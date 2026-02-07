@@ -1,0 +1,17 @@
+{
+  "name": "Harvest Helper",
+  "short_name": "Harvest",
+  "description": "Track your Fields of Mistria 100% completion progress",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
