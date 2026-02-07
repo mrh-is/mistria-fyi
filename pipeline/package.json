@@ -1,0 +1,12 @@
+{
+  "name": "harvest-helper-pipeline",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "tsx src/main.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.3"
+  }
+}

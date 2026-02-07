@@ -11,3 +11,4 @@ build/
 # Pipeline data
 pipeline/input/
 pipeline/output/
+src/lib/data/tracker-data.json

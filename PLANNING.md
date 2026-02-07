@@ -22,7 +22,7 @@ Reference data (sources, locations, prices) is accessed _in context_ of tracking
 
 ### D3: Data pipeline exists and should be preserved
 
-Python pipeline: `fiddle.json` → clean → localize → catalog.json (~888KB) + condensed_data.json (~48KB). Automated, versioned. Goal: drop in new fiddle.json, run pipeline, deploy. Pipeline will be moved into this repo.
+TypeScript pipeline in `pipeline/`: `fiddle.json` (flat slash-key format, ~7MB) → parse → localize → extract → `tracker-data.json` (~430KB). Drop in new fiddle.json + localization.json, run `npm run pipeline`, commit. Single version only — latest game version is all that matters.
 
 ### D4: Player.json import for bootstrapping
 
@@ -201,42 +201,42 @@ Restrictions on items/sources break down into distinct types:
 
 ## Data Pipeline
 
-### Current (separate repo on Google Drive)
-
-```
-Game update drops fiddle.json
-        ↓
-process_new_fiddle.py (auto-version, clean)
-        ↓
-    cleaned_fiddle.json (3.6MB)
-        ↓
-    localized_fiddle.json (with i18n)
-        ↓
-  ┌─────┴─────┐
-  ↓            ↓
-catalog.json  condensed_data.json
- (888KB)       (48KB)
-  ↓
-Copied to harvest-helper/static/versions/{ver}/
-```
-
-### Proposed (in this repo)
-
 ```
 Game update drops fiddle.json into pipeline/input/
         ↓
-Pipeline (Python, in this repo: pipeline/)
+npm run pipeline (TypeScript via tsx)
         ↓
-tracker-data.json → src/lib/data/ or static/
- (~100-200KB, exactly what the app needs)
+parse-fiddle.ts    → flat slash-keys → nested object (32K keys kept, 14K visual/audio skipped)
+        ↓
+localize.ts        → resolve i18n keys → English strings (semver fallback chain)
+        ↓
+extractors/*.ts    → 10 extractors, one per completion category + sources
+        ↓
+tracker-data.json  → pipeline/output/ (pretty, 706KB) + src/lib/data/ (minified, 428KB)
 ```
 
-### Pipeline work
+### Pipeline extractors
 
-- [ ] Move pipeline scripts from Google Drive into `pipeline/` directory
-- [ ] Redesign output format: `tracker-data.json` schema based on 9 completion categories
-- [ ] Add player.json → user progress parser (client-side, in the app)
-- [ ] Drop fiddle.json and full catalog from the app (only used in pipeline)
+| Extractor      | Source in fiddle         | Output                               |
+| -------------- | ------------------------ | ------------------------------------ |
+| `museum.ts`    | `museum_wings`           | 4 wings → 69 sets → 344 item IDs     |
+| `almanac.ts`   | `items`                  | 65 categories, 1903 items            |
+| `animals.ts`   | `ranching.animals`       | 8 types, 129 variants, 119 cosmetics |
+| `npcs.ts`      | `npcs`                   | 34 NPCs (name, birthday, dateable)   |
+| `cosmetics.ts` | `player_assets`          | 253 player cosmetics (name, slot)    |
+| `skills.ts`    | `skills`                 | 9 skills (id → name)                 |
+| `renown.ts`    | `renown`                 | 11 ranks × 10 levels                 |
+| `quests.ts`    | `quests`                 | 246 quests (story/heart/fetch/crown) |
+| `mines.ts`     | `dungeons` + `spells`    | 5 biomes, 99 floors, 4 spells        |
+| `sources.ts`   | stores, fish, bugs, etc. | 1611 items with 2144 sources         |
+
+### Deliberately excluded (add later for reference section)
+
+- NPC loved/liked gifts
+- Quest rewards, NPC associations, requirements
+- Renown rewards
+- Spell costs
+- Item sell/buy prices
 
 ---
 
@@ -244,22 +244,23 @@ tracker-data.json → src/lib/data/ or static/
 
 ### Game data (`tracker-data.json` — loaded once, cached)
 
-The "universe" of all completable things. Structured by category:
+The "universe" of all completable things. Structured by category. Full TypeScript types in `src/lib/types/tracker-data.ts` (branded ID types for type safety, shared between pipeline and app).
 
 ```
-{
+TrackerData {
   version: "0.13.4",
-  museum: { wings: { archaeology: { sets: [...] }, ... } },
-  almanac: { artifacts: [...], bugs: [...], crops: [...], ... },
-  recipes: { cooking: [...], crafting: [...] },
-  animals: { cow: { variants: [...] }, ... },
-  npcs: [ { id, name } ],
-  cosmetics: { player: [...], animal: { cow: [...], ... } },
-  skills: { cooking: { maxXp: N }, ... },
-  quests: { story: [...], heart: [...], fetch: [...], crown: [...] },
-  renown: { maxLevel: N },
-  mines: { maxFloor: N, spells: [...] },
-  sources: { [itemId]: [ { type, locations, restrictions } ] }
+  generatedAt: "2026-02-07T...",
+  museum:    Record<WingId, { name, sets: Record<SetId, { name, items: ItemId[] }> }>,
+  almanac:   Record<category, Record<ItemId, { name }>>,
+  animals:   Record<AnimalId, { name, variants: Record<VariantId, {...}>, cosmetics }>,
+  npcs:      Record<NpcId, { name, birthday, dateable }>,
+  cosmetics: Record<CosmeticId, { name, slot, defaultUnlocked }>,
+  skills:    Record<SkillId, string>,
+  renown:    { levelsPerRank, ranks },
+  quests:    Record<type, Record<QuestId, { name }>>,
+  mines:     { biomes, maxFloors, spells },
+  sources:   Record<ItemId, Source[]>,       // where/how to obtain each item
+  items:     Record<ItemId, { name, category }>,  // master item registry
 }
 ```
 
@@ -338,12 +339,15 @@ All items in the list should be visually scannable — a player should be able t
 - [x] Strict ESLint: `strictTypeChecked` + perfectionist (auto-sorted imports, objects, types)
 - [x] Prettier: consistent formatting with svelte + tailwind plugins
 
-### Phase 2: Data pipeline
+### Phase 2: Data pipeline ✅
 
-- Move pipeline scripts from Google Drive into `pipeline/`
-- Design `tracker-data.json` schema based on 9 completion categories
-- Generate `tracker-data.json` from latest fiddle.json
-- Load & cache in the app
+- [x] TypeScript pipeline in `pipeline/` (tsx, not Python)
+- [x] Shared types: `src/lib/types/tracker-data.ts` (branded IDs, enums, TrackerData interface)
+- [x] Parse fiddle.json (flat slash-keys → nested object, skip visual/audio data)
+- [x] Localize strings (same-version → semver fallback → snake_case→Title Case)
+- [x] 10 extractors for all completion categories + sources
+- [x] App-side loader: `src/lib/data/index.ts` (static import, typed)
+- [x] ESLint pipeline overrides (allow console, relax type strictness for game data)
 
 ### Phase 3: Core tracker UI
 

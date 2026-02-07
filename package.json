@@ -10,7 +10,8 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "prettier --check . && eslint .",
-    "lint:fix": "prettier --write . && eslint . --fix"
+    "lint:fix": "prettier --write . && eslint . --fix",
+    "pipeline": "cd pipeline && npx tsx src/main.ts"
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.2",

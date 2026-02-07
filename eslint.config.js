@@ -38,7 +38,6 @@ export default defineConfig(
   {
     rules: {
       "@typescript-eslint/consistent-type-imports": "error",
-
       "@typescript-eslint/no-import-type-side-effects": "error",
       "@typescript-eslint/no-unnecessary-condition": "warn",
       "@typescript-eslint/no-unused-vars": [
@@ -47,6 +46,7 @@ export default defineConfig(
       ],
       "@typescript-eslint/prefer-nullish-coalescing": "warn",
       "@typescript-eslint/prefer-optional-chain": "warn",
+      "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
       "@typescript-eslint/switch-exhaustiveness-check": "error",
       curly: ["error", "multi-line", "consistent"],
       eqeqeq: "error",
@@ -103,6 +103,17 @@ export default defineConfig(
       "@typescript-eslint/no-unsafe-call": "off",
       // Svelte requires `let` for $props() destructuring (reactivity)
       "prefer-const": "off",
+    },
+  },
+  {
+    // Pipeline is a CLI tool — console output is intentional, and game data
+    // is loosely typed so defensive checks against `unknown` casts are valid
+    files: ["pipeline/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-unnecessary-condition": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "no-console": "off",
     },
   },
   {
