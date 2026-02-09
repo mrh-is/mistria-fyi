@@ -2,6 +2,7 @@ import { SvelteSet } from "svelte/reactivity";
 
 import { trackerData } from "$lib/data/index.js";
 
+import type { ImportResult } from "$lib/engine/import-save.js";
 import type {
   AnimalId,
   CosmeticId,
@@ -139,11 +140,84 @@ function createUserState() {
     exportState(): string {
       return serialize(state);
     },
+    /** Import/export user state JSON (full replace) */
     importState(json: string): boolean {
       const imported = deserialize(json);
       if (!imported) return false;
       state = imported;
       return true;
+    },
+    /** Merge player.json save data into current progress (union, never removes) */
+    mergeFromSave(imported: Partial<CompletedState>): ImportResult["counts"] {
+      const counts: ImportResult["counts"] = {
+        almanac: 0,
+        animalCosmetics: 0,
+        animals: 0,
+        cosmetics: 0,
+        spells: 0,
+      };
+
+      // Almanac
+      if (imported.almanac) {
+        for (const id of imported.almanac) {
+          if (!state.completed.almanac.has(id)) {
+            state.completed.almanac.add(id);
+            counts.almanac++;
+          }
+        }
+      }
+
+      // Cosmetics
+      if (imported.cosmetics) {
+        for (const id of imported.cosmetics) {
+          if (!state.completed.cosmetics.has(id)) {
+            state.completed.cosmetics.add(id);
+            counts.cosmetics++;
+          }
+        }
+      }
+
+      // Animal variants
+      if (imported.animals) {
+        for (const [animalId, variants] of Object.entries(imported.animals)) {
+          const existing = (state.completed.animals[animalId] ??=
+            new SvelteSet<VariantId>());
+          for (const v of variants) {
+            if (!existing.has(v)) {
+              existing.add(v);
+              counts.animals++;
+            }
+          }
+        }
+      }
+
+      // Animal cosmetics
+      if (imported.animalCosmetics) {
+        for (const [animalId, cosmetics] of Object.entries(
+          imported.animalCosmetics,
+        )) {
+          const existing = (state.completed.animalCosmetics[animalId] ??=
+            new SvelteSet<CosmeticId>());
+          for (const c of cosmetics) {
+            if (!existing.has(c)) {
+              existing.add(c);
+              counts.animalCosmetics++;
+            }
+          }
+        }
+      }
+
+      // Spells
+      if (imported.mines?.spells) {
+        for (const id of imported.mines.spells) {
+          if (!state.completed.mines.spells.has(id)) {
+            state.completed.mines.spells.add(id);
+            counts.spells++;
+          }
+        }
+      }
+
+      return counts;
     },
     resetAll() {
       state = createDefaultState();

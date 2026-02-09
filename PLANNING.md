@@ -363,15 +363,20 @@ All items in the list should be visually scannable — a player should be able t
 - [x] Reactive state via Svelte 5 `$state`/`$derived` runes — single `userState` store persisted to localStorage
 - [x] Default-unlocked cosmetics and animal variants pre-populated on first load
 
-### Phase 4: Player.json import
+### Phase 4: Player.json import ✅
 
-- Client-side parser for player.json
-- Import flow in settings
-- Map player.json fields to user progress state
+- [x] Import engine (`src/lib/engine/import-save.ts`): parse, validate, map player.json → CompletedState
+- [x] Union merge strategy in `userState.mergeFromSave()` — adds items, never removes existing progress
+- [x] Almanac import uses `items_acquired ∪ items_sold ∪ recipes_created` (items_acquired is NOT cumulative — items_sold fills the gaps)
+- [x] Settings page (`/settings`) with file picker, import results summary, warnings
+- [x] Backup export/restore (full state JSON download/upload)
+- [x] Reset all progress with confirmation
+- [x] Settings gear icon on home page
+- [x] Import coverage: almanac, cosmetics, animal variants, animal cosmetics, spells
+- [x] Not importable (documented in UI): museum donations, NPC hearts, quests (not in player.json), skills/renown (XP thresholds unknown), mine floor (only milestones)
 
 ### Phase 5: Polish
 
-- Export/import user progress (backup)
 - PWA install experience
 - Mobile UX refinement
 - Performance (virtualized lists for large categories)
