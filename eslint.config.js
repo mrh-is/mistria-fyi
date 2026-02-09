@@ -117,6 +117,22 @@ export default defineConfig(
     },
   },
   {
+    // shadcn-svelte generated components — vendored code, relax strict rules
+    files: ["src/lib/components/ui/**/*.svelte", "src/lib/components/ui/**/*.ts"],
+    rules: {
+      "@typescript-eslint/consistent-type-imports": "off",
+      "@typescript-eslint/no-redundant-type-constituents": "off",
+      "@typescript-eslint/no-unnecessary-condition": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/prefer-nullish-coalescing": "off",
+      "perfectionist/sort-imports": "off",
+      "perfectionist/sort-objects": "off",
+      "svelte/no-navigation-without-resolve": "off",
+    },
+  },
+  {
     // Relax rules for config files (JS, no tsconfig coverage)
     files: ["*.config.{js,ts}", "*.config.*.{js,ts}"],
     ...ts.configs.disableTypeChecked,

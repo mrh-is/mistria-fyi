@@ -349,13 +349,19 @@ All items in the list should be visually scannable — a player should be able t
 - [x] App-side loader: `src/lib/data/index.ts` (static import, typed)
 - [x] ESLint pipeline overrides (allow console, relax type strictness for game data)
 
-### Phase 3: Core tracker UI
+### Phase 3: Core tracker UI ✅
 
-- Home screen: search bar + world state selectors + 3-way toggle + category cards with progress %
-- Category drill-in views with sub-categories
-- Item list with restriction indicators and visual treatments
-- Item detail (sources, restrictions, actions)
-- Check-off functionality with localStorage persistence
+- [x] Home screen: search bar + world state selectors + 3-way toggle + category cards with progress %
+- [x] Category drill-in views (9 routes) with sub-categories via `ExpandableSection`
+- [x] Item list with restriction badges (season/weather/time emoji indicators)
+- [x] Item detail: expandable source list with green/red availability dots
+- [x] Check-off functionality with localStorage persistence (debounced 300ms save)
+- [x] Cross-category search (prefix-match ranking, max 50 results, 200ms debounce)
+- [x] Dark mode with system/light/dark toggle + FOUC prevention
+- [x] shadcn-svelte component library (button, card, checkbox, toggle-group, select, etc.)
+- [x] Engine layer (`src/lib/engine/`): availability filtering, progress calculation, search — pure functions, no side effects
+- [x] Reactive state via Svelte 5 `$state`/`$derived` runes — single `userState` store persisted to localStorage
+- [x] Default-unlocked cosmetics and animal variants pre-populated on first load
 
 ### Phase 4: Player.json import
 

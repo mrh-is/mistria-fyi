@@ -158,7 +158,7 @@ export type VariantId = string & { readonly __brand: "VariantId" };
 
 // ─── Source ──────────────────────────────────────────────────────────
 
-export type Weather = "calm" | "rain" | "snow" | "special";
+export type Weather = "calm" | "heavy_inclement" | "inclement" | "special";
 
 // ─── TrackerData (top-level schema) ─────────────────────────────────
 

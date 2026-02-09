@@ -1,0 +1,83 @@
+<script lang="ts">
+  import { Checkbox } from "$lib/components/ui/checkbox/index.js";
+  import { trackerData } from "$lib/data/index.js";
+  import { searchItems } from "$lib/engine/search.js";
+  import { userState } from "$lib/stores/user-state.svelte.js";
+
+  import type { SearchResult } from "$lib/engine/search.js";
+  import type { AnimalId, VariantId } from "$lib/types/tracker-data.js";
+
+  let { query }: { query: string } = $props();
+
+  let results = $derived(searchItems(query, userState.state.completed));
+
+  const CATEGORY_LABELS: Record<string, string> = {
+    almanac: "Almanac",
+    animals: "Animals",
+    cosmetics: "Cosmetics",
+    npcs: "NPCs",
+    quests: "Quests",
+  };
+
+  // Build a reverse lookup: variantId → animalId (static, not reactive)
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- static lookup, never mutated after init
+  const variantToAnimal = new Map<string, string>();
+  for (const [animalId, animal] of Object.entries(trackerData.animals)) {
+    for (const variantId of Object.keys(animal.variants)) {
+      variantToAnimal.set(variantId, animalId);
+    }
+  }
+
+  function toggleResult(result: SearchResult): void {
+    switch (result.category) {
+      case "almanac":
+        userState.toggleAlmanacItem(result.id as never);
+        break;
+      case "animals": {
+        const animalId = variantToAnimal.get(result.id);
+        if (animalId) {
+          userState.toggleAnimalVariant(animalId as AnimalId, result.id as VariantId);
+        }
+        break;
+      }
+      case "cosmetics":
+        userState.toggleCosmetic(result.id as never);
+        break;
+      case "npcs":
+        userState.toggleNpc(result.id as never);
+        break;
+      case "quests":
+        userState.toggleQuest(result.id as never);
+        break;
+    }
+  }
+</script>
+
+<div class="flex flex-col gap-1">
+  <p class="text-muted-foreground text-xs">
+    {results.length} result{results.length === 1 ? "" : "s"}
+  </p>
+
+  {#each results as result (result.category + result.id)}
+    <div
+      class="flex items-center gap-2 rounded-md px-2 py-1 {result.completed
+        ? 'line-through opacity-40'
+        : ''}"
+    >
+      <Checkbox
+        checked={result.completed}
+        onCheckedChange={() => {
+          toggleResult(result);
+        }}
+      />
+      <span class="min-w-0 flex-1 text-sm">{result.name}</span>
+      <span class="text-muted-foreground text-[10px]">
+        {CATEGORY_LABELS[result.category] ?? result.category}
+      </span>
+    </div>
+  {/each}
+
+  {#if results.length === 0}
+    <p class="text-muted-foreground py-8 text-center text-sm">No items found</p>
+  {/if}
+</div>
