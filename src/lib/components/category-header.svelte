@@ -43,8 +43,8 @@
   }
 </script>
 
-<div class="flex flex-col gap-3">
-  <div class="bg-background sticky top-0 z-10 -mx-4 flex items-center gap-2 px-4 py-2">
+<div class="bg-background sticky top-0 z-10 -mx-4 flex flex-col gap-3 px-4 pb-3 pt-2">
+  <div class="flex items-center gap-2">
     <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- known route -->
     <a class="text-muted-foreground hover:text-foreground" href="/">
       <ArrowLeft class="size-5" />
