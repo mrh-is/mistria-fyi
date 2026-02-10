@@ -220,15 +220,15 @@ tracker-data.json  → pipeline/output/ (pretty, 706KB) + src/lib/data/ (minifie
 | Extractor      | Source in fiddle         | Output                               |
 | -------------- | ------------------------ | ------------------------------------ |
 | `museum.ts`    | `museum_wings`           | 4 wings → 69 sets → 344 item IDs     |
-| `almanac.ts`   | `items`                  | 65 categories, 1903 items            |
-| `animals.ts`   | `ranching.animals`       | 8 types, 129 variants, 119 cosmetics |
+| `almanac.ts`   | `items`                  | 67 categories, 1903 items (crops/forage split into 3) |
+| `animals.ts`   | `ranching.animals`       | 8 types, 97 variants (32 defaults skipped), 119 cosmetics |
 | `npcs.ts`      | `npcs`                   | 34 NPCs (name, birthday, dateable)   |
 | `cosmetics.ts` | `player_assets`          | 253 player cosmetics (name, slot)    |
 | `skills.ts`    | `skills`                 | 9 skills (id → name)                 |
 | `renown.ts`    | `renown`                 | 11 ranks × 10 levels                 |
 | `quests.ts`    | `quests`                 | 246 quests (story/heart/fetch/crown) |
 | `mines.ts`     | `dungeons` + `spells`    | 5 biomes, 99 floors, 4 spells        |
-| `sources.ts`   | stores, fish, bugs, etc. | 1611 items with 2144 sources         |
+| `sources.ts`   | stores, fish, bugs, etc. | 1611 items with 2190 sources (forage sources fixed) |
 
 ### Deliberately excluded (add later for reference section)
 
@@ -375,8 +375,106 @@ All items in the list should be visually scannable — a player should be able t
 - [x] Import coverage: almanac, cosmetics, animal variants, animal cosmetics, spells
 - [x] Not importable (documented in UI): museum donations, NPC hearts, quests (not in player.json), skills/renown (XP thresholds unknown), mine floor (only milestones)
 
+#### Fixes
+
+##### UI
+
+- [x] Move theme switcher into settings page (toggle group: system/light/dark)
+- [x] Show some response when the user starts typing in the search field
+- [x] If item is available in all seasons, don't show season icons
+- [x] Remove shadow size tags on "Materials" (hideFishSize prop on RestrictionBadges)
+- [x] Visually distinguish between various types of item restrictions (season badges have amber bg, weather has sky bg)
+- [x] Updates to weather names based on season (wiki-accurate: Blizzard/Snow in winter, Breezy in spring/fall)
+- [ ] Add search to individual category pages
+- [x] Show item restrictions when searching on home page
+- [x] Sort items alphabetically in Almanac
+- [x] Category pages show world state + availability toggle (Museum & Almanac via showWorldState prop)
+- [x] Add hover text to availability toggle to explain each option
+- [ ] Only two categories (Museum & Almanac) are affected by availability, maybe they should be more clearly differentiated? → **needs input**
+- [ ] Maybe add a way to indicate that an entire museum set is done (at least until that becomes importable) → **needs input**
+- [x] Allow the user to directly enter a renown level (click level text for inline edit, +/- buttons still work)
+- [x] Mute repetitive fetch quest "Request for a" prefix (preserves "Important" distinction)
+- [x] Mute repetitive crown quest "Crown Request:" prefix
+- [x] Home page tiles compacted (smaller padding, icon, progress bar, text)
+- [ ] Idea: With 9 categories, this feels like a 3x3 grid would make a lot of sense? → **needs input**
+- [x] Availability toggle has visible border + rounded edges
+
+##### Data
+
+- [ ] NPCs aren't "checked off", the player builds the relationship level → **needs input**
+- [ ] Skills have levels (cap at 60), not "checked off" → **needs input**
+- [x] Flatten Almanac "Other" subcategories to top level
+- [x] Remove default animal variants from pipeline (32 defaults now skipped)
+- [x] Human-readable pipeline outputs: `fiddle-readable.json` + `tracker-data-readable.json` in `pipeline/output/`
+- [x] Separate Crops from Forageables (tag-based split: 34 crops, 62 forageables, 61 seeds)
+- [x] Fix cosmetics slot mapping (feet→shoes, facial_hair→facial aliases; "bottom" resolved via ID-prefix to pants/skirts/shorts/underwear)
+- [x] Fix forage sources (were silently skipping all 42+ items due to expecting objects, not strings)
+- [ ] Categorize crops & forage by season → **partially done** (forage sources now have season data; crop season needs seed→crop mapping)
+- [ ] Quests: obtained vs completed two-state tracking → **needs input**
+
+##### Questions & Design Decisions Needed
+
+These items require your input or need investigation on the gaming PC.
+
+**1. NPC Relationship Levels**
+The current NPC page uses checkboxes (done/not done), but NPCs have relationship levels 1-8. Design questions:
+- Should it be a slider, stepper (+/- buttons), or direct input like renown?
+- Romanceable NPCs use hearts, non-romanceable use gems — should the UI reflect this distinction visually?
+- The fiddle data has `heart_point_values` with 4 threshold values. These may correspond to the 8 levels (every 2 thresholds = 1 level?). Need to verify mapping.
+- NPC hearts are NOT in player.json — manual tracking only (for now).
+
+**2. Skill Levels & Tiers**
+Skills currently show as checkboxes but should be level 1-60. Design questions:
+- Same input style as renown (click to type, +/- buttons)?
+- The fiddle has `skills` data but only 9 skill names, no XP thresholds or tier breakpoints.
+- The PLANNING.md mentions tiers unlock perks — should the UI show tier progress or just the level number?
+- Skill XP thresholds for leveling are NOT in the fiddle data. Do you know these, or can we extract from the game?
+- Skills are importable from player.json (`skill_xp`) but we need to know the XP→level formula.
+
+**3. Quest Two-State Tracking (Obtained vs Completed)**
+Currently quests are just checked off. The request is for two states: obtained (active) → completed.
+- Should this be: unchecked → active (partial fill/different icon) → completed (full check)?
+- Or a dropdown/toggle per quest?
+- Quests never expire or fail, so the flow is strictly: not obtained → obtained → completed.
+- What visual treatment for "obtained but not completed"? A half-check? Different color? Progress dot?
+
+**4. Availability Differentiation**
+Only Museum and Almanac items are affected by the season/weather availability system. The other 7 categories (Animals, NPCs, Cosmetics, Skills, Renown, Quests, Mines) have no seasonal restrictions.
+- Should categories unaffected by availability hide the world state/toggle controls?
+- Or should they show the controls greyed out with a message like "Not affected by season"?
+- Current behavior: Museum & Almanac show controls, others don't.
+
+**5. Museum Set Quick-Complete**
+For museum sets, it might be useful to mark an entire set as complete at once (especially before save import is possible for museum data).
+- A "mark all" button per set? Per wing?
+- Risk: accidentally completing a whole set. Maybe require long-press or confirmation?
+
+**6. 3×3 Grid Layout**
+With 9 categories, a 3×3 grid is tempting. Current layout is a 2-column grid that scrolls.
+- 3×3 would fit everything on one screen but tiles would be very small on narrow phones.
+- Could use a responsive approach: 3×3 on wider screens, 2-col on narrow.
+- The tiles are already quite compact after the latest changes.
+
+**7. Crop Season Association**
+Crops (34 items) don't have season data on the items themselves. Season lives on the *seed* items (via store seasonal stock). Approach:
+- Pipeline: link each crop to its seed via the `crop_object` field on seeds, then inherit the seed's store season.
+- Display: group crops by season in the Almanac, similar to how museum has sets.
+- 20 forageable items (herbs/flowers like Basil, Daffodil, Tulip) can be BOTH grown from seeds AND foraged in the wild — these are correctly in "Forageables" since they can be found without farming.
+
+**8. Category Page Search**
+The PLANNING.md wireframe shows a search bar within each category page. Options:
+- Same search bar as home, but filtered to current category?
+- Or a simpler text filter (no cross-category results)?
+- Should it search item names only, or also source descriptions?
+
 ### Phase 5: Polish
 
 - PWA install experience
 - Mobile UX refinement
 - Performance (virtualized lists for large categories)
+
+### Future
+
+#### Requires human
+
+- [ ] Investigate data sources for non-importable data: museum donations, NPC hearts, quests (not in player.json), skills/renown (XP thresholds unknown), mine floor (only milestones)
