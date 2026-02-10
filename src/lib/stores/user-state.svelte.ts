@@ -180,8 +180,7 @@ function createUserState() {
       // Animal variants
       if (imported.animals) {
         for (const [animalId, variants] of Object.entries(imported.animals)) {
-          const existing = (state.completed.animals[animalId] ??=
-            new SvelteSet<VariantId>());
+          const existing = (state.completed.animals[animalId] ??= new SvelteSet<VariantId>());
           for (const v of variants) {
             if (!existing.has(v)) {
               existing.add(v);
@@ -193,9 +192,7 @@ function createUserState() {
 
       // Animal cosmetics
       if (imported.animalCosmetics) {
-        for (const [animalId, cosmetics] of Object.entries(
-          imported.animalCosmetics,
-        )) {
+        for (const [animalId, cosmetics] of Object.entries(imported.animalCosmetics)) {
           const existing = (state.completed.animalCosmetics[animalId] ??=
             new SvelteSet<CosmeticId>());
           for (const c of cosmetics) {

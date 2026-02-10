@@ -1,7 +1,8 @@
 <script lang="ts">
-  import "../app.css";
   // Initialize theme store (side-effect: applies .dark class + syncs with localStorage)
   import "$lib/stores/theme.svelte.js";
+
+  import "../app.css";
 
   let { children } = $props();
 </script>
