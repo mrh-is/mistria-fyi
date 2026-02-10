@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { Landmark } from "@lucide/svelte";
+  import { CheckCheck, Landmark, Undo2 } from "@lucide/svelte";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import ItemRow from "$lib/components/item-row.svelte";
+  import { Button } from "$lib/components/ui/button/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { isItemAvailable } from "$lib/engine/availability.js";
   import { getMuseumProgress } from "$lib/engine/progress.js";
@@ -19,16 +20,19 @@
     }),
   );
 
+  let nameFilter = $state("");
+
+  function matchesFilter(itemId: ItemId): boolean {
+    if (!nameFilter) return true;
+    const name = trackerData.items[itemId]?.name ?? "";
+    return name.toLowerCase().includes(nameFilter.toLowerCase());
+  }
+
   function shouldShowItem(itemId: ItemId): boolean {
+    if (!matchesFilter(itemId)) return false;
     const completed = userState.state.completed.museum.has(itemId);
-
-    // If the item is completed and we're hiding completed items, don't show it
     if (completed && !userState.state.showCompleted) return false;
-
-    // If completed items are shown and this one is completed, always show it
     if (completed) return true;
-
-    // For incomplete items, check availability against current world state and mode
     return isItemAvailable(
       itemId,
       trackerData.sources,
@@ -39,14 +43,23 @@
 
   function isItemDimmed(itemId: ItemId): boolean {
     if (userState.state.completed.museum.has(itemId)) return false;
-    // In "everything" mode, dim items that aren't currently available
     if (userState.state.availabilityMode !== "everything") return false;
     return !isItemAvailable(itemId, trackerData.sources, userState.state.worldState, "available");
+  }
+
+  function isSetComplete(items: ItemId[]): boolean {
+    return items.every((id) => userState.state.completed.museum.has(id));
   }
 </script>
 
 <div class="flex flex-col gap-4 p-4">
-  <CategoryHeader icon={Landmark} name="Museum" {progress} showWorldState />
+  <CategoryHeader
+    icon={Landmark}
+    name="Museum"
+    onSearch={(q) => (nameFilter = q)}
+    {progress}
+    showWorldState
+  />
 
   {#each Object.entries(trackerData.museum) as [wingId, wing] (wingId)}
     {@const wingItems = Object.values(wing.sets).flatMap((s) => s.items)}
@@ -59,6 +72,7 @@
       >
         {#each Object.entries(wing.sets) as [setId, set] (setId)}
           {@const visibleSetItems = set.items.filter(shouldShowItem)}
+          {@const setComplete = isSetComplete(set.items)}
           {#if visibleSetItems.length > 0}
             <ExpandableSection
               count={set.items.filter((id) => userState.state.completed.museum.has(id)).length}
@@ -78,6 +92,29 @@
                   />
                 {/if}
               {/each}
+              <div class="mt-1 flex justify-end px-2">
+                {#if setComplete}
+                  <Button
+                    class="h-6 text-xs"
+                    variant="ghost"
+                    size="sm"
+                    onclick={() => userState.uncompleteMuseumSet(set.items)}
+                  >
+                    <Undo2 class="size-3" />
+                    Undo set
+                  </Button>
+                {:else}
+                  <Button
+                    class="h-6 text-xs"
+                    variant="ghost"
+                    size="sm"
+                    onclick={() => userState.completeMuseumSet(set.items)}
+                  >
+                    <CheckCheck class="size-3" />
+                    Complete set
+                  </Button>
+                {/if}
+              </div>
             </ExpandableSection>
           {/if}
         {/each}

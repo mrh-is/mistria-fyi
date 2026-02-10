@@ -249,6 +249,12 @@ function createUserState() {
     toggleMuseumItem(id: ItemId) {
       toggleInSet(state.completed.museum, id);
     },
+    completeMuseumSet(items: ItemId[]) {
+      for (const id of items) state.completed.museum.add(id);
+    },
+    uncompleteMuseumSet(items: ItemId[]) {
+      for (const id of items) state.completed.museum.delete(id);
+    },
     toggleNpc(id: NpcId) {
       toggleInSet(state.completed.npcs, id);
     },

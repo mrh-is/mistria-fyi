@@ -20,7 +20,16 @@
     }),
   );
 
+  let nameFilter = $state("");
+
+  function matchesFilter(itemId: ItemId, name: string): boolean {
+    if (!nameFilter) return true;
+    return name.toLowerCase().includes(nameFilter.toLowerCase());
+  }
+
   function shouldShowItem(itemId: ItemId): boolean {
+    const itemName = trackerData.items[itemId]?.name ?? "";
+    if (!matchesFilter(itemId, itemName)) return false;
     const completed = userState.state.completed.almanac.has(itemId);
     if (completed && !userState.state.showCompleted) return false;
     if (completed) return true;
@@ -66,7 +75,13 @@
 </script>
 
 <div class="flex flex-col gap-4 p-4">
-  <CategoryHeader icon={BookOpen} name="Almanac" {progress} showWorldState />
+  <CategoryHeader
+    icon={BookOpen}
+    name="Almanac"
+    onSearch={(q) => (nameFilter = q)}
+    {progress}
+    showWorldState
+  />
 
   {#each groupedCategories() as { categories, group } (group)}
     {@const groupItems = categories.flatMap((c) => c.items.map(([id]) => id as ItemId))}
