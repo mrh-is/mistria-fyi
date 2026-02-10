@@ -105,7 +105,7 @@
             </button>
             <span class="min-w-0 flex-1 text-sm">
               {quest.displayName}
-              {#if quest.npc && duplicateNames.has(quest.displayName)}
+              {#if quest.npc && (questType === "fetch_quests" || duplicateNames.has(quest.displayName))}
                 <span class="text-muted-foreground text-[10px]">({npcName(quest.npc)})</span>
               {/if}
             </span>
