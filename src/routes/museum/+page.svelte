@@ -46,7 +46,7 @@
 </script>
 
 <div class="flex flex-col gap-4 p-4">
-  <CategoryHeader icon={Landmark} name="Museum" {progress} />
+  <CategoryHeader icon={Landmark} name="Museum" {progress} showWorldState />
 
   {#each Object.entries(trackerData.museum) as [wingId, wing] (wingId)}
     {@const wingItems = Object.values(wing.sets).flatMap((s) => s.items)}

@@ -4,7 +4,9 @@
   import { Button } from "$lib/components/ui/button/index.js";
   import * as Card from "$lib/components/ui/card/index.js";
   import { Separator } from "$lib/components/ui/separator/index.js";
+  import * as ToggleGroup from "$lib/components/ui/toggle-group/index.js";
   import { buildImportState, parsePlayerSave } from "$lib/engine/import-save.js";
+  import { theme, type Theme } from "$lib/stores/theme.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import type { ImportResult } from "$lib/engine/import-save.js";
@@ -115,6 +117,27 @@
     <h1 class="text-lg font-semibold">Settings</h1>
   </div>
 
+  <!-- Theme -->
+  <Card.Root>
+    <Card.Header>
+      <Card.Title>Theme</Card.Title>
+    </Card.Header>
+    <Card.Content>
+      <ToggleGroup.Root
+        class="w-full"
+        type="single"
+        value={theme.preference}
+        onValueChange={(v) => {
+          if (v) theme.set(v as Theme);
+        }}
+      >
+        <ToggleGroup.Item class="flex-1" value="system">System</ToggleGroup.Item>
+        <ToggleGroup.Item class="flex-1" value="light">Light</ToggleGroup.Item>
+        <ToggleGroup.Item class="flex-1" value="dark">Dark</ToggleGroup.Item>
+      </ToggleGroup.Root>
+    </Card.Content>
+  </Card.Root>
+
   <!-- Import from Save File -->
   <Card.Root>
     <Card.Header>
@@ -151,24 +174,24 @@
       {#if importResult}
         <div class="mt-3 rounded-md bg-green-50 p-3 dark:bg-green-950">
           <p class="text-sm font-medium text-green-800 dark:text-green-200">
-            ✅ Imported {totalImported} new items
+            Imported {totalImported} new items
           </p>
           {#if totalImported > 0}
             <ul class="text-muted-foreground mt-1 space-y-0.5 text-xs">
               {#if importResult.counts.almanac > 0}
-                <li>📦 Almanac: +{importResult.counts.almanac}</li>
+                <li>Almanac: +{importResult.counts.almanac}</li>
               {/if}
               {#if importResult.counts.cosmetics > 0}
-                <li>👗 Cosmetics: +{importResult.counts.cosmetics}</li>
+                <li>Cosmetics: +{importResult.counts.cosmetics}</li>
               {/if}
               {#if importResult.counts.animals > 0}
-                <li>🐾 Animal variants: +{importResult.counts.animals}</li>
+                <li>Animal variants: +{importResult.counts.animals}</li>
               {/if}
               {#if importResult.counts.animalCosmetics > 0}
-                <li>🎀 Animal cosmetics: +{importResult.counts.animalCosmetics}</li>
+                <li>Animal cosmetics: +{importResult.counts.animalCosmetics}</li>
               {/if}
               {#if importResult.counts.spells > 0}
-                <li>✨ Spells: +{importResult.counts.spells}</li>
+                <li>Spells: +{importResult.counts.spells}</li>
               {/if}
             </ul>
           {/if}
@@ -190,7 +213,7 @@
 
         <div class="mt-3 rounded-md bg-sky-50 p-3 dark:bg-sky-950">
           <p class="text-sm font-medium text-sky-800 dark:text-sky-200">
-            ℹ️ Some data is manual-only
+            Some data is manual-only
           </p>
           <p class="text-muted-foreground mt-1 text-xs">We can't yet import data for:</p>
           <ul class="text-muted-foreground mt-1 list-inside list-disc space-y-0.5 text-xs">

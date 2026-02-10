@@ -7,6 +7,7 @@
   import { trackerData } from "$lib/data/index.js";
   import { getQuestsProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { displayQuestName } from "$lib/utils/format.js";
 
   import type { QuestId } from "$lib/types/tracker-data.js";
 
@@ -33,8 +34,12 @@
 
   {#each typeOrder as questType (questType)}
     {@const quests = Object.entries(trackerData.quests[questType] ?? {})
-      .map(([id, q]) => ({ id: id as QuestId, name: q.name }))
-      .sort((a, b) => a.name.localeCompare(b.name))}
+      .map(([id, q]) => ({
+        displayName: displayQuestName(q.name, questType),
+        id: id as QuestId,
+        name: q.name,
+      }))
+      .sort((a, b) => a.displayName.localeCompare(b.displayName))}
     {@const completedCount = quests.filter((q) =>
       userState.state.completed.quests.has(q.id),
     ).length}
@@ -61,7 +66,7 @@
                 userState.toggleQuest(quest.id);
               }}
             />
-            <span class="text-sm">{quest.name}</span>
+            <span class="text-sm">{quest.displayName}</span>
           </div>
         {/each}
       </ExpandableSection>

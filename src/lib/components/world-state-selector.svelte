@@ -7,6 +7,8 @@
 
   const seasons: Season[] = ["spring", "summer", "fall", "winter"];
   const weathers: Weather[] = ["calm", "inclement", "heavy_inclement", "special"];
+
+  let currentSeason = $derived(userState.state.worldState.season);
 </script>
 
 <div class="flex gap-2">
@@ -18,8 +20,8 @@
     }}
   >
     <Select.Trigger class="flex-1">
-      {seasonEmoji(userState.state.worldState.season)}
-      {seasonLabel(userState.state.worldState.season)}
+      {seasonEmoji(currentSeason)}
+      {seasonLabel(currentSeason)}
     </Select.Trigger>
     <Select.Content>
       {#each seasons as s (s)}
@@ -37,11 +39,13 @@
   >
     <Select.Trigger class="flex-1">
       {weatherEmoji(userState.state.worldState.weather)}
-      {weatherLabel(userState.state.worldState.weather)}
+      {weatherLabel(userState.state.worldState.weather, currentSeason)}
     </Select.Trigger>
     <Select.Content>
       {#each weathers as w (w)}
-        <Select.Item value={w}>{weatherEmoji(w)} {weatherLabel(w)}</Select.Item>
+        <Select.Item value={w}>
+          {weatherEmoji(w)} {weatherLabel(w, currentSeason)}
+        </Select.Item>
       {/each}
     </Select.Content>
   </Select.Root>

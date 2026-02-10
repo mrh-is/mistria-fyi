@@ -36,3 +36,6 @@
     </button>
   {/if}
 </div>
+{#if value && !value.trim()}
+  <p class="text-muted-foreground text-xs">Type to search across all categories...</p>
+{/if}

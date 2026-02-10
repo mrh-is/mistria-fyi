@@ -1,6 +1,8 @@
 <script lang="ts">
   import { ArrowLeft } from "@lucide/svelte";
 
+  import AvailabilityToggle from "$lib/components/availability-toggle.svelte";
+  import WorldStateSelector from "$lib/components/world-state-selector.svelte";
   import { Checkbox } from "$lib/components/ui/checkbox/index.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
@@ -12,10 +14,12 @@
     icon: Icon,
     name,
     progress,
+    showWorldState = false,
   }: {
     icon: Component<{ class?: string }>;
     name: string;
     progress: CategoryProgress;
+    showWorldState?: boolean;
   } = $props();
 
   let pct = $derived(
@@ -34,6 +38,11 @@
     <span class="text-muted-foreground text-sm">{pct}%</span>
     <span class="text-muted-foreground text-xs">({progress.completed}/{progress.total})</span>
   </div>
+
+  {#if showWorldState}
+    <WorldStateSelector />
+    <AvailabilityToggle />
+  {/if}
 
   <label class="flex items-center gap-2 text-sm">
     <Checkbox

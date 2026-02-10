@@ -46,10 +46,13 @@
     > = {};
     for (const [key, items] of Object.entries(trackerData.almanac)) {
       const parsed = parseAlmanacCategory(key);
-      (groups[parsed.group] ??= []).push({
-        items: Object.entries(items),
+      // Flatten "Other" subcategories to top level
+      const group = parsed.group === "Other" ? parsed.name : parsed.group;
+      const name = parsed.group === "Other" ? parsed.name : parsed.name;
+      (groups[group] ??= []).push({
+        items: Object.entries(items).sort(([, a], [, b]) => a.name.localeCompare(b.name)),
         key,
-        name: parsed.name,
+        name,
       });
     }
     // Sort groups and categories within groups
@@ -63,7 +66,7 @@
 </script>
 
 <div class="flex flex-col gap-4 p-4">
-  <CategoryHeader icon={BookOpen} name="Almanac" {progress} />
+  <CategoryHeader icon={BookOpen} name="Almanac" {progress} showWorldState />
 
   {#each groupedCategories() as { categories, group } (group)}
     {@const groupItems = categories.flatMap((c) => c.items.map(([id]) => id as ItemId))}
@@ -73,30 +76,47 @@
     {@const visibleGroupItems = groupItems.filter(shouldShowItem)}
     {#if visibleGroupItems.length > 0}
       <ExpandableSection count={groupCompleted} name={group} total={groupItems.length}>
-        {#each categories as cat (cat.key)}
-          {@const catItemIds = cat.items.map(([id]) => id as ItemId)}
-          {@const catCompleted = catItemIds.filter((id) =>
-            userState.state.completed.almanac.has(id),
-          ).length}
-          {@const visibleCatItems = catItemIds.filter(shouldShowItem)}
-          {#if visibleCatItems.length > 0}
-            <ExpandableSection count={catCompleted} name={cat.name} total={catItemIds.length}>
-              {#each cat.items as [itemId, item] (itemId)}
-                {#if shouldShowItem(itemId as ItemId)}
-                  <ItemRow
-                    completed={userState.state.completed.almanac.has(itemId as ItemId)}
-                    dimmed={isItemDimmed(itemId as ItemId)}
-                    itemId={itemId as ItemId}
-                    name={item.name}
-                    onToggle={() => {
-                      userState.toggleAlmanacItem(itemId as ItemId);
-                    }}
-                  />
-                {/if}
-              {/each}
-            </ExpandableSection>
-          {/if}
-        {/each}
+        {#if categories.length === 1 && categories[0].name === group}
+          <!-- Single category in group (flattened "Other") — render items directly -->
+          {#each categories[0].items as [itemId, item] (itemId)}
+            {#if shouldShowItem(itemId as ItemId)}
+              <ItemRow
+                completed={userState.state.completed.almanac.has(itemId as ItemId)}
+                dimmed={isItemDimmed(itemId as ItemId)}
+                itemId={itemId as ItemId}
+                name={item.name}
+                onToggle={() => {
+                  userState.toggleAlmanacItem(itemId as ItemId);
+                }}
+              />
+            {/if}
+          {/each}
+        {:else}
+          {#each categories as cat (cat.key)}
+            {@const catItemIds = cat.items.map(([id]) => id as ItemId)}
+            {@const catCompleted = catItemIds.filter((id) =>
+              userState.state.completed.almanac.has(id),
+            ).length}
+            {@const visibleCatItems = catItemIds.filter(shouldShowItem)}
+            {#if visibleCatItems.length > 0}
+              <ExpandableSection count={catCompleted} name={cat.name} total={catItemIds.length}>
+                {#each cat.items as [itemId, item] (itemId)}
+                  {#if shouldShowItem(itemId as ItemId)}
+                    <ItemRow
+                      completed={userState.state.completed.almanac.has(itemId as ItemId)}
+                      dimmed={isItemDimmed(itemId as ItemId)}
+                      itemId={itemId as ItemId}
+                      name={item.name}
+                      onToggle={() => {
+                        userState.toggleAlmanacItem(itemId as ItemId);
+                      }}
+                    />
+                  {/if}
+                {/each}
+              </ExpandableSection>
+            {/if}
+          {/each}
+        {/if}
       </ExpandableSection>
     {/if}
   {/each}

@@ -1,11 +1,13 @@
 <script lang="ts">
+  import RestrictionBadges from "$lib/components/restriction-badges.svelte";
   import { Checkbox } from "$lib/components/ui/checkbox/index.js";
   import { trackerData } from "$lib/data/index.js";
+  import { getItemRestrictions } from "$lib/engine/availability.js";
   import { searchItems } from "$lib/engine/search.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import type { SearchResult } from "$lib/engine/search.js";
-  import type { AnimalId, VariantId } from "$lib/types/tracker-data.js";
+  import type { AnimalId, ItemId, VariantId } from "$lib/types/tracker-data.js";
 
   let { query }: { query: string } = $props();
 
@@ -26,6 +28,14 @@
     for (const variantId of Object.keys(animal.variants)) {
       variantToAnimal.set(variantId, animalId);
     }
+  }
+
+  function getRestrictions(result: SearchResult) {
+    if (result.category === "almanac") {
+      const sources = trackerData.sources[result.id as ItemId] ?? [];
+      return getItemRestrictions(sources);
+    }
+    return [];
   }
 
   function toggleResult(result: SearchResult): void {
@@ -59,6 +69,7 @@
   </p>
 
   {#each results as result (result.category + result.id)}
+    {@const restrictions = getRestrictions(result)}
     <div
       class="flex items-center gap-2 rounded-md px-2 py-1 {result.completed
         ? 'line-through opacity-40'
@@ -71,7 +82,10 @@
         }}
       />
       <span class="min-w-0 flex-1 text-sm">{result.name}</span>
-      <span class="text-muted-foreground text-[10px]">
+      {#if restrictions.length > 0}
+        <RestrictionBadges compact {restrictions} />
+      {/if}
+      <span class="text-muted-foreground shrink-0 text-[10px]">
         {CATEGORY_LABELS[result.category] ?? result.category}
       </span>
     </div>

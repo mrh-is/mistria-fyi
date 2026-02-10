@@ -15,14 +15,42 @@ const SEASON_LABEL: Record<Season, string> = {
 };
 
 const WEATHER_EMOJI: Record<Weather, string> = {
-  calm: "☀️",
+  calm: "🌤️",
   heavy_inclement: "⛈️",
   inclement: "🌧️",
   special: "✨",
 };
 
+/** Season-specific weather display names from the wiki */
+const WEATHER_LABEL_BY_SEASON: Record<Season, Record<Weather, string>> = {
+  fall: {
+    calm: "Sunny",
+    heavy_inclement: "Thunderstorm",
+    inclement: "Rain",
+    special: "Breezy",
+  },
+  spring: {
+    calm: "Sunny",
+    heavy_inclement: "Thunderstorm",
+    inclement: "Rain",
+    special: "Breezy",
+  },
+  summer: {
+    calm: "Sunny",
+    heavy_inclement: "Thunderstorm",
+    inclement: "Rain",
+    special: "Special",
+  },
+  winter: {
+    calm: "Sunny",
+    heavy_inclement: "Blizzard",
+    inclement: "Snow",
+    special: "Special",
+  },
+};
+
 const WEATHER_LABEL: Record<Weather, string> = {
-  calm: "Calm",
+  calm: "Sunny",
   heavy_inclement: "Storm",
   inclement: "Rain",
   special: "Special",
@@ -44,6 +72,23 @@ const SOURCE_TYPE_LABEL: Record<SourceType, string> = {
   seed: "Seed",
   store: "Store",
 };
+
+/** Shorten repetitive quest name prefixes */
+export function displayQuestName(name: string, questType: string): string {
+  if (questType === "fetch_quests") {
+    // "Request for a {item}" → "{item}" (but keep "Important Request for a Moon Fruit" distinct)
+    if (name.startsWith("Important ")) {
+      return name.replace("Important Request for a ", "").replace("Important Request for an ", "") +
+        " (Important)";
+    }
+    return name.replace("Request for a ", "").replace("Request for an ", "");
+  }
+  if (questType === "crown_quests") {
+    // "Crown Request: {item}" or "Crown Request {item}" → "{item}"
+    return name.replace(/^Crown Request:?\s*/, "");
+  }
+  return name;
+}
 
 export function locationLabel(location: string): string {
   // Handles comma-separated locations like "narrows, eastern_road, town"
@@ -90,7 +135,10 @@ export function weatherEmoji(weather: Weather): string {
   return WEATHER_EMOJI[weather];
 }
 
-export function weatherLabel(weather: Weather): string {
+export function weatherLabel(weather: Weather, season?: Season): string {
+  if (season) {
+    return WEATHER_LABEL_BY_SEASON[season][weather];
+  }
   return WEATHER_LABEL[weather];
 }
 
