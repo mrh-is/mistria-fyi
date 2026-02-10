@@ -71,17 +71,11 @@ function createDefaultCompleted(): CompletedState {
     }
   }
 
-  // Pre-populate default-unlocked animal variants + empty cosmetic sets
+  // Initialize empty sets for each animal type
   const animals: Record<string, Set<VariantId>> = {};
   const animalCosmetics: Record<string, Set<CosmeticId>> = {};
-  for (const [animalId, animal] of Object.entries(trackerData.animals)) {
-    const variants = new SvelteSet<VariantId>();
-    for (const [variantId, variant] of Object.entries(animal.variants)) {
-      if (variant.defaultUnlocked) {
-        variants.add(variantId as VariantId);
-      }
-    }
-    animals[animalId] = variants;
+  for (const animalId of Object.keys(trackerData.animals)) {
+    animals[animalId] = new SvelteSet<VariantId>();
     animalCosmetics[animalId] = new SvelteSet<CosmeticId>();
   }
 

@@ -98,6 +98,22 @@ function main(): void {
     `  Copied:  src/lib/data/${OUTPUT_FILE} (${(json.length / 1024).toFixed(1)} KB minified)`,
   );
 
+  // Step 5: Human-readable outputs (for inspection, not shipped to app)
+  console.log("\nStep 5: Writing human-readable outputs...");
+
+  // Human-readable fiddle (nested, full data)
+  const fiddlePretty = JSON.stringify(localized, null, 2);
+  writeFileSync(resolve(OUTPUT_DIR, "fiddle-readable.json"), fiddlePretty);
+  console.log(
+    `  Written: pipeline/output/fiddle-readable.json (${(fiddlePretty.length / 1024 / 1024).toFixed(1)} MB)`,
+  );
+
+  // Human-readable tracker data (same as pretty but with sorted keys for diffing)
+  writeFileSync(resolve(OUTPUT_DIR, "tracker-data-readable.json"), prettyJson);
+  console.log(
+    `  Written: pipeline/output/tracker-data-readable.json (${(prettyJson.length / 1024).toFixed(1)} KB)`,
+  );
+
   console.log("\n✅ Pipeline complete!");
 }
 

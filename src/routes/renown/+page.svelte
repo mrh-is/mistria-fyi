@@ -3,6 +3,7 @@
 
   import CategoryHeader from "$lib/components/category-header.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
+  import { Input } from "$lib/components/ui/input/index.js";
   import { Progress } from "$lib/components/ui/progress/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { getRenownProgress } from "$lib/engine/progress.js";
@@ -19,6 +20,28 @@
   let level = $derived(userState.state.completed.renown);
   let levelsPerRank = trackerData.renown.levelsPerRank;
   let ranks = trackerData.renown.ranks;
+  let maxLevel = levelsPerRank * ranks.length;
+
+  let editing = $state(false);
+  let editValue = $state("");
+
+  function startEditing() {
+    editValue = String(level);
+    editing = true;
+  }
+
+  function commitEdit() {
+    const parsed = parseInt(editValue, 10);
+    if (!isNaN(parsed)) {
+      userState.setRenown(parsed);
+    }
+    editing = false;
+  }
+
+  function handleEditKeydown(e: KeyboardEvent) {
+    if (e.key === "Enter") commitEdit();
+    if (e.key === "Escape") editing = false;
+  }
 
   function getRenownDisplay(totalLevel: number): {
     levelInRank: number;
@@ -62,9 +85,29 @@
       >
         −
       </Button>
-      <span class="text-muted-foreground text-sm">
-        {level}/{ranks.length * levelsPerRank} total
-      </span>
+      {#if editing}
+        <Input
+          class="h-8 w-20 text-center text-sm"
+          type="number"
+          max={maxLevel}
+          min={0}
+          value={editValue}
+          onblur={commitEdit}
+          oninput={(e) => {
+            editValue = (e.target as HTMLInputElement).value;
+          }}
+          onkeydown={handleEditKeydown}
+        />
+      {:else}
+        <button
+          class="text-muted-foreground text-sm hover:underline"
+          title="Click to edit level directly"
+          type="button"
+          onclick={startEditing}
+        >
+          {level}/{maxLevel} total
+        </button>
+      {/if}
       <Button
         size="sm"
         variant="outline"

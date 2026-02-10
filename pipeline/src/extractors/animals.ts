@@ -14,6 +14,7 @@ export function extractAnimals(fiddle: FiddleData): TrackerData["animals"] {
   if (!animals) return {} as TrackerData["animals"];
 
   const result = {} as Record<AnimalId, TrackerData["animals"][AnimalId]>;
+  let skippedDefaults = 0;
 
   for (const [id, animal] of Object.entries(animals)) {
     if (id === "default") continue;
@@ -22,16 +23,25 @@ export function extractAnimals(fiddle: FiddleData): TrackerData["animals"] {
     const rawVariants = animal.variants as Record<string, Record<string, unknown>> | undefined;
     const rawCosmetics = animal.cosmetics as Record<string, Record<string, unknown>> | undefined;
 
-    // Extract variants
+    // Extract variants (skip "default" variants — every animal has one, not collectable)
     const variants = {} as Record<
       VariantId,
       TrackerData["animals"][AnimalId]["variants"][VariantId]
     >;
     if (rawVariants) {
       for (const [vid, v] of Object.entries(rawVariants)) {
+        if (vid === "default") {
+          skippedDefaults++;
+          continue;
+        }
+        const isDefault = (v.default_unlocked as boolean | undefined) ?? false;
+        if (isDefault) {
+          skippedDefaults++;
+          continue;
+        }
         variants[vid as VariantId] = {
           bornIn: (v.born_in as Season | undefined) ?? undefined,
-          defaultUnlocked: (v.default_unlocked as boolean | undefined) ?? false,
+          defaultUnlocked: false,
           name: (v.name as string | undefined) ?? vid,
           tier: v.tier as number | undefined,
         };
@@ -57,7 +67,8 @@ export function extractAnimals(fiddle: FiddleData): TrackerData["animals"] {
 
   console.log(
     `  Animals: ${Object.keys(result).length} types, ` +
-      `${Object.values(result).reduce((n, a) => n + Object.keys(a.variants).length, 0)} variants, ` +
+      `${Object.values(result).reduce((n, a) => n + Object.keys(a.variants).length, 0)} variants ` +
+      `(${skippedDefaults} default variants skipped), ` +
       `${Object.values(result).reduce((n, a) => n + Object.keys(a.cosmetics).length, 0)} cosmetics`,
   );
   return result;
