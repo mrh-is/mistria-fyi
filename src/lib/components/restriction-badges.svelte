@@ -4,12 +4,13 @@
     CloudLightning,
     CloudRain,
     CloudSnow,
-    CloudSun,
+    Flower,
     Leaf,
     Lock,
     Snowflake,
-    Sparkles,
     Sun,
+    SunDim,
+    Wind,
   } from "@lucide/svelte";
 
   import { timeRangeLabel } from "$lib/utils/format.js";
@@ -27,18 +28,18 @@
   } = $props();
 
   const ALL_SEASONS: Season[] = ["spring", "summer", "fall", "winter"];
-  const ALL_WEATHERS: Weather[] = ["calm", "heavy_inclement", "inclement", "special"];
+  const ALL_WEATHERS: Weather[] = ["calm", "inclement", "heavy_inclement", "special"];
 
   const SEASON_ICON: Record<Season, typeof Sun> = {
     fall: Leaf,
-    spring: Sparkles,
+    spring: Flower,
     summer: Sun,
     winter: Snowflake,
   };
 
   function weatherIconForRestriction(weather: Weather, seasons: Season[]): typeof Sun {
-    if (weather === "calm") return CloudSun;
-    if (weather === "special") return Sparkles;
+    if (weather === "calm") return SunDim;
+    if (weather === "special") return Wind;
     if (weather === "heavy_inclement") return CloudLightning;
     // inclement: snow if winter-only, rain otherwise
     if (seasons.length === 1 && seasons[0] === "winter") return CloudSnow;
@@ -83,7 +84,7 @@
     <span
       class="inline-flex gap-0.5 rounded bg-sky-100 px-0.5 py-px text-sky-700 dark:bg-sky-950 dark:text-sky-300"
     >
-      {#each r.weathers ?? [] as w (w)}
+      {#each ALL_WEATHERS.filter((w) => (r.weathers ?? []).includes(w)) as w (w)}
         {@const Icon = weatherIconForRestriction(w, getSeasonContext())}
         <Icon class="size-3" />
       {/each}

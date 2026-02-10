@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Leaf, PawPrint, Snowflake, Sparkles, Sun } from "@lucide/svelte";
+  import { Flower, Leaf, PawPrint, Snowflake, Sun } from "@lucide/svelte";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
@@ -14,7 +14,7 @@
 
   const SEASON_ICON: Record<Season, Component<{ class?: string; strokeWidth?: number }>> = {
     fall: Leaf,
-    spring: Sparkles,
+    spring: Flower,
     summer: Sun,
     winter: Snowflake,
   };

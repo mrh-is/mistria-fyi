@@ -3,11 +3,12 @@
     CloudLightning,
     CloudRain,
     CloudSnow,
-    CloudSun,
+    Flower,
     Leaf,
     Snowflake,
-    Sparkles,
     Sun,
+    SunDim,
+    Wind,
   } from "@lucide/svelte";
 
   import * as Select from "$lib/components/ui/select/index.js";
@@ -22,7 +23,7 @@
 
   const SEASON_ICON: Record<Season, Component<{ class?: string; strokeWidth?: number }>> = {
     fall: Leaf,
-    spring: Sparkles,
+    spring: Flower,
     summer: Sun,
     winter: Snowflake,
   };
@@ -33,8 +34,8 @@
   let availableWeathers = $derived(weathersForSeason(currentSeason));
 
   function weatherIcon(weather: Weather, season: Season): Component<{ class?: string }> {
-    if (weather === "calm") return CloudSun;
-    if (weather === "special") return Sparkles;
+    if (weather === "calm") return SunDim;
+    if (weather === "special") return Wind;
     if (weather === "heavy_inclement") return CloudLightning;
     // inclement: snow in winter, rain otherwise
     if (season === "winter") return CloudSnow;
@@ -60,7 +61,7 @@
     <Select.Trigger class="flex-1">
       <span class="flex items-center gap-1.5">
         <CurrentSeasonIcon
-          class="size-4"
+          class="size-4 {currentSeason === 'fall' ? '-scale-y-100 rotate-90' : ''}"
           strokeWidth={currentSeason === "summer" ? 2.5 : undefined}
         />
         {seasonLabel(currentSeason)}
@@ -71,7 +72,10 @@
         {@const Icon = SEASON_ICON[s]}
         <Select.Item value={s}>
           <span class="flex items-center gap-1.5">
-            <Icon class="size-4" strokeWidth={s === "summer" ? 2.5 : undefined} />
+            <Icon
+              class="size-4 {s === 'fall' ? '-scale-y-100 rotate-90' : ''}"
+              strokeWidth={s === "summer" ? 2.5 : undefined}
+            />
             {seasonLabel(s)}
           </span>
         </Select.Item>
