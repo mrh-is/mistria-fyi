@@ -78,11 +78,13 @@
       <ExpandableSection count={groupCompleted} name={group} total={groupItems.length}>
         {#if categories.length === 1 && categories[0].name === group}
           <!-- Single category in group (flattened "Other") — render items directly -->
+          {@const isFishCategory = categories[0].key.startsWith("fish/") || categories[0].key.startsWith("mines/")}
           {#each categories[0].items as [itemId, item] (itemId)}
             {#if shouldShowItem(itemId as ItemId)}
               <ItemRow
                 completed={userState.state.completed.almanac.has(itemId as ItemId)}
                 dimmed={isItemDimmed(itemId as ItemId)}
+                hideFishSize={!isFishCategory}
                 itemId={itemId as ItemId}
                 name={item.name}
                 onToggle={() => {
@@ -98,6 +100,7 @@
               userState.state.completed.almanac.has(id),
             ).length}
             {@const visibleCatItems = catItemIds.filter(shouldShowItem)}
+            {@const isFishCategory = cat.key.startsWith("fish/") || cat.key.startsWith("mines/")}
             {#if visibleCatItems.length > 0}
               <ExpandableSection count={catCompleted} name={cat.name} total={catItemIds.length}>
                 {#each cat.items as [itemId, item] (itemId)}
@@ -105,6 +108,7 @@
                     <ItemRow
                       completed={userState.state.completed.almanac.has(itemId as ItemId)}
                       dimmed={isItemDimmed(itemId as ItemId)}
+                      hideFishSize={!isFishCategory}
                       itemId={itemId as ItemId}
                       name={item.name}
                       onToggle={() => {

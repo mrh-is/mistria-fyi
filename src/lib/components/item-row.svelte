@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ChevronRight } from "@lucide/svelte";
   import { slide } from "svelte/transition";
 
   import ItemDetail from "$lib/components/item-detail.svelte";
@@ -12,12 +13,14 @@
   let {
     completed,
     dimmed = false,
+    hideFishSize = false,
     itemId,
     name,
     onToggle,
   }: {
     completed: boolean;
     dimmed?: boolean;
+    hideFishSize?: boolean;
     itemId: ItemId;
     name: string;
     onToggle: () => void;
@@ -36,17 +39,22 @@
       : ''}"
   >
     <Checkbox checked={completed} onCheckedChange={onToggle} />
-    <button
-      class="min-w-0 flex-1 text-left text-sm"
-      type="button"
-      onclick={() => {
-        expanded = !expanded;
-      }}
-    >
-      {name}
-    </button>
+    {#if sources.length > 0}
+      <button
+        class="group inline-flex min-w-0 flex-1 items-center gap-0.5 text-left text-sm"
+        type="button"
+        onclick={() => {
+          expanded = !expanded;
+        }}
+      >
+        <span class="group-hover:underline">{name}</span>
+        <ChevronRight class="text-muted-foreground size-3 shrink-0 opacity-0 transition-all group-hover:opacity-60 {expanded ? 'rotate-90' : ''}" />
+      </button>
+    {:else}
+      <span class="min-w-0 flex-1 text-left text-sm">{name}</span>
+    {/if}
     {#if restrictions.length > 0}
-      <RestrictionBadges {restrictions} />
+      <RestrictionBadges {hideFishSize} {restrictions} />
     {/if}
   </div>
   {#if expanded && sources.length > 0}

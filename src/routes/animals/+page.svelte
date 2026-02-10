@@ -9,7 +9,9 @@
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { seasonEmoji } from "$lib/utils/format.js";
 
-  import type { AnimalId, CosmeticId, VariantId } from "$lib/types/tracker-data.js";
+  import type { AnimalId, CosmeticId, Season, VariantId } from "$lib/types/tracker-data.js";
+
+  const SEASON_ORDER: Record<string, number> = { spring: 0, summer: 1, fall: 2, winter: 3 };
 
   let progress = $derived(
     getAnimalsProgress({
@@ -24,32 +26,69 @@
       .map(([id, animal]) => ({ ...animal, id: id as AnimalId }))
       .sort((a, b) => a.name.localeCompare(b.name)),
   );
+
+  function isVariantVisible(animalId: AnimalId, variantId: VariantId): boolean {
+    const completed =
+      (userState.state.completed.animals[animalId] as Set<VariantId> | undefined)?.has(variantId) ??
+      false;
+    return completed ? userState.state.showCompleted : true;
+  }
+
+  function isCosmeticVisible(animalId: AnimalId, cosmeticId: CosmeticId): boolean {
+    const completed =
+      (
+        userState.state.completed.animalCosmetics[animalId] as Set<CosmeticId> | undefined
+      )?.has(cosmeticId) ?? false;
+    return completed ? userState.state.showCompleted : true;
+  }
+
+  /** Sort variants: tier ascending (1 first, 6 last), then season order within same tier */
+  function sortedVariants(
+    variants: Record<string, { bornIn?: Season; defaultUnlocked: boolean; name: string; tier?: number }>,
+  ): Array<[string, { bornIn?: Season; defaultUnlocked: boolean; name: string; tier?: number }]> {
+    return Object.entries(variants).sort(([, a], [, b]) => {
+      const tierA = a.tier ?? 99;
+      const tierB = b.tier ?? 99;
+      if (tierA !== tierB) return tierA - tierB;
+      const seasonA = a.bornIn ? (SEASON_ORDER[a.bornIn] ?? 99) : 99;
+      const seasonB = b.bornIn ? (SEASON_ORDER[b.bornIn] ?? 99) : 99;
+      return seasonA - seasonB;
+    });
+  }
 </script>
 
 <div class="flex flex-col gap-4 p-4">
   <CategoryHeader icon={PawPrint} name="Animals" {progress} />
 
   {#each animals as animal (animal.id)}
-    {@const variantCount = Object.keys(animal.variants).length}
-    {@const cosmeticCount = Object.keys(animal.cosmetics).length}
+    {@const variantEntries = sortedVariants(animal.variants)}
+    {@const cosmeticEntries = Object.entries(animal.cosmetics)}
+    {@const variantCount = variantEntries.length}
+    {@const cosmeticCount = cosmeticEntries.length}
     {@const completedVariants =
       (userState.state.completed.animals[animal.id] as Set<VariantId> | undefined)?.size ?? 0}
     {@const completedCosmetics =
       (userState.state.completed.animalCosmetics[animal.id] as Set<CosmeticId> | undefined)?.size ??
       0}
-    <ExpandableSection
-      count={completedVariants + completedCosmetics}
-      name={animal.name}
-      total={variantCount + cosmeticCount}
-    >
-      {#if variantCount > 0}
-        <ExpandableSection count={completedVariants} name="Color Variants" total={variantCount}>
-          {#each Object.entries(animal.variants) as [variantId, variant] (variantId)}
-            {@const completed =
-              (userState.state.completed.animals[animal.id] as Set<VariantId> | undefined)?.has(
-                variantId as VariantId,
-              ) ?? false}
-            {#if completed ? userState.state.showCompleted : true}
+    {@const visibleVariants = variantEntries.filter(([vid]) =>
+      isVariantVisible(animal.id, vid as VariantId),
+    )}
+    {@const visibleCosmetics = cosmeticEntries.filter(([cid]) =>
+      isCosmeticVisible(animal.id, cid as CosmeticId),
+    )}
+    {#if visibleVariants.length > 0 || visibleCosmetics.length > 0}
+      <ExpandableSection
+        count={completedVariants + completedCosmetics}
+        name={animal.name}
+        total={variantCount + cosmeticCount}
+      >
+        {#if visibleVariants.length > 0}
+          <ExpandableSection count={completedVariants} name="Color Variants" total={variantCount}>
+            {#each visibleVariants as [variantId, variant] (variantId)}
+              {@const completed =
+                (userState.state.completed.animals[animal.id] as Set<VariantId> | undefined)?.has(
+                  variantId as VariantId,
+                ) ?? false}
               <div
                 class="flex items-center gap-2 rounded-md px-2 py-1 {completed
                   ? 'line-through opacity-40'
@@ -68,19 +107,19 @@
                   </span>
                 {/if}
               </div>
-            {/if}
-          {/each}
-        </ExpandableSection>
-      {/if}
+            {/each}
+          </ExpandableSection>
+        {/if}
 
-      {#if cosmeticCount > 0}
-        <ExpandableSection count={completedCosmetics} name="Cosmetics" total={cosmeticCount}>
-          {#each Object.entries(animal.cosmetics) as [cosmeticId, cosmetic] (cosmeticId)}
-            {@const completed =
-              (
-                userState.state.completed.animalCosmetics[animal.id] as Set<CosmeticId> | undefined
-              )?.has(cosmeticId as CosmeticId) ?? false}
-            {#if completed ? userState.state.showCompleted : true}
+        {#if visibleCosmetics.length > 0}
+          <ExpandableSection count={completedCosmetics} name="Cosmetics" total={cosmeticCount}>
+            {#each visibleCosmetics as [cosmeticId, cosmetic] (cosmeticId)}
+              {@const completed =
+                (
+                  userState.state.completed.animalCosmetics[animal.id] as
+                    | Set<CosmeticId>
+                    | undefined
+                )?.has(cosmeticId as CosmeticId) ?? false}
               <div
                 class="flex items-center gap-2 rounded-md px-2 py-1 {completed
                   ? 'line-through opacity-40'
@@ -94,10 +133,10 @@
                 />
                 <span class="text-sm">{cosmetic.name}</span>
               </div>
-            {/if}
-          {/each}
-        </ExpandableSection>
-      {/if}
-    </ExpandableSection>
+            {/each}
+          </ExpandableSection>
+        {/if}
+      </ExpandableSection>
+    {/if}
   {/each}
 </div>

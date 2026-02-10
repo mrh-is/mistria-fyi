@@ -32,6 +32,9 @@ export function extractAlmanac(fiddle: FiddleData): {
     | undefined;
   if (!itemsRoot) return { almanac: {} as TrackerData["almanac"], items: {} };
 
+  // Build set of treasure box IDs from the fish data (to exclude from almanac)
+  const chestIds = buildChestIdSet(fiddle);
+
   const almanac = {} as Record<string, Record<ItemId, { name: string }>>;
   const items: ItemsRegistry = {};
 
@@ -49,6 +52,7 @@ export function extractAlmanac(fiddle: FiddleData): {
       for (const [itemId, item] of Object.entries(categoryItems)) {
         if (itemId === "default") continue;
         if (typeof item !== "object" || item === null) continue;
+        if (chestIds.has(itemId)) continue; // Skip treasure boxes
 
         const itemData = item;
         const name = (itemData.name as string | undefined) ?? snakeToTitle(itemId);
@@ -56,6 +60,9 @@ export function extractAlmanac(fiddle: FiddleData): {
         categoryAlmanac[itemId as ItemId] = { name };
         items[itemId] = { category: categoryKey, name };
       }
+
+      // Deduplicate items with identical names within a category
+      deduplicateNames(categoryAlmanac);
 
       if (Object.keys(categoryAlmanac).length > 0) {
         almanac[categoryKey] = categoryAlmanac;
@@ -115,6 +122,65 @@ function splitCropsAndForage(
     `  Crops/Forage split: ${Object.keys(crops).length} crops, ` +
       `${Object.keys(forageables).length} forageables, ${Object.keys(seeds).length} seeds`,
   );
+}
+
+/**
+ * Build a set of item IDs that are treasure chests (from the fish data).
+ * These should be excluded from the almanac — they're loot containers, not collectibles.
+ */
+function buildChestIdSet(fiddle: FiddleData): Set<string> {
+  const fish = fiddle.fish as Record<string, Record<string, unknown>> | undefined;
+  if (!fish) return new Set();
+
+  const ids = new Set<string>();
+  for (const [, data] of Object.entries(fish)) {
+    if (data.is_chest) {
+      const itemId = (data.item as string | undefined) ?? "";
+      if (itemId) ids.add(itemId);
+    }
+  }
+  return ids;
+}
+
+/**
+ * When multiple items in a category share the same display name (e.g., 15 "Basic Wood Chest"
+ * color variants), append the variant suffix to disambiguate.
+ */
+function deduplicateNames(
+  category: Record<ItemId, { name: string }>,
+): void {
+  // Group IDs by name
+  const byName = new Map<string, ItemId[]>();
+  for (const [id, entry] of Object.entries(category)) {
+    const ids = byName.get(entry.name) ?? [];
+    ids.push(id as ItemId);
+    byName.set(entry.name, ids);
+  }
+
+  // Only fix names that appear more than once
+  for (const [name, ids] of byName) {
+    if (ids.length <= 1) continue;
+
+    // Find the common prefix among all IDs to strip it
+    const prefix = longestCommonPrefix(ids);
+    for (const id of ids) {
+      const suffix = id.slice(prefix.length).replace(/^_/, "");
+      if (suffix) {
+        category[id] = { name: `${name} (${snakeToTitle(suffix)})` };
+      }
+    }
+  }
+}
+
+function longestCommonPrefix(strings: string[]): string {
+  if (strings.length === 0) return "";
+  let prefix = strings[0];
+  for (let i = 1; i < strings.length; i++) {
+    while (!strings[i].startsWith(prefix)) {
+      prefix = prefix.slice(0, -1);
+    }
+  }
+  return prefix;
 }
 
 function snakeToTitle(s: string): string {

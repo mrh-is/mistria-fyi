@@ -124,7 +124,7 @@
     </Card.Header>
     <Card.Content>
       <ToggleGroup.Root
-        class="w-full"
+        class="border-input w-full rounded-md border"
         type="single"
         value={theme.preference}
         onValueChange={(v) => {

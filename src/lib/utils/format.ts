@@ -76,12 +76,12 @@ const SOURCE_TYPE_LABEL: Record<SourceType, string> = {
 /** Shorten repetitive quest name prefixes */
 export function displayQuestName(name: string, questType: string): string {
   if (questType === "fetch_quests") {
-    // "Request for a {item}" → "{item}" (but keep "Important Request for a Moon Fruit" distinct)
+    // "Request for a {item}" / "Request for {item}" → "{item}"
+    // "Important Request for a Moon Fruit" → "Moon Fruit (Important)"
     if (name.startsWith("Important ")) {
-      return name.replace("Important Request for a ", "").replace("Important Request for an ", "") +
-        " (Important)";
+      return name.replace(/^Important Request for (an? )?/, "") + " (Important)";
     }
-    return name.replace("Request for a ", "").replace("Request for an ", "");
+    return name.replace(/^Request for (an? )?/, "");
   }
   if (questType === "crown_quests") {
     // "Crown Request: {item}" or "Crown Request {item}" → "{item}"
