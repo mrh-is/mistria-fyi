@@ -3,14 +3,15 @@
     Clock,
     CloudLightning,
     CloudRain,
+    CloudSnow,
     CloudSun,
-    Flower2,
     Leaf,
     Lock,
     Snowflake,
     Sparkles,
     Sun,
   } from "@lucide/svelte";
+
   import { timeRangeLabel } from "$lib/utils/format.js";
 
   import type { Restriction, Season, Weather } from "$lib/types/tracker-data.js";
@@ -29,18 +30,20 @@
   const ALL_WEATHERS: Weather[] = ["calm", "heavy_inclement", "inclement", "special"];
 
   const SEASON_ICON: Record<Season, typeof Sun> = {
-    spring: Flower2,
-    summer: Sun,
     fall: Leaf,
+    spring: Sparkles,
+    summer: Sun,
     winter: Snowflake,
   };
 
-  const WEATHER_ICON: Record<Weather, typeof Sun> = {
-    calm: CloudSun,
-    heavy_inclement: CloudLightning,
-    inclement: CloudRain,
-    special: Sparkles,
-  };
+  function weatherIconForRestriction(weather: Weather, seasons: Season[]): typeof Sun {
+    if (weather === "calm") return CloudSun;
+    if (weather === "special") return Sparkles;
+    if (weather === "heavy_inclement") return CloudLightning;
+    // inclement: snow if winter-only, rain otherwise
+    if (seasons.length === 1 && seasons[0] === "winter") return CloudSnow;
+    return CloudRain;
+  }
 
   function isAllSeasons(seasons: Season[]): boolean {
     return ALL_SEASONS.every((s) => seasons.includes(s));
@@ -48,6 +51,14 @@
 
   function isAllWeathers(weathers: Weather[]): boolean {
     return ALL_WEATHERS.every((w) => weathers.includes(w));
+  }
+
+  /** Get the season context from the restrictions (for weather icon selection) */
+  function getSeasonContext(): Season[] {
+    for (const r of restrictions) {
+      if (r.type === "season" && r.seasons) return r.seasons;
+    }
+    return ALL_SEASONS;
   }
 </script>
 
@@ -59,7 +70,10 @@
     >
       {#each r.seasons ?? [] as s (s)}
         {@const Icon = SEASON_ICON[s]}
-        <Icon class="size-3" />
+        <Icon
+          class="size-3 {s === 'fall' ? '-scale-y-100 rotate-90' : ''}"
+          strokeWidth={s === "summer" ? 2.5 : undefined}
+        />
       {/each}
     </span>
   {/each}
@@ -70,7 +84,7 @@
       class="inline-flex gap-0.5 rounded bg-sky-100 px-0.5 py-px text-sky-700 dark:bg-sky-950 dark:text-sky-300"
     >
       {#each r.weathers ?? [] as w (w)}
-        {@const Icon = WEATHER_ICON[w]}
+        {@const Icon = weatherIconForRestriction(w, getSeasonContext())}
         <Icon class="size-3" />
       {/each}
     </span>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Settings } from "@lucide/svelte";
+  import { Settings, Wheat } from "@lucide/svelte";
 
   import AvailabilityToggle from "$lib/components/availability-toggle.svelte";
   import CategoryGrid from "$lib/components/category-grid.svelte";
@@ -12,7 +12,10 @@
 
 <div class="flex flex-col gap-3 p-4">
   <div class="flex items-center justify-between">
-    <h1 class="text-lg font-semibold">Harvest Helper 🌾</h1>
+    <h1 class="flex items-center gap-1.5 text-lg font-semibold">
+      <Wheat class="size-5 text-amber-600 dark:text-amber-400" />
+      Harvest Helper
+    </h1>
     <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- known route -->
     <a class="text-muted-foreground hover:text-foreground p-1" href="/settings">
       <Settings class="size-5" />

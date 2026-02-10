@@ -28,12 +28,9 @@ export interface CompletedState {
   mines: { floor: number; spells: Set<SpellId> };
   museum: Set<ItemId>;
   npcLevels: Record<string, number>;
-  npcs: Set<NpcId>; // Legacy — kept for backward compat reads
-  quests: Set<QuestId>; // Legacy — kept for backward compat reads
   questStates: Record<string, QuestState>;
   renown: number;
   skillLevels: Record<string, number>;
-  skills: Set<SkillId>; // Legacy — kept for backward compat reads
 }
 
 export type QuestState = "completed" | "none" | "obtained";
@@ -79,11 +76,17 @@ function createDefaultCompleted(): CompletedState {
     }
   }
 
-  // Initialize empty sets for each animal type
+  // Initialize sets for each animal type, pre-populating default-unlocked variants
   const animals: Record<string, Set<VariantId>> = {};
   const animalCosmetics: Record<string, Set<CosmeticId>> = {};
-  for (const animalId of Object.keys(trackerData.animals)) {
-    animals[animalId] = new SvelteSet<VariantId>();
+  for (const [animalId, animal] of Object.entries(trackerData.animals)) {
+    const variantSet = new SvelteSet<VariantId>();
+    for (const [vid, variant] of Object.entries(animal.variants)) {
+      if (variant.defaultUnlocked) {
+        variantSet.add(vid as VariantId);
+      }
+    }
+    animals[animalId] = variantSet;
     animalCosmetics[animalId] = new SvelteSet<CosmeticId>();
   }
 
@@ -95,12 +98,9 @@ function createDefaultCompleted(): CompletedState {
     mines: { floor: 0, spells: new SvelteSet<SpellId>() },
     museum: new SvelteSet<ItemId>(),
     npcLevels: {} as Record<string, number>,
-    npcs: new SvelteSet<NpcId>(),
-    quests: new SvelteSet<QuestId>(),
     questStates: {} as Record<string, QuestState>,
     renown: 0,
     skillLevels: {} as Record<string, number>,
-    skills: new SvelteSet<SkillId>(),
   };
 }
 
@@ -333,12 +333,9 @@ function deserialize(json: string): null | UserState {
         },
         museum: brandedSet<ItemId>(s.completed.museum),
         npcLevels,
-        npcs: brandedSet<NpcId>(s.completed.npcs ?? []),
-        quests: brandedSet<QuestId>(s.completed.quests ?? []),
         questStates,
         renown: s.completed.renown,
         skillLevels,
-        skills: brandedSet<SkillId>(s.completed.skills ?? []),
       },
       showCompleted: false,
       worldState: s.worldState,
@@ -350,7 +347,10 @@ function deserialize(json: string): null | UserState {
 
 // ─── Serialization helpers ───────────────────────────────────────────
 
-function filterRecord<V>(record: Record<string, V>, predicate: (v: V) => boolean): Record<string, V> {
+function filterRecord<V>(
+  record: Record<string, V>,
+  predicate: (v: V) => boolean,
+): Record<string, V> {
   return Object.fromEntries(Object.entries(record).filter(([, v]) => predicate(v)));
 }
 

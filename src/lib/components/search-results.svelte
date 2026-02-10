@@ -7,7 +7,7 @@
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import type { SearchResult } from "$lib/engine/search.js";
-  import type { AnimalId, ItemId, VariantId } from "$lib/types/tracker-data.js";
+  import type { AnimalId, ItemId, NpcId, QuestId, VariantId } from "$lib/types/tracker-data.js";
 
   let { query }: { query: string } = $props();
 
@@ -53,11 +53,16 @@
       case "cosmetics":
         userState.toggleCosmetic(result.id as never);
         break;
-      case "npcs":
-        userState.toggleNpc(result.id as never);
+      case "npcs": {
+        const npcId = result.id as NpcId;
+        const npc = trackerData.npcs[npcId];
+        const max = npc?.dateable ? 12 : 10;
+        const current = userState.state.completed.npcLevels[result.id] ?? 0;
+        userState.setNpcLevel(npcId, current >= max ? 0 : max);
         break;
+      }
       case "quests":
-        userState.toggleQuest(result.id as never);
+        userState.cycleQuestState(result.id as QuestId);
         break;
     }
   }

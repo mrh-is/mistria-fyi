@@ -7,19 +7,21 @@
   let {
     children,
     count,
+    forceOpen = false,
     name,
     open = false,
     total,
   }: {
     children: Snippet;
     count?: number;
+    forceOpen?: boolean;
     name: string;
     open?: boolean;
     total?: number;
   } = $props();
 
-  // svelte-ignore state_referenced_locally -- `open` used as initial value only
   let expanded = $state(open);
+  let isOpen = $derived(expanded || forceOpen);
 </script>
 
 <div>
@@ -29,9 +31,7 @@
     type="button"
   >
     <ChevronRight
-      class="text-muted-foreground size-4 shrink-0 transition-transform {expanded
-        ? 'rotate-90'
-        : ''}"
+      class="text-muted-foreground size-4 shrink-0 transition-transform {isOpen ? 'rotate-90' : ''}"
     />
     <span class="flex-1 font-medium">{name}</span>
     {#if total !== undefined && count !== undefined}
@@ -39,7 +39,7 @@
     {/if}
   </button>
 
-  {#if expanded}
+  {#if isOpen}
     <div class="pl-6" transition:slide={{ duration: 150 }}>
       {@render children()}
     </div>

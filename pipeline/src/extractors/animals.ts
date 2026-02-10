@@ -23,7 +23,9 @@ export function extractAnimals(fiddle: FiddleData): TrackerData["animals"] {
     const rawVariants = animal.variants as Record<string, Record<string, unknown>> | undefined;
     const rawCosmetics = animal.cosmetics as Record<string, Record<string, unknown>> | undefined;
 
-    // Extract variants (skip "default" variants — every animal has one, not collectable)
+    // Extract variants
+    // Skip key "default" (template, not collectable) and acquirable: false (e.g. Mistmare)
+    // Include default_unlocked variants as tier 1 collectables
     const variants = {} as Record<
       VariantId,
       TrackerData["animals"][AnimalId]["variants"][VariantId]
@@ -34,16 +36,16 @@ export function extractAnimals(fiddle: FiddleData): TrackerData["animals"] {
           skippedDefaults++;
           continue;
         }
-        const isDefault = (v.default_unlocked as boolean | undefined) ?? false;
-        if (isDefault) {
+        if ((v.acquirable as boolean | undefined) === false) {
           skippedDefaults++;
           continue;
         }
+        const isDefaultUnlocked = (v.default_unlocked as boolean | undefined) ?? false;
         variants[vid as VariantId] = {
           bornIn: (v.born_in as Season | undefined) ?? undefined,
-          defaultUnlocked: false,
+          defaultUnlocked: isDefaultUnlocked,
           name: (v.name as string | undefined) ?? vid,
-          tier: v.tier as number | undefined,
+          tier: isDefaultUnlocked ? 1 : (v.tier as number | undefined),
         };
       }
     }

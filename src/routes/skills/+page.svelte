@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Minus, Plus, Swords } from "@lucide/svelte";
+  import { BookOpenText, Minus, Plus } from "@lucide/svelte";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
@@ -62,7 +62,7 @@
 </script>
 
 <div class="flex flex-col gap-4 p-4">
-  <CategoryHeader icon={Swords} name="Skills" {progress} />
+  <CategoryHeader icon={BookOpenText} name="Skills" {progress} />
 
   <div class="flex flex-col gap-3">
     {#each skills as skill (skill.id)}
@@ -84,7 +84,9 @@
               size="icon"
               variant="ghost"
               disabled={level <= 0}
-              onclick={() => { userState.setSkillLevel(skill.id, level - 1); }}
+              onclick={() => {
+                userState.setSkillLevel(skill.id, level - 1);
+              }}
             >
               <Minus class="size-3" />
             </Button>
@@ -109,17 +111,23 @@
                 max={60}
                 min={0}
                 value={editValue}
-                onblur={() => { commitEdit(skill.id); }}
+                onblur={() => {
+                  commitEdit(skill.id);
+                }}
                 oninput={(e: Event) => {
                   editValue = (e.target as HTMLInputElement).value;
                 }}
-                onkeydown={(e: KeyboardEvent) => { handleEditKeydown(e, skill.id); }}
+                onkeydown={(e: KeyboardEvent) => {
+                  handleEditKeydown(e, skill.id);
+                }}
               />
             {:else}
               <button
                 class="text-muted-foreground w-12 text-center text-xs hover:underline"
                 type="button"
-                onclick={() => { startEditing(skill.id as string, level); }}
+                onclick={() => {
+                  startEditing(skill.id as string, level);
+                }}
               >
                 {level}/60
               </button>
@@ -130,7 +138,9 @@
               size="icon"
               variant="ghost"
               disabled={level >= 60}
-              onclick={() => { userState.setSkillLevel(skill.id, level + 1); }}
+              onclick={() => {
+                userState.setSkillLevel(skill.id, level + 1);
+              }}
             >
               <Plus class="size-3" />
             </Button>

@@ -9,7 +9,26 @@
   import { displayQuestName } from "$lib/utils/format.js";
 
   import type { QuestState } from "$lib/stores/user-state.svelte.js";
-  import type { QuestId } from "$lib/types/tracker-data.js";
+  import type { NpcId, QuestId } from "$lib/types/tracker-data.js";
+
+  /** Look up NPC display name from tracker data, falling back to title-cased ID */
+  function npcName(npcId: string): string {
+    const npc = trackerData.npcs[npcId as NpcId];
+    return npc?.name ?? npcId.charAt(0).toUpperCase() + npcId.slice(1);
+  }
+
+  /** Build a set of display names that appear more than once in a quest group */
+  function findDuplicateNames(entries: Array<{ displayName: string }>): Set<string> {
+    const counts: Record<string, number> = {};
+    for (const e of entries) {
+      counts[e.displayName] = (counts[e.displayName] ?? 0) + 1;
+    }
+    return new Set(
+      Object.entries(counts)
+        .filter(([, c]) => c > 1)
+        .map(([n]) => n),
+    );
+  }
 
   let progress = $derived(
     getQuestsProgress({
@@ -42,8 +61,10 @@
         displayName: displayQuestName(q.name, questType),
         id: id as QuestId,
         name: q.name,
+        npc: q.npc,
       }))
       .sort((a, b) => a.displayName.localeCompare(b.displayName))}
+    {@const duplicateNames = findDuplicateNames(quests)}
     {@const completedCount = quests.filter((q) => getQuestState(q.id) === "completed").length}
     {@const visibleQuests = quests.filter((q) => {
       const done = getQuestState(q.id) === "completed";
@@ -70,7 +91,9 @@
                 : questState === "obtained"
                   ? "Obtained — click to mark completed"
                   : "Completed — click to reset"}
-              onclick={() => { userState.cycleQuestState(quest.id); }}
+              onclick={() => {
+                userState.cycleQuestState(quest.id);
+              }}
             >
               {#if questState === "none"}
                 <CircleDashed class="text-muted-foreground/50 size-5" />
@@ -82,6 +105,9 @@
             </button>
             <span class="min-w-0 flex-1 text-sm">
               {quest.displayName}
+              {#if quest.npc && duplicateNames.has(quest.displayName)}
+                <span class="text-muted-foreground text-[10px]">({npcName(quest.npc)})</span>
+              {/if}
             </span>
             {#if questState === "obtained"}
               <span class="text-[10px] text-amber-600 dark:text-amber-400">Active</span>

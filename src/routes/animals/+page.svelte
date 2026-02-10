@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { PawPrint } from "@lucide/svelte";
+  import { Leaf, PawPrint, Snowflake, Sparkles, Sun } from "@lucide/svelte";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
@@ -7,11 +7,19 @@
   import { trackerData } from "$lib/data/index.js";
   import { getAnimalsProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
-  import { seasonEmoji } from "$lib/utils/format.js";
+
+  import type { Component } from "svelte";
 
   import type { AnimalId, CosmeticId, Season, VariantId } from "$lib/types/tracker-data.js";
 
-  const SEASON_ORDER: Record<string, number> = { spring: 0, summer: 1, fall: 2, winter: 3 };
+  const SEASON_ICON: Record<Season, Component<{ class?: string; strokeWidth?: number }>> = {
+    fall: Leaf,
+    spring: Sparkles,
+    summer: Sun,
+    winter: Snowflake,
+  };
+
+  const SEASON_ORDER: Record<string, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
 
   let progress = $derived(
     getAnimalsProgress({
@@ -103,10 +111,19 @@
                     userState.toggleAnimalVariant(animal.id, variantId as VariantId);
                   }}
                 />
-                <span class="min-w-0 flex-1 text-sm">{variant.name}</span>
+                <span class="min-w-0 flex-1 text-sm">
+                  {variant.name}
+                  {#if variant.tier}
+                    <span class="text-muted-foreground text-[10px]">T{variant.tier}</span>
+                  {/if}
+                </span>
                 {#if variant.bornIn}
-                  <span class="text-[10px]" title="Born in {variant.bornIn}">
-                    {seasonEmoji(variant.bornIn)}
+                  {@const SeasonIcon = SEASON_ICON[variant.bornIn]}
+                  <span class="text-muted-foreground" title="Born in {variant.bornIn}">
+                    <SeasonIcon
+                      class="size-3 {variant.bornIn === 'fall' ? '-scale-y-100 rotate-90' : ''}"
+                      strokeWidth={variant.bornIn === "summer" ? 2.5 : undefined}
+                    />
                   </span>
                 {/if}
               </div>

@@ -1,12 +1,5 @@
 import type { Season, SourceType, Weather } from "$lib/types/tracker-data.js";
 
-const SEASON_EMOJI: Record<Season, string> = {
-  fall: "🍂",
-  spring: "🌸",
-  summer: "☀️",
-  winter: "❄️",
-};
-
 const SEASON_LABEL: Record<Season, string> = {
   fall: "Fall",
   spring: "Spring",
@@ -14,15 +7,8 @@ const SEASON_LABEL: Record<Season, string> = {
   winter: "Winter",
 };
 
-const WEATHER_EMOJI: Record<Weather, string> = {
-  calm: "🌤️",
-  heavy_inclement: "⛈️",
-  inclement: "🌧️",
-  special: "✨",
-};
-
 /** Season-specific weather display names from the wiki */
-const WEATHER_LABEL_BY_SEASON: Record<Season, Record<Weather, string>> = {
+const WEATHER_LABEL_BY_SEASON: Record<Season, Partial<Record<Weather, string>>> = {
   fall: {
     calm: "Sunny",
     heavy_inclement: "Thunderstorm",
@@ -39,13 +25,11 @@ const WEATHER_LABEL_BY_SEASON: Record<Season, Record<Weather, string>> = {
     calm: "Sunny",
     heavy_inclement: "Thunderstorm",
     inclement: "Rain",
-    special: "Special",
   },
   winter: {
     calm: "Sunny",
     heavy_inclement: "Blizzard",
     inclement: "Snow",
-    special: "Special",
   },
 };
 
@@ -79,9 +63,9 @@ export function displayQuestName(name: string, questType: string): string {
     // "Request for a {item}" / "Request for {item}" → "{item}"
     // "Important Request for a Moon Fruit" → "Moon Fruit (Important)"
     if (name.startsWith("Important ")) {
-      return name.replace(/^Important Request for (an? )?/, "") + " (Important)";
+      return name.replace(/^Important Request [Ff]or (an? )?/, "") + " (Important)";
     }
-    return name.replace(/^Request for (an? )?/, "");
+    return name.replace(/^Request [Ff]or (an? )?/, "");
   }
   if (questType === "crown_quests") {
     // "Crown Request: {item}" or "Crown Request {item}" → "{item}"
@@ -110,10 +94,6 @@ export function parseAlmanacCategory(key: string): { group: string; name: string
   };
 }
 
-export function seasonEmoji(season: Season): string {
-  return SEASON_EMOJI[season];
-}
-
 export function seasonLabel(season: Season): string {
   return SEASON_LABEL[season];
 }
@@ -124,22 +104,26 @@ export function sourceTypeLabel(type: SourceType): string {
 
 export function timeRangeLabel(hours: [number, number]): string {
   const fmt = (h: number) => {
-    if (h === 0 || h === 24) return "12AM";
-    if (h === 12) return "12PM";
-    return h < 12 ? `${String(h)}AM` : `${String(h - 12)}PM`;
+    if (h === 0 || h === 24) return "12ᴀᴍ";
+    if (h === 12) return "12ᴘᴍ";
+    return h < 12 ? `${String(h)}ᴀᴍ` : `${String(h - 12)}ᴘᴍ`;
   };
   return `${fmt(hours[0])}–${fmt(hours[1])}`;
 }
 
-export function weatherEmoji(weather: Weather): string {
-  return WEATHER_EMOJI[weather];
-}
-
 export function weatherLabel(weather: Weather, season?: Season): string {
   if (season) {
-    return WEATHER_LABEL_BY_SEASON[season][weather];
+    return WEATHER_LABEL_BY_SEASON[season][weather] ?? WEATHER_LABEL[weather];
   }
   return WEATHER_LABEL[weather];
+}
+
+/** Weathers available for a given season (special only in spring/fall) */
+export function weathersForSeason(season: Season): Weather[] {
+  if (season === "summer" || season === "winter") {
+    return ["calm", "inclement", "heavy_inclement"];
+  }
+  return ["calm", "inclement", "heavy_inclement", "special"];
 }
 
 function titleCase(s: string): string {

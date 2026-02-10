@@ -67,6 +67,7 @@
     {#if visibleWingItems.length > 0}
       <ExpandableSection
         count={wingItems.filter((id) => userState.state.completed.museum.has(id)).length}
+        forceOpen={!!nameFilter}
         name={wing.name}
         total={wingItems.length}
       >
@@ -76,6 +77,7 @@
           {#if visibleSetItems.length > 0}
             <ExpandableSection
               count={set.items.filter((id) => userState.state.completed.museum.has(id)).length}
+              forceOpen={!!nameFilter}
               name={set.name}
               total={set.items.length}
             >
@@ -98,7 +100,7 @@
                     class="h-6 text-xs"
                     variant="ghost"
                     size="sm"
-                    onclick={() => userState.uncompleteMuseumSet(set.items)}
+                    onclick={() => { userState.uncompleteMuseumSet(set.items); }}
                   >
                     <Undo2 class="size-3" />
                     Undo set
@@ -108,7 +110,7 @@
                     class="h-6 text-xs"
                     variant="ghost"
                     size="sm"
-                    onclick={() => userState.completeMuseumSet(set.items)}
+                    onclick={() => { userState.completeMuseumSet(set.items); }}
                   >
                     <CheckCheck class="size-3" />
                     Complete set

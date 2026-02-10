@@ -138,7 +138,7 @@ export interface TrackerData {
     }
   >;
 
-  quests: Record<string, Record<QuestId, { name: string }>>;
+  quests: Record<string, Record<QuestId, { name: string; npc?: string }>>;
 
   renown: {
     levelsPerRank: number;

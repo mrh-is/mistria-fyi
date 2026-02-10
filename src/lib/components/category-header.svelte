@@ -2,9 +2,9 @@
   import { ArrowLeft, Search, X } from "@lucide/svelte";
 
   import AvailabilityToggle from "$lib/components/availability-toggle.svelte";
-  import WorldStateSelector from "$lib/components/world-state-selector.svelte";
   import { Checkbox } from "$lib/components/ui/checkbox/index.js";
   import { Input } from "$lib/components/ui/input/index.js";
+  import WorldStateSelector from "$lib/components/world-state-selector.svelte";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import type { Component } from "svelte";
@@ -44,7 +44,7 @@
 </script>
 
 <div class="flex flex-col gap-3">
-  <div class="flex items-center gap-2">
+  <div class="bg-background sticky top-0 z-10 -mx-4 flex items-center gap-2 px-4 py-2">
     <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- known route -->
     <a class="text-muted-foreground hover:text-foreground" href="/">
       <ArrowLeft class="size-5" />

@@ -1,14 +1,22 @@
 <script lang="ts">
-  import { Heart, Minus, Octagon, Plus } from "@lucide/svelte";
+  import { Heart, Leaf, Minus, Octagon, Plus, Snowflake, Sparkles, Sun } from "@lucide/svelte";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { getNpcsProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
-  import { seasonEmoji } from "$lib/utils/format.js";
 
-  import type { NpcId } from "$lib/types/tracker-data.js";
+  import type { Component } from "svelte";
+
+  import type { NpcId, Season } from "$lib/types/tracker-data.js";
+
+  const SEASON_ICON: Record<Season, Component<{ class?: string; strokeWidth?: number }>> = {
+    fall: Leaf,
+    spring: Sparkles,
+    summer: Sun,
+    winter: Snowflake,
+  };
 
   let progress = $derived(
     getNpcsProgress({
@@ -59,12 +67,16 @@
       {@const maxed = isMaxed(npc)}
       {@const max = npc.dateable ? 12 : 10}
       {#if maxed ? userState.state.showCompleted : true}
+        {@const BdayIcon = SEASON_ICON[npc.birthday.season]}
         <div class="flex flex-col gap-1.5 rounded-md px-2 py-1.5 {maxed ? 'opacity-40' : ''}">
           <!-- Name row -->
           <div class="flex items-center gap-2">
             <span class="min-w-0 flex-1 text-sm font-medium">{npc.name}</span>
-            <span class="text-muted-foreground text-[10px]">
-              {seasonEmoji(npc.birthday.season)}
+            <span class="text-muted-foreground flex items-center gap-0.5 text-[10px]">
+              <BdayIcon
+                class="size-3 {npc.birthday.season === 'fall' ? '-scale-y-100 rotate-90' : ''}"
+                strokeWidth={npc.birthday.season === "summer" ? 2.5 : undefined}
+              />
               {npc.birthday.day}
             </span>
           </div>
@@ -76,7 +88,9 @@
               size="icon"
               variant="ghost"
               disabled={level <= 0}
-              onclick={() => { userState.setNpcLevel(npc.id, level - 1); }}
+              onclick={() => {
+                userState.setNpcLevel(npc.id, level - 1);
+              }}
             >
               <Minus class="size-3" />
             </Button>
@@ -102,7 +116,9 @@
               size="icon"
               variant="ghost"
               disabled={level >= max}
-              onclick={() => { userState.setNpcLevel(npc.id, level + 1); }}
+              onclick={() => {
+                userState.setNpcLevel(npc.id, level + 1);
+              }}
             >
               <Plus class="size-3" />
             </Button>

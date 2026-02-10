@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Mountain } from "@lucide/svelte";
+  import { Pickaxe } from "@lucide/svelte";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
@@ -37,7 +37,7 @@
 </script>
 
 <div class="flex flex-col gap-4 p-4">
-  <CategoryHeader icon={Mountain} name="Mines" {progress} />
+  <CategoryHeader icon={Pickaxe} name="Mines" {progress} />
 
   <ExpandableSection
     count={userState.state.completed.mines.floor}

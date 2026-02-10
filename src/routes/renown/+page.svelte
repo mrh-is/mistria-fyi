@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Crown } from "@lucide/svelte";
+  import { Check, ChevronRight, Crown } from "@lucide/svelte";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
@@ -128,8 +128,12 @@
             ? 'text-muted-foreground line-through'
             : ''} {rankCurrent ? 'bg-accent font-medium' : ''}"
         >
-          <span class="w-4 text-center text-xs">
-            {#if rankComplete}✓{:else if rankCurrent}→{/if}
+          <span class="flex w-4 items-center justify-center">
+            {#if rankComplete}
+              <Check class="text-muted-foreground size-3.5" />
+            {:else if rankCurrent}
+              <ChevronRight class="size-3.5" />
+            {/if}
           </span>
           <span>{rank.name}</span>
         </div>

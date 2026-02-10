@@ -11,17 +11,19 @@ export function extractQuests(fiddle: FiddleData): TrackerData["quests"] {
     | undefined;
   if (!quests) return {} as TrackerData["quests"];
 
-  const result = {} as Record<string, Record<QuestId, { name: string }>>;
+  const result = {} as Record<string, Record<QuestId, { name: string; npc?: string }>>;
 
   for (const questType of QUEST_TYPES) {
     const questGroup = quests[questType];
     if (!questGroup) continue;
 
-    const group = {} as Record<QuestId, { name: string }>;
+    const group = {} as Record<QuestId, { name: string; npc?: string }>;
     for (const [id, quest] of Object.entries(questGroup)) {
       if (id === "default") continue;
+      const npc = quest.npc_for_icon as string | undefined;
       group[id as QuestId] = {
         name: (quest.name as string | undefined) ?? id,
+        ...(npc ? { npc } : {}),
       };
     }
 

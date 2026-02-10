@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { BookOpen } from "@lucide/svelte";
+  import { BookCheck } from "@lucide/svelte";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
@@ -76,7 +76,7 @@
 
 <div class="flex flex-col gap-4 p-4">
   <CategoryHeader
-    icon={BookOpen}
+    icon={BookCheck}
     name="Almanac"
     onSearch={(q) => (nameFilter = q)}
     {progress}
@@ -90,7 +90,12 @@
     ).length}
     {@const visibleGroupItems = groupItems.filter(shouldShowItem)}
     {#if visibleGroupItems.length > 0}
-      <ExpandableSection count={groupCompleted} name={group} total={groupItems.length}>
+      <ExpandableSection
+        count={groupCompleted}
+        forceOpen={!!nameFilter}
+        name={group}
+        total={groupItems.length}
+      >
         {#if categories.length === 1 && categories[0].name === group}
           <!-- Single category in group (flattened "Other") — render items directly -->
           {@const isFishCategory =
@@ -118,7 +123,12 @@
             {@const visibleCatItems = catItemIds.filter(shouldShowItem)}
             {@const isFishCategory = cat.key.startsWith("fish/") || cat.key.startsWith("mines/")}
             {#if visibleCatItems.length > 0}
-              <ExpandableSection count={catCompleted} name={cat.name} total={catItemIds.length}>
+              <ExpandableSection
+                count={catCompleted}
+                forceOpen={!!nameFilter}
+                name={cat.name}
+                total={catItemIds.length}
+              >
                 {#each cat.items as [itemId, item] (itemId)}
                   {#if shouldShowItem(itemId as ItemId)}
                     <ItemRow
