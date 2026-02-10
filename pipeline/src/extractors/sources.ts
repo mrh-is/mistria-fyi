@@ -185,16 +185,32 @@ function extractForageables(fiddle: FiddleData, map: SourceMap): void {
   const forageables = fiddle.forageables as Record<string, unknown> | undefined;
   if (!forageables) return;
 
+  // Non-seasonal forageables (e.g., sand_forageables = beach shells)
+  for (const [key, data] of Object.entries(forageables)) {
+    if (["spring", "summer", "fall", "winter"].includes(key)) continue;
+    const items = toArray<unknown>(data);
+    for (const entry of items) {
+      const itemId = typeof entry === "string" ? entry : undefined;
+      if (!itemId) continue;
+      addSource(map, itemId, { type: "forage" });
+    }
+  }
+
   const seasons: Season[] = ["spring", "summer", "fall", "winter"];
   for (const season of seasons) {
     const seasonData = forageables[season] as Record<string, unknown> | undefined;
     if (!seasonData) continue;
 
     for (const rarityGroup of Object.values(seasonData)) {
-      const rarityItems = toArray<Record<string, unknown>>(rarityGroup);
+      const rarityItems = toArray<unknown>(rarityGroup);
       for (const entry of rarityItems) {
-        if (typeof entry !== "object" || entry === null) continue;
-        const itemId = entry.item as string | undefined;
+        // Entries can be plain strings ("heather") or objects ({ item: "heather" })
+        const itemId =
+          typeof entry === "string"
+            ? entry
+            : typeof entry === "object" && entry !== null
+              ? ((entry as Record<string, unknown>).item as string | undefined)
+              : undefined;
         if (!itemId) continue;
 
         addSource(map, itemId, {

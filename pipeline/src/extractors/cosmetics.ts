@@ -35,8 +35,16 @@ export function extractCosmetics(fiddle: FiddleData): TrackerData["cosmetics"] {
     const uiSlot = asset.ui_slot as string | undefined;
     const slot = normalizeSlot(uiSlot ?? id, id);
 
-    // Track unrecognized slots for debugging
-    if (uiSlot && !VALID_SLOTS.has(uiSlot.replace(/_gear$/, "") as CosmeticSlot)) {
+    // Track truly unrecognized slots for debugging (after aliases + gear suffix + known composites)
+    const cleaned = uiSlot?.replace(/_gear$/, "");
+    const KNOWN_COMPOSITE_SLOTS = new Set(["bottom"]); // handled by ID-prefix matching
+    if (
+      uiSlot &&
+      cleaned &&
+      !VALID_SLOTS.has(cleaned as CosmeticSlot) &&
+      !(cleaned in SLOT_ALIASES) &&
+      !KNOWN_COMPOSITE_SLOTS.has(cleaned)
+    ) {
       unknownSlots.set(uiSlot, (unknownSlots.get(uiSlot) ?? 0) + 1);
     }
 
@@ -57,10 +65,21 @@ export function extractCosmetics(fiddle: FiddleData): TrackerData["cosmetics"] {
   return result;
 }
 
+// Game ui_slot values that don't match our display slot names.
+// "bottom" is intentionally omitted — it covers pants, shorts, skirts, and underwear,
+// so we let the ID-prefix matching assign the correct specific slot.
+const SLOT_ALIASES: Record<string, CosmeticSlot> = {
+  facial_hair: "facial",
+  feet: "shoes",
+};
+
 function normalizeSlot(raw: string, id: string): CosmeticSlot {
   // ui_slot values like "head_gear" → "head", "face_gear" → "face", "back_gear" → "back"
   const cleaned = raw.replace(/_gear$/, "");
   if (VALID_SLOTS.has(cleaned as CosmeticSlot)) return cleaned as CosmeticSlot;
+
+  // Check aliases (bottom → pants, feet → shoes, facial_hair → facial)
+  if (cleaned in SLOT_ALIASES) return SLOT_ALIASES[cleaned];
 
   // Infer slot from the cosmetic ID prefix (more reliable than the raw string)
   for (const slot of VALID_SLOTS) {
