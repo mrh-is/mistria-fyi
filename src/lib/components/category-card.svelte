@@ -25,18 +25,16 @@
 
 <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- href is a known route path -->
 <a class="block" {href}>
-  <Card.Root class="hover:bg-accent/50 transition-colors">
-    <Card.Content class="flex items-center gap-2 px-2.5 py-1">
-      <div class="text-muted-foreground shrink-0">
-        <Icon class="size-4" />
+  <Card.Root class="hover:bg-accent/50 gap-0 py-3 transition-colors md:py-4">
+    <Card.Content class="flex flex-col gap-1.5 px-3 md:px-4">
+      <div class="flex items-center gap-2">
+        <Icon class="text-muted-foreground size-4 shrink-0" />
+        <span class="min-w-0 flex-1 text-sm font-medium">{name}</span>
+        <span class="text-muted-foreground shrink-0 text-xs"
+          >{progress.completed}/{displayTotal}</span
+        >
       </div>
-      <div class="min-w-0 flex-1">
-        <div class="flex items-baseline justify-between">
-          <span class="text-sm font-medium">{name}</span>
-          <span class="text-muted-foreground text-[10px]">{progress.completed}/{displayTotal}</span>
-        </div>
-        <Progress class="mt-0.5 h-1" value={pct} />
-      </div>
+      <Progress class="h-1" value={pct} />
     </Card.Content>
   </Card.Root>
 </a>
