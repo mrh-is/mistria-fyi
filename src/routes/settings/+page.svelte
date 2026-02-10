@@ -212,9 +212,7 @@
         </div>
 
         <div class="mt-3 rounded-md bg-sky-50 p-3 dark:bg-sky-950">
-          <p class="text-sm font-medium text-sky-800 dark:text-sky-200">
-            Some data is manual-only
-          </p>
+          <p class="text-sm font-medium text-sky-800 dark:text-sky-200">Some data is manual-only</p>
           <p class="text-muted-foreground mt-1 text-xs">We can't yet import data for:</p>
           <ul class="text-muted-foreground mt-1 list-inside list-disc space-y-0.5 text-xs">
             <li>Museum donations</li>

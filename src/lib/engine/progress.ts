@@ -93,16 +93,23 @@ export function getMuseumProgress(ctx: ProgressContext): CategoryProgress {
 
 export function getNpcsProgress(ctx: ProgressContext): CategoryProgress {
   const total = Object.keys(trackerData.npcs).length;
-  const completed = ctx.completed.npcs.size;
+  let completed = 0;
+  for (const [id, npc] of Object.entries(trackerData.npcs)) {
+    const max = npc.dateable ? 12 : 10;
+    if ((ctx.completed.npcLevels[id] ?? 0) >= max) completed++;
+  }
   return { completed, filtered: total - completed, total };
 }
 
 export function getQuestsProgress(ctx: ProgressContext): CategoryProgress {
   let total = 0;
+  let completed = 0;
   for (const questType of Object.values(trackerData.quests)) {
-    total += Object.keys(questType).length;
+    for (const id of Object.keys(questType)) {
+      total++;
+      if (ctx.completed.questStates[id] === "completed") completed++;
+    }
   }
-  const completed = ctx.completed.quests.size;
   return { completed, filtered: total - completed, total };
 }
 
@@ -116,7 +123,10 @@ export function getRenownProgress(ctx: ProgressContext): CategoryProgress {
 
 export function getSkillsProgress(ctx: ProgressContext): CategoryProgress {
   const total = Object.keys(trackerData.skills).length;
-  const completed = ctx.completed.skills.size;
+  let completed = 0;
+  for (const id of Object.keys(trackerData.skills)) {
+    if ((ctx.completed.skillLevels[id] ?? 0) >= 60) completed++;
+  }
   return { completed, filtered: total - completed, total };
 }
 

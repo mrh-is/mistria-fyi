@@ -27,11 +27,16 @@ export interface CompletedState {
   cosmetics: Set<CosmeticId>;
   mines: { floor: number; spells: Set<SpellId> };
   museum: Set<ItemId>;
-  npcs: Set<NpcId>;
-  quests: Set<QuestId>;
+  npcLevels: Record<string, number>;
+  npcs: Set<NpcId>; // Legacy — kept for backward compat reads
+  quests: Set<QuestId>; // Legacy — kept for backward compat reads
+  questStates: Record<string, QuestState>;
   renown: number;
-  skills: Set<SkillId>;
+  skillLevels: Record<string, number>;
+  skills: Set<SkillId>; // Legacy — kept for backward compat reads
 }
+
+export type QuestState = "completed" | "none" | "obtained";
 
 export interface UserState {
   availabilityMode: AvailabilityMode;
@@ -51,10 +56,13 @@ interface SerializedState {
     cosmetics: string[];
     mines: { floor: number; spells: string[] };
     museum: string[];
-    npcs: string[];
-    quests: string[];
+    npcLevels?: Record<string, number>;
+    npcs?: string[];
+    quests?: string[];
+    questStates?: Record<string, QuestState>;
     renown: number;
-    skills: string[];
+    skillLevels?: Record<string, number>;
+    skills?: string[];
   };
   version: string;
   worldState: { season: Season; weather: Weather };
@@ -86,9 +94,12 @@ function createDefaultCompleted(): CompletedState {
     cosmetics: defaultCosmetics,
     mines: { floor: 0, spells: new SvelteSet<SpellId>() },
     museum: new SvelteSet<ItemId>(),
+    npcLevels: {} as Record<string, number>,
     npcs: new SvelteSet<NpcId>(),
     quests: new SvelteSet<QuestId>(),
+    questStates: {} as Record<string, QuestState>,
     renown: 0,
+    skillLevels: {} as Record<string, number>,
     skills: new SvelteSet<SkillId>(),
   };
 }
@@ -131,6 +142,15 @@ function createUserState() {
   }
 
   return {
+    completeMuseumSet(items: ItemId[]) {
+      for (const id of items) state.completed.museum.add(id);
+    },
+    cycleQuestState(id: QuestId) {
+      const current = state.completed.questStates[id as string] ?? "none";
+      const next: QuestState =
+        current === "none" ? "obtained" : current === "obtained" ? "completed" : "none";
+      state.completed.questStates[id as string] = next;
+    },
     exportState(): string {
       return serialize(state);
     },
@@ -219,12 +239,19 @@ function createUserState() {
     setMineFloor(floor: number) {
       state.completed.mines.floor = Math.max(0, Math.min(floor, trackerData.mines.maxFloors));
     },
+    setNpcLevel(id: NpcId, level: number) {
+      const max = trackerData.npcs[id].dateable ? 12 : 10;
+      state.completed.npcLevels[id as string] = Math.max(0, Math.min(level, max));
+    },
     setRenown(level: number) {
       const max = trackerData.renown.levelsPerRank * trackerData.renown.ranks.length;
       state.completed.renown = Math.max(0, Math.min(level, max));
     },
     setSeason(season: Season) {
       state.worldState.season = season;
+    },
+    setSkillLevel(id: SkillId, level: number) {
+      state.completed.skillLevels[id as string] = Math.max(0, Math.min(level, 60));
     },
     setWeather(weather: Weather) {
       state.worldState.weather = weather;
@@ -249,26 +276,14 @@ function createUserState() {
     toggleMuseumItem(id: ItemId) {
       toggleInSet(state.completed.museum, id);
     },
-    completeMuseumSet(items: ItemId[]) {
-      for (const id of items) state.completed.museum.add(id);
-    },
-    uncompleteMuseumSet(items: ItemId[]) {
-      for (const id of items) state.completed.museum.delete(id);
-    },
-    toggleNpc(id: NpcId) {
-      toggleInSet(state.completed.npcs, id);
-    },
-    toggleQuest(id: QuestId) {
-      toggleInSet(state.completed.quests, id);
-    },
     toggleShowCompleted() {
       state.showCompleted = !state.showCompleted;
     },
-    toggleSkill(id: SkillId) {
-      toggleInSet(state.completed.skills, id);
-    },
     toggleSpell(id: SpellId) {
       toggleInSet(state.completed.mines.spells, id);
+    },
+    uncompleteMuseumSet(items: ItemId[]) {
+      for (const id of items) state.completed.museum.delete(id);
     },
   };
 }
@@ -280,6 +295,23 @@ function deserialize(json: string): null | UserState {
 
     // Branded ID types require casting through unknown at the serialization boundary
     const brandedSet = <T>(arr: string[]) => new SvelteSet(arr) as unknown as Set<T>;
+
+    // Migrate legacy Set-based data → level/state Records
+    // Old format: npcs/skills/quests as string[]; New format: npcLevels/skillLevels/questStates as Records
+    const npcLevels: Record<string, number> = s.completed.npcLevels ?? {};
+    if (!s.completed.npcLevels && s.completed.npcs) {
+      for (const id of s.completed.npcs) npcLevels[id] = 10; // legacy "completed" → max standard level
+    }
+
+    const skillLevels: Record<string, number> = s.completed.skillLevels ?? {};
+    if (!s.completed.skillLevels && s.completed.skills) {
+      for (const id of s.completed.skills) skillLevels[id] = 60; // legacy "completed" → max level
+    }
+
+    const questStates: Record<string, QuestState> = s.completed.questStates ?? {};
+    if (!s.completed.questStates && s.completed.quests) {
+      for (const id of s.completed.quests) questStates[id] = "completed";
+    }
 
     return {
       availabilityMode: s.availabilityMode,
@@ -300,10 +332,13 @@ function deserialize(json: string): null | UserState {
           spells: brandedSet<SpellId>(s.completed.mines.spells),
         },
         museum: brandedSet<ItemId>(s.completed.museum),
-        npcs: brandedSet<NpcId>(s.completed.npcs),
-        quests: brandedSet<QuestId>(s.completed.quests),
+        npcLevels,
+        npcs: brandedSet<NpcId>(s.completed.npcs ?? []),
+        quests: brandedSet<QuestId>(s.completed.quests ?? []),
+        questStates,
         renown: s.completed.renown,
-        skills: brandedSet<SkillId>(s.completed.skills),
+        skillLevels,
+        skills: brandedSet<SkillId>(s.completed.skills ?? []),
       },
       showCompleted: false,
       worldState: s.worldState,
@@ -314,6 +349,10 @@ function deserialize(json: string): null | UserState {
 }
 
 // ─── Serialization helpers ───────────────────────────────────────────
+
+function filterRecord<V>(record: Record<string, V>, predicate: (v: V) => boolean): Record<string, V> {
+  return Object.fromEntries(Object.entries(record).filter(([, v]) => predicate(v)));
+}
 
 function serialize(state: UserState): string {
   const s: SerializedState = {
@@ -332,10 +371,10 @@ function serialize(state: UserState): string {
         spells: [...state.completed.mines.spells].sort(),
       },
       museum: [...state.completed.museum].sort(),
-      npcs: [...state.completed.npcs].sort(),
-      quests: [...state.completed.quests].sort(),
+      npcLevels: filterRecord(state.completed.npcLevels, (v) => v > 0),
+      questStates: filterRecord(state.completed.questStates, (v) => v !== "none"),
       renown: state.completed.renown,
-      skills: [...state.completed.skills].sort(),
+      skillLevels: filterRecord(state.completed.skillLevels, (v) => v > 0),
     },
     version: "1",
     worldState: state.worldState,

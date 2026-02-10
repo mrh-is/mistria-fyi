@@ -217,18 +217,18 @@ tracker-data.json  → pipeline/output/ (pretty, 706KB) + src/lib/data/ (minifie
 
 ### Pipeline extractors
 
-| Extractor      | Source in fiddle         | Output                               |
-| -------------- | ------------------------ | ------------------------------------ |
-| `museum.ts`    | `museum_wings`           | 4 wings → 69 sets → 344 item IDs     |
-| `almanac.ts`   | `items`                  | 67 categories, 1903 items (crops/forage split into 3) |
+| Extractor      | Source in fiddle         | Output                                                    |
+| -------------- | ------------------------ | --------------------------------------------------------- |
+| `museum.ts`    | `museum_wings`           | 4 wings → 69 sets → 344 item IDs                          |
+| `almanac.ts`   | `items`                  | 67 categories, 1903 items (crops/forage split into 3)     |
 | `animals.ts`   | `ranching.animals`       | 8 types, 97 variants (32 defaults skipped), 119 cosmetics |
-| `npcs.ts`      | `npcs`                   | 34 NPCs (name, birthday, dateable)   |
-| `cosmetics.ts` | `player_assets`          | 253 player cosmetics (name, slot)    |
-| `skills.ts`    | `skills`                 | 9 skills (id → name)                 |
-| `renown.ts`    | `renown`                 | 11 ranks × 10 levels                 |
-| `quests.ts`    | `quests`                 | 246 quests (story/heart/fetch/crown) |
-| `mines.ts`     | `dungeons` + `spells`    | 5 biomes, 99 floors, 4 spells        |
-| `sources.ts`   | stores, fish, bugs, etc. | 1611 items with 2190 sources (forage sources fixed) |
+| `npcs.ts`      | `npcs`                   | 34 NPCs (name, birthday, dateable)                        |
+| `cosmetics.ts` | `player_assets`          | 253 player cosmetics (name, slot)                         |
+| `skills.ts`    | `skills`                 | 9 skills (id → name)                                      |
+| `renown.ts`    | `renown`                 | 11 ranks × 10 levels                                      |
+| `quests.ts`    | `quests`                 | 246 quests (story/heart/fetch/crown)                      |
+| `mines.ts`     | `dungeons` + `spells`    | 5 biomes, 99 floors, 4 spells                             |
+| `sources.ts`   | stores, fish, bugs, etc. | 1611 items with 2190 sources (forage sources fixed)       |
 
 ### Deliberately excluded (add later for reference section)
 
@@ -379,38 +379,37 @@ All items in the list should be visually scannable — a player should be able t
 
 ##### UI
 
-- [x] Move theme switcher into settings page (toggle group: system/light/dark)
-- [x] Show some response when the user starts typing in the search field
-- [x] If item is available in all seasons, don't show season icons
-- [x] Remove shadow size tags on "Materials" (hideFishSize prop on RestrictionBadges)
-- [x] Visually distinguish between various types of item restrictions (season badges have amber bg, weather has sky bg)
-- [x] Updates to weather names based on season (wiki-accurate: Blizzard/Snow in winter, Breezy in spring/fall)
+- [ ] Remove diving shadow size tags on "Materials"
 - [ ] Add search to individual category pages
-- [x] Show item restrictions when searching on home page
-- [x] Sort items alphabetically in Almanac
-- [x] Category pages show world state + availability toggle (Museum & Almanac via showWorldState prop)
-- [x] Add hover text to availability toggle to explain each option
 - [ ] Only two categories (Museum & Almanac) are affected by availability, maybe they should be more clearly differentiated? → **needs input**
 - [ ] Maybe add a way to indicate that an entire museum set is done (at least until that becomes importable) → **needs input**
-- [x] Allow the user to directly enter a renown level (click level text for inline edit, +/- buttons still work)
-- [x] Mute repetitive fetch quest "Request for a" prefix (preserves "Important" distinction)
-- [x] Mute repetitive crown quest "Crown Request:" prefix
-- [x] Home page tiles compacted (smaller padding, icon, progress bar, text)
+- [ ] Mute repetitive fetch quest "Request for( a)" prefix (preserves "Important" distinction) [currently doesn't work on quests that don't have "a"]
+- [ ] Home page tiles could still have a little les vertical padding, at least on mobile
+  - Maybe on mobile, the rows could be [Icon + Name] / [Bar + Count]?
+  - Make the name one size larger please
 - [ ] Idea: With 9 categories, this feels like a 3x3 grid would make a lot of sense? → **needs input**
-- [x] Availability toggle has visible border + rounded edges
+- [ ] Also apply edges to theme switcher in settings menu
+- [ ] Are we still using the shadcn dropdown, or can we remove that whole component?
+- [ ] "Show completed" doesn't do anything in Animals
+- [ ] Crops don't show season
+- [ ] Counts don't update when changing availability toggle
+- [ ] Typing in the search bar still doesn't give any feedback for a second
+- [ ] It's not obvious that clicking an item name will show the sources
+- [ ] Could we switch from emojis to Lucide icons? Those will show the amber vs sky colors better
+- [ ] Don't show weather icons if item available in all weathers
+- [ ] Sort animal variants within tiers (tier 1 at top, tier 6 at bottom)
+  - Also sort seasonal variants in season order (spring, summer, fall, winter)
 
 ##### Data
 
 - [ ] NPCs aren't "checked off", the player builds the relationship level → **needs input**
 - [ ] Skills have levels (cap at 60), not "checked off" → **needs input**
-- [x] Flatten Almanac "Other" subcategories to top level
-- [x] Remove default animal variants from pipeline (32 defaults now skipped)
-- [x] Human-readable pipeline outputs: `fiddle-readable.json` + `tracker-data-readable.json` in `pipeline/output/`
-- [x] Separate Crops from Forageables (tag-based split: 34 crops, 62 forageables, 61 seeds)
-- [x] Fix cosmetics slot mapping (feet→shoes, facial_hair→facial aliases; "bottom" resolved via ID-prefix to pants/skirts/shorts/underwear)
-- [x] Fix forage sources (were silently skipping all 42+ items due to expecting objects, not strings)
 - [ ] Categorize crops & forage by season → **partially done** (forage sources now have season data; crop season needs seed→crop mapping)
 - [ ] Quests: obtained vs completed two-state tracking → **needs input**
+- [ ] "Acorn" has two sources for "Store / Balor" (probably more of this)
+- [ ] Furniture > Basic Chest Set has 15 entries for "Basic Wood Chest" (probably more of this)
+- [ ] Capitalize cosmetics categories
+- [ ] Remove treasure boxes from Fish
 
 ##### Questions & Design Decisions Needed
 
@@ -418,54 +417,105 @@ These items require your input or need investigation on the gaming PC.
 
 **1. NPC Relationship Levels**
 The current NPC page uses checkboxes (done/not done), but NPCs have relationship levels 1-8. Design questions:
+
 - Should it be a slider, stepper (+/- buttons), or direct input like renown?
+  - I was thinking it could be like a stepper with -/+ buttons on the sides? The in-game UI uses 2 rows of 6 icons each. I got another Claude Code to identify the closest Tailwind colors:
+
+    ```
+    Row 1 (top):
+    1. violet-600
+    2. indigo-700
+    3. blue-600
+    4. sky-400
+    5. green-500
+    6. lime-400
+
+    Row 2 (bottom):
+    7. amber-400
+    8. yellow-300
+    9. orange-500
+    10. orange-600
+    11. red-500
+    12. rose-700
+
+    A few judgment calls worth flagging:
+    - Gems 2 vs 3 are both blue but gem 2 reads more indigo/navy — indigo-700 vs blue-600 is a closer call than the others
+    - Gem 12 (bottom right) looks more like a deep crimson/ruby, which sits between rose-700 and red-800
+    - Gems 7/8 are both gold-ish; amber-400 vs yellow-300 distinguishes the warmer deeper gold from the brighter yellow
+    ```
+
 - Romanceable NPCs use hearts, non-romanceable use gems — should the UI reflect this distinction visually?
+  - Yes of course! The closest Lucide icon is probably octagon though.
 - The fiddle data has `heart_point_values` with 4 threshold values. These may correspond to the 8 levels (every 2 thresholds = 1 level?). Need to verify mapping.
+  - Dunno what that object is for, not this though. You should use the values in `npc_heart_point_table`.
 - NPC hearts are NOT in player.json — manual tracking only (for now).
+  - Yes
 
 **2. Skill Levels & Tiers**
 Skills currently show as checkboxes but should be level 1-60. Design questions:
+
 - Same input style as renown (click to type, +/- buttons)?
+  - Seems reasonable
 - The fiddle has `skills` data but only 9 skill names, no XP thresholds or tier breakpoints.
+  - The tier breakpoints are in `$.ui.skill_menu.defaults.category.level_requirements`.
 - The PLANNING.md mentions tiers unlock perks — should the UI show tier progress or just the level number?
+  - Maybe some small adjustment for the tiers, but it doesn't have to be called out.
 - Skill XP thresholds for leveling are NOT in the fiddle data. Do you know these, or can we extract from the game?
+  - Hmm, I just explored the fiddle & the wiki, no dice.
 - Skills are importable from player.json (`skill_xp`) but we need to know the XP→level formula.
 
 **3. Quest Two-State Tracking (Obtained vs Completed)**
 Currently quests are just checked off. The request is for two states: obtained (active) → completed.
+
 - Should this be: unchecked → active (partial fill/different icon) → completed (full check)?
 - Or a dropdown/toggle per quest?
+  - My thought is that 95% of the actions will be to move to the next state, but that there will be some error handling where the user needs to undo bc they started the wrong quest.
 - Quests never expire or fail, so the flow is strictly: not obtained → obtained → completed.
+  - Yes
 - What visual treatment for "obtained but not completed"? A half-check? Different color? Progress dot?
+  - The in-game quest icon is a ! in a speech bubble coming out of an open envelope, so we could use Mail / MailOpen / MailCheck? Or CircleDashed / Circle / CircleCheckBig? Just thoughts
 
 **4. Availability Differentiation**
 Only Museum and Almanac items are affected by the season/weather availability system. The other 7 categories (Animals, NPCs, Cosmetics, Skills, Renown, Quests, Mines) have no seasonal restrictions.
+
 - Should categories unaffected by availability hide the world state/toggle controls?
 - Or should they show the controls greyed out with a message like "Not affected by season"?
 - Current behavior: Museum & Almanac show controls, others don't.
+  - I like the current take!
 
 **5. Museum Set Quick-Complete**
 For museum sets, it might be useful to mark an entire set as complete at once (especially before save import is possible for museum data).
+
 - A "mark all" button per set? Per wing?
+  - Oh just per set. I'm thinking about entering my museum donations manually.
 - Risk: accidentally completing a whole set. Maybe require long-press or confirmation?
+  - That's fine, just undo the set or the items underneath. Shouldn't be a problem.
 
 **6. 3×3 Grid Layout**
 With 9 categories, a 3×3 grid is tempting. Current layout is a 2-column grid that scrolls.
+
 - 3×3 would fit everything on one screen but tiles would be very small on narrow phones.
 - Could use a responsive approach: 3×3 on wider screens, 2-col on narrow.
 - The tiles are already quite compact after the latest changes.
+  - True, let's keep this for now.
 
 **7. Crop Season Association**
-Crops (34 items) don't have season data on the items themselves. Season lives on the *seed* items (via store seasonal stock). Approach:
+Crops (34 items) don't have season data on the items themselves. Season lives on the _seed_ items (via store seasonal stock). Approach:
+
 - Pipeline: link each crop to its seed via the `crop_object` field on seeds, then inherit the seed's store season.
+  - Sounds good, make it so
 - Display: group crops by season in the Almanac, similar to how museum has sets.
 - 20 forageable items (herbs/flowers like Basil, Daffodil, Tulip) can be BOTH grown from seeds AND foraged in the wild — these are correctly in "Forageables" since they can be found without farming.
+  - Yeah, let's leave them in Forageables but also add a source for growing them
 
 **8. Category Page Search**
 The PLANNING.md wireframe shows a search bar within each category page. Options:
+
 - Same search bar as home, but filtered to current category?
+  - Yep, this.
 - Or a simpler text filter (no cross-category results)?
 - Should it search item names only, or also source descriptions?
+  - Just names, like home search.
 
 ### Phase 5: Polish
 

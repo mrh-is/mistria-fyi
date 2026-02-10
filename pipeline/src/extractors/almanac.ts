@@ -146,9 +146,7 @@ function buildChestIdSet(fiddle: FiddleData): Set<string> {
  * When multiple items in a category share the same display name (e.g., 15 "Basic Wood Chest"
  * color variants), append the variant suffix to disambiguate.
  */
-function deduplicateNames(
-  category: Record<ItemId, { name: string }>,
-): void {
+function deduplicateNames(category: Record<ItemId, { name: string }>): void {
   // Group IDs by name
   const byName = new Map<string, ItemId[]>();
   for (const [id, entry] of Object.entries(category)) {

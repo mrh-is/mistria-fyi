@@ -36,15 +36,18 @@
 
   function isCosmeticVisible(animalId: AnimalId, cosmeticId: CosmeticId): boolean {
     const completed =
-      (
-        userState.state.completed.animalCosmetics[animalId] as Set<CosmeticId> | undefined
-      )?.has(cosmeticId) ?? false;
+      (userState.state.completed.animalCosmetics[animalId] as Set<CosmeticId> | undefined)?.has(
+        cosmeticId,
+      ) ?? false;
     return completed ? userState.state.showCompleted : true;
   }
 
   /** Sort variants: tier ascending (1 first, 6 last), then season order within same tier */
   function sortedVariants(
-    variants: Record<string, { bornIn?: Season; defaultUnlocked: boolean; name: string; tier?: number }>,
+    variants: Record<
+      string,
+      { bornIn?: Season; defaultUnlocked: boolean; name: string; tier?: number }
+    >,
   ): Array<[string, { bornIn?: Season; defaultUnlocked: boolean; name: string; tier?: number }]> {
     return Object.entries(variants).sort(([, a], [, b]) => {
       const tierA = a.tier ?? 99;

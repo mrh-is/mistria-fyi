@@ -45,7 +45,11 @@
       return done ? userState.state.showCompleted : true;
     })}
     {#if visibleCosmetics.length > 0}
-      <ExpandableSection count={completedCount} name={slot.charAt(0).toUpperCase() + slot.slice(1)} total={cosmetics.length}>
+      <ExpandableSection
+        count={completedCount}
+        name={slot.charAt(0).toUpperCase() + slot.slice(1)}
+        total={cosmetics.length}
+      >
         {#each visibleCosmetics as cosmetic (cosmetic.id)}
           {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
           <div

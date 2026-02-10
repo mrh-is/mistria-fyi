@@ -44,7 +44,8 @@
     <Select.Content>
       {#each weathers as w (w)}
         <Select.Item value={w}>
-          {weatherEmoji(w)} {weatherLabel(w, currentSeason)}
+          {weatherEmoji(w)}
+          {weatherLabel(w, currentSeason)}
         </Select.Item>
       {/each}
     </Select.Content>

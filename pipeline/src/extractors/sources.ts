@@ -40,7 +40,9 @@ export function extractSources(fiddle: FiddleData): TrackerData["sources"] {
 
   const totalItems = Object.keys(map).length;
   const totalSources = Object.values(map).reduce((n, s) => n + s.length, 0);
-  console.log(`  Sources: ${totalItems} items with ${totalSources} sources (${deduped} duplicates removed)`);
+  console.log(
+    `  Sources: ${totalItems} items with ${totalSources} sources (${deduped} duplicates removed)`,
+  );
 
   return map as TrackerData["sources"];
 }

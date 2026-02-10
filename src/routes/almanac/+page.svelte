@@ -93,7 +93,8 @@
       <ExpandableSection count={groupCompleted} name={group} total={groupItems.length}>
         {#if categories.length === 1 && categories[0].name === group}
           <!-- Single category in group (flattened "Other") — render items directly -->
-          {@const isFishCategory = categories[0].key.startsWith("fish/") || categories[0].key.startsWith("mines/")}
+          {@const isFishCategory =
+            categories[0].key.startsWith("fish/") || categories[0].key.startsWith("mines/")}
           {#each categories[0].items as [itemId, item] (itemId)}
             {#if shouldShowItem(itemId as ItemId)}
               <ItemRow

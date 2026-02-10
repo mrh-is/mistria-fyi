@@ -39,9 +39,10 @@ export function searchItems(query: string, completed: CompletedState): SearchRes
   // NPCs
   for (const [id, npc] of Object.entries(trackerData.npcs)) {
     if (npc.name.toLowerCase().includes(q)) {
+      const max = npc.dateable ? 12 : 10;
       results.push({
         category: "npcs",
-        completed: completed.npcs.has(id as never),
+        completed: (completed.npcLevels[id] ?? 0) >= max,
         id,
         name: npc.name,
       });
@@ -85,7 +86,7 @@ export function searchItems(query: string, completed: CompletedState): SearchRes
       if (quest.name.toLowerCase().includes(q)) {
         results.push({
           category: "quests",
-          completed: completed.quests.has(id as never),
+          completed: completed.questStates[id] === "completed",
           id,
           name: quest.name,
           subcategory: questType,

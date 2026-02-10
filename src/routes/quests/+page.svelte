@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { ScrollText } from "@lucide/svelte";
+  import { Circle, CircleCheckBig, CircleDashed, ScrollText } from "@lucide/svelte";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
-  import { Checkbox } from "$lib/components/ui/checkbox/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { getQuestsProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { displayQuestName } from "$lib/utils/format.js";
 
+  import type { QuestState } from "$lib/stores/user-state.svelte.js";
   import type { QuestId } from "$lib/types/tracker-data.js";
 
   let progress = $derived(
@@ -27,6 +27,10 @@
   };
 
   const typeOrder = ["story_quests", "heart_quests", "fetch_quests", "crown_quests"];
+
+  function getQuestState(id: QuestId): QuestState {
+    return userState.state.completed.questStates[id as string] ?? "none";
+  }
 </script>
 
 <div class="flex flex-col gap-4 p-4">
@@ -40,11 +44,9 @@
         name: q.name,
       }))
       .sort((a, b) => a.displayName.localeCompare(b.displayName))}
-    {@const completedCount = quests.filter((q) =>
-      userState.state.completed.quests.has(q.id),
-    ).length}
+    {@const completedCount = quests.filter((q) => getQuestState(q.id) === "completed").length}
     {@const visibleQuests = quests.filter((q) => {
-      const done = userState.state.completed.quests.has(q.id);
+      const done = getQuestState(q.id) === "completed";
       return done ? userState.state.showCompleted : true;
     })}
     {#if visibleQuests.length > 0}
@@ -54,19 +56,36 @@
         total={quests.length}
       >
         {#each visibleQuests as quest (quest.id)}
-          {@const completed = userState.state.completed.quests.has(quest.id)}
+          {@const questState = getQuestState(quest.id)}
           <div
-            class="flex items-center gap-2 rounded-md px-2 py-1 {completed
+            class="flex items-center gap-2 rounded-md px-2 py-1 {questState === 'completed'
               ? 'line-through opacity-40'
               : ''}"
           >
-            <Checkbox
-              checked={completed}
-              onCheckedChange={() => {
-                userState.toggleQuest(quest.id);
-              }}
-            />
-            <span class="text-sm">{quest.displayName}</span>
+            <button
+              class="shrink-0 transition-colors"
+              type="button"
+              title={questState === "none"
+                ? "Not obtained — click to mark obtained"
+                : questState === "obtained"
+                  ? "Obtained — click to mark completed"
+                  : "Completed — click to reset"}
+              onclick={() => { userState.cycleQuestState(quest.id); }}
+            >
+              {#if questState === "none"}
+                <CircleDashed class="text-muted-foreground/50 size-5" />
+              {:else if questState === "obtained"}
+                <Circle class="size-5 text-amber-500 dark:text-amber-400" />
+              {:else}
+                <CircleCheckBig class="size-5 text-green-600 dark:text-green-400" />
+              {/if}
+            </button>
+            <span class="min-w-0 flex-1 text-sm">
+              {quest.displayName}
+            </span>
+            {#if questState === "obtained"}
+              <span class="text-[10px] text-amber-600 dark:text-amber-400">Active</span>
+            {/if}
           </div>
         {/each}
       </ExpandableSection>

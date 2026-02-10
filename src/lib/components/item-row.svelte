@@ -48,7 +48,11 @@
         }}
       >
         <span class="group-hover:underline">{name}</span>
-        <ChevronRight class="text-muted-foreground size-3 shrink-0 opacity-0 transition-all group-hover:opacity-60 {expanded ? 'rotate-90' : ''}" />
+        <ChevronRight
+          class="text-muted-foreground size-3 shrink-0 opacity-0 transition-all group-hover:opacity-60 {expanded
+            ? 'rotate-90'
+            : ''}"
+        />
       </button>
     {:else}
       <span class="min-w-0 flex-1 text-left text-sm">{name}</span>
