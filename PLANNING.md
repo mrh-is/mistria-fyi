@@ -379,29 +379,33 @@ All items in the list should be visually scannable — a player should be able t
 
 ##### UI
 
-- [ ] Can the header (probably just the back button & title row) be sticky? Annoying to have to scroll back up
+- [x] Can the header (probably just the back button & title row) be sticky? Annoying to have to scroll back up
   - Your first version is sticky, but only over the header/control section, the actual section/item list pushes it off the screen still
-- [ ] Icons
-  - [ ] Spring - `Flower`, not sparkle
-  - [ ] Fall icon should also be rotated in world state selector
-  - [ ] "Breezy" weather - `Wind`
-  - [ ] "Calm" weather - `SunDim`
-- [ ] Weather restrictions should always show in order: calm, inclement, heavy, special
-- [ ] Move overall completion to very top of page
+  - Fixed: entire category header (title + world state + search + show completed) is now sticky
+- [x] Icons
+  - [x] Spring - `Flower`, not sparkle
+  - [x] Fall icon should also be rotated in world state selector
+  - [x] "Breezy" weather - `Wind`
+  - [x] "Calm" weather - `SunDim`
+- [x] Weather restrictions should always show in order: calm, inclement, heavy, special
+- [x] Move overall completion to very top of page
   - Looks good on category page on same row as page title, do this on home as well
   - Maybe the progress bar is full-width below the page title?
   - I have a sense that this UI & the tile UI could be more similar, with a top row of [Icon / Name / Count] and the progress bar below
     - On mobile, the count might have to drop to a new row (esp "Cosmetics" tends to bump into the count)
-- [ ] Home page tiles should still have less vertical padding, especially on mobile
+  - Fixed: overall pct moved to home page title row; category cards now use [Icon / Name / Count] row with progress bar below
+- [x] Home page tiles should still have less vertical padding, especially on mobile
   - I believe the default vertical padding for a `Card` is `.py-6`
   - On desktop, should be more like `.py-4`
   - On mobile, should be `.py-4` or maybe even `.py-3`
   - Also the cards could use a touch more horizontal padding
-- [ ] Could the Renown page look more like one of the Skills?
+  - Fixed: cards now use `py-3 md:py-4` and `px-3 md:px-4`
+- [x] Could the Renown page look more like one of the Skills?
+  - Fixed: renown now shows each rank as a progress bar row with level counter, matching skills layout
 
 ##### Data
 
-- [ ] We might as well show the quest giver for all fetch quests
+- [x] We might as well show the quest giver for all fetch quests
 
 ### Phase 5: Polish
 
