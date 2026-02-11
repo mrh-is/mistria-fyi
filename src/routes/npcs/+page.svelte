@@ -4,7 +4,7 @@
   import CategoryHeader from "$lib/components/category-header.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
   import { trackerData } from "$lib/data/index.js";
-  import { getNpcsProgress } from "$lib/engine/progress.js";
+  import { getNpcsProgress, MAX_NPC_LEVEL } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import type { Component } from "svelte";
@@ -52,20 +52,18 @@
     return userState.state.completed.npcLevels[id as string] ?? 0;
   }
 
-  function isMaxed(npc: { dateable: boolean; id: NpcId }): boolean {
-    const max = npc.dateable ? 12 : 10;
-    return getNpcLevel(npc.id) >= max;
+  function isMaxed(npc: { id: NpcId }): boolean {
+    return getNpcLevel(npc.id) >= MAX_NPC_LEVEL;
   }
 </script>
 
-<div class="flex flex-col gap-4 p-4">
+<div class="flex flex-col gap-4 px-4 pb-4">
   <CategoryHeader icon={Heart} name="NPCs" {progress} />
 
   <div class="flex flex-col gap-2">
     {#each npcs as npc (npc.id)}
       {@const level = getNpcLevel(npc.id)}
       {@const maxed = isMaxed(npc)}
-      {@const max = npc.dateable ? 12 : 10}
       {#if maxed ? userState.state.showCompleted : true}
         {@const BdayIcon = SEASON_ICON[npc.birthday.season]}
         <div class="flex flex-col gap-1.5 rounded-md px-2 py-1.5 {maxed ? 'opacity-40' : ''}">
@@ -95,16 +93,16 @@
               <Minus class="size-3" />
             </Button>
 
-            <div class="flex min-w-0 flex-1 flex-wrap gap-0.5">
-              {#each { length: max } as _, i (i)}
+            <div class="flex min-w-0 flex-1 flex-wrap justify-center gap-1">
+              {#each { length: MAX_NPC_LEVEL } as _, i (i)}
                 {#if npc.dateable}
                   <Heart
-                    class="size-3.5 {i < level ? LEVEL_COLORS[i] : 'text-muted-foreground/30'}"
+                    class="size-5 {i < level ? LEVEL_COLORS[i] : 'text-muted-foreground/30'}"
                     fill={i < level ? "currentColor" : "none"}
                   />
                 {:else}
                   <Octagon
-                    class="size-3.5 {i < level ? LEVEL_COLORS[i] : 'text-muted-foreground/30'}"
+                    class="size-5 {i < level ? LEVEL_COLORS[i] : 'text-muted-foreground/30'}"
                     fill={i < level ? "currentColor" : "none"}
                   />
                 {/if}
@@ -115,7 +113,7 @@
               class="size-6 shrink-0"
               size="icon"
               variant="ghost"
-              disabled={level >= max}
+              disabled={level >= MAX_NPC_LEVEL}
               onclick={() => {
                 userState.setNpcLevel(npc.id, level + 1);
               }}

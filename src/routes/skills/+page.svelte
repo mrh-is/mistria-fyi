@@ -61,7 +61,7 @@
   }
 </script>
 
-<div class="flex flex-col gap-4 p-4">
+<div class="flex flex-col gap-4 px-4 pb-4">
   <CategoryHeader icon={BookOpenText} name="Skills" {progress} />
 
   <div class="flex flex-col gap-3">
