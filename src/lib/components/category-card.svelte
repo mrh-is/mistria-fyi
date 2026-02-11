@@ -28,11 +28,12 @@
   <Card.Root class="hover:bg-accent/50 gap-0 py-4 transition-colors">
     <Card.Content class="flex flex-col gap-2 px-4">
       <div class="flex items-center gap-2">
-        <Icon class="text-muted-foreground size-5 shrink-0" />
+        <Icon class="text-muted-foreground size-4 shrink-0" />
         <span class="min-w-0 flex-1 text-sm font-medium">{name}</span>
-        <span class="text-muted-foreground shrink-0 text-xs"
-          >{progress.completed}/{displayTotal}</span
-        >
+        <span class="text-muted-foreground shrink-0 text-xs">
+          <span class="sm:hidden">{Math.round(pct)}%</span>
+          <span class="hidden sm:inline">{progress.completed}/{displayTotal}</span>
+        </span>
       </div>
       <Progress class="h-1.5" value={pct} />
     </Card.Content>
