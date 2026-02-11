@@ -375,23 +375,47 @@ All items in the list should be visually scannable — a player should be able t
 - [x] Import coverage: almanac, cosmetics, animal variants, animal cosmetics, spells
 - [x] Not importable (documented in UI): museum donations, NPC hearts, quests (not in player.json), skills/renown (XP thresholds unknown), mine floor (only milestones)
 
-#### Fixes
+### Phase 5: Polish ✅
 
-- [x] On the home page on an iPhone SE, "Cosmetics" runs into the count
-  - Fixed: shows percentage on small screens (`sm:` breakpoint switches to full counts)
-- [x] On NPC page, it's not clear that -/+ are clickable
-  - Fixed: buttons now have visible hover states and are slightly larger (size-3.5)
-- [x] On NPC page, maybe -/+ could be attached to the meter icons? They get very far away
-  - Fixed: -/+ sit directly adjacent to icons with gap-0.5, no flex-1 spacer between them
-
-### Phase 5: Polish
-
-- PWA install experience
-- Mobile UX refinement
-- Performance (virtualized lists for large categories)
+- [x] **PWA install experience**
+  - [x] Generate proper icon sizes (192, 512) from favicon for manifest
+  - [x] Apple touch icon (180px) for iOS home screen
+  - [x] Apple mobile web app meta tags (capable, status bar style, title)
+  - [x] `viewport-fit=cover` for safe area inset support
+  - [x] Offline fallback page (pre-cached by service worker)
+  - [x] Fixed manifest.json: correct sizes, split any/maskable purpose, orientation, categories
+  - [x] ⚠️ **Note:** Favicon is a 128px grayscale placeholder — needs a real app icon designed
+- [x] **Mobile UX refinement**
+  - [x] Safe area insets: top padding on home, settings, category headers; bottom on root layout
+  - [x] Prevent iOS input zoom (`font-size: max(16px, 1em)`)
+  - [x] Disable tap highlight and pull-to-refresh overscroll for native PWA feel
+  - [x] NPC +/- buttons: increased to size-8 (32px) touch targets, added active state
+  - [x] NPC hearts: shrank icons to size-4 (fits iPhone SE), made individually tappable to set level
+  - [x] Skill +/- buttons: increased to size-8, bigger icons
+  - [x] Skill level text: taller tap target (h-8)
+  - [x] Sticky category headers: added bottom border for scroll separation
+- [x] **Performance**
+  - [x] Pre-filter almanac items before `{#each}` iteration (was filtering inside loop)
+  - [x] "Show N more..." progressive disclosure: caps at 50 items per section, button to reveal rest
+  - [x] Decided against full virtualization: sections are collapsed by default (DOM stays small), and progressive disclosure handles the furniture sets (95+ items)
+- [x] **UI polish**
+  - [x] Smooth opacity transition on item completion state change
+  - [x] Active press state on category cards (`active:bg-accent/70`)
+  - [x] "All done!" empty state for completed categories (almanac, museum, cosmetics, animals)
+  - [x] Increased item row vertical padding for touch comfort
+- [x] **Dev tooling**
+  - [x] Moved lint-staged config to JS file to exclude service-worker.ts from eslint (allowDefaultProject breaks with lint-staged temp paths — a known issue with SvelteKit's tsconfig setup)
 
 ### Future
 
 #### Requires human
 
 - [ ] Investigate data sources for non-importable data: museum donations, NPC hearts, quests (not in player.json), skills/renown (XP thresholds unknown), mine floor (only milestones)
+- [ ] Design a real app icon (current favicon is a 128px grayscale Svelte logo placeholder)
+
+#### Notes from Phase 5 (Claude)
+
+- **Icon situation**: The app icon is just the Svelte logo in grayscale at 128px. I upscaled it to 192/512 for the PWA manifest, but it's clearly a placeholder. You'll want a custom wheat/harvest-themed icon for public release. The maskable icon variant needs safe area padding too (the inner 80% circle).
+- **Performance verdict**: Full list virtualization (e.g., `svelte-virtual-list`) would add complexity for marginal gain. The collapsing sections pattern already keeps the DOM small — most users interact with one section at a time. The "Show more" cap on 50+ item sections handles the worst case (furniture sets). If you ever notice jank, the place to add virtualization is the almanac's "Everything" mode with all sections expanded.
+- **NPC hearts tappable**: Tapping a filled heart sets level to that heart's index (unfilling it and everything after). Tapping an empty heart fills up to and including it. This felt more intuitive than just fill-only.
+- **Almanac `other/unreviewed_new_items`**: The pipeline produces a category with 1 item called "unreviewed_new_items". Worth investigating if this is a pipeline bug or a real category — it shows up in the almanac as a section with 1 item.
