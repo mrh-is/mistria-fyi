@@ -190,4 +190,10 @@
       </ExpandableSection>
     {/if}
   {/each}
+
+  {#if progress.total > 0 && progress.completed === progress.total && !userState.state.showCompleted}
+    <p class="text-muted-foreground py-8 text-center text-sm">
+      All done! Toggle "Show completed" to review.
+    </p>
+  {/if}
 </div>

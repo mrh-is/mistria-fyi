@@ -25,7 +25,7 @@
 
 <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- href is a known route path -->
 <a class="block" {href}>
-  <Card.Root class="hover:bg-accent/50 gap-0 py-4 transition-colors">
+  <Card.Root class="hover:bg-accent/50 active:bg-accent/70 gap-0 py-4 transition-colors">
     <Card.Content class="flex flex-col gap-2 px-4">
       <div class="flex items-center gap-2">
         <Icon class="text-muted-foreground size-4 shrink-0" />

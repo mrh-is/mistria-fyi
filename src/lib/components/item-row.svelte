@@ -34,9 +34,9 @@
 
 <div>
   <div
-    class="flex items-center gap-2 rounded-md px-2 py-1 {dimmed ? 'opacity-50' : ''} {completed
-      ? 'line-through opacity-40'
-      : ''}"
+    class="flex items-center gap-2 rounded-md px-2 py-1.5 transition-opacity duration-200 {dimmed
+      ? 'opacity-50'
+      : ''} {completed ? 'line-through opacity-40' : ''}"
   >
     <Checkbox checked={completed} onCheckedChange={onToggle} />
     {#if sources.length > 0}
