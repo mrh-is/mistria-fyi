@@ -93,13 +93,15 @@
             {#each { length: MAX_NPC_LEVEL } as _, i (i)}
               {#if npc.dateable}
                 <Heart
-                  class="size-5 {i < level ? LEVEL_COLORS[i] : 'text-muted-foreground/30'}"
-                  fill={i < level ? "currentColor" : "none"}
+                  class="size-5 transition-colors duration-200 {i < level
+                    ? LEVEL_COLORS[i] + ' fill-current'
+                    : 'text-muted-foreground/30 fill-transparent'}"
                 />
               {:else}
                 <Octagon
-                  class="size-5 {i < level ? LEVEL_COLORS[i] : 'text-muted-foreground/30'}"
-                  fill={i < level ? "currentColor" : "none"}
+                  class="size-5 transition-colors duration-200 {i < level
+                    ? LEVEL_COLORS[i] + ' fill-current'
+                    : 'text-muted-foreground/30 fill-transparent'}"
                 />
               {/if}
             {/each}
