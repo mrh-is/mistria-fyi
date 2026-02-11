@@ -76,55 +76,6 @@ export function extractAlmanac(fiddle: FiddleData): {
 }
 
 /**
- * Split items/other/crops_and_forage into separate almanac categories
- * based on item tags.
- */
-function splitCropsAndForage(
-  categoryItems: Record<string, Record<string, unknown>>,
-  almanac: Record<string, Record<ItemId, { name: string }>>,
-  items: ItemsRegistry,
-): void {
-  const crops = {} as Record<ItemId, { name: string }>;
-  const forageables = {} as Record<ItemId, { name: string }>;
-  const seeds = {} as Record<ItemId, { name: string }>;
-
-  for (const [itemId, item] of Object.entries(categoryItems)) {
-    if (itemId === "default") continue;
-    if (typeof item !== "object" || item === null) continue;
-
-    const name = (item.name as string | undefined) ?? snakeToTitle(itemId);
-    const tags = toStringArray(item.tags);
-
-    let categoryKey: string;
-    if (tags.includes("seed")) {
-      categoryKey = "other/seeds";
-      seeds[itemId as ItemId] = { name };
-    } else if (tags.includes("forageable")) {
-      categoryKey = "other/forageables";
-      forageables[itemId as ItemId] = { name };
-    } else if (tags.includes("crop")) {
-      categoryKey = "other/crops";
-      crops[itemId as ItemId] = { name };
-    } else {
-      // Fallback: items with unrecognized tags (e.g., material) → forageables
-      categoryKey = "other/forageables";
-      forageables[itemId as ItemId] = { name };
-    }
-
-    items[itemId] = { category: categoryKey, name };
-  }
-
-  if (Object.keys(crops).length > 0) almanac["other/crops"] = crops;
-  if (Object.keys(forageables).length > 0) almanac["other/forageables"] = forageables;
-  if (Object.keys(seeds).length > 0) almanac["other/seeds"] = seeds;
-
-  console.log(
-    `  Crops/Forage split: ${Object.keys(crops).length} crops, ` +
-      `${Object.keys(forageables).length} forageables, ${Object.keys(seeds).length} seeds`,
-  );
-}
-
-/**
  * Build a set of item IDs that are treasure chests (from the fish data).
  * These should be excluded from the almanac — they're loot containers, not collectibles.
  */
@@ -186,6 +137,55 @@ function snakeToTitle(s: string): string {
     .split("_")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
+}
+
+/**
+ * Split items/other/crops_and_forage into separate almanac categories
+ * based on item tags.
+ */
+function splitCropsAndForage(
+  categoryItems: Record<string, Record<string, unknown>>,
+  almanac: Record<string, Record<ItemId, { name: string }>>,
+  items: ItemsRegistry,
+): void {
+  const crops = {} as Record<ItemId, { name: string }>;
+  const forageables = {} as Record<ItemId, { name: string }>;
+  const seeds = {} as Record<ItemId, { name: string }>;
+
+  for (const [itemId, item] of Object.entries(categoryItems)) {
+    if (itemId === "default") continue;
+    if (typeof item !== "object" || item === null) continue;
+
+    const name = (item.name as string | undefined) ?? snakeToTitle(itemId);
+    const tags = toStringArray(item.tags);
+
+    let categoryKey: string;
+    if (tags.includes("seed")) {
+      categoryKey = "other/seeds";
+      seeds[itemId as ItemId] = { name };
+    } else if (tags.includes("forageable")) {
+      categoryKey = "other/forageables";
+      forageables[itemId as ItemId] = { name };
+    } else if (tags.includes("crop")) {
+      categoryKey = "other/crops";
+      crops[itemId as ItemId] = { name };
+    } else {
+      // Fallback: items with unrecognized tags (e.g., material) → forageables
+      categoryKey = "other/forageables";
+      forageables[itemId as ItemId] = { name };
+    }
+
+    items[itemId] = { category: categoryKey, name };
+  }
+
+  if (Object.keys(crops).length > 0) almanac["other/crops"] = crops;
+  if (Object.keys(forageables).length > 0) almanac["other/forageables"] = forageables;
+  if (Object.keys(seeds).length > 0) almanac["other/seeds"] = seeds;
+
+  console.log(
+    `  Crops/Forage split: ${Object.keys(crops).length} crops, ` +
+      `${Object.keys(forageables).length} forageables, ${Object.keys(seeds).length} seeds`,
+  );
 }
 
 /** Extract string array from tags field (handles arrays and numbered-key objects). */

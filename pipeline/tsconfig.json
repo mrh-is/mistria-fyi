@@ -13,5 +13,5 @@
       "$lib/*": ["../src/lib/*"]
     }
   },
-  "include": ["src/**/*.ts", "../src/lib/types/**/*.ts"]
+  "include": ["src/**/*.ts"]
 }

@@ -63,51 +63,6 @@ function deduplicateSources(sources: Source[]): Source[] {
   });
 }
 
-/**
- * Map crop seasons: for each seed with a crop_object field, propagate the seed's
- * store season to the crop as a "grow" source. Also adds a "grow" source for
- * dual forageables (items that can be both foraged and grown from seed).
- */
-function extractCropSeasons(fiddle: FiddleData, map: SourceMap): void {
-  const items = fiddle.items as
-    | Record<string, Record<string, Record<string, Record<string, unknown>>>>
-    | undefined;
-  if (!items?.other?.crops_and_forage) return;
-
-  // Build seed → crop mapping + collect seed seasons from existing sources
-  const seedToCrop: Record<string, string> = {};
-  for (const [itemId, item] of Object.entries(items.other.crops_and_forage)) {
-    if (itemId === "default") continue;
-    if (typeof item !== "object" || item === null) continue;
-
-    const tags = parseStringArray(item.tags);
-    const cropObject = item.crop_object as string | undefined;
-    if (tags?.includes("seed") && cropObject) {
-      seedToCrop[itemId] = cropObject;
-    }
-  }
-
-  // For each seed→crop pair, find the seed's season restriction and apply to crop
-  let mapped = 0;
-  for (const [seedId, cropId] of Object.entries(seedToCrop)) {
-    const seedSources = map[seedId] ?? [];
-    // Find any season restriction on the seed (from store seasonal stock)
-    const seasonRestriction = seedSources
-      .flatMap((s) => s.restrictions ?? [])
-      .find((r) => r.type === "season");
-
-    const restrictions: Restriction[] = seasonRestriction ? [seasonRestriction] : [];
-
-    addSource(map, cropId, {
-      restrictions: restrictions.length > 0 ? restrictions : undefined,
-      type: "seed",
-    });
-    mapped++;
-  }
-
-  console.log(`  Crop seasons: ${mapped} crops mapped from seeds`);
-}
-
 function extractBugItems(fiddle: FiddleData, map: SourceMap): void {
   const bugs = fiddle.bugs as Record<string, Record<string, unknown>> | undefined;
   if (!bugs) return;
@@ -195,6 +150,51 @@ function extractCropItems(fiddle: FiddleData, map: SourceMap): void {
   }
 }
 
+/**
+ * Map crop seasons: for each seed with a crop_object field, propagate the seed's
+ * store season to the crop as a "grow" source. Also adds a "grow" source for
+ * dual forageables (items that can be both foraged and grown from seed).
+ */
+function extractCropSeasons(fiddle: FiddleData, map: SourceMap): void {
+  const items = fiddle.items as
+    | Record<string, Record<string, Record<string, Record<string, unknown>>>>
+    | undefined;
+  if (!items?.other?.crops_and_forage) return;
+
+  // Build seed → crop mapping + collect seed seasons from existing sources
+  const seedToCrop: Record<string, string> = {};
+  for (const [itemId, item] of Object.entries(items.other.crops_and_forage)) {
+    if (itemId === "default") continue;
+    if (typeof item !== "object" || item === null) continue;
+
+    const tags = parseStringArray(item.tags);
+    const cropObject = item.crop_object as string | undefined;
+    if (tags?.includes("seed") && cropObject) {
+      seedToCrop[itemId] = cropObject;
+    }
+  }
+
+  // For each seed→crop pair, find the seed's season restriction and apply to crop
+  let mapped = 0;
+  for (const [seedId, cropId] of Object.entries(seedToCrop)) {
+    const seedSources = map[seedId] ?? [];
+    // Find any season restriction on the seed (from store seasonal stock)
+    const seasonRestriction = seedSources
+      .flatMap((s) => s.restrictions ?? [])
+      .find((r) => r.type === "season");
+
+    const restrictions: Restriction[] = seasonRestriction ? [seasonRestriction] : [];
+
+    addSource(map, cropId, {
+      restrictions: restrictions.length > 0 ? restrictions : undefined,
+      type: "seed",
+    });
+    mapped++;
+  }
+
+  console.log(`  Crop seasons: ${mapped} crops mapped from seeds`);
+}
+
 function extractFishItems(fiddle: FiddleData, map: SourceMap): void {
   const fish = fiddle.fish as Record<string, Record<string, unknown>> | undefined;
   if (!fish) return;
@@ -254,8 +254,8 @@ function extractForageables(fiddle: FiddleData, map: SourceMap): void {
 
   // Non-seasonal forageables (e.g., sand_forageables = beach shells)
   for (const [key, data] of Object.entries(forageables)) {
-    if (["spring", "summer", "fall", "winter"].includes(key)) continue;
-    const items = toArray<unknown>(data);
+    if (["fall", "spring", "summer", "winter"].includes(key)) continue;
+    const items = toArray(data);
     for (const entry of items) {
       const itemId = typeof entry === "string" ? entry : undefined;
       if (!itemId) continue;
@@ -269,7 +269,7 @@ function extractForageables(fiddle: FiddleData, map: SourceMap): void {
     if (!seasonData) continue;
 
     for (const rarityGroup of Object.values(seasonData)) {
-      const rarityItems = toArray<unknown>(rarityGroup);
+      const rarityItems = toArray(rarityGroup);
       for (const entry of rarityItems) {
         // Entries can be plain strings ("heather") or objects ({ item: "heather" })
         const itemId =

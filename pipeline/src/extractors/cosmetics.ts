@@ -83,7 +83,7 @@ function normalizeSlot(raw: string, id: string): CosmeticSlot {
 
   // Infer slot from the cosmetic ID prefix (more reliable than the raw string)
   for (const slot of VALID_SLOTS) {
-    if (id.startsWith(slot + "_")) return slot;
+    if (id.startsWith(`${slot}_`)) return slot;
   }
 
   // Last resort: check raw string prefix
