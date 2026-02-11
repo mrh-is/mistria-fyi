@@ -7,8 +7,6 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "outDir": "dist",
-    "rootDir": ".",
     "paths": {
       "$lib/*": ["../src/lib/*"]
     }
