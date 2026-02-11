@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Harvest Helper — Offline</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100dvh;
+        padding: 2rem;
+        background: #fff;
+        color: #1a1a2e;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #1a1a2e;
+          color: #e8e8f0;
+        }
+        a {
+          color: #93a3f8;
+        }
+      }
+      .container {
+        text-align: center;
+        max-width: 20rem;
+      }
+      h1 {
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+      }
+      p {
+        font-size: 0.875rem;
+        color: #666;
+        margin-bottom: 1.5rem;
+      }
+      @media (prefers-color-scheme: dark) {
+        p {
+          color: #999;
+        }
+      }
+      button {
+        padding: 0.5rem 1.5rem;
+        border-radius: 0.5rem;
+        border: 1px solid #ddd;
+        background: transparent;
+        font-size: 0.875rem;
+        cursor: pointer;
+      }
+      @media (prefers-color-scheme: dark) {
+        button {
+          border-color: #444;
+          color: #e8e8f0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>You're offline</h1>
+      <p>
+        Harvest Helper needs an internet connection to load for the first time. Your tracked
+        progress is saved locally and will be here when you reconnect.
+      </p>
+      <button onclick="location.reload()">Try again</button>
+    </div>
+  </body>
+</html>

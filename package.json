@@ -47,15 +47,6 @@
     "vite": "^7.3.1",
     "vitest": "^4.0.18"
   },
-  "lint-staged": {
-    "*.{js,ts,svelte}": [
-      "prettier --write",
-      "eslint --fix"
-    ],
-    "*.{json,md,css,html,yaml}": [
-      "prettier --write"
-    ]
-  },
   "overrides": {
     "cookie": "^0.7.0"
   }

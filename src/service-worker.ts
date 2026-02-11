@@ -14,7 +14,7 @@ sw.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.addAll(ASSETS))
+      .then((cache) => cache.addAll([...ASSETS, "/offline.html"]))
       .then(() => sw.skipWaiting()),
   );
 });
@@ -49,7 +49,16 @@ sw.addEventListener("fetch", (event) => {
           void caches.open(CACHE).then((cache) => cache.put(event.request, clone));
           return response;
         })
-        .catch(() => caches.match(event.request).then((r) => r ?? Response.error())),
+        .catch(() =>
+          caches
+            .match(event.request)
+            .then(
+              (r) =>
+                r ??
+                (event.request.mode === "navigate" ? caches.match("/offline.html") : undefined),
+            )
+            .then((r) => r ?? Response.error()),
+        ),
     );
   }
 });
