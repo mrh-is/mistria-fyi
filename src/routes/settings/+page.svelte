@@ -5,6 +5,7 @@
   import * as Card from "$lib/components/ui/card/index.js";
   import { Separator } from "$lib/components/ui/separator/index.js";
   import * as ToggleGroup from "$lib/components/ui/toggle-group/index.js";
+  import { trackerData } from "$lib/data/index.js";
   import { buildImportState, parsePlayerSave } from "$lib/engine/import-save.js";
   import { theme, type Theme } from "$lib/stores/theme.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -279,4 +280,8 @@
       {/if}
     </Card.Content>
   </Card.Root>
+
+  <div class="text-muted-foreground text-center text-xs">
+    Game data: Fields of Mistria v{trackerData.version}
+  </div>
 </div>
