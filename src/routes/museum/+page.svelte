@@ -24,7 +24,7 @@
 
   function matchesFilter(itemId: ItemId): boolean {
     if (!nameFilter) return true;
-    const name = trackerData.items[itemId]?.name ?? "";
+    const name = trackerData.items[itemId].name;
     return name.toLowerCase().includes(nameFilter.toLowerCase());
   }
 
@@ -56,7 +56,7 @@
   <CategoryHeader
     icon={Landmark}
     name="Museum"
-    onSearch={(q) => (nameFilter = q)}
+    onSearch={(q: string) => (nameFilter = q)}
     {progress}
     showWorldState
   />
@@ -100,7 +100,9 @@
                     class="h-6 text-xs"
                     variant="ghost"
                     size="sm"
-                    onclick={() => { userState.uncompleteMuseumSet(set.items); }}
+                    onclick={() => {
+                      userState.uncompleteMuseumSet(set.items);
+                    }}
                   >
                     <Undo2 class="size-3" />
                     Undo set
@@ -110,7 +112,9 @@
                     class="h-6 text-xs"
                     variant="ghost"
                     size="sm"
-                    onclick={() => { userState.completeMuseumSet(set.items); }}
+                    onclick={() => {
+                      userState.completeMuseumSet(set.items);
+                    }}
                   >
                     <CheckCheck class="size-3" />
                     Complete set

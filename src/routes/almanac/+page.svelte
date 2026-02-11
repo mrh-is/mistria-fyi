@@ -4,6 +4,7 @@
   import CategoryHeader from "$lib/components/category-header.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import ItemRow from "$lib/components/item-row.svelte";
+  import { Button } from "$lib/components/ui/button/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { isItemAvailable } from "$lib/engine/availability.js";
   import { getAlmanacProgress } from "$lib/engine/progress.js";
@@ -11,6 +12,11 @@
   import { parseAlmanacCategory } from "$lib/utils/format.js";
 
   import type { ItemId } from "$lib/types/tracker-data.js";
+
+  const SECTION_LIMIT = 50;
+
+  // Track which sections have been expanded to show all items
+  let expandedSections = $state<Record<string, boolean>>({});
 
   let progress = $derived(
     getAlmanacProgress({
@@ -28,7 +34,7 @@
   }
 
   function shouldShowItem(itemId: ItemId): boolean {
-    const itemName = trackerData.items[itemId]?.name ?? "";
+    const itemName = trackerData.items[itemId].name;
     if (!matchesFilter(itemId, itemName)) return false;
     const completed = userState.state.completed.almanac.has(itemId);
     if (completed && !userState.state.showCompleted) return false;
@@ -78,7 +84,7 @@
   <CategoryHeader
     icon={BookCheck}
     name="Almanac"
-    onSearch={(q) => (nameFilter = q)}
+    onSearch={(q: string) => (nameFilter = q)}
     {progress}
     showWorldState
   />
@@ -100,49 +106,83 @@
           <!-- Single category in group (flattened "Other") — render items directly -->
           {@const isFishCategory =
             categories[0].key.startsWith("fish/") || categories[0].key.startsWith("mines/")}
-          {#each categories[0].items as [itemId, item] (itemId)}
-            {#if shouldShowItem(itemId as ItemId)}
-              <ItemRow
-                completed={userState.state.completed.almanac.has(itemId as ItemId)}
-                dimmed={isItemDimmed(itemId as ItemId)}
-                hideFishSize={!isFishCategory}
-                itemId={itemId as ItemId}
-                name={item.name}
-                onToggle={() => {
-                  userState.toggleAlmanacItem(itemId as ItemId);
-                }}
-              />
-            {/if}
+          {@const filteredItems = categories[0].items.filter(([id]) =>
+            shouldShowItem(id as ItemId),
+          )}
+          {@const sectionKey = categories[0].key}
+          {@const showAllItems = expandedSections[sectionKey] ?? false}
+          {@const displayItems = showAllItems
+            ? filteredItems
+            : filteredItems.slice(0, SECTION_LIMIT)}
+          {#each displayItems as [itemId, item] (itemId)}
+            <ItemRow
+              completed={userState.state.completed.almanac.has(itemId as ItemId)}
+              dimmed={isItemDimmed(itemId as ItemId)}
+              hideFishSize={!isFishCategory}
+              itemId={itemId as ItemId}
+              name={item.name}
+              onToggle={() => {
+                userState.toggleAlmanacItem(itemId as ItemId);
+              }}
+            />
           {/each}
+          {#if !showAllItems && filteredItems.length > SECTION_LIMIT}
+            <div class="flex justify-center py-1">
+              <Button
+                class="text-muted-foreground h-7 text-xs"
+                variant="ghost"
+                onclick={() => {
+                  expandedSections[sectionKey] = true;
+                }}
+              >
+                Show {filteredItems.length - SECTION_LIMIT} more...
+              </Button>
+            </div>
+          {/if}
         {:else}
           {#each categories as cat (cat.key)}
             {@const catItemIds = cat.items.map(([id]) => id as ItemId)}
             {@const catCompleted = catItemIds.filter((id) =>
               userState.state.completed.almanac.has(id),
             ).length}
-            {@const visibleCatItems = catItemIds.filter(shouldShowItem)}
+            {@const filteredCatItems = cat.items.filter(([id]) => shouldShowItem(id as ItemId))}
             {@const isFishCategory = cat.key.startsWith("fish/") || cat.key.startsWith("mines/")}
-            {#if visibleCatItems.length > 0}
+            {#if filteredCatItems.length > 0}
               <ExpandableSection
                 count={catCompleted}
                 forceOpen={!!nameFilter}
                 name={cat.name}
                 total={catItemIds.length}
               >
-                {#each cat.items as [itemId, item] (itemId)}
-                  {#if shouldShowItem(itemId as ItemId)}
-                    <ItemRow
-                      completed={userState.state.completed.almanac.has(itemId as ItemId)}
-                      dimmed={isItemDimmed(itemId as ItemId)}
-                      hideFishSize={!isFishCategory}
-                      itemId={itemId as ItemId}
-                      name={item.name}
-                      onToggle={() => {
-                        userState.toggleAlmanacItem(itemId as ItemId);
-                      }}
-                    />
-                  {/if}
+                {@const showAllCat = expandedSections[cat.key] ?? false}
+                {@const displayCatItems = showAllCat
+                  ? filteredCatItems
+                  : filteredCatItems.slice(0, SECTION_LIMIT)}
+                {#each displayCatItems as [itemId, item] (itemId)}
+                  <ItemRow
+                    completed={userState.state.completed.almanac.has(itemId as ItemId)}
+                    dimmed={isItemDimmed(itemId as ItemId)}
+                    hideFishSize={!isFishCategory}
+                    itemId={itemId as ItemId}
+                    name={item.name}
+                    onToggle={() => {
+                      userState.toggleAlmanacItem(itemId as ItemId);
+                    }}
+                  />
                 {/each}
+                {#if !showAllCat && filteredCatItems.length > SECTION_LIMIT}
+                  <div class="flex justify-center py-1">
+                    <Button
+                      class="text-muted-foreground h-7 text-xs"
+                      variant="ghost"
+                      onclick={() => {
+                        expandedSections[cat.key] = true;
+                      }}
+                    >
+                      Show {filteredCatItems.length - SECTION_LIMIT} more...
+                    </Button>
+                  </div>
+                {/if}
               </ExpandableSection>
             {/if}
           {/each}
