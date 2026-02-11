@@ -9,18 +9,16 @@
     count,
     forceOpen = false,
     name,
-    open = false,
     total,
   }: {
     children: Snippet;
     count?: number;
     forceOpen?: boolean;
     name: string;
-    open?: boolean;
     total?: number;
   } = $props();
 
-  let expanded = $state(open);
+  let expanded = $state(false);
   let isOpen = $derived(expanded || forceOpen);
 </script>
 

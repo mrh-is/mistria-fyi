@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Loader2, Search, X } from "@lucide/svelte";
+  import { LoaderCircle, Search, X } from "@lucide/svelte";
 
   import { Input } from "$lib/components/ui/input/index.js";
 
@@ -30,7 +30,7 @@
 
 <div class="relative">
   {#if searching}
-    <Loader2
+    <LoaderCircle
       class="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2 animate-spin"
     />
   {:else}

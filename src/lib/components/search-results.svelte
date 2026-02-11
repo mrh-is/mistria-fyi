@@ -55,10 +55,8 @@
         break;
       case "npcs": {
         const npcId = result.id as NpcId;
-        const npc = trackerData.npcs[npcId];
-        const max = npc?.dateable ? 12 : 10;
         const current = userState.state.completed.npcLevels[result.id] ?? 0;
-        userState.setNpcLevel(npcId, current >= max ? 0 : max);
+        userState.setNpcLevel(npcId, current >= 10 ? 0 : 10);
         break;
       }
       case "quests":
