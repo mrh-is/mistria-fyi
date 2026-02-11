@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Check, Crown, Minus, Plus } from "@lucide/svelte";
+  import { Crown, Minus, Plus } from "@lucide/svelte";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
@@ -22,6 +22,13 @@
   let ranks = trackerData.renown.ranks;
   let maxLevel = levelsPerRank * ranks.length;
 
+  let currentRankIndex = $derived(
+    Math.min(Math.floor(level / levelsPerRank), ranks.length - 1),
+  );
+  let levelInRank = $derived(level - currentRankIndex * levelsPerRank);
+  let currentRankName = $derived(ranks[currentRankIndex].name);
+  let overallPct = $derived(maxLevel > 0 ? (level / maxLevel) * 100 : 0);
+
   let editing = $state(false);
   let editValue = $state("");
 
@@ -42,85 +49,79 @@
     if (e.key === "Enter") commitEdit();
     if (e.key === "Escape") editing = false;
   }
-
-  function rankLevelsCompleted(rankIndex: number): number {
-    const rankStart = rankIndex * levelsPerRank;
-    return Math.max(0, Math.min(levelsPerRank, level - rankStart));
-  }
 </script>
 
-<div class="flex flex-col gap-4 p-4">
+<div class="flex flex-col gap-4 px-4 pb-4">
   <CategoryHeader icon={Crown} name="Renown" {progress} />
 
-  <div class="flex items-center justify-center gap-3">
-    <Button
-      class="size-6 shrink-0"
-      size="icon"
-      variant="ghost"
-      disabled={level <= 0}
-      onclick={() => {
-        userState.setRenown(level - 1);
-      }}
-    >
-      <Minus class="size-3" />
-    </Button>
-    {#if editing}
-      <Input
-        class="h-6 w-20 text-center text-xs"
-        type="number"
-        max={maxLevel}
-        min={0}
-        value={editValue}
-        onblur={commitEdit}
-        oninput={(e: Event) => {
-          editValue = (e.target as HTMLInputElement).value;
+  <div class="flex flex-col gap-2">
+    <div class="text-center text-lg font-semibold">{currentRankName}</div>
+    <div class="text-muted-foreground text-center text-xs">
+      Level {levelInRank}/{levelsPerRank} in rank
+    </div>
+    <Progress class="h-2" value={overallPct} />
+
+    <div class="flex items-center justify-center gap-3">
+      <Button
+        class="size-6 shrink-0"
+        size="icon"
+        variant="ghost"
+        disabled={level <= 0}
+        onclick={() => {
+          userState.setRenown(level - 1);
         }}
-        onkeydown={handleEditKeydown}
-      />
-    {:else}
-      <button
-        class="text-muted-foreground text-sm hover:underline"
-        title="Click to edit level directly"
-        type="button"
-        onclick={startEditing}
       >
-        {level}/{maxLevel} total
-      </button>
-    {/if}
-    <Button
-      class="size-6 shrink-0"
-      size="icon"
-      variant="ghost"
-      disabled={level >= maxLevel}
-      onclick={() => {
-        userState.setRenown(level + 1);
-      }}
-    >
-      <Plus class="size-3" />
-    </Button>
+        <Minus class="size-3" />
+      </Button>
+      {#if editing}
+        <Input
+          class="h-6 w-20 text-center text-xs"
+          type="number"
+          max={maxLevel}
+          min={0}
+          value={editValue}
+          onblur={commitEdit}
+          oninput={(e: Event) => {
+            editValue = (e.target as HTMLInputElement).value;
+          }}
+          onkeydown={handleEditKeydown}
+        />
+      {:else}
+        <button
+          class="text-muted-foreground text-sm hover:underline"
+          title="Click to edit level directly"
+          type="button"
+          onclick={startEditing}
+        >
+          {level}/{maxLevel} total
+        </button>
+      {/if}
+      <Button
+        class="size-6 shrink-0"
+        size="icon"
+        variant="ghost"
+        disabled={level >= maxLevel}
+        onclick={() => {
+          userState.setRenown(level + 1);
+        }}
+      >
+        <Plus class="size-3" />
+      </Button>
+    </div>
   </div>
 
-  <div class="flex flex-col gap-3">
+  <div class="flex flex-col">
     {#each ranks as rank, i (rank.name)}
-      {@const completed = rankLevelsCompleted(i)}
-      {@const maxed = completed >= levelsPerRank}
-      {#if maxed ? userState.state.showCompleted : true}
-        <div class="flex flex-col gap-1 rounded-md px-2 py-1.5 {maxed ? 'opacity-40' : ''}">
-          <div class="flex items-center gap-2">
-            <span class="min-w-0 flex-1 text-sm font-medium">{rank.name}</span>
-            {#if maxed}
-              <Check class="text-muted-foreground size-3.5" />
-            {/if}
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="flex-1">
-              <Progress class="h-2" value={(completed / levelsPerRank) * 100} />
-            </div>
-            <span class="text-muted-foreground w-12 text-center text-xs">
-              {completed}/{levelsPerRank}
-            </span>
-          </div>
+      {@const isCompleted = level >= (i + 1) * levelsPerRank}
+      {@const isCurrent = i === currentRankIndex}
+      {#if isCurrent}
+        <div class="bg-accent rounded-md px-3 py-2">
+          <div class="text-sm font-medium">{rank.name}</div>
         </div>
+      {:else if isCompleted}
+        <div class="text-muted-foreground px-3 py-0.5 text-xs line-through">{rank.name}</div>
+      {:else}
+        <div class="text-muted-foreground px-3 py-0.5 text-xs">{rank.name}</div>
       {/if}
     {/each}
   </div>
