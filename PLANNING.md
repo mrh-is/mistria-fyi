@@ -379,33 +379,24 @@ All items in the list should be visually scannable — a player should be able t
 
 ##### UI
 
-- [x] Can the header (probably just the back button & title row) be sticky? Annoying to have to scroll back up
-  - Your first version is sticky, but only over the header/control section, the actual section/item list pushes it off the screen still
-  - Fixed: entire category header (title + world state + search + show completed) is now sticky
-- [x] Icons
-  - [x] Spring - `Flower`, not sparkle
-  - [x] Fall icon should also be rotated in world state selector
-  - [x] "Breezy" weather - `Wind`
-  - [x] "Calm" weather - `SunDim`
-- [x] Weather restrictions should always show in order: calm, inclement, heavy, special
-- [x] Move overall completion to very top of page
-  - Looks good on category page on same row as page title, do this on home as well
-  - Maybe the progress bar is full-width below the page title?
-  - I have a sense that this UI & the tile UI could be more similar, with a top row of [Icon / Name / Count] and the progress bar below
-    - On mobile, the count might have to drop to a new row (esp "Cosmetics" tends to bump into the count)
-  - Fixed: overall pct moved to home page title row; category cards now use [Icon / Name / Count] row with progress bar below
-- [x] Home page tiles should still have less vertical padding, especially on mobile
-  - I believe the default vertical padding for a `Card` is `.py-6`
-  - On desktop, should be more like `.py-4`
-  - On mobile, should be `.py-4` or maybe even `.py-3`
-  - Also the cards could use a touch more horizontal padding
-  - Fixed: cards now use `py-3 md:py-4` and `px-3 md:px-4`
 - [x] Could the Renown page look more like one of the Skills?
-  - Fixed: renown now shows each rank as a progress bar row with level counter, matching skills layout
+  - Fixed: single -/+ control, single progress bar, current rank highlighted, completed ranks minimized (line-through), upcoming ranks subtle
+- [x] Home page cards are too small/cramped now
+  - Fixed: bigger icons (size-5), more padding (py-4, px-4), wider progress bar (h-1.5), increased grid gap
+- [x] Sticky headers are great, but weird that it scrolls very slightly from initial viewport, would love for it to ba basically static in that case
+  - Fixed: removed top padding from category pages, header now includes its own top padding so it starts flush with viewport
+- [x] The current game version supports NPC relationships up to level 8 only (but the max will be 10, so let's plan for that)
+  - Fixed: `MAX_NPC_LEVEL = 8` constant shared between progress engine and NPC page
+- [x] The NPC relationship meters leave a lot of empty space, could they utilize the space better? Maybe bigger icons, maybe centering?
+  - Fixed: icons enlarged to size-5, centered with gap-1
+- [x] Show the current game version somewhere
+  - Fixed: shown at bottom of settings page as "Game data: Fields of Mistria v0.13.4"
+- [x] Quest givers are shown in parentheses, but other sub-notes are just differentiated via styling (but no parens)
+  - Fixed: parentheses replaced with en-dash separator
 
 ##### Data
 
-- [x] We might as well show the quest giver for all fetch quests
+None currently
 
 ### Phase 5: Polish
 
