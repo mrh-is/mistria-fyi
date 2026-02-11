@@ -377,26 +377,12 @@ All items in the list should be visually scannable — a player should be able t
 
 #### Fixes
 
-##### UI
-
-- [x] Could the Renown page look more like one of the Skills?
-  - Fixed: single -/+ control, single progress bar, current rank highlighted, completed ranks minimized (line-through), upcoming ranks subtle
-- [x] Home page cards are too small/cramped now
-  - Fixed: bigger icons (size-5), more padding (py-4, px-4), wider progress bar (h-1.5), increased grid gap
-- [x] Sticky headers are great, but weird that it scrolls very slightly from initial viewport, would love for it to ba basically static in that case
-  - Fixed: removed top padding from category pages, header now includes its own top padding so it starts flush with viewport
-- [x] The current game version supports NPC relationships up to level 8 only (but the max will be 10, so let's plan for that)
-  - Fixed: `MAX_NPC_LEVEL = 8` constant shared between progress engine and NPC page
-- [x] The NPC relationship meters leave a lot of empty space, could they utilize the space better? Maybe bigger icons, maybe centering?
-  - Fixed: icons enlarged to size-5, centered with gap-1
-- [x] Show the current game version somewhere
-  - Fixed: shown at bottom of settings page as "Game data: Fields of Mistria v0.13.4"
-- [x] Quest givers are shown in parentheses, but other sub-notes are just differentiated via styling (but no parens)
-  - Fixed: parentheses replaced with en-dash separator
-
-##### Data
-
-None currently
+- [x] On the home page on an iPhone SE, "Cosmetics" runs into the count
+  - Fixed: shows percentage on small screens (`sm:` breakpoint switches to full counts)
+- [x] On NPC page, it's not clear that -/+ are clickable
+  - Fixed: buttons now have visible hover states and are slightly larger (size-3.5)
+- [x] On NPC page, maybe -/+ could be attached to the meter icons? They get very far away
+  - Fixed: -/+ sit directly adjacent to icons with gap-0.5, no flex-1 spacer between them
 
 ### Phase 5: Polish
 
