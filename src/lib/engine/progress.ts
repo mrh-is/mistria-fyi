@@ -4,6 +4,8 @@ import { filterAvailableItems } from "$lib/engine/availability.js";
 import type { AvailabilityMode, CompletedState } from "$lib/stores/user-state.svelte.js";
 import type { ItemId, Season, Source, Weather } from "$lib/types/tracker-data.js";
 
+export const MAX_NPC_LEVEL = 8;
+
 // ─── Types ──────────────────────────────────────────────────────────
 
 export interface AllProgress {
@@ -94,9 +96,8 @@ export function getMuseumProgress(ctx: ProgressContext): CategoryProgress {
 export function getNpcsProgress(ctx: ProgressContext): CategoryProgress {
   const total = Object.keys(trackerData.npcs).length;
   let completed = 0;
-  for (const [id, npc] of Object.entries(trackerData.npcs)) {
-    const max = npc.dateable ? 12 : 10;
-    if ((ctx.completed.npcLevels[id] ?? 0) >= max) completed++;
+  for (const [id, _npc] of Object.entries(trackerData.npcs)) {
+    if ((ctx.completed.npcLevels[id] ?? 0) >= MAX_NPC_LEVEL) completed++;
   }
   return { completed, filtered: total - completed, total };
 }
