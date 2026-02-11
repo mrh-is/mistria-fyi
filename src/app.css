@@ -117,5 +117,15 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Prevent pull-to-refresh in standalone PWA mode */
+    overscroll-behavior-y: contain;
+    /* Remove tap highlight on iOS */
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Prevent iOS zoom on focused inputs — inputs must be ≥16px */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em);
   }
 }

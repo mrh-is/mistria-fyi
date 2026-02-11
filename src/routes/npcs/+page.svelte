@@ -80,7 +80,7 @@
 
           <div class="flex items-center justify-center gap-0.5">
             <button
-              class="text-muted-foreground hover:text-foreground flex size-6 items-center justify-center rounded-md transition-colors disabled:opacity-30"
+              class="text-muted-foreground hover:text-foreground active:bg-accent flex size-8 items-center justify-center rounded-md transition-colors disabled:opacity-30"
               type="button"
               disabled={level <= 0}
               onclick={() => {
@@ -91,23 +91,31 @@
             </button>
 
             {#each { length: MAX_NPC_LEVEL } as _, i (i)}
-              {#if npc.dateable}
-                <Heart
-                  class="size-5 transition-colors duration-200 {i < level
-                    ? LEVEL_COLORS[i] + ' fill-current'
-                    : 'text-muted-foreground/30 fill-transparent'}"
-                />
-              {:else}
-                <Octagon
-                  class="size-5 transition-colors duration-200 {i < level
-                    ? LEVEL_COLORS[i] + ' fill-current'
-                    : 'text-muted-foreground/30 fill-transparent'}"
-                />
-              {/if}
+              <button
+                class="p-0.5"
+                type="button"
+                onclick={() => {
+                  userState.setNpcLevel(npc.id, i < level ? i : i + 1);
+                }}
+              >
+                {#if npc.dateable}
+                  <Heart
+                    class="size-4 transition-colors duration-200 {i < level
+                      ? `${LEVEL_COLORS[i]  } fill-current`
+                      : 'text-muted-foreground/30 fill-transparent'}"
+                  />
+                {:else}
+                  <Octagon
+                    class="size-4 transition-colors duration-200 {i < level
+                      ? `${LEVEL_COLORS[i]  } fill-current`
+                      : 'text-muted-foreground/30 fill-transparent'}"
+                  />
+                {/if}
+              </button>
             {/each}
 
             <button
-              class="text-muted-foreground hover:text-foreground flex size-6 items-center justify-center rounded-md transition-colors disabled:opacity-30"
+              class="text-muted-foreground hover:text-foreground active:bg-accent flex size-8 items-center justify-center rounded-md transition-colors disabled:opacity-30"
               type="button"
               disabled={level >= MAX_NPC_LEVEL}
               onclick={() => {

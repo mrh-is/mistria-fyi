@@ -108,7 +108,7 @@
   );
 </script>
 
-<div class="flex flex-col gap-4 p-4">
+<div class="flex flex-col gap-4 p-4 pt-[max(1rem,env(safe-area-inset-top))]">
   <!-- Header -->
   <div class="flex items-center gap-2">
     <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- known route -->

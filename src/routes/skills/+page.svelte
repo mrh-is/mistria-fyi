@@ -80,7 +80,7 @@
 
           <div class="flex items-center gap-2">
             <Button
-              class="size-6 shrink-0"
+              class="size-8 shrink-0"
               size="icon"
               variant="ghost"
               disabled={level <= 0}
@@ -88,7 +88,7 @@
                 userState.setSkillLevel(skill.id, level - 1);
               }}
             >
-              <Minus class="size-3" />
+              <Minus class="size-3.5" />
             </Button>
 
             <div class="relative flex-1">
@@ -123,7 +123,7 @@
               />
             {:else}
               <button
-                class="text-muted-foreground w-12 text-center text-xs hover:underline"
+                class="text-muted-foreground flex h-8 w-12 items-center justify-center text-center text-xs hover:underline"
                 type="button"
                 onclick={() => {
                   startEditing(skill.id as string, level);
@@ -134,7 +134,7 @@
             {/if}
 
             <Button
-              class="size-6 shrink-0"
+              class="size-8 shrink-0"
               size="icon"
               variant="ghost"
               disabled={level >= 60}
@@ -142,7 +142,7 @@
                 userState.setSkillLevel(skill.id, level + 1);
               }}
             >
-              <Plus class="size-3" />
+              <Plus class="size-3.5" />
             </Button>
           </div>
         </div>

@@ -11,7 +11,7 @@
   let searchQuery = $state("");
 </script>
 
-<div class="flex flex-col gap-3 p-4">
+<div class="flex flex-col gap-3 p-4 pt-[max(1rem,env(safe-area-inset-top))]">
   <div class="flex items-center justify-between">
     <h1 class="flex items-center gap-1.5 text-lg font-semibold">
       <Wheat class="size-5 text-amber-600 dark:text-amber-400" />
