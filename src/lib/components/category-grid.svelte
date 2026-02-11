@@ -36,7 +36,7 @@
   ] as const;
 </script>
 
-<div class="grid grid-cols-2 gap-1.5">
+<div class="grid grid-cols-2 gap-2">
   {#each categories as cat (cat.key)}
     <CategoryCard href={cat.href} icon={cat.icon} name={cat.name} progress={progress[cat.key]} />
   {/each}
