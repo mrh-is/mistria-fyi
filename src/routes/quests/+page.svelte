@@ -11,12 +11,6 @@
   import type { QuestState } from "$lib/stores/user-state.svelte.js";
   import type { NpcId, QuestId } from "$lib/types/tracker-data.js";
 
-  /** Look up NPC display name from tracker data, falling back to title-cased ID */
-  function npcName(npcId: string): string {
-    const npc = trackerData.npcs[npcId as NpcId];
-    return npc?.name ?? npcId.charAt(0).toUpperCase() + npcId.slice(1);
-  }
-
   /** Build a set of display names that appear more than once in a quest group */
   function findDuplicateNames(entries: Array<{ displayName: string }>): Set<string> {
     const counts: Record<string, number> = {};
@@ -106,7 +100,9 @@
             <span class="min-w-0 flex-1 text-sm">
               {quest.displayName}
               {#if quest.npc && (questType === "fetch_quests" || duplicateNames.has(quest.displayName))}
-                <span class="text-muted-foreground text-[10px]">— {npcName(quest.npc)}</span>
+                <span class="text-muted-foreground text-[10px]">
+                  {trackerData.npcs[quest.npc as NpcId].name}
+                </span>
               {/if}
             </span>
             {#if questState === "obtained"}

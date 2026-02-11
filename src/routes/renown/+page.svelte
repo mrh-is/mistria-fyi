@@ -22,9 +22,7 @@
   let ranks = trackerData.renown.ranks;
   let maxLevel = levelsPerRank * ranks.length;
 
-  let currentRankIndex = $derived(
-    Math.min(Math.floor(level / levelsPerRank), ranks.length - 1),
-  );
+  let currentRankIndex = $derived(Math.min(Math.floor(level / levelsPerRank), ranks.length - 1));
   let levelInRank = $derived(level - currentRankIndex * levelsPerRank);
   let currentRankName = $derived(ranks[currentRankIndex].name);
   let overallPct = $derived(maxLevel > 0 ? (level / maxLevel) * 100 : 0);

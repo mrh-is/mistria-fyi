@@ -42,7 +42,7 @@
   <ExpandableSection
     count={userState.state.completed.mines.floor}
     name="Floor Progress"
-    open={true}
+    forceOpen={true}
     total={trackerData.mines.maxFloors}
   >
     <div class="flex flex-col gap-2 py-2">
@@ -79,7 +79,7 @@
   <ExpandableSection
     count={userState.state.completed.mines.spells.size}
     name="Spells"
-    open={true}
+    forceOpen={true}
     total={spells.length}
   >
     {#each spells as spell (spell.id)}

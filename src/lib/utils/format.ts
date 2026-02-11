@@ -63,7 +63,7 @@ export function displayQuestName(name: string, questType: string): string {
     // "Request for a {item}" / "Request for {item}" → "{item}"
     // "Important Request for a Moon Fruit" → "Moon Fruit (Important)"
     if (name.startsWith("Important ")) {
-      return name.replace(/^Important Request [Ff]or (an? )?/, "") + " (Important)";
+      return `${name.replace(/^Important Request [Ff]or (an? )?/, "")} (Important)`;
     }
     return name.replace(/^Request [Ff]or (an? )?/, "");
   }

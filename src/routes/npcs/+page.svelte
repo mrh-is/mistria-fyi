@@ -101,13 +101,13 @@
                 {#if npc.dateable}
                   <Heart
                     class="size-4 transition-colors duration-200 {i < level
-                      ? `${LEVEL_COLORS[i]  } fill-current`
+                      ? `${LEVEL_COLORS[i]} fill-current`
                       : 'text-muted-foreground/30 fill-transparent'}"
                   />
                 {:else}
                   <Octagon
                     class="size-4 transition-colors duration-200 {i < level
-                      ? `${LEVEL_COLORS[i]  } fill-current`
+                      ? `${LEVEL_COLORS[i]} fill-current`
                       : 'text-muted-foreground/30 fill-transparent'}"
                   />
                 {/if}
