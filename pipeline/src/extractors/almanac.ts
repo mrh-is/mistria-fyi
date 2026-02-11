@@ -41,8 +41,11 @@ export function extractAlmanac(fiddle: FiddleData): {
   for (const [topCategory, subCategories] of Object.entries(itemsRoot)) {
     for (const [subCategory, categoryItems] of Object.entries(subCategories)) {
       if (topCategory === "other" && subCategory === "crops_and_forage") {
-        // Split crops_and_forage into subcategories by tags
         splitCropsAndForage(categoryItems, almanac, items);
+        continue;
+      }
+
+      if (topCategory === "other" && subCategory === "unreviewed_new_items") {
         continue;
       }
 
