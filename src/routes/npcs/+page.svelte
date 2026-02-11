@@ -2,7 +2,6 @@
   import { Flower, Heart, Leaf, Minus, Octagon, Plus, Snowflake, Sun } from "@lucide/svelte";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
-  import { Button } from "$lib/components/ui/button/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { getNpcsProgress, MAX_NPC_LEVEL } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -79,47 +78,42 @@
             </span>
           </div>
 
-          <!-- Icons + stepper row -->
-          <div class="flex items-center gap-1.5">
-            <Button
-              class="size-6 shrink-0"
-              size="icon"
-              variant="ghost"
+          <div class="flex items-center justify-center gap-0.5">
+            <button
+              class="text-muted-foreground hover:text-foreground flex size-6 items-center justify-center rounded-md transition-colors disabled:opacity-30"
+              type="button"
               disabled={level <= 0}
               onclick={() => {
                 userState.setNpcLevel(npc.id, level - 1);
               }}
             >
-              <Minus class="size-3" />
-            </Button>
+              <Minus class="size-3.5" />
+            </button>
 
-            <div class="flex min-w-0 flex-1 flex-wrap justify-center gap-1">
-              {#each { length: MAX_NPC_LEVEL } as _, i (i)}
-                {#if npc.dateable}
-                  <Heart
-                    class="size-5 {i < level ? LEVEL_COLORS[i] : 'text-muted-foreground/30'}"
-                    fill={i < level ? "currentColor" : "none"}
-                  />
-                {:else}
-                  <Octagon
-                    class="size-5 {i < level ? LEVEL_COLORS[i] : 'text-muted-foreground/30'}"
-                    fill={i < level ? "currentColor" : "none"}
-                  />
-                {/if}
-              {/each}
-            </div>
+            {#each { length: MAX_NPC_LEVEL } as _, i (i)}
+              {#if npc.dateable}
+                <Heart
+                  class="size-5 {i < level ? LEVEL_COLORS[i] : 'text-muted-foreground/30'}"
+                  fill={i < level ? "currentColor" : "none"}
+                />
+              {:else}
+                <Octagon
+                  class="size-5 {i < level ? LEVEL_COLORS[i] : 'text-muted-foreground/30'}"
+                  fill={i < level ? "currentColor" : "none"}
+                />
+              {/if}
+            {/each}
 
-            <Button
-              class="size-6 shrink-0"
-              size="icon"
-              variant="ghost"
+            <button
+              class="text-muted-foreground hover:text-foreground flex size-6 items-center justify-center rounded-md transition-colors disabled:opacity-30"
+              type="button"
               disabled={level >= MAX_NPC_LEVEL}
               onclick={() => {
                 userState.setNpcLevel(npc.id, level + 1);
               }}
             >
-              <Plus class="size-3" />
-            </Button>
+              <Plus class="size-3.5" />
+            </button>
           </div>
         </div>
       {/if}
