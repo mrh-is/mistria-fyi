@@ -2,11 +2,13 @@
 
 ## Vision
 
-A mobile-first companion web app for **Fields of Mistria** that helps players track progress toward 100% completion — used on their phone while playing on PC.
+A mobile-first companion web app for **Fields of Mistria** that helps players track progress toward
+100% completion — used on their phone while playing on PC.
 
 **Core experience**: Tracker-first. "What do I still need to do?" not "What is this item?"
 
-Reference data supports the tracker (e.g., tapping an item shows where to find it), but the primary UX is about surfacing what's incomplete and what's actionable _right now_.
+Reference data supports the tracker (e.g., tapping an item shows where to find it), but the primary
+UX is about surfacing what's incomplete and what's actionable _right now_.
 
 ---
 
@@ -14,27 +16,37 @@ Reference data supports the tracker (e.g., tapping an item shows where to find i
 
 ### D1: Target user = Completionist, building for public release
 
-Building for completionists first. The app should answer: "What's left? What can I do this season/today?" Designed for public release — other FoM players should be able to use this too.
+Building for completionists first. The app should answer: "What's left? What can I do this
+season/today?" Designed for public release — other FoM players should be able to use this too.
 
 ### D2: Tracker-first, reference supports it
 
-Reference data (sources, locations, prices) is accessed _in context_ of tracking, not as a standalone wiki. We don't need a full almanac browsing experience — we need "I haven't shipped this item yet → where do I get it?"
+Reference data (sources, locations, prices) is accessed _in context_ of tracking, not as a
+standalone wiki. We don't need a full almanac browsing experience — we need "I haven't shipped this
+item yet → where do I get it?"
 
 ### D3: Data pipeline exists and should be preserved
 
-TypeScript pipeline in `pipeline/`: `fiddle.json` (flat slash-key format, ~7MB) → parse → localize → extract → `tracker-data.json` (~430KB). Drop in new fiddle.json + localization.json, run `npm run pipeline`, commit. Single version only — latest game version is all that matters.
+TypeScript pipeline in `pipeline/`: `fiddle.json` (flat slash-key format, ~7MB) → parse → localize →
+extract → `tracker-data.json` (~430KB). Drop in new fiddle.json + localization.json, run
+`npm run pipeline`, commit. Single version only — latest game version is all that matters.
 
 ### D4: Player.json import for bootstrapping
 
-The game's save file (`player.json`) contains rich completion data that can auto-populate the tracker. This is a killer onboarding feature: import your save, see your progress instantly.
+The game's save file (`player.json`) contains rich completion data that can auto-populate the
+tracker. This is a killer onboarding feature: import your save, see your progress instantly.
 
 ### D5: One list, many views
 
-There is one canonical list: **everything you haven't done yet** (~3000 items). No separate "my lists" vs "progress" — they're the same data viewed differently. Completion % is just a summary of the checklist.
+There is one canonical list: **everything you haven't done yet** (~3000 items). No separate "my
+lists" vs "progress" — they're the same data viewed differently. Completion % is just a summary of
+the checklist.
 
 ### D6: No guidance
 
-The app doesn't tell you what to do. No "today's tasks," no priority sorting. The game has no time pressure. The app provides tools (filters, search, world state) and the player decides what to work on.
+The app doesn't tell you what to do. No "today's tasks," no priority sorting. The game has no time
+pressure. The app provides tools (filters, search, world state) and the player decides what to work
+on.
 
 ### D7: Filter-driven UI with 3-way availability toggle
 
@@ -46,7 +58,8 @@ World state (season, weather) is set by the player. A 3-way toggle controls how 
 
 ### D8: Search is the primary interaction
 
-Always-visible search bar. Used for both lookup ("where do I find X?") and recording progress ("just caught a fairy bee" → search → check off). Not a separate tab — persistent on the main screen.
+Always-visible search bar. Used for both lookup ("where do I find X?") and recording progress ("just
+caught a fairy bee" → search → check off). Not a separate tab — persistent on the main screen.
 
 ### D9: Tech stack
 
@@ -64,7 +77,8 @@ Completed items are hidden to keep focus on what's left. Toggle available to sho
 
 ### D11: Fresh start
 
-Hard reset the repo. Blow away existing code and git history. Start from scratch with the new architecture.
+Hard reset the repo. Blow away existing code and git history. Start from scratch with the new
+architecture.
 
 ---
 
@@ -125,7 +139,8 @@ Restrictions on items/sources break down into distinct types:
 
 **3-way toggle behavior:**
 
-- **Timely**: Category cards show only counts of season/weather-restricted incomplete items. "Museum: 3 timely" means 3 museum items are season/weather-restricted to right now.
+- **Timely**: Category cards show only counts of season/weather-restricted incomplete items.
+  "Museum: 3 timely" means 3 museum items are season/weather-restricted to right now.
 - **Available** (default): Cards show all incomplete items accessible given world state.
 - **Everything**: Cards show total incomplete items regardless of restrictions.
 
@@ -244,7 +259,8 @@ tracker-data.json  → pipeline/output/ (pretty, 706KB) + src/lib/data/ (minifie
 
 ### Game data (`tracker-data.json` — loaded once, cached)
 
-The "universe" of all completable things. Structured by category. Full TypeScript types in `src/lib/types/tracker-data.ts` (branded ID types for type safety, shared between pipeline and app).
+The "universe" of all completable things. Structured by category. Full TypeScript types in
+`src/lib/types/tracker-data.ts` (branded ID types for type safety, shared between pipeline and app).
 
 ```
 TrackerData {
@@ -291,7 +307,8 @@ The player's progress. Shape TBD but roughly:
 
 ## Item Visual Treatment
 
-Items in the tracker should carry visual indicators based on their restriction type and availability:
+Items in the tracker should carry visual indicators based on their restriction type and
+availability:
 
 | Indicator       | What it means                                                         | Visual approach                                                                                    |
 | --------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
@@ -302,7 +319,8 @@ Items in the tracker should carry visual indicators based on their restriction t
 | **Unavailable** | Not accessible given current world state                              | Dimmed/greyed treatment — clearly "not now"                                                        |
 | **Spoiler**     | Requires progress the player may not have (perks, buildings, animals) | Distinct treatment (lock icon? subtle badge?) to indicate "you may need to unlock something first" |
 
-All items in the list should be visually scannable — a player should be able to tell at a glance which items are timely, which are available but unrestricted, and which are currently locked.
+All items in the list should be visually scannable — a player should be able to tell at a glance
+which items are timely, which are available but unrestricted, and which are currently locked.
 
 ---
 
@@ -312,7 +330,8 @@ All items in the list should be visually scannable — a player should be able t
 
 - Item detail: inline accordion vs bottom sheet on mobile?
 - World state filters should persist across sessions (leaning yes)
-- How granular should world state be beyond season+weather? (Start with season+weather, add perks/skills/buildings later if needed)
+- How granular should world state be beyond season+weather? (Start with season+weather, add
+  perks/skills/buildings later if needed)
 - Exact visual design for the restriction indicators and unavailable/spoiler treatments
 
 ### Data gaps (investigate on gaming PC)
@@ -351,7 +370,8 @@ All items in the list should be visually scannable — a player should be able t
 
 ### Phase 3: Core tracker UI ✅
 
-- [x] Home screen: search bar + world state selectors + 3-way toggle + category cards with progress %
+- [x] Home screen: search bar + world state selectors + 3-way toggle + category cards with progress
+      %
 - [x] Category drill-in views (9 routes) with sub-categories via `ExpandableSection`
 - [x] Item list with restriction badges (season/weather/time emoji indicators)
 - [x] Item detail: expandable source list with green/red availability dots
@@ -359,21 +379,27 @@ All items in the list should be visually scannable — a player should be able t
 - [x] Cross-category search (prefix-match ranking, max 50 results, 200ms debounce)
 - [x] Dark mode with system/light/dark toggle + FOUC prevention
 - [x] shadcn-svelte component library (button, card, checkbox, toggle-group, select, etc.)
-- [x] Engine layer (`src/lib/engine/`): availability filtering, progress calculation, search — pure functions, no side effects
-- [x] Reactive state via Svelte 5 `$state`/`$derived` runes — single `userState` store persisted to localStorage
+- [x] Engine layer (`src/lib/engine/`): availability filtering, progress calculation, search — pure
+      functions, no side effects
+- [x] Reactive state via Svelte 5 `$state`/`$derived` runes — single `userState` store persisted to
+      localStorage
 - [x] Default-unlocked cosmetics and animal variants pre-populated on first load
 
 ### Phase 4: Player.json import ✅
 
-- [x] Import engine (`src/lib/engine/import-save.ts`): parse, validate, map player.json → CompletedState
-- [x] Union merge strategy in `userState.mergeFromSave()` — adds items, never removes existing progress
-- [x] Almanac import uses `items_acquired ∪ items_sold ∪ recipes_created` (items_acquired is NOT cumulative — items_sold fills the gaps)
+- [x] Import engine (`src/lib/engine/import-save.ts`): parse, validate, map player.json →
+      CompletedState
+- [x] Union merge strategy in `userState.mergeFromSave()` — adds items, never removes existing
+      progress
+- [x] Almanac import uses `items_acquired ∪ items_sold ∪ recipes_created` (items_acquired is NOT
+      cumulative — items_sold fills the gaps)
 - [x] Settings page (`/settings`) with file picker, import results summary, warnings
 - [x] Backup export/restore (full state JSON download/upload)
 - [x] Reset all progress with confirmation
 - [x] Settings gear icon on home page
 - [x] Import coverage: almanac, cosmetics, animal variants, animal cosmetics, spells
-- [x] Not importable (documented in UI): museum donations, NPC hearts, quests (not in player.json), skills/renown (XP thresholds unknown), mine floor (only milestones)
+- [x] Not importable (documented in UI): museum donations, NPC hearts, quests (not in player.json),
+      skills/renown (XP thresholds unknown), mine floor (only milestones)
 
 ### Phase 5: Polish ✅
 
@@ -397,62 +423,87 @@ All items in the list should be visually scannable — a player should be able t
 - [x] **Performance**
   - [x] Pre-filter almanac items before `{#each}` iteration (was filtering inside loop)
   - [x] "Show N more..." progressive disclosure: caps at 50 items per section, button to reveal rest
-  - [x] Decided against full virtualization: sections are collapsed by default (DOM stays small), and progressive disclosure handles the furniture sets (95+ items)
+  - [x] Decided against full virtualization: sections are collapsed by default (DOM stays small),
+        and progressive disclosure handles the furniture sets (95+ items)
 - [x] **UI polish**
   - [x] Smooth opacity transition on item completion state change
   - [x] Active press state on category cards (`active:bg-accent/70`)
   - [x] "All done!" empty state for completed categories (almanac, museum, cosmetics, animals)
   - [x] Increased item row vertical padding for touch comfort
 - [x] **Dev tooling**
-  - [x] Moved lint-staged config to JS file to exclude service-worker.ts from eslint (allowDefaultProject breaks with lint-staged temp paths — a known issue with SvelteKit's tsconfig setup)
+  - [x] Moved lint-staged config to JS file to exclude service-worker.ts from eslint
+        (allowDefaultProject breaks with lint-staged temp paths — a known issue with SvelteKit's
+        tsconfig setup)
 
 ### Phase 6: Cross-device transfer (QR code)
 
-The core UX problem: `player.json` lives on the gaming PC, but the tracker is used on a phone as a second screen. The player needs a way to get their imported progress from PC → phone without manually transferring files.
+The core UX problem: `player.json` lives on the gaming PC, but the tracker is used on a phone as a
+second screen. The player needs a way to get their imported progress from PC → phone without
+manually transferring files.
 
-**Strategy:** Import `player.json` on PC browser → generate QR code of compressed state → scan on phone to merge.
+**Strategy:** Import `player.json` on PC browser → generate QR code of compressed state → scan on
+phone to merge.
 
-**Why QR works:** We're not encoding the raw `player.json` (megabytes) — we're encoding the _processed_ `CompletedState`, which is just sets of short string IDs + a few numbers. Compressed, this should fit in a single QR code (max ~2.9KB binary / ~4.3KB alphanumeric).
+**Why QR works:** We're not encoding the raw `player.json` (megabytes) — we're encoding the
+_processed_ `CompletedState`, which is just sets of short string IDs + a few numbers. Compressed,
+this should fit in a single QR code (max ~2.9KB binary / ~4.3KB alphanumeric).
 
 #### Step 0: Measure compressed state size ✅
 
-Measured with real player.json (1898 almanac items, 237 cosmetics, 75 variants, 58 animal cosmetics, 4 spells).
+Measured with real player.json (1898 almanac items, 237 cosmetics, 75 variants, 58 animal cosmetics,
+4 spells).
 
-**JSON approach fails**: Even with minification + deflate, CompletedState is ~10.7KB compressed — far over the 2.9KB QR binary limit. The verbose string IDs (`alda_bronze_sword`, `back_gear_dragon_cleric_cape`) are the problem.
+**JSON approach fails**: Even with minification + deflate, CompletedState is ~10.7KB compressed —
+far over the 2.9KB QR binary limit. The verbose string IDs (`alda_bronze_sword`,
+`back_gear_dragon_cleric_cape`) are the problem.
 
-**Bitfield encoding works**: Both app and phone know the full item universe from `tracker-data.json`. Encode completion as 1 bit per item in a deterministic sorted order:
+**Bitfield encoding works**: Both app and phone know the full item universe from
+`tracker-data.json`. Encode completion as 1 bit per item in a deterministic sorted order:
 
-- Almanac: 238 bytes (1898 items), Cosmetics: 21 bytes, Variants: 12 bytes, Animal cosmetics: 15 bytes
+- Almanac: 238 bytes (1898 items), Cosmetics: 21 bytes, Variants: 12 bytes, Animal cosmetics: 15
+  bytes
 - **Total raw: 287 bytes → compressed: 66 bytes → base64url: 88 chars** ✅
 - Worst case (100% completion): compresses to 13 bytes (all 1s = trivially compressible)
 - Even with scalar fields (NPC levels, skills, quests, renown, mines) added, well under 2.9KB
 
-**Decision: Use bitfield encoding.** Both sides derive the same sorted item order from tracker-data.json, so the QR payload is just a version byte + compressed bitmasks + scalar values. Single QR code, no relay infrastructure needed.
+**Decision: Use bitfield encoding.** Both sides derive the same sorted item order from
+tracker-data.json, so the QR payload is just a version byte + compressed bitmasks + scalar values.
+Single QR code, no relay infrastructure needed.
 
 #### Step 1: Transfer UI in Settings
 
 - [x] Add "Transfer to Another Device" section in Settings (always visible, not just post-import)
-- [x] **Send side (PC):** "Generate QR Code" button → serializes + compresses `CompletedState` → renders QR code on screen
-- [x] **Receive side (phone):** "Scan QR Code" button → opens camera via `qr-scanner` library → decodes → decompresses → calls `userState.mergeFromSave()`
-- [x] Show merge results summary (same UI pattern as player.json import: "Added X almanac items, Y cosmetics...")
+- [x] **Send side (PC):** "Generate QR Code" button → serializes + compresses `CompletedState` →
+      renders QR code on screen
+- [x] **Receive side (phone):** "Scan QR Code" button → opens camera via `qr-scanner` library →
+      decodes → decompresses → calls `userState.mergeFromSave()`
+- [x] Show merge results summary (same UI pattern as player.json import: "Added X almanac items, Y
+      cosmetics...")
 
 #### Step 2: Post-import prompt
 
-- [x] After successful `player.json` import on Settings page, show a callout: _"Playing on your phone? Transfer this progress to your mobile device →"_ with a button that jumps to the QR transfer section
-- [x] Only show if user agent looks like a desktop browser (simple heuristic: screen width via `matchMedia("(min-width: 768px)")`)
+- [x] After successful `player.json` import on Settings page, show a callout: _"Playing on your
+      phone? Transfer this progress to your mobile device →"_ with a button that jumps to the QR
+      transfer section
+- [x] Only show if user agent looks like a desktop browser (simple heuristic: screen width via
+      `matchMedia("(min-width: 768px)")`)
 
 #### Step 3: Encoding format ✅
 
 - [x] Implement bitfield encoding/decoding in `src/lib/engine/transfer.ts`
-- [x] Binary format: `[version:1][deflate([almanacBits][cosmeticBits][variantBits][animalCosmeticBits][museumBits][spellBitmask:1][mineFloor:1][renown:2][npcLevels:34×4bits=17][skillLevels:9×1byte=9][questStates:246×2bits=62])]`
-- [x] Sorted item order derived from tracker-data.json (deterministic, both sides compute the same order)
+- [x] Binary format:
+      `[version:1][deflate([almanacBits][cosmeticBits][variantBits][animalCosmeticBits][museumBits][spellBitmask:1][mineFloor:1][renown:2][npcLevels:34×4bits=17][skillLevels:9×1byte=9][questStates:246×2bits=62])]`
+- [x] Sorted item order derived from tracker-data.json (deterministic, both sides compute the same
+      order)
 - [x] Omit default-unlocked cosmetics/variants (re-derived on load)
 - [x] Version byte prefix for future format changes
-- [x] Encode to base64url for QR alphanumeric mode; entire payload fits in single QR code (~88-300 chars)
+- [x] Encode to base64url for QR alphanumeric mode; entire payload fits in single QR code (~88-300
+      chars)
 
 #### Step 4: QR scanning ✅
 
-- [x] Using `qr-scanner` library (~59KB, uses native BarcodeDetector when available, WebWorker fallback)
+- [x] Using `qr-scanner` library (~59KB, uses native BarcodeDetector when available, WebWorker
+      fallback)
 - [x] Handle permissions gracefully (camera access prompt, denial state with helpful message)
 - [x] Image upload fallback: "Or scan from a screenshot..." button for non-camera devices
 
@@ -460,9 +511,12 @@ Measured with real player.json (1898 almanac items, 237 cosmetics, 75 variants, 
 
 For an even smoother experience (no camera needed, works computer-to-computer):
 
-- PC imports `player.json` → clicks "Share via Code" → compressed state uploads to a Cloudflare Worker endpoint → returns a 6-character code (stored in KV, expires in 10 minutes, auto-deletes after first retrieval)
+- PC imports `player.json` → clicks "Share via Code" → compressed state uploads to a Cloudflare
+  Worker endpoint → returns a 6-character code (stored in KV, expires in 10 minutes, auto-deletes
+  after first retrieval)
 - Phone enters code in Settings → Worker returns compressed state → merge
-- Implementation: ~50 lines of Cloudflare Worker code + KV namespace. Already deploying to Cloudflare Pages, so adding a Worker is trivial.
+- Implementation: ~50 lines of Cloudflare Worker code + KV namespace. Already deploying to
+  Cloudflare Pages, so adding a Worker is trivial.
 - Could optionally encrypt client-side with a user-chosen PIN for extra privacy.
 - Deferred because QR is zero-infra and sufficient for the phone use case.
 
@@ -470,5 +524,6 @@ For an even smoother experience (no camera needed, works computer-to-computer):
 
 #### Requires human
 
-- [ ] Investigate data sources for non-importable data: museum donations, NPC hearts, quests (not in player.json), skills/renown (XP thresholds unknown), mine floor (only milestones)
+- [ ] Investigate data sources for non-importable data: museum donations, NPC hearts, quests (not in
+      player.json), skills/renown (XP thresholds unknown), mine floor (only milestones)
 - [ ] Design a real app icon (current favicon is a 128px grayscale Svelte logo placeholder)

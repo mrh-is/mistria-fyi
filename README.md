@@ -1,6 +1,8 @@
 # Harvest Helper
 
-A mobile-first companion tracker for [Fields of Mistria](https://store.steampowered.com/app/2142790/Fields_of_Mistria/). Helps completionists track progress toward 100%.
+A mobile-first companion tracker for
+[Fields of Mistria](https://store.steampowered.com/app/2142790/Fields_of_Mistria/). Helps
+completionists track progress toward 100%.
 
 ## Quick start
 
@@ -11,7 +13,8 @@ npm run dev
 
 ## Data pipeline
 
-The app is powered by `tracker-data.json`, generated from the game's raw data files. The pipeline lives in `pipeline/` and runs via [tsx](https://github.com/privatenumber/tsx).
+The app is powered by `tracker-data.json`, generated from the game's raw data files. The pipeline
+lives in `pipeline/` and runs via [tsx](https://github.com/privatenumber/tsx).
 
 ### Running the pipeline
 
