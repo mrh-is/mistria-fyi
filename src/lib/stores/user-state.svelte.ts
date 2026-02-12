@@ -2,7 +2,6 @@ import { SvelteSet } from "svelte/reactivity";
 
 import { trackerData } from "$lib/data/index.js";
 
-import type { ImportResult } from "$lib/engine/import-save.js";
 import type {
   AnimalId,
   CosmeticId,
@@ -31,6 +30,20 @@ export interface CompletedState {
   questStates: Record<string, QuestState>;
   renown: number;
   skillLevels: Record<string, number>;
+}
+
+export interface MergeCounts {
+  almanac: number;
+  animalCosmetics: number;
+  animals: number;
+  cosmetics: number;
+  mineFloor: number;
+  museum: number;
+  npcLevels: number;
+  quests: number;
+  renown: number;
+  skillLevels: number;
+  spells: number;
 }
 
 export type QuestState = "completed" | "none" | "obtained";
@@ -161,13 +174,19 @@ function createUserState() {
       state = imported;
       return true;
     },
-    /** Merge player.json save data into current progress (union, never removes) */
-    mergeFromSave(imported: Partial<CompletedState>): ImportResult["counts"] {
-      const counts: ImportResult["counts"] = {
+    /** Merge imported data into current progress (union, never removes) */
+    mergeFromSave(imported: Partial<CompletedState>): MergeCounts {
+      const counts: MergeCounts = {
         almanac: 0,
         animalCosmetics: 0,
         animals: 0,
         cosmetics: 0,
+        mineFloor: 0,
+        museum: 0,
+        npcLevels: 0,
+        quests: 0,
+        renown: 0,
+        skillLevels: 0,
         spells: 0,
       };
 
@@ -218,12 +237,68 @@ function createUserState() {
         }
       }
 
+      // Museum
+      if (imported.museum) {
+        for (const id of imported.museum) {
+          if (!state.completed.museum.has(id)) {
+            state.completed.museum.add(id);
+            counts.museum++;
+          }
+        }
+      }
+
       // Spells
       if (imported.mines?.spells) {
         for (const id of imported.mines.spells) {
           if (!state.completed.mines.spells.has(id)) {
             state.completed.mines.spells.add(id);
             counts.spells++;
+          }
+        }
+      }
+
+      // Mine floor (take max)
+      if (imported.mines && imported.mines.floor > state.completed.mines.floor) {
+        counts.mineFloor = imported.mines.floor - state.completed.mines.floor;
+        state.completed.mines.floor = imported.mines.floor;
+      }
+
+      // Renown (take max)
+      if (imported.renown !== undefined && imported.renown > state.completed.renown) {
+        counts.renown = imported.renown - state.completed.renown;
+        state.completed.renown = imported.renown;
+      }
+
+      // NPC levels (take max per NPC)
+      if (imported.npcLevels) {
+        for (const [id, level] of Object.entries(imported.npcLevels)) {
+          const current = state.completed.npcLevels[id] ?? 0;
+          if (level > current) {
+            state.completed.npcLevels[id] = level;
+            counts.npcLevels++;
+          }
+        }
+      }
+
+      // Skill levels (take max per skill)
+      if (imported.skillLevels) {
+        for (const [id, level] of Object.entries(imported.skillLevels)) {
+          const current = state.completed.skillLevels[id] ?? 0;
+          if (level > current) {
+            state.completed.skillLevels[id] = level;
+            counts.skillLevels++;
+          }
+        }
+      }
+
+      // Quest states (take more advanced state: none < obtained < completed)
+      if (imported.questStates) {
+        const rank: Record<QuestState, number> = { completed: 2, none: 0, obtained: 1 };
+        for (const [id, importedState] of Object.entries(imported.questStates)) {
+          const current = state.completed.questStates[id] ?? "none";
+          if (rank[importedState] > rank[current]) {
+            state.completed.questStates[id] = importedState;
+            counts.quests++;
           }
         }
       }

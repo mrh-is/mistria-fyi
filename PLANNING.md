@@ -406,16 +406,69 @@ All items in the list should be visually scannable — a player should be able t
 - [x] **Dev tooling**
   - [x] Moved lint-staged config to JS file to exclude service-worker.ts from eslint (allowDefaultProject breaks with lint-staged temp paths — a known issue with SvelteKit's tsconfig setup)
 
+### Phase 6: Cross-device transfer (QR code)
+
+The core UX problem: `player.json` lives on the gaming PC, but the tracker is used on a phone as a second screen. The player needs a way to get their imported progress from PC → phone without manually transferring files.
+
+**Strategy:** Import `player.json` on PC browser → generate QR code of compressed state → scan on phone to merge.
+
+**Why QR works:** We're not encoding the raw `player.json` (megabytes) — we're encoding the _processed_ `CompletedState`, which is just sets of short string IDs + a few numbers. Compressed, this should fit in a single QR code (max ~2.9KB binary / ~4.3KB alphanumeric).
+
+#### Step 0: Measure compressed state size ✅
+
+Measured with real player.json (1898 almanac items, 237 cosmetics, 75 variants, 58 animal cosmetics, 4 spells).
+
+**JSON approach fails**: Even with minification + deflate, CompletedState is ~10.7KB compressed — far over the 2.9KB QR binary limit. The verbose string IDs (`alda_bronze_sword`, `back_gear_dragon_cleric_cape`) are the problem.
+
+**Bitfield encoding works**: Both app and phone know the full item universe from `tracker-data.json`. Encode completion as 1 bit per item in a deterministic sorted order:
+
+- Almanac: 238 bytes (1898 items), Cosmetics: 21 bytes, Variants: 12 bytes, Animal cosmetics: 15 bytes
+- **Total raw: 287 bytes → compressed: 66 bytes → base64url: 88 chars** ✅
+- Worst case (100% completion): compresses to 13 bytes (all 1s = trivially compressible)
+- Even with scalar fields (NPC levels, skills, quests, renown, mines) added, well under 2.9KB
+
+**Decision: Use bitfield encoding.** Both sides derive the same sorted item order from tracker-data.json, so the QR payload is just a version byte + compressed bitmasks + scalar values. Single QR code, no relay infrastructure needed.
+
+#### Step 1: Transfer UI in Settings
+
+- [x] Add "Transfer to Another Device" section in Settings (always visible, not just post-import)
+- [x] **Send side (PC):** "Generate QR Code" button → serializes + compresses `CompletedState` → renders QR code on screen
+- [x] **Receive side (phone):** "Scan QR Code" button → opens camera via `qr-scanner` library → decodes → decompresses → calls `userState.mergeFromSave()`
+- [x] Show merge results summary (same UI pattern as player.json import: "Added X almanac items, Y cosmetics...")
+
+#### Step 2: Post-import prompt
+
+- [x] After successful `player.json` import on Settings page, show a callout: _"Playing on your phone? Transfer this progress to your mobile device →"_ with a button that jumps to the QR transfer section
+- [x] Only show if user agent looks like a desktop browser (simple heuristic: screen width via `matchMedia("(min-width: 768px)")`)
+
+#### Step 3: Encoding format ✅
+
+- [x] Implement bitfield encoding/decoding in `src/lib/engine/transfer.ts`
+- [x] Binary format: `[version:1][deflate([almanacBits][cosmeticBits][variantBits][animalCosmeticBits][museumBits][spellBitmask:1][mineFloor:1][renown:2][npcLevels:34×4bits=17][skillLevels:9×1byte=9][questStates:246×2bits=62])]`
+- [x] Sorted item order derived from tracker-data.json (deterministic, both sides compute the same order)
+- [x] Omit default-unlocked cosmetics/variants (re-derived on load)
+- [x] Version byte prefix for future format changes
+- [x] Encode to base64url for QR alphanumeric mode; entire payload fits in single QR code (~88-300 chars)
+
+#### Step 4: QR scanning ✅
+
+- [x] Using `qr-scanner` library (~59KB, uses native BarcodeDetector when available, WebWorker fallback)
+- [x] Handle permissions gracefully (camera access prompt, denial state with helpful message)
+- [x] Image upload fallback: "Or scan from a screenshot..." button for non-camera devices
+
+#### Future improvement: Short code relay
+
+For an even smoother experience (no camera needed, works computer-to-computer):
+
+- PC imports `player.json` → clicks "Share via Code" → compressed state uploads to a Cloudflare Worker endpoint → returns a 6-character code (stored in KV, expires in 10 minutes, auto-deletes after first retrieval)
+- Phone enters code in Settings → Worker returns compressed state → merge
+- Implementation: ~50 lines of Cloudflare Worker code + KV namespace. Already deploying to Cloudflare Pages, so adding a Worker is trivial.
+- Could optionally encrypt client-side with a user-chosen PIN for extra privacy.
+- Deferred because QR is zero-infra and sufficient for the phone use case.
+
 ### Future
 
 #### Requires human
 
 - [ ] Investigate data sources for non-importable data: museum donations, NPC hearts, quests (not in player.json), skills/renown (XP thresholds unknown), mine floor (only milestones)
 - [ ] Design a real app icon (current favicon is a 128px grayscale Svelte logo placeholder)
-
-#### Notes from Phase 5 (Claude)
-
-- **Icon situation**: The app icon is just the Svelte logo in grayscale at 128px. I upscaled it to 192/512 for the PWA manifest, but it's clearly a placeholder. You'll want a custom wheat/harvest-themed icon for public release. The maskable icon variant needs safe area padding too (the inner 80% circle).
-- **Performance verdict**: Full list virtualization (e.g., `svelte-virtual-list`) would add complexity for marginal gain. The collapsing sections pattern already keeps the DOM small — most users interact with one section at a time. The "Show more" cap on 50+ item sections handles the worst case (furniture sets). If you ever notice jank, the place to add virtualization is the almanac's "Everything" mode with all sections expanded.
-- **NPC hearts tappable**: Tapping a filled heart sets level to that heart's index (unfilling it and everything after). Tapping an empty heart fills up to and including it. This felt more intuitive than just fill-only.
-- **Almanac `other/unreviewed_new_items`**: The pipeline produces a category with 1 item called "unreviewed_new_items". Worth investigating if this is a pipeline bug or a real category — it shows up in the almanac as a section with 1 item.

@@ -27,9 +27,7 @@ export default defineConfig(
       },
       parserOptions: {
         extraFileExtensions: [".svelte"],
-        projectService: {
-          allowDefaultProject: ["src/service-worker.ts"],
-        },
+        projectService: true,
         tsconfigRootDir: fileURLToPath(new URL(".", import.meta.url)),
       },
     },
@@ -109,6 +107,16 @@ export default defineConfig(
     // Pipeline is a CLI tool — console output is intentional, and game data
     // is loosely typed so defensive checks against `unknown` casts are valid
     files: ["pipeline/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-unnecessary-condition": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "no-console": "off",
+    },
+  },
+  {
+    // Scripts are utility/CLI files — console output and defensive checks are intentional
+    files: ["scripts/**/*.ts"],
     rules: {
       "@typescript-eslint/no-unnecessary-condition": "off",
       "@typescript-eslint/no-unsafe-assignment": "off",

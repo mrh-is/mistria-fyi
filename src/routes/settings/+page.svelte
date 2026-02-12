@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { ArrowLeft, FileUp, RotateCcw, Trash2, Upload } from "@lucide/svelte";
+  import { ArrowLeft, FileUp, Monitor, RotateCcw, Trash2, Upload } from "@lucide/svelte";
 
+  import TransferCard from "$lib/components/transfer-card.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
   import * as Card from "$lib/components/ui/card/index.js";
   import { Separator } from "$lib/components/ui/separator/index.js";
@@ -11,6 +12,17 @@
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import type { ImportResult } from "$lib/engine/import-save.js";
+
+  // ── Desktop detection (simple heuristic) ──
+  let isDesktop = $derived(
+    typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches,
+  );
+
+  let transferSection = $state<HTMLElement | null>(null);
+
+  function scrollToTransfer() {
+    transferSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   // ── Import state ──
   let importResult = $state<ImportResult | null>(null);
@@ -227,9 +239,31 @@
             You'll have to track this manually for now.
           </p>
         </div>
+
+        {#if isDesktop}
+          <button
+            class="mt-3 flex w-full items-start gap-3 rounded-md border border-violet-200 bg-violet-50 p-3 text-left transition-colors hover:bg-violet-100 dark:border-violet-800 dark:bg-violet-950 dark:hover:bg-violet-900"
+            onclick={scrollToTransfer}
+          >
+            <Monitor class="mt-0.5 size-5 shrink-0 text-violet-600 dark:text-violet-400" />
+            <div>
+              <p class="text-sm font-medium text-violet-800 dark:text-violet-200">
+                Playing on your phone?
+              </p>
+              <p class="text-muted-foreground mt-0.5 text-xs">
+                Transfer this progress to your mobile device →
+              </p>
+            </div>
+          </button>
+        {/if}
       {/if}
     </Card.Content>
   </Card.Root>
+
+  <!-- Transfer -->
+  <div bind:this={transferSection}>
+    <TransferCard />
+  </div>
 
   <!-- Backup & Restore -->
   <Card.Root>

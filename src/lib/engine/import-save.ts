@@ -1,19 +1,13 @@
 import { trackerData } from "$lib/data/index.js";
 
-import type { CompletedState } from "$lib/stores/user-state.svelte.js";
+import type { CompletedState, MergeCounts } from "$lib/stores/user-state.svelte.js";
 import type { CosmeticId, ItemId, SpellId, VariantId } from "$lib/types/tracker-data.js";
 
 // ─── Import result ──────────────────────────────────────────────────
 
 export interface ImportResult {
   /** Per-category counts of items imported */
-  counts: {
-    almanac: number;
-    animalCosmetics: number;
-    animals: number;
-    cosmetics: number;
-    spells: number;
-  };
+  counts: MergeCounts;
   /** Human-readable warnings (e.g. unknown IDs) */
   warnings: string[];
 }
@@ -37,11 +31,17 @@ export function buildImportState(save: PlayerSave): {
   result: ImportResult;
 } {
   const warnings: string[] = [];
-  const counts: ImportResult["counts"] = {
+  const counts: MergeCounts = {
     almanac: 0,
     animalCosmetics: 0,
     animals: 0,
     cosmetics: 0,
+    mineFloor: 0,
+    museum: 0,
+    npcLevels: 0,
+    quests: 0,
+    renown: 0,
+    skillLevels: 0,
     spells: 0,
   };
 
