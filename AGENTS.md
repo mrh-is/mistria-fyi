@@ -34,6 +34,15 @@ settings page composes `<ThemeCard />`, `<ImportCard />`, `<TransferCard />`, et
 their internals. Don't extract _parts_ of a single concern (e.g., pulling out a result display while
 leaving its state machine in the parent).
 
+**Colocate components with the page** (same directory): Components that are used exclusively by one
+page should be colocated in the route directory with `PascalCase` filenames (e.g.,
+`src/routes/skills/SkillRow.svelte`). Move reusable components to `$lib/components/` when they're
+used by multiple pages.
+
+**Pages as layouts**: When possible and reasonable, reduce page files to pure layout compositors.
+Migrate business logic, calculations, and state management into components. Pages should primarily
+handle data fetching and composition, not logic.
+
 ## Code Style
 
 - **Strict TypeScript**: `strictTypeChecked` ESLint + `strict: true` tsconfig. Use `type` imports
