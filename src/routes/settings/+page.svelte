@@ -23,7 +23,7 @@
     <a class="text-muted-foreground hover:text-foreground" href="/">
       <ArrowLeft class="size-5" />
     </a>
-    <h1 class="text-lg font-semibold">Settings</h1>
+    <h1 class="text-xl font-semibold">Settings</h1>
   </div>
 
   <ThemeCard />
@@ -34,7 +34,7 @@
   <BackupCard />
   <DangerZoneCard />
 
-  <div class="text-muted-foreground text-center text-xs">
+  <div class="text-center text-sm text-muted-foreground">
     Game data: Fields of Mistria v{trackerData.version}
   </div>
 </div>

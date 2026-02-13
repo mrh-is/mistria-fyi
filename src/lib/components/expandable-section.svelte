@@ -24,16 +24,16 @@
 
 <div>
   <button
-    class="hover:bg-accent/50 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm"
+    class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-base hover:bg-accent/50"
     onclick={() => (expanded = !expanded)}
     type="button"
   >
     <ChevronRight
-      class="text-muted-foreground size-4 shrink-0 transition-transform {isOpen ? 'rotate-90' : ''}"
+      class="size-4 shrink-0 text-muted-foreground transition-transform {isOpen ? 'rotate-90' : ''}"
     />
     <span class="flex-1 font-medium">{name}</span>
     {#if total !== undefined && count !== undefined}
-      <span class="text-muted-foreground text-xs">{count}/{total}</span>
+      <span class="text-sm text-muted-foreground">{count}/{total}</span>
     {/if}
   </button>
 

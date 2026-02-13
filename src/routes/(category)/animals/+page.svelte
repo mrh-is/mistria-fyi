@@ -111,10 +111,10 @@
                   userState.toggleAnimalVariant(animal.id, variantId as VariantId);
                 }}
               />
-              <span class="min-w-0 flex-1 text-sm">
+              <span class="min-w-0 flex-1 text-base">
                 {variant.name}
                 {#if variant.tier}
-                  <span class="text-muted-foreground text-[10px]">T{variant.tier}</span>
+                  <span class="text-sm text-muted-foreground">T{variant.tier}</span>
                 {/if}
               </span>
               {#if variant.bornIn}
@@ -149,7 +149,7 @@
                   userState.toggleAnimalCosmetic(animal.id, cosmeticId as CosmeticId);
                 }}
               />
-              <span class="text-sm">{cosmetic.name}</span>
+              <span class="text-base">{cosmetic.name}</span>
             </div>
           {/each}
         </ExpandableSection>
@@ -159,7 +159,7 @@
 {/each}
 
 {#if progress.total > 0 && progress.completed === progress.total && !userState.state.showCompleted}
-  <p class="text-muted-foreground py-8 text-center text-sm">
+  <p class="py-8 text-center text-base text-muted-foreground">
     All done! Toggle "Show completed" to review.
   </p>
 {/if}

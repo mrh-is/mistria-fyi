@@ -100,7 +100,7 @@
 
     {#if importError}
       <div
-        class="mt-3 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300"
+        class="mt-3 rounded-md bg-red-50 p-3 text-base text-red-700 dark:bg-red-950 dark:text-red-300"
       >
         {importError}
       </div>
@@ -108,11 +108,11 @@
 
     {#if importResult}
       <div class="mt-3 rounded-md bg-green-50 p-3 dark:bg-green-950">
-        <p class="text-sm font-medium text-green-800 dark:text-green-200">
+        <p class="text-base font-medium text-green-800 dark:text-green-200">
           Imported {totalImported} new items
         </p>
         {#if totalImported > 0}
-          <ul class="text-muted-foreground mt-1 space-y-0.5 text-xs">
+          <ul class="mt-1 space-y-0.5 text-sm text-muted-foreground">
             {#if importResult.counts.almanac > 0}
               <li>Almanac: +{importResult.counts.almanac}</li>
             {/if}
@@ -133,11 +133,11 @@
 
         {#if importResult.warnings.length > 0}
           <Separator class="my-2" />
-          <details class="text-xs">
-            <summary class="text-muted-foreground cursor-pointer">
+          <details class="text-sm">
+            <summary class="cursor-pointer text-muted-foreground">
               {importResult.warnings.length} warnings
             </summary>
-            <ul class="text-muted-foreground mt-1 max-h-32 space-y-0.5 overflow-y-auto">
+            <ul class="mt-1 max-h-32 space-y-0.5 overflow-y-auto text-muted-foreground">
               {#each importResult.warnings as warning (warning)}
                 <li>{warning}</li>
               {/each}
@@ -147,9 +147,9 @@
       </div>
 
       <div class="mt-3 rounded-md bg-sky-50 p-3 dark:bg-sky-950">
-        <p class="text-sm font-medium text-sky-800 dark:text-sky-200">Some data is manual-only</p>
-        <p class="text-muted-foreground mt-1 text-xs">We can't yet import data for:</p>
-        <ul class="text-muted-foreground mt-1 list-inside list-disc space-y-0.5 text-xs">
+        <p class="text-base font-medium text-sky-800 dark:text-sky-200">Some data is manual-only</p>
+        <p class="mt-1 text-sm text-muted-foreground">We can't yet import data for:</p>
+        <ul class="mt-1 list-inside list-disc space-y-0.5 text-sm text-muted-foreground">
           <li>Museum donations</li>
           <li>NPC hearts</li>
           <li>Quest completion</li>
@@ -157,7 +157,7 @@
           <li>Town renown</li>
           <li>Exact mine floor</li>
         </ul>
-        <p class="text-muted-foreground mt-3 text-xs">
+        <p class="mt-3 text-sm text-muted-foreground">
           You'll have to track this manually for now.
         </p>
       </div>
@@ -169,10 +169,10 @@
         >
           <Monitor class="mt-0.5 size-5 shrink-0 text-violet-600 dark:text-violet-400" />
           <div>
-            <p class="text-sm font-medium text-violet-800 dark:text-violet-200">
+            <p class="text-base font-medium text-violet-800 dark:text-violet-200">
               Playing on your phone?
             </p>
-            <p class="text-muted-foreground mt-0.5 text-xs">
+            <p class="mt-0.5 text-sm text-muted-foreground">
               Transfer this progress to your mobile device →
             </p>
           </div>

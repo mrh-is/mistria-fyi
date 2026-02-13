@@ -18,12 +18,12 @@
         ? "available"
         : userState.state.availabilityMode,
     )}
-    <div class="flex items-center gap-2 text-xs {available ? '' : 'opacity-40'}">
+    <div class="flex items-center gap-2 text-sm {available ? '' : 'opacity-40'}">
       <span class="size-1.5 shrink-0 rounded-full {available ? 'bg-green-500' : 'bg-red-400'}"
       ></span>
       <span class="font-medium">{sourceTypeLabel(source.type)}</span>
       {#if source.location}
-        <span class="text-muted-foreground truncate">{locationLabel(source.location)}</span>
+        <span class="truncate text-muted-foreground">{locationLabel(source.location)}</span>
       {/if}
       {#if source.restrictions && source.restrictions.length > 0}
         <RestrictionBadges restrictions={source.restrictions} />
@@ -31,6 +31,6 @@
     </div>
   {/each}
   {#if sources.length === 0}
-    <span class="text-muted-foreground text-xs">No source data</span>
+    <span class="text-sm text-muted-foreground">No source data</span>
   {/if}
 </div>

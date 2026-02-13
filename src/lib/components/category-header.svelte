@@ -44,7 +44,7 @@
 </script>
 
 <div
-  class="bg-background border-border/50 sticky top-0 z-10 -mx-4 flex flex-col gap-3 border-b px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-3"
+  class="sticky top-0 z-10 -mx-4 flex flex-col gap-3 border-b border-border/50 bg-background px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-3"
   style={color ? `--header-color: var(--${color})` : undefined}
 >
   <div class="flex items-center gap-2">
@@ -52,10 +52,10 @@
     <a class="text-muted-foreground hover:text-foreground" href="/">
       <ArrowLeft class="size-5" />
     </a>
-    <Icon class={color ? "size-5 text-(--header-color)" : "text-muted-foreground size-5"} />
-    <h1 class="flex-1 text-lg font-semibold">{category.name}</h1>
-    <span class="text-muted-foreground text-sm">{pct}%</span>
-    <span class="text-muted-foreground text-xs">({progress.completed}/{progress.total})</span>
+    <Icon class={color ? "size-5 text-(--header-color)" : "size-5 text-muted-foreground"} />
+    <h1 class="flex-1 text-xl font-semibold">{category.name}</h1>
+    <span class="text-base text-muted-foreground">{pct}%</span>
+    <span class="text-sm text-muted-foreground">({progress.completed}/{progress.total})</span>
   </div>
 
   {#if showWorldState}
@@ -65,7 +65,7 @@
 
   {#if onSearch}
     <div class="relative">
-      <Search class="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+      <Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         class="px-9"
         placeholder="Filter by name..."
@@ -75,7 +75,7 @@
       />
       {#if filterValue}
         <button
-          class="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
+          class="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           onclick={clearFilter}
           type="button"
         >
@@ -85,7 +85,7 @@
     </div>
   {/if}
 
-  <label class="flex items-center gap-2 text-sm">
+  <label class="flex items-center gap-2 text-base">
     <Checkbox
       checked={userState.state.showCompleted}
       onCheckedChange={() => {

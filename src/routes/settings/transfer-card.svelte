@@ -169,7 +169,7 @@
     {#if qrDataUrl}
       <div class="flex flex-col items-center gap-2 rounded-md border p-4">
         <img alt="Transfer QR Code" class="size-48" src={qrDataUrl} />
-        <p class="text-muted-foreground text-center text-xs">
+        <p class="text-center text-sm text-muted-foreground">
           Scan this code on your other device to transfer progress
         </p>
       </div>
@@ -194,7 +194,7 @@
     {/if}
 
     <!-- Image fallback -->
-    <Button class="w-full text-xs" variant="ghost" onclick={handleImageUpload}>
+    <Button class="w-full text-sm" variant="ghost" onclick={handleImageUpload}>
       <ImagePlus class="size-3" />
       Or scan from a screenshot...
     </Button>
@@ -203,10 +203,10 @@
     {#if transferResult}
       <div class="rounded-md bg-green-50 p-3 dark:bg-green-950">
         {#if totalMerged > 0}
-          <p class="text-sm font-medium text-green-800 dark:text-green-200">
+          <p class="text-base font-medium text-green-800 dark:text-green-200">
             Transferred {totalMerged} items!
           </p>
-          <ul class="text-muted-foreground mt-1 space-y-0.5 text-xs">
+          <ul class="mt-1 space-y-0.5 text-sm text-muted-foreground">
             {#if transferResult.almanac > 0}
               <li>Almanac: +{transferResult.almanac}</li>
             {/if}
@@ -242,7 +242,7 @@
             {/if}
           </ul>
         {:else}
-          <p class="text-sm font-medium text-green-800 dark:text-green-200">
+          <p class="text-base font-medium text-green-800 dark:text-green-200">
             QR code scanned successfully — no new items to add.
           </p>
         {/if}
@@ -251,7 +251,9 @@
 
     <!-- Error -->
     {#if transferError}
-      <div class="rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+      <div
+        class="rounded-md bg-red-50 p-3 text-base text-red-700 dark:bg-red-950 dark:text-red-300"
+      >
         {transferError}
       </div>
     {/if}

@@ -94,7 +94,7 @@
   <!-- Time restrictions -->
   {#each restrictions.filter((r) => r.type === "time" && r.hours) as r (JSON.stringify(r))}
     <span
-      class="text-muted-foreground bg-muted inline-flex items-center gap-0.5 rounded px-1 py-px text-[10px]"
+      class="inline-flex items-center gap-0.5 rounded bg-muted px-1 py-px text-sm text-muted-foreground"
     >
       <Clock class="size-2.5" />
       {timeRangeLabel(r.hours as [number, number])}
@@ -104,7 +104,7 @@
   <!-- Fish size (hideable for non-fish categories) -->
   {#if !hideFishSize}
     {#each restrictions.filter((r) => r.type === "fishSize" && r.size) as r (JSON.stringify(r))}
-      <span class="text-muted-foreground bg-muted rounded px-1 py-px text-[10px]">
+      <span class="rounded bg-muted px-1 py-px text-sm text-muted-foreground">
         {r.size}
       </span>
     {/each}
@@ -113,7 +113,7 @@
   <!-- Building/perk locks -->
   {#if !compact}
     {#each restrictions.filter((r) => r.type === "building" || r.type === "perk") as r (JSON.stringify(r))}
-      <Lock class="text-muted-foreground size-3" />
+      <Lock class="size-3 text-muted-foreground" />
     {/each}
   {/if}
 </span>

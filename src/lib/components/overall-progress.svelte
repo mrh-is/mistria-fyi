@@ -35,5 +35,5 @@
   });
 </script>
 
-<span class="text-muted-foreground text-sm">{overall().pct}%</span>
-<span class="text-muted-foreground text-xs">({overall().completed}/{overall().total})</span>
+<span class="text-base text-muted-foreground">{overall().pct}%</span>
+<span class="text-sm text-muted-foreground">({overall().completed}/{overall().total})</span>

@@ -52,9 +52,9 @@
 
 <div class="flex flex-col gap-1 rounded-md px-2 py-1.5 {maxed ? 'opacity-40' : ''}">
   <div class="flex items-center gap-2">
-    <span class="min-w-0 flex-1 text-sm font-medium">{name}</span>
+    <span class="min-w-0 flex-1 text-base font-medium">{name}</span>
     {#if tierIdx >= 0}
-      <span class="text-muted-foreground text-[10px]">{TIER_NAMES[tierIdx]}</span>
+      <span class="text-sm text-muted-foreground">{TIER_NAMES[tierIdx]}</span>
     {/if}
   </div>
 
@@ -77,7 +77,7 @@
       <div class="absolute inset-0 flex">
         {#each TIER_BREAKPOINTS.slice(0, -1) as bp (bp)}
           <div
-            class="bg-background absolute top-0 h-full w-px"
+            class="absolute top-0 h-full w-px bg-background"
             style="left: {(bp / MAX_LEVEL) * 100}%"
           ></div>
         {/each}
@@ -86,7 +86,7 @@
 
     {#if editingId === (id as string)}
       <Input
-        class="h-6 w-16 text-center text-xs"
+        class="h-6 w-16 text-center text-sm"
         type="number"
         max={MAX_LEVEL}
         min={0}
@@ -103,7 +103,7 @@
       />
     {:else}
       <button
-        class="text-muted-foreground flex h-8 w-12 items-center justify-center text-center text-xs hover:underline"
+        class="flex h-8 w-12 items-center justify-center text-center text-sm text-muted-foreground hover:underline"
         type="button"
         onclick={() => {
           startEditing(id as string, level);

@@ -54,7 +54,7 @@
       >
         −
       </Button>
-      <span class="text-lg font-semibold">
+      <span class="text-xl font-semibold">
         Floor {userState.state.completed.mines.floor}
       </span>
       <Button
@@ -67,7 +67,7 @@
         +
       </Button>
     </div>
-    <span class="text-muted-foreground text-xs">
+    <span class="text-sm text-muted-foreground">
       {currentBiome().name}
       (floors {currentBiome().startFloor}–{trackerData.mines.maxFloors})
     </span>
@@ -94,7 +94,7 @@
             userState.toggleSpell(spell.id);
           }}
         />
-        <span class="text-sm">{spell.name}</span>
+        <span class="text-base">{spell.name}</span>
       </div>
     {/if}
   {/each}

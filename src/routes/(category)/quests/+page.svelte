@@ -90,23 +90,23 @@
             }}
           >
             {#if questState === "none"}
-              <CircleDashed class="text-muted-foreground/50 size-5" />
+              <CircleDashed class="size-5 text-muted-foreground/50" />
             {:else if questState === "obtained"}
               <Circle class="size-5 text-amber-500 dark:text-amber-400" />
             {:else}
               <CircleCheckBig class="size-5 text-green-600 dark:text-green-400" />
             {/if}
           </button>
-          <span class="min-w-0 flex-1 text-sm">
+          <span class="min-w-0 flex-1 text-base">
             {quest.displayName}
             {#if quest.npc && (questType === "fetch_quests" || duplicateNames.has(quest.displayName))}
-              <span class="text-muted-foreground text-[10px]">
+              <span class="text-sm text-muted-foreground">
                 {trackerData.npcs[quest.npc as NpcId].name}
               </span>
             {/if}
           </span>
           {#if questState === "obtained"}
-            <span class="text-[10px] text-amber-600 dark:text-amber-400">Active</span>
+            <span class="text-sm text-amber-600 dark:text-amber-400">Active</span>
           {/if}
         </div>
       {/each}

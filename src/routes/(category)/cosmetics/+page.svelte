@@ -61,7 +61,7 @@
               userState.toggleCosmetic(cosmetic.id);
             }}
           />
-          <span class="text-sm">{cosmetic.name}</span>
+          <span class="text-base">{cosmetic.name}</span>
         </div>
       {/each}
     </ExpandableSection>
@@ -69,7 +69,7 @@
 {/each}
 
 {#if progress.total > 0 && progress.completed === progress.total && !userState.state.showCompleted}
-  <p class="text-muted-foreground py-8 text-center text-sm">
+  <p class="py-8 text-center text-base text-muted-foreground">
     All done! Toggle "Show completed" to review.
   </p>
 {/if}

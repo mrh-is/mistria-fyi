@@ -122,7 +122,7 @@
         {#if !showAllItems && filteredItems.length > SECTION_LIMIT}
           <div class="flex justify-center py-1">
             <Button
-              class="text-muted-foreground h-7 text-xs"
+              class="h-7 text-sm text-muted-foreground"
               variant="ghost"
               onclick={() => {
                 expandedSections[sectionKey] = true;
@@ -166,7 +166,7 @@
               {#if !showAllCat && filteredCatItems.length > SECTION_LIMIT}
                 <div class="flex justify-center py-1">
                   <Button
-                    class="text-muted-foreground h-7 text-xs"
+                    class="h-7 text-sm text-muted-foreground"
                     variant="ghost"
                     onclick={() => {
                       expandedSections[cat.key] = true;
@@ -185,7 +185,7 @@
 {/each}
 
 {#if progress.total > 0 && progress.completed === progress.total && !userState.state.showCompleted}
-  <p class="text-muted-foreground py-8 text-center text-sm">
+  <p class="py-8 text-center text-base text-muted-foreground">
     All done! Toggle "Show completed" to review.
   </p>
 {/if}

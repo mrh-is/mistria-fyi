@@ -19,7 +19,7 @@
   </Card.Header>
   <Card.Content>
     {#if showResetConfirm}
-      <p class="mb-3 text-sm">Are you sure? This will erase all your tracked progress.</p>
+      <p class="mb-3 text-base">Are you sure? This will erase all your tracked progress.</p>
       <div class="flex w-full justify-stretch gap-2">
         <Button class="grow-0" variant="destructive" onclick={handleReset}>
           <Trash2 />

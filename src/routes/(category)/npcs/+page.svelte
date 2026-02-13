@@ -68,8 +68,8 @@
       <div class="flex flex-col gap-1.5 rounded-md px-2 py-1.5 {maxed ? 'opacity-40' : ''}">
         <!-- Name row -->
         <div class="flex items-center gap-2">
-          <span class="min-w-0 flex-1 text-sm font-medium">{npc.name}</span>
-          <span class="text-muted-foreground flex items-center gap-0.5 text-[10px]">
+          <span class="min-w-0 flex-1 text-base font-medium">{npc.name}</span>
+          <span class="flex items-center gap-0.5 text-sm text-muted-foreground">
             <BdayIcon
               class="size-3 {npc.birthday.season === 'fall' ? '-scale-y-100 rotate-90' : ''}"
               strokeWidth={npc.birthday.season === "summer" ? 2.5 : undefined}
@@ -80,7 +80,7 @@
 
         <div class="flex items-center justify-center gap-0.5">
           <button
-            class="text-muted-foreground hover:text-foreground active:bg-accent flex size-8 items-center justify-center rounded-md transition-colors disabled:opacity-30"
+            class="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground active:bg-accent disabled:opacity-30"
             type="button"
             disabled={level <= 0}
             onclick={() => {
@@ -102,20 +102,20 @@
                 <Heart
                   class="size-4 transition-colors duration-200 {i < level
                     ? `${LEVEL_COLORS[i]} fill-current`
-                    : 'text-muted-foreground/30 fill-transparent'}"
+                    : 'fill-transparent text-muted-foreground/30'}"
                 />
               {:else}
                 <Octagon
                   class="size-4 transition-colors duration-200 {i < level
                     ? `${LEVEL_COLORS[i]} fill-current`
-                    : 'text-muted-foreground/30 fill-transparent'}"
+                    : 'fill-transparent text-muted-foreground/30'}"
                 />
               {/if}
             </button>
           {/each}
 
           <button
-            class="text-muted-foreground hover:text-foreground active:bg-accent flex size-8 items-center justify-center rounded-md transition-colors disabled:opacity-30"
+            class="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground active:bg-accent disabled:opacity-30"
             type="button"
             disabled={level >= MAX_NPC_LEVEL}
             onclick={() => {

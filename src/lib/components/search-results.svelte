@@ -67,7 +67,7 @@
 </script>
 
 <div class="flex flex-col gap-1">
-  <p class="text-muted-foreground text-xs">
+  <p class="text-sm text-muted-foreground">
     {results.length} result{results.length === 1 ? "" : "s"}
   </p>
 
@@ -84,17 +84,17 @@
           toggleResult(result);
         }}
       />
-      <span class="min-w-0 flex-1 text-sm">{result.name}</span>
+      <span class="min-w-0 flex-1 text-base">{result.name}</span>
       {#if restrictions.length > 0}
         <RestrictionBadges compact {restrictions} />
       {/if}
-      <span class="text-muted-foreground shrink-0 text-[10px]">
+      <span class="shrink-0 text-sm text-muted-foreground">
         {CATEGORY_LABELS[result.category] ?? result.category}
       </span>
     </div>
   {/each}
 
   {#if results.length === 0}
-    <p class="text-muted-foreground py-8 text-center text-sm">No items found</p>
+    <p class="py-8 text-center text-base text-muted-foreground">No items found</p>
   {/if}
 </div>

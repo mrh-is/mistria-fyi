@@ -96,7 +96,7 @@
             <div class="mt-1 flex justify-end px-2">
               {#if setComplete}
                 <Button
-                  class="h-6 text-xs"
+                  class="h-6 text-sm"
                   variant="ghost"
                   size="sm"
                   onclick={() => {
@@ -108,7 +108,7 @@
                 </Button>
               {:else}
                 <Button
-                  class="h-6 text-xs"
+                  class="h-6 text-sm"
                   variant="ghost"
                   size="sm"
                   onclick={() => {
@@ -128,7 +128,7 @@
 {/each}
 
 {#if progress.total > 0 && progress.completed === progress.total && !userState.state.showCompleted}
-  <p class="text-muted-foreground py-8 text-center text-sm">
+  <p class="py-8 text-center text-base text-muted-foreground">
     All done! Toggle "Show completed" to review.
   </p>
 {/if}

@@ -53,8 +53,8 @@
 <CategoryHeader category={CATEGORY_BY_KEY.renown} {progress} />
 
 <div class="flex flex-col gap-2">
-  <div class="text-center text-lg font-semibold">{currentRankName}</div>
-  <div class="text-muted-foreground text-center text-xs">
+  <div class="text-center text-xl font-semibold">{currentRankName}</div>
+  <div class="text-center text-sm text-muted-foreground">
     Level {levelInRank}/{levelsPerRank} in rank
   </div>
   <Progress class="h-2" value={overallPct} />
@@ -73,7 +73,7 @@
     </Button>
     {#if editing}
       <Input
-        class="h-6 w-20 text-center text-xs"
+        class="h-6 w-20 text-center text-sm"
         type="number"
         max={maxLevel}
         min={0}
@@ -86,7 +86,7 @@
       />
     {:else}
       <button
-        class="text-muted-foreground text-sm hover:underline"
+        class="text-base text-muted-foreground hover:underline"
         title="Click to edit level directly"
         type="button"
         onclick={startEditing}
@@ -113,13 +113,13 @@
     {@const isCompleted = level >= (i + 1) * levelsPerRank}
     {@const isCurrent = i === currentRankIndex}
     {#if isCurrent}
-      <div class="bg-accent rounded-md px-3 py-2">
-        <div class="text-sm font-medium">{rank.name}</div>
+      <div class="rounded-md bg-accent px-3 py-2">
+        <div class="text-base font-medium">{rank.name}</div>
       </div>
     {:else if isCompleted}
-      <div class="text-muted-foreground px-3 py-0.5 text-xs line-through">{rank.name}</div>
+      <div class="px-3 py-0.5 text-sm text-muted-foreground line-through">{rank.name}</div>
     {:else}
-      <div class="text-muted-foreground px-3 py-0.5 text-xs">{rank.name}</div>
+      <div class="px-3 py-0.5 text-sm text-muted-foreground">{rank.name}</div>
     {/if}
   {/each}
 </div>
