@@ -24,21 +24,13 @@
   );
 </script>
 
-<!-- Override --primary so checkboxes/progress bars inherit category color -->
-<div class="flex flex-col gap-4 px-4 pb-4" style="--primary: var(--cat-skills)">
-  <CategoryHeader
-    color={CATEGORY_BY_KEY.skills.color}
-    icon={CATEGORY_BY_KEY.skills.icon}
-    name={CATEGORY_BY_KEY.skills.name}
-    {progress}
-  />
+<CategoryHeader category={CATEGORY_BY_KEY.skills} {progress} />
 
-  <div class="flex flex-col gap-3">
-    {#each skills as skill (skill.id)}
-      {@const level = userState.state.completed.skillLevels[skill.id as string] ?? 0}
-      {#if level >= 60 ? userState.state.showCompleted : true}
-        <SkillRow id={skill.id} name={skill.name} />
-      {/if}
-    {/each}
-  </div>
+<div class="flex flex-col gap-3">
+  {#each skills as skill (skill.id)}
+    {@const level = userState.state.completed.skillLevels[skill.id as string] ?? 0}
+    {#if level >= 60 ? userState.state.showCompleted : true}
+      <SkillRow id={skill.id} name={skill.name} />
+    {/if}
+  {/each}
 </div>

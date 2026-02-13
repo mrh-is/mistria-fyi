@@ -5,27 +5,25 @@
   import { Checkbox } from "$lib/components/ui/checkbox/index.js";
   import { Input } from "$lib/components/ui/input/index.js";
   import WorldStateSelector from "$lib/components/world-state-selector.svelte";
+  import { categoryColor, type CategoryMeta } from "$lib/data/categories.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
-
-  import type { Component } from "svelte";
 
   import type { CategoryProgress } from "$lib/engine/progress.js";
 
   let {
-    color,
-    icon: Icon,
-    name,
+    category,
     onSearch,
     progress,
     showWorldState = false,
   }: {
-    color?: string;
-    icon: Component<{ class?: string }>;
-    name: string;
+    category: CategoryMeta;
     onSearch?: (query: string) => void;
     progress: CategoryProgress;
     showWorldState?: boolean;
   } = $props();
+
+  const Icon = $derived(category.icon);
+  const color = $derived(categoryColor(category.key));
 
   let pct = $derived(
     progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0,
@@ -55,7 +53,7 @@
       <ArrowLeft class="size-5" />
     </a>
     <Icon class={color ? "size-5 text-(--header-color)" : "text-muted-foreground size-5"} />
-    <h1 class="flex-1 text-lg font-semibold">{name}</h1>
+    <h1 class="flex-1 text-lg font-semibold">{category.name}</h1>
     <span class="text-muted-foreground text-sm">{pct}%</span>
     <span class="text-muted-foreground text-xs">({progress.completed}/{progress.total})</span>
   </div>

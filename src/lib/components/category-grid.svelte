@@ -15,12 +15,6 @@
 
 <div class="grid grid-cols-2 gap-2">
   {#each CATEGORIES as cat (cat.key)}
-    <CategoryCard
-      color={cat.color}
-      href={cat.href}
-      icon={cat.icon}
-      name={cat.name}
-      progress={progress[cat.key]}
-    />
+    <CategoryCard category={cat} progress={progress[cat.key]} />
   {/each}
 </div>

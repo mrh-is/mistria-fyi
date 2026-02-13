@@ -5,8 +5,10 @@ import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 const config = {
   kit: {
     adapter: adapter(),
-    paths: {
-      relative: false,
+    typescript: {
+      config: (config) => {
+        config.include.push("../scripts/**/*.ts");
+      },
     },
   },
 

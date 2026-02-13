@@ -1,24 +1,23 @@
 <script lang="ts">
   import * as Card from "$lib/components/ui/card/index.js";
   import { Progress } from "$lib/components/ui/progress/index.js";
+  import { categoryColor, categoryHref } from "$lib/data/categories.js";
 
-  import type { Component } from "svelte";
-
+  import type { CategoryMeta } from "$lib/data/categories.js";
   import type { CategoryProgress } from "$lib/engine/progress.js";
 
   let {
-    color,
-    href,
-    icon: Icon,
-    name,
+    category,
     progress,
   }: {
-    color: string;
-    href: string;
-    icon: Component<{ class?: string }>;
-    name: string;
+    category: CategoryMeta;
     progress: CategoryProgress;
   } = $props();
+
+  const Icon = $derived(category.icon);
+  const name = $derived(category.name);
+  const color = $derived(categoryColor(category.key));
+  const href = $derived(categoryHref(category.key));
 
   // Show available count when filtering is active (filtered < total - completed)
   let displayTotal = $derived(progress.completed + progress.filtered);

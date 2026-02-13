@@ -1,6 +1,7 @@
 import { trackerData } from "$lib/data/index.js";
 import { filterAvailableItems } from "$lib/engine/availability.js";
 
+import type { CategoryKey } from "$lib/data/categories.js";
 import type { AvailabilityMode, CompletedState } from "$lib/stores/user-state.svelte.js";
 import type { ItemId, Season, Source, Weather } from "$lib/types/tracker-data.js";
 
@@ -8,17 +9,7 @@ export const MAX_NPC_LEVEL = 8;
 
 // ─── Types ──────────────────────────────────────────────────────────
 
-export interface AllProgress {
-  almanac: CategoryProgress;
-  animals: CategoryProgress;
-  cosmetics: CategoryProgress;
-  mines: CategoryProgress;
-  museum: CategoryProgress;
-  npcs: CategoryProgress;
-  quests: CategoryProgress;
-  renown: CategoryProgress;
-  skills: CategoryProgress;
-}
+export type AllProgress = Record<CategoryKey, CategoryProgress>;
 
 export interface CategoryProgress {
   completed: number;
