@@ -7,11 +7,13 @@
   import type { CategoryProgress } from "$lib/engine/progress.js";
 
   let {
+    color,
     href,
     icon: Icon,
     name,
     progress,
   }: {
+    color: string;
     href: string;
     icon: Component<{ class?: string }>;
     name: string;
@@ -24,18 +26,20 @@
 </script>
 
 <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- href is a known route path -->
-<a class="block" {href}>
-  <Card.Root class="hover:bg-accent/50 active:bg-accent/70 gap-0 py-4 transition-colors">
+<a class="block" {href} style="--category-color: var(--{color})">
+  <Card.Root
+    class="hover:bg-accent/30 active:bg-accent/40 gap-0 py-4 transition-colors hover:border-(--category-color)/50"
+  >
     <Card.Content class="flex flex-col gap-2 px-4">
       <div class="flex items-center gap-2">
-        <Icon class="text-muted-foreground size-4 shrink-0" />
+        <Icon class="size-4 shrink-0 text-(--category-color)" />
         <span class="min-w-0 flex-1 text-sm font-medium">{name}</span>
         <span class="text-muted-foreground shrink-0 text-xs">
           <span class="sm:hidden">{Math.round(pct)}%</span>
           <span class="hidden sm:inline">{progress.completed}/{displayTotal}</span>
         </span>
       </div>
-      <Progress class="h-1.5" value={pct} />
+      <Progress class="h-1.5" value={pct} {color} />
     </Card.Content>
   </Card.Root>
 </a>

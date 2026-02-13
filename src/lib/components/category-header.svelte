@@ -12,12 +12,14 @@
   import type { CategoryProgress } from "$lib/engine/progress.js";
 
   let {
+    color,
     icon: Icon,
     name,
     onSearch,
     progress,
     showWorldState = false,
   }: {
+    color?: string;
     icon: Component<{ class?: string }>;
     name: string;
     onSearch?: (query: string) => void;
@@ -45,13 +47,14 @@
 
 <div
   class="bg-background border-border/50 sticky top-0 z-10 -mx-4 flex flex-col gap-3 border-b px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-3"
+  style={color ? `--header-color: var(--${color})` : undefined}
 >
   <div class="flex items-center gap-2">
     <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- known route -->
     <a class="text-muted-foreground hover:text-foreground" href="/">
       <ArrowLeft class="size-5" />
     </a>
-    <Icon class="text-muted-foreground size-5" />
+    <Icon class={color ? "size-5 text-(--header-color)" : "text-muted-foreground size-5"} />
     <h1 class="flex-1 text-lg font-semibold">{name}</h1>
     <span class="text-muted-foreground text-sm">{pct}%</span>
     <span class="text-muted-foreground text-xs">({progress.completed}/{progress.total})</span>

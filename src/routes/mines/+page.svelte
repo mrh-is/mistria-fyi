@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { Pickaxe } from "@lucide/svelte";
-
   import CategoryHeader from "$lib/components/category-header.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
   import { Checkbox } from "$lib/components/ui/checkbox/index.js";
+  import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
   import { getMinesProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -36,8 +35,14 @@
   );
 </script>
 
-<div class="flex flex-col gap-4 px-4 pb-4">
-  <CategoryHeader icon={Pickaxe} name="Mines" {progress} />
+<!-- Override --primary so checkboxes/progress bars inherit category color -->
+<div class="flex flex-col gap-4 px-4 pb-4" style="--primary: var(--cat-mines)">
+  <CategoryHeader
+    color={CATEGORY_BY_KEY.mines.color}
+    icon={CATEGORY_BY_KEY.mines.icon}
+    name={CATEGORY_BY_KEY.mines.name}
+    {progress}
+  />
 
   <ExpandableSection
     count={userState.state.completed.mines.floor}

@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { Crown, Minus, Plus } from "@lucide/svelte";
+  import { Minus, Plus } from "@lucide/svelte";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
   import { Input } from "$lib/components/ui/input/index.js";
   import { Progress } from "$lib/components/ui/progress/index.js";
+  import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
   import { getRenownProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -49,8 +50,14 @@
   }
 </script>
 
-<div class="flex flex-col gap-4 px-4 pb-4">
-  <CategoryHeader icon={Crown} name="Renown" {progress} />
+<!-- Override --primary so checkboxes/progress bars inherit category color -->
+<div class="flex flex-col gap-4 px-4 pb-4" style="--primary: var(--cat-renown)">
+  <CategoryHeader
+    color={CATEGORY_BY_KEY.renown.color}
+    icon={CATEGORY_BY_KEY.renown.icon}
+    name={CATEGORY_BY_KEY.renown.name}
+    {progress}
+  />
 
   <div class="flex flex-col gap-2">
     <div class="text-center text-lg font-semibold">{currentRankName}</div>

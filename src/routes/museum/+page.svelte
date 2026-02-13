@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { CheckCheck, Landmark, Undo2 } from "@lucide/svelte";
+  import { CheckCheck, Undo2 } from "@lucide/svelte";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import ItemRow from "$lib/components/item-row.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
+  import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
   import { isItemAvailable } from "$lib/engine/availability.js";
   import { getMuseumProgress } from "$lib/engine/progress.js";
@@ -52,10 +53,12 @@
   }
 </script>
 
-<div class="flex flex-col gap-4 px-4 pb-4">
+<!-- Override --primary so checkboxes/progress bars inherit category color -->
+<div class="flex flex-col gap-4 px-4 pb-4" style="--primary: var(--cat-museum)">
   <CategoryHeader
-    icon={Landmark}
-    name="Museum"
+    color={CATEGORY_BY_KEY.museum.color}
+    icon={CATEGORY_BY_KEY.museum.icon}
+    name={CATEGORY_BY_KEY.museum.name}
     onSearch={(q: string) => (nameFilter = q)}
     {progress}
     showWorldState

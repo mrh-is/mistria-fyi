@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { Flower, Leaf, PawPrint, Snowflake, Sun } from "@lucide/svelte";
+  import { Flower, Leaf, Snowflake, Sun } from "@lucide/svelte";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import { Checkbox } from "$lib/components/ui/checkbox/index.js";
+  import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
   import { getAnimalsProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -68,8 +69,14 @@
   }
 </script>
 
-<div class="flex flex-col gap-4 px-4 pb-4">
-  <CategoryHeader icon={PawPrint} name="Animals" {progress} />
+<!-- Override --primary so checkboxes/progress bars inherit category color -->
+<div class="flex flex-col gap-4 px-4 pb-4" style="--primary: var(--cat-animals)">
+  <CategoryHeader
+    color={CATEGORY_BY_KEY.animals.color}
+    icon={CATEGORY_BY_KEY.animals.icon}
+    name={CATEGORY_BY_KEY.animals.name}
+    {progress}
+  />
 
   {#each animals as animal (animal.id)}
     {@const variantEntries = sortedVariants(animal.variants)}

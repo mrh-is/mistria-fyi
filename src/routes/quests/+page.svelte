@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { Circle, CircleCheckBig, CircleDashed, ScrollText } from "@lucide/svelte";
+  import { Circle, CircleCheckBig, CircleDashed } from "@lucide/svelte";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
+  import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
   import { getQuestsProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -46,8 +47,14 @@
   }
 </script>
 
-<div class="flex flex-col gap-4 px-4 pb-4">
-  <CategoryHeader icon={ScrollText} name="Quests" {progress} />
+<!-- Override --primary so checkboxes/progress bars inherit category color -->
+<div class="flex flex-col gap-4 px-4 pb-4" style="--primary: var(--cat-quests)">
+  <CategoryHeader
+    color={CATEGORY_BY_KEY.quests.color}
+    icon={CATEGORY_BY_KEY.quests.icon}
+    name={CATEGORY_BY_KEY.quests.name}
+    {progress}
+  />
 
   {#each typeOrder as questType (questType)}
     {@const quests = Object.entries(trackerData.quests[questType] ?? {})

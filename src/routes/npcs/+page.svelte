@@ -2,6 +2,7 @@
   import { Flower, Heart, Leaf, Minus, Octagon, Plus, Snowflake, Sun } from "@lucide/svelte";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
+  import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
   import { getNpcsProgress, MAX_NPC_LEVEL } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -56,8 +57,14 @@
   }
 </script>
 
-<div class="flex flex-col gap-4 px-4 pb-4">
-  <CategoryHeader icon={Heart} name="NPCs" {progress} />
+<!-- Override --primary so checkboxes/progress bars inherit category color -->
+<div class="flex flex-col gap-4 px-4 pb-4" style="--primary: var(--cat-npcs)">
+  <CategoryHeader
+    color={CATEGORY_BY_KEY.npcs.color}
+    icon={CATEGORY_BY_KEY.npcs.icon}
+    name={CATEGORY_BY_KEY.npcs.name}
+    {progress}
+  />
 
   <div class="flex flex-col gap-2">
     {#each npcs as npc (npc.id)}

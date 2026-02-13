@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { Shirt } from "@lucide/svelte";
-
   import CategoryHeader from "$lib/components/category-header.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import { Checkbox } from "$lib/components/ui/checkbox/index.js";
+  import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
   import { getCosmeticsProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -33,8 +32,14 @@
   });
 </script>
 
-<div class="flex flex-col gap-4 px-4 pb-4">
-  <CategoryHeader icon={Shirt} name="Cosmetics" {progress} />
+<!-- Override --primary so checkboxes/progress bars inherit category color -->
+<div class="flex flex-col gap-4 px-4 pb-4" style="--primary: var(--cat-cosmetics)">
+  <CategoryHeader
+    color={CATEGORY_BY_KEY.cosmetics.color}
+    icon={CATEGORY_BY_KEY.cosmetics.icon}
+    name={CATEGORY_BY_KEY.cosmetics.name}
+    {progress}
+  />
 
   {#each groups() as [slot, cosmetics] (slot)}
     {@const completedCount = cosmetics.filter((c) =>

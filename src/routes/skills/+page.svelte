@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { BookOpenText } from "@lucide/svelte";
-
   import CategoryHeader from "$lib/components/category-header.svelte";
+  import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
   import { getSkillsProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -25,8 +24,14 @@
   );
 </script>
 
-<div class="flex flex-col gap-4 px-4 pb-4">
-  <CategoryHeader icon={BookOpenText} name="Skills" {progress} />
+<!-- Override --primary so checkboxes/progress bars inherit category color -->
+<div class="flex flex-col gap-4 px-4 pb-4" style="--primary: var(--cat-skills)">
+  <CategoryHeader
+    color={CATEGORY_BY_KEY.skills.color}
+    icon={CATEGORY_BY_KEY.skills.icon}
+    name={CATEGORY_BY_KEY.skills.name}
+    {progress}
+  />
 
   <div class="flex flex-col gap-3">
     {#each skills as skill (skill.id)}
