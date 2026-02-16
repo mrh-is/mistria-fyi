@@ -6,6 +6,7 @@
   import { trackerData } from "$lib/data/index.js";
   import { getCosmeticsProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { CosmeticId } from "$lib/types/tracker-data.js";
 
@@ -59,6 +60,10 @@
             checked={completed}
             onCheckedChange={() => {
               userState.toggleCosmetic(cosmetic.id);
+              const completed = userState.state.completed.cosmetics.has(cosmetic.id);
+              showUndoToast(cosmetic.name, completed, () => {
+                userState.toggleCosmetic(cosmetic.id);
+              });
             }}
           />
           <span class="text-base">{cosmetic.name}</span>

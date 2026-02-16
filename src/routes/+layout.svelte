@@ -7,6 +7,7 @@
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
   import ToolbarFooter from "$lib/components/toolbar-footer.svelte";
+  import { Toaster } from "$lib/components/ui/sonner/index.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
 
   let { children } = $props();
@@ -29,3 +30,4 @@
 </div>
 
 <ToolbarFooter />
+<Toaster position="bottom-center" offset="calc(56px + max(0.5rem, env(safe-area-inset-bottom)))" />

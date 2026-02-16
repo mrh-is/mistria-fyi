@@ -5,6 +5,7 @@
   import { getItemRestrictions } from "$lib/engine/availability.js";
   import { searchItems } from "$lib/engine/search.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { SearchResult } from "$lib/engine/search.js";
   import type { AnimalId, ItemId, NpcId, QuestId, VariantId } from "$lib/types/tracker-data.js";
@@ -84,6 +85,9 @@
         checked={result.completed}
         onCheckedChange={() => {
           toggleResult(result);
+          showUndoToast(result.name, !result.completed, () => {
+            toggleResult(result);
+          });
         }}
       />
       <span class="min-w-0 flex-1 text-base">{result.name}</span>

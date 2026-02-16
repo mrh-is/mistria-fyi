@@ -7,6 +7,7 @@
   import { trackerData } from "$lib/data/index.js";
   import { getMinesProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { SpellId } from "$lib/types/tracker-data.js";
 
@@ -94,6 +95,10 @@
           checked={completed}
           onCheckedChange={() => {
             userState.toggleSpell(spell.id);
+            const completed = userState.state.completed.mines.spells.has(spell.id);
+            showUndoToast(spell.name, completed, () => {
+              userState.toggleSpell(spell.id);
+            });
           }}
         />
         <span class="text-base">{spell.name}</span>

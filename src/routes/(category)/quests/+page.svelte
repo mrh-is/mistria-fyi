@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Circle, CircleCheckBig, CircleDashed } from "@lucide/svelte";
+  import { toast } from "svelte-sonner";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
@@ -87,6 +88,24 @@
                 : "Completed — click to reset"}
             onclick={() => {
               userState.cycleQuestState(quest.id);
+              const newState = getQuestState(quest.id);
+              const message =
+                newState === "obtained"
+                  ? `Marked "${quest.displayName}" obtained`
+                  : newState === "completed"
+                    ? `Marked "${quest.displayName}" completed`
+                    : `Reset "${quest.displayName}"`;
+              toast(message, {
+                cancel: {
+                  label: "Undo",
+                  onClick: () => {
+                    // Cycle twice to revert (3-state cycle)
+                    userState.cycleQuestState(quest.id);
+                    userState.cycleQuestState(quest.id);
+                  },
+                },
+                duration: 5000,
+              });
             }}
           >
             {#if questState === "none"}

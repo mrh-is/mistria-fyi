@@ -10,6 +10,7 @@
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { parseAlmanacCategory } from "$lib/utils/format.js";
+  import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { ItemId } from "$lib/types/tracker-data.js";
 
@@ -112,6 +113,10 @@
             name={item.name}
             onToggle={() => {
               userState.toggleAlmanacItem(itemId as ItemId);
+              const completed = userState.state.completed.almanac.has(itemId as ItemId);
+              showUndoToast(item.name, completed, () => {
+                userState.toggleAlmanacItem(itemId as ItemId);
+              });
             }}
           />
         {/each}
@@ -156,6 +161,10 @@
                   name={item.name}
                   onToggle={() => {
                     userState.toggleAlmanacItem(itemId as ItemId);
+                    const completed = userState.state.completed.almanac.has(itemId as ItemId);
+                    showUndoToast(item.name, completed, () => {
+                      userState.toggleAlmanacItem(itemId as ItemId);
+                    });
                   }}
                 />
               {/each}

@@ -11,6 +11,7 @@
   import { getMuseumProgress } from "$lib/engine/progress.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { ItemId } from "$lib/types/tracker-data.js";
 
@@ -85,6 +86,10 @@
                   name={trackerData.items[itemId].name}
                   onToggle={() => {
                     userState.toggleMuseumItem(itemId);
+                    const completed = userState.state.completed.museum.has(itemId);
+                    showUndoToast(trackerData.items[itemId].name, completed, () => {
+                      userState.toggleMuseumItem(itemId);
+                    });
                   }}
                 />
               {/if}
@@ -97,6 +102,9 @@
                   size="sm"
                   onclick={() => {
                     userState.uncompleteMuseumSet(set.items);
+                    showUndoToast(set.name, false, () => {
+                      userState.completeMuseumSet(set.items);
+                    });
                   }}
                 >
                   <Undo2 class="size-3" />
@@ -109,6 +117,9 @@
                   size="sm"
                   onclick={() => {
                     userState.completeMuseumSet(set.items);
+                    showUndoToast(set.name, true, () => {
+                      userState.uncompleteMuseumSet(set.items);
+                    });
                   }}
                 >
                   <CheckCheck class="size-3" />

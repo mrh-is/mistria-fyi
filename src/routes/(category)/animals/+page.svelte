@@ -8,6 +8,7 @@
   import { trackerData } from "$lib/data/index.js";
   import { getAnimalsProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { Component } from "svelte";
 
@@ -109,6 +110,13 @@
                 checked={completed}
                 onCheckedChange={() => {
                   userState.toggleAnimalVariant(animal.id, variantId as VariantId);
+                  const completed =
+                    (
+                      userState.state.completed.animals[animal.id] as Set<VariantId> | undefined
+                    )?.has(variantId as VariantId) ?? false;
+                  showUndoToast(variant.name, completed, () => {
+                    userState.toggleAnimalVariant(animal.id, variantId as VariantId);
+                  });
                 }}
               />
               <span class="min-w-0 flex-1 text-base">
@@ -147,6 +155,15 @@
                 checked={completed}
                 onCheckedChange={() => {
                   userState.toggleAnimalCosmetic(animal.id, cosmeticId as CosmeticId);
+                  const completed =
+                    (
+                      userState.state.completed.animalCosmetics[animal.id] as
+                        | Set<CosmeticId>
+                        | undefined
+                    )?.has(cosmeticId as CosmeticId) ?? false;
+                  showUndoToast(cosmetic.name, completed, () => {
+                    userState.toggleAnimalCosmetic(animal.id, cosmeticId as CosmeticId);
+                  });
                 }}
               />
               <span class="text-base">{cosmetic.name}</span>
