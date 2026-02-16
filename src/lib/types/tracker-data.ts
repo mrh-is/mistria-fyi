@@ -86,6 +86,7 @@ export interface TrackerData {
     {
       cosmetics: Record<CosmeticId, { name: string }>;
       name: string;
+      questGate?: QuestId[];
       variants: Record<
         VariantId,
         {
@@ -109,7 +110,7 @@ export interface TrackerData {
 
   generatedAt: string;
 
-  items: Record<ItemId, { category: string; name: string }>;
+  items: Record<ItemId, { category: string; name: string; questGate?: QuestId[] }>;
 
   mines: {
     biomes: Array<{
@@ -118,7 +119,7 @@ export interface TrackerData {
       startFloor: number;
     }>;
     maxFloors: number;
-    spells: Record<SpellId, { name: string }>;
+    spells: Record<SpellId, { name: string; questGate?: QuestId[] }>;
   };
 
   museum: Record<
@@ -137,6 +138,13 @@ export interface TrackerData {
       name: string;
     }
   >;
+
+  questGates: {
+    animalGates: Record<AnimalId, QuestId[]>;
+    itemGates: Record<ItemId, QuestId[]>;
+    progressionFlagToQuests: Record<string, QuestId[]>;
+    spellGates: Record<SpellId, QuestId[]>;
+  };
 
   quests: Record<string, Record<QuestId, { name: string; npc?: string }>>;
 

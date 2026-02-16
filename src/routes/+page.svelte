@@ -1,14 +1,11 @@
 <script lang="ts">
   import { Settings, Wheat } from "@lucide/svelte";
 
-  import AvailabilityToggle from "$lib/components/availability-toggle.svelte";
+  import { resolve } from "$app/paths";
   import CategoryGrid from "$lib/components/category-grid.svelte";
   import OverallProgress from "$lib/components/overall-progress.svelte";
-  import SearchBar from "$lib/components/search-bar.svelte";
   import SearchResults from "$lib/components/search-results.svelte";
-  import WorldStateSelector from "$lib/components/world-state-selector.svelte";
-
-  let searchQuery = $state("");
+  import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
 </script>
 
 <div class="flex flex-col gap-3 p-4 pt-[max(1rem,env(safe-area-inset-top))]">
@@ -20,19 +17,19 @@
     <div class="flex items-center gap-2">
       <OverallProgress />
       <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- known route -->
-      <a class="p-1 text-muted-foreground hover:text-foreground" href="/settings">
+      <a
+        class="flex min-h-11 min-w-11 items-center justify-center text-muted-foreground hover:text-foreground"
+        href={resolve("/settings")}
+        aria-label="Settings"
+      >
         <Settings class="size-5" />
       </a>
     </div>
   </div>
 
-  <SearchBar onSearch={(q: string) => (searchQuery = q)} />
-
-  {#if searchQuery}
-    <SearchResults query={searchQuery} />
+  {#if toolbarState.searchQuery}
+    <SearchResults query={toolbarState.searchQuery} />
   {:else}
-    <WorldStateSelector />
-    <AvailabilityToggle />
     <CategoryGrid />
   {/if}
 </div>

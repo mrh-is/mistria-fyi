@@ -31,15 +31,15 @@
 <div class="relative">
   {#if searching}
     <LoaderCircle
-      class="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2 animate-spin"
+      class="absolute top-1/2 left-3 size-4 -translate-y-1/2 animate-spin text-muted-foreground"
     />
   {:else}
-    <Search class="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+    <Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
   {/if}
   <Input class="px-9" placeholder="Search items..." type="text" {value} oninput={handleInput} />
   {#if value}
     <button
-      class="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
+      class="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
       onclick={clear}
       type="button"
     >

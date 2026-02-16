@@ -77,7 +77,14 @@ export default defineConfig(
           ignoreCase: true,
           internalPattern: ["^\\$lib", "^\\$app", "^\\$env", "^\\$service-worker"],
           order: "asc",
+          tsconfig: { rootDir: "." },
           type: "natural",
+        },
+      ],
+      "perfectionist/sort-objects": [
+        "error",
+        {
+          partitionByNewLine: true,
         },
       ],
       "prefer-const": "error",

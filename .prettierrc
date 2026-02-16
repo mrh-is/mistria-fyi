@@ -6,6 +6,7 @@
   "proseWrap": "always",
   "semi": true,
   "singleQuote": false,
+  "tailwindStylesheet": "./src/app.css",
   "trailingComma": "all",
   "useTabs": false,
 

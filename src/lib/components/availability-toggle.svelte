@@ -5,7 +5,7 @@
   import type { AvailabilityMode } from "$lib/stores/user-state.svelte.js";
 </script>
 
-<div class="border-border rounded-lg border p-1">
+<div class="rounded-lg border border-border p-1">
   <ToggleGroup.Root
     class="w-full"
     type="single"

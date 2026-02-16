@@ -9,6 +9,7 @@
   import { trackerData } from "$lib/data/index.js";
   import { isItemAvailable } from "$lib/engine/availability.js";
   import { getMuseumProgress } from "$lib/engine/progress.js";
+  import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import type { ItemId } from "$lib/types/tracker-data.js";
@@ -21,7 +22,7 @@
     }),
   );
 
-  let nameFilter = $state("");
+  let nameFilter = $derived(toolbarState.searchQuery);
 
   function matchesFilter(itemId: ItemId): boolean {
     if (!nameFilter) return true;
@@ -53,12 +54,7 @@
   }
 </script>
 
-<CategoryHeader
-  category={CATEGORY_BY_KEY.museum}
-  onSearch={(q: string) => (nameFilter = q)}
-  {progress}
-  showWorldState
-/>
+<CategoryHeader category={CATEGORY_BY_KEY.museum} {progress} />
 
 {#each Object.entries(trackerData.museum) as [wingId, wing] (wingId)}
   {@const wingItems = Object.values(wing.sets).flatMap((s) => s.items)}
