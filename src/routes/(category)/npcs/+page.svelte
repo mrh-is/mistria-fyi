@@ -6,10 +6,25 @@
   import { trackerData } from "$lib/data/index.js";
   import { getNpcsProgress, MAX_NPC_LEVEL } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { celebrateCategory } from "$lib/utils/celebrate.js";
 
   import type { Component } from "svelte";
 
   import type { NpcId, Season } from "$lib/types/tracker-data.js";
+
+  function areAllNpcsMaxed(): boolean {
+    return Object.keys(trackerData.npcs).every(
+      (id) => (userState.state.completed.npcLevels[id] ?? 0) >= MAX_NPC_LEVEL,
+    );
+  }
+
+  function setNpcLevelWithCelebration(id: NpcId, newLevel: number): void {
+    const wasCategoryComplete = areAllNpcsMaxed();
+    userState.setNpcLevel(id, newLevel);
+    if (!wasCategoryComplete && areAllNpcsMaxed()) {
+      celebrateCategory();
+    }
+  }
 
   const SEASON_ICON: Record<Season, Component<{ class?: string; strokeWidth?: number }>> = {
     fall: Leaf,
@@ -84,7 +99,7 @@
             type="button"
             disabled={level <= 0}
             onclick={() => {
-              userState.setNpcLevel(npc.id, level - 1);
+              setNpcLevelWithCelebration(npc.id, level - 1);
             }}
           >
             <Minus class="size-3.5" />
@@ -95,7 +110,7 @@
               class="flex size-7 items-center justify-center"
               type="button"
               onclick={() => {
-                userState.setNpcLevel(npc.id, i < level ? i : i + 1);
+                setNpcLevelWithCelebration(npc.id, i < level ? i : i + 1);
               }}
             >
               {#if npc.dateable}
@@ -119,7 +134,7 @@
             type="button"
             disabled={level >= MAX_NPC_LEVEL}
             onclick={() => {
-              userState.setNpcLevel(npc.id, level + 1);
+              setNpcLevelWithCelebration(npc.id, level + 1);
             }}
           >
             <Plus class="size-3.5" />

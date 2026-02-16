@@ -4,7 +4,9 @@
   import { Button } from "$lib/components/ui/button/index.js";
   import { Input } from "$lib/components/ui/input/index.js";
   import { Progress } from "$lib/components/ui/progress/index.js";
+  import { trackerData } from "$lib/data/index.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { celebrateCategory } from "$lib/utils/celebrate.js";
 
   import type { SkillId } from "$lib/types/tracker-data.js";
 
@@ -39,7 +41,7 @@
   function commitEdit(skillId: SkillId) {
     const parsed = parseInt(editValue, 10);
     if (!isNaN(parsed)) {
-      userState.setSkillLevel(skillId, parsed);
+      setLevelWithCelebration(skillId, parsed);
     }
     editingId = null;
   }
@@ -47,6 +49,20 @@
   function handleEditKeydown(e: KeyboardEvent, skillId: SkillId) {
     if (e.key === "Enter") commitEdit(skillId);
     if (e.key === "Escape") editingId = null;
+  }
+
+  function areAllSkillsMaxed(): boolean {
+    return Object.keys(trackerData.skills).every(
+      (sid) => (userState.state.completed.skillLevels[sid] ?? 0) >= MAX_LEVEL,
+    );
+  }
+
+  function setLevelWithCelebration(skillId: SkillId, newLevel: number): void {
+    const wasDone = areAllSkillsMaxed();
+    userState.setSkillLevel(skillId, newLevel);
+    if (!wasDone && areAllSkillsMaxed()) {
+      celebrateCategory();
+    }
   }
 </script>
 
@@ -65,7 +81,7 @@
       variant="ghost"
       disabled={level <= 0}
       onclick={() => {
-        userState.setSkillLevel(id, level - 1);
+        setLevelWithCelebration(id, level - 1);
       }}
     >
       <Minus class="size-3.5" />
@@ -119,7 +135,7 @@
       variant="ghost"
       disabled={level >= MAX_LEVEL}
       onclick={() => {
-        userState.setSkillLevel(id, level + 1);
+        setLevelWithCelebration(id, level + 1);
       }}
     >
       <Plus class="size-3.5" />

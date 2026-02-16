@@ -9,10 +9,31 @@
   import { getAlmanacProgress } from "$lib/engine/progress.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { parseAlmanacCategory } from "$lib/utils/format.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { ItemId } from "$lib/types/tracker-data.js";
+
+  function isGroupComplete(groupItemIds: ItemId[]): boolean {
+    return groupItemIds.every((id) => userState.state.completed.almanac.has(id));
+  }
+
+  function isAlmanacComplete(): boolean {
+    return Object.values(trackerData.almanac).every((items) =>
+      Object.keys(items).every((id) => userState.state.completed.almanac.has(id as ItemId)),
+    );
+  }
+
+  function checkCelebration(sectionItemIds: ItemId[], groupItemIds: ItemId[]): void {
+    if (isAlmanacComplete()) {
+      celebrateCategory();
+    } else if (isGroupComplete(groupItemIds)) {
+      celebrate();
+    } else if (sectionItemIds.every((id) => userState.state.completed.almanac.has(id))) {
+      celebrate();
+    }
+  }
 
   const SECTION_LIMIT = 50;
 
@@ -117,6 +138,12 @@
               showUndoToast(item.name, completed, () => {
                 userState.toggleAlmanacItem(itemId as ItemId);
               });
+              if (completed) {
+                checkCelebration(
+                  categories[0].items.map(([id]) => id as ItemId),
+                  groupItems,
+                );
+              }
             }}
           />
         {/each}
@@ -165,6 +192,9 @@
                     showUndoToast(item.name, completed, () => {
                       userState.toggleAlmanacItem(itemId as ItemId);
                     });
+                    if (completed) {
+                      checkCelebration(catItemIds, groupItems);
+                    }
                   }}
                 />
               {/each}

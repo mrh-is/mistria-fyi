@@ -11,9 +11,22 @@
   import { getMuseumProgress } from "$lib/engine/progress.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { ItemId } from "$lib/types/tracker-data.js";
+
+  function isWingComplete(wingItems: ItemId[]): boolean {
+    return wingItems.every((id) => userState.state.completed.museum.has(id));
+  }
+
+  function isCategoryComplete(): boolean {
+    return Object.values(trackerData.museum).every((wing) =>
+      Object.values(wing.sets)
+        .flatMap((s) => s.items)
+        .every((id) => userState.state.completed.museum.has(id)),
+    );
+  }
 
   let progress = $derived(
     getMuseumProgress({
@@ -90,6 +103,15 @@
                     showUndoToast(trackerData.items[itemId].name, completed, () => {
                       userState.toggleMuseumItem(itemId);
                     });
+                    if (completed) {
+                      if (isCategoryComplete()) {
+                        celebrateCategory();
+                      } else if (isWingComplete(wingItems)) {
+                        celebrate();
+                      } else if (isSetComplete(set.items)) {
+                        celebrate();
+                      }
+                    }
                   }}
                 />
               {/if}
@@ -120,6 +142,13 @@
                     showUndoToast(set.name, true, () => {
                       userState.uncompleteMuseumSet(set.items);
                     });
+                    if (isCategoryComplete()) {
+                      celebrateCategory();
+                    } else if (isWingComplete(wingItems)) {
+                      celebrate();
+                    } else {
+                      celebrate();
+                    }
                   }}
                 >
                   <CheckCheck class="size-3" />

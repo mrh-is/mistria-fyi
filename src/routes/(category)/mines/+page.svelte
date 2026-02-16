@@ -7,9 +7,23 @@
   import { trackerData } from "$lib/data/index.js";
   import { getMinesProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { SpellId } from "$lib/types/tracker-data.js";
+
+  function isMinesComplete(): boolean {
+    const allSpells = Object.keys(trackerData.mines.spells).every((id) =>
+      userState.state.completed.mines.spells.has(id as SpellId),
+    );
+    return allSpells && userState.state.completed.mines.floor >= trackerData.mines.maxFloors;
+  }
+
+  function allSpellsComplete(): boolean {
+    return Object.keys(trackerData.mines.spells).every((id) =>
+      userState.state.completed.mines.spells.has(id as SpellId),
+    );
+  }
 
   let progress = $derived(
     getMinesProgress({
@@ -65,6 +79,11 @@
         variant="outline"
         onclick={() => {
           userState.setMineFloor(userState.state.completed.mines.floor + 1);
+          if (isMinesComplete()) {
+            celebrateCategory();
+          } else if (userState.state.completed.mines.floor >= trackerData.mines.maxFloors) {
+            celebrate();
+          }
         }}
       >
         +
@@ -99,6 +118,13 @@
             showUndoToast(spell.name, completed, () => {
               userState.toggleSpell(spell.id);
             });
+            if (completed) {
+              if (isMinesComplete()) {
+                celebrateCategory();
+              } else if (allSpellsComplete()) {
+                celebrate();
+              }
+            }
           }}
         />
         <span class="text-base">{spell.name}</span>

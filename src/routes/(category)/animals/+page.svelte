@@ -8,11 +8,34 @@
   import { trackerData } from "$lib/data/index.js";
   import { getAnimalsProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { Component } from "svelte";
 
   import type { AnimalId, CosmeticId, Season, VariantId } from "$lib/types/tracker-data.js";
+
+  function isAnimalComplete(animalId: AnimalId): boolean {
+    const animal = trackerData.animals[animalId];
+    const variantIds = Object.keys(animal.variants) as VariantId[];
+    const cosmeticIds = Object.keys(animal.cosmetics) as CosmeticId[];
+    const variantsComplete = variantIds.every(
+      (v) =>
+        (userState.state.completed.animals[animalId] as Set<VariantId> | undefined)?.has(v) ??
+        false,
+    );
+    const cosmeticsComplete = cosmeticIds.every(
+      (c) =>
+        (userState.state.completed.animalCosmetics[animalId] as Set<CosmeticId> | undefined)?.has(
+          c,
+        ) ?? false,
+    );
+    return variantsComplete && cosmeticsComplete;
+  }
+
+  function isAnimalsComplete(): boolean {
+    return Object.keys(trackerData.animals).every((id) => isAnimalComplete(id as AnimalId));
+  }
 
   const SEASON_ICON: Record<Season, Component<{ class?: string; strokeWidth?: number }>> = {
     fall: Leaf,
@@ -117,6 +140,13 @@
                   showUndoToast(variant.name, completed, () => {
                     userState.toggleAnimalVariant(animal.id, variantId as VariantId);
                   });
+                  if (completed) {
+                    if (isAnimalsComplete()) {
+                      celebrateCategory();
+                    } else if (isAnimalComplete(animal.id)) {
+                      celebrate();
+                    }
+                  }
                 }}
               />
               <span class="min-w-0 flex-1 text-base">
@@ -164,6 +194,13 @@
                   showUndoToast(cosmetic.name, completed, () => {
                     userState.toggleAnimalCosmetic(animal.id, cosmeticId as CosmeticId);
                   });
+                  if (completed) {
+                    if (isAnimalsComplete()) {
+                      celebrateCategory();
+                    } else if (isAnimalComplete(animal.id)) {
+                      celebrate();
+                    }
+                  }
                 }}
               />
               <span class="text-base">{cosmetic.name}</span>

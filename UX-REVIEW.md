@@ -949,6 +949,8 @@ Provides a safety net without adding friction to intentional actions.
 
 ### Completed Category "Trophy Case" 🏆
 
+> ✅ **Implemented** — `category-card.svelte` + `category-grid.svelte`
+
 When a category reaches 100%, give it special treatment on the home grid.
 
 **Design principles:**
@@ -966,6 +968,19 @@ When a category reaches 100%, give it special treatment on the home grid.
 trigger a one-time celebration — confetti burst, color flash, or similar. Also trigger for
 section-level completions within a category (e.g., completing a Museum wing). Do NOT trigger for
 every individual item check-off.
+
+> ✅ **Implemented** — `canvas-confetti` library with two burst styles:
+>
+> - `celebrate()`: single center burst for section-level completions (museum wings/sets, almanac
+>   groups/sub-categories, per-animal completion, cosmetic slots, quest types, all spells learned,
+>   max mine floor)
+> - `celebrateCategory()`: dual burst from both sides for full category completion
+>
+> Celebration logic lives in each category page's event handlers (not in shared components),
+> avoiding a Svelte 5 lifecycle issue where conditionally-rendered `ExpandableSection` components
+> get destroyed before their `$effect` can fire when `showCompleted` is false.
+>
+> **Component:** `src/lib/utils/celebrate.ts`
 
 ### Welcome Experience — First Visit 👋
 
@@ -1043,8 +1058,10 @@ The app has excellent **bones**. The implementation plan transforms it from "fun
 10. 👋 Welcome experience (first-visit onboarding)
 11. 🔒 Spoiler system (quest-locked item obfuscation — blocked by data investigation)
 12. ↩️ Undo toasts (Sonner)
-13. 🏆 Completed category "trophy case" treatment
-14. 🎉 Milestone celebrations (confetti for section/category completion)
+13. ~~🏆 Completed category "trophy case" treatment~~ ✅ Done — gold cards + "Completed" section on
+    home grid
+14. ~~🎉 Milestone celebrations (confetti for section/category completion)~~ ✅ Done —
+    `canvas-confetti` in all 9 category page handlers
 
 **Phase D — Accessibility & Cleanup**:
 
@@ -1086,9 +1103,9 @@ Resolved questions have been incorporated into the spec sections above. Remainin
    visual evaluation against the new base palette. At minimum, the world state season marker should
    show a nice color even before any broader tinting.
 
-4. **Completed category layout**: Two candidate approaches remain (separate section below grid, or
-   in-grid with settled style). Half-height cards rejected — would break grid consistency. Need to
-   prototype both remaining options.
+4. ~~**Completed category layout**~~: Resolved — separate "Completed" section below the active grid,
+   with gold border/accent trophy treatment on cards. Trophy icon replaces category icon, progress
+   bar becomes solid amber.
 
 ---
 

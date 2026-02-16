@@ -8,10 +8,23 @@
   import { trackerData } from "$lib/data/index.js";
   import { getQuestsProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { displayQuestName } from "$lib/utils/format.js";
 
   import type { QuestState } from "$lib/stores/user-state.svelte.js";
   import type { NpcId, QuestId } from "$lib/types/tracker-data.js";
+
+  function isQuestTypeComplete(questIds: QuestId[]): boolean {
+    return questIds.every((id) => getQuestState(id) === "completed");
+  }
+
+  function isQuestsComplete(): boolean {
+    return typeOrder.every((type) =>
+      Object.keys(trackerData.quests[type] ?? {}).every(
+        (id) => getQuestState(id as QuestId) === "completed",
+      ),
+    );
+  }
 
   /** Build a set of display names that appear more than once in a quest group */
   function findDuplicateNames(entries: Array<{ displayName: string }>): Set<string> {
@@ -106,6 +119,14 @@
                 },
                 duration: 5000,
               });
+              if (newState === "completed") {
+                const questIds = quests.map((q) => q.id);
+                if (isQuestsComplete()) {
+                  celebrateCategory();
+                } else if (isQuestTypeComplete(questIds)) {
+                  celebrate();
+                }
+              }
             }}
           >
             {#if questState === "none"}

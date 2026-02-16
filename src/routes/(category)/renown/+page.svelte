@@ -9,6 +9,7 @@
   import { trackerData } from "$lib/data/index.js";
   import { getRenownProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { celebrateCategory } from "$lib/utils/celebrate.js";
 
   let progress = $derived(
     getRenownProgress({
@@ -39,7 +40,7 @@
   function commitEdit() {
     const parsed = parseInt(editValue, 10);
     if (!isNaN(parsed)) {
-      userState.setRenown(parsed);
+      setRenownWithCelebration(parsed);
     }
     editing = false;
   }
@@ -47,6 +48,14 @@
   function handleEditKeydown(e: KeyboardEvent) {
     if (e.key === "Enter") commitEdit();
     if (e.key === "Escape") editing = false;
+  }
+
+  function setRenownWithCelebration(newLevel: number): void {
+    const wasDone = level >= maxLevel;
+    userState.setRenown(newLevel);
+    if (!wasDone && userState.state.completed.renown >= maxLevel) {
+      celebrateCategory();
+    }
   }
 </script>
 
@@ -66,7 +75,7 @@
       variant="ghost"
       disabled={level <= 0}
       onclick={() => {
-        userState.setRenown(level - 1);
+        setRenownWithCelebration(level - 1);
       }}
     >
       <Minus class="size-4" />
@@ -100,7 +109,7 @@
       variant="ghost"
       disabled={level >= maxLevel}
       onclick={() => {
-        userState.setRenown(level + 1);
+        setRenownWithCelebration(level + 1);
       }}
     >
       <Plus class="size-4" />

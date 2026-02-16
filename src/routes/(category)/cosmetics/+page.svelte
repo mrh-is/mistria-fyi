@@ -6,9 +6,20 @@
   import { trackerData } from "$lib/data/index.js";
   import { getCosmeticsProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { CosmeticId } from "$lib/types/tracker-data.js";
+
+  function isCosmeticsComplete(): boolean {
+    return Object.keys(trackerData.cosmetics).every((id) =>
+      userState.state.completed.cosmetics.has(id as CosmeticId),
+    );
+  }
+
+  function isSlotComplete(slotCosmetics: Array<{ id: CosmeticId }>): boolean {
+    return slotCosmetics.every((c) => userState.state.completed.cosmetics.has(c.id));
+  }
 
   let progress = $derived(
     getCosmeticsProgress({
@@ -64,6 +75,13 @@
               showUndoToast(cosmetic.name, completed, () => {
                 userState.toggleCosmetic(cosmetic.id);
               });
+              if (completed) {
+                if (isCosmeticsComplete()) {
+                  celebrateCategory();
+                } else if (isSlotComplete(cosmetics)) {
+                  celebrate();
+                }
+              }
             }}
           />
           <span class="text-base">{cosmetic.name}</span>
