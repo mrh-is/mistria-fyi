@@ -60,7 +60,7 @@
 
   <div class="flex items-center gap-2">
     <Button
-      class="size-8 shrink-0"
+      class="size-10 shrink-0"
       size="icon"
       variant="ghost"
       disabled={level <= 0}
@@ -114,7 +114,7 @@
     {/if}
 
     <Button
-      class="size-8 shrink-0"
+      class="size-10 shrink-0"
       size="icon"
       variant="ghost"
       disabled={level >= MAX_LEVEL}

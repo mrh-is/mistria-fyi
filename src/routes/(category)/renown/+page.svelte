@@ -61,7 +61,7 @@
 
   <div class="flex items-center justify-center gap-3">
     <Button
-      class="size-6 shrink-0"
+      class="size-10 shrink-0"
       size="icon"
       variant="ghost"
       disabled={level <= 0}
@@ -69,7 +69,7 @@
         userState.setRenown(level - 1);
       }}
     >
-      <Minus class="size-3" />
+      <Minus class="size-4" />
     </Button>
     {#if editing}
       <Input
@@ -95,7 +95,7 @@
       </button>
     {/if}
     <Button
-      class="size-6 shrink-0"
+      class="size-10 shrink-0"
       size="icon"
       variant="ghost"
       disabled={level >= maxLevel}
@@ -103,7 +103,7 @@
         userState.setRenown(level + 1);
       }}
     >
-      <Plus class="size-3" />
+      <Plus class="size-4" />
     </Button>
   </div>
 </div>

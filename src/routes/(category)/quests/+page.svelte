@@ -78,7 +78,7 @@
             : ''}"
         >
           <button
-            class="shrink-0 transition-colors"
+            class="flex size-11 shrink-0 items-center justify-center rounded-md transition-colors"
             type="button"
             title={questState === "none"
               ? "Not obtained — click to mark obtained"

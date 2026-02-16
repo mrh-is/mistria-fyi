@@ -39,7 +39,7 @@
   <Input class="px-9" placeholder="Search items..." type="text" {value} oninput={handleInput} />
   {#if value}
     <button
-      class="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+      class="absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
       onclick={clear}
       type="button"
     >

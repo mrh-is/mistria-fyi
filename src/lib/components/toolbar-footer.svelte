@@ -317,7 +317,7 @@
           />
           {#if toolbarState.searchQuery}
             <button
-              class="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              class="absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
               onclick={() => {
                 toolbarState.setSearch("");
               }}

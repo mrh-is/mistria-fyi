@@ -80,7 +80,7 @@
 
         <div class="flex items-center justify-center gap-0.5">
           <button
-            class="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground active:bg-accent disabled:opacity-30"
+            class="flex size-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground active:bg-accent disabled:opacity-30"
             type="button"
             disabled={level <= 0}
             onclick={() => {
@@ -92,7 +92,7 @@
 
           {#each { length: MAX_NPC_LEVEL } as _, i (i)}
             <button
-              class="p-0.5"
+              class="flex size-7 items-center justify-center"
               type="button"
               onclick={() => {
                 userState.setNpcLevel(npc.id, i < level ? i : i + 1);
@@ -115,7 +115,7 @@
           {/each}
 
           <button
-            class="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground active:bg-accent disabled:opacity-30"
+            class="flex size-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground active:bg-accent disabled:opacity-30"
             type="button"
             disabled={level >= MAX_NPC_LEVEL}
             onclick={() => {

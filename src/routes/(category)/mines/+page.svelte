@@ -46,7 +46,8 @@
   <div class="flex flex-col gap-2 py-2">
     <div class="flex items-center gap-3">
       <Button
-        size="sm"
+        class="size-11"
+        size="icon"
         variant="outline"
         onclick={() => {
           userState.setMineFloor(userState.state.completed.mines.floor - 1);
@@ -58,7 +59,8 @@
         Floor {userState.state.completed.mines.floor}
       </span>
       <Button
-        size="sm"
+        class="size-11"
+        size="icon"
         variant="outline"
         onclick={() => {
           userState.setMineFloor(userState.state.completed.mines.floor + 1);
