@@ -2,6 +2,7 @@
   import { ArrowLeft } from "@lucide/svelte";
 
   import { resolve } from "$app/paths";
+  import { page } from "$app/state";
   import { trackerData } from "$lib/data/index.js";
 
   import BackupCard from "./backup-card.svelte";
@@ -10,11 +11,21 @@
   import ThemeCard from "./theme-card.svelte";
   import TransferCard from "./transfer-card.svelte";
 
+  let importSection = $state<HTMLElement | null>(null);
   let transferSection = $state<HTMLElement | null>(null);
 
   function scrollToTransfer() {
     transferSection?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
+
+  $effect(() => {
+    const section = page.url.searchParams.get("section");
+    if (section === "transfer") {
+      transferSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else if (section === "import") {
+      importSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
 </script>
 
 <div
@@ -33,7 +44,9 @@
 
 <div class="flex flex-col gap-4 p-4">
   <ThemeCard />
-  <ImportCard onScrollToTransfer={scrollToTransfer} />
+  <div bind:this={importSection}>
+    <ImportCard onScrollToTransfer={scrollToTransfer} />
+  </div>
   <div bind:this={transferSection}>
     <TransferCard />
   </div>

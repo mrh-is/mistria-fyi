@@ -5,6 +5,7 @@
   import CategoryGrid from "$lib/components/category-grid.svelte";
   import OverallProgress from "$lib/components/overall-progress.svelte";
   import SearchResults from "$lib/components/search-results.svelte";
+  import WelcomeCard from "$lib/components/welcome-card.svelte";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
 </script>
 
@@ -30,6 +31,7 @@
   {#if toolbarState.searchQuery}
     <SearchResults query={toolbarState.searchQuery} />
   {:else}
+    <WelcomeCard />
     <CategoryGrid />
   {/if}
 </div>

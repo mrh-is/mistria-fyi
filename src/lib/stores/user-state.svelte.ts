@@ -79,6 +79,7 @@ interface SerializedState {
 }
 
 const STORAGE_KEY = "harvest-helper-v1";
+export const WELCOME_DISMISSED_KEY = "harvest-helper-welcomed";
 
 function createDefaultCompleted(): CompletedState {
   // Pre-populate default-unlocked cosmetics
@@ -307,6 +308,9 @@ function createUserState() {
     },
     resetAll() {
       state = createDefaultState();
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(WELCOME_DISMISSED_KEY);
+      }
     },
     setAvailabilityMode(mode: AvailabilityMode) {
       state.availabilityMode = mode;

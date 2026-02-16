@@ -62,7 +62,7 @@ All recommendations in this review have been evaluated. Key decisions:
 - 🔒 **Spoiler system** — Quest-locked items get obfuscated with "Continue story quests to unlock."
 - ↩️ **Undo toasts** — Sonner/toast for check-off actions (Gmail-style "Undo").
 - 🏆 **Completed categories** — "Trophy case" treatment: celebratory but stays out of the way.
-- 👋 **Welcome UX** — First-visit onboarding guiding import or manual start.
+- 👋 **Welcome UX** — First-visit onboarding guiding import or manual start. ✅ Done.
 - 🎉 **Milestone celebrations** — Confetti/animation for section/category completions. Not
   individual items.
 - 🧩 **Design system** — Codify patterns as reusable components (not just conventions/rules).
@@ -1064,7 +1064,8 @@ The app has excellent **bones**. The implementation plan transforms it from "fun
 
 **Phase C — New Features**:
 
-10. 👋 Welcome experience (first-visit onboarding)
+10. ~~👋 Welcome experience (first-visit onboarding)~~ ✅ Done — `welcome-card.svelte`, device-aware
+    (mobile→QR scan, desktop→import), dismisses on manual start or reset
 11. 🔒 Spoiler system (quest-locked item obfuscation — blocked by data investigation)
 12. ↩️ Undo toasts (Sonner)
 13. ~~🏆 Completed category "trophy case" treatment~~ ✅ Done — gold cards + "Completed" section on
