@@ -23,13 +23,11 @@
   };
 
   // Build a reverse lookup: variantId → animalId (static, not reactive)
-  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- static lookup, never mutated after init
-  const variantToAnimal = new Map<string, string>();
-  for (const [animalId, animal] of Object.entries(trackerData.animals)) {
-    for (const variantId of Object.keys(animal.variants)) {
-      variantToAnimal.set(variantId, animalId);
-    }
-  }
+  const variantToAnimal = new Map(
+    Object.entries(trackerData.animals).flatMap(([animalId, animal]) =>
+      Object.keys(animal.variants).map((variantId) => [variantId, animalId]),
+    ),
+  );
 
   function getRestrictions(result: SearchResult) {
     if (result.category === "almanac") {

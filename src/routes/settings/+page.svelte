@@ -31,7 +31,6 @@
 <div
   class="sticky top-0 z-10 flex items-center gap-2 border-b border-border/50 bg-background px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-3"
 >
-  <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- known route -->
   <a
     class="flex min-h-11 min-w-11 items-center justify-center text-muted-foreground hover:text-foreground"
     href={resolve("/")}
