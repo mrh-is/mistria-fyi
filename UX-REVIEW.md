@@ -801,14 +801,23 @@ provide warmth and whimsy without sacrificing readability. Variable font file ~2
 
 ### Motion — Minimum Viable Delight
 
-Add three targeted animations (CSS-only, no library needed):
+> ✅ **Implemented** — `app.css`, `checkbox.svelte`, `progress.svelte`, `+layout.svelte`,
+> `item-row.svelte`
 
-1. **Checkbox check-off** — Brief scale pulse (100ms) on the checkbox when checked. Provides tactile
-   feedback.
-2. **Progress bar fill** — Animate `width` on progress bars with `transition: width 300ms ease-out`.
-   Currently static.
-3. **Page enter** — Subtle fade-in (150ms) on route change. The app currently hard-cuts between
-   pages.
+Three targeted animations (CSS-only, no library needed):
+
+1. **Checkbox check-off** — Brief scale pulse (100ms) on the checkbox when checked. Implemented via
+   `{#key checked}` block to re-trigger on every toggle + `@keyframes check-pulse` in `app.css`.
+2. **Progress bar fill** — `transition-transform duration-300 ease-out` on the `translateX`-based
+   fill indicator. GPU-accelerated (transform, not width).
+3. **Page enter** — `animate-in fade-in duration-200` on route change via `{#key page.url.pathname}`
+   wrapper in `+layout.svelte`.
+
+**Bonus: completion exit animation** — When an item is checked off with "show completed" off, it
+lingers for 800ms (showing checked/strikethrough state), fades out over 200ms, then collapses height
+instantly. Implemented via a custom Svelte `out:` transition (`completeOut`) in `item-row.svelte`,
+with `recentlyCompleted` sets in almanac and museum pages to hold items in the DOM during the
+animation.
 
 ### Touch Target Fix Pattern
 
@@ -1043,7 +1052,7 @@ The app has excellent **bones**. The implementation plan transforms it from "fun
    tinting yet — establish the base first)
 2. 🔤 SN Pro typeface (replaces system fonts)
 3. 🏷️ Clearer labels for availability toggle + world state context text
-4. ✨ Minimum viable motion (checkbox pulse, progress bar transitions, page fade)
+4. ~~✨ Minimum viable motion (checkbox pulse, progress bar transitions, page fade)~~ ✅ Done
 
 **Phase B — Mobile IA Redesign**:
 

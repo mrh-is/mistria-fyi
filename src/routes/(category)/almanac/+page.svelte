@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { SvelteSet } from "svelte/reactivity";
+
   import CategoryHeader from "$lib/components/category-header.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import ItemRow from "$lib/components/item-row.svelte";
@@ -14,6 +16,14 @@
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { ItemId } from "$lib/types/tracker-data.js";
+
+  // Items held on-screen during their exit animation (800ms linger + 300ms fade)
+  let recentlyCompleted = new SvelteSet<ItemId>();
+
+  function markLeaving(itemId: ItemId): void {
+    recentlyCompleted.add(itemId);
+    setTimeout(() => recentlyCompleted.delete(itemId), 1050);
+  }
 
   function isGroupComplete(groupItemIds: ItemId[]): boolean {
     return groupItemIds.every((id) => userState.state.completed.almanac.has(id));
@@ -58,6 +68,7 @@
   function shouldShowItem(itemId: ItemId): boolean {
     const itemName = trackerData.items[itemId].name;
     if (!matchesFilter(itemId, itemName)) return false;
+    if (recentlyCompleted.has(itemId)) return true;
     const completed = userState.state.completed.almanac.has(itemId);
     if (completed && !userState.state.showCompleted) return false;
     if (completed) return true;
@@ -131,6 +142,7 @@
             dimmed={isItemDimmed(itemId as ItemId)}
             hideFishSize={!isFishCategory}
             itemId={itemId as ItemId}
+            leaving={recentlyCompleted.has(itemId as ItemId)}
             name={item.name}
             onToggle={() => {
               userState.toggleAlmanacItem(itemId as ItemId);
@@ -139,6 +151,7 @@
                 userState.toggleAlmanacItem(itemId as ItemId);
               });
               if (completed) {
+                if (!userState.state.showCompleted) markLeaving(itemId as ItemId);
                 checkCelebration(
                   categories[0].items.map(([id]) => id as ItemId),
                   groupItems,
@@ -185,6 +198,7 @@
                   dimmed={isItemDimmed(itemId as ItemId)}
                   hideFishSize={!isFishCategory}
                   itemId={itemId as ItemId}
+                  leaving={recentlyCompleted.has(itemId as ItemId)}
                   name={item.name}
                   onToggle={() => {
                     userState.toggleAlmanacItem(itemId as ItemId);
@@ -193,6 +207,7 @@
                       userState.toggleAlmanacItem(itemId as ItemId);
                     });
                     if (completed) {
+                      if (!userState.state.showCompleted) markLeaving(itemId as ItemId);
                       checkCelebration(catItemIds, groupItems);
                     }
                   }}

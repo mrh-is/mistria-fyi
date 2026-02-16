@@ -26,12 +26,14 @@
   {...restProps}
 >
   {#snippet children({ checked, indeterminate })}
-    <div data-slot="checkbox-indicator" class="text-current transition-none">
-      {#if checked}
-        <CheckIcon class="size-3.5" />
-      {:else if indeterminate}
-        <MinusIcon class="size-3.5" />
-      {/if}
-    </div>
+    {#key checked}
+      <div data-slot="checkbox-indicator" class="animate-check-pulse text-current">
+        {#if checked}
+          <CheckIcon class="size-3.5" />
+        {:else if indeterminate}
+          <MinusIcon class="size-3.5" />
+        {/if}
+      </div>
+    {/key}
   {/snippet}
 </CheckboxPrimitive.Root>

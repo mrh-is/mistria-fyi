@@ -26,7 +26,11 @@
     ? "padding-bottom: calc(56px + max(0.5rem, env(safe-area-inset-bottom)))"
     : undefined}
 >
-  {@render children()}
+  {#key page.url.pathname}
+    <div class="flex flex-1 animate-in flex-col duration-200 fade-in">
+      {@render children()}
+    </div>
+  {/key}
 </div>
 
 <ToolbarFooter />

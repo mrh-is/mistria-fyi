@@ -15,6 +15,7 @@
     dimmed = false,
     hideFishSize = false,
     itemId,
+    leaving = false,
     name,
     onToggle,
   }: {
@@ -22,9 +23,30 @@
     dimmed?: boolean;
     hideFishSize?: boolean;
     itemId: ItemId;
+    leaving?: boolean;
     name: string;
     onToggle: () => void;
   } = $props();
+
+  // Linger then fade+collapse when leaving due to completion.
+  // For other removals (search filtering, bulk hide) exit instantly.
+  function completeOut(node: Element) {
+    // Read from DOM attribute — captures the value at last render, before reactive
+    // props update in the same batch that removes this element from the {#each}.
+    if (node.getAttribute("data-leaving") !== "true") return { duration: 0 };
+    return {
+      css: (t: number) => `opacity: ${t}; pointer-events: none;`,
+      delay: 800,
+      duration: 200,
+      tick: (t: number) => {
+        // Once fully faded, collapse the height instantly so there's no reflow pop.
+        if (t === 0) {
+          (node as HTMLElement).style.height = "0";
+          (node as HTMLElement).style.overflow = "hidden";
+        }
+      },
+    };
+  }
 
   let expanded = $state(false);
 
@@ -32,11 +54,11 @@
   let restrictions = $derived(getItemRestrictions(sources));
 </script>
 
-<div>
+<div out:completeOut data-leaving={leaving}>
   <div
     class="flex items-center gap-2 rounded-md px-2 py-1.5 transition-opacity duration-200 {dimmed
       ? 'opacity-50'
-      : ''} {completed ? 'line-through opacity-40' : ''}"
+      : ''} {completed || leaving ? 'line-through opacity-40' : ''}"
   >
     <Checkbox checked={completed} onCheckedChange={onToggle} />
     {#if sources.length > 0}

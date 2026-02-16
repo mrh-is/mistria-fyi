@@ -1,5 +1,6 @@
 <script lang="ts">
   import { CheckCheck, Undo2 } from "@lucide/svelte";
+  import { SvelteSet } from "svelte/reactivity";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
@@ -15,6 +16,13 @@
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { ItemId } from "$lib/types/tracker-data.js";
+
+  let recentlyCompleted = new SvelteSet<ItemId>();
+
+  function markLeaving(itemId: ItemId): void {
+    recentlyCompleted.add(itemId);
+    setTimeout(() => recentlyCompleted.delete(itemId), 1050);
+  }
 
   function isWingComplete(wingItems: ItemId[]): boolean {
     return wingItems.every((id) => userState.state.completed.museum.has(id));
@@ -46,6 +54,7 @@
 
   function shouldShowItem(itemId: ItemId): boolean {
     if (!matchesFilter(itemId)) return false;
+    if (recentlyCompleted.has(itemId)) return true;
     const completed = userState.state.completed.museum.has(itemId);
     if (completed && !userState.state.showCompleted) return false;
     if (completed) return true;
@@ -90,31 +99,31 @@
             name={set.name}
             total={set.items.length}
           >
-            {#each set.items as itemId (itemId)}
-              {#if shouldShowItem(itemId)}
-                <ItemRow
-                  completed={userState.state.completed.museum.has(itemId)}
-                  dimmed={isItemDimmed(itemId)}
-                  {itemId}
-                  name={trackerData.items[itemId].name}
-                  onToggle={() => {
+            {#each set.items.filter(shouldShowItem) as itemId (itemId)}
+              <ItemRow
+                completed={userState.state.completed.museum.has(itemId)}
+                dimmed={isItemDimmed(itemId)}
+                {itemId}
+                leaving={recentlyCompleted.has(itemId)}
+                name={trackerData.items[itemId].name}
+                onToggle={() => {
+                  userState.toggleMuseumItem(itemId);
+                  const completed = userState.state.completed.museum.has(itemId);
+                  showUndoToast(trackerData.items[itemId].name, completed, () => {
                     userState.toggleMuseumItem(itemId);
-                    const completed = userState.state.completed.museum.has(itemId);
-                    showUndoToast(trackerData.items[itemId].name, completed, () => {
-                      userState.toggleMuseumItem(itemId);
-                    });
-                    if (completed) {
-                      if (isCategoryComplete()) {
-                        celebrateCategory();
-                      } else if (isWingComplete(wingItems)) {
-                        celebrate();
-                      } else if (isSetComplete(set.items)) {
-                        celebrate();
-                      }
+                  });
+                  if (completed) {
+                    if (!userState.state.showCompleted) markLeaving(itemId);
+                    if (isCategoryComplete()) {
+                      celebrateCategory();
+                    } else if (isWingComplete(wingItems)) {
+                      celebrate();
+                    } else if (isSetComplete(set.items)) {
+                      celebrate();
                     }
-                  }}
-                />
-              {/if}
+                  }
+                }}
+              />
             {/each}
             <div class="mt-1 flex justify-end px-2">
               {#if setComplete}
