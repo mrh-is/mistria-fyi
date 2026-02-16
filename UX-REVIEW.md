@@ -833,6 +833,8 @@ feel comfortable rather than oversized.
 
 ### Mobile Toolbar Specification
 
+> ✅ **Implemented** (`src/lib/components/toolbar-footer.svelte`)
+
 The single biggest IA change: replace the tall sticky filter/control headers with a compact **sticky
 footer toolbar**.
 
@@ -844,45 +846,49 @@ footer toolbar**.
 
 Minimal: just navigation, identity, and progress.
 
-**Footer toolbar** (sticky bottom, one row of icon buttons):
+**Footer toolbar** (sticky bottom, three-slot layout):
 
 ```
-[🔍 Search] [🌸 Season] [☀️ Weather] [📊 Filters]
+[🔍 Search]    [🌸 Season + ☀️ Weather]    [📊 Filters]
+left-aligned        centered               right-aligned
 ```
 
-**Behavior:**
+Season and weather were combined into a single bordered pill button that opens one shared panel.
+This keeps the toolbar uncluttered and treats world state as a single concern.
 
-| Button  | Tap action                                                                                                                                                                                                                                                               | Visual state                    |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- |
-| Search  | Replaces toolbar with text input. Input rides up with mobile keyboard (à la iOS 26). Escape/X returns to toolbar.                                                                                                                                                        | Highlighted when active         |
-| Season  | Opens popover above toolbar with season picker                                                                                                                                                                                                                           | Shows current season icon       |
-| Weather | Opens popover with weather picker                                                                                                                                                                                                                                        | Shows current weather icon      |
-| Filters | Opens popover with: (1) availability 3-way toggle ("Seasonal only" / "Accessible now" / "All items") and (2) show-completed toggle. "Show completed" is a filter, not a primary action — grouping it here avoids a standalone icon that's hard to make self-explanatory. | Dot color for availability mode |
+**Implemented behavior:**
 
-- All toolbar icons should have **short labels** beneath them (like a native tab bar) for
-  discoverability. Use `text-[11px]` minimum.
-- Toolbar must respect `env(safe-area-inset-bottom)` on devices with home indicators.
+| Button         | Tap action                                                                                                                  | Visual state                                              |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Search         | Replaces toolbar with full-width text input + Cancel button                                                                 | Active when search is open                                |
+| Season+Weather | Opens floating card panel above toolbar with season tiles (4-up grid) and weather tiles (3–4, centered, scoot transition)   | Shows current season + weather icons; crossfade on change |
+| Filters        | Opens panel with availability 3-way toggle (world-state pages only) + show-completed switch + Reset button when non-default | Amber tinted background when filters are active           |
 
-**Home page variant:**
+**Weather tile names** (short nouns): Sun / Rain / Storm / Breeze (spring/fall only) / Snow (winter)
+/ Blizzard (winter heavy).
 
-Same footer toolbar. The header becomes:
+**Transitions:**
 
-```
-🌾 Harvest Helper                    3% (112/3236)  ⚙️
-```
+- Season+weather pill icons crossfade when current selection changes
+- Weather tiles scoot into position (width-collapse + opacity) when tile count changes
+  season-to-season
+- Icon and label inside each weather tile crossfade when season changes (e.g., Storm→Blizzard)
+- Panel opens/closes with `fly` transition (y: 8, 150ms)
 
-Search triggers cross-category search. Season/Weather/Availability affect category card counts.
+**Divergences from original spec:**
 
-**Desktop expansion (≥640px / `sm` breakpoint):**
+- Labels beneath toolbar buttons were dropped — color/icon context proved sufficient; labels made it
+  feel like a nav tab bar
+- Season and weather panels were merged into one "World" panel
+- Filter active state uses amber background tint instead of a dot indicator
+- Show completed uses a blocky Switch component, not a plain checkbox
 
-Recommended: controls move into an **expanded header row**, eliminating the footer:
+**Toolbar must respect `env(safe-area-inset-bottom)`** ✅ Implemented.
 
-```
-[← Back] 📦 Category Name  42% (n/m)  [Season ▾] [Weather ▾] [Filters ▾] [🔍 Search]
-```
+**Desktop expansion:** Deferred — evaluate after Phase B ships.
 
-The footer toolbar is a mobile accommodation. On wider screens, a single header row has room for
-everything. Prototype and evaluate — if it feels crowded at `sm`, bump to `md` breakpoint.
+**Component:** `src/lib/components/toolbar-footer.svelte` **Store:**
+`src/lib/stores/toolbar-state.svelte.ts` (searchOpen, searchQuery)
 
 ### Spoiler System — Quest-Locked Items 🔒
 
@@ -1026,7 +1032,7 @@ The app has excellent **bones**. The implementation plan transforms it from "fun
 
 **Phase B — Mobile IA Redesign**:
 
-5. 📐 Mobile toolbar footer (the single biggest structural change)
+5. ~~📐 Mobile toolbar footer~~ ✅ Done — `toolbar-footer.svelte`
 6. 📏 Compact sticky headers (one row only)
 7. 👆 44px touch targets everywhere (desktop too)
 8. 📝 Text wrapping for long item names

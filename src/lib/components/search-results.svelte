@@ -11,7 +11,7 @@
 
   let { query }: { query: string } = $props();
 
-  let results = $derived(searchItems(query, userState.state.completed));
+  let results = $derived(searchItems(query, userState.state.completed, userState.state.worldState));
 
   const CATEGORY_LABELS: Record<string, string> = {
     almanac: "Almanac",
@@ -76,7 +76,9 @@
     <div
       class="flex items-center gap-2 rounded-md px-2 py-1 {result.completed
         ? 'line-through opacity-40'
-        : ''}"
+        : !result.available
+          ? 'opacity-50'
+          : ''}"
     >
       <Checkbox
         checked={result.completed}

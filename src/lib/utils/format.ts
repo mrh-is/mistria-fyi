@@ -7,37 +7,22 @@ const SEASON_LABEL: Record<Season, string> = {
   winter: "Winter",
 };
 
-/** Season-specific weather display names from the wiki */
+/** Season-specific weather display names */
 const WEATHER_LABEL_BY_SEASON: Record<Season, Partial<Record<Weather, string>>> = {
-  fall: {
-    calm: "Sunny",
-    heavy_inclement: "Thunderstorm",
-    inclement: "Rain",
-    special: "Breezy",
-  },
-  spring: {
-    calm: "Sunny",
-    heavy_inclement: "Thunderstorm",
-    inclement: "Rain",
-    special: "Breezy",
-  },
-  summer: {
-    calm: "Sunny",
-    heavy_inclement: "Thunderstorm",
-    inclement: "Rain",
-  },
+  fall: {},
+  spring: {},
+  summer: {},
   winter: {
-    calm: "Sunny",
     heavy_inclement: "Blizzard",
     inclement: "Snow",
   },
 };
 
 const WEATHER_LABEL: Record<Weather, string> = {
-  calm: "Sunny",
+  calm: "Sun",
   heavy_inclement: "Storm",
   inclement: "Rain",
-  special: "Special",
+  special: "Breeze",
 };
 
 const SOURCE_TYPE_LABEL: Record<SourceType, string> = {

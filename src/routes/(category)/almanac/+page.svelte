@@ -7,6 +7,7 @@
   import { trackerData } from "$lib/data/index.js";
   import { isItemAvailable } from "$lib/engine/availability.js";
   import { getAlmanacProgress } from "$lib/engine/progress.js";
+  import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { parseAlmanacCategory } from "$lib/utils/format.js";
 
@@ -25,7 +26,7 @@
     }),
   );
 
-  let nameFilter = $state("");
+  let nameFilter = $derived(toolbarState.searchQuery);
 
   function matchesFilter(itemId: ItemId, name: string): boolean {
     if (!nameFilter) return true;
@@ -79,12 +80,7 @@
   });
 </script>
 
-<CategoryHeader
-  category={CATEGORY_BY_KEY.almanac}
-  onSearch={(q: string) => (nameFilter = q)}
-  {progress}
-  showWorldState
-/>
+<CategoryHeader category={CATEGORY_BY_KEY.almanac} {progress} />
 
 {#each groupedCategories() as { categories, group } (group)}
   {@const groupItems = categories.flatMap((c) => c.items.map(([id]) => id as ItemId))}
