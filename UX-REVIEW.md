@@ -22,8 +22,9 @@
 11. [Recommendations — Prioritized](#recommendations--prioritized) _(with decision status)_
 12. [Visual Audit — Browser Observations](#visual-audit--browser-observations-feb-2026)
 13. [Concrete Design Direction](#concrete-design-direction) _(+ implementation specs)_
-14. [Open Questions](#open-questions-)
-15. [Out of Scope](#out-of-scope-separate-tasks-)
+14. [Implementation Audit — Feb 17, 2026](#implementation-audit--feb-17-2026)
+15. [Open Questions](#open-questions-)
+16. [Out of Scope](#out-of-scope-separate-tasks-)
 
 ---
 
@@ -1110,6 +1111,71 @@ The app has excellent **bones**. The implementation plan transforms it from "fun
 _Review originally written [date unknown]. Visual audit and code verification performed Feb 2026.
 Claims marked "Verified," "Confirmed," or "Corrected" have been cross-referenced against live app
 behavior and source code. Decisions and direction confirmed Feb 2026._
+
+## Implementation Audit — Feb 17, 2026
+
+> Systematic codebase audit against every recommendation in this review. Checked source files, not
+> just file existence.
+
+### Fully Implemented (Phases A–D)
+
+| #   | Feature                                   | Evidence                                                                                                                                                                                                   |
+| --- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Warm pastel palette** (cream/mint/rose) | `app.css` — full oklch token replacement in `:root` and `.dark`                                                                                                                                            |
+| 2   | **Category color coding** (9 tints)       | `app.css` — `--cat-museum` through `--cat-mines` in both modes; applied to card icons, progress bars, hover borders in `category-card.svelte`                                                              |
+| 3   | **Warm dark mode**                        | `--background: oklch(0.16 0.025 200)` — midnight blue-green, not cold navy                                                                                                                                 |
+| 4   | **SN Pro typeface**                       | Loaded via Google Fonts in `app.html` (400/500/600); set as `--font-sans`                                                                                                                                  |
+| 5   | **Toolbar footer**                        | `toolbar-footer.svelte` — search, world-state panel (season+weather merged), filters panel with availability toggle + show-completed switch. Route-aware, safe-area-inset-bottom. Used in `+layout.svelte` |
+| 6   | **Compact sticky headers**                | `category-header.svelte` — single row: `[← Back] [Icon] [Name] [%] [(n/m)]`                                                                                                                                |
+| 7   | **44px touch targets everywhere**         | `touch-target.svelte` + `stepper.svelte` (size-11). Checkbox button, toolbar buttons, back arrow, expandable headers all min-h-11/min-w-11                                                                 |
+| 8   | **Standardized +/− buttons**              | `stepper.svelte` — 44px tap / 32px visual ring, `-mx-1.5` optical compensation. Used by Skills, Renown, Mines, NPCs                                                                                        |
+| 9   | **Checkbox pulse animation**              | `@keyframes check-pulse` in `app.css`; triggered via `{#key checked}` in `checkbox.svelte`                                                                                                                 |
+| 10  | **Progress bar transitions**              | `transition-transform duration-300 ease-out` in `progress.svelte`                                                                                                                                          |
+| 11  | **Page fade-in**                          | `animate-in fade-in duration-200` in `+layout.svelte`, keyed on `page.url.pathname`                                                                                                                        |
+| 12  | **Welcome experience**                    | `welcome-card.svelte` — device-aware (mobile→QR scan, desktop→import), localStorage-persisted dismissal                                                                                                    |
+| 13  | **Undo toasts**                           | `svelte-sonner` installed; `undo-toast.ts` with 5s auto-dismiss. Used on all checkbox pages + quests                                                                                                       |
+| 14  | **Trophy case**                           | `category-card.svelte` — gold border/amber accent, trophy icon replaces category icon. `category-grid.svelte` separates completed into own section                                                         |
+| 15  | **Confetti celebrations**                 | `canvas-confetti` installed; `celebrate.ts` — `celebrate()` for sections, `celebrateCategory()` for full categories. Wired in all 9 category page handlers                                                 |
+| 16  | **ARIA labels**                           | `aria-label` on all icon-only buttons (back, settings, search, clear, stepper, checkbox, expand, toolbar, transfer). `aria-expanded` on expandable-section and item-row details                            |
+| 17  | **Settings hierarchy**                    | 3 sections: "Interface" → "Getting Started" → "Data Management" with dividers                                                                                                                              |
+| 18  | **Availability labels rewritten**         | Toolbar uses "Seasonal" / "Accessible" / "All items" (new labels)                                                                                                                                          |
+| 19  | **Text wrapping**                         | `min-w-0 flex-1` pattern across `item-row`, `category-card`, `skill-row`                                                                                                                                   |
+| 20  | **Minimum text size**                     | Zero instances of `text-[10px]` remain in `src/`. Smallest is `text-xs` (12px)                                                                                                                             |
+| 21  | **Completion exit animation**             | Custom `out:` transition in `item-row.svelte` — 800ms linger, 200ms fade, height collapse                                                                                                                  |
+| 22  | **Panel transitions**                     | `fly` transitions on toolbar panels; crossfade on season/weather icons; scoot on weather tile reorder                                                                                                      |
+
+### Not Implemented
+
+| #   | Feature                            | Status      | Notes                                                                                                                                              |
+| --- | ---------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Spoiler system (quest-gate UI)** | Blocked     | Data types (`questGate?: QuestId[]`) and pipeline extraction exist, but no UI obfuscation. Blocked on completing the full quest dependency mapping |
+| 2   | **Progress ring on home page**     | Not started | `overall-progress.svelte` renders plain text (`X% (n/m)`). No SVG ring/arc                                                                         |
+| 3   | **Skill tier color progression**   | Not started | Progress bar is single-color. No per-tier gradient or color shift                                                                                  |
+| 4   | **Skill tier label correction**    | Not started | Still shows invented names (`Novice`, `Apprentice`, `Journeyman`, `Expert`, `Master`) in `SkillRow.svelte:13`. Game uses "Tier 1" through "Tier 5" |
+| 5   | **Town rank visual treatment**     | Not started | Flat text list with `line-through` for completed ranks. No colored stars or visual progression                                                     |
+| 6   | **Seasonal theme tinting**         | Not started | No dynamic CSS property updates based on selected season. Deferred per plan                                                                        |
+
+### Minor Gaps / Stale Code
+
+All resolved ✅
+
+| Issue                                        | Detail                                                                                                                                                          | Status                                                                    |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| **Quest toggle missing `aria-label`**        | Quest page 3-state cycle buttons have `title` but no `aria-label`. Title attributes aren't announced reliably on mobile screen readers                          | ✅ Fixed — replaced `title` with `aria-label`                             |
+| **Stale `availability-toggle.svelte`**       | Old standalone component still has "Timely / Available / Everything" labels. Appears unused now that the toolbar handles this, but still exists in the codebase | ✅ Fixed — deleted unused component                                       |
+| **Category header shows redundant progress** | Displays both `42%` and `(n/m)` simultaneously. Home cards show one or the other responsively (`%` on mobile, `n/m` on desktop). Minor inconsistency            | ✅ Fixed — now responsive (`%` mobile, `n/m` desktop) matching home cards |
+
+### Phase Status Summary
+
+| Phase           | Description                        | Status                                                                                                     |
+| --------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **A**           | Visual Identity & Core Polish      | **Complete** — palette, typography, labels, motion                                                         |
+| **B**           | Mobile IA Redesign                 | **Complete** — toolbar footer, compact headers, touch targets, text wrapping, stepper                      |
+| **C**           | New Features                       | **Mostly complete** — welcome, undo toasts, trophy case, confetti all done. Spoiler system blocked on data |
+| **D**           | Accessibility & Cleanup            | **Complete** — ARIA labels, contrast verified, components extracted, settings hierarchy                    |
+| **Prototyping** | Category colors + seasonal tinting | Category colors shipped. Seasonal tinting not started                                                      |
+
+---
 
 ## Open Questions ❓
 

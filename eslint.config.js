@@ -149,6 +149,12 @@ export default defineConfig(
     },
   },
   {
+    // Service worker uses a separate TS environment (webworker lib) not covered by the project
+    // service, so disable type-checked rules to avoid "not found by project service" errors.
+    files: ["src/service-worker.ts"],
+    ...ts.configs.disableTypeChecked,
+  },
+  {
     // Relax rules for config files (JS, no tsconfig coverage)
     files: ["*.config.{js,ts}", "*.config.*.{js,ts}"],
     ...ts.configs.disableTypeChecked,
