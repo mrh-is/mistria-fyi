@@ -1081,7 +1081,9 @@ The app has excellent **bones**. The implementation plan transforms it from "fun
     added to icon-only buttons (`search-bar`, `transfer-card`, `item-row`); `aria-expanded` added to
     `expandable-section` and `item-row` detail toggles. Toolbar footer and stepper already had
     correct ARIA attributes.
-16. 🔍 Verify muted-foreground contrast ratio
+16. ~~🔍 Verify muted-foreground contrast ratio~~ ✅ Done — all combinations pass WCAG AA (4.5:1).
+    Light: 7.5:1 on bg, 6.4:1 on muted, 7.7:1 on card. Dark: 6.0:1 on bg, 5.4:1 on muted, 5.7:1 on
+    card.
 17. ~~🧩 Extract PageHeader, ToolbarFooter, TouchTarget, Stepper components~~ ✅ Done —
     `touch-target.svelte` + `stepper.svelte` (44px tap / 32px visual, `-mx-1.5` optical correction,
     used in Skills, Renown, Mines, NPCs); PageHeader (`category-header.svelte`) and ToolbarFooter
