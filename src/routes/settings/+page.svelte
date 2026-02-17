@@ -41,16 +41,35 @@
   <h1 class="flex-1 text-xl font-semibold">Settings</h1>
 </div>
 
-<div class="flex flex-col gap-4 p-4">
-  <ThemeCard />
-  <div bind:this={importSection}>
-    <ImportCard onScrollToTransfer={scrollToTransfer} />
-  </div>
-  <div bind:this={transferSection}>
-    <TransferCard />
-  </div>
-  <BackupCard />
-  <DangerZoneCard />
+<div class="flex flex-col gap-6 p-4">
+  <section class="flex flex-col gap-4">
+    <h2 class="text-xs font-semibold tracking-widest text-muted-foreground uppercase">Interface</h2>
+    <ThemeCard />
+  </section>
+
+  <div class="border-t border-border/50"></div>
+
+  <section class="flex flex-col gap-4">
+    <h2 class="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+      Getting started
+    </h2>
+    <div bind:this={importSection}>
+      <ImportCard onScrollToTransfer={scrollToTransfer} />
+    </div>
+    <div bind:this={transferSection}>
+      <TransferCard />
+    </div>
+  </section>
+
+  <div class="border-t border-border/50"></div>
+
+  <section class="flex flex-col gap-4">
+    <h2 class="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+      Data management
+    </h2>
+    <BackupCard />
+    <DangerZoneCard />
+  </section>
 
   <div class="text-center text-sm text-muted-foreground">
     Game data: Fields of Mistria v{trackerData.version}

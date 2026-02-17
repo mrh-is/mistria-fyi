@@ -1094,7 +1094,9 @@ The app has excellent **bones**. The implementation plan transforms it from "fun
     `touch-target.svelte` + `stepper.svelte` (44px tap / 32px visual, `-mx-1.5` optical correction,
     used in Skills, Renown, Mines, NPCs); PageHeader (`category-header.svelte`) and ToolbarFooter
     already existed
-18. ⚙️ Settings page hierarchy (everyday vs. data management)
+18. ~~⚙️ Settings page hierarchy (everyday vs. data management)~~ ✅ Done — 3 sections: "Interface"
+    (Theme) → "Getting Started" (Import, Transfer) → "Data Management" (Backup, Danger Zone), with
+    dividers in `settings/+page.svelte`
 
 **Prototyping (after Phase A ships):**
 
