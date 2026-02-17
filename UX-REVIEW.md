@@ -1064,7 +1064,8 @@ The app has excellent **bones**. The implementation plan transforms it from "fun
 5. ~~📐 Mobile toolbar footer~~ ✅ Done — `toolbar-footer.svelte`
 6. ~~📏 Compact sticky headers (one row only)~~ ✅ Done — `category-header.svelte` single-row sticky
    layout
-7. 👆 44px touch targets everywhere (desktop too)
+7. ~~👆 44px touch targets everywhere (desktop too)~~ ✅ Done — button/toggle defaults bumped to
+   `h-11`, checkbox wrapped in 44px touch target, expandable headers use `min-h-11`
 8. ~~📝 Text wrapping for long item names~~ ✅ Done — `min-w-0 flex-1` allowing natural wrapping
 9. ~~📐 Standardized +/− button sizing~~ ✅ Done — unified `Stepper` component with `size-11` touch
    targets

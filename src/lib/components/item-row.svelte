@@ -56,11 +56,18 @@
 
 <div out:completeOut data-leaving={leaving}>
   <div
-    class="flex items-center gap-2 rounded-md px-2 py-1.5 transition-opacity duration-200 {dimmed
+    class="flex items-center gap-0 rounded-md pr-2 transition-opacity duration-200 {dimmed
       ? 'opacity-50'
       : ''} {completed || leaving ? 'line-through opacity-40' : ''}"
   >
-    <Checkbox checked={completed} onCheckedChange={onToggle} />
+    <button
+      class="flex min-h-11 min-w-11 shrink-0 items-center justify-center"
+      type="button"
+      aria-label={completed ? `Uncheck ${name}` : `Check ${name}`}
+      onclick={onToggle}
+    >
+      <Checkbox checked={completed} tabindex={-1} />
+    </button>
     {#if sources.length > 0}
       <button
         class="group inline-flex min-w-0 flex-1 items-center gap-0.5 text-left text-base"
