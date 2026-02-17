@@ -94,7 +94,7 @@
           <button
             class="flex size-11 shrink-0 items-center justify-center rounded-md transition-colors"
             type="button"
-            title={questState === "none"
+            aria-label={questState === "none"
               ? "Not obtained — click to mark obtained"
               : questState === "obtained"
                 ? "Obtained — click to mark completed"

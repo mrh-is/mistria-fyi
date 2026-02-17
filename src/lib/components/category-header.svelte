@@ -35,6 +35,8 @@
   </a>
   <Icon class={color ? "size-5 text-(--header-color)" : "size-5 text-muted-foreground"} />
   <h1 class="flex-1 text-xl font-semibold">{category.name}</h1>
-  <span class="text-base text-muted-foreground">{pct}%</span>
-  <span class="text-sm text-muted-foreground">({progress.completed}/{progress.total})</span>
+  <span class="shrink-0 text-sm text-muted-foreground">
+    <span class="sm:hidden">{pct}%</span>
+    <span class="hidden sm:inline">{progress.completed}/{progress.total}</span>
+  </span>
 </div>
