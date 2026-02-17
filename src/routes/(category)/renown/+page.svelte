@@ -1,8 +1,6 @@
 <script lang="ts">
-  import { Minus, Plus } from "@lucide/svelte";
-
   import CategoryHeader from "$lib/components/category-header.svelte";
-  import { Button } from "$lib/components/ui/button/index.js";
+  import Stepper from "$lib/components/stepper.svelte";
   import { Input } from "$lib/components/ui/input/index.js";
   import { Progress } from "$lib/components/ui/progress/index.js";
   import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
@@ -68,52 +66,43 @@
   </div>
   <Progress class="h-2" value={overallPct} />
 
-  <div class="flex items-center justify-center gap-3">
-    <Button
-      class="size-10 shrink-0"
-      size="icon"
-      variant="ghost"
-      disabled={level <= 0}
-      onclick={() => {
+  <div class="flex items-center justify-center">
+    <Stepper
+      decrementDisabled={level <= 0}
+      incrementDisabled={level >= maxLevel}
+      decrementLabel="Decrease renown"
+      incrementLabel="Increase renown"
+      onDecrement={() => {
         setRenownWithCelebration(level - 1);
       }}
-    >
-      <Minus class="size-4" />
-    </Button>
-    {#if editing}
-      <Input
-        class="h-6 w-20 text-center text-sm"
-        type="number"
-        max={maxLevel}
-        min={0}
-        value={editValue}
-        onblur={commitEdit}
-        oninput={(e: Event) => {
-          editValue = (e.target as HTMLInputElement).value;
-        }}
-        onkeydown={handleEditKeydown}
-      />
-    {:else}
-      <button
-        class="text-base text-muted-foreground hover:underline"
-        title="Click to edit level directly"
-        type="button"
-        onclick={startEditing}
-      >
-        {level}/{maxLevel} total
-      </button>
-    {/if}
-    <Button
-      class="size-10 shrink-0"
-      size="icon"
-      variant="ghost"
-      disabled={level >= maxLevel}
-      onclick={() => {
+      onIncrement={() => {
         setRenownWithCelebration(level + 1);
       }}
     >
-      <Plus class="size-4" />
-    </Button>
+      {#if editing}
+        <Input
+          class="h-6 w-20 text-center text-sm"
+          type="number"
+          max={maxLevel}
+          min={0}
+          value={editValue}
+          onblur={commitEdit}
+          oninput={(e: Event) => {
+            editValue = (e.target as HTMLInputElement).value;
+          }}
+          onkeydown={handleEditKeydown}
+        />
+      {:else}
+        <button
+          class="text-base text-muted-foreground hover:underline"
+          title="Click to edit level directly"
+          type="button"
+          onclick={startEditing}
+        >
+          {level}/{maxLevel} total
+        </button>
+      {/if}
+    </Stepper>
   </div>
 </div>
 

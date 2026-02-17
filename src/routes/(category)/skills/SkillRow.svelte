@@ -1,7 +1,5 @@
 <script lang="ts">
-  import { Minus, Plus } from "@lucide/svelte";
-
-  import { Button } from "$lib/components/ui/button/index.js";
+  import Stepper from "$lib/components/stepper.svelte";
   import { Input } from "$lib/components/ui/input/index.js";
   import { Progress } from "$lib/components/ui/progress/index.js";
   import { trackerData } from "$lib/data/index.js";
@@ -74,71 +72,60 @@
     {/if}
   </div>
 
-  <div class="flex items-center gap-2">
-    <Button
-      class="size-10 shrink-0"
-      size="icon"
-      variant="ghost"
-      disabled={level <= 0}
-      onclick={() => {
-        setLevelWithCelebration(id, level - 1);
-      }}
-    >
-      <Minus class="size-3.5" />
-    </Button>
-
-    <div class="relative flex-1">
-      <Progress class="h-2" value={(level / MAX_LEVEL) * 100} />
-      <!-- Tier markers -->
-      <div class="absolute inset-0 flex">
-        {#each TIER_BREAKPOINTS.slice(0, -1) as bp (bp)}
-          <div
-            class="absolute top-0 h-full w-px bg-background"
-            style="left: {(bp / MAX_LEVEL) * 100}%"
-          ></div>
-        {/each}
+  <Stepper
+    decrementDisabled={level <= 0}
+    incrementDisabled={level >= MAX_LEVEL}
+    decrementLabel="Decrease {name} level"
+    incrementLabel="Increase {name} level"
+    onDecrement={() => {
+      setLevelWithCelebration(id, level - 1);
+    }}
+    onIncrement={() => {
+      setLevelWithCelebration(id, level + 1);
+    }}
+  >
+    <div class="flex min-w-0 flex-1 items-center gap-2">
+      <div class="relative min-w-0 flex-1">
+        <Progress class="h-2" value={(level / MAX_LEVEL) * 100} />
+        <!-- Tier markers -->
+        <div class="absolute inset-0 flex">
+          {#each TIER_BREAKPOINTS.slice(0, -1) as bp (bp)}
+            <div
+              class="absolute top-0 h-full w-px bg-background"
+              style="left: {(bp / MAX_LEVEL) * 100}%"
+            ></div>
+          {/each}
+        </div>
       </div>
+
+      {#if editingId === (id as string)}
+        <Input
+          class="h-6 w-16 shrink-0 text-center text-sm"
+          type="number"
+          max={MAX_LEVEL}
+          min={0}
+          value={editValue}
+          onblur={() => {
+            commitEdit(id);
+          }}
+          oninput={(e: Event) => {
+            editValue = (e.target as HTMLInputElement).value;
+          }}
+          onkeydown={(e: KeyboardEvent) => {
+            handleEditKeydown(e, id);
+          }}
+        />
+      {:else}
+        <button
+          class="flex h-8 w-10 shrink-0 items-center justify-end text-sm text-muted-foreground hover:underline"
+          type="button"
+          onclick={() => {
+            startEditing(id as string, level);
+          }}
+        >
+          {level}/{MAX_LEVEL}
+        </button>
+      {/if}
     </div>
-
-    {#if editingId === (id as string)}
-      <Input
-        class="h-6 w-16 text-center text-sm"
-        type="number"
-        max={MAX_LEVEL}
-        min={0}
-        value={editValue}
-        onblur={() => {
-          commitEdit(id);
-        }}
-        oninput={(e: Event) => {
-          editValue = (e.target as HTMLInputElement).value;
-        }}
-        onkeydown={(e: KeyboardEvent) => {
-          handleEditKeydown(e, id);
-        }}
-      />
-    {:else}
-      <button
-        class="flex h-8 w-12 items-center justify-center text-center text-sm text-muted-foreground hover:underline"
-        type="button"
-        onclick={() => {
-          startEditing(id as string, level);
-        }}
-      >
-        {level}/{MAX_LEVEL}
-      </button>
-    {/if}
-
-    <Button
-      class="size-10 shrink-0"
-      size="icon"
-      variant="ghost"
-      disabled={level >= MAX_LEVEL}
-      onclick={() => {
-        setLevelWithCelebration(id, level + 1);
-      }}
-    >
-      <Plus class="size-3.5" />
-    </Button>
-  </div>
+  </Stepper>
 </div>

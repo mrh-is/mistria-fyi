@@ -566,14 +566,14 @@ but neither pixel font is a clear winner yet.
 
 ### What's inconsistent
 
-| Area                   | Inconsistency                                                                                                                  |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| **+/− button sizing**  | Skills: `size-8`, Renown: `size-6`, Mines: `size="sm"` (different component entirely)                                          |
-| **Progress display**   | Home cards: `%` on mobile, `n/m` on desktop. Category headers: always `X% (n/m)`. Inconsistent format.                         |
-| **Item row styling**   | Almanac/Museum use `ItemRow` component. Animals/Cosmetics use inline `div` with same structure but slightly different spacing. |
-| **Section padding**    | Some pages use `gap-4 px-4 pb-4`, settings uses `gap-4 p-4`. Minor but noticeable.                                             |
-| **Completed state**    | Items: `line-through opacity-40`. NPC cards: `opacity-40` only. Ranks: `line-through text-xs` (different size!).               |
-| **"All done" message** | Almanac, Animals, Cosmetics, Museum show "All done! Toggle 'Show completed' to review." Other pages don't.                     |
+| Area                      | Inconsistency                                                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| ~~**+/− button sizing**~~ | ✅ Resolved — all use `stepper.svelte` (44px tap / 32px visual)                                                                |
+| **Progress display**      | Home cards: `%` on mobile, `n/m` on desktop. Category headers: always `X% (n/m)`. Inconsistent format.                         |
+| **Item row styling**      | Almanac/Museum use `ItemRow` component. Animals/Cosmetics use inline `div` with same structure but slightly different spacing. |
+| **Section padding**       | Some pages use `gap-4 px-4 pb-4`, settings uses `gap-4 p-4`. Minor but noticeable.                                             |
+| **Completed state**       | Items: `line-through opacity-40`. NPC cards: `opacity-40` only. Ranks: `line-through text-xs` (different size!).               |
+| **"All done" message**    | Almanac, Animals, Cosmetics, Museum show "All done! Toggle 'Show completed' to review." Other pages don't.                     |
 
 ---
 
@@ -1036,8 +1036,10 @@ Codify recurring patterns as **reusable components** rather than relying on conv
   (`← Back | Icon + Name | Progress`). Currently duplicated across routes.
 - **ToolbarFooter**: The new footer toolbar (shared between home and category pages).
 - **TouchTarget**: Wrapper component that ensures 44px minimum hit area for icon buttons.
-- **Stepper (+/−)**: Standardized increment/decrement buttons (currently 3 different sizes across
-  Skills, Renown, Mines). Pick one size (32px minimum) and use it everywhere.
+- ~~**Stepper (+/−)**~~: ✅ Done — `stepper.svelte` with 44px tap target / 32px visual ring (outline
+  border on inner `<span>`), `-mx-1.5` optical compensation, slot for middle content. Used by
+  Skills, Renown, Mines, NPCs. All toolbar buttons bumped to `min-h-11`; clear search button fixed
+  from 32px → 44px.
 
 ---
 
@@ -1077,7 +1079,10 @@ The app has excellent **bones**. The implementation plan transforms it from "fun
 
 15. ♿ ARIA labels on all icon-only buttons + `aria-expanded` on sections
 16. 🔍 Verify muted-foreground contrast ratio
-17. 🧩 Extract PageHeader, ToolbarFooter, TouchTarget, Stepper components
+17. ~~🧩 Extract PageHeader, ToolbarFooter, TouchTarget, Stepper components~~ ✅ Done —
+    `touch-target.svelte` + `stepper.svelte` (44px tap / 32px visual, `-mx-1.5` optical correction,
+    used in Skills, Renown, Mines, NPCs); PageHeader (`category-header.svelte`) and ToolbarFooter
+    already existed
 18. ⚙️ Settings page hierarchy (everyday vs. data management)
 
 **Prototyping (after Phase A ships):**

@@ -1,7 +1,7 @@
 <script lang="ts">
   import CategoryHeader from "$lib/components/category-header.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
-  import { Button } from "$lib/components/ui/button/index.js";
+  import Stepper from "$lib/components/stepper.svelte";
   import { Checkbox } from "$lib/components/ui/checkbox/index.js";
   import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
@@ -59,36 +59,27 @@
   total={trackerData.mines.maxFloors}
 >
   <div class="flex flex-col gap-2 py-2">
-    <div class="flex items-center gap-3">
-      <Button
-        class="size-11"
-        size="icon"
-        variant="outline"
-        onclick={() => {
-          userState.setMineFloor(userState.state.completed.mines.floor - 1);
-        }}
-      >
-        −
-      </Button>
+    <Stepper
+      decrementDisabled={userState.state.completed.mines.floor <= 0}
+      incrementDisabled={userState.state.completed.mines.floor >= trackerData.mines.maxFloors}
+      decrementLabel="Go up one floor"
+      incrementLabel="Go down one floor"
+      onDecrement={() => {
+        userState.setMineFloor(userState.state.completed.mines.floor - 1);
+      }}
+      onIncrement={() => {
+        userState.setMineFloor(userState.state.completed.mines.floor + 1);
+        if (isMinesComplete()) {
+          celebrateCategory();
+        } else if (userState.state.completed.mines.floor >= trackerData.mines.maxFloors) {
+          celebrate();
+        }
+      }}
+    >
       <span class="text-xl font-semibold">
         Floor {userState.state.completed.mines.floor}
       </span>
-      <Button
-        class="size-11"
-        size="icon"
-        variant="outline"
-        onclick={() => {
-          userState.setMineFloor(userState.state.completed.mines.floor + 1);
-          if (isMinesComplete()) {
-            celebrateCategory();
-          } else if (userState.state.completed.mines.floor >= trackerData.mines.maxFloors) {
-            celebrate();
-          }
-        }}
-      >
-        +
-      </Button>
-    </div>
+    </Stepper>
     <span class="text-sm text-muted-foreground">
       {currentBiome().name}
       (floors {currentBiome().startFloor}–{trackerData.mines.maxFloors})

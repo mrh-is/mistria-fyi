@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { Flower, Heart, Leaf, Minus, Octagon, Plus, Snowflake, Sun } from "@lucide/svelte";
+  import { Flower, Heart, Leaf, Octagon, Snowflake, Sun } from "@lucide/svelte";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
+  import Stepper from "$lib/components/stepper.svelte";
   import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
   import { getNpcsProgress, MAX_NPC_LEVEL } from "$lib/engine/progress.js";
@@ -93,53 +94,44 @@
           </span>
         </div>
 
-        <div class="flex items-center justify-center gap-0.5">
-          <button
-            class="flex size-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground active:bg-accent disabled:opacity-30"
-            type="button"
-            disabled={level <= 0}
-            onclick={() => {
-              setNpcLevelWithCelebration(npc.id, level - 1);
-            }}
-          >
-            <Minus class="size-3.5" />
-          </button>
-
-          {#each { length: MAX_NPC_LEVEL } as _, i (i)}
-            <button
-              class="flex size-7 items-center justify-center"
-              type="button"
-              onclick={() => {
-                setNpcLevelWithCelebration(npc.id, i < level ? i : i + 1);
-              }}
-            >
-              {#if npc.dateable}
-                <Heart
-                  class="size-4 transition-colors duration-200 {i < level
-                    ? `${LEVEL_COLORS[i]} fill-current`
-                    : 'fill-transparent text-muted-foreground/30'}"
-                />
-              {:else}
-                <Octagon
-                  class="size-4 transition-colors duration-200 {i < level
-                    ? `${LEVEL_COLORS[i]} fill-current`
-                    : 'fill-transparent text-muted-foreground/30'}"
-                />
-              {/if}
-            </button>
-          {/each}
-
-          <button
-            class="flex size-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground active:bg-accent disabled:opacity-30"
-            type="button"
-            disabled={level >= MAX_NPC_LEVEL}
-            onclick={() => {
-              setNpcLevelWithCelebration(npc.id, level + 1);
-            }}
-          >
-            <Plus class="size-3.5" />
-          </button>
-        </div>
+        <Stepper
+          decrementDisabled={level <= 0}
+          incrementDisabled={level >= MAX_NPC_LEVEL}
+          decrementLabel="Decrease {npc.name} hearts"
+          incrementLabel="Increase {npc.name} hearts"
+          onDecrement={() => {
+            setNpcLevelWithCelebration(npc.id, level - 1);
+          }}
+          onIncrement={() => {
+            setNpcLevelWithCelebration(npc.id, level + 1);
+          }}
+        >
+          <div class="flex items-center justify-center gap-0.5">
+            {#each { length: MAX_NPC_LEVEL } as _, i (i)}
+              <button
+                class="flex size-7 items-center justify-center"
+                type="button"
+                onclick={() => {
+                  setNpcLevelWithCelebration(npc.id, i < level ? i : i + 1);
+                }}
+              >
+                {#if npc.dateable}
+                  <Heart
+                    class="size-4 transition-colors duration-200 {i < level
+                      ? `${LEVEL_COLORS[i]} fill-current`
+                      : 'fill-transparent text-muted-foreground/30'}"
+                  />
+                {:else}
+                  <Octagon
+                    class="size-4 transition-colors duration-200 {i < level
+                      ? `${LEVEL_COLORS[i]} fill-current`
+                      : 'fill-transparent text-muted-foreground/30'}"
+                  />
+                {/if}
+              </button>
+            {/each}
+          </div>
+        </Stepper>
       </div>
     {/if}
   {/each}

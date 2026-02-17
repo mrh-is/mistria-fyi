@@ -317,7 +317,7 @@
           />
           {#if toolbarState.searchQuery}
             <button
-              class="absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
+              class="absolute top-1/2 right-0 flex size-11 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
               onclick={() => {
                 toolbarState.setSearch("");
               }}
@@ -342,7 +342,7 @@
         <div class="flex flex-1 justify-start">
           {#if pathname === "/" || pathname === "/museum" || pathname === "/almanac"}
             <button
-              class="flex min-h-10 min-w-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              class="flex min-h-11 min-w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               onclick={openSearch}
               type="button"
               aria-label="Search"
@@ -356,7 +356,7 @@
         <div class="flex flex-1 justify-center">
           {#if showWorldState}
             <button
-              class="flex min-h-10 items-center gap-1.5 rounded-lg border border-border/60 px-3 transition-colors hover:bg-accent {activePanel ===
+              class="flex min-h-11 items-center gap-1.5 rounded-lg border border-border/60 px-3 transition-colors hover:bg-accent {activePanel ===
               'world'
                 ? 'bg-accent text-foreground'
                 : 'text-muted-foreground hover:text-foreground'}"
@@ -404,7 +404,7 @@
         <!-- Right slot: Filters (always) -->
         <div class="flex flex-1 justify-end">
           <button
-            class="flex min-h-10 items-center gap-1.5 rounded-md px-3 transition-colors {activePanel ===
+            class="flex min-h-11 items-center gap-1.5 rounded-md px-3 transition-colors {activePanel ===
             'filters'
               ? 'bg-accent text-foreground'
               : filtersActive
