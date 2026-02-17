@@ -8,6 +8,12 @@ import { extractCosmetics } from "./extractors/cosmetics.js";
 import { extractMines } from "./extractors/mines.js";
 import { extractMuseum } from "./extractors/museum.js";
 import { extractNpcs } from "./extractors/npcs.js";
+import {
+  applyAnimalQuestGates,
+  applyItemQuestGates,
+  applySpellQuestGates,
+  extractQuestGates,
+} from "./extractors/quest-gates.js";
 import { extractQuests } from "./extractors/quests.js";
 import { extractRenown } from "./extractors/renown.js";
 import { extractSkills } from "./extractors/skills.js";
@@ -61,6 +67,11 @@ function main(): void {
   const quests = extractQuests(localized);
   const mines = extractMines(localized);
   const sources = extractSources(localized);
+  const questGates = extractQuestGates(localized);
+
+  applyItemQuestGates(items, questGates.itemGates);
+  applyAnimalQuestGates(animals, questGates.animalGates);
+  applySpellQuestGates(mines, questGates.spellGates);
   console.log();
 
   // Step 4: Assemble
@@ -74,6 +85,7 @@ function main(): void {
     mines,
     museum,
     npcs,
+    questGates,
     quests,
     renown,
     skills,
