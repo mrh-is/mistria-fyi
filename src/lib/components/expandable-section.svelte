@@ -27,6 +27,7 @@
     class="flex w-full items-center gap-2 rounded-md px-2 py-2.5 text-left text-base hover:bg-accent/50"
     onclick={() => (expanded = !expanded)}
     type="button"
+    aria-expanded={isOpen}
   >
     <ChevronRight
       class="size-4 shrink-0 text-muted-foreground transition-transform {isOpen ? 'rotate-90' : ''}"

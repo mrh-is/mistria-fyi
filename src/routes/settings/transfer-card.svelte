@@ -187,7 +187,13 @@
     {#if scanning}
       <div class="relative overflow-hidden rounded-md border">
         <video bind:this={videoEl} class="aspect-square w-full object-cover"></video>
-        <Button class="absolute top-2 right-2" size="icon" variant="ghost" onclick={stopScanning}>
+        <Button
+          class="absolute top-2 right-2"
+          size="icon"
+          variant="ghost"
+          onclick={stopScanning}
+          aria-label="Close camera"
+        >
           <X />
         </Button>
       </div>

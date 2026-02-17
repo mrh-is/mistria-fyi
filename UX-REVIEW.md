@@ -1077,7 +1077,10 @@ The app has excellent **bones**. The implementation plan transforms it from "fun
 
 **Phase D — Accessibility & Cleanup**:
 
-15. ♿ ARIA labels on all icon-only buttons + `aria-expanded` on sections
+15. ~~♿ ARIA labels on all icon-only buttons + `aria-expanded` on sections~~ ✅ Done — `aria-label`
+    added to icon-only buttons (`search-bar`, `transfer-card`, `item-row`); `aria-expanded` added to
+    `expandable-section` and `item-row` detail toggles. Toolbar footer and stepper already had
+    correct ARIA attributes.
 16. 🔍 Verify muted-foreground contrast ratio
 17. ~~🧩 Extract PageHeader, ToolbarFooter, TouchTarget, Stepper components~~ ✅ Done —
     `touch-target.svelte` + `stepper.svelte` (44px tap / 32px visual, `-mx-1.5` optical correction,

@@ -65,6 +65,8 @@
       <button
         class="group inline-flex min-w-0 flex-1 items-center gap-0.5 text-left text-base"
         type="button"
+        aria-expanded={expanded}
+        aria-label="{name} details"
         onclick={() => {
           expanded = !expanded;
         }}
