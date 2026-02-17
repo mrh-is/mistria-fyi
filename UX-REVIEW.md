@@ -1050,26 +1050,31 @@ The app has excellent **bones**. The implementation plan transforms it from "fun
 
 **Phase A — Visual Identity & Core Polish** (highest leverage):
 
-1. 🎨 Custom color palette (cream/mint/rose) + warm dark mode (no category colors or seasonal
-   tinting yet — establish the base first)
-2. 🔤 SN Pro typeface (replaces system fonts)
-3. 🏷️ Clearer labels for availability toggle + world state context text
+1. ~~🎨 Custom color palette (cream/mint/rose) + warm dark mode (no category colors or seasonal
+   tinting yet — establish the base first)~~ ✅ Done — oklch Mistria pastel palette in `app.css`
+   with category colors and warm dark mode
+2. ~~🔤 SN Pro typeface (replaces system fonts)~~ ✅ Done — loaded via Google Fonts in `app.html`,
+   set as `--font-sans`
+3. ~~🏷️ Clearer labels for availability toggle + world state context text~~ ✅ Obviated by #5 —
+   labels now live in toolbar footer with descriptive text per mode
 4. ~~✨ Minimum viable motion (checkbox pulse, progress bar transitions, page fade)~~ ✅ Done
 
 **Phase B — Mobile IA Redesign**:
 
 5. ~~📐 Mobile toolbar footer~~ ✅ Done — `toolbar-footer.svelte`
-6. 📏 Compact sticky headers (one row only)
+6. ~~📏 Compact sticky headers (one row only)~~ ✅ Done — `category-header.svelte` single-row sticky
+   layout
 7. 👆 44px touch targets everywhere (desktop too)
-8. 📝 Text wrapping for long item names
-9. 📐 Standardized +/− button sizing
+8. ~~📝 Text wrapping for long item names~~ ✅ Done — `min-w-0 flex-1` allowing natural wrapping
+9. ~~📐 Standardized +/− button sizing~~ ✅ Done — unified `Stepper` component with `size-11` touch
+   targets
 
 **Phase C — New Features**:
 
 10. ~~👋 Welcome experience (first-visit onboarding)~~ ✅ Done — `welcome-card.svelte`, device-aware
     (mobile→QR scan, desktop→import), dismisses on manual start or reset
 11. 🔒 Spoiler system (quest-locked item obfuscation — blocked by data investigation)
-12. ↩️ Undo toasts (Sonner)
+12. ~~↩️ Undo toasts (Sonner)~~ ✅ Done — At bottom of screen
 13. ~~🏆 Completed category "trophy case" treatment~~ ✅ Done — gold cards + "Completed" section on
     home grid
 14. ~~🎉 Milestone celebrations (confetti for section/category completion)~~ ✅ Done —
