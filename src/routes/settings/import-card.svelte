@@ -4,7 +4,7 @@
   import { Button } from "$lib/components/ui/button/index.js";
   import * as Card from "$lib/components/ui/card/index.js";
   import { Separator } from "$lib/components/ui/separator/index.js";
-  import { buildImportState, parsePlayerSave } from "$lib/engine/import-save.js";
+  import { buildImportState, parseSaveFiles } from "$lib/engine/import-save.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import type { ImportResult } from "$lib/engine/import-save.js";
@@ -20,6 +20,7 @@
   let importResult = $state<ImportResult | null>(null);
   let importError = $state<null | string>(null);
   let importing = $state(false);
+  let filesUsed = $state<string[]>([]);
 
   // ── File input ref ──
   let fileInput = $state<HTMLInputElement | null>(null);
@@ -30,26 +31,30 @@
 
   async function handleFileChange(event: Event) {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
+    const files = input.files;
+    if (!files || files.length === 0) return;
 
     importing = true;
     importResult = null;
     importError = null;
+    filesUsed = [];
 
     try {
-      const text = await file.text();
-      const { error, save } = parsePlayerSave(text);
+      const { bundle, error } = await parseSaveFiles(files);
 
-      if (error || !save) {
-        importError = error ?? "Failed to parse save file.";
+      if (error || !bundle) {
+        importError = error ?? "Failed to parse save files.";
         return;
       }
 
-      const { completed, result } = buildImportState(save);
+      // Track which files were loaded
+      if (bundle.player) filesUsed.push("player.json");
+      if (bundle.gamedata) filesUsed.push("gamedata.json");
+      if (bundle.quests) filesUsed.push("quests.json");
+
+      const { completed, result } = buildImportState(bundle);
       const merged = userState.mergeFromSave(completed);
 
-      // Use the merged counts (only newly added items) for the result
       importResult = {
         counts: merged,
         warnings: result.warnings,
@@ -58,7 +63,6 @@
       importError = "An unexpected error occurred while importing.";
     } finally {
       importing = false;
-      // Reset file input so re-selecting same file triggers change
       input.value = "";
     }
   }
@@ -69,7 +73,13 @@
           importResult.counts.cosmetics +
           importResult.counts.animals +
           importResult.counts.animalCosmetics +
-          importResult.counts.spells
+          importResult.counts.spells +
+          importResult.counts.museum +
+          importResult.counts.npcLevels +
+          importResult.counts.quests +
+          importResult.counts.skillLevels +
+          importResult.counts.mineFloor +
+          importResult.counts.renown
       : 0,
   );
 </script>
@@ -81,8 +91,13 @@
       Import from Save File
     </Card.Title>
     <Card.Description>
-      Import your Fields of Mistria <code>player.json</code> to auto-populate progress. This merges with
-      your existing data — nothing is removed.
+      Import your extracted Fields of Mistria save files to auto-populate progress. Use <a
+        href="https://github.com/NPC-Studio/vaultc"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="underline">vaultc</a
+      >
+      to extract your <code>.sav</code> file, then select the resulting JSON files below.
     </Card.Description>
   </Card.Header>
   <Card.Content>
@@ -91,12 +106,16 @@
       accept=".json"
       class="hidden"
       type="file"
+      multiple
       onchange={handleFileChange}
     />
     <Button class="w-full" disabled={importing} variant="outline" onclick={handleFileSelect}>
       <FileUp />
-      {importing ? "Importing..." : "Select player.json"}
+      {importing ? "Importing..." : "Select save files"}
     </Button>
+    <p class="mt-1.5 text-center text-xs text-muted-foreground">
+      Select one or more: player.json, gamedata.json, quests.json
+    </p>
 
     {#if importError}
       <div
@@ -109,7 +128,11 @@
     {#if importResult}
       <div class="mt-3 rounded-md bg-green-50 p-3 dark:bg-green-950">
         <p class="text-base font-medium text-green-800 dark:text-green-200">
-          Imported {totalImported} new items
+          {#if totalImported > 0}
+            Imported from {filesUsed.join(", ")}
+          {:else}
+            No new data to import
+          {/if}
         </p>
         {#if totalImported > 0}
           <ul class="mt-1 space-y-0.5 text-sm text-muted-foreground">
@@ -128,6 +151,24 @@
             {#if importResult.counts.spells > 0}
               <li>Spells: +{importResult.counts.spells}</li>
             {/if}
+            {#if importResult.counts.museum > 0}
+              <li>Museum donations: +{importResult.counts.museum}</li>
+            {/if}
+            {#if importResult.counts.npcLevels > 0}
+              <li>NPC hearts: +{importResult.counts.npcLevels} NPCs updated</li>
+            {/if}
+            {#if importResult.counts.quests > 0}
+              <li>Quests: +{importResult.counts.quests}</li>
+            {/if}
+            {#if importResult.counts.skillLevels > 0}
+              <li>Skills: +{importResult.counts.skillLevels} skills updated</li>
+            {/if}
+            {#if importResult.counts.mineFloor > 0}
+              <li>Mine floor: +{importResult.counts.mineFloor} floors</li>
+            {/if}
+            {#if importResult.counts.renown > 0}
+              <li>Renown: +{importResult.counts.renown} levels</li>
+            {/if}
           </ul>
         {/if}
 
@@ -144,22 +185,6 @@
             </ul>
           </details>
         {/if}
-      </div>
-
-      <div class="mt-3 rounded-md bg-sky-50 p-3 dark:bg-sky-950">
-        <p class="text-base font-medium text-sky-800 dark:text-sky-200">Some data is manual-only</p>
-        <p class="mt-1 text-sm text-muted-foreground">We can't yet import data for:</p>
-        <ul class="mt-1 list-inside list-disc space-y-0.5 text-sm text-muted-foreground">
-          <li>Museum donations</li>
-          <li>NPC hearts</li>
-          <li>Quest completion</li>
-          <li>Skill levels</li>
-          <li>Town renown</li>
-          <li>Exact mine floor</li>
-        </ul>
-        <p class="mt-3 text-sm text-muted-foreground">
-          You'll have to track this manually for now.
-        </p>
       </div>
 
       {#if isDesktop && onScrollToTransfer}

@@ -1,6 +1,6 @@
 import { trackerData } from "$lib/data/index.js";
 
-import type { CompletedState, MergeCounts } from "$lib/stores/user-state.svelte.js";
+import type { CompletedState, MergeCounts, QuestState } from "$lib/stores/user-state.svelte.js";
 import type { CosmeticId, ItemId, SpellId, VariantId } from "$lib/types/tracker-data.js";
 
 // ─── Import result ──────────────────────────────────────────────────
@@ -12,7 +12,20 @@ export interface ImportResult {
   warnings: string[];
 }
 
-// ─── Player.json shape (subset we care about) ───────────────────────
+// ─── Save file shapes ───────────────────────────────────────────────
+
+/** All parsed save files bundled together */
+export interface SaveBundle {
+  gamedata?: GamedataSave;
+  player?: PlayerSave;
+  quests?: QuestsSave;
+}
+
+interface GamedataSave {
+  maximum_mines_level?: number;
+  museum_progress?: string[];
+  t2_world_facts?: Record<string, unknown>;
+}
 
 interface PlayerSave {
   animal_cosmetic_unlocks?: Record<string, string[]>;
@@ -21,12 +34,16 @@ interface PlayerSave {
   items_acquired?: string[];
   items_sold?: Record<string, unknown>;
   recipes_created?: string[];
+  skill_xp?: Record<string, number>;
   spells_learned?: string[];
 }
 
-// ─── Core import logic ──────────────────────────────────────────────
+interface QuestsSave {
+  active_quests?: Array<{ quest_name?: string }>;
+  completed_quests?: string[];
+}
 
-export function buildImportState(save: PlayerSave): {
+export function buildImportState(bundle: SaveBundle): {
   completed: Partial<CompletedState>;
   result: ImportResult;
 } {
@@ -45,14 +62,16 @@ export function buildImportState(save: PlayerSave): {
     spells: 0,
   };
 
+  const save = bundle.player;
+
   // ── Almanac: union of items_acquired + items_sold keys + recipes_created ──
   const almanacIds = new Set<ItemId>();
   const validItems = new Set(Object.keys(trackerData.items));
 
   const allPlayerItems = new Set<string>([
-    ...(save.items_acquired ?? []),
-    ...Object.keys(save.items_sold ?? {}),
-    ...(save.recipes_created ?? []),
+    ...(save?.items_acquired ?? []),
+    ...Object.keys(save?.items_sold ?? {}),
+    ...(save?.recipes_created ?? []),
   ]);
 
   for (const id of allPlayerItems) {
@@ -66,7 +85,7 @@ export function buildImportState(save: PlayerSave): {
   const cosmeticIds = new Set<CosmeticId>();
   const validCosmetics = new Set(Object.keys(trackerData.cosmetics));
 
-  for (const id of save.cosmetic_unlocks ?? []) {
+  for (const id of save?.cosmetic_unlocks ?? []) {
     if (validCosmetics.has(id)) {
       cosmeticIds.add(id as CosmeticId);
     } else {
@@ -79,7 +98,7 @@ export function buildImportState(save: PlayerSave): {
   const animalVariants: Record<string, Set<VariantId>> = {};
   for (const [animalId, animal] of Object.entries(trackerData.animals)) {
     const validVariants = new Set(Object.keys(animal.variants));
-    const playerVariants = save.animal_variant_unlocks?.[animalId] ?? [];
+    const playerVariants = save?.animal_variant_unlocks?.[animalId] ?? [];
     const matched = new Set<VariantId>();
 
     for (const v of playerVariants) {
@@ -97,7 +116,7 @@ export function buildImportState(save: PlayerSave): {
   const animalCosmetics: Record<string, Set<CosmeticId>> = {};
   for (const [animalId, animal] of Object.entries(trackerData.animals)) {
     const validAnimalCosmetics = new Set(Object.keys(animal.cosmetics));
-    const playerCosmetics = save.animal_cosmetic_unlocks?.[animalId] ?? [];
+    const playerCosmetics = save?.animal_cosmetic_unlocks?.[animalId] ?? [];
     const matched = new Set<CosmeticId>();
 
     for (const c of playerCosmetics) {
@@ -115,7 +134,7 @@ export function buildImportState(save: PlayerSave): {
   const spells = new Set<SpellId>();
   const validSpells = new Set(Object.keys(trackerData.mines.spells));
 
-  for (const id of save.spells_learned ?? []) {
+  for (const id of save?.spells_learned ?? []) {
     if (validSpells.has(id)) {
       spells.add(id as SpellId);
     } else {
@@ -124,13 +143,92 @@ export function buildImportState(save: PlayerSave): {
   }
   counts.spells = spells.size;
 
-  // ── Categories we CANNOT import ──
-  // Museum donations: not in player.json
-  // NPC hearts: not in player.json
-  // Quests: not in player.json
-  // Skills (maxed): XP thresholds unknown
-  // Renown: XP-to-level conversion unknown
-  // Mine floor: only milestone progression available, not exact floor
+  // ── Museum donations (from gamedata.json → museum_progress) ──
+  const museumIds = new Set<ItemId>();
+  if (bundle.gamedata?.museum_progress) {
+    const validMuseum = new Set<string>();
+    for (const wing of Object.values(trackerData.museum)) {
+      for (const set of Object.values(wing.sets)) {
+        for (const itemId of set.items) {
+          validMuseum.add(itemId);
+        }
+      }
+    }
+    for (const id of bundle.gamedata.museum_progress) {
+      if (validMuseum.has(id)) {
+        museumIds.add(id as ItemId);
+      }
+    }
+    counts.museum = museumIds.size;
+  }
+
+  // ── Mine floor (from gamedata.json → maximum_mines_level) ──
+  const mineFloor = bundle.gamedata?.maximum_mines_level
+    ? Math.min(Math.floor(bundle.gamedata.maximum_mines_level), trackerData.mines.maxFloors)
+    : 0;
+  counts.mineFloor = mineFloor;
+
+  // ── NPC levels, skill levels, renown (from gamedata.json → t2_world_facts) ──
+  const npcLevels: Record<string, number> = {};
+  const skillLevels: Record<string, number> = {};
+  let renown = 0;
+
+  const facts = bundle.gamedata?.t2_world_facts;
+  if (facts) {
+    // NPC heart levels: "{npc}_heart_level" keys in t2_world_facts
+    const validNpcs = new Set(Object.keys(trackerData.npcs));
+    for (const npcId of validNpcs) {
+      const level = facts[`${npcId}_heart_level`];
+      if (typeof level === "number" && level > 0) {
+        npcLevels[npcId] = Math.floor(level);
+        counts.npcLevels++;
+      }
+    }
+
+    // Skill levels: "{skill}_level" keys in t2_world_facts
+    const validSkills = new Set(Object.keys(trackerData.skills));
+    for (const skillId of validSkills) {
+      const level = facts[`${skillId}_level`];
+      if (typeof level === "number" && level > 0) {
+        skillLevels[skillId] = Math.min(Math.floor(level), 60);
+        counts.skillLevels++;
+      }
+    }
+
+    // Renown level
+    if (typeof facts.renown === "number") {
+      renown = Math.floor(facts.renown);
+      counts.renown = renown;
+    }
+  }
+
+  // ── Quest completion (from quests.json) ──
+  const questStates: Record<string, QuestState> = {};
+  if (bundle.quests) {
+    const validQuests = new Set<string>();
+    for (const category of Object.values(trackerData.quests)) {
+      for (const questId of Object.keys(category)) {
+        validQuests.add(questId);
+      }
+    }
+
+    // Completed quests
+    for (const id of bundle.quests.completed_quests ?? []) {
+      if (validQuests.has(id)) {
+        questStates[id] = "completed";
+        counts.quests++;
+      }
+    }
+
+    // Active quests → "obtained"
+    for (const quest of bundle.quests.active_quests ?? []) {
+      const id = quest.quest_name;
+      if (id && validQuests.has(id) && !questStates[id]) {
+        questStates[id] = "obtained";
+        counts.quests++;
+      }
+    }
+  }
 
   return {
     completed: {
@@ -138,7 +236,12 @@ export function buildImportState(save: PlayerSave): {
       animalCosmetics,
       animals: animalVariants,
       cosmetics: cosmeticIds,
-      mines: { floor: 0, spells },
+      mines: { floor: mineFloor, spells },
+      museum: museumIds,
+      npcLevels,
+      questStates,
+      renown,
+      skillLevels,
     },
     result: {
       counts,
@@ -147,7 +250,9 @@ export function buildImportState(save: PlayerSave): {
   };
 }
 
-// ─── Parse + validate in one step ───────────────────────────────────
+// ─── Parse save files from a FileList ───────────────────────────────
+
+const SAVE_FILES = new Set(["gamedata.json", "player.json", "quests.json"]);
 
 export function parsePlayerSave(jsonString: string): {
   error?: string;
@@ -167,12 +272,63 @@ export function parsePlayerSave(jsonString: string): {
   }
 }
 
+// ─── Legacy single-file parse (kept for backward compatibility) ─────
+
+export async function parseSaveFiles(files: FileList): Promise<{
+  bundle?: SaveBundle;
+  error?: string;
+}> {
+  const bundle: SaveBundle = {};
+  const errors: string[] = [];
+
+  for (const file of files) {
+    if (!SAVE_FILES.has(file.name)) continue;
+
+    try {
+      const text = await file.text();
+      const data: unknown = JSON.parse(text);
+      if (typeof data !== "object" || data === null) {
+        errors.push(`${file.name}: not a valid JSON object`);
+        continue;
+      }
+
+      switch (file.name) {
+        case "gamedata.json":
+          bundle.gamedata = data as GamedataSave;
+          break;
+        case "player.json":
+          if (validatePlayerSave(data)) {
+            bundle.player = data;
+          } else {
+            errors.push("player.json: missing expected fields");
+          }
+          break;
+        case "quests.json":
+          bundle.quests = data as QuestsSave;
+          break;
+      }
+    } catch {
+      errors.push(`${file.name}: invalid JSON`);
+    }
+  }
+
+  if (!bundle.player && !bundle.gamedata && !bundle.quests) {
+    return {
+      error:
+        errors.length > 0
+          ? errors.join(". ")
+          : "No recognized save files found. Select player.json, gamedata.json, and/or quests.json from your extracted save.",
+    };
+  }
+
+  return { bundle };
+}
+
 // ─── Validation ─────────────────────────────────────────────────────
 
 export function validatePlayerSave(data: unknown): data is PlayerSave {
   if (typeof data !== "object" || data === null) return false;
   const obj = data as Record<string, unknown>;
-  // Must have at least one importable field
   return (
     Array.isArray(obj["items_acquired"]) ||
     Array.isArray(obj["cosmetic_unlocks"]) ||

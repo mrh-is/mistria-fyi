@@ -79,7 +79,7 @@ const SKIP_SECTIONS = new Set([
 export type FiddleData = Record<string, unknown>;
 
 export function parseFiddle(inputDir: string): FiddleData {
-  const fiddlePath = resolve(inputDir, "fiddle.json");
+  const fiddlePath = resolve(inputDir, "__fiddle__.json");
   const raw: Record<string, unknown> = JSON.parse(readFileSync(fiddlePath, "utf-8"));
 
   const result: FiddleData = {};

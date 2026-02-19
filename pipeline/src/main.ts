@@ -34,10 +34,10 @@ function main(): void {
   console.log("🌾 Harvest Helper — Data Pipeline\n");
 
   // Validate input
-  const fiddlePath = resolve(INPUT_DIR, "fiddle.json");
+  const fiddlePath = resolve(INPUT_DIR, "__fiddle__.json");
   if (!existsSync(fiddlePath)) {
     console.error(`❌ Missing input: ${fiddlePath}`);
-    console.error("   Drop fiddle.json into pipeline/input/");
+    console.error("   Drop __fiddle__.json into pipeline/input/");
     process.exit(1);
   }
 

@@ -81,9 +81,24 @@ export default defineConfig(
           type: "natural",
         },
       ],
+      "perfectionist/sort-object-types": [
+        "error",
+        {
+          customGroups: [
+            { elementNamePattern: "^start$", groupName: "range-start" },
+            { elementNamePattern: "^end$", groupName: "range-end" },
+          ],
+          groups: ["range-start", "range-end", "unknown"],
+        },
+      ],
       "perfectionist/sort-objects": [
         "error",
         {
+          customGroups: [
+            { elementNamePattern: "^start$", groupName: "range-start" },
+            { elementNamePattern: "^end$", groupName: "range-end" },
+          ],
+          groups: ["range-start", "range-end", "unknown"],
           partitionByNewLine: true,
         },
       ],
