@@ -33,7 +33,43 @@
     const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
     return { completed, pct, total };
   });
+
+  const viewBox = 24;
+  const strokeWidth = 4;
+  const radius = (viewBox - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  let visualPct = $derived(overall().pct > 0 ? Math.max(overall().pct, 5) : 0);
+  let offset = $derived(circumference - (visualPct / 100) * circumference);
 </script>
 
-<span class="text-base text-muted-foreground">{overall().pct}%</span>
-<span class="text-sm text-muted-foreground">({overall().completed}/{overall().total})</span>
+<div class="flex items-center gap-1.5" title="{overall().completed}/{overall().total} completed">
+  <svg
+    viewBox="0 0 {viewBox} {viewBox}"
+    class="size-[1.2em] shrink-0 -rotate-90"
+    role="img"
+    aria-label="{overall().pct}% overall completion"
+  >
+    <circle
+      cx={viewBox / 2}
+      cy={viewBox / 2}
+      r={radius}
+      fill="none"
+      stroke="currentColor"
+      stroke-width={strokeWidth}
+      class="text-muted-foreground/20"
+    />
+    <circle
+      cx={viewBox / 2}
+      cy={viewBox / 2}
+      r={radius}
+      fill="none"
+      stroke="currentColor"
+      stroke-width={strokeWidth}
+      stroke-linecap="round"
+      stroke-dasharray={circumference}
+      stroke-dashoffset={offset}
+      class="text-primary transition-[stroke-dashoffset] duration-500 ease-out"
+    />
+  </svg>
+  <span class="text-sm font-medium text-muted-foreground tabular-nums">{overall().pct}%</span>
+</div>

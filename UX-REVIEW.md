@@ -1149,7 +1149,7 @@ behavior and source code. Decisions and direction confirmed Feb 2026._
 | #   | Feature                            | Status      | Notes                                                                                                                                              |
 | --- | ---------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | **Spoiler system (quest-gate UI)** | Blocked     | Data types (`questGate?: QuestId[]`) and pipeline extraction exist, but no UI obfuscation. Blocked on completing the full quest dependency mapping |
-| 2   | **Progress ring on home page**     | Not started | `overall-progress.svelte` renders plain text (`X% (n/m)`). No SVG ring/arc                                                                         |
+| 2   | **Progress ring on home page**     | ✅ Done     | SVG ring with animated arc + percentage label in `overall-progress.svelte`                                                                         |
 | 3   | **Skill tier color progression**   | Not started | Progress bar is single-color. No per-tier gradient or color shift                                                                                  |
 | 4   | **Skill tier label correction**    | Not started | Still shows invented names (`Novice`, `Apprentice`, `Journeyman`, `Expert`, `Master`) in `SkillRow.svelte:13`. Game uses "Tier 1" through "Tier 5" |
 | 5   | **Town rank visual treatment**     | Not started | Flat text list with `line-through` for completed ranks. No colored stars or visual progression                                                     |
