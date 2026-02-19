@@ -72,7 +72,7 @@ const SKIP_SECTIONS = new Set([
   "tile_cursor",
   "time_of_day",
   "tool_fx",
-  "ui",
+
   "weather",
 ]);
 

@@ -13,7 +13,7 @@
 
 ## Table of Contents
 
-1. [Pipeline: Stop Skipping `$.ui`](#1-pipeline-stop-skipping-ui)
+1. ~~[Pipeline: Stop Skipping `$.ui`](#1-pipeline-stop-skipping-ui--done)~~ ✅
 2. [Save File Import: `.sav` Unpacking](#2-save-file-import-sav-unpacking)
 3. [Almanac: Restructure Using In-Game Categories](#3-almanac-restructure-using-in-game-categories)
 4. [Animals: Flip IA Hierarchy](#4-animals-flip-ia-hierarchy)
@@ -37,12 +37,13 @@
 
 ---
 
-## 1. Pipeline: Stop Skipping `$.ui`
+## 1. ~~Pipeline: Stop Skipping `$.ui`~~ ✅ Done
 
-**Why:** Multiple fixes below depend on UI data currently being discarded. The `$.ui` tree contains
-authoritative in-game ordering and categorization data.
+Removed `"ui"` from `SKIP_SECTIONS` in `parse-fiddle.ts`. The `SKIP_PATTERNS` array still filters
+out visual-only keys. Pipeline output confirmed all expected UI data paths are available
+(`almanac.categories`, `museum` orders, `character_customization`, `crafting`, `skill_menu`).
 
-**Key data that becomes available:**
+**Key data that became available:**
 
 | Path                                      | Contains                                                       |
 | ----------------------------------------- | -------------------------------------------------------------- |
@@ -51,16 +52,6 @@ authoritative in-game ordering and categorization data.
 | `$.ui.character_customization`            | Cosmetic slot categories with sub-groupings                    |
 | `$.ui.crafting`                           | Crafting recipe categories                                     |
 | `$.ui.skill_menu`                         | Perk trees per skill domain                                    |
-
-**Implementation:**
-
-1. In [parse-fiddle.ts:47](pipeline/src/parse-fiddle.ts#L47), remove `"ui"` from `SKIP_SECTIONS`.
-
-2. The `SKIP_PATTERNS` array (line 15) already filters out sprite/animation/sound keys, so most
-   visual-only UI data will still be skipped. If the parsed output grows too large, add targeted
-   pattern skips rather than blanket-skipping the entire section.
-
-3. Run the pipeline and verify the `$.ui` subtree appears in `pipeline/output/fiddle-readable.json`.
 
 ---
 
