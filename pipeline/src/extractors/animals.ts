@@ -54,6 +54,7 @@ export function extractAnimals(fiddle: FiddleData): TrackerData["animals"] {
     const cosmetics = {} as Record<CosmeticId, { name: string }>;
     if (rawCosmetics) {
       for (const [cid, c] of Object.entries(rawCosmetics)) {
+        if (cid === "default") continue;
         cosmetics[cid as CosmeticId] = {
           name: (c.name as string | undefined) ?? cid,
         };

@@ -60,14 +60,11 @@
       .sort((a, b) => a.name.localeCompare(b.name)),
   );
 
-  let totalVariants = $derived(
-    animals.reduce((sum, a) => sum + Object.keys(a.variants).length, 0),
-  );
+  let totalVariants = $derived(animals.reduce((sum, a) => sum + Object.keys(a.variants).length, 0));
   let totalVariantsCompleted = $derived(
     animals.reduce(
       (sum, a) =>
-        sum +
-        ((userState.state.completed.animals[a.id] as Set<VariantId> | undefined)?.size ?? 0),
+        sum + ((userState.state.completed.animals[a.id] as Set<VariantId> | undefined)?.size ?? 0),
       0,
     ),
   );
@@ -88,7 +85,20 @@
     const completed =
       (userState.state.completed.animals[animalId] as Set<VariantId> | undefined)?.has(variantId) ??
       false;
-    return completed ? userState.state.showCompleted : true;
+    if (completed) return userState.state.showCompleted;
+
+    const variant = trackerData.animals[animalId].variants[variantId];
+    const mode = userState.state.availabilityMode;
+    const currentSeason = userState.state.worldState.season;
+
+    if (mode === "timely") {
+      return !!variant.bornIn && variant.bornIn === currentSeason;
+    }
+    if (mode === "available") {
+      if (variant.bornIn) return variant.bornIn === currentSeason;
+      return true;
+    }
+    return true; // "everything"
   }
 
   function isCosmeticVisible(animalId: AnimalId, cosmeticId: CosmeticId): boolean {
@@ -97,6 +107,31 @@
         cosmeticId,
       ) ?? false;
     return completed ? userState.state.showCompleted : true;
+  }
+
+  /** Highest tier visible for an animal: completed tier + 1 (so getting one in tier N reveals tier N+1) */
+  function maxVisibleTier(animalId: AnimalId): number {
+    const animal = trackerData.animals[animalId];
+    const completedVariants = userState.state.completed.animals[animalId] as
+      | Set<VariantId>
+      | undefined;
+    let highestCompletedTier = 0;
+    for (const [vid, variant] of Object.entries(animal.variants)) {
+      if (completedVariants?.has(vid as VariantId) && (variant.tier ?? 1) > highestCompletedTier) {
+        highestCompletedTier = variant.tier ?? 1;
+      }
+    }
+    return highestCompletedTier + 1;
+  }
+
+  function isVariantSpoilered(animalId: AnimalId, variantId: VariantId): boolean {
+    if (userState.state.showSpoilers) return false;
+    const variant = trackerData.animals[animalId].variants[variantId];
+    const completed =
+      (userState.state.completed.animals[animalId] as Set<VariantId> | undefined)?.has(variantId) ??
+      false;
+    if (completed) return false;
+    return (variant.tier ?? 1) > maxVisibleTier(animalId);
   }
 
   /** Sort variants: tier ascending (1 first, 6 last), then season order within same tier */
@@ -119,7 +154,7 @@
 
 <CategoryHeader category={CATEGORY_BY_KEY.animals} {progress} />
 
-{#if animals.some((a) => Object.keys(a.variants).some((vid) => isVariantVisible(a.id, vid as VariantId)))}
+{#if animals.some( (a) => Object.keys(a.variants).some( (vid) => isVariantVisible(a.id, vid as VariantId), ), )}
   <ExpandableSection count={totalVariantsCompleted} name="Color Variants" total={totalVariants}>
     {#each animals as animal (animal.id)}
       {@const variantEntries = sortedVariants(animal.variants)}
@@ -139,6 +174,7 @@
               (userState.state.completed.animals[animal.id] as Set<VariantId> | undefined)?.has(
                 variantId as VariantId,
               ) ?? false}
+            {@const spoilered = isVariantSpoilered(animal.id, variantId as VariantId)}
             <div
               class="flex items-center gap-2 rounded-md px-2 py-1 {completed
                 ? 'line-through opacity-40'
@@ -146,6 +182,7 @@
             >
               <Checkbox
                 checked={completed}
+                disabled={spoilered}
                 onCheckedChange={() => {
                   userState.toggleAnimalVariant(animal.id, variantId as VariantId);
                   const completed =
@@ -164,20 +201,29 @@
                   }
                 }}
               />
-              <span class="min-w-0 flex-1 text-base">
-                {variant.name}
+              {#if spoilered}
+                <span class="min-w-0 flex-1 text-base text-muted-foreground/50 blur-sm select-none">
+                  {variant.name}
+                </span>
                 {#if variant.tier}
                   <span class="text-sm text-muted-foreground">T{variant.tier}</span>
                 {/if}
-              </span>
-              {#if variant.bornIn}
-                {@const SeasonIcon = SEASON_ICON[variant.bornIn]}
-                <span class="text-muted-foreground" title="Born in {variant.bornIn}">
-                  <SeasonIcon
-                    class="size-3 {variant.bornIn === 'fall' ? '-scale-y-100 rotate-90' : ''}"
-                    strokeWidth={variant.bornIn === "summer" ? 2.5 : undefined}
-                  />
+              {:else}
+                <span class="min-w-0 flex-1 text-base">
+                  {variant.name}
+                  {#if variant.tier}
+                    <span class="text-sm text-muted-foreground">T{variant.tier}</span>
+                  {/if}
                 </span>
+                {#if variant.bornIn}
+                  {@const SeasonIcon = SEASON_ICON[variant.bornIn]}
+                  <span class="text-muted-foreground" title="Born in {variant.bornIn}">
+                    <SeasonIcon
+                      class="size-3 {variant.bornIn === 'fall' ? '-scale-y-100 rotate-90' : ''}"
+                      strokeWidth={variant.bornIn === "summer" ? 2.5 : undefined}
+                    />
+                  </span>
+                {/if}
               {/if}
             </div>
           {/each}
@@ -187,7 +233,7 @@
   </ExpandableSection>
 {/if}
 
-{#if animals.some((a) => Object.keys(a.cosmetics).some((cid) => isCosmeticVisible(a.id, cid as CosmeticId)))}
+{#if animals.some( (a) => Object.keys(a.cosmetics).some( (cid) => isCosmeticVisible(a.id, cid as CosmeticId), ), )}
   <ExpandableSection count={totalCosmeticsCompleted} name="Cosmetics" total={totalCosmetics}>
     {#each animals as animal (animal.id)}
       {@const cosmeticEntries = Object.entries(animal.cosmetics)}
@@ -206,9 +252,7 @@
           {#each visibleCosmetics as [cosmeticId, cosmetic] (cosmeticId)}
             {@const completed =
               (
-                userState.state.completed.animalCosmetics[animal.id] as
-                  | Set<CosmeticId>
-                  | undefined
+                userState.state.completed.animalCosmetics[animal.id] as Set<CosmeticId> | undefined
               )?.has(cosmeticId as CosmeticId) ?? false}
             <div
               class="flex items-center gap-2 rounded-md px-2 py-1 {completed

@@ -52,6 +52,7 @@ export interface UserState {
   availabilityMode: AvailabilityMode;
   completed: CompletedState;
   showCompleted: boolean;
+  showSpoilers: boolean;
   worldState: { season: Season; weather: Weather };
 }
 
@@ -123,6 +124,7 @@ function createDefaultState(): UserState {
     availabilityMode: "available",
     completed: createDefaultCompleted(),
     showCompleted: false,
+    showSpoilers: false,
     worldState: { season: "spring", weather: "calm" },
   };
 }
@@ -358,6 +360,9 @@ function createUserState() {
     toggleShowCompleted() {
       state.showCompleted = !state.showCompleted;
     },
+    toggleShowSpoilers() {
+      state.showSpoilers = !state.showSpoilers;
+    },
     toggleSpell(id: SpellId) {
       toggleInSet(state.completed.mines.spells, id);
     },
@@ -417,6 +422,7 @@ function deserialize(json: string): null | UserState {
         skillLevels,
       },
       showCompleted: false,
+      showSpoilers: false,
       worldState: s.worldState,
     };
   } catch {

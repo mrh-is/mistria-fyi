@@ -25,12 +25,9 @@
 9. ~~[Mines: Double-Tap Zoom on Stepper](#9-mines-double-tap-zoom-on-stepper--done)~~ ✅
 10. ~~[NPC Completion: Partial Hearts](#10-npc-completion-partial-hearts--done)~~ ✅
 11. ~~[Skills: Partial Level Progress](#11-skills-partial-level-progress--done)~~ ✅
-12. ~~[Animal Colors: Tier-Based Spoilers](#12-animal-colors-tier-based-spoilers--done)~~
-    ✅
-13. ~~[Season Animals: Timely Filtering](#13-season-animals-timely-filtering--done)~~
-    ✅
-14. ~~[Animal Cosmetics: Skip `default` Key](#14-animal-cosmetics-skip-default-key--done)~~
-    ✅
+12. ~~[Animal Colors: Tier-Based Spoilers](#12-animal-colors-tier-based-spoilers--done)~~ ✅
+13. ~~[Season Animals: Timely Filtering](#13-season-animals-timely-filtering--done)~~ ✅
+14. ~~[Animal Cosmetics: Skip `default` Key](#14-animal-cosmetics-skip-default-key--done)~~ ✅
 15. [Cosmetics: No Sources Shown](#15-cosmetics-no-sources-shown)
 16. ~~[Nameless Items: Filter from Pipeline](#16-nameless-items-filter-from-pipeline--done)~~ ✅
 17. [Settings: Show Game Version](#17-settings-show-game-version)
@@ -227,7 +224,8 @@ sum of all possible hearts). Progress now shows e.g. `45/120` instead of `3/15`.
 
 **Changes made:**
 
-- **[progress.ts](src/lib/engine/progress.ts)** — `getNpcsProgress` now sums `Math.min(level, MAX_NPC_LEVEL)` across all NPCs, with `total = npcCount × MAX_NPC_LEVEL`.
+- **[progress.ts](src/lib/engine/progress.ts)** — `getNpcsProgress` now sums
+  `Math.min(level, MAX_NPC_LEVEL)` across all NPCs, with `total = npcCount × MAX_NPC_LEVEL`.
 
 ---
 
@@ -238,126 +236,54 @@ skill levels vs sum of all possible levels). Extracted `MAX_SKILL_LEVEL = 60` as
 
 **Changes made:**
 
-- **[progress.ts](src/lib/engine/progress.ts)** — Added `MAX_SKILL_LEVEL = 60` constant. `getSkillsProgress` now sums `Math.min(level, MAX_SKILL_LEVEL)` across all skills.
-- **[skills/+page.svelte](<src/routes/(category)/skills/+page.svelte>)** — Replaced hardcoded `60` with `MAX_SKILL_LEVEL` import.
+- **[progress.ts](src/lib/engine/progress.ts)** — Added `MAX_SKILL_LEVEL = 60` constant.
+  `getSkillsProgress` now sums `Math.min(level, MAX_SKILL_LEVEL)` across all skills.
+- **[skills/+page.svelte](<src/routes/(category)/skills/+page.svelte>)** — Replaced hardcoded `60`
+  with `MAX_SKILL_LEVEL` import.
 
 ---
 
 ## 12. ~~Animal Colors: Tier-Based Spoilers~~ ✅ Done
 
-**Issue:** Higher-tier animal variants are spoilers. Unlocking at least one color in tier N should
-reveal all colors in tier N+1. Colors in unreached tiers should be hidden behind a spoiler.
+Implemented tier-based spoiler system for animal color variants. Variants above the player's
+unlocked tier are shown with blurred text and disabled checkboxes. Completing any variant in tier N
+reveals all variants in tier N+1.
 
-**Context:** Variants already have `tier?: number` in the data. Tier 1 = starter/default.
+**Changes made:**
 
-**Implementation:**
-
-1. Determine the player's "unlocked tier" per animal: scan completed variants to find the highest
-   tier with at least one completion. The next tier (highestCompleted + 1) is also visible (since
-   getting one in tier N unlocks tier N+1). All higher tiers are spoilered.
-
-2. In [animals/+page.svelte](<src/routes/(category)/animals/+page.svelte>), compute per-animal:
-
-   ```ts
-   function maxVisibleTier(animalId: AnimalId): number {
-     const animal = trackerData.animals[animalId];
-     const completedVariants = userState.state.completed.animals[animalId];
-     let highestCompletedTier = 0;
-     for (const [vid, variant] of Object.entries(animal.variants)) {
-       if (completedVariants?.has(vid as VariantId) && (variant.tier ?? 1) > highestCompletedTier) {
-         highestCompletedTier = variant.tier ?? 1;
-       }
-     }
-     return highestCompletedTier + 1; // seeing one in tier N reveals tier N+1
-   }
-   ```
-
-3. Variants above `maxVisibleTier` should be **shown but obfuscated** (not hidden entirely). Display
-   them with blurred/redacted text (e.g., `filter: blur(4px)` or replace name with "???" + tier
-   badge) so players can see how many remain without being spoiled on names. Tapping an obfuscated
-   variant could reveal it, or a "Show all" toggle reveals the section.
-
-4. Variants already completed should always be visible in full regardless of tier.
-
-5. Consider a global "show all spoilers" toggle in Settings for players who don't care.
+- **[animals/+page.svelte](<src/routes/(category)/animals/+page.svelte>)** — Added `maxVisibleTier`
+  (scans completed variants for highest tier, returns +1) and `isVariantSpoilered` (checks tier
+  against max visible). Spoilered variants render with `blur-sm`, `select-none`, muted color, and
+  `disabled` checkbox. Tier badge remains visible for orientation.
+- **[user-state.svelte.ts](src/lib/stores/user-state.svelte.ts)** — Added `showSpoilers: boolean`
+  to `UserState` (defaults `false`, not persisted) with `toggleShowSpoilers()` method.
+- **[toolbar-footer.svelte](src/lib/components/toolbar-footer.svelte)** — Added "Show all spoilers"
+  toggle in the filters panel. Integrated into `filtersActive` and reset logic.
 
 ---
 
 ## 13. ~~Season Animals: Timely Filtering~~ ✅ Done
 
-**Issue:** Animals born in a specific season should be highlighted/filtered when that season is
-active, using the same "timely" availability mode as seasonal items.
+Added seasonal availability filtering for animal variants, matching the pattern used by almanac and
+museum items. The animals page now shows the season/weather toolbar controls.
 
-**Context:** `trackerData.animals[id].variants[vid].bornIn?: Season` already exists.
+**Changes made:**
 
-**Where:**
-
-- [animals/+page.svelte](<src/routes/(category)/animals/+page.svelte>) (`isVariantVisible`)
-- [progress.ts](src/lib/engine/progress.ts) (`getAnimalsProgress`)
-
-**Implementation:**
-
-1. In `isVariantVisible`, add availability filtering. The behavior per mode:
-   - **"timely"**: only show seasonal variants matching current season (non-seasonal hidden)
-   - **"available"**: show non-seasonal variants + seasonal variants matching current season
-   - **"everything"**: show all variants
-
-   ```ts
-   function isVariantVisible(animalId: AnimalId, variantId: VariantId): boolean {
-     const variant = trackerData.animals[animalId].variants[variantId];
-     const completed = /* existing check */;
-     if (completed && !userState.state.showCompleted) return false;
-     if (completed) return true;
-     if (userState.state.availabilityMode === "timely") {
-       // Timely = only seasonal variants for the current season
-       return !!variant.bornIn && variant.bornIn === userState.state.worldState.season;
-     }
-     if (userState.state.availabilityMode === "available") {
-       // Available = non-seasonal + current season
-       if (variant.bornIn) return variant.bornIn === userState.state.worldState.season;
-       return true;
-     }
-     return true; // "everything"
-   }
-   ```
-
-2. Update `getAnimalsProgress` to reflect filtered counts in timely/available modes:
-   ```ts
-   // When filtering, only count variants matching the current season
-   if (
-     ctx.availabilityMode !== "everything" &&
-     variant.bornIn &&
-     variant.bornIn !== ctx.worldState.season
-   ) {
-     // Skip this variant from filtered count
-   }
-   ```
+- **[animals/+page.svelte](<src/routes/(category)/animals/+page.svelte>)** — Updated
+  `isVariantVisible` to filter by `bornIn` season. Timely mode shows only current-season variants;
+  available mode hides out-of-season variants; everything mode shows all.
+- **[progress.ts](src/lib/engine/progress.ts)** — Updated `getAnimalsProgress` to compute `filtered`
+  count per availability mode, so the progress bar reflects what's actually visible.
+- **[toolbar-footer.svelte](src/lib/components/toolbar-footer.svelte)** — Added `/animals` to
+  `WORLD_STATE_ROUTES` so the season/weather pill and availability toggle appear on the animals page.
 
 ---
 
 ## 14. ~~Animal Cosmetics: Skip `default` Key~~ ✅ Done
 
-**Issue:** The `default` key under each animal's cosmetics is not an actual cosmetic — it's a
-game-internal template for applying default sprites (male/female base). It should be filtered out.
-
-**Where:** [animals.ts](pipeline/src/extractors/animals.ts#L54-L60)
-
-**Current code** already skips `default` for variants (line 37), but does NOT skip it for cosmetics.
-
-**Implementation:**
-
-In the cosmetics extraction loop (line 56), add the same skip:
-
-```ts
-if (rawCosmetics) {
-  for (const [cid, c] of Object.entries(rawCosmetics)) {
-    if (cid === "default") continue; // ← add this line
-    cosmetics[cid as CosmeticId] = {
-      name: (c.name as string | undefined) ?? cid,
-    };
-  }
-}
-```
+Added `if (cid === "default") continue;` to the cosmetics extraction loop in
+[animals.ts](pipeline/src/extractors/animals.ts), matching the existing skip for variants. Pipeline
+output dropped from 123 to 115 cosmetics.
 
 ---
 

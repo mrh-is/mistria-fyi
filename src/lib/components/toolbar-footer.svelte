@@ -110,7 +110,7 @@
   });
 
   // ── Route awareness ───────────────────────────────────────────────────────
-  const WORLD_STATE_ROUTES = new Set(["/", "/almanac", "/museum"]);
+  const WORLD_STATE_ROUTES = new Set(["/", "/almanac", "/animals", "/museum"]);
 
   let pathname = $derived(page.url.pathname);
   let hidden = $derived(pathname === "/settings");
@@ -152,7 +152,9 @@
 
   // ── Filter active state ───────────────────────────────────────────────────
   let filtersActive = $derived(
-    userState.state.availabilityMode !== "available" || userState.state.showCompleted,
+    userState.state.availabilityMode !== "available" ||
+      userState.state.showCompleted ||
+      userState.state.showSpoilers,
   );
 </script>
 
@@ -280,12 +282,23 @@
               />
               Show completed items
             </label>
+            <label class="flex cursor-pointer items-center gap-3 text-sm">
+              <Switch
+                class="h-5 w-9 rounded-md px-px *:data-[slot=switch-thumb]:size-4 *:data-[slot=switch-thumb]:rounded-sm data-[state=checked]:bg-primary *:data-[slot=switch-thumb]:data-[state=checked]:translate-x-full data-[state=unchecked]:bg-input"
+                checked={userState.state.showSpoilers}
+                onCheckedChange={() => {
+                  userState.toggleShowSpoilers();
+                }}
+              />
+              Show all spoilers
+            </label>
             {#if filtersActive}
               <button
                 class="w-full rounded-md border border-border py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                 onclick={() => {
                   userState.setAvailabilityMode("available");
                   if (userState.state.showCompleted) userState.toggleShowCompleted();
+                  if (userState.state.showSpoilers) userState.toggleShowSpoilers();
                 }}
                 type="button"
               >
