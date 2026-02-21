@@ -147,8 +147,8 @@ export function buildImportState(bundle: SaveBundle): {
   const museumIds = new Set<ItemId>();
   if (bundle.gamedata?.museum_progress) {
     const validMuseum = new Set<string>();
-    for (const wing of Object.values(trackerData.museum)) {
-      for (const set of Object.values(wing.sets)) {
+    for (const wing of trackerData.museum) {
+      for (const set of wing.sets) {
         for (const itemId of set.items) {
           validMuseum.add(itemId);
         }

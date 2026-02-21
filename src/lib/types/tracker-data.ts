@@ -79,8 +79,20 @@ export type SourceType =
 
 export type SpellId = string & { readonly __brand: "SpellId" };
 
+export interface AlmanacCategory {
+  id: string;
+  items: Record<ItemId, { name: string }>;
+  name: string;
+}
+
+export interface MuseumWing {
+  id: WingId;
+  name: string;
+  sets: Array<{ id: SetId; items: ItemId[]; name: string }>;
+}
+
 export interface TrackerData {
-  almanac: Record<string, Record<ItemId, { name: string }>>;
+  almanac: AlmanacCategory[];
   animals: Record<
     AnimalId,
     {
@@ -122,13 +134,7 @@ export interface TrackerData {
     spells: Record<SpellId, { name: string; questGate?: QuestId[] }>;
   };
 
-  museum: Record<
-    WingId,
-    {
-      name: string;
-      sets: Record<SetId, { items: ItemId[]; name: string }>;
-    }
-  >;
+  museum: MuseumWing[];
 
   npcs: Record<
     NpcId,

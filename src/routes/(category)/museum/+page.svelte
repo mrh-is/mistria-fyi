@@ -1,11 +1,9 @@
 <script lang="ts">
-  import { CheckCheck, Undo2 } from "@lucide/svelte";
   import { SvelteSet } from "svelte/reactivity";
 
   import CategoryHeader from "$lib/components/category-header.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import ItemRow from "$lib/components/item-row.svelte";
-  import { Button } from "$lib/components/ui/button/index.js";
   import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
   import { isItemAvailable } from "$lib/engine/availability.js";
@@ -29,8 +27,8 @@
   }
 
   function isCategoryComplete(): boolean {
-    return Object.values(trackerData.museum).every((wing) =>
-      Object.values(wing.sets)
+    return trackerData.museum.every((wing) =>
+      wing.sets
         .flatMap((s) => s.items)
         .every((id) => userState.state.completed.museum.has(id)),
     );
@@ -48,8 +46,8 @@
 
   function matchesFilter(itemId: ItemId): boolean {
     if (!nameFilter) return true;
-    const name = trackerData.items[itemId].name;
-    return name.toLowerCase().includes(nameFilter.toLowerCase());
+    const name = trackerData.items[itemId]?.name;
+    return name ? name.toLowerCase().includes(nameFilter.toLowerCase()) : false;
   }
 
   function shouldShowItem(itemId: ItemId): boolean {
@@ -79,8 +77,8 @@
 
 <CategoryHeader category={CATEGORY_BY_KEY.museum} {progress} />
 
-{#each Object.entries(trackerData.museum) as [wingId, wing] (wingId)}
-  {@const wingItems = Object.values(wing.sets).flatMap((s) => s.items)}
+{#each trackerData.museum as wing (wing.id)}
+  {@const wingItems = wing.sets.flatMap((s) => s.items)}
   {@const visibleWingItems = wingItems.filter(shouldShowItem)}
   {#if visibleWingItems.length > 0}
     <ExpandableSection
@@ -89,9 +87,8 @@
       name={wing.name}
       total={wingItems.length}
     >
-      {#each Object.entries(wing.sets) as [setId, set] (setId)}
+      {#each wing.sets as set (set.id)}
         {@const visibleSetItems = set.items.filter(shouldShowItem)}
-        {@const setComplete = isSetComplete(set.items)}
         {#if visibleSetItems.length > 0}
           <ExpandableSection
             count={set.items.filter((id) => userState.state.completed.museum.has(id)).length}
@@ -105,11 +102,11 @@
                 dimmed={isItemDimmed(itemId)}
                 {itemId}
                 leaving={recentlyCompleted.has(itemId)}
-                name={trackerData.items[itemId].name}
+                name={trackerData.items[itemId]?.name ?? itemId}
                 onToggle={() => {
                   userState.toggleMuseumItem(itemId);
                   const completed = userState.state.completed.museum.has(itemId);
-                  showUndoToast(trackerData.items[itemId].name, completed, () => {
+                  showUndoToast(trackerData.items[itemId]?.name ?? itemId, completed, () => {
                     userState.toggleMuseumItem(itemId);
                   });
                   if (completed) {
@@ -125,46 +122,6 @@
                 }}
               />
             {/each}
-            <div class="mt-1 flex justify-end px-2">
-              {#if setComplete}
-                <Button
-                  class="h-6 text-sm"
-                  variant="ghost"
-                  size="sm"
-                  onclick={() => {
-                    userState.uncompleteMuseumSet(set.items);
-                    showUndoToast(set.name, false, () => {
-                      userState.completeMuseumSet(set.items);
-                    });
-                  }}
-                >
-                  <Undo2 class="size-3" />
-                  Undo set
-                </Button>
-              {:else}
-                <Button
-                  class="h-6 text-sm"
-                  variant="ghost"
-                  size="sm"
-                  onclick={() => {
-                    userState.completeMuseumSet(set.items);
-                    showUndoToast(set.name, true, () => {
-                      userState.uncompleteMuseumSet(set.items);
-                    });
-                    if (isCategoryComplete()) {
-                      celebrateCategory();
-                    } else if (isWingComplete(wingItems)) {
-                      celebrate();
-                    } else {
-                      celebrate();
-                    }
-                  }}
-                >
-                  <CheckCheck class="size-3" />
-                  Complete set
-                </Button>
-              {/if}
-            </div>
           </ExpandableSection>
         {/if}
       {/each}

@@ -42,7 +42,10 @@ export function getAllProgress(ctx: ProgressContext): AllProgress {
 }
 
 export function getAlmanacProgress(ctx: ProgressContext): CategoryProgress {
-  const allIds = Object.keys(trackerData.items) as ItemId[];
+  const allIds: ItemId[] = [];
+  for (const cat of trackerData.almanac) {
+    allIds.push(...(Object.keys(cat.items) as ItemId[]));
+  }
   return itemProgress(allIds, ctx.completed.almanac, trackerData.sources, ctx);
 }
 
@@ -76,8 +79,8 @@ export function getMinesProgress(ctx: ProgressContext): CategoryProgress {
 
 export function getMuseumProgress(ctx: ProgressContext): CategoryProgress {
   const allIds: ItemId[] = [];
-  for (const wing of Object.values(trackerData.museum)) {
-    for (const set of Object.values(wing.sets)) {
+  for (const wing of trackerData.museum) {
+    for (const set of wing.sets) {
       allIds.push(...set.items);
     }
   }

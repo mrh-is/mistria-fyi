@@ -15,10 +15,11 @@
 
 1. ~~[Pipeline: Stop Skipping `$.ui`](#1-pipeline-stop-skipping-ui--done)~~ ✅
 2. [Save File Import: `.sav` Unpacking](#2-save-file-import-sav-unpacking)
-3. [Almanac: Restructure Using In-Game Categories](#3-almanac-restructure-using-in-game-categories)
+3. ~~[Almanac: Restructure Using In-Game Categories](#3-almanac-restructure-using-in-game-categories--done)~~
+   ✅
 4. [Animals: Flip IA Hierarchy](#4-animals-flip-ia-hierarchy)
-5. [Museum: Set Ordering from Game Data](#5-museum-set-ordering-from-game-data)
-6. [Museum: "Complete Set" Button Position](#6-museum-complete-set-button-position)
+5. ~~[Museum: Set Ordering from Game Data](#5-museum-set-ordering-from-game-data--done)~~ ✅
+6. ~~[Museum: "Complete Set" Button Position](#6-museum-complete-set-button-position--done)~~ ✅
 7. [Mines: Biome Range Display Bug](#7-mines-biome-range-display-bug)
 8. [Mines: Text Input for Floor Level](#8-mines-text-input-for-floor-level)
 9. [Mines: Double-Tap Zoom on Stepper](#9-mines-double-tap-zoom-on-stepper)
@@ -28,7 +29,7 @@
 13. [Season Animals: Timely Filtering](#13-season-animals-timely-filtering)
 14. [Animal Cosmetics: Skip `default` Key](#14-animal-cosmetics-skip-default-key)
 15. [Cosmetics: No Sources Shown](#15-cosmetics-no-sources-shown)
-16. [Nameless Items: Filter from Pipeline](#16-nameless-items-filter-from-pipeline)
+16. ~~[Nameless Items: Filter from Pipeline](#16-nameless-items-filter-from-pipeline--done)~~ ✅
 17. [Settings: Show Game Version](#17-settings-show-game-version)
 18. [Custom Icons: Platonic NPC & Blizzard](#18-custom-icons-platonic-npc--blizzard)
 19. [Completed Quests Visibility](#19-completed-quests-visibility)
@@ -108,65 +109,29 @@ In [import-card.svelte](src/routes/settings/import-card.svelte):
 
 ---
 
-## 3. Almanac: Restructure Using In-Game Categories
+## 3. ~~Almanac: Restructure Using In-Game Categories~~ ✅ Done
 
-**Issue:** The app's Almanac categories, ordering, and item membership don't match the in-game
-Almanac. The current pipeline builds categories from the Fiddle item tree structure
-(`items/{furniture,fish,mines,other}`), but the in-game Almanac uses a tag-based system defined at
-`$.ui.menus.sub_menus.almanac.categories`.
+Rewrote the almanac extractor to use the in-game UI tag-based category system from
+`$.ui.menus.sub_menus.almanac.categories`. Items are now assigned to categories by matching their
+`tags` array against each category's tag filter. The v0.14.4 data has 11 categories (the original 10
+plus `date_inspiration`).
 
-**In-game Almanac categories** (in display order):
+**Changes made:**
 
-| #   | Key             | Tag filter      | Display name                         |
-| --- | --------------- | --------------- | ------------------------------------ |
-| 0   | `artifacts`     | `archaeology`   | Artifacts                            |
-| 1   | `blacksmithing` | `blacksmithing` | Blacksmithing                        |
-| 2   | `bugs`          | `bugs`          | Bugs                                 |
-| 3   | `cooked_dishes` | `food`          | Cooked Dishes                        |
-| 4   | `crops`         | `crop`          | Crops                                |
-| 5   | `fish`          | `fishable`      | Fishing and Diving (via `local_key`) |
-| 6   | `forageables`   | `forageable`    | Forageables                          |
-| 7   | `furniture`     | `furniture`     | Furniture                            |
-| 8   | `materials`     | `material`      | Materials                            |
-| 9   | `ranching`      | `ranching`      | Ranching                             |
+- **[almanac.ts](pipeline/src/extractors/almanac.ts)** — Complete rewrite. Reads UI category
+  definitions, assigns items by tag matching, collapses furniture colorways by `recipe_key` (1101 →
+  641 items), skips nameless items (issue #16), outputs as ordered `AlmanacCategory[]` array.
+- **[tracker-data.ts](src/lib/types/tracker-data.ts)** — Added `AlmanacCategory` interface; changed
+  `almanac` from `Record<string, ...>` to `AlmanacCategory[]`.
+- **[almanac/+page.svelte](<src/routes/(category)/almanac/+page.svelte>)** — Simplified to flat
+  iteration over the ordered category array. Removed `parseAlmanacCategory` dependency.
+- **[format.ts](src/lib/utils/format.ts)** — Removed unused `parseAlmanacCategory`.
+- **[progress.ts](src/lib/engine/progress.ts)** — Updated `getAlmanacProgress` for array iteration.
+- **[transfer.ts](src/lib/engine/transfer.ts)** — Updated `getAlmanacOrder` for array iteration.
 
-**This replaces multiple previous concerns:** Almanac ordering, fish rename, cooked dishes extras,
-missing crops, missing materials, milling placement. The tag-based approach from game data will
-naturally resolve all of these — items appear in the almanac section matching their tags.
-
-**Implementation:**
-
-1. **Requires:** Issue #1 (stop skipping `$.ui`).
-
-2. Rewrite [almanac.ts](pipeline/src/extractors/almanac.ts) extractor:
-   - Read `$.ui.menus.sub_menus.almanac.categories` for the category definitions
-   - For each item across all of `$.items`, check its `tags` array
-   - Place each item into the almanac category whose tag it matches
-   - Preserve the array index ordering (0–9) so categories render in game order
-   - Items matching no almanac tag are excluded from the Almanac (they're not in-game trackable)
-
-3. Handle the `fish` category's `local_key: "misc_local/fishing_and_diving"` — use this as the
-   display name rather than deriving from the key.
-
-4. Update [format.ts](src/lib/utils/format.ts) `parseAlmanacCategory()` — the category key structure
-   will change from `"furniture/tide_set"` to flat keys like `"furniture"`. The group nesting may no
-   longer be needed, or it can be derived from the new structure.
-
-5. In [almanac/+page.svelte](<src/routes/(category)/almanac/+page.svelte>), replace the alphabetical
-   group sort (line 108) with order-preserving rendering based on the category array index.
-
-6. **Furniture base-piece counting:** The in-game Almanac counts base furniture pieces (not
-   colorways). Colorway variants are linked via `$.items.furniture.{set}.{item}.recipe_key` — items
-   sharing the same `recipe_key` are colorways of the same base piece (e.g., `basic_area_rug_green`
-   and `basic_area_rug_yellow` both have `recipe_key: "basic_area_rug"`). The data between colorways
-   is identical except for ID/name/object/icon, so any one can represent the group. To collapse:
-   group items by `recipe_key`, keep only the first item encountered per group, and skip the rest.
-   Use the `recipe_key` value as the display name (title-cased) so the entry reads "Basic Area Rug"
-   rather than "Basic Area Rug Green".
-
-**State migration:** The serialized `completed.almanac` set contains ItemId strings. If item IDs
-stay the same (just re-categorized), no migration is needed — the IDs are stable. Only the category
-grouping changes. Since there are no current users, breaking changes are fine.
+**Output:** 11 categories, 1389 items — Artifacts (90), Blacksmithing (56), Bugs (78), Cooked Dishes
+(167), Crops (37), Date Inspiration (6), Fishing and Diving (126), Forageables (88), Furniture
+(641), Materials (61), Ranching (39).
 
 ---
 
@@ -235,63 +200,34 @@ Cosmetics
 
 ---
 
-## 5. Museum: Set Ordering from Game Data
+## 5. ~~Museum: Set Ordering from Game Data~~ ✅ Done
 
-**Issue:** Museum sets render in JS object iteration order. In-game, each wing has a defined set
-order in `$.ui.menus.standard_menus.museum.{wing}_order`.
+Rewrote the museum extractor to read wing and set ordering from `$.ui.menus.standard_menus.museum`.
+Output changed from `Record<WingId, ...>` to `MuseumWing[]`.
 
-**Game data for set ordering:**
+**Changes made:**
 
-- `archaeology_order`: 19 sets (`common_finds`, `prehistoric`, `ancient`, `alda`, `caldosian`,
-  `aldarian`, `oopart`, `aquatic`, `sunken`, `deep_woods`, `mine`, `upper_mines_artifacts`,
-  `tide_caverns`, `deep_earth`, `lava_caves`, `ritual`, `vintage_farm_tools`, `metals_of_mistria`,
-  `gems_of_mistria`)
-- `fish_order`: 19 sets (seasonal x location + `legendary`)
-- `flora_order`: 17 sets (seasonal x type + mine locations)
-- `insect_order`: 14 sets (seasonal + environments + `legendary`)
+- **[museum.ts](pipeline/src/extractors/museum.ts)** — Reads `museum.wings` for wing order and
+  `museum.{wing}_order` for per-wing set order. Outputs ordered `MuseumWing[]` array.
+- **[tracker-data.ts](src/lib/types/tracker-data.ts)** — Added `MuseumWing` interface; changed
+  `museum` from `Record<WingId, ...>` to `MuseumWing[]`.
+- **[museum/+page.svelte](<src/routes/(category)/museum/+page.svelte>)** — Iterates arrays directly.
+- **[progress.ts](src/lib/engine/progress.ts)** — Updated `getMuseumProgress` for array iteration.
+- **[transfer.ts](src/lib/engine/transfer.ts)** — Updated `getMuseumOrder` for array iteration.
+- **[import-save.ts](src/lib/engine/import-save.ts)** — Updated museum iteration.
 
-Wing display order: `archaeology -> fish -> flora -> insect`
-
-**Implementation:**
-
-1. **Requires:** Issue #1.
-
-2. In [museum.ts](pipeline/src/extractors/museum.ts), read `$.ui.menus.standard_menus.museum` and
-   use:
-   - `wings` array for wing ordering (emit as an ordered array, not a Record)
-   - `{wing}_order` arrays for set ordering within each wing
-
-3. Change `TrackerData["museum"]` from `Record<WingId, ...>` to an ordered array:
-
-   ```ts
-   museum: Array<{
-     id: WingId;
-     name: string;
-     sets: Array<{ id: SetId; items: ItemId[]; name: string }>;
-   }>;
-   ```
-
-   This preserves ordering in JSON serialization.
-
-4. In [museum/+page.svelte](<src/routes/(category)/museum/+page.svelte>), iterate the array directly
-   instead of `Object.entries(...)`.
-
-5. Update [progress.ts](src/lib/engine/progress.ts) `getMuseumProgress` to iterate the new array
-   structure.
+**Output:** 4 wings (Archaeology → Fish → Flora → Insects), 70 sets, 349 items — all matching
+in-game order.
 
 ---
 
-## 6. Museum: "Complete Set" Button Position
+## 6. ~~Museum: "Complete Set" Button Position~~ ✅ Done
 
-**Issue:** The "Complete set" / "Undo set" button is at the bottom of each set. Move it to the top
-for quicker access.
+Removed the "Complete set" / "Undo set" button entirely. Since museum completion can be imported
+from save files (issue #2), manual bulk-completion is no longer needed.
 
-**Where:** [museum/+page.svelte](<src/routes/(category)/museum/+page.svelte#L128-L167>)
-
-**Implementation:**
-
-Move the `<div class="mt-1 flex justify-end px-2">` block (lines 128–167) to before the
-`{#each set.items.filter(shouldShowItem) ...}` loop (line 102). Change `mt-1` to `mb-1`.
+**Where:** [museum/+page.svelte](<src/routes/(category)/museum/+page.svelte>) — removed the button
+block and its unused imports (`CheckCheck`, `Undo2`, `Button`).
 
 ---
 
@@ -606,44 +542,24 @@ if (rawCosmetics) {
 
 ---
 
-## 16. Nameless Items: Filter from Pipeline
+## 16. ~~Nameless Items: Filter from Pipeline~~ ✅ Done
 
-**Issue:** Some items in `$.items` lack a `name` field and aren't real collectible items. Example:
-`perfect_gift` has no name, only a description and icon sprite.
+Items without a `name` field are now skipped in [almanac.ts](pipeline/src/extractors/almanac.ts) and
+logged during the pipeline run so they can be reviewed.
 
-**Full list of nameless items** (7 out of 1903 total):
+**Pipeline output (v0.14.4, 6 nameless items):**
 
-| Item                               | Purpose                                        |
-| ---------------------------------- | ---------------------------------------------- |
-| `other/misc/perfect_gift`          | Internal item template, not a real collectible |
-| `other/misc/animal_cosmetic`       | Generic animal cosmetic container              |
-| `other/misc/cosmetic`              | Generic cosmetic container                     |
-| `other/misc/horse_potion`          | May be unreleased/internal                     |
-| `other/misc/lurid_colored_drink`   | May be unreleased/internal                     |
-| `other/misc/pet_cosmetic`          | Generic pet cosmetic container                 |
-| `other/misc/stinky_stamina_potion` | May be unreleased/internal                     |
+| Item                               | Purpose                           |
+| ---------------------------------- | --------------------------------- |
+| `other/misc/cosmetic`              | Generic cosmetic container        |
+| `other/misc/animal_cosmetic`       | Generic animal cosmetic container |
+| `other/misc/pet_cosmetic`          | Generic pet cosmetic container    |
+| `other/misc/stinky_stamina_potion` | May be unreleased/internal        |
+| `other/misc/horse_potion`          | May be unreleased/internal        |
+| `other/misc/lurid_colored_drink`   | May be unreleased/internal        |
 
-**Implementation:**
-
-In [almanac.ts](pipeline/src/extractors/almanac.ts#L55-L65), add a name check:
-
-```ts
-for (const [itemId, item] of Object.entries(categoryItems)) {
-  if (itemId === "default") continue;
-  if (typeof item !== "object" || item === null) continue;
-  if (chestIds.has(itemId)) continue;
-
-  const itemData = item;
-  const rawName = itemData.name as string | undefined;
-  if (!rawName) continue; // ← skip items without a name field
-
-  const name = rawName ?? snakeToTitle(itemId);
-  // ...
-}
-```
-
-This is clean and will correctly filter all 7 nameless items. Since none of them are real
-collectibles, this is the right approach.
+Note: `perfect_gift` from the original list now has a name after localization, so it is no longer
+filtered. It does not match any almanac tag, so it still doesn't appear in the almanac.
 
 ---
 

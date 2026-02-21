@@ -67,18 +67,6 @@ export function locationLabel(location: string): string {
     .join(", ");
 }
 
-/** Parse almanac category key like "furniture/tide_set" → { group: "Furniture", name: "Tide Set" } */
-export function parseAlmanacCategory(key: string): { group: string; name: string } {
-  const slashIdx = key.indexOf("/");
-  if (slashIdx === -1) {
-    return { group: "Other", name: titleCase(key) };
-  }
-  return {
-    group: titleCase(key.slice(0, slashIdx)),
-    name: titleCase(key.slice(slashIdx + 1)),
-  };
-}
-
 export function seasonLabel(season: Season): string {
   return SEASON_LABEL[season];
 }

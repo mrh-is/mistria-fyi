@@ -322,8 +322,8 @@ function fromBitfield(ordered: string[], bytes: Uint8Array): Set<string> {
 }
 
 function getAlmanacOrder(): ItemId[] {
-  return Object.values(trackerData.almanac)
-    .flatMap((cat) => Object.keys(cat))
+  return trackerData.almanac
+    .flatMap((cat) => Object.keys(cat.items))
     .sort() as ItemId[];
 }
 
@@ -364,8 +364,8 @@ function getCosmeticOrder(): CosmeticId[] {
 }
 
 function getMuseumOrder(): ItemId[] {
-  return Object.values(trackerData.museum)
-    .flatMap((wing) => Object.values(wing.sets))
+  return trackerData.museum
+    .flatMap((wing) => wing.sets)
     .flatMap((set) => set.items)
     .sort();
 }
