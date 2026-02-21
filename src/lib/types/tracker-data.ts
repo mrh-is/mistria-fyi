@@ -1,6 +1,11 @@
 // ─── Branded ID types ───────────────────────────────────────────────
 // Nominal typing for string IDs to prevent accidental mixing
 
+export interface AlmanacCategory {
+  id: string;
+  items: Record<ItemId, { name: string }>;
+  name: string;
+}
 export type AnimalId = string & { readonly __brand: "AnimalId" };
 export type BiomeId = string & { readonly __brand: "BiomeId" };
 export type CosmeticId = string & { readonly __brand: "CosmeticId" };
@@ -23,6 +28,11 @@ export type CosmeticSlot =
   | "top"
   | "underwear";
 export type ItemId = string & { readonly __brand: "ItemId" };
+export interface MuseumWing {
+  id: WingId;
+  name: string;
+  sets: Array<{ id: SetId; items: ItemId[]; name: string }>;
+}
 export type NpcId = string & { readonly __brand: "NpcId" };
 export type QuestId = string & { readonly __brand: "QuestId" };
 export interface Restriction {
@@ -49,12 +59,14 @@ export type RestrictionType =
   | "skill"
   | "time"
   | "weather";
-export type Season = "fall" | "spring" | "summer" | "winter";
-export type SetId = string & { readonly __brand: "SetId" };
 
 // ─── Enums ──────────────────────────────────────────────────────────
 
+export type Season = "fall" | "spring" | "summer" | "winter";
+export type SetId = string & { readonly __brand: "SetId" };
+
 export type SkillId = string & { readonly __brand: "SkillId" };
+
 export interface Source {
   location?: string;
   restrictions?: Restriction[];
@@ -68,28 +80,18 @@ export type SourceType =
   | "craft"
   | "dig"
   | "dive"
+  | "festival"
   | "fish"
   | "forage"
   | "mine"
   | "monster"
   | "quest"
+  | "renown"
   | "sapling"
   | "seed"
   | "store";
 
 export type SpellId = string & { readonly __brand: "SpellId" };
-
-export interface AlmanacCategory {
-  id: string;
-  items: Record<ItemId, { name: string }>;
-  name: string;
-}
-
-export interface MuseumWing {
-  id: WingId;
-  name: string;
-  sets: Array<{ id: SetId; items: ItemId[]; name: string }>;
-}
 
 export interface TrackerData {
   almanac: AlmanacCategory[];
@@ -117,6 +119,7 @@ export interface TrackerData {
       defaultUnlocked: boolean;
       name: string;
       slot: CosmeticSlot;
+      subCategory?: string;
     }
   >;
 

@@ -28,7 +28,7 @@
 12. ~~[Animal Colors: Tier-Based Spoilers](#12-animal-colors-tier-based-spoilers--done)~~ ✅
 13. ~~[Season Animals: Timely Filtering](#13-season-animals-timely-filtering--done)~~ ✅
 14. ~~[Animal Cosmetics: Skip `default` Key](#14-animal-cosmetics-skip-default-key--done)~~ ✅
-15. [Cosmetics: No Sources Shown](#15-cosmetics-no-sources-shown)
+15. ~~[Cosmetics: No Sources Shown](#15-cosmetics-no-sources-shown--done)~~ ✅
 16. ~~[Nameless Items: Filter from Pipeline](#16-nameless-items-filter-from-pipeline--done)~~ ✅
 17. ~~[Settings: Show Game Version](#17-settings-show-game-version--done)~~ ✅
 18. [Custom Icons: Platonic NPC & Blizzard](#18-custom-icons-platonic-npc--blizzard)
@@ -288,37 +288,36 @@ output dropped from 123 to 115 cosmetics.
 
 ---
 
-## 15. Cosmetics: No Sources Shown
+## 15. ~~Cosmetics: No Sources Shown~~ ✅ Done
 
-**Issue:** Human and animal cosmetic items show no source information (where to obtain them).
+Added cosmetic source extraction to the pipeline and restructured the cosmetics page with
+sub-category grouping and expandable source details.
 
-**Where:**
+**Pipeline changes:**
 
-- [cosmetics/+page.svelte](<src/routes/(category)/cosmetics/+page.svelte>)
-- [sources.ts](pipeline/src/extractors/sources.ts)
-- Also relevant: `$.ui.character_customization` — cosmetic slot categories with sub-groupings
+- **[sources.ts](pipeline/src/extractors/sources.ts)** — Added `extractFestivalCosmetics()` (9
+  cosmetics from spring/harvest festival shops, with season restrictions) and
+  `extractRenownCosmetics()` (22 cosmetics from renown level rewards). Added `"festival"` and
+  `"renown"` to `SourceType`.
+- **[cosmetics.ts](pipeline/src/extractors/cosmetics.ts)** — Added `buildSubCategoryMap()` to read
+  display names from `$.ui.character_customization`, populates `subCategory` on each cosmetic from
+  `ui_sub_category` (e.g., "Hats", "Short Hair", "Boots").
+- **[tracker-data.ts](src/lib/types/tracker-data.ts)** — Added `subCategory?: string` to cosmetics
+  type; added `"festival"` and `"renown"` source types.
+- **[format.ts](src/lib/utils/format.ts)** — Added source labels: `"Festival"` and
+  `"Renown Reward"`.
 
-**Implementation:**
+**UI changes:**
 
-1. In the pipeline's `sources.ts`, check whether cosmetic items have source entries in Fiddle (e.g.,
-   store availability, quest rewards). If sources exist but aren't being extracted for cosmetics,
-   add them.
+- **[cosmetics/+page.svelte](<src/routes/(category)/cosmetics/+page.svelte>)** — Restructured from
+  flat slot grouping to nested slot → sub-category `ExpandableSection`s with completion counts
+  (e.g., Head → Hats 3/31, Hair Accessories 2/14). Slots with only one sub-category skip nesting.
+- **[cosmetics/CosmeticRow.svelte](<src/routes/(category)/cosmetics/CosmeticRow.svelte>)** — New
+  colocated component matching the `ItemRow` pattern: cosmetics with sources get an expandable
+  chevron showing `ItemDetail` with source type, location, and restriction badges.
 
-2. `$.ui.character_customization` provides organized cosmetic categories:
-   - `head_gear`: hat, hair_accessory, helmet, crown, misc
-   - `face_gear`: glasses, ear_accessory, face_accessory
-   - `hair`: short, medium, long
-   - `top`: sleeveless, short_sleeve, long_sleeve, dress, robe, suit, misc
-   - `bottom`: pants, shorts, skirt, misc
-   - `feet`: boots, shoes, sandals, misc
-   - `back`, `eyes`, `facial_hair`, `skin`
-
-   This data can be used to better organize the cosmetics page into sub-sections matching the
-   in-game customization UI. Currently cosmetics have a `slot` field — this UI data provides
-   finer-grained sub-categories within each slot.
-
-3. In the cosmetics page component, add source display per cosmetic (reuse the source badge pattern
-   from `ItemRow`).
+**Output:** 31 cosmetics with sources (22 renown + 9 festival), 298 cosmetics with sub-categories
+across 10 slots.
 
 ---
 

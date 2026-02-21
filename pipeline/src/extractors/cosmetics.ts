@@ -26,6 +26,7 @@ export function extractCosmetics(fiddle: FiddleData): TrackerData["cosmetics"] {
   const assets = fiddle.player_assets as Record<string, Record<string, unknown>> | undefined;
   if (!assets) return {} as TrackerData["cosmetics"];
 
+  const subCategoryMap = buildSubCategoryMap(fiddle);
   const result = {} as Record<CosmeticId, TrackerData["cosmetics"][CosmeticId]>;
   const unknownSlots = new Map<string, number>();
 
@@ -48,10 +49,16 @@ export function extractCosmetics(fiddle: FiddleData): TrackerData["cosmetics"] {
       unknownSlots.set(uiSlot, (unknownSlots.get(uiSlot) ?? 0) + 1);
     }
 
+    const uiSubCategory = asset.ui_sub_category as string | undefined;
+    const subCategory = uiSubCategory
+      ? (subCategoryMap[uiSubCategory] ?? titleCase(uiSubCategory))
+      : undefined;
+
     result[id as CosmeticId] = {
       defaultUnlocked: (asset.default_unlocked as boolean | undefined) ?? false,
       name: (asset.name as string | undefined) ?? id,
       slot,
+      ...(subCategory && { subCategory }),
     };
   }
 
@@ -63,6 +70,26 @@ export function extractCosmetics(fiddle: FiddleData): TrackerData["cosmetics"] {
     console.log(`  Cosmetics: ${Object.keys(result).length}`);
   }
   return result;
+}
+
+// ─── Private helpers ────────────────────────────────────────────────
+
+function buildSubCategoryMap(fiddle: FiddleData): Record<string, string> {
+  const customization = (fiddle.ui as Record<string, unknown> | undefined)
+    ?.character_customization as
+    | Record<string, Record<string, { key?: string; name?: string }>>
+    | undefined;
+  if (!customization) return {};
+
+  const map: Record<string, string> = {};
+  for (const slotEntries of Object.values(customization)) {
+    for (const entry of Object.values(slotEntries)) {
+      if (entry.key && entry.name) {
+        map[entry.key] = entry.name;
+      }
+    }
+  }
+  return map;
 }
 
 // Game ui_slot values that don't match our display slot names.
@@ -91,4 +118,11 @@ function normalizeSlot(raw: string, id: string): CosmeticSlot {
     if (raw.startsWith(slot)) return slot;
   }
   return "top"; // fallback
+}
+
+function titleCase(key: string): string {
+  return key
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
 }

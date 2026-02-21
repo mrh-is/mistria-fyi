@@ -29,6 +29,8 @@ export function extractSources(fiddle: FiddleData): TrackerData["sources"] {
   extractCropSeasons(fiddle, map);
   extractMonsterDrops(fiddle, map);
   extractQuestRewards(fiddle, map);
+  extractFestivalCosmetics(fiddle, map);
+  extractRenownCosmetics(fiddle, map);
 
   // Deduplicate identical sources per item
   let deduped = 0;
@@ -195,6 +197,51 @@ function extractCropSeasons(fiddle: FiddleData, map: SourceMap): void {
   console.log(`  Crop seasons: ${mapped} crops mapped from seeds`);
 }
 
+function extractFestivalCosmetics(fiddle: FiddleData, map: SourceMap): void {
+  const festivals = fiddle.festivals as Record<string, Record<string, unknown>> | undefined;
+  if (!festivals) return;
+
+  const seasonMap: Record<string, Season> = {
+    fall: "fall",
+    harvest: "fall",
+    spring: "spring",
+    summer: "summer",
+    winter: "winter",
+  };
+
+  for (const [festivalId, fest] of Object.entries(festivals)) {
+    if (festivalId === "default") continue;
+    if (typeof fest !== "object" || fest === null) continue;
+
+    const stocks = fest.stocks as Record<string, unknown> | undefined;
+    if (!stocks) continue;
+
+    const season = seasonMap[festivalId];
+
+    for (const [storeId, stockData] of Object.entries(stocks)) {
+      if (storeId === "default") continue;
+
+      const items = toArray<Record<string, unknown>>(stockData);
+      for (const item of items) {
+        if (typeof item !== "object" || item === null) continue;
+        const cosmeticId = item.cosmetic as string | undefined;
+        if (!cosmeticId) continue;
+
+        const restrictions: Restriction[] = [];
+        if (season) restrictions.push({ seasons: [season], type: "season" });
+
+        addSource(map, cosmeticId, {
+          location: storeId,
+          restrictions: restrictions.length > 0 ? restrictions : undefined,
+          type: "festival",
+        });
+      }
+    }
+  }
+}
+
+// ─── Store items ────────────────────────────────────────────────────
+
 function extractFishItems(fiddle: FiddleData, map: SourceMap): void {
   const fish = fiddle.fish as Record<string, Record<string, unknown>> | undefined;
   if (!fish) return;
@@ -246,7 +293,7 @@ function extractFishItems(fiddle: FiddleData, map: SourceMap): void {
   }
 }
 
-// ─── Store items ────────────────────────────────────────────────────
+// ─── Fish ───────────────────────────────────────────────────────────
 
 function extractForageables(fiddle: FiddleData, map: SourceMap): void {
   const forageables = fiddle.forageables as Record<string, unknown> | undefined;
@@ -289,7 +336,7 @@ function extractForageables(fiddle: FiddleData, map: SourceMap): void {
   }
 }
 
-// ─── Fish ───────────────────────────────────────────────────────────
+// ─── Festival cosmetics ─────────────────────────────────────────────
 
 function extractMonsterDrops(fiddle: FiddleData, map: SourceMap): void {
   const monsters = fiddle.monsters as Record<string, Record<string, unknown>> | undefined;
@@ -318,7 +365,7 @@ function extractMonsterDrops(fiddle: FiddleData, map: SourceMap): void {
   }
 }
 
-// ─── Bugs ───────────────────────────────────────────────────────────
+// ─── Quest rewards ──────────────────────────────────────────────────
 
 function extractQuestRewards(fiddle: FiddleData, map: SourceMap): void {
   const quests = fiddle.quests as Record<string, Record<string, unknown>> | undefined;
@@ -344,6 +391,22 @@ function extractQuestRewards(fiddle: FiddleData, map: SourceMap): void {
         });
       }
     }
+  }
+}
+
+// ─── Renown cosmetics ───────────────────────────────────────────────
+
+function extractRenownCosmetics(fiddle: FiddleData, map: SourceMap): void {
+  const renown = fiddle.renown as Record<string, unknown> | undefined;
+  if (!renown) return;
+
+  const rewards = toArray<Record<string, unknown>>(renown.rewards);
+  for (const reward of rewards) {
+    if (typeof reward !== "object" || reward === null) continue;
+    const cosmeticId = reward.cosmetic as string | undefined;
+    if (!cosmeticId) continue;
+
+    addSource(map, cosmeticId, { type: "renown" });
   }
 }
 
