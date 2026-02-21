@@ -3,9 +3,10 @@ import { filterAvailableItems } from "$lib/engine/availability.js";
 
 import type { CategoryKey } from "$lib/data/categories.js";
 import type { AvailabilityMode, CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { ItemId, Season, Source, Weather } from "$lib/types/tracker-data.js";
+import type { ItemId, Season, Source, VariantId, Weather } from "$lib/types/tracker-data.js";
 
 export const MAX_NPC_LEVEL = 8;
+export const MAX_SKILL_LEVEL = 60;
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -52,15 +53,37 @@ export function getAlmanacProgress(ctx: ProgressContext): CategoryProgress {
 export function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
   let total = 0;
   let completed = 0;
+  let filtered = 0;
   for (const [animalId, animal] of Object.entries(trackerData.animals)) {
-    const variantCount = Object.keys(animal.variants).length;
     const cosmeticCount = Object.keys(animal.cosmetics).length;
-    total += variantCount + cosmeticCount;
-    completed += ctx.completed.animals[animalId].size;
+    total += cosmeticCount;
     completed += ctx.completed.animalCosmetics[animalId].size;
+    filtered += cosmeticCount - ctx.completed.animalCosmetics[animalId].size;
+
+    for (const [vid, variant] of Object.entries(animal.variants)) {
+      total++;
+      if (ctx.completed.animals[animalId].has(vid as VariantId)) {
+        completed++;
+        continue;
+      }
+      // Apply seasonal filtering for incomplete variants
+      if (ctx.availabilityMode === "timely") {
+        if (variant.bornIn && variant.bornIn === ctx.worldState.season) {
+          filtered++;
+        }
+        // timely: non-seasonal variants are not shown
+      } else if (ctx.availabilityMode === "available") {
+        if (variant.bornIn && variant.bornIn !== ctx.worldState.season) {
+          // out-of-season variant hidden
+        } else {
+          filtered++;
+        }
+      } else {
+        filtered++;
+      }
+    }
   }
-  // Animals don't have world-state availability filtering
-  return { completed, filtered: total - completed, total };
+  return { completed, filtered, total };
 }
 
 export function getCosmeticsProgress(ctx: ProgressContext): CategoryProgress {
@@ -88,10 +111,11 @@ export function getMuseumProgress(ctx: ProgressContext): CategoryProgress {
 }
 
 export function getNpcsProgress(ctx: ProgressContext): CategoryProgress {
-  const total = Object.keys(trackerData.npcs).length;
+  let total = 0;
   let completed = 0;
-  for (const [id, _npc] of Object.entries(trackerData.npcs)) {
-    if ((ctx.completed.npcLevels[id] ?? 0) >= MAX_NPC_LEVEL) completed++;
+  for (const id of Object.keys(trackerData.npcs)) {
+    total += MAX_NPC_LEVEL;
+    completed += Math.min(ctx.completed.npcLevels[id] ?? 0, MAX_NPC_LEVEL);
   }
   return { completed, filtered: total - completed, total };
 }
@@ -117,10 +141,11 @@ export function getRenownProgress(ctx: ProgressContext): CategoryProgress {
 // ─── All categories ─────────────────────────────────────────────────
 
 export function getSkillsProgress(ctx: ProgressContext): CategoryProgress {
-  const total = Object.keys(trackerData.skills).length;
+  let total = 0;
   let completed = 0;
   for (const id of Object.keys(trackerData.skills)) {
-    if ((ctx.completed.skillLevels[id] ?? 0) >= 60) completed++;
+    total += MAX_SKILL_LEVEL;
+    completed += Math.min(ctx.completed.skillLevels[id] ?? 0, MAX_SKILL_LEVEL);
   }
   return { completed, filtered: total - completed, total };
 }

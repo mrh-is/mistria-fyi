@@ -23,11 +23,14 @@
 7. ~~[Mines: Biome Range Display Bug](#7-mines-biome-range-display-bug--done)~~ ✅
 8. ~~[Mines: Text Input for Floor Level](#8-mines-text-input-for-floor-level--done)~~ ✅
 9. ~~[Mines: Double-Tap Zoom on Stepper](#9-mines-double-tap-zoom-on-stepper--done)~~ ✅
-10. [NPC Completion: Partial Hearts](#10-npc-completion-partial-hearts)
-11. [Skills: Partial Level Progress](#11-skills-partial-level-progress)
-12. [Animal Colors: Tier-Based Spoilers](#12-animal-colors-tier-based-spoilers)
-13. [Season Animals: Timely Filtering](#13-season-animals-timely-filtering)
-14. [Animal Cosmetics: Skip `default` Key](#14-animal-cosmetics-skip-default-key)
+10. ~~[NPC Completion: Partial Hearts](#10-npc-completion-partial-hearts--done)~~ ✅
+11. ~~[Skills: Partial Level Progress](#11-skills-partial-level-progress--done)~~ ✅
+12. ~~[Animal Colors: Tier-Based Spoilers](#12-animal-colors-tier-based-spoilers--done)~~
+    ✅
+13. ~~[Season Animals: Timely Filtering](#13-season-animals-timely-filtering--done)~~
+    ✅
+14. ~~[Animal Cosmetics: Skip `default` Key](#14-animal-cosmetics-skip-default-key--done)~~
+    ✅
 15. [Cosmetics: No Sources Shown](#15-cosmetics-no-sources-shown)
 16. ~~[Nameless Items: Filter from Pipeline](#16-nameless-items-filter-from-pipeline--done)~~ ✅
 17. [Settings: Show Game Version](#17-settings-show-game-version)
@@ -217,62 +220,30 @@ while preserving normal touch handling.
 
 ---
 
-## 10. NPC Completion: Partial Hearts
+## 10. ~~NPC Completion: Partial Hearts~~ ✅ Done
 
-**Issue:** NPC progress only counts NPCs at max level (8). Want fractional progress reflecting
-partial hearts across all NPCs.
+Changed `getNpcsProgress` from binary (0% or 100% per NPC) to granular (sum of all heart levels vs
+sum of all possible hearts). Progress now shows e.g. `45/120` instead of `3/15`.
 
-**Where:** [progress.ts](src/lib/engine/progress.ts#L87-L94) (`getNpcsProgress`)
+**Changes made:**
 
-**Current behavior:** Binary — NPC is 0% or 100%.
-
-**Max level:** 8 for everyone (eventually 10). There is no separate cap for dateable NPCs. The
-`dateable` field is for UI display only (e.g., heart vs platonic icon).
-
-**Implementation:**
-
-```ts
-export function getNpcsProgress(ctx: ProgressContext): CategoryProgress {
-  const maxLevel = MAX_NPC_LEVEL; // 8
-  let total = 0;
-  let completed = 0;
-  for (const id of Object.keys(trackerData.npcs)) {
-    total += maxLevel;
-    completed += Math.min(ctx.completed.npcLevels[id] ?? 0, maxLevel);
-  }
-  return { completed, filtered: total - completed, total };
-}
-```
-
-This yields progress like `45/120` (sum of all hearts earned vs sum of all possible hearts). The
-progress bar becomes meaningfully granular.
+- **[progress.ts](src/lib/engine/progress.ts)** — `getNpcsProgress` now sums `Math.min(level, MAX_NPC_LEVEL)` across all NPCs, with `total = npcCount × MAX_NPC_LEVEL`.
 
 ---
 
-## 11. Skills: Partial Level Progress
+## 11. ~~Skills: Partial Level Progress~~ ✅ Done
 
-**Issue:** Same as NPCs — skills only count as done at level 60. Want fractional progress.
+Changed `getSkillsProgress` from binary (0% or 100% per skill at level 60) to granular (sum of all
+skill levels vs sum of all possible levels). Extracted `MAX_SKILL_LEVEL = 60` as a named constant.
 
-**Where:** [progress.ts](src/lib/engine/progress.ts#L116-L123) (`getSkillsProgress`)
+**Changes made:**
 
-**Implementation:**
-
-```ts
-export function getSkillsProgress(ctx: ProgressContext): CategoryProgress {
-  const MAX_SKILL_LEVEL = 60;
-  let total = 0;
-  let completed = 0;
-  for (const id of Object.keys(trackerData.skills)) {
-    total += MAX_SKILL_LEVEL;
-    completed += Math.min(ctx.completed.skillLevels[id] ?? 0, MAX_SKILL_LEVEL);
-  }
-  return { completed, filtered: total - completed, total };
-}
-```
+- **[progress.ts](src/lib/engine/progress.ts)** — Added `MAX_SKILL_LEVEL = 60` constant. `getSkillsProgress` now sums `Math.min(level, MAX_SKILL_LEVEL)` across all skills.
+- **[skills/+page.svelte](<src/routes/(category)/skills/+page.svelte>)** — Replaced hardcoded `60` with `MAX_SKILL_LEVEL` import.
 
 ---
 
-## 12. Animal Colors: Tier-Based Spoilers
+## 12. ~~Animal Colors: Tier-Based Spoilers~~ ✅ Done
 
 **Issue:** Higher-tier animal variants are spoilers. Unlocking at least one color in tier N should
 reveal all colors in tier N+1. Colors in unreached tiers should be hidden behind a spoiler.
@@ -312,7 +283,7 @@ reveal all colors in tier N+1. Colors in unreached tiers should be hidden behind
 
 ---
 
-## 13. Season Animals: Timely Filtering
+## 13. ~~Season Animals: Timely Filtering~~ ✅ Done
 
 **Issue:** Animals born in a specific season should be highlighted/filtered when that season is
 active, using the same "timely" availability mode as seasonal items.
@@ -364,7 +335,7 @@ active, using the same "timely" availability mode as seasonal items.
 
 ---
 
-## 14. Animal Cosmetics: Skip `default` Key
+## 14. ~~Animal Cosmetics: Skip `default` Key~~ ✅ Done
 
 **Issue:** The `default` key under each animal's cosmetics is not an actual cosmetic — it's a
 game-internal template for applying default sprites (male/female base). It should be filtered out.

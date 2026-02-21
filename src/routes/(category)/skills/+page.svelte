@@ -2,7 +2,7 @@
   import CategoryHeader from "$lib/components/category-header.svelte";
   import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
-  import { getSkillsProgress } from "$lib/engine/progress.js";
+  import { getSkillsProgress, MAX_SKILL_LEVEL } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import SkillRow from "./SkillRow.svelte";
@@ -29,7 +29,7 @@
 <div class="flex flex-col gap-3">
   {#each skills as skill (skill.id)}
     {@const level = userState.state.completed.skillLevels[skill.id as string] ?? 0}
-    {#if level >= 60 ? userState.state.showCompleted : true}
+    {#if level >= MAX_SKILL_LEVEL ? userState.state.showCompleted : true}
       <SkillRow id={skill.id} name={skill.name} />
     {/if}
   {/each}
