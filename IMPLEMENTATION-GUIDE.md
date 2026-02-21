@@ -32,7 +32,7 @@
 16. ~~[Nameless Items: Filter from Pipeline](#16-nameless-items-filter-from-pipeline--done)~~ ✅
 17. ~~[Settings: Show Game Version](#17-settings-show-game-version--done)~~ ✅
 18. [Custom Icons: Platonic NPC & Blizzard](#18-custom-icons-platonic-npc--blizzard)
-19. [Completed Quests Visibility](#19-completed-quests-visibility)
+19. ~~[Completed Quests Visibility](#19-completed-quests-visibility--done)~~ ✅
 20. [Global "Everything" View](#20-global-everything-view)
 21. [Questions for Review](#questions-for-review)
 
@@ -372,7 +372,7 @@ component set and reference them in the NPC list and weather selector respective
 
 ---
 
-## 19. Completed Quests Visibility
+## 19. ~~Completed Quests Visibility~~ ✅ Done
 
 **Issue:** There is no way in-game to see completed quests, making manual tracking unreliable (you'd
 have to mark each quest as you complete it and never miss one).
