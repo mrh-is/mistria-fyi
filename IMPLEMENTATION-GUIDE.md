@@ -30,7 +30,7 @@
 14. ~~[Animal Cosmetics: Skip `default` Key](#14-animal-cosmetics-skip-default-key--done)~~ ✅
 15. [Cosmetics: No Sources Shown](#15-cosmetics-no-sources-shown)
 16. ~~[Nameless Items: Filter from Pipeline](#16-nameless-items-filter-from-pipeline--done)~~ ✅
-17. [Settings: Show Game Version](#17-settings-show-game-version)
+17. ~~[Settings: Show Game Version](#17-settings-show-game-version--done)~~ ✅
 18. [Custom Icons: Platonic NPC & Blizzard](#18-custom-icons-platonic-npc--blizzard)
 19. [Completed Quests Visibility](#19-completed-quests-visibility)
 20. [Global "Everything" View](#20-global-everything-view)
@@ -255,8 +255,8 @@ reveals all variants in tier N+1.
   (scans completed variants for highest tier, returns +1) and `isVariantSpoilered` (checks tier
   against max visible). Spoilered variants render with `blur-sm`, `select-none`, muted color, and
   `disabled` checkbox. Tier badge remains visible for orientation.
-- **[user-state.svelte.ts](src/lib/stores/user-state.svelte.ts)** — Added `showSpoilers: boolean`
-  to `UserState` (defaults `false`, not persisted) with `toggleShowSpoilers()` method.
+- **[user-state.svelte.ts](src/lib/stores/user-state.svelte.ts)** — Added `showSpoilers: boolean` to
+  `UserState` (defaults `false`, not persisted) with `toggleShowSpoilers()` method.
 - **[toolbar-footer.svelte](src/lib/components/toolbar-footer.svelte)** — Added "Show all spoilers"
   toggle in the filters panel. Integrated into `filtersActive` and reset logic.
 
@@ -275,7 +275,8 @@ museum items. The animals page now shows the season/weather toolbar controls.
 - **[progress.ts](src/lib/engine/progress.ts)** — Updated `getAnimalsProgress` to compute `filtered`
   count per availability mode, so the progress bar reflects what's actually visible.
 - **[toolbar-footer.svelte](src/lib/components/toolbar-footer.svelte)** — Added `/animals` to
-  `WORLD_STATE_ROUTES` so the season/weather pill and availability toggle appear on the animals page.
+  `WORLD_STATE_ROUTES` so the season/weather pill and availability toggle appear on the animals
+  page.
 
 ---
 
@@ -342,28 +343,17 @@ filtered. It does not match any almanac tag, so it still doesn't appear in the a
 
 ---
 
-## 17. Settings: Show Game Version
+## 17. ~~Settings: Show Game Version~~ ✅ Done
 
-**Issue:** The settings page shows the Fiddle game version but doesn't clarify what it is. Also add
-the Harvest Helper app version so users can cross-reference.
+Added Harvest Helper app version display alongside the existing game data version on the settings
+page. Version string includes the git commit short hash for debugging (e.g. `0.0.1+a3bf912`).
 
-**Where:** [settings/+page.svelte](src/routes/settings/+page.svelte#L74-L76)
+**Changes made:**
 
-**Current:** `Game data: Fields of Mistria v{trackerData.version}`
-
-**Implementation:**
-
-At the bottom of the settings page, expand the version display:
-
-```svelte
-<div class="text-center text-sm text-muted-foreground">
-  <p>Game data: Fields of Mistria v{trackerData.version}</p>
-  <p>Harvest Helper v{APP_VERSION}</p>
-</div>
-```
-
-Define `APP_VERSION` from `package.json` version (use Vite's `define` or `import.meta.env`), or
-hardcode for now.
+- **[svelte.config.js](svelte.config.js)** — Set `kit.version.name` to `${pkg.version}+${commit}`
+  using `package.json` version and `git rev-parse --short HEAD`.
+- **[settings/+page.svelte](src/routes/settings/+page.svelte)** — Imported `version` from
+  `$app/environment` and added a second line: `Harvest Helper v{version}`.
 
 ---
 

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { ArrowLeft } from "@lucide/svelte";
 
+  import { version } from "$app/environment";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import { trackerData } from "$lib/data/index.js";
@@ -72,6 +73,7 @@
   </section>
 
   <div class="text-center text-sm text-muted-foreground">
-    Game data: Fields of Mistria v{trackerData.version}
+    <p>Game data: Fields of Mistria v{trackerData.version}</p>
+    <p>Harvest Helper v{version}</p>
   </div>
 </div>

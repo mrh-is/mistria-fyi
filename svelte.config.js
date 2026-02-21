@@ -1,5 +1,10 @@
 import adapter from "@sveltejs/adapter-cloudflare";
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
+import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+
+const pkg = JSON.parse(readFileSync("package.json", "utf-8"));
+const commit = execSync("git rev-parse --short HEAD").toString().trim();
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -10,6 +15,7 @@ const config = {
         config.include.push("../scripts/**/*.ts");
       },
     },
+    version: { name: `${pkg.version} (${commit})` },
   },
 
   preprocess: vitePreprocess(),
