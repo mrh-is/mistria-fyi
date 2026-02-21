@@ -26,7 +26,7 @@
 
 <div class="flex w-full items-center gap-2">
   <button
-    class="group -mx-1.5 flex size-11 shrink-0 items-center justify-center disabled:opacity-50"
+    class="group -mx-1.5 flex size-11 shrink-0 touch-manipulation items-center justify-center disabled:opacity-50"
     type="button"
     disabled={decrementDisabled}
     aria-label={decrementLabel}
@@ -46,7 +46,7 @@
   {/if}
 
   <button
-    class="group -mx-1.5 flex size-11 shrink-0 items-center justify-center disabled:opacity-50"
+    class="group -mx-1.5 flex size-11 shrink-0 touch-manipulation items-center justify-center disabled:opacity-50"
     type="button"
     disabled={incrementDisabled}
     aria-label={incrementLabel}

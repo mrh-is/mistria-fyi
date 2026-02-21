@@ -16,6 +16,10 @@ export function extractMines(fiddle: FiddleData): TrackerData["mines"] {
     id: `biome_${i}` as BiomeId,
     name: (b.name as string | undefined) ?? `Biome ${i + 1}`,
     startFloor: (b.floor as number | undefined) ?? i * 20 + 1,
+    endFloor:
+      i + 1 < rawBiomes.length
+        ? ((rawBiomes[i + 1].floor as number | undefined) ?? (i + 1) * 20 + 1) - 1
+        : maxFloors,
   }));
 
   // Extract spells

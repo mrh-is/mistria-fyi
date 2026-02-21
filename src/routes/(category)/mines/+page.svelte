@@ -76,13 +76,33 @@
         }
       }}
     >
-      <span class="text-xl font-semibold">
-        Floor {userState.state.completed.mines.floor}
+      <span class="inline-flex w-full items-center justify-center gap-1 text-xl font-semibold">
+        Floor
+        <input
+          type="number"
+          inputmode="numeric"
+          min="0"
+          max={trackerData.mines.maxFloors}
+          value={userState.state.completed.mines.floor}
+          onchange={(e) => {
+            const v = Math.max(
+              0,
+              Math.min(trackerData.mines.maxFloors, Number(e.currentTarget.value)),
+            );
+            userState.setMineFloor(v);
+            if (isMinesComplete()) {
+              celebrateCategory();
+            } else if (v >= trackerData.mines.maxFloors) {
+              celebrate();
+            }
+          }}
+          class="w-14 bg-transparent text-center text-xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        />
       </span>
     </Stepper>
     <span class="text-sm text-muted-foreground">
       {currentBiome().name}
-      (floors {currentBiome().startFloor}–{trackerData.mines.maxFloors})
+      (floors {currentBiome().startFloor}–{currentBiome().endFloor})
     </span>
   </div>
 </ExpandableSection>

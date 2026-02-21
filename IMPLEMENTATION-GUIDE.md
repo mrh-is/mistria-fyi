@@ -20,9 +20,9 @@
 4. ~~[Animals: Flip IA Hierarchy](#4-animals-flip-ia-hierarchy--done)~~ ✅
 5. ~~[Museum: Set Ordering from Game Data](#5-museum-set-ordering-from-game-data--done)~~ ✅
 6. ~~[Museum: "Complete Set" Button Position](#6-museum-complete-set-button-position--done)~~ ✅
-7. [Mines: Biome Range Display Bug](#7-mines-biome-range-display-bug)
-8. [Mines: Text Input for Floor Level](#8-mines-text-input-for-floor-level)
-9. [Mines: Double-Tap Zoom on Stepper](#9-mines-double-tap-zoom-on-stepper)
+7. ~~[Mines: Biome Range Display Bug](#7-mines-biome-range-display-bug--done)~~ ✅
+8. ~~[Mines: Text Input for Floor Level](#8-mines-text-input-for-floor-level--done)~~ ✅
+9. ~~[Mines: Double-Tap Zoom on Stepper](#9-mines-double-tap-zoom-on-stepper--done)~~ ✅
 10. [NPC Completion: Partial Hearts](#10-npc-completion-partial-hearts)
 11. [Skills: Partial Level Progress](#11-skills-partial-level-progress)
 12. [Animal Colors: Tier-Based Spoilers](#12-animal-colors-tier-based-spoilers)
@@ -181,107 +181,39 @@ block and its unused imports (`CheckCheck`, `Undo2`, `Button`).
 
 ---
 
-## 7. Mines: Biome Range Display Bug
+## 7. ~~Mines: Biome Range Display Bug~~ ✅ Done
 
-**Issue:** Every biome shows `floors X–99` because the label hardcodes `trackerData.mines.maxFloors`
-as the end floor for all biomes.
+Added `endFloor` to each biome, computed from the next biome's `startFloor - 1` (or `maxFloors` for
+the last biome). Each biome now shows its correct floor range instead of always ending at 99.
 
-**Where:** [mines/+page.svelte:85](<src/routes/(category)/mines/+page.svelte#L85>)
+**Changes made:**
 
-**Current code:**
+- **[mines.ts](pipeline/src/extractors/mines.ts)** — Added `endFloor` to biome extraction.
+- **[tracker-data.ts](src/lib/types/tracker-data.ts)** — Added `endFloor: number` to biome type.
+- **[mines/+page.svelte](<src/routes/(category)/mines/+page.svelte>)** — Changed label to use
+  `currentBiome().endFloor`.
 
-```svelte
-{currentBiome().name} (floors {currentBiome().startFloor}–{trackerData.mines.maxFloors})
-```
-
-**Implementation:**
-
-1. In [mines.ts](pipeline/src/extractors/mines.ts), add `endFloor` to each biome:
-
-   ```ts
-   const biomes = rawBiomes.map((b, i) => ({
-     id: `biome_${i}` as BiomeId,
-     name: ...,
-     startFloor: ...,
-     endFloor: i + 1 < rawBiomes.length
-       ? (rawBiomes[i + 1].floor as number ?? (i + 1) * 20 + 1) - 1
-       : maxFloors,
-   }));
-   ```
-
-2. Update the `TrackerData["mines"]["biomes"]` type in
-   [tracker-data.ts](src/lib/types/tracker-data.ts) to include `endFloor: number`.
-
-3. In `mines/+page.svelte`, change the label to:
-
-   ```svelte
-   {currentBiome().name} (floors {currentBiome().startFloor}–{currentBiome().endFloor})
-   ```
-
-4. Verify the off-by-1 issue: if Lava Caves should show "through 80" not "through 79", adjust the
-   `endFloor` calculation (may need `nextBiome.startFloor` instead of `- 1`, depending on whether
-   floors are inclusive at both ends).
-
-**Note:** The max floor of 99 in the Fiddle is correct — an upcoming game update raises the cap.
-Leave `maxFloors` as-is.
+**Output:** Upper Mines 1–19, Tide Caverns 20–39, Deep Earth 40–59, Lava Caves 60–79, Ancient Ruins
+80–99.
 
 ---
 
-## 8. Mines: Text Input for Floor Level
+## 8. ~~Mines: Text Input for Floor Level~~ ✅ Done
 
-**Issue:** Can't type a mine floor level directly — only +/- buttons. Opening any input field
-doesn't grab focus, and focus can trigger zoom on mobile.
+Replaced the static "Floor N" span with an editable number input, centered between the +/- stepper
+buttons. Uses `inputmode="numeric"` for mobile keyboards, `text-xl` (20px) to prevent iOS auto-zoom,
+and hidden native spin buttons to avoid conflicts with the stepper.
 
-**Where:** [mines/+page.svelte](<src/routes/(category)/mines/+page.svelte#L79-L82>)
-
-**Implementation:**
-
-1. Replace the display `<span>Floor {floor}</span>` with a tappable number input:
-
-   ```svelte
-   <input
-     type="number"
-     inputmode="numeric"
-     min="0"
-     max={trackerData.mines.maxFloors}
-     value={userState.state.completed.mines.floor}
-     onchange={(e) => {
-       const v = Math.max(0, Math.min(trackerData.mines.maxFloors, Number(e.currentTarget.value)));
-       userState.setMineFloor(v);
-     }}
-     class="w-16 bg-transparent text-center text-xl font-semibold"
-   />
-   ```
-
-2. To prevent iOS zoom on focus, ensure the input has `font-size: 16px` or larger (Tailwind
-   `text-xl` is 20px, which is fine).
-
-3. Keep the +/- stepper buttons alongside the input for quick adjustments.
+**Where:** [mines/+page.svelte](<src/routes/(category)/mines/+page.svelte>)
 
 ---
 
-## 9. Mines: Double-Tap Zoom on Stepper
+## 9. ~~Mines: Double-Tap Zoom on Stepper~~ ✅ Done
 
-**Issue:** Tapping too fast on the mines +/- buttons triggers browser double-tap zoom.
+Added `touch-manipulation` Tailwind class to both stepper buttons, disabling double-tap-to-zoom
+while preserving normal touch handling.
 
 **Where:** [stepper.svelte](src/lib/components/stepper.svelte)
-
-**Implementation:**
-
-Add `touch-action: manipulation` to the stepper buttons. This disables the double-tap-to-zoom
-gesture while keeping normal touch handling.
-
-In Tailwind: add the `touch-manipulation` class to the increment/decrement button elements.
-
-Alternatively, apply this globally to all interactive elements in [app.css](src/app.css):
-
-```css
-button,
-input,
-[role="button"] {
-  touch-action: manipulation;
-}
-```
 
 ---
 

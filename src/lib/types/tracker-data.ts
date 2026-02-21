@@ -126,6 +126,7 @@ export interface TrackerData {
 
   mines: {
     biomes: Array<{
+      endFloor: number;
       id: BiomeId;
       name: string;
       startFloor: number;
