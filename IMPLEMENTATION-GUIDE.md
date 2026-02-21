@@ -17,7 +17,7 @@
 2. [Save File Import: `.sav` Unpacking](#2-save-file-import-sav-unpacking)
 3. ~~[Almanac: Restructure Using In-Game Categories](#3-almanac-restructure-using-in-game-categories--done)~~
    ✅
-4. [Animals: Flip IA Hierarchy](#4-animals-flip-ia-hierarchy)
+4. ~~[Animals: Flip IA Hierarchy](#4-animals-flip-ia-hierarchy--done)~~ ✅
 5. ~~[Museum: Set Ordering from Game Data](#5-museum-set-ordering-from-game-data--done)~~ ✅
 6. ~~[Museum: "Complete Set" Button Position](#6-museum-complete-set-button-position--done)~~ ✅
 7. [Mines: Biome Range Display Bug](#7-mines-biome-range-display-bug)
@@ -135,68 +135,18 @@ plus `date_inspiration`).
 
 ---
 
-## 4. Animals: Flip IA Hierarchy
+## 4. ~~Animals: Flip IA Hierarchy~~ ✅ Done
 
-**Issue:** The current hierarchy is `Animal → Color Variants / Cosmetics`. The desired hierarchy
-flips the two levels: the top level should be "Color Variants" and "Cosmetics" as two sections, with
-each listing all animal species underneath.
+Flipped the animals page hierarchy from `Animal → (Variants, Cosmetics)` to
+`(Color Variants, Cosmetics) → Animal`. The top level now shows two `ExpandableSection`s — "Color
+Variants" and "Cosmetics" — each containing per-animal sub-sections with the same checkbox rows.
 
-**Current structure:**
+**Changes made:**
 
-```
-Cow
-  └ Color Variants (Brown, Gold, Pink...)
-  └ Cosmetics (Beret, Crown...)
-Chicken
-  └ Color Variants (...)
-  └ Cosmetics (...)
-```
-
-**Target structure:**
-
-```
-Color Variants
-  └ Cow (Brown, Gold, Pink...)
-  └ Chicken (White, Black...)
-  └ ...
-Cosmetics
-  └ Cow (Beret, Crown...)
-  └ Chicken (Ribbon, Hat...)
-  └ ...
-```
-
-**Where:** [animals/+page.svelte](<src/routes/(category)/animals/+page.svelte>)
-
-**Implementation:**
-
-1. Replace the current `{#each animals ...}` loop with two top-level `ExpandableSection`s:
-
-   ```svelte
-   <ExpandableSection name="Color Variants" count={totalVariantsCompleted} total={totalVariants}>
-     {#each animals as animal}
-       <ExpandableSection name={animal.name} ...>
-         {#each sortedVariants(animal.variants) as [vid, variant]}
-           <!-- variant checkbox rows (same as current) -->
-         {/each}
-       </ExpandableSection>
-     {/each}
-   </ExpandableSection>
-
-   <ExpandableSection name="Cosmetics" count={totalCosmeticsCompleted} total={totalCosmetics}>
-     {#each animals as animal}
-       <ExpandableSection name={animal.name} ...>
-         {#each cosmeticEntries as [cid, cosmetic]}
-           <!-- cosmetic checkbox rows (same as current) -->
-         {/each}
-       </ExpandableSection>
-     {/each}
-   </ExpandableSection>
-   ```
-
-2. Compute `totalVariantsCompleted` / `totalVariants` and `totalCosmeticsCompleted` /
-   `totalCosmetics` by summing across all animals.
-
-3. No data model changes needed — same state, different rendering.
+- **[animals/+page.svelte](<src/routes/(category)/animals/+page.svelte>)** — Replaced the single
+  `{#each animals}` loop with two top-level `ExpandableSection`s. Added `$derived` totals
+  (`totalVariants`, `totalVariantsCompleted`, `totalCosmetics`, `totalCosmeticsCompleted`) summed
+  across all animals. No data model changes — same state, different rendering.
 
 ---
 

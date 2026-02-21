@@ -60,6 +60,30 @@
       .sort((a, b) => a.name.localeCompare(b.name)),
   );
 
+  let totalVariants = $derived(
+    animals.reduce((sum, a) => sum + Object.keys(a.variants).length, 0),
+  );
+  let totalVariantsCompleted = $derived(
+    animals.reduce(
+      (sum, a) =>
+        sum +
+        ((userState.state.completed.animals[a.id] as Set<VariantId> | undefined)?.size ?? 0),
+      0,
+    ),
+  );
+  let totalCosmetics = $derived(
+    animals.reduce((sum, a) => sum + Object.keys(a.cosmetics).length, 0),
+  );
+  let totalCosmeticsCompleted = $derived(
+    animals.reduce(
+      (sum, a) =>
+        sum +
+        ((userState.state.completed.animalCosmetics[a.id] as Set<CosmeticId> | undefined)?.size ??
+          0),
+      0,
+    ),
+  );
+
   function isVariantVisible(animalId: AnimalId, variantId: VariantId): boolean {
     const completed =
       (userState.state.completed.animals[animalId] as Set<VariantId> | undefined)?.has(variantId) ??
@@ -95,30 +119,21 @@
 
 <CategoryHeader category={CATEGORY_BY_KEY.animals} {progress} />
 
-{#each animals as animal (animal.id)}
-  {@const variantEntries = sortedVariants(animal.variants)}
-  {@const cosmeticEntries = Object.entries(animal.cosmetics)}
-  {@const variantCount = variantEntries.length}
-  {@const cosmeticCount = cosmeticEntries.length}
-  {@const completedVariants =
-    (userState.state.completed.animals[animal.id] as Set<VariantId> | undefined)?.size ?? 0}
-  {@const completedCosmetics =
-    (userState.state.completed.animalCosmetics[animal.id] as Set<CosmeticId> | undefined)?.size ??
-    0}
-  {@const visibleVariants = variantEntries.filter(([vid]) =>
-    isVariantVisible(animal.id, vid as VariantId),
-  )}
-  {@const visibleCosmetics = cosmeticEntries.filter(([cid]) =>
-    isCosmeticVisible(animal.id, cid as CosmeticId),
-  )}
-  {#if visibleVariants.length > 0 || visibleCosmetics.length > 0}
-    <ExpandableSection
-      count={completedVariants + completedCosmetics}
-      name={animal.name}
-      total={variantCount + cosmeticCount}
-    >
+{#if animals.some((a) => Object.keys(a.variants).some((vid) => isVariantVisible(a.id, vid as VariantId)))}
+  <ExpandableSection count={totalVariantsCompleted} name="Color Variants" total={totalVariants}>
+    {#each animals as animal (animal.id)}
+      {@const variantEntries = sortedVariants(animal.variants)}
+      {@const visibleVariants = variantEntries.filter(([vid]) =>
+        isVariantVisible(animal.id, vid as VariantId),
+      )}
+      {@const completedVariants =
+        (userState.state.completed.animals[animal.id] as Set<VariantId> | undefined)?.size ?? 0}
       {#if visibleVariants.length > 0}
-        <ExpandableSection count={completedVariants} name="Color Variants" total={variantCount}>
+        <ExpandableSection
+          count={completedVariants}
+          name={animal.name}
+          total={variantEntries.length}
+        >
           {#each visibleVariants as [variantId, variant] (variantId)}
             {@const completed =
               (userState.state.completed.animals[animal.id] as Set<VariantId> | undefined)?.has(
@@ -168,13 +183,32 @@
           {/each}
         </ExpandableSection>
       {/if}
+    {/each}
+  </ExpandableSection>
+{/if}
 
+{#if animals.some((a) => Object.keys(a.cosmetics).some((cid) => isCosmeticVisible(a.id, cid as CosmeticId)))}
+  <ExpandableSection count={totalCosmeticsCompleted} name="Cosmetics" total={totalCosmetics}>
+    {#each animals as animal (animal.id)}
+      {@const cosmeticEntries = Object.entries(animal.cosmetics)}
+      {@const visibleCosmetics = cosmeticEntries.filter(([cid]) =>
+        isCosmeticVisible(animal.id, cid as CosmeticId),
+      )}
+      {@const completedCosmetics =
+        (userState.state.completed.animalCosmetics[animal.id] as Set<CosmeticId> | undefined)
+          ?.size ?? 0}
       {#if visibleCosmetics.length > 0}
-        <ExpandableSection count={completedCosmetics} name="Cosmetics" total={cosmeticCount}>
+        <ExpandableSection
+          count={completedCosmetics}
+          name={animal.name}
+          total={cosmeticEntries.length}
+        >
           {#each visibleCosmetics as [cosmeticId, cosmetic] (cosmeticId)}
             {@const completed =
               (
-                userState.state.completed.animalCosmetics[animal.id] as Set<CosmeticId> | undefined
+                userState.state.completed.animalCosmetics[animal.id] as
+                  | Set<CosmeticId>
+                  | undefined
               )?.has(cosmeticId as CosmeticId) ?? false}
             <div
               class="flex items-center gap-2 rounded-md px-2 py-1 {completed
@@ -208,9 +242,9 @@
           {/each}
         </ExpandableSection>
       {/if}
-    </ExpandableSection>
-  {/if}
-{/each}
+    {/each}
+  </ExpandableSection>
+{/if}
 
 {#if progress.total > 0 && progress.completed === progress.total && !userState.state.showCompleted}
   <p class="py-8 text-center text-base text-muted-foreground">
