@@ -40,7 +40,7 @@
   </button>
 
   {#if children}
-    <div class="flex flex-1 items-center gap-2">
+    <div class="flex flex-1 items-center justify-center gap-2">
       {@render children()}
     </div>
   {/if}
