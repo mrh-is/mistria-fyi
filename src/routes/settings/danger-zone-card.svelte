@@ -20,14 +20,12 @@
   <Card.Content>
     {#if showResetConfirm}
       <p class="mb-3 text-base">Are you sure? This will erase all your tracked progress.</p>
-      <div class="flex w-full justify-stretch gap-2">
-        <Button class="grow-0" variant="destructive" onclick={handleReset}>
+      <div class="flex w-full flex-col gap-2">
+        <Button variant="destructive" onclick={handleReset}>
           <Trash2 />
           Yes, reset everything
         </Button>
-        <Button class="grow" variant="outline" onclick={() => (showResetConfirm = false)}>
-          Never mind
-        </Button>
+        <Button variant="outline" onclick={() => (showResetConfirm = false)}>Never mind</Button>
       </div>
     {:else}
       <Button
