@@ -52,12 +52,12 @@ SvelteKit 2 + Svelte 5 (runes), Tailwind 4, shadcn-svelte, deployed to Cloudflar
 
 | Command            | What                                              |
 | ------------------ | ------------------------------------------------- |
-| `npm run dev`      | Dev server                                        |
-| `npm run build`    | Production build (Cloudflare Pages)               |
-| `npm run check`    | SvelteKit type checking                           |
-| `npm run lint`     | Prettier + ESLint                                 |
-| `npm run lint:fix` | Auto-fix lint issues                              |
-| `npm run pipeline` | Regenerate `tracker-data.json` from `fiddle.json` |
+| `bun run dev`      | Dev server                                        |
+| `bun run build`    | Production build (Cloudflare Pages)               |
+| `bun run check`    | SvelteKit type checking                           |
+| `bun run lint`     | Prettier + ESLint                                 |
+| `bun run lint:fix` | Auto-fix lint issues                              |
+| `bun run pipeline` | Regenerate `tracker-data.json` from `fiddle.json` |
 
 No test suite yet (Vitest installed but no tests).
 
@@ -81,4 +81,4 @@ No test suite yet (Vitest installed but no tests).
 
 The app is powered by `tracker-data.json` (~430KB), generated from the game's `fiddle.json`. See
 [README.md](README.md) for pipeline details. When changing pipeline extractors, run
-`npm run pipeline` and commit the updated `src/lib/data/tracker-data.json`.
+`bun run pipeline` and commit the updated `src/lib/data/tracker-data.json`.

@@ -7,14 +7,14 @@ completionists track progress toward 100%.
 ## Quick start
 
 ```bash
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 ## Data pipeline
 
 The app is powered by `tracker-data.json`, generated from the game's raw data files. The pipeline
-lives in `pipeline/` and runs via [tsx](https://github.com/privatenumber/tsx).
+lives in `pipeline/` and runs via [bun](https://bun.sh).
 
 ### Running the pipeline
 
@@ -25,16 +25,10 @@ lives in `pipeline/` and runs via [tsx](https://github.com/privatenumber/tsx).
    Source files are on Google Drive at:
    `~/Library/CloudStorage/GoogleDrive-me@mrh.is/My Drive/Development/Mistria/versions/<version>/`
 
-2. Install pipeline dependencies (first time only):
+2. Run:
 
    ```bash
-   cd pipeline && npm install && cd ..
-   ```
-
-3. Run:
-
-   ```bash
-   npm run pipeline
+   bun run pipeline
    ```
 
 4. Output:
@@ -45,7 +39,7 @@ lives in `pipeline/` and runs via [tsx](https://github.com/privatenumber/tsx).
 
 1. Get the new `fiddle.json` (and `localization.json` if available)
 2. Drop them into `pipeline/input/`, replacing the old ones
-3. `npm run pipeline`
+3. `bun run pipeline`
 4. Commit the updated `src/lib/data/tracker-data.json`
 
 ### Pipeline architecture
@@ -70,13 +64,13 @@ tracker-data.json   ~430KB minified, typed via src/lib/types/tracker-data.ts
 
 | Command            | Description                               |
 | ------------------ | ----------------------------------------- |
-| `npm run dev`      | Start dev server                          |
-| `npm run build`    | Production build (Cloudflare Pages)       |
-| `npm run preview`  | Preview production build locally          |
-| `npm run check`    | SvelteKit type checking                   |
-| `npm run lint`     | Prettier + ESLint                         |
-| `npm run format`   | Auto-fix formatting                       |
-| `npm run pipeline` | Generate tracker-data.json from game data |
+| `bun run dev`      | Start dev server                          |
+| `bun run build`    | Production build (Cloudflare Pages)       |
+| `bun run preview`  | Preview production build locally          |
+| `bun run check`    | SvelteKit type checking                   |
+| `bun run lint`     | Prettier + ESLint                         |
+| `bun run lint:fix` | Auto-fix formatting and lint issues       |
+| `bun run pipeline` | Generate tracker-data.json from game data |
 
 ## Tech stack
 
