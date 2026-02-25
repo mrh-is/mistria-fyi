@@ -44,7 +44,7 @@
       >
         <span class="group-hover:underline">{name}</span>
         <ChevronRight
-          class="size-3 shrink-0 text-muted-foreground opacity-0 transition-all group-hover:opacity-60 {expanded
+          class="size-3 shrink-0 text-muted-foreground opacity-40 transition-all group-hover:opacity-60 {expanded
             ? 'rotate-90'
             : ''}"
         />
