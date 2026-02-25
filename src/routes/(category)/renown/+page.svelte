@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { Star } from "@lucide/svelte";
+
   import CategoryHeader from "$lib/components/category-header.svelte";
   import Stepper from "$lib/components/stepper.svelte";
   import { Input } from "$lib/components/ui/input/index.js";
@@ -8,6 +10,23 @@
   import { getRenownProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
+
+  import RankCard from "./RankCard.svelte";
+
+  // Colors per rank (Wood → Mistril), matched to the in-game chart
+  const RANK_COLORS = [
+    "#92400e", // Wood      — amber-800
+    "#a8a29e", // Stone     — stone-400
+    "#f97316", // Copper    — orange-500
+    "#ef4444", // Ruby      — red-500
+    "#94a3b8", // Iron      — slate-400
+    "#3b82f6", // Sapphire  — blue-500
+    "#cbd5e1", // Silver    — slate-300
+    "#10b981", // Emerald   — emerald-500
+    "#fbbf24", // Gold      — amber-400
+    "#67e8f9", // Diamond   — cyan-300
+    "#a78bfa", // Mistril   — violet-400
+  ];
 
   let progress = $derived(
     getRenownProgress({
@@ -25,7 +44,9 @@
   let currentRankIndex = $derived(Math.min(Math.floor(level / levelsPerRank), ranks.length - 1));
   let levelInRank = $derived(level - currentRankIndex * levelsPerRank);
   let currentRankName = $derived(ranks[currentRankIndex].name);
+  let currentRankColor = $derived(RANK_COLORS[currentRankIndex]);
   let overallPct = $derived(maxLevel > 0 ? (level / maxLevel) * 100 : 0);
+  let isMaxed = $derived(level >= maxLevel);
 
   let editing = $state(false);
   let editValue = $state("");
@@ -59,65 +80,91 @@
 
 <CategoryHeader category={CATEGORY_BY_KEY.renown} {progress} />
 
-<div class="flex flex-col gap-2">
-  <div class="text-center text-xl font-semibold">{currentRankName}</div>
-  <div class="text-center text-sm text-muted-foreground">
-    Level {levelInRank}/{levelsPerRank} in rank
+<!-- Current rank hero -->
+<div class="flex flex-col items-center gap-2 rounded-xl bg-accent/60 px-4 py-5">
+  <div
+    class="flex size-16 items-center justify-center rounded-full"
+    style="background-color: {currentRankColor}22; box-shadow: 0 0 0 2px {currentRankColor}44"
+  >
+    <Star
+      class="size-9"
+      style="color: {currentRankColor}"
+      fill={currentRankColor}
+      strokeWidth={1.5}
+    />
   </div>
-  <Progress class="h-2" value={overallPct} />
 
-  <div class="flex items-center justify-center">
-    <Stepper
-      decrementDisabled={level <= 0}
-      incrementDisabled={level >= maxLevel}
-      decrementLabel="Decrease renown"
-      incrementLabel="Increase renown"
-      onDecrement={() => {
-        setRenownWithCelebration(level - 1);
-      }}
-      onIncrement={() => {
-        setRenownWithCelebration(level + 1);
-      }}
-    >
-      {#if editing}
-        <Input
-          class="h-6 w-20 text-center text-sm"
-          type="number"
-          max={maxLevel}
-          min={0}
-          value={editValue}
-          onblur={commitEdit}
-          oninput={(e: Event) => {
-            editValue = (e.target as HTMLInputElement).value;
-          }}
-          onkeydown={handleEditKeydown}
-        />
-      {:else}
-        <button
-          class="text-base text-muted-foreground hover:underline"
-          title="Click to edit level directly"
-          type="button"
-          onclick={startEditing}
-        >
-          {level}/{maxLevel} total
-        </button>
-      {/if}
-    </Stepper>
+  <div class="text-center">
+    <div class="text-2xl font-bold tracking-tight">{currentRankName}</div>
+    {#if isMaxed}
+      <div class="text-sm text-muted-foreground">Max rank reached!</div>
+    {:else}
+      <div class="text-sm text-muted-foreground">
+        Level {levelInRank}/{levelsPerRank} in rank
+      </div>
+    {/if}
   </div>
+
+  <div class="w-full max-w-xs">
+    <Progress class="h-1.5" value={overallPct} />
+  </div>
+
+  <!-- Stepper -->
+  <Stepper
+    decrementDisabled={level <= 0}
+    incrementDisabled={level >= maxLevel}
+    decrementLabel="Decrease renown"
+    incrementLabel="Increase renown"
+    onDecrement={() => {
+      setRenownWithCelebration(level - 1);
+    }}
+    onIncrement={() => {
+      setRenownWithCelebration(level + 1);
+    }}
+  >
+    {#if editing}
+      <Input
+        class="h-6 w-20 text-center text-sm"
+        type="number"
+        max={maxLevel}
+        min={0}
+        value={editValue}
+        onblur={commitEdit}
+        oninput={(e: Event) => {
+          editValue = (e.target as HTMLInputElement).value;
+        }}
+        onkeydown={handleEditKeydown}
+      />
+    {:else}
+      <button
+        class="text-sm text-muted-foreground tabular-nums hover:underline"
+        title="Click to edit level directly"
+        type="button"
+        onclick={startEditing}
+      >
+        {level}/{maxLevel}
+      </button>
+    {/if}
+  </Stepper>
 </div>
 
-<div class="flex flex-col">
+<!-- Rank list -->
+<div class="flex flex-col gap-0.5">
   {#each ranks as rank, i (rank.name)}
-    {@const isCompleted = level >= (i + 1) * levelsPerRank}
-    {@const isCurrent = i === currentRankIndex}
-    {#if isCurrent}
-      <div class="rounded-md bg-accent px-3 py-2">
-        <div class="text-base font-medium">{rank.name}</div>
-      </div>
-    {:else if isCompleted}
-      <div class="px-3 py-0.5 text-sm text-muted-foreground line-through">{rank.name}</div>
-    {:else}
-      <div class="px-3 py-0.5 text-sm text-muted-foreground">{rank.name}</div>
-    {/if}
+    {@const rankState =
+      level >= (i + 1) * levelsPerRank
+        ? "completed"
+        : i === currentRankIndex
+          ? "current"
+          : "upcoming"}
+    <RankCard
+      name={rank.name}
+      starColor={RANK_COLORS[i]}
+      minLevel={i * levelsPerRank}
+      maxLevel={(i + 1) * levelsPerRank - 1}
+      state={rankState}
+      {levelInRank}
+      {levelsPerRank}
+    />
   {/each}
 </div>
