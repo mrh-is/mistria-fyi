@@ -1,3 +1,45 @@
 {
-  "prettier.documentSelectors": ["**/*.svelte"]
+  "prettier.documentSelectors": ["**/*.svelte"],
+  "cSpell.words": [
+    "Mistria",
+    "stylesheet",
+    "qrcode",
+    "vite",
+    "FOUC",
+    "WCAG",
+    "Segoe",
+    "Noto",
+    "overscroll",
+    "mistril",
+    "completionist",
+    "completionists",
+    "Helmbrecht",
+    "NPC",
+    "NPCs",
+    "oklch",
+    "gamedata",
+    "vaultc",
+    "spoilered",
+    "bitfield",
+    "forageable",
+    "forageables",
+    "divespot",
+    "cutscene",
+    "cutscenes",
+    "mistmare",
+    "unreviewed",
+    "bunx"
+  ],
+  "cSpell.ignorePaths": ["src/lib/components/ui", "pipeline/input", "pipeline/output"],
+  "json.schemaDownload.trustedDomains": {
+    "https://shadcn-svelte.com/schema.json": true
+  },
+  "json.schemas": [
+    {
+      "fileMatch": ["bun.lock"],
+      "schema": {
+        "allowTrailingCommas": true
+      }
+    }
+  ]
 }

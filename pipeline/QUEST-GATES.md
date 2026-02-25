@@ -4,6 +4,8 @@ This document captures the prerequisite research that informed the pipeline chan
 locked items. It focuses on the fields available in `pipeline/input/fiddle.json` and the
 human-readable output in `pipeline/output/fiddle-readable.json`.
 
+<!--- cSpell:words mistrias haydens wildberry --->
+
 ## Core Signals Found
 
 ### Progression flags on animals

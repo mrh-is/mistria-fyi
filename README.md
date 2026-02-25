@@ -31,7 +31,7 @@ lives in `pipeline/` and runs via [bun](https://bun.sh).
    bun run pipeline
    ```
 
-4. Output:
+3. Output:
    - `pipeline/output/tracker-data.json` — pretty-printed (for debugging)
    - `src/lib/data/tracker-data.json` — minified (committed, used by the app)
 

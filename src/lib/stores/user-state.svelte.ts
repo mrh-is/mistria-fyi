@@ -158,9 +158,6 @@ function createUserState() {
   }
 
   return {
-    completeMuseumSet(items: ItemId[]) {
-      for (const id of items) state.completed.museum.add(id);
-    },
     cycleQuestState(id: QuestId) {
       const current = state.completed.questStates[id as string] ?? "none";
       const next: QuestState =
@@ -365,9 +362,6 @@ function createUserState() {
     },
     toggleSpell(id: SpellId) {
       toggleInSet(state.completed.mines.spells, id);
-    },
-    uncompleteMuseumSet(items: ItemId[]) {
-      for (const id of items) state.completed.museum.delete(id);
     },
   };
 }

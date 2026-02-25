@@ -104,7 +104,7 @@
     {/if}
   {/each}
 
-  <!-- Fish size (hideable for non-fish categories) -->
+  <!-- Fish size (hide-able for non-fish categories) -->
   {#if !hideFishSize}
     {#each restrictions.filter((r) => r.type === "fishSize" && r.size) as r (JSON.stringify(r))}
       <span class="rounded bg-muted px-1 py-px text-sm text-muted-foreground">
