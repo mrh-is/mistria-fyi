@@ -1,5 +1,21 @@
 # AGENTS.md — Harvest Helper
 
+> Agent-specific instructions. For project conventions, architecture, and workflow, see
+> [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Task Workflow
+
+Work is tracked via [GitHub Issues](https://github.com/mrh-is/harvest-helper/issues). To pick up a
+task:
+
+1. Read the issue (`gh issue view <number>` or via GitHub API/MCP).
+2. Create a branch: `<issue-number>-<short-description>`.
+3. Do the work. Run `npm run check` and `npm run lint` before committing.
+4. Open a PR that references the issue (`Closes #N` in the PR body).
+
+Issues labeled `ready` are available. Issues labeled `blocked` or `discussion` are not actionable
+yet.
+
 ## Commands
 
 - **Dev**: `npm run dev` | **Build**: `npm run build` | **Type-check**: `npm run check`
