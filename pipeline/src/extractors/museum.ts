@@ -25,7 +25,7 @@ export function extractMuseum(fiddle: FiddleData): MuseumWing[] {
     const setOrder = setOrders[wingId];
     const orderedSetIds = setOrder && setOrder.length > 0 ? setOrder : Object.keys(rawSets);
 
-    const sets: Array<{ id: SetId; items: ItemId[]; name: string }> = [];
+    const sets: { id: SetId; items: ItemId[]; name: string }[] = [];
     for (const setId of orderedSetIds) {
       const set = rawSets[setId] as Record<string, unknown> | undefined;
       if (!set) continue;

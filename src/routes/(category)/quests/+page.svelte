@@ -27,7 +27,7 @@
   }
 
   /** Build a set of display names that appear more than once in a quest group */
-  function findDuplicateNames(entries: Array<{ displayName: string }>): Set<string> {
+  function findDuplicateNames(entries: { displayName: string }[]): Set<string> {
     const counts: Record<string, number> = {};
     for (const e of entries) {
       counts[e.displayName] = (counts[e.displayName] ?? 0) + 1;

@@ -39,7 +39,7 @@ interface PlayerSave {
 }
 
 interface QuestsSave {
-  active_quests?: Array<{ quest_name?: string }>;
+  active_quests?: { quest_name?: string }[];
   completed_quests?: string[];
 }
 
@@ -330,10 +330,10 @@ export function validatePlayerSave(data: unknown): data is PlayerSave {
   if (typeof data !== "object" || data === null) return false;
   const obj = data as Record<string, unknown>;
   return (
-    Array.isArray(obj["items_acquired"]) ||
-    Array.isArray(obj["cosmetic_unlocks"]) ||
-    typeof obj["animal_variant_unlocks"] === "object" ||
-    typeof obj["items_sold"] === "object" ||
-    Array.isArray(obj["spells_learned"])
+    Array.isArray(obj.items_acquired) ||
+    Array.isArray(obj.cosmetic_unlocks) ||
+    typeof obj.animal_variant_unlocks === "object" ||
+    typeof obj.items_sold === "object" ||
+    Array.isArray(obj.spells_learned)
   );
 }

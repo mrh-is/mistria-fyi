@@ -140,7 +140,7 @@
       string,
       { bornIn?: Season; defaultUnlocked: boolean; name: string; tier?: number }
     >,
-  ): Array<[string, { bornIn?: Season; defaultUnlocked: boolean; name: string; tier?: number }]> {
+  ): [string, { bornIn?: Season; defaultUnlocked: boolean; name: string; tier?: number }][] {
     return Object.entries(variants).sort(([, a], [, b]) => {
       const tierA = a.tier ?? 99;
       const tierB = b.tier ?? 99;

@@ -57,7 +57,7 @@ function isLocalizationKey(value: string): boolean {
 
 function loadLocalization(inputDir: string, gameVersion: string): Record<string, string> {
   // Collect all localization files in input dir
-  const files: Array<{ name: string; version: string }> = [];
+  const files: { name: string; version: string }[] = [];
 
   if (existsSync(inputDir)) {
     for (const file of readdirSync(inputDir)) {

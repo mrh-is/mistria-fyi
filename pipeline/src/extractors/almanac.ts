@@ -17,9 +17,7 @@ import type { FiddleData } from "../parse-fiddle.js";
  */
 
 // Items master registry (separate from almanac — used for lookups)
-export interface ItemsRegistry {
-  [id: string]: { category: string; name: string };
-}
+export type ItemsRegistry = Record<string, { category: string; name: string }>;
 
 interface RawAlmanacCategory {
   key: string;
@@ -50,13 +48,13 @@ export function extractAlmanac(fiddle: FiddleData): {
   const namelessItems: string[] = [];
 
   // Collect ALL items across all top-level/sub-categories into a flat list
-  const allItems: Array<{
+  const allItems: {
     id: string;
     name: string;
     recipeKey?: string;
     tags: string[];
     topCategory: string;
-  }> = [];
+  }[] = [];
 
   for (const [topCategory, subCategories] of Object.entries(itemsRoot)) {
     for (const [subCategory, categoryItems] of Object.entries(subCategories)) {
@@ -96,7 +94,7 @@ export function extractAlmanac(fiddle: FiddleData): {
   }
 
   // Assign items to almanac categories by tag matching
-  const categoryBuckets: Array<Map<string, { id: string; name: string; recipeKey?: string }>> =
+  const categoryBuckets: Map<string, { id: string; name: string; recipeKey?: string }>[] =
     rawCategories.map(() => new Map());
 
   const items: ItemsRegistry = {};

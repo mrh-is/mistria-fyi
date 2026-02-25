@@ -24,11 +24,11 @@ const CATEGORIES_INTERNAL = [
   { icon: Crown, key: "renown", name: "Renown" },
   { icon: ScrollText, key: "quests", name: "Quests" },
   { icon: Pickaxe, key: "mines", name: "Mines" },
-] as const satisfies ReadonlyArray<{
+] as const satisfies readonly {
   icon: Component<{ class?: string }>;
   key: string;
   name: string;
-}>;
+}[];
 
 export type CategoryKey = (typeof CATEGORIES_INTERNAL)[number]["key"];
 

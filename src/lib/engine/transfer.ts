@@ -325,8 +325,8 @@ function getAlmanacOrder(): ItemId[] {
   return trackerData.almanac.flatMap((cat) => Object.keys(cat.items)).sort() as ItemId[];
 }
 
-function getAnimalCosmeticOrder(): Array<{ animalId: AnimalId; cosmeticId: CosmeticId }> {
-  const result: Array<{ animalId: AnimalId; cosmeticId: CosmeticId }> = [];
+function getAnimalCosmeticOrder(): { animalId: AnimalId; cosmeticId: CosmeticId }[] {
+  const result: { animalId: AnimalId; cosmeticId: CosmeticId }[] = [];
   for (const [animalId, animal] of Object.entries(trackerData.animals).sort(([a], [b]) =>
     a.localeCompare(b),
   )) {
@@ -337,8 +337,8 @@ function getAnimalCosmeticOrder(): Array<{ animalId: AnimalId; cosmeticId: Cosme
   return result;
 }
 
-function getAnimalVariantOrder(): Array<{ animalId: AnimalId; variantId: VariantId }> {
-  const result: Array<{ animalId: AnimalId; variantId: VariantId }> = [];
+function getAnimalVariantOrder(): { animalId: AnimalId; variantId: VariantId }[] {
+  const result: { animalId: AnimalId; variantId: VariantId }[] = [];
   for (const [animalId, animal] of Object.entries(trackerData.animals).sort(([a], [b]) =>
     a.localeCompare(b),
   )) {
@@ -374,8 +374,8 @@ function getNpcOrder(): NpcId[] {
   return (Object.keys(trackerData.npcs) as NpcId[]).sort();
 }
 
-function getQuestOrder(): Array<{ questId: QuestId; type: string }> {
-  const result: Array<{ questId: QuestId; type: string }> = [];
+function getQuestOrder(): { questId: QuestId; type: string }[] {
+  const result: { questId: QuestId; type: string }[] = [];
   for (const type of Object.keys(trackerData.quests).sort()) {
     for (const questId of (Object.keys(trackerData.quests[type]) as QuestId[]).sort()) {
       result.push({ questId, type });

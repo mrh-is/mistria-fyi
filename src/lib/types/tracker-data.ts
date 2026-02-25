@@ -31,7 +31,7 @@ export type ItemId = string & { readonly __brand: "ItemId" };
 export interface MuseumWing {
   id: WingId;
   name: string;
-  sets: Array<{ id: SetId; items: ItemId[]; name: string }>;
+  sets: { id: SetId; items: ItemId[]; name: string }[];
 }
 export type NpcId = string & { readonly __brand: "NpcId" };
 export type QuestId = string & { readonly __brand: "QuestId" };
@@ -128,12 +128,12 @@ export interface TrackerData {
   items: Record<ItemId, { category: string; name: string; questGate?: QuestId[] }>;
 
   mines: {
-    biomes: Array<{
+    biomes: {
       endFloor: number;
       id: BiomeId;
       name: string;
       startFloor: number;
-    }>;
+    }[];
     maxFloors: number;
     spells: Record<SpellId, { name: string; questGate?: QuestId[] }>;
   };
@@ -160,7 +160,7 @@ export interface TrackerData {
 
   renown: {
     levelsPerRank: number;
-    ranks: Array<{ name: string }>;
+    ranks: { name: string }[];
   };
 
   skills: Record<SkillId, string>;

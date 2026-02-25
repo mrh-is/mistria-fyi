@@ -16,6 +16,7 @@ export default defineConfig(
   includeIgnoreFile(gitignorePath),
   js.configs.recommended,
   ...ts.configs.strictTypeChecked,
+  ...ts.configs.stylisticTypeChecked,
   ...svelte.configs.recommended,
   prettier,
   ...svelte.configs.prettier,

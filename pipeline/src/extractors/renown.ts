@@ -11,11 +11,11 @@ export function extractRenown(fiddle: FiddleData): TrackerData["renown"] {
   // Ranks come as a numbered-key object { "0": {...}, "1": {...} } from the parser
   // (because the flat keys are renown/ranks/0/name, renown/ranks/1/name, etc.)
   const rawRanks = renown.ranks as
-    | Array<Record<string, unknown>>
     | Record<string, Record<string, unknown>>
+    | Record<string, unknown>[]
     | undefined;
 
-  const ranks: Array<{ name: string }> = [];
+  const ranks: { name: string }[] = [];
   if (Array.isArray(rawRanks)) {
     for (const r of rawRanks) {
       ranks.push({ name: (r.name as string | undefined) ?? "Unknown" });

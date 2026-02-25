@@ -93,12 +93,15 @@
 
   <!-- Time restrictions -->
   {#each restrictions.filter((r) => r.type === "time" && r.hours) as r (JSON.stringify(r))}
-    <span
-      class="inline-flex items-center gap-0.5 rounded bg-muted px-1 py-px text-sm text-muted-foreground"
-    >
-      <Clock class="size-2.5" />
-      {timeRangeLabel(r.hours as [number, number])}
-    </span>
+    {@const hours = r.hours}
+    {#if hours}
+      <span
+        class="inline-flex items-center gap-0.5 rounded bg-muted px-1 py-px text-sm text-muted-foreground"
+      >
+        <Clock class="size-2.5" />
+        {timeRangeLabel(hours)}
+      </span>
+    {/if}
   {/each}
 
   <!-- Fish size (hideable for non-fish categories) -->

@@ -40,7 +40,7 @@ export function extractMines(fiddle: FiddleData): TrackerData["mines"] {
 }
 
 /** Convert array or numbered-key object to array of entries. */
-function toArray(data: unknown): Array<Record<string, unknown>> {
+function toArray(data: unknown): Record<string, unknown>[] {
   if (Array.isArray(data)) return data;
   if (data && typeof data === "object") {
     return Object.keys(data)
