@@ -34,7 +34,14 @@
 18. [Custom Icons: Platonic NPC & Blizzard](#18-custom-icons-platonic-npc--blizzard)
 19. ~~[Completed Quests Visibility](#19-completed-quests-visibility--done)~~ ✅
 20. [Global "Everything" View](#20-global-everything-view)
-21. [Questions for Review](#questions-for-review)
+21. [Animal Cosmetics: Drop Species Name in Pipeline](#21-animal-cosmetics-drop-species-name-in-pipeline)
+22. [Spoiler UI: Revisit Design](#22-spoiler-ui-revisit-design)
+23. [NPC Hearts: Center Content](#23-npc-hearts-center-content)
+24. [Reset Buttons: Mobile Overflow](#24-reset-buttons-mobile-overflow)
+25. [Toolbar: Extra Bottom Padding](#25-toolbar-extra-bottom-padding)
+26. [Stepper Component: Center Content](#26-stepper-component-center-content)
+27. [Item Row: Source Tap Affordance](#27-item-row-source-tap-affordance)
+28. [Questions for Review](#questions-for-review)
 
 ---
 
@@ -398,6 +405,75 @@ late-game gap analysis. This requires UX design work before implementation:
 - Performance implications of rendering all items in one list
 
 **Park this for a dedicated UX discussion.**
+
+---
+
+## 21. Animal Cosmetics: Drop Species Name in Pipeline
+
+All animal cosmetics include the species name in their display name (e.g., "Pink Duck Bow", "Spotted
+Cow Bell"). The species name is redundant because cosmetics are already grouped under their animal.
+The pipeline could strip the species prefix to produce cleaner labels (e.g., "Pink Bow", "Spotted
+Bell").
+
+**Where:** [animals.ts](pipeline/src/extractors/animals.ts) — cosmetic name extraction.
+
+---
+
+## 22. Spoiler UI: Revisit Design
+
+**Status: Needs UX review.**
+
+The current tier-based spoiler system (issue #12) works mechanically but the UI treatment may not be
+ideal. Revisit the blur/disabled approach and consider alternatives.
+
+---
+
+## 23. NPC Hearts: Center Content
+
+The NPC heart level display should be horizontally centered within its row. The stepper controls
+should remain full-width — only the heart content needs centering.
+
+**Where:** [npcs/+page.svelte](<src/routes/(category)/npcs/+page.svelte>) or the relevant NPC row
+component.
+
+---
+
+## 24. Reset Buttons: Mobile Overflow
+
+Reset buttons overflow the viewport width on mobile. They need to stack vertically, matching the
+layout pattern used by other cards on the settings page.
+
+**Where:** [settings/+page.svelte](src/routes/settings/+page.svelte) or the relevant reset card
+component.
+
+---
+
+## 25. Toolbar: Extra Bottom Padding
+
+The bottom toolbar has unnecessary extra bottom padding that should be removed.
+
+**Where:** [toolbar-footer.svelte](src/lib/components/toolbar-footer.svelte)
+
+---
+
+## 26. Stepper Component: Center Content
+
+The renown stepper has off-center content. This should be fixed at the component level — the stepper
+should always be full-width with its content centered. This will also fix any other steppers with the
+same issue (e.g., mines floor stepper).
+
+**Where:** [stepper.svelte](src/lib/components/stepper.svelte)
+
+---
+
+## 27. Item Row: Source Tap Affordance
+
+Item rows that have source details (expandable chevron) have no visual affordance indicating they are
+tappable. Users don't know they can tap to see sources. Needs a subtle visual hint — e.g., a chevron
+icon, background highlight, or other indicator.
+
+**Where:** Item row components across pages (e.g.,
+[CosmeticRow.svelte](<src/routes/(category)/cosmetics/CosmeticRow.svelte>), and similar).
 
 ---
 
