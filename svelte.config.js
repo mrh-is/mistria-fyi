@@ -4,7 +4,10 @@ import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
 const pkg = JSON.parse(readFileSync("package.json", "utf-8"));
-const commit = execSync("git rev-parse --short HEAD").toString().trim();
+const commit =
+  process.env.NODE_ENV === "production"
+    ? execSync("git rev-parse --short HEAD").toString().trim()
+    : "dev";
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {

@@ -1,3 +1,5 @@
+import type { Configuration } from "lint-staged";
+
 export default {
   "*.{js,ts,svelte}": (files) => {
     const eslintFiles = files.filter((f) => !f.includes("service-worker"));
@@ -7,4 +9,4 @@ export default {
     ];
   },
   "*.{json,md,css,html,yaml}": "prettier --write",
-};
+} as Configuration;
