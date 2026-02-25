@@ -28,9 +28,7 @@
 
   function isCategoryComplete(): boolean {
     return trackerData.museum.every((wing) =>
-      wing.sets
-        .flatMap((s) => s.items)
-        .every((id) => userState.state.completed.museum.has(id)),
+      wing.sets.flatMap((s) => s.items).every((id) => userState.state.completed.museum.has(id)),
     );
   }
 
@@ -46,7 +44,7 @@
 
   function matchesFilter(itemId: ItemId): boolean {
     if (!nameFilter) return true;
-    const name = trackerData.items[itemId]?.name;
+    const name = trackerData.items[itemId].name;
     return name ? name.toLowerCase().includes(nameFilter.toLowerCase()) : false;
   }
 
@@ -102,11 +100,11 @@
                 dimmed={isItemDimmed(itemId)}
                 {itemId}
                 leaving={recentlyCompleted.has(itemId)}
-                name={trackerData.items[itemId]?.name ?? itemId}
+                name={trackerData.items[itemId].name}
                 onToggle={() => {
                   userState.toggleMuseumItem(itemId);
                   const completed = userState.state.completed.museum.has(itemId);
-                  showUndoToast(trackerData.items[itemId]?.name ?? itemId, completed, () => {
+                  showUndoToast(trackerData.items[itemId].name, completed, () => {
                     userState.toggleMuseumItem(itemId);
                   });
                   if (completed) {

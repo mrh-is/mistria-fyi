@@ -113,7 +113,8 @@ export function extractAlmanac(fiddle: FiddleData): {
     }
 
     // Always register in items registry (for search, sources, etc.)
-    const categoryKey = assignedIdx !== undefined ? rawCategories[assignedIdx].key : item.topCategory;
+    const categoryKey =
+      assignedIdx !== undefined ? rawCategories[assignedIdx].key : item.topCategory;
     items[item.id] = { category: categoryKey, name: item.name };
 
     // Only add to almanac if it matches an almanac tag
@@ -168,30 +169,6 @@ export function extractAlmanac(fiddle: FiddleData): {
 }
 
 /**
- * Read almanac category definitions from the UI data.
- * Returns categories in display order (array index order).
- */
-function readAlmanacCategories(fiddle: FiddleData): RawAlmanacCategory[] {
-  const ui = fiddle.ui as Record<string, unknown> | undefined;
-  const menus = ui?.menus as Record<string, unknown> | undefined;
-  const subMenus = menus?.sub_menus as Record<string, unknown> | undefined;
-  const almanac = subMenus?.almanac as Record<string, unknown> | undefined;
-  const categories = almanac?.categories as Record<string, Record<string, unknown>> | undefined;
-  if (!categories) return [];
-
-  // Categories are stored as numbered keys (0, 1, 2, ...) — sort by number
-  const sorted = Object.entries(categories)
-    .sort(([a], [b]) => Number(a) - Number(b))
-    .map(([, cat]) => ({
-      key: cat.key as string,
-      local_key: cat.local_key as string | undefined,
-      tags: toStringArray(cat.tags),
-    }));
-
-  return sorted;
-}
-
-/**
  * Build a set of item IDs that are treasure chests (from the fish data).
  * These should be excluded from the almanac — they're loot containers, not collectibles.
  */
@@ -231,6 +208,30 @@ function collapseFurnitureColorways(
   }
 
   return result;
+}
+
+/**
+ * Read almanac category definitions from the UI data.
+ * Returns categories in display order (array index order).
+ */
+function readAlmanacCategories(fiddle: FiddleData): RawAlmanacCategory[] {
+  const ui = fiddle.ui as Record<string, unknown> | undefined;
+  const menus = ui?.menus as Record<string, unknown> | undefined;
+  const subMenus = menus?.sub_menus as Record<string, unknown> | undefined;
+  const almanac = subMenus?.almanac as Record<string, unknown> | undefined;
+  const categories = almanac?.categories as Record<string, Record<string, unknown>> | undefined;
+  if (!categories) return [];
+
+  // Categories are stored as numbered keys (0, 1, 2, ...) — sort by number
+  const sorted = Object.entries(categories)
+    .sort(([a], [b]) => Number(a) - Number(b))
+    .map(([, cat]) => ({
+      key: cat.key as string,
+      local_key: cat.local_key as string | undefined,
+      tags: toStringArray(cat.tags),
+    }));
+
+  return sorted;
 }
 
 function snakeToTitle(s: string): string {

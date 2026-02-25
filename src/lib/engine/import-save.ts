@@ -223,7 +223,7 @@ export function buildImportState(bundle: SaveBundle): {
     // Active quests → "obtained"
     for (const quest of bundle.quests.active_quests ?? []) {
       const id = quest.quest_name;
-      if (id && validQuests.has(id) && !questStates[id]) {
+      if (id && validQuests.has(id)) {
         questStates[id] = "obtained";
         counts.quests++;
       }

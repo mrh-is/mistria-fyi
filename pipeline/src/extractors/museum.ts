@@ -7,7 +7,7 @@ export function extractMuseum(fiddle: FiddleData): MuseumWing[] {
   if (!wings) return [];
 
   // Read wing ordering and per-wing set ordering from UI data
-  const { wingOrder, setOrders } = readMuseumOrdering(fiddle);
+  const { setOrders, wingOrder } = readMuseumOrdering(fiddle);
 
   // Use UI wing order if available, otherwise fall back to Object.keys
   const orderedWingIds = wingOrder.length > 0 ? wingOrder : Object.keys(wings);
@@ -63,7 +63,7 @@ function readMuseumOrdering(fiddle: FiddleData): {
   const menus = ui?.menus as Record<string, unknown> | undefined;
   const standardMenus = menus?.standard_menus as Record<string, unknown> | undefined;
   const museum = standardMenus?.museum as Record<string, unknown> | undefined;
-  if (!museum) return { wingOrder: [], setOrders: {} };
+  if (!museum) return { setOrders: {}, wingOrder: [] };
 
   // Wing order: museum.wings is { 0: { wing: "archaeology" }, 1: { wing: "fish" }, ... }
   const rawWings = museum.wings as Record<string, Record<string, unknown>> | undefined;
@@ -88,5 +88,5 @@ function readMuseumOrdering(fiddle: FiddleData): {
     }
   }
 
-  return { wingOrder, setOrders };
+  return { setOrders, wingOrder };
 }

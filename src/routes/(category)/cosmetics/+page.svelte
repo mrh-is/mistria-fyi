@@ -90,11 +90,7 @@
         })}
         {#if visibleCosmetics.length > 0}
           {#if subCategories.length > 1}
-            <ExpandableSection
-              count={completedCount}
-              name={subCategory}
-              total={cosmetics.length}
-            >
+            <ExpandableSection count={completedCount} name={subCategory} total={cosmetics.length}>
               {#each visibleCosmetics as cosmetic (cosmetic.id)}
                 {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
                 <CosmeticRow

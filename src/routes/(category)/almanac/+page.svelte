@@ -60,7 +60,6 @@
 
   function shouldShowItem(itemId: ItemId): boolean {
     const item = trackerData.items[itemId];
-    if (!item) return false;
     if (!matchesFilter(itemId, item.name)) return false;
     if (recentlyCompleted.has(itemId)) return true;
     const completed = userState.state.completed.almanac.has(itemId);
@@ -89,8 +88,12 @@
 
 {#each trackerData.almanac as cat (cat.id)}
   {@const catItemIds = Object.keys(cat.items) as ItemId[]}
-  {@const catCompleted = catItemIds.filter((id) => userState.state.completed.almanac.has(id)).length}
-  {@const catEntries = Object.entries(cat.items).sort(([, a], [, b]) => a.name.localeCompare(b.name))}
+  {@const catCompleted = catItemIds.filter((id) =>
+    userState.state.completed.almanac.has(id),
+  ).length}
+  {@const catEntries = Object.entries(cat.items).sort(([, a], [, b]) =>
+    a.name.localeCompare(b.name),
+  )}
   {@const filteredItems = catEntries.filter(([id]) => shouldShowItem(id as ItemId))}
   {#if filteredItems.length > 0}
     <ExpandableSection

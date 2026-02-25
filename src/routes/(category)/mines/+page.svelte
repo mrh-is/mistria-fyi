@@ -96,7 +96,7 @@
               celebrate();
             }
           }}
-          class="w-14 bg-transparent text-center text-xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          class="w-14 [appearance:textfield] bg-transparent text-center text-xl font-semibold [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         />
       </span>
     </Stepper>

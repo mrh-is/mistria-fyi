@@ -322,9 +322,7 @@ function fromBitfield(ordered: string[], bytes: Uint8Array): Set<string> {
 }
 
 function getAlmanacOrder(): ItemId[] {
-  return trackerData.almanac
-    .flatMap((cat) => Object.keys(cat.items))
-    .sort() as ItemId[];
+  return trackerData.almanac.flatMap((cat) => Object.keys(cat.items)).sort() as ItemId[];
 }
 
 function getAnimalCosmeticOrder(): Array<{ animalId: AnimalId; cosmeticId: CosmeticId }> {
