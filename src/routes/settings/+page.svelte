@@ -33,7 +33,7 @@
   class="sticky top-0 z-10 flex items-center gap-2 border-b border-border/50 bg-background px-4 pt-safe-or-4 pb-3"
 >
   <a
-    class="flex min-h-11 min-w-11 items-center justify-center text-muted-foreground hover:text-foreground"
+    class="-ml-3 flex min-h-11 min-w-11 items-center justify-center text-muted-foreground hover:text-foreground"
     href={resolve("/")}
     aria-label="Back to home"
   >
