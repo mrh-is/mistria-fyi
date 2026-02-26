@@ -10,9 +10,9 @@ export interface SearchResult {
   available: boolean;
   category: string;
   completed: boolean;
+  displayName?: string;
   id: string;
   name: string;
-  subcategory?: string;
 }
 
 const MAX_RESULTS = 50;
@@ -38,7 +38,6 @@ export function searchItems(
         completed: completed.almanac.has(id as never),
         id,
         name: item.name,
-        subcategory: item.category,
       });
     }
     if (results.length >= MAX_RESULTS) return rankResults(results, q);
@@ -62,14 +61,15 @@ export function searchItems(
   // Animal variants — not season-gated
   for (const [animalId, animal] of Object.entries(trackerData.animals)) {
     for (const [variantId, variant] of Object.entries(animal.variants)) {
-      if (variant.name.toLowerCase().includes(q)) {
+      const variantDisplayName = `${variant.name} ${animal.name}`;
+      if (variantDisplayName.toLowerCase().includes(q)) {
         results.push({
           available: true,
           category: "animals",
           completed: completed.animals[animalId].has(variantId as never),
+          displayName: variantDisplayName,
           id: variantId,
           name: variant.name,
-          subcategory: animal.name,
         });
       }
       if (results.length >= MAX_RESULTS) return rankResults(results, q);
@@ -79,14 +79,15 @@ export function searchItems(
   // Animal cosmetics — not season-gated
   for (const [animalId, animal] of Object.entries(trackerData.animals)) {
     for (const [cosmeticId, cosmetic] of Object.entries(animal.cosmetics)) {
-      if (cosmetic.name.toLowerCase().includes(q)) {
+      const cosmeticDisplayName = `${cosmetic.name} ${animal.name}`;
+      if (cosmeticDisplayName.toLowerCase().includes(q)) {
         results.push({
           available: true,
           category: "animals",
           completed: completed.animalCosmetics[animalId].has(cosmeticId as never),
+          displayName: cosmeticDisplayName,
           id: `${animalId}:${cosmeticId}`,
           name: cosmetic.name,
-          subcategory: animal.name,
         });
       }
       if (results.length >= MAX_RESULTS) return rankResults(results, q);
@@ -102,14 +103,13 @@ export function searchItems(
         completed: completed.cosmetics.has(id as never),
         id,
         name: cosmetic.name,
-        subcategory: cosmetic.slot,
       });
     }
     if (results.length >= MAX_RESULTS) return rankResults(results, q);
   }
 
   // Quests — not season-gated
-  for (const [questType, quests] of Object.entries(trackerData.quests)) {
+  for (const [, quests] of Object.entries(trackerData.quests)) {
     for (const [id, quest] of Object.entries(quests)) {
       if (quest.name.toLowerCase().includes(q)) {
         results.push({
@@ -118,7 +118,6 @@ export function searchItems(
           completed: completed.questStates[id] === "completed",
           id,
           name: quest.name,
-          subcategory: questType,
         });
       }
       if (results.length >= MAX_RESULTS) return rankResults(results, q);
@@ -131,10 +130,12 @@ export function searchItems(
 /** Prefix matches first, then available before unavailable, then alphabetical */
 function rankResults(results: SearchResult[], query: string): SearchResult[] {
   return results.sort((a, b) => {
-    const aPrefix = a.name.toLowerCase().startsWith(query) ? 0 : 1;
-    const bPrefix = b.name.toLowerCase().startsWith(query) ? 0 : 1;
+    const aName = (a.displayName ?? a.name).toLowerCase();
+    const bName = (b.displayName ?? b.name).toLowerCase();
+    const aPrefix = aName.startsWith(query) ? 0 : 1;
+    const bPrefix = bName.startsWith(query) ? 0 : 1;
     if (aPrefix !== bPrefix) return aPrefix - bPrefix;
     if (a.available !== b.available) return a.available ? -1 : 1;
-    return a.name.localeCompare(b.name);
+    return aName.localeCompare(bName);
   });
 }

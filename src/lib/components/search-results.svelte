@@ -100,12 +100,7 @@
           });
         }}
       />
-      <span class="min-w-0 flex-1 text-base">
-        {result.name}
-        {#if result.subcategory}
-          <span class="text-sm text-muted-foreground">{result.subcategory}</span>
-        {/if}
-      </span>
+      <span class="min-w-0 flex-1 text-base">{result.displayName ?? result.name}</span>
       {#if restrictions.length > 0}
         <RestrictionBadges compact {restrictions} />
       {/if}
