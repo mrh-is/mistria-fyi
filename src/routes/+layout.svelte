@@ -21,10 +21,9 @@
 </script>
 
 <div
-  class="mx-auto flex min-h-dvh max-w-lg flex-col bg-background"
-  style={hasToolbar
-    ? "padding-bottom: calc(56px + max(0.5rem, env(safe-area-inset-bottom)))"
-    : undefined}
+  class="mx-auto flex min-h-dvh max-w-lg flex-col bg-background {hasToolbar
+    ? 'pb-safe-offset-14'
+    : ''}"
 >
   {#key page.url.pathname}
     <div class="flex flex-1 animate-in flex-col duration-200 fade-in">
@@ -34,4 +33,4 @@
 </div>
 
 <ToolbarFooter />
-<Toaster position="bottom-center" offset="calc(56px + max(0.5rem, env(safe-area-inset-bottom)))" />
+<Toaster position="bottom-center" offset="calc(56px + env(safe-area-inset-bottom))" />
