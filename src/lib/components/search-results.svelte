@@ -100,12 +100,17 @@
           });
         }}
       />
-      <span class="min-w-0 flex-1 text-base">{result.name}</span>
+      <span class="min-w-0 flex-1 text-base">
+        {result.name}
+        {#if result.subcategory}
+          <span class="text-sm text-muted-foreground">{result.subcategory}</span>
+        {/if}
+      </span>
       {#if restrictions.length > 0}
         <RestrictionBadges compact {restrictions} />
       {/if}
       <span class="shrink-0 text-sm text-muted-foreground">
-        {result.subcategory ?? CATEGORY_LABELS[result.category] ?? result.category}
+        {CATEGORY_LABELS[result.category] ?? result.category}
       </span>
     </div>
   {/each}
