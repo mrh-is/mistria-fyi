@@ -8,7 +8,14 @@
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { SearchResult } from "$lib/engine/search.js";
-  import type { AnimalId, ItemId, NpcId, QuestId, VariantId } from "$lib/types/tracker-data.js";
+  import type {
+    AnimalId,
+    CosmeticId,
+    ItemId,
+    NpcId,
+    QuestId,
+    VariantId,
+  } from "$lib/types/tracker-data.js";
 
   let { query }: { query: string } = $props();
 
@@ -43,9 +50,14 @@
         userState.toggleAlmanacItem(result.id as never);
         break;
       case "animals": {
-        const animalId = variantToAnimal.get(result.id);
-        if (animalId) {
-          userState.toggleAnimalVariant(animalId as AnimalId, result.id as VariantId);
+        if (result.id.includes(":")) {
+          const [animalId, cosmeticId] = result.id.split(":");
+          userState.toggleAnimalCosmetic(animalId as AnimalId, cosmeticId as CosmeticId);
+        } else {
+          const animalId = variantToAnimal.get(result.id);
+          if (animalId) {
+            userState.toggleAnimalVariant(animalId as AnimalId, result.id as VariantId);
+          }
         }
         break;
       }

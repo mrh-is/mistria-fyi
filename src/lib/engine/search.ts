@@ -84,7 +84,7 @@ export function searchItems(
           available: true,
           category: "animals",
           completed: completed.animalCosmetics[animalId].has(cosmeticId as never),
-          id: cosmeticId,
+          id: `${animalId}:${cosmeticId}`,
           name: cosmetic.name,
           subcategory: animal.name,
         });
