@@ -8,7 +8,14 @@
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { SearchResult } from "$lib/engine/search.js";
-  import type { AnimalId, ItemId, NpcId, QuestId, VariantId } from "$lib/types/tracker-data.js";
+  import type {
+    AnimalId,
+    CosmeticId,
+    ItemId,
+    NpcId,
+    QuestId,
+    VariantId,
+  } from "$lib/types/tracker-data.js";
 
   let { query }: { query: string } = $props();
 
@@ -21,13 +28,6 @@
     npcs: "NPCs",
     quests: "Quests",
   };
-
-  // Build a reverse lookup: variantId → animalId (static, not reactive)
-  const variantToAnimal = new Map(
-    Object.entries(trackerData.animals).flatMap(([animalId, animal]) =>
-      Object.keys(animal.variants).map((variantId) => [variantId, animalId]),
-    ),
-  );
 
   function getRestrictions(result: SearchResult) {
     if (result.category === "almanac") {
@@ -43,9 +43,11 @@
         userState.toggleAlmanacItem(result.id as never);
         break;
       case "animals": {
-        const animalId = variantToAnimal.get(result.id);
-        if (animalId) {
-          userState.toggleAnimalVariant(animalId as AnimalId, result.id as VariantId);
+        const [animalId, subId] = result.id.split(":");
+        if (result.fullName) {
+          userState.toggleAnimalCosmetic(animalId as AnimalId, subId as CosmeticId);
+        } else {
+          userState.toggleAnimalVariant(animalId as AnimalId, subId as VariantId);
         }
         break;
       }
@@ -88,7 +90,12 @@
           });
         }}
       />
-      <span class="min-w-0 flex-1 text-base">{result.name}</span>
+      <span class="min-w-0 flex-1 text-base">
+        {result.fullName ?? result.name}
+        {#if result.detail}
+          <span class="text-sm text-muted-foreground">{result.detail}</span>
+        {/if}
+      </span>
       {#if restrictions.length > 0}
         <RestrictionBadges compact {restrictions} />
       {/if}

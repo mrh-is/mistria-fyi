@@ -50,13 +50,17 @@ export function extractAnimals(fiddle: FiddleData): TrackerData["animals"] {
       }
     }
 
-    // Extract cosmetics
-    const cosmetics = {} as Record<CosmeticId, { name: string }>;
+    // Extract cosmetics, stripping the species name from display names
+    const speciesName = (core?.name as string | undefined) ?? id;
+    const cosmetics = {} as Record<CosmeticId, { fullName: string; name: string }>;
     if (rawCosmetics) {
       for (const [cid, c] of Object.entries(rawCosmetics)) {
         if (cid === "default") continue;
+        const rawName = (c.name as string | undefined) ?? cid;
+        const stripped = rawName.replace(new RegExp(`\\b${speciesName}\\b\\s*`, "i"), "").trim();
         cosmetics[cid as CosmeticId] = {
-          name: (c.name as string | undefined) ?? cid,
+          fullName: rawName,
+          name: stripped || rawName,
         };
       }
     }
