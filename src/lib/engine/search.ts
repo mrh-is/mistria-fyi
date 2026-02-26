@@ -76,6 +76,23 @@ export function searchItems(
     }
   }
 
+  // Animal cosmetics — not season-gated
+  for (const [animalId, animal] of Object.entries(trackerData.animals)) {
+    for (const [cosmeticId, cosmetic] of Object.entries(animal.cosmetics)) {
+      if (cosmetic.name.toLowerCase().includes(q)) {
+        results.push({
+          available: true,
+          category: "animals",
+          completed: completed.animalCosmetics[animalId].has(cosmeticId as never),
+          id: cosmeticId,
+          name: cosmetic.name,
+          subcategory: animal.name,
+        });
+      }
+      if (results.length >= MAX_RESULTS) return rankResults(results, q);
+    }
+  }
+
   // Cosmetics — not season-gated
   for (const [id, cosmetic] of Object.entries(trackerData.cosmetics)) {
     if (cosmetic.name.toLowerCase().includes(q)) {
