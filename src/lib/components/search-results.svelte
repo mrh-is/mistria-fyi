@@ -90,7 +90,12 @@
           });
         }}
       />
-      <span class="min-w-0 flex-1 text-base">{result.fullName ?? result.name}</span>
+      <span class="min-w-0 flex-1 text-base">
+        {result.fullName ?? result.name}
+        {#if result.detail}
+          <span class="text-sm text-muted-foreground">{result.detail}</span>
+        {/if}
+      </span>
       {#if restrictions.length > 0}
         <RestrictionBadges compact {restrictions} />
       {/if}

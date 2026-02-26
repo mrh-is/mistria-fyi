@@ -10,6 +10,7 @@ export interface SearchResult {
   available: boolean;
   category: string;
   completed: boolean;
+  detail?: string;
   fullName?: string;
   id: string;
   name: string;
@@ -66,6 +67,7 @@ export function searchItems(
           available: true,
           category: "animals",
           completed: completed.animals[animalId].has(variantId as never),
+          detail: animal.name,
           id: `${animalId}:${variantId}`,
           name: variant.name,
         });
