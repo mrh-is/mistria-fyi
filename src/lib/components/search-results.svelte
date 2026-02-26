@@ -105,7 +105,7 @@
         <RestrictionBadges compact {restrictions} />
       {/if}
       <span class="shrink-0 text-sm text-muted-foreground">
-        {CATEGORY_LABELS[result.category] ?? result.category}
+        {result.subcategory ?? CATEGORY_LABELS[result.category] ?? result.category}
       </span>
     </div>
   {/each}
