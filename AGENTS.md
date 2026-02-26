@@ -24,6 +24,14 @@ yet.
   `pipeline/input/fiddle.json`)
 - No test suite configured yet. Vitest is installed but no tests exist.
 
+## Downloading Images from GitHub Issue Comments
+
+GitHub user-content URLs require auth — unauthenticated requests return a 400 error. Use:
+
+```sh
+curl -H "Authorization: token $(gh auth token)" -L <image-url> -o <output-path>
+```
+
 ## Architecture
 
 SvelteKit 2 + Svelte 5 (runes) app deployed to Cloudflare Pages. Mobile-first PWA tracker for Fields
