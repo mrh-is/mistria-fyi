@@ -167,7 +167,7 @@
 
     <!-- Floating card -->
     <div
-      class="fixed right-0 bottom-[calc(56px+max(0.5rem,env(safe-area-inset-bottom)))] left-0 z-30 mx-auto max-w-lg px-3"
+      class="fixed right-0 bottom-safe-offset-14 left-0 z-30 mx-auto max-w-lg px-3"
       transition:fly={{ duration: 150, y: 8 }}
     >
       <div class="rounded-xl border border-border bg-background p-4 shadow-lg">
@@ -313,11 +313,10 @@
 
   <!-- Toolbar bar -->
   <div
-    class="fixed right-0 bottom-0 left-0 z-20 mx-auto max-w-lg border-t border-border/50 bg-background"
-    style="padding-bottom: max(0.5rem, env(safe-area-inset-bottom))"
+    class="pb-safe-offset-1.5 fixed right-0 bottom-0 left-0 z-20 mx-auto max-w-lg border-t border-border/50 bg-background pt-1.5"
   >
     {#if toolbarState.searchOpen}
-      <div class="flex items-center gap-2 px-3 pt-2 pb-1">
+      <div class="flex items-center gap-2 px-3">
         <div class="relative flex-1">
           <Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -350,7 +349,7 @@
         </button>
       </div>
     {:else}
-      <div class="flex items-center px-3 pt-1.5 pb-1">
+      <div class="flex items-center px-3">
         <!-- Left slot: Search (world-state pages only) -->
         <div class="flex flex-1 justify-start">
           {#if pathname === "/" || pathname === "/museum" || pathname === "/almanac"}

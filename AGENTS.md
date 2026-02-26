@@ -8,7 +8,8 @@
 Work is tracked via [GitHub Issues](https://github.com/mrh-is/harvest-helper/issues). To pick up a
 task:
 
-1. Read the issue (`gh issue view <number>` or via GitHub API/MCP).
+1. Read the issue **and its comments** (`gh issue view <number> --comments` or via GitHub API/MCP).
+   Comments often contain screenshots, clarifications, and additional requirements.
 2. Create a branch: `<issue-number>-<short-description>`.
 3. Do the work. Run `bun run check` and `bun run lint` before committing.
 4. Open a PR that references the issue (`Closes #N` in the PR body).
