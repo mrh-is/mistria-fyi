@@ -98,7 +98,7 @@ export interface TrackerData {
   animals: Record<
     AnimalId,
     {
-      cosmetics: Record<CosmeticId, { displayName: string; name: string }>;
+      cosmetics: Record<CosmeticId, { fullName: string; name: string }>;
       name: string;
       questGate?: QuestId[];
       variants: Record<

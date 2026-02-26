@@ -10,7 +10,7 @@ export interface SearchResult {
   available: boolean;
   category: string;
   completed: boolean;
-  displayName?: string;
+  fullName?: string;
   id: string;
   name: string;
 }
@@ -66,7 +66,7 @@ export function searchItems(
           available: true,
           category: "animals",
           completed: completed.animals[animalId].has(variantId as never),
-          id: variantId,
+          id: `${animalId}:${variantId}`,
           name: variant.name,
         });
       }
@@ -77,12 +77,12 @@ export function searchItems(
   // Animal cosmetics — not season-gated
   for (const [animalId, animal] of Object.entries(trackerData.animals)) {
     for (const [cosmeticId, cosmetic] of Object.entries(animal.cosmetics)) {
-      if (cosmetic.displayName.toLowerCase().includes(q)) {
+      if (cosmetic.fullName.toLowerCase().includes(q)) {
         results.push({
           available: true,
           category: "animals",
           completed: completed.animalCosmetics[animalId].has(cosmeticId as never),
-          displayName: cosmetic.displayName,
+          fullName: cosmetic.fullName,
           id: `${animalId}:${cosmeticId}`,
           name: cosmetic.name,
         });
@@ -127,8 +127,8 @@ export function searchItems(
 /** Prefix matches first, then available before unavailable, then alphabetical */
 function rankResults(results: SearchResult[], query: string): SearchResult[] {
   return results.sort((a, b) => {
-    const aName = (a.displayName ?? a.name).toLowerCase();
-    const bName = (b.displayName ?? b.name).toLowerCase();
+    const aName = (a.fullName ?? a.name).toLowerCase();
+    const bName = (b.fullName ?? b.name).toLowerCase();
     const aPrefix = aName.startsWith(query) ? 0 : 1;
     const bPrefix = bName.startsWith(query) ? 0 : 1;
     if (aPrefix !== bPrefix) return aPrefix - bPrefix;

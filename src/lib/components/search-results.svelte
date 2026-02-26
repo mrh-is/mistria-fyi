@@ -29,13 +29,6 @@
     quests: "Quests",
   };
 
-  // Build a reverse lookup: variantId → animalId (static, not reactive)
-  const variantToAnimal = new Map(
-    Object.entries(trackerData.animals).flatMap(([animalId, animal]) =>
-      Object.keys(animal.variants).map((variantId) => [variantId, animalId]),
-    ),
-  );
-
   function getRestrictions(result: SearchResult) {
     if (result.category === "almanac") {
       const sources = trackerData.sources[result.id as ItemId] ?? [];
@@ -50,14 +43,11 @@
         userState.toggleAlmanacItem(result.id as never);
         break;
       case "animals": {
-        if (result.id.includes(":")) {
-          const [animalId, cosmeticId] = result.id.split(":");
-          userState.toggleAnimalCosmetic(animalId as AnimalId, cosmeticId as CosmeticId);
+        const [animalId, subId] = result.id.split(":");
+        if (result.fullName) {
+          userState.toggleAnimalCosmetic(animalId as AnimalId, subId as CosmeticId);
         } else {
-          const animalId = variantToAnimal.get(result.id);
-          if (animalId) {
-            userState.toggleAnimalVariant(animalId as AnimalId, result.id as VariantId);
-          }
+          userState.toggleAnimalVariant(animalId as AnimalId, subId as VariantId);
         }
         break;
       }
@@ -100,7 +90,7 @@
           });
         }}
       />
-      <span class="min-w-0 flex-1 text-base">{result.displayName ?? result.name}</span>
+      <span class="min-w-0 flex-1 text-base">{result.fullName ?? result.name}</span>
       {#if restrictions.length > 0}
         <RestrictionBadges compact {restrictions} />
       {/if}
