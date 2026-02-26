@@ -27,7 +27,7 @@
   style={color ? `--header-color: var(--${color})` : undefined}
 >
   <a
-    class="flex min-h-11 min-w-11 items-center justify-center text-muted-foreground hover:text-foreground"
+    class="-ml-3 flex min-h-11 min-w-11 items-center justify-center text-muted-foreground hover:text-foreground"
     href={resolve("/")}
     aria-label="Back to home"
   >

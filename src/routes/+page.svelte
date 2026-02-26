@@ -18,7 +18,7 @@
     <div class="flex items-center gap-2">
       <OverallProgress />
       <a
-        class="flex min-h-11 min-w-11 items-center justify-center text-muted-foreground hover:text-foreground"
+        class="-mr-3 flex min-h-11 min-w-11 items-center justify-center text-muted-foreground hover:text-foreground"
         href={resolve("/settings")}
         aria-label="Settings"
       >

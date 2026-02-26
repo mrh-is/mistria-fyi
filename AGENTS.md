@@ -12,7 +12,7 @@ task:
    Comments often contain screenshots, clarifications, and additional requirements.
 2. Create a branch: `<issue-number>-<short-description>`.
 3. Do the work. Run `bun run check` and `bun run lint` before committing.
-4. Open a PR that references the issue (`Closes #N` in the PR body).
+4. Commit, push the branch, and open a PR that references the issue (`Closes #N` in the PR body).
 
 Issues labeled `ready` are available. Issues labeled `blocked` or `discussion` are not actionable
 yet.
