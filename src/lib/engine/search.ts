@@ -61,13 +61,11 @@ export function searchItems(
   // Animal variants — not season-gated
   for (const [animalId, animal] of Object.entries(trackerData.animals)) {
     for (const [variantId, variant] of Object.entries(animal.variants)) {
-      const variantDisplayName = `${variant.name} ${animal.name}`;
-      if (variantDisplayName.toLowerCase().includes(q)) {
+      if (variant.name.toLowerCase().includes(q)) {
         results.push({
           available: true,
           category: "animals",
           completed: completed.animals[animalId].has(variantId as never),
-          displayName: variantDisplayName,
           id: variantId,
           name: variant.name,
         });
@@ -79,13 +77,12 @@ export function searchItems(
   // Animal cosmetics — not season-gated
   for (const [animalId, animal] of Object.entries(trackerData.animals)) {
     for (const [cosmeticId, cosmetic] of Object.entries(animal.cosmetics)) {
-      const cosmeticDisplayName = `${cosmetic.name} ${animal.name}`;
-      if (cosmeticDisplayName.toLowerCase().includes(q)) {
+      if (cosmetic.displayName.toLowerCase().includes(q)) {
         results.push({
           available: true,
           category: "animals",
           completed: completed.animalCosmetics[animalId].has(cosmeticId as never),
-          displayName: cosmeticDisplayName,
+          displayName: cosmetic.displayName,
           id: `${animalId}:${cosmeticId}`,
           name: cosmetic.name,
         });
