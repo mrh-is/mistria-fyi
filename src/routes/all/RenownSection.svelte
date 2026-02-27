@@ -59,6 +59,27 @@
     <SectionHeader category={CATEGORY_BY_KEY.renown} {progress} />
     <div class="flex items-center gap-2 rounded-md px-2 {isMaxed ? 'opacity-40' : ''}">
       <span class="min-w-0 flex-1 text-base font-medium">{currentRankName}</span>
+      <!-- Partially-filled rank star -->
+      <div class="relative size-4 shrink-0" aria-hidden="true">
+        <Star
+          class="absolute inset-0 size-4"
+          style="color: {currentRankColor}"
+          strokeWidth={1.5}
+        />
+        {#if fillPct > 0}
+          <div
+            class="absolute inset-0 overflow-hidden"
+            style="clip-path: inset(0 {100 - fillPct}% 0 0)"
+          >
+            <Star
+              class="size-4"
+              style="color: {currentRankColor}"
+              fill={currentRankColor}
+              strokeWidth={1.5}
+            />
+          </div>
+        {/if}
+      </div>
       <div class="w-32 shrink-0">
         <Stepper
           size="sm"
@@ -73,26 +94,7 @@
             setRenownWithCelebration(level + 1);
           }}
         >
-          <div class="relative size-4 shrink-0" aria-hidden="true">
-            <Star
-              class="absolute inset-0 size-4"
-              style="color: {currentRankColor}"
-              strokeWidth={1.5}
-            />
-            {#if fillPct > 0}
-              <div
-                class="absolute inset-0 overflow-hidden"
-                style="clip-path: inset(0 {100 - fillPct}% 0 0)"
-              >
-                <Star
-                  class="size-4"
-                  style="color: {currentRankColor}"
-                  fill={currentRankColor}
-                  strokeWidth={1.5}
-                />
-              </div>
-            {/if}
-          </div>
+          <span class="text-sm text-muted-foreground tabular-nums">{level}/{maxLevel}</span>
         </Stepper>
       </div>
     </div>
