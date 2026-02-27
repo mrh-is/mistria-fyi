@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ChevronRight } from "@lucide/svelte";
+  import { untrack } from "svelte";
   import { slide } from "svelte/transition";
 
   import type { Snippet } from "svelte";
@@ -7,18 +8,20 @@
   let {
     children,
     count,
+    defaultOpen = false,
     forceOpen = false,
     name,
     total,
   }: {
     children: Snippet;
     count?: number;
+    defaultOpen?: boolean;
     forceOpen?: boolean;
     name: string;
     total?: number;
   } = $props();
 
-  let expanded = $state(false);
+  let expanded = $state(untrack(() => defaultOpen));
   let isOpen = $derived(expanded || forceOpen);
 </script>
 

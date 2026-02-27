@@ -11,6 +11,7 @@
     incrementLabel?: string;
     onDecrement: () => void;
     onIncrement: () => void;
+    size?: "default" | "sm";
   }
 
   const {
@@ -21,19 +22,26 @@
     incrementLabel = "Increase",
     onDecrement,
     onIncrement,
+    size = "default",
   }: Props = $props();
 </script>
 
-<div class="flex w-full items-center gap-2">
+<div class="flex items-center {size === 'sm' ? 'gap-1' : 'w-full gap-2'}">
   <button
-    class="group -mx-1.5 flex size-11 shrink-0 touch-manipulation items-center justify-center disabled:opacity-50"
+    class="group flex shrink-0 touch-manipulation items-center justify-center disabled:opacity-50 {size ===
+    'sm'
+      ? 'size-9'
+      : '-mx-1.5 size-11'}"
     type="button"
     disabled={decrementDisabled}
     aria-label={decrementLabel}
     onclick={onDecrement}
   >
     <span
-      class="flex size-8 items-center justify-center rounded-md border border-border transition-colors group-hover:bg-accent group-hover:text-foreground"
+      class="flex items-center justify-center rounded-md border border-border transition-colors group-hover:bg-accent group-hover:text-foreground {size ===
+      'sm'
+        ? 'size-7'
+        : 'size-8'}"
     >
       <Minus class="size-4" />
     </span>
@@ -46,14 +54,20 @@
   {/if}
 
   <button
-    class="group -mx-1.5 flex size-11 shrink-0 touch-manipulation items-center justify-center disabled:opacity-50"
+    class="group flex shrink-0 touch-manipulation items-center justify-center disabled:opacity-50 {size ===
+    'sm'
+      ? 'size-9'
+      : '-mx-1.5 size-11'}"
     type="button"
     disabled={incrementDisabled}
     aria-label={incrementLabel}
     onclick={onIncrement}
   >
     <span
-      class="flex size-8 items-center justify-center rounded-md border border-border transition-colors group-hover:bg-accent group-hover:text-foreground"
+      class="flex items-center justify-center rounded-md border border-border transition-colors group-hover:bg-accent group-hover:text-foreground {size ===
+      'sm'
+        ? 'size-7'
+        : 'size-8'}"
     >
       <Plus class="size-4" />
     </span>

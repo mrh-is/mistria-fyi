@@ -110,7 +110,7 @@
   });
 
   // ── Route awareness ───────────────────────────────────────────────────────
-  const WORLD_STATE_ROUTES = new Set(["/", "/almanac", "/animals", "/museum"]);
+  const WORLD_STATE_ROUTES = new Set(["/", "/all", "/almanac", "/animals", "/museum"]);
 
   let pathname = $derived(page.url.pathname);
   let hidden = $derived(pathname === "/settings");
