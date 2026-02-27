@@ -58,9 +58,10 @@
   <div class="flex flex-col gap-1">
     <SectionHeader category={CATEGORY_BY_KEY.renown} {progress} />
     <div class="flex items-center gap-2 rounded-md px-2 {isMaxed ? 'opacity-40' : ''}">
-      <span class="min-w-0 flex-1 text-base font-medium">{currentRankName}</span>
-      <!-- Partially-filled rank star -->
-      <div class="relative size-4 shrink-0" aria-hidden="true">
+      <div class="flex min-w-0 flex-1 items-center gap-1.5">
+        <span class="text-base font-medium">{currentRankName}</span>
+        <!-- Partially-filled rank star -->
+        <div class="relative size-4 shrink-0" aria-hidden="true">
         <Star
           class="absolute inset-0 size-4"
           style="color: {currentRankColor}"
@@ -79,6 +80,7 @@
             />
           </div>
         {/if}
+        </div>
       </div>
       <div class="w-32 shrink-0">
         <Stepper
