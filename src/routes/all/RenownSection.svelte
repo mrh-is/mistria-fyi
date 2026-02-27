@@ -62,24 +62,24 @@
         <span class="text-base font-medium">{currentRankName}</span>
         <!-- Partially-filled rank star -->
         <div class="relative size-4 shrink-0" aria-hidden="true">
-        <Star
-          class="absolute inset-0 size-4"
-          style="color: {currentRankColor}"
-          strokeWidth={1.5}
-        />
-        {#if fillPct > 0}
-          <div
-            class="absolute inset-0 overflow-hidden"
-            style="clip-path: inset(0 {100 - fillPct}% 0 0)"
-          >
-            <Star
-              class="size-4"
-              style="color: {currentRankColor}"
-              fill={currentRankColor}
-              strokeWidth={1.5}
-            />
-          </div>
-        {/if}
+          <Star
+            class="absolute inset-0 size-4"
+            style="color: {currentRankColor}"
+            strokeWidth={1.5}
+          />
+          {#if fillPct > 0}
+            <div
+              class="absolute inset-0 overflow-hidden"
+              style="clip-path: inset(0 {100 - fillPct}% 0 0)"
+            >
+              <Star
+                class="size-4"
+                style="color: {currentRankColor}"
+                fill={currentRankColor}
+                strokeWidth={1.5}
+              />
+            </div>
+          {/if}
         </div>
       </div>
       <div class="w-32 shrink-0">

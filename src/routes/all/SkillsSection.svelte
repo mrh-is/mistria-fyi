@@ -56,8 +56,12 @@
                 incrementDisabled={level >= MAX_SKILL_LEVEL}
                 decrementLabel="Decrease {skill.name} level"
                 incrementLabel="Increase {skill.name} level"
-                onDecrement={() => { setLevelWithCelebration(skill.id, level - 1); }}
-                onIncrement={() => { setLevelWithCelebration(skill.id, level + 1); }}
+                onDecrement={() => {
+                  setLevelWithCelebration(skill.id, level - 1);
+                }}
+                onIncrement={() => {
+                  setLevelWithCelebration(skill.id, level + 1);
+                }}
               >
                 <span class="text-sm text-muted-foreground tabular-nums"
                   >{level}/{MAX_SKILL_LEVEL}</span

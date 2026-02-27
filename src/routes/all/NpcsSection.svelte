@@ -94,8 +94,12 @@
                 incrementDisabled={level >= MAX_NPC_LEVEL}
                 decrementLabel="Decrease {npc.name} hearts"
                 incrementLabel="Increase {npc.name} hearts"
-                onDecrement={() => { setNpcLevelWithCelebration(npc.id, level - 1); }}
-                onIncrement={() => { setNpcLevelWithCelebration(npc.id, level + 1); }}
+                onDecrement={() => {
+                  setNpcLevelWithCelebration(npc.id, level - 1);
+                }}
+                onIncrement={() => {
+                  setNpcLevelWithCelebration(npc.id, level + 1);
+                }}
               >
                 <StatusIcon
                   class="size-4 transition-colors duration-200 {level > 0
