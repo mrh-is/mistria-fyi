@@ -1,6 +1,43 @@
 import type { AvailabilityMode } from "$lib/stores/user-state.svelte.js";
 import type { ItemId, Restriction, Season, Source, Weather } from "$lib/types/tracker-data.js";
 
+// ─── Composite display helpers ───────────────────────────────────────
+
+/**
+ * Whether an item row should be visually dimmed — incomplete but unavailable
+ * in the current season/weather when viewing "everything".
+ */
+export function isItemDimmed(
+  itemId: ItemId,
+  isCompleted: boolean,
+  sourcesMap: Partial<Record<ItemId, Source[]>>,
+  worldState: WorldState,
+  mode: AvailabilityMode,
+): boolean {
+  if (isCompleted) return false;
+  if (mode !== "everything") return false;
+  return !isItemAvailable(itemId, sourcesMap, worldState, "available");
+}
+
+/**
+ * Whether an item should be visible in a list given filter state.
+ * Handles the recentlyCompleted linger, showCompleted toggle, and availability.
+ */
+export function shouldShowItem(
+  itemId: ItemId,
+  isCompleted: boolean,
+  sourcesMap: Partial<Record<ItemId, Source[]>>,
+  worldState: WorldState,
+  mode: AvailabilityMode,
+  showCompleted: boolean,
+  recentlyCompleted?: ReadonlySet<ItemId>,
+): boolean {
+  if (recentlyCompleted?.has(itemId)) return true;
+  if (isCompleted && !showCompleted) return false;
+  if (isCompleted) return true;
+  return isItemAvailable(itemId, sourcesMap, worldState, mode);
+}
+
 // ─── Restriction types by taxonomy ─────────────────────────────────
 
 const TIMELY_TYPES = new Set(["season", "time", "weather"]);
