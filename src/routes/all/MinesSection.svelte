@@ -18,6 +18,6 @@
 {#if progress.completed < progress.total || userState.state.showCompleted}
   <div class="flex flex-col gap-1">
     <SectionHeader category={CATEGORY_BY_KEY.mines} {progress} />
-    <MinesContent />
+    <MinesContent compact={true} />
   </div>
 {/if}

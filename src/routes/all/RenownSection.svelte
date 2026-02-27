@@ -39,21 +39,23 @@
     <SectionHeader category={CATEGORY_BY_KEY.renown} {progress} />
     <div class="flex items-center gap-2 rounded-md px-2 {isMaxed ? 'opacity-40' : ''}">
       <span class="min-w-0 flex-1 text-sm text-muted-foreground">{currentRankName}</span>
-      <Stepper
-        size="sm"
-        decrementDisabled={level <= 0}
-        incrementDisabled={level >= maxLevel}
-        decrementLabel="Decrease renown"
-        incrementLabel="Increase renown"
-        onDecrement={() => {
-          setRenownWithCelebration(level - 1);
-        }}
-        onIncrement={() => {
-          setRenownWithCelebration(level + 1);
-        }}
-      >
-        <span class="text-sm text-muted-foreground tabular-nums">{level}/{maxLevel}</span>
-      </Stepper>
+      <div class="w-32 shrink-0">
+        <Stepper
+          size="sm"
+          decrementDisabled={level <= 0}
+          incrementDisabled={level >= maxLevel}
+          decrementLabel="Decrease renown"
+          incrementLabel="Increase renown"
+          onDecrement={() => {
+            setRenownWithCelebration(level - 1);
+          }}
+          onIncrement={() => {
+            setRenownWithCelebration(level + 1);
+          }}
+        >
+          <span class="text-sm text-muted-foreground tabular-nums">{level}/{maxLevel}</span>
+        </Stepper>
+      </div>
     </div>
   </div>
 {/if}

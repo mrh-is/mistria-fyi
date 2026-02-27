@@ -9,7 +9,8 @@
 
   import type { SpellId } from "$lib/types/tracker-data.js";
 
-  const { defaultOpen = false }: { defaultOpen?: boolean } = $props();
+  const { compact = false, defaultOpen = false }: { compact?: boolean; defaultOpen?: boolean } =
+    $props();
 
   function isMinesComplete(): boolean {
     const allSpells = Object.keys(trackerData.mines.spells).every((id) =>
@@ -40,60 +41,90 @@
   );
 </script>
 
-<ExpandableSection
-  count={userState.state.completed.mines.floor}
-  name="Floor Progress"
-  {defaultOpen}
-  total={trackerData.mines.maxFloors}
->
-  <div class="flex flex-col gap-2 py-2">
-    <Stepper
-      decrementDisabled={userState.state.completed.mines.floor <= 0}
-      incrementDisabled={userState.state.completed.mines.floor >= trackerData.mines.maxFloors}
-      decrementLabel="Go up one floor"
-      incrementLabel="Go down one floor"
-      onDecrement={() => {
-        userState.setMineFloor(userState.state.completed.mines.floor - 1);
-      }}
-      onIncrement={() => {
-        userState.setMineFloor(userState.state.completed.mines.floor + 1);
-        if (isMinesComplete()) {
-          celebrateCategory();
-        } else if (userState.state.completed.mines.floor >= trackerData.mines.maxFloors) {
-          celebrate();
-        }
-      }}
-    >
-      <span class="inline-flex w-full items-center justify-center gap-1 text-xl font-semibold">
-        Floor
-        <input
-          type="number"
-          inputmode="numeric"
-          min="0"
-          max={trackerData.mines.maxFloors}
-          value={userState.state.completed.mines.floor}
-          onchange={(e) => {
-            const v = Math.max(
-              0,
-              Math.min(trackerData.mines.maxFloors, Number(e.currentTarget.value)),
-            );
-            userState.setMineFloor(v);
-            if (isMinesComplete()) {
-              celebrateCategory();
-            } else if (v >= trackerData.mines.maxFloors) {
-              celebrate();
-            }
-          }}
-          class="w-14 [appearance:textfield] bg-transparent text-center text-xl font-semibold [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-        />
-      </span>
-    </Stepper>
-    <span class="text-sm text-muted-foreground">
-      {currentBiome().name}
-      (floors {currentBiome().startFloor}–{currentBiome().endFloor})
-    </span>
+{#if compact}
+  <div class="flex items-center gap-2 rounded-md px-2">
+    <span class="min-w-0 flex-1 text-base font-medium">Floor Progress</span>
+    <div class="w-32 shrink-0">
+      <Stepper
+        size="sm"
+        decrementDisabled={userState.state.completed.mines.floor <= 0}
+        incrementDisabled={userState.state.completed.mines.floor >= trackerData.mines.maxFloors}
+        decrementLabel="Go up one floor"
+        incrementLabel="Go down one floor"
+        onDecrement={() => {
+          userState.setMineFloor(userState.state.completed.mines.floor - 1);
+        }}
+        onIncrement={() => {
+          userState.setMineFloor(userState.state.completed.mines.floor + 1);
+          if (isMinesComplete()) {
+            celebrateCategory();
+          } else if (userState.state.completed.mines.floor >= trackerData.mines.maxFloors) {
+            celebrate();
+          }
+        }}
+      >
+        <span class="text-sm text-muted-foreground tabular-nums">
+          {userState.state.completed.mines.floor}/{trackerData.mines.maxFloors}
+        </span>
+      </Stepper>
+    </div>
   </div>
-</ExpandableSection>
+{:else}
+  <ExpandableSection
+    count={userState.state.completed.mines.floor}
+    name="Floor Progress"
+    {defaultOpen}
+    total={trackerData.mines.maxFloors}
+  >
+    <div class="flex flex-col gap-2 py-2">
+      <Stepper
+        decrementDisabled={userState.state.completed.mines.floor <= 0}
+        incrementDisabled={userState.state.completed.mines.floor >= trackerData.mines.maxFloors}
+        decrementLabel="Go up one floor"
+        incrementLabel="Go down one floor"
+        onDecrement={() => {
+          userState.setMineFloor(userState.state.completed.mines.floor - 1);
+        }}
+        onIncrement={() => {
+          userState.setMineFloor(userState.state.completed.mines.floor + 1);
+          if (isMinesComplete()) {
+            celebrateCategory();
+          } else if (userState.state.completed.mines.floor >= trackerData.mines.maxFloors) {
+            celebrate();
+          }
+        }}
+      >
+        <span class="inline-flex w-full items-center justify-center gap-1 text-xl font-semibold">
+          Floor
+          <input
+            type="number"
+            inputmode="numeric"
+            min="0"
+            max={trackerData.mines.maxFloors}
+            value={userState.state.completed.mines.floor}
+            onchange={(e) => {
+              const v = Math.max(
+                0,
+                Math.min(trackerData.mines.maxFloors, Number(e.currentTarget.value)),
+              );
+              userState.setMineFloor(v);
+              if (isMinesComplete()) {
+                celebrateCategory();
+              } else if (v >= trackerData.mines.maxFloors) {
+                celebrate();
+              }
+            }}
+            class="w-14 [appearance:textfield] bg-transparent text-center text-xl font-semibold [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          />
+        </span>
+      </Stepper>
+      <span class="text-sm text-muted-foreground">
+        {currentBiome().name}
+        (floors {currentBiome().startFloor}–{currentBiome().endFloor})
+      </span>
+    </div>
+  </ExpandableSection>
+{/if}
 
 <ExpandableSection
   count={userState.state.completed.mines.spells.size}

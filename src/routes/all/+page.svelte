@@ -20,11 +20,14 @@
 
   $effect(() => {
     if (!headerEl) return;
+    const el = headerEl;
     const ro = new ResizeObserver(() => {
-      headerH = headerEl.offsetHeight;
+      headerH = el.offsetHeight;
     });
     ro.observe(headerEl);
-    return () => { ro.disconnect(); };
+    return () => {
+      ro.disconnect();
+    };
   });
 
   let progress = $derived(
