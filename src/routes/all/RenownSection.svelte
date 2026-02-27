@@ -37,9 +37,10 @@
 {#if progress.completed < progress.total || userState.state.showCompleted}
   <div class="flex flex-col gap-1">
     <SectionHeader category={CATEGORY_BY_KEY.renown} {progress} />
-    <div class="rounded-md px-2 py-1.5 {isMaxed ? 'opacity-40' : ''}">
-      <div class="mb-1 text-sm text-muted-foreground">{currentRankName}</div>
+    <div class="flex items-center gap-2 rounded-md px-2 {isMaxed ? 'opacity-40' : ''}">
+      <span class="min-w-0 flex-1 text-sm text-muted-foreground">{currentRankName}</span>
       <Stepper
+        size="sm"
         decrementDisabled={level <= 0}
         incrementDisabled={level >= maxLevel}
         decrementLabel="Decrease renown"

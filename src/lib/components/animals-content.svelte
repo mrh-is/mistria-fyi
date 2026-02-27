@@ -266,7 +266,7 @@
                   }
                 }}
               />
-              <span class="text-base">{cosmetic.name}</span>
+              <span class="min-w-0 flex-1 text-base">{cosmetic.name}</span>
             </div>
           {/each}
         </ExpandableSection>

@@ -18,9 +18,10 @@
     }),
   );
 
-  let remaining = $derived(
-    Object.values(allProgress).reduce((sum, p) => sum + (p.total - p.completed), 0),
+  let totalCompleted = $derived(
+    Object.values(allProgress).reduce((sum, p) => sum + p.completed, 0),
   );
+  let grandTotal = $derived(Object.values(allProgress).reduce((sum, p) => sum + p.total, 0));
 </script>
 
 <div class="flex flex-col gap-3 p-4 pt-safe-or-4">
@@ -52,7 +53,7 @@
     >
       <Layers class="size-4 shrink-0 text-muted-foreground" />
       <span class="flex-1 text-sm font-medium text-muted-foreground">Everything</span>
-      <span class="text-sm text-muted-foreground">{remaining} remaining</span>
+      <span class="text-sm text-muted-foreground">{totalCompleted}/{grandTotal}</span>
       <ChevronRight class="size-4 shrink-0 text-muted-foreground/50" />
     </a>
   {/if}

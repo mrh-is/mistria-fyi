@@ -59,18 +59,17 @@
         {@const maxed = level >= MAX_NPC_LEVEL}
         {#if maxed ? userState.state.showCompleted : true}
           {@const BdayIcon = SEASON_ICON[npc.birthday.season]}
-          <div class="flex flex-col gap-1 rounded-md px-2 py-1.5 {maxed ? 'opacity-40' : ''}">
-            <div class="flex items-center gap-2">
-              <span class="min-w-0 flex-1 text-base font-medium">{npc.name}</span>
-              <span class="flex items-center gap-0.5 text-sm text-muted-foreground">
-                <BdayIcon
-                  class="size-3 {npc.birthday.season === 'fall' ? '-scale-y-100 rotate-90' : ''}"
-                  strokeWidth={npc.birthday.season === "summer" ? 2.5 : undefined}
-                />
-                {npc.birthday.day}
-              </span>
-            </div>
+          <div class="flex items-center gap-2 rounded-md px-2 {maxed ? 'opacity-40' : ''}">
+            <span class="min-w-0 flex-1 text-base font-medium">{npc.name}</span>
+            <span class="flex shrink-0 items-center gap-0.5 text-sm text-muted-foreground">
+              <BdayIcon
+                class="size-3 {npc.birthday.season === 'fall' ? '-scale-y-100 rotate-90' : ''}"
+                strokeWidth={npc.birthday.season === "summer" ? 2.5 : undefined}
+              />
+              {npc.birthday.day}
+            </span>
             <Stepper
+              size="sm"
               decrementDisabled={level <= 0}
               incrementDisabled={level >= MAX_NPC_LEVEL}
               decrementLabel="Decrease {npc.name} hearts"

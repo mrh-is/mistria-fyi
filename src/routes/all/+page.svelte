@@ -15,6 +15,18 @@
   import RenownSection from "./RenownSection.svelte";
   import SkillsSection from "./SkillsSection.svelte";
 
+  let headerEl = $state<HTMLDivElement | null>(null);
+  let headerH = $state(0);
+
+  $effect(() => {
+    if (!headerEl) return;
+    const ro = new ResizeObserver(() => {
+      headerH = headerEl.offsetHeight;
+    });
+    ro.observe(headerEl);
+    return () => { ro.disconnect(); };
+  });
+
   let progress = $derived(
     getAllProgress({
       availabilityMode: userState.state.availabilityMode,
@@ -31,6 +43,7 @@
 </script>
 
 <div
+  bind:this={headerEl}
   class="sticky top-0 z-10 -mx-4 flex items-center gap-2 border-b border-border/50 bg-background px-4 pt-safe-or-4 pb-3"
 >
   <a
@@ -48,7 +61,7 @@
   </span>
 </div>
 
-<div class="flex flex-col gap-6 px-4 pb-4">
+<div class="flex flex-col gap-6 px-4 pb-4" style="--section-top: {headerH}px">
   <MuseumSection />
   <AlmanacSection />
   <AnimalsSection />

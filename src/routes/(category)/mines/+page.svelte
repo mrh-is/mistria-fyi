@@ -16,4 +16,4 @@
 
 <CategoryHeader category={CATEGORY_BY_KEY.mines} {progress} />
 
-<MinesContent />
+<MinesContent defaultOpen={true} />
