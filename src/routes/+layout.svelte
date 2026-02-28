@@ -34,5 +34,5 @@
   {/key}
 </div>
 
-<ToolbarFooter />
+<ToolbarFooter hidden={!hasToolbar} />
 <Toaster position="bottom-center" offset="calc(56px + env(safe-area-inset-bottom))" />

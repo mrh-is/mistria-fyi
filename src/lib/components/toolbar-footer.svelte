@@ -35,6 +35,8 @@
 
   type ActivePanel = "filters" | "world" | null;
 
+  let { hidden = false }: { hidden?: boolean } = $props();
+
   const seasons: Season[] = ["spring", "summer", "fall", "winter"];
   const SEASON_ICON: Record<Season, Component<{ class?: string; strokeWidth?: number }>> = {
     fall: Leaf,
@@ -113,7 +115,6 @@
   const WORLD_STATE_ROUTES = new Set(["/", "/all", "/almanac", "/animals", "/museum"]);
 
   let pathname = $derived(page.url.pathname);
-  let hidden = $derived(pathname === "/settings" || pathname === "/privacy");
   let showWorldState = $derived(WORLD_STATE_ROUTES.has(pathname));
 
   // ── Panel state ───────────────────────────────────────────────────────────
