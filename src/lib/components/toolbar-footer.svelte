@@ -313,7 +313,7 @@
 
   <!-- Toolbar bar -->
   <div
-    class="pb-safe-offset-1.5 fixed right-0 bottom-0 left-0 z-20 mx-auto max-w-lg border-t border-border/50 bg-background pt-1.5"
+    class="pb-safe-offset-2 fixed right-0 bottom-0 left-0 z-20 mx-auto max-w-lg border-t border-border/50 bg-background pt-1.5"
   >
     {#if toolbarState.searchOpen}
       <div class="flex items-center gap-2 px-3">
