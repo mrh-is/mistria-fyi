@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { Eye, EyeOff } from "@lucide/svelte";
-
   import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
   import * as Card from "$lib/components/ui/card/index.js";
   import { Switch } from "$lib/components/ui/switch/index.js";
@@ -54,13 +52,12 @@
   </Card.Header>
   <Card.Content>
     <label class="flex cursor-pointer items-center gap-3 text-sm">
-      {#if userState.state.showSpoilers}
-        <Eye class="size-4 shrink-0 text-muted-foreground" />
-      {:else}
-        <EyeOff class="size-4 shrink-0 text-muted-foreground" />
-      {/if}
-      <span class="flex-1">Show all spoilers</span>
-      <Switch bind:checked={switchChecked} onCheckedChange={handleSpoilersChange} />
+      <Switch
+        class="h-5 w-9 rounded-md px-px *:data-[slot=switch-thumb]:size-4 *:data-[slot=switch-thumb]:rounded-sm data-[state=checked]:bg-primary *:data-[slot=switch-thumb]:data-[state=checked]:translate-x-full data-[state=unchecked]:bg-input"
+        bind:checked={switchChecked}
+        onCheckedChange={handleSpoilersChange}
+      />
+      Show all spoilers
     </label>
   </Card.Content>
 </Card.Root>
