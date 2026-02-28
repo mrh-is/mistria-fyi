@@ -60,21 +60,21 @@
   {@const visibleWingItems = wingItems.filter(isItemVisible)}
   {#if visibleWingItems.length > 0}
     <ExpandableSection
-      count={wingItems.filter((id) => userState.state.completed.museum.has(id)).length}
+      count={visibleWingItems.filter((id) => userState.state.completed.museum.has(id)).length}
       forceOpen={!!nameFilter}
       name={wing.name}
-      total={wingItems.length}
+      total={visibleWingItems.length}
     >
       {#each wing.sets as set (set.id)}
         {@const visibleSetItems = set.items.filter(isItemVisible)}
         {#if visibleSetItems.length > 0}
           <ExpandableSection
-            count={set.items.filter((id) => userState.state.completed.museum.has(id)).length}
+            count={visibleSetItems.filter((id) => userState.state.completed.museum.has(id)).length}
             forceOpen={!!nameFilter}
             name={set.name}
-            total={set.items.length}
+            total={visibleSetItems.length}
           >
-            {#each set.items.filter(isItemVisible) as itemId (itemId)}
+            {#each visibleSetItems as itemId (itemId)}
               <ItemRow
                 completed={userState.state.completed.museum.has(itemId)}
                 dimmed={isItemDimmed(

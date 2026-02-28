@@ -39,6 +39,13 @@
       .map(([id, spell]) => ({ id: id as SpellId, name: spell.name }))
       .sort((a, b) => a.name.localeCompare(b.name)),
   );
+
+  let visibleSpells = $derived(
+    spells.filter((spell) => {
+      const completed = userState.state.completed.mines.spells.has(spell.id);
+      return completed ? userState.state.showCompleted : true;
+    }),
+  );
 </script>
 
 {#if compact}
@@ -127,38 +134,36 @@
 {/if}
 
 <ExpandableSection
-  count={userState.state.completed.mines.spells.size}
+  count={visibleSpells.filter((s) => userState.state.completed.mines.spells.has(s.id)).length}
   name="Spells"
   {defaultOpen}
-  total={spells.length}
+  total={visibleSpells.length}
 >
-  {#each spells as spell (spell.id)}
+  {#each visibleSpells as spell (spell.id)}
     {@const completed = userState.state.completed.mines.spells.has(spell.id)}
-    {#if completed ? userState.state.showCompleted : true}
-      <div
-        class="flex items-center gap-2 rounded-md px-2 py-1 {completed
-          ? 'line-through opacity-40'
-          : ''}"
-      >
-        <Checkbox
-          checked={completed}
-          onCheckedChange={() => {
+    <div
+      class="flex items-center gap-2 rounded-md px-2 py-1 {completed
+        ? 'line-through opacity-40'
+        : ''}"
+    >
+      <Checkbox
+        checked={completed}
+        onCheckedChange={() => {
+          userState.toggleSpell(spell.id);
+          const completed = userState.state.completed.mines.spells.has(spell.id);
+          showUndoToast(spell.name, completed, () => {
             userState.toggleSpell(spell.id);
-            const completed = userState.state.completed.mines.spells.has(spell.id);
-            showUndoToast(spell.name, completed, () => {
-              userState.toggleSpell(spell.id);
-            });
-            if (completed) {
-              if (isMinesComplete()) {
-                celebrateCategory();
-              } else if (allSpellsComplete()) {
-                celebrate();
-              }
+          });
+          if (completed) {
+            if (isMinesComplete()) {
+              celebrateCategory();
+            } else if (allSpellsComplete()) {
+              celebrate();
             }
-          }}
-        />
-        <span class="text-base">{spell.name}</span>
-      </div>
-    {/if}
+          }
+        }}
+      />
+      <span class="text-base">{spell.name}</span>
+    </div>
   {/each}
 </ExpandableSection>
