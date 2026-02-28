@@ -9,6 +9,7 @@
   import BackupCard from "./backup-card.svelte";
   import DangerZoneCard from "./danger-zone-card.svelte";
   import ImportCard from "./import-card.svelte";
+  import SpoilersCard from "./spoilers-card.svelte";
   import ThemeCard from "./theme-card.svelte";
   import TransferCard from "./transfer-card.svelte";
 
@@ -46,6 +47,7 @@
   <section class="flex flex-col gap-4">
     <h2 class="text-xs font-semibold tracking-widest text-muted-foreground uppercase">Interface</h2>
     <ThemeCard />
+    <SpoilersCard />
   </section>
 
   <div class="border-t border-border/50"></div>
