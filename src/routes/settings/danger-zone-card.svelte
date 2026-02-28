@@ -1,15 +1,13 @@
 <script lang="ts">
   import { RotateCcw, Trash2 } from "@lucide/svelte";
 
+  import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
   import * as Card from "$lib/components/ui/card/index.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
-  let showResetConfirm = $state(false);
-
   function handleReset() {
     userState.resetAll();
-    showResetConfirm = false;
   }
 </script>
 
@@ -18,26 +16,33 @@
     <Card.Title class="text-red-600 dark:text-red-400">Danger Zone</Card.Title>
   </Card.Header>
   <Card.Content>
-    {#if showResetConfirm}
-      <p class="mb-3 text-base">Are you sure? This will erase all your tracked progress.</p>
-      <div class="flex w-full flex-col gap-2">
-        <Button variant="destructive" onclick={handleReset}>
-          <Trash2 />
-          Yes, reset everything
-        </Button>
-        <Button variant="outline" onclick={() => (showResetConfirm = false)}>Never mind</Button>
-      </div>
-    {:else}
-      <Button
-        class="w-full"
-        variant="outline"
-        onclick={() => {
-          showResetConfirm = true;
-        }}
-      >
-        <RotateCcw />
-        Reset all progress
-      </Button>
-    {/if}
+    <AlertDialog.Root>
+      <AlertDialog.Trigger>
+        {#snippet child({ props })}
+          <Button class="w-full" variant="outline" {...props}>
+            <RotateCcw />
+            Reset all progress
+          </Button>
+        {/snippet}
+      </AlertDialog.Trigger>
+      <AlertDialog.Content>
+        <AlertDialog.Header>
+          <AlertDialog.Title>Reset all progress?</AlertDialog.Title>
+          <AlertDialog.Description>
+            This will erase all your tracked progress. This cannot be undone.
+          </AlertDialog.Description>
+        </AlertDialog.Header>
+        <AlertDialog.Footer>
+          <AlertDialog.Cancel>Never mind</AlertDialog.Cancel>
+          <AlertDialog.Action
+            class="bg-destructive text-white hover:bg-destructive/90"
+            onclick={handleReset}
+          >
+            <Trash2 />
+            Yes, reset everything
+          </AlertDialog.Action>
+        </AlertDialog.Footer>
+      </AlertDialog.Content>
+    </AlertDialog.Root>
   </Card.Content>
 </Card.Root>
