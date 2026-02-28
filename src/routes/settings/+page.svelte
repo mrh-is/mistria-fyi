@@ -75,5 +75,8 @@
   <div class="text-center text-sm text-muted-foreground">
     <p>Game data: Fields of Mistria v{trackerData.version}</p>
     <p>Harvest Helper v{version}</p>
+    <a href={resolve("/privacy")} class="mt-1 inline-block underline hover:text-foreground">
+      Privacy Policy
+    </a>
   </div>
 </div>

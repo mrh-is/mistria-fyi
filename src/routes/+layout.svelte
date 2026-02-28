@@ -17,7 +17,9 @@
     toolbarState.closeSearch();
   });
 
-  let hasToolbar = $derived(page.url.pathname !== "/settings");
+  let hasToolbar = $derived(
+    page.url.pathname !== "/settings" && page.url.pathname !== "/privacy",
+  );
 </script>
 
 <div
