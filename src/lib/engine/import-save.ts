@@ -250,6 +250,10 @@ export function buildImportState(bundle: SaveBundle): {
   };
 }
 
+// ─── .sav file unpacking (client-side) ──────────────────────────────
+
+export { parseSavFile as unpackSavFile } from "./parse-sav.js";
+
 // ─── Parse save files from a FileList ───────────────────────────────
 
 const SAVE_FILES = new Set(["gamedata.json", "player.json", "quests.json"]);
