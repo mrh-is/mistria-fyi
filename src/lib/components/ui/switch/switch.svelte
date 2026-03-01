@@ -1,13 +1,17 @@
 <script lang="ts">
   import { Switch as SwitchPrimitive } from "bits-ui";
+  import type { Component } from "svelte";
   import { cn, type WithoutChildrenOrChild } from "$lib/utils.js";
 
   let {
     ref = $bindable(null),
     class: className,
     checked = $bindable(false),
+    thumbIcon,
     ...restProps
-  }: WithoutChildrenOrChild<SwitchPrimitive.RootProps> = $props();
+  }: WithoutChildrenOrChild<SwitchPrimitive.RootProps> & {
+    thumbIcon?: Component<{ class?: string }>;
+  } = $props();
 </script>
 
 <SwitchPrimitive.Root
@@ -23,7 +27,12 @@
   <SwitchPrimitive.Thumb
     data-slot="switch-thumb"
     class={cn(
-      "pointer-events-none block size-4 rounded-full bg-background ring-0 transition-transform data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=unchecked]:translate-x-0 dark:data-[state=checked]:bg-primary-foreground dark:data-[state=unchecked]:bg-foreground",
+      "pointer-events-none flex size-4 items-center justify-center rounded-full bg-background ring-0 transition-transform data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=unchecked]:translate-x-0 dark:data-[state=checked]:bg-primary-foreground dark:data-[state=unchecked]:bg-foreground",
     )}
-  />
+  >
+    {#if thumbIcon}
+      {@const Icon = thumbIcon}
+      <Icon class="size-3 text-muted-foreground" />
+    {/if}
+  </SwitchPrimitive.Thumb>
 </SwitchPrimitive.Root>

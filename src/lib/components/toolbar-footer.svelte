@@ -20,8 +20,8 @@
   import { fade, fly } from "svelte/transition";
 
   import { page } from "$app/state";
+  import BlockySwitch from "$lib/components/blocky-switch.svelte";
   import { Input } from "$lib/components/ui/input/index.js";
-  import { Switch } from "$lib/components/ui/switch/index.js";
   import * as ToggleGroup from "$lib/components/ui/toggle-group/index.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -152,9 +152,7 @@
 
   // ── Filter active state ───────────────────────────────────────────────────
   let filtersActive = $derived(
-    userState.state.availabilityMode !== "available" ||
-      userState.state.showCompleted ||
-      userState.state.showSpoilers,
+    userState.state.availabilityMode !== "available" || userState.state.showCompleted,
   );
 </script>
 
@@ -272,33 +270,20 @@
                 </ToggleGroup.Root>
               </div>
             {/if}
-            <label class="flex cursor-pointer items-center gap-3 text-sm">
-              <Switch
-                class="h-5 w-9 rounded-md px-px *:data-[slot=switch-thumb]:size-4 *:data-[slot=switch-thumb]:rounded-sm data-[state=checked]:bg-primary *:data-[slot=switch-thumb]:data-[state=checked]:translate-x-full data-[state=unchecked]:bg-input"
-                checked={userState.state.showCompleted}
-                onCheckedChange={() => {
-                  userState.toggleShowCompleted();
-                }}
-              />
+            <BlockySwitch
+              checked={userState.state.showCompleted}
+              onCheckedChange={() => {
+                userState.toggleShowCompleted();
+              }}
+            >
               Show completed items
-            </label>
-            <label class="flex cursor-pointer items-center gap-3 text-sm">
-              <Switch
-                class="h-5 w-9 rounded-md px-px *:data-[slot=switch-thumb]:size-4 *:data-[slot=switch-thumb]:rounded-sm data-[state=checked]:bg-primary *:data-[slot=switch-thumb]:data-[state=checked]:translate-x-full data-[state=unchecked]:bg-input"
-                checked={userState.state.showSpoilers}
-                onCheckedChange={() => {
-                  userState.toggleShowSpoilers();
-                }}
-              />
-              Show all spoilers
-            </label>
+            </BlockySwitch>
             {#if filtersActive}
               <button
                 class="w-full rounded-md border border-border py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                 onclick={() => {
                   userState.setAvailabilityMode("available");
                   if (userState.state.showCompleted) userState.toggleShowCompleted();
-                  if (userState.state.showSpoilers) userState.toggleShowSpoilers();
                 }}
                 type="button"
               >
