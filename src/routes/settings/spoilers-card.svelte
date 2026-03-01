@@ -1,7 +1,9 @@
 <script lang="ts">
+  import { Eye, EyeOff } from "@lucide/svelte";
+
+  import BlockySwitch from "$lib/components/blocky-switch.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
   import * as Card from "$lib/components/ui/card/index.js";
-  import { Switch } from "$lib/components/ui/switch/index.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   let showConfirm = $state(false);
@@ -51,13 +53,13 @@
     <Card.Title>Spoilers</Card.Title>
   </Card.Header>
   <Card.Content>
-    <label class="flex cursor-pointer items-center gap-3 text-sm">
-      <Switch
-        class="h-5 w-9 rounded-md px-px *:data-[slot=switch-thumb]:size-4 *:data-[slot=switch-thumb]:rounded-sm data-[state=checked]:bg-primary *:data-[slot=switch-thumb]:data-[state=checked]:translate-x-full data-[state=unchecked]:bg-input"
-        bind:checked={switchChecked}
-        onCheckedChange={handleSpoilersChange}
-      />
+    <BlockySwitch
+      bind:checked={switchChecked}
+      onCheckedChange={handleSpoilersChange}
+      checkedIcon={Eye}
+      uncheckedIcon={EyeOff}
+    >
       Show all spoilers
-    </label>
+    </BlockySwitch>
   </Card.Content>
 </Card.Root>
