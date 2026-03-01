@@ -69,7 +69,12 @@
         })}
         {#if visibleCosmetics.length > 0}
           {#if subCategories.length > 1}
-            <ExpandableSection count={visibleCosmetics.filter((c) => userState.state.completed.cosmetics.has(c.id)).length} name={subCategory} total={visibleCosmetics.length}>
+            <ExpandableSection
+              count={visibleCosmetics.filter((c) => userState.state.completed.cosmetics.has(c.id))
+                .length}
+              name={subCategory}
+              total={visibleCosmetics.length}
+            >
               {#each visibleCosmetics as cosmetic (cosmetic.id)}
                 {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
                 <CosmeticRow

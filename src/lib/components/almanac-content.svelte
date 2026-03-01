@@ -69,7 +69,8 @@
   })}
   {#if filteredItems.length > 0}
     <ExpandableSection
-      count={filteredItems.filter(([id]) => userState.state.completed.almanac.has(id as ItemId)).length}
+      count={filteredItems.filter(([id]) => userState.state.completed.almanac.has(id as ItemId))
+        .length}
       forceOpen={!!nameFilter}
       name={cat.name}
       total={filteredItems.length}

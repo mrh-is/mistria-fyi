@@ -76,8 +76,7 @@
     animals.reduce(
       (sum, a) =>
         sum +
-        Object.keys(a.cosmetics).filter((cid) => isCosmeticVisible(a.id, cid as CosmeticId))
-          .length,
+        Object.keys(a.cosmetics).filter((cid) => isCosmeticVisible(a.id, cid as CosmeticId)).length,
       0,
     ),
   );
@@ -167,7 +166,11 @@
 </script>
 
 {#if animals.some( (a) => Object.keys(a.variants).some( (vid) => isVariantVisible(a.id, vid as VariantId), ), )}
-  <ExpandableSection count={filteredTotalVariantsCompleted} name="Color Variants" total={filteredTotalVariants}>
+  <ExpandableSection
+    count={filteredTotalVariantsCompleted}
+    name="Color Variants"
+    total={filteredTotalVariants}
+  >
     {#each animals as animal (animal.id)}
       {@const variantEntries = sortedVariants(animal.variants)}
       {@const visibleVariants = variantEntries.filter(([vid]) =>
@@ -175,8 +178,11 @@
       )}
       {#if visibleVariants.length > 0}
         <ExpandableSection
-          count={visibleVariants.filter(([vid]) =>
-            (userState.state.completed.animals[animal.id] as Set<VariantId> | undefined)?.has(vid as VariantId) ?? false,
+          count={visibleVariants.filter(
+            ([vid]) =>
+              (userState.state.completed.animals[animal.id] as Set<VariantId> | undefined)?.has(
+                vid as VariantId,
+              ) ?? false,
           ).length}
           name={animal.name}
           total={visibleVariants.length}
@@ -246,7 +252,11 @@
 {/if}
 
 {#if animals.some( (a) => Object.keys(a.cosmetics).some( (cid) => isCosmeticVisible(a.id, cid as CosmeticId), ), )}
-  <ExpandableSection count={filteredTotalCosmeticsCompleted} name="Cosmetics" total={filteredTotalCosmetics}>
+  <ExpandableSection
+    count={filteredTotalCosmeticsCompleted}
+    name="Cosmetics"
+    total={filteredTotalCosmetics}
+  >
     {#each animals as animal (animal.id)}
       {@const cosmeticEntries = Object.entries(animal.cosmetics)}
       {@const visibleCosmetics = cosmeticEntries.filter(([cid]) =>
@@ -254,8 +264,11 @@
       )}
       {#if visibleCosmetics.length > 0}
         <ExpandableSection
-          count={visibleCosmetics.filter(([cid]) =>
-            (userState.state.completed.animalCosmetics[animal.id] as Set<CosmeticId> | undefined)?.has(cid as CosmeticId) ?? false,
+          count={visibleCosmetics.filter(
+            ([cid]) =>
+              (
+                userState.state.completed.animalCosmetics[animal.id] as Set<CosmeticId> | undefined
+              )?.has(cid as CosmeticId) ?? false,
           ).length}
           name={animal.name}
           total={visibleCosmetics.length}
