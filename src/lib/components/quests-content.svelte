@@ -59,16 +59,15 @@
     }))
     .sort((a, b) => a.displayName.localeCompare(b.displayName))}
   {@const duplicateNames = findDuplicateNames(quests)}
-  {@const completedCount = quests.filter((q) => getQuestState(q.id) === "completed").length}
   {@const visibleQuests = quests.filter((q) => {
     const done = getQuestState(q.id) === "completed";
     return done ? userState.state.showCompleted : true;
   })}
   {#if visibleQuests.length > 0}
     <ExpandableSection
-      count={completedCount}
+      count={visibleQuests.filter((q) => getQuestState(q.id) === "completed").length}
       name={typeLabels[questType] ?? questType}
-      total={quests.length}
+      total={visibleQuests.length}
     >
       {#each visibleQuests as quest (quest.id)}
         {@const questState = getQuestState(quest.id)}

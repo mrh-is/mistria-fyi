@@ -52,30 +52,29 @@
 
 {#each groups() as { slot, subCategories } (slot)}
   {@const allInSlot = subCategories.flatMap(([, items]) => items)}
-  {@const slotCompletedCount = allInSlot.filter((c) =>
-    userState.state.completed.cosmetics.has(c.id),
-  ).length}
   {@const visibleInSlot = allInSlot.filter((c) => {
     const done = userState.state.completed.cosmetics.has(c.id);
     return done ? userState.state.showCompleted : true;
   })}
   {#if visibleInSlot.length > 0}
     <ExpandableSection
-      count={slotCompletedCount}
+      count={visibleInSlot.filter((c) => userState.state.completed.cosmetics.has(c.id)).length}
       name={slot.charAt(0).toUpperCase() + slot.slice(1)}
-      total={allInSlot.length}
+      total={visibleInSlot.length}
     >
       {#each subCategories as [subCategory, cosmetics] (subCategory)}
-        {@const completedCount = cosmetics.filter((c) =>
-          userState.state.completed.cosmetics.has(c.id),
-        ).length}
         {@const visibleCosmetics = cosmetics.filter((c) => {
           const done = userState.state.completed.cosmetics.has(c.id);
           return done ? userState.state.showCompleted : true;
         })}
         {#if visibleCosmetics.length > 0}
           {#if subCategories.length > 1}
-            <ExpandableSection count={completedCount} name={subCategory} total={cosmetics.length}>
+            <ExpandableSection
+              count={visibleCosmetics.filter((c) => userState.state.completed.cosmetics.has(c.id))
+                .length}
+              name={subCategory}
+              total={visibleCosmetics.length}
+            >
               {#each visibleCosmetics as cosmetic (cosmetic.id)}
                 {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
                 <CosmeticRow

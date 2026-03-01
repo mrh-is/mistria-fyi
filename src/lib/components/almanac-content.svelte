@@ -52,9 +52,6 @@
 
 {#each trackerData.almanac as cat (cat.id)}
   {@const catItemIds = Object.keys(cat.items) as ItemId[]}
-  {@const catCompleted = catItemIds.filter((id) =>
-    userState.state.completed.almanac.has(id),
-  ).length}
   {@const catEntries = Object.entries(cat.items).sort(([, a], [, b]) =>
     a.name.localeCompare(b.name),
   )}
@@ -72,10 +69,11 @@
   })}
   {#if filteredItems.length > 0}
     <ExpandableSection
-      count={catCompleted}
+      count={filteredItems.filter(([id]) => userState.state.completed.almanac.has(id as ItemId))
+        .length}
       forceOpen={!!nameFilter}
       name={cat.name}
-      total={catItemIds.length}
+      total={filteredItems.length}
     >
       {@const showAll = expandedSections[cat.id] ?? false}
       {@const displayItems = showAll ? filteredItems : filteredItems.slice(0, SECTION_LIMIT)}
