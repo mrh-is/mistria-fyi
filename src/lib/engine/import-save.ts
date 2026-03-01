@@ -250,7 +250,11 @@ export function buildImportState(bundle: SaveBundle): {
   };
 }
 
-// ─── Parse save files from a FileList ───────────────────────────────
+// ─── .sav file unpacking (client-side) ──────────────────────────────
+
+export { parseSavFile as unpackSavFile } from "./parse-sav.js";
+
+// ─── Parse save files ----------------───────────────────────────────
 
 const SAVE_FILES = new Set(["gamedata.json", "player.json", "quests.json"]);
 
@@ -274,7 +278,7 @@ export function parsePlayerSave(jsonString: string): {
 
 // ─── Legacy single-file parse (kept for backward compatibility) ─────
 
-export async function parseSaveFiles(files: FileList): Promise<{
+export async function parseSaveFiles(files: File[]): Promise<{
   bundle?: SaveBundle;
   error?: string;
 }> {

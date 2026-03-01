@@ -29,7 +29,6 @@ export default defineConfig(
       parserOptions: {
         extraFileExtensions: [".svelte"],
         projectService: true,
-        tsconfigRootDir: fileURLToPath(new URL(".", import.meta.url)),
       },
     },
   },
@@ -160,6 +159,8 @@ export default defineConfig(
       "@typescript-eslint/no-unsafe-return": "off",
       "@typescript-eslint/prefer-nullish-coalescing": "off",
       "perfectionist/sort-imports": "off",
+      "perfectionist/sort-named-exports": "off",
+      "perfectionist/sort-object-types": "off",
       "perfectionist/sort-objects": "off",
       "svelte/no-navigation-without-resolve": "off",
     },

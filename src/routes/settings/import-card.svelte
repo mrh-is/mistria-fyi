@@ -1,10 +1,12 @@
 <script lang="ts">
-  import { FileUp, Monitor, Upload } from "@lucide/svelte";
+  import { Check, Copy, FolderOpen, Monitor } from "@lucide/svelte";
 
   import { Button } from "$lib/components/ui/button/index.js";
   import * as Card from "$lib/components/ui/card/index.js";
+  import * as Dialog from "$lib/components/ui/dialog/index.js";
   import { Separator } from "$lib/components/ui/separator/index.js";
-  import { buildImportState, parseSaveFiles } from "$lib/engine/import-save.js";
+  import { hasSavedFileHandle, pickFiles } from "$lib/engine/file-picker.js";
+  import { buildImportState, parseSaveFiles, unpackSavFile } from "$lib/engine/import-save.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import type { ImportResult } from "$lib/engine/import-save.js";
@@ -19,32 +21,73 @@
   // ── Import state ──
   let importResult = $state<ImportResult | null>(null);
   let importError = $state<null | string>(null);
+  let savFallback = $state(false);
   let importing = $state(false);
+  let importStatus = $state("");
   let filesUsed = $state<string[]>([]);
 
-  // ── File input ref ──
-  let fileInput = $state<HTMLInputElement | null>(null);
+  // ── File handle persistence (File System Access API) ──
+  let fileHandle = $derived(hasSavedFileHandle());
 
-  function handleFileSelect() {
-    fileInput?.click();
+  // ── Save location dialog ──
+  const SAV_PATH = String.raw`%LOCALAPPDATA%\FieldsOfMistria\saves`;
+  let copied = $state(false);
+
+  function copyPath() {
+    void navigator.clipboard.writeText(SAV_PATH).then(() => {
+      copied = true;
+      setTimeout(() => {
+        copied = false;
+      }, 2000);
+    });
   }
 
-  async function handleFileChange(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const files = input.files;
+  async function handleFileSelect() {
+    try {
+      const files = await pickFiles();
+      await handleFileChange(files);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      importError = `Failed to access file picker: ${message}`;
+    }
+  }
+
+  function isSavFile(file: File): boolean {
+    return file.name.toLowerCase().endsWith(".sav");
+  }
+
+  async function handleFileChange(files: File[] | null) {
     if (!files || files.length === 0) return;
 
     importing = true;
     importResult = null;
     importError = null;
+    savFallback = false;
+    importStatus = "";
     filesUsed = [];
 
     try {
-      const { bundle, error } = await parseSaveFiles(files);
+      // Check if user selected a .sav file
+      const savFile = Array.from(files).find(isSavFile);
 
-      if (error || !bundle) {
-        importError = error ?? "Failed to parse save files.";
-        return;
+      let bundle;
+      if (savFile) {
+        importStatus = "Unpacking save file\u2026";
+        try {
+          bundle = await unpackSavFile(savFile);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Unknown error";
+          importError = message;
+          savFallback = true;
+          return;
+        }
+      } else {
+        const result = await parseSaveFiles(files);
+        if (result.error || !result.bundle) {
+          importError = result.error ?? "Failed to parse save files.";
+          return;
+        }
+        bundle = result.bundle;
       }
 
       // Track which files were loaded
@@ -52,6 +95,7 @@
       if (bundle.gamedata) filesUsed.push("gamedata.json");
       if (bundle.quests) filesUsed.push("quests.json");
 
+      importStatus = "Importing\u2026";
       const { completed, result } = buildImportState(bundle);
       const merged = userState.mergeFromSave(completed);
 
@@ -63,7 +107,7 @@
       importError = "An unexpected error occurred while importing.";
     } finally {
       importing = false;
-      input.value = "";
+      importStatus = "";
     }
   }
 
@@ -87,41 +131,102 @@
 <Card.Root>
   <Card.Header>
     <Card.Title class="flex items-center gap-2">
-      <Upload class="size-4" />
+      <FolderOpen class="size-4" />
       Import from Save File
     </Card.Title>
     <Card.Description>
-      Import your extracted Fields of Mistria save files to auto-populate progress. Use <a
-        href="https://github.com/NPC-Studio/vaultc"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="underline">vaultc</a
-      >
-      to extract your <code>.sav</code> file, then select the resulting JSON files below.
+      Import your Fields of Mistria save to auto-populate your progress. Processed entirely in your
+      browser — your save file is never uploaded anywhere.
     </Card.Description>
   </Card.Header>
   <Card.Content>
-    <input
-      bind:this={fileInput}
-      accept=".json"
-      class="hidden"
-      type="file"
-      multiple
-      onchange={handleFileChange}
-    />
     <Button class="w-full" disabled={importing} variant="outline" onclick={handleFileSelect}>
-      <FileUp />
-      {importing ? "Importing..." : "Select save files"}
+      <FolderOpen />
+      {#if importing}
+        {importStatus || "Importing\u2026"}
+      {:else if fileHandle}
+        Re-import from saved file
+      {:else}
+        Open save file
+      {/if}
     </Button>
+    {#if fileHandle && !importing && !importResult}
+      <p class="mt-2 text-center text-xs text-muted-foreground">
+        File handle saved — you won't need to navigate again.
+      </p>
+    {/if}
     <p class="mt-1.5 text-center text-xs text-muted-foreground">
-      Select one or more: player.json, gamedata.json, quests.json
+      <Dialog.Root>
+        <Dialog.Trigger class="underline decoration-dotted">Where is my save file?</Dialog.Trigger>
+        <Dialog.Content class="max-w-sm">
+          <Dialog.Header>
+            <Dialog.Title>Finding your save file</Dialog.Title>
+            <Dialog.Description>
+              Fields of Mistria saves are stored in your Windows user folder.
+            </Dialog.Description>
+          </Dialog.Header>
+          <ol class="mt-2 list-decimal space-y-2 pl-5 text-sm marker:text-muted-foreground">
+            <li>
+              Press
+              <kbd class="rounded border px-1 font-mono text-xs">Win</kbd>
+              + <kbd class="rounded border px-1 font-mono text-xs">R</kbd> to open the Run dialog
+            </li>
+            <li>
+              Paste this path and press Enter:
+              <div class="mt-1 flex items-center gap-2 rounded-md border bg-muted px-3 py-2">
+                <code class="flex-1 text-xs break-all">{SAV_PATH}</code>
+                <button
+                  onclick={copyPath}
+                  class="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+                  aria-label="Copy path"
+                >
+                  {#if copied}
+                    <Check class="size-4 text-green-600" />
+                  {:else}
+                    <Copy class="size-4" />
+                  {/if}
+                </button>
+              </div>
+            </li>
+            <li>
+              Select the file ending in <code>-autosave.sav</code>.
+            </li>
+          </ol>
+          <Dialog.Footer class="mt-2">
+            <Dialog.Close>
+              <Button variant="outline">Got it</Button>
+            </Dialog.Close>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Root>
     </p>
 
     {#if importError}
       <div
         class="mt-3 rounded-md bg-red-50 p-3 text-base text-red-700 dark:bg-red-950 dark:text-red-300"
       >
-        {importError}
+        <p>{importError}</p>
+        {#if savFallback}
+          <p class="mt-2 text-sm">
+            As a fallback, you can extract the JSON files manually using <a
+              href="https://github.com/NPC-Studio/vaultc"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="underline">vaultc</a
+            >
+            (on Windows) or
+            <a
+              href="https://github.com/NPC-Studio/vaultgo"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="underline">VaultGo</a
+            > (on macOS or Linux).
+          </p>
+          <p class="mt-2 text-sm">
+            Then import from the resulting <code>player.json</code>, <code>gamedata.json</code>, and
+            <code>quests.json</code> files.
+          </p>
+        {/if}
       </div>
     {/if}
 
