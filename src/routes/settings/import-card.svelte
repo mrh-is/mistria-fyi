@@ -5,6 +5,7 @@
   import * as Card from "$lib/components/ui/card/index.js";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
   import { Separator } from "$lib/components/ui/separator/index.js";
+  import { hasSavedFileHandle, pickFiles } from "$lib/engine/file-picker.js";
   import { buildImportState, parseSaveFiles, unpackSavFile } from "$lib/engine/import-save.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
@@ -25,8 +26,8 @@
   let importStatus = $state("");
   let filesUsed = $state<string[]>([]);
 
-  // ── File input ref ──
-  let fileInput = $state<HTMLInputElement | null>(null);
+  // ── File handle persistence (File System Access API) ──
+  let fileHandle = $derived(hasSavedFileHandle());
 
   // ── Save location dialog ──
   const SAV_PATH = String.raw`%LOCALAPPDATA%\FieldsOfMistria\saves`;
@@ -41,17 +42,21 @@
     });
   }
 
-  function handleFileSelect() {
-    fileInput?.click();
+  async function handleFileSelect() {
+    try {
+      const files = await pickFiles();
+      await handleFileChange(files);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      importError = `Failed to access file picker: ${message}`;
+    }
   }
 
   function isSavFile(file: File): boolean {
     return file.name.toLowerCase().endsWith(".sav");
   }
 
-  async function handleFileChange(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const files = input.files;
+  async function handleFileChange(files: File[] | null) {
     if (!files || files.length === 0) return;
 
     importing = true;
@@ -103,7 +108,6 @@
     } finally {
       importing = false;
       importStatus = "";
-      input.value = "";
     }
   }
 
@@ -136,22 +140,21 @@
     </Card.Description>
   </Card.Header>
   <Card.Content>
-    <input
-      bind:this={fileInput}
-      accept=".sav,.json"
-      class="hidden"
-      type="file"
-      multiple
-      onchange={handleFileChange}
-    />
     <Button class="w-full" disabled={importing} variant="outline" onclick={handleFileSelect}>
       <FolderOpen />
       {#if importing}
         {importStatus || "Importing\u2026"}
+      {:else if fileHandle}
+        Re-import from saved file
       {:else}
         Open save file
       {/if}
     </Button>
+    {#if fileHandle && !importing && !importResult}
+      <p class="mt-2 text-center text-xs text-muted-foreground">
+        File handle saved — you won't need to navigate again.
+      </p>
+    {/if}
     <p class="mt-1.5 text-center text-xs text-muted-foreground">
       <Dialog.Root>
         <Dialog.Trigger class="underline decoration-dotted">Where is my save file?</Dialog.Trigger>

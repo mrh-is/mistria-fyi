@@ -29,7 +29,6 @@ export default defineConfig(
       parserOptions: {
         extraFileExtensions: [".svelte"],
         projectService: true,
-        tsconfigRootDir: fileURLToPath(new URL(".", import.meta.url)),
       },
     },
   },

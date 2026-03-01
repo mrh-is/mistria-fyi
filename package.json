@@ -25,6 +25,7 @@
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^25.3.0",
     "@types/qrcode": "^1.5.6",
+    "@types/wicg-file-system-access": "^2023.10.7",
     "bits-ui": "^2.16.2",
     "clsx": "^2.1.1",
     "eslint": "^10.0.2",

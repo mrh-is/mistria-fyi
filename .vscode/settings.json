@@ -29,7 +29,8 @@
     "unreviewed",
     "vaultc",
     "vite",
-    "WCAG"
+    "WCAG",
+    "WICG"
   ],
   "json.schemaDownload.trustedDomains": {
     "https://shadcn-svelte.com/schema.json": true
