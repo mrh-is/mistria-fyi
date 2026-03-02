@@ -19,6 +19,8 @@ yet.
 
 ## Commands
 
+Use **bun** (not npm/npx) for all commands.
+
 - **Dev**: `bun run dev` | **Build**: `bun run build` | **Type-check**: `bun run check`
 - **Lint**: `bun run lint` (prettier + eslint) | **Fix**: `bun run lint:fix`
 - **Pipeline**: `bun run pipeline` (regenerates `tracker-data.json` from

@@ -112,10 +112,12 @@ function main(): void {
 
   // Sync package.json version with game version
   const packageJsonPath = resolve(PIPELINE_ROOT, "..", "package.json");
-  const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8")) as {
+    version?: string;
+  };
   if (version !== "unknown" && packageJson.version !== version) {
     packageJson.version = version;
-    writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + "\n");
+    writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
     console.log(`  Synced:  package.json version → ${version}`);
   }
 

@@ -5,7 +5,7 @@
   import * as Card from "$lib/components/ui/card/index.js";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
   import { Separator } from "$lib/components/ui/separator/index.js";
-  import { hasSavedFileHandle, pickFiles } from "$lib/engine/file-picker.js";
+  import { pickFiles } from "$lib/engine/file-picker.js";
   import { buildImportState, parseSaveFiles, unpackSavFile } from "$lib/engine/import-save.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
@@ -25,9 +25,6 @@
   let importing = $state(false);
   let importStatus = $state("");
   let filesUsed = $state<string[]>([]);
-
-  // ── File handle persistence (File System Access API) ──
-  let fileHandle = $derived(hasSavedFileHandle());
 
   // ── Save location dialog ──
   const SAV_PATH = String.raw`%LOCALAPPDATA%\FieldsOfMistria\saves`;
@@ -144,17 +141,10 @@
       <FolderOpen />
       {#if importing}
         {importStatus || "Importing\u2026"}
-      {:else if fileHandle}
-        Re-import from saved file
       {:else}
         Open save file
       {/if}
     </Button>
-    {#if fileHandle && !importing && !importResult}
-      <p class="mt-2 text-center text-xs text-muted-foreground">
-        File handle saved — you won't need to navigate again.
-      </p>
-    {/if}
     <p class="mt-1.5 text-center text-xs text-muted-foreground">
       <Dialog.Root>
         <Dialog.Trigger class="underline decoration-dotted">Where is my save file?</Dialog.Trigger>
