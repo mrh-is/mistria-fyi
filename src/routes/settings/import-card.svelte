@@ -1,11 +1,10 @@
 <script lang="ts">
-  import { Check, Copy, FolderOpen, Monitor } from "@lucide/svelte";
+  import { Check, Copy, Monitor, Upload } from "@lucide/svelte";
 
   import { Button } from "$lib/components/ui/button/index.js";
   import * as Card from "$lib/components/ui/card/index.js";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
   import { Separator } from "$lib/components/ui/separator/index.js";
-  import { pickFiles } from "$lib/engine/file-picker.js";
   import { buildImportState, parseSaveFiles, unpackSavFile } from "$lib/engine/import-save.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
@@ -26,6 +25,13 @@
   let importStatus = $state("");
   let filesUsed = $state<string[]>([]);
 
+  // ── Drag-and-drop state ──
+  let dragCounter = $state(0);
+  let dragging = $derived(dragCounter > 0);
+
+  // ── Hidden file input ref ──
+  let fileInput = $state<HTMLInputElement | null>(null);
+
   // ── Save location dialog ──
   const SAV_PATH = String.raw`%LOCALAPPDATA%\FieldsOfMistria\saves`;
   let copied = $state(false);
@@ -39,13 +45,33 @@
     });
   }
 
-  async function handleFileSelect() {
-    try {
-      const files = await pickFiles();
-      await handleFileChange(files);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      importError = `Failed to access file picker: ${message}`;
+  function handleDragEnter(e: DragEvent) {
+    e.preventDefault();
+    dragCounter++;
+  }
+
+  function handleDragLeave(e: DragEvent) {
+    e.preventDefault();
+    dragCounter--;
+  }
+
+  function handleDragOver(e: DragEvent) {
+    e.preventDefault();
+  }
+
+  function handleDrop(e: DragEvent) {
+    e.preventDefault();
+    dragCounter = 0;
+    const files = e.dataTransfer?.files;
+    if (files?.length) {
+      void handleFileChange(Array.from(files));
+    }
+  }
+
+  function handleInputChange(e: Event) {
+    const files = (e.target as HTMLInputElement).files;
+    if (files?.length) {
+      void handleFileChange(Array.from(files));
     }
   }
 
@@ -105,6 +131,10 @@
     } finally {
       importing = false;
       importStatus = "";
+      // Reset input so the same file can be re-selected
+      if (fileInput) {
+        fileInput.value = "";
+      }
     }
   }
 
@@ -128,7 +158,7 @@
 <Card.Root>
   <Card.Header>
     <Card.Title class="flex items-center gap-2">
-      <FolderOpen class="size-4" />
+      <Upload class="size-4" />
       Import from Save File
     </Card.Title>
     <Card.Description>
@@ -137,14 +167,42 @@
     </Card.Description>
   </Card.Header>
   <Card.Content>
-    <Button class="w-full" disabled={importing} variant="outline" onclick={handleFileSelect}>
-      <FolderOpen />
+    <!-- Hidden file input -->
+    <input
+      bind:this={fileInput}
+      type="file"
+      accept=".sav,.json"
+      multiple
+      class="hidden"
+      onchange={handleInputChange}
+    />
+
+    <!-- Drop zone -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="flex flex-col items-center gap-2 rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors {dragging
+        ? 'border-primary bg-primary/5'
+        : 'border-border'}"
+      ondragenter={handleDragEnter}
+      ondragleave={handleDragLeave}
+      ondragover={handleDragOver}
+      ondrop={handleDrop}
+    >
       {#if importing}
-        {importStatus || "Importing\u2026"}
+        <p class="text-sm text-muted-foreground">{importStatus || "Importing\u2026"}</p>
       {:else}
-        Open save file
+        <Upload class="size-6 text-muted-foreground" />
+        <p class="text-sm text-muted-foreground">Drag your save file here</p>
+        <p class="text-xs text-muted-foreground/60">or</p>
+        <button
+          class="text-sm font-medium text-primary underline decoration-dotted underline-offset-2 hover:text-primary/80"
+          onclick={() => fileInput?.click()}
+        >
+          browse files
+        </button>
       {/if}
-    </Button>
+    </div>
+
     <p class="mt-1.5 text-center text-xs text-muted-foreground">
       <Dialog.Root>
         <Dialog.Trigger class="underline decoration-dotted">Where is my save file?</Dialog.Trigger>
@@ -179,7 +237,7 @@
               </div>
             </li>
             <li>
-              Select the file ending in <code>-autosave.sav</code>.
+              Drag the file ending in <code>-autosave.sav</code> onto the drop zone above.
             </li>
           </ol>
           <Dialog.Footer class="mt-2">
