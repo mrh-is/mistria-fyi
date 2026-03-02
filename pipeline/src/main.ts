@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -109,6 +109,15 @@ function main(): void {
   console.log(
     `  Copied:  src/lib/data/${OUTPUT_FILE} (${(json.length / 1024).toFixed(1)} KB minified)`,
   );
+
+  // Sync package.json version with game version
+  const packageJsonPath = resolve(PIPELINE_ROOT, "..", "package.json");
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
+  if (version !== "unknown" && packageJson.version !== version) {
+    packageJson.version = version;
+    writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + "\n");
+    console.log(`  Synced:  package.json version → ${version}`);
+  }
 
   // Step 5: Human-readable outputs (for inspection, not shipped to app)
   console.log("\nStep 5: Writing human-readable outputs...");
