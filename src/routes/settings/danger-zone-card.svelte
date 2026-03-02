@@ -6,8 +6,11 @@
   import * as Card from "$lib/components/ui/card/index.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
+  let open = $state(false);
+
   function handleReset() {
     userState.resetAll();
+    open = false;
   }
 </script>
 
@@ -16,7 +19,7 @@
     <Card.Title class="text-red-600 dark:text-red-400">Danger Zone</Card.Title>
   </Card.Header>
   <Card.Content>
-    <AlertDialog.Root>
+    <AlertDialog.Root bind:open>
       <AlertDialog.Trigger>
         {#snippet child({ props })}
           <Button class="w-full" variant="outline" {...props}>
