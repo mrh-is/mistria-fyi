@@ -1,53 +1,60 @@
-import { sourceFileFor, type FiddleData } from "./parse-fiddle.js";
+import { sourceFileFor, type ParsedGameData } from "./parse-fiddle.js";
 
 type ResolutionState = "resolved" | "visiting";
-type ValueField = "bin" | "store";
+type ResolvableValueField = "bin" | "store";
 
-interface EvaluationContext {
-  allItems: Map<string, Record<string, unknown>>;
-  fiddle: FiddleData;
-  itemRoots: Map<string, string>;
-  stack: string[];
-  valueStates: Map<string, ResolutionState>;
+interface ValueEvaluationContext {
+  itemsById: Map<string, Record<string, unknown>>;
+  fiddle: ParsedGameData;
+  itemRootPathById: Map<string, string>;
+  dependencyPathStack: string[];
+  resolutionStateByValuePath: Map<string, ResolutionState>;
 }
 
-export function evaluateExpressions(fiddle: FiddleData): void {
+/**
+ * Resolves supported item value expressions by mutating the parsed tree in place.
+ * Item IDs must be globally unique across item TOML files. Only `self.recipe * N` and
+ * `<item_id>.store * N` inline forms are supported. An absent state-map entry means
+ * unvisited; revisiting `visiting` reports a dependency cycle. Every claimed string
+ * `bin` or `store` value must become numeric before extraction.
+ */
+export function evaluateExpressions(fiddle: ParsedGameData): void {
   const itemsRoot = fiddle.items as
     | Record<string, Record<string, Record<string, Record<string, unknown>>>>
     | undefined;
   if (!itemsRoot) return;
 
-  const allItems = new Map<string, Record<string, unknown>>();
-  const itemRoots = new Map<string, string>();
-  for (const [categoryId, subCategories] of Object.entries(itemsRoot)) {
-    for (const [fileId, categoryItems] of Object.entries(subCategories)) {
-      const itemRoot = `items.${categoryId}.${fileId}`;
+  const itemsById = new Map<string, Record<string, unknown>>();
+  const itemRootPathById = new Map<string, string>();
+  for (const [categoryId, categoryFiles] of Object.entries(itemsRoot)) {
+    for (const [fileStem, itemsInFile] of Object.entries(categoryFiles)) {
+      const itemRoot = `items.${categoryId}.${fileStem}`;
       const sourceFile = sourceFileFor(fiddle, itemRoot);
-      for (const [itemId, item] of Object.entries(categoryItems)) {
+      for (const [itemId, item] of Object.entries(itemsInFile)) {
         if (typeof item === "object" && item !== null) {
-          const priorRoot = itemRoots.get(itemId);
+          const priorRoot = itemRootPathById.get(itemId);
           if (priorRoot) {
             throw new Error(
               `Duplicate item ID "${itemId}" in ${sourceFile} and ${sourceFileFor(fiddle, priorRoot)}`,
             );
           }
-          allItems.set(itemId, item as Record<string, unknown>);
-          itemRoots.set(itemId, itemRoot);
+          itemsById.set(itemId, item as Record<string, unknown>);
+          itemRootPathById.set(itemId, itemRoot);
         }
       }
     }
   }
 
-  const context: EvaluationContext = {
-    allItems,
+  const context: ValueEvaluationContext = {
+    itemsById,
     fiddle,
-    itemRoots,
-    stack: [],
-    valueStates: new Map(),
+    itemRootPathById,
+    dependencyPathStack: [],
+    resolutionStateByValuePath: new Map(),
   };
   let resolved = 0;
 
-  for (const [itemId, item] of allItems) {
+  for (const [itemId, item] of itemsById) {
     const value = item.value as Record<string, unknown> | undefined;
     if (typeof value?.bin === "string") {
       resolveValueField(itemId, "bin", context);
@@ -60,7 +67,7 @@ export function evaluateExpressions(fiddle: FiddleData): void {
   }
 
   // Enforce complete resolution: no string expressions should remain
-  for (const [itemId, item] of allItems) {
+  for (const [itemId, item] of itemsById) {
     const value = item.value as Record<string, unknown> | undefined;
     if (!value) continue;
     for (const field of ["bin", "store"] as const) {
@@ -78,45 +85,50 @@ export function evaluateExpressions(fiddle: FiddleData): void {
 }
 
 function resolveExpression(
-  expr: string,
+  expression: string,
   itemId: string,
   item: Record<string, unknown>,
-  context: EvaluationContext,
+  context: ValueEvaluationContext,
 ): number {
-  // Pattern 1: self.recipe * <multiplier>
-  const selfRecipeMatch = /^self\.recipe\s*\*\s*([\d.]+)$/.exec(expr);
+  // Supported inline forms are `self.recipe * N`, which resolves recipe cost, and
+  // `<item_id>.store * N`, which multiplies a referenced store value. No other forms are
+  // accepted.
+  const selfRecipeMatch = /^self\.recipe\s*\*\s*([\d.]+)$/.exec(expression);
   if (selfRecipeMatch) {
     const multiplier = parseFloat(selfRecipeMatch[1]);
     const recipeCost = calculateRecipeCost(itemId, item, context);
     return Math.round(recipeCost * multiplier);
   }
 
-  // Pattern 2: <item_id>.store * <count>
-  const refStoreMatch = /^(\w+)\.store\s*\*\s*(\d+)$/.exec(expr);
+  const refStoreMatch = /^(\w+)\.store\s*\*\s*(\d+)$/.exec(expression);
   if (refStoreMatch) {
-    const refId = refStoreMatch[1];
+    const referencedItemId = refStoreMatch[1];
     const count = parseInt(refStoreMatch[2], 10);
-    const storeVal = resolveValueField(refId, "store", context, itemId);
-    if (typeof storeVal !== "number") {
+    const referencedStoreValue = resolveValueField(referencedItemId, "store", context, itemId);
+    if (typeof referencedStoreValue !== "number") {
       throw itemError(
         context,
         itemId,
-        `Expression "${expr}" on item "${itemId}": "${refId}.store" is not a number (got ${typeof storeVal})`,
+        `Expression "${expression}" on item "${itemId}": "${referencedItemId}.store" is not a number (got ${typeof referencedStoreValue})`,
       );
     }
-    return storeVal * count;
+    return referencedStoreValue * count;
   }
 
-  throw itemError(context, itemId, `Unknown expression pattern "${expr}" on item "${itemId}"`);
+  throw itemError(
+    context,
+    itemId,
+    `Unknown expression pattern "${expression}" on item "${itemId}"`,
+  );
 }
 
 function resolveValueField(
   itemId: string,
-  field: ValueField,
-  context: EvaluationContext,
+  field: ResolvableValueField,
+  context: ValueEvaluationContext,
   requesterId = itemId,
 ): number | undefined {
-  const item = context.allItems.get(itemId);
+  const item = context.itemsById.get(itemId);
   if (!item) {
     throw itemError(context, requesterId, `Value dependency references missing item "${itemId}"`);
   }
@@ -134,14 +146,18 @@ function resolveValueField(
   }
 
   const key = `${itemId}.value.${field}`;
-  if (context.valueStates.get(key) === "visiting") {
-    throw itemError(context, itemId, `Value cycle: ${[...context.stack, key].join(" -> ")}`);
+  if (context.resolutionStateByValuePath.get(key) === "visiting") {
+    throw itemError(
+      context,
+      itemId,
+      `Value cycle: ${[...context.dependencyPathStack, key].join(" -> ")}`,
+    );
   }
-  context.valueStates.set(key, "visiting");
-  context.stack.push(key);
+  context.resolutionStateByValuePath.set(key, "visiting");
+  context.dependencyPathStack.push(key);
   const resolved = resolveExpression(raw, itemId, item, context);
-  context.stack.pop();
-  context.valueStates.set(key, "resolved");
+  context.dependencyPathStack.pop();
+  context.resolutionStateByValuePath.set(key, "resolved");
   value[field] = resolved;
   return resolved;
 }
@@ -149,7 +165,7 @@ function resolveValueField(
 function calculateRecipeCost(
   itemId: string,
   item: Record<string, unknown>,
-  context: EvaluationContext,
+  context: ValueEvaluationContext,
 ): number {
   const recipe = item.recipe;
   if (!Array.isArray(recipe)) {
@@ -157,42 +173,48 @@ function calculateRecipeCost(
   }
 
   let total = 0;
+  // Recipe costs ignore numeric `hours` and `essence` entries, default missing counts to one,
+  // reject invalid counts, prefer `bin`, fall back to `store`, and preserve zero as valid.
   for (const ingredient of recipe) {
     if (typeof ingredient !== "object" || ingredient === null) {
       throw itemError(context, itemId, `Malformed recipe entry on item "${itemId}"`);
     }
-    const ing = ingredient as Record<string, unknown>;
-    const ingItemId = ing.item as string | undefined;
-    if (!ingItemId) {
+    const ingredientData = ingredient as Record<string, unknown>;
+    const ingredientItemId = ingredientData.item as string | undefined;
+    if (!ingredientItemId) {
       // Skip non-item recipe costs (time, essence)
-      if (typeof ing.hours === "number" || typeof ing.essence === "number") continue;
+      if (typeof ingredientData.hours === "number" || typeof ingredientData.essence === "number")
+        continue;
       throw itemError(context, itemId, `Malformed recipe entry on item "${itemId}"`);
     }
-    if (ing.count !== undefined && (typeof ing.count !== "number" || ing.count <= 0)) {
+    if (
+      ingredientData.count !== undefined &&
+      (typeof ingredientData.count !== "number" || ingredientData.count <= 0)
+    ) {
       throw itemError(
         context,
         itemId,
-        `Recipe for "${itemId}" has invalid count for "${ingItemId}"`,
+        `Recipe for "${itemId}" has invalid count for "${ingredientItemId}"`,
       );
     }
-    const count = (ing.count as number | undefined) ?? 1;
+    const count = (ingredientData.count as number | undefined) ?? 1;
 
-    const ingItem = context.allItems.get(ingItemId);
-    if (!ingItem) {
+    const ingredientItem = context.itemsById.get(ingredientItemId);
+    if (!ingredientItem) {
       throw itemError(
         context,
         itemId,
-        `Recipe for "${itemId}" references missing item "${ingItemId}"`,
+        `Recipe for "${itemId}" references missing item "${ingredientItemId}"`,
       );
     }
 
-    let ingredientValue = resolveValueField(ingItemId, "bin", context, itemId);
-    ingredientValue ??= resolveValueField(ingItemId, "store", context, itemId);
+    let ingredientValue = resolveValueField(ingredientItemId, "bin", context, itemId);
+    ingredientValue ??= resolveValueField(ingredientItemId, "store", context, itemId);
     if (typeof ingredientValue !== "number") {
       throw itemError(
         context,
         itemId,
-        `Recipe for "${itemId}" uses "${ingItemId}", which has neither numeric bin nor store value`,
+        `Recipe for "${itemId}" uses "${ingredientItemId}", which has neither numeric bin nor store value`,
       );
     }
     total += ingredientValue * count;
@@ -201,8 +223,8 @@ function calculateRecipeCost(
   return total;
 }
 
-function itemError(context: EvaluationContext, itemId: string, message: string): Error {
-  const itemRoot = context.itemRoots.get(itemId);
+function itemError(context: ValueEvaluationContext, itemId: string, message: string): Error {
+  const itemRoot = context.itemRootPathById.get(itemId);
   if (!itemRoot) return new Error(message);
   return new Error(`${message} in ${sourceFileFor(context.fiddle, itemRoot)}`);
 }

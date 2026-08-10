@@ -58,7 +58,7 @@ describe("evaluateExpressions", () => {
     expect(remaining).toEqual([]);
   });
 
-  it("resolves bundle store prices using referenced item store values", () => {
+  it("keeps a representative referenced store value numeric", () => {
     const parsed = parseFiddle("pipeline/input/assets");
     evaluateExpressions(parsed.data);
 
@@ -67,7 +67,8 @@ describe("evaluateExpressions", () => {
       Record<string, Record<string, Record<string, unknown>>>
     >;
 
-    // Find basic_wood to verify its store value, then find a bundle that references it
+    // Verify a representative referenced store value remains numeric; this does not assert a
+    // bundle's computed total.
     let basicWood: Record<string, unknown> | undefined;
     for (const subCats of Object.values(items)) {
       for (const fileItems of Object.values(subCats)) {
@@ -76,14 +77,14 @@ describe("evaluateExpressions", () => {
     }
 
     if (basicWood) {
-      const storeVal = (basicWood.value as Record<string, unknown>)?.store;
-      expect(typeof storeVal).toBe("number");
+      const referencedStoreValue = (basicWood.value as Record<string, unknown>)?.store;
+      expect(typeof referencedStoreValue).toBe("number");
     }
   });
 
-  it("resolves recipe ingredients with count > 1", () => {
+  it("does not throw on fixture recipes with ingredient counts greater than one", () => {
     const parsed = parseFiddle("pipeline/input/assets");
     evaluateExpressions(parsed.data);
-    // If we get here without throwing, all multi-count recipes resolved correctly
+    // Fixture-wide no-throw smoke test; it does not assert a specific computed value.
   });
 });
