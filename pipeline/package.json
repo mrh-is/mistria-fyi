@@ -4,5 +4,8 @@
   "type": "module",
   "scripts": {
     "generate": "tsx src/main.ts"
+  },
+  "dependencies": {
+    "smol-toml": "^1.6.1"
   }
 }

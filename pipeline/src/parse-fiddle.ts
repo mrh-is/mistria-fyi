@@ -1,127 +1,119 @@
-/**
- * Parses the flat slash-key fiddle.json format into a nested object structure.
- *
- * Raw fiddle.json is a flat dictionary:
- *   { "npcs/holt/name": "npcs/holt/name", "npcs/holt/birthday/season": "winter", ... }
- *
- * This module converts it to:
- *   { npcs: { holt: { name: "npcs/holt/name", birthday: { season: "winter" } } } }
- */
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
 
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { parse } from "smol-toml";
 
-// Keys containing these substrings are visual/audio data — skip them
-const SKIP_PATTERNS = [
-  "sprite",
-  "animation",
-  "collision",
-  "shadow",
-  "offset",
-  "_fx",
-  "sound",
-  "music",
-  "idle_range",
-  "move_range",
-  "speed_range",
-  "portrait_fallback",
-  "post_process",
-  "priority_grass",
-  "priority_objects",
-  "footsteps",
-  "exterior_lights",
-  "lights/",
-  "rumbles/",
-  "tile_cursor",
-  "tool_fx",
-  "camera/",
-  "fonts/",
-  "lut_index",
-  "icon_sprite",
-  "journal_portrait",
-  "journal_background",
-  "preview_sprite",
-];
+const SOURCE_FILES: unique symbol = Symbol("sourceFiles");
 
-// Top-level sections to skip entirely (visual/audio/UI-only)
-const SKIP_SECTIONS = new Set([
-  "activities",
-  "barks",
-  "birds",
-  "camera",
-  "doors",
-  "exterior_lights",
-  "fonts",
-  "footsteps",
-  "gossip",
-  "grow_back",
-  "interaction",
-  "lights",
-  "player",
-  "player_home",
-  "portrait_fallback",
-  "post_process",
-  "priority_grass",
-  "priority_objects",
-  "props",
-  "routines",
-  "rumbles",
-  "sha",
-  "shooting_star",
-  "summit",
-  "tile_cursor",
-  "time_of_day",
-  "tool_fx",
+export type FiddleData = Record<string, unknown> & {
+  readonly [SOURCE_FILES]: ReadonlyMap<string, string>;
+};
 
-  "weather",
-]);
+export interface ParsedFiddle {
+  data: FiddleData;
+  fileCount: number;
+  sourceFiles: Map<string, string>;
+}
 
-export type FiddleData = Record<string, unknown>;
+export function parseFiddle(assetsDir: string): ParsedFiddle {
+  const fiddleDir = join(assetsDir, "fiddle");
+  const data = {} as FiddleData;
+  const sourceFiles = new Map<string, string>();
 
-export function parseFiddle(inputDir: string): FiddleData {
-  const fiddlePath = resolve(inputDir, "__fiddle__.json");
-  const raw: Record<string, unknown> = JSON.parse(readFileSync(fiddlePath, "utf-8"));
+  walkDirectory(fiddleDir, fiddleDir, data, sourceFiles);
+  Object.defineProperty(data, SOURCE_FILES, {
+    enumerable: false,
+    value: sourceFiles,
+  });
 
-  const result: FiddleData = {};
-  let kept = 0;
-  let skipped = 0;
+  console.log(`  Parsed ${sourceFiles.size} TOML files from ${fiddleDir}`);
+  return { data, fileCount: sourceFiles.size, sourceFiles };
+}
 
-  for (const [key, value] of Object.entries(raw)) {
-    if (shouldSkipKey(key)) {
-      skipped++;
+export function sourceFileFor(fiddle: FiddleData, dottedPath: string): string {
+  let candidate = dottedPath;
+  while (candidate.length > 0) {
+    const sourceFile = fiddle[SOURCE_FILES].get(candidate);
+    if (sourceFile) {
+      return sourceFile;
+    }
+    const separator = candidate.lastIndexOf(".");
+    candidate = separator === -1 ? "" : candidate.slice(0, separator);
+  }
+  throw new Error(`No TOML source file found for ${dottedPath}`);
+}
+
+function walkDirectory(
+  dir: string,
+  rootDir: string,
+  result: FiddleData,
+  sourceFiles: Map<string, string>,
+): void {
+  const entries = readdirSync(dir);
+
+  for (const entry of entries) {
+    const fullPath = join(dir, entry);
+    const stat = statSync(fullPath);
+
+    if (stat.isDirectory()) {
+      walkDirectory(fullPath, rootDir, result, sourceFiles);
       continue;
     }
 
-    const parts = key.split("/");
-    setNestedValue(result, parts, value);
-    kept++;
-  }
+    if (!entry.endsWith(".toml") || entry.endsWith(".meta.toml")) {
+      continue;
+    }
 
-  console.log(
-    `  Parsed fiddle.json: ${kept.toLocaleString()} keys kept, ${skipped.toLocaleString()} skipped`,
-  );
-  return result;
+    const relPath = relative(rootDir, fullPath);
+    const keyPath = relPath.replace(/\.toml$/, "").split("/");
+    const sourceKey = keyPath.join(".");
+    const conflictingKey = [...sourceFiles.keys()].find(
+      (existing) =>
+        existing === sourceKey ||
+        existing.startsWith(`${sourceKey}.`) ||
+        sourceKey.startsWith(`${existing}.`),
+    );
+    if (conflictingKey) {
+      throw new Error(
+        `Duplicate or colliding TOML destinations "${conflictingKey}" and "${sourceKey}" from ${relPath}`,
+      );
+    }
+
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = parse(readFileSync(fullPath, "utf-8"));
+    } catch (error) {
+      throw new Error(`Failed to parse ${relPath} at ${sourceKey}`, { cause: error });
+    }
+
+    setNestedValue(result, keyPath, parsed, relPath);
+    sourceFiles.set(sourceKey, relPath);
+  }
 }
 
-function setNestedValue(obj: Record<string, unknown>, path: string[], value: unknown): void {
+function setNestedValue(
+  obj: Record<string, unknown>,
+  path: string[],
+  value: Record<string, unknown>,
+  sourceFile: string,
+): void {
   let current = obj;
   for (let i = 0; i < path.length - 1; i++) {
     const key = path[i];
-    if (!(key in current) || typeof current[key] !== "object" || current[key] === null) {
+    if (!(key in current)) {
       current[key] = {};
+    } else if (
+      typeof current[key] !== "object" ||
+      current[key] === null ||
+      Array.isArray(current[key])
+    ) {
+      throw new Error(`Path collision while assigning ${sourceFile} at ${path.join(".")}`);
     }
     current = current[key] as Record<string, unknown>;
   }
   const lastKey = path[path.length - 1];
-  // Don't overwrite an existing object with a primitive
-  if (lastKey in current && typeof current[lastKey] === "object" && current[lastKey] !== null) {
-    return;
+  if (lastKey in current) {
+    throw new Error(`Duplicate or colliding path ${path.join(".")} from ${sourceFile}`);
   }
   current[lastKey] = value;
-}
-
-function shouldSkipKey(key: string): boolean {
-  const section = key.split("/")[0];
-  if (SKIP_SECTIONS.has(section)) return true;
-  return SKIP_PATTERNS.some((p) => key.includes(p));
 }
