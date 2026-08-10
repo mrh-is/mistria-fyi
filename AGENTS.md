@@ -23,8 +23,11 @@ Use **pnpm** (not npm/npx) for all commands.
 
 - **Dev**: `pnpm run dev` | **Build**: `pnpm run build` | **Type-check**: `pnpm run check`
 - **Lint**: `pnpm run lint` (prettier + eslint) | **Fix**: `pnpm run lint:fix`
-- **Pipeline**: `pnpm run pipeline -- input/assets` (regenerates `tracker-data.json` from the checked-in game TOML fixture)
-- **Tests**: `npx vitest run pipeline/` (pipeline unit tests)
+- **Pipeline**: `pnpm run pipeline -- /path/to/assets` (regenerates `tracker-data.json` from local game TOML assets)
+- **Tests**: `pnpm exec vitest run pipeline/` (pipeline unit tests)
+
+`pipeline/input/assets/` is ignored and local. See [pipeline/README.md](pipeline/README.md) for
+pipeline contracts, artifacts, & version-specific checks.
 
 ## Downloading Images from GitHub Issue Comments
 
@@ -43,13 +46,13 @@ of Mistria 100% completion.
   import. No side effects.
 - **`src/lib/stores/`** — Reactive state via `$state`/`$derived` runes; `userState` persisted to
   localStorage.
-- **`src/lib/data/`** — Static import of generated `tracker-data.json` (game universe, ~430KB).
+- **`src/lib/data/`** — Static import of generated `tracker-data.json`.
 - **`src/lib/types/`** — Branded ID types (`ItemId`, `NpcId`, etc.) shared between pipeline and app.
 - **`src/lib/components/ui/`** — shadcn-svelte vendored components (do not manually edit; relaxed
   lint rules).
 - **`src/routes/`** — 9 category pages (almanac, animals, cosmetics, mines, museum, npcs, quests,
   renown, skills) + settings.
-- **`pipeline/`** — Separate TypeScript project. Extracts game data from TOML fixtures →
+- **`pipeline/`** — Separate TypeScript project. Extracts game data from locally supplied TOML assets →
   `tracker-data.json`.
 
 ## Componentization

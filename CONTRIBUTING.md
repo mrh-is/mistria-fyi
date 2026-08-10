@@ -2,8 +2,8 @@
 
 ## Task Workflow
 
-All work is tracked via [GitHub Issues](https://github.com/mrh-is/harvest-helper/issues). The
-IMPLEMENTATION-GUIDE.md file is historical — new tasks go in GitHub Issues.
+All work is tracked via [GitHub Issues](https://github.com/mrh-is/harvest-helper/issues). New tasks
+go in GitHub Issues.
 
 ### Issue lifecycle
 
@@ -57,8 +57,8 @@ SvelteKit 2 + Svelte 5 (runes), Tailwind 4, shadcn-svelte, deployed to Cloudflar
 | `pnpm run check`    | SvelteKit type checking                           |
 | `pnpm run lint`     | Prettier + ESLint                                 |
 | `pnpm run lint:fix` | Auto-fix lint issues                              |
-| `pnpm run pipeline -- input/assets` | Regenerate `tracker-data.json` from TOML fixture |
-| `npx vitest run pipeline/` | Run pipeline unit tests |
+| `pnpm run pipeline -- /path/to/assets` | Regenerate `tracker-data.json` from local TOML assets |
+| `pnpm exec vitest run pipeline/` | Run pipeline unit tests |
 
 ## Code Conventions
 
@@ -78,6 +78,8 @@ SvelteKit 2 + Svelte 5 (runes), Tailwind 4, shadcn-svelte, deployed to Cloudflar
 
 ## Pipeline
 
-The app is powered by `tracker-data.json` (~560KB), generated from the game's TOML data files. See
-[README.md](README.md) for pipeline details. When changing pipeline extractors, run
-`pnpm run pipeline -- input/assets` and commit the updated `src/lib/data/tracker-data.json`.
+The app is powered by `tracker-data.json`, generated from locally supplied game TOML assets. See the
+[pipeline guide](pipeline/README.md) for the current pipeline contracts. Extractor work requires
+locally supplied assets for integration regeneration. When relevant assets are available, run
+`pnpm exec vitest run pipeline/`, `pnpm run pipeline -- /path/to/assets`, `pnpm run check`, and
+`pnpm run lint`, then commit the updated `src/lib/data/tracker-data.json`.

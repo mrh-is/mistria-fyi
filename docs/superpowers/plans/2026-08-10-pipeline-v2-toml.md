@@ -1,5 +1,9 @@
 # Pipeline v2: TOML-based data processing implementation plan
 
+> Status: Historical design artifact for PR #43. See `pipeline/README.md` for implemented behavior.
+> Where this document differs from the code, the maintainer guide and production code are
+> authoritative.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development
 > (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use
 > checkbox (`- [ ]`) syntax for tracking.

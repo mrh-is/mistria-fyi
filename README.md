@@ -13,45 +13,55 @@ pnpm run dev
 
 ## Data pipeline
 
-The app is powered by `tracker-data.json`, generated from the game's TOML data files. The pipeline
-lives in `pipeline/` and runs via `tsx`. A checked-in fixture at `pipeline/input/assets/` contains
-the v1.0.2 game data (295 TOML files).
+The app is powered by `tracker-data.json`, generated from locally supplied Fields of Mistria TOML
+assets. The pipeline lives in `pipeline/`, runs via `tsx`, and expects an assets root that contains a
+`fiddle/` directory. Game assets are ignored by Git and are not present in a fresh clone. See the
+[pipeline guide](pipeline/README.md) for the maintained contracts & extractor details.
 
 ### Running the pipeline
 
 ```bash
-pnpm run pipeline -- input/assets
+pnpm run pipeline -- /path/to/assets
+MISTRIA_ASSETS=/path/to/assets pnpm run pipeline
 ```
 
-You can also pass a different assets directory for local comparison (e.g. a newer game version).
+`--parse-only` stops after parsing, but it is a version-specific v1.0.2 smoke test: it requires 295
+non-metadata TOML files and three representative paths. It is not a general validator for newer
+asset versions.
 
-Output:
-- `pipeline/output/tracker-data.json` — pretty-printed (for debugging)
-- `src/lib/data/tracker-data.json` — minified (committed, used by the app)
+### Artifacts
+
+- `pipeline/output/tracker-data.json`, pretty diagnostic output.
+- `pipeline/output/tracker-data-readable.json`, duplicate pretty diagnostic output.
+- `pipeline/output/fiddle-readable.json`, the parsed & evaluated namespace tree for inspection.
+- `src/lib/data/tracker-data.json`, minified committed app data.
 
 ### When a new game version drops
 
 1. Get the new assets directory containing a `fiddle/` folder of TOML files
 2. Run `pnpm run pipeline -- /path/to/new/assets`
-3. Compare output, then replace the checked-in fixture if the data looks correct
+3. Compare the generated artifacts
 4. Commit the updated `src/lib/data/tracker-data.json`
 
 ### Pipeline architecture
 
 ```
-assets/fiddle/*.toml (295 TOML files, directory-walked)
+assets root/fiddle/*.toml (directory-walked)
     |
     v
-parse-fiddle.ts     Walk directory tree, merge into nested object
+parse-fiddle.ts     Walk directory tree, merge into nested object, record provenance
     |
     v
-evaluate.ts         Resolve value expressions (self.recipe * N, item.store * N)
+evaluate.ts         Resolve supported value expressions in place
     |
     v
-extractors/*.ts     10 extractors (museum, almanac, animals, npcs, cosmetics,
-    |               skills, renown, quests, mines, sources) + quest-gates
+extractors/*.ts     Parse requirements during source extraction; project domains
+    |               & preserve direct-reward quest gates
     v
-tracker-data.json   ~560KB minified, typed via src/lib/types/tracker-data.ts
+main.ts             Attach quest gates & assemble TrackerData
+    |
+    v
+tracker-data.json   Typed via src/lib/types/tracker-data.ts
 ```
 
 ## Scripts
@@ -64,7 +74,7 @@ tracker-data.json   ~560KB minified, typed via src/lib/types/tracker-data.ts
 | `pnpm run check`    | SvelteKit type checking                   |
 | `pnpm run lint`     | Prettier + ESLint                         |
 | `pnpm run lint:fix` | Auto-fix formatting and lint issues       |
-| `pnpm run pipeline -- input/assets` | Generate tracker-data.json from TOML fixture |
+| `pnpm run pipeline -- /path/to/assets` | Generate tracker-data.json from local TOML assets |
 
 ## Tech stack
 

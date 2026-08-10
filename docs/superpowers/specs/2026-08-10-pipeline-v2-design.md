@@ -1,27 +1,33 @@
 # Pipeline v2: TOML-based data processing
 
+> Status: Historical design artifact for PR #43. See `pipeline/README.md` for implemented behavior.
+> Where this document differs from the code, the maintainer guide and production code are
+> authoritative.
+
 ## Context
 
 Mistria switched engines from GameMaker to a Rust-based engine between v0.13.4 and v1.0.2. The game
 data format changed from a single flat `fiddle.json` (slash-delimited path keys) to 295 non-metadata
-TOML files organized in a directory tree under `assets/fiddle/`. The v1.0.2 fixture is checked in at
-`pipeline/input/assets/`. The existing TypeScript pipeline in `harvest-helper/pipeline/` needs to be
-updated to read TOML instead of flat JSON.
+TOML files organized in a directory tree under `assets/fiddle/`. The v1.0.2 assets are local and
+ignored at `pipeline/input/assets/`, rather than checked into the repository. The existing TypeScript
+pipeline in `harvest-helper/pipeline/` was updated to read TOML instead of flat JSON.
 
 **This is not a rewrite.** The existing pipeline structure remains, but the migration must add
-strict shape validation, source-file provenance, expression evaluation, and a reusable requirements
-parser before updating extractors. This PR adds a recipe domain for direct quest acquisition while
-preserving finished-item ownership semantics. Non-quest recipe sources and comprehensive inferred
-quest gating remain follow-up work.
+source-file provenance, expression evaluation, and a reusable requirements parser before updating
+extractors. Recipe tracking is deferred and absent from `TrackerData`; comprehensive inferred quest
+gating is also deferred.
 
-## Current pipeline (in harvest-helper)
+## Pre-migration baseline
+
+This is the v0.13.4 implementation baseline that the historical PR proposed replacing. It does not
+describe current production behavior.
 
 ```
 pipeline/
   src/
-    main.ts              # Entry point: parse → localize → extract → assemble
-    parse-fiddle.ts      # Parses flat slash-key JSON → nested dict (REPLACE)
-    localize.ts          # Resolves slash-path localization keys (SIMPLIFY)
+    main.ts              # Former entry point: parse → localize → extract → assemble
+    parse-fiddle.ts      # Former flat slash-key JSON parser (REPLACE)
+    localize.ts          # Former slash-path localization resolver (SIMPLIFY)
     extractors/
       almanac.ts         # Item classification via almanac tags (UPDATE)
       sources.ts         # Where items come from (UPDATE)
@@ -34,12 +40,12 @@ pipeline/
       npcs.ts            # NPC data (UPDATE)
       renown.ts          # Renown ranks (UPDATE)
       skills.ts          # Skill definitions (UPDATE)
-  input/                 # Currently expects __fiddle__.json + localization.json
+  input/                 # Formerly expected __fiddle__.json + localization.json
   output/                # Produces tracker-data.json
 ```
 
-The pipeline runs with `tsx` via `pnpm run pipeline` and outputs a single `tracker-data.json` that's
-copied to `src/lib/data/` for the SvelteKit app.
+That pre-migration pipeline ran with `tsx` via `pnpm run pipeline` and wrote a single
+`tracker-data.json` copied to `src/lib/data/` for the SvelteKit app.
 
 ## What changes
 
@@ -52,7 +58,7 @@ objects. The new data is already nested TOML files in a directory tree.
 
 New behavior:
 
-- Accept a path to the `assets/fiddle/` directory (not a single JSON file)
+- Accept an assets root, then append `fiddle/` (not a single JSON file)
 - Walk the directory, skipping `.meta.toml` files (engine asset metadata)
 - Parse each `.toml` file with a TOML parser (e.g., `smol-toml` or `@iarna/toml` — both pure JS, no
   native deps)
@@ -75,9 +81,8 @@ fields they don't use.
 
 **The `input/` directory model changes.** Instead of dropping `__fiddle__.json` into
 `pipeline/input/`, the pipeline reads an assets directory passed as a CLI argument or environment
-variable. The canonical v1.0.2 test fixture at `pipeline/input/assets/` is checked into the repo for
-tests, validation, and documentation. Alternate assets directories used for local comparison stay on
-the developer's machine and are not checked into the repo.
+variable. The v1.0.2 assets at `pipeline/input/assets/` are local, ignored, and used only when a
+developer supplies them. Alternate assets directories used for local comparison are also local.
 
 ### 2. Localization: slash-path resolution → already done
 
@@ -88,8 +93,8 @@ them up in a `localization.json` file. In the new TOML format, **English strings
 inline**: `name = "Turnip"`, `description = "A fast growing spring crop..."`. There's nothing to
 resolve for English.
 
-New behavior for English: the localize step becomes a no-op (or is removed from the pipeline
-entirely).
+Implemented behavior: `main.ts` does not call localization. `localize.ts` is an always-throwing
+tombstone that documents inline English strings & rejects future calls.
 
 For future i18n support: the new localization system uses `assets/localization/l10n.meta.toml` which
 defines a `fiddle_renames` mapping specifying which TOML paths contain localizable fields:
@@ -107,8 +112,8 @@ Translation files are in `assets/localization/source_caches/{lang}.meta.toml` (E
 strings by path) and `assets/localization/translations/{lang}.meta.toml` (translated strings). These
 are large (~5-6 MB each). Only the selected language should be loaded.
 
-**Initial implementation ships English only.** The localize step can accept an optional language
-parameter that errors with "not yet supported" for non-English.
+**Initial implementation ships English only.** `localize.ts` accepts an optional language parameter,
+but every call throws because it is not part of the production pipeline.
 
 Inline strings are not universal. `ui.menus.sub_menus.almanac.categories` still uses
 `local_key = "misc_local/fishing_and_diving"` for the fish category. `local_key` is an identifier,
@@ -121,7 +126,7 @@ syntax.
 The new TOML data uses string expressions for some numeric fields. The pipeline needs a new
 `evaluate.ts` module (or function within the parser) to resolve these.
 
-**Three expression patterns exist:**
+**Two inline expression forms are implemented:**
 
 **Pattern 1: `self.recipe * <multiplier>`** Used for `value.bin` on items with recipes. The
 multiplier varies by star level:
@@ -154,8 +159,7 @@ with neither value is fatal. Zero is never an implicit fallback.
 
 Resolution: look up the referenced item's `value.store`, multiply.
 
-**Pattern 3: `value_expr` in `restoration.toml`** Per-star-level formula templates for dish bin
-prices. These are metadata, not inline values.
+`value_expr` in `restoration.toml` is restoration metadata. The evaluator ignores it.
 
 **Error handling**: Unknown expression patterns or unresolvable references stop the pipeline with an
 error. No silent fallbacks.
@@ -202,8 +206,7 @@ non-array value is malformed data. Do not retain numbered-key compatibility in n
   Requirements use these observed predicates: named requirements such as `repaired_general_store`,
   plus `has_perk`, `reached_skill_level = { ranching = 20 }`, `reached_mines_level`, `is_season`,
   `unlocked_animal`, `seen_cutscene`, `reached_date`, `has_upper_floor`, and `is_dating_someone`.
-  Unsupported predicates on processed stock are fatal and name the store, stock kind, entity,
-  predicate, and source file.
+  Unsupported predicates on processed stock are discarded during the lossy restriction projection.
 
   ```toml
   { item = "large_pouch", requirements = { repaired_general_store = true } }
@@ -246,12 +249,15 @@ type RequirementExpr =
   | { predicate: string; value: unknown };
 ```
 
-The resolver recursively expands named requirements, rejects unknown names and malformed primitive
-values, and reports cycles with the full name chain. Sources map the predicates they support into
-`Restriction` values. The later quest-gating project can consume the same AST without duplicating
-requirement semantics.
+The resolver recursively expands named requirements & reports cycles with the full name chain.
+Unknown requirement keys remain predicate leaves, and primitive payloads are not schema-validated.
+Sources map the predicates they support into `Restriction` values. The later quest-gating project can
+consume the same AST without duplicating requirement semantics.
 
 ### 7. Quest & recipe acquisition
+
+This section records a proposed design. Recipe tracking remains deferred and is absent from the
+implemented `TrackerData` model.
 
 Quest rewards provide the most reliable unlock edges. For example:
 
@@ -321,9 +327,10 @@ export type RecipeSource = {
 };
 ```
 
-`TrackerData` adds `recipes: Record<RecipeId, RecipeData>`. Almanac furniture rows retain the
-canonical item ID used for ownership, but also carry their `recipeId` and presentation item IDs.
-`recipe_is_default` must agree across every member of a recipe group; disagreement is fatal.
+The proposed `TrackerData` change adds `recipes: Record<RecipeId, RecipeData>`. It is not
+implemented. The proposed almanac rows retain the canonical item ID used for ownership, while also
+carrying their `recipeId` & presentation item IDs. `recipe_is_default` would need to agree across
+every member of a recipe group.
 
 Quest metadata includes `stillwell_challenges` and `tali_challenges` for cross-reference, even if
 those groups are not yet shown as sections on the quests page. A quest recipe source must resolve to
@@ -392,12 +399,15 @@ categories = [
 set intersects the item's tags. Do not choose the first matching tag in item tag order.
 
 **Process or ignore**: Every piece of game data the pipeline encounters falls into one of two
-buckets. Data that at least one extractor knows how to use is **processed** — the pipeline extracts
-it and errors loudly if anything is malformed or missing. Data that no extractor claims is
-**ignored** silently. The nine tracking domains (almanac, animals, cosmetics, mines, museum, npcs,
-quests, renown, skills) plus cross-cutting data (sources, quest-gates) each define their own process
-rules. The pipeline errors only when data it's _trying to process_ has bad or missing fields, never
-because a TOML file exists that nobody asked for.
+buckets. Data that at least one extractor knows how to use is **processed**; data that no extractor
+claims is **ignored** silently. The nine tracking domains (almanac, animals, cosmetics, mines,
+museum, npcs, quests, renown, skills) plus cross-cutting data (sources, quest-gates) each define
+their own process rules.
+
+Parser collisions & value-expression failures are strict and stop the pipeline with source context.
+Extractor validation is uneven: several missing roots, entries, and unsupported shapes are skipped,
+while particular claimed arrays or fields can still throw. The pipeline does not fail merely because
+a TOML file contains a domain that no extractor uses.
 
 **Non-almanac tags are fine**: 259 distinct tags exist; most encode sets/attributes (`basic_set`,
 `jam`, `single_bed`). Only almanac-mapped tags drive classification.
@@ -499,13 +509,11 @@ The pipeline uses a **process or ignore** model:
   extractors, or cross-cutting extractors like sources/quest-gates) or is **ignored silently**. Most
   of the 295 non-metadata TOML files contain data irrelevant to tracking (doors, camera, footsteps,
   barks, etc.) and are simply skipped.
-- **Within processed data**, the pipeline fails fast and loud:
-  - Malformed data on a processed item → stop with error naming the item, the field, and the file
-  - Unresolvable value expression → stop with error showing the expression and what's missing
-- Missing cross-reference between processed items → stop with error
-- Every error includes the entity ID, field or predicate, and relative TOML filename from parser
-  provenance
-- **No partial output**: all extractors must succeed before writing anything.
+- Extractors do not uniformly fail on malformed data. Several recoverable conditions skip an entry,
+  missing root, or unsupported shape; individual extractor contracts define the current behavior.
+- Value-expression failures stop the pipeline with source context.
+- No files are written until every transform succeeds.
 
-The distinction matters: the pipeline should never stop because an item _exists_ that it doesn't
-care about. It stops when an item it's _trying to process_ has bad or missing data.
+The distinction matters: an unclaimed TOML file does not stop the pipeline. Parser collisions &
+value-expression invariants fail with source context; extractor behavior varies by file & field,
+with some malformed or incomplete records skipped.
