@@ -1,6 +1,6 @@
 import type { QuestId, TrackerData } from "$lib/types/tracker-data.js";
 
-import type { FiddleData } from "../parse-fiddle.js";
+import type { ParsedGameData } from "../parse-fiddle.js";
 
 const QUEST_TYPES = [
   "story_quests",
@@ -11,7 +11,7 @@ const QUEST_TYPES = [
   "tali_challenges",
 ];
 
-export function extractQuests(fiddle: FiddleData): TrackerData["quests"] {
+export function extractQuests(fiddle: ParsedGameData): TrackerData["quests"] {
   const quests = fiddle.quests as
     | Record<string, Record<string, Record<string, unknown>>>
     | undefined;

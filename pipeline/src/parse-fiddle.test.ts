@@ -22,7 +22,7 @@ describe("parseFiddle", () => {
     expect(parsed.data).toHaveProperty("items.other.cooked_dishes");
     expect(parsed.data).toHaveProperty("npcs.holt");
     expect(parsed.data).toHaveProperty("dungeons.dungeons.biomes");
-    expect(parsed.sourceFiles.get("items.other.cooked_dishes")).toBe(
+    expect(parsed.sourceFileByRootPath.get("items.other.cooked_dishes")).toBe(
       "items/other/cooked_dishes.toml",
     );
     expect(sourceFileFor(parsed.data, "items.other.cooked_dishes.turnip_soup.value.bin")).toBe(

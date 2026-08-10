@@ -1,6 +1,6 @@
 import type { AnimalId, ItemId, QuestId, SpellId, TrackerData } from "$lib/types/tracker-data.js";
 
-import type { FiddleData } from "../parse-fiddle.js";
+import type { ParsedGameData } from "../parse-fiddle.js";
 
 export interface QuestGateIndex {
   animalGates: Record<AnimalId, QuestId[]>;
@@ -53,7 +53,7 @@ const QUEST_TYPES = [
   "tali_challenges",
 ];
 
-export function extractQuestGates(fiddle: FiddleData): QuestGateIndex {
+export function extractQuestGates(fiddle: ParsedGameData): QuestGateIndex {
   const questGroups = fiddle.quests as
     | Record<string, Record<string, Record<string, unknown>>>
     | undefined;

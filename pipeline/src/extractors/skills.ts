@@ -1,8 +1,8 @@
 import type { SkillId, TrackerData } from "$lib/types/tracker-data.js";
 
-import type { FiddleData } from "../parse-fiddle.js";
+import type { ParsedGameData } from "../parse-fiddle.js";
 
-export function extractSkills(fiddle: FiddleData): TrackerData["skills"] {
+export function extractSkills(fiddle: ParsedGameData): TrackerData["skills"] {
   const skills = fiddle.skills as Record<string, Record<string, unknown>> | undefined;
   if (!skills) return {} as TrackerData["skills"];
 

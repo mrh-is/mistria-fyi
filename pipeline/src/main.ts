@@ -23,6 +23,11 @@ import { parseFiddle } from "./parse-fiddle.js";
 
 import type { TrackerData } from "$lib/types/tracker-data.js";
 
+/**
+ * The pipeline parses, evaluates in place, extracts, applies post-extraction quest gates, then
+ * assembles and serializes output. Writes begin only after every transformation succeeds.
+ * --parse-only is a v1.0.2-specific smoke test that exits before evaluation.
+ */
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PIPELINE_ROOT = resolve(__dirname, "..");
 const OUTPUT_DIR = resolve(PIPELINE_ROOT, "output");
@@ -47,15 +52,12 @@ function main(): void {
     process.exit(1);
   }
 
-  // --parse-only: smoke test that stops after parsing
   const parseOnly = args.includes("--parse-only");
 
-  // Step 1: Parse
   console.log("Step 1: Parsing TOML data...");
   const parsed = parseFiddle(assetsDir);
   const fiddle = parsed.data;
 
-  // Extract version
   const misc = fiddle.misc as Record<string, unknown> | undefined;
   const version = (misc?.version as string | undefined) ?? "unknown";
   console.log(`  Game version: ${version}\n`);
@@ -81,12 +83,10 @@ function main(): void {
     return;
   }
 
-  // Step 2: Evaluate expressions
   console.log("Step 2: Evaluating expressions...");
   evaluateExpressions(fiddle);
   console.log();
 
-  // Step 3: Extract
   console.log("Step 3: Extracting tracker data...");
   const museum = extractMuseum(fiddle);
   const { almanac, items } = extractAlmanac(fiddle);
@@ -105,7 +105,6 @@ function main(): void {
   applySpellQuestGates(mines, questGates.spellGates);
   console.log();
 
-  // Step 4: Assemble
   console.log("Step 4: Assembling tracker-data.json...");
   const trackerData: TrackerData = {
     almanac,
@@ -127,21 +126,18 @@ function main(): void {
   const json = JSON.stringify(trackerData);
   const prettyJson = JSON.stringify(trackerData, null, 2);
 
-  // Write output
   mkdirSync(OUTPUT_DIR, { recursive: true });
   writeFileSync(resolve(OUTPUT_DIR, OUTPUT_FILE), prettyJson);
   console.log(
     `  Written: pipeline/output/${OUTPUT_FILE} (${(prettyJson.length / 1024).toFixed(1)} KB pretty)`,
   );
 
-  // Copy to app
   mkdirSync(APP_DATA_DIR, { recursive: true });
   writeFileSync(resolve(APP_DATA_DIR, OUTPUT_FILE), json);
   console.log(
     `  Copied:  src/lib/data/${OUTPUT_FILE} (${(json.length / 1024).toFixed(1)} KB minified)`,
   );
 
-  // Step 5: Human-readable outputs (for inspection, not shipped to app)
   console.log("\nStep 5: Writing human-readable outputs...");
 
   const fiddlePretty = JSON.stringify(fiddle, null, 2);

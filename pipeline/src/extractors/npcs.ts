@@ -1,8 +1,8 @@
 import type { NpcId, Season, TrackerData } from "$lib/types/tracker-data.js";
 
-import type { FiddleData } from "../parse-fiddle.js";
+import type { ParsedGameData } from "../parse-fiddle.js";
 
-export function extractNpcs(fiddle: FiddleData): TrackerData["npcs"] {
+export function extractNpcs(fiddle: ParsedGameData): TrackerData["npcs"] {
   const npcs = fiddle.npcs as Record<string, Record<string, unknown>> | undefined;
   if (!npcs) return {} as TrackerData["npcs"];
 

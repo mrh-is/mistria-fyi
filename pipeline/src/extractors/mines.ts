@@ -1,9 +1,9 @@
 import type { BiomeId, SpellId, TrackerData } from "$lib/types/tracker-data.js";
 
 import { expectArray } from "../data-shapes.js";
-import { sourceFileFor, type FiddleData } from "../parse-fiddle.js";
+import { sourceFileFor, type ParsedGameData } from "../parse-fiddle.js";
 
-export function extractMines(fiddle: FiddleData): TrackerData["mines"] {
+export function extractMines(fiddle: ParsedGameData): TrackerData["mines"] {
   const dungeons = fiddle.dungeons as Record<string, unknown> | undefined;
   const spellsData = fiddle.spells as Record<string, Record<string, unknown>> | undefined;
 
@@ -16,8 +16,8 @@ export function extractMines(fiddle: FiddleData): TrackerData["mines"] {
 
   const sourceFile = sourceFileFor(fiddle, "dungeons.dungeons.biomes");
   const rawBiomes = expectArray<Record<string, unknown>>(dungeonsInner?.biomes, {
-    field: "dungeons.biomes",
-    sourceFile,
+    fieldPath: "dungeons.biomes",
+    sourcePath: sourceFile,
   });
 
   const biomes = rawBiomes.map((b, i) => ({

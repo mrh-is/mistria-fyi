@@ -1,9 +1,9 @@
 import type { ItemId, MuseumWing, SetId, WingId } from "$lib/types/tracker-data.js";
 
 import { expectArray, expectStringArray } from "../data-shapes.js";
-import { sourceFileFor, type FiddleData } from "../parse-fiddle.js";
+import { sourceFileFor, type ParsedGameData } from "../parse-fiddle.js";
 
-export function extractMuseum(fiddle: FiddleData): MuseumWing[] {
+export function extractMuseum(fiddle: ParsedGameData): MuseumWing[] {
   const wings = fiddle.museum_wings as Record<string, Record<string, unknown>> | undefined;
   if (!wings) return [];
 
@@ -30,9 +30,9 @@ export function extractMuseum(fiddle: FiddleData): MuseumWing[] {
       if (!set) continue;
 
       const items = expectStringArray(set.items, {
-        entity: `${wingId}.${setId}`,
-        field: "items",
-        sourceFile,
+        entityId: `${wingId}.${setId}`,
+        fieldPath: "items",
+        sourcePath: sourceFile,
       });
 
       sets.push({
@@ -55,7 +55,7 @@ export function extractMuseum(fiddle: FiddleData): MuseumWing[] {
   return result;
 }
 
-function readMuseumOrdering(fiddle: FiddleData): {
+function readMuseumOrdering(fiddle: ParsedGameData): {
   setOrders: Record<string, string[]>;
   wingOrder: string[];
 } {
@@ -69,8 +69,8 @@ function readMuseumOrdering(fiddle: FiddleData): {
 
   // Wings: now a real array of { wing: string, ... }
   const rawWings = expectArray<Record<string, unknown>>(museum.wings, {
-    field: "museum.wings",
-    sourceFile,
+    fieldPath: "museum.wings",
+    sourcePath: sourceFile,
   });
   const wingOrder: string[] = [];
   for (const entry of rawWings) {
@@ -87,9 +87,9 @@ function readMuseumOrdering(fiddle: FiddleData): {
     const orderKey = `${wingId}_order`;
     const rawOrder = museum[orderKey];
     setOrders[wingId] = expectStringArray(rawOrder, {
-      entity: wingId,
-      field: orderKey,
-      sourceFile,
+      entityId: wingId,
+      fieldPath: orderKey,
+      sourcePath: sourceFile,
     });
   }
 

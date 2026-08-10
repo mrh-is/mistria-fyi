@@ -3,37 +3,47 @@ import { join, relative, sep } from "node:path";
 
 import { parse } from "smol-toml";
 
-const SOURCE_FILES: unique symbol = Symbol("sourceFiles");
+const SOURCE_FILE_BY_ROOT_PATH: unique symbol = Symbol("sourceFileByRootPath");
 
-export type FiddleData = Record<string, unknown> & {
-  readonly [SOURCE_FILES]: ReadonlyMap<string, string>;
+export type ParsedGameData = Record<string, unknown> & {
+  readonly [SOURCE_FILE_BY_ROOT_PATH]: ReadonlyMap<string, string>;
 };
 
-export interface ParsedFiddle {
-  data: FiddleData;
+export interface ParsedGameDataResult {
+  data: ParsedGameData;
   fileCount: number;
-  sourceFiles: Map<string, string>;
+  sourceFileByRootPath: ReadonlyMap<string, string>;
 }
 
-export function parseFiddle(assetsDir: string): ParsedFiddle {
+/**
+ * Parses the assets root's fiddle/ directory, mapping relative TOML paths to dotted data roots.
+ * Non-TOML and .meta.toml files are skipped, while ancestor and descendant root collisions are
+ * rejected. Provenance is embedded non-enumerably, so it survives mutation but not JSON
+ * serialization.
+ */
+export function parseFiddle(assetsDir: string): ParsedGameDataResult {
   const fiddleDir = join(assetsDir, "fiddle");
-  const data = {} as FiddleData;
-  const sourceFiles = new Map<string, string>();
+  const data = {} as ParsedGameData;
+  const sourceFileByRootPath = new Map<string, string>();
 
-  walkDirectory(fiddleDir, fiddleDir, data, sourceFiles);
-  Object.defineProperty(data, SOURCE_FILES, {
+  walkDirectory(fiddleDir, fiddleDir, data, sourceFileByRootPath);
+  Object.defineProperty(data, SOURCE_FILE_BY_ROOT_PATH, {
     enumerable: false,
-    value: sourceFiles,
+    value: sourceFileByRootPath,
   });
 
-  console.log(`  Parsed ${sourceFiles.size} TOML files from ${fiddleDir}`);
-  return { data, fileCount: sourceFiles.size, sourceFiles };
+  console.log(`  Parsed ${sourceFileByRootPath.size} TOML files from ${fiddleDir}`);
+  return { data, fileCount: sourceFileByRootPath.size, sourceFileByRootPath };
 }
 
-export function sourceFileFor(fiddle: FiddleData, dottedPath: string): string {
+/**
+ * Finds the nearest provenance ancestor because the map indexes file roots while callers pass
+ * entity or field paths.
+ */
+export function sourceFileFor(data: ParsedGameData, dottedPath: string): string {
   let candidate = dottedPath;
   while (candidate.length > 0) {
-    const sourceFile = fiddle[SOURCE_FILES].get(candidate);
+    const sourceFile = data[SOURCE_FILE_BY_ROOT_PATH].get(candidate);
     if (sourceFile) {
       return sourceFile;
     }
@@ -46,8 +56,8 @@ export function sourceFileFor(fiddle: FiddleData, dottedPath: string): string {
 function walkDirectory(
   dir: string,
   rootDir: string,
-  result: FiddleData,
-  sourceFiles: Map<string, string>,
+  data: ParsedGameData,
+  sourceFileByRootPath: Map<string, string>,
 ): void {
   const entries = readdirSync(dir);
 
@@ -56,7 +66,7 @@ function walkDirectory(
     const stat = statSync(fullPath);
 
     if (stat.isDirectory()) {
-      walkDirectory(fullPath, rootDir, result, sourceFiles);
+      walkDirectory(fullPath, rootDir, data, sourceFileByRootPath);
       continue;
     }
 
@@ -67,7 +77,7 @@ function walkDirectory(
     const relPath = relative(rootDir, fullPath).split(sep).join("/");
     const keyPath = relPath.replace(/\.toml$/, "").split("/");
     const sourceKey = keyPath.join(".");
-    const conflictingKey = [...sourceFiles.keys()].find(
+    const conflictingKey = [...sourceFileByRootPath.keys()].find(
       (existing) =>
         existing === sourceKey ||
         existing.startsWith(`${sourceKey}.`) ||
@@ -86,18 +96,18 @@ function walkDirectory(
       throw new Error(`Failed to parse ${relPath} at ${sourceKey}`, { cause: error });
     }
 
-    setNestedValue(result, keyPath, parsed, relPath);
-    sourceFiles.set(sourceKey, relPath);
+    setNestedValue(data, keyPath, parsed, relPath);
+    sourceFileByRootPath.set(sourceKey, relPath);
   }
 }
 
 function setNestedValue(
-  obj: Record<string, unknown>,
+  target: Record<string, unknown>,
   path: string[],
   value: Record<string, unknown>,
   sourceFile: string,
 ): void {
-  let current = obj;
+  let current = target;
   for (let i = 0; i < path.length - 1; i++) {
     const key = path[i];
     if (!(key in current)) {

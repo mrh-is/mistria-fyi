@@ -1,6 +1,6 @@
 import type { CosmeticId, CosmeticSlot, TrackerData } from "$lib/types/tracker-data.js";
 
-import type { FiddleData } from "../parse-fiddle.js";
+import type { ParsedGameData } from "../parse-fiddle.js";
 
 const VALID_SLOTS = new Set<CosmeticSlot>([
   "back",
@@ -22,7 +22,7 @@ const VALID_SLOTS = new Set<CosmeticSlot>([
   "underwear",
 ]);
 
-export function extractCosmetics(fiddle: FiddleData): TrackerData["cosmetics"] {
+export function extractCosmetics(fiddle: ParsedGameData): TrackerData["cosmetics"] {
   const assets = fiddle.player_assets as Record<string, Record<string, unknown>> | undefined;
   if (!assets) return {} as TrackerData["cosmetics"];
 
@@ -71,7 +71,7 @@ export function extractCosmetics(fiddle: FiddleData): TrackerData["cosmetics"] {
   return result;
 }
 
-function buildSubCategoryMap(fiddle: FiddleData): Record<string, string> {
+function buildSubCategoryMap(fiddle: ParsedGameData): Record<string, string> {
   const ui = fiddle.ui as Record<string, unknown> | undefined;
   const menus = ui?.menus as Record<string, unknown> | undefined;
   const subMenus = menus?.sub_menus as Record<string, unknown> | undefined;

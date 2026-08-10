@@ -6,9 +6,9 @@ import type {
   VariantId,
 } from "$lib/types/tracker-data.js";
 
-import type { FiddleData } from "../parse-fiddle.js";
+import type { ParsedGameData } from "../parse-fiddle.js";
 
-export function extractAnimals(fiddle: FiddleData): TrackerData["animals"] {
+export function extractAnimals(fiddle: ParsedGameData): TrackerData["animals"] {
   const ranching = fiddle.ranching as Record<string, unknown> | undefined;
   const animals = ranching?.animals as Record<string, Record<string, unknown>> | undefined;
   if (!animals) return {} as TrackerData["animals"];

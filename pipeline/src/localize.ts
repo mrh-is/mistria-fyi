@@ -1,5 +1,5 @@
-// English strings are inline in the TOML data (v1.0.2+).
-// This module is retained as a stub for future i18n support.
+// This explicit compatibility tombstone is absent from main.ts and always throws, including for
+// English.
 
 export function localize(_fiddle: unknown, _lang?: string): never {
   if (_lang && _lang !== "en") {

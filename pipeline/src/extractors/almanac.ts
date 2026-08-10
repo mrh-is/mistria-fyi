@@ -1,7 +1,7 @@
 import type { AlmanacCategory, ItemId, TrackerData } from "$lib/types/tracker-data.js";
 
 import { expectArray, expectStringArray } from "../data-shapes.js";
-import { sourceFileFor, type FiddleData } from "../parse-fiddle.js";
+import { sourceFileFor, type ParsedGameData } from "../parse-fiddle.js";
 
 export type ItemsRegistry = Record<string, { category: string; name: string }>;
 
@@ -14,7 +14,7 @@ const CATEGORY_NAME_OVERRIDES: Record<string, string> = {
   fish: "Fishing and Diving",
 };
 
-export function extractAlmanac(fiddle: FiddleData): {
+export function extractAlmanac(fiddle: ParsedGameData): {
   almanac: TrackerData["almanac"];
   items: ItemsRegistry;
 } {
@@ -156,7 +156,7 @@ export function extractAlmanac(fiddle: FiddleData): {
   return { almanac, items };
 }
 
-function buildChestIdSet(fiddle: FiddleData): Set<string> {
+function buildChestIdSet(fiddle: ParsedGameData): Set<string> {
   const fish = fiddle.fish as Record<string, Record<string, unknown>> | undefined;
   if (!fish) return new Set();
 
@@ -192,7 +192,7 @@ function collapseFurnitureColorways(
   return result;
 }
 
-function readAlmanacCategories(fiddle: FiddleData): RawAlmanacCategory[] {
+function readAlmanacCategories(fiddle: ParsedGameData): RawAlmanacCategory[] {
   const ui = fiddle.ui as Record<string, unknown> | undefined;
   const menus = ui?.menus as Record<string, unknown> | undefined;
   const subMenus = menus?.sub_menus as Record<string, unknown> | undefined;
@@ -201,16 +201,16 @@ function readAlmanacCategories(fiddle: FiddleData): RawAlmanacCategory[] {
 
   const sourceFile = sourceFileFor(fiddle, "ui.menus.sub_menus.almanac.categories");
   const arr = expectArray<Record<string, unknown>>(almanac.categories, {
-    field: "almanac.categories",
-    sourceFile,
+    fieldPath: "almanac.categories",
+    sourcePath: sourceFile,
   });
 
   return arr.map((cat: Record<string, unknown>) => ({
     key: cat.key as string,
     tags: expectStringArray(cat.tags, {
-      entity: cat.key as string,
-      field: "tags",
-      sourceFile,
+      entityId: cat.key as string,
+      fieldPath: "tags",
+      sourcePath: sourceFile,
     }),
   }));
 }
