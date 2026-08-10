@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, sep } from "node:path";
 
 import { parse } from "smol-toml";
 
@@ -64,7 +64,7 @@ function walkDirectory(
       continue;
     }
 
-    const relPath = relative(rootDir, fullPath);
+    const relPath = relative(rootDir, fullPath).split(sep).join("/");
     const keyPath = relPath.replace(/\.toml$/, "").split("/");
     const sourceKey = keyPath.join(".");
     const conflictingKey = [...sourceFiles.keys()].find(

@@ -35,7 +35,7 @@ export function extractSources(fiddle: FiddleData): TrackerData["sources"] {
   extractMonsterDrops(fiddle, map);
   extractQuestRewards(fiddle, map);
   extractFestivalCosmetics(fiddle, map);
-  extractRenownCosmetics(fiddle, map);
+  extractRenownRewards(fiddle, map);
 
   let deduped = 0;
   for (const [itemId, sources] of Object.entries(map)) {
@@ -218,15 +218,17 @@ function extractFestivalCosmetics(fiddle: FiddleData, map: SourceMap): void {
       if (storeId === "default") continue;
 
       if (!Array.isArray(stockData)) continue;
-      for (const item of stockData) {
-        if (typeof item !== "object" || item === null) continue;
-        const cosmeticId = (item as Record<string, unknown>).cosmetic as string | undefined;
-        if (!cosmeticId) continue;
+      for (const entry of stockData) {
+        if (typeof entry !== "object" || entry === null) continue;
+        const obj = entry as Record<string, unknown>;
+
+        const targetId = (obj.cosmetic as string) ?? (obj.item as string);
+        if (!targetId) continue;
 
         const restrictions: Restriction[] = [];
         if (season) restrictions.push({ seasons: [season], type: "season" });
 
-        addSource(map, cosmeticId, {
+        addSource(map, targetId, {
           location: storeId,
           restrictions: restrictions.length > 0 ? restrictions : undefined,
           type: "festival",
@@ -385,17 +387,18 @@ function extractQuestRewards(fiddle: FiddleData, map: SourceMap): void {
   }
 }
 
-function extractRenownCosmetics(fiddle: FiddleData, map: SourceMap): void {
+function extractRenownRewards(fiddle: FiddleData, map: SourceMap): void {
   const renown = fiddle.renown as Record<string, unknown> | undefined;
   if (!renown) return;
 
   const rewards = Array.isArray(renown.rewards) ? renown.rewards : [];
   for (const reward of rewards) {
     if (typeof reward !== "object" || reward === null) continue;
-    const cosmeticId = (reward as Record<string, unknown>).cosmetic as string | undefined;
-    if (!cosmeticId) continue;
+    const obj = reward as Record<string, unknown>;
+    const targetId = (obj.cosmetic as string) ?? (obj.item as string);
+    if (!targetId) continue;
 
-    addSource(map, cosmeticId, { type: "renown" });
+    addSource(map, targetId, { type: "renown" });
   }
 }
 
