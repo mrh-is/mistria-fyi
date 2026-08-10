@@ -10,15 +10,22 @@ export function extractNpcs(fiddle: FiddleData): TrackerData["npcs"] {
   for (const [id, npc] of Object.entries(npcs)) {
     if (id === "default") continue;
 
+    const name = npc.name as string | undefined;
+    if (!name) continue;
+
     const birthday = npc.birthday as undefined | { day?: number; season?: string };
+    const dateable = npc.dateable;
+
+    if (typeof dateable !== "boolean") continue;
+    if (!birthday?.season || typeof birthday.day !== "number") continue;
 
     result[id as NpcId] = {
       birthday: {
-        day: birthday?.day ?? 1,
-        season: (birthday?.season as Season) ?? "spring",
+        day: birthday.day,
+        season: birthday.season as Season,
       },
-      dateable: (npc.dateable as boolean | undefined) ?? false,
-      name: (npc.name as string | undefined) ?? id,
+      dateable,
+      name,
     };
   }
 

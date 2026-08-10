@@ -36,9 +36,8 @@ export function extractCosmetics(fiddle: FiddleData): TrackerData["cosmetics"] {
     const uiSlot = asset.ui_slot as string | undefined;
     const slot = normalizeSlot(uiSlot ?? id, id);
 
-    // Track truly unrecognized slots for debugging (after aliases + gear suffix + known composites)
     const cleaned = uiSlot?.replace(/_gear$/, "");
-    const KNOWN_COMPOSITE_SLOTS = new Set(["bottom"]); // handled by ID-prefix matching
+    const KNOWN_COMPOSITE_SLOTS = new Set(["bottom"]);
     if (
       uiSlot &&
       cleaned &&
@@ -72,18 +71,20 @@ export function extractCosmetics(fiddle: FiddleData): TrackerData["cosmetics"] {
   return result;
 }
 
-// ─── Private helpers ────────────────────────────────────────────────
-
 function buildSubCategoryMap(fiddle: FiddleData): Record<string, string> {
-  const customization = (fiddle.ui as Record<string, unknown> | undefined)
-    ?.character_customization as
+  const ui = fiddle.ui as Record<string, unknown> | undefined;
+  const menus = ui?.menus as Record<string, unknown> | undefined;
+  const subMenus = menus?.sub_menus as Record<string, unknown> | undefined;
+  const customization = subMenus?.customization as
     | Record<string, Record<string, { key?: string; name?: string }>>
     | undefined;
   if (!customization) return {};
 
   const map: Record<string, string> = {};
   for (const slotEntries of Object.values(customization)) {
+    if (typeof slotEntries !== "object" || slotEntries === null) continue;
     for (const entry of Object.values(slotEntries)) {
+      if (typeof entry !== "object" || entry === null) continue;
       if (entry.key && entry.name) {
         map[entry.key] = entry.name;
       }
@@ -92,32 +93,25 @@ function buildSubCategoryMap(fiddle: FiddleData): Record<string, string> {
   return map;
 }
 
-// Game ui_slot values that don't match our display slot names.
-// "bottom" is intentionally omitted — it covers pants, shorts, skirts, and underwear,
-// so we let the ID-prefix matching assign the correct specific slot.
 const SLOT_ALIASES: Record<string, CosmeticSlot> = {
   facial_hair: "facial",
   feet: "shoes",
 };
 
 function normalizeSlot(raw: string, id: string): CosmeticSlot {
-  // ui_slot values like "head_gear" → "head", "face_gear" → "face", "back_gear" → "back"
   const cleaned = raw.replace(/_gear$/, "");
   if (VALID_SLOTS.has(cleaned as CosmeticSlot)) return cleaned as CosmeticSlot;
 
-  // Check aliases (bottom → pants, feet → shoes, facial_hair → facial)
   if (cleaned in SLOT_ALIASES) return SLOT_ALIASES[cleaned];
 
-  // Infer slot from the cosmetic ID prefix (more reliable than the raw string)
   for (const slot of VALID_SLOTS) {
     if (id.startsWith(`${slot}_`)) return slot;
   }
 
-  // Last resort: check raw string prefix
   for (const slot of VALID_SLOTS) {
     if (raw.startsWith(slot)) return slot;
   }
-  return "top"; // fallback
+  return "top";
 }
 
 function titleCase(key: string): string {

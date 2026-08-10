@@ -2,8 +2,14 @@ import type { QuestId, TrackerData } from "$lib/types/tracker-data.js";
 
 import type { FiddleData } from "../parse-fiddle.js";
 
-// Only extract these quest types (skip request_board — those are procedural daily quests)
-const QUEST_TYPES = ["story_quests", "heart_quests", "fetch_quests", "crown_quests"];
+const QUEST_TYPES = [
+  "story_quests",
+  "heart_quests",
+  "fetch_quests",
+  "crown_quests",
+  "stillwell_challenges",
+  "tali_challenges",
+];
 
 export function extractQuests(fiddle: FiddleData): TrackerData["quests"] {
   const quests = fiddle.quests as

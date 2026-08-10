@@ -7,20 +7,25 @@ import type {
   Weather,
 } from "$lib/types/tracker-data.js";
 
-import type { FiddleData } from "../parse-fiddle.js";
-
-/**
- * Extracts source data: WHERE and HOW to obtain each item.
- * This is the most complex extractor — it pulls from stores, fish, bugs,
- * artifacts, dungeons, items (crafting/cooking), and quests.
- */
+import {
+  buildRequirementRegistry,
+  parseRequirements,
+  type RequirementExpr,
+} from "../requirements.js";
+import { sourceFileFor, type FiddleData } from "../parse-fiddle.js";
 
 type SourceMap = Record<string, Source[]>;
 
 export function extractSources(fiddle: FiddleData): TrackerData["sources"] {
   const map: SourceMap = {};
 
-  extractStoreItems(fiddle, map);
+  // Build requirement registry once for all store processing
+  const requirementsData = fiddle.requirements as Record<string, unknown> | undefined;
+  const { named, primitives } = requirementsData
+    ? buildRequirementRegistry(requirementsData)
+    : { named: {}, primitives: new Set<string>() };
+
+  extractStoreItems(fiddle, map, named, primitives);
   extractFishItems(fiddle, map);
   extractBugItems(fiddle, map);
   extractCraftingItems(fiddle, map);
@@ -32,7 +37,6 @@ export function extractSources(fiddle: FiddleData): TrackerData["sources"] {
   extractFestivalCosmetics(fiddle, map);
   extractRenownCosmetics(fiddle, map);
 
-  // Deduplicate identical sources per item
   let deduped = 0;
   for (const [itemId, sources] of Object.entries(map)) {
     const before = sources.length;
@@ -54,7 +58,6 @@ function addSource(map: SourceMap, itemId: string, source: Source): void {
   map[itemId].push(source);
 }
 
-/** Remove duplicate sources (same type, location, and restrictions). */
 function deduplicateSources(sources: Source[]): Source[] {
   const seen = new Set<string>();
   return sources.filter((s) => {
@@ -100,7 +103,6 @@ function extractCraftingItems(fiddle: FiddleData, map: SourceMap): void {
     | undefined;
   if (!items) return;
 
-  // Furniture items with recipes → craft
   const furniture = items.furniture;
   if (furniture) {
     for (const subCategory of Object.values(furniture)) {
@@ -114,7 +116,6 @@ function extractCraftingItems(fiddle: FiddleData, map: SourceMap): void {
     }
   }
 
-  // Cooked dishes → cook
   const other = items.other;
   if (other?.cooked_dishes) {
     for (const [itemId, item] of Object.entries(other.cooked_dishes)) {
@@ -137,8 +138,9 @@ function extractCropItems(fiddle: FiddleData, map: SourceMap): void {
     if (itemId === "default") continue;
     if (typeof item !== "object" || item === null) continue;
 
-    const tags = parseStringArray(item.tags);
-    if (!tags) continue;
+    const tags = Array.isArray(item.tags)
+      ? (item.tags as unknown[]).filter((v): v is string => typeof v === "string")
+      : [];
 
     if (tags.includes("seed")) {
       const seasons = parseSeasonsArray(item.seasons);
@@ -152,35 +154,29 @@ function extractCropItems(fiddle: FiddleData, map: SourceMap): void {
   }
 }
 
-/**
- * Map crop seasons: for each seed with a crop_object field, propagate the seed's
- * store season to the crop as a "grow" source. Also adds a "grow" source for
- * dual forageables (items that can be both foraged and grown from seed).
- */
 function extractCropSeasons(fiddle: FiddleData, map: SourceMap): void {
   const items = fiddle.items as
     | Record<string, Record<string, Record<string, Record<string, unknown>>>>
     | undefined;
   if (!items?.other?.crops_and_forage) return;
 
-  // Build seed → crop mapping + collect seed seasons from existing sources
   const seedToCrop: Record<string, string> = {};
   for (const [itemId, item] of Object.entries(items.other.crops_and_forage)) {
     if (itemId === "default") continue;
     if (typeof item !== "object" || item === null) continue;
 
-    const tags = parseStringArray(item.tags);
+    const tags = Array.isArray(item.tags)
+      ? (item.tags as unknown[]).filter((v): v is string => typeof v === "string")
+      : [];
     const cropObject = item.crop_object as string | undefined;
-    if (tags?.includes("seed") && cropObject) {
+    if (tags.includes("seed") && cropObject) {
       seedToCrop[itemId] = cropObject;
     }
   }
 
-  // For each seed→crop pair, find the seed's season restriction and apply to crop
   let mapped = 0;
   for (const [seedId, cropId] of Object.entries(seedToCrop)) {
     const seedSources = map[seedId] ?? [];
-    // Find any season restriction on the seed (from store seasonal stock)
     const seasonRestriction = seedSources
       .flatMap((s) => s.restrictions ?? [])
       .find((r) => r.type === "season");
@@ -221,10 +217,10 @@ function extractFestivalCosmetics(fiddle: FiddleData, map: SourceMap): void {
     for (const [storeId, stockData] of Object.entries(stocks)) {
       if (storeId === "default") continue;
 
-      const items = toArray<Record<string, unknown>>(stockData);
-      for (const item of items) {
+      if (!Array.isArray(stockData)) continue;
+      for (const item of stockData) {
         if (typeof item !== "object" || item === null) continue;
-        const cosmeticId = item.cosmetic as string | undefined;
+        const cosmeticId = (item as Record<string, unknown>).cosmetic as string | undefined;
         if (!cosmeticId) continue;
 
         const restrictions: Restriction[] = [];
@@ -240,8 +236,6 @@ function extractFestivalCosmetics(fiddle: FiddleData, map: SourceMap): void {
   }
 }
 
-// ─── Store items ────────────────────────────────────────────────────
-
 function extractFishItems(fiddle: FiddleData, map: SourceMap): void {
   const fish = fiddle.fish as Record<string, Record<string, unknown>> | undefined;
   if (!fish) return;
@@ -251,8 +245,6 @@ function extractFishItems(fiddle: FiddleData, map: SourceMap): void {
 
     const itemId = (data.item as string | undefined) ?? fishId;
     const isChest = data.is_chest as boolean | undefined;
-    const retrieval = data.retrieval;
-    const retrievalArr = parseStringArray(retrieval);
 
     const restrictions: Restriction[] = [];
 
@@ -269,21 +261,28 @@ function extractFishItems(fiddle: FiddleData, map: SourceMap): void {
       restrictions.push({ size: data.size as string, type: "fishSize" });
     }
 
-    // Determine source type
     let sourceType: SourceType = "fish";
     if (isChest) {
       sourceType = "chest";
-    } else if (retrievalArr?.includes("divespot") || retrieval === "divespot") {
-      sourceType = "dive";
+    } else {
+      const retrieval = data.retrieval;
+      const retrievalArr = Array.isArray(retrieval)
+        ? retrieval.filter((v): v is string => typeof v === "string")
+        : typeof retrieval === "string"
+          ? [retrieval]
+          : [];
+      if (retrievalArr.includes("divespot")) {
+        sourceType = "dive";
+      }
     }
 
     const waterType = data.water_type;
-    const wtArr = parseStringArray(waterType);
-    const location = wtArr
-      ? wtArr.join(", ")
+    const wtArr = Array.isArray(waterType)
+      ? waterType.filter((v): v is string => typeof v === "string")
       : typeof waterType === "string"
-        ? waterType
-        : undefined;
+        ? [waterType]
+        : [];
+    const location = wtArr.length > 0 ? wtArr.join(", ") : undefined;
 
     addSource(map, itemId, {
       location,
@@ -293,17 +292,14 @@ function extractFishItems(fiddle: FiddleData, map: SourceMap): void {
   }
 }
 
-// ─── Fish ───────────────────────────────────────────────────────────
-
 function extractForageables(fiddle: FiddleData, map: SourceMap): void {
   const forageables = fiddle.forageables as Record<string, unknown> | undefined;
   if (!forageables) return;
 
-  // Non-seasonal forageables (e.g., sand_forageables = beach shells)
   for (const [key, data] of Object.entries(forageables)) {
     if (["fall", "spring", "summer", "winter"].includes(key)) continue;
-    const items = toArray(data);
-    for (const entry of items) {
+    if (!Array.isArray(data)) continue;
+    for (const entry of data) {
       const itemId = typeof entry === "string" ? entry : undefined;
       if (!itemId) continue;
       addSource(map, itemId, { type: "forage" });
@@ -316,9 +312,8 @@ function extractForageables(fiddle: FiddleData, map: SourceMap): void {
     if (!seasonData) continue;
 
     for (const rarityGroup of Object.values(seasonData)) {
-      const rarityItems = toArray(rarityGroup);
-      for (const entry of rarityItems) {
-        // Entries can be plain strings ("heather") or objects ({ item: "heather" })
+      if (!Array.isArray(rarityGroup)) continue;
+      for (const entry of rarityGroup) {
         const itemId =
           typeof entry === "string"
             ? entry
@@ -336,8 +331,6 @@ function extractForageables(fiddle: FiddleData, map: SourceMap): void {
   }
 }
 
-// ─── Festival cosmetics ─────────────────────────────────────────────
-
 function extractMonsterDrops(fiddle: FiddleData, map: SourceMap): void {
   const monsters = fiddle.monsters as Record<string, Record<string, unknown>> | undefined;
   if (!monsters) return;
@@ -349,11 +342,11 @@ function extractMonsterDrops(fiddle: FiddleData, map: SourceMap): void {
       if (monsterId === "default" || typeof monster !== "object" || monster === null) continue;
 
       const monsterData = monster as Record<string, unknown>;
-      const drops = toArray<Record<string, unknown>>(monsterData.drops);
+      const drops = Array.isArray(monsterData.drops) ? monsterData.drops : [];
 
       for (const drop of drops) {
         if (typeof drop !== "object" || drop === null) continue;
-        const itemId = drop.item as string | undefined;
+        const itemId = (drop as Record<string, unknown>).item as string | undefined;
         if (!itemId) continue;
 
         addSource(map, itemId, {
@@ -364,8 +357,6 @@ function extractMonsterDrops(fiddle: FiddleData, map: SourceMap): void {
     }
   }
 }
-
-// ─── Quest rewards ──────────────────────────────────────────────────
 
 function extractQuestRewards(fiddle: FiddleData, map: SourceMap): void {
   const quests = fiddle.quests as Record<string, Record<string, unknown>> | undefined;
@@ -378,11 +369,11 @@ function extractQuestRewards(fiddle: FiddleData, map: SourceMap): void {
       if (questId === "default" || typeof quest !== "object" || quest === null) continue;
 
       const questData = quest as Record<string, unknown>;
-      const rewards = toArray<Record<string, unknown>>(questData.rewards);
+      const rewards = Array.isArray(questData.rewards) ? questData.rewards : [];
 
       for (const reward of rewards) {
         if (typeof reward !== "object" || reward === null) continue;
-        const itemId = reward.item as string | undefined;
+        const itemId = (reward as Record<string, unknown>).item as string | undefined;
         if (!itemId) continue;
 
         addSource(map, itemId, {
@@ -394,154 +385,252 @@ function extractQuestRewards(fiddle: FiddleData, map: SourceMap): void {
   }
 }
 
-// ─── Renown cosmetics ───────────────────────────────────────────────
-
 function extractRenownCosmetics(fiddle: FiddleData, map: SourceMap): void {
   const renown = fiddle.renown as Record<string, unknown> | undefined;
   if (!renown) return;
 
-  const rewards = toArray<Record<string, unknown>>(renown.rewards);
+  const rewards = Array.isArray(renown.rewards) ? renown.rewards : [];
   for (const reward of rewards) {
     if (typeof reward !== "object" || reward === null) continue;
-    const cosmeticId = reward.cosmetic as string | undefined;
+    const cosmeticId = (reward as Record<string, unknown>).cosmetic as string | undefined;
     if (!cosmeticId) continue;
 
     addSource(map, cosmeticId, { type: "renown" });
   }
 }
 
-// ─── Crafting & Cooking ─────────────────────────────────────────────
-
-function extractStoreItems(fiddle: FiddleData, map: SourceMap): void {
+function extractStoreItems(
+  fiddle: FiddleData,
+  map: SourceMap,
+  namedRegistry: Record<string, Record<string, unknown>>,
+  primitives: Set<string>,
+): void {
   const stores = fiddle.stores as Record<string, Record<string, unknown>> | undefined;
   if (!stores) return;
 
+  const storeSourceFile = sourceFileFor(fiddle, "stores");
+  let ignoredScrolls = 0;
+
   for (const [storeId, store] of Object.entries(stores)) {
-    const categories = toArray<Record<string, unknown>>(store.categories);
-    if (categories.length === 0) continue;
+    if (storeId === "default") continue;
+    const categories = Array.isArray(store.categories) ? store.categories : [];
 
     for (const category of categories) {
       if (typeof category !== "object" || category === null) continue;
+      const cat = category as Record<string, unknown>;
 
       // Constant stock
-      const constantStock = toArray(category.constant_stock);
-      for (const entry of constantStock) {
-        const itemId = typeof entry === "string" ? entry : (entry as Record<string, unknown>)?.item;
-        if (typeof itemId !== "string") continue;
-
-        const restrictions: Restriction[] = [];
-        if (typeof entry === "object" && entry !== null) {
-          const obj = entry as Record<string, unknown>;
-          if (obj.building_fixed) {
-            restrictions.push({ building: obj.building_fixed as string, type: "building" });
-          }
-          if (obj.has_perk) {
-            restrictions.push({ perk: obj.has_perk as string, type: "perk" });
-          }
-          if (obj.skill_level_at_least) {
-            const skill = obj.skill_level_at_least as Record<string, unknown>;
-            restrictions.push({
-              level: skill.level as number,
-              skill: skill.skill as string,
-              type: "skill",
-            });
-          }
+      if (Array.isArray(cat.constant_stock)) {
+        for (const entry of cat.constant_stock) {
+          ignoredScrolls += processStoreEntry(
+            entry,
+            storeId,
+            [],
+            map,
+            namedRegistry,
+            primitives,
+            storeSourceFile,
+          );
         }
-
-        addSource(map, itemId, {
-          location: storeId,
-          restrictions: restrictions.length > 0 ? restrictions : undefined,
-          type: "store",
-        });
       }
 
       // Seasonal stock
-      const seasonal = category.seasonal as Record<string, unknown> | undefined;
+      const seasonal = cat.seasonal as Record<string, unknown> | undefined;
       if (seasonal) {
         for (const [season, itemsData] of Object.entries(seasonal)) {
-          const items = toArray(itemsData);
-          for (const entry of items) {
-            const itemId =
-              typeof entry === "string" ? entry : (entry as Record<string, unknown>)?.item;
-            if (typeof itemId !== "string") continue;
-
-            const restrictions: Restriction[] = [{ seasons: [season as Season], type: "season" }];
-            if (typeof entry === "object" && entry !== null) {
-              const obj = entry as Record<string, unknown>;
-              if (obj.building_fixed) {
-                restrictions.push({ building: obj.building_fixed as string, type: "building" });
-              }
-            }
-
-            addSource(map, itemId, {
-              location: storeId,
-              restrictions,
-              type: "store",
-            });
+          if (!Array.isArray(itemsData)) continue;
+          const seasonRestriction: Restriction = { seasons: [season as Season], type: "season" };
+          for (const entry of itemsData) {
+            ignoredScrolls += processStoreEntry(
+              entry,
+              storeId,
+              [seasonRestriction],
+              map,
+              namedRegistry,
+              primitives,
+              storeSourceFile,
+            );
           }
         }
       }
 
       // Random stock
-      const randomStock = toArray(category.random_stock);
-      for (const entry of randomStock) {
-        const itemId = typeof entry === "string" ? entry : (entry as Record<string, unknown>)?.item;
-        if (typeof itemId !== "string") continue;
-
-        addSource(map, itemId, {
-          location: storeId,
-          restrictions: [{ type: "randomStock" }],
-          type: "store",
-        });
+      if (Array.isArray(cat.random_stock)) {
+        const randomRestriction: Restriction = { type: "randomStock" };
+        for (const entry of cat.random_stock) {
+          ignoredScrolls += processStoreEntry(
+            entry,
+            storeId,
+            [randomRestriction],
+            map,
+            namedRegistry,
+            primitives,
+            storeSourceFile,
+          );
+        }
       }
     }
   }
+
+  if (ignoredScrolls > 0) {
+    console.log(`  Stores: ${ignoredScrolls} recipe/crafting scrolls explicitly ignored`);
+  }
 }
 
-// ─── Crops & Seeds ──────────────────────────────────────────────────
+function processStoreEntry(
+  entry: unknown,
+  storeId: string,
+  baseRestrictions: Restriction[],
+  map: SourceMap,
+  namedRegistry: Record<string, Record<string, unknown>>,
+  primitives: Set<string>,
+  storeSourceFile: string,
+): number {
+  if (typeof entry === "string") {
+    addSource(map, entry, {
+      location: storeId,
+      restrictions: baseRestrictions.length > 0 ? baseRestrictions : undefined,
+      type: "store",
+    });
+    return 0;
+  }
+
+  if (typeof entry !== "object" || entry === null) return 0;
+  const obj = entry as Record<string, unknown>;
+
+  // Recipe/crafting scrolls are explicitly ignored
+  if (obj.recipe_scroll || obj.crafting_scroll) return 1;
+
+  const itemId = obj.item as string | undefined;
+  const cosmeticId = obj.cosmetic as string | undefined;
+  const targetId = itemId ?? cosmeticId;
+  if (!targetId) return 0;
+
+  const restrictions = [...baseRestrictions];
+
+  // Parse requirements through the requirement system
+  if (obj.requirements) {
+    const reqRestrictions = mapRequirementsToRestrictions(
+      obj.requirements,
+      namedRegistry,
+      primitives,
+      storeId,
+      targetId,
+      storeSourceFile,
+    );
+    restrictions.push(...reqRestrictions);
+  }
+
+  addSource(map, targetId, {
+    location: storeId,
+    restrictions: restrictions.length > 0 ? restrictions : undefined,
+    type: cosmeticId ? "store" : "store",
+  });
+  return 0;
+}
+
+function mapRequirementsToRestrictions(
+  requirements: unknown,
+  namedRegistry: Record<string, Record<string, unknown>>,
+  primitives: Set<string>,
+  storeId: string,
+  entityId: string,
+  storeSourceFile: string,
+): Restriction[] {
+  const ctx = { entity: `${storeId}/${entityId}`, field: "requirements", sourceFile: storeSourceFile };
+  const expr = parseRequirements(requirements, namedRegistry, primitives, ctx);
+  return flattenExprToRestrictions(expr);
+}
+
+function flattenExprToRestrictions(expr: RequirementExpr): Restriction[] {
+  if ("all" in expr) {
+    return expr.all.flatMap(flattenExprToRestrictions);
+  }
+  if ("any" in expr) {
+    // Can't flatten OR into a flat restriction list — skip for now
+    return [];
+  }
+  if ("not" in expr) {
+    // Can't represent NOT in restrictions — skip
+    return [];
+  }
+  if ("predicate" in expr) {
+    return predicateToRestriction(expr.predicate, expr.value);
+  }
+  return [];
+}
+
+function predicateToRestriction(predicate: string, value: unknown): Restriction[] {
+  switch (predicate) {
+    case "has_perk":
+      return [{ perk: value as string, type: "perk" }];
+    case "reached_skill_level": {
+      if (typeof value === "object" && value !== null) {
+        const entries = Object.entries(value as Record<string, unknown>);
+        if (entries.length === 1) {
+          const [skill, level] = entries[0];
+          return [{ level: level as number, skill, type: "skill" }];
+        }
+      }
+      return [];
+    }
+    case "reached_mines_level":
+      return [{ level: value as number, type: "minesLevel" }];
+    case "is_season":
+      return [{ seasons: [value as Season], type: "season" }];
+    case "unlocked_animal":
+      return [{ animal: value as string, type: "animal" }];
+    case "seen_cutscene":
+      return [{ cutscene: value as string, type: "cutscene" }];
+    case "reached_date":
+      if (typeof value === "string") {
+        return [{ season: value as Season, type: "seenSeason" }];
+      }
+      if (typeof value === "object" && value !== null) {
+        const dateObj = value as Record<string, unknown>;
+        if (dateObj.season) {
+          return [{ season: dateObj.season as Season, type: "seenSeason" }];
+        }
+      }
+      return [];
+    case "has_upper_floor":
+      return [{ type: "upperFloor" }];
+    case "is_dating_someone":
+      return [{ relationship: "datingSomeone", type: "relationship" }];
+    default:
+      return [];
+  }
+}
 
 function parseHours(hours: unknown): [number, number] | undefined {
   if (hours === false || hours === undefined || hours === null) return undefined;
-  const arr = toArray<number>(hours);
-  return arr.length >= 2 ? [arr[0], arr[1]] : undefined;
+  if (Array.isArray(hours) && hours.length >= 2) return [hours[0] as number, hours[1] as number];
+  return undefined;
 }
-
-// ─── Forageables ────────────────────────────────────────────────────
 
 function parseSeasonsArray(seasons: unknown): Season[] | undefined {
   if (seasons === false || seasons === undefined || seasons === null) return undefined;
-  const arr = toArray<string>(seasons);
-  return arr.length > 0 ? (arr as Season[]) : undefined;
+  if (Array.isArray(seasons)) {
+    const arr = seasons.filter((v): v is string => typeof v === "string") as Season[];
+    return arr.length > 0 ? arr : undefined;
+  }
+  return undefined;
 }
-
-// ─── Monster drops ──────────────────────────────────────────────────
 
 function parseStringArray(data: unknown): string[] | undefined {
   if (data === false || data === undefined || data === null) return undefined;
-  const arr = toArray<string>(data);
-  return arr.length > 0 ? arr : undefined;
+  if (Array.isArray(data)) {
+    const arr = data.filter((v): v is string => typeof v === "string");
+    return arr.length > 0 ? arr : undefined;
+  }
+  return undefined;
 }
-
-// ─── Quest rewards ──────────────────────────────────────────────────
 
 function parseWeathersArray(weathers: unknown): undefined | Weather[] {
   if (weathers === false || weathers === undefined || weathers === null) return undefined;
-  const arr = toArray<string>(weathers);
-  return arr.length > 0 ? (arr as Weather[]) : undefined;
-}
-
-// ─── Main export ────────────────────────────────────────────────────
-
-/** Convert array or numbered-key object (from flat parser) to array. */
-function toArray<T = unknown>(data: unknown): T[] {
-  if (Array.isArray(data)) return data as T[];
-  if (data && typeof data === "object") {
-    const obj = data as Record<string, unknown>;
-    const keys = Object.keys(obj);
-    // Only treat as array if keys look numeric
-    if (keys.length > 0 && keys.every((k) => /^\d+$/.test(k))) {
-      return keys.sort((a, b) => Number(a) - Number(b)).map((k) => obj[k] as T);
-    }
+  if (Array.isArray(weathers)) {
+    const arr = weathers.filter((v): v is string => typeof v === "string") as Weather[];
+    return arr.length > 0 ? arr : undefined;
   }
-  return [];
+  return undefined;
 }

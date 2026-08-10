@@ -23,9 +23,6 @@ export function extractAnimals(fiddle: FiddleData): TrackerData["animals"] {
     const rawVariants = animal.variants as Record<string, Record<string, unknown>> | undefined;
     const rawCosmetics = animal.cosmetics as Record<string, Record<string, unknown>> | undefined;
 
-    // Extract variants
-    // Skip key "default" (template, not collectable) and acquirable: false (e.g. Mistmare)
-    // Include default_unlocked variants as tier 1 collectables
     const variants = {} as Record<
       VariantId,
       TrackerData["animals"][AnimalId]["variants"][VariantId]
@@ -50,7 +47,6 @@ export function extractAnimals(fiddle: FiddleData): TrackerData["animals"] {
       }
     }
 
-    // Extract cosmetics, stripping the species name from display names
     const speciesName = (core?.name as string | undefined) ?? id;
     const cosmetics = {} as Record<CosmeticId, { fullName: string; name: string }>;
     if (rawCosmetics) {
