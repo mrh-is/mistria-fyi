@@ -1,22 +1,26 @@
 import { describe, expect, it } from "vitest";
 
-import type { DataContext } from "./data-shapes.js";
+import type { SourceFieldLocation } from "./data-shapes.js";
 import { parseFiddle } from "./parse-fiddle.js";
 
 import {
-  buildRequirementRegistry,
+  buildRequirementDefinitions,
   parseRequirements,
-  type RequirementExpr,
-  type RequirementRegistry,
+  type NamedRequirementDefinitions,
+  type RequirementExpression,
 } from "./requirements.js";
 
-const ctx: DataContext = { entity: "test_item", field: "requirements", sourceFile: "test.toml" };
+const testSourceLocation: SourceFieldLocation = {
+  entityId: "test_item",
+  fieldPath: "requirements",
+  sourcePath: "test.toml",
+};
 
-function makeState(
-  named: RequirementRegistry,
+function makeRequirementDefinitions(
+  namedRequirements: NamedRequirementDefinitions,
   extraPrimitives: string[] = [],
 ) {
-  const primitives = new Set([
+  const primitivePredicates = new Set([
     "has_perk",
     "reached_skill_level",
     "reached_mines_level",
@@ -33,30 +37,30 @@ function makeState(
     "met_npc",
     ...extraPrimitives,
   ]);
-  return { named, primitives };
+  return { namedRequirements, primitivePredicates };
 }
 
 describe("parseRequirements", () => {
   it("resolves a primitive predicate", () => {
-    const { named, primitives } = makeState({});
+    const { namedRequirements, primitivePredicates } = makeRequirementDefinitions({});
     const result = parseRequirements(
       { reached_skill_level: { ranching: 20 } },
-      named,
-      primitives,
-      ctx,
+      namedRequirements,
+      primitivePredicates,
+      testSourceLocation,
     );
     expect(result).toEqual({ predicate: "reached_skill_level", value: { ranching: 20 } });
   });
 
   it("resolves a named requirement to its primitive", () => {
-    const { named, primitives } = makeState({
+    const { namedRequirements, primitivePredicates } = makeRequirementDefinitions({
       repaired_general_store: { seen_cutscene: "repair_the_general_store_pt_2" },
     });
     const result = parseRequirements(
       { repaired_general_store: true },
-      named,
-      primitives,
-      ctx,
+      namedRequirements,
+      primitivePredicates,
+      testSourceLocation,
     );
     expect(result).toEqual({
       predicate: "seen_cutscene",
@@ -65,7 +69,7 @@ describe("parseRequirements", () => {
   });
 
   it("resolves nested named requirements", () => {
-    const { named, primitives } = makeState({
+    const { namedRequirements, primitivePredicates } = makeRequirementDefinitions({
       broke_bell: {
         invert: {
           or: [{ repaired_bell_tower: true }, { repaired_bell_tower_door: true }],
@@ -76,37 +80,50 @@ describe("parseRequirements", () => {
       repaired_bell_tower_door: { seen_cutscene: "repair_the_bell_tower_pt_2" },
     });
 
-    const result = parseRequirements({ broke_bell: true }, named, primitives, ctx);
+    const result = parseRequirements(
+      { broke_bell: true },
+      namedRequirements,
+      primitivePredicates,
+      testSourceLocation,
+    );
 
     expect(result).toHaveProperty("all");
-    const all = (result as { all: RequirementExpr[] }).all;
+    const all = (result as { all: RequirementExpression[] }).all;
     expect(all).toHaveLength(2);
     const predicateEntry = all.find((e) => "predicate" in e);
     const notEntry = all.find((e) => "not" in e);
-    expect(predicateEntry).toEqual({ predicate: "seen_cutscene", value: "repair_the_bell_tower_pt_1" });
+    expect(predicateEntry).toEqual({
+      predicate: "seen_cutscene",
+      value: "repair_the_bell_tower_pt_1",
+    });
     expect(notEntry).toHaveProperty("not");
-    const notExpr = (notEntry as { not: RequirementExpr }).not;
+    const notExpr = (notEntry as { not: RequirementExpression }).not;
     expect(notExpr).toHaveProperty("any");
   });
 
   it("detects cycles", () => {
-    const { named, primitives } = makeState({
+    const { namedRequirements, primitivePredicates } = makeRequirementDefinitions({
       cycle_a: { cycle_b: true },
       cycle_b: { cycle_a: true },
     });
     expect(() =>
-      parseRequirements({ cycle_a: true }, named, primitives, ctx),
+      parseRequirements(
+        { cycle_a: true },
+        namedRequirements,
+        primitivePredicates,
+        testSourceLocation,
+      ),
     ).toThrow(/cycle_a -> cycle_b -> cycle_a/);
   });
 
-  it("throws on unknown requirement names", () => {
-    const { named, primitives } = makeState({});
+  it("preserves unknown keys as predicate leaves", () => {
+    const { namedRequirements, primitivePredicates } = makeRequirementDefinitions({});
     // unknown_requirement is neither primitive nor named
     const result = parseRequirements(
       { unknown_requirement: true },
-      named,
-      primitives,
-      ctx,
+      namedRequirements,
+      primitivePredicates,
+      testSourceLocation,
     );
     // Unknown keys are treated as predicates (not errors) since we can't distinguish
     // all possible future predicate keys from typos at parse time
@@ -114,12 +131,12 @@ describe("parseRequirements", () => {
   });
 
   it("handles multiple sibling keys as implicit all", () => {
-    const { named, primitives } = makeState({});
+    const { namedRequirements, primitivePredicates } = makeRequirementDefinitions({});
     const result = parseRequirements(
       { has_perk: "steady_supplies", is_season: "spring" },
-      named,
-      primitives,
-      ctx,
+      namedRequirements,
+      primitivePredicates,
+      testSourceLocation,
     );
     expect(result).toEqual({
       all: [
@@ -130,12 +147,12 @@ describe("parseRequirements", () => {
   });
 
   it("handles or with array of alternatives", () => {
-    const { named, primitives } = makeState({});
+    const { namedRequirements, primitivePredicates } = makeRequirementDefinitions({});
     const result = parseRequirements(
       { or: [{ is_season: "spring" }, { is_season: "summer" }] },
-      named,
-      primitives,
-      ctx,
+      namedRequirements,
+      primitivePredicates,
+      testSourceLocation,
     );
     expect(result).toEqual({
       any: [
@@ -146,7 +163,7 @@ describe("parseRequirements", () => {
   });
 
   it("resolves the real broke_bell definition from requirements.toml", () => {
-    const { named, primitives } = makeState({
+    const { namedRequirements, primitivePredicates } = makeRequirementDefinitions({
       broke_bell: {
         invert: {
           or: [{ repaired_bell_tower: true }, { repaired_bell_tower_door: true }],
@@ -157,16 +174,21 @@ describe("parseRequirements", () => {
       repaired_bell_tower_door: { seen_cutscene: "repair_the_bell_tower_pt_2" },
     });
 
-    const result = parseRequirements({ broke_bell: true }, named, primitives, ctx);
+    const result = parseRequirements(
+      { broke_bell: true },
+      namedRequirements,
+      primitivePredicates,
+      testSourceLocation,
+    );
 
     // Should be: all(seen_cutscene, not(any(seen_cutscene, seen_cutscene)))
     expect(result).toHaveProperty("all");
-    const all = (result as { all: RequirementExpr[] }).all;
+    const all = (result as { all: RequirementExpression[] }).all;
     expect(all).toHaveLength(2);
   });
 });
 
-describe("buildRequirementRegistry", () => {
+describe("buildRequirementDefinitions", () => {
   it("separates primitives from named requirements", () => {
     const data: Record<string, unknown> = {
       has_perk: {},
@@ -174,12 +196,12 @@ describe("buildRequirementRegistry", () => {
       repaired_general_store: { seen_cutscene: "repair_the_general_store_pt_2" },
       seen_cutscene: {},
     };
-    const { named, primitives } = buildRequirementRegistry(data);
-    expect(primitives.has("has_perk")).toBe(true);
-    expect(primitives.has("is_season")).toBe(true);
-    expect(primitives.has("seen_cutscene")).toBe(true);
-    expect(primitives.has("repaired_general_store")).toBe(false);
-    expect(named.repaired_general_store).toEqual({
+    const { namedRequirements, primitivePredicates } = buildRequirementDefinitions(data);
+    expect(primitivePredicates.has("has_perk")).toBe(true);
+    expect(primitivePredicates.has("is_season")).toBe(true);
+    expect(primitivePredicates.has("seen_cutscene")).toBe(true);
+    expect(primitivePredicates.has("repaired_general_store")).toBe(false);
+    expect(namedRequirements.repaired_general_store).toEqual({
       seen_cutscene: "repair_the_general_store_pt_2",
     });
   });
@@ -189,16 +211,17 @@ describe("buildRequirementRegistry", () => {
     const requirementsData = parsed.data.requirements as Record<string, unknown>;
     expect(requirementsData).toBeDefined();
 
-    const { named, primitives } = buildRequirementRegistry(requirementsData);
-    expect(primitives.size).toBeGreaterThan(30);
-    expect(Object.keys(named).length).toBeGreaterThan(20);
+    const { namedRequirements, primitivePredicates } =
+      buildRequirementDefinitions(requirementsData);
+    expect(primitivePredicates.size).toBeGreaterThan(30);
+    expect(Object.keys(namedRequirements).length).toBeGreaterThan(20);
 
     // Verify repaired_general_store resolves
     const result = parseRequirements(
       { repaired_general_store: true },
-      named,
-      primitives,
-      { entity: "test", field: "requirements", sourceFile: "stores.toml" },
+      namedRequirements,
+      primitivePredicates,
+      { entityId: "test", fieldPath: "requirements", sourcePath: "stores.toml" },
     );
     expect(result).toEqual({
       predicate: "seen_cutscene",

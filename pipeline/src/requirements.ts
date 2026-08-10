@@ -1,169 +1,201 @@
-import type { DataContext } from "./data-shapes.js";
+import type { SourceFieldLocation } from "./data-shapes.js";
 
-export type RequirementExpr =
-  | { all: RequirementExpr[] }
-  | { any: RequirementExpr[] }
-  | { not: RequirementExpr }
+/**
+ * Requirements normalize into an expression tree. Missing, null, and empty objects become
+ * `{ all: [] }`, an unconstrained true expression. Sibling keys imply `all`; an `or` array
+ * implies `any`; and `invert` implies `not`. A single-object `or` parses directly rather than
+ * gaining a redundant `any` wrapper.
+ */
+export type RequirementExpression =
+  | { all: RequirementExpression[] }
+  | { any: RequirementExpression[] }
+  | { not: RequirementExpression }
   | { predicate: string; value: unknown };
 
-export type RequirementRegistry = Record<string, Record<string, unknown>>;
+/**
+ * Empty top-level definition tables identify primitive predicate names; nonempty tables identify
+ * named definitions.
+ */
+export type NamedRequirementDefinitions = Record<string, Record<string, unknown>>;
+
+export interface RequirementDefinitions {
+  namedRequirements: NamedRequirementDefinitions;
+  primitivePredicates: Set<string>;
+}
 
 type ResolutionState = "resolved" | "unvisited" | "visiting";
 
-interface ResolverState {
-  cache: Map<string, RequirementExpr>;
-  primitives: Set<string>;
-  registry: RequirementRegistry;
-  states: Map<string, ResolutionState>;
+interface RequirementResolutionContext {
+  cache: Map<string, RequirementExpression>;
+  namedRequirements: NamedRequirementDefinitions;
+  primitivePredicates: Set<string>;
+  resolutionStateByName: Map<string, ResolutionState>;
 }
 
-export function buildRequirementRegistry(
+export function buildRequirementDefinitions(
   requirementsData: Record<string, unknown>,
-): { named: RequirementRegistry; primitives: Set<string> } {
-  const primitives = new Set<string>();
-  const named: RequirementRegistry = {};
+): RequirementDefinitions {
+  const primitivePredicates = new Set<string>();
+  const namedRequirements: NamedRequirementDefinitions = {};
 
   for (const [key, value] of Object.entries(requirementsData)) {
     if (typeof value !== "object" || value === null || Array.isArray(value)) continue;
     const body = value as Record<string, unknown>;
     if (Object.keys(body).length === 0) {
-      primitives.add(key);
+      primitivePredicates.add(key);
     } else {
-      named[key] = body;
+      namedRequirements[key] = body;
     }
   }
 
-  return { named, primitives };
+  return { namedRequirements, primitivePredicates };
 }
 
 export function parseRequirements(
   value: unknown,
-  registry: RequirementRegistry,
-  primitives: Set<string>,
-  context: DataContext,
-): RequirementExpr {
+  namedRequirements: NamedRequirementDefinitions,
+  primitivePredicates: Set<string>,
+  context: SourceFieldLocation,
+): RequirementExpression {
   if (value === undefined || value === null) return { all: [] };
   if (typeof value !== "object" || Array.isArray(value)) {
     throw new Error(
-      `Expected requirements object for ${context.entity ?? context.field} in ${context.sourceFile}, got ${typeof value}`,
+      `Expected requirements object for ${context.entityId ?? context.fieldPath} in ${context.sourcePath}, got ${typeof value}`,
     );
   }
 
   const obj = value as Record<string, unknown>;
-  const state: ResolverState = {
+  const requirementResolutionContext: RequirementResolutionContext = {
     cache: new Map(),
-    primitives,
-    registry,
-    states: new Map(),
+    namedRequirements,
+    primitivePredicates,
+    resolutionStateByName: new Map(),
   };
 
-  return parseRequirementObject(obj, state, context, []);
+  return parseRequirementObject(obj, requirementResolutionContext, context, []);
 }
 
+/**
+ * Named references must be literal `true`, are expanded recursively, are memoized, and report
+ * cycles. Unknown keys deliberately remain predicate leaves for forward compatibility; this
+ * layer does not schema-validate primitive payloads.
+ */
 function parseRequirementObject(
   obj: Record<string, unknown>,
-  state: ResolverState,
-  context: DataContext,
-  nameStack: string[],
-): RequirementExpr {
+  requirementResolutionContext: RequirementResolutionContext,
+  context: SourceFieldLocation,
+  namedRequirementStack: string[],
+): RequirementExpression {
   const entries = Object.entries(obj);
   if (entries.length === 0) return { all: [] };
 
-  const parts: RequirementExpr[] = [];
+  const conjuncts: RequirementExpression[] = [];
 
   for (const [key, val] of entries) {
     if (key === "or") {
-      parts.push(parseOr(val, state, context, nameStack));
+      conjuncts.push(parseOr(val, requirementResolutionContext, context, namedRequirementStack));
     } else if (key === "invert") {
-      parts.push(parseInvert(val, state, context, nameStack));
-    } else if (state.primitives.has(key)) {
-      parts.push({ predicate: key, value: val });
-    } else if (key in state.registry) {
+      conjuncts.push(
+        parseInvert(val, requirementResolutionContext, context, namedRequirementStack),
+      );
+    } else if (requirementResolutionContext.primitivePredicates.has(key)) {
+      conjuncts.push({ predicate: key, value: val });
+    } else if (key in requirementResolutionContext.namedRequirements) {
       if (val === true) {
-        parts.push(resolveNamed(key, state, context, nameStack));
+        conjuncts.push(
+          resolveNamed(key, requirementResolutionContext, context, namedRequirementStack),
+        );
       } else {
         throw new Error(
-          `Named requirement "${key}" must be true (boolean), got ${typeof val} in ${context.sourceFile}`,
+          `Named requirement "${key}" must be true (boolean), got ${typeof val} in ${context.sourcePath}`,
         );
       }
     } else {
       // Dotted key might be a predicate with nested value (e.g., reached_skill_level.ranching = 20)
       // or an unknown name — treat as predicate if its name follows predicate patterns
-      parts.push({ predicate: key, value: val });
+      conjuncts.push({ predicate: key, value: val });
     }
   }
 
-  return parts.length === 1 ? parts[0] : { all: parts };
+  return conjuncts.length === 1 ? conjuncts[0] : { all: conjuncts };
 }
 
 function parseOr(
   val: unknown,
-  state: ResolverState,
-  context: DataContext,
-  nameStack: string[],
-): RequirementExpr {
+  requirementResolutionContext: RequirementResolutionContext,
+  context: SourceFieldLocation,
+  namedRequirementStack: string[],
+): RequirementExpression {
   if (Array.isArray(val)) {
-    const alternatives: RequirementExpr[] = val.map((entry) => {
+    const alternatives: RequirementExpression[] = val.map((entry) => {
       if (typeof entry === "object" && entry !== null && !Array.isArray(entry)) {
-        return parseRequirementObject(entry as Record<string, unknown>, state, context, nameStack);
+        return parseRequirementObject(
+          entry as Record<string, unknown>,
+          requirementResolutionContext,
+          context,
+          namedRequirementStack,
+        );
       }
-      throw new Error(`Expected object in or-array in ${context.sourceFile}, got ${typeof entry}`);
+      throw new Error(`Expected object in or-array in ${context.sourcePath}, got ${typeof entry}`);
     });
     return { any: alternatives };
   }
   if (typeof val === "object" && val !== null) {
     // Single-entry or (e.g., or = { ... })
-    return parseRequirementObject(val as Record<string, unknown>, state, context, nameStack);
+    return parseRequirementObject(
+      val as Record<string, unknown>,
+      requirementResolutionContext,
+      context,
+      namedRequirementStack,
+    );
   }
-  throw new Error(`Expected array or object for "or" in ${context.sourceFile}, got ${typeof val}`);
+  throw new Error(`Expected array or object for "or" in ${context.sourcePath}, got ${typeof val}`);
 }
 
 function parseInvert(
   val: unknown,
-  state: ResolverState,
-  context: DataContext,
-  nameStack: string[],
-): RequirementExpr {
+  requirementResolutionContext: RequirementResolutionContext,
+  context: SourceFieldLocation,
+  namedRequirementStack: string[],
+): RequirementExpression {
   if (typeof val !== "object" || val === null || Array.isArray(val)) {
-    throw new Error(
-      `Expected object for "invert" in ${context.sourceFile}, got ${typeof val}`,
-    );
+    throw new Error(`Expected object for "invert" in ${context.sourcePath}, got ${typeof val}`);
   }
   const inner = parseRequirementObject(
     val as Record<string, unknown>,
-    state,
+    requirementResolutionContext,
     context,
-    nameStack,
+    namedRequirementStack,
   );
   return { not: inner };
 }
 
 function resolveNamed(
   name: string,
-  state: ResolverState,
-  context: DataContext,
-  nameStack: string[],
-): RequirementExpr {
-  const cached = state.cache.get(name);
+  requirementResolutionContext: RequirementResolutionContext,
+  context: SourceFieldLocation,
+  namedRequirementStack: string[],
+): RequirementExpression {
+  const cached = requirementResolutionContext.cache.get(name);
   if (cached) return cached;
 
-  const currentState = state.states.get(name) ?? "unvisited";
+  const currentState = requirementResolutionContext.resolutionStateByName.get(name) ?? "unvisited";
   if (currentState === "visiting") {
-    const cycle = [...nameStack, name].join(" -> ");
-    throw new Error(`Requirement cycle: ${cycle} in ${context.sourceFile}`);
+    const cycle = [...namedRequirementStack, name].join(" -> ");
+    throw new Error(`Requirement cycle: ${cycle} in ${context.sourcePath}`);
   }
 
-  const body = state.registry[name];
+  const body = requirementResolutionContext.namedRequirements[name];
   if (!body) {
     throw new Error(
-      `Unknown requirement "${name}" referenced by ${context.entity ?? context.field} in ${context.sourceFile}`,
+      `Unknown requirement "${name}" referenced by ${context.entityId ?? context.fieldPath} in ${context.sourcePath}`,
     );
   }
 
-  state.states.set(name, "visiting");
-  const newStack = [...nameStack, name];
-  const resolved = parseRequirementObject(body, state, context, newStack);
-  state.states.set(name, "resolved");
-  state.cache.set(name, resolved);
+  requirementResolutionContext.resolutionStateByName.set(name, "visiting");
+  const newStack = [...namedRequirementStack, name];
+  const resolved = parseRequirementObject(body, requirementResolutionContext, context, newStack);
+  requirementResolutionContext.resolutionStateByName.set(name, "resolved");
+  requirementResolutionContext.cache.set(name, resolved);
   return resolved;
 }

@@ -8,54 +8,66 @@ import type {
 } from "$lib/types/tracker-data.js";
 
 import {
-  buildRequirementRegistry,
+  buildRequirementDefinitions,
   parseRequirements,
-  type RequirementExpr,
+  type NamedRequirementDefinitions,
+  type RequirementExpression,
 } from "../requirements.js";
-import { sourceFileFor, type FiddleData } from "../parse-fiddle.js";
+import { sourceFileFor, type ParsedGameData } from "../parse-fiddle.js";
 
-type SourceMap = Record<string, Source[]>;
+/**
+ * Projects native TOML namespaces to acquisition targets, then Source records with flat
+ * restriction arrays, before structural first-entry-preserving deduplication.
+ *
+ * `Source.location` has type-dependent meaning, such as a store ID, water type, monster ID, or
+ * quest ID.
+ */
+type AcquisitionSourceIndex = Record<string, Source[]>;
 
-export function extractSources(fiddle: FiddleData): TrackerData["sources"] {
-  const map: SourceMap = {};
+export function extractSources(fiddle: ParsedGameData): TrackerData["sources"] {
+  const sourcesByTargetId: AcquisitionSourceIndex = {};
 
-  // Build requirement registry once for all store processing
+  // Build requirement definitions once for all store processing.
   const requirementsData = fiddle.requirements as Record<string, unknown> | undefined;
-  const { named, primitives } = requirementsData
-    ? buildRequirementRegistry(requirementsData)
-    : { named: {}, primitives: new Set<string>() };
+  const { namedRequirements, primitivePredicates } = requirementsData
+    ? buildRequirementDefinitions(requirementsData)
+    : { namedRequirements: {}, primitivePredicates: new Set<string>() };
 
-  extractStoreItems(fiddle, map, named, primitives);
-  extractFishItems(fiddle, map);
-  extractBugItems(fiddle, map);
-  extractCraftingItems(fiddle, map);
-  extractCropItems(fiddle, map);
-  extractForageables(fiddle, map);
-  extractCropSeasons(fiddle, map);
-  extractMonsterDrops(fiddle, map);
-  extractQuestRewards(fiddle, map);
-  extractFestivalCosmetics(fiddle, map);
-  extractRenownRewards(fiddle, map);
+  extractStoreItems(fiddle, sourcesByTargetId, namedRequirements, primitivePredicates);
+  extractFishItems(fiddle, sourcesByTargetId);
+  extractBugItems(fiddle, sourcesByTargetId);
+  extractRecipeSources(fiddle, sourcesByTargetId);
+  extractSeedAndSaplingSources(fiddle, sourcesByTargetId);
+  extractForageables(fiddle, sourcesByTargetId);
+  deriveCropSourcesFromSeeds(fiddle, sourcesByTargetId);
+  extractMonsterDrops(fiddle, sourcesByTargetId);
+  extractQuestRewards(fiddle, sourcesByTargetId);
+  extractFestivalStockSources(fiddle, sourcesByTargetId);
+  extractRenownRewards(fiddle, sourcesByTargetId);
 
   let deduped = 0;
-  for (const [itemId, sources] of Object.entries(map)) {
+  for (const [targetId, sources] of Object.entries(sourcesByTargetId)) {
     const before = sources.length;
-    map[itemId] = deduplicateSources(sources);
-    deduped += before - map[itemId].length;
+    sourcesByTargetId[targetId] = deduplicateSources(sources);
+    deduped += before - sourcesByTargetId[targetId].length;
   }
 
-  const totalItems = Object.keys(map).length;
-  const totalSources = Object.values(map).reduce((n, s) => n + s.length, 0);
+  const totalItems = Object.keys(sourcesByTargetId).length;
+  const totalSources = Object.values(sourcesByTargetId).reduce((n, s) => n + s.length, 0);
   console.log(
     `  Sources: ${totalItems} items with ${totalSources} sources (${deduped} duplicates removed)`,
   );
 
-  return map as TrackerData["sources"];
+  return sourcesByTargetId as TrackerData["sources"];
 }
 
-function addSource(map: SourceMap, itemId: string, source: Source): void {
-  if (!map[itemId]) map[itemId] = [];
-  map[itemId].push(source);
+function addSource(
+  sourcesByTargetId: AcquisitionSourceIndex,
+  targetId: string,
+  source: Source,
+): void {
+  if (!sourcesByTargetId[targetId]) sourcesByTargetId[targetId] = [];
+  sourcesByTargetId[targetId].push(source);
 }
 
 function deduplicateSources(sources: Source[]): Source[] {
@@ -68,7 +80,7 @@ function deduplicateSources(sources: Source[]): Source[] {
   });
 }
 
-function extractBugItems(fiddle: FiddleData, map: SourceMap): void {
+function extractBugItems(fiddle: ParsedGameData, sourcesByTargetId: AcquisitionSourceIndex): void {
   const bugs = fiddle.bugs as Record<string, Record<string, unknown>> | undefined;
   if (!bugs) return;
 
@@ -89,7 +101,7 @@ function extractBugItems(fiddle: FiddleData, map: SourceMap): void {
     const locations = parseStringArray(data.locations);
     const location = locations?.join(", ");
 
-    addSource(map, bugId, {
+    addSource(sourcesByTargetId, bugId, {
       location,
       restrictions: restrictions.length > 0 ? restrictions : undefined,
       type: "bug_catch",
@@ -97,10 +109,12 @@ function extractBugItems(fiddle: FiddleData, map: SourceMap): void {
   }
 }
 
-function extractCraftingItems(fiddle: FiddleData, map: SourceMap): void {
+function extractRecipeSources(
+  fiddle: ParsedGameData,
+  sourcesByTargetId: AcquisitionSourceIndex,
+): void {
   const items = fiddle.items as
-    | Record<string, Record<string, Record<string, Record<string, unknown>>>>
-    | undefined;
+    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
   if (!items) return;
 
   const furniture = items.furniture;
@@ -110,7 +124,7 @@ function extractCraftingItems(fiddle: FiddleData, map: SourceMap): void {
         if (itemId === "default") continue;
         if (typeof item !== "object" || item === null) continue;
         if (item.recipe || item.recipe_key) {
-          addSource(map, itemId, { type: "craft" });
+          addSource(sourcesByTargetId, itemId, { type: "craft" });
         }
       }
     }
@@ -122,16 +136,18 @@ function extractCraftingItems(fiddle: FiddleData, map: SourceMap): void {
       if (itemId === "default") continue;
       if (typeof item !== "object" || item === null) continue;
       if (item.recipe) {
-        addSource(map, itemId, { type: "cook" });
+        addSource(sourcesByTargetId, itemId, { type: "cook" });
       }
     }
   }
 }
 
-function extractCropItems(fiddle: FiddleData, map: SourceMap): void {
+function extractSeedAndSaplingSources(
+  fiddle: ParsedGameData,
+  sourcesByTargetId: AcquisitionSourceIndex,
+): void {
   const items = fiddle.items as
-    | Record<string, Record<string, Record<string, Record<string, unknown>>>>
-    | undefined;
+    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
   if (!items?.other?.crops_and_forage) return;
 
   for (const [itemId, item] of Object.entries(items.other.crops_and_forage)) {
@@ -144,20 +160,22 @@ function extractCropItems(fiddle: FiddleData, map: SourceMap): void {
 
     if (tags.includes("seed")) {
       const seasons = parseSeasonsArray(item.seasons);
-      addSource(map, itemId, {
+      addSource(sourcesByTargetId, itemId, {
         restrictions: seasons ? [{ seasons, type: "season" }] : undefined,
         type: "seed",
       });
     } else if (tags.includes("sapling")) {
-      addSource(map, itemId, { type: "sapling" });
+      addSource(sourcesByTargetId, itemId, { type: "sapling" });
     }
   }
 }
 
-function extractCropSeasons(fiddle: FiddleData, map: SourceMap): void {
+function deriveCropSourcesFromSeeds(
+  fiddle: ParsedGameData,
+  sourcesByTargetId: AcquisitionSourceIndex,
+): void {
   const items = fiddle.items as
-    | Record<string, Record<string, Record<string, Record<string, unknown>>>>
-    | undefined;
+    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
   if (!items?.other?.crops_and_forage) return;
 
   const seedToCrop: Record<string, string> = {};
@@ -176,14 +194,15 @@ function extractCropSeasons(fiddle: FiddleData, map: SourceMap): void {
 
   let mapped = 0;
   for (const [seedId, cropId] of Object.entries(seedToCrop)) {
-    const seedSources = map[seedId] ?? [];
+    const seedSources = sourcesByTargetId[seedId] ?? [];
     const seasonRestriction = seedSources
       .flatMap((s) => s.restrictions ?? [])
       .find((r) => r.type === "season");
 
     const restrictions: Restriction[] = seasonRestriction ? [seasonRestriction] : [];
 
-    addSource(map, cropId, {
+    // Crop sources copy the seed's first season restriction.
+    addSource(sourcesByTargetId, cropId, {
       restrictions: restrictions.length > 0 ? restrictions : undefined,
       type: "seed",
     });
@@ -193,10 +212,14 @@ function extractCropSeasons(fiddle: FiddleData, map: SourceMap): void {
   console.log(`  Crop seasons: ${mapped} crops mapped from seeds`);
 }
 
-function extractFestivalCosmetics(fiddle: FiddleData, map: SourceMap): void {
+function extractFestivalStockSources(
+  fiddle: ParsedGameData,
+  sourcesByTargetId: AcquisitionSourceIndex,
+): void {
   const festivals = fiddle.festivals as Record<string, Record<string, unknown>> | undefined;
   if (!festivals) return;
 
+  // Festival season comes from this hard-coded ID map.
   const seasonMap: Record<string, Season> = {
     fall: "fall",
     harvest: "fall",
@@ -228,7 +251,7 @@ function extractFestivalCosmetics(fiddle: FiddleData, map: SourceMap): void {
         const restrictions: Restriction[] = [];
         if (season) restrictions.push({ seasons: [season], type: "season" });
 
-        addSource(map, targetId, {
+        addSource(sourcesByTargetId, targetId, {
           location: storeId,
           restrictions: restrictions.length > 0 ? restrictions : undefined,
           type: "festival",
@@ -238,14 +261,15 @@ function extractFestivalCosmetics(fiddle: FiddleData, map: SourceMap): void {
   }
 }
 
-function extractFishItems(fiddle: FiddleData, map: SourceMap): void {
+function extractFishItems(fiddle: ParsedGameData, sourcesByTargetId: AcquisitionSourceIndex): void {
   const fish = fiddle.fish as Record<string, Record<string, unknown>> | undefined;
   if (!fish) return;
 
   for (const [fishId, data] of Object.entries(fish)) {
     if (fishId === "default") continue;
 
-    const itemId = (data.item as string | undefined) ?? fishId;
+    // Fish use `data.item ?? fishId`; small fish size is omitted.
+    const targetId = (data.item as string | undefined) ?? fishId;
     const isChest = data.is_chest as boolean | undefined;
 
     const restrictions: Restriction[] = [];
@@ -286,7 +310,7 @@ function extractFishItems(fiddle: FiddleData, map: SourceMap): void {
         : [];
     const location = wtArr.length > 0 ? wtArr.join(", ") : undefined;
 
-    addSource(map, itemId, {
+    addSource(sourcesByTargetId, targetId, {
       location,
       restrictions: restrictions.length > 0 ? restrictions : undefined,
       type: sourceType,
@@ -294,7 +318,10 @@ function extractFishItems(fiddle: FiddleData, map: SourceMap): void {
   }
 }
 
-function extractForageables(fiddle: FiddleData, map: SourceMap): void {
+function extractForageables(
+  fiddle: ParsedGameData,
+  sourcesByTargetId: AcquisitionSourceIndex,
+): void {
   const forageables = fiddle.forageables as Record<string, unknown> | undefined;
   if (!forageables) return;
 
@@ -304,7 +331,7 @@ function extractForageables(fiddle: FiddleData, map: SourceMap): void {
     for (const entry of data) {
       const itemId = typeof entry === "string" ? entry : undefined;
       if (!itemId) continue;
-      addSource(map, itemId, { type: "forage" });
+      addSource(sourcesByTargetId, itemId, { type: "forage" });
     }
   }
 
@@ -324,7 +351,7 @@ function extractForageables(fiddle: FiddleData, map: SourceMap): void {
               : undefined;
         if (!itemId) continue;
 
-        addSource(map, itemId, {
+        addSource(sourcesByTargetId, itemId, {
           restrictions: [{ seasons: [season], type: "season" }],
           type: "forage",
         });
@@ -333,7 +360,10 @@ function extractForageables(fiddle: FiddleData, map: SourceMap): void {
   }
 }
 
-function extractMonsterDrops(fiddle: FiddleData, map: SourceMap): void {
+function extractMonsterDrops(
+  fiddle: ParsedGameData,
+  sourcesByTargetId: AcquisitionSourceIndex,
+): void {
   const monsters = fiddle.monsters as Record<string, Record<string, unknown>> | undefined;
   if (!monsters) return;
 
@@ -351,7 +381,7 @@ function extractMonsterDrops(fiddle: FiddleData, map: SourceMap): void {
         const itemId = (drop as Record<string, unknown>).item as string | undefined;
         if (!itemId) continue;
 
-        addSource(map, itemId, {
+        addSource(sourcesByTargetId, itemId, {
           location: monsterId,
           type: "monster",
         });
@@ -360,7 +390,10 @@ function extractMonsterDrops(fiddle: FiddleData, map: SourceMap): void {
   }
 }
 
-function extractQuestRewards(fiddle: FiddleData, map: SourceMap): void {
+function extractQuestRewards(
+  fiddle: ParsedGameData,
+  sourcesByTargetId: AcquisitionSourceIndex,
+): void {
   const quests = fiddle.quests as Record<string, Record<string, unknown>> | undefined;
   if (!quests) return;
 
@@ -378,7 +411,7 @@ function extractQuestRewards(fiddle: FiddleData, map: SourceMap): void {
         const itemId = (reward as Record<string, unknown>).item as string | undefined;
         if (!itemId) continue;
 
-        addSource(map, itemId, {
+        addSource(sourcesByTargetId, itemId, {
           location: questId,
           type: "quest",
         });
@@ -387,7 +420,10 @@ function extractQuestRewards(fiddle: FiddleData, map: SourceMap): void {
   }
 }
 
-function extractRenownRewards(fiddle: FiddleData, map: SourceMap): void {
+function extractRenownRewards(
+  fiddle: ParsedGameData,
+  sourcesByTargetId: AcquisitionSourceIndex,
+): void {
   const renown = fiddle.renown as Record<string, unknown> | undefined;
   if (!renown) return;
 
@@ -398,15 +434,15 @@ function extractRenownRewards(fiddle: FiddleData, map: SourceMap): void {
     const targetId = (obj.cosmetic as string) ?? (obj.item as string);
     if (!targetId) continue;
 
-    addSource(map, targetId, { type: "renown" });
+    addSource(sourcesByTargetId, targetId, { type: "renown" });
   }
 }
 
 function extractStoreItems(
-  fiddle: FiddleData,
-  map: SourceMap,
-  namedRegistry: Record<string, Record<string, unknown>>,
-  primitives: Set<string>,
+  fiddle: ParsedGameData,
+  sourcesByTargetId: AcquisitionSourceIndex,
+  namedRequirements: NamedRequirementDefinitions,
+  primitivePredicates: Set<string>,
 ): void {
   const stores = fiddle.stores as Record<string, Record<string, unknown>> | undefined;
   if (!stores) return;
@@ -429,9 +465,9 @@ function extractStoreItems(
             entry,
             storeId,
             [],
-            map,
-            namedRegistry,
-            primitives,
+            sourcesByTargetId,
+            namedRequirements,
+            primitivePredicates,
             storeSourceFile,
           );
         }
@@ -448,9 +484,9 @@ function extractStoreItems(
               entry,
               storeId,
               [seasonRestriction],
-              map,
-              namedRegistry,
-              primitives,
+              sourcesByTargetId,
+              namedRequirements,
+              primitivePredicates,
               storeSourceFile,
             );
           }
@@ -465,9 +501,9 @@ function extractStoreItems(
             entry,
             storeId,
             [randomRestriction],
-            map,
-            namedRegistry,
-            primitives,
+            sourcesByTargetId,
+            namedRequirements,
+            primitivePredicates,
             storeSourceFile,
           );
         }
@@ -484,13 +520,13 @@ function processStoreEntry(
   entry: unknown,
   storeId: string,
   baseRestrictions: Restriction[],
-  map: SourceMap,
-  namedRegistry: Record<string, Record<string, unknown>>,
-  primitives: Set<string>,
+  sourcesByTargetId: AcquisitionSourceIndex,
+  namedRequirements: NamedRequirementDefinitions,
+  primitivePredicates: Set<string>,
   storeSourceFile: string,
 ): number {
   if (typeof entry === "string") {
-    addSource(map, entry, {
+    addSource(sourcesByTargetId, entry, {
       location: storeId,
       restrictions: baseRestrictions.length > 0 ? baseRestrictions : undefined,
       type: "store",
@@ -501,7 +537,7 @@ function processStoreEntry(
   if (typeof entry !== "object" || entry === null) return 0;
   const obj = entry as Record<string, unknown>;
 
-  // Recipe/crafting scrolls are explicitly ignored
+  // Recipe/crafting scrolls are counted and intentionally discarded.
   if (obj.recipe_scroll || obj.crafting_scroll) return 1;
 
   const itemId = obj.item as string | undefined;
@@ -513,10 +549,10 @@ function processStoreEntry(
 
   // Parse requirements through the requirement system
   if (obj.requirements) {
-    const reqRestrictions = mapRequirementsToRestrictions(
+    const reqRestrictions = projectRequirementsToRestrictions(
       obj.requirements,
-      namedRegistry,
-      primitives,
+      namedRequirements,
+      primitivePredicates,
       storeId,
       targetId,
       storeSourceFile,
@@ -524,7 +560,7 @@ function processStoreEntry(
     restrictions.push(...reqRestrictions);
   }
 
-  addSource(map, targetId, {
+  addSource(sourcesByTargetId, targetId, {
     location: storeId,
     restrictions: restrictions.length > 0 ? restrictions : undefined,
     type: cosmeticId ? "store" : "store",
@@ -532,33 +568,45 @@ function processStoreEntry(
   return 0;
 }
 
-function mapRequirementsToRestrictions(
+function projectRequirementsToRestrictions(
   requirements: unknown,
-  namedRegistry: Record<string, Record<string, unknown>>,
-  primitives: Set<string>,
+  namedRequirements: NamedRequirementDefinitions,
+  primitivePredicates: Set<string>,
   storeId: string,
   entityId: string,
   storeSourceFile: string,
 ): Restriction[] {
-  const ctx = { entity: `${storeId}/${entityId}`, field: "requirements", sourceFile: storeSourceFile };
-  const expr = parseRequirements(requirements, namedRegistry, primitives, ctx);
-  return flattenExprToRestrictions(expr);
+  const sourceLocation = {
+    entityId: `${storeId}/${entityId}`,
+    fieldPath: "requirements",
+    sourcePath: storeSourceFile,
+  };
+  const expression = parseRequirements(
+    requirements,
+    namedRequirements,
+    primitivePredicates,
+    sourceLocation,
+  );
+  return projectRequirementExpressionToFlatRestrictions(expression);
 }
 
-function flattenExprToRestrictions(expr: RequirementExpr): Restriction[] {
-  if ("all" in expr) {
-    return expr.all.flatMap(flattenExprToRestrictions);
+function projectRequirementExpressionToFlatRestrictions(
+  expression: RequirementExpression,
+): Restriction[] {
+  if ("all" in expression) {
+    // `all` is flattened as an implicit conjunction.
+    return expression.all.flatMap(projectRequirementExpressionToFlatRestrictions);
   }
-  if ("any" in expr) {
-    // Can't flatten OR into a flat restriction list — skip for now
+  if ("any" in expression) {
+    // Entire `any` branches are discarded because flat restrictions cannot represent alternatives.
     return [];
   }
-  if ("not" in expr) {
-    // Can't represent NOT in restrictions — skip
+  if ("not" in expression) {
+    // Entire `not` branches are discarded because flat restrictions cannot represent negation.
     return [];
   }
-  if ("predicate" in expr) {
-    return predicateToRestriction(expr.predicate, expr.value);
+  if ("predicate" in expression) {
+    return predicateToRestriction(expression.predicate, expression.value);
   }
   return [];
 }
@@ -586,6 +634,7 @@ function predicateToRestriction(predicate: string, value: unknown): Restriction[
     case "seen_cutscene":
       return [{ cutscene: value as string, type: "cutscene" }];
     case "reached_date":
+      // `reached_date` retains season only.
       if (typeof value === "string") {
         return [{ season: value as Season, type: "seenSeason" }];
       }
@@ -601,6 +650,7 @@ function predicateToRestriction(predicate: string, value: unknown): Restriction[
     case "is_dating_someone":
       return [{ relationship: "datingSomeone", type: "relationship" }];
     default:
+      // Unsupported predicates return no restriction.
       return [];
   }
 }
