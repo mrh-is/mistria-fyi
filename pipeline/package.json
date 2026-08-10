@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "generate": "bun src/main.ts"
+    "generate": "tsx src/main.ts"
   }
 }

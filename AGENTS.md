@@ -11,7 +11,7 @@ task:
 1. Read the issue **and its comments** (`gh issue view <number> --comments` or via GitHub API/MCP).
    Comments often contain screenshots, clarifications, and additional requirements.
 2. Create a branch: `<issue-number>-<short-description>`.
-3. Do the work. Run `bun run check` and `bun run lint` before committing.
+3. Do the work. Run `pnpm run check` and `pnpm run lint` before committing.
 4. Commit, push the branch, and open a PR that references the issue (`Closes #N` in the PR body).
 
 Issues labeled `ready` are available. Issues labeled `blocked` or `discussion` are not actionable
@@ -19,11 +19,11 @@ yet.
 
 ## Commands
 
-Use **bun** (not npm/npx) for all commands.
+Use **pnpm** (not npm/npx) for all commands.
 
-- **Dev**: `bun run dev` | **Build**: `bun run build` | **Type-check**: `bun run check`
-- **Lint**: `bun run lint` (prettier + eslint) | **Fix**: `bun run lint:fix`
-- **Pipeline**: `bun run pipeline` (regenerates `tracker-data.json` from
+- **Dev**: `pnpm run dev` | **Build**: `pnpm run build` | **Type-check**: `pnpm run check`
+- **Lint**: `pnpm run lint` (prettier + eslint) | **Fix**: `pnpm run lint:fix`
+- **Pipeline**: `pnpm run pipeline` (regenerates `tracker-data.json` from
   `pipeline/input/fiddle.json`)
 - No test suite configured yet. Vitest is installed but no tests exist.
 
@@ -50,7 +50,7 @@ of Mistria 100% completion.
   lint rules).
 - **`src/routes/`** — 9 category pages (almanac, animals, cosmetics, mines, museum, npcs, quests,
   renown, skills) + settings.
-- **`pipeline/`** — Separate TypeScript project (bun). Extracts game data from `fiddle.json` →
+- **`pipeline/`** — Separate TypeScript project. Extracts game data from `fiddle.json` →
   `tracker-data.json`.
 
 ## Componentization

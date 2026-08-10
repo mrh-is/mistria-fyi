@@ -2,7 +2,7 @@
   "cSpell.ignorePaths": ["pipeline/input", "pipeline/output", "src/lib/components/ui"],
   "cSpell.words": [
     "bitfield",
-    "bunx",
+    "pnpm",
     "completionist",
     "completionists",
     "cutscene",
@@ -35,13 +35,6 @@
   "json.schemaDownload.trustedDomains": {
     "https://shadcn-svelte.com/schema.json": true
   },
-  "json.schemas": [
-    {
-      "fileMatch": ["bun.lock"],
-      "schema": {
-        "allowTrailingCommas": true
-      }
-    }
-  ],
+  "json.schemas": [],
   "prettier.documentSelectors": ["**/*.svelte"]
 }
