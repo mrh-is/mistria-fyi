@@ -57,9 +57,8 @@ SvelteKit 2 + Svelte 5 (runes), Tailwind 4, shadcn-svelte, deployed to Cloudflar
 | `pnpm run check`    | SvelteKit type checking                           |
 | `pnpm run lint`     | Prettier + ESLint                                 |
 | `pnpm run lint:fix` | Auto-fix lint issues                              |
-| `pnpm run pipeline` | Regenerate `tracker-data.json` from `fiddle.json` |
-
-No test suite yet (Vitest installed but no tests).
+| `pnpm run pipeline -- input/assets` | Regenerate `tracker-data.json` from TOML fixture |
+| `npx vitest run pipeline/` | Run pipeline unit tests |
 
 ## Code Conventions
 
@@ -79,6 +78,6 @@ No test suite yet (Vitest installed but no tests).
 
 ## Pipeline
 
-The app is powered by `tracker-data.json` (~430KB), generated from the game's `fiddle.json`. See
+The app is powered by `tracker-data.json` (~560KB), generated from the game's TOML data files. See
 [README.md](README.md) for pipeline details. When changing pipeline extractors, run
-`pnpm run pipeline` and commit the updated `src/lib/data/tracker-data.json`.
+`pnpm run pipeline -- input/assets` and commit the updated `src/lib/data/tracker-data.json`.

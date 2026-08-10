@@ -23,9 +23,8 @@ Use **pnpm** (not npm/npx) for all commands.
 
 - **Dev**: `pnpm run dev` | **Build**: `pnpm run build` | **Type-check**: `pnpm run check`
 - **Lint**: `pnpm run lint` (prettier + eslint) | **Fix**: `pnpm run lint:fix`
-- **Pipeline**: `pnpm run pipeline` (regenerates `tracker-data.json` from
-  `pipeline/input/fiddle.json`)
-- No test suite configured yet. Vitest is installed but no tests exist.
+- **Pipeline**: `pnpm run pipeline -- input/assets` (regenerates `tracker-data.json` from the checked-in game TOML fixture)
+- **Tests**: `npx vitest run pipeline/` (pipeline unit tests)
 
 ## Downloading Images from GitHub Issue Comments
 
@@ -50,7 +49,7 @@ of Mistria 100% completion.
   lint rules).
 - **`src/routes/`** — 9 category pages (almanac, animals, cosmetics, mines, museum, npcs, quests,
   renown, skills) + settings.
-- **`pipeline/`** — Separate TypeScript project. Extracts game data from `fiddle.json` →
+- **`pipeline/`** — Separate TypeScript project. Extracts game data from TOML fixtures →
   `tracker-data.json`.
 
 ## Componentization

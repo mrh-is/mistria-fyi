@@ -13,51 +13,45 @@ pnpm run dev
 
 ## Data pipeline
 
-The app is powered by `tracker-data.json`, generated from the game's raw data files. The pipeline
-lives in `pipeline/` and runs via `tsx`.
+The app is powered by `tracker-data.json`, generated from the game's TOML data files. The pipeline
+lives in `pipeline/` and runs via `tsx`. A checked-in fixture at `pipeline/input/assets/` contains
+the v1.0.2 game data (295 TOML files).
 
 ### Running the pipeline
 
-1. Place game data files in `pipeline/input/`:
-   - `fiddle.json` (required) — raw game data (~7MB)
-   - `localization.json` (optional) — English strings for item/NPC names
+```bash
+pnpm run pipeline -- input/assets
+```
 
-   Source files are on Google Drive at:
-   `~/Library/CloudStorage/GoogleDrive-me@mrh.is/My Drive/Development/Mistria/versions/<version>/`
+You can also pass a different assets directory for local comparison (e.g. a newer game version).
 
-2. Run:
-
-   ```bash
-   pnpm run pipeline
-   ```
-
-3. Output:
-   - `pipeline/output/tracker-data.json` — pretty-printed (for debugging)
-   - `src/lib/data/tracker-data.json` — minified (committed, used by the app)
+Output:
+- `pipeline/output/tracker-data.json` — pretty-printed (for debugging)
+- `src/lib/data/tracker-data.json` — minified (committed, used by the app)
 
 ### When a new game version drops
 
-1. Get the new `fiddle.json` (and `localization.json` if available)
-2. Drop them into `pipeline/input/`, replacing the old ones
-3. `pnpm run pipeline`
+1. Get the new assets directory containing a `fiddle/` folder of TOML files
+2. Run `pnpm run pipeline -- /path/to/new/assets`
+3. Compare output, then replace the checked-in fixture if the data looks correct
 4. Commit the updated `src/lib/data/tracker-data.json`
 
 ### Pipeline architecture
 
 ```
-fiddle.json (flat slash-key format, 46K entries)
+assets/fiddle/*.toml (295 TOML files, directory-walked)
     |
     v
-parse-fiddle.ts     Strip visual/audio data, convert to nested object
+parse-fiddle.ts     Walk directory tree, merge into nested object
     |
     v
-localize.ts         Resolve i18n keys to English (fallback: snake_case -> Title Case)
+evaluate.ts         Resolve value expressions (self.recipe * N, item.store * N)
     |
     v
 extractors/*.ts     10 extractors (museum, almanac, animals, npcs, cosmetics,
-    |               skills, renown, quests, mines, sources)
+    |               skills, renown, quests, mines, sources) + quest-gates
     v
-tracker-data.json   ~430KB minified, typed via src/lib/types/tracker-data.ts
+tracker-data.json   ~560KB minified, typed via src/lib/types/tracker-data.ts
 ```
 
 ## Scripts
@@ -70,7 +64,7 @@ tracker-data.json   ~430KB minified, typed via src/lib/types/tracker-data.ts
 | `pnpm run check`    | SvelteKit type checking                   |
 | `pnpm run lint`     | Prettier + ESLint                         |
 | `pnpm run lint:fix` | Auto-fix formatting and lint issues       |
-| `pnpm run pipeline` | Generate tracker-data.json from game data |
+| `pnpm run pipeline -- input/assets` | Generate tracker-data.json from TOML fixture |
 
 ## Tech stack
 
