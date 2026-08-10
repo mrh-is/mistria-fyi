@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { evaluateExpressions } from "./evaluate.js";
 import { extractAlmanac } from "./extractors/almanac.js";
 import { extractAnimals } from "./extractors/animals.js";
 import { extractCosmetics } from "./extractors/cosmetics.js";
@@ -80,8 +81,13 @@ function main(): void {
     return;
   }
 
-  // Step 2: Extract
-  console.log("Step 2: Extracting tracker data...");
+  // Step 2: Evaluate expressions
+  console.log("Step 2: Evaluating expressions...");
+  evaluateExpressions(fiddle);
+  console.log();
+
+  // Step 3: Extract
+  console.log("Step 3: Extracting tracker data...");
   const museum = extractMuseum(fiddle);
   const { almanac, items } = extractAlmanac(fiddle);
   const animals = extractAnimals(fiddle);
@@ -99,8 +105,8 @@ function main(): void {
   applySpellQuestGates(mines, questGates.spellGates);
   console.log();
 
-  // Step 3: Assemble
-  console.log("Step 3: Assembling tracker-data.json...");
+  // Step 4: Assemble
+  console.log("Step 4: Assembling tracker-data.json...");
   const trackerData: TrackerData = {
     almanac,
     animals,
@@ -135,8 +141,8 @@ function main(): void {
     `  Copied:  src/lib/data/${OUTPUT_FILE} (${(json.length / 1024).toFixed(1)} KB minified)`,
   );
 
-  // Step 4: Human-readable outputs (for inspection, not shipped to app)
-  console.log("\nStep 4: Writing human-readable outputs...");
+  // Step 5: Human-readable outputs (for inspection, not shipped to app)
+  console.log("\nStep 5: Writing human-readable outputs...");
 
   const fiddlePretty = JSON.stringify(fiddle, null, 2);
   writeFileSync(resolve(OUTPUT_DIR, "fiddle-readable.json"), fiddlePretty);
