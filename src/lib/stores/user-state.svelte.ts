@@ -1,6 +1,7 @@
 import { SvelteSet } from "svelte/reactivity";
 
 import { trackerData } from "$lib/data/index.js";
+import { clampRenownLevel } from "$lib/engine/progress.js";
 
 import type {
   AnimalId,
@@ -322,8 +323,7 @@ function createUserState() {
       state.completed.npcLevels[id as string] = Math.max(0, Math.min(level, max));
     },
     setRenown(level: number) {
-      const max = trackerData.renown.levelsPerRank * trackerData.renown.ranks.length;
-      state.completed.renown = Math.max(0, Math.min(level, max));
+      state.completed.renown = clampRenownLevel(level);
     },
     setSeason(season: Season) {
       state.worldState.season = season;
@@ -412,7 +412,7 @@ function deserialize(json: string): null | UserState {
         museum: brandedSet<ItemId>(s.completed.museum),
         npcLevels,
         questStates,
-        renown: s.completed.renown,
+        renown: clampRenownLevel(s.completed.renown),
         skillLevels,
       },
       showCompleted: false,

@@ -6,6 +6,7 @@ import type { AvailabilityMode, CompletedState } from "$lib/stores/user-state.sv
 import type { ItemId, Season, Source, VariantId, Weather } from "$lib/types/tracker-data.js";
 
 export const MAX_NPC_LEVEL = 10;
+export const MAX_RENOWN_LEVEL = 100;
 export const MAX_SKILL_LEVEL = 60;
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -24,6 +25,10 @@ interface ProgressContext {
   availabilityMode: AvailabilityMode;
   completed: CompletedState;
   worldState: { season: Season; weather: Weather };
+}
+
+export function clampRenownLevel(level: number): number {
+  return Math.max(0, Math.min(level, MAX_RENOWN_LEVEL));
 }
 
 // ─── Per-category progress ──────────────────────────────────────────
@@ -133,8 +138,8 @@ export function getQuestsProgress(ctx: ProgressContext): CategoryProgress {
 }
 
 export function getRenownProgress(ctx: ProgressContext): CategoryProgress {
-  const total = trackerData.renown.levelsPerRank * trackerData.renown.ranks.length;
-  const completed = ctx.completed.renown;
+  const total = MAX_RENOWN_LEVEL;
+  const completed = clampRenownLevel(ctx.completed.renown);
   return { completed, filtered: total - completed, total };
 }
 
