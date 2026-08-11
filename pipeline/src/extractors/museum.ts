@@ -1,7 +1,7 @@
-import type { ItemId, MuseumWing, SetId, WingId } from "$lib/types/tracker-data.js";
-
 import { expectArray, expectStringArray } from "../data-shapes.js";
-import { sourceFileFor, type ParsedGameData } from "../parse-fiddle.js";
+import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
+
+import type { ItemId, MuseumWing, SetId, WingId } from "$lib/types/tracker-data.js";
 
 /**
  * Projects museum wings and sets in the canonical UI display order. Object insertion order is only

@@ -102,9 +102,9 @@ export function extractQuestGates(fiddle: ParsedGameData): QuestGateIndex {
   console.log(`    Deferred: store item gates (requires requirement→quest inference)`);
 
   return {
-    animalGates: {} as Record<AnimalId, QuestId[]>,
-    itemGates: directItemRewardIndex as Record<ItemId, QuestId[]>,
+    animalGates: {},
+    itemGates: directItemRewardIndex,
     progressionFlagToQuests: {},
-    spellGates: {} as Record<SpellId, QuestId[]>,
+    spellGates: {},
   };
 }

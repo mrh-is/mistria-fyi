@@ -1,3 +1,11 @@
+import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
+import {
+  buildRequirementDefinitions,
+  type NamedRequirementDefinitions,
+  parseRequirements,
+  type RequirementExpression,
+} from "../requirements.js";
+
 import type {
   Restriction,
   Season,
@@ -6,14 +14,6 @@ import type {
   TrackerData,
   Weather,
 } from "$lib/types/tracker-data.js";
-
-import {
-  buildRequirementDefinitions,
-  parseRequirements,
-  type NamedRequirementDefinitions,
-  type RequirementExpression,
-} from "../requirements.js";
-import { sourceFileFor, type ParsedGameData } from "../parse-fiddle.js";
 
 /**
  * Projects native TOML namespaces to acquisition targets, then Source records with flat
@@ -58,7 +58,7 @@ export function extractSources(fiddle: ParsedGameData): TrackerData["sources"] {
     `  Sources: ${totalItems} items with ${totalSources} sources (${deduped} duplicates removed)`,
   );
 
-  return sourcesByTargetId as TrackerData["sources"];
+  return sourcesByTargetId;
 }
 
 function addSource(
@@ -516,6 +516,83 @@ function extractStoreItems(
   }
 }
 
+function parseHours(hours: unknown): [number, number] | undefined {
+  if (hours === false || hours === undefined || hours === null) return undefined;
+  if (Array.isArray(hours) && hours.length >= 2) return [hours[0] as number, hours[1] as number];
+  return undefined;
+}
+
+function parseSeasonsArray(seasons: unknown): Season[] | undefined {
+  if (seasons === false || seasons === undefined || seasons === null) return undefined;
+  if (Array.isArray(seasons)) {
+    const arr = seasons.filter((v): v is string => typeof v === "string") as Season[];
+    return arr.length > 0 ? arr : undefined;
+  }
+  return undefined;
+}
+
+function parseStringArray(data: unknown): string[] | undefined {
+  if (data === false || data === undefined || data === null) return undefined;
+  if (Array.isArray(data)) {
+    const arr = data.filter((v): v is string => typeof v === "string");
+    return arr.length > 0 ? arr : undefined;
+  }
+  return undefined;
+}
+
+function parseWeathersArray(weathers: unknown): undefined | Weather[] {
+  if (weathers === false || weathers === undefined || weathers === null) return undefined;
+  if (Array.isArray(weathers)) {
+    const arr = weathers.filter((v): v is string => typeof v === "string") as Weather[];
+    return arr.length > 0 ? arr : undefined;
+  }
+  return undefined;
+}
+
+function predicateToRestriction(predicate: string, value: unknown): Restriction[] {
+  switch (predicate) {
+    case "has_perk":
+      return [{ perk: value as string, type: "perk" }];
+    case "has_upper_floor":
+      return [{ type: "upperFloor" }];
+    case "is_dating_someone":
+      return [{ relationship: "datingSomeone", type: "relationship" }];
+    case "is_season":
+      return [{ seasons: [value as Season], type: "season" }];
+    case "reached_date":
+      // `reached_date` retains season only.
+      if (typeof value === "string") {
+        return [{ season: value as Season, type: "seenSeason" }];
+      }
+      if (typeof value === "object" && value !== null) {
+        const dateObj = value as Record<string, unknown>;
+        if (dateObj.season) {
+          return [{ season: dateObj.season as Season, type: "seenSeason" }];
+        }
+      }
+      return [];
+    case "reached_mines_level":
+      return [{ level: value as number, type: "minesLevel" }];
+    case "reached_skill_level": {
+      if (typeof value === "object" && value !== null) {
+        const entries = Object.entries(value as Record<string, unknown>);
+        if (entries.length === 1) {
+          const [skill, level] = entries[0];
+          return [{ level: level as number, skill, type: "skill" }];
+        }
+      }
+      return [];
+    }
+    case "seen_cutscene":
+      return [{ cutscene: value as string, type: "cutscene" }];
+    case "unlocked_animal":
+      return [{ animal: value as string, type: "animal" }];
+    default:
+      // Unsupported predicates return no restriction.
+      return [];
+  }
+}
+
 function processStoreEntry(
   entry: unknown,
   storeId: string,
@@ -568,50 +645,6 @@ function processStoreEntry(
   return 0;
 }
 
-function predicateToRestriction(predicate: string, value: unknown): Restriction[] {
-  switch (predicate) {
-    case "has_perk":
-      return [{ perk: value as string, type: "perk" }];
-    case "reached_skill_level": {
-      if (typeof value === "object" && value !== null) {
-        const entries = Object.entries(value as Record<string, unknown>);
-        if (entries.length === 1) {
-          const [skill, level] = entries[0];
-          return [{ level: level as number, skill, type: "skill" }];
-        }
-      }
-      return [];
-    }
-    case "reached_mines_level":
-      return [{ level: value as number, type: "minesLevel" }];
-    case "is_season":
-      return [{ seasons: [value as Season], type: "season" }];
-    case "unlocked_animal":
-      return [{ animal: value as string, type: "animal" }];
-    case "seen_cutscene":
-      return [{ cutscene: value as string, type: "cutscene" }];
-    case "reached_date":
-      // `reached_date` retains season only.
-      if (typeof value === "string") {
-        return [{ season: value as Season, type: "seenSeason" }];
-      }
-      if (typeof value === "object" && value !== null) {
-        const dateObj = value as Record<string, unknown>;
-        if (dateObj.season) {
-          return [{ season: dateObj.season as Season, type: "seenSeason" }];
-        }
-      }
-      return [];
-    case "has_upper_floor":
-      return [{ type: "upperFloor" }];
-    case "is_dating_someone":
-      return [{ relationship: "datingSomeone", type: "relationship" }];
-    default:
-      // Unsupported predicates return no restriction.
-      return [];
-  }
-}
-
 function projectRequirementExpressionToFlatRestrictions(
   expression: RequirementExpression,
 ): Restriction[] {
@@ -653,37 +686,4 @@ function projectRequirementsToRestrictions(
     sourceLocation,
   );
   return projectRequirementExpressionToFlatRestrictions(expression);
-}
-
-function parseHours(hours: unknown): [number, number] | undefined {
-  if (hours === false || hours === undefined || hours === null) return undefined;
-  if (Array.isArray(hours) && hours.length >= 2) return [hours[0] as number, hours[1] as number];
-  return undefined;
-}
-
-function parseSeasonsArray(seasons: unknown): Season[] | undefined {
-  if (seasons === false || seasons === undefined || seasons === null) return undefined;
-  if (Array.isArray(seasons)) {
-    const arr = seasons.filter((v): v is string => typeof v === "string") as Season[];
-    return arr.length > 0 ? arr : undefined;
-  }
-  return undefined;
-}
-
-function parseStringArray(data: unknown): string[] | undefined {
-  if (data === false || data === undefined || data === null) return undefined;
-  if (Array.isArray(data)) {
-    const arr = data.filter((v): v is string => typeof v === "string");
-    return arr.length > 0 ? arr : undefined;
-  }
-  return undefined;
-}
-
-function parseWeathersArray(weathers: unknown): undefined | Weather[] {
-  if (weathers === false || weathers === undefined || weathers === null) return undefined;
-  if (Array.isArray(weathers)) {
-    const arr = weathers.filter((v): v is string => typeof v === "string") as Weather[];
-    return arr.length > 0 ? arr : undefined;
-  }
-  return undefined;
 }

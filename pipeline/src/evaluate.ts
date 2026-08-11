@@ -1,4 +1,4 @@
-import { sourceFileFor, type ParsedGameData } from "./parse-fiddle.js";
+import { type ParsedGameData, sourceFileFor } from "./parse-fiddle.js";
 
 type ResolutionState = "resolved" | "visiting";
 type ResolvableValueField = "bin" | "store";
@@ -37,7 +37,7 @@ export function evaluateExpressions(fiddle: ParsedGameData): void {
               `Duplicate item ID "${itemId}" in ${sourceFile} and ${sourceFileFor(fiddle, priorRoot)}`,
             );
           }
-          itemsById.set(itemId, item as Record<string, unknown>);
+          itemsById.set(itemId, item);
           itemRootPathById.set(itemId, itemRoot);
         }
       }
@@ -81,6 +81,74 @@ export function evaluateExpressions(fiddle: ParsedGameData): void {
   }
 
   console.log(`  Expressions: ${resolved} values resolved`);
+}
+
+function calculateRecipeCost(
+  itemId: string,
+  item: Record<string, unknown>,
+  context: ValueEvaluationContext,
+): number {
+  const recipe = item.recipe;
+  if (!Array.isArray(recipe)) {
+    throw itemError(context, itemId, `Item "${itemId}" has self.recipe value but no recipe array`);
+  }
+
+  let total = 0;
+  // Recipe costs ignore numeric `hours` and `essence` entries, default missing counts to one,
+  // reject invalid counts, prefer `bin`, fall back to `store`, and preserve zero as valid.
+  for (const ingredient of recipe) {
+    if (typeof ingredient !== "object" || ingredient === null) {
+      throw itemError(context, itemId, `Malformed recipe entry on item "${itemId}"`);
+    }
+    const ingredientData = ingredient as Record<string, unknown>;
+    const ingredientItemId = ingredientData.item as string | undefined;
+    if (!ingredientItemId) {
+      // Skip non-item recipe costs (time, essence)
+      if (typeof ingredientData.hours === "number" || typeof ingredientData.essence === "number") {
+        continue;
+      }
+      throw itemError(context, itemId, `Malformed recipe entry on item "${itemId}"`);
+    }
+    if (
+      ingredientData.count !== undefined &&
+      (typeof ingredientData.count !== "number" || ingredientData.count <= 0)
+    ) {
+      throw itemError(
+        context,
+        itemId,
+        `Recipe for "${itemId}" has invalid count for "${ingredientItemId}"`,
+      );
+    }
+    const count = ingredientData.count ?? 1;
+
+    const ingredientItem = context.itemsById.get(ingredientItemId);
+    if (!ingredientItem) {
+      throw itemError(
+        context,
+        itemId,
+        `Recipe for "${itemId}" references missing item "${ingredientItemId}"`,
+      );
+    }
+
+    let ingredientValue = resolveValueField(ingredientItemId, "bin", context, itemId);
+    ingredientValue ??= resolveValueField(ingredientItemId, "store", context, itemId);
+    if (typeof ingredientValue !== "number") {
+      throw itemError(
+        context,
+        itemId,
+        `Recipe for "${itemId}" uses "${ingredientItemId}", which has neither numeric bin nor store value`,
+      );
+    }
+    total += ingredientValue * count;
+  }
+
+  return total;
+}
+
+function itemError(context: ValueEvaluationContext, itemId: string, message: string): Error {
+  const itemRoot = context.itemRootPathById.get(itemId);
+  if (!itemRoot) return new Error(message);
+  return new Error(`${message} in ${sourceFileFor(context.fiddle, itemRoot)}`);
 }
 
 function resolveExpression(
@@ -159,71 +227,4 @@ function resolveValueField(
   context.resolutionStateByValuePath.set(key, "resolved");
   value[field] = resolved;
   return resolved;
-}
-
-function calculateRecipeCost(
-  itemId: string,
-  item: Record<string, unknown>,
-  context: ValueEvaluationContext,
-): number {
-  const recipe = item.recipe;
-  if (!Array.isArray(recipe)) {
-    throw itemError(context, itemId, `Item "${itemId}" has self.recipe value but no recipe array`);
-  }
-
-  let total = 0;
-  // Recipe costs ignore numeric `hours` and `essence` entries, default missing counts to one,
-  // reject invalid counts, prefer `bin`, fall back to `store`, and preserve zero as valid.
-  for (const ingredient of recipe) {
-    if (typeof ingredient !== "object" || ingredient === null) {
-      throw itemError(context, itemId, `Malformed recipe entry on item "${itemId}"`);
-    }
-    const ingredientData = ingredient as Record<string, unknown>;
-    const ingredientItemId = ingredientData.item as string | undefined;
-    if (!ingredientItemId) {
-      // Skip non-item recipe costs (time, essence)
-      if (typeof ingredientData.hours === "number" || typeof ingredientData.essence === "number")
-        continue;
-      throw itemError(context, itemId, `Malformed recipe entry on item "${itemId}"`);
-    }
-    if (
-      ingredientData.count !== undefined &&
-      (typeof ingredientData.count !== "number" || ingredientData.count <= 0)
-    ) {
-      throw itemError(
-        context,
-        itemId,
-        `Recipe for "${itemId}" has invalid count for "${ingredientItemId}"`,
-      );
-    }
-    const count = (ingredientData.count as number | undefined) ?? 1;
-
-    const ingredientItem = context.itemsById.get(ingredientItemId);
-    if (!ingredientItem) {
-      throw itemError(
-        context,
-        itemId,
-        `Recipe for "${itemId}" references missing item "${ingredientItemId}"`,
-      );
-    }
-
-    let ingredientValue = resolveValueField(ingredientItemId, "bin", context, itemId);
-    ingredientValue ??= resolveValueField(ingredientItemId, "store", context, itemId);
-    if (typeof ingredientValue !== "number") {
-      throw itemError(
-        context,
-        itemId,
-        `Recipe for "${itemId}" uses "${ingredientItemId}", which has neither numeric bin nor store value`,
-      );
-    }
-    total += ingredientValue * count;
-  }
-
-  return total;
-}
-
-function itemError(context: ValueEvaluationContext, itemId: string, message: string): Error {
-  const itemRoot = context.itemRootPathById.get(itemId);
-  if (!itemRoot) return new Error(message);
-  return new Error(`${message} in ${sourceFileFor(context.fiddle, itemRoot)}`);
 }

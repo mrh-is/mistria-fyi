@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import type { SourceFieldLocation } from "./data-shapes.js";
 import { parseFiddle } from "./parse-fiddle.js";
-
 import {
   buildRequirementDefinitions,
-  parseRequirements,
   type NamedRequirementDefinitions,
+  parseRequirements,
   type RequirementExpression,
 } from "./requirements.js";
+
+import type { SourceFieldLocation } from "./data-shapes.js";
 
 const testSourceLocation: SourceFieldLocation = {
   entityId: "test_item",
@@ -22,19 +22,19 @@ function makeRequirementDefinitions(
 ) {
   const primitivePredicates = new Set([
     "has_perk",
-    "reached_skill_level",
-    "reached_mines_level",
-    "is_season",
-    "unlocked_animal",
-    "seen_cutscene",
-    "reached_date",
     "has_upper_floor",
-    "is_dating_someone",
-    "scene_is_playing",
-    "is_partner",
     "is_best_friend",
-    "reached_heart_level",
+    "is_dating_someone",
+    "is_partner",
+    "is_season",
     "met_npc",
+    "reached_date",
+    "reached_heart_level",
+    "reached_mines_level",
+    "reached_skill_level",
+    "scene_is_playing",
+    "seen_cutscene",
+    "unlocked_animal",
     ...extraPrimitives,
   ]);
   return { namedRequirements, primitivePredicates };

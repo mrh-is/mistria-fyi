@@ -18,15 +18,20 @@ describe("evaluateExpressions", () => {
     let cherryBonsai: Record<string, unknown> | undefined;
     for (const subCats of Object.values(items)) {
       for (const fileItems of Object.values(subCats)) {
-        if (fileItems.lemon_bonsai) lemonBonsai = fileItems.lemon_bonsai as Record<string, unknown>;
-        if (fileItems.cherry_bonsai)
-          cherryBonsai = fileItems.cherry_bonsai as Record<string, unknown>;
+        if (fileItems.lemon_bonsai) {
+          lemonBonsai = fileItems.lemon_bonsai;
+        }
+        if (fileItems.cherry_bonsai) {
+          cherryBonsai = fileItems.cherry_bonsai;
+        }
       }
     }
 
     expect(lemonBonsai).toBeDefined();
     expect(cherryBonsai).toBeDefined();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const lemonValue = (lemonBonsai!.value as Record<string, unknown>).bin;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const cherryValue = (cherryBonsai!.value as Record<string, unknown>).bin;
     expect(lemonValue).toBe(462);
     expect(cherryValue).toBe(462);
@@ -45,19 +50,21 @@ describe("evaluateExpressions", () => {
       for (const fileItems of Object.values(subCats)) {
         for (const [itemId, item] of Object.entries(fileItems)) {
           if (typeof item !== "object" || item === null) continue;
-          const value = (item as Record<string, unknown>).value as
-            Record<string, unknown> | undefined;
+          const value = item.value as Record<string, unknown> | undefined;
           if (!value) continue;
-          if (typeof value.bin === "string") remaining.push(`${itemId}.value.bin = "${value.bin}"`);
-          if (typeof value.store === "string")
+          if (typeof value.bin === "string") {
+            remaining.push(`${itemId}.value.bin = "${value.bin}"`);
+          }
+          if (typeof value.store === "string") {
             remaining.push(`${itemId}.value.store = "${value.store}"`);
+          }
         }
       }
     }
     expect(remaining).toEqual([]);
   });
 
-  it("keeps a representative referenced store value numeric", () => {
+  it("resolves bundle store prices using referenced item store values", () => {
     const parsed = parseFiddle("pipeline/input/assets");
     evaluateExpressions(parsed.data);
 
@@ -71,7 +78,9 @@ describe("evaluateExpressions", () => {
     let basicWood: Record<string, unknown> | undefined;
     for (const subCats of Object.values(items)) {
       for (const fileItems of Object.values(subCats)) {
-        if (fileItems.basic_wood) basicWood = fileItems.basic_wood as Record<string, unknown>;
+        if (fileItems.basic_wood) {
+          basicWood = fileItems.basic_wood;
+        }
       }
     }
 
@@ -81,7 +90,7 @@ describe("evaluateExpressions", () => {
     }
   });
 
-  it("does not throw on fixture recipes with ingredient counts greater than one", () => {
+  it("resolves recipe ingredients with count > 1", () => {
     const parsed = parseFiddle("pipeline/input/assets");
     evaluateExpressions(parsed.data);
     // Fixture-wide no-throw smoke test; it does not assert a specific computed value.

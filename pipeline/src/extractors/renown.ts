@@ -1,7 +1,7 @@
-import type { TrackerData } from "$lib/types/tracker-data.js";
-
 import { expectArray } from "../data-shapes.js";
-import { sourceFileFor, type ParsedGameData } from "../parse-fiddle.js";
+import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
+
+import type { TrackerData } from "$lib/types/tracker-data.js";
 
 /**
  * Extracts renown ranks. A missing renown root returns ten levels per rank with no ranks; missing

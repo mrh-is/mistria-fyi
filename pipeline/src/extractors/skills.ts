@@ -8,7 +8,7 @@ import type { ParsedGameData } from "../parse-fiddle.js";
  */
 export function extractSkills(fiddle: ParsedGameData): TrackerData["skills"] {
   const skills = fiddle.skills as Record<string, Record<string, unknown>> | undefined;
-  if (!skills) return {} as TrackerData["skills"];
+  if (!skills) return {};
 
   const result = {} as Record<SkillId, string>;
   for (const id of Object.keys(skills)) {

@@ -32,7 +32,7 @@ const KNOWN_COMPOSITE_SLOTS = new Set(["bottom"]);
  */
 export function extractCosmetics(fiddle: ParsedGameData): TrackerData["cosmetics"] {
   const assets = fiddle.player_assets as Record<string, Record<string, unknown>> | undefined;
-  if (!assets) return {} as TrackerData["cosmetics"];
+  if (!assets) return {};
 
   const subCategoryMap = buildSubCategoryMap(fiddle);
   const result = {} as Record<CosmeticId, TrackerData["cosmetics"][CosmeticId]>;

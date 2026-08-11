@@ -1,7 +1,6 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-
 import { afterEach, describe, expect, it } from "vitest";
 
 import { parseFiddle, sourceFileFor } from "./parse-fiddle.js";
@@ -33,7 +32,7 @@ describe("parseFiddle", () => {
   it("reports the relative filename and dotted destination for malformed TOML", () => {
     const assetsDir = createAssetsFixture({ "items/broken.toml": "invalid = [" });
 
-    expect(() => parseFiddle(assetsDir)).toThrowError(
+    expect(() => parseFiddle(assetsDir)).toThrow(
       /items\/broken\.toml[\s\S]*items\.broken|items\.broken[\s\S]*items\/broken\.toml/,
     );
   });
@@ -44,7 +43,7 @@ describe("parseFiddle", () => {
       "items/crops.toml": "enabled = true",
     });
 
-    expect(() => parseFiddle(assetsDir)).toThrowError(
+    expect(() => parseFiddle(assetsDir)).toThrow(
       /items\.toml[\s\S]*items[\s\S]*items\.crops|items\.crops[\s\S]*items[\s\S]*items\.toml/,
     );
   });
@@ -55,7 +54,7 @@ describe("parseFiddle", () => {
       "npcs/holt/profile.toml": 'birthday = "spring 1"',
     });
 
-    expect(() => parseFiddle(assetsDir)).toThrowError(
+    expect(() => parseFiddle(assetsDir)).toThrow(
       /npcs\/holt(?:\/profile)?\.toml[\s\S]*npcs\.holt(?:\.profile)?|npcs\.holt(?:\.profile)?[\s\S]*npcs\/holt(?:\/profile)?\.toml/,
     );
   });

@@ -1,7 +1,7 @@
-import type { AlmanacCategory, ItemId, TrackerData } from "$lib/types/tracker-data.js";
-
 import { expectArray, expectStringArray } from "../data-shapes.js";
-import { sourceFileFor, type ParsedGameData } from "../parse-fiddle.js";
+import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
+
+import type { AlmanacCategory, ItemId, TrackerData } from "$lib/types/tracker-data.js";
 
 /**
  * Extracts both named item metadata and visible almanac rows. The metadata index includes every

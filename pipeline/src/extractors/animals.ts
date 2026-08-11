@@ -15,7 +15,7 @@ import type { ParsedGameData } from "../parse-fiddle.js";
 export function extractAnimals(fiddle: ParsedGameData): TrackerData["animals"] {
   const ranching = fiddle.ranching as Record<string, unknown> | undefined;
   const animals = ranching?.animals as Record<string, Record<string, unknown>> | undefined;
-  if (!animals) return {} as TrackerData["animals"];
+  if (!animals) return {};
 
   const result = {} as Record<AnimalId, TrackerData["animals"][AnimalId]>;
   let skippedVariants = 0;
@@ -75,7 +75,7 @@ export function extractAnimals(fiddle: ParsedGameData): TrackerData["animals"] {
   console.log(
     `  Animals: ${Object.keys(result).length} types, ` +
       `${Object.values(result).reduce((n, a) => n + Object.keys(a.variants).length, 0)} variants ` +
-      `(${skippedVariants} default variants skipped), ` +
+      `(${skippedVariants} template/unacquirable variants skipped), ` +
       `${Object.values(result).reduce((n, a) => n + Object.keys(a.cosmetics).length, 0)} cosmetics`,
   );
   return result;

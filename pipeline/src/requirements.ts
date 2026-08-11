@@ -75,6 +75,56 @@ export function parseRequirements(
   return parseRequirementObject(obj, requirementResolutionContext, context, []);
 }
 
+function parseInvert(
+  val: unknown,
+  requirementResolutionContext: RequirementResolutionContext,
+  context: SourceFieldLocation,
+  namedRequirementStack: string[],
+): RequirementExpression {
+  if (typeof val !== "object" || val === null || Array.isArray(val)) {
+    throw new Error(`Expected object for "invert" in ${context.sourcePath}, got ${typeof val}`);
+  }
+  const inner = parseRequirementObject(
+    val as Record<string, unknown>,
+    requirementResolutionContext,
+    context,
+    namedRequirementStack,
+  );
+  return { not: inner };
+}
+
+function parseOr(
+  val: unknown,
+  requirementResolutionContext: RequirementResolutionContext,
+  context: SourceFieldLocation,
+  namedRequirementStack: string[],
+): RequirementExpression {
+  if (Array.isArray(val)) {
+    const alternatives: RequirementExpression[] = val.map((entry) => {
+      if (typeof entry === "object" && entry !== null && !Array.isArray(entry)) {
+        return parseRequirementObject(
+          entry as Record<string, unknown>,
+          requirementResolutionContext,
+          context,
+          namedRequirementStack,
+        );
+      }
+      throw new Error(`Expected object in or-array in ${context.sourcePath}, got ${typeof entry}`);
+    });
+    return { any: alternatives };
+  }
+  if (typeof val === "object" && val !== null) {
+    // Single-entry or (e.g., or = { ... })
+    return parseRequirementObject(
+      val as Record<string, unknown>,
+      requirementResolutionContext,
+      context,
+      namedRequirementStack,
+    );
+  }
+  throw new Error(`Expected array or object for "or" in ${context.sourcePath}, got ${typeof val}`);
+}
+
 /**
  * Named references must be literal `true`, are expanded recursively, are memoized, and report
  * cycles. Unknown keys deliberately remain predicate leaves for forward compatibility; this
@@ -118,56 +168,6 @@ function parseRequirementObject(
   }
 
   return conjuncts.length === 1 ? conjuncts[0] : { all: conjuncts };
-}
-
-function parseOr(
-  val: unknown,
-  requirementResolutionContext: RequirementResolutionContext,
-  context: SourceFieldLocation,
-  namedRequirementStack: string[],
-): RequirementExpression {
-  if (Array.isArray(val)) {
-    const alternatives: RequirementExpression[] = val.map((entry) => {
-      if (typeof entry === "object" && entry !== null && !Array.isArray(entry)) {
-        return parseRequirementObject(
-          entry as Record<string, unknown>,
-          requirementResolutionContext,
-          context,
-          namedRequirementStack,
-        );
-      }
-      throw new Error(`Expected object in or-array in ${context.sourcePath}, got ${typeof entry}`);
-    });
-    return { any: alternatives };
-  }
-  if (typeof val === "object" && val !== null) {
-    // Single-entry or (e.g., or = { ... })
-    return parseRequirementObject(
-      val as Record<string, unknown>,
-      requirementResolutionContext,
-      context,
-      namedRequirementStack,
-    );
-  }
-  throw new Error(`Expected array or object for "or" in ${context.sourcePath}, got ${typeof val}`);
-}
-
-function parseInvert(
-  val: unknown,
-  requirementResolutionContext: RequirementResolutionContext,
-  context: SourceFieldLocation,
-  namedRequirementStack: string[],
-): RequirementExpression {
-  if (typeof val !== "object" || val === null || Array.isArray(val)) {
-    throw new Error(`Expected object for "invert" in ${context.sourcePath}, got ${typeof val}`);
-  }
-  const inner = parseRequirementObject(
-    val as Record<string, unknown>,
-    requirementResolutionContext,
-    context,
-    namedRequirementStack,
-  );
-  return { not: inner };
 }
 
 function resolveNamed(

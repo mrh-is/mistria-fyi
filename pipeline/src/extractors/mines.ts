@@ -1,7 +1,7 @@
-import type { BiomeId, SpellId, TrackerData } from "$lib/types/tracker-data.js";
-
 import { expectArray } from "../data-shapes.js";
-import { sourceFileFor, type ParsedGameData } from "../parse-fiddle.js";
+import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
+
+import type { BiomeId, SpellId, TrackerData } from "$lib/types/tracker-data.js";
 
 /**
  * Projects dungeon biomes and spells. Biome IDs are synthetic array indices; each end floor is the

@@ -8,7 +8,7 @@ import type { ParsedGameData } from "../parse-fiddle.js";
  */
 export function extractNpcs(fiddle: ParsedGameData): TrackerData["npcs"] {
   const npcs = fiddle.npcs as Record<string, Record<string, unknown>> | undefined;
-  if (!npcs) return {} as TrackerData["npcs"];
+  if (!npcs) return {};
 
   const result = {} as Record<NpcId, TrackerData["npcs"][NpcId]>;
   for (const [id, npc] of Object.entries(npcs)) {
