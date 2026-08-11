@@ -11,7 +11,8 @@ task:
 1. Read the issue **and its comments** (`gh issue view <number> --comments` or via GitHub API/MCP).
    Comments often contain screenshots, clarifications, and additional requirements.
 2. Create a branch: `<issue-number>-<short-description>`.
-3. Do the work. Run `pnpm run check` and `pnpm run lint` before committing.
+3. Do the work. Run `pnpm run check` and `pnpm run lint:fix` before committing (lint:fix runs
+   both prettier and eslint with auto-fix; `pnpm run lint` checks without fixing).
 4. Commit, push the branch, and open a PR that references the issue (`Closes #N` in the PR body).
 
 Issues labeled `ready` are available. Issues labeled `blocked` or `discussion` are not actionable

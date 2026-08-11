@@ -124,10 +124,10 @@ function createDefaultCompleted(): CompletedState {
     cosmetics: defaultCosmetics,
     mines: { floor: 0, spells: new SvelteSet<SpellId>() },
     museum: new SvelteSet<ItemId>(),
-    npcLevels: {} as Record<string, number>,
-    questStates: {} as Record<string, QuestState>,
+    npcLevels: {},
+    questStates: {},
     renown: 0,
-    skillLevels: {} as Record<string, number>,
+    skillLevels: {},
   };
 }
 

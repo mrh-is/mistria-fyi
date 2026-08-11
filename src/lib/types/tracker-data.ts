@@ -46,24 +46,24 @@ export interface RecipePresentation {
   name: string;
 }
 export type RecipeSource =
+  | { biomeId: BiomeId; perk: string; type: "dungeon_chest" }
+  | { bundleName: string; storeId: string; type: "scroll_bundle" }
+  | { chestTier: string; type: "treasure_chest" }
+  | { festivalId: string; storeId: string; type: "festival" }
+  | { level: number; type: "renown" }
+  | { perk: string; type: "perk" }
+  | { questId: QuestId; questType: string; type: "quest" }
+  | { setCount: number; type: "museum_donation"; wingId: WingId }
+  | { storeId: string; type: "store" }
+  | { tier: "large" | "small"; type: "chicken_statue" }
+  | { tier: "large" | "small"; type: "wishing_well" }
+  | { trigger: "donated_item" | "shipped_item"; triggerItemId: ItemId; type: "letter" }
+  | { trigger: "reached_date"; type: "letter" }
   | { type: "beach_cave_chest" }
   | { type: "default" }
   | { type: "dragon_forge" }
   | { type: "relationship" }
-  | { type: "dungeon_chest"; biomeId: BiomeId; perk: string }
-  | { type: "chicken_statue"; tier: "large" | "small" }
-  | { type: "festival"; festivalId: string; storeId: string }
-  | { type: "letter"; trigger: "donated_item" | "shipped_item"; triggerItemId: ItemId }
-  | { type: "letter"; trigger: "reached_date" }
-  | { type: "museum_donation"; setCount: number; wingId: WingId }
-  | { type: "perk"; perk: string }
-  | { type: "quest"; questId: QuestId; questType: string }
-  | { type: "renown"; level: number }
-  | { type: "scroll_bundle"; bundleName: string; storeId: string }
-  | { type: "store"; storeId: string }
-  | { type: "treasure_chest"; chestTier: string }
-  | { type: "upgrade"; upgradeName: string }
-  | { type: "wishing_well"; tier: "large" | "small" };
+  | { type: "upgrade"; upgradeName: string };
 export interface Restriction {
   animal?: string;
   building?: string;

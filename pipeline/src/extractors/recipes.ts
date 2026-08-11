@@ -123,26 +123,20 @@ export function extractRecipes(fiddle: ParsedGameData): {
   return { recipeIdByItemId, recipes };
 }
 
-function collectHardcodedSources(
-  itemIdToRecipeId: Map<string, string>,
-): Map<string, RecipeSource[]> {
-  const result = new Map<string, RecipeSource[]>();
-
-  const hardcoded: [string, RecipeSource][] = [
-    ["water_sprite_statue_v1", { type: "beach_cave_chest" }],
-    ["stairs", { type: "upgrade", upgradeName: "House Stairs" }],
-    ["farm_bridge", { type: "upgrade", upgradeName: "Starter Farm Bridge" }],
-    ["engagement_ring", { type: "relationship" }],
-  ];
-
-  for (const [itemId, source] of hardcoded) {
-    const recipeId = itemIdToRecipeId.get(itemId);
-    if (recipeId && !result.has(recipeId)) {
-      result.set(recipeId, [source]);
-    }
+function buildPresentations(group: RawRecipeEntry[]): RecipePresentation[] {
+  const byName = new Map<string, string[]>();
+  for (const entry of group) {
+    const ids = byName.get(entry.name) ?? [];
+    ids.push(entry.itemId);
+    byName.set(entry.name, ids);
   }
 
-  return result;
+  return [...byName.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([name, ids]) => ({
+      itemIds: ids.sort((a, b) => a.localeCompare(b)) as ItemId[],
+      name,
+    }));
 }
 
 function collectBiomeFurnitureSources(
@@ -173,28 +167,12 @@ function collectBiomeFurnitureSources(
 
       if (result.has(recipeId)) continue;
       const sources = result.get(recipeId) ?? [];
-      sources.push({ type: "perk", perk: "natural_beauty" });
+      sources.push({ perk: "natural_beauty", type: "perk" });
       result.set(recipeId, sources);
     }
   }
 
   return result;
-}
-
-function buildPresentations(group: RawRecipeEntry[]): RecipePresentation[] {
-  const byName = new Map<string, string[]>();
-  for (const entry of group) {
-    const ids = byName.get(entry.name) ?? [];
-    ids.push(entry.itemId);
-    byName.set(entry.name, ids);
-  }
-
-  return [...byName.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([name, ids]) => ({
-      itemIds: ids.sort((a, b) => a.localeCompare(b)) as ItemId[],
-      name,
-    }));
 }
 
 function collectChickenStatueSources(
@@ -233,10 +211,32 @@ function collectChickenStatueSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ type: "chicken_statue", tier });
+      sources.push({ tier, type: "chicken_statue" });
       result.set(recipeId, sources);
     }
   }
+
+  return result;
+}
+
+function collectDragonForgeSources(
+  fiddle: ParsedGameData,
+  itemIdToRecipeId: Map<string, string>,
+): Map<string, RecipeSource[]> {
+  const result = new Map<string, RecipeSource[]>();
+
+  forEachItem(fiddle, (itemId, item) => {
+    if (item.recipe_is_default) return;
+
+    const tags = Array.isArray(item.tags) ? (item.tags as string[]) : [];
+    if (!tags.includes("blacksmithing")) return;
+    if (!itemId.startsWith("dragon_forged_")) return;
+
+    const recipeId = itemIdToRecipeId.get(itemId);
+    if (recipeId && !result.has(recipeId)) {
+      result.set(recipeId, [{ type: "dragon_forge" }]);
+    }
+  });
 
   return result;
 }
@@ -271,33 +271,11 @@ function collectDungeonDelicacySources(
         if (!recipeId) continue;
 
         const sources = result.get(recipeId) ?? [];
-        sources.push({ type: "dungeon_chest", biomeId: biomeId as BiomeId, perk: arrayKey });
+        sources.push({ biomeId: biomeId as BiomeId, perk: arrayKey, type: "dungeon_chest" });
         result.set(recipeId, sources);
       }
     }
   }
-
-  return result;
-}
-
-function collectDragonForgeSources(
-  fiddle: ParsedGameData,
-  itemIdToRecipeId: Map<string, string>,
-): Map<string, RecipeSource[]> {
-  const result = new Map<string, RecipeSource[]>();
-
-  forEachItem(fiddle, (itemId, item) => {
-    if (item.recipe_is_default) return;
-
-    const tags = Array.isArray(item.tags) ? (item.tags as string[]) : [];
-    if (!tags.includes("blacksmithing")) return;
-    if (!itemId.startsWith("dragon_forged_")) return;
-
-    const recipeId = itemIdToRecipeId.get(itemId);
-    if (recipeId && !result.has(recipeId)) {
-      result.set(recipeId, [{ type: "dragon_forge" }]);
-    }
-  });
 
   return result;
 }
@@ -340,7 +318,7 @@ function collectFestivalScrollSources(
         if (!recipeId) continue;
 
         const sources = result.get(recipeId) ?? [];
-        sources.push({ type: "festival", festivalId, storeId: vendorStoreId });
+        sources.push({ festivalId, storeId: vendorStoreId, type: "festival" });
         result.set(recipeId, sources);
       }
     }
@@ -384,8 +362,30 @@ function collectFishingChestSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ type: "treasure_chest", chestTier });
+      sources.push({ chestTier, type: "treasure_chest" });
       result.set(recipeId, sources);
+    }
+  }
+
+  return result;
+}
+
+function collectHardcodedSources(
+  itemIdToRecipeId: Map<string, string>,
+): Map<string, RecipeSource[]> {
+  const result = new Map<string, RecipeSource[]>();
+
+  const hardcoded: [string, RecipeSource][] = [
+    ["water_sprite_statue_v1", { type: "beach_cave_chest" }],
+    ["stairs", { type: "upgrade", upgradeName: "House Stairs" }],
+    ["farm_bridge", { type: "upgrade", upgradeName: "Starter Farm Bridge" }],
+    ["engagement_ring", { type: "relationship" }],
+  ];
+
+  for (const [itemId, source] of hardcoded) {
+    const recipeId = itemIdToRecipeId.get(itemId);
+    if (recipeId && !result.has(recipeId)) {
+      result.set(recipeId, [source]);
     }
   }
 
@@ -430,24 +430,24 @@ function collectLetterScrollSources(
       if (requirements) {
         if (typeof requirements.shipped_item === "string") {
           sources.push({
-            type: "letter",
             trigger: "shipped_item",
             triggerItemId: requirements.shipped_item as ItemId,
+            type: "letter",
           });
           result.set(recipeId, sources);
           continue;
         }
         if (typeof requirements.donated_item === "string") {
           sources.push({
-            type: "letter",
             trigger: "donated_item",
             triggerItemId: requirements.donated_item as ItemId,
+            type: "letter",
           });
           result.set(recipeId, sources);
           continue;
         }
         if (requirements.reached_date !== undefined) {
-          sources.push({ type: "letter", trigger: "reached_date" });
+          sources.push({ trigger: "reached_date", type: "letter" });
           result.set(recipeId, sources);
           continue;
         }
@@ -502,7 +502,7 @@ function collectMuseumScrollSources(
         if (!recipeId) continue;
 
         const sources = result.get(recipeId) ?? [];
-        sources.push({ type: "museum_donation", setCount, wingId: wingId as WingId });
+        sources.push({ setCount, type: "museum_donation", wingId: wingId as WingId });
         result.set(recipeId, sources);
       }
     }
@@ -535,9 +535,112 @@ function collectPerkSources(
 
     const recipeId = itemIdToRecipeId.get(itemId);
     if (recipeId && !result.has(recipeId)) {
-      result.set(recipeId, [{ type: "perk", perk }]);
+      result.set(recipeId, [{ perk, type: "perk" }]);
     }
   });
+
+  return result;
+}
+
+function collectQuestScrollSources(
+  fiddle: ParsedGameData,
+  itemIdToRecipeId: Map<string, string>,
+  knownRecipeIds: Set<string>,
+): Map<string, RecipeSource[]> {
+  const quests = fiddle.quests as
+    Record<string, Record<string, Record<string, unknown>>> | undefined;
+  if (!quests) return new Map();
+
+  const result = new Map<string, RecipeSource[]>();
+
+  for (const questType of QUEST_TYPES_WITH_SCROLLS) {
+    const questGroup = quests[questType];
+    if (!questGroup) continue;
+
+    for (const [questId, quest] of Object.entries(questGroup)) {
+      if (questId === "default" || typeof quest !== "object" || quest === null) continue;
+
+      const questObj = quest;
+      const rewards = Array.isArray(questObj.rewards) ? questObj.rewards : [];
+      for (const reward of rewards) {
+        if (typeof reward !== "object" || reward === null) continue;
+        const obj = reward as Record<string, unknown>;
+
+        const scrollTarget =
+          (obj.recipe_scroll as string | undefined) ?? (obj.crafting_scroll as string | undefined);
+        if (!scrollTarget) continue;
+
+        const recipeId = resolveScrollTarget(
+          scrollTarget,
+          itemIdToRecipeId,
+          knownRecipeIds,
+          `${questType}/${questId}`,
+        );
+        if (!recipeId) continue;
+
+        const sources = result.get(recipeId) ?? [];
+        sources.push({
+          questId: questId as QuestId,
+          questType,
+          type: "quest",
+        });
+        result.set(recipeId, sources);
+      }
+    }
+  }
+
+  return result;
+}
+
+function collectRecipeEntries(fiddle: ParsedGameData): RawRecipeEntry[] {
+  const entries: RawRecipeEntry[] = [];
+
+  forEachItem(fiddle, (itemId, item, subCatKey) => {
+    if (subCatKey === "unreviewed_new_items") return;
+
+    const hasRecipe = Array.isArray(item.recipe) || typeof item.recipe_key === "string";
+    const isDefault = item.recipe_is_default === true;
+
+    if (!hasRecipe && isDefault) {
+      console.log(
+        `  Diagnostic: "${itemId}" has recipe_is_default but no recipe array or recipe_key — skipped`,
+      );
+      return;
+    }
+
+    if (!hasRecipe) return;
+
+    const recipeKey = item.recipe_key as string | undefined;
+    const recipeId = recipeKey ?? itemId;
+    const name = (item.name as string | undefined) ?? itemId;
+
+    entries.push({ defaultUnlocked: isDefault, itemId, name, recipeId });
+  });
+
+  return entries;
+}
+
+function collectRenownRecipeSources(
+  fiddle: ParsedGameData,
+  itemIdToRecipeId: Map<string, string>,
+): Map<string, RecipeSource[]> {
+  const renown = fiddle.renown as Record<string, unknown> | undefined;
+  if (!renown) return new Map();
+
+  const result = new Map<string, RecipeSource[]>();
+  const rewards = Array.isArray(renown.rewards) ? renown.rewards : [];
+
+  for (let i = 0; i < rewards.length; i++) {
+    const reward = rewards[i];
+    if (typeof reward !== "object" || reward === null) continue;
+    const itemId = (reward as Record<string, unknown>).item as string | undefined;
+    if (!itemId) continue;
+
+    const recipeId = itemIdToRecipeId.get(itemId);
+    if (!recipeId || result.has(recipeId)) continue;
+
+    result.set(recipeId, [{ level: i + 1, type: "renown" }]);
+  }
 
   return result;
 }
@@ -607,7 +710,7 @@ function collectScrollBundleSources(
         const recipeId = itemIdToRecipeId.get(itemId);
         if (recipeId && !result.has(recipeId)) {
           result.set(recipeId, [
-            { type: "scroll_bundle", bundleName: info.bundleName, storeId: info.storeId },
+            { bundleName: info.bundleName, storeId: info.storeId, type: "scroll_bundle" },
           ]);
         }
       }
@@ -615,109 +718,6 @@ function collectScrollBundleSources(
   });
 
   return result;
-}
-
-function collectQuestScrollSources(
-  fiddle: ParsedGameData,
-  itemIdToRecipeId: Map<string, string>,
-  knownRecipeIds: Set<string>,
-): Map<string, RecipeSource[]> {
-  const quests = fiddle.quests as
-    Record<string, Record<string, Record<string, unknown>>> | undefined;
-  if (!quests) return new Map();
-
-  const result = new Map<string, RecipeSource[]>();
-
-  for (const questType of QUEST_TYPES_WITH_SCROLLS) {
-    const questGroup = quests[questType];
-    if (!questGroup) continue;
-
-    for (const [questId, quest] of Object.entries(questGroup)) {
-      if (questId === "default" || typeof quest !== "object" || quest === null) continue;
-
-      const questObj = quest;
-      const rewards = Array.isArray(questObj.rewards) ? questObj.rewards : [];
-      for (const reward of rewards) {
-        if (typeof reward !== "object" || reward === null) continue;
-        const obj = reward as Record<string, unknown>;
-
-        const scrollTarget =
-          (obj.recipe_scroll as string | undefined) ?? (obj.crafting_scroll as string | undefined);
-        if (!scrollTarget) continue;
-
-        const recipeId = resolveScrollTarget(
-          scrollTarget,
-          itemIdToRecipeId,
-          knownRecipeIds,
-          `${questType}/${questId}`,
-        );
-        if (!recipeId) continue;
-
-        const sources = result.get(recipeId) ?? [];
-        sources.push({
-          type: "quest",
-          questId: questId as QuestId,
-          questType,
-        });
-        result.set(recipeId, sources);
-      }
-    }
-  }
-
-  return result;
-}
-
-function collectRenownRecipeSources(
-  fiddle: ParsedGameData,
-  itemIdToRecipeId: Map<string, string>,
-): Map<string, RecipeSource[]> {
-  const renown = fiddle.renown as Record<string, unknown> | undefined;
-  if (!renown) return new Map();
-
-  const result = new Map<string, RecipeSource[]>();
-  const rewards = Array.isArray(renown.rewards) ? renown.rewards : [];
-
-  for (let i = 0; i < rewards.length; i++) {
-    const reward = rewards[i];
-    if (typeof reward !== "object" || reward === null) continue;
-    const itemId = (reward as Record<string, unknown>).item as string | undefined;
-    if (!itemId) continue;
-
-    const recipeId = itemIdToRecipeId.get(itemId);
-    if (!recipeId || result.has(recipeId)) continue;
-
-    result.set(recipeId, [{ type: "renown", level: i + 1 }]);
-  }
-
-  return result;
-}
-
-function collectRecipeEntries(fiddle: ParsedGameData): RawRecipeEntry[] {
-  const entries: RawRecipeEntry[] = [];
-
-  forEachItem(fiddle, (itemId, item, subCatKey) => {
-    if (subCatKey === "unreviewed_new_items") return;
-
-    const hasRecipe = Array.isArray(item.recipe) || typeof item.recipe_key === "string";
-    const isDefault = item.recipe_is_default === true;
-
-    if (!hasRecipe && isDefault) {
-      console.log(
-        `  Diagnostic: "${itemId}" has recipe_is_default but no recipe array or recipe_key — skipped`,
-      );
-      return;
-    }
-
-    if (!hasRecipe) return;
-
-    const recipeKey = item.recipe_key as string | undefined;
-    const recipeId = recipeKey ?? itemId;
-    const name = (item.name as string | undefined) ?? itemId;
-
-    entries.push({ defaultUnlocked: isDefault, itemId, name, recipeId });
-  });
-
-  return entries;
 }
 
 function collectStoreScrollSources(
@@ -770,7 +770,7 @@ function collectStoreScrollSources(
             );
             if (recipeId) {
               const sources = result.get(recipeId) ?? [];
-              sources.push({ type: "store", storeId });
+              sources.push({ storeId, type: "store" });
               result.set(recipeId, sources);
             }
             continue;
@@ -782,7 +782,7 @@ function collectStoreScrollSources(
             const recipeId = itemIdToRecipeId.get(itemId);
             if (!recipeId) continue;
             const sources = result.get(recipeId) ?? [];
-            sources.push({ type: "store", storeId });
+            sources.push({ storeId, type: "store" });
             result.set(recipeId, sources);
           }
         }
@@ -829,7 +829,7 @@ function collectWishingWellSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ type: "wishing_well", tier });
+      sources.push({ tier, type: "wishing_well" });
       result.set(recipeId, sources);
     }
   }
@@ -856,23 +856,6 @@ function deduplicateSources(sources: RecipeSource[]): RecipeSource[] {
   return result;
 }
 
-function resolveScrollTarget(
-  scrollTarget: string,
-  itemIdToRecipeId: Map<string, string>,
-  knownRecipeIds: Set<string>,
-  context: string,
-): string | undefined {
-  const recipeId = itemIdToRecipeId.get(scrollTarget);
-  if (recipeId) return recipeId;
-  if (knownRecipeIds.has(scrollTarget)) return scrollTarget;
-  console.warn(`  Warning: scroll target "${scrollTarget}" in ${context} has no matching item`);
-  return undefined;
-}
-
-function sourceKey(s: RecipeSource): string {
-  return JSON.stringify(s, Object.keys(s).sort());
-}
-
 function forEachItem(
   fiddle: ParsedGameData,
   callback: (itemId: string, item: Record<string, unknown>, subCategoryKey: string) => void,
@@ -891,6 +874,23 @@ function forEachItem(
       }
     }
   }
+}
+
+function resolveScrollTarget(
+  scrollTarget: string,
+  itemIdToRecipeId: Map<string, string>,
+  knownRecipeIds: Set<string>,
+  context: string,
+): string | undefined {
+  const recipeId = itemIdToRecipeId.get(scrollTarget);
+  if (recipeId) return recipeId;
+  if (knownRecipeIds.has(scrollTarget)) return scrollTarget;
+  console.warn(`  Warning: scroll target "${scrollTarget}" in ${context} has no matching item`);
+  return undefined;
+}
+
+function sourceKey(s: RecipeSource): string {
+  return JSON.stringify(s, Object.keys(s).sort());
 }
 
 function validateRecipeIdCollisions(

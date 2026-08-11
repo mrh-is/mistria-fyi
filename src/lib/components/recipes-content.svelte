@@ -54,7 +54,7 @@
           .map((s) => recipeSourceLabel(s, sourceLookups))
           .filter(Boolean);
         entries.push({
-          id: item.recipeId as RecipeId,
+          id: item.recipeId,
           name: item.name,
           sourceLabels,
         });
@@ -83,9 +83,7 @@
   function checkCelebration(sectionRecipeIds: RecipeId[]): void {
     if (isAllComplete()) {
       celebrateCategory();
-    } else if (
-      sectionRecipeIds.every((id) => userState.state.completed.almanacRecipes.has(id))
-    ) {
+    } else if (sectionRecipeIds.every((id) => userState.state.completed.almanacRecipes.has(id))) {
       celebrate();
     }
   }
@@ -113,9 +111,7 @@
       total={filteredEntries.length}
     >
       {@const showAll = expandedSections[group.id] ?? false}
-      {@const displayEntries = showAll
-        ? filteredEntries
-        : filteredEntries.slice(0, SECTION_LIMIT)}
+      {@const displayEntries = showAll ? filteredEntries : filteredEntries.slice(0, SECTION_LIMIT)}
       {#each displayEntries as entry (entry.id)}
         {@const completed = userState.state.completed.almanacRecipes.has(entry.id)}
         {@const leaving = recentlyCompleted.has(entry.id)}
