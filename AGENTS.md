@@ -19,6 +19,7 @@ Issues labeled `ready` are available. Issues labeled `blocked` or `discussion` a
 yet.
 
 Do not commit a specification or implementation plan until the user has explicitly approved it.
+Always commit approved specs and plans before starting the implementation work they describe.
 
 ## Commands
 
