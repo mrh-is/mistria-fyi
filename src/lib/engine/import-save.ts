@@ -50,6 +50,7 @@ export function buildImportState(bundle: SaveBundle): {
   const warnings: string[] = [];
   const counts: MergeCounts = {
     almanac: 0,
+    almanacRecipes: 0,
     animalCosmetics: 0,
     animals: 0,
     cosmetics: 0,

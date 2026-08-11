@@ -3,7 +3,7 @@ import { filterAvailableItems } from "$lib/engine/availability.js";
 
 import type { CategoryKey } from "$lib/data/categories.js";
 import type { AvailabilityMode, CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { ItemId, Season, Source, VariantId, Weather } from "$lib/types/tracker-data.js";
+import type { ItemId, RecipeId, Season, Source, VariantId, Weather } from "$lib/types/tracker-data.js";
 
 export const MAX_NPC_LEVEL = 10;
 export const MAX_SKILL_LEVEL = 60;
@@ -32,6 +32,7 @@ export function getAllProgress(ctx: ProgressContext): AllProgress {
   return {
     almanac: getAlmanacProgress(ctx),
     animals: getAnimalsProgress(ctx),
+    recipes: getRecipesProgress(ctx),
     cosmetics: getCosmeticsProgress(ctx),
     mines: getMinesProgress(ctx),
     museum: getMuseumProgress(ctx),
@@ -108,6 +109,12 @@ export function getMuseumProgress(ctx: ProgressContext): CategoryProgress {
     }
   }
   return itemProgress(allIds, ctx.completed.museum, trackerData.sources, ctx);
+}
+
+export function getRecipesProgress(ctx: ProgressContext): CategoryProgress {
+  const allIds = Object.keys(trackerData.recipes) as RecipeId[];
+  const completed = allIds.filter((id) => ctx.completed.almanacRecipes.has(id)).length;
+  return { completed, filtered: allIds.length - completed, total: allIds.length };
 }
 
 export function getNpcsProgress(ctx: ProgressContext): CategoryProgress {

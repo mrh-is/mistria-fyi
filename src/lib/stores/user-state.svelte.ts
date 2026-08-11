@@ -8,6 +8,7 @@ import type {
   ItemId,
   NpcId,
   QuestId,
+  RecipeId,
   Season,
   SkillId,
   SpellId,
@@ -21,6 +22,7 @@ export type AvailabilityMode = "available" | "everything" | "timely";
 
 export interface CompletedState {
   almanac: Set<ItemId>;
+  almanacRecipes: Set<RecipeId>;
   animalCosmetics: Record<string, Set<CosmeticId>>;
   animals: Record<string, Set<VariantId>>;
   cosmetics: Set<CosmeticId>;
@@ -34,6 +36,7 @@ export interface CompletedState {
 
 export interface MergeCounts {
   almanac: number;
+  almanacRecipes: number;
   animalCosmetics: number;
   animals: number;
   cosmetics: number;
@@ -62,6 +65,7 @@ interface SerializedState {
   availabilityMode: AvailabilityMode;
   completed: {
     almanac: string[];
+    almanacRecipes?: string[];
     animalCosmetics: Record<string, string[]>;
     animals: Record<string, string[]>;
     cosmetics: string[];
@@ -105,8 +109,16 @@ function createDefaultCompleted(): CompletedState {
     animalCosmetics[animalId] = new SvelteSet<CosmeticId>();
   }
 
+  const defaultRecipes = new SvelteSet<RecipeId>();
+  for (const [id, recipe] of Object.entries(trackerData.recipes)) {
+    if (recipe.defaultUnlocked) {
+      defaultRecipes.add(id as RecipeId);
+    }
+  }
+
   return {
     almanac: new SvelteSet<ItemId>(),
+    almanacRecipes: defaultRecipes,
     animalCosmetics,
     animals,
     cosmetics: defaultCosmetics,
@@ -178,6 +190,7 @@ function createUserState() {
     mergeFromSave(imported: Partial<CompletedState>): MergeCounts {
       const counts: MergeCounts = {
         almanac: 0,
+        almanacRecipes: 0,
         animalCosmetics: 0,
         animals: 0,
         cosmetics: 0,
@@ -196,6 +209,16 @@ function createUserState() {
           if (!state.completed.almanac.has(id)) {
             state.completed.almanac.add(id);
             counts.almanac++;
+          }
+        }
+      }
+
+      // Almanac recipes
+      if (imported.almanacRecipes) {
+        for (const id of imported.almanacRecipes) {
+          if (!state.completed.almanacRecipes.has(id)) {
+            state.completed.almanacRecipes.add(id);
+            counts.almanacRecipes++;
           }
         }
       }
@@ -340,6 +363,9 @@ function createUserState() {
     toggleAlmanacItem(id: ItemId) {
       toggleInSet(state.completed.almanac, id);
     },
+    toggleAlmanacRecipe(id: RecipeId) {
+      toggleInSet(state.completed.almanacRecipes, id);
+    },
     toggleAnimalCosmetic(animalId: AnimalId, cosmeticId: CosmeticId) {
       const set = (state.completed.animalCosmetics[animalId] ??= new SvelteSet<CosmeticId>());
       toggleInSet(set, cosmeticId);
@@ -395,6 +421,7 @@ function deserialize(json: string): null | UserState {
       availabilityMode: s.availabilityMode,
       completed: {
         almanac: brandedSet<ItemId>(s.completed.almanac),
+        almanacRecipes: brandedSet<RecipeId>(s.completed.almanacRecipes ?? []),
         animalCosmetics: Object.fromEntries(
           Object.entries(s.completed.animalCosmetics).map(([k, v]) => [
             k,
@@ -438,6 +465,7 @@ function serialize(state: UserState): string {
     availabilityMode: state.availabilityMode,
     completed: {
       almanac: [...state.completed.almanac].sort(),
+      almanacRecipes: [...state.completed.almanacRecipes].sort(),
       animalCosmetics: Object.fromEntries(
         Object.entries(state.completed.animalCosmetics).map(([k, v]) => [k, [...v].sort()]),
       ),
