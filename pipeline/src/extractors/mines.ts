@@ -3,6 +3,10 @@ import type { BiomeId, SpellId, TrackerData } from "$lib/types/tracker-data.js";
 import { expectArray } from "../data-shapes.js";
 import { sourceFileFor, type ParsedGameData } from "../parse-fiddle.js";
 
+/**
+ * Projects dungeon biomes and spells. Biome IDs are synthetic array indices; each end floor is the
+ * floor before the next biome starts, and missing starts use 20-floor spacing.
+ */
 export function extractMines(fiddle: ParsedGameData): TrackerData["mines"] {
   const dungeons = fiddle.dungeons as Record<string, unknown> | undefined;
   const spellsData = fiddle.spells as Record<string, Record<string, unknown>> | undefined;

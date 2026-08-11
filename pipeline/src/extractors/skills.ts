@@ -2,6 +2,10 @@ import type { SkillId, TrackerData } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
 
+/**
+ * Extracts named skills, omitting the default template and converting nameless snake-case IDs to
+ * display titles.
+ */
 export function extractSkills(fiddle: ParsedGameData): TrackerData["skills"] {
   const skills = fiddle.skills as Record<string, Record<string, unknown>> | undefined;
   if (!skills) return {} as TrackerData["skills"];

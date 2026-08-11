@@ -2,6 +2,7 @@ import type { QuestId, TrackerData } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
 
+// These six allowlisted keys are TOML group/file names; request-board and registry siblings are excluded.
 const QUEST_TYPES = [
   "story_quests",
   "heart_quests",

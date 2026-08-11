@@ -22,6 +22,14 @@ const VALID_SLOTS = new Set<CosmeticSlot>([
   "underwear",
 ]);
 
+// These compound UI slots suppress unknown-slot diagnostics only. normalizeSlot still checks
+// canonical slots, aliases, asset-ID prefixes, and raw prefixes before falling back to top.
+const KNOWN_COMPOSITE_SLOTS = new Set(["bottom"]);
+
+/**
+ * Normalizes player_assets into tracker cosmetics. Slot selection removes the gear suffix, accepts
+ * canonical slots and aliases, infers from an ID prefix, then falls back to the top slot.
+ */
 export function extractCosmetics(fiddle: ParsedGameData): TrackerData["cosmetics"] {
   const assets = fiddle.player_assets as Record<string, Record<string, unknown>> | undefined;
   if (!assets) return {} as TrackerData["cosmetics"];
@@ -37,7 +45,6 @@ export function extractCosmetics(fiddle: ParsedGameData): TrackerData["cosmetics
     const slot = normalizeSlot(uiSlot ?? id, id);
 
     const cleaned = uiSlot?.replace(/_gear$/, "");
-    const KNOWN_COMPOSITE_SLOTS = new Set(["bottom"]);
     if (
       uiSlot &&
       cleaned &&
@@ -99,6 +106,7 @@ const SLOT_ALIASES: Record<string, CosmeticSlot> = {
 };
 
 function normalizeSlot(raw: string, id: string): CosmeticSlot {
+  // Normalize direct slots first, then aliases, ID prefixes, broad raw prefixes, and finally top.
   const cleaned = raw.replace(/_gear$/, "");
   if (VALID_SLOTS.has(cleaned as CosmeticSlot)) return cleaned as CosmeticSlot;
 

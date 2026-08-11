@@ -3,7 +3,11 @@ import type { AlmanacCategory, ItemId, TrackerData } from "$lib/types/tracker-da
 import { expectArray, expectStringArray } from "../data-shapes.js";
 import { sourceFileFor, type ParsedGameData } from "../parse-fiddle.js";
 
-export type ItemsRegistry = Record<string, { category: string; name: string }>;
+/**
+ * Extracts both named item metadata and visible almanac rows. The metadata index includes every
+ * accepted named item, while the almanac contains only items assigned to a UI-defined category.
+ */
+export type ItemMetadataIndex = Record<string, { category: string; name: string }>;
 
 interface RawAlmanacCategory {
   key: string;
@@ -16,7 +20,7 @@ const CATEGORY_NAME_OVERRIDES: Record<string, string> = {
 
 export function extractAlmanac(fiddle: ParsedGameData): {
   almanac: TrackerData["almanac"];
-  items: ItemsRegistry;
+  items: ItemMetadataIndex;
 } {
   const itemsRoot = fiddle.items as
     | Record<string, Record<string, Record<string, Record<string, unknown>>>>
@@ -42,11 +46,13 @@ export function extractAlmanac(fiddle: ParsedGameData): {
 
   for (const [topCategory, subCategories] of Object.entries(itemsRoot)) {
     for (const [subCategory, categoryItems] of Object.entries(subCategories)) {
+      // Internal, unreviewed items are intentionally absent from both output views.
       if (topCategory === "other" && subCategory === "unreviewed_new_items") continue;
 
       for (const [itemId, item] of Object.entries(categoryItems)) {
         if (itemId === "default") continue;
         if (typeof item !== "object" || item === null) continue;
+        // Fish chest rewards are not collectible almanac items.
         if (chestIds.has(itemId)) continue;
 
         const rawName = item.name as string | undefined;
@@ -55,7 +61,7 @@ export function extractAlmanac(fiddle: ParsedGameData): {
           continue;
         }
 
-        // Reject names that look like localization paths
+        // Reject localization paths that have not resolved to an item name.
         if (rawName.includes("/") && !rawName.startsWith("spr_")) {
           namelessItems.push(`${topCategory}/${subCategory}/${itemId} (localization path: ${rawName})`);
           continue;
@@ -77,8 +83,7 @@ export function extractAlmanac(fiddle: ParsedGameData): {
     }
   }
 
-  // Build tag→category index: iterate categories in menu order
-  // For each category's tags, map tag → category index (first category wins)
+  // Menu order determines tag precedence when an item has tags from multiple categories.
   const tagToCategoryIdx = new Map<string, number>();
   for (let i = 0; i < rawCategories.length; i++) {
     for (const tag of rawCategories[i].tags) {
@@ -91,7 +96,7 @@ export function extractAlmanac(fiddle: ParsedGameData): {
   const categoryBuckets: Map<string, { id: string; name: string; recipeKey?: string }>[] =
     rawCategories.map(() => new Map());
 
-  const items: ItemsRegistry = {};
+  const items: ItemMetadataIndex = {};
 
   for (const item of allItems) {
     // Find the first matching almanac category by iterating categories in menu order
@@ -105,6 +110,7 @@ export function extractAlmanac(fiddle: ParsedGameData): {
       }
     }
 
+    // Items without a matching menu tag retain their source top-category metadata.
     const categoryKey =
       assignedIdx !== undefined ? rawCategories[assignedIdx].key : item.topCategory;
     items[item.id] = { category: categoryKey, name: item.name };
@@ -175,7 +181,7 @@ function collapseFurnitureColorways(
   bucket: Map<string, { id: string; name: string; recipeKey?: string }>,
 ): Map<string, { name: string }> {
   const result = new Map<string, { name: string }>();
-  // Collapse by (recipe_key, name) — not recipe_key alone
+  // Furniture colorways collapse only when both recipe_key and name match.
   const seenRecipeGroups = new Map<string, string>();
 
   for (const [id, entry] of bucket) {

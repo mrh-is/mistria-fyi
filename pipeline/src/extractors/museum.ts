@@ -3,6 +3,10 @@ import type { ItemId, MuseumWing, SetId, WingId } from "$lib/types/tracker-data.
 import { expectArray, expectStringArray } from "../data-shapes.js";
 import { sourceFileFor, type ParsedGameData } from "../parse-fiddle.js";
 
+/**
+ * Projects museum wings and sets in the canonical UI display order. Object insertion order is only
+ * a fallback when UI ordering is unavailable; ordered wing and set IDs absent from game data are skipped.
+ */
 export function extractMuseum(fiddle: ParsedGameData): MuseumWing[] {
   const wings = fiddle.museum_wings as Record<string, Record<string, unknown>> | undefined;
   if (!wings) return [];

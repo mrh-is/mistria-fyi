@@ -8,13 +8,17 @@ import type {
 
 import type { ParsedGameData } from "../parse-fiddle.js";
 
+/**
+ * Normalizes ranching.animals into tracker species, omitting template and non-acquirable variants.
+ * Default-unlocked variants always become tier one, and cosmetic labels remove the species name.
+ */
 export function extractAnimals(fiddle: ParsedGameData): TrackerData["animals"] {
   const ranching = fiddle.ranching as Record<string, unknown> | undefined;
   const animals = ranching?.animals as Record<string, Record<string, unknown>> | undefined;
   if (!animals) return {} as TrackerData["animals"];
 
   const result = {} as Record<AnimalId, TrackerData["animals"][AnimalId]>;
-  let skippedDefaults = 0;
+  let skippedVariants = 0;
 
   for (const [id, animal] of Object.entries(animals)) {
     if (id === "default") continue;
@@ -30,11 +34,11 @@ export function extractAnimals(fiddle: ParsedGameData): TrackerData["animals"] {
     if (rawVariants) {
       for (const [vid, v] of Object.entries(rawVariants)) {
         if (vid === "default") {
-          skippedDefaults++;
+          skippedVariants++;
           continue;
         }
         if ((v.acquirable as boolean | undefined) === false) {
-          skippedDefaults++;
+          skippedVariants++;
           continue;
         }
         const isDefaultUnlocked = (v.default_unlocked as boolean | undefined) ?? false;
@@ -71,7 +75,7 @@ export function extractAnimals(fiddle: ParsedGameData): TrackerData["animals"] {
   console.log(
     `  Animals: ${Object.keys(result).length} types, ` +
       `${Object.values(result).reduce((n, a) => n + Object.keys(a.variants).length, 0)} variants ` +
-      `(${skippedDefaults} default variants skipped), ` +
+      `(${skippedVariants} default variants skipped), ` +
       `${Object.values(result).reduce((n, a) => n + Object.keys(a.cosmetics).length, 0)} cosmetics`,
   );
   return result;
