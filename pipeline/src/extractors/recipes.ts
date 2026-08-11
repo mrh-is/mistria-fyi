@@ -693,12 +693,16 @@ function collectScrollBundleSources(
         const cat = category as Record<string, unknown>;
 
         const allStock: unknown[] = [];
-        if (Array.isArray(cat.constant_stock)) allStock.push(...cat.constant_stock);
-        if (Array.isArray(cat.random_stock)) allStock.push(...cat.random_stock);
+        if (Array.isArray(cat.constant_stock)) {
+          allStock.push(...(cat.constant_stock as unknown[]));
+        }
+        if (Array.isArray(cat.random_stock)) {
+          allStock.push(...(cat.random_stock as unknown[]));
+        }
         const seasonal = cat.seasonal as Record<string, unknown> | undefined;
         if (seasonal) {
           for (const val of Object.values(seasonal)) {
-            if (Array.isArray(val)) allStock.push(...val);
+            if (Array.isArray(val)) allStock.push(...(val as unknown[]));
           }
         }
 

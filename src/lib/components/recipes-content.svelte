@@ -1,5 +1,21 @@
 <script lang="ts">
-  import { ChevronRight } from "@lucide/svelte";
+  import {
+    Archive,
+    ChevronRight,
+    CircleCheck,
+    Coins,
+    Crown,
+    Flame,
+    Forklift,
+    Heart,
+    Landmark,
+    Mail,
+    PartyPopper,
+    Pickaxe,
+    Scroll,
+    ShoppingCart,
+    Sparkles,
+  } from "@lucide/svelte";
   import { SvelteSet } from "svelte/reactivity";
   import { slide } from "svelte/transition";
 
@@ -13,7 +29,10 @@
   import { recipeSourceLabel } from "$lib/utils/format.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
-  import type { RecipeId } from "$lib/types/tracker-data.js";
+  import type { Component } from "svelte";
+
+  import type { RecipeId, RecipeSource } from "$lib/types/tracker-data.js";
+  import type { RecipeSourceLookups } from "$lib/utils/format.js";
 
   let recentlyCompleted = new SvelteSet<RecipeId>();
 
@@ -22,22 +41,53 @@
     setTimeout(() => recentlyCompleted.delete(recipeId), 1050);
   }
 
-  let sourceLookups = $derived({
-    biomeNames: Object.fromEntries(trackerData.mines.biomes.map((b) => [b.id, b.name])),
+  const SOURCE_ICON: Record<RecipeSource["type"], Component> = {
+    beach_cave_chest: Archive,
+    chicken_statue: Coins,
+    default: CircleCheck,
+    dragon_forge: Flame,
+    festival: PartyPopper,
+    letter: Mail,
+    mines_chest: Pickaxe,
+    mines_dig_site: Pickaxe,
+    museum_donation: Landmark,
+    perk: Sparkles,
+    quest: Scroll,
+    relationship: Heart,
+    renown: Crown,
+    scroll_bundle: ShoppingCart,
+    store: ShoppingCart,
+    store_with_perk: ShoppingCart,
+    treasure_chest: Archive,
+    upgrade: Forklift,
+    wishing_well: Coins,
+  };
+
+  let sourceLookups: RecipeSourceLookups = $derived({
+    biomes: trackerData.mines.biomes,
+    festivals: trackerData.festivals,
     itemNames: Object.fromEntries(
       Object.entries(trackerData.items).map(([id, item]) => [id, item.name]),
     ),
+    perks: trackerData.perks,
+    perkTierLevels: trackerData.perkTierLevels,
     questNames: Object.fromEntries(
       Object.values(trackerData.quests).flatMap((group) =>
         Object.entries(group).map(([id, q]) => [id, q.name]),
       ),
     ),
+    skillNames: Object.fromEntries(
+      Object.entries(trackerData.skills).map(([id, name]) => [id, name]),
+    ),
+    stores: trackerData.stores,
+    treasureChestTiers: trackerData.treasureChestTiers,
   });
 
   interface RecipeEntry {
     id: RecipeId;
     name: string;
     sourceLabels: string[];
+    sources: RecipeSource[];
   }
 
   let recipesByCategory = $derived.by(() => {
@@ -57,6 +107,7 @@
           id: item.recipeId,
           name: item.name,
           sourceLabels,
+          sources: recipe.sources,
         });
       }
       if (entries.length > 0) {
@@ -164,10 +215,11 @@
           </div>
           {#if expanded && entry.sourceLabels.length > 0}
             <div class="flex flex-col gap-1 py-1 pr-2 pl-8" transition:slide={{ duration: 150 }}>
-              {#each entry.sourceLabels as label}
+              {#each entry.sources as source, i (i)}
+                {@const Icon = SOURCE_ICON[source.type]}
                 <div class="flex items-center gap-2 text-sm">
-                  <span class="size-1.5 shrink-0 rounded-full bg-green-500"></span>
-                  <span class="text-muted-foreground">{label}</span>
+                  <Icon class="size-3.5 shrink-0 text-muted-foreground" />
+                  <span class="text-muted-foreground">{entry.sourceLabels[i]}</span>
                 </div>
               {/each}
             </div>
