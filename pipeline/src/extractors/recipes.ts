@@ -85,12 +85,12 @@ export function extractRecipes(fiddle: ParsedGameData): {
 
     const presentations = buildPresentations(group);
     const sources = deduplicateSources(allSources.get(recipeId) ?? []);
+    const allSrc: RecipeSource[] = allDefault ? [{ type: "default" }, ...sources] : sources;
 
     recipes[recipeId as RecipeId] = {
-      defaultUnlocked: allDefault,
       memberItemIds,
       presentations,
-      sources,
+      sources: allSrc,
     };
   }
 
@@ -100,8 +100,12 @@ export function extractRecipes(fiddle: ParsedGameData): {
   }
 
   const totalRecipes = Object.keys(recipes).length;
-  const withSources = Object.values(recipes).filter((r) => r.sources.length > 0).length;
-  const withDefault = Object.values(recipes).filter((r) => r.defaultUnlocked).length;
+  const withSources = Object.values(recipes).filter((r) =>
+    r.sources.some((s) => s.type !== "default"),
+  ).length;
+  const withDefault = Object.values(recipes).filter((r) =>
+    r.sources.some((s) => s.type === "default"),
+  ).length;
   const sourceTypeCounts = new Map<string, number>();
   for (const recipe of Object.values(recipes)) {
     const seenTypes = new Set(recipe.sources.map((s) => s.type));
@@ -125,10 +129,10 @@ function collectHardcodedSources(
   const result = new Map<string, RecipeSource[]>();
 
   const hardcoded: [string, RecipeSource][] = [
-    ["water_sprite_statue_v1", { type: "treasure_chest" }],
-    ["stairs", { storeId: "carpenter", type: "store" }],
-    ["farm_bridge", { storeId: "carpenter", type: "store" }],
-    ["engagement_ring", { cutscene: "ten_hearts", type: "cutscene" }],
+    ["water_sprite_statue_v1", { type: "beach_cave_chest" }],
+    ["stairs", { type: "upgrade", upgradeName: "House Stairs" }],
+    ["farm_bridge", { type: "upgrade", upgradeName: "Starter Farm Bridge" }],
+    ["engagement_ring", { type: "relationship" }],
   ];
 
   for (const [itemId, source] of hardcoded) {
@@ -206,8 +210,12 @@ function collectChickenStatueSources(
   const common = chickenStatue.common as Record<string, unknown> | undefined;
   if (!common) return result;
 
-  const rolls = ["small_roll", "medium_roll", "large_roll"];
-  for (const rollKey of rolls) {
+  const rollTiers: ["small_roll" | "medium_roll" | "large_roll", "large" | "medium" | "small"][] = [
+    ["small_roll", "small"],
+    ["medium_roll", "medium"],
+    ["large_roll", "large"],
+  ];
+  for (const [rollKey, tier] of rollTiers) {
     const roll = Array.isArray(common[rollKey]) ? (common[rollKey] as unknown[]) : [];
     for (const entry of roll) {
       if (typeof entry !== "object" || entry === null) continue;
@@ -226,7 +234,7 @@ function collectChickenStatueSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ type: "chicken_statue" });
+      sources.push({ tier, type: "chicken_statue" });
       result.set(recipeId, sources);
     }
   }
@@ -251,6 +259,7 @@ function collectDungeonDelicacySources(
   for (const biome of biomes) {
     if (typeof biome !== "object" || biome === null) continue;
     const biomeObj = biome as Record<string, unknown>;
+    const biomeId = (biomeObj.id as string | undefined) ?? "unknown";
 
     const delicacyArrays = ["dungeon_delicacies", "taste_maker"];
     for (const arrayKey of delicacyArrays) {
@@ -263,7 +272,7 @@ function collectDungeonDelicacySources(
         if (!recipeId) continue;
 
         const sources = result.get(recipeId) ?? [];
-        sources.push({ type: "mine_zone" });
+        sources.push({ biomeId: biomeId as BiomeId, perk: arrayKey, type: "dungeon_chest" });
         result.set(recipeId, sources);
       }
     }
@@ -461,9 +470,11 @@ function collectMuseumScrollSources(
 
     const wingObj = wing;
     const rewards = Array.isArray(wingObj.rewards) ? wingObj.rewards : [];
-    for (const reward of rewards) {
+    for (let rewardIdx = 0; rewardIdx < rewards.length; rewardIdx++) {
+      const reward = rewards[rewardIdx];
       if (typeof reward !== "object" || reward === null) continue;
       const rewardObj = reward as Record<string, unknown>;
+      const setCount = rewardIdx + 1;
       const entries = Array.isArray(rewardObj.entries) ? rewardObj.entries : [];
 
       for (const entry of entries) {
@@ -483,7 +494,7 @@ function collectMuseumScrollSources(
         if (!recipeId) continue;
 
         const sources = result.get(recipeId) ?? [];
-        sources.push({ type: "museum_donation", wingId: wingId as WingId });
+        sources.push({ setCount, type: "museum_donation", wingId: wingId as WingId });
         result.set(recipeId, sources);
       }
     }
@@ -658,7 +669,8 @@ function collectRenownRecipeSources(
   const result = new Map<string, RecipeSource[]>();
   const rewards = Array.isArray(renown.rewards) ? renown.rewards : [];
 
-  for (const reward of rewards) {
+  for (let i = 0; i < rewards.length; i++) {
+    const reward = rewards[i];
     if (typeof reward !== "object" || reward === null) continue;
     const itemId = (reward as Record<string, unknown>).item as string | undefined;
     if (!itemId) continue;
@@ -666,7 +678,7 @@ function collectRenownRecipeSources(
     const recipeId = itemIdToRecipeId.get(itemId);
     if (!recipeId || result.has(recipeId)) continue;
 
-    result.set(recipeId, [{ type: "renown" }]);
+    result.set(recipeId, [{ level: i + 1, type: "renown" }]);
   }
 
   return result;
@@ -786,8 +798,12 @@ function collectWishingWellSources(
   const common = wishingWell.common as Record<string, unknown> | undefined;
   if (!common) return result;
 
-  const rolls = ["small_roll", "medium_roll", "large_roll"];
-  for (const rollKey of rolls) {
+  const rollTiers: ["small_roll" | "medium_roll" | "large_roll", "large" | "medium" | "small"][] = [
+    ["small_roll", "small"],
+    ["medium_roll", "medium"],
+    ["large_roll", "large"],
+  ];
+  for (const [rollKey, tier] of rollTiers) {
     const roll = Array.isArray(common[rollKey]) ? (common[rollKey] as unknown[]) : [];
     for (const entry of roll) {
       if (typeof entry !== "object" || entry === null) continue;
@@ -806,7 +822,7 @@ function collectWishingWellSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ type: "wishing_well" });
+      sources.push({ tier, type: "wishing_well" });
       result.set(recipeId, sources);
     }
   }

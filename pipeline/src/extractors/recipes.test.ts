@@ -66,14 +66,13 @@ describe("extractRecipes", () => {
     expect(recipe).toBeDefined();
     expect(recipe.memberItemIds).toEqual(["chair_blue", "chair_green", "chair_purple"]);
     expect(recipe.sources).toEqual([]);
-    expect(recipe.defaultUnlocked).toBe(false);
     expect(recipe.presentations).toEqual([
       { itemIds: ["chair_blue", "chair_green", "chair_purple"], name: "Sapling Chair" },
     ]);
     expect(recipeIdByItemId.get("chair_blue")).toBe("sapling_chair");
   });
 
-  it("sets defaultUnlocked when all members have recipe_is_default", () => {
+  it("emits default source when all members have recipe_is_default", () => {
     const fiddle = makeFiddle({
       items: {
         furniture: {
@@ -98,11 +97,11 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["basic_table" as RecipeId];
-    expect(recipe.defaultUnlocked).toBe(true);
-    expect(recipe.sources).toEqual([]);
+    expect(recipe.sources).toEqual([{ type: "default" }]);
+    expect(recipe).not.toHaveProperty("defaultUnlocked");
   });
 
-  it("warns and sets defaultUnlocked false when members disagree on recipe_is_default", () => {
+  it("warns and omits default source when members disagree on recipe_is_default", () => {
     const fiddle = makeFiddle({
       items: {
         furniture: {
@@ -125,7 +124,7 @@ describe("extractRecipes", () => {
     });
 
     const { recipes } = extractRecipes(fiddle);
-    expect(recipes["mixed_group" as RecipeId].defaultUnlocked).toBe(false);
+    expect(recipes["mixed_group" as RecipeId].sources).toEqual([]);
     expect(console.warn).toHaveBeenCalledWith(expect.stringContaining("mixed_group"));
   });
 
@@ -380,7 +379,9 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["fossil_table" as RecipeId];
-    expect(recipe.sources).toEqual([{ type: "museum_donation", wingId: "archaeology" }]);
+    expect(recipe.sources).toEqual([
+      { setCount: 1, type: "museum_donation", wingId: "archaeology" },
+    ]);
   });
 
   it("maps chicken statue recipe_scroll to chicken_statue source", () => {
@@ -405,7 +406,7 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["egg_dish" as RecipeId];
-    expect(recipe.sources).toEqual([{ type: "chicken_statue" }]);
+    expect(recipe.sources).toEqual([{ tier: "small", type: "chicken_statue" }]);
   });
 
   it("maps fishing chest entries with kind=recipe to treasure_chest source", () => {
@@ -457,7 +458,7 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["wish_cake" as RecipeId];
-    expect(recipe.sources).toEqual([{ type: "wishing_well" }]);
+    expect(recipe.sources).toEqual([{ tier: "large", type: "wishing_well" }]);
   });
 
   it("maps festival recipe_scroll via stocks[storeId] to festival source", () => {
@@ -489,13 +490,14 @@ describe("extractRecipes", () => {
     ]);
   });
 
-  it("maps dungeon_delicacies items to mine_zone source", () => {
+  it("maps dungeon_delicacies items to dungeon_chest source with biome info", () => {
     const fiddle = makeFiddle({
       dungeons: {
         dungeons: {
           biomes: [
             {
               dungeon_delicacies: ["cave_stew"],
+              id: "biome_0",
               taste_maker: [],
             },
           ],
@@ -516,7 +518,9 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["cave_stew" as RecipeId];
-    expect(recipe.sources).toEqual([{ type: "mine_zone" }]);
+    expect(recipe.sources).toEqual([
+      { biomeId: "biome_0", perk: "dungeon_delicacies", type: "dungeon_chest" },
+    ]);
   });
 
   it("logs diagnostic for items with recipe_is_default but no recipe array or recipe_key", () => {
@@ -730,7 +734,9 @@ describe.skipIf(!HAS_ASSETS)("extractRecipes — real data", () => {
     const totalRecipes = Object.keys(recipes).length;
     expect(totalRecipes).toBeGreaterThan(100);
 
-    const withDefault = Object.values(recipes).filter((r) => r.defaultUnlocked).length;
+    const withDefault = Object.values(recipes).filter((r) =>
+      r.sources.some((s) => s.type === "default"),
+    ).length;
     expect(withDefault).toBeGreaterThan(50);
 
     const withQuest = Object.values(recipes).filter((r) =>
