@@ -17,6 +17,10 @@ function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGam
     fishing: {},
     items: {},
     letters: {},
+    misc: {
+      chicken_statue: { high_price: 100, low_price: 10 },
+      wishing_well: { high_price: 500, low_price: 100 },
+    },
     museum_wings: {},
     quests: {},
     stores: {},
@@ -406,7 +410,7 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["egg_dish" as RecipeId];
-    expect(recipe.sources).toEqual([{ tier: "small", type: "chicken_statue" }]);
+    expect(recipe.sources).toEqual([{ cost: 10, type: "chicken_statue" }]);
   });
 
   it("maps fishing chest entries with kind=recipe to treasure_chest source", () => {
@@ -433,7 +437,7 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["fish_stew" as RecipeId];
-    expect(recipe.sources).toEqual([{ chestTier: "bronze", type: "treasure_chest" }]);
+    expect(recipe.sources).toEqual([{ tier: "bronze", type: "treasure_chest" }]);
   });
 
   it("maps wishing well recipe_scroll to wishing_well source", () => {
@@ -458,7 +462,7 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["wish_cake" as RecipeId];
-    expect(recipe.sources).toEqual([{ tier: "large", type: "wishing_well" }]);
+    expect(recipe.sources).toEqual([{ cost: 500, type: "wishing_well" }]);
   });
 
   it("maps festival recipe_scroll via stocks[storeId] to festival source", () => {
@@ -490,14 +494,14 @@ describe("extractRecipes", () => {
     ]);
   });
 
-  it("maps dungeon_delicacies items to dungeon_chest source with biome info", () => {
+  it("maps dungeon_delicacies items to mines_chest source with biome index", () => {
     const fiddle = makeFiddle({
       dungeons: {
         dungeons: {
           biomes: [
             {
               dungeon_delicacies: ["cave_stew"],
-              id: "biome_0",
+              furniture: [],
               taste_maker: [],
             },
           ],
@@ -519,7 +523,73 @@ describe("extractRecipes", () => {
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["cave_stew" as RecipeId];
     expect(recipe.sources).toEqual([
-      { biomeId: "biome_0", perk: "dungeon_delicacies", type: "dungeon_chest" },
+      { biomeId: "biome_0", perkId: "dungeon_delicacies", type: "mines_chest" },
+    ]);
+  });
+
+  it("maps taste_maker items to mines_chest source", () => {
+    const fiddle = makeFiddle({
+      dungeons: {
+        dungeons: {
+          biomes: [
+            {
+              dungeon_delicacies: [],
+              furniture: [],
+              taste_maker: ["spicy_soup"],
+            },
+          ],
+        },
+      },
+      items: {
+        other: {
+          cooked_dishes: {
+            default: {},
+            spicy_soup: {
+              name: "Spicy Soup",
+              recipe: [{ count: 1, item: "pepper" }],
+            },
+          },
+        },
+      },
+    });
+
+    const { recipes } = extractRecipes(fiddle);
+    const recipe = recipes["spicy_soup" as RecipeId];
+    expect(recipe.sources).toEqual([
+      { biomeId: "biome_0", perkId: "taste_maker", type: "mines_chest" },
+    ]);
+  });
+
+  it("maps biome furniture items to mines_dig_site source", () => {
+    const fiddle = makeFiddle({
+      dungeons: {
+        dungeons: {
+          biomes: [
+            {
+              dungeon_delicacies: [],
+              furniture: ["cave_shelf"],
+              taste_maker: [],
+            },
+          ],
+        },
+      },
+      items: {
+        furniture: {
+          cave_set: {
+            cave_shelf: {
+              name: "Cave Shelf",
+              recipe: [{ count: 5, item: "stone" }],
+            },
+            default: {},
+          },
+        },
+      },
+    });
+
+    const { recipes } = extractRecipes(fiddle);
+    const recipe = recipes["cave_shelf" as RecipeId];
+    expect(recipe.sources).toEqual([
+      { biomeId: "biome_0", perkId: "natural_beauty", type: "mines_dig_site" },
     ]);
   });
 
@@ -541,6 +611,107 @@ describe("extractRecipes", () => {
     const { recipes } = extractRecipes(fiddle);
     expect(recipes["ore_gold" as RecipeId]).toBeUndefined();
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining("ore_gold"));
+  });
+
+  it("emits store source with upgraded flag when requirements include repaired_*", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          cooked_dishes: {
+            default: {},
+            inn_special: {
+              name: "Inn Special",
+              recipe: [{ count: 1, item: "flour" }],
+            },
+          },
+        },
+      },
+      stores: {
+        sleeping_dragon_inn: {
+          categories: [
+            {
+              constant_stock: [
+                {
+                  recipe_scroll: "inn_special",
+                  requirements: { repaired_inn: true },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    });
+
+    const { recipes } = extractRecipes(fiddle);
+    const recipe = recipes["inn_special" as RecipeId];
+    expect(recipe.sources).toEqual([
+      { storeId: "sleeping_dragon_inn", type: "store", upgraded: true },
+    ]);
+  });
+
+  it("emits store_with_perk source when requirements include has_perk", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          cooked_dishes: {
+            default: {},
+            espresso: {
+              name: "Espresso",
+              recipe: [{ count: 1, item: "coffee_beans" }],
+            },
+          },
+        },
+      },
+      stores: {
+        darcy_stall: {
+          categories: [
+            {
+              constant_stock: [
+                {
+                  include_recipe: true,
+                  item: "espresso",
+                  requirements: { has_perk: "espresso_yourself" },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    });
+
+    const { recipes } = extractRecipes(fiddle);
+    const recipe = recipes["espresso" as RecipeId];
+    expect(recipe.sources).toEqual([
+      { perkId: "espresso_yourself", storeId: "darcy_stall", type: "store_with_perk" },
+    ]);
+  });
+
+  it("maps letter recipe_scroll with reached_date requirement to letter source with triggerDate", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          cooked_dishes: {
+            default: {},
+            seasonal_dish: {
+              name: "Seasonal Dish",
+              recipe: [{ count: 1, item: "pumpkin" }],
+            },
+          },
+        },
+      },
+      letters: {
+        fall_letter: {
+          items: [{ recipe_scroll: "seasonal_dish" }],
+          requirements: { reached_date: { day: 15, season: "fall" } },
+        },
+      },
+    });
+
+    const { recipes } = extractRecipes(fiddle);
+    const recipe = recipes["seasonal_dish" as RecipeId];
+    expect(recipe.sources).toEqual([
+      { trigger: "reached_date", triggerDate: { day: 15, season: "fall" }, type: "letter" },
+    ]);
   });
 
   it("deduplicates identical sources from different chest tiers", () => {
@@ -568,9 +739,9 @@ describe("extractRecipes", () => {
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["rare_fish" as RecipeId];
     expect(recipe.sources).toEqual([
-      { chestTier: "bronze", type: "treasure_chest" },
-      { chestTier: "gold", type: "treasure_chest" },
-      { chestTier: "silver", type: "treasure_chest" },
+      { tier: "bronze", type: "treasure_chest" },
+      { tier: "gold", type: "treasure_chest" },
+      { tier: "silver", type: "treasure_chest" },
     ]);
   });
 

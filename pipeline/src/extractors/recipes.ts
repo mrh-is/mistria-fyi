@@ -1,11 +1,17 @@
 import type {
   BiomeId,
+  FestivalId,
   ItemId,
+  PerkId,
   QuestId,
+  QuestType,
   Recipe,
   RecipeId,
   RecipePresentation,
   RecipeSource,
+  Season,
+  StoreId,
+  TreasureChestTier,
   WingId,
 } from "$lib/types/tracker-data.js";
 
@@ -61,9 +67,8 @@ export function extractRecipes(fiddle: ParsedGameData): {
   mergeSources(collectFishingChestSources(fiddle, itemIdToRecipeId, knownRecipeIds));
   mergeSources(collectWishingWellSources(fiddle, itemIdToRecipeId, knownRecipeIds));
   mergeSources(collectFestivalScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds));
-  mergeSources(collectDungeonDelicacySources(fiddle, itemIdToRecipeId));
+  mergeSources(collectMinesRecipeSources(fiddle, itemIdToRecipeId));
   mergeSources(collectScrollBundleSources(fiddle, itemIdToRecipeId));
-  mergeSources(collectBiomeFurnitureSources(fiddle, itemIdToRecipeId));
   mergeSources(collectPerkSources(fiddle, itemIdToRecipeId));
   mergeSources(collectDragonForgeSources(fiddle, itemIdToRecipeId));
   mergeSources(collectRenownRecipeSources(fiddle, itemIdToRecipeId));
@@ -139,42 +144,6 @@ function buildPresentations(group: RawRecipeEntry[]): RecipePresentation[] {
     }));
 }
 
-function collectBiomeFurnitureSources(
-  fiddle: ParsedGameData,
-  itemIdToRecipeId: Map<string, string>,
-): Map<string, RecipeSource[]> {
-  const dungeons = fiddle.dungeons as Record<string, Record<string, unknown>> | undefined;
-  if (!dungeons) return new Map();
-
-  const result = new Map<string, RecipeSource[]>();
-
-  const dungeonsData = dungeons.dungeons as Record<string, unknown> | undefined;
-  if (!dungeonsData) return result;
-
-  const biomes = Array.isArray(dungeonsData.biomes) ? (dungeonsData.biomes as unknown[]) : [];
-
-  for (const biome of biomes) {
-    if (typeof biome !== "object" || biome === null) continue;
-    const biomeObj = biome as Record<string, unknown>;
-
-    const furniture = Array.isArray(biomeObj.furniture) ? (biomeObj.furniture as unknown[]) : [];
-
-    for (const itemId of furniture) {
-      if (typeof itemId !== "string") continue;
-
-      const recipeId = itemIdToRecipeId.get(itemId);
-      if (!recipeId) continue;
-
-      if (result.has(recipeId)) continue;
-      const sources = result.get(recipeId) ?? [];
-      sources.push({ perk: "natural_beauty", type: "perk" });
-      result.set(recipeId, sources);
-    }
-  }
-
-  return result;
-}
-
 function collectChickenStatueSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
@@ -188,11 +157,16 @@ function collectChickenStatueSources(
   const common = chickenStatue.common as Record<string, unknown> | undefined;
   if (!common) return result;
 
-  const rollTiers: [string, "large" | "small"][] = [
-    ["small_roll", "small"],
-    ["large_roll", "large"],
+  const misc = fiddle.misc as Record<string, Record<string, unknown>> | undefined;
+  const chickenMisc = misc?.chicken_statue;
+  const lowPrice = (chickenMisc?.low_price as number | undefined) ?? 10;
+  const highPrice = (chickenMisc?.high_price as number | undefined) ?? 100;
+
+  const rollCosts: [string, number][] = [
+    ["small_roll", lowPrice],
+    ["large_roll", highPrice],
   ];
-  for (const [rollKey, tier] of rollTiers) {
+  for (const [rollKey, cost] of rollCosts) {
     const roll = Array.isArray(common[rollKey]) ? (common[rollKey] as unknown[]) : [];
     for (const entry of roll) {
       if (typeof entry !== "object" || entry === null) continue;
@@ -211,7 +185,7 @@ function collectChickenStatueSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ tier, type: "chicken_statue" });
+      sources.push({ cost, type: "chicken_statue" });
       result.set(recipeId, sources);
     }
   }
@@ -237,45 +211,6 @@ function collectDragonForgeSources(
       result.set(recipeId, [{ type: "dragon_forge" }]);
     }
   });
-
-  return result;
-}
-
-function collectDungeonDelicacySources(
-  fiddle: ParsedGameData,
-  itemIdToRecipeId: Map<string, string>,
-): Map<string, RecipeSource[]> {
-  const dungeons = fiddle.dungeons as Record<string, Record<string, unknown>> | undefined;
-  if (!dungeons) return new Map();
-
-  const result = new Map<string, RecipeSource[]>();
-
-  const dungeonsData = dungeons.dungeons as Record<string, unknown> | undefined;
-  if (!dungeonsData) return result;
-
-  const biomes = Array.isArray(dungeonsData.biomes) ? (dungeonsData.biomes as unknown[]) : [];
-
-  for (const biome of biomes) {
-    if (typeof biome !== "object" || biome === null) continue;
-    const biomeObj = biome as Record<string, unknown>;
-    const biomeId = (biomeObj.id as string | undefined) ?? "unknown";
-
-    const delicacyArrays = ["dungeon_delicacies", "taste_maker"];
-    for (const arrayKey of delicacyArrays) {
-      const items = Array.isArray(biomeObj[arrayKey]) ? (biomeObj[arrayKey] as unknown[]) : [];
-
-      for (const itemId of items) {
-        if (typeof itemId !== "string") continue;
-
-        const recipeId = itemIdToRecipeId.get(itemId);
-        if (!recipeId) continue;
-
-        const sources = result.get(recipeId) ?? [];
-        sources.push({ biomeId: biomeId as BiomeId, perk: arrayKey, type: "dungeon_chest" });
-        result.set(recipeId, sources);
-      }
-    }
-  }
 
   return result;
 }
@@ -318,7 +253,11 @@ function collectFestivalScrollSources(
         if (!recipeId) continue;
 
         const sources = result.get(recipeId) ?? [];
-        sources.push({ festivalId, storeId: vendorStoreId, type: "festival" });
+        sources.push({
+          festivalId: festivalId as FestivalId,
+          storeId: vendorStoreId as StoreId,
+          type: "festival",
+        });
         result.set(recipeId, sources);
       }
     }
@@ -362,7 +301,7 @@ function collectFishingChestSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ chestTier, type: "treasure_chest" });
+      sources.push({ tier: chestTier as TreasureChestTier, type: "treasure_chest" });
       result.set(recipeId, sources);
     }
   }
@@ -377,8 +316,15 @@ function collectHardcodedSources(
 
   const hardcoded: [string, RecipeSource][] = [
     ["water_sprite_statue_v1", { type: "beach_cave_chest" }],
-    ["stairs", { type: "upgrade", upgradeName: "House Stairs" }],
-    ["farm_bridge", { type: "upgrade", upgradeName: "Starter Farm Bridge" }],
+    ["stairs", { storeId: "carpenter" as StoreId, type: "upgrade", upgradeName: "House Stairs" }],
+    [
+      "farm_bridge",
+      {
+        storeId: "carpenter" as StoreId,
+        type: "upgrade",
+        upgradeName: "Starter Farm Bridge",
+      },
+    ],
     ["engagement_ring", { type: "relationship" }],
   ];
 
@@ -447,7 +393,24 @@ function collectLetterScrollSources(
           continue;
         }
         if (requirements.reached_date !== undefined) {
-          sources.push({ trigger: "reached_date", type: "letter" });
+          const dateVal = requirements.reached_date as Record<string, unknown> | string | undefined;
+          let triggerDate: undefined | { day: number; season: Season; year?: number };
+          if (typeof dateVal === "object" && dateVal !== null) {
+            const day = dateVal.day as number | undefined;
+            const season = dateVal.season as Season | undefined;
+            const year = dateVal.year as number | undefined;
+            if (day !== undefined && season !== undefined) {
+              triggerDate =
+                year !== undefined && year > 1 ? { day, season, year } : { day, season };
+            }
+          }
+          if (triggerDate) {
+            sources.push({ trigger: "reached_date", triggerDate, type: "letter" });
+          } else {
+            console.warn(
+              `  Warning: letter "${letterId}" has reached_date but couldn't parse date — skipping`,
+            );
+          }
           result.set(recipeId, sources);
           continue;
         }
@@ -456,6 +419,61 @@ function collectLetterScrollSources(
       console.warn(
         `  Warning: letter "${letterId}" has recipe_scroll but no recognized requirement trigger — skipping`,
       );
+      result.set(recipeId, sources);
+    }
+  }
+
+  return result;
+}
+
+function collectMinesRecipeSources(
+  fiddle: ParsedGameData,
+  itemIdToRecipeId: Map<string, string>,
+): Map<string, RecipeSource[]> {
+  const dungeons = fiddle.dungeons as Record<string, Record<string, unknown>> | undefined;
+  if (!dungeons) return new Map();
+
+  const result = new Map<string, RecipeSource[]>();
+
+  const dungeonsData = dungeons.dungeons as Record<string, unknown> | undefined;
+  if (!dungeonsData) return result;
+
+  const biomes = Array.isArray(dungeonsData.biomes) ? (dungeonsData.biomes as unknown[]) : [];
+
+  for (let i = 0; i < biomes.length; i++) {
+    const biome = biomes[i];
+    if (typeof biome !== "object" || biome === null) continue;
+    const biomeObj = biome as Record<string, unknown>;
+    const biomeId = `biome_${i}` as BiomeId;
+
+    const chestArrays: [string, PerkId][] = [
+      ["dungeon_delicacies", "dungeon_delicacies" as PerkId],
+      ["taste_maker", "taste_maker" as PerkId],
+    ];
+    for (const [arrayKey, perkId] of chestArrays) {
+      const items = Array.isArray(biomeObj[arrayKey]) ? (biomeObj[arrayKey] as unknown[]) : [];
+
+      for (const itemId of items) {
+        if (typeof itemId !== "string") continue;
+
+        const recipeId = itemIdToRecipeId.get(itemId);
+        if (!recipeId) continue;
+
+        const sources = result.get(recipeId) ?? [];
+        sources.push({ biomeId, perkId, type: "mines_chest" });
+        result.set(recipeId, sources);
+      }
+    }
+
+    const furniture = Array.isArray(biomeObj.furniture) ? (biomeObj.furniture as unknown[]) : [];
+    for (const itemId of furniture) {
+      if (typeof itemId !== "string") continue;
+
+      const recipeId = itemIdToRecipeId.get(itemId);
+      if (!recipeId) continue;
+
+      const sources = result.get(recipeId) ?? [];
+      sources.push({ biomeId, perkId: "natural_beauty" as PerkId, type: "mines_dig_site" });
       result.set(recipeId, sources);
     }
   }
@@ -535,7 +553,7 @@ function collectPerkSources(
 
     const recipeId = itemIdToRecipeId.get(itemId);
     if (recipeId && !result.has(recipeId)) {
-      result.set(recipeId, [{ perk, type: "perk" }]);
+      result.set(recipeId, [{ perkId: perk as PerkId, type: "perk" }]);
     }
   });
 
@@ -581,7 +599,7 @@ function collectQuestScrollSources(
         const sources = result.get(recipeId) ?? [];
         sources.push({
           questId: questId as QuestId,
-          questType,
+          questType: questType as QuestType,
           type: "quest",
         });
         result.set(recipeId, sources);
@@ -761,30 +779,48 @@ function collectStoreScrollSources(
             (obj.recipe_scroll as string | undefined) ??
             (obj.crafting_scroll as string | undefined);
 
-          if (scrollTarget) {
-            const recipeId = resolveScrollTarget(
-              scrollTarget,
-              itemIdToRecipeId,
-              knownRecipeIds,
-              `stores/${storeId}`,
-            );
-            if (recipeId) {
-              const sources = result.get(recipeId) ?? [];
-              sources.push({ storeId, type: "store" });
+          const recipeId = scrollTarget
+            ? resolveScrollTarget(
+                scrollTarget,
+                itemIdToRecipeId,
+                knownRecipeIds,
+                `stores/${storeId}`,
+              )
+            : obj.include_recipe === true
+              ? itemIdToRecipeId.get(obj.item as string)
+              : undefined;
+
+          if (!recipeId) continue;
+
+          const sources = result.get(recipeId) ?? [];
+          const requirements = obj.requirements as Record<string, unknown> | undefined;
+
+          if (requirements) {
+            const hasPerk = requirements.has_perk as string | undefined;
+            if (hasPerk) {
+              sources.push({
+                perkId: hasPerk as PerkId,
+                storeId: storeId as StoreId,
+                type: "store_with_perk",
+              });
               result.set(recipeId, sources);
+              continue;
             }
-            continue;
+            const UPGRADE_PREDICATES = new Set([
+              "repaired_carpenters_shop",
+              "repaired_general_store",
+              "repaired_inn",
+            ]);
+            const isUpgraded = Object.keys(requirements).some((k) => UPGRADE_PREDICATES.has(k));
+            if (isUpgraded) {
+              sources.push({ storeId: storeId as StoreId, type: "store", upgraded: true });
+              result.set(recipeId, sources);
+              continue;
+            }
           }
 
-          if (obj.include_recipe === true) {
-            const itemId = obj.item as string | undefined;
-            if (!itemId) continue;
-            const recipeId = itemIdToRecipeId.get(itemId);
-            if (!recipeId) continue;
-            const sources = result.get(recipeId) ?? [];
-            sources.push({ storeId, type: "store" });
-            result.set(recipeId, sources);
-          }
+          sources.push({ storeId: storeId as StoreId, type: "store" });
+          result.set(recipeId, sources);
         }
       }
     }
@@ -806,11 +842,16 @@ function collectWishingWellSources(
   const common = wishingWell.common as Record<string, unknown> | undefined;
   if (!common) return result;
 
-  const rollTiers: [string, "large" | "small"][] = [
-    ["small_roll", "small"],
-    ["large_roll", "large"],
+  const misc = fiddle.misc as Record<string, Record<string, unknown>> | undefined;
+  const wellMisc = misc?.wishing_well;
+  const lowPrice = (wellMisc?.low_price as number | undefined) ?? 100;
+  const highPrice = (wellMisc?.high_price as number | undefined) ?? 500;
+
+  const rollCosts: [string, number][] = [
+    ["small_roll", lowPrice],
+    ["large_roll", highPrice],
   ];
-  for (const [rollKey, tier] of rollTiers) {
+  for (const [rollKey, cost] of rollCosts) {
     const roll = Array.isArray(common[rollKey]) ? (common[rollKey] as unknown[]) : [];
     for (const entry of roll) {
       if (typeof entry !== "object" || entry === null) continue;
@@ -829,7 +870,7 @@ function collectWishingWellSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ tier, type: "wishing_well" });
+      sources.push({ cost, type: "wishing_well" });
       result.set(recipeId, sources);
     }
   }
