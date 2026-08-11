@@ -127,8 +127,7 @@
   function maxVisibleTier(animalId: AnimalId): number {
     const animal = trackerData.animals[animalId];
     const completedVariants = userState.state.completed.animals[animalId] as
-      | Set<VariantId>
-      | undefined;
+      Set<VariantId> | undefined;
     let highestCompletedTier = 0;
     for (const [vid, variant] of Object.entries(animal.variants)) {
       if (completedVariants?.has(vid as VariantId) && (variant.tier ?? 1) > highestCompletedTier) {
@@ -165,7 +164,7 @@
   }
 </script>
 
-{#if animals.some( (a) => Object.keys(a.variants).some( (vid) => isVariantVisible(a.id, vid as VariantId), ), )}
+{#if animals.some( (a) => Object.keys(a.variants).some( (vid) => isVariantVisible(a.id, vid as VariantId) ) )}
   <ExpandableSection
     count={filteredTotalVariantsCompleted}
     name="Color Variants"
@@ -251,7 +250,7 @@
   </ExpandableSection>
 {/if}
 
-{#if animals.some( (a) => Object.keys(a.cosmetics).some( (cid) => isCosmeticVisible(a.id, cid as CosmeticId), ), )}
+{#if animals.some( (a) => Object.keys(a.cosmetics).some( (cid) => isCosmeticVisible(a.id, cid as CosmeticId) ) )}
   <ExpandableSection
     count={filteredTotalCosmeticsCompleted}
     name="Cosmetics"
@@ -290,8 +289,7 @@
                   const completed =
                     (
                       userState.state.completed.animalCosmetics[animal.id] as
-                        | Set<CosmeticId>
-                        | undefined
+                        Set<CosmeticId> | undefined
                     )?.has(cosmeticId as CosmeticId) ?? false;
                   showUndoToast(cosmetic.name, completed, () => {
                     userState.toggleAnimalCosmetic(animal.id, cosmeticId as CosmeticId);
@@ -314,7 +312,7 @@
   </ExpandableSection>
 {/if}
 
-{#if Object.keys(trackerData.animals).every( (id) => isAnimalComplete(id as AnimalId), ) && !userState.state.showCompleted}
+{#if Object.keys(trackerData.animals).every( (id) => isAnimalComplete(id as AnimalId) ) && !userState.state.showCompleted}
   <p class="py-8 text-center text-base text-muted-foreground">
     All done! Toggle "Show completed" to review.
   </p>
