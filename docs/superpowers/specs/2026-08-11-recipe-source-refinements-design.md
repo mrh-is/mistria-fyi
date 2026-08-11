@@ -92,13 +92,14 @@ export type RecipeSource =
   | { type: "relationship" }
   | { type: "renown"; level: number }
   | { type: "scroll_bundle"; bundleName: string; storeId: StoreId }
-  | { type: "store"; requiresPerkId?: PerkId; storeId: StoreId; upgraded?: true }
+  | { type: "store"; storeId: StoreId; upgraded?: true }
+  | { type: "store_with_perk"; perkId: PerkId; storeId: StoreId }
   | { type: "treasure_chest"; tier: TreasureChestTier }
   | { type: "upgrade"; storeId: StoreId; upgradeName: string }
   | { type: "wishing_well"; cost: number };
 ```
 
-The `store` variant uses optional fields (`upgraded?: true`, `requiresPerkId?: PerkId`) rather than separate union members. No items in the game data require both simultaneously, but the type permits it to avoid a discriminated-union problem (three members sharing `type: "store"` can't be narrowed by TypeScript). Runtime label logic checks `upgraded` first, then `requiresPerkId`, then falls through to the base case.
+Store sources are split into two types: `store` (with an optional `upgraded?: true` flag for stores requiring a repair quest) and `store_with_perk` (for the rare case where a recipe requires a specific perk, e.g., the espresso machine). This cleanly discriminates at the type level — `upgraded` narrows via optional field presence, and perk-gated purchases have a separate `type`.
 
 Key changes from the current type:
 - `dungeon_chest` → split into `mines_chest` and `mines_dig_site` (cooking recipes drop from treasure chests; furniture recipes drop from dig sites)
@@ -108,7 +109,7 @@ Key changes from the current type:
 - `questType` typed as `QuestType`
 - `chestTier` (string) → `tier` (`TreasureChestTier`)
 - `letter` with `reached_date` gains `triggerDate: { day, season, year? }` — `year` is optional; year 1 is omitted from display
-- `store` gains optional `upgraded` and `requiresPerkId`
+- `store` gains optional `upgraded?: true`; perk-gated store purchases become a separate `store_with_perk` type
 - `upgrade` gains `storeId: StoreId` instead of hardcoding "the carpenter"
 - `chicken_statue` and `wishing_well` replace tier labels with actual `cost` (number of beads/tickets), extracted from `fiddle.misc.chicken_statue.{high,low}_price` and `fiddle.misc.wishing_well.{high,low}_price`
 
@@ -143,7 +144,7 @@ All labels start with a verb. The `withIndefiniteArticle(name)` helper prepends 
 | `scroll_bundle` | "Purchase the {bundle} from {store}" | "Purchase the Chess Piece Scroll Bundle from Balor's Wagon" |
 | `store` | "Purchase from {store}" | "Purchase from the General Store" |
 | `store` (upgraded) | "Purchase from {store} (after upgrade)" | "Purchase from the Sleeping Dragon Inn (after upgrade)" |
-| `store` (perk) | "Purchase from {store} (requires {perk} perk)" | "Purchase from Darcy's Stall (requires Espresso Yourself perk)" |
+| `store_with_perk` | "Purchase from {store} (requires {perk} perk)" | "Purchase from Darcy's Stall (requires Espresso Yourself perk)" |
 | `treasure_chest` | "Fish up {a/an} {name}" | "Fish up a Golden Treasure Box" |
 | `upgrade` | "Purchase {name} from {store}" | "Purchase House Stairs from the Carpenter's Shop" |
 | `wishing_well` | "Obtain from the Wishing Well ({cost}t)" | "Obtain from the Wishing Well (100t)" |
@@ -193,7 +194,7 @@ Each source label gets a Lucide icon replacing the current green dot. The `recip
 | Source type | Lucide icon |
 |---|---|
 | `default` | `CircleCheck` |
-| `store` / `scroll_bundle` | `ShoppingCart` |
+| `store` / `store_with_perk` / `scroll_bundle` | `ShoppingCart` |
 | `upgrade` | `Forklift` |
 | `quest` | `Scroll` |
 | `perk` | `Sparkles` |
@@ -254,7 +255,7 @@ The matching rule: `chest_tables` keys are `wood`, `copper`, `silver`, `gold`, `
 
 - **`collectDungeonDelicacySources`** → rename to `collectMinesRecipeSources`: Both `dungeon_delicacies` and `taste_maker` arrays produce `mines_chest` sources (both mechanically drop recipe scrolls from treasure chests; the flavor text differs but the acquisition method is the same). Merge `collectBiomeFurnitureSources` into this function; the `furniture` array produces `mines_dig_site` sources with perkId `natural_beauty`.
 
-- **`collectStoreScrollSources`**: When a `recipe_scroll` entry has `requirements`, check for named requirements that resolve to upgrade predicates (`repaired_inn`, `repaired_general_store`, `repaired_carpenters_shop`) and set `upgraded: true` on the source. Check for `has_perk` and set `requiresPerkId`. **Also handle `include_recipe` entries** — these can also carry requirements (e.g., Darcy's espresso machine with `has_perk = "espresso_yourself"`). The current extractor already processes `include_recipe` entries but discards their requirements.
+- **`collectStoreScrollSources`**: When a `recipe_scroll` entry has `requirements`, check for named requirements that resolve to upgrade predicates (`repaired_inn`, `repaired_general_store`, `repaired_carpenters_shop`) and emit `{ type: "store", storeId, upgraded: true }`. When requirements contain `has_perk`, emit `{ type: "store_with_perk", storeId, perkId }`. **Also handle `include_recipe` entries** — these can also carry requirements (e.g., Darcy's espresso machine with `has_perk = "espresso_yourself"`). The current extractor already processes `include_recipe` entries but discards their requirements.
 
 - **`collectLetterScrollSources`**: When trigger is `reached_date`, extract `{ season, day, year? }` from `requirements.reached_date` and include as `triggerDate`.
 
