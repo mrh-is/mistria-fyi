@@ -36,7 +36,6 @@ export interface MuseumWing {
 export type NpcId = string & { readonly __brand: "NpcId" };
 export type QuestId = string & { readonly __brand: "QuestId" };
 export interface Recipe {
-  defaultUnlocked: boolean;
   memberItemIds: ItemId[];
   presentations: RecipePresentation[];
   sources: RecipeSource[];
@@ -47,20 +46,23 @@ export interface RecipePresentation {
   name: string;
 }
 export type RecipeSource =
+  | { type: "beach_cave_chest" }
+  | { type: "default" }
+  | { type: "dragon_forge" }
+  | { type: "relationship" }
+  | { type: "treasure_chest" }
+  | { biomeId: BiomeId; perk: string; type: "dungeon_chest" }
+  | { bundleName: string; storeId: string; type: "scroll_bundle" }
   | { festivalId: string; storeId: string; type: "festival" }
+  | { level: number; type: "renown" }
   | { perk: string; type: "perk" }
   | { questId: QuestId; questType: string; type: "quest" }
-  | { type: "renown" }
-  | { storeId: string; type: "scroll_bundle" }
+  | { setCount: number; type: "museum_donation"; wingId: WingId }
   | { storeId: string; type: "store" }
+  | { tier: "large" | "medium" | "small"; type: "chicken_statue" }
+  | { tier: "large" | "medium" | "small"; type: "wishing_well" }
   | { trigger?: "donated_item" | "shipped_item"; triggerItemId?: ItemId; type: "letter" }
-  | { type: "chicken_statue" }
-  | { cutscene: string; type: "cutscene" }
-  | { type: "dragon_forge" }
-  | { type: "mine_zone" }
-  | { type: "museum_donation"; wingId: WingId }
-  | { type: "treasure_chest" }
-  | { type: "wishing_well" };
+  | { type: "upgrade"; upgradeName: string };
 export interface Restriction {
   animal?: string;
   building?: string;
