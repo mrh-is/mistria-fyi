@@ -84,6 +84,7 @@ current contract, not a general validation policy.
 | `extractors/renown.ts`      | Renown                                                                    | Ranks and levels per rank         | Falls back to 10 levels per rank and `Unknown` rank names.                                                                                                                                                                                                                                                                                     |
 | `extractors/skills.ts`      | Skills                                                                    | Skill names                       | Skips defaults and title-cases IDs without a name.                                                                                                                                                                                                                                                                                             |
 | `extractors/sources.ts`     | Stores, wildlife, items, forageables, monsters, quests, festivals, renown | Acquisition-target source index   | Source order follows extractor order. Structural deduplication preserves the first identical JSON representation. Targets include items, cosmetics, and other game object IDs. Scroll entries are counted and discarded. `all` requirements flatten, while `any`, `not`, unsupported predicates, and reached-date day precision are discarded. |
+| `extractors/recipes.ts`     | Items (all categories), quests, letters, stores, museum wings, chicken statue, fishing chests, wishing well, festivals, dungeons | Recipe registry and item back-links | Groups items by `recipe_key ?? itemId`; builds presentations by name; collects scroll sources from quests, letters, stores (via `categories[]`, including `include_recipe`), museum wings, chicken statue, fishing chests, wishing well, festivals (via `stocks[storeId]`), dungeon delicacies; deduplicates sources centrally; validates recipe ID collisions; requires `recipe_is_default` agreement across groups. |
 | `extractors/quest-gates.ts` | Supported quest groups and extracted registries                           | Direct-reward index and mutations | Every allowlisted `rewards[].item` ID is indexed. Applicators attach only IDs that match extracted item, animal, or spell records; recipe scrolls and animal, spell, store, & progression inference are deferred.                                                                                                                              |
 
 ### Source rules
@@ -95,7 +96,8 @@ the first structurally identical record. The serialized `TrackerData.sources` ty
 but the extractor also indexes cosmetics and other game object IDs.
 
 Store processing accepts constant, seasonal, and random stock. It counts and discards
-`recipe_scroll` and `crafting_scroll` entries. Store requirements first become Boolean expressions,
+`recipe_scroll` and `crafting_scroll` entries; these are handled by the recipe extractor
+(`extractors/recipes.ts`) instead. Store requirements first become Boolean expressions,
 then a lossy flat restriction list: `all` branches concatenate; `any` and `not` branches disappear;
 unsupported predicates disappear; and `reached_date` retains season but drops day precision.
 Supported predicates project to perk, skill, mines-level, season, animal, cutscene, season-seen,
@@ -114,6 +116,30 @@ reward with an `item` field, and deduplicates quest IDs per item. The main progr
 gates to the item registry. Animal and spell applicators exist, but their current indexes are empty.
 Recipe-scroll tracking and inference from animals, spells, stores, progression flags, requirements,
 or cutscenes are deferred.
+
+### Recipes
+
+`extractRecipes` builds a recipe registry in three phases. The first phase scans all items for `recipe_key` and `recipe_is_default`, grouping items into recipe identities using `recipe_key ?? itemId`. Only items with a `recipe` array or a `recipe_key` field are included; items with `recipe_is_default` but no recipe or key (e.g., `ore_gold`) are excluded with a diagnostic log. Item IDs that collide with recipe keys from other groups produce a warning.
+
+The second phase collects recipe acquisition sources from nine data locations:
+
+| Source type | Data location | Pattern |
+|-------------|---------------|---------|
+| `quest` | `quests/{fetch_quests,stillwell_challenges,story_quests,tali_challenges}` | `rewards[].recipe_scroll` or `crafting_scroll` |
+| `letter` | `letters` | `items[].recipe_scroll` with `requirements.shipped_item` or `donated_item` |
+| `store` | `stores[storeId].categories[]` | `constant_stock`, `seasonal`, `random_stock` entries with `recipe_scroll`, `crafting_scroll`, or `include_recipe = true` |
+| `museum_donation` | `museum_wings/{archaeology,fish,flora,insect}` | `rewards[].entries[].crafting_scroll` |
+| `chicken_statue` | `chicken_statue` | `common.{small,medium,large}_roll[].recipe_scroll` |
+| `treasure_chest` | `fishing` | `chest_tables.{tier}.items[]` with `kind = "recipe"` and `value` as target |
+| `wishing_well` | `wishing_well` | `common.{small,medium,large}_roll[].recipe_scroll` |
+| `festival` | `festivals[festivalId].stocks[storeId]` | Stock entries with `recipe_scroll` or `crafting_scroll` |
+| `mine_zone` | `dungeons` | `biomes[].dungeon_delicacies` and `taste_maker` item ID lists |
+
+After all collectors merge, sources are structurally deduplicated centrally, then sorted by type and detail fields. `defaultUnlocked` is a separate boolean flag requiring all group members to agree; mixed flags produce a warning and resolve to false.
+
+The third phase builds `presentations` — items within each recipe grouped by display name — so that recipe keys containing multiple distinct designs (e.g., single and double beds) produce separate almanac rows.
+
+The extractor also returns a `recipeIdByItemId` map that the main program passes to `extractAlmanac` for stamping `recipeId` onto almanac rows. This ensures all craftable items receive their recipe back-link, including items without `recipe_key` (e.g., cooked dishes identified by item ID).
 
 ## Artifacts & mutation
 
