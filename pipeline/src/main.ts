@@ -9,9 +9,11 @@ import { fileURLToPath } from "node:url";
 
 import { evaluateExpressions } from "./evaluate.js";
 import { extractAlmanac } from "./extractors/almanac.js";
+import { extractFestivals } from "./extractors/festivals.js";
 import { extractAnimals } from "./extractors/animals.js";
 import { extractCosmetics } from "./extractors/cosmetics.js";
 import { extractMines } from "./extractors/mines.js";
+import { extractPerks } from "./extractors/perks.js";
 import { extractMuseum } from "./extractors/museum.js";
 import { extractNpcs } from "./extractors/npcs.js";
 import {
@@ -25,6 +27,8 @@ import { extractRecipes } from "./extractors/recipes.js";
 import { extractRenown } from "./extractors/renown.js";
 import { extractSkills } from "./extractors/skills.js";
 import { extractSources } from "./extractors/sources.js";
+import { extractStoresMeta } from "./extractors/stores-meta.js";
+import { extractTreasureChestTiers } from "./extractors/treasure-chest-tiers.js";
 import { parseFiddle } from "./parse-fiddle.js";
 
 import type { ItemId, TrackerData } from "$lib/types/tracker-data.js";
@@ -102,6 +106,10 @@ function main(): void {
   const mines = extractMines(fiddle);
   const sources = extractSources(fiddle);
   const questGates = extractQuestGates(fiddle);
+  const { perks, perkTierLevels } = extractPerks(fiddle);
+  const storesMeta = extractStoresMeta(fiddle);
+  const festivals = extractFestivals(fiddle);
+  const treasureChestTiers = extractTreasureChestTiers(fiddle);
 
   applyItemQuestGates(items, questGates.itemGates);
   applyAnimalQuestGates(animals, questGates.animalGates);
@@ -121,17 +129,22 @@ function main(): void {
     almanac,
     animals,
     cosmetics,
+    festivals,
     generatedAt: new Date().toISOString(),
     items,
     mines,
     museum,
     npcs,
+    perkTierLevels,
+    perks,
     questGates,
     quests,
     recipes,
     renown,
     skills,
     sources,
+    stores: storesMeta,
+    treasureChestTiers,
     version,
   };
 
