@@ -21,12 +21,13 @@ import {
   extractQuestGates,
 } from "./extractors/quest-gates.js";
 import { extractQuests } from "./extractors/quests.js";
+import { extractRecipes } from "./extractors/recipes.js";
 import { extractRenown } from "./extractors/renown.js";
 import { extractSkills } from "./extractors/skills.js";
 import { extractSources } from "./extractors/sources.js";
 import { parseFiddle } from "./parse-fiddle.js";
 
-import type { TrackerData } from "$lib/types/tracker-data.js";
+import type { ItemId, TrackerData } from "$lib/types/tracker-data.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PIPELINE_ROOT = resolve(__dirname, "..");
 const OUTPUT_DIR = resolve(PIPELINE_ROOT, "output");
@@ -90,7 +91,8 @@ function main(): void {
 
   console.log("Step 3: Extracting tracker data...");
   const museum = extractMuseum(fiddle);
-  const { almanac, items } = extractAlmanac(fiddle);
+  const { recipeIdByItemId, recipes } = extractRecipes(fiddle);
+  const { almanac, items } = extractAlmanac(fiddle, recipeIdByItemId);
   const animals = extractAnimals(fiddle);
   const npcs = extractNpcs(fiddle);
   const cosmetics = extractCosmetics(fiddle);
@@ -104,6 +106,14 @@ function main(): void {
   applyItemQuestGates(items, questGates.itemGates);
   applyAnimalQuestGates(animals, questGates.animalGates);
   applySpellQuestGates(mines, questGates.spellGates);
+
+  for (const [itemId, recipeId] of recipeIdByItemId) {
+    const typedId = itemId as ItemId;
+    const item = items[typedId];
+    if (item) {
+      (items as TrackerData["items"])[typedId] = { ...item, recipeId };
+    }
+  }
   console.log();
 
   console.log("Step 4: Assembling tracker-data.json...");
@@ -118,6 +128,7 @@ function main(): void {
     npcs,
     questGates,
     quests,
+    recipes,
     renown,
     skills,
     sources,

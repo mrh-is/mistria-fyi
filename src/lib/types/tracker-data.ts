@@ -3,7 +3,7 @@
 
 export interface AlmanacCategory {
   id: string;
-  items: Record<ItemId, { name: string }>;
+  items: Record<ItemId, { colorCount?: number; name: string; recipeId?: RecipeId }>;
   name: string;
 }
 export type AnimalId = string & { readonly __brand: "AnimalId" };
@@ -35,27 +35,27 @@ export interface MuseumWing {
 }
 export type NpcId = string & { readonly __brand: "NpcId" };
 export type QuestId = string & { readonly __brand: "QuestId" };
-export type RecipeId = string & { readonly __brand: "RecipeId" };
-export type RecipeSource =
-  | { type: "chicken_statue" }
-  | { festivalId: string; storeId: string; type: "festival" }
-  | { trigger?: "donated_item" | "shipped_item"; triggerItemId?: ItemId; type: "letter" }
-  | { type: "mine_zone" }
-  | { type: "museum_donation"; wingId: WingId }
-  | { questId: QuestId; questType: string; type: "quest" }
-  | { storeId: string; type: "store" }
-  | { type: "treasure_chest" }
-  | { type: "wishing_well" };
-export interface RecipePresentation {
-  itemIds: ItemId[];
-  name: string;
-}
 export interface Recipe {
   defaultUnlocked: boolean;
   memberItemIds: ItemId[];
   presentations: RecipePresentation[];
   sources: RecipeSource[];
 }
+export type RecipeId = string & { readonly __brand: "RecipeId" };
+export interface RecipePresentation {
+  itemIds: ItemId[];
+  name: string;
+}
+export type RecipeSource =
+  | { festivalId: string; storeId: string; type: "festival" }
+  | { questId: QuestId; questType: string; type: "quest" }
+  | { storeId: string; type: "store" }
+  | { trigger?: "donated_item" | "shipped_item"; triggerItemId?: ItemId; type: "letter" }
+  | { type: "chicken_statue" }
+  | { type: "mine_zone" }
+  | { type: "museum_donation"; wingId: WingId }
+  | { type: "treasure_chest" }
+  | { type: "wishing_well" };
 export interface Restriction {
   animal?: string;
   building?: string;
@@ -152,7 +152,10 @@ export interface TrackerData {
 
   generatedAt: string;
 
-  items: Record<ItemId, { category: string; name: string; questGate?: QuestId[] }>;
+  items: Record<
+    ItemId,
+    { category: string; name: string; questGate?: QuestId[]; recipeId?: RecipeId }
+  >;
 
   mines: {
     biomes: {
@@ -184,6 +187,8 @@ export interface TrackerData {
   };
 
   quests: Record<string, Record<QuestId, { name: string; npc?: string }>>;
+
+  recipes: Record<RecipeId, Recipe>;
 
   renown: {
     levelsPerRank: number;
