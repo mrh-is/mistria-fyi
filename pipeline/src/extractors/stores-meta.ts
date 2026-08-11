@@ -2,24 +2,24 @@ import type { StoreId } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
 
-const KNOWN_STORES: Record<string, { article?: "the"; name: string }> = {
-  balor: { name: "Balor's Wagon" },
-  blacksmith: { article: "the", name: "Blacksmith's Shop" },
-  carpenter: { article: "the", name: "Carpenter's Shop" },
-  darcy: { name: "Darcy's Stall" },
-  elsie_spring_festival: { name: "Clothing Stall" },
-  general: { article: "the", name: "General Store" },
-  hayden: { name: "Hayden's Shop" },
-  inn: { article: "the", name: "Sleeping Dragon Inn" },
-  louis: { name: "Louis' Stall" },
-  maple_spring_festival: { name: "Food Stall" },
-  merri: { name: "Merri's Stall" },
-  nora_souvenir_stall: { name: "Souvenir Stall" },
-  terithia: { article: "the", name: "Tackle Shop" },
-  valens_clinic: { name: "Valen's Clinic" },
-  vera: { name: "Vera's Stall" },
-  wheedle: { name: "Wheedle's Stall" },
-  zorel: { name: "Zorel's Stall" },
+const KNOWN_STORES: Record<string, { article?: "the" }> = {
+  balor: {},
+  blacksmith: { article: "the" },
+  carpenter: { article: "the" },
+  darcy: {},
+  elsie_spring_festival: {},
+  general: { article: "the" },
+  hayden: {},
+  inn: { article: "the" },
+  louis: {},
+  maple_spring_festival: {},
+  merri: {},
+  nora_souvenir_stall: {},
+  terithia: { article: "the" },
+  valens_clinic: {},
+  vera: {},
+  wheedle: {},
+  zorel: {},
 };
 
 export function extractStoresMeta(
@@ -40,7 +40,12 @@ export function extractStoresMeta(
       throw new Error(`Unknown store "${storeId}" — add it to KNOWN_STORES in stores-meta.ts`);
     }
 
-    result[storeId as StoreId] = known;
+    const name = store.name;
+    if (typeof name !== "string") {
+      throw new Error(`Store "${storeId}" has no name in stores.toml — check data assembly`);
+    }
+
+    result[storeId as StoreId] = known.article ? { article: known.article, name } : { name };
   }
 
   console.log(`  Stores: ${Object.keys(result).length}`);

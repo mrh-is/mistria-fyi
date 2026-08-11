@@ -413,6 +413,35 @@ describe("extractRecipes", () => {
     expect(recipe.sources).toEqual([{ cost: 10, type: "chicken_statue" }]);
   });
 
+  it("rejects non-numeric chicken statue prices", () => {
+    const fiddle = makeFiddle({
+      chicken_statue: {
+        common: {
+          small_roll: [{ recipe_scroll: "egg_dish" }],
+        },
+      },
+      items: {
+        other: {
+          cooked_dishes: {
+            default: {},
+            egg_dish: {
+              name: "Egg Dish",
+              recipe: [{ count: 1, item: "egg" }],
+            },
+          },
+        },
+      },
+      misc: {
+        chicken_statue: { high_price: 100, low_price: "10" },
+        wishing_well: { high_price: 500, low_price: 100 },
+      },
+    });
+
+    expect(() => extractRecipes(fiddle)).toThrow(
+      'Invalid or missing numeric value "misc.chicken_statue.low_price"',
+    );
+  });
+
   it("maps fishing chest entries with kind=recipe to treasure_chest source", () => {
     const fiddle = makeFiddle({
       fishing: {
@@ -463,6 +492,35 @@ describe("extractRecipes", () => {
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["wish_cake" as RecipeId];
     expect(recipe.sources).toEqual([{ cost: 500, type: "wishing_well" }]);
+  });
+
+  it("rejects missing wishing well prices", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          cooked_dishes: {
+            default: {},
+            wish_cake: {
+              name: "Wish Cake",
+              recipe: [{ count: 1, item: "flour" }],
+            },
+          },
+        },
+      },
+      misc: {
+        chicken_statue: { high_price: 100, low_price: 10 },
+        wishing_well: { low_price: 100 },
+      },
+      wishing_well: {
+        common: {
+          large_roll: [{ recipe_scroll: "wish_cake" }],
+        },
+      },
+    });
+
+    expect(() => extractRecipes(fiddle)).toThrow(
+      'Invalid or missing numeric value "misc.wishing_well.high_price"',
+    );
   });
 
   it("maps festival recipe_scroll via stocks[storeId] to festival source", () => {
@@ -711,6 +769,39 @@ describe("extractRecipes", () => {
     const recipe = recipes["seasonal_dish" as RecipeId];
     expect(recipe.sources).toEqual([
       { trigger: "reached_date", triggerDate: { day: 15, season: "fall" }, type: "letter" },
+    ]);
+  });
+
+  it("preserves distinct reached_date letter sources for the same recipe", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          cooked_dishes: {
+            default: {},
+            seasonal_dish: {
+              name: "Seasonal Dish",
+              recipe: [{ count: 1, item: "pumpkin" }],
+            },
+          },
+        },
+      },
+      letters: {
+        first_letter: {
+          items: [{ recipe_scroll: "seasonal_dish" }],
+          requirements: { reached_date: { day: 15, season: "fall" } },
+        },
+        second_letter: {
+          items: [{ recipe_scroll: "seasonal_dish" }],
+          requirements: { reached_date: { day: 16, season: "fall" } },
+        },
+      },
+    });
+
+    const { recipes } = extractRecipes(fiddle);
+    const recipe = recipes["seasonal_dish" as RecipeId];
+    expect(recipe.sources).toEqual([
+      { trigger: "reached_date", triggerDate: { day: 15, season: "fall" }, type: "letter" },
+      { trigger: "reached_date", triggerDate: { day: 16, season: "fall" }, type: "letter" },
     ]);
   });
 

@@ -159,8 +159,8 @@ function collectChickenStatueSources(
 
   const misc = fiddle.misc as Record<string, Record<string, unknown>> | undefined;
   const chickenMisc = misc?.chicken_statue;
-  const lowPrice = (chickenMisc?.low_price as number | undefined) ?? 10;
-  const highPrice = (chickenMisc?.high_price as number | undefined) ?? 100;
+  const lowPrice = requireNumber(chickenMisc?.low_price, "misc.chicken_statue.low_price");
+  const highPrice = requireNumber(chickenMisc?.high_price, "misc.chicken_statue.high_price");
 
   const rollCosts: [string, number][] = [
     ["small_roll", lowPrice],
@@ -848,8 +848,8 @@ function collectWishingWellSources(
 
   const misc = fiddle.misc as Record<string, Record<string, unknown>> | undefined;
   const wellMisc = misc?.wishing_well;
-  const lowPrice = (wellMisc?.low_price as number | undefined) ?? 100;
-  const highPrice = (wellMisc?.high_price as number | undefined) ?? 500;
+  const lowPrice = requireNumber(wellMisc?.low_price, "misc.wishing_well.low_price");
+  const highPrice = requireNumber(wellMisc?.high_price, "misc.wishing_well.high_price");
 
   const rollCosts: [string, number][] = [
     ["small_roll", lowPrice],
@@ -921,6 +921,13 @@ function forEachItem(
   }
 }
 
+function requireNumber(value: unknown, path: string): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new Error(`Invalid or missing numeric value "${path}"`);
+  }
+  return value;
+}
+
 function resolveScrollTarget(
   scrollTarget: string,
   itemIdToRecipeId: Map<string, string>,
@@ -935,7 +942,9 @@ function resolveScrollTarget(
 }
 
 function sourceKey(s: RecipeSource): string {
-  return JSON.stringify(s, Object.keys(s).sort());
+  return JSON.stringify(
+    Object.fromEntries(Object.entries(s).sort(([a], [b]) => a.localeCompare(b))),
+  );
 }
 
 function validateRecipeIdCollisions(

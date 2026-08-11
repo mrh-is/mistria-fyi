@@ -38,6 +38,18 @@ describe("extractStoresMeta", () => {
     });
   });
 
+  it("uses the canonical store name from game data", () => {
+    const fiddle = makeFiddle({
+      stores: {
+        general: { name: "General Store and Market" },
+      },
+    });
+
+    expect(extractStoresMeta(fiddle)).toEqual({
+      general: { article: "the", name: "General Store and Market" },
+    });
+  });
+
   it("assigns article 'the' for establishment stores", () => {
     const fiddle = makeFiddle({
       stores: {
@@ -82,6 +94,18 @@ describe("extractStoresMeta", () => {
 
     expect(() => extractStoresMeta(fiddle)).toThrow(
       'Unknown store "mystery_vendor" — add it to KNOWN_STORES in stores-meta.ts',
+    );
+  });
+
+  it("throws when a known store has no canonical name", () => {
+    const fiddle = makeFiddle({
+      stores: {
+        general: { categories: [] },
+      },
+    });
+
+    expect(() => extractStoresMeta(fiddle)).toThrow(
+      'Store "general" has no name in stores.toml — check data assembly',
     );
   });
 
