@@ -27,6 +27,7 @@ export type CosmeticSlot =
   | "suit"
   | "top"
   | "underwear";
+export type FestivalId = string & { readonly __brand: "FestivalId" };
 export type ItemId = string & { readonly __brand: "ItemId" };
 export interface MuseumWing {
   id: WingId;
@@ -34,7 +35,9 @@ export interface MuseumWing {
   sets: { id: SetId; items: ItemId[]; name: string }[];
 }
 export type NpcId = string & { readonly __brand: "NpcId" };
+export type PerkId = string & { readonly __brand: "PerkId" };
 export type QuestId = string & { readonly __brand: "QuestId" };
+export type QuestType = string & { readonly __brand: "QuestType" };
 export interface Recipe {
   memberItemIds: ItemId[];
   presentations: RecipePresentation[];
@@ -46,24 +49,27 @@ export interface RecipePresentation {
   name: string;
 }
 export type RecipeSource =
-  | { biomeId: BiomeId; perk: string; type: "dungeon_chest" }
-  | { bundleName: string; storeId: string; type: "scroll_bundle" }
-  | { chestTier: string; type: "treasure_chest" }
-  | { festivalId: string; storeId: string; type: "festival" }
-  | { level: number; type: "renown" }
-  | { perk: string; type: "perk" }
-  | { questId: QuestId; questType: string; type: "quest" }
-  | { setCount: number; type: "museum_donation"; wingId: WingId }
-  | { storeId: string; type: "store" }
-  | { tier: "large" | "small"; type: "chicken_statue" }
-  | { tier: "large" | "small"; type: "wishing_well" }
-  | { trigger: "donated_item" | "shipped_item"; triggerItemId: ItemId; type: "letter" }
-  | { trigger: "reached_date"; type: "letter" }
   | { type: "beach_cave_chest" }
+  | { cost: number; type: "chicken_statue" }
   | { type: "default" }
   | { type: "dragon_forge" }
+  | { festivalId: FestivalId; storeId: StoreId; type: "festival" }
+  | { trigger: "donated_item"; triggerItemId: ItemId; type: "letter" }
+  | { trigger: "reached_date"; triggerDate: { day: number; season: Season; year?: number }; type: "letter" }
+  | { trigger: "shipped_item"; triggerItemId: ItemId; type: "letter" }
+  | { biomeId: BiomeId; perkId: PerkId; type: "mines_chest" }
+  | { biomeId: BiomeId; perkId: PerkId; type: "mines_dig_site" }
+  | { setCount: number; type: "museum_donation"; wingId: WingId }
+  | { perkId: PerkId; type: "perk" }
+  | { questId: QuestId; questType: QuestType; type: "quest" }
   | { type: "relationship" }
-  | { type: "upgrade"; upgradeName: string };
+  | { level: number; type: "renown" }
+  | { bundleName: string; storeId: StoreId; type: "scroll_bundle" }
+  | { storeId: StoreId; type: "store"; upgraded?: true }
+  | { perkId: PerkId; storeId: StoreId; type: "store_with_perk" }
+  | { tier: TreasureChestTier; type: "treasure_chest" }
+  | { storeId: StoreId; type: "upgrade"; upgradeName: string }
+  | { cost: number; type: "wishing_well" };
 export interface Restriction {
   animal?: string;
   building?: string;
@@ -101,6 +107,7 @@ export type Season = "fall" | "spring" | "summer" | "winter";
 export type SetId = string & { readonly __brand: "SetId" };
 
 export type SkillId = string & { readonly __brand: "SkillId" };
+export type StoreId = string & { readonly __brand: "StoreId" };
 
 export interface Source {
   location?: string;
@@ -127,6 +134,7 @@ export type SourceType =
   | "store";
 
 export type SpellId = string & { readonly __brand: "SpellId" };
+export type TreasureChestTier = string & { readonly __brand: "TreasureChestTier" };
 
 export interface TrackerData {
   almanac: AlmanacCategory[];
@@ -158,6 +166,8 @@ export interface TrackerData {
     }
   >;
 
+  festivals: Record<FestivalId, { name: string }>;
+
   generatedAt: string;
 
   items: Record<
@@ -177,6 +187,10 @@ export interface TrackerData {
   };
 
   museum: MuseumWing[];
+
+  perkTierLevels: number[];
+
+  perks: Record<PerkId, { name: string; skillId: SkillId; tier: number }>;
 
   npcs: Record<
     NpcId,
@@ -206,6 +220,10 @@ export interface TrackerData {
   skills: Record<SkillId, string>;
 
   sources: Record<ItemId, Source[]>;
+
+  stores: Record<StoreId, { article?: "the"; name: string }>;
+
+  treasureChestTiers: Record<TreasureChestTier, { name: string }>;
 
   version: string;
 }
