@@ -1,4 +1,4 @@
-import type { Season, SourceType, Weather } from "$lib/types/tracker-data.js";
+import type { Recipe, Season, SourceType, Weather } from "$lib/types/tracker-data.js";
 
 const SEASON_LABEL: Record<Season, string> = {
   fall: "Fall",
@@ -67,6 +67,46 @@ export function locationLabel(location: string): string {
     .split(", ")
     .map((part) => titleCase(part))
     .join(", ");
+}
+
+export function recipeSourceLabel(
+  recipe: Recipe,
+  questNames: Record<string, string>,
+  itemNames: Record<string, string>,
+): string {
+  if (recipe.defaultUnlocked) return "Default recipe";
+
+  if (recipe.sources.length === 0) return "";
+  const source = recipe.sources[0];
+
+  switch (source.type) {
+    case "chicken_statue":
+      return "Chicken statue";
+    case "festival":
+      return `${titleCase(source.festivalId)} — ${titleCase(source.storeId)}`;
+    case "letter":
+      if (source.trigger === "shipped_item" && source.triggerItemId) {
+        const name = itemNames[source.triggerItemId] ?? titleCase(source.triggerItemId);
+        return `Ship ${name}`;
+      }
+      if (source.trigger === "donated_item" && source.triggerItemId) {
+        const name = itemNames[source.triggerItemId] ?? titleCase(source.triggerItemId);
+        return `Donate ${name}`;
+      }
+      return "Letter";
+    case "mine_zone":
+      return "Mine zone discovery";
+    case "museum_donation":
+      return `${titleCase(source.wingId)} wing donations`;
+    case "quest":
+      return questNames[source.questId] ?? titleCase(source.questId);
+    case "store":
+      return titleCase(source.storeId);
+    case "treasure_chest":
+      return "Fishing treasure chest";
+    case "wishing_well":
+      return "Wishing well";
+  }
 }
 
 export function seasonLabel(season: Season): string {
