@@ -102,15 +102,28 @@ export function extractAlmanac(
 
   const items: ItemMetadataIndex = {};
 
+  // Tags that describe how an item is obtained, not what it is. These lose to any
+  // classification tag when an item matches multiple almanac categories.
+  const ACQUISITION_TAGS = new Set(["fishable", "dive"]);
+
   for (const item of allItems) {
-    // Find the first matching almanac category by iterating categories in menu order
+    // Find the best matching almanac category. Classification tags (what the item is)
+    // take priority over acquisition-method tags (how you get it). Within each tier,
+    // lowest menu index wins.
     let assignedIdx: number | undefined;
     let bestCategoryOrder = Infinity;
+    let bestIsAcquisition = true;
     for (const tag of item.tags) {
       const idx = tagToCategoryIdx.get(tag);
-      if (idx !== undefined && idx < bestCategoryOrder) {
+      if (idx === undefined) continue;
+      const isAcq = ACQUISITION_TAGS.has(tag);
+      if (
+        (!isAcq && bestIsAcquisition) ||
+        (isAcq === bestIsAcquisition && idx < bestCategoryOrder)
+      ) {
         bestCategoryOrder = idx;
         assignedIdx = idx;
+        bestIsAcquisition = isAcq;
       }
     }
 
