@@ -35,6 +35,27 @@ export interface MuseumWing {
 }
 export type NpcId = string & { readonly __brand: "NpcId" };
 export type QuestId = string & { readonly __brand: "QuestId" };
+export type RecipeId = string & { readonly __brand: "RecipeId" };
+export type RecipeSource =
+  | { type: "chicken_statue" }
+  | { festivalId: string; storeId: string; type: "festival" }
+  | { trigger?: "donated_item" | "shipped_item"; triggerItemId?: ItemId; type: "letter" }
+  | { type: "mine_zone" }
+  | { type: "museum_donation"; wingId: WingId }
+  | { questId: QuestId; questType: string; type: "quest" }
+  | { storeId: string; type: "store" }
+  | { type: "treasure_chest" }
+  | { type: "wishing_well" };
+export interface RecipePresentation {
+  itemIds: ItemId[];
+  name: string;
+}
+export interface Recipe {
+  defaultUnlocked: boolean;
+  memberItemIds: ItemId[];
+  presentations: RecipePresentation[];
+  sources: RecipeSource[];
+}
 export interface Restriction {
   animal?: string;
   building?: string;
