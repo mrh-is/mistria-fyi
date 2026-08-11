@@ -18,7 +18,6 @@
     leaving = false,
     name,
     onToggle,
-    recipeInfo,
   }: {
     completed: boolean;
     dimmed?: boolean;
@@ -27,7 +26,6 @@
     leaving?: boolean;
     name: string;
     onToggle: () => void;
-    recipeInfo?: { colorCount?: number; sourceLabel?: string };
   } = $props();
 
   // Linger then fade+collapse when leaving due to completion.
@@ -80,19 +78,7 @@
           expanded = !expanded;
         }}
       >
-        <span class="flex min-w-0 flex-col">
-          <span class="text-base group-hover:underline">{name}</span>
-          {#if recipeInfo && (recipeInfo.colorCount ?? recipeInfo.sourceLabel)}
-            <span class="text-xs text-muted-foreground">
-              {[
-                recipeInfo.colorCount ? `${recipeInfo.colorCount} colors` : "",
-                recipeInfo.sourceLabel ?? "",
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </span>
-          {/if}
-        </span>
+        <span class="text-base group-hover:underline">{name}</span>
         <ChevronRight
           class="mt-1.5 size-3 shrink-0 text-muted-foreground opacity-40 transition-all group-hover:opacity-60 {expanded
             ? 'rotate-90'
@@ -100,19 +86,7 @@
         />
       </button>
     {:else}
-      <span class="flex min-w-0 flex-1 flex-col text-left">
-        <span class="text-base">{name}</span>
-        {#if recipeInfo && (recipeInfo.colorCount ?? recipeInfo.sourceLabel)}
-          <span class="text-xs text-muted-foreground">
-            {[
-              recipeInfo.colorCount ? `${recipeInfo.colorCount} colors` : "",
-              recipeInfo.sourceLabel ?? "",
-            ]
-              .filter(Boolean)
-              .join(" · ")}
-          </span>
-        {/if}
-      </span>
+      <span class="text-base">{name}</span>
     {/if}
     {#if restrictions.length > 0}
       <RestrictionBadges {hideFishSize} {restrictions} />

@@ -44,6 +44,7 @@
   /* Category colors */
   --cat-museum: oklch(0.72 0.1 65); /* warm amber */
   --cat-almanac: oklch(0.72 0.12 145); /* forest green */
+  --cat-recipes: oklch(0.72 0.1 45); /* warm orange */
   --cat-animals: oklch(0.78 0.1 350); /* soft pink */
   --cat-npcs: oklch(0.7 0.12 15); /* warm rose-red */
   --cat-cosmetics: oklch(0.72 0.1 300); /* lavender */
@@ -90,6 +91,7 @@
   /* Category colors — adjusted for dark bg */
   --cat-museum: oklch(0.78 0.1 65);
   --cat-almanac: oklch(0.78 0.12 145);
+  --cat-recipes: oklch(0.78 0.1 45);
   --cat-animals: oklch(0.82 0.1 350);
   --cat-npcs: oklch(0.76 0.12 15);
   --cat-cosmetics: oklch(0.78 0.1 300);
@@ -140,6 +142,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-cat-museum: var(--cat-museum);
   --color-cat-almanac: var(--cat-almanac);
+  --color-cat-recipes: var(--cat-recipes);
   --color-cat-animals: var(--cat-animals);
   --color-cat-npcs: var(--cat-npcs);
   --color-cat-cosmetics: var(--cat-cosmetics);

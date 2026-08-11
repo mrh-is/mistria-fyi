@@ -9,24 +9,11 @@
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
-  import { recipeSourceLabel } from "$lib/utils/format.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { ItemId } from "$lib/types/tracker-data.js";
 
   let recentlyCompleted = new SvelteSet<ItemId>();
-
-  let questNames = $derived(
-    Object.fromEntries(
-      Object.values(trackerData.quests).flatMap((group) =>
-        Object.entries(group).map(([id, q]) => [id, q.name]),
-      ),
-    ),
-  );
-
-  let itemNames = $derived(
-    Object.fromEntries(Object.entries(trackerData.items).map(([id, item]) => [id, item.name])),
-  );
 
   function markLeaving(itemId: ItemId): void {
     recentlyCompleted.add(itemId);
@@ -91,8 +78,6 @@
       {@const showAll = expandedSections[cat.id] ?? false}
       {@const displayItems = showAll ? filteredItems : filteredItems.slice(0, SECTION_LIMIT)}
       {#each displayItems as [itemId, item] (itemId)}
-        {@const recipe = item.recipeId ? trackerData.recipes[item.recipeId] : undefined}
-        {@const sourceLabel = recipe ? recipeSourceLabel(recipe, questNames, itemNames) : ""}
         <ItemRow
           completed={userState.state.completed.almanac.has(itemId as ItemId)}
           dimmed={isItemDimmed(
@@ -106,12 +91,6 @@
           itemId={itemId as ItemId}
           leaving={recentlyCompleted.has(itemId as ItemId)}
           name={item.name}
-          recipeInfo={recipe && (item.colorCount || sourceLabel)
-            ? {
-                colorCount: item.colorCount,
-                sourceLabel: sourceLabel || undefined,
-              }
-            : undefined}
           onToggle={() => {
             userState.toggleAlmanacItem(itemId as ItemId);
             const completed = userState.state.completed.almanac.has(itemId as ItemId);
