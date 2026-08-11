@@ -22,9 +22,8 @@ export function extractTreasureChestTiers(
     const itemData = fishMisc?.[itemKey];
     const name = itemData?.name as string | undefined;
     if (!name) {
-      throw new Error(
-        `Treasure chest tier "${tier}" has no matching item "${itemKey}" in items/fish/misc — check data assembly`,
-      );
+      console.log(`  Skipping chest tier "${tier}" — no matching item "${itemKey}"`);
+      continue;
     }
 
     result[tier as TreasureChestTier] = { name };

@@ -49,27 +49,31 @@ export interface RecipePresentation {
   name: string;
 }
 export type RecipeSource =
-  | { type: "beach_cave_chest" }
-  | { cost: number; type: "chicken_statue" }
-  | { type: "default" }
-  | { type: "dragon_forge" }
-  | { festivalId: FestivalId; storeId: StoreId; type: "festival" }
-  | { trigger: "donated_item"; triggerItemId: ItemId; type: "letter" }
-  | { trigger: "reached_date"; triggerDate: { day: number; season: Season; year?: number }; type: "letter" }
-  | { trigger: "shipped_item"; triggerItemId: ItemId; type: "letter" }
   | { biomeId: BiomeId; perkId: PerkId; type: "mines_chest" }
   | { biomeId: BiomeId; perkId: PerkId; type: "mines_dig_site" }
-  | { setCount: number; type: "museum_donation"; wingId: WingId }
+  | { bundleName: string; storeId: StoreId; type: "scroll_bundle" }
+  | { cost: number; type: "chicken_statue" }
+  | { cost: number; type: "wishing_well" }
+  | { festivalId: FestivalId; storeId: StoreId; type: "festival" }
+  | { level: number; type: "renown" }
+  | { perkId: PerkId; storeId: StoreId; type: "store_with_perk" }
   | { perkId: PerkId; type: "perk" }
   | { questId: QuestId; questType: QuestType; type: "quest" }
-  | { type: "relationship" }
-  | { level: number; type: "renown" }
-  | { bundleName: string; storeId: StoreId; type: "scroll_bundle" }
+  | { setCount: number; type: "museum_donation"; wingId: WingId }
   | { storeId: StoreId; type: "store"; upgraded?: true }
-  | { perkId: PerkId; storeId: StoreId; type: "store_with_perk" }
-  | { tier: TreasureChestTier; type: "treasure_chest" }
   | { storeId: StoreId; type: "upgrade"; upgradeName: string }
-  | { cost: number; type: "wishing_well" };
+  | { tier: TreasureChestTier; type: "treasure_chest" }
+  | { trigger: "donated_item"; triggerItemId: ItemId; type: "letter" }
+  | {
+      trigger: "reached_date";
+      triggerDate: { day: number; season: Season; year?: number };
+      type: "letter";
+    }
+  | { trigger: "shipped_item"; triggerItemId: ItemId; type: "letter" }
+  | { type: "beach_cave_chest" }
+  | { type: "default" }
+  | { type: "dragon_forge" }
+  | { type: "relationship" };
 export interface Restriction {
   animal?: string;
   building?: string;
@@ -107,8 +111,6 @@ export type Season = "fall" | "spring" | "summer" | "winter";
 export type SetId = string & { readonly __brand: "SetId" };
 
 export type SkillId = string & { readonly __brand: "SkillId" };
-export type StoreId = string & { readonly __brand: "StoreId" };
-
 export interface Source {
   location?: string;
   restrictions?: Restriction[];
@@ -134,8 +136,8 @@ export type SourceType =
   | "store";
 
 export type SpellId = string & { readonly __brand: "SpellId" };
-export type TreasureChestTier = string & { readonly __brand: "TreasureChestTier" };
 
+export type StoreId = string & { readonly __brand: "StoreId" };
 export interface TrackerData {
   almanac: AlmanacCategory[];
   animals: Record<
@@ -188,10 +190,6 @@ export interface TrackerData {
 
   museum: MuseumWing[];
 
-  perkTierLevels: number[];
-
-  perks: Record<PerkId, { name: string; skillId: SkillId; tier: number }>;
-
   npcs: Record<
     NpcId,
     {
@@ -200,6 +198,10 @@ export interface TrackerData {
       name: string;
     }
   >;
+
+  perks: Record<PerkId, { name: string; skillId: SkillId; tier: number }>;
+
+  perkTierLevels: number[];
 
   questGates: {
     animalGates: Record<AnimalId, QuestId[]>;
@@ -227,6 +229,8 @@ export interface TrackerData {
 
   version: string;
 }
+
+export type TreasureChestTier = string & { readonly __brand: "TreasureChestTier" };
 
 // ─── Restriction ────────────────────────────────────────────────────
 

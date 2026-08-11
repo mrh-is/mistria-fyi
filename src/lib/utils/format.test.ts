@@ -19,7 +19,7 @@ const EMPTY_LOOKUPS: RecipeSourceLookups = {
   perkTierLevels: [],
   questNames: {},
   skillNames: {},
-  stores: {} as Record<StoreId, { article?: "the"; name: string }>,
+  stores: {},
   treasureChestTiers: {},
 };
 
@@ -92,10 +92,7 @@ describe("recipeSourceLabel", () => {
       } as Record<StoreId, { article?: "the"; name: string }>,
     };
     expect(
-      recipeSourceLabel(
-        { storeId: "inn" as StoreId, type: "store", upgraded: true } as RecipeSource,
-        lookups,
-      ),
+      recipeSourceLabel({ storeId: "inn" as StoreId, type: "store", upgraded: true }, lookups),
     ).toBe("Purchase from the Sleeping Dragon Inn (after upgrade)");
   });
   it("renders letter with reached_date", () => {

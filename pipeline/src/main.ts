@@ -9,13 +9,13 @@ import { fileURLToPath } from "node:url";
 
 import { evaluateExpressions } from "./evaluate.js";
 import { extractAlmanac } from "./extractors/almanac.js";
-import { extractFestivals } from "./extractors/festivals.js";
 import { extractAnimals } from "./extractors/animals.js";
 import { extractCosmetics } from "./extractors/cosmetics.js";
+import { extractFestivals } from "./extractors/festivals.js";
 import { extractMines } from "./extractors/mines.js";
-import { extractPerks } from "./extractors/perks.js";
 import { extractMuseum } from "./extractors/museum.js";
 import { extractNpcs } from "./extractors/npcs.js";
+import { extractPerks } from "./extractors/perks.js";
 import {
   applyAnimalQuestGates,
   applyItemQuestGates,
@@ -135,8 +135,8 @@ function main(): void {
     mines,
     museum,
     npcs,
-    perkTierLevels,
     perks,
+    perkTierLevels,
     questGates,
     quests,
     recipes,

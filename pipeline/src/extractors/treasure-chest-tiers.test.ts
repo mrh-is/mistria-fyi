@@ -50,7 +50,7 @@ describe("extractTreasureChestTiers", () => {
     });
   });
 
-  it("throws when treasure box item not found for tier", () => {
+  it("skips tiers without a matching treasure box item", () => {
     const fiddle = makeFiddle({
       fishing: {
         chest_tables: {
@@ -60,9 +60,8 @@ describe("extractTreasureChestTiers", () => {
       items: {},
     });
 
-    expect(() => extractTreasureChestTiers(fiddle)).toThrow(
-      'Treasure chest tier "abyss" has no matching item "treasure_box_abyss"',
-    );
+    const tiers = extractTreasureChestTiers(fiddle);
+    expect(Object.keys(tiers)).toEqual([]);
   });
 
   it("returns empty when no fishing data", () => {

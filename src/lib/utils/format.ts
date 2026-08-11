@@ -52,6 +52,18 @@ const SOURCE_TYPE_LABEL: Record<SourceType, string> = {
   store: "Store",
 };
 
+export interface RecipeSourceLookups {
+  biomes: TrackerData["mines"]["biomes"];
+  festivals: Record<string, { name: string }>;
+  itemNames: Record<string, string>;
+  perks: Record<string, { name: string; skillId: string; tier: number }>;
+  perkTierLevels: number[];
+  questNames: Record<string, string>;
+  skillNames: Record<string, string>;
+  stores: Record<string, { article?: "the"; name: string }>;
+  treasureChestTiers: Record<string, { name: string }>;
+}
+
 /** Shorten repetitive quest name prefixes */
 export function displayQuestName(name: string, questType: string): string {
   if (questType === "fetch_quests") {
@@ -69,22 +81,11 @@ export function displayQuestName(name: string, questType: string): string {
   return name;
 }
 
-export interface RecipeSourceLookups {
-  biomes: TrackerData["mines"]["biomes"];
-  festivals: Record<string, { name: string }>;
-  itemNames: Record<string, string>;
-  perks: Record<string, { name: string; skillId: string; tier: number }>;
-  perkTierLevels: number[];
-  questNames: Record<string, string>;
-  skillNames: Record<string, string>;
-  stores: Record<string, { article?: "the"; name: string }>;
-  treasureChestTiers: Record<string, { name: string }>;
-}
-
-export function withIndefiniteArticle(name: string): string {
-  const firstChar = name.charAt(0).toLowerCase();
-  const article = "aeiou".includes(firstChar) ? "an" : "a";
-  return `${article} ${name}`;
+export function formatBiomeName(biomeId: BiomeId, biomes: TrackerData["mines"]["biomes"]): string {
+  const biome = biomes.find((b) => b.id === biomeId);
+  if (!biome) return titleCase(biomeId);
+  if (biome.name.startsWith("The ")) return `the ${biome.name.slice(4)}`;
+  return `the ${biome.name}`;
 }
 
 export function formatStoreName(
@@ -94,16 +95,6 @@ export function formatStoreName(
   const store = stores[storeId];
   if (!store) return titleCase(storeId);
   return store.article ? `${store.article} ${store.name}` : store.name;
-}
-
-export function formatBiomeName(
-  biomeId: BiomeId,
-  biomes: TrackerData["mines"]["biomes"],
-): string {
-  const biome = biomes.find((b) => b.id === biomeId);
-  if (!biome) return titleCase(biomeId);
-  if (biome.name.startsWith("The ")) return `the ${biome.name.slice(4)}`;
-  return `the ${biome.name}`;
 }
 
 export function locationLabel(location: string): string {
@@ -154,9 +145,7 @@ export function recipeSourceLabel(source: RecipeSource, lookups: RecipeSourceLoo
         : "";
       const perk = lookups.perks[source.perkId];
       const perkName = perk?.name ?? titleCase(source.perkId);
-      const skillName = perk
-        ? (lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId))
-        : "";
+      const skillName = perk ? (lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId)) : "";
       const tierStr = perk ? ` (${skillName} tier ${String(perk.tier)})` : "";
       return `Find in a Treasure Chest in ${biomeName}${floorRange ? ` (${floorRange})` : ""}, with the ${perkName} perk${tierStr}`;
     }
@@ -168,9 +157,7 @@ export function recipeSourceLabel(source: RecipeSource, lookups: RecipeSourceLoo
         : "";
       const perk = lookups.perks[source.perkId];
       const perkName = perk?.name ?? titleCase(source.perkId);
-      const skillName = perk
-        ? (lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId))
-        : "";
+      const skillName = perk ? (lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId)) : "";
       const tierStr = perk ? ` (${skillName} tier ${String(perk.tier)})` : "";
       return `Dig up in ${biomeName}${floorRange ? ` (${floorRange})` : ""}, with the ${perkName} perk${tierStr}`;
     }
@@ -182,9 +169,7 @@ export function recipeSourceLabel(source: RecipeSource, lookups: RecipeSourceLoo
     case "perk": {
       const perk = lookups.perks[source.perkId];
       const perkName = perk?.name ?? titleCase(source.perkId);
-      const skillName = perk
-        ? (lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId))
-        : "";
+      const skillName = perk ? (lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId)) : "";
       const tierStr = perk ? ` (${skillName} tier ${String(perk.tier)})` : "";
       return `Unlock the ${perkName} perk${tierStr}`;
     }
@@ -255,6 +240,12 @@ export function weathersForSeason(season: Season): Weather[] {
     return ["calm", "inclement", "heavy_inclement"];
   }
   return ["calm", "inclement", "heavy_inclement", "special"];
+}
+
+export function withIndefiniteArticle(name: string): string {
+  const firstChar = name.charAt(0).toLowerCase();
+  const article = "aeiou".includes(firstChar) ? "an" : "a";
+  return `${article} ${name}`;
 }
 
 function titleCase(s: string): string {
