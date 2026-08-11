@@ -1,4 +1,5 @@
 import type {
+  BiomeId,
   ItemId,
   QuestId,
   Recipe,
@@ -275,29 +276,20 @@ function collectDragonForgeSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
 ): Map<string, RecipeSource[]> {
-  const items = fiddle.items as
-    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
-  if (!items?.other?.blacksmithing) return new Map();
-
   const result = new Map<string, RecipeSource[]>();
 
-  for (const [itemId, item] of Object.entries(items.other.blacksmithing)) {
-    if (itemId === "default" || typeof item !== "object" || item === null) continue;
-    if (item.recipe_is_default) continue;
+  forEachItem(fiddle, (itemId, item) => {
+    if (item.recipe_is_default) return;
 
     const tags = Array.isArray(item.tags) ? (item.tags as string[]) : [];
-    if (!tags.includes("blacksmithing")) continue;
-
-    const name = item.name as string | undefined;
-    if (!name || !itemId.startsWith("dragon_forged_")) continue;
+    if (!tags.includes("blacksmithing")) return;
+    if (!itemId.startsWith("dragon_forged_")) return;
 
     const recipeId = itemIdToRecipeId.get(itemId);
-    if (!recipeId) continue;
-
-    const sources = result.get(recipeId) ?? [];
-    sources.push({ type: "dragon_forge" });
-    result.set(recipeId, sources);
-  }
+    if (recipeId && !result.has(recipeId)) {
+      result.set(recipeId, [{ type: "dragon_forge" }]);
+    }
+  });
 
   return result;
 }
@@ -504,10 +496,6 @@ function collectPerkSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
 ): Map<string, RecipeSource[]> {
-  const items = fiddle.items as
-    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
-  if (!items) return new Map();
-
   const result = new Map<string, RecipeSource[]>();
 
   const perkBySubCategory: Record<string, string> = {
@@ -522,26 +510,15 @@ function collectPerkSources(
     water_sprite_statue_large_v1: "big_water_sprites",
   };
 
-  for (const subCategories of Object.values(items)) {
-    if (typeof subCategories !== "object" || subCategories === null) continue;
-    for (const [subCatKey, categoryItems] of Object.entries(subCategories)) {
-      if (typeof categoryItems !== "object" || categoryItems === null) continue;
+  forEachItem(fiddle, (itemId, _item, subCatKey) => {
+    const perk = perkByItemId[itemId] ?? perkBySubCategory[subCatKey];
+    if (!perk) return;
 
-      const subCatPerk = perkBySubCategory[subCatKey];
-
-      for (const [itemId, item] of Object.entries(categoryItems)) {
-        if (itemId === "default" || typeof item !== "object" || item === null) continue;
-
-        const perk = perkByItemId[itemId] ?? subCatPerk;
-        if (!perk) continue;
-
-        const recipeId = itemIdToRecipeId.get(itemId);
-        if (recipeId && !result.has(recipeId)) {
-          result.set(recipeId, [{ perk, type: "perk" }]);
-        }
-      }
+    const recipeId = itemIdToRecipeId.get(itemId);
+    if (recipeId && !result.has(recipeId)) {
+      result.set(recipeId, [{ perk, type: "perk" }]);
     }
-  }
+  });
 
   return result;
 }
@@ -550,30 +527,21 @@ function collectScrollBundleSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
 ): Map<string, RecipeSource[]> {
-  const items = fiddle.items as
-    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
-  if (!items) return new Map();
-
   const result = new Map<string, RecipeSource[]>();
 
   const bundleIdToSetTag = new Map<string, string>();
-  for (const subCategories of Object.values(items)) {
-    if (typeof subCategories !== "object" || subCategories === null) continue;
-    for (const categoryItems of Object.values(subCategories)) {
-      if (typeof categoryItems !== "object" || categoryItems === null) continue;
-      for (const [itemId, item] of Object.entries(categoryItems)) {
-        if (itemId === "default" || typeof item !== "object" || item === null) continue;
-        const setUnlock = item.set_unlock as string | undefined;
-        if (setUnlock) {
-          bundleIdToSetTag.set(itemId, setUnlock);
-        }
-      }
+  const bundleIdToName = new Map<string, string>();
+  forEachItem(fiddle, (itemId, item) => {
+    const setUnlock = item.set_unlock as string | undefined;
+    if (setUnlock) {
+      bundleIdToSetTag.set(itemId, setUnlock);
+      bundleIdToName.set(itemId, (item.name as string | undefined) ?? itemId);
     }
-  }
+  });
 
   if (bundleIdToSetTag.size === 0) return result;
 
-  const setTagToStoreId = new Map<string, string>();
+  const setTagToStore = new Map<string, { bundleName: string; storeId: string }>();
   const stores = fiddle.stores as Record<string, Record<string, unknown>> | undefined;
   if (stores) {
     for (const [storeId, store] of Object.entries(stores)) {
@@ -604,33 +572,28 @@ function collectScrollBundleSources(
           if (!itemId) continue;
           const setTag = bundleIdToSetTag.get(itemId);
           if (setTag) {
-            setTagToStoreId.set(setTag, storeId);
+            const bundleName = bundleIdToName.get(itemId) ?? itemId;
+            setTagToStore.set(setTag, { bundleName, storeId });
           }
         }
       }
     }
   }
 
-  for (const subCategories of Object.values(items)) {
-    if (typeof subCategories !== "object" || subCategories === null) continue;
-    for (const categoryItems of Object.values(subCategories)) {
-      if (typeof categoryItems !== "object" || categoryItems === null) continue;
-      for (const [itemId, item] of Object.entries(categoryItems)) {
-        if (itemId === "default" || typeof item !== "object" || item === null) continue;
+  forEachItem(fiddle, (itemId, item) => {
+    const tags = Array.isArray(item.tags) ? (item.tags as string[]) : [];
 
-        const tags = Array.isArray(item.tags) ? (item.tags as string[]) : [];
-
-        for (const [setTag, storeId] of setTagToStoreId) {
-          if (tags.includes(setTag)) {
-            const recipeId = itemIdToRecipeId.get(itemId);
-            if (recipeId && !result.has(recipeId)) {
-              result.set(recipeId, [{ storeId, type: "scroll_bundle" }]);
-            }
-          }
+    for (const [setTag, info] of setTagToStore) {
+      if (tags.includes(setTag)) {
+        const recipeId = itemIdToRecipeId.get(itemId);
+        if (recipeId && !result.has(recipeId)) {
+          result.set(recipeId, [
+            { bundleName: info.bundleName, storeId: info.storeId, type: "scroll_bundle" },
+          ]);
         }
       }
     }
-  }
+  });
 
   return result;
 }
@@ -710,42 +673,29 @@ function collectRenownRecipeSources(
 }
 
 function collectRecipeEntries(fiddle: ParsedGameData): RawRecipeEntry[] {
-  const itemsRoot = fiddle.items as
-    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
-  if (!itemsRoot) return [];
-
   const entries: RawRecipeEntry[] = [];
 
-  for (const [topCategory, subCategories] of Object.entries(itemsRoot)) {
-    if (typeof subCategories !== "object" || subCategories === null) continue;
-    for (const [subCategory, categoryItems] of Object.entries(subCategories)) {
-      if (typeof categoryItems !== "object" || categoryItems === null) continue;
-      if (topCategory === "other" && subCategory === "unreviewed_new_items") continue;
-      for (const [itemId, item] of Object.entries(categoryItems)) {
-        if (itemId === "default") continue;
-        if (typeof item !== "object" || item === null) continue;
+  forEachItem(fiddle, (itemId, item, subCatKey) => {
+    if (subCatKey === "unreviewed_new_items") return;
 
-        const itemObj = item;
-        const hasRecipe = Array.isArray(itemObj.recipe) || typeof itemObj.recipe_key === "string";
-        const isDefault = itemObj.recipe_is_default === true;
+    const hasRecipe = Array.isArray(item.recipe) || typeof item.recipe_key === "string";
+    const isDefault = item.recipe_is_default === true;
 
-        if (!hasRecipe && isDefault) {
-          console.log(
-            `  Diagnostic: "${itemId}" has recipe_is_default but no recipe array or recipe_key — skipped`,
-          );
-          continue;
-        }
-
-        if (!hasRecipe) continue;
-
-        const recipeKey = itemObj.recipe_key as string | undefined;
-        const recipeId = recipeKey ?? itemId;
-        const name = (itemObj.name as string | undefined) ?? itemId;
-
-        entries.push({ defaultUnlocked: isDefault, itemId, name, recipeId });
-      }
+    if (!hasRecipe && isDefault) {
+      console.log(
+        `  Diagnostic: "${itemId}" has recipe_is_default but no recipe array or recipe_key — skipped`,
+      );
+      return;
     }
-  }
+
+    if (!hasRecipe) return;
+
+    const recipeKey = item.recipe_key as string | undefined;
+    const recipeId = recipeKey ?? itemId;
+    const name = (item.name as string | undefined) ?? itemId;
+
+    entries.push({ defaultUnlocked: isDefault, itemId, name, recipeId });
+  });
 
   return entries;
 }
@@ -898,6 +848,26 @@ function resolveScrollTarget(
 
 function sourceKey(s: RecipeSource): string {
   return JSON.stringify(s, Object.keys(s).sort());
+}
+
+function forEachItem(
+  fiddle: ParsedGameData,
+  callback: (itemId: string, item: Record<string, unknown>, subCategoryKey: string) => void,
+): void {
+  const items = fiddle.items as
+    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
+  if (!items) return;
+
+  for (const subCategories of Object.values(items)) {
+    if (typeof subCategories !== "object" || subCategories === null) continue;
+    for (const [subCatKey, categoryItems] of Object.entries(subCategories)) {
+      if (typeof categoryItems !== "object" || categoryItems === null) continue;
+      for (const [itemId, item] of Object.entries(categoryItems)) {
+        if (itemId === "default" || typeof item !== "object" || item === null) continue;
+        callback(itemId, item, subCatKey);
+      }
+    }
+  }
 }
 
 function validateRecipeIdCollisions(
