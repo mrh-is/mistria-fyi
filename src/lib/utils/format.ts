@@ -1,4 +1,4 @@
-import type { Recipe, Season, SourceType, Weather } from "$lib/types/tracker-data.js";
+import type { RecipeSource, Season, SourceType, Weather } from "$lib/types/tracker-data.js";
 
 const SEASON_LABEL: Record<Season, string> = {
   fall: "Fall",
@@ -70,52 +70,67 @@ export function locationLabel(location: string): string {
 }
 
 export function recipeSourceLabel(
-  recipe: Recipe,
-  questNames: Record<string, string>,
-  itemNames: Record<string, string>,
+  source: RecipeSource,
+  lookups: {
+    biomeNames?: Record<string, string>;
+    itemNames?: Record<string, string>;
+    questNames?: Record<string, string>;
+  },
 ): string {
-  if (recipe.defaultUnlocked) return "Default recipe";
-
-  if (recipe.sources.length === 0) return "";
-  const source = recipe.sources[0];
-
   switch (source.type) {
-    case "chicken_statue":
-      return "Chicken statue";
-    case "cutscene":
-      return titleCase(source.cutscene);
+    case "beach_cave_chest":
+      return "Treasure chest in the Beach Cave";
+    case "chicken_statue": {
+      const beadLabel: Record<string, string> = { large: "100", small: "10" };
+      return `Chicken Statue (${beadLabel[source.tier]} beads)`;
+    }
+    case "default":
+      return "Default recipe";
     case "dragon_forge":
       return "Dragon forge";
+    case "dungeon_chest": {
+      const biomeName = lookups.biomeNames?.[source.biomeId] ?? titleCase(source.biomeId);
+      const perkName = titleCase(source.perk);
+      return `Treasure chest in ${biomeName} with ${perkName} perk`;
+    }
     case "festival":
-      return `${titleCase(source.festivalId)} — ${titleCase(source.storeId)}`;
+      return `${titleCase(source.festivalId)} festival — ${titleCase(source.storeId)}`;
     case "letter":
-      if (source.trigger === "shipped_item" && source.triggerItemId) {
-        const name = itemNames[source.triggerItemId] ?? titleCase(source.triggerItemId);
+      if (source.trigger === "shipped_item") {
+        const name = lookups.itemNames?.[source.triggerItemId] ?? titleCase(source.triggerItemId);
         return `Ship ${name}`;
       }
-      if (source.trigger === "donated_item" && source.triggerItemId) {
-        const name = itemNames[source.triggerItemId] ?? titleCase(source.triggerItemId);
+      if (source.trigger === "donated_item") {
+        const name = lookups.itemNames?.[source.triggerItemId] ?? titleCase(source.triggerItemId);
         return `Donate ${name}`;
       }
       return "Letter";
-    case "mine_zone":
-      return "Mine zone discovery";
-    case "museum_donation":
-      return `${titleCase(source.wingId)} wing donations`;
+    case "museum_donation": {
+      const wingName = titleCase(source.wingId);
+      return `Complete ${String(source.setCount)} sets in the ${wingName} wing`;
+    }
     case "perk":
-      return titleCase(source.perk);
+      return `${titleCase(source.perk)} perk`;
+    case "quest": {
+      const name = lookups.questNames?.[source.questId] ?? titleCase(source.questId);
+      return `Quest — ${name}`;
+    }
+    case "relationship":
+      return "Get to 10 hearts with a dateable character";
     case "renown":
-      return "Renown reward";
-    case "quest":
-      return questNames[source.questId] ?? titleCase(source.questId);
+      return `Town rank level ${String(source.level)}`;
     case "scroll_bundle":
-      return `${titleCase(source.storeId)} scroll bundle`;
+      return `Purchase ${source.bundleName} from ${titleCase(source.storeId)}`;
     case "store":
-      return titleCase(source.storeId);
+      return `Purchase from ${titleCase(source.storeId)}`;
     case "treasure_chest":
-      return "Fishing treasure chest";
-    case "wishing_well":
-      return "Wishing well";
+      return `Fish up a ${titleCase(source.chestTier)} Treasure Box`;
+    case "upgrade":
+      return `Purchase ${source.upgradeName} from the carpenter`;
+    case "wishing_well": {
+      const ticketLabel: Record<string, string> = { large: "500", small: "100" };
+      return `Wishing Well (${ticketLabel[source.tier]}t)`;
+    }
   }
 }
 

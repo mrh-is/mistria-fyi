@@ -156,9 +156,9 @@ describe("extractRecipes", () => {
     const recipe = recipes["sapling_chair" as RecipeId];
     expect(recipe.sources).toEqual([
       {
+        type: "quest",
         questId: "green_sapling_surprise",
         questType: "stillwell_challenges",
-        type: "quest",
       },
     ]);
   });
@@ -190,7 +190,7 @@ describe("extractRecipes", () => {
     const recipe = recipes["vegetable_soup" as RecipeId];
     expect(recipe).toBeDefined();
     expect(recipe.sources).toEqual([
-      { questId: "cooking_101", questType: "story_quests", type: "quest" },
+      { type: "quest", questId: "cooking_101", questType: "story_quests" },
     ]);
     expect(recipe.memberItemIds).toEqual(["vegetable_soup"]);
     expect(recipe.presentations).toEqual([{ itemIds: ["vegetable_soup"], name: "Vegetable Soup" }]);
@@ -278,7 +278,7 @@ describe("extractRecipes", () => {
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["tomato_soup" as RecipeId];
     expect(recipe.sources).toEqual([
-      { trigger: "shipped_item", triggerItemId: "tomato", type: "letter" },
+      { type: "letter", trigger: "shipped_item", triggerItemId: "tomato" },
     ]);
   });
 
@@ -304,7 +304,7 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["fancy_lamp" as RecipeId];
-    expect(recipe.sources).toEqual([{ storeId: "furniture_store", type: "store" }]);
+    expect(recipe.sources).toEqual([{ type: "store", storeId: "furniture_store" }]);
   });
 
   it("maps store include_recipe=true to store source", () => {
@@ -329,7 +329,7 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["bookshelf" as RecipeId];
-    expect(recipe.sources).toEqual([{ storeId: "general_store", type: "store" }]);
+    expect(recipe.sources).toEqual([{ type: "store", storeId: "general_store" }]);
   });
 
   it("maps store seasonal stock scrolls via categories[]", () => {
@@ -354,7 +354,7 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["summer_chair" as RecipeId];
-    expect(recipe.sources).toEqual([{ storeId: "seasonal_store", type: "store" }]);
+    expect(recipe.sources).toEqual([{ type: "store", storeId: "seasonal_store" }]);
   });
 
   it("maps museum wing crafting_scroll to museum_donation source", () => {
@@ -380,7 +380,7 @@ describe("extractRecipes", () => {
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["fossil_table" as RecipeId];
     expect(recipe.sources).toEqual([
-      { setCount: 1, type: "museum_donation", wingId: "archaeology" },
+      { type: "museum_donation", setCount: 1, wingId: "archaeology" },
     ]);
   });
 
@@ -406,7 +406,7 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["egg_dish" as RecipeId];
-    expect(recipe.sources).toEqual([{ tier: "small", type: "chicken_statue" }]);
+    expect(recipe.sources).toEqual([{ type: "chicken_statue", tier: "small" }]);
   });
 
   it("maps fishing chest entries with kind=recipe to treasure_chest source", () => {
@@ -433,7 +433,7 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["fish_stew" as RecipeId];
-    expect(recipe.sources).toEqual([{ type: "treasure_chest" }]);
+    expect(recipe.sources).toEqual([{ type: "treasure_chest", chestTier: "bronze" }]);
   });
 
   it("maps wishing well recipe_scroll to wishing_well source", () => {
@@ -458,7 +458,7 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["wish_cake" as RecipeId];
-    expect(recipe.sources).toEqual([{ tier: "large", type: "wishing_well" }]);
+    expect(recipe.sources).toEqual([{ type: "wishing_well", tier: "large" }]);
   });
 
   it("maps festival recipe_scroll via stocks[storeId] to festival source", () => {
@@ -486,7 +486,7 @@ describe("extractRecipes", () => {
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["festival_treat" as RecipeId];
     expect(recipe.sources).toEqual([
-      { festivalId: "harvest", storeId: "nora_souvenir_stall", type: "festival" },
+      { type: "festival", festivalId: "harvest", storeId: "nora_souvenir_stall" },
     ]);
   });
 
@@ -519,7 +519,7 @@ describe("extractRecipes", () => {
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["cave_stew" as RecipeId];
     expect(recipe.sources).toEqual([
-      { biomeId: "biome_0", perk: "dungeon_delicacies", type: "dungeon_chest" },
+      { type: "dungeon_chest", biomeId: "biome_0", perk: "dungeon_delicacies" },
     ]);
   });
 
@@ -567,7 +567,11 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["rare_fish" as RecipeId];
-    expect(recipe.sources).toEqual([{ type: "treasure_chest" }]);
+    expect(recipe.sources).toEqual([
+      { type: "treasure_chest", chestTier: "bronze" },
+      { type: "treasure_chest", chestTier: "gold" },
+      { type: "treasure_chest", chestTier: "silver" },
+    ]);
   });
 
   it("sorts sources by type then by detail fields", () => {
@@ -604,8 +608,8 @@ describe("extractRecipes", () => {
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["multi_source_item" as RecipeId];
     expect(recipe.sources[0].type).toBe("quest");
-    expect(recipe.sources[1]).toEqual({ storeId: "aaa_store", type: "store" });
-    expect(recipe.sources[2]).toEqual({ storeId: "zzz_store", type: "store" });
+    expect(recipe.sources[1]).toEqual({ type: "store", storeId: "aaa_store" });
+    expect(recipe.sources[2]).toEqual({ type: "store", storeId: "zzz_store" });
   });
 
   it("creates separate presentations for items with different names under one recipe_key", () => {
@@ -688,7 +692,7 @@ describe("extractRecipes", () => {
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["widget" as RecipeId];
     expect(recipe.sources).toEqual([
-      { questId: "widget_quest", questType: "fetch_quests", type: "quest" },
+      { type: "quest", questId: "widget_quest", questType: "fetch_quests" },
     ]);
   });
 
@@ -716,7 +720,7 @@ describe("extractRecipes", () => {
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["rare_stew" as RecipeId];
     expect(recipe.sources).toEqual([
-      { trigger: "donated_item", triggerItemId: "ancient_fossil", type: "letter" },
+      { type: "letter", trigger: "donated_item", triggerItemId: "ancient_fossil" },
     ]);
   });
 });

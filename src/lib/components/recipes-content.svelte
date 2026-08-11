@@ -22,17 +22,17 @@
     setTimeout(() => recentlyCompleted.delete(recipeId), 1050);
   }
 
-  let questNames = $derived(
-    Object.fromEntries(
+  let sourceLookups = $derived({
+    biomeNames: Object.fromEntries(trackerData.mines.biomes.map((b) => [b.id, b.name])),
+    itemNames: Object.fromEntries(
+      Object.entries(trackerData.items).map(([id, item]) => [id, item.name]),
+    ),
+    questNames: Object.fromEntries(
       Object.values(trackerData.quests).flatMap((group) =>
         Object.entries(group).map(([id, q]) => [id, q.name]),
       ),
     ),
-  );
-
-  let itemNames = $derived(
-    Object.fromEntries(Object.entries(trackerData.items).map(([id, item]) => [id, item.name])),
-  );
+  });
 
   interface RecipeEntry {
     id: RecipeId;
@@ -50,18 +50,13 @@
         seen.add(item.recipeId);
         const recipe = trackerData.recipes[item.recipeId];
         if (!recipe) continue;
-        const sourceLabels = recipe.defaultUnlocked
-          ? ["Default recipe"]
-          : recipe.sources.map((s) => recipeSourceLabel(recipe, questNames, itemNames)).length > 0
-            ? recipe.sources.map((_, i) => {
-                const single = { ...recipe, sources: [recipe.sources[i]] };
-                return recipeSourceLabel(single, questNames, itemNames);
-              })
-            : [];
+        const sourceLabels = recipe.sources
+          .map((s) => recipeSourceLabel(s, sourceLookups))
+          .filter(Boolean);
         entries.push({
           id: item.recipeId as RecipeId,
           name: item.name,
-          sourceLabels: sourceLabels.filter(Boolean),
+          sourceLabels,
         });
       }
       if (entries.length > 0) {

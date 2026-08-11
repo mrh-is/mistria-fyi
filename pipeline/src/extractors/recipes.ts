@@ -173,7 +173,7 @@ function collectBiomeFurnitureSources(
 
       if (result.has(recipeId)) continue;
       const sources = result.get(recipeId) ?? [];
-      sources.push({ perk: "natural_beauty", type: "perk" });
+      sources.push({ type: "perk", perk: "natural_beauty" });
       result.set(recipeId, sources);
     }
   }
@@ -210,9 +210,8 @@ function collectChickenStatueSources(
   const common = chickenStatue.common as Record<string, unknown> | undefined;
   if (!common) return result;
 
-  const rollTiers: ["small_roll" | "medium_roll" | "large_roll", "large" | "medium" | "small"][] = [
+  const rollTiers: [string, "large" | "small"][] = [
     ["small_roll", "small"],
-    ["medium_roll", "medium"],
     ["large_roll", "large"],
   ];
   for (const [rollKey, tier] of rollTiers) {
@@ -234,7 +233,7 @@ function collectChickenStatueSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ tier, type: "chicken_statue" });
+      sources.push({ type: "chicken_statue", tier });
       result.set(recipeId, sources);
     }
   }
@@ -272,7 +271,7 @@ function collectDungeonDelicacySources(
         if (!recipeId) continue;
 
         const sources = result.get(recipeId) ?? [];
-        sources.push({ biomeId: biomeId as BiomeId, perk: arrayKey, type: "dungeon_chest" });
+        sources.push({ type: "dungeon_chest", biomeId: biomeId as BiomeId, perk: arrayKey });
         result.set(recipeId, sources);
       }
     }
@@ -341,7 +340,7 @@ function collectFestivalScrollSources(
         if (!recipeId) continue;
 
         const sources = result.get(recipeId) ?? [];
-        sources.push({ festivalId, storeId: vendorStoreId, type: "festival" });
+        sources.push({ type: "festival", festivalId, storeId: vendorStoreId });
         result.set(recipeId, sources);
       }
     }
@@ -363,7 +362,7 @@ function collectFishingChestSources(
   const chestTables = fishing.chest_tables as Record<string, unknown> | undefined;
   if (!chestTables) return result;
 
-  for (const [, tierData] of Object.entries(chestTables)) {
+  for (const [chestTier, tierData] of Object.entries(chestTables)) {
     if (typeof tierData !== "object" || tierData === null) continue;
     const tierObj = tierData as Record<string, unknown>;
     const items = Array.isArray(tierObj.items) ? tierObj.items : [];
@@ -380,12 +379,12 @@ function collectFishingChestSources(
         scrollTarget,
         itemIdToRecipeId,
         knownRecipeIds,
-        "fishing/chest_tables",
+        `fishing/chest_tables/${chestTier}`,
       );
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ type: "treasure_chest" });
+      sources.push({ type: "treasure_chest", chestTier });
       result.set(recipeId, sources);
     }
   }
@@ -426,28 +425,37 @@ function collectLetterScrollSources(
       );
       if (!recipeId) continue;
 
-      let trigger: "donated_item" | "shipped_item" | undefined;
-      let triggerItemId: string | undefined;
+      const sources = result.get(recipeId) ?? [];
 
       if (requirements) {
         if (typeof requirements.shipped_item === "string") {
-          trigger = "shipped_item";
-          triggerItemId = requirements.shipped_item;
-        } else if (typeof requirements.donated_item === "string") {
-          trigger = "donated_item";
-          triggerItemId = requirements.donated_item;
+          sources.push({
+            type: "letter",
+            trigger: "shipped_item",
+            triggerItemId: requirements.shipped_item as ItemId,
+          });
+          result.set(recipeId, sources);
+          continue;
+        }
+        if (typeof requirements.donated_item === "string") {
+          sources.push({
+            type: "letter",
+            trigger: "donated_item",
+            triggerItemId: requirements.donated_item as ItemId,
+          });
+          result.set(recipeId, sources);
+          continue;
+        }
+        if (requirements.reached_date !== undefined) {
+          sources.push({ type: "letter", trigger: "reached_date" });
+          result.set(recipeId, sources);
+          continue;
         }
       }
 
-      const sources = result.get(recipeId) ?? [];
-      if (trigger && triggerItemId) {
-        sources.push({ trigger, triggerItemId: triggerItemId as ItemId, type: "letter" });
-      } else {
-        console.warn(
-          `  Warning: letter "${letterId}" has recipe_scroll but no recognized requirement trigger — adding generic letter source`,
-        );
-        sources.push({ type: "letter" });
-      }
+      console.warn(
+        `  Warning: letter "${letterId}" has recipe_scroll but no recognized requirement trigger — skipping`,
+      );
       result.set(recipeId, sources);
     }
   }
@@ -494,7 +502,7 @@ function collectMuseumScrollSources(
         if (!recipeId) continue;
 
         const sources = result.get(recipeId) ?? [];
-        sources.push({ setCount, type: "museum_donation", wingId: wingId as WingId });
+        sources.push({ type: "museum_donation", setCount, wingId: wingId as WingId });
         result.set(recipeId, sources);
       }
     }
@@ -527,7 +535,7 @@ function collectPerkSources(
 
     const recipeId = itemIdToRecipeId.get(itemId);
     if (recipeId && !result.has(recipeId)) {
-      result.set(recipeId, [{ perk, type: "perk" }]);
+      result.set(recipeId, [{ type: "perk", perk }]);
     }
   });
 
@@ -599,7 +607,7 @@ function collectScrollBundleSources(
         const recipeId = itemIdToRecipeId.get(itemId);
         if (recipeId && !result.has(recipeId)) {
           result.set(recipeId, [
-            { bundleName: info.bundleName, storeId: info.storeId, type: "scroll_bundle" },
+            { type: "scroll_bundle", bundleName: info.bundleName, storeId: info.storeId },
           ]);
         }
       }
@@ -647,9 +655,9 @@ function collectQuestScrollSources(
 
         const sources = result.get(recipeId) ?? [];
         sources.push({
+          type: "quest",
           questId: questId as QuestId,
           questType,
-          type: "quest",
         });
         result.set(recipeId, sources);
       }
@@ -678,7 +686,7 @@ function collectRenownRecipeSources(
     const recipeId = itemIdToRecipeId.get(itemId);
     if (!recipeId || result.has(recipeId)) continue;
 
-    result.set(recipeId, [{ level: i + 1, type: "renown" }]);
+    result.set(recipeId, [{ type: "renown", level: i + 1 }]);
   }
 
   return result;
@@ -762,7 +770,7 @@ function collectStoreScrollSources(
             );
             if (recipeId) {
               const sources = result.get(recipeId) ?? [];
-              sources.push({ storeId, type: "store" });
+              sources.push({ type: "store", storeId });
               result.set(recipeId, sources);
             }
             continue;
@@ -774,7 +782,7 @@ function collectStoreScrollSources(
             const recipeId = itemIdToRecipeId.get(itemId);
             if (!recipeId) continue;
             const sources = result.get(recipeId) ?? [];
-            sources.push({ storeId, type: "store" });
+            sources.push({ type: "store", storeId });
             result.set(recipeId, sources);
           }
         }
@@ -798,9 +806,8 @@ function collectWishingWellSources(
   const common = wishingWell.common as Record<string, unknown> | undefined;
   if (!common) return result;
 
-  const rollTiers: ["small_roll" | "medium_roll" | "large_roll", "large" | "medium" | "small"][] = [
+  const rollTiers: [string, "large" | "small"][] = [
     ["small_roll", "small"],
-    ["medium_roll", "medium"],
     ["large_roll", "large"],
   ];
   for (const [rollKey, tier] of rollTiers) {
@@ -822,7 +829,7 @@ function collectWishingWellSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ tier, type: "wishing_well" });
+      sources.push({ type: "wishing_well", tier });
       result.set(recipeId, sources);
     }
   }
