@@ -46,8 +46,7 @@ describe("evaluateExpressions", () => {
         for (const [itemId, item] of Object.entries(fileItems)) {
           if (typeof item !== "object" || item === null) continue;
           const value = (item as Record<string, unknown>).value as
-            | Record<string, unknown>
-            | undefined;
+            Record<string, unknown> | undefined;
           if (!value) continue;
           if (typeof value.bin === "string") remaining.push(`${itemId}.value.bin = "${value.bin}"`);
           if (typeof value.store === "string")

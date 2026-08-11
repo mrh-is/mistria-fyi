@@ -1,3 +1,8 @@
+/**
+ * The pipeline parses, evaluates in place, extracts, applies post-extraction quest gates, then
+ * assembles and serializes output. Writes begin only after every transformation succeeds.
+ * --parse-only is a v1.0.2-specific smoke test that exits before evaluation.
+ */
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,12 +27,6 @@ import { extractSources } from "./extractors/sources.js";
 import { parseFiddle } from "./parse-fiddle.js";
 
 import type { TrackerData } from "$lib/types/tracker-data.js";
-
-/**
- * The pipeline parses, evaluates in place, extracts, applies post-extraction quest gates, then
- * assembles and serializes output. Writes begin only after every transformation succeeds.
- * --parse-only is a v1.0.2-specific smoke test that exits before evaluation.
- */
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PIPELINE_ROOT = resolve(__dirname, "..");
 const OUTPUT_DIR = resolve(PIPELINE_ROOT, "output");

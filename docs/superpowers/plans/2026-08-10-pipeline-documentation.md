@@ -26,8 +26,8 @@ Prettier.
 - Preserve the unrelated working-tree change in `.gitignore`; never stage or modify it.
 - Do not commit implementation changes until the user reviews and explicitly approves the complete
   diff. Task boundaries use uncommitted review checkpoints instead of commits.
-- Use smart quotes, sentence-case headings, US spelling, serial commas, ampersands for close compound
-  pairs, and no em dashes in prose documentation.
+- Use smart quotes, sentence-case headings, US spelling, serial commas, ampersands for close
+  compound pairs, and no em dashes in prose documentation.
 
 ---
 
@@ -96,20 +96,18 @@ Create `pipeline/README.md` with these opening sections and facts:
 ```markdown
 # Data pipeline
 
-The pipeline converts Fields of Mistria’s native TOML namespaces into the smaller
-`TrackerData` model consumed by Harvest Helper. It deliberately ignores game domains the tracker
-does not claim, but many claimed fields are normalized or omitted according to extractor-specific
-rules documented below.
+The pipeline converts Fields of Mistria’s native TOML namespaces into the smaller `TrackerData`
+model consumed by Harvest Helper. It deliberately ignores game domains the tracker does not claim,
+but many claimed fields are normalized or omitted according to extractor-specific rules documented
+below.
 
 ## Setup & commands
 
-The input argument is an assets root containing `fiddle/`, not the `fiddle/` directory itself.
-Game assets are ignored by Git and are not present in a fresh clone.
+The input argument is an assets root containing `fiddle/`, not the `fiddle/` directory itself. Game
+assets are ignored by Git and are not present in a fresh clone.
 
-pnpm run pipeline -- /path/to/assets
-MISTRIA_ASSETS=/path/to/assets pnpm run pipeline
-pnpm run pipeline -- /path/to/assets --parse-only
-pnpm exec vitest run pipeline/
+pnpm run pipeline -- /path/to/assets MISTRIA_ASSETS=/path/to/assets pnpm run pipeline pnpm run
+pipeline -- /path/to/assets --parse-only pnpm exec vitest run pipeline/
 ```
 
 State that `--parse-only` currently enforces the v1.0.2 fixture’s 295 non-metadata files and three
@@ -186,8 +184,8 @@ Run:
 rtk rg -n "parse-only|sourceFileFor|flattenExprToRestrictions|predicateToRestriction|questGate|generatedAt" pipeline/src src/lib/types/tracker-data.ts
 ```
 
-Expected: Every behavior named in the guide has a corresponding implementation reference; the
-guide contains no promise of recipe tracking, complete requirement preservation, or bundled assets.
+Expected: Every behavior named in the guide has a corresponding implementation reference; the guide
+contains no promise of recipe tracking, complete requirement preservation, or bundled assets.
 
 - [ ] **Step 7: Review the guide checkpoint**
 
@@ -248,10 +246,15 @@ Replace the obsolete v0-era “Mapping strategy implemented” document with cur
 
 ```markdown
 # Quest-gate extraction
+
 ## Current meaning
+
 ## Direct evidence
+
 ## Attachment behavior
+
 ## Deferred inference
+
 ## Follow-up design
 ```
 
@@ -338,9 +341,9 @@ export interface SourceFieldLocation {
 }
 ```
 
-Keep `expectArray<T>()` and `expectStringArray()` runtime logic unchanged. Add a module comment stating
-that `expectArray<T>()` checks only the outer array shape; its type parameter describes the caller’s
-expected elements and is not runtime validation.
+Keep `expectArray<T>()` and `expectStringArray()` runtime logic unchanged. Add a module comment
+stating that `expectArray<T>()` checks only the outer array shape; its type parameter describes the
+caller’s expected elements and is not runtime validation.
 
 - [ ] **Step 2: Update context call sites**
 
@@ -424,8 +427,8 @@ Expected: No whitespace errors; leave the type refactor uncommitted for final us
 **Interfaces:**
 
 - Consumes: `ParsedGameData` and `sourceFileFor()` from Task 3.
-- Produces: The unchanged `evaluateExpressions(data: ParsedGameData): void` behavior with descriptive
-  internal state names.
+- Produces: The unchanged `evaluateExpressions(data: ParsedGameData): void` behavior with
+  descriptive internal state names.
 
 - [ ] **Step 1: Rename evaluator vocabulary**
 
@@ -529,8 +532,8 @@ export interface RequirementDefinitions {
 }
 ```
 
-Rename `ResolverState` to `RequirementResolutionContext`, `states` to
-`resolutionStateByName`, `nameStack` to `namedRequirementStack`, and `parts` to `conjuncts`.
+Rename `ResolverState` to `RequirementResolutionContext`, `states` to `resolutionStateByName`,
+`nameStack` to `namedRequirementStack`, and `parts` to `conjuncts`.
 
 Change `buildRequirementRegistry()` to `buildRequirementDefinitions()` and return the named fields
 above. This is an internal interface refactor; preserve registry classification and iteration.
@@ -545,7 +548,8 @@ Document these exact semantics:
 - A single-object `or` parses directly rather than gaining a redundant `any` wrapper.
 - Empty top-level definition tables identify primitive predicate names; nonempty tables identify
   named definitions.
-- Named references must be literal `true`, are expanded recursively, are memoized, and report cycles.
+- Named references must be literal `true`, are expanded recursively, are memoized, and report
+  cycles.
 - Unknown keys deliberately remain predicate leaves for forward compatibility; this layer does not
   schema-validate primitive payloads.
 
@@ -586,14 +590,14 @@ Place concise intent comments beside these losses and assumptions:
 - `reached_date` retains season only.
 - `Source.location` has type-dependent meaning.
 - Scroll records are counted and intentionally discarded.
-- Fish use `data.item ?? fishId`, small fish size is omitted, crop sources copy the seed’s first season
-  restriction, and festival season comes from a hard-coded ID map.
+- Fish use `data.item ?? fishId`, small fish size is omitted, crop sources copy the seed’s first
+  season restriction, and festival season comes from a hard-coded ID map.
 
 - [ ] **Step 5: Correct contradictory requirement test names**
 
 Rename “throws on unknown requirement names” to “preserves unknown keys as predicate leaves”. Rename
-`ctx` to `testSourceLocation` and `makeState` to `makeRequirementDefinitions`. Update type names only;
-do not add assertions.
+`ctx` to `testSourceLocation` and `makeState` to `makeRequirementDefinitions`. Update type names
+only; do not add assertions.
 
 - [ ] **Step 6: Run requirement & source verification**
 
@@ -664,8 +668,8 @@ and unknown ordered wing or set IDs are skipped.
 - [ ] **Step 4: Document NPC, quest, renown, & skill inclusion**
 
 - NPCs: Missing name, Boolean `dateable`, or complete birthday silently excludes the record.
-- Quests: The six allowlisted keys are TOML group/file names; request-board and registry siblings are
-  excluded.
+- Quests: The six allowlisted keys are TOML group/file names; request-board and registry siblings
+  are excluded.
 - Renown: Missing root returns 10 levels and no ranks; missing rank names become `Unknown`.
 - Skills: The `default` template is excluded; missing names use snake-case title conversion.
 

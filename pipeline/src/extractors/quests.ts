@@ -14,8 +14,7 @@ const QUEST_TYPES = [
 
 export function extractQuests(fiddle: ParsedGameData): TrackerData["quests"] {
   const quests = fiddle.quests as
-    | Record<string, Record<string, Record<string, unknown>>>
-    | undefined;
+    Record<string, Record<string, Record<string, unknown>>> | undefined;
   if (!quests) return {} as TrackerData["quests"];
 
   const result = {} as Record<string, Record<QuestId, { name: string; npc?: string }>>;

@@ -14,8 +14,8 @@ pnpm run dev
 ## Data pipeline
 
 The app is powered by `tracker-data.json`, generated from locally supplied Fields of Mistria TOML
-assets. The pipeline lives in `pipeline/`, runs via `tsx`, and expects an assets root that contains a
-`fiddle/` directory. Game assets are ignored by Git and are not present in a fresh clone. See the
+assets. The pipeline lives in `pipeline/`, runs via `tsx`, and expects an assets root that contains
+a `fiddle/` directory. Game assets are ignored by Git and are not present in a fresh clone. See the
 [pipeline guide](pipeline/README.md) for the maintained contracts & extractor details.
 
 ### Running the pipeline
@@ -66,14 +66,14 @@ tracker-data.json   Typed via src/lib/types/tracker-data.ts
 
 ## Scripts
 
-| Command            | Description                               |
-| ------------------ | ----------------------------------------- |
-| `pnpm run dev`      | Start dev server                          |
-| `pnpm run build`    | Production build (Cloudflare Pages)       |
-| `pnpm run preview`  | Preview production build locally          |
-| `pnpm run check`    | SvelteKit type checking                   |
-| `pnpm run lint`     | Prettier + ESLint                         |
-| `pnpm run lint:fix` | Auto-fix formatting and lint issues       |
+| Command                                | Description                                       |
+| -------------------------------------- | ------------------------------------------------- |
+| `pnpm run dev`                         | Start dev server                                  |
+| `pnpm run build`                       | Production build (Cloudflare Pages)               |
+| `pnpm run preview`                     | Preview production build locally                  |
+| `pnpm run check`                       | SvelteKit type checking                           |
+| `pnpm run lint`                        | Prettier + ESLint                                 |
+| `pnpm run lint:fix`                    | Auto-fix formatting and lint issues               |
 | `pnpm run pipeline -- /path/to/assets` | Generate tracker-data.json from local TOML assets |
 
 ## Tech stack

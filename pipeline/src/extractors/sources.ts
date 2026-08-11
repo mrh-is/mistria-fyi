@@ -80,96 +80,6 @@ function deduplicateSources(sources: Source[]): Source[] {
   });
 }
 
-function extractBugItems(fiddle: ParsedGameData, sourcesByTargetId: AcquisitionSourceIndex): void {
-  const bugs = fiddle.bugs as Record<string, Record<string, unknown>> | undefined;
-  if (!bugs) return;
-
-  for (const [bugId, data] of Object.entries(bugs)) {
-    if (bugId === "default") continue;
-
-    const restrictions: Restriction[] = [];
-
-    const seasons = parseSeasonsArray(data.seasons);
-    if (seasons) restrictions.push({ seasons, type: "season" });
-
-    const weathers = parseWeathersArray(data.weather);
-    if (weathers) restrictions.push({ type: "weather", weathers });
-
-    const hours = parseHours(data.hours);
-    if (hours) restrictions.push({ hours, type: "time" });
-
-    const locations = parseStringArray(data.locations);
-    const location = locations?.join(", ");
-
-    addSource(sourcesByTargetId, bugId, {
-      location,
-      restrictions: restrictions.length > 0 ? restrictions : undefined,
-      type: "bug_catch",
-    });
-  }
-}
-
-function extractRecipeSources(
-  fiddle: ParsedGameData,
-  sourcesByTargetId: AcquisitionSourceIndex,
-): void {
-  const items = fiddle.items as
-    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
-  if (!items) return;
-
-  const furniture = items.furniture;
-  if (furniture) {
-    for (const subCategory of Object.values(furniture)) {
-      for (const [itemId, item] of Object.entries(subCategory)) {
-        if (itemId === "default") continue;
-        if (typeof item !== "object" || item === null) continue;
-        if (item.recipe || item.recipe_key) {
-          addSource(sourcesByTargetId, itemId, { type: "craft" });
-        }
-      }
-    }
-  }
-
-  const other = items.other;
-  if (other?.cooked_dishes) {
-    for (const [itemId, item] of Object.entries(other.cooked_dishes)) {
-      if (itemId === "default") continue;
-      if (typeof item !== "object" || item === null) continue;
-      if (item.recipe) {
-        addSource(sourcesByTargetId, itemId, { type: "cook" });
-      }
-    }
-  }
-}
-
-function extractSeedAndSaplingSources(
-  fiddle: ParsedGameData,
-  sourcesByTargetId: AcquisitionSourceIndex,
-): void {
-  const items = fiddle.items as
-    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
-  if (!items?.other?.crops_and_forage) return;
-
-  for (const [itemId, item] of Object.entries(items.other.crops_and_forage)) {
-    if (itemId === "default") continue;
-    if (typeof item !== "object" || item === null) continue;
-
-    const tags = Array.isArray(item.tags)
-      ? (item.tags as unknown[]).filter((v): v is string => typeof v === "string")
-      : [];
-
-    if (tags.includes("seed")) {
-      const seasons = parseSeasonsArray(item.seasons);
-      addSource(sourcesByTargetId, itemId, {
-        restrictions: seasons ? [{ seasons, type: "season" }] : undefined,
-        type: "seed",
-      });
-    } else if (tags.includes("sapling")) {
-      addSource(sourcesByTargetId, itemId, { type: "sapling" });
-    }
-  }
-}
-
 function deriveCropSourcesFromSeeds(
   fiddle: ParsedGameData,
   sourcesByTargetId: AcquisitionSourceIndex,
@@ -210,6 +120,35 @@ function deriveCropSourcesFromSeeds(
   }
 
   console.log(`  Crop seasons: ${mapped} crops mapped from seeds`);
+}
+
+function extractBugItems(fiddle: ParsedGameData, sourcesByTargetId: AcquisitionSourceIndex): void {
+  const bugs = fiddle.bugs as Record<string, Record<string, unknown>> | undefined;
+  if (!bugs) return;
+
+  for (const [bugId, data] of Object.entries(bugs)) {
+    if (bugId === "default") continue;
+
+    const restrictions: Restriction[] = [];
+
+    const seasons = parseSeasonsArray(data.seasons);
+    if (seasons) restrictions.push({ seasons, type: "season" });
+
+    const weathers = parseWeathersArray(data.weather);
+    if (weathers) restrictions.push({ type: "weather", weathers });
+
+    const hours = parseHours(data.hours);
+    if (hours) restrictions.push({ hours, type: "time" });
+
+    const locations = parseStringArray(data.locations);
+    const location = locations?.join(", ");
+
+    addSource(sourcesByTargetId, bugId, {
+      location,
+      restrictions: restrictions.length > 0 ? restrictions : undefined,
+      type: "bug_catch",
+    });
+  }
 }
 
 function extractFestivalStockSources(
@@ -420,6 +359,39 @@ function extractQuestRewards(
   }
 }
 
+function extractRecipeSources(
+  fiddle: ParsedGameData,
+  sourcesByTargetId: AcquisitionSourceIndex,
+): void {
+  const items = fiddle.items as
+    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
+  if (!items) return;
+
+  const furniture = items.furniture;
+  if (furniture) {
+    for (const subCategory of Object.values(furniture)) {
+      for (const [itemId, item] of Object.entries(subCategory)) {
+        if (itemId === "default") continue;
+        if (typeof item !== "object" || item === null) continue;
+        if (item.recipe || item.recipe_key) {
+          addSource(sourcesByTargetId, itemId, { type: "craft" });
+        }
+      }
+    }
+  }
+
+  const other = items.other;
+  if (other?.cooked_dishes) {
+    for (const [itemId, item] of Object.entries(other.cooked_dishes)) {
+      if (itemId === "default") continue;
+      if (typeof item !== "object" || item === null) continue;
+      if (item.recipe) {
+        addSource(sourcesByTargetId, itemId, { type: "cook" });
+      }
+    }
+  }
+}
+
 function extractRenownRewards(
   fiddle: ParsedGameData,
   sourcesByTargetId: AcquisitionSourceIndex,
@@ -435,6 +407,34 @@ function extractRenownRewards(
     if (!targetId) continue;
 
     addSource(sourcesByTargetId, targetId, { type: "renown" });
+  }
+}
+
+function extractSeedAndSaplingSources(
+  fiddle: ParsedGameData,
+  sourcesByTargetId: AcquisitionSourceIndex,
+): void {
+  const items = fiddle.items as
+    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
+  if (!items?.other?.crops_and_forage) return;
+
+  for (const [itemId, item] of Object.entries(items.other.crops_and_forage)) {
+    if (itemId === "default") continue;
+    if (typeof item !== "object" || item === null) continue;
+
+    const tags = Array.isArray(item.tags)
+      ? (item.tags as unknown[]).filter((v): v is string => typeof v === "string")
+      : [];
+
+    if (tags.includes("seed")) {
+      const seasons = parseSeasonsArray(item.seasons);
+      addSource(sourcesByTargetId, itemId, {
+        restrictions: seasons ? [{ seasons, type: "season" }] : undefined,
+        type: "seed",
+      });
+    } else if (tags.includes("sapling")) {
+      addSource(sourcesByTargetId, itemId, { type: "sapling" });
+    }
   }
 }
 
@@ -568,49 +568,6 @@ function processStoreEntry(
   return 0;
 }
 
-function projectRequirementsToRestrictions(
-  requirements: unknown,
-  namedRequirements: NamedRequirementDefinitions,
-  primitivePredicates: Set<string>,
-  storeId: string,
-  entityId: string,
-  storeSourceFile: string,
-): Restriction[] {
-  const sourceLocation = {
-    entityId: `${storeId}/${entityId}`,
-    fieldPath: "requirements",
-    sourcePath: storeSourceFile,
-  };
-  const expression = parseRequirements(
-    requirements,
-    namedRequirements,
-    primitivePredicates,
-    sourceLocation,
-  );
-  return projectRequirementExpressionToFlatRestrictions(expression);
-}
-
-function projectRequirementExpressionToFlatRestrictions(
-  expression: RequirementExpression,
-): Restriction[] {
-  if ("all" in expression) {
-    // `all` is flattened as an implicit conjunction.
-    return expression.all.flatMap(projectRequirementExpressionToFlatRestrictions);
-  }
-  if ("any" in expression) {
-    // Entire `any` branches are discarded because flat restrictions cannot represent alternatives.
-    return [];
-  }
-  if ("not" in expression) {
-    // Entire `not` branches are discarded because flat restrictions cannot represent negation.
-    return [];
-  }
-  if ("predicate" in expression) {
-    return predicateToRestriction(expression.predicate, expression.value);
-  }
-  return [];
-}
-
 function predicateToRestriction(predicate: string, value: unknown): Restriction[] {
   switch (predicate) {
     case "has_perk":
@@ -653,6 +610,49 @@ function predicateToRestriction(predicate: string, value: unknown): Restriction[
       // Unsupported predicates return no restriction.
       return [];
   }
+}
+
+function projectRequirementExpressionToFlatRestrictions(
+  expression: RequirementExpression,
+): Restriction[] {
+  if ("all" in expression) {
+    // `all` is flattened as an implicit conjunction.
+    return expression.all.flatMap(projectRequirementExpressionToFlatRestrictions);
+  }
+  if ("any" in expression) {
+    // Entire `any` branches are discarded because flat restrictions cannot represent alternatives.
+    return [];
+  }
+  if ("not" in expression) {
+    // Entire `not` branches are discarded because flat restrictions cannot represent negation.
+    return [];
+  }
+  if ("predicate" in expression) {
+    return predicateToRestriction(expression.predicate, expression.value);
+  }
+  return [];
+}
+
+function projectRequirementsToRestrictions(
+  requirements: unknown,
+  namedRequirements: NamedRequirementDefinitions,
+  primitivePredicates: Set<string>,
+  storeId: string,
+  entityId: string,
+  storeSourceFile: string,
+): Restriction[] {
+  const sourceLocation = {
+    entityId: `${storeId}/${entityId}`,
+    fieldPath: "requirements",
+    sourcePath: storeSourceFile,
+  };
+  const expression = parseRequirements(
+    requirements,
+    namedRequirements,
+    primitivePredicates,
+    sourceLocation,
+  );
+  return projectRequirementExpressionToFlatRestrictions(expression);
 }
 
 function parseHours(hours: unknown): [number, number] | undefined {

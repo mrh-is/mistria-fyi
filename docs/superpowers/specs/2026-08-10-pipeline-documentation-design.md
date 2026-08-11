@@ -107,8 +107,8 @@ pipeline scope.
 The pipeline v2 design and implementation plan will remain as historical design artifacts. Each will
 receive a clear status notice pointing readers to `pipeline/README.md` for current behavior. False
 current-tense scope statements will be corrected where they would otherwise mislead maintainers,
-especially around recipe tracking, localization, fixture distribution, unknown requirement keys,
-and strict processed-data validation.
+especially around recipe tracking, localization, fixture distribution, unknown requirement keys, and
+strict processed-data validation.
 
 `pipeline/QUEST-GATES.md` will be rewritten as a current-state document. It will distinguish direct
 item-reward evidence from deferred animal, spell, store, progression, and recipe inference, and it
@@ -116,8 +116,8 @@ will link to the follow-up quest-gate design for future work.
 
 ## Behavioral recommendations
 
-The maintainer guide will record the following implementation-ready briefs without acting on them
-in this pass. Each brief identifies the current behavior, affected code, desired result, constraints,
+The maintainer guide will record the following implementation-ready briefs without acting on them in
+this pass. Each brief identifies the current behavior, affected code, desired result, constraints,
 and evidence required for a later agent to complete it independently.
 
 ### Make tests portable
@@ -126,8 +126,8 @@ and evidence required for a later agent to complete it independently.
   requirement tests read `pipeline/input/assets/`. A fresh clone therefore cannot run the complete
   pipeline test suite. The local v1.0.2 assets occupy roughly 972 MB and cannot be assumed to be
   distributable.
-- **Affected files:** `.gitignore`, `pipeline/src/*.test.ts`, pipeline test helpers, and the pipeline
-  setup documentation.
+- **Affected files:** `.gitignore`, `pipeline/src/*.test.ts`, pipeline test helpers, and the
+  pipeline setup documentation.
 - **Desired result:** Either add a small, synthetic, distributable fixture containing only the TOML
   relationships each test exercises, or add an explicit asset-provisioning mechanism that skips
   fixture-dependent tests with an actionable message when assets are absent. Prefer synthetic
@@ -165,16 +165,16 @@ and evidence required for a later agent to complete it independently.
   lookup and display consumers, and generated-data contract tests.
 - **Desired result:** Introduce a truthful acquisition-target identifier and a discriminated source
   union with source-specific identity fields such as `storeId`, `questId`, or `monsterId`.
-- **Constraints:** Inventory every current source key and location interpretation before changing the
-  schema. Preserve targets that are useful even when they are not almanac items.
+- **Constraints:** Inventory every current source key and location interpretation before changing
+  the schema. Preserve targets that are useful even when they are not almanac items.
 - **Verification:** A generated-data contract test classifies every source target and proves that
   every source variant carries the identifier required by its discriminator.
 
 ### Strengthen restriction types
 
-- **Current behavior:** `Restriction` is one permissive interface with optional fields, so impossible
-  combinations type-check. Several generated restriction variants are informational because the
-  availability engine and badge UI do not consume them.
+- **Current behavior:** `Restriction` is one permissive interface with optional fields, so
+  impossible combinations type-check. Several generated restriction variants are informational
+  because the availability engine and badge UI do not consume them.
 - **Affected files:** `src/lib/types/tracker-data.ts`, `pipeline/src/extractors/sources.ts`,
   `src/lib/engine/availability.ts`, restriction UI components, and their tests.
 - **Desired result:** Replace `Restriction` with a discriminated union whose required payload is
@@ -190,8 +190,8 @@ and evidence required for a later agent to complete it independently.
 - **Current behavior:** The design says processed data fails fast, while several extractors silently
   skip missing roots, malformed entries, incomplete NPCs, unknown ordered IDs, unsupported stock
   entries, and other partial shapes.
-- **Affected files:** Every file in `pipeline/src/extractors/`, `pipeline/src/data-shapes.ts`, parser
-  provenance helpers, and extractor tests.
+- **Affected files:** Every file in `pipeline/src/extractors/`, `pipeline/src/data-shapes.ts`,
+  parser provenance helpers, and extractor tests.
 - **Desired result:** Create a field-by-field policy distinguishing optional data, ignored domains,
   recoverable omissions, and fatal malformed claimed data. Apply shared validators only after the
   policy is explicit.
@@ -210,21 +210,23 @@ and evidence required for a later agent to complete it independently.
   default smoke test should validate structural invariants; an explicit v1.0.2 profile may retain
   the 295-file and representative-path assertions.
 - **Constraints:** Preserve a strict regression check for the canonical v1.0.2 integration fixture.
-- **Verification:** Synthetic assets pass the generic parse-only command, the v1.0.2 profile enforces
-  295 files and representative paths, and a mismatched profile fails with an actionable message.
+- **Verification:** Synthetic assets pass the generic parse-only command, the v1.0.2 profile
+  enforces 295 files and representative paths, and a mismatched profile fails with an actionable
+  message.
 
 ### Add contract coverage
 
-- **Current behavior:** Parser tests omit metadata exclusion and provenance serialization;
-  evaluator tests mainly cover real-fixture happy paths; requirement tests omit malformed forms;
-  sources and quest gates have no focused tests. Two evaluator test names overstate their assertions.
+- **Current behavior:** Parser tests omit metadata exclusion and provenance serialization; evaluator
+  tests mainly cover real-fixture happy paths; requirement tests omit malformed forms; sources and
+  quest gates have no focused tests. Two evaluator test names overstate their assertions.
 - **Affected files:** Existing `pipeline/src/*.test.ts`, new extractor test files, and shared
   synthetic-fixture helpers.
 - **Desired result:** Add small contract tests for parser collisions and provenance, evaluator
   mutation and failures, requirement normalization and malformed input, lossy source projection,
   source deduplication, and direct item-reward quest gates.
-- **Constraints:** Tests must not require private game assets unless explicitly marked as integration
-  tests. Assert exact representative outputs rather than merely asserting that code does not throw.
+- **Constraints:** Tests must not require private game assets unless explicitly marked as
+  integration tests. Assert exact representative outputs rather than merely asserting that code does
+  not throw.
 - **Verification:** Every documented pipeline invariant has a test whose name and assertion describe
   the same behavior, and the unit suite passes without `pipeline/input/assets/`.
 
@@ -237,8 +239,9 @@ and evidence required for a later agent to complete it independently.
   expressions, rejecting malformed or non-finite multipliers before evaluation.
 - **Constraints:** Confirm every expression in supported fixtures conforms to the grammar. Keep the
   two supported expression forms and existing rounding semantics unchanged.
-- **Verification:** Tests accept integer and decimal multipliers used by fixtures and reject repeated
-  decimal points, empty numeric tokens, non-finite values, and trailing text with source context.
+- **Verification:** Tests accept integer and decimal multipliers used by fixtures and reject
+  repeated decimal points, empty numeric tokens, non-finite values, and trailing text with source
+  context.
 
 ## Verification
 

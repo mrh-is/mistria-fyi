@@ -62,8 +62,7 @@ const TRACKED_QUEST_GROUP_KEYS = [
 
 export function extractQuestGates(fiddle: ParsedGameData): QuestGateIndex {
   const questGroups = fiddle.quests as
-    | Record<string, Record<string, Record<string, unknown>>>
-    | undefined;
+    Record<string, Record<string, Record<string, unknown>>> | undefined;
 
   const directRewardQuestsByItemId: Record<string, Set<QuestId>> = {};
 

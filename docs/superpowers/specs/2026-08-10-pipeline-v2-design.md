@@ -9,8 +9,8 @@
 Mistria switched engines from GameMaker to a Rust-based engine between v0.13.4 and v1.0.2. The game
 data format changed from a single flat `fiddle.json` (slash-delimited path keys) to 295 non-metadata
 TOML files organized in a directory tree under `assets/fiddle/`. The v1.0.2 assets are local and
-ignored at `pipeline/input/assets/`, rather than checked into the repository. The existing TypeScript
-pipeline in `harvest-helper/pipeline/` was updated to read TOML instead of flat JSON.
+ignored at `pipeline/input/assets/`, rather than checked into the repository. The existing
+TypeScript pipeline in `harvest-helper/pipeline/` was updated to read TOML instead of flat JSON.
 
 **This is not a rewrite.** The existing pipeline structure remains, but the migration must add
 source-file provenance, expression evaluation, and a reusable requirements parser before updating
@@ -251,8 +251,8 @@ type RequirementExpr =
 
 The resolver recursively expands named requirements & reports cycles with the full name chain.
 Unknown requirement keys remain predicate leaves, and primitive payloads are not schema-validated.
-Sources map the predicates they support into `Restriction` values. The later quest-gating project can
-consume the same AST without duplicating requirement semantics.
+Sources map the predicates they support into `Restriction` values. The later quest-gating project
+can consume the same AST without duplicating requirement semantics.
 
 ### 7. Quest & recipe acquisition
 

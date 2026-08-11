@@ -50,15 +50,15 @@ SvelteKit 2 + Svelte 5 (runes), Tailwind 4, shadcn-svelte, deployed to Cloudflar
 
 ### Commands
 
-| Command            | What                                              |
-| ------------------ | ------------------------------------------------- |
-| `pnpm run dev`      | Dev server                                        |
-| `pnpm run build`    | Production build (Cloudflare Pages)               |
-| `pnpm run check`    | SvelteKit type checking                           |
-| `pnpm run lint`     | Prettier + ESLint                                 |
-| `pnpm run lint:fix` | Auto-fix lint issues                              |
+| Command                                | What                                                  |
+| -------------------------------------- | ----------------------------------------------------- |
+| `pnpm run dev`                         | Dev server                                            |
+| `pnpm run build`                       | Production build (Cloudflare Pages)                   |
+| `pnpm run check`                       | SvelteKit type checking                               |
+| `pnpm run lint`                        | Prettier + ESLint                                     |
+| `pnpm run lint:fix`                    | Auto-fix lint issues                                  |
 | `pnpm run pipeline -- /path/to/assets` | Regenerate `tracker-data.json` from local TOML assets |
-| `pnpm exec vitest run pipeline/` | Run pipeline unit tests |
+| `pnpm exec vitest run pipeline/`       | Run pipeline unit tests                               |
 
 ## Code Conventions
 

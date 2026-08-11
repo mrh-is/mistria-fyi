@@ -23,7 +23,8 @@ Use **pnpm** (not npm/npx) for all commands.
 
 - **Dev**: `pnpm run dev` | **Build**: `pnpm run build` | **Type-check**: `pnpm run check`
 - **Lint**: `pnpm run lint` (prettier + eslint) | **Fix**: `pnpm run lint:fix`
-- **Pipeline**: `pnpm run pipeline -- /path/to/assets` (regenerates `tracker-data.json` from local game TOML assets)
+- **Pipeline**: `pnpm run pipeline -- /path/to/assets` (regenerates `tracker-data.json` from local
+  game TOML assets)
 - **Tests**: `pnpm exec vitest run pipeline/` (pipeline unit tests)
 
 `pipeline/input/assets/` is ignored and local. See [pipeline/README.md](pipeline/README.md) for
@@ -52,8 +53,8 @@ of Mistria 100% completion.
   lint rules).
 - **`src/routes/`** — 9 category pages (almanac, animals, cosmetics, mines, museum, npcs, quests,
   renown, skills) + settings.
-- **`pipeline/`** — Separate TypeScript project. Extracts game data from locally supplied TOML assets →
-  `tracker-data.json`.
+- **`pipeline/`** — Separate TypeScript project. Extracts game data from locally supplied TOML
+  assets → `tracker-data.json`.
 
 ## Componentization
 

@@ -1,6 +1,17 @@
 import type { SourceFieldLocation } from "./data-shapes.js";
 
 /**
+ * Empty top-level definition tables identify primitive predicate names; nonempty tables identify
+ * named definitions.
+ */
+export type NamedRequirementDefinitions = Record<string, Record<string, unknown>>;
+
+export interface RequirementDefinitions {
+  namedRequirements: NamedRequirementDefinitions;
+  primitivePredicates: Set<string>;
+}
+
+/**
  * Requirements normalize into an expression tree. Missing, null, and empty objects become
  * `{ all: [] }`, an unconstrained true expression. Sibling keys imply `all`; an `or` array
  * implies `any`; and `invert` implies `not`. A single-object `or` parses directly rather than
@@ -12,25 +23,14 @@ export type RequirementExpression =
   | { not: RequirementExpression }
   | { predicate: string; value: unknown };
 
-/**
- * Empty top-level definition tables identify primitive predicate names; nonempty tables identify
- * named definitions.
- */
-export type NamedRequirementDefinitions = Record<string, Record<string, unknown>>;
-
-export interface RequirementDefinitions {
-  namedRequirements: NamedRequirementDefinitions;
-  primitivePredicates: Set<string>;
-}
-
-type ResolutionState = "resolved" | "unvisited" | "visiting";
-
 interface RequirementResolutionContext {
   cache: Map<string, RequirementExpression>;
   namedRequirements: NamedRequirementDefinitions;
   primitivePredicates: Set<string>;
   resolutionStateByName: Map<string, ResolutionState>;
 }
+
+type ResolutionState = "resolved" | "unvisited" | "visiting";
 
 export function buildRequirementDefinitions(
   requirementsData: Record<string, unknown>,
@@ -111,8 +111,8 @@ function parseRequirementObject(
         );
       }
     } else {
-      // Dotted key might be a predicate with nested value (e.g., reached_skill_level.ranching = 20)
-      // or an unknown name — treat as predicate if its name follows predicate patterns
+      // Dotted keys can be predicates with nested values (e.g., reached_skill_level.ranching = 20),
+      // and all otherwise-unknown keys become predicate leaves.
       conjuncts.push({ predicate: key, value: val });
     }
   }

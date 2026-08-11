@@ -23,8 +23,7 @@ export function extractAlmanac(fiddle: ParsedGameData): {
   items: ItemMetadataIndex;
 } {
   const itemsRoot = fiddle.items as
-    | Record<string, Record<string, Record<string, Record<string, unknown>>>>
-    | undefined;
+    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
   if (!itemsRoot) return { almanac: [], items: {} };
 
   const rawCategories = readAlmanacCategories(fiddle);
@@ -63,7 +62,9 @@ export function extractAlmanac(fiddle: ParsedGameData): {
 
         // Reject localization paths that have not resolved to an item name.
         if (rawName.includes("/") && !rawName.startsWith("spr_")) {
-          namelessItems.push(`${topCategory}/${subCategory}/${itemId} (localization path: ${rawName})`);
+          namelessItems.push(
+            `${topCategory}/${subCategory}/${itemId} (localization path: ${rawName})`,
+          );
           continue;
         }
 

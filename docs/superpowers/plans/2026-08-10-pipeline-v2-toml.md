@@ -86,15 +86,14 @@ app.
 
 **Deferred (separate specs & PRs):**
 
-- Recipe tracking & acquisition display — see
-  `docs/superpowers/specs/2026-08-10-recipe-tracking.md`
+- Recipe tracking & acquisition display — see `docs/superpowers/specs/2026-08-10-recipe-tracking.md`
 - Quest-gate improvements (requirement → quest inference) — see
   `docs/superpowers/specs/2026-08-10-quest-gate-improvements.md`
 - New data domains (children, cameos, dating, etc. — spec section 7). These need new extractors and
   `TrackerData` sections.
 
-**Execution order:** Task 1 → Task 2 → Task 8 → Task 2A → Tasks 3–7 → Tasks 9–10. The evaluator
-runs immediately after parser/main plumbing because it is the riskiest independent transformation.
+**Execution order:** Task 1 → Task 2 → Task 8 → Task 2A → Tasks 3–7 → Tasks 9–10. The evaluator runs
+immediately after parser/main plumbing because it is the riskiest independent transformation.
 
 ---
 
@@ -908,12 +907,13 @@ follow-up (see `docs/superpowers/specs/2026-08-10-quest-gate-improvements.md`).
 **Interfaces:**
 
 - Consumes: strict arrays from Task 2A
-- Produces: `QuestGateIndex` with direct item reward gates only. `animalGates` and `spellGates`
-  will be empty until the quest-gate improvements spec is implemented.
+- Produces: `QuestGateIndex` with direct item reward gates only. `animalGates` and `spellGates` will
+  be empty until the quest-gate improvements spec is implemented.
 
 - [ ] **Step 1: Remove obsolete inference paths**
 
 Delete:
+
 - `progression_unlocks` collection from cutscenes
 - `quest_is_completed` / `progression` fields from store stock entries
 - `collectItemQuestGates` store-based inference
@@ -934,6 +934,7 @@ Update the quests extractor to scan all quest files including `stillwell_challen
 - [ ] **Step 3: Log deferred gates**
 
 Log a summary of what's not yet covered:
+
 ```
 Quest gates: N direct item gates preserved
   Deferred: animal gates (requires requirement→quest inference)
@@ -951,6 +952,7 @@ pnpm run pipeline -- input/assets
 ```
 
 Verify:
+
 - `questGates.itemGates` has entries from direct quest rewards
 - `questGates.animalGates` and `spellGates` are empty (logged as deferred)
 - No crashes from missing fields

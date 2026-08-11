@@ -2,9 +2,10 @@
 
 ## Current meaning
 
-Quest gates are direct evidence that completing a quest rewards an extracted finished item. They are
-not a general availability model, and they do not infer prerequisites from progression flags,
-requirements, stores, cutscenes, animals, or spells.
+Quest gates index every `rewards[].item` reward ID from an allowlisted quest. Applicators attach
+only IDs that match extracted item, animal, or spell records. Quest gates are not a general
+availability model, and they do not infer prerequisites from progression flags, requirements,
+stores, cutscenes, animals, or spells.
 
 ## Direct evidence
 
@@ -19,8 +20,8 @@ ownership.
 ## Attachment behavior
 
 The pipeline attaches direct item gates to extracted item records. Animal & spell applicators remain
-available for later work. All applicators silently skip a gate when the target item, animal, or spell
-ID is absent from its extracted registry.
+available for later work. All applicators silently skip a gate when the target item, animal, or
+spell ID is absent from its extracted registry.
 
 ## Deferred inference
 

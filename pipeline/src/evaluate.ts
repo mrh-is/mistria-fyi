@@ -4,10 +4,10 @@ type ResolutionState = "resolved" | "visiting";
 type ResolvableValueField = "bin" | "store";
 
 interface ValueEvaluationContext {
-  itemsById: Map<string, Record<string, unknown>>;
+  dependencyPathStack: string[];
   fiddle: ParsedGameData;
   itemRootPathById: Map<string, string>;
-  dependencyPathStack: string[];
+  itemsById: Map<string, Record<string, unknown>>;
   resolutionStateByValuePath: Map<string, ResolutionState>;
 }
 
@@ -20,8 +20,7 @@ interface ValueEvaluationContext {
  */
 export function evaluateExpressions(fiddle: ParsedGameData): void {
   const itemsRoot = fiddle.items as
-    | Record<string, Record<string, Record<string, Record<string, unknown>>>>
-    | undefined;
+    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
   if (!itemsRoot) return;
 
   const itemsById = new Map<string, Record<string, unknown>>();
@@ -46,10 +45,10 @@ export function evaluateExpressions(fiddle: ParsedGameData): void {
   }
 
   const context: ValueEvaluationContext = {
-    itemsById,
+    dependencyPathStack: [],
     fiddle,
     itemRootPathById,
-    dependencyPathStack: [],
+    itemsById,
     resolutionStateByValuePath: new Map(),
   };
   let resolved = 0;

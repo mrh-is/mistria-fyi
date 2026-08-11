@@ -83,8 +83,7 @@ function buildSubCategoryMap(fiddle: ParsedGameData): Record<string, string> {
   const menus = ui?.menus as Record<string, unknown> | undefined;
   const subMenus = menus?.sub_menus as Record<string, unknown> | undefined;
   const customization = subMenus?.customization as
-    | Record<string, Record<string, { key?: string; name?: string }>>
-    | undefined;
+    Record<string, Record<string, { key?: string; name?: string }>> | undefined;
   if (!customization) return {};
 
   const map: Record<string, string> = {};
