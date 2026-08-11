@@ -4,7 +4,7 @@
 
 **Goal:** Extract recipe identity & acquisition sources from all extractable game data locations, expose them in `TrackerData`, and display recipe provenance on collapsed almanac rows.
 
-**Architecture:** A new `extractRecipes` extractor scans all items for `recipe_key` and `recipe_is_default`, groups items into recipe identities (`recipe_key ?? itemId`), then scans eleven data locations (quests, letters, stores, museum wings, chicken statue, fishing chests, wishing well, festivals, dungeon delicacies, and default flags) to build acquisition sources. The recipe registry becomes a new `recipes` field on `TrackerData`. Items gain a back-link `recipeId` for cheap two-way traversal. The almanac UI adds a subtitle line to collapsed colorway rows showing color count and recipe source.
+**Architecture:** A new `extractRecipes` extractor scans all items for `recipe_key` and `recipe_is_default`, groups items into recipe identities (`recipe_key ?? itemId`), then scans nine data locations (quests, letters, stores, museum wings, chicken statue, fishing chests, wishing well, festivals, and dungeon delicacies) to build acquisition sources. A `defaultUnlocked` boolean flag is stored directly on each recipe rather than modeled as a source type. Items within a recipe are grouped into presentations by display name so that recipe keys containing multiple distinct designs (e.g., single and double beds) are correctly separated. The recipe registry becomes a new `recipes` field on `TrackerData`. Items gain a back-link `recipeId` for cheap two-way traversal. The almanac UI adds a subtitle line to collapsed colorway rows showing color count and recipe source.
 
 **Tech Stack:** TypeScript pipeline extractor, Vitest, Svelte 5 (runes), Tailwind 4
 
@@ -14,7 +14,7 @@
 - **Strict TypeScript** with `strictTypeChecked` ESLint. Use `type` imports.
 - **Formatting:** Prettier with double quotes, no tabs, trailing commas, 100-char width, semicolons.
 - **Naming:** `camelCase` variables/functions, `PascalCase` types/components, `kebab-case` files. Branded IDs for type safety.
-- Run `pnpm run check` and `pnpm run lint` before committing.
+- Run `pnpm run check` and `pnpm run lint` before committing. All commits must type-check independently.
 - Run `pnpm exec vitest run pipeline/` for pipeline tests.
 - Sort all output arrays deterministically (by ID or name) so output is stable across runs.
 
@@ -22,30 +22,30 @@
 
 | File | Action | Responsibility |
 |------|--------|----------------|
-| `src/lib/types/tracker-data.ts` | Modify | Add `RecipeId` branded type, `RecipeSource` union (10 variants), `Recipe` interface, `TrackerData.recipes` field, `recipeId` on items, `colorCount` + `recipeId` on `AlmanacCategory` items |
-| `pipeline/src/extractors/recipes.ts` | Create | New extractor: builds recipe registry from items + all extractable scroll/recipe sources |
-| `pipeline/src/extractors/recipes.test.ts` | Create | Unit tests for the recipe extractor using synthetic fixtures, plus one real-data integration test |
-| `pipeline/src/main.ts` | Modify | Wire `extractRecipes` into pipeline step 3, add `recipes` to assembled `TrackerData` |
-| `pipeline/src/extractors/almanac.ts` | Modify | Extend `collapseFurnitureColorways` to emit `colorCount` and pass `recipeKey` through to almanac items |
-| `src/lib/utils/format.ts` | Modify | Add `recipeSourceLabel` helper |
-| `src/lib/components/almanac-content.svelte` | Modify | Pass recipe data to `ItemRow` for collapsed colorway rows |
-| `src/lib/components/item-row.svelte` | Modify | Accept optional `recipeInfo` prop, render subtitle line with color count and recipe source |
+| `src/lib/types/tracker-data.ts` | Modify (Task 1, Task 3) | Task 1: Add `RecipeId` branded type, `RecipeSource` union (9 acquired variants), `RecipePresentation`, `Recipe` interface as standalone exports. Task 3: Add `TrackerData.recipes` field, `recipeId` on items, `colorCount` + `recipeId` on `AlmanacCategory` items. |
+| `pipeline/src/extractors/recipes.ts` | Create (Task 2) | New extractor: builds recipe registry from items + all extractable scroll/recipe sources |
+| `pipeline/src/extractors/recipes.test.ts` | Create (Task 2) | Unit tests for the recipe extractor using synthetic fixtures, plus one real-data integration test |
+| `pipeline/src/main.ts` | Modify (Task 3) | Wire `extractRecipes` into pipeline step 3, add `recipes` to assembled `TrackerData` |
+| `pipeline/src/extractors/almanac.ts` | Modify (Task 3) | Extend `collapseFurnitureColorways` to emit `colorCount`; stamp `recipeId` on almanac items from `recipeIdByItemId` |
+| `src/lib/utils/format.ts` | Modify (Task 4) | Add `recipeSourceLabel` helper |
+| `src/lib/components/almanac-content.svelte` | Modify (Task 4) | Pass recipe data to `ItemRow` for collapsed colorway rows |
+| `src/lib/components/item-row.svelte` | Modify (Task 4) | Accept optional `recipeInfo` prop, render subtitle line with color count and recipe source |
 
 ## Recipe source locations
 
-Every file containing `recipe_scroll` or `crafting_scroll` has been audited. The plan extracts sources from all locations listed below. Sources marked "not extractable" are documented but out of scope.
+Every file containing `recipe_scroll` or `crafting_scroll` has been audited. The plan extracts sources from ten acquisition channels: nine acquired source types plus a `defaultUnlocked` flag. Sources marked "not extractable" are documented but out of scope.
 
 | Source type | Data location | Pattern | Approx. count |
 |-------------|---------------|---------|---------------|
-| `default` | Items with `recipe_is_default = true` | Flag on item | ~78 |
+| `defaultUnlocked` flag | Items with `recipe_is_default = true` | Flag on item; all members must agree | ~78 |
 | `quest` | `quests/{fetch_quests,stillwell_challenges,story_quests,tali_challenges}` | `rewards[].recipe_scroll` or `crafting_scroll` | ~60 |
-| `letter` | `letters` | `items[].recipe_scroll` with `requirements.shipped_item` (~35) or `donated_item` (3) | ~38 |
-| `store` | `stores` | Stock arrays with `recipe_scroll` or `crafting_scroll` | ~47 |
+| `letter` | `letters` | `items[].recipe_scroll` with `requirements.shipped_item` (~35), `donated_item` (3), or other triggers (generic letter source) | ~38+ |
+| `store` | `stores[storeId].categories[].{constant_stock,seasonal,random_stock}` | Entries with `recipe_scroll`, `crafting_scroll`, or `include_recipe = true` | ~289 (47 scrolls + 242 include_recipe) |
 | `museum_donation` | `museum_wings/{archaeology,fish,flora,insect}` | `rewards[].entries[].crafting_scroll` | ~50 |
 | `chicken_statue` | `chicken_statue` | `common.small_roll[].recipe_scroll` | 5 |
 | `treasure_chest` | `fishing` | `chest_tables.{tier}.items[]` with `kind = "recipe"` and `value` as target | 12 |
 | `wishing_well` | `wishing_well` | `common.large_roll[].recipe_scroll` | 3 |
-| `festival` | `festivals` | Stock arrays with `recipe_scroll` and `tier_required` | 5 |
+| `festival` | `festivals[festivalId].stocks[storeId]` | Stock entries with `recipe_scroll` or `crafting_scroll` | 5 |
 | `mine_zone` | `dungeons/dungeons` | `biomes[].dungeon_delicacies` and `taste_maker` item ID lists | varies |
 
 ### Not extractable (game knowledge, no scroll data)
@@ -70,14 +70,14 @@ Every file containing `recipe_scroll` or `crafting_scroll` has been audited. The
 - Modify: `src/lib/types/tracker-data.ts`
 
 **Interfaces:**
-- Consumes: nothing new
-- Produces: `RecipeId` branded type, `RecipeSource` union type, `Recipe` interface, `TrackerData["recipes"]` shape, `recipeId` on items, `colorCount` + `recipeId` on `AlmanacCategory` items
+- Consumes: existing branded types `ItemId`, `QuestId`, `WingId`
+- Produces: `RecipeId` branded type, `RecipeSource` union type (9 variants), `RecipePresentation` interface, `Recipe` interface. These are standalone exports; `TrackerData` is not modified yet.
 
-These types define the contract between the pipeline extractor (task 2) and the UI (task 4). Get them right first.
+These types define the contract between the pipeline extractor (Task 2) and the UI (Task 4). `TrackerData` changes are deferred to Task 3 so every commit independently type-checks.
 
 - [ ] **Step 1: Add `RecipeId` branded type**
 
-Add alongside the other branded types in `src/lib/types/tracker-data.ts`, alphabetically between `QuestId` and `RestrictionType`:
+Add alongside the other branded types in `src/lib/types/tracker-data.ts`, after `QuestId`:
 
 ```typescript
 export type RecipeId = string & { readonly __brand: "RecipeId" };
@@ -85,73 +85,57 @@ export type RecipeId = string & { readonly __brand: "RecipeId" };
 
 - [ ] **Step 2: Add `RecipeSource` discriminated union**
 
-Add after the `RecipeId` type. This union models every extractable recipe acquisition channel.
+Add after the `RecipeId` type. This union models every extractable acquired recipe channel. `defaultUnlocked` is a separate boolean on `Recipe`, not a source variant.
 
 ```typescript
 export type RecipeSource =
   | { type: "chicken_statue" }
-  | { type: "default" }
-  | { festivalId: string; type: "festival" }
-  | { trigger: "donated_item" | "shipped_item"; triggerItemId: string; type: "letter" }
+  | { festivalId: string; storeId: string; type: "festival" }
+  | { trigger?: "donated_item" | "shipped_item"; triggerItemId?: ItemId; type: "letter" }
   | { type: "mine_zone" }
-  | { type: "museum_donation"; wingId: string }
+  | { type: "museum_donation"; wingId: WingId }
   | { questId: QuestId; questType: string; type: "quest" }
   | { storeId: string; type: "store" }
   | { type: "treasure_chest" }
   | { type: "wishing_well" };
 ```
 
-- [ ] **Step 3: Add `Recipe` interface**
+- [ ] **Step 3: Add `RecipePresentation` interface**
 
-Add after `RecipeSource`:
-
-```typescript
-export interface Recipe {
-  memberItemIds: ItemId[];
-  sources: RecipeSource[];
-}
-```
-
-`memberItemIds`: all item IDs sharing this recipe identity, sorted alphabetically. `sources`: how to acquire the recipe; empty when unknown; `{ type: "default" }` means available from game start. Sorted by `type` then by detail fields for deterministic output.
-
-- [ ] **Step 4: Add `recipes` to `TrackerData`**
-
-Insert into the `TrackerData` interface, alphabetically between `quests` and `renown`:
+Add after `RecipeSource`. A recipe key containing items with different display names (e.g., `mermaid_bed` covering "Mermaid Bed" and "Mermaid Double Bed") produces multiple presentations. Each almanac row maps to one presentation.
 
 ```typescript
-recipes: Record<RecipeId, Recipe>;
-```
-
-- [ ] **Step 5: Add `recipeId` to `TrackerData.items`**
-
-Change the items type to include an optional recipe back-link:
-
-```typescript
-items: Record<ItemId, { category: string; name: string; questGate?: QuestId[]; recipeId?: RecipeId }>;
-```
-
-- [ ] **Step 6: Add `colorCount` and `recipeId` to `AlmanacCategory` items**
-
-Change the `AlmanacCategory` interface:
-
-```typescript
-export interface AlmanacCategory {
-  id: string;
-  items: Record<ItemId, { colorCount?: number; name: string; recipeId?: RecipeId }>;
+export interface RecipePresentation {
+  itemIds: ItemId[];
   name: string;
 }
 ```
 
-- [ ] **Step 7: Run type-check**
+- [ ] **Step 4: Add `Recipe` interface**
+
+Add after `RecipePresentation`:
+
+```typescript
+export interface Recipe {
+  defaultUnlocked: boolean;
+  memberItemIds: ItemId[];
+  presentations: RecipePresentation[];
+  sources: RecipeSource[];
+}
+```
+
+`defaultUnlocked`: true when all members have `recipe_is_default = true`; false otherwise. `memberItemIds`: all item IDs in this recipe group, sorted alphabetically. `presentations`: items grouped by display name, sorted by name. `sources`: acquired sources; empty when unknown. Sorted by `type` then by detail fields for deterministic output.
+
+- [ ] **Step 5: Run type-check**
 
 Run: `pnpm run check`
-Expected: Fail — `main.ts` assembles `TrackerData` without `recipes`. That is expected; task 3 fixes it.
+Expected: PASS — no existing code depends on these new exports yet.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add src/lib/types/tracker-data.ts
-git commit -m "feat(types): add Recipe, RecipeId, and RecipeSource types"
+git commit -m "feat(types): add Recipe, RecipeId, RecipeSource, and RecipePresentation types"
 ```
 
 ---
@@ -163,15 +147,32 @@ git commit -m "feat(types): add Recipe, RecipeId, and RecipeSource types"
 - Create: `pipeline/src/extractors/recipes.test.ts`
 
 **Interfaces:**
-- Consumes: `ParsedGameData` from `parse-fiddle.ts`, `TrackerData["recipes"]` shape from task 1
-- Produces: `extractRecipes(fiddle: ParsedGameData): { recipes: TrackerData["recipes"]; recipeIdByItemId: Map<string, RecipeId> }`
+- Consumes: `ParsedGameData` from `parse-fiddle.ts`, `Recipe`, `RecipeId`, `RecipeSource`, `RecipePresentation`, `ItemId`, `QuestId`, `WingId` from Task 1
+- Produces: `extractRecipes(fiddle: ParsedGameData): { recipes: Record<RecipeId, Recipe>; recipeIdByItemId: Map<string, RecipeId> }`
 
-The extractor has two phases:
+The extractor has three phases:
 
 1. **Collect recipe entries** — scan all items for `recipe_key` and `recipe_is_default`, grouping items by recipe identity (`recipe_key ?? itemId`). Only items with a `recipe` array (crafting recipe) or `recipe_key` are included. Items with `recipe_is_default` but no `recipe` array and no `recipe_key` (e.g., `ore_gold`) are excluded with a diagnostic log.
-2. **Collect sources** — scan ten data locations for scroll/recipe references, map them to recipe IDs via an item-to-recipe index. Each data location has a dedicated helper function.
+2. **Collect sources** — scan nine data locations for scroll/recipe references, map them to recipe IDs via an item-to-recipe index. Each data location has a dedicated helper function. After all collectors merge, sources are structurally deduplicated centrally.
+3. **Build recipes** — assemble `Recipe` objects with `defaultUnlocked` (requires group-wide agreement), `presentations` (items grouped by display name), sorted `memberItemIds`, and sorted deduplicated `sources`.
 
-The function also returns a `recipeIdByItemId` map so the caller can stamp `recipeId` onto the item registry without re-scanning.
+The function also returns a `recipeIdByItemId` map so the caller can stamp `recipeId` onto the item registry and almanac without re-scanning.
+
+#### Store traversal
+
+Stores nest stock arrays inside `store.categories[]`, not at the top level. The collector must iterate each category's `constant_stock`, `seasonal.{season}`, and `random_stock` arrays. In addition to `recipe_scroll` and `crafting_scroll` entries, store items with `include_recipe = true` also grant the recipe for the referenced item.
+
+#### Festival traversal
+
+Festivals expose vendor stock via `fest.stocks[storeId]`, an object mapping vendor store IDs to stock arrays. The collector must traverse this structure (not scan arbitrary arrays), preserving both `festivalId` and `storeId`.
+
+#### Source deduplication
+
+Individual collectors do not maintain `seen` sets. Instead, after all collectors merge their sources into the central map, a single pass deduplicates each recipe's source array by stable JSON key. This prevents both intra-collector and cross-collector duplicates.
+
+#### Recipe ID collision validation
+
+After grouping items by `recipe_key ?? itemId`, the extractor validates that no item ID matches a recipe key from a different group. If a collision is detected, a warning is logged.
 
 - [ ] **Step 1: Write test — groups items by recipe identity**
 
@@ -203,6 +204,15 @@ function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGam
 }
 
 describe("extractRecipes", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("groups colorway items by recipe_key into a single recipe", () => {
     const fiddle = makeFiddle({
       items: {
@@ -234,6 +244,10 @@ describe("extractRecipes", () => {
     expect(recipe).toBeDefined();
     expect(recipe.memberItemIds).toEqual(["chair_blue", "chair_green", "chair_purple"]);
     expect(recipe.sources).toEqual([]);
+    expect(recipe.defaultUnlocked).toBe(false);
+    expect(recipe.presentations).toEqual([
+      { itemIds: ["chair_blue", "chair_green", "chair_purple"], name: "Sapling Chair" },
+    ]);
     expect(recipeIdByItemId.get("chair_blue")).toBe("sapling_chair");
   });
 });
@@ -244,9 +258,16 @@ describe("extractRecipes", () => {
 Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
 Expected: FAIL — module `./recipes.js` not found.
 
-- [ ] **Step 3: Implement `extractRecipes` — entry collection and main function**
+- [ ] **Step 3: Implement `extractRecipes` — full extractor**
 
-Create `pipeline/src/extractors/recipes.ts`:
+Create `pipeline/src/extractors/recipes.ts`. The full implementation follows. Key differences from a naive approach:
+
+- Store collector traverses `store.categories[]` and handles `include_recipe = true`
+- Festival collector traverses `fest.stocks[storeId]`
+- `defaultUnlocked` requires all members to agree; disagreements log a diagnostic
+- Presentations group items by display name within each recipe
+- Central deduplication after all collectors merge
+- Collision validation for item IDs vs recipe keys
 
 ```typescript
 import type {
@@ -254,8 +275,9 @@ import type {
   QuestId,
   Recipe,
   RecipeId,
+  RecipePresentation,
   RecipeSource,
-  TrackerData,
+  WingId,
 } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
@@ -270,12 +292,13 @@ const QUEST_TYPES_WITH_SCROLLS = [
 interface RawRecipeEntry {
   defaultUnlocked: boolean;
   itemId: string;
+  name: string;
   recipeId: string;
 }
 
 export function extractRecipes(fiddle: ParsedGameData): {
   recipeIdByItemId: Map<string, RecipeId>;
-  recipes: TrackerData["recipes"];
+  recipes: Record<RecipeId, Recipe>;
 } {
   const entries = collectRecipeEntries(fiddle);
   const itemIdToRecipeId = new Map<string, string>();
@@ -288,6 +311,9 @@ export function extractRecipes(fiddle: ParsedGameData): {
     grouped.set(entry.recipeId, group);
   }
 
+  validateRecipeIdCollisions(itemIdToRecipeId, grouped);
+
+  const knownRecipeIds = new Set(grouped.keys());
   const allSources = new Map<string, RecipeSource[]>();
 
   function mergeSources(incoming: Map<string, RecipeSource[]>): void {
@@ -298,22 +324,14 @@ export function extractRecipes(fiddle: ParsedGameData): {
     }
   }
 
-  for (const [recipeId, group] of grouped) {
-    if (group.some((e) => e.defaultUnlocked)) {
-      const existing = allSources.get(recipeId) ?? [];
-      existing.push({ type: "default" });
-      allSources.set(recipeId, existing);
-    }
-  }
-
-  mergeSources(collectQuestScrollSources(fiddle, itemIdToRecipeId));
-  mergeSources(collectLetterScrollSources(fiddle, itemIdToRecipeId));
-  mergeSources(collectStoreScrollSources(fiddle, itemIdToRecipeId));
-  mergeSources(collectMuseumScrollSources(fiddle, itemIdToRecipeId));
-  mergeSources(collectChickenStatueSources(fiddle, itemIdToRecipeId));
-  mergeSources(collectFishingChestSources(fiddle, itemIdToRecipeId));
-  mergeSources(collectWishingWellSources(fiddle, itemIdToRecipeId));
-  mergeSources(collectFestivalScrollSources(fiddle, itemIdToRecipeId));
+  mergeSources(collectQuestScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds));
+  mergeSources(collectLetterScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds));
+  mergeSources(collectStoreScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds));
+  mergeSources(collectMuseumScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds));
+  mergeSources(collectChickenStatueSources(fiddle, itemIdToRecipeId, knownRecipeIds));
+  mergeSources(collectFishingChestSources(fiddle, itemIdToRecipeId, knownRecipeIds));
+  mergeSources(collectWishingWellSources(fiddle, itemIdToRecipeId, knownRecipeIds));
+  mergeSources(collectFestivalScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds));
   mergeSources(collectDungeonDelicacySources(fiddle, itemIdToRecipeId));
 
   const recipes: Record<RecipeId, Recipe> = {};
@@ -323,9 +341,24 @@ export function extractRecipes(fiddle: ParsedGameData): {
       .map((e) => e.itemId as ItemId)
       .sort((a, b) => a.localeCompare(b));
 
-    const sources = (allSources.get(recipeId) ?? []).sort(compareRecipeSources);
+    const defaultFlags = group.map((e) => e.defaultUnlocked);
+    const allDefault = defaultFlags.every(Boolean);
+    const anyDefault = defaultFlags.some(Boolean);
+    if (anyDefault && !allDefault) {
+      console.warn(
+        `  Warning: recipe "${recipeId}" has mixed recipe_is_default flags — treating as not default`,
+      );
+    }
 
-    recipes[recipeId as RecipeId] = { memberItemIds, sources };
+    const presentations = buildPresentations(group);
+    const sources = deduplicateSources(allSources.get(recipeId) ?? []);
+
+    recipes[recipeId as RecipeId] = {
+      defaultUnlocked: allDefault,
+      memberItemIds,
+      presentations,
+      sources,
+    };
   }
 
   const recipeIdByItemId = new Map<string, RecipeId>();
@@ -335,6 +368,7 @@ export function extractRecipes(fiddle: ParsedGameData): {
 
   const totalRecipes = Object.keys(recipes).length;
   const withSources = Object.values(recipes).filter((r) => r.sources.length > 0).length;
+  const withDefault = Object.values(recipes).filter((r) => r.defaultUnlocked).length;
   const sourceTypeCounts = new Map<string, number>();
   for (const recipe of Object.values(recipes)) {
     const seenTypes = new Set(recipe.sources.map((s) => s.type));
@@ -346,16 +380,49 @@ export function extractRecipes(fiddle: ParsedGameData): {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([type, count]) => `${count} ${type}`);
   console.log(
-    `  Recipes: ${totalRecipes} total, ${withSources} with sources (${countParts.join(", ")})`,
+    `  Recipes: ${totalRecipes} total, ${withDefault} default, ${withSources} with acquired sources (${countParts.join(", ")})`,
   );
 
   return { recipeIdByItemId, recipes };
 }
 
+function buildPresentations(group: RawRecipeEntry[]): RecipePresentation[] {
+  const byName = new Map<string, string[]>();
+  for (const entry of group) {
+    const ids = byName.get(entry.name) ?? [];
+    ids.push(entry.itemId);
+    byName.set(entry.name, ids);
+  }
+
+  return [...byName.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([name, ids]) => ({
+      itemIds: ids.sort((a, b) => a.localeCompare(b)) as ItemId[],
+      name,
+    }));
+}
+
+function sourceKey(s: RecipeSource): string {
+  return JSON.stringify(s, Object.keys(s).sort());
+}
+
+function deduplicateSources(sources: RecipeSource[]): RecipeSource[] {
+  const seen = new Set<string>();
+  const result: RecipeSource[] = [];
+  const sorted = [...sources].sort(compareRecipeSources);
+  for (const s of sorted) {
+    const key = sourceKey(s);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(s);
+  }
+  return result;
+}
+
 function compareRecipeSources(a: RecipeSource, b: RecipeSource): number {
   const cmp = a.type.localeCompare(b.type);
   if (cmp !== 0) return cmp;
-  return JSON.stringify(a).localeCompare(JSON.stringify(b));
+  return sourceKey(a).localeCompare(sourceKey(b));
 }
 
 function collectRecipeEntries(fiddle: ParsedGameData): RawRecipeEntry[] {
@@ -366,10 +433,11 @@ function collectRecipeEntries(fiddle: ParsedGameData): RawRecipeEntry[] {
 
   const entries: RawRecipeEntry[] = [];
 
-  for (const subCategories of Object.values(itemsRoot)) {
+  for (const [topCategory, subCategories] of Object.entries(itemsRoot)) {
     if (typeof subCategories !== "object" || subCategories === null) continue;
-    for (const categoryItems of Object.values(subCategories)) {
+    for (const [subCategory, categoryItems] of Object.entries(subCategories)) {
       if (typeof categoryItems !== "object" || categoryItems === null) continue;
+      if (topCategory === "other" && subCategory === "unreviewed_new_items") continue;
       for (const [itemId, item] of Object.entries(categoryItems)) {
         if (itemId === "default") continue;
         if (typeof item !== "object" || item === null) continue;
@@ -390,8 +458,9 @@ function collectRecipeEntries(fiddle: ParsedGameData): RawRecipeEntry[] {
 
         const recipeKey = itemObj.recipe_key as string | undefined;
         const recipeId = recipeKey ?? itemId;
+        const name = (itemObj.name as string | undefined) ?? itemId;
 
-        entries.push({ defaultUnlocked: isDefault, itemId, recipeId });
+        entries.push({ defaultUnlocked: isDefault, itemId, name, recipeId });
       }
     }
   }
@@ -399,14 +468,29 @@ function collectRecipeEntries(fiddle: ParsedGameData): RawRecipeEntry[] {
   return entries;
 }
 
+function validateRecipeIdCollisions(
+  itemIdToRecipeId: Map<string, string>,
+  grouped: Map<string, RawRecipeEntry[]>,
+): void {
+  for (const [itemId, recipeId] of itemIdToRecipeId) {
+    if (itemId === recipeId) continue;
+    if (grouped.has(itemId) && itemId !== recipeId) {
+      console.warn(
+        `  Warning: item ID "${itemId}" is also a recipe key for a different group — potential collision`,
+      );
+    }
+  }
+}
+
 function resolveScrollTarget(
   scrollTarget: string,
   itemIdToRecipeId: Map<string, string>,
+  knownRecipeIds: Set<string>,
   context: string,
 ): string | undefined {
   const recipeId = itemIdToRecipeId.get(scrollTarget);
   if (recipeId) return recipeId;
-  if ([...itemIdToRecipeId.values()].includes(scrollTarget)) return scrollTarget;
+  if (knownRecipeIds.has(scrollTarget)) return scrollTarget;
   console.warn(`  Warning: scroll target "${scrollTarget}" in ${context} has no matching item`);
   return undefined;
 }
@@ -414,6 +498,7 @@ function resolveScrollTarget(
 function collectQuestScrollSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
+  knownRecipeIds: Set<string>,
 ): Map<string, RecipeSource[]> {
   const quests = fiddle.quests as
     | Record<string, Record<string, Record<string, unknown>>>
@@ -421,7 +506,6 @@ function collectQuestScrollSources(
   if (!quests) return new Map();
 
   const result = new Map<string, RecipeSource[]>();
-  const seen = new Set<string>();
 
   for (const questType of QUEST_TYPES_WITH_SCROLLS) {
     const questGroup = quests[questType];
@@ -444,13 +528,10 @@ function collectQuestScrollSources(
         const recipeId = resolveScrollTarget(
           scrollTarget,
           itemIdToRecipeId,
+          knownRecipeIds,
           `${questType}/${questId}`,
         );
         if (!recipeId) continue;
-
-        const dedupeKey = `quest::${recipeId}::${questId}`;
-        if (seen.has(dedupeKey)) continue;
-        seen.add(dedupeKey);
 
         const sources = result.get(recipeId) ?? [];
         sources.push({
@@ -469,6 +550,7 @@ function collectQuestScrollSources(
 function collectLetterScrollSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
+  knownRecipeIds: Set<string>,
 ): Map<string, RecipeSource[]> {
   const letters = fiddle.letters as Record<string, Record<string, unknown>> | undefined;
   if (!letters) return new Map();
@@ -494,6 +576,7 @@ function collectLetterScrollSources(
       const recipeId = resolveScrollTarget(
         scrollTarget,
         itemIdToRecipeId,
+        knownRecipeIds,
         `letters/${letterId}`,
       );
       if (!recipeId) continue;
@@ -511,11 +594,16 @@ function collectLetterScrollSources(
         }
       }
 
+      const sources = result.get(recipeId) ?? [];
       if (trigger && triggerItemId) {
-        const sources = result.get(recipeId) ?? [];
-        sources.push({ trigger, triggerItemId, type: "letter" });
-        result.set(recipeId, sources);
+        sources.push({ trigger, triggerItemId: triggerItemId as ItemId, type: "letter" });
+      } else {
+        console.warn(
+          `  Warning: letter "${letterId}" has recipe_scroll but no recognized requirement trigger — adding generic letter source`,
+        );
+        sources.push({ type: "letter" });
       }
+      result.set(recipeId, sources);
     }
   }
 
@@ -525,32 +613,36 @@ function collectLetterScrollSources(
 function collectStoreScrollSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
+  knownRecipeIds: Set<string>,
 ): Map<string, RecipeSource[]> {
   const stores = fiddle.stores as Record<string, Record<string, unknown>> | undefined;
   if (!stores) return new Map();
 
   const result = new Map<string, RecipeSource[]>();
-  const seen = new Set<string>();
 
   for (const [storeId, store] of Object.entries(stores)) {
     if (storeId === "default" || typeof store !== "object" || store === null) continue;
-
     const storeObj = store as Record<string, unknown>;
-    const stockArrays = ["constant_stock", "seasonal", "random_stock"];
-    for (const stockKey of stockArrays) {
-      const stockSection = storeObj[stockKey];
-      if (!stockSection) continue;
+    const categories = Array.isArray(storeObj.categories) ? storeObj.categories : [];
 
-      const arrays: unknown[][] = [];
-      if (Array.isArray(stockSection)) {
-        arrays.push(stockSection);
-      } else if (typeof stockSection === "object" && stockSection !== null) {
-        for (const val of Object.values(stockSection as Record<string, unknown>)) {
-          if (Array.isArray(val)) arrays.push(val);
+    for (const category of categories) {
+      if (typeof category !== "object" || category === null) continue;
+      const cat = category as Record<string, unknown>;
+
+      const stockArrays: unknown[][] = [];
+
+      if (Array.isArray(cat.constant_stock)) stockArrays.push(cat.constant_stock);
+
+      const seasonal = cat.seasonal as Record<string, unknown> | undefined;
+      if (seasonal) {
+        for (const val of Object.values(seasonal)) {
+          if (Array.isArray(val)) stockArrays.push(val);
         }
       }
 
-      for (const arr of arrays) {
+      if (Array.isArray(cat.random_stock)) stockArrays.push(cat.random_stock);
+
+      for (const arr of stockArrays) {
         for (const entry of arr) {
           if (typeof entry !== "object" || entry === null) continue;
           const obj = entry as Record<string, unknown>;
@@ -558,22 +650,31 @@ function collectStoreScrollSources(
           const scrollTarget =
             (obj.recipe_scroll as string | undefined) ??
             (obj.crafting_scroll as string | undefined);
-          if (!scrollTarget) continue;
 
-          const recipeId = resolveScrollTarget(
-            scrollTarget,
-            itemIdToRecipeId,
-            `stores/${storeId}`,
-          );
-          if (!recipeId) continue;
+          if (scrollTarget) {
+            const recipeId = resolveScrollTarget(
+              scrollTarget,
+              itemIdToRecipeId,
+              knownRecipeIds,
+              `stores/${storeId}`,
+            );
+            if (recipeId) {
+              const sources = result.get(recipeId) ?? [];
+              sources.push({ storeId, type: "store" });
+              result.set(recipeId, sources);
+            }
+            continue;
+          }
 
-          const dedupeKey = `store::${recipeId}::${storeId}`;
-          if (seen.has(dedupeKey)) continue;
-          seen.add(dedupeKey);
-
-          const sources = result.get(recipeId) ?? [];
-          sources.push({ storeId, type: "store" });
-          result.set(recipeId, sources);
+          if (obj.include_recipe === true) {
+            const itemId = obj.item as string | undefined;
+            if (!itemId) continue;
+            const recipeId = itemIdToRecipeId.get(itemId);
+            if (!recipeId) continue;
+            const sources = result.get(recipeId) ?? [];
+            sources.push({ storeId, type: "store" });
+            result.set(recipeId, sources);
+          }
         }
       }
     }
@@ -585,6 +686,7 @@ function collectStoreScrollSources(
 function collectMuseumScrollSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
+  knownRecipeIds: Set<string>,
 ): Map<string, RecipeSource[]> {
   const museumWings = fiddle.museum_wings as
     | Record<string, Record<string, unknown>>
@@ -615,12 +717,13 @@ function collectMuseumScrollSources(
         const recipeId = resolveScrollTarget(
           scrollTarget,
           itemIdToRecipeId,
+          knownRecipeIds,
           `museum_wings/${wingId}`,
         );
         if (!recipeId) continue;
 
         const sources = result.get(recipeId) ?? [];
-        sources.push({ type: "museum_donation", wingId });
+        sources.push({ type: "museum_donation", wingId: wingId as WingId });
         result.set(recipeId, sources);
       }
     }
@@ -632,6 +735,7 @@ function collectMuseumScrollSources(
 function collectChickenStatueSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
+  knownRecipeIds: Set<string>,
 ): Map<string, RecipeSource[]> {
   const chickenStatue = fiddle.chicken_statue as Record<string, unknown> | undefined;
   if (!chickenStatue) return new Map();
@@ -656,6 +760,7 @@ function collectChickenStatueSources(
       const recipeId = resolveScrollTarget(
         scrollTarget,
         itemIdToRecipeId,
+        knownRecipeIds,
         "chicken_statue",
       );
       if (!recipeId) continue;
@@ -672,6 +777,7 @@ function collectChickenStatueSources(
 function collectFishingChestSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
+  knownRecipeIds: Set<string>,
 ): Map<string, RecipeSource[]> {
   const fishing = fiddle.fishing as Record<string, unknown> | undefined;
   if (!fishing) return new Map();
@@ -697,6 +803,7 @@ function collectFishingChestSources(
       const recipeId = resolveScrollTarget(
         scrollTarget,
         itemIdToRecipeId,
+        knownRecipeIds,
         "fishing/chest_tables",
       );
       if (!recipeId) continue;
@@ -713,6 +820,7 @@ function collectFishingChestSources(
 function collectWishingWellSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
+  knownRecipeIds: Set<string>,
 ): Map<string, RecipeSource[]> {
   const wishingWell = fiddle.wishing_well as Record<string, unknown> | undefined;
   if (!wishingWell) return new Map();
@@ -737,6 +845,7 @@ function collectWishingWellSources(
       const recipeId = resolveScrollTarget(
         scrollTarget,
         itemIdToRecipeId,
+        knownRecipeIds,
         "wishing_well",
       );
       if (!recipeId) continue;
@@ -753,6 +862,7 @@ function collectWishingWellSources(
 function collectFestivalScrollSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
+  knownRecipeIds: Set<string>,
 ): Map<string, RecipeSource[]> {
   const festivals = fiddle.festivals as
     | Record<string, Record<string, unknown>>
@@ -760,26 +870,20 @@ function collectFestivalScrollSources(
   if (!festivals) return new Map();
 
   const result = new Map<string, RecipeSource[]>();
-  const seen = new Set<string>();
 
   for (const [festivalId, festival] of Object.entries(festivals)) {
     if (festivalId === "default" || typeof festival !== "object" || festival === null)
       continue;
 
     const festivalObj = festival as Record<string, unknown>;
-    const arraysToScan: unknown[][] = [];
-    for (const val of Object.values(festivalObj)) {
-      if (Array.isArray(val)) {
-        arraysToScan.push(val);
-      } else if (typeof val === "object" && val !== null) {
-        for (const innerVal of Object.values(val as Record<string, unknown>)) {
-          if (Array.isArray(innerVal)) arraysToScan.push(innerVal);
-        }
-      }
-    }
+    const stocks = festivalObj.stocks as Record<string, unknown> | undefined;
+    if (!stocks) continue;
 
-    for (const arr of arraysToScan) {
-      for (const entry of arr) {
+    for (const [vendorStoreId, stockData] of Object.entries(stocks)) {
+      if (vendorStoreId === "default") continue;
+      if (!Array.isArray(stockData)) continue;
+
+      for (const entry of stockData) {
         if (typeof entry !== "object" || entry === null) continue;
         const obj = entry as Record<string, unknown>;
 
@@ -791,16 +895,13 @@ function collectFestivalScrollSources(
         const recipeId = resolveScrollTarget(
           scrollTarget,
           itemIdToRecipeId,
-          `festivals/${festivalId}`,
+          knownRecipeIds,
+          `festivals/${festivalId}/${vendorStoreId}`,
         );
         if (!recipeId) continue;
 
-        const dedupeKey = `festival::${recipeId}::${festivalId}`;
-        if (seen.has(dedupeKey)) continue;
-        seen.add(dedupeKey);
-
         const sources = result.get(recipeId) ?? [];
-        sources.push({ festivalId, type: "festival" });
+        sources.push({ festivalId, storeId: vendorStoreId, type: "festival" });
         result.set(recipeId, sources);
       }
     }
@@ -819,7 +920,6 @@ function collectDungeonDelicacySources(
   if (!dungeons) return new Map();
 
   const result = new Map<string, RecipeSource[]>();
-  const seen = new Set<string>();
 
   const dungeonsData = dungeons.dungeons as Record<string, unknown> | undefined;
   if (!dungeonsData) return result;
@@ -844,10 +944,6 @@ function collectDungeonDelicacySources(
         const recipeId = itemIdToRecipeId.get(itemId);
         if (!recipeId) continue;
 
-        const dedupeKey = `mine_zone::${recipeId}`;
-        if (seen.has(dedupeKey)) continue;
-        seen.add(dedupeKey);
-
         const sources = result.get(recipeId) ?? [];
         sources.push({ type: "mine_zone" });
         result.set(recipeId, sources);
@@ -864,12 +960,12 @@ function collectDungeonDelicacySources(
 Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Write test — default-unlocked recipe has `{ type: "default" }` source**
+- [ ] **Step 5: Write test — default-unlocked recipe has `defaultUnlocked: true`**
 
 Add to `recipes.test.ts`:
 
 ```typescript
-it("adds a default source when any member has recipe_is_default", () => {
+it("sets defaultUnlocked when all members have recipe_is_default", () => {
   const fiddle = makeFiddle({
     items: {
       furniture: {
@@ -884,6 +980,7 @@ it("adds a default source when any member has recipe_is_default", () => {
           basic_table_oak: {
             name: "Basic Table",
             recipe: [{ item: "wood", count: 3 }],
+            recipe_is_default: true,
             recipe_key: "basic_table",
           },
         },
@@ -893,7 +990,8 @@ it("adds a default source when any member has recipe_is_default", () => {
 
   const { recipes } = extractRecipes(fiddle);
   const recipe = recipes["basic_table" as RecipeId];
-  expect(recipe.sources).toEqual([{ type: "default" }]);
+  expect(recipe.defaultUnlocked).toBe(true);
+  expect(recipe.sources).toEqual([]);
 });
 ```
 
@@ -902,7 +1000,47 @@ it("adds a default source when any member has recipe_is_default", () => {
 Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
 Expected: PASS
 
-- [ ] **Step 7: Write test — quest scroll rewards map to recipe IDs**
+- [ ] **Step 7: Write test — mixed default flags warn and resolve to false**
+
+Add to `recipes.test.ts`:
+
+```typescript
+it("warns and sets defaultUnlocked false when members disagree on recipe_is_default", () => {
+  const fiddle = makeFiddle({
+    items: {
+      furniture: {
+        test_set: {
+          default: {},
+          mixed_a: {
+            name: "Mixed Item",
+            recipe: [{ item: "wood", count: 1 }],
+            recipe_is_default: true,
+            recipe_key: "mixed_group",
+          },
+          mixed_b: {
+            name: "Mixed Item",
+            recipe: [{ item: "wood", count: 1 }],
+            recipe_key: "mixed_group",
+          },
+        },
+      },
+    },
+  });
+
+  const { recipes } = extractRecipes(fiddle);
+  expect(recipes["mixed_group" as RecipeId].defaultUnlocked).toBe(false);
+  expect(console.warn).toHaveBeenCalledWith(
+    expect.stringContaining("mixed_group"),
+  );
+});
+```
+
+- [ ] **Step 8: Run test to verify it passes**
+
+Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
+Expected: PASS
+
+- [ ] **Step 9: Write test — quest scroll rewards map to recipe IDs**
 
 Add to `recipes.test.ts`:
 
@@ -943,17 +1081,17 @@ it("maps quest crafting_scroll rewards to recipe sources", () => {
 });
 ```
 
-- [ ] **Step 8: Run test to verify it passes**
+- [ ] **Step 10: Run test to verify it passes**
 
 Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
 Expected: PASS
 
-- [ ] **Step 9: Write test — recipe_scroll (cooking) maps correctly**
+- [ ] **Step 11: Write test — recipe_scroll (cooking) maps correctly**
 
 Add to `recipes.test.ts`:
 
 ```typescript
-it("maps recipe_scroll rewards for cooked dishes", () => {
+it("maps recipe_scroll rewards for cooked dishes without recipe_key", () => {
   const fiddle = makeFiddle({
     items: {
       other: {
@@ -982,15 +1120,19 @@ it("maps recipe_scroll rewards for cooked dishes", () => {
   expect(recipe.sources).toEqual([
     { questId: "cooking_101", questType: "story_quests", type: "quest" },
   ]);
+  expect(recipe.memberItemIds).toEqual(["vegetable_soup"]);
+  expect(recipe.presentations).toEqual([
+    { itemIds: ["vegetable_soup"], name: "Vegetable Soup" },
+  ]);
 });
 ```
 
-- [ ] **Step 10: Run test to verify it passes**
+- [ ] **Step 12: Run test to verify it passes**
 
 Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
 Expected: PASS
 
-- [ ] **Step 11: Write test — items without recipe array or recipe_key are excluded**
+- [ ] **Step 13: Write test — items without recipe array or recipe_key are excluded**
 
 Add to `recipes.test.ts`:
 
@@ -1012,12 +1154,12 @@ it("excludes items without a recipe array or recipe_key", () => {
 });
 ```
 
-- [ ] **Step 12: Run test to verify it passes**
+- [ ] **Step 14: Run test to verify it passes**
 
 Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
 Expected: PASS
 
-- [ ] **Step 13: Write test — memberItemIds are sorted alphabetically**
+- [ ] **Step 15: Write test — memberItemIds are sorted alphabetically**
 
 Add to `recipes.test.ts`:
 
@@ -1048,19 +1190,17 @@ it("sorts memberItemIds alphabetically", () => {
 });
 ```
 
-- [ ] **Step 14: Run test to verify it passes**
+- [ ] **Step 16: Run test to verify it passes**
 
 Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
 Expected: PASS
 
-- [ ] **Step 15: Write test — unresolved scroll target warns and is skipped**
+- [ ] **Step 17: Write test — unresolved scroll target warns and is skipped**
 
 Add to `recipes.test.ts`:
 
 ```typescript
 it("warns on unresolved scroll targets and skips them", () => {
-  const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
   const fiddle = makeFiddle({
     quests: {
       fetch_quests: {
@@ -1074,20 +1214,18 @@ it("warns on unresolved scroll targets and skips them", () => {
 
   const { recipes } = extractRecipes(fiddle);
   expect(recipes["unknown_dish" as RecipeId]).toBeUndefined();
-  expect(warnSpy).toHaveBeenCalledWith(
+  expect(console.warn).toHaveBeenCalledWith(
     expect.stringContaining("unknown_dish"),
   );
-
-  warnSpy.mockRestore();
 });
 ```
 
-- [ ] **Step 16: Run test to verify it passes**
+- [ ] **Step 18: Run test to verify it passes**
 
 Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
 Expected: PASS
 
-- [ ] **Step 17: Write test — letter with shipped_item requirement**
+- [ ] **Step 19: Write test — letter with shipped_item requirement**
 
 Add to `recipes.test.ts`:
 
@@ -1121,56 +1259,19 @@ it("maps letter recipe_scroll with shipped_item requirement", () => {
 });
 ```
 
-- [ ] **Step 18: Run test to verify it passes**
-
-Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
-Expected: PASS
-
-- [ ] **Step 19: Write test — letter with donated_item requirement**
-
-Add to `recipes.test.ts`:
-
-```typescript
-it("maps letter recipe_scroll with donated_item requirement", () => {
-  const fiddle = makeFiddle({
-    items: {
-      other: {
-        cooked_dishes: {
-          default: {},
-          rare_stew: {
-            name: "Rare Stew",
-            recipe: [{ item: "rare_mushroom", count: 1 }],
-          },
-        },
-      },
-    },
-    letters: {
-      museum_reward_letter: {
-        requirements: { donated_item: "ancient_fossil" },
-        items: [{ recipe_scroll: "rare_stew" }],
-      },
-    },
-  });
-
-  const { recipes } = extractRecipes(fiddle);
-  const recipe = recipes["rare_stew" as RecipeId];
-  expect(recipe.sources).toEqual([
-    { trigger: "donated_item", triggerItemId: "ancient_fossil", type: "letter" },
-  ]);
-});
-```
-
 - [ ] **Step 20: Run test to verify it passes**
 
 Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
 Expected: PASS
 
-- [ ] **Step 21: Write test — store recipe_scroll creates store source**
+- [ ] **Step 21: Write test — store recipe_scroll via categories[]**
+
+This test uses the correct nested `categories[]` structure matching the real data shape.
 
 Add to `recipes.test.ts`:
 
 ```typescript
-it("maps store recipe_scroll to store source", () => {
+it("maps store recipe_scroll via categories[] to store source", () => {
   const fiddle = makeFiddle({
     items: {
       furniture: {
@@ -1185,7 +1286,9 @@ it("maps store recipe_scroll to store source", () => {
     },
     stores: {
       furniture_store: {
-        constant_stock: [{ recipe_scroll: "fancy_lamp" }],
+        categories: [
+          { constant_stock: [{ recipe_scroll: "fancy_lamp" }] },
+        ],
       },
     },
   });
@@ -1203,7 +1306,87 @@ it("maps store recipe_scroll to store source", () => {
 Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
 Expected: PASS
 
-- [ ] **Step 23: Write test — museum wing crafting_scroll creates museum_donation source**
+- [ ] **Step 23: Write test — store include_recipe grants recipe source**
+
+Add to `recipes.test.ts`:
+
+```typescript
+it("maps store include_recipe=true to store source", () => {
+  const fiddle = makeFiddle({
+    items: {
+      furniture: {
+        test_set: {
+          default: {},
+          bookshelf: {
+            name: "Bookshelf",
+            recipe: [{ item: "wood", count: 10 }],
+          },
+        },
+      },
+    },
+    stores: {
+      general_store: {
+        categories: [
+          { constant_stock: [{ item: "bookshelf", include_recipe: true }] },
+        ],
+      },
+    },
+  });
+
+  const { recipes } = extractRecipes(fiddle);
+  const recipe = recipes["bookshelf" as RecipeId];
+  expect(recipe.sources).toEqual([
+    { storeId: "general_store", type: "store" },
+  ]);
+});
+```
+
+- [ ] **Step 24: Run test to verify it passes**
+
+Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
+Expected: PASS
+
+- [ ] **Step 25: Write test — store seasonal stock via categories[]**
+
+Add to `recipes.test.ts`:
+
+```typescript
+it("maps store seasonal stock scrolls via categories[]", () => {
+  const fiddle = makeFiddle({
+    items: {
+      furniture: {
+        test_set: {
+          default: {},
+          summer_chair: {
+            name: "Summer Chair",
+            recipe: [{ item: "wood", count: 3 }],
+          },
+        },
+      },
+    },
+    stores: {
+      seasonal_store: {
+        categories: [
+          { seasonal: { summer: [{ crafting_scroll: "summer_chair" }] } },
+        ],
+      },
+    },
+  });
+
+  const { recipes } = extractRecipes(fiddle);
+  const recipe = recipes["summer_chair" as RecipeId];
+  expect(recipe.sources).toEqual([
+    { storeId: "seasonal_store", type: "store" },
+  ]);
+});
+```
+
+- [ ] **Step 26: Run test to verify it passes**
+
+Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
+Expected: PASS
+
+- [ ] **Step 27: Write test — museum wing crafting_scroll creates museum_donation source**
 
 Add to `recipes.test.ts`:
 
@@ -1236,12 +1419,12 @@ it("maps museum wing crafting_scroll to museum_donation source", () => {
 });
 ```
 
-- [ ] **Step 24: Run test to verify it passes**
+- [ ] **Step 28: Run test to verify it passes**
 
 Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
 Expected: PASS
 
-- [ ] **Step 25: Write test — chicken statue recipe_scroll**
+- [ ] **Step 29: Write test — chicken statue recipe_scroll**
 
 Add to `recipes.test.ts`:
 
@@ -1272,12 +1455,12 @@ it("maps chicken statue recipe_scroll to chicken_statue source", () => {
 });
 ```
 
-- [ ] **Step 26: Run test to verify it passes**
+- [ ] **Step 30: Run test to verify it passes**
 
 Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
 Expected: PASS
 
-- [ ] **Step 27: Write test — fishing chest with kind="recipe"**
+- [ ] **Step 31: Write test — fishing chest with kind="recipe"**
 
 Add to `recipes.test.ts`:
 
@@ -1310,12 +1493,12 @@ it("maps fishing chest entries with kind=recipe to treasure_chest source", () =>
 });
 ```
 
-- [ ] **Step 28: Run test to verify it passes**
+- [ ] **Step 32: Run test to verify it passes**
 
 Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
 Expected: PASS
 
-- [ ] **Step 29: Write test — wishing well recipe_scroll**
+- [ ] **Step 33: Write test — wishing well recipe_scroll**
 
 Add to `recipes.test.ts`:
 
@@ -1346,17 +1529,19 @@ it("maps wishing well recipe_scroll to wishing_well source", () => {
 });
 ```
 
-- [ ] **Step 30: Run test to verify it passes**
+- [ ] **Step 34: Run test to verify it passes**
 
 Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
 Expected: PASS
 
-- [ ] **Step 31: Write test — festival recipe_scroll**
+- [ ] **Step 35: Write test — festival recipe_scroll via stocks[storeId]**
+
+This test uses the correct `stocks[storeId]` structure matching the real data shape.
 
 Add to `recipes.test.ts`:
 
 ```typescript
-it("maps festival recipe_scroll to festival source", () => {
+it("maps festival recipe_scroll via stocks[storeId] to festival source", () => {
   const fiddle = makeFiddle({
     items: {
       other: {
@@ -1370,8 +1555,12 @@ it("maps festival recipe_scroll to festival source", () => {
       },
     },
     festivals: {
-      harvest_festival: {
-        vendor_stock: [{ recipe_scroll: "festival_treat", tier_required: 2 }],
+      harvest: {
+        stocks: {
+          nora_souvenir_stall: [
+            { recipe_scroll: "festival_treat", tier_required: 2 },
+          ],
+        },
       },
     },
   });
@@ -1379,17 +1568,17 @@ it("maps festival recipe_scroll to festival source", () => {
   const { recipes } = extractRecipes(fiddle);
   const recipe = recipes["festival_treat" as RecipeId];
   expect(recipe.sources).toEqual([
-    { festivalId: "harvest_festival", type: "festival" },
+    { festivalId: "harvest", storeId: "nora_souvenir_stall", type: "festival" },
   ]);
 });
 ```
 
-- [ ] **Step 32: Run test to verify it passes**
+- [ ] **Step 36: Run test to verify it passes**
 
 Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
 Expected: PASS
 
-- [ ] **Step 33: Write test — dungeon delicacies**
+- [ ] **Step 37: Write test — dungeon delicacies**
 
 Add to `recipes.test.ts`:
 
@@ -1425,19 +1614,17 @@ it("maps dungeon_delicacies items to mine_zone source", () => {
 });
 ```
 
-- [ ] **Step 34: Run test to verify it passes**
+- [ ] **Step 38: Run test to verify it passes**
 
 Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
 Expected: PASS
 
-- [ ] **Step 35: Write test — recipe_is_default without recipe array logs diagnostic**
+- [ ] **Step 39: Write test — recipe_is_default without recipe array logs diagnostic**
 
 Add to `recipes.test.ts`:
 
 ```typescript
 it("logs diagnostic for items with recipe_is_default but no recipe array or recipe_key", () => {
-  const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-
   const fiddle = makeFiddle({
     items: {
       other: {
@@ -1454,20 +1641,56 @@ it("logs diagnostic for items with recipe_is_default but no recipe array or reci
 
   const { recipes } = extractRecipes(fiddle);
   expect(recipes["ore_gold" as RecipeId]).toBeUndefined();
-  expect(logSpy).toHaveBeenCalledWith(
+  expect(console.log).toHaveBeenCalledWith(
     expect.stringContaining("ore_gold"),
   );
-
-  logSpy.mockRestore();
 });
 ```
 
-- [ ] **Step 36: Run test to verify it passes**
+- [ ] **Step 40: Run test to verify it passes**
 
 Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
 Expected: PASS
 
-- [ ] **Step 37: Write test — sources are sorted by type then by detail fields**
+- [ ] **Step 41: Write test — centralized deduplication removes duplicate sources**
+
+Add to `recipes.test.ts`:
+
+```typescript
+it("deduplicates identical sources from different chest tiers", () => {
+  const fiddle = makeFiddle({
+    items: {
+      other: {
+        cooked_dishes: {
+          default: {},
+          rare_fish: {
+            name: "Rare Fish Dish",
+            recipe: [{ item: "fish", count: 3 }],
+          },
+        },
+      },
+    },
+    fishing: {
+      chest_tables: {
+        bronze: { items: [{ value: "rare_fish", kind: "recipe" }] },
+        silver: { items: [{ value: "rare_fish", kind: "recipe" }] },
+        gold: { items: [{ value: "rare_fish", kind: "recipe" }] },
+      },
+    },
+  });
+
+  const { recipes } = extractRecipes(fiddle);
+  const recipe = recipes["rare_fish" as RecipeId];
+  expect(recipe.sources).toEqual([{ type: "treasure_chest" }]);
+});
+```
+
+- [ ] **Step 42: Run test to verify it passes**
+
+Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
+Expected: PASS
+
+- [ ] **Step 43: Write test — sources are sorted by type then by detail fields**
 
 Add to `recipes.test.ts`:
 
@@ -1481,37 +1704,204 @@ it("sorts sources by type then by detail fields", () => {
           multi_source_item: {
             name: "Multi Source",
             recipe: [{ item: "wood", count: 1 }],
-            recipe_is_default: true,
           },
         },
       },
     },
     stores: {
       zzz_store: {
-        constant_stock: [{ recipe_scroll: "multi_source_item" }],
+        categories: [
+          { constant_stock: [{ recipe_scroll: "multi_source_item" }] },
+        ],
       },
       aaa_store: {
-        constant_stock: [{ recipe_scroll: "multi_source_item" }],
+        categories: [
+          { constant_stock: [{ recipe_scroll: "multi_source_item" }] },
+        ],
+      },
+    },
+    quests: {
+      fetch_quests: {
+        get_multi: {
+          name: "Get Multi",
+          rewards: [{ recipe_scroll: "multi_source_item" }],
+        },
       },
     },
   });
 
   const { recipes } = extractRecipes(fiddle);
   const recipe = recipes["multi_source_item" as RecipeId];
-  expect(recipe.sources[0]).toEqual({ type: "default" });
+  expect(recipe.sources[0].type).toBe("quest");
   expect(recipe.sources[1]).toEqual({ storeId: "aaa_store", type: "store" });
   expect(recipe.sources[2]).toEqual({ storeId: "zzz_store", type: "store" });
 });
 ```
 
-- [ ] **Step 38: Run test to verify it passes**
+- [ ] **Step 44: Run test to verify it passes**
 
 Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
 Expected: PASS
 
-- [ ] **Step 39: Write integration test — real pipeline output assertion**
+- [ ] **Step 45: Write test — presentations separate items with different names**
 
-Add a second describe block at the end of `recipes.test.ts`. Add the required imports at the top of the file alongside the existing imports:
+Add to `recipes.test.ts`:
+
+```typescript
+it("creates separate presentations for items with different names under one recipe_key", () => {
+  const fiddle = makeFiddle({
+    items: {
+      furniture: {
+        beds: {
+          default: {},
+          mermaid_bed_single_blue: {
+            name: "Mermaid Bed",
+            recipe: [{ item: "wood", count: 5 }],
+            recipe_key: "mermaid_bed",
+          },
+          mermaid_bed_single_green: {
+            name: "Mermaid Bed",
+            recipe: [{ item: "wood", count: 5 }],
+            recipe_key: "mermaid_bed",
+          },
+          mermaid_bed_double_blue: {
+            name: "Mermaid Double Bed",
+            recipe: [{ item: "wood", count: 8 }],
+            recipe_key: "mermaid_bed",
+          },
+        },
+      },
+    },
+  });
+
+  const { recipes } = extractRecipes(fiddle);
+  const recipe = recipes["mermaid_bed" as RecipeId];
+  expect(recipe.presentations).toEqual([
+    {
+      itemIds: ["mermaid_bed_single_blue", "mermaid_bed_single_green"],
+      name: "Mermaid Bed",
+    },
+    {
+      itemIds: ["mermaid_bed_double_blue"],
+      name: "Mermaid Double Bed",
+    },
+  ]);
+  expect(recipe.memberItemIds).toEqual([
+    "mermaid_bed_double_blue",
+    "mermaid_bed_single_blue",
+    "mermaid_bed_single_green",
+  ]);
+});
+```
+
+- [ ] **Step 46: Run test to verify it passes**
+
+Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
+Expected: PASS
+
+- [ ] **Step 47: Write test — empty data produces empty results**
+
+Add to `recipes.test.ts`:
+
+```typescript
+it("produces empty results for empty data", () => {
+  const fiddle = makeFiddle();
+
+  const { recipes, recipeIdByItemId } = extractRecipes(fiddle);
+  expect(Object.keys(recipes)).toEqual([]);
+  expect(recipeIdByItemId.size).toBe(0);
+});
+```
+
+- [ ] **Step 48: Run test to verify it passes**
+
+Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
+Expected: PASS
+
+- [ ] **Step 49: Write test — resolveScrollTarget fallback to recipe key**
+
+Add to `recipes.test.ts`:
+
+```typescript
+it("resolves scroll targets that are recipe keys directly", () => {
+  const fiddle = makeFiddle({
+    items: {
+      furniture: {
+        test_set: {
+          default: {},
+          widget_blue: {
+            name: "Widget",
+            recipe: [{ item: "wood", count: 1 }],
+            recipe_key: "widget",
+          },
+        },
+      },
+    },
+    quests: {
+      fetch_quests: {
+        widget_quest: {
+          name: "Widget Quest",
+          rewards: [{ crafting_scroll: "widget" }],
+        },
+      },
+    },
+  });
+
+  const { recipes } = extractRecipes(fiddle);
+  const recipe = recipes["widget" as RecipeId];
+  expect(recipe.sources).toEqual([
+    { questId: "widget_quest", questType: "fetch_quests", type: "quest" },
+  ]);
+});
+```
+
+- [ ] **Step 50: Run test to verify it passes**
+
+Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
+Expected: PASS
+
+- [ ] **Step 51: Write test — letter with donated_item requirement**
+
+Add to `recipes.test.ts`:
+
+```typescript
+it("maps letter recipe_scroll with donated_item requirement", () => {
+  const fiddle = makeFiddle({
+    items: {
+      other: {
+        cooked_dishes: {
+          default: {},
+          rare_stew: {
+            name: "Rare Stew",
+            recipe: [{ item: "rare_mushroom", count: 1 }],
+          },
+        },
+      },
+    },
+    letters: {
+      museum_reward_letter: {
+        requirements: { donated_item: "ancient_fossil" },
+        items: [{ recipe_scroll: "rare_stew" }],
+      },
+    },
+  });
+
+  const { recipes } = extractRecipes(fiddle);
+  const recipe = recipes["rare_stew" as RecipeId];
+  expect(recipe.sources).toEqual([
+    { trigger: "donated_item", triggerItemId: "ancient_fossil", type: "letter" },
+  ]);
+});
+```
+
+- [ ] **Step 52: Run test to verify it passes**
+
+Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts`
+Expected: PASS
+
+- [ ] **Step 53: Write integration test — real pipeline output assertion**
+
+Add the required imports at the top of `recipes.test.ts` alongside the existing imports:
 
 ```typescript
 import { existsSync } from "node:fs";
@@ -1520,7 +1910,7 @@ import { evaluateExpressions } from "../evaluate.js";
 import { parseFiddle } from "../parse-fiddle.js";
 ```
 
-Then add:
+Then add a second describe block at the end of the file:
 
 ```typescript
 const ASSETS_DIR = process.env.MISTRIA_ASSETS ?? "pipeline/input/assets";
@@ -1536,9 +1926,7 @@ describe.skipIf(!HAS_ASSETS)("extractRecipes — real data", () => {
     const totalRecipes = Object.keys(recipes).length;
     expect(totalRecipes).toBeGreaterThan(100);
 
-    const withDefault = Object.values(recipes).filter((r) =>
-      r.sources.some((s) => s.type === "default"),
-    ).length;
+    const withDefault = Object.values(recipes).filter((r) => r.defaultUnlocked).length;
     expect(withDefault).toBeGreaterThan(50);
 
     const withQuest = Object.values(recipes).filter((r) =>
@@ -1559,16 +1947,21 @@ describe.skipIf(!HAS_ASSETS)("extractRecipes — real data", () => {
     for (const [, recipeId] of recipeIdByItemId) {
       expect(recipes[recipeId]).toBeDefined();
     }
+
+    const multiPresentation = Object.values(recipes).filter(
+      (r) => r.presentations.length > 1,
+    );
+    expect(multiPresentation.length).toBeGreaterThan(0);
   });
 });
 ```
 
-- [ ] **Step 40: Run all tests and lint**
+- [ ] **Step 54: Run all tests and lint**
 
 Run: `pnpm exec vitest run pipeline/src/extractors/recipes.test.ts && pnpm run lint`
 Expected: PASS. Fix any lint issues (unused imports, formatting).
 
-- [ ] **Step 41: Commit**
+- [ ] **Step 55: Commit**
 
 ```bash
 git add pipeline/src/extractors/recipes.ts pipeline/src/extractors/recipes.test.ts
@@ -1580,17 +1973,50 @@ git commit -m "feat(pipeline): add recipe extractor with all source collectors"
 ### Task 3: Wire extractor into the pipeline & regenerate data
 
 **Files:**
-- Modify: `pipeline/src/main.ts`
+- Modify: `src/lib/types/tracker-data.ts`
 - Modify: `pipeline/src/extractors/almanac.ts`
+- Modify: `pipeline/src/main.ts`
 - Regenerate: `src/lib/data/tracker-data.json`
 
 **Interfaces:**
-- Consumes: `extractRecipes` from task 2, `ItemMetadataIndex` from almanac extractor
+- Consumes: `extractRecipes` from Task 2, `RecipeId`, `Recipe`, `RecipePresentation` from Task 1, `ItemMetadataIndex` from almanac extractor, `applyItemQuestGates` pattern from `quest-gates.ts`
 - Produces: `TrackerData` now includes `recipes` field, items have `recipeId`, almanac items have `colorCount` and `recipeId`
 
-This task wires the extractor, stamps `recipeId` onto the item registry, updates almanac collapsing to emit `colorCount` and `recipeId`, regenerates `tracker-data.json`, and verifies the pipeline output. Regeneration happens here (before the UI task) so that task 4 can test against real data in the browser.
+This task updates `TrackerData` to include the recipe registry, stamps `recipeId` onto the item registry and almanac items using `recipeIdByItemId`, updates almanac collapsing to emit `colorCount`, regenerates `tracker-data.json`, and verifies the pipeline output.
 
-- [ ] **Step 1: Add import to `main.ts`**
+Recipe back-links on almanac items come from `recipeIdByItemId`, not from the raw `recipe_key` field. This ensures that items without `recipe_key` (e.g., cooked dishes with only a `recipe` array) also receive their `recipeId`.
+
+The `recipeId` stamping follows the existing `applyItemQuestGates` pattern: a function that accepts `TrackerData["items"]` as its parameter type, which allows the spread assignment to include the new field.
+
+- [ ] **Step 1: Add `recipes` to `TrackerData`**
+
+In `src/lib/types/tracker-data.ts`, insert into the `TrackerData` interface, alphabetically between `quests` and `renown`:
+
+```typescript
+recipes: Record<RecipeId, Recipe>;
+```
+
+- [ ] **Step 2: Add `recipeId` to `TrackerData.items`**
+
+Change the items type to include an optional recipe back-link:
+
+```typescript
+items: Record<ItemId, { category: string; name: string; questGate?: QuestId[]; recipeId?: RecipeId }>;
+```
+
+- [ ] **Step 3: Add `colorCount` and `recipeId` to `AlmanacCategory` items**
+
+Change the `AlmanacCategory` interface:
+
+```typescript
+export interface AlmanacCategory {
+  id: string;
+  items: Record<ItemId, { colorCount?: number; name: string; recipeId?: RecipeId }>;
+  name: string;
+}
+```
+
+- [ ] **Step 4: Add import to `main.ts`**
 
 Add to the import block in `pipeline/src/main.ts`, after the existing extractor imports (after the `extractQuests` import):
 
@@ -1598,44 +2024,39 @@ Add to the import block in `pipeline/src/main.ts`, after the existing extractor 
 import { extractRecipes } from "./extractors/recipes.js";
 ```
 
-- [ ] **Step 2: Call `extractRecipes` in step 3**
+- [ ] **Step 5: Stamp `recipeId` onto items**
 
-In the step 3 extraction block (after `const sources = extractSources(fiddle);` on line 101), add:
-
-```typescript
-const { recipes, recipeIdByItemId } = extractRecipes(fiddle);
-```
-
-- [ ] **Step 3: Stamp `recipeId` onto items**
-
-After `extractRecipes` and before `applyItemQuestGates` (line 104), add:
+After `applySpellQuestGates` and before the `console.log();` that ends step 3, add:
 
 ```typescript
 for (const [itemId, recipeId] of recipeIdByItemId) {
-  const item = items[itemId];
+  const typedId = itemId as ItemId;
+  const item = items[typedId];
   if (item) {
-    items[itemId] = { ...item, recipeId };
+    (items as TrackerData["items"])[typedId] = { ...item, recipeId };
   }
 }
 ```
 
-- [ ] **Step 4: Add `recipes` to the assembled `TrackerData` object**
+Note: `items` is declared as `ItemMetadataIndex` (returned from `extractAlmanac`), which doesn't include `recipeId`. The cast to `TrackerData["items"]` is needed for the spread assignment, following the same runtime mutation pattern used by `applyItemQuestGates`.
 
-In the `trackerData` object literal (line 110-125), add `recipes` between `quests` and `renown`:
+- [ ] **Step 6: Add `recipes` to the assembled `TrackerData` object**
+
+In the `trackerData` object literal, add `recipes` between `quests` and `renown`:
 
 ```typescript
 recipes,
 ```
 
-- [ ] **Step 5: Update `collapseFurnitureColorways` in `almanac.ts`**
+- [ ] **Step 7: Update `collapseFurnitureColorways` in `almanac.ts`**
 
-Replace the current `collapseFurnitureColorways` function (lines 181-200) with a version that tracks color counts and preserves `recipeKey`:
+Replace the current `collapseFurnitureColorways` function with a version that tracks color counts:
 
 ```typescript
 function collapseFurnitureColorways(
   bucket: Map<string, { id: string; name: string; recipeKey?: string }>,
-): Map<string, { colorCount?: number; name: string; recipeKey?: string }> {
-  const result = new Map<string, { colorCount?: number; name: string; recipeKey?: string }>();
+): Map<string, { colorCount?: number; name: string }> {
+  const result = new Map<string, { colorCount?: number; name: string }>();
   const seenRecipeGroups = new Map<string, { count: number; representativeId: string }>();
 
   for (const [id, entry] of bucket) {
@@ -1647,7 +2068,7 @@ function collapseFurnitureColorways(
         continue;
       }
       seenRecipeGroups.set(groupKey, { count: 1, representativeId: id });
-      result.set(id, { colorCount: 1, name: entry.name, recipeKey: entry.recipeKey });
+      result.set(id, { colorCount: 1, name: entry.name });
     } else {
       result.set(id, { name: entry.name });
     }
@@ -1662,60 +2083,94 @@ function collapseFurnitureColorways(
 }
 ```
 
-- [ ] **Step 6: Update almanac assembly to include `colorCount` and `recipeId`**
+- [ ] **Step 8: Update almanac assembly to stamp `recipeId` from `recipeIdByItemId`**
 
-In `extractAlmanac`, update the type import to include `RecipeId`:
+This is the key change from the original plan. Instead of deriving `recipeId` only from the raw `recipe_key` field (which misses items without `recipe_key`), the almanac receives `recipeIdByItemId` and stamps `recipeId` on every item that has a recipe.
+
+First, update the `extractAlmanac` signature to accept the recipe map:
 
 ```typescript
 import type { AlmanacCategory, ItemId, RecipeId, TrackerData } from "$lib/types/tracker-data.js";
+
+export function extractAlmanac(
+  fiddle: ParsedGameData,
+  recipeIdByItemId?: Map<string, RecipeId>,
+): {
+  almanac: TrackerData["almanac"];
+  items: ItemMetadataIndex;
+} {
 ```
 
-Replace the `categoryItems` construction (lines 141-144) with:
+Then replace the `categoryItems` construction with:
 
 ```typescript
 const categoryItems: AlmanacCategory["items"] = {};
 for (const [id, entry] of sortedEntries) {
+  const recipeId = recipeIdByItemId?.get(id);
   categoryItems[id as ItemId] = {
     ...(entry.colorCount ? { colorCount: entry.colorCount } : {}),
     name: entry.name,
-    ...(entry.recipeKey ? { recipeId: entry.recipeKey as RecipeId } : {}),
+    ...(recipeId ? { recipeId } : {}),
   };
 }
 ```
 
-- [ ] **Step 7: Run type-check and pipeline tests**
+- [ ] **Step 9: Wire `extractRecipes` into `main.ts` and pass `recipeIdByItemId` to `extractAlmanac`**
+
+In `pipeline/src/main.ts`, add the `extractRecipes` call before `extractAlmanac` and pass `recipeIdByItemId` to it. The reordered step 3 extraction block should read:
+
+```typescript
+const { recipes, recipeIdByItemId } = extractRecipes(fiddle);
+const { almanac, items } = extractAlmanac(fiddle, recipeIdByItemId);
+const animals = extractAnimals(fiddle);
+const npcs = extractNpcs(fiddle);
+const cosmetics = extractCosmetics(fiddle);
+const skills = extractSkills(fiddle);
+const renown = extractRenown(fiddle);
+const quests = extractQuests(fiddle);
+const mines = extractMines(fiddle);
+const sources = extractSources(fiddle);
+const questGates = extractQuestGates(fiddle);
+```
+
+`extractRecipes` must run before `extractAlmanac` because it produces `recipeIdByItemId`. The other extractors have no ordering dependency and remain unchanged.
+
+- [ ] **Step 10: Run type-check and pipeline tests**
 
 Run: `pnpm run check && pnpm exec vitest run pipeline/`
 Expected: PASS
 
-- [ ] **Step 8: Run the pipeline against real assets**
+- [ ] **Step 11: Run the pipeline against real assets**
 
 Run: `pnpm run pipeline -- /path/to/assets` (or use `MISTRIA_ASSETS` env var)
-Expected: Pipeline completes successfully. Look for the new `Recipes:` log line showing total count and per-source-type counts.
+Expected: Pipeline completes successfully. Look for the new `Recipes:` log line showing total count, default count, and per-source-type counts.
 
-- [ ] **Step 9: Inspect the output**
+- [ ] **Step 12: Inspect the output**
 
 Open `pipeline/output/tracker-data-readable.json` and search for `"recipes"`. Verify:
 - Multiple recipe entries exist
 - Colorway recipes (e.g., `sapling_beanbag_chair`) have multiple `memberItemIds`
-- Sources include `quest`, `default`, `letter`, `store`, `museum_donation`, and other types
-- Items in `"items"` section have `"recipeId"` where expected
+- Multi-presentation recipes have `presentations` with different names
+- Sources include `quest`, `letter`, `store`, `museum_donation`, and other types
+- `defaultUnlocked` is true for expected recipes
+- Items in `"items"` section have `"recipeId"` where expected (including cooked dishes without `recipe_key`)
 - Almanac items have `"colorCount"` and `"recipeId"` where expected
+- Store sources appear for both scroll entries and `include_recipe` entries
 
-- [ ] **Step 10: Build the app**
+- [ ] **Step 13: Build the app**
 
 Run: `pnpm run build`
 Expected: Build succeeds with no type errors.
 
-- [ ] **Step 11: Run lint**
+- [ ] **Step 14: Run lint**
 
 Run: `pnpm run lint`
 Expected: PASS
 
-- [ ] **Step 12: Commit**
+- [ ] **Step 15: Commit**
 
 ```bash
-git add pipeline/src/main.ts pipeline/src/extractors/almanac.ts src/lib/data/tracker-data.json
+git add src/lib/types/tracker-data.ts pipeline/src/main.ts pipeline/src/extractors/almanac.ts src/lib/data/tracker-data.json
 git commit -m "feat(pipeline): wire recipe extractor, update almanac collapsing, regenerate data"
 ```
 
@@ -1729,44 +2184,45 @@ git commit -m "feat(pipeline): wire recipe extractor, update almanac collapsing,
 - Modify: `src/lib/components/almanac-content.svelte`
 
 **Interfaces:**
-- Consumes: `TrackerData["recipes"]` from tasks 1-3, `trackerData` from `$lib/data/index.js`, `RecipeSource` from task 1
+- Consumes: `TrackerData["recipes"]` from Tasks 1–3, `trackerData` from `$lib/data/index.js`, `RecipeSource` from Task 1, `Recipe` from Task 1
 - Produces: UI rendering of color count and recipe source on collapsed almanac rows
 
 This task adds the `recipeSourceLabel` helper, then renders recipe info inline on collapsed rows. The spec says recipe info is display-only context, not a separate tracking concern.
 
+The label logic prioritizes `defaultUnlocked`: if a recipe is default-unlocked, it always shows "Default recipe" regardless of other acquired sources, because the player already has the recipe and doesn't need to pursue acquisition. For non-default recipes with multiple sources, the initial implementation displays only the primary (first sorted) source. Showing multiple sources is a potential future enhancement.
+
 - [ ] **Step 1: Create the `recipeSourceLabel` helper**
 
-In `src/lib/utils/format.ts`, update the type import to include `RecipeSource`:
+In `src/lib/utils/format.ts`, update the type import:
 
 ```typescript
-import type { RecipeSource, Season, SourceType, Weather } from "$lib/types/tracker-data.js";
+import type { Recipe, RecipeSource, Season, SourceType, Weather } from "$lib/types/tracker-data.js";
 ```
 
-Add the helper function after the `weathersForSeason` function (line 102) and before `titleCase`:
+Add the helper function after the `weathersForSeason` function (keeping exported functions grouped together):
 
 ```typescript
 export function recipeSourceLabel(
-  sources: RecipeSource[],
+  recipe: Recipe,
   questNames: Record<string, string>,
   itemNames: Record<string, string>,
 ): string {
-  const nonDefault = sources.find((s) => s.type !== "default");
-  const source = nonDefault ?? sources[0];
+  if (recipe.defaultUnlocked) return "Default recipe";
+
+  const source = recipe.sources[0];
   if (!source) return "";
 
   switch (source.type) {
     case "chicken_statue":
       return "Chicken statue";
-    case "default":
-      return "Default recipe";
     case "festival":
-      return titleCase(source.festivalId);
+      return `${titleCase(source.festivalId)} — ${titleCase(source.storeId)}`;
     case "letter":
-      if (source.trigger === "shipped_item") {
+      if (source.trigger === "shipped_item" && source.triggerItemId) {
         const name = itemNames[source.triggerItemId] ?? titleCase(source.triggerItemId);
         return `Ship ${name}`;
       }
-      if (source.trigger === "donated_item") {
+      if (source.trigger === "donated_item" && source.triggerItemId) {
         const name = itemNames[source.triggerItemId] ?? titleCase(source.triggerItemId);
         return `Donate ${name}`;
       }
@@ -1787,8 +2243,6 @@ export function recipeSourceLabel(
 }
 ```
 
-Note: `titleCase` is already defined as a private function in `format.ts` (line 104). It works for this usage.
-
 - [ ] **Step 2: Run type-check**
 
 Run: `pnpm run check`
@@ -1796,7 +2250,7 @@ Expected: PASS
 
 - [ ] **Step 3: Update `item-row.svelte` to accept and display recipe info**
 
-In `src/lib/components/item-row.svelte`, update the props destructuring (lines 13-29) to add `recipeInfo`:
+In `src/lib/components/item-row.svelte`, update the props destructuring to add `recipeInfo`:
 
 ```typescript
 let {
@@ -1820,12 +2274,12 @@ let {
 } = $props();
 ```
 
-Replace the expandable name section (lines 71-90) with a version that stacks a subtitle:
+Replace the expandable name section (the `{#if sources.length > 0}` block through its `{/if}`) with a version that stacks a subtitle:
 
 ```svelte
 {#if sources.length > 0}
   <button
-    class="group inline-flex min-w-0 flex-1 items-center gap-0.5 text-left"
+    class="group inline-flex min-w-0 flex-1 items-start gap-0.5 text-left"
     type="button"
     aria-expanded={expanded}
     aria-label="{name} details"
@@ -1847,7 +2301,7 @@ Replace the expandable name section (lines 71-90) with a version that stacks a s
       {/if}
     </span>
     <ChevronRight
-      class="size-3 shrink-0 text-muted-foreground opacity-40 transition-all group-hover:opacity-60 {expanded
+      class="mt-1.5 size-3 shrink-0 text-muted-foreground opacity-40 transition-all group-hover:opacity-60 {expanded
         ? 'rotate-90'
         : ''}"
     />
@@ -1877,7 +2331,7 @@ Add the import at the top of the script in `src/lib/components/almanac-content.s
 import { recipeSourceLabel } from "$lib/utils/format.js";
 ```
 
-Add derived lookup indexes after the existing `let recentlyCompleted` line (line 16):
+Add derived lookup indexes after the existing `let recentlyCompleted` line:
 
 ```typescript
 let questNames = $derived(
@@ -1895,13 +2349,13 @@ let itemNames = $derived(
 );
 ```
 
-In the `{#each displayItems ...}` block (line 80), add computed recipe info and pass it to `ItemRow`. Replace the `{#each displayItems ...}` through the closing `{/each}` (lines 80-106):
+In the `{#each displayItems ...}` block, add computed recipe info and pass it to `ItemRow`. Replace the `{#each displayItems ...}` through the closing `{/each}`:
 
 ```svelte
 {#each displayItems as [itemId, item] (itemId)}
   {@const recipe = item.recipeId ? trackerData.recipes[item.recipeId] : undefined}
   {@const sourceLabel = recipe
-    ? recipeSourceLabel(recipe.sources, questNames, itemNames)
+    ? recipeSourceLabel(recipe, questNames, itemNames)
     : ""}
   <ItemRow
     completed={userState.state.completed.almanac.has(itemId as ItemId)}
@@ -1955,6 +2409,7 @@ Open the almanac page in a browser. Verify:
 - Letter sources show "Ship {item name}" or "Donate {item name}"
 - Store sources show the store name (title-cased)
 - Museum sources show "{wing name} wing donations"
+- Festival sources show "{festival name} — {vendor name}"
 - Single-color items with no known recipe source show no subtitle
 - Items without recipes (crops, minerals, etc.) show no subtitle
 - Existing item rows without recipes are unchanged
@@ -1975,7 +2430,7 @@ git commit -m "feat(almanac): display color count and recipe source on collapsed
 - Modify: `pipeline/README.md`
 
 **Interfaces:**
-- Consumes: everything from tasks 1-4
+- Consumes: everything from Tasks 1–4
 - Produces: updated pipeline documentation
 
 - [ ] **Step 1: Add recipe extractor to the processor map table**
@@ -1983,39 +2438,42 @@ git commit -m "feat(almanac): display color count and recipe source on collapsed
 Add a row to the processor map table in `pipeline/README.md`, after the `extractors/quest-gates.ts` row:
 
 ```markdown
-| `extractors/recipes.ts`  | Items (all categories), quests, letters, stores, museum wings, chicken statue, fishing chests, wishing well, festivals, dungeons | Recipe registry and item back-links | Groups items by `recipe_key ?? itemId`; only items with `recipe` array or `recipe_key` are included; items with `recipe_is_default` but no recipe/key are logged and skipped; collects scroll sources from quests, letters (shipped_item/donated_item), stores, museum wings, chicken statue, fishing chests (kind=recipe), wishing well, festivals, and dungeon delicacies; deduplicates sources per recipe; warns on unresolved scroll targets; sorts memberItemIds and sources deterministically. |
+| `extractors/recipes.ts`  | Items (all categories), quests, letters, stores, museum wings, chicken statue, fishing chests, wishing well, festivals, dungeons | Recipe registry and item back-links | Groups items by `recipe_key ?? itemId`; builds presentations by name; collects scroll sources from quests, letters, stores (via `categories[]`, including `include_recipe`), museum wings, chicken statue, fishing chests, wishing well, festivals (via `stocks[storeId]`), dungeon delicacies; deduplicates sources centrally; validates recipe ID collisions; requires `recipe_is_default` agreement across groups. |
 ```
 
 - [ ] **Step 2: Add recipes section to README**
 
-Add a section after "Quest gates" (line 116) called "Recipes":
+Add a section after "Quest gates" called "Recipes":
 
 ```markdown
 ### Recipes
 
-`extractRecipes` builds a recipe registry in two phases. The first phase scans all items for `recipe_key` and `recipe_is_default`, grouping items into recipe identities using `recipe_key ?? itemId`. Only items with a `recipe` array or a `recipe_key` field are included; items with `recipe_is_default` but no recipe or key (e.g., `ore_gold`) are excluded with a diagnostic log. The second phase collects recipe acquisition sources from ten data locations:
+`extractRecipes` builds a recipe registry in three phases. The first phase scans all items for `recipe_key` and `recipe_is_default`, grouping items into recipe identities using `recipe_key ?? itemId`. Only items with a `recipe` array or a `recipe_key` field are included; items with `recipe_is_default` but no recipe or key (e.g., `ore_gold`) are excluded with a diagnostic log. Item IDs that collide with recipe keys from other groups produce a warning.
+
+The second phase collects recipe acquisition sources from nine data locations:
 
 | Source type | Data location | Pattern |
 |-------------|---------------|---------|
-| `default` | Items | `recipe_is_default = true` |
 | `quest` | `quests/{fetch_quests,stillwell_challenges,story_quests,tali_challenges}` | `rewards[].recipe_scroll` or `crafting_scroll` |
 | `letter` | `letters` | `items[].recipe_scroll` with `requirements.shipped_item` or `donated_item` |
-| `store` | `stores` | `constant_stock`, `seasonal`, `random_stock` arrays with `recipe_scroll` or `crafting_scroll` |
+| `store` | `stores[storeId].categories[]` | `constant_stock`, `seasonal`, `random_stock` entries with `recipe_scroll`, `crafting_scroll`, or `include_recipe = true` |
 | `museum_donation` | `museum_wings/{archaeology,fish,flora,insect}` | `rewards[].entries[].crafting_scroll` |
 | `chicken_statue` | `chicken_statue` | `common.{small,medium,large}_roll[].recipe_scroll` |
 | `treasure_chest` | `fishing` | `chest_tables.{tier}.items[]` with `kind = "recipe"` and `value` as target |
 | `wishing_well` | `wishing_well` | `common.{small,medium,large}_roll[].recipe_scroll` |
-| `festival` | `festivals` | Stock arrays with `recipe_scroll` or `crafting_scroll` |
+| `festival` | `festivals[festivalId].stocks[storeId]` | Stock entries with `recipe_scroll` or `crafting_scroll` |
 | `mine_zone` | `dungeons` | `biomes[].dungeon_delicacies` and `taste_maker` item ID lists |
 
-Unresolved scroll targets produce a warning. Member item IDs and sources are sorted deterministically: memberItemIds alphabetically, sources by type then by JSON-serialized detail fields.
+After all collectors merge, sources are structurally deduplicated centrally, then sorted by type and detail fields. `defaultUnlocked` is a separate boolean flag requiring all group members to agree; mixed flags produce a warning and resolve to false.
 
-The extractor also returns a `recipeIdByItemId` map that the main program uses to stamp `recipeId` onto the item registry for cheap two-way traversal between items and their recipe identity.
+The third phase builds `presentations` — items within each recipe grouped by display name — so that recipe keys containing multiple distinct designs (e.g., single and double beds) produce separate almanac rows.
+
+The extractor also returns a `recipeIdByItemId` map that the main program passes to `extractAlmanac` for stamping `recipeId` onto almanac rows. This ensures all craftable items receive their recipe back-link, including items without `recipe_key` (e.g., cooked dishes identified by item ID).
 ```
 
 - [ ] **Step 3: Update the source rules section**
 
-In the "Source rules" section (line 97-98), update the sentence about scroll entries to clarify that recipe scrolls are now handled by the recipe extractor:
+In the "Source rules" section, update the sentence about scroll entries to clarify that recipe scrolls are now handled by the recipe extractor:
 
 Change:
 > Store processing accepts constant, seasonal, and random stock. It counts and discards `recipe_scroll` and `crafting_scroll` entries.
