@@ -121,7 +121,7 @@
   {/if}
 {/each}
 
-{#if trackerData.almanac.every( (cat) => Object.keys(cat.items).every( (id) => userState.state.completed.almanac.has(id as ItemId), ), ) && !userState.state.showCompleted}
+{#if trackerData.almanac.every( (cat) => Object.keys(cat.items).every( (id) => userState.state.completed.almanac.has(id as ItemId) ) ) && !userState.state.showCompleted}
   <p class="py-8 text-center text-base text-muted-foreground">
     All done! Toggle "Show completed" to review.
   </p>

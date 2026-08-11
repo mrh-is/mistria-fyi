@@ -11,7 +11,7 @@ task:
 1. Read the issue **and its comments** (`gh issue view <number> --comments` or via GitHub API/MCP).
    Comments often contain screenshots, clarifications, and additional requirements.
 2. Create a branch: `<issue-number>-<short-description>`.
-3. Do the work. Run `bun run check` and `bun run lint` before committing.
+3. Do the work. Run `pnpm run check` and `pnpm run lint` before committing.
 4. Commit, push the branch, and open a PR that references the issue (`Closes #N` in the PR body).
 
 Issues labeled `ready` are available. Issues labeled `blocked` or `discussion` are not actionable
@@ -19,13 +19,16 @@ yet.
 
 ## Commands
 
-Use **bun** (not npm/npx) for all commands.
+Use **pnpm** (not npm/npx) for all commands.
 
-- **Dev**: `bun run dev` | **Build**: `bun run build` | **Type-check**: `bun run check`
-- **Lint**: `bun run lint` (prettier + eslint) | **Fix**: `bun run lint:fix`
-- **Pipeline**: `bun run pipeline` (regenerates `tracker-data.json` from
-  `pipeline/input/fiddle.json`)
-- No test suite configured yet. Vitest is installed but no tests exist.
+- **Dev**: `pnpm run dev` | **Build**: `pnpm run build` | **Type-check**: `pnpm run check`
+- **Lint**: `pnpm run lint` (prettier + eslint) | **Fix**: `pnpm run lint:fix`
+- **Pipeline**: `pnpm run pipeline -- /path/to/assets` (regenerates `tracker-data.json` from local
+  game TOML assets)
+- **Tests**: `pnpm exec vitest run pipeline/` (pipeline unit tests)
+
+`pipeline/input/assets/` is ignored and local. See [pipeline/README.md](pipeline/README.md) for
+pipeline contracts, artifacts, & version-specific checks.
 
 ## Downloading Images from GitHub Issue Comments
 
@@ -44,14 +47,14 @@ of Mistria 100% completion.
   import. No side effects.
 - **`src/lib/stores/`** — Reactive state via `$state`/`$derived` runes; `userState` persisted to
   localStorage.
-- **`src/lib/data/`** — Static import of generated `tracker-data.json` (game universe, ~430KB).
+- **`src/lib/data/`** — Static import of generated `tracker-data.json`.
 - **`src/lib/types/`** — Branded ID types (`ItemId`, `NpcId`, etc.) shared between pipeline and app.
 - **`src/lib/components/ui/`** — shadcn-svelte vendored components (do not manually edit; relaxed
   lint rules).
 - **`src/routes/`** — 9 category pages (almanac, animals, cosmetics, mines, museum, npcs, quests,
   renown, skills) + settings.
-- **`pipeline/`** — Separate TypeScript project (bun). Extracts game data from `fiddle.json` →
-  `tracker-data.json`.
+- **`pipeline/`** — Separate TypeScript project. Extracts game data from locally supplied TOML
+  assets → `tracker-data.json`.
 
 ## Componentization
 

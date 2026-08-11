@@ -138,7 +138,7 @@
   {/if}
 {/each}
 
-{#if typeOrder.every( (type) => Object.keys(trackerData.quests[type] ?? {}).every((id) => getQuestState(id as QuestId) === "completed"), ) && !userState.state.showCompleted}
+{#if typeOrder.every( (type) => Object.keys(trackerData.quests[type] ?? {}).every((id) => getQuestState(id as QuestId) === "completed") ) && !userState.state.showCompleted}
   <p class="py-8 text-center text-base text-muted-foreground">
     All done! Toggle "Show completed" to review.
   </p>

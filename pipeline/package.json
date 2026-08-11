@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "generate": "bun src/main.ts"
+    "generate": "tsx src/main.ts"
+  },
+  "dependencies": {
+    "smol-toml": "^1.6.1"
   }
 }

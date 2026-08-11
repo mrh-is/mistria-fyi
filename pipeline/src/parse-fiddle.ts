@@ -1,127 +1,128 @@
-/**
- * Parses the flat slash-key fiddle.json format into a nested object structure.
- *
- * Raw fiddle.json is a flat dictionary:
- *   { "npcs/holt/name": "npcs/holt/name", "npcs/holt/birthday/season": "winter", ... }
- *
- * This module converts it to:
- *   { npcs: { holt: { name: "npcs/holt/name", birthday: { season: "winter" } } } }
- */
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join, relative, sep } from "node:path";
+import { parse } from "smol-toml";
 
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+const SOURCE_FILE_BY_ROOT_PATH: unique symbol = Symbol("sourceFileByRootPath");
 
-// Keys containing these substrings are visual/audio data — skip them
-const SKIP_PATTERNS = [
-  "sprite",
-  "animation",
-  "collision",
-  "shadow",
-  "offset",
-  "_fx",
-  "sound",
-  "music",
-  "idle_range",
-  "move_range",
-  "speed_range",
-  "portrait_fallback",
-  "post_process",
-  "priority_grass",
-  "priority_objects",
-  "footsteps",
-  "exterior_lights",
-  "lights/",
-  "rumbles/",
-  "tile_cursor",
-  "tool_fx",
-  "camera/",
-  "fonts/",
-  "lut_index",
-  "icon_sprite",
-  "journal_portrait",
-  "journal_background",
-  "preview_sprite",
-];
+export type ParsedGameData = Record<string, unknown> & {
+  readonly [SOURCE_FILE_BY_ROOT_PATH]: ReadonlyMap<string, string>;
+};
 
-// Top-level sections to skip entirely (visual/audio/UI-only)
-const SKIP_SECTIONS = new Set([
-  "activities",
-  "barks",
-  "birds",
-  "camera",
-  "doors",
-  "exterior_lights",
-  "fonts",
-  "footsteps",
-  "gossip",
-  "grow_back",
-  "interaction",
-  "lights",
-  "player",
-  "player_home",
-  "portrait_fallback",
-  "post_process",
-  "priority_grass",
-  "priority_objects",
-  "props",
-  "routines",
-  "rumbles",
-  "sha",
-  "shooting_star",
-  "summit",
-  "tile_cursor",
-  "time_of_day",
-  "tool_fx",
-
-  "weather",
-]);
-
-export type FiddleData = Record<string, unknown>;
-
-export function parseFiddle(inputDir: string): FiddleData {
-  const fiddlePath = resolve(inputDir, "__fiddle__.json");
-  const raw: Record<string, unknown> = JSON.parse(readFileSync(fiddlePath, "utf-8"));
-
-  const result: FiddleData = {};
-  let kept = 0;
-  let skipped = 0;
-
-  for (const [key, value] of Object.entries(raw)) {
-    if (shouldSkipKey(key)) {
-      skipped++;
-      continue;
-    }
-
-    const parts = key.split("/");
-    setNestedValue(result, parts, value);
-    kept++;
-  }
-
-  console.log(
-    `  Parsed fiddle.json: ${kept.toLocaleString()} keys kept, ${skipped.toLocaleString()} skipped`,
-  );
-  return result;
+export interface ParsedGameDataResult {
+  data: ParsedGameData;
+  fileCount: number;
+  sourceFileByRootPath: ReadonlyMap<string, string>;
 }
 
-function setNestedValue(obj: Record<string, unknown>, path: string[], value: unknown): void {
-  let current = obj;
+/**
+ * Parses the assets root's fiddle/ directory, mapping relative TOML paths to dotted data roots.
+ * Non-TOML and .meta.toml files are skipped, while ancestor and descendant root collisions are
+ * rejected. Provenance is embedded non-enumerably, so it survives mutation but not JSON
+ * serialization.
+ */
+export function parseFiddle(assetsDir: string): ParsedGameDataResult {
+  const fiddleDir = join(assetsDir, "fiddle");
+  const data = {} as ParsedGameData;
+  const sourceFileByRootPath = new Map<string, string>();
+
+  walkDirectory(fiddleDir, fiddleDir, data, sourceFileByRootPath);
+  Object.defineProperty(data, SOURCE_FILE_BY_ROOT_PATH, {
+    enumerable: false,
+    value: sourceFileByRootPath,
+  });
+
+  console.log(`  Parsed ${sourceFileByRootPath.size} TOML files from ${fiddleDir}`);
+  return { data, fileCount: sourceFileByRootPath.size, sourceFileByRootPath };
+}
+
+/**
+ * Finds the nearest provenance ancestor because the map indexes file roots while callers pass
+ * entity or field paths.
+ */
+export function sourceFileFor(data: ParsedGameData, dottedPath: string): string {
+  let candidate = dottedPath;
+  while (candidate.length > 0) {
+    const sourceFile = data[SOURCE_FILE_BY_ROOT_PATH].get(candidate);
+    if (sourceFile) {
+      return sourceFile;
+    }
+    const separator = candidate.lastIndexOf(".");
+    candidate = separator === -1 ? "" : candidate.slice(0, separator);
+  }
+  throw new Error(`No TOML source file found for ${dottedPath}`);
+}
+
+function setNestedValue(
+  target: Record<string, unknown>,
+  path: string[],
+  value: Record<string, unknown>,
+  sourceFile: string,
+): void {
+  let current = target;
   for (let i = 0; i < path.length - 1; i++) {
     const key = path[i];
-    if (!(key in current) || typeof current[key] !== "object" || current[key] === null) {
+    if (!(key in current)) {
       current[key] = {};
+    } else if (
+      typeof current[key] !== "object" ||
+      current[key] === null ||
+      Array.isArray(current[key])
+    ) {
+      throw new Error(`Path collision while assigning ${sourceFile} at ${path.join(".")}`);
     }
     current = current[key] as Record<string, unknown>;
   }
   const lastKey = path[path.length - 1];
-  // Don't overwrite an existing object with a primitive
-  if (lastKey in current && typeof current[lastKey] === "object" && current[lastKey] !== null) {
-    return;
+  if (lastKey in current) {
+    throw new Error(`Duplicate or colliding path ${path.join(".")} from ${sourceFile}`);
   }
   current[lastKey] = value;
 }
 
-function shouldSkipKey(key: string): boolean {
-  const section = key.split("/")[0];
-  if (SKIP_SECTIONS.has(section)) return true;
-  return SKIP_PATTERNS.some((p) => key.includes(p));
+function walkDirectory(
+  dir: string,
+  rootDir: string,
+  data: ParsedGameData,
+  sourceFileByRootPath: Map<string, string>,
+): void {
+  const entries = readdirSync(dir);
+
+  for (const entry of entries) {
+    const fullPath = join(dir, entry);
+    const stat = statSync(fullPath);
+
+    if (stat.isDirectory()) {
+      walkDirectory(fullPath, rootDir, data, sourceFileByRootPath);
+      continue;
+    }
+
+    if (!entry.endsWith(".toml") || entry.endsWith(".meta.toml")) {
+      continue;
+    }
+
+    const relPath = relative(rootDir, fullPath).split(sep).join("/");
+    const keyPath = relPath.replace(/\.toml$/, "").split("/");
+    const sourceKey = keyPath.join(".");
+    const conflictingKey = [...sourceFileByRootPath.keys()].find(
+      (existing) =>
+        existing === sourceKey ||
+        existing.startsWith(`${sourceKey}.`) ||
+        sourceKey.startsWith(`${existing}.`),
+    );
+    if (conflictingKey) {
+      throw new Error(
+        `Duplicate or colliding TOML destinations "${conflictingKey}" and "${sourceKey}" from ${relPath}`,
+      );
+    }
+
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = parse(readFileSync(fullPath, "utf-8"));
+    } catch (error) {
+      throw new Error(`Failed to parse ${relPath} at ${sourceKey}`, { cause: error });
+    }
+
+    setNestedValue(data, keyPath, parsed, relPath);
+    sourceFileByRootPath.set(sourceKey, relPath);
+  }
 }

@@ -38,9 +38,11 @@ export type QuestId = string & { readonly __brand: "QuestId" };
 export interface Restriction {
   animal?: string;
   building?: string;
+  cutscene?: string;
   hours?: [number, number];
   level?: number;
   perk?: string;
+  relationship?: string;
   season?: Season;
   seasons?: Season[];
   size?: string;
@@ -51,13 +53,17 @@ export interface Restriction {
 export type RestrictionType =
   | "animal"
   | "building"
+  | "cutscene"
   | "fishSize"
+  | "minesLevel"
   | "perk"
   | "randomStock"
+  | "relationship"
   | "season"
   | "seenSeason"
   | "skill"
   | "time"
+  | "upperFloor"
   | "weather";
 
 // ─── Enums ──────────────────────────────────────────────────────────

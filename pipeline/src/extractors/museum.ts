@@ -1,15 +1,17 @@
+import { expectArray, expectStringArray } from "../data-shapes.js";
+import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
+
 import type { ItemId, MuseumWing, SetId, WingId } from "$lib/types/tracker-data.js";
 
-import type { FiddleData } from "../parse-fiddle.js";
-
-export function extractMuseum(fiddle: FiddleData): MuseumWing[] {
+/**
+ * Projects museum wings and sets in the canonical UI display order. Object insertion order is only
+ * a fallback when UI ordering is unavailable; ordered wing and set IDs absent from game data are skipped.
+ */
+export function extractMuseum(fiddle: ParsedGameData): MuseumWing[] {
   const wings = fiddle.museum_wings as Record<string, Record<string, unknown>> | undefined;
   if (!wings) return [];
 
-  // Read wing ordering and per-wing set ordering from UI data
   const { setOrders, wingOrder } = readMuseumOrdering(fiddle);
-
-  // Use UI wing order if available, otherwise fall back to Object.keys
   const orderedWingIds = wingOrder.length > 0 ? wingOrder : Object.keys(wings);
 
   const result: MuseumWing[] = [];
@@ -21,16 +23,22 @@ export function extractMuseum(fiddle: FiddleData): MuseumWing[] {
     const rawSets = wing.sets as Record<string, Record<string, unknown>> | undefined;
     if (!rawSets) continue;
 
-    // Use UI set order if available, otherwise fall back to Object.keys
     const setOrder = setOrders[wingId];
     const orderedSetIds = setOrder && setOrder.length > 0 ? setOrder : Object.keys(rawSets);
+
+    const sourceFile = sourceFileFor(fiddle, `museum_wings.${wingId}`);
 
     const sets: { id: SetId; items: ItemId[]; name: string }[] = [];
     for (const setId of orderedSetIds) {
       const set = rawSets[setId] as Record<string, unknown> | undefined;
       if (!set) continue;
 
-      const items = (set.items as string[] | undefined) ?? [];
+      const items = expectStringArray(set.items, {
+        entityId: `${wingId}.${setId}`,
+        fieldPath: "items",
+        sourcePath: sourceFile,
+      });
+
       sets.push({
         id: setId as SetId,
         items: items as ItemId[],
@@ -51,11 +59,7 @@ export function extractMuseum(fiddle: FiddleData): MuseumWing[] {
   return result;
 }
 
-/**
- * Read museum wing ordering and per-wing set ordering from UI data.
- * Located at `$.ui.menus.standard_menus.museum`.
- */
-function readMuseumOrdering(fiddle: FiddleData): {
+function readMuseumOrdering(fiddle: ParsedGameData): {
   setOrders: Record<string, string[]>;
   wingOrder: string[];
 } {
@@ -65,27 +69,32 @@ function readMuseumOrdering(fiddle: FiddleData): {
   const museum = standardMenus?.museum as Record<string, unknown> | undefined;
   if (!museum) return { setOrders: {}, wingOrder: [] };
 
-  // Wing order: museum.wings is { 0: { wing: "archaeology" }, 1: { wing: "fish" }, ... }
-  const rawWings = museum.wings as Record<string, Record<string, unknown>> | undefined;
+  const sourceFile = sourceFileFor(fiddle, "ui.menus.standard_menus.museum");
+
+  // Wings: now a real array of { wing: string, ... }
+  const rawWings = expectArray<Record<string, unknown>>(museum.wings, {
+    fieldPath: "museum.wings",
+    sourcePath: sourceFile,
+  });
   const wingOrder: string[] = [];
-  if (rawWings) {
-    const sorted = Object.entries(rawWings).sort(([a], [b]) => Number(a) - Number(b));
-    for (const [, entry] of sorted) {
-      const wingId = entry.wing as string | undefined;
-      if (wingId) wingOrder.push(wingId);
+  for (const entry of rawWings) {
+    const wingId = entry.wing;
+    if (typeof wingId !== "string") {
+      throw new Error(`museum.wings entry lacks string wing in ${sourceFile}`);
     }
+    wingOrder.push(wingId);
   }
 
-  // Set orders: museum.{wing}_order is { 0: "common_finds", 1: "prehistoric", ... }
+  // Set orders: now real string arrays
   const setOrders: Record<string, string[]> = {};
   for (const wingId of wingOrder) {
     const orderKey = `${wingId}_order`;
-    const rawOrder = museum[orderKey] as Record<string, string> | undefined;
-    if (rawOrder) {
-      setOrders[wingId] = Object.entries(rawOrder)
-        .sort(([a], [b]) => Number(a) - Number(b))
-        .map(([, setId]) => setId);
-    }
+    const rawOrder = museum[orderKey];
+    setOrders[wingId] = expectStringArray(rawOrder, {
+      entityId: wingId,
+      fieldPath: orderKey,
+      sourcePath: sourceFile,
+    });
   }
 
   return { setOrders, wingOrder };

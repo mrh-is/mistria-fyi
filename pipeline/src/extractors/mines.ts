@@ -1,16 +1,28 @@
+import { expectArray } from "../data-shapes.js";
+import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
+
 import type { BiomeId, SpellId, TrackerData } from "$lib/types/tracker-data.js";
 
-import type { FiddleData } from "../parse-fiddle.js";
-
-export function extractMines(fiddle: FiddleData): TrackerData["mines"] {
+/**
+ * Projects dungeon biomes and spells. Biome IDs are synthetic array indices; each end floor is the
+ * floor before the next biome starts, and missing starts use 20-floor spacing.
+ */
+export function extractMines(fiddle: ParsedGameData): TrackerData["mines"] {
   const dungeons = fiddle.dungeons as Record<string, unknown> | undefined;
   const spellsData = fiddle.spells as Record<string, Record<string, unknown>> | undefined;
 
-  // Extract biomes
   const dungeonsInner = dungeons?.dungeons as Record<string, unknown> | undefined;
-  const rawBiomes = toArray(dungeonsInner?.biomes);
   const misc = dungeons?.misc as Record<string, unknown> | undefined;
-  const maxFloors = (misc?.max_floors as number | undefined) ?? 99;
+  const maxFloors = misc?.max_floors as number | undefined;
+  if (typeof maxFloors !== "number") {
+    throw new Error("Missing numeric dungeons.misc.max_floors");
+  }
+
+  const sourceFile = sourceFileFor(fiddle, "dungeons.dungeons.biomes");
+  const rawBiomes = expectArray<Record<string, unknown>>(dungeonsInner?.biomes, {
+    fieldPath: "dungeons.biomes",
+    sourcePath: sourceFile,
+  });
 
   const biomes = rawBiomes.map((b, i) => ({
     endFloor:
@@ -22,7 +34,6 @@ export function extractMines(fiddle: FiddleData): TrackerData["mines"] {
     startFloor: (b.floor as number | undefined) ?? i * 20 + 1,
   }));
 
-  // Extract spells
   const spells = {} as Record<SpellId, { name: string }>;
   if (spellsData) {
     for (const [id, spell] of Object.entries(spellsData)) {
@@ -37,16 +48,4 @@ export function extractMines(fiddle: FiddleData): TrackerData["mines"] {
     `  Mines: ${biomes.length} biomes, ${maxFloors} max floors, ${Object.keys(spells).length} spells`,
   );
   return { biomes, maxFloors, spells };
-}
-
-/** Convert array or numbered-key object to array of entries. */
-function toArray(data: unknown): Record<string, unknown>[] {
-  if (Array.isArray(data)) return data;
-  if (data && typeof data === "object") {
-    return Object.keys(data)
-      .sort((a, b) => Number(a) - Number(b))
-      .map((k) => (data as Record<string, unknown>)[k] as Record<string, unknown>)
-      .filter((v) => v && typeof v === "object");
-  }
-  return [];
 }

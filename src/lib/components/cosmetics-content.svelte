@@ -128,7 +128,7 @@
   {/if}
 {/each}
 
-{#if Object.keys(trackerData.cosmetics).every( (id) => userState.state.completed.cosmetics.has(id as CosmeticId), ) && !userState.state.showCompleted}
+{#if Object.keys(trackerData.cosmetics).every( (id) => userState.state.completed.cosmetics.has(id as CosmeticId) ) && !userState.state.showCompleted}
   <p class="py-8 text-center text-base text-muted-foreground">
     All done! Toggle "Show completed" to review.
   </p>

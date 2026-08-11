@@ -1,15 +1,21 @@
 import type { QuestId, TrackerData } from "$lib/types/tracker-data.js";
 
-import type { FiddleData } from "../parse-fiddle.js";
+import type { ParsedGameData } from "../parse-fiddle.js";
 
-// Only extract these quest types (skip request_board — those are procedural daily quests)
-const QUEST_TYPES = ["story_quests", "heart_quests", "fetch_quests", "crown_quests"];
+// These six allowlisted keys are TOML group/file names; request-board and registry siblings are excluded.
+const QUEST_TYPES = [
+  "story_quests",
+  "heart_quests",
+  "fetch_quests",
+  "crown_quests",
+  "stillwell_challenges",
+  "tali_challenges",
+];
 
-export function extractQuests(fiddle: FiddleData): TrackerData["quests"] {
+export function extractQuests(fiddle: ParsedGameData): TrackerData["quests"] {
   const quests = fiddle.quests as
-    | Record<string, Record<string, Record<string, unknown>>>
-    | undefined;
-  if (!quests) return {} as TrackerData["quests"];
+    Record<string, Record<string, Record<string, unknown>>> | undefined;
+  if (!quests) return {};
 
   const result = {} as Record<string, Record<QuestId, { name: string; npc?: string }>>;
 
