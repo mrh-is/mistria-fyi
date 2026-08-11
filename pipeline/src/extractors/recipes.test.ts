@@ -22,7 +22,7 @@ function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGam
     stores: {},
     wishing_well: {},
     ...overrides,
-  } as ParsedGameData;
+  } as unknown as ParsedGameData;
 }
 
 describe("extractRecipes", () => {
