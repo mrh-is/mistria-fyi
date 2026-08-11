@@ -61,6 +61,12 @@ export function extractRecipes(fiddle: ParsedGameData): {
   mergeSources(collectWishingWellSources(fiddle, itemIdToRecipeId, knownRecipeIds));
   mergeSources(collectFestivalScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds));
   mergeSources(collectDungeonDelicacySources(fiddle, itemIdToRecipeId));
+  mergeSources(collectScrollBundleSources(fiddle, itemIdToRecipeId));
+  mergeSources(collectBiomeFurnitureSources(fiddle, itemIdToRecipeId));
+  mergeSources(collectPerkSources(fiddle, itemIdToRecipeId));
+  mergeSources(collectDragonForgeSources(fiddle, itemIdToRecipeId));
+  mergeSources(collectRenownRecipeSources(fiddle, itemIdToRecipeId));
+  mergeSources(collectHardcodedSources(itemIdToRecipeId));
 
   const recipes: Record<RecipeId, Recipe> = {};
 
@@ -110,6 +116,64 @@ export function extractRecipes(fiddle: ParsedGameData): {
   );
 
   return { recipeIdByItemId, recipes };
+}
+
+function collectHardcodedSources(
+  itemIdToRecipeId: Map<string, string>,
+): Map<string, RecipeSource[]> {
+  const result = new Map<string, RecipeSource[]>();
+
+  const hardcoded: [string, RecipeSource][] = [
+    ["water_sprite_statue_v1", { type: "treasure_chest" }],
+    ["stairs", { storeId: "carpenter", type: "store" }],
+    ["farm_bridge", { storeId: "carpenter", type: "store" }],
+    ["engagement_ring", { cutscene: "ten_hearts", type: "cutscene" }],
+  ];
+
+  for (const [itemId, source] of hardcoded) {
+    const recipeId = itemIdToRecipeId.get(itemId);
+    if (recipeId && !result.has(recipeId)) {
+      result.set(recipeId, [source]);
+    }
+  }
+
+  return result;
+}
+
+function collectBiomeFurnitureSources(
+  fiddle: ParsedGameData,
+  itemIdToRecipeId: Map<string, string>,
+): Map<string, RecipeSource[]> {
+  const dungeons = fiddle.dungeons as Record<string, Record<string, unknown>> | undefined;
+  if (!dungeons) return new Map();
+
+  const result = new Map<string, RecipeSource[]>();
+
+  const dungeonsData = dungeons.dungeons as Record<string, unknown> | undefined;
+  if (!dungeonsData) return result;
+
+  const biomes = Array.isArray(dungeonsData.biomes) ? (dungeonsData.biomes as unknown[]) : [];
+
+  for (const biome of biomes) {
+    if (typeof biome !== "object" || biome === null) continue;
+    const biomeObj = biome as Record<string, unknown>;
+
+    const furniture = Array.isArray(biomeObj.furniture) ? (biomeObj.furniture as unknown[]) : [];
+
+    for (const itemId of furniture) {
+      if (typeof itemId !== "string") continue;
+
+      const recipeId = itemIdToRecipeId.get(itemId);
+      if (!recipeId) continue;
+
+      if (result.has(recipeId)) continue;
+      const sources = result.get(recipeId) ?? [];
+      sources.push({ perk: "natural_beauty", type: "perk" });
+      result.set(recipeId, sources);
+    }
+  }
+
+  return result;
 }
 
 function buildPresentations(group: RawRecipeEntry[]): RecipePresentation[] {
@@ -202,6 +266,37 @@ function collectDungeonDelicacySources(
         result.set(recipeId, sources);
       }
     }
+  }
+
+  return result;
+}
+
+function collectDragonForgeSources(
+  fiddle: ParsedGameData,
+  itemIdToRecipeId: Map<string, string>,
+): Map<string, RecipeSource[]> {
+  const items = fiddle.items as
+    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
+  if (!items?.other?.blacksmithing) return new Map();
+
+  const result = new Map<string, RecipeSource[]>();
+
+  for (const [itemId, item] of Object.entries(items.other.blacksmithing)) {
+    if (itemId === "default" || typeof item !== "object" || item === null) continue;
+    if (item.recipe_is_default) continue;
+
+    const tags = Array.isArray(item.tags) ? (item.tags as string[]) : [];
+    if (!tags.includes("blacksmithing")) continue;
+
+    const name = item.name as string | undefined;
+    if (!name || !itemId.startsWith("dragon_forged_")) continue;
+
+    const recipeId = itemIdToRecipeId.get(itemId);
+    if (!recipeId) continue;
+
+    const sources = result.get(recipeId) ?? [];
+    sources.push({ type: "dragon_forge" });
+    result.set(recipeId, sources);
   }
 
   return result;
@@ -405,6 +500,141 @@ function collectMuseumScrollSources(
   return result;
 }
 
+function collectPerkSources(
+  fiddle: ParsedGameData,
+  itemIdToRecipeId: Map<string, string>,
+): Map<string, RecipeSource[]> {
+  const items = fiddle.items as
+    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
+  if (!items) return new Map();
+
+  const result = new Map<string, RecipeSource[]>();
+
+  const perkBySubCategory: Record<string, string> = {
+    faux_plant_set: "ornamental",
+    void_set: "void_crafting",
+  };
+
+  const perkByItemId: Record<string, string> = {
+    big_bell: "the_bell_tolls",
+    essence_stone_giant: "magic_design",
+    ocarina_sprite_statue: "the_bell_tolls",
+    water_sprite_statue_large_v1: "big_water_sprites",
+  };
+
+  for (const subCategories of Object.values(items)) {
+    if (typeof subCategories !== "object" || subCategories === null) continue;
+    for (const [subCatKey, categoryItems] of Object.entries(subCategories)) {
+      if (typeof categoryItems !== "object" || categoryItems === null) continue;
+
+      const subCatPerk = perkBySubCategory[subCatKey];
+
+      for (const [itemId, item] of Object.entries(categoryItems)) {
+        if (itemId === "default" || typeof item !== "object" || item === null) continue;
+
+        const perk = perkByItemId[itemId] ?? subCatPerk;
+        if (!perk) continue;
+
+        const recipeId = itemIdToRecipeId.get(itemId);
+        if (recipeId && !result.has(recipeId)) {
+          result.set(recipeId, [{ perk, type: "perk" }]);
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
+function collectScrollBundleSources(
+  fiddle: ParsedGameData,
+  itemIdToRecipeId: Map<string, string>,
+): Map<string, RecipeSource[]> {
+  const items = fiddle.items as
+    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
+  if (!items) return new Map();
+
+  const result = new Map<string, RecipeSource[]>();
+
+  const bundleIdToSetTag = new Map<string, string>();
+  for (const subCategories of Object.values(items)) {
+    if (typeof subCategories !== "object" || subCategories === null) continue;
+    for (const categoryItems of Object.values(subCategories)) {
+      if (typeof categoryItems !== "object" || categoryItems === null) continue;
+      for (const [itemId, item] of Object.entries(categoryItems)) {
+        if (itemId === "default" || typeof item !== "object" || item === null) continue;
+        const setUnlock = item.set_unlock as string | undefined;
+        if (setUnlock) {
+          bundleIdToSetTag.set(itemId, setUnlock);
+        }
+      }
+    }
+  }
+
+  if (bundleIdToSetTag.size === 0) return result;
+
+  const setTagToStoreId = new Map<string, string>();
+  const stores = fiddle.stores as Record<string, Record<string, unknown>> | undefined;
+  if (stores) {
+    for (const [storeId, store] of Object.entries(stores)) {
+      if (storeId === "default" || typeof store !== "object" || store === null) continue;
+      const categories = Array.isArray(store.categories) ? store.categories : [];
+
+      for (const category of categories) {
+        if (typeof category !== "object" || category === null) continue;
+        const cat = category as Record<string, unknown>;
+
+        const allStock: unknown[] = [];
+        if (Array.isArray(cat.constant_stock)) allStock.push(...cat.constant_stock);
+        if (Array.isArray(cat.random_stock)) allStock.push(...cat.random_stock);
+        const seasonal = cat.seasonal as Record<string, unknown> | undefined;
+        if (seasonal) {
+          for (const val of Object.values(seasonal)) {
+            if (Array.isArray(val)) allStock.push(...val);
+          }
+        }
+
+        for (const entry of allStock) {
+          let itemId: string | undefined;
+          if (typeof entry === "string") {
+            itemId = entry;
+          } else if (typeof entry === "object" && entry !== null) {
+            itemId = (entry as Record<string, unknown>).item as string | undefined;
+          }
+          if (!itemId) continue;
+          const setTag = bundleIdToSetTag.get(itemId);
+          if (setTag) {
+            setTagToStoreId.set(setTag, storeId);
+          }
+        }
+      }
+    }
+  }
+
+  for (const subCategories of Object.values(items)) {
+    if (typeof subCategories !== "object" || subCategories === null) continue;
+    for (const categoryItems of Object.values(subCategories)) {
+      if (typeof categoryItems !== "object" || categoryItems === null) continue;
+      for (const [itemId, item] of Object.entries(categoryItems)) {
+        if (itemId === "default" || typeof item !== "object" || item === null) continue;
+
+        const tags = Array.isArray(item.tags) ? (item.tags as string[]) : [];
+
+        for (const [setTag, storeId] of setTagToStoreId) {
+          if (tags.includes(setTag)) {
+            const recipeId = itemIdToRecipeId.get(itemId);
+            if (recipeId && !result.has(recipeId)) {
+              result.set(recipeId, [{ storeId, type: "scroll_bundle" }]);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
 function collectQuestScrollSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
@@ -450,6 +680,30 @@ function collectQuestScrollSources(
         result.set(recipeId, sources);
       }
     }
+  }
+
+  return result;
+}
+
+function collectRenownRecipeSources(
+  fiddle: ParsedGameData,
+  itemIdToRecipeId: Map<string, string>,
+): Map<string, RecipeSource[]> {
+  const renown = fiddle.renown as Record<string, unknown> | undefined;
+  if (!renown) return new Map();
+
+  const result = new Map<string, RecipeSource[]>();
+  const rewards = Array.isArray(renown.rewards) ? renown.rewards : [];
+
+  for (const reward of rewards) {
+    if (typeof reward !== "object" || reward === null) continue;
+    const itemId = (reward as Record<string, unknown>).item as string | undefined;
+    if (!itemId) continue;
+
+    const recipeId = itemIdToRecipeId.get(itemId);
+    if (!recipeId || result.has(recipeId)) continue;
+
+    result.set(recipeId, [{ type: "renown" }]);
   }
 
   return result;

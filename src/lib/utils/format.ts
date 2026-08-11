@@ -82,6 +82,10 @@ export function recipeSourceLabel(
   switch (source.type) {
     case "chicken_statue":
       return "Chicken statue";
+    case "cutscene":
+      return titleCase(source.cutscene);
+    case "dragon_forge":
+      return "Dragon forge";
     case "festival":
       return `${titleCase(source.festivalId)} — ${titleCase(source.storeId)}`;
     case "letter":
@@ -98,8 +102,14 @@ export function recipeSourceLabel(
       return "Mine zone discovery";
     case "museum_donation":
       return `${titleCase(source.wingId)} wing donations`;
+    case "perk":
+      return titleCase(source.perk);
+    case "renown":
+      return "Renown reward";
     case "quest":
       return questNames[source.questId] ?? titleCase(source.questId);
+    case "scroll_bundle":
+      return `${titleCase(source.storeId)} scroll bundle`;
     case "store":
       return titleCase(source.storeId);
     case "treasure_chest":

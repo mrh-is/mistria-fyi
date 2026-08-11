@@ -48,10 +48,15 @@ export interface RecipePresentation {
 }
 export type RecipeSource =
   | { festivalId: string; storeId: string; type: "festival" }
+  | { perk: string; type: "perk" }
   | { questId: QuestId; questType: string; type: "quest" }
+  | { type: "renown" }
+  | { storeId: string; type: "scroll_bundle" }
   | { storeId: string; type: "store" }
   | { trigger?: "donated_item" | "shipped_item"; triggerItemId?: ItemId; type: "letter" }
   | { type: "chicken_statue" }
+  | { cutscene: string; type: "cutscene" }
+  | { type: "dragon_forge" }
   | { type: "mine_zone" }
   | { type: "museum_donation"; wingId: WingId }
   | { type: "treasure_chest" }
