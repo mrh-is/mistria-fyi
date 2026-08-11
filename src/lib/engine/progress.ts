@@ -5,7 +5,7 @@ import type { CategoryKey } from "$lib/data/categories.js";
 import type { AvailabilityMode, CompletedState } from "$lib/stores/user-state.svelte.js";
 import type { ItemId, Season, Source, VariantId, Weather } from "$lib/types/tracker-data.js";
 
-export const MAX_NPC_LEVEL = 8;
+export const MAX_NPC_LEVEL = 10;
 export const MAX_SKILL_LEVEL = 60;
 
 // ─── Types ──────────────────────────────────────────────────────────

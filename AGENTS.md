@@ -17,6 +17,8 @@ task:
 Issues labeled `ready` are available. Issues labeled `blocked` or `discussion` are not actionable
 yet.
 
+Do not commit a specification or implementation plan until the user has explicitly approved it.
+
 ## Commands
 
 Use **pnpm** (not npm/npx) for all commands.
