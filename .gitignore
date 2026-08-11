@@ -21,8 +21,6 @@ Thumbs.db
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-# Pipeline outputs
-pipeline/output/
-
-# Pipeline inputs (game data files, not ours to distribute)
+# Pipeline inputs/outputs (large game data files)
 pipeline/input/
+pipeline/output/
