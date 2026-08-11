@@ -39,7 +39,7 @@ function main(): void {
   const args = process.argv.slice(2).filter((a) => a !== "--");
   const assetsDir = args.find((a) => !a.startsWith("-")) ?? process.env.MISTRIA_ASSETS;
   if (!assetsDir) {
-    console.error("Usage: tsx src/main.ts <path-to-assets-dir>");
+    console.error("Usage: tsx src/main.ts <path-to-assets-dir> [--version=X.Y.Z]");
     console.error("  Or set MISTRIA_ASSETS environment variable");
     process.exit(1);
   }
@@ -52,13 +52,15 @@ function main(): void {
   }
 
   const parseOnly = args.includes("--parse-only");
+  const versionFlag = args.find((a) => a.startsWith("--version="));
+  const versionArg = versionFlag?.split("=")[1];
 
   console.log("Step 1: Parsing TOML data...");
   const parsed = parseFiddle(assetsDir);
   const fiddle = parsed.data;
 
   const misc = fiddle.misc as Record<string, unknown> | undefined;
-  const version = (misc?.version as string | undefined) ?? "unknown";
+  const version = versionArg ?? (misc?.version as string | undefined) ?? "unknown";
   console.log(`  Game version: ${version}\n`);
 
   if (parseOnly) {
