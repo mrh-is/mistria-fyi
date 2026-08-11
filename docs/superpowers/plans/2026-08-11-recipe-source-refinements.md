@@ -234,7 +234,7 @@ describe("extractPerks", () => {
     expect(perks).toHaveProperty("horsepower");
   });
 
-  it("falls back to snake_case title when perk has no name in perks.toml", () => {
+  it("throws when perk has no name in perks.toml", () => {
     const fiddle = makeFiddle({
       perks: {},
       ui: {
@@ -253,12 +253,9 @@ describe("extractPerks", () => {
       },
     });
 
-    const { perks } = extractPerks(fiddle);
-    expect(perks["unknown_perk" as PerkId]).toEqual({
-      name: "Unknown Perk",
-      skillId: "combat",
-      tier: 1,
-    });
+    expect(() => extractPerks(fiddle)).toThrow(
+      'Perk "unknown_perk" found in skill menu but has no name in perks.toml',
+    );
   });
 
   it("returns empty result when no ui.skill_menu data", () => {
@@ -317,7 +314,10 @@ export function extractPerks(fiddle: ParsedGameData): {
         if (!perkId) continue;
 
         const perkData = perksData?.[perkId];
-        const name = (perkData?.name as string | undefined) ?? snakeToTitle(perkId);
+        const name = perkData?.name as string | undefined;
+        if (!name) {
+          throw new Error(`Perk "${perkId}" found in skill menu but has no name in perks.toml — check data assembly`);
+        }
 
         perks[perkId as PerkId] = {
           name,
@@ -330,13 +330,6 @@ export function extractPerks(fiddle: ParsedGameData): {
 
   console.log(`  Perks: ${Object.keys(perks).length} perks, ${perkTierLevels.length} tier levels`);
   return { perkTierLevels, perks };
-}
-
-function snakeToTitle(s: string): string {
-  return s
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
 }
 ```
 
@@ -397,65 +390,64 @@ describe("extractStoresMeta", () => {
     vi.restoreAllMocks();
   });
 
-  it("extracts store names and assigns article for non-possessive names", () => {
+  it("extracts known stores with correct article classification", () => {
     const fiddle = makeFiddle({
       stores: {
         default: {},
-        general_store: { name: "General Store" },
-        merri_stall: { name: "Merri's Stall" },
+        general: { name: "General Store" },
+        merri: { name: "Merri's Stall" },
       },
     });
 
     const stores = extractStoresMeta(fiddle);
     expect(stores).toEqual({
-      general_store: { article: "the", name: "General Store" },
-      merri_stall: { name: "Merri's Stall" },
+      general: { article: "the", name: "General Store" },
+      merri: { name: "Merri's Stall" },
     });
   });
 
-  it("omits article for possessive names (containing 's or ending in ')", () => {
+  it("assigns article 'the' for establishment stores", () => {
     const fiddle = makeFiddle({
       stores: {
-        balors_wagon: { name: "Balor's Wagon" },
-        haydens_shop: { name: "Hayden's Shop" },
-        louis_stall: { name: "Louis' Stall" },
+        blacksmith: { name: "Blacksmith's Shop" },
+        carpenter: { name: "Carpenter's Shop" },
+        inn: { name: "Sleeping Dragon Inn" },
+        terithia: { name: "Tackle Shop" },
       },
     });
 
     const stores = extractStoresMeta(fiddle);
-    expect(stores["balors_wagon" as StoreId]).toEqual({ name: "Balor's Wagon" });
-    expect(stores["haydens_shop" as StoreId]).toEqual({ name: "Hayden's Shop" });
-    expect(stores["louis_stall" as StoreId]).toEqual({ name: "Louis' Stall" });
+    expect(stores["carpenter" as StoreId]).toEqual({ article: "the", name: "Carpenter's Shop" });
+    expect(stores["inn" as StoreId]).toEqual({ article: "the", name: "Sleeping Dragon Inn" });
+    expect(stores["blacksmith" as StoreId]).toEqual({ article: "the", name: "Blacksmith's Shop" });
+    expect(stores["terithia" as StoreId]).toEqual({ article: "the", name: "Tackle Shop" });
   });
 
-  it("assigns article 'the' for establishment names like Carpenter's Shop", () => {
+  it("omits article for personal and bare-noun stalls", () => {
     const fiddle = makeFiddle({
       stores: {
-        carpenters_shop: { name: "Carpenter's Shop" },
-        sleeping_dragon_inn: { name: "Sleeping Dragon Inn" },
-        tackle_shop: { name: "Tackle Shop" },
+        darcy: { name: "Darcy's Stall" },
+        hayden: { name: "Hayden's Shop" },
+        maple_spring_festival: { name: "Food Stall" },
       },
     });
 
     const stores = extractStoresMeta(fiddle);
-    expect(stores["carpenters_shop" as StoreId]).toEqual({ article: "the", name: "Carpenter's Shop" });
-    expect(stores["sleeping_dragon_inn" as StoreId]).toEqual({ article: "the", name: "Sleeping Dragon Inn" });
-    expect(stores["tackle_shop" as StoreId]).toEqual({ article: "the", name: "Tackle Shop" });
+    expect(stores["darcy" as StoreId]).toEqual({ name: "Darcy's Stall" });
+    expect(stores["hayden" as StoreId]).toEqual({ name: "Hayden's Shop" });
+    expect(stores["maple_spring_festival" as StoreId]).toEqual({ name: "Food Stall" });
   });
 
-  it("omits article for bare-noun stall names", () => {
+  it("throws on unknown store ID", () => {
     const fiddle = makeFiddle({
       stores: {
-        clothing_stall: { name: "Clothing Stall" },
-        food_stall: { name: "Food Stall" },
-        souvenir_stall: { name: "Souvenir Stall" },
+        mystery_vendor: { name: "Mystery Vendor" },
       },
     });
 
-    const stores = extractStoresMeta(fiddle);
-    expect(stores["food_stall" as StoreId]).toEqual({ name: "Food Stall" });
-    expect(stores["souvenir_stall" as StoreId]).toEqual({ name: "Souvenir Stall" });
-    expect(stores["clothing_stall" as StoreId]).toEqual({ name: "Clothing Stall" });
+    expect(() => extractStoresMeta(fiddle)).toThrow(
+      'Unknown store "mystery_vendor" — add it to KNOWN_STORES in stores-meta.ts',
+    );
   });
 
   it("returns empty when no stores data", () => {
@@ -480,13 +472,25 @@ import type { StoreId } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
 
-const THE_STORES = new Set([
-  "Blacksmith's Shop",
-  "Carpenter's Shop",
-  "General Store",
-  "Sleeping Dragon Inn",
-  "Tackle Shop",
-]);
+const KNOWN_STORES: Record<string, { article?: "the"; name: string }> = {
+  balor: { name: "Balor's Wagon" },
+  blacksmith: { article: "the", name: "Blacksmith's Shop" },
+  carpenter: { article: "the", name: "Carpenter's Shop" },
+  darcy: { name: "Darcy's Stall" },
+  elsie_spring_festival: { name: "Clothing Stall" },
+  general: { article: "the", name: "General Store" },
+  hayden: { name: "Hayden's Shop" },
+  inn: { article: "the", name: "Sleeping Dragon Inn" },
+  louis: { name: "Louis' Stall" },
+  maple_spring_festival: { name: "Food Stall" },
+  merri: { name: "Merri's Stall" },
+  nora_souvenir_stall: { name: "Souvenir Stall" },
+  terithia: { article: "the", name: "Tackle Shop" },
+  valens_clinic: { name: "Valen's Clinic" },
+  vera: { name: "Vera's Stall" },
+  wheedle: { name: "Wheedle's Stall" },
+  zorel: { name: "Zorel's Stall" },
+};
 
 export function extractStoresMeta(
   fiddle: ParsedGameData,
@@ -501,14 +505,12 @@ export function extractStoresMeta(
     const store = stores[storeId];
     if (typeof store !== "object" || store === null) continue;
 
-    const name = store.name as string | undefined;
-    if (!name) continue;
-
-    const entry: { article?: "the"; name: string } = { name };
-    if (THE_STORES.has(name)) {
-      entry.article = "the";
+    const known = KNOWN_STORES[storeId];
+    if (!known) {
+      throw new Error(`Unknown store "${storeId}" — add it to KNOWN_STORES in stores-meta.ts`);
     }
-    result[storeId as StoreId] = entry;
+
+    result[storeId as StoreId] = known;
   }
 
   console.log(`  Stores: ${Object.keys(result).length}`);
@@ -516,7 +518,7 @@ export function extractStoresMeta(
 }
 ```
 
-Note: The spec lists specific stores that get "the" vs. not. A heuristic (possessive detection) is fragile — "Carpenter's Shop" gets "the" while "Hayden's Shop" doesn't, which breaks any simple possessive rule. Use an explicit set for the stores that get "the", matching the spec exactly.
+All known stores are hardcoded with their correct article classification. Unknown stores throw immediately so new game versions surface as pipeline errors rather than silently leaking bad display text.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
@@ -735,7 +737,7 @@ describe("extractTreasureChestTiers", () => {
     });
   });
 
-  it("falls back to titleCase when item name not found", () => {
+  it("throws when treasure box item not found for tier", () => {
     const fiddle = makeFiddle({
       fishing: {
         chest_tables: {
@@ -745,10 +747,9 @@ describe("extractTreasureChestTiers", () => {
       items: {},
     });
 
-    const tiers = extractTreasureChestTiers(fiddle);
-    expect(tiers).toEqual({
-      abyss: { name: "Abyss Treasure Box" },
-    });
+    expect(() => extractTreasureChestTiers(fiddle)).toThrow(
+      'Treasure chest tier "abyss" has no matching item "treasure_box_abyss"',
+    );
   });
 
   it("returns empty when no fishing data", () => {
@@ -790,20 +791,16 @@ export function extractTreasureChestTiers(
   for (const tier of Object.keys(chestTables).sort()) {
     const itemKey = `treasure_box_${tier}`;
     const itemData = fishMisc?.[itemKey];
-    const name = (itemData?.name as string | undefined) ?? `${snakeToTitle(tier)} Treasure Box`;
+    const name = itemData?.name as string | undefined;
+    if (!name) {
+      throw new Error(`Treasure chest tier "${tier}" has no matching item "${itemKey}" in items/fish/misc — check data assembly`);
+    }
 
     result[tier as TreasureChestTier] = { name };
   }
 
   console.log(`  Treasure chest tiers: ${Object.keys(result).length}`);
   return result;
-}
-
-function snakeToTitle(s: string): string {
-  return s
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
 }
 ```
 
