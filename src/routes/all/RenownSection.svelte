@@ -4,7 +4,7 @@
   import Stepper from "$lib/components/stepper.svelte";
   import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
-  import { getRenownProgress } from "$lib/engine/progress.js";
+  import { clampRenownLevel, getRenownProgress, MAX_RENOWN_LEVEL } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
 
@@ -27,7 +27,7 @@
 
   let levelsPerRank = trackerData.renown.levelsPerRank;
   let ranks = trackerData.renown.ranks;
-  let maxLevel = levelsPerRank * ranks.length;
+  let maxLevel = MAX_RENOWN_LEVEL;
 
   let progress = $derived(
     getRenownProgress({
@@ -37,7 +37,7 @@
     }),
   );
 
-  let level = $derived(userState.state.completed.renown);
+  let level = $derived(clampRenownLevel(userState.state.completed.renown));
   let currentRankIndex = $derived(Math.min(Math.floor(level / levelsPerRank), ranks.length - 1));
   let currentRankName = $derived(ranks[currentRankIndex].name);
   let isMaxed = $derived(level >= maxLevel);

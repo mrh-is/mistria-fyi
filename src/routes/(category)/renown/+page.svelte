@@ -7,7 +7,7 @@
   import { Progress } from "$lib/components/ui/progress/index.js";
   import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
-  import { getRenownProgress } from "$lib/engine/progress.js";
+  import { clampRenownLevel, getRenownProgress, MAX_RENOWN_LEVEL } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
 
@@ -36,10 +36,10 @@
     }),
   );
 
-  let level = $derived(userState.state.completed.renown);
+  let level = $derived(clampRenownLevel(userState.state.completed.renown));
   let levelsPerRank = trackerData.renown.levelsPerRank;
   let ranks = trackerData.renown.ranks;
-  let maxLevel = levelsPerRank * ranks.length;
+  let maxLevel = MAX_RENOWN_LEVEL;
 
   let currentRankIndex = $derived(Math.min(Math.floor(level / levelsPerRank), ranks.length - 1));
   let levelInRank = $derived(level - currentRankIndex * levelsPerRank);
@@ -152,7 +152,7 @@
 <div class="flex flex-col gap-0.5">
   {#each ranks as rank, i (rank.name)}
     {@const rankState =
-      level >= (i + 1) * levelsPerRank
+      level >= Math.min((i + 1) * levelsPerRank, maxLevel)
         ? "completed"
         : i === currentRankIndex
           ? "current"
@@ -161,7 +161,7 @@
       name={rank.name}
       starColor={RANK_COLORS[i]}
       minLevel={i * levelsPerRank}
-      maxLevel={(i + 1) * levelsPerRank - 1}
+      maxLevel={Math.min((i + 1) * levelsPerRank - 1, maxLevel)}
       state={rankState}
       {levelInRank}
       {levelsPerRank}
