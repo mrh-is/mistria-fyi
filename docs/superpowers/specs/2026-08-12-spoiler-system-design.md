@@ -33,6 +33,7 @@ A visibility condition is a small, serializable expression tree.
 ```typescript
 type VisibilityCondition =
   | { type: "always" }
+  | { type: "never" }
   | { type: "questCompleted"; questId: QuestId }
   | { type: "questAvailable"; questId: QuestId }
   | { type: "npcKnown"; npcId: NpcId }
@@ -162,7 +163,10 @@ information:
   level + previous quest completion. Fetch quests use request board requirements resolved against
   the rest of the progression state.
 - **`knownNpcs`**: an NPC is known if their visibility condition (from tracker data) evaluates to
-  true against the current quest/progression state, or if their heart level is > 0.
+  true against the current quest/progression state. For NPCs without an explicit unlock gate (i.e.,
+  visibility is `always`), heart level > 0 also marks them known. NPCs with explicit unlock gates
+  (Caldarus, Seridia, Saturday Market vendors) are known only when their gate quest is completed,
+  regardless of heart level — this prevents story-granted heart levels from revealing them early.
 - **`heartLevels`**: `max(manuallyTracked, questDerived)` using `heartLevelChanges` data from
   tracker data. Completing "Breaking the Water Seal" auto-sets Caldarus to 2 and Seridia to 1, but
   never overwrites a higher manually-tracked value. Caldarus and Seridia start at 0 hearts until
@@ -181,8 +185,14 @@ Three paths populate `CompletedState`:
 2. **Save file import**: the existing `buildImportState` in `import-save.ts` already imports quest
    states, heart levels, skill levels, renown, mines floor, and spells. Enhancements needed:
    - Import `perks` from `player.perks` (field exists in save, not currently read)
-   - Derive `knownNpcs` from imported heart levels + quest completion cascades
-3. **Future continuous sync** (#73): watch the save file and auto-update. Out of scope for this
+   - Derive `knownNpcs` from quest completion cascades (heart level alone is not sufficient for
+     gated NPCs like Caldarus/Seridia; see `knownNpcs` derivation rules above)
+3. **QR transfer**: the existing transfer codec (`src/lib/engine/transfer.ts`) is a versioned
+   binary format (`TRANSFER_VERSION = 1`). Adding `unlockedPerks` to `CompletedState` requires
+   bumping to version 2 with perk bitfield serialization. The decoder must remain
+   backward-compatible with version 1 payloads (which have no perk data — treat as empty set).
+   Include perk round-trip tests for both v1 and v2 payloads.
+4. **Future continuous sync** (#73): watch the save file and auto-update. Out of scope for this
    spec.
 
 ### Quest chain state management
@@ -372,8 +382,13 @@ From `letters.toml`, emit visibility conditions on each heart quest:
 ```
 
 For level 4+ heart quests, also include `questCompleted` of the previous heart quest in the
-chain. Pregnancy quests get a separate condition (marriage state; exact encoding TBD during
-implementation since marriage tracking doesn't currently exist in the user state).
+chain.
+
+Pregnancy quests require marriage + child state that does not exist in `UserProgressionState`. Until
+marriage tracking is added, pregnancy quests use `{ type: "never" }` — unconditionally redacted,
+visible only when `showSpoilers` is enabled. When marriage tracking is added in a future spec,
+these get proper condition primitives. Wedding cosmetics likewise use `{ type: "never" }` until
+then.
 
 Some 2-heart quests have no letter (Balor, Juniper, Valen) and trigger via world-location
 cutscenes. These still get `heartLevel` visibility conditions; the letter is just the in-game
@@ -386,7 +401,7 @@ delivery mechanism, not the spoiler gate.
 2. Extend `extractQuestRewards` to read `reward.player_cosmetic` (+2 cosmetics).
 3. Add `chest_tables` extraction from `fishing.toml` and `dungeons.toml` — parse chest loot
    pools, map `kind = "cosmetic"` entries, tag with chest tier as source.
-4. Investigate wedding cosmetics as a follow-up if any remain unsourced.
+4. Wedding cosmetics use `{ type: "never" }` until marriage tracking is added (see Section 3g).
 
 Cosmetic visibility derives from the source: store-bought cosmetics inherit their store's
 visibility, quest-reward cosmetics inherit the quest's visibility, treasure-chest cosmetics inherit
@@ -450,6 +465,7 @@ function isVisible(
 Recursively evaluates the condition tree. Each primitive is a direct lookup:
 
 - `always` -> `true`
+- `never` -> `false` (only visible when `showSpoilers` override is active)
 - `questCompleted` -> `state.questVisibility[questId] === "completed"`
 - `questAvailable` -> `state.questVisibility[questId]` is `"available"` or `"completed"`
 - `npcKnown` -> `state.knownNpcs.has(npcId)`
@@ -542,7 +558,10 @@ Uses the existing `AlertDialog` component.
 Extend `buildImportState` in `src/lib/engine/import-save.ts`:
 
 - Import `perks` from `player.perks` (save field exists, not currently read)
-- Derive `knownNpcs` from imported heart levels > 0 + quest completion cascades
+
+Note: `knownNpcs` is not imported directly — it is derived at runtime by `deriveProgressionState`
+from quest completion state and heart levels (with gated-NPC exceptions). The importer only needs to
+supply the raw `CompletedState` fields (`questStates`, `heartLevels`, `unlockedPerks`, etc.).
 
 The importer already handles quest states, heart levels, skill levels, renown, and mines floor.
 
@@ -587,10 +606,17 @@ Comprehensive mapping of every content type to its visibility condition source:
 | Recipes (dragon forge) | Dragonsworn quest chain | `questCompleted` |
 | Recipes (fish trap) | Beach bridge repair | `questCompleted` |
 | Cosmetics | Source-dependent | Inherits source gate |
-| Museum items | Always (area gating via sources) | `always` |
+| Museum items | Area gate from acquisition source | `questCompleted` or `always` (see below) |
 | Mines biomes | Mines floor | `minesLevel(startFloor)` |
 | Spells | Quest gate | `questCompleted` (tablet quests) |
 | Renown rewards | Town rank | `townRank(level)` |
+
+**Museum item visibility**: museum items are not uniformly `always`. Items sourced exclusively from
+gated areas (Deep Woods, Summit, Western Ruins upper, Beach Cave) inherit the area's visibility
+condition as their entity-level visibility. Items obtainable from multiple areas (e.g., forageable
+in both a gated and ungated area) use `or` across the area conditions. Items with no area gate
+(town forageables, mines drops from early floors, fishing) remain `always`. The pipeline derives
+this from the item's source locations cross-referenced with the area gates in Section 3k.
 
 ---
 
@@ -604,8 +630,8 @@ hardcoded in the pipeline or annotated manually:
 | Caldarus NPC unlock | `questCompleted("breaking_the_fire_seal")` | No explicit flag; inferred from cutscene `heart_level_changes` |
 | Taliferro store unlock | `questCompleted("upgrade_the_saturday_market")` | No requirement on store/NPC; user confirmed |
 | Wheedle store unlock | `questCompleted("upgrade_the_saturday_market")` | Same |
-| Pregnancy quest gating | Marriage/child state | Marriage tracking not in current user state |
-| Wedding cosmetics | Marriage state | Source not found in TOML data |
+| Pregnancy quest gating | `never` (until marriage tracking added) | Marriage tracking not in current user state |
+| Wedding cosmetics | `never` (until marriage tracking added) | Source not found in TOML data |
 
 These are documented here so that future game data updates can be checked against them.
 
