@@ -65,9 +65,9 @@
   })}
   {#if visibleQuests.length > 0}
     <ExpandableSection
-      count={visibleQuests.filter((q) => getQuestState(q.id) === "completed").length}
+      count={quests.filter((q) => getQuestState(q.id) === "completed").length}
       name={typeLabels[questType] ?? questType}
-      total={visibleQuests.length}
+      total={quests.length}
     >
       {#each visibleQuests as quest (quest.id)}
         {@const questState = getQuestState(quest.id)}

@@ -5,7 +5,7 @@
   import ItemRow from "$lib/components/item-row.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
   import { trackerData } from "$lib/data/index.js";
-  import { isItemDimmed, shouldShowItem } from "$lib/engine/availability.js";
+  import { isItemDimmed, isRowVisible, shouldCountItem } from "$lib/engine/availability.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
@@ -55,25 +55,31 @@
   {@const catEntries = Object.entries(cat.items).sort(([, a], [, b]) =>
     a.name.localeCompare(b.name),
   )}
-  {@const filteredItems = catEntries.filter(([id, item]) => {
+  {@const scopedItems = catEntries.filter(([id, item]) => {
     if (!matchesFilter(item.name)) return false;
-    return shouldShowItem(
+    return shouldCountItem(
       id as ItemId,
       userState.state.completed.almanac.has(id as ItemId),
       trackerData.sources,
       userState.state.worldState,
       userState.state.availabilityMode,
-      userState.state.showCompleted,
-      recentlyCompleted,
     );
   })}
+  {@const filteredItems = scopedItems.filter(([id]) =>
+    isRowVisible(
+      id as ItemId,
+      userState.state.completed.almanac.has(id as ItemId),
+      userState.state.showCompleted,
+      recentlyCompleted,
+    ),
+  )}
   {#if filteredItems.length > 0}
     <ExpandableSection
-      count={filteredItems.filter(([id]) => userState.state.completed.almanac.has(id as ItemId))
+      count={scopedItems.filter(([id]) => userState.state.completed.almanac.has(id as ItemId))
         .length}
       forceOpen={!!nameFilter}
       name={cat.name}
-      total={filteredItems.length}
+      total={scopedItems.length}
     >
       {@const showAll = expandedSections[cat.id] ?? false}
       {@const displayItems = showAll ? filteredItems : filteredItems.slice(0, SECTION_LIMIT)}

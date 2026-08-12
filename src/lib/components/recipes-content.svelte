@@ -135,8 +135,8 @@
 </script>
 
 {#each recipesByCategory as group (group.id)}
-  {@const filteredEntries = group.entries.filter((e) => {
-    if (!matchesFilter(e)) return false;
+  {@const scopedEntries = group.entries.filter(matchesFilter)}
+  {@const filteredEntries = scopedEntries.filter((e) => {
     if (!userState.state.showCompleted && userState.state.completed.almanacRecipes.has(e.id)) {
       return recentlyCompleted.has(e.id);
     }
@@ -144,11 +144,10 @@
   })}
   {#if filteredEntries.length > 0}
     <ExpandableSection
-      count={filteredEntries.filter((e) => userState.state.completed.almanacRecipes.has(e.id))
-        .length}
+      count={scopedEntries.filter((e) => userState.state.completed.almanacRecipes.has(e.id)).length}
       forceOpen={!!nameFilter || toolbarState.sourceFilterActive}
       name={group.name}
-      total={filteredEntries.length}
+      total={scopedEntries.length}
     >
       {@const showAll = expandedSections[group.id] ?? false}
       {@const displayEntries = showAll ? filteredEntries : filteredEntries.slice(0, SECTION_LIMIT)}

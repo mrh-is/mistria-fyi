@@ -4,7 +4,7 @@
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import ItemRow from "$lib/components/item-row.svelte";
   import { trackerData } from "$lib/data/index.js";
-  import { isItemDimmed, shouldShowItem } from "$lib/engine/availability.js";
+  import { isItemDimmed, isRowVisible, shouldCountItem } from "$lib/engine/availability.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
@@ -41,14 +41,22 @@
     return name ? name.toLowerCase().includes(nameFilter.toLowerCase()) : false;
   }
 
-  function isItemVisible(itemId: ItemId): boolean {
+  function isItemScoped(itemId: ItemId): boolean {
     if (!matchesFilter(itemId)) return false;
-    return shouldShowItem(
+    return shouldCountItem(
       itemId,
       userState.state.completed.museum.has(itemId),
       trackerData.sources,
       userState.state.worldState,
       userState.state.availabilityMode,
+    );
+  }
+
+  function isItemVisible(itemId: ItemId): boolean {
+    if (!isItemScoped(itemId)) return false;
+    return isRowVisible(
+      itemId,
+      userState.state.completed.museum.has(itemId),
       userState.state.showCompleted,
       recentlyCompleted,
     );
@@ -57,22 +65,24 @@
 
 {#each trackerData.museum as wing (wing.id)}
   {@const wingItems = wing.sets.flatMap((s) => s.items)}
+  {@const scopedWingItems = wingItems.filter(isItemScoped)}
   {@const visibleWingItems = wingItems.filter(isItemVisible)}
   {#if visibleWingItems.length > 0}
     <ExpandableSection
-      count={visibleWingItems.filter((id) => userState.state.completed.museum.has(id)).length}
+      count={scopedWingItems.filter((id) => userState.state.completed.museum.has(id)).length}
       forceOpen={!!nameFilter}
       name={wing.name}
-      total={visibleWingItems.length}
+      total={scopedWingItems.length}
     >
       {#each wing.sets as set (set.id)}
+        {@const scopedSetItems = set.items.filter(isItemScoped)}
         {@const visibleSetItems = set.items.filter(isItemVisible)}
         {#if visibleSetItems.length > 0}
           <ExpandableSection
-            count={visibleSetItems.filter((id) => userState.state.completed.museum.has(id)).length}
+            count={scopedSetItems.filter((id) => userState.state.completed.museum.has(id)).length}
             forceOpen={!!nameFilter}
             name={set.name}
-            total={visibleSetItems.length}
+            total={scopedSetItems.length}
           >
             {#each visibleSetItems as itemId (itemId)}
               <ItemRow
