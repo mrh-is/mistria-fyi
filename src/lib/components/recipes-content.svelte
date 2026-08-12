@@ -1,11 +1,9 @@
 <script lang="ts">
-  import { ChevronRight } from "@lucide/svelte";
   import { SvelteSet } from "svelte/reactivity";
   import { slide } from "svelte/transition";
 
   import ExpandableSection from "$lib/components/expandable-section.svelte";
-  import SourceIcon from "$lib/components/source-icon.svelte";
-  import { SOURCE_FILTERS } from "$lib/components/source-icons.js";
+  import { Icon, SOURCE_FILTERS } from "$lib/components/icon/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
   import { Checkbox } from "$lib/components/ui/checkbox/index.js";
   import { trackerData } from "$lib/data/index.js";
@@ -196,9 +194,10 @@
                 }}
               >
                 {#each uniqueTypes as sourceType (sourceType)}
-                  <SourceIcon type={sourceType} class="size-3.5 shrink-0" />
+                  <Icon.Source type={sourceType} class="size-3.5 shrink-0" />
                 {/each}
-                <ChevronRight
+                <Icon.UI
+                  type="disclosure"
                   class="size-3 shrink-0 opacity-40 transition-transform {expanded
                     ? 'rotate-90'
                     : ''}"
@@ -210,7 +209,7 @@
             <div class="flex flex-col gap-1 py-1 pr-2 pl-8" transition:slide={{ duration: 150 }}>
               {#each entry.sources as source, i (i)}
                 <div class="flex items-center gap-2 text-sm">
-                  <SourceIcon type={source.type} class="size-3.5 shrink-0 text-muted-foreground" />
+                  <Icon.Source type={source.type} class="size-3.5 shrink-0 text-muted-foreground" />
                   <span class="text-muted-foreground">{entry.sourceLabels[i]}</span>
                 </div>
               {/each}
