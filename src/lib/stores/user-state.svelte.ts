@@ -2,6 +2,7 @@ import { SvelteSet } from "svelte/reactivity";
 
 import { trackerData } from "$lib/data/index.js";
 import { clampRenownLevel } from "$lib/engine/progress.js";
+import { findRecipesForQuest } from "$lib/engine/quest-rewards.js";
 
 import type {
   AnimalId,
@@ -171,6 +172,32 @@ function createUserState() {
   }
 
   return {
+    /**
+     * Transitions a quest from `obtained` → `completed` and idempotently adds
+     * any recipe rewards. Returns the recipe IDs that were **newly** added by
+     * this call (already-complete recipes are excluded). Call this instead of
+     * `cycleQuestState` when the transition should include recipe auto-complete.
+     *
+     * If the quest is not in `obtained` state, it is cycled normally with no
+     * recipe side-effects (covers none→obtained and completed→none).
+     */
+    completeQuestWithRecipes(id: QuestId): RecipeId[] {
+      const current = state.completed.questStates[id as string] ?? "none";
+      state.completed.questStates[id as string] =
+        current === "none" ? "obtained" : current === "obtained" ? "completed" : "none";
+
+      if (current !== "obtained") return [];
+
+      const candidates = findRecipesForQuest(id);
+      const newlyAdded: RecipeId[] = [];
+      for (const recipeId of candidates) {
+        if (!state.completed.almanacRecipes.has(recipeId)) {
+          state.completed.almanacRecipes.add(recipeId);
+          newlyAdded.push(recipeId);
+        }
+      }
+      return newlyAdded;
+    },
     cycleQuestState(id: QuestId) {
       const current = state.completed.questStates[id as string] ?? "none";
       const next: QuestState =

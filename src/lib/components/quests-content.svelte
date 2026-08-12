@@ -4,12 +4,13 @@
 
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import { trackerData } from "$lib/data/index.js";
+  import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { displayQuestName } from "$lib/utils/format.js";
 
   import type { QuestState } from "$lib/stores/user-state.svelte.js";
-  import type { NpcId, QuestId } from "$lib/types/tracker-data.js";
+  import type { NpcId, QuestId, RecipeId } from "$lib/types/tracker-data.js";
 
   function isQuestTypeComplete(questIds: QuestId[]): boolean {
     return questIds.every((id) => getQuestState(id) === "completed");
@@ -85,20 +86,32 @@
                 ? "Obtained — click to mark completed"
                 : "Completed — click to reset"}
             onclick={() => {
-              userState.cycleQuestState(quest.id);
+              const newlyAdded: RecipeId[] = userState.completeQuestWithRecipes(quest.id);
               const newState = getQuestState(quest.id);
-              const message =
-                newState === "obtained"
-                  ? `Marked "${quest.displayName}" obtained`
-                  : newState === "completed"
-                    ? `Marked "${quest.displayName}" completed`
-                    : `Reset "${quest.displayName}"`;
+              let message: string;
+              if (newState === "obtained") {
+                message = `Marked "${quest.displayName}" obtained`;
+              } else if (newState === "completed") {
+                if (newlyAdded.length === 1) {
+                  const names = recipeDisplayNames(newlyAdded);
+                  message = `Marked "${quest.displayName}" completed and unlocked "${names[0]}"`;
+                } else if (newlyAdded.length > 1) {
+                  message = `Marked "${quest.displayName}" completed and unlocked ${newlyAdded.length.toString()} recipes`;
+                } else {
+                  message = `Marked "${quest.displayName}" completed`;
+                }
+              } else {
+                message = `Reset "${quest.displayName}"`;
+              }
               toast(message, {
                 cancel: {
                   label: "Undo",
                   onClick: () => {
                     userState.cycleQuestState(quest.id);
                     userState.cycleQuestState(quest.id);
+                    for (const recipeId of newlyAdded) {
+                      userState.state.completed.almanacRecipes.delete(recipeId);
+                    }
                   },
                 },
                 duration: 5000,
