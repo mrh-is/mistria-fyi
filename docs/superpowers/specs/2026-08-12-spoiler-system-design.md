@@ -494,7 +494,7 @@ Emit visibility conditions for quest categories that are themselves spoilers:
 
 | Category | Visibility condition |
 |---|---|
-| `crown_quests` | `{ type: "renownLevel", level: N }` (**implementation blocker**: determine exact threshold from wiki or in-game testing before coding this gate; use `never` as placeholder until resolved) |
+| `crown_quests` | `{ type: "renownLevel", level: N }` (**pre-implementation research required**: determine exact renown level at which the crown request board unlocks, from wiki or in-game testing. This must be resolved to a concrete number before implementation begins — `never` is not acceptable as a production value for this category since it would permanently redact content for normal users.) |
 | `stillwell_challenges` | `{ type: "npcKnown", npcId: "stillwell" }` |
 | `tali_challenges` | `{ type: "npcKnown", npcId: "taliferro" }` |
 | `story_quests` | `{ type: "always" }` (first quest is always visible) |
@@ -607,6 +607,24 @@ Every item/quest/NPC row calls `redactionState()` and renders accordingly:
 The exact visual treatment (blur, "???", locked icon, etc.) is deferred to issue #6. The existing
 animal-tier blur approach serves as the starting point and is folded into this unified system.
 
+### Redaction in non-category surfaces
+
+Redaction applies everywhere entity names appear, not just category pages:
+
+- **Global search** (`searchItems` in `search.ts`, rendered by `search-results.svelte`): redacted
+  entities are excluded from search results entirely. Searching for a redacted item name returns
+  no match. This prevents name leaks through the search index.
+- **`/all` aggregate page** (`NpcsSection.svelte`, etc.): same redaction rules as category pages.
+  All component sections must check visibility before rendering names.
+- **Undo toasts**: if a completion undo toast would show a redacted item name, show the redaction
+  placeholder instead.
+- **Accessible labels / aria attributes**: redacted names must not appear in `aria-label` or
+  `title` attributes.
+
+Implementation must audit every code path that renders `entity.name` and route it through the
+visibility check. A fresh-state test (no save imported, no manual progress) should verify that no
+redacted names appear anywhere in the rendered DOM.
+
 ### Heart quest display
 
 For a known NPC, all heart quest slots are visible as rows. Quests at heart levels the player has
@@ -632,12 +650,19 @@ for `never` conditions only "just this item" is available.
 
 ### Save importer enhancements
 
-Extend `buildImportState` in `src/lib/engine/import-save.ts`:
+Extend the save import pipeline end-to-end:
 
-- Import `perks` from `player.perks` (save field exists, not currently read)
+1. **`buildImportState`** (`import-save.ts`): add `perks` field to `PlayerSave` interface. Parse
+   `player.perks` (string array) into `Set<PerkId>`, validating against `trackerData.perks`. Add
+   perk count to `ImportResult.counts`.
+2. **`mergeFromSave`** (`user-state.svelte.ts`): add a perk merge branch that unions the imported
+   `unlockedPerks` with the existing set (same pattern as other fields). Extend `MergeCounts` with
+   a `perks` field.
+3. **Integration test**: verify `buildImportState` -> `mergeFromSave` -> persisted state round-trip
+   for perks, including that perk-gated recipes unredact after import.
 
 Note: `knownNpcs` is not imported directly — it is derived at runtime by `deriveProgressionState`
-from quest completion state and heart levels (with gated-NPC exceptions). The importer only needs to
+from quest completion state and NPC levels (with gated-NPC exceptions). The importer only needs to
 supply the raw `CompletedState` fields (`questStates`, `npcLevels`, `unlockedPerks`, etc.).
 
 The importer already handles quest states, heart levels, skill levels, renown, and mines floor.
