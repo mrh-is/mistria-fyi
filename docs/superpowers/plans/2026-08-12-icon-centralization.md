@@ -1,29 +1,49 @@
 # Icon centralization implementation plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development
+> (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use
+> checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Centralize shared, semantically meaningful icon mappings through a namespaced `Icon.*` component system, so duplicated icon records (season, weather, source, category, etc.) live in one place and call sites speak domain types instead of Lucide names. Single-use, single-file icons (settings actions, app identity, transfer flow) remain as direct Lucide imports; this is an intentional scope boundary, not an oversight.
+**Goal:** Centralize shared, semantically meaningful icon mappings through a namespaced `Icon.*`
+component system, so duplicated icon records (season, weather, source, category, etc.) live in one
+place and call sites speak domain types instead of Lucide names. Single-use, single-file icons
+(settings actions, app identity, transfer flow) remain as direct Lucide imports; this is an
+intentional scope boundary, not an oversight.
 
-**Architecture:** A barrel module at `$lib/components/icon/index.ts` exports a namespaced `Icon` object with variant sub-components (`Icon.Season`, `Icon.Source`, etc.). Each variant is a thin `.svelte` component whose props are domain types (`Season`, `RecipeSource["type"]`, etc.) plus `LucideProps` for customization. The icon-to-Lucide mappings live in a shared `$lib/components/icon/icon-maps.ts` module. `icon-maps.ts` is the only non-vendored file that imports from `@lucide/svelte`. Some call sites also import raw maps/functions from `icon-maps.ts` when they need the component reference for dynamic rendering (e.g., iterating over seasons, building derived tile arrays).
+**Architecture:** A barrel module at `$lib/components/icon/index.ts` exports a namespaced `Icon`
+object with variant sub-components (`Icon.Season`, `Icon.Source`, etc.). Each variant is a thin
+`.svelte` component whose props are domain types (`Season`, `RecipeSource["type"]`, etc.) plus
+`LucideProps` for customization. The icon-to-Lucide mappings live in a shared
+`$lib/components/icon/icon-maps.ts` module. `icon-maps.ts` is the only non-vendored file that
+imports from `@lucide/svelte`. Some call sites also import raw maps/functions from `icon-maps.ts`
+when they need the component reference for dynamic rendering (e.g., iterating over seasons, building
+derived tile arrays).
 
 **Tech stack:** SvelteKit 2, Svelte 5 (runes), TypeScript (strict), `@lucide/svelte` v1.31
 
 ## Global constraints
 
-- **Centralized icons** import only from `$lib/components/icon/`. Single-use icons may still import `@lucide/svelte` directly.
-- `LucideProps` and `LucideIcon` are re-exported from the barrel so call sites can type icon-prop forwarding without importing Lucide.
-- Follow existing code style: `consistent-type-imports`, `perfectionist` sort rules, double quotes, 100-char width, kebab-case files, PascalCase components.
+- **Centralized icons** import only from `$lib/components/icon/`. Single-use icons may still import
+  `@lucide/svelte` directly.
+- `LucideProps` and `LucideIcon` are re-exported from the barrel so call sites can type icon-prop
+  forwarding without importing Lucide.
+- Follow existing code style: `consistent-type-imports`, `perfectionist` sort rules, double quotes,
+  100-char width, kebab-case files, PascalCase components.
 - Run `pnpm run check` and `pnpm run lint:fix` after every task.
-- The existing `source-icon.svelte` and `source-icons.ts` from the PR on branch `51-source-icon-component` will be superseded by this work. Remove them and replace with the new `icon/` structure.
+- The existing `source-icon.svelte` and `source-icons.ts` from the PR on branch
+  `51-source-icon-component` will be superseded by this work. Remove them and replace with the new
+  `icon/` structure.
 - Swap `FishingHook` → `FishingRod` for `treasure_chest` sources (closes #53).
 
 ---
 
 ### Task 1: Icon maps module & barrel
 
-Create the centralized icon mapping data and the `Icon` namespace barrel. This is the foundation everything else builds on.
+Create the centralized icon mapping data and the `Icon` namespace barrel. This is the foundation
+everything else builds on.
 
 **Files:**
+
 - Create: `src/lib/components/icon/icon-maps.ts`
 - Create: `src/lib/components/icon/icon-source.svelte`
 - Create: `src/lib/components/icon/icon-season.svelte`
@@ -36,33 +56,45 @@ Create the centralized icon mapping data and the `Icon` namespace barrel. This i
 - Create: `src/lib/components/icon/index.ts`
 
 **Interfaces:**
+
 - Produces:
   - `SOURCE_ICON: Record<RecipeSource["type"], LucideIcon>` — recipe source type → icon
   - `SOURCE_FILTERS: SourceFilter[]` — filter chip definitions for recipe toolbar
   - `SEASON_ICON: Record<Season, LucideIcon>` — season → icon
-  - `weatherIcon(weather: Weather, season: Season): LucideIcon` — weather + single-season context → icon (used by toolbar and world-state selector for "current weather")
-  - `restrictionWeatherIcon(weather: Weather, seasons: Season[]): LucideIcon` — weather + multi-season context → icon (used by restriction badges, where inclement only shows snow when winter is the *sole* restricted season)
-  - `CATEGORY_ICON: Record<CategoryKey | "all" | "complete", LucideIcon>` — category/meta keys → icon. Note: `CategoryKey` is imported here, not defined here; no circular dependency.
+  - `weatherIcon(weather: Weather, season: Season): LucideIcon` — weather + single-season context →
+    icon (used by toolbar and world-state selector for "current weather")
+  - `restrictionWeatherIcon(weather: Weather, seasons: Season[]): LucideIcon` — weather +
+    multi-season context → icon (used by restriction badges, where inclement only shows snow when
+    winter is the _sole_ restricted season)
+  - `CATEGORY_ICON: Record<CategoryKey | "all" | "complete", LucideIcon>` — category/meta keys →
+    icon. Note: `CategoryKey` is imported here, not defined here; no circular dependency.
   - `COMPLETION_ICON: Record<QuestState, LucideIcon>` — quest/completion state → icon
   - `RESTRICTION_ICON: { clock: LucideIcon; lock: LucideIcon }` — restriction badge icons
   - `PROGRESS_MARK_ICON: Record<ProgressMarkType, LucideIcon>` — meter/level shape → icon
   - `UI_ICON: Record<UIIconType, LucideIcon>` — generic UI affordance → icon
   - Re-export of `type LucideProps` and `type LucideIcon` from `@lucide/svelte`
-  - `Icon` namespace object (from `index.ts`): `{ Category, Completion, ProgressMark, Restriction, Season, Source, UI, Weather }`
+  - `Icon` namespace object (from `index.ts`):
+    `{ Category, Completion, ProgressMark, Restriction, Season, Source, UI, Weather }`
 
 **Weather icon semantics — important behavioral note:**
 
 There are three weather-icon functions in the codebase today, with a real divergence:
 
-| Function | Location | `heavy_inclement` + winter |
-|---|---|---|
-| `weatherIcon` | `toolbar-footer.svelte` | `CloudDrizzle` |
-| `weatherIcon` | `world-state-selector.svelte` | `CloudLightning` |
-| `weatherIconForRestriction` | `restriction-badges.svelte` | `CloudLightning` |
+| Function                    | Location                      | `heavy_inclement` + winter |
+| --------------------------- | ----------------------------- | -------------------------- |
+| `weatherIcon`               | `toolbar-footer.svelte`       | `CloudDrizzle`             |
+| `weatherIcon`               | `world-state-selector.svelte` | `CloudLightning`           |
+| `weatherIconForRestriction` | `restriction-badges.svelte`   | `CloudLightning`           |
 
-The toolbar-footer uses `CloudDrizzle` for winter heavy-inclement while the other two use `CloudLightning`. The world-state-selector and toolbar-footer represent the same concept (current weather display), so they should agree. The centralized `weatherIcon` should normalize to `CloudLightning` for all `heavy_inclement` cases (matching the majority behavior), making `CloudDrizzle` unused. The toolbar was likely the odd one out.
+The toolbar-footer uses `CloudDrizzle` for winter heavy-inclement while the other two use
+`CloudLightning`. The world-state-selector and toolbar-footer represent the same concept (current
+weather display), so they should agree. The centralized `weatherIcon` should normalize to
+`CloudLightning` for all `heavy_inclement` cases (matching the majority behavior), making
+`CloudDrizzle` unused. The toolbar was likely the odd one out.
 
-The restriction variant is genuinely different: it takes `seasons: Season[]` (plural) because restriction badges need to distinguish "winter-only" inclement (snow) from "multi-season" inclement (rain). This stays as a separate function.
+The restriction variant is genuinely different: it takes `seasons: Season[]` (plural) because
+restriction badges need to distinguish "winter-only" inclement (snow) from "multi-season" inclement
+(rain). This stays as a separate function.
 
 - [ ] **Step 1: Create `icon-maps.ts`**
 
@@ -457,19 +489,31 @@ git commit -m "feat: add centralized Icon namespace with semantic variants"
 
 ### Task 2: Migrate `categories.ts` & its consumers to `Icon.Category`
 
-Decouple `categories.ts` from direct Lucide imports. Also migrate the three components that render `category.icon` directly — they currently declare `const Icon = $derived(category.icon)` which collides with the `Icon` namespace import. These components should use `<Icon.Category>` instead.
+Decouple `categories.ts` from direct Lucide imports. Also migrate the three components that render
+`category.icon` directly — they currently declare `const Icon = $derived(category.icon)` which
+collides with the `Icon` namespace import. These components should use `<Icon.Category>` instead.
 
-**Important — avoiding circular types:** `CategoryKey` is inferred from `CATEGORIES_INTERNAL` in `categories.ts`. `CATEGORY_ICON` in `icon-maps.ts` imports `CategoryKey`. If `CATEGORIES_INTERNAL` also imports from `icon-maps.ts`, this creates a circular dependency. Solution: define `CategoryKey` independently as a string union in `categories.ts`, then both files can use it without circularity.
+**Important — avoiding circular types:** `CategoryKey` is inferred from `CATEGORIES_INTERNAL` in
+`categories.ts`. `CATEGORY_ICON` in `icon-maps.ts` imports `CategoryKey`. If `CATEGORIES_INTERNAL`
+also imports from `icon-maps.ts`, this creates a circular dependency. Solution: define `CategoryKey`
+independently as a string union in `categories.ts`, then both files can use it without circularity.
 
 **Files:**
-- Modify: `src/lib/data/categories.ts` — define `CategoryKey` as explicit union, remove Lucide imports, source icons from `CATEGORY_ICON`
-- Modify: `src/lib/components/category-card.svelte` — replace `Trophy` and `const Icon = $derived(category.icon)` with `Icon.Category`
-- Modify: `src/lib/components/category-header.svelte` — replace `const Icon = $derived(category.icon)` with `Icon.Category`
-- Modify: `src/routes/all/SectionHeader.svelte` — replace `const Icon = $derived(category.icon)` with `Icon.Category`
+
+- Modify: `src/lib/data/categories.ts` — define `CategoryKey` as explicit union, remove Lucide
+  imports, source icons from `CATEGORY_ICON`
+- Modify: `src/lib/components/category-card.svelte` — replace `Trophy` and
+  `const Icon = $derived(category.icon)` with `Icon.Category`
+- Modify: `src/lib/components/category-header.svelte` — replace
+  `const Icon = $derived(category.icon)` with `Icon.Category`
+- Modify: `src/routes/all/SectionHeader.svelte` — replace `const Icon = $derived(category.icon)`
+  with `Icon.Category`
 
 **Interfaces:**
+
 - Consumes: `CATEGORY_ICON` from `icon-maps.ts`
-- Produces: `CategoryKey` as explicit union type (no longer inferred from array), `CategoryMeta` with `icon: LucideIcon` sourced from centralized map
+- Produces: `CategoryKey` as explicit union type (no longer inferred from array), `CategoryMeta`
+  with `icon: LucideIcon` sourced from centralized map
 
 - [ ] **Step 1: Update `categories.ts`**
 
@@ -511,22 +555,28 @@ const CATEGORIES_INTERNAL: readonly {
 ];
 ```
 
-Remove the 10 Lucide icon imports and `import type { Component } from "svelte"`. Update the `CategoryMeta` interface to use `LucideIcon` instead of `Component<{ class?: string }>`. Keep `categoryColor`, `categoryHref`, `CATEGORIES`, and `CATEGORY_BY_KEY` exports unchanged.
+Remove the 10 Lucide icon imports and `import type { Component } from "svelte"`. Update the
+`CategoryMeta` interface to use `LucideIcon` instead of `Component<{ class?: string }>`. Keep
+`categoryColor`, `categoryHref`, `CATEGORIES`, and `CATEGORY_BY_KEY` exports unchanged.
 
 - [ ] **Step 2: Update `category-card.svelte`**
 
 Replace:
+
 ```svelte
-import { Trophy } from "@lucide/svelte";
+import {Trophy} from "@lucide/svelte";
 ```
+
 With:
+
 ```svelte
-import { Icon } from "$lib/components/icon/index.js";
+import {Icon} from "$lib/components/icon/index.js";
 ```
 
 Remove `const Icon = $derived(category.icon);` — this name collides with the `Icon` namespace.
 
 Replace template usages:
+
 ```svelte
 <!-- Before -->
 {#if isComplete}
@@ -547,6 +597,7 @@ Replace template usages:
 Remove `const Icon = $derived(category.icon);`.
 
 Replace template usage:
+
 ```svelte
 <!-- Before -->
 <Icon class={color ? "size-5 text-(--header-color)" : "size-5 text-muted-foreground"} />
@@ -558,8 +609,9 @@ Replace template usage:
 ```
 
 Add import:
+
 ```svelte
-import { Icon } from "$lib/components/icon/index.js";
+import {Icon} from "$lib/components/icon/index.js";
 ```
 
 Keep `ArrowLeft` as direct Lucide import (pending #59).
@@ -569,6 +621,7 @@ Keep `ArrowLeft` as direct Lucide import (pending #59).
 Remove `const Icon = $derived(category.icon);`.
 
 Replace template usage:
+
 ```svelte
 <!-- Before -->
 <Icon class="size-4 text-(--header-color)" />
@@ -577,8 +630,9 @@ Replace template usage:
 ```
 
 Add import:
+
 ```svelte
-import { Icon } from "$lib/components/icon/index.js";
+import {Icon} from "$lib/components/icon/index.js";
 ```
 
 - [ ] **Step 5: Run `pnpm run check` and `pnpm run lint:fix`**
@@ -597,31 +651,38 @@ git commit -m "refactor: migrate categories & their renderers to Icon.Category"
 Replace `Trophy` and `Layers` imports in components that display category-level meta icons.
 
 **Files:**
+
 - Modify: `src/lib/components/category-grid.svelte` — replace `Trophy` with `Icon.Category`
-- Modify: `src/routes/+page.svelte` — replace `Layers`, `ChevronRight` with `Icon.Category`, `Icon.UI`
+- Modify: `src/routes/+page.svelte` — replace `Layers`, `ChevronRight` with `Icon.Category`,
+  `Icon.UI`
 - Modify: `src/routes/all/+page.svelte` — replace `Layers` with `Icon.Category`
 
 **Interfaces:**
-- Consumes: `Icon.Category` (with `category="complete"` for Trophy, `category="all"` for Layers), `Icon.UI` (with `type="disclosure"`)
+
+- Consumes: `Icon.Category` (with `category="complete"` for Trophy, `category="all"` for Layers),
+  `Icon.UI` (with `type="disclosure"`)
 
 - [ ] **Step 1: Update `category-grid.svelte`**
 
-Replace `Trophy` import with `Icon`. Replace `<Trophy ...>` with `<Icon.Category category="complete" ...>`.
+Replace `Trophy` import with `Icon`. Replace `<Trophy ...>` with
+`<Icon.Category category="complete" ...>`.
 
 - [ ] **Step 2: Update `src/routes/+page.svelte`**
 
 Replace:
-```svelte
-import { ChevronRight, Layers, Settings, Wheat } from "@lucide/svelte";
-```
-With:
-```svelte
-import { Settings, Wheat } from "@lucide/svelte";
 
-import { Icon } from "$lib/components/icon/index.js";
+```svelte
+import {(ChevronRight, Layers, Settings, Wheat)} from "@lucide/svelte";
+```
+
+With:
+
+```svelte
+import {(Settings, Wheat)} from "@lucide/svelte"; import {Icon} from "$lib/components/icon/index.js";
 ```
 
 Replace template usages:
+
 - `<Layers ...>` → `<Icon.Category category="all" ...>`
 - `<ChevronRight ...>` → `<Icon.UI type="disclosure" ...>`
 
@@ -630,14 +691,15 @@ Replace template usages:
 - [ ] **Step 3: Update `src/routes/all/+page.svelte`**
 
 Replace:
-```svelte
-import { ArrowLeft, Layers } from "@lucide/svelte";
-```
-With:
-```svelte
-import { ArrowLeft } from "@lucide/svelte";
 
-import { Icon } from "$lib/components/icon/index.js";
+```svelte
+import {(ArrowLeft, Layers)} from "@lucide/svelte";
+```
+
+With:
+
+```svelte
+import {ArrowLeft} from "@lucide/svelte"; import {Icon} from "$lib/components/icon/index.js";
 ```
 
 Replace `<Layers ...>` → `<Icon.Category category="all" ...>`. Keep `ArrowLeft` (pending #59).
@@ -655,9 +717,12 @@ git commit -m "refactor: migrate category grid & page icons to Icon.Category"
 
 ### Task 4: Migrate season & weather icons
 
-The `SEASON_ICON` record is duplicated in six files and the `weatherIcon` function in two (plus a `weatherIconForRestriction` variant in restriction-badges). Replace all with `Icon.Season`, `Icon.Weather`, and centralized map imports.
+The `SEASON_ICON` record is duplicated in six files and the `weatherIcon` function in two (plus a
+`weatherIconForRestriction` variant in restriction-badges). Replace all with `Icon.Season`,
+`Icon.Weather`, and centralized map imports.
 
 **Files:**
+
 - Modify: `src/lib/components/toolbar-footer.svelte`
 - Modify: `src/lib/components/world-state-selector.svelte`
 - Modify: `src/lib/components/animals-content.svelte`
@@ -665,29 +730,40 @@ The `SEASON_ICON` record is duplicated in six files and the `weatherIcon` functi
 - Modify: `src/routes/all/NpcsSection.svelte`
 
 **Interfaces:**
-- Consumes: `Icon.Season` (prop: `season: Season`), `Icon.Weather` (props: `weather: Weather`, `season: Season`), `SEASON_ICON` and `weatherIcon` from `icon-maps.ts` (for iteration-based lookups where templates need the raw component reference)
 
-Note: restriction-badges is handled in Task 5 since it also needs `Icon.Restriction` and the separate `restrictionWeatherIcon` function.
+- Consumes: `Icon.Season` (prop: `season: Season`), `Icon.Weather` (props: `weather: Weather`,
+  `season: Season`), `SEASON_ICON` and `weatherIcon` from `icon-maps.ts` (for iteration-based
+  lookups where templates need the raw component reference)
+
+Note: restriction-badges is handled in Task 5 since it also needs `Icon.Restriction` and the
+separate `restrictionWeatherIcon` function.
 
 **Important note on season icon styling:** Several call sites apply custom styling to season icons:
+
 - Fall (`Leaf`) gets `class="-scale-y-100 rotate-90"` to flip the leaf icon
 - Summer (`Sun`) gets `strokeWidth={2.5}` for visual weight
 
-These per-season style overrides pass through `LucideProps` on `Icon.Season`, so call sites keep their existing class/strokeWidth props.
+These per-season style overrides pass through `LucideProps` on `Icon.Season`, so call sites keep
+their existing class/strokeWidth props.
 
 - [ ] **Step 1: Update `toolbar-footer.svelte`**
 
-Remove all season and weather Lucide imports (`Flower`, `Leaf`, `Sun`, `Snowflake`, `SunDim`, `Wind`, `CloudDrizzle`, `CloudLightning`, `CloudRain`, `CloudSnow`). Remove the inline `SEASON_ICON` record and `weatherIcon` function.
+Remove all season and weather Lucide imports (`Flower`, `Leaf`, `Sun`, `Snowflake`, `SunDim`,
+`Wind`, `CloudDrizzle`, `CloudLightning`, `CloudRain`, `CloudSnow`). Remove the inline `SEASON_ICON`
+record and `weatherIcon` function.
 
 Import:
+
 ```svelte
-import { Icon } from "$lib/components/icon/index.js";
-import { SEASON_ICON, weatherIcon } from "$lib/components/icon/icon-maps.js";
+import {Icon} from "$lib/components/icon/index.js"; import {(SEASON_ICON, weatherIcon)} from "$lib/components/icon/icon-maps.js";
 ```
 
-The `SEASON_ICON` and `weatherIcon` direct imports are needed because this component iterates over seasons to build `$derived` values (`CurrentSeasonIcon`, `CurrentWeatherIcon`) and `WeatherTile` objects that hold raw component references. These patterns use the map/function directly.
+The `SEASON_ICON` and `weatherIcon` direct imports are needed because this component iterates over
+seasons to build `$derived` values (`CurrentSeasonIcon`, `CurrentWeatherIcon`) and `WeatherTile`
+objects that hold raw component references. These patterns use the map/function directly.
 
 For template usages where an icon renders directly from a season value, replace:
+
 ```svelte
 <!-- Before -->
 {@const Icon = SEASON_ICON[s]}
@@ -696,34 +772,39 @@ For template usages where an icon renders directly from a season value, replace:
 <Icon.Season season={s} class="size-5 ..." strokeWidth={...} />
 ```
 
-Note: the local `{@const Icon = SEASON_ICON[s]}` binding shadows the imported `Icon` namespace, so converting these to `<Icon.Season>` also eliminates the shadowing.
+Note: the local `{@const Icon = SEASON_ICON[s]}` binding shadows the imported `Icon` namespace, so
+converting these to `<Icon.Season>` also eliminates the shadowing.
 
 Also replace `X` → `<Icon.UI type="dismiss" ...>`.
 
-Keep `ChevronDown`, `ChevronUp`, `Search`, and `ListFilter` as direct Lucide imports — they're single-file, toolbar-specific.
+Keep `ChevronDown`, `ChevronUp`, `Search`, and `ListFilter` as direct Lucide imports — they're
+single-file, toolbar-specific.
 
 - [ ] **Step 2: Update `world-state-selector.svelte`**
 
-Remove all season/weather Lucide imports. Remove inline `SEASON_ICON` record and `weatherIcon` function.
+Remove all season/weather Lucide imports. Remove inline `SEASON_ICON` record and `weatherIcon`
+function.
 
 ```svelte
-import { Icon } from "$lib/components/icon/index.js";
-import { SEASON_ICON, weatherIcon } from "$lib/components/icon/icon-maps.js";
+import {Icon} from "$lib/components/icon/index.js"; import {(SEASON_ICON, weatherIcon)} from "$lib/components/icon/icon-maps.js";
 ```
 
-Same pattern as toolbar-footer: the `CurrentSeasonIcon`/`CurrentWeatherIcon` derivations use the raw map/function, while direct template renders use `<Icon.Season>`.
+Same pattern as toolbar-footer: the `CurrentSeasonIcon`/`CurrentWeatherIcon` derivations use the raw
+map/function, while direct template renders use `<Icon.Season>`.
 
-Note: this normalizes `heavy_inclement` + winter from `CloudLightning` (unchanged for world-state-selector) while fixing toolbar-footer's divergent `CloudDrizzle` to match.
+Note: this normalizes `heavy_inclement` + winter from `CloudLightning` (unchanged for
+world-state-selector) while fixing toolbar-footer's divergent `CloudDrizzle` to match.
 
 - [ ] **Step 3: Update `animals-content.svelte`**
 
 Remove `Flower`, `Leaf`, `Snowflake`, `Sun` imports and the inline `SEASON_ICON` record.
 
 ```svelte
-import { Icon } from "$lib/components/icon/index.js";
+import {Icon} from "$lib/components/icon/index.js";
 ```
 
 Replace:
+
 ```svelte
 <!-- Before -->
 {@const SeasonIcon = SEASON_ICON[variant.bornIn]}
@@ -739,10 +820,11 @@ Remove `import type { Component } from "svelte"` if no longer needed.
 Remove `Flower`, `Leaf`, `Sun`, `Snowflake` imports and inline `SEASON_ICON` record.
 
 ```svelte
-import { Icon } from "$lib/components/icon/index.js";
+import {Icon} from "$lib/components/icon/index.js";
 ```
 
 Replace birthday icon:
+
 ```svelte
 <!-- Before -->
 {@const BdayIcon = SEASON_ICON[npc.birthday.season]}
@@ -759,7 +841,8 @@ Keep `Heart` and `Octagon` imports for now — they're migrated in Task 6.
 
 - [ ] **Step 5: Update `src/routes/all/NpcsSection.svelte`**
 
-Same as npcs page: remove season Lucide imports and inline `SEASON_ICON`, replace with `Icon.Season`.
+Same as npcs page: remove season Lucide imports and inline `SEASON_ICON`, replace with
+`Icon.Season`.
 
 Keep `Heart` and `Octagon` for Task 6.
 
@@ -777,31 +860,39 @@ git commit -m "refactor: migrate season & weather icons to Icon.Season and Icon.
 ### Task 5: Migrate recipes, completion, & restriction icons
 
 **Files:**
-- Modify: `src/lib/components/recipes-content.svelte` — replace `ChevronRight` and `SourceIcon` with `Icon.UI` and `Icon.Source`
-- Modify: `src/lib/components/quests-content.svelte` — replace quest state icons with `Icon.Completion`
+
+- Modify: `src/lib/components/recipes-content.svelte` — replace `ChevronRight` and `SourceIcon` with
+  `Icon.UI` and `Icon.Source`
+- Modify: `src/lib/components/quests-content.svelte` — replace quest state icons with
+  `Icon.Completion`
 - Modify: `src/lib/components/restriction-badges.svelte` — replace season/weather/clock/lock icons
-- Modify: `src/lib/components/icon/icon-maps.ts` — add `restrictionWeatherIcon` (if not already present from Task 1)
+- Modify: `src/lib/components/icon/icon-maps.ts` — add `restrictionWeatherIcon` (if not already
+  present from Task 1)
 - Remove: `src/lib/components/source-icon.svelte` — superseded by `Icon.Source`
 - Remove: `src/lib/components/source-icons.ts` — superseded by `icon-maps.ts`
 
 **Interfaces:**
-- Consumes: `Icon.Source`, `Icon.UI`, `Icon.Completion`, `Icon.Season`, `Icon.Restriction`, `restrictionWeatherIcon` from `icon-maps.ts`
+
+- Consumes: `Icon.Source`, `Icon.UI`, `Icon.Completion`, `Icon.Season`, `Icon.Restriction`,
+  `restrictionWeatherIcon` from `icon-maps.ts`
 
 - [ ] **Step 1: Update `recipes-content.svelte`**
 
 Replace:
-```svelte
-import { ChevronRight } from "@lucide/svelte";
 
-import SourceIcon from "$lib/components/source-icon.svelte";
-import { SOURCE_FILTERS } from "$lib/components/source-icons.js";
-```
-With:
 ```svelte
-import { Icon, SOURCE_FILTERS } from "$lib/components/icon/index.js";
+import {ChevronRight} from "@lucide/svelte"; import SourceIcon from "$lib/components/source-icon.svelte";
+import {SOURCE_FILTERS} from "$lib/components/source-icons.js";
+```
+
+With:
+
+```svelte
+import {(Icon, SOURCE_FILTERS)} from "$lib/components/icon/index.js";
 ```
 
 Replace template usages:
+
 - `<SourceIcon type={sourceType} ...>` → `<Icon.Source type={sourceType} ...>`
 - `<SourceIcon type={source.type} ...>` → `<Icon.Source type={source.type} ...>`
 - `<ChevronRight ...>` → `<Icon.UI type="disclosure" ...>`
@@ -809,15 +900,19 @@ Replace template usages:
 - [ ] **Step 2: Update `quests-content.svelte`**
 
 Replace:
+
 ```svelte
-import { Circle, CircleCheckBig, CircleDashed } from "@lucide/svelte";
+import {(Circle, CircleCheckBig, CircleDashed)} from "@lucide/svelte";
 ```
+
 With:
+
 ```svelte
-import { Icon } from "$lib/components/icon/index.js";
+import {Icon} from "$lib/components/icon/index.js";
 ```
 
 Replace the three-way conditional:
+
 ```svelte
 <!-- Before -->
 {#if questState === "none"}
@@ -841,20 +936,27 @@ Replace the three-way conditional:
 - [ ] **Step 3: Update `restriction-badges.svelte`**
 
 Replace all Lucide imports with:
+
 ```svelte
-import { Icon } from "$lib/components/icon/index.js";
-import { restrictionWeatherIcon } from "$lib/components/icon/icon-maps.js";
+import {Icon} from "$lib/components/icon/index.js"; import {restrictionWeatherIcon} from "$lib/components/icon/icon-maps.js";
 ```
 
-Remove the inline `SEASON_ICON` record and `weatherIconForRestriction` function. The centralized `restrictionWeatherIcon` in `icon-maps.ts` has identical logic (takes `seasons: Season[]`, only shows snow for winter-only inclement).
+Remove the inline `SEASON_ICON` record and `weatherIconForRestriction` function. The centralized
+`restrictionWeatherIcon` in `icon-maps.ts` has identical logic (takes `seasons: Season[]`, only
+shows snow for winter-only inclement).
 
 Replace template usages:
+
 - Season icons: `{@const Icon = SEASON_ICON[s]}` + `<Icon ...>` → `<Icon.Season season={s} ...>`
-- Weather icons: `{@const Icon = weatherIconForRestriction(w, ...)}` + `<Icon ...>` → use `{@const WeatherComp = restrictionWeatherIcon(w, getSeasonContext())}` then `<WeatherComp ...>` (raw component reference needed since icon varies by runtime args)
+- Weather icons: `{@const Icon = weatherIconForRestriction(w, ...)}` + `<Icon ...>` → use
+  `{@const WeatherComp = restrictionWeatherIcon(w, getSeasonContext())}` then `<WeatherComp ...>`
+  (raw component reference needed since icon varies by runtime args)
 - `<Clock ...>` → `<Icon.Restriction type="clock" ...>`
 - `<Lock ...>` → `<Icon.Restriction type="lock" ...>`
 
-Note: the `{@const Icon = SEASON_ICON[s]}` pattern inside `{#each}` blocks shadows the `Icon` import. When replacing these with `<Icon.Season>`, the `{@const}` line is removed entirely, eliminating the shadowing.
+Note: the `{@const Icon = SEASON_ICON[s]}` pattern inside `{#each}` blocks shadows the `Icon`
+import. When replacing these with `<Icon.Season>`, the `{@const}` line is removed entirely,
+eliminating the shadowing.
 
 - [ ] **Step 4: Remove old source icon files**
 
@@ -877,7 +979,9 @@ git commit -m "refactor: migrate source, completion, & restriction icons to Icon
 ### Task 6: Migrate ProgressMark & remaining UI icons
 
 **Files:**
-- Modify: `src/routes/(category)/npcs/+page.svelte` — replace `Heart`/`Octagon` with `Icon.ProgressMark`
+
+- Modify: `src/routes/(category)/npcs/+page.svelte` — replace `Heart`/`Octagon` with
+  `Icon.ProgressMark`
 - Modify: `src/routes/all/NpcsSection.svelte` — replace `Heart`/`Octagon` with `Icon.ProgressMark`
 - Modify: `src/routes/(category)/renown/+page.svelte` — replace `Star` with `Icon.ProgressMark`
 - Modify: `src/routes/(category)/renown/RankCard.svelte` — replace `Star` with `Icon.ProgressMark`
@@ -887,7 +991,10 @@ git commit -m "refactor: migrate source, completion, & restriction icons to Icon
 - Modify: `src/lib/components/cosmetic-row.svelte` — replace `ChevronRight` with `Icon.UI`
 
 **Interfaces:**
-- Consumes: `Icon.ProgressMark` (with `type: "relationship_dateable" | "relationship_platonic" | "town_rank"`), `Icon.UI` (with `type: "disclosure"`)
+
+- Consumes: `Icon.ProgressMark` (with
+  `type: "relationship_dateable" | "relationship_platonic" | "town_rank"`), `Icon.UI` (with
+  `type: "disclosure"`)
 
 - [ ] **Step 1: Update `npcs/+page.svelte`**
 
@@ -896,13 +1003,17 @@ Remove `Heart` and `Octagon` imports (the `Icon` import should already be presen
 ```svelte
 <!-- Before -->
 {#if npc.dateable}
-  <Heart class="size-4 transition-colors duration-200 {i < level
-    ? `${LEVEL_COLORS[i]} fill-current`
-    : 'fill-transparent text-muted-foreground/30'}" />
+  <Heart
+    class="size-4 transition-colors duration-200 {i < level
+      ? `${LEVEL_COLORS[i]} fill-current`
+      : 'fill-transparent text-muted-foreground/30'}"
+  />
 {:else}
-  <Octagon class="size-4 transition-colors duration-200 {i < level
-    ? `${LEVEL_COLORS[i]} fill-current`
-    : 'fill-transparent text-muted-foreground/30'}" />
+  <Octagon
+    class="size-4 transition-colors duration-200 {i < level
+      ? `${LEVEL_COLORS[i]} fill-current`
+      : 'fill-transparent text-muted-foreground/30'}"
+  />
 {/if}
 <!-- After -->
 <Icon.ProgressMark
@@ -920,11 +1031,14 @@ After this step, no direct Lucide imports should remain in this file.
 Remove `Heart` and `Octagon` imports.
 
 Replace:
+
 ```svelte
 {@const StatusIcon = npc.dateable ? Heart : Octagon}
 <StatusIcon class="size-4 transition-colors duration-200 ..." />
 ```
+
 With:
+
 ```svelte
 <Icon.ProgressMark
   type={npc.dateable ? "relationship_dateable" : "relationship_platonic"}
@@ -934,7 +1048,8 @@ With:
 
 - [ ] **Step 3: Update `renown/+page.svelte`**
 
-Replace `Star` import with `Icon` (add to existing import if present). Replace all `<Star ...>` with `<Icon.ProgressMark type="town_rank" ...>`, preserving `fill`, `style`, and `strokeWidth` props:
+Replace `Star` import with `Icon` (add to existing import if present). Replace all `<Star ...>` with
+`<Icon.ProgressMark type="town_rank" ...>`, preserving `fill`, `style`, and `strokeWidth` props:
 
 ```svelte
 <!-- Hero star -->
@@ -950,19 +1065,24 @@ Replace `Star` import with `Icon` (add to existing import if present). Replace a
 - [ ] **Step 4: Update `renown/RankCard.svelte`**
 
 Replace `Star` import with:
+
 ```svelte
-import { Icon } from "$lib/components/icon/index.js";
+import {Icon} from "$lib/components/icon/index.js";
 ```
 
-Replace all three `<Star ...>` usages with `<Icon.ProgressMark type="town_rank" ...>`, preserving the `fill`, `style`, `strokeWidth`, and `aria-label` props.
+Replace all three `<Star ...>` usages with `<Icon.ProgressMark type="town_rank" ...>`, preserving
+the `fill`, `style`, `strokeWidth`, and `aria-label` props.
 
 - [ ] **Step 5: Update `all/RenownSection.svelte`**
 
-Replace `Star` import with `Icon`. Check how `Star` is used in this file and replace with `<Icon.ProgressMark type="town_rank" ...>`.
+Replace `Star` import with `Icon`. Check how `Star` is used in this file and replace with
+`<Icon.ProgressMark type="town_rank" ...>`.
 
 - [ ] **Step 6: Update disclosure icon components**
 
-In each of these files, replace `import { ChevronRight } from "@lucide/svelte"` with `import { Icon } from "$lib/components/icon/index.js"`, and replace `<ChevronRight ...>` with `<Icon.UI type="disclosure" ...>`:
+In each of these files, replace `import { ChevronRight } from "@lucide/svelte"` with
+`import { Icon } from "$lib/components/icon/index.js"`, and replace `<ChevronRight ...>` with
+`<Icon.UI type="disclosure" ...>`:
 
 - `src/lib/components/expandable-section.svelte`
 - `src/lib/components/item-row.svelte`
@@ -981,14 +1101,18 @@ git commit -m "refactor: migrate progress marks & disclosure icons to Icon names
 
 ### Task 7: Migrate remaining dismiss (`X`) icons & final audit
 
-Migrate the remaining `X` usages and do a final sweep to confirm no shared/duplicated Lucide imports remain outside `icon-maps.ts`.
+Migrate the remaining `X` usages and do a final sweep to confirm no shared/duplicated Lucide imports
+remain outside `icon-maps.ts`.
 
 **Files:**
-- Modify: `src/lib/components/toolbar-footer.svelte` — replace `X` with `Icon.UI` (if not done in Task 4)
+
+- Modify: `src/lib/components/toolbar-footer.svelte` — replace `X` with `Icon.UI` (if not done in
+  Task 4)
 - Modify: `src/routes/settings/transfer-card.svelte` — replace `X` with `Icon.UI`
 - Audit: all `src/` files except `src/lib/components/ui/`
 
 **Interfaces:**
+
 - Consumes: `Icon.UI` (with `type: "dismiss"`)
 
 - [ ] **Step 1: Replace remaining `X` imports**
@@ -996,7 +1120,9 @@ Migrate the remaining `X` usages and do a final sweep to confirm no shared/dupli
 In `toolbar-footer.svelte`, if `X` wasn't already replaced in Task 4, replace its template usages:
 `<X class="..." />` → `<Icon.UI type="dismiss" class="..." />`
 
-In `transfer-card.svelte`, replace `X` with `Icon.UI type="dismiss"` for consistency. Add `import { Icon } from "$lib/components/icon/index.js"`. Keep `Camera`, `ImagePlus`, `Smartphone`, `QrCode`, `LoaderCircle` as direct imports (transfer-specific, single-file).
+In `transfer-card.svelte`, replace `X` with `Icon.UI type="dismiss"` for consistency. Add
+`import { Icon } from "$lib/components/icon/index.js"`. Keep `Camera`, `ImagePlus`, `Smartphone`,
+`QrCode`, `LoaderCircle` as direct imports (transfer-specific, single-file).
 
 - [ ] **Step 2: Run the audit**
 
@@ -1005,12 +1131,14 @@ grep -rn 'from "@lucide/svelte"' --include="*.svelte" --include="*.ts" src/ | gr
 ```
 
 This should return only intentionally-kept single-use direct imports:
+
 - `src/routes/+page.svelte` — `Settings`, `Wheat` (app identity)
 - `src/routes/settings/backup-card.svelte` — `FileUp`, `Upload`
 - `src/routes/settings/danger-zone-card.svelte` — `RotateCcw`, `Trash2`
 - `src/routes/settings/import-card.svelte` — `Check`, `Copy`, `Monitor`, `Upload`
 - `src/routes/settings/spoilers-card.svelte` — `Eye`, `EyeOff`
-- `src/routes/settings/transfer-card.svelte` — `Camera`, `ImagePlus`, `Smartphone`, `QrCode`, `LoaderCircle`
+- `src/routes/settings/transfer-card.svelte` — `Camera`, `ImagePlus`, `Smartphone`, `QrCode`,
+  `LoaderCircle`
 - `src/routes/privacy/+page.svelte` — `ArrowLeft` (pending #59)
 - `src/routes/settings/+page.svelte` — `ArrowLeft` (pending #59)
 - `src/routes/all/+page.svelte` — `ArrowLeft` (pending #59)
@@ -1020,7 +1148,9 @@ This should return only intentionally-kept single-use direct imports:
 - `src/lib/components/toolbar-footer.svelte` — `Search`, `ListFilter`, `ChevronUp`, `ChevronDown`
 - `src/lib/components/welcome-card.svelte` — `FileDown`, `Pencil`, `QrCode`
 
-Verify none of these icons appear in multiple files (duplicates that should have been centralized). Known multi-file exceptions that are intentionally kept:
+Verify none of these icons appear in multiple files (duplicates that should have been centralized).
+Known multi-file exceptions that are intentionally kept:
+
 - `ArrowLeft` — 4 files, all pending header harmonization #59
 - `Upload` — 2 files (backup-card, import-card), both settings-only
 - `QrCode` — 2 files (welcome-card, transfer-card), both settings/onboarding-specific
@@ -1046,6 +1176,7 @@ git commit -m "refactor: migrate dismiss icons & audit remaining Lucide imports"
 This work continues on branch `51-source-icon-component` and reuses the existing PR #57.
 
 **Files:**
+
 - No code changes
 
 - [ ] **Step 1: Push and update PR #57**
