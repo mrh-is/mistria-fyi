@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { filterAvailableItems, isItemAvailable, isSourceAvailable } from "../availability.js";
+import {
+  filterAvailableItems,
+  isItemAvailable,
+  isRowVisible,
+  isSourceAvailable,
+  shouldCountItem,
+} from "../availability.js";
 
 import type { ItemId, Source } from "$lib/types/tracker-data.js";
 
@@ -145,5 +151,69 @@ describe("filterAvailableItems", () => {
 
   it("everything returns all", () => {
     expect(filterAvailableItems(ids, sources, spring, "everything")).toEqual(ids);
+  });
+});
+
+// ─── shouldCountItem ────────────────────────────────────────────────
+
+describe("shouldCountItem", () => {
+  const id = "item_a" as ItemId;
+  const summerSrc: Partial<Record<ItemId, Source[]>> = {
+    [id]: [src([seasonRestriction(["summer"])])],
+  };
+
+  it("completed items are always in scope regardless of availability", () => {
+    expect(shouldCountItem(id, true, summerSrc, spring, "available")).toBe(true);
+    expect(shouldCountItem(id, true, summerSrc, spring, "timely")).toBe(true);
+    expect(shouldCountItem(id, true, summerSrc, spring, "everything")).toBe(true);
+  });
+
+  it("incomplete items in scope when available", () => {
+    const springSrc: Partial<Record<ItemId, Source[]>> = {
+      [id]: [src([seasonRestriction(["spring"])])],
+    };
+    expect(shouldCountItem(id, false, springSrc, spring, "available")).toBe(true);
+  });
+
+  it("incomplete items out of scope when unavailable", () => {
+    expect(shouldCountItem(id, false, summerSrc, spring, "available")).toBe(false);
+  });
+
+  it("incomplete items always in scope in everything mode", () => {
+    expect(shouldCountItem(id, false, summerSrc, spring, "everything")).toBe(true);
+  });
+
+  it("incomplete items out of scope in timely mode if no timely sources", () => {
+    expect(shouldCountItem(id, false, {}, spring, "timely")).toBe(false);
+  });
+});
+
+// ─── isRowVisible ───────────────────────────────────────────────────
+
+describe("isRowVisible", () => {
+  const id = "item_b" as ItemId;
+
+  it("incomplete items are always visible", () => {
+    expect(isRowVisible(id, false, false)).toBe(true);
+    expect(isRowVisible(id, false, true)).toBe(true);
+  });
+
+  it("completed items hidden when showCompleted is false", () => {
+    expect(isRowVisible(id, true, false)).toBe(false);
+  });
+
+  it("completed items visible when showCompleted is true", () => {
+    expect(isRowVisible(id, true, true)).toBe(true);
+  });
+
+  it("recently completed items are always visible regardless of showCompleted", () => {
+    const recentlyCompleted = new Set([id]);
+    expect(isRowVisible(id, true, false, recentlyCompleted)).toBe(true);
+  });
+
+  it("items not in recentlyCompleted respect showCompleted", () => {
+    const other = "other_item" as ItemId;
+    const recentlyCompleted = new Set([other]);
+    expect(isRowVisible(id, true, false, recentlyCompleted)).toBe(false);
   });
 });

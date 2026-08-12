@@ -58,9 +58,9 @@
   })}
   {#if visibleInSlot.length > 0}
     <ExpandableSection
-      count={visibleInSlot.filter((c) => userState.state.completed.cosmetics.has(c.id)).length}
+      count={allInSlot.filter((c) => userState.state.completed.cosmetics.has(c.id)).length}
       name={slot.charAt(0).toUpperCase() + slot.slice(1)}
-      total={visibleInSlot.length}
+      total={allInSlot.length}
     >
       {#each subCategories as [subCategory, cosmetics] (subCategory)}
         {@const visibleCosmetics = cosmetics.filter((c) => {
@@ -70,10 +70,9 @@
         {#if visibleCosmetics.length > 0}
           {#if subCategories.length > 1}
             <ExpandableSection
-              count={visibleCosmetics.filter((c) => userState.state.completed.cosmetics.has(c.id))
-                .length}
+              count={cosmetics.filter((c) => userState.state.completed.cosmetics.has(c.id)).length}
               name={subCategory}
-              total={visibleCosmetics.length}
+              total={cosmetics.length}
             >
               {#each visibleCosmetics as cosmetic (cosmetic.id)}
                 {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}

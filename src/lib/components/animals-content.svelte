@@ -43,7 +43,7 @@
     animals.reduce(
       (sum, a) =>
         sum +
-        Object.keys(a.variants).filter((vid) => isVariantVisible(a.id, vid as VariantId)).length,
+        Object.keys(a.variants).filter((vid) => isVariantInScope(a.id, vid as VariantId)).length,
       0,
     ),
   );
@@ -53,7 +53,7 @@
         sum +
         Object.entries(a.variants).filter(
           ([vid]) =>
-            isVariantVisible(a.id, vid as VariantId) &&
+            isVariantInScope(a.id, vid as VariantId) &&
             ((userState.state.completed.animals[a.id] as Set<VariantId> | undefined)?.has(
               vid as VariantId,
             ) ??
@@ -63,34 +63,27 @@
     ),
   );
   let filteredTotalCosmetics = $derived(
-    animals.reduce(
-      (sum, a) =>
-        sum +
-        Object.keys(a.cosmetics).filter((cid) => isCosmeticVisible(a.id, cid as CosmeticId)).length,
-      0,
-    ),
+    animals.reduce((sum, a) => sum + Object.keys(a.cosmetics).length, 0),
   );
   let filteredTotalCosmeticsCompleted = $derived(
     animals.reduce(
       (sum, a) =>
         sum +
-        Object.entries(a.cosmetics).filter(
-          ([cid]) =>
-            isCosmeticVisible(a.id, cid as CosmeticId) &&
-            ((userState.state.completed.animalCosmetics[a.id] as Set<CosmeticId> | undefined)?.has(
+        Object.keys(a.cosmetics).filter(
+          (cid) =>
+            (userState.state.completed.animalCosmetics[a.id] as Set<CosmeticId> | undefined)?.has(
               cid as CosmeticId,
-            ) ??
-              false),
+            ) ?? false,
         ).length,
       0,
     ),
   );
 
-  function isVariantVisible(animalId: AnimalId, variantId: VariantId): boolean {
+  function isVariantInScope(animalId: AnimalId, variantId: VariantId): boolean {
     const completed =
       (userState.state.completed.animals[animalId] as Set<VariantId> | undefined)?.has(variantId) ??
       false;
-    if (completed) return userState.state.showCompleted;
+    if (completed) return true;
 
     const variant = trackerData.animals[animalId].variants[variantId];
     const mode = userState.state.availabilityMode;
@@ -104,6 +97,14 @@
       return true;
     }
     return true;
+  }
+
+  function isVariantVisible(animalId: AnimalId, variantId: VariantId): boolean {
+    if (!isVariantInScope(animalId, variantId)) return false;
+    const completed =
+      (userState.state.completed.animals[animalId] as Set<VariantId> | undefined)?.has(variantId) ??
+      false;
+    return !completed || userState.state.showCompleted;
   }
 
   function isCosmeticVisible(animalId: AnimalId, cosmeticId: CosmeticId): boolean {
@@ -162,19 +163,22 @@
   >
     {#each animals as animal (animal.id)}
       {@const variantEntries = sortedVariants(animal.variants)}
+      {@const scopedVariants = variantEntries.filter(([vid]) =>
+        isVariantInScope(animal.id, vid as VariantId),
+      )}
       {@const visibleVariants = variantEntries.filter(([vid]) =>
         isVariantVisible(animal.id, vid as VariantId),
       )}
       {#if visibleVariants.length > 0}
         <ExpandableSection
-          count={visibleVariants.filter(
+          count={scopedVariants.filter(
             ([vid]) =>
               (userState.state.completed.animals[animal.id] as Set<VariantId> | undefined)?.has(
                 vid as VariantId,
               ) ?? false,
           ).length}
           name={animal.name}
-          total={visibleVariants.length}
+          total={scopedVariants.length}
         >
           {#each visibleVariants as [variantId, variant] (variantId)}
             {@const completed =
@@ -253,14 +257,14 @@
       )}
       {#if visibleCosmetics.length > 0}
         <ExpandableSection
-          count={visibleCosmetics.filter(
+          count={cosmeticEntries.filter(
             ([cid]) =>
               (
                 userState.state.completed.animalCosmetics[animal.id] as Set<CosmeticId> | undefined
               )?.has(cid as CosmeticId) ?? false,
           ).length}
           name={animal.name}
-          total={visibleCosmetics.length}
+          total={cosmeticEntries.length}
         >
           {#each visibleCosmetics as [cosmeticId, cosmetic] (cosmeticId)}
             {@const completed =
