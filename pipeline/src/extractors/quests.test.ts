@@ -22,6 +22,29 @@ describe("extractQuests", () => {
     expect(extractQuests(fiddle)).toEqual({ story_quests: {} });
   });
 
+  it("maps a populated tracked quest with its name and NPC", () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const fiddle = {
+      quests: {
+        story_quests: {
+          meet_juniper: {
+            name: "Meet Juniper",
+            npc_for_icon: "juniper",
+          },
+        },
+      },
+    } as unknown as ParsedGameData;
+
+    expect(extractQuests(fiddle)).toEqual({
+      story_quests: {
+        meet_juniper: {
+          name: "Meet Juniper",
+          npc: "juniper",
+        },
+      },
+    });
+  });
+
   it("does not log a summary when the quest root is absent", () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
 
