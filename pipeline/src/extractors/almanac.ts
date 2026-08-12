@@ -1,4 +1,5 @@
 import { expectArray, expectStringArray } from "../data-shapes.js";
+import { forEachItem } from "../extractor-helpers.js";
 import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
 
 import type { AlmanacCategory, ItemId, RecipeId, TrackerData } from "$lib/types/tracker-data.js";
@@ -25,10 +26,6 @@ export function extractAlmanac(
   almanac: TrackerData["almanac"];
   items: ItemMetadataIndex;
 } {
-  const itemsRoot = fiddle.items as
-    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
-  if (!itemsRoot) return { almanac: [], items: {} };
-
   const rawCategories = readAlmanacCategories(fiddle);
   if (rawCategories.length === 0) {
     console.warn("  Warning: No almanac categories found in UI data, falling back to empty");
@@ -46,46 +43,38 @@ export function extractAlmanac(
     topCategory: string;
   }[] = [];
 
-  for (const [topCategory, subCategories] of Object.entries(itemsRoot)) {
-    for (const [subCategory, categoryItems] of Object.entries(subCategories)) {
-      // Internal, unreviewed items are intentionally absent from both output views.
-      if (topCategory === "other" && subCategory === "unreviewed_new_items") continue;
+  forEachItem(fiddle, (itemId, item, topCategory, subCategory) => {
+    // Internal, unreviewed items are intentionally absent from both output views.
+    if (topCategory === "other" && subCategory === "unreviewed_new_items") return;
 
-      for (const [itemId, item] of Object.entries(categoryItems)) {
-        if (itemId === "default") continue;
-        if (typeof item !== "object" || item === null) continue;
-        // Fish chest rewards are not collectible almanac items.
-        if (chestIds.has(itemId)) continue;
+    // Fish chest rewards are not collectible almanac items.
+    if (chestIds.has(itemId)) return;
 
-        const rawName = item.name as string | undefined;
-        if (!rawName) {
-          namelessItems.push(`${topCategory}/${subCategory}/${itemId}`);
-          continue;
-        }
-
-        // Reject localization paths that have not resolved to an item name.
-        if (rawName.includes("/") && !rawName.startsWith("spr_")) {
-          namelessItems.push(
-            `${topCategory}/${subCategory}/${itemId} (localization path: ${rawName})`,
-          );
-          continue;
-        }
-
-        const tags = Array.isArray(item.tags)
-          ? (item.tags as unknown[]).filter((v): v is string => typeof v === "string")
-          : [];
-        const recipeKey = item.recipe_key as string | undefined;
-
-        allItems.push({
-          id: itemId,
-          name: rawName,
-          recipeKey,
-          tags,
-          topCategory,
-        });
-      }
+    const rawName = item.name as string | undefined;
+    if (!rawName) {
+      namelessItems.push(`${topCategory}/${subCategory}/${itemId}`);
+      return;
     }
-  }
+
+    // Reject localization paths that have not resolved to an item name.
+    if (rawName.includes("/") && !rawName.startsWith("spr_")) {
+      namelessItems.push(`${topCategory}/${subCategory}/${itemId} (localization path: ${rawName})`);
+      return;
+    }
+
+    const tags = Array.isArray(item.tags)
+      ? (item.tags as unknown[]).filter((v): v is string => typeof v === "string")
+      : [];
+    const recipeKey = item.recipe_key as string | undefined;
+
+    allItems.push({
+      id: itemId,
+      name: rawName,
+      recipeKey,
+      tags,
+      topCategory,
+    });
+  });
 
   // Menu order determines tag precedence when an item has tags from multiple categories.
   const tagToCategoryIdx = new Map<string, number>();

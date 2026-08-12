@@ -1,3 +1,5 @@
+import { forEachItem, forEachQuest } from "../extractor-helpers.js";
+
 import type {
   BiomeId,
   FestivalId,
@@ -22,7 +24,7 @@ const QUEST_TYPES_WITH_SCROLLS = [
   "stillwell_challenges",
   "story_quests",
   "tali_challenges",
-];
+] as const;
 
 interface RawRecipeEntry {
   defaultUnlocked: boolean;
@@ -544,7 +546,7 @@ function collectPerkSources(
     water_sprite_statue_large_v1: "big_water_sprites",
   };
 
-  forEachItem(fiddle, (itemId, _item, subCatKey) => {
+  forEachItem(fiddle, (itemId, _item, _topCat, subCatKey) => {
     const perk = perkByItemId[itemId] ?? perkBySubCategory[subCatKey];
     if (!perk) return;
 
@@ -562,47 +564,35 @@ function collectQuestScrollSources(
   itemIdToRecipeId: Map<string, string>,
   knownRecipeIds: Set<string>,
 ): Map<string, RecipeSource[]> {
-  const quests = fiddle.quests as
-    Record<string, Record<string, Record<string, unknown>>> | undefined;
-  if (!quests) return new Map();
-
   const result = new Map<string, RecipeSource[]>();
 
-  for (const questType of QUEST_TYPES_WITH_SCROLLS) {
-    const questGroup = quests[questType];
-    if (!questGroup) continue;
+  forEachQuest(fiddle, QUEST_TYPES_WITH_SCROLLS, (questType, questId, quest) => {
+    const rewards = Array.isArray(quest.rewards) ? quest.rewards : [];
+    for (const reward of rewards) {
+      if (typeof reward !== "object" || reward === null) continue;
+      const obj = reward as Record<string, unknown>;
 
-    for (const [questId, quest] of Object.entries(questGroup)) {
-      if (questId === "default" || typeof quest !== "object" || quest === null) continue;
+      const scrollTarget =
+        (obj.recipe_scroll as string | undefined) ?? (obj.crafting_scroll as string | undefined);
+      if (!scrollTarget) continue;
 
-      const questObj = quest;
-      const rewards = Array.isArray(questObj.rewards) ? questObj.rewards : [];
-      for (const reward of rewards) {
-        if (typeof reward !== "object" || reward === null) continue;
-        const obj = reward as Record<string, unknown>;
+      const recipeId = resolveScrollTarget(
+        scrollTarget,
+        itemIdToRecipeId,
+        knownRecipeIds,
+        `${questType}/${questId}`,
+      );
+      if (!recipeId) continue;
 
-        const scrollTarget =
-          (obj.recipe_scroll as string | undefined) ?? (obj.crafting_scroll as string | undefined);
-        if (!scrollTarget) continue;
-
-        const recipeId = resolveScrollTarget(
-          scrollTarget,
-          itemIdToRecipeId,
-          knownRecipeIds,
-          `${questType}/${questId}`,
-        );
-        if (!recipeId) continue;
-
-        const sources = result.get(recipeId) ?? [];
-        sources.push({
-          questId: questId as QuestId,
-          questType: questType as QuestType,
-          type: "quest",
-        });
-        result.set(recipeId, sources);
-      }
+      const sources = result.get(recipeId) ?? [];
+      sources.push({
+        questId: questId as QuestId,
+        questType: questType as QuestType,
+        type: "quest",
+      });
+      result.set(recipeId, sources);
     }
-  }
+  });
 
   return result;
 }
@@ -610,7 +600,7 @@ function collectQuestScrollSources(
 function collectRecipeEntries(fiddle: ParsedGameData): RawRecipeEntry[] {
   const entries: RawRecipeEntry[] = [];
 
-  forEachItem(fiddle, (itemId, item, subCatKey) => {
+  forEachItem(fiddle, (itemId, item, _topCat, subCatKey) => {
     if (subCatKey === "unreviewed_new_items") return;
 
     const hasRecipe = Array.isArray(item.recipe) || typeof item.recipe_key === "string";
@@ -896,26 +886,6 @@ function deduplicateSources(sources: RecipeSource[]): RecipeSource[] {
     result.push(s);
   }
   return result;
-}
-
-function forEachItem(
-  fiddle: ParsedGameData,
-  callback: (itemId: string, item: Record<string, unknown>, subCategoryKey: string) => void,
-): void {
-  const items = fiddle.items as
-    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
-  if (!items) return;
-
-  for (const subCategories of Object.values(items)) {
-    if (typeof subCategories !== "object" || subCategories === null) continue;
-    for (const [subCatKey, categoryItems] of Object.entries(subCategories)) {
-      if (typeof categoryItems !== "object" || categoryItems === null) continue;
-      for (const [itemId, item] of Object.entries(categoryItems)) {
-        if (itemId === "default" || typeof item !== "object" || item === null) continue;
-        callback(itemId, item, subCatKey);
-      }
-    }
-  }
 }
 
 function requireNumber(value: unknown, path: string): number {
