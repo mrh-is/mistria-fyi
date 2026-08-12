@@ -96,7 +96,7 @@ function extractBundle(data: Uint8Array): SaveBundle {
         if (typeof parsed !== "object" || parsed === null) {
           throw new Error(`Entry "${name}" is not a JSON object`);
         }
-        bundle[name as keyof SaveBundle] = parsed as never;
+        bundle[name] = parsed;
       } catch (cause) {
         throw new Error(
           `Failed to parse "${name}" entry: ${cause instanceof Error ? cause.message : String(cause)}`,

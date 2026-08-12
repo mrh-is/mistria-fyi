@@ -1,54 +1,77 @@
 # Recipe source refinements implementation plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development
+> (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use
+> checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Enrich the recipe pipeline with branded types, new top-level lookups (perks, stores, festivals, treasure chest tiers), split dungeon sources into mines_chest/mines_dig_site, fix biome ID derivation, upgrade display labels with helper functions, and add source-type icons to the recipe list UI.
+**Goal:** Enrich the recipe pipeline with branded types, new top-level lookups (perks, stores,
+festivals, treasure chest tiers), split dungeon sources into mines_chest/mines_dig_site, fix biome
+ID derivation, upgrade display labels with helper functions, and add source-type icons to the recipe
+list UI.
 
-**Architecture:** Four new extractors (`extractPerks`, `extractStoresMeta`, `extractFestivals`, `extractTreasureChestTiers`) produce top-level lookup tables on `TrackerData`. The `RecipeSource` union is reshaped with branded ID types (`PerkId`, `StoreId`, `FestivalId`, `QuestType`, `TreasureChestTier`) and new variants (`mines_chest`, `mines_dig_site`, `store_with_perk`). The `recipeSourceLabel` function is rewritten with expanded lookups and new helpers (`withIndefiniteArticle`, `formatStoreName`, `formatBiomeName`). The recipe list component replaces green dots with Lucide icons mapped by source type.
+**Architecture:** Four new extractors (`extractPerks`, `extractStoresMeta`, `extractFestivals`,
+`extractTreasureChestTiers`) produce top-level lookup tables on `TrackerData`. The `RecipeSource`
+union is reshaped with branded ID types (`PerkId`, `StoreId`, `FestivalId`, `QuestType`,
+`TreasureChestTier`) and new variants (`mines_chest`, `mines_dig_site`, `store_with_perk`). The
+`recipeSourceLabel` function is rewritten with expanded lookups and new helpers
+(`withIndefiniteArticle`, `formatStoreName`, `formatBiomeName`). The recipe list component replaces
+green dots with Lucide icons mapped by source type.
 
-**Tech Stack:** TypeScript pipeline extractors, Vitest, Svelte 5 (runes), Lucide icons (`@lucide/svelte`), Tailwind 4
+**Tech Stack:** TypeScript pipeline extractors, Vitest, Svelte 5 (runes), Lucide icons
+(`@lucide/svelte`), Tailwind 4
 
 ## Global constraints
 
 - Use **pnpm** for all commands (never npm/npx).
-- **Strict TypeScript** with `strictTypeChecked` ESLint. Use `type` imports (`consistent-type-imports`).
+- **Strict TypeScript** with `strictTypeChecked` ESLint. Use `type` imports
+  (`consistent-type-imports`).
 - **Formatting:** Prettier with double quotes, no tabs, trailing commas, 100-char width, semicolons.
-- **Naming:** `camelCase` variables/functions, `PascalCase` types/components, `kebab-case` files. Branded IDs for type safety.
-- Run `pnpm run lint:fix` before committing. All commits must type-check independently, **except** Task 1 (type-only changes that intentionally break consumers fixed in later tasks). Tasks 2–5 (new extractors) type-check independently. Tasks 6+ must restore full type-check.
-- Run `pnpm exec vitest run pipeline/` for pipeline tests. Also run `pnpm exec tsc -p pipeline/tsconfig.json --noEmit` for pipeline type-checking.
-- Sort all output arrays and object keys deterministically (by ID or name) so output is stable across runs.
-- Game assets are available at `pipeline/input/assets/` (symlink to main worktree). Real-data tests should run. Regenerate `tracker-data.json` after pipeline changes.
+- **Naming:** `camelCase` variables/functions, `PascalCase` types/components, `kebab-case` files.
+  Branded IDs for type safety.
+- Run `pnpm run lint:fix` before committing. All commits must type-check independently, **except**
+  Task 1 (type-only changes that intentionally break consumers fixed in later tasks). Tasks 2–5 (new
+  extractors) type-check independently. Tasks 6+ must restore full type-check.
+- Run `pnpm exec vitest run pipeline/` for pipeline tests. Also run
+  `pnpm exec tsc -p pipeline/tsconfig.json --noEmit` for pipeline type-checking.
+- Sort all output arrays and object keys deterministically (by ID or name) so output is stable
+  across runs.
+- Game assets are available at `pipeline/input/assets/` (symlink to main worktree). Real-data tests
+  should run. Regenerate `tracker-data.json` after pipeline changes.
 
 ## File structure
 
-| File | Action | Responsibility |
-|------|--------|----------------|
-| `src/lib/types/tracker-data.ts` | Modify (Task 1) | Add `PerkId`, `StoreId`, `FestivalId`, `QuestType`, `TreasureChestTier`; reshape `RecipeSource` union; add `perks`, `perkTierLevels`, `stores`, `festivals`, `treasureChestTiers` to `TrackerData` |
-| `pipeline/src/extractors/perks.ts` | Create (Task 2) | `extractPerks` — reads `ui/skill_menu/*.toml` + `perks.toml` + `ui/skill_menu/defaults.toml` |
-| `pipeline/src/extractors/perks.test.ts` | Create (Task 2) | Unit tests for `extractPerks` |
-| `pipeline/src/extractors/stores-meta.ts` | Create (Task 3) | `extractStoresMeta` — reads `stores.toml` for display names and articles |
-| `pipeline/src/extractors/stores-meta.test.ts` | Create (Task 3) | Unit tests for `extractStoresMeta` |
-| `pipeline/src/extractors/festivals.ts` | Create (Task 4) | `extractFestivals` — reads `festivals.toml` for display names |
-| `pipeline/src/extractors/festivals.test.ts` | Create (Task 4) | Unit tests for `extractFestivals` |
-| `pipeline/src/extractors/treasure-chest-tiers.ts` | Create (Task 5) | `extractTreasureChestTiers` — reads `items/fish/misc.toml` + `fishing.chest_tables` |
-| `pipeline/src/extractors/treasure-chest-tiers.test.ts` | Create (Task 5) | Unit tests for `extractTreasureChestTiers` |
-| `pipeline/src/extractors/recipes.ts` | Modify (Task 6) | Fix biome ID derivation, rename dungeon→mines, split chest/dig-site, use branded types, handle `include_recipe` requirements, bake in costs from `fiddle.misc` |
-| `pipeline/src/extractors/recipes.test.ts` | Modify (Task 6) | Update all tests for reshaped source types |
-| `pipeline/src/main.ts` | Modify (Task 7) | Wire up four new extractors into pipeline and `TrackerData` assembly |
-| `src/lib/utils/format.ts` | Modify (Task 8) | Rewrite `recipeSourceLabel` with `RecipeSourceLookups`, add helpers `withIndefiniteArticle`, `formatStoreName`, `formatBiomeName` |
-| `src/lib/components/recipes-content.svelte` | Modify (Task 9) | Replace green dots with Lucide icons, carry `sources: RecipeSource[]` on `RecipeEntry`, pass expanded lookups |
-| `src/lib/stores/user-state.svelte.ts` | Audit (Task 9) | Verify no breakage from `TrackerData` shape changes |
+| File                                                   | Action          | Responsibility                                                                                                                                                                                     |
+| ------------------------------------------------------ | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/types/tracker-data.ts`                        | Modify (Task 1) | Add `PerkId`, `StoreId`, `FestivalId`, `QuestType`, `TreasureChestTier`; reshape `RecipeSource` union; add `perks`, `perkTierLevels`, `stores`, `festivals`, `treasureChestTiers` to `TrackerData` |
+| `pipeline/src/extractors/perks.ts`                     | Create (Task 2) | `extractPerks` — reads `ui/skill_menu/*.toml` + `perks.toml` + `ui/skill_menu/defaults.toml`                                                                                                       |
+| `pipeline/src/extractors/perks.test.ts`                | Create (Task 2) | Unit tests for `extractPerks`                                                                                                                                                                      |
+| `pipeline/src/extractors/stores-meta.ts`               | Create (Task 3) | `extractStoresMeta` — reads `stores.toml` for display names and articles                                                                                                                           |
+| `pipeline/src/extractors/stores-meta.test.ts`          | Create (Task 3) | Unit tests for `extractStoresMeta`                                                                                                                                                                 |
+| `pipeline/src/extractors/festivals.ts`                 | Create (Task 4) | `extractFestivals` — reads `festivals.toml` for display names                                                                                                                                      |
+| `pipeline/src/extractors/festivals.test.ts`            | Create (Task 4) | Unit tests for `extractFestivals`                                                                                                                                                                  |
+| `pipeline/src/extractors/treasure-chest-tiers.ts`      | Create (Task 5) | `extractTreasureChestTiers` — reads `items/fish/misc.toml` + `fishing.chest_tables`                                                                                                                |
+| `pipeline/src/extractors/treasure-chest-tiers.test.ts` | Create (Task 5) | Unit tests for `extractTreasureChestTiers`                                                                                                                                                         |
+| `pipeline/src/extractors/recipes.ts`                   | Modify (Task 6) | Fix biome ID derivation, rename dungeon→mines, split chest/dig-site, use branded types, handle `include_recipe` requirements, bake in costs from `fiddle.misc`                                     |
+| `pipeline/src/extractors/recipes.test.ts`              | Modify (Task 6) | Update all tests for reshaped source types                                                                                                                                                         |
+| `pipeline/src/main.ts`                                 | Modify (Task 7) | Wire up four new extractors into pipeline and `TrackerData` assembly                                                                                                                               |
+| `src/lib/utils/format.ts`                              | Modify (Task 8) | Rewrite `recipeSourceLabel` with `RecipeSourceLookups`, add helpers `withIndefiniteArticle`, `formatStoreName`, `formatBiomeName`                                                                  |
+| `src/lib/components/recipes-content.svelte`            | Modify (Task 9) | Replace green dots with Lucide icons, carry `sources: RecipeSource[]` on `RecipeEntry`, pass expanded lookups                                                                                      |
+| `src/lib/stores/user-state.svelte.ts`                  | Audit (Task 9)  | Verify no breakage from `TrackerData` shape changes                                                                                                                                                |
 
 ---
 
 ### Task 1: Types — branded IDs, reshaped RecipeSource, TrackerData lookups
 
 **Files:**
+
 - Modify: `src/lib/types/tracker-data.ts`
 
 **Interfaces:**
+
 - Consumes: existing `BiomeId`, `ItemId`, `QuestId`, `WingId`, `SkillId`, `Season`
-- Produces: new branded types `FestivalId`, `PerkId`, `QuestType`, `StoreId`, `TreasureChestTier`; reshaped `RecipeSource` union; expanded `TrackerData` with `perks`, `perkTierLevels`, `stores`, `festivals`, `treasureChestTiers`
+- Produces: new branded types `FestivalId`, `PerkId`, `QuestType`, `StoreId`, `TreasureChestTier`;
+  reshaped `RecipeSource` union; expanded `TrackerData` with `perks`, `perkTierLevels`, `stores`,
+  `festivals`, `treasureChestTiers`
 
 - [ ] **Step 1: Add new branded types**
 
@@ -74,7 +97,11 @@ export type RecipeSource =
   | { type: "dragon_forge" }
   | { type: "festival"; festivalId: FestivalId; storeId: StoreId }
   | { type: "letter"; trigger: "donated_item"; triggerItemId: ItemId }
-  | { type: "letter"; trigger: "reached_date"; triggerDate: { day: number; season: Season; year?: number } }
+  | {
+      type: "letter";
+      trigger: "reached_date";
+      triggerDate: { day: number; season: Season; year?: number };
+    }
   | { type: "letter"; trigger: "shipped_item"; triggerItemId: ItemId }
   | { type: "mines_chest"; biomeId: BiomeId; perkId: PerkId }
   | { type: "mines_dig_site"; biomeId: BiomeId; perkId: PerkId }
@@ -114,8 +141,8 @@ treasureChestTiers: Record<TreasureChestTier, { name: string }>;
 
 - [ ] **Step 4: Run type-check to confirm expected failures**
 
-Run: `pnpm run check`
-Expected: Type errors in `recipes.ts`, `format.ts`, `recipes-content.svelte`, `user-state.svelte.ts`, `main.ts` (the files fixed in later tasks).
+Run: `pnpm run check` Expected: Type errors in `recipes.ts`, `format.ts`, `recipes-content.svelte`,
+`user-state.svelte.ts`, `main.ts` (the files fixed in later tasks).
 
 - [ ] **Step 5: Commit**
 
@@ -129,14 +156,19 @@ git commit -m "refactor: reshape RecipeSource with branded types, add TrackerDat
 ### Task 2: New extractor — `extractPerks`
 
 **Files:**
+
 - Create: `pipeline/src/extractors/perks.ts`
 - Create: `pipeline/src/extractors/perks.test.ts`
 
 **Interfaces:**
-- Consumes: `ParsedGameData` (reads `fiddle.ui.skill_menu`, `fiddle.perks`)
-- Produces: `extractPerks(fiddle: ParsedGameData): { perkTierLevels: number[]; perks: Record<PerkId, { name: string; skillId: SkillId; tier: number }> }`
 
-The pipeline's `parseFiddle` maps directory structure to dotted keys. The `ui/skill_menu/*.toml` files become `fiddle.ui.skill_menu.*` (one key per file). `perks.toml` becomes `fiddle.perks`. `ui/skill_menu/defaults.toml` becomes `fiddle.ui.skill_menu.defaults`.
+- Consumes: `ParsedGameData` (reads `fiddle.ui.skill_menu`, `fiddle.perks`)
+- Produces:
+  `extractPerks(fiddle: ParsedGameData): { perkTierLevels: number[]; perks: Record<PerkId, { name: string; skillId: SkillId; tier: number }> }`
+
+The pipeline's `parseFiddle` maps directory structure to dotted keys. The `ui/skill_menu/*.toml`
+files become `fiddle.ui.skill_menu.*` (one key per file). `perks.toml` becomes `fiddle.perks`.
+`ui/skill_menu/defaults.toml` becomes `fiddle.ui.skill_menu.defaults`.
 
 - [ ] **Step 1: Write the test file**
 
@@ -270,8 +302,8 @@ describe("extractPerks", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm exec vitest run pipeline/src/extractors/perks.test.ts`
-Expected: FAIL — module `./perks.js` not found.
+Run: `pnpm exec vitest run pipeline/src/extractors/perks.test.ts` Expected: FAIL — module
+`./perks.js` not found.
 
 - [ ] **Step 3: Write the implementation**
 
@@ -288,7 +320,11 @@ export function extractPerks(fiddle: ParsedGameData): {
 } {
   const ui = fiddle.ui as Record<string, unknown> | undefined;
   const skillMenus = ui?.skill_menu as Record<string, Record<string, unknown>> | undefined;
-  if (!skillMenus) return { perkTierLevels: [], perks: {} as Record<PerkId, { name: string; skillId: SkillId; tier: number }> };
+  if (!skillMenus)
+    return {
+      perkTierLevels: [],
+      perks: {} as Record<PerkId, { name: string; skillId: SkillId; tier: number }>,
+    };
 
   const defaults = skillMenus.defaults as Record<string, unknown> | undefined;
   const category = defaults?.category as Record<string, unknown> | undefined;
@@ -306,7 +342,9 @@ export function extractPerks(fiddle: ParsedGameData): {
 
     for (let tierIdx = 1; tierIdx <= 5; tierIdx++) {
       const tierKey = `tier_${tierIdx}`;
-      const tierEntries = Array.isArray(skillMenu[tierKey]) ? (skillMenu[tierKey] as unknown[]) : [];
+      const tierEntries = Array.isArray(skillMenu[tierKey])
+        ? (skillMenu[tierKey] as unknown[])
+        : [];
 
       for (const entry of tierEntries) {
         if (typeof entry !== "object" || entry === null) continue;
@@ -316,7 +354,9 @@ export function extractPerks(fiddle: ParsedGameData): {
         const perkData = perksData?.[perkId];
         const name = perkData?.name as string | undefined;
         if (!name) {
-          throw new Error(`Perk "${perkId}" found in skill menu but has no name in perks.toml — check data assembly`);
+          throw new Error(
+            `Perk "${perkId}" found in skill menu but has no name in perks.toml — check data assembly`,
+          );
         }
 
         perks[perkId as PerkId] = {
@@ -335,8 +375,7 @@ export function extractPerks(fiddle: ParsedGameData): {
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `pnpm exec vitest run pipeline/src/extractors/perks.test.ts`
-Expected: All tests pass.
+Run: `pnpm exec vitest run pipeline/src/extractors/perks.test.ts` Expected: All tests pass.
 
 - [ ] **Step 5: Run lint:fix**
 
@@ -354,12 +393,15 @@ git commit -m "feat: add extractPerks extractor for perk lookup data"
 ### Task 3: New extractor — `extractStoresMeta`
 
 **Files:**
+
 - Create: `pipeline/src/extractors/stores-meta.ts`
 - Create: `pipeline/src/extractors/stores-meta.test.ts`
 
 **Interfaces:**
+
 - Consumes: `ParsedGameData` (reads `fiddle.stores`)
-- Produces: `extractStoresMeta(fiddle: ParsedGameData): Record<StoreId, { article?: "the"; name: string }>`
+- Produces:
+  `extractStoresMeta(fiddle: ParsedGameData): Record<StoreId, { article?: "the"; name: string }>`
 
 - [ ] **Step 1: Write the test file**
 
@@ -460,8 +502,8 @@ describe("extractStoresMeta", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm exec vitest run pipeline/src/extractors/stores-meta.test.ts`
-Expected: FAIL — module not found.
+Run: `pnpm exec vitest run pipeline/src/extractors/stores-meta.test.ts` Expected: FAIL — module not
+found.
 
 - [ ] **Step 3: Write the implementation**
 
@@ -518,12 +560,13 @@ export function extractStoresMeta(
 }
 ```
 
-All known stores are hardcoded with their correct article classification. Unknown stores throw immediately so new game versions surface as pipeline errors rather than silently leaking bad display text.
+All known stores are hardcoded with their correct article classification. Unknown stores throw
+immediately so new game versions surface as pipeline errors rather than silently leaking bad display
+text.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `pnpm exec vitest run pipeline/src/extractors/stores-meta.test.ts`
-Expected: All tests pass.
+Run: `pnpm exec vitest run pipeline/src/extractors/stores-meta.test.ts` Expected: All tests pass.
 
 - [ ] **Step 5: Run lint:fix**
 
@@ -541,10 +584,12 @@ git commit -m "feat: add extractStoresMeta extractor for store display names"
 ### Task 4: New extractor — `extractFestivals`
 
 **Files:**
+
 - Create: `pipeline/src/extractors/festivals.ts`
 - Create: `pipeline/src/extractors/festivals.test.ts`
 
 **Interfaces:**
+
 - Consumes: `ParsedGameData` (reads `fiddle.festivals`)
 - Produces: `extractFestivals(fiddle: ParsedGameData): Record<FestivalId, { name: string }>`
 
@@ -614,8 +659,8 @@ describe("extractFestivals", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm exec vitest run pipeline/src/extractors/festivals.test.ts`
-Expected: FAIL — module not found.
+Run: `pnpm exec vitest run pipeline/src/extractors/festivals.test.ts` Expected: FAIL — module not
+found.
 
 - [ ] **Step 3: Write the implementation**
 
@@ -626,9 +671,7 @@ import type { FestivalId } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
 
-export function extractFestivals(
-  fiddle: ParsedGameData,
-): Record<FestivalId, { name: string }> {
+export function extractFestivals(fiddle: ParsedGameData): Record<FestivalId, { name: string }> {
   const festivals = fiddle.festivals as Record<string, Record<string, unknown>> | undefined;
   if (!festivals) return {} as Record<FestivalId, { name: string }>;
 
@@ -652,8 +695,7 @@ export function extractFestivals(
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `pnpm exec vitest run pipeline/src/extractors/festivals.test.ts`
-Expected: All tests pass.
+Run: `pnpm exec vitest run pipeline/src/extractors/festivals.test.ts` Expected: All tests pass.
 
 - [ ] **Step 5: Run lint:fix**
 
@@ -671,14 +713,20 @@ git commit -m "feat: add extractFestivals extractor for festival display names"
 ### Task 5: New extractor — `extractTreasureChestTiers`
 
 **Files:**
+
 - Create: `pipeline/src/extractors/treasure-chest-tiers.ts`
 - Create: `pipeline/src/extractors/treasure-chest-tiers.test.ts`
 
 **Interfaces:**
-- Consumes: `ParsedGameData` (reads `fiddle.items.fish.misc` for item names, `fiddle.fishing.chest_tables` for tier keys)
-- Produces: `extractTreasureChestTiers(fiddle: ParsedGameData): Record<TreasureChestTier, { name: string }>`
 
-The matching rule: `chest_tables` keys are tier IDs (e.g., `wood`, `copper`, `silver`, `gold`, `abyss`). Item IDs are `treasure_box_${tier}`. Look up `fiddle.items.fish.misc.treasure_box_${tier}.name` for the canonical display name.
+- Consumes: `ParsedGameData` (reads `fiddle.items.fish.misc` for item names,
+  `fiddle.fishing.chest_tables` for tier keys)
+- Produces:
+  `extractTreasureChestTiers(fiddle: ParsedGameData): Record<TreasureChestTier, { name: string }>`
+
+The matching rule: `chest_tables` keys are tier IDs (e.g., `wood`, `copper`, `silver`, `gold`,
+`abyss`). Item IDs are `treasure_box_${tier}`. Look up
+`fiddle.items.fish.misc.treasure_box_${tier}.name` for the canonical display name.
 
 - [ ] **Step 1: Write the test file**
 
@@ -762,8 +810,8 @@ describe("extractTreasureChestTiers", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm exec vitest run pipeline/src/extractors/treasure-chest-tiers.test.ts`
-Expected: FAIL — module not found.
+Run: `pnpm exec vitest run pipeline/src/extractors/treasure-chest-tiers.test.ts` Expected: FAIL —
+module not found.
 
 - [ ] **Step 3: Write the implementation**
 
@@ -783,7 +831,8 @@ export function extractTreasureChestTiers(
   const chestTables = fishing.chest_tables as Record<string, unknown> | undefined;
   if (!chestTables) return {} as Record<TreasureChestTier, { name: string }>;
 
-  const items = fiddle.items as Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
+  const items = fiddle.items as
+    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
   const fishMisc = items?.fish?.misc as Record<string, Record<string, unknown>> | undefined;
 
   const result = {} as Record<TreasureChestTier, { name: string }>;
@@ -793,7 +842,9 @@ export function extractTreasureChestTiers(
     const itemData = fishMisc?.[itemKey];
     const name = itemData?.name as string | undefined;
     if (!name) {
-      throw new Error(`Treasure chest tier "${tier}" has no matching item "${itemKey}" in items/fish/misc — check data assembly`);
+      throw new Error(
+        `Treasure chest tier "${tier}" has no matching item "${itemKey}" in items/fish/misc — check data assembly`,
+      );
     }
 
     result[tier as TreasureChestTier] = { name };
@@ -806,8 +857,8 @@ export function extractTreasureChestTiers(
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `pnpm exec vitest run pipeline/src/extractors/treasure-chest-tiers.test.ts`
-Expected: All tests pass.
+Run: `pnpm exec vitest run pipeline/src/extractors/treasure-chest-tiers.test.ts` Expected: All tests
+pass.
 
 - [ ] **Step 5: Run lint:fix**
 
@@ -825,21 +876,31 @@ git commit -m "feat: add extractTreasureChestTiers extractor"
 ### Task 6: Reshape recipe extractor — branded types, mines split, costs, requirements
 
 **Files:**
+
 - Modify: `pipeline/src/extractors/recipes.ts`
 - Modify: `pipeline/src/extractors/recipes.test.ts`
 
 **Interfaces:**
-- Consumes: updated `RecipeSource` from Task 1 (branded `PerkId`, `StoreId`, `FestivalId`, `QuestType`, `TreasureChestTier`, `BiomeId`); `ParsedGameData`
+
+- Consumes: updated `RecipeSource` from Task 1 (branded `PerkId`, `StoreId`, `FestivalId`,
+  `QuestType`, `TreasureChestTier`, `BiomeId`); `ParsedGameData`
 - Produces: recipes with reshaped sources matching the new `RecipeSource` union
 
 This is the largest task. It makes these changes to `recipes.ts`:
 
-1. **Biome ID fix**: `collectDungeonDelicacySources` uses array index `biome_${i}` instead of `biomeObj.id`
-2. **Rename + split**: `collectDungeonDelicacySources` → `collectMinesRecipeSources`, merge `collectBiomeFurnitureSources` into it. `dungeon_delicacies`/`taste_maker` → `mines_chest`; `furniture` → `mines_dig_site`
-3. **Branded types**: all `storeId` → `StoreId`, `festivalId` → `FestivalId`, `questType` → `QuestType`, `perk` → `perkId: PerkId`, `chestTier` → `tier: TreasureChestTier`
-4. **Costs**: `chicken_statue` and `wishing_well` replace `tier` with `cost: number` from `fiddle.misc`
-5. **Store requirements**: `collectStoreScrollSources` checks `requirements` for `repaired_*` (emit `upgraded: true`) and `has_perk` (emit `store_with_perk`)
-6. **Letter dates**: `collectLetterScrollSources` extracts `triggerDate` from `reached_date` requirement
+1. **Biome ID fix**: `collectDungeonDelicacySources` uses array index `biome_${i}` instead of
+   `biomeObj.id`
+2. **Rename + split**: `collectDungeonDelicacySources` → `collectMinesRecipeSources`, merge
+   `collectBiomeFurnitureSources` into it. `dungeon_delicacies`/`taste_maker` → `mines_chest`;
+   `furniture` → `mines_dig_site`
+3. **Branded types**: all `storeId` → `StoreId`, `festivalId` → `FestivalId`, `questType` →
+   `QuestType`, `perk` → `perkId: PerkId`, `chestTier` → `tier: TreasureChestTier`
+4. **Costs**: `chicken_statue` and `wishing_well` replace `tier` with `cost: number` from
+   `fiddle.misc`
+5. **Store requirements**: `collectStoreScrollSources` checks `requirements` for `repaired_*` (emit
+   `upgraded: true`) and `has_perk` (emit `store_with_perk`)
+6. **Letter dates**: `collectLetterScrollSources` extracts `triggerDate` from `reached_date`
+   requirement
 7. **Hardcoded sources**: `upgrade` gains `storeId: "carpenter" as StoreId`
 
 - [ ] **Step 1: Update imports**
@@ -865,7 +926,8 @@ import type {
 } from "$lib/types/tracker-data.js";
 ```
 
-- [ ] **Step 2: Replace `collectDungeonDelicacySources` and `collectBiomeFurnitureSources` with `collectMinesRecipeSources`**
+- [ ] **Step 2: Replace `collectDungeonDelicacySources` and `collectBiomeFurnitureSources` with
+      `collectMinesRecipeSources`**
 
 Remove both `collectDungeonDelicacySources` and `collectBiomeFurnitureSources`. Replace with:
 
@@ -1038,7 +1100,8 @@ function collectWishingWellSources(
 
 - [ ] **Step 5: Update `collectFishingChestSources` to use `TreasureChestTier`**
 
-Change the source push from `{ chestTier, type: "treasure_chest" }` to `{ tier: chestTier as TreasureChestTier, type: "treasure_chest" }`.
+Change the source push from `{ chestTier, type: "treasure_chest" }` to
+`{ tier: chestTier as TreasureChestTier, type: "treasure_chest" }`.
 
 - [ ] **Step 6: Update `collectPerkSources` to use `PerkId`**
 
@@ -1046,7 +1109,8 @@ Change `{ perk, type: "perk" }` to `{ perkId: perk as PerkId, type: "perk" }`.
 
 - [ ] **Step 7: Update `collectStoreScrollSources` for `upgraded` and `store_with_perk`**
 
-Add requirement detection. After resolving the scroll target or `include_recipe` item, check for requirements:
+Add requirement detection. After resolving the scroll target or `include_recipe` item, check for
+requirements:
 
 ```typescript
 function collectStoreScrollSources(
@@ -1091,7 +1155,12 @@ function collectStoreScrollSources(
             (obj.crafting_scroll as string | undefined);
 
           const recipeId = scrollTarget
-            ? resolveScrollTarget(scrollTarget, itemIdToRecipeId, knownRecipeIds, `stores/${storeId}`)
+            ? resolveScrollTarget(
+                scrollTarget,
+                itemIdToRecipeId,
+                knownRecipeIds,
+                `stores/${storeId}`,
+              )
             : obj.include_recipe === true
               ? itemIdToRecipeId.get(obj.item as string)
               : undefined;
@@ -1104,11 +1173,19 @@ function collectStoreScrollSources(
           if (requirements) {
             const hasPerk = requirements.has_perk as string | undefined;
             if (hasPerk) {
-              sources.push({ perkId: hasPerk as PerkId, storeId: storeId as StoreId, type: "store_with_perk" });
+              sources.push({
+                perkId: hasPerk as PerkId,
+                storeId: storeId as StoreId,
+                type: "store_with_perk",
+              });
               result.set(recipeId, sources);
               continue;
             }
-            const UPGRADE_PREDICATES = new Set(["repaired_inn", "repaired_general_store", "repaired_carpenters_shop"]);
+            const UPGRADE_PREDICATES = new Set([
+              "repaired_inn",
+              "repaired_general_store",
+              "repaired_carpenters_shop",
+            ]);
             const isUpgraded = Object.keys(requirements).some((k) => UPGRADE_PREDICATES.has(k));
             if (isUpgraded) {
               sources.push({ storeId: storeId as StoreId, type: "store", upgraded: true });
@@ -1164,34 +1241,52 @@ if (requirements.reached_date !== undefined) {
 - `collectHardcodedSources`: add `storeId: "carpenter" as StoreId` to upgrade sources
 
 In `collectHardcodedSources`:
+
 ```typescript
 const hardcoded: [string, RecipeSource][] = [
   ["water_sprite_statue_v1", { type: "beach_cave_chest" }],
   ["stairs", { storeId: "carpenter" as StoreId, type: "upgrade", upgradeName: "House Stairs" }],
-  ["farm_bridge", { storeId: "carpenter" as StoreId, type: "upgrade", upgradeName: "Starter Farm Bridge" }],
+  [
+    "farm_bridge",
+    { storeId: "carpenter" as StoreId, type: "upgrade", upgradeName: "Starter Farm Bridge" },
+  ],
   ["engagement_ring", { type: "relationship" }],
 ];
 ```
 
 - [ ] **Step 10: Update `extractRecipes` main function**
 
-Replace `mergeSources(collectDungeonDelicacySources(...))` and `mergeSources(collectBiomeFurnitureSources(...))` with `mergeSources(collectMinesRecipeSources(fiddle, itemIdToRecipeId))`.
+Replace `mergeSources(collectDungeonDelicacySources(...))` and
+`mergeSources(collectBiomeFurnitureSources(...))` with
+`mergeSources(collectMinesRecipeSources(fiddle, itemIdToRecipeId))`.
 
 - [ ] **Step 11: Update tests for new source shapes**
 
 In `pipeline/src/extractors/recipes.test.ts`, update these assertions:
 
-**chicken_statue test**: `{ tier: "small", type: "chicken_statue" }` → `{ cost: 10, type: "chicken_statue" }`. Add `misc: { chicken_statue: { high_price: 100, low_price: 10 } }` to the fixture's `makeFiddle` overrides.
+**chicken_statue test**: `{ tier: "small", type: "chicken_statue" }` →
+`{ cost: 10, type: "chicken_statue" }`. Add
+`misc: { chicken_statue: { high_price: 100, low_price: 10 } }` to the fixture's `makeFiddle`
+overrides.
 
-**wishing_well test**: `{ tier: "large", type: "wishing_well" }` → `{ cost: 500, type: "wishing_well" }`. Add `misc: { wishing_well: { high_price: 500, low_price: 100 } }` to the fixture's `makeFiddle` overrides.
+**wishing_well test**: `{ tier: "large", type: "wishing_well" }` →
+`{ cost: 500, type: "wishing_well" }`. Add
+`misc: { wishing_well: { high_price: 500, low_price: 100 } }` to the fixture's `makeFiddle`
+overrides.
 
-**fishing chest test**: `{ chestTier: "bronze", type: "treasure_chest" }` → `{ tier: "bronze", type: "treasure_chest" }`
+**fishing chest test**: `{ chestTier: "bronze", type: "treasure_chest" }` →
+`{ tier: "bronze", type: "treasure_chest" }`
 
 **deduplication test**: `{ chestTier: "bronze"... }` → `{ tier: "bronze"... }` etc.
 
-**dungeon_chest test**: rename to "maps dungeon_delicacies items to mines_chest source with biome index". Remove `id: "biome_0"` from the fixture's biome object (the extractor derives the ID from the array index, not from a field). Change expected source from `{ biomeId: "biome_0", perk: "dungeon_delicacies", type: "dungeon_chest" }` to `{ biomeId: "biome_0", perkId: "dungeon_delicacies", type: "mines_chest" }`
+**dungeon_chest test**: rename to "maps dungeon_delicacies items to mines_chest source with biome
+index". Remove `id: "biome_0"` from the fixture's biome object (the extractor derives the ID from
+the array index, not from a field). Change expected source from
+`{ biomeId: "biome_0", perk: "dungeon_delicacies", type: "dungeon_chest" }` to
+`{ biomeId: "biome_0", perkId: "dungeon_delicacies", type: "mines_chest" }`
 
-**festival test**: cast `festivalId`/`storeId` assertions to match branded shape (values unchanged, types align)
+**festival test**: cast `festivalId`/`storeId` assertions to match branded shape (values unchanged,
+types align)
 
 **store tests**: add test for `upgraded` and `store_with_perk`:
 
@@ -1378,8 +1473,7 @@ it("maps letter recipe_scroll with reached_date requirement to letter source wit
 
 - [ ] **Step 12: Run tests**
 
-Run: `pnpm exec vitest run pipeline/`
-Expected: All tests pass.
+Run: `pnpm exec vitest run pipeline/` Expected: All tests pass.
 
 - [ ] **Step 13: Run lint:fix**
 
@@ -1397,11 +1491,15 @@ git commit -m "feat: reshape recipe sources with branded types, mines split, cos
 ### Task 7: Wire up new extractors in pipeline main
 
 **Files:**
+
 - Modify: `pipeline/src/main.ts`
 
 **Interfaces:**
-- Consumes: `extractPerks` from Task 2, `extractStoresMeta` from Task 3, `extractFestivals` from Task 4, `extractTreasureChestTiers` from Task 5
-- Produces: `TrackerData` with `perks`, `perkTierLevels`, `stores`, `festivals`, `treasureChestTiers` fields
+
+- Consumes: `extractPerks` from Task 2, `extractStoresMeta` from Task 3, `extractFestivals` from
+  Task 4, `extractTreasureChestTiers` from Task 5
+- Produces: `TrackerData` with `perks`, `perkTierLevels`, `stores`, `festivals`,
+  `treasureChestTiers` fields
 
 - [ ] **Step 1: Add imports**
 
@@ -1456,8 +1554,8 @@ const trackerData: TrackerData = {
 
 - [ ] **Step 4: Run type-check**
 
-Run: `pnpm run check`
-Expected: Pipeline and types pass. `format.ts` and `recipes-content.svelte` may still have errors (fixed in Tasks 8-9).
+Run: `pnpm run check` Expected: Pipeline and types pass. `format.ts` and `recipes-content.svelte`
+may still have errors (fixed in Tasks 8-9).
 
 - [ ] **Step 5: Run lint:fix**
 
@@ -1475,18 +1573,30 @@ git commit -m "feat: wire up perks, stores, festivals, treasure chest tier extra
 ### Task 8: Update display labels with enriched lookups and helpers
 
 **Files:**
+
 - Modify: `src/lib/utils/format.ts`
 
 **Interfaces:**
+
 - Consumes: updated `RecipeSource` from Task 1, `TrackerData` fields from Task 7
-- Produces: `RecipeSourceLookups` interface, `recipeSourceLabel(source, lookups)`, `withIndefiniteArticle(name)`, `formatStoreName(storeId, stores)`, `formatBiomeName(biomeId, biomes)`
+- Produces: `RecipeSourceLookups` interface, `recipeSourceLabel(source, lookups)`,
+  `withIndefiniteArticle(name)`, `formatStoreName(storeId, stores)`,
+  `formatBiomeName(biomeId, biomes)`
 
 - [ ] **Step 1: Update imports and add the `RecipeSourceLookups` interface and helper functions**
 
 Update the import at the top of `format.ts` to include `BiomeId`, `StoreId`, and `TrackerData`:
 
 ```typescript
-import type { BiomeId, RecipeSource, Season, SourceType, StoreId, TrackerData, Weather } from "$lib/types/tracker-data.js";
+import type {
+  BiomeId,
+  RecipeSource,
+  Season,
+  SourceType,
+  StoreId,
+  TrackerData,
+  Weather,
+} from "$lib/types/tracker-data.js";
 ```
 
 Add before `recipeSourceLabel`:
@@ -1519,10 +1629,7 @@ export function formatStoreName(
   return store.article ? `${store.article} ${store.name}` : store.name;
 }
 
-export function formatBiomeName(
-  biomeId: BiomeId,
-  biomes: TrackerData["mines"]["biomes"],
-): string {
+export function formatBiomeName(biomeId: BiomeId, biomes: TrackerData["mines"]["biomes"]): string {
   const biome = biomes.find((b) => b.id === biomeId);
   if (!biome) return titleCase(biomeId);
   if (biome.name.startsWith("The ")) return `the ${biome.name.slice(4)}`;
@@ -1535,10 +1642,7 @@ export function formatBiomeName(
 Replace the existing function with:
 
 ```typescript
-export function recipeSourceLabel(
-  source: RecipeSource,
-  lookups: RecipeSourceLookups,
-): string {
+export function recipeSourceLabel(source: RecipeSource, lookups: RecipeSourceLookups): string {
   switch (source.type) {
     case "beach_cave_chest":
       return "Find in the Gold Treasure Chest in the Beach Cave";
@@ -1549,7 +1653,8 @@ export function recipeSourceLabel(
     case "dragon_forge":
       return "Craft at the Dragon Forge (Mines level 90)";
     case "festival": {
-      const festivalName = lookups.festivals[source.festivalId]?.name ?? titleCase(source.festivalId);
+      const festivalName =
+        lookups.festivals[source.festivalId]?.name ?? titleCase(source.festivalId);
       const storeName = formatStoreName(source.storeId, lookups.stores);
       return `Purchase from ${storeName} at the ${festivalName}`;
     }
@@ -1564,13 +1669,17 @@ export function recipeSourceLabel(
       }
       const { day, season, year } = source.triggerDate;
       const seasonName = seasonLabel(season);
-      const dateStr = year ? `${seasonName} ${String(day)}, Year ${String(year)}` : `${seasonName} ${String(day)}`;
+      const dateStr = year
+        ? `${seasonName} ${String(day)}, Year ${String(year)}`
+        : `${seasonName} ${String(day)}`;
       return `Receive in a letter after reaching ${dateStr}`;
     }
     case "mines_chest": {
       const biomeName = formatBiomeName(source.biomeId, lookups.biomes);
       const biome = lookups.biomes.find((b) => b.id === source.biomeId);
-      const floorRange = biome ? `floors ${String(biome.startFloor)}–${String(biome.endFloor)}` : "";
+      const floorRange = biome
+        ? `floors ${String(biome.startFloor)}–${String(biome.endFloor)}`
+        : "";
       const perk = lookups.perks[source.perkId];
       const perkName = perk?.name ?? titleCase(source.perkId);
       const skillName = perk ? (lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId)) : "";
@@ -1580,7 +1689,9 @@ export function recipeSourceLabel(
     case "mines_dig_site": {
       const biomeName = formatBiomeName(source.biomeId, lookups.biomes);
       const biome = lookups.biomes.find((b) => b.id === source.biomeId);
-      const floorRange = biome ? `floors ${String(biome.startFloor)}–${String(biome.endFloor)}` : "";
+      const floorRange = biome
+        ? `floors ${String(biome.startFloor)}–${String(biome.endFloor)}`
+        : "";
       const perk = lookups.perks[source.perkId];
       const perkName = perk?.name ?? titleCase(source.perkId);
       const skillName = perk ? (lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId)) : "";
@@ -1644,7 +1755,12 @@ Create `src/lib/utils/format.test.ts` (or add to it if it exists). Tests should 
 ```typescript
 import { describe, expect, it } from "vitest";
 
-import { formatBiomeName, formatStoreName, recipeSourceLabel, withIndefiniteArticle } from "./format.js";
+import {
+  formatBiomeName,
+  formatStoreName,
+  recipeSourceLabel,
+  withIndefiniteArticle,
+} from "./format.js";
 
 import type { BiomeId, RecipeSource, StoreId } from "$lib/types/tracker-data.js";
 
@@ -1672,24 +1788,43 @@ describe("withIndefiniteArticle", () => {
 describe("formatStoreName", () => {
   it("prepends article when present", () => {
     const stores = { general_store: { article: "the" as const, name: "General Store" } };
-    expect(formatStoreName("general_store" as StoreId, stores as Record<StoreId, { article?: "the"; name: string }>)).toBe("the General Store");
+    expect(
+      formatStoreName(
+        "general_store" as StoreId,
+        stores as Record<StoreId, { article?: "the"; name: string }>,
+      ),
+    ).toBe("the General Store");
   });
   it("omits article for possessive names", () => {
     const stores = { merri_stall: { name: "Merri's Stall" } };
-    expect(formatStoreName("merri_stall" as StoreId, stores as Record<StoreId, { article?: "the"; name: string }>)).toBe("Merri's Stall");
+    expect(
+      formatStoreName(
+        "merri_stall" as StoreId,
+        stores as Record<StoreId, { article?: "the"; name: string }>,
+      ),
+    ).toBe("Merri's Stall");
   });
   it("falls back to titleCase for unknown stores", () => {
-    expect(formatStoreName("unknown_shop" as StoreId, {} as Record<StoreId, { article?: "the"; name: string }>)).toBe("Unknown Shop");
+    expect(
+      formatStoreName(
+        "unknown_shop" as StoreId,
+        {} as Record<StoreId, { article?: "the"; name: string }>,
+      ),
+    ).toBe("Unknown Shop");
   });
 });
 
 describe("formatBiomeName", () => {
   it("lowercases leading 'The' in biome names", () => {
-    const biomes = [{ endFloor: 19, id: "biome_0" as BiomeId, name: "The Tide Caverns", startFloor: 1 }];
+    const biomes = [
+      { endFloor: 19, id: "biome_0" as BiomeId, name: "The Tide Caverns", startFloor: 1 },
+    ];
     expect(formatBiomeName("biome_0" as BiomeId, biomes)).toBe("the Tide Caverns");
   });
   it("prepends 'the' for names without leading article", () => {
-    const biomes = [{ endFloor: 39, id: "biome_1" as BiomeId, name: "Upper Mines", startFloor: 20 }];
+    const biomes = [
+      { endFloor: 39, id: "biome_1" as BiomeId, name: "Upper Mines", startFloor: 20 },
+    ];
     expect(formatBiomeName("biome_1" as BiomeId, biomes)).toBe("the Upper Mines");
   });
 });
@@ -1699,15 +1834,35 @@ describe("recipeSourceLabel", () => {
     expect(recipeSourceLabel({ type: "default" }, EMPTY_LOOKUPS)).toBe("Available from the start");
   });
   it("renders store with upgrade", () => {
-    const lookups = { ...EMPTY_LOOKUPS, stores: { inn: { article: "the" as const, name: "Sleeping Dragon Inn" } } as Record<StoreId, { article?: "the"; name: string }> };
-    expect(recipeSourceLabel({ type: "store", storeId: "inn" as StoreId, upgraded: true } as RecipeSource, lookups)).toBe("Purchase from the Sleeping Dragon Inn (after upgrade)");
+    const lookups = {
+      ...EMPTY_LOOKUPS,
+      stores: { inn: { article: "the" as const, name: "Sleeping Dragon Inn" } } as Record<
+        StoreId,
+        { article?: "the"; name: string }
+      >,
+    };
+    expect(
+      recipeSourceLabel(
+        { type: "store", storeId: "inn" as StoreId, upgraded: true } as RecipeSource,
+        lookups,
+      ),
+    ).toBe("Purchase from the Sleeping Dragon Inn (after upgrade)");
   });
   it("renders letter with reached_date", () => {
-    const source: RecipeSource = { type: "letter", trigger: "reached_date", triggerDate: { day: 28, season: "summer" } };
-    expect(recipeSourceLabel(source, EMPTY_LOOKUPS)).toBe("Receive in a letter after reaching Summer 28");
+    const source: RecipeSource = {
+      type: "letter",
+      trigger: "reached_date",
+      triggerDate: { day: 28, season: "summer" },
+    };
+    expect(recipeSourceLabel(source, EMPTY_LOOKUPS)).toBe(
+      "Receive in a letter after reaching Summer 28",
+    );
   });
   it("renders treasure_chest with tier name", () => {
-    const lookups = { ...EMPTY_LOOKUPS, treasureChestTiers: { gold: { name: "Golden Treasure Box" } } };
+    const lookups = {
+      ...EMPTY_LOOKUPS,
+      treasureChestTiers: { gold: { name: "Golden Treasure Box" } },
+    };
     const source: RecipeSource = { type: "treasure_chest", tier: "gold" as any };
     expect(recipeSourceLabel(source, lookups)).toBe("Fish up a Golden Treasure Box");
   });
@@ -1716,8 +1871,8 @@ describe("recipeSourceLabel", () => {
 
 - [ ] **Step 4: Run type-check**
 
-Run: `pnpm run check`
-Expected: `format.ts` passes. `recipes-content.svelte` may still have errors (fixed in Task 9).
+Run: `pnpm run check` Expected: `format.ts` passes. `recipes-content.svelte` may still have errors
+(fixed in Task 9).
 
 - [ ] **Step 5: Run lint:fix**
 
@@ -1735,11 +1890,14 @@ git commit -m "feat: rewrite recipeSourceLabel with enriched lookups and display
 ### Task 9: Update recipe list component — expanded lookups, source icons
 
 **Files:**
+
 - Modify: `src/lib/components/recipes-content.svelte`
 - Audit: `src/lib/stores/user-state.svelte.ts`
 
 **Interfaces:**
-- Consumes: `recipeSourceLabel` with `RecipeSourceLookups` from Task 8, `RecipeSource` from Task 1, Lucide icons from `@lucide/svelte`, `trackerData` with new fields from Task 7
+
+- Consumes: `recipeSourceLabel` with `RecipeSourceLookups` from Task 8, `RecipeSource` from Task 1,
+  Lucide icons from `@lucide/svelte`, `trackerData` with new fields from Task 7
 - Produces: Updated recipe list UI with source-type icons replacing green dots
 
 - [ ] **Step 1: Update `RecipeEntry` interface to carry sources**
@@ -1792,9 +1950,7 @@ In the recipe entry construction, add `sources`:
 entries.push({
   id: item.recipeId,
   name: item.name,
-  sourceLabels: recipe.sources
-    .map((s) => recipeSourceLabel(s, sourceLookups))
-    .filter(Boolean),
+  sourceLabels: recipe.sources.map((s) => recipeSourceLabel(s, sourceLookups)).filter(Boolean),
   sources: recipe.sources,
 });
 ```
@@ -1870,8 +2026,7 @@ Expected: Only `recipe.sources.some((s) => s.type === "default")` at ~line 114, 
 
 - [ ] **Step 7: Run full checks**
 
-Run: `pnpm run check && pnpm run lint && pnpm exec vitest run pipeline/`
-Expected: All pass clean.
+Run: `pnpm run check && pnpm run lint && pnpm exec vitest run pipeline/` Expected: All pass clean.
 
 - [ ] **Step 8: Run lint:fix**
 
@@ -1889,13 +2044,13 @@ git commit -m "feat: add source-type icons and enriched labels to recipe list"
 ### Task 10: Final validation, regeneration, and cleanup
 
 **Files:**
+
 - All modified files
 - Possibly: `src/lib/data/tracker-data.json` (if assets available)
 
 - [ ] **Step 1: Run full validation suite**
 
-Run: `pnpm run check && pnpm run lint && pnpm exec vitest run pipeline/`
-Expected: All pass clean.
+Run: `pnpm run check && pnpm run lint && pnpm exec vitest run pipeline/` Expected: All pass clean.
 
 - [ ] **Step 2: Regenerate tracker-data.json if assets are available**
 
@@ -1903,7 +2058,8 @@ Check: `ls pipeline/input/assets/fiddle/ 2>/dev/null`
 
 If assets exist, run: `pnpm run pipeline -- pipeline/input/assets`
 
-If assets are not available, note that `tracker-data.json` will need regeneration on the next pipeline run with assets.
+If assets are not available, note that `tracker-data.json` will need regeneration on the next
+pipeline run with assets.
 
 - [ ] **Step 3: File follow-up GitHub issues**
 
@@ -1922,6 +2078,7 @@ Run: `pnpm run lint:fix`
 - [ ] **Step 5: Final commit if needed**
 
 If lint:fix made changes:
+
 ```bash
 git add -A
 git commit -m "chore: lint, format, regenerate tracker-data"

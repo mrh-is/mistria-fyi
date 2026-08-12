@@ -1,10 +1,21 @@
 # Recipe source enrichment implementation plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development
+> (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use
+> checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace `Recipe.defaultUnlocked` with a `{ type: "default" }` source, enrich all `RecipeSource` variants with display-ready data, reshape hardcoded sources, reduce extractor repetition, and enforce lint/format before commits.
+**Goal:** Replace `Recipe.defaultUnlocked` with a `{ type: "default" }` source, enrich all
+`RecipeSource` variants with display-ready data, reshape hardcoded sources, reduce extractor
+repetition, and enforce lint/format before commits.
 
-**Architecture:** The `RecipeSource` union gains a `"default"` variant so every recipe's provenance is fully described by its `sources` array. Existing source variants gain contextual fields (bead tier, biome info, renown level, museum set count, ticket tier, bundle/upgrade/item names) so the UI can render descriptive labels without ad-hoc lookups. Three hardcoded recipes (water sprite, stairs/bridge, engagement ring) get dedicated source types instead of being shoehorned into `treasure_chest`, `store`, or `cutscene`. Extractor helper functions replace the repeated `items.subCategories[].categoryItems[].item[]` traversal pattern. All changed files are linted and formatted before committing.
+**Architecture:** The `RecipeSource` union gains a `"default"` variant so every recipe's provenance
+is fully described by its `sources` array. Existing source variants gain contextual fields (bead
+tier, biome info, renown level, museum set count, ticket tier, bundle/upgrade/item names) so the UI
+can render descriptive labels without ad-hoc lookups. Three hardcoded recipes (water sprite,
+stairs/bridge, engagement ring) get dedicated source types instead of being shoehorned into
+`treasure_chest`, `store`, or `cutscene`. Extractor helper functions replace the repeated
+`items.subCategories[].categoryItems[].item[]` traversal pattern. All changed files are linted and
+formatted before committing.
 
 **Tech Stack:** TypeScript pipeline extractor, Vitest, Svelte 5 (runes), Tailwind 4
 
@@ -13,55 +24,59 @@
 - Use **pnpm** for all commands (never npm/npx).
 - **Strict TypeScript** with `strictTypeChecked` ESLint. Use `type` imports.
 - **Formatting:** Prettier with double quotes, no tabs, trailing commas, 100-char width, semicolons.
-- **Naming:** `camelCase` variables/functions, `PascalCase` types/components, `kebab-case` files. Branded IDs for type safety.
+- **Naming:** `camelCase` variables/functions, `PascalCase` types/components, `kebab-case` files.
+  Branded IDs for type safety.
 - Run `pnpm run lint:fix` before committing. All commits must type-check independently.
 - Run `pnpm exec vitest run pipeline/` for pipeline tests.
 - Sort all output arrays deterministically (by ID or name) so output is stable across runs.
 
 ## File structure
 
-| File | Action | Responsibility |
-|------|--------|----------------|
-| `src/lib/types/tracker-data.ts` | Modify (Task 1) | Reshape `RecipeSource` union: add `"default"` variant, add enrichment fields to existing variants, add new source types `"beach_cave_chest"`, `"upgrade"`, `"relationship"`. Remove `defaultUnlocked` from `Recipe`. |
-| `pipeline/src/extractors/recipes.ts` | Modify (Tasks 2, 3) | Task 2: extract helpers for item traversal, DRY up extractors. Task 3: emit `{ type: "default" }` sources, enrich source data, reshape hardcoded items. |
-| `pipeline/src/extractors/recipes.test.ts` | Modify (Tasks 2, 3) | Update tests for new source shapes and `defaultUnlocked` removal. |
-| `src/lib/utils/format.ts` | Modify (Task 4) | Update `recipeSourceLabel` for enriched source types and new display format strings. |
-| `src/lib/stores/user-state.svelte.ts` | Modify (Task 5) | Replace `recipe.defaultUnlocked` check with `recipe.sources.some(s => s.type === "default")`. |
-| `src/lib/components/recipes-content.svelte` | Modify (Task 5) | Remove `defaultUnlocked` branching, simplify source label generation. |
-| `src/lib/engine/transfer.ts` | Audit (Task 5) | Verify no `recipe.defaultUnlocked` references remain (animals/cosmetics have their own `defaultUnlocked` — those are unrelated and stay). |
-| `AGENTS.md` | Modify (Task 6) | Note lint/format requirement explicitly. |
+| File                                        | Action              | Responsibility                                                                                                                                                                                                       |
+| ------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/types/tracker-data.ts`             | Modify (Task 1)     | Reshape `RecipeSource` union: add `"default"` variant, add enrichment fields to existing variants, add new source types `"beach_cave_chest"`, `"upgrade"`, `"relationship"`. Remove `defaultUnlocked` from `Recipe`. |
+| `pipeline/src/extractors/recipes.ts`        | Modify (Tasks 2, 3) | Task 2: extract helpers for item traversal, DRY up extractors. Task 3: emit `{ type: "default" }` sources, enrich source data, reshape hardcoded items.                                                              |
+| `pipeline/src/extractors/recipes.test.ts`   | Modify (Tasks 2, 3) | Update tests for new source shapes and `defaultUnlocked` removal.                                                                                                                                                    |
+| `src/lib/utils/format.ts`                   | Modify (Task 4)     | Update `recipeSourceLabel` for enriched source types and new display format strings.                                                                                                                                 |
+| `src/lib/stores/user-state.svelte.ts`       | Modify (Task 5)     | Replace `recipe.defaultUnlocked` check with `recipe.sources.some(s => s.type === "default")`.                                                                                                                        |
+| `src/lib/components/recipes-content.svelte` | Modify (Task 5)     | Remove `defaultUnlocked` branching, simplify source label generation.                                                                                                                                                |
+| `src/lib/engine/transfer.ts`                | Audit (Task 5)      | Verify no `recipe.defaultUnlocked` references remain (animals/cosmetics have their own `defaultUnlocked` — those are unrelated and stay).                                                                            |
+| `AGENTS.md`                                 | Modify (Task 6)     | Note lint/format requirement explicitly.                                                                                                                                                                             |
 
 ## Source type enrichment summary
 
-| Source type | Current label | Target label | New fields |
-|---|---|---|---|
-| `default` (NEW) | "Default recipe" | "Default recipe" | — |
-| `chicken_statue` | "Chicken statue" | "Chicken Statue ({tier} beads)" | `tier: "small" \| "medium" \| "large"` |
-| `cutscene` | titleCase(cutscene) | "Cutscene — {title}" | `title: string` (human-readable) |
-| `letter` (no trigger) | "Letter" | "Letter — {letterId}" | `letterId` already extractable; label uses it |
-| `mine_zone` → `dungeon_chest` | "Mine zone discovery" | "Treasure chest in {zone} (floors X–Y) with {perk} perk" | rename type to `dungeon_chest`, add `biomeId: BiomeId`, `perk: string` |
-| `museum_donation` | "{wing} wing donations" | "Complete {count} sets in the {wing} wing" | `setCount: number` |
-| `perk` | titleCase(perk) | "{Perk Name} perk" | — (label change only) |
-| `renown` | "Renown reward" | "Town rank level {level}" | `level: number` |
-| `quest` | questName | "Quest — {name}" | — (label change only) |
-| `scroll_bundle` | "{store} scroll bundle" | "Purchase {bundleName} from {store}" | `bundleName: string` |
-| `store` | titleCase(storeId) | "Purchase from {store}" | — (label change only) |
-| `wishing_well` | "Wishing well" | "Wishing Well ({tier} toss)" | `tier: "small" \| "medium" \| "large"` |
-| `treasure_chest` | "Fishing treasure chest" | "Fishing treasure chest" | — (unchanged) |
-| `beach_cave_chest` (NEW) | n/a | "Treasure chest in the Beach Cave" | — |
-| `upgrade` (NEW) | n/a | "Purchase {upgradeName} from the carpenter" | `upgradeName: string` |
-| `relationship` (NEW) | n/a | "Get to 10 hearts with a dateable character" | — |
+| Source type                   | Current label            | Target label                                             | New fields                                                             |
+| ----------------------------- | ------------------------ | -------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `default` (NEW)               | "Default recipe"         | "Default recipe"                                         | —                                                                      |
+| `chicken_statue`              | "Chicken statue"         | "Chicken Statue ({tier} beads)"                          | `tier: "small" \| "medium" \| "large"`                                 |
+| `cutscene`                    | titleCase(cutscene)      | "Cutscene — {title}"                                     | `title: string` (human-readable)                                       |
+| `letter` (no trigger)         | "Letter"                 | "Letter — {letterId}"                                    | `letterId` already extractable; label uses it                          |
+| `mine_zone` → `dungeon_chest` | "Mine zone discovery"    | "Treasure chest in {zone} (floors X–Y) with {perk} perk" | rename type to `dungeon_chest`, add `biomeId: BiomeId`, `perk: string` |
+| `museum_donation`             | "{wing} wing donations"  | "Complete {count} sets in the {wing} wing"               | `setCount: number`                                                     |
+| `perk`                        | titleCase(perk)          | "{Perk Name} perk"                                       | — (label change only)                                                  |
+| `renown`                      | "Renown reward"          | "Town rank level {level}"                                | `level: number`                                                        |
+| `quest`                       | questName                | "Quest — {name}"                                         | — (label change only)                                                  |
+| `scroll_bundle`               | "{store} scroll bundle"  | "Purchase {bundleName} from {store}"                     | `bundleName: string`                                                   |
+| `store`                       | titleCase(storeId)       | "Purchase from {store}"                                  | — (label change only)                                                  |
+| `wishing_well`                | "Wishing well"           | "Wishing Well ({tier} toss)"                             | `tier: "small" \| "medium" \| "large"`                                 |
+| `treasure_chest`              | "Fishing treasure chest" | "Fishing treasure chest"                                 | — (unchanged)                                                          |
+| `beach_cave_chest` (NEW)      | n/a                      | "Treasure chest in the Beach Cave"                       | —                                                                      |
+| `upgrade` (NEW)               | n/a                      | "Purchase {upgradeName} from the carpenter"              | `upgradeName: string`                                                  |
+| `relationship` (NEW)          | n/a                      | "Get to 10 hearts with a dateable character"             | —                                                                      |
 
 ---
 
 ### Task 1: Types — reshape RecipeSource & Recipe
 
 **Files:**
+
 - Modify: `src/lib/types/tracker-data.ts`
 
 **Interfaces:**
+
 - Consumes: existing branded types `ItemId`, `QuestId`, `WingId`, `BiomeId`
-- Produces: Updated `RecipeSource` union (adds `"default"`, `"beach_cave_chest"`, `"upgrade"`, `"relationship"` variants; enriches existing variants), `Recipe` without `defaultUnlocked`
+- Produces: Updated `RecipeSource` union (adds `"default"`, `"beach_cave_chest"`, `"upgrade"`,
+  `"relationship"` variants; enriches existing variants), `Recipe` without `defaultUnlocked`
 
 - [ ] **Step 1: Update RecipeSource union**
 
@@ -102,12 +117,14 @@ export interface Recipe {
 
 - [ ] **Step 3: Remove `"cutscene"` from RecipeSource**
 
-The only cutscene was the engagement ring, which is now `"relationship"`. Remove `{ cutscene: string; type: "cutscene" }` from the union. Also remove `"mine_zone"` since it's renamed to `"dungeon_chest"`.
+The only cutscene was the engagement ring, which is now `"relationship"`. Remove
+`{ cutscene: string; type: "cutscene" }` from the union. Also remove `"mine_zone"` since it's
+renamed to `"dungeon_chest"`.
 
 - [ ] **Step 4: Verify type-check fails**
 
-Run: `pnpm run check`
-Expected: Type errors in recipes.ts, format.ts, user-state.svelte.ts, recipes-content.svelte (the files we'll fix in later tasks).
+Run: `pnpm run check` Expected: Type errors in recipes.ts, format.ts, user-state.svelte.ts,
+recipes-content.svelte (the files we'll fix in later tasks).
 
 - [ ] **Step 5: Commit**
 
@@ -121,14 +138,18 @@ git commit -m "refactor: reshape RecipeSource union, remove Recipe.defaultUnlock
 ### Task 2: Extractor helpers & DRY refactor
 
 **Files:**
+
 - Modify: `pipeline/src/extractors/recipes.ts`
 - Modify: `pipeline/src/extractors/recipes.test.ts`
 
 **Interfaces:**
-- Consumes: `ParsedGameData` from `parse-fiddle.ts`, updated `RecipeSource` from Task 1
-- Produces: Helper functions `forEachItem`, `forEachItemInSubCategory` for traversing the `items` tree; refactored extractors using them
 
-The pipeline has multiple extractors that iterate `items[category][subCategory][itemId]` with identical guard checks. This task extracts that into shared helpers.
+- Consumes: `ParsedGameData` from `parse-fiddle.ts`, updated `RecipeSource` from Task 1
+- Produces: Helper functions `forEachItem`, `forEachItemInSubCategory` for traversing the `items`
+  tree; refactored extractors using them
+
+The pipeline has multiple extractors that iterate `items[category][subCategory][itemId]` with
+identical guard checks. This task extracts that into shared helpers.
 
 - [ ] **Step 1: Add `forEachItem` helper**
 
@@ -195,7 +216,8 @@ function collectPerkSources(
 
 - [ ] **Step 3: Refactor `collectScrollBundleSources` to use `forEachItem`**
 
-Replace the two separate triple-nested loops in `collectScrollBundleSources` with `forEachItem`. First loop builds `bundleIdToSetTag`, second resolves tagged items to recipe sources:
+Replace the two separate triple-nested loops in `collectScrollBundleSources` with `forEachItem`.
+First loop builds `bundleIdToSetTag`, second resolves tagged items to recipe sources:
 
 ```typescript
 function collectScrollBundleSources(
@@ -262,7 +284,9 @@ function collectScrollBundleSources(
       if (tags.includes(setTag)) {
         const recipeId = itemIdToRecipeId.get(itemId);
         if (recipeId && !result.has(recipeId)) {
-          result.set(recipeId, [{ bundleName: info.bundleName, storeId: info.storeId, type: "scroll_bundle" }]);
+          result.set(recipeId, [
+            { bundleName: info.bundleName, storeId: info.storeId, type: "scroll_bundle" },
+          ]);
         }
       }
     }
@@ -308,7 +332,8 @@ function collectRecipeEntries(fiddle: ParsedGameData): RawRecipeEntry[] {
 
 - [ ] **Step 5: Refactor `collectDragonForgeSources`**
 
-Currently accesses `items.other.blacksmithing` directly — refactor to use `forEachItem` with a filter:
+Currently accesses `items.other.blacksmithing` directly — refactor to use `forEachItem` with a
+filter:
 
 ```typescript
 function collectDragonForgeSources(
@@ -336,8 +361,8 @@ function collectDragonForgeSources(
 
 - [ ] **Step 6: Run tests**
 
-Run: `pnpm exec vitest run pipeline/`
-Expected: Tests pass (helper refactor preserves behavior — source shapes change in Task 3).
+Run: `pnpm exec vitest run pipeline/` Expected: Tests pass (helper refactor preserves behavior —
+source shapes change in Task 3).
 
 - [ ] **Step 7: Commit**
 
@@ -351,14 +376,17 @@ git commit -m "refactor: extract forEachItem helper, DRY up recipe extractors"
 ### Task 3: Enrich source data & reshape hardcoded sources
 
 **Files:**
+
 - Modify: `pipeline/src/extractors/recipes.ts`
 - Modify: `pipeline/src/extractors/recipes.test.ts`
 
 **Interfaces:**
+
 - Consumes: Updated `RecipeSource` from Task 1, `forEachItem` from Task 2
 - Produces: Enriched recipe sources in pipeline output
 
-This is the core data enrichment task. Each source collector gains the additional fields defined in the enrichment summary.
+This is the core data enrichment task. Each source collector gains the additional fields defined in
+the enrichment summary.
 
 - [ ] **Step 1: Emit `{ type: "default" }` instead of `defaultUnlocked` flag**
 
@@ -376,9 +404,7 @@ recipes[recipeId as RecipeId] = {
 with:
 
 ```typescript
-const allSrc = allDefault
-  ? [{ type: "default" as const }, ...sources]
-  : sources;
+const allSrc = allDefault ? [{ type: "default" as const }, ...sources] : sources;
 
 recipes[recipeId as RecipeId] = {
   memberItemIds,
@@ -457,14 +483,15 @@ Add `BiomeId` to the imports from `$lib/types/tracker-data.js`.
 
 - [ ] **Step 4: Enrich `museum_donation` with `setCount`**
 
-In `collectMuseumScrollSources`, the `reward` object in the `rewards` array likely has a numeric threshold or index. Capture it:
+In `collectMuseumScrollSources`, the `reward` object in the `rewards` array likely has a numeric
+threshold or index. Capture it:
 
 ```typescript
 for (let rewardIdx = 0; rewardIdx < rewards.length; rewardIdx++) {
   const reward = rewards[rewardIdx];
   if (typeof reward !== "object" || reward === null) continue;
   const rewardObj = reward as Record<string, unknown>;
-  const setCount = (rewardObj.sets_needed as number | undefined) ?? (rewardIdx + 1);
+  const setCount = (rewardObj.sets_needed as number | undefined) ?? rewardIdx + 1;
   const entries = Array.isArray(rewardObj.entries) ? rewardObj.entries : [];
 
   for (const entry of entries) {
@@ -599,8 +626,7 @@ it("maps dungeon_delicacies items to dungeon_chest source with biome info", () =
 
 - [ ] **Step 9: Run tests**
 
-Run: `pnpm exec vitest run pipeline/`
-Expected: All tests pass with updated assertions.
+Run: `pnpm exec vitest run pipeline/` Expected: All tests pass with updated assertions.
 
 - [ ] **Step 10: Commit**
 
@@ -614,15 +640,18 @@ git commit -m "feat: enrich RecipeSource data, reshape hardcoded sources"
 ### Task 4: Update display labels
 
 **Files:**
+
 - Modify: `src/lib/utils/format.ts`
 
 **Interfaces:**
+
 - Consumes: Updated `RecipeSource` from Task 1, `TrackerData` biome/museum data for lookups
 - Produces: `recipeSourceLabel` that renders enriched labels per the target format
 
 - [ ] **Step 1: Update `recipeSourceLabel` function signature**
 
-The function currently takes `(recipe, questNames, itemNames)`. Change the signature to take a single `RecipeSource` plus lookup maps, since the component already calls it per-source:
+The function currently takes `(recipe, questNames, itemNames)`. Change the signature to take a
+single `RecipeSource` plus lookup maps, since the component already calls it per-source:
 
 ```typescript
 export function recipeSourceLabel(
@@ -636,7 +665,8 @@ export function recipeSourceLabel(
 ): string {
 ```
 
-Build `biomeNames` and `storeNames` lookups in `recipes-content.svelte` alongside the existing `questNames` and `itemNames`.
+Build `biomeNames` and `storeNames` lookups in `recipes-content.svelte` alongside the existing
+`questNames` and `itemNames`.
 
 - [ ] **Step 2: Implement all label cases**
 
@@ -708,12 +738,12 @@ export function recipeSourceLabel(
 }
 ```
 
-Note: The bead/ticket costs (5/15/30) are approximate — verify against game data and adjust if wrong.
+Note: The bead/ticket costs (5/15/30) are approximate — verify against game data and adjust if
+wrong.
 
 - [ ] **Step 3: Run type-check**
 
-Run: `pnpm run check`
-Expected: `format.ts` passes. Other files still have errors (fixed in Task 5).
+Run: `pnpm run check` Expected: `format.ts` passes. Other files still have errors (fixed in Task 5).
 
 - [ ] **Step 4: Commit**
 
@@ -727,11 +757,13 @@ git commit -m "feat: update recipeSourceLabel for enriched source types"
 ### Task 5: Update app code for new Recipe shape
 
 **Files:**
+
 - Modify: `src/lib/stores/user-state.svelte.ts`
 - Modify: `src/lib/components/recipes-content.svelte`
 - Audit: `src/lib/engine/transfer.ts` (animals/cosmetics `defaultUnlocked` stays)
 
 **Interfaces:**
+
 - Consumes: `Recipe` without `defaultUnlocked`, updated `recipeSourceLabel` from Task 4
 
 - [ ] **Step 1: Update `user-state.svelte.ts`**
@@ -760,34 +792,35 @@ const sourceLabels = recipe.sources.map((s) =>
 Add `biomeNames` and `storeNames` derived values alongside `questNames` and `itemNames`:
 
 ```typescript
-let biomeNames = $derived(
-  Object.fromEntries(
-    trackerData.mines.biomes.map((b) => [b.id, b.name]),
-  ),
-);
+let biomeNames = $derived(Object.fromEntries(trackerData.mines.biomes.map((b) => [b.id, b.name])));
 
 let storeNames = $derived(
   Object.fromEntries(
     Object.entries(trackerData.sources)
       .flatMap(([, sources]) => sources)
       .filter((s) => s.type === "store" && s.location)
-      .map((s) => [s.location!, titleCase(s.location!)])
+      .map((s) => [s.location!, titleCase(s.location!)]),
   ),
 );
 ```
 
-Actually, `storeNames` aren't stored in `TrackerData` as a top-level map. The `titleCase` function handles store ID → display name. So `storeNames` can be omitted, and `recipeSourceLabel` can use `titleCase` directly (which it already does in the implementation above). Remove `storeNames` from the lookups type and simplify accordingly.
+Actually, `storeNames` aren't stored in `TrackerData` as a top-level map. The `titleCase` function
+handles store ID → display name. So `storeNames` can be omitted, and `recipeSourceLabel` can use
+`titleCase` directly (which it already does in the implementation above). Remove `storeNames` from
+the lookups type and simplify accordingly.
 
 - [ ] **Step 3: Verify no other `recipe.defaultUnlocked` references exist**
 
-Run: `grep -rn "recipe\.defaultUnlocked\|recipe\[.*\]\.defaultUnlocked" --include="*.ts" --include="*.svelte" src/ pipeline/`
+Run:
+`grep -rn "recipe\.defaultUnlocked\|recipe\[.*\]\.defaultUnlocked" --include="*.ts" --include="*.svelte" src/ pipeline/`
 
-The only `defaultUnlocked` references remaining should be in `animals` and `cosmetics` contexts (those are unrelated fields on different types).
+The only `defaultUnlocked` references remaining should be in `animals` and `cosmetics` contexts
+(those are unrelated fields on different types).
 
 - [ ] **Step 4: Run full checks**
 
-Run: `pnpm run check && pnpm exec vitest run pipeline/`
-Expected: All type-checks pass, all tests pass.
+Run: `pnpm run check && pnpm exec vitest run pipeline/` Expected: All type-checks pass, all tests
+pass.
 
 - [ ] **Step 5: Commit**
 
@@ -801,32 +834,33 @@ git commit -m "refactor: update app code for RecipeSource-based default detectio
 ### Task 6: Lint, format & AGENTS.md
 
 **Files:**
+
 - All modified files
 - Modify: `AGENTS.md`
 
 - [ ] **Step 1: Run lint:fix**
 
-Run: `pnpm run lint:fix`
-Expected: Prettier and ESLint fix any formatting/import ordering issues.
+Run: `pnpm run lint:fix` Expected: Prettier and ESLint fix any formatting/import ordering issues.
 
 - [ ] **Step 2: Run full validation**
 
-Run: `pnpm run check && pnpm run lint && pnpm exec vitest run pipeline/`
-Expected: All pass clean.
+Run: `pnpm run check && pnpm run lint && pnpm exec vitest run pipeline/` Expected: All pass clean.
 
 - [ ] **Step 3: Update AGENTS.md**
 
 Add a note under the Commands section or Code Style section:
 
 ```markdown
-- **Pre-commit:** Always run `pnpm run lint:fix` before committing. The `perfectionist` ESLint plugin enforces import and property ordering — files must pass `pnpm run lint` to be committed.
+- **Pre-commit:** Always run `pnpm run lint:fix` before committing. The `perfectionist` ESLint
+  plugin enforces import and property ordering — files must pass `pnpm run lint` to be committed.
 ```
 
 - [ ] **Step 4: Regenerate tracker-data.json if assets are available**
 
 If `pipeline/input/assets/fiddle/` exists, run: `pnpm run pipeline -- pipeline/input/assets`
 
-If assets are not available, note that `tracker-data.json` will need regeneration on the next pipeline run.
+If assets are not available, note that `tracker-data.json` will need regeneration on the next
+pipeline run.
 
 - [ ] **Step 5: Final commit**
 

@@ -40,15 +40,12 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   // 1. Almanac items
   const almanacOrder = getAlmanacOrder();
   const almanacBytes = readBytes(Math.ceil(almanacOrder.length / 8));
-  const almanac = fromBitfield(almanacOrder as unknown as string[], almanacBytes) as Set<ItemId>;
+  const almanac = fromBitfield(almanacOrder, almanacBytes) as Set<ItemId>;
 
   // 2. Cosmetics (non-default-unlocked)
   const cosmeticOrder = getCosmeticOrder();
   const cosmeticBytes = readBytes(Math.ceil(cosmeticOrder.length / 8));
-  const cosmetics = fromBitfield(
-    cosmeticOrder as unknown as string[],
-    cosmeticBytes,
-  ) as Set<CosmeticId>;
+  const cosmetics = fromBitfield(cosmeticOrder, cosmeticBytes) as Set<CosmeticId>;
 
   // 3. Animal variants (non-default-unlocked)
   const animalVariantOrder = getAnimalVariantOrder();
@@ -77,7 +74,7 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   // 5. Museum items
   const museumOrder = getMuseumOrder();
   const museumBytes = readBytes(Math.ceil(museumOrder.length / 8));
-  const museum = fromBitfield(museumOrder as unknown as string[], museumBytes) as Set<ItemId>;
+  const museum = fromBitfield(museumOrder, museumBytes) as Set<ItemId>;
 
   // 6. Spell bitmask (1 byte)
   const spellOrder = getSpellOrder();
@@ -147,11 +144,11 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
 
   // 1. Almanac items
   const almanacOrder = getAlmanacOrder();
-  parts.push(toBitfield(almanacOrder as unknown as string[], completed.almanac as Set<string>));
+  parts.push(toBitfield(almanacOrder, completed.almanac));
 
   // 2. Cosmetics (non-default-unlocked)
   const cosmeticOrder = getCosmeticOrder();
-  parts.push(toBitfield(cosmeticOrder as unknown as string[], completed.cosmetics as Set<string>));
+  parts.push(toBitfield(cosmeticOrder, completed.cosmetics));
 
   // 3. Animal variants (non-default-unlocked)
   const animalVariantOrder = getAnimalVariantOrder();
@@ -179,7 +176,7 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
 
   // 5. Museum items
   const museumOrder = getMuseumOrder();
-  parts.push(toBitfield(museumOrder as unknown as string[], completed.museum as Set<string>));
+  parts.push(toBitfield(museumOrder, completed.museum));
 
   // 6. Spell bitmask (1 byte)
   const spellOrder = getSpellOrder();

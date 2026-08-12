@@ -299,7 +299,7 @@ export async function parseSaveFiles(files: File[]): Promise<{
 
       switch (file.name) {
         case "gamedata.json":
-          bundle.gamedata = data as GamedataSave;
+          bundle.gamedata = data;
           break;
         case "player.json":
           if (validatePlayerSave(data)) {
@@ -309,7 +309,7 @@ export async function parseSaveFiles(files: File[]): Promise<{
           }
           break;
         case "quests.json":
-          bundle.quests = data as QuestsSave;
+          bundle.quests = data;
           break;
       }
     } catch {

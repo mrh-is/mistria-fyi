@@ -104,7 +104,7 @@ export function extractAlmanac(
 
   // Tags that describe how an item is obtained, not what it is. These lose to any
   // classification tag when an item matches multiple almanac categories.
-  const ACQUISITION_TAGS = new Set(["fishable", "dive"]);
+  const ACQUISITION_TAGS = new Set(["dive", "fishable"]);
 
   for (const item of allItems) {
     // Find the best matching almanac category. Classification tags (what the item is)
