@@ -1,7 +1,7 @@
 <script lang="ts">
   import ExpandableSection from "$lib/components/expandable-section.svelte";
+  import { Icon } from "$lib/components/icon/index.js";
   import Stepper from "$lib/components/stepper.svelte";
-  import { Checkbox } from "$lib/components/ui/checkbox/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
@@ -147,9 +147,11 @@
           ? 'line-through opacity-40'
           : ''}"
       >
-        <Checkbox
-          checked={completed}
-          onCheckedChange={() => {
+        <button
+          class="flex size-11 shrink-0 items-center justify-center"
+          type="button"
+          aria-label={completed ? `Uncheck ${spell.name}` : `Check ${spell.name}`}
+          onclick={() => {
             userState.toggleSpell(spell.id);
             const completed = userState.state.completed.mines.spells.has(spell.id);
             showUndoToast(spell.name, completed, () => {
@@ -163,7 +165,14 @@
               }
             }
           }}
-        />
+        >
+          <Icon.Completion
+            state={completed ? "completed" : "none"}
+            class="size-5 {completed
+              ? 'text-green-600 dark:text-green-400'
+              : 'text-muted-foreground/50'}"
+          />
+        </button>
         <span class="text-base">{spell.name}</span>
       </div>
     {/each}

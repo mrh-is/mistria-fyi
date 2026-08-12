@@ -5,7 +5,6 @@
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import { Icon, SOURCE_FILTERS } from "$lib/components/icon/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
-  import { Checkbox } from "$lib/components/ui/checkbox/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -178,7 +177,12 @@
                 }
               }}
             >
-              <Checkbox checked={completed} tabindex={-1} />
+              <Icon.Completion
+                state={completed ? "completed" : "none"}
+                class="size-5 {completed
+                  ? 'text-green-600 dark:text-green-400'
+                  : 'text-muted-foreground/50'}"
+              />
             </button>
             <span class="min-w-0 flex-1 text-base">{entry.name}</span>
             {#if entry.sourceLabels.length > 0}
