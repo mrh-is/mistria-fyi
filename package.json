@@ -55,9 +55,6 @@
     "vite-plugin-devtools-json": "^1.1.0",
     "vitest": "^4.1.10"
   },
-  "overrides": {
-    "cookie": "^0.7.0"
-  },
   "dependencies": {
     "canvas-confetti": "^1.9.4"
   },
