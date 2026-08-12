@@ -122,19 +122,25 @@ marked.
 
 ```typescript
 interface UserProgressionState {
-  // Existing (passed through from CompletedState)
+  // Passed through from CompletedState (using existing field names)
   skillLevels: Record<SkillId, number>;
-  showSpoilers: boolean;
+  npcLevels: Record<NpcId, number>;
   minesFloor: number;
   renown: number;
-  heartLevels: Record<NpcId, number>;
   unlockedPerks: Set<PerkId>;
+
+  // From UserState (not CompletedState)
+  showSpoilers: boolean;
 
   // Derived from CompletedState + tracker data (see below)
   questVisibility: Record<QuestId, QuestVisibility>;
   knownNpcs: Set<NpcId>;
 }
 ```
+
+Note: the existing `CompletedState` uses `npcLevels` (not `heartLevels`). The spec preserves
+this name. `showSpoilers` lives on `UserState`, not `CompletedState`; `deriveProgressionState`
+takes both `completed` and `showSpoilers` as inputs (or the full `UserState`).
 
 `unlockedPerks` is a new field on `CompletedState` (stored, imported from save file or manually
 tracked); it passes through to `UserProgressionState` for use by the evaluator. `knownNpcs` and
@@ -185,7 +191,7 @@ information:
   visibility is `always`), heart level > 0 also marks them known. NPCs with explicit unlock gates
   (Caldarus, Seridia, Saturday Market vendors) are known only when their gate quest is completed,
   regardless of heart level — this prevents story-granted heart levels from revealing them early.
-- **`heartLevels`**: `max(manuallyTracked, questDerived)` using `heartLevelChanges` data from
+- **`npcLevels`**: `max(manuallyTracked, questDerived)` using `heartLevelChanges` data from
   tracker data. Completing "Breaking the Water Seal" auto-sets Caldarus to 2 and Seridia to 1, but
   never overwrites a higher manually-tracked value. Caldarus and Seridia start at 0 hearts until
   their unlock quest, regardless of cutscene data that grants earlier heart levels (those characters
@@ -466,7 +472,7 @@ Emit visibility conditions for quest categories that are themselves spoilers:
 
 | Category | Visibility condition |
 |---|---|
-| `crown_quests` | `{ type: "renownLevel", level: N }` (exact unlock threshold TBD; verify from game data or wiki) |
+| `crown_quests` | `{ type: "renownLevel", level: N }` (**implementation blocker**: determine exact threshold from wiki or in-game testing before coding this gate; use `never` as placeholder until resolved) |
 | `stillwell_challenges` | `{ type: "npcKnown", npcId: "stillwell" }` |
 | `tali_challenges` | `{ type: "npcKnown", npcId: "taliferro" }` |
 | `story_quests` | `{ type: "always" }` (first quest is always visible) |
@@ -514,7 +520,7 @@ Recursively evaluates the condition tree. Each primitive is a direct lookup:
 - `skillLevel` -> `state.skillLevels[skillId] >= level`
 - `perkUnlocked` -> `state.unlockedPerks.has(perkId)`
 - `minesLevel` -> `state.minesFloor >= floor`
-- `heartLevel` -> `state.heartLevels[npcId] >= level`
+- `heartLevel` -> `state.npcLevels[npcId] >= level`
 - `renownLevel` -> `state.renown >= level`
 - `and` -> every sub-condition is visible
 - `or` -> any sub-condition is visible
@@ -522,36 +528,39 @@ Recursively evaluates the condition tree. Each primitive is a direct lookup:
 When `state.showSpoilers` is true, the evaluator returns `true` for all conditions (global
 override).
 
-### Redaction state helper
+### Visibility helpers
+
+Two independent checks, not a single combined state:
 
 ```typescript
-type RedactionState = "visible" | "redacted" | "source-only";
-
-function redactionState(
+function isEntityNameVisible(
   entityVisibility: VisibilityCondition,
+  state: UserProgressionState,
+): boolean
+
+function isSourceDetailVisible(
   sourceVisibility: VisibilityCondition | undefined,
   state: UserProgressionState,
-): RedactionState
+): boolean
 ```
 
-- `"visible"`: entity visibility met
-- `"source-only"`: source visibility met but entity visibility is not
-- `"redacted"`: neither met
+- **Entity name**: shown when `isEntityNameVisible` returns true; otherwise redacted. This
+  controls the item/recipe/quest name display only.
+- **Source detail**: each source is evaluated independently via `isSourceDetailVisible`. A source
+  whose condition is not met shows redacted details (store name hidden, perk name hidden) even
+  when the entity name is visible. A source with no `visibility` field inherits the entity's
+  condition.
 
-Components use this to decide rendering without understanding conditions themselves.
+This separation prevents an ungated source from revealing the details of a still-gated source on
+the same entity (e.g., `void_bonsai` visible via museum donation doesn't reveal the perk source
+details until the perk tier is unlocked).
 
-For entities with **multiple sources** (15 recipes have 2+ sources, e.g., `void_bonsai` from both
-museum donation and a perk), visibility has two layers:
+Components render each source row by checking both: entity name for the row's label, source
+detail for the acquisition text. The three visual states per-source-row are:
 
-1. **Entity-name visibility**: determined by the entity-level `visibility` condition. When met, the
-   item/recipe name is shown.
-2. **Per-source detail visibility**: each source has its own `visibility` condition evaluated
-   independently. A source whose condition is not met remains redacted even when the entity name
-   is visible. This prevents an ungated source (e.g., store purchase) from revealing the details
-   of a still-gated source (e.g., perk name, quest name) on the same entity.
-
-`redactionState` is called per-source. The entity name uses the entity-level condition; each
-source row uses its own source-level condition for detail rendering.
+- **Fully visible**: entity name visible AND source detail visible
+- **Source-only**: entity name redacted, source detail visible (partial disclosure phase)
+- **Fully redacted**: both redacted
 
 ### Reactive integration
 
@@ -607,7 +616,7 @@ Extend `buildImportState` in `src/lib/engine/import-save.ts`:
 
 Note: `knownNpcs` is not imported directly — it is derived at runtime by `deriveProgressionState`
 from quest completion state and heart levels (with gated-NPC exceptions). The importer only needs to
-supply the raw `CompletedState` fields (`questStates`, `heartLevels`, `unlockedPerks`, etc.).
+supply the raw `CompletedState` fields (`questStates`, `npcLevels`, `unlockedPerks`, etc.).
 
 The importer already handles quest states, heart levels, skill levels, renown, and mines floor.
 
@@ -628,7 +637,7 @@ Comprehensive mapping of every content type to its visibility condition source:
 | Story quests | Chain ordering from letters | `questCompleted(previousQuest)` |
 | Heart quests | Letter `reached_heart_level` + NPC known | `and(npcKnown, heartLevel)` |
 | Fetch quests | Request board requirements | `questCompleted`, area flags, skill levels |
-| Crown quests | Renown level + chain ordering | `renownLevel(N)`, `questCompleted(prev)` (exact level TBD) |
+| Crown quests | Renown level + chain ordering | `renownLevel(N)`, `questCompleted(prev)` (exact level TBD; see 3j) |
 | Stillwell challenges | NPC known + chain ordering | `npcKnown("stillwell")` |
 | Tali challenges | NPC known + chain ordering | `npcKnown("taliferro")` |
 | NPCs | Unlock quest or always | `questCompleted` or `always` |
@@ -644,7 +653,7 @@ Comprehensive mapping of every content type to its visibility condition source:
 | Recipes (renown) | Renown level | `renownLevel(level)` |
 | Recipes (letter) | Always (temporal trigger, not a spoiler gate) | `always` |
 | Recipes (default) | Always | `always` |
-| Recipes (treasure chest) | Chest tier | TBD during implementation |
+| Recipes (treasure chest) | Mines floor from chest tier | `minesLevel(tierStartFloor)` (**implementation task**: map `treasureChestTiers` to floor ranges) |
 | Recipes (festival) | Always | `always` |
 | Recipes (chicken statue) | Always | `always` |
 | Recipes (wishing well) | Always | `always` |
