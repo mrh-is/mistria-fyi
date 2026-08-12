@@ -73,12 +73,12 @@ export function shouldShowItem(
 
 const TIMELY_TYPES = new Set(["season", "time", "weather"]);
 
+const ALL_SEASONS: Season[] = ["spring", "summer", "fall", "winter"];
+
 interface WorldState {
   season: Season;
   weather: Weather;
 }
-
-// ─── Individual restriction matchers ────────────────────────────────
 
 /**
  * Filter a list of item IDs to only those passing availability check.
@@ -92,6 +92,8 @@ export function filterAvailableItems(
   if (mode === "everything") return itemIds;
   return itemIds.filter((id) => isItemAvailable(id, sourcesMap, worldState, mode));
 }
+
+// ─── Individual restriction matchers ────────────────────────────────
 
 /** Get deduplicated restriction summary for display badges */
 export function getItemRestrictions(sources: Source[]): Restriction[] {
@@ -110,6 +112,25 @@ export function getItemRestrictions(sources: Source[]): Restriction[] {
   }
 
   return result;
+}
+
+/**
+ * Returns true if the source has a season restriction that excludes at least
+ * one season (i.e. it is not year-round). This is the qualification test for
+ * "Seasonal" / "timely" mode.
+ *
+ * - A scalar `season` value always qualifies.
+ * - A `seasons` array qualifies only when it does NOT contain all four seasons.
+ * - A missing / empty season restriction does not qualify.
+ */
+export function hasSelectiveSeasonRestriction(source: Source): boolean {
+  return (source.restrictions ?? []).some((r) => {
+    if (r.type !== "season") return false;
+    if (r.season !== undefined) return true;
+    const seasons = r.seasons;
+    if (!seasons || seasons.length === 0) return false;
+    return !ALL_SEASONS.every((s) => seasons.includes(s));
+  });
 }
 
 // ─── Source-level availability ──────────────────────────────────────
@@ -161,8 +182,8 @@ export function isSourceAvailable(
   const timelyRestrictions = restrictions.filter(isTimelyRestriction);
 
   if (mode === "timely") {
-    // Source must have at least one timely restriction to be relevant
-    if (timelyRestrictions.length === 0) return false;
+    // Source must have a selective season restriction to qualify
+    if (!hasSelectiveSeasonRestriction(source)) return false;
   }
 
   // All timely restrictions must match
