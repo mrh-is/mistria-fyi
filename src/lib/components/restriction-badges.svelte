@@ -1,18 +1,6 @@
 <script lang="ts">
-  import {
-    Clock,
-    CloudLightning,
-    CloudRain,
-    CloudSnow,
-    Flower,
-    Leaf,
-    Lock,
-    Snowflake,
-    Sun,
-    SunDim,
-    Wind,
-  } from "@lucide/svelte";
-
+  import { restrictionWeatherIcon } from "$lib/components/icon/icon-maps.js";
+  import { Icon } from "$lib/components/icon/index.js";
   import { timeRangeLabel } from "$lib/utils/format.js";
 
   import type { Restriction, Season, Weather } from "$lib/types/tracker-data.js";
@@ -29,22 +17,6 @@
 
   const ALL_SEASONS: Season[] = ["spring", "summer", "fall", "winter"];
   const ALL_WEATHERS: Weather[] = ["calm", "inclement", "heavy_inclement", "special"];
-
-  const SEASON_ICON: Record<Season, typeof Sun> = {
-    fall: Leaf,
-    spring: Flower,
-    summer: Sun,
-    winter: Snowflake,
-  };
-
-  function weatherIconForRestriction(weather: Weather, seasons: Season[]): typeof Sun {
-    if (weather === "calm") return SunDim;
-    if (weather === "special") return Wind;
-    if (weather === "heavy_inclement") return CloudLightning;
-    // inclement: snow if winter-only, rain otherwise
-    if (seasons.length === 1 && seasons[0] === "winter") return CloudSnow;
-    return CloudRain;
-  }
 
   function isAllSeasons(seasons: Season[]): boolean {
     return ALL_SEASONS.every((s) => seasons.includes(s));
@@ -70,8 +42,8 @@
       class="inline-flex gap-0.5 rounded bg-amber-100 px-0.5 py-px text-amber-700 dark:bg-amber-950 dark:text-amber-300"
     >
       {#each r.seasons ?? [] as s (s)}
-        {@const Icon = SEASON_ICON[s]}
-        <Icon
+        <Icon.Season
+          season={s}
           class="size-3 {s === 'fall' ? '-scale-y-100 rotate-90' : ''}"
           strokeWidth={s === "summer" ? 2.5 : undefined}
         />
@@ -85,8 +57,8 @@
       class="inline-flex gap-0.5 rounded bg-sky-100 px-0.5 py-px text-sky-700 dark:bg-sky-950 dark:text-sky-300"
     >
       {#each ALL_WEATHERS.filter((w) => (r.weathers ?? []).includes(w)) as w (w)}
-        {@const Icon = weatherIconForRestriction(w, getSeasonContext())}
-        <Icon class="size-3" />
+        {@const WeatherComp = restrictionWeatherIcon(w, getSeasonContext())}
+        <WeatherComp class="size-3" />
       {/each}
     </span>
   {/each}
@@ -98,7 +70,7 @@
       <span
         class="inline-flex items-center gap-0.5 rounded bg-muted px-1 py-px text-sm text-muted-foreground"
       >
-        <Clock class="size-2.5" />
+        <Icon.Restriction type="clock" class="size-2.5" />
         {timeRangeLabel(hours)}
       </span>
     {/if}
@@ -116,7 +88,7 @@
   <!-- Building/perk locks -->
   {#if !compact}
     {#each restrictions.filter((r) => r.type === "building" || r.type === "perk") as r (JSON.stringify(r))}
-      <Lock class="size-3 text-muted-foreground" />
+      <Icon.Restriction type="lock" class="size-3 text-muted-foreground" />
     {/each}
   {/if}
 </span>

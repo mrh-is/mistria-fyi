@@ -2,6 +2,7 @@
   import { ArrowLeft } from "@lucide/svelte";
 
   import { resolve } from "$app/paths";
+  import { Icon } from "$lib/components/icon/index.js";
   import { categoryColor, type CategoryMeta } from "$lib/data/categories.js";
 
   import type { CategoryProgress } from "$lib/engine/progress.js";
@@ -14,7 +15,6 @@
     progress: CategoryProgress;
   } = $props();
 
-  const Icon = $derived(category.icon);
   const color = $derived(categoryColor(category.key));
 
   let pct = $derived(
@@ -33,7 +33,10 @@
   >
     <ArrowLeft class="size-5" />
   </a>
-  <Icon class={color ? "size-5 text-(--header-color)" : "size-5 text-muted-foreground"} />
+  <Icon.Category
+    category={category.key}
+    class={color ? "size-5 text-(--header-color)" : "size-5 text-muted-foreground"}
+  />
   <h1 class="flex-1 text-xl font-semibold">{category.name}</h1>
   <span class="shrink-0 text-sm text-muted-foreground">
     <span class="sm:hidden">{pct}%</span>

@@ -1,8 +1,8 @@
 <script lang="ts">
   import { toast } from "svelte-sonner";
 
+  import { Icon } from "$lib/components/icon/index.js";
   import RestrictionBadges from "$lib/components/restriction-badges.svelte";
-  import { Checkbox } from "$lib/components/ui/checkbox/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { getItemRestrictions } from "$lib/engine/availability.js";
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
@@ -113,9 +113,13 @@
           ? 'opacity-50'
           : ''}"
     >
-      <Checkbox
-        checked={result.completed}
-        onCheckedChange={() => {
+      <button
+        class="flex size-11 shrink-0 items-center justify-center"
+        type="button"
+        aria-label={result.completed
+          ? `Uncheck ${result.fullName ?? result.name}`
+          : `Check ${result.fullName ?? result.name}`}
+        onclick={() => {
           if (result.category === "quests") {
             handleQuestToggle(result);
           } else {
@@ -125,7 +129,14 @@
             });
           }
         }}
-      />
+      >
+        <Icon.Completion
+          state={result.completed ? "completed" : "none"}
+          class="size-5 {result.completed
+            ? 'text-green-600 dark:text-green-400'
+            : 'text-muted-foreground/50'}"
+        />
+      </button>
       <span class="min-w-0 flex-1 text-base">
         {result.fullName ?? result.name}
         {#if result.detail}

@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { Camera, ImagePlus, LoaderCircle, QrCode, Smartphone, X } from "@lucide/svelte";
+  import { Camera, ImagePlus, LoaderCircle, QrCode, Smartphone } from "@lucide/svelte";
   import QrScanner from "qr-scanner";
   import QRCode from "qrcode";
 
+  import { Icon } from "$lib/components/icon/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
   import * as Card from "$lib/components/ui/card/index.js";
   import { decodeTransferPayload, encodeTransferPayload } from "$lib/engine/transfer.js";
@@ -194,7 +195,7 @@
           onclick={stopScanning}
           aria-label="Close camera"
         >
-          <X />
+          <Icon.UI type="dismiss" />
         </Button>
       </div>
     {/if}

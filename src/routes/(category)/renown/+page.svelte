@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { Star } from "@lucide/svelte";
-
   import CategoryHeader from "$lib/components/category-header.svelte";
+  import { Icon } from "$lib/components/icon/index.js";
   import Stepper from "$lib/components/stepper.svelte";
   import { Input } from "$lib/components/ui/input/index.js";
   import { Progress } from "$lib/components/ui/progress/index.js";
@@ -86,7 +85,8 @@
     class="flex size-16 items-center justify-center rounded-full"
     style="background-color: {currentRankColor}22; box-shadow: 0 0 0 2px {currentRankColor}44"
   >
-    <Star
+    <Icon.ProgressMark
+      type="town_rank"
       class="size-9"
       style="color: {currentRankColor}"
       fill={currentRankColor}

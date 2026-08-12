@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { Flower, Heart, Leaf, Octagon, Snowflake, Sun } from "@lucide/svelte";
-
   import CategoryHeader from "$lib/components/category-header.svelte";
+  import { Icon } from "$lib/components/icon/index.js";
   import Stepper from "$lib/components/stepper.svelte";
   import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
@@ -9,9 +8,7 @@
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
 
-  import type { Component } from "svelte";
-
-  import type { NpcId, Season } from "$lib/types/tracker-data.js";
+  import type { NpcId } from "$lib/types/tracker-data.js";
 
   function areAllNpcsMaxed(): boolean {
     return Object.keys(trackerData.npcs).every(
@@ -26,13 +23,6 @@
       celebrateCategory();
     }
   }
-
-  const SEASON_ICON: Record<Season, Component<{ class?: string; strokeWidth?: number }>> = {
-    fall: Leaf,
-    spring: Flower,
-    summer: Sun,
-    winter: Snowflake,
-  };
 
   let progress = $derived(
     getNpcsProgress({
@@ -80,13 +70,13 @@
     {@const level = getNpcLevel(npc.id)}
     {@const maxed = isMaxed(npc)}
     {#if maxed ? userState.state.showCompleted : true}
-      {@const BdayIcon = SEASON_ICON[npc.birthday.season]}
       <div class="flex flex-col gap-1.5 rounded-md px-2 py-1.5 {maxed ? 'opacity-40' : ''}">
         <!-- Name row -->
         <div class="flex items-center gap-2">
           <span class="min-w-0 flex-1 text-base font-medium">{npc.name}</span>
           <span class="flex items-center gap-0.5 text-sm text-muted-foreground">
-            <BdayIcon
+            <Icon.Season
+              season={npc.birthday.season}
               class="size-3 {npc.birthday.season === 'fall' ? '-scale-y-100 rotate-90' : ''}"
               strokeWidth={npc.birthday.season === "summer" ? 2.5 : undefined}
             />
@@ -115,19 +105,12 @@
                   setNpcLevelWithCelebration(npc.id, i < level ? i : i + 1);
                 }}
               >
-                {#if npc.dateable}
-                  <Heart
-                    class="size-4 transition-colors duration-200 {i < level
-                      ? `${LEVEL_COLORS[i]} fill-current`
-                      : 'fill-transparent text-muted-foreground/30'}"
-                  />
-                {:else}
-                  <Octagon
-                    class="size-4 transition-colors duration-200 {i < level
-                      ? `${LEVEL_COLORS[i]} fill-current`
-                      : 'fill-transparent text-muted-foreground/30'}"
-                  />
-                {/if}
+                <Icon.ProgressMark
+                  type={npc.dateable ? "relationship_dateable" : "relationship_platonic"}
+                  class="size-4 transition-colors duration-200 {i < level
+                    ? `${LEVEL_COLORS[i]} fill-current`
+                    : 'fill-transparent text-muted-foreground/30'}"
+                />
               </button>
             {/each}
           </div>

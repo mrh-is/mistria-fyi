@@ -1,0 +1,4 @@
+pipeline/input/
+pipeline/output/
+.env
+.env.*

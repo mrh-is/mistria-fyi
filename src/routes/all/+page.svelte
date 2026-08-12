@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { ArrowLeft, Layers } from "@lucide/svelte";
+  import { ArrowLeft } from "@lucide/svelte";
 
   import { resolve } from "$app/paths";
+  import { Icon } from "$lib/components/icon/index.js";
   import { getAllProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
@@ -56,7 +57,7 @@
   >
     <ArrowLeft class="size-5" />
   </a>
-  <Layers class="size-5 text-muted-foreground" />
+  <Icon.Category category="all" class="size-5 text-muted-foreground" />
   <h1 class="flex-1 text-xl font-semibold">Everything</h1>
   <span class="shrink-0 text-sm text-muted-foreground">
     <span class="sm:hidden">{overallPct}%</span>

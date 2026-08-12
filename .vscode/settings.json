@@ -39,5 +39,6 @@
   "json.schemaDownload.trustedDomains": {
     "https://shadcn-svelte.com/schema.json": true
   },
+  "npm.exclude": ["**/.claude/worktrees/**", "**/.worktrees/**"],
   "prettier.documentSelectors": ["**/*.svelte"]
 }

@@ -3,6 +3,28 @@
 > Agent-specific instructions. For project conventions, architecture, and workflow, see
 > [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Worktree Requirement
+
+**All agents must work in a git worktree.** Multiple agents run concurrently in this repo; a shared
+working tree causes edit collisions, dirty-state confusion, and branch-switch destruction.
+
+Use the `superpowers:using-git-worktrees` skill to set up your workspace. This is a declared
+preference: do not ask for consent, just create the worktree. Agents and tools without their own
+managed worktree location should put worktrees under `.worktrees/`, named after the branch:
+`.worktrees/<issue-number>-<short-description>`. Claude Code may use its native managed worktree
+location.
+
+Before creating a worktree, verify that the shared directory is ignored:
+
+```sh
+git check-ignore -q .worktrees/placeholder
+```
+
+Claude Code automatically copies the ignored local files listed in `.worktreeinclude` into each
+worktree it creates. Other agents should copy the existing files matching that list from the main
+checkout after running `git worktree add`; do not copy dependencies, caches, or build artifacts. Run
+`pnpm install --frozen-lockfile` inside each new worktree instead.
+
 ## Task Workflow
 
 Work is tracked via [GitHub Issues](https://github.com/mrh-is/harvest-helper/issues). To pick up a
@@ -10,7 +32,7 @@ task:
 
 1. Read the issue **and its comments** (`gh issue view <number> --comments` or via GitHub API/MCP).
    Comments often contain screenshots, clarifications, and additional requirements.
-2. Create a branch: `<issue-number>-<short-description>`.
+2. Set up an isolated worktree using the `superpowers:using-git-worktrees` skill.
 3. Do the work. Run `pnpm run check` and `pnpm run lint:fix` before committing (lint:fix runs both
    prettier and eslint with auto-fix; `pnpm run lint` checks without fixing).
 4. Commit, push the branch, and open a PR that references the issue (`Closes #N` in the PR body).

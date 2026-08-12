@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { ChevronRight, Layers, Settings, Wheat } from "@lucide/svelte";
+  import { Settings, Wheat } from "@lucide/svelte";
 
   import { resolve } from "$app/paths";
   import CategoryGrid from "$lib/components/category-grid.svelte";
+  import { Icon } from "$lib/components/icon/index.js";
   import OverallProgress from "$lib/components/overall-progress.svelte";
   import SearchResults from "$lib/components/search-results.svelte";
   import WelcomeCard from "$lib/components/welcome-card.svelte";
@@ -51,10 +52,10 @@
       class="flex items-center gap-3 rounded-xl border border-border/50 bg-accent/20 px-4 py-3 transition-colors hover:bg-accent/40"
       href={resolve("/all")}
     >
-      <Layers class="size-4 shrink-0 text-muted-foreground" />
+      <Icon.Category category="all" class="size-4 shrink-0 text-muted-foreground" />
       <span class="flex-1 text-sm font-medium text-muted-foreground">Everything</span>
       <span class="text-sm text-muted-foreground">{totalCompleted}/{grandTotal}</span>
-      <ChevronRight class="size-4 shrink-0 text-muted-foreground/50" />
+      <Icon.UI type="disclosure" class="size-4 shrink-0 text-muted-foreground/50" />
     </a>
   {/if}
 </div>

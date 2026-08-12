@@ -20,6 +20,37 @@ export function isItemDimmed(
 }
 
 /**
+ * Whether a scoped item row should be rendered.
+ * An item is visible when it is not completed, showCompleted is true,
+ * or it is in the recentlyCompleted linger set.
+ */
+export function isRowVisible(
+  itemId: ItemId,
+  isCompleted: boolean,
+  showCompleted: boolean,
+  recentlyCompleted?: ReadonlySet<ItemId>,
+): boolean {
+  if (recentlyCompleted?.has(itemId)) return true;
+  return !isCompleted || showCompleted;
+}
+
+/**
+ * Whether an item falls within the scoped set used for progress counters.
+ * Completed items are always in scope; incomplete items must pass availability.
+ * Ignores showCompleted and recentlyCompleted — those affect rendering only.
+ */
+export function shouldCountItem(
+  itemId: ItemId,
+  isCompleted: boolean,
+  sourcesMap: Partial<Record<ItemId, Source[]>>,
+  worldState: WorldState,
+  mode: AvailabilityMode,
+): boolean {
+  if (isCompleted) return true;
+  return isItemAvailable(itemId, sourcesMap, worldState, mode);
+}
+
+/**
  * Whether an item should be visible in a list given filter state.
  * Handles the recentlyCompleted linger, showCompleted toggle, and availability.
  */

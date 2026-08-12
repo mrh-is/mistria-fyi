@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { Trophy } from "@lucide/svelte";
-
+  import { Icon } from "$lib/components/icon/index.js";
   import * as Card from "$lib/components/ui/card/index.js";
   import { Progress } from "$lib/components/ui/progress/index.js";
   import { categoryColor, categoryHref } from "$lib/data/categories.js";
@@ -16,7 +15,6 @@
     progress: CategoryProgress;
   } = $props();
 
-  const Icon = $derived(category.icon);
   const name = $derived(category.name);
   const color = $derived(categoryColor(category.key));
   const href = $derived(categoryHref(category.key));
@@ -40,9 +38,12 @@
     <Card.Content class="flex flex-col gap-2 px-4">
       <div class="flex items-center gap-2">
         {#if isComplete}
-          <Trophy class="size-4 shrink-0 text-yellow-700 dark:text-yellow-400" />
+          <Icon.Category
+            category="complete"
+            class="size-4 shrink-0 text-yellow-700 dark:text-yellow-400"
+          />
         {:else}
-          <Icon class="size-4 shrink-0 text-(--category-color)" />
+          <Icon.Category category={category.key} class="size-4 shrink-0 text-(--category-color)" />
         {/if}
         <span class="min-w-0 flex-1 text-base font-medium">{name}</span>
         <span class="shrink-0 text-sm text-muted-foreground">

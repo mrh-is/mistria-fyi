@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Circle, CircleCheckBig, CircleDashed } from "@lucide/svelte";
   import { toast } from "svelte-sonner";
 
   import ExpandableSection from "$lib/components/expandable-section.svelte";
+  import { Icon } from "$lib/components/icon/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -66,9 +66,9 @@
   })}
   {#if visibleQuests.length > 0}
     <ExpandableSection
-      count={visibleQuests.filter((q) => getQuestState(q.id) === "completed").length}
+      count={quests.filter((q) => getQuestState(q.id) === "completed").length}
       name={typeLabels[questType] ?? questType}
-      total={visibleQuests.length}
+      total={quests.length}
     >
       {#each visibleQuests as quest (quest.id)}
         {@const questState = getQuestState(quest.id)}
@@ -122,13 +122,14 @@
               }
             }}
           >
-            {#if questState === "none"}
-              <CircleDashed class="size-5 text-muted-foreground/50" />
-            {:else if questState === "obtained"}
-              <Circle class="size-5 text-amber-500 dark:text-amber-400" />
-            {:else}
-              <CircleCheckBig class="size-5 text-green-600 dark:text-green-400" />
-            {/if}
+            <Icon.Completion
+              state={questState}
+              class="size-5 {questState === 'none'
+                ? 'text-muted-foreground/50'
+                : questState === 'obtained'
+                  ? 'text-amber-500 dark:text-amber-400'
+                  : 'text-green-600 dark:text-green-400'}"
+            />
           </button>
           <span class="min-w-0 flex-1 text-base">
             {quest.displayName}

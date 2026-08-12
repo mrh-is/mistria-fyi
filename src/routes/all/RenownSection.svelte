@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { Star } from "@lucide/svelte";
-
+  import { Icon } from "$lib/components/icon/index.js";
   import Stepper from "$lib/components/stepper.svelte";
   import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
@@ -62,7 +61,8 @@
         <span class="text-base font-medium">{currentRankName}</span>
         <!-- Partially-filled rank star -->
         <div class="relative size-4 shrink-0" aria-hidden="true">
-          <Star
+          <Icon.ProgressMark
+            type="town_rank"
             class="absolute inset-0 size-4"
             style="color: {currentRankColor}"
             strokeWidth={1.5}
@@ -72,7 +72,8 @@
               class="absolute inset-0 overflow-hidden"
               style="clip-path: inset(0 {100 - fillPct}% 0 0)"
             >
-              <Star
+              <Icon.ProgressMark
+                type="town_rank"
                 class="size-4"
                 style="color: {currentRankColor}"
                 fill={currentRankColor}
