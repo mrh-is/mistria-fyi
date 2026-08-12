@@ -25,7 +25,7 @@
     almanac: "Almanac",
     animals: "Animals",
     cosmetics: "Cosmetics",
-    npcs: "NPCs",
+    npcs: "Relationships",
     quests: "Quests",
   };
 
