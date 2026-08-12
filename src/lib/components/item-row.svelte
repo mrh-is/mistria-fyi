@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { ChevronRight } from "@lucide/svelte";
   import { slide } from "svelte/transition";
 
+  import { Icon } from "$lib/components/icon/index.js";
   import ItemDetail from "$lib/components/item-detail.svelte";
   import RestrictionBadges from "$lib/components/restriction-badges.svelte";
   import { Checkbox } from "$lib/components/ui/checkbox/index.js";
@@ -79,7 +79,8 @@
         }}
       >
         <span class="text-base group-hover:underline">{name}</span>
-        <ChevronRight
+        <Icon.UI
+          type="disclosure"
           class="mt-1.5 size-3 shrink-0 text-muted-foreground opacity-40 transition-all group-hover:opacity-60 {expanded
             ? 'rotate-90'
             : ''}"

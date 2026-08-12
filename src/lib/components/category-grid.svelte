@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { Trophy } from "@lucide/svelte";
-
   import CategoryCard from "$lib/components/category-card.svelte";
+  import { Icon } from "$lib/components/icon/index.js";
   import { CATEGORIES } from "$lib/data/categories.js";
   import { getAllProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -43,7 +42,7 @@
       <div
         class="flex items-center gap-1.5 text-sm font-medium text-yellow-700 dark:text-yellow-400"
       >
-        <Trophy class="size-3.5" />
+        <Icon.Category category="complete" class="size-3.5" />
         <span>Completed</span>
       </div>
       <div class="grid grid-cols-2 gap-2">

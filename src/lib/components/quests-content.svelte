@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Circle, CircleCheckBig, CircleDashed } from "@lucide/svelte";
   import { toast } from "svelte-sonner";
 
   import ExpandableSection from "$lib/components/expandable-section.svelte";
+  import { Icon } from "$lib/components/icon/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
@@ -113,13 +113,14 @@
               }
             }}
           >
-            {#if questState === "none"}
-              <CircleDashed class="size-5 text-muted-foreground/50" />
-            {:else if questState === "obtained"}
-              <Circle class="size-5 text-amber-500 dark:text-amber-400" />
-            {:else}
-              <CircleCheckBig class="size-5 text-green-600 dark:text-green-400" />
-            {/if}
+            <Icon.Completion
+              state={questState}
+              class="size-5 {questState === 'none'
+                ? 'text-muted-foreground/50'
+                : questState === 'obtained'
+                  ? 'text-amber-500 dark:text-amber-400'
+                  : 'text-green-600 dark:text-green-400'}"
+            />
           </button>
           <span class="min-w-0 flex-1 text-base">
             {quest.displayName}

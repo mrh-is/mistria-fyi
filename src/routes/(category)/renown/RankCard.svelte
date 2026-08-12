@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Star } from "@lucide/svelte";
+  import { Icon } from "$lib/components/icon/index.js";
 
   interface Props {
     levelInRank?: number;
@@ -35,7 +35,8 @@
   <!-- Star icon -->
   <div class="relative size-7 shrink-0" aria-hidden="true">
     <!-- Background (empty) star -->
-    <Star
+    <Icon.ProgressMark
+      type="town_rank"
       class="absolute inset-0 size-7 {state === 'upcoming' ? 'text-muted-foreground/30' : ''}"
       style="color: {state !== 'upcoming' ? starColor : ''}"
       strokeWidth={1.5}
@@ -46,7 +47,13 @@
         class="absolute inset-0 overflow-hidden"
         style="clip-path: inset(0 {100 - fillPct}% 0 0)"
       >
-        <Star class="size-7" style="color: {starColor}" fill={starColor} strokeWidth={1.5} />
+        <Icon.ProgressMark
+          type="town_rank"
+          class="size-7"
+          style="color: {starColor}"
+          fill={starColor}
+          strokeWidth={1.5}
+        />
       </div>
     {/if}
   </div>
@@ -70,7 +77,8 @@
       {levelInRank}/{levelsPerRank}
     </span>
   {:else if state === "completed"}
-    <Star
+    <Icon.ProgressMark
+      type="town_rank"
       class="size-4 shrink-0"
       style="color: {starColor}"
       fill={starColor}
