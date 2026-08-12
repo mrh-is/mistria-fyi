@@ -200,6 +200,32 @@ describe("extractRecipes", () => {
     expect(recipe.presentations).toEqual([{ itemIds: ["vegetable_soup"], name: "Vegetable Soup" }]);
   });
 
+  it("ignores recipe scroll rewards from quest groups outside the explicit subset", () => {
+    const fiddle = makeFiddle({
+      items: {
+        furniture: {
+          test_set: {
+            heart_chair: {
+              name: "Heart Chair",
+              recipe: [{ count: 5, item: "wood" }],
+            },
+          },
+        },
+      },
+      quests: {
+        heart_quests: {
+          heart_chair_reward: {
+            rewards: [{ crafting_scroll: "heart_chair" }],
+          },
+        },
+      },
+    });
+
+    const { recipes } = extractRecipes(fiddle);
+
+    expect(recipes["heart_chair" as RecipeId].sources).toEqual([]);
+  });
+
   it("excludes items without a recipe array or recipe_key", () => {
     const fiddle = makeFiddle({
       items: {

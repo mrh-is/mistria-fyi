@@ -1,3 +1,5 @@
+import { forEachQuest, TRACKED_QUEST_GROUPS } from "../extractor-helpers.js";
+
 import type { AnimalId, ItemId, QuestId, SpellId, TrackerData } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
@@ -51,44 +53,22 @@ export function applySpellQuestGates(
   }
 }
 
-const TRACKED_QUEST_GROUP_KEYS = [
-  "story_quests",
-  "heart_quests",
-  "fetch_quests",
-  "crown_quests",
-  "stillwell_challenges",
-  "tali_challenges",
-];
-
 export function extractQuestGates(fiddle: ParsedGameData): QuestGateIndex {
-  const questGroups = fiddle.quests as
-    Record<string, Record<string, Record<string, unknown>>> | undefined;
-
   const directRewardQuestsByItemId: Record<string, Set<QuestId>> = {};
 
-  if (questGroups) {
-    // These allowlisted keys are TOML group/file names, excluding request-board and registry siblings.
-    for (const questType of TRACKED_QUEST_GROUP_KEYS) {
-      const questGroup = questGroups[questType];
-      if (!questGroup || typeof questGroup !== "object") continue;
+  forEachQuest(fiddle, TRACKED_QUEST_GROUPS, (_questType, questId, quest) => {
+    const rewards = Array.isArray(quest.rewards) ? quest.rewards : [];
+    for (const reward of rewards) {
+      if (typeof reward !== "object" || reward === null) continue;
+      const itemId = (reward as Record<string, unknown>).item as string | undefined;
+      if (!itemId) continue;
 
-      for (const [questId, quest] of Object.entries(questGroup)) {
-        if (questId === "default" || typeof quest !== "object" || quest === null) continue;
-
-        const rewards = Array.isArray(quest.rewards) ? quest.rewards : [];
-        for (const reward of rewards) {
-          if (typeof reward !== "object" || reward === null) continue;
-          const itemId = (reward as Record<string, unknown>).item as string | undefined;
-          if (!itemId) continue;
-
-          if (!directRewardQuestsByItemId[itemId]) {
-            directRewardQuestsByItemId[itemId] = new Set();
-          }
-          directRewardQuestsByItemId[itemId].add(questId as QuestId);
-        }
+      if (!directRewardQuestsByItemId[itemId]) {
+        directRewardQuestsByItemId[itemId] = new Set();
       }
+      directRewardQuestsByItemId[itemId].add(questId as QuestId);
     }
-  }
+  });
 
   const directItemRewardIndex: Record<string, QuestId[]> = {};
   for (const [itemId, quests] of Object.entries(directRewardQuestsByItemId)) {

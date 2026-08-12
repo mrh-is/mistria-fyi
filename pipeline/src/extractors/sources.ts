@@ -1,3 +1,4 @@
+import { forEachItem } from "../extractor-helpers.js";
 import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
 import {
   buildRequirementDefinitions,
@@ -363,33 +364,17 @@ function extractRecipeSources(
   fiddle: ParsedGameData,
   sourcesByTargetId: AcquisitionSourceIndex,
 ): void {
-  const items = fiddle.items as
-    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
-  if (!items) return;
-
-  const furniture = items.furniture;
-  if (furniture) {
-    for (const subCategory of Object.values(furniture)) {
-      for (const [itemId, item] of Object.entries(subCategory)) {
-        if (itemId === "default") continue;
-        if (typeof item !== "object" || item === null) continue;
-        if (item.recipe || item.recipe_key) {
-          addSource(sourcesByTargetId, itemId, { type: "craft" });
-        }
-      }
+  forEachItem(fiddle, (itemId, item, topCat) => {
+    if (topCat === "furniture" && (item.recipe || item.recipe_key)) {
+      addSource(sourcesByTargetId, itemId, { type: "craft" });
     }
-  }
+  });
 
-  const other = items.other;
-  if (other?.cooked_dishes) {
-    for (const [itemId, item] of Object.entries(other.cooked_dishes)) {
-      if (itemId === "default") continue;
-      if (typeof item !== "object" || item === null) continue;
-      if (item.recipe) {
-        addSource(sourcesByTargetId, itemId, { type: "cook" });
-      }
+  forEachItem(fiddle, (itemId, item, topCat, subCat) => {
+    if (topCat === "other" && subCat === "cooked_dishes" && item.recipe) {
+      addSource(sourcesByTargetId, itemId, { type: "cook" });
     }
-  }
+  });
 }
 
 function extractRenownRewards(
