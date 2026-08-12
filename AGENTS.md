@@ -3,6 +3,15 @@
 > Agent-specific instructions. For project conventions, architecture, and workflow, see
 > [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Worktree Requirement
+
+**All agents must work in a git worktree.** Multiple agents run concurrently in this repo; a shared
+working tree causes edit collisions, dirty-state confusion, and branch-switch destruction.
+
+Use the `superpowers:using-git-worktrees` skill to set up your workspace. This is a declared
+preference: do not ask for consent, just create the worktree. Name it after the branch:
+`<issue-number>-<short-description>`.
+
 ## Task Workflow
 
 Work is tracked via [GitHub Issues](https://github.com/mrh-is/harvest-helper/issues). To pick up a
@@ -10,7 +19,7 @@ task:
 
 1. Read the issue **and its comments** (`gh issue view <number> --comments` or via GitHub API/MCP).
    Comments often contain screenshots, clarifications, and additional requirements.
-2. Create a branch: `<issue-number>-<short-description>`.
+2. Set up an isolated worktree using the `superpowers:using-git-worktrees` skill.
 3. Do the work. Run `pnpm run check` and `pnpm run lint:fix` before committing (lint:fix runs both
    prettier and eslint with auto-fix; `pnpm run lint` checks without fixing).
 4. Commit, push the branch, and open a PR that references the issue (`Closes #N` in the PR body).
