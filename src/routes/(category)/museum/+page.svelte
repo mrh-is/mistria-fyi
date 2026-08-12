@@ -1,7 +1,7 @@
 <script lang="ts">
-  import CategoryHeader from "$lib/components/category-header.svelte";
   import MuseumContent from "$lib/components/museum-content.svelte";
-  import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
+  import PageHeader from "$lib/components/page-header.svelte";
+  import { CATEGORY_BY_KEY, categoryColor } from "$lib/data/categories.js";
   import { getMuseumProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
@@ -14,6 +14,13 @@
   );
 </script>
 
-<CategoryHeader category={CATEGORY_BY_KEY.museum} {progress} />
+<PageHeader
+  icon={{
+    color: categoryColor(CATEGORY_BY_KEY.museum.key),
+    component: CATEGORY_BY_KEY.museum.icon,
+  }}
+  title={CATEGORY_BY_KEY.museum.name}
+  {progress}
+/>
 
 <MuseumContent />

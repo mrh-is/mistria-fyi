@@ -1,7 +1,7 @@
 <script lang="ts">
-  import CategoryHeader from "$lib/components/category-header.svelte";
+  import PageHeader from "$lib/components/page-header.svelte";
   import SkillsContent from "$lib/components/skills-content.svelte";
-  import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
+  import { CATEGORY_BY_KEY, categoryColor } from "$lib/data/categories.js";
   import { getSkillsProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
@@ -14,6 +14,13 @@
   );
 </script>
 
-<CategoryHeader category={CATEGORY_BY_KEY.skills} {progress} />
+<PageHeader
+  icon={{
+    color: categoryColor(CATEGORY_BY_KEY.skills.key),
+    component: CATEGORY_BY_KEY.skills.icon,
+  }}
+  title={CATEGORY_BY_KEY.skills.name}
+  {progress}
+/>
 
 <SkillsContent />

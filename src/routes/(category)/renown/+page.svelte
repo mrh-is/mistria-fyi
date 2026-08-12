@@ -1,10 +1,10 @@
 <script lang="ts">
-  import CategoryHeader from "$lib/components/category-header.svelte";
   import { Icon } from "$lib/components/icon/index.js";
+  import PageHeader from "$lib/components/page-header.svelte";
   import Stepper from "$lib/components/stepper.svelte";
   import { Input } from "$lib/components/ui/input/index.js";
   import { Progress } from "$lib/components/ui/progress/index.js";
-  import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
+  import { CATEGORY_BY_KEY, categoryColor } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
   import { clampRenownLevel, getRenownProgress, MAX_RENOWN_LEVEL } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -77,7 +77,14 @@
   }
 </script>
 
-<CategoryHeader category={CATEGORY_BY_KEY.renown} {progress} />
+<PageHeader
+  icon={{
+    color: categoryColor(CATEGORY_BY_KEY.renown.key),
+    component: CATEGORY_BY_KEY.renown.icon,
+  }}
+  title={CATEGORY_BY_KEY.renown.name}
+  {progress}
+/>
 
 <!-- Current rank hero -->
 <div class="flex flex-col items-center gap-2 rounded-xl bg-accent/60 px-4 py-5">

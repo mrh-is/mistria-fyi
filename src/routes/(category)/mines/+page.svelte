@@ -1,7 +1,7 @@
 <script lang="ts">
-  import CategoryHeader from "$lib/components/category-header.svelte";
   import MinesContent from "$lib/components/mines-content.svelte";
-  import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
+  import PageHeader from "$lib/components/page-header.svelte";
+  import { CATEGORY_BY_KEY, categoryColor } from "$lib/data/categories.js";
   import { getMinesProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
@@ -14,6 +14,10 @@
   );
 </script>
 
-<CategoryHeader category={CATEGORY_BY_KEY.mines} {progress} />
+<PageHeader
+  icon={{ color: categoryColor(CATEGORY_BY_KEY.mines.key), component: CATEGORY_BY_KEY.mines.icon }}
+  title={CATEGORY_BY_KEY.mines.name}
+  {progress}
+/>
 
 <MinesContent defaultOpen={true} />
