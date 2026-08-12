@@ -153,7 +153,9 @@
 
   // ── Filter active state ───────────────────────────────────────────────────
   let filtersActive = $derived(
-    userState.state.availabilityMode !== "available" || userState.state.showCompleted,
+    userState.state.availabilityMode !== "available" ||
+      userState.state.showCompleted ||
+      toolbarState.sourceFilterActive,
   );
 </script>
 
@@ -271,6 +273,54 @@
                 </ToggleGroup.Root>
               </div>
             {/if}
+            {#if toolbarState.recipeSourceFilters.length > 0}
+              <div class="flex flex-col gap-2">
+                <div class="flex items-center justify-between">
+                  <p class="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                    Recipe source
+                  </p>
+                  <div class="flex gap-2">
+                    <button
+                      class="text-xs text-muted-foreground hover:text-foreground"
+                      type="button"
+                      onclick={() => {
+                        toolbarState.showAllSourceFilters();
+                      }}
+                    >
+                      Show all
+                    </button>
+                    <button
+                      class="text-xs text-muted-foreground hover:text-foreground"
+                      type="button"
+                      onclick={() => {
+                        toolbarState.hideAllSourceFilters();
+                      }}
+                    >
+                      Hide all
+                    </button>
+                  </div>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  {#each toolbarState.recipeSourceFilters as filter (filter.label)}
+                    {@const active = toolbarState.activeSourceLabels.has(filter.label)}
+                    {@const Icon = filter.icon}
+                    <button
+                      class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors {active
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border text-muted-foreground hover:bg-muted'}"
+                      type="button"
+                      aria-pressed={active}
+                      onclick={() => {
+                        toolbarState.toggleSourceFilter(filter);
+                      }}
+                    >
+                      <Icon class="size-3" />
+                      {filter.label}
+                    </button>
+                  {/each}
+                </div>
+              </div>
+            {/if}
             <BlockySwitch
               checked={userState.state.showCompleted}
               onCheckedChange={() => {
@@ -285,6 +335,7 @@
                 onclick={() => {
                   userState.setAvailabilityMode("available");
                   if (userState.state.showCompleted) userState.toggleShowCompleted();
+                  toolbarState.clearSourceFilter();
                 }}
                 type="button"
               >

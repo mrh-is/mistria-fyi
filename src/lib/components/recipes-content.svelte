@@ -5,8 +5,9 @@
     CircleCheck,
     Coins,
     Crown,
+    FishingHook,
     Flame,
-    Forklift,
+    HardHat,
     Heart,
     Landmark,
     Mail,
@@ -31,8 +32,27 @@
 
   import type { Component } from "svelte";
 
+  import type { SourceFilter } from "$lib/stores/toolbar-state.svelte.js";
   import type { RecipeId, RecipeSource } from "$lib/types/tracker-data.js";
   import type { RecipeSourceLookups } from "$lib/utils/format.js";
+
+  const SOURCE_FILTERS: SourceFilter[] = [
+    { icon: Archive, label: "Chest", types: ["beach_cave_chest"] },
+    { icon: HardHat, label: "Construction", types: ["upgrade"] },
+    { icon: CircleCheck, label: "Default", types: ["default"] },
+    { icon: Flame, label: "Dragon Forge", types: ["dragon_forge"] },
+    { icon: PartyPopper, label: "Festival", types: ["festival"] },
+    { icon: FishingHook, label: "Fishing", types: ["treasure_chest"] },
+    { icon: Mail, label: "Letter", types: ["letter"] },
+    { icon: Pickaxe, label: "Mines", types: ["mines_chest", "mines_dig_site"] },
+    { icon: Landmark, label: "Museum", types: ["museum_donation"] },
+    { icon: Coins, label: "Offering", types: ["chicken_statue", "wishing_well"] },
+    { icon: Sparkles, label: "Perk", types: ["perk"] },
+    { icon: Scroll, label: "Quest", types: ["quest"] },
+    { icon: Heart, label: "Relationship", types: ["relationship"] },
+    { icon: ShoppingCart, label: "Store", types: ["store", "store_with_perk", "scroll_bundle"] },
+    { icon: Crown, label: "Town rank", types: ["renown"] },
+  ];
 
   let recentlyCompleted = new SvelteSet<RecipeId>();
 
@@ -58,8 +78,8 @@
     scroll_bundle: ShoppingCart,
     store: ShoppingCart,
     store_with_perk: ShoppingCart,
-    treasure_chest: Archive,
-    upgrade: Forklift,
+    treasure_chest: FishingHook,
+    upgrade: HardHat,
     wishing_well: Coins,
   };
 
@@ -93,7 +113,7 @@
   let recipesByCategory = $derived.by(() => {
     const groups: { entries: RecipeEntry[]; id: string; name: string }[] = [];
     for (const cat of trackerData.almanac) {
-      const seen = new Set<string>();
+      const seen = new SvelteSet<string>();
       const entries: RecipeEntry[] = [];
       for (const [, item] of Object.entries(cat.items)) {
         if (!item.recipeId || seen.has(item.recipeId)) continue;
@@ -120,9 +140,41 @@
 
   let nameFilter = $derived(toolbarState.searchQuery);
 
-  function matchesFilter(name: string): boolean {
-    if (!nameFilter) return true;
-    return name.toLowerCase().includes(nameFilter.toLowerCase());
+  $effect(() => {
+    const allTypes = new SvelteSet<RecipeSource["type"]>();
+    for (const group of recipesByCategory) {
+      for (const entry of group.entries) {
+        for (const source of entry.sources) {
+          allTypes.add(source.type);
+        }
+      }
+    }
+    toolbarState.setRecipeSourceFilters(
+      SOURCE_FILTERS.filter((f) => f.types.some((t) => allTypes.has(t))),
+    );
+    return () => {
+      toolbarState.setRecipeSourceFilters([]);
+      toolbarState.clearSourceFilter();
+    };
+  });
+
+  let activeSourceTypes = $derived.by(() => {
+    if (!toolbarState.sourceFilterActive) return null;
+    const types = new SvelteSet<RecipeSource["type"]>();
+    for (const filter of toolbarState.recipeSourceFilters) {
+      if (toolbarState.activeSourceLabels.has(filter.label)) {
+        for (const t of filter.types) types.add(t);
+      }
+    }
+    return types;
+  });
+
+  function matchesFilter(entry: RecipeEntry): boolean {
+    if (nameFilter && !entry.name.toLowerCase().includes(nameFilter.toLowerCase())) return false;
+    if (activeSourceTypes) {
+      return entry.sources.some((s) => activeSourceTypes.has(s.type));
+    }
+    return true;
   }
 
   function isAllComplete(): boolean {
@@ -147,7 +199,7 @@
 
 {#each recipesByCategory as group (group.id)}
   {@const filteredEntries = group.entries.filter((e) => {
-    if (!matchesFilter(e.name)) return false;
+    if (!matchesFilter(e)) return false;
     if (!userState.state.showCompleted && userState.state.completed.almanacRecipes.has(e.id)) {
       return recentlyCompleted.has(e.id);
     }
@@ -157,7 +209,7 @@
     <ExpandableSection
       count={filteredEntries.filter((e) => userState.state.completed.almanacRecipes.has(e.id))
         .length}
-      forceOpen={!!nameFilter}
+      forceOpen={!!nameFilter || toolbarState.sourceFilterActive}
       name={group.name}
       total={filteredEntries.length}
     >
