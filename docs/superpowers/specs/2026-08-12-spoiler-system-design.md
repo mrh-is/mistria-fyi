@@ -162,15 +162,19 @@ visibility engine uses. A quest with `QuestState = "none"` may be `QuestVisibili
 `UserProgressionState` from the user's raw completed state and the tracker data's chain/ordering
 information:
 
-- **`questVisibility`**: computed per-quest from its prerequisites, not from a linear walk.
-  A quest is "completed" if the user has marked it so. An incomplete quest is "available" when all
-  of its own prerequisites are satisfied (prerequisite quest completed, heart level met, etc.).
-  Otherwise it is "unavailable". This handles parallel branches correctly: two quests with
-  independent prerequisites can both be "available" even if they appear adjacent in the data. For
-  strictly linear registries (crown, stillwell, tali), this reduces to sequential availability
-  since each quest's only prerequisite is the previous one. Heart quests use per-NPC chains gated
-  on heart level + previous quest completion. Fetch quests use request board requirements resolved
-  against the rest of the progression state.
+- **`questVisibility`**: computed per-quest, respecting actual user state first:
+  1. `QuestState = "completed"` -> `QuestVisibility = "completed"`
+  2. `QuestState = "obtained"` -> `QuestVisibility = "available"` (unconditionally — the player
+     has demonstrably reached this quest, so prerequisite reconstruction is irrelevant)
+  3. `QuestState = "none"` -> evaluate prerequisites: "available" when all prerequisites are
+     satisfied, "unavailable" otherwise
+
+  Prerequisites are per-quest, not from a linear walk. Two quests with independent prerequisites
+  can both be "available" even if they appear adjacent in the data. For strictly linear registries
+  (crown, stillwell, tali), this reduces to sequential availability since each quest's only
+  prerequisite is the previous one. Heart quests use per-NPC chains gated on heart level +
+  previous quest completion. Fetch quests use request board requirements resolved against the rest
+  of the progression state.
 - **`knownNpcs`**: an NPC is known if their visibility condition (from tracker data) evaluates to
   true against the current quest/progression state. For NPCs without an explicit unlock gate (i.e.,
   visibility is `always`), heart level > 0 also marks them known. NPCs with explicit unlock gates
@@ -271,9 +275,11 @@ New extraction from `letters.toml` and quest registry files. For each quest cate
 ordering data:
 
 - **Story quests**: extract `completed_quest` dependencies from letters that start story quests.
-  Build a dependency graph; emit `previousQuestId` / `nextQuestId` where the chain is linear. For
-  non-linear sections (if any), emit the prerequisite quest ID without forcing a linear chain.
-  Fall back to TOML file position for quests without letter triggers.
+  Build a dependency graph; emit prerequisite quest IDs per quest. For quests without an explicit
+  letter trigger or `completed_quest` dependency, emit **no prerequisite** — TOML file position
+  is used only for display sorting, never as a prerequisite edge. (Inventing dependencies from
+  file order would contradict the out-of-scope rule against fabricating quest links, and could
+  cause the "update my progress" cascade to mark unrelated quests completed.)
 - **Crown / Stillwell / Tali**: use the explicit `order` arrays from registry files.
 - **Heart quests**: extract `reached_heart_level` requirements from letters. Emit per-NPC ordered
   lists with heart level thresholds and `completed_quest` prerequisites.
@@ -514,10 +520,17 @@ function redactionState(
 Components use this to decide rendering without understanding conditions themselves.
 
 For entities with **multiple sources** (15 recipes have 2+ sources, e.g., `void_bonsai` from both
-museum donation and a perk), `redactionState` is called per-source. Each source row renders
-independently: one source may be `"source-only"` while another is `"redacted"`. The entity name
-itself is `"visible"` when the entity-level condition is met, regardless of individual source
-states.
+museum donation and a perk), visibility has two layers:
+
+1. **Entity-name visibility**: determined by the entity-level `visibility` condition. When met, the
+   item/recipe name is shown.
+2. **Per-source detail visibility**: each source has its own `visibility` condition evaluated
+   independently. A source whose condition is not met remains redacted even when the entity name
+   is visible. This prevents an ungated source (e.g., store purchase) from revealing the details
+   of a still-gated source (e.g., perk name, quest name) on the same entity.
+
+`redactionState` is called per-source. The entity name uses the entity-level condition; each
+source row uses its own source-level condition for detail rendering.
 
 ### Reactive integration
 
