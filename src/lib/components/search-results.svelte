@@ -1,8 +1,11 @@
 <script lang="ts">
+  import { toast } from "svelte-sonner";
+
   import { Icon } from "$lib/components/icon/index.js";
   import RestrictionBadges from "$lib/components/restriction-badges.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { getItemRestrictions } from "$lib/engine/availability.js";
+  import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
   import { searchItems } from "$lib/engine/search.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
@@ -60,10 +63,39 @@
         userState.setNpcLevel(npcId, current >= 10 ? 0 : 10);
         break;
       }
-      case "quests":
-        userState.cycleQuestState(result.id as QuestId);
-        break;
     }
+  }
+
+  function handleQuestToggle(result: SearchResult): void {
+    const questId = result.id as QuestId;
+    const newlyAdded = userState.completeQuestWithRecipes(questId);
+    const newState = userState.state.completed.questStates[result.id] ?? "none";
+
+    let message: string;
+    if (newState === "obtained") {
+      message = `Marked "${result.name}" obtained`;
+    } else if (newState === "completed") {
+      if (newlyAdded.length === 1) {
+        const names = recipeDisplayNames(newlyAdded);
+        message = `Marked "${result.name}" completed and unlocked "${names[0]}"`;
+      } else if (newlyAdded.length > 1) {
+        message = `Marked "${result.name}" completed and unlocked ${newlyAdded.length.toString()} recipes`;
+      } else {
+        message = `Marked "${result.name}" completed`;
+      }
+    } else {
+      message = `Reset "${result.name}"`;
+    }
+
+    toast(message, {
+      cancel: {
+        label: "Undo",
+        onClick: () => {
+          userState.undoQuestWithRecipes(questId, newlyAdded);
+        },
+      },
+      duration: 5000,
+    });
   }
 </script>
 
@@ -88,10 +120,14 @@
           ? `Uncheck ${result.fullName ?? result.name}`
           : `Check ${result.fullName ?? result.name}`}
         onclick={() => {
-          toggleResult(result);
-          showUndoToast(result.name, !result.completed, () => {
+          if (result.category === "quests") {
+            handleQuestToggle(result);
+          } else {
             toggleResult(result);
-          });
+            showUndoToast(result.name, !result.completed, () => {
+              toggleResult(result);
+            });
+          }
         }}
       >
         <Icon.Completion
