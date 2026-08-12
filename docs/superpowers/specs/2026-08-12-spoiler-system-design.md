@@ -41,10 +41,15 @@ type VisibilityCondition =
   | { type: "perkUnlocked"; perkId: PerkId }
   | { type: "minesLevel"; floor: number }
   | { type: "heartLevel"; npcId: NpcId; level: number }
-  | { type: "townRank"; level: number }
+  | { type: "renownLevel"; level: number }
   | { type: "and"; conditions: VisibilityCondition[] }
   | { type: "or"; conditions: VisibilityCondition[] }
 ```
+
+`renownLevel` uses the raw renown level (0-100) stored in `CompletedState.renown`, not a derived
+rank index. The existing app stores renown as a raw level; town ranks (Wood, Stone, Copper, etc.)
+are display labels derived from `trackerData.renown.levelsPerRank` (currently 10). Issue #60
+renames the UI label to "Town Rank" but the underlying data remains a level.
 
 ### How conditions attach to content
 
@@ -121,7 +126,7 @@ interface UserProgressionState {
   skillLevels: Record<SkillId, number>;
   showSpoilers: boolean;
   minesFloor: number;
-  townRank: number;
+  renown: number;
   heartLevels: Record<NpcId, number>;
   unlockedPerks: Set<PerkId>;
 
@@ -185,7 +190,7 @@ information:
   never overwrites a higher manually-tracked value. Caldarus and Seridia start at 0 hearts until
   their unlock quest, regardless of cutscene data that grants earlier heart levels (those characters
   are not interactable before their unlock).
-- **`unlockedPerks`**, **`skillLevels`**, **`minesFloor`**, **`townRank`**: pass through from
+- **`unlockedPerks`**, **`skillLevels`**, **`minesFloor`**, **`renown`**: pass through from
   `CompletedState` directly.
 
 ### State population
@@ -315,10 +320,19 @@ each named requirement:
 - Boolean named requirement references (e.g., `repaired_general_store = true`) -> resolve
   recursively
 - `or` arrays -> `{ type: "or", conditions: [...] }`
-- `invert` -> skip for visibility purposes (inverted conditions represent time-limited states,
-  not spoiler gates)
+- `invert` -> project to `{ type: "always" }` (inverted conditions represent time-limited states,
+  not spoiler gates; treating them as always-satisfied preserves boolean semantics)
 - `met_npc` -> `npcKnown`
 - `completed_quest` -> `questCompleted`
+- `is_season` / `is_day_type` / `reached_date` / `acquired_item` -> project to
+  `{ type: "always" }` (not spoiler gates; availability restrictions only)
+
+**Compositional projection**: non-spoiler predicates are projected to `{ type: "always" }`, not
+dropped. This preserves boolean semantics: `or(acquired_item, completed_quest)` projects to
+`or(always, questCompleted)` which simplifies to `always`, correctly reflecting that the item is
+obtainable without quest completion. After projection, simplify using boolean identities:
+`and(..., always)` drops the `always`; `or(..., always)` collapses to `always`; `and()` (empty) =
+`always`; `or()` (empty) = `never`.
 
 The existing `Restriction[]` flattening (which silently drops `any`/`not` branches) is preserved
 for backward compatibility but the new `VisibilityCondition` path is the primary output.
@@ -385,8 +399,8 @@ the corresponding fetch quest. Requirement types to resolve:
 | `reached_skill_level` | `skillLevel` | 13 |
 | `reached_heart_level` | `heartLevel` | 3 |
 | `has_barn` / `has_coop` / `has_any_animal` | `questCompleted("repair_haydens_barn")` | 8 |
-| `acquired_item` | Filter out (not a spoiler gate) | 19 |
-| `is_season` / `is_day_type` / `reached_date` | Filter out (not spoiler gates) | 126 |
+| `acquired_item` | Project to `always` (not a spoiler gate) | 19 |
+| `is_season` / `is_day_type` / `reached_date` | Project to `always` (not spoiler gates) | 126 |
 
 Self-referential chains (e.g., `common_bait -> uncommon_bait -> rare_bait`) become
 `questCompleted` conditions on the previous tier.
@@ -428,6 +442,13 @@ Cosmetic visibility derives from the source: store-bought cosmetics inherit thei
 visibility, quest-reward cosmetics inherit the quest's visibility, treasure-chest cosmetics inherit
 their mines biome/floor gate, etc. `defaultUnlocked: true` cosmetics get `{ type: "always" }`.
 
+**Completeness validation**: after all source-wiring steps, the pipeline must assert that every
+non-`defaultUnlocked` cosmetic has at least one source. Any unsourced cosmetics fail the pipeline
+build with their IDs listed. This is the enforcement side of issue #78 (source coverage). The same
+validation applies to all entity types: items, recipes, and cosmetics must each have an explicit
+`visibility` derivation or the pipeline errors. Intentional exceptions (wedding cosmetics) are
+documented with `{ type: "never" }` and a comment in the pipeline code.
+
 ### 3i. Perk visibility
 
 Emit visibility on each perk based on its tier's skill level threshold from `perkTierLevels`:
@@ -445,7 +466,7 @@ Emit visibility conditions for quest categories that are themselves spoilers:
 
 | Category | Visibility condition |
 |---|---|
-| `crown_quests` | `{ type: "townRank", level: N }` (exact unlock threshold TBD; verify from game data or wiki) |
+| `crown_quests` | `{ type: "renownLevel", level: N }` (exact unlock threshold TBD; verify from game data or wiki) |
 | `stillwell_challenges` | `{ type: "npcKnown", npcId: "stillwell" }` |
 | `tali_challenges` | `{ type: "npcKnown", npcId: "taliferro" }` |
 | `story_quests` | `{ type: "always" }` (first quest is always visible) |
@@ -494,7 +515,7 @@ Recursively evaluates the condition tree. Each primitive is a direct lookup:
 - `perkUnlocked` -> `state.unlockedPerks.has(perkId)`
 - `minesLevel` -> `state.minesFloor >= floor`
 - `heartLevel` -> `state.heartLevels[npcId] >= level`
-- `townRank` -> `state.townRank >= level`
+- `renownLevel` -> `state.renown >= level`
 - `and` -> every sub-condition is visible
 - `or` -> any sub-condition is visible
 
@@ -607,7 +628,7 @@ Comprehensive mapping of every content type to its visibility condition source:
 | Story quests | Chain ordering from letters | `questCompleted(previousQuest)` |
 | Heart quests | Letter `reached_heart_level` + NPC known | `and(npcKnown, heartLevel)` |
 | Fetch quests | Request board requirements | `questCompleted`, area flags, skill levels |
-| Crown quests | Town rank + chain ordering | `townRank(N)`, `questCompleted(prev)` (exact rank TBD) |
+| Crown quests | Renown level + chain ordering | `renownLevel(N)`, `questCompleted(prev)` (exact level TBD) |
 | Stillwell challenges | NPC known + chain ordering | `npcKnown("stillwell")` |
 | Tali challenges | NPC known + chain ordering | `npcKnown("taliferro")` |
 | NPCs | Unlock quest or always | `questCompleted` or `always` |
@@ -620,7 +641,7 @@ Comprehensive mapping of every content type to its visibility condition source:
 | Recipes (quest-sourced) | Quest visibility | `questCompleted(questId)` |
 | Recipes (mines) | Mines floor + perk | `and(minesLevel, perkUnlocked)` |
 | Recipes (museum) | Always (museum is day-1) | `always` |
-| Recipes (renown) | Town rank | `townRank(level)` |
+| Recipes (renown) | Renown level | `renownLevel(level)` |
 | Recipes (letter) | Always (temporal trigger, not a spoiler gate) | `always` |
 | Recipes (default) | Always | `always` |
 | Recipes (treasure chest) | Chest tier | TBD during implementation |
@@ -634,7 +655,7 @@ Comprehensive mapping of every content type to its visibility condition source:
 | Museum items | Area gate from acquisition source | `questCompleted` or `always` (see below) |
 | Mines biomes | Mines floor | `minesLevel(startFloor)` |
 | Spells | Quest gate | `questCompleted` (tablet quests) |
-| Renown rewards | Town rank | `townRank(level)` |
+| Renown rewards | Renown level | `renownLevel(level)` |
 
 **Museum item visibility**: museum items are not uniformly `always`. Items sourced exclusively from
 gated areas (Deep Woods, Summit, Western Ruins upper, Beach Cave) inherit the area's visibility
