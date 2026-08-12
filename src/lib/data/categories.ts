@@ -23,7 +23,7 @@ const CATEGORIES_INTERNAL: readonly {
   { icon: CATEGORY_ICON.almanac, key: "almanac", name: "Almanac" },
   { icon: CATEGORY_ICON.recipes, key: "recipes", name: "Recipes" },
   { icon: CATEGORY_ICON.animals, key: "animals", name: "Animals" },
-  { icon: CATEGORY_ICON.npcs, key: "npcs", name: "NPCs" },
+  { icon: CATEGORY_ICON.npcs, key: "npcs", name: "Relationships" },
   { icon: CATEGORY_ICON.cosmetics, key: "cosmetics", name: "Cosmetics" },
   { icon: CATEGORY_ICON.skills, key: "skills", name: "Skills" },
   { icon: CATEGORY_ICON.renown, key: "renown", name: "Renown" },
