@@ -33,7 +33,6 @@ A visibility condition is a small, serializable expression tree.
 ```typescript
 type VisibilityCondition =
   | { type: "always" }
-  | { type: "never" }
   | { type: "questCompleted"; questId: QuestId }
   | { type: "questAvailable"; questId: QuestId }
   | { type: "npcKnown"; npcId: NpcId }
@@ -41,15 +40,15 @@ type VisibilityCondition =
   | { type: "perkUnlocked"; perkId: PerkId }
   | { type: "minesLevel"; floor: number }
   | { type: "heartLevel"; npcId: NpcId; level: number }
-  | { type: "renownLevel"; level: number }
+  | { type: "townRank"; level: number }
+  | { type: "married"; npcId: NpcId }
   | { type: "and"; conditions: VisibilityCondition[] }
   | { type: "or"; conditions: VisibilityCondition[] }
 ```
 
-`renownLevel` uses the raw renown level (0-100) stored in `CompletedState.renown`, not a derived
-rank index. The existing app stores renown as a raw level; town ranks (Wood, Stone, Copper, etc.)
-are display labels derived from `trackerData.renown.levelsPerRank` (currently 10). Issue #60
-renames the UI label to "Town Rank" but the underlying data remains a level.
+`townRank` uses the raw renown level (0-100) stored in `CompletedState.renown`. Issue #60 renames
+the UI label to "Town Rank"; the condition name matches that terminology. Town ranks (Wood, Stone,
+Copper, etc.) are display labels derived from `trackerData.renown.levelsPerRank` (currently 10).
 
 ### How conditions attach to content
 
@@ -128,6 +127,7 @@ interface UserProgressionState {
   minesFloor: number;
   renown: number;
   unlockedPerks: Set<PerkId>;
+  marriedNpc: NpcId | null;
 
   // From UserState (not CompletedState)
   showSpoilers: boolean;
@@ -142,16 +142,18 @@ Note: the existing `CompletedState` uses `npcLevels` (not `heartLevels`). The sp
 this name. `showSpoilers` lives on `UserState`, not `CompletedState`; `deriveProgressionState`
 takes both `completed` and `showSpoilers` as inputs (or the full `UserState`).
 
-`unlockedPerks` is a new field on `CompletedState` (stored, imported from save file or manually
-tracked); it passes through to `UserProgressionState` for use by the evaluator. `knownNpcs` and
-`questVisibility` are derived — they live only on `UserProgressionState`, never persisted.
+`unlockedPerks` and `marriedNpc` are new fields on `CompletedState` (stored, imported from save
+file or manually tracked); they pass through to `UserProgressionState` for use by the evaluator.
+`knownNpcs` and `questVisibility` are derived — they live only on `UserProgressionState`, never
+persisted.
 
-New `CompletedState` field:
+New `CompletedState` fields:
 
 ```typescript
 interface CompletedState {
   // ... existing fields ...
   unlockedPerks: Set<PerkId>; // New
+  marriedNpc: NpcId | null;  // New — which dateable NPC the player married, or null
 }
 
 type QuestVisibility = "unavailable" | "available" | "completed";
@@ -187,10 +189,10 @@ information:
   previous quest completion. Fetch quests use request board requirements resolved against the rest
   of the progression state.
 - **`knownNpcs`**: an NPC is known if their visibility condition (from tracker data) evaluates to
-  true against the current quest/progression state. For NPCs without an explicit unlock gate (i.e.,
-  visibility is `always`), heart level > 0 also marks them known. NPCs with explicit unlock gates
-  (Caldarus, Seridia, Saturday Market vendors) are known only when their gate quest is completed,
-  regardless of heart level — this prevents story-granted heart levels from revealing them early.
+  true against the current quest/progression state. NPCs without an explicit unlock gate (i.e.,
+  visibility is `always`) are **always known** — they start known at heart level 0 and are never
+  redacted. Only NPCs with explicit unlock gates (Caldarus, Seridia, Saturday Market vendors) can
+  be unknown; they become known when their gate quest is completed.
 - **`npcLevels`**: two-step computation for NPCs with explicit unlock gates (Caldarus, Seridia):
   1. **Stored level** (in `CompletedState.npcLevels`): `max(manuallyTracked, questDerived)` using
      `heartLevelChanges` data. This is the persisted value.
@@ -199,8 +201,8 @@ information:
      (their unlock quest is completed), the effective level equals the stored level.
 
   This prevents story-granted heart levels from satisfying `heartLevel` conditions before the NPC
-  is interactable. For NPCs without explicit unlock gates (visibility = `always`), the effective
-  level equals the stored level directly (no masking).
+  is interactable. For NPCs without explicit unlock gates, the effective level equals the stored
+  level directly (no masking needed since these NPCs are always known).
 - **`unlockedPerks`**, **`skillLevels`**, **`minesFloor`**, **`renown`**: pass through from
   `CompletedState` directly.
 
@@ -275,17 +277,17 @@ prevent the override flow entirely.)
   - `questAvailable(id)` -> mark prerequisite quests completed (quest itself becomes available)
   - `skillLevel(id, n)` -> set skill to `max(current, n)`
   - `minesLevel(n)` -> set mines floor to `max(current, n)`
-  - `renownLevel(n)` -> set renown to `max(current, n)`
+  - `townRank(n)` -> set renown to `max(current, n)`
   - `heartLevel(npcId, n)` -> set NPC level to `max(current, n)`
   - `perkUnlocked(id)` -> mark perk as unlocked
+  - `married(npcId)` -> set `marriedNpc` to `npcId`
   - `and` -> satisfy all sub-conditions (recursively)
   - `or` -> present branches, user picks which to satisfy
 
   **Not invertible** (suppress "update my progress"):
-  - `never` -> no possible mutation
   - `npcKnown` -> derived from quest completion; would require recursing into the NPC's own
     visibility condition, which may itself involve non-invertible gates. Too complex for v1.
-  - Any tree containing a `never` or `npcKnown` leaf
+  - Any tree containing an `npcKnown` leaf
 - **"Cancel"**: no change.
 
 Uses the existing `AlertDialog` component pattern.
@@ -359,8 +361,8 @@ each named requirement:
 dropped. This preserves boolean semantics: `or(acquired_item, completed_quest)` projects to
 `or(always, questCompleted)` which simplifies to `always`, correctly reflecting that the item is
 obtainable without quest completion. After projection, simplify using boolean identities:
-`and(..., always)` drops the `always`; `or(..., always)` collapses to `always`; `and()` (empty) =
-`always`; `or()` (empty) = `never`.
+`and(..., always)` drops the `always`; `or(..., always)` collapses to `always`; empty compositions
+(`and()`, `or()`) simplify to `always`.
 
 The existing `Restriction[]` flattening (which silently drops `any`/`not` branches) is preserved
 for backward compatibility but the new `VisibilityCondition` path is the primary output.
@@ -447,11 +449,14 @@ From `letters.toml`, emit visibility conditions on each heart quest:
 For level 4+ heart quests, also include `questCompleted` of the previous heart quest in the
 chain.
 
-Pregnancy quests require marriage + child state that does not exist in `UserProgressionState`. Until
-marriage tracking is added, pregnancy quests use `{ type: "never" }` — unconditionally redacted,
-visible only when `showSpoilers` is enabled. When marriage tracking is added in a future spec,
-these get proper condition primitives. Wedding cosmetics likewise use `{ type: "never" }` until
-then.
+Pregnancy quests gate on `{ type: "married", "npcId": "<npc>" }` — the player must be married to
+the specific NPC. The child decision is a post-marriage choice, not a separate tracked state; the
+pregnancy quest's existence isn't a spoiler (same as heart events), just its name. So `married` is
+sufficient as the visibility gate.
+
+Marriage state: the player can marry exactly one dateable NPC. `CompletedState.marriedNpc` stores
+`NpcId | null`. Populated via save file import (exact save field TBD — needs in-game verification)
+or manual selection in settings. Wedding cosmetics also gate on `married` for the relevant NPC.
 
 Some 2-heart quests have no letter (Balor, Juniper, Valen) and trigger via world-location
 cutscenes. These still get `heartLevel` visibility conditions; the letter is just the in-game
@@ -464,7 +469,7 @@ delivery mechanism, not the spoiler gate.
 2. Extend `extractQuestRewards` to read `reward.player_cosmetic` (+2 cosmetics).
 3. Add `chest_tables` extraction from `fishing.toml` and `dungeons.toml` — parse chest loot
    pools, map `kind = "cosmetic"` entries, tag with chest tier as source.
-4. Wedding cosmetics use `{ type: "never" }` until marriage tracking is added (see Section 3g).
+4. Wedding cosmetics gate on `{ type: "married", "npcId": "<npc>" }` (see Section 3g).
 
 Cosmetic visibility derives from the source: store-bought cosmetics inherit their store's
 visibility, quest-reward cosmetics inherit the quest's visibility, treasure-chest cosmetics inherit
@@ -475,7 +480,7 @@ non-`defaultUnlocked` cosmetic has at least one source. Any unsourced cosmetics 
 build with their IDs listed. This is the enforcement side of issue #78 (source coverage). The same
 validation applies to all entity types: items, recipes, and cosmetics must each have an explicit
 `visibility` derivation or the pipeline errors. Intentional exceptions (wedding cosmetics) are
-documented with `{ type: "never" }` and a comment in the pipeline code.
+documented with an explicit comment in the pipeline code.
 
 ### 3i. Perk visibility
 
@@ -494,7 +499,7 @@ Emit visibility conditions for quest categories that are themselves spoilers:
 
 | Category | Visibility condition |
 |---|---|
-| `crown_quests` | `{ type: "renownLevel", level: N }` (**pre-implementation research required**: determine exact renown level at which the crown request board unlocks, from wiki or in-game testing. This must be resolved to a concrete number before implementation begins — `never` is not acceptable as a production value for this category since it would permanently redact content for normal users.) |
+| `crown_quests` | `{ type: "townRank", level: N }` (**pre-implementation research required**: determine exact town rank at which the crown request board unlocks, from wiki or in-game testing. This must be resolved to a concrete number before implementation begins.) |
 | `stillwell_challenges` | `{ type: "npcKnown", npcId: "stillwell" }` |
 | `tali_challenges` | `{ type: "npcKnown", npcId: "taliferro" }` |
 | `story_quests` | `{ type: "always" }` (first quest is always visible) |
@@ -535,7 +540,6 @@ function isVisible(
 Recursively evaluates the condition tree. Each primitive is a direct lookup:
 
 - `always` -> `true`
-- `never` -> `false` (only visible when `showSpoilers` override is active)
 - `questCompleted` -> `state.questVisibility[questId] === "completed"`
 - `questAvailable` -> `state.questVisibility[questId]` is `"available"` or `"completed"`
 - `npcKnown` -> `state.knownNpcs.has(npcId)`
@@ -543,7 +547,8 @@ Recursively evaluates the condition tree. Each primitive is a direct lookup:
 - `perkUnlocked` -> `state.unlockedPerks.has(perkId)`
 - `minesLevel` -> `state.minesFloor >= floor`
 - `heartLevel` -> `state.npcLevels[npcId] >= level`
-- `renownLevel` -> `state.renown >= level`
+- `townRank` -> `state.renown >= level`
+- `married` -> `state.marriedNpc === npcId`
 - `and` -> every sub-condition is visible
 - `or` -> any sub-condition is visible
 
@@ -646,7 +651,7 @@ implementation.
 
 See Section 2 for full semantics. Summary: intercepted checkbox opens `AlertDialog` with "Yes, just
 this item" / "Yes, and update my progress" / "Cancel". For `or` conditions the user picks a branch;
-for `never` conditions only "just this item" is available.
+for non-invertible conditions only "just this item" is available.
 
 ### Save importer enhancements
 
@@ -684,7 +689,7 @@ Comprehensive mapping of every content type to its visibility condition source:
 | Story quests | Chain ordering from letters | `questCompleted(previousQuest)` |
 | Heart quests | Letter `reached_heart_level` + NPC known | `and(npcKnown, heartLevel)` |
 | Fetch quests | Request board requirements | `questCompleted`, area flags, skill levels |
-| Crown quests | Renown level + chain ordering | `renownLevel(N)`, `questCompleted(prev)` (exact level TBD; see 3j) |
+| Crown quests | Town rank + chain ordering | `townRank(N)`, `questCompleted(prev)` (exact level TBD; see 3j) |
 | Stillwell challenges | NPC known + chain ordering | `npcKnown("stillwell")` |
 | Tali challenges | NPC known + chain ordering | `npcKnown("taliferro")` |
 | NPCs | Unlock quest or always | `questCompleted` or `always` |
@@ -697,7 +702,7 @@ Comprehensive mapping of every content type to its visibility condition source:
 | Recipes (quest-sourced) | Quest visibility | `questCompleted(questId)` |
 | Recipes (mines) | Mines floor + perk | `and(minesLevel, perkUnlocked)` |
 | Recipes (museum) | Always (museum is day-1) | `always` |
-| Recipes (renown) | Renown level | `renownLevel(level)` |
+| Recipes (renown) | Town rank | `townRank(level)` |
 | Recipes (letter) | Always (temporal trigger, not a spoiler gate) | `always` |
 | Recipes (default) | Always | `always` |
 | Recipes (treasure chest) | Mines floor from chest tier | `minesLevel(tierStartFloor)` (**implementation task**: map `treasureChestTiers` to floor ranges) |
@@ -711,7 +716,7 @@ Comprehensive mapping of every content type to its visibility condition source:
 | Museum items | Area gate from acquisition source | `questCompleted` or `always` (see below) |
 | Mines biomes | Mines floor | `minesLevel(startFloor)` |
 | Spells | Quest gate | `questCompleted` (tablet quests) |
-| Renown rewards | Renown level | `renownLevel(level)` |
+| Renown rewards | Town rank | `townRank(level)` |
 
 **Museum item visibility**: museum items are not uniformly `always`. Items sourced exclusively from
 gated areas (Deep Woods, Summit, Western Ruins upper, Beach Cave) inherit the area's visibility
@@ -732,8 +737,8 @@ hardcoded in the pipeline or annotated manually:
 | Caldarus NPC unlock | `questCompleted("breaking_the_fire_seal")` | No explicit flag; inferred from cutscene `heart_level_changes` |
 | Taliferro store unlock | `questCompleted("upgrade_the_saturday_market")` | No requirement on store/NPC; user confirmed |
 | Wheedle store unlock | `questCompleted("upgrade_the_saturday_market")` | Same |
-| Pregnancy quest gating | `never` (until marriage tracking added) | Marriage tracking not in current user state |
-| Wedding cosmetics | `never` (until marriage tracking added) | Source not found in TOML data |
+| Pregnancy quest gating | `married(npcId)` | Marriage state not in TOML data; derived from user-tracked `marriedNpc` |
+| Wedding cosmetics | `married(npcId)` | Source not in TOML data; gated on marriage to the relevant NPC |
 
 These are documented here so that future game data updates can be checked against them.
 
