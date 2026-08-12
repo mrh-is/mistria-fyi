@@ -364,15 +364,15 @@ function extractRecipeSources(
   fiddle: ParsedGameData,
   sourcesByTargetId: AcquisitionSourceIndex,
 ): void {
+  forEachItem(fiddle, (itemId, item, topCat) => {
+    if (topCat === "furniture" && (item.recipe || item.recipe_key)) {
+      addSource(sourcesByTargetId, itemId, { type: "craft" });
+    }
+  });
+
   forEachItem(fiddle, (itemId, item, topCat, subCat) => {
-    if (topCat === "furniture") {
-      if (item.recipe || item.recipe_key) {
-        addSource(sourcesByTargetId, itemId, { type: "craft" });
-      }
-    } else if (topCat === "other" && subCat === "cooked_dishes") {
-      if (item.recipe) {
-        addSource(sourcesByTargetId, itemId, { type: "cook" });
-      }
+    if (topCat === "other" && subCat === "cooked_dishes" && item.recipe) {
+      addSource(sourcesByTargetId, itemId, { type: "cook" });
     }
   });
 }
