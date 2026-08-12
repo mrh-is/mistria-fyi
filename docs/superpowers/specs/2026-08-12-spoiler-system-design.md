@@ -40,15 +40,15 @@ type VisibilityCondition =
   | { type: "perkUnlocked"; perkId: PerkId }
   | { type: "minesLevel"; floor: number }
   | { type: "heartLevel"; npcId: NpcId; level: number }
-  | { type: "townRank"; level: number }
+  | { type: "renownLevel"; level: number }
   | { type: "married"; npcId: NpcId }
-  | { type: "and"; conditions: VisibilityCondition[] }
-  | { type: "or"; conditions: VisibilityCondition[] }
+  | { type: "and"; conditions: [VisibilityCondition, ...VisibilityCondition[]] }
+  | { type: "or"; conditions: [VisibilityCondition, ...VisibilityCondition[]] }
 ```
 
-`townRank` uses the raw renown level (0-100) stored in `CompletedState.renown`. Issue #60 renames
-the UI label to "Town Rank"; the condition name matches that terminology. Town ranks (Wood, Stone,
-Copper, etc.) are display labels derived from `trackerData.renown.levelsPerRank` (currently 10).
+`renownLevel` uses the raw renown level (0–100) stored in `CompletedState.renown`. Town ranks (Wood,
+Stone, Copper, etc.) are display labels for bands of 10 levels, derived from
+`trackerData.renown.levelsPerRank`.
 
 ### How conditions attach to content
 
@@ -277,7 +277,7 @@ prevent the override flow entirely.)
   - `questAvailable(id)` -> mark prerequisite quests completed (quest itself becomes available)
   - `skillLevel(id, n)` -> set skill to `max(current, n)`
   - `minesLevel(n)` -> set mines floor to `max(current, n)`
-  - `townRank(n)` -> set renown to `max(current, n)`
+  - `renownLevel(n)` -> set renown to `max(current, n)`
   - `heartLevel(npcId, n)` -> set NPC level to `max(current, n)`
   - `perkUnlocked(id)` -> mark perk as unlocked
   - `married(npcId)` -> set `marriedNpc` to `npcId`
@@ -499,7 +499,7 @@ Emit visibility conditions for quest categories that are themselves spoilers:
 
 | Category | Visibility condition |
 |---|---|
-| `crown_quests` | `{ type: "townRank", level: N }` (**pre-implementation research required**: determine exact town rank at which the crown request board unlocks, from wiki or in-game testing. This must be resolved to a concrete number before implementation begins.) |
+| `crown_quests` | `{ type: "renownLevel", level: N }` (**pre-implementation research required**: determine exact town rank at which the crown request board unlocks, from wiki or in-game testing. This must be resolved to a concrete number before implementation begins.) |
 | `stillwell_challenges` | `{ type: "npcKnown", npcId: "stillwell" }` |
 | `tali_challenges` | `{ type: "npcKnown", npcId: "taliferro" }` |
 | `story_quests` | `{ type: "always" }` (first quest is always visible) |
@@ -547,7 +547,7 @@ Recursively evaluates the condition tree. Each primitive is a direct lookup:
 - `perkUnlocked` -> `state.unlockedPerks.has(perkId)`
 - `minesLevel` -> `state.minesFloor >= floor`
 - `heartLevel` -> `state.npcLevels[npcId] >= level`
-- `townRank` -> `state.renown >= level`
+- `renownLevel` -> `state.renown >= level`
 - `married` -> `state.marriedNpc === npcId`
 - `and` -> every sub-condition is visible
 - `or` -> any sub-condition is visible
@@ -689,7 +689,7 @@ Comprehensive mapping of every content type to its visibility condition source:
 | Story quests | Chain ordering from letters | `questCompleted(previousQuest)` |
 | Heart quests | Letter `reached_heart_level` + NPC known | `and(npcKnown, heartLevel)` |
 | Fetch quests | Request board requirements | `questCompleted`, area flags, skill levels |
-| Crown quests | Town rank + chain ordering | `townRank(N)`, `questCompleted(prev)` (exact level TBD; see 3j) |
+| Crown quests | Town rank + chain ordering | `renownLevel(N)`, `questCompleted(prev)` (exact level TBD; see 3j) |
 | Stillwell challenges | NPC known + chain ordering | `npcKnown("stillwell")` |
 | Tali challenges | NPC known + chain ordering | `npcKnown("taliferro")` |
 | NPCs | Unlock quest or always | `questCompleted` or `always` |
@@ -702,7 +702,7 @@ Comprehensive mapping of every content type to its visibility condition source:
 | Recipes (quest-sourced) | Quest visibility | `questCompleted(questId)` |
 | Recipes (mines) | Mines floor + perk | `and(minesLevel, perkUnlocked)` |
 | Recipes (museum) | Always (museum is day-1) | `always` |
-| Recipes (renown) | Town rank | `townRank(level)` |
+| Recipes (renown) | Town rank | `renownLevel(level)` |
 | Recipes (letter) | Always (temporal trigger, not a spoiler gate) | `always` |
 | Recipes (default) | Always | `always` |
 | Recipes (treasure chest) | Mines floor from chest tier | `minesLevel(tierStartFloor)` (**implementation task**: map `treasureChestTiers` to floor ranges) |
@@ -716,7 +716,7 @@ Comprehensive mapping of every content type to its visibility condition source:
 | Museum items | Area gate from acquisition source | `questCompleted` or `always` (see below) |
 | Mines biomes | Mines floor | `minesLevel(startFloor)` |
 | Spells | Quest gate | `questCompleted` (tablet quests) |
-| Renown rewards | Town rank | `townRank(level)` |
+| Renown rewards | Town rank | `renownLevel(level)` |
 
 **Museum item visibility**: museum items are not uniformly `always`. Items sourced exclusively from
 gated areas (Deep Woods, Summit, Western Ruins upper, Beach Cave) inherit the area's visibility
