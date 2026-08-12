@@ -552,7 +552,7 @@ describe("extractRecipes", () => {
     ]);
   });
 
-  it("maps dungeon_delicacies items to mines_chest source with biome index", () => {
+  it("ignores dungeon_delicacies items (gives dishes, not recipes)", () => {
     const fiddle = makeFiddle({
       dungeons: {
         dungeons: {
@@ -580,9 +580,7 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["cave_stew" as RecipeId];
-    expect(recipe.sources).toEqual([
-      { biomeId: "biome_0", perkId: "dungeon_delicacies", type: "mines_chest" },
-    ]);
+    expect(recipe.sources).toEqual([]);
   });
 
   it("maps taste_maker items to mines_chest source", () => {

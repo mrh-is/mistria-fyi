@@ -446,10 +446,7 @@ function collectMinesRecipeSources(
     const biomeObj = biome as Record<string, unknown>;
     const biomeId = `biome_${i}` as BiomeId;
 
-    const chestArrays: [string, PerkId][] = [
-      ["dungeon_delicacies", "dungeon_delicacies" as PerkId],
-      ["taste_maker", "taste_maker" as PerkId],
-    ];
+    const chestArrays: [string, PerkId][] = [["taste_maker", "taste_maker" as PerkId]];
     for (const [arrayKey, perkId] of chestArrays) {
       const items = Array.isArray(biomeObj[arrayKey]) ? (biomeObj[arrayKey] as unknown[]) : [];
 
