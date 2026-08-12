@@ -119,10 +119,7 @@
         if (!item.recipeId || seen.has(item.recipeId)) continue;
         seen.add(item.recipeId);
         const recipe = trackerData.recipes[item.recipeId];
-        if (!recipe) continue;
-        const sourceLabels = recipe.sources
-          .map((s) => recipeSourceLabel(s, sourceLookups))
-          .filter(Boolean);
+        const sourceLabels = recipe.sources.map((s) => recipeSourceLabel(s, sourceLookups));
         entries.push({
           id: item.recipeId,
           name: item.name,

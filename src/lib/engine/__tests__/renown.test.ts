@@ -7,6 +7,7 @@ import { getRenownProgress } from "../progress.js";
 function completedAtRenown(renown: number): CompletedState {
   return {
     almanac: new Set(),
+    almanacRecipes: new Set(),
     animalCosmetics: {},
     animals: {},
     cosmetics: new Set(),

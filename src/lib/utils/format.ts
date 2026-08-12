@@ -54,14 +54,14 @@ const SOURCE_TYPE_LABEL: Record<SourceType, string> = {
 
 export interface RecipeSourceLookups {
   biomes: TrackerData["mines"]["biomes"];
-  festivals: Record<string, { name: string }>;
-  itemNames: Record<string, string>;
-  perks: Record<string, { name: string; skillId: string; tier: number }>;
+  festivals: Partial<Record<string, { name: string }>>;
+  itemNames: Partial<Record<string, string>>;
+  perks: Partial<Record<string, { name: string; skillId: string; tier: number }>>;
   perkTierLevels: number[];
-  questNames: Record<string, string>;
-  skillNames: Record<string, string>;
-  stores: Record<string, { article?: "the"; name: string }>;
-  treasureChestTiers: Record<string, { name: string }>;
+  questNames: Partial<Record<string, string>>;
+  skillNames: Partial<Record<string, string>>;
+  stores: Partial<Record<string, { article?: "the"; name: string }>>;
+  treasureChestTiers: Partial<Record<string, { name: string }>>;
 }
 
 /** Shorten repetitive quest name prefixes */
@@ -90,7 +90,7 @@ export function formatBiomeName(biomeId: BiomeId, biomes: TrackerData["mines"]["
 
 export function formatStoreName(
   storeId: StoreId,
-  stores: Record<StoreId, { article?: "the"; name: string }>,
+  stores: Partial<Record<StoreId, { article?: "the"; name: string }>>,
 ): string {
   const store = stores[storeId];
   if (!store) return titleCase(storeId);
