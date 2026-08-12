@@ -1,6 +1,7 @@
 import {
   BookCheck,
   BookOpenText,
+  CookingPot,
   Crown,
   Heart,
   Landmark,
@@ -17,6 +18,7 @@ import type { Component } from "svelte";
 const CATEGORIES_INTERNAL = [
   { icon: Landmark, key: "museum", name: "Museum" },
   { icon: BookCheck, key: "almanac", name: "Almanac" },
+  { icon: CookingPot, key: "recipes", name: "Recipes" },
   { icon: PawPrint, key: "animals", name: "Animals" },
   { icon: Heart, key: "npcs", name: "NPCs" },
   { icon: Shirt, key: "cosmetics", name: "Cosmetics" },

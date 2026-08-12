@@ -131,7 +131,7 @@
           class="flex h-8 w-10 shrink-0 items-center justify-end text-sm text-muted-foreground hover:underline"
           type="button"
           onclick={() => {
-            startEditing(id as string, level);
+            startEditing(id, level);
           }}
         >
           {level}/{MAX_LEVEL}

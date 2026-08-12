@@ -70,7 +70,7 @@
     </button>
     {#if sources.length > 0}
       <button
-        class="group inline-flex min-w-0 flex-1 items-center gap-0.5 text-left text-base"
+        class="group inline-flex min-w-0 flex-1 items-start gap-0.5 text-left"
         type="button"
         aria-expanded={expanded}
         aria-label="{name} details"
@@ -78,15 +78,15 @@
           expanded = !expanded;
         }}
       >
-        <span class="group-hover:underline">{name}</span>
+        <span class="text-base group-hover:underline">{name}</span>
         <ChevronRight
-          class="size-3 shrink-0 text-muted-foreground opacity-40 transition-all group-hover:opacity-60 {expanded
+          class="mt-1.5 size-3 shrink-0 text-muted-foreground opacity-40 transition-all group-hover:opacity-60 {expanded
             ? 'rotate-90'
             : ''}"
         />
       </button>
     {:else}
-      <span class="min-w-0 flex-1 text-left text-base">{name}</span>
+      <span class="text-base">{name}</span>
     {/if}
     {#if restrictions.length > 0}
       <RestrictionBadges {hideFishSize} {restrictions} />

@@ -3,7 +3,7 @@ node_modules
 # Output
 .output
 .wrangler
-/.svelte-kit
+.svelte-kit
 /build
 /.pnpm-store
 

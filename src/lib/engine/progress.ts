@@ -3,7 +3,14 @@ import { filterAvailableItems } from "$lib/engine/availability.js";
 
 import type { CategoryKey } from "$lib/data/categories.js";
 import type { AvailabilityMode, CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { ItemId, Season, Source, VariantId, Weather } from "$lib/types/tracker-data.js";
+import type {
+  ItemId,
+  RecipeId,
+  Season,
+  Source,
+  VariantId,
+  Weather,
+} from "$lib/types/tracker-data.js";
 
 export const MAX_NPC_LEVEL = 10;
 export const MAX_RENOWN_LEVEL = 100;
@@ -42,6 +49,7 @@ export function getAllProgress(ctx: ProgressContext): AllProgress {
     museum: getMuseumProgress(ctx),
     npcs: getNpcsProgress(ctx),
     quests: getQuestsProgress(ctx),
+    recipes: getRecipesProgress(ctx),
     renown: getRenownProgress(ctx),
     skills: getSkillsProgress(ctx),
   };
@@ -135,6 +143,12 @@ export function getQuestsProgress(ctx: ProgressContext): CategoryProgress {
     }
   }
   return { completed, filtered: total - completed, total };
+}
+
+export function getRecipesProgress(ctx: ProgressContext): CategoryProgress {
+  const allIds = Object.keys(trackerData.recipes) as RecipeId[];
+  const completed = allIds.filter((id) => ctx.completed.almanacRecipes.has(id)).length;
+  return { completed, filtered: allIds.length - completed, total: allIds.length };
 }
 
 export function getRenownProgress(ctx: ProgressContext): CategoryProgress {

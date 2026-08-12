@@ -1,7 +1,7 @@
 import { expectArray, expectStringArray } from "../data-shapes.js";
 import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
 
-import type { AlmanacCategory, ItemId, TrackerData } from "$lib/types/tracker-data.js";
+import type { AlmanacCategory, ItemId, RecipeId, TrackerData } from "$lib/types/tracker-data.js";
 
 /**
  * Extracts both named item metadata and visible almanac rows. The metadata index includes every
@@ -18,7 +18,10 @@ const CATEGORY_NAME_OVERRIDES: Record<string, string> = {
   fish: "Fishing and Diving",
 };
 
-export function extractAlmanac(fiddle: ParsedGameData): {
+export function extractAlmanac(
+  fiddle: ParsedGameData,
+  recipeIdByItemId?: Map<string, RecipeId>,
+): {
   almanac: TrackerData["almanac"];
   items: ItemMetadataIndex;
 } {
@@ -99,15 +102,28 @@ export function extractAlmanac(fiddle: ParsedGameData): {
 
   const items: ItemMetadataIndex = {};
 
+  // Tags that describe how an item is obtained, not what it is. These lose to any
+  // classification tag when an item matches multiple almanac categories.
+  const ACQUISITION_TAGS = new Set(["dive", "fishable"]);
+
   for (const item of allItems) {
-    // Find the first matching almanac category by iterating categories in menu order
+    // Find the best matching almanac category. Classification tags (what the item is)
+    // take priority over acquisition-method tags (how you get it). Within each tier,
+    // lowest menu index wins.
     let assignedIdx: number | undefined;
     let bestCategoryOrder = Infinity;
+    let bestIsAcquisition = true;
     for (const tag of item.tags) {
       const idx = tagToCategoryIdx.get(tag);
-      if (idx !== undefined && idx < bestCategoryOrder) {
+      if (idx === undefined) continue;
+      const isAcq = ACQUISITION_TAGS.has(tag);
+      if (
+        (!isAcq && bestIsAcquisition) ||
+        (isAcq === bestIsAcquisition && idx < bestCategoryOrder)
+      ) {
         bestCategoryOrder = idx;
         assignedIdx = idx;
+        bestIsAcquisition = isAcq;
       }
     }
 
@@ -138,9 +154,14 @@ export function extractAlmanac(fiddle: ParsedGameData): {
       a.name.localeCompare(b.name),
     );
 
-    const categoryItems: Record<ItemId, { name: string }> = {};
+    const categoryItems: AlmanacCategory["items"] = {};
     for (const [id, entry] of sortedEntries) {
-      categoryItems[id as ItemId] = { name: entry.name };
+      const recipeId = recipeIdByItemId?.get(id);
+      categoryItems[id as ItemId] = {
+        ...(entry.colorCount ? { colorCount: entry.colorCount } : {}),
+        name: entry.name,
+        ...(recipeId ? { recipeId } : {}),
+      };
     }
 
     const displayName = CATEGORY_NAME_OVERRIDES[cat.key] ?? snakeToTitle(cat.key);
@@ -180,19 +201,29 @@ function buildChestIdSet(fiddle: ParsedGameData): Set<string> {
 
 function collapseFurnitureColorways(
   bucket: Map<string, { id: string; name: string; recipeKey?: string }>,
-): Map<string, { name: string }> {
-  const result = new Map<string, { name: string }>();
-  // Furniture colorways collapse only when both recipe_key and name match.
-  const seenRecipeGroups = new Map<string, string>();
+): Map<string, { colorCount?: number; name: string }> {
+  const result = new Map<string, { colorCount?: number; name: string }>();
+  const seenRecipeGroups = new Map<string, { count: number; representativeId: string }>();
 
   for (const [id, entry] of bucket) {
     if (entry.recipeKey) {
       const groupKey = `${entry.recipeKey}::${entry.name}`;
-      if (seenRecipeGroups.has(groupKey)) continue;
-      seenRecipeGroups.set(groupKey, id);
-      result.set(id, { name: entry.name });
+      const existing = seenRecipeGroups.get(groupKey);
+      if (existing) {
+        existing.count++;
+        continue;
+      }
+      seenRecipeGroups.set(groupKey, { count: 1, representativeId: id });
+      result.set(id, { colorCount: 1, name: entry.name });
     } else {
       result.set(id, { name: entry.name });
+    }
+  }
+
+  for (const [, { count, representativeId }] of seenRecipeGroups) {
+    const entry = result.get(representativeId);
+    if (entry) {
+      entry.colorCount = count > 1 ? count : undefined;
     }
   }
 

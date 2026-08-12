@@ -3,7 +3,7 @@
 
 export interface AlmanacCategory {
   id: string;
-  items: Record<ItemId, { name: string }>;
+  items: Record<ItemId, { colorCount?: number; name: string; recipeId?: RecipeId }>;
   name: string;
 }
 export type AnimalId = string & { readonly __brand: "AnimalId" };
@@ -27,6 +27,7 @@ export type CosmeticSlot =
   | "suit"
   | "top"
   | "underwear";
+export type FestivalId = string & { readonly __brand: "FestivalId" };
 export type ItemId = string & { readonly __brand: "ItemId" };
 export interface MuseumWing {
   id: WingId;
@@ -34,7 +35,45 @@ export interface MuseumWing {
   sets: { id: SetId; items: ItemId[]; name: string }[];
 }
 export type NpcId = string & { readonly __brand: "NpcId" };
+export type PerkId = string & { readonly __brand: "PerkId" };
 export type QuestId = string & { readonly __brand: "QuestId" };
+export type QuestType = string & { readonly __brand: "QuestType" };
+export interface Recipe {
+  memberItemIds: ItemId[];
+  presentations: RecipePresentation[];
+  sources: RecipeSource[];
+}
+export type RecipeId = string & { readonly __brand: "RecipeId" };
+export interface RecipePresentation {
+  itemIds: ItemId[];
+  name: string;
+}
+export type RecipeSource =
+  | { biomeId: BiomeId; perkId: PerkId; type: "mines_chest" }
+  | { biomeId: BiomeId; perkId: PerkId; type: "mines_dig_site" }
+  | { bundleName: string; storeId: StoreId; type: "scroll_bundle" }
+  | { cost: number; type: "chicken_statue" }
+  | { cost: number; type: "wishing_well" }
+  | { festivalId: FestivalId; storeId: StoreId; type: "festival" }
+  | { level: number; type: "renown" }
+  | { perkId: PerkId; storeId: StoreId; type: "store_with_perk" }
+  | { perkId: PerkId; type: "perk" }
+  | { questId: QuestId; questType: QuestType; type: "quest" }
+  | { setCount: number; type: "museum_donation"; wingId: WingId }
+  | { storeId: StoreId; type: "store"; upgraded?: true }
+  | { storeId: StoreId; type: "upgrade"; upgradeName: string }
+  | { tier: TreasureChestTier; type: "treasure_chest" }
+  | { trigger: "donated_item"; triggerItemId: ItemId; type: "letter" }
+  | {
+      trigger: "reached_date";
+      triggerDate: { day: number; season: Season; year?: number };
+      type: "letter";
+    }
+  | { trigger: "shipped_item"; triggerItemId: ItemId; type: "letter" }
+  | { type: "beach_cave_chest" }
+  | { type: "default" }
+  | { type: "dragon_forge" }
+  | { type: "relationship" };
 export interface Restriction {
   animal?: string;
   building?: string;
@@ -72,7 +111,6 @@ export type Season = "fall" | "spring" | "summer" | "winter";
 export type SetId = string & { readonly __brand: "SetId" };
 
 export type SkillId = string & { readonly __brand: "SkillId" };
-
 export interface Source {
   location?: string;
   restrictions?: Restriction[];
@@ -99,6 +137,7 @@ export type SourceType =
 
 export type SpellId = string & { readonly __brand: "SpellId" };
 
+export type StoreId = string & { readonly __brand: "StoreId" };
 export interface TrackerData {
   almanac: AlmanacCategory[];
   animals: Record<
@@ -129,9 +168,14 @@ export interface TrackerData {
     }
   >;
 
+  festivals: Record<FestivalId, { name: string }>;
+
   generatedAt: string;
 
-  items: Record<ItemId, { category: string; name: string; questGate?: QuestId[] }>;
+  items: Record<
+    ItemId,
+    { category: string; name: string; questGate?: QuestId[]; recipeId?: RecipeId }
+  >;
 
   mines: {
     biomes: {
@@ -155,6 +199,10 @@ export interface TrackerData {
     }
   >;
 
+  perks: Record<PerkId, { name: string; skillId: SkillId; tier: number }>;
+
+  perkTierLevels: number[];
+
   questGates: {
     animalGates: Record<AnimalId, QuestId[]>;
     itemGates: Record<ItemId, QuestId[]>;
@@ -163,6 +211,8 @@ export interface TrackerData {
   };
 
   quests: Record<string, Record<QuestId, { name: string; npc?: string }>>;
+
+  recipes: Record<RecipeId, Recipe>;
 
   renown: {
     levelsPerRank: number;
@@ -173,8 +223,14 @@ export interface TrackerData {
 
   sources: Record<ItemId, Source[]>;
 
+  stores: Record<StoreId, { article?: "the"; name: string }>;
+
+  treasureChestTiers: Record<TreasureChestTier, { name: string }>;
+
   version: string;
 }
+
+export type TreasureChestTier = string & { readonly __brand: "TreasureChestTier" };
 
 // ─── Restriction ────────────────────────────────────────────────────
 
