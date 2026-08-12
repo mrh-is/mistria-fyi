@@ -9,8 +9,21 @@
 working tree causes edit collisions, dirty-state confusion, and branch-switch destruction.
 
 Use the `superpowers:using-git-worktrees` skill to set up your workspace. This is a declared
-preference: do not ask for consent, just create the worktree. Name it after the branch:
-`<issue-number>-<short-description>`.
+preference: do not ask for consent, just create the worktree. Agents and tools without their own
+managed worktree location should put worktrees under `.worktrees/`, named after the branch:
+`.worktrees/<issue-number>-<short-description>`. Claude Code may use its native managed worktree
+location.
+
+Before creating a worktree, verify that the shared directory is ignored:
+
+```sh
+git check-ignore -q .worktrees/placeholder
+```
+
+Claude Code automatically copies the ignored local files listed in `.worktreeinclude` into each
+worktree it creates. Other agents should copy the existing files matching that list from the main
+checkout after running `git worktree add`; do not copy dependencies, caches, or build artifacts. Run
+`pnpm install --frozen-lockfile` inside each new worktree instead.
 
 ## Task Workflow
 
