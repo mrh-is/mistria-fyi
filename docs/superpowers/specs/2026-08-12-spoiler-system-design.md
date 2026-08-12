@@ -191,11 +191,16 @@ information:
   visibility is `always`), heart level > 0 also marks them known. NPCs with explicit unlock gates
   (Caldarus, Seridia, Saturday Market vendors) are known only when their gate quest is completed,
   regardless of heart level — this prevents story-granted heart levels from revealing them early.
-- **`npcLevels`**: `max(manuallyTracked, questDerived)` using `heartLevelChanges` data from
-  tracker data. Completing "Breaking the Water Seal" auto-sets Caldarus to 2 and Seridia to 1, but
-  never overwrites a higher manually-tracked value. Caldarus and Seridia start at 0 hearts until
-  their unlock quest, regardless of cutscene data that grants earlier heart levels (those characters
-  are not interactable before their unlock).
+- **`npcLevels`**: two-step computation for NPCs with explicit unlock gates (Caldarus, Seridia):
+  1. **Stored level** (in `CompletedState.npcLevels`): `max(manuallyTracked, questDerived)` using
+     `heartLevelChanges` data. This is the persisted value.
+  2. **Effective level** (in `UserProgressionState.npcLevels`): if `knownNpcs` does not include
+     this NPC, effective level is **0** regardless of stored value. Once the NPC becomes known
+     (their unlock quest is completed), the effective level equals the stored level.
+
+  This prevents story-granted heart levels from satisfying `heartLevel` conditions before the NPC
+  is interactable. For NPCs without explicit unlock gates (visibility = `always`), the effective
+  level equals the stored level directly (no masking).
 - **`unlockedPerks`**, **`skillLevels`**, **`minesFloor`**, **`renown`**: pass through from
   `CompletedState` directly.
 
@@ -264,12 +269,23 @@ prevent the override flow entirely.)
 - **"Yes, just this item"**: marks the item completed; progression state unchanged. The item appears
   completed within a redacted section.
 - **"Yes, and update my progress"**: marks the item completed AND satisfies the visibility
-  condition by updating quest states, heart levels, etc. as needed. This cascades: marking a late
-  story quest as completed also marks all prior story quests as completed. The cascade is computed
-  from the condition tree: each `questCompleted` primitive adds that quest, each `skillLevel` sets
-  at least that level, etc. For `or` conditions, the dialog presents the branches and the user
-  picks which to satisfy. For `never` conditions, only "Yes, just this item" is offered (there is
-  no invertible progression update).
+  condition by updating the user's tracked progression. Only offered when the condition is
+  safely invertible. Invertible primitives and their mutations:
+  - `questCompleted(id)` -> mark quest completed (+ all prerequisite quests in chain)
+  - `questAvailable(id)` -> mark prerequisite quests completed (quest itself becomes available)
+  - `skillLevel(id, n)` -> set skill to `max(current, n)`
+  - `minesLevel(n)` -> set mines floor to `max(current, n)`
+  - `renownLevel(n)` -> set renown to `max(current, n)`
+  - `heartLevel(npcId, n)` -> set NPC level to `max(current, n)`
+  - `perkUnlocked(id)` -> mark perk as unlocked
+  - `and` -> satisfy all sub-conditions (recursively)
+  - `or` -> present branches, user picks which to satisfy
+
+  **Not invertible** (suppress "update my progress"):
+  - `never` -> no possible mutation
+  - `npcKnown` -> derived from quest completion; would require recursing into the NPC's own
+    visibility condition, which may itself involve non-invertible gates. Too complex for v1.
+  - Any tree containing a `never` or `npcKnown` leaf
 - **"Cancel"**: no change.
 
 Uses the existing `AlertDialog` component pattern.
@@ -320,7 +336,13 @@ Validated mapping (from investigation):
 Extend the existing `requirements.ts` to produce `VisibilityCondition` trees. The resolver walks
 each named requirement:
 
-- `seen_cutscene = "X"` -> look up cutscene-to-quest mapping -> `questCompleted`
+- `seen_cutscene = "X"` -> look up cutscene-to-quest mapping. The phase depends on how the
+  cutscene relates to its quest: completion cutscenes (from `_pt_2` naming convention or explicit
+  `quest_to_progress` that advances to the final stage) -> `questCompleted`; start cutscenes
+  (from `quest_to_start`) -> `questAvailable`. In practice, nearly all requirement predicates
+  reference completion cutscenes (`_pt_2`); start cutscenes as requirements are rare. When in
+  doubt, use `questAvailable` (the less restrictive option — content is shown once the quest
+  becomes active, not only after completion).
 - `reached_skill_level = { farming = 30 }` -> `skillLevel`
 - `reached_mines_level = 41` -> `minesLevel`
 - Boolean named requirement references (e.g., `repaired_general_store = true`) -> resolve
