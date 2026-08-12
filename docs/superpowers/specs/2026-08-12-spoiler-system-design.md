@@ -117,12 +117,13 @@ marked.
 
 ```typescript
 interface UserProgressionState {
-  // Existing (from CompletedState)
+  // Existing (passed through from CompletedState)
   skillLevels: Record<SkillId, number>;
   showSpoilers: boolean;
   minesFloor: number;
   townRank: number;
   heartLevels: Record<NpcId, number>;
+  unlockedPerks: Set<PerkId>;
 
   // Derived from CompletedState + tracker data (see below)
   questVisibility: Record<QuestId, QuestVisibility>;
@@ -131,8 +132,8 @@ interface UserProgressionState {
 ```
 
 `unlockedPerks` is a new field on `CompletedState` (stored, imported from save file or manually
-tracked). `knownNpcs` and `questVisibility` are derived — they live only on
-`UserProgressionState`, never persisted.
+tracked); it passes through to `UserProgressionState` for use by the evaluator. `knownNpcs` and
+`questVisibility` are derived — they live only on `UserProgressionState`, never persisted.
 
 New `CompletedState` field:
 
@@ -144,6 +145,10 @@ interface CompletedState {
 
 type QuestVisibility = "unavailable" | "available" | "completed";
 ```
+
+**localStorage migration**: existing saved state has no `unlockedPerks` field. On load, treat a
+missing field as an empty set. The existing localStorage serializer already handles partial
+`CompletedState` (optional fields with defaults); `unlockedPerks` follows the same pattern.
 
 Note: `QuestVisibility` is distinct from the existing `QuestState` type (`"none" | "obtained" |
 "completed"`) used in `CompletedState`. `QuestState` tracks what the user has done (manual or
@@ -157,11 +162,15 @@ visibility engine uses. A quest with `QuestState = "none"` may be `QuestVisibili
 `UserProgressionState` from the user's raw completed state and the tracker data's chain/ordering
 information:
 
-- **`questVisibility`**: for each quest chain (story, crown, stillwell, tali), walk the ordering.
-  Every quest before the first incomplete one is "completed"; the first incomplete one is
-  "available"; everything after is "unavailable". Heart quests use per-NPC chains gated on heart
-  level + previous quest completion. Fetch quests use request board requirements resolved against
-  the rest of the progression state.
+- **`questVisibility`**: computed per-quest from its prerequisites, not from a linear walk.
+  A quest is "completed" if the user has marked it so. An incomplete quest is "available" when all
+  of its own prerequisites are satisfied (prerequisite quest completed, heart level met, etc.).
+  Otherwise it is "unavailable". This handles parallel branches correctly: two quests with
+  independent prerequisites can both be "available" even if they appear adjacent in the data. For
+  strictly linear registries (crown, stillwell, tali), this reduces to sequential availability
+  since each quest's only prerequisite is the previous one. Heart quests use per-NPC chains gated
+  on heart level + previous quest completion. Fetch quests use request board requirements resolved
+  against the rest of the progression state.
 - **`knownNpcs`**: an NPC is known if their visibility condition (from tracker data) evaluates to
   true against the current quest/progression state. For NPCs without an explicit unlock gate (i.e.,
   visibility is `always`), heart level > 0 also marks them known. NPCs with explicit unlock gates
@@ -233,13 +242,19 @@ giftable/datable, so the tracker shows them at 0 hearts until their unlock quest
 
 ### "Complete redacted item" confirmation
 
-When a user tries to check off something that's currently redacted, a confirmation dialog appears:
+Redacted rows keep their checkbox **enabled but intercepted**: tapping the checkbox on a redacted
+row opens a confirmation dialog instead of toggling completion. (A fully disabled control would
+prevent the override flow entirely.)
 
 - **"Yes, just this item"**: marks the item completed; progression state unchanged. The item appears
   completed within a redacted section.
 - **"Yes, and update my progress"**: marks the item completed AND satisfies the visibility
   condition by updating quest states, heart levels, etc. as needed. This cascades: marking a late
-  story quest as completed also marks all prior story quests as completed.
+  story quest as completed also marks all prior story quests as completed. The cascade is computed
+  from the condition tree: each `questCompleted` primitive adds that quest, each `skillLevel` sets
+  at least that level, etc. For `or` conditions, the dialog presents the branches and the user
+  picks which to satisfy. For `never` conditions, only "Yes, just this item" is offered (there is
+  no invertible progression update).
 - **"Cancel"**: no change.
 
 Uses the existing `AlertDialog` component pattern.
@@ -517,8 +532,9 @@ reactively when the user checks off a quest, imports a save, or adjusts a skill 
 
 Every item/quest/NPC row calls `redactionState()` and renders accordingly:
 
-- **`"redacted"`**: name replaced with a redaction indicator, checkbox disabled, source text shows
-  a hint about what's needed. The row remains present in the list, never removed.
+- **`"redacted"`**: name replaced with a redaction indicator, source text shows a hint about what's
+  needed. The row remains present in the list, never removed. Checkbox is enabled but intercepted:
+  tapping it opens the "complete redacted item" confirmation dialog (see Section 2).
 - **`"source-only"`**: source text partially revealed (store name, perk tier), entity name still
   redacted. This is the middle phase of layered gating.
 - **`"visible"`**: everything shown normally.
@@ -545,13 +561,9 @@ implementation.
 
 ### "Complete redacted item" confirmation
 
-Dialog with three options:
-
-- **"Yes, just this item"**: marks item completed, progression state unchanged
-- **"Yes, and update my progress"**: marks item completed AND cascades progression state
-- **"Cancel"**: no change
-
-Uses the existing `AlertDialog` component.
+See Section 2 for full semantics. Summary: intercepted checkbox opens `AlertDialog` with "Yes, just
+this item" / "Yes, and update my progress" / "Cancel". For `or` conditions the user picks a branch;
+for `never` conditions only "just this item" is available.
 
 ### Save importer enhancements
 
