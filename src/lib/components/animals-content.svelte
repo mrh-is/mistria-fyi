@@ -1,7 +1,6 @@
 <script lang="ts">
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import { Icon } from "$lib/components/icon/index.js";
-  import { Checkbox } from "$lib/components/ui/checkbox/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
@@ -191,10 +190,12 @@
                 ? 'line-through opacity-40'
                 : ''}"
             >
-              <Checkbox
-                checked={completed}
+              <button
+                class="flex size-11 shrink-0 items-center justify-center"
+                type="button"
                 disabled={spoilered}
-                onCheckedChange={() => {
+                aria-label={completed ? `Uncheck ${variant.name}` : `Check ${variant.name}`}
+                onclick={() => {
                   userState.toggleAnimalVariant(animal.id, variantId as VariantId);
                   const completed =
                     (
@@ -211,7 +212,14 @@
                     }
                   }
                 }}
-              />
+              >
+                <Icon.Completion
+                  state={completed ? "completed" : "none"}
+                  class="size-5 {completed
+                    ? 'text-green-600 dark:text-green-400'
+                    : 'text-muted-foreground/50'}"
+                />
+              </button>
               {#if spoilered}
                 <span class="min-w-0 flex-1 text-base text-muted-foreground/50 blur-sm select-none">
                   {variant.name}
@@ -276,9 +284,11 @@
                 ? 'line-through opacity-40'
                 : ''}"
             >
-              <Checkbox
-                checked={completed}
-                onCheckedChange={() => {
+              <button
+                class="flex size-11 shrink-0 items-center justify-center"
+                type="button"
+                aria-label={completed ? `Uncheck ${cosmetic.name}` : `Check ${cosmetic.name}`}
+                onclick={() => {
                   userState.toggleAnimalCosmetic(animal.id, cosmeticId as CosmeticId);
                   const completed =
                     (
@@ -296,7 +306,14 @@
                     }
                   }
                 }}
-              />
+              >
+                <Icon.Completion
+                  state={completed ? "completed" : "none"}
+                  class="size-5 {completed
+                    ? 'text-green-600 dark:text-green-400'
+                    : 'text-muted-foreground/50'}"
+                />
+              </button>
               <span class="min-w-0 flex-1 text-base">{cosmetic.name}</span>
             </div>
           {/each}
