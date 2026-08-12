@@ -192,25 +192,29 @@
             >
               <Checkbox checked={completed} tabindex={-1} />
             </button>
+            <span class="min-w-0 flex-1 text-base">{entry.name}</span>
             {#if entry.sourceLabels.length > 0}
+              {@const uniqueIcons = [...new Set(entry.sources.map((s) => s.type))].map(
+                (t) => SOURCE_ICON[t],
+              )}
               <button
-                class="group inline-flex min-w-0 flex-1 items-start gap-0.5 text-left"
+                class="group flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted"
                 type="button"
                 aria-expanded={expanded}
-                aria-label="{entry.name} details"
+                aria-label="{entry.name} sources"
                 onclick={() => {
                   expandedRecipes[entry.id] = !expanded;
                 }}
               >
-                <span class="text-base group-hover:underline">{entry.name}</span>
+                {#each uniqueIcons as Icon (Icon)}
+                  <Icon class="size-3.5 shrink-0" />
+                {/each}
                 <ChevronRight
-                  class="mt-1.5 size-3 shrink-0 text-muted-foreground opacity-40 transition-all group-hover:opacity-60 {expanded
+                  class="size-3 shrink-0 opacity-40 transition-transform {expanded
                     ? 'rotate-90'
                     : ''}"
                 />
               </button>
-            {:else}
-              <span class="text-base">{entry.name}</span>
             {/if}
           </div>
           {#if expanded && entry.sourceLabels.length > 0}
