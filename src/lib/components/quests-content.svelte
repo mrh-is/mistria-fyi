@@ -10,7 +10,7 @@
   import { displayQuestName } from "$lib/utils/format.js";
 
   import type { QuestState } from "$lib/stores/user-state.svelte.js";
-  import type { NpcId, QuestId, RecipeId } from "$lib/types/tracker-data.js";
+  import type { NpcId, QuestId } from "$lib/types/tracker-data.js";
 
   function isQuestTypeComplete(questIds: QuestId[]): boolean {
     return questIds.every((id) => getQuestState(id) === "completed");
@@ -86,7 +86,7 @@
                 ? "Obtained — click to mark completed"
                 : "Completed — click to reset"}
             onclick={() => {
-              const newlyAdded: RecipeId[] = userState.completeQuestWithRecipes(quest.id);
+              const newlyAdded = userState.completeQuestWithRecipes(quest.id);
               const newState = getQuestState(quest.id);
               let message: string;
               if (newState === "obtained") {
@@ -107,11 +107,7 @@
                 cancel: {
                   label: "Undo",
                   onClick: () => {
-                    userState.cycleQuestState(quest.id);
-                    userState.cycleQuestState(quest.id);
-                    for (const recipeId of newlyAdded) {
-                      userState.state.completed.almanacRecipes.delete(recipeId);
-                    }
+                    userState.undoQuestWithRecipes(quest.id, newlyAdded);
                   },
                 },
                 duration: 5000,

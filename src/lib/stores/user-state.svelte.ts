@@ -416,6 +416,14 @@ function createUserState() {
     toggleSpell(id: SpellId) {
       toggleInSet(state.completed.mines.spells, id);
     },
+    /** Restores the quest's prior state and removes only recipes added by that transition. */
+    undoQuestWithRecipes(id: QuestId, newlyAdded: RecipeId[]) {
+      this.cycleQuestState(id);
+      this.cycleQuestState(id);
+      for (const recipeId of newlyAdded) {
+        state.completed.almanacRecipes.delete(recipeId);
+      }
+    },
   };
 }
 

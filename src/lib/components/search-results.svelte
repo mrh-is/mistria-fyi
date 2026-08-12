@@ -17,7 +17,6 @@
     ItemId,
     NpcId,
     QuestId,
-    RecipeId,
     VariantId,
   } from "$lib/types/tracker-data.js";
 
@@ -69,7 +68,7 @@
 
   function handleQuestToggle(result: SearchResult): void {
     const questId = result.id as QuestId;
-    const newlyAdded: RecipeId[] = userState.completeQuestWithRecipes(questId);
+    const newlyAdded = userState.completeQuestWithRecipes(questId);
     const newState = userState.state.completed.questStates[result.id] ?? "none";
 
     let message: string;
@@ -92,11 +91,7 @@
       cancel: {
         label: "Undo",
         onClick: () => {
-          userState.cycleQuestState(questId);
-          userState.cycleQuestState(questId);
-          for (const recipeId of newlyAdded) {
-            userState.state.completed.almanacRecipes.delete(recipeId);
-          }
+          userState.undoQuestWithRecipes(questId, newlyAdded);
         },
       },
       duration: 5000,
