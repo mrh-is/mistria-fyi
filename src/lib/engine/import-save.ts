@@ -1,7 +1,7 @@
 import { trackerData } from "$lib/data/index.js";
 
 import type { CompletedState, MergeCounts, QuestState } from "$lib/stores/user-state.svelte.js";
-import type { CosmeticId, ItemId, SpellId, VariantId } from "$lib/types/tracker-data.js";
+import type { CosmeticId, ItemId, RecipeId, SpellId, VariantId } from "$lib/types/tracker-data.js";
 
 // ─── Import result ──────────────────────────────────────────────────
 
@@ -33,6 +33,7 @@ interface PlayerSave {
   cosmetic_unlocks?: string[];
   items_acquired?: string[];
   items_sold?: Record<string, unknown>;
+  recipe_unlocks?: string[];
   recipes_created?: string[];
   skill_xp?: Record<string, number>;
   spells_learned?: string[];
@@ -81,6 +82,28 @@ export function buildImportState(bundle: SaveBundle): {
     }
   }
   counts.almanac = almanacIds.size;
+
+  // ── Recipe unlocks ──
+  const almanacRecipes = new Set<RecipeId>();
+  const validRecipes = new Set(Object.keys(trackerData.recipes));
+
+  for (const [id, recipe] of Object.entries(trackerData.recipes)) {
+    if (recipe.sources.some((source) => source.type === "default")) {
+      almanacRecipes.add(id as RecipeId);
+    }
+  }
+
+  for (const id of save?.recipe_unlocks ?? []) {
+    if (validRecipes.has(id)) {
+      almanacRecipes.add(id as RecipeId);
+    } else if (validItems.has(id)) {
+      const recipeId = trackerData.items[id as ItemId].recipeId;
+      if (recipeId) {
+        almanacRecipes.add(recipeId);
+      }
+    }
+  }
+  counts.almanacRecipes = almanacRecipes.size;
 
   // ── Cosmetics ──
   const cosmeticIds = new Set<CosmeticId>();
@@ -234,6 +257,7 @@ export function buildImportState(bundle: SaveBundle): {
   return {
     completed: {
       almanac: almanacIds,
+      almanacRecipes,
       animalCosmetics,
       animals: animalVariants,
       cosmetics: cosmeticIds,
@@ -336,6 +360,7 @@ export function validatePlayerSave(data: unknown): data is PlayerSave {
   const obj = data as Record<string, unknown>;
   return (
     Array.isArray(obj.items_acquired) ||
+    Array.isArray(obj.recipe_unlocks) ||
     Array.isArray(obj.cosmetic_unlocks) ||
     typeof obj.animal_variant_unlocks === "object" ||
     typeof obj.items_sold === "object" ||

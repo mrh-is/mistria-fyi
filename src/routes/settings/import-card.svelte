@@ -144,6 +144,7 @@
           importResult.counts.cosmetics +
           importResult.counts.animals +
           importResult.counts.animalCosmetics +
+          importResult.counts.almanacRecipes +
           importResult.counts.spells +
           importResult.counts.museum +
           importResult.counts.npcLevels +
@@ -291,6 +292,9 @@
           <ul class="mt-1 space-y-0.5 text-sm text-muted-foreground">
             {#if importResult.counts.almanac > 0}
               <li>Almanac: +{importResult.counts.almanac}</li>
+            {/if}
+            {#if importResult.counts.almanacRecipes > 0}
+              <li>Recipes: +{importResult.counts.almanacRecipes}</li>
             {/if}
             {#if importResult.counts.cosmetics > 0}
               <li>Cosmetics: +{importResult.counts.cosmetics}</li>
