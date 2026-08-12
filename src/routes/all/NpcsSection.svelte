@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { Flower, Heart, Leaf, Octagon, Snowflake, Sun } from "@lucide/svelte";
-
+  import { Icon } from "$lib/components/icon/index.js";
   import Stepper from "$lib/components/stepper.svelte";
   import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
@@ -10,16 +9,7 @@
 
   import SectionHeader from "./SectionHeader.svelte";
 
-  import type { Component } from "svelte";
-
-  import type { NpcId, Season } from "$lib/types/tracker-data.js";
-
-  const SEASON_ICON: Record<Season, Component<{ class?: string; strokeWidth?: number }>> = {
-    fall: Leaf,
-    spring: Flower,
-    summer: Sun,
-    winter: Snowflake,
-  };
+  import type { NpcId } from "$lib/types/tracker-data.js";
 
   // Matches the rainbow color scale on the full NPC page
   const LEVEL_COLORS = [
@@ -74,13 +64,12 @@
         {@const level = userState.state.completed.npcLevels[npc.id as string] ?? 0}
         {@const maxed = level >= MAX_NPC_LEVEL}
         {#if maxed ? userState.state.showCompleted : true}
-          {@const BdayIcon = SEASON_ICON[npc.birthday.season]}
-          {@const StatusIcon = npc.dateable ? Heart : Octagon}
           <div class="flex items-center gap-2 rounded-md px-2 {maxed ? 'opacity-40' : ''}">
             <div class="flex min-w-0 flex-1 items-center gap-1.5">
               <span class="truncate text-base font-medium">{npc.name}</span>
               <span class="flex shrink-0 items-center gap-0.5 text-xs text-muted-foreground">
-                <BdayIcon
+                <Icon.Season
+                  season={npc.birthday.season}
                   class="size-2.5 {npc.birthday.season === 'fall' ? '-scale-y-100 rotate-90' : ''}"
                   strokeWidth={npc.birthday.season === "summer" ? 2.5 : undefined}
                 />
@@ -101,7 +90,8 @@
                   setNpcLevelWithCelebration(npc.id, level + 1);
                 }}
               >
-                <StatusIcon
+                <Icon.ProgressMark
+                  type={npc.dateable ? "relationship_dateable" : "relationship_platonic"}
                   class="size-4 transition-colors duration-200 {level > 0
                     ? `${LEVEL_COLORS[level - 1]} fill-current`
                     : 'fill-transparent text-muted-foreground/30'}"

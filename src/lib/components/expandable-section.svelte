@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { ChevronRight } from "@lucide/svelte";
   import { untrack } from "svelte";
   import { slide } from "svelte/transition";
+
+  import { Icon } from "$lib/components/icon/index.js";
 
   import type { Snippet } from "svelte";
 
@@ -32,7 +33,8 @@
     type="button"
     aria-expanded={isOpen}
   >
-    <ChevronRight
+    <Icon.UI
+      type="disclosure"
       class="size-4 shrink-0 text-muted-foreground transition-transform {isOpen ? 'rotate-90' : ''}"
     />
     <span class="flex-1 font-medium">{name}</span>

@@ -1,35 +1,21 @@
 <script lang="ts">
-  import {
-    ChevronDown,
-    ChevronUp,
-    CloudDrizzle,
-    CloudLightning,
-    CloudRain,
-    CloudSnow,
-    Flower,
-    Leaf,
-    ListFilter,
-    Search,
-    Snowflake,
-    Sun,
-    SunDim,
-    Wind,
-    X,
-  } from "@lucide/svelte";
+  import { ChevronDown, ChevronUp, ListFilter, Search } from "@lucide/svelte";
   import { flip } from "svelte/animate";
   import { fade, fly } from "svelte/transition";
 
   import { page } from "$app/state";
   import BlockySwitch from "$lib/components/blocky-switch.svelte";
+  import { SEASON_ICON, weatherIcon } from "$lib/components/icon/icon-maps.js";
+  import { Icon } from "$lib/components/icon/index.js";
   import { Input } from "$lib/components/ui/input/index.js";
   import * as ToggleGroup from "$lib/components/ui/toggle-group/index.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { seasonLabel, weatherLabel, weathersForSeason } from "$lib/utils/format.js";
 
-  import type { Component } from "svelte";
   import type { TransitionConfig } from "svelte/transition";
 
+  import type { LucideIcon } from "$lib/components/icon/icon-maps.js";
   import type { AvailabilityMode } from "$lib/stores/user-state.svelte.js";
   import type { Season, Weather } from "$lib/types/tracker-data.js";
 
@@ -38,24 +24,10 @@
   let { hidden = false }: { hidden?: boolean } = $props();
 
   const seasons: Season[] = ["spring", "summer", "fall", "winter"];
-  const SEASON_ICON: Record<Season, Component<{ class?: string; strokeWidth?: number }>> = {
-    fall: Leaf,
-    spring: Flower,
-    summer: Sun,
-    winter: Snowflake,
-  };
 
   let currentSeason = $derived(userState.state.worldState.season);
   let CurrentSeasonIcon = $derived(SEASON_ICON[currentSeason]);
   let availableWeathers = $derived(weathersForSeason(currentSeason));
-
-  function weatherIcon(weather: Weather, season: Season): Component<{ class?: string }> {
-    if (weather === "calm") return SunDim;
-    if (weather === "special") return Wind;
-    if (weather === "heavy_inclement") return season === "winter" ? CloudDrizzle : CloudLightning;
-    if (season === "winter") return CloudSnow;
-    return CloudRain;
-  }
 
   let CurrentWeatherIcon = $derived(weatherIcon(userState.state.worldState.weather, currentSeason));
   let currentWeatherLabel = $derived(
@@ -92,7 +64,7 @@
 
   /** Weather tiles derived from current season, keyed by display name for stable identity */
   interface WeatherTile {
-    icon: Component<{ class?: string }>;
+    icon: LucideIcon;
     label: string;
     weather: Weather;
   }
@@ -179,7 +151,6 @@
           </p>
           <div class="mb-4 grid grid-cols-4 gap-1">
             {#each seasons as s (s)}
-              {@const Icon = SEASON_ICON[s]}
               {@const isSelected = s === currentSeason}
               <button
                 class="flex flex-col items-center gap-1.5 rounded-lg p-2.5 text-xs transition-colors hover:bg-accent {isSelected
@@ -190,7 +161,8 @@
                 }}
                 type="button"
               >
-                <Icon
+                <Icon.Season
+                  season={s}
                   class="size-5 {s === 'fall' ? '-scale-y-100 rotate-90' : ''}"
                   strokeWidth={s === "summer" ? 2.5 : undefined}
                 />
@@ -303,7 +275,7 @@
                 <div class="flex flex-wrap gap-1.5">
                   {#each toolbarState.recipeSourceFilters as filter (filter.label)}
                     {@const active = toolbarState.activeSourceLabels.has(filter.label)}
-                    {@const Icon = filter.icon}
+                    {@const FilterIcon = filter.icon}
                     <button
                       class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors {active
                         ? 'border-primary bg-primary text-primary-foreground'
@@ -314,7 +286,7 @@
                         toolbarState.toggleSourceFilter(filter);
                       }}
                     >
-                      <Icon class="size-3" />
+                      <FilterIcon class="size-3" />
                       {filter.label}
                     </button>
                   {/each}
@@ -373,7 +345,7 @@
               type="button"
               aria-label="Clear search"
             >
-              <X class="size-4" />
+              <Icon.UI type="dismiss" class="size-4" />
             </button>
           {/if}
         </div>

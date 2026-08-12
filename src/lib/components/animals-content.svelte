@@ -1,14 +1,11 @@
 <script lang="ts">
-  import { Flower, Leaf, Snowflake, Sun } from "@lucide/svelte";
-
   import ExpandableSection from "$lib/components/expandable-section.svelte";
+  import { Icon } from "$lib/components/icon/index.js";
   import { Checkbox } from "$lib/components/ui/checkbox/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
-
-  import type { Component } from "svelte";
 
   import type { AnimalId, CosmeticId, Season, VariantId } from "$lib/types/tracker-data.js";
 
@@ -33,13 +30,6 @@
   function isAnimalsComplete(): boolean {
     return Object.keys(trackerData.animals).every((id) => isAnimalComplete(id as AnimalId));
   }
-
-  const SEASON_ICON: Record<Season, Component<{ class?: string; strokeWidth?: number }>> = {
-    fall: Leaf,
-    spring: Flower,
-    summer: Sun,
-    winter: Snowflake,
-  };
 
   const SEASON_ORDER: Record<string, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
 
@@ -233,9 +223,9 @@
                   {/if}
                 </span>
                 {#if variant.bornIn}
-                  {@const SeasonIcon = SEASON_ICON[variant.bornIn]}
                   <span class="text-muted-foreground" title="Born in {variant.bornIn}">
-                    <SeasonIcon
+                    <Icon.Season
+                      season={variant.bornIn}
                       class="size-3 {variant.bornIn === 'fall' ? '-scale-y-100 rotate-90' : ''}"
                       strokeWidth={variant.bornIn === "summer" ? 2.5 : undefined}
                     />
