@@ -26,6 +26,8 @@ export function extractAlmanac(
   almanac: TrackerData["almanac"];
   items: ItemMetadataIndex;
 } {
+  if (!fiddle.items) return { almanac: [], items: {} };
+
   const rawCategories = readAlmanacCategories(fiddle);
   if (rawCategories.length === 0) {
     console.warn("  Warning: No almanac categories found in UI data, falling back to empty");
