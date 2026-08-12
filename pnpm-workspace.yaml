@@ -1,6 +1,11 @@
+engineStrict: true
+
 packages:
   - pipeline
 
 allowBuilds:
   esbuild: true
   workerd: true
+
+minimumReleaseAgeExclude:
+  - globals@17.10.0

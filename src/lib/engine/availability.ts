@@ -139,11 +139,15 @@ export function isSourceAvailable(
     switch (r.type) {
       case "animal":
       case "building":
+      case "cutscene":
       case "fishSize":
+      case "minesLevel":
       case "perk":
       case "randomStock":
+      case "relationship":
       case "seenSeason":
       case "skill":
+      case "upperFloor":
         // Non-timely restrictions — already filtered out, but needed for exhaustiveness
         return true;
       case "season":
