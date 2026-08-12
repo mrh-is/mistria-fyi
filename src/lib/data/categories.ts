@@ -1,43 +1,38 @@
-import {
-  BookCheck,
-  BookOpenText,
-  CookingPot,
-  Crown,
-  Heart,
-  Landmark,
-  PawPrint,
-  Pickaxe,
-  ScrollText,
-  Shirt,
-} from "@lucide/svelte";
+import { CATEGORY_ICON } from "$lib/components/icon/icon-maps.js";
 
-import type { Component } from "svelte";
+import type { LucideIcon } from "$lib/components/icon/icon-maps.js";
 
-// ─── Single source of truth ────────────────────────────────────────
+export type CategoryKey =
+  | "almanac"
+  | "animals"
+  | "cosmetics"
+  | "mines"
+  | "museum"
+  | "npcs"
+  | "quests"
+  | "recipes"
+  | "renown"
+  | "skills";
 
-const CATEGORIES_INTERNAL = [
-  { icon: Landmark, key: "museum", name: "Museum" },
-  { icon: BookCheck, key: "almanac", name: "Almanac" },
-  { icon: CookingPot, key: "recipes", name: "Recipes" },
-  { icon: PawPrint, key: "animals", name: "Animals" },
-  { icon: Heart, key: "npcs", name: "NPCs" },
-  { icon: Shirt, key: "cosmetics", name: "Cosmetics" },
-  { icon: BookOpenText, key: "skills", name: "Skills" },
-  { icon: Crown, key: "renown", name: "Renown" },
-  { icon: ScrollText, key: "quests", name: "Quests" },
-  { icon: Pickaxe, key: "mines", name: "Mines" },
-] as const satisfies readonly {
-  icon: Component<{ class?: string }>;
-  key: string;
+const CATEGORIES_INTERNAL: readonly {
+  icon: LucideIcon;
+  key: CategoryKey;
   name: string;
-}[];
-
-export type CategoryKey = (typeof CATEGORIES_INTERNAL)[number]["key"];
-
-// ─── Public types & helpers ────────────────────────────────────────
+}[] = [
+  { icon: CATEGORY_ICON.museum, key: "museum", name: "Museum" },
+  { icon: CATEGORY_ICON.almanac, key: "almanac", name: "Almanac" },
+  { icon: CATEGORY_ICON.recipes, key: "recipes", name: "Recipes" },
+  { icon: CATEGORY_ICON.animals, key: "animals", name: "Animals" },
+  { icon: CATEGORY_ICON.npcs, key: "npcs", name: "NPCs" },
+  { icon: CATEGORY_ICON.cosmetics, key: "cosmetics", name: "Cosmetics" },
+  { icon: CATEGORY_ICON.skills, key: "skills", name: "Skills" },
+  { icon: CATEGORY_ICON.renown, key: "renown", name: "Renown" },
+  { icon: CATEGORY_ICON.quests, key: "quests", name: "Quests" },
+  { icon: CATEGORY_ICON.mines, key: "mines", name: "Mines" },
+];
 
 export interface CategoryMeta {
-  icon: Component<{ class?: string }>;
+  icon: LucideIcon;
   key: CategoryKey;
   name: string;
 }
