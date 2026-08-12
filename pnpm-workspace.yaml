@@ -9,3 +9,7 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - globals@17.10.0
+
+overrides:
+  cookie: ">=0.7.0"
+  undici: ">=7.29.0"
