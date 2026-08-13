@@ -3,24 +3,18 @@
 
   import CompletionRow from "$lib/components/completion-row.svelte";
 
-  import type { VisibilityCondition } from "$lib/types/visibility.js";
-
   let {
     completed,
-    entityVisibility: _entityVisibility,
     name,
     onToggle,
     redaction,
     sources = [],
-    sourceVisibility: _sourceVisibility,
   }: {
     completed: boolean;
-    entityVisibility: VisibilityCondition;
     name: string;
     onToggle: () => void;
     redaction: "redacted" | "source-only" | "visible";
     sources?: { label: string }[];
-    sourceVisibility?: VisibilityCondition;
   } = $props();
 </script>
 
