@@ -1,9 +1,14 @@
+import type { VisibilityCondition } from "./visibility.js";
+
 // ─── Branded ID types ───────────────────────────────────────────────
 // Nominal typing for string IDs to prevent accidental mixing
 
 export interface AlmanacCategory {
   id: string;
-  items: Record<ItemId, { colorCount?: number; name: string; recipeId?: RecipeId }>;
+  items: Record<
+    ItemId,
+    { colorCount?: number; name: string; recipeId?: RecipeId; visibility?: VisibilityCondition }
+  >;
   name: string;
 }
 export type AnimalId = string & { readonly __brand: "AnimalId" };
@@ -42,6 +47,7 @@ export interface Recipe {
   memberItemIds: ItemId[];
   presentations: RecipePresentation[];
   sources: RecipeSource[];
+  visibility?: VisibilityCondition;
 }
 export type RecipeId = string & { readonly __brand: "RecipeId" };
 export interface RecipePresentation {
@@ -49,31 +55,47 @@ export interface RecipePresentation {
   name: string;
 }
 export type RecipeSource =
-  | { biomeId: BiomeId; perkId: PerkId; type: "mines_chest" }
-  | { biomeId: BiomeId; perkId: PerkId; type: "mines_dig_site" }
-  | { bundleName: string; storeId: StoreId; type: "scroll_bundle" }
-  | { cost: number; type: "chicken_statue" }
-  | { cost: number; type: "wishing_well" }
-  | { festivalId: FestivalId; storeId: StoreId; type: "festival" }
-  | { level: number; type: "renown" }
-  | { perkId: PerkId; storeId: StoreId; type: "store_with_perk" }
-  | { perkId: PerkId; type: "perk" }
-  | { questId: QuestId; questType: QuestType; type: "quest" }
-  | { setCount: number; type: "museum_donation"; wingId: WingId }
-  | { storeId: StoreId; type: "store"; upgraded?: true }
-  | { storeId: StoreId; type: "upgrade"; upgradeName: string }
-  | { tier: TreasureChestTier; type: "treasure_chest" }
-  | { trigger: "donated_item"; triggerItemId: ItemId; type: "letter" }
+  | { biomeId: BiomeId; perkId: PerkId; type: "mines_chest"; visibility?: VisibilityCondition }
+  | { biomeId: BiomeId; perkId: PerkId; type: "mines_dig_site"; visibility?: VisibilityCondition }
+  | {
+      bundleName: string;
+      storeId: StoreId;
+      type: "scroll_bundle";
+      visibility?: VisibilityCondition;
+    }
+  | { cost: number; type: "chicken_statue"; visibility?: VisibilityCondition }
+  | { cost: number; type: "wishing_well"; visibility?: VisibilityCondition }
+  | { festivalId: FestivalId; storeId: StoreId; type: "festival"; visibility?: VisibilityCondition }
+  | { level: number; type: "renown"; visibility?: VisibilityCondition }
+  | { perkId: PerkId; storeId: StoreId; type: "store_with_perk"; visibility?: VisibilityCondition }
+  | { perkId: PerkId; type: "perk"; visibility?: VisibilityCondition }
+  | { questId: QuestId; questType: QuestType; type: "quest"; visibility?: VisibilityCondition }
+  | { setCount: number; type: "museum_donation"; visibility?: VisibilityCondition; wingId: WingId; }
+  | { storeId: StoreId; type: "store"; upgraded?: true; visibility?: VisibilityCondition }
+  | { storeId: StoreId; type: "upgrade"; upgradeName: string; visibility?: VisibilityCondition }
+  | { tier: TreasureChestTier; type: "treasure_chest"; visibility?: VisibilityCondition }
+  | {
+      trigger: "donated_item";
+      triggerItemId: ItemId;
+      type: "letter";
+      visibility?: VisibilityCondition;
+    }
   | {
       trigger: "reached_date";
       triggerDate: { day: number; season: Season; year?: number };
       type: "letter";
+      visibility?: VisibilityCondition;
     }
-  | { trigger: "shipped_item"; triggerItemId: ItemId; type: "letter" }
-  | { type: "beach_cave_chest" }
-  | { type: "default" }
-  | { type: "dragon_forge" }
-  | { type: "relationship" };
+  | {
+      trigger: "shipped_item";
+      triggerItemId: ItemId;
+      type: "letter";
+      visibility?: VisibilityCondition;
+    }
+  | { type: "beach_cave_chest"; visibility?: VisibilityCondition }
+  | { type: "default"; visibility?: VisibilityCondition }
+  | { type: "dragon_forge"; visibility?: VisibilityCondition }
+  | { type: "relationship"; visibility?: VisibilityCondition };
 export interface Restriction {
   animal?: string;
   building?: string;
@@ -155,8 +177,11 @@ export interface TrackerData {
           tier?: number;
         }
       >;
+      visibility?: VisibilityCondition;
     }
   >;
+
+  categoryVisibility: Record<string, VisibilityCondition>;
 
   cosmetics: Record<
     CosmeticId,
@@ -165,6 +190,7 @@ export interface TrackerData {
       name: string;
       slot: CosmeticSlot;
       subCategory?: string;
+      visibility?: VisibilityCondition;
     }
   >;
 
@@ -172,9 +198,17 @@ export interface TrackerData {
 
   generatedAt: string;
 
+  heartLevelChanges: Record<QuestId, { level: number; npcId: NpcId; }[]>;
+
   items: Record<
     ItemId,
-    { category: string; name: string; questGate?: QuestId[]; recipeId?: RecipeId }
+    {
+      category: string;
+      name: string;
+      questGate?: QuestId[];
+      recipeId?: RecipeId;
+      visibility?: VisibilityCondition;
+    }
   >;
 
   mines: {
@@ -185,7 +219,10 @@ export interface TrackerData {
       startFloor: number;
     }[];
     maxFloors: number;
-    spells: Record<SpellId, { name: string; questGate?: QuestId[] }>;
+    spells: Record<
+      SpellId,
+      { name: string; questGate?: QuestId[]; visibility?: VisibilityCondition }
+    >;
   };
 
   museum: MuseumWing[];
@@ -199,9 +236,23 @@ export interface TrackerData {
     }
   >;
 
-  perks: Record<PerkId, { name: string; skillId: SkillId; tier: number }>;
+  npcVisibility: Record<NpcId, VisibilityCondition>;
+
+  perks: Record<
+    PerkId,
+    { name: string; skillId: SkillId; tier: number; visibility?: VisibilityCondition }
+  >;
 
   perkTierLevels: number[];
+
+  questChains: {
+    crown: QuestId[];
+    fetch: Record<QuestId, VisibilityCondition>;
+    heart: Record<NpcId, { heartLevel: number; prerequisiteQuest?: QuestId; questId: QuestId; }[]>;
+    stillwell: QuestId[];
+    story: Record<QuestId, { prerequisites: QuestId[] }>;
+    tali: QuestId[];
+  };
 
   questGates: {
     animalGates: Record<AnimalId, QuestId[]>;
@@ -210,7 +261,10 @@ export interface TrackerData {
     spellGates: Record<SpellId, QuestId[]>;
   };
 
-  quests: Record<string, Record<QuestId, { name: string; npc?: string }>>;
+  quests: Record<
+    string,
+    Record<QuestId, { name: string; npc?: string; visibility?: VisibilityCondition }>
+  >;
 
   recipes: Record<RecipeId, Recipe>;
 
@@ -220,11 +274,9 @@ export interface TrackerData {
   };
 
   skills: Record<SkillId, string>;
-
   sources: Record<ItemId, Source[]>;
-
   stores: Record<StoreId, { article?: "the"; name: string }>;
-
+  storeVisibility: Record<StoreId, VisibilityCondition>;
   treasureChestTiers: Record<TreasureChestTier, { name: string }>;
 
   version: string;
