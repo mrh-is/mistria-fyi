@@ -12,14 +12,16 @@ export type CutsceneQuestMap = Record<string, CutsceneQuestEntry>;
 export function buildCutsceneQuestMap(fiddle: ParsedGameData): CutsceneQuestMap {
   const map: CutsceneQuestMap = {};
 
-  // Collect all known quest IDs
+  // Collect all known quest IDs (skip "default" placeholder entries)
   const allQuestIds = new Set<string>();
   const questGroups = fiddle.quests as Record<string, Record<string, unknown>> | undefined;
   if (questGroups) {
     for (const group of Object.values(questGroups)) {
       if (typeof group === "object" && group !== null) {
         for (const questId of Object.keys(group)) {
-          allQuestIds.add(questId);
+          if (questId !== "default") {
+            allQuestIds.add(questId);
+          }
         }
       }
     }
@@ -34,7 +36,7 @@ export function buildCutsceneQuestMap(fiddle: ParsedGameData): CutsceneQuestMap 
 
   if (cutscenes) {
     for (const [cutsceneId, cutscene] of Object.entries(cutscenes)) {
-      if (typeof cutscene !== "object" || cutscene === null) continue;
+      if (cutsceneId === "default" || typeof cutscene !== "object" || cutscene === null) continue;
 
       if (typeof cutscene.quest_to_start === "string") {
         map[cutsceneId] = {
@@ -56,7 +58,7 @@ export function buildCutsceneQuestMap(fiddle: ParsedGameData): CutsceneQuestMap 
     for (const group of Object.values(questGroups)) {
       if (typeof group !== "object" || group === null) continue;
       for (const [questId, quest] of Object.entries(group)) {
-        if (typeof quest !== "object" || quest === null) continue;
+        if (questId === "default" || typeof quest !== "object" || quest === null) continue;
         const stages = (quest as Record<string, unknown>).stages;
         if (!Array.isArray(stages)) continue;
         for (const stage of stages) {
@@ -81,7 +83,7 @@ export function buildCutsceneQuestMap(fiddle: ParsedGameData): CutsceneQuestMap 
   // Source 3: Naming convention — strip _pt_N suffix, match against quest IDs
   if (cutscenes) {
     for (const cutsceneId of Object.keys(cutscenes)) {
-      if (cutsceneId in map) continue;
+      if (cutsceneId === "default" || cutsceneId in map) continue;
       const ptMatch = /^(.+)_pt_(\d+)$/.exec(cutsceneId);
       if (!ptMatch) continue;
       const baseId = ptMatch[1];
@@ -91,27 +93,6 @@ export function buildCutsceneQuestMap(fiddle: ParsedGameData): CutsceneQuestMap 
           phase: partNumber >= 2 ? "completed" : "available",
           questId: baseId as QuestId,
         };
-      }
-    }
-  }
-
-  // Fallback: if cutscenes was undefined, try accessing from nested structure
-  if (!cutscenes) {
-    const nestedCutscenes = (fiddle.cutscenes as Record<string, unknown> | undefined)?.cutscenes as
-      Record<string, Record<string, unknown>> | undefined;
-    if (nestedCutscenes) {
-      for (const cutsceneId of Object.keys(nestedCutscenes)) {
-        if (cutsceneId in map) continue;
-        const ptMatch = /^(.+)_pt_(\d+)$/.exec(cutsceneId);
-        if (!ptMatch) continue;
-        const baseId = ptMatch[1];
-        const partNumber = parseInt(ptMatch[2], 10);
-        if (allQuestIds.has(baseId)) {
-          map[cutsceneId] = {
-            phase: partNumber >= 2 ? "completed" : "available",
-            questId: baseId as QuestId,
-          };
-        }
       }
     }
   }
