@@ -5,7 +5,7 @@
 
   import type { Snippet } from "svelte";
 
-  import type { RouteId } from "$app/types";
+  import type { Pathname } from "$app/types";
   import type { CategoryProgress } from "$lib/engine/progress.js";
 
   let {
@@ -16,7 +16,7 @@
     ref = $bindable<HTMLDivElement | undefined>(undefined),
     title,
   }: {
-    backHref?: RouteId;
+    backHref?: Pathname;
     backLabel?: string;
     icon?: Snippet<[string]>;
     progress?: CategoryProgress;

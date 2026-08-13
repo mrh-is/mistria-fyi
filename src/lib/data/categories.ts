@@ -1,3 +1,5 @@
+import type { Pathname } from "$app/types";
+
 export const CATEGORY_KEYS = [
   "almanac",
   "animals",
@@ -13,7 +15,7 @@ export const CATEGORY_KEYS = [
 
 export interface CategoryInfo {
   color: string;
-  href: string;
+  href: Pathname;
   name: string;
 }
 
