@@ -1,21 +1,8 @@
 <script lang="ts">
-  import { ArrowLeft } from "@lucide/svelte";
-
-  import { resolve } from "$app/paths";
+  import PageHeader from "$lib/components/page-header.svelte";
 </script>
 
-<div
-  class="sticky top-0 z-10 flex items-center gap-2 border-b border-border/50 bg-background px-4 pt-safe-or-4 pb-3"
->
-  <a
-    class="-ml-3 flex min-h-11 min-w-11 items-center justify-center text-muted-foreground hover:text-foreground"
-    href={resolve("/settings")}
-    aria-label="Back to settings"
-  >
-    <ArrowLeft class="size-5" />
-  </a>
-  <h1 class="flex-1 text-xl font-semibold">Privacy Policy</h1>
-</div>
+<PageHeader title="Privacy Policy" backHref="/settings" backLabel="Back to settings" />
 
 <div class="flex flex-col gap-6 p-4 text-sm">
   <section class="flex flex-col gap-2">

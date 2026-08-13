@@ -1,9 +1,8 @@
 <script lang="ts">
   import { Icon } from "$lib/components/icon/index.js";
   import Stepper from "$lib/components/stepper.svelte";
-  import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
-  import { getNpcsProgress, MAX_NPC_LEVEL } from "$lib/engine/progress.js";
+  import { type CategoryProgress, MAX_NPC_LEVEL } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
 
@@ -41,13 +40,7 @@
     }
   }
 
-  let progress = $derived(
-    getNpcsProgress({
-      availabilityMode: userState.state.availabilityMode,
-      completed: userState.state.completed,
-      worldState: userState.state.worldState,
-    }),
-  );
+  const { progress }: { progress: CategoryProgress } = $props();
 
   let npcs = $derived(
     Object.entries(trackerData.npcs)
@@ -58,7 +51,7 @@
 
 {#if progress.completed < progress.total || userState.state.showCompleted}
   <div class="flex flex-col gap-1">
-    <SectionHeader category={CATEGORY_BY_KEY.npcs} {progress} />
+    <SectionHeader key="npcs" {progress} />
     <div class="flex flex-col gap-1">
       {#each npcs as npc (npc.id)}
         {@const level = userState.state.completed.npcLevels[npc.id as string] ?? 0}

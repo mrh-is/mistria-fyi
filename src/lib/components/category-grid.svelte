@@ -1,7 +1,7 @@
 <script lang="ts">
   import CategoryCard from "$lib/components/category-card.svelte";
   import { Icon } from "$lib/components/icon/index.js";
-  import { CATEGORIES } from "$lib/data/categories.js";
+  import { CATEGORY_KEYS } from "$lib/data/categories.js";
   import { getAllProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
@@ -14,15 +14,15 @@
   );
 
   let activeCategories = $derived(
-    CATEGORIES.filter((cat) => {
-      const p = progress[cat.key];
+    CATEGORY_KEYS.filter((key) => {
+      const p = progress[key];
       return p.total === 0 || p.completed < p.total;
     }),
   );
 
   let completedCategories = $derived(
-    CATEGORIES.filter((cat) => {
-      const p = progress[cat.key];
+    CATEGORY_KEYS.filter((key) => {
+      const p = progress[key];
       return p.total > 0 && p.completed >= p.total;
     }),
   );
@@ -31,8 +31,8 @@
 <div class="flex flex-col gap-4">
   {#if activeCategories.length > 0}
     <div class="grid grid-cols-2 gap-2">
-      {#each activeCategories as cat (cat.key)}
-        <CategoryCard category={cat} progress={progress[cat.key]} />
+      {#each activeCategories as key (key)}
+        <CategoryCard {key} progress={progress[key]} />
       {/each}
     </div>
   {/if}
@@ -46,8 +46,8 @@
         <span>Completed</span>
       </div>
       <div class="grid grid-cols-2 gap-2">
-        {#each completedCategories as cat (cat.key)}
-          <CategoryCard category={cat} progress={progress[cat.key]} />
+        {#each completedCategories as key (key)}
+          <CategoryCard {key} progress={progress[key]} />
         {/each}
       </div>
     </div>

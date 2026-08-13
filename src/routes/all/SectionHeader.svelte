@@ -1,25 +1,25 @@
 <script lang="ts">
   import { Icon } from "$lib/components/icon/index.js";
-  import { categoryColor, type CategoryMeta } from "$lib/data/categories.js";
+  import { categoryForKey, type CategoryKey } from "$lib/data/categories.js";
 
   import type { CategoryProgress } from "$lib/engine/progress.js";
 
   let {
-    category,
+    key,
     progress,
   }: {
-    category: CategoryMeta;
+    key: CategoryKey;
     progress: CategoryProgress;
   } = $props();
 
-  const color = $derived(categoryColor(category.key));
+  const { color, name } = $derived(categoryForKey(key));
 </script>
 
 <div
   class="sticky z-5 -mx-4 flex items-center gap-2 bg-background px-6 py-2"
   style="top: var(--section-top, 0px); --header-color: var(--{color})"
 >
-  <Icon.Category category={category.key} class="size-4 text-(--header-color)" />
-  <span class="flex-1 text-sm font-semibold tracking-wide">{category.name}</span>
+  <Icon.Category category={key} class="size-4 text-(--header-color)" />
+  <span class="flex-1 text-sm font-semibold tracking-wide">{name}</span>
   <span class="text-sm text-muted-foreground">{progress.completed}/{progress.total}</span>
 </div>

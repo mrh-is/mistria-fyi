@@ -1,23 +1,17 @@
 <script lang="ts">
   import AlmanacContent from "$lib/components/almanac-content.svelte";
-  import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
-  import { getAlmanacProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import SectionHeader from "./SectionHeader.svelte";
 
-  let progress = $derived(
-    getAlmanacProgress({
-      availabilityMode: userState.state.availabilityMode,
-      completed: userState.state.completed,
-      worldState: userState.state.worldState,
-    }),
-  );
+  import type { CategoryProgress } from "$lib/engine/progress.js";
+
+  const { progress }: { progress: CategoryProgress } = $props();
 </script>
 
 {#if progress.completed < progress.total || userState.state.showCompleted}
   <div class="flex flex-col gap-1">
-    <SectionHeader category={CATEGORY_BY_KEY.almanac} {progress} />
+    <SectionHeader key="almanac" {progress} />
     <AlmanacContent />
   </div>
 {/if}

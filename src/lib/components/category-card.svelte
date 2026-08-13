@@ -1,23 +1,21 @@
 <script lang="ts">
+  import { resolve } from "$app/paths";
   import { Icon } from "$lib/components/icon/index.js";
   import * as Card from "$lib/components/ui/card/index.js";
   import { Progress } from "$lib/components/ui/progress/index.js";
-  import { categoryColor, categoryHref } from "$lib/data/categories.js";
+  import { categoryForKey, type CategoryKey } from "$lib/data/categories.js";
 
-  import type { CategoryMeta } from "$lib/data/categories.js";
   import type { CategoryProgress } from "$lib/engine/progress.js";
 
   let {
-    category,
+    key,
     progress,
   }: {
-    category: CategoryMeta;
+    key: CategoryKey;
     progress: CategoryProgress;
   } = $props();
 
-  const name = $derived(category.name);
-  const color = $derived(categoryColor(category.key));
-  const href = $derived(categoryHref(category.key));
+  const { color, href, name } = $derived(categoryForKey(key));
 
   // Show available count when filtering is active (filtered < total - completed)
   let displayTotal = $derived(progress.completed + progress.filtered);
@@ -25,8 +23,7 @@
   let isComplete = $derived(progress.total > 0 && progress.completed >= progress.total);
 </script>
 
-<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- href is a known route path -->
-<a class="block" {href} style="--category-color: var(--{color})">
+<a class="block" href={resolve(href)} style="--category-color: var(--{color})">
   <Card.Root
     class={[
       "gap-0 py-4 transition-colors",
@@ -43,7 +40,7 @@
             class="size-4 shrink-0 text-yellow-700 dark:text-yellow-400"
           />
         {:else}
-          <Icon.Category category={category.key} class="size-4 shrink-0 text-(--category-color)" />
+          <Icon.Category category={key} class="size-4 shrink-0 text-(--category-color)" />
         {/if}
         <span class="min-w-0 flex-1 text-base font-medium">{name}</span>
         <span class="shrink-0 text-sm text-muted-foreground">

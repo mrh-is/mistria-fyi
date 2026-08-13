@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { type CompletedState, userState } from "$lib/stores/user-state.svelte.js";
 
-import { getRenownProgress } from "../progress.js";
+import { getCategoryProgress } from "../progress.js";
 
 function completedAtRenown(renown: number): CompletedState {
   return {
@@ -26,7 +26,7 @@ describe("renown maximum", () => {
   });
 
   it("reports level 100 as complete", () => {
-    const progress = getRenownProgress({
+    const progress = getCategoryProgress("renown", {
       availabilityMode: "everything",
       completed: completedAtRenown(100),
       worldState: { season: "spring", weather: "calm" },
@@ -36,7 +36,7 @@ describe("renown maximum", () => {
   });
 
   it("normalizes progress saved above level 100", () => {
-    const progress = getRenownProgress({
+    const progress = getCategoryProgress("renown", {
       availabilityMode: "everything",
       completed: completedAtRenown(110),
       worldState: { season: "spring", weather: "calm" },

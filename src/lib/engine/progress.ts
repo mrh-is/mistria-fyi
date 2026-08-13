@@ -55,7 +55,32 @@ export function getAllProgress(ctx: ProgressContext): AllProgress {
   };
 }
 
-export function getAlmanacProgress(ctx: ProgressContext): CategoryProgress {
+export function getCategoryProgress(category: CategoryKey, ctx: ProgressContext): CategoryProgress {
+  switch (category) {
+    case "almanac":
+      return getAlmanacProgress(ctx);
+    case "animals":
+      return getAnimalsProgress(ctx);
+    case "cosmetics":
+      return getCosmeticsProgress(ctx);
+    case "mines":
+      return getMinesProgress(ctx);
+    case "museum":
+      return getMuseumProgress(ctx);
+    case "npcs":
+      return getNpcsProgress(ctx);
+    case "quests":
+      return getQuestsProgress(ctx);
+    case "recipes":
+      return getRecipesProgress(ctx);
+    case "renown":
+      return getRenownProgress(ctx);
+    case "skills":
+      return getSkillsProgress(ctx);
+  }
+}
+
+function getAlmanacProgress(ctx: ProgressContext): CategoryProgress {
   const allIds: ItemId[] = [];
   for (const cat of trackerData.almanac) {
     allIds.push(...(Object.keys(cat.items) as ItemId[]));
@@ -63,7 +88,7 @@ export function getAlmanacProgress(ctx: ProgressContext): CategoryProgress {
   return itemProgress(allIds, ctx.completed.almanac, trackerData.sources, ctx);
 }
 
-export function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
+function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
   let total = 0;
   let completed = 0;
   let filtered = 0;
@@ -99,13 +124,13 @@ export function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
   return { completed, filtered, total };
 }
 
-export function getCosmeticsProgress(ctx: ProgressContext): CategoryProgress {
+function getCosmeticsProgress(ctx: ProgressContext): CategoryProgress {
   const total = Object.keys(trackerData.cosmetics).length;
   const completed = ctx.completed.cosmetics.size;
   return { completed, filtered: total - completed, total };
 }
 
-export function getMinesProgress(ctx: ProgressContext): CategoryProgress {
+function getMinesProgress(ctx: ProgressContext): CategoryProgress {
   const totalFloors = trackerData.mines.maxFloors;
   const totalSpells = Object.keys(trackerData.mines.spells).length;
   const total = totalFloors + totalSpells;
@@ -113,7 +138,7 @@ export function getMinesProgress(ctx: ProgressContext): CategoryProgress {
   return { completed, filtered: total - completed, total };
 }
 
-export function getMuseumProgress(ctx: ProgressContext): CategoryProgress {
+function getMuseumProgress(ctx: ProgressContext): CategoryProgress {
   const allIds: ItemId[] = [];
   for (const wing of trackerData.museum) {
     for (const set of wing.sets) {
@@ -123,7 +148,7 @@ export function getMuseumProgress(ctx: ProgressContext): CategoryProgress {
   return itemProgress(allIds, ctx.completed.museum, trackerData.sources, ctx);
 }
 
-export function getNpcsProgress(ctx: ProgressContext): CategoryProgress {
+function getNpcsProgress(ctx: ProgressContext): CategoryProgress {
   let total = 0;
   let completed = 0;
   for (const id of Object.keys(trackerData.npcs)) {
@@ -133,7 +158,7 @@ export function getNpcsProgress(ctx: ProgressContext): CategoryProgress {
   return { completed, filtered: total - completed, total };
 }
 
-export function getQuestsProgress(ctx: ProgressContext): CategoryProgress {
+function getQuestsProgress(ctx: ProgressContext): CategoryProgress {
   let total = 0;
   let completed = 0;
   for (const questType of Object.values(trackerData.quests)) {
@@ -145,13 +170,13 @@ export function getQuestsProgress(ctx: ProgressContext): CategoryProgress {
   return { completed, filtered: total - completed, total };
 }
 
-export function getRecipesProgress(ctx: ProgressContext): CategoryProgress {
+function getRecipesProgress(ctx: ProgressContext): CategoryProgress {
   const allIds = Object.keys(trackerData.recipes) as RecipeId[];
   const completed = allIds.filter((id) => ctx.completed.almanacRecipes.has(id)).length;
   return { completed, filtered: allIds.length - completed, total: allIds.length };
 }
 
-export function getRenownProgress(ctx: ProgressContext): CategoryProgress {
+function getRenownProgress(ctx: ProgressContext): CategoryProgress {
   const total = MAX_RENOWN_LEVEL;
   const completed = clampRenownLevel(ctx.completed.renown);
   return { completed, filtered: total - completed, total };
@@ -159,7 +184,7 @@ export function getRenownProgress(ctx: ProgressContext): CategoryProgress {
 
 // ─── All categories ─────────────────────────────────────────────────
 
-export function getSkillsProgress(ctx: ProgressContext): CategoryProgress {
+function getSkillsProgress(ctx: ProgressContext): CategoryProgress {
   let total = 0;
   let completed = 0;
   for (const id of Object.keys(trackerData.skills)) {

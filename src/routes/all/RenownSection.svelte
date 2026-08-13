@@ -1,9 +1,12 @@
 <script lang="ts">
   import { Icon } from "$lib/components/icon/index.js";
   import Stepper from "$lib/components/stepper.svelte";
-  import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
-  import { clampRenownLevel, getRenownProgress, MAX_RENOWN_LEVEL } from "$lib/engine/progress.js";
+  import {
+    type CategoryProgress,
+    clampRenownLevel,
+    MAX_RENOWN_LEVEL,
+  } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
 
@@ -28,13 +31,7 @@
   let ranks = trackerData.renown.ranks;
   let maxLevel = MAX_RENOWN_LEVEL;
 
-  let progress = $derived(
-    getRenownProgress({
-      availabilityMode: userState.state.availabilityMode,
-      completed: userState.state.completed,
-      worldState: userState.state.worldState,
-    }),
-  );
+  const { progress }: { progress: CategoryProgress } = $props();
 
   let level = $derived(clampRenownLevel(userState.state.completed.renown));
   let currentRankIndex = $derived(Math.min(Math.floor(level / levelsPerRank), ranks.length - 1));
@@ -55,7 +52,7 @@
 
 {#if progress.completed < progress.total || userState.state.showCompleted}
   <div class="flex flex-col gap-1">
-    <SectionHeader category={CATEGORY_BY_KEY.renown} {progress} />
+    <SectionHeader key="renown" {progress} />
     <div class="flex items-center gap-2 rounded-md px-2 {isMaxed ? 'opacity-40' : ''}">
       <div class="flex min-w-0 flex-1 items-center gap-1.5">
         <span class="text-base font-medium">{currentRankName}</span>
