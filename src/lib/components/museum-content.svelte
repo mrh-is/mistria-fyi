@@ -1,16 +1,27 @@
 <script lang="ts">
   import { SvelteSet } from "svelte/reactivity";
 
+  import ConfirmRedactedDialog from "$lib/components/confirm-redacted-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import ItemRow from "$lib/components/item-row.svelte";
+  import RedactedRow from "$lib/components/redacted-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { isItemDimmed, isRowVisible, shouldCountItem } from "$lib/engine/availability.js";
+  import { redactionState } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
+  import { createRedactionGuard, resolveName } from "$lib/utils/redaction-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { ItemId } from "$lib/types/tracker-data.js";
+
+  const redactGuard = createRedactionGuard();
+
+  function itemRedaction(itemId: ItemId) {
+    const visibility = trackerData.items[itemId].visibility ?? { type: "always" };
+    return redactionState(visibility, undefined, userState.progressionState);
+  }
 
   let recentlyCompleted = new SvelteSet<ItemId>();
 
@@ -61,7 +72,42 @@
       recentlyCompleted,
     );
   }
+
+  function toggleItem(itemId: ItemId, wingItems: ItemId[], setItems: ItemId[]): void {
+    userState.toggleMuseumItem(itemId);
+    const completed = userState.state.completed.museum.has(itemId);
+    const item = trackerData.items[itemId];
+    showUndoToast(resolveName(item.name, item.visibility ?? { type: "always" }), completed, () => {
+      userState.toggleMuseumItem(itemId);
+    });
+    if (completed) {
+      if (!userState.state.showCompleted) markLeaving(itemId);
+      if (isCategoryComplete()) {
+        celebrateCategory();
+      } else if (isWingComplete(wingItems)) {
+        celebrate();
+      } else if (isSetComplete(setItems)) {
+        celebrate();
+      }
+    }
+  }
 </script>
+
+{#if redactGuard.condition}
+  <ConfirmRedactedDialog
+    condition={redactGuard.condition}
+    bind:open={redactGuard.open}
+    onCancel={() => {
+      redactGuard.cancel();
+    }}
+    onComplete={() => {
+      redactGuard.complete();
+    }}
+    onCompleteAndUpdate={() => {
+      redactGuard.completeAndUpdate();
+    }}
+  />
+{/if}
 
 {#each trackerData.museum as wing (wing.id)}
   {@const wingItems = wing.sets.flatMap((s) => s.items)}
@@ -85,36 +131,39 @@
             total={scopedSetItems.length}
           >
             {#each visibleSetItems as itemId (itemId)}
-              <ItemRow
-                completed={userState.state.completed.museum.has(itemId)}
-                dimmed={isItemDimmed(
-                  itemId,
-                  userState.state.completed.museum.has(itemId),
-                  trackerData.sources,
-                  userState.state.worldState,
-                  userState.state.availabilityMode,
-                )}
-                {itemId}
-                leaving={recentlyCompleted.has(itemId)}
-                name={trackerData.items[itemId].name}
-                onToggle={() => {
-                  userState.toggleMuseumItem(itemId);
-                  const completed = userState.state.completed.museum.has(itemId);
-                  showUndoToast(trackerData.items[itemId].name, completed, () => {
-                    userState.toggleMuseumItem(itemId);
-                  });
-                  if (completed) {
-                    if (!userState.state.showCompleted) markLeaving(itemId);
-                    if (isCategoryComplete()) {
-                      celebrateCategory();
-                    } else if (isWingComplete(wingItems)) {
-                      celebrate();
-                    } else if (isSetComplete(set.items)) {
-                      celebrate();
-                    }
-                  }
-                }}
-              />
+              {@const redaction = itemRedaction(itemId)}
+              {#if redaction !== "visible"}
+                <RedactedRow
+                  completed={userState.state.completed.museum.has(itemId)}
+                  name={trackerData.items[itemId].name}
+                  onToggle={() => {
+                    redactGuard.guard(
+                      trackerData.items[itemId].visibility ?? { type: "always" },
+                      () => {
+                        toggleItem(itemId, wingItems, set.items);
+                      },
+                    );
+                  }}
+                  {redaction}
+                />
+              {:else}
+                <ItemRow
+                  completed={userState.state.completed.museum.has(itemId)}
+                  dimmed={isItemDimmed(
+                    itemId,
+                    userState.state.completed.museum.has(itemId),
+                    trackerData.sources,
+                    userState.state.worldState,
+                    userState.state.availabilityMode,
+                  )}
+                  {itemId}
+                  leaving={recentlyCompleted.has(itemId)}
+                  name={trackerData.items[itemId].name}
+                  onToggle={() => {
+                    toggleItem(itemId, wingItems, set.items);
+                  }}
+                />
+              {/if}
             {/each}
           </ExpandableSection>
         {/if}

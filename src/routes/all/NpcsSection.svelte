@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { Lock } from "@lucide/svelte";
+
   import { Icon } from "$lib/components/icon/index.js";
   import Stepper from "$lib/components/stepper.svelte";
   import { trackerData } from "$lib/data/index.js";
@@ -9,6 +11,10 @@
   import SectionHeader from "./SectionHeader.svelte";
 
   import type { NpcId } from "$lib/types/tracker-data.js";
+
+  function isNpcKnown(id: NpcId): boolean {
+    return userState.progressionState.knownNpcs.has(id);
+  }
 
   // Matches the rainbow color scale on the full NPC page
   const LEVEL_COLORS = [
@@ -56,7 +62,13 @@
       {#each npcs as npc (npc.id)}
         {@const level = userState.state.completed.npcLevels[npc.id as string] ?? 0}
         {@const maxed = level >= MAX_NPC_LEVEL}
-        {#if maxed ? userState.state.showCompleted : true}
+        {@const known = isNpcKnown(npc.id)}
+        {#if !known}
+          <div class="flex items-center gap-2 rounded-md px-2 py-1.5">
+            <Lock class="size-4 shrink-0 text-muted-foreground/50" />
+            <span class="min-w-0 flex-1 text-base text-muted-foreground italic">Redacted</span>
+          </div>
+        {:else if maxed ? userState.state.showCompleted : true}
           <div class="flex items-center gap-2 rounded-md px-2 {maxed ? 'opacity-40' : ''}">
             <div class="flex min-w-0 flex-1 items-center gap-1.5">
               <span class="truncate text-base font-medium">{npc.name}</span>

@@ -1,13 +1,44 @@
 <script lang="ts">
+  import ConfirmRedactedDialog from "$lib/components/confirm-redacted-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import { Icon } from "$lib/components/icon/index.js";
+  import RedactedRow from "$lib/components/redacted-row.svelte";
   import Stepper from "$lib/components/stepper.svelte";
   import { trackerData } from "$lib/data/index.js";
+  import { redactionState } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
+  import { createRedactionGuard, resolveName } from "$lib/utils/redaction-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { SpellId } from "$lib/types/tracker-data.js";
+
+  const redactGuard = createRedactionGuard();
+
+  function spellRedaction(spellId: SpellId) {
+    const visibility = trackerData.mines.spells[spellId].visibility ?? { type: "always" };
+    return redactionState(visibility, undefined, userState.progressionState);
+  }
+
+  function toggleSpell(spellId: SpellId): void {
+    userState.toggleSpell(spellId);
+    const completed = userState.state.completed.mines.spells.has(spellId);
+    const spell = trackerData.mines.spells[spellId];
+    showUndoToast(
+      resolveName(spell.name, spell.visibility ?? { type: "always" }),
+      completed,
+      () => {
+        userState.toggleSpell(spellId);
+      },
+    );
+    if (completed) {
+      if (isMinesComplete()) {
+        celebrateCategory();
+      } else if (allSpellsComplete()) {
+        celebrate();
+      }
+    }
+  }
 
   const { compact = false, defaultOpen = false }: { compact?: boolean; defaultOpen?: boolean } =
     $props();
@@ -47,6 +78,22 @@
     }),
   );
 </script>
+
+{#if redactGuard.condition}
+  <ConfirmRedactedDialog
+    condition={redactGuard.condition}
+    bind:open={redactGuard.open}
+    onCancel={() => {
+      redactGuard.cancel();
+    }}
+    onComplete={() => {
+      redactGuard.complete();
+    }}
+    onCompleteAndUpdate={() => {
+      redactGuard.completeAndUpdate();
+    }}
+  />
+{/if}
 
 {#if compact}
   <div class="flex items-center gap-2 rounded-md px-2">
@@ -142,39 +189,45 @@
   >
     {#each visibleSpells as spell (spell.id)}
       {@const completed = userState.state.completed.mines.spells.has(spell.id)}
-      <div
-        class="flex items-center gap-2 rounded-md px-2 py-1 {completed
-          ? 'line-through opacity-40'
-          : ''}"
-      >
-        <button
-          class="flex size-11 shrink-0 items-center justify-center"
-          type="button"
-          aria-label={completed ? `Uncheck ${spell.name}` : `Check ${spell.name}`}
-          onclick={() => {
-            userState.toggleSpell(spell.id);
-            const completed = userState.state.completed.mines.spells.has(spell.id);
-            showUndoToast(spell.name, completed, () => {
-              userState.toggleSpell(spell.id);
-            });
-            if (completed) {
-              if (isMinesComplete()) {
-                celebrateCategory();
-              } else if (allSpellsComplete()) {
-                celebrate();
-              }
-            }
+      {@const redaction = spellRedaction(spell.id)}
+      {#if redaction !== "visible"}
+        <RedactedRow
+          {completed}
+          name={spell.name}
+          onToggle={() => {
+            redactGuard.guard(
+              trackerData.mines.spells[spell.id].visibility ?? { type: "always" },
+              () => {
+                toggleSpell(spell.id);
+              },
+            );
           }}
+          {redaction}
+        />
+      {:else}
+        <div
+          class="flex items-center gap-2 rounded-md px-2 py-1 {completed
+            ? 'line-through opacity-40'
+            : ''}"
         >
-          <Icon.Completion
-            state={completed ? "completed" : "none"}
-            class="size-5 {completed
-              ? 'text-green-600 dark:text-green-400'
-              : 'text-muted-foreground/50'}"
-          />
-        </button>
-        <span class="text-base">{spell.name}</span>
-      </div>
+          <button
+            class="flex size-11 shrink-0 items-center justify-center"
+            type="button"
+            aria-label={completed ? `Uncheck ${spell.name}` : `Check ${spell.name}`}
+            onclick={() => {
+              toggleSpell(spell.id);
+            }}
+          >
+            <Icon.Completion
+              state={completed ? "completed" : "none"}
+              class="size-5 {completed
+                ? 'text-green-600 dark:text-green-400'
+                : 'text-muted-foreground/50'}"
+            />
+          </button>
+          <span class="text-base">{spell.name}</span>
+        </div>
+      {/if}
     {/each}
   </ExpandableSection>
 {/if}

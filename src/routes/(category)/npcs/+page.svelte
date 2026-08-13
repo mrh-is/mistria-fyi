@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { Lock } from "@lucide/svelte";
+
   import { Icon } from "$lib/components/icon/index.js";
   import Stepper from "$lib/components/stepper.svelte";
   import { trackerData } from "$lib/data/index.js";
@@ -7,6 +9,10 @@
   import { celebrateCategory } from "$lib/utils/celebrate.js";
 
   import type { NpcId } from "$lib/types/tracker-data.js";
+
+  function isNpcKnown(id: NpcId): boolean {
+    return userState.progressionState.knownNpcs.has(id);
+  }
 
   function areAllNpcsMaxed(): boolean {
     return Object.keys(trackerData.npcs).every(
@@ -57,7 +63,13 @@
   {#each npcs as npc (npc.id)}
     {@const level = getNpcLevel(npc.id)}
     {@const maxed = isMaxed(npc)}
-    {#if maxed ? userState.state.showCompleted : true}
+    {@const known = isNpcKnown(npc.id)}
+    {#if !known}
+      <div class="flex items-center gap-2 rounded-md px-2 py-1.5">
+        <Lock class="size-4 shrink-0 text-muted-foreground/50" />
+        <span class="min-w-0 flex-1 text-base text-muted-foreground italic">Redacted</span>
+      </div>
+    {:else if maxed ? userState.state.showCompleted : true}
       <div class="flex flex-col gap-1.5 rounded-md px-2 py-1.5 {maxed ? 'opacity-40' : ''}">
         <!-- Name row -->
         <div class="flex items-center gap-2">

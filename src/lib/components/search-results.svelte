@@ -7,7 +7,6 @@
   import { getItemRestrictions } from "$lib/engine/availability.js";
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
   import { searchItems } from "$lib/engine/search.js";
-  import { deriveProgressionState } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
@@ -23,11 +22,13 @@
 
   let { query }: { query: string } = $props();
 
-  let progressionState = $derived(
-    deriveProgressionState(userState.state.completed, trackerData, userState.state.showSpoilers),
-  );
   let results = $derived(
-    searchItems(query, userState.state.completed, userState.state.worldState, progressionState),
+    searchItems(
+      query,
+      userState.state.completed,
+      userState.state.worldState,
+      userState.progressionState,
+    ),
   );
 
   const CATEGORY_LABELS: Record<string, string> = {

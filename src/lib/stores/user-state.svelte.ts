@@ -3,6 +3,7 @@ import { SvelteSet } from "svelte/reactivity";
 import { trackerData } from "$lib/data/index.js";
 import { clampRenownLevel } from "$lib/engine/progress.js";
 import { findRecipesForQuest } from "$lib/engine/quest-rewards.js";
+import { deriveProgressionState, type UserProgressionState } from "$lib/engine/visibility.js";
 
 import type {
   AnimalId,
@@ -165,6 +166,10 @@ function createUserState() {
   }
 
   let state = $state<UserState>(initial);
+
+  const progressionState = $derived(
+    deriveProgressionState(state.completed, trackerData, state.showSpoilers),
+  );
 
   // Auto-save to localStorage (debounced)
   if (typeof window !== "undefined") {
@@ -375,6 +380,9 @@ function createUserState() {
       }
 
       return counts;
+    },
+    get progressionState(): UserProgressionState {
+      return progressionState;
     },
     resetAll() {
       state = createDefaultState();

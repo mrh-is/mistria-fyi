@@ -1,17 +1,32 @@
 <script lang="ts">
   import { SvelteSet } from "svelte/reactivity";
 
+  import ConfirmRedactedDialog from "$lib/components/confirm-redacted-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import ItemRow from "$lib/components/item-row.svelte";
+  import RedactedRow from "$lib/components/redacted-row.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { isItemDimmed, isRowVisible, shouldCountItem } from "$lib/engine/availability.js";
+  import { redactionState } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
+  import { createRedactionGuard, resolveName } from "$lib/utils/redaction-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { ItemId } from "$lib/types/tracker-data.js";
+  import type { VisibilityCondition } from "$lib/types/visibility.js";
+
+  const redactGuard = createRedactionGuard();
+
+  function itemRedaction(item: { visibility?: VisibilityCondition }) {
+    return redactionState(
+      item.visibility ?? { type: "always" },
+      undefined,
+      userState.progressionState,
+    );
+  }
 
   let recentlyCompleted = new SvelteSet<ItemId>();
 
@@ -48,7 +63,39 @@
   function isFishCategory(catId: string): boolean {
     return catId === "fish";
   }
+
+  function toggleItem(
+    itemId: ItemId,
+    item: { name: string; visibility?: VisibilityCondition },
+    catItemIds: ItemId[],
+  ): void {
+    userState.toggleAlmanacItem(itemId);
+    const completed = userState.state.completed.almanac.has(itemId);
+    showUndoToast(resolveName(item.name, item.visibility ?? { type: "always" }), completed, () => {
+      userState.toggleAlmanacItem(itemId);
+    });
+    if (completed) {
+      if (!userState.state.showCompleted) markLeaving(itemId);
+      checkCelebration(catItemIds);
+    }
+  }
 </script>
+
+{#if redactGuard.condition}
+  <ConfirmRedactedDialog
+    condition={redactGuard.condition}
+    bind:open={redactGuard.open}
+    onCancel={() => {
+      redactGuard.cancel();
+    }}
+    onComplete={() => {
+      redactGuard.complete();
+    }}
+    onCompleteAndUpdate={() => {
+      redactGuard.completeAndUpdate();
+    }}
+  />
+{/if}
 
 {#each trackerData.almanac as cat (cat.id)}
   {@const catItemIds = Object.keys(cat.items) as ItemId[]}
@@ -84,31 +131,37 @@
       {@const showAll = expandedSections[cat.id] ?? false}
       {@const displayItems = showAll ? filteredItems : filteredItems.slice(0, SECTION_LIMIT)}
       {#each displayItems as [itemId, item] (itemId)}
-        <ItemRow
-          completed={userState.state.completed.almanac.has(itemId as ItemId)}
-          dimmed={isItemDimmed(
-            itemId as ItemId,
-            userState.state.completed.almanac.has(itemId as ItemId),
-            trackerData.sources,
-            userState.state.worldState,
-            userState.state.availabilityMode,
-          )}
-          hideFishSize={!isFishCategory(cat.id)}
-          itemId={itemId as ItemId}
-          leaving={recentlyCompleted.has(itemId as ItemId)}
-          name={item.name}
-          onToggle={() => {
-            userState.toggleAlmanacItem(itemId as ItemId);
-            const completed = userState.state.completed.almanac.has(itemId as ItemId);
-            showUndoToast(item.name, completed, () => {
-              userState.toggleAlmanacItem(itemId as ItemId);
-            });
-            if (completed) {
-              if (!userState.state.showCompleted) markLeaving(itemId as ItemId);
-              checkCelebration(catItemIds);
-            }
-          }}
-        />
+        {@const redaction = itemRedaction(item)}
+        {#if redaction !== "visible"}
+          <RedactedRow
+            completed={userState.state.completed.almanac.has(itemId as ItemId)}
+            name={item.name}
+            onToggle={() => {
+              redactGuard.guard(item.visibility ?? { type: "always" }, () => {
+                toggleItem(itemId as ItemId, item, catItemIds);
+              });
+            }}
+            {redaction}
+          />
+        {:else}
+          <ItemRow
+            completed={userState.state.completed.almanac.has(itemId as ItemId)}
+            dimmed={isItemDimmed(
+              itemId as ItemId,
+              userState.state.completed.almanac.has(itemId as ItemId),
+              trackerData.sources,
+              userState.state.worldState,
+              userState.state.availabilityMode,
+            )}
+            hideFishSize={!isFishCategory(cat.id)}
+            itemId={itemId as ItemId}
+            leaving={recentlyCompleted.has(itemId as ItemId)}
+            name={item.name}
+            onToggle={() => {
+              toggleItem(itemId as ItemId, item, catItemIds);
+            }}
+          />
+        {/if}
       {/each}
       {#if !showAll && filteredItems.length > SECTION_LIMIT}
         <div class="flex justify-center py-1">
