@@ -70,7 +70,7 @@ export type RecipeSource =
   | { perkId: PerkId; storeId: StoreId; type: "store_with_perk"; visibility?: VisibilityCondition }
   | { perkId: PerkId; type: "perk"; visibility?: VisibilityCondition }
   | { questId: QuestId; questType: QuestType; type: "quest"; visibility?: VisibilityCondition }
-  | { setCount: number; type: "museum_donation"; visibility?: VisibilityCondition; wingId: WingId; }
+  | { setCount: number; type: "museum_donation"; visibility?: VisibilityCondition; wingId: WingId }
   | { storeId: StoreId; type: "store"; upgraded?: true; visibility?: VisibilityCondition }
   | { storeId: StoreId; type: "upgrade"; upgradeName: string; visibility?: VisibilityCondition }
   | { tier: TreasureChestTier; type: "treasure_chest"; visibility?: VisibilityCondition }
@@ -198,7 +198,7 @@ export interface TrackerData {
 
   generatedAt: string;
 
-  heartLevelChanges: Record<QuestId, { level: number; npcId: NpcId; }[]>;
+  heartLevelChanges: Record<QuestId, { level: number; npcId: NpcId }[]>;
 
   items: Record<
     ItemId,
@@ -248,7 +248,7 @@ export interface TrackerData {
   questChains: {
     crown: QuestId[];
     fetch: Record<QuestId, VisibilityCondition>;
-    heart: Record<NpcId, { heartLevel: number; prerequisiteQuest?: QuestId; questId: QuestId; }[]>;
+    heart: Record<NpcId, { heartLevel: number; prerequisiteQuest?: QuestId; questId: QuestId }[]>;
     stillwell: QuestId[];
     story: Record<QuestId, { prerequisites: QuestId[] }>;
     tali: QuestId[];
