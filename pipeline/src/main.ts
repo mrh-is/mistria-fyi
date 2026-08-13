@@ -29,6 +29,16 @@ import { extractSkills } from "./extractors/skills.js";
 import { extractSources } from "./extractors/sources.js";
 import { extractStoresMeta } from "./extractors/stores-meta.js";
 import { extractTreasureChestTiers } from "./extractors/treasure-chest-tiers.js";
+import { buildCutsceneQuestMap } from "./extractors/visibility/cutscene-quest-map.js";
+import {
+  assignEntityVisibility,
+  extractCategoryVisibility,
+  extractFetchQuestVisibility,
+  extractHeartLevelChanges,
+  extractNpcVisibility,
+  extractStoreVisibility,
+} from "./extractors/visibility/entity-visibility.js";
+import { extractQuestChains } from "./extractors/visibility/quest-chains.js";
 import { parseFiddle } from "./parse-fiddle.js";
 
 import type { ItemId, TrackerData } from "$lib/types/tracker-data.js";
@@ -124,23 +134,33 @@ function main(): void {
   }
   console.log();
 
+  console.log("Step 3b: Extracting visibility data...");
+  const cutsceneQuestMap = buildCutsceneQuestMap(fiddle);
+  const questChainsRaw = extractQuestChains(fiddle);
+  const storeVisibilityData = extractStoreVisibility(fiddle, cutsceneQuestMap);
+  const npcVisibilityData = extractNpcVisibility();
+  const heartLevelChangesData = extractHeartLevelChanges(fiddle);
+  const categoryVisibilityData = extractCategoryVisibility();
+  const fetchQuestVisibilityData = extractFetchQuestVisibility(fiddle, cutsceneQuestMap);
+  console.log();
+
   console.log("Step 4: Assembling tracker-data.json...");
   const trackerData: TrackerData = {
     almanac,
     animals,
-    categoryVisibility: {},
+    categoryVisibility: categoryVisibilityData,
     cosmetics,
     festivals,
     generatedAt: new Date().toISOString(),
-    heartLevelChanges: {},
+    heartLevelChanges: heartLevelChangesData,
     items,
     mines,
     museum,
     npcs,
-    npcVisibility: {},
+    npcVisibility: npcVisibilityData,
     perks,
     perkTierLevels,
-    questChains: { crown: [], fetch: {}, heart: {}, stillwell: [], story: {}, tali: [] },
+    questChains: { ...questChainsRaw, fetch: fetchQuestVisibilityData },
     questGates,
     quests,
     recipes,
@@ -148,10 +168,14 @@ function main(): void {
     skills,
     sources,
     stores: storesMeta,
-    storeVisibility: {},
+    storeVisibility: storeVisibilityData,
     treasureChestTiers,
     version,
   };
+
+  // Mutate trackerData in place: stamps visibility on items, recipes, perks, cosmetics, animals,
+  // spells, and quests.
+  assignEntityVisibility(trackerData, storeVisibilityData, cutsceneQuestMap, fiddle);
 
   const json = JSON.stringify(trackerData);
   const prettyJson = JSON.stringify(trackerData, null, 2);
