@@ -236,7 +236,7 @@
               <li>Mine floor: +{transferResult.mineFloor} floors</li>
             {/if}
             {#if transferResult.npcLevels > 0}
-              <li>NPC hearts: +{transferResult.npcLevels} NPCs updated</li>
+              <li>NPC hearts: +{transferResult.npcLevels} relationships updated</li>
             {/if}
             {#if transferResult.skillLevels > 0}
               <li>Skills: +{transferResult.skillLevels} skills updated</li>

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   filterAvailableItems,
+  hasSelectiveSeasonRestriction,
   isItemAvailable,
   isRowVisible,
   isSourceAvailable,
@@ -24,6 +25,44 @@ const seasonRestriction = (seasons: string[]) => ({
 const weatherRestriction = (weathers: string[]) => ({
   type: "weather" as const,
   weathers: weathers as never[],
+});
+const timeRestriction = () => ({ hours: [6, 18] as [number, number], type: "time" as const });
+const ALL_FOUR_SEASONS = ["spring", "summer", "fall", "winter"];
+
+// ─── hasSelectiveSeasonRestriction ──────────────────────────────────
+
+describe("hasSelectiveSeasonRestriction", () => {
+  it("scalar season qualifies", () => {
+    expect(
+      hasSelectiveSeasonRestriction(src([{ season: "spring", type: "season" as const }])),
+    ).toBe(true);
+  });
+
+  it("seasons array with fewer than 4 qualifies", () => {
+    expect(hasSelectiveSeasonRestriction(src([seasonRestriction(["spring", "summer"])]))).toBe(
+      true,
+    );
+  });
+
+  it("explicit all-four-seasons array does not qualify", () => {
+    expect(hasSelectiveSeasonRestriction(src([seasonRestriction(ALL_FOUR_SEASONS)]))).toBe(false);
+  });
+
+  it("empty seasons array does not qualify", () => {
+    expect(hasSelectiveSeasonRestriction(src([seasonRestriction([])]))).toBe(false);
+  });
+
+  it("no season restriction does not qualify", () => {
+    expect(hasSelectiveSeasonRestriction(src())).toBe(false);
+  });
+
+  it("time-only source does not qualify", () => {
+    expect(hasSelectiveSeasonRestriction(src([timeRestriction()]))).toBe(false);
+  });
+
+  it("weather-only source does not qualify", () => {
+    expect(hasSelectiveSeasonRestriction(src([weatherRestriction(["inclement"])]))).toBe(false);
+  });
 });
 
 // ─── isSourceAvailable ──────────────────────────────────────────────
@@ -82,11 +121,37 @@ describe("isSourceAvailable", () => {
     expect(isSourceAvailable(source, spring, "timely")).toBe(false);
   });
 
-  it("time restrictions always pass (not filtered in Phase 3)", () => {
-    const source = src([{ hours: [6, 18] as [number, number], type: "time" as const }]);
-    expect(isSourceAvailable(source, spring, "available")).toBe(true);
-    // For timely mode, having a time restriction qualifies as timely
+  it("timely mode: time-only source does not qualify", () => {
+    expect(isSourceAvailable(src([timeRestriction()]), spring, "timely")).toBe(false);
+  });
+
+  it("timely mode: weather-only source does not qualify", () => {
+    expect(isSourceAvailable(src([weatherRestriction(["inclement"])]), spring, "timely")).toBe(
+      false,
+    );
+  });
+
+  it("timely mode: explicit all-four-seasons source does not qualify", () => {
+    expect(isSourceAvailable(src([seasonRestriction(ALL_FOUR_SEASONS)]), spring, "timely")).toBe(
+      false,
+    );
+  });
+
+  it("timely mode: selective season + time qualifies and passes in matching season", () => {
+    const source = src([seasonRestriction(["spring"]), timeRestriction()]);
     expect(isSourceAvailable(source, spring, "timely")).toBe(true);
+    expect(isSourceAvailable(source, { season: "summer", weather: "calm" }, "timely")).toBe(false);
+  });
+
+  it("timely mode: selective season + weather requires both to match", () => {
+    const source = src([seasonRestriction(["summer"]), weatherRestriction(["inclement"])]);
+    expect(isSourceAvailable(source, spring, "timely")).toBe(false);
+    expect(isSourceAvailable(source, summerRain, "timely")).toBe(true);
+    expect(isSourceAvailable(source, { season: "summer", weather: "calm" }, "timely")).toBe(false);
+  });
+
+  it("time restrictions always pass in available mode (not filtered in Phase 3)", () => {
+    expect(isSourceAvailable(src([timeRestriction()]), spring, "available")).toBe(true);
   });
 });
 
@@ -122,6 +187,24 @@ describe("isItemAvailable", () => {
       [id]: [src([seasonRestriction(["summer"])])],
     };
     expect(isItemAvailable(id, sources, spring, "everything")).toBe(true);
+  });
+
+  it("timely mode: item with year-round AND seasonal sources qualifies through seasonal source only", () => {
+    const sources: Partial<Record<ItemId, Source[]>> = {
+      // year-round source (all four seasons) + spring-only source
+      [id]: [src([seasonRestriction(ALL_FOUR_SEASONS)]), src([seasonRestriction(["spring"])])],
+    };
+    expect(isItemAvailable(id, sources, spring, "timely")).toBe(true);
+    expect(isItemAvailable(id, sources, { season: "summer", weather: "calm" }, "timely")).toBe(
+      false,
+    );
+  });
+
+  it("timely mode: item with only year-round source does not qualify", () => {
+    const sources: Partial<Record<ItemId, Source[]>> = {
+      [id]: [src([seasonRestriction(ALL_FOUR_SEASONS)])],
+    };
+    expect(isItemAvailable(id, sources, spring, "timely")).toBe(false);
   });
 });
 

@@ -312,7 +312,7 @@
               <li>Museum donations: +{importResult.counts.museum}</li>
             {/if}
             {#if importResult.counts.npcLevels > 0}
-              <li>NPC hearts: +{importResult.counts.npcLevels} NPCs updated</li>
+              <li>NPC hearts: +{importResult.counts.npcLevels} relationships updated</li>
             {/if}
             {#if importResult.counts.quests > 0}
               <li>Quests: +{importResult.counts.quests}</li>
