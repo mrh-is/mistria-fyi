@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { CATEGORY_ICON } from "$lib/components/icon/icon-maps.js";
+  import { Icon } from "$lib/components/icon";
   import PageHeader from "$lib/components/page-header.svelte";
   import { getAllProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -44,23 +44,22 @@
   });
 </script>
 
-<PageHeader
-  bind:ref={headerEl}
-  icon={{ component: CATEGORY_ICON.all }}
-  title="Everything"
-  progress={overallProgress}
-/>
+<PageHeader bind:ref={headerEl} title="Everything" progress={overallProgress}>
+  {#snippet icon(cls)}
+    <Icon.Category category="all" useCategoryColor class={cls} />
+  {/snippet}
+</PageHeader>
 
 <div class="flex flex-col gap-6 px-4 pb-4" style="--section-top: {headerH}px">
-  <MuseumSection />
-  <AlmanacSection />
-  <AnimalsSection />
-  <NpcsSection />
-  <CosmeticsSection />
-  <SkillsSection />
-  <RenownSection />
-  <QuestsSection />
-  <MinesSection />
+  <MuseumSection progress={progress.museum} />
+  <AlmanacSection progress={progress.almanac} />
+  <AnimalsSection progress={progress.animals} />
+  <NpcsSection progress={progress.npcs} />
+  <CosmeticsSection progress={progress.cosmetics} />
+  <SkillsSection progress={progress.skills} />
+  <RenownSection progress={progress.renown} />
+  <QuestsSection progress={progress.quests} />
+  <MinesSection progress={progress.mines} />
 
   {#if overallProgress.completed >= overallProgress.total && !userState.state.showCompleted}
     <p class="py-8 text-center text-base text-muted-foreground">

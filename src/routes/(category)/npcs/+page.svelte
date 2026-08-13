@@ -1,10 +1,8 @@
 <script lang="ts">
   import { Icon } from "$lib/components/icon/index.js";
-  import PageHeader from "$lib/components/page-header.svelte";
   import Stepper from "$lib/components/stepper.svelte";
-  import { CATEGORY_BY_KEY, categoryColor } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
-  import { getNpcsProgress, MAX_NPC_LEVEL } from "$lib/engine/progress.js";
+  import { MAX_NPC_LEVEL } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
 
@@ -23,14 +21,6 @@
       celebrateCategory();
     }
   }
-
-  let progress = $derived(
-    getNpcsProgress({
-      availabilityMode: userState.state.availabilityMode,
-      completed: userState.state.completed,
-      worldState: userState.state.worldState,
-    }),
-  );
 
   let npcs = $derived(
     Object.entries(trackerData.npcs)
@@ -62,12 +52,6 @@
     return getNpcLevel(npc.id) >= MAX_NPC_LEVEL;
   }
 </script>
-
-<PageHeader
-  icon={{ color: categoryColor(CATEGORY_BY_KEY.npcs.key), component: CATEGORY_BY_KEY.npcs.icon }}
-  title={CATEGORY_BY_KEY.npcs.name}
-  {progress}
-/>
 
 <div class="flex flex-col gap-2">
   {#each npcs as npc (npc.id)}

@@ -3,7 +3,7 @@
 
   import { resolve } from "$app/paths";
 
-  import type { Component } from "svelte";
+  import type { Snippet } from "svelte";
 
   import type { RouteId } from "$app/types";
   import type { CategoryProgress } from "$lib/engine/progress.js";
@@ -18,10 +18,7 @@
   }: {
     backHref?: RouteId;
     backLabel?: string;
-    icon?: {
-      color?: string;
-      component: Component<{ class?: string; color?: string }>;
-    };
+    icon?: Snippet<[string]>;
     progress?: CategoryProgress;
     ref?: HTMLDivElement | undefined;
     title: string;
@@ -45,9 +42,7 @@
   >
     <ArrowLeft class="size-5" />
   </a>
-  {#if icon}
-    <icon.component class="size-5" color={icon.color ? `var(--${icon.color})` : undefined} />
-  {/if}
+  {@render icon?.("size-5")}
   <h1 class="flex-1 text-xl font-semibold">{title}</h1>
   {#if pct !== undefined && progress !== undefined}
     <span class="shrink-0 text-sm text-muted-foreground">

@@ -1,8 +1,7 @@
 <script lang="ts">
   import Stepper from "$lib/components/stepper.svelte";
-  import { CATEGORY_BY_KEY } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
-  import { getSkillsProgress, MAX_SKILL_LEVEL } from "$lib/engine/progress.js";
+  import { type CategoryProgress, MAX_SKILL_LEVEL } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
 
@@ -24,13 +23,7 @@
     }
   }
 
-  let progress = $derived(
-    getSkillsProgress({
-      availabilityMode: userState.state.availabilityMode,
-      completed: userState.state.completed,
-      worldState: userState.state.worldState,
-    }),
-  );
+  const { progress }: { progress: CategoryProgress } = $props();
 
   let skills = $derived(
     Object.entries(trackerData.skills)
@@ -41,7 +34,7 @@
 
 {#if progress.completed < progress.total || userState.state.showCompleted}
   <div class="flex flex-col gap-1">
-    <SectionHeader category={CATEGORY_BY_KEY.skills} {progress} />
+    <SectionHeader key="skills" {progress} />
     <div class="flex flex-col gap-1">
       {#each skills as skill (skill.id)}
         {@const level = userState.state.completed.skillLevels[skill.id as string] ?? 0}
