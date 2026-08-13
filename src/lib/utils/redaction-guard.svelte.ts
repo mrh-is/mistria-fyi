@@ -19,17 +19,20 @@ export function createRedactionGuard() {
   return {
     cancel(): void {
       open = false;
+      condition = null;
       pendingAction = null;
     },
     complete(): void {
       pendingAction?.();
       open = false;
+      condition = null;
       pendingAction = null;
     },
     completeAndUpdate(): void {
       if (condition) satisfyCondition(condition, userState.state.completed, trackerData);
       pendingAction?.();
       open = false;
+      condition = null;
       pendingAction = null;
     },
     get condition(): null | VisibilityCondition {

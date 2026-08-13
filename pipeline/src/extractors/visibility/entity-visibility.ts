@@ -441,8 +441,12 @@ function computeRecipeSourceConditions(
       return { entity: gate, source: toAvailable(gate) };
     }
     case "store_with_perk": {
-      const condition: VisibilityCondition = { perkId: source.perkId, type: "perkUnlocked" };
-      return { entity: condition, source: condition };
+      const storeGate = storeGateCondition(source.storeId, ctx.storeVisibility);
+      const perkCondition: VisibilityCondition = { perkId: source.perkId, type: "perkUnlocked" };
+      return {
+        entity: andSimplify([storeGate, perkCondition]),
+        source: andSimplify([toAvailable(storeGate), perkCondition]),
+      };
     }
   }
 }
