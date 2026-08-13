@@ -137,11 +137,14 @@ function main(): void {
   console.log("Step 3b: Extracting visibility data...");
   const cutsceneQuestMap = buildCutsceneQuestMap(fiddle);
   const questChainsRaw = extractQuestChains(fiddle);
-  const storeVisibilityData = extractStoreVisibility(fiddle, cutsceneQuestMap);
+  const storeVisibilityData = extractStoreVisibility(fiddle);
   const npcVisibilityData = extractNpcVisibility();
-  const heartLevelChangesData = extractHeartLevelChanges(fiddle);
+  const heartLevelChangesData = extractHeartLevelChanges(fiddle, cutsceneQuestMap);
   const categoryVisibilityData = extractCategoryVisibility();
-  const fetchQuestVisibilityData = extractFetchQuestVisibility(fiddle, cutsceneQuestMap);
+  const fetchQuestVisibilityData = extractFetchQuestVisibility(
+    questChainsRaw.fetch,
+    cutsceneQuestMap,
+  );
   console.log();
 
   console.log("Step 4: Assembling tracker-data.json...");
@@ -175,7 +178,13 @@ function main(): void {
 
   // Mutate trackerData in place: stamps visibility on items, recipes, perks, cosmetics, animals,
   // spells, and quests.
-  assignEntityVisibility(trackerData, storeVisibilityData, cutsceneQuestMap, fiddle);
+  assignEntityVisibility(
+    trackerData,
+    storeVisibilityData,
+    cutsceneQuestMap,
+    fiddle,
+    questChainsRaw,
+  );
 
   const json = JSON.stringify(trackerData);
   const prettyJson = JSON.stringify(trackerData, null, 2);

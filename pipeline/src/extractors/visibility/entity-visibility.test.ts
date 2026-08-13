@@ -25,6 +25,7 @@ import type {
 } from "$lib/types/tracker-data.js";
 
 import type { CutsceneQuestMap } from "./cutscene-quest-map.js";
+import type { QuestChainData } from "./quest-chains.js";
 
 const emptyCutsceneMap: CutsceneQuestMap = {};
 
@@ -42,6 +43,18 @@ function makeFiddle(overrides: {
     ranching: overrides.ranching ?? { animals: {} },
     requirements: overrides.requirements ?? {},
     stores: overrides.stores ?? {},
+  };
+}
+
+function makeQuestChains(overrides: Partial<QuestChainData>): QuestChainData {
+  return {
+    crown: [],
+    fetch: {},
+    heart: {},
+    stillwell: [],
+    story: {},
+    tali: [],
+    ...overrides,
   };
 }
 
@@ -84,7 +97,7 @@ function makeTrackerData(overrides: Record<string, unknown>): TrackerData {
 describe("extractStoreVisibility", () => {
   it("gates the general store behind its unlock quest", () => {
     const fiddle = makeFiddle({ stores: { general: {} } });
-    const result = extractStoreVisibility(fiddle as never, emptyCutsceneMap);
+    const result = extractStoreVisibility(fiddle as never);
     expect(result["general" as StoreId]).toEqual({
       questId: "repair_the_general_store",
       type: "questCompleted",
@@ -93,7 +106,7 @@ describe("extractStoreVisibility", () => {
 
   it("gates Wheedle behind the Saturday Market upgrade quest", () => {
     const fiddle = makeFiddle({ stores: { wheedle: {} } });
-    const result = extractStoreVisibility(fiddle as never, emptyCutsceneMap);
+    const result = extractStoreVisibility(fiddle as never);
     expect(result["wheedle" as StoreId]).toEqual({
       questId: "upgrade_the_saturday_market",
       type: "questCompleted",
@@ -102,13 +115,13 @@ describe("extractStoreVisibility", () => {
 
   it("leaves Balor always visible", () => {
     const fiddle = makeFiddle({ stores: { balor: {} } });
-    const result = extractStoreVisibility(fiddle as never, emptyCutsceneMap);
+    const result = extractStoreVisibility(fiddle as never);
     expect(result["balor" as StoreId]).toEqual({ type: "always" });
   });
 
   it("skips the default placeholder entry", () => {
     const fiddle = makeFiddle({ stores: { balor: {}, default: {} } });
-    const result = extractStoreVisibility(fiddle as never, emptyCutsceneMap);
+    const result = extractStoreVisibility(fiddle as never);
     expect(result["default" as StoreId]).toBeUndefined();
   });
 });
@@ -186,14 +199,10 @@ describe("extractCategoryVisibility", () => {
 
 describe("extractFetchQuestVisibility", () => {
   it("resolves a request board requirement into questCompleted", () => {
-    const fiddle = makeFiddle({
-      quests: {
-        request_board: {
-          deliver_the_goods: { requirements: { completed_quest: "repair_the_bridge" } },
-        },
-      },
-    });
-    const result = extractFetchQuestVisibility(fiddle as never, emptyCutsceneMap);
+    const fetchRequirements = {
+      deliver_the_goods: { predicate: "completed_quest", value: "repair_the_bridge" },
+    };
+    const result = extractFetchQuestVisibility(fetchRequirements, emptyCutsceneMap);
     expect(result["deliver_the_goods" as QuestId]).toEqual({
       questId: "repair_the_bridge",
       type: "questCompleted",
@@ -201,10 +210,8 @@ describe("extractFetchQuestVisibility", () => {
   });
 
   it("resolves an unconstrained requirement to always", () => {
-    const fiddle = makeFiddle({
-      quests: { request_board: { open_fetch: {} } },
-    });
-    const result = extractFetchQuestVisibility(fiddle as never, emptyCutsceneMap);
+    const fetchRequirements = { open_fetch: { all: [] } };
+    const result = extractFetchQuestVisibility(fetchRequirements, emptyCutsceneMap);
     expect(result["open_fetch" as QuestId]).toEqual({ type: "always" });
   });
 });
@@ -218,11 +225,13 @@ describe("extractHeartLevelChanges", () => {
             { heart_level: 2, npc_id: "caldarus" },
             { heart_level: 1, npc_id: "seridia" },
           ],
-          quest_to_progress: "breaking_the_water_seal",
         },
       },
     });
-    const result = extractHeartLevelChanges(fiddle as never);
+    const cutsceneMap: CutsceneQuestMap = {
+      break_water_seal: { phase: "completed", questId: "breaking_the_water_seal" as QuestId },
+    };
+    const result = extractHeartLevelChanges(fiddle as never, cutsceneMap);
     expect(result["breaking_the_water_seal" as QuestId]).toEqual([
       { level: 2, npcId: "caldarus" },
       { level: 1, npcId: "seridia" },
@@ -237,11 +246,13 @@ describe("extractHeartLevelChanges", () => {
             { heart_level: 6, npc_id: "caldarus" },
             { heart_level: 6, npc_id: "seridia" },
           ],
-          quest_to_progress: "breaking_the_final_seal",
         },
       },
     });
-    const result = extractHeartLevelChanges(fiddle as never);
+    const cutsceneMap: CutsceneQuestMap = {
+      break_fire_seal: { phase: "completed", questId: "breaking_the_final_seal" as QuestId },
+    };
+    const result = extractHeartLevelChanges(fiddle as never, cutsceneMap);
     expect(result["breaking_the_final_seal" as QuestId]).toEqual([
       { level: 6, npcId: "caldarus" },
       { level: 6, npcId: "seridia" },
@@ -252,7 +263,7 @@ describe("extractHeartLevelChanges", () => {
     const fiddle = makeFiddle({
       cutscenes: { default: { heart_level_changes: [] } },
     });
-    const result = extractHeartLevelChanges(fiddle as never);
+    const result = extractHeartLevelChanges(fiddle as never, emptyCutsceneMap);
     expect(result).toEqual({});
   });
 
@@ -262,7 +273,7 @@ describe("extractHeartLevelChanges", () => {
         unmapped_cutscene: { heart_level_changes: [{ heart_level: 1, npc_id: "holt" }] },
       },
     });
-    const result = extractHeartLevelChanges(fiddle as never);
+    const result = extractHeartLevelChanges(fiddle as never, emptyCutsceneMap);
     expect(result).toEqual({});
   });
 });
@@ -278,6 +289,7 @@ describe("assignEntityVisibility — items", () => {
       { general: { type: "always" } } as never,
       emptyCutsceneMap,
       makeFiddle({}) as never,
+      makeQuestChains({}),
     );
     expect(trackerData.items["seed_turnip" as ItemId].visibility).toEqual({ type: "always" });
   });
@@ -302,6 +314,7 @@ describe("assignEntityVisibility — items", () => {
       } as never,
       emptyCutsceneMap,
       makeFiddle({}) as never,
+      makeQuestChains({}),
     );
     expect(trackerData.items["fancy_seed" as ItemId].visibility).toEqual({
       conditions: [
@@ -316,7 +329,13 @@ describe("assignEntityVisibility — items", () => {
     const trackerData = makeTrackerData({
       items: { mystery_item: { category: "other", name: "Mystery Item" } },
     });
-    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, makeFiddle({}) as never);
+    assignEntityVisibility(
+      trackerData,
+      {},
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
     expect(trackerData.items["mystery_item" as ItemId].visibility).toEqual({ type: "always" });
   });
 });
@@ -333,7 +352,13 @@ describe("assignEntityVisibility — recipes", () => {
         },
       },
     });
-    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, makeFiddle({}) as never);
+    assignEntityVisibility(
+      trackerData,
+      {},
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
     const recipe = trackerData.recipes["stew" as RecipeId];
     expect(recipe.visibility).toEqual({ perkId: "taste_maker", type: "perkUnlocked" });
     expect(recipe.sources[0].visibility).toEqual({
@@ -363,6 +388,7 @@ describe("assignEntityVisibility — recipes", () => {
       } as never,
       emptyCutsceneMap,
       makeFiddle({}) as never,
+      makeQuestChains({}),
     );
     const recipe = trackerData.recipes["stairs" as RecipeId];
     expect(recipe.visibility).toEqual({
@@ -385,7 +411,13 @@ describe("assignEntityVisibility — recipes", () => {
         },
       },
     });
-    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, makeFiddle({}) as never);
+    assignEntityVisibility(
+      trackerData,
+      {},
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
     const recipe = trackerData.recipes["basic_dish" as RecipeId];
     expect(recipe.visibility).toEqual({ type: "always" });
     expect(recipe.sources[0].visibility).toEqual({ type: "always" });
@@ -407,7 +439,13 @@ describe("assignEntityVisibility — recipes", () => {
         },
       },
     });
-    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, makeFiddle({}) as never);
+    assignEntityVisibility(
+      trackerData,
+      {},
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
     const recipe = trackerData.recipes["scroll_of_the_sword" as RecipeId];
     expect(recipe.visibility).toEqual({ questId: "the_final_showdown", type: "questCompleted" });
     expect(recipe.sources[0].visibility).toEqual({
@@ -437,7 +475,13 @@ describe("assignEntityVisibility — recipes", () => {
         },
       },
     });
-    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, makeFiddle({}) as never);
+    assignEntityVisibility(
+      trackerData,
+      {},
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
     const recipe = trackerData.recipes["crystal_lamp" as RecipeId];
     expect(recipe.visibility).toEqual({
       conditions: [
@@ -459,7 +503,13 @@ describe("assignEntityVisibility — recipes", () => {
         },
       },
     });
-    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, makeFiddle({}) as never);
+    assignEntityVisibility(
+      trackerData,
+      {},
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
     const recipe = trackerData.recipes["set_reward" as RecipeId];
     expect(recipe.visibility).toEqual({ type: "always" });
     expect(recipe.sources[0].visibility).toEqual({ type: "always" });
@@ -485,6 +535,7 @@ describe("assignEntityVisibility — recipes", () => {
       } as never,
       emptyCutsceneMap,
       makeFiddle({}) as never,
+      makeQuestChains({}),
     );
     const recipe = trackerData.recipes["bundle_recipe" as RecipeId];
     expect(recipe.visibility).toEqual({
@@ -510,7 +561,13 @@ describe("assignEntityVisibility — recipes", () => {
         },
       },
     });
-    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, makeFiddle({}) as never);
+    assignEntityVisibility(
+      trackerData,
+      {},
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
     const recipe = trackerData.recipes["multi_source" as RecipeId];
     expect(recipe.visibility).toEqual({ type: "always" });
   });
@@ -521,7 +578,13 @@ describe("assignEntityVisibility — perks", () => {
     const trackerData = makeTrackerData({
       perks: { basic_perk: { name: "Basic Perk", skillId: "farming" as SkillId, tier: 1 } },
     });
-    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, makeFiddle({}) as never);
+    assignEntityVisibility(
+      trackerData,
+      {},
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
     expect(trackerData.perks["basic_perk" as PerkId].visibility).toEqual({
       level: 1,
       skillId: "farming",
@@ -533,7 +596,13 @@ describe("assignEntityVisibility — perks", () => {
     const trackerData = makeTrackerData({
       perks: { advanced_perk: { name: "Advanced Perk", skillId: "mining" as SkillId, tier: 4 } },
     });
-    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, makeFiddle({}) as never);
+    assignEntityVisibility(
+      trackerData,
+      {},
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
     expect(trackerData.perks["advanced_perk" as PerkId].visibility).toEqual({
       level: 45,
       skillId: "mining",
@@ -558,7 +627,7 @@ describe("assignEntityVisibility — animals", () => {
         animals: { horse: { core: { requirements: { repaired_haydens_farm: true } } } },
       },
     });
-    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, fiddle as never);
+    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, fiddle as never, makeQuestChains({}));
     expect(trackerData.animals["horse" as AnimalId].visibility).toEqual({
       questId: "repair_haydens_barn",
       type: "questCompleted",
@@ -570,7 +639,7 @@ describe("assignEntityVisibility — animals", () => {
       animals: { chicken: { cosmetics: {}, name: "Chicken", variants: {} } },
     });
     const fiddle = makeFiddle({ ranching: { animals: { chicken: { core: {} } } } });
-    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, fiddle as never);
+    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, fiddle as never, makeQuestChains({}));
     expect(trackerData.animals["chicken" as AnimalId].visibility).toEqual({ type: "always" });
   });
 });
@@ -593,6 +662,7 @@ describe("assignEntityVisibility — cosmetics", () => {
       } as never,
       emptyCutsceneMap,
       makeFiddle({}) as never,
+      makeQuestChains({}),
     );
     expect(trackerData.cosmetics["fancy_hat" as CosmeticId].visibility).toEqual({
       questId: "upgrade_the_saturday_market",
@@ -604,7 +674,13 @@ describe("assignEntityVisibility — cosmetics", () => {
     const trackerData = makeTrackerData({
       cosmetics: { unsourced_hat: { defaultUnlocked: false, name: "Unsourced Hat", slot: "head" } },
     });
-    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, makeFiddle({}) as never);
+    assignEntityVisibility(
+      trackerData,
+      {},
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
     expect(trackerData.cosmetics["unsourced_hat" as CosmeticId].visibility).toBeUndefined();
   });
 });
@@ -620,7 +696,7 @@ describe("assignEntityVisibility — spells", () => {
     const cutsceneMap: CutsceneQuestMap = {
       post_water_seal: { phase: "completed", questId: "the_water_tablet" as QuestId },
     };
-    assignEntityVisibility(trackerData, {}, cutsceneMap, fiddle as never);
+    assignEntityVisibility(trackerData, {}, cutsceneMap, fiddle as never, makeQuestChains({}));
     expect(trackerData.mines.spells["summon_rain" as SpellId].visibility).toEqual({
       questId: "the_water_tablet",
       type: "questCompleted",
@@ -633,24 +709,19 @@ describe("assignEntityVisibility — quests", () => {
     const trackerData = makeTrackerData({
       quests: { heart_quests: { bird_song: { name: "Bird Song" } } },
     });
-    const fiddle = makeFiddle({
-      quests: {
-        heart_quests: { bird_song: {}, bird_song_prereq: {} },
-      },
+    const questChains = makeQuestChains({
+      heart: {
+        ryis: [
+          { heartLevel: 2, questId: "bird_song_prereq" as QuestId },
+          {
+            heartLevel: 4,
+            prerequisiteQuest: "bird_song_prereq" as QuestId,
+            questId: "bird_song" as QuestId,
+          },
+        ],
+      } as never,
     });
-    // assignEntityVisibility recomputes chains from fiddle.letters via extractQuestChains, so
-    // build a fiddle with the letters needed to produce the desired heart chain.
-    fiddle.letters = {
-      bird_song: {
-        quest_to_start: "bird_song",
-        requirements: { reached_heart_level: { ryis: 4 } },
-      },
-      bird_song_prereq: {
-        quest_to_start: "bird_song_prereq",
-        requirements: { reached_heart_level: { ryis: 2 } },
-      },
-    };
-    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, fiddle as never);
+    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, makeFiddle({}) as never, questChains);
     expect(trackerData.quests.heart_quests["bird_song" as QuestId].visibility).toEqual({
       conditions: [
         { npcId: "ryis", type: "npcKnown" },
@@ -670,12 +741,10 @@ describe("assignEntityVisibility — quests", () => {
         },
       },
     });
-    const fiddle = makeFiddle({
-      quests: {
-        crown_registry: { order: ["first_crown_quest", "second_crown_quest"] },
-      },
+    const questChains = makeQuestChains({
+      crown: ["first_crown_quest", "second_crown_quest"] as never,
     });
-    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, fiddle as never);
+    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, makeFiddle({}) as never, questChains);
     expect(trackerData.quests.crown_quests["first_crown_quest" as QuestId].visibility).toEqual({
       level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER,
       type: "renownLevel",
@@ -693,14 +762,12 @@ describe("assignEntityVisibility — quests", () => {
     const trackerData = makeTrackerData({
       quests: { fetch_quests: { deliver_the_goods: { name: "Deliver the Goods" } } },
     });
-    const fiddle = makeFiddle({
-      quests: {
-        request_board: {
-          deliver_the_goods: { requirements: { completed_quest: "repair_the_bridge" } },
-        },
-      },
+    const questChains = makeQuestChains({
+      fetch: {
+        deliver_the_goods: { predicate: "completed_quest", value: "repair_the_bridge" },
+      } as never,
     });
-    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, fiddle as never);
+    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, makeFiddle({}) as never, questChains);
     expect(trackerData.quests.fetch_quests["deliver_the_goods" as QuestId].visibility).toEqual({
       questId: "repair_the_bridge",
       type: "questCompleted",
@@ -711,33 +778,23 @@ describe("assignEntityVisibility — quests", () => {
     const trackerData = makeTrackerData({
       quests: { story_quests: { crafting_tutorial: { name: "Crafting Tutorial" } } },
     });
-    const fiddle = makeFiddle({
-      quests: { story_quests: { crafting_tutorial: { npc_for_icon: "adeline", stages: [] } } },
+    const questChains = makeQuestChains({
+      story: { crafting_tutorial: { prerequisites: [] } } as never,
     });
-    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, fiddle as never);
+    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, makeFiddle({}) as never, questChains);
     expect(trackerData.quests.story_quests["crafting_tutorial" as QuestId].visibility).toEqual({
       type: "always",
     });
   });
 
-  it("gates a story quest behind its letter-derived prerequisite", () => {
+  it("gates a story quest behind its prerequisite", () => {
     const trackerData = makeTrackerData({
       quests: { story_quests: { repair_the_mill: { name: "Repair the Mill" } } },
     });
-    const fiddle = makeFiddle({
-      quests: {
-        story_quests: {
-          repair_the_mill: { npc_for_icon: "adeline", stages: [] },
-        },
-      },
+    const questChains = makeQuestChains({
+      story: { repair_the_mill: { prerequisites: ["prior_quest" as QuestId] } } as never,
     });
-    fiddle.letters = {
-      repair_the_mill: {
-        quest_to_start: "repair_the_mill",
-        requirements: { completed_quest: "prior_quest" },
-      },
-    };
-    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, fiddle as never);
+    assignEntityVisibility(trackerData, {}, emptyCutsceneMap, makeFiddle({}) as never, questChains);
     expect(trackerData.quests.story_quests["repair_the_mill" as QuestId].visibility).toEqual({
       questId: "prior_quest",
       type: "questCompleted",

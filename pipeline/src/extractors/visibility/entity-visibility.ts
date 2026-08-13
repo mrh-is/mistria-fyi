@@ -1,5 +1,3 @@
-import { buildCutsceneQuestMap } from "./cutscene-quest-map.js";
-import { extractQuestChains } from "./quest-chains.js";
 import { resolveToVisibility, simplifyCondition } from "./requirement-resolver.js";
 
 import type {
@@ -19,7 +17,9 @@ import type {
 import type { VisibilityCondition } from "$lib/types/visibility.js";
 
 import type { ParsedGameData } from "../../parse-fiddle.js";
+import type { RequirementExpression } from "../../requirements.js";
 import type { CutsceneQuestMap } from "./cutscene-quest-map.js";
+import type { QuestChainData } from "./quest-chains.js";
 
 const ALWAYS: VisibilityCondition = { type: "always" };
 
@@ -83,15 +83,17 @@ interface RecipeSourceContext {
 
 /**
  * Mutates `trackerData` in place, stamping `visibility` on items, recipes (and their sources),
- * perks, cosmetics, animals, spells, and quests. Store visibility is precomputed and passed in;
- * quest chains and NPC/category gates are recomputed internally from `fiddle` since this is the
- * final composition step over already-extracted TrackerData slices.
+ * perks, cosmetics, animals, spells, and quests. Store visibility, the cutscene-quest map, and
+ * quest chains are all precomputed by the caller (`main.ts`) and passed in here rather than
+ * recomputed, since each is otherwise a pure function of `fiddle` that would be recomputed for no
+ * reason.
  */
 export function assignEntityVisibility(
   trackerData: TrackerData,
   storeVisibility: Record<StoreId, VisibilityCondition>,
   cutsceneMap: CutsceneQuestMap,
   fiddle: ParsedGameData,
+  questChains: QuestChainData,
 ): void {
   assignItemVisibility(trackerData, storeVisibility);
   assignRecipeVisibility(trackerData, storeVisibility);
@@ -99,7 +101,7 @@ export function assignEntityVisibility(
   assignCosmeticVisibility(trackerData, storeVisibility);
   assignAnimalVisibility(trackerData, fiddle);
   assignSpellVisibility(trackerData, fiddle, cutsceneMap);
-  assignQuestVisibility(trackerData, fiddle, cutsceneMap);
+  assignQuestVisibility(trackerData, cutsceneMap, questChains);
 }
 
 /** Hardcoded category visibility gates (spec Section 3j). */
@@ -116,15 +118,15 @@ export function extractCategoryVisibility(): Record<string, VisibilityCondition>
 
 /**
  * Resolves the request board's raw `RequirementExpression` fetch-quest requirements (Task 3's
- * `questChains.fetch`) into `VisibilityCondition`s via the Task 4 resolver.
+ * `questChains.fetch`, already extracted by the caller) into `VisibilityCondition`s via the Task 4
+ * resolver.
  */
 export function extractFetchQuestVisibility(
-  fiddle: ParsedGameData,
+  fetchRequirements: Record<QuestId, RequirementExpression>,
   cutsceneMap: CutsceneQuestMap,
 ): Record<QuestId, VisibilityCondition> {
-  const { fetch } = extractQuestChains(fiddle);
   const result: Record<QuestId, VisibilityCondition> = {};
-  for (const [questId, expression] of Object.entries(fetch)) {
+  for (const [questId, expression] of Object.entries(fetchRequirements)) {
     result[questId as QuestId] = simplifyCondition(resolveToVisibility(expression, cutsceneMap));
   }
   return result;
@@ -133,12 +135,12 @@ export function extractFetchQuestVisibility(
 /**
  * Walks `cutscenes.toml` entries for `heart_level_changes` fields, grouping the resulting NPC
  * heart-level bumps by the quest that triggers the cutscene (via the Task 2 cutscene-quest map,
- * built internally since this extractor only receives raw fiddle data).
+ * passed in by the caller rather than rebuilt here).
  */
 export function extractHeartLevelChanges(
   fiddle: ParsedGameData,
+  cutsceneMap: CutsceneQuestMap,
 ): Record<QuestId, { level: number; npcId: NpcId }[]> {
-  const cutsceneMap = buildCutsceneQuestMap(fiddle);
   const cutscenes = getCutsceneRecords(fiddle);
   const result: Record<QuestId, { level: number; npcId: NpcId }[]> = {};
 
@@ -184,7 +186,6 @@ export function extractNpcVisibility(): Record<NpcId, VisibilityCondition> {
  */
 export function extractStoreVisibility(
   fiddle: ParsedGameData,
-  _cutsceneMap: CutsceneQuestMap,
 ): Record<StoreId, VisibilityCondition> {
   const stores = fiddle.stores as Record<string, unknown> | undefined;
   const result: Record<StoreId, VisibilityCondition> = {};
@@ -271,10 +272,9 @@ function assignPerkVisibility(trackerData: TrackerData): void {
 
 function assignQuestVisibility(
   trackerData: TrackerData,
-  fiddle: ParsedGameData,
   cutsceneMap: CutsceneQuestMap,
+  chains: QuestChainData,
 ): void {
-  const chains = extractQuestChains(fiddle);
   const categoryVisibility = extractCategoryVisibility();
 
   const storyQuests = trackerData.quests.story_quests;
@@ -313,7 +313,7 @@ function assignQuestVisibility(
 
   const fetchQuests = trackerData.quests.fetch_quests;
   if (fetchQuests) {
-    const fetchVisibility = extractFetchQuestVisibility(fiddle, cutsceneMap);
+    const fetchVisibility = extractFetchQuestVisibility(chains.fetch, cutsceneMap);
     for (const [questId, quest] of Object.entries(fetchQuests)) {
       quest.visibility = fetchVisibility[questId as QuestId] ?? ALWAYS;
     }
