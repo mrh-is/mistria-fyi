@@ -18,6 +18,8 @@ export interface QuestGateIndex {
   spellGates: Record<SpellId, QuestId[]>;
 }
 
+// Deprecated: questGate has been superseded by the visibility system.
+// Kept for backward compatibility. New code should use visibility instead.
 export function applyAnimalQuestGates(
   animals: TrackerData["animals"],
   questGates: Record<AnimalId, QuestId[]>,
@@ -29,6 +31,8 @@ export function applyAnimalQuestGates(
   }
 }
 
+// Deprecated: questGate has been superseded by the visibility system.
+// Kept for backward compatibility. New code should use visibility instead.
 export function applyItemQuestGates(
   items: TrackerData["items"],
   questGates: Record<ItemId, QuestId[]>,
@@ -41,6 +45,8 @@ export function applyItemQuestGates(
   }
 }
 
+// Deprecated: questGate has been superseded by the visibility system.
+// Kept for backward compatibility. New code should use visibility instead.
 export function applySpellQuestGates(
   mines: TrackerData["mines"],
   questGates: Record<SpellId, QuestId[]>,
