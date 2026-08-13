@@ -58,6 +58,7 @@ export function buildImportState(bundle: SaveBundle): {
     mineFloor: 0,
     museum: 0,
     npcLevels: 0,
+    perks: 0,
     quests: 0,
     renown: 0,
     skillLevels: 0,

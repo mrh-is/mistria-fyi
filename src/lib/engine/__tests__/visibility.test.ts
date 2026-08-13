@@ -20,12 +20,14 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     animalCosmetics: {},
     animals: {},
     cosmetics: new Set(),
+    marriedNpc: null,
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
     npcLevels: {},
     questStates: {},
     renown: 0,
     skillLevels: {},
+    unlockedPerks: new Set(),
     ...overrides,
   };
 }

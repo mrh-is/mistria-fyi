@@ -14,14 +14,6 @@ export interface UserProgressionState {
   unlockedPerks: Set<PerkId>;
 }
 
-// `unlockedPerks` and `marriedNpc` are added to `CompletedState` in a later task. Access them
-// defensively through this local extension so this module compiles against both the current and
-// future shape of `CompletedState`.
-type CompletedStateWithFutureFields = CompletedState & {
-  marriedNpc?: NpcId | null;
-  unlockedPerks?: Set<PerkId>;
-};
-
 interface HeartChainEntry {
   heartLevel: number;
   npcId: NpcId;
@@ -34,9 +26,8 @@ export function deriveProgressionState(
   trackerData: TrackerData,
   showSpoilers: boolean,
 ): UserProgressionState {
-  const extended = completed as CompletedStateWithFutureFields;
-  const unlockedPerks = extended.unlockedPerks ?? new Set<PerkId>();
-  const marriedNpc = extended.marriedNpc ?? null;
+  const unlockedPerks = completed.unlockedPerks;
+  const marriedNpc = completed.marriedNpc;
 
   // 1. Quest visibility, per-quest, from actual quest state + chain prerequisites.
   const questVisibility: Record<string, QuestVisibility> = {};
@@ -203,8 +194,6 @@ export function satisfyCondition(
   completed: CompletedState,
   trackerData: TrackerData,
 ): void {
-  const extended = completed as CompletedStateWithFutureFields;
-
   switch (condition.type) {
     case "always":
     case "npcKnown":
@@ -219,7 +208,7 @@ export function satisfyCondition(
       );
       return;
     case "married":
-      extended.marriedNpc = condition.npcId;
+      completed.marriedNpc = condition.npcId;
       return;
     case "minesLevel":
       completed.mines.floor = Math.max(completed.mines.floor, condition.floor);
@@ -231,12 +220,9 @@ export function satisfyCondition(
       if (branch) satisfyCondition(branch, completed, trackerData);
       return;
     }
-    case "perkUnlocked": {
-      const perks = extended.unlockedPerks ?? new Set<PerkId>();
-      perks.add(condition.perkId);
-      extended.unlockedPerks = perks;
+    case "perkUnlocked":
+      completed.unlockedPerks.add(condition.perkId);
       return;
-    }
     case "questAvailable":
       markQuestPrerequisitesCompleted(condition.questId, completed, trackerData);
       return;
