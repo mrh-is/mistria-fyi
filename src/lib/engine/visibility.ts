@@ -261,9 +261,12 @@ function evaluateOrderedChain(
   order: QuestId[],
   questId: QuestId,
   completed: CompletedState,
+  trackerData: TrackerData,
+  baseCondition: VisibilityCondition,
 ): QuestVisibility {
   const index = order.indexOf(questId);
   if (index === -1) return "unavailable";
+  if (!isBaseConditionMet(baseCondition, completed, trackerData)) return "unavailable";
   if (index === 0) return "available";
   const prevQuestId = order[index - 1];
   return completed.questStates[prevQuestId as string] === "completed" ? "available" : "unavailable";
@@ -280,7 +283,13 @@ function evaluateQuestPrerequisites(
 
   switch (questType) {
     case "crown_quests":
-      return evaluateOrderedChain(chains.crown, questId, completed);
+      return evaluateOrderedChain(
+        chains.crown,
+        questId,
+        completed,
+        trackerData,
+        trackerData.categoryVisibility.crown_quests,
+      );
     case "fetch_quests": {
       const condition = lookup(chains.fetch, questId);
       if (!condition) return "unavailable";
@@ -307,7 +316,13 @@ function evaluateQuestPrerequisites(
       return heartLevelMet && prereqMet ? "available" : "unavailable";
     }
     case "stillwell_challenges":
-      return evaluateOrderedChain(chains.stillwell, questId, completed);
+      return evaluateOrderedChain(
+        chains.stillwell,
+        questId,
+        completed,
+        trackerData,
+        trackerData.categoryVisibility.stillwell_challenges,
+      );
     case "story_quests": {
       const prerequisites = lookup(chains.story, questId)?.prerequisites ?? [];
       const allMet = prerequisites.every(
@@ -316,13 +331,17 @@ function evaluateQuestPrerequisites(
       return allMet ? "available" : "unavailable";
     }
     case "tali_challenges":
-      return evaluateOrderedChain(chains.tali, questId, completed);
+      return evaluateOrderedChain(
+        chains.tali,
+        questId,
+        completed,
+        trackerData,
+        trackerData.categoryVisibility.tali_challenges,
+      );
     default:
       return "unavailable";
   }
 }
-
-// ─── Progression state derivation ───────────────────────────────────
 
 function findHeartChainEntry(
   heart: TrackerData["questChains"]["heart"],
@@ -335,11 +354,49 @@ function findHeartChainEntry(
   return undefined;
 }
 
+// ─── Progression state derivation ───────────────────────────────────
+
 function findQuestType(questId: QuestId, trackerData: TrackerData): string | undefined {
   for (const [questType, quests] of Object.entries(trackerData.quests)) {
     if (questId in quests) return questType;
   }
   return undefined;
+}
+
+function isBaseConditionMet(
+  condition: VisibilityCondition,
+  completed: CompletedState,
+  trackerData: TrackerData,
+): boolean {
+  switch (condition.type) {
+    case "always":
+      return true;
+    case "and":
+      return condition.conditions.every((c) => isBaseConditionMet(c, completed, trackerData));
+    case "heartLevel":
+      return (completed.npcLevels[condition.npcId as string] ?? 0) >= condition.level;
+    case "married":
+      return completed.marriedNpc === condition.npcId;
+    case "minesLevel":
+      return completed.mines.floor >= condition.floor;
+    case "npcKnown": {
+      const npcVis = lookup(trackerData.npcVisibility, condition.npcId);
+      if (!npcVis || npcVis.type === "always") return true;
+      return isBaseConditionMet(npcVis, completed, trackerData);
+    }
+    case "or":
+      return condition.conditions.some((c) => isBaseConditionMet(c, completed, trackerData));
+    case "perkUnlocked":
+      return completed.unlockedPerks.has(condition.perkId);
+    case "questAvailable":
+      return (completed.questStates[condition.questId as string] ?? "none") !== "none";
+    case "questCompleted":
+      return completed.questStates[condition.questId as string] === "completed";
+    case "renownLevel":
+      return completed.renown >= condition.level;
+    case "skillLevel":
+      return (completed.skillLevels[condition.skillId as string] ?? 0) >= condition.level;
+  }
 }
 
 /**
