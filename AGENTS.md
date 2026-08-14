@@ -22,7 +22,14 @@ collisions, dirty-state confusion, & branch-switch destruction.
 - `pipeline/input/` — shared read-only game assets. Symlink from the main checkout.
 - `.env` / `.env.*` — machine-local configuration. Symlink or copy from the main checkout.
 
-## 2. Task Lifecycle
+## 2. Git Configuration
+
+The repo remote uses HTTPS (not SSH) and authenticates via `gh auth`. Commit signing uses a local
+SSH key with `gpg.ssh.program = ssh-keygen`. Both are configured to work non-interactively so agents
+can push and sign commits without triggering 1Password or other interactive prompts. Do not switch
+the remote back to SSH.
+
+## 3. Task Lifecycle
 
 Follow this sequence for every task:
 
@@ -45,7 +52,7 @@ Follow this sequence for every task:
 > Git pre-commit hooks are developer conveniences, not verification evidence. Agents must run the
 > documented commands directly and verify clean exit status before committing.
 
-## 3. Commands
+## 4. Commands
 
 Use **pnpm** exclusively. Do **not** use `npm`, `npx`, `yarn`, or `bun`.
 
@@ -61,7 +68,7 @@ Use **pnpm** exclusively. Do **not** use `npm`, `npx`, `yarn`, or `bun`.
 | `pnpm run test:pipeline`      | Pipeline tests (`pipeline/`)               |
 | `pnpm run pipeline -- <path>` | Regenerate `tracker-data.json` from assets |
 
-## 4. Architecture Boundaries
+## 5. Architecture Boundaries
 
 These rules prevent accidental damage to generated or vendored code:
 
@@ -77,7 +84,7 @@ These rules prevent accidental damage to generated or vendored code:
 - **`src/lib/components/ui/`** is vendored shadcn-svelte code. Do not manually edit.
 - Category pages are layout compositors. Shared or stateful concerns belong in focused components.
 
-## 5. Code Style
+## 6. Code Style
 
 - **TypeScript**: `strictTypeChecked` ESLint + `strict: true` tsconfig. Use `type` imports
   (`consistent-type-imports`).
