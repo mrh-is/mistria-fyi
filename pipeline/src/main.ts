@@ -75,7 +75,11 @@ function main(): void {
   const fiddle = parsed.data;
 
   const misc = fiddle.misc as Record<string, unknown> | undefined;
-  const version = versionArg ?? (misc?.version as string | undefined) ?? "unknown";
+  const version = versionArg ?? (misc?.version as string | undefined);
+  if (!version) {
+    console.error("❌ No game version found. Pass --version=X.Y.Z or ensure misc.version exists.");
+    process.exit(1);
+  }
   console.log(`  Game version: ${version}\n`);
 
   if (parseOnly) {

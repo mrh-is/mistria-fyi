@@ -7,11 +7,11 @@
   import RedactedRow from "$lib/components/redacted-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
-  import { redactionState } from "$lib/engine/visibility.js";
+  import { isVisible, redactionState } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { displayQuestName } from "$lib/utils/format.js";
-  import { createRedactionGuard, resolveName } from "$lib/utils/redaction-guard.svelte.js";
+  import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
 
   import type { QuestState } from "$lib/stores/user-state.svelte.js";
   import type { NpcId, QuestId } from "$lib/types/tracker-data.js";
@@ -62,18 +62,22 @@
     crown_quests: "Crown Quests",
     fetch_quests: "Fetch Quests",
     heart_quests: "Heart Quests",
+    stillwell_challenges: "Stillwell Challenges",
     story_quests: "Story Quests",
+    tali_challenges: "Taliferro Challenges",
   };
 
-  const typeOrder = ["story_quests", "heart_quests", "fetch_quests", "crown_quests"];
+  const typeOrder = [
+    "story_quests",
+    "heart_quests",
+    "fetch_quests",
+    "crown_quests",
+    "stillwell_challenges",
+    "tali_challenges",
+  ];
 
   function getQuestState(id: QuestId): QuestState {
     return userState.state.completed.questStates[id as string] ?? "none";
-  }
-
-  function isTypeVisible(questType: string): boolean {
-    const visibility = trackerData.categoryVisibility[questType] ?? { type: "always" };
-    return redactionState(visibility, undefined, userState.progressionState) === "visible";
   }
 
   function completeQuest(
@@ -83,7 +87,7 @@
   ) {
     const newlyAdded = userState.completeQuestWithRecipes(quest.id);
     const newState = getQuestState(quest.id);
-    const displayName = resolveName(quest.displayName, questVisibility(questType, quest.id));
+    const displayName = quest.displayName;
     let message: string;
     if (newState === "obtained") {
       message = `Marked "${displayName}" obtained`;
@@ -135,7 +139,19 @@
   />
 {/if}
 
-{#each typeOrder.filter(isTypeVisible) as questType (questType)}
+{#each typeOrder as questType (questType)}
+  {@const categoryRevealed = isVisible(
+    trackerData.categoryVisibility[questType],
+    userState.progressionState,
+  )}
+  {@const chainOrder =
+    questType === "crown_quests"
+      ? trackerData.questChains.crown
+      : questType === "stillwell_challenges"
+        ? trackerData.questChains.stillwell
+        : questType === "tali_challenges"
+          ? trackerData.questChains.tali
+          : null}
   {@const quests = Object.entries(trackerData.quests[questType] ?? {})
     .map(([id, q]) => ({
       displayName: displayQuestName(q.name, questType),
@@ -143,7 +159,12 @@
       name: q.name,
       npc: q.npc,
     }))
-    .sort((a, b) => a.displayName.localeCompare(b.displayName))}
+    .sort((a, b) => {
+      if (chainOrder) {
+        return chainOrder.indexOf(a.id) - chainOrder.indexOf(b.id);
+      }
+      return a.displayName.localeCompare(b.displayName);
+    })}
   {@const duplicateNames = findDuplicateNames(quests)}
   {@const visibleQuests = quests.filter((q) => {
     const done = getQuestState(q.id) === "completed";
@@ -152,7 +173,7 @@
   {#if visibleQuests.length > 0}
     <ExpandableSection
       count={quests.filter((q) => getQuestState(q.id) === "completed").length}
-      name={typeLabels[questType] ?? questType}
+      name={categoryRevealed ? (typeLabels[questType] ?? questType) : "Redacted"}
       total={quests.length}
     >
       {#each visibleQuests as quest (quest.id)}
@@ -163,9 +184,13 @@
             completed={questState !== "none"}
             name={quest.displayName}
             onToggle={() => {
-              redactGuard.guard(questVisibility(questType, quest.id), () => {
+              if (questState !== "none") {
                 completeQuest(quest, questType, quests);
-              });
+              } else {
+                redactGuard.guard(questVisibility(questType, quest.id), () => {
+                  completeQuest(quest, questType, quests);
+                });
+              }
             }}
             {redaction}
           />

@@ -11,7 +11,7 @@
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
-  import { createRedactionGuard, resolveName } from "$lib/utils/redaction-guard.svelte.js";
+  import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { ItemId } from "$lib/types/tracker-data.js";
@@ -77,7 +77,7 @@
     userState.toggleMuseumItem(itemId);
     const completed = userState.state.completed.museum.has(itemId);
     const item = trackerData.items[itemId];
-    showUndoToast(resolveName(item.name, item.visibility ?? { type: "always" }), completed, () => {
+    showUndoToast(item.name, completed, () => {
       userState.toggleMuseumItem(itemId);
     });
     if (completed) {
@@ -131,18 +131,23 @@
             total={scopedSetItems.length}
           >
             {#each visibleSetItems as itemId (itemId)}
+              {@const museumCompleted = userState.state.completed.museum.has(itemId)}
               {@const redaction = itemRedaction(itemId)}
               {#if redaction !== "visible"}
                 <RedactedRow
-                  completed={userState.state.completed.museum.has(itemId)}
+                  completed={museumCompleted}
                   name={trackerData.items[itemId].name}
                   onToggle={() => {
-                    redactGuard.guard(
-                      trackerData.items[itemId].visibility ?? { type: "always" },
-                      () => {
-                        toggleItem(itemId, wingItems, set.items);
-                      },
-                    );
+                    if (museumCompleted) {
+                      toggleItem(itemId, wingItems, set.items);
+                    } else {
+                      redactGuard.guard(
+                        trackerData.items[itemId].visibility ?? { type: "always" },
+                        () => {
+                          toggleItem(itemId, wingItems, set.items);
+                        },
+                      );
+                    }
                   }}
                   {redaction}
                 />

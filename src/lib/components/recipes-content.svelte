@@ -13,7 +13,7 @@
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { recipeSourceLabel } from "$lib/utils/format.js";
-  import { createRedactionGuard, resolveName } from "$lib/utils/redaction-guard.svelte.js";
+  import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { RecipeId, RecipeSource } from "$lib/types/tracker-data.js";
@@ -33,6 +33,14 @@
     setTimeout(() => recentlyCompleted.delete(recipeId), 1050);
   }
 
+  let redactedStoreIds = $derived(
+    new Set(
+      Object.entries(trackerData.storeVisibility)
+        .filter(([, vis]) => !isVisible(vis, userState.progressionState))
+        .map(([id]) => id),
+    ),
+  );
+
   let sourceLookups: RecipeSourceLookups = $derived({
     biomes: trackerData.mines.biomes,
     festivals: trackerData.festivals,
@@ -46,6 +54,7 @@
         Object.entries(group).map(([id, q]) => [id, q.name]),
       ),
     ),
+    redactedStoreIds,
     skillNames: Object.fromEntries(
       Object.entries(trackerData.skills).map(([id, name]) => [id, name]),
     ),
@@ -157,7 +166,7 @@
   function toggleRecipe(entry: RecipeEntry, sectionRecipeIds: RecipeId[]): void {
     userState.toggleAlmanacRecipe(entry.id);
     const nowCompleted = userState.state.completed.almanacRecipes.has(entry.id);
-    showUndoToast(resolveName(entry.name, entry.visibility), nowCompleted, () => {
+    showUndoToast(entry.name, nowCompleted, () => {
       userState.toggleAlmanacRecipe(entry.id);
     });
     if (nowCompleted) {
@@ -211,12 +220,19 @@
             {completed}
             name={entry.name}
             onToggle={() => {
-              redactGuard.guard(entry.visibility, () => {
+              if (completed) {
                 toggleRecipe(
                   entry,
                   group.entries.map((e) => e.id),
                 );
-              });
+              } else {
+                redactGuard.guard(entry.visibility, () => {
+                  toggleRecipe(
+                    entry,
+                    group.entries.map((e) => e.id),
+                  );
+                });
+              }
             }}
             {redaction}
             sourceLabels={visibleSources.map(

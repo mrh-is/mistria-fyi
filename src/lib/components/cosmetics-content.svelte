@@ -7,7 +7,7 @@
   import { redactionState } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
-  import { createRedactionGuard, resolveName } from "$lib/utils/redaction-guard.svelte.js";
+  import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { CosmeticId, ItemId, Source } from "$lib/types/tracker-data.js";
@@ -61,7 +61,7 @@
   function toggleCosmetic(cosmetic: CosmeticEntry, allInSlot: CosmeticEntry[]): void {
     userState.toggleCosmetic(cosmetic.id);
     const completed = userState.state.completed.cosmetics.has(cosmetic.id);
-    showUndoToast(resolveName(cosmetic.name, cosmetic.visibility), completed, () => {
+    showUndoToast(cosmetic.name, completed, () => {
       userState.toggleCosmetic(cosmetic.id);
     });
     if (completed) {
@@ -126,9 +126,13 @@
                     {completed}
                     name={cosmetic.name}
                     onToggle={() => {
-                      redactGuard.guard(cosmetic.visibility, () => {
+                      if (completed) {
                         toggleCosmetic(cosmetic, allInSlot);
-                      });
+                      } else {
+                        redactGuard.guard(cosmetic.visibility, () => {
+                          toggleCosmetic(cosmetic, allInSlot);
+                        });
+                      }
                     }}
                     {redaction}
                   />

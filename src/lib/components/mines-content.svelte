@@ -8,7 +8,7 @@
   import { redactionState } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
-  import { createRedactionGuard, resolveName } from "$lib/utils/redaction-guard.svelte.js";
+  import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { SpellId } from "$lib/types/tracker-data.js";
@@ -24,13 +24,9 @@
     userState.toggleSpell(spellId);
     const completed = userState.state.completed.mines.spells.has(spellId);
     const spell = trackerData.mines.spells[spellId];
-    showUndoToast(
-      resolveName(spell.name, spell.visibility ?? { type: "always" }),
-      completed,
-      () => {
-        userState.toggleSpell(spellId);
-      },
-    );
+    showUndoToast(spell.name, completed, () => {
+      userState.toggleSpell(spellId);
+    });
     if (completed) {
       if (isMinesComplete()) {
         celebrateCategory();
@@ -195,12 +191,16 @@
           {completed}
           name={spell.name}
           onToggle={() => {
-            redactGuard.guard(
-              trackerData.mines.spells[spell.id].visibility ?? { type: "always" },
-              () => {
-                toggleSpell(spell.id);
-              },
-            );
+            if (completed) {
+              toggleSpell(spell.id);
+            } else {
+              redactGuard.guard(
+                trackerData.mines.spells[spell.id].visibility ?? { type: "always" },
+                () => {
+                  toggleSpell(spell.id);
+                },
+              );
+            }
           }}
           {redaction}
         />

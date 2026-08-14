@@ -23,10 +23,12 @@
     sources?: RecipeSource[];
   } = $props();
 
+  let uniqueSourceTypes = $derived([...new Set(sources.map((s) => s.type))]);
+
   let expanded = $state(false);
 </script>
 
-{#if redaction === "visible"}
+{#if redaction === "visible" || completed}
   <CompletionRow {completed} {name} {onToggle} />
 {:else}
   <div>
@@ -40,8 +42,7 @@
         <Lock class="size-4 text-muted-foreground/50" />
       </button>
       <span class="min-w-0 flex-1 text-base text-muted-foreground italic">Redacted</span>
-      {#if redaction === "source-only" && sources.length > 0}
-        {@const uniqueTypes = [...new Set(sources.map((s) => s.type))]}
+      {#if uniqueSourceTypes.length > 0}
         <button
           class="group flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted"
           type="button"
@@ -51,7 +52,7 @@
             expanded = !expanded;
           }}
         >
-          {#each uniqueTypes as sourceType (sourceType)}
+          {#each uniqueSourceTypes as sourceType (sourceType)}
             <Icon.Source type={sourceType} class="size-3.5 shrink-0" />
           {/each}
           <Icon.UI

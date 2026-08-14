@@ -12,7 +12,7 @@
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
-  import { createRedactionGuard, resolveName } from "$lib/utils/redaction-guard.svelte.js";
+  import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { ItemId } from "$lib/types/tracker-data.js";
@@ -71,7 +71,7 @@
   ): void {
     userState.toggleAlmanacItem(itemId);
     const completed = userState.state.completed.almanac.has(itemId);
-    showUndoToast(resolveName(item.name, item.visibility ?? { type: "always" }), completed, () => {
+    showUndoToast(item.name, completed, () => {
       userState.toggleAlmanacItem(itemId);
     });
     if (completed) {
@@ -131,15 +131,20 @@
       {@const showAll = expandedSections[cat.id] ?? false}
       {@const displayItems = showAll ? filteredItems : filteredItems.slice(0, SECTION_LIMIT)}
       {#each displayItems as [itemId, item] (itemId)}
+        {@const itemCompleted = userState.state.completed.almanac.has(itemId as ItemId)}
         {@const redaction = itemRedaction(item)}
         {#if redaction !== "visible"}
           <RedactedRow
-            completed={userState.state.completed.almanac.has(itemId as ItemId)}
+            completed={itemCompleted}
             name={item.name}
             onToggle={() => {
-              redactGuard.guard(item.visibility ?? { type: "always" }, () => {
+              if (itemCompleted) {
                 toggleItem(itemId as ItemId, item, catItemIds);
-              });
+              } else {
+                redactGuard.guard(item.visibility ?? { type: "always" }, () => {
+                  toggleItem(itemId as ItemId, item, catItemIds);
+                });
+              }
             }}
             {redaction}
           />

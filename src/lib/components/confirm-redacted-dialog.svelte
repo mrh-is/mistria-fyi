@@ -33,7 +33,10 @@
     </AlertDialog.Header>
     <AlertDialog.Footer class="flex-wrap">
       <AlertDialog.Cancel onclick={onCancel}>Cancel</AlertDialog.Cancel>
-      <AlertDialog.Action class={buttonVariants({ variant: "outline" })} onclick={onComplete}>
+      <AlertDialog.Action
+        class={`${buttonVariants({ variant: "outline" })} text-foreground`}
+        onclick={onComplete}
+      >
         Yes, just this item
       </AlertDialog.Action>
       {#if invertible}

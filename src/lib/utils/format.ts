@@ -59,6 +59,7 @@ export interface RecipeSourceLookups {
   perks: Partial<Record<string, { name: string; skillId: string; tier: number }>>;
   perkTierLevels: number[];
   questNames: Partial<Record<string, string>>;
+  redactedStoreIds?: ReadonlySet<string>;
   skillNames: Partial<Record<string, string>>;
   stores: Partial<Record<string, { article?: "the"; name: string }>>;
   treasureChestTiers: Partial<Record<string, { name: string }>>;
@@ -118,7 +119,7 @@ export function recipeSourceLabel(source: RecipeSource, lookups: RecipeSourceLoo
     case "festival": {
       const festivalName =
         lookups.festivals[source.festivalId]?.name ?? titleCase(source.festivalId);
-      const storeName = formatStoreName(source.storeId, lookups.stores);
+      const storeName = resolveStoreName(source.storeId, lookups);
       return `Purchase from ${storeName} at the ${festivalName}`;
     }
     case "letter": {
@@ -182,16 +183,16 @@ export function recipeSourceLabel(source: RecipeSource, lookups: RecipeSourceLoo
     case "renown":
       return `Get the town rank to level ${String(source.level)}`;
     case "scroll_bundle": {
-      const storeName = formatStoreName(source.storeId, lookups.stores);
+      const storeName = resolveStoreName(source.storeId, lookups);
       return `Purchase the ${source.bundleName} from ${storeName}`;
     }
     case "store": {
-      const storeName = formatStoreName(source.storeId, lookups.stores);
+      const storeName = resolveStoreName(source.storeId, lookups);
       const suffix = source.upgraded ? " (after upgrade)" : "";
       return `Purchase from ${storeName}${suffix}`;
     }
     case "store_with_perk": {
-      const storeName = formatStoreName(source.storeId, lookups.stores);
+      const storeName = resolveStoreName(source.storeId, lookups);
       const perk = lookups.perks[source.perkId];
       const perkName = perk?.name ?? titleCase(source.perkId);
       return `Purchase from ${storeName} (requires ${perkName} perk)`;
@@ -202,7 +203,7 @@ export function recipeSourceLabel(source: RecipeSource, lookups: RecipeSourceLoo
       return `Fish up ${withIndefiniteArticle(name)}`;
     }
     case "upgrade": {
-      const storeName = formatStoreName(source.storeId, lookups.stores);
+      const storeName = resolveStoreName(source.storeId, lookups);
       return `Purchase ${source.upgradeName} from ${storeName}`;
     }
     case "wishing_well":
@@ -246,6 +247,11 @@ export function withIndefiniteArticle(name: string): string {
   const firstChar = name.charAt(0).toLowerCase();
   const article = "aeiou".includes(firstChar) ? "an" : "a";
   return `${article} ${name}`;
+}
+
+function resolveStoreName(storeId: StoreId, lookups: RecipeSourceLookups): string {
+  if (lookups.redactedStoreIds?.has(storeId)) return "???";
+  return formatStoreName(storeId, lookups.stores);
 }
 
 function titleCase(s: string): string {
