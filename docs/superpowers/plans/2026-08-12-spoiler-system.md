@@ -8,10 +8,10 @@
 player's progression, with an app-side evaluator and UI integration across all category pages.
 
 **Architecture:** The pipeline emits a `visibility: VisibilityCondition` field on every content
-entity in `tracker-data.json`. A pure evaluator in `src/lib/engine/visibility.ts` takes a condition +
-`UserProgressionState` (derived from `CompletedState` + tracker data) and returns a boolean. UI
-components check visibility to render items as redacted, partially disclosed, or fully visible. No
-game-data joining happens at runtime.
+entity in `tracker-data.json`. A pure evaluator in `src/lib/engine/visibility.ts` takes a
+condition + `UserProgressionState` (derived from `CompletedState` + tracker data) and returns a
+boolean. UI components check visibility to render items as redacted, partially disclosed, or fully
+visible. No game-data joining happens at runtime.
 
 **Tech stack:** SvelteKit 2, Svelte 5 (runes), TypeScript (strict + `strictTypeChecked` ESLint),
 Vitest, pnpm
@@ -32,31 +32,31 @@ Vitest, pnpm
 
 ## File structure
 
-| File | Action | Responsibility |
-|---|---|---|
-| `src/lib/types/tracker-data.ts` | Modify (Task 1) | Add `VisibilityCondition` type, `visibility` fields on entities, `storeVisibility`, `questChains`, `npcVisibility`, `heartLevelChanges` to `TrackerData` |
-| `src/lib/types/visibility.ts` | Create (Task 1) | `VisibilityCondition` type union, exported separately for pipeline + app use |
-| `pipeline/src/extractors/visibility/` | Create (Tasks 2–5) | New extraction modules for visibility conditions |
-| `pipeline/src/extractors/visibility/cutscene-quest-map.ts` | Create (Task 2) | Cutscene-to-quest bidirectional index |
-| `pipeline/src/extractors/visibility/cutscene-quest-map.test.ts` | Create (Task 2) | Tests for cutscene mapping |
-| `pipeline/src/extractors/visibility/quest-chains.ts` | Create (Task 3) | Quest chain ordering extraction from letters + registries |
-| `pipeline/src/extractors/visibility/quest-chains.test.ts` | Create (Task 3) | Tests for chain extraction |
-| `pipeline/src/extractors/visibility/requirement-resolver.ts` | Create (Task 4) | Converts `RequirementExpression` → `VisibilityCondition` with boolean simplification |
-| `pipeline/src/extractors/visibility/requirement-resolver.test.ts` | Create (Task 4) | Tests for requirement resolution |
-| `pipeline/src/extractors/visibility/entity-visibility.ts` | Create (Task 5) | Assigns `visibility` to stores, NPCs, items, recipes, perks, cosmetics, quests, animals |
-| `pipeline/src/extractors/visibility/entity-visibility.test.ts` | Create (Task 5) | Tests for entity visibility assignment |
-| `pipeline/src/main.ts` | Modify (Task 5) | Wire visibility extraction into pipeline |
-| `src/lib/engine/visibility.ts` | Create (Task 6) | `isVisible`, `isEntityNameVisible`, `isSourceDetailVisible`, `deriveProgressionState` |
-| `src/lib/engine/__tests__/visibility.test.ts` | Create (Task 6) | Tests for evaluator + progression derivation |
-| `src/lib/stores/user-state.svelte.ts` | Modify (Task 7) | Add `unlockedPerks`, `marriedNpc` to `CompletedState`; serialize/deserialize; new methods |
-| `src/lib/engine/transfer.ts` | Modify (Task 7) | Bump to version 2, add perk bitfield |
-| `src/lib/engine/__tests__/transfer.test.ts` | Modify (Task 7) | v1/v2 round-trip tests |
-| `src/lib/engine/import-save.ts` | Modify (Task 8) | Import perks from `player.perks` |
-| `src/lib/engine/search.ts` | Modify (Task 9) | Filter redacted entities from search results |
-| `src/lib/components/redacted-row.svelte` | Create (Task 9) | Redacted item row component |
-| `src/lib/components/confirm-redacted-dialog.svelte` | Create (Task 9) | "Complete redacted item" confirmation dialog |
-| `src/lib/components/quests-content.svelte` | Modify (Task 10) | Integrate visibility into quest rendering |
-| Various category content components | Modify (Task 10) | Integrate redacted row rendering |
+| File                                                              | Action             | Responsibility                                                                                                                                           |
+| ----------------------------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/types/tracker-data.ts`                                   | Modify (Task 1)    | Add `VisibilityCondition` type, `visibility` fields on entities, `storeVisibility`, `questChains`, `npcVisibility`, `heartLevelChanges` to `TrackerData` |
+| `src/lib/types/visibility.ts`                                     | Create (Task 1)    | `VisibilityCondition` type union, exported separately for pipeline + app use                                                                             |
+| `pipeline/src/extractors/visibility/`                             | Create (Tasks 2–5) | New extraction modules for visibility conditions                                                                                                         |
+| `pipeline/src/extractors/visibility/cutscene-quest-map.ts`        | Create (Task 2)    | Cutscene-to-quest bidirectional index                                                                                                                    |
+| `pipeline/src/extractors/visibility/cutscene-quest-map.test.ts`   | Create (Task 2)    | Tests for cutscene mapping                                                                                                                               |
+| `pipeline/src/extractors/visibility/quest-chains.ts`              | Create (Task 3)    | Quest chain ordering extraction from letters + registries                                                                                                |
+| `pipeline/src/extractors/visibility/quest-chains.test.ts`         | Create (Task 3)    | Tests for chain extraction                                                                                                                               |
+| `pipeline/src/extractors/visibility/requirement-resolver.ts`      | Create (Task 4)    | Converts `RequirementExpression` → `VisibilityCondition` with boolean simplification                                                                     |
+| `pipeline/src/extractors/visibility/requirement-resolver.test.ts` | Create (Task 4)    | Tests for requirement resolution                                                                                                                         |
+| `pipeline/src/extractors/visibility/entity-visibility.ts`         | Create (Task 5)    | Assigns `visibility` to stores, NPCs, items, recipes, perks, cosmetics, quests, animals                                                                  |
+| `pipeline/src/extractors/visibility/entity-visibility.test.ts`    | Create (Task 5)    | Tests for entity visibility assignment                                                                                                                   |
+| `pipeline/src/main.ts`                                            | Modify (Task 5)    | Wire visibility extraction into pipeline                                                                                                                 |
+| `src/lib/engine/visibility.ts`                                    | Create (Task 6)    | `isVisible`, `isEntityNameVisible`, `isSourceDetailVisible`, `deriveProgressionState`                                                                    |
+| `src/lib/engine/__tests__/visibility.test.ts`                     | Create (Task 6)    | Tests for evaluator + progression derivation                                                                                                             |
+| `src/lib/stores/user-state.svelte.ts`                             | Modify (Task 7)    | Add `unlockedPerks`, `marriedNpc` to `CompletedState`; serialize/deserialize; new methods                                                                |
+| `src/lib/engine/transfer.ts`                                      | Modify (Task 7)    | Bump to version 2, add perk bitfield                                                                                                                     |
+| `src/lib/engine/__tests__/transfer.test.ts`                       | Modify (Task 7)    | v1/v2 round-trip tests                                                                                                                                   |
+| `src/lib/engine/import-save.ts`                                   | Modify (Task 8)    | Import perks from `player.perks`                                                                                                                         |
+| `src/lib/engine/search.ts`                                        | Modify (Task 9)    | Filter redacted entities from search results                                                                                                             |
+| `src/lib/components/redacted-row.svelte`                          | Create (Task 9)    | Redacted item row component                                                                                                                              |
+| `src/lib/components/confirm-redacted-dialog.svelte`               | Create (Task 9)    | "Complete redacted item" confirmation dialog                                                                                                             |
+| `src/lib/components/quests-content.svelte`                        | Modify (Task 10)   | Integrate visibility into quest rendering                                                                                                                |
+| Various category content components                               | Modify (Task 10)   | Integrate redacted row rendering                                                                                                                         |
 
 ---
 
@@ -112,6 +112,7 @@ import type { VisibilityCondition } from "./visibility.js";
 ```
 
 Add `visibility?: VisibilityCondition` to:
+
 - `TrackerData.items[id]` entries (alongside `category`, `name`, `questGate`, `recipeId`) — this is
   the primary entity map iterated by search, availability checks, and all content components
 - `AlmanacCategory.items[id]` entries (alongside `name`, `colorCount`, `recipeId`)
@@ -329,8 +330,8 @@ describe("buildCutsceneQuestMap", () => {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `pnpm exec vitest run pipeline/src/extractors/visibility/cutscene-quest-map.test.ts`
-Expected: FAIL — module not found.
+Run: `pnpm exec vitest run pipeline/src/extractors/visibility/cutscene-quest-map.test.ts` Expected:
+FAIL — module not found.
 
 - [ ] **Step 3: Implement `buildCutsceneQuestMap`**
 
@@ -364,10 +365,8 @@ export function buildCutsceneQuestMap(fiddle: ParsedGameData): CutsceneQuestMap 
   }
 
   // Source 1: Explicit quest_to_start / quest_to_progress on cutscene entries
-  const cutscenes =
-    (fiddle.cutscenes as Record<string, unknown> | undefined)?.cutscenes as
-      | Record<string, Record<string, unknown>>
-      | undefined;
+  const cutscenes = (fiddle.cutscenes as Record<string, unknown> | undefined)?.cutscenes as
+    Record<string, Record<string, unknown>> | undefined;
 
   if (cutscenes) {
     for (const [cutsceneId, cutscene] of Object.entries(cutscenes)) {
@@ -439,8 +438,8 @@ export function buildCutsceneQuestMap(fiddle: ParsedGameData): CutsceneQuestMap 
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `pnpm exec vitest run pipeline/src/extractors/visibility/cutscene-quest-map.test.ts`
-Expected: PASS
+Run: `pnpm exec vitest run pipeline/src/extractors/visibility/cutscene-quest-map.test.ts` Expected:
+PASS
 
 - [ ] **Step 5: Run `pnpm run check` and `pnpm run lint:fix`**
 
@@ -466,12 +465,12 @@ Extract quest chain ordering from letters and registry files. This data drives
 
 **Interfaces:**
 
-- Consumes: `ParsedGameData` (fiddle with `letters`, `quests.story_quests`,
-  `quests.crown_registry`, `quests.stillwell_registry`, `quests.tali_registry`)
+- Consumes: `ParsedGameData` (fiddle with `letters`, `quests.story_quests`, `quests.crown_registry`,
+  `quests.stillwell_registry`, `quests.tali_registry`)
 - Produces:
   - `QuestChainData` — same shape as `TrackerData["questChains"]` except `fetch` is
-    `Record<QuestId, RequirementExpression>` (raw, not yet resolved to `VisibilityCondition`).
-    Task 5 resolves these via the requirement resolver.
+    `Record<QuestId, RequirementExpression>` (raw, not yet resolved to `VisibilityCondition`). Task
+    5 resolves these via the requirement resolver.
   - `extractQuestChains(fiddle: ParsedGameData): QuestChainData`
 
 - [ ] **Step 1: Write failing tests for quest chain extraction**
@@ -486,6 +485,7 @@ should have its own `describe` block. The test file structure follows
 `pipeline/src/extractors/visibility/cutscene-quest-map.test.ts` as a template.
 
 Key assertions:
+
 - Story quest prerequisites are extracted from letters' `completed_quest` field
 - Quests without letter triggers have empty prerequisite arrays
 - Crown quest order matches the `order` array from `crown_registry.toml`
@@ -495,38 +495,36 @@ Key assertions:
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `pnpm exec vitest run pipeline/src/extractors/visibility/quest-chains.test.ts`
-Expected: FAIL — module not found.
+Run: `pnpm exec vitest run pipeline/src/extractors/visibility/quest-chains.test.ts` Expected: FAIL —
+module not found.
 
 - [ ] **Step 3: Implement `extractQuestChains`**
 
 The function walks four data sources:
 
 1. **`letters.toml`** → story quest dependencies. For each letter with a `quest_to_start` or
-   `quest_to_complete` field that points to a story quest, extract the letter's
-   `completed_quest` requirement as the quest's prerequisite. Store as
+   `quest_to_complete` field that points to a story quest, extract the letter's `completed_quest`
+   requirement as the quest's prerequisite. Store as
    `story: Record<QuestId, { prerequisites: QuestId[] }>`.
 
 2. **Registry files** → ordered arrays. Read `order` from `crown_registry.toml`,
    `stillwell_registry.toml`, `tali_registry.toml`. Store as `crown: QuestId[]`, etc.
 
-3. **`letters.toml`** → heart quest chains. For each letter with `reached_heart_level`, extract
-   the NPC ID and level. Group by NPC, sort by level. For level 4+ entries, set
-   `prerequisiteQuest` to the previous quest in the chain. Use the letter's
-   `reached_heart_level` NPC key (not the quest's `npc_for_icon`) to handle cross-NPC
-   dependencies.
+3. **`letters.toml`** → heart quest chains. For each letter with `reached_heart_level`, extract the
+   NPC ID and level. Group by NPC, sort by level. For level 4+ entries, set `prerequisiteQuest` to
+   the previous quest in the chain. Use the letter's `reached_heart_level` NPC key (not the quest's
+   `npc_for_icon`) to handle cross-NPC dependencies.
 
 4. **`request_board.toml`** → fetch quest raw requirements. Parse each entry's requirements using
-   `buildRequirementDefinitions` + `parseRequirements` from `pipeline/src/requirements.ts` and
-   store as `Record<QuestId, RequirementExpression>`. Do NOT resolve to `VisibilityCondition`
-   here — that requires the cutscene-quest map and requirement resolver from Tasks 2 + 4, which
-   may not exist yet. Task 5's `assignEntityVisibility` resolves these raw expressions into the
-   final `questChains.fetch: Record<QuestId, VisibilityCondition>` field.
+   `buildRequirementDefinitions` + `parseRequirements` from `pipeline/src/requirements.ts` and store
+   as `Record<QuestId, RequirementExpression>`. Do NOT resolve to `VisibilityCondition` here — that
+   requires the cutscene-quest map and requirement resolver from Tasks 2 + 4, which may not exist
+   yet. Task 5's `assignEntityVisibility` resolves these raw expressions into the final
+   `questChains.fetch: Record<QuestId, VisibilityCondition>` field.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `pnpm exec vitest run pipeline/src/extractors/visibility/quest-chains.test.ts`
-Expected: PASS
+Run: `pnpm exec vitest run pipeline/src/extractors/visibility/quest-chains.test.ts` Expected: PASS
 
 - [ ] **Step 5: Run `pnpm run check` and `pnpm run lint:fix`**
 
@@ -542,8 +540,8 @@ git commit -m "add quest chain ordering extractor"
 
 ### Task 4: Pipeline — requirement-to-visibility resolver
 
-Convert the existing `RequirementExpression` trees into `VisibilityCondition` trees. This handles the
-projection of non-spoiler predicates to `always` and boolean simplification.
+Convert the existing `RequirementExpression` trees into `VisibilityCondition` trees. This handles
+the projection of non-spoiler predicates to `always` and boolean simplification.
 
 **Files:**
 
@@ -740,10 +738,7 @@ describe("simplifyCondition", () => {
     expect(
       simplifyCondition({
         type: "and",
-        conditions: [
-          { type: "always" },
-          { type: "questCompleted", questId: "q" as never },
-        ],
+        conditions: [{ type: "always" }, { type: "questCompleted", questId: "q" as never }],
       }),
     ).toEqual({ type: "questCompleted", questId: "q" });
   });
@@ -752,10 +747,7 @@ describe("simplifyCondition", () => {
     expect(
       simplifyCondition({
         type: "or",
-        conditions: [
-          { type: "always" },
-          { type: "questCompleted", questId: "q" as never },
-        ],
+        conditions: [{ type: "always" }, { type: "questCompleted", questId: "q" as never }],
       }),
     ).toEqual({ type: "always" });
   });
@@ -780,10 +772,7 @@ describe("simplifyCondition", () => {
         conditions: [
           {
             type: "or",
-            conditions: [
-              { type: "always" },
-              { type: "questCompleted", questId: "q" as never },
-            ],
+            conditions: [{ type: "always" }, { type: "questCompleted", questId: "q" as never }],
           },
           { type: "minesLevel", floor: 20 },
         ],
@@ -825,11 +814,17 @@ export function resolveToVisibility(
 ): VisibilityCondition {
   if ("all" in expr) {
     const conditions = expr.all.map((e) => resolveToVisibility(e, cutsceneMap));
-    return simplifyCondition({ type: "and", conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]] });
+    return simplifyCondition({
+      type: "and",
+      conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
+    });
   }
   if ("any" in expr) {
     const conditions = expr.any.map((e) => resolveToVisibility(e, cutsceneMap));
-    return simplifyCondition({ type: "or", conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]] });
+    return simplifyCondition({
+      type: "or",
+      conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
+    });
   }
   if ("not" in expr) {
     return ALWAYS;
@@ -918,14 +913,20 @@ export function simplifyCondition(condition: VisibilityCondition): VisibilityCon
       .filter((c) => c.type !== "always");
     if (simplified.length === 0) return ALWAYS;
     if (simplified.length === 1) return simplified[0];
-    return { type: "and", conditions: simplified as [VisibilityCondition, ...VisibilityCondition[]] };
+    return {
+      type: "and",
+      conditions: simplified as [VisibilityCondition, ...VisibilityCondition[]],
+    };
   }
   if (condition.type === "or") {
     const simplified = condition.conditions.map(simplifyCondition);
     if (simplified.some((c) => c.type === "always")) return ALWAYS;
     if (simplified.length === 0) return ALWAYS;
     if (simplified.length === 1) return simplified[0];
-    return { type: "or", conditions: simplified as [VisibilityCondition, ...VisibilityCondition[]] };
+    return {
+      type: "or",
+      conditions: simplified as [VisibilityCondition, ...VisibilityCondition[]],
+    };
   }
   return condition;
 }
@@ -983,42 +984,50 @@ recipes, perks, cosmetics, quests, and animals.
 Test each visibility assignment function. Key test cases:
 
 **Store visibility:**
+
 - General Store upgrade → `questCompleted("repair_the_general_store")`
 - Taliferro → `questCompleted("upgrade_the_saturday_market")` (hardcoded)
 - Balor → `always` (no gate)
 
 **NPC visibility:**
+
 - Caldarus → `questCompleted("breaking_the_fire_seal")` (hardcoded)
 - Seridia → `questCompleted("breaking_the_final_seal")`
 - Saturday Market vendors in correct waves
 - Regular NPCs (Holt, Adeline, etc.) → `always`
 
 **Heart level changes:**
+
 - Breaking the Water Seal → Caldarus level 2, Seridia level 1
 - Breaking the Final Seal → Caldarus level 6, Seridia level 6
 
 **Item visibility:**
+
 - Store item with upgrade requirement → composes store gate + item-specific requirement
 - Non-gated item → `always`
 
 **Recipe visibility:**
+
 - Perk-sourced recipe → `perkUnlocked(id)`; source gets `skillLevel`
 - Store-sourced recipe → inherits store visibility
 - Default recipe → `always`
 - Quest-sourced recipe → `questCompleted(questId)`
 
 **Perk visibility:**
-- Tier 1 → `skillLevel(skillId, 1)` which simplifies to `always` (everyone starts at level 1)
-  ... actually tier 1 unlocks at level 1, which is always available. Check if this should be
-  `always` or `skillLevel(skillId, 1)`. The spec says emit `skillLevel`, so emit it literally.
+
+- Tier 1 → `skillLevel(skillId, 1)` which simplifies to `always` (everyone starts at level 1) ...
+  actually tier 1 unlocks at level 1, which is always available. Check if this should be `always` or
+  `skillLevel(skillId, 1)`. The spec says emit `skillLevel`, so emit it literally.
 - Tier 4 → `skillLevel(skillId, 45)`
 
 **Category visibility:**
+
 - `stillwell_challenges` → `npcKnown("stillwell")`
 - `tali_challenges` → `npcKnown("taliferro")`
 - `story_quests` → `always`
 
 **Quest visibility (from chains):**
+
 - Heart quest at level 4 → `and(npcKnown(npc), heartLevel(npc, 4), questCompleted(prev))`
 - Crown quest → `and(renownLevel(N), questCompleted(prev))` or just `renownLevel(N)` for first
 - Fetch quest → resolved from request board raw `RequirementExpression` (from Task 3) via
@@ -1027,15 +1036,15 @@ Test each visibility assignment function. Key test cases:
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `pnpm exec vitest run pipeline/src/extractors/visibility/entity-visibility.test.ts`
-Expected: FAIL
+Run: `pnpm exec vitest run pipeline/src/extractors/visibility/entity-visibility.test.ts` Expected:
+FAIL
 
 - [ ] **Step 3: Implement entity visibility functions**
 
 The implementation has several sub-functions:
 
-**`extractStoreVisibility`**: hardcoded mapping for the 12 gated stores (from spec Section 3d),
-plus `always` for the 8 ungated stores. Uses the store IDs from `trackerData.stores`.
+**`extractStoreVisibility`**: hardcoded mapping for the 12 gated stores (from spec Section 3d), plus
+`always` for the 8 ungated stores. Uses the store IDs from `trackerData.stores`.
 
 **`extractNpcVisibility`**: hardcoded mapping for gated NPCs (from spec Section 3e). Caldarus,
 Seridia, Merri/Darcy/Vera/Louis, Taliferro/Wheedle, Stillwell/Zorel. All others → `always`.
@@ -1048,18 +1057,20 @@ fields. Maps cutscene → quest via `CutsceneQuestMap`, groups by quest ID.
 Use a placeholder constant with a comment.
 
 **`assignEntityVisibility`**: walks each entity type in TrackerData and stamps `visibility`:
-- **Items**: for each item, look up its sources in `trackerData.sources`. If any source has a
-  store restriction, compose with `storeVisibility`. If it has a `building` restriction, resolve
-  via the requirement resolver. Otherwise `always`.
+
+- **Items**: for each item, look up its sources in `trackerData.sources`. If any source has a store
+  restriction, compose with `storeVisibility`. If it has a `building` restriction, resolve via the
+  requirement resolver. Otherwise `always`.
 - **Recipes**: each `RecipeSource` variant maps to TWO conditions — one for the recipe entity
   (stronger gate) and one for the source detail (weaker gate for partial disclosure). The
   distinction matters for the three-phase reveal pattern:
-  - `perk` source → entity: `perkUnlocked(perkId)`, source: `skillLevel(perkSkillId,
-    perkTierLevels[tier - 1])` — the tier threshold is looked up from the perk's own data
+  - `perk` source → entity: `perkUnlocked(perkId)`, source:
+    `skillLevel(perkSkillId, perkTierLevels[tier - 1])` — the tier threshold is looked up from the
+    perk's own data
   - `store` → entity: `questCompleted(storeUnlockQuest)`, source: `questAvailable(storeUnlockQuest)`
   - `quest` → entity: `questCompleted(questId)`, source: `questAvailable(questId)`
-  - `mines_chest` / `mines_dig_site` → entity: `and(minesLevel, perkUnlocked)`, source:
-    `minesLevel` alone (perk not yet required for partial reveal)
+  - `mines_chest` / `mines_dig_site` → entity: `and(minesLevel, perkUnlocked)`, source: `minesLevel`
+    alone (perk not yet required for partial reveal)
   - `museum_donation` → entity + source: `always`
   - `default` → entity + source: `always`
   - `scroll_bundle` → same as `store` (inherits store gate)
@@ -1068,14 +1079,15 @@ Use a placeholder constant with a comment.
   The recipe's overall entity visibility is the weakest (most permissive) of all its source-level
   entity conditions — `or` across all sources. Each `RecipeSource.visibility` field gets its own
   source-level condition independently.
+
 - **Perks**: `skillLevel(skillId, perkTierLevels[tier - 1])`
 - **Cosmetics**: derive from source (store, quest, chest). This task handles cosmetics that have
   sources in `trackerData.sources`; full cosmetic source coverage is tracked by issue #78.
 - **Animals**: the 6 gated animals get `questCompleted("repair_haydens_barn")`.
 - **Spells**: map to the tablet quest chain (`questCompleted`).
-- **Quests**: story quests get `questCompleted(prerequisiteQuest)` from chain data. Heart quests
-  get `and(npcKnown, heartLevel, questCompleted(prev))`. Fetch quests get their request board
-  condition. Crown/stillwell/tali quests get chain position conditions.
+- **Quests**: story quests get `questCompleted(prerequisiteQuest)` from chain data. Heart quests get
+  `and(npcKnown, heartLevel, questCompleted(prev))`. Fetch quests get their request board condition.
+  Crown/stillwell/tali quests get chain position conditions.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
@@ -1118,8 +1130,7 @@ categoryVisibility: categoryVisibilityData,
 
 - [ ] **Step 6: Run full pipeline test suite**
 
-Run: `pnpm exec vitest run pipeline/`
-Expected: PASS
+Run: `pnpm exec vitest run pipeline/` Expected: PASS
 
 - [ ] **Step 7: Run `pnpm run check` and `pnpm run lint:fix`**
 
@@ -1158,7 +1169,8 @@ computes `UserProgressionState` from `CompletedState` + tracker data.
   - `isSourceDetailVisible(sourceVisibility: VisibilityCondition | undefined, state: UserProgressionState): boolean`
   - `redactionState(entityVisibility: VisibilityCondition, sourceVisibility: VisibilityCondition | undefined, state: UserProgressionState): "redacted" | "source-only" | "visible"`
   - `isConditionInvertible(condition: VisibilityCondition): boolean`
-  - `satisfyCondition(condition: VisibilityCondition, completed: CompletedState, trackerData: TrackerData): void` — mutates CompletedState to satisfy a visibility condition
+  - `satisfyCondition(condition: VisibilityCondition, completed: CompletedState, trackerData: TrackerData): void`
+    — mutates CompletedState to satisfy a visibility condition
 
 - [ ] **Step 1: Write failing tests for the evaluator**
 
@@ -1203,9 +1215,9 @@ describe("isVisible", () => {
     expect(isVisible({ type: "questCompleted", questId: "repair_the_inn" as never }, state)).toBe(
       true,
     );
-    expect(
-      isVisible({ type: "questCompleted", questId: "other_quest" as never }, state),
-    ).toBe(false);
+    expect(isVisible({ type: "questCompleted", questId: "other_quest" as never }, state)).toBe(
+      false,
+    );
   });
 
   it("questAvailable matches available or completed", () => {
@@ -1216,12 +1228,12 @@ describe("isVisible", () => {
         unavailable_quest: "unavailable",
       } as never,
     });
-    expect(
-      isVisible({ type: "questAvailable", questId: "available_quest" as never }, state),
-    ).toBe(true);
-    expect(
-      isVisible({ type: "questAvailable", questId: "completed_quest" as never }, state),
-    ).toBe(true);
+    expect(isVisible({ type: "questAvailable", questId: "available_quest" as never }, state)).toBe(
+      true,
+    );
+    expect(isVisible({ type: "questAvailable", questId: "completed_quest" as never }, state)).toBe(
+      true,
+    );
     expect(
       isVisible({ type: "questAvailable", questId: "unavailable_quest" as never }, state),
     ).toBe(false);
@@ -1235,15 +1247,15 @@ describe("isVisible", () => {
 
   it("skillLevel checks >= threshold", () => {
     const state = makeState({ skillLevels: { farming: 30 } as never });
-    expect(
-      isVisible({ type: "skillLevel", skillId: "farming" as never, level: 30 }, state),
-    ).toBe(true);
-    expect(
-      isVisible({ type: "skillLevel", skillId: "farming" as never, level: 31 }, state),
-    ).toBe(false);
-    expect(
-      isVisible({ type: "skillLevel", skillId: "mining" as never, level: 1 }, state),
-    ).toBe(false);
+    expect(isVisible({ type: "skillLevel", skillId: "farming" as never, level: 30 }, state)).toBe(
+      true,
+    );
+    expect(isVisible({ type: "skillLevel", skillId: "farming" as never, level: 31 }, state)).toBe(
+      false,
+    );
+    expect(isVisible({ type: "skillLevel", skillId: "mining" as never, level: 1 }, state)).toBe(
+      false,
+    );
   });
 
   it("perkUnlocked checks set membership", () => {
@@ -1331,22 +1343,14 @@ describe("redactionState", () => {
   it("returns source-only when source is met but entity is not", () => {
     const state = makeState({ minesFloor: 20 });
     expect(
-      redactionState(
-        { type: "minesLevel", floor: 40 },
-        { type: "minesLevel", floor: 20 },
-        state,
-      ),
+      redactionState({ type: "minesLevel", floor: 40 }, { type: "minesLevel", floor: 20 }, state),
     ).toBe("source-only");
   });
 
   it("returns redacted when neither is met", () => {
     const state = makeState();
     expect(
-      redactionState(
-        { type: "minesLevel", floor: 40 },
-        { type: "minesLevel", floor: 20 },
-        state,
-      ),
+      redactionState({ type: "minesLevel", floor: 40 }, { type: "minesLevel", floor: 20 }, state),
     ).toBe("redacted");
   });
 
@@ -1433,8 +1437,7 @@ shapes depend on the final `TrackerData` type from Task 1.
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `pnpm exec vitest run src/lib/engine/__tests__/visibility.test.ts`
-Expected: FAIL
+Run: `pnpm exec vitest run src/lib/engine/__tests__/visibility.test.ts` Expected: FAIL
 
 - [ ] **Step 3: Implement the visibility engine**
 
@@ -1456,10 +1459,7 @@ export interface UserProgressionState {
   knownNpcs: Set<NpcId>;
 }
 
-export function isVisible(
-  condition: VisibilityCondition,
-  state: UserProgressionState,
-): boolean {
+export function isVisible(condition: VisibilityCondition, state: UserProgressionState): boolean {
   if (state.showSpoilers) return true;
 
   switch (condition.type) {
@@ -1622,8 +1622,7 @@ each primitive (as described in spec Section 2's invertible conditions).
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `pnpm exec vitest run src/lib/engine/__tests__/visibility.test.ts`
-Expected: PASS
+Run: `pnpm exec vitest run src/lib/engine/__tests__/visibility.test.ts` Expected: PASS
 
 - [ ] **Step 5: Run `pnpm run check` and `pnpm run lint:fix`**
 
@@ -1728,8 +1727,7 @@ modification), save the base64 string, then verify the v2 decoder handles it.
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `pnpm exec vitest run src/lib/engine/__tests__/transfer.test.ts`
-Expected: FAIL
+Run: `pnpm exec vitest run src/lib/engine/__tests__/transfer.test.ts` Expected: FAIL
 
 - [ ] **Step 3: Add `unlockedPerks` and `marriedNpc` to `CompletedState`**
 
@@ -1759,6 +1757,7 @@ Update `SerializedState.completed` type to include `unlockedPerks?: string[]` an
 **Fix `showSpoilers` persistence** (pre-existing bug): `showSpoilers` currently resets to `false` on
 every page load because `deserialize()` hardcodes it and `SerializedState` has no field for it.
 While editing the serializer for the new fields above, also:
+
 - Add `showSpoilers?: boolean` to `SerializedState` (top-level, not inside `completed`)
 - Update `serialize()` to include `showSpoilers: state.showSpoilers`
 - Update `deserialize()` to read `showSpoilers: s.showSpoilers ?? false`
@@ -1805,9 +1804,7 @@ parts.push(toBitfield(perkOrder, completed.unlockedPerks));
 
 // 13. Married NPC index (new in v2) — 1 byte: 0xFF = no spouse, else index into npcOrder
 const npcOrder = getNpcOrder();
-const marriedIndex = completed.marriedNpc
-  ? npcOrder.indexOf(completed.marriedNpc)
-  : -1;
+const marriedIndex = completed.marriedNpc ? npcOrder.indexOf(completed.marriedNpc) : -1;
 parts.push(new Uint8Array([marriedIndex === -1 ? 0xff : marriedIndex]));
 ```
 
@@ -1854,8 +1851,7 @@ return {
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `pnpm exec vitest run src/lib/engine/__tests__/transfer.test.ts`
-Expected: PASS
+Run: `pnpm exec vitest run src/lib/engine/__tests__/transfer.test.ts` Expected: PASS
 
 - [ ] **Step 6: Run `pnpm run check` and `pnpm run lint:fix`**
 
@@ -1871,8 +1867,8 @@ git commit -m "add unlockedPerks and marriedNpc to state, bump transfer codec to
 
 ### Task 8: Save importer — perk import
 
-Extend the save file importer to read `player.perks` from the save file and populate
-`unlockedPerks` on `CompletedState`.
+Extend the save file importer to read `player.perks` from the save file and populate `unlockedPerks`
+on `CompletedState`.
 
 **Files:**
 
@@ -2109,8 +2105,8 @@ git commit -m "add search spoiler filtering, redacted row component, and confirm
 
 ### Task 10: UI — integrate visibility into category pages
 
-Wire the visibility system into all content components. This is the final integration task that makes
-redaction visible throughout the app.
+Wire the visibility system into all content components. This is the final integration task that
+makes redaction visible throughout the app.
 
 **Files:**
 
@@ -2163,11 +2159,12 @@ In `quests-content.svelte`:
 3. If `redactionState` is `"redacted"`, render a `RedactedRow` instead of the normal row
 4. If `"source-only"`, show quest type hint but redact the name
 5. If `"visible"`, render normally (existing behavior)
-6. Add category-level redaction: check `trackerData.categoryVisibility[questType]` before
-   rendering the entire section
+6. Add category-level redaction: check `trackerData.categoryVisibility[questType]` before rendering
+   the entire section
 
 For quest checkbox interaction on redacted rows, intercept the click and show the
 `ConfirmRedactedDialog`. Wire the three dialog options:
+
 - "Just this item" → toggle quest state directly
 - "Update my progress" → call `satisfyCondition` then toggle
 - "Cancel" → no-op
@@ -2182,9 +2179,10 @@ Apply the same pattern to each content component. The pattern is consistent:
 4. Intercept checkbox on redacted rows → `ConfirmRedactedDialog`
 
 Category-specific notes:
+
 - **Almanac**: items have `visibility` from `TrackerData.almanac[].items[id]`
-- **Animals**: species-level visibility from `TrackerData.animals[id].visibility`; existing tier blur
-  system continues to work for variant tiers within a visible species
+- **Animals**: species-level visibility from `TrackerData.animals[id].visibility`; existing tier
+  blur system continues to work for variant tiers within a visible species
 - **Cosmetics**: `TrackerData.cosmetics[id].visibility`
 - **Mines**: spell visibility from `TrackerData.mines.spells[id].visibility`; biome visibility from
   `minesLevel(startFloor)`
@@ -2216,6 +2214,7 @@ visibility check. Redacted names must not appear in accessibility attributes.
 Run: `pnpm run dev`
 
 Verify:
+
 - Fresh state (no save): most content redacted, only early-game items visible
 - Toggle "Show all spoilers" → everything visible; off → redaction returns
 - Import a save file → content unredacts based on progression
@@ -2248,11 +2247,10 @@ superseded code.
 
 - [ ] **Step 1: Run full pipeline with game data (if available)**
 
-Run: `pnpm run pipeline -- pipeline/input/assets/`
-Verify: no errors, `tracker-data.json` contains `visibility` fields on entities.
+Run: `pnpm run pipeline -- pipeline/input/assets/` Verify: no errors, `tracker-data.json` contains
+`visibility` fields on entities.
 
-If game data is not available, run: `pnpm exec vitest run pipeline/`
-Verify: all unit tests pass.
+If game data is not available, run: `pnpm exec vitest run pipeline/` Verify: all unit tests pass.
 
 - [ ] **Step 2: Verify `questGate` migration**
 
@@ -2266,6 +2264,7 @@ Run: `grep -rn "questGate" src/ pipeline/` to find remaining references.
 - [ ] **Step 3: Run full test suite**
 
 Run:
+
 ```bash
 pnpm run check
 pnpm run lint
