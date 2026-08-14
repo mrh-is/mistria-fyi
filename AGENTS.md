@@ -1,107 +1,92 @@
 # AGENTS.md — Harvest Helper
 
-> Agent-specific instructions. For project conventions, architecture, and workflow, see
-> [CONTRIBUTING.md](CONTRIBUTING.md).
+> Universal operating rules for agents. For detailed workflow, architecture, and verification
+> guidance, see [docs/development-workflow.md](docs/development-workflow.md),
+> [docs/app-architecture.md](docs/app-architecture.md), [pipeline/README.md](pipeline/README.md),
+> and [docs/save-file-format.md](docs/save-file-format.md).
 
-## Worktree Requirement
+## 1. Worktree Isolation
 
-**All agents must work in a git worktree.** Multiple agents run concurrently in this repo; a shared
-working tree causes edit collisions, dirty-state confusion, and branch-switch destruction.
+Every agent must operate inside an isolated Git worktree. Shared working trees cause edit
+collisions, dirty-state confusion, & branch-switch destruction.
 
-Use the `superpowers:using-git-worktrees` skill to set up your workspace. This is a declared
-preference: do not ask for consent, just create the worktree. Agents and tools without their own
-managed worktree location should put worktrees under `.worktrees/`, named after the branch:
-`.worktrees/<issue-number>-<short-description>`. Claude Code may use its native managed worktree
-location.
+- Create worktrees under `.worktrees/<issue-number>-<short-description>`.
+- Verify `.worktrees/` is ignored before creating: `git check-ignore -q .worktrees/placeholder`.
+- Use the `superpowers:using-git-worktrees` skill.
+- After `git worktree add`, recreate each entry listed in `.worktreeinclude` from the main checkout.
+- Do **not** copy dependencies, caches, build artifacts, or writable generated directories.
+- Run `pnpm install --frozen-lockfile` inside the new worktree.
 
-Before creating a worktree, verify that the shared directory is ignored:
+`.worktreeinclude` currently covers:
 
-```sh
-git check-ignore -q .worktrees/placeholder
-```
+- `pipeline/input/` — shared read-only game assets. Symlink from the main checkout.
+- `.env` / `.env.*` — machine-local configuration. Symlink or copy from the main checkout.
 
-Claude Code automatically copies the ignored local files listed in `.worktreeinclude` into each
-worktree it creates. Other agents should copy the existing files matching that list from the main
-checkout after running `git worktree add`; do not copy dependencies, caches, or build artifacts. Run
-`pnpm install --frozen-lockfile` inside each new worktree instead.
+## 2. Git Configuration
 
-## Task Workflow
+The repo remote uses HTTPS (not SSH) and authenticates via `gh auth`. Commit signing uses a local
+SSH key with `gpg.ssh.program = ssh-keygen`. Both are configured to work non-interactively so agents
+can push and sign commits without triggering 1Password or other interactive prompts. Do not switch
+the remote back to SSH.
 
-Work is tracked via [GitHub Issues](https://github.com/mrh-is/harvest-helper/issues). To pick up a
-task:
+## 3. Task Lifecycle
 
-1. Read the issue **and its comments** (`gh issue view <number> --comments` or via GitHub API/MCP).
-   Comments often contain screenshots, clarifications, and additional requirements.
-2. Set up an isolated worktree using the `superpowers:using-git-worktrees` skill.
-3. Do the work. Run `pnpm run check` and `pnpm run lint:fix` before committing (lint:fix runs both
-   prettier and eslint with auto-fix; `pnpm run lint` checks without fixing).
-4. Commit, push the branch, and open a PR that references the issue (`Closes #N` in the PR body).
+Follow this sequence for every task:
 
-Issues labeled `ready` are available. Issues labeled `blocked` or `discussion` are not actionable
-yet.
+1. **Read the issue & comments** — use `gh issue view <number> --comments`. Do not start issues
+   labeled `blocked` or `discussion`.
+2. **Invoke skills** — load the applicable Superpowers skills before exploration or implementation.
+3. **Approval gates** — obtain explicit user approval at every specification and plan gate.
+4. **Worktree** — create an isolated worktree before editing.
+5. **Baseline** — install dependencies (`Node >=26`, `pnpm install --frozen-lockfile`) and verify a
+   clean baseline.
+6. **Understand contracts** — read the affected subsystem, its boundaries, and existing tests before
+   editing.
+7. **Test first** — add or update tests for behavioral changes, preferably before implementation.
+   Run focused tests during development.
+8. **Verification matrix** — run the complete verification matrix before committing.
+9. **Commit plans first** — commit approved specifications and plans before their implementation
+   begins.
+10. **Deliver** — commit, push, and open a PR that references the issue (`Closes #N`).
 
-Do not commit a specification or implementation plan until the user has explicitly approved it.
-Always commit approved specs and plans before starting the implementation work they describe.
+> Git pre-commit hooks are developer conveniences, not verification evidence. Agents must run the
+> documented commands directly and verify clean exit status before committing.
 
-## Commands
+## 4. Commands
 
-Use **pnpm** (not npm/npx) for all commands.
+Use **pnpm** exclusively. Do **not** use `npm`, `npx`, `yarn`, or `bun`.
 
-- **Dev**: `pnpm run dev` | **Build**: `pnpm run build` | **Type-check**: `pnpm run check`
-- **Lint**: `pnpm run lint` (prettier + eslint) | **Fix**: `pnpm run lint:fix`
-- **Pipeline**: `pnpm run pipeline -- /path/to/assets` (regenerates `tracker-data.json` from local
-  game TOML assets)
-- **Tests**: `pnpm exec vitest run pipeline/` (pipeline unit tests)
+| Command                       | Purpose                                    |
+| ----------------------------- | ------------------------------------------ |
+| `pnpm run dev`                | Dev server                                 |
+| `pnpm run build`              | Production build (Cloudflare Pages)        |
+| `pnpm run check`              | SvelteKit type checking                    |
+| `pnpm run lint`               | Prettier + ESLint check                    |
+| `pnpm run lint:fix`           | Auto-fix formatting & lint                 |
+| `pnpm run test`               | Complete Vitest suite (asset-independent)  |
+| `pnpm run test:app`           | App tests (`src/`)                         |
+| `pnpm run test:pipeline`      | Pipeline tests (`pipeline/`)               |
+| `pnpm run pipeline -- <path>` | Regenerate `tracker-data.json` from assets |
 
-`pipeline/input/assets/` is ignored and local. See [pipeline/README.md](pipeline/README.md) for
-pipeline contracts, artifacts, & version-specific checks.
+## 5. Architecture Boundaries
 
-## Downloading Images from GitHub Issue Comments
+These rules prevent accidental damage to generated or vendored code:
 
-GitHub user-content URLs require auth — unauthenticated requests return a 400 error. Use:
+- **`src/lib/data/tracker-data.json`** is generated by the pipeline. Never hand-edit.
+- **`src/lib/types/tracker-data.ts`** is the shared data contract between pipeline & app.
+- **`src/lib/engine/`** contains pure domain logic. Side effects belong at store or component
+  boundaries.
+- **`src/lib/stores/user-state.svelte.ts`** owns mutable progress & localStorage persistence.
+- Save import merges progress additively. Backup restore replaces the serialized state. These flows
+  are not interchangeable.
+- Transfer encoding uses deterministic orderings derived from generated tracker data. Ordering &
+  schema changes require compatibility tests & deliberate versioning.
+- **`src/lib/components/ui/`** is vendored shadcn-svelte code. Do not manually edit.
+- Category pages are layout compositors. Shared or stateful concerns belong in focused components.
 
-```sh
-curl -H "Authorization: token $(gh auth token)" -L <image-url> -o <output-path>
-```
+## 6. Code Style
 
-## Architecture
-
-SvelteKit 2 + Svelte 5 (runes) app deployed to Cloudflare Pages. Mobile-first PWA tracker for Fields
-of Mistria 100% completion.
-
-- **`src/lib/engine/`** — Pure functions: availability filtering, progress calculation, search, save
-  import. No side effects.
-- **`src/lib/stores/`** — Reactive state via `$state`/`$derived` runes; `userState` persisted to
-  localStorage.
-- **`src/lib/data/`** — Static import of generated `tracker-data.json`.
-- **`src/lib/types/`** — Branded ID types (`ItemId`, `NpcId`, etc.) shared between pipeline and app.
-- **`src/lib/components/ui/`** — shadcn-svelte vendored components (do not manually edit; relaxed
-  lint rules).
-- **`src/routes/`** — 9 category pages (almanac, animals, cosmetics, mines, museum, npcs, quests,
-  renown, skills) + settings.
-- **`pipeline/`** — Separate TypeScript project. Extracts game data from locally supplied TOML
-  assets → `tracker-data.json`.
-
-## Componentization
-
-Extract a component when it has its own independent state/concern OR is reused — even if it's small.
-Page files should be **layout compositors**, not containers for unrelated logic. For example, the
-settings page composes `<ThemeCard />`, `<ImportCard />`, `<TransferCard />`, etc. without knowing
-their internals. Don't extract _parts_ of a single concern (e.g., pulling out a result display while
-leaving its state machine in the parent).
-
-**Colocate components with the page** (same directory): Components that are used exclusively by one
-page should be colocated in the route directory with `PascalCase` filenames (e.g.,
-`src/routes/skills/SkillRow.svelte`). Move reusable components to `$lib/components/` when they're
-used by multiple pages.
-
-**Pages as layouts**: When possible and reasonable, reduce page files to pure layout compositors.
-Migrate business logic, calculations, and state management into components. Pages should primarily
-handle data fetching and composition, not logic.
-
-## Code Style
-
-- **Strict TypeScript**: `strictTypeChecked` ESLint + `strict: true` tsconfig. Use `type` imports
+- **TypeScript**: `strictTypeChecked` ESLint + `strict: true` tsconfig. Use `type` imports
   (`consistent-type-imports`).
 - **Formatting**: Prettier — double quotes, no tabs, trailing commas, 100 char width, semicolons.
 - **Imports**: Auto-sorted by `perfectionist/sort-imports` — externals first, then `$lib`/`$app`

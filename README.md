@@ -11,6 +11,14 @@ pnpm install
 pnpm run dev
 ```
 
+## Developer docs
+
+- [CONTRIBUTING.md](CONTRIBUTING.md) — conventions, architecture, & code style
+- [docs/development-workflow.md](docs/development-workflow.md) — setup, worktrees, verification
+- [docs/app-architecture.md](docs/app-architecture.md) — data contracts, state, persistence,
+  composition
+- [pipeline/README.md](pipeline/README.md) — pipeline contracts & extractor details
+
 ## Data pipeline
 
 The app is powered by `tracker-data.json`, generated from locally supplied Fields of Mistria TOML
@@ -31,6 +39,9 @@ pnpm run pipeline -- /path/to/assets
 | `pnpm run check`                       | SvelteKit type checking                           |
 | `pnpm run lint`                        | Prettier + ESLint                                 |
 | `pnpm run lint:fix`                    | Auto-fix formatting and lint issues               |
+| `pnpm run test`                        | Complete Vitest suite                             |
+| `pnpm run test:app`                    | App tests (`src/`)                                |
+| `pnpm run test:pipeline`               | Pipeline tests (`pipeline/`)                      |
 | `pnpm run pipeline -- /path/to/assets` | Generate tracker-data.json from local TOML assets |
 
 ## Tech stack

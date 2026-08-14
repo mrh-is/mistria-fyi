@@ -48,7 +48,13 @@ SvelteKit 2 + Svelte 5 (runes), Tailwind 4, shadcn-svelte, deployed to Cloudflar
 | `src/lib/data/`         | Static import of generated `tracker-data.json`                          |
 | `pipeline/`             | Separate TS project: game data → `tracker-data.json`                    |
 
-### Commands
+## Developer Workflow
+
+For the full task lifecycle, verification matrix, and worktree mechanics, see
+[docs/development-workflow.md](docs/development-workflow.md). For architecture boundaries, data
+contracts, and state management rules, see [docs/app-architecture.md](docs/app-architecture.md).
+
+## Commands
 
 | Command                                | What                                                  |
 | -------------------------------------- | ----------------------------------------------------- |
@@ -57,8 +63,10 @@ SvelteKit 2 + Svelte 5 (runes), Tailwind 4, shadcn-svelte, deployed to Cloudflar
 | `pnpm run check`                       | SvelteKit type checking                               |
 | `pnpm run lint`                        | Prettier + ESLint                                     |
 | `pnpm run lint:fix`                    | Auto-fix lint issues                                  |
+| `pnpm run test`                        | Complete Vitest suite                                 |
+| `pnpm run test:app`                    | App tests (`src/`)                                    |
+| `pnpm run test:pipeline`               | Pipeline tests (`pipeline/`)                          |
 | `pnpm run pipeline -- /path/to/assets` | Regenerate `tracker-data.json` from local TOML assets |
-| `pnpm exec vitest run pipeline/`       | Run pipeline unit tests                               |
 
 ## Code Conventions
 
