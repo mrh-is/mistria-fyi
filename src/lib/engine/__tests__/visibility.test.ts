@@ -5,10 +5,11 @@ import {
   isConditionInvertible,
   isVisible,
   redactionState,
+  satisfyCondition,
 } from "../visibility.js";
 
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { NpcId, QuestId, TrackerData } from "$lib/types/tracker-data.js";
+import type { NpcId, PerkId, QuestId, SkillId, TrackerData } from "$lib/types/tracker-data.js";
 import type { VisibilityCondition } from "$lib/types/visibility.js";
 
 import type { UserProgressionState } from "../visibility.js";
@@ -422,5 +423,278 @@ describe("deriveProgressionState", () => {
     const state = deriveProgressionState(completed, trackerData, false);
     expect(state.knownNpcs.has(caldarus)).toBe(true);
     expect(state.npcLevels[caldarus]).toBe(4);
+  });
+});
+
+describe("satisfyCondition", () => {
+  it("does nothing for always", () => {
+    const completed = makeCompleted();
+    satisfyCondition({ type: "always" }, completed, makeTrackerData());
+    expect(completed).toEqual(makeCompleted());
+  });
+
+  it("does nothing for npcKnown (not invertible)", () => {
+    const completed = makeCompleted();
+    satisfyCondition({ npcId: holt, type: "npcKnown" }, completed, makeTrackerData());
+    expect(completed.questStates).toEqual({});
+  });
+
+  it("sets minesLevel to max of current and required", () => {
+    const completed = makeCompleted({ mines: { floor: 10, spells: new Set() } });
+    satisfyCondition({ floor: 20, type: "minesLevel" }, completed, makeTrackerData());
+    expect(completed.mines.floor).toBe(20);
+  });
+
+  it("does not lower minesLevel", () => {
+    const completed = makeCompleted({ mines: { floor: 40, spells: new Set() } });
+    satisfyCondition({ floor: 20, type: "minesLevel" }, completed, makeTrackerData());
+    expect(completed.mines.floor).toBe(40);
+  });
+
+  it("sets renownLevel", () => {
+    const completed = makeCompleted({ renown: 5 });
+    satisfyCondition({ level: 20, type: "renownLevel" }, completed, makeTrackerData());
+    expect(completed.renown).toBe(20);
+  });
+
+  it("sets skillLevel", () => {
+    const completed = makeCompleted();
+    const skillId = "cooking" as SkillId;
+    satisfyCondition({ level: 15, skillId, type: "skillLevel" }, completed, makeTrackerData());
+    expect(completed.skillLevels[skillId as string]).toBe(15);
+  });
+
+  it("sets heartLevel", () => {
+    const completed = makeCompleted();
+    satisfyCondition({ level: 6, npcId: holt, type: "heartLevel" }, completed, makeTrackerData());
+    expect(completed.npcLevels[holt as string]).toBe(6);
+  });
+
+  it("takes max of heartLevel", () => {
+    const completed = makeCompleted({ npcLevels: { [holt]: 8 } });
+    satisfyCondition({ level: 6, npcId: holt, type: "heartLevel" }, completed, makeTrackerData());
+    expect(completed.npcLevels[holt as string]).toBe(8);
+  });
+
+  it("adds perkUnlocked", () => {
+    const completed = makeCompleted();
+    const perkId = "magic_design" as PerkId;
+    satisfyCondition({ perkId, type: "perkUnlocked" }, completed, makeTrackerData());
+    expect(completed.unlockedPerks.has(perkId)).toBe(true);
+  });
+
+  it("sets marriedNpc", () => {
+    const completed = makeCompleted();
+    satisfyCondition({ npcId: holt, type: "married" }, completed, makeTrackerData());
+    expect(completed.marriedNpc).toBe(holt);
+  });
+
+  it("marks quest as completed for questCompleted", () => {
+    const trackerData = makeTrackerData({
+      questChains: { ...emptyStoryChains, story: { [repairTheInn]: { prerequisites: [] } } },
+      quests: { story_quests: { [repairTheInn]: { name: "Repair the Inn" } } },
+    });
+    const completed = makeCompleted();
+    satisfyCondition({ questId: repairTheInn, type: "questCompleted" }, completed, trackerData);
+    expect(completed.questStates[repairTheInn as string]).toBe("completed");
+  });
+
+  it("satisfies and by satisfying all sub-conditions", () => {
+    const completed = makeCompleted();
+    const condition: VisibilityCondition = {
+      conditions: [
+        { floor: 20, type: "minesLevel" },
+        { level: 30, type: "renownLevel" },
+      ],
+      type: "and",
+    };
+    satisfyCondition(condition, completed, makeTrackerData());
+    expect(completed.mines.floor).toBe(20);
+    expect(completed.renown).toBe(30);
+  });
+
+  it("satisfies or by picking the first invertible branch", () => {
+    const completed = makeCompleted();
+    const condition: VisibilityCondition = {
+      conditions: [
+        { npcId: holt, type: "npcKnown" },
+        { floor: 20, type: "minesLevel" },
+      ],
+      type: "or",
+    };
+    satisfyCondition(condition, completed, makeTrackerData());
+    expect(completed.mines.floor).toBe(20);
+  });
+
+  it("completes quest prerequisites when satisfying a chained quest", () => {
+    const trackerData = makeTrackerData({
+      questChains: {
+        ...emptyStoryChains,
+        story: {
+          [firstQuest]: { prerequisites: [] },
+          [theSecondQuest]: { prerequisites: [firstQuest] },
+        },
+      },
+      quests: {
+        story_quests: {
+          [firstQuest]: { name: "First" },
+          [theSecondQuest]: { name: "Second" },
+        },
+      },
+    });
+    const completed = makeCompleted();
+    satisfyCondition({ questId: theSecondQuest, type: "questCompleted" }, completed, trackerData);
+    expect(completed.questStates[firstQuest as string]).toBe("completed");
+    expect(completed.questStates[theSecondQuest as string]).toBe("completed");
+  });
+
+  it("marks ordered chain predecessors completed for questAvailable", () => {
+    const thirdCrown = "crown_3" as QuestId;
+    const trackerData = makeTrackerData({
+      categoryVisibility: { crown_quests: { type: "always" } },
+      questChains: {
+        ...emptyStoryChains,
+        crown: [firstQuest, theSecondQuest, thirdCrown],
+      },
+      quests: {
+        crown_quests: {
+          [firstQuest]: { name: "Crown 1" },
+          [theSecondQuest]: { name: "Crown 2" },
+          [thirdCrown]: { name: "Crown 3" },
+        },
+      },
+    });
+    const completed = makeCompleted();
+    satisfyCondition({ questId: thirdCrown, type: "questAvailable" }, completed, trackerData);
+    expect(completed.questStates[firstQuest as string]).toBe("completed");
+    expect(completed.questStates[theSecondQuest as string]).toBe("completed");
+    expect(completed.questStates[thirdCrown as string]).toBeUndefined();
+  });
+});
+
+describe("satisfyCondition → deriveProgressionState round-trips", () => {
+  it("redacted → visible after satisfying entity condition", () => {
+    const trackerData = makeTrackerData({
+      questChains: { ...emptyStoryChains, story: { [repairTheInn]: { prerequisites: [] } } },
+      quests: { story_quests: { [repairTheInn]: { name: "Repair the Inn" } } },
+    });
+    const entityCondition: VisibilityCondition = {
+      questId: repairTheInn,
+      type: "questCompleted",
+    };
+
+    const completed = makeCompleted();
+    const stateBefore = deriveProgressionState(completed, trackerData, false);
+    expect(redactionState(entityCondition, undefined, stateBefore)).toBe("redacted");
+
+    satisfyCondition(entityCondition, completed, trackerData);
+    const stateAfter = deriveProgressionState(completed, trackerData, false);
+    expect(redactionState(entityCondition, undefined, stateAfter)).toBe("visible");
+  });
+
+  it("redacted → source-only → visible through three-state progression", () => {
+    const trackerData = makeTrackerData({
+      questChains: { ...emptyStoryChains, story: { [repairTheInn]: { prerequisites: [] } } },
+      quests: { story_quests: { [repairTheInn]: { name: "Repair the Inn" } } },
+    });
+    const entityCondition: VisibilityCondition = {
+      questId: repairTheInn,
+      type: "questCompleted",
+    };
+    const sourceCondition: VisibilityCondition = { floor: 20, type: "minesLevel" };
+
+    const completed = makeCompleted();
+    const state1 = deriveProgressionState(completed, trackerData, false);
+    expect(redactionState(entityCondition, sourceCondition, state1)).toBe("redacted");
+
+    completed.mines.floor = 20;
+    const state2 = deriveProgressionState(completed, trackerData, false);
+    expect(redactionState(entityCondition, sourceCondition, state2)).toBe("source-only");
+
+    satisfyCondition(entityCondition, completed, trackerData);
+    const state3 = deriveProgressionState(completed, trackerData, false);
+    expect(redactionState(entityCondition, sourceCondition, state3)).toBe("visible");
+  });
+
+  it("satisfying a quest reveals NPC-gated content", () => {
+    const trackerData = makeTrackerData({
+      npcs: {
+        [caldarus]: { birthday: { day: 1, season: "spring" }, dateable: false, name: "Caldarus" },
+      },
+      npcVisibility: {
+        [caldarus]: { questId: breakingTheFireSeal, type: "questCompleted" },
+      },
+      questChains: {
+        ...emptyStoryChains,
+        story: { [breakingTheFireSeal]: { prerequisites: [] } },
+      },
+      quests: {
+        story_quests: { [breakingTheFireSeal]: { name: "Breaking the Fire Seal" } },
+      },
+    });
+    const npcKnownCondition: VisibilityCondition = { npcId: caldarus, type: "npcKnown" };
+
+    const completed = makeCompleted();
+    const stateBefore = deriveProgressionState(completed, trackerData, false);
+    expect(isVisible(npcKnownCondition, stateBefore)).toBe(false);
+
+    satisfyCondition(
+      { questId: breakingTheFireSeal, type: "questCompleted" },
+      completed,
+      trackerData,
+    );
+    const stateAfter = deriveProgressionState(completed, trackerData, false);
+    expect(isVisible(npcKnownCondition, stateAfter)).toBe(true);
+  });
+
+  it("completing a chain quest cascades visibility to gated items", () => {
+    const trackerData = makeTrackerData({
+      questChains: {
+        ...emptyStoryChains,
+        story: {
+          [firstQuest]: { prerequisites: [] },
+          [theSecondQuest]: { prerequisites: [firstQuest] },
+        },
+      },
+      quests: {
+        story_quests: {
+          [firstQuest]: { name: "First" },
+          [theSecondQuest]: { name: "Second" },
+        },
+      },
+    });
+    const gatedBehindSecond: VisibilityCondition = {
+      questId: theSecondQuest,
+      type: "questCompleted",
+    };
+
+    const completed = makeCompleted();
+    satisfyCondition(gatedBehindSecond, completed, trackerData);
+    const state = deriveProgressionState(completed, trackerData, false);
+
+    expect(state.questVisibility[firstQuest as string]).toBe("completed");
+    expect(state.questVisibility[theSecondQuest as string]).toBe("completed");
+    expect(isVisible(gatedBehindSecond, state)).toBe(true);
+  });
+
+  it("just-this-item does not cascade quest state", () => {
+    const trackerData = makeTrackerData({
+      questChains: { ...emptyStoryChains, story: { [repairTheInn]: { prerequisites: [] } } },
+      quests: { story_quests: { [repairTheInn]: { name: "Repair the Inn" } } },
+    });
+    const entityCondition: VisibilityCondition = {
+      questId: repairTheInn,
+      type: "questCompleted",
+    };
+
+    const completed = makeCompleted();
+    // "Just this item" means toggling the checkbox without calling satisfyCondition.
+    // The quest state should not change.
+    const stateBefore = deriveProgressionState(completed, trackerData, false);
+    expect(isVisible(entityCondition, stateBefore)).toBe(false);
+
+    // Simulate: user checks item off but doesn't satisfy the condition.
+    // The item is now "completed" in the almanac/recipes, but the underlying quest is untouched.
+    expect(completed.questStates[repairTheInn as string]).toBeUndefined();
   });
 });
