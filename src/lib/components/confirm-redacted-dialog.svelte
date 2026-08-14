@@ -1,5 +1,6 @@
 <script lang="ts">
   import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
+  import { buttonVariants } from "$lib/components/ui/button/button.svelte";
   import { isConditionInvertible } from "$lib/engine/visibility.js";
 
   import type { VisibilityCondition } from "$lib/types/visibility.js";
@@ -30,9 +31,11 @@
         it as completed?
       </AlertDialog.Description>
     </AlertDialog.Header>
-    <AlertDialog.Footer>
+    <AlertDialog.Footer class="flex-wrap">
       <AlertDialog.Cancel onclick={onCancel}>Cancel</AlertDialog.Cancel>
-      <AlertDialog.Action onclick={onComplete}>Yes, just this item</AlertDialog.Action>
+      <AlertDialog.Action class={buttonVariants({ variant: "outline" })} onclick={onComplete}>
+        Yes, just this item
+      </AlertDialog.Action>
       {#if invertible}
         <AlertDialog.Action onclick={onCompleteAndUpdate}>
           Yes, and update my progress

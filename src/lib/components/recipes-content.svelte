@@ -219,9 +219,10 @@
               });
             }}
             {redaction}
-            sources={visibleSources.map((s, i) => ({
-              label: entry.sourceLabels[entry.sources.indexOf(s)] ?? entry.sourceLabels[i],
-            }))}
+            sourceLabels={visibleSources.map(
+              (s, i) => entry.sourceLabels[entry.sources.indexOf(s)] ?? entry.sourceLabels[i],
+            )}
+            sources={visibleSources}
           />
         {:else}
           {@const visibleSources = entry.sources.filter(isSourceVisible)}
