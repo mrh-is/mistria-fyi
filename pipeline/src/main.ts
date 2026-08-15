@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 
 import { collectNaturalSources } from "./acquisition/collectors/natural.js";
 import { collectRewardSources } from "./acquisition/collectors/rewards.js";
+import { collectStoreSources } from "./acquisition/collectors/stores.js";
 import { deriveRecipeProductSources } from "./acquisition/recipe-products.js";
 import { ItemSourceAccumulator } from "./acquisition/source-accumulator.js";
 import { evaluateExpressions } from "./evaluate.js";
@@ -44,6 +45,7 @@ import {
 } from "./extractors/visibility/entity-visibility.js";
 import { extractQuestChains } from "./extractors/visibility/quest-chains.js";
 import { parseFiddle } from "./parse-fiddle.js";
+import { createRequirementContext } from "./requirements.js";
 
 import type { ItemId, TrackerData } from "$lib/types/tracker-data.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -130,10 +132,16 @@ function main(): void {
   const festivals = extractFestivals(fiddle);
   const treasureChestTiers = extractTreasureChestTiers(fiddle);
 
+  const requirementContext = createRequirementContext(
+    fiddle.requirements as Record<string, unknown> | undefined,
+    cutsceneQuestMap,
+  );
+
   const itemSources = new ItemSourceAccumulator();
   deriveRecipeProductSources(fiddle, recipes, itemSources);
   collectNaturalSources(fiddle, itemSources);
   collectRewardSources(fiddle, itemSources);
+  collectStoreSources(fiddle, requirementContext, itemSources);
 
   applyItemQuestGates(items, questGates.itemGates);
   applyAnimalQuestGates(animals, questGates.animalGates);
