@@ -3,7 +3,8 @@
 > Universal operating rules for agents. For detailed workflow, architecture, and verification
 > guidance, see [docs/development-workflow.md](docs/development-workflow.md),
 > [docs/app-architecture.md](docs/app-architecture.md), [pipeline/README.md](pipeline/README.md),
-> and [docs/save-file-format.md](docs/save-file-format.md).
+> [docs/save-file-format.md](docs/save-file-format.md), and
+> [docs/mistria-wiki-api.md](docs/mistria-wiki-api.md).
 
 ## 1. Worktree Isolation
 
