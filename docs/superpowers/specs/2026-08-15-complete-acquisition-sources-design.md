@@ -118,6 +118,7 @@ export type Source =
         | { type: "fish"; waterTypes?: WaterType[] }
         | { type: "fish_trap" }
         | { monsterId: MonsterId; type: "monster" }
+        | { monsterId: MonsterId; type: "monster_feed" }
         | { biomeId: BiomeId; type: "mine" }
         | { biomeId: BiomeId; lootGroup?: DungeonLootGroup; perkId?: PerkId; type: "mines_chest" }
         | { biomeId: BiomeId; perkId: PerkId; type: "mines_dig_site" }
@@ -259,7 +260,7 @@ The audit covers, at minimum:
 - all relevant `dungeons.dungeons.biomes[]` loot keys, rather than one hardcoded key;
 - `quests.*.rewards[].item` and `player_cosmetic`;
 - museum item, cosmetic, & recipe rewards;
-- monster `drops[].item` and `drops[].cosmetic`;
+- monster drops and distinct feeding rewards such as Mimic Hat;
 - `artifacts.loot` and the artifact-to-replica naming relationship;
 - `misc.pumpkin_patch_options`, `misc.earthly_essence`, & seasonal alternatives;
 - renown item, cosmetic, & recipe rewards with exact levels;

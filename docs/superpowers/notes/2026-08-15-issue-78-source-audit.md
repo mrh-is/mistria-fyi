@@ -82,6 +82,55 @@ museum set. Regenerate these counts after every collector tranche.
 - Wedding assets and first-date photo awards require event sources rather than defaults.
 - `kitchen_salt_and_pepper_shakers` is the sole recipe gap and needs research, not a fallback.
 
+## Cosmetic audit
+
+A TOML-structured delegated audit mapped 352 of 389 cosmetics to at least one native family:
+
+| Family                                    | Count |
+| ----------------------------------------- | ----: |
+| `player_assets.default_unlocked`          |    91 |
+| store stock                               |    96 |
+| `player_assets.price_override` candidates |    26 |
+| equipment `cosmetic_to_unlock`            |    44 |
+| renown rewards                            |    22 |
+| museum rewards                            |    20 |
+| dungeon biome cosmetics                   |    17 |
+| monster drops                             |    15 |
+| wedding assets                            |    11 |
+| festival rewards                          |     9 |
+| Earthly Essence and Mist Sight tables     |    18 |
+| fishing treasure                          |     5 |
+| quest `player_cosmetic` rewards           |     2 |
+| Wishing Well                              |     2 |
+
+Families overlap. `price_override` alone is evidence of a configured price, not necessarily the
+store path; join it to stock data before emitting a source.
+
+The 37 unresolved cosmetic IDs form four review groups:
+
+- 24 `baby_back_*` held-baby assets have only name, lookup table, and UI slot fields. No player
+  unlock reference was found; these are likely internal presentation assets and need exclusion
+  evidence.
+- five `*_seridia` Dragonsworn armor assets occur in `misc.seridia_armor`, an NPC outfit list rather
+  than a player acquisition path. They need exclusion evidence.
+- five Dragon Cleric assets match the Lost to History Ritual Chamber override.
+- `back_gear_march_mistrian_shield` appears related to the ten-heart placeable item but has no
+  cosmetic unlock path; `head_flower_hat` and `head_mimic_hat` also remain unresolved. Check the
+  wiki and broader event data before excluding any of these three.
+
+The two exact quest cosmetic rewards are `head_special_flower_crown` and
+`back_gear_dragonsworn_cloak`. The two Wishing Well cosmetics are `head_teapot` and `head_soup_pot`.
+
+- The wiki identifies `head_mimic_hat` as a reward for feeding Mimics in the Mines. This requires a
+  distinct `monster_feed` source because it is not a drop.
+- The wiki lists `head_flower_hat` under “Unknowns” with no acquisition details, strengthening an
+  unreleased/internal exclusion case but not proving it alone.
+- The wiki describes March’s proposal furniture item `marchs_mistrian_shield`; it does not establish
+  an unlock for the separate `back_gear_march_mistrian_shield` cosmetic. Keep it unresolved.
+- `kitchen_salt_and_pepper_shakers` is sold in the Inn’s constant stock and has a crafting recipe,
+  but neither native data nor the wiki result established how the recipe unlocks. Keep it
+  unresolved.
+
 ## Research cautions
 
 - Text presence is not proof of acquisition. Quest requests, ingredients, declarations, and
