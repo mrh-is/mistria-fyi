@@ -204,4 +204,67 @@ describe("projectRequirementExpressionToAvailability", () => {
       );
     }
   });
+
+  it("includes nested field and source-file provenance in JSON diagnostics", () => {
+    expect(() =>
+      project({
+        predicate: "future_gate",
+        value: { nested: [undefined] },
+      }),
+    ).toThrow("town_store/copper_sword.requirements.future_gate.nested[0] in stores.toml");
+  });
+
+  it.each(["reached_skill_level", "reached_heart_level"])(
+    "preserves null %s payloads and diagnoses undefined payloads",
+    (predicate) => {
+      expect(project({ predicate, value: null })).toEqual({
+        predicate,
+        type: "gamePredicate",
+        value: null,
+      });
+      expect(() => project({ predicate, value: undefined })).toThrow(
+        `town_store/copper_sword.requirements.${predicate} in stores.toml`,
+      );
+    },
+  );
+
+  it.each([
+    ["is_season", ["spring", "spring", "summer", "fall"]],
+    ["is_season", ["spring", "monsoon"]],
+    ["is_weather", ["inclement", "sandstorm"]],
+  ])("preserves invalid or non-unique %s members as game predicates", (predicate, value) => {
+    expect(project({ predicate, value })).toEqual({
+      predicate,
+      type: "gamePredicate",
+      value,
+    });
+  });
+
+  it("rejects non-JSON array and record structures without discarding their data", () => {
+    const sparse: unknown[] = new Array(1);
+    const symbolArray: unknown[] = ["calm"];
+    Object.defineProperty(symbolArray, Symbol("weather"), { enumerable: true, value: true });
+    const extraArray: unknown[] = ["calm"];
+    Object.defineProperty(extraArray, "label", { enumerable: true, value: "market" });
+    const symbolLevelRecord: Record<string, unknown> = { cooking: 20 };
+    Object.defineProperty(symbolLevelRecord, Symbol("level"), { enumerable: true, value: true });
+    const extraRange: unknown[] = [18, 26];
+    Object.defineProperty(extraRange, "label", { enumerable: true, value: "market" });
+
+    expect(() => project({ predicate: "future_gate", value: sparse })).toThrow(
+      "town_store/copper_sword.requirements.future_gate[0] in stores.toml",
+    );
+    expect(() => project({ predicate: "future_gate", value: symbolArray })).toThrow(
+      "town_store/copper_sword.requirements.future_gate in stores.toml",
+    );
+    expect(() => project({ predicate: "future_gate", value: extraArray })).toThrow(
+      "town_store/copper_sword.requirements.future_gate in stores.toml",
+    );
+    expect(() => project({ predicate: "reached_skill_level", value: symbolLevelRecord })).toThrow(
+      "town_store/copper_sword.requirements.reached_skill_level in stores.toml",
+    );
+    expect(() => project({ predicate: "in_time_range", value: extraRange })).toThrow(
+      "town_store/copper_sword.requirements.in_time_range in stores.toml",
+    );
+  });
 });
