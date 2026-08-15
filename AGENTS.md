@@ -17,6 +17,9 @@ collisions, dirty-state confusion, & branch-switch destruction.
 - After `git worktree add`, recreate each entry listed in `.worktreeinclude` from the main checkout.
 - Do **not** copy dependencies, caches, build artifacts, or writable generated directories.
 - Run `pnpm install --frozen-lockfile` inside the new worktree.
+- Run `pnpm run prepare` after installation to install Husky git hooks explicitly. (Lifecycle
+  scripts may be disabled or skipped in some environments; this step ensures deterministic hook
+  installation regardless.)
 
 `.worktreeinclude` currently covers:
 

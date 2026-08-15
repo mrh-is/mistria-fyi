@@ -43,6 +43,11 @@ confusion, and branch switching interference across concurrent sessions.
    cd .worktrees/<issue-number>-<short-description>
    pnpm install --frozen-lockfile
    ```
+3. Install Husky git hooks explicitly (required in environments where lifecycle scripts are disabled
+   or skipped):
+   ```sh
+   pnpm run prepare
+   ```
 
 ### Shared vs. Isolated Worktree Resources (`.worktreeinclude`)
 
@@ -166,3 +171,22 @@ updates) must pass the complete verification matrix.
 - **Symptom**: Pre-commit hooks fail or block commits inside isolated worktree environments.
 - **Recovery**: Bypass hooks if necessary (`git commit --no-verify`), provided you have directly run
   and passed `pnpm run lint:fix`, `pnpm run check`, `pnpm run test`, and `pnpm run build`.
+
+### Missing Husky Hooks After Worktree Setup
+
+- **Symptom**: Pre-commit hooks are absent in a fresh worktree — commits pass without lint or
+  formatting checks running.
+- **Cause**: Lifecycle scripts (including `prepare`) may be disabled or skipped in some
+  environments. `core.hooksPath` is stored in the shared `.git/config` and may already be set by
+  another worktree, but the `.husky/_` directory that Husky generates is worktree-local and will be
+  absent until `prepare` is run.
+- **Recovery**: Run `pnpm run prepare` from within the worktree directory after installation:
+  ```sh
+  pnpm run prepare
+  ```
+  Verify installation by confirming `core.hooksPath` is set to `.husky/_` and the Husky wrapper
+  exists:
+  ```sh
+  git config --get core.hooksPath   # should print .husky/_
+  ls .husky/_/pre-commit            # should exist
+  ```
