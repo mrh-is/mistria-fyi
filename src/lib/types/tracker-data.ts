@@ -1,5 +1,22 @@
 import type { VisibilityCondition } from "./visibility.js";
 
+export type {
+  Source as AcquisitionSource,
+  ActivityId,
+  AvailabilityCondition,
+  DateId,
+  DialogueChoiceId,
+  DungeonLootGroup,
+  JsonValue,
+  LocationId,
+  MonsterId,
+  ProductionMethod,
+  SourceDetails,
+  SourceTuple,
+  StationId,
+  WaterType,
+} from "./acquisition.js";
+
 // ─── Branded ID types ───────────────────────────────────────────────
 // Nominal typing for string IDs to prevent accidental mixing
 
