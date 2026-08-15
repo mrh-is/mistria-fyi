@@ -7,6 +7,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { collectExplorationSources } from "./acquisition/collectors/exploration.js";
 import { collectNaturalSources } from "./acquisition/collectors/natural.js";
 import { collectRewardSources } from "./acquisition/collectors/rewards.js";
 import { collectStoreSources } from "./acquisition/collectors/stores.js";
@@ -146,6 +147,7 @@ function main(): void {
   collectNaturalSources(fiddle, itemSources);
   collectRewardSources(fiddle, itemSources, cosmeticSources);
   collectStoreSources(fiddle, requirementContext, itemSources);
+  collectExplorationSources(fiddle, itemSources, cosmeticSources);
 
   applyItemQuestGates(items, questGates.itemGates);
   applyAnimalQuestGates(animals, questGates.animalGates);
