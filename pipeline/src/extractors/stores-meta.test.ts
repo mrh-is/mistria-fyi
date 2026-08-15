@@ -33,7 +33,7 @@ describe("extractStoresMeta", () => {
 
     const stores = extractStoresMeta(fiddle);
     expect(stores).toEqual({
-      general: { article: "the", name: "General Store" },
+      general: { article: "the", name: "General Store", upgradeAction: "repairing" },
       merri: { name: "Merri's Stall" },
     });
   });
@@ -46,7 +46,7 @@ describe("extractStoresMeta", () => {
     });
 
     expect(extractStoresMeta(fiddle)).toEqual({
-      general: { article: "the", name: "General Store and Market" },
+      general: { article: "the", name: "General Store and Market", upgradeAction: "repairing" },
     });
   });
 
@@ -83,6 +83,23 @@ describe("extractStoresMeta", () => {
     expect(stores["darcy" as StoreId]).toEqual({ name: "Darcy's Stall" });
     expect(stores["hayden" as StoreId]).toEqual({ name: "Hayden's Shop" });
     expect(stores["maple_spring_festival" as StoreId]).toEqual({ name: "Food Stall" });
+  });
+
+  it("adds upgradeAction for the general store and omits it for the inn", () => {
+    const fiddle = makeFiddle({
+      stores: {
+        general: { name: "General Store" },
+        inn: { name: "Sleeping Dragon Inn" },
+      },
+    });
+
+    const stores = extractStoresMeta(fiddle);
+    expect(stores["general" as StoreId]).toEqual({
+      article: "the",
+      name: "General Store",
+      upgradeAction: "repairing",
+    });
+    expect(stores["inn" as StoreId]).toEqual({ article: "the", name: "Sleeping Dragon Inn" });
   });
 
   it("throws on unknown store ID", () => {

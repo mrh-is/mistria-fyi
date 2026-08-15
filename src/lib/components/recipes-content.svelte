@@ -54,6 +54,7 @@
         Object.entries(group).map(([id, q]) => [id, q.name]),
       ),
     ),
+    recipeNames: {},
     redactedStoreIds,
     skillNames: Object.fromEntries(
       Object.entries(trackerData.skills).map(([id, name]) => [id, name]),

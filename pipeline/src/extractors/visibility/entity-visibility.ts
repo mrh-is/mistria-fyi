@@ -391,9 +391,9 @@ function computeRecipeSourceConditions(
     case "beach_cave_chest":
     case "chicken_statue":
     case "dragon_forge":
+    case "engagement":
     case "festival":
     case "letter":
-    case "relationship":
     case "renown":
     case "treasure_chest":
     case "upgrade":

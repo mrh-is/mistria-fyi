@@ -1011,6 +1011,180 @@ describe("extractRecipes", () => {
       { trigger: "donated_item", triggerItemId: "ancient_fossil", type: "letter" },
     ]);
   });
+
+  it("emits an engagement source for the engagement ring", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          rings: {
+            default: {},
+            engagement_ring: {
+              name: "Engagement Ring",
+              recipe: [{ count: 1, item: "gold_bar" }],
+            },
+          },
+        },
+      },
+    });
+
+    const { recipes } = extractRecipes(fiddle);
+    const recipe = recipes["engagement_ring" as RecipeId];
+    expect(recipe.sources).toEqual([{ type: "engagement" }]);
+  });
+
+  it("resolves a scalar has_item fetch quest requirement to requestedItemId", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          cooked_dishes: {
+            default: {},
+            widget: {
+              name: "Widget",
+              recipe: [{ count: 1, item: "wood" }],
+            },
+          },
+        },
+      },
+      quests: {
+        fetch_quests: {
+          get_widget: {
+            name: "Get Widget",
+            rewards: [{ recipe_scroll: "widget" }],
+            stages: [{ requirements: { has_item: "wild_berries" } }],
+          },
+        },
+      },
+    });
+
+    const { recipes } = extractRecipes(fiddle);
+    const recipe = recipes["widget" as RecipeId];
+    expect(recipe.sources).toEqual([
+      {
+        questId: "get_widget",
+        questType: "fetch_quests",
+        requestedItemId: "wild_berries",
+        type: "quest",
+      },
+    ]);
+  });
+
+  it("resolves a quantity-object has_item fetch quest requirement to requestedItemId", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          cooked_dishes: {
+            default: {},
+            widget: {
+              name: "Widget",
+              recipe: [{ count: 1, item: "wood" }],
+            },
+          },
+        },
+      },
+      quests: {
+        fetch_quests: {
+          get_widget: {
+            name: "Get Widget",
+            rewards: [{ recipe_scroll: "widget" }],
+            stages: [{ requirements: { has_item: { wild_berries: 5 } } }],
+          },
+        },
+      },
+    });
+
+    const { recipes } = extractRecipes(fiddle);
+    const recipe = recipes["widget" as RecipeId];
+    expect(recipe.sources).toEqual([
+      {
+        questId: "get_widget",
+        questType: "fetch_quests",
+        requestedItemId: "wild_berries",
+        type: "quest",
+      },
+    ]);
+  });
+
+  it("resolves an array-of-objects has_item fetch quest requirement to requestedItemId", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          cooked_dishes: {
+            default: {},
+            widget: {
+              name: "Widget",
+              recipe: [{ count: 1, item: "wood" }],
+            },
+          },
+        },
+      },
+      quests: {
+        fetch_quests: {
+          get_widget: {
+            name: "Get Widget",
+            rewards: [{ recipe_scroll: "widget" }],
+            stages: [
+              {
+                requirements: {
+                  has_item: [{ wild_berries: 5 }, { truffle: 1 }],
+                },
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    const { recipes } = extractRecipes(fiddle);
+    const recipe = recipes["widget" as RecipeId];
+    expect(recipe.sources).toEqual([
+      {
+        questId: "get_widget",
+        questType: "fetch_quests",
+        requestedItemId: "wild_berries",
+        type: "quest",
+      },
+    ]);
+  });
+
+  it("resolves Tali challenge item IDs through itemIdToRecipeId to challengeRecipeId", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          cooked_dishes: {
+            challenge_dish: {
+              name: "Challenge Dish",
+              recipe: [{ count: 1, item: "fish" }],
+            },
+            default: {},
+            widget: {
+              name: "Widget",
+              recipe: [{ count: 1, item: "wood" }],
+            },
+          },
+        },
+      },
+      quests: {
+        tali_challenges: {
+          challenge_one: {
+            name: "Challenge One",
+            rewards: [{ recipe_scroll: "widget" }],
+            stages: [{ requirements: { has_item: "challenge_dish" } }],
+          },
+        },
+      },
+    });
+
+    const { recipes } = extractRecipes(fiddle);
+    const recipe = recipes["widget" as RecipeId];
+    expect(recipe.sources).toEqual([
+      {
+        challengeRecipeId: "challenge_dish",
+        questId: "challenge_one",
+        questType: "tali_challenges",
+        type: "quest",
+      },
+    ]);
+  });
 });
 
 describe("extractRecipes — stock requirement visibility", () => {

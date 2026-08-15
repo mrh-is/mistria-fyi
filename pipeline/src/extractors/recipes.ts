@@ -172,6 +172,32 @@ function buildPresentations(group: RawRecipeEntry[]): RecipePresentation[] {
     }));
 }
 
+function buildQuestRecipeSource(
+  questType: string,
+  questId: string,
+  quest: Record<string, unknown>,
+  itemIdToRecipeId: Map<string, string>,
+): RecipeSource {
+  const sourceBase = {
+    questId: questId as QuestId,
+    questType: questType as QuestType,
+    type: "quest" as const,
+  };
+
+  if (questType === "fetch_quests") {
+    const itemId = extractQuestRequiredItem(quest);
+    return itemId ? { ...sourceBase, requestedItemId: itemId as ItemId } : sourceBase;
+  }
+  if (questType === "tali_challenges") {
+    const itemId = extractQuestRequiredItem(quest);
+    const challengeRecipeId = itemId ? itemIdToRecipeId.get(itemId) : undefined;
+    return challengeRecipeId
+      ? { ...sourceBase, challengeRecipeId: challengeRecipeId as RecipeId }
+      : sourceBase;
+  }
+  return sourceBase;
+}
+
 function collectChickenStatueSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
@@ -353,7 +379,7 @@ function collectHardcodedSources(
         upgradeName: "Starter Farm Bridge",
       },
     ],
-    ["engagement_ring", { type: "relationship" }],
+    ["engagement_ring", { type: "engagement" }],
   ];
 
   for (const [itemId, source] of hardcoded) {
@@ -611,11 +637,7 @@ function collectQuestScrollSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({
-        questId: questId as QuestId,
-        questType: questType as QuestType,
-        type: "quest",
-      });
+      sources.push(buildQuestRecipeSource(questType, questId, quest, itemIdToRecipeId));
       result.set(recipeId, sources);
     }
   });
@@ -934,6 +956,33 @@ function deduplicateSources(sources: RecipeSource[]): RecipeSource[] {
     result.push(s);
   }
   return result;
+}
+
+function extractQuestRequiredItem(quest: Record<string, unknown>): string | undefined {
+  const stages = Array.isArray(quest.stages) ? quest.stages : [];
+  for (const stage of stages) {
+    if (typeof stage !== "object" || stage === null) continue;
+    const requirements = (stage as Record<string, unknown>).requirements;
+    if (typeof requirements !== "object" || requirements === null) continue;
+    const itemId = firstRequiredItem((requirements as Record<string, unknown>).has_item);
+    if (itemId) return itemId;
+  }
+  return undefined;
+}
+
+function firstRequiredItem(value: unknown): string | undefined {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const itemId = firstRequiredItem(entry);
+      if (itemId) return itemId;
+    }
+    return undefined;
+  }
+  if (typeof value === "object" && value !== null) {
+    return Object.keys(value)[0];
+  }
+  return undefined;
 }
 
 function requireNumber(value: unknown, path: string): number {

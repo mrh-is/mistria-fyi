@@ -63,13 +63,20 @@ export type RecipeSource =
       type: "scroll_bundle";
       visibility?: VisibilityCondition;
     }
+  | {
+      challengeRecipeId?: RecipeId;
+      questId: QuestId;
+      questType: QuestType;
+      requestedItemId?: ItemId;
+      type: "quest";
+      visibility?: VisibilityCondition;
+    }
   | { cost: number; type: "chicken_statue"; visibility?: VisibilityCondition }
   | { cost: number; type: "wishing_well"; visibility?: VisibilityCondition }
   | { festivalId: FestivalId; storeId: StoreId; type: "festival"; visibility?: VisibilityCondition }
   | { level: number; type: "renown"; visibility?: VisibilityCondition }
   | { perkId: PerkId; storeId: StoreId; type: "store_with_perk"; visibility?: VisibilityCondition }
   | { perkId: PerkId; type: "perk"; visibility?: VisibilityCondition }
-  | { questId: QuestId; questType: QuestType; type: "quest"; visibility?: VisibilityCondition }
   | { setCount: number; type: "museum_donation"; visibility?: VisibilityCondition; wingId: WingId }
   | { storeId: StoreId; type: "store"; upgraded?: true; visibility?: VisibilityCondition }
   | { storeId: StoreId; type: "upgrade"; upgradeName: string; visibility?: VisibilityCondition }
@@ -95,7 +102,7 @@ export type RecipeSource =
   | { type: "beach_cave_chest"; visibility?: VisibilityCondition }
   | { type: "default"; visibility?: VisibilityCondition }
   | { type: "dragon_forge"; visibility?: VisibilityCondition }
-  | { type: "relationship"; visibility?: VisibilityCondition };
+  | { type: "engagement"; visibility?: VisibilityCondition };
 export interface Restriction {
   animal?: string;
   building?: string;
@@ -194,7 +201,7 @@ export interface TrackerData {
     }
   >;
 
-  festivals: Record<FestivalId, { name: string }>;
+  festivals: Record<FestivalId, { date: { day: number; season: Season }; name: string }>;
 
   generatedAt: string;
 
@@ -275,7 +282,7 @@ export interface TrackerData {
 
   skills: Record<SkillId, string>;
   sources: Record<ItemId, Source[]>;
-  stores: Record<StoreId, { article?: "the"; name: string }>;
+  stores: Record<StoreId, { article?: "the"; name: string; upgradeAction?: string }>;
   storeVisibility: Record<StoreId, VisibilityCondition>;
   treasureChestTiers: Record<TreasureChestTier, { name: string }>;
 

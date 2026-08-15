@@ -1,5 +1,6 @@
 import type {
   BiomeId,
+  RecipeId,
   RecipeSource,
   Season,
   SourceType,
@@ -7,6 +8,7 @@ import type {
   TrackerData,
   Weather,
 } from "$lib/types/tracker-data.js";
+import type { VisibilityCondition } from "$lib/types/visibility.js";
 
 const SEASON_LABEL: Record<Season, string> = {
   fall: "Fall",
@@ -56,12 +58,23 @@ export interface RecipeSourceLookups {
   biomes: TrackerData["mines"]["biomes"];
   festivals: Partial<Record<string, { name: string }>>;
   itemNames: Partial<Record<string, string>>;
-  perks: Partial<Record<string, { name: string; skillId: string; tier: number }>>;
+  perks: Partial<
+    Record<
+      string,
+      {
+        name: string;
+        skillId: string;
+        tier: number;
+        visibility?: VisibilityCondition;
+      }
+    >
+  >;
   perkTierLevels: number[];
   questNames: Partial<Record<string, string>>;
+  recipeNames: Partial<Record<RecipeId, string>>;
   redactedStoreIds?: ReadonlySet<string>;
   skillNames: Partial<Record<string, string>>;
-  stores: Partial<Record<string, { article?: "the"; name: string }>>;
+  stores: Partial<Record<string, { article?: "the"; name: string; upgradeAction?: string }>>;
   treasureChestTiers: Partial<Record<string, { name: string }>>;
 }
 
@@ -116,6 +129,8 @@ export function recipeSourceLabel(source: RecipeSource, lookups: RecipeSourceLoo
       return "Available from the start";
     case "dragon_forge":
       return "Craft at the Dragon Forge (Mines level 90)";
+    case "engagement":
+      return "Receive from Elsie after getting to 10 hearts with a dateable character";
     case "festival": {
       const festivalName =
         lookups.festivals[source.festivalId]?.name ?? titleCase(source.festivalId);
@@ -178,8 +193,6 @@ export function recipeSourceLabel(source: RecipeSource, lookups: RecipeSourceLoo
       const name = lookups.questNames[source.questId] ?? titleCase(source.questId);
       return `Complete the ${name} quest`;
     }
-    case "relationship":
-      return "Receive from Elsie after getting to 10 hearts with a dateable character";
     case "renown":
       return `Get the town rank to level ${String(source.level)}`;
     case "scroll_bundle": {
