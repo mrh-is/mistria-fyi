@@ -177,8 +177,9 @@ updates) must pass the complete verification matrix.
 - **Symptom**: Pre-commit hooks are absent in a fresh worktree — commits pass without lint or
   formatting checks running.
 - **Cause**: Lifecycle scripts (including `prepare`) may be disabled or skipped in some
-  environments. Husky 9 sets `core.hooksPath` via the `prepare` script; without it the git config
-  entry is absent and hooks do not run.
+  environments. `core.hooksPath` is stored in the shared `.git/config` and may already be set by
+  another worktree, but the `.husky/_` directory that Husky generates is worktree-local and will be
+  absent until `prepare` is run.
 - **Recovery**: Run `pnpm run prepare` from within the worktree directory after installation:
   ```sh
   pnpm run prepare
