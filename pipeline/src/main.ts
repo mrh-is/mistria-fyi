@@ -7,6 +7,8 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { collectNaturalSources } from "./acquisition/collectors/natural.js";
+import { collectRewardSources } from "./acquisition/collectors/rewards.js";
 import { deriveRecipeProductSources } from "./acquisition/recipe-products.js";
 import { ItemSourceAccumulator } from "./acquisition/source-accumulator.js";
 import { evaluateExpressions } from "./evaluate.js";
@@ -130,6 +132,8 @@ function main(): void {
 
   const itemSources = new ItemSourceAccumulator();
   deriveRecipeProductSources(fiddle, recipes, itemSources);
+  collectNaturalSources(fiddle, itemSources);
+  collectRewardSources(fiddle, itemSources);
 
   applyItemQuestGates(items, questGates.itemGates);
   applyAnimalQuestGates(animals, questGates.animalGates);
