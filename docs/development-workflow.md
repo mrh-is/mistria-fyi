@@ -43,7 +43,8 @@ confusion, and branch switching interference across concurrent sessions.
    cd .worktrees/<issue-number>-<short-description>
    pnpm install --frozen-lockfile
    ```
-3. Install Husky git hooks (required — `--frozen-lockfile` skips lifecycle scripts):
+3. Install Husky git hooks explicitly (required in environments where lifecycle scripts are disabled
+   or skipped):
    ```sh
    pnpm run prepare
    ```
@@ -175,10 +176,16 @@ updates) must pass the complete verification matrix.
 
 - **Symptom**: Pre-commit hooks are absent in a fresh worktree — commits pass without lint or
   formatting checks running.
-- **Cause**: `pnpm install --frozen-lockfile` skips lifecycle scripts (including `prepare`), so
-  Husky hooks are not installed automatically.
+- **Cause**: Lifecycle scripts (including `prepare`) may be disabled or skipped in some
+  environments. Husky 9 sets `core.hooksPath` via the `prepare` script; without it the git config
+  entry is absent and hooks do not run.
 - **Recovery**: Run `pnpm run prepare` from within the worktree directory after installation:
   ```sh
   pnpm run prepare
   ```
-  Verify hook installation by checking `.git/hooks/pre-commit` exists inside the worktree.
+  Verify installation by confirming `core.hooksPath` is set to `.husky/_` and the Husky wrapper
+  exists:
+  ```sh
+  git config --get core.hooksPath   # should print .husky/_
+  ls .husky/_/pre-commit            # should exist
+  ```
