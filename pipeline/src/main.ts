@@ -7,6 +7,8 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { deriveRecipeProductSources } from "./acquisition/recipe-products.js";
+import { ItemSourceAccumulator } from "./acquisition/source-accumulator.js";
 import { evaluateExpressions } from "./evaluate.js";
 import { extractAlmanac } from "./extractors/almanac.js";
 import { extractAnimals } from "./extractors/animals.js";
@@ -125,6 +127,9 @@ function main(): void {
   const storesMeta = extractStoresMeta(fiddle);
   const festivals = extractFestivals(fiddle);
   const treasureChestTiers = extractTreasureChestTiers(fiddle);
+
+  const itemSources = new ItemSourceAccumulator();
+  deriveRecipeProductSources(fiddle, recipes, itemSources);
 
   applyItemQuestGates(items, questGates.itemGates);
   applyAnimalQuestGates(animals, questGates.animalGates);
