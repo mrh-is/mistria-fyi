@@ -6,7 +6,13 @@ import {
   simplifyAvailabilityCondition,
 } from "../availability-condition.js";
 
-import type { AvailabilityCondition, PerkId, QuestId, SkillId } from "$lib/types/tracker-data.js";
+import type {
+  AvailabilityCondition,
+  NpcId,
+  PerkId,
+  QuestId,
+  SkillId,
+} from "$lib/types/tracker-data.js";
 
 const summer = { season: "summer" as const, weather: "calm" as const };
 
@@ -25,7 +31,7 @@ describe("evaluateAvailabilityCondition", () => {
         { perkId: "green_thumb" as PerkId, type: "perkUnlocked" },
         { questId: "main_quest" as QuestId, state: "completed", type: "quest" },
         { level: 10, skillId: "farming" as SkillId, type: "skillLevel" },
-        { level: 4, npcId: "adeline" as never, type: "heartLevel" },
+        { level: 4, npcId: "adeline" as NpcId, type: "heartLevel" },
       ],
       type: "all",
     };
@@ -33,7 +39,7 @@ describe("evaluateAvailabilityCondition", () => {
     expect(
       evaluateAvailabilityCondition(condition, {
         ...summer,
-        heartLevels: new Map([["adeline" as never, 4]]),
+        heartLevels: new Map([["adeline" as NpcId, 4]]),
         minesLevel: 20,
         perkIds: new Set(["green_thumb" as PerkId]),
         questStates: new Map([["main_quest" as QuestId, "completed"]]),
@@ -85,6 +91,15 @@ describe("evaluateAvailabilityCondition", () => {
       ),
     ).toBe("unknown");
   });
+
+  it("returns unknown when a supplied quest-state map lacks the quest", () => {
+    expect(
+      evaluateAvailabilityCondition(
+        { questId: "main_quest" as QuestId, state: "completed", type: "quest" },
+        { questStates: new Map() },
+      ),
+    ).toBe("unknown");
+  });
 });
 
 describe("simplifyAvailabilityCondition", () => {
@@ -114,16 +129,37 @@ describe("simplifyAvailabilityCondition", () => {
       }),
     ).toEqual({ type: "always" });
   });
+
+  it("preserves missing-season evaluation when simplifying a year-round season", () => {
+    const condition: AvailabilityCondition = {
+      seasons: ["spring", "summer", "fall", "winter"],
+      type: "season",
+    };
+
+    expect(evaluateAvailabilityCondition(condition, {})).toBe("unknown");
+    expect(evaluateAvailabilityCondition(simplifyAvailabilityCondition(condition), {})).toBe(
+      "unknown",
+    );
+  });
 });
 
 describe("hasSelectiveSeasonCondition", () => {
-  it("finds selective seasons through Boolean nodes", () => {
+  it("ignores selective seasons in a branch simplified to always", () => {
     expect(
       hasSelectiveSeasonCondition({
         condition: {
           conditions: [{ type: "always" }, { seasons: ["summer"], type: "season" }],
           type: "any",
         },
+        type: "not",
+      }),
+    ).toBe(false);
+  });
+
+  it("finds a selective season through a not node", () => {
+    expect(
+      hasSelectiveSeasonCondition({
+        condition: { seasons: ["winter"], type: "season" },
         type: "not",
       }),
     ).toBe(true);

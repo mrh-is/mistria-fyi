@@ -48,10 +48,10 @@ export function evaluateAvailabilityCondition(
     }
     case "perkUnlocked":
       return context.perkIds === undefined ? "unknown" : context.perkIds.has(condition.perkId);
-    case "quest":
-      return context.questStates === undefined
-        ? "unknown"
-        : context.questStates.get(condition.questId) === condition.state;
+    case "quest": {
+      const state = context.questStates?.get(condition.questId);
+      return state === undefined ? "unknown" : state === condition.state;
+    }
     case "season":
       return context.season === undefined ? "unknown" : condition.seasons.includes(context.season);
     case "skillLevel": {
@@ -70,25 +70,7 @@ export function evaluateAvailabilityCondition(
 }
 
 export function hasSelectiveSeasonCondition(condition: AvailabilityCondition): boolean {
-  switch (condition.type) {
-    case "all":
-    case "any":
-      return condition.conditions.some(hasSelectiveSeasonCondition);
-    case "always":
-    case "gamePredicate":
-    case "heartLevel":
-    case "minesLevel":
-    case "perkUnlocked":
-    case "quest":
-    case "skillLevel":
-    case "time":
-    case "weather":
-      return false;
-    case "not":
-      return hasSelectiveSeasonCondition(condition.condition);
-    case "season":
-      return !ALL_SEASONS.every((season) => condition.seasons.includes(season));
-  }
+  return hasSelectiveSeasonConditionInSimplified(simplifyAvailabilityCondition(condition));
 }
 
 export function simplifyAvailabilityCondition(
@@ -131,9 +113,7 @@ export function simplifyAvailabilityCondition(
         : { condition: simplified, type: "not" };
     }
     case "season":
-      return ALL_SEASONS.every((season) => condition.seasons.includes(season))
-        ? { type: "always" }
-        : condition;
+      return condition;
   }
 }
 
@@ -161,6 +141,28 @@ function evaluateAny(
     if (value === "unknown") hasUnknown = true;
   }
   return hasUnknown ? "unknown" : false;
+}
+
+function hasSelectiveSeasonConditionInSimplified(condition: AvailabilityCondition): boolean {
+  switch (condition.type) {
+    case "all":
+    case "any":
+      return condition.conditions.some(hasSelectiveSeasonConditionInSimplified);
+    case "always":
+    case "gamePredicate":
+    case "heartLevel":
+    case "minesLevel":
+    case "perkUnlocked":
+    case "quest":
+    case "skillLevel":
+    case "time":
+    case "weather":
+      return false;
+    case "not":
+      return hasSelectiveSeasonConditionInSimplified(condition.condition);
+    case "season":
+      return !ALL_SEASONS.every((season) => condition.seasons.includes(season));
+  }
 }
 
 function timeMatches(start: number, end: number, time: number): boolean {
