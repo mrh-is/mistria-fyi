@@ -7,7 +7,7 @@
   import RedactedRow from "$lib/components/redacted-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
-  import { isVisible, redactionState } from "$lib/engine/visibility.js";
+  import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { displayQuestName } from "$lib/utils/format.js";
@@ -19,15 +19,8 @@
 
   const redactGuard = createRedactionGuard();
 
-  function questRedaction(
-    questType: string,
-    questId: QuestId,
-  ): "redacted" | "source-only" | "visible" {
-    return redactionState(
-      questVisibility(questType, questId),
-      undefined,
-      userState.progressionState,
-    );
+  function questNameVisible(questType: string, questId: QuestId): boolean {
+    return isEntityNameVisible(questVisibility(questType, questId), userState.progressionState);
   }
 
   function questVisibility(questType: string, questId: QuestId): VisibilityCondition {
@@ -178,8 +171,7 @@
     >
       {#each visibleQuests as quest (quest.id)}
         {@const questState = getQuestState(quest.id)}
-        {@const redaction = questRedaction(questType, quest.id)}
-        {#if redaction !== "visible"}
+        {#if !questNameVisible(questType, quest.id)}
           <RedactedRow
             completed={questState !== "none"}
             name={quest.displayName}
@@ -192,7 +184,6 @@
                 });
               }
             }}
-            {redaction}
           />
         {:else}
           <div

@@ -8,7 +8,7 @@
   import { Button } from "$lib/components/ui/button/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { isItemDimmed, isRowVisible, shouldCountItem } from "$lib/engine/availability.js";
-  import { redactionState } from "$lib/engine/visibility.js";
+  import { isEntityNameVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
@@ -20,12 +20,8 @@
 
   const redactGuard = createRedactionGuard();
 
-  function itemRedaction(item: { visibility?: VisibilityCondition }) {
-    return redactionState(
-      item.visibility ?? { type: "always" },
-      undefined,
-      userState.progressionState,
-    );
+  function itemNameVisible(item: { visibility?: VisibilityCondition }): boolean {
+    return isEntityNameVisible(item.visibility ?? { type: "always" }, userState.progressionState);
   }
 
   let recentlyCompleted = new SvelteSet<ItemId>();
@@ -132,8 +128,7 @@
       {@const displayItems = showAll ? filteredItems : filteredItems.slice(0, SECTION_LIMIT)}
       {#each displayItems as [itemId, item] (itemId)}
         {@const itemCompleted = userState.state.completed.almanac.has(itemId as ItemId)}
-        {@const redaction = itemRedaction(item)}
-        {#if redaction !== "visible"}
+        {#if !itemNameVisible(item)}
           <RedactedRow
             completed={itemCompleted}
             name={item.name}
@@ -146,7 +141,6 @@
                 });
               }
             }}
-            {redaction}
           />
         {:else}
           <ItemRow

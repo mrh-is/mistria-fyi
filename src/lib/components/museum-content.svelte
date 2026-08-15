@@ -7,7 +7,7 @@
   import RedactedRow from "$lib/components/redacted-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { isItemDimmed, isRowVisible, shouldCountItem } from "$lib/engine/availability.js";
-  import { redactionState } from "$lib/engine/visibility.js";
+  import { isEntityNameVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
@@ -18,9 +18,9 @@
 
   const redactGuard = createRedactionGuard();
 
-  function itemRedaction(itemId: ItemId) {
+  function itemNameVisible(itemId: ItemId): boolean {
     const visibility = trackerData.items[itemId].visibility ?? { type: "always" };
-    return redactionState(visibility, undefined, userState.progressionState);
+    return isEntityNameVisible(visibility, userState.progressionState);
   }
 
   let recentlyCompleted = new SvelteSet<ItemId>();
@@ -132,8 +132,7 @@
           >
             {#each visibleSetItems as itemId (itemId)}
               {@const museumCompleted = userState.state.completed.museum.has(itemId)}
-              {@const redaction = itemRedaction(itemId)}
-              {#if redaction !== "visible"}
+              {#if !itemNameVisible(itemId)}
                 <RedactedRow
                   completed={museumCompleted}
                   name={trackerData.items[itemId].name}
@@ -149,7 +148,6 @@
                       );
                     }
                   }}
-                  {redaction}
                 />
               {:else}
                 <ItemRow

@@ -5,26 +5,25 @@
   import ConfirmRedactedDialog from "$lib/components/confirm-redacted-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import { Icon, SOURCE_FILTERS } from "$lib/components/icon/index.js";
+  import RecipeSourceList from "$lib/components/recipe-source-list.svelte";
   import RedactedRow from "$lib/components/redacted-row.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
   import { trackerData } from "$lib/data/index.js";
-  import { isVisible, redactionState } from "$lib/engine/visibility.js";
+  import { isVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { recipeSourceLabel } from "$lib/utils/format.js";
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
+  import { buildSourceSegments } from "$lib/utils/source-segments.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
-  import type { RecipeId, RecipeSource } from "$lib/types/tracker-data.js";
+  import type { NpcId, QuestId, RecipeId, RecipeSource } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
   import type { RecipeSourceLookups } from "$lib/utils/format.js";
+  import type { SegmentLookups, SourceSegment } from "$lib/utils/source-segments.js";
 
   const redactGuard = createRedactionGuard();
-
-  function isSourceVisible(source: RecipeSource): boolean {
-    return !source.visibility || isVisible(source.visibility, userState.progressionState);
-  }
 
   let recentlyCompleted = new SvelteSet<RecipeId>();
 
@@ -51,10 +50,15 @@
     perkTierLevels: trackerData.perkTierLevels,
     questNames: Object.fromEntries(
       Object.values(trackerData.quests).flatMap((group) =>
-        Object.entries(group).map(([id, q]) => [id, q.name]),
+        Object.entries(group).map(([id, quest]) => [id, quest.name]),
       ),
     ),
-    recipeNames: {},
+    recipeNames: Object.fromEntries(
+      Object.entries(trackerData.recipes).map(([id, recipe]) => [
+        id,
+        recipe.presentations[0]?.name ?? id,
+      ]),
+    ),
     redactedStoreIds,
     skillNames: Object.fromEntries(
       Object.entries(trackerData.skills).map(([id, name]) => [id, name]),
@@ -63,21 +67,41 @@
     treasureChestTiers: trackerData.treasureChestTiers,
   });
 
+  // The current recipe condition is added when each tree is built.
+  let baseSegmentLookups: Omit<SegmentLookups, "recipeVisibility"> = $derived({
+    ...sourceLookups,
+    categoryVisibility: trackerData.categoryVisibility,
+    festivalDates: Object.fromEntries(
+      Object.entries(trackerData.festivals).map(([id, festival]) => [id, festival.date]),
+    ),
+    itemVisibility: Object.fromEntries(
+      Object.entries(trackerData.items)
+        .filter(([, item]) => item.visibility)
+        .map(([id, item]) => [id, item.visibility]),
+    ),
+    npcNames: Object.fromEntries(
+      Object.entries(trackerData.npcs).map(([id, npc]) => [id, npc.name]),
+    ),
+    npcVisibility: trackerData.npcVisibility,
+    questNpcIds: Object.fromEntries(
+      Object.values(trackerData.quests).flatMap((group) =>
+        Object.entries(group)
+          .filter(([, q]) => q.npc)
+          .map(([id, q]) => [id, q.npc as NpcId]),
+      ),
+    ) as Partial<Record<QuestId, NpcId>>,
+
+    storeVisibility: trackerData.storeVisibility,
+  });
+
   interface RecipeEntry {
     id: RecipeId;
     name: string;
+    nameVisible: boolean;
     sourceLabels: string[];
     sources: RecipeSource[];
+    sourceSegments: SourceSegment[][];
     visibility: VisibilityCondition;
-  }
-
-  function entryRedaction(entry: RecipeEntry): "redacted" | "source-only" | "visible" {
-    const knownSource = entry.sources.find(isSourceVisible);
-    return redactionState(
-      entry.visibility,
-      knownSource ? (knownSource.visibility ?? { type: "always" }) : undefined,
-      userState.progressionState,
-    );
   }
 
   let recipesByCategory = $derived.by(() => {
@@ -89,13 +113,17 @@
         if (!item.recipeId || seen.has(item.recipeId)) continue;
         seen.add(item.recipeId);
         const recipe = trackerData.recipes[item.recipeId];
-        const sourceLabels = recipe.sources.map((s) => recipeSourceLabel(s, sourceLookups));
+        const visibility = recipe.visibility ?? { type: "always" };
         entries.push({
           id: item.recipeId,
           name: item.name,
-          sourceLabels,
+          nameVisible: isVisible(visibility, userState.progressionState),
+          sourceLabels: recipe.sources.map((s) => recipeSourceLabel(s, sourceLookups)),
           sources: recipe.sources,
-          visibility: recipe.visibility ?? { type: "always" },
+          sourceSegments: recipe.sources.map((source) =>
+            buildSourceSegments(source, { ...baseSegmentLookups, recipeVisibility: visibility }),
+          ),
+          visibility,
         });
       }
       if (entries.length > 0) {
@@ -214,9 +242,7 @@
         {@const completed = userState.state.completed.almanacRecipes.has(entry.id)}
         {@const leaving = recentlyCompleted.has(entry.id)}
         {@const expanded = expandedRecipes[entry.id] ?? false}
-        {@const redaction = entryRedaction(entry)}
-        {#if redaction !== "visible"}
-          {@const visibleSources = entry.sources.filter(isSourceVisible)}
+        {#if !entry.nameVisible}
           <RedactedRow
             {completed}
             name={entry.name}
@@ -224,25 +250,22 @@
               if (completed) {
                 toggleRecipe(
                   entry,
-                  group.entries.map((e) => e.id),
+                  group.entries.map((candidate) => candidate.id),
                 );
               } else {
                 redactGuard.guard(entry.visibility, () => {
                   toggleRecipe(
                     entry,
-                    group.entries.map((e) => e.id),
+                    group.entries.map((candidate) => candidate.id),
                   );
                 });
               }
             }}
-            {redaction}
-            sourceLabels={visibleSources.map(
-              (s, i) => entry.sourceLabels[entry.sources.indexOf(s)] ?? entry.sourceLabels[i],
-            )}
-            sources={visibleSources}
+            sourceLabels={entry.sourceLabels}
+            sourceSegments={entry.sourceSegments}
+            sources={entry.sources}
           />
         {:else}
-          {@const visibleSources = entry.sources.filter(isSourceVisible)}
           <div>
             <div
               class="flex items-center gap-0 rounded-md pr-2 transition-opacity duration-200 {completed ||
@@ -257,7 +280,7 @@
                 onclick={() => {
                   toggleRecipe(
                     entry,
-                    group.entries.map((e) => e.id),
+                    group.entries.map((candidate) => candidate.id),
                   );
                 }}
               >
@@ -269,8 +292,8 @@
                 />
               </button>
               <span class="min-w-0 flex-1 text-base">{entry.name}</span>
-              {#if visibleSources.length > 0}
-                {@const uniqueTypes = [...new Set(visibleSources.map((s) => s.type))]}
+              {#if entry.sources.length > 0}
+                {@const uniqueTypes = [...new Set(entry.sources.map((s) => s.type))]}
                 <button
                   class="group flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted"
                   type="button"
@@ -292,18 +315,9 @@
                 </button>
               {/if}
             </div>
-            {#if expanded && visibleSources.length > 0}
+            {#if expanded && entry.sources.length > 0}
               <div class="flex flex-col gap-1 py-1 pr-2 pl-8" transition:slide={{ duration: 150 }}>
-                {#each visibleSources as source (source)}
-                  {@const i = entry.sources.indexOf(source)}
-                  <div class="flex items-center gap-2 text-sm">
-                    <Icon.Source
-                      type={source.type}
-                      class="size-3.5 shrink-0 text-muted-foreground"
-                    />
-                    <span class="text-muted-foreground">{entry.sourceLabels[i]}</span>
-                  </div>
-                {/each}
+                <RecipeSourceList sourceSegments={entry.sourceSegments} sources={entry.sources} />
               </div>
             {/if}
           </div>

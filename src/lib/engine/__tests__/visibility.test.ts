@@ -3,8 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   deriveProgressionState,
   isConditionInvertible,
+  isEntityNameVisible,
+  isSourceDetailVisible,
   isVisible,
-  redactionState,
   satisfyCondition,
 } from "../visibility.js";
 
@@ -212,32 +213,6 @@ describe("isVisible", () => {
         state,
       ),
     ).toBe(true);
-  });
-});
-
-describe("redactionState", () => {
-  it("returns visible when entity visibility is met", () => {
-    const state = makeState({ minesFloor: 20 });
-    expect(redactionState({ floor: 20, type: "minesLevel" }, undefined, state)).toBe("visible");
-  });
-
-  it("returns source-only when source is met but entity is not", () => {
-    const state = makeState({ minesFloor: 20 });
-    expect(
-      redactionState({ floor: 40, type: "minesLevel" }, { floor: 20, type: "minesLevel" }, state),
-    ).toBe("source-only");
-  });
-
-  it("returns redacted when neither is met", () => {
-    const state = makeState();
-    expect(
-      redactionState({ floor: 40, type: "minesLevel" }, { floor: 20, type: "minesLevel" }, state),
-    ).toBe("redacted");
-  });
-
-  it("returns redacted when entity not met and source is undefined", () => {
-    const state = makeState();
-    expect(redactionState({ floor: 40, type: "minesLevel" }, undefined, state)).toBe("redacted");
   });
 });
 
@@ -573,7 +548,7 @@ describe("satisfyCondition", () => {
 });
 
 describe("satisfyCondition → deriveProgressionState round-trips", () => {
-  it("redacted → visible after satisfying entity condition", () => {
+  it("hides then reveals an entity after satisfying its condition", () => {
     const trackerData = makeTrackerData({
       questChains: { ...emptyStoryChains, story: { [repairTheInn]: { prerequisites: [] } } },
       quests: { story_quests: { [repairTheInn]: { name: "Repair the Inn" } } },
@@ -585,14 +560,14 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
 
     const completed = makeCompleted();
     const stateBefore = deriveProgressionState(completed, trackerData, false);
-    expect(redactionState(entityCondition, undefined, stateBefore)).toBe("redacted");
+    expect(isEntityNameVisible(entityCondition, stateBefore)).toBe(false);
 
     satisfyCondition(entityCondition, completed, trackerData);
     const stateAfter = deriveProgressionState(completed, trackerData, false);
-    expect(redactionState(entityCondition, undefined, stateAfter)).toBe("visible");
+    expect(isEntityNameVisible(entityCondition, stateAfter)).toBe(true);
   });
 
-  it("redacted → source-only → visible through three-state progression", () => {
+  it("reveals source detail and entity name at their separate thresholds", () => {
     const trackerData = makeTrackerData({
       questChains: { ...emptyStoryChains, story: { [repairTheInn]: { prerequisites: [] } } },
       quests: { story_quests: { [repairTheInn]: { name: "Repair the Inn" } } },
@@ -605,15 +580,18 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
 
     const completed = makeCompleted();
     const state1 = deriveProgressionState(completed, trackerData, false);
-    expect(redactionState(entityCondition, sourceCondition, state1)).toBe("redacted");
+    expect(isEntityNameVisible(entityCondition, state1)).toBe(false);
+    expect(isSourceDetailVisible(sourceCondition, state1)).toBe(false);
 
     completed.mines.floor = 20;
     const state2 = deriveProgressionState(completed, trackerData, false);
-    expect(redactionState(entityCondition, sourceCondition, state2)).toBe("source-only");
+    expect(isEntityNameVisible(entityCondition, state2)).toBe(false);
+    expect(isSourceDetailVisible(sourceCondition, state2)).toBe(true);
 
     satisfyCondition(entityCondition, completed, trackerData);
     const state3 = deriveProgressionState(completed, trackerData, false);
-    expect(redactionState(entityCondition, sourceCondition, state3)).toBe("visible");
+    expect(isEntityNameVisible(entityCondition, state3)).toBe(true);
+    expect(isSourceDetailVisible(sourceCondition, state3)).toBe(true);
   });
 
   it("satisfying a quest reveals NPC-gated content", () => {

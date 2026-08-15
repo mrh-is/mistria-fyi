@@ -4,7 +4,7 @@
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import RedactedRow from "$lib/components/redacted-row.svelte";
   import { trackerData } from "$lib/data/index.js";
-  import { redactionState } from "$lib/engine/visibility.js";
+  import { isEntityNameVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
@@ -116,12 +116,7 @@
             >
               {#each visibleCosmetics as cosmetic (cosmetic.id)}
                 {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
-                {@const redaction = redactionState(
-                  cosmetic.visibility,
-                  undefined,
-                  userState.progressionState,
-                )}
-                {#if redaction !== "visible"}
+                {#if !isEntityNameVisible(cosmetic.visibility, userState.progressionState)}
                   <RedactedRow
                     {completed}
                     name={cosmetic.name}
@@ -134,7 +129,6 @@
                         });
                       }
                     }}
-                    {redaction}
                   />
                 {:else}
                   <CosmeticRow
@@ -151,12 +145,7 @@
           {:else}
             {#each visibleCosmetics as cosmetic (cosmetic.id)}
               {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
-              {@const redaction = redactionState(
-                cosmetic.visibility,
-                undefined,
-                userState.progressionState,
-              )}
-              {#if redaction !== "visible"}
+              {#if !isEntityNameVisible(cosmetic.visibility, userState.progressionState)}
                 <RedactedRow
                   {completed}
                   name={cosmetic.name}
@@ -165,7 +154,6 @@
                       toggleCosmetic(cosmetic, allInSlot);
                     });
                   }}
-                  {redaction}
                 />
               {:else}
                 <CosmeticRow

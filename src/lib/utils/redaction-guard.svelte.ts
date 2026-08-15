@@ -1,5 +1,5 @@
 import { trackerData } from "$lib/data/index.js";
-import { redactionState, satisfyCondition } from "$lib/engine/visibility.js";
+import { isEntityNameVisible, satisfyCondition } from "$lib/engine/visibility.js";
 import { userState } from "$lib/stores/user-state.svelte.js";
 
 import type { VisibilityCondition } from "$lib/types/visibility.js";
@@ -58,7 +58,5 @@ export function createRedactionGuard() {
  * (not reactively) since callers use it right after a state mutation to reflect the fresh state.
  */
 export function resolveName(name: string, visibility: VisibilityCondition): string {
-  return redactionState(visibility, undefined, userState.progressionState) === "visible"
-    ? name
-    : REDACTED_NAME;
+  return isEntityNameVisible(visibility, userState.progressionState) ? name : REDACTED_NAME;
 }

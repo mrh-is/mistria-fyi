@@ -5,7 +5,7 @@
   import RedactedRow from "$lib/components/redacted-row.svelte";
   import Stepper from "$lib/components/stepper.svelte";
   import { trackerData } from "$lib/data/index.js";
-  import { redactionState } from "$lib/engine/visibility.js";
+  import { isEntityNameVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
@@ -15,9 +15,9 @@
 
   const redactGuard = createRedactionGuard();
 
-  function spellRedaction(spellId: SpellId) {
+  function spellNameVisible(spellId: SpellId): boolean {
     const visibility = trackerData.mines.spells[spellId].visibility ?? { type: "always" };
-    return redactionState(visibility, undefined, userState.progressionState);
+    return isEntityNameVisible(visibility, userState.progressionState);
   }
 
   function toggleSpell(spellId: SpellId): void {
@@ -185,8 +185,7 @@
   >
     {#each visibleSpells as spell (spell.id)}
       {@const completed = userState.state.completed.mines.spells.has(spell.id)}
-      {@const redaction = spellRedaction(spell.id)}
-      {#if redaction !== "visible"}
+      {#if !spellNameVisible(spell.id)}
         <RedactedRow
           {completed}
           name={spell.name}
@@ -202,7 +201,6 @@
               );
             }
           }}
-          {redaction}
         />
       {:else}
         <div

@@ -4,7 +4,7 @@
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import { Icon } from "$lib/components/icon/index.js";
   import { trackerData } from "$lib/data/index.js";
-  import { redactionState } from "$lib/engine/visibility.js";
+  import { isEntityNameVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
@@ -13,7 +13,7 @@
 
   function isSpeciesVisible(animalId: AnimalId): boolean {
     const visibility = trackerData.animals[animalId].visibility ?? { type: "always" };
-    return redactionState(visibility, undefined, userState.progressionState) === "visible";
+    return isEntityNameVisible(visibility, userState.progressionState);
   }
 
   function hasDisplayableVariant(animalId: AnimalId): boolean {

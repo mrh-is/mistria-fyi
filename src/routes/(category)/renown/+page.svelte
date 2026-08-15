@@ -5,19 +5,16 @@
   import { Progress } from "$lib/components/ui/progress/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { clampRenownLevel, MAX_RENOWN_LEVEL } from "$lib/engine/progress.js";
-  import { redactionState } from "$lib/engine/visibility.js";
+  import { isEntityNameVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
 
   import RankCard from "./RankCard.svelte";
 
   function isRankVisible(minLevel: number): boolean {
-    return (
-      redactionState(
-        { level: minLevel, type: "renownLevel" },
-        undefined,
-        userState.progressionState,
-      ) === "visible"
+    return isEntityNameVisible(
+      { level: minLevel, type: "renownLevel" },
+      userState.progressionState,
     );
   }
 

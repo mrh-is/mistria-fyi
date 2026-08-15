@@ -174,16 +174,6 @@ export function isVisible(condition: VisibilityCondition, state: UserProgression
 
 // ─── Invertibility & satisfaction ───────────────────────────────────
 
-export function redactionState(
-  entityVisibility: VisibilityCondition,
-  sourceVisibility: undefined | VisibilityCondition,
-  state: UserProgressionState,
-): "redacted" | "source-only" | "visible" {
-  if (isEntityNameVisible(entityVisibility, state)) return "visible";
-  if (sourceVisibility && isSourceDetailVisible(sourceVisibility, state)) return "source-only";
-  return "redacted";
-}
-
 /**
  * Mutates `completed` to satisfy `condition`, per the invertible-primitive mapping in the spec
  * (spoiler-system-design.md Section 2). Callers should check `isConditionInvertible` first;
