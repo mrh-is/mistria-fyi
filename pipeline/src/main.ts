@@ -180,6 +180,9 @@ function main(): void {
     version,
   };
 
+  // Task 13 enables validateAcquisitionSources(trackerData, acquisitionReferences) here, after
+  // every canonical registry has cut over to inline acquisition sources and before visibility.
+
   // Mutate trackerData in place: stamps visibility on items, recipes, perks, cosmetics, animals,
   // spells, and quests.
   assignEntityVisibility(
