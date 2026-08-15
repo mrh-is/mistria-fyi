@@ -3,12 +3,14 @@ import { SvelteSet } from "svelte/reactivity";
 import { trackerData } from "$lib/data/index.js";
 import { clampRenownLevel } from "$lib/engine/progress.js";
 import { findRecipesForQuest } from "$lib/engine/quest-rewards.js";
+import { deriveProgressionState, type UserProgressionState } from "$lib/engine/visibility.js";
 
 import type {
   AnimalId,
   CosmeticId,
   ItemId,
   NpcId,
+  PerkId,
   QuestId,
   RecipeId,
   Season,
@@ -28,12 +30,14 @@ export interface CompletedState {
   animalCosmetics: Record<string, Set<CosmeticId>>;
   animals: Record<string, Set<VariantId>>;
   cosmetics: Set<CosmeticId>;
+  marriedNpc: NpcId | null;
   mines: { floor: number; spells: Set<SpellId> };
   museum: Set<ItemId>;
   npcLevels: Record<string, number>;
   questStates: Record<string, QuestState>;
   renown: number;
   skillLevels: Record<string, number>;
+  unlockedPerks: Set<PerkId>;
 }
 
 export interface MergeCounts {
@@ -45,6 +49,7 @@ export interface MergeCounts {
   mineFloor: number;
   museum: number;
   npcLevels: number;
+  perks: number;
   quests: number;
   renown: number;
   skillLevels: number;
@@ -71,6 +76,7 @@ interface SerializedState {
     animalCosmetics: Record<string, string[]>;
     animals: Record<string, string[]>;
     cosmetics: string[];
+    marriedNpc?: null | string;
     mines: { floor: number; spells: string[] };
     museum: string[];
     npcLevels?: Record<string, number>;
@@ -80,7 +86,9 @@ interface SerializedState {
     renown: number;
     skillLevels?: Record<string, number>;
     skills?: string[];
+    unlockedPerks?: string[];
   };
+  showSpoilers?: boolean;
   version: string;
   worldState: { season: Season; weather: Weather };
 }
@@ -124,12 +132,14 @@ function createDefaultCompleted(): CompletedState {
     animalCosmetics,
     animals,
     cosmetics: defaultCosmetics,
+    marriedNpc: null,
     mines: { floor: 0, spells: new SvelteSet<SpellId>() },
     museum: new SvelteSet<ItemId>(),
     npcLevels: {},
     questStates: {},
     renown: 0,
     skillLevels: {},
+    unlockedPerks: new SvelteSet<PerkId>(),
   };
 }
 
@@ -156,6 +166,10 @@ function createUserState() {
   }
 
   let state = $state<UserState>(initial);
+
+  const progressionState = $derived(
+    deriveProgressionState(state.completed, trackerData, state.showSpoilers),
+  );
 
   // Auto-save to localStorage (debounced)
   if (typeof window !== "undefined") {
@@ -225,6 +239,7 @@ function createUserState() {
         mineFloor: 0,
         museum: 0,
         npcLevels: 0,
+        perks: 0,
         quests: 0,
         renown: 0,
         skillLevels: 0,
@@ -342,6 +357,16 @@ function createUserState() {
         }
       }
 
+      // Perks (union)
+      if (imported.unlockedPerks) {
+        for (const id of imported.unlockedPerks) {
+          if (!state.completed.unlockedPerks.has(id)) {
+            state.completed.unlockedPerks.add(id);
+            counts.perks++;
+          }
+        }
+      }
+
       // Quest states (take more advanced state: none < obtained < completed)
       if (imported.questStates) {
         const rank: Record<QuestState, number> = { completed: 2, none: 0, obtained: 1 };
@@ -356,6 +381,9 @@ function createUserState() {
 
       return counts;
     },
+    get progressionState(): UserProgressionState {
+      return progressionState;
+    },
     resetAll() {
       state = createDefaultState();
       if (typeof window !== "undefined") {
@@ -364,6 +392,9 @@ function createUserState() {
     },
     setAvailabilityMode(mode: AvailabilityMode) {
       state.availabilityMode = mode;
+    },
+    setMarriedNpc(npcId: NpcId | null) {
+      state.completed.marriedNpc = npcId;
     },
     setMineFloor(floor: number) {
       state.completed.mines.floor = Math.max(0, Math.min(floor, trackerData.mines.maxFloors));
@@ -406,6 +437,9 @@ function createUserState() {
     },
     toggleMuseumItem(id: ItemId) {
       toggleInSet(state.completed.museum, id);
+    },
+    togglePerk(id: PerkId) {
+      toggleInSet(state.completed.unlockedPerks, id);
     },
     toggleShowCompleted() {
       state.showCompleted = !state.showCompleted;
@@ -467,6 +501,7 @@ function deserialize(json: string): null | UserState {
           Object.entries(s.completed.animals).map(([k, v]) => [k, brandedSet<VariantId>(v)]),
         ),
         cosmetics: brandedSet<CosmeticId>(s.completed.cosmetics),
+        marriedNpc: (s.completed.marriedNpc as NpcId | null | undefined) ?? null,
         mines: {
           floor: s.completed.mines.floor,
           spells: brandedSet<SpellId>(s.completed.mines.spells),
@@ -476,9 +511,10 @@ function deserialize(json: string): null | UserState {
         questStates,
         renown: clampRenownLevel(s.completed.renown),
         skillLevels,
+        unlockedPerks: brandedSet<PerkId>(s.completed.unlockedPerks ?? []),
       },
       showCompleted: false,
-      showSpoilers: false,
+      showSpoilers: s.showSpoilers ?? false,
       worldState: s.worldState,
     };
   } catch {
@@ -508,6 +544,7 @@ function serialize(state: UserState): string {
         Object.entries(state.completed.animals).map(([k, v]) => [k, [...v].sort()]),
       ),
       cosmetics: [...state.completed.cosmetics].sort(),
+      marriedNpc: state.completed.marriedNpc,
       mines: {
         floor: state.completed.mines.floor,
         spells: [...state.completed.mines.spells].sort(),
@@ -517,7 +554,9 @@ function serialize(state: UserState): string {
       questStates: filterRecord(state.completed.questStates, (v) => v !== "none"),
       renown: state.completed.renown,
       skillLevels: filterRecord(state.completed.skillLevels, (v) => v > 0),
+      unlockedPerks: [...state.completed.unlockedPerks].sort(),
     },
+    showSpoilers: state.showSpoilers,
     version: "1",
     worldState: state.worldState,
   };

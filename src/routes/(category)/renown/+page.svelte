@@ -5,10 +5,18 @@
   import { Progress } from "$lib/components/ui/progress/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { clampRenownLevel, MAX_RENOWN_LEVEL } from "$lib/engine/progress.js";
+  import { isEntityNameVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
 
   import RankCard from "./RankCard.svelte";
+
+  function isRankVisible(minLevel: number): boolean {
+    return isEntityNameVisible(
+      { level: minLevel, type: "renownLevel" },
+      userState.progressionState,
+    );
+  }
 
   // Colors per rank (Wood → Mistril), matched to the in-game chart
   const RANK_COLORS = [
@@ -146,7 +154,7 @@
           ? "current"
           : "upcoming"}
     <RankCard
-      name={rank.name}
+      name={isRankVisible(i * levelsPerRank) ? rank.name : "Redacted"}
       starColor={RANK_COLORS[i]}
       minLevel={i * levelsPerRank}
       maxLevel={Math.min((i + 1) * levelsPerRank - 1, maxLevel)}

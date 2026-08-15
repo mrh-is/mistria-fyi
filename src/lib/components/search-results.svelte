@@ -22,7 +22,14 @@
 
   let { query }: { query: string } = $props();
 
-  let results = $derived(searchItems(query, userState.state.completed, userState.state.worldState));
+  let results = $derived(
+    searchItems(
+      query,
+      userState.state.completed,
+      userState.state.worldState,
+      userState.progressionState,
+    ),
+  );
 
   const CATEGORY_LABELS: Record<string, string> = {
     almanac: "Almanac",

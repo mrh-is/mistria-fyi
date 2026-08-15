@@ -6,6 +6,7 @@ import type {
   CosmeticId,
   ItemId,
   NpcId,
+  PerkId,
   QuestId,
   SkillId,
   SpellId,
@@ -14,7 +15,7 @@ import type {
 
 // ─── Constants ──────────────────────────────────────────────────────
 
-export const TRANSFER_VERSION = 1;
+export const TRANSFER_VERSION = 2;
 
 // ─── Deterministic orderings (derived from trackerData) ─────────────
 
@@ -22,7 +23,7 @@ export const TRANSFER_VERSION = 1;
 export async function decodeTransferPayload(payload: string): Promise<Partial<CompletedState>> {
   const payloadBytes = fromBase64url(payload);
   const version = payloadBytes[0];
-  if (version !== TRANSFER_VERSION) {
+  if (version !== 1 && version !== 2) {
     throw new Error(`Unsupported transfer version: ${String(version)}`);
   }
 
@@ -124,17 +125,35 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
     questStates[questOrder[i].questId as string] = questStateMap[bits];
   }
 
+  // 12. Perk bitfield (v2 only)
+  // 13. Married NPC index (v2 only) — 1 byte: 0xFF = no spouse, else index into npcOrder
+  let unlockedPerks = new Set<PerkId>();
+  let marriedNpc: NpcId | null = null;
+
+  if (version >= 2) {
+    const perkOrder = getPerkOrder();
+    const perkBytes = readBytes(Math.ceil(perkOrder.length / 8));
+    unlockedPerks = fromBitfield(perkOrder, perkBytes) as Set<PerkId>;
+
+    const marriedByte = readBytes(1)[0];
+    if (marriedByte !== 0xff) {
+      marriedNpc = npcOrder[marriedByte] ?? null;
+    }
+  }
+
   return {
     almanac,
     animalCosmetics,
     animals,
     cosmetics,
+    marriedNpc,
     mines: { floor, spells },
     museum,
     npcLevels,
     questStates,
     renown,
     skillLevels,
+    unlockedPerks,
   };
 }
 
@@ -229,6 +248,14 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
     questBytes[byteIndex] |= (bits & 0x3) << bitOffset;
   }
   parts.push(questBytes);
+
+  // 12. Perk bitfield (new in v2)
+  const perkOrder = getPerkOrder();
+  parts.push(toBitfield(perkOrder, completed.unlockedPerks));
+
+  // 13. Married NPC index (new in v2) — 1 byte: 0xFF = no spouse, else index into npcOrder
+  const marriedIndex = completed.marriedNpc ? npcOrder.indexOf(completed.marriedNpc) : -1;
+  parts.push(new Uint8Array([marriedIndex === -1 ? 0xff : marriedIndex]));
 
   // Concatenate all parts
   const totalLength = parts.reduce((sum, p) => sum + p.length, 0);
@@ -369,6 +396,10 @@ function getMuseumOrder(): ItemId[] {
 
 function getNpcOrder(): NpcId[] {
   return (Object.keys(trackerData.npcs) as NpcId[]).sort();
+}
+
+function getPerkOrder(): PerkId[] {
+  return (Object.keys(trackerData.perks) as PerkId[]).sort();
 }
 
 function getQuestOrder(): { questId: QuestId; type: string }[] {

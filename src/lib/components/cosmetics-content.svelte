@@ -1,18 +1,26 @@
 <script lang="ts">
+  import ConfirmRedactedDialog from "$lib/components/confirm-redacted-dialog.svelte";
   import CosmeticRow from "$lib/components/cosmetic-row.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
+  import RedactedRow from "$lib/components/redacted-row.svelte";
   import { trackerData } from "$lib/data/index.js";
+  import { isEntityNameVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
+  import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { CosmeticId, ItemId, Source } from "$lib/types/tracker-data.js";
+  import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   interface CosmeticEntry {
     id: CosmeticId;
     name: string;
     sources: Source[];
+    visibility: VisibilityCondition;
   }
+
+  const redactGuard = createRedactionGuard();
 
   function isCosmeticsComplete(): boolean {
     return Object.keys(trackerData.cosmetics).every((id) =>
@@ -34,6 +42,7 @@
         id: id as CosmeticId,
         name: cosmetic.name,
         sources,
+        visibility: cosmetic.visibility ?? { type: "always" },
       });
     }
     for (const subCats of Object.values(bySlot)) {
@@ -48,7 +57,38 @@
         subCategories: Object.entries(subCats).sort(([a], [b]) => a.localeCompare(b)),
       }));
   });
+
+  function toggleCosmetic(cosmetic: CosmeticEntry, allInSlot: CosmeticEntry[]): void {
+    userState.toggleCosmetic(cosmetic.id);
+    const completed = userState.state.completed.cosmetics.has(cosmetic.id);
+    showUndoToast(cosmetic.name, completed, () => {
+      userState.toggleCosmetic(cosmetic.id);
+    });
+    if (completed) {
+      if (isCosmeticsComplete()) {
+        celebrateCategory();
+      } else if (isSlotComplete(allInSlot)) {
+        celebrate();
+      }
+    }
+  }
 </script>
+
+{#if redactGuard.condition}
+  <ConfirmRedactedDialog
+    condition={redactGuard.condition}
+    bind:open={redactGuard.open}
+    onCancel={() => {
+      redactGuard.cancel();
+    }}
+    onComplete={() => {
+      redactGuard.complete();
+    }}
+    onCompleteAndUpdate={() => {
+      redactGuard.completeAndUpdate();
+    }}
+  />
+{/if}
 
 {#each groups() as { slot, subCategories } (slot)}
   {@const allInSlot = subCategories.flatMap(([, items]) => items)}
@@ -76,49 +116,55 @@
             >
               {#each visibleCosmetics as cosmetic (cosmetic.id)}
                 {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
-                <CosmeticRow
-                  {completed}
-                  name={cosmetic.name}
-                  sources={cosmetic.sources}
-                  onToggle={() => {
-                    userState.toggleCosmetic(cosmetic.id);
-                    const completed = userState.state.completed.cosmetics.has(cosmetic.id);
-                    showUndoToast(cosmetic.name, completed, () => {
-                      userState.toggleCosmetic(cosmetic.id);
-                    });
-                    if (completed) {
-                      if (isCosmeticsComplete()) {
-                        celebrateCategory();
-                      } else if (isSlotComplete(allInSlot)) {
-                        celebrate();
+                {#if !isEntityNameVisible(cosmetic.visibility, userState.progressionState)}
+                  <RedactedRow
+                    {completed}
+                    name={cosmetic.name}
+                    onToggle={() => {
+                      if (completed) {
+                        toggleCosmetic(cosmetic, allInSlot);
+                      } else {
+                        redactGuard.guard(cosmetic.visibility, () => {
+                          toggleCosmetic(cosmetic, allInSlot);
+                        });
                       }
-                    }
-                  }}
-                />
+                    }}
+                  />
+                {:else}
+                  <CosmeticRow
+                    {completed}
+                    name={cosmetic.name}
+                    sources={cosmetic.sources}
+                    onToggle={() => {
+                      toggleCosmetic(cosmetic, allInSlot);
+                    }}
+                  />
+                {/if}
               {/each}
             </ExpandableSection>
           {:else}
             {#each visibleCosmetics as cosmetic (cosmetic.id)}
               {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
-              <CosmeticRow
-                {completed}
-                name={cosmetic.name}
-                sources={cosmetic.sources}
-                onToggle={() => {
-                  userState.toggleCosmetic(cosmetic.id);
-                  const completed = userState.state.completed.cosmetics.has(cosmetic.id);
-                  showUndoToast(cosmetic.name, completed, () => {
-                    userState.toggleCosmetic(cosmetic.id);
-                  });
-                  if (completed) {
-                    if (isCosmeticsComplete()) {
-                      celebrateCategory();
-                    } else if (isSlotComplete(allInSlot)) {
-                      celebrate();
-                    }
-                  }
-                }}
-              />
+              {#if !isEntityNameVisible(cosmetic.visibility, userState.progressionState)}
+                <RedactedRow
+                  {completed}
+                  name={cosmetic.name}
+                  onToggle={() => {
+                    redactGuard.guard(cosmetic.visibility, () => {
+                      toggleCosmetic(cosmetic, allInSlot);
+                    });
+                  }}
+                />
+              {:else}
+                <CosmeticRow
+                  {completed}
+                  name={cosmetic.name}
+                  sources={cosmetic.sources}
+                  onToggle={() => {
+                    toggleCosmetic(cosmetic, allInSlot);
+                  }}
+                />
+              {/if}
             {/each}
           {/if}
         {/if}

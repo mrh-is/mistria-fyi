@@ -29,6 +29,16 @@ import { extractSkills } from "./extractors/skills.js";
 import { extractSources } from "./extractors/sources.js";
 import { extractStoresMeta } from "./extractors/stores-meta.js";
 import { extractTreasureChestTiers } from "./extractors/treasure-chest-tiers.js";
+import { buildCutsceneQuestMap } from "./extractors/visibility/cutscene-quest-map.js";
+import {
+  assignEntityVisibility,
+  extractCategoryVisibility,
+  extractFetchQuestVisibility,
+  extractHeartLevelChanges,
+  extractNpcVisibility,
+  extractStoreVisibility,
+} from "./extractors/visibility/entity-visibility.js";
+import { extractQuestChains } from "./extractors/visibility/quest-chains.js";
 import { parseFiddle } from "./parse-fiddle.js";
 
 import type { ItemId, TrackerData } from "$lib/types/tracker-data.js";
@@ -65,7 +75,11 @@ function main(): void {
   const fiddle = parsed.data;
 
   const misc = fiddle.misc as Record<string, unknown> | undefined;
-  const version = versionArg ?? (misc?.version as string | undefined) ?? "unknown";
+  const version = versionArg ?? (misc?.version as string | undefined);
+  if (!version) {
+    console.error("❌ No game version found. Pass --version=X.Y.Z or ensure misc.version exists.");
+    process.exit(1);
+  }
   console.log(`  Game version: ${version}\n`);
 
   if (parseOnly) {
@@ -95,7 +109,8 @@ function main(): void {
 
   console.log("Step 3: Extracting tracker data...");
   const museum = extractMuseum(fiddle);
-  const { recipeIdByItemId, recipes } = extractRecipes(fiddle);
+  const cutsceneQuestMap = buildCutsceneQuestMap(fiddle);
+  const { recipeIdByItemId, recipes } = extractRecipes(fiddle, cutsceneQuestMap);
   const { almanac, items } = extractAlmanac(fiddle, recipeIdByItemId);
   const animals = extractAnimals(fiddle);
   const npcs = extractNpcs(fiddle);
@@ -124,19 +139,35 @@ function main(): void {
   }
   console.log();
 
+  console.log("Step 3b: Extracting visibility data...");
+  const questChainsRaw = extractQuestChains(fiddle);
+  const storeVisibilityData = extractStoreVisibility(fiddle);
+  const npcVisibilityData = extractNpcVisibility();
+  const heartLevelChangesData = extractHeartLevelChanges(fiddle, cutsceneQuestMap);
+  const categoryVisibilityData = extractCategoryVisibility();
+  const fetchQuestVisibilityData = extractFetchQuestVisibility(
+    questChainsRaw.fetch,
+    cutsceneQuestMap,
+  );
+  console.log();
+
   console.log("Step 4: Assembling tracker-data.json...");
   const trackerData: TrackerData = {
     almanac,
     animals,
+    categoryVisibility: categoryVisibilityData,
     cosmetics,
     festivals,
     generatedAt: new Date().toISOString(),
+    heartLevelChanges: heartLevelChangesData,
     items,
     mines,
     museum,
     npcs,
+    npcVisibility: npcVisibilityData,
     perks,
     perkTierLevels,
+    questChains: { ...questChainsRaw, fetch: fetchQuestVisibilityData },
     questGates,
     quests,
     recipes,
@@ -144,9 +175,20 @@ function main(): void {
     skills,
     sources,
     stores: storesMeta,
+    storeVisibility: storeVisibilityData,
     treasureChestTiers,
     version,
   };
+
+  // Mutate trackerData in place: stamps visibility on items, recipes, perks, cosmetics, animals,
+  // spells, and quests.
+  assignEntityVisibility(
+    trackerData,
+    storeVisibilityData,
+    cutsceneQuestMap,
+    fiddle,
+    questChainsRaw,
+  );
 
   const json = JSON.stringify(trackerData);
   const prettyJson = JSON.stringify(trackerData, null, 2);

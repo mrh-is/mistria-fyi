@@ -11,12 +11,14 @@ function completedAtRenown(renown: number): CompletedState {
     animalCosmetics: {},
     animals: {},
     cosmetics: new Set(),
+    marriedNpc: null,
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
     npcLevels: {},
     questStates: {},
     renown,
     skillLevels: {},
+    unlockedPerks: new Set(),
   };
 }
 

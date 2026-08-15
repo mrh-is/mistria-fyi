@@ -32,6 +32,23 @@ describe("buildImportState", () => {
     expect(result.counts.almanacRecipes).toBe(defaultRecipeIds.size + 2);
     expect(result.warnings).toEqual([]);
   });
+
+  it("imports perks from player.perks", () => {
+    const bundle = {
+      player: {
+        perks: ["magic_design", "green_thumb", "unknown_perk"],
+      },
+    };
+    const { completed, result } = buildImportState(bundle);
+    const unlockedPerks = completed.unlockedPerks;
+    if (unlockedPerks === undefined) {
+      throw new Error("unlockedPerks should be defined");
+    }
+    expect(unlockedPerks.has("magic_design" as never)).toBe(true);
+    expect(unlockedPerks.has("green_thumb" as never)).toBe(true);
+    expect(unlockedPerks.has("unknown_perk" as never)).toBe(false);
+    expect(result.warnings).toContain("Unknown perk: unknown_perk");
+  });
 });
 
 describe("validatePlayerSave", () => {

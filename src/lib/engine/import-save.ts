@@ -1,7 +1,14 @@
 import { trackerData } from "$lib/data/index.js";
 
 import type { CompletedState, MergeCounts, QuestState } from "$lib/stores/user-state.svelte.js";
-import type { CosmeticId, ItemId, RecipeId, SpellId, VariantId } from "$lib/types/tracker-data.js";
+import type {
+  CosmeticId,
+  ItemId,
+  PerkId,
+  RecipeId,
+  SpellId,
+  VariantId,
+} from "$lib/types/tracker-data.js";
 
 // ─── Import result ──────────────────────────────────────────────────
 
@@ -33,6 +40,7 @@ interface PlayerSave {
   cosmetic_unlocks?: string[];
   items_acquired?: string[];
   items_sold?: Record<string, unknown>;
+  perks?: string[];
   recipe_unlocks?: string[];
   recipes_created?: string[];
   skill_xp?: Record<string, number>;
@@ -58,6 +66,7 @@ export function buildImportState(bundle: SaveBundle): {
     mineFloor: 0,
     museum: 0,
     npcLevels: 0,
+    perks: 0,
     quests: 0,
     renown: 0,
     skillLevels: 0,
@@ -167,6 +176,19 @@ export function buildImportState(bundle: SaveBundle): {
   }
   counts.spells = spells.size;
 
+  // ── Perks ──
+  const perkIds = new Set<PerkId>();
+  const validPerks = new Set(Object.keys(trackerData.perks));
+
+  for (const id of save?.perks ?? []) {
+    if (validPerks.has(id)) {
+      perkIds.add(id as PerkId);
+    } else {
+      warnings.push(`Unknown perk: ${id}`);
+    }
+  }
+  counts.perks = perkIds.size;
+
   // ── Museum donations (from gamedata.json → museum_progress) ──
   const museumIds = new Set<ItemId>();
   if (bundle.gamedata?.museum_progress) {
@@ -267,6 +289,7 @@ export function buildImportState(bundle: SaveBundle): {
       questStates,
       renown,
       skillLevels,
+      unlockedPerks: perkIds,
     },
     result: {
       counts,
@@ -364,6 +387,7 @@ export function validatePlayerSave(data: unknown): data is PlayerSave {
     Array.isArray(obj.cosmetic_unlocks) ||
     typeof obj.animal_variant_unlocks === "object" ||
     typeof obj.items_sold === "object" ||
-    Array.isArray(obj.spells_learned)
+    Array.isArray(obj.spells_learned) ||
+    Array.isArray(obj.perks)
   );
 }

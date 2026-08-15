@@ -8,6 +8,7 @@ import { extractRecipes } from "./recipes.js";
 import type { RecipeId } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
+import type { CutsceneQuestMap } from "./visibility/cutscene-quest-map.js";
 
 function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGameData {
   return {
@@ -23,6 +24,7 @@ function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGam
     },
     museum_wings: {},
     quests: {},
+    requirements: {},
     stores: {},
     wishing_well: {},
     ...overrides,
@@ -1007,6 +1009,416 @@ describe("extractRecipes", () => {
     const recipe = recipes["rare_stew" as RecipeId];
     expect(recipe.sources).toEqual([
       { trigger: "donated_item", triggerItemId: "ancient_fossil", type: "letter" },
+    ]);
+  });
+
+  it("emits an engagement source for the engagement ring", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          rings: {
+            default: {},
+            engagement_ring: {
+              name: "Engagement Ring",
+              recipe: [{ count: 1, item: "gold_bar" }],
+            },
+          },
+        },
+      },
+    });
+
+    const { recipes } = extractRecipes(fiddle);
+    const recipe = recipes["engagement_ring" as RecipeId];
+    expect(recipe.sources).toEqual([{ type: "engagement" }]);
+  });
+
+  it("resolves a scalar has_item fetch quest requirement to requestedItemId", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          cooked_dishes: {
+            default: {},
+            widget: {
+              name: "Widget",
+              recipe: [{ count: 1, item: "wood" }],
+            },
+          },
+        },
+      },
+      quests: {
+        fetch_quests: {
+          get_widget: {
+            name: "Get Widget",
+            rewards: [{ recipe_scroll: "widget" }],
+            stages: [{ requirements: { has_item: "wild_berries" } }],
+          },
+        },
+      },
+    });
+
+    const { recipes } = extractRecipes(fiddle);
+    const recipe = recipes["widget" as RecipeId];
+    expect(recipe.sources).toEqual([
+      {
+        questId: "get_widget",
+        questType: "fetch_quests",
+        requestedItemId: "wild_berries",
+        type: "quest",
+      },
+    ]);
+  });
+
+  it("resolves a quantity-object has_item fetch quest requirement to requestedItemId", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          cooked_dishes: {
+            default: {},
+            widget: {
+              name: "Widget",
+              recipe: [{ count: 1, item: "wood" }],
+            },
+          },
+        },
+      },
+      quests: {
+        fetch_quests: {
+          get_widget: {
+            name: "Get Widget",
+            rewards: [{ recipe_scroll: "widget" }],
+            stages: [{ requirements: { has_item: { wild_berries: 5 } } }],
+          },
+        },
+      },
+    });
+
+    const { recipes } = extractRecipes(fiddle);
+    const recipe = recipes["widget" as RecipeId];
+    expect(recipe.sources).toEqual([
+      {
+        questId: "get_widget",
+        questType: "fetch_quests",
+        requestedItemId: "wild_berries",
+        type: "quest",
+      },
+    ]);
+  });
+
+  it("resolves an array-of-objects has_item fetch quest requirement to requestedItemId", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          cooked_dishes: {
+            default: {},
+            widget: {
+              name: "Widget",
+              recipe: [{ count: 1, item: "wood" }],
+            },
+          },
+        },
+      },
+      quests: {
+        fetch_quests: {
+          get_widget: {
+            name: "Get Widget",
+            rewards: [{ recipe_scroll: "widget" }],
+            stages: [
+              {
+                requirements: {
+                  has_item: [{ wild_berries: 5 }, { truffle: 1 }],
+                },
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    const { recipes } = extractRecipes(fiddle);
+    const recipe = recipes["widget" as RecipeId];
+    expect(recipe.sources).toEqual([
+      {
+        questId: "get_widget",
+        questType: "fetch_quests",
+        requestedItemId: "wild_berries",
+        type: "quest",
+      },
+    ]);
+  });
+
+  it("resolves Tali challenge item IDs through itemIdToRecipeId to challengeRecipeId", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          cooked_dishes: {
+            challenge_dish: {
+              name: "Challenge Dish",
+              recipe: [{ count: 1, item: "fish" }],
+            },
+            default: {},
+            widget: {
+              name: "Widget",
+              recipe: [{ count: 1, item: "wood" }],
+            },
+          },
+        },
+      },
+      quests: {
+        tali_challenges: {
+          challenge_one: {
+            name: "Challenge One",
+            rewards: [{ recipe_scroll: "widget" }],
+            stages: [{ requirements: { has_item: "challenge_dish" } }],
+          },
+        },
+      },
+    });
+
+    const { recipes } = extractRecipes(fiddle);
+    const recipe = recipes["widget" as RecipeId];
+    expect(recipe.sources).toEqual([
+      {
+        challengeRecipeId: "challenge_dish",
+        questId: "challenge_one",
+        questType: "tali_challenges",
+        type: "quest",
+      },
+    ]);
+  });
+});
+
+describe("extractRecipes — stock requirement visibility", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("resolves a repaired_general_store named requirement to questCompleted and marks the source upgraded", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          cooked_dishes: {
+            default: {},
+            general_dish: {
+              name: "General Dish",
+              recipe: [{ count: 1, item: "flour" }],
+            },
+          },
+        },
+      },
+      requirements: {
+        repaired_general_store: { seen_cutscene: "repair_the_general_store_pt_2" },
+      },
+      stores: {
+        general: {
+          categories: [
+            {
+              constant_stock: [
+                {
+                  recipe_scroll: "general_dish",
+                  requirements: { repaired_general_store: true },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    });
+    const cutsceneMap: CutsceneQuestMap = {
+      repair_the_general_store_pt_2: {
+        phase: "completed",
+        questId: "repair_the_general_store" as never,
+      },
+    };
+
+    const { recipes } = extractRecipes(fiddle, cutsceneMap);
+    const recipe = recipes["general_dish" as RecipeId];
+    expect(recipe.sources).toEqual([
+      {
+        storeId: "general",
+        type: "store",
+        upgraded: true,
+        visibility: { questId: "repair_the_general_store", type: "questCompleted" },
+      },
+    ]);
+  });
+
+  it("resolves unlocked_deep_woods through the supplied cutscene map instead of collapsing to always", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          cooked_dishes: {
+            deep_woods_dish: {
+              name: "Deep Woods Dish",
+              recipe: [{ count: 1, item: "mushroom" }],
+            },
+            default: {},
+          },
+        },
+      },
+      requirements: {
+        unlocked_deep_woods: { seen_cutscene: "destroy_vines_eastern_road" },
+      },
+      stores: {
+        general: {
+          categories: [
+            {
+              constant_stock: [
+                {
+                  recipe_scroll: "deep_woods_dish",
+                  requirements: { unlocked_deep_woods: true },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    });
+    const cutsceneMap: CutsceneQuestMap = {
+      destroy_vines_eastern_road: {
+        phase: "available",
+        questId: "destroy_the_vines" as never,
+      },
+    };
+
+    const { recipes } = extractRecipes(fiddle, cutsceneMap);
+    const recipe = recipes["deep_woods_dish" as RecipeId];
+    expect(recipe.sources).toEqual([
+      {
+        storeId: "general",
+        type: "store",
+        visibility: { questId: "destroy_the_vines", type: "questAvailable" },
+      },
+    ]);
+  });
+
+  it("resolves reached_date to always because it is explicitly non-spoiler-sensitive", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          cooked_dishes: {
+            dated_dish: {
+              name: "Dated Dish",
+              recipe: [{ count: 1, item: "flour" }],
+            },
+            default: {},
+          },
+        },
+      },
+      stores: {
+        general: {
+          categories: [
+            {
+              constant_stock: [
+                {
+                  recipe_scroll: "dated_dish",
+                  requirements: { reached_date: { day: 1, season: "spring" } },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    });
+
+    const { recipes } = extractRecipes(fiddle);
+    const recipe = recipes["dated_dish" as RecipeId];
+    expect(recipe.sources).toEqual([{ storeId: "general", type: "store" }]);
+  });
+
+  it("carries the resolved completion condition on an upgrade-gated scroll bundle", () => {
+    const fiddle = makeFiddle({
+      items: {
+        furniture: {
+          test_set: {
+            default: {},
+            void_bundle_scroll: {
+              name: "Void Bundle Scroll",
+              set_unlock: "void_set_tag",
+            },
+            void_chair: {
+              name: "Void Chair",
+              recipe: [{ count: 1, item: "void_essence" }],
+              tags: ["void_set_tag"],
+            },
+          },
+        },
+      },
+      requirements: {
+        repaired_general_store: { seen_cutscene: "repair_the_general_store_pt_2" },
+      },
+      stores: {
+        general: {
+          categories: [
+            {
+              constant_stock: [
+                {
+                  item: "void_bundle_scroll",
+                  requirements: { repaired_general_store: true },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    });
+    const cutsceneMap: CutsceneQuestMap = {
+      repair_the_general_store_pt_2: {
+        phase: "completed",
+        questId: "repair_the_general_store" as never,
+      },
+    };
+
+    const { recipes } = extractRecipes(fiddle, cutsceneMap);
+    const recipe = recipes["void_chair" as RecipeId];
+    expect(recipe.sources).toEqual([
+      {
+        bundleName: "Void Bundle Scroll",
+        storeId: "general",
+        type: "scroll_bundle",
+        visibility: { questId: "repair_the_general_store", type: "questCompleted" },
+      },
+    ]);
+  });
+
+  it("keeps the Espresso Machine fixture as store_with_perk, never rewritten as a plain store source", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          cooked_dishes: {
+            default: {},
+            espresso: {
+              name: "Espresso",
+              recipe: [{ count: 1, item: "coffee_beans" }],
+            },
+          },
+        },
+      },
+      stores: {
+        darcy_stall: {
+          categories: [
+            {
+              constant_stock: [
+                {
+                  include_recipe: true,
+                  item: "espresso",
+                  requirements: { has_perk: "espresso_yourself" },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    });
+
+    const { recipes } = extractRecipes(fiddle);
+    const recipe = recipes["espresso" as RecipeId];
+    expect(recipe.sources).toEqual([
+      { perkId: "espresso_yourself", storeId: "darcy_stall", type: "store_with_perk" },
     ]);
   });
 });

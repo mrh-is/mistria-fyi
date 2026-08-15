@@ -18,6 +18,7 @@ const EMPTY_LOOKUPS: RecipeSourceLookups = {
   perks: {},
   perkTierLevels: [],
   questNames: {},
+  recipeNames: {},
   skillNames: {},
   stores: {},
   treasureChestTiers: {},
@@ -83,6 +84,11 @@ describe("formatBiomeName", () => {
 describe("recipeSourceLabel", () => {
   it("renders default source", () => {
     expect(recipeSourceLabel({ type: "default" }, EMPTY_LOOKUPS)).toBe("Available from the start");
+  });
+  it("renders engagement source", () => {
+    expect(recipeSourceLabel({ type: "engagement" }, EMPTY_LOOKUPS)).toBe(
+      "Receive from Elsie after getting to 10 hearts with a dateable character",
+    );
   });
   it("renders store with upgrade", () => {
     const lookups = {

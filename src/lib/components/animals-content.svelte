@@ -1,12 +1,36 @@
 <script lang="ts">
+  import { Lock } from "@lucide/svelte";
+
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import { Icon } from "$lib/components/icon/index.js";
   import { trackerData } from "$lib/data/index.js";
+  import { isEntityNameVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { AnimalId, CosmeticId, Season, VariantId } from "$lib/types/tracker-data.js";
+
+  function isSpeciesVisible(animalId: AnimalId): boolean {
+    const visibility = trackerData.animals[animalId].visibility ?? { type: "always" };
+    return isEntityNameVisible(visibility, userState.progressionState);
+  }
+
+  function hasDisplayableVariant(animalId: AnimalId): boolean {
+    const variantIds = Object.keys(trackerData.animals[animalId].variants) as VariantId[];
+    if (isSpeciesVisible(animalId)) {
+      return variantIds.some((vid) => isVariantVisible(animalId, vid));
+    }
+    return variantIds.some((vid) => isVariantInScope(animalId, vid));
+  }
+
+  function hasDisplayableCosmetic(animalId: AnimalId): boolean {
+    const cosmeticIds = Object.keys(trackerData.animals[animalId].cosmetics) as CosmeticId[];
+    if (isSpeciesVisible(animalId)) {
+      return cosmeticIds.some((cid) => isCosmeticVisible(animalId, cid));
+    }
+    return cosmeticIds.length > 0;
+  }
 
   function isAnimalComplete(animalId: AnimalId): boolean {
     const animal = trackerData.animals[animalId];
@@ -154,21 +178,27 @@
   }
 </script>
 
-{#if animals.some( (a) => Object.keys(a.variants).some( (vid) => isVariantVisible(a.id, vid as VariantId) ) )}
+{#if animals.some((a) => hasDisplayableVariant(a.id))}
   <ExpandableSection
     count={filteredTotalVariantsCompleted}
     name="Color Variants"
     total={filteredTotalVariants}
   >
     {#each animals as animal (animal.id)}
+      {@const speciesVisible = isSpeciesVisible(animal.id)}
       {@const variantEntries = sortedVariants(animal.variants)}
       {@const scopedVariants = variantEntries.filter(([vid]) =>
         isVariantInScope(animal.id, vid as VariantId),
       )}
-      {@const visibleVariants = variantEntries.filter(([vid]) =>
-        isVariantVisible(animal.id, vid as VariantId),
-      )}
-      {#if visibleVariants.length > 0}
+      {@const visibleVariants = speciesVisible
+        ? variantEntries.filter(([vid]) => isVariantVisible(animal.id, vid as VariantId))
+        : []}
+      {#if !speciesVisible && scopedVariants.length > 0}
+        <div class="flex items-center gap-2 rounded-md px-2 py-1.5">
+          <Lock class="size-4 shrink-0 text-muted-foreground/50" />
+          <span class="min-w-0 flex-1 text-base text-muted-foreground italic">Redacted</span>
+        </div>
+      {:else if visibleVariants.length > 0}
         <ExpandableSection
           count={scopedVariants.filter(
             ([vid]) =>
@@ -252,18 +282,24 @@
   </ExpandableSection>
 {/if}
 
-{#if animals.some( (a) => Object.keys(a.cosmetics).some( (cid) => isCosmeticVisible(a.id, cid as CosmeticId) ) )}
+{#if animals.some((a) => hasDisplayableCosmetic(a.id))}
   <ExpandableSection
     count={filteredTotalCosmeticsCompleted}
     name="Cosmetics"
     total={filteredTotalCosmetics}
   >
     {#each animals as animal (animal.id)}
+      {@const speciesVisible = isSpeciesVisible(animal.id)}
       {@const cosmeticEntries = Object.entries(animal.cosmetics)}
-      {@const visibleCosmetics = cosmeticEntries.filter(([cid]) =>
-        isCosmeticVisible(animal.id, cid as CosmeticId),
-      )}
-      {#if visibleCosmetics.length > 0}
+      {@const visibleCosmetics = speciesVisible
+        ? cosmeticEntries.filter(([cid]) => isCosmeticVisible(animal.id, cid as CosmeticId))
+        : []}
+      {#if !speciesVisible && cosmeticEntries.length > 0}
+        <div class="flex items-center gap-2 rounded-md px-2 py-1.5">
+          <Lock class="size-4 shrink-0 text-muted-foreground/50" />
+          <span class="min-w-0 flex-1 text-base text-muted-foreground italic">Redacted</span>
+        </div>
+      {:else if visibleCosmetics.length > 0}
         <ExpandableSection
           count={cosmeticEntries.filter(
             ([cid]) =>
