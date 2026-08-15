@@ -11,7 +11,10 @@ import { collectNaturalSources } from "./acquisition/collectors/natural.js";
 import { collectRewardSources } from "./acquisition/collectors/rewards.js";
 import { collectStoreSources } from "./acquisition/collectors/stores.js";
 import { deriveRecipeProductSources } from "./acquisition/recipe-products.js";
-import { ItemSourceAccumulator } from "./acquisition/source-accumulator.js";
+import {
+  CosmeticSourceAccumulator,
+  ItemSourceAccumulator,
+} from "./acquisition/source-accumulator.js";
 import { evaluateExpressions } from "./evaluate.js";
 import { extractAlmanac } from "./extractors/almanac.js";
 import { extractAnimals } from "./extractors/animals.js";
@@ -138,9 +141,10 @@ function main(): void {
   );
 
   const itemSources = new ItemSourceAccumulator();
+  const cosmeticSources = new CosmeticSourceAccumulator();
   deriveRecipeProductSources(fiddle, recipes, itemSources);
   collectNaturalSources(fiddle, itemSources);
-  collectRewardSources(fiddle, itemSources);
+  collectRewardSources(fiddle, itemSources, cosmeticSources);
   collectStoreSources(fiddle, requirementContext, itemSources);
 
   applyItemQuestGates(items, questGates.itemGates);

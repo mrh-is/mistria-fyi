@@ -1,7 +1,20 @@
-import type { FestivalId, ItemId, QuestId, Season, StoreId } from "$lib/types/tracker-data.js";
+import type { Source } from "$lib/types/acquisition.js";
+import type {
+  CosmeticId,
+  DateId,
+  FestivalId,
+  ItemId,
+  NpcId,
+  QuestId,
+  Season,
+  StoreId,
+  WingId,
+} from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../../parse-fiddle.js";
-import type { ItemSourceAccumulator } from "../source-accumulator.js";
+import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "../source-accumulator.js";
+
+type LetterTrigger = Omit<Extract<Source, { type: "letter" }>, "type">;
 
 const FESTIVAL_SEASON_MAP: Record<string, Season> = {
   fall: "fall",
@@ -11,13 +24,101 @@ const FESTIVAL_SEASON_MAP: Record<string, Season> = {
   winter: "winter",
 };
 
+const TEN_HEART_SUFFIX = "_ten_hearts";
+
 export function collectRewardSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
+  cosmeticAccumulator?: CosmeticSourceAccumulator,
 ): void {
-  collectQuestRewardSources(fiddle, accumulator);
+  collectQuestRewardSources(fiddle, accumulator, cosmeticAccumulator);
   collectFestivalStockSources(fiddle, accumulator);
   collectRenownRewardSources(fiddle, accumulator);
+  collectLetterRewardSources(fiddle, accumulator);
+  collectMuseumDonationRewardSources(fiddle, accumulator);
+  collectProposalSources(fiddle, accumulator);
+  collectDateSources(fiddle, accumulator);
+  collectEngagementSources(fiddle, accumulator);
+}
+
+function classifyLetterTrigger(reqs: Record<string, unknown> | undefined): LetterTrigger {
+  if (!reqs) {
+    return {
+      trigger: "reached_date" as const,
+      triggerDate: { day: 1, season: "spring" as Season },
+    };
+  }
+
+  if (typeof reqs.shipped_item === "string") {
+    return { trigger: "shipped_item" as const, triggerItemId: reqs.shipped_item };
+  }
+
+  if (typeof reqs.donated_item === "string") {
+    return { trigger: "donated_item" as const, triggerItemId: reqs.donated_item };
+  }
+
+  const reachedDate = reqs.reached_date as Record<string, unknown> | undefined;
+  if (reachedDate && typeof reachedDate === "object") {
+    return {
+      trigger: "reached_date" as const,
+      triggerDate: {
+        day: (reachedDate.day as number) ?? 1,
+        season: (reachedDate.season as Season) ?? "spring",
+        ...(reachedDate.year !== undefined ? { year: reachedDate.year as number } : {}),
+      },
+    };
+  }
+
+  return { trigger: "reached_date" as const, triggerDate: { day: 1, season: "spring" as Season } };
+}
+
+function collectDateSources(fiddle: ParsedGameData, accumulator: ItemSourceAccumulator): void {
+  const dates = fiddle.dates as Record<string, Record<string, unknown>> | undefined;
+  if (!dates) return;
+
+  for (const [dateId, dateData] of Object.entries(dates)) {
+    if (dateId === "default" || typeof dateData !== "object" || dateData === null) continue;
+
+    const photoItem = dateData.photo_item as string | undefined;
+    if (photoItem && photoItem !== "<n/a>") {
+      accumulator.add(photoItem as ItemId, {
+        dateId: dateId as DateId,
+        type: "date",
+      });
+    }
+  }
+}
+
+function collectEngagementSources(
+  fiddle: ParsedGameData,
+  accumulator: ItemSourceAccumulator,
+): void {
+  const cutscenes = fiddle.cutscenes as Record<string, Record<string, unknown>> | undefined;
+  if (!cutscenes) return;
+
+  const engagement = cutscenes.engagement_tutorial as Record<string, unknown> | undefined;
+  if (engagement) {
+    const givenItems = Array.isArray(engagement.given_items) ? engagement.given_items : [];
+    for (const entry of givenItems) {
+      if (typeof entry !== "object" || entry === null) continue;
+      const itemId = (entry as Record<string, unknown>).item_id as string | undefined;
+      if (itemId) {
+        accumulator.add(itemId as ItemId, { type: "engagement" });
+      }
+    }
+  }
+
+  const wedding = cutscenes.wedding as Record<string, unknown> | undefined;
+  if (wedding) {
+    const givenItems = Array.isArray(wedding.given_items) ? wedding.given_items : [];
+    for (const entry of givenItems) {
+      if (typeof entry !== "object" || entry === null) continue;
+      const itemId = (entry as Record<string, unknown>).item_id as string | undefined;
+      if (itemId) {
+        accumulator.add(itemId as ItemId, { type: "wedding" });
+      }
+    }
+  }
 }
 
 function collectFestivalStockSources(
@@ -55,9 +156,107 @@ function collectFestivalStockSources(
   }
 }
 
+function collectLetterRewardSources(
+  fiddle: ParsedGameData,
+  accumulator: ItemSourceAccumulator,
+): void {
+  const letters = fiddle.letters as Record<string, Record<string, unknown>> | undefined;
+  if (!letters) return;
+
+  for (const [, letter] of Object.entries(letters)) {
+    if (typeof letter !== "object" || letter === null) continue;
+
+    const items = Array.isArray(letter.items) ? letter.items : [];
+    if (items.length === 0) continue;
+
+    const reqs = letter.requirements as Record<string, unknown> | undefined;
+    const trigger = classifyLetterTrigger(reqs);
+
+    for (const entry of items) {
+      if (typeof entry !== "object" || entry === null) continue;
+      const obj = entry as Record<string, unknown>;
+
+      if (obj.recipe_scroll || obj.crafting_scroll) {
+        const scrollTarget = (obj.recipe_scroll ?? obj.crafting_scroll) as string;
+        accumulator.add(scrollTarget as ItemId, { ...trigger, type: "letter" });
+        continue;
+      }
+
+      const itemId = obj.item_name as string | undefined;
+      if (itemId) {
+        accumulator.add(itemId as ItemId, { ...trigger, type: "letter" });
+      }
+    }
+  }
+}
+
+function collectMuseumDonationRewardSources(
+  fiddle: ParsedGameData,
+  accumulator: ItemSourceAccumulator,
+): void {
+  const wings = fiddle.museum_wings as Record<string, Record<string, unknown>> | undefined;
+  if (!wings) return;
+
+  for (const [wingId, wing] of Object.entries(wings)) {
+    if (typeof wing !== "object" || wing === null) continue;
+
+    const rewards = Array.isArray(wing.rewards) ? wing.rewards : [];
+
+    for (let i = 0; i < rewards.length; i++) {
+      const reward = rewards[i];
+      if (typeof reward !== "object" || reward === null) continue;
+      const rewardObj = reward as Record<string, unknown>;
+
+      const entries = Array.isArray(rewardObj.entries) ? rewardObj.entries : [];
+      const setCount = i + 1;
+
+      for (const entry of entries) {
+        if (typeof entry !== "object" || entry === null) continue;
+        const obj = entry as Record<string, unknown>;
+
+        if (obj.crafting_scroll || obj.recipe_scroll) continue;
+
+        const targetId = (obj.item ?? obj.cosmetic) as string | undefined;
+        if (!targetId) continue;
+
+        accumulator.add(targetId as ItemId, {
+          setCount,
+          type: "museum_donation",
+          wingId: wingId as WingId,
+        });
+      }
+    }
+  }
+}
+
+function collectProposalSources(fiddle: ParsedGameData, accumulator: ItemSourceAccumulator): void {
+  const cutscenes = fiddle.cutscenes as Record<string, Record<string, unknown>> | undefined;
+  if (!cutscenes) return;
+
+  for (const [sceneId, scene] of Object.entries(cutscenes)) {
+    if (!sceneId.endsWith(TEN_HEART_SUFFIX)) continue;
+    if (typeof scene !== "object" || scene === null) continue;
+
+    const npcId = sceneId.slice(0, -TEN_HEART_SUFFIX.length);
+    const givenItems = Array.isArray(scene.given_items) ? scene.given_items : [];
+
+    for (const entry of givenItems) {
+      if (typeof entry !== "object" || entry === null) continue;
+      const itemId = (entry as Record<string, unknown>).item_id as string | undefined;
+      if (itemId) {
+        accumulator.add(itemId as ItemId, {
+          npcId: npcId as NpcId,
+          type: "proposal",
+        });
+      }
+    }
+  }
+}
+
 function collectQuestRewardSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
+  cosmeticAccumulator?: CosmeticSourceAccumulator,
 ): void {
   const quests = fiddle.quests as Record<string, Record<string, unknown>> | undefined;
   if (!quests) return;
@@ -70,17 +269,14 @@ function collectQuestRewardSources(
 
       const questData = quest as Record<string, unknown>;
       const rewards = Array.isArray(questData.rewards) ? questData.rewards : [];
+      processQuestRewards(rewards, questId, accumulator, cosmeticAccumulator);
 
-      for (const reward of rewards) {
-        if (typeof reward !== "object" || reward === null) continue;
-        const itemId = (reward as Record<string, unknown>).item as string | undefined;
-        if (itemId) {
-          accumulator.add(itemId as ItemId, {
-            questId: questId as QuestId,
-            trigger: "completion",
-            type: "quest",
-          });
-        }
+      const stages = Array.isArray(questData.stages) ? questData.stages : [];
+      for (const stage of stages) {
+        if (typeof stage !== "object" || stage === null) continue;
+        const stageData = stage as Record<string, unknown>;
+        const stageRewards = Array.isArray(stageData.rewards) ? stageData.rewards : [];
+        processQuestRewards(stageRewards, questId, accumulator, cosmeticAccumulator);
       }
     }
   }
@@ -106,5 +302,43 @@ function collectRenownRewardSources(
       level: i + 1,
       type: "renown",
     });
+  }
+}
+
+function processQuestRewards(
+  rewards: unknown[],
+  questId: string,
+  accumulator: ItemSourceAccumulator,
+  cosmeticAccumulator?: CosmeticSourceAccumulator,
+): void {
+  for (const reward of rewards) {
+    if (typeof reward !== "object" || reward === null) continue;
+    const obj = reward as Record<string, unknown>;
+
+    if (obj.item) {
+      accumulator.add(obj.item as ItemId, {
+        questId: questId as QuestId,
+        trigger: "completion",
+        type: "quest",
+      });
+    }
+
+    if (obj.player_cosmetic && cosmeticAccumulator) {
+      cosmeticAccumulator.add(obj.player_cosmetic as CosmeticId, {
+        questId: questId as QuestId,
+        trigger: "completion",
+        type: "quest",
+      });
+    }
+
+    if (obj.tiers && Array.isArray(obj.tiers)) {
+      for (const tier of obj.tiers) {
+        if (typeof tier !== "object" || tier === null) continue;
+        const tierRewards = Array.isArray((tier as Record<string, unknown>).rewards)
+          ? ((tier as Record<string, unknown>).rewards as unknown[])
+          : [];
+        processQuestRewards(tierRewards, questId, accumulator, cosmeticAccumulator);
+      }
+    }
   }
 }
