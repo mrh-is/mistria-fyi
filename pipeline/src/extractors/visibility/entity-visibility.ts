@@ -280,7 +280,7 @@ function assignQuestVisibility(
       quest.visibility =
         prerequisites.length === 0
           ? ALWAYS
-          : orSimplify(
+          : andSimplify(
               prerequisites.map((prereq): VisibilityCondition => ({
                 questId: prereq,
                 type: "questCompleted",

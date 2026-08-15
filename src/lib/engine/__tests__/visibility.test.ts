@@ -4,7 +4,6 @@ import {
   deriveProgressionState,
   isConditionInvertible,
   isEntityNameVisible,
-  isSourceDetailVisible,
   isVisible,
   satisfyCondition,
 } from "../visibility.js";
@@ -581,17 +580,17 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
     const completed = makeCompleted();
     const state1 = deriveProgressionState(completed, trackerData, false);
     expect(isEntityNameVisible(entityCondition, state1)).toBe(false);
-    expect(isSourceDetailVisible(sourceCondition, state1)).toBe(false);
+    expect(isVisible(sourceCondition, state1)).toBe(false);
 
     completed.mines.floor = 20;
     const state2 = deriveProgressionState(completed, trackerData, false);
     expect(isEntityNameVisible(entityCondition, state2)).toBe(false);
-    expect(isSourceDetailVisible(sourceCondition, state2)).toBe(true);
+    expect(isVisible(sourceCondition, state2)).toBe(true);
 
     satisfyCondition(entityCondition, completed, trackerData);
     const state3 = deriveProgressionState(completed, trackerData, false);
     expect(isEntityNameVisible(entityCondition, state3)).toBe(true);
-    expect(isSourceDetailVisible(sourceCondition, state3)).toBe(true);
+    expect(isVisible(sourceCondition, state3)).toBe(true);
   });
 
   it("satisfying a quest reveals NPC-gated content", () => {

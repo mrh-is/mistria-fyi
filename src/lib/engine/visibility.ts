@@ -131,14 +131,6 @@ export function isEntityNameVisible(
   return isVisible(entityVisibility, state);
 }
 
-export function isSourceDetailVisible(
-  sourceVisibility: undefined | VisibilityCondition,
-  state: UserProgressionState,
-): boolean {
-  if (!sourceVisibility) return true;
-  return isVisible(sourceVisibility, state);
-}
-
 export function isVisible(condition: VisibilityCondition, state: UserProgressionState): boolean {
   if (state.showSpoilers) return true;
 
@@ -198,7 +190,7 @@ export function satisfyCondition(
       );
       return;
     case "married":
-      completed.marriedNpc = condition.npcId;
+      completed.marriedNpc ??= condition.npcId;
       return;
     case "minesLevel":
       completed.mines.floor = Math.max(completed.mines.floor, condition.floor);
@@ -285,14 +277,14 @@ function evaluateQuestPrerequisites(
       if (!condition) return "unavailable";
       const tempState: UserProgressionState = {
         knownNpcs: new Set(),
-        marriedNpc: null,
+        marriedNpc: completed.marriedNpc,
         minesFloor: completed.mines.floor,
         npcLevels: completed.npcLevels,
         questVisibility: questVisibilitySoFar,
         renown: completed.renown,
         showSpoilers: false,
         skillLevels: completed.skillLevels,
-        unlockedPerks: new Set(),
+        unlockedPerks: completed.unlockedPerks,
       };
       return isVisible(condition, tempState) ? "available" : "unavailable";
     }
