@@ -1,4 +1,4 @@
-import { formatBiomeName, seasonLabel } from "./format.js";
+import { formatBiomeName, formatStoreName, seasonLabel, withIndefiniteArticle } from "./format.js";
 
 import type {
   BiomeId,
@@ -7,6 +7,7 @@ import type {
   NpcId,
   PerkId,
   QuestId,
+  RecipeSource,
   Season,
   StoreId,
 } from "$lib/types/tracker-data.js";
@@ -82,6 +83,121 @@ export function buildPerkLabel(
   ];
 }
 
+export function buildSourceSegments(
+  source: RecipeSource,
+  lookups: SegmentLookups,
+): [SourceSegment, ...SourceSegment[]] {
+  switch (source.type) {
+    case "beach_cave_chest":
+      return ["Find in the Gold Treasure Chest in the Beach Cave"];
+    case "chicken_statue":
+      return [`Obtain from the Chicken Statue (${String(source.cost)} beads)`];
+    case "default":
+      return ["Available from the start"];
+    case "dragon_forge":
+      return [
+        "Craft at ",
+        {
+          condition: { floor: 90, type: "minesLevel" },
+          revealed: ["the Dragon Forge (Mines level 90)"],
+        },
+      ];
+    case "engagement":
+      return ["Receive from Elsie after getting to 10 hearts with a dateable character"];
+    case "festival": {
+      const festivalName =
+        lookups.festivals[source.festivalId as string]?.name ?? titleCase(source.festivalId);
+      const storeName = formatStoreName(source.storeId, lookups.stores);
+      const date = lookups.festivalDates[source.festivalId];
+      const dateSuffix = date ? ` (${formatDateLabel(date.season, date.day)})` : "";
+      return [`Purchase from ${storeName} at the ${festivalName}${dateSuffix}`];
+    }
+    case "letter": {
+      if (source.trigger === "shipped_item" || source.trigger === "donated_item") {
+        const verb = source.trigger === "shipped_item" ? "shipping" : "donating";
+        const itemName =
+          lookups.itemNames[source.triggerItemId as string] ?? titleCase(source.triggerItemId);
+        const itemVis = lookups.itemVisibility[source.triggerItemId];
+        const nameWithArticle = withIndefiniteArticle(itemName);
+        const itemSegment: SourceSegment =
+          itemVis && itemVis.type !== "always"
+            ? { condition: itemVis, revealed: [nameWithArticle] }
+            : nameWithArticle;
+        return joinSegments(`Receive in a letter after ${verb} `, itemSegment);
+      }
+      const { day, season, year } = source.triggerDate;
+      const dateStr = year
+        ? `${formatDateLabel(season, day)}, Year ${String(year)}`
+        : formatDateLabel(season, day);
+      return [`Receive in a letter after reaching ${dateStr}`];
+    }
+    case "mines_chest": {
+      const biomeLabel = buildBiomeLabel(source.biomeId, lookups);
+      const perkLabel = buildPerkLabel(source.perkId, lookups);
+      return joinSegments("Find in a Treasure Chest in ", biomeLabel, ", with ", perkLabel);
+    }
+    case "mines_dig_site": {
+      const biomeLabel = buildBiomeLabel(source.biomeId, lookups);
+      const perk = lookups.perks[source.perkId as string];
+      const perkName = perk?.name ?? titleCase(source.perkId);
+      const skillName = perk ? (lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId)) : "";
+      const tierStr = perk ? ` (${skillName} tier ${String(perk.tier)})` : "";
+
+      return [
+        {
+          condition: { perkId: source.perkId, type: "perkUnlocked" },
+          revealed: joinSegments("Dig up in ", biomeLabel, `, with the ${perkName} perk${tierStr}`),
+        },
+      ];
+    }
+
+    case "museum_donation": {
+      const wingName = titleCase(source.wingId);
+      const setWord = source.setCount === 1 ? "set" : "sets";
+      return [`Complete ${String(source.setCount)} ${setWord} in the ${wingName} wing`];
+    }
+    case "perk": {
+      const perkLabel = buildPerkLabel(source.perkId, lookups);
+      return joinSegments("Unlock ", perkLabel);
+    }
+    case "quest":
+      return buildQuestSegments(source, lookups);
+    case "renown":
+      return [`Get the town's renown rank to level ${String(source.level)}`];
+    case "scroll_bundle": {
+      const storeName = buildStoreName(source.storeId, lookups);
+      const qualifier = buildStoreQualifier(source.visibility, lookups, source.storeId);
+      const bundleSegment: SourceSegment =
+        lookups.recipeVisibility.type === "always"
+          ? `the ${source.bundleName}`
+          : { condition: lookups.recipeVisibility, revealed: [`the ${source.bundleName}`] };
+      return joinSegments("Purchase ", bundleSegment, " from ", storeName, qualifier);
+    }
+    case "store": {
+      const storeName = buildStoreName(source.storeId, lookups);
+      const qualifier = source.upgraded
+        ? buildStoreQualifier(source.visibility, lookups, source.storeId)
+        : [];
+      return joinSegments("Purchase from ", storeName, qualifier);
+    }
+    case "store_with_perk": {
+      const storeName = buildStoreName(source.storeId, lookups);
+      const perkLabel = buildPerkLabel(source.perkId, lookups);
+      return joinSegments("Purchase from ", storeName, ", with ", perkLabel);
+    }
+    case "treasure_chest": {
+      const tierData = lookups.treasureChestTiers[source.tier as string];
+      const name = tierData?.name ?? `${titleCase(source.tier)} Treasure Box`;
+      return [`Fish up ${withIndefiniteArticle(name)}`];
+    }
+    case "upgrade":
+      return [upgradeSourceText(source)];
+
+    case "wishing_well":
+      return [`Obtain from the Wishing Well (${String(source.cost)}t)`];
+  }
+}
+
 export function buildStoreQualifier(
   sourceVisibility: undefined | VisibilityCondition,
   lookups: SegmentLookups,
@@ -104,9 +220,193 @@ export function formatDateLabel(season: Season, day: number): string {
   return `${seasonLabel(season)} ${String(day)}`;
 }
 
+function buildCookingChallengeSegments(
+  source: RecipeSource & { type: "quest" },
+  lookups: SegmentLookups,
+): [SourceSegment, ...SourceSegment[]] {
+  const recipeName = source.challengeRecipeId
+    ? (lookups.recipeNames[source.challengeRecipeId] ?? titleCase(source.challengeRecipeId))
+    : (lookups.questNames[source.questId] ?? titleCase(source.questId));
+  const questVis = source.visibility;
+  const categoryVis = lookups.categoryVisibility.tali_challenges;
+
+  const nameSegment: SourceSegment =
+    questVis && questVis.type !== "always"
+      ? { condition: questVis, revealed: [recipeName] }
+      : recipeName;
+
+  const inner = joinSegments("Complete the ", nameSegment, " cooking challenge");
+
+  if (!categoryVis || categoryVis.type === "always") return inner;
+  return [{ condition: categoryVis, revealed: inner }];
+}
+
+function buildCrownQuestSegments(
+  source: RecipeSource & { type: "quest" },
+  lookups: SegmentLookups,
+): [SourceSegment, ...SourceSegment[]] {
+  const questName = lookups.questNames[source.questId] ?? titleCase(source.questId);
+  const subject = questName.replace(/^Crown Request:?\s*/, "");
+  const questVis = source.visibility;
+  const categoryVis = lookups.categoryVisibility.crown_quests;
+
+  const subjectSegment: SourceSegment =
+    questVis && questVis.type !== "always" ? { condition: questVis, revealed: [subject] } : subject;
+
+  const inner = joinSegments("Complete the Crown Request for ", subjectSegment);
+
+  if (!categoryVis || categoryVis.type === "always") return inner;
+  return [{ condition: categoryVis, revealed: inner }];
+}
+
+function buildFetchQuestSegments(
+  source: RecipeSource & { type: "quest" },
+  lookups: SegmentLookups,
+): [SourceSegment, ...SourceSegment[]] {
+  const npcId = lookups.questNpcIds[source.questId];
+  const npcName = npcId ? (lookups.npcNames[npcId] ?? titleCase(npcId)) : "???";
+  const npcVis = npcId ? lookups.npcVisibility[npcId] : undefined;
+  const questVis = source.visibility;
+
+  const npcSegment: SourceSegment =
+    npcVis && npcVis.type !== "always" ? { condition: npcVis, revealed: [npcName] } : npcName;
+
+  const itemId = source.requestedItemId;
+  const itemName = itemId ? (lookups.itemNames[itemId as string] ?? titleCase(itemId)) : "???";
+  const itemSegment: SourceSegment =
+    questVis && questVis.type !== "always"
+      ? { condition: questVis, revealed: [itemName] }
+      : itemName;
+
+  return joinSegments("Complete ", npcSegment, "'s request for ", itemSegment);
+}
+
+function buildHeartQuestSegments(
+  source: RecipeSource & { type: "quest" },
+  lookups: SegmentLookups,
+): [SourceSegment, ...SourceSegment[]] {
+  const questName = lookups.questNames[source.questId] ?? titleCase(source.questId);
+  const questVis = source.visibility;
+
+  const npcId = lookups.questNpcIds[source.questId];
+  const npcName = npcId ? (lookups.npcNames[npcId] ?? titleCase(npcId)) : "???";
+  const npcVis = npcId ? lookups.npcVisibility[npcId] : undefined;
+
+  const npcSegment: SourceSegment =
+    npcVis && npcVis.type !== "always" ? { condition: npcVis, revealed: [npcName] } : npcName;
+  const questSegment: SourceSegment =
+    questVis && questVis.type !== "always"
+      ? { condition: questVis, revealed: [questName] }
+      : questName;
+
+  return joinSegments("Complete ", npcSegment, "'s ", questSegment, " quest");
+}
+
+function buildMissionQuestSegments(
+  source: RecipeSource & { type: "quest" },
+  lookups: SegmentLookups,
+): [SourceSegment, ...SourceSegment[]] {
+  const questName = lookups.questNames[source.questId] ?? titleCase(source.questId);
+  const questVis = source.visibility;
+  const categoryVis = lookups.categoryVisibility.stillwell_challenges;
+
+  const nameSegment: SourceSegment =
+    questVis && questVis.type !== "always"
+      ? { condition: questVis, revealed: [questName] }
+      : questName;
+
+  const inner = joinSegments("Complete the ", nameSegment, " mission");
+
+  if (!categoryVis || categoryVis.type === "always") return inner;
+  return [{ condition: categoryVis, revealed: inner }];
+}
+
+function buildQuestSegments(
+  source: RecipeSource & { type: "quest" },
+  lookups: SegmentLookups,
+): [SourceSegment, ...SourceSegment[]] {
+  const questType = source.questType as string;
+
+  switch (questType) {
+    case "crown_quests":
+      return buildCrownQuestSegments(source, lookups);
+    case "fetch_quests":
+      return buildFetchQuestSegments(source, lookups);
+    case "heart_quests":
+      return buildHeartQuestSegments(source, lookups);
+    case "stillwell_challenges":
+      return buildMissionQuestSegments(source, lookups);
+    case "tali_challenges":
+      return buildCookingChallengeSegments(source, lookups);
+    default:
+      return buildStoryQuestSegments(source, lookups);
+  }
+}
+
+function buildStoreName(
+  storeId: StoreId,
+  lookups: SegmentLookups,
+): [SourceSegment, ...SourceSegment[]] {
+  const vis = lookups.storeVisibility[storeId];
+  const name = formatStoreName(storeId, lookups.stores);
+  if (!vis || vis.type === "always") return [name];
+  return [{ condition: vis, revealed: [name] }];
+}
+
+function buildStoryQuestSegments(
+  source: RecipeSource & { type: "quest" },
+  lookups: SegmentLookups,
+): [SourceSegment, ...SourceSegment[]] {
+  const questName = lookups.questNames[source.questId] ?? titleCase(source.questId);
+  const questVis = source.visibility;
+
+  // Handle quest names starting with "The" to avoid "the The"
+  const displayName = questName.startsWith("The ") ? questName.slice(4) : questName;
+  const prefix = "Complete the ";
+
+  if (!questVis || questVis.type === "always") {
+    return [`${prefix}${displayName} quest`];
+  }
+  return joinSegments(prefix, { condition: questVis, revealed: [displayName] }, " quest");
+}
+
+function joinSegments(
+  ...parts: (SourceSegment | SourceSegment[])[]
+): [SourceSegment, ...SourceSegment[]] {
+  const flat: SourceSegment[] = [];
+  for (const part of parts) {
+    if (Array.isArray(part)) {
+      flat.push(...part);
+    } else {
+      flat.push(part);
+    }
+  }
+
+  const merged: SourceSegment[] = [];
+  for (const segment of flat) {
+    const last = merged.at(-1);
+    if (typeof segment === "string" && typeof last === "string") {
+      merged[merged.length - 1] = last + segment;
+    } else {
+      merged.push(segment);
+    }
+  }
+
+  if (merged.length === 0) throw new Error("joinSegments: no segments provided");
+  return merged as [SourceSegment, ...SourceSegment[]];
+}
+
 function titleCase(s: string): string {
   return s
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
+}
+
+function upgradeSourceText(source: RecipeSource & { type: "upgrade" }): string {
+  const UPGRADE_TEXT: Record<string, string> = {
+    "House Stairs": "Upgrade your home a fourth time",
+    "Starter Farm Bridge": "Expand your farm",
+  };
+  return UPGRADE_TEXT[source.upgradeName] ?? `Purchase ${source.upgradeName}`;
 }
