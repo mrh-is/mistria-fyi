@@ -95,11 +95,26 @@ function makeTrackerData(overrides: Record<string, unknown>): TrackerData {
 }
 
 describe("extractStoreVisibility", () => {
-  it("gates the general store behind its unlock quest", () => {
-    const fiddle = makeFiddle({ stores: { general: {} } });
+  it("returns always for starter stores", () => {
+    const fiddle = makeFiddle({
+      stores: { carpenter: {}, general: {}, hayden: {}, inn: {} },
+    });
     const result = extractStoreVisibility(fiddle as never);
-    expect(result["general" as StoreId]).toEqual({
-      questId: "repair_the_general_store",
+    expect(result["carpenter" as StoreId]).toEqual({ type: "always" });
+    expect(result["general" as StoreId]).toEqual({ type: "always" });
+    expect(result["hayden" as StoreId]).toEqual({ type: "always" });
+    expect(result["inn" as StoreId]).toEqual({ type: "always" });
+  });
+
+  it("returns questCompleted for NPC market stalls", () => {
+    const fiddle = makeFiddle({ stores: { darcy: {}, wheedle: {} } });
+    const result = extractStoreVisibility(fiddle as never);
+    expect(result["darcy" as StoreId]).toEqual({
+      questId: "repair_the_bridge",
+      type: "questCompleted",
+    });
+    expect(result["wheedle" as StoreId]).toEqual({
+      questId: "upgrade_the_saturday_market",
       type: "questCompleted",
     });
   });
@@ -545,6 +560,184 @@ describe("assignEntityVisibility — recipes", () => {
     expect(recipe.sources[0].visibility).toEqual({
       questId: "upgrade_the_saturday_market_plaza",
       type: "questAvailable",
+    });
+  });
+
+  it("keeps a starter-store recipe's entity condition as questCompleted while the source becomes questAvailable", () => {
+    const trackerData = makeTrackerData({
+      recipes: {
+        general_dish: {
+          memberItemIds: [],
+          presentations: [],
+          sources: [
+            {
+              storeId: "general" as StoreId,
+              type: "store",
+              upgraded: true,
+              visibility: {
+                questId: "repair_the_general_store" as QuestId,
+                type: "questCompleted",
+              },
+            },
+          ],
+        },
+      },
+    });
+    assignEntityVisibility(
+      trackerData,
+      { general: { type: "always" } } as never,
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
+    const recipe = trackerData.recipes["general_dish" as RecipeId];
+    expect(recipe.visibility).toEqual({
+      questId: "repair_the_general_store",
+      type: "questCompleted",
+    });
+    expect(recipe.sources[0].visibility).toEqual({
+      questId: "repair_the_general_store",
+      type: "questAvailable",
+    });
+  });
+
+  it("composes the store gate, stock gate, and perkUnlocked for a store_with_perk recipe", () => {
+    const trackerData = makeTrackerData({
+      recipes: {
+        espresso: {
+          memberItemIds: [],
+          presentations: [],
+          sources: [
+            {
+              perkId: "espresso_yourself" as PerkId,
+              storeId: "darcy" as StoreId,
+              type: "store_with_perk",
+              visibility: {
+                questId: "repair_the_general_store" as QuestId,
+                type: "questCompleted",
+              },
+            },
+          ],
+        },
+      },
+    });
+    assignEntityVisibility(
+      trackerData,
+      {
+        darcy: { questId: "repair_the_bridge" as QuestId, type: "questCompleted" },
+      } as never,
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
+    const recipe = trackerData.recipes["espresso" as RecipeId];
+    expect(recipe.visibility).toEqual({
+      conditions: [
+        { questId: "repair_the_bridge", type: "questCompleted" },
+        { questId: "repair_the_general_store", type: "questCompleted" },
+        { perkId: "espresso_yourself", type: "perkUnlocked" },
+      ],
+      type: "and",
+    });
+    expect(recipe.sources[0].visibility).toEqual({
+      conditions: [
+        { questId: "repair_the_bridge", type: "questAvailable" },
+        { questId: "repair_the_general_store", type: "questAvailable" },
+        { perkId: "espresso_yourself", type: "perkUnlocked" },
+      ],
+      type: "and",
+    });
+  });
+
+  it("only converts the nested questCompleted leaf to questAvailable in an and(questCompleted, skillLevel) stock gate", () => {
+    const trackerData = makeTrackerData({
+      recipes: {
+        and_gated_dish: {
+          memberItemIds: [],
+          presentations: [],
+          sources: [
+            {
+              storeId: "general" as StoreId,
+              type: "store",
+              visibility: {
+                conditions: [
+                  { questId: "repair_the_general_store" as QuestId, type: "questCompleted" },
+                  { level: 10, skillId: "cooking" as SkillId, type: "skillLevel" },
+                ],
+                type: "and",
+              },
+            },
+          ],
+        },
+      },
+    });
+    assignEntityVisibility(
+      trackerData,
+      { general: { type: "always" } } as never,
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
+    const recipe = trackerData.recipes["and_gated_dish" as RecipeId];
+    expect(recipe.visibility).toEqual({
+      conditions: [
+        { questId: "repair_the_general_store", type: "questCompleted" },
+        { level: 10, skillId: "cooking", type: "skillLevel" },
+      ],
+      type: "and",
+    });
+    expect(recipe.sources[0].visibility).toEqual({
+      conditions: [
+        { questId: "repair_the_general_store", type: "questAvailable" },
+        { level: 10, skillId: "cooking", type: "skillLevel" },
+      ],
+      type: "and",
+    });
+  });
+
+  it("only converts the nested questCompleted leaf to questAvailable in an or(questCompleted, minesLevel) stock gate", () => {
+    const trackerData = makeTrackerData({
+      recipes: {
+        or_gated_dish: {
+          memberItemIds: [],
+          presentations: [],
+          sources: [
+            {
+              storeId: "general" as StoreId,
+              type: "store",
+              visibility: {
+                conditions: [
+                  { questId: "repair_the_general_store" as QuestId, type: "questCompleted" },
+                  { floor: 5, type: "minesLevel" },
+                ],
+                type: "or",
+              },
+            },
+          ],
+        },
+      },
+    });
+    assignEntityVisibility(
+      trackerData,
+      { general: { type: "always" } } as never,
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
+    const recipe = trackerData.recipes["or_gated_dish" as RecipeId];
+    expect(recipe.visibility).toEqual({
+      conditions: [
+        { questId: "repair_the_general_store", type: "questCompleted" },
+        { floor: 5, type: "minesLevel" },
+      ],
+      type: "or",
+    });
+    expect(recipe.sources[0].visibility).toEqual({
+      conditions: [
+        { questId: "repair_the_general_store", type: "questAvailable" },
+        { floor: 5, type: "minesLevel" },
+      ],
+      type: "or",
     });
   });
 

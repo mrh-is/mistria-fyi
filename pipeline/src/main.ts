@@ -109,7 +109,8 @@ function main(): void {
 
   console.log("Step 3: Extracting tracker data...");
   const museum = extractMuseum(fiddle);
-  const { recipeIdByItemId, recipes } = extractRecipes(fiddle);
+  const cutsceneQuestMap = buildCutsceneQuestMap(fiddle);
+  const { recipeIdByItemId, recipes } = extractRecipes(fiddle, cutsceneQuestMap);
   const { almanac, items } = extractAlmanac(fiddle, recipeIdByItemId);
   const animals = extractAnimals(fiddle);
   const npcs = extractNpcs(fiddle);
@@ -139,7 +140,6 @@ function main(): void {
   console.log();
 
   console.log("Step 3b: Extracting visibility data...");
-  const cutsceneQuestMap = buildCutsceneQuestMap(fiddle);
   const questChainsRaw = extractQuestChains(fiddle);
   const storeVisibilityData = extractStoreVisibility(fiddle);
   const npcVisibilityData = extractNpcVisibility();

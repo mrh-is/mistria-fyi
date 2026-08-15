@@ -1,4 +1,6 @@
 import { forEachItem, forEachQuest } from "../extractor-helpers.js";
+import { buildRequirementDefinitions, parseRequirements } from "../requirements.js";
+import { resolveToVisibility } from "./visibility/requirement-resolver.js";
 
 import type {
   BiomeId,
@@ -16,8 +18,10 @@ import type {
   TreasureChestTier,
   WingId,
 } from "$lib/types/tracker-data.js";
+import type { VisibilityCondition } from "$lib/types/visibility.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
+import type { CutsceneQuestMap } from "./visibility/cutscene-quest-map.js";
 
 const QUEST_TYPES_WITH_SCROLLS = [
   "fetch_quests",
@@ -26,6 +30,12 @@ const QUEST_TYPES_WITH_SCROLLS = [
   "tali_challenges",
 ] as const;
 
+const UPGRADE_PREDICATES = new Set([
+  "repaired_carpenters_shop",
+  "repaired_general_store",
+  "repaired_inn",
+]);
+
 interface RawRecipeEntry {
   defaultUnlocked: boolean;
   itemId: string;
@@ -33,10 +43,24 @@ interface RawRecipeEntry {
   recipeId: string;
 }
 
-export function extractRecipes(fiddle: ParsedGameData): {
+interface StockVisibilityContext {
+  cutsceneMap: CutsceneQuestMap;
+  namedRequirements: ReturnType<typeof buildRequirementDefinitions>["namedRequirements"];
+  primitivePredicates: ReturnType<typeof buildRequirementDefinitions>["primitivePredicates"];
+}
+
+export function extractRecipes(
+  fiddle: ParsedGameData,
+  cutsceneMap: CutsceneQuestMap = {},
+): {
   recipeIdByItemId: Map<string, RecipeId>;
   recipes: Record<RecipeId, Recipe>;
 } {
+  const definitions = buildRequirementDefinitions(
+    (fiddle.requirements as Record<string, unknown> | undefined) ?? {},
+  );
+  const stockVisibilityContext: StockVisibilityContext = { cutsceneMap, ...definitions };
+
   const entries = collectRecipeEntries(fiddle);
   const itemIdToRecipeId = new Map<string, string>();
   const grouped = new Map<string, RawRecipeEntry[]>();
@@ -63,14 +87,16 @@ export function extractRecipes(fiddle: ParsedGameData): {
 
   mergeSources(collectQuestScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds));
   mergeSources(collectLetterScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds));
-  mergeSources(collectStoreScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds));
+  mergeSources(
+    collectStoreScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds, stockVisibilityContext),
+  );
   mergeSources(collectMuseumScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds));
   mergeSources(collectChickenStatueSources(fiddle, itemIdToRecipeId, knownRecipeIds));
   mergeSources(collectFishingChestSources(fiddle, itemIdToRecipeId, knownRecipeIds));
   mergeSources(collectWishingWellSources(fiddle, itemIdToRecipeId, knownRecipeIds));
   mergeSources(collectFestivalScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds));
   mergeSources(collectMinesRecipeSources(fiddle, itemIdToRecipeId));
-  mergeSources(collectScrollBundleSources(fiddle, itemIdToRecipeId));
+  mergeSources(collectScrollBundleSources(fiddle, itemIdToRecipeId, stockVisibilityContext));
   mergeSources(collectPerkSources(fiddle, itemIdToRecipeId));
   mergeSources(collectDragonForgeSources(fiddle, itemIdToRecipeId));
   mergeSources(collectRenownRecipeSources(fiddle, itemIdToRecipeId));
@@ -653,6 +679,7 @@ function collectRenownRecipeSources(
 function collectScrollBundleSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
+  ctx: StockVisibilityContext,
 ): Map<string, RecipeSource[]> {
   const result = new Map<string, RecipeSource[]>();
 
@@ -668,7 +695,10 @@ function collectScrollBundleSources(
 
   if (bundleIdToSetTag.size === 0) return result;
 
-  const setTagToStore = new Map<string, { bundleName: string; storeId: string }>();
+  const setTagToStore = new Map<
+    string,
+    { bundleName: string; storeId: string; visibility: VisibilityCondition }
+  >();
   const stores = fiddle.stores as Record<string, Record<string, unknown>> | undefined;
   if (stores) {
     for (const [storeId, store] of Object.entries(stores)) {
@@ -704,7 +734,16 @@ function collectScrollBundleSources(
           const setTag = bundleIdToSetTag.get(itemId);
           if (setTag) {
             const bundleName = bundleIdToName.get(itemId) ?? itemId;
-            setTagToStore.set(setTag, { bundleName, storeId });
+            const entryObject =
+              typeof entry === "object" && entry !== null
+                ? (entry as Record<string, unknown>)
+                : undefined;
+            const visibility = resolveStockVisibility(
+              entryObject?.requirements,
+              `${storeId}/${itemId}`,
+              ctx,
+            );
+            setTagToStore.set(setTag, { bundleName, storeId, visibility });
           }
         }
       }
@@ -719,7 +758,12 @@ function collectScrollBundleSources(
         const recipeId = itemIdToRecipeId.get(itemId);
         if (recipeId && !result.has(recipeId)) {
           result.set(recipeId, [
-            { bundleName: info.bundleName, storeId: info.storeId, type: "scroll_bundle" },
+            {
+              bundleName: info.bundleName,
+              storeId: info.storeId as StoreId,
+              type: "scroll_bundle",
+              ...(info.visibility.type === "always" ? {} : { visibility: info.visibility }),
+            },
           ]);
         }
       }
@@ -733,6 +777,7 @@ function collectStoreScrollSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
   knownRecipeIds: Set<string>,
+  ctx: StockVisibilityContext,
 ): Map<string, RecipeSource[]> {
   const stores = fiddle.stores as Record<string, Record<string, unknown>> | undefined;
   if (!stores) return new Map();
@@ -784,33 +829,36 @@ function collectStoreScrollSources(
           if (!recipeId) continue;
 
           const sources = result.get(recipeId) ?? [];
-          const requirements = obj.requirements as Record<string, unknown> | undefined;
+          const visibility = resolveStockVisibility(
+            obj.requirements,
+            `${storeId}/${recipeId}`,
+            ctx,
+          );
+          const requirements =
+            typeof obj.requirements === "object" && obj.requirements !== null
+              ? (obj.requirements as Record<string, unknown>)
+              : undefined;
+          const upgraded = requirements
+            ? Object.keys(requirements).some((key) => UPGRADE_PREDICATES.has(key))
+            : false;
+          const hasPerk =
+            typeof requirements?.has_perk === "string" ? requirements.has_perk : undefined;
 
-          if (requirements) {
-            const hasPerk = requirements.has_perk as string | undefined;
-            if (hasPerk) {
-              sources.push({
-                perkId: hasPerk as PerkId,
-                storeId: storeId as StoreId,
-                type: "store_with_perk",
-              });
-              result.set(recipeId, sources);
-              continue;
-            }
-            const UPGRADE_PREDICATES = new Set([
-              "repaired_carpenters_shop",
-              "repaired_general_store",
-              "repaired_inn",
-            ]);
-            const isUpgraded = Object.keys(requirements).some((k) => UPGRADE_PREDICATES.has(k));
-            if (isUpgraded) {
-              sources.push({ storeId: storeId as StoreId, type: "store", upgraded: true });
-              result.set(recipeId, sources);
-              continue;
-            }
+          if (hasPerk) {
+            sources.push({
+              perkId: hasPerk as PerkId,
+              storeId: storeId as StoreId,
+              type: "store_with_perk",
+              ...(visibility.type === "always" ? {} : { visibility }),
+            });
+          } else {
+            sources.push({
+              storeId: storeId as StoreId,
+              type: "store",
+              ...(upgraded ? { upgraded: true } : {}),
+              ...(visibility.type === "always" ? {} : { visibility }),
+            });
           }
-
-          sources.push({ storeId: storeId as StoreId, type: "store" });
           result.set(recipeId, sources);
         }
       }
@@ -906,6 +954,20 @@ function resolveScrollTarget(
   if (knownRecipeIds.has(scrollTarget)) return scrollTarget;
   console.warn(`  Warning: scroll target "${scrollTarget}" in ${context} has no matching item`);
   return undefined;
+}
+
+function resolveStockVisibility(
+  requirements: unknown,
+  entityId: string,
+  ctx: StockVisibilityContext,
+): VisibilityCondition {
+  const expression = parseRequirements(
+    requirements,
+    ctx.namedRequirements,
+    ctx.primitivePredicates,
+    { entityId, fieldPath: "requirements", sourcePath: "fiddle/stores.toml" },
+  );
+  return resolveToVisibility(expression, ctx.cutsceneMap);
 }
 
 function sourceKey(s: RecipeSource): string {

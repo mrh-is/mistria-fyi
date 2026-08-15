@@ -36,11 +36,7 @@ export const CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER = 20;
  * Taliferro and Stillwell, who have no `stores.toml` entry of their own) are always visible.
  */
 const STORE_UNLOCK_QUESTS: Partial<Record<string, QuestId>> = {
-  carpenter: "upgrade_the_carpenters_shop" as QuestId,
   darcy: "repair_the_bridge" as QuestId,
-  general: "repair_the_general_store" as QuestId,
-  hayden: "repair_haydens_barn" as QuestId,
-  inn: "repair_the_inn" as QuestId,
   louis: "repair_the_bridge" as QuestId,
   merri: "repair_the_bridge" as QuestId,
   vera: "repair_the_bridge" as QuestId,
@@ -437,15 +433,21 @@ function computeRecipeSourceConditions(
     }
     case "scroll_bundle":
     case "store": {
-      const gate = storeGateCondition(source.storeId, ctx.storeVisibility);
-      return { entity: gate, source: toAvailable(gate) };
+      const storeGate = storeGateCondition(source.storeId, ctx.storeVisibility);
+      // At this point source.visibility carries the extraction-time stock entity gate.
+      const stockGate = source.visibility ?? ALWAYS;
+      return {
+        entity: andSimplify([storeGate, stockGate]),
+        source: andSimplify([toAvailable(storeGate), toAvailable(stockGate)]),
+      };
     }
     case "store_with_perk": {
       const storeGate = storeGateCondition(source.storeId, ctx.storeVisibility);
+      const stockGate = source.visibility ?? ALWAYS;
       const perkCondition: VisibilityCondition = { perkId: source.perkId, type: "perkUnlocked" };
       return {
-        entity: andSimplify([storeGate, perkCondition]),
-        source: andSimplify([toAvailable(storeGate), perkCondition]),
+        entity: andSimplify([storeGate, stockGate, perkCondition]),
+        source: andSimplify([toAvailable(storeGate), toAvailable(stockGate), perkCondition]),
       };
     }
   }
@@ -545,7 +547,27 @@ function storeGateCondition(
 }
 
 function toAvailable(condition: VisibilityCondition): VisibilityCondition {
-  return condition.type === "questCompleted"
-    ? { questId: condition.questId, type: "questAvailable" }
-    : condition;
+  switch (condition.type) {
+    case "always":
+    case "heartLevel":
+    case "married":
+    case "minesLevel":
+    case "npcKnown":
+    case "perkUnlocked":
+    case "questAvailable":
+    case "renownLevel":
+    case "skillLevel":
+      return condition;
+    case "and":
+    case "or":
+      return simplifyCondition({
+        conditions: condition.conditions.map(toAvailable) as [
+          VisibilityCondition,
+          ...VisibilityCondition[],
+        ],
+        type: condition.type,
+      });
+    case "questCompleted":
+      return { questId: condition.questId, type: "questAvailable" };
+  }
 }
