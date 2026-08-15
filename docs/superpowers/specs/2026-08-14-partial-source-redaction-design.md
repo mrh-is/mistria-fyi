@@ -4,8 +4,8 @@ Extends the spoiler system spec (`2026-08-12-spoiler-system-design.md`) with per
 of source text. Instead of hiding or showing entire source strings, each source is composed of
 segments that independently redact based on the player's progression.
 
-Related issues: #88 (spoiler system PR), #78 (ensure all items have sources), #97 (audit
-sources against wiki), #6 (spoiler UI redesign).
+Related issues: #88 (spoiler system PR), #78 (ensure all items have sources), #97 (audit sources
+against wiki), #6 (spoiler UI redesign).
 
 ## Core principle
 
@@ -24,8 +24,8 @@ Two things redact independently:
 
 ## 1. Segment tree data model
 
-A source's display form is a recursive tree of segments, computed at render time by the frontend from
-the existing `RecipeSource` data and tracker-data lookup tables.
+A source's display form is a recursive tree of segments, computed at render time by the frontend
+from the existing `RecipeSource` data and tracker-data lookup tables.
 
 ### Types
 
@@ -56,15 +56,15 @@ Both `revealed` and `redacted` are non-empty tuple arrays.
 function buildSourceSegments(
   source: RecipeSource,
   lookups: RecipeSourceLookups,
-): [SourceSegment, ...SourceSegment[]]
+): [SourceSegment, ...SourceSegment[]];
 ```
 
-This replaces `recipeSourceLabel()` for redaction-aware contexts. The flat-string function can remain
-for contexts that need plain text (search indexing, accessibility labels, etc.).
+This replaces `recipeSourceLabel()` for redaction-aware contexts. The flat-string function can
+remain for contexts that need plain text (search indexing, accessibility labels, etc.).
 
-The function reads `source.visibility` (the existing `VisibilityCondition` on each `RecipeSource`) to
-determine conditions for qualifier fragments like "(after upgrading)". It uses `lookups` to resolve
-store visibility, perk skill levels, biome floor ranges, and other fragment conditions. The
+The function reads `source.visibility` (the existing `VisibilityCondition` on each `RecipeSource`)
+to determine conditions for qualifier fragments like "(after upgrading)". It uses `lookups` to
+resolve store visibility, perk skill levels, biome floor ranges, and other fragment conditions. The
 `source.visibility` field is preserved in the data; it is not removed by this spec.
 
 ### UI rendering contract
@@ -130,21 +130,21 @@ itself. Individual item availability within these stores is gated by per-item re
 `stores.toml` (e.g. `repaired_inn = true`), which the pipeline must use to derive per-recipe
 visibility conditions rather than inheriting the store-level gate.
 
-| Store ID | Name |
-|---|---|
-| `balor` | Balor's Wagon |
-| `blacksmith` | Blacksmith's Shop |
-| `carpenter` | Carpenter's Shop |
-| `general` | General Store |
-| `hayden` | Hayden's Shop |
-| `inn` | Sleeping Dragon Inn |
-| `terithia` | Tackle Shop |
-| `valens_clinic` | Valen's Clinic |
+| Store ID        | Name                |
+| --------------- | ------------------- |
+| `balor`         | Balor's Wagon       |
+| `blacksmith`    | Blacksmith's Shop   |
+| `carpenter`     | Carpenter's Shop    |
+| `general`       | General Store       |
+| `hayden`        | Hayden's Shop       |
+| `inn`           | Sleeping Dragon Inn |
+| `terithia`      | Tackle Shop         |
+| `valens_clinic` | Valen's Clinic      |
 
 Currently `carpenter`, `general`, `hayden`, and `inn` have `storeVisibility` gated by quest
 completion. This is wrong: it causes the pipeline to over-gate all recipes from these stores (e.g.
-Lemon Pie is currently redacted until the inn is upgraded, but it's purchasable from day one). Fixing
-`storeVisibility` to `always` for these stores is a prerequisite for this spec, paired with a
+Lemon Pie is currently redacted until the inn is upgraded, but it's purchasable from day one).
+Fixing `storeVisibility` to `always` for these stores is a prerequisite for this spec, paired with a
 pipeline fix to derive recipe visibility from per-item requirements.
 
 **Festival stalls** (also always visible): `elsie_spring_festival`, `maple_spring_festival`,
@@ -152,17 +152,17 @@ pipeline fix to derive recipe visibility from per-item requirements.
 
 **NPC market stalls** (name redacted until quest completion reveals the NPC):
 
-| Store ID | Revealed by |
-|---|---|
-| `darcy`, `louis`, `merri`, `vera` | `questCompleted(repair_the_bridge)` |
-| `wheedle` | `questCompleted(upgrade_the_saturday_market)` |
-| `zorel` | `questCompleted(upgrade_the_saturday_market_plaza)` |
+| Store ID                          | Revealed by                                         |
+| --------------------------------- | --------------------------------------------------- |
+| `darcy`, `louis`, `merri`, `vera` | `questCompleted(repair_the_bridge)`                 |
+| `wheedle`                         | `questCompleted(upgrade_the_saturday_market)`       |
+| `zorel`                           | `questCompleted(upgrade_the_saturday_market_plaza)` |
 
 ### Perk name visibility
 
 Perk names (and their skill/tier label) redact based on `perk.visibility`, which is a `skillLevel`
-condition for the tier's threshold. The perk name is revealed when the player reaches the skill level
-where the perk appears in the skill tree, not when the perk is unlocked.
+condition for the tier's threshold. The perk name is revealed when the player reaches the skill
+level where the perk appears in the skill tree, not when the perk is unlocked.
 
 ### Biome name & floor range visibility
 
@@ -174,8 +174,8 @@ preserves structural text with "Mines floors" as a generic label:
 
 ### Quest name visibility
 
-Quest names redact until the quest is `available` or `completed` per `questVisibility`. See
-section 3.1 for per-quest-type formatting.
+Quest names redact until the quest is `available` or `completed` per `questVisibility`. See section
+3.1 for per-quest-type formatting.
 
 ### Item name visibility (in trigger contexts)
 
@@ -236,7 +236,8 @@ Wagon) produce no qualifier.
 
 - Fully redacted: `Purchase ███ from the General Store (after ███)`
 - Qualifier revealed: `Purchase ███ from the General Store (after repairing)`
-- Fully revealed: `Purchase the Fall Crop Sign Scroll Bundle from the General Store (after repairing)`
+- Fully revealed:
+  `Purchase the Fall Crop Sign Scroll Bundle from the General Store (after repairing)`
 
 **Example — Chess Pawn Piece** (`scroll_bundle(balor, "Chess Piece Scroll Bundle")`):
 
@@ -247,28 +248,33 @@ Wagon) produce no qualifier.
 
 Format: `Find in a Treasure Chest in <biomeLabel>, with <perkLabel>`
 
-Structure is always visible (treasure chests are not a mechanic surprise). Biome label and perk label
-redact independently per the shared grammar segments.
+Structure is always visible (treasure chests are not a mechanic surprise). Biome label and perk
+label redact independently per the shared grammar segments.
 
 **Example — Chickpea Curry** (`mines_chest(biome_1, taste_maker)`):
 
-- Fully redacted: `Find in a Treasure Chest in ███ (Mines floors ███–███), with the ███ perk (Cooking tier 1)`
-- Biome redacted, perk revealed: `Find in a Treasure Chest in ███ (Mines floors ███–███), with the Taste Maker perk (Cooking tier 1)`
-- Fully revealed: `Find in a Treasure Chest in the Tide Caverns (Mines floors 20–39), with the Taste Maker perk (Cooking tier 1)`
+- Fully redacted:
+  `Find in a Treasure Chest in ███ (Mines floors ███–███), with the ███ perk (Cooking tier 1)`
+- Biome redacted, perk revealed:
+  `Find in a Treasure Chest in ███ (Mines floors ███–███), with the Taste Maker perk (Cooking tier 1)`
+- Fully revealed:
+  `Find in a Treasure Chest in the Tide Caverns (Mines floors 20–39), with the Taste Maker perk (Cooking tier 1)`
 
 ### `mines_dig_site`
 
 Format: `Dig up in <biomeLabel>, with <perkLabel>`
 
 **Entire source is gated** behind `perkUnlocked(perkId)` as a top-level conditional node. Dig sites
-are a mechanic surprise; knowing they exist is itself a spoiler. Once the perk is unlocked, the biome
-label redacts on `minesLevel` as a nested conditional.
+are a mechanic surprise; knowing they exist is itself a spoiler. Once the perk is unlocked, the
+biome label redacts on `minesLevel` as a nested conditional.
 
 **Example — Stalactite Arch** (`mines_dig_site(biome_2, natural_beauty)`):
 
 - Mechanic hidden: `███`
-- Perk unlocked, biome redacted: `Dig up in ███ (Mines floors ███–███), with the Natural Beauty perk (Archaeology tier 3)`
-- Fully revealed: `Dig up in the Deep Earth (Mines floors 40–59), with the Natural Beauty perk (Archaeology tier 3)`
+- Perk unlocked, biome redacted:
+  `Dig up in ███ (Mines floors ███–███), with the Natural Beauty perk (Archaeology tier 3)`
+- Fully revealed:
+  `Dig up in the Deep Earth (Mines floors 40–59), with the Natural Beauty perk (Archaeology tier 3)`
 
 ### `perk`
 
@@ -353,13 +359,13 @@ always visible; only the location name redacts.
 ### `upgrade`
 
 Special-cased source text per item. These are not store purchases; the recipe is a side effect of a
-larger farm/house upgrade. No redactable fragments; the text is intentionally cryptic enough that the
-player will puzzle it out.
+larger farm/house upgrade. No redactable fragments; the text is intentionally cryptic enough that
+the player will puzzle it out.
 
-| Item | Source text |
-|---|---|
-| House Stairs | Upgrade your home a fourth time |
-| Starter Farm Bridge | Expand your farm |
+| Item                | Source text                     |
+| ------------------- | ------------------------------- |
+| House Stairs        | Upgrade your home a fourth time |
+| Starter Farm Bridge | Expand your farm                |
 
 ### `museum_donation`
 
@@ -435,8 +441,8 @@ Format: `Complete <npcName>'s request for <requestedItemName>`
 
 NPC name follows `npcVisibility`. The requested item name comes from the `requestedItemId` field on
 the quest source (see section 5, pipeline additions), looked up via `items[requestedItemId].name`.
-NPC name and quest details redact independently; the quest details (including item name) redact until
-the quest is available.
+NPC name and quest details redact independently; the quest details (including item name) redact
+until the quest is available.
 
 - Fully redacted: `Complete ███'s request for ███`
 - NPC revealed: `Complete Eiland's request for ███`
@@ -459,10 +465,10 @@ themselves a progression-gated mechanic.
 
 Format: `Complete the <challengeRecipeName> cooking challenge`
 
-The challenge recipe name comes from the `challengeRecipeId` field on the quest source (see
-section 5, pipeline additions), looked up via `items[challengeRecipeId].name` or the recipe's
-presentation name. The entire source is gated behind `npcKnown(taliferro)`, since knowing Taliferro
-is what unlocks the category.
+The challenge recipe name comes from the `challengeRecipeId` field on the quest source (see section
+5, pipeline additions), looked up via `items[challengeRecipeId].name` or the recipe's presentation
+name. The entire source is gated behind `npcKnown(taliferro)`, since knowing Taliferro is what
+unlocks the category.
 
 The quest type key is `tali_challenges` internally but should display as "Cooking Challenges" per
 the game's localization.
@@ -508,11 +514,11 @@ Segment tree:
 ]
 ```
 
-| State | Name | Source |
-|---|---|---|
-| Fresh save | ███ | Purchase from the Sleeping Dragon Inn (after ███) |
-| "Upgrade the Inn" quest available | ███ | Purchase from the Sleeping Dragon Inn (after upgrading) |
-| Quest completed | Beet Soup | Purchase from the Sleeping Dragon Inn (after upgrading) |
+| State                             | Name      | Source                                                  |
+| --------------------------------- | --------- | ------------------------------------------------------- |
+| Fresh save                        | ███       | Purchase from the Sleeping Dragon Inn (after ███)       |
+| "Upgrade the Inn" quest available | ███       | Purchase from the Sleeping Dragon Inn (after upgrading) |
+| Quest completed                   | Beet Soup | Purchase from the Sleeping Dragon Inn (after upgrading) |
 
 ### Chickpea Curry — `mines_chest(biome_1, taste_maker)`
 
@@ -542,10 +548,10 @@ Segment tree:
 ]
 ```
 
-| State | Name | Source |
-|---|---|---|
-| Fresh save (cooking < 1) | ███ | Find in a Treasure Chest in ███ (Mines floors ███–███), with the ███ perk (Cooking tier 1) |
-| Cooking ≥ 1, mines < 20 | ███ | Find in a Treasure Chest in ███ (Mines floors ███–███), with the Taste Maker perk (Cooking tier 1) |
+| State                      | Name           | Source                                                                                                        |
+| -------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------- |
+| Fresh save (cooking < 1)   | ███            | Find in a Treasure Chest in ███ (Mines floors ███–███), with the ███ perk (Cooking tier 1)                    |
+| Cooking ≥ 1, mines < 20    | ███            | Find in a Treasure Chest in ███ (Mines floors ███–███), with the Taste Maker perk (Cooking tier 1)            |
 | Mines ≥ 20 + perk unlocked | Chickpea Curry | Find in a Treasure Chest in the Tide Caverns (Mines floors 20–39), with the Taste Maker perk (Cooking tier 1) |
 
 ### Stalactite Arch — `mines_dig_site(biome_2, natural_beauty)`
@@ -576,10 +582,10 @@ Segment tree:
 ]
 ```
 
-| State | Name | Source |
-|---|---|---|
-| Fresh save | ███ | ███ |
-| Perk unlocked, mines < 40 | ███ | Dig up in ███ (Mines floors ███–███), with the Natural Beauty perk (Archaeology tier 3) |
+| State                      | Name            | Source                                                                                           |
+| -------------------------- | --------------- | ------------------------------------------------------------------------------------------------ |
+| Fresh save                 | ███             | ███                                                                                              |
+| Perk unlocked, mines < 40  | ███             | Dig up in ███ (Mines floors ███–███), with the Natural Beauty perk (Archaeology tier 3)          |
 | Perk unlocked + mines ≥ 40 | Stalactite Arch | Dig up in the Deep Earth (Mines floors 40–59), with the Natural Beauty perk (Archaeology tier 3) |
 
 ### Apple Sign — `scroll_bundle(general, "Fall Crop Sign Scroll Bundle")`
@@ -605,10 +611,10 @@ Segment tree:
 ]
 ```
 
-| State | Name | Source |
-|---|---|---|
-| Fresh save | ███ | Purchase ███ from the General Store (after ███) |
-| Quest available | ███ | Purchase ███ from the General Store (after repairing) |
+| State           | Name       | Source                                                                             |
+| --------------- | ---------- | ---------------------------------------------------------------------------------- |
+| Fresh save      | ███        | Purchase ███ from the General Store (after ███)                                    |
+| Quest available | ███        | Purchase ███ from the General Store (after repairing)                              |
 | Quest completed | Apple Sign | Purchase the Fall Crop Sign Scroll Bundle from the General Store (after repairing) |
 
 ### Cherry Cobbler — `store(darcy)`
@@ -625,9 +631,9 @@ Segment tree:
 ]
 ```
 
-| State | Name | Source |
-|---|---|---|
-| Fresh save | ███ | Purchase from ███ |
+| State           | Name           | Source                      |
+| --------------- | -------------- | --------------------------- |
+| Fresh save      | ███            | Purchase from ███           |
 | Bridge repaired | Cherry Cobbler | Purchase from Darcy's Stall |
 
 ### Dragon Forge — `dragon_forge`
@@ -644,9 +650,9 @@ Segment tree:
 ]
 ```
 
-| State | Name | Source |
-|---|---|---|
-| Mines < 90 | Dragon-Forged Fang | Craft at ███ |
+| State      | Name               | Source                                     |
+| ---------- | ------------------ | ------------------------------------------ |
+| Mines < 90 | Dragon-Forged Fang | Craft at ███                               |
 | Mines ≥ 90 | Dragon-Forged Fang | Craft at the Dragon Forge (Mines level 90) |
 
 (Dragon-forged items have `visibility: always`, so the name is never redacted.)
@@ -663,8 +669,8 @@ Segment tree:
   (e.g. `repaired_inn = true`, `reached_date = "summer"`, `unlocked_deep_woods = true`) rather than
   inheriting the store-level `storeVisibility` gate. Currently the pipeline over-gates: all inn
   recipes are redacted until the inn is upgraded, but recipes without the `repaired_inn` requirement
-  (e.g. Lemon Pie) are purchasable from day one. The per-item requirements are the correct source
-  of truth for recipe visibility.
+  (e.g. Lemon Pie) are purchasable from day one. The per-item requirements are the correct source of
+  truth for recipe visibility.
 - Rename source type `relationship` → `engagement` in the pipeline extractor and all downstream
   types (`RecipeSource`, format functions, etc.).
 - Fix item visibility for items whose conditions are currently wrong (e.g. `crystal_berries` should
@@ -694,8 +700,8 @@ Segment tree:
   needs for fragment conditions.
 - Update UI components to render segment trees instead of flat strings. The existing
   `recipeSourceLabel()` can remain for flat-string contexts (search, accessibility).
-- Remove `redactionState()` and the `"redacted" | "source-only" | "visible"` trichotomy; the
-  segment tree encodes this granularity directly.
+- Remove `redactionState()` and the `"redacted" | "source-only" | "visible"` trichotomy; the segment
+  tree encodes this granularity directly.
 
 ### Deferred
 
