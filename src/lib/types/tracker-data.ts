@@ -1,4 +1,22 @@
+import type { Source as AcquisitionSource } from "./acquisition.js";
 import type { VisibilityCondition } from "./visibility.js";
+
+export type { AcquisitionSource };
+export type {
+  ActivityId,
+  AvailabilityCondition,
+  DateId,
+  DialogueChoiceId,
+  DungeonLootGroup,
+  JsonValue,
+  LocationId,
+  MonsterId,
+  ProductionMethod,
+  SourceDetails,
+  SourceTuple,
+  StationId,
+  WaterType,
+} from "./acquisition.js";
 
 // ─── Branded ID types ───────────────────────────────────────────────
 // Nominal typing for string IDs to prevent accidental mixing
@@ -34,27 +52,12 @@ export type CosmeticSlot =
   | "underwear";
 export type FestivalId = string & { readonly __brand: "FestivalId" };
 export type ItemId = string & { readonly __brand: "ItemId" };
-export interface MuseumWing {
-  id: WingId;
-  name: string;
-  sets: { id: SetId; items: ItemId[]; name: string }[];
+export interface LegacyItemSource {
+  location?: string;
+  restrictions?: Restriction[];
+  type: SourceType;
 }
-export type NpcId = string & { readonly __brand: "NpcId" };
-export type PerkId = string & { readonly __brand: "PerkId" };
-export type QuestId = string & { readonly __brand: "QuestId" };
-export type QuestType = string & { readonly __brand: "QuestType" };
-export interface Recipe {
-  memberItemIds: ItemId[];
-  presentations: RecipePresentation[];
-  sources: RecipeSource[];
-  visibility?: VisibilityCondition;
-}
-export type RecipeId = string & { readonly __brand: "RecipeId" };
-export interface RecipePresentation {
-  itemIds: ItemId[];
-  name: string;
-}
-export type RecipeSource =
+export type LegacyRecipeSource = (
   | { biomeId: BiomeId; perkId: PerkId; type: "mines_chest"; visibility?: VisibilityCondition }
   | { biomeId: BiomeId; perkId: PerkId; type: "mines_dig_site"; visibility?: VisibilityCondition }
   | {
@@ -102,7 +105,30 @@ export type RecipeSource =
   | { type: "beach_cave_chest"; visibility?: VisibilityCondition }
   | { type: "default"; visibility?: VisibilityCondition }
   | { type: "dragon_forge"; visibility?: VisibilityCondition }
-  | { type: "engagement"; visibility?: VisibilityCondition };
+  | { type: "engagement"; visibility?: VisibilityCondition }
+) & { restrictions?: Restriction[] };
+export interface MuseumWing {
+  id: WingId;
+  name: string;
+  sets: { id: SetId; items: ItemId[]; name: string }[];
+}
+export type NpcId = string & { readonly __brand: "NpcId" };
+export type PerkId = string & { readonly __brand: "PerkId" };
+export type QuestId = string & { readonly __brand: "QuestId" };
+export type QuestType = string & { readonly __brand: "QuestType" };
+export interface Recipe {
+  acquisitionSources?: AcquisitionSource[];
+  memberItemIds: ItemId[];
+  presentations: RecipePresentation[];
+  sources: LegacyRecipeSource[];
+  visibility?: VisibilityCondition;
+}
+export type RecipeId = string & { readonly __brand: "RecipeId" };
+export interface RecipePresentation {
+  itemIds: ItemId[];
+  name: string;
+}
+export type RecipeSource = LegacyRecipeSource;
 export interface Restriction {
   animal?: string;
   building?: string;
@@ -118,6 +144,9 @@ export interface Restriction {
   type: RestrictionType;
   weathers?: Weather[];
 }
+
+// ─── Enums ──────────────────────────────────────────────────────────
+
 export type RestrictionType =
   | "animal"
   | "building"
@@ -133,18 +162,11 @@ export type RestrictionType =
   | "time"
   | "upperFloor"
   | "weather";
-
-// ─── Enums ──────────────────────────────────────────────────────────
-
 export type Season = "fall" | "spring" | "summer" | "winter";
-export type SetId = string & { readonly __brand: "SetId" };
 
+export type SetId = string & { readonly __brand: "SetId" };
 export type SkillId = string & { readonly __brand: "SkillId" };
-export interface Source {
-  location?: string;
-  restrictions?: Restriction[];
-  type: SourceType;
-}
+export type Source = LegacyItemSource;
 
 export type SourceType =
   | "bug_catch"
@@ -193,6 +215,7 @@ export interface TrackerData {
   cosmetics: Record<
     CosmeticId,
     {
+      acquisitionSources?: AcquisitionSource[];
       defaultUnlocked: boolean;
       name: string;
       slot: CosmeticSlot;
@@ -210,6 +233,7 @@ export interface TrackerData {
   items: Record<
     ItemId,
     {
+      acquisitionSources?: AcquisitionSource[];
       category: string;
       name: string;
       questGate?: QuestId[];

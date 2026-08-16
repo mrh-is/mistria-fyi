@@ -1,10 +1,19 @@
 import type { SourceFieldLocation } from "./data-shapes.js";
+import type { CutsceneQuestMap } from "./extractors/visibility/cutscene-quest-map.js";
 
 /**
  * Empty top-level definition tables identify primitive predicate names; nonempty tables identify
  * named definitions.
  */
 export type NamedRequirementDefinitions = Record<string, Record<string, unknown>>;
+
+/**
+ * Reusable native-requirement dependencies. Collectors will share one context once they migrate
+ * to availability conditions.
+ */
+export interface RequirementContext extends RequirementDefinitions {
+  cutsceneMap: CutsceneQuestMap;
+}
 
 export interface RequirementDefinitions {
   namedRequirements: NamedRequirementDefinitions;
@@ -49,6 +58,13 @@ export function buildRequirementDefinitions(
   }
 
   return { namedRequirements, primitivePredicates };
+}
+
+export function createRequirementContext(
+  requirementsData: Record<string, unknown> | undefined,
+  cutsceneMap: CutsceneQuestMap = {},
+): RequirementContext {
+  return { ...buildRequirementDefinitions(requirementsData ?? {}), cutsceneMap };
 }
 
 export function parseRequirements(

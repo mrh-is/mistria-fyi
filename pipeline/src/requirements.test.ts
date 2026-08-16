@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { parseFiddle } from "./parse-fiddle.js";
 import {
   buildRequirementDefinitions,
+  createRequirementContext,
   type NamedRequirementDefinitions,
   parseRequirements,
   type RequirementExpression,
@@ -226,6 +227,31 @@ describe("buildRequirementDefinitions", () => {
     expect(result).toEqual({
       predicate: "seen_cutscene",
       value: "repair_the_general_store_pt_2",
+    });
+  });
+});
+
+describe("createRequirementContext", () => {
+  it("combines parsed requirement definitions with the supplied cutscene map", () => {
+    const context = createRequirementContext(
+      { has_perk: {}, repaired_general_store: { seen_cutscene: "repair_general_store" } },
+      {
+        repair_general_store: {
+          phase: "completed",
+          questId: "repair_the_general_store" as never,
+        },
+      },
+    );
+
+    expect(context.primitivePredicates).toEqual(new Set(["has_perk"]));
+    expect(context.namedRequirements).toEqual({
+      repaired_general_store: { seen_cutscene: "repair_general_store" },
+    });
+    expect(context.cutsceneMap).toEqual({
+      repair_general_store: {
+        phase: "completed",
+        questId: "repair_the_general_store",
+      },
     });
   });
 });

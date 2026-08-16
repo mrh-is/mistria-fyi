@@ -1,15 +1,11 @@
 import { resolveToVisibility, simplifyCondition } from "./requirement-resolver.js";
 
+import type { Source as AcquisitionSource } from "$lib/types/acquisition.js";
 import type {
   BiomeId,
-  ItemId,
   NpcId,
-  PerkId,
   QuestId,
   RecipeSource,
-  Restriction,
-  SkillId,
-  Source,
   SpellId,
   StoreId,
   TrackerData,
@@ -70,7 +66,7 @@ const NPC_GATES: Partial<Record<string, VisibilityCondition>> = {
  */
 const HAYDENS_BARN_UNLOCK_QUEST = "repair_haydens_barn" as QuestId;
 
-interface RecipeSourceContext {
+interface SourceVisibilityContext {
   biomeFloor: (biomeId: BiomeId) => number | undefined;
   perks: TrackerData["perks"];
   perkTierLevels: number[];
@@ -91,10 +87,17 @@ export function assignEntityVisibility(
   fiddle: ParsedGameData,
   questChains: QuestChainData,
 ): void {
-  assignItemVisibility(trackerData, storeVisibility);
-  assignRecipeVisibility(trackerData, storeVisibility);
+  const ctx: SourceVisibilityContext = {
+    biomeFloor: (biomeId) => trackerData.mines.biomes.find((b) => b.id === biomeId)?.startFloor,
+    perks: trackerData.perks,
+    perkTierLevels: trackerData.perkTierLevels,
+    storeVisibility,
+  };
+
+  assignItemVisibility(trackerData, ctx);
+  assignRecipeVisibility(trackerData, ctx);
   assignPerkVisibility(trackerData);
-  assignCosmeticVisibility(trackerData, storeVisibility);
+  assignCosmeticVisibility(trackerData, ctx);
   assignAnimalVisibility(trackerData, fiddle);
   assignSpellVisibility(trackerData, fiddle, cutsceneMap);
   assignQuestVisibility(trackerData, cutsceneMap, questChains);
@@ -195,6 +198,71 @@ export function extractStoreVisibility(
   return result;
 }
 
+function acquisitionSourceCondition(
+  source: AcquisitionSource,
+  ctx: SourceVisibilityContext,
+): VisibilityCondition {
+  switch (source.type) {
+    case "animal_product":
+    case "artifact_dig":
+    case "artifact_replicator":
+    case "beach_cave_chest":
+    case "bug_catch":
+    case "chicken_statue":
+    case "crop":
+    case "date":
+    case "default":
+    case "dive":
+    case "engagement":
+    case "equipment":
+    case "festival_activity":
+    case "fish":
+    case "fish_trap":
+    case "forage":
+    case "letter":
+    case "monster":
+    case "monster_feed":
+    case "museum_donation":
+    case "proposal":
+    case "recipe":
+    case "station":
+    case "treasure_chest":
+    case "tree":
+    case "wedding":
+    case "wishing_well":
+      return ALWAYS;
+    case "festival":
+      return source.storeId ? storeGateCondition(source.storeId, ctx.storeVisibility) : ALWAYS;
+    case "mine": {
+      const floor = source.biomeId ? ctx.biomeFloor(source.biomeId) : undefined;
+      return floor !== undefined ? { floor, type: "minesLevel" } : ALWAYS;
+    }
+    case "mines_chest":
+    case "mines_dig_site": {
+      const floor = ctx.biomeFloor(source.biomeId);
+      const minesCondition: VisibilityCondition =
+        floor === undefined ? ALWAYS : { floor, type: "minesLevel" };
+      const perkCondition: VisibilityCondition = source.perkId
+        ? { perkId: source.perkId, type: "perkUnlocked" }
+        : ALWAYS;
+      return andSimplify([minesCondition, perkCondition]);
+    }
+    case "perk":
+    case "perk_drop":
+    case "ritual_chamber":
+      return { perkId: source.perkId, type: "perkUnlocked" };
+    case "quest":
+      return { questId: source.questId, type: "questCompleted" };
+    case "renown":
+      return { level: source.level, type: "renownLevel" };
+    case "scroll_bundle":
+      return storeGateCondition(source.storeId, ctx.storeVisibility);
+    case "store":
+    case "upgrade":
+      return storeGateCondition(source.storeId, ctx.storeVisibility);
+  }
+}
+
 function andSimplify(conditions: VisibilityCondition[]): VisibilityCondition {
   if (conditions.length === 0) return ALWAYS;
   if (conditions.length === 1) return conditions[0];
@@ -218,26 +286,20 @@ function assignAnimalVisibility(trackerData: TrackerData, fiddle: ParsedGameData
   }
 }
 
-function assignCosmeticVisibility(
-  trackerData: TrackerData,
-  storeVisibility: Record<StoreId, VisibilityCondition>,
-): void {
-  for (const [cosmeticId, cosmetic] of Object.entries(trackerData.cosmetics)) {
-    const sources = trackerData.sources[cosmeticId as unknown as ItemId];
+function assignCosmeticVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
+  for (const [, cosmetic] of Object.entries(trackerData.cosmetics)) {
+    const sources = cosmetic.acquisitionSources;
     if (!sources || sources.length === 0) continue;
 
-    const conditions = sources.map((source) => cosmeticSourceCondition(source, storeVisibility));
+    const conditions = sources.map((source) => acquisitionSourceCondition(source, ctx));
     cosmetic.visibility = orSimplify(conditions);
   }
 }
 
-function assignItemVisibility(
-  trackerData: TrackerData,
-  storeVisibility: Record<StoreId, VisibilityCondition>,
-): void {
-  for (const [itemId, item] of Object.entries(trackerData.items)) {
-    const sources = trackerData.sources[itemId as ItemId] ?? [];
-    const conditions = sources.map((source) => itemSourceCondition(source, storeVisibility));
+function assignItemVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
+  for (const [, item] of Object.entries(trackerData.items)) {
+    const sources = item.acquisitionSources ?? [];
+    const conditions = sources.map((source) => acquisitionSourceCondition(source, ctx));
     item.visibility = orSimplify(conditions);
   }
 }
@@ -332,17 +394,7 @@ function assignQuestVisibility(
   );
 }
 
-function assignRecipeVisibility(
-  trackerData: TrackerData,
-  storeVisibility: Record<StoreId, VisibilityCondition>,
-): void {
-  const ctx: RecipeSourceContext = {
-    biomeFloor: (biomeId) => trackerData.mines.biomes.find((b) => b.id === biomeId)?.startFloor,
-    perks: trackerData.perks,
-    perkTierLevels: trackerData.perkTierLevels,
-    storeVisibility,
-  };
-
+function assignRecipeVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
   for (const recipe of Object.values(trackerData.recipes)) {
     const computed = recipe.sources.map((source) => ({
       conditions: computeRecipeSourceConditions(source, ctx),
@@ -385,7 +437,7 @@ function assignSpellVisibility(
 
 function computeRecipeSourceConditions(
   source: RecipeSource,
-  ctx: RecipeSourceContext,
+  ctx: SourceVisibilityContext,
 ): { entity: VisibilityCondition; source: VisibilityCondition } {
   switch (source.type) {
     case "beach_cave_chest":
@@ -453,19 +505,6 @@ function computeRecipeSourceConditions(
   }
 }
 
-function cosmeticSourceCondition(
-  source: Source,
-  storeVisibility: Record<StoreId, VisibilityCondition>,
-): VisibilityCondition {
-  if (source.type === "store" && source.location) {
-    return storeGateCondition(source.location as StoreId, storeVisibility);
-  }
-  if (source.type === "quest" && source.location) {
-    return { questId: source.location as QuestId, type: "questCompleted" };
-  }
-  return ALWAYS;
-}
-
 /**
  * Returns cutscene records from either the nested (`fiddle.cutscenes.cutscenes`) or flat
  * (`fiddle.cutscenes`) structure, matching the access pattern in `cutscene-quest-map.ts`.
@@ -476,24 +515,6 @@ function getCutsceneRecords(fiddle: ParsedGameData): Record<string, Record<strin
   return nested ?? (raw as Record<string, Record<string, unknown>> | undefined) ?? {};
 }
 
-function itemSourceCondition(
-  source: Source,
-  storeVisibility: Record<StoreId, VisibilityCondition>,
-): VisibilityCondition {
-  const conditions: VisibilityCondition[] = [];
-
-  if (source.type === "store" && source.location) {
-    conditions.push(storeGateCondition(source.location as StoreId, storeVisibility));
-  }
-
-  for (const restriction of source.restrictions ?? []) {
-    const restrictionCondition = restrictionToCondition(restriction, storeVisibility);
-    if (restrictionCondition) conditions.push(restrictionCondition);
-  }
-
-  return andSimplify(conditions);
-}
-
 function orSimplify(conditions: VisibilityCondition[]): VisibilityCondition {
   if (conditions.length === 0) return ALWAYS;
   if (conditions.length === 1) return conditions[0];
@@ -501,42 +522,6 @@ function orSimplify(conditions: VisibilityCondition[]): VisibilityCondition {
     conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
     type: "or",
   });
-}
-
-function restrictionToCondition(
-  restriction: Restriction,
-  storeVisibility: Record<StoreId, VisibilityCondition>,
-): undefined | VisibilityCondition {
-  switch (restriction.type) {
-    case "animal":
-    case "cutscene":
-    case "fishSize":
-    case "randomStock":
-    case "relationship":
-    case "season":
-    case "seenSeason":
-    case "time":
-    case "upperFloor":
-    case "weather":
-      // No visibility signal derivable from these restriction types.
-      return undefined;
-    case "building":
-      return restriction.building
-        ? storeGateCondition(restriction.building as StoreId, storeVisibility)
-        : undefined;
-    case "minesLevel":
-      return restriction.level !== undefined
-        ? { floor: restriction.level, type: "minesLevel" }
-        : undefined;
-    case "perk":
-      return restriction.perk
-        ? { perkId: restriction.perk as PerkId, type: "perkUnlocked" }
-        : undefined;
-    case "skill":
-      return restriction.skill && restriction.level !== undefined
-        ? { level: restriction.level, skillId: restriction.skill as SkillId, type: "skillLevel" }
-        : undefined;
-  }
 }
 
 function storeGateCondition(
