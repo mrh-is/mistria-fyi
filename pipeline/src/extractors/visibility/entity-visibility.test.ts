@@ -309,17 +309,14 @@ describe("assignEntityVisibility — items", () => {
     expect(trackerData.items["seed_turnip" as ItemId].visibility).toEqual({ type: "always" });
   });
 
-  it("composes a store gate with an item-specific perk requirement", () => {
+  it("derives item visibility from inline acquisition sources", () => {
     const trackerData = makeTrackerData({
-      items: { fancy_seed: { category: "seeds", name: "Fancy Seed" } },
-      sources: {
-        fancy_seed: [
-          {
-            location: "general",
-            restrictions: [{ perk: "green_thumb", type: "perk" }],
-            type: "store",
-          },
-        ],
+      items: {
+        fancy_seed: {
+          acquisitionSources: [{ storeId: "general", type: "store" }],
+          category: "seeds",
+          name: "Fancy Seed",
+        },
       },
     });
     assignEntityVisibility(
@@ -332,11 +329,39 @@ describe("assignEntityVisibility — items", () => {
       makeQuestChains({}),
     );
     expect(trackerData.items["fancy_seed" as ItemId].visibility).toEqual({
+      questId: "repair_the_general_store",
+      type: "questCompleted",
+    });
+  });
+
+  it("ORs multiple inline acquisition sources for item visibility", () => {
+    const trackerData = makeTrackerData({
+      items: {
+        dual_source_item: {
+          acquisitionSources: [
+            { storeId: "general", type: "store" },
+            { questId: "find_the_thing" as QuestId, trigger: "completion", type: "quest" },
+          ],
+          category: "other",
+          name: "Dual Source Item",
+        },
+      },
+    });
+    assignEntityVisibility(
+      trackerData,
+      {
+        general: { questId: "repair_the_general_store" as QuestId, type: "questCompleted" },
+      } as never,
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
+    expect(trackerData.items["dual_source_item" as ItemId].visibility).toEqual({
       conditions: [
         { questId: "repair_the_general_store", type: "questCompleted" },
-        { perkId: "green_thumb", type: "perkUnlocked" },
+        { questId: "find_the_thing", type: "questCompleted" },
       ],
-      type: "and",
+      type: "or",
     });
   });
 
@@ -838,12 +863,16 @@ describe("assignEntityVisibility — animals", () => {
 });
 
 describe("assignEntityVisibility — cosmetics", () => {
-  it("derives cosmetic visibility from a store source", () => {
+  it("derives cosmetic visibility from inline acquisition sources", () => {
     const trackerData = makeTrackerData({
       cosmetics: {
-        fancy_hat: { defaultUnlocked: false, name: "Fancy Hat", slot: "head" },
+        fancy_hat: {
+          acquisitionSources: [{ storeId: "wheedle", type: "store" }],
+          defaultUnlocked: false,
+          name: "Fancy Hat",
+          slot: "head",
+        },
       },
-      sources: { fancy_hat: [{ location: "wheedle", type: "store" }] },
     });
     assignEntityVisibility(
       trackerData,
