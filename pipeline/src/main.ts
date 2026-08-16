@@ -11,7 +11,13 @@ import { collectExplorationSources } from "./acquisition/collectors/exploration.
 import { collectNaturalSources } from "./acquisition/collectors/natural.js";
 import { collectRewardSources } from "./acquisition/collectors/rewards.js";
 import { collectStoreSources } from "./acquisition/collectors/stores.js";
+import { applyExclusions } from "./acquisition/exclusions.js";
 import { deriveRecipeProductSources } from "./acquisition/recipe-products.js";
+import {
+  applyReviewedOverrides,
+  collectDefaultCosmeticSources,
+  collectDefaultItemSources,
+} from "./acquisition/reviewed-overrides.js";
 import {
   CosmeticSourceAccumulator,
   ItemSourceAccumulator,
@@ -124,7 +130,8 @@ function main(): void {
   const { almanac, items } = extractAlmanac(fiddle, recipeIdByItemId);
   const animals = extractAnimals(fiddle);
   const npcs = extractNpcs(fiddle);
-  const cosmetics = extractCosmetics(fiddle);
+  const cosmeticsRaw = extractCosmetics(fiddle);
+  const cosmetics = applyExclusions(cosmeticsRaw);
   const skills = extractSkills(fiddle);
   const renown = extractRenown(fiddle);
   const quests = extractQuests(fiddle);
@@ -148,6 +155,21 @@ function main(): void {
   collectRewardSources(fiddle, itemSources, cosmeticSources);
   collectStoreSources(fiddle, requirementContext, itemSources);
   collectExplorationSources(fiddle, itemSources, cosmeticSources);
+  collectDefaultItemSources(fiddle, itemSources, items);
+  collectDefaultCosmeticSources(cosmetics, cosmeticSources);
+
+  const overrideDiagnostics = applyReviewedOverrides(
+    items,
+    cosmetics,
+    itemSources,
+    cosmeticSources,
+  );
+  for (const d of overrideDiagnostics) {
+    if (d.kind === "obsolete-override") {
+      throw new Error(`Obsolete override: ${d.message}`);
+    }
+    console.log(`  Warning: ${d.message}`);
+  }
 
   applyItemQuestGates(items, questGates.itemGates);
   applyAnimalQuestGates(animals, questGates.animalGates);

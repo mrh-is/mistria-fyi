@@ -106,30 +106,40 @@ A TOML-structured delegated audit mapped 352 of 389 cosmetics to at least one na
 Families overlap. `price_override` alone is evidence of a configured price, not necessarily the
 store path; join it to stock data before emitting a source.
 
-The 37 unresolved cosmetic IDs form four review groups:
+The original 37 unresolved cosmetic IDs were resolved in Task 9:
 
-- 24 `baby_back_*` held-baby assets have only name, lookup table, and UI slot fields. No player
-  unlock reference was found; these are likely internal presentation assets and need exclusion
-  evidence.
-- five `*_seridia` Dragonsworn armor assets occur in `misc.seridia_armor`, an NPC outfit list rather
-  than a player acquisition path. They need exclusion evidence.
-- five Dragon Cleric assets match the Lost to History Ritual Chamber override.
-- `back_gear_march_mistrian_shield` appears related to the ten-heart placeable item but has no
-  cosmetic unlock path; `head_flower_hat` and `head_mimic_hat` also remain unresolved. Check the
-  wiki and broader event data before excluding any of these three.
+- 24 `baby_back_*` held-baby assets: **excluded** (internal presentation assets; empty names,
+  lut-only fields, no player unlock path).
+- five `*_seridia` Dragonsworn armor variants: **excluded** (NPC outfit assets listed in
+  `misc.seridia_armor`, not player-obtainable).
+- five Dragon Cleric assets: **sourced** via reviewed `ritual_chamber` override with
+  `lost_to_history` perk.
+- `head_mimic_hat`: **sourced** via `monster_feed` for Mimics (Task 8 exploration collector).
+- `head_flower_hat`: **excluded** (wiki lists under Unknowns, no acquisition path in native data).
+- `back_gear_march_mistrian_shield`: **excluded** (wiki describes furniture item only, no cosmetic
+  unlock path in native data).
 
 The two exact quest cosmetic rewards are `head_special_flower_crown` and
 `back_gear_dragonsworn_cloak`. The two Wishing Well cosmetics are `head_teapot` and `head_soup_pot`.
 
-- The wiki identifies `head_mimic_hat` as a reward for feeding Mimics in the Mines. This requires a
-  distinct `monster_feed` source because it is not a drop.
-- The wiki lists `head_flower_hat` under “Unknowns” with no acquisition details, strengthening an
-  unreleased/internal exclusion case but not proving it alone.
-- The wiki describes March’s proposal furniture item `marchs_mistrian_shield`; it does not establish
-  an unlock for the separate `back_gear_march_mistrian_shield` cosmetic. Keep it unresolved.
 - `kitchen_salt_and_pepper_shakers` is sold in the Inn’s constant stock and has a crafting recipe,
   but neither native data nor the wiki result established how the recipe unlocks. Keep it
   unresolved.
+
+## Items with default sources (Task 9)
+
+Starting-state items sourced from `misc.ari_stats`:
+
+- `sword_worn` (starting_inventory)
+- `cloth_helmet`, `cloth_chestpiece`, `cloth_pants`, `cloth_shoes`, `cloth_wristband`
+  (starting_armor)
+
+## Reviewed overrides (Task 9)
+
+- `void_cake`: quest dialogue_choice from “The Dragonsworn Tablet” (repeatedly refusing to raise
+  friendship with Eiland). Evidence: wiki page.
+- Dragon Cleric set (5 cosmetics): ritual_chamber requiring `lost_to_history` perk. Evidence: wiki
+  page, no native acquisition table found.
 
 ## Research cautions
 

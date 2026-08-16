@@ -1,0 +1,286 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  applyReviewedOverrides,
+  collectDefaultCosmeticSources,
+  collectDefaultItemSources,
+  COSMETIC_OVERRIDES,
+  ITEM_OVERRIDES,
+} from "./reviewed-overrides.js";
+
+import type { Source } from "$lib/types/acquisition.js";
+import type { CosmeticId, ItemId } from "$lib/types/tracker-data.js";
+
+import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator.js";
+
+describe("reviewed overrides", () => {
+  describe("override tables", () => {
+    it("every item override has a target ID and at least one source", () => {
+      for (const [targetId, sources] of Object.entries(ITEM_OVERRIDES)) {
+        expect(targetId).toBeTruthy();
+        expect(sources.length).toBeGreaterThan(0);
+        for (const source of sources) {
+          expect(source.type).toBeTruthy();
+        }
+      }
+    });
+
+    it("every cosmetic override has a target ID and at least one source", () => {
+      for (const [targetId, sources] of Object.entries(COSMETIC_OVERRIDES)) {
+        expect(targetId).toBeTruthy();
+        expect(sources.length).toBeGreaterThan(0);
+        for (const source of sources) {
+          expect(source.type).toBeTruthy();
+        }
+      }
+    });
+
+    it("void_cake has a quest dialogue_choice source from the_dragonsworn_tablet", () => {
+      const sources = ITEM_OVERRIDES["void_cake" as ItemId];
+      expect(sources).toBeDefined();
+      expect(sources).toHaveLength(1);
+      const source = sources[0] as Extract<Source, { type: "quest" }>;
+      expect(source.type).toBe("quest");
+      expect(source.trigger).toBe("dialogue_choice");
+      expect(source.questId).toBe("the_dragonsworn_tablet");
+    });
+
+    it("Dragon Cleric cosmetics are ritual_chamber sources with lost_to_history perk", () => {
+      const expectedIds: CosmeticId[] = [
+        "back_gear_dragon_cleric_cape" as CosmeticId,
+        "face_gear_dragon_cleric_earrings" as CosmeticId,
+        "head_dragon_cleric_diadem" as CosmeticId,
+        "robe_dragon_cleric" as CosmeticId,
+        "shoes_boots_dragon_cleric" as CosmeticId,
+      ];
+
+      for (const id of expectedIds) {
+        const sources = COSMETIC_OVERRIDES[id];
+        expect(sources, `missing override for ${id}`).toBeDefined();
+        expect(sources).toHaveLength(1);
+        const source = sources[0] as Extract<Source, { type: "ritual_chamber" }>;
+        expect(source.type).toBe("ritual_chamber");
+        expect(source.perkId).toBe("lost_to_history");
+      }
+    });
+  });
+
+  describe("applyReviewedOverrides", () => {
+    it("adds overrides to accumulators for targets that exist in registries", () => {
+      const itemAdds: [ItemId, Source][] = [];
+      const cosmeticAdds: [CosmeticId, Source][] = [];
+
+      const itemAccumulator = {
+        add: (id: ItemId, source: Source) => itemAdds.push([id, source]),
+        get: () => [],
+      } as unknown as ItemSourceAccumulator;
+
+      const cosmeticAccumulator = {
+        add: (id: CosmeticId, source: Source) => cosmeticAdds.push([id, source]),
+        get: () => [],
+      } as unknown as CosmeticSourceAccumulator;
+
+      const items = { void_cake: { name: "Void Cake" } } as Record<string, unknown>;
+      const cosmetics = {
+        back_gear_dragon_cleric_cape: { name: "Dragon Cleric Cape" },
+        face_gear_dragon_cleric_earrings: { name: "Dragon Cleric Earrings" },
+        head_dragon_cleric_diadem: { name: "Dragon Cleric Diadem" },
+        robe_dragon_cleric: { name: "Dragon Cleric Robes" },
+        shoes_boots_dragon_cleric: { name: "Dragon Cleric Boots" },
+      } as Record<string, unknown>;
+
+      const diagnostics = applyReviewedOverrides(
+        items,
+        cosmetics,
+        itemAccumulator,
+        cosmeticAccumulator,
+      );
+
+      expect(diagnostics).toHaveLength(0);
+      expect(itemAdds).toHaveLength(1);
+      expect(itemAdds[0][0]).toBe("void_cake");
+      expect(cosmeticAdds).toHaveLength(5);
+    });
+
+    it("reports diagnostics for override targets missing from registries", () => {
+      const itemAccumulator = {
+        add: () => undefined,
+        get: () => [],
+      } as unknown as ItemSourceAccumulator;
+
+      const cosmeticAccumulator = {
+        add: () => undefined,
+        get: () => [],
+      } as unknown as CosmeticSourceAccumulator;
+
+      const diagnostics = applyReviewedOverrides({}, {}, itemAccumulator, cosmeticAccumulator);
+
+      expect(diagnostics.length).toBeGreaterThan(0);
+      for (const d of diagnostics) {
+        expect(d.kind).toBe("missing-target");
+        expect(d.targetId).toBeTruthy();
+      }
+    });
+
+    it("skips override sources already present in accumulator with identical identity", () => {
+      const itemAdds: [ItemId, Source][] = [];
+      const itemAccumulator = {
+        add: (id: ItemId, source: Source) => itemAdds.push([id, source]),
+        get: (id: ItemId) => {
+          if (id === ("void_cake" as ItemId)) {
+            return ITEM_OVERRIDES["void_cake" as ItemId];
+          }
+          return [];
+        },
+      } as unknown as ItemSourceAccumulator;
+
+      const cosmeticAccumulator = {
+        add: () => undefined,
+        get: () => [],
+      } as unknown as CosmeticSourceAccumulator;
+
+      const items = { void_cake: { name: "Void Cake" } } as Record<string, unknown>;
+
+      const diagnostics = applyReviewedOverrides(items, {}, itemAccumulator, cosmeticAccumulator);
+
+      const obsoleteDiags = diagnostics.filter((d) => d.kind === "obsolete-override");
+      expect(obsoleteDiags.length).toBeGreaterThan(0);
+      expect(obsoleteDiags[0].targetId).toBe("void_cake");
+    });
+
+    it("coexists when native and override paths are distinct", () => {
+      const itemAdds: [ItemId, Source][] = [];
+      const itemAccumulator = {
+        add: (id: ItemId, source: Source) => itemAdds.push([id, source]),
+        get: (id: ItemId) => {
+          if (id === ("void_cake" as ItemId)) {
+            return [{ storeId: "some_store", type: "store" }] as Source[];
+          }
+          return [];
+        },
+      } as unknown as ItemSourceAccumulator;
+
+      const cosmeticAccumulator = {
+        add: () => undefined,
+        get: () => [],
+      } as unknown as CosmeticSourceAccumulator;
+
+      const items = { void_cake: { name: "Void Cake" } } as Record<string, unknown>;
+
+      const diagnostics = applyReviewedOverrides(items, {}, itemAccumulator, cosmeticAccumulator);
+
+      const obsoleteDiags = diagnostics.filter((d) => d.kind === "obsolete-override");
+      expect(obsoleteDiags).toHaveLength(0);
+
+      const voidCakeAdds = itemAdds.filter(([id]) => id === ("void_cake" as ItemId));
+      expect(voidCakeAdds).toHaveLength(1);
+    });
+  });
+
+  describe("collectDefaultCosmeticSources", () => {
+    it("adds default sources for cosmetics with defaultUnlocked true", () => {
+      const adds: [CosmeticId, Source][] = [];
+      const accumulator = {
+        add: (id: CosmeticId, source: Source) => adds.push([id, source]),
+      } as unknown as CosmeticSourceAccumulator;
+
+      const cosmetics = {
+        default_hat: { defaultUnlocked: true, name: "Default Hat", slot: "head" as const },
+        store_hat: { defaultUnlocked: false, name: "Store Hat", slot: "head" as const },
+      } as Record<CosmeticId, { defaultUnlocked: boolean; name: string; slot: "head" }>;
+
+      collectDefaultCosmeticSources(cosmetics, accumulator);
+
+      expect(adds).toHaveLength(1);
+      expect(adds[0][0]).toBe("default_hat");
+      expect(adds[0][1]).toEqual({ type: "default" });
+    });
+
+    it("does not add default for cosmetics with defaultUnlocked false", () => {
+      const adds: [CosmeticId, Source][] = [];
+      const accumulator = {
+        add: (id: CosmeticId, source: Source) => adds.push([id, source]),
+      } as unknown as CosmeticSourceAccumulator;
+
+      const cosmetics = {
+        store_hat: { defaultUnlocked: false, name: "Store Hat", slot: "head" as const },
+      } as Record<CosmeticId, { defaultUnlocked: boolean; name: string; slot: "head" }>;
+
+      collectDefaultCosmeticSources(cosmetics, accumulator);
+      expect(adds).toHaveLength(0);
+    });
+  });
+
+  describe("collectDefaultItemSources", () => {
+    it("adds default sources for starting inventory items", () => {
+      const adds: [ItemId, Source][] = [];
+      const accumulator = {
+        add: (id: ItemId, source: Source) => adds.push([id, source]),
+      } as unknown as ItemSourceAccumulator;
+
+      const fiddle = {
+        misc: {
+          ari_stats: {
+            starting_inventory: ["sword_worn"],
+          },
+        },
+      };
+
+      const items = { sword_worn: { name: "Worn Sword" } } as Record<string, unknown>;
+      collectDefaultItemSources(fiddle, accumulator, items);
+
+      expect(adds).toHaveLength(1);
+      expect(adds[0][0]).toBe("sword_worn");
+      expect(adds[0][1]).toEqual({ type: "default" });
+    });
+
+    it("adds default sources for starting armor items", () => {
+      const adds: [ItemId, Source][] = [];
+      const accumulator = {
+        add: (id: ItemId, source: Source) => adds.push([id, source]),
+      } as unknown as ItemSourceAccumulator;
+
+      const fiddle = {
+        misc: {
+          ari_stats: {
+            starting_armor: {
+              boots: "cloth_shoes",
+              chest: "cloth_chestpiece",
+              head: "cloth_helmet",
+            },
+          },
+        },
+      };
+
+      const items = {
+        cloth_chestpiece: { name: "Cloth Chestpiece" },
+        cloth_helmet: { name: "Cloth Helmet" },
+        cloth_shoes: { name: "Cloth Shoes" },
+      } as Record<string, unknown>;
+
+      collectDefaultItemSources(fiddle, accumulator, items);
+
+      expect(adds).toHaveLength(3);
+      const ids = adds.map(([id]) => id).sort();
+      expect(ids).toEqual(["cloth_chestpiece", "cloth_helmet", "cloth_shoes"]);
+    });
+
+    it("skips starting items not in the item registry", () => {
+      const adds: [ItemId, Source][] = [];
+      const accumulator = {
+        add: (id: ItemId, source: Source) => adds.push([id, source]),
+      } as unknown as ItemSourceAccumulator;
+
+      const fiddle = {
+        misc: {
+          ari_stats: {
+            starting_inventory: ["nonexistent_item"],
+          },
+        },
+      };
+
+      collectDefaultItemSources(fiddle, accumulator, {});
+      expect(adds).toHaveLength(0);
+    });
+  });
+});
