@@ -1,4 +1,4 @@
-import type { Source } from "$lib/types/acquisition.js";
+import type { ActivityId, Source } from "$lib/types/acquisition.js";
 import type {
   CosmeticId,
   DateId,
@@ -33,6 +33,7 @@ export function collectRewardSources(
 ): void {
   collectQuestRewardSources(fiddle, accumulator, cosmeticAccumulator);
   collectFestivalStockSources(fiddle, accumulator, cosmeticAccumulator);
+  collectAnimalFestivalRewardSources(fiddle, accumulator);
   collectRenownRewardSources(fiddle, accumulator, cosmeticAccumulator);
   collectLetterRewardSources(fiddle, accumulator);
   collectMuseumDonationRewardSources(fiddle, accumulator, cosmeticAccumulator);
@@ -41,6 +42,9 @@ export function collectRewardSources(
   collectEngagementSources(fiddle, accumulator);
   collectWeddingCosmeticSources(fiddle, cosmeticAccumulator);
 }
+
+const SMALL_ANIMAL_KINDS = ["capybara", "chicken", "duck", "rabbit"];
+const LARGE_ANIMAL_KINDS = ["alpaca", "cow", "horse", "sheep"];
 
 function classifyLetterTrigger(reqs: Record<string, unknown> | undefined): LetterTrigger {
   if (!reqs) {
@@ -71,6 +75,37 @@ function classifyLetterTrigger(reqs: Record<string, unknown> | undefined): Lette
   }
 
   return { trigger: "reached_date" as const, triggerDate: { day: 1, season: "spring" as Season } };
+}
+
+function collectAnimalFestivalRewardSources(
+  fiddle: ParsedGameData,
+  accumulator: ItemSourceAccumulator,
+): void {
+  const misc = fiddle.misc as Record<string, unknown> | undefined;
+  if (!misc) return;
+
+  const expandRewards = (rewards: unknown, animalKinds: string[]): void => {
+    if (!Array.isArray(rewards)) return;
+
+    for (const entry of rewards) {
+      if (typeof entry !== "object" || entry === null) continue;
+      const obj = entry as Record<string, unknown>;
+      const template = obj.placeable as string | undefined;
+      if (!template) continue;
+
+      for (const kind of animalKinds) {
+        const itemId = template.replace("{AnimalKind}", kind) as ItemId;
+        accumulator.add(itemId, {
+          activityId: "animal_contest" as ActivityId,
+          festivalId: "animal" as FestivalId,
+          type: "festival_activity",
+        });
+      }
+    }
+  };
+
+  expandRewards(misc.small_animal_festival_rewards, SMALL_ANIMAL_KINDS);
+  expandRewards(misc.large_animal_festival_rewards, LARGE_ANIMAL_KINDS);
 }
 
 function collectDateSources(fiddle: ParsedGameData, accumulator: ItemSourceAccumulator): void {

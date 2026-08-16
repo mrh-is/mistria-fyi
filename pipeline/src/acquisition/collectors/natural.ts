@@ -11,6 +11,7 @@ import type {
 } from "$lib/types/acquisition.js";
 import type {
   AnimalId,
+  BiomeId,
   CosmeticId,
   FestivalId,
   ItemId,
@@ -30,10 +31,12 @@ export function collectNaturalSources(
   collectFishSources(fiddle, accumulator);
   collectBugSources(fiddle, accumulator);
   collectForageSources(fiddle, accumulator);
+  collectMineForageableSources(fiddle, accumulator);
   collectCropSources(fiddle, accumulator);
   collectTreeSources(fiddle, accumulator);
   collectMonsterDropSources(fiddle, accumulator, cosmeticAccumulator);
   collectAnimalProductSources(fiddle, accumulator);
+  collectGoldenAnimalProductSources(fiddle, accumulator);
   collectEarthlyEssenceCosmeticSources(fiddle, cosmeticAccumulator);
   collectMistSightSources(fiddle, accumulator, cosmeticAccumulator);
   collectPumpkinPatchSources(fiddle, accumulator);
@@ -57,6 +60,14 @@ function buildNaturalAvailability(
   if (conditions.length === 1) return simplifyAvailabilityCondition(conditions[0]);
   return simplifyAvailabilityCondition({ conditions, type: "all" });
 }
+
+const MINE_SUBCAT_TO_BIOME: Record<string, BiomeId> = {
+  deep_earth: "biome_2" as BiomeId,
+  lava_caves: "biome_3" as BiomeId,
+  ruins: "biome_4" as BiomeId,
+  tide_caverns: "biome_1" as BiomeId,
+  upper_mines: "biome_0" as BiomeId,
+};
 
 function collectAnimalProductSources(
   fiddle: ParsedGameData,
@@ -243,6 +254,61 @@ function collectForageSources(fiddle: ParsedGameData, accumulator: ItemSourceAcc
       }
     }
   }
+}
+
+function collectGoldenAnimalProductSources(
+  fiddle: ParsedGameData,
+  accumulator: ItemSourceAccumulator,
+): void {
+  const GOLDEN_PRODUCT_TO_ANIMAL: Record<string, string> = {
+    animal_currency: "chicken",
+    bull_horn: "cow",
+    golden_alpaca_wool: "alpaca",
+    golden_bristle: "horse",
+    golden_cow_milk: "cow",
+    golden_duck_egg: "duck",
+    golden_duck_feather: "duck",
+    golden_egg: "chicken",
+    golden_feather: "chicken",
+    golden_horse_hair: "horse",
+    golden_rabbit_wool: "rabbit",
+    golden_sheep_wool: "sheep",
+  };
+
+  forEachItem(fiddle, (itemId, item) => {
+    const animalType = GOLDEN_PRODUCT_TO_ANIMAL[itemId];
+    if (!animalType) return;
+
+    const tags = Array.isArray(item.tags)
+      ? (item.tags as unknown[]).filter((v): v is string => typeof v === "string")
+      : [];
+    if (!tags.includes("animal_product")) return;
+
+    accumulator.add(itemId as ItemId, {
+      animalId: animalType as AnimalId,
+      type: "animal_product",
+    });
+  });
+}
+
+function collectMineForageableSources(
+  fiddle: ParsedGameData,
+  accumulator: ItemSourceAccumulator,
+): void {
+  forEachItem(fiddle, (itemId, item, topCat, subCat) => {
+    const tags = Array.isArray(item.tags)
+      ? (item.tags as unknown[]).filter((v): v is string => typeof v === "string")
+      : [];
+
+    if (!tags.includes("mines_forageable")) return;
+
+    const biomeId = topCat === "mines" ? MINE_SUBCAT_TO_BIOME[subCat] : undefined;
+
+    accumulator.add(itemId as ItemId, {
+      ...(biomeId ? { biomeId } : {}),
+      type: "mine",
+    });
+  });
 }
 
 function collectMistSightSources(

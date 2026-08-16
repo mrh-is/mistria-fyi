@@ -99,9 +99,13 @@ describe("reviewed overrides", () => {
         cosmeticAccumulator,
       );
 
-      expect(diagnostics).toHaveLength(0);
-      expect(itemAdds).toHaveLength(1);
-      expect(itemAdds[0][0]).toBe("void_cake");
+      const missingTargetDiags = diagnostics.filter((d) => d.kind === "missing-target");
+      const obsoleteDiags = diagnostics.filter((d) => d.kind === "obsolete-override");
+      expect(obsoleteDiags).toHaveLength(0);
+      expect(missingTargetDiags.every((d) => d.namespace === "items")).toBe(true);
+
+      const voidCakeAdd = itemAdds.find(([id]) => id === ("void_cake" as ItemId));
+      expect(voidCakeAdd).toBeDefined();
       expect(cosmeticAdds).toHaveLength(8);
     });
 

@@ -12,6 +12,8 @@ export function collectExplorationSources(
   cosmeticAccumulator: CosmeticSourceAccumulator,
 ): void {
   collectMineBiomeSources(fiddle, accumulator, cosmeticAccumulator);
+  collectPerfectOreSources(fiddle, accumulator);
+  collectWishingWellSources(fiddle, accumulator);
   collectFishingChestSources(fiddle, accumulator, cosmeticAccumulator);
   collectArtifactDigSources(fiddle, accumulator);
   collectArtifactReplicaSources(fiddle, accumulator);
@@ -176,6 +178,77 @@ function collectMineBiomeSources(
       : [];
     for (const itemId of tasteMaker) {
       accumulator.add(itemId as ItemId, { biomeId, type: "mine" });
+    }
+  }
+}
+
+function collectPerfectOreSources(
+  fiddle: ParsedGameData,
+  accumulator: ItemSourceAccumulator,
+): void {
+  const dungeons = fiddle.dungeons as Record<string, Record<string, unknown>> | undefined;
+  if (!dungeons) return;
+
+  const inner = dungeons.dungeons as Record<string, unknown> | undefined;
+  const biomes = (inner?.biomes ?? dungeons.biomes) as Record<string, unknown>[] | undefined;
+  if (!Array.isArray(biomes)) return;
+
+  const perfectItems = new Set<string>();
+  forEachItem(fiddle, (itemId, item) => {
+    const tags = Array.isArray(item.tags)
+      ? (item.tags as unknown[]).filter((v): v is string => typeof v === "string")
+      : [];
+    if (itemId.startsWith("perfect_") && tags.includes("archaeology")) {
+      perfectItems.add(itemId);
+    }
+  });
+
+  for (let i = 0; i < biomes.length; i++) {
+    const biome = biomes[i];
+    if (typeof biome !== "object" || biome === null) continue;
+
+    const biomeId = `biome_${i}` as BiomeId;
+
+    for (const mineralKey of [biome.ore, biome.gem] as (string | undefined)[]) {
+      if (!mineralKey) continue;
+      const base = mineralKey.replace("ore_", "");
+      const candidates = [`perfect_${base}_ore`, `perfect_${base}`];
+      for (const candidate of candidates) {
+        if (perfectItems.has(candidate)) {
+          accumulator.add(candidate as ItemId, { biomeId, type: "mine" });
+          perfectItems.delete(candidate);
+          break;
+        }
+      }
+    }
+  }
+}
+
+function collectWishingWellSources(
+  fiddle: ParsedGameData,
+  accumulator: ItemSourceAccumulator,
+): void {
+  const wishingWell = fiddle.wishing_well as Record<string, Record<string, unknown>> | undefined;
+  if (!wishingWell) return;
+
+  for (const [, tierData] of Object.entries(wishingWell)) {
+    if (typeof tierData !== "object" || tierData === null) continue;
+
+    for (const rollKey of ["small_roll", "large_roll"]) {
+      const roll = tierData[rollKey];
+      if (!Array.isArray(roll)) continue;
+
+      for (const entry of roll) {
+        if (typeof entry !== "object" || entry === null) continue;
+        const obj = entry as Record<string, unknown>;
+        const itemId = obj.item as string | undefined;
+        if (itemId) {
+          accumulator.add(itemId as ItemId, {
+            cost: { amount: 100, currency: "tesserae" as const },
+            type: "wishing_well",
+          });
+        }
+      }
     }
   }
 }
