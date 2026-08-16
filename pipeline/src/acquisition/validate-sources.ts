@@ -35,7 +35,8 @@ interface AcquisitionRecipeEntity extends AcquisitionSourceEntity {
 }
 
 interface AcquisitionSourceEntity {
-  sources: readonly unknown[];
+  acquisitionSources?: readonly unknown[];
+  sources?: readonly unknown[];
 }
 
 const DIAGNOSTIC_ORDER: Record<AcquisitionSourceDiagnosticKind, number> = {
@@ -77,6 +78,7 @@ const SOURCE_FIELDS = {
   default: [],
   dive: ["waterTypes"],
   engagement: [],
+  equipment: ["itemId"],
   festival: ["festivalId", "storeId"],
   festival_activity: ["activityId", "festivalId"],
   fish: ["waterTypes"],
@@ -808,7 +810,8 @@ function validateEntities(
     left.localeCompare(right),
   )) {
     reference(diagnostics, references, kind, targetId, targetId, `${kind}s.${targetId}`);
-    if (!Array.isArray(entity.sources)) {
+    const entitySources = entity.acquisitionSources ?? entity.sources;
+    if (!Array.isArray(entitySources)) {
       malformed(
         diagnostics,
         targetId,
@@ -818,7 +821,7 @@ function validateEntities(
       );
       continue;
     }
-    if (entity.sources.length === 0) {
+    if (entitySources.length === 0) {
       diagnostics.push({
         fieldPath: `${kind}s.${targetId}.sources`,
         kind: "missing-source",
@@ -826,7 +829,7 @@ function validateEntities(
         targetId,
       });
     }
-    entity.sources.forEach((source, index) => {
+    entitySources.forEach((source, index) => {
       validateSource(
         source,
         targetId,
@@ -919,7 +922,8 @@ function validateRecipeCycles(
 ): void {
   const graph = new Map<string, string[]>();
   for (const [recipeId, recipe] of Object.entries(recipes)) {
-    const dependencies = (Array.isArray(recipe.sources) ? recipe.sources : [])
+    const recipeSources = recipe.acquisitionSources ?? recipe.sources ?? [];
+    const dependencies = (Array.isArray(recipeSources) ? recipeSources : [])
       .filter(isRecord)
       .filter((source) => source.type === "recipe" && typeof source.recipeId === "string")
       .map((source) => source.recipeId as string)
@@ -1032,6 +1036,9 @@ function validateVariantFields(
         diagnostics,
       );
       break;
+    case "equipment":
+      stringReferences.push(["itemId", "item"]);
+      break;
     case "festival":
       stringReferences.push(["festivalId", "festival"]);
       optionalReference(source, "storeId", "store", targetId, fieldPath, references, diagnostics);
@@ -1043,7 +1050,7 @@ function validateVariantFields(
       validateLetter(source, targetId, fieldPath, references, diagnostics);
       break;
     case "mine":
-      stringReferences.push(["biomeId", "biome"]);
+      optionalReference(source, "biomeId", "biome", targetId, fieldPath, references, diagnostics);
       break;
     case "mines_chest":
       stringReferences.push(["biomeId", "biome"]);

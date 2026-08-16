@@ -129,10 +129,10 @@ describe("collectStoreSources", () => {
     const sources = acc.get("perk_item" as ItemId);
     expect(sources.length).toBe(1);
     expect(sources[0]).toMatchObject({
-      perkId: "taste_maker",
       storeId: "general",
       type: "store",
     });
+    expect(sources[0]).not.toHaveProperty("perkId");
   });
 
   it("skips recipe and crafting scrolls", () => {

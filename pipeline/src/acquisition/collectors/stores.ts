@@ -4,7 +4,7 @@ import { parseRequirements } from "../../requirements.js";
 import { projectRequirementExpressionToAvailability } from "../availability.js";
 
 import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
-import type { CosmeticId, ItemId, PerkId, Season, StoreId } from "$lib/types/tracker-data.js";
+import type { CosmeticId, ItemId, Season, StoreId } from "$lib/types/tracker-data.js";
 
 import type { SourceFieldLocation } from "../../data-shapes.js";
 import type { ParsedGameData } from "../../parse-fiddle.js";
@@ -187,7 +187,6 @@ function processStoreEntry(
   } else if (perkId) {
     source = {
       ...(availability ? { availability } : {}),
-      perkId: perkId as PerkId,
       storeId: storeId as StoreId,
       type: "store",
     };

@@ -13,6 +13,7 @@ import { collectRewardSources } from "./acquisition/collectors/rewards.js";
 import { collectStoreSources } from "./acquisition/collectors/stores.js";
 import { applyExclusions } from "./acquisition/exclusions.js";
 import { deriveRecipeProductSources } from "./acquisition/recipe-products.js";
+import { AcquisitionReferenceIndex } from "./acquisition/reference-index.js";
 import {
   applyReviewedOverrides,
   collectDefaultCosmeticSources,
@@ -22,6 +23,7 @@ import {
   CosmeticSourceAccumulator,
   ItemSourceAccumulator,
 } from "./acquisition/source-accumulator.js";
+import { validateAcquisitionSources } from "./acquisition/validate-sources.js";
 import { evaluateExpressions } from "./evaluate.js";
 import { extractAlmanac } from "./extractors/almanac.js";
 import { extractAnimals } from "./extractors/animals.js";
@@ -58,12 +60,189 @@ import { parseFiddle } from "./parse-fiddle.js";
 import { createRequirementContext } from "./requirements.js";
 
 import type { Source as AcquisitionSource } from "$lib/types/acquisition.js";
-import type { ItemId, LegacyRecipeSource, RecipeId, TrackerData } from "$lib/types/tracker-data.js";
+import type {
+  CosmeticId,
+  ItemId,
+  LegacyRecipeSource,
+  RecipeId,
+  TrackerData,
+} from "$lib/types/tracker-data.js";
+
+import type { ParsedGameData } from "./parse-fiddle.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PIPELINE_ROOT = resolve(__dirname, "..");
 const OUTPUT_DIR = resolve(PIPELINE_ROOT, "output");
 const APP_DATA_DIR = resolve(PIPELINE_ROOT, "..", "src", "lib", "data");
 const OUTPUT_FILE = "tracker-data.json";
+
+function buildAcquisitionReferences(
+  trackerData: TrackerData,
+  fiddle: ParsedGameData,
+  cosmeticsRaw: Record<string, unknown>,
+  cosmetics: Record<CosmeticId, unknown>,
+  itemSources: ItemSourceAccumulator,
+  cosmeticSources: CosmeticSourceAccumulator,
+): AcquisitionReferenceIndex {
+  const nativeIds = collectNativeIdsFromSources(itemSources, cosmeticSources, trackerData);
+
+  const nativeQuestIds = [
+    ...extractNestedFiddleKeys(fiddle, "quests"),
+    ...extractFiddleKeys(fiddle, "cutscenes"),
+  ];
+  const fishing = fiddle.fishing as Record<string, unknown> | undefined;
+  const chestTables = (fishing?.chest_tables ?? {}) as Record<string, unknown>;
+  const nativeChestTiers = Object.keys(chestTables).filter((k) => k !== "default");
+
+  return AcquisitionReferenceIndex.from({
+    emitted: {
+      cosmetics: trackerData.cosmetics,
+      items: trackerData.items,
+      recipes: trackerData.recipes,
+    },
+    excluded: {
+      cosmetics: Object.keys(cosmeticsRaw)
+        .filter((id) => !(id in cosmetics))
+        .reduce<Record<string, unknown>>((acc, id) => ({ ...acc, [id]: true }), {}),
+    },
+    native: {
+      activities: nativeIds.activities,
+      animals: trackerData.animals,
+      biomes: trackerData.mines.biomes,
+      dates: nativeIds.dates,
+      dialogueChoices: nativeIds.dialogueChoices,
+      dungeonLootGroups: nativeIds.dungeonLootGroups,
+      festivals: trackerData.festivals,
+      items: trackerData.items,
+      locations: nativeIds.locations,
+      monsters: nativeIds.monsters,
+      npcs: trackerData.npcs,
+      perks: trackerData.perks,
+      quests: { ...nativeIds.quests, ...toRecord(nativeQuestIds), ...trackerData.quests },
+      questTypes: nativeIds.questTypes,
+      skills: trackerData.skills,
+      stations: nativeIds.stations,
+      stores: trackerData.stores,
+      treasureChestTiers: { ...toRecord(nativeChestTiers), ...trackerData.treasureChestTiers },
+      waterTypes: nativeIds.waterTypes,
+      wings: Object.fromEntries(trackerData.museum.map((wing) => [wing.id, true])),
+    },
+  });
+}
+
+function collectNativeIdsFromSources(
+  itemSources: ItemSourceAccumulator,
+  cosmeticSources: CosmeticSourceAccumulator,
+  trackerData: TrackerData,
+): Record<string, Record<string, true>> {
+  const sets: Record<string, Set<string>> = {
+    activities: new Set(),
+    dates: new Set(),
+    dialogueChoices: new Set(),
+    dungeonLootGroups: new Set(),
+    locations: new Set(),
+    monsters: new Set(),
+    quests: new Set(),
+    questTypes: new Set(),
+    stations: new Set(),
+    waterTypes: new Set(),
+  };
+
+  const allSources: AcquisitionSource[] = [];
+  for (const [, sources] of itemSources.entries()) {
+    allSources.push(...sources);
+  }
+  for (const [, sources] of cosmeticSources.entries()) {
+    allSources.push(...sources);
+  }
+  for (const recipe of Object.values(trackerData.recipes)) {
+    if (recipe.acquisitionSources) {
+      allSources.push(...recipe.acquisitionSources);
+    }
+  }
+
+  for (const source of allSources) {
+    switch (source.type) {
+      case "animal_product":
+      case "artifact_replicator":
+      case "beach_cave_chest":
+        break;
+      case "artifact_dig":
+      case "bug_catch":
+        source.locationIds?.forEach((id) => sets.locations.add(id));
+        break;
+      case "chicken_statue":
+      case "crop":
+        break;
+      case "date":
+        sets.dates.add(source.dateId);
+        break;
+      case "default":
+        break;
+      case "dive":
+        source.waterTypes?.forEach((id) => sets.waterTypes.add(id));
+        break;
+      case "engagement":
+      case "equipment":
+      case "festival":
+        break;
+      case "festival_activity":
+        sets.activities.add(source.activityId);
+        break;
+      case "fish":
+        source.waterTypes?.forEach((id) => sets.waterTypes.add(id));
+        break;
+      case "fish_trap":
+        break;
+      case "forage":
+        source.locationIds?.forEach((id) => sets.locations.add(id));
+        break;
+      case "letter":
+      case "mine":
+        break;
+      case "mines_chest":
+        if (source.lootGroup) sets.dungeonLootGroups.add(source.lootGroup);
+        break;
+      case "mines_dig_site":
+        break;
+      case "monster":
+      case "monster_feed":
+        sets.monsters.add(source.monsterId);
+        break;
+      case "museum_donation":
+      case "perk":
+      case "perk_drop":
+      case "proposal":
+        break;
+      case "quest":
+        sets.quests.add(source.questId);
+        if (source.questType) sets.questTypes.add(source.questType);
+        if (source.choiceId) sets.dialogueChoices.add(source.choiceId);
+        break;
+      case "recipe":
+      case "renown":
+      case "ritual_chamber":
+      case "scroll_bundle":
+        break;
+      case "station":
+        sets.stations.add(source.stationId);
+        break;
+      case "store":
+      case "treasure_chest":
+      case "tree":
+      case "upgrade":
+      case "wedding":
+      case "wishing_well":
+        break;
+    }
+  }
+
+  return Object.fromEntries(
+    Object.entries(sets).map(([key, set]) => [
+      key,
+      Object.fromEntries([...set].map((id) => [id, true as const])),
+    ]),
+  );
+}
 
 function convertLegacyRecipeSource(
   source: LegacyRecipeSource,
@@ -122,6 +301,26 @@ function convertLegacyRecipeSource(
     case "wishing_well":
       return { cost: { amount: source.cost, currency: "tesserae" }, type: "wishing_well" };
   }
+}
+
+function extractFiddleKeys(fiddle: ParsedGameData, topKey: string): string[] {
+  const raw = fiddle[topKey] as Record<string, unknown> | undefined;
+  if (!raw || typeof raw !== "object") return [];
+  const nested = raw[topKey] as Record<string, unknown> | undefined;
+  const target = nested ?? raw;
+  return Object.keys(target).filter((k) => k !== "default");
+}
+
+function extractNestedFiddleKeys(fiddle: ParsedGameData, topKey: string): string[] {
+  const raw = fiddle[topKey] as Record<string, unknown> | undefined;
+  if (!raw || typeof raw !== "object") return [];
+  const keys: string[] = [];
+  for (const child of Object.values(raw)) {
+    if (child && typeof child === "object") {
+      keys.push(...Object.keys(child as Record<string, unknown>).filter((k) => k !== "default"));
+    }
+  }
+  return keys;
 }
 
 function main(): void {
@@ -249,9 +448,10 @@ function main(): void {
 
   // Attach inline acquisition sources to recipes
   for (const [recipeId, recipe] of Object.entries(recipes)) {
-    recipe.acquisitionSources = recipe.sources.map((legacySource) =>
+    const converted = recipe.sources.map((legacySource) =>
       convertLegacyRecipeSource(legacySource, recipeId as RecipeId),
     );
+    recipe.acquisitionSources = converted.length > 0 ? converted : [{ type: "default" as const }];
   }
 
   // Log inline source attachment stats
@@ -324,8 +524,16 @@ function main(): void {
     version,
   };
 
-  // Task 13 enables validateAcquisitionSources(trackerData, acquisitionReferences) here, after
-  // every canonical registry has cut over to inline acquisition sources and before visibility.
+  const acquisitionReferences = buildAcquisitionReferences(
+    trackerData,
+    fiddle,
+    cosmeticsRaw,
+    cosmetics,
+    itemSources,
+    cosmeticSources,
+  );
+  validateAcquisitionSources(trackerData, acquisitionReferences);
+  console.log("  Acquisition source validation passed");
 
   // Mutate trackerData in place: stamps visibility on items, recipes, perks, cosmetics, animals,
   // spells, and quests.
@@ -366,6 +574,10 @@ function main(): void {
   );
 
   console.log("\n✅ Pipeline complete!");
+}
+
+function toRecord(keys: string[]): Record<string, true> {
+  return Object.fromEntries(keys.map((k) => [k, true as const]));
 }
 
 main();
