@@ -85,6 +85,9 @@ describe("reviewed overrides", () => {
         back_gear_dragon_cleric_cape: { name: "Dragon Cleric Cape" },
         face_gear_dragon_cleric_earrings: { name: "Dragon Cleric Earrings" },
         head_dragon_cleric_diadem: { name: "Dragon Cleric Diadem" },
+        head_mimic_hat: { name: "Mimic Hat" },
+        head_soup_pot: { name: "Soup Pot Hat" },
+        head_teapot: { name: "Teapot Hat" },
         robe_dragon_cleric: { name: "Dragon Cleric Robes" },
         shoes_boots_dragon_cleric: { name: "Dragon Cleric Boots" },
       } as Record<string, unknown>;
@@ -99,7 +102,7 @@ describe("reviewed overrides", () => {
       expect(diagnostics).toHaveLength(0);
       expect(itemAdds).toHaveLength(1);
       expect(itemAdds[0][0]).toBe("void_cake");
-      expect(cosmeticAdds).toHaveLength(5);
+      expect(cosmeticAdds).toHaveLength(8);
     });
 
     it("reports diagnostics for override targets missing from registries", () => {

@@ -37,7 +37,12 @@ export function deriveProductionMethod(
       return;
     }
 
-    if (topCat === "furniture") {
+    if (topCat === "furniture" || tags.includes("furniture")) {
+      result = "craft";
+      return;
+    }
+
+    if (tags.includes("refined_material") || tags.includes("essence_stone")) {
       result = "craft";
     }
   });
@@ -89,7 +94,20 @@ function buildMethodIndex(fiddle: ParsedGameData): Map<string, ProductionMethod>
       return;
     }
 
-    if (topCat === "furniture" && (item.recipe || item.recipe_key)) {
+    if (
+      (topCat === "furniture" || tags.includes("furniture")) &&
+      (item.recipe || item.recipe_key)
+    ) {
+      index.set(itemId, "craft");
+      return;
+    }
+
+    if (tags.includes("refined_material") && (item.recipe || item.recipe_key)) {
+      index.set(itemId, "craft");
+      return;
+    }
+
+    if (tags.includes("essence_stone") && (item.recipe || item.recipe_key)) {
       index.set(itemId, "craft");
     }
   });

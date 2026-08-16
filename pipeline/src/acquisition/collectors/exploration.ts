@@ -1,3 +1,5 @@
+import { forEachItem } from "../../extractor-helpers.js";
+
 import type { LocationId } from "$lib/types/acquisition.js";
 import type { BiomeId, CosmeticId, ItemId, TreasureChestTier } from "$lib/types/tracker-data.js";
 
@@ -12,6 +14,8 @@ export function collectExplorationSources(
   collectMineBiomeSources(fiddle, accumulator, cosmeticAccumulator);
   collectFishingChestSources(fiddle, accumulator, cosmeticAccumulator);
   collectArtifactDigSources(fiddle, accumulator);
+  collectArtifactReplicaSources(fiddle, accumulator);
+  collectEquipmentCosmeticSources(fiddle, cosmeticAccumulator);
 }
 
 function collectArtifactDigSources(
@@ -41,6 +45,41 @@ function collectArtifactDigSources(
       type: "artifact_dig",
     });
   }
+}
+
+function collectArtifactReplicaSources(
+  fiddle: ParsedGameData,
+  accumulator: ItemSourceAccumulator,
+): void {
+  const items = fiddle.items as
+    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
+  const replicaSet = items?.furniture?.artifact_replica_set;
+  if (!replicaSet || typeof replicaSet !== "object") return;
+
+  for (const replicaId of Object.keys(replicaSet)) {
+    if (replicaId === "default") continue;
+    const originalId = replicaId.replace("artifact_replica_", "");
+    accumulator.add(replicaId as ItemId, {
+      originalItemId: originalId as ItemId,
+      requiredSetCount: 1,
+      type: "artifact_replicator",
+    });
+  }
+}
+
+function collectEquipmentCosmeticSources(
+  fiddle: ParsedGameData,
+  cosmeticAccumulator: CosmeticSourceAccumulator,
+): void {
+  forEachItem(fiddle, (itemId, item) => {
+    const cosmeticToUnlock = item.cosmetic_to_unlock as string | undefined;
+    if (cosmeticToUnlock) {
+      cosmeticAccumulator.add(cosmeticToUnlock as CosmeticId, {
+        itemId: itemId as ItemId,
+        type: "equipment",
+      });
+    }
+  });
 }
 
 function collectFishingChestSources(
@@ -91,10 +130,11 @@ function collectMineBiomeSources(
   accumulator: ItemSourceAccumulator,
   cosmeticAccumulator: CosmeticSourceAccumulator,
 ): void {
-  const dungeons = fiddle.dungeons as Record<string, unknown> | undefined;
+  const dungeons = fiddle.dungeons as Record<string, Record<string, unknown>> | undefined;
   if (!dungeons) return;
 
-  const biomes = dungeons.biomes as Record<string, unknown>[] | undefined;
+  const inner = dungeons.dungeons as Record<string, unknown> | undefined;
+  const biomes = (inner?.biomes ?? dungeons.biomes) as Record<string, unknown>[] | undefined;
   if (!Array.isArray(biomes)) return;
 
   for (let i = 0; i < biomes.length; i++) {

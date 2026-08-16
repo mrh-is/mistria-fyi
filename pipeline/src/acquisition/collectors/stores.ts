@@ -4,12 +4,12 @@ import { parseRequirements } from "../../requirements.js";
 import { projectRequirementExpressionToAvailability } from "../availability.js";
 
 import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
-import type { ItemId, PerkId, Season, StoreId } from "$lib/types/tracker-data.js";
+import type { CosmeticId, ItemId, PerkId, Season, StoreId } from "$lib/types/tracker-data.js";
 
 import type { SourceFieldLocation } from "../../data-shapes.js";
 import type { ParsedGameData } from "../../parse-fiddle.js";
 import type { RequirementContext } from "../../requirements.js";
-import type { ItemSourceAccumulator } from "../source-accumulator.js";
+import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "../source-accumulator.js";
 
 const UPGRADE_PREDICATES = new Set([
   "repaired_carpenters_shop",
@@ -21,6 +21,7 @@ export function collectStoreSources(
   fiddle: ParsedGameData,
   requirementContext: RequirementContext,
   accumulator: ItemSourceAccumulator,
+  cosmeticAccumulator?: CosmeticSourceAccumulator,
 ): void {
   const stores = fiddle.stores as Record<string, Record<string, unknown>> | undefined;
   if (!stores) return;
@@ -35,7 +36,14 @@ export function collectStoreSources(
 
       if (Array.isArray(cat.constant_stock)) {
         for (const entry of cat.constant_stock) {
-          processStoreEntry(entry, storeId, undefined, requirementContext, accumulator);
+          processStoreEntry(
+            entry,
+            storeId,
+            undefined,
+            requirementContext,
+            accumulator,
+            cosmeticAccumulator,
+          );
         }
       }
 
@@ -48,14 +56,29 @@ export function collectStoreSources(
             type: "season",
           };
           for (const entry of itemsData) {
-            processStoreEntry(entry, storeId, seasonAvailability, requirementContext, accumulator);
+            processStoreEntry(
+              entry,
+              storeId,
+              seasonAvailability,
+              requirementContext,
+              accumulator,
+              cosmeticAccumulator,
+            );
           }
         }
       }
 
       if (Array.isArray(cat.random_stock)) {
         for (const entry of cat.random_stock) {
-          processStoreEntry(entry, storeId, undefined, requirementContext, accumulator, true);
+          processStoreEntry(
+            entry,
+            storeId,
+            undefined,
+            requirementContext,
+            accumulator,
+            cosmeticAccumulator,
+            true,
+          );
         }
       }
     }
@@ -95,6 +118,7 @@ function processStoreEntry(
   baseAvailability: AvailabilityCondition | undefined,
   requirementContext: RequirementContext,
   accumulator: ItemSourceAccumulator,
+  cosmeticAccumulator?: CosmeticSourceAccumulator,
   isRandom = false,
 ): void {
   if (typeof entry === "string") {
@@ -171,5 +195,9 @@ function processStoreEntry(
     source = buildStoreSource(storeId, availability, isRandom);
   }
 
-  accumulator.add(targetId as ItemId, source);
+  if (cosmeticId && cosmeticAccumulator) {
+    cosmeticAccumulator.add(targetId as CosmeticId, source);
+  } else {
+    accumulator.add(targetId as ItemId, source);
+  }
 }

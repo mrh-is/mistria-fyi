@@ -3,27 +3,40 @@ import { simplifyAvailabilityCondition } from "$lib/engine/availability-conditio
 import { forEachItem } from "../../extractor-helpers.js";
 
 import type {
+  ActivityId,
   AvailabilityCondition,
   LocationId,
   MonsterId,
   WaterType,
 } from "$lib/types/acquisition.js";
-import type { AnimalId, ItemId, Season, Weather } from "$lib/types/tracker-data.js";
+import type {
+  AnimalId,
+  CosmeticId,
+  FestivalId,
+  ItemId,
+  PerkId,
+  Season,
+  Weather,
+} from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../../parse-fiddle.js";
-import type { ItemSourceAccumulator } from "../source-accumulator.js";
+import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "../source-accumulator.js";
 
 export function collectNaturalSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
+  cosmeticAccumulator?: CosmeticSourceAccumulator,
 ): void {
   collectFishSources(fiddle, accumulator);
   collectBugSources(fiddle, accumulator);
   collectForageSources(fiddle, accumulator);
   collectCropSources(fiddle, accumulator);
   collectTreeSources(fiddle, accumulator);
-  collectMonsterDropSources(fiddle, accumulator);
+  collectMonsterDropSources(fiddle, accumulator, cosmeticAccumulator);
   collectAnimalProductSources(fiddle, accumulator);
+  collectEarthlyEssenceCosmeticSources(fiddle, cosmeticAccumulator);
+  collectMistSightSources(fiddle, accumulator, cosmeticAccumulator);
+  collectPumpkinPatchSources(fiddle, accumulator);
 }
 
 function buildNaturalAvailability(
@@ -120,6 +133,34 @@ function collectCropSources(fiddle: ParsedGameData, accumulator: ItemSourceAccum
   }
 }
 
+function collectEarthlyEssenceCosmeticSources(
+  fiddle: ParsedGameData,
+  cosmeticAccumulator?: CosmeticSourceAccumulator,
+): void {
+  if (!cosmeticAccumulator) return;
+
+  const misc = fiddle.misc as Record<string, unknown> | undefined;
+  const earthlyEssence = misc?.earthly_essence as Record<string, unknown[]> | undefined;
+  if (!earthlyEssence) return;
+
+  for (const [season, entries] of Object.entries(earthlyEssence)) {
+    if (!Array.isArray(entries)) continue;
+
+    for (const entry of entries) {
+      if (typeof entry !== "object" || entry === null) continue;
+      const obj = entry as Record<string, unknown>;
+      if (obj.item_id === "cosmetic" && typeof obj.inner_data === "string") {
+        cosmeticAccumulator.add(obj.inner_data as CosmeticId, {
+          activity: "crop_harvest" as const,
+          availability: { seasons: [season as Season], type: "season" as const },
+          perkId: "earthly_essence" as PerkId,
+          type: "perk_drop",
+        });
+      }
+    }
+  }
+}
+
 function collectFishSources(fiddle: ParsedGameData, accumulator: ItemSourceAccumulator): void {
   const fish = fiddle.fish as Record<string, Record<string, unknown>> | undefined;
   if (!fish) return;
@@ -204,9 +245,37 @@ function collectForageSources(fiddle: ParsedGameData, accumulator: ItemSourceAcc
   }
 }
 
+function collectMistSightSources(
+  fiddle: ParsedGameData,
+  accumulator: ItemSourceAccumulator,
+  cosmeticAccumulator?: CosmeticSourceAccumulator,
+): void {
+  const misc = fiddle.misc as Record<string, unknown> | undefined;
+  const table = misc?.mist_sight_table;
+  if (!Array.isArray(table)) return;
+
+  for (const entry of table) {
+    if (typeof entry !== "object" || entry === null) continue;
+    const obj = entry as Record<string, unknown>;
+
+    if (obj.item_id === "cosmetic" && typeof obj.inner_data === "string") {
+      cosmeticAccumulator?.add(obj.inner_data as CosmeticId, {
+        perkId: "mist_sight" as PerkId,
+        type: "perk",
+      });
+    } else if (typeof obj.item_id === "string" && obj.item_id !== "unidentified_artifact") {
+      accumulator.add(obj.item_id as ItemId, {
+        perkId: "mist_sight" as PerkId,
+        type: "perk",
+      });
+    }
+  }
+}
+
 function collectMonsterDropSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
+  cosmeticAccumulator?: CosmeticSourceAccumulator,
 ): void {
   const monsters = fiddle.monsters as Record<string, Record<string, unknown>> | undefined;
   if (!monsters) return;
@@ -222,14 +291,44 @@ function collectMonsterDropSources(
 
       for (const drop of drops) {
         if (typeof drop !== "object" || drop === null) continue;
-        const itemId = (drop as Record<string, unknown>).item as string | undefined;
+        const dropObj = drop as Record<string, unknown>;
+        const itemId = dropObj.item as string | undefined;
         if (itemId) {
           accumulator.add(itemId as ItemId, {
             monsterId: monsterId as MonsterId,
             type: "monster",
           });
         }
+        const cosmeticId = dropObj.cosmetic as string | undefined;
+        if (cosmeticId && cosmeticAccumulator) {
+          cosmeticAccumulator.add(cosmeticId as CosmeticId, {
+            monsterId: monsterId as MonsterId,
+            type: "monster",
+          });
+        }
       }
+    }
+  }
+}
+
+function collectPumpkinPatchSources(
+  fiddle: ParsedGameData,
+  accumulator: ItemSourceAccumulator,
+): void {
+  const misc = fiddle.misc as Record<string, unknown> | undefined;
+  const options = misc?.pumpkin_patch_options;
+  if (!Array.isArray(options)) return;
+
+  for (const entry of options) {
+    if (typeof entry !== "object" || entry === null) continue;
+    const itemId = (entry as Record<string, unknown>).item as string | undefined;
+    if (itemId) {
+      accumulator.add(itemId as ItemId, {
+        activityId: "pumpkin_patch" as ActivityId,
+        availability: { seasons: ["fall"], type: "season" as const },
+        festivalId: "harvest" as FestivalId,
+        type: "festival_activity",
+      });
     }
   }
 }

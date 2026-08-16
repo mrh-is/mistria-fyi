@@ -32,13 +32,14 @@ export function collectRewardSources(
   cosmeticAccumulator?: CosmeticSourceAccumulator,
 ): void {
   collectQuestRewardSources(fiddle, accumulator, cosmeticAccumulator);
-  collectFestivalStockSources(fiddle, accumulator);
-  collectRenownRewardSources(fiddle, accumulator);
+  collectFestivalStockSources(fiddle, accumulator, cosmeticAccumulator);
+  collectRenownRewardSources(fiddle, accumulator, cosmeticAccumulator);
   collectLetterRewardSources(fiddle, accumulator);
-  collectMuseumDonationRewardSources(fiddle, accumulator);
+  collectMuseumDonationRewardSources(fiddle, accumulator, cosmeticAccumulator);
   collectProposalSources(fiddle, accumulator);
   collectDateSources(fiddle, accumulator);
   collectEngagementSources(fiddle, accumulator);
+  collectWeddingCosmeticSources(fiddle, cosmeticAccumulator);
 }
 
 function classifyLetterTrigger(reqs: Record<string, unknown> | undefined): LetterTrigger {
@@ -124,6 +125,7 @@ function collectEngagementSources(
 function collectFestivalStockSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
+  cosmeticAccumulator?: CosmeticSourceAccumulator,
 ): void {
   const festivals = fiddle.festivals as Record<string, Record<string, unknown>> | undefined;
   if (!festivals) return;
@@ -142,15 +144,23 @@ function collectFestivalStockSources(
       for (const entry of stockData) {
         if (typeof entry !== "object" || entry === null) continue;
         const obj = entry as Record<string, unknown>;
-        const targetId = (obj.cosmetic as string) ?? (obj.item as string);
+        const cosmeticId = obj.cosmetic as string | undefined;
+        const itemId = obj.item as string | undefined;
+        const targetId = cosmeticId ?? itemId;
         if (!targetId) continue;
 
-        accumulator.add(targetId as ItemId, {
+        const source: Source = {
           ...(season ? { availability: { seasons: [season], type: "season" as const } } : {}),
           festivalId: festivalId as FestivalId,
           storeId: storeId as StoreId,
           type: "festival",
-        });
+        };
+
+        if (cosmeticId && cosmeticAccumulator) {
+          cosmeticAccumulator.add(cosmeticId as CosmeticId, source);
+        } else {
+          accumulator.add(targetId as ItemId, source);
+        }
       }
     }
   }
@@ -193,6 +203,7 @@ function collectLetterRewardSources(
 function collectMuseumDonationRewardSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
+  cosmeticAccumulator?: CosmeticSourceAccumulator,
 ): void {
   const wings = fiddle.museum_wings as Record<string, Record<string, unknown>> | undefined;
   if (!wings) return;
@@ -216,14 +227,22 @@ function collectMuseumDonationRewardSources(
 
         if (obj.crafting_scroll || obj.recipe_scroll) continue;
 
-        const targetId = (obj.item ?? obj.cosmetic) as string | undefined;
+        const cosmeticId = obj.cosmetic as string | undefined;
+        const itemId = obj.item as string | undefined;
+        const targetId = cosmeticId ?? itemId;
         if (!targetId) continue;
 
-        accumulator.add(targetId as ItemId, {
+        const source: Source = {
           setCount,
           type: "museum_donation",
           wingId: wingId as WingId,
-        });
+        };
+
+        if (cosmeticId && cosmeticAccumulator) {
+          cosmeticAccumulator.add(cosmeticId as CosmeticId, source);
+        } else {
+          accumulator.add(targetId as ItemId, source);
+        }
       }
     }
   }
@@ -285,6 +304,7 @@ function collectQuestRewardSources(
 function collectRenownRewardSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
+  cosmeticAccumulator?: CosmeticSourceAccumulator,
 ): void {
   const renown = fiddle.renown as Record<string, unknown> | undefined;
   if (!renown) return;
@@ -295,13 +315,38 @@ function collectRenownRewardSources(
     const reward = rewards[i];
     if (typeof reward !== "object" || reward === null) continue;
     const obj = reward as Record<string, unknown>;
-    const targetId = (obj.cosmetic as string) ?? (obj.item as string);
+    const cosmeticId = obj.cosmetic as string | undefined;
+    const itemId = obj.item as string | undefined;
+    const targetId = cosmeticId ?? itemId;
     if (!targetId) continue;
 
-    accumulator.add(targetId as ItemId, {
+    const source: Source = {
       level: i + 1,
       type: "renown",
-    });
+    };
+
+    if (cosmeticId && cosmeticAccumulator) {
+      cosmeticAccumulator.add(cosmeticId as CosmeticId, source);
+    } else {
+      accumulator.add(targetId as ItemId, source);
+    }
+  }
+}
+
+function collectWeddingCosmeticSources(
+  fiddle: ParsedGameData,
+  cosmeticAccumulator?: CosmeticSourceAccumulator,
+): void {
+  if (!cosmeticAccumulator) return;
+
+  const misc = fiddle.misc as Record<string, unknown> | undefined;
+  const weddingAssets = misc?.wedding_assets;
+  if (!Array.isArray(weddingAssets)) return;
+
+  for (const cosmeticId of weddingAssets) {
+    if (typeof cosmeticId === "string") {
+      cosmeticAccumulator.add(cosmeticId as CosmeticId, { type: "wedding" });
+    }
   }
 }
 

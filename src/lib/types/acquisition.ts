@@ -65,6 +65,7 @@ export type Source =
         | { cost: { amount: number; currency: "tesserae" }; type: "wishing_well" }
         | { dateId: DateId; type: "date" }
         | { festivalId: FestivalId; storeId?: StoreId; type: "festival" }
+        | { itemId: ItemId; type: "equipment" }
         | { level: number; type: "renown" }
         | { locationIds?: LocationId[]; type: "artifact_dig" }
         | { locationIds?: LocationId[]; type: "bug_catch" }

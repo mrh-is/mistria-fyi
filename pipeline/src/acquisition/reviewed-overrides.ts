@@ -1,6 +1,6 @@
 import { canonicalSourceJson } from "./source-accumulator.js";
 
-import type { Source } from "$lib/types/acquisition.js";
+import type { MonsterId, Source } from "$lib/types/acquisition.js";
 import type { CosmeticId, ItemId, PerkId, QuestId } from "$lib/types/tracker-data.js";
 import type { TrackerData } from "$lib/types/tracker-data.js";
 
@@ -41,6 +41,21 @@ export const COSMETIC_OVERRIDES: Partial<Record<CosmeticId, Source[]>> = {
   ],
   ["head_dragon_cleric_diadem" as CosmeticId]: [
     { perkId: "lost_to_history" as PerkId, type: "ritual_chamber" as const },
+  ],
+  // Wiki: https://fieldsofmistria.wiki.gg/wiki/Mimic
+  // The Mimic Hat drops from feeding mimics in the mines. The native data has no drops or
+  // feed_reward table for mimics; the reward appears to be determined at runtime.
+  ["head_mimic_hat" as CosmeticId]: [
+    { monsterId: "mimic" as MonsterId, type: "monster_feed" as const },
+  ],
+  // Wiki: https://fieldsofmistria.wiki.gg/wiki/Wishing_Well
+  // Soup Pot Hat and Teapot Hat are obtainable from the Wishing Well. The native data only stores
+  // price configuration; the reward pool is not encoded in the static game data.
+  ["head_soup_pot" as CosmeticId]: [
+    { cost: { amount: 100, currency: "tesserae" as const }, type: "wishing_well" as const },
+  ],
+  ["head_teapot" as CosmeticId]: [
+    { cost: { amount: 100, currency: "tesserae" as const }, type: "wishing_well" as const },
   ],
   ["robe_dragon_cleric" as CosmeticId]: [
     { perkId: "lost_to_history" as PerkId, type: "ritual_chamber" as const },

@@ -1,7 +1,8 @@
+import type { Source as AcquisitionSource } from "./acquisition.js";
 import type { VisibilityCondition } from "./visibility.js";
 
+export type { AcquisitionSource };
 export type {
-  Source as AcquisitionSource,
   ActivityId,
   AvailabilityCondition,
   DateId,
@@ -116,6 +117,7 @@ export type PerkId = string & { readonly __brand: "PerkId" };
 export type QuestId = string & { readonly __brand: "QuestId" };
 export type QuestType = string & { readonly __brand: "QuestType" };
 export interface Recipe {
+  acquisitionSources?: AcquisitionSource[];
   memberItemIds: ItemId[];
   presentations: RecipePresentation[];
   sources: LegacyRecipeSource[];
@@ -213,6 +215,7 @@ export interface TrackerData {
   cosmetics: Record<
     CosmeticId,
     {
+      acquisitionSources?: AcquisitionSource[];
       defaultUnlocked: boolean;
       name: string;
       slot: CosmeticSlot;
@@ -230,6 +233,7 @@ export interface TrackerData {
   items: Record<
     ItemId,
     {
+      acquisitionSources?: AcquisitionSource[];
       category: string;
       name: string;
       questGate?: QuestId[];

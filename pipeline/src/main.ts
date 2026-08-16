@@ -151,9 +151,9 @@ function main(): void {
   const itemSources = new ItemSourceAccumulator();
   const cosmeticSources = new CosmeticSourceAccumulator();
   deriveRecipeProductSources(fiddle, recipes, itemSources);
-  collectNaturalSources(fiddle, itemSources);
+  collectNaturalSources(fiddle, itemSources, cosmeticSources);
   collectRewardSources(fiddle, itemSources, cosmeticSources);
-  collectStoreSources(fiddle, requirementContext, itemSources);
+  collectStoreSources(fiddle, requirementContext, itemSources, cosmeticSources);
   collectExplorationSources(fiddle, itemSources, cosmeticSources);
   collectDefaultItemSources(fiddle, itemSources, items);
   collectDefaultCosmeticSources(cosmetics, cosmeticSources);
@@ -170,6 +170,33 @@ function main(): void {
     }
     console.log(`  Warning: ${d.message}`);
   }
+
+  // Attach inline acquisition sources to items
+  for (const [itemId, sources] of itemSources.entries()) {
+    const item = items[itemId];
+    if (item) {
+      (item as TrackerData["items"][ItemId]).acquisitionSources = sources;
+    }
+  }
+
+  // Attach inline acquisition sources to cosmetics
+  for (const [cosmeticId, sources] of cosmeticSources.entries()) {
+    const cosmetic = cosmetics[cosmeticId];
+    if (cosmetic) {
+      cosmetic.acquisitionSources = sources;
+    }
+  }
+
+  // Log inline source attachment stats
+  const itemsWithSources = Object.values(items).filter(
+    (i) => (i as TrackerData["items"][ItemId]).acquisitionSources?.length,
+  ).length;
+  const cosmeticsWithSources = Object.values(cosmetics).filter(
+    (c) => c.acquisitionSources?.length,
+  ).length;
+  console.log(
+    `  Inline sources: ${itemsWithSources}/${Object.keys(items).length} items, ${cosmeticsWithSources}/${Object.keys(cosmetics).length} cosmetics`,
+  );
 
   applyItemQuestGates(items, questGates.itemGates);
   applyAnimalQuestGates(animals, questGates.animalGates);

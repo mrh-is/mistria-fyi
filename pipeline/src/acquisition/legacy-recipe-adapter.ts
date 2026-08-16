@@ -112,6 +112,7 @@ export function toLegacyRecipeSource(source: Source): LegacyRecipeSource {
     case "crop":
     case "date":
     case "dive":
+    case "equipment":
     case "festival_activity":
     case "fish":
     case "fish_trap":
