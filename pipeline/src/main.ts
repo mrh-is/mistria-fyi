@@ -57,12 +57,72 @@ import { extractQuestChains } from "./extractors/visibility/quest-chains.js";
 import { parseFiddle } from "./parse-fiddle.js";
 import { createRequirementContext } from "./requirements.js";
 
-import type { ItemId, TrackerData } from "$lib/types/tracker-data.js";
+import type { Source as AcquisitionSource } from "$lib/types/acquisition.js";
+import type { ItemId, LegacyRecipeSource, RecipeId, TrackerData } from "$lib/types/tracker-data.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PIPELINE_ROOT = resolve(__dirname, "..");
 const OUTPUT_DIR = resolve(PIPELINE_ROOT, "output");
 const APP_DATA_DIR = resolve(PIPELINE_ROOT, "..", "src", "lib", "data");
 const OUTPUT_FILE = "tracker-data.json";
+
+function convertLegacyRecipeSource(
+  source: LegacyRecipeSource,
+  _recipeId: RecipeId,
+): AcquisitionSource {
+  switch (source.type) {
+    case "beach_cave_chest":
+      return { type: "beach_cave_chest" };
+    case "chicken_statue":
+      return { cost: { amount: source.cost, currency: "beads" }, type: "chicken_statue" };
+    case "default":
+      return { type: "default" };
+    case "dragon_forge":
+      return { type: "default" };
+    case "engagement":
+      return { type: "engagement" };
+    case "festival":
+      return { festivalId: source.festivalId, storeId: source.storeId, type: "festival" };
+    case "letter":
+      if (source.trigger === "donated_item") {
+        return { trigger: "donated_item", triggerItemId: source.triggerItemId, type: "letter" };
+      }
+      if (source.trigger === "shipped_item") {
+        return { trigger: "shipped_item", triggerItemId: source.triggerItemId, type: "letter" };
+      }
+      return { trigger: "reached_date", triggerDate: source.triggerDate, type: "letter" };
+    case "mines_chest":
+      return { biomeId: source.biomeId, perkId: source.perkId, type: "mines_chest" };
+    case "mines_dig_site":
+      return { biomeId: source.biomeId, perkId: source.perkId, type: "mines_dig_site" };
+    case "museum_donation":
+      return { setCount: source.setCount, type: "museum_donation", wingId: source.wingId };
+    case "perk":
+      return { perkId: source.perkId, type: "perk" };
+    case "quest":
+      return {
+        ...(source.challengeRecipeId ? { challengeRecipeId: source.challengeRecipeId } : {}),
+        questId: source.questId,
+        ...(source.questType ? { questType: source.questType } : {}),
+        ...(source.requestedItemId ? { requestedItemId: source.requestedItemId } : {}),
+        trigger: "completion",
+        type: "quest",
+      };
+    case "renown":
+      return { level: source.level, type: "renown" };
+    case "scroll_bundle":
+      return { bundleName: source.bundleName, storeId: source.storeId, type: "scroll_bundle" };
+    case "store":
+      return { storeId: source.storeId, type: "store" };
+    case "store_with_perk":
+      return { storeId: source.storeId, type: "store" };
+    case "treasure_chest":
+      return { tier: source.tier, type: "treasure_chest" };
+    case "upgrade":
+      return { storeId: source.storeId, type: "upgrade", upgradeName: source.upgradeName };
+    case "wishing_well":
+      return { cost: { amount: source.cost, currency: "tesserae" }, type: "wishing_well" };
+  }
+}
 
 function main(): void {
   console.log("🌾 Harvest Helper — Data Pipeline\n");
@@ -187,6 +247,13 @@ function main(): void {
     }
   }
 
+  // Attach inline acquisition sources to recipes
+  for (const [recipeId, recipe] of Object.entries(recipes)) {
+    recipe.acquisitionSources = recipe.sources.map((legacySource) =>
+      convertLegacyRecipeSource(legacySource, recipeId as RecipeId),
+    );
+  }
+
   // Log inline source attachment stats
   const itemsWithSources = Object.values(items).filter(
     (i) => (i as TrackerData["items"][ItemId]).acquisitionSources?.length,
@@ -194,8 +261,13 @@ function main(): void {
   const cosmeticsWithSources = Object.values(cosmetics).filter(
     (c) => c.acquisitionSources?.length,
   ).length;
+  const recipesWithSources = Object.values(recipes).filter(
+    (r) => r.acquisitionSources?.length,
+  ).length;
   console.log(
-    `  Inline sources: ${itemsWithSources}/${Object.keys(items).length} items, ${cosmeticsWithSources}/${Object.keys(cosmetics).length} cosmetics`,
+    `  Inline sources: ${itemsWithSources}/${Object.keys(items).length} items, ` +
+      `${cosmeticsWithSources}/${Object.keys(cosmetics).length} cosmetics, ` +
+      `${recipesWithSources}/${Object.keys(recipes).length} recipes`,
   );
 
   applyItemQuestGates(items, questGates.itemGates);
