@@ -91,14 +91,6 @@ export function formatStoreName(
   return store.article ? `${store.article} ${store.name}` : store.name;
 }
 
-export function locationLabel(location: string): string {
-  // Handles comma-separated locations like "narrows, eastern_road, town"
-  return location
-    .split(", ")
-    .map((part) => titleCase(part))
-    .join(", ");
-}
-
 export function recipeSourceLabel(source: AcquisitionSource, lookups: RecipeSourceLookups): string {
   switch (source.type) {
     case "animal_product":

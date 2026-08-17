@@ -70,6 +70,7 @@
   // The current recipe condition is added when each tree is built.
   let baseSegmentLookups: Omit<SegmentLookups, "recipeVisibility"> = $derived({
     ...sourceLookups,
+    animalNames: {},
     categoryVisibility: trackerData.categoryVisibility,
     festivalDates: Object.fromEntries(
       Object.entries(trackerData.festivals).map(([id, festival]) => [id, festival.date]),
@@ -79,6 +80,8 @@
         .filter(([, item]) => item.visibility)
         .map(([id, item]) => [id, item.visibility]),
     ),
+    locationNames: {},
+    monsterNames: {},
     npcNames: Object.fromEntries(
       Object.entries(trackerData.npcs).map(([id, npc]) => [id, npc.name]),
     ),
@@ -91,6 +94,7 @@
       ),
     ) as Partial<Record<QuestId, NpcId>>,
 
+    stationNames: {},
     storeVisibility: trackerData.storeVisibility,
   });
 

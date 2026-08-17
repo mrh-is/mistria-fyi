@@ -10,23 +10,31 @@ import {
 
 import type {
   AcquisitionSource,
+  ActivityId,
+  AnimalId,
   BiomeId,
+  DateId,
   FestivalId,
   ItemId,
+  LocationId,
+  MonsterId,
   NpcId,
   PerkId,
   QuestId,
   QuestType,
   RecipeId,
   SkillId,
+  StationId,
   StoreId,
   TreasureChestTier,
+  WaterType,
   WingId,
 } from "$lib/types/tracker-data.js";
 
 import type { SegmentLookups } from "./source-segments.js";
 
 const BASE_LOOKUPS: SegmentLookups = {
+  animalNames: {},
   biomes: [
     { endFloor: 19, id: "biome_0" as BiomeId, name: "Upper Mines", startFloor: 1 },
     { endFloor: 39, id: "biome_1" as BiomeId, name: "The Tide Caverns", startFloor: 20 },
@@ -37,6 +45,8 @@ const BASE_LOOKUPS: SegmentLookups = {
   festivals: {},
   itemNames: {},
   itemVisibility: {},
+  locationNames: {},
+  monsterNames: {},
   npcNames: {},
   npcVisibility: {},
   perks: {
@@ -53,6 +63,7 @@ const BASE_LOOKUPS: SegmentLookups = {
   recipeNames: {},
   recipeVisibility: { type: "always" },
   skillNames: { cooking: "Cooking" },
+  stationNames: {},
   stores: {
     general: { article: "the" as const, name: "General Store", upgradeAction: "repairing" },
     inn: { article: "the" as const, name: "Sleeping Dragon Inn" },
@@ -579,5 +590,236 @@ describe("buildSourceSegments — quest types", () => {
     expect(buildSourceSegments(source, lookups)[0]).toMatchObject({
       condition: { npcId: "stillwell", type: "npcKnown" },
     });
+  });
+});
+
+describe("buildSourceSegments — item/cosmetic source types", () => {
+  it("animal_product with known animal name", () => {
+    const source: AcquisitionSource = { animalId: "alpaca" as AnimalId, type: "animal_product" };
+    const lookups: SegmentLookups = { ...BASE_LOOKUPS, animalNames: { alpaca: "Alpaca" } };
+    expect(buildSourceSegments(source, lookups)).toEqual(["Collect from Alpaca"]);
+  });
+
+  it("animal_product falls back to title-cased id", () => {
+    const source: AcquisitionSource = { animalId: "dairy_cow" as AnimalId, type: "animal_product" };
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Collect from Dairy Cow"]);
+  });
+
+  it("artifact_dig with locations", () => {
+    const source: AcquisitionSource = {
+      locationIds: ["narrows" as LocationId, "eastern_road" as LocationId],
+      type: "artifact_dig",
+    };
+    const lookups: SegmentLookups = {
+      ...BASE_LOOKUPS,
+      locationNames: { eastern_road: "Eastern Road", narrows: "Narrows" },
+    };
+    expect(buildSourceSegments(source, lookups)).toEqual(["Dig up at Narrows, Eastern Road"]);
+  });
+
+  it("artifact_dig without locations", () => {
+    const source: AcquisitionSource = { type: "artifact_dig" };
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Dig up at an artifact dig site"]);
+  });
+
+  it("artifact_replicator", () => {
+    const source: AcquisitionSource = {
+      originalItemId: "ancient_vase" as ItemId,
+      requiredSetCount: 3,
+      type: "artifact_replicator",
+    };
+    const lookups: SegmentLookups = {
+      ...BASE_LOOKUPS,
+      itemNames: { ancient_vase: "Ancient Vase" },
+    };
+    expect(buildSourceSegments(source, lookups)).toEqual([
+      "Replicate from Ancient Vase (3 museum sets)",
+    ]);
+  });
+
+  it("bug_catch with locations", () => {
+    const source: AcquisitionSource = {
+      locationIds: ["narrows" as LocationId, "eastern_road" as LocationId],
+      type: "bug_catch",
+    };
+    const lookups: SegmentLookups = {
+      ...BASE_LOOKUPS,
+      locationNames: { eastern_road: "Eastern Road", narrows: "Narrows" },
+    };
+    expect(buildSourceSegments(source, lookups)).toEqual(["Catch at Narrows, Eastern Road"]);
+  });
+
+  it("bug_catch without locations", () => {
+    const source: AcquisitionSource = { type: "bug_catch" };
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Catch"]);
+  });
+
+  it("crop from seed", () => {
+    const source: AcquisitionSource = {
+      seedItemId: "turnip_seeds" as ItemId,
+      type: "crop",
+    };
+    const lookups: SegmentLookups = {
+      ...BASE_LOOKUPS,
+      itemNames: { turnip_seeds: "Turnip Seeds" },
+    };
+    const result = buildSourceSegments(source, lookups);
+    expect(result[0]).toContain("Grow");
+    expect(result).toEqual(["Grow from Turnip Seeds"]);
+  });
+
+  it("date", () => {
+    const source: AcquisitionSource = { dateId: "date_1" as DateId, type: "date" };
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Receive on a date"]);
+  });
+
+  it("dive with water types", () => {
+    const source: AcquisitionSource = { type: "dive", waterTypes: ["ocean" as WaterType] };
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Dive in Ocean"]);
+  });
+
+  it("dive without water types", () => {
+    const source: AcquisitionSource = { type: "dive" };
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Dive"]);
+  });
+
+  it("equipment", () => {
+    const source: AcquisitionSource = { itemId: "fishing_rod" as ItemId, type: "equipment" };
+    const lookups: SegmentLookups = {
+      ...BASE_LOOKUPS,
+      itemNames: { fishing_rod: "Fishing Rod" },
+    };
+    expect(buildSourceSegments(source, lookups)).toEqual(["Use Fishing Rod"]);
+  });
+
+  it("festival_activity", () => {
+    const source: AcquisitionSource = {
+      activityId: "harvest_race" as ActivityId,
+      festivalId: "harvest_festival" as FestivalId,
+      type: "festival_activity",
+    };
+    const lookups: SegmentLookups = {
+      ...BASE_LOOKUPS,
+      festivals: { harvest_festival: { name: "Harvest Festival" } },
+    };
+    expect(buildSourceSegments(source, lookups)).toEqual([
+      "Participate in an activity at the Harvest Festival",
+    ]);
+  });
+
+  it("fish with water types", () => {
+    const source: AcquisitionSource = { type: "fish", waterTypes: ["river" as WaterType] };
+    const result = buildSourceSegments(source, BASE_LOOKUPS);
+    expect(result[0]).toContain("Catch");
+    expect(result).toEqual(["Catch in River"]);
+  });
+
+  it("fish without water types", () => {
+    const source: AcquisitionSource = { type: "fish" };
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Catch while fishing"]);
+  });
+
+  it("fish_trap", () => {
+    const source: AcquisitionSource = { type: "fish_trap" };
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Catch in a fish trap"]);
+  });
+
+  it("forage with locations", () => {
+    const source: AcquisitionSource = {
+      locationIds: ["narrows" as LocationId],
+      type: "forage",
+    };
+    const lookups: SegmentLookups = {
+      ...BASE_LOOKUPS,
+      locationNames: { narrows: "Narrows" },
+    };
+    expect(buildSourceSegments(source, lookups)).toEqual(["Forage at Narrows"]);
+  });
+
+  it("forage without locations", () => {
+    const source: AcquisitionSource = { type: "forage" };
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Forage in the wild"]);
+  });
+
+  it("mine wraps biome label", () => {
+    const source: AcquisitionSource = { biomeId: "biome_0" as BiomeId, type: "mine" };
+    const result = buildSourceSegments(source, BASE_LOOKUPS);
+    expect(result[0]).toBe("Mine in ");
+    expect(result[1]).toMatchObject({
+      condition: { floor: 1, type: "minesLevel" },
+      revealed: ["the Upper Mines (Mines floors 1–19)"],
+    });
+  });
+
+  it("monster", () => {
+    const source: AcquisitionSource = { monsterId: "slime" as MonsterId, type: "monster" };
+    const lookups: SegmentLookups = { ...BASE_LOOKUPS, monsterNames: { slime: "Slime" } };
+    expect(buildSourceSegments(source, lookups)).toEqual(["Dropped by Slime"]);
+  });
+
+  it("monster_feed", () => {
+    const source: AcquisitionSource = { monsterId: "slime" as MonsterId, type: "monster_feed" };
+    const lookups: SegmentLookups = { ...BASE_LOOKUPS, monsterNames: { slime: "Slime" } };
+    expect(buildSourceSegments(source, lookups)).toEqual(["Feed Slime"]);
+  });
+
+  it("perk_drop", () => {
+    const source: AcquisitionSource = {
+      activity: "crop_harvest",
+      perkId: "taste_maker" as PerkId,
+      type: "perk_drop",
+    };
+    const result = buildSourceSegments(source, BASE_LOOKUPS);
+    expect(result[0]).toBe("Random drop with ");
+    expect(result[1]).toMatchObject({ revealed: ["the Taste Maker perk (Cooking tier 1)"] });
+  });
+
+  it("proposal", () => {
+    const source: AcquisitionSource = { npcId: "elsie" as NpcId, type: "proposal" };
+    const lookups: SegmentLookups = {
+      ...BASE_LOOKUPS,
+      npcNames: { elsie: "Elsie" } as Record<NpcId, string>,
+    };
+    expect(buildSourceSegments(source, lookups)).toEqual(["Propose to Elsie"]);
+  });
+
+  it("recipe", () => {
+    const source: AcquisitionSource = {
+      method: "dragon_forge",
+      recipeId: "iron_ingot" as RecipeId,
+      type: "recipe",
+    };
+    const lookups: SegmentLookups = {
+      ...BASE_LOOKUPS,
+      recipeNames: { iron_ingot: "Iron Ingot" } as Record<RecipeId, string>,
+    };
+    expect(buildSourceSegments(source, lookups)).toEqual(["Dragon Forge via Iron Ingot"]);
+  });
+
+  it("ritual_chamber", () => {
+    const source: AcquisitionSource = { perkId: "taste_maker" as PerkId, type: "ritual_chamber" };
+    const result = buildSourceSegments(source, BASE_LOOKUPS);
+    expect(result[0]).toBe("Craft at the Ritual Chamber with ");
+    expect(result[1]).toMatchObject({ revealed: ["the Taste Maker perk (Cooking tier 1)"] });
+  });
+
+  it("station", () => {
+    const source: AcquisitionSource = { stationId: "forge" as StationId, type: "station" };
+    const lookups: SegmentLookups = { ...BASE_LOOKUPS, stationNames: { forge: "Forge" } };
+    expect(buildSourceSegments(source, lookups)).toEqual(["Process at Forge"]);
+  });
+
+  it("tree", () => {
+    const source: AcquisitionSource = { saplingItemId: "apple_sapling" as ItemId, type: "tree" };
+    const lookups: SegmentLookups = {
+      ...BASE_LOOKUPS,
+      itemNames: { apple_sapling: "Apple Sapling" },
+    };
+    expect(buildSourceSegments(source, lookups)).toEqual(["Harvest from Apple Sapling"]);
+  });
+
+  it("wedding", () => {
+    const source: AcquisitionSource = { type: "wedding" };
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Receive after getting married"]);
   });
 });

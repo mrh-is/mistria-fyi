@@ -5,24 +5,30 @@ import type {
   BiomeId,
   FestivalId,
   ItemId,
+  LocationId,
   NpcId,
   PerkId,
   QuestId,
   Season,
   StoreId,
+  WaterType,
 } from "$lib/types/tracker-data.js";
 import type { VisibilityCondition } from "$lib/types/visibility.js";
 
 import type { RecipeSourceLookups } from "./format.js";
 
 export interface SegmentLookups extends RecipeSourceLookups {
+  animalNames: Partial<Record<string, string>>;
   categoryVisibility: Record<string, VisibilityCondition>;
   festivalDates: Partial<Record<FestivalId, { day: number; season: Season }>>;
   itemVisibility: Partial<Record<ItemId, VisibilityCondition>>;
+  locationNames: Partial<Record<string, string>>;
+  monsterNames: Partial<Record<string, string>>;
   npcNames: Partial<Record<NpcId, string>>;
   npcVisibility: Partial<Record<NpcId, VisibilityCondition>>;
   questNpcIds: Partial<Record<QuestId, NpcId>>;
   recipeVisibility: VisibilityCondition;
+  stationNames: Partial<Record<string, string>>;
   storeVisibility: Partial<Record<StoreId, VisibilityCondition>>;
 }
 
@@ -88,30 +94,46 @@ export function buildSourceSegments(
   lookups: SegmentLookups,
 ): [SourceSegment, ...SourceSegment[]] {
   switch (source.type) {
-    case "animal_product":
-      return ["Obtain from an animal product"];
-    case "artifact_dig":
-      return ["Dig up at an artifact dig site"];
-    case "artifact_replicator":
-      return ["Replicate at the Artifact Replicator"];
+    case "animal_product": {
+      const name = lookups.animalNames[source.animalId as string] ?? titleCase(source.animalId);
+      return [`Collect from ${name}`];
+    }
+    case "artifact_dig": {
+      const locations = buildLocationList(source.locationIds, lookups);
+      return [locations ? `Dig up at ${locations}` : "Dig up at an artifact dig site"];
+    }
+    case "artifact_replicator": {
+      const itemName =
+        lookups.itemNames[source.originalItemId as string] ?? titleCase(source.originalItemId);
+      return [`Replicate from ${itemName} (${String(source.requiredSetCount)} museum sets)`];
+    }
     case "beach_cave_chest":
       return ["Find in the Gold Treasure Chest in the Beach Cave"];
-    case "bug_catch":
-      return ["Catch as a bug"];
+    case "bug_catch": {
+      const locations = buildLocationList(source.locationIds, lookups);
+      return [locations ? `Catch at ${locations}` : "Catch"];
+    }
     case "chicken_statue":
       return [`Obtain from the Chicken Statue (${String(source.cost.amount)} beads)`];
-    case "crop":
-      return ["Grow as a crop"];
+    case "crop": {
+      const seedName =
+        lookups.itemNames[source.seedItemId as string] ?? titleCase(source.seedItemId);
+      return [`Grow from ${seedName}`];
+    }
     case "date":
-      return ["Receive on a scheduled date"];
+      return ["Receive on a date"];
     case "default":
       return ["Available from the start"];
-    case "dive":
-      return ["Find while diving"];
+    case "dive": {
+      const waters = buildWaterList(source.waterTypes);
+      return [waters ? `Dive in ${waters}` : "Dive"];
+    }
     case "engagement":
       return ["Receive from Elsie after getting to 10 hearts with a dateable character"];
-    case "equipment":
-      return ["Obtain as equipment"];
+    case "equipment": {
+      const itemName = lookups.itemNames[source.itemId as string] ?? titleCase(source.itemId);
+      return [`Use ${itemName}`];
+    }
     case "festival": {
       const festivalName =
         lookups.festivals[source.festivalId as string]?.name ?? titleCase(source.festivalId);
@@ -121,14 +143,21 @@ export function buildSourceSegments(
       const storeName = formatStoreName(source.storeId, lookups.stores);
       return [`Purchase from ${storeName} at the ${festivalName}${dateSuffix}`];
     }
-    case "festival_activity":
-      return ["Complete a festival activity"];
-    case "fish":
-      return ["Catch while fishing"];
+    case "festival_activity": {
+      const festivalName =
+        lookups.festivals[source.festivalId as string]?.name ?? titleCase(source.festivalId);
+      return [`Participate in an activity at the ${festivalName}`];
+    }
+    case "fish": {
+      const waters = buildWaterList(source.waterTypes);
+      return [waters ? `Catch in ${waters}` : "Catch while fishing"];
+    }
     case "fish_trap":
-      return ["Find in a fish trap"];
-    case "forage":
-      return ["Forage in the wild"];
+      return ["Catch in a fish trap"];
+    case "forage": {
+      const locations = buildLocationList(source.locationIds, lookups);
+      return [locations ? `Forage at ${locations}` : "Forage in the wild"];
+    }
     case "letter": {
       if (source.trigger === "shipped_item" || source.trigger === "donated_item") {
         const verb = source.trigger === "shipped_item" ? "shipping" : "donating";
@@ -148,8 +177,10 @@ export function buildSourceSegments(
         : formatDateLabel(season, day);
       return [`Receive in a letter after reaching ${dateStr}`];
     }
-    case "mine":
-      return ["Mine in the Mines"];
+    case "mine": {
+      const biomeLabel = buildBiomeLabel(source.biomeId, lookups);
+      return joinSegments("Mine in ", biomeLabel);
+    }
     case "mines_chest": {
       const biomeLabel = buildBiomeLabel(source.biomeId, lookups);
       if (!source.perkId) return joinSegments("Find in a Treasure Chest in ", biomeLabel);
@@ -172,29 +203,44 @@ export function buildSourceSegments(
       ];
     }
 
-    case "monster":
-      return ["Obtain as a monster drop"];
-    case "monster_feed":
-      return ["Receive from feeding a monster"];
+    case "monster": {
+      const name = lookups.monsterNames[source.monsterId as string] ?? titleCase(source.monsterId);
+      return [`Dropped by ${name}`];
+    }
+    case "monster_feed": {
+      const name = lookups.monsterNames[source.monsterId as string] ?? titleCase(source.monsterId);
+      return [`Feed ${name}`];
+    }
     case "museum_donation": {
       const wingName = titleCase(source.wingId);
       const setWord = source.setCount === 1 ? "set" : "sets";
       return [`Complete ${String(source.setCount)} ${setWord} in the ${wingName} wing`];
     }
-    case "perk":
-    case "perk_drop":
-    case "ritual_chamber": {
+    case "perk": {
       const perkLabel = buildPerkLabel(source.perkId, lookups);
       return joinSegments("Unlock ", perkLabel);
     }
-    case "proposal":
-      return ["Receive after proposing to a dateable character"];
+    case "perk_drop": {
+      const perkLabel = buildPerkLabel(source.perkId, lookups);
+      return joinSegments("Random drop with ", perkLabel);
+    }
+    case "proposal": {
+      const npcName = lookups.npcNames[source.npcId] ?? titleCase(source.npcId);
+      return [`Propose to ${npcName}`];
+    }
     case "quest":
       return buildQuestSegments(source, lookups);
-    case "recipe":
-      return ["Obtained as a byproduct of crafting a recipe"];
+    case "recipe": {
+      const recipeName = lookups.recipeNames[source.recipeId] ?? titleCase(source.recipeId);
+      const methodLabel = titleCase(source.method);
+      return [`${methodLabel} via ${recipeName}`];
+    }
     case "renown":
       return [`Get the town's renown rank to level ${String(source.level)}`];
+    case "ritual_chamber": {
+      const perkLabel = buildPerkLabel(source.perkId, lookups);
+      return joinSegments("Craft at the Ritual Chamber with ", perkLabel);
+    }
     case "scroll_bundle": {
       const storeName = buildStoreName(source.storeId, lookups);
       const qualifier = buildStoreQualifier(source.visibility, lookups, source.storeId);
@@ -204,8 +250,11 @@ export function buildSourceSegments(
           : { condition: lookups.recipeVisibility, revealed: [`the ${source.bundleName}`] };
       return joinSegments("Purchase ", bundleSegment, " from ", storeName, qualifier);
     }
-    case "station":
-      return ["Obtain from a crafting station"];
+    case "station": {
+      const stationName =
+        lookups.stationNames[source.stationId as string] ?? titleCase(source.stationId);
+      return [`Process at ${stationName}`];
+    }
     case "store": {
       const storeName = buildStoreName(source.storeId, lookups);
       const qualifier = buildStoreQualifier(source.visibility, lookups, source.storeId);
@@ -216,8 +265,11 @@ export function buildSourceSegments(
       const name = tierData?.name ?? `${titleCase(source.tier)} Treasure Box`;
       return [`Fish up ${withIndefiniteArticle(name)}`];
     }
-    case "tree":
-      return ["Grow on a tree"];
+    case "tree": {
+      const saplingName =
+        lookups.itemNames[source.saplingItemId as string] ?? titleCase(source.saplingItemId);
+      return [`Harvest from ${saplingName}`];
+    }
     case "upgrade":
       return [upgradeSourceText(source)];
     case "wedding":
@@ -331,6 +383,12 @@ function buildHeartQuestSegments(
   return joinSegments("Complete ", npcSegment, "'s ", questSegment, " quest");
 }
 
+function buildLocationList(locationIds: LocationId[] | undefined, lookups: SegmentLookups): string {
+  return (locationIds ?? [])
+    .map((id) => lookups.locationNames[id as string] ?? titleCase(id))
+    .join(", ");
+}
+
 function buildMissionQuestSegments(
   source: AcquisitionSource & { type: "quest" },
   lookups: SegmentLookups,
@@ -397,6 +455,10 @@ function buildStoryQuestSegments(
     return [`${prefix}${displayName} quest`];
   }
   return joinSegments(prefix, { condition: questVis, revealed: [displayName] }, " quest");
+}
+
+function buildWaterList(waterTypes: undefined | WaterType[]): string {
+  return (waterTypes ?? []).map((w) => titleCase(w)).join(", ");
 }
 
 function joinSegments(
