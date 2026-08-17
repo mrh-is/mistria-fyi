@@ -75,7 +75,6 @@ function makeTrackerData(overrides: Partial<TrackerData> = {}): TrackerData {
     recipes: {},
     renown: { levelsPerRank: 10, ranks: [] },
     skills: {},
-    sources: {},
     stores: {},
     storeVisibility: {},
     treasureChestTiers: {},

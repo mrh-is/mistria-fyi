@@ -1,9 +1,8 @@
 import type {
+  AcquisitionSource,
   BiomeId,
   RecipeId,
-  RecipeSource,
   Season,
-  SourceType,
   StoreId,
   TrackerData,
   Weather,
@@ -33,25 +32,6 @@ const WEATHER_LABEL: Record<Weather, string> = {
   heavy_inclement: "Storm",
   inclement: "Rain",
   special: "Breeze",
-};
-
-const SOURCE_TYPE_LABEL: Record<SourceType, string> = {
-  bug_catch: "Bug Catching",
-  chest: "Chest",
-  cook: "Cooking",
-  craft: "Crafting",
-  dig: "Digging",
-  dive: "Diving",
-  festival: "Festival",
-  fish: "Fishing",
-  forage: "Foraging",
-  mine: "Mining",
-  monster: "Monster Drop",
-  quest: "Quest Reward",
-  renown: "Renown Reward",
-  sapling: "Sapling",
-  seed: "Seed",
-  store: "Store",
 };
 
 export interface RecipeSourceLookups {
@@ -119,24 +99,48 @@ export function locationLabel(location: string): string {
     .join(", ");
 }
 
-export function recipeSourceLabel(source: RecipeSource, lookups: RecipeSourceLookups): string {
+export function recipeSourceLabel(source: AcquisitionSource, lookups: RecipeSourceLookups): string {
   switch (source.type) {
+    case "animal_product":
+      return "Obtain from an animal product";
+    case "artifact_dig":
+      return "Dig up at an artifact dig site";
+    case "artifact_replicator":
+      return "Replicate at the Artifact Replicator";
     case "beach_cave_chest":
       return "Find in the Gold Treasure Chest in the Beach Cave";
+    case "bug_catch":
+      return "Catch as a bug";
     case "chicken_statue":
-      return `Obtain from the Chicken Statue (${String(source.cost)} beads)`;
+      return `Obtain from the Chicken Statue (${String(source.cost.amount)} beads)`;
+    case "crop":
+      return "Grow as a crop";
+    case "date":
+      return "Receive on a scheduled date";
     case "default":
       return "Available from the start";
-    case "dragon_forge":
-      return "Craft at the Dragon Forge (Mines level 90)";
+    case "dive":
+      return "Find while diving";
     case "engagement":
       return "Receive from Elsie after getting to 10 hearts with a dateable character";
+    case "equipment":
+      return "Obtain as equipment";
     case "festival": {
       const festivalName =
         lookups.festivals[source.festivalId]?.name ?? titleCase(source.festivalId);
-      const storeName = resolveStoreName(source.storeId, lookups);
-      return `Purchase from ${storeName} at the ${festivalName}`;
+      const storeName = source.storeId ? resolveStoreName(source.storeId, lookups) : undefined;
+      return storeName
+        ? `Purchase from ${storeName} at the ${festivalName}`
+        : `Obtain at the ${festivalName}`;
     }
+    case "festival_activity":
+      return "Complete a festival activity";
+    case "fish":
+      return "Catch while fishing";
+    case "fish_trap":
+      return "Find in a fish trap";
+    case "forage":
+      return "Forage in the wild";
     case "letter": {
       if (source.trigger === "shipped_item") {
         const name = lookups.itemNames[source.triggerItemId] ?? titleCase(source.triggerItemId);
@@ -153,17 +157,20 @@ export function recipeSourceLabel(source: RecipeSource, lookups: RecipeSourceLoo
         : `${seasonName} ${String(day)}`;
       return `Receive in a letter after reaching ${dateStr}`;
     }
+    case "mine":
+      return "Mine in the Mines";
     case "mines_chest": {
       const biomeName = formatBiomeName(source.biomeId, lookups.biomes);
       const biome = lookups.biomes.find((b) => b.id === source.biomeId);
       const floorRange = biome
         ? `floors ${String(biome.startFloor)}–${String(biome.endFloor)}`
         : "";
-      const perk = lookups.perks[source.perkId];
-      const perkName = perk?.name ?? titleCase(source.perkId);
+      const perk = source.perkId ? lookups.perks[source.perkId] : undefined;
+      const perkName = source.perkId ? (perk?.name ?? titleCase(source.perkId)) : undefined;
       const skillName = perk ? (lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId)) : "";
       const tierStr = perk ? ` (${skillName} tier ${String(perk.tier)})` : "";
-      return `Find in a Treasure Chest in ${biomeName}${floorRange ? ` (${floorRange})` : ""}, with the ${perkName} perk${tierStr}`;
+      const perkSuffix = perkName ? `, with the ${perkName} perk${tierStr}` : "";
+      return `Find in a Treasure Chest in ${biomeName}${floorRange ? ` (${floorRange})` : ""}${perkSuffix}`;
     }
     case "mines_dig_site": {
       const biomeName = formatBiomeName(source.biomeId, lookups.biomes);
@@ -171,65 +178,71 @@ export function recipeSourceLabel(source: RecipeSource, lookups: RecipeSourceLoo
       const floorRange = biome
         ? `floors ${String(biome.startFloor)}–${String(biome.endFloor)}`
         : "";
-      const perk = lookups.perks[source.perkId];
-      const perkName = perk?.name ?? titleCase(source.perkId);
+      const perk = source.perkId ? lookups.perks[source.perkId] : undefined;
+      const perkName = source.perkId ? (perk?.name ?? titleCase(source.perkId)) : undefined;
       const skillName = perk ? (lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId)) : "";
       const tierStr = perk ? ` (${skillName} tier ${String(perk.tier)})` : "";
-      return `Dig up in ${biomeName}${floorRange ? ` (${floorRange})` : ""}, with the ${perkName} perk${tierStr}`;
+      const perkSuffix = perkName ? `, with the ${perkName} perk${tierStr}` : "";
+      return `Dig up in ${biomeName}${floorRange ? ` (${floorRange})` : ""}${perkSuffix}`;
     }
+    case "monster":
+      return "Obtain as a monster drop";
+    case "monster_feed":
+      return "Receive from feeding a monster";
     case "museum_donation": {
       const wingName = titleCase(source.wingId);
       const setWord = source.setCount === 1 ? "set" : "sets";
       return `Complete ${String(source.setCount)} ${setWord} in the ${wingName} wing`;
     }
-    case "perk": {
+    case "perk":
+    case "perk_drop":
+    case "ritual_chamber": {
       const perk = lookups.perks[source.perkId];
       const perkName = perk?.name ?? titleCase(source.perkId);
       const skillName = perk ? (lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId)) : "";
       const tierStr = perk ? ` (${skillName} tier ${String(perk.tier)})` : "";
       return `Unlock the ${perkName} perk${tierStr}`;
     }
+    case "proposal":
+      return "Receive after proposing to a dateable character";
     case "quest": {
       const name = lookups.questNames[source.questId] ?? titleCase(source.questId);
       return `Complete the ${name} quest`;
     }
+    case "recipe":
+      return "Obtained as a byproduct of crafting a recipe";
     case "renown":
       return `Get the town rank to level ${String(source.level)}`;
     case "scroll_bundle": {
       const storeName = resolveStoreName(source.storeId, lookups);
       return `Purchase the ${source.bundleName} from ${storeName}`;
     }
+    case "station":
+      return "Obtain from a crafting station";
     case "store": {
       const storeName = resolveStoreName(source.storeId, lookups);
-      const suffix = source.upgraded ? " (after upgrade)" : "";
-      return `Purchase from ${storeName}${suffix}`;
-    }
-    case "store_with_perk": {
-      const storeName = resolveStoreName(source.storeId, lookups);
-      const perk = lookups.perks[source.perkId];
-      const perkName = perk?.name ?? titleCase(source.perkId);
-      return `Purchase from ${storeName} (requires ${perkName} perk)`;
+      return `Purchase from ${storeName}`;
     }
     case "treasure_chest": {
       const tierData = lookups.treasureChestTiers[source.tier];
       const name = tierData?.name ?? `${titleCase(source.tier)} Treasure Box`;
       return `Fish up ${withIndefiniteArticle(name)}`;
     }
+    case "tree":
+      return "Grow on a tree";
     case "upgrade": {
       const storeName = resolveStoreName(source.storeId, lookups);
       return `Purchase ${source.upgradeName} from ${storeName}`;
     }
+    case "wedding":
+      return "Receive after getting married";
     case "wishing_well":
-      return `Obtain from the Wishing Well (${String(source.cost)}t)`;
+      return `Obtain from the Wishing Well (${String(source.cost.amount)}t)`;
   }
 }
 
 export function seasonLabel(season: Season): string {
   return SEASON_LABEL[season];
-}
-
-export function sourceTypeLabel(type: SourceType): string {
-  return SOURCE_TYPE_LABEL[type];
 }
 
 export function timeRangeLabel(hours: [number, number]): string {

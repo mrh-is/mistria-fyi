@@ -3,14 +3,7 @@ import { filterAvailableItems } from "$lib/engine/availability.js";
 
 import type { CategoryKey } from "$lib/data/categories.js";
 import type { AvailabilityMode, CompletedState } from "$lib/stores/user-state.svelte.js";
-import type {
-  ItemId,
-  RecipeId,
-  Season,
-  Source,
-  VariantId,
-  Weather,
-} from "$lib/types/tracker-data.js";
+import type { ItemId, RecipeId, Season, VariantId, Weather } from "$lib/types/tracker-data.js";
 
 export const MAX_NPC_LEVEL = 10;
 export const MAX_RENOWN_LEVEL = 100;
@@ -85,7 +78,7 @@ function getAlmanacProgress(ctx: ProgressContext): CategoryProgress {
   for (const cat of trackerData.almanac) {
     allIds.push(...(Object.keys(cat.items) as ItemId[]));
   }
-  return itemProgress(allIds, ctx.completed.almanac, trackerData.sources, ctx);
+  return itemProgress(allIds, ctx.completed.almanac, ctx);
 }
 
 function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
@@ -145,7 +138,7 @@ function getMuseumProgress(ctx: ProgressContext): CategoryProgress {
       allIds.push(...set.items);
     }
   }
-  return itemProgress(allIds, ctx.completed.museum, trackerData.sources, ctx);
+  return itemProgress(allIds, ctx.completed.museum, ctx);
 }
 
 function getNpcsProgress(ctx: ProgressContext): CategoryProgress {
@@ -197,13 +190,12 @@ function getSkillsProgress(ctx: ProgressContext): CategoryProgress {
 function itemProgress(
   allIds: ItemId[],
   completedSet: Set<ItemId>,
-  sourcesMap: Partial<Record<ItemId, Source[]>>,
   ctx: ProgressContext,
 ): CategoryProgress {
   const incompleteIds = allIds.filter((id) => !completedSet.has(id));
   const filtered = filterAvailableItems(
     incompleteIds,
-    sourcesMap,
+    (id) => trackerData.items[id]?.sources ?? [],
     ctx.worldState,
     ctx.availabilityMode,
   );

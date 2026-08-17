@@ -4,7 +4,7 @@
   import { Icon } from "$lib/components/icon/index.js";
   import RecipeSourceList from "$lib/components/recipe-source-list.svelte";
 
-  import type { RecipeSource } from "$lib/types/tracker-data.js";
+  import type { AcquisitionSource } from "$lib/types/tracker-data.js";
   import type { SourceSegment } from "$lib/utils/source-segments.js";
 
   let {
@@ -19,7 +19,7 @@
     name: string;
     onToggle: () => void;
     sourceLabels?: string[];
-    sources?: RecipeSource[];
+    sources?: AcquisitionSource[];
     sourceSegments?: SourceSegment[][];
   } = $props();
 

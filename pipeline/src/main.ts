@@ -43,7 +43,6 @@ import { extractQuests } from "./extractors/quests.js";
 import { extractRecipes } from "./extractors/recipes.js";
 import { extractRenown } from "./extractors/renown.js";
 import { extractSkills } from "./extractors/skills.js";
-import { extractSources } from "./extractors/sources.js";
 import { extractStoresMeta } from "./extractors/stores-meta.js";
 import { extractTreasureChestTiers } from "./extractors/treasure-chest-tiers.js";
 import { buildCutsceneQuestMap } from "./extractors/visibility/cutscene-quest-map.js";
@@ -60,13 +59,7 @@ import { parseFiddle } from "./parse-fiddle.js";
 import { createRequirementContext } from "./requirements.js";
 
 import type { Source as AcquisitionSource } from "$lib/types/acquisition.js";
-import type {
-  CosmeticId,
-  ItemId,
-  LegacyRecipeSource,
-  RecipeId,
-  TrackerData,
-} from "$lib/types/tracker-data.js";
+import type { CosmeticId, ItemId, TrackerData } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "./parse-fiddle.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -155,8 +148,8 @@ function collectNativeIdsFromSources(
     allSources.push(...sources);
   }
   for (const recipe of Object.values(trackerData.recipes)) {
-    if (recipe.acquisitionSources) {
-      allSources.push(...recipe.acquisitionSources);
+    if (recipe.sources) {
+      allSources.push(...recipe.sources);
     }
   }
 
@@ -242,65 +235,6 @@ function collectNativeIdsFromSources(
       Object.fromEntries([...set].map((id) => [id, true as const])),
     ]),
   );
-}
-
-function convertLegacyRecipeSource(
-  source: LegacyRecipeSource,
-  _recipeId: RecipeId,
-): AcquisitionSource {
-  switch (source.type) {
-    case "beach_cave_chest":
-      return { type: "beach_cave_chest" };
-    case "chicken_statue":
-      return { cost: { amount: source.cost, currency: "beads" }, type: "chicken_statue" };
-    case "default":
-      return { type: "default" };
-    case "dragon_forge":
-      return { type: "default" };
-    case "engagement":
-      return { type: "engagement" };
-    case "festival":
-      return { festivalId: source.festivalId, storeId: source.storeId, type: "festival" };
-    case "letter":
-      if (source.trigger === "donated_item") {
-        return { trigger: "donated_item", triggerItemId: source.triggerItemId, type: "letter" };
-      }
-      if (source.trigger === "shipped_item") {
-        return { trigger: "shipped_item", triggerItemId: source.triggerItemId, type: "letter" };
-      }
-      return { trigger: "reached_date", triggerDate: source.triggerDate, type: "letter" };
-    case "mines_chest":
-      return { biomeId: source.biomeId, perkId: source.perkId, type: "mines_chest" };
-    case "mines_dig_site":
-      return { biomeId: source.biomeId, perkId: source.perkId, type: "mines_dig_site" };
-    case "museum_donation":
-      return { setCount: source.setCount, type: "museum_donation", wingId: source.wingId };
-    case "perk":
-      return { perkId: source.perkId, type: "perk" };
-    case "quest":
-      return {
-        ...(source.challengeRecipeId ? { challengeRecipeId: source.challengeRecipeId } : {}),
-        questId: source.questId,
-        ...(source.questType ? { questType: source.questType } : {}),
-        ...(source.requestedItemId ? { requestedItemId: source.requestedItemId } : {}),
-        trigger: "completion",
-        type: "quest",
-      };
-    case "renown":
-      return { level: source.level, type: "renown" };
-    case "scroll_bundle":
-      return { bundleName: source.bundleName, storeId: source.storeId, type: "scroll_bundle" };
-    case "store":
-      return { storeId: source.storeId, type: "store" };
-    case "store_with_perk":
-      return { storeId: source.storeId, type: "store" };
-    case "treasure_chest":
-      return { tier: source.tier, type: "treasure_chest" };
-    case "upgrade":
-      return { storeId: source.storeId, type: "upgrade", upgradeName: source.upgradeName };
-    case "wishing_well":
-      return { cost: { amount: source.cost, currency: "tesserae" }, type: "wishing_well" };
-  }
 }
 
 function extractFiddleKeys(fiddle: ParsedGameData, topKey: string): string[] {
@@ -395,7 +329,6 @@ function main(): void {
   const renown = extractRenown(fiddle);
   const quests = extractQuests(fiddle);
   const mines = extractMines(fiddle);
-  const sources = extractSources(fiddle);
   const questGates = extractQuestGates(fiddle);
   const { perks, perkTierLevels } = extractPerks(fiddle);
   const storesMeta = extractStoresMeta(fiddle);
@@ -434,7 +367,7 @@ function main(): void {
   for (const [itemId, sources] of itemSources.entries()) {
     const item = items[itemId];
     if (item) {
-      (item as TrackerData["items"][ItemId]).acquisitionSources = sources;
+      (item as TrackerData["items"][ItemId]).sources = sources;
     }
   }
 
@@ -442,28 +375,24 @@ function main(): void {
   for (const [cosmeticId, sources] of cosmeticSources.entries()) {
     const cosmetic = cosmetics[cosmeticId];
     if (cosmetic) {
-      cosmetic.acquisitionSources = sources;
+      cosmetic.sources = sources;
     }
   }
 
-  // Attach inline acquisition sources to recipes
-  for (const [recipeId, recipe] of Object.entries(recipes)) {
-    const converted = recipe.sources.map((legacySource) =>
-      convertLegacyRecipeSource(legacySource, recipeId as RecipeId),
-    );
-    recipe.acquisitionSources = converted.length > 0 ? converted : [{ type: "default" as const }];
+  // Recipes already have sources: AcquisitionSource[] from the extractor; fall back to a default
+  // source for recipes with none.
+  for (const recipe of Object.values(recipes)) {
+    if (!recipe.sources || recipe.sources.length === 0) {
+      recipe.sources = [{ type: "default" as const }];
+    }
   }
 
   // Log inline source attachment stats
   const itemsWithSources = Object.values(items).filter(
-    (i) => (i as TrackerData["items"][ItemId]).acquisitionSources?.length,
+    (i) => (i as TrackerData["items"][ItemId]).sources?.length,
   ).length;
-  const cosmeticsWithSources = Object.values(cosmetics).filter(
-    (c) => c.acquisitionSources?.length,
-  ).length;
-  const recipesWithSources = Object.values(recipes).filter(
-    (r) => r.acquisitionSources?.length,
-  ).length;
+  const cosmeticsWithSources = Object.values(cosmetics).filter((c) => c.sources?.length).length;
+  const recipesWithSources = Object.values(recipes).filter((r) => r.sources?.length).length;
   console.log(
     `  Inline sources: ${itemsWithSources}/${Object.keys(items).length} items, ` +
       `${cosmeticsWithSources}/${Object.keys(cosmetics).length} cosmetics, ` +
@@ -517,7 +446,6 @@ function main(): void {
     recipes,
     renown,
     skills,
-    sources,
     stores: storesMeta,
     storeVisibility: storeVisibilityData,
     treasureChestTiers,

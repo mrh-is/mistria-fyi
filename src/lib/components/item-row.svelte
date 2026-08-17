@@ -1,7 +1,6 @@
 <script lang="ts">
   import CompletionRow from "$lib/components/completion-row.svelte";
   import { trackerData } from "$lib/data/index.js";
-  import { getItemRestrictions } from "$lib/engine/availability.js";
 
   import type { ItemId } from "$lib/types/tracker-data.js";
 
@@ -23,17 +22,7 @@
     onToggle: () => void;
   } = $props();
 
-  let sources = $derived(trackerData.sources[itemId] ?? []);
-  let restrictions = $derived(getItemRestrictions(sources));
+  let sources = $derived(trackerData.items[itemId]?.sources ?? []);
 </script>
 
-<CompletionRow
-  {completed}
-  {dimmed}
-  {hideFishSize}
-  {leaving}
-  {name}
-  {onToggle}
-  {restrictions}
-  {sources}
-/>
+<CompletionRow {completed} {dimmed} {hideFishSize} {leaving} {name} {onToggle} {sources} />

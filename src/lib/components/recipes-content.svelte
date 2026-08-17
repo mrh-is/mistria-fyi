@@ -18,7 +18,7 @@
   import { buildSourceSegments } from "$lib/utils/source-segments.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
-  import type { NpcId, QuestId, RecipeId, RecipeSource } from "$lib/types/tracker-data.js";
+  import type { AcquisitionSource, NpcId, QuestId, RecipeId } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
   import type { RecipeSourceLookups } from "$lib/utils/format.js";
   import type { SegmentLookups, SourceSegment } from "$lib/utils/source-segments.js";
@@ -99,7 +99,7 @@
     name: string;
     nameVisible: boolean;
     sourceLabels: string[];
-    sources: RecipeSource[];
+    sources: AcquisitionSource[];
     sourceSegments: SourceSegment[][];
     visibility: VisibilityCondition;
   }
@@ -114,13 +114,14 @@
         seen.add(item.recipeId);
         const recipe = trackerData.recipes[item.recipeId];
         const visibility = recipe.visibility ?? { type: "always" };
+        const sources = recipe.sources ?? [];
         entries.push({
           id: item.recipeId,
           name: item.name,
           nameVisible: isVisible(visibility, userState.progressionState),
-          sourceLabels: recipe.sources.map((s) => recipeSourceLabel(s, sourceLookups)),
-          sources: recipe.sources,
-          sourceSegments: recipe.sources.map((source) =>
+          sourceLabels: sources.map((s) => recipeSourceLabel(s, sourceLookups)),
+          sources,
+          sourceSegments: sources.map((source) =>
             buildSourceSegments(source, { ...baseSegmentLookups, recipeVisibility: visibility }),
           ),
           visibility,
@@ -137,7 +138,7 @@
   let nameFilter = $derived(toolbarState.searchQuery);
 
   $effect(() => {
-    const allTypes = new SvelteSet<RecipeSource["type"]>();
+    const allTypes = new SvelteSet<AcquisitionSource["type"]>();
     for (const group of recipesByCategory) {
       for (const entry of group.entries) {
         for (const source of entry.sources) {
@@ -156,7 +157,7 @@
 
   let activeSourceTypes = $derived.by(() => {
     if (!toolbarState.sourceFilterActive) return null;
-    const types = new SvelteSet<RecipeSource["type"]>();
+    const types = new SvelteSet<AcquisitionSource["type"]>();
     for (const filter of toolbarState.recipeSourceFilters) {
       if (toolbarState.activeSourceLabels.has(filter.label)) {
         for (const t of filter.types) types.add(t);

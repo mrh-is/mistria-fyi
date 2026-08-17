@@ -2,23 +2,13 @@
   import { toast } from "svelte-sonner";
 
   import { Icon } from "$lib/components/icon/index.js";
-  import RestrictionBadges from "$lib/components/restriction-badges.svelte";
-  import { trackerData } from "$lib/data/index.js";
-  import { getItemRestrictions } from "$lib/engine/availability.js";
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
   import { searchItems } from "$lib/engine/search.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { SearchResult } from "$lib/engine/search.js";
-  import type {
-    AnimalId,
-    CosmeticId,
-    ItemId,
-    NpcId,
-    QuestId,
-    VariantId,
-  } from "$lib/types/tracker-data.js";
+  import type { AnimalId, CosmeticId, NpcId, QuestId, VariantId } from "$lib/types/tracker-data.js";
 
   let { query }: { query: string } = $props();
 
@@ -38,14 +28,6 @@
     npcs: "Relationships",
     quests: "Quests",
   };
-
-  function getRestrictions(result: SearchResult) {
-    if (result.category === "almanac") {
-      const sources = trackerData.sources[result.id as ItemId] ?? [];
-      return getItemRestrictions(sources);
-    }
-    return [];
-  }
 
   function toggleResult(result: SearchResult): void {
     switch (result.category) {
@@ -112,7 +94,6 @@
   </p>
 
   {#each results as result (result.category + result.id)}
-    {@const restrictions = getRestrictions(result)}
     <div
       class="flex items-center gap-2 rounded-md px-2 py-1 {result.completed
         ? 'line-through opacity-40'
@@ -150,9 +131,6 @@
           <span class="text-sm text-muted-foreground">{result.detail}</span>
         {/if}
       </span>
-      {#if restrictions.length > 0}
-        <RestrictionBadges compact {restrictions} />
-      {/if}
       <span class="shrink-0 text-sm text-muted-foreground">
         {CATEGORY_LABELS[result.category] ?? result.category}
       </span>

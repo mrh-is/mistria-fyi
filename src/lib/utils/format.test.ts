@@ -7,7 +7,7 @@ import {
   withIndefiniteArticle,
 } from "./format.js";
 
-import type { BiomeId, RecipeSource, StoreId } from "$lib/types/tracker-data.js";
+import type { AcquisitionSource, BiomeId, StoreId } from "$lib/types/tracker-data.js";
 
 import type { RecipeSourceLookups } from "./format.js";
 
@@ -90,19 +90,19 @@ describe("recipeSourceLabel", () => {
       "Receive from Elsie after getting to 10 hearts with a dateable character",
     );
   });
-  it("renders store with upgrade", () => {
+  it("renders store", () => {
     const lookups = {
       ...EMPTY_LOOKUPS,
       stores: {
         inn: { article: "the" as const, name: "Sleeping Dragon Inn" },
       } as Record<StoreId, { article?: "the"; name: string }>,
     };
-    expect(
-      recipeSourceLabel({ storeId: "inn" as StoreId, type: "store", upgraded: true }, lookups),
-    ).toBe("Purchase from the Sleeping Dragon Inn (after upgrade)");
+    expect(recipeSourceLabel({ storeId: "inn" as StoreId, type: "store" }, lookups)).toBe(
+      "Purchase from the Sleeping Dragon Inn",
+    );
   });
   it("renders letter with reached_date", () => {
-    const source: RecipeSource = {
+    const source: AcquisitionSource = {
       trigger: "reached_date",
       triggerDate: { day: 28, season: "summer" },
       type: "letter",
@@ -116,8 +116,8 @@ describe("recipeSourceLabel", () => {
       ...EMPTY_LOOKUPS,
       treasureChestTiers: { gold: { name: "Golden Treasure Box" } },
     };
-    const source: RecipeSource = {
-      tier: "gold" as RecipeSource & { type: "treasure_chest" } extends { tier: infer T }
+    const source: AcquisitionSource = {
+      tier: "gold" as AcquisitionSource & { type: "treasure_chest" } extends { tier: infer T }
         ? T
         : never,
       type: "treasure_chest",

@@ -1,7 +1,7 @@
 <script lang="ts">
   import CompletionRow from "$lib/components/completion-row.svelte";
 
-  import type { Source } from "$lib/types/tracker-data.js";
+  import type { AcquisitionSource } from "$lib/types/tracker-data.js";
 
   let {
     completed,
@@ -12,7 +12,7 @@
     completed: boolean;
     name: string;
     onToggle: () => void;
-    sources: Source[];
+    sources: AcquisitionSource[];
   } = $props();
 </script>
 

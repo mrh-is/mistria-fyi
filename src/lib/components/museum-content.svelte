@@ -55,9 +55,8 @@
   function isItemScoped(itemId: ItemId): boolean {
     if (!matchesFilter(itemId)) return false;
     return shouldCountItem(
-      itemId,
+      trackerData.items[itemId]?.sources ?? [],
       userState.state.completed.museum.has(itemId),
-      trackerData.sources,
       userState.state.worldState,
       userState.state.availabilityMode,
     );
@@ -153,9 +152,8 @@
                 <ItemRow
                   completed={userState.state.completed.museum.has(itemId)}
                   dimmed={isItemDimmed(
-                    itemId,
+                    trackerData.items[itemId]?.sources ?? [],
                     userState.state.completed.museum.has(itemId),
-                    trackerData.sources,
                     userState.state.worldState,
                     userState.state.availabilityMode,
                   )}

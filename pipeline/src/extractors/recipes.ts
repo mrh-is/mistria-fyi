@@ -2,6 +2,7 @@ import { forEachItem, forEachQuest } from "../extractor-helpers.js";
 import { buildRequirementDefinitions, parseRequirements } from "../requirements.js";
 import { resolveToVisibility } from "./visibility/requirement-resolver.js";
 
+import type { Source as AcquisitionSource } from "$lib/types/acquisition.js";
 import type {
   BiomeId,
   FestivalId,
@@ -12,7 +13,6 @@ import type {
   Recipe,
   RecipeId,
   RecipePresentation,
-  RecipeSource,
   Season,
   StoreId,
   TreasureChestTier,
@@ -29,12 +29,6 @@ const QUEST_TYPES_WITH_SCROLLS = [
   "story_quests",
   "tali_challenges",
 ] as const;
-
-const UPGRADE_PREDICATES = new Set([
-  "repaired_carpenters_shop",
-  "repaired_general_store",
-  "repaired_inn",
-]);
 
 interface RawRecipeEntry {
   defaultUnlocked: boolean;
@@ -75,9 +69,9 @@ export function extractRecipes(
   validateRecipeIdCollisions(itemIdToRecipeId, grouped);
 
   const knownRecipeIds = new Set(grouped.keys());
-  const allSources = new Map<string, RecipeSource[]>();
+  const allSources = new Map<string, AcquisitionSource[]>();
 
-  function mergeSources(incoming: Map<string, RecipeSource[]>): void {
+  function mergeSources(incoming: Map<string, AcquisitionSource[]>): void {
     for (const [recipeId, sources] of incoming) {
       const existing = allSources.get(recipeId) ?? [];
       existing.push(...sources);
@@ -118,7 +112,7 @@ export function extractRecipes(
 
     const presentations = buildPresentations(group);
     const sources = deduplicateSources(allSources.get(recipeId) ?? []);
-    const allSrc: RecipeSource[] = allDefault ? [{ type: "default" }, ...sources] : sources;
+    const allSrc: AcquisitionSource[] = allDefault ? [{ type: "default" }, ...sources] : sources;
 
     recipes[recipeId as RecipeId] = {
       memberItemIds,
@@ -134,14 +128,14 @@ export function extractRecipes(
 
   const totalRecipes = Object.keys(recipes).length;
   const withSources = Object.values(recipes).filter((r) =>
-    r.sources.some((s) => s.type !== "default"),
+    (r.sources ?? []).some((s) => s.type !== "default"),
   ).length;
   const withDefault = Object.values(recipes).filter((r) =>
-    r.sources.some((s) => s.type === "default"),
+    (r.sources ?? []).some((s) => s.type === "default"),
   ).length;
   const sourceTypeCounts = new Map<string, number>();
   for (const recipe of Object.values(recipes)) {
-    const seenTypes = new Set(recipe.sources.map((s) => s.type));
+    const seenTypes = new Set((recipe.sources ?? []).map((s) => s.type));
     for (const t of seenTypes) {
       sourceTypeCounts.set(t, (sourceTypeCounts.get(t) ?? 0) + 1);
     }
@@ -177,10 +171,11 @@ function buildQuestRecipeSource(
   questId: string,
   quest: Record<string, unknown>,
   itemIdToRecipeId: Map<string, string>,
-): RecipeSource {
+): AcquisitionSource {
   const sourceBase = {
     questId: questId as QuestId,
     questType: questType as QuestType,
+    trigger: "completion" as const,
     type: "quest" as const,
   };
 
@@ -202,11 +197,11 @@ function collectChickenStatueSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
   knownRecipeIds: Set<string>,
-): Map<string, RecipeSource[]> {
+): Map<string, AcquisitionSource[]> {
   const chickenStatue = fiddle.chicken_statue as Record<string, unknown> | undefined;
   if (!chickenStatue) return new Map();
 
-  const result = new Map<string, RecipeSource[]>();
+  const result = new Map<string, AcquisitionSource[]>();
 
   const common = chickenStatue.common as Record<string, unknown> | undefined;
   if (!common) return result;
@@ -239,7 +234,7 @@ function collectChickenStatueSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ cost, type: "chicken_statue" });
+      sources.push({ cost: { amount: cost, currency: "beads" }, type: "chicken_statue" });
       result.set(recipeId, sources);
     }
   }
@@ -250,8 +245,8 @@ function collectChickenStatueSources(
 function collectDragonForgeSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
-): Map<string, RecipeSource[]> {
-  const result = new Map<string, RecipeSource[]>();
+): Map<string, AcquisitionSource[]> {
+  const result = new Map<string, AcquisitionSource[]>();
 
   forEachItem(fiddle, (itemId, item) => {
     if (item.recipe_is_default) return;
@@ -262,7 +257,7 @@ function collectDragonForgeSources(
 
     const recipeId = itemIdToRecipeId.get(itemId);
     if (recipeId && !result.has(recipeId)) {
-      result.set(recipeId, [{ type: "dragon_forge" }]);
+      result.set(recipeId, [{ type: "default" }]);
     }
   });
 
@@ -273,11 +268,11 @@ function collectFestivalScrollSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
   knownRecipeIds: Set<string>,
-): Map<string, RecipeSource[]> {
+): Map<string, AcquisitionSource[]> {
   const festivals = fiddle.festivals as Record<string, Record<string, unknown>> | undefined;
   if (!festivals) return new Map();
 
-  const result = new Map<string, RecipeSource[]>();
+  const result = new Map<string, AcquisitionSource[]>();
 
   for (const [festivalId, festival] of Object.entries(festivals)) {
     if (festivalId === "default" || typeof festival !== "object" || festival === null) continue;
@@ -324,11 +319,11 @@ function collectFishingChestSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
   knownRecipeIds: Set<string>,
-): Map<string, RecipeSource[]> {
+): Map<string, AcquisitionSource[]> {
   const fishing = fiddle.fishing as Record<string, unknown> | undefined;
   if (!fishing) return new Map();
 
-  const result = new Map<string, RecipeSource[]>();
+  const result = new Map<string, AcquisitionSource[]>();
 
   const chestTables = fishing.chest_tables as Record<string, unknown> | undefined;
   if (!chestTables) return result;
@@ -365,10 +360,10 @@ function collectFishingChestSources(
 
 function collectHardcodedSources(
   itemIdToRecipeId: Map<string, string>,
-): Map<string, RecipeSource[]> {
-  const result = new Map<string, RecipeSource[]>();
+): Map<string, AcquisitionSource[]> {
+  const result = new Map<string, AcquisitionSource[]>();
 
-  const hardcoded: [string, RecipeSource][] = [
+  const hardcoded: [string, AcquisitionSource][] = [
     ["water_sprite_statue_v1", { type: "beach_cave_chest" }],
     ["stairs", { storeId: "carpenter" as StoreId, type: "upgrade", upgradeName: "House Stairs" }],
     [
@@ -396,11 +391,11 @@ function collectLetterScrollSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
   knownRecipeIds: Set<string>,
-): Map<string, RecipeSource[]> {
+): Map<string, AcquisitionSource[]> {
   const letters = fiddle.letters as Record<string, Record<string, unknown>> | undefined;
   if (!letters) return new Map();
 
-  const result = new Map<string, RecipeSource[]>();
+  const result = new Map<string, AcquisitionSource[]>();
 
   for (const [letterId, letter] of Object.entries(letters)) {
     if (letterId === "default" || typeof letter !== "object" || letter === null) continue;
@@ -483,11 +478,11 @@ function collectLetterScrollSources(
 function collectMinesRecipeSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
-): Map<string, RecipeSource[]> {
+): Map<string, AcquisitionSource[]> {
   const dungeons = fiddle.dungeons as Record<string, Record<string, unknown>> | undefined;
   if (!dungeons) return new Map();
 
-  const result = new Map<string, RecipeSource[]>();
+  const result = new Map<string, AcquisitionSource[]>();
 
   const dungeonsData = dungeons.dungeons as Record<string, unknown> | undefined;
   if (!dungeonsData) return result;
@@ -536,11 +531,11 @@ function collectMuseumScrollSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
   knownRecipeIds: Set<string>,
-): Map<string, RecipeSource[]> {
+): Map<string, AcquisitionSource[]> {
   const museumWings = fiddle.museum_wings as Record<string, Record<string, unknown>> | undefined;
   if (!museumWings) return new Map();
 
-  const result = new Map<string, RecipeSource[]>();
+  const result = new Map<string, AcquisitionSource[]>();
 
   for (const [wingId, wing] of Object.entries(museumWings)) {
     if (wingId === "default" || typeof wing !== "object" || wing === null) continue;
@@ -583,8 +578,8 @@ function collectMuseumScrollSources(
 function collectPerkSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
-): Map<string, RecipeSource[]> {
-  const result = new Map<string, RecipeSource[]>();
+): Map<string, AcquisitionSource[]> {
+  const result = new Map<string, AcquisitionSource[]>();
 
   const perkBySubCategory: Record<string, string> = {
     faux_plant_set: "ornamental",
@@ -615,8 +610,8 @@ function collectQuestScrollSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
   knownRecipeIds: Set<string>,
-): Map<string, RecipeSource[]> {
-  const result = new Map<string, RecipeSource[]>();
+): Map<string, AcquisitionSource[]> {
+  const result = new Map<string, AcquisitionSource[]>();
 
   forEachQuest(fiddle, QUEST_TYPES_WITH_SCROLLS, (questType, questId, quest) => {
     const rewards = Array.isArray(quest.rewards) ? quest.rewards : [];
@@ -676,11 +671,11 @@ function collectRecipeEntries(fiddle: ParsedGameData): RawRecipeEntry[] {
 function collectRenownRecipeSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
-): Map<string, RecipeSource[]> {
+): Map<string, AcquisitionSource[]> {
   const renown = fiddle.renown as Record<string, unknown> | undefined;
   if (!renown) return new Map();
 
-  const result = new Map<string, RecipeSource[]>();
+  const result = new Map<string, AcquisitionSource[]>();
   const rewards = Array.isArray(renown.rewards) ? renown.rewards : [];
 
   for (let i = 0; i < rewards.length; i++) {
@@ -702,8 +697,8 @@ function collectScrollBundleSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
   ctx: StockVisibilityContext,
-): Map<string, RecipeSource[]> {
-  const result = new Map<string, RecipeSource[]>();
+): Map<string, AcquisitionSource[]> {
+  const result = new Map<string, AcquisitionSource[]>();
 
   const bundleIdToSetTag = new Map<string, string>();
   const bundleIdToName = new Map<string, string>();
@@ -800,11 +795,11 @@ function collectStoreScrollSources(
   itemIdToRecipeId: Map<string, string>,
   knownRecipeIds: Set<string>,
   ctx: StockVisibilityContext,
-): Map<string, RecipeSource[]> {
+): Map<string, AcquisitionSource[]> {
   const stores = fiddle.stores as Record<string, Record<string, unknown>> | undefined;
   if (!stores) return new Map();
 
-  const result = new Map<string, RecipeSource[]>();
+  const result = new Map<string, AcquisitionSource[]>();
 
   for (const [storeId, store] of Object.entries(stores)) {
     if (storeId === "default" || typeof store !== "object" || store === null) continue;
@@ -856,31 +851,16 @@ function collectStoreScrollSources(
             `${storeId}/${recipeId}`,
             ctx,
           );
-          const requirements =
-            typeof obj.requirements === "object" && obj.requirements !== null
-              ? (obj.requirements as Record<string, unknown>)
-              : undefined;
-          const upgraded = requirements
-            ? Object.keys(requirements).some((key) => UPGRADE_PREDICATES.has(key))
-            : false;
-          const hasPerk =
-            typeof requirements?.has_perk === "string" ? requirements.has_perk : undefined;
 
-          if (hasPerk) {
-            sources.push({
-              perkId: hasPerk as PerkId,
-              storeId: storeId as StoreId,
-              type: "store_with_perk",
-              ...(visibility.type === "always" ? {} : { visibility }),
-            });
-          } else {
-            sources.push({
-              storeId: storeId as StoreId,
-              type: "store",
-              ...(upgraded ? { upgraded: true } : {}),
-              ...(visibility.type === "always" ? {} : { visibility }),
-            });
-          }
+          // NOTE: perk-gated stock (has_perk requirement) and repaired-store upgrade gates
+          // (UPGRADE_PREDICATES) both collapse to a plain "store" source. AcquisitionSource has
+          // no equivalent of the legacy `store_with_perk` type or `upgraded` flag; Task 2 will
+          // reintroduce richer availability/restriction modeling.
+          sources.push({
+            storeId: storeId as StoreId,
+            type: "store",
+            ...(visibility.type === "always" ? {} : { visibility }),
+          });
           result.set(recipeId, sources);
         }
       }
@@ -894,11 +874,11 @@ function collectWishingWellSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
   knownRecipeIds: Set<string>,
-): Map<string, RecipeSource[]> {
+): Map<string, AcquisitionSource[]> {
   const wishingWell = fiddle.wishing_well as Record<string, unknown> | undefined;
   if (!wishingWell) return new Map();
 
-  const result = new Map<string, RecipeSource[]>();
+  const result = new Map<string, AcquisitionSource[]>();
 
   const common = wishingWell.common as Record<string, unknown> | undefined;
   if (!common) return result;
@@ -931,7 +911,7 @@ function collectWishingWellSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ cost, type: "wishing_well" });
+      sources.push({ cost: { amount: cost, currency: "tesserae" }, type: "wishing_well" });
       result.set(recipeId, sources);
     }
   }
@@ -939,15 +919,15 @@ function collectWishingWellSources(
   return result;
 }
 
-function compareRecipeSources(a: RecipeSource, b: RecipeSource): number {
+function compareRecipeSources(a: AcquisitionSource, b: AcquisitionSource): number {
   const cmp = a.type.localeCompare(b.type);
   if (cmp !== 0) return cmp;
   return sourceKey(a).localeCompare(sourceKey(b));
 }
 
-function deduplicateSources(sources: RecipeSource[]): RecipeSource[] {
+function deduplicateSources(sources: AcquisitionSource[]): AcquisitionSource[] {
   const seen = new Set<string>();
-  const result: RecipeSource[] = [];
+  const result: AcquisitionSource[] = [];
   const sorted = [...sources].sort(compareRecipeSources);
   for (const s of sorted) {
     const key = sourceKey(s);
@@ -1019,7 +999,7 @@ function resolveStockVisibility(
   return resolveToVisibility(expression, ctx.cutsceneMap);
 }
 
-function sourceKey(s: RecipeSource): string {
+function sourceKey(s: AcquisitionSource): string {
   return JSON.stringify(
     Object.fromEntries(Object.entries(s).sort(([a], [b]) => a.localeCompare(b))),
   );

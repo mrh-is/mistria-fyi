@@ -2,12 +2,12 @@ import { SvelteSet } from "svelte/reactivity";
 
 import type { Component } from "svelte";
 
-import type { RecipeSource } from "$lib/types/tracker-data.js";
+import type { AcquisitionSource } from "$lib/types/tracker-data.js";
 
 export interface SourceFilter {
   icon: Component;
   label: string;
-  types: RecipeSource["type"][];
+  types: AcquisitionSource["type"][];
 }
 
 class ToolbarState {

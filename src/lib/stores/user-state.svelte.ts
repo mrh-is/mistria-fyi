@@ -121,7 +121,7 @@ function createDefaultCompleted(): CompletedState {
 
   const defaultRecipes = new SvelteSet<RecipeId>();
   for (const [id, recipe] of Object.entries(trackerData.recipes)) {
-    if (recipe.sources.some((s) => s.type === "default")) {
+    if (recipe.sources?.some((s) => s.type === "default")) {
       defaultRecipes.add(id as RecipeId);
     }
   }

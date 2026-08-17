@@ -3,18 +3,16 @@
 
   import { Icon } from "$lib/components/icon/index.js";
   import ItemDetail from "$lib/components/item-detail.svelte";
-  import RestrictionBadges from "$lib/components/restriction-badges.svelte";
 
-  import type { Restriction, Source } from "$lib/types/tracker-data.js";
+  import type { AcquisitionSource } from "$lib/types/tracker-data.js";
 
   let {
     completed,
     dimmed = false,
-    hideFishSize = false,
+    hideFishSize: _hideFishSize = false,
     leaving = false,
     name,
     onToggle,
-    restrictions = [],
     sources = [],
   }: {
     completed: boolean;
@@ -23,8 +21,7 @@
     leaving?: boolean;
     name: string;
     onToggle: () => void;
-    restrictions?: Restriction[];
-    sources?: Source[];
+    sources?: AcquisitionSource[];
   } = $props();
 
   // Linger then fade+collapse when leaving due to completion.
@@ -89,9 +86,6 @@
       </button>
     {:else}
       <span class="min-w-0 flex-1 text-base">{name}</span>
-    {/if}
-    {#if restrictions.length > 0}
-      <RestrictionBadges {hideFishSize} {restrictions} />
     {/if}
   </div>
   {#if expanded && sources.length > 0}

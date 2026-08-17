@@ -35,7 +35,6 @@ interface AcquisitionRecipeEntity extends AcquisitionSourceEntity {
 }
 
 interface AcquisitionSourceEntity {
-  acquisitionSources?: readonly unknown[];
   sources?: readonly unknown[];
 }
 
@@ -810,7 +809,7 @@ function validateEntities(
     left.localeCompare(right),
   )) {
     reference(diagnostics, references, kind, targetId, targetId, `${kind}s.${targetId}`);
-    const entitySources = entity.acquisitionSources ?? entity.sources;
+    const entitySources = entity.sources;
     if (!Array.isArray(entitySources)) {
       malformed(
         diagnostics,
@@ -922,7 +921,7 @@ function validateRecipeCycles(
 ): void {
   const graph = new Map<string, string[]>();
   for (const [recipeId, recipe] of Object.entries(recipes)) {
-    const recipeSources = recipe.acquisitionSources ?? recipe.sources ?? [];
+    const recipeSources = recipe.sources ?? [];
     const dependencies = (Array.isArray(recipeSources) ? recipeSources : [])
       .filter(isRecord)
       .filter((source) => source.type === "recipe" && typeof source.recipeId === "string")

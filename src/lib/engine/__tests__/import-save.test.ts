@@ -9,7 +9,7 @@ import type { RecipeId } from "$lib/types/tracker-data.js";
 function getDefaultRecipeIds(): Set<RecipeId> {
   const ids = new Set<RecipeId>();
   for (const [id, recipe] of Object.entries(trackerData.recipes)) {
-    if (recipe.sources.some((source) => source.type === "default")) {
+    if (recipe.sources?.some((source) => source.type === "default")) {
       ids.add(id as RecipeId);
     }
   }

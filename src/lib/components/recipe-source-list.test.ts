@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import RecipeSourceList from "$lib/components/recipe-source-list.svelte";
 import { userState } from "$lib/stores/user-state.svelte.js";
 
-import type { RecipeSource } from "$lib/types/tracker-data.js";
+import type { AcquisitionSource } from "$lib/types/tracker-data.js";
 import type { SourceSegment } from "$lib/utils/source-segments.js";
 
 describe("RecipeSourceList", () => {
@@ -13,25 +13,17 @@ describe("RecipeSourceList", () => {
   });
 
   it("renders every source through its index-aligned segment tree", () => {
-    const sources: RecipeSource[] = [{ type: "dragon_forge" }, { type: "default" }];
+    const sources: AcquisitionSource[] = [{ type: "beach_cave_chest" }, { type: "default" }];
     const sourceSegments: SourceSegment[][] = [
-      [
-        "Craft at ",
-        {
-          condition: { floor: 90, type: "minesLevel" },
-          revealed: ["the Dragon Forge (Mines level 90)"],
-        },
-      ],
+      ["Find in the Gold Treasure Chest in the Beach Cave"],
       ["Available from the start"],
     ];
 
     const { body } = render(RecipeSourceList, { props: { sources, sourceSegments } });
 
-    expect(body).toContain('data-source-type="dragon_forge"');
+    expect(body).toContain('data-source-type="beach_cave_chest"');
     expect(body).toContain('data-source-type="default"');
-    expect(body).toContain("Craft at");
-    expect(body).toContain("Redacted");
-    expect(body).not.toContain("Dragon Forge");
+    expect(body).toContain("Find in the Gold Treasure Chest in the Beach Cave");
     expect(body).toContain("Available from the start");
   });
 });

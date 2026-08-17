@@ -85,7 +85,6 @@ function makeTrackerData(overrides: Record<string, unknown>): TrackerData {
     recipes: {},
     renown: { levelsPerRank: 10, ranks: [] },
     skills: {},
-    sources: {},
     stores: {},
     storeVisibility: {},
     treasureChestTiers: {},
@@ -297,7 +296,6 @@ describe("assignEntityVisibility — items", () => {
   it("leaves a non-gated item always visible", () => {
     const trackerData = makeTrackerData({
       items: { seed_turnip: { category: "seeds", name: "Turnip Seed" } },
-      sources: { seed_turnip: [{ location: "general", type: "store" }] },
     });
     assignEntityVisibility(
       trackerData,
@@ -313,9 +311,9 @@ describe("assignEntityVisibility — items", () => {
     const trackerData = makeTrackerData({
       items: {
         fancy_seed: {
-          acquisitionSources: [{ storeId: "general", type: "store" }],
           category: "seeds",
           name: "Fancy Seed",
+          sources: [{ storeId: "general", type: "store" }],
         },
       },
     });
@@ -338,12 +336,12 @@ describe("assignEntityVisibility — items", () => {
     const trackerData = makeTrackerData({
       items: {
         dual_source_item: {
-          acquisitionSources: [
+          category: "other",
+          name: "Dual Source Item",
+          sources: [
             { storeId: "general", type: "store" },
             { questId: "find_the_thing" as QuestId, trigger: "completion", type: "quest" },
           ],
-          category: "other",
-          name: "Dual Source Item",
         },
       },
     });
@@ -401,7 +399,7 @@ describe("assignEntityVisibility — recipes", () => {
     );
     const recipe = trackerData.recipes["stew" as RecipeId];
     expect(recipe.visibility).toEqual({ perkId: "taste_maker", type: "perkUnlocked" });
-    expect(recipe.sources[0].visibility).toEqual({
+    expect(recipe.sources?.[0]?.visibility).toEqual({
       level: 20,
       skillId: "cooking",
       type: "skillLevel",
@@ -435,7 +433,7 @@ describe("assignEntityVisibility — recipes", () => {
       questId: "upgrade_the_carpenters_shop",
       type: "questCompleted",
     });
-    expect(recipe.sources[0].visibility).toEqual({
+    expect(recipe.sources?.[0]?.visibility).toEqual({
       questId: "upgrade_the_carpenters_shop",
       type: "questAvailable",
     });
@@ -460,7 +458,7 @@ describe("assignEntityVisibility — recipes", () => {
     );
     const recipe = trackerData.recipes["basic_dish" as RecipeId];
     expect(recipe.visibility).toEqual({ type: "always" });
-    expect(recipe.sources[0].visibility).toEqual({ type: "always" });
+    expect(recipe.sources?.[0]?.visibility).toEqual({ type: "always" });
   });
 
   it("gives a quest-sourced recipe entity questCompleted and source questAvailable", () => {
@@ -488,7 +486,7 @@ describe("assignEntityVisibility — recipes", () => {
     );
     const recipe = trackerData.recipes["scroll_of_the_sword" as RecipeId];
     expect(recipe.visibility).toEqual({ questId: "the_final_showdown", type: "questCompleted" });
-    expect(recipe.sources[0].visibility).toEqual({
+    expect(recipe.sources?.[0]?.visibility).toEqual({
       questId: "the_final_showdown",
       type: "questAvailable",
     });
@@ -530,7 +528,7 @@ describe("assignEntityVisibility — recipes", () => {
       ],
       type: "and",
     });
-    expect(recipe.sources[0].visibility).toEqual({ floor: 1, type: "minesLevel" });
+    expect(recipe.sources?.[0]?.visibility).toEqual({ floor: 1, type: "minesLevel" });
   });
 
   it("leaves a museum_donation source's entity and source both always", () => {
@@ -552,7 +550,7 @@ describe("assignEntityVisibility — recipes", () => {
     );
     const recipe = trackerData.recipes["set_reward" as RecipeId];
     expect(recipe.visibility).toEqual({ type: "always" });
-    expect(recipe.sources[0].visibility).toEqual({ type: "always" });
+    expect(recipe.sources?.[0]?.visibility).toEqual({ type: "always" });
   });
 
   it("treats scroll_bundle sources the same as store sources", () => {
@@ -582,7 +580,7 @@ describe("assignEntityVisibility — recipes", () => {
       questId: "upgrade_the_saturday_market_plaza",
       type: "questCompleted",
     });
-    expect(recipe.sources[0].visibility).toEqual({
+    expect(recipe.sources?.[0]?.visibility).toEqual({
       questId: "upgrade_the_saturday_market_plaza",
       type: "questAvailable",
     });
@@ -598,7 +596,6 @@ describe("assignEntityVisibility — recipes", () => {
             {
               storeId: "general" as StoreId,
               type: "store",
-              upgraded: true,
               visibility: {
                 questId: "repair_the_general_store" as QuestId,
                 type: "questCompleted",
@@ -620,13 +617,13 @@ describe("assignEntityVisibility — recipes", () => {
       questId: "repair_the_general_store",
       type: "questCompleted",
     });
-    expect(recipe.sources[0].visibility).toEqual({
+    expect(recipe.sources?.[0]?.visibility).toEqual({
       questId: "repair_the_general_store",
       type: "questAvailable",
     });
   });
 
-  it("composes the store gate, stock gate, and perkUnlocked for a store_with_perk recipe", () => {
+  it("composes the store gate and stock gate for a perk-locked store recipe (perk gate dropped)", () => {
     const trackerData = makeTrackerData({
       recipes: {
         espresso: {
@@ -634,9 +631,8 @@ describe("assignEntityVisibility — recipes", () => {
           presentations: [],
           sources: [
             {
-              perkId: "espresso_yourself" as PerkId,
               storeId: "darcy" as StoreId,
-              type: "store_with_perk",
+              type: "store",
               visibility: {
                 questId: "repair_the_general_store" as QuestId,
                 type: "questCompleted",
@@ -660,15 +656,13 @@ describe("assignEntityVisibility — recipes", () => {
       conditions: [
         { questId: "repair_the_bridge", type: "questCompleted" },
         { questId: "repair_the_general_store", type: "questCompleted" },
-        { perkId: "espresso_yourself", type: "perkUnlocked" },
       ],
       type: "and",
     });
-    expect(recipe.sources[0].visibility).toEqual({
+    expect(recipe.sources?.[0]?.visibility).toEqual({
       conditions: [
         { questId: "repair_the_bridge", type: "questAvailable" },
         { questId: "repair_the_general_store", type: "questAvailable" },
-        { perkId: "espresso_yourself", type: "perkUnlocked" },
       ],
       type: "and",
     });
@@ -711,7 +705,7 @@ describe("assignEntityVisibility — recipes", () => {
       ],
       type: "and",
     });
-    expect(recipe.sources[0].visibility).toEqual({
+    expect(recipe.sources?.[0]?.visibility).toEqual({
       conditions: [
         { questId: "repair_the_general_store", type: "questAvailable" },
         { level: 10, skillId: "cooking", type: "skillLevel" },
@@ -757,7 +751,7 @@ describe("assignEntityVisibility — recipes", () => {
       ],
       type: "or",
     });
-    expect(recipe.sources[0].visibility).toEqual({
+    expect(recipe.sources?.[0]?.visibility).toEqual({
       conditions: [
         { questId: "repair_the_general_store", type: "questAvailable" },
         { floor: 5, type: "minesLevel" },
@@ -867,10 +861,10 @@ describe("assignEntityVisibility — cosmetics", () => {
     const trackerData = makeTrackerData({
       cosmetics: {
         fancy_hat: {
-          acquisitionSources: [{ storeId: "wheedle", type: "store" }],
           defaultUnlocked: false,
           name: "Fancy Hat",
           slot: "head",
+          sources: [{ storeId: "wheedle", type: "store" }],
         },
       },
     });

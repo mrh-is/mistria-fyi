@@ -101,9 +101,8 @@
   {@const scopedItems = catEntries.filter(([id, item]) => {
     if (!matchesFilter(item.name)) return false;
     return shouldCountItem(
-      id as ItemId,
+      trackerData.items[id as ItemId]?.sources ?? [],
       userState.state.completed.almanac.has(id as ItemId),
-      trackerData.sources,
       userState.state.worldState,
       userState.state.availabilityMode,
     );
@@ -146,9 +145,8 @@
           <ItemRow
             completed={userState.state.completed.almanac.has(itemId as ItemId)}
             dimmed={isItemDimmed(
-              itemId as ItemId,
+              trackerData.items[itemId as ItemId]?.sources ?? [],
               userState.state.completed.almanac.has(itemId as ItemId),
-              trackerData.sources,
               userState.state.worldState,
               userState.state.availabilityMode,
             )}

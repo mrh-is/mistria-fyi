@@ -10,13 +10,13 @@
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
-  import type { CosmeticId, ItemId, Source } from "$lib/types/tracker-data.js";
+  import type { AcquisitionSource, CosmeticId } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   interface CosmeticEntry {
     id: CosmeticId;
     name: string;
-    sources: Source[];
+    sources: AcquisitionSource[];
     visibility: VisibilityCondition;
   }
 
@@ -37,7 +37,7 @@
     for (const [id, cosmetic] of Object.entries(trackerData.cosmetics)) {
       const slot = cosmetic.slot;
       const subCategory = cosmetic.subCategory ?? "Other";
-      const sources = trackerData.sources[id as unknown as ItemId] ?? [];
+      const sources = cosmetic.sources ?? [];
       ((bySlot[slot] ??= {})[subCategory] ??= []).push({
         id: id as CosmeticId,
         name: cosmetic.name,

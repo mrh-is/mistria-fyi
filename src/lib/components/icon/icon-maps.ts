@@ -2,6 +2,8 @@ import {
   Archive,
   BookCheck,
   BookOpenText,
+  Bug,
+  Calendar,
   ChevronRight,
   Circle,
   CircleCheck,
@@ -13,9 +15,10 @@ import {
   CloudSnow,
   Coins,
   CookingPot,
+  Copy,
   Crown,
+  Fish,
   FishingRod,
-  Flame,
   Flower,
   HardHat,
   Heart,
@@ -32,13 +35,19 @@ import {
   ScrollText,
   Shirt,
   ShoppingCart,
+  Shovel,
+  Skull,
   Snowflake,
   Sparkles,
+  Sprout,
   Star,
   Sun,
   SunDim,
+  TreePine,
   Trophy,
+  WavesHorizontal,
   Wind,
+  Wrench,
   X,
 } from "@lucide/svelte";
 
@@ -49,29 +58,49 @@ import type { LucideIcon } from "@lucide/svelte";
 import type { CategoryKey } from "$lib/data/categories.js";
 import type { SourceFilter } from "$lib/stores/toolbar-state.svelte.js";
 import type { QuestState } from "$lib/stores/user-state.svelte.js";
-import type { RecipeSource, Season, Weather } from "$lib/types/tracker-data.js";
+import type { AcquisitionSource, Season, Weather } from "$lib/types/tracker-data.js";
 
 // ── Source ──────────────────────────────────────────────────────────────────
 
-export const SOURCE_ICON: Record<RecipeSource["type"], LucideIcon> = {
+export const SOURCE_ICON: Record<AcquisitionSource["type"], LucideIcon> = {
+  animal_product: PawPrint,
+  artifact_dig: Shovel,
+  artifact_replicator: Copy,
   beach_cave_chest: Archive,
+  bug_catch: Bug,
   chicken_statue: Coins,
+  crop: Sprout,
+  date: Calendar,
   default: CircleCheck,
-  dragon_forge: Flame,
+  dive: WavesHorizontal,
   engagement: Heart,
+  equipment: Shirt,
   festival: PartyPopper,
+  festival_activity: PartyPopper,
+  fish: Fish,
+  fish_trap: Fish,
+  forage: Leaf,
   letter: Mail,
+  mine: Pickaxe,
   mines_chest: Pickaxe,
   mines_dig_site: Pickaxe,
+  monster: Skull,
+  monster_feed: Skull,
   museum_donation: Landmark,
   perk: Sparkles,
+  perk_drop: Sparkles,
+  proposal: Heart,
   quest: Scroll,
+  recipe: CookingPot,
   renown: Crown,
+  ritual_chamber: Sparkles,
   scroll_bundle: ShoppingCart,
+  station: Wrench,
   store: ShoppingCart,
-  store_with_perk: ShoppingCart,
   treasure_chest: FishingRod,
+  tree: TreePine,
   upgrade: HardHat,
+  wedding: Heart,
   wishing_well: Coins,
 };
 
@@ -79,7 +108,6 @@ export const SOURCE_FILTERS: SourceFilter[] = [
   { icon: Archive, label: "Chest", types: ["beach_cave_chest"] },
   { icon: HardHat, label: "Construction", types: ["upgrade"] },
   { icon: CircleCheck, label: "Default", types: ["default"] },
-  { icon: Flame, label: "Dragon Forge", types: ["dragon_forge"] },
   { icon: Heart, label: "Engagement", types: ["engagement"] },
   { icon: PartyPopper, label: "Festival", types: ["festival"] },
   { icon: FishingRod, label: "Fishing", types: ["treasure_chest"] },
@@ -89,7 +117,7 @@ export const SOURCE_FILTERS: SourceFilter[] = [
   { icon: Coins, label: "Offering", types: ["chicken_statue", "wishing_well"] },
   { icon: Sparkles, label: "Perk", types: ["perk"] },
   { icon: Scroll, label: "Quest", types: ["quest"] },
-  { icon: ShoppingCart, label: "Store", types: ["store", "store_with_perk", "scroll_bundle"] },
+  { icon: ShoppingCart, label: "Store", types: ["store", "scroll_bundle"] },
   { icon: Crown, label: "Town rank", types: ["renown"] },
 ];
 
