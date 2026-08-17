@@ -19,7 +19,7 @@ import type { RecipeSourceLookups } from "./format.js";
 
 export interface SegmentLookups extends RecipeSourceLookups {
   animalNames: Partial<Record<string, string>>;
-  categoryVisibility: Record<string, VisibilityCondition>;
+  categoryVisibility: Partial<Record<string, VisibilityCondition>>;
   festivalDates: Partial<Record<FestivalId, { day: number; season: Season }>>;
   itemVisibility: Partial<Record<ItemId, VisibilityCondition>>;
   locationNames: Partial<Record<string, string>>;

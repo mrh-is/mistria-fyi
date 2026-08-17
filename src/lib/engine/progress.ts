@@ -195,7 +195,7 @@ function itemProgress(
   const incompleteIds = allIds.filter((id) => !completedSet.has(id));
   const filtered = filterAvailableItems(
     incompleteIds,
-    (id) => trackerData.items[id]?.sources ?? [],
+    (id) => trackerData.items[id].sources ?? [],
     ctx.worldState,
     ctx.availabilityMode,
   );

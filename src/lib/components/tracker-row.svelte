@@ -109,7 +109,7 @@
       </button>
     {/if}
 
-    {#if (badges.seasons || badges.weathers || badges.timeRange) && !isRedacted}
+    {#if (badges.seasons ?? badges.weathers ?? badges.timeRange) && !isRedacted}
       <RestrictionBadges {badges} />
     {/if}
   </div>

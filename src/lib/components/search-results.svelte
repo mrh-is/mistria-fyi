@@ -53,10 +53,10 @@
 
   function getSources(result: SearchResult): AcquisitionSource[] {
     if (result.category === "almanac") {
-      return trackerData.items[result.id as ItemId]?.sources ?? [];
+      return trackerData.items[result.id as ItemId].sources ?? [];
     }
     if (result.category === "cosmetics") {
-      return trackerData.cosmetics[result.id as CosmeticId]?.sources ?? [];
+      return trackerData.cosmetics[result.id as CosmeticId].sources ?? [];
     }
     return [];
   }

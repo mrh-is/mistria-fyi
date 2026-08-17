@@ -127,7 +127,7 @@
   {@const scopedItems = catEntries.filter(([id, item]) => {
     if (!matchesFilter(item.name)) return false;
     return shouldCountItem(
-      trackerData.items[id as ItemId]?.sources ?? [],
+      trackerData.items[id as ItemId].sources ?? [],
       userState.state.completed.almanac.has(id as ItemId),
       userState.state.worldState,
       userState.state.availabilityMode,
@@ -153,7 +153,7 @@
       {@const displayItems = showAll ? filteredItems : filteredItems.slice(0, SECTION_LIMIT)}
       {#each displayItems as [itemId, item] (itemId)}
         {@const itemCompleted = userState.state.completed.almanac.has(itemId as ItemId)}
-        {@const itemSources = trackerData.items[itemId as ItemId]?.sources ?? []}
+        {@const itemSources = trackerData.items[itemId as ItemId].sources ?? []}
         {@const itemVisibility = item.visibility ?? { type: "always" }}
         <TrackerRow
           display={rowDisplay(itemId as ItemId, item, itemSources)}

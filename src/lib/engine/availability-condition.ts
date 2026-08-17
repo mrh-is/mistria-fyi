@@ -171,13 +171,13 @@ function collectBadges(condition: AvailabilityCondition, badges: DisplayBadges):
       collectBadges(condition.condition, badges);
       break;
     case "season":
-      if (!badges.seasons) badges.seasons = condition.seasons;
+      badges.seasons ??= condition.seasons;
       break;
     case "time":
-      if (!badges.timeRange) badges.timeRange = [condition.start, condition.end];
+      badges.timeRange ??= [condition.start, condition.end];
       break;
     case "weather":
-      if (!badges.weathers) badges.weathers = condition.weathers;
+      badges.weathers ??= condition.weathers;
       break;
   }
 }

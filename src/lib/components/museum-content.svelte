@@ -81,7 +81,7 @@
   function isItemScoped(itemId: ItemId): boolean {
     if (!matchesFilter(itemId)) return false;
     return shouldCountItem(
-      trackerData.items[itemId]?.sources ?? [],
+      trackerData.items[itemId].sources ?? [],
       userState.state.completed.museum.has(itemId),
       userState.state.worldState,
       userState.state.availabilityMode,
@@ -157,7 +157,7 @@
           >
             {#each visibleSetItems as itemId (itemId)}
               {@const museumCompleted = userState.state.completed.museum.has(itemId)}
-              {@const museumItemSources = trackerData.items[itemId]?.sources ?? []}
+              {@const museumItemSources = trackerData.items[itemId].sources ?? []}
               {@const museumItemVisibility = trackerData.items[itemId].visibility ?? {
                 type: "always",
               }}
