@@ -22,17 +22,17 @@ describe("TrackerRow", () => {
     expect(body).toContain('aria-label="Check redacted item"');
   });
 
-  it("provides a spoiler-safe label for a completed redacted row", () => {
+  it("reveals the name for a completed row, unlike a redacted one", () => {
     const { body } = render(TrackerRow, {
       props: {
-        display: { mode: "redacted" },
+        display: { mode: "completed" },
         name: "Cherry Cobbler",
         onToggle: vi.fn(),
       },
     });
 
-    expect(body).not.toContain("Cherry Cobbler");
-    expect(body).toContain('aria-label="Check redacted item"');
+    expect(body).toContain("Cherry Cobbler");
+    expect(body).not.toContain("Redacted");
   });
 
   it("shows the entity name for a visible row", () => {

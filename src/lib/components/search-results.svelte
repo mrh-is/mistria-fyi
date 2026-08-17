@@ -5,6 +5,7 @@
   import { trackerData } from "$lib/data/index.js";
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
   import { searchItems } from "$lib/engine/search.js";
+  import { isVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
@@ -40,7 +41,15 @@
     quests: "Quests",
   };
 
-  let baseLookups = $derived(buildBaseSegmentLookups(new Set()));
+  let redactedStoreIds = $derived(
+    new Set(
+      Object.entries(trackerData.storeVisibility)
+        .filter(([, vis]) => !isVisible(vis, userState.progressionState))
+        .map(([id]) => id),
+    ),
+  );
+
+  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
 
   function getSources(result: SearchResult): AcquisitionSource[] {
     if (result.category === "almanac") {

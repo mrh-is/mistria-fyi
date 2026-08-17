@@ -1,7 +1,6 @@
 <script lang="ts">
   import ConfirmRedactedDialog from "$lib/components/confirm-redacted-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
-  import { Icon } from "$lib/components/icon/index.js";
   import Stepper from "$lib/components/stepper.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
@@ -11,6 +10,7 @@
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
+  import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { SpellId } from "$lib/types/tracker-data.js";
 
   const redactGuard = createRedactionGuard();
@@ -18,6 +18,11 @@
   function spellNameVisible(spellId: SpellId): boolean {
     const visibility = trackerData.mines.spells[spellId].visibility ?? { type: "always" };
     return isEntityNameVisible(visibility, userState.progressionState);
+  }
+
+  function rowDisplay(spellId: SpellId, completed: boolean): TrackerRowDisplay {
+    if (!spellNameVisible(spellId)) return { mode: "redacted" };
+    return completed ? { mode: "completed" } : { mode: "visible" };
   }
 
   function toggleSpell(spellId: SpellId): void {
@@ -185,47 +190,22 @@
   >
     {#each visibleSpells as spell (spell.id)}
       {@const completed = userState.state.completed.mines.spells.has(spell.id)}
-      {#if !spellNameVisible(spell.id)}
-        <TrackerRow
-          display={{ mode: "redacted" }}
-          name={spell.name}
-          onToggle={() => {
-            if (completed) {
-              toggleSpell(spell.id);
-            } else {
-              redactGuard.guard(
-                trackerData.mines.spells[spell.id].visibility ?? { type: "always" },
-                () => {
-                  toggleSpell(spell.id);
-                },
-              );
-            }
-          }}
-        />
-      {:else}
-        <div
-          class="flex items-center gap-2 rounded-md px-2 py-1 {completed
-            ? 'line-through opacity-40'
-            : ''}"
-        >
-          <button
-            class="flex size-11 shrink-0 items-center justify-center"
-            type="button"
-            aria-label={completed ? `Uncheck ${spell.name}` : `Check ${spell.name}`}
-            onclick={() => {
-              toggleSpell(spell.id);
-            }}
-          >
-            <Icon.Completion
-              state={completed ? "completed" : "none"}
-              class="size-5 {completed
-                ? 'text-green-600 dark:text-green-400'
-                : 'text-muted-foreground/50'}"
-            />
-          </button>
-          <span class="text-base">{spell.name}</span>
-        </div>
-      {/if}
+      <TrackerRow
+        display={rowDisplay(spell.id, completed)}
+        name={spell.name}
+        onToggle={() => {
+          if (spellNameVisible(spell.id) || completed) {
+            toggleSpell(spell.id);
+          } else {
+            redactGuard.guard(
+              trackerData.mines.spells[spell.id].visibility ?? { type: "always" },
+              () => {
+                toggleSpell(spell.id);
+              },
+            );
+          }
+        }}
+      />
     {/each}
   </ExpandableSection>
 {/if}
