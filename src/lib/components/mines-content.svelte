@@ -2,8 +2,8 @@
   import ConfirmRedactedDialog from "$lib/components/confirm-redacted-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import { Icon } from "$lib/components/icon/index.js";
-  import RedactedRow from "$lib/components/redacted-row.svelte";
   import Stepper from "$lib/components/stepper.svelte";
+  import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { isEntityNameVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -186,8 +186,8 @@
     {#each visibleSpells as spell (spell.id)}
       {@const completed = userState.state.completed.mines.spells.has(spell.id)}
       {#if !spellNameVisible(spell.id)}
-        <RedactedRow
-          {completed}
+        <TrackerRow
+          display={{ mode: "redacted" }}
           name={spell.name}
           onToggle={() => {
             if (completed) {

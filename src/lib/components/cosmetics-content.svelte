@@ -1,15 +1,16 @@
 <script lang="ts">
   import ConfirmRedactedDialog from "$lib/components/confirm-redacted-dialog.svelte";
-  import CosmeticRow from "$lib/components/cosmetic-row.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
-  import RedactedRow from "$lib/components/redacted-row.svelte";
+  import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
-  import { isEntityNameVisible } from "$lib/engine/visibility.js";
+  import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
+  import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
+  import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { AcquisitionSource, CosmeticId } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
@@ -21,6 +22,24 @@
   }
 
   const redactGuard = createRedactionGuard();
+
+  let redactedStoreIds = $derived(
+    new Set(
+      Object.entries(trackerData.storeVisibility)
+        .filter(([, vis]) => !isVisible(vis, userState.progressionState))
+        .map(([id]) => id),
+    ),
+  );
+
+  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
+
+  function rowDisplay(cosmetic: CosmeticEntry, completed: boolean): TrackerRowDisplay {
+    if (!isEntityNameVisible(cosmetic.visibility, userState.progressionState)) {
+      return { mode: "redacted" };
+    }
+    if (completed) return { mode: "completed" };
+    return { mode: "visible" };
+  }
 
   function isCosmeticsComplete(): boolean {
     return Object.keys(trackerData.cosmetics).every((id) =>
@@ -116,55 +135,47 @@
             >
               {#each visibleCosmetics as cosmetic (cosmetic.id)}
                 {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
-                {#if !isEntityNameVisible(cosmetic.visibility, userState.progressionState)}
-                  <RedactedRow
-                    {completed}
-                    name={cosmetic.name}
-                    onToggle={() => {
-                      if (completed) {
-                        toggleCosmetic(cosmetic, allInSlot);
-                      } else {
-                        redactGuard.guard(cosmetic.visibility, () => {
-                          toggleCosmetic(cosmetic, allInSlot);
-                        });
-                      }
-                    }}
-                  />
-                {:else}
-                  <CosmeticRow
-                    {completed}
-                    name={cosmetic.name}
-                    sources={cosmetic.sources}
-                    onToggle={() => {
+                <TrackerRow
+                  display={rowDisplay(cosmetic, completed)}
+                  lookups={{ ...baseLookups, recipeVisibility: cosmetic.visibility }}
+                  name={cosmetic.name}
+                  sources={cosmetic.sources}
+                  onToggle={() => {
+                    if (
+                      isEntityNameVisible(cosmetic.visibility, userState.progressionState) ||
+                      completed
+                    ) {
                       toggleCosmetic(cosmetic, allInSlot);
-                    }}
-                  />
-                {/if}
+                    } else {
+                      redactGuard.guard(cosmetic.visibility, () => {
+                        toggleCosmetic(cosmetic, allInSlot);
+                      });
+                    }
+                  }}
+                />
               {/each}
             </ExpandableSection>
           {:else}
             {#each visibleCosmetics as cosmetic (cosmetic.id)}
               {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
-              {#if !isEntityNameVisible(cosmetic.visibility, userState.progressionState)}
-                <RedactedRow
-                  {completed}
-                  name={cosmetic.name}
-                  onToggle={() => {
+              <TrackerRow
+                display={rowDisplay(cosmetic, completed)}
+                lookups={{ ...baseLookups, recipeVisibility: cosmetic.visibility }}
+                name={cosmetic.name}
+                sources={cosmetic.sources}
+                onToggle={() => {
+                  if (
+                    isEntityNameVisible(cosmetic.visibility, userState.progressionState) ||
+                    completed
+                  ) {
+                    toggleCosmetic(cosmetic, allInSlot);
+                  } else {
                     redactGuard.guard(cosmetic.visibility, () => {
                       toggleCosmetic(cosmetic, allInSlot);
                     });
-                  }}
-                />
-              {:else}
-                <CosmeticRow
-                  {completed}
-                  name={cosmetic.name}
-                  sources={cosmetic.sources}
-                  onToggle={() => {
-                    toggleCosmetic(cosmetic, allInSlot);
-                  }}
-                />
-              {/if}
+                  }
+                }}
+              />
             {/each}
           {/if}
         {/if}

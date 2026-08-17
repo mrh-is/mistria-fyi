@@ -1,13 +1,13 @@
 import { render } from "svelte/server";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import RecipeSourceList from "$lib/components/recipe-source-list.svelte";
+import SourceList from "$lib/components/source-list.svelte";
 import { userState } from "$lib/stores/user-state.svelte.js";
 
 import type { AcquisitionSource } from "$lib/types/tracker-data.js";
 import type { SourceSegment } from "$lib/utils/source-segments.js";
 
-describe("RecipeSourceList", () => {
+describe("SourceList", () => {
   beforeEach(() => {
     userState.resetAll();
   });
@@ -19,7 +19,7 @@ describe("RecipeSourceList", () => {
       ["Available from the start"],
     ];
 
-    const { body } = render(RecipeSourceList, { props: { sources, sourceSegments } });
+    const { body } = render(SourceList, { props: { sources, sourceSegments } });
 
     expect(body).toContain('data-source-type="beach_cave_chest"');
     expect(body).toContain('data-source-type="default"');
