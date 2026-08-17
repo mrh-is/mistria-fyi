@@ -137,7 +137,7 @@
                 {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
                 <TrackerRow
                   display={rowDisplay(cosmetic, completed)}
-                  lookups={{ ...baseLookups, recipeVisibility: cosmetic.visibility }}
+                  lookups={{ ...baseLookups, entityVisibility: cosmetic.visibility }}
                   name={cosmetic.name}
                   sources={cosmetic.sources}
                   onToggle={() => {
@@ -160,7 +160,7 @@
               {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
               <TrackerRow
                 display={rowDisplay(cosmetic, completed)}
-                lookups={{ ...baseLookups, recipeVisibility: cosmetic.visibility }}
+                lookups={{ ...baseLookups, entityVisibility: cosmetic.visibility }}
                 name={cosmetic.name}
                 sources={cosmetic.sources}
                 onToggle={() => {

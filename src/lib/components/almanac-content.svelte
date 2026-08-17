@@ -157,7 +157,7 @@
         {@const itemVisibility = item.visibility ?? { type: "always" }}
         <TrackerRow
           display={rowDisplay(itemId as ItemId, item, itemSources)}
-          lookups={{ ...baseLookups, recipeVisibility: itemVisibility }}
+          lookups={{ ...baseLookups, entityVisibility: itemVisibility }}
           name={item.name}
           sources={itemSources}
           onToggle={() => {

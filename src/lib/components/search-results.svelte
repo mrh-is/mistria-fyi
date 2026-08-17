@@ -136,7 +136,7 @@
       <div class="min-w-0 flex-1">
         <TrackerRow
           display={rowDisplay(result)}
-          lookups={{ ...baseLookups, recipeVisibility: { type: "always" } }}
+          lookups={{ ...baseLookups, entityVisibility: { type: "always" } }}
           name={result.detail ? `${label} ${result.detail}` : label}
           sources={getSources(result)}
           onToggle={() => {

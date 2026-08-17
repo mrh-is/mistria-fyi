@@ -41,6 +41,7 @@ const BASE_LOOKUPS: SegmentLookups = {
     { endFloor: 59, id: "biome_2" as BiomeId, name: "Deep Earth", startFloor: 40 },
   ],
   categoryVisibility: {},
+  entityVisibility: { type: "always" },
   festivalDates: {},
   festivals: {},
   itemNames: {},
@@ -61,7 +62,6 @@ const BASE_LOOKUPS: SegmentLookups = {
   questNames: {},
   questNpcIds: {},
   recipeNames: {},
-  recipeVisibility: { type: "always" },
   skillNames: { cooking: "Cooking" },
   stationNames: {},
   stores: {
@@ -278,7 +278,7 @@ describe("buildSourceSegments — scroll_bundle", () => {
     };
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
-      recipeVisibility: {
+      entityVisibility: {
         questId: "repair_the_general_store" as QuestId,
         type: "questCompleted",
       },

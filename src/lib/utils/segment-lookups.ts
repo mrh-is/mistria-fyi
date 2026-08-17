@@ -6,7 +6,7 @@ import type { SegmentLookups } from "$lib/utils/source-segments.js";
 /**
  * Builds the shared portion of a `SegmentLookups` object from `trackerData`.
  * Every content page needs the same reference tables (items, quests, npcs, stores,
- * perks, festivals, biomes, treasure chests, & visibility maps); only `recipeVisibility`
+ * perks, festivals, biomes, treasure chests, & visibility maps); only `entityVisibility`
  * varies per row, since it reflects the entity currently being rendered.
  *
  * `animalNames`, `locationNames`, `monsterNames`, & `stationNames` have no dedicated
@@ -15,7 +15,7 @@ import type { SegmentLookups } from "$lib/utils/source-segments.js";
  */
 export function buildBaseSegmentLookups(
   redactedStoreIds: ReadonlySet<string>,
-): Omit<SegmentLookups, "recipeVisibility"> {
+): Omit<SegmentLookups, "entityVisibility"> {
   return {
     animalNames: {},
     biomes: trackerData.mines.biomes,

@@ -20,6 +20,7 @@ import type { RecipeSourceLookups } from "./format.js";
 export interface SegmentLookups extends RecipeSourceLookups {
   animalNames: Partial<Record<string, string>>;
   categoryVisibility: Partial<Record<string, VisibilityCondition>>;
+  entityVisibility: VisibilityCondition;
   festivalDates: Partial<Record<FestivalId, { day: number; season: Season }>>;
   itemVisibility: Partial<Record<ItemId, VisibilityCondition>>;
   locationNames: Partial<Record<string, string>>;
@@ -27,7 +28,6 @@ export interface SegmentLookups extends RecipeSourceLookups {
   npcNames: Partial<Record<NpcId, string>>;
   npcVisibility: Partial<Record<NpcId, VisibilityCondition>>;
   questNpcIds: Partial<Record<QuestId, NpcId>>;
-  recipeVisibility: VisibilityCondition;
   stationNames: Partial<Record<string, string>>;
   storeVisibility: Partial<Record<StoreId, VisibilityCondition>>;
 }
@@ -245,9 +245,9 @@ export function buildSourceSegments(
       const storeName = buildStoreName(source.storeId, lookups);
       const qualifier = buildStoreQualifier(source.visibility, lookups, source.storeId);
       const bundleSegment: SourceSegment =
-        lookups.recipeVisibility.type === "always"
+        lookups.entityVisibility.type === "always"
           ? `the ${source.bundleName}`
-          : { condition: lookups.recipeVisibility, revealed: [`the ${source.bundleName}`] };
+          : { condition: lookups.entityVisibility, revealed: [`the ${source.bundleName}`] };
       return joinSegments("Purchase ", bundleSegment, " from ", storeName, qualifier);
     }
     case "station": {

@@ -188,7 +188,7 @@
         {@const leaving = recentlyCompleted.has(entry.id)}
         <TrackerRow
           display={rowDisplay(entry, completed, leaving)}
-          lookups={{ ...baseSegmentLookups, recipeVisibility: entry.visibility }}
+          lookups={{ ...baseSegmentLookups, entityVisibility: entry.visibility }}
           name={entry.name}
           sources={entry.sources}
           onToggle={() => {

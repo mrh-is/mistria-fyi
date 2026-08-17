@@ -163,7 +163,7 @@
               }}
               <TrackerRow
                 display={rowDisplay(itemId, museumItemSources)}
-                lookups={{ ...baseLookups, recipeVisibility: museumItemVisibility }}
+                lookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
                 name={trackerData.items[itemId].name}
                 sources={museumItemSources}
                 onToggle={() => {
