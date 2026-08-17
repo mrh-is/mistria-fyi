@@ -56,10 +56,6 @@
     return name.toLowerCase().includes(nameFilter.toLowerCase());
   }
 
-  function isFishCategory(catId: string): boolean {
-    return catId === "fish";
-  }
-
   function toggleItem(
     itemId: ItemId,
     item: { name: string; visibility?: VisibilityCondition },
@@ -150,7 +146,6 @@
               userState.state.worldState,
               userState.state.availabilityMode,
             )}
-            hideFishSize={!isFishCategory(cat.id)}
             itemId={itemId as ItemId}
             leaving={recentlyCompleted.has(itemId as ItemId)}
             name={item.name}

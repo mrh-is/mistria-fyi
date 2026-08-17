@@ -3,21 +3,23 @@
 
   import { Icon } from "$lib/components/icon/index.js";
   import ItemDetail from "$lib/components/item-detail.svelte";
+  import RestrictionBadges from "$lib/components/restriction-badges.svelte";
 
+  import type { DisplayBadges } from "$lib/engine/availability-condition.js";
   import type { AcquisitionSource } from "$lib/types/tracker-data.js";
 
   let {
+    badges = {},
     completed,
     dimmed = false,
-    hideFishSize: _hideFishSize = false,
     leaving = false,
     name,
     onToggle,
     sources = [],
   }: {
+    badges?: DisplayBadges;
     completed: boolean;
     dimmed?: boolean;
-    hideFishSize?: boolean;
     leaving?: boolean;
     name: string;
     onToggle: () => void;
@@ -45,6 +47,9 @@
   }
 
   let expanded = $state(false);
+  let hasBadges = $derived(
+    badges.seasons !== undefined || badges.weathers !== undefined || badges.timeRange !== undefined,
+  );
 </script>
 
 <div out:completeOut data-leaving={leaving}>
@@ -86,6 +91,9 @@
       </button>
     {:else}
       <span class="min-w-0 flex-1 text-base">{name}</span>
+    {/if}
+    {#if hasBadges}
+      <RestrictionBadges {badges} />
     {/if}
   </div>
   {#if expanded && sources.length > 0}

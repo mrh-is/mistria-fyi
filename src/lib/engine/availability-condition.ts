@@ -21,6 +21,12 @@ export interface AvailabilityContext {
 
 export type AvailabilityValue = "unknown" | boolean;
 
+export interface DisplayBadges {
+  seasons?: Season[];
+  timeRange?: [number, number];
+  weathers?: Weather[];
+}
+
 const ALL_SEASONS: readonly Season[] = ["spring", "summer", "fall", "winter"];
 
 export function evaluateAvailabilityCondition(
@@ -69,8 +75,36 @@ export function evaluateAvailabilityCondition(
   }
 }
 
+export function extractDisplayBadges(condition: AvailabilityCondition): DisplayBadges {
+  const badges: DisplayBadges = {};
+  collectBadges(condition, badges);
+  return badges;
+}
+
 export function hasSelectiveSeasonCondition(condition: AvailabilityCondition): boolean {
   return hasSelectiveSeasonConditionInSimplified(simplifyAvailabilityCondition(condition));
+}
+
+export function hasTimelyCondition(condition: AvailabilityCondition): boolean {
+  switch (condition.type) {
+    case "all":
+    case "any":
+      return condition.conditions.some(hasTimelyCondition);
+    case "always":
+    case "gamePredicate":
+    case "heartLevel":
+    case "minesLevel":
+    case "perkUnlocked":
+    case "quest":
+    case "skillLevel":
+      return false;
+    case "not":
+      return hasTimelyCondition(condition.condition);
+    case "season":
+    case "time":
+    case "weather":
+      return true;
+  }
 }
 
 export function simplifyAvailabilityCondition(
@@ -114,6 +148,37 @@ export function simplifyAvailabilityCondition(
     }
     case "season":
       return condition;
+  }
+}
+
+function collectBadges(condition: AvailabilityCondition, badges: DisplayBadges): void {
+  switch (condition.type) {
+    case "all":
+    case "any":
+      for (const child of condition.conditions) {
+        collectBadges(child, badges);
+      }
+      break;
+    case "always":
+    case "gamePredicate":
+    case "heartLevel":
+    case "minesLevel":
+    case "perkUnlocked":
+    case "quest":
+    case "skillLevel":
+      break;
+    case "not":
+      collectBadges(condition.condition, badges);
+      break;
+    case "season":
+      if (!badges.seasons) badges.seasons = condition.seasons;
+      break;
+    case "time":
+      if (!badges.timeRange) badges.timeRange = [condition.start, condition.end];
+      break;
+    case "weather":
+      if (!badges.weathers) badges.weathers = condition.weathers;
+      break;
   }
 }
 

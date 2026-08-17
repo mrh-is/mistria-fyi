@@ -6,7 +6,7 @@
 
   let { sources }: { sources: AcquisitionSource[] } = $props();
 
-  // Task 2 restores full recipeSourceLabel/lookups-based labeling and restriction badges here.
+  // ItemDetail's source labeling remains basic; Task 4 removes this component entirely.
   function typeLabel(type: string): string {
     return type.replace(/_/g, " ");
   }

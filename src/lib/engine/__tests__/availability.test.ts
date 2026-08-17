@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   filterAvailableItems,
-  getItemRestrictions,
+  getDisplayBadges,
   hasSelectiveSeasonRestriction,
   hasTimelyRestriction,
   isItemAvailable,
@@ -11,31 +11,73 @@ import {
   shouldCountItem,
 } from "../availability.js";
 
-import type { AcquisitionSource, ItemId } from "$lib/types/tracker-data.js";
+import type { AvailabilityCondition } from "$lib/types/acquisition.js";
+import type {
+  AcquisitionSource,
+  ItemId,
+  Season,
+  StoreId,
+  Weather,
+} from "$lib/types/tracker-data.js";
 
 const spring = { season: "spring" as const, weather: "calm" as const };
 
-function src(): AcquisitionSource {
-  return { storeId: "test" as never, type: "store" };
+function src(availability?: AvailabilityCondition): AcquisitionSource {
+  return { ...(availability ? { availability } : {}), storeId: "test" as StoreId, type: "store" };
 }
 
-// ─── Restriction-derived helpers (stubbed pending Task 2) ──────────────
-
-describe("getItemRestrictions", () => {
-  it("always returns an empty array (stubbed pending Task 2)", () => {
-    expect(getItemRestrictions([src(), src()])).toEqual([]);
-  });
+const seasonCondition = (seasons: Season[]): AvailabilityCondition => ({
+  seasons,
+  type: "season",
 });
+const weatherCondition = (weathers: Weather[]): AvailabilityCondition => ({
+  type: "weather",
+  weathers,
+});
+const timeCondition = (start: number, end: number): AvailabilityCondition => ({
+  start,
+  end,
+  type: "time",
+});
+const allSeasonsCondition = seasonCondition(["spring", "summer", "fall", "winter"]);
+
+// ─── hasSelectiveSeasonRestriction ──────────────────────────────────
 
 describe("hasSelectiveSeasonRestriction", () => {
-  it("always returns false (stubbed pending Task 2)", () => {
+  it("returns false when the source has no availability condition", () => {
     expect(hasSelectiveSeasonRestriction(src())).toBe(false);
+  });
+
+  it("returns false when all seasons are included", () => {
+    expect(hasSelectiveSeasonRestriction(src(allSeasonsCondition))).toBe(false);
+  });
+
+  it("returns true when only some seasons are included", () => {
+    expect(hasSelectiveSeasonRestriction(src(seasonCondition(["spring"])))).toBe(true);
   });
 });
 
+// ─── hasTimelyRestriction ────────────────────────────────────────────
+
 describe("hasTimelyRestriction", () => {
-  it("always returns false (stubbed pending Task 2)", () => {
+  it("returns false when the source has no availability condition", () => {
     expect(hasTimelyRestriction(src())).toBe(false);
+  });
+
+  it("returns true for a season condition", () => {
+    expect(hasTimelyRestriction(src(seasonCondition(["spring"])))).toBe(true);
+  });
+
+  it("returns true for a weather condition", () => {
+    expect(hasTimelyRestriction(src(weatherCondition(["calm"])))).toBe(true);
+  });
+
+  it("returns true for a time condition", () => {
+    expect(hasTimelyRestriction(src(timeCondition(6, 12)))).toBe(true);
+  });
+
+  it("returns false for a non-timely condition", () => {
+    expect(hasTimelyRestriction(src({ floor: 5, type: "minesLevel" }))).toBe(false);
   });
 });
 
@@ -43,23 +85,53 @@ describe("hasTimelyRestriction", () => {
 
 describe("isSourceAvailable", () => {
   it("everything mode always returns true", () => {
-    expect(isSourceAvailable(src(), spring, "everything")).toBe(true);
+    expect(isSourceAvailable(src(seasonCondition(["winter"])), spring, "everything")).toBe(true);
   });
 
-  it("available mode always returns true (stubbed pending Task 2)", () => {
+  it("available mode with no availability condition returns true", () => {
     expect(isSourceAvailable(src(), spring, "available")).toBe(true);
   });
 
-  it("timely mode always returns false (stubbed pending Task 2)", () => {
+  it("timely mode with no availability condition returns false", () => {
     expect(isSourceAvailable(src(), spring, "timely")).toBe(false);
+  });
+
+  it("available mode returns true when the season condition matches", () => {
+    expect(isSourceAvailable(src(seasonCondition(["spring"])), spring, "available")).toBe(true);
+  });
+
+  it("available mode returns false when the season condition doesn't match", () => {
+    expect(isSourceAvailable(src(seasonCondition(["winter"])), spring, "available")).toBe(false);
+  });
+
+  it("timely mode returns true for a selective season condition that matches", () => {
+    expect(isSourceAvailable(src(seasonCondition(["spring"])), spring, "timely")).toBe(true);
+  });
+
+  it("timely mode returns false for a non-selective (all seasons) condition", () => {
+    expect(isSourceAvailable(src(allSeasonsCondition), spring, "timely")).toBe(false);
+  });
+
+  it("timely mode returns false when the selective season condition doesn't match", () => {
+    expect(isSourceAvailable(src(seasonCondition(["winter"])), spring, "timely")).toBe(false);
   });
 });
 
 // ─── isItemAvailable ────────────────────────────────────────────────
 
 describe("isItemAvailable", () => {
-  it("available if ANY source passes (OR logic; stubbed always-available in available mode)", () => {
-    expect(isItemAvailable([src(), src()], spring, "available")).toBe(true);
+  it("available if ANY source passes (OR logic)", () => {
+    expect(
+      isItemAvailable(
+        [src(seasonCondition(["winter"])), src(seasonCondition(["spring"]))],
+        spring,
+        "available",
+      ),
+    ).toBe(true);
+  });
+
+  it("unavailable if no source passes", () => {
+    expect(isItemAvailable([src(seasonCondition(["winter"]))], spring, "available")).toBe(false);
   });
 
   it("no sources: available in available mode", () => {
@@ -71,11 +143,11 @@ describe("isItemAvailable", () => {
   });
 
   it("everything mode: always available", () => {
-    expect(isItemAvailable([src()], spring, "everything")).toBe(true);
+    expect(isItemAvailable([src(seasonCondition(["winter"]))], spring, "everything")).toBe(true);
   });
 
-  it("timely mode: hidden regardless of sources (stubbed pending Task 2)", () => {
-    expect(isItemAvailable([src()], spring, "timely")).toBe(false);
+  it("timely mode: available when a source has a selective season condition that matches", () => {
+    expect(isItemAvailable([src(seasonCondition(["spring"]))], spring, "timely")).toBe(true);
   });
 });
 
@@ -85,12 +157,12 @@ describe("filterAvailableItems", () => {
   const ids = ["a", "b", "c"] as ItemId[];
   const lookup = (id: ItemId): AcquisitionSource[] => (id === "c" ? [] : [src()]);
 
-  it("available mode passes everything through (stubbed pending Task 2)", () => {
+  it("available mode passes items with sources through", () => {
     const result = filterAvailableItems(ids, lookup, spring, "available");
     expect(result).toEqual(ids);
   });
 
-  it("timely mode excludes all items (stubbed pending Task 2)", () => {
+  it("timely mode excludes items with no timely condition", () => {
     const result = filterAvailableItems(ids, lookup, spring, "timely");
     expect(result).toEqual([]);
   });
@@ -117,7 +189,7 @@ describe("shouldCountItem", () => {
     expect(shouldCountItem([src()], false, spring, "everything")).toBe(true);
   });
 
-  it("incomplete items out of scope in timely mode (stubbed pending Task 2)", () => {
+  it("incomplete items out of scope in timely mode when no sources are timely", () => {
     expect(shouldCountItem([], false, spring, "timely")).toBe(false);
   });
 });
@@ -149,5 +221,30 @@ describe("isRowVisible", () => {
     const other = "other_item" as ItemId;
     const recentlyCompleted = new Set([other]);
     expect(isRowVisible(id, true, false, recentlyCompleted)).toBe(false);
+  });
+});
+
+// ─── getDisplayBadges ───────────────────────────────────────────────
+
+describe("getDisplayBadges", () => {
+  it("returns an empty object when no sources have availability conditions", () => {
+    expect(getDisplayBadges([src(), src()])).toEqual({});
+  });
+
+  it("extracts seasons, weathers, and time range from a single source", () => {
+    const condition: AvailabilityCondition = {
+      conditions: [seasonCondition(["spring"]), weatherCondition(["calm"]), timeCondition(6, 12)],
+      type: "all",
+    };
+    expect(getDisplayBadges([src(condition)])).toEqual({
+      seasons: ["spring"],
+      timeRange: [6, 12],
+      weathers: ["calm"],
+    });
+  });
+
+  it("merges badges across multiple sources, keeping the first found for each kind", () => {
+    const sources = [src(seasonCondition(["spring"])), src(seasonCondition(["winter"]))];
+    expect(getDisplayBadges(sources)).toEqual({ seasons: ["spring"] });
   });
 });

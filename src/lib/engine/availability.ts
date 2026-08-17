@@ -1,7 +1,15 @@
+import {
+  evaluateAvailabilityCondition,
+  extractDisplayBadges,
+  hasSelectiveSeasonCondition,
+  hasTimelyCondition,
+} from "./availability-condition.js";
+
 import type { AvailabilityMode } from "$lib/stores/user-state.svelte.js";
+import type { AvailabilityCondition } from "$lib/types/acquisition.js";
 import type { AcquisitionSource, ItemId, Season, Weather } from "$lib/types/tracker-data.js";
 
-// ─── Composite display helpers ───────────────────────────────────────
+import type { DisplayBadges } from "./availability-condition.js";
 
 interface WorldState {
   season: Season;
@@ -21,34 +29,41 @@ export function filterAvailableItems(
   return itemIds.filter((id) => isItemAvailable(sourceLookup(id), worldState, mode));
 }
 
+// ─── Source-level availability ──────────────────────────────────────
+
 /**
- * Get deduplicated restriction summary for display badges.
- *
- * Stubbed pending Task 2, which replaces this with `getDisplayBadges` built on
- * `AcquisitionSource.availability` (an `AvailabilityCondition` tree) instead of the removed
- * `Restriction[]` shape.
+ * Get a merged, deduplicated set of display badges from a list of sources.
  */
-export function getItemRestrictions(_sources: AcquisitionSource[]): never[] {
-  return [];
+export function getDisplayBadges(sources: AcquisitionSource[]): DisplayBadges {
+  const merged: DisplayBadges = {};
+  for (const source of sources) {
+    const availability = getAvailabilityCondition(source);
+    if (!availability) continue;
+    const badges = extractDisplayBadges(availability);
+    if (badges.seasons && !merged.seasons) merged.seasons = badges.seasons;
+    if (badges.weathers && !merged.weathers) merged.weathers = badges.weathers;
+    if (badges.timeRange && !merged.timeRange) merged.timeRange = badges.timeRange;
+  }
+  return merged;
 }
 
 /**
- * Returns true if the source has a season restriction that excludes at least one season.
- *
- * Stubbed pending Task 2's `AvailabilityCondition`-based rewrite.
+ * Whether the source has a season condition that excludes at least one season.
  */
-export function hasSelectiveSeasonRestriction(_source: AcquisitionSource): boolean {
-  return false;
+export function hasSelectiveSeasonRestriction(source: AcquisitionSource): boolean {
+  const availability = getAvailabilityCondition(source);
+  return availability !== undefined && hasSelectiveSeasonCondition(availability);
 }
 
 /**
- * Does this source have any timely restriction?
- *
- * Stubbed pending Task 2's `AvailabilityCondition`-based rewrite.
+ * Does this source have any timely (season/weather/time) condition?
  */
-export function hasTimelyRestriction(_source: AcquisitionSource): boolean {
-  return false;
+export function hasTimelyRestriction(source: AcquisitionSource): boolean {
+  const availability = getAvailabilityCondition(source);
+  return availability !== undefined && hasTimelyCondition(availability);
 }
+
+// ─── Item-level availability ────────────────────────────────────────
 
 /**
  * Check if an item is available: ANY source must pass (OR logic).
@@ -70,7 +85,7 @@ export function isItemAvailable(
   return sources.some((source) => isSourceAvailable(source, worldState, mode));
 }
 
-// ─── Restriction-derived helpers (stubbed pending Task 2) ──────────────
+// ─── Composite display helpers ───────────────────────────────────────
 
 /**
  * Whether an item row should be visually dimmed — incomplete but unavailable
@@ -104,19 +119,26 @@ export function isRowVisible(
 
 /**
  * Check if a single source is available given world state and mode.
- *
- * Stubbed pending Task 2's `AvailabilityCondition`-based rewrite: everything is available except
- * in "timely" mode, where nothing currently qualifies.
  */
 export function isSourceAvailable(
-  _source: AcquisitionSource,
-  _worldState: WorldState,
+  source: AcquisitionSource,
+  worldState: WorldState,
   mode: AvailabilityMode,
 ): boolean {
-  return mode !== "timely";
-}
+  if (mode === "everything") return true;
+  const availability = getAvailabilityCondition(source);
+  if (!availability) return mode === "available";
 
-// ─── Item-level availability ────────────────────────────────────────
+  if (mode === "timely") {
+    if (!hasSelectiveSeasonCondition(availability)) return false;
+  }
+
+  const result = evaluateAvailabilityCondition(availability, {
+    season: worldState.season,
+    weather: worldState.weather,
+  });
+  return result !== false;
+}
 
 /**
  * Whether an item falls within the scoped set used for progress counters.
@@ -132,8 +154,6 @@ export function shouldCountItem(
   if (isCompleted) return true;
   return isItemAvailable(sources, worldState, mode);
 }
-
-// ─── Source-level availability ──────────────────────────────────────
 
 /**
  * Whether an item should be visible in a list given filter state.
@@ -151,4 +171,12 @@ export function shouldShowItem(
   if (isCompleted && !showCompleted) return false;
   if (isCompleted) return true;
   return isItemAvailable(sources, worldState, mode);
+}
+
+/**
+ * Source variants that carry no `SourceDetails` (e.g. `{ type: "default" }`) have no
+ * `availability` field at all, so it can't be accessed directly on the union type.
+ */
+function getAvailabilityCondition(source: AcquisitionSource): AvailabilityCondition | undefined {
+  return "availability" in source ? source.availability : undefined;
 }
