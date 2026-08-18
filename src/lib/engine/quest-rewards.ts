@@ -9,7 +9,7 @@ import type { QuestId, RecipeId } from "$lib/types/tracker-data.js";
 export function findRecipesForQuest(questId: QuestId): RecipeId[] {
   const result: RecipeId[] = [];
   for (const [id, recipe] of Object.entries(trackerData.recipes)) {
-    if (recipe.sources.some((s) => s.type === "quest" && s.questId === questId)) {
+    if (recipe.sources?.some((s) => s.type === "quest" && s.questId === questId)) {
       result.push(id as RecipeId);
     }
   }

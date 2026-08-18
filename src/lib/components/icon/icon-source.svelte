@@ -2,10 +2,10 @@
   import { SOURCE_ICON } from "$lib/components/icon/icon-maps.js";
 
   import type { LucideProps } from "$lib/components/icon/icon-maps.js";
-  import type { RecipeSource } from "$lib/types/tracker-data.js";
+  import type { AcquisitionSource } from "$lib/types/tracker-data.js";
 
   interface Props extends LucideProps {
-    type: RecipeSource["type"];
+    type: AcquisitionSource["type"];
   }
 
   let { type, ...rest }: Props = $props();

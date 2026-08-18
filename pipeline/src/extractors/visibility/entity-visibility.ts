@@ -5,7 +5,6 @@ import type {
   BiomeId,
   NpcId,
   QuestId,
-  RecipeSource,
   SpellId,
   StoreId,
   TrackerData,
@@ -288,7 +287,7 @@ function assignAnimalVisibility(trackerData: TrackerData, fiddle: ParsedGameData
 
 function assignCosmeticVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
   for (const [, cosmetic] of Object.entries(trackerData.cosmetics)) {
-    const sources = cosmetic.acquisitionSources;
+    const sources = cosmetic.sources;
     if (!sources || sources.length === 0) continue;
 
     const conditions = sources.map((source) => acquisitionSourceCondition(source, ctx));
@@ -298,7 +297,7 @@ function assignCosmeticVisibility(trackerData: TrackerData, ctx: SourceVisibilit
 
 function assignItemVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
   for (const [, item] of Object.entries(trackerData.items)) {
-    const sources = item.acquisitionSources ?? [];
+    const sources = item.sources ?? [];
     const conditions = sources.map((source) => acquisitionSourceCondition(source, ctx));
     item.visibility = orSimplify(conditions);
   }
@@ -396,7 +395,8 @@ function assignQuestVisibility(
 
 function assignRecipeVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
   for (const recipe of Object.values(trackerData.recipes)) {
-    const computed = recipe.sources.map((source) => ({
+    const recipeSources = recipe.sources ?? [];
+    const computed = recipeSources.map((source) => ({
       conditions: computeRecipeSourceConditions(source, ctx),
       source,
     }));
@@ -436,31 +436,53 @@ function assignSpellVisibility(
 }
 
 function computeRecipeSourceConditions(
-  source: RecipeSource,
+  source: AcquisitionSource,
   ctx: SourceVisibilityContext,
 ): { entity: VisibilityCondition; source: VisibilityCondition } {
   switch (source.type) {
+    case "animal_product":
+    case "artifact_dig":
+    case "artifact_replicator":
     case "beach_cave_chest":
+    case "bug_catch":
     case "chicken_statue":
-    case "dragon_forge":
+    case "crop":
+    case "date":
+    case "default":
+    case "dive":
     case "engagement":
+    case "equipment":
     case "festival":
+    case "festival_activity":
+    case "fish":
+    case "fish_trap":
+    case "forage":
     case "letter":
+    case "mine":
+    case "monster":
+    case "monster_feed":
+    case "museum_donation":
+    case "perk_drop":
+    case "proposal":
+    case "recipe":
     case "renown":
+    case "ritual_chamber":
+    case "station":
     case "treasure_chest":
+    case "tree":
     case "upgrade":
+    case "wedding":
     case "wishing_well":
       // No dedicated gate data yet; entity and source share the same (currently always) condition.
-      return { entity: ALWAYS, source: ALWAYS };
-    case "default":
-    case "museum_donation":
       return { entity: ALWAYS, source: ALWAYS };
     case "mines_chest":
     case "mines_dig_site": {
       const floor = ctx.biomeFloor(source.biomeId);
       const minesCondition: VisibilityCondition =
         floor === undefined ? ALWAYS : { floor, type: "minesLevel" };
-      const perkCondition: VisibilityCondition = { perkId: source.perkId, type: "perkUnlocked" };
+      const perkCondition: VisibilityCondition = source.perkId
+        ? { perkId: source.perkId, type: "perkUnlocked" }
+        : ALWAYS;
       return {
         entity: andSimplify([minesCondition, perkCondition]),
         source: minesCondition,
@@ -491,15 +513,6 @@ function computeRecipeSourceConditions(
       return {
         entity: andSimplify([storeGate, stockGate]),
         source: andSimplify([toAvailable(storeGate), toAvailable(stockGate)]),
-      };
-    }
-    case "store_with_perk": {
-      const storeGate = storeGateCondition(source.storeId, ctx.storeVisibility);
-      const stockGate = source.visibility ?? ALWAYS;
-      const perkCondition: VisibilityCondition = { perkId: source.perkId, type: "perkUnlocked" };
-      return {
-        entity: andSimplify([storeGate, stockGate, perkCondition]),
-        source: andSimplify([toAvailable(storeGate), toAvailable(stockGate), perkCondition]),
       };
     }
   }

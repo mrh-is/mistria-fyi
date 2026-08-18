@@ -1,9 +1,7 @@
 import type {
   BiomeId,
   RecipeId,
-  RecipeSource,
   Season,
-  SourceType,
   StoreId,
   TrackerData,
   Weather,
@@ -33,25 +31,6 @@ const WEATHER_LABEL: Record<Weather, string> = {
   heavy_inclement: "Storm",
   inclement: "Rain",
   special: "Breeze",
-};
-
-const SOURCE_TYPE_LABEL: Record<SourceType, string> = {
-  bug_catch: "Bug Catching",
-  chest: "Chest",
-  cook: "Cooking",
-  craft: "Crafting",
-  dig: "Digging",
-  dive: "Diving",
-  festival: "Festival",
-  fish: "Fishing",
-  forage: "Foraging",
-  mine: "Mining",
-  monster: "Monster Drop",
-  quest: "Quest Reward",
-  renown: "Renown Reward",
-  sapling: "Sapling",
-  seed: "Seed",
-  store: "Store",
 };
 
 export interface RecipeSourceLookups {
@@ -111,125 +90,8 @@ export function formatStoreName(
   return store.article ? `${store.article} ${store.name}` : store.name;
 }
 
-export function locationLabel(location: string): string {
-  // Handles comma-separated locations like "narrows, eastern_road, town"
-  return location
-    .split(", ")
-    .map((part) => titleCase(part))
-    .join(", ");
-}
-
-export function recipeSourceLabel(source: RecipeSource, lookups: RecipeSourceLookups): string {
-  switch (source.type) {
-    case "beach_cave_chest":
-      return "Find in the Gold Treasure Chest in the Beach Cave";
-    case "chicken_statue":
-      return `Obtain from the Chicken Statue (${String(source.cost)} beads)`;
-    case "default":
-      return "Available from the start";
-    case "dragon_forge":
-      return "Craft at the Dragon Forge (Mines level 90)";
-    case "engagement":
-      return "Receive from Elsie after getting to 10 hearts with a dateable character";
-    case "festival": {
-      const festivalName =
-        lookups.festivals[source.festivalId]?.name ?? titleCase(source.festivalId);
-      const storeName = resolveStoreName(source.storeId, lookups);
-      return `Purchase from ${storeName} at the ${festivalName}`;
-    }
-    case "letter": {
-      if (source.trigger === "shipped_item") {
-        const name = lookups.itemNames[source.triggerItemId] ?? titleCase(source.triggerItemId);
-        return `Receive in a letter after shipping ${withIndefiniteArticle(name)}`;
-      }
-      if (source.trigger === "donated_item") {
-        const name = lookups.itemNames[source.triggerItemId] ?? titleCase(source.triggerItemId);
-        return `Receive in a letter after donating ${withIndefiniteArticle(name)}`;
-      }
-      const { day, season, year } = source.triggerDate;
-      const seasonName = seasonLabel(season);
-      const dateStr = year
-        ? `${seasonName} ${String(day)}, Year ${String(year)}`
-        : `${seasonName} ${String(day)}`;
-      return `Receive in a letter after reaching ${dateStr}`;
-    }
-    case "mines_chest": {
-      const biomeName = formatBiomeName(source.biomeId, lookups.biomes);
-      const biome = lookups.biomes.find((b) => b.id === source.biomeId);
-      const floorRange = biome
-        ? `floors ${String(biome.startFloor)}–${String(biome.endFloor)}`
-        : "";
-      const perk = lookups.perks[source.perkId];
-      const perkName = perk?.name ?? titleCase(source.perkId);
-      const skillName = perk ? (lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId)) : "";
-      const tierStr = perk ? ` (${skillName} tier ${String(perk.tier)})` : "";
-      return `Find in a Treasure Chest in ${biomeName}${floorRange ? ` (${floorRange})` : ""}, with the ${perkName} perk${tierStr}`;
-    }
-    case "mines_dig_site": {
-      const biomeName = formatBiomeName(source.biomeId, lookups.biomes);
-      const biome = lookups.biomes.find((b) => b.id === source.biomeId);
-      const floorRange = biome
-        ? `floors ${String(biome.startFloor)}–${String(biome.endFloor)}`
-        : "";
-      const perk = lookups.perks[source.perkId];
-      const perkName = perk?.name ?? titleCase(source.perkId);
-      const skillName = perk ? (lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId)) : "";
-      const tierStr = perk ? ` (${skillName} tier ${String(perk.tier)})` : "";
-      return `Dig up in ${biomeName}${floorRange ? ` (${floorRange})` : ""}, with the ${perkName} perk${tierStr}`;
-    }
-    case "museum_donation": {
-      const wingName = titleCase(source.wingId);
-      const setWord = source.setCount === 1 ? "set" : "sets";
-      return `Complete ${String(source.setCount)} ${setWord} in the ${wingName} wing`;
-    }
-    case "perk": {
-      const perk = lookups.perks[source.perkId];
-      const perkName = perk?.name ?? titleCase(source.perkId);
-      const skillName = perk ? (lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId)) : "";
-      const tierStr = perk ? ` (${skillName} tier ${String(perk.tier)})` : "";
-      return `Unlock the ${perkName} perk${tierStr}`;
-    }
-    case "quest": {
-      const name = lookups.questNames[source.questId] ?? titleCase(source.questId);
-      return `Complete the ${name} quest`;
-    }
-    case "renown":
-      return `Get the town rank to level ${String(source.level)}`;
-    case "scroll_bundle": {
-      const storeName = resolveStoreName(source.storeId, lookups);
-      return `Purchase the ${source.bundleName} from ${storeName}`;
-    }
-    case "store": {
-      const storeName = resolveStoreName(source.storeId, lookups);
-      const suffix = source.upgraded ? " (after upgrade)" : "";
-      return `Purchase from ${storeName}${suffix}`;
-    }
-    case "store_with_perk": {
-      const storeName = resolveStoreName(source.storeId, lookups);
-      const perk = lookups.perks[source.perkId];
-      const perkName = perk?.name ?? titleCase(source.perkId);
-      return `Purchase from ${storeName} (requires ${perkName} perk)`;
-    }
-    case "treasure_chest": {
-      const tierData = lookups.treasureChestTiers[source.tier];
-      const name = tierData?.name ?? `${titleCase(source.tier)} Treasure Box`;
-      return `Fish up ${withIndefiniteArticle(name)}`;
-    }
-    case "upgrade": {
-      const storeName = resolveStoreName(source.storeId, lookups);
-      return `Purchase ${source.upgradeName} from ${storeName}`;
-    }
-    case "wishing_well":
-      return `Obtain from the Wishing Well (${String(source.cost)}t)`;
-  }
-}
-
 export function seasonLabel(season: Season): string {
   return SEASON_LABEL[season];
-}
-
-export function sourceTypeLabel(type: SourceType): string {
-  return SOURCE_TYPE_LABEL[type];
 }
 
 export function timeRangeLabel(hours: [number, number]): string {
@@ -260,11 +122,6 @@ export function withIndefiniteArticle(name: string): string {
   const firstChar = name.charAt(0).toLowerCase();
   const article = "aeiou".includes(firstChar) ? "an" : "a";
   return `${article} ${name}`;
-}
-
-function resolveStoreName(storeId: StoreId, lookups: RecipeSourceLookups): string {
-  if (lookups.redactedStoreIds?.has(storeId)) return "???";
-  return formatStoreName(storeId, lookups.stores);
 }
 
 function titleCase(s: string): string {

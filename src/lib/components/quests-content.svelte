@@ -4,7 +4,7 @@
   import ConfirmRedactedDialog from "$lib/components/confirm-redacted-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import { Icon } from "$lib/components/icon/index.js";
-  import RedactedRow from "$lib/components/redacted-row.svelte";
+  import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
@@ -172,8 +172,8 @@
       {#each visibleQuests as quest (quest.id)}
         {@const questState = getQuestState(quest.id)}
         {#if !questNameVisible(questType, quest.id)}
-          <RedactedRow
-            completed={questState !== "none"}
+          <TrackerRow
+            display={{ mode: "redacted" }}
             name={quest.displayName}
             onToggle={() => {
               if (questState !== "none") {

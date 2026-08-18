@@ -3,24 +3,50 @@
 
   import ConfirmRedactedDialog from "$lib/components/confirm-redacted-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
-  import ItemRow from "$lib/components/item-row.svelte";
-  import RedactedRow from "$lib/components/redacted-row.svelte";
+  import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { isItemDimmed, isRowVisible, shouldCountItem } from "$lib/engine/availability.js";
-  import { isEntityNameVisible } from "$lib/engine/visibility.js";
+  import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
+  import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
-  import type { ItemId } from "$lib/types/tracker-data.js";
+  import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
+  import type { AcquisitionSource, ItemId } from "$lib/types/tracker-data.js";
 
   const redactGuard = createRedactionGuard();
 
   function itemNameVisible(itemId: ItemId): boolean {
     const visibility = trackerData.items[itemId].visibility ?? { type: "always" };
     return isEntityNameVisible(visibility, userState.progressionState);
+  }
+
+  let redactedStoreIds = $derived(
+    new Set(
+      Object.entries(trackerData.storeVisibility)
+        .filter(([, vis]) => !isVisible(vis, userState.progressionState))
+        .map(([id]) => id),
+    ),
+  );
+
+  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
+
+  function rowDisplay(itemId: ItemId, sources: AcquisitionSource[]): TrackerRowDisplay {
+    const completed = userState.state.completed.museum.has(itemId);
+    if (!itemNameVisible(itemId)) return { mode: "redacted" };
+    if (completed) return { leaving: recentlyCompleted.has(itemId), mode: "completed" };
+    return {
+      dimmed: isItemDimmed(
+        sources,
+        completed,
+        userState.state.worldState,
+        userState.state.availabilityMode,
+      ),
+      mode: "visible",
+    };
   }
 
   let recentlyCompleted = new SvelteSet<ItemId>();
@@ -55,9 +81,8 @@
   function isItemScoped(itemId: ItemId): boolean {
     if (!matchesFilter(itemId)) return false;
     return shouldCountItem(
-      itemId,
+      trackerData.items[itemId].sources ?? [],
       userState.state.completed.museum.has(itemId),
-      trackerData.sources,
       userState.state.worldState,
       userState.state.availabilityMode,
     );
@@ -132,41 +157,25 @@
           >
             {#each visibleSetItems as itemId (itemId)}
               {@const museumCompleted = userState.state.completed.museum.has(itemId)}
-              {#if !itemNameVisible(itemId)}
-                <RedactedRow
-                  completed={museumCompleted}
-                  name={trackerData.items[itemId].name}
-                  onToggle={() => {
-                    if (museumCompleted) {
-                      toggleItem(itemId, wingItems, set.items);
-                    } else {
-                      redactGuard.guard(
-                        trackerData.items[itemId].visibility ?? { type: "always" },
-                        () => {
-                          toggleItem(itemId, wingItems, set.items);
-                        },
-                      );
-                    }
-                  }}
-                />
-              {:else}
-                <ItemRow
-                  completed={userState.state.completed.museum.has(itemId)}
-                  dimmed={isItemDimmed(
-                    itemId,
-                    userState.state.completed.museum.has(itemId),
-                    trackerData.sources,
-                    userState.state.worldState,
-                    userState.state.availabilityMode,
-                  )}
-                  {itemId}
-                  leaving={recentlyCompleted.has(itemId)}
-                  name={trackerData.items[itemId].name}
-                  onToggle={() => {
+              {@const museumItemSources = trackerData.items[itemId].sources ?? []}
+              {@const museumItemVisibility = trackerData.items[itemId].visibility ?? {
+                type: "always",
+              }}
+              <TrackerRow
+                display={rowDisplay(itemId, museumItemSources)}
+                lookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
+                name={trackerData.items[itemId].name}
+                sources={museumItemSources}
+                onToggle={() => {
+                  if (itemNameVisible(itemId) || museumCompleted) {
                     toggleItem(itemId, wingItems, set.items);
-                  }}
-                />
-              {/if}
+                  } else {
+                    redactGuard.guard(museumItemVisibility, () => {
+                      toggleItem(itemId, wingItems, set.items);
+                    });
+                  }
+                }}
+              />
             {/each}
           </ExpandableSection>
         {/if}

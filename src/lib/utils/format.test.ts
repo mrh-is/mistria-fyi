@@ -1,28 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  formatBiomeName,
-  formatStoreName,
-  recipeSourceLabel,
-  withIndefiniteArticle,
-} from "./format.js";
+import { formatBiomeName, formatStoreName, withIndefiniteArticle } from "./format.js";
 
-import type { BiomeId, RecipeSource, StoreId } from "$lib/types/tracker-data.js";
-
-import type { RecipeSourceLookups } from "./format.js";
-
-const EMPTY_LOOKUPS: RecipeSourceLookups = {
-  biomes: [],
-  festivals: {},
-  itemNames: {},
-  perks: {},
-  perkTierLevels: [],
-  questNames: {},
-  recipeNames: {},
-  skillNames: {},
-  stores: {},
-  treasureChestTiers: {},
-};
+import type { BiomeId, StoreId } from "$lib/types/tracker-data.js";
 
 describe("withIndefiniteArticle", () => {
   it("uses 'an' for vowel-starting names", () => {
@@ -78,50 +58,5 @@ describe("formatBiomeName", () => {
       },
     ];
     expect(formatBiomeName("biome_1" as BiomeId, biomes)).toBe("the Upper Mines");
-  });
-});
-
-describe("recipeSourceLabel", () => {
-  it("renders default source", () => {
-    expect(recipeSourceLabel({ type: "default" }, EMPTY_LOOKUPS)).toBe("Available from the start");
-  });
-  it("renders engagement source", () => {
-    expect(recipeSourceLabel({ type: "engagement" }, EMPTY_LOOKUPS)).toBe(
-      "Receive from Elsie after getting to 10 hearts with a dateable character",
-    );
-  });
-  it("renders store with upgrade", () => {
-    const lookups = {
-      ...EMPTY_LOOKUPS,
-      stores: {
-        inn: { article: "the" as const, name: "Sleeping Dragon Inn" },
-      } as Record<StoreId, { article?: "the"; name: string }>,
-    };
-    expect(
-      recipeSourceLabel({ storeId: "inn" as StoreId, type: "store", upgraded: true }, lookups),
-    ).toBe("Purchase from the Sleeping Dragon Inn (after upgrade)");
-  });
-  it("renders letter with reached_date", () => {
-    const source: RecipeSource = {
-      trigger: "reached_date",
-      triggerDate: { day: 28, season: "summer" },
-      type: "letter",
-    };
-    expect(recipeSourceLabel(source, EMPTY_LOOKUPS)).toBe(
-      "Receive in a letter after reaching Summer 28",
-    );
-  });
-  it("renders treasure_chest with tier name", () => {
-    const lookups = {
-      ...EMPTY_LOOKUPS,
-      treasureChestTiers: { gold: { name: "Golden Treasure Box" } },
-    };
-    const source: RecipeSource = {
-      tier: "gold" as RecipeSource & { type: "treasure_chest" } extends { tier: infer T }
-        ? T
-        : never,
-      type: "treasure_chest",
-    };
-    expect(recipeSourceLabel(source, lookups)).toBe("Fish up a Golden Treasure Box");
   });
 });

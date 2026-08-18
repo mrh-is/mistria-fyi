@@ -164,6 +164,7 @@ describe("extractRecipes", () => {
       {
         questId: "green_sapling_surprise",
         questType: "stillwell_challenges",
+        trigger: "completion",
         type: "quest",
       },
     ]);
@@ -196,7 +197,7 @@ describe("extractRecipes", () => {
     const recipe = recipes["vegetable_soup" as RecipeId];
     expect(recipe).toBeDefined();
     expect(recipe.sources).toEqual([
-      { questId: "cooking_101", questType: "story_quests", type: "quest" },
+      { questId: "cooking_101", questType: "story_quests", trigger: "completion", type: "quest" },
     ]);
     expect(recipe.memberItemIds).toEqual(["vegetable_soup"]);
     expect(recipe.presentations).toEqual([{ itemIds: ["vegetable_soup"], name: "Vegetable Soup" }]);
@@ -438,7 +439,9 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["egg_dish" as RecipeId];
-    expect(recipe.sources).toEqual([{ cost: 10, type: "chicken_statue" }]);
+    expect(recipe.sources).toEqual([
+      { cost: { amount: 10, currency: "beads" }, type: "chicken_statue" },
+    ]);
   });
 
   it("rejects non-numeric chicken statue prices", () => {
@@ -519,7 +522,9 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["wish_cake" as RecipeId];
-    expect(recipe.sources).toEqual([{ cost: 500, type: "wishing_well" }]);
+    expect(recipe.sources).toEqual([
+      { cost: { amount: 500, currency: "tesserae" }, type: "wishing_well" },
+    ]);
   });
 
   it("rejects missing wishing well prices", () => {
@@ -697,7 +702,7 @@ describe("extractRecipes", () => {
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining("ore_gold"));
   });
 
-  it("emits store source with upgraded flag when requirements include repaired_*", () => {
+  it("emits a plain store source when requirements include repaired_* (upgrade gate dropped)", () => {
     const fiddle = makeFiddle({
       items: {
         other: {
@@ -728,12 +733,10 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["inn_special" as RecipeId];
-    expect(recipe.sources).toEqual([
-      { storeId: "sleeping_dragon_inn", type: "store", upgraded: true },
-    ]);
+    expect(recipe.sources).toEqual([{ storeId: "sleeping_dragon_inn", type: "store" }]);
   });
 
-  it("emits store_with_perk source when requirements include has_perk", () => {
+  it("emits a plain store source when requirements include has_perk (perk gate dropped)", () => {
     const fiddle = makeFiddle({
       items: {
         other: {
@@ -765,9 +768,7 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["espresso" as RecipeId];
-    expect(recipe.sources).toEqual([
-      { perkId: "espresso_yourself", storeId: "darcy_stall", type: "store_with_perk" },
-    ]);
+    expect(recipe.sources).toEqual([{ storeId: "darcy_stall", type: "store" }]);
   });
 
   it("maps letter recipe_scroll with reached_date requirement to letter source with triggerDate", () => {
@@ -980,7 +981,7 @@ describe("extractRecipes", () => {
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["widget" as RecipeId];
     expect(recipe.sources).toEqual([
-      { questId: "widget_quest", questType: "fetch_quests", type: "quest" },
+      { questId: "widget_quest", questType: "fetch_quests", trigger: "completion", type: "quest" },
     ]);
   });
 
@@ -1063,6 +1064,7 @@ describe("extractRecipes", () => {
         questId: "get_widget",
         questType: "fetch_quests",
         requestedItemId: "wild_berries",
+        trigger: "completion",
         type: "quest",
       },
     ]);
@@ -1099,6 +1101,7 @@ describe("extractRecipes", () => {
         questId: "get_widget",
         questType: "fetch_quests",
         requestedItemId: "wild_berries",
+        trigger: "completion",
         type: "quest",
       },
     ]);
@@ -1141,6 +1144,7 @@ describe("extractRecipes", () => {
         questId: "get_widget",
         questType: "fetch_quests",
         requestedItemId: "wild_berries",
+        trigger: "completion",
         type: "quest",
       },
     ]);
@@ -1181,6 +1185,7 @@ describe("extractRecipes", () => {
         challengeRecipeId: "challenge_dish",
         questId: "challenge_one",
         questType: "tali_challenges",
+        trigger: "completion",
         type: "quest",
       },
     ]);
@@ -1197,7 +1202,7 @@ describe("extractRecipes — stock requirement visibility", () => {
     vi.restoreAllMocks();
   });
 
-  it("resolves a repaired_general_store named requirement to questCompleted and marks the source upgraded", () => {
+  it("resolves a repaired_general_store named requirement to questCompleted visibility", () => {
     const fiddle = makeFiddle({
       items: {
         other: {
@@ -1241,7 +1246,6 @@ describe("extractRecipes — stock requirement visibility", () => {
       {
         storeId: "general",
         type: "store",
-        upgraded: true,
         visibility: { questId: "repair_the_general_store", type: "questCompleted" },
       },
     ]);
@@ -1385,7 +1389,7 @@ describe("extractRecipes — stock requirement visibility", () => {
     ]);
   });
 
-  it("keeps the Espresso Machine fixture as store_with_perk, never rewritten as a plain store source", () => {
+  it("emits a plain store source for the Espresso Machine fixture (perk gate dropped)", () => {
     const fiddle = makeFiddle({
       items: {
         other: {
@@ -1417,9 +1421,7 @@ describe("extractRecipes — stock requirement visibility", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["espresso" as RecipeId];
-    expect(recipe.sources).toEqual([
-      { perkId: "espresso_yourself", storeId: "darcy_stall", type: "store_with_perk" },
-    ]);
+    expect(recipe.sources).toEqual([{ storeId: "darcy_stall", type: "store" }]);
   });
 });
 

@@ -1,27 +1,23 @@
 <script lang="ts">
   import { SvelteSet } from "svelte/reactivity";
-  import { slide } from "svelte/transition";
 
   import ConfirmRedactedDialog from "$lib/components/confirm-redacted-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
-  import { Icon, SOURCE_FILTERS } from "$lib/components/icon/index.js";
-  import RecipeSourceList from "$lib/components/recipe-source-list.svelte";
-  import RedactedRow from "$lib/components/redacted-row.svelte";
+  import { SOURCE_FILTERS } from "$lib/components/icon/index.js";
+  import TrackerRow from "$lib/components/tracker-row.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { isVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
-  import { recipeSourceLabel } from "$lib/utils/format.js";
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
-  import { buildSourceSegments } from "$lib/utils/source-segments.js";
+  import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
-  import type { NpcId, QuestId, RecipeId, RecipeSource } from "$lib/types/tracker-data.js";
+  import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
+  import type { AcquisitionSource, RecipeId } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
-  import type { RecipeSourceLookups } from "$lib/utils/format.js";
-  import type { SegmentLookups, SourceSegment } from "$lib/utils/source-segments.js";
 
   const redactGuard = createRedactionGuard();
 
@@ -40,67 +36,14 @@
     ),
   );
 
-  let sourceLookups: RecipeSourceLookups = $derived({
-    biomes: trackerData.mines.biomes,
-    festivals: trackerData.festivals,
-    itemNames: Object.fromEntries(
-      Object.entries(trackerData.items).map(([id, item]) => [id, item.name]),
-    ),
-    perks: trackerData.perks,
-    perkTierLevels: trackerData.perkTierLevels,
-    questNames: Object.fromEntries(
-      Object.values(trackerData.quests).flatMap((group) =>
-        Object.entries(group).map(([id, quest]) => [id, quest.name]),
-      ),
-    ),
-    recipeNames: Object.fromEntries(
-      Object.entries(trackerData.recipes).map(([id, recipe]) => [
-        id,
-        recipe.presentations[0]?.name ?? id,
-      ]),
-    ),
-    redactedStoreIds,
-    skillNames: Object.fromEntries(
-      Object.entries(trackerData.skills).map(([id, name]) => [id, name]),
-    ),
-    stores: trackerData.stores,
-    treasureChestTiers: trackerData.treasureChestTiers,
-  });
-
   // The current recipe condition is added when each tree is built.
-  let baseSegmentLookups: Omit<SegmentLookups, "recipeVisibility"> = $derived({
-    ...sourceLookups,
-    categoryVisibility: trackerData.categoryVisibility,
-    festivalDates: Object.fromEntries(
-      Object.entries(trackerData.festivals).map(([id, festival]) => [id, festival.date]),
-    ),
-    itemVisibility: Object.fromEntries(
-      Object.entries(trackerData.items)
-        .filter(([, item]) => item.visibility)
-        .map(([id, item]) => [id, item.visibility]),
-    ),
-    npcNames: Object.fromEntries(
-      Object.entries(trackerData.npcs).map(([id, npc]) => [id, npc.name]),
-    ),
-    npcVisibility: trackerData.npcVisibility,
-    questNpcIds: Object.fromEntries(
-      Object.values(trackerData.quests).flatMap((group) =>
-        Object.entries(group)
-          .filter(([, q]) => q.npc)
-          .map(([id, q]) => [id, q.npc as NpcId]),
-      ),
-    ) as Partial<Record<QuestId, NpcId>>,
-
-    storeVisibility: trackerData.storeVisibility,
-  });
+  let baseSegmentLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
 
   interface RecipeEntry {
     id: RecipeId;
     name: string;
     nameVisible: boolean;
-    sourceLabels: string[];
-    sources: RecipeSource[];
-    sourceSegments: SourceSegment[][];
+    sources: AcquisitionSource[];
     visibility: VisibilityCondition;
   }
 
@@ -114,15 +57,12 @@
         seen.add(item.recipeId);
         const recipe = trackerData.recipes[item.recipeId];
         const visibility = recipe.visibility ?? { type: "always" };
+        const sources = recipe.sources ?? [];
         entries.push({
           id: item.recipeId,
           name: item.name,
           nameVisible: isVisible(visibility, userState.progressionState),
-          sourceLabels: recipe.sources.map((s) => recipeSourceLabel(s, sourceLookups)),
-          sources: recipe.sources,
-          sourceSegments: recipe.sources.map((source) =>
-            buildSourceSegments(source, { ...baseSegmentLookups, recipeVisibility: visibility }),
-          ),
+          sources,
           visibility,
         });
       }
@@ -134,10 +74,16 @@
     return groups;
   });
 
+  function rowDisplay(entry: RecipeEntry, completed: boolean, leaving: boolean): TrackerRowDisplay {
+    if (!entry.nameVisible) return { mode: "redacted" };
+    if (completed) return { leaving, mode: "completed" };
+    return { mode: "visible" };
+  }
+
   let nameFilter = $derived(toolbarState.searchQuery);
 
   $effect(() => {
-    const allTypes = new SvelteSet<RecipeSource["type"]>();
+    const allTypes = new SvelteSet<AcquisitionSource["type"]>();
     for (const group of recipesByCategory) {
       for (const entry of group.entries) {
         for (const source of entry.sources) {
@@ -156,7 +102,7 @@
 
   let activeSourceTypes = $derived.by(() => {
     if (!toolbarState.sourceFilterActive) return null;
-    const types = new SvelteSet<RecipeSource["type"]>();
+    const types = new SvelteSet<AcquisitionSource["type"]>();
     for (const filter of toolbarState.recipeSourceFilters) {
       if (toolbarState.activeSourceLabels.has(filter.label)) {
         for (const t of filter.types) types.add(t);
@@ -190,7 +136,6 @@
   const SECTION_LIMIT = 50;
 
   let expandedSections = $state<Record<string, boolean>>({});
-  let expandedRecipes = $state<Record<string, boolean>>({});
 
   function toggleRecipe(entry: RecipeEntry, sectionRecipeIds: RecipeId[]): void {
     userState.toggleAlmanacRecipe(entry.id);
@@ -241,87 +186,27 @@
       {#each displayEntries as entry (entry.id)}
         {@const completed = userState.state.completed.almanacRecipes.has(entry.id)}
         {@const leaving = recentlyCompleted.has(entry.id)}
-        {@const expanded = expandedRecipes[entry.id] ?? false}
-        {#if !entry.nameVisible}
-          <RedactedRow
-            {completed}
-            name={entry.name}
-            onToggle={() => {
-              if (completed) {
+        <TrackerRow
+          display={rowDisplay(entry, completed, leaving)}
+          lookups={{ ...baseSegmentLookups, entityVisibility: entry.visibility }}
+          name={entry.name}
+          sources={entry.sources}
+          onToggle={() => {
+            if (entry.nameVisible || completed) {
+              toggleRecipe(
+                entry,
+                group.entries.map((candidate) => candidate.id),
+              );
+            } else {
+              redactGuard.guard(entry.visibility, () => {
                 toggleRecipe(
                   entry,
                   group.entries.map((candidate) => candidate.id),
                 );
-              } else {
-                redactGuard.guard(entry.visibility, () => {
-                  toggleRecipe(
-                    entry,
-                    group.entries.map((candidate) => candidate.id),
-                  );
-                });
-              }
-            }}
-            sourceLabels={entry.sourceLabels}
-            sourceSegments={entry.sourceSegments}
-            sources={entry.sources}
-          />
-        {:else}
-          <div>
-            <div
-              class="flex items-center gap-0 rounded-md pr-2 transition-opacity duration-200 {completed ||
-              leaving
-                ? 'line-through opacity-40'
-                : ''}"
-            >
-              <button
-                class="flex min-h-11 min-w-11 shrink-0 items-center justify-center"
-                type="button"
-                aria-label={completed ? `Uncheck ${entry.name}` : `Check ${entry.name}`}
-                onclick={() => {
-                  toggleRecipe(
-                    entry,
-                    group.entries.map((candidate) => candidate.id),
-                  );
-                }}
-              >
-                <Icon.Completion
-                  state={completed ? "completed" : "none"}
-                  class="size-5 {completed
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-muted-foreground/50'}"
-                />
-              </button>
-              <span class="min-w-0 flex-1 text-base">{entry.name}</span>
-              {#if entry.sources.length > 0}
-                {@const uniqueTypes = [...new Set(entry.sources.map((s) => s.type))]}
-                <button
-                  class="group flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted"
-                  type="button"
-                  aria-expanded={expanded}
-                  aria-label="{entry.name} sources"
-                  onclick={() => {
-                    expandedRecipes[entry.id] = !expanded;
-                  }}
-                >
-                  {#each uniqueTypes as sourceType (sourceType)}
-                    <Icon.Source type={sourceType} class="size-3.5 shrink-0" />
-                  {/each}
-                  <Icon.UI
-                    type="disclosure"
-                    class="size-3 shrink-0 opacity-40 transition-transform {expanded
-                      ? 'rotate-90'
-                      : ''}"
-                  />
-                </button>
-              {/if}
-            </div>
-            {#if expanded && entry.sources.length > 0}
-              <div class="flex flex-col gap-1 py-1 pr-2 pl-8" transition:slide={{ duration: 150 }}>
-                <RecipeSourceList sourceSegments={entry.sourceSegments} sources={entry.sources} />
-              </div>
-            {/if}
-          </div>
-        {/if}
+              });
+            }
+          }}
+        />
       {/each}
       {#if !showAll && filteredEntries.length > SECTION_LIMIT}
         <div class="flex justify-center py-1">

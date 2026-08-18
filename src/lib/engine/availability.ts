@@ -1,5 +1,89 @@
+import {
+  evaluateAvailabilityCondition,
+  extractDisplayBadges,
+  hasSelectiveSeasonCondition,
+  hasTimelyCondition,
+} from "./availability-condition.js";
+
 import type { AvailabilityMode } from "$lib/stores/user-state.svelte.js";
-import type { ItemId, Restriction, Season, Source, Weather } from "$lib/types/tracker-data.js";
+import type { AvailabilityCondition } from "$lib/types/acquisition.js";
+import type { AcquisitionSource, ItemId, Season, Weather } from "$lib/types/tracker-data.js";
+
+import type { DisplayBadges } from "./availability-condition.js";
+
+interface WorldState {
+  season: Season;
+  weather: Weather;
+}
+
+/**
+ * Filter a list of item IDs to only those passing availability check.
+ */
+export function filterAvailableItems(
+  itemIds: ItemId[],
+  sourceLookup: (id: ItemId) => AcquisitionSource[],
+  worldState: WorldState,
+  mode: AvailabilityMode,
+): ItemId[] {
+  if (mode === "everything") return itemIds;
+  return itemIds.filter((id) => isItemAvailable(sourceLookup(id), worldState, mode));
+}
+
+// ─── Source-level availability ──────────────────────────────────────
+
+/**
+ * Get a merged, deduplicated set of display badges from a list of sources.
+ */
+export function getDisplayBadges(sources: AcquisitionSource[]): DisplayBadges {
+  const merged: DisplayBadges = {};
+  for (const source of sources) {
+    const availability = getAvailabilityCondition(source);
+    if (!availability) continue;
+    const badges = extractDisplayBadges(availability);
+    if (badges.seasons && !merged.seasons) merged.seasons = badges.seasons;
+    if (badges.weathers && !merged.weathers) merged.weathers = badges.weathers;
+    if (badges.timeRange && !merged.timeRange) merged.timeRange = badges.timeRange;
+  }
+  return merged;
+}
+
+/**
+ * Whether the source has a season condition that excludes at least one season.
+ */
+export function hasSelectiveSeasonRestriction(source: AcquisitionSource): boolean {
+  const availability = getAvailabilityCondition(source);
+  return availability !== undefined && hasSelectiveSeasonCondition(availability);
+}
+
+/**
+ * Does this source have any timely (season/weather/time) condition?
+ */
+export function hasTimelyRestriction(source: AcquisitionSource): boolean {
+  const availability = getAvailabilityCondition(source);
+  return availability !== undefined && hasTimelyCondition(availability);
+}
+
+// ─── Item-level availability ────────────────────────────────────────
+
+/**
+ * Check if an item is available: ANY source must pass (OR logic).
+ * Items with no sources are always available in "available"/"everything",
+ * but hidden in "timely" (nothing is timely about them).
+ */
+export function isItemAvailable(
+  sources: AcquisitionSource[],
+  worldState: WorldState,
+  mode: AvailabilityMode,
+): boolean {
+  if (mode === "everything") return true;
+
+  if (sources.length === 0) {
+    // No sources — available but not timely
+    return mode === "available";
+  }
+
+  return sources.some((source) => isSourceAvailable(source, worldState, mode));
+}
 
 // ─── Composite display helpers ───────────────────────────────────────
 
@@ -8,15 +92,14 @@ import type { ItemId, Restriction, Season, Source, Weather } from "$lib/types/tr
  * in the current season/weather when viewing "everything".
  */
 export function isItemDimmed(
-  itemId: ItemId,
+  sources: AcquisitionSource[],
   isCompleted: boolean,
-  sourcesMap: Partial<Record<ItemId, Source[]>>,
   worldState: WorldState,
   mode: AvailabilityMode,
 ): boolean {
   if (isCompleted) return false;
   if (mode !== "everything") return false;
-  return !isItemAvailable(itemId, sourcesMap, worldState, "available");
+  return !isItemAvailable(sources, worldState, "available");
 }
 
 /**
@@ -35,19 +118,41 @@ export function isRowVisible(
 }
 
 /**
+ * Check if a single source is available given world state and mode.
+ */
+export function isSourceAvailable(
+  source: AcquisitionSource,
+  worldState: WorldState,
+  mode: AvailabilityMode,
+): boolean {
+  if (mode === "everything") return true;
+  const availability = getAvailabilityCondition(source);
+  if (!availability) return mode === "available";
+
+  if (mode === "timely") {
+    if (!hasSelectiveSeasonCondition(availability)) return false;
+  }
+
+  const result = evaluateAvailabilityCondition(availability, {
+    season: worldState.season,
+    weather: worldState.weather,
+  });
+  return result !== false;
+}
+
+/**
  * Whether an item falls within the scoped set used for progress counters.
  * Completed items are always in scope; incomplete items must pass availability.
  * Ignores showCompleted and recentlyCompleted — those affect rendering only.
  */
 export function shouldCountItem(
-  itemId: ItemId,
+  sources: AcquisitionSource[],
   isCompleted: boolean,
-  sourcesMap: Partial<Record<ItemId, Source[]>>,
   worldState: WorldState,
   mode: AvailabilityMode,
 ): boolean {
   if (isCompleted) return true;
-  return isItemAvailable(itemId, sourcesMap, worldState, mode);
+  return isItemAvailable(sources, worldState, mode);
 }
 
 /**
@@ -55,177 +160,23 @@ export function shouldCountItem(
  * Handles the recentlyCompleted linger, showCompleted toggle, and availability.
  */
 export function shouldShowItem(
-  itemId: ItemId,
+  sources: AcquisitionSource[],
   isCompleted: boolean,
-  sourcesMap: Partial<Record<ItemId, Source[]>>,
   worldState: WorldState,
   mode: AvailabilityMode,
   showCompleted: boolean,
-  recentlyCompleted?: ReadonlySet<ItemId>,
+  isRecentlyCompleted = false,
 ): boolean {
-  if (recentlyCompleted?.has(itemId)) return true;
+  if (isRecentlyCompleted) return true;
   if (isCompleted && !showCompleted) return false;
   if (isCompleted) return true;
-  return isItemAvailable(itemId, sourcesMap, worldState, mode);
-}
-
-// ─── Restriction types by taxonomy ─────────────────────────────────
-
-const TIMELY_TYPES = new Set(["season", "time", "weather"]);
-
-const ALL_SEASONS: Season[] = ["spring", "summer", "fall", "winter"];
-
-interface WorldState {
-  season: Season;
-  weather: Weather;
+  return isItemAvailable(sources, worldState, mode);
 }
 
 /**
- * Filter a list of item IDs to only those passing availability check.
+ * Source variants that carry no `SourceDetails` (e.g. `{ type: "default" }`) have no
+ * `availability` field at all, so it can't be accessed directly on the union type.
  */
-export function filterAvailableItems(
-  itemIds: ItemId[],
-  sourcesMap: Partial<Record<ItemId, Source[]>>,
-  worldState: WorldState,
-  mode: AvailabilityMode,
-): ItemId[] {
-  if (mode === "everything") return itemIds;
-  return itemIds.filter((id) => isItemAvailable(id, sourcesMap, worldState, mode));
-}
-
-// ─── Individual restriction matchers ────────────────────────────────
-
-/** Get deduplicated restriction summary for display badges */
-export function getItemRestrictions(sources: Source[]): Restriction[] {
-  const seen = new Set<string>();
-  const result: Restriction[] = [];
-
-  for (const source of sources) {
-    for (const r of source.restrictions ?? []) {
-      // Dedupe by type + value
-      const key = JSON.stringify(r);
-      if (!seen.has(key)) {
-        seen.add(key);
-        result.push(r);
-      }
-    }
-  }
-
-  return result;
-}
-
-/**
- * Returns true if the source has a season restriction that excludes at least
- * one season (i.e. it is not year-round). This is the qualification test for
- * "Seasonal" / "timely" mode.
- *
- * - A scalar `season` value always qualifies.
- * - A `seasons` array qualifies only when it does NOT contain all four seasons.
- * - A missing / empty season restriction does not qualify.
- */
-export function hasSelectiveSeasonRestriction(source: Source): boolean {
-  return (source.restrictions ?? []).some((r) => {
-    if (r.type !== "season") return false;
-    if (r.season !== undefined) return true;
-    const seasons = r.seasons;
-    if (!seasons || seasons.length === 0) return false;
-    return !ALL_SEASONS.every((s) => seasons.includes(s));
-  });
-}
-
-// ─── Source-level availability ──────────────────────────────────────
-
-/** Does this source have any timely restriction? */
-export function hasTimelyRestriction(source: Source): boolean {
-  return (source.restrictions ?? []).some(isTimelyRestriction);
-}
-
-/**
- * Check if an item is available: ANY source must pass (OR logic).
- * Items with no sources are always available in "available"/"everything",
- * but hidden in "timely" (nothing is timely about them).
- */
-export function isItemAvailable(
-  itemId: ItemId,
-  sourcesMap: Partial<Record<ItemId, Source[]>>,
-  worldState: WorldState,
-  mode: AvailabilityMode,
-): boolean {
-  if (mode === "everything") return true;
-
-  const sources = sourcesMap[itemId];
-  if (!sources || sources.length === 0) {
-    // No sources — available but not timely
-    return mode === "available";
-  }
-
-  return sources.some((source) => isSourceAvailable(source, worldState, mode));
-}
-
-// ─── Item-level availability ────────────────────────────────────────
-
-/**
- * Check if a single source is available given world state and mode.
- *
- * - "everything": always true
- * - "available": all timely restrictions must match (ignores spoilable/info)
- * - "timely": source must HAVE a timely restriction AND all timely restrictions must match
- */
-export function isSourceAvailable(
-  source: Source,
-  worldState: WorldState,
-  mode: AvailabilityMode,
-): boolean {
-  if (mode === "everything") return true;
-
-  const restrictions = source.restrictions ?? [];
-  const timelyRestrictions = restrictions.filter(isTimelyRestriction);
-
-  if (mode === "timely") {
-    // Source must have a selective season restriction to qualify
-    if (!hasSelectiveSeasonRestriction(source)) return false;
-  }
-
-  // All timely restrictions must match
-  return timelyRestrictions.every((r) => {
-    switch (r.type) {
-      case "animal":
-      case "building":
-      case "cutscene":
-      case "fishSize":
-      case "minesLevel":
-      case "perk":
-      case "randomStock":
-      case "relationship":
-      case "seenSeason":
-      case "skill":
-      case "upperFloor":
-        // Non-timely restrictions — already filtered out, but needed for exhaustiveness
-        return true;
-      case "season":
-        return seasonMatches(r, worldState.season);
-      case "time":
-        // Time-of-day not filtered in Phase 3 — always passes
-        return true;
-      case "weather":
-        return weatherMatches(r, worldState.weather);
-    }
-  });
-}
-
-function isTimelyRestriction(r: Restriction): boolean {
-  return TIMELY_TYPES.has(r.type);
-}
-
-// ─── Display helpers ────────────────────────────────────────────────
-
-function seasonMatches(r: Restriction, season: Season): boolean {
-  if (r.seasons) return r.seasons.includes(season);
-  if (r.season) return r.season === season;
-  return true;
-}
-
-function weatherMatches(r: Restriction, weather: Weather): boolean {
-  if (r.weathers) return r.weathers.includes(weather);
-  return true;
+function getAvailabilityCondition(source: AcquisitionSource): AvailabilityCondition | undefined {
+  return "availability" in source ? source.availability : undefined;
 }

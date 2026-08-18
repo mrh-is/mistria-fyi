@@ -1,17 +1,19 @@
 <script lang="ts">
   import { toast } from "svelte-sonner";
 
-  import { Icon } from "$lib/components/icon/index.js";
-  import RestrictionBadges from "$lib/components/restriction-badges.svelte";
+  import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
-  import { getItemRestrictions } from "$lib/engine/availability.js";
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
   import { searchItems } from "$lib/engine/search.js";
+  import { isVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
+  import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { SearchResult } from "$lib/engine/search.js";
   import type {
+    AcquisitionSource,
     AnimalId,
     CosmeticId,
     ItemId,
@@ -39,12 +41,29 @@
     quests: "Quests",
   };
 
-  function getRestrictions(result: SearchResult) {
+  let redactedStoreIds = $derived(
+    new Set(
+      Object.entries(trackerData.storeVisibility)
+        .filter(([, vis]) => !isVisible(vis, userState.progressionState))
+        .map(([id]) => id),
+    ),
+  );
+
+  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
+
+  function getSources(result: SearchResult): AcquisitionSource[] {
     if (result.category === "almanac") {
-      const sources = trackerData.sources[result.id as ItemId] ?? [];
-      return getItemRestrictions(sources);
+      return trackerData.items[result.id as ItemId].sources ?? [];
+    }
+    if (result.category === "cosmetics") {
+      return trackerData.cosmetics[result.id as CosmeticId].sources ?? [];
     }
     return [];
+  }
+
+  function rowDisplay(result: SearchResult): TrackerRowDisplay {
+    if (result.completed) return { mode: "completed" };
+    return { dimmed: !result.available, mode: "visible" };
   }
 
   function toggleResult(result: SearchResult): void {
@@ -112,47 +131,26 @@
   </p>
 
   {#each results as result (result.category + result.id)}
-    {@const restrictions = getRestrictions(result)}
-    <div
-      class="flex items-center gap-2 rounded-md px-2 py-1 {result.completed
-        ? 'line-through opacity-40'
-        : !result.available
-          ? 'opacity-50'
-          : ''}"
-    >
-      <button
-        class="flex size-11 shrink-0 items-center justify-center"
-        type="button"
-        aria-label={result.completed
-          ? `Uncheck ${result.fullName ?? result.name}`
-          : `Check ${result.fullName ?? result.name}`}
-        onclick={() => {
-          if (result.category === "quests") {
-            handleQuestToggle(result);
-          } else {
-            toggleResult(result);
-            showUndoToast(result.name, !result.completed, () => {
+    {@const label = result.fullName ?? result.name}
+    <div class="flex items-center gap-2 rounded-md">
+      <div class="min-w-0 flex-1">
+        <TrackerRow
+          display={rowDisplay(result)}
+          lookups={{ ...baseLookups, entityVisibility: { type: "always" } }}
+          name={result.detail ? `${label} ${result.detail}` : label}
+          sources={getSources(result)}
+          onToggle={() => {
+            if (result.category === "quests") {
+              handleQuestToggle(result);
+            } else {
               toggleResult(result);
-            });
-          }
-        }}
-      >
-        <Icon.Completion
-          state={result.completed ? "completed" : "none"}
-          class="size-5 {result.completed
-            ? 'text-green-600 dark:text-green-400'
-            : 'text-muted-foreground/50'}"
+              showUndoToast(result.name, !result.completed, () => {
+                toggleResult(result);
+              });
+            }
+          }}
         />
-      </button>
-      <span class="min-w-0 flex-1 text-base">
-        {result.fullName ?? result.name}
-        {#if result.detail}
-          <span class="text-sm text-muted-foreground">{result.detail}</span>
-        {/if}
-      </span>
-      {#if restrictions.length > 0}
-        <RestrictionBadges compact {restrictions} />
-      {/if}
+      </div>
       <span class="shrink-0 text-sm text-muted-foreground">
         {CATEGORY_LABELS[result.category] ?? result.category}
       </span>
