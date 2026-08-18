@@ -23,10 +23,7 @@ export type {
 
 export interface AlmanacCategory {
   id: string;
-  items: Record<
-    ItemId,
-    { colorCount?: number; name: string; recipeId?: RecipeId; visibility?: VisibilityCondition }
-  >;
+  items: ItemId[];
   name: string;
 }
 export type AnimalId = string & { readonly __brand: "AnimalId" };

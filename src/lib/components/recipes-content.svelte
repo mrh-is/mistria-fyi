@@ -52,7 +52,8 @@
     for (const cat of trackerData.almanac) {
       const seen = new SvelteSet<string>();
       const entries: RecipeEntry[] = [];
-      for (const [, item] of Object.entries(cat.items)) {
+      for (const [, itemId] of Object.entries(cat.items)) {
+        const item = trackerData.items[itemId];
         if (!item.recipeId || seen.has(item.recipeId)) continue;
         seen.add(item.recipeId);
         const recipe = trackerData.recipes[item.recipeId];

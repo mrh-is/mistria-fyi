@@ -16,7 +16,7 @@
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
-  import type { AcquisitionSource, ItemId } from "$lib/types/tracker-data.js";
+  import type { AcquisitionSource, Item, ItemId } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   const redactGuard = createRedactionGuard();
@@ -121,30 +121,29 @@
 
 {#each trackerData.almanac as cat (cat.id)}
   {@const catItemIds = Object.keys(cat.items) as ItemId[]}
-  {@const catEntries = Object.entries(cat.items).sort(([, a], [, b]) =>
-    a.name.localeCompare(b.name),
-  )}
+  {@const catEntries = catItemIds
+    .map((id) => [id, trackerData.items[id]] as [ItemId, Item])
+    .sort(([, a], [, b]) => a.name.localeCompare(b.name))}
   {@const scopedItems = catEntries.filter(([id, item]) => {
     if (!matchesFilter(item.name)) return false;
     return shouldCountItem(
-      trackerData.items[id as ItemId].sources ?? [],
-      userState.state.completed.almanac.has(id as ItemId),
+      item.sources ?? [],
+      userState.state.completed.almanac.has(id),
       userState.state.worldState,
       userState.state.availabilityMode,
     );
   })}
   {@const filteredItems = scopedItems.filter(([id]) =>
     isRowVisible(
-      id as ItemId,
-      userState.state.completed.almanac.has(id as ItemId),
+      id,
+      userState.state.completed.almanac.has(id),
       userState.state.showCompleted,
       recentlyCompleted,
     ),
   )}
   {#if filteredItems.length > 0}
     <ExpandableSection
-      count={scopedItems.filter(([id]) => userState.state.completed.almanac.has(id as ItemId))
-        .length}
+      count={scopedItems.filter(([id]) => userState.state.completed.almanac.has(id)).length}
       forceOpen={!!nameFilter}
       name={cat.name}
       total={scopedItems.length}
@@ -152,20 +151,20 @@
       {@const showAll = expandedSections[cat.id] ?? false}
       {@const displayItems = showAll ? filteredItems : filteredItems.slice(0, SECTION_LIMIT)}
       {#each displayItems as [itemId, item] (itemId)}
-        {@const itemCompleted = userState.state.completed.almanac.has(itemId as ItemId)}
-        {@const itemSources = trackerData.items[itemId as ItemId].sources ?? []}
+        {@const itemCompleted = userState.state.completed.almanac.has(itemId)}
+        {@const itemSources = trackerData.items[itemId].sources ?? []}
         {@const itemVisibility = item.visibility ?? { type: "always" }}
         <TrackerRow
-          display={rowDisplay(itemId as ItemId, item, itemSources)}
+          display={rowDisplay(itemId, item, itemSources)}
           lookups={{ ...baseLookups, entityVisibility: itemVisibility }}
           name={item.name}
           sources={itemSources}
           onToggle={() => {
             if (itemNameVisible(item) || itemCompleted) {
-              toggleItem(itemId as ItemId, item, catItemIds);
+              toggleItem(itemId, item, catItemIds);
             } else {
               redactGuard.guard(itemVisibility, () => {
-                toggleItem(itemId as ItemId, item, catItemIds);
+                toggleItem(itemId, item, catItemIds);
               });
             }
           }}
