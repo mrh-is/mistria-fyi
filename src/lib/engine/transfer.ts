@@ -369,7 +369,7 @@ function getAnimalVariantOrder(): { animalId: AnimalId; variantId: VariantId }[]
     for (const [variantId, variant] of Object.entries(animal.variants).sort(([a], [b]) =>
       a.localeCompare(b),
     )) {
-      if (!variant.defaultUnlocked) {
+      if (!variant.sources.some((s) => s.type === "default")) {
         result.push({ animalId: animalId as AnimalId, variantId: variantId as VariantId });
       }
     }
@@ -381,7 +381,7 @@ function getAnimalVariantOrder(): { animalId: AnimalId; variantId: VariantId }[]
 
 function getCosmeticOrder(): CosmeticId[] {
   return (Object.keys(trackerData.cosmetics) as CosmeticId[])
-    .filter((id) => !trackerData.cosmetics[id].defaultUnlocked)
+    .filter((id) => !trackerData.cosmetics[id].sources?.some((s) => s.type === "default"))
     .sort();
 }
 

@@ -140,8 +140,7 @@ The second phase collects recipe acquisition sources from nine data locations:
 | `mine_zone`       | `dungeons`                                                                | `biomes[].dungeon_delicacies` and `taste_maker` item ID lists                                                            |
 
 After all collectors merge, sources are structurally deduplicated centrally, then sorted by type and
-detail fields. `defaultUnlocked` is a separate boolean flag requiring all group members to agree;
-mixed flags produce a warning and resolve to false.
+detail fields.
 
 The third phase builds `presentations` — items within each recipe grouped by display name — so that
 recipe keys containing multiple distinct designs (e.g., single and double beds) produce separate

@@ -44,8 +44,8 @@ export function extractAnimals(fiddle: ParsedGameData): TrackerData["animals"] {
         const isDefaultUnlocked = (v.default_unlocked as boolean | undefined) ?? false;
         variants[vid as VariantId] = {
           bornIn: (v.born_in as Season | undefined) ?? undefined,
-          defaultUnlocked: isDefaultUnlocked,
           name: (v.name as string | undefined) ?? vid,
+          sources: isDefaultUnlocked ? [{ type: "default" }] : [],
           tier: isDefaultUnlocked ? 1 : (v.tier as number | undefined),
         };
       }

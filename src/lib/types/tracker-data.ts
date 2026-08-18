@@ -1,4 +1,4 @@
-import type { Source as AcquisitionSource } from "./acquisition.js";
+import type { Source as AcquisitionSource, Source } from "./acquisition.js";
 import type { VisibilityCondition } from "./visibility.js";
 
 export type { AcquisitionSource };
@@ -32,7 +32,6 @@ export interface AlmanacCategory {
 export type AnimalId = string & { readonly __brand: "AnimalId" };
 export type BiomeId = string & { readonly __brand: "BiomeId" };
 export interface Cosmetic extends TrackerEntity {
-  defaultUnlocked: boolean;
   name: string;
   slot: CosmeticSlot;
   subCategory?: string;
@@ -108,8 +107,8 @@ export interface TrackerData {
         VariantId,
         {
           bornIn?: Season;
-          defaultUnlocked: boolean;
           name: string;
+          sources: Source[];
           tier?: number;
         }
       >;

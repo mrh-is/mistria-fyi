@@ -861,7 +861,6 @@ describe("assignEntityVisibility — cosmetics", () => {
     const trackerData = makeTrackerData({
       cosmetics: {
         fancy_hat: {
-          defaultUnlocked: false,
           name: "Fancy Hat",
           slot: "head",
           sources: [{ storeId: "wheedle", type: "store" }],
@@ -888,7 +887,7 @@ describe("assignEntityVisibility — cosmetics", () => {
 
   it("leaves visibility unstamped for cosmetics without a known source (issue #78)", () => {
     const trackerData = makeTrackerData({
-      cosmetics: { unsourced_hat: { defaultUnlocked: false, name: "Unsourced Hat", slot: "head" } },
+      cosmetics: { unsourced_hat: { name: "Unsourced Hat", slot: "head" } },
     });
     assignEntityVisibility(
       trackerData,

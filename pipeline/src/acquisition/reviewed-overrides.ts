@@ -477,9 +477,9 @@ export function collectDefaultCosmeticSources(
   accumulator: CosmeticSourceAccumulator,
 ): void {
   for (const [id, cosmetic] of Object.entries(cosmetics)) {
-    if (cosmetic.defaultUnlocked) {
+    if (cosmetic.sources?.some((src) => src.type === "default")) {
       accumulator.add(id as CosmeticId, DEFAULT_SOURCE, {
-        fieldPath: `cosmetics.${id}.defaultUnlocked`,
+        fieldPath: `cosmetics.${id}.default_unlocked`,
         sourcePath: "player_assets.toml",
       });
     }

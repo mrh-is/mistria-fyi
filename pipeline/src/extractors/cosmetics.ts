@@ -61,10 +61,10 @@ export function extractCosmetics(fiddle: ParsedGameData): TrackerData["cosmetics
       : undefined;
 
     result[id as CosmeticId] = {
-      defaultUnlocked: (asset.default_unlocked as boolean | undefined) ?? false,
       name: (asset.name as string | undefined) ?? id,
       slot,
       ...(subCategory && { subCategory }),
+      sources: (asset.default_unlocked as boolean | undefined) ? [{ type: "default" }] : [],
     };
   }
 

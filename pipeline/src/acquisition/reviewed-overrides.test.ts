@@ -185,16 +185,16 @@ describe("reviewed overrides", () => {
   });
 
   describe("collectDefaultCosmeticSources", () => {
-    it("adds default sources for cosmetics with defaultUnlocked true", () => {
+    it("adds default sources for cosmetics with default source", () => {
       const adds: [CosmeticId, Source][] = [];
       const accumulator = {
         add: (id: CosmeticId, source: Source) => adds.push([id, source]),
       } as unknown as CosmeticSourceAccumulator;
 
       const cosmetics = {
-        default_hat: { defaultUnlocked: true, name: "Default Hat", slot: "head" as const },
-        store_hat: { defaultUnlocked: false, name: "Store Hat", slot: "head" as const },
-      } as Record<CosmeticId, { defaultUnlocked: boolean; name: string; slot: "head" }>;
+        default_hat: { name: "Default Hat", slot: "head" as const, sources: [{ type: "default" }] },
+        store_hat: { name: "Store Hat", slot: "head" as const, sources: [] },
+      } as Record<CosmeticId, { name: string; slot: "head"; sources: Source[] }>;
 
       collectDefaultCosmeticSources(cosmetics, accumulator);
 
@@ -203,15 +203,15 @@ describe("reviewed overrides", () => {
       expect(adds[0][1]).toEqual({ type: "default" });
     });
 
-    it("does not add default for cosmetics with defaultUnlocked false", () => {
+    it("does not add default for cosmetics without default source", () => {
       const adds: [CosmeticId, Source][] = [];
       const accumulator = {
         add: (id: CosmeticId, source: Source) => adds.push([id, source]),
       } as unknown as CosmeticSourceAccumulator;
 
       const cosmetics = {
-        store_hat: { defaultUnlocked: false, name: "Store Hat", slot: "head" as const },
-      } as Record<CosmeticId, { defaultUnlocked: boolean; name: string; slot: "head" }>;
+        store_hat: { name: "Store Hat", slot: "head" as const, sources: [] },
+      } as Record<CosmeticId, { name: string; slot: "head"; sources: Source[] }>;
 
       collectDefaultCosmeticSources(cosmetics, accumulator);
       expect(adds).toHaveLength(0);

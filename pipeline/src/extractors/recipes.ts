@@ -31,7 +31,7 @@ const QUEST_TYPES_WITH_SCROLLS = [
 ] as const;
 
 interface RawRecipeEntry {
-  defaultUnlocked: boolean;
+  isDefault: boolean;
   itemId: string;
   name: string;
   recipeId: string;
@@ -101,7 +101,7 @@ export function extractRecipes(
   for (const [recipeId, group] of grouped) {
     const memberItemIds = group.map((e) => e.itemId as ItemId).sort((a, b) => a.localeCompare(b));
 
-    const defaultFlags = group.map((e) => e.defaultUnlocked);
+    const defaultFlags = group.map((e) => e.isDefault);
     const allDefault = defaultFlags.every(Boolean);
     const anyDefault = defaultFlags.some(Boolean);
     if (anyDefault && !allDefault) {
@@ -662,7 +662,7 @@ function collectRecipeEntries(fiddle: ParsedGameData): RawRecipeEntry[] {
     const recipeId = recipeKey ?? itemId;
     const name = (item.name as string | undefined) ?? itemId;
 
-    entries.push({ defaultUnlocked: isDefault, itemId, name, recipeId });
+    entries.push({ isDefault, itemId, name, recipeId });
   });
 
   return entries;
