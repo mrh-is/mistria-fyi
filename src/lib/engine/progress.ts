@@ -3,7 +3,13 @@ import { filterAvailableItems } from "$lib/engine/availability.js";
 
 import type { CategoryKey } from "$lib/data/categories.js";
 import type { AvailabilityMode, CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { ItemId, RecipeId, Season, VariantId, Weather } from "$lib/types/tracker-data.js";
+import type {
+  AnimalVariantId,
+  ItemId,
+  RecipeId,
+  Season,
+  Weather,
+} from "$lib/types/tracker-data.js";
 
 export const MAX_NPC_LEVEL = 10;
 export const MAX_RENOWN_LEVEL = 100;
@@ -91,26 +97,38 @@ function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
     completed += ctx.completed.animalCosmetics[animalId].size;
     filtered += cosmeticCount - ctx.completed.animalCosmetics[animalId].size;
 
-    for (const [vid, variant] of Object.entries(animal.variants)) {
-      total++;
-      if (ctx.completed.animals[animalId].has(vid as VariantId)) {
-        completed++;
-        continue;
-      }
-      // Apply seasonal filtering for incomplete variants
-      if (ctx.availabilityMode === "timely") {
-        if (variant.bornIn && variant.bornIn === ctx.worldState.season) {
-          filtered++;
+    for (const tier of animal.variantTiers) {
+      for (const [variantId, variant] of Object.entries(tier)) {
+        total++;
+        if (ctx.completed.animals[animalId].has(variantId as AnimalVariantId)) {
+          completed++;
+          continue;
         }
-        // timely: non-seasonal variants are not shown
-      } else if (ctx.availabilityMode === "available") {
-        if (variant.bornIn && variant.bornIn !== ctx.worldState.season) {
-          // out-of-season variant hidden
-        } else {
-          filtered++;
+        // Apply seasonal filtering for incomplete variants
+        switch (ctx.availabilityMode) {
+          case "available":
+            if (
+              variant.source.type === "default" ||
+              (variant.source.availability?.type === "season" &&
+                !variant.source.availability.seasons.includes(ctx.worldState.season))
+            ) {
+              filtered++;
+            }
+            break;
+          case "everything":
+            filtered++;
+            break;
+          case "timely":
+            // timely: non-seasonal variants are not shown
+            if (
+              variant.source.type === "breed" &&
+              variant.source.availability?.type === "season" &&
+              !variant.source.availability.seasons.includes(ctx.worldState.season)
+            ) {
+              filtered++;
+            }
+            break;
         }
-      } else {
-        filtered++;
       }
     }
   }

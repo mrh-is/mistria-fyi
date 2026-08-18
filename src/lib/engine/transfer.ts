@@ -1,8 +1,10 @@
 import { trackerData } from "$lib/data/index.js";
+import { recordToArray } from "$lib/utils";
 
 import type { CompletedState, QuestState } from "$lib/stores/user-state.svelte.js";
 import type {
   AnimalId,
+  AnimalVariantId,
   CosmeticId,
   ItemId,
   NpcId,
@@ -10,7 +12,6 @@ import type {
   QuestId,
   SkillId,
   SpellId,
-  VariantId,
 } from "$lib/types/tracker-data.js";
 
 // ─── Constants ──────────────────────────────────────────────────────
@@ -53,11 +54,11 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   const animalVariantKeys = animalVariantOrder.map((v) => `${v.animalId}:${v.variantId}`);
   const animalVariantBytes = readBytes(Math.ceil(animalVariantKeys.length / 8));
   const animalVariantSet = fromBitfield(animalVariantKeys, animalVariantBytes);
-  const animals: Record<string, Set<VariantId>> = {};
+  const animals: Record<string, Set<AnimalVariantId>> = {};
   for (const key of animalVariantSet) {
     const [animalId, variantId] = key.split(":");
-    const existing = (animals[animalId] ??= new Set<VariantId>());
-    existing.add(variantId as VariantId);
+    const existing = (animals[animalId] ??= new Set<AnimalVariantId>());
+    existing.add(variantId as AnimalVariantId);
   }
 
   // 4. Animal cosmetics
@@ -361,16 +362,18 @@ function getAnimalCosmeticOrder(): { animalId: AnimalId; cosmeticId: CosmeticId 
   return result;
 }
 
-function getAnimalVariantOrder(): { animalId: AnimalId; variantId: VariantId }[] {
-  const result: { animalId: AnimalId; variantId: VariantId }[] = [];
-  for (const [animalId, animal] of Object.entries(trackerData.animals).sort(([a], [b]) =>
+function getAnimalVariantOrder(): { animalId: AnimalId; variantId: AnimalVariantId }[] {
+  const result: { animalId: AnimalId; variantId: AnimalVariantId }[] = [];
+  for (const [animalId, animal] of recordToArray(trackerData.animals).sort(([a], [b]) =>
     a.localeCompare(b),
   )) {
-    for (const [variantId, variant] of Object.entries(animal.variants).sort(([a], [b]) =>
-      a.localeCompare(b),
-    )) {
-      if (!variant.sources.some((s) => s.type === "default")) {
-        result.push({ animalId: animalId as AnimalId, variantId: variantId as VariantId });
+    for (const tier of animal.variantTiers) {
+      for (const [variantId, variant] of recordToArray(tier).sort(([a], [b]) =>
+        a.localeCompare(b),
+      )) {
+        if (!(variant.source.type === "default")) {
+          result.push({ animalId, variantId });
+        }
       }
     }
   }

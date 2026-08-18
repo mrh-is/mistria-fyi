@@ -1,6 +1,7 @@
 import { trackerData } from "$lib/data/index.js";
 import { isItemAvailable } from "$lib/engine/availability.js";
 import { isVisible } from "$lib/engine/visibility.js";
+import { recordToArray } from "$lib/utils";
 
 import type { UserProgressionState } from "$lib/engine/visibility.js";
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
@@ -74,16 +75,18 @@ export function searchItems(
   for (const [animalId, animal] of Object.entries(trackerData.animals)) {
     if (animal.visibility && !isVisible(animal.visibility, progressionState)) continue;
 
-    for (const [variantId, variant] of Object.entries(animal.variants)) {
-      if (variant.name.toLowerCase().includes(q)) {
-        results.push({
-          available: true,
-          category: "animals",
-          completed: completed.animals[animalId].has(variantId as never),
-          detail: animal.name,
-          id: `${animalId}:${variantId}`,
-          name: variant.name,
-        });
+    for (const tier of animal.variantTiers) {
+      for (const [variantId, variant] of recordToArray(tier)) {
+        if (variant.name.toLowerCase().includes(q)) {
+          results.push({
+            available: true,
+            category: "animals",
+            completed: completed.animals[animalId].has(variantId),
+            detail: animal.name,
+            id: `${animalId}:${variantId}`,
+            name: variant.name,
+          });
+        }
       }
       if (results.length >= MAX_RESULTS) return rankResults(results, q);
     }

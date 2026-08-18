@@ -7,6 +7,7 @@ import { deriveProgressionState, type UserProgressionState } from "$lib/engine/v
 
 import type {
   AnimalId,
+  AnimalVariantId,
   CosmeticId,
   ItemId,
   NpcId,
@@ -16,7 +17,6 @@ import type {
   Season,
   SkillId,
   SpellId,
-  VariantId,
   Weather,
 } from "$lib/types/tracker-data.js";
 
@@ -28,7 +28,7 @@ export interface CompletedState {
   almanac: Set<ItemId>;
   almanacRecipes: Set<RecipeId>;
   animalCosmetics: Record<string, Set<CosmeticId>>;
-  animals: Record<string, Set<VariantId>>;
+  animals: Record<string, Set<AnimalVariantId>>;
   cosmetics: Set<CosmeticId>;
   marriedNpc: NpcId | null;
   mines: { floor: number; spells: Set<SpellId> };
@@ -106,13 +106,15 @@ function createDefaultCompleted(): CompletedState {
   }
 
   // Initialize sets for each animal type, pre-populating default-unlocked variants
-  const animals: Record<string, Set<VariantId>> = {};
+  const animals: Record<string, Set<AnimalVariantId>> = {};
   const animalCosmetics: Record<string, Set<CosmeticId>> = {};
   for (const [animalId, animal] of Object.entries(trackerData.animals)) {
-    const variantSet = new SvelteSet<VariantId>();
-    for (const [vid, variant] of Object.entries(animal.variants)) {
-      if (variant.sources.some((s) => s.type === "default")) {
-        variantSet.add(vid as VariantId);
+    const variantSet = new SvelteSet<AnimalVariantId>();
+    for (const tier of animal.variantTiers) {
+      for (const [variantId, variant] of Object.entries(tier)) {
+        if (variant.source.type === "default") {
+          variantSet.add(variantId as AnimalVariantId);
+        }
       }
     }
     animals[animalId] = variantSet;
@@ -279,7 +281,7 @@ function createUserState() {
       // Animal variants
       if (imported.animals) {
         for (const [animalId, variants] of Object.entries(imported.animals)) {
-          const existing = (state.completed.animals[animalId] ??= new SvelteSet<VariantId>());
+          const existing = (state.completed.animals[animalId] ??= new SvelteSet<AnimalVariantId>());
           for (const v of variants) {
             if (!existing.has(v)) {
               existing.add(v);
@@ -428,8 +430,8 @@ function createUserState() {
       const set = (state.completed.animalCosmetics[animalId] ??= new SvelteSet<CosmeticId>());
       toggleInSet(set, cosmeticId);
     },
-    toggleAnimalVariant(animalId: AnimalId, variantId: VariantId) {
-      const set = (state.completed.animals[animalId] ??= new SvelteSet<VariantId>());
+    toggleAnimalVariant(animalId: AnimalId, variantId: AnimalVariantId) {
+      const set = (state.completed.animals[animalId] ??= new SvelteSet<AnimalVariantId>());
       toggleInSet(set, variantId);
     },
     toggleCosmetic(id: CosmeticId) {
@@ -498,7 +500,7 @@ function deserialize(json: string): null | UserState {
           ]),
         ),
         animals: Object.fromEntries(
-          Object.entries(s.completed.animals).map(([k, v]) => [k, brandedSet<VariantId>(v)]),
+          Object.entries(s.completed.animals).map(([k, v]) => [k, brandedSet<AnimalVariantId>(v)]),
         ),
         cosmetics: brandedSet<CosmeticId>(s.completed.cosmetics),
         marriedNpc: (s.completed.marriedNpc as NpcId | null | undefined) ?? null,

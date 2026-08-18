@@ -9,3 +9,7 @@ export type WithoutChildrenOrChild<T> = Omit<T, "child" | "children">;
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export function recordToArray<K extends PropertyKey, T>(record: Record<K, T>) {
+  return Object.entries(record) as [K, T][];
+}

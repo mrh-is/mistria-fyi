@@ -109,6 +109,8 @@ export function buildSourceSegments(
     }
     case "beach_cave_chest":
       return ["Find in the Gold Treasure Chest in the Beach Cave"];
+    case "breed":
+      return ["Breed"];
     case "bug_catch": {
       const locations = buildLocationList(source.locationIds, lookups);
       return [locations ? `Catch at ${locations}` : "Catch"];

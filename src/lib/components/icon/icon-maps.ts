@@ -1,5 +1,6 @@
 import {
   Archive,
+  Baby,
   BookCheck,
   BookOpenText,
   Bug,
@@ -71,6 +72,7 @@ export const SOURCE_ICON: Record<AcquisitionSource["type"], LucideIcon> = {
   artifact_replicator: Gem,
   // Shared types (present in both old recipe sources and item/cosmetic sources)
   beach_cave_chest: Archive,
+  breed: Baby,
   bug_catch: Bug,
   chicken_statue: Coins,
   crop: Wheat,

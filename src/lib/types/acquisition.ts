@@ -92,6 +92,7 @@ export type Source =
           }
         | { trigger: "shipped_item"; triggerItemId: ItemId; type: "letter" }
         | { type: "beach_cave_chest" }
+        | { type: "breed" }
         | { type: "dive"; waterTypes?: WaterType[] }
         | { type: "engagement" }
         | { type: "fish"; waterTypes?: WaterType[] }

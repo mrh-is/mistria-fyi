@@ -5,7 +5,7 @@ import { trackerData } from "$lib/data/index.js";
 import { decodeTransferPayload, encodeTransferPayload, TRANSFER_VERSION } from "../transfer.js";
 
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { CosmeticId, NpcId, PerkId, VariantId } from "$lib/types/tracker-data.js";
+import type { CosmeticId, NpcId, PerkId, AnimalVariantId } from "$lib/types/tracker-data.js";
 
 // A payload encoded with the v1 codec (no perk bitfield, no married-NPC byte) for a state with
 // mines.floor = 5, npcLevels.adeline = 3, renown = 10, and all other fields empty. Used to verify
@@ -14,7 +14,7 @@ const V1_FIXTURE = "AWNgGAVUBqwMXAYDZDUA";
 
 // Helper to create a minimal CompletedState for testing
 function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState {
-  const animals: Record<string, Set<VariantId>> = {};
+  const animals: Record<string, Set<AnimalVariantId>> = {};
   const animalCosmetics: Record<string, Set<CosmeticId>> = {};
   for (const animalId of Object.keys(trackerData.animals)) {
     animals[animalId] = new Set();

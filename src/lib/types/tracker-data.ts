@@ -26,7 +26,25 @@ export interface AlmanacCategory {
   items: ItemId[];
   name: string;
 }
+export interface Animal {
+  cosmetics: Record<CosmeticId, AnimalCosmetic>;
+  name: string;
+  questGate?: QuestId[];
+  variantTiers: AnimalVariantTier[];
+  visibility?: VisibilityCondition;
+}
+export interface AnimalCosmetic {
+  fullName: string;
+  name: string;
+}
 export type AnimalId = string & { readonly __brand: "AnimalId" };
+export interface AnimalVariant {
+  name: string;
+  source: Extract<Source, { type: "breed" | "default" }>;
+}
+export type AnimalVariantId = string & { readonly __brand: "VariantId" };
+export type AnimalVariantTier = Record<AnimalVariantId, AnimalVariant>;
+export type AnyId = string & { readonly __brand: string };
 export type BiomeId = string & { readonly __brand: "BiomeId" };
 export interface Cosmetic extends TrackerEntity {
   name: string;
@@ -65,7 +83,9 @@ export interface MuseumWing {
   name: string;
   sets: { id: SetId; items: ItemId[]; name: string }[];
 }
+
 export type NpcId = string & { readonly __brand: "NpcId" };
+
 export type PerkId = string & { readonly __brand: "PerkId" };
 
 export type QuestId = string & { readonly __brand: "QuestId" };
@@ -76,42 +96,25 @@ export interface Recipe extends TrackerEntity {
   memberItemIds: ItemId[];
   presentations: RecipePresentation[];
 }
-
 export type RecipeId = string & { readonly __brand: "RecipeId" };
 
 export interface RecipePresentation {
   itemIds: ItemId[];
   name: string;
 }
-export type Season = "fall" | "spring" | "summer" | "winter";
 
+export type Season = "fall" | "spring" | "summer" | "winter";
 export type SetId = string & { readonly __brand: "SetId" };
 
 export type SkillId = string & { readonly __brand: "SkillId" };
-export type SpellId = string & { readonly __brand: "SpellId" };
 
+export type SpellId = string & { readonly __brand: "SpellId" };
 export type StoreId = string & { readonly __brand: "StoreId" };
 
 export interface TrackerData {
   almanac: AlmanacCategory[];
-  animals: Record<
-    AnimalId,
-    {
-      cosmetics: Record<CosmeticId, { fullName: string; name: string }>;
-      name: string;
-      questGate?: QuestId[];
-      variants: Record<
-        VariantId,
-        {
-          bornIn?: Season;
-          name: string;
-          sources: Source[];
-          tier?: number;
-        }
-      >;
-      visibility?: VisibilityCondition;
-    }
-  >;
+
+  animals: Record<AnimalId, Animal>;
 
   categoryVisibility: Record<string, VisibilityCondition>;
 
@@ -194,14 +197,13 @@ export interface TrackerData {
 
   version: string;
 }
+
 export interface TrackerEntity {
   sources?: AcquisitionSource[];
   visibility?: VisibilityCondition;
 }
 
 export type TreasureChestTier = string & { readonly __brand: "TreasureChestTier" };
-
-export type VariantId = string & { readonly __brand: "VariantId" };
 
 export type Weather = "calm" | "heavy_inclement" | "inclement" | "special";
 

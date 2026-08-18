@@ -2,12 +2,12 @@ import { trackerData } from "$lib/data/index.js";
 
 import type { CompletedState, MergeCounts, QuestState } from "$lib/stores/user-state.svelte.js";
 import type {
+  AnimalVariantId,
   CosmeticId,
   ItemId,
   PerkId,
   RecipeId,
   SpellId,
-  VariantId,
 } from "$lib/types/tracker-data.js";
 
 // ─── Import result ──────────────────────────────────────────────────
@@ -128,15 +128,15 @@ export function buildImportState(bundle: SaveBundle): {
   counts.cosmetics = cosmeticIds.size;
 
   // ── Animal variants ──
-  const animalVariants: Record<string, Set<VariantId>> = {};
+  const animalVariants: Record<string, Set<AnimalVariantId>> = {};
   for (const [animalId, animal] of Object.entries(trackerData.animals)) {
-    const validVariants = new Set(Object.keys(animal.variants));
+    const validVariants = new Set(animal.variantTiers.flatMap((tier) => Object.keys(tier)));
     const playerVariants = save?.animal_variant_unlocks?.[animalId] ?? [];
-    const matched = new Set<VariantId>();
+    const matched = new Set<AnimalVariantId>();
 
     for (const v of playerVariants) {
       if (validVariants.has(v)) {
-        matched.add(v as VariantId);
+        matched.add(v as AnimalVariantId);
       } else {
         warnings.push(`Unknown ${animalId} variant: ${v}`);
       }

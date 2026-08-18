@@ -19,7 +19,7 @@
     ItemId,
     NpcId,
     QuestId,
-    VariantId,
+    AnimalVariantId,
   } from "$lib/types/tracker-data.js";
 
   let { query }: { query: string } = $props();
@@ -76,7 +76,7 @@
         if (result.fullName) {
           userState.toggleAnimalCosmetic(animalId as AnimalId, subId as CosmeticId);
         } else {
-          userState.toggleAnimalVariant(animalId as AnimalId, subId as VariantId);
+          userState.toggleAnimalVariant(animalId as AnimalId, subId as AnimalVariantId);
         }
         break;
       }

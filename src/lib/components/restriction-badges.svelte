@@ -30,11 +30,7 @@
       class="inline-flex gap-0.5 rounded bg-amber-100 px-0.5 py-px text-amber-700 dark:bg-amber-950 dark:text-amber-300"
     >
       {#each badges.seasons as s (s)}
-        <Icon.Season
-          season={s}
-          class="size-3 {s === 'fall' ? '-scale-y-100 rotate-90' : ''}"
-          strokeWidth={s === "summer" ? 2.5 : undefined}
-        />
+        <Icon.Season season={s} class="size-3" />
       {/each}
     </span>
   {/if}
