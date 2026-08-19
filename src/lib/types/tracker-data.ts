@@ -79,7 +79,6 @@ export interface Item extends TrackerEntity {
   category: string;
   name: string;
   questGate?: QuestId[];
-  recipeId?: RecipeId;
 }
 export type ItemId = string & { readonly __brand: "ItemId" };
 export interface MuseumWing {

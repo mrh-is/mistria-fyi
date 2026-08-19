@@ -16,7 +16,7 @@
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
-  import type { AcquisitionSource, RecipeId } from "$lib/types/tracker-data.js";
+  import type { AcquisitionSource, Item, RecipeId } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   const redactGuard = createRedactionGuard();
@@ -36,6 +36,10 @@
     ),
   );
 
+  function recipeForItem(item: Item): RecipeId | undefined {
+    return item.sources?.find((source) => source.type === "recipe")?.recipeId;
+  }
+
   // The current recipe condition is added when each tree is built.
   let baseSegmentLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
 
@@ -54,13 +58,14 @@
       const entries: RecipeEntry[] = [];
       for (const [, itemId] of Object.entries(cat.items)) {
         const item = trackerData.items[itemId];
-        if (!item.recipeId || seen.has(item.recipeId)) continue;
-        seen.add(item.recipeId);
-        const recipe = trackerData.recipes[item.recipeId];
+        const recipeId = recipeForItem(item);
+        if (!recipeId || seen.has(recipeId)) continue;
+        seen.add(recipeId);
+        const recipe = trackerData.recipes[recipeId];
         const visibility = recipe.visibility ?? { type: "always" };
         const sources = recipe.sources ?? [];
         entries.push({
-          id: item.recipeId,
+          id: recipeId,
           name: item.name,
           nameVisible: isVisible(visibility, userState.progressionState),
           sources,

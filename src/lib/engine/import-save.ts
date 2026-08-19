@@ -106,7 +106,9 @@ export function buildImportState(bundle: SaveBundle): {
     if (validRecipes.has(id)) {
       almanacRecipes.add(id as RecipeId);
     } else if (validItems.has(id)) {
-      const recipeId = trackerData.items[id as ItemId].recipeId;
+      const recipeId = trackerData.items[id as ItemId].sources?.find(
+        (source) => source.type === "recipe",
+      )?.recipeId;
       if (recipeId) {
         almanacRecipes.add(recipeId);
       }
