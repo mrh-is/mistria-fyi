@@ -117,6 +117,9 @@ export type SetId = string & { readonly __brand: "SetId" };
 
 export type SkillId = string & { readonly __brand: "SkillId" };
 
+export interface Spell extends TrackerEntity {
+  name: string;
+}
 export type SpellId = string & { readonly __brand: "SpellId" };
 export type StoreId = string & { readonly __brand: "StoreId" };
 
@@ -143,10 +146,7 @@ export interface TrackerData {
       startFloor: number;
     }[];
     maxFloors: number;
-    spells: Record<
-      SpellId,
-      { name: string; questGate?: QuestId[]; visibility?: VisibilityCondition }
-    >;
+    spells: Record<SpellId, Spell>;
   };
 
   museum: MuseumWing[];
