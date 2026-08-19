@@ -103,7 +103,6 @@ export type Source =
 
 export interface SourceDetails {
   availability?: AvailabilityCondition;
-  chance?: number;
   cost?: { amount: number; currency: "beads" | "tesserae" | "tickets" };
   visibility?: VisibilityCondition;
   weight?: number;

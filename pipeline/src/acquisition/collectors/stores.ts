@@ -77,7 +77,6 @@ export function collectStoreSources(
             requirementContext,
             accumulator,
             cosmeticAccumulator,
-            true,
           );
         }
       }
@@ -88,11 +87,9 @@ export function collectStoreSources(
 function buildStoreSource(
   storeId: string,
   availability: AvailabilityCondition | undefined,
-  isRandom: boolean,
 ): Source {
   return {
     ...(availability ? { availability } : {}),
-    ...(isRandom ? { chance: 0 } : {}),
     storeId: storeId as StoreId,
     type: "store",
   };
@@ -119,10 +116,9 @@ function processStoreEntry(
   requirementContext: RequirementContext,
   accumulator: ItemSourceAccumulator,
   cosmeticAccumulator?: CosmeticSourceAccumulator,
-  isRandom = false,
 ): void {
   if (typeof entry === "string") {
-    const source = buildStoreSource(storeId, baseAvailability, isRandom);
+    const source = buildStoreSource(storeId, baseAvailability);
     accumulator.add(entry as ItemId, source);
     return;
   }
@@ -191,7 +187,7 @@ function processStoreEntry(
       type: "store",
     };
   } else {
-    source = buildStoreSource(storeId, availability, isRandom);
+    source = buildStoreSource(storeId, availability);
   }
 
   if (cosmeticId && cosmeticAccumulator) {

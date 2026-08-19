@@ -108,7 +108,7 @@ const SOURCE_FIELDS = {
 } as const satisfies Record<Source["type"], readonly string[]>;
 
 const SOURCE_TYPES = new Set<string>(Object.keys(SOURCE_FIELDS));
-const SOURCE_DETAIL_FIELDS = ["availability", "chance", "cost", "visibility", "weight"];
+const SOURCE_DETAIL_FIELDS = ["availability", "cost", "visibility", "weight"];
 
 export class AcquisitionSourceValidationError extends Error {
   constructor(readonly diagnostics: AcquisitionSourceDiagnostic[]) {
@@ -756,16 +756,8 @@ function validateCommonSourceFields(
       new Set(),
     );
   }
-  for (const numericField of ["chance", "weight"] as const) {
-    if (numericField in source && !isFiniteNumber(source[numericField])) {
-      malformed(
-        diagnostics,
-        targetId,
-        `${fieldPath}.${numericField}`,
-        "Expected a finite number",
-        source,
-      );
-    }
+  if ("weight" in source && !isFiniteNumber(source.weight)) {
+    malformed(diagnostics, targetId, `${fieldPath}.weight`, "Expected a finite number", source);
   }
   if ("cost" in source) {
     validateCost(source.cost, targetId, `${fieldPath}.cost`, source, diagnostics);

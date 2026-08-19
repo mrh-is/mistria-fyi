@@ -61,23 +61,6 @@ describe("collectStoreSources", () => {
     ]);
   });
 
-  it("marks random stock with chance: 0", () => {
-    const fiddle = makeFiddle({
-      stores: {
-        general: {
-          categories: [{ random_stock: [{ item: "mystery_box" }] }],
-        },
-      },
-    });
-
-    const acc = new ItemSourceAccumulator();
-    collectStoreSources(fiddle, defaultContext, acc);
-
-    expect(acc.get("mystery_box" as ItemId)).toEqual([
-      { chance: 0, storeId: "general", type: "store" },
-    ]);
-  });
-
   it("projects upgrade requirements as upgrade sources", () => {
     const fiddle = makeFiddle({
       stores: {
