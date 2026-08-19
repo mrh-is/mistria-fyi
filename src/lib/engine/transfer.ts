@@ -1,5 +1,5 @@
 import { trackerData } from "$lib/data/index.js";
-import { recordToArray } from "$lib/utils";
+import { recordKeys, recordToArray } from "$lib/utils";
 
 import type { CompletedState, QuestState } from "$lib/stores/user-state.svelte.js";
 import type {
@@ -407,8 +407,8 @@ function getPerkOrder(): PerkId[] {
 
 function getQuestOrder(): { questId: QuestId; type: string }[] {
   const result: { questId: QuestId; type: string }[] = [];
-  for (const type of Object.keys(trackerData.quests).sort()) {
-    for (const questId of (Object.keys(trackerData.quests[type]) as QuestId[]).sort()) {
+  for (const type of recordKeys(trackerData.quests).sort()) {
+    for (const questId of recordKeys(trackerData.quests[type]).sort()) {
       result.push({ questId, type });
     }
   }

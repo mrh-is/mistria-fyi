@@ -10,6 +10,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function recordToArray<K extends PropertyKey, T>(record: Record<K, T>) {
+export function recordKeys<K extends string, T>(record: Record<K, T>): K[] {
+  return Object.keys(record) as K[];
+}
+export function recordToArray<K extends string, T>(record: Record<K, T>): [K, T][] {
   return Object.entries(record) as [K, T][];
 }

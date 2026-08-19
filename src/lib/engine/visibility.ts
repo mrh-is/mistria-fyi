@@ -1,3 +1,5 @@
+import { recordToArray } from "$lib/utils";
+
 import type { CompletedState, QuestState } from "$lib/stores/user-state.svelte.js";
 import type { NpcId, PerkId, QuestId, TrackerData } from "$lib/types/tracker-data.js";
 import type { QuestVisibility, VisibilityCondition } from "$lib/types/visibility.js";
@@ -230,9 +232,13 @@ function computeStoredNpcLevel(
   trackerData: TrackerData,
 ): number {
   let level = completed.npcLevels[npcId as string] ?? 0;
-  for (const [questId, changes] of Object.entries(trackerData.heartLevelChanges)) {
-    if (completed.questStates[questId] !== "completed") continue;
-    for (const change of changes) {
+  for (const [questId, state] of recordToArray(completed.questStates)) {
+    if (state !== "completed") continue;
+    const quest = recordToArray(trackerData.quests).find(([, questRecord]) =>
+      Object.keys(questRecord).includes(questId),
+    )?.[1][questId as QuestId];
+    if (quest?.heartLevelChanges === undefined) continue;
+    for (const change of quest.heartLevelChanges) {
       if (change.npcId === npcId) level = Math.max(level, change.level);
     }
   }

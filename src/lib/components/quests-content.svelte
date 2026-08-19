@@ -14,16 +14,16 @@
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
 
   import type { QuestState } from "$lib/stores/user-state.svelte.js";
-  import type { NpcId, QuestId } from "$lib/types/tracker-data.js";
+  import type { NpcId, QuestId, QuestType } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   const redactGuard = createRedactionGuard();
 
-  function questNameVisible(questType: string, questId: QuestId): boolean {
+  function questNameVisible(questType: QuestType, questId: QuestId): boolean {
     return isEntityNameVisible(questVisibility(questType, questId), userState.progressionState);
   }
 
-  function questVisibility(questType: string, questId: QuestId): VisibilityCondition {
+  function questVisibility(questType: QuestType, questId: QuestId): VisibilityCondition {
     return trackerData.quests[questType][questId].visibility ?? { type: "always" };
   }
 
@@ -67,17 +67,13 @@
     "crown_quests",
     "stillwell_challenges",
     "tali_challenges",
-  ];
+  ] as QuestType[];
 
   function getQuestState(id: QuestId): QuestState {
     return userState.state.completed.questStates[id as string] ?? "none";
   }
 
-  function completeQuest(
-    quest: { displayName: string; id: QuestId },
-    questType: string,
-    quests: { id: QuestId }[],
-  ) {
+  function completeQuest(quest: { displayName: string; id: QuestId }, quests: { id: QuestId }[]) {
     const newlyAdded = userState.completeQuestWithRecipes(quest.id);
     const newState = getQuestState(quest.id);
     const displayName = quest.displayName;
@@ -177,10 +173,10 @@
             name={quest.displayName}
             onToggle={() => {
               if (questState !== "none") {
-                completeQuest(quest, questType, quests);
+                completeQuest(quest, quests);
               } else {
                 redactGuard.guard(questVisibility(questType, quest.id), () => {
-                  completeQuest(quest, questType, quests);
+                  completeQuest(quest, quests);
                 });
               }
             }}
@@ -200,7 +196,7 @@
                   ? "Obtained — click to mark completed"
                   : "Completed — click to reset"}
               onclick={() => {
-                completeQuest(quest, questType, quests);
+                completeQuest(quest, quests);
               }}
             >
               <Icon.Completion

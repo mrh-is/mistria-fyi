@@ -71,6 +71,10 @@ export type CosmeticSlot =
   | "top"
   | "underwear";
 export type FestivalId = string & { readonly __brand: "FestivalId" };
+export interface HeartLevelChange {
+  level: number;
+  npcId: NpcId;
+}
 export interface Item extends TrackerEntity {
   category: string;
   name: string;
@@ -87,6 +91,12 @@ export interface MuseumWing {
 export type NpcId = string & { readonly __brand: "NpcId" };
 
 export type PerkId = string & { readonly __brand: "PerkId" };
+
+export interface Quest extends TrackerEntity {
+  heartLevelChanges?: HeartLevelChange[];
+  name: string;
+  npc?: string;
+}
 
 export type QuestId = string & { readonly __brand: "QuestId" };
 
@@ -123,8 +133,6 @@ export interface TrackerData {
   festivals: Record<FestivalId, { date: { day: number; season: Season }; name: string }>;
 
   generatedAt: string;
-
-  heartLevelChanges: Record<QuestId, { level: number; npcId: NpcId }[]>;
 
   items: Record<ItemId, Item>;
 
@@ -178,10 +186,7 @@ export interface TrackerData {
     spellGates: Record<SpellId, QuestId[]>;
   };
 
-  quests: Record<
-    string,
-    Record<QuestId, { name: string; npc?: string; visibility?: VisibilityCondition }>
-  >;
+  quests: Record<QuestType, Record<QuestId, Quest>>;
 
   recipes: Record<RecipeId, Recipe>;
 

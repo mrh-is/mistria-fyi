@@ -9,7 +9,14 @@ import {
 } from "../visibility.js";
 
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { NpcId, PerkId, QuestId, SkillId, TrackerData } from "$lib/types/tracker-data.js";
+import type {
+  NpcId,
+  PerkId,
+  QuestId,
+  QuestType,
+  SkillId,
+  TrackerData,
+} from "$lib/types/tracker-data.js";
 import type { VisibilityCondition } from "$lib/types/visibility.js";
 
 import type { UserProgressionState } from "../visibility.js";
@@ -56,7 +63,6 @@ function makeTrackerData(overrides: Partial<TrackerData> = {}): TrackerData {
     cosmetics: {},
     festivals: {},
     generatedAt: "",
-    heartLevelChanges: {},
     items: {},
     mines: { biomes: [], maxFloors: 60, spells: {} },
     museum: [],
@@ -254,6 +260,8 @@ describe("isConditionInvertible", () => {
   });
 });
 
+const story_quests = "story_quests" as QuestType;
+const crown_quests = "crown_quests" as QuestType;
 const repairTheInn = "repair_the_inn" as QuestId;
 const theSecondQuest = "the_second_quest" as QuestId;
 const firstQuest = "first_quest" as QuestId;
@@ -276,7 +284,7 @@ describe("deriveProgressionState", () => {
   it("marks completed quests as completed", () => {
     const trackerData = makeTrackerData({
       questChains: { ...emptyStoryChains, story: { [repairTheInn]: { prerequisites: [] } } },
-      quests: { story_quests: { [repairTheInn]: { name: "Repair the Inn" } } },
+      quests: { [story_quests]: { [repairTheInn]: { name: "Repair the Inn" } } },
     });
     const completed = makeCompleted({
       questStates: { [repairTheInn]: "completed" },
@@ -292,7 +300,7 @@ describe("deriveProgressionState", () => {
         ...emptyStoryChains,
         story: { [theSecondQuest]: { prerequisites: [firstQuest] } },
       },
-      quests: { story_quests: { [theSecondQuest]: { name: "Second" } } },
+      quests: { [story_quests]: { [theSecondQuest]: { name: "Second" } } },
     });
     const completed = makeCompleted({
       questStates: { [theSecondQuest]: "obtained" },
@@ -306,7 +314,7 @@ describe("deriveProgressionState", () => {
   it("makes first story quest available when none completed", () => {
     const trackerData = makeTrackerData({
       questChains: { ...emptyStoryChains, story: { [firstQuest]: { prerequisites: [] } } },
-      quests: { story_quests: { [firstQuest]: { name: "First" } } },
+      quests: { [story_quests]: { [firstQuest]: { name: "First" } } },
     });
     const completed = makeCompleted();
 
@@ -327,7 +335,7 @@ describe("deriveProgressionState", () => {
         story: { [breakingTheFinalSeal]: { prerequisites: [] } },
       },
       quests: {
-        story_quests: { [breakingTheFinalSeal]: { name: "Breaking the Final Seal" } },
+        [story_quests]: { [breakingTheFinalSeal]: { name: "Breaking the Final Seal" } },
       },
     });
 
@@ -372,9 +380,6 @@ describe("deriveProgressionState", () => {
 
   it("cascades heart level from heartLevelChanges once the triggering quest is completed", () => {
     const trackerData = makeTrackerData({
-      heartLevelChanges: {
-        [breakingTheFireSeal]: [{ level: 4, npcId: caldarus }],
-      },
       npcs: {
         [caldarus]: { birthday: { day: 1, season: "spring" }, dateable: false, name: "Caldarus" },
       },
@@ -386,7 +391,12 @@ describe("deriveProgressionState", () => {
         story: { [breakingTheFireSeal]: { prerequisites: [] } },
       },
       quests: {
-        story_quests: { [breakingTheFireSeal]: { name: "Breaking the Fire Seal" } },
+        [story_quests]: {
+          [breakingTheFireSeal]: {
+            heartLevelChanges: [{ level: 4, npcId: caldarus }],
+            name: "Breaking the Fire Seal",
+          },
+        },
       },
     });
     const completed = makeCompleted({
@@ -465,7 +475,7 @@ describe("satisfyCondition", () => {
   it("marks quest as completed for questCompleted", () => {
     const trackerData = makeTrackerData({
       questChains: { ...emptyStoryChains, story: { [repairTheInn]: { prerequisites: [] } } },
-      quests: { story_quests: { [repairTheInn]: { name: "Repair the Inn" } } },
+      quests: { [story_quests]: { [repairTheInn]: { name: "Repair the Inn" } } },
     });
     const completed = makeCompleted();
     satisfyCondition({ questId: repairTheInn, type: "questCompleted" }, completed, trackerData);
@@ -509,7 +519,7 @@ describe("satisfyCondition", () => {
         },
       },
       quests: {
-        story_quests: {
+        [story_quests]: {
           [firstQuest]: { name: "First" },
           [theSecondQuest]: { name: "Second" },
         },
@@ -530,7 +540,7 @@ describe("satisfyCondition", () => {
         crown: [firstQuest, theSecondQuest, thirdCrown],
       },
       quests: {
-        crown_quests: {
+        [crown_quests]: {
           [firstQuest]: { name: "Crown 1" },
           [theSecondQuest]: { name: "Crown 2" },
           [thirdCrown]: { name: "Crown 3" },
@@ -549,7 +559,7 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
   it("hides then reveals an entity after satisfying its condition", () => {
     const trackerData = makeTrackerData({
       questChains: { ...emptyStoryChains, story: { [repairTheInn]: { prerequisites: [] } } },
-      quests: { story_quests: { [repairTheInn]: { name: "Repair the Inn" } } },
+      quests: { [story_quests]: { [repairTheInn]: { name: "Repair the Inn" } } },
     });
     const entityCondition: VisibilityCondition = {
       questId: repairTheInn,
@@ -568,7 +578,7 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
   it("reveals source detail and entity name at their separate thresholds", () => {
     const trackerData = makeTrackerData({
       questChains: { ...emptyStoryChains, story: { [repairTheInn]: { prerequisites: [] } } },
-      quests: { story_quests: { [repairTheInn]: { name: "Repair the Inn" } } },
+      quests: { [story_quests]: { [repairTheInn]: { name: "Repair the Inn" } } },
     });
     const entityCondition: VisibilityCondition = {
       questId: repairTheInn,
@@ -605,7 +615,7 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
         story: { [breakingTheFireSeal]: { prerequisites: [] } },
       },
       quests: {
-        story_quests: { [breakingTheFireSeal]: { name: "Breaking the Fire Seal" } },
+        [story_quests]: { [breakingTheFireSeal]: { name: "Breaking the Fire Seal" } },
       },
     });
     const npcKnownCondition: VisibilityCondition = { npcId: caldarus, type: "npcKnown" };
@@ -633,7 +643,7 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
         },
       },
       quests: {
-        story_quests: {
+        [story_quests]: {
           [firstQuest]: { name: "First" },
           [theSecondQuest]: { name: "Second" },
         },
@@ -656,7 +666,7 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
   it("just-this-item does not cascade quest state", () => {
     const trackerData = makeTrackerData({
       questChains: { ...emptyStoryChains, story: { [repairTheInn]: { prerequisites: [] } } },
-      quests: { story_quests: { [repairTheInn]: { name: "Repair the Inn" } } },
+      quests: { [story_quests]: { [repairTheInn]: { name: "Repair the Inn" } } },
     });
     const entityCondition: VisibilityCondition = {
       questId: repairTheInn,
