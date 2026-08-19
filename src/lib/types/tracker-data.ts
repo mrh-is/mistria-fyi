@@ -105,7 +105,7 @@ export interface MuseumWingSet {
 export type MuseumWingSetId = string & { readonly __brand: "SetId" };
 export interface Npc {
   birthday: Day;
-  dateable: boolean;
+  dateable?: true;
   name: string;
 }
 export type NpcId = string & { readonly __brand: "NpcId" };

@@ -324,7 +324,7 @@ describe("deriveProgressionState", () => {
   it("marks NPC as known when unlock quest is completed", () => {
     const trackerData = makeTrackerData({
       npcs: {
-        [seridia]: { birthday: { day: 1, season: "spring" }, dateable: false, name: "Seridia" },
+        [seridia]: { birthday: { day: 1, season: "spring" }, name: "Seridia" },
       },
       npcVisibility: {
         [seridia]: { questId: breakingTheFinalSeal, type: "questCompleted" },
@@ -352,7 +352,7 @@ describe("deriveProgressionState", () => {
   it("masks NPC heart level to 0 when NPC not known", () => {
     const trackerData = makeTrackerData({
       npcs: {
-        [caldarus]: { birthday: { day: 1, season: "spring" }, dateable: false, name: "Caldarus" },
+        [caldarus]: { birthday: { day: 1, season: "spring" }, name: "Caldarus" },
       },
       npcVisibility: {
         [caldarus]: { questId: breakingTheFireSeal, type: "questCompleted" },
@@ -380,7 +380,7 @@ describe("deriveProgressionState", () => {
   it("cascades heart level from heartLevelChanges once the triggering quest is completed", () => {
     const trackerData = makeTrackerData({
       npcs: {
-        [caldarus]: { birthday: { day: 1, season: "spring" }, dateable: false, name: "Caldarus" },
+        [caldarus]: { birthday: { day: 1, season: "spring" }, name: "Caldarus" },
       },
       npcVisibility: {
         [caldarus]: { questId: breakingTheFireSeal, type: "questCompleted" },
@@ -604,7 +604,7 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
   it("satisfying a quest reveals NPC-gated content", () => {
     const trackerData = makeTrackerData({
       npcs: {
-        [caldarus]: { birthday: { day: 1, season: "spring" }, dateable: false, name: "Caldarus" },
+        [caldarus]: { birthday: { day: 1, season: "spring" }, name: "Caldarus" },
       },
       npcVisibility: {
         [caldarus]: { questId: breakingTheFireSeal, type: "questCompleted" },
