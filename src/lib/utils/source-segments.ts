@@ -116,7 +116,7 @@ export function buildSourceSegments(
       return [locations ? `Catch at ${locations}` : "Catch"];
     }
     case "chicken_statue":
-      return [`Obtain from the Chicken Statue (${String(source.cost.amount)} beads)`];
+      return [`Obtain from the Chicken Statue (${String(source.cost)} beads)`];
     case "crop": {
       const seedName =
         lookups.itemNames[source.seedItemId as string] ?? titleCase(source.seedItemId);
@@ -277,7 +277,7 @@ export function buildSourceSegments(
     case "wedding":
       return ["Receive after getting married"];
     case "wishing_well":
-      return [`Obtain from the Wishing Well (${String(source.cost.amount)}t)`];
+      return [`Obtain from the Wishing Well (${String(source.cost)}t)`];
   }
 }
 

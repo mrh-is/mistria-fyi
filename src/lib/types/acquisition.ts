@@ -61,8 +61,8 @@ export type Source =
             trigger: "completion" | "dialogue_choice";
             type: "quest";
           }
-        | { cost: { amount: number; currency: "beads" }; type: "chicken_statue" }
-        | { cost: { amount: number; currency: "tesserae" }; type: "wishing_well" }
+        | { cost: number; type: "chicken_statue" }
+        | { cost: number; type: "wishing_well" }
         | { dateId: DateId; type: "date" }
         | { festivalId: FestivalId; storeId?: StoreId; type: "festival" }
         | { itemId: ItemId; type: "equipment" }
@@ -103,9 +103,7 @@ export type Source =
 
 export interface SourceDetails {
   availability?: AvailabilityCondition;
-  cost?: { amount: number; currency: "beads" | "tesserae" | "tickets" };
   visibility?: VisibilityCondition;
-  weight?: number;
 }
 
 export type SourceTuple = [Source, ...Source[]];

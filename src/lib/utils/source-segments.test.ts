@@ -168,7 +168,7 @@ describe("buildSourceSegments — simple types", () => {
 
   it("chicken statue", () => {
     const source: AcquisitionSource = {
-      cost: { amount: 10, currency: "beads" },
+      cost: 10,
       type: "chicken_statue",
     };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([
@@ -178,7 +178,7 @@ describe("buildSourceSegments — simple types", () => {
 
   it("wishing well", () => {
     const source: AcquisitionSource = {
-      cost: { amount: 500, currency: "tesserae" },
+      cost: 500,
       type: "wishing_well",
     };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([
