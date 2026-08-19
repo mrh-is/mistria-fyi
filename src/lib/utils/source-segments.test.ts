@@ -42,7 +42,6 @@ const BASE_LOOKUPS: SegmentLookups = {
   ],
   categoryVisibility: {},
   entityVisibility: { type: "always" },
-  festivalDates: {},
   festivals: {},
   itemNames: {},
   itemVisibility: {},
@@ -51,22 +50,25 @@ const BASE_LOOKUPS: SegmentLookups = {
   npcNames: {},
   npcVisibility: {},
   perks: {
-    taste_maker: {
+    ["taste_maker" as PerkId]: {
       name: "Taste Maker",
-      skillId: "cooking",
+      skillId: "cooking" as SkillId,
       tier: 1,
-      visibility: { level: 1, skillId: "cooking" as SkillId, type: "skillLevel" },
     },
   },
   perkTierLevels: [1, 5, 10, 15, 20],
   questNames: {},
   questNpcIds: {},
   recipeNames: {},
-  skillNames: { cooking: "Cooking" },
+  skillNames: { ["cooking" as SkillId]: "Cooking" },
   stationNames: {},
   stores: {
-    general: { article: "the" as const, name: "General Store", upgradeAction: "repairing" },
-    inn: { article: "the" as const, name: "Sleeping Dragon Inn" },
+    ["general" as StoreId]: {
+      article: "the" as const,
+      name: "General Store",
+      upgradeAction: "repairing",
+    },
+    ["inn" as StoreId]: { article: "the" as const, name: "Sleeping Dragon Inn" },
   },
   storeVisibility: {},
   treasureChestTiers: {},
@@ -193,7 +195,7 @@ describe("buildSourceSegments — simple types", () => {
     };
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
-      treasureChestTiers: { gold: { name: "Golden Treasure Box" } },
+      treasureChestTiers: { ["gold" as TreasureChestTierId]: { name: "Golden Treasure Box" } },
     };
     expect(buildSourceSegments(source, lookups)).toEqual(["Fish up a Golden Treasure Box"]);
   });
@@ -307,16 +309,17 @@ describe("buildSourceSegments — scroll_bundle", () => {
 
 describe("buildSourceSegments — letter and perk", () => {
   it("gates a shipped item name with item visibility", () => {
+    const crystal_berries = "crystal_berries" as ItemId;
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
-      itemNames: { crystal_berries: "Crystal Berries" },
+      itemNames: { [crystal_berries]: "Crystal Berries" },
       itemVisibility: {
-        ["crystal_berries" as ItemId]: { floor: 40, type: "minesLevel" },
+        [crystal_berries]: { floor: 40, type: "minesLevel" },
       },
     };
     const source: AcquisitionSource = {
       trigger: "shipped_item",
-      triggerItemId: "crystal_berries" as ItemId,
+      triggerItemId: crystal_berries,
       type: "letter",
     };
     expect(buildSourceSegments(source, lookups)).toEqual([
@@ -326,14 +329,15 @@ describe("buildSourceSegments — letter and perk", () => {
   });
 
   it("gates a donated item name with item visibility", () => {
+    const cave_kelp = "cave_kelp" as ItemId;
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
-      itemNames: { cave_kelp: "Cave Kelp" },
-      itemVisibility: { ["cave_kelp" as ItemId]: { floor: 20, type: "minesLevel" } },
+      itemNames: { [cave_kelp]: "Cave Kelp" },
+      itemVisibility: { [cave_kelp]: { floor: 20, type: "minesLevel" } },
     };
     const source: AcquisitionSource = {
       trigger: "donated_item",
-      triggerItemId: "cave_kelp" as ItemId,
+      triggerItemId: cave_kelp,
       type: "letter",
     };
     expect(buildSourceSegments(source, lookups)).toEqual([
@@ -363,9 +367,10 @@ describe("buildSourceSegments — festival", () => {
   it("includes the festival store, name, and required date", () => {
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
-      festivalDates: { ["harvest" as FestivalId]: { day: 10, season: "fall" } },
-      festivals: { harvest: { name: "Harvest Festival" } },
-      stores: { nora_souvenir_stall: { name: "Souvenir Stall" } },
+      festivals: {
+        ["harvest" as FestivalId]: { date: { day: 10, season: "fall" }, name: "Harvest Festival" },
+      },
+      stores: { ["nora_souvenir_stall" as StoreId]: { name: "Souvenir Stall" } },
     };
     const source: AcquisitionSource = {
       festivalId: "harvest" as FestivalId,
@@ -527,7 +532,7 @@ describe("buildSourceSegments — quest types", () => {
     };
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
-      itemNames: { wild_berries: "Wild Berries" },
+      itemNames: { ["wild_berries" as ItemId]: "Wild Berries" },
       npcNames: { ["eiland" as NpcId]: "Eiland" },
       npcVisibility: { ["eiland" as NpcId]: { type: "always" } },
       questNpcIds: { ["request_for_berries" as QuestId]: "eiland" as NpcId },
@@ -585,7 +590,7 @@ describe("buildSourceSegments — quest types", () => {
       categoryVisibility: {
         stillwell_challenges: { npcId: "stillwell" as NpcId, type: "npcKnown" },
       },
-      questNames: { lost_relic: "Lost Relic" },
+      questNames: { ["lost_relic" as QuestId]: "Lost Relic" },
     };
     expect(buildSourceSegments(source, lookups)[0]).toMatchObject({
       condition: { npcId: "stillwell", type: "npcKnown" },
@@ -596,7 +601,10 @@ describe("buildSourceSegments — quest types", () => {
 describe("buildSourceSegments — item/cosmetic source types", () => {
   it("animal_product with known animal name", () => {
     const source: AcquisitionSource = { animalId: "alpaca" as AnimalId, type: "animal_product" };
-    const lookups: SegmentLookups = { ...BASE_LOOKUPS, animalNames: { alpaca: "Alpaca" } };
+    const lookups: SegmentLookups = {
+      ...BASE_LOOKUPS,
+      animalNames: { ["alpaca" as AnimalId]: "Alpaca" },
+    };
     expect(buildSourceSegments(source, lookups)).toEqual(["Collect from Alpaca"]);
   });
 
@@ -629,7 +637,7 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
     };
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
-      itemNames: { ancient_vase: "Ancient Vase" },
+      itemNames: { ["ancient_vase" as ItemId]: "Ancient Vase" },
     };
     expect(buildSourceSegments(source, lookups)).toEqual(["Replicate from Ancient Vase"]);
   });
@@ -658,7 +666,7 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
     };
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
-      itemNames: { turnip_seeds: "Turnip Seeds" },
+      itemNames: { ["turnip_seeds" as ItemId]: "Turnip Seeds" },
     };
     const result = buildSourceSegments(source, lookups);
     expect(result[0]).toContain("Grow");
@@ -684,7 +692,7 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
     const source: AcquisitionSource = { itemId: "fishing_rod" as ItemId, type: "equipment" };
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
-      itemNames: { fishing_rod: "Fishing Rod" },
+      itemNames: { ["fishing_rod" as ItemId]: "Fishing Rod" },
     };
     expect(buildSourceSegments(source, lookups)).toEqual(["Use Fishing Rod"]);
   });
@@ -697,7 +705,9 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
     };
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
-      festivals: { harvest_festival: { name: "Harvest Festival" } },
+      festivals: {
+        ["harvest" as FestivalId]: { date: { day: 10, season: "fall" }, name: "Harvest Festival" },
+      },
     };
     expect(buildSourceSegments(source, lookups)).toEqual([
       "Participate in an activity at the Harvest Festival",
@@ -810,7 +820,7 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
     const source: AcquisitionSource = { saplingItemId: "apple_sapling" as ItemId, type: "tree" };
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
-      itemNames: { apple_sapling: "Apple Sapling" },
+      itemNames: { ["apple_sapling" as ItemId]: "Apple Sapling" },
     };
     expect(buildSourceSegments(source, lookups)).toEqual(["Harvest from Apple Sapling"]);
   });

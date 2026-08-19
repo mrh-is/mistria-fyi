@@ -1,12 +1,15 @@
 import type {
+  MinesBiome,
   MinesBiomeId,
-  RecipeId,
+  Perk,
+  PerkId,
+  QuestType,
   Season,
+  SkillId,
   StoreId,
   TrackerData,
   Weather,
 } from "$lib/types/tracker-data.js";
-import type { VisibilityCondition } from "$lib/types/visibility.js";
 
 const SEASON_LABEL: Record<Season, string> = {
   fall: "Fall",
@@ -33,29 +36,25 @@ const WEATHER_LABEL: Record<Weather, string> = {
   special: "Breeze",
 };
 
-export interface RecipeSourceLookups {
-  biomes: TrackerData["mines"]["biomes"];
-  festivals: Partial<Record<string, { name: string }>>;
-  itemNames: Partial<Record<string, string>>;
-  perks: Partial<
-    Record<
-      string,
-      {
-        name: string;
-        skillId: string;
-        tier: number;
-        visibility?: VisibilityCondition;
-      }
-    >
-  >;
-  perkTierLevels: number[];
-  questNames: Partial<Record<string, string>>;
-  recipeNames: Partial<Record<RecipeId, string>>;
-  redactedStoreIds?: ReadonlySet<string>;
-  skillNames: Partial<Record<string, string>>;
-  stores: Partial<Record<string, { article?: "the"; name: string; upgradeAction?: string }>>;
-  treasureChestTiers: Partial<Record<string, { name: string }>>;
-}
+export type NameLookup<T> = Partial<Record<keyof T, string>>;
+
+export type PartialPick<T, K extends keyof T> = {
+  [P in K]: Partial<T[P]>;
+};
+
+export type RecipeSourceLookups = PartialPick<
+  TrackerData,
+  "festivals" | "stores" | "treasureChestTiers"
+> &
+  Pick<TrackerData, "perkTierLevels"> & {
+    biomes: MinesBiome[];
+    itemNames: NameLookup<TrackerData["items"]>;
+    perks: Partial<Record<PerkId, Perk & { skillId: SkillId; tier: number }>>;
+    questNames: NameLookup<TrackerData["quests"][QuestType]>;
+    recipeNames: NameLookup<TrackerData["recipes"]>;
+    redactedStoreIds?: ReadonlySet<string>;
+    skillNames: NameLookup<TrackerData["skills"]>;
+  };
 
 /** Shorten repetitive quest name prefixes */
 export function displayQuestName(name: string, questType: string): string {

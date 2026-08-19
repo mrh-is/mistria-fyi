@@ -14,7 +14,7 @@
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
 
   import type { QuestState } from "$lib/stores/user-state.svelte.js";
-  import type { NpcId, QuestId, QuestType } from "$lib/types/tracker-data.js";
+  import type { QuestId, QuestType } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   const redactGuard = createRedactionGuard();
@@ -130,7 +130,7 @@
 
 {#each typeOrder as questType (questType)}
   {@const categoryRevealed = isVisible(
-    trackerData.categoryVisibility[questType],
+    trackerData.categoryVisibility[questType] ?? { type: "always" },
     userState.progressionState,
   )}
   {@const chainOrder =
@@ -212,7 +212,7 @@
               {quest.displayName}
               {#if quest.npc && (questType === "fetch_quests" || duplicateNames.has(quest.displayName))}
                 <span class="text-sm text-muted-foreground">
-                  {trackerData.npcs[quest.npc as NpcId].name}
+                  {trackerData.npcs[quest.npc].name}
                 </span>
               {/if}
             </span>

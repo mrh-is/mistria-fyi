@@ -1,5 +1,5 @@
 import { trackerData } from "$lib/data/index.js";
-import { recordKeys, recordToArray } from "$lib/utils";
+import { recordKeys, recordToArray, recordValues } from "$lib/utils";
 
 import type { CompletedState, QuestState } from "$lib/stores/user-state.svelte.js";
 import type {
@@ -402,7 +402,9 @@ function getNpcOrder(): NpcId[] {
 }
 
 function getPerkOrder(): PerkId[] {
-  return (Object.keys(trackerData.perks) as PerkId[]).sort();
+  return recordValues(trackerData.skills)
+    .flatMap((skill) => skill.perkTiers.flatMap((tier) => recordKeys(tier)))
+    .sort();
 }
 
 function getQuestOrder(): { questId: QuestId; type: string }[] {

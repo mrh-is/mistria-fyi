@@ -68,7 +68,6 @@ function makeTrackerData(overrides: Partial<TrackerData> = {}): TrackerData {
     museum: [],
     npcs: {},
     npcVisibility: {},
-    perks: {},
     perkTierLevels: [1, 15, 30, 45, 60],
     questChains: { crown: [], fetch: {}, heart: {}, stillwell: [], story: {}, tali: [] },
     questGates: {

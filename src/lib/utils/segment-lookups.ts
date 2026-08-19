@@ -1,6 +1,6 @@
 import { trackerData } from "$lib/data/index.js";
+import { recordMap } from "$lib/utils";
 
-import type { NpcId } from "$lib/types/tracker-data.js";
 import type { SegmentLookups } from "$lib/utils/source-segments.js";
 
 /**
@@ -20,9 +20,6 @@ export function buildBaseSegmentLookups(
     animalNames: {},
     biomes: trackerData.mines.biomes,
     categoryVisibility: trackerData.categoryVisibility,
-    festivalDates: Object.fromEntries(
-      Object.entries(trackerData.festivals).map(([id, festival]) => [id, festival.date]),
-    ),
     festivals: trackerData.festivals,
     itemNames: Object.fromEntries(
       Object.entries(trackerData.items).map(([id, item]) => [id, item.name]),
@@ -38,7 +35,7 @@ export function buildBaseSegmentLookups(
       Object.entries(trackerData.npcs).map(([id, npc]) => [id, npc.name]),
     ),
     npcVisibility: trackerData.npcVisibility,
-    perks: trackerData.perks,
+    perks: trackerData.skills,
     perkTierLevels: trackerData.perkTierLevels,
     questNames: Object.fromEntries(
       Object.values(trackerData.quests).flatMap((group) =>
@@ -49,19 +46,15 @@ export function buildBaseSegmentLookups(
       Object.values(trackerData.quests).flatMap((group) =>
         Object.entries(group)
           .filter(([, q]) => q.npc)
-          .map(([id, q]) => [id, q.npc as NpcId]),
+          .map(([id, q]) => [id, q.npc]),
       ),
     ),
-    recipeNames: Object.fromEntries(
-      Object.entries(trackerData.recipes).map(([id, recipe]) => [
-        id,
-        recipe.presentations[0]?.name ?? id,
-      ]),
+    recipeNames: recordMap(
+      trackerData.recipes,
+      (recipe, id) => recipe.presentations[0]?.name ?? id,
     ),
     redactedStoreIds,
-    skillNames: Object.fromEntries(
-      Object.entries(trackerData.skills).map(([id, name]) => [id, name]),
-    ),
+    skillNames: recordMap(trackerData.skills, ({ name }) => name),
     stationNames: {},
     stores: trackerData.stores,
     storeVisibility: trackerData.storeVisibility,

@@ -8,7 +8,7 @@
 
   let skills = $derived(
     Object.entries(trackerData.skills)
-      .map(([id, name]) => ({ id: id as SkillId, name }))
+      .map(([id, skill]) => ({ id: id as SkillId, name: skill.name }))
       .sort((a, b) => a.name.localeCompare(b.name)),
   );
 </script>

@@ -2,8 +2,6 @@ import { formatBiomeName, formatStoreName, seasonLabel, withIndefiniteArticle } 
 
 import type {
   AcquisitionSource,
-  FestivalId,
-  ItemId,
   LocationId,
   MinesBiomeId,
   NpcId,
@@ -11,26 +9,26 @@ import type {
   QuestId,
   Season,
   StoreId,
+  TrackerData,
   WaterType,
 } from "$lib/types/tracker-data.js";
 import type { VisibilityCondition } from "$lib/types/visibility.js";
 
-import type { RecipeSourceLookups } from "./format.js";
+import type { NameLookup, RecipeSourceLookups } from "./format.js";
 
-export interface SegmentLookups extends RecipeSourceLookups {
-  animalNames: Partial<Record<string, string>>;
-  categoryVisibility: Partial<Record<string, VisibilityCondition>>;
-  entityVisibility: VisibilityCondition;
-  festivalDates: Partial<Record<FestivalId, { day: number; season: Season }>>;
-  itemVisibility: Partial<Record<ItemId, VisibilityCondition>>;
-  locationNames: Partial<Record<string, string>>;
-  monsterNames: Partial<Record<string, string>>;
-  npcNames: Partial<Record<NpcId, string>>;
-  npcVisibility: Partial<Record<NpcId, VisibilityCondition>>;
-  questNpcIds: Partial<Record<QuestId, NpcId>>;
-  stationNames: Partial<Record<string, string>>;
-  storeVisibility: Partial<Record<StoreId, VisibilityCondition>>;
-}
+export type SegmentLookups = Pick<TrackerData, "categoryVisibility"> &
+  RecipeSourceLookups & {
+    animalNames: NameLookup<TrackerData["animals"]>;
+    entityVisibility: VisibilityCondition;
+    itemVisibility: VisibilityLookup<TrackerData["items"]>;
+    locationNames: Partial<Record<string, string>>;
+    monsterNames: Partial<Record<string, string>>;
+    npcNames: NameLookup<TrackerData["npcs"]>;
+    npcVisibility: VisibilityLookup<TrackerData["npcs"]>;
+    questNpcIds: Partial<Record<QuestId, NpcId>>;
+    stationNames: Partial<Record<string, string>>;
+    storeVisibility: VisibilityLookup<TrackerData["stores"]>;
+  };
 
 export type SourceSegment =
   | string
@@ -40,6 +38,8 @@ export type SourceSegment =
       revealed: [SourceSegment, ...SourceSegment[]];
     }
   | { redacted: true };
+
+type VisibilityLookup<T> = Partial<Record<keyof T, VisibilityCondition>>;
 
 export function buildBiomeLabel(
   biomeId: MinesBiomeId,
@@ -72,13 +72,17 @@ export function buildPerkLabel(
   perkId: PerkId,
   lookups: SegmentLookups,
 ): [SourceSegment, ...SourceSegment[]] {
-  const perk = lookups.perks[perkId as string];
+  const perk = lookups.perks[perkId];
   if (!perk) return [`the ${titleCase(perkId)} perk`];
 
   const skillName = lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId);
   const tierSuffix = ` (${skillName} tier ${String(perk.tier)})`;
-  const condition = perk.visibility;
-  if (!condition) return [`the ${perk.name} perk${tierSuffix}`];
+  const level = lookups.perkTierLevels[perk.tier];
+  const condition: VisibilityCondition = {
+    level,
+    skillId: perk.skillId,
+    type: "skillLevel",
+  };
 
   return [
     {
@@ -95,7 +99,7 @@ export function buildSourceSegments(
 ): [SourceSegment, ...SourceSegment[]] {
   switch (source.type) {
     case "animal_product": {
-      const name = lookups.animalNames[source.animalId as string] ?? titleCase(source.animalId);
+      const name = lookups.animalNames[source.animalId] ?? titleCase(source.animalId);
       return [`Collect from ${name}`];
     }
     case "artifact_dig": {
@@ -103,8 +107,7 @@ export function buildSourceSegments(
       return [locations ? `Dig up at ${locations}` : "Dig up at an artifact dig site"];
     }
     case "artifact_replicator": {
-      const itemName =
-        lookups.itemNames[source.originalItemId as string] ?? titleCase(source.originalItemId);
+      const itemName = lookups.itemNames[source.originalItemId] ?? titleCase(source.originalItemId);
       return [`Replicate from ${itemName}`];
     }
     case "beach_cave_chest":
@@ -118,8 +121,7 @@ export function buildSourceSegments(
     case "chicken_statue":
       return [`Obtain from the Chicken Statue (${String(source.cost)} beads)`];
     case "crop": {
-      const seedName =
-        lookups.itemNames[source.seedItemId as string] ?? titleCase(source.seedItemId);
+      const seedName = lookups.itemNames[source.seedItemId] ?? titleCase(source.seedItemId);
       return [`Grow from ${seedName}`];
     }
     case "date":
@@ -133,13 +135,13 @@ export function buildSourceSegments(
     case "engagement":
       return ["Receive from Elsie after getting to 10 hearts with a dateable character"];
     case "equipment": {
-      const itemName = lookups.itemNames[source.itemId as string] ?? titleCase(source.itemId);
+      const itemName = lookups.itemNames[source.itemId] ?? titleCase(source.itemId);
       return [`Use ${itemName}`];
     }
     case "festival": {
       const festivalName =
-        lookups.festivals[source.festivalId as string]?.name ?? titleCase(source.festivalId);
-      const date = lookups.festivalDates[source.festivalId];
+        lookups.festivals[source.festivalId]?.name ?? titleCase(source.festivalId);
+      const date = lookups.festivals[source.festivalId]?.date;
       const dateSuffix = date ? ` (${formatDateLabel(date.season, date.day)})` : "";
       if (!source.storeId) return [`Obtain at the ${festivalName}${dateSuffix}`];
       const storeName = formatStoreName(source.storeId, lookups.stores);
@@ -147,7 +149,7 @@ export function buildSourceSegments(
     }
     case "festival_activity": {
       const festivalName =
-        lookups.festivals[source.festivalId as string]?.name ?? titleCase(source.festivalId);
+        lookups.festivals[source.festivalId]?.name ?? titleCase(source.festivalId);
       return [`Participate in an activity at the ${festivalName}`];
     }
     case "fish": {
@@ -163,8 +165,7 @@ export function buildSourceSegments(
     case "letter": {
       if (source.trigger === "shipped_item" || source.trigger === "donated_item") {
         const verb = source.trigger === "shipped_item" ? "shipping" : "donating";
-        const itemName =
-          lookups.itemNames[source.triggerItemId as string] ?? titleCase(source.triggerItemId);
+        const itemName = lookups.itemNames[source.triggerItemId] ?? titleCase(source.triggerItemId);
         const itemVis = lookups.itemVisibility[source.triggerItemId];
         const nameWithArticle = withIndefiniteArticle(itemName);
         const itemSegment: SourceSegment =
@@ -192,7 +193,7 @@ export function buildSourceSegments(
     case "mines_dig_site": {
       const biomeLabel = buildBiomeLabel(source.biomeId, lookups);
       if (!source.perkId) return joinSegments("Dig up in ", biomeLabel);
-      const perk = lookups.perks[source.perkId as string];
+      const perk = lookups.perks[source.perkId];
       const perkName = perk?.name ?? titleCase(source.perkId);
       const skillName = perk ? (lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId)) : "";
       const tierStr = perk ? ` (${skillName} tier ${String(perk.tier)})` : "";
@@ -206,11 +207,11 @@ export function buildSourceSegments(
     }
 
     case "monster": {
-      const name = lookups.monsterNames[source.monsterId as string] ?? titleCase(source.monsterId);
+      const name = lookups.monsterNames[source.monsterId] ?? titleCase(source.monsterId);
       return [`Dropped by ${name}`];
     }
     case "monster_feed": {
-      const name = lookups.monsterNames[source.monsterId as string] ?? titleCase(source.monsterId);
+      const name = lookups.monsterNames[source.monsterId] ?? titleCase(source.monsterId);
       return [`Feed ${name}`];
     }
     case "museum_donation": {
@@ -253,8 +254,7 @@ export function buildSourceSegments(
       return joinSegments("Purchase ", bundleSegment, " from ", storeName, qualifier);
     }
     case "station": {
-      const stationName =
-        lookups.stationNames[source.stationId as string] ?? titleCase(source.stationId);
+      const stationName = lookups.stationNames[source.stationId] ?? titleCase(source.stationId);
       return [`Process at ${stationName}`];
     }
     case "store": {
@@ -263,13 +263,13 @@ export function buildSourceSegments(
       return joinSegments("Purchase from ", storeName, qualifier);
     }
     case "treasure_chest": {
-      const tierData = lookups.treasureChestTiers[source.tier as string];
+      const tierData = lookups.treasureChestTiers[source.tier];
       const name = tierData?.name ?? `${titleCase(source.tier)} Treasure Box`;
       return [`Fish up ${withIndefiniteArticle(name)}`];
     }
     case "tree": {
       const saplingName =
-        lookups.itemNames[source.saplingItemId as string] ?? titleCase(source.saplingItemId);
+        lookups.itemNames[source.saplingItemId] ?? titleCase(source.saplingItemId);
       return [`Harvest from ${saplingName}`];
     }
     case "upgrade":
@@ -355,7 +355,7 @@ function buildFetchQuestSegments(
     npcVis && npcVis.type !== "always" ? { condition: npcVis, revealed: [npcName] } : npcName;
 
   const itemId = source.requestedItemId;
-  const itemName = itemId ? (lookups.itemNames[itemId as string] ?? titleCase(itemId)) : "???";
+  const itemName = itemId ? (lookups.itemNames[itemId] ?? titleCase(itemId)) : "???";
   const itemSegment: SourceSegment =
     questVis && questVis.type !== "always"
       ? { condition: questVis, revealed: [itemName] }
@@ -386,9 +386,7 @@ function buildHeartQuestSegments(
 }
 
 function buildLocationList(locationIds: LocationId[] | undefined, lookups: SegmentLookups): string {
-  return (locationIds ?? [])
-    .map((id) => lookups.locationNames[id as string] ?? titleCase(id))
-    .join(", ");
+  return (locationIds ?? []).map((id) => lookups.locationNames[id] ?? titleCase(id)).join(", ");
 }
 
 function buildMissionQuestSegments(
@@ -414,7 +412,7 @@ function buildQuestSegments(
   source: AcquisitionSource & { type: "quest" },
   lookups: SegmentLookups,
 ): [SourceSegment, ...SourceSegment[]] {
-  const questType = source.questType as string;
+  const questType = source.questType;
 
   switch (questType) {
     case "crown_quests":
@@ -427,6 +425,7 @@ function buildQuestSegments(
       return buildMissionQuestSegments(source, lookups);
     case "tali_challenges":
       return buildCookingChallengeSegments(source, lookups);
+    case undefined:
     default:
       return buildStoryQuestSegments(source, lookups);
   }

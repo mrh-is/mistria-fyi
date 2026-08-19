@@ -111,15 +111,13 @@ export interface Npc {
 export type NpcId = string & { readonly __brand: "NpcId" };
 export interface Perk {
   name: string;
-  skillId: SkillId;
-  tier: number;
-  visibility?: VisibilityCondition;
 }
 export type PerkId = string & { readonly __brand: "PerkId" };
+export type PerkTier = Record<PerkId, Perk>;
 export interface Quest extends TrackerEntity {
   heartLevelChanges?: HeartLevelChange[];
   name: string;
-  npc?: string;
+  npc?: NpcId;
 }
 export type QuestId = string & { readonly __brand: "QuestId" };
 export type QuestType = string & { readonly __brand: "QuestType" };
@@ -133,6 +131,10 @@ export interface RecipePresentation {
   name: string;
 }
 export type Season = "fall" | "spring" | "summer" | "winter";
+export interface Skill {
+  name: string;
+  perkTiers: [PerkTier, PerkTier, PerkTier, PerkTier, PerkTier];
+}
 export type SkillId = string & { readonly __brand: "SkillId" };
 export interface Spell extends TrackerEntity {
   name: string;
@@ -147,7 +149,7 @@ export type StoreId = string & { readonly __brand: "StoreId" };
 export interface TrackerData {
   almanac: AlmanacCategory[];
   animals: Record<AnimalId, Animal>;
-  categoryVisibility: Record<string, VisibilityCondition>;
+  categoryVisibility: Partial<Record<string, VisibilityCondition>>;
   cosmetics: Record<CosmeticId, Cosmetic>;
   festivals: Record<FestivalId, Festival>;
   generatedAt: string;
@@ -160,8 +162,7 @@ export interface TrackerData {
   museum: MuseumWing[];
   npcs: Record<NpcId, Npc>;
   npcVisibility: Record<NpcId, VisibilityCondition>;
-  perks: Record<PerkId, Perk>;
-  perkTierLevels: number[];
+  perkTierLevels: [number, number, number, number, number];
   questChains: {
     crown: QuestId[];
     fetch: Record<QuestId, VisibilityCondition>;
@@ -182,7 +183,7 @@ export interface TrackerData {
     levelsPerRank: number;
     ranks: { name: string }[];
   };
-  skills: Record<SkillId, string>;
+  skills: Record<SkillId, Skill>;
   stores: Record<StoreId, Store>;
   storeVisibility: Record<StoreId, VisibilityCondition>;
   treasureChestTiers: Record<TreasureChestTierId, { name: string }>;

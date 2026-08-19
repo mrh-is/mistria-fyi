@@ -1,4 +1,5 @@
 import { trackerData } from "$lib/data/index.js";
+import { recordKeys, recordValues } from "$lib/utils.js";
 
 import type { CompletedState, MergeCounts, QuestState } from "$lib/stores/user-state.svelte.js";
 import type {
@@ -180,7 +181,11 @@ export function buildImportState(bundle: SaveBundle): {
 
   // ── Perks ──
   const perkIds = new Set<PerkId>();
-  const validPerks = new Set(Object.keys(trackerData.perks));
+  const validPerks = new Set(
+    recordValues(trackerData.skills).flatMap((skill) =>
+      skill.perkTiers.flatMap((tier) => recordKeys(tier)),
+    ) as string[],
+  );
 
   for (const id of save?.perks ?? []) {
     if (validPerks.has(id)) {

@@ -268,16 +268,12 @@ function evaluateQuestPrerequisites(
   questVisibilitySoFar: Record<string, QuestVisibility>,
 ): QuestVisibility {
   const chains = trackerData.questChains;
+  const visibility = trackerData.categoryVisibility[questType];
+  if (!visibility) throw new Error(`Unknown visibility for quest type ${questType}`);
 
   switch (questType) {
     case "crown_quests":
-      return evaluateOrderedChain(
-        chains.crown,
-        questId,
-        completed,
-        trackerData,
-        trackerData.categoryVisibility.crown_quests,
-      );
+      return evaluateOrderedChain(chains.crown, questId, completed, trackerData, visibility);
     case "fetch_quests": {
       const condition = lookup(chains.fetch, questId);
       if (!condition) return "unavailable";
@@ -304,13 +300,7 @@ function evaluateQuestPrerequisites(
       return heartLevelMet && prereqMet ? "available" : "unavailable";
     }
     case "stillwell_challenges":
-      return evaluateOrderedChain(
-        chains.stillwell,
-        questId,
-        completed,
-        trackerData,
-        trackerData.categoryVisibility.stillwell_challenges,
-      );
+      return evaluateOrderedChain(chains.stillwell, questId, completed, trackerData, visibility);
     case "story_quests": {
       const prerequisites = lookup(chains.story, questId)?.prerequisites ?? [];
       const allMet = prerequisites.every(
@@ -319,13 +309,7 @@ function evaluateQuestPrerequisites(
       return allMet ? "available" : "unavailable";
     }
     case "tali_challenges":
-      return evaluateOrderedChain(
-        chains.tali,
-        questId,
-        completed,
-        trackerData,
-        trackerData.categoryVisibility.tali_challenges,
-      );
+      return evaluateOrderedChain(chains.tali, questId, completed, trackerData, visibility);
     default:
       return "unavailable";
   }
