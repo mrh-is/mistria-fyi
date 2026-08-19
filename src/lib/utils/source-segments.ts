@@ -2,10 +2,10 @@ import { formatBiomeName, formatStoreName, seasonLabel, withIndefiniteArticle } 
 
 import type {
   AcquisitionSource,
-  BiomeId,
   FestivalId,
   ItemId,
   LocationId,
+  MinesBiomeId,
   NpcId,
   PerkId,
   QuestId,
@@ -42,7 +42,7 @@ export type SourceSegment =
   | { redacted: true };
 
 export function buildBiomeLabel(
-  biomeId: BiomeId,
+  biomeId: MinesBiomeId,
   lookups: SegmentLookups,
 ): [SourceSegment, ...SourceSegment[]] {
   const biome = lookups.biomes.find((b) => b.id === biomeId);

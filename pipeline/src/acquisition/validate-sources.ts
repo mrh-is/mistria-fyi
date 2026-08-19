@@ -70,6 +70,7 @@ const SOURCE_FIELDS = {
   artifact_dig: ["locationIds"],
   artifact_replicator: ["originalItemId"],
   beach_cave_chest: [],
+  breed: [],
   bug_catch: ["locationIds"],
   chicken_statue: ["cost"],
   crop: ["seedItemId"],

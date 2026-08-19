@@ -2,10 +2,10 @@ import { canonicalSourceJson } from "./source-accumulator.js";
 
 import type { ActivityId, MonsterId, Source, StationId } from "$lib/types/acquisition.js";
 import type {
-  BiomeId,
   CosmeticId,
   FestivalId,
   ItemId,
+  MinesBiomeId,
   NpcId,
   PerkId,
   QuestId,
@@ -40,17 +40,13 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
     },
   ],
 
-  ["dragon_mosaic_flooring" as ItemId]: [
-    { cost: { amount: 100, currency: "tesserae" as const }, type: "wishing_well" as const },
-  ],
+  ["dragon_mosaic_flooring" as ItemId]: [{ cost: 100, type: "wishing_well" as const }],
   // --- Dragon set furniture: Wishing well (commented out in wishing_well.toml) ---
   // Wiki: https://fieldsofmistria.wiki.gg/wiki/Wishing_Well
   // These two dragon set items are tagged dragon_wishing_well_set but are commented out in
   // wishing_well.toml's large_roll. The tag is evidence of intended acquisition path; the
   // items are present in the almanac and have full descriptions.
-  ["dragon_relief_wallpaper" as ItemId]: [
-    { cost: { amount: 100, currency: "tesserae" as const }, type: "wishing_well" as const },
-  ],
+  ["dragon_relief_wallpaper" as ItemId]: [{ cost: 100, type: "wishing_well" as const }],
 
   // --- Pirate set furniture: Wishing well rewards ---
   // Wiki: https://fieldsofmistria.wiki.gg/wiki/Wishing_Well
@@ -69,10 +65,7 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
       "pirate_nautical_compass_v1",
       "pirate_nautical_compass_v2",
       "mournful_clown_painting",
-    ].map((id) => [
-      id as ItemId,
-      [{ cost: { amount: 100, currency: "tesserae" as const }, type: "wishing_well" as const }],
-    ]),
+    ].map((id) => [id as ItemId, [{ cost: 100, type: "wishing_well" as const }]]),
   ),
 
   // --- Station products: Apiary & Terrarium outputs ---
@@ -222,12 +215,14 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   ),
 
   // dragon_horn_mushroom: Mine forageable in the Ancient Ruins biome
-  ["dragon_horn_mushroom" as ItemId]: [{ biomeId: "biome_4" as BiomeId, type: "mine" as const }],
+  ["dragon_horn_mushroom" as ItemId]: [
+    { biomeId: "biome_4" as MinesBiomeId, type: "mine" as const },
+  ],
   // void_powder: Dropped by void monsters in the Ancient Ruins biome
   ["void_powder" as ItemId]: [{ monsterId: "void_cat" as MonsterId, type: "monster" as const }],
   // --- Mine & exploration items ---
   // void_stone: Mine drop from the Ancient Ruins biome, also quest item
-  ["void_stone" as ItemId]: [{ biomeId: "biome_4" as BiomeId, type: "mine" as const }],
+  ["void_stone" as ItemId]: [{ biomeId: "biome_4" as MinesBiomeId, type: "mine" as const }],
 
   // --- Monster drops ---
   // mob_coin, medium_mob_coin, large_mob_coin: Currency dropped by mine monsters
@@ -266,7 +261,7 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
     { questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const, type: "quest" },
   ],
   // void_newt: Material from the Ancient Ruins biome
-  ["void_newt" as ItemId]: [{ biomeId: "biome_4" as BiomeId, type: "mine" as const }],
+  ["void_newt" as ItemId]: [{ biomeId: "biome_4" as MinesBiomeId, type: "mine" as const }],
   // void_set_scroll_bundle: Obtained from void monsters in Ancient Ruins
   ["void_set_scroll_bundle" as ItemId]: [
     { monsterId: "any" as MonsterId, type: "monster" as const },
@@ -307,7 +302,7 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
     },
   ],
 
-  ["abyssal_chest" as ItemId]: [{ biomeId: "biome_4" as BiomeId, type: "mine" as const }],
+  ["abyssal_chest" as ItemId]: [{ biomeId: "biome_4" as MinesBiomeId, type: "mine" as const }],
   // --- Quest/story items without user-facing acquisition path ---
   // These items exist in the items registry but are obtained through story progression,
   // cutscenes, or special interactions that aren't encoded in reward arrays.
@@ -382,12 +377,8 @@ export const COSMETIC_OVERRIDES: Partial<Record<CosmeticId, Source[]>> = {
   // Wiki: https://fieldsofmistria.wiki.gg/wiki/Wishing_Well
   // Soup Pot Hat and Teapot Hat are obtainable from the Wishing Well. The native data only stores
   // price configuration; the reward pool is not encoded in the static game data.
-  ["head_soup_pot" as CosmeticId]: [
-    { cost: { amount: 100, currency: "tesserae" as const }, type: "wishing_well" as const },
-  ],
-  ["head_teapot" as CosmeticId]: [
-    { cost: { amount: 100, currency: "tesserae" as const }, type: "wishing_well" as const },
-  ],
+  ["head_soup_pot" as CosmeticId]: [{ cost: 100, type: "wishing_well" as const }],
+  ["head_teapot" as CosmeticId]: [{ cost: 100, type: "wishing_well" as const }],
   ["robe_dragon_cleric" as CosmeticId]: [
     { perkId: "lost_to_history" as PerkId, type: "ritual_chamber" as const },
   ],

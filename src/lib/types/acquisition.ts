@@ -1,8 +1,8 @@
 import type {
   AnimalId,
-  BiomeId,
   FestivalId,
   ItemId,
+  MinesBiomeId,
   NpcId,
   PerkId,
   QuestId,
@@ -11,7 +11,7 @@ import type {
   Season,
   SkillId,
   StoreId,
-  TreasureChestTier,
+  TreasureChestTierId,
   Weather,
   WingId,
 } from "./tracker-data.js";
@@ -48,9 +48,14 @@ export type Source =
         | { activity: "crop_harvest"; perkId: PerkId; type: "perk_drop" }
         | { activityId: ActivityId; festivalId: FestivalId; type: "festival_activity" }
         | { animalId: AnimalId; type: "animal_product" }
-        | { biomeId: BiomeId; lootGroup?: DungeonLootGroup; perkId?: PerkId; type: "mines_chest" }
-        | { biomeId: BiomeId; perkId: PerkId; type: "mines_dig_site" }
-        | { biomeId: BiomeId; type: "mine" }
+        | {
+            biomeId: MinesBiomeId;
+            lootGroup?: DungeonLootGroup;
+            perkId?: PerkId;
+            type: "mines_chest";
+          }
+        | { biomeId: MinesBiomeId; perkId: PerkId; type: "mines_dig_site" }
+        | { biomeId: MinesBiomeId; type: "mine" }
         | { bundleName: string; storeId: StoreId; type: "scroll_bundle" }
         | {
             challengeRecipeId?: RecipeId;
@@ -83,7 +88,7 @@ export type Source =
         | { stationId: StationId; type: "station" }
         | { storeId: StoreId; type: "store" }
         | { storeId: StoreId; type: "upgrade"; upgradeName: string }
-        | { tier: TreasureChestTier; type: "treasure_chest" }
+        | { tier: TreasureChestTierId; type: "treasure_chest" }
         | { trigger: "donated_item"; triggerItemId: ItemId; type: "letter" }
         | {
             trigger: "reached_date";

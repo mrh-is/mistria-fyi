@@ -11,10 +11,10 @@ import type {
 } from "$lib/types/acquisition.js";
 import type {
   AnimalId,
-  BiomeId,
   CosmeticId,
   FestivalId,
   ItemId,
+  MinesBiomeId,
   PerkId,
   Season,
   Weather,
@@ -61,12 +61,12 @@ function buildNaturalAvailability(
   return simplifyAvailabilityCondition({ conditions, type: "all" });
 }
 
-const MINE_SUBCAT_TO_BIOME: Record<string, BiomeId> = {
-  deep_earth: "biome_2" as BiomeId,
-  lava_caves: "biome_3" as BiomeId,
-  ruins: "biome_4" as BiomeId,
-  tide_caverns: "biome_1" as BiomeId,
-  upper_mines: "biome_0" as BiomeId,
+const MINE_SUBCAT_TO_BIOME: Record<string, MinesBiomeId> = {
+  deep_earth: "biome_2" as MinesBiomeId,
+  lava_caves: "biome_3" as MinesBiomeId,
+  ruins: "biome_4" as MinesBiomeId,
+  tide_caverns: "biome_1" as MinesBiomeId,
+  upper_mines: "biome_0" as MinesBiomeId,
 };
 
 function collectAnimalProductSources(

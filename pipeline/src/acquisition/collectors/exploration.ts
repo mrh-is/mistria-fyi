@@ -1,7 +1,7 @@
 import { forEachItem } from "../../extractor-helpers.js";
 
 import type { LocationId } from "$lib/types/acquisition.js";
-import type { BiomeId, CosmeticId, ItemId, TreasureChestTier } from "$lib/types/tracker-data.js";
+import type { CosmeticId, ItemId, MinesBiomeId } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../../parse-fiddle.js";
 import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "../source-accumulator.js";
@@ -106,7 +106,7 @@ function collectFishingChestSources(
         const cosmeticId = obj.cosmetic as string | undefined;
         if (cosmeticId) {
           cosmeticAccumulator.add(cosmeticId as CosmeticId, {
-            tier: tier as TreasureChestTier,
+            tier,
             type: "treasure_chest",
           });
         }
@@ -118,7 +118,7 @@ function collectFishingChestSources(
       const value = obj.value as string | undefined;
       if (value && kind === "item") {
         accumulator.add(value as ItemId, {
-          tier: tier as TreasureChestTier,
+          tier,
           type: "treasure_chest",
         });
       }
@@ -142,7 +142,7 @@ function collectMineBiomeSources(
     const biome = biomes[i];
     if (typeof biome !== "object" || biome === null) continue;
 
-    const biomeId = `biome_${i}` as BiomeId;
+    const biomeId = `biome_${i}` as MinesBiomeId;
 
     const cosmetics = Array.isArray(biome.cosmetics)
       ? biome.cosmetics.filter((v): v is string => typeof v === "string")
@@ -206,7 +206,7 @@ function collectPerfectOreSources(
     const biome = biomes[i];
     if (typeof biome !== "object" || biome === null) continue;
 
-    const biomeId = `biome_${i}` as BiomeId;
+    const biomeId = `biome_${i}` as MinesBiomeId;
 
     for (const mineralKey of [biome.ore, biome.gem] as (string | undefined)[]) {
       if (!mineralKey) continue;

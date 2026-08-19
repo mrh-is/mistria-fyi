@@ -1,7 +1,7 @@
 import { expectArray } from "../data-shapes.js";
 import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
 
-import type { BiomeId, SpellId, TrackerData } from "$lib/types/tracker-data.js";
+import type { MinesBiomeId, SpellId, TrackerData } from "$lib/types/tracker-data.js";
 
 /**
  * Projects dungeon biomes and spells. Biome IDs are synthetic array indices; each end floor is the
@@ -29,7 +29,7 @@ export function extractMines(fiddle: ParsedGameData): TrackerData["mines"] {
       i + 1 < rawBiomes.length
         ? ((rawBiomes[i + 1].floor as number | undefined) ?? (i + 1) * 20 + 1) - 1
         : maxFloors,
-    id: `biome_${i}` as BiomeId,
+    id: `biome_${i}` as MinesBiomeId,
     name: (b.name as string | undefined) ?? `Biome ${i + 1}`,
     startFloor: (b.floor as number | undefined) ?? i * 20 + 1,
   }));

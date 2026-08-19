@@ -18,9 +18,6 @@ export type {
   WaterType,
 } from "./acquisition.js";
 
-// ─── Branded ID types ───────────────────────────────────────────────
-// Nominal typing for string IDs to prevent accidental mixing
-
 export interface AlmanacCategory {
   id: string;
   items: ItemId[];
@@ -45,7 +42,6 @@ export interface AnimalVariant {
 export type AnimalVariantId = string & { readonly __brand: "VariantId" };
 export type AnimalVariantTier = Record<AnimalVariantId, AnimalVariant>;
 export type AnyId = string & { readonly __brand: string };
-export type BiomeId = string & { readonly __brand: "BiomeId" };
 export interface Cosmetic extends TrackerEntity {
   name: string;
   slot: CosmeticSlot;
@@ -70,6 +66,14 @@ export type CosmeticSlot =
   | "suit"
   | "top"
   | "underwear";
+export interface Day {
+  day: number;
+  season: Season;
+}
+export interface Festival {
+  date: Day;
+  name: string;
+}
 export type FestivalId = string & { readonly __brand: "FestivalId" };
 export interface HeartLevelChange {
   level: number;
@@ -81,94 +85,83 @@ export interface Item extends TrackerEntity {
   questGate?: QuestId[];
 }
 export type ItemId = string & { readonly __brand: "ItemId" };
+export interface MinesBiome {
+  endFloor: number;
+  id: MinesBiomeId;
+  name: string;
+  startFloor: number;
+}
+export type MinesBiomeId = string & { readonly __brand: "BiomeId" };
 export interface MuseumWing {
   id: WingId;
   name: string;
-  sets: { id: SetId; items: ItemId[]; name: string }[];
+  sets: MuseumWingSet[];
 }
-
+export interface MuseumWingSet {
+  id: MuseumWingSetId;
+  items: ItemId[];
+  name: string;
+}
+export type MuseumWingSetId = string & { readonly __brand: "SetId" };
+export interface Npc {
+  birthday: Day;
+  dateable: boolean;
+  name: string;
+}
 export type NpcId = string & { readonly __brand: "NpcId" };
-
+export interface Perk {
+  name: string;
+  skillId: SkillId;
+  tier: number;
+  visibility?: VisibilityCondition;
+}
 export type PerkId = string & { readonly __brand: "PerkId" };
-
 export interface Quest extends TrackerEntity {
   heartLevelChanges?: HeartLevelChange[];
   name: string;
   npc?: string;
 }
-
 export type QuestId = string & { readonly __brand: "QuestId" };
-
 export type QuestType = string & { readonly __brand: "QuestType" };
-
 export interface Recipe extends TrackerEntity {
   memberItemIds: ItemId[];
   presentations: RecipePresentation[];
 }
 export type RecipeId = string & { readonly __brand: "RecipeId" };
-
 export interface RecipePresentation {
   itemIds: ItemId[];
   name: string;
 }
-
 export type Season = "fall" | "spring" | "summer" | "winter";
-export type SetId = string & { readonly __brand: "SetId" };
-
 export type SkillId = string & { readonly __brand: "SkillId" };
-
 export interface Spell extends TrackerEntity {
   name: string;
 }
 export type SpellId = string & { readonly __brand: "SpellId" };
+export interface Store {
+  article?: "the";
+  name: string;
+  upgradeAction?: string;
+}
 export type StoreId = string & { readonly __brand: "StoreId" };
-
 export interface TrackerData {
   almanac: AlmanacCategory[];
-
   animals: Record<AnimalId, Animal>;
-
   categoryVisibility: Record<string, VisibilityCondition>;
-
   cosmetics: Record<CosmeticId, Cosmetic>;
-
-  festivals: Record<FestivalId, { date: { day: number; season: Season }; name: string }>;
-
+  festivals: Record<FestivalId, Festival>;
   generatedAt: string;
-
   items: Record<ItemId, Item>;
-
   mines: {
-    biomes: {
-      endFloor: number;
-      id: BiomeId;
-      name: string;
-      startFloor: number;
-    }[];
+    biomes: MinesBiome[];
     maxFloors: number;
     spells: Record<SpellId, Spell>;
   };
-
   museum: MuseumWing[];
-
-  npcs: Record<
-    NpcId,
-    {
-      birthday: { day: number; season: Season };
-      dateable: boolean;
-      name: string;
-    }
-  >;
-
+  npcs: Record<NpcId, Npc>;
   npcVisibility: Record<NpcId, VisibilityCondition>;
-
-  perks: Record<
-    PerkId,
-    { name: string; skillId: SkillId; tier: number; visibility?: VisibilityCondition }
-  >;
-
+  perks: Record<PerkId, Perk>;
   perkTierLevels: number[];
-
   questChains: {
     crown: QuestId[];
     fetch: Record<QuestId, VisibilityCondition>;
@@ -177,38 +170,28 @@ export interface TrackerData {
     story: Record<QuestId, { prerequisites: QuestId[] }>;
     tali: QuestId[];
   };
-
   questGates: {
     animalGates: Record<AnimalId, QuestId[]>;
     itemGates: Record<ItemId, QuestId[]>;
     progressionFlagToQuests: Record<string, QuestId[]>;
     spellGates: Record<SpellId, QuestId[]>;
   };
-
   quests: Record<QuestType, Record<QuestId, Quest>>;
-
   recipes: Record<RecipeId, Recipe>;
-
   renown: {
     levelsPerRank: number;
     ranks: { name: string }[];
   };
-
   skills: Record<SkillId, string>;
-  stores: Record<StoreId, { article?: "the"; name: string; upgradeAction?: string }>;
+  stores: Record<StoreId, Store>;
   storeVisibility: Record<StoreId, VisibilityCondition>;
-  treasureChestTiers: Record<TreasureChestTier, { name: string }>;
-
+  treasureChestTiers: Record<TreasureChestTierId, { name: string }>;
   version: string;
 }
-
 export interface TrackerEntity {
   sources?: AcquisitionSource[];
   visibility?: VisibilityCondition;
 }
-
-export type TreasureChestTier = string & { readonly __brand: "TreasureChestTier" };
-
+export type TreasureChestTierId = string & { readonly __brand: "TreasureChestTier" };
 export type Weather = "calm" | "heavy_inclement" | "inclement" | "special";
-
 export type WingId = string & { readonly __brand: "WingId" };

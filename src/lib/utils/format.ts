@@ -1,5 +1,5 @@
 import type {
-  BiomeId,
+  MinesBiomeId,
   RecipeId,
   Season,
   StoreId,
@@ -74,7 +74,10 @@ export function displayQuestName(name: string, questType: string): string {
   return name;
 }
 
-export function formatBiomeName(biomeId: BiomeId, biomes: TrackerData["mines"]["biomes"]): string {
+export function formatBiomeName(
+  biomeId: MinesBiomeId,
+  biomes: TrackerData["mines"]["biomes"],
+): string {
   const biome = biomes.find((b) => b.id === biomeId);
   if (!biome) return titleCase(biomeId);
   if (biome.name.startsWith("The ")) return `the ${biome.name.slice(4)}`;

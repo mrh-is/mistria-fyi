@@ -12,11 +12,11 @@ import type {
   AcquisitionSource,
   ActivityId,
   AnimalId,
-  BiomeId,
   DateId,
   FestivalId,
   ItemId,
   LocationId,
+  MinesBiomeId,
   MonsterId,
   NpcId,
   PerkId,
@@ -26,7 +26,7 @@ import type {
   SkillId,
   StationId,
   StoreId,
-  TreasureChestTier,
+  TreasureChestTierId,
   WaterType,
   WingId,
 } from "$lib/types/tracker-data.js";
@@ -36,9 +36,9 @@ import type { SegmentLookups } from "./source-segments.js";
 const BASE_LOOKUPS: SegmentLookups = {
   animalNames: {},
   biomes: [
-    { endFloor: 19, id: "biome_0" as BiomeId, name: "Upper Mines", startFloor: 1 },
-    { endFloor: 39, id: "biome_1" as BiomeId, name: "The Tide Caverns", startFloor: 20 },
-    { endFloor: 59, id: "biome_2" as BiomeId, name: "Deep Earth", startFloor: 40 },
+    { endFloor: 19, id: "biome_0" as MinesBiomeId, name: "Upper Mines", startFloor: 1 },
+    { endFloor: 39, id: "biome_1" as MinesBiomeId, name: "The Tide Caverns", startFloor: 20 },
+    { endFloor: 59, id: "biome_2" as MinesBiomeId, name: "Deep Earth", startFloor: 40 },
   ],
   categoryVisibility: {},
   entityVisibility: { type: "always" },
@@ -87,7 +87,7 @@ describe("buildPerkLabel", () => {
 
 describe("buildBiomeLabel", () => {
   it("creates conditional node with floor range redacted", () => {
-    const result = buildBiomeLabel("biome_1" as BiomeId, BASE_LOOKUPS);
+    const result = buildBiomeLabel("biome_1" as MinesBiomeId, BASE_LOOKUPS);
     expect(result).toEqual([
       {
         condition: { floor: 20, type: "minesLevel" },
@@ -188,7 +188,7 @@ describe("buildSourceSegments — simple types", () => {
 
   it("treasure chest", () => {
     const source: AcquisitionSource = {
-      tier: "gold" as TreasureChestTier,
+      tier: "gold" as TreasureChestTierId,
       type: "treasure_chest",
     };
     const lookups: SegmentLookups = {
@@ -381,7 +381,7 @@ describe("buildSourceSegments — festival", () => {
 describe("buildSourceSegments — mines_chest (worked example: Chickpea Curry)", () => {
   it("matches spec worked example", () => {
     const source: AcquisitionSource = {
-      biomeId: "biome_1" as BiomeId,
+      biomeId: "biome_1" as MinesBiomeId,
       perkId: "taste_maker" as PerkId,
       type: "mines_chest",
     };
@@ -426,7 +426,7 @@ describe("buildSourceSegments — mines_dig_site (worked example: Stalactite Arc
       skillNames: { ...BASE_LOOKUPS.skillNames, archaeology: "Archaeology" },
     };
     const source: AcquisitionSource = {
-      biomeId: "biome_2" as BiomeId,
+      biomeId: "biome_2" as MinesBiomeId,
       perkId: "natural_beauty" as PerkId,
       type: "mines_dig_site",
     };
@@ -739,7 +739,7 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   });
 
   it("mine wraps biome label", () => {
-    const source: AcquisitionSource = { biomeId: "biome_0" as BiomeId, type: "mine" };
+    const source: AcquisitionSource = { biomeId: "biome_0" as MinesBiomeId, type: "mine" };
     const result = buildSourceSegments(source, BASE_LOOKUPS);
     expect(result[0]).toBe("Mine in ");
     expect(result[1]).toMatchObject({

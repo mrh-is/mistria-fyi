@@ -4,9 +4,9 @@ import { resolveToVisibility } from "./visibility/requirement-resolver.js";
 
 import type { Source as AcquisitionSource } from "$lib/types/acquisition.js";
 import type {
-  BiomeId,
   FestivalId,
   ItemId,
+  MinesBiomeId,
   PerkId,
   QuestId,
   QuestType,
@@ -15,7 +15,7 @@ import type {
   RecipePresentation,
   Season,
   StoreId,
-  TreasureChestTier,
+  TreasureChestTierId,
   WingId,
 } from "$lib/types/tracker-data.js";
 import type { VisibilityCondition } from "$lib/types/visibility.js";
@@ -234,7 +234,7 @@ function collectChickenStatueSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ cost: { amount: cost, currency: "beads" }, type: "chicken_statue" });
+      sources.push({ cost, type: "chicken_statue" });
       result.set(recipeId, sources);
     }
   }
@@ -350,7 +350,7 @@ function collectFishingChestSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ tier: chestTier as TreasureChestTier, type: "treasure_chest" });
+      sources.push({ tier: chestTier as TreasureChestTierId, type: "treasure_chest" });
       result.set(recipeId, sources);
     }
   }
@@ -493,7 +493,7 @@ function collectMinesRecipeSources(
     const biome = biomes[i];
     if (typeof biome !== "object" || biome === null) continue;
     const biomeObj = biome as Record<string, unknown>;
-    const biomeId = `biome_${i}` as BiomeId;
+    const biomeId = `biome_${i}` as MinesBiomeId;
 
     const chestArrays: [string, PerkId][] = [["taste_maker", "taste_maker" as PerkId]];
     for (const [arrayKey, perkId] of chestArrays) {
@@ -911,7 +911,7 @@ function collectWishingWellSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ cost: { amount: cost, currency: "tesserae" }, type: "wishing_well" });
+      sources.push({ cost, type: "wishing_well" });
       result.set(recipeId, sources);
     }
   }

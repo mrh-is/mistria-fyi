@@ -1,7 +1,7 @@
 import { expectArray, expectStringArray } from "../data-shapes.js";
 import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
 
-import type { ItemId, MuseumWing, SetId, WingId } from "$lib/types/tracker-data.js";
+import type { ItemId, MuseumWing, MuseumWingSetId, WingId } from "$lib/types/tracker-data.js";
 
 /**
  * Projects museum wings and sets in the canonical UI display order. Object insertion order is only
@@ -28,7 +28,7 @@ export function extractMuseum(fiddle: ParsedGameData): MuseumWing[] {
 
     const sourceFile = sourceFileFor(fiddle, `museum_wings.${wingId}`);
 
-    const sets: { id: SetId; items: ItemId[]; name: string }[] = [];
+    const sets: { id: MuseumWingSetId; items: ItemId[]; name: string }[] = [];
     for (const setId of orderedSetIds) {
       const set = rawSets[setId] as Record<string, unknown> | undefined;
       if (!set) continue;
@@ -40,7 +40,7 @@ export function extractMuseum(fiddle: ParsedGameData): MuseumWing[] {
       });
 
       sets.push({
-        id: setId as SetId,
+        id: setId as MuseumWingSetId,
         items: items as ItemId[],
         name: (set.name as string | undefined) ?? setId,
       });

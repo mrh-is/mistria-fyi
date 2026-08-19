@@ -2,9 +2,10 @@ import { resolveToVisibility, simplifyCondition } from "./requirement-resolver.j
 
 import type { Source as AcquisitionSource } from "$lib/types/acquisition.js";
 import type {
-  BiomeId,
+  MinesBiomeId,
   NpcId,
   QuestId,
+  QuestType,
   SpellId,
   StoreId,
   TrackerData,
@@ -66,7 +67,7 @@ const NPC_GATES: Partial<Record<string, VisibilityCondition>> = {
 const HAYDENS_BARN_UNLOCK_QUEST = "repair_haydens_barn" as QuestId;
 
 interface SourceVisibilityContext {
-  biomeFloor: (biomeId: BiomeId) => number | undefined;
+  biomeFloor: (biomeId: MinesBiomeId) => number | undefined;
   perks: TrackerData["perks"];
   perkTierLevels: number[];
   storeVisibility: Record<StoreId, VisibilityCondition>;
@@ -206,6 +207,7 @@ function acquisitionSourceCondition(
     case "artifact_dig":
     case "artifact_replicator":
     case "beach_cave_chest":
+    case "breed":
     case "bug_catch":
     case "chicken_statue":
     case "crop":
@@ -334,7 +336,7 @@ function assignQuestVisibility(
 ): void {
   const categoryVisibility = extractCategoryVisibility();
 
-  const storyQuests = trackerData.quests.story_quests;
+  const storyQuests = trackerData.quests["story_quests" as QuestType];
   if (storyQuests) {
     for (const [questId, quest] of Object.entries(storyQuests)) {
       const prerequisites = chains.story[questId as QuestId]?.prerequisites ?? [];
@@ -350,7 +352,7 @@ function assignQuestVisibility(
     }
   }
 
-  const heartQuests = trackerData.quests.heart_quests;
+  const heartQuests = trackerData.quests["heart_quests" as QuestType];
   if (heartQuests) {
     for (const [npcId, entries] of Object.entries(chains.heart)) {
       for (const entry of entries) {
@@ -368,7 +370,7 @@ function assignQuestVisibility(
     }
   }
 
-  const fetchQuests = trackerData.quests.fetch_quests;
+  const fetchQuests = trackerData.quests["fetch_quests" as QuestType];
   if (fetchQuests) {
     const fetchVisibility = extractFetchQuestVisibility(chains.fetch, cutsceneMap);
     for (const [questId, quest] of Object.entries(fetchQuests)) {
@@ -377,17 +379,17 @@ function assignQuestVisibility(
   }
 
   assignOrderedChain(
-    trackerData.quests.crown_quests,
+    trackerData.quests["crown_quests" as QuestType],
     chains.crown,
     categoryVisibility.crown_quests,
   );
   assignOrderedChain(
-    trackerData.quests.stillwell_challenges,
+    trackerData.quests["stillwell_challenges" as QuestType],
     chains.stillwell,
     categoryVisibility.stillwell_challenges,
   );
   assignOrderedChain(
-    trackerData.quests.tali_challenges,
+    trackerData.quests["tali_challenges" as QuestType],
     chains.tali,
     categoryVisibility.tali_challenges,
   );
@@ -444,6 +446,7 @@ function computeRecipeSourceConditions(
     case "artifact_dig":
     case "artifact_replicator":
     case "beach_cave_chest":
+    case "breed":
     case "bug_catch":
     case "chicken_statue":
     case "crop":
