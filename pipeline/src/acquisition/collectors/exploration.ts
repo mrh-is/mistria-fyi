@@ -63,7 +63,6 @@ function collectArtifactReplicaSources(
     const originalId = replicaId.replace("artifact_replica_", "");
     accumulator.add(replicaId as ItemId, {
       originalItemId: originalId as ItemId,
-      requiredSetCount: 1,
       type: "artifact_replicator",
     });
   }

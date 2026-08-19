@@ -625,16 +625,13 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   it("artifact_replicator", () => {
     const source: AcquisitionSource = {
       originalItemId: "ancient_vase" as ItemId,
-      requiredSetCount: 3,
       type: "artifact_replicator",
     };
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
       itemNames: { ancient_vase: "Ancient Vase" },
     };
-    expect(buildSourceSegments(source, lookups)).toEqual([
-      "Replicate from Ancient Vase (3 museum sets)",
-    ]);
+    expect(buildSourceSegments(source, lookups)).toEqual(["Replicate from Ancient Vase"]);
   });
 
   it("bug_catch with locations", () => {

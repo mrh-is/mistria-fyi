@@ -68,7 +68,7 @@ const WEATHERS = new Set(["calm", "heavy_inclement", "inclement", "special"]);
 const SOURCE_FIELDS = {
   animal_product: ["animalId"],
   artifact_dig: ["locationIds"],
-  artifact_replicator: ["originalItemId", "requiredSetCount"],
+  artifact_replicator: ["originalItemId"],
   beach_cave_chest: [],
   bug_catch: ["locationIds"],
   chicken_statue: ["cost"],
@@ -1012,7 +1012,6 @@ function validateVariantFields(
       break;
     case "artifact_replicator":
       stringReferences.push(["originalItemId", "item"]);
-      requiredNumbers.push("requiredSetCount");
       break;
     case "chicken_statue":
       validateExpectedCurrency(source, "beads", targetId, fieldPath, diagnostics);

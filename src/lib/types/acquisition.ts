@@ -74,7 +74,7 @@ export type Source =
         | { monsterId: MonsterId; type: "monster" }
         | { monsterId: MonsterId; type: "monster_feed" }
         | { npcId: NpcId; type: "proposal" }
-        | { originalItemId: ItemId; requiredSetCount: number; type: "artifact_replicator" }
+        | { originalItemId: ItemId; type: "artifact_replicator" }
         | { perkId: PerkId; type: "perk" }
         | { perkId: PerkId; type: "ritual_chamber" }
         | { saplingItemId: ItemId; type: "tree" }

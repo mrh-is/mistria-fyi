@@ -105,7 +105,7 @@ export function buildSourceSegments(
     case "artifact_replicator": {
       const itemName =
         lookups.itemNames[source.originalItemId as string] ?? titleCase(source.originalItemId);
-      return [`Replicate from ${itemName} (${String(source.requiredSetCount)} museum sets)`];
+      return [`Replicate from ${itemName}`];
     }
     case "beach_cave_chest":
       return ["Find in the Gold Treasure Chest in the Beach Cave"];
