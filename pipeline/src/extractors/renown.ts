@@ -3,13 +3,9 @@ import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
 
 import type { TrackerData } from "$lib/types/tracker-data.js";
 
-/**
- * Extracts renown ranks. A missing renown root returns ten levels per rank with no ranks; missing
- * rank names normalize to Unknown.
- */
-export function extractRenown(fiddle: ParsedGameData): TrackerData["renown"] {
+export function extractTownRanks(fiddle: ParsedGameData): TrackerData["townRanks"] {
   const renown = fiddle.renown as Record<string, unknown> | undefined;
-  if (!renown) return { levelsPerRank: 10, ranks: [] };
+  if (!renown) return [];
 
   const levelsPerRank = (renown.levels_per_rank as number | undefined) ?? 10;
 
@@ -19,10 +15,14 @@ export function extractRenown(fiddle: ParsedGameData): TrackerData["renown"] {
     sourcePath: sourceFile,
   });
 
-  const ranks: { name: string }[] = rawRanks.map((r) => ({
+  const townRanks: TrackerData["townRanks"] = rawRanks.map((r, i) => ({
+    levels: {
+      end: (i + 1) * levelsPerRank,
+      start: i * levelsPerRank + 1,
+    },
     name: (r.name as string | undefined) ?? "Unknown",
   }));
 
-  console.log(`  Renown: ${ranks.length} ranks, ${levelsPerRank} levels per rank`);
-  return { levelsPerRank, ranks };
+  console.log(`  Town ranks: ${townRanks.length} ranks, ${levelsPerRank} levels per rank`);
+  return townRanks;
 }
