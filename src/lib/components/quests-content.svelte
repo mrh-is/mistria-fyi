@@ -13,6 +13,8 @@
   import { displayQuestName } from "$lib/utils/format.js";
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
 
+  import AllCompleted from "./all-completed.svelte";
+
   import type { QuestState } from "$lib/stores/user-state.svelte.js";
   import type { FetchQuest, QuestId, QuestType } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
@@ -219,8 +221,4 @@
   {/if}
 {/each}
 
-{#if typeOrder.every( (type) => Object.keys(trackerData.quests[type]).every((id) => getQuestState(id as QuestId) === "completed") ) && !userState.state.showCompleted}
-  <p class="py-8 text-center text-base text-muted-foreground">
-    All done! Toggle "Show completed" to review.
-  </p>
-{/if}
+<AllCompleted isAllCompleted={isQuestsComplete()} />

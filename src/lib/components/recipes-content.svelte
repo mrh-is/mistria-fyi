@@ -16,6 +16,8 @@
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
+  import AllCompleted from "./all-completed.svelte";
+
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { AcquisitionSource, Item, RecipeId } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
@@ -234,8 +236,4 @@
   {/if}
 {/each}
 
-{#if isAllComplete() && !userState.state.showCompleted}
-  <p class="py-8 text-center text-base text-muted-foreground">
-    All done! Toggle "Show completed" to review.
-  </p>
-{/if}
+<AllCompleted isAllCompleted={isAllComplete()} />
