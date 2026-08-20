@@ -7,6 +7,7 @@ import type {
   SkillId,
   Weather,
 } from "$lib/types/tracker-data.js";
+import type { NonEmptyArray } from "$lib/utils";
 
 export interface AvailabilityContext {
   heartLevels?: ReadonlyMap<NpcId, number>;
@@ -119,7 +120,7 @@ export function simplifyAvailabilityCondition(
       const withoutAlways = conditions.filter((child) => child.type !== "always");
       if (withoutAlways.length === 0) return { type: "always" };
       if (withoutAlways.length === 1) return withoutAlways[0];
-      return { type: "all", conditions: withoutAlways };
+      return { type: "all", conditions: withoutAlways as NonEmptyArray<AvailabilityCondition> };
     }
     case "always":
     case "gamePredicate":
@@ -136,9 +137,11 @@ export function simplifyAvailabilityCondition(
         const simplified = simplifyAvailabilityCondition(child);
         return simplified.type === "any" ? simplified.conditions : [simplified];
       });
-      if (conditions.some((child) => child.type === "always")) return { type: "always" };
+      if (conditions.some((child) => child.type === "always") || conditions.length === 0) {
+        return { type: "always" };
+      }
       if (conditions.length === 1) return conditions[0];
-      return { type: "any", conditions };
+      return { type: "any", conditions: conditions as NonEmptyArray<AvailabilityCondition> };
     }
     case "not": {
       const simplified = simplifyAvailabilityCondition(condition.condition);

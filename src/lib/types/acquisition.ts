@@ -1,5 +1,8 @@
+import type { NonEmptyArray } from "$lib/utils.js";
+
 import type {
   AnimalId,
+  Day,
   FestivalId,
   ItemId,
   MinesBiomeId,
@@ -15,20 +18,20 @@ import type {
   TreasureChestTierId,
   Weather,
 } from "./tracker-data.js";
-import type { VisibilityCondition } from "./visibility.js";
+import type { QuestVisibility, VisibilityCondition } from "./visibility.js";
 
 export type ActivityId = string & { readonly __brand: "ActivityId" };
 export type AvailabilityCondition =
-  | { type: "all"; conditions: AvailabilityCondition[] }
+  | { type: "all"; conditions: NonEmptyArray<AvailabilityCondition> }
   | { type: "always" }
-  | { type: "any"; conditions: AvailabilityCondition[] }
+  | { type: "any"; conditions: NonEmptyArray<AvailabilityCondition> }
   | { type: "gamePredicate"; predicate: string; value: JsonValue }
   | { type: "heartLevel"; level: number; npcId: NpcId }
   | { type: "minesLevel"; floor: number }
   | { type: "not"; condition: AvailabilityCondition }
   | { type: "perkUnlocked"; perkId: PerkId }
-  | { type: "quest"; questId: QuestId; state: "available" | "completed" }
-  | { type: "season"; seasons: Season[] }
+  | { type: "quest"; questId: QuestId; state: Omit<QuestVisibility, "unavailable"> }
+  | { type: "season"; seasons: NonEmptyArray<Season> }
   | { type: "skillLevel"; level: number; skillId: SkillId }
   | { type: "time"; start: number; end: number }
   | { type: "weather"; weathers: Weather[] };
@@ -39,34 +42,32 @@ export type JsonValue =
   boolean | JsonValue[] | null | number | string | { [key: string]: JsonValue };
 export type LocationId = string & { readonly __brand: "LocationId" };
 export type MonsterId = string & { readonly __brand: "MonsterId" };
-
 export type ProductionMethod = "cook" | "craft" | "dragon_forge" | "mill" | "smith";
-
 export type Source =
   | (SourceDetails &
       (
         | { type: "animal_product"; animalId: AnimalId }
-        | { type: "artifact_dig"; locationIds?: LocationId[] }
+        | { type: "artifact_dig"; locationIds?: NonEmptyArray<LocationId> }
         | { type: "artifact_replicator"; originalItemId: ItemId }
         | { type: "beach_cave_chest" }
         | { type: "breed" }
-        | { type: "bug_catch"; locationIds?: LocationId[] }
+        | { type: "bug_catch"; locationIds?: NonEmptyArray<LocationId> }
         | { type: "chicken_statue"; cost: number }
         | { type: "crop"; seedItemId: ItemId }
         | { type: "date"; dateId: DateId }
-        | { type: "dive"; waterTypes?: WaterType[] }
+        | { type: "dive"; waterTypes?: NonEmptyArray<WaterType> }
         | { type: "engagement" }
         | { type: "equipment"; itemId: ItemId }
         | { type: "festival"; festivalId: FestivalId; storeId?: StoreId }
         | { type: "festival_activity"; activityId: ActivityId; festivalId: FestivalId }
-        | { type: "fish"; waterTypes?: WaterType[] }
+        | { type: "fish"; waterTypes?: NonEmptyArray<WaterType> }
         | { type: "fish_trap" }
-        | { type: "forage"; locationIds?: LocationId[] }
+        | { type: "forage"; locationIds?: NonEmptyArray<LocationId> }
         | { type: "letter"; trigger: "donated_item"; triggerItemId: ItemId }
         | {
             type: "letter";
             trigger: "reached_date";
-            triggerDate: { day: number; season: Season; year?: number };
+            triggerDate: Day & { year?: number };
           }
         | { type: "letter"; trigger: "shipped_item"; triggerItemId: ItemId }
         | { type: "mine"; biomeId: MinesBiomeId }
@@ -105,14 +106,10 @@ export type Source =
         | { type: "wishing_well"; cost: number }
       ))
   | { type: "default" };
-
 export interface SourceDetails {
   availability?: AvailabilityCondition;
   visibility?: VisibilityCondition;
 }
-
-export type SourceTuple = [Source, ...Source[]];
-
+export type SourceTuple = NonEmptyArray<Source>;
 export type StationId = string & { readonly __brand: "StationId" };
-
 export type WaterType = string & { readonly __brand: "WaterType" };

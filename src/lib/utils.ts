@@ -1,6 +1,8 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+export type NonEmptyArray<T> = [T, ...T[]];
+
 export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: null | U };
 
 export type WithoutChild<T> = Omit<T, "child">;
@@ -8,6 +10,10 @@ export type WithoutChildren<T> = Omit<T, "children">;
 export type WithoutChildrenOrChild<T> = Omit<T, "child" | "children">;
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+export function isNonEmptyArray<T>(arr: T[]): arr is NonEmptyArray<T> {
+  return arr.length > 0;
 }
 
 export function recordForEach<K extends string, T>(

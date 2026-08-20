@@ -19,6 +19,7 @@ import type {
   StoreId,
   Weather,
 } from "$lib/types/tracker-data.js";
+import type { NonEmptyArray } from "$lib/utils.js";
 
 const spring = { season: "spring" as const, weather: "calm" as const };
 
@@ -26,7 +27,7 @@ function src(availability?: AvailabilityCondition): AcquisitionSource {
   return { ...(availability ? { availability } : {}), type: "store", storeId: "test" as StoreId };
 }
 
-const seasonCondition = (seasons: Season[]): AvailabilityCondition => ({
+const seasonCondition = (seasons: NonEmptyArray<Season>): AvailabilityCondition => ({
   type: "season",
   seasons,
 });
