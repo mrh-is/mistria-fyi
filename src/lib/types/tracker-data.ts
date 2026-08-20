@@ -156,6 +156,7 @@ export interface Store {
   article?: "the";
   name: string;
   upgradeAction?: string;
+  visibility?: VisibilityCondition;
 }
 export type StoreId = string & { readonly __brand: "StoreId" };
 export interface StoryQuest extends Quest {
@@ -200,7 +201,6 @@ export interface TrackerData {
   recipes: Record<RecipeId, Recipe>;
   skills: Record<SkillId, Skill>;
   stores: Record<StoreId, Store>;
-  storeVisibility: Record<StoreId, VisibilityCondition>;
   townRanks: TownRank[];
   treasureChestTiers: Record<TreasureChestTierId, { name: string }>;
   version: string;

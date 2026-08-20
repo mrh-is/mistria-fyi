@@ -49,7 +49,7 @@ export function buildBaseSegmentLookups(
     skillNames: recordMap(trackerData.skills, ({ name }) => name),
     stationNames: {},
     stores: trackerData.stores,
-    storeVisibility: trackerData.storeVisibility,
+    storeVisibility: recordMap(trackerData.stores, ({ visibility }) => visibility),
     treasureChestTiers: trackerData.treasureChestTiers,
   };
 }

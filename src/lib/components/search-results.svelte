@@ -15,11 +15,11 @@
   import type {
     AcquisitionSource,
     AnimalId,
+    AnimalVariantId,
     CosmeticId,
     ItemId,
     NpcId,
     QuestId,
-    AnimalVariantId,
   } from "$lib/types/tracker-data.js";
 
   let { query }: { query: string } = $props();
@@ -43,8 +43,10 @@
 
   let redactedStoreIds = $derived(
     new Set(
-      Object.entries(trackerData.storeVisibility)
-        .filter(([, vis]) => !isVisible(vis, userState.progressionState))
+      Object.entries(trackerData.stores)
+        .filter(
+          ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
+        )
         .map(([id]) => id),
     ),
   );
