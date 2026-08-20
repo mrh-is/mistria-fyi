@@ -87,7 +87,7 @@
         break;
       case "npcs": {
         const npcId = result.id as NpcId;
-        const current = userState.state.completed.npcLevels[result.id] ?? 0;
+        const current = userState.state.completed.npcLevels[npcId] ?? 0;
         userState.setNpcLevel(npcId, current >= 10 ? 0 : 10);
         break;
       }
@@ -97,7 +97,7 @@
   function handleQuestToggle(result: SearchResult): void {
     const questId = result.id as QuestId;
     const newlyAdded = userState.completeQuestWithRecipes(questId);
-    const newState = userState.state.completed.questStates[result.id] ?? "none";
+    const newState = userState.state.completed.questStates[questId] ?? "none";
 
     let message: string;
     if (newState === "obtained") {

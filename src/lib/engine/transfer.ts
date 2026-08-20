@@ -102,7 +102,7 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   for (let i = 0; i < npcOrder.length; i++) {
     const byteIndex = Math.floor(i / 2);
     const level = i % 2 === 0 ? (npcBytes[byteIndex] >> 4) & 0xf : npcBytes[byteIndex] & 0xf;
-    npcLevels[npcOrder[i] as string] = level;
+    npcLevels[npcOrder[i]] = level;
   }
 
   // 10. Skill levels (1 byte each)
@@ -110,7 +110,7 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   const skillBytes = readBytes(skillOrder.length);
   const skillLevels: Record<string, number> = {};
   for (let i = 0; i < skillOrder.length; i++) {
-    skillLevels[skillOrder[i] as string] = skillBytes[i];
+    skillLevels[skillOrder[i]] = skillBytes[i];
   }
 
   // 11. Quest states (2 bits each, 4 per byte)
@@ -123,7 +123,7 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
     const byteIndex = Math.floor(i / 4);
     const bitOffset = (3 - (i % 4)) * 2;
     const bits = (questBytes[byteIndex] >> bitOffset) & 0x3;
-    questStates[questOrder[i].questId as string] = questStateMap[bits];
+    questStates[questOrder[i].questId] = questStateMap[bits];
   }
 
   // 12. Perk bitfield (v2 only)
@@ -175,9 +175,9 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   const animalVariantKeys = animalVariantOrder.map((v) => `${v.animalId}:${v.variantId}`);
   const completedAnimalVariants = new Set<string>();
   for (const { animalId, variantId } of animalVariantOrder) {
-    const animalSet = completed.animals[animalId as string];
+    const animalSet = completed.animals[animalId];
     if (animalSet.has(variantId)) {
-      completedAnimalVariants.add(`${animalId as string}:${variantId as string}`);
+      completedAnimalVariants.add(`${animalId}:${variantId}`);
     }
   }
   parts.push(toBitfield(animalVariantKeys, completedAnimalVariants));
@@ -187,9 +187,9 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   const animalCosmeticKeys = animalCosmeticOrder.map((v) => `${v.animalId}:${v.cosmeticId}`);
   const completedAnimalCosmetics = new Set<string>();
   for (const { animalId, cosmeticId } of animalCosmeticOrder) {
-    const cosmeticSet = completed.animalCosmetics[animalId as string];
+    const cosmeticSet = completed.animalCosmetics[animalId];
     if (cosmeticSet.has(cosmeticId)) {
-      completedAnimalCosmetics.add(`${animalId as string}:${cosmeticId as string}`);
+      completedAnimalCosmetics.add(`${animalId}:${cosmeticId}`);
     }
   }
   parts.push(toBitfield(animalCosmeticKeys, completedAnimalCosmetics));
@@ -219,7 +219,7 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   const npcOrder = getNpcOrder();
   const npcBytes = new Uint8Array(Math.ceil(npcOrder.length / 2));
   for (let i = 0; i < npcOrder.length; i++) {
-    const level = Math.min(15, completed.npcLevels[npcOrder[i] as string] ?? 0);
+    const level = Math.min(15, completed.npcLevels[npcOrder[i]] ?? 0);
     const byteIndex = Math.floor(i / 2);
     if (i % 2 === 0) {
       npcBytes[byteIndex] |= (level & 0xf) << 4;
@@ -233,7 +233,7 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   const skillOrder = getSkillOrder();
   const skillBytes = new Uint8Array(skillOrder.length);
   for (let i = 0; i < skillOrder.length; i++) {
-    skillBytes[i] = Math.min(255, completed.skillLevels[skillOrder[i] as string] ?? 0);
+    skillBytes[i] = Math.min(255, completed.skillLevels[skillOrder[i]] ?? 0);
   }
   parts.push(skillBytes);
 
@@ -241,7 +241,7 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   const questOrder = getQuestOrder();
   const questBytes = new Uint8Array(Math.ceil(questOrder.length / 4));
   for (let i = 0; i < questOrder.length; i++) {
-    const questKey = questOrder[i].questId as string;
+    const questKey = questOrder[i].questId;
     const stateVal = completed.questStates[questKey] ?? "none";
     const bits = stateVal === "none" ? 0 : stateVal === "obtained" ? 1 : 2;
     const byteIndex = Math.floor(i / 4);

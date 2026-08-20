@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { deepMerge } from "./deep-partial.js";
 import {
   buildBiomeLabel,
   buildPerkLabel,
@@ -18,6 +19,7 @@ import type {
   LocationId,
   MinesBiomeId,
   MonsterId,
+  MuseumWingId,
   NpcId,
   PerkId,
   QuestId,
@@ -28,7 +30,6 @@ import type {
   StoreId,
   TreasureChestTierId,
   WaterType,
-  MuseumWingId,
 } from "$lib/types/tracker-data.js";
 
 import type { SegmentLookups } from "./source-segments.js";
@@ -510,11 +511,10 @@ describe("buildSourceSegments — quest types", () => {
   });
 
   it("crown quest gated behind renown", () => {
-    const lookups = {
-      ...BASE_LOOKUPS,
-      categoryVisibility: { crown_quests: { type: "renownLevel" as const, level: 20 } },
-      questNames: { crown_crops: "Crown Request: Crops" },
-    };
+    const lookups = deepMerge(BASE_LOOKUPS, {
+      categoryVisibility: { crown: { type: "renownLevel" as const, level: 20 } },
+      questNames: { ["crown_crops" as QuestId]: "Crown Request: Crops" },
+    });
     const source: AcquisitionSource = {
       type: "quest",
       questId: "crown_crops" as QuestId,
@@ -563,13 +563,12 @@ describe("buildSourceSegments — quest types", () => {
       trigger: "completion",
       visibility: { type: "questAvailable", questId: "tali_earthshroom" as QuestId },
     };
-    const lookups: SegmentLookups = {
-      ...BASE_LOOKUPS,
+    const lookups = deepMerge(BASE_LOOKUPS, {
       categoryVisibility: {
-        tali_challenges: { type: "npcKnown", npcId: "taliferro" as NpcId },
+        cooking: { type: "npcKnown", npcId: "taliferro" },
       },
       recipeNames: { ["crispy_fried_earthshroom" as RecipeId]: "Crispy Fried Earthshroom" },
-    };
+    });
     expect(buildSourceSegments(source, lookups)).toEqual([
       {
         condition: { type: "npcKnown", npcId: "taliferro" },
@@ -589,17 +588,16 @@ describe("buildSourceSegments — quest types", () => {
     const source: AcquisitionSource = {
       type: "quest",
       questId: "lost_relic" as QuestId,
-      questType: "stillwell_challenges" as QuestType,
+      questType: "cooking" as QuestType,
       trigger: "completion",
       visibility: { type: "questAvailable", questId: "lost_relic" as QuestId },
     };
-    const lookups: SegmentLookups = {
-      ...BASE_LOOKUPS,
+    const lookups = deepMerge(BASE_LOOKUPS, {
       categoryVisibility: {
-        stillwell_challenges: { type: "npcKnown", npcId: "stillwell" as NpcId },
+        cooking: { type: "npcKnown", npcId: "stillwell" },
       },
       questNames: { ["lost_relic" as QuestId]: "Lost Relic" },
-    };
+    });
     expect(buildSourceSegments(source, lookups)[0]).toMatchObject({
       condition: { type: "npcKnown", npcId: "stillwell" },
     });

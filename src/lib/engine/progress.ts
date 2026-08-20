@@ -1,16 +1,10 @@
 import { trackerData } from "$lib/data/index.js";
 import { filterAvailableItems } from "$lib/engine/availability.js";
-import { recordValues } from "$lib/utils";
+import { recordKeys, recordToArray, recordValues } from "$lib/utils";
 
 import type { CategoryKey } from "$lib/data/categories.js";
 import type { AvailabilityMode, CompletedState } from "$lib/stores/user-state.svelte.js";
-import type {
-  AnimalVariantId,
-  ItemId,
-  RecipeId,
-  Season,
-  Weather,
-} from "$lib/types/tracker-data.js";
+import type { ItemId, Season, Weather } from "$lib/types/tracker-data.js";
 
 export const MAX_NPC_LEVEL = 10;
 export const MAX_SKILL_LEVEL = 60;
@@ -89,16 +83,16 @@ function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
   let total = 0;
   let completed = 0;
   let filtered = 0;
-  for (const [animalId, animal] of Object.entries(trackerData.animals)) {
-    const cosmeticCount = Object.keys(animal.cosmetics).length;
+  for (const [animalId, animal] of recordToArray(trackerData.animals)) {
+    const cosmeticCount = recordKeys(animal.cosmetics).length;
     total += cosmeticCount;
     completed += ctx.completed.animalCosmetics[animalId].size;
     filtered += cosmeticCount - ctx.completed.animalCosmetics[animalId].size;
 
     for (const tier of animal.variantTiers) {
-      for (const [variantId, variant] of Object.entries(tier)) {
+      for (const [variantId, variant] of recordToArray(tier)) {
         total++;
-        if (ctx.completed.animals[animalId].has(variantId as AnimalVariantId)) {
+        if (ctx.completed.animals[animalId].has(variantId)) {
           completed++;
           continue;
         }
@@ -134,7 +128,7 @@ function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
 }
 
 function getCosmeticsProgress(ctx: ProgressContext): CategoryProgress {
-  const total = Object.keys(trackerData.cosmetics).length;
+  const total = recordKeys(trackerData.cosmetics).length;
   const completed = ctx.completed.cosmetics.size;
   return { completed, filtered: total - completed, total };
 }
@@ -143,7 +137,7 @@ function getMinesProgress(ctx: ProgressContext): CategoryProgress {
   const biomes = trackerData.mines.biomes;
   const maxFloor = biomes[biomes.length - 1].floors.end;
   const totalFloors = maxFloor;
-  const totalSpells = Object.keys(trackerData.mines.spells).length;
+  const totalSpells = recordKeys(trackerData.mines.spells).length;
   const total = totalFloors + totalSpells;
   const completed = ctx.completed.mines.floor + ctx.completed.mines.spells.size;
   return { completed, filtered: total - completed, total };
@@ -159,7 +153,7 @@ function getMuseumProgress(ctx: ProgressContext): CategoryProgress {
 function getNpcsProgress(ctx: ProgressContext): CategoryProgress {
   let total = 0;
   let completed = 0;
-  for (const id of Object.keys(trackerData.npcs)) {
+  for (const id of recordKeys(trackerData.npcs)) {
     total += MAX_NPC_LEVEL;
     completed += Math.min(ctx.completed.npcLevels[id] ?? 0, MAX_NPC_LEVEL);
   }
@@ -169,8 +163,8 @@ function getNpcsProgress(ctx: ProgressContext): CategoryProgress {
 function getQuestsProgress(ctx: ProgressContext): CategoryProgress {
   let total = 0;
   let completed = 0;
-  for (const questType of Object.values(trackerData.quests)) {
-    for (const id of Object.keys(questType)) {
+  for (const questType of recordValues(trackerData.quests)) {
+    for (const id of recordKeys(questType)) {
       total++;
       if (ctx.completed.questStates[id] === "completed") completed++;
     }
@@ -179,7 +173,7 @@ function getQuestsProgress(ctx: ProgressContext): CategoryProgress {
 }
 
 function getRecipesProgress(ctx: ProgressContext): CategoryProgress {
-  const allIds = Object.keys(trackerData.recipes) as RecipeId[];
+  const allIds = recordKeys(trackerData.recipes);
   const completed = allIds.filter((id) => ctx.completed.almanacRecipes.has(id)).length;
   return { completed, filtered: allIds.length - completed, total: allIds.length };
 }
@@ -196,7 +190,7 @@ function getRenownProgress(ctx: ProgressContext): CategoryProgress {
 function getSkillsProgress(ctx: ProgressContext): CategoryProgress {
   let total = 0;
   let completed = 0;
-  for (const id of Object.keys(trackerData.skills)) {
+  for (const id of recordKeys(trackerData.skills)) {
     total += MAX_SKILL_LEVEL;
     completed += Math.min(ctx.completed.skillLevels[id] ?? 0, MAX_SKILL_LEVEL);
   }

@@ -311,7 +311,7 @@ function buildCookingChallengeSegments(
     ? (lookups.recipeNames[source.challengeRecipeId] ?? titleCase(source.challengeRecipeId))
     : (lookups.questNames[source.questId] ?? titleCase(source.questId));
   const questVis = source.visibility;
-  const categoryVis = lookups.categoryVisibility.tali_challenges;
+  const categoryVis = lookups.categoryVisibility.cooking;
 
   const nameSegment: SourceSegment =
     questVis && questVis.type !== "always"
@@ -331,7 +331,7 @@ function buildCrownQuestSegments(
   const questName = lookups.questNames[source.questId] ?? titleCase(source.questId);
   const subject = questName.replace(/^Crown Request:?\s*/, "");
   const questVis = source.visibility;
-  const categoryVis = lookups.categoryVisibility.crown_quests;
+  const categoryVis = lookups.categoryVisibility.crown;
 
   const subjectSegment: SourceSegment =
     questVis && questVis.type !== "always" ? { condition: questVis, revealed: [subject] } : subject;
@@ -395,7 +395,7 @@ function buildMissionQuestSegments(
 ): [SourceSegment, ...SourceSegment[]] {
   const questName = lookups.questNames[source.questId] ?? titleCase(source.questId);
   const questVis = source.visibility;
-  const categoryVis = lookups.categoryVisibility.stillwell_challenges;
+  const categoryVis = lookups.categoryVisibility.mission;
 
   const nameSegment: SourceSegment =
     questVis && questVis.type !== "always"

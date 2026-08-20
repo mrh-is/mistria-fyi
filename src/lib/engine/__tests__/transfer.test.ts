@@ -73,7 +73,7 @@ describe("transfer codec v2", () => {
     expect(decoded.marriedNpc).toBeNull();
     // Sanity check that pre-existing v1 fields still decode correctly.
     expect(decoded.mines?.floor).toBe(5);
-    expect(decoded.npcLevels?.adeline).toBe(3);
+    expect(decoded.npcLevels?.["adeline" as NpcId]).toBe(3);
     expect(decoded.renown).toBe(10);
   });
 

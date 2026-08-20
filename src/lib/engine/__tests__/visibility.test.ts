@@ -102,7 +102,7 @@ describe("isVisible", () => {
 
   it("questCompleted checks questVisibility", () => {
     const state = makeState({
-      questVisibility: { repair_the_inn: "completed" },
+      questVisibility: { ["repair_the_inn" as QuestId]: "completed" },
     });
     expect(isVisible({ type: "questCompleted", questId: "repair_the_inn" as QuestId }, state)).toBe(
       true,
@@ -115,9 +115,9 @@ describe("isVisible", () => {
   it("questAvailable matches available or completed", () => {
     const state = makeState({
       questVisibility: {
-        available_quest: "available",
-        completed_quest: "completed",
-        unavailable_quest: "unavailable",
+        ["available_quest" as QuestId]: "available",
+        ["completed_quest" as QuestId]: "completed",
+        ["unavailable_quest" as QuestId]: "unavailable",
       },
     });
     expect(
@@ -138,22 +138,22 @@ describe("isVisible", () => {
   });
 
   it("skillLevel checks >= threshold", () => {
-    const state = makeState({ skillLevels: { farming: 30 } });
-    expect(isVisible({ type: "skillLevel", level: 30, skillId: "farming" as never }, state)).toBe(
+    const state = makeState({ skillLevels: { ["farming" as SkillId]: 30 } });
+    expect(isVisible({ type: "skillLevel", level: 30, skillId: "farming" as SkillId }, state)).toBe(
       true,
     );
-    expect(isVisible({ type: "skillLevel", level: 31, skillId: "farming" as never }, state)).toBe(
+    expect(isVisible({ type: "skillLevel", level: 31, skillId: "farming" as SkillId }, state)).toBe(
       false,
     );
-    expect(isVisible({ type: "skillLevel", level: 1, skillId: "mining" as never }, state)).toBe(
+    expect(isVisible({ type: "skillLevel", level: 1, skillId: "mining" as SkillId }, state)).toBe(
       false,
     );
   });
 
   it("perkUnlocked checks set membership", () => {
-    const state = makeState({ unlockedPerks: new Set(["magic_design" as never]) });
-    expect(isVisible({ type: "perkUnlocked", perkId: "magic_design" as never }, state)).toBe(true);
-    expect(isVisible({ type: "perkUnlocked", perkId: "other_perk" as never }, state)).toBe(false);
+    const state = makeState({ unlockedPerks: new Set(["magic_design" as PerkId]) });
+    expect(isVisible({ type: "perkUnlocked", perkId: "magic_design" as PerkId }, state)).toBe(true);
+    expect(isVisible({ type: "perkUnlocked", perkId: "other_perk" as PerkId }, state)).toBe(false);
   });
 
   it("minesLevel checks >= floor", () => {
@@ -163,7 +163,7 @@ describe("isVisible", () => {
   });
 
   it("heartLevel checks npcLevels >= level", () => {
-    const state = makeState({ npcLevels: { ryis: 4 } });
+    const state = makeState({ npcLevels: { ["ryis" as NpcId]: 4 } });
     expect(isVisible({ type: "heartLevel", level: 4, npcId: "ryis" as NpcId }, state)).toBe(true);
     expect(isVisible({ type: "heartLevel", level: 5, npcId: "ryis" as NpcId }, state)).toBe(false);
   });
@@ -229,11 +229,11 @@ describe("isVisible", () => {
 describe("isConditionInvertible", () => {
   it("returns true for invertible primitives", () => {
     expect(isConditionInvertible({ type: "questCompleted", questId: "q" as QuestId })).toBe(true);
-    expect(isConditionInvertible({ type: "skillLevel", level: 10, skillId: "s" as never })).toBe(
+    expect(isConditionInvertible({ type: "skillLevel", level: 10, skillId: "s" as SkillId })).toBe(
       true,
     );
     expect(isConditionInvertible({ type: "minesLevel", floor: 10 })).toBe(true);
-    expect(isConditionInvertible({ type: "perkUnlocked", perkId: "p" as never })).toBe(true);
+    expect(isConditionInvertible({ type: "perkUnlocked", perkId: "p" as PerkId })).toBe(true);
     expect(isConditionInvertible({ type: "married", npcId: "n" as NpcId })).toBe(true);
   });
 
@@ -459,19 +459,19 @@ describe("satisfyCondition", () => {
     const completed = makeCompleted();
     const skillId = "cooking" as SkillId;
     satisfyCondition({ type: "skillLevel", level: 15, skillId }, completed, makeTrackerData());
-    expect(completed.skillLevels[skillId as string]).toBe(15);
+    expect(completed.skillLevels[skillId]).toBe(15);
   });
 
   it("sets heartLevel", () => {
     const completed = makeCompleted();
     satisfyCondition({ type: "heartLevel", level: 6, npcId: holt }, completed, makeTrackerData());
-    expect(completed.npcLevels[holt as string]).toBe(6);
+    expect(completed.npcLevels[holt]).toBe(6);
   });
 
   it("takes max of heartLevel", () => {
     const completed = makeCompleted({ npcLevels: { [holt]: 8 } });
     satisfyCondition({ type: "heartLevel", level: 6, npcId: holt }, completed, makeTrackerData());
-    expect(completed.npcLevels[holt as string]).toBe(8);
+    expect(completed.npcLevels[holt]).toBe(8);
   });
 
   it("adds perkUnlocked", () => {
@@ -494,7 +494,7 @@ describe("satisfyCondition", () => {
     });
     const completed = makeCompleted();
     satisfyCondition({ type: "questCompleted", questId: repairTheInn }, completed, trackerData);
-    expect(completed.questStates[repairTheInn as string]).toBe("completed");
+    expect(completed.questStates[repairTheInn]).toBe("completed");
   });
 
   it("satisfies and by satisfying all sub-conditions", () => {
@@ -542,14 +542,14 @@ describe("satisfyCondition", () => {
     });
     const completed = makeCompleted();
     satisfyCondition({ type: "questCompleted", questId: theSecondQuest }, completed, trackerData);
-    expect(completed.questStates[firstQuest as string]).toBe("completed");
-    expect(completed.questStates[theSecondQuest as string]).toBe("completed");
+    expect(completed.questStates[firstQuest]).toBe("completed");
+    expect(completed.questStates[theSecondQuest]).toBe("completed");
   });
 
   it("marks ordered chain predecessors completed for questAvailable", () => {
     const thirdCrown = "crown_3" as QuestId;
     const trackerData = makeTrackerData({
-      categoryVisibility: { crown_quests: { type: "always" } },
+      categoryVisibility: { crown: { type: "always" } },
       questChains: {
         ...emptyStoryChains,
         crown: [firstQuest, theSecondQuest, thirdCrown],
@@ -564,9 +564,9 @@ describe("satisfyCondition", () => {
     });
     const completed = makeCompleted();
     satisfyCondition({ type: "questAvailable", questId: thirdCrown }, completed, trackerData);
-    expect(completed.questStates[firstQuest as string]).toBe("completed");
-    expect(completed.questStates[theSecondQuest as string]).toBe("completed");
-    expect(completed.questStates[thirdCrown as string]).toBeUndefined();
+    expect(completed.questStates[firstQuest]).toBe("completed");
+    expect(completed.questStates[theSecondQuest]).toBe("completed");
+    expect(completed.questStates[thirdCrown]).toBeUndefined();
   });
 });
 
@@ -674,8 +674,8 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
     satisfyCondition(gatedBehindSecond, completed, trackerData);
     const state = deriveProgressionState(completed, trackerData, false);
 
-    expect(state.questVisibility[firstQuest as string]).toBe("completed");
-    expect(state.questVisibility[theSecondQuest as string]).toBe("completed");
+    expect(state.questVisibility[firstQuest]).toBe("completed");
+    expect(state.questVisibility[theSecondQuest]).toBe("completed");
     expect(isVisible(gatedBehindSecond, state)).toBe(true);
   });
 
@@ -697,6 +697,6 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
 
     // Simulate: user checks item off but doesn't satisfy the condition.
     // The item is now "completed" in the almanac/recipes, but the underlying quest is untouched.
-    expect(completed.questStates[repairTheInn as string]).toBeUndefined();
+    expect(completed.questStates[repairTheInn]).toBeUndefined();
   });
 });

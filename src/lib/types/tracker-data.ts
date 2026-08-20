@@ -168,7 +168,7 @@ export interface TownRank {
 export interface TrackerData {
   almanac: Record<AlmanacCategoryId, AlmanacCategory>;
   animals: Record<AnimalId, Animal>;
-  categoryVisibility: Partial<Record<string, VisibilityCondition>>;
+  categoryVisibility: Partial<Record<QuestType, VisibilityCondition>>;
   cosmetics: Record<CosmeticId, Cosmetic>;
   festivals: Record<FestivalId, Festival>;
   generatedAt: string;

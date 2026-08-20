@@ -6,6 +6,7 @@
   import { trackerData } from "$lib/data/index.js";
   import { MAX_NPC_LEVEL } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { recordKeys } from "$lib/utils";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
 
   import type { NpcId } from "$lib/types/tracker-data.js";
@@ -15,7 +16,7 @@
   }
 
   function areAllNpcsMaxed(): boolean {
-    return Object.keys(trackerData.npcs).every(
+    return recordKeys(trackerData.npcs).every(
       (id) => (userState.state.completed.npcLevels[id] ?? 0) >= MAX_NPC_LEVEL,
     );
   }
@@ -51,7 +52,7 @@
   ];
 
   function getNpcLevel(id: NpcId): number {
-    return userState.state.completed.npcLevels[id as string] ?? 0;
+    return userState.state.completed.npcLevels[id] ?? 0;
   }
 
   function isMaxed(npc: { id: NpcId }): boolean {

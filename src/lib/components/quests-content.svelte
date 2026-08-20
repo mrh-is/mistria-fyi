@@ -65,7 +65,7 @@
   const typeOrder = ["story", "heart", "fetch", "crown", "mission", "cooking"] as QuestType[];
 
   function getQuestState(id: QuestId): QuestState {
-    return userState.state.completed.questStates[id as string] ?? "none";
+    return userState.state.completed.questStates[id] ?? "none";
   }
 
   function completeQuest(quest: { displayName: string; id: QuestId }, quests: { id: QuestId }[]) {

@@ -5,7 +5,7 @@ import { recordToArray } from "$lib/utils";
 
 import type { UserProgressionState } from "$lib/engine/visibility.js";
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { NpcId, Season, Weather } from "$lib/types/tracker-data.js";
+import type { Season, Weather } from "$lib/types/tracker-data.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -35,14 +35,14 @@ export function searchItems(
   const results: SearchResult[] = [];
 
   // Items (covers museum + almanac) — always search all, flag availability
-  for (const [id, item] of Object.entries(trackerData.items)) {
+  for (const [id, item] of recordToArray(trackerData.items)) {
     if (item.visibility && !isVisible(item.visibility, progressionState)) continue;
 
     if (item.name.toLowerCase().includes(q)) {
       results.push({
         available: isItemAvailable(item.sources ?? [], worldState, "available"),
         category: "almanac",
-        completed: completed.almanac.has(id as never),
+        completed: completed.almanac.has(id),
         id,
         name: item.name,
       });
@@ -51,8 +51,8 @@ export function searchItems(
   }
 
   // NPCs — not season-gated
-  for (const [id, npc] of Object.entries(trackerData.npcs)) {
-    const npcVis = trackerData.npcs[id as NpcId].visibility;
+  for (const [id, npc] of recordToArray(trackerData.npcs)) {
+    const npcVis = trackerData.npcs[id].visibility;
     if (npcVis && !isVisible(npcVis, progressionState)) continue;
 
     if (npc.name.toLowerCase().includes(q)) {
@@ -69,7 +69,7 @@ export function searchItems(
   }
 
   // Animal variants — not season-gated
-  for (const [animalId, animal] of Object.entries(trackerData.animals)) {
+  for (const [animalId, animal] of recordToArray(trackerData.animals)) {
     if (animal.visibility && !isVisible(animal.visibility, progressionState)) continue;
 
     for (const tier of animal.variantTiers) {
@@ -90,15 +90,15 @@ export function searchItems(
   }
 
   // Animal cosmetics — not season-gated
-  for (const [animalId, animal] of Object.entries(trackerData.animals)) {
+  for (const [animalId, animal] of recordToArray(trackerData.animals)) {
     if (animal.visibility && !isVisible(animal.visibility, progressionState)) continue;
 
-    for (const [cosmeticId, cosmetic] of Object.entries(animal.cosmetics)) {
+    for (const [cosmeticId, cosmetic] of recordToArray(animal.cosmetics)) {
       if (cosmetic.fullName.toLowerCase().includes(q)) {
         results.push({
           available: true,
           category: "animals",
-          completed: completed.animalCosmetics[animalId].has(cosmeticId as never),
+          completed: completed.animalCosmetics[animalId].has(cosmeticId),
           fullName: cosmetic.fullName,
           id: `${animalId}:${cosmeticId}`,
           name: cosmetic.name,
@@ -109,14 +109,14 @@ export function searchItems(
   }
 
   // Cosmetics — not season-gated
-  for (const [id, cosmetic] of Object.entries(trackerData.cosmetics)) {
+  for (const [id, cosmetic] of recordToArray(trackerData.cosmetics)) {
     if (cosmetic.visibility && !isVisible(cosmetic.visibility, progressionState)) continue;
 
     if (cosmetic.name.toLowerCase().includes(q)) {
       results.push({
         available: true,
         category: "cosmetics",
-        completed: completed.cosmetics.has(id as never),
+        completed: completed.cosmetics.has(id),
         id,
         name: cosmetic.name,
       });
@@ -125,8 +125,8 @@ export function searchItems(
   }
 
   // Quests — not season-gated
-  for (const [, quests] of Object.entries(trackerData.quests)) {
-    for (const [id, quest] of Object.entries(quests)) {
+  for (const [, quests] of recordToArray(trackerData.quests)) {
+    for (const [id, quest] of recordToArray(quests)) {
       if (quest.visibility && !isVisible(quest.visibility, progressionState)) continue;
 
       if (quest.name.toLowerCase().includes(q)) {
