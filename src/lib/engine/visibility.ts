@@ -231,10 +231,9 @@ function computeStoredNpcLevel(
   let level = completed.npcLevels[npcId as string] ?? 0;
   for (const [questId, state] of recordToArray(completed.questStates)) {
     if (state !== "completed") continue;
-    const quest = recordToArray(trackerData.quests).find(([, questRecord]) =>
-      Object.keys(questRecord).includes(questId),
-    )?.[1][questId as QuestId];
-    if (quest?.heartLevelChanges === undefined) continue;
+    if (!(questId in trackerData.quests.story)) continue;
+    const quest = trackerData.quests.story[questId as QuestId];
+    if (quest.heartLevelChanges === undefined) continue;
     for (const change of quest.heartLevelChanges) {
       if (change.npcId === npcId) level = Math.max(level, change.level);
     }

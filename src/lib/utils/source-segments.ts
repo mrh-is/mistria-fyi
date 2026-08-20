@@ -413,20 +413,20 @@ function buildQuestSegments(
   lookups: SegmentLookups,
 ): [SourceSegment, ...SourceSegment[]] {
   const questType = source.questType;
+  if (!questType) throw new Error(`Unknown quest type for ${source.questId}`);
 
   switch (questType) {
-    case "crown_quests":
-      return buildCrownQuestSegments(source, lookups);
-    case "fetch_quests":
-      return buildFetchQuestSegments(source, lookups);
-    case "heart_quests":
-      return buildHeartQuestSegments(source, lookups);
-    case "stillwell_challenges":
-      return buildMissionQuestSegments(source, lookups);
-    case "tali_challenges":
+    case "cooking":
       return buildCookingChallengeSegments(source, lookups);
-    case undefined:
-    default:
+    case "crown":
+      return buildCrownQuestSegments(source, lookups);
+    case "fetch":
+      return buildFetchQuestSegments(source, lookups);
+    case "heart":
+      return buildHeartQuestSegments(source, lookups);
+    case "mission":
+      return buildMissionQuestSegments(source, lookups);
+    case "story":
       return buildStoryQuestSegments(source, lookups);
   }
 }

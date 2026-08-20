@@ -14,7 +14,7 @@
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
 
   import type { QuestState } from "$lib/stores/user-state.svelte.js";
-  import type { QuestId, QuestType } from "$lib/types/tracker-data.js";
+  import type { FetchQuest, QuestId, QuestType } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   const redactGuard = createRedactionGuard();
@@ -33,7 +33,7 @@
 
   function isQuestsComplete(): boolean {
     return typeOrder.every((type) =>
-      Object.keys(trackerData.quests[type] ?? {}).every(
+      Object.keys(trackerData.quests[type]).every(
         (id) => getQuestState(id as QuestId) === "completed",
       ),
     );
@@ -60,14 +60,7 @@
     tali_challenges: "Taliferro Challenges",
   };
 
-  const typeOrder = [
-    "story_quests",
-    "heart_quests",
-    "fetch_quests",
-    "crown_quests",
-    "stillwell_challenges",
-    "tali_challenges",
-  ] as QuestType[];
+  const typeOrder = ["story", "heart", "fetch", "crown", "mission", "cooking"] as QuestType[];
 
   function getQuestState(id: QuestId): QuestState {
     return userState.state.completed.questStates[id as string] ?? "none";
@@ -134,19 +127,19 @@
     userState.progressionState,
   )}
   {@const chainOrder =
-    questType === "crown_quests"
+    questType === "crown"
       ? trackerData.questChains.crown
-      : questType === "stillwell_challenges"
+      : questType === "mission"
         ? trackerData.questChains.stillwell
-        : questType === "tali_challenges"
+        : questType === "cooking"
           ? trackerData.questChains.tali
           : null}
-  {@const quests = Object.entries(trackerData.quests[questType] ?? {})
+  {@const quests = Object.entries(trackerData.quests[questType])
     .map(([id, q]) => ({
       displayName: displayQuestName(q.name, questType),
       id: id as QuestId,
       name: q.name,
-      npc: q.npc,
+      npc: questType === "fetch" ? (q as FetchQuest).npc : undefined,
     }))
     .sort((a, b) => {
       if (chainOrder) {
@@ -210,7 +203,7 @@
             </button>
             <span class="min-w-0 flex-1 text-base">
               {quest.displayName}
-              {#if quest.npc && (questType === "fetch_quests" || duplicateNames.has(quest.displayName))}
+              {#if quest.npc && (questType === "fetch" || duplicateNames.has(quest.displayName))}
                 <span class="text-sm text-muted-foreground">
                   {trackerData.npcs[quest.npc].name}
                 </span>
@@ -226,7 +219,7 @@
   {/if}
 {/each}
 
-{#if typeOrder.every( (type) => Object.keys(trackerData.quests[type] ?? {}).every((id) => getQuestState(id as QuestId) === "completed") ) && !userState.state.showCompleted}
+{#if typeOrder.every( (type) => Object.keys(trackerData.quests[type]).every((id) => getQuestState(id as QuestId) === "completed") ) && !userState.state.showCompleted}
   <p class="py-8 text-center text-base text-muted-foreground">
     All done! Toggle "Show completed" to review.
   </p>

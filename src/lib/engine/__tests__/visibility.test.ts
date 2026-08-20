@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { deepMerge, type DeepPartial } from "$lib/utils/deep-partial.js";
+
 import {
   deriveProgressionState,
   isConditionInvertible,
@@ -55,8 +57,8 @@ function makeState(overrides: Partial<UserProgressionState> = {}): UserProgressi
   };
 }
 
-function makeTrackerData(overrides: Partial<TrackerData> = {}): TrackerData {
-  return {
+function makeTrackerData(overrides: DeepPartial<TrackerData> = {}): TrackerData {
+  const defaults: TrackerData = {
     almanac: [],
     animals: {},
     categoryVisibility: {},
@@ -75,7 +77,14 @@ function makeTrackerData(overrides: Partial<TrackerData> = {}): TrackerData {
       progressionFlagToQuests: {},
       spellGates: {},
     },
-    quests: {},
+    quests: {
+      cooking: {},
+      crown: {},
+      fetch: {},
+      heart: {},
+      mission: {},
+      story: {},
+    },
     recipes: {},
     renown: { levelsPerRank: 10, ranks: [] },
     skills: {},
@@ -83,8 +92,8 @@ function makeTrackerData(overrides: Partial<TrackerData> = {}): TrackerData {
     storeVisibility: {},
     treasureChestTiers: {},
     version: "test",
-    ...overrides,
   };
+  return deepMerge(defaults, overrides);
 }
 
 describe("isVisible", () => {

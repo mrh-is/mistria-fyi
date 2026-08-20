@@ -75,6 +75,9 @@ export interface Festival {
   name: string;
 }
 export type FestivalId = string & { readonly __brand: "FestivalId" };
+export interface FetchQuest extends Quest {
+  npc: NpcId;
+}
 export interface HeartLevelChange {
   level: number;
   npcId: NpcId;
@@ -116,12 +119,17 @@ export interface Perk {
 export type PerkId = string & { readonly __brand: "PerkId" };
 export type PerkTier = Record<PerkId, Perk>;
 export interface Quest extends TrackerEntity {
-  heartLevelChanges?: HeartLevelChange[];
   name: string;
-  npc?: NpcId;
 }
 export type QuestId = string & { readonly __brand: "QuestId" };
-export type QuestType = string & { readonly __brand: "QuestType" };
+export interface QuestOverrides {
+  fetch: FetchQuest;
+  story: StoryQuest;
+}
+export type QuestType = "cooking" | "crown" | "fetch" | "heart" | "mission" | "story";
+export type QuestTypeMap = {
+  [K in QuestType]: K extends keyof QuestOverrides ? QuestOverrides[K] : Quest;
+};
 export interface Recipe extends TrackerEntity {
   memberItemIds: ItemId[];
   presentations: RecipePresentation[];
@@ -147,6 +155,9 @@ export interface Store {
   upgradeAction?: string;
 }
 export type StoreId = string & { readonly __brand: "StoreId" };
+export interface StoryQuest extends Quest {
+  heartLevelChanges?: HeartLevelChange[];
+}
 export interface TrackerData {
   almanac: AlmanacCategory[];
   animals: Record<AnimalId, Animal>;
@@ -177,7 +188,9 @@ export interface TrackerData {
     progressionFlagToQuests: Record<string, QuestId[]>;
     spellGates: Record<SpellId, QuestId[]>;
   };
-  quests: Record<QuestType, Record<QuestId, Quest>>;
+  quests: {
+    [K in QuestType]: Record<QuestId, QuestTypeMap[K]>;
+  };
   recipes: Record<RecipeId, Recipe>;
   renown: {
     levelsPerRank: number;

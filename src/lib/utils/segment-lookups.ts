@@ -40,13 +40,7 @@ export function buildBaseSegmentLookups(
         Object.entries(group).map(([id, quest]) => [id, quest.name]),
       ),
     ),
-    questNpcIds: Object.fromEntries(
-      Object.values(trackerData.quests).flatMap((group) =>
-        Object.entries(group)
-          .filter(([, q]) => q.npc)
-          .map(([id, q]) => [id, q.npc]),
-      ),
-    ),
+    questNpcIds: recordMap(trackerData.quests.fetch, ({ npc }) => npc),
     recipeNames: recordMap(
       trackerData.recipes,
       (recipe, id) => recipe.presentations[0]?.name ?? id,
