@@ -19,10 +19,10 @@ export type {
 } from "./acquisition.js";
 
 export interface AlmanacCategory {
-  id: string;
   items: ItemId[];
   name: string;
 }
+export type AlmanacCategoryId = string & { readonly __brand: "AlmanacCategoryId" };
 export interface Animal {
   cosmetics: Record<CosmeticId, AnimalCosmetic>;
   name: string;
@@ -167,7 +167,7 @@ export interface TownRank {
   name: string;
 }
 export interface TrackerData {
-  almanac: AlmanacCategory[];
+  almanac: Record<AlmanacCategoryId, AlmanacCategory>;
   animals: Record<AnimalId, Animal>;
   categoryVisibility: Partial<Record<string, VisibilityCondition>>;
   cosmetics: Record<CosmeticId, Cosmetic>;

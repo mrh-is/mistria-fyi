@@ -1,5 +1,6 @@
 import { trackerData } from "$lib/data/index.js";
 import { filterAvailableItems } from "$lib/engine/availability.js";
+import { recordValues } from "$lib/utils";
 
 import type { CategoryKey } from "$lib/data/categories.js";
 import type { AvailabilityMode, CompletedState } from "$lib/stores/user-state.svelte.js";
@@ -80,10 +81,7 @@ export function getCategoryProgress(category: CategoryKey, ctx: ProgressContext)
 }
 
 function getAlmanacProgress(ctx: ProgressContext): CategoryProgress {
-  const allIds: ItemId[] = [];
-  for (const cat of trackerData.almanac) {
-    allIds.push(...(Object.keys(cat.items) as ItemId[]));
-  }
+  const allIds = recordValues(trackerData.almanac).flatMap(({ items }) => items);
   return itemProgress(allIds, ctx.completed.almanac, ctx);
 }
 

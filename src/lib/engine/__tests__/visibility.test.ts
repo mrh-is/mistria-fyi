@@ -59,7 +59,7 @@ function makeState(overrides: Partial<UserProgressionState> = {}): UserProgressi
 
 function makeTrackerData(overrides: DeepPartial<TrackerData> = {}): TrackerData {
   const defaults: TrackerData = {
-    almanac: [],
+    almanac: {},
     animals: {},
     categoryVisibility: {},
     cosmetics: {},

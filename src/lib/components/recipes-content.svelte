@@ -10,6 +10,7 @@
   import { isVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { recordForEach } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
@@ -55,7 +56,7 @@
 
   let recipesByCategory = $derived.by(() => {
     const groups: { entries: RecipeEntry[]; id: string; name: string }[] = [];
-    for (const cat of trackerData.almanac) {
+    recordForEach(trackerData.almanac, ([catId, cat]) => {
       const seen = new SvelteSet<string>();
       const entries: RecipeEntry[] = [];
       for (const [, itemId] of Object.entries(cat.items)) {
@@ -76,9 +77,9 @@
       }
       if (entries.length > 0) {
         entries.sort((a, b) => a.name.localeCompare(b.name));
-        groups.push({ entries, id: cat.id, name: cat.name });
+        groups.push({ entries, id: catId, name: cat.name });
       }
-    }
+    });
     return groups;
   });
 

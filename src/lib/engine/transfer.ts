@@ -347,7 +347,7 @@ function fromBitfield(ordered: string[], bytes: Uint8Array): Set<string> {
 }
 
 function getAlmanacOrder(): ItemId[] {
-  return trackerData.almanac.flatMap((cat) => Object.keys(cat.items)).sort() as ItemId[];
+  return recordValues(trackerData.almanac).flatMap(({ items }) => items.toSorted());
 }
 
 function getAnimalCosmeticOrder(): { animalId: AnimalId; cosmeticId: CosmeticId }[] {
@@ -407,8 +407,8 @@ function getPerkOrder(): PerkId[] {
     .sort();
 }
 
-function getQuestOrder(): { type: string; questId: QuestId; }[] {
-  const result: { type: string; questId: QuestId; }[] = [];
+function getQuestOrder(): { type: string; questId: QuestId }[] {
+  const result: { type: string; questId: QuestId }[] = [];
   for (const type of recordKeys(trackerData.quests).sort()) {
     for (const questId of recordKeys(trackerData.quests[type]).sort()) {
       result.push({ type, questId });
