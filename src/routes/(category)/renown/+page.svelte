@@ -4,7 +4,6 @@
   import { Input } from "$lib/components/ui/input/index.js";
   import { Progress } from "$lib/components/ui/progress/index.js";
   import { trackerData } from "$lib/data/index.js";
-  import { clampRenownLevel, MAX_RENOWN_LEVEL } from "$lib/engine/progress.js";
   import { isEntityNameVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
@@ -33,17 +32,21 @@
     "#a78bfa", // Mistril   — violet-400
   ];
 
-  let level = $derived(clampRenownLevel(userState.state.completed.renown));
-  let levelsPerRank = trackerData.renown.levelsPerRank;
-  let ranks = trackerData.renown.ranks;
-  let maxLevel = MAX_RENOWN_LEVEL;
-
-  let currentRankIndex = $derived(Math.min(Math.floor(level / levelsPerRank), ranks.length - 1));
-  let levelInRank = $derived(level - currentRankIndex * levelsPerRank);
-  let currentRankName = $derived(ranks[currentRankIndex].name);
-  let currentRankColor = $derived(RANK_COLORS[currentRankIndex]);
-  let overallPct = $derived(maxLevel > 0 ? (level / maxLevel) * 100 : 0);
+  const ranks = trackerData.townRanks;
+  const maxLevel = ranks[ranks.length - 1].levels.end;
+  let level = $derived(userState.state.completed.renown);
+  let currentRankIndex = $derived(
+    ranks.findLastIndex(({ levels: { start, end } }) => start <= level && level <= end),
+  );
+  let currentRank = $derived(ranks[currentRankIndex]);
   let isMaxed = $derived(level >= maxLevel);
+  let currentRankColor = $derived(RANK_COLORS[currentRankIndex]);
+  let levelInRank = $derived(level - currentRank.levels.start);
+  let levelsInCurrentRank = $derived(
+    Math.max(currentRank.levels.end - currentRank.levels.start, 1),
+  );
+
+  let overallPct = $derived(maxLevel > 0 ? (level / maxLevel) * 100 : 0);
 
   let editing = $state(false);
   let editValue = $state("");
@@ -91,12 +94,12 @@
   </div>
 
   <div class="text-center">
-    <div class="text-2xl font-bold tracking-tight">{currentRankName}</div>
+    <div class="text-2xl font-bold tracking-tight">{currentRank.name}</div>
     {#if isMaxed}
       <div class="text-sm text-muted-foreground">Max rank reached!</div>
     {:else}
       <div class="text-sm text-muted-foreground">
-        Level {levelInRank}/{levelsPerRank} in rank
+        Level {levelInRank}/{levelsInCurrentRank} in rank
       </div>
     {/if}
   </div>
@@ -148,19 +151,19 @@
 <div class="flex flex-col gap-0.5">
   {#each ranks as rank, i (rank.name)}
     {@const rankState =
-      level >= Math.min((i + 1) * levelsPerRank, maxLevel)
+      level >= Math.min((i + 1) * levelsInCurrentRank, maxLevel)
         ? "completed"
         : i === currentRankIndex
           ? "current"
           : "upcoming"}
     <RankCard
-      name={isRankVisible(i * levelsPerRank) ? rank.name : "Redacted"}
+      name={isRankVisible(i * levelsInCurrentRank) ? rank.name : "Redacted"}
       starColor={RANK_COLORS[i]}
-      minLevel={i * levelsPerRank}
-      maxLevel={Math.min((i + 1) * levelsPerRank - 1, maxLevel)}
+      minLevel={i * levelsInCurrentRank}
+      maxLevel={Math.min((i + 1) * levelsInCurrentRank - 1, maxLevel)}
       state={rankState}
       {levelInRank}
-      {levelsPerRank}
+      levelsPerRank={levelsInCurrentRank}
     />
   {/each}
 </div>

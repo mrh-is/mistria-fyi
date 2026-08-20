@@ -12,7 +12,6 @@ import type {
 } from "$lib/types/tracker-data.js";
 
 export const MAX_NPC_LEVEL = 10;
-export const MAX_RENOWN_LEVEL = 100;
 export const MAX_SKILL_LEVEL = 60;
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -34,7 +33,8 @@ interface ProgressContext {
 }
 
 export function clampRenownLevel(level: number): number {
-  return Math.max(0, Math.min(level, MAX_RENOWN_LEVEL));
+  const maxLevel = trackerData.townRanks[trackerData.townRanks.length - 1].levels.end;
+  return Math.max(0, Math.min(level, maxLevel));
 }
 
 // ─── Per-category progress ──────────────────────────────────────────
@@ -188,8 +188,9 @@ function getRecipesProgress(ctx: ProgressContext): CategoryProgress {
 }
 
 function getRenownProgress(ctx: ProgressContext): CategoryProgress {
-  const total = MAX_RENOWN_LEVEL;
-  const completed = clampRenownLevel(ctx.completed.renown);
+  const ranks = trackerData.townRanks;
+  const total = ranks[ranks.length - 1].levels.end;
+  const completed = Math.max(0, Math.min(ctx.completed.renown, total));
   return { completed, filtered: total - completed, total };
 }
 

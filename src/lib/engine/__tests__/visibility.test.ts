@@ -86,10 +86,10 @@ function makeTrackerData(overrides: DeepPartial<TrackerData> = {}): TrackerData 
       story: {},
     },
     recipes: {},
-    renown: { levelsPerRank: 10, ranks: [] },
     skills: {},
     stores: {},
     storeVisibility: {},
+    townRanks: [],
     treasureChestTiers: {},
     version: "test",
   };

@@ -158,6 +158,13 @@ export type StoreId = string & { readonly __brand: "StoreId" };
 export interface StoryQuest extends Quest {
   heartLevelChanges?: HeartLevelChange[];
 }
+export interface TownRank {
+  levels: {
+    start: number;
+    end: number;
+  };
+  name: string;
+}
 export interface TrackerData {
   almanac: AlmanacCategory[];
   animals: Record<AnimalId, Animal>;
@@ -192,13 +199,10 @@ export interface TrackerData {
     [K in QuestType]: Record<QuestId, QuestTypeMap[K]>;
   };
   recipes: Record<RecipeId, Recipe>;
-  renown: {
-    levelsPerRank: number;
-    ranks: { name: string }[];
-  };
   skills: Record<SkillId, Skill>;
   stores: Record<StoreId, Store>;
   storeVisibility: Record<StoreId, VisibilityCondition>;
+  townRanks: TownRank[];
   treasureChestTiers: Record<TreasureChestTierId, { name: string }>;
   version: string;
 }

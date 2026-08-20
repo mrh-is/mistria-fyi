@@ -2,15 +2,13 @@
   import { Icon } from "$lib/components/icon/index.js";
   import Stepper from "$lib/components/stepper.svelte";
   import { trackerData } from "$lib/data/index.js";
-  import {
-    type CategoryProgress,
-    clampRenownLevel,
-    MAX_RENOWN_LEVEL,
-  } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
 
   import SectionHeader from "./SectionHeader.svelte";
+
+  import type { CategoryProgress } from "$lib/engine/progress.js";
+  import type { TownRank } from "$lib/types/tracker-data";
 
   // Colors per rank (Wood → Mistril), matched to the in-game chart
   const RANK_COLORS = [
@@ -27,19 +25,25 @@
     "#a78bfa", // Mistril   — violet-400
   ];
 
-  let levelsPerRank = trackerData.renown.levelsPerRank;
-  let ranks = trackerData.renown.ranks;
-  let maxLevel = MAX_RENOWN_LEVEL;
+  const ranks = trackerData.townRanks;
+  const maxLevel = ranks[ranks.length - 1].levels.end;
 
   const { progress }: { progress: CategoryProgress } = $props();
 
-  let level = $derived(clampRenownLevel(userState.state.completed.renown));
-  let currentRankIndex = $derived(Math.min(Math.floor(level / levelsPerRank), ranks.length - 1));
-  let currentRankName = $derived(ranks[currentRankIndex].name);
+  let level = $derived(userState.state.completed.renown);
+  let currentRankIndex = $derived(
+    ranks.findLastIndex(({ levels: { start, end } }) => start <= level && level <= end),
+  );
+  let currentRank = $derived(ranks[currentRankIndex]);
   let isMaxed = $derived(level >= maxLevel);
   let currentRankColor = $derived(RANK_COLORS[currentRankIndex]);
-  let levelInRank = $derived(level - currentRankIndex * levelsPerRank);
-  let fillPct = $derived(isMaxed ? 100 : (levelInRank / levelsPerRank) * 100);
+  let fillPct = $derived(calculateFillPercentage(level, currentRank));
+
+  function calculateFillPercentage(level: number, rank: TownRank): number {
+    const range = Math.max(rank.levels.end - rank.levels.start, 1);
+    const progress = (level - rank.levels.start) / range;
+    return Math.min(progress, 1) * 100;
+  }
 
   function setRenownWithCelebration(newLevel: number): void {
     const wasDone = level >= maxLevel;
@@ -55,7 +59,7 @@
     <SectionHeader key="renown" {progress} />
     <div class="flex items-center gap-2 rounded-md px-2 {isMaxed ? 'opacity-40' : ''}">
       <div class="flex min-w-0 flex-1 items-center gap-1.5">
-        <span class="text-base font-medium">{currentRankName}</span>
+        <span class="text-base font-medium">{currentRank.name}</span>
         <!-- Partially-filled rank star -->
         <div class="relative size-4 shrink-0" aria-hidden="true">
           <Icon.ProgressMark
