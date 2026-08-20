@@ -1,7 +1,6 @@
-import type { Source as AcquisitionSource, Source } from "./acquisition.js";
+import type { Source } from "./acquisition.js";
 import type { VisibilityCondition } from "./visibility.js";
 
-export type { AcquisitionSource };
 export type {
   ActivityId,
   AvailabilityCondition,
@@ -205,7 +204,7 @@ export interface TrackerData {
   version: string;
 }
 export interface TrackerEntity {
-  sources?: AcquisitionSource[];
+  sources?: Source[];
   visibility?: VisibilityCondition;
 }
 export type TreasureChestTierId = string & { readonly __brand: "TreasureChestTier" };

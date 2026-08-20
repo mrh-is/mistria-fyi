@@ -9,8 +9,8 @@ import {
   formatDateLabel,
 } from "./source-segments.js";
 
+import type { Source } from "$lib/types/acquisition.js";
 import type {
-  AcquisitionSource,
   ActivityId,
   AnimalId,
   DateId,
@@ -155,19 +155,19 @@ describe("formatDateLabel", () => {
 
 describe("buildSourceSegments — simple types", () => {
   it("default", () => {
-    const source: AcquisitionSource = { type: "default" };
+    const source: Source = { type: "default" };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Available from the start"]);
   });
 
   it("renown", () => {
-    const source: AcquisitionSource = { type: "renown", level: 3 };
+    const source: Source = { type: "renown", level: 3 };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([
       "Get the town's renown rank to level 3",
     ]);
   });
 
   it("museum donation", () => {
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "museum_donation",
       setCount: 3,
       wingId: "archaeology" as MuseumWingId,
@@ -178,7 +178,7 @@ describe("buildSourceSegments — simple types", () => {
   });
 
   it("chicken statue", () => {
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "chicken_statue",
       cost: 10,
     };
@@ -188,7 +188,7 @@ describe("buildSourceSegments — simple types", () => {
   });
 
   it("wishing well", () => {
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "wishing_well",
       cost: 500,
     };
@@ -198,7 +198,7 @@ describe("buildSourceSegments — simple types", () => {
   });
 
   it("treasure chest", () => {
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "treasure_chest",
       tier: "gold" as TreasureChestTierId,
     };
@@ -210,14 +210,14 @@ describe("buildSourceSegments — simple types", () => {
   });
 
   it("beach cave chest", () => {
-    const source: AcquisitionSource = { type: "beach_cave_chest" };
+    const source: Source = { type: "beach_cave_chest" };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([
       "Find in the Gold Treasure Chest in the Beach Cave",
     ]);
   });
 
   it("upgrade — House Stairs", () => {
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "upgrade",
       storeId: "carpenter" as StoreId,
       upgradeName: "House Stairs",
@@ -226,7 +226,7 @@ describe("buildSourceSegments — simple types", () => {
   });
 
   it("upgrade — Starter Farm Bridge", () => {
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "upgrade",
       storeId: "carpenter" as StoreId,
       upgradeName: "Starter Farm Bridge",
@@ -235,7 +235,7 @@ describe("buildSourceSegments — simple types", () => {
   });
 
   it("engagement", () => {
-    const source: AcquisitionSource = { type: "engagement" };
+    const source: Source = { type: "engagement" };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([
       "Receive from Elsie after getting to 10 hearts with a dateable character",
     ]);
@@ -251,7 +251,7 @@ describe("buildSourceSegments — store", () => {
         darcy: { type: "questCompleted" as const, questId: "repair_the_bridge" as QuestId },
       },
     };
-    const source: AcquisitionSource = { type: "store", storeId: "darcy" as StoreId };
+    const source: Source = { type: "store", storeId: "darcy" as StoreId };
     const result = buildSourceSegments(source, lookups);
     expect(result).toEqual([
       "Purchase from ",
@@ -264,7 +264,7 @@ describe("buildSourceSegments — store", () => {
 
   it("store with visibility qualifier", () => {
     const vis = { type: "questAvailable" as const, questId: "repair_the_inn" as QuestId };
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "store",
       storeId: "inn" as StoreId,
       visibility: vis,
@@ -294,7 +294,7 @@ describe("buildSourceSegments — scroll_bundle", () => {
         questId: "repair_the_general_store" as QuestId,
       },
     };
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "scroll_bundle",
       bundleName: "Fall Crop Sign Scroll Bundle",
       storeId: "general" as StoreId,
@@ -326,7 +326,7 @@ describe("buildSourceSegments — letter and perk", () => {
         [crystal_berries]: { type: "minesLevel", floor: 40 },
       },
     };
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "letter",
       trigger: "shipped_item",
       triggerItemId: crystal_berries,
@@ -344,7 +344,7 @@ describe("buildSourceSegments — letter and perk", () => {
       itemNames: { [cave_kelp]: "Cave Kelp" },
       itemVisibility: { [cave_kelp]: { type: "minesLevel", floor: 20 } },
     };
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "letter",
       trigger: "donated_item",
       triggerItemId: cave_kelp,
@@ -356,7 +356,7 @@ describe("buildSourceSegments — letter and perk", () => {
   });
 
   it("renders a reached-date trigger without redaction", () => {
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "letter",
       trigger: "reached_date",
       triggerDate: { day: 3, season: "winter" },
@@ -367,7 +367,7 @@ describe("buildSourceSegments — letter and perk", () => {
   });
 
   it("builds the perk grammar for a perk source", () => {
-    const source: AcquisitionSource = { type: "perk", perkId: "taste_maker" as PerkId };
+    const source: Source = { type: "perk", perkId: "taste_maker" as PerkId };
     expect(buildSourceSegments(source, BASE_LOOKUPS)[0]).toBe("Unlock ");
   });
 });
@@ -381,7 +381,7 @@ describe("buildSourceSegments — festival", () => {
       },
       stores: { ["nora_souvenir_stall" as StoreId]: { name: "Souvenir Stall" } },
     };
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "festival",
       festivalId: "harvest" as FestivalId,
       storeId: "nora_souvenir_stall" as StoreId,
@@ -394,7 +394,7 @@ describe("buildSourceSegments — festival", () => {
 
 describe("buildSourceSegments — mines_chest (worked example: Chickpea Curry)", () => {
   it("matches spec worked example", () => {
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "mines_chest",
       biomeId: "biome_1" as MinesBiomeId,
       perkId: "taste_maker" as PerkId,
@@ -439,7 +439,7 @@ describe("buildSourceSegments — mines_dig_site (worked example: Stalactite Arc
       },
       skillNames: { ...BASE_LOOKUPS.skillNames, archaeology: "Archaeology" },
     };
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "mines_dig_site",
       biomeId: "biome_2" as MinesBiomeId,
       perkId: "natural_beauty" as PerkId,
@@ -459,7 +459,7 @@ describe("buildSourceSegments — quest types", () => {
       ...BASE_LOOKUPS,
       questNames: { unusual_seed: "The Unusual Seed" },
     };
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "quest",
       questId: "unusual_seed" as QuestId,
       questType: "story_quests" as QuestType,
@@ -487,7 +487,7 @@ describe("buildSourceSegments — quest types", () => {
       questNames: { tall_dark: "Tall, Dark and Mysterious" },
       questNpcIds: { tall_dark: "balor" as NpcId },
     };
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "quest",
       questId: "tall_dark" as QuestId,
       questType: "heart_quests" as QuestType,
@@ -515,7 +515,7 @@ describe("buildSourceSegments — quest types", () => {
       categoryVisibility: { crown: { type: "renownLevel" as const, level: 20 } },
       questNames: { ["crown_crops" as QuestId]: "Crown Request: Crops" },
     });
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "quest",
       questId: "crown_crops" as QuestId,
       questType: "crown_quests" as QuestType,
@@ -530,7 +530,7 @@ describe("buildSourceSegments — quest types", () => {
   });
 
   it("fetch quest gates NPC and requested item independently", () => {
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "quest",
       questId: "request_for_berries" as QuestId,
       questType: "fetch_quests" as QuestType,
@@ -555,7 +555,7 @@ describe("buildSourceSegments — quest types", () => {
   });
 
   it("wraps cooking challenges in their category gate", () => {
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "quest",
       challengeRecipeId: "crispy_fried_earthshroom" as RecipeId,
       questId: "tali_earthshroom" as QuestId,
@@ -585,7 +585,7 @@ describe("buildSourceSegments — quest types", () => {
   });
 
   it("wraps mission quests in their category gate", () => {
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "quest",
       questId: "lost_relic" as QuestId,
       questType: "cooking" as QuestType,
@@ -606,7 +606,7 @@ describe("buildSourceSegments — quest types", () => {
 
 describe("buildSourceSegments — item/cosmetic source types", () => {
   it("animal_product with known animal name", () => {
-    const source: AcquisitionSource = { type: "animal_product", animalId: "alpaca" as AnimalId };
+    const source: Source = { type: "animal_product", animalId: "alpaca" as AnimalId };
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
       animalNames: { ["alpaca" as AnimalId]: "Alpaca" },
@@ -615,12 +615,12 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   });
 
   it("animal_product falls back to title-cased id", () => {
-    const source: AcquisitionSource = { type: "animal_product", animalId: "dairy_cow" as AnimalId };
+    const source: Source = { type: "animal_product", animalId: "dairy_cow" as AnimalId };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Collect from Dairy Cow"]);
   });
 
   it("artifact_dig with locations", () => {
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "artifact_dig",
       locationIds: ["narrows" as LocationId, "eastern_road" as LocationId],
     };
@@ -632,12 +632,12 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   });
 
   it("artifact_dig without locations", () => {
-    const source: AcquisitionSource = { type: "artifact_dig" };
+    const source: Source = { type: "artifact_dig" };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Dig up at an artifact dig site"]);
   });
 
   it("artifact_replicator", () => {
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "artifact_replicator",
       originalItemId: "ancient_vase" as ItemId,
     };
@@ -649,7 +649,7 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   });
 
   it("bug_catch with locations", () => {
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "bug_catch",
       locationIds: ["narrows" as LocationId, "eastern_road" as LocationId],
     };
@@ -661,12 +661,12 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   });
 
   it("bug_catch without locations", () => {
-    const source: AcquisitionSource = { type: "bug_catch" };
+    const source: Source = { type: "bug_catch" };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Catch"]);
   });
 
   it("crop from seed", () => {
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "crop",
       seedItemId: "turnip_seeds" as ItemId,
     };
@@ -680,22 +680,22 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   });
 
   it("date", () => {
-    const source: AcquisitionSource = { type: "date", dateId: "date_1" as DateId };
+    const source: Source = { type: "date", dateId: "date_1" as DateId };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Receive on a date"]);
   });
 
   it("dive with water types", () => {
-    const source: AcquisitionSource = { type: "dive", waterTypes: ["ocean" as WaterType] };
+    const source: Source = { type: "dive", waterTypes: ["ocean" as WaterType] };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Dive in Ocean"]);
   });
 
   it("dive without water types", () => {
-    const source: AcquisitionSource = { type: "dive" };
+    const source: Source = { type: "dive" };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Dive"]);
   });
 
   it("equipment", () => {
-    const source: AcquisitionSource = { type: "equipment", itemId: "fishing_rod" as ItemId };
+    const source: Source = { type: "equipment", itemId: "fishing_rod" as ItemId };
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
       itemNames: { ["fishing_rod" as ItemId]: "Fishing Rod" },
@@ -704,7 +704,7 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   });
 
   it("festival_activity", () => {
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "festival_activity",
       activityId: "harvest_race" as ActivityId,
       festivalId: "harvest_festival" as FestivalId,
@@ -721,24 +721,24 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   });
 
   it("fish with water types", () => {
-    const source: AcquisitionSource = { type: "fish", waterTypes: ["river" as WaterType] };
+    const source: Source = { type: "fish", waterTypes: ["river" as WaterType] };
     const result = buildSourceSegments(source, BASE_LOOKUPS);
     expect(result[0]).toContain("Catch");
     expect(result).toEqual(["Catch in River"]);
   });
 
   it("fish without water types", () => {
-    const source: AcquisitionSource = { type: "fish" };
+    const source: Source = { type: "fish" };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Catch while fishing"]);
   });
 
   it("fish_trap", () => {
-    const source: AcquisitionSource = { type: "fish_trap" };
+    const source: Source = { type: "fish_trap" };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Catch in a fish trap"]);
   });
 
   it("forage with locations", () => {
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "forage",
       locationIds: ["narrows" as LocationId],
     };
@@ -750,12 +750,12 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   });
 
   it("forage without locations", () => {
-    const source: AcquisitionSource = { type: "forage" };
+    const source: Source = { type: "forage" };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Forage in the wild"]);
   });
 
   it("mine wraps biome label", () => {
-    const source: AcquisitionSource = { type: "mine", biomeId: "biome_0" as MinesBiomeId };
+    const source: Source = { type: "mine", biomeId: "biome_0" as MinesBiomeId };
     const result = buildSourceSegments(source, BASE_LOOKUPS);
     expect(result[0]).toBe("Mine in ");
     expect(result[1]).toMatchObject({
@@ -765,19 +765,19 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   });
 
   it("monster", () => {
-    const source: AcquisitionSource = { type: "monster", monsterId: "slime" as MonsterId };
+    const source: Source = { type: "monster", monsterId: "slime" as MonsterId };
     const lookups: SegmentLookups = { ...BASE_LOOKUPS, monsterNames: { slime: "Slime" } };
     expect(buildSourceSegments(source, lookups)).toEqual(["Dropped by Slime"]);
   });
 
   it("monster_feed", () => {
-    const source: AcquisitionSource = { type: "monster_feed", monsterId: "slime" as MonsterId };
+    const source: Source = { type: "monster_feed", monsterId: "slime" as MonsterId };
     const lookups: SegmentLookups = { ...BASE_LOOKUPS, monsterNames: { slime: "Slime" } };
     expect(buildSourceSegments(source, lookups)).toEqual(["Feed Slime"]);
   });
 
   it("perk_drop", () => {
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "perk_drop",
       activity: "crop_harvest",
       perkId: "taste_maker" as PerkId,
@@ -788,7 +788,7 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   });
 
   it("proposal", () => {
-    const source: AcquisitionSource = { type: "proposal", npcId: "elsie" as NpcId };
+    const source: Source = { type: "proposal", npcId: "elsie" as NpcId };
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
       npcNames: { elsie: "Elsie" } as Record<NpcId, string>,
@@ -797,7 +797,7 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   });
 
   it("recipe", () => {
-    const source: AcquisitionSource = {
+    const source: Source = {
       type: "recipe",
       method: "dragon_forge",
       recipeId: "iron_ingot" as RecipeId,
@@ -810,20 +810,20 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   });
 
   it("ritual_chamber", () => {
-    const source: AcquisitionSource = { type: "ritual_chamber", perkId: "taste_maker" as PerkId };
+    const source: Source = { type: "ritual_chamber", perkId: "taste_maker" as PerkId };
     const result = buildSourceSegments(source, BASE_LOOKUPS);
     expect(result[0]).toBe("Craft at the Ritual Chamber with ");
     expect(result[1]).toMatchObject({ revealed: ["the Taste Maker perk (Cooking tier 1)"] });
   });
 
   it("station", () => {
-    const source: AcquisitionSource = { type: "station", stationId: "forge" as StationId };
+    const source: Source = { type: "station", stationId: "forge" as StationId };
     const lookups: SegmentLookups = { ...BASE_LOOKUPS, stationNames: { forge: "Forge" } };
     expect(buildSourceSegments(source, lookups)).toEqual(["Process at Forge"]);
   });
 
   it("tree", () => {
-    const source: AcquisitionSource = { type: "tree", saplingItemId: "apple_sapling" as ItemId };
+    const source: Source = { type: "tree", saplingItemId: "apple_sapling" as ItemId };
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
       itemNames: { ["apple_sapling" as ItemId]: "Apple Sapling" },
@@ -832,7 +832,7 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   });
 
   it("wedding", () => {
-    const source: AcquisitionSource = { type: "wedding" };
+    const source: Source = { type: "wedding" };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Receive after getting married"]);
   });
 });

@@ -61,11 +61,12 @@ import type { LucideIcon } from "@lucide/svelte";
 import type { CategoryKey } from "$lib/data/categories.js";
 import type { SourceFilter } from "$lib/stores/toolbar-state.svelte.js";
 import type { QuestState } from "$lib/stores/user-state.svelte.js";
-import type { AcquisitionSource, Season, Weather } from "$lib/types/tracker-data.js";
+import type { Source } from "$lib/types/acquisition";
+import type { Season, Weather } from "$lib/types/tracker-data.js";
 
 // ── Source ──────────────────────────────────────────────────────────────────
 
-export const SOURCE_ICON: Record<AcquisitionSource["type"], LucideIcon> = {
+export const SOURCE_ICON: Record<Source["type"], LucideIcon> = {
   // Types from item/cosmetic acquisition sources only
   animal_product: Egg,
   artifact_dig: Shovel,

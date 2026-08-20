@@ -19,7 +19,8 @@
   import AllCompleted from "./all-completed.svelte";
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
-  import type { AcquisitionSource, Item, ItemId } from "$lib/types/tracker-data.js";
+  import type { Source } from "$lib/types/acquisition";
+  import type { Item, ItemId } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   const redactGuard = createRedactionGuard();
@@ -35,7 +36,7 @@
   function rowDisplay(
     itemId: ItemId,
     item: { visibility?: VisibilityCondition },
-    sources: AcquisitionSource[],
+    sources: Source[],
   ): TrackerRowDisplay {
     const completed = isItemCompleted(itemId);
     if (!itemNameVisible(item)) return { mode: "redacted" };

@@ -2,12 +2,12 @@ import { SvelteSet } from "svelte/reactivity";
 
 import type { Component } from "svelte";
 
-import type { AcquisitionSource } from "$lib/types/tracker-data.js";
+import type { Source } from "$lib/types/acquisition";
 
 export interface SourceFilter {
   icon: Component;
   label: string;
-  types: AcquisitionSource["type"][];
+  types: Source["type"][];
 }
 
 class ToolbarState {

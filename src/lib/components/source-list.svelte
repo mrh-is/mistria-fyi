@@ -2,14 +2,14 @@
   import { Icon } from "$lib/components/icon/index.js";
   import SourceSegmentText from "$lib/components/source-segment-text.svelte";
 
-  import type { AcquisitionSource } from "$lib/types/tracker-data.js";
+  import type { Source } from "$lib/types/acquisition";
   import type { SourceSegment } from "$lib/utils/source-segments.js";
 
   let {
     sources,
     sourceSegments,
   }: {
-    sources: AcquisitionSource[];
+    sources: Source[];
     sourceSegments: SourceSegment[][];
   } = $props();
 </script>

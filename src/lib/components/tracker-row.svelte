@@ -8,7 +8,7 @@
   import { buildSourceSegments } from "$lib/utils/source-segments.js";
 
   import type { DisplayBadges } from "$lib/engine/availability-condition.js";
-  import type { AcquisitionSource } from "$lib/types/tracker-data.js";
+  import type { Source } from "$lib/types/acquisition";
   import type { SegmentLookups, SourceSegment } from "$lib/utils/source-segments.js";
 
   export type TrackerRowDisplay =
@@ -27,7 +27,7 @@
     lookups?: SegmentLookups;
     name: string;
     onToggle: () => void;
-    sources?: AcquisitionSource[];
+    sources?: Source[];
   } = $props();
 
   let uniqueSourceTypes = $derived([...new Set(sources.map((s) => s.type))]);

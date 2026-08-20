@@ -18,8 +18,8 @@
   import AllCompleted from "./all-completed.svelte";
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
+  import type { Source } from "$lib/types/acquisition";
   import type {
-    AcquisitionSource,
     Item,
     ItemId,
     MuseumWing,
@@ -47,7 +47,7 @@
 
   let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
 
-  function rowDisplay(itemId: ItemId, sources: AcquisitionSource[]): TrackerRowDisplay {
+  function rowDisplay(itemId: ItemId, sources: Source[]): TrackerRowDisplay {
     const completed = userState.state.completed.museum.has(itemId);
     if (!itemNameVisible(itemId)) return { mode: "redacted" };
     if (completed) return { leaving: recentlyCompleted.has(itemId), mode: "completed" };

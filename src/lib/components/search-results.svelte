@@ -12,8 +12,8 @@
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { SearchResult } from "$lib/engine/search.js";
+  import type { Source } from "$lib/types/acquisition";
   import type {
-    AcquisitionSource,
     AnimalId,
     AnimalVariantId,
     CosmeticId,
@@ -53,7 +53,7 @@
 
   let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
 
-  function getSources(result: SearchResult): AcquisitionSource[] {
+  function getSources(result: SearchResult): Source[] {
     if (result.category === "almanac") {
       return trackerData.items[result.id as ItemId].sources ?? [];
     }

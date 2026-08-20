@@ -13,13 +13,14 @@
   import AllCompleted from "./all-completed.svelte";
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
-  import type { AcquisitionSource, CosmeticId } from "$lib/types/tracker-data.js";
+  import type { Source } from "$lib/types/acquisition";
+  import type { CosmeticId } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   interface CosmeticEntry {
     id: CosmeticId;
     name: string;
-    sources: AcquisitionSource[];
+    sources: Source[];
     visibility: VisibilityCondition;
   }
 

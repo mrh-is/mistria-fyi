@@ -19,7 +19,8 @@
   import AllCompleted from "./all-completed.svelte";
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
-  import type { AcquisitionSource, Item, RecipeId } from "$lib/types/tracker-data.js";
+  import type { Source } from "$lib/types/acquisition";
+  import type { Item, RecipeId } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   const redactGuard = createRedactionGuard();
@@ -52,7 +53,7 @@
     id: RecipeId;
     name: string;
     nameVisible: boolean;
-    sources: AcquisitionSource[];
+    sources: Source[];
     visibility: VisibilityCondition;
   }
 
@@ -94,7 +95,7 @@
   let nameFilter = $derived(toolbarState.searchQuery);
 
   $effect(() => {
-    const allTypes = new SvelteSet<AcquisitionSource["type"]>();
+    const allTypes = new SvelteSet<Source["type"]>();
     for (const group of recipesByCategory) {
       for (const entry of group.entries) {
         for (const source of entry.sources) {
@@ -113,7 +114,7 @@
 
   let activeSourceTypes = $derived.by(() => {
     if (!toolbarState.sourceFilterActive) return null;
-    const types = new SvelteSet<AcquisitionSource["type"]>();
+    const types = new SvelteSet<Source["type"]>();
     for (const filter of toolbarState.recipeSourceFilters) {
       if (toolbarState.activeSourceLabels.has(filter.label)) {
         for (const t of filter.types) types.add(t);

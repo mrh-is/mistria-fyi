@@ -1,7 +1,7 @@
 import { formatBiomeName, formatStoreName, seasonLabel, withIndefiniteArticle } from "./format.js";
 
+import type { Source } from "$lib/types/acquisition.js";
 import type {
-  AcquisitionSource,
   LocationId,
   MinesBiomeId,
   NpcId,
@@ -94,7 +94,7 @@ export function buildPerkLabel(
 }
 
 export function buildSourceSegments(
-  source: AcquisitionSource,
+  source: Source,
   lookups: SegmentLookups,
 ): [SourceSegment, ...SourceSegment[]] {
   switch (source.type) {
@@ -304,7 +304,7 @@ export function formatDateLabel(season: Season, day: number): string {
 }
 
 function buildCookingChallengeSegments(
-  source: AcquisitionSource & { type: "quest" },
+  source: Source & { type: "quest" },
   lookups: SegmentLookups,
 ): [SourceSegment, ...SourceSegment[]] {
   const recipeName = source.challengeRecipeId
@@ -325,7 +325,7 @@ function buildCookingChallengeSegments(
 }
 
 function buildCrownQuestSegments(
-  source: AcquisitionSource & { type: "quest" },
+  source: Source & { type: "quest" },
   lookups: SegmentLookups,
 ): [SourceSegment, ...SourceSegment[]] {
   const questName = lookups.questNames[source.questId] ?? titleCase(source.questId);
@@ -343,7 +343,7 @@ function buildCrownQuestSegments(
 }
 
 function buildFetchQuestSegments(
-  source: AcquisitionSource & { type: "quest" },
+  source: Source & { type: "quest" },
   lookups: SegmentLookups,
 ): [SourceSegment, ...SourceSegment[]] {
   const npcId = lookups.questNpcIds[source.questId];
@@ -365,7 +365,7 @@ function buildFetchQuestSegments(
 }
 
 function buildHeartQuestSegments(
-  source: AcquisitionSource & { type: "quest" },
+  source: Source & { type: "quest" },
   lookups: SegmentLookups,
 ): [SourceSegment, ...SourceSegment[]] {
   const questName = lookups.questNames[source.questId] ?? titleCase(source.questId);
@@ -390,7 +390,7 @@ function buildLocationList(locationIds: LocationId[] | undefined, lookups: Segme
 }
 
 function buildMissionQuestSegments(
-  source: AcquisitionSource & { type: "quest" },
+  source: Source & { type: "quest" },
   lookups: SegmentLookups,
 ): [SourceSegment, ...SourceSegment[]] {
   const questName = lookups.questNames[source.questId] ?? titleCase(source.questId);
@@ -409,7 +409,7 @@ function buildMissionQuestSegments(
 }
 
 function buildQuestSegments(
-  source: AcquisitionSource & { type: "quest" },
+  source: Source & { type: "quest" },
   lookups: SegmentLookups,
 ): [SourceSegment, ...SourceSegment[]] {
   const questType = source.questType;
@@ -442,7 +442,7 @@ function buildStoreName(
 }
 
 function buildStoryQuestSegments(
-  source: AcquisitionSource & { type: "quest" },
+  source: Source & { type: "quest" },
   lookups: SegmentLookups,
 ): [SourceSegment, ...SourceSegment[]] {
   const questName = lookups.questNames[source.questId] ?? titleCase(source.questId);
@@ -495,7 +495,7 @@ function titleCase(s: string): string {
     .join(" ");
 }
 
-function upgradeSourceText(source: AcquisitionSource & { type: "upgrade" }): string {
+function upgradeSourceText(source: Source & { type: "upgrade" }): string {
   const UPGRADE_TEXT: Record<string, string> = {
     "House Stairs": "Upgrade your home a fourth time",
     "Starter Farm Bridge": "Expand your farm",
