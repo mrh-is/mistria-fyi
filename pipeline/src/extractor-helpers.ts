@@ -1,3 +1,5 @@
+import type { QuestType } from "$lib/types/tracker-data.js";
+
 import type { ParsedGameData } from "./parse-fiddle.js";
 
 /**
@@ -14,6 +16,15 @@ export const TRACKED_QUEST_GROUPS = [
 ] as const;
 
 export type TrackedQuestGroup = (typeof TRACKED_QUEST_GROUPS)[number];
+
+export const QUEST_TYPE_MAP: Record<TrackedQuestGroup, QuestType> = {
+  crown_quests: "crown",
+  fetch_quests: "fetch",
+  heart_quests: "heart",
+  stillwell_challenges: "mission",
+  story_quests: "story",
+  tali_challenges: "cooking",
+};
 
 /**
  * Iterates every non-default, non-null, object item record in the full

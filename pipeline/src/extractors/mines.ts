@@ -1,12 +1,15 @@
 import { expectArray } from "../data-shapes.js";
 import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
 
-import type { MinesBiomeId, SpellId, TrackerData } from "$lib/types/tracker-data.js";
+import type { MinesBiome, MinesBiomeId, SpellId, TrackerData } from "$lib/types/tracker-data.js";
 
-/**
- * Projects dungeon biomes and spells. Biome IDs are synthetic array indices; each end floor is the
- * floor before the next biome starts, and missing starts use 20-floor spacing.
- */
+function nameToId(name: string): MinesBiomeId {
+  return name
+    .replace(/^The\s+/i, "")
+    .toLowerCase()
+    .replace(/\s+/g, "_") as MinesBiomeId;
+}
+
 export function extractMines(fiddle: ParsedGameData): TrackerData["mines"] {
   const dungeons = fiddle.dungeons as Record<string, unknown> | undefined;
   const spellsData = fiddle.spells as Record<string, Record<string, unknown>> | undefined;
@@ -24,15 +27,19 @@ export function extractMines(fiddle: ParsedGameData): TrackerData["mines"] {
     sourcePath: sourceFile,
   });
 
-  const biomes = rawBiomes.map((b, i) => ({
-    endFloor:
+  const biomes: MinesBiome[] = rawBiomes.map((b, i) => {
+    const name = (b.name as string | undefined) ?? `Biome ${i + 1}`;
+    const start = (b.floor as number | undefined) ?? i * 20 + 1;
+    const end =
       i + 1 < rawBiomes.length
         ? ((rawBiomes[i + 1].floor as number | undefined) ?? (i + 1) * 20 + 1) - 1
-        : maxFloors,
-    id: `biome_${i}` as MinesBiomeId,
-    name: (b.name as string | undefined) ?? `Biome ${i + 1}`,
-    startFloor: (b.floor as number | undefined) ?? i * 20 + 1,
-  }));
+        : maxFloors;
+    return {
+      floors: { end, start },
+      id: nameToId(name),
+      name,
+    };
+  });
 
   const spells = {} as Record<SpellId, { name: string }>;
   if (spellsData) {
@@ -44,8 +51,9 @@ export function extractMines(fiddle: ParsedGameData): TrackerData["mines"] {
     }
   }
 
+  const lastBiome = biomes[biomes.length - 1];
   console.log(
-    `  Mines: ${biomes.length} biomes, ${maxFloors} max floors, ${Object.keys(spells).length} spells`,
+    `  Mines: ${biomes.length} biomes, ${lastBiome?.floors.end ?? 0} max floors, ${Object.keys(spells).length} spells`,
   );
-  return { biomes, maxFloors, spells };
+  return { biomes, spells };
 }

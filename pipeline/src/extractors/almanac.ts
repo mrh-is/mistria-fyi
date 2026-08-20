@@ -2,7 +2,12 @@ import { expectArray, expectStringArray } from "../data-shapes.js";
 import { forEachItem } from "../extractor-helpers.js";
 import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
 
-import type { AlmanacCategory, ItemId, RecipeId, TrackerData } from "$lib/types/tracker-data.js";
+import type {
+  AlmanacCategory,
+  AlmanacCategoryId,
+  ItemId,
+  TrackerData,
+} from "$lib/types/tracker-data.js";
 
 /**
  * Extracts both named item metadata and visible almanac rows. The metadata index includes every
@@ -19,19 +24,16 @@ const CATEGORY_NAME_OVERRIDES: Record<string, string> = {
   fish: "Fishing and Diving",
 };
 
-export function extractAlmanac(
-  fiddle: ParsedGameData,
-  recipeIdByItemId?: Map<string, RecipeId>,
-): {
+export function extractAlmanac(fiddle: ParsedGameData): {
   almanac: TrackerData["almanac"];
   items: ItemMetadataIndex;
 } {
-  if (!fiddle.items) return { almanac: [], items: {} };
+  if (!fiddle.items) return { almanac: {}, items: {} };
 
   const rawCategories = readAlmanacCategories(fiddle);
   if (rawCategories.length === 0) {
     console.warn("  Warning: No almanac categories found in UI data, falling back to empty");
-    return { almanac: [], items: {} };
+    return { almanac: {}, items: {} };
   }
 
   const chestIds = buildChestIdSet(fiddle);
@@ -46,10 +48,7 @@ export function extractAlmanac(
   }[] = [];
 
   forEachItem(fiddle, (itemId, item, topCategory, subCategory) => {
-    // Internal, unreviewed items are intentionally absent from both output views.
     if (topCategory === "other" && subCategory === "unreviewed_new_items") return;
-
-    // Fish chest rewards are not collectible almanac items.
     if (chestIds.has(itemId)) return;
 
     const rawName = item.name as string | undefined;
@@ -58,7 +57,6 @@ export function extractAlmanac(
       return;
     }
 
-    // Reject localization paths that have not resolved to an item name.
     if (rawName.includes("/") && !rawName.startsWith("spr_")) {
       namelessItems.push(`${topCategory}/${subCategory}/${itemId} (localization path: ${rawName})`);
       return;
@@ -78,7 +76,6 @@ export function extractAlmanac(
     });
   });
 
-  // Menu order determines tag precedence when an item has tags from multiple categories.
   const tagToCategoryIdx = new Map<string, number>();
   for (let i = 0; i < rawCategories.length; i++) {
     for (const tag of rawCategories[i].tags) {
@@ -93,14 +90,9 @@ export function extractAlmanac(
 
   const items: ItemMetadataIndex = {};
 
-  // Tags that describe how an item is obtained, not what it is. These lose to any
-  // classification tag when an item matches multiple almanac categories.
   const ACQUISITION_TAGS = new Set(["dive", "fishable"]);
 
   for (const item of allItems) {
-    // Find the best matching almanac category. Classification tags (what the item is)
-    // take priority over acquisition-method tags (how you get it). Within each tier,
-    // lowest menu index wins.
     let assignedIdx: number | undefined;
     let bestCategoryOrder = Infinity;
     let bestIsAcquisition = true;
@@ -118,7 +110,6 @@ export function extractAlmanac(
       }
     }
 
-    // Items without a matching menu tag retain their source top-category metadata.
     const categoryKey =
       assignedIdx !== undefined ? rawCategories[assignedIdx].key : item.topCategory;
     items[item.id] = { category: categoryKey, name: item.name };
@@ -132,7 +123,7 @@ export function extractAlmanac(
     }
   }
 
-  const almanac: AlmanacCategory[] = [];
+  const almanac: Record<AlmanacCategoryId, AlmanacCategory> = {};
 
   for (let i = 0; i < rawCategories.length; i++) {
     const cat = rawCategories[i];
@@ -141,31 +132,20 @@ export function extractAlmanac(
 
     const collapsed = collapseFurnitureColorways(bucket);
 
-    const sortedEntries = [...collapsed.entries()].sort(([, a], [, b]) =>
-      a.name.localeCompare(b.name),
-    );
-
-    const categoryItems: AlmanacCategory["items"] = {};
-    for (const [id, entry] of sortedEntries) {
-      const recipeId = recipeIdByItemId?.get(id);
-      categoryItems[id as ItemId] = {
-        ...(entry.colorCount ? { colorCount: entry.colorCount } : {}),
-        name: entry.name,
-        ...(recipeId ? { recipeId } : {}),
-      };
-    }
+    const sortedIds = [...collapsed.entries()]
+      .sort(([, a], [, b]) => a.name.localeCompare(b.name))
+      .map(([id]) => id as ItemId);
 
     const displayName = CATEGORY_NAME_OVERRIDES[cat.key] ?? snakeToTitle(cat.key);
 
-    almanac.push({
-      id: cat.key,
-      items: categoryItems,
+    almanac[cat.key as AlmanacCategoryId] = {
+      items: sortedIds,
       name: displayName,
-    });
+    };
   }
 
-  const totalItems = almanac.reduce((n, cat) => n + Object.keys(cat.items).length, 0);
-  console.log(`  Almanac: ${almanac.length} categories, ${totalItems} items`);
+  const totalItems = Object.values(almanac).reduce((n, cat) => n + cat.items.length, 0);
+  console.log(`  Almanac: ${Object.keys(almanac).length} categories, ${totalItems} items`);
   if (namelessItems.length > 0) {
     console.log(`  Nameless items skipped (${namelessItems.length}):`);
     for (const path of namelessItems) {
@@ -192,8 +172,8 @@ function buildChestIdSet(fiddle: ParsedGameData): Set<string> {
 
 function collapseFurnitureColorways(
   bucket: Map<string, { id: string; name: string; recipeKey?: string }>,
-): Map<string, { colorCount?: number; name: string }> {
-  const result = new Map<string, { colorCount?: number; name: string }>();
+): Map<string, { name: string }> {
+  const result = new Map<string, { name: string }>();
   const seenRecipeGroups = new Map<string, { count: number; representativeId: string }>();
 
   for (const [id, entry] of bucket) {
@@ -205,16 +185,9 @@ function collapseFurnitureColorways(
         continue;
       }
       seenRecipeGroups.set(groupKey, { count: 1, representativeId: id });
-      result.set(id, { colorCount: 1, name: entry.name });
+      result.set(id, { name: entry.name });
     } else {
       result.set(id, { name: entry.name });
-    }
-  }
-
-  for (const [, { count, representativeId }] of seenRecipeGroups) {
-    const entry = result.get(representativeId);
-    if (entry) {
-      entry.colorCount = count > 1 ? count : undefined;
     }
   }
 
