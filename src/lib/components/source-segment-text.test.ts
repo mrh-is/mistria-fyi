@@ -15,7 +15,7 @@ describe("SourceSegmentText", () => {
     const segments: SourceSegment[] = [
       "Craft at ",
       {
-        condition: { floor: 90, type: "minesLevel" },
+        condition: { type: "minesLevel", floor: 90 },
         revealed: ["the Dragon Forge (Mines level 90)"],
       },
     ];
@@ -29,7 +29,7 @@ describe("SourceSegmentText", () => {
     userState.setMineFloor(90);
     const segments: SourceSegment[] = [
       {
-        condition: { floor: 90, type: "minesLevel" },
+        condition: { type: "minesLevel", floor: 90 },
         revealed: ["the Dragon Forge (Mines level 90)"],
       },
     ];

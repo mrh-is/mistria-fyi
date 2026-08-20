@@ -42,21 +42,21 @@ const STORE_UNLOCK_QUESTS: Partial<Record<string, QuestId>> = {
 
 /** Hardcoded NPC gates (spec Section 3e). NPCs not listed here are always visible. */
 const NPC_GATES: Partial<Record<string, VisibilityCondition>> = {
-  caldarus: { questId: "breaking_the_fire_seal" as QuestId, type: "questCompleted" },
-  darcy: { questId: "repair_the_bridge" as QuestId, type: "questCompleted" },
-  louis: { questId: "repair_the_bridge" as QuestId, type: "questCompleted" },
-  merri: { questId: "repair_the_bridge" as QuestId, type: "questCompleted" },
-  seridia: { questId: "breaking_the_final_seal" as QuestId, type: "questCompleted" },
+  caldarus: { type: "questCompleted", questId: "breaking_the_fire_seal" as QuestId },
+  darcy: { type: "questCompleted", questId: "repair_the_bridge" as QuestId },
+  louis: { type: "questCompleted", questId: "repair_the_bridge" as QuestId },
+  merri: { type: "questCompleted", questId: "repair_the_bridge" as QuestId },
+  seridia: { type: "questCompleted", questId: "breaking_the_final_seal" as QuestId },
   stillwell: {
-    questId: "upgrade_the_saturday_market_plaza" as QuestId,
     type: "questCompleted",
+    questId: "upgrade_the_saturday_market_plaza" as QuestId,
   },
-  taliferro: { questId: "upgrade_the_saturday_market" as QuestId, type: "questCompleted" },
-  vera: { questId: "repair_the_bridge" as QuestId, type: "questCompleted" },
-  wheedle: { questId: "upgrade_the_saturday_market" as QuestId, type: "questCompleted" },
+  taliferro: { type: "questCompleted", questId: "upgrade_the_saturday_market" as QuestId },
+  vera: { type: "questCompleted", questId: "repair_the_bridge" as QuestId },
+  wheedle: { type: "questCompleted", questId: "upgrade_the_saturday_market" as QuestId },
   zorel: {
-    questId: "upgrade_the_saturday_market_plaza" as QuestId,
     type: "questCompleted",
+    questId: "upgrade_the_saturday_market_plaza" as QuestId,
   },
 };
 
@@ -106,12 +106,12 @@ export function assignEntityVisibility(
 /** Hardcoded category visibility gates (spec Section 3j). */
 export function extractCategoryVisibility(): Record<string, VisibilityCondition> {
   return {
-    crown_quests: { level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER, type: "renownLevel" },
+    crown_quests: { type: "renownLevel", level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER },
     fetch_quests: ALWAYS,
     heart_quests: ALWAYS,
-    stillwell_challenges: { npcId: "stillwell" as NpcId, type: "npcKnown" },
+    stillwell_challenges: { type: "npcKnown", npcId: "stillwell" as NpcId },
     story_quests: ALWAYS,
-    tali_challenges: { npcId: "taliferro" as NpcId, type: "npcKnown" },
+    tali_challenges: { type: "npcKnown", npcId: "taliferro" as NpcId },
   };
 }
 
@@ -193,7 +193,7 @@ export function extractStoreVisibility(
   for (const storeId of Object.keys(stores)) {
     if (storeId === "default") continue;
     const questId = STORE_UNLOCK_QUESTS[storeId];
-    result[storeId as StoreId] = questId ? { questId, type: "questCompleted" } : ALWAYS;
+    result[storeId as StoreId] = questId ? { type: "questCompleted", questId } : ALWAYS;
   }
   return result;
 }
@@ -236,26 +236,26 @@ function acquisitionSourceCondition(
       return source.storeId ? storeGateCondition(source.storeId, ctx.storeVisibility) : ALWAYS;
     case "mine": {
       const floor = source.biomeId ? ctx.biomeFloor(source.biomeId) : undefined;
-      return floor !== undefined ? { floor, type: "minesLevel" } : ALWAYS;
+      return floor !== undefined ? { type: "minesLevel", floor } : ALWAYS;
     }
     case "mines_chest":
     case "mines_dig_site": {
       const floor = ctx.biomeFloor(source.biomeId);
       const minesCondition: VisibilityCondition =
-        floor === undefined ? ALWAYS : { floor, type: "minesLevel" };
+        floor === undefined ? ALWAYS : { type: "minesLevel", floor };
       const perkCondition: VisibilityCondition = source.perkId
-        ? { perkId: source.perkId, type: "perkUnlocked" }
+        ? { type: "perkUnlocked", perkId: source.perkId }
         : ALWAYS;
       return andSimplify([minesCondition, perkCondition]);
     }
     case "perk":
     case "perk_drop":
     case "ritual_chamber":
-      return { perkId: source.perkId, type: "perkUnlocked" };
+      return { type: "perkUnlocked", perkId: source.perkId };
     case "quest":
-      return { questId: source.questId, type: "questCompleted" };
+      return { type: "questCompleted", questId: source.questId };
     case "renown":
-      return { level: source.level, type: "renownLevel" };
+      return { type: "renownLevel", level: source.level };
     case "scroll_bundle":
       return storeGateCondition(source.storeId, ctx.storeVisibility);
     case "store":
@@ -268,8 +268,8 @@ function andSimplify(conditions: VisibilityCondition[]): VisibilityCondition {
   if (conditions.length === 0) return ALWAYS;
   if (conditions.length === 1) return conditions[0];
   return simplifyCondition({
-    conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
     type: "and",
+    conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
   });
 }
 
@@ -282,7 +282,7 @@ function assignAnimalVisibility(trackerData: TrackerData, fiddle: ParsedGameData
     const requirements = core?.requirements as Record<string, unknown> | undefined;
     const gated = requirements?.repaired_haydens_farm === true;
     animal.visibility = gated
-      ? { questId: HAYDENS_BARN_UNLOCK_QUEST, type: "questCompleted" }
+      ? { type: "questCompleted", questId: HAYDENS_BARN_UNLOCK_QUEST }
       : ALWAYS;
   }
 }
@@ -317,7 +317,7 @@ function assignOrderedChain(
     quest.visibility =
       i === 0
         ? baseCondition
-        : andSimplify([baseCondition, { questId: order[i - 1], type: "questCompleted" }]);
+        : andSimplify([baseCondition, { type: "questCompleted", questId: order[i - 1] }]);
   }
 }
 
@@ -325,7 +325,7 @@ function assignPerkVisibility(trackerData: TrackerData): void {
   for (const perk of Object.values(trackerData.perks)) {
     const level = trackerData.perkTierLevels[perk.tier - 1];
     perk.visibility =
-      level === undefined ? ALWAYS : { level, skillId: perk.skillId, type: "skillLevel" };
+      level === undefined ? ALWAYS : { type: "skillLevel", level, skillId: perk.skillId };
   }
 }
 
@@ -345,8 +345,8 @@ function assignQuestVisibility(
           ? ALWAYS
           : andSimplify(
               prerequisites.map((prereq): VisibilityCondition => ({
-                questId: prereq,
                 type: "questCompleted",
+                questId: prereq,
               })),
             );
     }
@@ -359,11 +359,11 @@ function assignQuestVisibility(
         const quest = heartQuests[entry.questId];
         if (!quest) continue;
         const conditions: VisibilityCondition[] = [
-          { npcId: npcId as NpcId, type: "npcKnown" },
-          { level: entry.heartLevel, npcId: npcId as NpcId, type: "heartLevel" },
+          { type: "npcKnown", npcId: npcId as NpcId },
+          { type: "heartLevel", level: entry.heartLevel, npcId: npcId as NpcId },
         ];
         if (entry.prerequisiteQuest) {
-          conditions.push({ questId: entry.prerequisiteQuest, type: "questCompleted" });
+          conditions.push({ type: "questCompleted", questId: entry.prerequisiteQuest });
         }
         quest.visibility = andSimplify(conditions);
       }
@@ -430,8 +430,8 @@ function assignSpellVisibility(
     const entry = cutsceneMap[cutsceneId];
     spell.visibility = entry
       ? {
-          questId: entry.questId,
           type: entry.phase === "completed" ? "questCompleted" : "questAvailable",
+          questId: entry.questId,
         }
       : ALWAYS;
   }
@@ -482,9 +482,9 @@ function computeRecipeSourceConditions(
     case "mines_dig_site": {
       const floor = ctx.biomeFloor(source.biomeId);
       const minesCondition: VisibilityCondition =
-        floor === undefined ? ALWAYS : { floor, type: "minesLevel" };
+        floor === undefined ? ALWAYS : { type: "minesLevel", floor };
       const perkCondition: VisibilityCondition = source.perkId
-        ? { perkId: source.perkId, type: "perkUnlocked" }
+        ? { type: "perkUnlocked", perkId: source.perkId }
         : ALWAYS;
       return {
         entity: andSimplify([minesCondition, perkCondition]),
@@ -495,17 +495,17 @@ function computeRecipeSourceConditions(
       const perk = ctx.perks[source.perkId];
       const level = perk ? ctx.perkTierLevels[perk.tier - 1] : undefined;
       return {
-        entity: { perkId: source.perkId, type: "perkUnlocked" },
+        entity: { type: "perkUnlocked", perkId: source.perkId },
         source:
           perk && level !== undefined
-            ? { level, skillId: perk.skillId, type: "skillLevel" }
+            ? { type: "skillLevel", level, skillId: perk.skillId }
             : ALWAYS,
       };
     }
     case "quest": {
       return {
-        entity: { questId: source.questId, type: "questCompleted" },
-        source: { questId: source.questId, type: "questAvailable" },
+        entity: { type: "questCompleted", questId: source.questId },
+        source: { type: "questAvailable", questId: source.questId },
       };
     }
     case "scroll_bundle":
@@ -535,8 +535,8 @@ function orSimplify(conditions: VisibilityCondition[]): VisibilityCondition {
   if (conditions.length === 0) return ALWAYS;
   if (conditions.length === 1) return conditions[0];
   return simplifyCondition({
-    conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
     type: "or",
+    conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
   });
 }
 
@@ -562,13 +562,13 @@ function toAvailable(condition: VisibilityCondition): VisibilityCondition {
     case "and":
     case "or":
       return simplifyCondition({
+        type: condition.type,
         conditions: condition.conditions.map(toAvailable) as [
           VisibilityCondition,
           ...VisibilityCondition[],
         ],
-        type: condition.type,
       });
     case "questCompleted":
-      return { questId: condition.questId, type: "questAvailable" };
+      return { type: "questAvailable", questId: condition.questId };
   }
 }

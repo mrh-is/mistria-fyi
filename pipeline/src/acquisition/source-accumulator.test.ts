@@ -11,23 +11,23 @@ describe("source accumulators", () => {
     const cosmetics = new CosmeticSourceAccumulator();
 
     items.add("shared_id" as ItemId, { type: "default" });
-    cosmetics.add("shared_id" as CosmeticId, { level: 20, type: "renown" });
+    cosmetics.add("shared_id" as CosmeticId, { type: "renown", level: 20 });
 
     expect(items.toRecord()).toEqual({ shared_id: [{ type: "default" }] });
-    expect(cosmetics.toRecord()).toEqual({ shared_id: [{ level: 20, type: "renown" }] });
+    expect(cosmetics.toRecord()).toEqual({ shared_id: [{ type: "renown", level: 20 }] });
   });
 
   it("sorts target IDs and sources by canonical JSON", () => {
     const sources = new ItemSourceAccumulator();
 
     sources.add("z_item" as ItemId, { type: "default" });
-    sources.add("a_item" as ItemId, { storeId: "z_store" as never, type: "store" });
-    sources.add("a_item" as ItemId, { level: 5, type: "renown" });
+    sources.add("a_item" as ItemId, { type: "store", storeId: "z_store" as never });
+    sources.add("a_item" as ItemId, { type: "renown", level: 5 });
 
     expect(sources.toRecord()).toEqual({
       a_item: [
-        { level: 5, type: "renown" },
-        { storeId: "z_store", type: "store" },
+        { type: "renown", level: 5 },
+        { type: "store", storeId: "z_store" },
       ],
       z_item: [{ type: "default" }],
     });
@@ -37,23 +37,23 @@ describe("source accumulators", () => {
     const sources = new ItemSourceAccumulator();
     const targetId = "item" as ItemId;
     const first: Source = {
-      availability: { seasons: ["spring"], type: "season" },
+      type: "store",
+      availability: { type: "season", seasons: ["spring"] },
       cost: { amount: 10, currency: "tesserae" },
       storeId: "general" as never,
-      type: "store",
-      visibility: { questId: "first" as never, type: "questCompleted" },
+      visibility: { type: "questCompleted", questId: "first" as never },
       weight: 2,
     };
 
     sources.add(targetId, first);
     sources.add(targetId, {
       ...first,
-      visibility: { questId: "second" as never, type: "questCompleted" },
+      visibility: { type: "questCompleted", questId: "second" as never },
     });
     sources.add(targetId, { ...first, cost: { amount: 11, currency: "tesserae" } });
     sources.add(targetId, {
       ...first,
-      availability: { seasons: ["summer"], type: "season" },
+      availability: { type: "season", seasons: ["summer"] },
     });
     sources.add(targetId, { ...first, weight: 3 });
 
@@ -62,7 +62,7 @@ describe("source accumulators", () => {
     expect(accumulated).toContain(first);
     expect(accumulated).not.toContainEqual({
       ...first,
-      visibility: { questId: "second", type: "questCompleted" },
+      visibility: { type: "questCompleted", questId: "second" },
     });
   });
 });

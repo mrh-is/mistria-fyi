@@ -17,8 +17,8 @@ describe("resolveToVisibility", () => {
       value: "repair_the_inn_pt_2",
     };
     expect(resolveToVisibility(expr, cutsceneMap)).toEqual({
-      questId: "repair_the_inn",
       type: "questCompleted",
+      questId: "repair_the_inn",
     });
   });
 
@@ -31,8 +31,8 @@ describe("resolveToVisibility", () => {
       value: "quest_start",
     };
     expect(resolveToVisibility(expr, cutsceneMap)).toEqual({
-      questId: "some_quest",
       type: "questAvailable",
+      questId: "some_quest",
     });
   });
 
@@ -42,9 +42,9 @@ describe("resolveToVisibility", () => {
       value: { farming: 30 },
     };
     expect(resolveToVisibility(expr, emptyCutsceneMap)).toEqual({
+      type: "skillLevel",
       level: 30,
       skillId: "farming",
-      type: "skillLevel",
     });
   });
 
@@ -54,8 +54,8 @@ describe("resolveToVisibility", () => {
       value: 41,
     };
     expect(resolveToVisibility(expr, emptyCutsceneMap)).toEqual({
-      floor: 41,
       type: "minesLevel",
+      floor: 41,
     });
   });
 
@@ -65,8 +65,8 @@ describe("resolveToVisibility", () => {
       value: "repair_the_bridge",
     };
     expect(resolveToVisibility(expr, emptyCutsceneMap)).toEqual({
-      questId: "repair_the_bridge",
       type: "questCompleted",
+      questId: "repair_the_bridge",
     });
   });
 
@@ -76,8 +76,8 @@ describe("resolveToVisibility", () => {
       value: "stillwell",
     };
     expect(resolveToVisibility(expr, emptyCutsceneMap)).toEqual({
-      npcId: "stillwell",
       type: "npcKnown",
+      npcId: "stillwell",
     });
   });
 
@@ -131,11 +131,11 @@ describe("resolveToVisibility", () => {
       ],
     };
     expect(resolveToVisibility(expr, cutsceneMap)).toEqual({
-      conditions: [
-        { questId: "repair_the_inn", type: "questCompleted" },
-        { floor: 20, type: "minesLevel" },
-      ],
       type: "and",
+      conditions: [
+        { type: "questCompleted", questId: "repair_the_inn" },
+        { type: "minesLevel", floor: 20 },
+      ],
     });
   });
 
@@ -147,11 +147,11 @@ describe("resolveToVisibility", () => {
       ],
     };
     expect(resolveToVisibility(expr, emptyCutsceneMap)).toEqual({
-      conditions: [
-        { questId: "quest_a", type: "questCompleted" },
-        { questId: "quest_b", type: "questCompleted" },
-      ],
       type: "or",
+      conditions: [
+        { type: "questCompleted", questId: "quest_a" },
+        { type: "questCompleted", questId: "quest_b" },
+      ],
     });
   });
 
@@ -161,9 +161,9 @@ describe("resolveToVisibility", () => {
       value: { ryis: 2 },
     };
     expect(resolveToVisibility(expr, emptyCutsceneMap)).toEqual({
+      type: "heartLevel",
       level: 2,
       npcId: "ryis",
-      type: "heartLevel",
     });
   });
 });
@@ -172,46 +172,46 @@ describe("simplifyCondition", () => {
   it("drops always from and", () => {
     expect(
       simplifyCondition({
-        conditions: [{ type: "always" }, { questId: "q" as never, type: "questCompleted" }],
         type: "and",
+        conditions: [{ type: "always" }, { type: "questCompleted", questId: "q" as never }],
       }),
-    ).toEqual({ questId: "q", type: "questCompleted" });
+    ).toEqual({ type: "questCompleted", questId: "q" });
   });
 
   it("collapses or containing always to always", () => {
     expect(
       simplifyCondition({
-        conditions: [{ type: "always" }, { questId: "q" as never, type: "questCompleted" }],
         type: "or",
+        conditions: [{ type: "always" }, { type: "questCompleted", questId: "q" as never }],
       }),
     ).toEqual({ type: "always" });
   });
 
   it("collapses empty and to always", () => {
-    expect(simplifyCondition({ conditions: [] as never, type: "and" })).toEqual({ type: "always" });
+    expect(simplifyCondition({ type: "and", conditions: [] as never })).toEqual({ type: "always" });
   });
 
   it("unwraps single-element and", () => {
     expect(
       simplifyCondition({
-        conditions: [{ questId: "q" as never, type: "questCompleted" }],
         type: "and",
+        conditions: [{ type: "questCompleted", questId: "q" as never }],
       }),
-    ).toEqual({ questId: "q", type: "questCompleted" });
+    ).toEqual({ type: "questCompleted", questId: "q" });
   });
 
   it("simplifies nested and-of-or with always", () => {
     expect(
       simplifyCondition({
+        type: "and",
         conditions: [
           {
-            conditions: [{ type: "always" }, { questId: "q" as never, type: "questCompleted" }],
             type: "or",
+            conditions: [{ type: "always" }, { type: "questCompleted", questId: "q" as never }],
           },
-          { floor: 20, type: "minesLevel" },
+          { type: "minesLevel", floor: 20 },
         ],
-        type: "and",
       }),
-    ).toEqual({ floor: 20, type: "minesLevel" });
+    ).toEqual({ type: "minesLevel", floor: 20 });
   });
 });

@@ -48,7 +48,7 @@ export function buildBiomeLabel(
   const biome = lookups.biomes.find((b) => b.id === biomeId);
   if (!biome) return [titleCase(biomeId)];
 
-  const condition: VisibilityCondition = { floor: biome.floors.start, type: "minesLevel" };
+  const condition: VisibilityCondition = { type: "minesLevel", floor: biome.floors.start };
   const biomeName = formatBiomeName(biomeId, lookups.biomes);
   const floorRange = `Mines floors ${String(biome.floors.start)}–${String(biome.floors.end)}`;
 
@@ -79,9 +79,9 @@ export function buildPerkLabel(
   const tierSuffix = ` (${skillName} tier ${String(perk.tier)})`;
   const level = lookups.perkTierLevels[perk.tier];
   const condition: VisibilityCondition = {
+    type: "skillLevel",
     level,
     skillId: perk.skillId,
-    type: "skillLevel",
   };
 
   return [
@@ -200,7 +200,7 @@ export function buildSourceSegments(
 
       return [
         {
-          condition: { perkId: source.perkId, type: "perkUnlocked" },
+          condition: { type: "perkUnlocked", perkId: source.perkId },
           revealed: joinSegments("Dig up in ", biomeLabel, `, with the ${perkName} perk${tierStr}`),
         },
       ];

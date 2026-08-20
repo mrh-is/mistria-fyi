@@ -119,7 +119,7 @@ export function simplifyAvailabilityCondition(
       const withoutAlways = conditions.filter((child) => child.type !== "always");
       if (withoutAlways.length === 0) return { type: "always" };
       if (withoutAlways.length === 1) return withoutAlways[0];
-      return { conditions: withoutAlways, type: "all" };
+      return { type: "all", conditions: withoutAlways };
     }
     case "always":
     case "gamePredicate":
@@ -138,13 +138,13 @@ export function simplifyAvailabilityCondition(
       });
       if (conditions.some((child) => child.type === "always")) return { type: "always" };
       if (conditions.length === 1) return conditions[0];
-      return { conditions, type: "any" };
+      return { type: "any", conditions };
     }
     case "not": {
       const simplified = simplifyAvailabilityCondition(condition.condition);
       return simplified.type === "not"
         ? simplified.condition
-        : { condition: simplified, type: "not" };
+        : { type: "not", condition: simplified };
     }
     case "season":
       return condition;

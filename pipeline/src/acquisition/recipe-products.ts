@@ -62,9 +62,9 @@ export function deriveRecipeProductSources(
     if (!method) continue;
 
     const source: Source = {
+      type: "recipe",
       method,
       recipeId: recipeId as RecipeId,
-      type: "recipe",
     };
 
     for (const itemId of recipe.memberItemIds) {

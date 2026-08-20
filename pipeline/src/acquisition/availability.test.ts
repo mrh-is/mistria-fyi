@@ -33,11 +33,11 @@ describe("projectRequirementExpressionToAvailability", () => {
         ],
       }),
     ).toEqual({
-      conditions: [
-        { perkId: "steady_supplies", type: "perkUnlocked" },
-        { seasons: ["spring"], type: "season" },
-      ],
       type: "all",
+      conditions: [
+        { type: "perkUnlocked", perkId: "steady_supplies" },
+        { type: "season", seasons: ["spring"] },
+      ],
     });
   });
 
@@ -50,18 +50,18 @@ describe("projectRequirementExpressionToAvailability", () => {
         ],
       }),
     ).toEqual({
-      conditions: [
-        { seasons: ["spring"], type: "season" },
-        { seasons: ["summer"], type: "season" },
-      ],
       type: "any",
+      conditions: [
+        { type: "season", seasons: ["spring"] },
+        { type: "season", seasons: ["summer"] },
+      ],
     });
   });
 
   it("preserves inverted requirements as not conditions", () => {
     expect(project({ not: { predicate: "has_perk", value: "steady_supplies" } })).toEqual({
-      condition: { perkId: "steady_supplies", type: "perkUnlocked" },
       type: "not",
+      condition: { type: "perkUnlocked", perkId: "steady_supplies" },
     });
   });
 
@@ -83,11 +83,11 @@ describe("projectRequirementExpressionToAvailability", () => {
         ],
       }),
     ).toEqual({
+      type: "all",
       conditions: [
         { type: "weather", weathers: ["inclement", "heavy_inclement"] },
-        { start: 18, end: 26, type: "time" },
+        { type: "time", start: 18, end: 26 },
       ],
-      type: "all",
     });
   });
 
@@ -100,11 +100,11 @@ describe("projectRequirementExpressionToAvailability", () => {
         ],
       }),
     ).toEqual({
-      conditions: [
-        { floor: 60, type: "minesLevel" },
-        { perkId: "deep_delver", type: "perkUnlocked" },
-      ],
       type: "all",
+      conditions: [
+        { type: "minesLevel", floor: 60 },
+        { type: "perkUnlocked", perkId: "deep_delver" },
+      ],
     });
   });
 
@@ -118,12 +118,12 @@ describe("projectRequirementExpressionToAvailability", () => {
         ],
       }),
     ).toEqual({
-      conditions: [
-        { questId: "repair_the_general_store", state: "completed", type: "quest" },
-        { questId: "meet_the_vendors", state: "available", type: "quest" },
-        { questId: "repair_the_inn", state: "completed", type: "quest" },
-      ],
       type: "all",
+      conditions: [
+        { type: "quest", questId: "repair_the_general_store", state: "completed" },
+        { type: "quest", questId: "meet_the_vendors", state: "available" },
+        { type: "quest", questId: "repair_the_inn", state: "completed" },
+      ],
     });
   });
 
@@ -136,29 +136,29 @@ describe("projectRequirementExpressionToAvailability", () => {
         ],
       }),
     ).toEqual({
+      type: "all",
       conditions: [
         {
+          type: "skillLevel",
           level: 20,
           skillId: "cooking",
-          type: "skillLevel",
         },
         {
+          type: "skillLevel",
           level: 10,
           skillId: "fishing",
-          type: "skillLevel",
         },
         {
+          type: "heartLevel",
           level: 4,
           npcId: "celine",
-          type: "heartLevel",
         },
         {
+          type: "heartLevel",
           level: 6,
           npcId: "march",
-          type: "heartLevel",
         },
       ],
-      type: "all",
     });
   });
 
@@ -169,8 +169,8 @@ describe("projectRequirementExpressionToAvailability", () => {
         value: { day: 28, exact: true, season: "summer", year: 2 },
       }),
     ).toEqual({
-      predicate: "reached_date",
       type: "gamePredicate",
+      predicate: "reached_date",
       value: { day: 28, exact: true, season: "summer", year: 2 },
     });
   });
@@ -182,8 +182,8 @@ describe("projectRequirementExpressionToAvailability", () => {
         value: { alternatives: [{ flags: ["alpha", false] }], minimum: 3 },
       }),
     ).toEqual({
-      predicate: "future_gate",
       type: "gamePredicate",
+      predicate: "future_gate",
       value: { alternatives: [{ flags: ["alpha", false] }], minimum: 3 },
     });
   });
@@ -218,8 +218,8 @@ describe("projectRequirementExpressionToAvailability", () => {
     "preserves null %s payloads and diagnoses undefined payloads",
     (predicate) => {
       expect(project({ predicate, value: null })).toEqual({
-        predicate,
         type: "gamePredicate",
+        predicate,
         value: null,
       });
       expect(() => project({ predicate, value: undefined })).toThrow(
@@ -234,8 +234,8 @@ describe("projectRequirementExpressionToAvailability", () => {
     ["is_weather", ["inclement", "sandstorm"]],
   ])("preserves invalid or non-unique %s members as game predicates", (predicate, value) => {
     expect(project({ predicate, value })).toEqual({
-      predicate,
       type: "gamePredicate",
+      predicate,
       value,
     });
   });

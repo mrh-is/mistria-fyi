@@ -34,19 +34,19 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   // Priestess. No native data table encodes this acquisition path.
   ["void_cake" as ItemId]: [
     {
+      type: "quest" as const,
       questId: "the_dragonsworn_tablet" as QuestId,
       trigger: "dialogue_choice" as const,
-      type: "quest" as const,
     },
   ],
 
-  ["dragon_mosaic_flooring" as ItemId]: [{ cost: 100, type: "wishing_well" as const }],
+  ["dragon_mosaic_flooring" as ItemId]: [{ type: "wishing_well" as const, cost: 100 }],
   // --- Dragon set furniture: Wishing well (commented out in wishing_well.toml) ---
   // Wiki: https://fieldsofmistria.wiki.gg/wiki/Wishing_Well
   // These two dragon set items are tagged dragon_wishing_well_set but are commented out in
   // wishing_well.toml's large_roll. The tag is evidence of intended acquisition path; the
   // items are present in the almanac and have full descriptions.
-  ["dragon_relief_wallpaper" as ItemId]: [{ cost: 100, type: "wishing_well" as const }],
+  ["dragon_relief_wallpaper" as ItemId]: [{ type: "wishing_well" as const, cost: 100 }],
 
   // --- Pirate set furniture: Wishing well rewards ---
   // Wiki: https://fieldsofmistria.wiki.gg/wiki/Wishing_Well
@@ -65,7 +65,7 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
       "pirate_nautical_compass_v1",
       "pirate_nautical_compass_v2",
       "mournful_clown_painting",
-    ].map((id) => [id as ItemId, [{ cost: 100, type: "wishing_well" as const }]]),
+    ].map((id) => [id as ItemId, [{ type: "wishing_well" as const, cost: 100 }]]),
   ),
 
   // --- Station products: Apiary & Terrarium outputs ---
@@ -75,7 +75,7 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   ...Object.fromEntries(
     ["honeycomb", "honey_premium", "honey_deluxe", "honey_legendary"].map((id) => [
       id as ItemId,
-      [{ stationId: "apiary" as StationId, type: "station" as const }],
+      [{ type: "station" as const, stationId: "apiary" as StationId }],
     ]),
   ),
   // Wiki: https://fieldsofmistria.wiki.gg/wiki/Terrarium
@@ -91,7 +91,7 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
       "fish_bait_rare",
     ].map((id) => [
       id as ItemId,
-      [{ stationId: "terrarium" as StationId, type: "station" as const }],
+      [{ type: "station" as const, stationId: "terrarium" as StationId }],
     ]),
   ),
 
@@ -127,40 +127,40 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   // breath_of_spring: Spring Festival quest reward
   ["breath_of_spring" as ItemId]: [
     {
-      availability: { seasons: ["spring"], type: "season" as const },
-      festivalId: "spring" as FestivalId,
       type: "festival" as const,
+      availability: { type: "season" as const, seasons: ["spring"] },
+      festivalId: "spring" as FestivalId,
     },
   ],
   // haydens_weathervane: Quest reward from "Find the Weathervane"
   ["haydens_weathervane" as ItemId]: [
-    { questId: "find_the_weathervane" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "find_the_weathervane" as QuestId, trigger: "completion" as const },
   ],
   // heros_ring: Given in Adeline's 8-heart cutscene
-  ["heros_ring" as ItemId]: [{ npcId: "adeline" as NpcId, type: "proposal" as const }],
+  ["heros_ring" as ItemId]: [{ type: "proposal" as const, npcId: "adeline" as NpcId }],
   // maples_drawing: Given in mistril_rank cutscene (Maple draws the Aldarian Star)
-  ["maples_drawing" as ItemId]: [{ level: 10, type: "renown" as const }],
+  ["maples_drawing" as ItemId]: [{ type: "renown" as const, level: 10 }],
   // mistril_star_trophy: Given in mistril_rank cutscene
-  ["mistril_star_trophy" as ItemId]: [{ level: 10, type: "renown" as const }],
+  ["mistril_star_trophy" as ItemId]: [{ type: "renown" as const, level: 10 }],
   // star_brooch: Given in shooting_star_morning cutscene
   ["star_brooch" as ItemId]: [
     {
-      availability: { seasons: ["summer"], type: "season" as const },
-      festivalId: "shooting_star" as FestivalId,
       type: "festival" as const,
+      availability: { type: "season" as const, seasons: ["summer"] },
+      festivalId: "shooting_star" as FestivalId,
     },
   ],
   // star_shaped_cookie: Given in shooting_star_reina cutscene
   ["star_shaped_cookie" as ItemId]: [
     {
-      availability: { seasons: ["summer"], type: "season" as const },
-      festivalId: "shooting_star" as FestivalId,
       type: "festival" as const,
+      availability: { type: "season" as const, seasons: ["summer"] },
+      festivalId: "shooting_star" as FestivalId,
     },
   ],
 
   ["dollhouse_bench" as ItemId]: [
-    { questId: "park_date_unlock" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "park_date_unlock" as QuestId, trigger: "completion" as const },
   ],
   // --- Date inspiration items: unlocked through heart events ---
   // Wiki: https://fieldsofmistria.wiki.gg/wiki/Dates
@@ -168,16 +168,16 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   // tutorial cutscene. Others are unlocked through heart level progression with NPCs.
   // No native reward array encodes these; the dating system handles them at runtime.
   ["inn_menu" as ItemId]: [
-    { questId: "elsies_dating_tutorial" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "elsies_dating_tutorial" as QuestId, trigger: "completion" as const },
   ],
   ["lovely_seashell" as ItemId]: [
-    { questId: "beach_date_unlock" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "beach_date_unlock" as QuestId, trigger: "completion" as const },
   ],
   ["rough_gemstone" as ItemId]: [
     {
+      type: "quest",
       questId: "gem_cutting_date_unlock" as QuestId,
       trigger: "completion" as const,
-      type: "quest",
     },
   ],
 
@@ -187,9 +187,9 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   // inn, given as quest rewards, or are festival-specific items.
   ["harvest_day_pie" as ItemId]: [
     {
-      availability: { seasons: ["fall"], type: "season" as const },
-      festivalId: "harvest" as FestivalId,
       type: "festival" as const,
+      availability: { type: "season" as const, seasons: ["fall"] },
+      festivalId: "harvest" as FestivalId,
     },
   ],
   // Inn-prepared dishes: made by NPCs at the inn, not player-craftable
@@ -211,66 +211,66 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
       "tesserae_cake",
       "soup_of_the_day",
       "soup_of_the_day_gold",
-    ].map((id) => [id as ItemId, [{ storeId: "inn" as StoreId, type: "store" as const }]]),
+    ].map((id) => [id as ItemId, [{ type: "store" as const, storeId: "inn" as StoreId }]]),
   ),
 
   // dragon_horn_mushroom: Mine forageable in the Ancient Ruins biome
   ["dragon_horn_mushroom" as ItemId]: [
-    { biomeId: "biome_4" as MinesBiomeId, type: "mine" as const },
+    { type: "mine" as const, biomeId: "biome_4" as MinesBiomeId },
   ],
   // void_powder: Dropped by void monsters in the Ancient Ruins biome
-  ["void_powder" as ItemId]: [{ monsterId: "void_cat" as MonsterId, type: "monster" as const }],
+  ["void_powder" as ItemId]: [{ type: "monster" as const, monsterId: "void_cat" as MonsterId }],
   // --- Mine & exploration items ---
   // void_stone: Mine drop from the Ancient Ruins biome, also quest item
-  ["void_stone" as ItemId]: [{ biomeId: "biome_4" as MinesBiomeId, type: "mine" as const }],
+  ["void_stone" as ItemId]: [{ type: "mine" as const, biomeId: "biome_4" as MinesBiomeId }],
 
   // --- Monster drops ---
   // mob_coin, medium_mob_coin, large_mob_coin: Currency dropped by mine monsters
   ...Object.fromEntries(
     ["mob_coin", "medium_mob_coin", "large_mob_coin", "tree_coin"].map((id) => [
       id as ItemId,
-      [{ monsterId: "any" as MonsterId, type: "monster" as const }],
+      [{ type: "monster" as const, monsterId: "any" as MonsterId }],
     ]),
   ),
   // bomb: Dropped by monsters and craftable
-  ["bomb" as ItemId]: [{ monsterId: "any" as MonsterId, type: "monster" as const }],
+  ["bomb" as ItemId]: [{ type: "monster" as const, monsterId: "any" as MonsterId }],
   // pet_skin_mimic: Dropped by mimics in the mines
-  ["pet_skin_mimic" as ItemId]: [{ monsterId: "mimic" as MonsterId, type: "monster" as const }],
+  ["pet_skin_mimic" as ItemId]: [{ type: "monster" as const, monsterId: "mimic" as MonsterId }],
 
   // --- Quest-specific items ---
   // These items are given during specific quests or cutscenes. The native data encodes the
   // quest/cutscene but not the item reward in the rewards array.
   ["heart_crystal" as ItemId]: [
-    { questId: "break_water_seal" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "break_water_seal" as QuestId, trigger: "completion" as const },
   ],
   ["mystical_feather" as ItemId]: [
-    { questId: "great_bird_0" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "great_bird_0" as QuestId, trigger: "completion" as const },
   ],
   ["sealing_scroll" as ItemId]: [
-    { questId: "breaking_the_fire_seal" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "breaking_the_fire_seal" as QuestId, trigger: "completion" as const },
   ],
   ["song_crystal_another_tower" as ItemId]: [
-    { questId: "another_tower" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "another_tower" as QuestId, trigger: "completion" as const },
   ],
 
   // magic_key: Grown from seed_magic_key
-  ["magic_key" as ItemId]: [{ seedItemId: "seed_magic_key" as ItemId, type: "crop" as const }],
+  ["magic_key" as ItemId]: [{ type: "crop" as const, seedItemId: "seed_magic_key" as ItemId }],
   // --- Miscellaneous items ---
   // seed_magic_key: Quest-specific seed planted in the Priestess Chamber Field
   ["seed_magic_key" as ItemId]: [
-    { questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const },
   ],
   // void_newt: Material from the Ancient Ruins biome
-  ["void_newt" as ItemId]: [{ biomeId: "biome_4" as MinesBiomeId, type: "mine" as const }],
+  ["void_newt" as ItemId]: [{ type: "mine" as const, biomeId: "biome_4" as MinesBiomeId }],
   // void_set_scroll_bundle: Obtained from void monsters in Ancient Ruins
   ["void_set_scroll_bundle" as ItemId]: [
-    { monsterId: "any" as MonsterId, type: "monster" as const },
+    { type: "monster" as const, monsterId: "any" as MonsterId },
   ],
 
   ["adept_kitchen" as ItemId]: [
     {
-      storeId: "carpenter" as StoreId,
       type: "upgrade" as const,
+      storeId: "carpenter" as StoreId,
       upgradeName: "repaired_carpenters_shop",
     },
   ],
@@ -278,8 +278,8 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   // cozy_kitchen, adept_kitchen: Kitchen upgrades purchased from the carpenter
   ["cozy_kitchen" as ItemId]: [
     {
-      storeId: "carpenter" as StoreId,
       type: "upgrade" as const,
+      storeId: "carpenter" as StoreId,
       upgradeName: "repaired_carpenters_shop",
     },
   ],
@@ -288,68 +288,68 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   // dough_lad_doll: Festival item from the Harvest Festival
   ["dough_lad_doll" as ItemId]: [
     {
-      availability: { seasons: ["fall"], type: "season" as const },
-      festivalId: "harvest" as FestivalId,
       type: "festival" as const,
+      availability: { type: "season" as const, seasons: ["fall"] },
+      festivalId: "harvest" as FestivalId,
     },
   ],
   // lopsided_animal: Festival activity prize (animal contest consolation)
   ["lopsided_animal" as ItemId]: [
     {
+      type: "festival_activity" as const,
       activityId: "animal_contest" as ActivityId,
       festivalId: "animal" as FestivalId,
-      type: "festival_activity" as const,
     },
   ],
 
-  ["abyssal_chest" as ItemId]: [{ biomeId: "biome_4" as MinesBiomeId, type: "mine" as const }],
+  ["abyssal_chest" as ItemId]: [{ type: "mine" as const, biomeId: "biome_4" as MinesBiomeId }],
   // --- Quest/story items without user-facing acquisition path ---
   // These items exist in the items registry but are obtained through story progression,
   // cutscenes, or special interactions that aren't encoded in reward arrays.
   ["axe_worn" as ItemId]: [{ type: "default" as const }],
   ["balors_crate" as ItemId]: [
-    { questId: "balors_crate" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "balors_crate" as QuestId, trigger: "completion" as const },
   ],
   ["clay_key" as ItemId]: [
-    { questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const },
   ],
   ["construction_fence" as ItemId]: [{ type: "default" as const }],
   ["crafting_scroll" as ItemId]: [{ type: "default" as const }],
   ["dragonsworn_chest_and_pants" as ItemId]: [
-    { questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const },
   ],
   ["dragonsworn_greaves" as ItemId]: [
-    { questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const },
   ],
   ["dragonsworn_helmet" as ItemId]: [
-    { questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const },
   ],
   ["dungeon_fountain_health" as ItemId]: [{ type: "default" as const }],
   ["dungeon_fountain_stamina" as ItemId]: [{ type: "default" as const }],
   ["earth_tablet_rubbing" as ItemId]: [
-    { questId: "break_earth_seal" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "break_earth_seal" as QuestId, trigger: "completion" as const },
   ],
   ["fake_essence" as ItemId]: [
-    { questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const },
   ],
   ["fire_tablet_rubbing" as ItemId]: [
-    { questId: "break_fire_seal" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "break_fire_seal" as QuestId, trigger: "completion" as const },
   ],
-  ["mist_held_item" as ItemId]: [{ perkId: "mist_sight" as PerkId, type: "perk" as const }],
+  ["mist_held_item" as ItemId]: [{ type: "perk" as const, perkId: "mist_sight" as PerkId }],
   ["purse" as ItemId]: [{ type: "default" as const }],
   ["recipe_scroll" as ItemId]: [{ type: "default" as const }],
   ["ruins_tablet_rubbing" as ItemId]: [
-    { questId: "break_ruins_seal_pt_3" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "break_ruins_seal_pt_3" as QuestId, trigger: "completion" as const },
   ],
   ["ryis_lumber" as ItemId]: [
-    { questId: "ryis_lumber" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "ryis_lumber" as QuestId, trigger: "completion" as const },
   ],
   ["unknown_item" as ItemId]: [{ type: "default" as const }],
   ["unusual_seed" as ItemId]: [
-    { questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const },
   ],
   ["water_tablet_rubbing" as ItemId]: [
-    { questId: "break_water_seal" as QuestId, trigger: "completion" as const, type: "quest" },
+    { type: "quest", questId: "break_water_seal" as QuestId, trigger: "completion" as const },
   ],
   ["world_fountain" as ItemId]: [{ type: "default" as const }],
 };
@@ -360,30 +360,30 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
 // perk. No native acquisition table encodes these rewards.
 export const COSMETIC_OVERRIDES: Partial<Record<CosmeticId, Source[]>> = {
   ["back_gear_dragon_cleric_cape" as CosmeticId]: [
-    { perkId: "lost_to_history" as PerkId, type: "ritual_chamber" as const },
+    { type: "ritual_chamber" as const, perkId: "lost_to_history" as PerkId },
   ],
   ["face_gear_dragon_cleric_earrings" as CosmeticId]: [
-    { perkId: "lost_to_history" as PerkId, type: "ritual_chamber" as const },
+    { type: "ritual_chamber" as const, perkId: "lost_to_history" as PerkId },
   ],
   ["head_dragon_cleric_diadem" as CosmeticId]: [
-    { perkId: "lost_to_history" as PerkId, type: "ritual_chamber" as const },
+    { type: "ritual_chamber" as const, perkId: "lost_to_history" as PerkId },
   ],
   // Wiki: https://fieldsofmistria.wiki.gg/wiki/Mimic
   // The Mimic Hat drops from feeding mimics in the mines. The native data has no drops or
   // feed_reward table for mimics; the reward appears to be determined at runtime.
   ["head_mimic_hat" as CosmeticId]: [
-    { monsterId: "mimic" as MonsterId, type: "monster_feed" as const },
+    { type: "monster_feed" as const, monsterId: "mimic" as MonsterId },
   ],
   // Wiki: https://fieldsofmistria.wiki.gg/wiki/Wishing_Well
   // Soup Pot Hat and Teapot Hat are obtainable from the Wishing Well. The native data only stores
   // price configuration; the reward pool is not encoded in the static game data.
-  ["head_soup_pot" as CosmeticId]: [{ cost: 100, type: "wishing_well" as const }],
-  ["head_teapot" as CosmeticId]: [{ cost: 100, type: "wishing_well" as const }],
+  ["head_soup_pot" as CosmeticId]: [{ type: "wishing_well" as const, cost: 100 }],
+  ["head_teapot" as CosmeticId]: [{ type: "wishing_well" as const, cost: 100 }],
   ["robe_dragon_cleric" as CosmeticId]: [
-    { perkId: "lost_to_history" as PerkId, type: "ritual_chamber" as const },
+    { type: "ritual_chamber" as const, perkId: "lost_to_history" as PerkId },
   ],
   ["shoes_boots_dragon_cleric" as CosmeticId]: [
-    { perkId: "lost_to_history" as PerkId, type: "ritual_chamber" as const },
+    { type: "ritual_chamber" as const, perkId: "lost_to_history" as PerkId },
   ],
 };
 

@@ -12,7 +12,7 @@
 
   function isRankVisible(minLevel: number): boolean {
     return isEntityNameVisible(
-      { level: minLevel, type: "renownLevel" },
+      { type: "renownLevel", level: minLevel },
       userState.progressionState,
     );
   }

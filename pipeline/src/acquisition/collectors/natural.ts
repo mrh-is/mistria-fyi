@@ -48,17 +48,17 @@ function buildNaturalAvailability(
   const conditions: AvailabilityCondition[] = [];
 
   const seasons = parseSeasonsArray(data.seasons);
-  if (seasons) conditions.push({ seasons, type: "season" });
+  if (seasons) conditions.push({ type: "season", seasons });
 
   const weathers = parseWeathersArray(data.weather);
   if (weathers) conditions.push({ type: "weather", weathers });
 
   const hours = parseHours(data.hours);
-  if (hours) conditions.push({ start: hours[0], end: hours[1], type: "time" });
+  if (hours) conditions.push({ type: "time", start: hours[0], end: hours[1] });
 
   if (conditions.length === 0) return undefined;
   if (conditions.length === 1) return simplifyAvailabilityCondition(conditions[0]);
-  return simplifyAvailabilityCondition({ conditions, type: "all" });
+  return simplifyAvailabilityCondition({ type: "all", conditions });
 }
 
 const MINE_SUBCAT_TO_BIOME: Record<string, MinesBiomeId> = {
@@ -82,8 +82,8 @@ function collectAnimalProductSources(
       const animalId = item.animal_product as string | undefined;
       if (animalId) {
         accumulator.add(itemId as ItemId, {
-          animalId: animalId as AnimalId,
           type: "animal_product",
+          animalId: animalId as AnimalId,
         });
       }
     }
@@ -137,9 +137,9 @@ function collectCropSources(fiddle: ParsedGameData, accumulator: ItemSourceAccum
   for (const [seedId, cropId] of seedToCrop) {
     const seasons = seedSeasons.get(seedId);
     accumulator.add(cropId as ItemId, {
-      ...(seasons ? { availability: { seasons, type: "season" as const } } : {}),
-      seedItemId: seedId as ItemId,
+      ...(seasons ? { availability: { type: "season" as const, seasons } } : {}),
       type: "crop",
+      seedItemId: seedId as ItemId,
     });
   }
 }
@@ -162,10 +162,10 @@ function collectEarthlyEssenceCosmeticSources(
       const obj = entry as Record<string, unknown>;
       if (obj.item_id === "cosmetic" && typeof obj.inner_data === "string") {
         cosmeticAccumulator.add(obj.inner_data as CosmeticId, {
-          activity: "crop_harvest" as const,
-          availability: { seasons: [season as Season], type: "season" as const },
-          perkId: "earthly_essence" as PerkId,
           type: "perk_drop",
+          activity: "crop_harvest" as const,
+          availability: { type: "season" as const, seasons: [season as Season] },
+          perkId: "earthly_essence" as PerkId,
         });
       }
     }
@@ -247,8 +247,8 @@ function collectForageSources(fiddle: ParsedGameData, accumulator: ItemSourceAcc
               : undefined;
         if (itemId) {
           accumulator.add(itemId as ItemId, {
-            availability: { seasons: [season as Season], type: "season" },
             type: "forage",
+            availability: { type: "season", seasons: [season as Season] },
           });
         }
       }
@@ -285,8 +285,8 @@ function collectGoldenAnimalProductSources(
     if (!tags.includes("animal_product")) return;
 
     accumulator.add(itemId as ItemId, {
-      animalId: animalType as AnimalId,
       type: "animal_product",
+      animalId: animalType as AnimalId,
     });
   });
 }
@@ -326,13 +326,13 @@ function collectMistSightSources(
 
     if (obj.item_id === "cosmetic" && typeof obj.inner_data === "string") {
       cosmeticAccumulator?.add(obj.inner_data as CosmeticId, {
-        perkId: "mist_sight" as PerkId,
         type: "perk",
+        perkId: "mist_sight" as PerkId,
       });
     } else if (typeof obj.item_id === "string" && obj.item_id !== "unidentified_artifact") {
       accumulator.add(obj.item_id as ItemId, {
-        perkId: "mist_sight" as PerkId,
         type: "perk",
+        perkId: "mist_sight" as PerkId,
       });
     }
   }
@@ -361,15 +361,15 @@ function collectMonsterDropSources(
         const itemId = dropObj.item as string | undefined;
         if (itemId) {
           accumulator.add(itemId as ItemId, {
-            monsterId: monsterId as MonsterId,
             type: "monster",
+            monsterId: monsterId as MonsterId,
           });
         }
         const cosmeticId = dropObj.cosmetic as string | undefined;
         if (cosmeticId && cosmeticAccumulator) {
           cosmeticAccumulator.add(cosmeticId as CosmeticId, {
-            monsterId: monsterId as MonsterId,
             type: "monster",
+            monsterId: monsterId as MonsterId,
           });
         }
       }
@@ -390,10 +390,10 @@ function collectPumpkinPatchSources(
     const itemId = (entry as Record<string, unknown>).item as string | undefined;
     if (itemId) {
       accumulator.add(itemId as ItemId, {
-        activityId: "pumpkin_patch" as ActivityId,
-        availability: { seasons: ["fall"], type: "season" as const },
-        festivalId: "harvest" as FestivalId,
         type: "festival_activity",
+        activityId: "pumpkin_patch" as ActivityId,
+        availability: { type: "season" as const, seasons: ["fall"] },
+        festivalId: "harvest" as FestivalId,
       });
     }
   }
@@ -415,8 +415,8 @@ function collectTreeSources(fiddle: ParsedGameData, accumulator: ItemSourceAccum
       const treeProduct = item.tree_product as string | undefined;
       if (treeProduct) {
         accumulator.add(treeProduct as ItemId, {
-          saplingItemId: itemId as ItemId,
           type: "tree",
+          saplingItemId: itemId as ItemId,
         });
       }
     }

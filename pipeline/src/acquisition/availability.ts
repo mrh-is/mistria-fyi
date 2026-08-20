@@ -24,28 +24,28 @@ export function projectRequirementExpressionToAvailability(
 ): AvailabilityCondition {
   if ("all" in expression) {
     return simplifyAvailabilityCondition({
+      type: "all",
       conditions: expression.all.map((child) =>
         projectRequirementExpressionToAvailability(child, context, sourceLocation),
       ),
-      type: "all",
     });
   }
   if ("any" in expression) {
     return simplifyAvailabilityCondition({
+      type: "any",
       conditions: expression.any.map((child) =>
         projectRequirementExpressionToAvailability(child, context, sourceLocation),
       ),
-      type: "any",
     });
   }
   if ("not" in expression) {
     return simplifyAvailabilityCondition({
+      type: "not",
       condition: projectRequirementExpressionToAvailability(
         expression.not,
         context,
         sourceLocation,
       ),
-      type: "not",
     });
   }
 
@@ -110,10 +110,10 @@ function projectLevelRecord(
 
   const conditions = entries.map(([id, level]) =>
     type === "heart"
-      ? { level, npcId: id as NpcId, type: "heartLevel" as const }
-      : { level, skillId: id as SkillId, type: "skillLevel" as const },
+      ? { type: "heartLevel" as const, level, npcId: id as NpcId }
+      : { type: "skillLevel" as const, level, skillId: id as SkillId },
   );
-  return simplifyAvailabilityCondition({ conditions, type: "all" });
+  return simplifyAvailabilityCondition({ type: "all", conditions });
 }
 
 function projectPredicate(
@@ -132,17 +132,17 @@ function projectPredicate(
   switch (predicate) {
     case "completed_quest":
       if (typeof jsonValue === "string") {
-        return { questId: jsonValue as QuestId, state: "completed", type: "quest" };
+        return { type: "quest", questId: jsonValue as QuestId, state: "completed" };
       }
       break;
     case "has_perk":
       if (typeof jsonValue === "string") {
-        return { perkId: jsonValue as PerkId, type: "perkUnlocked" };
+        return { type: "perkUnlocked", perkId: jsonValue as PerkId };
       }
       break;
     case "in_time_range": {
       const range = numberPair(jsonValue);
-      if (range) return { start: range[0], end: range[1], type: "time" };
+      if (range) return { type: "time", start: range[0], end: range[1] };
       break;
     }
     case "is_season": {
@@ -154,7 +154,7 @@ function projectPredicate(
         ) {
           return { type: "always" };
         }
-        return { seasons, type: "season" };
+        return { type: "season", seasons };
       }
       break;
     }
@@ -170,7 +170,7 @@ function projectPredicate(
     }
     case "reached_mines_level":
       if (typeof jsonValue === "number" && Number.isFinite(jsonValue)) {
-        return { floor: jsonValue, type: "minesLevel" };
+        return { type: "minesLevel", floor: jsonValue };
       }
       break;
     case "reached_skill_level": {
@@ -182,15 +182,15 @@ function projectPredicate(
       if (typeof jsonValue === "string") {
         const cutscene = context.cutsceneMap[jsonValue];
         if (cutscene) {
-          return { questId: cutscene.questId, state: cutscene.phase, type: "quest" };
+          return { type: "quest", questId: cutscene.questId, state: cutscene.phase };
         }
       }
       break;
   }
 
   return {
-    predicate,
     type: "gamePredicate",
+    predicate,
     value: jsonValue,
   };
 }

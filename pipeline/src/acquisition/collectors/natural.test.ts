@@ -38,15 +38,15 @@ describe("collectNaturalSources", () => {
 
       expect(acc.get("bass" as ItemId)).toEqual([
         {
-          availability: {
-            conditions: [
-              { seasons: ["spring", "summer"], type: "season" },
-              { type: "weather", weathers: ["calm"] },
-              { start: 6, end: 18, type: "time" },
-            ],
-            type: "all",
-          },
           type: "fish",
+          availability: {
+            type: "all",
+            conditions: [
+              { type: "season", seasons: ["spring", "summer"] },
+              { type: "weather", weathers: ["calm"] },
+              { type: "time", start: 6, end: 18 },
+            ],
+          },
           waterTypes: ["river"],
         },
       ]);
@@ -129,16 +129,16 @@ describe("collectNaturalSources", () => {
 
       expect(acc.get("butterfly" as ItemId)).toEqual([
         {
+          type: "bug_catch",
           availability: {
-            conditions: [
-              { seasons: ["spring"], type: "season" },
-              { type: "weather", weathers: ["calm"] },
-              { start: 8, end: 16, type: "time" },
-            ],
             type: "all",
+            conditions: [
+              { type: "season", seasons: ["spring"] },
+              { type: "weather", weathers: ["calm"] },
+              { type: "time", start: 8, end: 16 },
+            ],
           },
           locationIds: ["meadow", "forest"],
-          type: "bug_catch",
         },
       ]);
     });
@@ -169,7 +169,7 @@ describe("collectNaturalSources", () => {
       const acc = new ItemSourceAccumulator();
       collectNaturalSources(fiddle, acc);
       expect(acc.get("dandelion" as ItemId)).toEqual([
-        { availability: { seasons: ["spring"], type: "season" }, type: "forage" },
+        { type: "forage", availability: { type: "season", seasons: ["spring"] } },
       ]);
     });
 
@@ -185,7 +185,7 @@ describe("collectNaturalSources", () => {
       const acc = new ItemSourceAccumulator();
       collectNaturalSources(fiddle, acc);
       expect(acc.get("truffle" as ItemId)).toEqual([
-        { availability: { seasons: ["spring"], type: "season" }, type: "forage" },
+        { type: "forage", availability: { type: "season", seasons: ["spring"] } },
       ]);
     });
   });
@@ -218,9 +218,9 @@ describe("collectNaturalSources", () => {
 
       expect(acc.get("tomato" as ItemId)).toEqual([
         {
-          availability: { seasons: ["summer"], type: "season" },
-          seedItemId: "tomato_seeds",
           type: "crop",
+          availability: { type: "season", seasons: ["summer"] },
+          seedItemId: "tomato_seeds",
         },
       ]);
     });
@@ -247,7 +247,7 @@ describe("collectNaturalSources", () => {
       collectNaturalSources(fiddle, acc);
 
       expect(acc.get("apple" as ItemId)).toEqual([
-        { saplingItemId: "apple_sapling", type: "tree" },
+        { type: "tree", saplingItemId: "apple_sapling" },
       ]);
     });
   });
@@ -268,7 +268,7 @@ describe("collectNaturalSources", () => {
       collectNaturalSources(fiddle, acc);
 
       expect(acc.get("slime_goo" as ItemId)).toEqual([
-        { monsterId: "blue_slime", type: "monster" },
+        { type: "monster", monsterId: "blue_slime" },
       ]);
     });
 
@@ -307,7 +307,7 @@ describe("collectNaturalSources", () => {
       const acc = new ItemSourceAccumulator();
       collectNaturalSources(fiddle, acc);
 
-      expect(acc.get("egg" as ItemId)).toEqual([{ animalId: "chicken", type: "animal_product" }]);
+      expect(acc.get("egg" as ItemId)).toEqual([{ type: "animal_product", animalId: "chicken" }]);
     });
   });
 });

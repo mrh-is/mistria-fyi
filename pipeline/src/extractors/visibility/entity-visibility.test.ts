@@ -109,12 +109,12 @@ describe("extractStoreVisibility", () => {
     const fiddle = makeFiddle({ stores: { darcy: {}, wheedle: {} } });
     const result = extractStoreVisibility(fiddle as never);
     expect(result["darcy" as StoreId]).toEqual({
-      questId: "repair_the_bridge",
       type: "questCompleted",
+      questId: "repair_the_bridge",
     });
     expect(result["wheedle" as StoreId]).toEqual({
-      questId: "upgrade_the_saturday_market",
       type: "questCompleted",
+      questId: "upgrade_the_saturday_market",
     });
   });
 
@@ -122,8 +122,8 @@ describe("extractStoreVisibility", () => {
     const fiddle = makeFiddle({ stores: { wheedle: {} } });
     const result = extractStoreVisibility(fiddle as never);
     expect(result["wheedle" as StoreId]).toEqual({
-      questId: "upgrade_the_saturday_market",
       type: "questCompleted",
+      questId: "upgrade_the_saturday_market",
     });
   });
 
@@ -144,36 +144,36 @@ describe("extractNpcVisibility", () => {
   it("gates Caldarus behind breaking the fire seal", () => {
     const result = extractNpcVisibility();
     expect(result["caldarus" as NpcId]).toEqual({
-      questId: "breaking_the_fire_seal",
       type: "questCompleted",
+      questId: "breaking_the_fire_seal",
     });
   });
 
   it("gates Seridia behind breaking the final seal", () => {
     const result = extractNpcVisibility();
     expect(result["seridia" as NpcId]).toEqual({
-      questId: "breaking_the_final_seal",
       type: "questCompleted",
+      questId: "breaking_the_final_seal",
     });
   });
 
   it("gates Saturday Market vendors in their respective waves", () => {
     const result = extractNpcVisibility();
     expect(result["taliferro" as NpcId]).toEqual({
-      questId: "upgrade_the_saturday_market",
       type: "questCompleted",
+      questId: "upgrade_the_saturday_market",
     });
     expect(result["wheedle" as NpcId]).toEqual({
-      questId: "upgrade_the_saturday_market",
       type: "questCompleted",
+      questId: "upgrade_the_saturday_market",
     });
     expect(result["stillwell" as NpcId]).toEqual({
-      questId: "upgrade_the_saturday_market_plaza",
       type: "questCompleted",
+      questId: "upgrade_the_saturday_market_plaza",
     });
     expect(result["zorel" as NpcId]).toEqual({
-      questId: "upgrade_the_saturday_market_plaza",
       type: "questCompleted",
+      questId: "upgrade_the_saturday_market_plaza",
     });
   });
 
@@ -187,12 +187,12 @@ describe("extractNpcVisibility", () => {
 describe("extractCategoryVisibility", () => {
   it("gates stillwell_challenges behind knowing Stillwell", () => {
     const result = extractCategoryVisibility();
-    expect(result.stillwell_challenges).toEqual({ npcId: "stillwell", type: "npcKnown" });
+    expect(result.stillwell_challenges).toEqual({ type: "npcKnown", npcId: "stillwell" });
   });
 
   it("gates tali_challenges behind knowing Taliferro", () => {
     const result = extractCategoryVisibility();
-    expect(result.tali_challenges).toEqual({ npcId: "taliferro", type: "npcKnown" });
+    expect(result.tali_challenges).toEqual({ type: "npcKnown", npcId: "taliferro" });
   });
 
   it("leaves story_quests, heart_quests, and fetch_quests always visible", () => {
@@ -205,8 +205,8 @@ describe("extractCategoryVisibility", () => {
   it("gates crown_quests behind the placeholder renown level", () => {
     const result = extractCategoryVisibility();
     expect(result.crown_quests).toEqual({
-      level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER,
       type: "renownLevel",
+      level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER,
     });
   });
 });
@@ -218,8 +218,8 @@ describe("extractFetchQuestVisibility", () => {
     };
     const result = extractFetchQuestVisibility(fetchRequirements, emptyCutsceneMap);
     expect(result["deliver_the_goods" as QuestId]).toEqual({
-      questId: "repair_the_bridge",
       type: "questCompleted",
+      questId: "repair_the_bridge",
     });
   });
 
@@ -313,22 +313,22 @@ describe("assignEntityVisibility — items", () => {
         fancy_seed: {
           category: "seeds",
           name: "Fancy Seed",
-          sources: [{ storeId: "general", type: "store" }],
+          sources: [{ type: "store", storeId: "general" }],
         },
       },
     });
     assignEntityVisibility(
       trackerData,
       {
-        general: { questId: "repair_the_general_store" as QuestId, type: "questCompleted" },
+        general: { type: "questCompleted", questId: "repair_the_general_store" as QuestId },
       } as never,
       emptyCutsceneMap,
       makeFiddle({}) as never,
       makeQuestChains({}),
     );
     expect(trackerData.items["fancy_seed" as ItemId].visibility).toEqual({
-      questId: "repair_the_general_store",
       type: "questCompleted",
+      questId: "repair_the_general_store",
     });
   });
 
@@ -339,8 +339,8 @@ describe("assignEntityVisibility — items", () => {
           category: "other",
           name: "Dual Source Item",
           sources: [
-            { storeId: "general", type: "store" },
-            { questId: "find_the_thing" as QuestId, trigger: "completion", type: "quest" },
+            { type: "store", storeId: "general" },
+            { type: "quest", questId: "find_the_thing" as QuestId, trigger: "completion" },
           ],
         },
       },
@@ -348,18 +348,18 @@ describe("assignEntityVisibility — items", () => {
     assignEntityVisibility(
       trackerData,
       {
-        general: { questId: "repair_the_general_store" as QuestId, type: "questCompleted" },
+        general: { type: "questCompleted", questId: "repair_the_general_store" as QuestId },
       } as never,
       emptyCutsceneMap,
       makeFiddle({}) as never,
       makeQuestChains({}),
     );
     expect(trackerData.items["dual_source_item" as ItemId].visibility).toEqual({
-      conditions: [
-        { questId: "repair_the_general_store", type: "questCompleted" },
-        { questId: "find_the_thing", type: "questCompleted" },
-      ],
       type: "or",
+      conditions: [
+        { type: "questCompleted", questId: "repair_the_general_store" },
+        { type: "questCompleted", questId: "find_the_thing" },
+      ],
     });
   });
 
@@ -386,7 +386,7 @@ describe("assignEntityVisibility — recipes", () => {
         stew: {
           memberItemIds: [],
           presentations: [],
-          sources: [{ perkId: "taste_maker" as PerkId, type: "perk" }],
+          sources: [{ type: "perk", perkId: "taste_maker" as PerkId }],
         },
       },
     });
@@ -398,11 +398,11 @@ describe("assignEntityVisibility — recipes", () => {
       makeQuestChains({}),
     );
     const recipe = trackerData.recipes["stew" as RecipeId];
-    expect(recipe.visibility).toEqual({ perkId: "taste_maker", type: "perkUnlocked" });
+    expect(recipe.visibility).toEqual({ type: "perkUnlocked", perkId: "taste_maker" });
     expect(recipe.sources?.[0]?.visibility).toEqual({
+      type: "skillLevel",
       level: 20,
       skillId: "cooking",
-      type: "skillLevel",
     });
   });
 
@@ -412,7 +412,7 @@ describe("assignEntityVisibility — recipes", () => {
         stairs: {
           memberItemIds: [],
           presentations: [],
-          sources: [{ storeId: "carpenter" as StoreId, type: "store" }],
+          sources: [{ type: "store", storeId: "carpenter" as StoreId }],
         },
       },
     });
@@ -420,8 +420,8 @@ describe("assignEntityVisibility — recipes", () => {
       trackerData,
       {
         carpenter: {
-          questId: "upgrade_the_carpenters_shop" as QuestId,
           type: "questCompleted",
+          questId: "upgrade_the_carpenters_shop" as QuestId,
         },
       } as never,
       emptyCutsceneMap,
@@ -430,12 +430,12 @@ describe("assignEntityVisibility — recipes", () => {
     );
     const recipe = trackerData.recipes["stairs" as RecipeId];
     expect(recipe.visibility).toEqual({
-      questId: "upgrade_the_carpenters_shop",
       type: "questCompleted",
+      questId: "upgrade_the_carpenters_shop",
     });
     expect(recipe.sources?.[0]?.visibility).toEqual({
-      questId: "upgrade_the_carpenters_shop",
       type: "questAvailable",
+      questId: "upgrade_the_carpenters_shop",
     });
   });
 
@@ -469,9 +469,9 @@ describe("assignEntityVisibility — recipes", () => {
           presentations: [],
           sources: [
             {
+              type: "quest",
               questId: "the_final_showdown" as QuestId,
               questType: "story_quests" as never,
-              type: "quest",
             },
           ],
         },
@@ -485,10 +485,10 @@ describe("assignEntityVisibility — recipes", () => {
       makeQuestChains({}),
     );
     const recipe = trackerData.recipes["scroll_of_the_sword" as RecipeId];
-    expect(recipe.visibility).toEqual({ questId: "the_final_showdown", type: "questCompleted" });
+    expect(recipe.visibility).toEqual({ type: "questCompleted", questId: "the_final_showdown" });
     expect(recipe.sources?.[0]?.visibility).toEqual({
-      questId: "the_final_showdown",
       type: "questAvailable",
+      questId: "the_final_showdown",
     });
   });
 
@@ -505,9 +505,9 @@ describe("assignEntityVisibility — recipes", () => {
           presentations: [],
           sources: [
             {
+              type: "mines_chest",
               biomeId: "biome_0" as never,
               perkId: "taste_maker" as PerkId,
-              type: "mines_chest",
             },
           ],
         },
@@ -522,13 +522,13 @@ describe("assignEntityVisibility — recipes", () => {
     );
     const recipe = trackerData.recipes["crystal_lamp" as RecipeId];
     expect(recipe.visibility).toEqual({
-      conditions: [
-        { floor: 1, type: "minesLevel" },
-        { perkId: "taste_maker", type: "perkUnlocked" },
-      ],
       type: "and",
+      conditions: [
+        { type: "minesLevel", floor: 1 },
+        { type: "perkUnlocked", perkId: "taste_maker" },
+      ],
     });
-    expect(recipe.sources?.[0]?.visibility).toEqual({ floor: 1, type: "minesLevel" });
+    expect(recipe.sources?.[0]?.visibility).toEqual({ type: "minesLevel", floor: 1 });
   });
 
   it("leaves a museum_donation source's entity and source both always", () => {
@@ -537,7 +537,7 @@ describe("assignEntityVisibility — recipes", () => {
         set_reward: {
           memberItemIds: [],
           presentations: [],
-          sources: [{ setCount: 1, type: "museum_donation", wingId: "wing_a" as never }],
+          sources: [{ type: "museum_donation", setCount: 1, wingId: "wing_a" as never }],
         },
       },
     });
@@ -559,7 +559,7 @@ describe("assignEntityVisibility — recipes", () => {
         bundle_recipe: {
           memberItemIds: [],
           presentations: [],
-          sources: [{ bundleName: "Void Set", storeId: "zorel" as StoreId, type: "scroll_bundle" }],
+          sources: [{ type: "scroll_bundle", bundleName: "Void Set", storeId: "zorel" as StoreId }],
         },
       },
     });
@@ -567,8 +567,8 @@ describe("assignEntityVisibility — recipes", () => {
       trackerData,
       {
         zorel: {
-          questId: "upgrade_the_saturday_market_plaza" as QuestId,
           type: "questCompleted",
+          questId: "upgrade_the_saturday_market_plaza" as QuestId,
         },
       } as never,
       emptyCutsceneMap,
@@ -577,12 +577,12 @@ describe("assignEntityVisibility — recipes", () => {
     );
     const recipe = trackerData.recipes["bundle_recipe" as RecipeId];
     expect(recipe.visibility).toEqual({
-      questId: "upgrade_the_saturday_market_plaza",
       type: "questCompleted",
+      questId: "upgrade_the_saturday_market_plaza",
     });
     expect(recipe.sources?.[0]?.visibility).toEqual({
-      questId: "upgrade_the_saturday_market_plaza",
       type: "questAvailable",
+      questId: "upgrade_the_saturday_market_plaza",
     });
   });
 
@@ -594,11 +594,11 @@ describe("assignEntityVisibility — recipes", () => {
           presentations: [],
           sources: [
             {
-              storeId: "general" as StoreId,
               type: "store",
+              storeId: "general" as StoreId,
               visibility: {
-                questId: "repair_the_general_store" as QuestId,
                 type: "questCompleted",
+                questId: "repair_the_general_store" as QuestId,
               },
             },
           ],
@@ -614,12 +614,12 @@ describe("assignEntityVisibility — recipes", () => {
     );
     const recipe = trackerData.recipes["general_dish" as RecipeId];
     expect(recipe.visibility).toEqual({
-      questId: "repair_the_general_store",
       type: "questCompleted",
+      questId: "repair_the_general_store",
     });
     expect(recipe.sources?.[0]?.visibility).toEqual({
-      questId: "repair_the_general_store",
       type: "questAvailable",
+      questId: "repair_the_general_store",
     });
   });
 
@@ -631,11 +631,11 @@ describe("assignEntityVisibility — recipes", () => {
           presentations: [],
           sources: [
             {
-              storeId: "darcy" as StoreId,
               type: "store",
+              storeId: "darcy" as StoreId,
               visibility: {
-                questId: "repair_the_general_store" as QuestId,
                 type: "questCompleted",
+                questId: "repair_the_general_store" as QuestId,
               },
             },
           ],
@@ -645,7 +645,7 @@ describe("assignEntityVisibility — recipes", () => {
     assignEntityVisibility(
       trackerData,
       {
-        darcy: { questId: "repair_the_bridge" as QuestId, type: "questCompleted" },
+        darcy: { type: "questCompleted", questId: "repair_the_bridge" as QuestId },
       } as never,
       emptyCutsceneMap,
       makeFiddle({}) as never,
@@ -653,18 +653,18 @@ describe("assignEntityVisibility — recipes", () => {
     );
     const recipe = trackerData.recipes["espresso" as RecipeId];
     expect(recipe.visibility).toEqual({
-      conditions: [
-        { questId: "repair_the_bridge", type: "questCompleted" },
-        { questId: "repair_the_general_store", type: "questCompleted" },
-      ],
       type: "and",
+      conditions: [
+        { type: "questCompleted", questId: "repair_the_bridge" },
+        { type: "questCompleted", questId: "repair_the_general_store" },
+      ],
     });
     expect(recipe.sources?.[0]?.visibility).toEqual({
-      conditions: [
-        { questId: "repair_the_bridge", type: "questAvailable" },
-        { questId: "repair_the_general_store", type: "questAvailable" },
-      ],
       type: "and",
+      conditions: [
+        { type: "questAvailable", questId: "repair_the_bridge" },
+        { type: "questAvailable", questId: "repair_the_general_store" },
+      ],
     });
   });
 
@@ -676,14 +676,14 @@ describe("assignEntityVisibility — recipes", () => {
           presentations: [],
           sources: [
             {
-              storeId: "general" as StoreId,
               type: "store",
+              storeId: "general" as StoreId,
               visibility: {
-                conditions: [
-                  { questId: "repair_the_general_store" as QuestId, type: "questCompleted" },
-                  { level: 10, skillId: "cooking" as SkillId, type: "skillLevel" },
-                ],
                 type: "and",
+                conditions: [
+                  { type: "questCompleted", questId: "repair_the_general_store" as QuestId },
+                  { type: "skillLevel", level: 10, skillId: "cooking" as SkillId },
+                ],
               },
             },
           ],
@@ -699,18 +699,18 @@ describe("assignEntityVisibility — recipes", () => {
     );
     const recipe = trackerData.recipes["and_gated_dish" as RecipeId];
     expect(recipe.visibility).toEqual({
-      conditions: [
-        { questId: "repair_the_general_store", type: "questCompleted" },
-        { level: 10, skillId: "cooking", type: "skillLevel" },
-      ],
       type: "and",
+      conditions: [
+        { type: "questCompleted", questId: "repair_the_general_store" },
+        { type: "skillLevel", level: 10, skillId: "cooking" },
+      ],
     });
     expect(recipe.sources?.[0]?.visibility).toEqual({
-      conditions: [
-        { questId: "repair_the_general_store", type: "questAvailable" },
-        { level: 10, skillId: "cooking", type: "skillLevel" },
-      ],
       type: "and",
+      conditions: [
+        { type: "questAvailable", questId: "repair_the_general_store" },
+        { type: "skillLevel", level: 10, skillId: "cooking" },
+      ],
     });
   });
 
@@ -722,14 +722,14 @@ describe("assignEntityVisibility — recipes", () => {
           presentations: [],
           sources: [
             {
-              storeId: "general" as StoreId,
               type: "store",
+              storeId: "general" as StoreId,
               visibility: {
-                conditions: [
-                  { questId: "repair_the_general_store" as QuestId, type: "questCompleted" },
-                  { floor: 5, type: "minesLevel" },
-                ],
                 type: "or",
+                conditions: [
+                  { type: "questCompleted", questId: "repair_the_general_store" as QuestId },
+                  { type: "minesLevel", floor: 5 },
+                ],
               },
             },
           ],
@@ -745,18 +745,18 @@ describe("assignEntityVisibility — recipes", () => {
     );
     const recipe = trackerData.recipes["or_gated_dish" as RecipeId];
     expect(recipe.visibility).toEqual({
-      conditions: [
-        { questId: "repair_the_general_store", type: "questCompleted" },
-        { floor: 5, type: "minesLevel" },
-      ],
       type: "or",
+      conditions: [
+        { type: "questCompleted", questId: "repair_the_general_store" },
+        { type: "minesLevel", floor: 5 },
+      ],
     });
     expect(recipe.sources?.[0]?.visibility).toEqual({
-      conditions: [
-        { questId: "repair_the_general_store", type: "questAvailable" },
-        { floor: 5, type: "minesLevel" },
-      ],
       type: "or",
+      conditions: [
+        { type: "questAvailable", questId: "repair_the_general_store" },
+        { type: "minesLevel", floor: 5 },
+      ],
     });
   });
 
@@ -768,7 +768,7 @@ describe("assignEntityVisibility — recipes", () => {
           presentations: [],
           sources: [
             { type: "default" },
-            { questId: "some_quest" as QuestId, questType: "story_quests" as never, type: "quest" },
+            { type: "quest", questId: "some_quest" as QuestId, questType: "story_quests" as never },
           ],
         },
       },
@@ -798,9 +798,9 @@ describe("assignEntityVisibility — perks", () => {
       makeQuestChains({}),
     );
     expect(trackerData.perks["basic_perk" as PerkId].visibility).toEqual({
+      type: "skillLevel",
       level: 1,
       skillId: "farming",
-      type: "skillLevel",
     });
   });
 
@@ -816,9 +816,9 @@ describe("assignEntityVisibility — perks", () => {
       makeQuestChains({}),
     );
     expect(trackerData.perks["advanced_perk" as PerkId].visibility).toEqual({
+      type: "skillLevel",
       level: 45,
       skillId: "mining",
-      type: "skillLevel",
     });
   });
 });
@@ -841,8 +841,8 @@ describe("assignEntityVisibility — animals", () => {
     });
     assignEntityVisibility(trackerData, {}, emptyCutsceneMap, fiddle as never, makeQuestChains({}));
     expect(trackerData.animals["horse" as AnimalId].visibility).toEqual({
-      questId: "repair_haydens_barn",
       type: "questCompleted",
+      questId: "repair_haydens_barn",
     });
   });
 
@@ -863,7 +863,7 @@ describe("assignEntityVisibility — cosmetics", () => {
         fancy_hat: {
           name: "Fancy Hat",
           slot: "head",
-          sources: [{ storeId: "wheedle", type: "store" }],
+          sources: [{ type: "store", storeId: "wheedle" }],
         },
       },
     });
@@ -871,8 +871,8 @@ describe("assignEntityVisibility — cosmetics", () => {
       trackerData,
       {
         wheedle: {
-          questId: "upgrade_the_saturday_market" as QuestId,
           type: "questCompleted",
+          questId: "upgrade_the_saturday_market" as QuestId,
         },
       } as never,
       emptyCutsceneMap,
@@ -880,8 +880,8 @@ describe("assignEntityVisibility — cosmetics", () => {
       makeQuestChains({}),
     );
     expect(trackerData.cosmetics["fancy_hat" as CosmeticId].visibility).toEqual({
-      questId: "upgrade_the_saturday_market",
       type: "questCompleted",
+      questId: "upgrade_the_saturday_market",
     });
   });
 
@@ -913,8 +913,8 @@ describe("assignEntityVisibility — spells", () => {
     };
     assignEntityVisibility(trackerData, {}, cutsceneMap, fiddle as never, makeQuestChains({}));
     expect(trackerData.mines.spells["summon_rain" as SpellId].visibility).toEqual({
-      questId: "the_water_tablet",
       type: "questCompleted",
+      questId: "the_water_tablet",
     });
   });
 });
@@ -938,12 +938,12 @@ describe("assignEntityVisibility — quests", () => {
     });
     assignEntityVisibility(trackerData, {}, emptyCutsceneMap, makeFiddle({}) as never, questChains);
     expect(trackerData.quests.heart_quests["bird_song" as QuestId].visibility).toEqual({
-      conditions: [
-        { npcId: "ryis", type: "npcKnown" },
-        { level: 4, npcId: "ryis", type: "heartLevel" },
-        { questId: "bird_song_prereq", type: "questCompleted" },
-      ],
       type: "and",
+      conditions: [
+        { type: "npcKnown", npcId: "ryis" },
+        { type: "heartLevel", level: 4, npcId: "ryis" },
+        { type: "questCompleted", questId: "bird_song_prereq" },
+      ],
     });
   });
 
@@ -961,15 +961,15 @@ describe("assignEntityVisibility — quests", () => {
     });
     assignEntityVisibility(trackerData, {}, emptyCutsceneMap, makeFiddle({}) as never, questChains);
     expect(trackerData.quests.crown_quests["first_crown_quest" as QuestId].visibility).toEqual({
-      level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER,
       type: "renownLevel",
+      level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER,
     });
     expect(trackerData.quests.crown_quests["second_crown_quest" as QuestId].visibility).toEqual({
-      conditions: [
-        { level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER, type: "renownLevel" },
-        { questId: "first_crown_quest", type: "questCompleted" },
-      ],
       type: "and",
+      conditions: [
+        { type: "renownLevel", level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER },
+        { type: "questCompleted", questId: "first_crown_quest" },
+      ],
     });
   });
 
@@ -984,8 +984,8 @@ describe("assignEntityVisibility — quests", () => {
     });
     assignEntityVisibility(trackerData, {}, emptyCutsceneMap, makeFiddle({}) as never, questChains);
     expect(trackerData.quests.fetch_quests["deliver_the_goods" as QuestId].visibility).toEqual({
-      questId: "repair_the_bridge",
       type: "questCompleted",
+      questId: "repair_the_bridge",
     });
   });
 
@@ -1011,8 +1011,8 @@ describe("assignEntityVisibility — quests", () => {
     });
     assignEntityVisibility(trackerData, {}, emptyCutsceneMap, makeFiddle({}) as never, questChains);
     expect(trackerData.quests.story_quests["repair_the_mill" as QuestId].visibility).toEqual({
-      questId: "prior_quest",
       type: "questCompleted",
+      questId: "prior_quest",
     });
   });
 });

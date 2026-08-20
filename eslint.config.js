@@ -54,7 +54,6 @@ export default defineConfig(
       "no-eval": "error",
       "no-implied-eval": "error",
       "no-throw-literal": "error",
-
       "no-unneeded-ternary": "error",
       "no-useless-rename": "error",
       "no-var": "error",
@@ -63,6 +62,7 @@ export default defineConfig(
       "perfectionist/sort-imports": [
         "error",
         {
+          type: "natural",
           groups: [
             "side-effect",
             "side-effect-style",
@@ -78,7 +78,6 @@ export default defineConfig(
           internalPattern: ["^\\$lib", "^\\$app", "^\\$env", "^\\$service-worker"],
           order: "asc",
           tsconfig: { rootDir: "." },
-          type: "natural",
         },
       ],
       "perfectionist/sort-object-types": [
@@ -87,8 +86,9 @@ export default defineConfig(
           customGroups: [
             { elementNamePattern: "^start$", groupName: "range-start" },
             { elementNamePattern: "^end$", groupName: "range-end" },
+            { elementNamePattern: "^type$", groupName: "type-discriminator" },
           ],
-          groups: ["range-start", "range-end", "unknown"],
+          groups: ["type-discriminator", "range-start", "range-end", "unknown"],
         },
       ],
       "perfectionist/sort-objects": [
@@ -97,13 +97,15 @@ export default defineConfig(
           customGroups: [
             { elementNamePattern: "^start$", groupName: "range-start" },
             { elementNamePattern: "^end$", groupName: "range-end" },
+            { elementNamePattern: "^type$", groupName: "type-discriminator" },
           ],
-          groups: ["range-start", "range-end", "unknown"],
+          groups: ["type-discriminator", "range-start", "range-end", "unknown"],
           partitionByNewLine: true,
         },
       ],
       "prefer-const": "error",
       "prefer-template": "warn",
+      "sort-keys": "off",
     },
   },
   {

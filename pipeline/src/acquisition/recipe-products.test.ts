@@ -153,7 +153,7 @@ describe("deriveRecipeProductSources", () => {
     deriveRecipeProductSources(fiddle, recipes, accumulator);
 
     expect(accumulator.get("turnip_soup" as ItemId)).toEqual([
-      { method: "cook", recipeId: "turnip_soup", type: "recipe" },
+      { type: "recipe", method: "cook", recipeId: "turnip_soup" },
     ]);
   });
 
@@ -187,7 +187,7 @@ describe("deriveRecipeProductSources", () => {
     const accumulator = new ItemSourceAccumulator();
     deriveRecipeProductSources(fiddle, recipes, accumulator);
 
-    const expected = [{ method: "craft", recipeId: "chair", type: "recipe" }];
+    const expected = [{ type: "recipe", method: "craft", recipeId: "chair" }];
     expect(accumulator.get("chair_blue" as ItemId)).toEqual(expected);
     expect(accumulator.get("chair_green" as ItemId)).toEqual(expected);
   });
@@ -235,7 +235,7 @@ describe("deriveRecipeProductSources", () => {
     deriveRecipeProductSources(fiddle, recipes, accumulator);
 
     expect(accumulator.get("pie_apple" as ItemId)).toEqual([
-      { method: "cook", recipeId: "pie", type: "recipe" },
+      { type: "recipe", method: "cook", recipeId: "pie" },
     ]);
   });
 
@@ -295,9 +295,9 @@ describe("deriveRecipeProductSources", () => {
 
     expect(accumulator.get("kitchen_salt_and_pepper_shakers" as ItemId)).toEqual([
       {
+        type: "recipe",
         method: "craft",
         recipeId: "kitchen_salt_and_pepper_shakers",
-        type: "recipe",
       },
     ]);
   });

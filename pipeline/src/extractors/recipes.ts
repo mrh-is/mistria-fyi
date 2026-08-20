@@ -173,10 +173,10 @@ function buildQuestRecipeSource(
   itemIdToRecipeId: Map<string, string>,
 ): AcquisitionSource {
   const sourceBase = {
+    type: "quest" as const,
     questId: questId as QuestId,
     questType: questType as QuestType,
     trigger: "completion" as const,
-    type: "quest" as const,
   };
 
   if (questType === "fetch_quests") {
@@ -234,7 +234,7 @@ function collectChickenStatueSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ cost, type: "chicken_statue" });
+      sources.push({ type: "chicken_statue", cost });
       result.set(recipeId, sources);
     }
   }
@@ -303,9 +303,9 @@ function collectFestivalScrollSources(
 
         const sources = result.get(recipeId) ?? [];
         sources.push({
+          type: "festival",
           festivalId: festivalId as FestivalId,
           storeId: vendorStoreId as StoreId,
-          type: "festival",
         });
         result.set(recipeId, sources);
       }
@@ -350,7 +350,7 @@ function collectFishingChestSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ tier: chestTier as TreasureChestTierId, type: "treasure_chest" });
+      sources.push({ type: "treasure_chest", tier: chestTier as TreasureChestTierId });
       result.set(recipeId, sources);
     }
   }
@@ -365,12 +365,12 @@ function collectHardcodedSources(
 
   const hardcoded: [string, AcquisitionSource][] = [
     ["water_sprite_statue_v1", { type: "beach_cave_chest" }],
-    ["stairs", { storeId: "carpenter" as StoreId, type: "upgrade", upgradeName: "House Stairs" }],
+    ["stairs", { type: "upgrade", storeId: "carpenter" as StoreId, upgradeName: "House Stairs" }],
     [
       "farm_bridge",
       {
-        storeId: "carpenter" as StoreId,
         type: "upgrade",
+        storeId: "carpenter" as StoreId,
         upgradeName: "Starter Farm Bridge",
       },
     ],
@@ -425,18 +425,18 @@ function collectLetterScrollSources(
       if (requirements) {
         if (typeof requirements.shipped_item === "string") {
           sources.push({
+            type: "letter",
             trigger: "shipped_item",
             triggerItemId: requirements.shipped_item as ItemId,
-            type: "letter",
           });
           result.set(recipeId, sources);
           continue;
         }
         if (typeof requirements.donated_item === "string") {
           sources.push({
+            type: "letter",
             trigger: "donated_item",
             triggerItemId: requirements.donated_item as ItemId,
-            type: "letter",
           });
           result.set(recipeId, sources);
           continue;
@@ -454,7 +454,7 @@ function collectLetterScrollSources(
             }
           }
           if (triggerDate) {
-            sources.push({ trigger: "reached_date", triggerDate, type: "letter" });
+            sources.push({ type: "letter", trigger: "reached_date", triggerDate });
           } else {
             console.warn(
               `  Warning: letter "${letterId}" has reached_date but couldn't parse date — skipping`,
@@ -506,7 +506,7 @@ function collectMinesRecipeSources(
         if (!recipeId) continue;
 
         const sources = result.get(recipeId) ?? [];
-        sources.push({ biomeId, perkId, type: "mines_chest" });
+        sources.push({ type: "mines_chest", biomeId, perkId });
         result.set(recipeId, sources);
       }
     }
@@ -519,7 +519,7 @@ function collectMinesRecipeSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ biomeId, perkId: "natural_beauty" as PerkId, type: "mines_dig_site" });
+      sources.push({ type: "mines_dig_site", biomeId, perkId: "natural_beauty" as PerkId });
       result.set(recipeId, sources);
     }
   }
@@ -566,7 +566,7 @@ function collectMuseumScrollSources(
         if (!recipeId) continue;
 
         const sources = result.get(recipeId) ?? [];
-        sources.push({ setCount, type: "museum_donation", wingId: wingId as WingId });
+        sources.push({ type: "museum_donation", setCount, wingId: wingId as WingId });
         result.set(recipeId, sources);
       }
     }
@@ -599,7 +599,7 @@ function collectPerkSources(
 
     const recipeId = itemIdToRecipeId.get(itemId);
     if (recipeId && !result.has(recipeId)) {
-      result.set(recipeId, [{ perkId: perk as PerkId, type: "perk" }]);
+      result.set(recipeId, [{ type: "perk", perkId: perk as PerkId }]);
     }
   });
 
@@ -687,7 +687,7 @@ function collectRenownRecipeSources(
     const recipeId = itemIdToRecipeId.get(itemId);
     if (!recipeId || result.has(recipeId)) continue;
 
-    result.set(recipeId, [{ level: i + 1, type: "renown" }]);
+    result.set(recipeId, [{ type: "renown", level: i + 1 }]);
   }
 
   return result;
@@ -776,9 +776,9 @@ function collectScrollBundleSources(
         if (recipeId && !result.has(recipeId)) {
           result.set(recipeId, [
             {
+              type: "scroll_bundle",
               bundleName: info.bundleName,
               storeId: info.storeId as StoreId,
-              type: "scroll_bundle",
               ...(info.visibility.type === "always" ? {} : { visibility: info.visibility }),
             },
           ]);
@@ -857,8 +857,8 @@ function collectStoreScrollSources(
           // no equivalent of the legacy `store_with_perk` type or `upgraded` flag; Task 2 will
           // reintroduce richer availability/restriction modeling.
           sources.push({
-            storeId: storeId as StoreId,
             type: "store",
+            storeId: storeId as StoreId,
             ...(visibility.type === "always" ? {} : { visibility }),
           });
           result.set(recipeId, sources);
@@ -911,7 +911,7 @@ function collectWishingWellSources(
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push({ cost, type: "wishing_well" });
+      sources.push({ type: "wishing_well", cost });
       result.set(recipeId, sources);
     }
   }

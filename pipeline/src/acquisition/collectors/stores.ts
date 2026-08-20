@@ -52,8 +52,8 @@ export function collectStoreSources(
         for (const [season, itemsData] of Object.entries(seasonal)) {
           if (!Array.isArray(itemsData)) continue;
           const seasonAvailability: AvailabilityCondition = {
-            seasons: [season as Season],
             type: "season",
+            seasons: [season as Season],
           };
           for (const entry of itemsData) {
             processStoreEntry(
@@ -90,8 +90,8 @@ function buildStoreSource(
 ): Source {
   return {
     ...(availability ? { availability } : {}),
-    storeId: storeId as StoreId,
     type: "store",
+    storeId: storeId as StoreId,
   };
 }
 
@@ -104,8 +104,8 @@ function combineAvailability(
   if (!requirement) return base;
   if (requirement.type === "always") return base;
   return simplifyAvailabilityCondition({
-    conditions: [base, requirement],
     type: "all",
+    conditions: [base, requirement],
   });
 }
 
@@ -176,15 +176,15 @@ function processStoreEntry(
   if (upgradeName) {
     source = {
       ...(availability ? { availability } : {}),
-      storeId: storeId as StoreId,
       type: "upgrade",
+      storeId: storeId as StoreId,
       upgradeName,
     };
   } else if (perkId) {
     source = {
       ...(availability ? { availability } : {}),
-      storeId: storeId as StoreId,
       type: "store",
+      storeId: storeId as StoreId,
     };
   } else {
     source = buildStoreSource(storeId, availability);

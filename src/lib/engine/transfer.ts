@@ -407,11 +407,11 @@ function getPerkOrder(): PerkId[] {
     .sort();
 }
 
-function getQuestOrder(): { questId: QuestId; type: string }[] {
-  const result: { questId: QuestId; type: string }[] = [];
+function getQuestOrder(): { type: string; questId: QuestId; }[] {
+  const result: { type: string; questId: QuestId; }[] = [];
   for (const type of recordKeys(trackerData.quests).sort()) {
     for (const questId of recordKeys(trackerData.quests[type]).sort()) {
-      result.push({ questId, type });
+      result.push({ type, questId });
     }
   }
   return result;

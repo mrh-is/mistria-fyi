@@ -161,7 +161,7 @@ describe("reviewed overrides", () => {
         add: (id: ItemId, source: Source) => itemAdds.push([id, source]),
         get: (id: ItemId) => {
           if (id === ("void_cake" as ItemId)) {
-            return [{ storeId: "some_store", type: "store" }] as Source[];
+            return [{ type: "store", storeId: "some_store" }] as Source[];
           }
           return [];
         },

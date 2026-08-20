@@ -37,7 +37,7 @@ describe("collectRewardSources", () => {
       collectRewardSources(fiddle, acc);
 
       expect(acc.get("axe" as ItemId)).toEqual([
-        { questId: "gather_wood", trigger: "completion", type: "quest" },
+        { type: "quest", questId: "gather_wood", trigger: "completion" },
       ]);
     });
 
@@ -57,7 +57,7 @@ describe("collectRewardSources", () => {
       collectRewardSources(fiddle, acc, cosmeticAcc);
 
       expect(cosmeticAcc.get("head_special_flower_crown" as CosmeticId)).toEqual([
-        { questId: "the_spring_festival", trigger: "completion", type: "quest" },
+        { type: "quest", questId: "the_spring_festival", trigger: "completion" },
       ]);
     });
 
@@ -84,10 +84,10 @@ describe("collectRewardSources", () => {
       collectRewardSources(fiddle, acc, cosmeticAcc);
 
       expect(acc.get("spring_planter" as ItemId)).toEqual([
-        { questId: "the_spring_festival", trigger: "completion", type: "quest" },
+        { type: "quest", questId: "the_spring_festival", trigger: "completion" },
       ]);
       expect(cosmeticAcc.get("flower_crown" as CosmeticId)).toEqual([
-        { questId: "the_spring_festival", trigger: "completion", type: "quest" },
+        { type: "quest", questId: "the_spring_festival", trigger: "completion" },
       ]);
     });
 
@@ -110,10 +110,10 @@ describe("collectRewardSources", () => {
       collectRewardSources(fiddle, acc);
 
       expect(acc.get("stage_1_reward" as ItemId)).toEqual([
-        { questId: "multi_stage", trigger: "completion", type: "quest" },
+        { type: "quest", questId: "multi_stage", trigger: "completion" },
       ]);
       expect(acc.get("stage_2_reward" as ItemId)).toEqual([
-        { questId: "multi_stage", trigger: "completion", type: "quest" },
+        { type: "quest", questId: "multi_stage", trigger: "completion" },
       ]);
     });
 
@@ -149,10 +149,10 @@ describe("collectRewardSources", () => {
 
       expect(acc.get("flower_crown" as ItemId)).toEqual([
         {
-          availability: { seasons: ["spring"], type: "season" },
+          type: "festival",
+          availability: { type: "season", seasons: ["spring"] },
           festivalId: "spring",
           storeId: "vendor_a",
-          type: "festival",
         },
       ]);
     });
@@ -172,10 +172,10 @@ describe("collectRewardSources", () => {
       collectRewardSources(fiddle, acc);
       expect(acc.get("sun_hat" as ItemId)).toEqual([
         {
-          availability: { seasons: ["summer"], type: "season" },
+          type: "festival",
+          availability: { type: "season", seasons: ["summer"] },
           festivalId: "summer",
           storeId: "vendor",
-          type: "festival",
         },
       ]);
     });
@@ -192,9 +192,9 @@ describe("collectRewardSources", () => {
       const acc = new ItemSourceAccumulator();
       collectRewardSources(fiddle, acc);
 
-      expect(acc.get("bronze_medal" as ItemId)).toEqual([{ level: 1, type: "renown" }]);
-      expect(acc.get("silver_hat" as ItemId)).toEqual([{ level: 2, type: "renown" }]);
-      expect(acc.get("gold_trophy" as ItemId)).toEqual([{ level: 3, type: "renown" }]);
+      expect(acc.get("bronze_medal" as ItemId)).toEqual([{ type: "renown", level: 1 }]);
+      expect(acc.get("silver_hat" as ItemId)).toEqual([{ type: "renown", level: 2 }]);
+      expect(acc.get("gold_trophy" as ItemId)).toEqual([{ type: "renown", level: 3 }]);
     });
   });
 
@@ -214,7 +214,7 @@ describe("collectRewardSources", () => {
       collectRewardSources(fiddle, acc);
 
       expect(acc.get("baked_potato" as ItemId)).toEqual([
-        { trigger: "shipped_item", triggerItemId: "potato", type: "letter" },
+        { type: "letter", trigger: "shipped_item", triggerItemId: "potato" },
       ]);
     });
 
@@ -232,7 +232,7 @@ describe("collectRewardSources", () => {
       collectRewardSources(fiddle, acc);
 
       expect(acc.get("miners_mushroom_stew" as ItemId)).toEqual([
-        { trigger: "donated_item", triggerItemId: "upper_mines_mushroom", type: "letter" },
+        { type: "letter", trigger: "donated_item", triggerItemId: "upper_mines_mushroom" },
       ]);
     });
 
@@ -251,9 +251,9 @@ describe("collectRewardSources", () => {
 
       expect(acc.get("gift_box" as ItemId)).toEqual([
         {
+          type: "letter",
           trigger: "reached_date",
           triggerDate: { day: 5, season: "spring" },
-          type: "letter",
         },
       ]);
     });
@@ -311,13 +311,13 @@ describe("collectRewardSources", () => {
       collectRewardSources(fiddle, acc);
 
       expect(acc.get("treasure_box_wood" as ItemId)).toEqual([
-        { setCount: 1, type: "museum_donation", wingId: "archaeology" },
+        { type: "museum_donation", setCount: 1, wingId: "archaeology" },
       ]);
       expect(acc.get("head_explorer_hat" as ItemId)).toEqual([
-        { setCount: 1, type: "museum_donation", wingId: "archaeology" },
+        { type: "museum_donation", setCount: 1, wingId: "archaeology" },
       ]);
       expect(acc.get("treasure_box_copper" as ItemId)).toEqual([
-        { setCount: 2, type: "museum_donation", wingId: "archaeology" },
+        { type: "museum_donation", setCount: 2, wingId: "archaeology" },
       ]);
     });
 
@@ -358,10 +358,10 @@ describe("collectRewardSources", () => {
       collectRewardSources(fiddle, acc);
 
       expect(acc.get("arch_reward" as ItemId)).toEqual([
-        { setCount: 1, type: "museum_donation", wingId: "archaeology" },
+        { type: "museum_donation", setCount: 1, wingId: "archaeology" },
       ]);
       expect(acc.get("fish_reward" as ItemId)).toEqual([
-        { setCount: 1, type: "museum_donation", wingId: "fish" },
+        { type: "museum_donation", setCount: 1, wingId: "fish" },
       ]);
     });
   });
@@ -385,10 +385,10 @@ describe("collectRewardSources", () => {
       collectRewardSources(fiddle, acc);
 
       expect(acc.get("adelines_lifetime_planner" as ItemId)).toEqual([
-        { npcId: "adeline", type: "proposal" },
+        { type: "proposal", npcId: "adeline" },
       ]);
       expect(acc.get("balors_polished_gem" as ItemId)).toEqual([
-        { npcId: "balor", type: "proposal" },
+        { type: "proposal", npcId: "balor" },
       ]);
     });
 
@@ -423,9 +423,9 @@ describe("collectRewardSources", () => {
       const acc = new ItemSourceAccumulator();
       collectRewardSources(fiddle, acc);
 
-      expect(acc.get("date_photo_inn" as ItemId)).toEqual([{ dateId: "inn_meal", type: "date" }]);
+      expect(acc.get("date_photo_inn" as ItemId)).toEqual([{ type: "date", dateId: "inn_meal" }]);
       expect(acc.get("date_photo_deep_woods" as ItemId)).toEqual([
-        { dateId: "deep_woods_picnic", type: "date" },
+        { type: "date", dateId: "deep_woods_picnic" },
       ]);
     });
 

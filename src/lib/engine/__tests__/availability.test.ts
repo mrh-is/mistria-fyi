@@ -23,21 +23,21 @@ import type {
 const spring = { season: "spring" as const, weather: "calm" as const };
 
 function src(availability?: AvailabilityCondition): AcquisitionSource {
-  return { ...(availability ? { availability } : {}), storeId: "test" as StoreId, type: "store" };
+  return { ...(availability ? { availability } : {}), type: "store", storeId: "test" as StoreId };
 }
 
 const seasonCondition = (seasons: Season[]): AvailabilityCondition => ({
-  seasons,
   type: "season",
+  seasons,
 });
 const weatherCondition = (weathers: Weather[]): AvailabilityCondition => ({
   type: "weather",
   weathers,
 });
 const timeCondition = (start: number, end: number): AvailabilityCondition => ({
+  type: "time",
   start,
   end,
-  type: "time",
 });
 const allSeasonsCondition = seasonCondition(["spring", "summer", "fall", "winter"]);
 
@@ -77,7 +77,7 @@ describe("hasTimelyRestriction", () => {
   });
 
   it("returns false for a non-timely condition", () => {
-    expect(hasTimelyRestriction(src({ floor: 5, type: "minesLevel" }))).toBe(false);
+    expect(hasTimelyRestriction(src({ type: "minesLevel", floor: 5 }))).toBe(false);
   });
 });
 
@@ -233,8 +233,8 @@ describe("getDisplayBadges", () => {
 
   it("extracts seasons, weathers, and time range from a single source", () => {
     const condition: AvailabilityCondition = {
-      conditions: [seasonCondition(["spring"]), weatherCondition(["calm"]), timeCondition(6, 12)],
       type: "all",
+      conditions: [seasonCondition(["spring"]), weatherCondition(["calm"]), timeCondition(6, 12)],
     };
     expect(getDisplayBadges([src(condition)])).toEqual({
       seasons: ["spring"],
