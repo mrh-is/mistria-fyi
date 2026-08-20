@@ -5,8 +5,7 @@ import { recordToArray } from "$lib/utils";
 
 import type { UserProgressionState } from "$lib/engine/visibility.js";
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { Season, Weather } from "$lib/types/tracker-data.js";
-import type { VisibilityCondition } from "$lib/types/visibility.js";
+import type { NpcId, Season, Weather } from "$lib/types/tracker-data.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -53,9 +52,7 @@ export function searchItems(
 
   // NPCs — not season-gated
   for (const [id, npc] of Object.entries(trackerData.npcs)) {
-    const npcVis = (trackerData.npcVisibility as Record<string, undefined | VisibilityCondition>)[
-      id
-    ];
+    const npcVis = trackerData.npcs[id as NpcId].visibility;
     if (npcVis && !isVisible(npcVis, progressionState)) continue;
 
     if (npc.name.toLowerCase().includes(q)) {

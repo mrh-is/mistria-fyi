@@ -55,10 +55,7 @@ export function deriveProgressionState(
 
   // 2. Known NPCs: always-visible NPCs are always known; gated NPCs are known once their
   // visibility condition (typically a questCompleted gate) evaluates true.
-  const npcIds = new Set<NpcId>([
-    ...(Object.keys(trackerData.npcs) as NpcId[]),
-    ...(Object.keys(trackerData.npcVisibility) as NpcId[]),
-  ]);
+  const npcIds = new Set<NpcId>(Object.keys(trackerData.npcs) as NpcId[]);
 
   const knownNpcs = new Set<NpcId>();
   if (showSpoilers) {
@@ -76,8 +73,8 @@ export function deriveProgressionState(
       unlockedPerks,
     };
     for (const npcId of npcIds) {
-      const npcVis = lookup(trackerData.npcVisibility, npcId);
-      if (!npcVis || npcVis.type === "always" || isVisible(npcVis, tempState)) {
+      const npcVis = trackerData.npcs[npcId].visibility;
+      if (!npcVis || isVisible(npcVis, tempState)) {
         knownNpcs.add(npcId);
       }
     }
@@ -352,7 +349,7 @@ function isBaseConditionMet(
     case "minesLevel":
       return completed.mines.floor >= condition.floor;
     case "npcKnown": {
-      const npcVis = lookup(trackerData.npcVisibility, condition.npcId);
+      const npcVis = trackerData.npcs[condition.npcId].visibility;
       if (!npcVis || npcVis.type === "always") return true;
       return isBaseConditionMet(npcVis, completed, trackerData);
     }

@@ -31,10 +31,8 @@ export function buildBaseSegmentLookups(
     ),
     locationNames: {},
     monsterNames: {},
-    npcNames: Object.fromEntries(
-      Object.entries(trackerData.npcs).map(([id, npc]) => [id, npc.name]),
-    ),
-    npcVisibility: trackerData.npcVisibility,
+    npcNames: recordMap(trackerData.npcs, ({ name }) => name),
+    npcVisibility: recordMap(trackerData.npcs, ({ visibility }) => visibility),
     perks: trackerData.skills,
     perkTierLevels: trackerData.perkTierLevels,
     questNames: Object.fromEntries(

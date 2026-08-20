@@ -107,6 +107,7 @@ export interface Npc {
   birthday: Day;
   dateable?: true;
   name: string;
+  visibility?: VisibilityCondition;
 }
 export type NpcId = string & { readonly __brand: "NpcId" };
 export interface Perk {
@@ -161,7 +162,6 @@ export interface TrackerData {
   };
   museum: MuseumWing[];
   npcs: Record<NpcId, Npc>;
-  npcVisibility: Record<NpcId, VisibilityCondition>;
   perkTierLevels: [number, number, number, number, number];
   questChains: {
     crown: QuestId[];

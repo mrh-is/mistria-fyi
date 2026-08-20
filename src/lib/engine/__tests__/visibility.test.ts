@@ -67,7 +67,6 @@ function makeTrackerData(overrides: Partial<TrackerData> = {}): TrackerData {
     mines: { biomes: [], maxFloors: 60, spells: {} },
     museum: [],
     npcs: {},
-    npcVisibility: {},
     perkTierLevels: [1, 15, 30, 45, 60],
     questChains: { crown: [], fetch: {}, heart: {}, stillwell: [], story: {}, tali: [] },
     questGates: {
@@ -324,10 +323,11 @@ describe("deriveProgressionState", () => {
   it("marks NPC as known when unlock quest is completed", () => {
     const trackerData = makeTrackerData({
       npcs: {
-        [seridia]: { birthday: { day: 1, season: "spring" }, name: "Seridia" },
-      },
-      npcVisibility: {
-        [seridia]: { questId: breakingTheFinalSeal, type: "questCompleted" },
+        [seridia]: {
+          birthday: { day: 1, season: "spring" },
+          name: "Seridia",
+          visibility: { questId: breakingTheFinalSeal, type: "questCompleted" },
+        },
       },
       questChains: {
         ...emptyStoryChains,
@@ -352,10 +352,11 @@ describe("deriveProgressionState", () => {
   it("masks NPC heart level to 0 when NPC not known", () => {
     const trackerData = makeTrackerData({
       npcs: {
-        [caldarus]: { birthday: { day: 1, season: "spring" }, name: "Caldarus" },
-      },
-      npcVisibility: {
-        [caldarus]: { questId: breakingTheFireSeal, type: "questCompleted" },
+        [caldarus]: {
+          birthday: { day: 1, season: "spring" },
+          name: "Caldarus",
+          visibility: { questId: breakingTheFireSeal, type: "questCompleted" },
+        },
       },
     });
     const completed = makeCompleted({ npcLevels: { [caldarus]: 4 } });
@@ -367,8 +368,14 @@ describe("deriveProgressionState", () => {
 
   it("passes through heart level when NPC is always-known", () => {
     const trackerData = makeTrackerData({
-      npcs: { [holt]: { birthday: { day: 1, season: "spring" }, dateable: true, name: "Holt" } },
-      npcVisibility: { [holt]: { type: "always" } },
+      npcs: {
+        [holt]: {
+          birthday: { day: 1, season: "spring" },
+          dateable: true,
+          name: "Holt",
+          visibility: { type: "always" },
+        },
+      },
     });
     const completed = makeCompleted({ npcLevels: { [holt]: 5 } });
 
@@ -380,10 +387,11 @@ describe("deriveProgressionState", () => {
   it("cascades heart level from heartLevelChanges once the triggering quest is completed", () => {
     const trackerData = makeTrackerData({
       npcs: {
-        [caldarus]: { birthday: { day: 1, season: "spring" }, name: "Caldarus" },
-      },
-      npcVisibility: {
-        [caldarus]: { questId: breakingTheFireSeal, type: "questCompleted" },
+        [caldarus]: {
+          birthday: { day: 1, season: "spring" },
+          name: "Caldarus",
+          visibility: { questId: breakingTheFireSeal, type: "questCompleted" },
+        },
       },
       questChains: {
         ...emptyStoryChains,
@@ -604,10 +612,11 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
   it("satisfying a quest reveals NPC-gated content", () => {
     const trackerData = makeTrackerData({
       npcs: {
-        [caldarus]: { birthday: { day: 1, season: "spring" }, name: "Caldarus" },
-      },
-      npcVisibility: {
-        [caldarus]: { questId: breakingTheFireSeal, type: "questCompleted" },
+        [caldarus]: {
+          birthday: { day: 1, season: "spring" },
+          name: "Caldarus",
+          visibility: { questId: breakingTheFireSeal, type: "questCompleted" },
+        },
       },
       questChains: {
         ...emptyStoryChains,
