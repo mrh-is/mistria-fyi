@@ -6,8 +6,7 @@ import type { ParsedGameData } from "../parse-fiddle.js";
 
 export function extractQuests(fiddle: ParsedGameData): TrackerData["quests"] {
   const quests = fiddle.quests as
-    | Record<string, Record<string, Record<string, unknown>>>
-    | undefined;
+    Record<string, Record<string, Record<string, unknown>>> | undefined;
   if (!quests) {
     return { cooking: {}, crown: {}, fetch: {}, heart: {}, mission: {}, story: {} };
   }
@@ -22,7 +21,7 @@ export function extractQuests(fiddle: ParsedGameData): TrackerData["quests"] {
   };
 
   forEachQuest(fiddle, TRACKED_QUEST_GROUPS, (tomlType, questId, quest) => {
-    const outputType = QUEST_TYPE_MAP[tomlType as keyof typeof QUEST_TYPE_MAP] as QuestType;
+    const outputType = QUEST_TYPE_MAP[tomlType as keyof typeof QUEST_TYPE_MAP];
     const name = (quest.name as string | undefined) ?? questId;
 
     if (outputType === "fetch") {
@@ -36,10 +35,7 @@ export function extractQuests(fiddle: ParsedGameData): TrackerData["quests"] {
     }
   });
 
-  const total = Object.values(result).reduce(
-    (n, g) => n + Object.keys(g).length,
-    0,
-  );
+  const total = Object.values(result).reduce((n, g) => n + Object.keys(g).length, 0);
   const breakdown = (Object.keys(result) as QuestType[])
     .map((t) => `${t}: ${Object.keys(result[t]).length}`)
     .join(", ");

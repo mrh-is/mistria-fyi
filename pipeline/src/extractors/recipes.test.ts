@@ -439,9 +439,7 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["egg_dish" as RecipeId];
-    expect(recipe.sources).toEqual([
-      { type: "chicken_statue", cost: { amount: 10, currency: "beads" } },
-    ]);
+    expect(recipe.sources).toEqual([{ type: "chicken_statue", cost: 10 }]);
   });
 
   it("rejects non-numeric chicken statue prices", () => {
@@ -522,9 +520,7 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["wish_cake" as RecipeId];
-    expect(recipe.sources).toEqual([
-      { type: "wishing_well", cost: { amount: 500, currency: "tesserae" } },
-    ]);
+    expect(recipe.sources).toEqual([{ type: "wishing_well", cost: 500 }]);
   });
 
   it("rejects missing wishing well prices", () => {
@@ -645,7 +641,7 @@ describe("extractRecipes", () => {
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["spicy_soup" as RecipeId];
     expect(recipe.sources).toEqual([
-      { type: "mines_chest", biomeId: "biome_0", perkId: "taste_maker" },
+      { type: "mines_chest", biomeId: "biome_1", perkId: "taste_maker" },
     ]);
   });
 
@@ -678,7 +674,7 @@ describe("extractRecipes", () => {
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["cave_shelf" as RecipeId];
     expect(recipe.sources).toEqual([
-      { type: "mines_dig_site", biomeId: "biome_0", perkId: "natural_beauty" },
+      { type: "mines_dig_site", biomeId: "biome_1", perkId: "natural_beauty" },
     ]);
   });
 

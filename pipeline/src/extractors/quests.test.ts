@@ -9,6 +9,8 @@ describe("extractQuests", () => {
     vi.restoreAllMocks();
   });
 
+  const emptyQuests = { cooking: {}, crown: {}, fetch: {}, heart: {}, mission: {}, story: {} };
+
   it("preserves a present tracked quest group with no accepted quests", () => {
     vi.spyOn(console, "log").mockImplementation(() => undefined);
     const fiddle = {
@@ -19,14 +21,14 @@ describe("extractQuests", () => {
       },
     } as unknown as ParsedGameData;
 
-    expect(extractQuests(fiddle)).toEqual({ story_quests: {} });
+    expect(extractQuests(fiddle)).toEqual(emptyQuests);
   });
 
   it("maps a populated tracked quest with its name and NPC", () => {
     vi.spyOn(console, "log").mockImplementation(() => undefined);
     const fiddle = {
       quests: {
-        story_quests: {
+        fetch_quests: {
           meet_juniper: {
             name: "Meet Juniper",
             npc_for_icon: "juniper",
@@ -36,7 +38,8 @@ describe("extractQuests", () => {
     } as unknown as ParsedGameData;
 
     expect(extractQuests(fiddle)).toEqual({
-      story_quests: {
+      ...emptyQuests,
+      fetch: {
         meet_juniper: {
           name: "Meet Juniper",
           npc: "juniper",
@@ -48,7 +51,7 @@ describe("extractQuests", () => {
   it("does not log a summary when the quest root is absent", () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
 
-    expect(extractQuests({} as ParsedGameData)).toEqual({});
+    expect(extractQuests({} as ParsedGameData)).toEqual(emptyQuests);
     expect(logSpy).not.toHaveBeenCalled();
   });
 });

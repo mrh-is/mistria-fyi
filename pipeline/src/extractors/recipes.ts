@@ -493,7 +493,11 @@ function collectMinesRecipeSources(
     const biome = biomes[i];
     if (typeof biome !== "object" || biome === null) continue;
     const biomeObj = biome as Record<string, unknown>;
-    const biomeId = `biome_${i}` as MinesBiomeId;
+    const biomeName = (biomeObj.name as string | undefined) ?? `Biome ${i + 1}`;
+    const biomeId = biomeName
+      .replace(/^The\s+/i, "")
+      .toLowerCase()
+      .replace(/\s+/g, "_") as MinesBiomeId;
 
     const chestArrays: [string, PerkId][] = [["taste_maker", "taste_maker" as PerkId]];
     for (const [arrayKey, perkId] of chestArrays) {

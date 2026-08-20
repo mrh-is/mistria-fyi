@@ -36,10 +36,10 @@ describe("collectExplorationSources", () => {
       collectExplorationSources(fiddle, acc, cosAcc);
 
       expect(acc.get("scrap_metal_helmet" as ItemId)).toEqual([
-        { type: "mine", biomeId: "biome_0" },
+        { type: "mine", biomeId: "upper_mines" },
       ]);
       expect(acc.get("scrap_metal_chestpiece" as ItemId)).toEqual([
-        { type: "mine", biomeId: "biome_0" },
+        { type: "mine", biomeId: "upper_mines" },
       ]);
     });
 
@@ -60,7 +60,7 @@ describe("collectExplorationSources", () => {
       collectExplorationSources(fiddle, acc, cosAcc);
 
       expect(cosAcc.get("head_miners_helmet" as CosmeticId)).toEqual([
-        { type: "mine", biomeId: "biome_0" },
+        { type: "mine", biomeId: "upper_mines" },
       ]);
     });
 
@@ -81,7 +81,7 @@ describe("collectExplorationSources", () => {
       collectExplorationSources(fiddle, acc, cosAcc);
 
       expect(acc.get("miners_copper_node" as ItemId)).toEqual([
-        { type: "mine", biomeId: "biome_0" },
+        { type: "mine", biomeId: "upper_mines" },
       ]);
     });
 
@@ -101,15 +101,17 @@ describe("collectExplorationSources", () => {
       const cosAcc = new CosmeticSourceAccumulator();
       collectExplorationSources(fiddle, acc, cosAcc);
 
-      expect(acc.get("baked_sweetroot" as ItemId)).toEqual([{ type: "mine", biomeId: "biome_0" }]);
+      expect(acc.get("baked_sweetroot" as ItemId)).toEqual([
+        { type: "mine", biomeId: "upper_mines" },
+      ]);
     });
 
-    it("uses sequential biome IDs", () => {
+    it("uses descriptive biome IDs derived from names", () => {
       const fiddle = makeFiddle({
         dungeons: {
           biomes: [
-            { armor: ["item_a"], name: "Biome A" },
-            { armor: ["item_b"], name: "Biome B" },
+            { armor: ["item_a"], name: "Upper Mines" },
+            { armor: ["item_b"], name: "The Tide Caverns" },
           ],
         },
       });
@@ -118,8 +120,8 @@ describe("collectExplorationSources", () => {
       const cosAcc = new CosmeticSourceAccumulator();
       collectExplorationSources(fiddle, acc, cosAcc);
 
-      expect(acc.get("item_a" as ItemId)).toEqual([{ type: "mine", biomeId: "biome_0" }]);
-      expect(acc.get("item_b" as ItemId)).toEqual([{ type: "mine", biomeId: "biome_1" }]);
+      expect(acc.get("item_a" as ItemId)).toEqual([{ type: "mine", biomeId: "upper_mines" }]);
+      expect(acc.get("item_b" as ItemId)).toEqual([{ type: "mine", biomeId: "tide_caverns" }]);
     });
   });
 

@@ -11,12 +11,6 @@ import type { ParsedGameData } from "../../parse-fiddle.js";
 import type { RequirementContext } from "../../requirements.js";
 import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "../source-accumulator.js";
 
-const UPGRADE_PREDICATES = new Set([
-  "repaired_carpenters_shop",
-  "repaired_general_store",
-  "repaired_inn",
-]);
-
 export function collectStoreSources(
   fiddle: ParsedGameData,
   requirementContext: RequirementContext,
@@ -134,22 +128,8 @@ function processStoreEntry(
   if (!targetId) return;
 
   let requirementAvailability: AvailabilityCondition | undefined;
-  let upgradeName: string | undefined;
-  let perkId: string | undefined;
 
   if (obj.requirements && typeof obj.requirements === "object") {
-    const reqs = obj.requirements as Record<string, unknown>;
-
-    for (const key of Object.keys(reqs)) {
-      if (UPGRADE_PREDICATES.has(key)) {
-        upgradeName = key;
-      }
-    }
-
-    if (typeof reqs.has_perk === "string") {
-      perkId = reqs.has_perk;
-    }
-
     const sourceLocation: SourceFieldLocation = {
       entityId: `${storeId}/${targetId}`,
       fieldPath: "requirements",
@@ -171,24 +151,7 @@ function processStoreEntry(
   }
 
   const availability = combineAvailability(baseAvailability, requirementAvailability);
-
-  let source: Source;
-  if (upgradeName) {
-    source = {
-      ...(availability ? { availability } : {}),
-      type: "upgrade",
-      storeId: storeId as StoreId,
-      upgradeName,
-    };
-  } else if (perkId) {
-    source = {
-      ...(availability ? { availability } : {}),
-      type: "store",
-      storeId: storeId as StoreId,
-    };
-  } else {
-    source = buildStoreSource(storeId, availability);
-  }
+  const source = buildStoreSource(storeId, availability);
 
   if (cosmeticId && cosmeticAccumulator) {
     cosmeticAccumulator.add(targetId as CosmeticId, source);

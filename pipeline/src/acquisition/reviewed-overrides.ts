@@ -216,13 +216,13 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
 
   // dragon_horn_mushroom: Mine forageable in the Ancient Ruins biome
   ["dragon_horn_mushroom" as ItemId]: [
-    { type: "mine" as const, biomeId: "biome_4" as MinesBiomeId },
+    { type: "mine" as const, biomeId: "ancient_ruins" as MinesBiomeId },
   ],
   // void_powder: Dropped by void monsters in the Ancient Ruins biome
   ["void_powder" as ItemId]: [{ type: "monster" as const, monsterId: "void_cat" as MonsterId }],
   // --- Mine & exploration items ---
   // void_stone: Mine drop from the Ancient Ruins biome, also quest item
-  ["void_stone" as ItemId]: [{ type: "mine" as const, biomeId: "biome_4" as MinesBiomeId }],
+  ["void_stone" as ItemId]: [{ type: "mine" as const, biomeId: "ancient_ruins" as MinesBiomeId }],
 
   // --- Monster drops ---
   // mob_coin, medium_mob_coin, large_mob_coin: Currency dropped by mine monsters
@@ -261,7 +261,7 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
     { type: "quest", questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const },
   ],
   // void_newt: Material from the Ancient Ruins biome
-  ["void_newt" as ItemId]: [{ type: "mine" as const, biomeId: "biome_4" as MinesBiomeId }],
+  ["void_newt" as ItemId]: [{ type: "mine" as const, biomeId: "ancient_ruins" as MinesBiomeId }],
   // void_set_scroll_bundle: Obtained from void monsters in Ancient Ruins
   ["void_set_scroll_bundle" as ItemId]: [
     { type: "monster" as const, monsterId: "any" as MonsterId },
@@ -271,16 +271,14 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
     {
       type: "upgrade" as const,
       storeId: "carpenter" as StoreId,
-      upgradeName: "repaired_carpenters_shop",
+      upgradeName: "adept_kitchen",
     },
   ],
-  // --- Upgrade & progression items ---
-  // cozy_kitchen, adept_kitchen: Kitchen upgrades purchased from the carpenter
   ["cozy_kitchen" as ItemId]: [
     {
       type: "upgrade" as const,
       storeId: "carpenter" as StoreId,
-      upgradeName: "repaired_carpenters_shop",
+      upgradeName: "cozy_kitchen",
     },
   ],
 
@@ -302,7 +300,9 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
     },
   ],
 
-  ["abyssal_chest" as ItemId]: [{ type: "mine" as const, biomeId: "biome_4" as MinesBiomeId }],
+  ["abyssal_chest" as ItemId]: [
+    { type: "mine" as const, biomeId: "ancient_ruins" as MinesBiomeId },
+  ],
   // --- Quest/story items without user-facing acquisition path ---
   // These items exist in the items registry but are obtained through story progression,
   // cutscenes, or special interactions that aren't encoded in reward arrays.

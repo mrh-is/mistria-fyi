@@ -61,7 +61,7 @@ describe("collectStoreSources", () => {
     ]);
   });
 
-  it("projects upgrade requirements as upgrade sources", () => {
+  it("projects upgrade requirements as availability conditions on store sources", () => {
     const fiddle = makeFiddle({
       stores: {
         general: {
@@ -82,13 +82,12 @@ describe("collectStoreSources", () => {
     const sources = acc.get("seed_carrot" as ItemId);
     expect(sources).toEqual([
       {
-        type: "upgrade",
+        type: "store",
         availability: {
           type: "all",
           conditions: expect.arrayContaining([{ type: "season", seasons: ["spring"] }]),
         },
         storeId: "general",
-        upgradeName: "repaired_general_store",
       },
     ]);
   });

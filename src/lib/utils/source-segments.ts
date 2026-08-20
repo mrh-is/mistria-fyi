@@ -497,8 +497,10 @@ function titleCase(s: string): string {
 
 function upgradeSourceText(source: Source & { type: "upgrade" }): string {
   const UPGRADE_TEXT: Record<string, string> = {
-    "House Stairs": "Upgrade your home a fourth time",
-    "Starter Farm Bridge": "Expand your farm",
+    adept_kitchen: "Upgrade to the adept kitchen",
+    cozy_kitchen: "Upgrade to the cozy kitchen",
+    farm_bridge: "Expand your farm",
+    stairs: "Upgrade your home a fourth time",
   };
   return UPGRADE_TEXT[source.upgradeName] ?? `Purchase ${source.upgradeName}`;
 }

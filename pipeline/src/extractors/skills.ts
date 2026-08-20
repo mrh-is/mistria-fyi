@@ -12,7 +12,7 @@ export function extractSkills(fiddle: ParsedGameData): {
   const ui = fiddle.ui as Record<string, unknown> | undefined;
   const skillMenus = ui?.skill_menu as Record<string, Record<string, unknown>> | undefined;
 
-  const defaults = skillMenus?.defaults as Record<string, unknown> | undefined;
+  const defaults = skillMenus?.defaults;
   const category = defaults?.category as Record<string, unknown> | undefined;
   const rawLevels = Array.isArray(category?.level_requirements)
     ? (category.level_requirements as number[])
@@ -64,9 +64,7 @@ function buildPerkTiers(
       const perkData = perksData?.[perkId];
       const name = perkData?.name as string | undefined;
       if (!name) {
-        throw new Error(
-          `Perk "${perkId}" found in skill menu but has no name in perks data`,
-        );
+        throw new Error(`Perk "${perkId}" found in skill menu but has no name in perks data`);
       }
 
       tiers[tierIdx][perkId as PerkId] = { name };

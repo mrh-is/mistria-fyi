@@ -3,13 +3,6 @@ import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
 
 import type { MinesBiome, MinesBiomeId, SpellId, TrackerData } from "$lib/types/tracker-data.js";
 
-function nameToId(name: string): MinesBiomeId {
-  return name
-    .replace(/^The\s+/i, "")
-    .toLowerCase()
-    .replace(/\s+/g, "_") as MinesBiomeId;
-}
-
 export function extractMines(fiddle: ParsedGameData): TrackerData["mines"] {
   const dungeons = fiddle.dungeons as Record<string, unknown> | undefined;
   const spellsData = fiddle.spells as Record<string, Record<string, unknown>> | undefined;
@@ -35,7 +28,7 @@ export function extractMines(fiddle: ParsedGameData): TrackerData["mines"] {
         ? ((rawBiomes[i + 1].floor as number | undefined) ?? (i + 1) * 20 + 1) - 1
         : maxFloors;
     return {
-      floors: { end, start },
+      floors: { start, end },
       id: nameToId(name),
       name,
     };
@@ -56,4 +49,11 @@ export function extractMines(fiddle: ParsedGameData): TrackerData["mines"] {
     `  Mines: ${biomes.length} biomes, ${lastBiome?.floors.end ?? 0} max floors, ${Object.keys(spells).length} spells`,
   );
   return { biomes, spells };
+}
+
+function nameToId(name: string): MinesBiomeId {
+  return name
+    .replace(/^The\s+/i, "")
+    .toLowerCase()
+    .replace(/\s+/g, "_") as MinesBiomeId;
 }

@@ -17,8 +17,8 @@ export function extractTownRanks(fiddle: ParsedGameData): TrackerData["townRanks
 
   const townRanks: TrackerData["townRanks"] = rawRanks.map((r, i) => ({
     levels: {
-      end: (i + 1) * levelsPerRank,
       start: i * levelsPerRank + 1,
+      end: (i + 1) * levelsPerRank,
     },
     name: (r.name as string | undefined) ?? "Unknown",
   }));

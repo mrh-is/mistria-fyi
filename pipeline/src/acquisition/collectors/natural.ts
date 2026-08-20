@@ -62,11 +62,11 @@ function buildNaturalAvailability(
 }
 
 const MINE_SUBCAT_TO_BIOME: Record<string, MinesBiomeId> = {
-  deep_earth: "biome_2" as MinesBiomeId,
-  lava_caves: "biome_3" as MinesBiomeId,
-  ruins: "biome_4" as MinesBiomeId,
-  tide_caverns: "biome_1" as MinesBiomeId,
-  upper_mines: "biome_0" as MinesBiomeId,
+  deep_earth: "deep_earth" as MinesBiomeId,
+  lava_caves: "lava_caves" as MinesBiomeId,
+  ruins: "ancient_ruins" as MinesBiomeId,
+  tide_caverns: "tide_caverns" as MinesBiomeId,
+  upper_mines: "upper_mines" as MinesBiomeId,
 };
 
 function collectAnimalProductSources(

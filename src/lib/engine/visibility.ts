@@ -271,8 +271,7 @@ function evaluateQuestPrerequisites(
   questVisibilitySoFar: Record<string, QuestVisibility>,
 ): QuestVisibility {
   const chains = trackerData.questChains;
-  const visibility = trackerData.categoryVisibility[questType];
-  if (!visibility) throw new Error(`Unknown visibility for quest type ${questType}`);
+  const visibility = trackerData.categoryVisibility[questType] ?? { type: "always" as const };
 
   switch (questType) {
     case "cooking":
@@ -416,15 +415,18 @@ function markQuestPrerequisitesCompleted(
 
   const chains = trackerData.questChains;
   switch (questType) {
-    case "crown_quests":
+    case "cooking":
+      markOrderedPredecessorsCompleted(chains.tali, questId, completed, trackerData);
+      return;
+    case "crown":
       markOrderedPredecessorsCompleted(chains.crown, questId, completed, trackerData);
       return;
-    case "fetch_quests": {
+    case "fetch": {
       const condition = lookup(chains.fetch, questId);
       if (condition) satisfyCondition(condition, completed, trackerData);
       return;
     }
-    case "heart_quests": {
+    case "heart": {
       const entry = findHeartChainEntry(chains.heart, questId);
       if (entry) {
         completed.npcLevels[entry.npcId] = Math.max(
@@ -437,16 +439,13 @@ function markQuestPrerequisitesCompleted(
       }
       return;
     }
-    case "stillwell_challenges":
+    case "mission":
       markOrderedPredecessorsCompleted(chains.stillwell, questId, completed, trackerData);
       return;
-    case "story_quests": {
+    case "story": {
       const prerequisites = lookup(chains.story, questId)?.prerequisites ?? [];
       for (const prereqId of prerequisites) markQuestCompleted(prereqId, completed, trackerData);
       return;
     }
-    case "tali_challenges":
-      markOrderedPredecessorsCompleted(chains.tali, questId, completed, trackerData);
-      return;
   }
 }

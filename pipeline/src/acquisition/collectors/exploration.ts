@@ -20,6 +20,13 @@ export function collectExplorationSources(
   collectEquipmentCosmeticSources(fiddle, cosmeticAccumulator);
 }
 
+function biomeNameToId(name: string): MinesBiomeId {
+  return name
+    .replace(/^The\s+/i, "")
+    .toLowerCase()
+    .replace(/\s+/g, "_") as MinesBiomeId;
+}
+
 function collectArtifactDigSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
@@ -142,7 +149,8 @@ function collectMineBiomeSources(
     const biome = biomes[i];
     if (typeof biome !== "object" || biome === null) continue;
 
-    const biomeId = `biome_${i}` as MinesBiomeId;
+    const name = (biome.name as string | undefined) ?? `Biome ${i + 1}`;
+    const biomeId = biomeNameToId(name);
 
     const cosmetics = Array.isArray(biome.cosmetics)
       ? biome.cosmetics.filter((v): v is string => typeof v === "string")
@@ -206,7 +214,8 @@ function collectPerfectOreSources(
     const biome = biomes[i];
     if (typeof biome !== "object" || biome === null) continue;
 
-    const biomeId = `biome_${i}` as MinesBiomeId;
+    const name = (biome.name as string | undefined) ?? `Biome ${i + 1}`;
+    const biomeId = biomeNameToId(name);
 
     for (const mineralKey of [biome.ore, biome.gem] as (string | undefined)[]) {
       if (!mineralKey) continue;
@@ -244,7 +253,7 @@ function collectWishingWellSources(
         if (itemId) {
           accumulator.add(itemId as ItemId, {
             type: "wishing_well",
-            cost: { amount: 100, currency: "tesserae" as const },
+            cost: 100,
           });
         }
       }

@@ -37,15 +37,15 @@ import type { SegmentLookups } from "./source-segments.js";
 const BASE_LOOKUPS: SegmentLookups = {
   animalNames: {},
   biomes: [
-    { floors: { start: 1, end: 19 }, id: "biome_0" as MinesBiomeId, name: "Upper Mines" },
+    { floors: { start: 1, end: 19 }, id: "upper_mines" as MinesBiomeId, name: "Upper Mines" },
     {
       floors: { start: 20, end: 39 },
-      id: "biome_1" as MinesBiomeId,
+      id: "tide_caverns" as MinesBiomeId,
       name: "The Tide Caverns",
     },
     {
       floors: { start: 40, end: 59 },
-      id: "biome_2" as MinesBiomeId,
+      id: "deep_earth" as MinesBiomeId,
       name: "Deep Earth",
     },
   ],
@@ -88,7 +88,7 @@ describe("buildPerkLabel", () => {
     const result = buildPerkLabel("taste_maker" as PerkId, BASE_LOOKUPS);
     expect(result).toEqual([
       {
-        condition: { type: "skillLevel", level: 1, skillId: "cooking" },
+        condition: { type: "skillLevel", level: 5, skillId: "cooking" },
         redacted: ["the ", { redacted: true }, " perk (Cooking tier 1)"],
         revealed: ["the Taste Maker perk (Cooking tier 1)"],
       },
@@ -98,7 +98,7 @@ describe("buildPerkLabel", () => {
 
 describe("buildBiomeLabel", () => {
   it("creates conditional node with floor range redacted", () => {
-    const result = buildBiomeLabel("biome_1" as MinesBiomeId, BASE_LOOKUPS);
+    const result = buildBiomeLabel("tide_caverns" as MinesBiomeId, BASE_LOOKUPS);
     expect(result).toEqual([
       {
         condition: { type: "minesLevel", floor: 20 },
@@ -216,20 +216,20 @@ describe("buildSourceSegments — simple types", () => {
     ]);
   });
 
-  it("upgrade — House Stairs", () => {
+  it("upgrade — stairs", () => {
     const source: Source = {
       type: "upgrade",
       storeId: "carpenter" as StoreId,
-      upgradeName: "House Stairs",
+      upgradeName: "stairs",
     };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Upgrade your home a fourth time"]);
   });
 
-  it("upgrade — Starter Farm Bridge", () => {
+  it("upgrade — farm_bridge", () => {
     const source: Source = {
       type: "upgrade",
       storeId: "carpenter" as StoreId,
-      upgradeName: "Starter Farm Bridge",
+      upgradeName: "farm_bridge",
     };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Expand your farm"]);
   });
@@ -396,7 +396,7 @@ describe("buildSourceSegments — mines_chest (worked example: Chickpea Curry)",
   it("matches spec worked example", () => {
     const source: Source = {
       type: "mines_chest",
-      biomeId: "biome_1" as MinesBiomeId,
+      biomeId: "tide_caverns" as MinesBiomeId,
       perkId: "taste_maker" as PerkId,
     };
     const result = buildSourceSegments(source, BASE_LOOKUPS);
@@ -416,7 +416,7 @@ describe("buildSourceSegments — mines_chest (worked example: Chickpea Curry)",
       },
       ", with ",
       {
-        condition: { type: "skillLevel", level: 1, skillId: "cooking" },
+        condition: { type: "skillLevel", level: 5, skillId: "cooking" },
         redacted: ["the ", { redacted: true }, " perk (Cooking tier 1)"],
         revealed: ["the Taste Maker perk (Cooking tier 1)"],
       },
@@ -441,7 +441,7 @@ describe("buildSourceSegments — mines_dig_site (worked example: Stalactite Arc
     };
     const source: Source = {
       type: "mines_dig_site",
-      biomeId: "biome_2" as MinesBiomeId,
+      biomeId: "deep_earth" as MinesBiomeId,
       perkId: "natural_beauty" as PerkId,
     };
     const result = buildSourceSegments(source, lookups);
@@ -462,7 +462,7 @@ describe("buildSourceSegments — quest types", () => {
     const source: Source = {
       type: "quest",
       questId: "unusual_seed" as QuestId,
-      questType: "story_quests" as QuestType,
+      questType: "story" as QuestType,
       trigger: "completion",
       visibility: { type: "questAvailable", questId: "unusual_seed" as QuestId },
     };
@@ -490,7 +490,7 @@ describe("buildSourceSegments — quest types", () => {
     const source: Source = {
       type: "quest",
       questId: "tall_dark" as QuestId,
-      questType: "heart_quests" as QuestType,
+      questType: "heart" as QuestType,
       trigger: "completion",
       visibility: { type: "questAvailable", questId: "tall_dark" as QuestId },
     };
@@ -518,7 +518,7 @@ describe("buildSourceSegments — quest types", () => {
     const source: Source = {
       type: "quest",
       questId: "crown_crops" as QuestId,
-      questType: "crown_quests" as QuestType,
+      questType: "crown" as QuestType,
       trigger: "completion",
       visibility: { type: "questAvailable", questId: "crown_crops" as QuestId },
     };
@@ -533,7 +533,7 @@ describe("buildSourceSegments — quest types", () => {
     const source: Source = {
       type: "quest",
       questId: "request_for_berries" as QuestId,
-      questType: "fetch_quests" as QuestType,
+      questType: "fetch" as QuestType,
       requestedItemId: "wild_berries" as ItemId,
       trigger: "completion",
       visibility: { type: "questAvailable", questId: "request_for_berries" as QuestId },
@@ -559,7 +559,7 @@ describe("buildSourceSegments — quest types", () => {
       type: "quest",
       challengeRecipeId: "crispy_fried_earthshroom" as RecipeId,
       questId: "tali_earthshroom" as QuestId,
-      questType: "tali_challenges" as QuestType,
+      questType: "cooking" as QuestType,
       trigger: "completion",
       visibility: { type: "questAvailable", questId: "tali_earthshroom" as QuestId },
     };
@@ -755,7 +755,7 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   });
 
   it("mine wraps biome label", () => {
-    const source: Source = { type: "mine", biomeId: "biome_0" as MinesBiomeId };
+    const source: Source = { type: "mine", biomeId: "upper_mines" as MinesBiomeId };
     const result = buildSourceSegments(source, BASE_LOOKUPS);
     expect(result[0]).toBe("Mine in ");
     expect(result[1]).toMatchObject({

@@ -12,7 +12,7 @@ import type { Source } from "$lib/types/acquisition.js";
 describe("validateAcquisitionSources", () => {
   it("accepts an assembled fixture with emitted and non-emitted native references", () => {
     const trackerData = {
-      almanac: [],
+      almanac: {},
       cosmetics: { hat: { sources: [{ type: "default" }] } },
       items: {
         catch: {
@@ -26,7 +26,7 @@ describe("validateAcquisitionSources", () => {
           ],
         },
       },
-      museum: [],
+      museum: {},
       recipes: { catch_recipe: { memberItemIds: ["catch"], sources: [{ type: "default" }] } },
     };
     const references = AcquisitionReferenceIndex.from({
@@ -442,7 +442,7 @@ describe("validateAcquisitionSources", () => {
     });
 
     const trackerData = {
-      almanac: [],
+      almanac: {},
       cosmetics: { empty_cosmetic: { sources: [] } },
       items: {
         excluded_reference: {
@@ -451,7 +451,7 @@ describe("validateAcquisitionSources", () => {
         malformed: { sources: accumulator.get("malformed" as never) },
         missing_item: { sources: [] },
       },
-      museum: [],
+      museum: {},
       recipes: {
         cycle_a: {
           memberItemIds: [],

@@ -50,15 +50,15 @@ import {
   extractCategoryVisibility,
   extractFetchQuestVisibility,
   extractHeartLevelChanges,
-  extractNpcVisibility,
-  extractStoreVisibility,
+  stampNpcVisibility,
+  stampStoreVisibility,
 } from "./extractors/visibility/entity-visibility.js";
 import { extractQuestChains } from "./extractors/visibility/quest-chains.js";
 import { parseFiddle } from "./parse-fiddle.js";
 import { createRequirementContext } from "./requirements.js";
 
 import type { Source as AcquisitionSource } from "$lib/types/acquisition.js";
-import type { CosmeticId, ItemId, NpcId, QuestId, StoreId, TrackerData } from "$lib/types/tracker-data.js";
+import type { CosmeticId, ItemId, QuestId, TrackerData } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "./parse-fiddle.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -108,6 +108,12 @@ function buildAcquisitionReferences(
       locations: nativeIds.locations,
       monsters: nativeIds.monsters,
       npcs: trackerData.npcs,
+      perks: Object.values(trackerData.skills).reduce<Record<string, unknown>>((acc, skill) => {
+        for (const tier of skill.perkTiers) {
+          for (const perkId of Object.keys(tier)) acc[perkId] = true;
+        }
+        return acc;
+      }, {}),
       quests: { ...nativeIds.quests, ...toRecord(nativeQuestIds), ...trackerData.quests },
       questTypes: nativeIds.questTypes,
       skills: trackerData.skills,
@@ -156,6 +162,7 @@ function collectNativeIdsFromSources(
       case "animal_product":
       case "artifact_replicator":
       case "beach_cave_chest":
+      case "breed":
         break;
       case "artifact_dig":
       case "bug_catch":
@@ -404,8 +411,6 @@ function main(): void {
 
   console.log("Step 3b: Extracting visibility data...");
   const questChainsRaw = extractQuestChains(fiddle);
-  const storeVisibilityData = extractStoreVisibility(fiddle);
-  const npcVisibilityData = extractNpcVisibility();
   const heartLevelChangesData = extractHeartLevelChanges(fiddle, cutsceneQuestMap);
   const categoryVisibilityData = extractCategoryVisibility();
   const fetchQuestVisibilityData = extractFetchQuestVisibility(
@@ -413,24 +418,10 @@ function main(): void {
     cutsceneQuestMap,
   );
 
-  for (const [npcId, condition] of Object.entries(npcVisibilityData)) {
-    const npc = npcs[npcId as NpcId];
-    if (npc && condition.type !== "always") {
-      npc.visibility = condition;
-    }
-  }
-
-  for (const [storeId, condition] of Object.entries(storeVisibilityData)) {
-    const store = storesMeta[storeId as StoreId];
-    if (store && condition.type !== "always") {
-      store.visibility = condition;
-    }
-  }
-
   for (const [questId, changes] of Object.entries(heartLevelChangesData)) {
     const quest = quests.story[questId as QuestId];
     if (quest) {
-      (quest as TrackerData["quests"]["story"][QuestId]).heartLevelChanges = changes;
+      quest.heartLevelChanges = changes;
     }
   }
   console.log();
@@ -470,15 +461,9 @@ function main(): void {
   validateAcquisitionSources(trackerData, acquisitionReferences);
   console.log("  Acquisition source validation passed");
 
-  // Mutate trackerData in place: stamps visibility on items, recipes, perks, cosmetics, animals,
-  // spells, and quests.
-  assignEntityVisibility(
-    trackerData,
-    storeVisibilityData,
-    cutsceneQuestMap,
-    fiddle,
-    questChainsRaw,
-  );
+  stampNpcVisibility(trackerData);
+  stampStoreVisibility(trackerData);
+  assignEntityVisibility(trackerData, cutsceneQuestMap, fiddle, questChainsRaw);
 
   const json = JSON.stringify(trackerData);
   const prettyJson = JSON.stringify(trackerData, null, 2);
