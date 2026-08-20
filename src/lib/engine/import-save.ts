@@ -216,8 +216,12 @@ export function buildImportState(bundle: SaveBundle): {
   }
 
   // ── Mine floor (from gamedata.json → maximum_mines_level) ──
+  const biomes = trackerData.mines.biomes;
   const mineFloor = bundle.gamedata?.maximum_mines_level
-    ? Math.min(Math.floor(bundle.gamedata.maximum_mines_level), trackerData.mines.maxFloors)
+    ? Math.min(
+        Math.floor(bundle.gamedata.maximum_mines_level),
+        biomes[biomes.length - 1].floors.end,
+      )
     : 0;
   counts.mineFloor = mineFloor;
 

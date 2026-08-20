@@ -36,9 +36,17 @@ import type { SegmentLookups } from "./source-segments.js";
 const BASE_LOOKUPS: SegmentLookups = {
   animalNames: {},
   biomes: [
-    { endFloor: 19, id: "biome_0" as MinesBiomeId, name: "Upper Mines", startFloor: 1 },
-    { endFloor: 39, id: "biome_1" as MinesBiomeId, name: "The Tide Caverns", startFloor: 20 },
-    { endFloor: 59, id: "biome_2" as MinesBiomeId, name: "Deep Earth", startFloor: 40 },
+    { floors: { start: 1, end: 19 }, id: "biome_0" as MinesBiomeId, name: "Upper Mines" },
+    {
+      floors: { start: 20, end: 39 },
+      id: "biome_1" as MinesBiomeId,
+      name: "The Tide Caverns",
+    },
+    {
+      floors: { start: 40, end: 59 },
+      id: "biome_2" as MinesBiomeId,
+      name: "Deep Earth",
+    },
   ],
   categoryVisibility: {},
   entityVisibility: { type: "always" },

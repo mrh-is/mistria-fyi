@@ -40,10 +40,9 @@ describe("formatBiomeName", () => {
   it("lowercases leading 'The' in biome names", () => {
     const biomes = [
       {
-        endFloor: 19,
+        floors: { start: 1, end: 19 },
         id: "biome_0" as MinesBiomeId,
         name: "The Tide Caverns",
-        startFloor: 1,
       },
     ];
     expect(formatBiomeName("biome_0" as MinesBiomeId, biomes)).toBe("the Tide Caverns");
@@ -51,10 +50,9 @@ describe("formatBiomeName", () => {
   it("prepends 'the' for names without leading article", () => {
     const biomes = [
       {
-        endFloor: 39,
+        floors: { start: 20, end: 39 },
         id: "biome_1" as MinesBiomeId,
         name: "Upper Mines",
-        startFloor: 20,
       },
     ];
     expect(formatBiomeName("biome_1" as MinesBiomeId, biomes)).toBe("the Upper Mines");

@@ -399,7 +399,9 @@ function createUserState() {
       state.completed.marriedNpc = npcId;
     },
     setMineFloor(floor: number) {
-      state.completed.mines.floor = Math.max(0, Math.min(floor, trackerData.mines.maxFloors));
+      const biomes = trackerData.mines.biomes;
+      const maxFloor = biomes[biomes.length - 1].floors.end;
+      state.completed.mines.floor = Math.max(0, Math.min(floor, maxFloor));
     },
     setNpcLevel(id: NpcId, level: number) {
       const max = trackerData.npcs[id].dateable ? 12 : 10;

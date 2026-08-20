@@ -48,9 +48,9 @@ export function buildBiomeLabel(
   const biome = lookups.biomes.find((b) => b.id === biomeId);
   if (!biome) return [titleCase(biomeId)];
 
-  const condition: VisibilityCondition = { floor: biome.startFloor, type: "minesLevel" };
+  const condition: VisibilityCondition = { floor: biome.floors.start, type: "minesLevel" };
   const biomeName = formatBiomeName(biomeId, lookups.biomes);
-  const floorRange = `Mines floors ${String(biome.startFloor)}–${String(biome.endFloor)}`;
+  const floorRange = `Mines floors ${String(biome.floors.start)}–${String(biome.floors.end)}`;
 
   return [
     {

@@ -142,7 +142,9 @@ function getCosmeticsProgress(ctx: ProgressContext): CategoryProgress {
 }
 
 function getMinesProgress(ctx: ProgressContext): CategoryProgress {
-  const totalFloors = trackerData.mines.maxFloors;
+  const biomes = trackerData.mines.biomes;
+  const maxFloor = biomes[biomes.length - 1].floors.end;
+  const totalFloors = maxFloor;
   const totalSpells = Object.keys(trackerData.mines.spells).length;
   const total = totalFloors + totalSpells;
   const completed = ctx.completed.mines.floor + ctx.completed.mines.spells.size;

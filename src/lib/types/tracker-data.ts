@@ -89,10 +89,9 @@ export interface Item extends TrackerEntity {
 }
 export type ItemId = string & { readonly __brand: "ItemId" };
 export interface MinesBiome {
-  endFloor: number;
+  floors: Range;
   id: MinesBiomeId;
   name: string;
-  startFloor: number;
 }
 export type MinesBiomeId = string & { readonly __brand: "BiomeId" };
 export interface MuseumWing {
@@ -130,6 +129,10 @@ export type QuestType = "cooking" | "crown" | "fetch" | "heart" | "mission" | "s
 export type QuestTypeMap = {
   [K in QuestType]: K extends keyof QuestOverrides ? QuestOverrides[K] : Quest;
 };
+export interface Range {
+  end: number;
+  start: number;
+}
 export interface Recipe extends TrackerEntity {
   memberItemIds: ItemId[];
   presentations: RecipePresentation[];
@@ -159,10 +162,7 @@ export interface StoryQuest extends Quest {
   heartLevelChanges?: HeartLevelChange[];
 }
 export interface TownRank {
-  levels: {
-    start: number;
-    end: number;
-  };
+  levels: Range;
   name: string;
 }
 export interface TrackerData {
@@ -175,7 +175,6 @@ export interface TrackerData {
   items: Record<ItemId, Item>;
   mines: {
     biomes: MinesBiome[];
-    maxFloors: number;
     spells: Record<SpellId, Spell>;
   };
   museum: MuseumWing[];
