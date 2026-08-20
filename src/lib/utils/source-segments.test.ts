@@ -28,7 +28,7 @@ import type {
   StoreId,
   TreasureChestTierId,
   WaterType,
-  WingId,
+  MuseumWingId,
 } from "$lib/types/tracker-data.js";
 
 import type { SegmentLookups } from "./source-segments.js";
@@ -169,7 +169,7 @@ describe("buildSourceSegments — simple types", () => {
     const source: AcquisitionSource = {
       type: "museum_donation",
       setCount: 3,
-      wingId: "archaeology" as WingId,
+      wingId: "archaeology" as MuseumWingId,
     };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([
       "Complete 3 sets in the Archaeology wing",

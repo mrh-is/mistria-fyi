@@ -199,14 +199,11 @@ export function buildImportState(bundle: SaveBundle): {
   // ── Museum donations (from gamedata.json → museum_progress) ──
   const museumIds = new Set<ItemId>();
   if (bundle.gamedata?.museum_progress) {
-    const validMuseum = new Set<string>();
-    for (const wing of trackerData.museum) {
-      for (const set of wing.sets) {
-        for (const itemId of set.items) {
-          validMuseum.add(itemId);
-        }
-      }
-    }
+    const validMuseum = new Set<string>(
+      recordValues(trackerData.museum).flatMap(({ sets }) =>
+        recordValues(sets).flatMap(({ items }) => items),
+      ),
+    );
     for (const id of bundle.gamedata.museum_progress) {
       if (validMuseum.has(id)) {
         museumIds.add(id as ItemId);

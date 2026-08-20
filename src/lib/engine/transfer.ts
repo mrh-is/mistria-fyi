@@ -389,9 +389,8 @@ function getCosmeticOrder(): CosmeticId[] {
 }
 
 function getMuseumOrder(): ItemId[] {
-  return trackerData.museum
-    .flatMap((wing) => wing.sets)
-    .flatMap((set) => set.items)
+  return recordValues(trackerData.museum)
+    .flatMap(({ sets }) => recordValues(sets).flatMap(({ items }) => items))
     .sort();
 }
 

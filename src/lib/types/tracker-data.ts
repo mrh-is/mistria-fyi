@@ -95,12 +95,11 @@ export interface MinesBiome {
 }
 export type MinesBiomeId = string & { readonly __brand: "BiomeId" };
 export interface MuseumWing {
-  id: WingId;
   name: string;
-  sets: MuseumWingSet[];
+  sets: Record<MuseumWingSetId, MuseumWingSet>;
 }
+export type MuseumWingId = string & { readonly __brand: "WingId" };
 export interface MuseumWingSet {
-  id: MuseumWingSetId;
   items: ItemId[];
   name: string;
 }
@@ -178,7 +177,7 @@ export interface TrackerData {
     biomes: MinesBiome[];
     spells: Record<SpellId, Spell>;
   };
-  museum: MuseumWing[];
+  museum: Record<MuseumWingId, MuseumWing>;
   npcs: Record<NpcId, Npc>;
   perkTierLevels: [number, number, number, number, number];
   questChains: {
@@ -211,4 +210,3 @@ export interface TrackerEntity {
 }
 export type TreasureChestTierId = string & { readonly __brand: "TreasureChestTier" };
 export type Weather = "calm" | "heavy_inclement" | "inclement" | "special";
-export type WingId = string & { readonly __brand: "WingId" };

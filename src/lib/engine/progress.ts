@@ -150,12 +150,9 @@ function getMinesProgress(ctx: ProgressContext): CategoryProgress {
 }
 
 function getMuseumProgress(ctx: ProgressContext): CategoryProgress {
-  const allIds: ItemId[] = [];
-  for (const wing of trackerData.museum) {
-    for (const set of wing.sets) {
-      allIds.push(...set.items);
-    }
-  }
+  const allIds = recordValues(trackerData.museum).flatMap(({ sets }) =>
+    recordValues(sets).flatMap(({ items }) => items),
+  );
   return itemProgress(allIds, ctx.completed.museum, ctx);
 }
 
