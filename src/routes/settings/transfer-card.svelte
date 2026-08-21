@@ -132,6 +132,8 @@
           transferResult.cosmetics +
           transferResult.animals +
           transferResult.animalCosmetics +
+          transferResult.petCosmetics +
+          transferResult.petSkins +
           transferResult.museum +
           transferResult.spells +
           transferResult.npcLevels +
@@ -225,6 +227,12 @@
             {/if}
             {#if transferResult.animalCosmetics > 0}
               <li>Animal cosmetics: +{transferResult.animalCosmetics}</li>
+            {/if}
+            {#if transferResult.petCosmetics > 0}
+              <li>Pet cosmetics: +{transferResult.petCosmetics}</li>
+            {/if}
+            {#if transferResult.petSkins > 0}
+              <li>Pet skins: +{transferResult.petSkins}</li>
             {/if}
             {#if transferResult.museum > 0}
               <li>Museum: +{transferResult.museum}</li>

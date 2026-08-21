@@ -7,6 +7,7 @@ import type {
   NpcId,
   PerkId,
   QuestId,
+  QuestType,
   Season,
   StoreId,
   TrackerData,
@@ -26,6 +27,7 @@ export type SegmentLookups = Pick<TrackerData, "categoryVisibility"> &
     npcNames: NameLookup<TrackerData["npcs"]>;
     npcVisibility: VisibilityLookup<TrackerData["npcs"]>;
     questNpcIds: Partial<Record<QuestId, NpcId>>;
+    questTypes: Partial<Record<QuestId, QuestType>>;
     stationNames: Partial<Record<string, string>>;
     storeVisibility: VisibilityLookup<TrackerData["stores"]>;
   };
@@ -421,7 +423,7 @@ function buildQuestSegments(
   source: Source & { type: "quest" },
   lookups: SegmentLookups,
 ): [SourceSegment, ...SourceSegment[]] {
-  const questType = source.questType;
+  const questType = source.questType ?? lookups.questTypes[source.questId];
   if (!questType) throw new Error(`Unknown quest type for ${source.questId}`);
 
   switch (questType) {

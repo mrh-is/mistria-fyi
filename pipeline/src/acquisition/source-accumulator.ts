@@ -1,5 +1,5 @@
 import type { Source } from "$lib/types/acquisition.js";
-import type { CosmeticId, ItemId } from "$lib/types/tracker-data.js";
+import type { AnimalId, CosmeticId, ItemId, PetCosmeticSetId } from "$lib/types/tracker-data.js";
 
 export interface SourceProvenance {
   fieldPath: string;
@@ -8,10 +8,12 @@ export interface SourceProvenance {
 
 const provenanceBySource = new WeakMap<object, Map<string, SourceProvenance>>();
 
+export type AnimalCosmeticKey = `${AnimalId}:${CosmeticId}`;
+
 abstract class SourceAccumulator<TargetId extends string> {
   readonly #sourcesByTarget = new Map<TargetId, Map<string, Source>>();
 
-  protected constructor(private readonly targetNamespace: "cosmetics" | "items") {}
+  protected constructor(private readonly targetNamespace: string) {}
 
   add(targetId: TargetId, source: Source, provenance?: SourceProvenance): void {
     let sources = this.#sourcesByTarget.get(targetId);
@@ -60,6 +62,42 @@ abstract class SourceAccumulator<TargetId extends string> {
   }
 }
 
+export class AnimalCosmeticSourceAccumulator {
+  readonly #inner = new (class extends SourceAccumulator<AnimalCosmeticKey> {
+    constructor() {
+      super("animalCosmetics");
+    }
+  })();
+
+  add(
+    animalId: AnimalId,
+    cosmeticId: CosmeticId,
+    source: Source,
+    provenance?: SourceProvenance,
+  ): void {
+    this.#inner.add(`${animalId}:${cosmeticId}`, source, provenance);
+  }
+
+  animalCosmeticEntries(): {
+    animalId: AnimalId;
+    cosmeticId: CosmeticId;
+    sources: Source[];
+  }[] {
+    return this.#inner.entries().map(([key, sources]) => {
+      const [animalId, cosmeticId] = key.split(":") as [string, string];
+      return {
+        animalId: animalId as AnimalId,
+        cosmeticId: cosmeticId as CosmeticId,
+        sources,
+      };
+    });
+  }
+
+  get(animalId: AnimalId, cosmeticId: CosmeticId): Source[] {
+    return this.#inner.get(`${animalId}:${cosmeticId}`);
+  }
+}
+
 export class CosmeticSourceAccumulator extends SourceAccumulator<CosmeticId> {
   constructor() {
     super("cosmetics");
@@ -69,6 +107,12 @@ export class CosmeticSourceAccumulator extends SourceAccumulator<CosmeticId> {
 export class ItemSourceAccumulator extends SourceAccumulator<ItemId> {
   constructor() {
     super("items");
+  }
+}
+
+export class PetCosmeticSourceAccumulator extends SourceAccumulator<PetCosmeticSetId> {
+  constructor() {
+    super("petCosmetics");
   }
 }
 

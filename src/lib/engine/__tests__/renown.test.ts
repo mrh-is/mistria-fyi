@@ -15,6 +15,8 @@ function completedAtRenown(renown: number): CompletedState {
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
     npcLevels: {},
+    petCosmetics: new Set(),
+    petSkins: new Set(),
     questStates: {},
     renown,
     skillLevels: {},

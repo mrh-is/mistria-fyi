@@ -29,8 +29,7 @@ export interface Animal {
   variantTiers: AnimalVariantTier[];
   visibility?: VisibilityCondition;
 }
-export interface AnimalCosmetic {
-  fullName: string;
+export interface AnimalCosmetic extends TrackerEntity {
   name: string;
 }
 export type AnimalId = string & { readonly __brand: "AnimalId" };
@@ -115,6 +114,14 @@ export interface Perk {
 }
 export type PerkId = string & { readonly __brand: "PerkId" };
 export type PerkTier = Record<PerkId, Perk>;
+export interface PetCosmeticSet extends TrackerEntity {
+  name: string;
+}
+export type PetCosmeticSetId = string & { readonly __brand: "PetCosmeticSetId" };
+export interface PetSkin extends TrackerEntity {
+  name: string;
+}
+export type PetSkinId = string & { readonly __brand: "PetSkinId" };
 export interface Quest extends TrackerEntity {
   name: string;
 }
@@ -178,6 +185,10 @@ export interface TrackerData {
   museum: Record<MuseumWingId, MuseumWing>;
   npcs: Record<NpcId, Npc>;
   perkTierLevels: [number, number, number, number, number];
+  pets: {
+    cosmetics: Record<PetCosmeticSetId, PetCosmeticSet>;
+    skins: Record<PetSkinId, PetSkin>;
+  };
   questOrder: Partial<Record<QuestType, QuestId[]>>;
   quests: {
     [K in QuestType]: Record<QuestId, QuestTypeMap[K]>;

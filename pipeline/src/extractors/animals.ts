@@ -1,5 +1,6 @@
 import type { Source } from "$lib/types/acquisition.js";
 import type {
+  AnimalCosmetic,
   AnimalId,
   AnimalVariant,
   AnimalVariantId,
@@ -59,15 +60,26 @@ export function extractAnimals(fiddle: ParsedGameData): TrackerData["animals"] {
     const variantTiers: AnimalVariantTier[] = sortedTiers.map(([, bucket]) => bucket);
 
     const speciesName = (core?.name as string | undefined) ?? id;
-    const cosmetics = {} as Record<CosmeticId, { fullName: string; name: string }>;
+    const breedCosmetics = new Set<string>();
+    if (rawVariants) {
+      for (const [vid, v] of Object.entries(rawVariants)) {
+        if (vid === "default") continue;
+        const defaultCosmetic = v.default_cosmetic as string | undefined;
+        if (defaultCosmetic) {
+          breedCosmetics.add(defaultCosmetic);
+        }
+      }
+    }
+
+    const cosmetics = {} as Record<CosmeticId, AnimalCosmetic>;
     if (rawCosmetics) {
       for (const [cid, c] of Object.entries(rawCosmetics)) {
         if (cid === "default") continue;
         const rawName = (c.name as string | undefined) ?? cid;
         const stripped = rawName.replace(new RegExp(`\\b${speciesName}\\b\\s*`, "i"), "").trim();
         cosmetics[cid as CosmeticId] = {
-          fullName: rawName,
           name: stripped || rawName,
+          sources: breedCosmetics.has(cid) ? [{ type: "breed" as const }] : [],
         };
       }
     }

@@ -62,6 +62,9 @@
           {#each visibleItems as itemRow (itemRow.id)}
             <TrackerRow
               display={rowDisplay(itemRow)}
+              lookups={props.lookups
+                ? { ...props.lookups, entityVisibility: undefined }
+                : undefined}
               name={itemRow.name}
               onToggle={() => {
                 props.toggleCompletion(animal.id, itemRow.id);

@@ -34,6 +34,8 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
     npcLevels: {},
+    petCosmetics: new Set(),
+    petSkins: new Set(),
     questStates: {},
     renown: 0,
     skillLevels: {},
@@ -77,6 +79,7 @@ function makeTrackerData(overrides: DeepPartial<TrackerData> = {}): TrackerData 
     museum: {},
     npcs: {},
     perkTierLevels: [1, 15, 30, 45, 60],
+    pets: { cosmetics: {}, skins: {} },
     questOrder: {},
     quests: {
       cooking: {},

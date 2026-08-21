@@ -94,18 +94,49 @@ export function searchItems(
     if (animal.visibility && !isVisible(animal.visibility, progressionState)) continue;
 
     for (const [cosmeticId, cosmetic] of recordEntries(animal.cosmetics)) {
-      if (cosmetic.fullName.toLowerCase().includes(q)) {
+      const fullName = `${animal.name} ${cosmetic.name}`;
+      if (fullName.toLowerCase().includes(q)) {
         results.push({
           available: true,
           category: "animals",
           completed: completed.animalCosmetics[animalId].has(cosmeticId),
-          fullName: cosmetic.fullName,
+          fullName,
           id: `${animalId}:${cosmeticId}`,
           name: cosmetic.name,
         });
       }
       if (results.length >= MAX_RESULTS) return rankResults(results, q);
     }
+  }
+
+  // Pet cosmetics
+  for (const [id, entry] of recordEntries(trackerData.pets.cosmetics)) {
+    if (entry.name.toLowerCase().includes(q)) {
+      results.push({
+        available: true,
+        category: "animals",
+        completed: completed.petCosmetics.has(id),
+        fullName: entry.name,
+        id: `pet-cosmetic:${id}`,
+        name: entry.name,
+      });
+    }
+    if (results.length >= MAX_RESULTS) return rankResults(results, q);
+  }
+
+  // Pet skins
+  for (const [id, entry] of recordEntries(trackerData.pets.skins)) {
+    if (entry.name.toLowerCase().includes(q)) {
+      results.push({
+        available: true,
+        category: "animals",
+        completed: completed.petSkins.has(id),
+        fullName: entry.name,
+        id: `pet-skin:${id}`,
+        name: entry.name,
+      });
+    }
+    if (results.length >= MAX_RESULTS) return rankResults(results, q);
   }
 
   // Cosmetics — not season-gated

@@ -13,6 +13,8 @@ import type {
   ItemId,
   NpcId,
   PerkId,
+  PetCosmeticSetId,
+  PetSkinId,
   QuestId,
   RecipeId,
   Season,
@@ -35,6 +37,8 @@ export interface CompletedState {
   mines: { floor: number; spells: Set<SpellId> };
   museum: Set<ItemId>;
   npcLevels: Record<NpcId, number>;
+  petCosmetics: Set<PetCosmeticSetId>;
+  petSkins: Set<PetSkinId>;
   questStates: Record<QuestId, QuestState>;
   renown: number;
   skillLevels: Record<SkillId, number>;
@@ -51,6 +55,8 @@ export interface MergeCounts {
   museum: number;
   npcLevels: number;
   perks: number;
+  petCosmetics: number;
+  petSkins: number;
   quests: number;
   renown: number;
   skillLevels: number;
@@ -82,6 +88,8 @@ interface SerializedState {
     museum: string[];
     npcLevels?: Record<string, number>;
     npcs?: string[];
+    petCosmetics?: string[];
+    petSkins?: string[];
     quests?: string[];
     questStates?: Record<string, QuestState>;
     renown: number;
@@ -139,6 +147,8 @@ function createDefaultCompleted(): CompletedState {
     mines: { floor: 0, spells: new SvelteSet<SpellId>() },
     museum: new SvelteSet<ItemId>(),
     npcLevels: {},
+    petCosmetics: new SvelteSet<PetCosmeticSetId>(),
+    petSkins: new SvelteSet<PetSkinId>(),
     questStates: {},
     renown: 0,
     skillLevels: {},
@@ -243,6 +253,8 @@ function createUserState() {
         museum: 0,
         npcLevels: 0,
         perks: 0,
+        petCosmetics: 0,
+        petSkins: 0,
         quests: 0,
         renown: 0,
         skillLevels: 0,
@@ -302,6 +314,26 @@ function createUserState() {
               existing.add(c);
               counts.animalCosmetics++;
             }
+          }
+        }
+      }
+
+      // Pet cosmetics
+      if (imported.petCosmetics) {
+        for (const id of imported.petCosmetics) {
+          if (!state.completed.petCosmetics.has(id)) {
+            state.completed.petCosmetics.add(id);
+            counts.petCosmetics++;
+          }
+        }
+      }
+
+      // Pet skins
+      if (imported.petSkins) {
+        for (const id of imported.petSkins) {
+          if (!state.completed.petSkins.has(id)) {
+            state.completed.petSkins.add(id);
+            counts.petSkins++;
           }
         }
       }
@@ -446,6 +478,12 @@ function createUserState() {
     togglePerk(id: PerkId) {
       toggleInSet(state.completed.unlockedPerks, id);
     },
+    togglePetCosmetic(id: PetCosmeticSetId) {
+      toggleInSet(state.completed.petCosmetics, id);
+    },
+    togglePetSkin(id: PetSkinId) {
+      toggleInSet(state.completed.petSkins, id);
+    },
     toggleShowCompleted() {
       state.showCompleted = !state.showCompleted;
     },
@@ -513,6 +551,8 @@ function deserialize(json: string): null | UserState {
         },
         museum: brandedSet<ItemId>(s.completed.museum),
         npcLevels,
+        petCosmetics: brandedSet<PetCosmeticSetId>(s.completed.petCosmetics ?? []),
+        petSkins: brandedSet<PetSkinId>(s.completed.petSkins ?? []),
         questStates,
         renown: clampRenownLevel(s.completed.renown),
         skillLevels,
@@ -556,6 +596,8 @@ function serialize(state: UserState): string {
       },
       museum: [...state.completed.museum].sort(),
       npcLevels: filterRecord(state.completed.npcLevels, (v) => v > 0),
+      petCosmetics: [...state.completed.petCosmetics].sort(),
+      petSkins: [...state.completed.petSkins].sort(),
       questStates: filterRecord(state.completed.questStates, (v) => v !== "none"),
       renown: state.completed.renown,
       skillLevels: filterRecord(state.completed.skillLevels, (v) => v > 0),

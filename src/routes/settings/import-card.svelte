@@ -144,6 +144,8 @@
           importResult.counts.cosmetics +
           importResult.counts.animals +
           importResult.counts.animalCosmetics +
+          importResult.counts.petCosmetics +
+          importResult.counts.petSkins +
           importResult.counts.almanacRecipes +
           importResult.counts.spells +
           importResult.counts.museum +
@@ -304,6 +306,12 @@
             {/if}
             {#if importResult.counts.animalCosmetics > 0}
               <li>Animal cosmetics: +{importResult.counts.animalCosmetics}</li>
+            {/if}
+            {#if importResult.counts.petCosmetics > 0}
+              <li>Pet cosmetics: +{importResult.counts.petCosmetics}</li>
+            {/if}
+            {#if importResult.counts.petSkins > 0}
+              <li>Pet skins: +{importResult.counts.petSkins}</li>
             {/if}
             {#if importResult.counts.spells > 0}
               <li>Spells: +{importResult.counts.spells}</li>

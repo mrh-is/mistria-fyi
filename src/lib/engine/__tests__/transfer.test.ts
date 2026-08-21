@@ -6,7 +6,14 @@ import { recordKeys } from "$lib/utils.js";
 import { decodeTransferPayload, encodeTransferPayload, TRANSFER_VERSION } from "../transfer.js";
 
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { AnimalVariantId, CosmeticId, NpcId, SkillId } from "$lib/types/tracker-data.js";
+import type {
+  AnimalVariantId,
+  CosmeticId,
+  NpcId,
+  PetCosmeticSetId,
+  PetSkinId,
+  SkillId,
+} from "$lib/types/tracker-data.js";
 
 // A payload encoded with the v1 codec (no perk bitfield, no married-NPC byte) for a state with
 // mines.floor = 5, npcLevels.adeline = 3, renown = 10, and all other fields empty. Used to verify
@@ -31,6 +38,8 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
     npcLevels: {},
+    petCosmetics: new Set(),
+    petSkins: new Set(),
     questStates: {},
     renown: 0,
     skillLevels: {},
@@ -39,9 +48,9 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
   };
 }
 
-describe("transfer codec v2", () => {
-  it("has version 2", () => {
-    expect(TRANSFER_VERSION).toBe(2);
+describe("transfer codec v3", () => {
+  it("has version 3", () => {
+    expect(TRANSFER_VERSION).toBe(3);
   });
 
   it("round-trips unlockedPerks", async () => {
@@ -67,10 +76,31 @@ describe("transfer codec v2", () => {
     expect(decoded.marriedNpc).toBeNull();
   });
 
-  it("decodes v1 payload without perks or marriedNpc", async () => {
+  it("round-trips petCosmetics", async () => {
+    const petCosmeticIds = Object.keys(trackerData.pets.cosmetics).slice(
+      0,
+      3,
+    ) as PetCosmeticSetId[];
+    const completed = makeCompleted({ petCosmetics: new Set(petCosmeticIds) });
+    const payload = await encodeTransferPayload(completed);
+    const decoded = await decodeTransferPayload(payload);
+    expect(decoded.petCosmetics).toEqual(new Set(petCosmeticIds));
+  });
+
+  it("round-trips petSkins", async () => {
+    const petSkinIds = Object.keys(trackerData.pets.skins).slice(0, 3) as PetSkinId[];
+    const completed = makeCompleted({ petSkins: new Set(petSkinIds) });
+    const payload = await encodeTransferPayload(completed);
+    const decoded = await decodeTransferPayload(payload);
+    expect(decoded.petSkins).toEqual(new Set(petSkinIds));
+  });
+
+  it("decodes v1 payload without perks, marriedNpc, or pet fields", async () => {
     const decoded = await decodeTransferPayload(V1_FIXTURE);
     expect(decoded.unlockedPerks).toEqual(new Set());
     expect(decoded.marriedNpc).toBeNull();
+    expect(decoded.petCosmetics).toEqual(new Set());
+    expect(decoded.petSkins).toEqual(new Set());
     // Sanity check that pre-existing v1 fields still decode correctly.
     expect(decoded.mines?.floor).toBe(5);
     expect(decoded.npcLevels?.["adeline" as NpcId]).toBe(3);

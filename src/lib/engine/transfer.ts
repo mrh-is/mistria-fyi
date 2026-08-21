@@ -9,6 +9,8 @@ import type {
   ItemId,
   NpcId,
   PerkId,
+  PetCosmeticSetId,
+  PetSkinId,
   QuestId,
   SkillId,
   SpellId,
@@ -16,7 +18,7 @@ import type {
 
 // ─── Constants ──────────────────────────────────────────────────────
 
-export const TRANSFER_VERSION = 2;
+export const TRANSFER_VERSION = 3;
 
 // ─── Deterministic orderings (derived from trackerData) ─────────────
 
@@ -24,7 +26,7 @@ export const TRANSFER_VERSION = 2;
 export async function decodeTransferPayload(payload: string): Promise<Partial<CompletedState>> {
   const payloadBytes = fromBase64url(payload);
   const version = payloadBytes[0];
-  if (version !== 1 && version !== 2) {
+  if (version !== 1 && version !== 2 && version !== 3) {
     throw new Error(`Unsupported transfer version: ${String(version)}`);
   }
 
@@ -142,6 +144,21 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
     }
   }
 
+  // 14. Pet cosmetic sets bitfield (v3 only)
+  // 15. Pet skins bitfield (v3 only)
+  let petCosmetics = new Set<PetCosmeticSetId>();
+  let petSkins = new Set<PetSkinId>();
+
+  if (version >= 3) {
+    const petCosmeticOrder = getPetCosmeticOrder();
+    const petCosmeticBytes = readBytes(Math.ceil(petCosmeticOrder.length / 8));
+    petCosmetics = fromBitfield(petCosmeticOrder, petCosmeticBytes) as Set<PetCosmeticSetId>;
+
+    const petSkinOrder = getPetSkinOrder();
+    const petSkinBytes = readBytes(Math.ceil(petSkinOrder.length / 8));
+    petSkins = fromBitfield(petSkinOrder, petSkinBytes) as Set<PetSkinId>;
+  }
+
   return {
     almanac,
     animalCosmetics,
@@ -151,6 +168,8 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
     mines: { floor, spells },
     museum,
     npcLevels,
+    petCosmetics,
+    petSkins,
     questStates,
     renown,
     skillLevels,
@@ -257,6 +276,14 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   // 13. Married NPC index (new in v2) — 1 byte: 0xFF = no spouse, else index into npcOrder
   const marriedIndex = completed.marriedNpc ? npcOrder.indexOf(completed.marriedNpc) : -1;
   parts.push(new Uint8Array([marriedIndex === -1 ? 0xff : marriedIndex]));
+
+  // 14. Pet cosmetic sets bitfield (new in v3)
+  const petCosmeticOrder = getPetCosmeticOrder();
+  parts.push(toBitfield(petCosmeticOrder, completed.petCosmetics));
+
+  // 15. Pet skins bitfield (new in v3)
+  const petSkinOrder = getPetSkinOrder();
+  parts.push(toBitfield(petSkinOrder, completed.petSkins));
 
   // Concatenate all parts
   const totalLength = parts.reduce((sum, p) => sum + p.length, 0);
@@ -404,6 +431,14 @@ function getPerkOrder(): PerkId[] {
   return recordValues(trackerData.skills)
     .flatMap((skill) => skill.perkTiers.flatMap((tier) => recordKeys(tier)))
     .sort();
+}
+
+function getPetCosmeticOrder(): PetCosmeticSetId[] {
+  return (Object.keys(trackerData.pets.cosmetics) as PetCosmeticSetId[]).sort();
+}
+
+function getPetSkinOrder(): PetSkinId[] {
+  return (Object.keys(trackerData.pets.skins) as PetSkinId[]).sort();
 }
 
 function getQuestOrder(): { type: string; questId: QuestId }[] {

@@ -1,7 +1,7 @@
 import { trackerData } from "$lib/data/index.js";
 import { recordMap } from "$lib/utils";
 
-import type { StoreId } from "$lib/types/tracker-data";
+import type { QuestType, StoreId } from "$lib/types/tracker-data";
 import type { SegmentLookups } from "$lib/utils/source-segments.js";
 
 /**
@@ -42,6 +42,11 @@ export function buildBaseSegmentLookups(
       ),
     ),
     questNpcIds: recordMap(trackerData.quests.fetch, ({ npc }) => npc),
+    questTypes: Object.fromEntries(
+      (Object.entries(trackerData.quests) as [QuestType, Record<string, unknown>][]).flatMap(
+        ([questType, group]) => Object.keys(group).map((id) => [id, questType]),
+      ),
+    ),
     recipeNames: recordMap(trackerData.recipes, ({ name }) => name),
     redactedStoreIds,
     skillNames: recordMap(trackerData.skills, ({ name }) => name),

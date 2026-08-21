@@ -42,7 +42,7 @@ describe("extractAnimals", () => {
     expect(extractAnimals(fiddle)).toEqual({
       chicken: {
         cosmetics: {
-          chicken_hat: { fullName: "Chicken Hat", name: "Hat" },
+          chicken_hat: { name: "Hat", sources: [] },
         },
         name: "Chicken",
         variantTiers: [
@@ -155,8 +155,8 @@ describe("extractAnimals", () => {
     expect(extractAnimals(fiddle)).toEqual({
       chicken: {
         cosmetics: {
-          chicken_hat: { fullName: "Chicken Hat", name: "Hat" },
-          scarf: { fullName: "Cozy Scarf", name: "Cozy Scarf" },
+          chicken_hat: { name: "Hat", sources: [] },
+          scarf: { name: "Cozy Scarf", sources: [] },
         },
         name: "Chicken",
         variantTiers: [],
@@ -183,7 +183,7 @@ describe("extractAnimals", () => {
     expect(extractAnimals(fiddle)).toEqual({
       goat: {
         cosmetics: {
-          bell: { fullName: "Bell", name: "Bell" },
+          bell: { name: "Bell", sources: [] },
         },
         name: "Goat",
         variantTiers: [],

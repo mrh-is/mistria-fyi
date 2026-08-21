@@ -7,6 +7,8 @@ import type {
   CosmeticId,
   ItemId,
   PerkId,
+  PetCosmeticSetId,
+  PetSkinId,
   RecipeId,
   SpellId,
 } from "$lib/types/tracker-data.js";
@@ -42,6 +44,8 @@ interface PlayerSave {
   items_acquired?: string[];
   items_sold?: Record<string, unknown>;
   perks?: string[];
+  pet_cosmetic_sets_unlocked?: string[];
+  pet_skin_unlocks?: string[];
   recipe_unlocks?: string[];
   recipes_created?: string[];
   skill_xp?: Record<string, number>;
@@ -68,6 +72,8 @@ export function buildImportState(bundle: SaveBundle): {
     museum: 0,
     npcLevels: 0,
     perks: 0,
+    petCosmetics: 0,
+    petSkins: 0,
     quests: 0,
     renown: 0,
     skillLevels: 0,
@@ -165,6 +171,32 @@ export function buildImportState(bundle: SaveBundle): {
     animalCosmetics[animalId] = matched;
     counts.animalCosmetics += matched.size;
   }
+
+  // ── Pet cosmetic sets ──
+  const petCosmetics = new Set<PetCosmeticSetId>();
+  const validPetCosmetics = new Set(Object.keys(trackerData.pets.cosmetics));
+
+  for (const id of save?.pet_cosmetic_sets_unlocked ?? []) {
+    if (validPetCosmetics.has(id)) {
+      petCosmetics.add(id as PetCosmeticSetId);
+    } else {
+      warnings.push(`Unknown pet cosmetic set: ${id}`);
+    }
+  }
+  counts.petCosmetics = petCosmetics.size;
+
+  // ── Pet skins ──
+  const petSkins = new Set<PetSkinId>();
+  const validPetSkins = new Set(Object.keys(trackerData.pets.skins));
+
+  for (const id of save?.pet_skin_unlocks ?? []) {
+    if (validPetSkins.has(id)) {
+      petSkins.add(id as PetSkinId);
+    } else {
+      warnings.push(`Unknown pet skin: ${id}`);
+    }
+  }
+  counts.petSkins = petSkins.size;
 
   // ── Spells ──
   const spells = new Set<SpellId>();
@@ -294,6 +326,8 @@ export function buildImportState(bundle: SaveBundle): {
       mines: { floor: mineFloor, spells },
       museum: museumIds,
       npcLevels,
+      petCosmetics,
+      petSkins,
       questStates,
       renown,
       skillLevels,
@@ -396,6 +430,8 @@ export function validatePlayerSave(data: unknown): data is PlayerSave {
     typeof obj.animal_variant_unlocks === "object" ||
     typeof obj.items_sold === "object" ||
     Array.isArray(obj.spells_learned) ||
-    Array.isArray(obj.perks)
+    Array.isArray(obj.perks) ||
+    Array.isArray(obj.pet_cosmetic_sets_unlocked) ||
+    Array.isArray(obj.pet_skin_unlocks)
   );
 }
