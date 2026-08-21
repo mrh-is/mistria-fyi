@@ -144,7 +144,7 @@ function collectChickenStatueLootSources(
   for (const [, tier] of Object.entries(chickenStatue)) {
     if (typeof tier !== "object" || tier === null) continue;
     for (const rollKey of ["small_roll", "large_roll"]) {
-      const rolls = (tier)[rollKey];
+      const rolls = tier[rollKey];
       if (!Array.isArray(rolls)) continue;
 
       for (const entry of rolls) {

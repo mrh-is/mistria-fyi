@@ -6,12 +6,15 @@
   import AllCompleted from "./all-completed.svelte";
   import AnimalCosmeticsSection from "./animal-cosmetics-section.svelte";
   import AnimalVariantsSection from "./animal-variants-section.svelte";
+  import PetCollectiblesSection from "./pet-collectibles-section.svelte";
 
   import type {
     AnimalId,
     AnimalVariant,
     AnimalVariantId,
     CosmeticId,
+    PetCosmeticSetId,
+    PetSkinId,
   } from "$lib/types/tracker-data";
 
   function someVariant(
@@ -47,12 +50,23 @@
   }
 
   function areAllAnimalsComplete(): boolean {
-    return Object.keys(trackerData.animals).every((id) => isAnimalComplete(id as AnimalId));
+    const allAnimals = Object.keys(trackerData.animals).every((id) =>
+      isAnimalComplete(id as AnimalId),
+    );
+    const allPetCosmetics = Object.keys(trackerData.pets.cosmetics).every((id) =>
+      userState.state.completed.petCosmetics.has(id as PetCosmeticSetId),
+    );
+    const allPetSkins = Object.keys(trackerData.pets.skins).every((id) =>
+      userState.state.completed.petSkins.has(id as PetSkinId),
+    );
+    return allAnimals && allPetCosmetics && allPetSkins;
   }
 </script>
 
 <AnimalVariantsSection {areAllAnimalsComplete} {isAnimalComplete} {isSpeciesVisible} />
 
 <AnimalCosmeticsSection {areAllAnimalsComplete} {isAnimalComplete} {isSpeciesVisible} />
+
+<PetCollectiblesSection {areAllAnimalsComplete} />
 
 <AllCompleted isAllCompleted={areAllAnimalsComplete()} />

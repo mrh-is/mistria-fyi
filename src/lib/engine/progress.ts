@@ -124,6 +124,27 @@ function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
       }
     }
   }
+
+  const petCosmeticIds = recordKeys(trackerData.pets.cosmetics);
+  total += petCosmeticIds.length;
+  for (const id of petCosmeticIds) {
+    if (ctx.completed.petCosmetics.has(id)) {
+      completed++;
+    } else {
+      filtered++;
+    }
+  }
+
+  const petSkinIds = recordKeys(trackerData.pets.skins);
+  total += petSkinIds.length;
+  for (const id of petSkinIds) {
+    if (ctx.completed.petSkins.has(id)) {
+      completed++;
+    } else {
+      filtered++;
+    }
+  }
+
   return { completed, filtered, total };
 }
 

@@ -45,7 +45,7 @@
           id: cosmeticId,
           name,
           redacted: false,
-          sources: [],
+          sources: animal.cosmetics[cosmeticId].sources,
         });
       }
     });
