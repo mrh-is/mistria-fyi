@@ -70,6 +70,7 @@ export type Source =
             triggerDate: Day & { year?: number };
           }
         | { type: "letter"; trigger: "shipped_item"; triggerItemId: ItemId }
+        | { type: "lost_and_found" }
         | { type: "mine"; biomeId: MinesBiomeId }
         | {
             type: "mines_chest";

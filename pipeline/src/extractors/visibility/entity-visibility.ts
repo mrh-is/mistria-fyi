@@ -211,6 +211,7 @@ function acquisitionSourceCondition(
     case "fish_trap":
     case "forage":
     case "letter":
+    case "lost_and_found":
     case "monster":
     case "monster_feed":
     case "museum_donation":
@@ -444,6 +445,7 @@ function computeRecipeSourceConditions(
     case "fish_trap":
     case "forage":
     case "letter":
+    case "lost_and_found":
     case "mine":
     case "monster":
     case "monster_feed":

@@ -209,6 +209,13 @@ describe("buildSourceSegments — simple types", () => {
     expect(buildSourceSegments(source, lookups)).toEqual(["Fish up a Golden Treasure Box"]);
   });
 
+  it("lost and found", () => {
+    const source: Source = { type: "lost_and_found" };
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([
+      "Obtain from the Lost and Found chest",
+    ]);
+  });
+
   it("beach cave chest", () => {
     const source: Source = { type: "beach_cave_chest" };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([
