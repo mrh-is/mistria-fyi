@@ -384,7 +384,7 @@ function getAnimalVariantOrder(): { animalId: AnimalId; variantId: AnimalVariant
 
 function getCosmeticOrder(): CosmeticId[] {
   return (Object.keys(trackerData.cosmetics) as CosmeticId[])
-    .filter((id) => !trackerData.cosmetics[id].sources?.some((s) => s.type === "default"))
+    .filter((id) => !trackerData.cosmetics[id].sources.some((s) => s.type === "default"))
     .sort();
 }
 

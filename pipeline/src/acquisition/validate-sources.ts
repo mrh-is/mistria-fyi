@@ -37,7 +37,7 @@ interface AcquisitionRecipeEntity extends AcquisitionSourceEntity {
 }
 
 interface AcquisitionSourceEntity {
-  sources?: readonly unknown[];
+  sources: readonly unknown[];
 }
 
 const DIAGNOSTIC_ORDER: Record<AcquisitionSourceDiagnosticKind, number> = {
