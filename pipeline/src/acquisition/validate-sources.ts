@@ -71,6 +71,7 @@ const SOURCE_FIELDS = {
   animal_product: ["animalId"],
   artifact_dig: ["locationIds"],
   artifact_replicator: ["originalItemId"],
+  bait_fish: ["baitItemIds"],
   beach_cave_chest: [],
   breed: [],
   bug_catch: ["locationIds"],
@@ -84,11 +85,12 @@ const SOURCE_FIELDS = {
   festival: ["festivalId", "storeId"],
   festival_activity: ["activityId", "festivalId"],
   fish: ["waterTypes"],
-  fish_trap: [],
+  fish_trap: ["baitItemIds"],
   forage: ["locationIds"],
   letter: ["trigger", "triggerDate", "triggerItemId"],
   lost_and_found: [],
   mine: ["biomeId"],
+  mine_fish: ["biomeId"],
   mines_chest: ["biomeId", "lootGroup", "perkId"],
   mines_dig_site: ["biomeId", "perkId"],
   monster: ["monsterId"],
@@ -377,6 +379,30 @@ function reference(
 
 function referenceLabel(kind: AcquisitionReferenceKind): string {
   return kind.replace(/[A-Z]/g, (character) => ` ${character.toLowerCase()}`);
+}
+
+function requiredReferenceArray(
+  source: Record<string, unknown>,
+  field: string,
+  kind: AcquisitionReferenceKind,
+  targetId: string,
+  fieldPath: string,
+  references: AcquisitionReferenceIndex,
+  diagnostics: AcquisitionSourceDiagnostic[],
+): void {
+  if (requireStringArray(source, field, targetId, fieldPath, source, diagnostics)) {
+    (source[field] as string[]).forEach((id, index) => {
+      reference(
+        diagnostics,
+        references,
+        kind,
+        id,
+        targetId,
+        `${fieldPath}.${field}[${index}]`,
+        source,
+      );
+    });
+  }
 }
 
 function requireNumber(
@@ -986,6 +1012,18 @@ function validateVariantFields(
     case "artifact_replicator":
       stringReferences.push(["originalItemId", "item"]);
       break;
+    case "bait_fish":
+    case "fish_trap":
+      requiredReferenceArray(
+        source,
+        "baitItemIds",
+        "item",
+        targetId,
+        fieldPath,
+        references,
+        diagnostics,
+      );
+      break;
     case "chicken_statue":
       break;
     case "crop":
@@ -1020,6 +1058,9 @@ function validateVariantFields(
       validateLetter(source, targetId, fieldPath, references, diagnostics);
       break;
     case "mine":
+      optionalReference(source, "biomeId", "biome", targetId, fieldPath, references, diagnostics);
+      break;
+    case "mine_fish":
       optionalReference(source, "biomeId", "biome", targetId, fieldPath, references, diagnostics);
       break;
     case "mines_chest":

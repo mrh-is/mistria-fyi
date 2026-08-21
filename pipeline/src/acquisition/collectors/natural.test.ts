@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { ItemSourceAccumulator } from "../source-accumulator.js";
-import { collectNaturalSources } from "./natural.js";
+import { buildBaitRanges, buildFishBiomeMap, collectNaturalSources } from "./natural.js";
 
 import type { ItemId } from "$lib/types/tracker-data.js";
 
@@ -82,18 +82,197 @@ describe("collectNaturalSources", () => {
       expect(acc.get("sea_urchin" as ItemId)).toEqual([{ type: "dive", waterTypes: ["ocean"] }]);
     });
 
-    it("adds a fish_trap source for fishtrap retrieval", () => {
+    it("adds a fish_trap source with bait item IDs for fish_trap retrieval", () => {
       const fiddle = makeFiddle({
         fish: {
           crab: {
-            retrieval: ["fishtrap"],
+            rarity: "common",
+            retrieval: "fish_trap",
+          },
+        },
+        items: {
+          other: {
+            apiaries_and_terrariums: {
+              fish_bait_common: {
+                attract: { max_rarity: "common", min_rarity: 10000 },
+                tags: ["fish_bait"],
+              },
+              fish_bait_uncommon: {
+                attract: { max_rarity: "uncommon", min_rarity: "common" },
+                tags: ["fish_bait"],
+              },
+            },
           },
         },
       });
 
       const acc = new ItemSourceAccumulator();
       collectNaturalSources(fiddle, acc);
-      expect(acc.get("crab" as ItemId)).toEqual([{ type: "fish_trap" }]);
+      expect(acc.get("crab" as ItemId)).toEqual([
+        { type: "fish_trap", baitItemIds: ["fish_bait_common", "fish_bait_uncommon"] },
+      ]);
+    });
+
+    it("adds both fish and dive sources for fishing+divespot retrieval", () => {
+      const fiddle = makeFiddle({
+        fish: {
+          salmon: {
+            retrieval: ["fishing", "divespot"],
+            seasons: ["spring"],
+            water_type: ["river"],
+          },
+        },
+      });
+
+      const acc = new ItemSourceAccumulator();
+      collectNaturalSources(fiddle, acc);
+      expect(acc.get("salmon" as ItemId)).toEqual([
+        {
+          type: "fish",
+          availability: { type: "season", seasons: ["spring"] },
+          waterTypes: ["river"],
+        },
+        { type: "dive", waterTypes: ["river"] },
+      ]);
+    });
+
+    it("adds a bait_fish source for bait_only fish", () => {
+      const fiddle = makeFiddle({
+        fish: {
+          massive_minnow: {
+            bait_only: true,
+            rarity: "very_very_common",
+            retrieval: ["fishing", "mines"],
+            seasons: ["spring", "summer", "fall", "winter"],
+            water_type: ["pond", "river", "ocean"],
+          },
+        },
+        items: {
+          other: {
+            apiaries_and_terrariums: {
+              fish_bait_common: {
+                attract: { max_rarity: "common", min_rarity: 10000 },
+                tags: ["fish_bait"],
+              },
+            },
+          },
+        },
+      });
+
+      const acc = new ItemSourceAccumulator();
+      collectNaturalSources(fiddle, acc);
+      expect(acc.get("massive_minnow" as ItemId)).toEqual([
+        { type: "bait_fish", baitItemIds: ["fish_bait_common"] },
+      ]);
+    });
+
+    it("adds a mine_fish source with biome ID for mines retrieval", () => {
+      const fiddle = makeFiddle({
+        dungeons: {
+          dungeons: {
+            biomes: [
+              {
+                name: "Deep Earth",
+                votes: {
+                  fish: [{ object: "cave_eel", votes: 30 }],
+                },
+              },
+            ],
+          },
+        },
+        fish: {
+          cave_eel: {
+            retrieval: "mines",
+          },
+        },
+      });
+
+      const acc = new ItemSourceAccumulator();
+      collectNaturalSources(fiddle, acc);
+      expect(acc.get("cave_eel" as ItemId)).toEqual([{ type: "mine_fish", biomeId: "deep_earth" }]);
+    });
+
+    it("throws for bait_only fish without fishing+mines retrieval", () => {
+      const fiddle = makeFiddle({
+        fish: {
+          bad_fish: {
+            bait_only: true,
+            rarity: "common",
+            retrieval: ["fishing"],
+          },
+        },
+        items: {
+          other: {
+            apiaries_and_terrariums: {
+              fish_bait_common: {
+                attract: { max_rarity: "common", min_rarity: 10000 },
+                tags: ["fish_bait"],
+              },
+            },
+          },
+        },
+      });
+
+      const acc = new ItemSourceAccumulator();
+      expect(() => {
+        collectNaturalSources(fiddle, acc);
+      }).toThrow(/bait_only fish "bad_fish" has unexpected retrieval/);
+    });
+
+    it("adds a mine_fish source without biome when fish is not in any dungeon biome", () => {
+      const fiddle = makeFiddle({
+        dungeons: { dungeons: { biomes: [] } },
+        fish: {
+          mystery_fish: {
+            retrieval: "mines",
+          },
+        },
+      });
+
+      const acc = new ItemSourceAccumulator();
+      collectNaturalSources(fiddle, acc);
+      expect(acc.get("mystery_fish" as ItemId)).toEqual([{ type: "mine_fish" }]);
+    });
+
+    it("throws for fish_trap with extra retrieval methods", () => {
+      const fiddle = makeFiddle({
+        fish: {
+          odd_crab: {
+            rarity: "common",
+            retrieval: ["fish_trap", "divespot"],
+          },
+        },
+        items: {
+          other: {
+            apiaries_and_terrariums: {
+              fish_bait_common: {
+                attract: { max_rarity: "common", min_rarity: 10000 },
+                tags: ["fish_bait"],
+              },
+            },
+          },
+        },
+      });
+
+      const acc = new ItemSourceAccumulator();
+      expect(() => {
+        collectNaturalSources(fiddle, acc);
+      }).toThrow(/fish_trap fish "odd_crab" has unexpected extra retrieval/);
+    });
+
+    it("throws for unknown retrieval methods", () => {
+      const fiddle = makeFiddle({
+        fish: {
+          weird_fish: {
+            retrieval: "teleportation",
+          },
+        },
+      });
+
+      const acc = new ItemSourceAccumulator();
+      expect(() => {
+        collectNaturalSources(fiddle, acc);
+      }).toThrow(/fish "weird_fish" has unknown retrieval methods: \[teleportation\]/);
     });
 
     it("skips chest fish entries", () => {
@@ -309,5 +488,115 @@ describe("collectNaturalSources", () => {
 
       expect(acc.get("egg" as ItemId)).toEqual([{ type: "animal_product", animalId: "chicken" }]);
     });
+  });
+});
+
+describe("buildBaitRanges", () => {
+  it("extracts bait ranges from items with fish_bait tag", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          apiaries_and_terrariums: {
+            fish_bait_common: {
+              attract: { max_rarity: "common", min_rarity: 10000 },
+              tags: ["fish_bait"],
+            },
+            fish_bait_rare: {
+              attract: { max_rarity: "rare", min_rarity: "uncommon" },
+              tags: ["fish_bait"],
+            },
+            honeycomb: {
+              tags: ["crop"],
+            },
+          },
+        },
+      },
+    });
+
+    const ranges = buildBaitRanges(fiddle);
+    expect(ranges).toEqual([
+      { itemId: "fish_bait_common", maxIdx: 4, minIdx: 0 },
+      { itemId: "fish_bait_rare", maxIdx: 6, minIdx: 5 },
+    ]);
+  });
+
+  it("skips items without attract data", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          apiaries_and_terrariums: {
+            fish_bait_broken: {
+              tags: ["fish_bait"],
+            },
+          },
+        },
+      },
+    });
+
+    expect(buildBaitRanges(fiddle)).toEqual([]);
+  });
+
+  it("returns empty array when no bait items exist", () => {
+    const fiddle = makeFiddle({});
+    expect(buildBaitRanges(fiddle)).toEqual([]);
+  });
+});
+
+describe("buildFishBiomeMap", () => {
+  it("maps fish objects to biome IDs", () => {
+    const fiddle = makeFiddle({
+      dungeons: {
+        dungeons: {
+          biomes: [
+            {
+              name: "Upper Mines",
+              votes: {
+                fish: [
+                  { object: "rock_guppy", votes: 30 },
+                  { object: "cave_eel", votes: 18 },
+                ],
+              },
+            },
+            {
+              name: "The Lava Caves",
+              votes: {
+                fish: [{ object: "lava_piranha", votes: 30 }],
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    const map = buildFishBiomeMap(fiddle);
+    expect(map.get("rock_guppy")).toBe("upper_mines");
+    expect(map.get("cave_eel")).toBe("upper_mines");
+    expect(map.get("lava_piranha")).toBe("lava_caves");
+    expect(map.size).toBe(3);
+  });
+
+  it("strips 'The' prefix from biome names", () => {
+    const fiddle = makeFiddle({
+      dungeons: {
+        dungeons: {
+          biomes: [
+            {
+              name: "The Tide Caverns",
+              votes: {
+                fish: [{ object: "jellyfish", votes: 10 }],
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    const map = buildFishBiomeMap(fiddle);
+    expect(map.get("jellyfish")).toBe("tide_caverns");
+  });
+
+  it("returns empty map when no dungeons data exists", () => {
+    const fiddle = makeFiddle({});
+    expect(buildFishBiomeMap(fiddle).size).toBe(0);
   });
 });

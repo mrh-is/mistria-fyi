@@ -110,6 +110,8 @@ export function buildSourceSegments(
       const itemName = lookups.itemNames[source.originalItemId] ?? titleCase(source.originalItemId);
       return [`Replicate from ${itemName}`];
     }
+    case "bait_fish":
+      return ["Catch with bait"];
     case "beach_cave_chest":
       return ["Find in the Gold Treasure Chest in the Beach Cave"];
     case "breed":
@@ -157,7 +159,7 @@ export function buildSourceSegments(
       return [waters ? `Catch in ${waters}` : "Catch while fishing"];
     }
     case "fish_trap":
-      return ["Catch in a fish trap"];
+      return ["Catch in a fish trap (requires bait)"];
     case "forage": {
       const locations = buildLocationList(source.locationIds, lookups);
       return [locations ? `Forage at ${locations}` : "Forage in the wild"];
@@ -185,6 +187,11 @@ export function buildSourceSegments(
     case "mine": {
       const biomeLabel = buildBiomeLabel(source.biomeId, lookups);
       return joinSegments("Mine in ", biomeLabel);
+    }
+    case "mine_fish": {
+      if (!source.biomeId) return ["Fish in the mines"];
+      const biomeLabel = buildBiomeLabel(source.biomeId, lookups);
+      return joinSegments("Fish in ", biomeLabel);
     }
     case "mines_chest": {
       const biomeLabel = buildBiomeLabel(source.biomeId, lookups);
