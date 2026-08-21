@@ -1,3 +1,5 @@
+import { forEachItem } from "../extractor-helpers.js";
+
 import type {
   PetCosmeticSet,
   PetCosmeticSetId,
@@ -25,19 +27,16 @@ export function extractPetCosmetics(
 }
 
 export function extractPetSkins(fiddle: ParsedGameData): Record<PetSkinId, PetSkin> {
-  const items = fiddle.items as Record<string, Record<string, unknown>> | undefined;
-  if (!items) return {};
-
   const result = {} as Record<PetSkinId, PetSkin>;
-  for (const [, item] of Object.entries(items)) {
-    if (typeof item !== "object" || item === null) continue;
+
+  forEachItem(fiddle, (_itemId, item) => {
     const skinUnlock = item.pet_skin_unlock as string | undefined;
-    if (!skinUnlock) continue;
+    if (!skinUnlock) return;
 
     const rawName = (item.name as string | undefined) ?? skinUnlock;
     const name = rawName.replace(/^Pet Skin:\s*/i, "");
     result[skinUnlock as PetSkinId] = { name, sources: [] };
-  }
+  });
 
   console.log(`  Pet skins: ${Object.keys(result).length}`);
   return result;

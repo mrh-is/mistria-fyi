@@ -41,18 +41,22 @@ describe("extractPetSkins", () => {
   it("extracts skins from items with pet_skin_unlock field", () => {
     const fiddle = makeFiddle({
       items: {
-        pet_skin_mushroom: {
-          name: "Pet Skin: Mushroom",
-          pet_skin_unlock: "mushroom",
-          soulbind: "forever",
-        },
-        pet_skin_sapling: {
-          name: "Pet Skin: Sapling",
-          pet_skin_unlock: "sapling",
-          soulbind: "forever",
-        },
-        regular_item: {
-          name: "Egg",
+        other: {
+          monster_drops: {
+            pet_skin_mushroom: {
+              name: "Pet Skin: Mushroom",
+              pet_skin_unlock: "mushroom",
+              soulbind: "forever",
+            },
+            pet_skin_sapling: {
+              name: "Pet Skin: Sapling",
+              pet_skin_unlock: "sapling",
+              soulbind: "forever",
+            },
+            regular_item: {
+              name: "Egg",
+            },
+          },
         },
       },
     });

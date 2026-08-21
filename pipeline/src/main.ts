@@ -20,11 +20,14 @@ import {
   collectDefaultItemSources,
 } from "./acquisition/reviewed-overrides.js";
 import {
+  AnimalCosmeticSourceAccumulator,
   CosmeticSourceAccumulator,
   ItemSourceAccumulator,
+  PetCosmeticSourceAccumulator,
 } from "./acquisition/source-accumulator.js";
 import { validateAcquisitionSources } from "./acquisition/validate-sources.js";
 import { evaluateExpressions } from "./evaluate.js";
+import { forEachItem } from "./extractor-helpers.js";
 import { extractAlmanac } from "./extractors/almanac.js";
 import { extractAnimals } from "./extractors/animals.js";
 import { extractCosmetics } from "./extractors/cosmetics.js";
@@ -32,6 +35,7 @@ import { extractFestivals } from "./extractors/festivals.js";
 import { extractMines } from "./extractors/mines.js";
 import { extractMuseum } from "./extractors/museum.js";
 import { extractNpcs } from "./extractors/npcs.js";
+import { extractPetCosmetics, extractPetSkins } from "./extractors/pets.js";
 import {
   applyAnimalQuestGates,
   applyItemQuestGates,
@@ -325,6 +329,8 @@ function main(): void {
   const { recipeMemberItems, recipes } = extractRecipes(fiddle, cutsceneQuestMap);
   const { almanac, items } = extractAlmanac(fiddle);
   const animals = extractAnimals(fiddle);
+  const petCosmetics = extractPetCosmetics(fiddle);
+  const petSkins = extractPetSkins(fiddle);
   const npcs = extractNpcs(fiddle);
   const cosmeticsRaw = extractCosmetics(fiddle);
   const cosmetics = applyExclusions(cosmeticsRaw);
@@ -344,10 +350,24 @@ function main(): void {
 
   const itemSources = new ItemSourceAccumulator();
   const cosmeticSources = new CosmeticSourceAccumulator();
+  const animalCosmeticSources = new AnimalCosmeticSourceAccumulator();
+  const petCosmeticSources = new PetCosmeticSourceAccumulator();
   deriveRecipeProductSources(fiddle, recipeMemberItems, itemSources);
-  collectNaturalSources(fiddle, itemSources, cosmeticSources);
-  collectRewardSources(fiddle, itemSources, cosmeticSources);
-  collectStoreSources(fiddle, requirementContext, itemSources, cosmeticSources);
+  collectNaturalSources(fiddle, itemSources, cosmeticSources, petCosmeticSources);
+  collectRewardSources(
+    fiddle,
+    itemSources,
+    cosmeticSources,
+    animalCosmeticSources,
+    petCosmeticSources,
+  );
+  collectStoreSources(
+    fiddle,
+    requirementContext,
+    itemSources,
+    cosmeticSources,
+    animalCosmeticSources,
+  );
   collectExplorationSources(fiddle, itemSources, cosmeticSources);
   collectDefaultItemSources(fiddle, itemSources, items);
   collectDefaultCosmeticSources(cosmetics, cosmeticSources);
@@ -381,6 +401,41 @@ function main(): void {
     }
   }
 
+  // Attach sources to animal cosmetics
+  for (const { animalId, cosmeticId, sources } of animalCosmeticSources.animalCosmeticEntries()) {
+    const animal = animals[animalId];
+    if (!animal) continue;
+    const cosmetic = animal.cosmetics[cosmeticId];
+    if (!cosmetic) continue;
+    cosmetic.sources = [...cosmetic.sources, ...sources];
+  }
+
+  // Attach sources to pet cosmetic sets
+  for (const [setId, sources] of petCosmeticSources.entries()) {
+    const set = petCosmetics[setId];
+    if (set) {
+      set.sources = sources;
+    }
+  }
+
+  // Attach sources to pet skins by finding items with matching pet_skin_unlock field
+  const petSkinItemMap = new Map<string, string>();
+  forEachItem(fiddle, (itemId, item) => {
+    const skinUnlock = item.pet_skin_unlock as string | undefined;
+    if (skinUnlock) {
+      petSkinItemMap.set(skinUnlock, itemId);
+    }
+  });
+  for (const [skinId, skin] of Object.entries(petSkins)) {
+    const itemId = petSkinItemMap.get(skinId);
+    if (itemId) {
+      const itemSrc = itemSources.get(itemId as ItemId);
+      if (itemSrc.length > 0) {
+        skin.sources = itemSrc;
+      }
+    }
+  }
+
   // Recipes already have sources: AcquisitionSource[] from the extractor; fall back to a default
   // source for recipes with none.
   for (const recipe of Object.values(recipes)) {
@@ -395,10 +450,25 @@ function main(): void {
   ).length;
   const cosmeticsWithSources = Object.values(cosmetics).filter((c) => c.sources?.length).length;
   const recipesWithSources = Object.values(recipes).filter((r) => r.sources?.length).length;
+  const animalCosmeticsWithSources = Object.values(animals).reduce(
+    (n, a) => n + Object.values(a.cosmetics).filter((c) => c.sources.length > 0).length,
+    0,
+  );
+  const totalAnimalCosmetics = Object.values(animals).reduce(
+    (n, a) => n + Object.keys(a.cosmetics).length,
+    0,
+  );
+  const petCosmeticsWithSources = Object.values(petCosmetics).filter(
+    (c) => c.sources.length > 0,
+  ).length;
+  const petSkinsWithSources = Object.values(petSkins).filter((s) => s.sources.length > 0).length;
   console.log(
     `  Inline sources: ${itemsWithSources}/${Object.keys(items).length} items, ` +
       `${cosmeticsWithSources}/${Object.keys(cosmetics).length} cosmetics, ` +
-      `${recipesWithSources}/${Object.keys(recipes).length} recipes`,
+      `${recipesWithSources}/${Object.keys(recipes).length} recipes, ` +
+      `${animalCosmeticsWithSources}/${totalAnimalCosmetics} animal cosmetics, ` +
+      `${petCosmeticsWithSources}/${Object.keys(petCosmetics).length} pet cosmetics, ` +
+      `${petSkinsWithSources}/${Object.keys(petSkins).length} pet skins`,
   );
 
   applyItemQuestGates(items, questGates.itemGates);
@@ -437,6 +507,7 @@ function main(): void {
     museum,
     npcs,
     perkTierLevels,
+    pets: { cosmetics: petCosmetics, skins: petSkins },
     questChains: { ...questChainsRaw, fetch: fetchQuestVisibilityData },
     questGates,
     quests,
