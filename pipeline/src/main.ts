@@ -185,6 +185,7 @@ function collectNativeIdsFromSources(
         source.locationIds?.forEach((id) => sets.locations.add(id));
         break;
       case "letter":
+      case "lost_and_found":
       case "mine":
         break;
       case "mines_chest":

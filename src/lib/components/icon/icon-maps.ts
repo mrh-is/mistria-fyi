@@ -88,6 +88,7 @@ export const SOURCE_ICON: Record<Source["type"], LucideIcon> = {
   fish_trap: FishingRod,
   forage: Salad,
   letter: Mail,
+  lost_and_found: Archive,
   mine: Pickaxe,
   mines_chest: Pickaxe,
   mines_dig_site: Pickaxe,

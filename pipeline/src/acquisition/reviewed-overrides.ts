@@ -68,6 +68,57 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
     ].map((id) => [id as ItemId, [{ type: "wishing_well" as const, cost: 100 }]]),
   ),
 
+  // --- Dingy set furniture: Lost and Found chest ---
+  // Wiki: https://fieldsofmistria.wiki.gg/wiki/Lost_and_Found
+  // The dingy set furniture items appear in the Lost and Found chest after completing the
+  // "Lost and Found" story quest. The chest refills weekly; these items are not encoded as
+  // rewards in any native data table.
+  ...Object.fromEntries(
+    [
+      "dingy_flooring_v1",
+      "dingy_flooring_v2",
+      "dingy_wallpaper_v1",
+      "dingy_wallpaper_v2",
+      "dingy_rug_v1",
+      "dingy_rug_v2",
+      "dingy_table_v1",
+      "dingy_table_v2",
+      "dingy_chair_v1",
+      "dingy_chair_v2",
+      "dingy_couch_v1",
+      "dingy_couch_v2",
+      "dingy_window_v1",
+      "dingy_window_v2",
+      "dingy_string_lights_v1",
+      "dingy_string_lights_v2",
+      "dingy_broken_plate_v1",
+      "dingy_broken_plate_v2",
+      "dingy_broken_bottle_v1",
+      "dingy_broken_bottle_v2",
+      "dingy_chipped_cup_v1",
+      "dingy_chipped_cup_v2",
+      "dingy_pile_of_newspapers_v1",
+      "dingy_pile_of_newspapers_v2",
+      "dingy_pile_of_laundry_v1",
+      "dingy_pile_of_laundry_v2",
+      "dingy_garbage_bag_v1",
+      "dingy_garbage_bag_v2",
+      "dingy_mouse_hole_v1",
+      "dingy_mouse_hole_v2",
+    ].map((id) => [
+      id as ItemId,
+      [
+        {
+          type: "lost_and_found" as const,
+          visibility: {
+            type: "questCompleted" as const,
+            questId: "lost_and_found" as QuestId,
+          },
+        },
+      ],
+    ]),
+  ),
+
   // --- Station products: Apiary & Terrarium outputs ---
   // Wiki: https://fieldsofmistria.wiki.gg/wiki/Apiary
   // Honey variants are produced by apiaries with different bee populations. The native data

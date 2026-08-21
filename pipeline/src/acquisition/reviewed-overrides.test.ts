@@ -45,6 +45,38 @@ describe("reviewed overrides", () => {
       expect(source.questId).toBe("the_dragonsworn_tablet");
     });
 
+    it("dingy set items have lost_and_found sources gated behind quest completion", () => {
+      const dingyIds = [
+        "dingy_flooring_v1",
+        "dingy_rug_v1",
+        "dingy_table_v1",
+        "dingy_chair_v1",
+        "dingy_couch_v1",
+        "dingy_window_v1",
+        "dingy_string_lights_v1",
+        "dingy_broken_plate_v1",
+        "dingy_broken_bottle_v1",
+        "dingy_chipped_cup_v1",
+        "dingy_pile_of_newspapers_v1",
+        "dingy_pile_of_laundry_v1",
+        "dingy_garbage_bag_v1",
+        "dingy_mouse_hole_v1",
+        "dingy_wallpaper_v1",
+      ];
+
+      for (const id of dingyIds) {
+        const sources = ITEM_OVERRIDES[id as ItemId];
+        expect(sources, `missing override for ${id}`).toBeDefined();
+        expect(sources).toHaveLength(1);
+        const source = sources[0] as Extract<Source, { type: "lost_and_found" }>;
+        expect(source.type).toBe("lost_and_found");
+        expect(source.visibility).toEqual({
+          type: "questCompleted",
+          questId: "lost_and_found",
+        });
+      }
+    });
+
     it("Dragon Cleric cosmetics are ritual_chamber sources with lost_to_history perk", () => {
       const expectedIds: CosmeticId[] = [
         "back_gear_dragon_cleric_cape" as CosmeticId,
