@@ -529,8 +529,7 @@ export function collectDefaultCosmeticSources(
 }
 
 // misc.ari_stats.starting_inventory and misc.ari_stats.starting_armor provide evidence that
-// these items are available from the start of the game. items.furniture.dingy_set contains the
-// starting home furnishings which are placed in the player's home from the beginning.
+// these items are available from the start of the game.
 export function collectDefaultItemSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
@@ -558,21 +557,6 @@ export function collectDefaultItemSources(
         accumulator.add(itemId as ItemId, DEFAULT_SOURCE, {
           fieldPath: `misc.ari_stats.starting_armor.${slot}`,
           sourcePath: "misc.toml",
-        });
-      }
-    }
-  }
-
-  const allItems = fiddle.items as
-    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
-  const dingySet = allItems?.furniture?.dingy_set;
-  if (dingySet && typeof dingySet === "object") {
-    for (const itemId of Object.keys(dingySet)) {
-      if (itemId === "default") continue;
-      if (itemId in items) {
-        accumulator.add(itemId as ItemId, DEFAULT_SOURCE, {
-          fieldPath: `items.furniture.dingy_set.${itemId}`,
-          sourcePath: "items/furniture.toml",
         });
       }
     }
