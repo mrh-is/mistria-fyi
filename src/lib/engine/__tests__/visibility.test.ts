@@ -77,6 +77,7 @@ function makeTrackerData(overrides: DeepPartial<TrackerData> = {}): TrackerData 
     museum: {},
     npcs: {},
     perkTierLevels: [1, 15, 30, 45, 60],
+    pets: { cosmetics: {}, skins: {} },
     questChains: { crown: [], fetch: {}, heart: {}, stillwell: [], story: {}, tali: [] },
     questGates: {
       animalGates: {},

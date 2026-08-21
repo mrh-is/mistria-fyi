@@ -94,12 +94,13 @@ export function searchItems(
     if (animal.visibility && !isVisible(animal.visibility, progressionState)) continue;
 
     for (const [cosmeticId, cosmetic] of recordEntries(animal.cosmetics)) {
-      if (cosmetic.fullName.toLowerCase().includes(q)) {
+      const fullName = `${animal.name} ${cosmetic.name}`;
+      if (fullName.toLowerCase().includes(q)) {
         results.push({
           available: true,
           category: "animals",
           completed: completed.animalCosmetics[animalId].has(cosmeticId),
-          fullName: cosmetic.fullName,
+          fullName,
           id: `${animalId}:${cosmeticId}`,
           name: cosmetic.name,
         });
