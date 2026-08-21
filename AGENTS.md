@@ -49,8 +49,11 @@ Follow this sequence for every task:
 7. **Test first** — add or update tests for behavioral changes, preferably before implementation.
    Run focused tests during development.
 8. **Verification matrix** — run the complete verification matrix before committing.
-9. **Commit plans first** — commit approved specifications and plans before their implementation
-   begins.
+9. **Commit specs & plans first** — commit approved specifications (`docs/superpowers/specs/`) and
+   implementation plans (`docs/superpowers/plans/`) **before writing any implementation code**. If
+   these files were created in the main checkout before the worktree existed, copy them into the
+   worktree and commit them there as the first commit on the branch. This is not optional; specs and
+   plans are deliverables that belong in the PR alongside the code they describe.
 10. **Deliver** — commit, push, and open a PR that references the issue (`Closes #N`).
 
 > Git pre-commit hooks are developer conveniences, not verification evidence. Agents must run the
