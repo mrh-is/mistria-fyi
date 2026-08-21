@@ -741,8 +741,13 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   });
 
   it("fish_trap", () => {
-    const source: Source = { type: "fish_trap" };
-    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Catch in a fish trap"]);
+    const source: Source = {
+      type: "fish_trap",
+      baitItemIds: ["fish_bait_common" as ItemId],
+    };
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([
+      "Catch in a fish trap (requires bait)",
+    ]);
   });
 
   it("forage with locations", () => {

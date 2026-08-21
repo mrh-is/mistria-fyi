@@ -178,9 +178,91 @@ function collectEarthlyEssenceCosmeticSources(
   }
 }
 
+const RARITY_ORDER = [
+  "junk",
+  "ultra_common",
+  "very_very_common",
+  "very_common",
+  "common",
+  "uncommon",
+  "rare",
+  "very_rare",
+] as const;
+
+interface BaitRange {
+  itemId: ItemId;
+  maxIdx: number;
+  minIdx: number;
+}
+
+type FishRarity = (typeof RARITY_ORDER)[number];
+
+export function buildBaitRanges(fiddle: ParsedGameData): BaitRange[] {
+  const items = fiddle.items as
+    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
+  const baits = items?.other?.apiaries_and_terrariums;
+  if (!baits) return [];
+
+  const ranges: BaitRange[] = [];
+  for (const [itemId, item] of Object.entries(baits)) {
+    if (typeof item !== "object" || item === null) continue;
+    const tags = Array.isArray(item.tags)
+      ? (item.tags as unknown[]).filter((v): v is string => typeof v === "string")
+      : [];
+    if (!tags.includes("fish_bait")) continue;
+
+    const attract = item.attract as Record<string, unknown> | undefined;
+    if (!attract) continue;
+
+    const minRarity = attract.min_rarity;
+    const maxRarity = attract.max_rarity;
+    if (typeof maxRarity !== "string") continue;
+
+    const minIdx = typeof minRarity === "number" ? 0 : rarityIndex(minRarity as string);
+    const maxIdx = rarityIndex(maxRarity);
+
+    ranges.push({ itemId: itemId as ItemId, maxIdx, minIdx });
+  }
+  return ranges;
+}
+
+export function buildFishBiomeMap(fiddle: ParsedGameData): Map<string, MinesBiomeId> {
+  const dungeons = fiddle.dungeons as Record<string, unknown> | undefined;
+  const dungeonsInner = dungeons?.dungeons as Record<string, unknown> | undefined;
+  const rawBiomes = dungeonsInner?.biomes;
+  if (!Array.isArray(rawBiomes)) return new Map();
+
+  const map = new Map<string, MinesBiomeId>();
+  for (const biome of rawBiomes) {
+    if (typeof biome !== "object" || biome === null) continue;
+    const b = biome as Record<string, unknown>;
+    const name = b.name as string | undefined;
+    if (!name) continue;
+
+    const biomeId = name
+      .replace(/^The\s+/i, "")
+      .toLowerCase()
+      .replace(/\s+/g, "_") as MinesBiomeId;
+
+    const votes = b.votes as Record<string, unknown> | undefined;
+    const fishEntries = votes?.fish;
+    if (!Array.isArray(fishEntries)) continue;
+    for (const entry of fishEntries) {
+      if (typeof entry !== "object" || entry === null) continue;
+      const obj = entry as Record<string, unknown>;
+      const fishObj = obj.object as string | undefined;
+      if (fishObj) map.set(fishObj, biomeId);
+    }
+  }
+  return map;
+}
+
 function collectFishSources(fiddle: ParsedGameData, accumulator: ItemSourceAccumulator): void {
   const fish = fiddle.fish as Record<string, Record<string, unknown>> | undefined;
   if (!fish) return;
+
+  const baitRanges = buildBaitRanges(fiddle);
+  const fishBiomeMap = buildFishBiomeMap(fiddle);
 
   for (const [fishId, data] of Object.entries(fish)) {
     if (fishId === "default" || typeof data !== "object" || data === null) continue;
@@ -197,27 +279,84 @@ function collectFishSources(fiddle: ParsedGameData, accumulator: ItemSourceAccum
         ? [retrieval]
         : [];
 
-    const waterTypes = parseWaterTypes(data.water_type);
+    const methods = new Set(retrievalArr.length > 0 ? retrievalArr : ["fishing"]);
+    const isBaitOnly = data.bait_only === true;
+    const rarity = data.rarity as string | undefined;
 
-    if (retrievalArr.includes("divespot")) {
+    if (isBaitOnly) {
+      if (!methods.has("fishing") || !methods.has("mines")) {
+        throw new Error(
+          `bait_only fish "${fishId}" has unexpected retrieval [${[...methods].join(", ")}]; expected ["fishing", "mines"]`,
+        );
+      }
+      if (!rarity) throw new Error(`bait_only fish "${fishId}" is missing a rarity`);
+      const baitItemIds = matchingBaitItemIds(rarity, baitRanges);
+      if (baitItemIds.length === 0) {
+        throw new Error(`bait_only fish "${fishId}" (rarity "${rarity}") matches no bait items`);
+      }
       accumulator.add(targetId, {
-        type: "dive",
-        ...(waterTypes ? { waterTypes } : {}),
+        type: "bait_fish",
+        baitItemIds: baitItemIds as [ItemId, ...ItemId[]],
       });
       continue;
     }
 
-    if (retrievalArr.includes("fishtrap")) {
-      accumulator.add(targetId, { type: "fish_trap" });
+    if (methods.has("fish_trap")) {
+      if (methods.size !== 1) {
+        throw new Error(
+          `fish_trap fish "${fishId}" has unexpected extra retrieval methods: [${[...methods].join(", ")}]`,
+        );
+      }
+      if (!rarity) throw new Error(`fish_trap fish "${fishId}" is missing a rarity`);
+      const baitItemIds = matchingBaitItemIds(rarity, baitRanges);
+      if (baitItemIds.length === 0) {
+        throw new Error(`fish_trap fish "${fishId}" (rarity "${rarity}") matches no bait items`);
+      }
+      accumulator.add(targetId, {
+        type: "fish_trap",
+        baitItemIds: baitItemIds as [ItemId, ...ItemId[]],
+      });
       continue;
     }
 
+    if (methods.has("mines")) {
+      if (methods.size !== 1) {
+        throw new Error(
+          `mines fish "${fishId}" has unexpected extra retrieval methods: [${[...methods].join(", ")}]`,
+        );
+      }
+      const biomeId = fishBiomeMap.get(fishId);
+      accumulator.add(targetId, {
+        type: "mine_fish",
+        ...(biomeId ? { biomeId } : {}),
+      });
+      continue;
+    }
+
+    const waterTypes = parseWaterTypes(data.water_type);
     const availability = buildNaturalAvailability(data);
-    accumulator.add(targetId, {
-      ...(availability ? { availability } : {}),
-      type: "fish",
-      ...(waterTypes ? { waterTypes } : {}),
-    });
+
+    if (methods.has("fishing")) {
+      accumulator.add(targetId, {
+        ...(availability ? { availability } : {}),
+        type: "fish",
+        ...(waterTypes ? { waterTypes } : {}),
+      });
+    }
+
+    if (methods.has("divespot")) {
+      accumulator.add(targetId, {
+        type: "dive",
+        ...(waterTypes ? { waterTypes } : {}),
+      });
+    }
+
+    const unknownMethods = [...methods].filter((m) => m !== "fishing" && m !== "divespot");
+    if (unknownMethods.length > 0) {
+      throw new Error(
+        `fish "${fishId}" has unknown retrieval methods: [${unknownMethods.join(", ")}]`,
+      );
+    }
   }
 }
 
@@ -437,6 +576,11 @@ function collectTreeSources(fiddle: ParsedGameData, accumulator: ItemSourceAccum
   }
 }
 
+function matchingBaitItemIds(rarity: string, baitRanges: BaitRange[]): ItemId[] {
+  const idx = rarityIndex(rarity);
+  return baitRanges.filter((b) => idx >= b.minIdx && idx <= b.maxIdx).map((b) => b.itemId);
+}
+
 function parseHours(hours: unknown): [number, number] | undefined {
   if (hours === false || hours === undefined || hours === null) return undefined;
   if (Array.isArray(hours) && hours.length >= 2) return [hours[0] as number, hours[1] as number];
@@ -481,4 +625,10 @@ function parseWeathersArray(weathers: unknown): undefined | Weather[] {
     return arr.length > 0 ? arr : undefined;
   }
   return undefined;
+}
+
+function rarityIndex(rarity: string): number {
+  const idx = RARITY_ORDER.indexOf(rarity as FishRarity);
+  if (idx === -1) throw new Error(`Unknown fish rarity "${rarity}"`);
+  return idx;
 }
