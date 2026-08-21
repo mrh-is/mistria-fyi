@@ -1,6 +1,7 @@
 import { trackerData } from "$lib/data/index.js";
 import { recordMap } from "$lib/utils";
 
+import type { StoreId } from "$lib/types/tracker-data";
 import type { SegmentLookups } from "$lib/utils/source-segments.js";
 
 /**
@@ -14,7 +15,7 @@ import type { SegmentLookups } from "$lib/utils/source-segments.js";
  * title-cased id for those source types.
  */
 export function buildBaseSegmentLookups(
-  redactedStoreIds: ReadonlySet<string>,
+  redactedStoreIds: ReadonlySet<StoreId>,
 ): Omit<SegmentLookups, "entityVisibility"> {
   return {
     animalNames: {},
@@ -41,10 +42,7 @@ export function buildBaseSegmentLookups(
       ),
     ),
     questNpcIds: recordMap(trackerData.quests.fetch, ({ npc }) => npc),
-    recipeNames: recordMap(
-      trackerData.recipes,
-      (recipe, id) => recipe.presentations[0]?.name ?? id,
-    ),
+    recipeNames: recordMap(trackerData.recipes, ({ name }) => name),
     redactedStoreIds,
     skillNames: recordMap(trackerData.skills, ({ name }) => name),
     stationNames: {},

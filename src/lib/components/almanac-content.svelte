@@ -10,7 +10,7 @@
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
-  import { recordToArray, recordValues } from "$lib/utils";
+  import { recordEntries, recordValues } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
@@ -30,7 +30,7 @@
   }
 
   function itemNameVisible(item: { visibility?: VisibilityCondition }): boolean {
-    return isEntityNameVisible(item.visibility ?? { type: "always" }, userState.progressionState);
+    return isEntityNameVisible(item.visibility, userState.progressionState);
   }
 
   function rowDisplay(
@@ -54,7 +54,7 @@
 
   let redactedStoreIds = $derived(
     new Set(
-      Object.entries(trackerData.stores)
+      recordEntries(trackerData.stores)
         .filter(
           ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
         )
@@ -129,7 +129,7 @@
   />
 {/if}
 
-{#each recordToArray(trackerData.almanac) as [id, cat] (id)}
+{#each recordEntries(trackerData.almanac) as [id, cat] (id)}
   {@const catEntries = cat.items
     .map((id) => [id, trackerData.items[id]] as [ItemId, Item])
     .sort(([, a], [, b]) => a.name.localeCompare(b.name))}
@@ -157,7 +157,7 @@
       {#each displayItems as [itemId, item] (itemId)}
         {@const itemCompleted = isItemCompleted(itemId)}
         {@const itemSources = trackerData.items[itemId].sources ?? []}
-        {@const itemVisibility = item.visibility ?? { type: "always" }}
+        {@const itemVisibility = item.visibility}
         <TrackerRow
           display={rowDisplay(itemId, item, itemSources)}
           lookups={{ ...baseLookups, entityVisibility: itemVisibility }}

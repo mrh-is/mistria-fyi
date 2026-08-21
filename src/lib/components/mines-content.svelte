@@ -16,7 +16,7 @@
   const redactGuard = createRedactionGuard();
 
   function spellNameVisible(spellId: SpellId): boolean {
-    const visibility = trackerData.mines.spells[spellId].visibility ?? { type: "always" };
+    const visibility = trackerData.mines.spells[spellId].visibility;
     return isEntityNameVisible(visibility, userState.progressionState);
   }
 
@@ -197,12 +197,9 @@
           if (spellNameVisible(spell.id) || completed) {
             toggleSpell(spell.id);
           } else {
-            redactGuard.guard(
-              trackerData.mines.spells[spell.id].visibility ?? { type: "always" },
-              () => {
-                toggleSpell(spell.id);
-              },
-            );
+            redactGuard.guard(trackerData.mines.spells[spell.id].visibility, () => {
+              toggleSpell(spell.id);
+            });
           }
         }}
       />

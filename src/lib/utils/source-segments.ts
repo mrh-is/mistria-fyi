@@ -19,7 +19,7 @@ import type { NameLookup, RecipeSourceLookups } from "./format.js";
 export type SegmentLookups = Pick<TrackerData, "categoryVisibility"> &
   RecipeSourceLookups & {
     animalNames: NameLookup<TrackerData["animals"]>;
-    entityVisibility: VisibilityCondition;
+    entityVisibility?: VisibilityCondition;
     itemVisibility: VisibilityLookup<TrackerData["items"]>;
     locationNames: Partial<Record<string, string>>;
     monsterNames: Partial<Record<string, string>>;
@@ -248,9 +248,9 @@ export function buildSourceSegments(
       const storeName = buildStoreName(source.storeId, lookups);
       const qualifier = buildStoreQualifier(source.visibility, lookups, source.storeId);
       const bundleSegment: SourceSegment =
-        lookups.entityVisibility.type === "always"
-          ? `the ${source.bundleName}`
-          : { condition: lookups.entityVisibility, revealed: [`the ${source.bundleName}`] };
+        lookups.entityVisibility && lookups.entityVisibility.type !== "always"
+          ? { condition: lookups.entityVisibility, revealed: [`the ${source.bundleName}`] }
+          : `the ${source.bundleName}`;
       return joinSegments("Purchase ", bundleSegment, " from ", storeName, qualifier);
     }
     case "station": {

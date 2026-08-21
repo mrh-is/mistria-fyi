@@ -16,6 +16,9 @@ export function isNonEmptyArray<T>(arr: T[]): arr is NonEmptyArray<T> {
   return arr.length > 0;
 }
 
+export function recordEntries<K extends string, T>(record: Record<K, T>): [K, T][] {
+  return Object.entries(record) as [K, T][];
+}
 export function recordForEach<K extends string, T>(
   record: Record<K, T>,
   callbackfn: (value: [K, T], index: number, record: Record<K, T>) => void,
@@ -38,9 +41,6 @@ export function recordMap<K extends string, T, U>(
     result[key] = callbackfn.call(thisArg, record[key], key, index, record);
   });
   return result;
-}
-export function recordToArray<K extends string, T>(record: Record<K, T>): [K, T][] {
-  return Object.entries(record) as [K, T][];
 }
 export function recordValues<K extends PropertyKey, T>(record: Record<K, T>): T[] {
   return Object.values(record);

@@ -9,7 +9,7 @@
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
-  import { recordToArray, recordValues } from "$lib/utils";
+  import { recordEntries, recordValues } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
@@ -31,13 +31,13 @@
   const redactGuard = createRedactionGuard();
 
   function itemNameVisible(itemId: ItemId): boolean {
-    const visibility = trackerData.items[itemId].visibility ?? { type: "always" };
+    const visibility = trackerData.items[itemId].visibility;
     return isEntityNameVisible(visibility, userState.progressionState);
   }
 
   let redactedStoreIds = $derived(
     new Set(
-      Object.entries(trackerData.stores)
+      recordEntries(trackerData.stores)
         .filter(
           ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
         )
@@ -120,7 +120,7 @@
     setConfigs: (SetConfig & { setId: MuseumWingSetId })[];
   }
   function wingConfig(wing: MuseumWing): WingConfig {
-    const setConfigs = recordToArray(wing.sets)
+    const setConfigs = recordEntries(wing.sets)
       .map(([id, set]) => {
         return { setId: id, ...setConfig(set) };
       })
@@ -191,7 +191,7 @@
   />
 {/if}
 
-{#each recordToArray(trackerData.museum) as [wingId, wing] (wingId)}
+{#each recordEntries(trackerData.museum) as [wingId, wing] (wingId)}
   {@const config = wingConfig(wing)}
   {#if config.isVisible}
     <ExpandableSection

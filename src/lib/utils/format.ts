@@ -52,13 +52,13 @@ export type RecipeSourceLookups = PartialPick<
     perks: Partial<Record<PerkId, Perk & { skillId: SkillId; tier: number }>>;
     questNames: NameLookup<TrackerData["quests"][QuestType]>;
     recipeNames: NameLookup<TrackerData["recipes"]>;
-    redactedStoreIds?: ReadonlySet<string>;
+    redactedStoreIds?: ReadonlySet<StoreId>;
     skillNames: NameLookup<TrackerData["skills"]>;
   };
 
 /** Shorten repetitive quest name prefixes */
-export function displayQuestName(name: string, questType: string): string {
-  if (questType === "fetch_quests") {
+export function displayQuestName(name: string, questType: QuestType): string {
+  if (questType === "fetch") {
     // "Request for a {item}" / "Request for {item}" → "{item}"
     // "Important Request for a Moon Fruit" → "Moon Fruit (Important)"
     if (name.startsWith("Important ")) {
@@ -66,7 +66,7 @@ export function displayQuestName(name: string, questType: string): string {
     }
     return name.replace(/^Request [Ff]or (an? )?/, "");
   }
-  if (questType === "crown_quests") {
+  if (questType === "crown") {
     // "Crown Request: {item}" or "Crown Request {item}" → "{item}"
     return name.replace(/^Crown Request:?\s*/, "");
   }

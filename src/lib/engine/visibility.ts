@@ -1,4 +1,4 @@
-import { recordKeys, recordToArray } from "$lib/utils";
+import { recordEntries, recordKeys } from "$lib/utils";
 
 import type { CompletedState, QuestState } from "$lib/stores/user-state.svelte.js";
 import type {
@@ -40,7 +40,7 @@ export function deriveProgressionState(
 
   // 1. Quest visibility, per-quest, from actual quest state + chain prerequisites.
   const questVisibility: Record<string, QuestVisibility> = {};
-  for (const [questType, quests] of recordToArray(trackerData.quests)) {
+  for (const [questType, quests] of recordEntries(trackerData.quests)) {
     for (const questId of recordKeys(quests)) {
       const userState: QuestState = completed.questStates[questId] ?? "none";
 
@@ -131,13 +131,19 @@ export function isConditionInvertible(condition: VisibilityCondition): boolean {
 }
 
 export function isEntityNameVisible(
-  entityVisibility: VisibilityCondition,
+  entityVisibility: undefined | VisibilityCondition,
   state: UserProgressionState,
 ): boolean {
   return isVisible(entityVisibility, state);
 }
 
-export function isVisible(condition: VisibilityCondition, state: UserProgressionState): boolean {
+export function isVisible(
+  condition: undefined | VisibilityCondition,
+  state: UserProgressionState,
+): boolean {
+  // Default visibility is always
+  if (!condition) return true;
+
   if (state.showSpoilers) return true;
 
   switch (condition.type) {
@@ -236,7 +242,7 @@ function computeStoredNpcLevel(
   trackerData: TrackerData,
 ): number {
   let level = completed.npcLevels[npcId] ?? 0;
-  for (const [questId, state] of recordToArray(completed.questStates)) {
+  for (const [questId, state] of recordEntries(completed.questStates)) {
     if (state !== "completed") continue;
     if (!(questId in trackerData.quests.story)) continue;
     const quest = trackerData.quests.story[questId];

@@ -5,6 +5,7 @@
   import { trackerData } from "$lib/data/index.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { recordEntries } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
@@ -21,14 +22,14 @@
     id: CosmeticId;
     name: string;
     sources: Source[];
-    visibility: VisibilityCondition;
+    visibility?: VisibilityCondition;
   }
 
   const redactGuard = createRedactionGuard();
 
   let redactedStoreIds = $derived(
     new Set(
-      Object.entries(trackerData.stores)
+      recordEntries(trackerData.stores)
         .filter(
           ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
         )
@@ -66,7 +67,7 @@
         id: id as CosmeticId,
         name: cosmetic.name,
         sources,
-        visibility: cosmetic.visibility ?? { type: "always" },
+        visibility: cosmetic.visibility,
       });
     }
     for (const subCats of Object.values(bySlot)) {

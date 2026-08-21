@@ -1,6 +1,6 @@
 import { trackerData } from "$lib/data/index.js";
 import { filterAvailableItems } from "$lib/engine/availability.js";
-import { recordKeys, recordToArray, recordValues } from "$lib/utils";
+import { recordEntries, recordKeys, recordValues } from "$lib/utils";
 
 import type { CategoryKey } from "$lib/data/categories.js";
 import type { AvailabilityMode, CompletedState } from "$lib/stores/user-state.svelte.js";
@@ -83,14 +83,14 @@ function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
   let total = 0;
   let completed = 0;
   let filtered = 0;
-  for (const [animalId, animal] of recordToArray(trackerData.animals)) {
+  for (const [animalId, animal] of recordEntries(trackerData.animals)) {
     const cosmeticCount = recordKeys(animal.cosmetics).length;
     total += cosmeticCount;
     completed += ctx.completed.animalCosmetics[animalId].size;
     filtered += cosmeticCount - ctx.completed.animalCosmetics[animalId].size;
 
     for (const tier of animal.variantTiers) {
-      for (const [variantId, variant] of recordToArray(tier)) {
+      for (const [variantId, variant] of recordEntries(tier)) {
         total++;
         if (ctx.completed.animals[animalId].has(variantId)) {
           completed++;

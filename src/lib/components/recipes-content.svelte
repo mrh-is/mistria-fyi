@@ -10,7 +10,7 @@
   import { isVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
-  import { recordForEach } from "$lib/utils";
+  import { recordEntries, recordForEach } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
@@ -34,7 +34,7 @@
 
   let redactedStoreIds = $derived(
     new Set(
-      Object.entries(trackerData.stores)
+      recordEntries(trackerData.stores)
         .filter(
           ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
         )
@@ -54,7 +54,7 @@
     name: string;
     nameVisible: boolean;
     sources: Source[];
-    visibility: VisibilityCondition;
+    visibility?: VisibilityCondition;
   }
 
   let recipesByCategory = $derived.by(() => {
@@ -68,7 +68,7 @@
         if (!recipeId || seen.has(recipeId)) continue;
         seen.add(recipeId);
         const recipe = trackerData.recipes[recipeId];
-        const visibility = recipe.visibility ?? { type: "always" };
+        const visibility = recipe.visibility;
         const sources = recipe.sources ?? [];
         entries.push({
           id: recipeId,

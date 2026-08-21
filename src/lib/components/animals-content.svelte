@@ -32,7 +32,7 @@
   }
 
   function isSpeciesVisible(animalId: AnimalId): boolean {
-    const visibility = trackerData.animals[animalId].visibility ?? { type: "always" };
+    const visibility = trackerData.animals[animalId].visibility;
     return isEntityNameVisible(visibility, userState.progressionState);
   }
 

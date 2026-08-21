@@ -4,7 +4,7 @@ import { trackerData } from "$lib/data/index.js";
 import { clampRenownLevel } from "$lib/engine/progress.js";
 import { findRecipesForQuest } from "$lib/engine/quest-rewards.js";
 import { deriveProgressionState, type UserProgressionState } from "$lib/engine/visibility.js";
-import { recordToArray } from "$lib/utils";
+import { recordEntries } from "$lib/utils";
 
 import type {
   AnimalId,
@@ -281,7 +281,7 @@ function createUserState() {
 
       // Animal variants
       if (imported.animals) {
-        for (const [animalId, variants] of recordToArray(imported.animals)) {
+        for (const [animalId, variants] of recordEntries(imported.animals)) {
           const existing = (state.completed.animals[animalId] ??= new SvelteSet<AnimalVariantId>());
           for (const v of variants) {
             if (!existing.has(v)) {
@@ -294,7 +294,7 @@ function createUserState() {
 
       // Animal cosmetics
       if (imported.animalCosmetics) {
-        for (const [animalId, cosmetics] of recordToArray(imported.animalCosmetics)) {
+        for (const [animalId, cosmetics] of recordEntries(imported.animalCosmetics)) {
           const existing = (state.completed.animalCosmetics[animalId] ??=
             new SvelteSet<CosmeticId>());
           for (const c of cosmetics) {
@@ -340,7 +340,7 @@ function createUserState() {
 
       // NPC levels (take max per NPC)
       if (imported.npcLevels) {
-        for (const [id, level] of recordToArray(imported.npcLevels)) {
+        for (const [id, level] of recordEntries(imported.npcLevels)) {
           const current = state.completed.npcLevels[id] ?? 0;
           if (level > current) {
             state.completed.npcLevels[id] = level;
@@ -351,7 +351,7 @@ function createUserState() {
 
       // Skill levels (take max per skill)
       if (imported.skillLevels) {
-        for (const [id, level] of recordToArray(imported.skillLevels)) {
+        for (const [id, level] of recordEntries(imported.skillLevels)) {
           const current = state.completed.skillLevels[id] ?? 0;
           if (level > current) {
             state.completed.skillLevels[id] = level;
@@ -373,7 +373,7 @@ function createUserState() {
       // Quest states (take more advanced state: none < obtained < completed)
       if (imported.questStates) {
         const rank: Record<QuestState, number> = { completed: 2, none: 0, obtained: 1 };
-        for (const [id, importedState] of recordToArray(imported.questStates)) {
+        for (const [id, importedState] of recordEntries(imported.questStates)) {
           const current = state.completed.questStates[id] ?? "none";
           if (rank[importedState] > rank[current]) {
             state.completed.questStates[id] = importedState;

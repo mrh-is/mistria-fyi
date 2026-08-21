@@ -1,7 +1,7 @@
 <script lang="ts">
   import { trackerData } from "$lib/data";
   import { userState } from "$lib/stores/user-state.svelte";
-  import { recordToArray } from "$lib/utils";
+  import { recordEntries } from "$lib/utils";
 
   import AnimalSubcategory from "./animal-subcategory.svelte";
 
@@ -34,7 +34,7 @@
     let completedCount = 0;
     let displayableCount = 0;
     let visibleCosmetics: AnimalSubcategoryRowProps<CosmeticId>[] = [];
-    recordToArray(animal.cosmetics).forEach(([cid, { name }]) => {
+    recordEntries(animal.cosmetics).forEach(([cid, { name }]) => {
       displayableCount++;
       const cosmeticId = cid;
       const completed = hasCompletedCosmetic(animalId, cosmeticId);

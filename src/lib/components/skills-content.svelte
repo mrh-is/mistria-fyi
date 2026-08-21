@@ -3,10 +3,10 @@
   import { trackerData } from "$lib/data/index.js";
   import { MAX_SKILL_LEVEL } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
-  import { recordToArray } from "$lib/utils";
+  import { recordEntries } from "$lib/utils";
 
   let skills = $derived(
-    recordToArray(trackerData.skills)
+    recordEntries(trackerData.skills)
       .map(([id, { name }]) => ({ id, name }))
       .sort((a, b) => a.name.localeCompare(b.name)),
   );

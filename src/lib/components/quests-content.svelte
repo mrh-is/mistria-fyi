@@ -25,8 +25,11 @@
     return isEntityNameVisible(questVisibility(questType, questId), userState.progressionState);
   }
 
-  function questVisibility(questType: QuestType, questId: QuestId): VisibilityCondition {
-    return trackerData.quests[questType][questId].visibility ?? { type: "always" };
+  function questVisibility(
+    questType: QuestType,
+    questId: QuestId,
+  ): undefined | VisibilityCondition {
+    return trackerData.quests[questType][questId].visibility;
   }
 
   function isQuestTypeComplete(questIds: QuestId[]): boolean {
@@ -53,13 +56,13 @@
     );
   }
 
-  const typeLabels: Record<string, string> = {
-    crown_quests: "Crown Quests",
-    fetch_quests: "Fetch Quests",
-    heart_quests: "Heart Quests",
-    stillwell_challenges: "Stillwell Challenges",
-    story_quests: "Story Quests",
-    tali_challenges: "Taliferro Challenges",
+  const typeLabels: Record<QuestType, string> = {
+    cooking: "Cooking Challenges",
+    crown: "Crown Quests",
+    fetch: "Fetch Quests",
+    heart: "Heart Quests",
+    mission: "Mission Quests",
+    story: "Story Quests",
   };
 
   const typeOrder = ["story", "heart", "fetch", "crown", "mission", "cooking"] as QuestType[];
@@ -125,7 +128,7 @@
 
 {#each typeOrder as questType (questType)}
   {@const categoryRevealed = isVisible(
-    trackerData.categoryVisibility[questType] ?? { type: "always" },
+    trackerData.categoryVisibility[questType],
     userState.progressionState,
   )}
   {@const chainOrder =
@@ -157,7 +160,7 @@
   {#if visibleQuests.length > 0}
     <ExpandableSection
       count={quests.filter((q) => getQuestState(q.id) === "completed").length}
-      name={categoryRevealed ? (typeLabels[questType] ?? questType) : "Redacted"}
+      name={categoryRevealed ? typeLabels[questType] : "Redacted"}
       total={quests.length}
     >
       {#each visibleQuests as quest (quest.id)}

@@ -7,6 +7,7 @@
   import { searchItems } from "$lib/engine/search.js";
   import { isVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { recordEntries } from "$lib/utils";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
@@ -43,7 +44,7 @@
 
   let redactedStoreIds = $derived(
     new Set(
-      Object.entries(trackerData.stores)
+      recordEntries(trackerData.stores)
         .filter(
           ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
         )
@@ -138,7 +139,7 @@
       <div class="min-w-0 flex-1">
         <TrackerRow
           display={rowDisplay(result)}
-          lookups={{ ...baseLookups, entityVisibility: { type: "always" } }}
+          lookups={baseLookups}
           name={result.detail ? `${label} ${result.detail}` : label}
           sources={getSources(result)}
           onToggle={() => {

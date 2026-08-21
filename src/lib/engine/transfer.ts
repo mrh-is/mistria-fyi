@@ -1,5 +1,5 @@
 import { trackerData } from "$lib/data/index.js";
-import { recordKeys, recordToArray, recordValues } from "$lib/utils";
+import { recordEntries, recordKeys, recordValues } from "$lib/utils";
 
 import type { CompletedState, QuestState } from "$lib/stores/user-state.svelte.js";
 import type {
@@ -364,11 +364,11 @@ function getAnimalCosmeticOrder(): { animalId: AnimalId; cosmeticId: CosmeticId 
 
 function getAnimalVariantOrder(): { animalId: AnimalId; variantId: AnimalVariantId }[] {
   const result: { animalId: AnimalId; variantId: AnimalVariantId }[] = [];
-  for (const [animalId, animal] of recordToArray(trackerData.animals).sort(([a], [b]) =>
+  for (const [animalId, animal] of recordEntries(trackerData.animals).sort(([a], [b]) =>
     a.localeCompare(b),
   )) {
     for (const tier of animal.variantTiers) {
-      for (const [variantId, variant] of recordToArray(tier).sort(([a], [b]) =>
+      for (const [variantId, variant] of recordEntries(tier).sort(([a], [b]) =>
         a.localeCompare(b),
       )) {
         if (!(variant.source.type === "default")) {
