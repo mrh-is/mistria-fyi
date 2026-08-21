@@ -68,6 +68,7 @@ const BASE_LOOKUPS: SegmentLookups = {
   perkTierLevels: [1, 5, 10, 15, 20],
   questNames: {},
   questNpcIds: {},
+  questTypes: {},
   recipeNames: {},
   skillNames: { ["cooking" as SkillId]: "Cooking" },
   stationNames: {},
