@@ -180,6 +180,8 @@ export function buildSourceSegments(
         : formatDateLabel(season, day);
       return [`Receive in a letter after reaching ${dateStr}`];
     }
+    case "lost_and_found":
+      return ["Obtain from the Lost and Found chest"];
     case "mine": {
       const biomeLabel = buildBiomeLabel(source.biomeId, lookups);
       return joinSegments("Mine in ", biomeLabel);

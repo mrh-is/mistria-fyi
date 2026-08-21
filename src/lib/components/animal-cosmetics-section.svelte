@@ -1,7 +1,9 @@
 <script lang="ts">
   import { trackerData } from "$lib/data";
+  import { isVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte";
   import { recordEntries } from "$lib/utils";
+  import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
 
   import AnimalSubcategory from "./animal-subcategory.svelte";
 
@@ -57,6 +59,18 @@
     };
   }
 
+  let redactedStoreIds = $derived(
+    new Set(
+      recordEntries(trackerData.stores)
+        .filter(
+          ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
+        )
+        .map(([id]) => id),
+    ),
+  );
+
+  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
+
   let {
     areAllAnimalsComplete,
     isAnimalComplete,
@@ -73,6 +87,7 @@
   completionCheck={hasCompletedCosmetic}
   hasDisplayableItem={hasDisplayableCosmetic}
   {isAnimalComplete}
+  lookups={baseLookups}
   name="Cosmetics"
   {sectionConfig}
   toggleCompletion={(animalId: AnimalId, variantId: CosmeticId) => {

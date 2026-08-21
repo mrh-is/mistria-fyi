@@ -2,28 +2,21 @@
   import { Icon } from "$lib/components/icon/index.js";
 
   interface Props {
-    levelInRank?: number;
-    levelsPerRank?: number;
+    currentLevel: number;
     maxLevel: number;
     minLevel: number;
     name: string;
     starColor: string;
-    state: "completed" | "current" | "upcoming";
   }
 
-  let {
-    levelInRank = 0,
-    levelsPerRank = 10,
-    maxLevel,
-    minLevel,
-    name,
-    starColor,
-    state,
-  }: Props = $props();
+  let { currentLevel, maxLevel, minLevel, name, starColor }: Props = $props();
 
-  let fillPct = $derived(
-    state === "completed" ? 100 : state === "current" ? (levelInRank / levelsPerRank) * 100 : 0,
+  let state: "completed" | "current" | "upcoming" = $derived(
+    currentLevel < minLevel ? "upcoming" : currentLevel > maxLevel ? "completed" : "current",
   );
+  let currentLevelInRank = $derived(currentLevel - minLevel + 1);
+  let totalLevelsInRank = $derived(maxLevel - minLevel + 1);
+  let fillPct = $derived(Math.min(Math.max(currentLevelInRank, 0) / totalLevelsInRank, 1) * 100);
 </script>
 
 <div
@@ -68,13 +61,17 @@
     >
       {name}
     </span>
-    <span class="text-xs text-muted-foreground">Lv {minLevel}–{maxLevel}</span>
+    {#if maxLevel === minLevel}
+      <span class="text-xs text-muted-foreground">Lv {minLevel}</span>
+    {:else}
+      <span class="text-xs text-muted-foreground">Lv {minLevel}–{maxLevel}</span>
+    {/if}
   </div>
 
   <!-- Current rank progress indicator -->
   {#if state === "current"}
     <span class="shrink-0 text-xs text-muted-foreground tabular-nums">
-      {levelInRank}/{levelsPerRank}
+      {currentLevelInRank}/{totalLevelsInRank}
     </span>
   {:else if state === "completed"}
     <Icon.ProgressMark

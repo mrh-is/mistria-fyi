@@ -38,8 +38,8 @@ describe("extractTownRanks", () => {
 
     const result = extractTownRanks(fiddle);
     expect(result).toEqual([
-      { levels: { start: 1, end: 10 }, name: "Newcomer" },
-      { levels: { start: 11, end: 19 }, name: "Resident" },
+      { levels: { start: 0, end: 9 }, name: "Newcomer" },
+      { levels: { start: 10, end: 19 }, name: "Resident" },
       { levels: { start: 20, end: 20 }, name: "Citizen" },
     ]);
   });
@@ -53,19 +53,20 @@ describe("extractTownRanks", () => {
     });
 
     const result = extractTownRanks(fiddle);
-    expect(result[0].levels).toEqual({ start: 1, end: 5 });
-    expect(result[1].levels).toEqual({ start: 6, end: 10 });
+    expect(result[0].levels).toEqual({ start: 0, end: 4 });
+    expect(result[1].levels).toEqual({ start: 5, end: 5 });
   });
 
   it("defaults to 10 levels per rank when field is missing", () => {
     const fiddle = makeFiddle({
       renown: {
-        ranks: [{ name: "Only" }],
+        ranks: [{ name: "Rank A" }, { name: "Rank B" }],
       },
     });
 
     const result = extractTownRanks(fiddle);
-    expect(result[0].levels).toEqual({ start: 1, end: 10 });
+    expect(result[0].levels).toEqual({ start: 0, end: 9 });
+    expect(result[1].levels).toEqual({ start: 10, end: 10 });
   });
 
   it("uses 'Unknown' as name fallback", () => {

@@ -80,13 +80,7 @@ function makeTrackerData(overrides: DeepPartial<TrackerData> = {}): TrackerData 
     npcs: {},
     perkTierLevels: [1, 15, 30, 45, 60],
     pets: { cosmetics: {}, skins: {} },
-    questChains: { crown: [], fetch: {}, heart: {}, stillwell: [], story: {}, tali: [] },
-    questGates: {
-      animalGates: {},
-      itemGates: {},
-      progressionFlagToQuests: {},
-      spellGates: {},
-    },
+    questOrder: {},
     quests: {
       cooking: {},
       crown: {},
@@ -287,19 +281,9 @@ const seridia = "seridia" as NpcId;
 const caldarus = "caldarus" as NpcId;
 const holt = "holt" as NpcId;
 
-const emptyStoryChains = {
-  crown: [],
-  fetch: {},
-  heart: {},
-  stillwell: [],
-  story: {},
-  tali: [],
-};
-
 describe("deriveProgressionState", () => {
   it("marks completed quests as completed", () => {
     const trackerData = makeTrackerData({
-      questChains: { ...emptyStoryChains, story: { [repairTheInn]: { prerequisites: [] } } },
       quests: { [story]: { [repairTheInn]: { name: "Repair the Inn" } } },
     });
     const completed = makeCompleted({
@@ -312,11 +296,14 @@ describe("deriveProgressionState", () => {
 
   it("marks obtained quests as available", () => {
     const trackerData = makeTrackerData({
-      questChains: {
-        ...emptyStoryChains,
-        story: { [theSecondQuest]: { prerequisites: [firstQuest] } },
+      quests: {
+        [story]: {
+          [theSecondQuest]: {
+            name: "Second",
+            visibility: { type: "questCompleted", questId: firstQuest },
+          },
+        },
       },
-      quests: { [story]: { [theSecondQuest]: { name: "Second" } } },
     });
     const completed = makeCompleted({
       questStates: { [theSecondQuest]: "obtained" },
@@ -329,7 +316,6 @@ describe("deriveProgressionState", () => {
 
   it("makes first story quest available when none completed", () => {
     const trackerData = makeTrackerData({
-      questChains: { ...emptyStoryChains, story: { [firstQuest]: { prerequisites: [] } } },
       quests: { [story]: { [firstQuest]: { name: "First" } } },
     });
     const completed = makeCompleted();
@@ -346,10 +332,6 @@ describe("deriveProgressionState", () => {
           name: "Seridia",
           visibility: { type: "questCompleted", questId: breakingTheFinalSeal },
         },
-      },
-      questChains: {
-        ...emptyStoryChains,
-        story: { [breakingTheFinalSeal]: { prerequisites: [] } },
       },
       quests: {
         [story]: { [breakingTheFinalSeal]: { name: "Breaking the Final Seal" } },
@@ -410,10 +392,6 @@ describe("deriveProgressionState", () => {
           name: "Caldarus",
           visibility: { type: "questCompleted", questId: breakingTheFireSeal },
         },
-      },
-      questChains: {
-        ...emptyStoryChains,
-        story: { [breakingTheFireSeal]: { prerequisites: [] } },
       },
       quests: {
         [story]: {
@@ -499,7 +477,6 @@ describe("satisfyCondition", () => {
 
   it("marks quest as completed for questCompleted", () => {
     const trackerData = makeTrackerData({
-      questChains: { ...emptyStoryChains, story: { [repairTheInn]: { prerequisites: [] } } },
       quests: { [story]: { [repairTheInn]: { name: "Repair the Inn" } } },
     });
     const completed = makeCompleted();
@@ -536,17 +513,13 @@ describe("satisfyCondition", () => {
 
   it("completes quest prerequisites when satisfying a chained quest", () => {
     const trackerData = makeTrackerData({
-      questChains: {
-        ...emptyStoryChains,
-        story: {
-          [firstQuest]: { prerequisites: [] },
-          [theSecondQuest]: { prerequisites: [firstQuest] },
-        },
-      },
       quests: {
         [story]: {
           [firstQuest]: { name: "First" },
-          [theSecondQuest]: { name: "Second" },
+          [theSecondQuest]: {
+            name: "Second",
+            visibility: { type: "questCompleted", questId: firstQuest },
+          },
         },
       },
     });
@@ -560,10 +533,7 @@ describe("satisfyCondition", () => {
     const thirdCrown = "crown_3" as QuestId;
     const trackerData = makeTrackerData({
       categoryVisibility: { crown: { type: "always" } },
-      questChains: {
-        ...emptyStoryChains,
-        crown: [firstQuest, theSecondQuest, thirdCrown],
-      },
+      questOrder: { crown: [firstQuest, theSecondQuest, thirdCrown] },
       quests: {
         [crown]: {
           [firstQuest]: { name: "Crown 1" },
@@ -583,7 +553,6 @@ describe("satisfyCondition", () => {
 describe("satisfyCondition → deriveProgressionState round-trips", () => {
   it("hides then reveals an entity after satisfying its condition", () => {
     const trackerData = makeTrackerData({
-      questChains: { ...emptyStoryChains, story: { [repairTheInn]: { prerequisites: [] } } },
       quests: { [story]: { [repairTheInn]: { name: "Repair the Inn" } } },
     });
     const entityCondition: VisibilityCondition = {
@@ -602,7 +571,6 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
 
   it("reveals source detail and entity name at their separate thresholds", () => {
     const trackerData = makeTrackerData({
-      questChains: { ...emptyStoryChains, story: { [repairTheInn]: { prerequisites: [] } } },
       quests: { [story]: { [repairTheInn]: { name: "Repair the Inn" } } },
     });
     const entityCondition: VisibilityCondition = {
@@ -636,10 +604,6 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
           visibility: { type: "questCompleted", questId: breakingTheFireSeal },
         },
       },
-      questChains: {
-        ...emptyStoryChains,
-        story: { [breakingTheFireSeal]: { prerequisites: [] } },
-      },
       quests: {
         [story]: { [breakingTheFireSeal]: { name: "Breaking the Fire Seal" } },
       },
@@ -661,17 +625,13 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
 
   it("completing a chain quest cascades visibility to gated items", () => {
     const trackerData = makeTrackerData({
-      questChains: {
-        ...emptyStoryChains,
-        story: {
-          [firstQuest]: { prerequisites: [] },
-          [theSecondQuest]: { prerequisites: [firstQuest] },
-        },
-      },
       quests: {
         [story]: {
           [firstQuest]: { name: "First" },
-          [theSecondQuest]: { name: "Second" },
+          [theSecondQuest]: {
+            name: "Second",
+            visibility: { type: "questCompleted", questId: firstQuest },
+          },
         },
       },
     });
@@ -691,7 +651,6 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
 
   it("just-this-item does not cascade quest state", () => {
     const trackerData = makeTrackerData({
-      questChains: { ...emptyStoryChains, story: { [repairTheInn]: { prerequisites: [] } } },
       quests: { [story]: { [repairTheInn]: { name: "Repair the Inn" } } },
     });
     const entityCondition: VisibilityCondition = {

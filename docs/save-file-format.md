@@ -3,6 +3,9 @@
 Reference for the `.sav` file format used by Fields of Mistria. Documented from a v1.0.2 save file;
 earlier versions use the same binary container but may differ in JSON schemas.
 
+A reference save file, its unpacked JSON representation, and a field-level schema breakdown live at
+`pipeline/input/save/`.
+
 ## Binary container
 
 A `.sav` file is a raw **deflate**-compressed binary blob (not gzip, not zip). Decompress with

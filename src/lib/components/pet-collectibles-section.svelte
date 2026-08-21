@@ -2,14 +2,29 @@
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
+  import { isVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { recordEntries } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
+  import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { PetCosmeticSetId, PetSkinId } from "$lib/types/tracker-data.js";
 
   let { areAllAnimalsComplete }: { areAllAnimalsComplete: () => boolean } = $props();
+
+  let redactedStoreIds = $derived(
+    new Set(
+      recordEntries(trackerData.stores)
+        .filter(
+          ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
+        )
+        .map(([id]) => id),
+    ),
+  );
+
+  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
 
   let petCosmeticEntries = $derived(
     Object.entries(trackerData.pets.cosmetics)
@@ -72,6 +87,7 @@
     {#each visibleCosmeticEntries as entry (entry.id)}
       <TrackerRow
         display={cosmeticDisplay(entry.id)}
+        lookups={baseLookups}
         name={entry.name}
         sources={entry.sources}
         onToggle={() => {
@@ -96,6 +112,7 @@
     {#each visibleSkinEntries as entry (entry.id)}
       <TrackerRow
         display={skinDisplay(entry.id)}
+        lookups={baseLookups}
         name={entry.name}
         sources={entry.sources}
         onToggle={() => {

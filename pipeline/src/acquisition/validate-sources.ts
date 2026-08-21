@@ -87,6 +87,7 @@ const SOURCE_FIELDS = {
   fish_trap: [],
   forage: ["locationIds"],
   letter: ["trigger", "triggerDate", "triggerItemId"],
+  lost_and_found: [],
   mine: ["biomeId"],
   mines_chest: ["biomeId", "lootGroup", "perkId"],
   mines_dig_site: ["biomeId", "perkId"],
