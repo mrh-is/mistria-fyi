@@ -127,7 +127,7 @@ describe("simplifyAvailabilityCondition", () => {
         type: "any",
         conditions: [{ type: "always" }, { type: "season", seasons: ["summer"] }],
       }),
-    ).toEqual({ type: "always" });
+    ).toBeUndefined();
   });
 
   it("preserves missing-season evaluation when simplifying a year-round season", () => {

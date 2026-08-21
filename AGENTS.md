@@ -101,3 +101,39 @@ These rules prevent accidental damage to generated or vendored code:
   Branded IDs for type safety.
 - **Rules**: `eqeqeq`, `prefer-const` (except `.svelte`), `no-var`, `object-shorthand`,
   `prefer-template`, `curly` (multi-line).
+
+## 7. Token Efficiency
+
+This project has a history of heavy agent usage. Follow these rules to keep token consumption
+reasonable.
+
+### Reading files
+
+- **Use `offset` & `limit`** on the Read tool whenever you need a specific function, type, or
+  section. Reading 30 targeted lines instead of 500 saves 10–20K tokens per call.
+- **Never read `src/lib/data/tracker-data.json`** — it is large generated data. Read the types in
+  `tracker-data.ts` or the pipeline source instead.
+- **Don't re-read files you already have in context.** If compression has dropped a file's contents,
+  re-read only the section you need, not the entire file.
+
+### Verification & commands
+
+- **Run the full verification matrix once before committing**, not after every edit. During
+  development, run only the specific test file or check that covers your change.
+- **Truncate verbose output.** Pipe lint, test, & build commands through `tail -30` unless you need
+  the full output to diagnose a failure. Example: `pnpm run lint 2>&1 | tail -30`.
+- **Batch grep patterns** into a single `rg` call with alternation rather than running separate
+  searches.
+
+### Session & agent strategy
+
+- **Keep sessions focused.** One concern per session. Don't let sessions grow past ~100 turns if
+  avoidable; long sessions pay a compounding context-compression tax.
+- **Prefer forks over fresh subagents for research.** Forks share the parent's prompt cache; fresh
+  agents pay the full context setup cost and re-read the same files from scratch.
+- **Use subagent-driven development (SDD) sparingly.** SDD is expensive because each agent re-reads
+  shared context files independently. Reserve it for genuinely parallelizable work with independent
+  file sets. For most tasks in this project, sequential work with targeted forks is far cheaper.
+- **Don't paste handoff reports when continuing across sessions.** Give the new session the branch
+  name and issue number and let it read the PR/issue via `gh`. Handoff blobs duplicate what
+  `gh issue view` and `git log` already provide.

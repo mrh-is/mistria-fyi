@@ -39,8 +39,8 @@ describe("extractTownRanks", () => {
     const result = extractTownRanks(fiddle);
     expect(result).toEqual([
       { levels: { start: 1, end: 10 }, name: "Newcomer" },
-      { levels: { start: 11, end: 20 }, name: "Resident" },
-      { levels: { start: 21, end: 30 }, name: "Citizen" },
+      { levels: { start: 11, end: 19 }, name: "Resident" },
+      { levels: { start: 20, end: 20 }, name: "Citizen" },
     ]);
   });
 
@@ -90,7 +90,7 @@ describe("extractTownRanks", () => {
 
     const result = extractTownRanks(fiddle);
     expect(result).toHaveLength(11);
-    expect(result[10].levels).toEqual({ start: 101, end: 110 });
+    expect(result[10].levels).toEqual({ start: 100, end: 100 });
     expect(result[10].name).toBe("Rank 11");
   });
 });

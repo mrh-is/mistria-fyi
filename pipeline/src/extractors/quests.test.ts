@@ -24,7 +24,7 @@ describe("extractQuests", () => {
     expect(extractQuests(fiddle)).toEqual(emptyQuests);
   });
 
-  it("maps a populated tracked quest with its name and NPC", () => {
+  it("maps a populated tracked quest with its name, NPC, and itemId", () => {
     vi.spyOn(console, "log").mockImplementation(() => undefined);
     const fiddle = {
       quests: {
@@ -32,6 +32,7 @@ describe("extractQuests", () => {
           meet_juniper: {
             name: "Meet Juniper",
             npc_for_icon: "juniper",
+            stages: [{ requirements: { has_item: "wild_berries" } }],
           },
         },
       },
@@ -41,6 +42,7 @@ describe("extractQuests", () => {
       ...emptyQuests,
       fetch: {
         meet_juniper: {
+          itemId: "wild_berries",
           name: "Meet Juniper",
           npc: "juniper",
         },

@@ -75,6 +75,7 @@ export interface Festival {
 }
 export type FestivalId = string & { readonly __brand: "FestivalId" };
 export interface FetchQuest extends Quest {
+  itemId: ItemId;
   npc: NpcId;
 }
 export interface HeartLevelChange {
@@ -132,8 +133,7 @@ export interface Range {
   start: number;
 }
 export interface Recipe extends TrackerEntity {
-  memberItemIds: ItemId[];
-  presentations: RecipePresentation[];
+  name: string;
 }
 export type RecipeId = string & { readonly __brand: "RecipeId" };
 export interface RecipePresentation {

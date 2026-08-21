@@ -408,8 +408,7 @@ describe("assignEntityVisibility — recipes", () => {
     const trackerData = makeTrackerData({
       recipes: {
         stew: {
-          memberItemIds: [],
-          presentations: [],
+          name: "Test Recipe",
           sources: [{ type: "perk", perkId: "taste_maker" as PerkId }],
         },
       },
@@ -439,8 +438,7 @@ describe("assignEntityVisibility — recipes", () => {
     const trackerData = makeTrackerData({
       recipes: {
         stairs: {
-          memberItemIds: [],
-          presentations: [],
+          name: "Test Recipe",
           sources: [{ type: "store", storeId: "carpenter" as StoreId }],
         },
       },
@@ -472,8 +470,7 @@ describe("assignEntityVisibility — recipes", () => {
     const trackerData = makeTrackerData({
       recipes: {
         basic_dish: {
-          memberItemIds: [],
-          presentations: [],
+          name: "Test Recipe",
           sources: [{ type: "default" }],
         },
       },
@@ -486,15 +483,14 @@ describe("assignEntityVisibility — recipes", () => {
     );
     const recipe = trackerData.recipes["basic_dish" as RecipeId];
     expect(recipe.visibility).toBeUndefined();
-    expect(recipe.sources?.[0]?.visibility).toEqual({ type: "always" });
+    expect(recipe.sources?.[0]?.visibility).toBeUndefined();
   });
 
   it("gives a quest-sourced recipe entity questCompleted and source questAvailable", () => {
     const trackerData = makeTrackerData({
       recipes: {
         scroll_of_the_sword: {
-          memberItemIds: [],
-          presentations: [],
+          name: "Test Recipe",
           sources: [
             {
               type: "quest",
@@ -530,8 +526,7 @@ describe("assignEntityVisibility — recipes", () => {
       },
       recipes: {
         crystal_lamp: {
-          memberItemIds: [],
-          presentations: [],
+          name: "Test Recipe",
           sources: [
             {
               type: "mines_chest",
@@ -563,8 +558,7 @@ describe("assignEntityVisibility — recipes", () => {
     const trackerData = makeTrackerData({
       recipes: {
         set_reward: {
-          memberItemIds: [],
-          presentations: [],
+          name: "Test Recipe",
           sources: [{ type: "museum_donation", setCount: 1, wingId: "wing_a" as never }],
         },
       },
@@ -577,15 +571,14 @@ describe("assignEntityVisibility — recipes", () => {
     );
     const recipe = trackerData.recipes["set_reward" as RecipeId];
     expect(recipe.visibility).toBeUndefined();
-    expect(recipe.sources?.[0]?.visibility).toEqual({ type: "always" });
+    expect(recipe.sources?.[0]?.visibility).toBeUndefined();
   });
 
   it("treats scroll_bundle sources the same as store sources", () => {
     const trackerData = makeTrackerData({
       recipes: {
         bundle_recipe: {
-          memberItemIds: [],
-          presentations: [],
+          name: "Test Recipe",
           sources: [{ type: "scroll_bundle", bundleName: "Void Set", storeId: "zorel" as StoreId }],
         },
       },
@@ -621,8 +614,7 @@ describe("assignEntityVisibility — recipes", () => {
     const trackerData = makeTrackerData({
       recipes: {
         general_dish: {
-          memberItemIds: [],
-          presentations: [],
+          name: "Test Recipe",
           sources: [
             {
               type: "store",
@@ -661,8 +653,7 @@ describe("assignEntityVisibility — recipes", () => {
     const trackerData = makeTrackerData({
       recipes: {
         espresso: {
-          memberItemIds: [],
-          presentations: [],
+          name: "Test Recipe",
           sources: [
             {
               type: "store",
@@ -710,8 +701,7 @@ describe("assignEntityVisibility — recipes", () => {
     const trackerData = makeTrackerData({
       recipes: {
         and_gated_dish: {
-          memberItemIds: [],
-          presentations: [],
+          name: "Test Recipe",
           sources: [
             {
               type: "store",
@@ -759,8 +749,7 @@ describe("assignEntityVisibility — recipes", () => {
     const trackerData = makeTrackerData({
       recipes: {
         or_gated_dish: {
-          memberItemIds: [],
-          presentations: [],
+          name: "Test Recipe",
           sources: [
             {
               type: "store",
@@ -808,8 +797,7 @@ describe("assignEntityVisibility — recipes", () => {
     const trackerData = makeTrackerData({
       recipes: {
         multi_source: {
-          memberItemIds: [],
-          presentations: [],
+          name: "Test Recipe",
           sources: [
             { type: "default" },
             { type: "quest", questId: "some_quest" as QuestId, questType: "story_quests" as never },

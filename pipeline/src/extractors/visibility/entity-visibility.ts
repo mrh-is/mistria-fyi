@@ -6,7 +6,6 @@ import type {
   NpcId,
   QuestId,
   SkillId,
-  SpellId,
   StoreId,
   TrackerData,
 } from "$lib/types/tracker-data.js";
@@ -95,7 +94,7 @@ export function assignEntityVisibility(
   assignRecipeVisibility(trackerData, ctx);
   assignCosmeticVisibility(trackerData, ctx);
   assignAnimalVisibility(trackerData, fiddle);
-  assignSpellVisibility(trackerData, fiddle, cutsceneMap);
+  assignSpellVisibility(trackerData);
   assignQuestVisibility(trackerData, cutsceneMap, questChains);
   stripAllAlwaysVisibility(trackerData);
 }
@@ -374,28 +373,26 @@ function assignRecipeVisibility(trackerData: TrackerData, ctx: SourceVisibilityC
   }
 }
 
-function assignSpellVisibility(
-  trackerData: TrackerData,
-  fiddle: ParsedGameData,
-  cutsceneMap: CutsceneQuestMap,
-): void {
-  const cutscenes = getCutsceneRecords(fiddle);
+/**
+ * Hardcoded spell → source-quest mappings. The cutscene chain (quest → seal break → post-cutscene
+ * → spell_to_unlock) is too indirect for the cutsceneMap to trace automatically: the post-seal
+ * cutscenes lack quest_to_start/quest_to_progress and aren't referenced in quest stage queries.
+ * full_restore has no quest at all (mines level 10 reward).
+ */
+const SPELL_SOURCES: Partial<Record<string, QuestId>> = {
+  fire_breath: "breaking_the_fire_seal" as QuestId,
+  growth: "the_earth_tablet" as QuestId,
+  sacred_light: "find_the_magic_key" as QuestId,
+  summon_rain: "the_water_tablet" as QuestId,
+};
 
-  for (const [cutsceneId, cutscene] of Object.entries(cutscenes)) {
-    if (cutsceneId === "default") continue;
-    const spellId = cutscene.spell_to_unlock;
-    if (typeof spellId !== "string" || spellId === "<n/a>") continue;
-
-    const spell = trackerData.mines.spells[spellId as SpellId];
-    if (!spell) continue;
-
-    const entry = cutsceneMap[cutsceneId];
-    spell.visibility = entry
-      ? {
-          type: entry.phase === "completed" ? "questCompleted" : "questAvailable",
-          questId: entry.questId,
-        }
-      : ALWAYS;
+function assignSpellVisibility(trackerData: TrackerData): void {
+  for (const [spellId, spell] of Object.entries(trackerData.mines.spells)) {
+    const questId = SPELL_SOURCES[spellId];
+    if (questId) {
+      spell.visibility = { type: "questCompleted", questId };
+      spell.sources = [{ type: "quest", questId, questType: "story", trigger: "completion" }];
+    }
   }
 }
 
@@ -563,6 +560,18 @@ function stripAllAlwaysVisibility(trackerData: TrackerData): void {
   }
   for (const store of Object.values(trackerData.stores)) {
     if (isAlwaysVisible(store.visibility)) delete store.visibility;
+  }
+
+  for (const entity of [
+    ...Object.values(trackerData.items),
+    ...Object.values(trackerData.recipes),
+    ...Object.values(trackerData.cosmetics),
+  ]) {
+    for (const source of entity.sources ?? []) {
+      if ("visibility" in source && isAlwaysVisible(source.visibility)) {
+        delete source.visibility;
+      }
+    }
   }
 
   const filtered: Partial<Record<string, VisibilityCondition>> = {};

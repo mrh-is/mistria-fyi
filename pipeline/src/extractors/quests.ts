@@ -1,6 +1,6 @@
 import { forEachQuest, QUEST_TYPE_MAP, TRACKED_QUEST_GROUPS } from "../extractor-helpers.js";
 
-import type { NpcId, QuestId, QuestType, TrackerData } from "$lib/types/tracker-data.js";
+import type { ItemId, NpcId, QuestId, QuestType, TrackerData } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
 
@@ -26,7 +26,9 @@ export function extractQuests(fiddle: ParsedGameData): TrackerData["quests"] {
 
     if (outputType === "fetch") {
       const npc = quest.npc_for_icon as string | undefined;
+      const itemId = extractFetchQuestItemId(questId, quest);
       result.fetch[questId as QuestId] = {
+        itemId: itemId as ItemId,
         name,
         npc: (npc ?? questId) as NpcId,
       };
@@ -41,4 +43,25 @@ export function extractQuests(fiddle: ParsedGameData): TrackerData["quests"] {
     .join(", ");
   console.log(`  Quests: ${total} (${breakdown})`);
   return result;
+}
+
+function extractFetchQuestItemId(questId: string, quest: Record<string, unknown>): string {
+  const stages = quest.stages as Record<string, unknown>[] | undefined;
+  if (Array.isArray(stages)) {
+    for (const stage of stages) {
+      const requirements = stage.requirements as Record<string, unknown> | undefined;
+      const hasItem = requirements?.has_item;
+      if (typeof hasItem === "string") return hasItem;
+      if (Array.isArray(hasItem) && hasItem.length > 0) {
+        const first: unknown = hasItem[0];
+        if (typeof first === "object" && first !== null) {
+          return Object.keys(first)[0];
+        }
+      }
+      if (typeof hasItem === "object" && hasItem !== null && !Array.isArray(hasItem)) {
+        return Object.keys(hasItem)[0];
+      }
+    }
+  }
+  throw new Error(`Fetch quest "${questId}" has no has_item requirement in any stage`);
 }

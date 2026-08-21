@@ -14,15 +14,12 @@ function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGam
   } as unknown as ParsedGameData;
 }
 
-function makeRecipes(
-  entries: Record<string, { memberItemIds: string[] }>,
-): Record<RecipeId, { memberItemIds: ItemId[] }> {
-  return Object.fromEntries(
-    Object.entries(entries).map(([id, r]) => [
-      id as RecipeId,
-      { memberItemIds: r.memberItemIds as ItemId[] },
-    ]),
-  );
+function makeRecipeMemberItems(entries: Record<string, string[]>): Map<RecipeId, ItemId[]> {
+  const map = new Map<RecipeId, ItemId[]>();
+  for (const [id, items] of Object.entries(entries)) {
+    map.set(id as RecipeId, items as ItemId[]);
+  }
+  return map;
 }
 
 describe("deriveProductionMethod", () => {
@@ -145,8 +142,8 @@ describe("deriveRecipeProductSources", () => {
       },
     });
 
-    const recipes = makeRecipes({
-      turnip_soup: { memberItemIds: ["turnip_soup"] },
+    const recipes = makeRecipeMemberItems({
+      turnip_soup: ["turnip_soup"],
     });
 
     const accumulator = new ItemSourceAccumulator();
@@ -180,8 +177,8 @@ describe("deriveRecipeProductSources", () => {
       },
     });
 
-    const recipes = makeRecipes({
-      chair: { memberItemIds: ["chair_blue", "chair_green"] },
+    const recipes = makeRecipeMemberItems({
+      chair: ["chair_blue", "chair_green"],
     });
 
     const accumulator = new ItemSourceAccumulator();
@@ -204,8 +201,8 @@ describe("deriveRecipeProductSources", () => {
       },
     });
 
-    const recipes = makeRecipes({
-      mystery_item: { memberItemIds: ["mystery_item"] },
+    const recipes = makeRecipeMemberItems({
+      mystery_item: ["mystery_item"],
     });
 
     const accumulator = new ItemSourceAccumulator();
@@ -227,8 +224,8 @@ describe("deriveRecipeProductSources", () => {
       },
     });
 
-    const recipes = makeRecipes({
-      pie: { memberItemIds: ["pie_apple", "pie_cherry"] },
+    const recipes = makeRecipeMemberItems({
+      pie: ["pie_apple", "pie_cherry"],
     });
 
     const accumulator = new ItemSourceAccumulator();
@@ -257,8 +254,8 @@ describe("deriveRecipeProductSources", () => {
       },
     });
 
-    const recipes = makeRecipes({
-      mixed_recipe: { memberItemIds: ["item_a", "item_b"] },
+    const recipes = makeRecipeMemberItems({
+      mixed_recipe: ["item_a", "item_b"],
     });
 
     const accumulator = new ItemSourceAccumulator();
@@ -284,10 +281,8 @@ describe("deriveRecipeProductSources", () => {
       },
     });
 
-    const recipes = makeRecipes({
-      kitchen_salt_and_pepper_shakers: {
-        memberItemIds: ["kitchen_salt_and_pepper_shakers"],
-      },
+    const recipes = makeRecipeMemberItems({
+      kitchen_salt_and_pepper_shakers: ["kitchen_salt_and_pepper_shakers"],
     });
 
     const accumulator = new ItemSourceAccumulator();

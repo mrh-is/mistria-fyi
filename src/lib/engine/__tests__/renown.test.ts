@@ -30,11 +30,11 @@ describe("renown maximum", () => {
   it("reports max level as complete", () => {
     const progress = getCategoryProgress("renown", {
       availabilityMode: "everything",
-      completed: completedAtRenown(110),
+      completed: completedAtRenown(100),
       worldState: { season: "spring", weather: "calm" },
     });
 
-    expect(progress).toEqual({ completed: 110, filtered: 0, total: 110 });
+    expect(progress).toEqual({ completed: 100, filtered: 0, total: 100 });
   });
 
   it("normalizes progress saved above max level", () => {
@@ -44,12 +44,12 @@ describe("renown maximum", () => {
       worldState: { season: "spring", weather: "calm" },
     });
 
-    expect(progress).toEqual({ completed: 110, filtered: 0, total: 110 });
+    expect(progress).toEqual({ completed: 100, filtered: 0, total: 100 });
   });
 
   it("clamps tracked renown to max level", () => {
     userState.setRenown(120);
 
-    expect(userState.state.completed.renown).toBe(110);
+    expect(userState.state.completed.renown).toBe(100);
   });
 });

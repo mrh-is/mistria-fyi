@@ -50,7 +50,7 @@ const BASE_LOOKUPS: SegmentLookups = {
     },
   ],
   categoryVisibility: {},
-  entityVisibility: { type: "always" },
+  entityVisibility: undefined,
   festivals: {},
   itemNames: {},
   itemVisibility: {},
@@ -118,7 +118,7 @@ describe("buildBiomeLabel", () => {
 
 describe("buildStoreQualifier", () => {
   it("returns empty array when visibility is always", () => {
-    expect(buildStoreQualifier({ type: "always" }, BASE_LOOKUPS, "inn" as StoreId)).toEqual([]);
+    expect(buildStoreQualifier(undefined, BASE_LOOKUPS, "inn" as StoreId)).toEqual([]);
   });
 
   it("returns empty array when visibility is undefined", () => {

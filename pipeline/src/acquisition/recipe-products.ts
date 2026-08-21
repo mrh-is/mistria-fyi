@@ -52,22 +52,22 @@ export function deriveProductionMethod(
 
 export function deriveRecipeProductSources(
   fiddle: ParsedGameData,
-  recipes: Record<RecipeId, { memberItemIds: ItemId[] }>,
+  recipeMemberItems: Map<RecipeId, ItemId[]>,
   accumulator: ItemSourceAccumulator,
 ): void {
   const methodByItemId = buildMethodIndex(fiddle);
 
-  for (const [recipeId, recipe] of Object.entries(recipes)) {
-    const method = resolveRecipeMethod(recipeId as RecipeId, recipe.memberItemIds, methodByItemId);
+  for (const [recipeId, memberItemIds] of recipeMemberItems) {
+    const method = resolveRecipeMethod(recipeId, memberItemIds, methodByItemId);
     if (!method) continue;
 
     const source: Source = {
       type: "recipe",
       method,
-      recipeId: recipeId as RecipeId,
+      recipeId,
     };
 
-    for (const itemId of recipe.memberItemIds) {
+    for (const itemId of memberItemIds) {
       accumulator.add(itemId, source);
     }
   }

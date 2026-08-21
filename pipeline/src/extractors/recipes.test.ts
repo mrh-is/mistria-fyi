@@ -67,14 +67,16 @@ describe("extractRecipes", () => {
       },
     });
 
-    const { recipeIdByItemId, recipes } = extractRecipes(fiddle);
+    const { recipeIdByItemId, recipeMemberItems, recipes } = extractRecipes(fiddle);
     const recipe = recipes["sapling_chair" as RecipeId];
     expect(recipe).toBeDefined();
-    expect(recipe.memberItemIds).toEqual(["chair_blue", "chair_green", "chair_purple"]);
-    expect(recipe.sources).toEqual([]);
-    expect(recipe.presentations).toEqual([
-      { itemIds: ["chair_blue", "chair_green", "chair_purple"], name: "Sapling Chair" },
+    expect(recipe.name).toBe("Sapling Chair");
+    expect(recipeMemberItems.get("sapling_chair" as RecipeId)).toEqual([
+      "chair_blue",
+      "chair_green",
+      "chair_purple",
     ]);
+    expect(recipe.sources).toEqual([]);
     expect(recipeIdByItemId.get("chair_blue")).toBe("sapling_chair");
   });
 
@@ -199,8 +201,7 @@ describe("extractRecipes", () => {
     expect(recipe.sources).toEqual([
       { type: "quest", questId: "cooking_101", questType: "story_quests", trigger: "completion" },
     ]);
-    expect(recipe.memberItemIds).toEqual(["vegetable_soup"]);
-    expect(recipe.presentations).toEqual([{ itemIds: ["vegetable_soup"], name: "Vegetable Soup" }]);
+    expect(recipe.name).toBe("Vegetable Soup");
   });
 
   it("ignores recipe scroll rewards from quest groups outside the explicit subset", () => {
@@ -245,7 +246,7 @@ describe("extractRecipes", () => {
     expect(Object.keys(recipes)).toEqual([]);
   });
 
-  it("sorts memberItemIds alphabetically", () => {
+  it("sorts recipeMemberItems alphabetically", () => {
     const fiddle = makeFiddle({
       items: {
         furniture: {
@@ -266,8 +267,8 @@ describe("extractRecipes", () => {
       },
     });
 
-    const { recipes } = extractRecipes(fiddle);
-    expect(recipes["widget" as RecipeId].memberItemIds).toEqual(["aaa_first", "zzz_last"]);
+    const { recipeMemberItems } = extractRecipes(fiddle);
+    expect(recipeMemberItems.get("widget" as RecipeId)).toEqual(["aaa_first", "zzz_last"]);
   });
 
   it("warns on unresolved scroll targets and skips them", () => {
@@ -897,7 +898,7 @@ describe("extractRecipes", () => {
     expect(recipe.sources[2]).toEqual({ type: "store", storeId: "zzz_store" });
   });
 
-  it("creates separate presentations for items with different names under one recipe_key", () => {
+  it("collapses single/double bed names into a unified bed name", () => {
     const fiddle = makeFiddle({
       items: {
         furniture: {
@@ -925,21 +926,7 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["mermaid_bed" as RecipeId];
-    expect(recipe.presentations).toEqual([
-      {
-        itemIds: ["mermaid_bed_single_blue", "mermaid_bed_single_green"],
-        name: "Mermaid Bed",
-      },
-      {
-        itemIds: ["mermaid_bed_double_blue"],
-        name: "Mermaid Double Bed",
-      },
-    ]);
-    expect(recipe.memberItemIds).toEqual([
-      "mermaid_bed_double_blue",
-      "mermaid_bed_single_blue",
-      "mermaid_bed_single_green",
-    ]);
+    expect(recipe.name).toBe("Mermaid Bed");
   });
 
   it("produces empty results for empty data", () => {
@@ -1458,7 +1445,9 @@ describe.skipIf(!HAS_ASSETS)("extractRecipes — real data", () => {
       expect(recipes[recipeId]).toBeDefined();
     }
 
-    const multiPresentation = Object.values(recipes).filter((r) => r.presentations.length > 1);
-    expect(multiPresentation.length).toBeGreaterThan(0);
+    for (const recipe of Object.values(recipes)) {
+      expect(typeof recipe.name).toBe("string");
+      expect(recipe.name.length).toBeGreaterThan(0);
+    }
   });
 });

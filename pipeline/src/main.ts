@@ -324,7 +324,7 @@ function main(): void {
   console.log("Step 3: Extracting tracker data...");
   const museum = extractMuseum(fiddle);
   const cutsceneQuestMap = buildCutsceneQuestMap(fiddle);
-  const { recipes } = extractRecipes(fiddle, cutsceneQuestMap);
+  const { recipeMemberItems, recipes } = extractRecipes(fiddle, cutsceneQuestMap);
   const { almanac, items } = extractAlmanac(fiddle);
   const animals = extractAnimals(fiddle);
   const npcs = extractNpcs(fiddle);
@@ -346,7 +346,7 @@ function main(): void {
 
   const itemSources = new ItemSourceAccumulator();
   const cosmeticSources = new CosmeticSourceAccumulator();
-  deriveRecipeProductSources(fiddle, recipes, itemSources);
+  deriveRecipeProductSources(fiddle, recipeMemberItems, itemSources);
   collectNaturalSources(fiddle, itemSources, cosmeticSources);
   collectRewardSources(fiddle, itemSources, cosmeticSources);
   collectStoreSources(fiddle, requirementContext, itemSources, cosmeticSources);

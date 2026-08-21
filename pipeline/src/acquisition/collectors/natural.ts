@@ -433,7 +433,9 @@ function parseSeasonsArray(seasons: unknown): Season[] | undefined {
   if (seasons === false || seasons === undefined || seasons === null) return undefined;
   if (Array.isArray(seasons)) {
     const arr = seasons.filter((v): v is string => typeof v === "string") as Season[];
-    return arr.length > 0 ? arr : undefined;
+    if (arr.length === 0) return undefined;
+    if (arr.length === 4) return undefined;
+    return arr;
   }
   return undefined;
 }
@@ -453,7 +455,9 @@ function parseWaterTypes(waterType: unknown): undefined | WaterType[] {
     : typeof waterType === "string"
       ? [waterType]
       : [];
-  return arr.length > 0 ? (arr as WaterType[]) : undefined;
+  if (arr.length === 0) return undefined;
+  if (arr.length === 3) return undefined;
+  return arr as WaterType[];
 }
 
 function parseWeathersArray(weathers: unknown): undefined | Weather[] {

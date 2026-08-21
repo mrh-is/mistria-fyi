@@ -12,7 +12,6 @@ import type {
   QuestType,
   Recipe,
   RecipeId,
-  RecipePresentation,
   Season,
   StoreId,
   TreasureChestTierId,
@@ -48,6 +47,7 @@ export function extractRecipes(
   cutsceneMap: CutsceneQuestMap = {},
 ): {
   recipeIdByItemId: Map<string, RecipeId>;
+  recipeMemberItems: Map<RecipeId, ItemId[]>;
   recipes: Record<RecipeId, Recipe>;
 } {
   const definitions = buildRequirementDefinitions(
@@ -97,9 +97,11 @@ export function extractRecipes(
   mergeSources(collectHardcodedSources(itemIdToRecipeId));
 
   const recipes: Record<RecipeId, Recipe> = {};
+  const recipeMemberItems = new Map<RecipeId, ItemId[]>();
 
   for (const [recipeId, group] of grouped) {
     const memberItemIds = group.map((e) => e.itemId as ItemId).sort((a, b) => a.localeCompare(b));
+    recipeMemberItems.set(recipeId as RecipeId, memberItemIds);
 
     const defaultFlags = group.map((e) => e.isDefault);
     const allDefault = defaultFlags.every(Boolean);
@@ -110,13 +112,12 @@ export function extractRecipes(
       );
     }
 
-    const presentations = buildPresentations(group);
+    const name = deriveRecipeName(recipeId, group);
     const sources = deduplicateSources(allSources.get(recipeId) ?? []);
     const allSrc: AcquisitionSource[] = allDefault ? [{ type: "default" }, ...sources] : sources;
 
     recipes[recipeId as RecipeId] = {
-      memberItemIds,
-      presentations,
+      name,
       sources: allSrc,
     };
   }
@@ -147,23 +148,7 @@ export function extractRecipes(
     `  Recipes: ${totalRecipes} total, ${withDefault} default, ${withSources} with acquired sources (${countParts.join(", ")})`,
   );
 
-  return { recipeIdByItemId, recipes };
-}
-
-function buildPresentations(group: RawRecipeEntry[]): RecipePresentation[] {
-  const byName = new Map<string, string[]>();
-  for (const entry of group) {
-    const ids = byName.get(entry.name) ?? [];
-    ids.push(entry.itemId);
-    byName.set(entry.name, ids);
-  }
-
-  return [...byName.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([name, ids]) => ({
-      itemIds: ids.sort((a, b) => a.localeCompare(b)) as ItemId[],
-      name,
-    }));
+  return { recipeIdByItemId, recipeMemberItems, recipes };
 }
 
 function buildQuestRecipeSource(
@@ -940,6 +925,24 @@ function deduplicateSources(sources: AcquisitionSource[]): AcquisitionSource[] {
     result.push(s);
   }
   return result;
+}
+
+function deriveRecipeName(recipeId: string, group: RawRecipeEntry[]): string {
+  const uniqueNames = [...new Set(group.map((e) => e.name))].sort();
+  if (uniqueNames.length === 1) return uniqueNames[0];
+
+  if (uniqueNames.length === 2) {
+    const plainBed = uniqueNames.find((n) => n.endsWith(" Bed") || n.endsWith(" Single Bed"));
+    const doubleBed = uniqueNames.find((n) => n.endsWith(" Double Bed"));
+    if (plainBed && doubleBed) {
+      const prefix = doubleBed.slice(0, -" Double Bed".length);
+      return `${prefix} Bed`;
+    }
+  }
+
+  throw new Error(
+    `Recipe "${recipeId}" has ${uniqueNames.length} distinct presentation names: ${uniqueNames.join(", ")}`,
+  );
 }
 
 function extractQuestRequiredItem(quest: Record<string, unknown>): string | undefined {

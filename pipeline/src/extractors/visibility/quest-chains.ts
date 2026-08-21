@@ -36,7 +36,7 @@ export function extractQuestChains(fiddle: ParsedGameData): QuestChainData {
   const letters = fiddle.letters as Record<string, Record<string, unknown>> | undefined;
 
   const story = extractStoryChain(questGroups, letters);
-  const heart = extractHeartChain(letters);
+  const heart = extractHeartChain(letters, questGroups);
   const crown = extractRegistryOrder(questGroups, "crown_registry");
   const stillwell = extractRegistryOrder(questGroups, "stillwell_registry");
   const tali = extractRegistryOrder(questGroups, "tali_registry");
@@ -101,6 +101,7 @@ function extractFetchChain(
  */
 function extractHeartChain(
   letters: Record<string, Record<string, unknown>> | undefined,
+  questGroups: Record<string, Record<string, unknown>> | undefined,
 ): Record<NpcId, { heartLevel: number; prerequisiteQuest?: QuestId; questId: QuestId }[]> {
   const entriesByNpc = new Map<NpcId, HeartChainEntry[]>();
 
@@ -114,6 +115,26 @@ function extractHeartChain(
       const requirements = letter.requirements;
       if (typeof requirements !== "object" || requirements === null) continue;
       const reachedHeartLevel = (requirements as Record<string, unknown>).reached_heart_level;
+      if (typeof reachedHeartLevel !== "object" || reachedHeartLevel === null) continue;
+
+      const [npcId, level] = Object.entries(reachedHeartLevel)[0] ?? [];
+      if (npcId === undefined || typeof level !== "number") continue;
+
+      const entries = entriesByNpc.get(npcId as NpcId) ?? [];
+      entries.push({ heartLevel: level, npcId: npcId as NpcId, questId: questId as QuestId });
+      entriesByNpc.set(npcId as NpcId, entries);
+    }
+  }
+
+  const requestBoard = questGroups?.request_board as
+    Record<string, Record<string, unknown>> | undefined;
+  if (requestBoard) {
+    for (const [questId, entry] of Object.entries(requestBoard)) {
+      if (questId === "default" || typeof entry !== "object" || entry === null) continue;
+
+      const requirements = entry.requirements as Record<string, unknown> | undefined;
+      if (!requirements) continue;
+      const reachedHeartLevel = requirements.reached_heart_level;
       if (typeof reachedHeartLevel !== "object" || reachedHeartLevel === null) continue;
 
       const [npcId, level] = Object.entries(reachedHeartLevel)[0] ?? [];
