@@ -26,7 +26,6 @@ export type AlmanacCategoryId = string & { readonly __brand: "AlmanacCategoryId"
 export interface Animal {
   cosmetics: Record<CosmeticId, AnimalCosmetic>;
   name: string;
-  questGate?: QuestId[];
   variantTiers: AnimalVariantTier[];
   visibility?: VisibilityCondition;
 }
@@ -86,7 +85,6 @@ export interface HeartLevelChange {
 export interface Item extends TrackerEntity {
   category: string;
   name: string;
-  questGate?: QuestId[];
 }
 export type ItemId = string & { readonly __brand: "ItemId" };
 export interface MinesBiome {
@@ -180,20 +178,7 @@ export interface TrackerData {
   museum: Record<MuseumWingId, MuseumWing>;
   npcs: Record<NpcId, Npc>;
   perkTierLevels: [number, number, number, number, number];
-  questChains: {
-    crown: QuestId[];
-    fetch: Record<QuestId, VisibilityCondition>;
-    heart: Record<NpcId, { heartLevel: number; prerequisiteQuest?: QuestId; questId: QuestId }[]>;
-    stillwell: QuestId[];
-    story: Record<QuestId, { prerequisites: QuestId[] }>;
-    tali: QuestId[];
-  };
-  questGates: {
-    animalGates: Record<AnimalId, QuestId[]>;
-    itemGates: Record<ItemId, QuestId[]>;
-    progressionFlagToQuests: Record<string, QuestId[]>;
-    spellGates: Record<SpellId, QuestId[]>;
-  };
+  questOrder: Partial<Record<QuestType, QuestId[]>>;
   quests: {
     [K in QuestType]: Record<QuestId, QuestTypeMap[K]>;
   };

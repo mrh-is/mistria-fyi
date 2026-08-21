@@ -131,14 +131,7 @@
     trackerData.categoryVisibility[questType],
     userState.progressionState,
   )}
-  {@const chainOrder =
-    questType === "crown"
-      ? trackerData.questChains.crown
-      : questType === "mission"
-        ? trackerData.questChains.stillwell
-        : questType === "cooking"
-          ? trackerData.questChains.tali
-          : null}
+  {@const chainOrder = trackerData.questOrder[questType] ?? null}
   {@const quests = Object.entries(trackerData.quests[questType])
     .map(([id, q]) => ({
       displayName: displayQuestName(q.name, questType),

@@ -1,6 +1,5 @@
 /**
- * The pipeline parses, evaluates in place, extracts, applies post-extraction quest gates, then
- * assembles and serializes output. Writes begin only after every transformation succeeds.
+ * The pipeline parses, evaluates in place, extracts, assembles, and serializes output. Writes begin only after every transformation succeeds.
  * --parse-only is a v1.0.2-specific smoke test that exits before evaluation.
  */
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
@@ -32,12 +31,6 @@ import { extractFestivals } from "./extractors/festivals.js";
 import { extractMines } from "./extractors/mines.js";
 import { extractMuseum } from "./extractors/museum.js";
 import { extractNpcs } from "./extractors/npcs.js";
-import {
-  applyAnimalQuestGates,
-  applyItemQuestGates,
-  applySpellQuestGates,
-  extractQuestGates,
-} from "./extractors/quest-gates.js";
 import { extractQuests } from "./extractors/quests.js";
 import { extractRecipes } from "./extractors/recipes.js";
 import { extractTownRanks } from "./extractors/renown.js";
@@ -48,7 +41,6 @@ import { buildCutsceneQuestMap } from "./extractors/visibility/cutscene-quest-ma
 import {
   assignEntityVisibility,
   extractCategoryVisibility,
-  extractFetchQuestVisibility,
   extractHeartLevelChanges,
   stampNpcVisibility,
   stampStoreVisibility,
@@ -332,7 +324,6 @@ function main(): void {
   const townRanks = extractTownRanks(fiddle);
   const quests = extractQuests(fiddle);
   const mines = extractMines(fiddle);
-  const questGates = extractQuestGates(fiddle);
   const storesMeta = extractStoresMeta(fiddle);
   const festivals = extractFestivals(fiddle);
   const treasureChestTiers = extractTreasureChestTiers(fiddle);
@@ -401,20 +392,12 @@ function main(): void {
       `${recipesWithSources}/${Object.keys(recipes).length} recipes`,
   );
 
-  applyItemQuestGates(items, questGates.itemGates);
-  applyAnimalQuestGates(animals, questGates.animalGates);
-  applySpellQuestGates(mines, questGates.spellGates);
-
   console.log();
 
   console.log("Step 3b: Extracting visibility data...");
   const questChainsRaw = extractQuestChains(fiddle);
   const heartLevelChangesData = extractHeartLevelChanges(fiddle, cutsceneQuestMap);
   const categoryVisibilityData = extractCategoryVisibility();
-  const fetchQuestVisibilityData = extractFetchQuestVisibility(
-    questChainsRaw.fetch,
-    cutsceneQuestMap,
-  );
 
   for (const [questId, changes] of Object.entries(heartLevelChangesData)) {
     const quest = quests.story[questId as QuestId];
@@ -437,8 +420,11 @@ function main(): void {
     museum,
     npcs,
     perkTierLevels,
-    questChains: { ...questChainsRaw, fetch: fetchQuestVisibilityData },
-    questGates,
+    questOrder: {
+      cooking: questChainsRaw.tali,
+      crown: questChainsRaw.crown,
+      mission: questChainsRaw.stillwell,
+    },
     quests,
     recipes,
     skills,

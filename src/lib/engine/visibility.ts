@@ -23,13 +23,6 @@ export interface UserProgressionState {
   unlockedPerks: Set<PerkId>;
 }
 
-interface HeartChainEntry {
-  heartLevel: number;
-  npcId: NpcId;
-  prerequisiteQuest?: QuestId;
-  questId: QuestId;
-}
-
 export function deriveProgressionState(
   completed: CompletedState,
   trackerData: TrackerData,
@@ -276,67 +269,33 @@ function evaluateQuestPrerequisites(
   trackerData: TrackerData,
   questVisibilitySoFar: Record<string, QuestVisibility>,
 ): QuestVisibility {
-  const chains = trackerData.questChains;
-  const visibility = trackerData.categoryVisibility[questType] ?? { type: "always" as const };
-
-  switch (questType) {
-    case "cooking":
-      return evaluateOrderedChain(chains.tali, questId, completed, trackerData, visibility);
-    case "crown":
-      return evaluateOrderedChain(chains.crown, questId, completed, trackerData, visibility);
-    case "fetch": {
-      const condition = lookup(chains.fetch, questId);
-      if (!condition) return "unavailable";
-      const tempState: UserProgressionState = {
-        knownNpcs: new Set(),
-        marriedNpc: completed.marriedNpc,
-        minesFloor: completed.mines.floor,
-        npcLevels: completed.npcLevels,
-        questVisibility: questVisibilitySoFar,
-        renown: completed.renown,
-        showSpoilers: false,
-        skillLevels: completed.skillLevels,
-        unlockedPerks: completed.unlockedPerks,
-      };
-      return isVisible(condition, tempState) ? "available" : "unavailable";
-    }
-    case "heart": {
-      const entry = findHeartChainEntry(chains.heart, questId);
-      if (!entry) return "unavailable";
-      const heartLevelMet = (completed.npcLevels[entry.npcId] ?? 0) >= entry.heartLevel;
-      const prereqMet =
-        !entry.prerequisiteQuest || completed.questStates[entry.prerequisiteQuest] === "completed";
-      return heartLevelMet && prereqMet ? "available" : "unavailable";
-    }
-    case "mission":
-      return evaluateOrderedChain(chains.stillwell, questId, completed, trackerData, visibility);
-    case "story": {
-      const prerequisites = lookup(chains.story, questId)?.prerequisites ?? [];
-      const allMet = prerequisites.every(
-        (prereqId) => completed.questStates[prereqId] === "completed",
-      );
-      return allMet ? "available" : "unavailable";
-    }
-    default:
-      return "unavailable";
+  const order = trackerData.questOrder[questType];
+  if (order) {
+    const categoryVis = trackerData.categoryVisibility[questType] ?? { type: "always" as const };
+    return evaluateOrderedChain(order, questId, completed, trackerData, categoryVis);
   }
-}
 
-function findHeartChainEntry(
-  heart: TrackerData["questChains"]["heart"],
-  questId: QuestId,
-): HeartChainEntry | undefined {
-  for (const [npcId, entries] of Object.entries(heart)) {
-    const entry = entries.find((e) => e.questId === questId);
-    if (entry) return { ...entry, npcId: npcId as NpcId };
-  }
-  return undefined;
+  const quest = trackerData.quests[questType][questId];
+  if (!quest.visibility) return "available";
+
+  const tempState: UserProgressionState = {
+    knownNpcs: new Set(),
+    marriedNpc: completed.marriedNpc,
+    minesFloor: completed.mines.floor,
+    npcLevels: completed.npcLevels,
+    questVisibility: questVisibilitySoFar,
+    renown: completed.renown,
+    showSpoilers: false,
+    skillLevels: completed.skillLevels,
+    unlockedPerks: completed.unlockedPerks,
+  };
+  return isVisible(quest.visibility, tempState) ? "available" : "unavailable";
 }
 
 // ─── Progression state derivation ───────────────────────────────────
 
-function findQuestType(questId: QuestId, trackerData: TrackerData): string | undefined {
-  for (const [questType, quests] of Object.entries(trackerData.quests)) {
+function findQuestType(questId: QuestId, trackerData: TrackerData): QuestType | undefined {
+  for (const [questType, quests] of recordEntries(trackerData.quests)) {
     if (questId in quests) return questType;
   }
   return undefined;
@@ -378,16 +337,6 @@ function isBaseConditionMet(
   }
 }
 
-/**
- * Looks up `key` in `record` without TypeScript's optimistic (and here, incorrect) assumption
- * that every key of a `Record<K, V>` is present — several `TrackerData` maps are only populated
- * for a subset of the IDs this module iterates over (e.g. not every quest has a fetch/story chain
- * entry, not every NPC has an explicit `npcVisibility` gate).
- */
-function lookup<V>(record: Record<string, V>, key: string): undefined | V {
-  return (record as Record<string, undefined | V>)[key];
-}
-
 function markOrderedPredecessorsCompleted(
   order: QuestId[],
   questId: QuestId,
@@ -410,7 +359,6 @@ function markQuestCompleted(
   completed.questStates[questId] = "completed";
 }
 
-/** Marks every quest `questId` is chained behind as completed, without touching `questId` itself. */
 function markQuestPrerequisitesCompleted(
   questId: QuestId,
   completed: CompletedState,
@@ -419,39 +367,14 @@ function markQuestPrerequisitesCompleted(
   const questType = findQuestType(questId, trackerData);
   if (!questType) return;
 
-  const chains = trackerData.questChains;
-  switch (questType) {
-    case "cooking":
-      markOrderedPredecessorsCompleted(chains.tali, questId, completed, trackerData);
-      return;
-    case "crown":
-      markOrderedPredecessorsCompleted(chains.crown, questId, completed, trackerData);
-      return;
-    case "fetch": {
-      const condition = lookup(chains.fetch, questId);
-      if (condition) satisfyCondition(condition, completed, trackerData);
-      return;
-    }
-    case "heart": {
-      const entry = findHeartChainEntry(chains.heart, questId);
-      if (entry) {
-        completed.npcLevels[entry.npcId] = Math.max(
-          completed.npcLevels[entry.npcId] ?? 0,
-          entry.heartLevel,
-        );
-        if (entry.prerequisiteQuest) {
-          markQuestCompleted(entry.prerequisiteQuest, completed, trackerData);
-        }
-      }
-      return;
-    }
-    case "mission":
-      markOrderedPredecessorsCompleted(chains.stillwell, questId, completed, trackerData);
-      return;
-    case "story": {
-      const prerequisites = lookup(chains.story, questId)?.prerequisites ?? [];
-      for (const prereqId of prerequisites) markQuestCompleted(prereqId, completed, trackerData);
-      return;
-    }
+  const order = trackerData.questOrder[questType];
+  if (order) {
+    markOrderedPredecessorsCompleted(order, questId, completed, trackerData);
+    return;
+  }
+
+  const quest = trackerData.quests[questType][questId];
+  if (quest.visibility) {
+    satisfyCondition(quest.visibility, completed, trackerData);
   }
 }
