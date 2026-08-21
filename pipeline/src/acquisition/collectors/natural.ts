@@ -19,14 +19,20 @@ import type {
   Season,
   Weather,
 } from "$lib/types/tracker-data.js";
+import type { PetCosmeticSetId } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../../parse-fiddle.js";
-import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "../source-accumulator.js";
+import type {
+  CosmeticSourceAccumulator,
+  ItemSourceAccumulator,
+  PetCosmeticSourceAccumulator,
+} from "../source-accumulator.js";
 
 export function collectNaturalSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
   cosmeticAccumulator?: CosmeticSourceAccumulator,
+  petCosmeticAccumulator?: PetCosmeticSourceAccumulator,
 ): void {
   collectFishSources(fiddle, accumulator);
   collectBugSources(fiddle, accumulator);
@@ -34,7 +40,7 @@ export function collectNaturalSources(
   collectMineForageableSources(fiddle, accumulator);
   collectCropSources(fiddle, accumulator);
   collectTreeSources(fiddle, accumulator);
-  collectMonsterDropSources(fiddle, accumulator, cosmeticAccumulator);
+  collectMonsterDropSources(fiddle, accumulator, cosmeticAccumulator, petCosmeticAccumulator);
   collectAnimalProductSources(fiddle, accumulator);
   collectGoldenAnimalProductSources(fiddle, accumulator);
   collectEarthlyEssenceCosmeticSources(fiddle, cosmeticAccumulator);
@@ -342,6 +348,7 @@ function collectMonsterDropSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
   cosmeticAccumulator?: CosmeticSourceAccumulator,
+  petCosmeticAccumulator?: PetCosmeticSourceAccumulator,
 ): void {
   const monsters = fiddle.monsters as Record<string, Record<string, unknown>> | undefined;
   if (!monsters) return;
@@ -368,6 +375,13 @@ function collectMonsterDropSources(
         const cosmeticId = dropObj.cosmetic as string | undefined;
         if (cosmeticId && cosmeticAccumulator) {
           cosmeticAccumulator.add(cosmeticId as CosmeticId, {
+            type: "monster",
+            monsterId: monsterId as MonsterId,
+          });
+        }
+        const petCosmeticId = dropObj.pet_cosmetic as string | undefined;
+        if (petCosmeticId && petCosmeticAccumulator) {
+          petCosmeticAccumulator.add(petCosmeticId as PetCosmeticSetId, {
             type: "monster",
             monsterId: monsterId as MonsterId,
           });

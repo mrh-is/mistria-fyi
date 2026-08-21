@@ -4,18 +4,23 @@ import { parseRequirements } from "../../requirements.js";
 import { projectRequirementExpressionToAvailability } from "../availability.js";
 
 import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
-import type { CosmeticId, ItemId, Season, StoreId } from "$lib/types/tracker-data.js";
+import type { AnimalId, CosmeticId, ItemId, Season, StoreId } from "$lib/types/tracker-data.js";
 
 import type { SourceFieldLocation } from "../../data-shapes.js";
 import type { ParsedGameData } from "../../parse-fiddle.js";
 import type { RequirementContext } from "../../requirements.js";
-import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "../source-accumulator.js";
+import type {
+  AnimalCosmeticSourceAccumulator,
+  CosmeticSourceAccumulator,
+  ItemSourceAccumulator,
+} from "../source-accumulator.js";
 
 export function collectStoreSources(
   fiddle: ParsedGameData,
   requirementContext: RequirementContext,
   accumulator: ItemSourceAccumulator,
   cosmeticAccumulator?: CosmeticSourceAccumulator,
+  animalCosmeticAccumulator?: AnimalCosmeticSourceAccumulator,
 ): void {
   const stores = fiddle.stores as Record<string, Record<string, unknown>> | undefined;
   if (!stores) return;
@@ -37,6 +42,7 @@ export function collectStoreSources(
             requirementContext,
             accumulator,
             cosmeticAccumulator,
+            animalCosmeticAccumulator,
           );
         }
       }
@@ -57,6 +63,7 @@ export function collectStoreSources(
               requirementContext,
               accumulator,
               cosmeticAccumulator,
+              animalCosmeticAccumulator,
             );
           }
         }
@@ -71,6 +78,7 @@ export function collectStoreSources(
             requirementContext,
             accumulator,
             cosmeticAccumulator,
+            animalCosmeticAccumulator,
           );
         }
       }
@@ -110,6 +118,7 @@ function processStoreEntry(
   requirementContext: RequirementContext,
   accumulator: ItemSourceAccumulator,
   cosmeticAccumulator?: CosmeticSourceAccumulator,
+  animalCosmeticAccumulator?: AnimalCosmeticSourceAccumulator,
 ): void {
   if (typeof entry === "string") {
     const source = buildStoreSource(storeId, baseAvailability);
@@ -121,6 +130,34 @@ function processStoreEntry(
   const obj = entry as Record<string, unknown>;
 
   if (obj.recipe_scroll || obj.crafting_scroll) return;
+
+  const animalCosmeticId = obj.animal_cosmetic as string | undefined;
+  const animalId = obj.animal as string | undefined;
+  if (animalCosmeticId && animalId && animalCosmeticAccumulator) {
+    let requirementAvailability: AvailabilityCondition | undefined;
+    if (obj.requirements && typeof obj.requirements === "object") {
+      const sourceLocation: SourceFieldLocation = {
+        entityId: `${storeId}/${animalId}:${animalCosmeticId}`,
+        fieldPath: "requirements",
+        sourcePath: "fiddle/stores.toml",
+      };
+      const expression = parseRequirements(
+        obj.requirements,
+        requirementContext.namedRequirements,
+        requirementContext.primitivePredicates,
+        sourceLocation,
+      );
+      requirementAvailability = projectRequirementExpressionToAvailability(
+        expression,
+        requirementContext,
+        sourceLocation,
+      );
+    }
+    const availability = combineAvailability(baseAvailability, requirementAvailability);
+    const source = buildStoreSource(storeId, availability);
+    animalCosmeticAccumulator.add(animalId as AnimalId, animalCosmeticId as CosmeticId, source);
+    return;
+  }
 
   const itemId = obj.item as string | undefined;
   const cosmeticId = obj.cosmetic as string | undefined;

@@ -1,10 +1,12 @@
 import type { ActivityId, Source } from "$lib/types/acquisition.js";
 import type {
+  AnimalId,
   CosmeticId,
   DateId,
   FestivalId,
   ItemId,
   NpcId,
+  PetCosmeticSetId,
   QuestId,
   Season,
   StoreId,
@@ -12,7 +14,12 @@ import type {
 } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../../parse-fiddle.js";
-import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "../source-accumulator.js";
+import type {
+  AnimalCosmeticSourceAccumulator,
+  CosmeticSourceAccumulator,
+  ItemSourceAccumulator,
+  PetCosmeticSourceAccumulator,
+} from "../source-accumulator.js";
 
 type LetterTrigger = Omit<Extract<Source, { type: "letter" }>, "type">;
 
@@ -30,10 +37,12 @@ export function collectRewardSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
   cosmeticAccumulator?: CosmeticSourceAccumulator,
+  animalCosmeticAccumulator?: AnimalCosmeticSourceAccumulator,
+  petCosmeticAccumulator?: PetCosmeticSourceAccumulator,
 ): void {
-  collectQuestRewardSources(fiddle, accumulator, cosmeticAccumulator);
-  collectFestivalStockSources(fiddle, accumulator, cosmeticAccumulator);
-  collectAnimalFestivalRewardSources(fiddle, accumulator);
+  collectQuestRewardSources(fiddle, accumulator, cosmeticAccumulator, animalCosmeticAccumulator);
+  collectFestivalStockSources(fiddle, accumulator, cosmeticAccumulator, animalCosmeticAccumulator);
+  collectAnimalFestivalRewardSources(fiddle, accumulator, animalCosmeticAccumulator);
   collectRenownRewardSources(fiddle, accumulator, cosmeticAccumulator);
   collectLetterRewardSources(fiddle, accumulator);
   collectMuseumDonationRewardSources(fiddle, accumulator, cosmeticAccumulator);
@@ -41,6 +50,7 @@ export function collectRewardSources(
   collectDateSources(fiddle, accumulator);
   collectEngagementSources(fiddle, accumulator);
   collectWeddingCosmeticSources(fiddle, cosmeticAccumulator);
+  collectChickenStatueLootSources(fiddle, animalCosmeticAccumulator, petCosmeticAccumulator);
 }
 
 const SMALL_ANIMAL_KINDS = ["capybara", "chicken", "duck", "rabbit"];
@@ -80,9 +90,16 @@ function classifyLetterTrigger(reqs: Record<string, unknown> | undefined): Lette
 function collectAnimalFestivalRewardSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
+  animalCosmeticAccumulator?: AnimalCosmeticSourceAccumulator,
 ): void {
   const misc = fiddle.misc as Record<string, unknown> | undefined;
   if (!misc) return;
+
+  const festivalSource: Source = {
+    type: "festival_activity",
+    activityId: "animal_contest" as ActivityId,
+    festivalId: "animal" as FestivalId,
+  };
 
   const expandRewards = (rewards: unknown, animalKinds: string[]): void => {
     if (!Array.isArray(rewards)) return;
@@ -95,17 +112,64 @@ function collectAnimalFestivalRewardSources(
 
       for (const kind of animalKinds) {
         const itemId = template.replace("{AnimalKind}", kind) as ItemId;
-        accumulator.add(itemId, {
-          type: "festival_activity",
-          activityId: "animal_contest" as ActivityId,
-          festivalId: "animal" as FestivalId,
-        });
+        accumulator.add(itemId, festivalSource);
+      }
+
+      const cosmeticId = obj.cosmetic as string | undefined;
+      if (cosmeticId && animalCosmeticAccumulator) {
+        for (const kind of animalKinds) {
+          animalCosmeticAccumulator.add(kind as AnimalId, cosmeticId as CosmeticId, festivalSource);
+        }
       }
     }
   };
 
   expandRewards(misc.small_animal_festival_rewards, SMALL_ANIMAL_KINDS);
   expandRewards(misc.large_animal_festival_rewards, LARGE_ANIMAL_KINDS);
+}
+
+function collectChickenStatueLootSources(
+  fiddle: ParsedGameData,
+  animalCosmeticAccumulator?: AnimalCosmeticSourceAccumulator,
+  petCosmeticAccumulator?: PetCosmeticSourceAccumulator,
+): void {
+  const chickenStatue = fiddle.chicken_statue as
+    Record<string, Record<string, unknown>> | undefined;
+  if (!chickenStatue) return;
+
+  const misc = fiddle.misc as Record<string, unknown> | undefined;
+  const chickenMisc = (misc?.chicken_statue as Record<string, unknown>) ?? {};
+  const cost = (chickenMisc.low_price as number | undefined) ?? 10;
+
+  for (const [, tier] of Object.entries(chickenStatue)) {
+    if (typeof tier !== "object" || tier === null) continue;
+    for (const rollKey of ["small_roll", "large_roll"]) {
+      const rolls = (tier)[rollKey];
+      if (!Array.isArray(rolls)) continue;
+
+      for (const entry of rolls) {
+        if (typeof entry !== "object" || entry === null) continue;
+        const obj = entry as Record<string, unknown>;
+
+        const animalCosmeticId = obj.animal_cosmetic as string | undefined;
+        const animalId = obj.animal as string | undefined;
+        if (animalCosmeticId && animalId && animalCosmeticAccumulator) {
+          animalCosmeticAccumulator.add(animalId as AnimalId, animalCosmeticId as CosmeticId, {
+            type: "chicken_statue",
+            cost,
+          });
+        }
+
+        const petCosmeticId = obj.pet_cosmetic as string | undefined;
+        if (petCosmeticId && petCosmeticAccumulator) {
+          petCosmeticAccumulator.add(petCosmeticId as PetCosmeticSetId, {
+            type: "chicken_statue",
+            cost,
+          });
+        }
+      }
+    }
+  }
 }
 
 function collectDateSources(fiddle: ParsedGameData, accumulator: ItemSourceAccumulator): void {
@@ -161,6 +225,7 @@ function collectFestivalStockSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
   cosmeticAccumulator?: CosmeticSourceAccumulator,
+  animalCosmeticAccumulator?: AnimalCosmeticSourceAccumulator,
 ): void {
   const festivals = fiddle.festivals as Record<string, Record<string, unknown>> | undefined;
   if (!festivals) return;
@@ -179,10 +244,6 @@ function collectFestivalStockSources(
       for (const entry of stockData) {
         if (typeof entry !== "object" || entry === null) continue;
         const obj = entry as Record<string, unknown>;
-        const cosmeticId = obj.cosmetic as string | undefined;
-        const itemId = obj.item as string | undefined;
-        const targetId = cosmeticId ?? itemId;
-        if (!targetId) continue;
 
         const source: Source = {
           ...(season ? { availability: { type: "season" as const, seasons: [season] } } : {}),
@@ -190,6 +251,22 @@ function collectFestivalStockSources(
           festivalId: festivalId as FestivalId,
           storeId: storeId as StoreId,
         };
+
+        const animalCosmeticId = obj.animal_cosmetic as string | undefined;
+        const animalId = obj.animal as string | undefined;
+        if (animalCosmeticId && animalId && animalCosmeticAccumulator) {
+          animalCosmeticAccumulator.add(
+            animalId as AnimalId,
+            animalCosmeticId as CosmeticId,
+            source,
+          );
+          continue;
+        }
+
+        const cosmeticId = obj.cosmetic as string | undefined;
+        const itemId = obj.item as string | undefined;
+        const targetId = cosmeticId ?? itemId;
+        if (!targetId) continue;
 
         if (cosmeticId && cosmeticAccumulator) {
           cosmeticAccumulator.add(cosmeticId as CosmeticId, source);
@@ -311,6 +388,7 @@ function collectQuestRewardSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
   cosmeticAccumulator?: CosmeticSourceAccumulator,
+  animalCosmeticAccumulator?: AnimalCosmeticSourceAccumulator,
 ): void {
   const quests = fiddle.quests as Record<string, Record<string, unknown>> | undefined;
   if (!quests) return;
@@ -323,14 +401,26 @@ function collectQuestRewardSources(
 
       const questData = quest as Record<string, unknown>;
       const rewards = Array.isArray(questData.rewards) ? questData.rewards : [];
-      processQuestRewards(rewards, questId, accumulator, cosmeticAccumulator);
+      processQuestRewards(
+        rewards,
+        questId,
+        accumulator,
+        cosmeticAccumulator,
+        animalCosmeticAccumulator,
+      );
 
       const stages = Array.isArray(questData.stages) ? questData.stages : [];
       for (const stage of stages) {
         if (typeof stage !== "object" || stage === null) continue;
         const stageData = stage as Record<string, unknown>;
         const stageRewards = Array.isArray(stageData.rewards) ? stageData.rewards : [];
-        processQuestRewards(stageRewards, questId, accumulator, cosmeticAccumulator);
+        processQuestRewards(
+          stageRewards,
+          questId,
+          accumulator,
+          cosmeticAccumulator,
+          animalCosmeticAccumulator,
+        );
       }
     }
   }
@@ -390,6 +480,7 @@ function processQuestRewards(
   questId: string,
   accumulator: ItemSourceAccumulator,
   cosmeticAccumulator?: CosmeticSourceAccumulator,
+  animalCosmeticAccumulator?: AnimalCosmeticSourceAccumulator,
 ): void {
   for (const reward of rewards) {
     if (typeof reward !== "object" || reward === null) continue;
@@ -411,13 +502,29 @@ function processQuestRewards(
       });
     }
 
+    const animalCosmeticId = obj.animal_cosmetic as string | undefined;
+    const animalId = obj.animal as string | undefined;
+    if (animalCosmeticId && animalId && animalCosmeticAccumulator) {
+      animalCosmeticAccumulator.add(animalId as AnimalId, animalCosmeticId as CosmeticId, {
+        type: "quest",
+        questId: questId as QuestId,
+        trigger: "completion",
+      });
+    }
+
     if (obj.tiers && Array.isArray(obj.tiers)) {
       for (const tier of obj.tiers) {
         if (typeof tier !== "object" || tier === null) continue;
         const tierRewards = Array.isArray((tier as Record<string, unknown>).rewards)
           ? ((tier as Record<string, unknown>).rewards as unknown[])
           : [];
-        processQuestRewards(tierRewards, questId, accumulator, cosmeticAccumulator);
+        processQuestRewards(
+          tierRewards,
+          questId,
+          accumulator,
+          cosmeticAccumulator,
+          animalCosmeticAccumulator,
+        );
       }
     }
   }
