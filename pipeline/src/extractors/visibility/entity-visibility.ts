@@ -2,10 +2,10 @@ import { resolveToVisibility, simplifyCondition } from "./requirement-resolver.j
 
 import type { Source as AcquisitionSource } from "$lib/types/acquisition.js";
 import type {
-  BiomeId,
+  MinesBiomeId,
   NpcId,
   QuestId,
-  SpellId,
+  SkillId,
   StoreId,
   TrackerData,
 } from "$lib/types/tracker-data.js";
@@ -41,21 +41,21 @@ const STORE_UNLOCK_QUESTS: Partial<Record<string, QuestId>> = {
 
 /** Hardcoded NPC gates (spec Section 3e). NPCs not listed here are always visible. */
 const NPC_GATES: Partial<Record<string, VisibilityCondition>> = {
-  caldarus: { questId: "breaking_the_fire_seal" as QuestId, type: "questCompleted" },
-  darcy: { questId: "repair_the_bridge" as QuestId, type: "questCompleted" },
-  louis: { questId: "repair_the_bridge" as QuestId, type: "questCompleted" },
-  merri: { questId: "repair_the_bridge" as QuestId, type: "questCompleted" },
-  seridia: { questId: "breaking_the_final_seal" as QuestId, type: "questCompleted" },
+  caldarus: { type: "questCompleted", questId: "breaking_the_fire_seal" as QuestId },
+  darcy: { type: "questCompleted", questId: "repair_the_bridge" as QuestId },
+  louis: { type: "questCompleted", questId: "repair_the_bridge" as QuestId },
+  merri: { type: "questCompleted", questId: "repair_the_bridge" as QuestId },
+  seridia: { type: "questCompleted", questId: "breaking_the_final_seal" as QuestId },
   stillwell: {
-    questId: "upgrade_the_saturday_market_plaza" as QuestId,
     type: "questCompleted",
+    questId: "upgrade_the_saturday_market_plaza" as QuestId,
   },
-  taliferro: { questId: "upgrade_the_saturday_market" as QuestId, type: "questCompleted" },
-  vera: { questId: "repair_the_bridge" as QuestId, type: "questCompleted" },
-  wheedle: { questId: "upgrade_the_saturday_market" as QuestId, type: "questCompleted" },
+  taliferro: { type: "questCompleted", questId: "upgrade_the_saturday_market" as QuestId },
+  vera: { type: "questCompleted", questId: "repair_the_bridge" as QuestId },
+  wheedle: { type: "questCompleted", questId: "upgrade_the_saturday_market" as QuestId },
   zorel: {
-    questId: "upgrade_the_saturday_market_plaza" as QuestId,
     type: "questCompleted",
+    questId: "upgrade_the_saturday_market_plaza" as QuestId,
   },
 };
 
@@ -65,52 +65,49 @@ const NPC_GATES: Partial<Record<string, VisibilityCondition>> = {
  */
 const HAYDENS_BARN_UNLOCK_QUEST = "repair_haydens_barn" as QuestId;
 
+interface FlatPerkInfo {
+  skillId: SkillId;
+  tier: number;
+}
+
 interface SourceVisibilityContext {
-  biomeFloor: (biomeId: BiomeId) => number | undefined;
-  perks: TrackerData["perks"];
-  perkTierLevels: number[];
+  biomeFloor: (biomeId: MinesBiomeId) => number | undefined;
+  perks: Record<string, FlatPerkInfo>;
+  perkTierLevels: TrackerData["perkTierLevels"];
   storeVisibility: Record<StoreId, VisibilityCondition>;
 }
 
-/**
- * Mutates `trackerData` in place, stamping `visibility` on items, recipes (and their sources),
- * perks, cosmetics, animals, spells, and quests. Store visibility, the cutscene-quest map, and
- * quest chains are all precomputed by the caller (`main.ts`) and passed in here rather than
- * recomputed, since each is otherwise a pure function of `fiddle` that would be recomputed for no
- * reason.
- */
 export function assignEntityVisibility(
   trackerData: TrackerData,
-  storeVisibility: Record<StoreId, VisibilityCondition>,
   cutsceneMap: CutsceneQuestMap,
   fiddle: ParsedGameData,
   questChains: QuestChainData,
 ): void {
   const ctx: SourceVisibilityContext = {
-    biomeFloor: (biomeId) => trackerData.mines.biomes.find((b) => b.id === biomeId)?.startFloor,
-    perks: trackerData.perks,
+    biomeFloor: (biomeId) => trackerData.mines.biomes.find((b) => b.id === biomeId)?.floors.start,
+    perks: buildFlatPerks(trackerData.skills),
     perkTierLevels: trackerData.perkTierLevels,
-    storeVisibility,
+    storeVisibility: buildStoreVisibilityMap(trackerData.stores),
   };
 
   assignItemVisibility(trackerData, ctx);
   assignRecipeVisibility(trackerData, ctx);
-  assignPerkVisibility(trackerData);
   assignCosmeticVisibility(trackerData, ctx);
   assignAnimalVisibility(trackerData, fiddle);
-  assignSpellVisibility(trackerData, fiddle, cutsceneMap);
+  assignSpellVisibility(trackerData);
   assignQuestVisibility(trackerData, cutsceneMap, questChains);
+  stripAllAlwaysVisibility(trackerData);
 }
 
 /** Hardcoded category visibility gates (spec Section 3j). */
 export function extractCategoryVisibility(): Record<string, VisibilityCondition> {
   return {
-    crown_quests: { level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER, type: "renownLevel" },
-    fetch_quests: ALWAYS,
-    heart_quests: ALWAYS,
-    stillwell_challenges: { npcId: "stillwell" as NpcId, type: "npcKnown" },
-    story_quests: ALWAYS,
-    tali_challenges: { npcId: "taliferro" as NpcId, type: "npcKnown" },
+    cooking: { type: "npcKnown", npcId: "taliferro" as NpcId },
+    crown: { type: "renownLevel", level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER },
+    fetch: ALWAYS,
+    heart: ALWAYS,
+    mission: { type: "npcKnown", npcId: "stillwell" as NpcId },
+    story: ALWAYS,
   };
 }
 
@@ -168,33 +165,27 @@ export function extractHeartLevelChanges(
   return result;
 }
 
-/** Hardcoded NPC visibility (spec Section 3e). NPCs absent from the map are always visible. */
-export function extractNpcVisibility(): Record<NpcId, VisibilityCondition> {
-  const result: Record<NpcId, VisibilityCondition> = {};
-  for (const [npcId, condition] of Object.entries(NPC_GATES)) {
-    if (condition) result[npcId as NpcId] = condition;
+/** Stamps hardcoded NPC visibility (spec Section 3e) directly onto trackerData.npcs. */
+export function stampNpcVisibility(trackerData: TrackerData): void {
+  for (const [npcId, npc] of Object.entries(trackerData.npcs)) {
+    const gate = NPC_GATES[npcId];
+    if (gate) {
+      npc.visibility = gate;
+    }
   }
-  return result;
 }
 
 /**
- * Hardcoded store visibility (spec Section 3d), keyed by the store IDs actually present in
- * `fiddle.stores` — Taliferro and Stillwell have no store entry of their own and are handled by
- * `extractNpcVisibility` instead.
+ * Stamps hardcoded store visibility (spec Section 3d) directly onto trackerData.stores.
+ * Taliferro and Stillwell have no store entry; their gates are handled by `stampNpcVisibility`.
  */
-export function extractStoreVisibility(
-  fiddle: ParsedGameData,
-): Record<StoreId, VisibilityCondition> {
-  const stores = fiddle.stores as Record<string, unknown> | undefined;
-  const result: Record<StoreId, VisibilityCondition> = {};
-  if (!stores) return result;
-
-  for (const storeId of Object.keys(stores)) {
-    if (storeId === "default") continue;
+export function stampStoreVisibility(trackerData: TrackerData): void {
+  for (const [storeId, store] of Object.entries(trackerData.stores)) {
     const questId = STORE_UNLOCK_QUESTS[storeId];
-    result[storeId as StoreId] = questId ? { questId, type: "questCompleted" } : ALWAYS;
+    if (questId) {
+      store.visibility = { type: "questCompleted", questId };
+    }
   }
-  return result;
 }
 
 function acquisitionSourceCondition(
@@ -206,6 +197,7 @@ function acquisitionSourceCondition(
     case "artifact_dig":
     case "artifact_replicator":
     case "beach_cave_chest":
+    case "breed":
     case "bug_catch":
     case "chicken_statue":
     case "crop":
@@ -234,26 +226,26 @@ function acquisitionSourceCondition(
       return source.storeId ? storeGateCondition(source.storeId, ctx.storeVisibility) : ALWAYS;
     case "mine": {
       const floor = source.biomeId ? ctx.biomeFloor(source.biomeId) : undefined;
-      return floor !== undefined ? { floor, type: "minesLevel" } : ALWAYS;
+      return floor !== undefined ? { type: "minesLevel", floor } : ALWAYS;
     }
     case "mines_chest":
     case "mines_dig_site": {
       const floor = ctx.biomeFloor(source.biomeId);
       const minesCondition: VisibilityCondition =
-        floor === undefined ? ALWAYS : { floor, type: "minesLevel" };
+        floor === undefined ? ALWAYS : { type: "minesLevel", floor };
       const perkCondition: VisibilityCondition = source.perkId
-        ? { perkId: source.perkId, type: "perkUnlocked" }
+        ? { type: "perkUnlocked", perkId: source.perkId }
         : ALWAYS;
       return andSimplify([minesCondition, perkCondition]);
     }
     case "perk":
     case "perk_drop":
     case "ritual_chamber":
-      return { perkId: source.perkId, type: "perkUnlocked" };
+      return { type: "perkUnlocked", perkId: source.perkId };
     case "quest":
-      return { questId: source.questId, type: "questCompleted" };
+      return { type: "questCompleted", questId: source.questId };
     case "renown":
-      return { level: source.level, type: "renownLevel" };
+      return { type: "renownLevel", level: source.level };
     case "scroll_bundle":
       return storeGateCondition(source.storeId, ctx.storeVisibility);
     case "store":
@@ -266,8 +258,8 @@ function andSimplify(conditions: VisibilityCondition[]): VisibilityCondition {
   if (conditions.length === 0) return ALWAYS;
   if (conditions.length === 1) return conditions[0];
   return simplifyCondition({
-    conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
     type: "and",
+    conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
   });
 }
 
@@ -280,7 +272,7 @@ function assignAnimalVisibility(trackerData: TrackerData, fiddle: ParsedGameData
     const requirements = core?.requirements as Record<string, unknown> | undefined;
     const gated = requirements?.repaired_haydens_farm === true;
     animal.visibility = gated
-      ? { questId: HAYDENS_BARN_UNLOCK_QUEST, type: "questCompleted" }
+      ? { type: "questCompleted", questId: HAYDENS_BARN_UNLOCK_QUEST }
       : ALWAYS;
   }
 }
@@ -315,15 +307,7 @@ function assignOrderedChain(
     quest.visibility =
       i === 0
         ? baseCondition
-        : andSimplify([baseCondition, { questId: order[i - 1], type: "questCompleted" }]);
-  }
-}
-
-function assignPerkVisibility(trackerData: TrackerData): void {
-  for (const perk of Object.values(trackerData.perks)) {
-    const level = trackerData.perkTierLevels[perk.tier - 1];
-    perk.visibility =
-      level === undefined ? ALWAYS : { level, skillId: perk.skillId, type: "skillLevel" };
+        : andSimplify([baseCondition, { type: "questCompleted", questId: order[i - 1] }]);
   }
 }
 
@@ -334,63 +318,42 @@ function assignQuestVisibility(
 ): void {
   const categoryVisibility = extractCategoryVisibility();
 
-  const storyQuests = trackerData.quests.story_quests;
-  if (storyQuests) {
-    for (const [questId, quest] of Object.entries(storyQuests)) {
-      const prerequisites = chains.story[questId as QuestId]?.prerequisites ?? [];
-      quest.visibility =
-        prerequisites.length === 0
-          ? ALWAYS
-          : andSimplify(
-              prerequisites.map((prereq): VisibilityCondition => ({
-                questId: prereq,
-                type: "questCompleted",
-              })),
-            );
-    }
+  for (const [questId, quest] of Object.entries(trackerData.quests.story)) {
+    const prerequisites = chains.story[questId as QuestId]?.prerequisites ?? [];
+    quest.visibility =
+      prerequisites.length === 0
+        ? ALWAYS
+        : andSimplify(
+            prerequisites.map((prereq): VisibilityCondition => ({
+              type: "questCompleted",
+              questId: prereq,
+            })),
+          );
   }
 
-  const heartQuests = trackerData.quests.heart_quests;
-  if (heartQuests) {
-    for (const [npcId, entries] of Object.entries(chains.heart)) {
-      for (const entry of entries) {
-        const quest = heartQuests[entry.questId];
-        if (!quest) continue;
-        const conditions: VisibilityCondition[] = [
-          { npcId: npcId as NpcId, type: "npcKnown" },
-          { level: entry.heartLevel, npcId: npcId as NpcId, type: "heartLevel" },
-        ];
-        if (entry.prerequisiteQuest) {
-          conditions.push({ questId: entry.prerequisiteQuest, type: "questCompleted" });
-        }
-        quest.visibility = andSimplify(conditions);
+  for (const [npcId, entries] of Object.entries(chains.heart)) {
+    for (const entry of entries) {
+      const quest = trackerData.quests.heart[entry.questId];
+      if (!quest) continue;
+      const conditions: VisibilityCondition[] = [
+        { type: "npcKnown", npcId: npcId as NpcId },
+        { type: "heartLevel", level: entry.heartLevel, npcId: npcId as NpcId },
+      ];
+      if (entry.prerequisiteQuest) {
+        conditions.push({ type: "questCompleted", questId: entry.prerequisiteQuest });
       }
+      quest.visibility = andSimplify(conditions);
     }
   }
 
-  const fetchQuests = trackerData.quests.fetch_quests;
-  if (fetchQuests) {
-    const fetchVisibility = extractFetchQuestVisibility(chains.fetch, cutsceneMap);
-    for (const [questId, quest] of Object.entries(fetchQuests)) {
-      quest.visibility = fetchVisibility[questId as QuestId] ?? ALWAYS;
-    }
+  const fetchVisibility = extractFetchQuestVisibility(chains.fetch, cutsceneMap);
+  for (const [questId, quest] of Object.entries(trackerData.quests.fetch)) {
+    quest.visibility = fetchVisibility[questId as QuestId] ?? ALWAYS;
   }
 
-  assignOrderedChain(
-    trackerData.quests.crown_quests,
-    chains.crown,
-    categoryVisibility.crown_quests,
-  );
-  assignOrderedChain(
-    trackerData.quests.stillwell_challenges,
-    chains.stillwell,
-    categoryVisibility.stillwell_challenges,
-  );
-  assignOrderedChain(
-    trackerData.quests.tali_challenges,
-    chains.tali,
-    categoryVisibility.tali_challenges,
-  );
+  assignOrderedChain(trackerData.quests.crown, chains.crown, categoryVisibility.crown);
+  assignOrderedChain(trackerData.quests.mission, chains.stillwell, categoryVisibility.mission);
+  assignOrderedChain(trackerData.quests.cooking, chains.tali, categoryVisibility.cooking);
 }
 
 function assignRecipeVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
@@ -410,29 +373,51 @@ function assignRecipeVisibility(trackerData: TrackerData, ctx: SourceVisibilityC
   }
 }
 
-function assignSpellVisibility(
-  trackerData: TrackerData,
-  fiddle: ParsedGameData,
-  cutsceneMap: CutsceneQuestMap,
-): void {
-  const cutscenes = getCutsceneRecords(fiddle);
+/**
+ * Hardcoded spell → source-quest mappings. The cutscene chain (quest → seal break → post-cutscene
+ * → spell_to_unlock) is too indirect for the cutsceneMap to trace automatically: the post-seal
+ * cutscenes lack quest_to_start/quest_to_progress and aren't referenced in quest stage queries.
+ * full_restore has no quest at all (mines level 10 reward).
+ */
+const SPELL_SOURCES: Partial<Record<string, QuestId>> = {
+  fire_breath: "breaking_the_fire_seal" as QuestId,
+  growth: "the_earth_tablet" as QuestId,
+  sacred_light: "find_the_magic_key" as QuestId,
+  summon_rain: "the_water_tablet" as QuestId,
+};
 
-  for (const [cutsceneId, cutscene] of Object.entries(cutscenes)) {
-    if (cutsceneId === "default") continue;
-    const spellId = cutscene.spell_to_unlock;
-    if (typeof spellId !== "string" || spellId === "<n/a>") continue;
-
-    const spell = trackerData.mines.spells[spellId as SpellId];
-    if (!spell) continue;
-
-    const entry = cutsceneMap[cutsceneId];
-    spell.visibility = entry
-      ? {
-          questId: entry.questId,
-          type: entry.phase === "completed" ? "questCompleted" : "questAvailable",
-        }
-      : ALWAYS;
+function assignSpellVisibility(trackerData: TrackerData): void {
+  for (const [spellId, spell] of Object.entries(trackerData.mines.spells)) {
+    const questId = SPELL_SOURCES[spellId];
+    if (questId) {
+      spell.visibility = { type: "questCompleted", questId };
+      spell.sources = [{ type: "quest", questId, questType: "story", trigger: "completion" }];
+    }
   }
+}
+
+function buildFlatPerks(skills: TrackerData["skills"]): Record<string, FlatPerkInfo> {
+  const result: Record<string, FlatPerkInfo> = {};
+  for (const [skillId, skill] of Object.entries(skills)) {
+    skill.perkTiers.forEach((tier, tierIdx) => {
+      for (const perkId of Object.keys(tier)) {
+        result[perkId] = { skillId: skillId as SkillId, tier: tierIdx + 1 };
+      }
+    });
+  }
+  return result;
+}
+
+function buildStoreVisibilityMap(
+  stores: TrackerData["stores"],
+): Record<StoreId, VisibilityCondition> {
+  const result: Record<StoreId, VisibilityCondition> = {};
+  for (const [storeId, store] of Object.entries(stores)) {
+    if (store.visibility) {
+      result[storeId as StoreId] = store.visibility;
+    }
+  }
+  return result;
 }
 
 function computeRecipeSourceConditions(
@@ -444,6 +429,7 @@ function computeRecipeSourceConditions(
     case "artifact_dig":
     case "artifact_replicator":
     case "beach_cave_chest":
+    case "breed":
     case "bug_catch":
     case "chicken_statue":
     case "crop":
@@ -479,9 +465,9 @@ function computeRecipeSourceConditions(
     case "mines_dig_site": {
       const floor = ctx.biomeFloor(source.biomeId);
       const minesCondition: VisibilityCondition =
-        floor === undefined ? ALWAYS : { floor, type: "minesLevel" };
+        floor === undefined ? ALWAYS : { type: "minesLevel", floor };
       const perkCondition: VisibilityCondition = source.perkId
-        ? { perkId: source.perkId, type: "perkUnlocked" }
+        ? { type: "perkUnlocked", perkId: source.perkId }
         : ALWAYS;
       return {
         entity: andSimplify([minesCondition, perkCondition]),
@@ -492,17 +478,17 @@ function computeRecipeSourceConditions(
       const perk = ctx.perks[source.perkId];
       const level = perk ? ctx.perkTierLevels[perk.tier - 1] : undefined;
       return {
-        entity: { perkId: source.perkId, type: "perkUnlocked" },
+        entity: { type: "perkUnlocked", perkId: source.perkId },
         source:
           perk && level !== undefined
-            ? { level, skillId: perk.skillId, type: "skillLevel" }
+            ? { type: "skillLevel", level, skillId: perk.skillId }
             : ALWAYS,
       };
     }
     case "quest": {
       return {
-        entity: { questId: source.questId, type: "questCompleted" },
-        source: { questId: source.questId, type: "questAvailable" },
+        entity: { type: "questCompleted", questId: source.questId },
+        source: { type: "questAvailable", questId: source.questId },
       };
     }
     case "scroll_bundle":
@@ -528,12 +514,16 @@ function getCutsceneRecords(fiddle: ParsedGameData): Record<string, Record<strin
   return nested ?? (raw as Record<string, Record<string, unknown>> | undefined) ?? {};
 }
 
+function isAlwaysVisible(v: undefined | VisibilityCondition): boolean {
+  return v === undefined || v.type === "always";
+}
+
 function orSimplify(conditions: VisibilityCondition[]): VisibilityCondition {
   if (conditions.length === 0) return ALWAYS;
   if (conditions.length === 1) return conditions[0];
   return simplifyCondition({
-    conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
     type: "or",
+    conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
   });
 }
 
@@ -542,6 +532,53 @@ function storeGateCondition(
   storeVisibility: Record<StoreId, VisibilityCondition>,
 ): VisibilityCondition {
   return storeVisibility[storeId] ?? ALWAYS;
+}
+
+function stripAllAlwaysVisibility(trackerData: TrackerData): void {
+  for (const item of Object.values(trackerData.items)) {
+    if (isAlwaysVisible(item.visibility)) delete item.visibility;
+  }
+  for (const recipe of Object.values(trackerData.recipes)) {
+    if (isAlwaysVisible(recipe.visibility)) delete recipe.visibility;
+  }
+  for (const cosmetic of Object.values(trackerData.cosmetics)) {
+    if (isAlwaysVisible(cosmetic.visibility)) delete cosmetic.visibility;
+  }
+  for (const animal of Object.values(trackerData.animals)) {
+    if (isAlwaysVisible(animal.visibility)) delete animal.visibility;
+  }
+  for (const spell of Object.values(trackerData.mines.spells)) {
+    if (isAlwaysVisible(spell.visibility)) delete spell.visibility;
+  }
+  for (const questType of Object.values(trackerData.quests)) {
+    for (const quest of Object.values(questType)) {
+      if (isAlwaysVisible(quest.visibility)) delete quest.visibility;
+    }
+  }
+  for (const npc of Object.values(trackerData.npcs)) {
+    if (isAlwaysVisible(npc.visibility)) delete npc.visibility;
+  }
+  for (const store of Object.values(trackerData.stores)) {
+    if (isAlwaysVisible(store.visibility)) delete store.visibility;
+  }
+
+  for (const entity of [
+    ...Object.values(trackerData.items),
+    ...Object.values(trackerData.recipes),
+    ...Object.values(trackerData.cosmetics),
+  ]) {
+    for (const source of entity.sources ?? []) {
+      if ("visibility" in source && isAlwaysVisible(source.visibility)) {
+        delete source.visibility;
+      }
+    }
+  }
+
+  const filtered: Partial<Record<string, VisibilityCondition>> = {};
+  for (const [key, vis] of Object.entries(trackerData.categoryVisibility)) {
+    if (!isAlwaysVisible(vis)) filtered[key] = vis;
+  }
+  trackerData.categoryVisibility = filtered;
 }
 
 function toAvailable(condition: VisibilityCondition): VisibilityCondition {
@@ -559,13 +596,13 @@ function toAvailable(condition: VisibilityCondition): VisibilityCondition {
     case "and":
     case "or":
       return simplifyCondition({
+        type: condition.type,
         conditions: condition.conditions.map(toAvailable) as [
           VisibilityCondition,
           ...VisibilityCondition[],
         ],
-        type: condition.type,
       });
     case "questCompleted":
-      return { questId: condition.questId, type: "questAvailable" };
+      return { type: "questAvailable", questId: condition.questId };
   }
 }

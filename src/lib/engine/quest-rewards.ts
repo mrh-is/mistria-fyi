@@ -21,6 +21,6 @@ export function findRecipesForQuest(questId: QuestId): RecipeId[] {
  * using the first presentation name for each recipe.
  */
 export function recipeDisplayNames(recipeIds: RecipeId[]): string[] {
-  const names = recipeIds.map((id) => trackerData.recipes[id].presentations[0]?.name ?? id);
+  const names = recipeIds.map((id) => trackerData.recipes[id].name);
   return [...new Set(names)];
 }

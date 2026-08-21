@@ -6,10 +6,12 @@ import type { AcquisitionReferenceKind } from "./reference-index.js";
 import type { AcquisitionReferenceIndex } from "./reference-index.js";
 
 export interface AcquisitionSourceAssembly {
-  almanac?: readonly { items?: Readonly<Record<string, unknown>> }[];
+  almanac?: Readonly<Record<string, { items?: readonly string[] }>>;
   cosmetics: Readonly<Record<string, AcquisitionSourceEntity>>;
   items: Readonly<Record<string, AcquisitionSourceEntity>>;
-  museum?: readonly { sets?: readonly { items?: readonly string[] }[] }[];
+  museum?: Readonly<
+    Record<string, { sets?: Readonly<Record<string, { items?: readonly string[] }>> }>
+  >;
   recipes: Readonly<Record<string, AcquisitionRecipeEntity>>;
 }
 
@@ -68,8 +70,9 @@ const WEATHERS = new Set(["calm", "heavy_inclement", "inclement", "special"]);
 const SOURCE_FIELDS = {
   animal_product: ["animalId"],
   artifact_dig: ["locationIds"],
-  artifact_replicator: ["originalItemId", "requiredSetCount"],
+  artifact_replicator: ["originalItemId"],
   beach_cave_chest: [],
+  breed: [],
   bug_catch: ["locationIds"],
   chicken_statue: ["cost"],
   crop: ["seedItemId"],
@@ -108,7 +111,7 @@ const SOURCE_FIELDS = {
 } as const satisfies Record<Source["type"], readonly string[]>;
 
 const SOURCE_TYPES = new Set<string>(Object.keys(SOURCE_FIELDS));
-const SOURCE_DETAIL_FIELDS = ["availability", "chance", "cost", "visibility", "weight"];
+const SOURCE_DETAIL_FIELDS = ["availability", "cost", "visibility", "weight"];
 
 export class AcquisitionSourceValidationError extends Error {
   constructor(readonly diagnostics: AcquisitionSourceDiagnostic[]) {
@@ -434,32 +437,32 @@ function validateAssemblyReferences(
   references: AcquisitionReferenceIndex,
   diagnostics: AcquisitionSourceDiagnostic[],
 ): void {
-  trackerData.almanac?.forEach((category, categoryIndex) => {
-    for (const itemId of Object.keys(category.items ?? {}).sort()) {
+  for (const [categoryId, category] of Object.entries(trackerData.almanac ?? {})) {
+    for (const itemId of [...(category.items ?? [])].sort()) {
       reference(
         diagnostics,
         references,
         "item",
         itemId,
         itemId,
-        `almanac[${categoryIndex}].items.${itemId}`,
+        `almanac.${categoryId}.items[${itemId}]`,
       );
     }
-  });
-  trackerData.museum?.forEach((wing, wingIndex) =>
-    wing.sets?.forEach((set, setIndex) =>
-      set.items?.forEach((itemId, itemIndex) => {
+  }
+  for (const [wingId, wing] of Object.entries(trackerData.museum ?? {})) {
+    for (const [setId, set] of Object.entries(wing.sets ?? {})) {
+      for (const [itemIndex, itemId] of (set.items ?? []).entries()) {
         reference(
           diagnostics,
           references,
           "item",
           itemId,
           itemId,
-          `museum[${wingIndex}].sets[${setIndex}].items[${itemIndex}]`,
+          `museum.${wingId}.sets.${setId}.items[${itemIndex}]`,
         );
-      }),
-    ),
-  );
+      }
+    }
+  }
   for (const [recipeId, recipe] of Object.entries(trackerData.recipes).sort(([left], [right]) =>
     left.localeCompare(right),
   )) {
@@ -756,16 +759,8 @@ function validateCommonSourceFields(
       new Set(),
     );
   }
-  for (const numericField of ["chance", "weight"] as const) {
-    if (numericField in source && !isFiniteNumber(source[numericField])) {
-      malformed(
-        diagnostics,
-        targetId,
-        `${fieldPath}.${numericField}`,
-        "Expected a finite number",
-        source,
-      );
-    }
+  if ("weight" in source && !isFiniteNumber(source.weight)) {
+    malformed(diagnostics, targetId, `${fieldPath}.weight`, "Expected a finite number", source);
   }
   if ("cost" in source) {
     validateCost(source.cost, targetId, `${fieldPath}.cost`, source, diagnostics);
@@ -782,19 +777,8 @@ function validateCost(
   source: object,
   diagnostics: AcquisitionSourceDiagnostic[],
 ): void {
-  if (!isRecord(value)) {
-    malformed(diagnostics, targetId, fieldPath, "Expected a structured cost", source);
-    return;
-  }
-  requireNumber(value, "amount", targetId, fieldPath, source, diagnostics);
-  if (!new Set(["beads", "tesserae", "tickets"]).has(value.currency as string)) {
-    malformed(
-      diagnostics,
-      targetId,
-      `${fieldPath}.currency`,
-      "Expected beads, tesserae, or tickets",
-      source,
-    );
+  if (!isFiniteNumber(value)) {
+    malformed(diagnostics, targetId, fieldPath, "Expected a finite number for cost", source);
   }
 }
 
@@ -837,18 +821,6 @@ function validateEntities(
         diagnostics,
       );
     });
-  }
-}
-
-function validateExpectedCurrency(
-  source: Record<string, unknown>,
-  currency: string,
-  targetId: string,
-  fieldPath: string,
-  diagnostics: AcquisitionSourceDiagnostic[],
-): void {
-  if (!isRecord(source.cost) || source.cost.currency !== currency) {
-    malformed(diagnostics, targetId, `${fieldPath}.cost.currency`, `Expected ${currency}`, source);
   }
 }
 
@@ -1012,10 +984,8 @@ function validateVariantFields(
       break;
     case "artifact_replicator":
       stringReferences.push(["originalItemId", "item"]);
-      requiredNumbers.push("requiredSetCount");
       break;
     case "chicken_statue":
-      validateExpectedCurrency(source, "beads", targetId, fieldPath, diagnostics);
       break;
     case "crop":
       stringReferences.push(["seedItemId", "item"]);
@@ -1180,7 +1150,6 @@ function validateVariantFields(
       requiredStrings.push("upgradeName");
       break;
     case "wishing_well":
-      validateExpectedCurrency(source, "tesserae", targetId, fieldPath, diagnostics);
       break;
   }
 

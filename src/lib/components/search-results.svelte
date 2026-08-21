@@ -7,19 +7,20 @@
   import { searchItems } from "$lib/engine/search.js";
   import { isVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { recordEntries } from "$lib/utils";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { SearchResult } from "$lib/engine/search.js";
+  import type { Source } from "$lib/types/acquisition";
   import type {
-    AcquisitionSource,
     AnimalId,
+    AnimalVariantId,
     CosmeticId,
     ItemId,
     NpcId,
     QuestId,
-    VariantId,
   } from "$lib/types/tracker-data.js";
 
   let { query }: { query: string } = $props();
@@ -43,15 +44,17 @@
 
   let redactedStoreIds = $derived(
     new Set(
-      Object.entries(trackerData.storeVisibility)
-        .filter(([, vis]) => !isVisible(vis, userState.progressionState))
+      recordEntries(trackerData.stores)
+        .filter(
+          ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
+        )
         .map(([id]) => id),
     ),
   );
 
   let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
 
-  function getSources(result: SearchResult): AcquisitionSource[] {
+  function getSources(result: SearchResult): Source[] {
     if (result.category === "almanac") {
       return trackerData.items[result.id as ItemId].sources ?? [];
     }
@@ -76,7 +79,7 @@
         if (result.fullName) {
           userState.toggleAnimalCosmetic(animalId as AnimalId, subId as CosmeticId);
         } else {
-          userState.toggleAnimalVariant(animalId as AnimalId, subId as VariantId);
+          userState.toggleAnimalVariant(animalId as AnimalId, subId as AnimalVariantId);
         }
         break;
       }
@@ -85,7 +88,7 @@
         break;
       case "npcs": {
         const npcId = result.id as NpcId;
-        const current = userState.state.completed.npcLevels[result.id] ?? 0;
+        const current = userState.state.completed.npcLevels[npcId] ?? 0;
         userState.setNpcLevel(npcId, current >= 10 ? 0 : 10);
         break;
       }
@@ -95,7 +98,7 @@
   function handleQuestToggle(result: SearchResult): void {
     const questId = result.id as QuestId;
     const newlyAdded = userState.completeQuestWithRecipes(questId);
-    const newState = userState.state.completed.questStates[result.id] ?? "none";
+    const newState = userState.state.completed.questStates[questId] ?? "none";
 
     let message: string;
     if (newState === "obtained") {
@@ -136,7 +139,7 @@
       <div class="min-w-0 flex-1">
         <TrackerRow
           display={rowDisplay(result)}
-          lookups={{ ...baseLookups, entityVisibility: { type: "always" } }}
+          lookups={baseLookups}
           name={result.detail ? `${label} ${result.detail}` : label}
           sources={getSources(result)}
           onToggle={() => {

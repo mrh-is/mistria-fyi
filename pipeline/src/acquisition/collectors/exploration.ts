@@ -1,7 +1,7 @@
 import { forEachItem } from "../../extractor-helpers.js";
 
 import type { LocationId } from "$lib/types/acquisition.js";
-import type { BiomeId, CosmeticId, ItemId, TreasureChestTier } from "$lib/types/tracker-data.js";
+import type { CosmeticId, ItemId, MinesBiomeId } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../../parse-fiddle.js";
 import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "../source-accumulator.js";
@@ -18,6 +18,13 @@ export function collectExplorationSources(
   collectArtifactDigSources(fiddle, accumulator);
   collectArtifactReplicaSources(fiddle, accumulator);
   collectEquipmentCosmeticSources(fiddle, cosmeticAccumulator);
+}
+
+function biomeNameToId(name: string): MinesBiomeId {
+  return name
+    .replace(/^The\s+/i, "")
+    .toLowerCase()
+    .replace(/\s+/g, "_") as MinesBiomeId;
 }
 
 function collectArtifactDigSources(
@@ -62,9 +69,8 @@ function collectArtifactReplicaSources(
     if (replicaId === "default") continue;
     const originalId = replicaId.replace("artifact_replica_", "");
     accumulator.add(replicaId as ItemId, {
-      originalItemId: originalId as ItemId,
-      requiredSetCount: 1,
       type: "artifact_replicator",
+      originalItemId: originalId as ItemId,
     });
   }
 }
@@ -77,8 +83,8 @@ function collectEquipmentCosmeticSources(
     const cosmeticToUnlock = item.cosmetic_to_unlock as string | undefined;
     if (cosmeticToUnlock) {
       cosmeticAccumulator.add(cosmeticToUnlock as CosmeticId, {
-        itemId: itemId as ItemId,
         type: "equipment",
+        itemId: itemId as ItemId,
       });
     }
   });
@@ -107,8 +113,8 @@ function collectFishingChestSources(
         const cosmeticId = obj.cosmetic as string | undefined;
         if (cosmeticId) {
           cosmeticAccumulator.add(cosmeticId as CosmeticId, {
-            tier: tier as TreasureChestTier,
             type: "treasure_chest",
+            tier,
           });
         }
         continue;
@@ -119,8 +125,8 @@ function collectFishingChestSources(
       const value = obj.value as string | undefined;
       if (value && kind === "item") {
         accumulator.add(value as ItemId, {
-          tier: tier as TreasureChestTier,
           type: "treasure_chest",
+          tier,
         });
       }
     }
@@ -143,41 +149,42 @@ function collectMineBiomeSources(
     const biome = biomes[i];
     if (typeof biome !== "object" || biome === null) continue;
 
-    const biomeId = `biome_${i}` as BiomeId;
+    const name = (biome.name as string | undefined) ?? `Biome ${i + 1}`;
+    const biomeId = biomeNameToId(name);
 
     const cosmetics = Array.isArray(biome.cosmetics)
       ? biome.cosmetics.filter((v): v is string => typeof v === "string")
       : [];
     for (const cosmeticId of cosmetics) {
-      cosmeticAccumulator.add(cosmeticId as CosmeticId, { biomeId, type: "mine" });
+      cosmeticAccumulator.add(cosmeticId as CosmeticId, { type: "mine", biomeId });
     }
 
     const armor = Array.isArray(biome.armor)
       ? biome.armor.filter((v): v is string => typeof v === "string")
       : [];
     for (const itemId of armor) {
-      accumulator.add(itemId as ItemId, { biomeId, type: "mine" });
+      accumulator.add(itemId as ItemId, { type: "mine", biomeId });
     }
 
     const furniture = Array.isArray(biome.furniture)
       ? biome.furniture.filter((v): v is string => typeof v === "string")
       : [];
     for (const itemId of furniture) {
-      accumulator.add(itemId as ItemId, { biomeId, type: "mine" });
+      accumulator.add(itemId as ItemId, { type: "mine", biomeId });
     }
 
     const dungeonDelicacies = Array.isArray(biome.dungeon_delicacies)
       ? biome.dungeon_delicacies.filter((v): v is string => typeof v === "string")
       : [];
     for (const itemId of dungeonDelicacies) {
-      accumulator.add(itemId as ItemId, { biomeId, type: "mine" });
+      accumulator.add(itemId as ItemId, { type: "mine", biomeId });
     }
 
     const tasteMaker = Array.isArray(biome.taste_maker)
       ? biome.taste_maker.filter((v): v is string => typeof v === "string")
       : [];
     for (const itemId of tasteMaker) {
-      accumulator.add(itemId as ItemId, { biomeId, type: "mine" });
+      accumulator.add(itemId as ItemId, { type: "mine", biomeId });
     }
   }
 }
@@ -207,7 +214,8 @@ function collectPerfectOreSources(
     const biome = biomes[i];
     if (typeof biome !== "object" || biome === null) continue;
 
-    const biomeId = `biome_${i}` as BiomeId;
+    const name = (biome.name as string | undefined) ?? `Biome ${i + 1}`;
+    const biomeId = biomeNameToId(name);
 
     for (const mineralKey of [biome.ore, biome.gem] as (string | undefined)[]) {
       if (!mineralKey) continue;
@@ -215,7 +223,7 @@ function collectPerfectOreSources(
       const candidates = [`perfect_${base}_ore`, `perfect_${base}`];
       for (const candidate of candidates) {
         if (perfectItems.has(candidate)) {
-          accumulator.add(candidate as ItemId, { biomeId, type: "mine" });
+          accumulator.add(candidate as ItemId, { type: "mine", biomeId });
           perfectItems.delete(candidate);
           break;
         }
@@ -244,8 +252,8 @@ function collectWishingWellSources(
         const itemId = obj.item as string | undefined;
         if (itemId) {
           accumulator.add(itemId as ItemId, {
-            cost: { amount: 100, currency: "tesserae" as const },
             type: "wishing_well",
+            cost: 100,
           });
         }
       }

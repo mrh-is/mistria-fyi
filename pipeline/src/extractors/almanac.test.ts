@@ -56,15 +56,12 @@ tags = ["crop"]
     const fiddle = parseFiddle(assetsDir).data;
 
     expect(extractAlmanac(fiddle)).toEqual({
-      almanac: [
-        {
-          id: "crops",
-          items: {
-            turnip: { name: "Turnip" },
-          },
+      almanac: {
+        crops: {
+          items: ["turnip"],
           name: "Crops",
         },
-      ],
+      },
       items: {
         turnip: { category: "crops", name: "Turnip" },
       },

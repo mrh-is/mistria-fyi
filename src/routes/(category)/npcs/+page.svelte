@@ -6,6 +6,7 @@
   import { trackerData } from "$lib/data/index.js";
   import { MAX_NPC_LEVEL } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { recordKeys } from "$lib/utils";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
 
   import type { NpcId } from "$lib/types/tracker-data.js";
@@ -15,7 +16,7 @@
   }
 
   function areAllNpcsMaxed(): boolean {
-    return Object.keys(trackerData.npcs).every(
+    return recordKeys(trackerData.npcs).every(
       (id) => (userState.state.completed.npcLevels[id] ?? 0) >= MAX_NPC_LEVEL,
     );
   }
@@ -51,7 +52,7 @@
   ];
 
   function getNpcLevel(id: NpcId): number {
-    return userState.state.completed.npcLevels[id as string] ?? 0;
+    return userState.state.completed.npcLevels[id] ?? 0;
   }
 
   function isMaxed(npc: { id: NpcId }): boolean {
@@ -75,11 +76,7 @@
         <div class="flex items-center gap-2">
           <span class="min-w-0 flex-1 text-base font-medium">{npc.name}</span>
           <span class="flex items-center gap-0.5 text-sm text-muted-foreground">
-            <Icon.Season
-              season={npc.birthday.season}
-              class="size-3 {npc.birthday.season === 'fall' ? '-scale-y-100 rotate-90' : ''}"
-              strokeWidth={npc.birthday.season === "summer" ? 2.5 : undefined}
-            />
+            <Icon.Season season={npc.birthday.season} class="size-3" />
             {npc.birthday.day}
           </span>
         </div>

@@ -2,10 +2,6 @@ import type { NpcId, Season, TrackerData } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
 
-/**
- * Includes only complete NPC tracker records. Missing names, non-Boolean dateable values, and
- * incomplete birthdays silently exclude the source record.
- */
 export function extractNpcs(fiddle: ParsedGameData): TrackerData["npcs"] {
   const npcs = fiddle.npcs as Record<string, Record<string, unknown>> | undefined;
   if (!npcs) return {};
@@ -18,17 +14,16 @@ export function extractNpcs(fiddle: ParsedGameData): TrackerData["npcs"] {
     if (!name) continue;
 
     const birthday = npc.birthday as undefined | { day?: number; season?: string };
-    const dateable = npc.dateable;
-
-    if (typeof dateable !== "boolean") continue;
     if (!birthday?.season || typeof birthday.day !== "number") continue;
+
+    const dateable = npc.dateable === true;
 
     result[id as NpcId] = {
       birthday: {
         day: birthday.day,
         season: birthday.season as Season,
       },
-      dateable,
+      ...(dateable ? { dateable } : {}),
       name,
     };
   }

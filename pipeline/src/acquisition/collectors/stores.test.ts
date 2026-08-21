@@ -31,7 +31,7 @@ describe("collectStoreSources", () => {
     const acc = new ItemSourceAccumulator();
     collectStoreSources(fiddle, defaultContext, acc);
 
-    expect(acc.get("wood" as ItemId)).toEqual([{ storeId: "general", type: "store" }]);
+    expect(acc.get("wood" as ItemId)).toEqual([{ type: "store", storeId: "general" }]);
   });
 
   it("adds seasonal availability for seasonal stock", () => {
@@ -54,31 +54,14 @@ describe("collectStoreSources", () => {
 
     expect(acc.get("seed_turnip" as ItemId)).toEqual([
       {
-        availability: { seasons: ["spring"], type: "season" },
-        storeId: "general",
         type: "store",
+        availability: { type: "season", seasons: ["spring"] },
+        storeId: "general",
       },
     ]);
   });
 
-  it("marks random stock with chance: 0", () => {
-    const fiddle = makeFiddle({
-      stores: {
-        general: {
-          categories: [{ random_stock: [{ item: "mystery_box" }] }],
-        },
-      },
-    });
-
-    const acc = new ItemSourceAccumulator();
-    collectStoreSources(fiddle, defaultContext, acc);
-
-    expect(acc.get("mystery_box" as ItemId)).toEqual([
-      { chance: 0, storeId: "general", type: "store" },
-    ]);
-  });
-
-  it("projects upgrade requirements as upgrade sources", () => {
+  it("projects upgrade requirements as availability conditions on store sources", () => {
     const fiddle = makeFiddle({
       stores: {
         general: {
@@ -99,13 +82,12 @@ describe("collectStoreSources", () => {
     const sources = acc.get("seed_carrot" as ItemId);
     expect(sources).toEqual([
       {
+        type: "store",
         availability: {
-          conditions: expect.arrayContaining([{ seasons: ["spring"], type: "season" }]),
           type: "all",
+          conditions: expect.arrayContaining([{ type: "season", seasons: ["spring"] }]),
         },
         storeId: "general",
-        type: "upgrade",
-        upgradeName: "repaired_general_store",
       },
     ]);
   });
@@ -129,8 +111,8 @@ describe("collectStoreSources", () => {
     const sources = acc.get("perk_item" as ItemId);
     expect(sources.length).toBe(1);
     expect(sources[0]).toMatchObject({
-      storeId: "general",
       type: "store",
+      storeId: "general",
     });
     expect(sources[0]).not.toHaveProperty("perkId");
   });
@@ -170,7 +152,7 @@ describe("collectStoreSources", () => {
     const acc = new ItemSourceAccumulator();
     collectStoreSources(fiddle, defaultContext, acc);
 
-    expect(acc.get("fancy_hat" as ItemId)).toEqual([{ storeId: "clothing", type: "store" }]);
+    expect(acc.get("fancy_hat" as ItemId)).toEqual([{ type: "store", storeId: "clothing" }]);
   });
 
   it("skips default store entries", () => {

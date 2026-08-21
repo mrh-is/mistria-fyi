@@ -43,11 +43,7 @@
       {#each seasons as s (s)}
         <Select.Item value={s}>
           <span class="flex items-center gap-1.5">
-            <Icon.Season
-              season={s}
-              class="size-4 {s === 'fall' ? '-scale-y-100 rotate-90' : ''}"
-              strokeWidth={s === "summer" ? 2.5 : undefined}
-            />
+            <Icon.Season season={s} class="size-4" />
             {seasonLabel(s)}
           </span>
         </Select.Item>

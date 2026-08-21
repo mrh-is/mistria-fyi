@@ -10,13 +10,17 @@
   import { isVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { recordEntries, recordForEach } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
+  import AllCompleted from "./all-completed.svelte";
+
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
-  import type { AcquisitionSource, RecipeId } from "$lib/types/tracker-data.js";
+  import type { Source } from "$lib/types/acquisition";
+  import type { Item, RecipeId } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   const redactGuard = createRedactionGuard();
@@ -30,11 +34,17 @@
 
   let redactedStoreIds = $derived(
     new Set(
-      Object.entries(trackerData.storeVisibility)
-        .filter(([, vis]) => !isVisible(vis, userState.progressionState))
+      recordEntries(trackerData.stores)
+        .filter(
+          ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
+        )
         .map(([id]) => id),
     ),
   );
+
+  function recipeForItem(item: Item): RecipeId | undefined {
+    return item.sources?.find((source) => source.type === "recipe")?.recipeId;
+  }
 
   // The current recipe condition is added when each tree is built.
   let baseSegmentLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
@@ -43,23 +53,25 @@
     id: RecipeId;
     name: string;
     nameVisible: boolean;
-    sources: AcquisitionSource[];
-    visibility: VisibilityCondition;
+    sources: Source[];
+    visibility?: VisibilityCondition;
   }
 
   let recipesByCategory = $derived.by(() => {
     const groups: { entries: RecipeEntry[]; id: string; name: string }[] = [];
-    for (const cat of trackerData.almanac) {
+    recordForEach(trackerData.almanac, ([catId, cat]) => {
       const seen = new SvelteSet<string>();
       const entries: RecipeEntry[] = [];
-      for (const [, item] of Object.entries(cat.items)) {
-        if (!item.recipeId || seen.has(item.recipeId)) continue;
-        seen.add(item.recipeId);
-        const recipe = trackerData.recipes[item.recipeId];
-        const visibility = recipe.visibility ?? { type: "always" };
+      for (const itemId of cat.items) {
+        const item = trackerData.items[itemId];
+        const recipeId = recipeForItem(item);
+        if (!recipeId || seen.has(recipeId)) continue;
+        seen.add(recipeId);
+        const recipe = trackerData.recipes[recipeId];
+        const visibility = recipe.visibility;
         const sources = recipe.sources ?? [];
         entries.push({
-          id: item.recipeId,
+          id: recipeId,
           name: item.name,
           nameVisible: isVisible(visibility, userState.progressionState),
           sources,
@@ -68,9 +80,9 @@
       }
       if (entries.length > 0) {
         entries.sort((a, b) => a.name.localeCompare(b.name));
-        groups.push({ entries, id: cat.id, name: cat.name });
+        groups.push({ entries, id: catId, name: cat.name });
       }
-    }
+    });
     return groups;
   });
 
@@ -83,7 +95,7 @@
   let nameFilter = $derived(toolbarState.searchQuery);
 
   $effect(() => {
-    const allTypes = new SvelteSet<AcquisitionSource["type"]>();
+    const allTypes = new SvelteSet<Source["type"]>();
     for (const group of recipesByCategory) {
       for (const entry of group.entries) {
         for (const source of entry.sources) {
@@ -102,7 +114,7 @@
 
   let activeSourceTypes = $derived.by(() => {
     if (!toolbarState.sourceFilterActive) return null;
-    const types = new SvelteSet<AcquisitionSource["type"]>();
+    const types = new SvelteSet<Source["type"]>();
     for (const filter of toolbarState.recipeSourceFilters) {
       if (toolbarState.activeSourceLabels.has(filter.label)) {
         for (const t of filter.types) types.add(t);
@@ -225,8 +237,4 @@
   {/if}
 {/each}
 
-{#if isAllComplete() && !userState.state.showCompleted}
-  <p class="py-8 text-center text-base text-muted-foreground">
-    All done! Toggle "Show completed" to review.
-  </p>
-{/if}
+<AllCompleted isAllCompleted={isAllComplete()} />

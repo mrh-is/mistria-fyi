@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
+import { recordKeys } from "$lib/utils.js";
 
 import { decodeTransferPayload, encodeTransferPayload, TRANSFER_VERSION } from "../transfer.js";
 
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { CosmeticId, NpcId, PerkId, VariantId } from "$lib/types/tracker-data.js";
+import type { AnimalVariantId, CosmeticId, NpcId, SkillId } from "$lib/types/tracker-data.js";
 
 // A payload encoded with the v1 codec (no perk bitfield, no married-NPC byte) for a state with
 // mines.floor = 5, npcLevels.adeline = 3, renown = 10, and all other fields empty. Used to verify
@@ -14,7 +15,7 @@ const V1_FIXTURE = "AWNgGAVUBqwMXAYDZDUA";
 
 // Helper to create a minimal CompletedState for testing
 function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState {
-  const animals: Record<string, Set<VariantId>> = {};
+  const animals: Record<string, Set<AnimalVariantId>> = {};
   const animalCosmetics: Record<string, Set<CosmeticId>> = {};
   for (const animalId of Object.keys(trackerData.animals)) {
     animals[animalId] = new Set();
@@ -44,7 +45,7 @@ describe("transfer codec v2", () => {
   });
 
   it("round-trips unlockedPerks", async () => {
-    const perkIds = (Object.keys(trackerData.perks) as PerkId[]).slice(0, 2);
+    const perkIds = recordKeys(trackerData.skills["cooking" as SkillId].perkTiers[0]);
     const completed = makeCompleted({ unlockedPerks: new Set(perkIds) });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
@@ -72,7 +73,7 @@ describe("transfer codec v2", () => {
     expect(decoded.marriedNpc).toBeNull();
     // Sanity check that pre-existing v1 fields still decode correctly.
     expect(decoded.mines?.floor).toBe(5);
-    expect(decoded.npcLevels?.adeline).toBe(3);
+    expect(decoded.npcLevels?.["adeline" as NpcId]).toBe(3);
     expect(decoded.renown).toBe(10);
   });
 

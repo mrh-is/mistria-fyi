@@ -3,6 +3,7 @@
   import { Input } from "$lib/components/ui/input/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { recordKeys } from "$lib/utils";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
 
   import type { SkillId } from "$lib/types/tracker-data.js";
@@ -22,7 +23,7 @@
 
   const { id, name }: Props = $props();
 
-  let level = $derived(userState.state.completed.skillLevels[id as string] ?? 0);
+  let level = $derived(userState.state.completed.skillLevels[id] ?? 0);
   let maxed = $derived(level >= MAX_LEVEL);
   let currentSegment = $derived(SEGMENTS.findLastIndex((s) => level >= s.start && level > 0));
 
@@ -40,10 +41,10 @@
     return Math.max(0.35, 1 - distance * 0.2);
   }
 
-  let editingId = $state<null | string>(null);
+  let editingId = $state<SkillId | undefined>(undefined);
   let editValue = $state("");
 
-  function startEditing(skillId: string, skillLevel: number) {
+  function startEditing(skillId: SkillId, skillLevel: number) {
     editingId = skillId;
     editValue = String(skillLevel);
   }
@@ -53,16 +54,16 @@
     if (!isNaN(parsed)) {
       setLevelWithCelebration(skillId, parsed);
     }
-    editingId = null;
+    editingId = undefined;
   }
 
   function handleEditKeydown(e: KeyboardEvent, skillId: SkillId) {
     if (e.key === "Enter") commitEdit(skillId);
-    if (e.key === "Escape") editingId = null;
+    if (e.key === "Escape") editingId = undefined;
   }
 
   function areAllSkillsMaxed(): boolean {
-    return Object.keys(trackerData.skills).every(
+    return recordKeys(trackerData.skills).every(
       (sid) => (userState.state.completed.skillLevels[sid] ?? 0) >= MAX_LEVEL,
     );
   }
@@ -109,7 +110,7 @@
         {/each}
       </div>
 
-      {#if editingId === (id as string)}
+      {#if editingId === id}
         <Input
           class="h-6 w-16 shrink-0 text-center text-sm"
           type="number"

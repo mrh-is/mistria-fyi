@@ -10,27 +10,35 @@
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { recordEntries, recordValues } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
+  import AllCompleted from "./all-completed.svelte";
+
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
-  import type { AcquisitionSource, ItemId } from "$lib/types/tracker-data.js";
+  import type { Source } from "$lib/types/acquisition";
+  import type { Item, ItemId } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   const redactGuard = createRedactionGuard();
 
+  function isItemCompleted(itemId: ItemId): boolean {
+    return userState.state.completed.almanac.has(itemId);
+  }
+
   function itemNameVisible(item: { visibility?: VisibilityCondition }): boolean {
-    return isEntityNameVisible(item.visibility ?? { type: "always" }, userState.progressionState);
+    return isEntityNameVisible(item.visibility, userState.progressionState);
   }
 
   function rowDisplay(
     itemId: ItemId,
     item: { visibility?: VisibilityCondition },
-    sources: AcquisitionSource[],
+    sources: Source[],
   ): TrackerRowDisplay {
-    const completed = userState.state.completed.almanac.has(itemId);
+    const completed = isItemCompleted(itemId);
     if (!itemNameVisible(item)) return { mode: "redacted" };
     if (completed) return { leaving: recentlyCompleted.has(itemId), mode: "completed" };
     return {
@@ -46,8 +54,10 @@
 
   let redactedStoreIds = $derived(
     new Set(
-      Object.entries(trackerData.storeVisibility)
-        .filter(([, vis]) => !isVisible(vis, userState.progressionState))
+      recordEntries(trackerData.stores)
+        .filter(
+          ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
+        )
         .map(([id]) => id),
     ),
   );
@@ -62,15 +72,15 @@
   }
 
   function isAlmanacComplete(): boolean {
-    return trackerData.almanac.every((cat) =>
-      Object.keys(cat.items).every((id) => userState.state.completed.almanac.has(id as ItemId)),
+    return recordValues(trackerData.almanac).every((cat) =>
+      cat.items.every((id) => isItemCompleted(id)),
     );
   }
 
   function checkCelebration(sectionItemIds: ItemId[]): void {
     if (isAlmanacComplete()) {
       celebrateCategory();
-    } else if (sectionItemIds.every((id) => userState.state.completed.almanac.has(id))) {
+    } else if (sectionItemIds.every((id) => isItemCompleted(id))) {
       celebrate();
     }
   }
@@ -92,7 +102,7 @@
     catItemIds: ItemId[],
   ): void {
     userState.toggleAlmanacItem(itemId);
-    const completed = userState.state.completed.almanac.has(itemId);
+    const completed = isItemCompleted(itemId);
     showUndoToast(item.name, completed, () => {
       userState.toggleAlmanacItem(itemId);
     });
@@ -119,53 +129,46 @@
   />
 {/if}
 
-{#each trackerData.almanac as cat (cat.id)}
-  {@const catItemIds = Object.keys(cat.items) as ItemId[]}
-  {@const catEntries = Object.entries(cat.items).sort(([, a], [, b]) =>
-    a.name.localeCompare(b.name),
-  )}
+{#each recordEntries(trackerData.almanac) as [id, cat] (id)}
+  {@const catEntries = cat.items
+    .map((id) => [id, trackerData.items[id]] as [ItemId, Item])
+    .sort(([, a], [, b]) => a.name.localeCompare(b.name))}
   {@const scopedItems = catEntries.filter(([id, item]) => {
     if (!matchesFilter(item.name)) return false;
     return shouldCountItem(
-      trackerData.items[id as ItemId].sources ?? [],
-      userState.state.completed.almanac.has(id as ItemId),
+      item.sources ?? [],
+      isItemCompleted(id),
       userState.state.worldState,
       userState.state.availabilityMode,
     );
   })}
   {@const filteredItems = scopedItems.filter(([id]) =>
-    isRowVisible(
-      id as ItemId,
-      userState.state.completed.almanac.has(id as ItemId),
-      userState.state.showCompleted,
-      recentlyCompleted,
-    ),
+    isRowVisible(id, isItemCompleted(id), userState.state.showCompleted, recentlyCompleted),
   )}
   {#if filteredItems.length > 0}
     <ExpandableSection
-      count={scopedItems.filter(([id]) => userState.state.completed.almanac.has(id as ItemId))
-        .length}
+      count={scopedItems.filter(([id]) => isItemCompleted(id)).length}
       forceOpen={!!nameFilter}
       name={cat.name}
       total={scopedItems.length}
     >
-      {@const showAll = expandedSections[cat.id] ?? false}
+      {@const showAll = expandedSections[id] ?? false}
       {@const displayItems = showAll ? filteredItems : filteredItems.slice(0, SECTION_LIMIT)}
       {#each displayItems as [itemId, item] (itemId)}
-        {@const itemCompleted = userState.state.completed.almanac.has(itemId as ItemId)}
-        {@const itemSources = trackerData.items[itemId as ItemId].sources ?? []}
-        {@const itemVisibility = item.visibility ?? { type: "always" }}
+        {@const itemCompleted = isItemCompleted(itemId)}
+        {@const itemSources = trackerData.items[itemId].sources ?? []}
+        {@const itemVisibility = item.visibility}
         <TrackerRow
-          display={rowDisplay(itemId as ItemId, item, itemSources)}
+          display={rowDisplay(itemId, item, itemSources)}
           lookups={{ ...baseLookups, entityVisibility: itemVisibility }}
           name={item.name}
           sources={itemSources}
           onToggle={() => {
             if (itemNameVisible(item) || itemCompleted) {
-              toggleItem(itemId as ItemId, item, catItemIds);
+              toggleItem(itemId, item, cat.items);
             } else {
               redactGuard.guard(itemVisibility, () => {
-                toggleItem(itemId as ItemId, item, catItemIds);
+                toggleItem(itemId, item, cat.items);
               });
             }
           }}
@@ -177,7 +180,7 @@
             class="h-7 text-sm text-muted-foreground"
             variant="ghost"
             onclick={() => {
-              expandedSections[cat.id] = true;
+              expandedSections[id] = true;
             }}
           >
             Show {filteredItems.length - SECTION_LIMIT} more...
@@ -188,8 +191,4 @@
   {/if}
 {/each}
 
-{#if trackerData.almanac.every( (cat) => Object.keys(cat.items).every( (id) => userState.state.completed.almanac.has(id as ItemId) ) ) && !userState.state.showCompleted}
-  <p class="py-8 text-center text-base text-muted-foreground">
-    All done! Toggle "Show completed" to review.
-  </p>
-{/if}
+<AllCompleted isAllCompleted={isAlmanacComplete()} />

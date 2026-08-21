@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AllCompleted from "$lib/components/all-completed.svelte";
   import { Icon } from "$lib/components/icon";
   import PageHeader from "$lib/components/page-header.svelte";
   import { getAllProgress } from "$lib/engine/progress.js";
@@ -61,9 +62,5 @@
   <QuestsSection progress={progress.quests} />
   <MinesSection progress={progress.mines} />
 
-  {#if overallProgress.completed >= overallProgress.total && !userState.state.showCompleted}
-    <p class="py-8 text-center text-base text-muted-foreground">
-      All done! Toggle "Show completed" to review.
-    </p>
-  {/if}
+  <AllCompleted isAllCompleted={overallProgress.completed >= overallProgress.total} />
 </div>

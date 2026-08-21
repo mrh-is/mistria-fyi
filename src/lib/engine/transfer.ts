@@ -1,8 +1,10 @@
 import { trackerData } from "$lib/data/index.js";
+import { recordEntries, recordKeys, recordValues } from "$lib/utils";
 
 import type { CompletedState, QuestState } from "$lib/stores/user-state.svelte.js";
 import type {
   AnimalId,
+  AnimalVariantId,
   CosmeticId,
   ItemId,
   NpcId,
@@ -10,7 +12,6 @@ import type {
   QuestId,
   SkillId,
   SpellId,
-  VariantId,
 } from "$lib/types/tracker-data.js";
 
 // ─── Constants ──────────────────────────────────────────────────────
@@ -53,11 +54,11 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   const animalVariantKeys = animalVariantOrder.map((v) => `${v.animalId}:${v.variantId}`);
   const animalVariantBytes = readBytes(Math.ceil(animalVariantKeys.length / 8));
   const animalVariantSet = fromBitfield(animalVariantKeys, animalVariantBytes);
-  const animals: Record<string, Set<VariantId>> = {};
+  const animals: Record<string, Set<AnimalVariantId>> = {};
   for (const key of animalVariantSet) {
     const [animalId, variantId] = key.split(":");
-    const existing = (animals[animalId] ??= new Set<VariantId>());
-    existing.add(variantId as VariantId);
+    const existing = (animals[animalId] ??= new Set<AnimalVariantId>());
+    existing.add(variantId as AnimalVariantId);
   }
 
   // 4. Animal cosmetics
@@ -101,7 +102,7 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   for (let i = 0; i < npcOrder.length; i++) {
     const byteIndex = Math.floor(i / 2);
     const level = i % 2 === 0 ? (npcBytes[byteIndex] >> 4) & 0xf : npcBytes[byteIndex] & 0xf;
-    npcLevels[npcOrder[i] as string] = level;
+    npcLevels[npcOrder[i]] = level;
   }
 
   // 10. Skill levels (1 byte each)
@@ -109,7 +110,7 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   const skillBytes = readBytes(skillOrder.length);
   const skillLevels: Record<string, number> = {};
   for (let i = 0; i < skillOrder.length; i++) {
-    skillLevels[skillOrder[i] as string] = skillBytes[i];
+    skillLevels[skillOrder[i]] = skillBytes[i];
   }
 
   // 11. Quest states (2 bits each, 4 per byte)
@@ -122,7 +123,7 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
     const byteIndex = Math.floor(i / 4);
     const bitOffset = (3 - (i % 4)) * 2;
     const bits = (questBytes[byteIndex] >> bitOffset) & 0x3;
-    questStates[questOrder[i].questId as string] = questStateMap[bits];
+    questStates[questOrder[i].questId] = questStateMap[bits];
   }
 
   // 12. Perk bitfield (v2 only)
@@ -174,9 +175,9 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   const animalVariantKeys = animalVariantOrder.map((v) => `${v.animalId}:${v.variantId}`);
   const completedAnimalVariants = new Set<string>();
   for (const { animalId, variantId } of animalVariantOrder) {
-    const animalSet = completed.animals[animalId as string];
+    const animalSet = completed.animals[animalId];
     if (animalSet.has(variantId)) {
-      completedAnimalVariants.add(`${animalId as string}:${variantId as string}`);
+      completedAnimalVariants.add(`${animalId}:${variantId}`);
     }
   }
   parts.push(toBitfield(animalVariantKeys, completedAnimalVariants));
@@ -186,9 +187,9 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   const animalCosmeticKeys = animalCosmeticOrder.map((v) => `${v.animalId}:${v.cosmeticId}`);
   const completedAnimalCosmetics = new Set<string>();
   for (const { animalId, cosmeticId } of animalCosmeticOrder) {
-    const cosmeticSet = completed.animalCosmetics[animalId as string];
+    const cosmeticSet = completed.animalCosmetics[animalId];
     if (cosmeticSet.has(cosmeticId)) {
-      completedAnimalCosmetics.add(`${animalId as string}:${cosmeticId as string}`);
+      completedAnimalCosmetics.add(`${animalId}:${cosmeticId}`);
     }
   }
   parts.push(toBitfield(animalCosmeticKeys, completedAnimalCosmetics));
@@ -218,7 +219,7 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   const npcOrder = getNpcOrder();
   const npcBytes = new Uint8Array(Math.ceil(npcOrder.length / 2));
   for (let i = 0; i < npcOrder.length; i++) {
-    const level = Math.min(15, completed.npcLevels[npcOrder[i] as string] ?? 0);
+    const level = Math.min(15, completed.npcLevels[npcOrder[i]] ?? 0);
     const byteIndex = Math.floor(i / 2);
     if (i % 2 === 0) {
       npcBytes[byteIndex] |= (level & 0xf) << 4;
@@ -232,7 +233,7 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   const skillOrder = getSkillOrder();
   const skillBytes = new Uint8Array(skillOrder.length);
   for (let i = 0; i < skillOrder.length; i++) {
-    skillBytes[i] = Math.min(255, completed.skillLevels[skillOrder[i] as string] ?? 0);
+    skillBytes[i] = Math.min(255, completed.skillLevels[skillOrder[i]] ?? 0);
   }
   parts.push(skillBytes);
 
@@ -240,7 +241,7 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   const questOrder = getQuestOrder();
   const questBytes = new Uint8Array(Math.ceil(questOrder.length / 4));
   for (let i = 0; i < questOrder.length; i++) {
-    const questKey = questOrder[i].questId as string;
+    const questKey = questOrder[i].questId;
     const stateVal = completed.questStates[questKey] ?? "none";
     const bits = stateVal === "none" ? 0 : stateVal === "obtained" ? 1 : 2;
     const byteIndex = Math.floor(i / 4);
@@ -346,7 +347,7 @@ function fromBitfield(ordered: string[], bytes: Uint8Array): Set<string> {
 }
 
 function getAlmanacOrder(): ItemId[] {
-  return trackerData.almanac.flatMap((cat) => Object.keys(cat.items)).sort() as ItemId[];
+  return recordValues(trackerData.almanac).flatMap(({ items }) => items.toSorted());
 }
 
 function getAnimalCosmeticOrder(): { animalId: AnimalId; cosmeticId: CosmeticId }[] {
@@ -361,16 +362,18 @@ function getAnimalCosmeticOrder(): { animalId: AnimalId; cosmeticId: CosmeticId 
   return result;
 }
 
-function getAnimalVariantOrder(): { animalId: AnimalId; variantId: VariantId }[] {
-  const result: { animalId: AnimalId; variantId: VariantId }[] = [];
-  for (const [animalId, animal] of Object.entries(trackerData.animals).sort(([a], [b]) =>
+function getAnimalVariantOrder(): { animalId: AnimalId; variantId: AnimalVariantId }[] {
+  const result: { animalId: AnimalId; variantId: AnimalVariantId }[] = [];
+  for (const [animalId, animal] of recordEntries(trackerData.animals).sort(([a], [b]) =>
     a.localeCompare(b),
   )) {
-    for (const [variantId, variant] of Object.entries(animal.variants).sort(([a], [b]) =>
-      a.localeCompare(b),
-    )) {
-      if (!variant.defaultUnlocked) {
-        result.push({ animalId: animalId as AnimalId, variantId: variantId as VariantId });
+    for (const tier of animal.variantTiers) {
+      for (const [variantId, variant] of recordEntries(tier).sort(([a], [b]) =>
+        a.localeCompare(b),
+      )) {
+        if (!(variant.source.type === "default")) {
+          result.push({ animalId, variantId });
+        }
       }
     }
   }
@@ -381,14 +384,13 @@ function getAnimalVariantOrder(): { animalId: AnimalId; variantId: VariantId }[]
 
 function getCosmeticOrder(): CosmeticId[] {
   return (Object.keys(trackerData.cosmetics) as CosmeticId[])
-    .filter((id) => !trackerData.cosmetics[id].defaultUnlocked)
+    .filter((id) => !trackerData.cosmetics[id].sources?.some((s) => s.type === "default"))
     .sort();
 }
 
 function getMuseumOrder(): ItemId[] {
-  return trackerData.museum
-    .flatMap((wing) => wing.sets)
-    .flatMap((set) => set.items)
+  return recordValues(trackerData.museum)
+    .flatMap(({ sets }) => recordValues(sets).flatMap(({ items }) => items))
     .sort();
 }
 
@@ -399,14 +401,16 @@ function getNpcOrder(): NpcId[] {
 }
 
 function getPerkOrder(): PerkId[] {
-  return (Object.keys(trackerData.perks) as PerkId[]).sort();
+  return recordValues(trackerData.skills)
+    .flatMap((skill) => skill.perkTiers.flatMap((tier) => recordKeys(tier)))
+    .sort();
 }
 
-function getQuestOrder(): { questId: QuestId; type: string }[] {
-  const result: { questId: QuestId; type: string }[] = [];
-  for (const type of Object.keys(trackerData.quests).sort()) {
-    for (const questId of (Object.keys(trackerData.quests[type]) as QuestId[]).sort()) {
-      result.push({ questId, type });
+function getQuestOrder(): { type: string; questId: QuestId }[] {
+  const result: { type: string; questId: QuestId }[] = [];
+  for (const type of recordKeys(trackerData.quests).sort()) {
+    for (const questId of recordKeys(trackerData.quests[type]).sort()) {
+      result.push({ type, questId });
     }
   }
   return result;

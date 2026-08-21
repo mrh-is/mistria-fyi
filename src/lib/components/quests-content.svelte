@@ -13,18 +13,23 @@
   import { displayQuestName } from "$lib/utils/format.js";
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
 
+  import AllCompleted from "./all-completed.svelte";
+
   import type { QuestState } from "$lib/stores/user-state.svelte.js";
-  import type { NpcId, QuestId } from "$lib/types/tracker-data.js";
+  import type { FetchQuest, QuestId, QuestType } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   const redactGuard = createRedactionGuard();
 
-  function questNameVisible(questType: string, questId: QuestId): boolean {
+  function questNameVisible(questType: QuestType, questId: QuestId): boolean {
     return isEntityNameVisible(questVisibility(questType, questId), userState.progressionState);
   }
 
-  function questVisibility(questType: string, questId: QuestId): VisibilityCondition {
-    return trackerData.quests[questType][questId].visibility ?? { type: "always" };
+  function questVisibility(
+    questType: QuestType,
+    questId: QuestId,
+  ): undefined | VisibilityCondition {
+    return trackerData.quests[questType][questId].visibility;
   }
 
   function isQuestTypeComplete(questIds: QuestId[]): boolean {
@@ -33,7 +38,7 @@
 
   function isQuestsComplete(): boolean {
     return typeOrder.every((type) =>
-      Object.keys(trackerData.quests[type] ?? {}).every(
+      Object.keys(trackerData.quests[type]).every(
         (id) => getQuestState(id as QuestId) === "completed",
       ),
     );
@@ -51,33 +56,22 @@
     );
   }
 
-  const typeLabels: Record<string, string> = {
-    crown_quests: "Crown Quests",
-    fetch_quests: "Fetch Quests",
-    heart_quests: "Heart Quests",
-    stillwell_challenges: "Stillwell Challenges",
-    story_quests: "Story Quests",
-    tali_challenges: "Taliferro Challenges",
+  const typeLabels: Record<QuestType, string> = {
+    cooking: "Cooking Challenges",
+    crown: "Crown Quests",
+    fetch: "Fetch Quests",
+    heart: "Heart Quests",
+    mission: "Mission Quests",
+    story: "Story Quests",
   };
 
-  const typeOrder = [
-    "story_quests",
-    "heart_quests",
-    "fetch_quests",
-    "crown_quests",
-    "stillwell_challenges",
-    "tali_challenges",
-  ];
+  const typeOrder = ["story", "heart", "fetch", "crown", "mission", "cooking"] as QuestType[];
 
   function getQuestState(id: QuestId): QuestState {
-    return userState.state.completed.questStates[id as string] ?? "none";
+    return userState.state.completed.questStates[id] ?? "none";
   }
 
-  function completeQuest(
-    quest: { displayName: string; id: QuestId },
-    questType: string,
-    quests: { id: QuestId }[],
-  ) {
+  function completeQuest(quest: { displayName: string; id: QuestId }, quests: { id: QuestId }[]) {
     const newlyAdded = userState.completeQuestWithRecipes(quest.id);
     const newState = getQuestState(quest.id);
     const displayName = quest.displayName;
@@ -138,19 +132,19 @@
     userState.progressionState,
   )}
   {@const chainOrder =
-    questType === "crown_quests"
+    questType === "crown"
       ? trackerData.questChains.crown
-      : questType === "stillwell_challenges"
+      : questType === "mission"
         ? trackerData.questChains.stillwell
-        : questType === "tali_challenges"
+        : questType === "cooking"
           ? trackerData.questChains.tali
           : null}
-  {@const quests = Object.entries(trackerData.quests[questType] ?? {})
+  {@const quests = Object.entries(trackerData.quests[questType])
     .map(([id, q]) => ({
       displayName: displayQuestName(q.name, questType),
       id: id as QuestId,
       name: q.name,
-      npc: q.npc,
+      npc: questType === "fetch" ? (q as FetchQuest).npc : undefined,
     }))
     .sort((a, b) => {
       if (chainOrder) {
@@ -166,7 +160,7 @@
   {#if visibleQuests.length > 0}
     <ExpandableSection
       count={quests.filter((q) => getQuestState(q.id) === "completed").length}
-      name={categoryRevealed ? (typeLabels[questType] ?? questType) : "Redacted"}
+      name={categoryRevealed ? typeLabels[questType] : "Redacted"}
       total={quests.length}
     >
       {#each visibleQuests as quest (quest.id)}
@@ -177,10 +171,10 @@
             name={quest.displayName}
             onToggle={() => {
               if (questState !== "none") {
-                completeQuest(quest, questType, quests);
+                completeQuest(quest, quests);
               } else {
                 redactGuard.guard(questVisibility(questType, quest.id), () => {
-                  completeQuest(quest, questType, quests);
+                  completeQuest(quest, quests);
                 });
               }
             }}
@@ -200,7 +194,7 @@
                   ? "Obtained — click to mark completed"
                   : "Completed — click to reset"}
               onclick={() => {
-                completeQuest(quest, questType, quests);
+                completeQuest(quest, quests);
               }}
             >
               <Icon.Completion
@@ -214,9 +208,9 @@
             </button>
             <span class="min-w-0 flex-1 text-base">
               {quest.displayName}
-              {#if quest.npc && (questType === "fetch_quests" || duplicateNames.has(quest.displayName))}
+              {#if quest.npc && (questType === "fetch" || duplicateNames.has(quest.displayName))}
                 <span class="text-sm text-muted-foreground">
-                  {trackerData.npcs[quest.npc as NpcId].name}
+                  {trackerData.npcs[quest.npc].name}
                 </span>
               {/if}
             </span>
@@ -230,8 +224,4 @@
   {/if}
 {/each}
 
-{#if typeOrder.every( (type) => Object.keys(trackerData.quests[type] ?? {}).every((id) => getQuestState(id as QuestId) === "completed") ) && !userState.state.showCompleted}
-  <p class="py-8 text-center text-base text-muted-foreground">
-    All done! Toggle "Show completed" to review.
-  </p>
-{/if}
+<AllCompleted isAllCompleted={isQuestsComplete()} />

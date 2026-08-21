@@ -38,8 +38,8 @@ export function createRedactionGuard() {
     get condition(): null | VisibilityCondition {
       return condition;
     },
-    guard(forCondition: VisibilityCondition, action: () => void): void {
-      condition = forCondition;
+    guard(forCondition: undefined | VisibilityCondition, action: () => void): void {
+      condition = forCondition ?? null;
       pendingAction = action;
       open = true;
     },

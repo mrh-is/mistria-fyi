@@ -1,12 +1,15 @@
 import type {
-  BiomeId,
-  RecipeId,
+  MinesBiome,
+  MinesBiomeId,
+  Perk,
+  PerkId,
+  QuestType,
   Season,
+  SkillId,
   StoreId,
   TrackerData,
   Weather,
 } from "$lib/types/tracker-data.js";
-import type { VisibilityCondition } from "$lib/types/visibility.js";
 
 const SEASON_LABEL: Record<Season, string> = {
   fall: "Fall",
@@ -33,33 +36,29 @@ const WEATHER_LABEL: Record<Weather, string> = {
   special: "Breeze",
 };
 
-export interface RecipeSourceLookups {
-  biomes: TrackerData["mines"]["biomes"];
-  festivals: Partial<Record<string, { name: string }>>;
-  itemNames: Partial<Record<string, string>>;
-  perks: Partial<
-    Record<
-      string,
-      {
-        name: string;
-        skillId: string;
-        tier: number;
-        visibility?: VisibilityCondition;
-      }
-    >
-  >;
-  perkTierLevels: number[];
-  questNames: Partial<Record<string, string>>;
-  recipeNames: Partial<Record<RecipeId, string>>;
-  redactedStoreIds?: ReadonlySet<string>;
-  skillNames: Partial<Record<string, string>>;
-  stores: Partial<Record<string, { article?: "the"; name: string; upgradeAction?: string }>>;
-  treasureChestTiers: Partial<Record<string, { name: string }>>;
-}
+export type NameLookup<T> = Partial<Record<keyof T, string>>;
+
+export type PartialPick<T, K extends keyof T> = {
+  [P in K]: Partial<T[P]>;
+};
+
+export type RecipeSourceLookups = PartialPick<
+  TrackerData,
+  "festivals" | "stores" | "treasureChestTiers"
+> &
+  Pick<TrackerData, "perkTierLevels"> & {
+    biomes: MinesBiome[];
+    itemNames: NameLookup<TrackerData["items"]>;
+    perks: Partial<Record<PerkId, Perk & { skillId: SkillId; tier: number }>>;
+    questNames: NameLookup<TrackerData["quests"][QuestType]>;
+    recipeNames: NameLookup<TrackerData["recipes"]>;
+    redactedStoreIds?: ReadonlySet<StoreId>;
+    skillNames: NameLookup<TrackerData["skills"]>;
+  };
 
 /** Shorten repetitive quest name prefixes */
-export function displayQuestName(name: string, questType: string): string {
-  if (questType === "fetch_quests") {
+export function displayQuestName(name: string, questType: QuestType): string {
+  if (questType === "fetch") {
     // "Request for a {item}" / "Request for {item}" → "{item}"
     // "Important Request for a Moon Fruit" → "Moon Fruit (Important)"
     if (name.startsWith("Important ")) {
@@ -67,14 +66,17 @@ export function displayQuestName(name: string, questType: string): string {
     }
     return name.replace(/^Request [Ff]or (an? )?/, "");
   }
-  if (questType === "crown_quests") {
+  if (questType === "crown") {
     // "Crown Request: {item}" or "Crown Request {item}" → "{item}"
     return name.replace(/^Crown Request:?\s*/, "");
   }
   return name;
 }
 
-export function formatBiomeName(biomeId: BiomeId, biomes: TrackerData["mines"]["biomes"]): string {
+export function formatBiomeName(
+  biomeId: MinesBiomeId,
+  biomes: TrackerData["mines"]["biomes"],
+): string {
   const biome = biomes.find((b) => b.id === biomeId);
   if (!biome) return titleCase(biomeId);
   if (biome.name.startsWith("The ")) return `the ${biome.name.slice(4)}`;

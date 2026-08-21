@@ -1,6 +1,7 @@
 import { trackerData } from "$lib/data/index.js";
+import { recordMap } from "$lib/utils";
 
-import type { NpcId } from "$lib/types/tracker-data.js";
+import type { StoreId } from "$lib/types/tracker-data";
 import type { SegmentLookups } from "$lib/utils/source-segments.js";
 
 /**
@@ -14,15 +15,12 @@ import type { SegmentLookups } from "$lib/utils/source-segments.js";
  * title-cased id for those source types.
  */
 export function buildBaseSegmentLookups(
-  redactedStoreIds: ReadonlySet<string>,
+  redactedStoreIds: ReadonlySet<StoreId>,
 ): Omit<SegmentLookups, "entityVisibility"> {
   return {
     animalNames: {},
     biomes: trackerData.mines.biomes,
     categoryVisibility: trackerData.categoryVisibility,
-    festivalDates: Object.fromEntries(
-      Object.entries(trackerData.festivals).map(([id, festival]) => [id, festival.date]),
-    ),
     festivals: trackerData.festivals,
     itemNames: Object.fromEntries(
       Object.entries(trackerData.items).map(([id, item]) => [id, item.name]),
@@ -34,37 +32,22 @@ export function buildBaseSegmentLookups(
     ),
     locationNames: {},
     monsterNames: {},
-    npcNames: Object.fromEntries(
-      Object.entries(trackerData.npcs).map(([id, npc]) => [id, npc.name]),
-    ),
-    npcVisibility: trackerData.npcVisibility,
-    perks: trackerData.perks,
+    npcNames: recordMap(trackerData.npcs, ({ name }) => name),
+    npcVisibility: recordMap(trackerData.npcs, ({ visibility }) => visibility),
+    perks: trackerData.skills,
     perkTierLevels: trackerData.perkTierLevels,
     questNames: Object.fromEntries(
       Object.values(trackerData.quests).flatMap((group) =>
         Object.entries(group).map(([id, quest]) => [id, quest.name]),
       ),
     ),
-    questNpcIds: Object.fromEntries(
-      Object.values(trackerData.quests).flatMap((group) =>
-        Object.entries(group)
-          .filter(([, q]) => q.npc)
-          .map(([id, q]) => [id, q.npc as NpcId]),
-      ),
-    ),
-    recipeNames: Object.fromEntries(
-      Object.entries(trackerData.recipes).map(([id, recipe]) => [
-        id,
-        recipe.presentations[0]?.name ?? id,
-      ]),
-    ),
+    questNpcIds: recordMap(trackerData.quests.fetch, ({ npc }) => npc),
+    recipeNames: recordMap(trackerData.recipes, ({ name }) => name),
     redactedStoreIds,
-    skillNames: Object.fromEntries(
-      Object.entries(trackerData.skills).map(([id, name]) => [id, name]),
-    ),
+    skillNames: recordMap(trackerData.skills, ({ name }) => name),
     stationNames: {},
     stores: trackerData.stores,
-    storeVisibility: trackerData.storeVisibility,
+    storeVisibility: recordMap(trackerData.stores, ({ visibility }) => visibility),
     treasureChestTiers: trackerData.treasureChestTiers,
   };
 }

@@ -1,13 +1,14 @@
 import { trackerData } from "$lib/data/index.js";
+import { recordKeys, recordValues } from "$lib/utils.js";
 
 import type { CompletedState, MergeCounts, QuestState } from "$lib/stores/user-state.svelte.js";
 import type {
+  AnimalVariantId,
   CosmeticId,
   ItemId,
   PerkId,
   RecipeId,
   SpellId,
-  VariantId,
 } from "$lib/types/tracker-data.js";
 
 // ─── Import result ──────────────────────────────────────────────────
@@ -106,7 +107,9 @@ export function buildImportState(bundle: SaveBundle): {
     if (validRecipes.has(id)) {
       almanacRecipes.add(id as RecipeId);
     } else if (validItems.has(id)) {
-      const recipeId = trackerData.items[id as ItemId].recipeId;
+      const recipeId = trackerData.items[id as ItemId].sources?.find(
+        (source) => source.type === "recipe",
+      )?.recipeId;
       if (recipeId) {
         almanacRecipes.add(recipeId);
       }
@@ -128,15 +131,15 @@ export function buildImportState(bundle: SaveBundle): {
   counts.cosmetics = cosmeticIds.size;
 
   // ── Animal variants ──
-  const animalVariants: Record<string, Set<VariantId>> = {};
+  const animalVariants: Record<string, Set<AnimalVariantId>> = {};
   for (const [animalId, animal] of Object.entries(trackerData.animals)) {
-    const validVariants = new Set(Object.keys(animal.variants));
+    const validVariants = new Set(animal.variantTiers.flatMap((tier) => Object.keys(tier)));
     const playerVariants = save?.animal_variant_unlocks?.[animalId] ?? [];
-    const matched = new Set<VariantId>();
+    const matched = new Set<AnimalVariantId>();
 
     for (const v of playerVariants) {
       if (validVariants.has(v)) {
-        matched.add(v as VariantId);
+        matched.add(v as AnimalVariantId);
       } else {
         warnings.push(`Unknown ${animalId} variant: ${v}`);
       }
@@ -178,7 +181,11 @@ export function buildImportState(bundle: SaveBundle): {
 
   // ── Perks ──
   const perkIds = new Set<PerkId>();
-  const validPerks = new Set(Object.keys(trackerData.perks));
+  const validPerks = new Set(
+    recordValues(trackerData.skills).flatMap((skill) =>
+      skill.perkTiers.flatMap((tier) => recordKeys(tier)),
+    ) as string[],
+  );
 
   for (const id of save?.perks ?? []) {
     if (validPerks.has(id)) {
@@ -192,14 +199,11 @@ export function buildImportState(bundle: SaveBundle): {
   // ── Museum donations (from gamedata.json → museum_progress) ──
   const museumIds = new Set<ItemId>();
   if (bundle.gamedata?.museum_progress) {
-    const validMuseum = new Set<string>();
-    for (const wing of trackerData.museum) {
-      for (const set of wing.sets) {
-        for (const itemId of set.items) {
-          validMuseum.add(itemId);
-        }
-      }
-    }
+    const validMuseum = new Set<string>(
+      recordValues(trackerData.museum).flatMap(({ sets }) =>
+        recordValues(sets).flatMap(({ items }) => items),
+      ),
+    );
     for (const id of bundle.gamedata.museum_progress) {
       if (validMuseum.has(id)) {
         museumIds.add(id as ItemId);
@@ -209,8 +213,12 @@ export function buildImportState(bundle: SaveBundle): {
   }
 
   // ── Mine floor (from gamedata.json → maximum_mines_level) ──
+  const biomes = trackerData.mines.biomes;
   const mineFloor = bundle.gamedata?.maximum_mines_level
-    ? Math.min(Math.floor(bundle.gamedata.maximum_mines_level), trackerData.mines.maxFloors)
+    ? Math.min(
+        Math.floor(bundle.gamedata.maximum_mines_level),
+        biomes[biomes.length - 1].floors.end,
+      )
     : 0;
   counts.mineFloor = mineFloor;
 

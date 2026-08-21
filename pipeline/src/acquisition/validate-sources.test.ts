@@ -12,21 +12,21 @@ import type { Source } from "$lib/types/acquisition.js";
 describe("validateAcquisitionSources", () => {
   it("accepts an assembled fixture with emitted and non-emitted native references", () => {
     const trackerData = {
-      almanac: [],
+      almanac: {},
       cosmetics: { hat: { sources: [{ type: "default" }] } },
       items: {
         catch: {
           sources: [
-            { activityId: "contest", festivalId: "spring_festival", type: "festival_activity" },
-            { stationId: "forge", type: "station" },
-            { locationIds: ["farm"], type: "forage" },
+            { type: "festival_activity", activityId: "contest", festivalId: "spring_festival" },
+            { type: "station", stationId: "forge" },
+            { type: "forage", locationIds: ["farm"] },
             { type: "fish", waterTypes: ["river"] },
-            { monsterId: "slime", type: "monster" },
-            { questId: "story_quest", trigger: "completion", type: "quest" },
+            { type: "monster", monsterId: "slime" },
+            { type: "quest", questId: "story_quest", trigger: "completion" },
           ],
         },
       },
-      museum: [],
+      museum: {},
       recipes: { catch_recipe: { memberItemIds: ["catch"], sources: [{ type: "default" }] } },
     };
     const references = AcquisitionReferenceIndex.from({
@@ -58,9 +58,9 @@ describe("validateAcquisitionSources", () => {
         gated_item: {
           sources: [
             {
-              availability: { level: 4, npcId: "missing_npc", type: "heartLevel" },
-              storeId: "general",
               type: "store",
+              availability: { type: "heartLevel", level: 4, npcId: "missing_npc" },
+              storeId: "general",
             },
           ],
         },
@@ -78,18 +78,18 @@ describe("validateAcquisitionSources", () => {
 
   it("rejects unexpected fields on every availability variant", () => {
     const conditions = [
-      { conditions: [], type: "all" },
-      { conditions: [], type: "any" },
-      { condition: { type: "always" }, type: "not" },
+      { type: "all", conditions: [] },
+      { type: "any", conditions: [] },
+      { type: "not", condition: { type: "always" } },
       { type: "always" },
-      { predicate: "native_flag", type: "gamePredicate", value: true },
-      { level: 4, npcId: "npc", type: "heartLevel" },
-      { floor: 20, type: "minesLevel" },
-      { perkId: "perk", type: "perkUnlocked" },
-      { questId: "quest", state: "completed", type: "quest" },
-      { seasons: ["spring"], type: "season" },
-      { level: 8, skillId: "skill", type: "skillLevel" },
-      { start: 600, end: 1200, type: "time" },
+      { type: "gamePredicate", predicate: "native_flag", value: true },
+      { type: "heartLevel", level: 4, npcId: "npc" },
+      { type: "minesLevel", floor: 20 },
+      { type: "perkUnlocked", perkId: "perk" },
+      { type: "quest", questId: "quest", state: "completed" },
+      { type: "season", seasons: ["spring"] },
+      { type: "skillLevel", level: 8, skillId: "skill" },
+      { type: "time", start: 600, end: 1200 },
       { type: "weather", weathers: ["calm"] },
     ];
     const items = Object.fromEntries(
@@ -98,9 +98,9 @@ describe("validateAcquisitionSources", () => {
         {
           sources: [
             {
+              type: "store",
               availability: { ...condition, extra: undefined },
               storeId: "general",
-              type: "store",
             },
           ],
         },
@@ -132,7 +132,7 @@ describe("validateAcquisitionSources", () => {
     Object.defineProperty(availability, "type", { value: "always" });
     const items = {
       hidden_type: {
-        sources: [{ availability, storeId: "general", type: "store" }],
+        sources: [{ type: "store", availability, storeId: "general" }],
       },
     };
     const references = AcquisitionReferenceIndex.from({
@@ -152,8 +152,8 @@ describe("validateAcquisitionSources", () => {
   it("rejects accessor-backed availability fields without executing getters", () => {
     let getterCalls = 0;
     const availability: Record<string, unknown> = {
-      predicate: "native_flag",
       type: "gamePredicate",
+      predicate: "native_flag",
     };
     Object.defineProperty(availability, "value", {
       enumerable: true,
@@ -164,7 +164,7 @@ describe("validateAcquisitionSources", () => {
     });
     const items = {
       accessor_value: {
-        sources: [{ availability, storeId: "general", type: "store" }],
+        sources: [{ type: "store", availability, storeId: "general" }],
       },
     };
     const references = AcquisitionReferenceIndex.from({
@@ -191,22 +191,22 @@ describe("validateAcquisitionSources", () => {
       null_conditions: {
         sources: [
           {
-            availability: { conditions, type: "all" },
-            storeId: "general",
             type: "store",
+            availability: { type: "all", conditions },
+            storeId: "general",
           },
         ],
       },
       null_predicate: {
         sources: [
           {
+            type: "store",
             availability: {
-              predicate: "native_flag",
               type: "gamePredicate",
+              predicate: "native_flag",
               value: predicateValue,
             },
             storeId: "general",
-            type: "store",
           },
         ],
       },
@@ -257,22 +257,22 @@ describe("validateAcquisitionSources", () => {
       custom_conditions: {
         sources: [
           {
-            availability: { conditions, type: "all" },
-            storeId: "general",
             type: "store",
+            availability: { type: "all", conditions },
+            storeId: "general",
           },
         ],
       },
       custom_predicate: {
         sources: [
           {
+            type: "store",
             availability: {
-              predicate: "native_flag",
               type: "gamePredicate",
+              predicate: "native_flag",
               value: predicateValue,
             },
             storeId: "general",
-            type: "store",
           },
         ],
       },
@@ -311,27 +311,27 @@ describe("validateAcquisitionSources", () => {
       invalid_array: {
         sources: [
           {
-            availability: { conditions: sparseConditions, type: "all" },
-            storeId: "general",
             type: "store",
+            availability: { type: "all", conditions: sparseConditions },
+            storeId: "general",
           },
         ],
       },
       invalid_season: {
         sources: [
           {
-            availability: { seasons: ["monsoon"], type: "season" },
-            storeId: "general",
             type: "store",
+            availability: { type: "season", seasons: ["monsoon"] },
+            storeId: "general",
           },
         ],
       },
       invalid_weather: {
         sources: [
           {
+            type: "store",
             availability: { type: "weather", weathers: ["sunny"] },
             storeId: "general",
-            type: "store",
           },
         ],
       },
@@ -380,9 +380,9 @@ describe("validateAcquisitionSources", () => {
 
   it("keeps provenance entry-specific when one source object is reused", () => {
     const sharedSource = {
-      availability: { predicate: "native_flag", type: "gamePredicate", value: undefined },
-      storeId: "general",
       type: "store",
+      availability: { type: "gamePredicate", predicate: "native_flag", value: undefined },
+      storeId: "general",
     } as unknown as Source;
     const items = new ItemSourceAccumulator();
     const cosmetics = new CosmeticSourceAccumulator();
@@ -431,9 +431,9 @@ describe("validateAcquisitionSources", () => {
 
   it("aggregates deterministic diagnostics with field paths and source provenance", () => {
     const malformedSource = {
-      availability: { predicate: "native_flag", type: "gamePredicate", value: undefined },
-      storeId: "general",
       type: "store",
+      availability: { type: "gamePredicate", predicate: "native_flag", value: undefined },
+      storeId: "general",
     } as unknown as Source;
     const accumulator = new ItemSourceAccumulator();
     accumulator.add("malformed" as never, malformedSource, {
@@ -442,28 +442,28 @@ describe("validateAcquisitionSources", () => {
     });
 
     const trackerData = {
-      almanac: [],
+      almanac: {},
       cosmetics: { empty_cosmetic: { sources: [] } },
       items: {
         excluded_reference: {
-          sources: [{ trigger: "donated_item", triggerItemId: "debug_item", type: "letter" }],
+          sources: [{ type: "letter", trigger: "donated_item", triggerItemId: "debug_item" }],
         },
         malformed: { sources: accumulator.get("malformed" as never) },
         missing_item: { sources: [] },
       },
-      museum: [],
+      museum: {},
       recipes: {
         cycle_a: {
           memberItemIds: [],
-          sources: [{ method: "cook", recipeId: "cycle_b", type: "recipe" }],
+          sources: [{ type: "recipe", method: "cook", recipeId: "cycle_b" }],
         },
         cycle_b: {
           memberItemIds: [],
-          sources: [{ method: "cook", recipeId: "cycle_a", type: "recipe" }],
+          sources: [{ type: "recipe", method: "cook", recipeId: "cycle_a" }],
         },
         unresolved: {
           memberItemIds: [],
-          sources: [{ method: "cook", recipeId: "missing_recipe", type: "recipe" }],
+          sources: [{ type: "recipe", method: "cook", recipeId: "missing_recipe" }],
         },
       },
     };

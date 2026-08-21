@@ -9,32 +9,45 @@
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { recordEntries, recordValues } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
+  import AllCompleted from "./all-completed.svelte";
+
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
-  import type { AcquisitionSource, ItemId } from "$lib/types/tracker-data.js";
+  import type { Source } from "$lib/types/acquisition";
+  import type {
+    Item,
+    ItemId,
+    MuseumWing,
+    MuseumWingId,
+    MuseumWingSet,
+    MuseumWingSetId,
+  } from "$lib/types/tracker-data.js";
 
   const redactGuard = createRedactionGuard();
 
   function itemNameVisible(itemId: ItemId): boolean {
-    const visibility = trackerData.items[itemId].visibility ?? { type: "always" };
+    const visibility = trackerData.items[itemId].visibility;
     return isEntityNameVisible(visibility, userState.progressionState);
   }
 
   let redactedStoreIds = $derived(
     new Set(
-      Object.entries(trackerData.storeVisibility)
-        .filter(([, vis]) => !isVisible(vis, userState.progressionState))
+      recordEntries(trackerData.stores)
+        .filter(
+          ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
+        )
         .map(([id]) => id),
     ),
   );
 
   let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
 
-  function rowDisplay(itemId: ItemId, sources: AcquisitionSource[]): TrackerRowDisplay {
+  function rowDisplay(itemId: ItemId, sources: Source[]): TrackerRowDisplay {
     const completed = userState.state.completed.museum.has(itemId);
     if (!itemNameVisible(itemId)) return { mode: "redacted" };
     if (completed) return { leaving: recentlyCompleted.has(itemId), mode: "completed" };
@@ -56,18 +69,20 @@
     setTimeout(() => recentlyCompleted.delete(itemId), 1050);
   }
 
-  function isWingComplete(wingItems: ItemId[]): boolean {
-    return wingItems.every((id) => userState.state.completed.museum.has(id));
+  function isItemComplete(itemId: ItemId): boolean {
+    return userState.state.completed.museum.has(itemId);
   }
 
-  function isCategoryComplete(): boolean {
-    return trackerData.museum.every((wing) =>
-      wing.sets.flatMap((s) => s.items).every((id) => userState.state.completed.museum.has(id)),
-    );
+  function isWingComplete(wing: MuseumWing): boolean {
+    return recordValues(wing.sets).every(isSetComplete);
   }
 
-  function isSetComplete(items: ItemId[]): boolean {
-    return items.every((id) => userState.state.completed.museum.has(id));
+  function isMuseumComplete(): boolean {
+    return recordValues(trackerData.museum).every(isWingComplete);
+  }
+
+  function isSetComplete(set: MuseumWingSet): boolean {
+    return set.items.every(isItemComplete);
   }
 
   let nameFilter = $derived(toolbarState.searchQuery);
@@ -82,7 +97,7 @@
     if (!matchesFilter(itemId)) return false;
     return shouldCountItem(
       trackerData.items[itemId].sources ?? [],
-      userState.state.completed.museum.has(itemId),
+      isItemComplete(itemId),
       userState.state.worldState,
       userState.state.availabilityMode,
     );
@@ -92,26 +107,68 @@
     if (!isItemScoped(itemId)) return false;
     return isRowVisible(
       itemId,
-      userState.state.completed.museum.has(itemId),
+      isItemComplete(itemId),
       userState.state.showCompleted,
       recentlyCompleted,
     );
   }
 
-  function toggleItem(itemId: ItemId, wingItems: ItemId[], setItems: ItemId[]): void {
+  interface WingConfig {
+    isVisible: boolean;
+    scopedCompletedItemCount: number;
+    scopedItemCount: number;
+    setConfigs: (SetConfig & { setId: MuseumWingSetId })[];
+  }
+  function wingConfig(wing: MuseumWing): WingConfig {
+    const setConfigs = recordEntries(wing.sets)
+      .map(([id, set]) => {
+        return { setId: id, ...setConfig(set) };
+      })
+      .filter(({ visibleItems }) => visibleItems.length > 0);
+    return {
+      isVisible: setConfigs.length > 0,
+      scopedCompletedItemCount: setConfigs.reduce(
+        (sum, { scopedCompletedItemCount }) => sum + scopedCompletedItemCount,
+        0,
+      ),
+      scopedItemCount: setConfigs.reduce((sum, { scopedItemCount }) => sum + scopedItemCount, 0),
+      setConfigs,
+    };
+  }
+
+  interface SetConfig {
+    name: string;
+    scopedCompletedItemCount: number;
+    scopedItemCount: number;
+    visibleItems: (Item & { itemId: ItemId })[];
+  }
+  function setConfig(set: MuseumWingSet): SetConfig {
+    return {
+      name: set.name,
+      scopedCompletedItemCount: set.items.filter(
+        (itemId) => isItemScoped(itemId) && isItemComplete(itemId),
+      ).length,
+      scopedItemCount: set.items.filter(isItemScoped).length,
+      visibleItems: set.items.filter(isItemVisible).map((itemId) => {
+        return { itemId, ...trackerData.items[itemId] };
+      }),
+    };
+  }
+
+  function toggleItem(itemId: ItemId, setId: MuseumWingSetId, wingId: MuseumWingId): void {
     userState.toggleMuseumItem(itemId);
-    const completed = userState.state.completed.museum.has(itemId);
+    const completed = isItemComplete(itemId);
     const item = trackerData.items[itemId];
     showUndoToast(item.name, completed, () => {
       userState.toggleMuseumItem(itemId);
     });
     if (completed) {
       if (!userState.state.showCompleted) markLeaving(itemId);
-      if (isCategoryComplete()) {
+      if (isMuseumComplete()) {
         celebrateCategory();
-      } else if (isWingComplete(wingItems)) {
+      } else if (isWingComplete(trackerData.museum[wingId])) {
         celebrate();
-      } else if (isSetComplete(setItems)) {
+      } else if (isSetComplete(trackerData.museum[wingId].sets[setId])) {
         celebrate();
       }
     }
@@ -134,60 +191,49 @@
   />
 {/if}
 
-{#each trackerData.museum as wing (wing.id)}
-  {@const wingItems = wing.sets.flatMap((s) => s.items)}
-  {@const scopedWingItems = wingItems.filter(isItemScoped)}
-  {@const visibleWingItems = wingItems.filter(isItemVisible)}
-  {#if visibleWingItems.length > 0}
+{#each recordEntries(trackerData.museum) as [wingId, wing] (wingId)}
+  {@const config = wingConfig(wing)}
+  {#if config.isVisible}
     <ExpandableSection
-      count={scopedWingItems.filter((id) => userState.state.completed.museum.has(id)).length}
+      count={config.scopedCompletedItemCount}
       forceOpen={!!nameFilter}
       name={wing.name}
-      total={scopedWingItems.length}
+      total={config.scopedItemCount}
     >
-      {#each wing.sets as set (set.id)}
-        {@const scopedSetItems = set.items.filter(isItemScoped)}
-        {@const visibleSetItems = set.items.filter(isItemVisible)}
-        {#if visibleSetItems.length > 0}
-          <ExpandableSection
-            count={scopedSetItems.filter((id) => userState.state.completed.museum.has(id)).length}
-            forceOpen={!!nameFilter}
-            name={set.name}
-            total={scopedSetItems.length}
-          >
-            {#each visibleSetItems as itemId (itemId)}
-              {@const museumCompleted = userState.state.completed.museum.has(itemId)}
-              {@const museumItemSources = trackerData.items[itemId].sources ?? []}
-              {@const museumItemVisibility = trackerData.items[itemId].visibility ?? {
-                type: "always",
+      {#each config.setConfigs as set (set.setId)}
+        <ExpandableSection
+          count={set.scopedCompletedItemCount}
+          forceOpen={!!nameFilter}
+          name={set.name}
+          total={set.scopedItemCount}
+        >
+          {#each set.visibleItems as item (item.itemId)}
+            {@const itemId = item.itemId}
+            {@const museumCompleted = isItemComplete(itemId)}
+            {@const museumItemSources = trackerData.items[itemId].sources ?? []}
+            {@const museumItemVisibility = trackerData.items[itemId].visibility ?? {
+              type: "always",
+            }}
+            <TrackerRow
+              display={rowDisplay(itemId, museumItemSources)}
+              lookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
+              name={trackerData.items[itemId].name}
+              sources={museumItemSources}
+              onToggle={() => {
+                if (itemNameVisible(itemId) || museumCompleted) {
+                  toggleItem(itemId, set.setId, wingId);
+                } else {
+                  redactGuard.guard(museumItemVisibility, () => {
+                    toggleItem(itemId, set.setId, wingId);
+                  });
+                }
               }}
-              <TrackerRow
-                display={rowDisplay(itemId, museumItemSources)}
-                lookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
-                name={trackerData.items[itemId].name}
-                sources={museumItemSources}
-                onToggle={() => {
-                  if (itemNameVisible(itemId) || museumCompleted) {
-                    toggleItem(itemId, wingItems, set.items);
-                  } else {
-                    redactGuard.guard(museumItemVisibility, () => {
-                      toggleItem(itemId, wingItems, set.items);
-                    });
-                  }
-                }}
-              />
-            {/each}
-          </ExpandableSection>
-        {/if}
+            />
+          {/each}
+        </ExpandableSection>
       {/each}
     </ExpandableSection>
   {/if}
 {/each}
 
-{#if trackerData.museum.every((wing) => wing.sets
-    .flatMap((s) => s.items)
-    .every((id) => userState.state.completed.museum.has(id))) && !userState.state.showCompleted}
-  <p class="py-8 text-center text-base text-muted-foreground">
-    All done! Toggle "Show completed" to review.
-  </p>
-{/if}
+<AllCompleted isAllCompleted={isMuseumComplete()} />

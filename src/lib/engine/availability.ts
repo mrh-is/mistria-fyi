@@ -6,8 +6,8 @@ import {
 } from "./availability-condition.js";
 
 import type { AvailabilityMode } from "$lib/stores/user-state.svelte.js";
-import type { AvailabilityCondition } from "$lib/types/acquisition.js";
-import type { AcquisitionSource, ItemId, Season, Weather } from "$lib/types/tracker-data.js";
+import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
+import type { ItemId, Season, Weather } from "$lib/types/tracker-data.js";
 
 import type { DisplayBadges } from "./availability-condition.js";
 
@@ -21,7 +21,7 @@ interface WorldState {
  */
 export function filterAvailableItems(
   itemIds: ItemId[],
-  sourceLookup: (id: ItemId) => AcquisitionSource[],
+  sourceLookup: (id: ItemId) => Source[],
   worldState: WorldState,
   mode: AvailabilityMode,
 ): ItemId[] {
@@ -34,7 +34,7 @@ export function filterAvailableItems(
 /**
  * Get a merged, deduplicated set of display badges from a list of sources.
  */
-export function getDisplayBadges(sources: AcquisitionSource[]): DisplayBadges {
+export function getDisplayBadges(sources: Source[]): DisplayBadges {
   const merged: DisplayBadges = {};
   for (const source of sources) {
     const availability = getAvailabilityCondition(source);
@@ -50,7 +50,7 @@ export function getDisplayBadges(sources: AcquisitionSource[]): DisplayBadges {
 /**
  * Whether the source has a season condition that excludes at least one season.
  */
-export function hasSelectiveSeasonRestriction(source: AcquisitionSource): boolean {
+export function hasSelectiveSeasonRestriction(source: Source): boolean {
   const availability = getAvailabilityCondition(source);
   return availability !== undefined && hasSelectiveSeasonCondition(availability);
 }
@@ -58,7 +58,7 @@ export function hasSelectiveSeasonRestriction(source: AcquisitionSource): boolea
 /**
  * Does this source have any timely (season/weather/time) condition?
  */
-export function hasTimelyRestriction(source: AcquisitionSource): boolean {
+export function hasTimelyRestriction(source: Source): boolean {
   const availability = getAvailabilityCondition(source);
   return availability !== undefined && hasTimelyCondition(availability);
 }
@@ -71,7 +71,7 @@ export function hasTimelyRestriction(source: AcquisitionSource): boolean {
  * but hidden in "timely" (nothing is timely about them).
  */
 export function isItemAvailable(
-  sources: AcquisitionSource[],
+  sources: Source[],
   worldState: WorldState,
   mode: AvailabilityMode,
 ): boolean {
@@ -92,7 +92,7 @@ export function isItemAvailable(
  * in the current season/weather when viewing "everything".
  */
 export function isItemDimmed(
-  sources: AcquisitionSource[],
+  sources: Source[],
   isCompleted: boolean,
   worldState: WorldState,
   mode: AvailabilityMode,
@@ -121,7 +121,7 @@ export function isRowVisible(
  * Check if a single source is available given world state and mode.
  */
 export function isSourceAvailable(
-  source: AcquisitionSource,
+  source: Source,
   worldState: WorldState,
   mode: AvailabilityMode,
 ): boolean {
@@ -146,7 +146,7 @@ export function isSourceAvailable(
  * Ignores showCompleted and recentlyCompleted — those affect rendering only.
  */
 export function shouldCountItem(
-  sources: AcquisitionSource[],
+  sources: Source[],
   isCompleted: boolean,
   worldState: WorldState,
   mode: AvailabilityMode,
@@ -160,7 +160,7 @@ export function shouldCountItem(
  * Handles the recentlyCompleted linger, showCompleted toggle, and availability.
  */
 export function shouldShowItem(
-  sources: AcquisitionSource[],
+  sources: Source[],
   isCompleted: boolean,
   worldState: WorldState,
   mode: AvailabilityMode,
@@ -177,6 +177,6 @@ export function shouldShowItem(
  * Source variants that carry no `SourceDetails` (e.g. `{ type: "default" }`) have no
  * `availability` field at all, so it can't be accessed directly on the union type.
  */
-function getAvailabilityCondition(source: AcquisitionSource): AvailabilityCondition | undefined {
+function getAvailabilityCondition(source: Source): AvailabilityCondition | undefined {
   return "availability" in source ? source.availability : undefined;
 }

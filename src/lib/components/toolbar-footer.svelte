@@ -161,11 +161,7 @@
                 }}
                 type="button"
               >
-                <Icon.Season
-                  season={s}
-                  class="size-5 {s === 'fall' ? '-scale-y-100 rotate-90' : ''}"
-                  strokeWidth={s === "summer" ? 2.5 : undefined}
-                />
+                <Icon.Season season={s} class="size-5" />
                 {seasonLabel(s)}
               </button>
             {/each}

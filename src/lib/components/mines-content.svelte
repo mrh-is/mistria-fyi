@@ -16,7 +16,7 @@
   const redactGuard = createRedactionGuard();
 
   function spellNameVisible(spellId: SpellId): boolean {
-    const visibility = trackerData.mines.spells[spellId].visibility ?? { type: "always" };
+    const visibility = trackerData.mines.spells[spellId].visibility;
     return isEntityNameVisible(visibility, userState.progressionState);
   }
 
@@ -44,11 +44,14 @@
   const { compact = false, defaultOpen = false }: { compact?: boolean; defaultOpen?: boolean } =
     $props();
 
+  const biomes = trackerData.mines.biomes;
+  const maxFloors = biomes[biomes.length - 1].floors.end;
+
   function isMinesComplete(): boolean {
     const allSpells = Object.keys(trackerData.mines.spells).every((id) =>
       userState.state.completed.mines.spells.has(id as SpellId),
     );
-    return allSpells && userState.state.completed.mines.floor >= trackerData.mines.maxFloors;
+    return allSpells && userState.state.completed.mines.floor >= maxFloors;
   }
 
   function allSpellsComplete(): boolean {
@@ -61,7 +64,7 @@
     const floor = userState.state.completed.mines.floor;
     let biome = trackerData.mines.biomes[0];
     for (const b of trackerData.mines.biomes) {
-      if (b.startFloor <= floor) biome = b;
+      if (b.floors.start <= floor) biome = b;
     }
     return biome;
   });
@@ -103,7 +106,7 @@
       <Stepper
         size="sm"
         decrementDisabled={userState.state.completed.mines.floor <= 0}
-        incrementDisabled={userState.state.completed.mines.floor >= trackerData.mines.maxFloors}
+        incrementDisabled={userState.state.completed.mines.floor >= maxFloors}
         decrementLabel="Go up one floor"
         incrementLabel="Go down one floor"
         onDecrement={() => {
@@ -113,13 +116,13 @@
           userState.setMineFloor(userState.state.completed.mines.floor + 1);
           if (isMinesComplete()) {
             celebrateCategory();
-          } else if (userState.state.completed.mines.floor >= trackerData.mines.maxFloors) {
+          } else if (userState.state.completed.mines.floor >= maxFloors) {
             celebrate();
           }
         }}
       >
         <span class="text-sm text-muted-foreground tabular-nums">
-          {userState.state.completed.mines.floor}/{trackerData.mines.maxFloors}
+          {userState.state.completed.mines.floor}/{maxFloors}
         </span>
       </Stepper>
     </div>
@@ -129,12 +132,12 @@
     count={userState.state.completed.mines.floor}
     name="Floor Progress"
     {defaultOpen}
-    total={trackerData.mines.maxFloors}
+    total={maxFloors}
   >
     <div class="flex flex-col gap-2 py-2">
       <Stepper
         decrementDisabled={userState.state.completed.mines.floor <= 0}
-        incrementDisabled={userState.state.completed.mines.floor >= trackerData.mines.maxFloors}
+        incrementDisabled={userState.state.completed.mines.floor >= maxFloors}
         decrementLabel="Go up one floor"
         incrementLabel="Go down one floor"
         onDecrement={() => {
@@ -144,7 +147,7 @@
           userState.setMineFloor(userState.state.completed.mines.floor + 1);
           if (isMinesComplete()) {
             celebrateCategory();
-          } else if (userState.state.completed.mines.floor >= trackerData.mines.maxFloors) {
+          } else if (userState.state.completed.mines.floor >= maxFloors) {
             celebrate();
           }
         }}
@@ -155,17 +158,14 @@
             type="number"
             inputmode="numeric"
             min="0"
-            max={trackerData.mines.maxFloors}
+            max={maxFloors}
             value={userState.state.completed.mines.floor}
             onchange={(e) => {
-              const v = Math.max(
-                0,
-                Math.min(trackerData.mines.maxFloors, Number(e.currentTarget.value)),
-              );
+              const v = Math.max(0, Math.min(maxFloors, Number(e.currentTarget.value)));
               userState.setMineFloor(v);
               if (isMinesComplete()) {
                 celebrateCategory();
-              } else if (v >= trackerData.mines.maxFloors) {
+              } else if (v >= maxFloors) {
                 celebrate();
               }
             }}
@@ -175,7 +175,7 @@
       </Stepper>
       <span class="text-sm text-muted-foreground">
         {currentBiome().name}
-        (floors {currentBiome().startFloor}–{currentBiome().endFloor})
+        (floors {currentBiome().floors.start}–{currentBiome().floors.end})
       </span>
     </div>
   </ExpandableSection>
@@ -197,12 +197,9 @@
           if (spellNameVisible(spell.id) || completed) {
             toggleSpell(spell.id);
           } else {
-            redactGuard.guard(
-              trackerData.mines.spells[spell.id].visibility ?? { type: "always" },
-              () => {
-                toggleSpell(spell.id);
-              },
-            );
+            redactGuard.guard(trackerData.mines.spells[spell.id].visibility, () => {
+              toggleSpell(spell.id);
+            });
           }
         }}
       />

@@ -3,6 +3,7 @@
   import { trackerData } from "$lib/data/index.js";
   import { type CategoryProgress, MAX_SKILL_LEVEL } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { recordEntries, recordKeys } from "$lib/utils";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
 
   import SectionHeader from "./SectionHeader.svelte";
@@ -10,7 +11,7 @@
   import type { SkillId } from "$lib/types/tracker-data.js";
 
   function areAllSkillsMaxed(): boolean {
-    return Object.keys(trackerData.skills).every(
+    return recordKeys(trackerData.skills).every(
       (id) => (userState.state.completed.skillLevels[id] ?? 0) >= MAX_SKILL_LEVEL,
     );
   }
@@ -26,8 +27,8 @@
   const { progress }: { progress: CategoryProgress } = $props();
 
   let skills = $derived(
-    Object.entries(trackerData.skills)
-      .map(([id, name]) => ({ id: id as SkillId, name }))
+    recordEntries(trackerData.skills)
+      .map(([id, { name }]) => ({ id, name }))
       .sort((a, b) => a.name.localeCompare(b.name)),
   );
 </script>
@@ -37,7 +38,7 @@
     <SectionHeader key="skills" {progress} />
     <div class="flex flex-col gap-1">
       {#each skills as skill (skill.id)}
-        {@const level = userState.state.completed.skillLevels[skill.id as string] ?? 0}
+        {@const level = userState.state.completed.skillLevels[skill.id] ?? 0}
         {@const maxed = level >= MAX_SKILL_LEVEL}
         {#if maxed ? userState.state.showCompleted : true}
           <div class="flex items-center gap-2 rounded-md px-2 {maxed ? 'opacity-40' : ''}">

@@ -11,33 +11,28 @@ import {
   shouldCountItem,
 } from "../availability.js";
 
-import type { AvailabilityCondition } from "$lib/types/acquisition.js";
-import type {
-  AcquisitionSource,
-  ItemId,
-  Season,
-  StoreId,
-  Weather,
-} from "$lib/types/tracker-data.js";
+import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
+import type { ItemId, Season, StoreId, Weather } from "$lib/types/tracker-data.js";
+import type { NonEmptyArray } from "$lib/utils.js";
 
 const spring = { season: "spring" as const, weather: "calm" as const };
 
-function src(availability?: AvailabilityCondition): AcquisitionSource {
-  return { ...(availability ? { availability } : {}), storeId: "test" as StoreId, type: "store" };
+function src(availability?: AvailabilityCondition): Source {
+  return { ...(availability ? { availability } : {}), type: "store", storeId: "test" as StoreId };
 }
 
-const seasonCondition = (seasons: Season[]): AvailabilityCondition => ({
-  seasons,
+const seasonCondition = (seasons: NonEmptyArray<Season>): AvailabilityCondition => ({
   type: "season",
+  seasons,
 });
 const weatherCondition = (weathers: Weather[]): AvailabilityCondition => ({
   type: "weather",
   weathers,
 });
 const timeCondition = (start: number, end: number): AvailabilityCondition => ({
+  type: "time",
   start,
   end,
-  type: "time",
 });
 const allSeasonsCondition = seasonCondition(["spring", "summer", "fall", "winter"]);
 
@@ -77,7 +72,7 @@ describe("hasTimelyRestriction", () => {
   });
 
   it("returns false for a non-timely condition", () => {
-    expect(hasTimelyRestriction(src({ floor: 5, type: "minesLevel" }))).toBe(false);
+    expect(hasTimelyRestriction(src({ type: "minesLevel", floor: 5 }))).toBe(false);
   });
 });
 
@@ -155,7 +150,7 @@ describe("isItemAvailable", () => {
 
 describe("filterAvailableItems", () => {
   const ids = ["a", "b", "c"] as ItemId[];
-  const lookup = (id: ItemId): AcquisitionSource[] => (id === "c" ? [] : [src()]);
+  const lookup = (id: ItemId): Source[] => (id === "c" ? [] : [src()]);
 
   it("available mode passes items with sources through", () => {
     const result = filterAvailableItems(ids, lookup, spring, "available");
@@ -233,8 +228,8 @@ describe("getDisplayBadges", () => {
 
   it("extracts seasons, weathers, and time range from a single source", () => {
     const condition: AvailabilityCondition = {
-      conditions: [seasonCondition(["spring"]), weatherCondition(["calm"]), timeCondition(6, 12)],
       type: "all",
+      conditions: [seasonCondition(["spring"]), weatherCondition(["calm"]), timeCondition(6, 12)],
     };
     expect(getDisplayBadges([src(condition)])).toEqual({
       seasons: ["spring"],

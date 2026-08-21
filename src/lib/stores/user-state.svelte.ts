@@ -4,9 +4,11 @@ import { trackerData } from "$lib/data/index.js";
 import { clampRenownLevel } from "$lib/engine/progress.js";
 import { findRecipesForQuest } from "$lib/engine/quest-rewards.js";
 import { deriveProgressionState, type UserProgressionState } from "$lib/engine/visibility.js";
+import { recordEntries } from "$lib/utils";
 
 import type {
   AnimalId,
+  AnimalVariantId,
   CosmeticId,
   ItemId,
   NpcId,
@@ -16,7 +18,6 @@ import type {
   Season,
   SkillId,
   SpellId,
-  VariantId,
   Weather,
 } from "$lib/types/tracker-data.js";
 
@@ -27,16 +28,16 @@ export type AvailabilityMode = "available" | "everything" | "timely";
 export interface CompletedState {
   almanac: Set<ItemId>;
   almanacRecipes: Set<RecipeId>;
-  animalCosmetics: Record<string, Set<CosmeticId>>;
-  animals: Record<string, Set<VariantId>>;
+  animalCosmetics: Record<AnimalId, Set<CosmeticId>>;
+  animals: Record<AnimalId, Set<AnimalVariantId>>;
   cosmetics: Set<CosmeticId>;
   marriedNpc: NpcId | null;
   mines: { floor: number; spells: Set<SpellId> };
   museum: Set<ItemId>;
-  npcLevels: Record<string, number>;
-  questStates: Record<string, QuestState>;
+  npcLevels: Record<NpcId, number>;
+  questStates: Record<QuestId, QuestState>;
   renown: number;
-  skillLevels: Record<string, number>;
+  skillLevels: Record<SkillId, number>;
   unlockedPerks: Set<PerkId>;
 }
 
@@ -100,19 +101,21 @@ function createDefaultCompleted(): CompletedState {
   // Pre-populate default-unlocked cosmetics
   const defaultCosmetics = new SvelteSet<CosmeticId>();
   for (const [id, cosmetic] of Object.entries(trackerData.cosmetics)) {
-    if (cosmetic.defaultUnlocked) {
+    if (cosmetic.sources?.some((s) => s.type === "default")) {
       defaultCosmetics.add(id as CosmeticId);
     }
   }
 
   // Initialize sets for each animal type, pre-populating default-unlocked variants
-  const animals: Record<string, Set<VariantId>> = {};
+  const animals: Record<string, Set<AnimalVariantId>> = {};
   const animalCosmetics: Record<string, Set<CosmeticId>> = {};
   for (const [animalId, animal] of Object.entries(trackerData.animals)) {
-    const variantSet = new SvelteSet<VariantId>();
-    for (const [vid, variant] of Object.entries(animal.variants)) {
-      if (variant.defaultUnlocked) {
-        variantSet.add(vid as VariantId);
+    const variantSet = new SvelteSet<AnimalVariantId>();
+    for (const tier of animal.variantTiers) {
+      for (const [variantId, variant] of Object.entries(tier)) {
+        if (variant.source.type === "default") {
+          variantSet.add(variantId as AnimalVariantId);
+        }
       }
     }
     animals[animalId] = variantSet;
@@ -196,8 +199,8 @@ function createUserState() {
      * recipe side-effects (covers none→obtained and completed→none).
      */
     completeQuestWithRecipes(id: QuestId): RecipeId[] {
-      const current = state.completed.questStates[id as string] ?? "none";
-      state.completed.questStates[id as string] =
+      const current = state.completed.questStates[id] ?? "none";
+      state.completed.questStates[id] =
         current === "none" ? "obtained" : current === "obtained" ? "completed" : "none";
 
       if (current !== "obtained") return [];
@@ -213,10 +216,10 @@ function createUserState() {
       return newlyAdded;
     },
     cycleQuestState(id: QuestId) {
-      const current = state.completed.questStates[id as string] ?? "none";
+      const current = state.completed.questStates[id] ?? "none";
       const next: QuestState =
         current === "none" ? "obtained" : current === "obtained" ? "completed" : "none";
-      state.completed.questStates[id as string] = next;
+      state.completed.questStates[id] = next;
     },
     exportState(): string {
       return serialize(state);
@@ -278,8 +281,8 @@ function createUserState() {
 
       // Animal variants
       if (imported.animals) {
-        for (const [animalId, variants] of Object.entries(imported.animals)) {
-          const existing = (state.completed.animals[animalId] ??= new SvelteSet<VariantId>());
+        for (const [animalId, variants] of recordEntries(imported.animals)) {
+          const existing = (state.completed.animals[animalId] ??= new SvelteSet<AnimalVariantId>());
           for (const v of variants) {
             if (!existing.has(v)) {
               existing.add(v);
@@ -291,7 +294,7 @@ function createUserState() {
 
       // Animal cosmetics
       if (imported.animalCosmetics) {
-        for (const [animalId, cosmetics] of Object.entries(imported.animalCosmetics)) {
+        for (const [animalId, cosmetics] of recordEntries(imported.animalCosmetics)) {
           const existing = (state.completed.animalCosmetics[animalId] ??=
             new SvelteSet<CosmeticId>());
           for (const c of cosmetics) {
@@ -337,7 +340,7 @@ function createUserState() {
 
       // NPC levels (take max per NPC)
       if (imported.npcLevels) {
-        for (const [id, level] of Object.entries(imported.npcLevels)) {
+        for (const [id, level] of recordEntries(imported.npcLevels)) {
           const current = state.completed.npcLevels[id] ?? 0;
           if (level > current) {
             state.completed.npcLevels[id] = level;
@@ -348,7 +351,7 @@ function createUserState() {
 
       // Skill levels (take max per skill)
       if (imported.skillLevels) {
-        for (const [id, level] of Object.entries(imported.skillLevels)) {
+        for (const [id, level] of recordEntries(imported.skillLevels)) {
           const current = state.completed.skillLevels[id] ?? 0;
           if (level > current) {
             state.completed.skillLevels[id] = level;
@@ -370,7 +373,7 @@ function createUserState() {
       // Quest states (take more advanced state: none < obtained < completed)
       if (imported.questStates) {
         const rank: Record<QuestState, number> = { completed: 2, none: 0, obtained: 1 };
-        for (const [id, importedState] of Object.entries(imported.questStates)) {
+        for (const [id, importedState] of recordEntries(imported.questStates)) {
           const current = state.completed.questStates[id] ?? "none";
           if (rank[importedState] > rank[current]) {
             state.completed.questStates[id] = importedState;
@@ -397,11 +400,13 @@ function createUserState() {
       state.completed.marriedNpc = npcId;
     },
     setMineFloor(floor: number) {
-      state.completed.mines.floor = Math.max(0, Math.min(floor, trackerData.mines.maxFloors));
+      const biomes = trackerData.mines.biomes;
+      const maxFloor = biomes[biomes.length - 1].floors.end;
+      state.completed.mines.floor = Math.max(0, Math.min(floor, maxFloor));
     },
     setNpcLevel(id: NpcId, level: number) {
       const max = trackerData.npcs[id].dateable ? 12 : 10;
-      state.completed.npcLevels[id as string] = Math.max(0, Math.min(level, max));
+      state.completed.npcLevels[id] = Math.max(0, Math.min(level, max));
     },
     setRenown(level: number) {
       state.completed.renown = clampRenownLevel(level);
@@ -410,7 +415,7 @@ function createUserState() {
       state.worldState.season = season;
     },
     setSkillLevel(id: SkillId, level: number) {
-      state.completed.skillLevels[id as string] = Math.max(0, Math.min(level, 60));
+      state.completed.skillLevels[id] = Math.max(0, Math.min(level, 60));
     },
     setWeather(weather: Weather) {
       state.worldState.weather = weather;
@@ -428,8 +433,8 @@ function createUserState() {
       const set = (state.completed.animalCosmetics[animalId] ??= new SvelteSet<CosmeticId>());
       toggleInSet(set, cosmeticId);
     },
-    toggleAnimalVariant(animalId: AnimalId, variantId: VariantId) {
-      const set = (state.completed.animals[animalId] ??= new SvelteSet<VariantId>());
+    toggleAnimalVariant(animalId: AnimalId, variantId: AnimalVariantId) {
+      const set = (state.completed.animals[animalId] ??= new SvelteSet<AnimalVariantId>());
       toggleInSet(set, variantId);
     },
     toggleCosmetic(id: CosmeticId) {
@@ -498,7 +503,7 @@ function deserialize(json: string): null | UserState {
           ]),
         ),
         animals: Object.fromEntries(
-          Object.entries(s.completed.animals).map(([k, v]) => [k, brandedSet<VariantId>(v)]),
+          Object.entries(s.completed.animals).map(([k, v]) => [k, brandedSet<AnimalVariantId>(v)]),
         ),
         cosmetics: brandedSet<CosmeticId>(s.completed.cosmetics),
         marriedNpc: (s.completed.marriedNpc as NpcId | null | undefined) ?? null,

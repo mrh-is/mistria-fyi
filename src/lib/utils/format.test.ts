@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { formatBiomeName, formatStoreName, withIndefiniteArticle } from "./format.js";
 
-import type { BiomeId, StoreId } from "$lib/types/tracker-data.js";
+import type { MinesBiomeId, StoreId } from "$lib/types/tracker-data.js";
 
 describe("withIndefiniteArticle", () => {
   it("uses 'an' for vowel-starting names", () => {
@@ -40,23 +40,21 @@ describe("formatBiomeName", () => {
   it("lowercases leading 'The' in biome names", () => {
     const biomes = [
       {
-        endFloor: 19,
-        id: "biome_0" as BiomeId,
+        floors: { start: 1, end: 19 },
+        id: "biome_0" as MinesBiomeId,
         name: "The Tide Caverns",
-        startFloor: 1,
       },
     ];
-    expect(formatBiomeName("biome_0" as BiomeId, biomes)).toBe("the Tide Caverns");
+    expect(formatBiomeName("biome_0" as MinesBiomeId, biomes)).toBe("the Tide Caverns");
   });
   it("prepends 'the' for names without leading article", () => {
     const biomes = [
       {
-        endFloor: 39,
-        id: "biome_1" as BiomeId,
+        floors: { start: 20, end: 39 },
+        id: "biome_1" as MinesBiomeId,
         name: "Upper Mines",
-        startFloor: 20,
       },
     ];
-    expect(formatBiomeName("biome_1" as BiomeId, biomes)).toBe("the Upper Mines");
+    expect(formatBiomeName("biome_1" as MinesBiomeId, biomes)).toBe("the Upper Mines");
   });
 });

@@ -32,7 +32,6 @@ import { extractFestivals } from "./extractors/festivals.js";
 import { extractMines } from "./extractors/mines.js";
 import { extractMuseum } from "./extractors/museum.js";
 import { extractNpcs } from "./extractors/npcs.js";
-import { extractPerks } from "./extractors/perks.js";
 import {
   applyAnimalQuestGates,
   applyItemQuestGates,
@@ -41,7 +40,7 @@ import {
 } from "./extractors/quest-gates.js";
 import { extractQuests } from "./extractors/quests.js";
 import { extractRecipes } from "./extractors/recipes.js";
-import { extractRenown } from "./extractors/renown.js";
+import { extractTownRanks } from "./extractors/renown.js";
 import { extractSkills } from "./extractors/skills.js";
 import { extractStoresMeta } from "./extractors/stores-meta.js";
 import { extractTreasureChestTiers } from "./extractors/treasure-chest-tiers.js";
@@ -51,15 +50,15 @@ import {
   extractCategoryVisibility,
   extractFetchQuestVisibility,
   extractHeartLevelChanges,
-  extractNpcVisibility,
-  extractStoreVisibility,
+  stampNpcVisibility,
+  stampStoreVisibility,
 } from "./extractors/visibility/entity-visibility.js";
 import { extractQuestChains } from "./extractors/visibility/quest-chains.js";
 import { parseFiddle } from "./parse-fiddle.js";
 import { createRequirementContext } from "./requirements.js";
 
 import type { Source as AcquisitionSource } from "$lib/types/acquisition.js";
-import type { CosmeticId, ItemId, TrackerData } from "$lib/types/tracker-data.js";
+import type { CosmeticId, ItemId, QuestId, TrackerData } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "./parse-fiddle.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -109,7 +108,12 @@ function buildAcquisitionReferences(
       locations: nativeIds.locations,
       monsters: nativeIds.monsters,
       npcs: trackerData.npcs,
-      perks: trackerData.perks,
+      perks: Object.values(trackerData.skills).reduce<Record<string, unknown>>((acc, skill) => {
+        for (const tier of skill.perkTiers) {
+          for (const perkId of Object.keys(tier)) acc[perkId] = true;
+        }
+        return acc;
+      }, {}),
       quests: { ...nativeIds.quests, ...toRecord(nativeQuestIds), ...trackerData.quests },
       questTypes: nativeIds.questTypes,
       skills: trackerData.skills,
@@ -117,7 +121,7 @@ function buildAcquisitionReferences(
       stores: trackerData.stores,
       treasureChestTiers: { ...toRecord(nativeChestTiers), ...trackerData.treasureChestTiers },
       waterTypes: nativeIds.waterTypes,
-      wings: Object.fromEntries(trackerData.museum.map((wing) => [wing.id, true])),
+      wings: trackerData.museum,
     },
   });
 }
@@ -158,6 +162,7 @@ function collectNativeIdsFromSources(
       case "animal_product":
       case "artifact_replicator":
       case "beach_cave_chest":
+      case "breed":
         break;
       case "artifact_dig":
       case "bug_catch":
@@ -319,18 +324,17 @@ function main(): void {
   console.log("Step 3: Extracting tracker data...");
   const museum = extractMuseum(fiddle);
   const cutsceneQuestMap = buildCutsceneQuestMap(fiddle);
-  const { recipeIdByItemId, recipes } = extractRecipes(fiddle, cutsceneQuestMap);
-  const { almanac, items } = extractAlmanac(fiddle, recipeIdByItemId);
+  const { recipeMemberItems, recipes } = extractRecipes(fiddle, cutsceneQuestMap);
+  const { almanac, items } = extractAlmanac(fiddle);
   const animals = extractAnimals(fiddle);
   const npcs = extractNpcs(fiddle);
   const cosmeticsRaw = extractCosmetics(fiddle);
   const cosmetics = applyExclusions(cosmeticsRaw);
-  const skills = extractSkills(fiddle);
-  const renown = extractRenown(fiddle);
+  const { perkTierLevels, skills } = extractSkills(fiddle);
+  const townRanks = extractTownRanks(fiddle);
   const quests = extractQuests(fiddle);
   const mines = extractMines(fiddle);
   const questGates = extractQuestGates(fiddle);
-  const { perks, perkTierLevels } = extractPerks(fiddle);
   const storesMeta = extractStoresMeta(fiddle);
   const festivals = extractFestivals(fiddle);
   const treasureChestTiers = extractTreasureChestTiers(fiddle);
@@ -342,7 +346,7 @@ function main(): void {
 
   const itemSources = new ItemSourceAccumulator();
   const cosmeticSources = new CosmeticSourceAccumulator();
-  deriveRecipeProductSources(fiddle, recipes, itemSources);
+  deriveRecipeProductSources(fiddle, recipeMemberItems, itemSources);
   collectNaturalSources(fiddle, itemSources, cosmeticSources);
   collectRewardSources(fiddle, itemSources, cosmeticSources);
   collectStoreSources(fiddle, requirementContext, itemSources, cosmeticSources);
@@ -403,25 +407,23 @@ function main(): void {
   applyAnimalQuestGates(animals, questGates.animalGates);
   applySpellQuestGates(mines, questGates.spellGates);
 
-  for (const [itemId, recipeId] of recipeIdByItemId) {
-    const typedId = itemId as ItemId;
-    const item = items[typedId];
-    if (item) {
-      (items as TrackerData["items"])[typedId] = { ...item, recipeId };
-    }
-  }
   console.log();
 
   console.log("Step 3b: Extracting visibility data...");
   const questChainsRaw = extractQuestChains(fiddle);
-  const storeVisibilityData = extractStoreVisibility(fiddle);
-  const npcVisibilityData = extractNpcVisibility();
   const heartLevelChangesData = extractHeartLevelChanges(fiddle, cutsceneQuestMap);
   const categoryVisibilityData = extractCategoryVisibility();
   const fetchQuestVisibilityData = extractFetchQuestVisibility(
     questChainsRaw.fetch,
     cutsceneQuestMap,
   );
+
+  for (const [questId, changes] of Object.entries(heartLevelChangesData)) {
+    const quest = quests.story[questId as QuestId];
+    if (quest) {
+      quest.heartLevelChanges = changes;
+    }
+  }
   console.log();
 
   console.log("Step 4: Assembling tracker-data.json...");
@@ -432,22 +434,18 @@ function main(): void {
     cosmetics,
     festivals,
     generatedAt: new Date().toISOString(),
-    heartLevelChanges: heartLevelChangesData,
     items,
     mines,
     museum,
     npcs,
-    npcVisibility: npcVisibilityData,
-    perks,
     perkTierLevels,
     questChains: { ...questChainsRaw, fetch: fetchQuestVisibilityData },
     questGates,
     quests,
     recipes,
-    renown,
     skills,
     stores: storesMeta,
-    storeVisibility: storeVisibilityData,
+    townRanks,
     treasureChestTiers,
     version,
   };
@@ -463,15 +461,9 @@ function main(): void {
   validateAcquisitionSources(trackerData, acquisitionReferences);
   console.log("  Acquisition source validation passed");
 
-  // Mutate trackerData in place: stamps visibility on items, recipes, perks, cosmetics, animals,
-  // spells, and quests.
-  assignEntityVisibility(
-    trackerData,
-    storeVisibilityData,
-    cutsceneQuestMap,
-    fiddle,
-    questChainsRaw,
-  );
+  stampNpcVisibility(trackerData);
+  stampStoreVisibility(trackerData);
+  assignEntityVisibility(trackerData, cutsceneQuestMap, fiddle, questChainsRaw);
 
   const json = JSON.stringify(trackerData);
   const prettyJson = JSON.stringify(trackerData, null, 2);

@@ -21,15 +21,15 @@ export function resolveToVisibility(
   if ("all" in expr) {
     const conditions = expr.all.map((e) => resolveToVisibility(e, cutsceneMap));
     return simplifyCondition({
-      conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
       type: "and",
+      conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
     });
   }
   if ("any" in expr) {
     const conditions = expr.any.map((e) => resolveToVisibility(e, cutsceneMap));
     return simplifyCondition({
-      conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
       type: "or",
+      conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
     });
   }
   if ("not" in expr) {
@@ -45,26 +45,26 @@ export function resolveToVisibility(
     const entry = cutsceneMap[value];
     if (!entry) return ALWAYS;
     return entry.phase === "completed"
-      ? { questId: entry.questId, type: "questCompleted" }
-      : { questId: entry.questId, type: "questAvailable" };
+      ? { type: "questCompleted", questId: entry.questId }
+      : { type: "questAvailable", questId: entry.questId };
   }
 
   if (predicate === "completed_quest" && typeof value === "string") {
-    return { questId: value as QuestId, type: "questCompleted" };
+    return { type: "questCompleted", questId: value as QuestId };
   }
 
   if (predicate === "met_npc") {
     if (typeof value === "string") {
-      return { npcId: value as NpcId, type: "npcKnown" };
+      return { type: "npcKnown", npcId: value as NpcId };
     }
     if (Array.isArray(value)) {
       const conditions = value.map((npc) => ({
-        npcId: npc as NpcId,
         type: "npcKnown" as const,
+        npcId: npc as NpcId,
       }));
       return simplifyCondition({
-        conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
         type: "and",
+        conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
       });
     }
     return ALWAYS;
@@ -74,37 +74,37 @@ export function resolveToVisibility(
     const entries = Object.entries(value as Record<string, number>);
     if (entries.length === 1) {
       const [skillId, level] = entries[0];
-      return { level, skillId: skillId as SkillId, type: "skillLevel" };
+      return { type: "skillLevel", level, skillId: skillId as SkillId };
     }
     const conditions = entries.map(([skillId, level]) => ({
+      type: "skillLevel" as const,
       level,
       skillId: skillId as SkillId,
-      type: "skillLevel" as const,
     }));
     return simplifyCondition({
-      conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
       type: "and",
+      conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
     });
   }
 
   if (predicate === "reached_mines_level" && typeof value === "number") {
-    return { floor: value, type: "minesLevel" };
+    return { type: "minesLevel", floor: value };
   }
 
   if (predicate === "reached_heart_level" && typeof value === "object" && value !== null) {
     const entries = Object.entries(value as Record<string, number>);
     if (entries.length === 1) {
       const [npcId, level] = entries[0];
-      return { level, npcId: npcId as NpcId, type: "heartLevel" };
+      return { type: "heartLevel", level, npcId: npcId as NpcId };
     }
     const conditions = entries.map(([npcId, level]) => ({
+      type: "heartLevel" as const,
       level,
       npcId: npcId as NpcId,
-      type: "heartLevel" as const,
     }));
     return simplifyCondition({
-      conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
       type: "and",
+      conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
     });
   }
 
@@ -120,8 +120,8 @@ export function simplifyCondition(condition: VisibilityCondition): VisibilityCon
     if (simplified.length === 0) return ALWAYS;
     if (simplified.length === 1) return simplified[0];
     return {
-      conditions: simplified as [VisibilityCondition, ...VisibilityCondition[]],
       type: "and",
+      conditions: simplified as [VisibilityCondition, ...VisibilityCondition[]],
     };
   }
   if (condition.type === "or") {
@@ -130,8 +130,8 @@ export function simplifyCondition(condition: VisibilityCondition): VisibilityCon
     if (simplified.length === 0) return ALWAYS;
     if (simplified.length === 1) return simplified[0];
     return {
-      conditions: simplified as [VisibilityCondition, ...VisibilityCondition[]],
       type: "or",
+      conditions: simplified as [VisibilityCondition, ...VisibilityCondition[]],
     };
   }
   return condition;

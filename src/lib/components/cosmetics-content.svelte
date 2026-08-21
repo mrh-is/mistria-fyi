@@ -5,28 +5,34 @@
   import { trackerData } from "$lib/data/index.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { recordEntries } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
+  import AllCompleted from "./all-completed.svelte";
+
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
-  import type { AcquisitionSource, CosmeticId } from "$lib/types/tracker-data.js";
+  import type { Source } from "$lib/types/acquisition";
+  import type { CosmeticId } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   interface CosmeticEntry {
     id: CosmeticId;
     name: string;
-    sources: AcquisitionSource[];
-    visibility: VisibilityCondition;
+    sources: Source[];
+    visibility?: VisibilityCondition;
   }
 
   const redactGuard = createRedactionGuard();
 
   let redactedStoreIds = $derived(
     new Set(
-      Object.entries(trackerData.storeVisibility)
-        .filter(([, vis]) => !isVisible(vis, userState.progressionState))
+      recordEntries(trackerData.stores)
+        .filter(
+          ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
+        )
         .map(([id]) => id),
     ),
   );
@@ -61,7 +67,7 @@
         id: id as CosmeticId,
         name: cosmetic.name,
         sources,
-        visibility: cosmetic.visibility ?? { type: "always" },
+        visibility: cosmetic.visibility,
       });
     }
     for (const subCats of Object.values(bySlot)) {
@@ -184,8 +190,4 @@
   {/if}
 {/each}
 
-{#if Object.keys(trackerData.cosmetics).every( (id) => userState.state.completed.cosmetics.has(id as CosmeticId) ) && !userState.state.showCompleted}
-  <p class="py-8 text-center text-base text-muted-foreground">
-    All done! Toggle "Show completed" to review.
-  </p>
-{/if}
+<AllCompleted isAllCompleted={isCosmeticsComplete()} />

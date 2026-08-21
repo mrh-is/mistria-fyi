@@ -96,9 +96,9 @@ function collectAnimalFestivalRewardSources(
       for (const kind of animalKinds) {
         const itemId = template.replace("{AnimalKind}", kind) as ItemId;
         accumulator.add(itemId, {
+          type: "festival_activity",
           activityId: "animal_contest" as ActivityId,
           festivalId: "animal" as FestivalId,
-          type: "festival_activity",
         });
       }
     }
@@ -118,8 +118,8 @@ function collectDateSources(fiddle: ParsedGameData, accumulator: ItemSourceAccum
     const photoItem = dateData.photo_item as string | undefined;
     if (photoItem && photoItem !== "<n/a>") {
       accumulator.add(photoItem as ItemId, {
-        dateId: dateId as DateId,
         type: "date",
+        dateId: dateId as DateId,
       });
     }
   }
@@ -185,10 +185,10 @@ function collectFestivalStockSources(
         if (!targetId) continue;
 
         const source: Source = {
-          ...(season ? { availability: { seasons: [season], type: "season" as const } } : {}),
+          ...(season ? { availability: { type: "season" as const, seasons: [season] } } : {}),
+          type: "festival",
           festivalId: festivalId as FestivalId,
           storeId: storeId as StoreId,
-          type: "festival",
         };
 
         if (cosmeticId && cosmeticAccumulator) {
@@ -268,8 +268,8 @@ function collectMuseumDonationRewardSources(
         if (!targetId) continue;
 
         const source: Source = {
-          setCount,
           type: "museum_donation",
+          setCount,
           wingId: wingId as WingId,
         };
 
@@ -299,8 +299,8 @@ function collectProposalSources(fiddle: ParsedGameData, accumulator: ItemSourceA
       const itemId = (entry as Record<string, unknown>).item_id as string | undefined;
       if (itemId) {
         accumulator.add(itemId as ItemId, {
-          npcId: npcId as NpcId,
           type: "proposal",
+          npcId: npcId as NpcId,
         });
       }
     }
@@ -356,8 +356,8 @@ function collectRenownRewardSources(
     if (!targetId) continue;
 
     const source: Source = {
-      level: i + 1,
       type: "renown",
+      level: i + 1,
     };
 
     if (cosmeticId && cosmeticAccumulator) {
@@ -397,17 +397,17 @@ function processQuestRewards(
 
     if (obj.item) {
       accumulator.add(obj.item as ItemId, {
+        type: "quest",
         questId: questId as QuestId,
         trigger: "completion",
-        type: "quest",
       });
     }
 
     if (obj.player_cosmetic && cosmeticAccumulator) {
       cosmeticAccumulator.add(obj.player_cosmetic as CosmeticId, {
+        type: "quest",
         questId: questId as QuestId,
         trigger: "completion",
-        type: "quest",
       });
     }
 

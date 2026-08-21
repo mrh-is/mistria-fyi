@@ -1,16 +1,25 @@
+import { recordEntries, recordKeys } from "$lib/utils";
+
 import type { CompletedState, QuestState } from "$lib/stores/user-state.svelte.js";
-import type { NpcId, PerkId, QuestId, TrackerData } from "$lib/types/tracker-data.js";
+import type {
+  NpcId,
+  PerkId,
+  QuestId,
+  QuestType,
+  SkillId,
+  TrackerData,
+} from "$lib/types/tracker-data.js";
 import type { QuestVisibility, VisibilityCondition } from "$lib/types/visibility.js";
 
 export interface UserProgressionState {
   knownNpcs: Set<NpcId>;
   marriedNpc: NpcId | null;
   minesFloor: number;
-  npcLevels: Record<string, number>;
-  questVisibility: Record<string, QuestVisibility>;
+  npcLevels: Record<NpcId, number>;
+  questVisibility: Record<QuestId, QuestVisibility>;
   renown: number;
   showSpoilers: boolean;
-  skillLevels: Record<string, number>;
+  skillLevels: Record<SkillId, number>;
   unlockedPerks: Set<PerkId>;
 }
 
@@ -31,16 +40,16 @@ export function deriveProgressionState(
 
   // 1. Quest visibility, per-quest, from actual quest state + chain prerequisites.
   const questVisibility: Record<string, QuestVisibility> = {};
-  for (const [questType, quests] of Object.entries(trackerData.quests)) {
-    for (const questId of Object.keys(quests) as QuestId[]) {
-      const userState: QuestState = completed.questStates[questId as string] ?? "none";
+  for (const [questType, quests] of recordEntries(trackerData.quests)) {
+    for (const questId of recordKeys(quests)) {
+      const userState: QuestState = completed.questStates[questId] ?? "none";
 
       if (userState === "completed") {
-        questVisibility[questId as string] = "completed";
+        questVisibility[questId] = "completed";
       } else if (userState === "obtained") {
-        questVisibility[questId as string] = "available";
+        questVisibility[questId] = "available";
       } else {
-        questVisibility[questId as string] = evaluateQuestPrerequisites(
+        questVisibility[questId] = evaluateQuestPrerequisites(
           questId,
           questType,
           completed,
@@ -53,10 +62,7 @@ export function deriveProgressionState(
 
   // 2. Known NPCs: always-visible NPCs are always known; gated NPCs are known once their
   // visibility condition (typically a questCompleted gate) evaluates true.
-  const npcIds = new Set<NpcId>([
-    ...(Object.keys(trackerData.npcs) as NpcId[]),
-    ...(Object.keys(trackerData.npcVisibility) as NpcId[]),
-  ]);
+  const npcIds = new Set<NpcId>(Object.keys(trackerData.npcs) as NpcId[]);
 
   const knownNpcs = new Set<NpcId>();
   if (showSpoilers) {
@@ -74,8 +80,8 @@ export function deriveProgressionState(
       unlockedPerks,
     };
     for (const npcId of npcIds) {
-      const npcVis = lookup(trackerData.npcVisibility, npcId);
-      if (!npcVis || npcVis.type === "always" || isVisible(npcVis, tempState)) {
+      const npcVis = trackerData.npcs[npcId].visibility;
+      if (!npcVis || isVisible(npcVis, tempState)) {
         knownNpcs.add(npcId);
       }
     }
@@ -86,7 +92,7 @@ export function deriveProgressionState(
   const npcLevels: Record<string, number> = {};
   for (const npcId of npcIds) {
     const stored = computeStoredNpcLevel(npcId, completed, trackerData);
-    npcLevels[npcId as string] = knownNpcs.has(npcId) ? stored : 0;
+    npcLevels[npcId] = knownNpcs.has(npcId) ? stored : 0;
   }
 
   return {
@@ -125,13 +131,19 @@ export function isConditionInvertible(condition: VisibilityCondition): boolean {
 }
 
 export function isEntityNameVisible(
-  entityVisibility: VisibilityCondition,
+  entityVisibility: undefined | VisibilityCondition,
   state: UserProgressionState,
 ): boolean {
   return isVisible(entityVisibility, state);
 }
 
-export function isVisible(condition: VisibilityCondition, state: UserProgressionState): boolean {
+export function isVisible(
+  condition: undefined | VisibilityCondition,
+  state: UserProgressionState,
+): boolean {
+  // Default visibility is always
+  if (!condition) return true;
+
   if (state.showSpoilers) return true;
 
   switch (condition.type) {
@@ -140,7 +152,7 @@ export function isVisible(condition: VisibilityCondition, state: UserProgression
     case "and":
       return condition.conditions.every((c) => isVisible(c, state));
     case "heartLevel":
-      return (state.npcLevels[condition.npcId as string] ?? 0) >= condition.level;
+      return (state.npcLevels[condition.npcId] ?? 0) >= condition.level;
     case "married":
       return state.marriedNpc === condition.npcId;
     case "minesLevel":
@@ -152,15 +164,15 @@ export function isVisible(condition: VisibilityCondition, state: UserProgression
     case "perkUnlocked":
       return state.unlockedPerks.has(condition.perkId);
     case "questAvailable": {
-      const vis = state.questVisibility[condition.questId as string];
+      const vis = state.questVisibility[condition.questId];
       return vis === "available" || vis === "completed";
     }
     case "questCompleted":
-      return state.questVisibility[condition.questId as string] === "completed";
+      return state.questVisibility[condition.questId] === "completed";
     case "renownLevel":
       return state.renown >= condition.level;
     case "skillLevel":
-      return (state.skillLevels[condition.skillId as string] ?? 0) >= condition.level;
+      return (state.skillLevels[condition.skillId] ?? 0) >= condition.level;
   }
 }
 
@@ -184,8 +196,8 @@ export function satisfyCondition(
       for (const sub of condition.conditions) satisfyCondition(sub, completed, trackerData);
       return;
     case "heartLevel":
-      completed.npcLevels[condition.npcId as string] = Math.max(
-        completed.npcLevels[condition.npcId as string] ?? 0,
+      completed.npcLevels[condition.npcId] = Math.max(
+        completed.npcLevels[condition.npcId] ?? 0,
         condition.level,
       );
       return;
@@ -215,8 +227,8 @@ export function satisfyCondition(
       completed.renown = Math.max(completed.renown, condition.level);
       return;
     case "skillLevel":
-      completed.skillLevels[condition.skillId as string] = Math.max(
-        completed.skillLevels[condition.skillId as string] ?? 0,
+      completed.skillLevels[condition.skillId] = Math.max(
+        completed.skillLevels[condition.skillId] ?? 0,
         condition.level,
       );
       return;
@@ -229,10 +241,13 @@ function computeStoredNpcLevel(
   completed: CompletedState,
   trackerData: TrackerData,
 ): number {
-  let level = completed.npcLevels[npcId as string] ?? 0;
-  for (const [questId, changes] of Object.entries(trackerData.heartLevelChanges)) {
-    if (completed.questStates[questId] !== "completed") continue;
-    for (const change of changes) {
+  let level = completed.npcLevels[npcId] ?? 0;
+  for (const [questId, state] of recordEntries(completed.questStates)) {
+    if (state !== "completed") continue;
+    if (!(questId in trackerData.quests.story)) continue;
+    const quest = trackerData.quests.story[questId];
+    if (quest.heartLevelChanges === undefined) continue;
+    for (const change of quest.heartLevelChanges) {
       if (change.npcId === npcId) level = Math.max(level, change.level);
     }
   }
@@ -251,28 +266,25 @@ function evaluateOrderedChain(
   if (!isBaseConditionMet(baseCondition, completed, trackerData)) return "unavailable";
   if (index === 0) return "available";
   const prevQuestId = order[index - 1];
-  return completed.questStates[prevQuestId as string] === "completed" ? "available" : "unavailable";
+  return completed.questStates[prevQuestId] === "completed" ? "available" : "unavailable";
 }
 
 function evaluateQuestPrerequisites(
   questId: QuestId,
-  questType: string,
+  questType: QuestType,
   completed: CompletedState,
   trackerData: TrackerData,
   questVisibilitySoFar: Record<string, QuestVisibility>,
 ): QuestVisibility {
   const chains = trackerData.questChains;
+  const visibility = trackerData.categoryVisibility[questType] ?? { type: "always" as const };
 
   switch (questType) {
-    case "crown_quests":
-      return evaluateOrderedChain(
-        chains.crown,
-        questId,
-        completed,
-        trackerData,
-        trackerData.categoryVisibility.crown_quests,
-      );
-    case "fetch_quests": {
+    case "cooking":
+      return evaluateOrderedChain(chains.tali, questId, completed, trackerData, visibility);
+    case "crown":
+      return evaluateOrderedChain(chains.crown, questId, completed, trackerData, visibility);
+    case "fetch": {
       const condition = lookup(chains.fetch, questId);
       if (!condition) return "unavailable";
       const tempState: UserProgressionState = {
@@ -288,38 +300,23 @@ function evaluateQuestPrerequisites(
       };
       return isVisible(condition, tempState) ? "available" : "unavailable";
     }
-    case "heart_quests": {
+    case "heart": {
       const entry = findHeartChainEntry(chains.heart, questId);
       if (!entry) return "unavailable";
-      const heartLevelMet = (completed.npcLevels[entry.npcId as string] ?? 0) >= entry.heartLevel;
+      const heartLevelMet = (completed.npcLevels[entry.npcId] ?? 0) >= entry.heartLevel;
       const prereqMet =
-        !entry.prerequisiteQuest ||
-        completed.questStates[entry.prerequisiteQuest as string] === "completed";
+        !entry.prerequisiteQuest || completed.questStates[entry.prerequisiteQuest] === "completed";
       return heartLevelMet && prereqMet ? "available" : "unavailable";
     }
-    case "stillwell_challenges":
-      return evaluateOrderedChain(
-        chains.stillwell,
-        questId,
-        completed,
-        trackerData,
-        trackerData.categoryVisibility.stillwell_challenges,
-      );
-    case "story_quests": {
+    case "mission":
+      return evaluateOrderedChain(chains.stillwell, questId, completed, trackerData, visibility);
+    case "story": {
       const prerequisites = lookup(chains.story, questId)?.prerequisites ?? [];
       const allMet = prerequisites.every(
-        (prereqId) => completed.questStates[prereqId as string] === "completed",
+        (prereqId) => completed.questStates[prereqId] === "completed",
       );
       return allMet ? "available" : "unavailable";
     }
-    case "tali_challenges":
-      return evaluateOrderedChain(
-        chains.tali,
-        questId,
-        completed,
-        trackerData,
-        trackerData.categoryVisibility.tali_challenges,
-      );
     default:
       return "unavailable";
   }
@@ -356,13 +353,13 @@ function isBaseConditionMet(
     case "and":
       return condition.conditions.every((c) => isBaseConditionMet(c, completed, trackerData));
     case "heartLevel":
-      return (completed.npcLevels[condition.npcId as string] ?? 0) >= condition.level;
+      return (completed.npcLevels[condition.npcId] ?? 0) >= condition.level;
     case "married":
       return completed.marriedNpc === condition.npcId;
     case "minesLevel":
       return completed.mines.floor >= condition.floor;
     case "npcKnown": {
-      const npcVis = lookup(trackerData.npcVisibility, condition.npcId);
+      const npcVis = trackerData.npcs[condition.npcId].visibility;
       if (!npcVis || npcVis.type === "always") return true;
       return isBaseConditionMet(npcVis, completed, trackerData);
     }
@@ -371,13 +368,13 @@ function isBaseConditionMet(
     case "perkUnlocked":
       return completed.unlockedPerks.has(condition.perkId);
     case "questAvailable":
-      return (completed.questStates[condition.questId as string] ?? "none") !== "none";
+      return (completed.questStates[condition.questId] ?? "none") !== "none";
     case "questCompleted":
-      return completed.questStates[condition.questId as string] === "completed";
+      return completed.questStates[condition.questId] === "completed";
     case "renownLevel":
       return completed.renown >= condition.level;
     case "skillLevel":
-      return (completed.skillLevels[condition.skillId as string] ?? 0) >= condition.level;
+      return (completed.skillLevels[condition.skillId] ?? 0) >= condition.level;
   }
 }
 
@@ -408,9 +405,9 @@ function markQuestCompleted(
   completed: CompletedState,
   trackerData: TrackerData,
 ): void {
-  if (completed.questStates[questId as string] === "completed") return;
+  if (completed.questStates[questId] === "completed") return;
   markQuestPrerequisitesCompleted(questId, completed, trackerData);
-  completed.questStates[questId as string] = "completed";
+  completed.questStates[questId] = "completed";
 }
 
 /** Marks every quest `questId` is chained behind as completed, without touching `questId` itself. */
@@ -424,19 +421,22 @@ function markQuestPrerequisitesCompleted(
 
   const chains = trackerData.questChains;
   switch (questType) {
-    case "crown_quests":
+    case "cooking":
+      markOrderedPredecessorsCompleted(chains.tali, questId, completed, trackerData);
+      return;
+    case "crown":
       markOrderedPredecessorsCompleted(chains.crown, questId, completed, trackerData);
       return;
-    case "fetch_quests": {
+    case "fetch": {
       const condition = lookup(chains.fetch, questId);
       if (condition) satisfyCondition(condition, completed, trackerData);
       return;
     }
-    case "heart_quests": {
+    case "heart": {
       const entry = findHeartChainEntry(chains.heart, questId);
       if (entry) {
-        completed.npcLevels[entry.npcId as string] = Math.max(
-          completed.npcLevels[entry.npcId as string] ?? 0,
+        completed.npcLevels[entry.npcId] = Math.max(
+          completed.npcLevels[entry.npcId] ?? 0,
           entry.heartLevel,
         );
         if (entry.prerequisiteQuest) {
@@ -445,16 +445,13 @@ function markQuestPrerequisitesCompleted(
       }
       return;
     }
-    case "stillwell_challenges":
+    case "mission":
       markOrderedPredecessorsCompleted(chains.stillwell, questId, completed, trackerData);
       return;
-    case "story_quests": {
+    case "story": {
       const prerequisites = lookup(chains.story, questId)?.prerequisites ?? [];
       for (const prereqId of prerequisites) markQuestCompleted(prereqId, completed, trackerData);
       return;
     }
-    case "tali_challenges":
-      markOrderedPredecessorsCompleted(chains.tali, questId, completed, trackerData);
-      return;
   }
 }

@@ -7,6 +7,7 @@ import type {
   SkillId,
   Weather,
 } from "$lib/types/tracker-data.js";
+import type { NonEmptyArray } from "$lib/utils";
 
 export interface AvailabilityContext {
   heartLevels?: ReadonlyMap<NpcId, number>;
@@ -27,12 +28,11 @@ export interface DisplayBadges {
   weathers?: Weather[];
 }
 
-const ALL_SEASONS: readonly Season[] = ["spring", "summer", "fall", "winter"];
-
 export function evaluateAvailabilityCondition(
-  condition: AvailabilityCondition,
+  condition: AvailabilityCondition | undefined,
   context: AvailabilityContext,
 ): AvailabilityValue {
+  if (!condition) return true;
   switch (condition.type) {
     case "all":
       return evaluateAll(condition.conditions, context);
@@ -109,17 +109,18 @@ export function hasTimelyCondition(condition: AvailabilityCondition): boolean {
 
 export function simplifyAvailabilityCondition(
   condition: AvailabilityCondition,
-): AvailabilityCondition {
+): AvailabilityCondition | undefined {
   switch (condition.type) {
     case "all": {
       const conditions = condition.conditions.flatMap((child) => {
         const simplified = simplifyAvailabilityCondition(child);
+        if (!simplified) return [];
         return simplified.type === "all" ? simplified.conditions : [simplified];
       });
       const withoutAlways = conditions.filter((child) => child.type !== "always");
-      if (withoutAlways.length === 0) return { type: "always" };
+      if (withoutAlways.length === 0) return undefined;
       if (withoutAlways.length === 1) return withoutAlways[0];
-      return { conditions: withoutAlways, type: "all" };
+      return { type: "all", conditions: withoutAlways as NonEmptyArray<AvailabilityCondition> };
     }
     case "always":
     case "gamePredicate":
@@ -134,17 +135,21 @@ export function simplifyAvailabilityCondition(
     case "any": {
       const conditions = condition.conditions.flatMap((child) => {
         const simplified = simplifyAvailabilityCondition(child);
+        if (!simplified) return [];
         return simplified.type === "any" ? simplified.conditions : [simplified];
       });
-      if (conditions.some((child) => child.type === "always")) return { type: "always" };
+      if (conditions.some((child) => child.type === "always") || conditions.length === 0) {
+        return undefined;
+      }
       if (conditions.length === 1) return conditions[0];
-      return { conditions, type: "any" };
+      return { type: "any", conditions: conditions as NonEmptyArray<AvailabilityCondition> };
     }
     case "not": {
       const simplified = simplifyAvailabilityCondition(condition.condition);
+      if (!simplified) return undefined;
       return simplified.type === "not"
         ? simplified.condition
-        : { condition: simplified, type: "not" };
+        : { type: "not", condition: simplified };
     }
     case "season":
       return condition;
@@ -208,8 +213,8 @@ function evaluateAny(
   return hasUnknown ? "unknown" : false;
 }
 
-function hasSelectiveSeasonConditionInSimplified(condition: AvailabilityCondition): boolean {
-  switch (condition.type) {
+function hasSelectiveSeasonConditionInSimplified(condition?: AvailabilityCondition): boolean {
+  switch (condition?.type) {
     case "all":
     case "any":
       return condition.conditions.some(hasSelectiveSeasonConditionInSimplified);
@@ -221,12 +226,15 @@ function hasSelectiveSeasonConditionInSimplified(condition: AvailabilityConditio
     case "quest":
     case "skillLevel":
     case "time":
+    case undefined:
     case "weather":
       return false;
     case "not":
       return hasSelectiveSeasonConditionInSimplified(condition.condition);
     case "season":
-      return !ALL_SEASONS.every((season) => condition.seasons.includes(season));
+      return !(["spring", "summer", "fall", "winter"] as Season[]).every((season) =>
+        condition.seasons.includes(season),
+      );
   }
 }
 
