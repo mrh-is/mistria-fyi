@@ -152,9 +152,7 @@ function collectNativeIdsFromSources(
     allSources.push(...sources);
   }
   for (const recipe of Object.values(trackerData.recipes)) {
-    if (recipe.sources) {
-      allSources.push(...recipe.sources);
-    }
+    allSources.push(...recipe.sources);
   }
 
   for (const source of allSources) {

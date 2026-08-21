@@ -1,4 +1,4 @@
-import type { Source } from "./acquisition.js";
+import type { Source, SourceTuple } from "./acquisition.js";
 import type { VisibilityCondition } from "./visibility.js";
 
 export type {
@@ -11,6 +11,7 @@ export type {
   LocationId,
   MonsterId,
   ProductionMethod,
+  Source,
   SourceDetails,
   SourceTuple,
   StationId,
@@ -204,7 +205,7 @@ export interface TrackerData {
   version: string;
 }
 export interface TrackerEntity {
-  sources?: Source[];
+  sources: SourceTuple;
   visibility?: VisibilityCondition;
 }
 export type TreasureChestTierId = string & { readonly __brand: "TreasureChestTier" };

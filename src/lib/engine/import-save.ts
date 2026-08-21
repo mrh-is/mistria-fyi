@@ -98,7 +98,7 @@ export function buildImportState(bundle: SaveBundle): {
   const validRecipes = new Set(Object.keys(trackerData.recipes));
 
   for (const [id, recipe] of Object.entries(trackerData.recipes)) {
-    if (recipe.sources?.some((source) => source.type === "default")) {
+    if (recipe.sources.some((source) => source.type === "default")) {
       almanacRecipes.add(id as RecipeId);
     }
   }
@@ -107,7 +107,7 @@ export function buildImportState(bundle: SaveBundle): {
     if (validRecipes.has(id)) {
       almanacRecipes.add(id as RecipeId);
     } else if (validItems.has(id)) {
-      const recipeId = trackerData.items[id as ItemId].sources?.find(
+      const recipeId = trackerData.items[id as ItemId].sources.find(
         (source) => source.type === "recipe",
       )?.recipeId;
       if (recipeId) {

@@ -101,7 +101,7 @@ function createDefaultCompleted(): CompletedState {
   // Pre-populate default-unlocked cosmetics
   const defaultCosmetics = new SvelteSet<CosmeticId>();
   for (const [id, cosmetic] of Object.entries(trackerData.cosmetics)) {
-    if (cosmetic.sources?.some((s) => s.type === "default")) {
+    if (cosmetic.sources.some((s) => s.type === "default")) {
       defaultCosmetics.add(id as CosmeticId);
     }
   }
@@ -124,7 +124,7 @@ function createDefaultCompleted(): CompletedState {
 
   const defaultRecipes = new SvelteSet<RecipeId>();
   for (const [id, recipe] of Object.entries(trackerData.recipes)) {
-    if (recipe.sources?.some((s) => s.type === "default")) {
+    if (recipe.sources.some((s) => s.type === "default")) {
       defaultRecipes.add(id as RecipeId);
     }
   }
