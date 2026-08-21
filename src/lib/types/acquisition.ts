@@ -49,6 +49,7 @@ export type Source =
         | { type: "animal_product"; animalId: AnimalId }
         | { type: "artifact_dig"; locationIds?: NonEmptyArray<LocationId> }
         | { type: "artifact_replicator"; originalItemId: ItemId }
+        | { type: "bait_fish"; baitItemIds: NonEmptyArray<ItemId> }
         | { type: "beach_cave_chest" }
         | { type: "breed" }
         | { type: "bug_catch"; locationIds?: NonEmptyArray<LocationId> }
@@ -61,7 +62,7 @@ export type Source =
         | { type: "festival"; festivalId: FestivalId; storeId?: StoreId }
         | { type: "festival_activity"; activityId: ActivityId; festivalId: FestivalId }
         | { type: "fish"; waterTypes?: NonEmptyArray<WaterType> }
-        | { type: "fish_trap" }
+        | { type: "fish_trap"; baitItemIds: NonEmptyArray<ItemId> }
         | { type: "forage"; locationIds?: NonEmptyArray<LocationId> }
         | { type: "letter"; trigger: "donated_item"; triggerItemId: ItemId }
         | {
@@ -72,6 +73,7 @@ export type Source =
         | { type: "letter"; trigger: "shipped_item"; triggerItemId: ItemId }
         | { type: "lost_and_found" }
         | { type: "mine"; biomeId: MinesBiomeId }
+        | { type: "mine_fish"; biomeId?: MinesBiomeId }
         | {
             type: "mines_chest";
             biomeId: MinesBiomeId;
