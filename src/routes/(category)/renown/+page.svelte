@@ -36,15 +36,16 @@
   const maxLevel = ranks[ranks.length - 1].levels.end;
   let level = $derived(userState.state.completed.renown);
   let currentRankIndex = $derived(
-    ranks.findLastIndex(({ levels: { start, end } }) => start <= level && level <= end),
+    Math.max(
+      ranks.findLastIndex(({ levels: { start, end } }) => start <= level && level <= end),
+      0,
+    ),
   );
   let currentRank = $derived(ranks[currentRankIndex]);
   let isMaxed = $derived(level >= maxLevel);
   let currentRankColor = $derived(RANK_COLORS[currentRankIndex]);
-  let levelInRank = $derived(level - currentRank.levels.start);
-  let levelsInCurrentRank = $derived(
-    Math.max(currentRank.levels.end - currentRank.levels.start, 1),
-  );
+  let levelInRank = $derived(level - currentRank.levels.start + 1);
+  let levelsInCurrentRank = $derived(currentRank.levels.end - currentRank.levels.start + 1);
 
   let overallPct = $derived(maxLevel > 0 ? (level / maxLevel) * 100 : 0);
 
@@ -87,7 +88,7 @@
     <Icon.ProgressMark
       type="town_rank"
       class="size-9"
-      style="color: {currentRankColor}"
+      color={currentRankColor}
       fill={currentRankColor}
       strokeWidth={1.5}
     />
@@ -150,20 +151,12 @@
 <!-- Rank list -->
 <div class="flex flex-col gap-0.5">
   {#each ranks as rank, i (rank.name)}
-    {@const rankState =
-      level >= Math.min((i + 1) * levelsInCurrentRank, maxLevel)
-        ? "completed"
-        : i === currentRankIndex
-          ? "current"
-          : "upcoming"}
     <RankCard
       name={isRankVisible(i * levelsInCurrentRank) ? rank.name : "Redacted"}
       starColor={RANK_COLORS[i]}
-      minLevel={i * levelsInCurrentRank}
-      maxLevel={Math.min((i + 1) * levelsInCurrentRank - 1, maxLevel)}
-      state={rankState}
-      {levelInRank}
-      levelsPerRank={levelsInCurrentRank}
+      minLevel={rank.levels.start}
+      maxLevel={rank.levels.end}
+      currentLevel={level}
     />
   {/each}
 </div>
