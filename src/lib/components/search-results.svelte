@@ -21,6 +21,7 @@
     ItemId,
     NpcId,
     QuestId,
+    RecipeId,
   } from "$lib/types/tracker-data.js";
 
   let { query }: { query: string } = $props();
@@ -40,6 +41,7 @@
     cosmetics: "Cosmetics",
     npcs: "Relationships",
     quests: "Quests",
+    recipes: "Recipes",
   };
 
   let redactedStoreIds = $derived(
@@ -60,6 +62,9 @@
     }
     if (result.category === "cosmetics") {
       return trackerData.cosmetics[result.id as CosmeticId].sources ?? [];
+    }
+    if (result.category === "recipes") {
+      return trackerData.recipes[result.id as RecipeId].sources ?? [];
     }
     return [];
   }
@@ -92,6 +97,9 @@
         userState.setNpcLevel(npcId, current >= 10 ? 0 : 10);
         break;
       }
+      case "recipes":
+        userState.toggleAlmanacRecipe(result.id as RecipeId);
+        break;
     }
   }
 

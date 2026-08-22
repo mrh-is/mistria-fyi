@@ -139,6 +139,22 @@ export function searchItems(
     if (results.length >= MAX_RESULTS) return rankResults(results, q);
   }
 
+  // Recipes — gated by recipe visibility, not item visibility
+  for (const [id, recipe] of recordEntries(trackerData.recipes)) {
+    if (recipe.visibility && !isVisible(recipe.visibility, progressionState)) continue;
+
+    if (recipe.name.toLowerCase().includes(q)) {
+      results.push({
+        available: true,
+        category: "recipes",
+        completed: completed.almanacRecipes.has(id),
+        id,
+        name: recipe.name,
+      });
+    }
+    if (results.length >= MAX_RESULTS) return rankResults(results, q);
+  }
+
   // Cosmetics — not season-gated
   for (const [id, cosmetic] of recordEntries(trackerData.cosmetics)) {
     if (cosmetic.visibility && !isVisible(cosmetic.visibility, progressionState)) continue;
