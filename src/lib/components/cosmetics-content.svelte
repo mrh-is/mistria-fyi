@@ -62,7 +62,7 @@
     for (const [id, cosmetic] of Object.entries(trackerData.cosmetics)) {
       const slot = cosmetic.slot;
       const subCategory = cosmetic.subCategory ?? "Other";
-      const sources = cosmetic.sources ?? [];
+      const sources = cosmetic.sources;
       ((bySlot[slot] ??= {})[subCategory] ??= []).push({
         id: id as CosmeticId,
         name: cosmetic.name,

@@ -96,7 +96,7 @@
   function isItemScoped(itemId: ItemId): boolean {
     if (!matchesFilter(itemId)) return false;
     return shouldCountItem(
-      trackerData.items[itemId].sources ?? [],
+      trackerData.items[itemId].sources,
       isItemComplete(itemId),
       userState.state.worldState,
       userState.state.availabilityMode,
@@ -210,10 +210,8 @@
           {#each set.visibleItems as item (item.itemId)}
             {@const itemId = item.itemId}
             {@const museumCompleted = isItemComplete(itemId)}
-            {@const museumItemSources = trackerData.items[itemId].sources ?? []}
-            {@const museumItemVisibility = trackerData.items[itemId].visibility ?? {
-              type: "always",
-            }}
+            {@const museumItemSources = trackerData.items[itemId].sources}
+            {@const museumItemVisibility = trackerData.items[itemId].visibility}
             <TrackerRow
               display={rowDisplay(itemId, museumItemSources)}
               lookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}

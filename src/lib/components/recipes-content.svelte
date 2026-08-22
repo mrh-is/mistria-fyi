@@ -43,7 +43,7 @@
   );
 
   function recipeForItem(item: Item): RecipeId | undefined {
-    return item.sources?.find((source) => source.type === "recipe")?.recipeId;
+    return item.sources.find((source) => source.type === "recipe")?.recipeId;
   }
 
   // The current recipe condition is added when each tree is built.
@@ -69,7 +69,7 @@
         seen.add(recipeId);
         const recipe = trackerData.recipes[recipeId];
         const visibility = recipe.visibility;
-        const sources = recipe.sources ?? [];
+        const sources = recipe.sources;
         entries.push({
           id: recipeId,
           name: item.name,

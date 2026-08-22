@@ -1,6 +1,6 @@
 import { resolveToVisibility, simplifyCondition } from "./requirement-resolver.js";
 
-import type { Source as AcquisitionSource } from "$lib/types/acquisition.js";
+import type { Source as AcquisitionSource, SourceTuple } from "$lib/types/acquisition.js";
 import type {
   MinesBiomeId,
   NpcId,
@@ -223,9 +223,12 @@ function acquisitionSourceCondition(
     case "wedding":
     case "wishing_well":
       return ALWAYS;
+    case "bait_fish":
+      return { type: "questCompleted", questId: "apiaries_and_terrariums" as QuestId };
     case "festival":
       return source.storeId ? storeGateCondition(source.storeId, ctx.storeVisibility) : ALWAYS;
-    case "mine": {
+    case "mine":
+    case "mine_fish": {
       const floor = source.biomeId ? ctx.biomeFloor(source.biomeId) : undefined;
       return floor !== undefined ? { type: "minesLevel", floor } : ALWAYS;
     }
@@ -359,7 +362,7 @@ function assignQuestVisibility(
 
 function assignRecipeVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
   for (const recipe of Object.values(trackerData.recipes)) {
-    const recipeSources = recipe.sources ?? [];
+    const recipeSources = recipe.sources;
     const computed = recipeSources.map((source) => ({
       conditions: computeRecipeSourceConditions(source, ctx),
       source,
@@ -368,7 +371,7 @@ function assignRecipeVisibility(trackerData: TrackerData, ctx: SourceVisibilityC
     recipe.sources = computed.map(({ conditions, source }) => ({
       ...source,
       visibility: conditions.source,
-    }));
+    })) as SourceTuple;
 
     recipe.visibility = orSimplify(computed.map(({ conditions }) => conditions.entity));
   }
@@ -429,6 +432,7 @@ function computeRecipeSourceConditions(
     case "animal_product":
     case "artifact_dig":
     case "artifact_replicator":
+    case "bait_fish":
     case "beach_cave_chest":
     case "breed":
     case "bug_catch":
@@ -447,6 +451,7 @@ function computeRecipeSourceConditions(
     case "letter":
     case "lost_and_found":
     case "mine":
+    case "mine_fish":
     case "monster":
     case "monster_feed":
     case "museum_donation":

@@ -40,7 +40,7 @@ export function searchItems(
 
     if (item.name.toLowerCase().includes(q)) {
       results.push({
-        available: isItemAvailable(item.sources ?? [], worldState, "available"),
+        available: isItemAvailable(item.sources, worldState, "available"),
         category: "almanac",
         completed: completed.almanac.has(id),
         id,
