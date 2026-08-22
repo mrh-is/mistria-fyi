@@ -340,7 +340,7 @@
         {#if importResult.warnings.length > 0}
           <Separator class="my-2" />
           <details class="text-sm">
-            <summary class="cursor-pointer text-muted-foreground">
+            <summary class="text-muted-foreground">
               {importResult.warnings.length} warnings
             </summary>
             <ul class="mt-1 max-h-32 space-y-0.5 overflow-y-auto text-muted-foreground">

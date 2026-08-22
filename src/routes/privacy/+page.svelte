@@ -2,6 +2,10 @@
   import PageHeader from "$lib/components/page-header.svelte";
 </script>
 
+<svelte:head>
+  <title>Privacy policy — Harvest Helper</title>
+</svelte:head>
+
 <PageHeader title="Privacy Policy" backHref="/settings" backLabel="Back to settings" />
 
 <div class="flex flex-col gap-6 p-4 text-sm">

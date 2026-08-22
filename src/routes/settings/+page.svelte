@@ -29,6 +29,10 @@
   });
 </script>
 
+<svelte:head>
+  <title>Settings — Harvest Helper</title>
+</svelte:head>
+
 <PageHeader title="Settings" />
 
 <div class="flex flex-col gap-6 p-4">

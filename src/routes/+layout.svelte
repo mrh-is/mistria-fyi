@@ -26,9 +26,9 @@
     : ''}"
 >
   {#key page.url.pathname}
-    <div class="flex flex-1 animate-in flex-col duration-200 fade-in">
+    <main class="flex flex-1 animate-in flex-col duration-200 fade-in">
       {@render children()}
-    </div>
+    </main>
   {/key}
 </div>
 
