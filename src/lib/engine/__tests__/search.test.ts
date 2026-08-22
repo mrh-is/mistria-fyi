@@ -1,12 +1,19 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
+import { deriveProgressionState } from "$lib/engine/visibility.js";
 import { recordEntries, recordKeys, recordValues } from "$lib/utils.js";
 
 import { searchItems } from "../search.js";
 
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { AnimalVariantId, CosmeticId, Season, Weather } from "$lib/types/tracker-data.js";
+import type {
+  AnimalVariantId,
+  CosmeticId,
+  RecipeId,
+  Season,
+  Weather,
+} from "$lib/types/tracker-data.js";
 
 import type { UserProgressionState } from "../visibility.js";
 
@@ -40,7 +47,10 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
   };
 }
 
-const defaultWorld = { season: "spring" as Season, weather: "calm" as Weather };
+const defaultWorld: { season: Season; weather: Weather } = {
+  season: "spring",
+  weather: "calm",
+};
 
 function makeProgressionState(overrides: Partial<UserProgressionState> = {}): UserProgressionState {
   return {
@@ -107,7 +117,6 @@ describe("basic matching", () => {
     if (questResult) {
       expect(questResult.category).toBe("quests");
     } else {
-      // If no quest matches "a" even with spoilers, find one that does match
       for (const questType of recordValues(trackerData.quests)) {
         for (const [, quest] of recordEntries(questType)) {
           const r = searchItems(
@@ -188,7 +197,6 @@ describe("result cap", () => {
 
 describe("cross-category coverage", () => {
   it("searches across multiple categories", () => {
-    // Use showSpoilers to avoid visibility filtering, and search something common
     const results = searchItems(
       "e",
       makeCompleted(),
@@ -216,5 +224,56 @@ describe("result shape", () => {
       expect(typeof r.completed).toBe("boolean");
       expect(typeof r.available).toBe("boolean");
     }
+  });
+});
+
+// ─── Recipe visibility ─────────────────────────────────────────────
+
+describe("recipe visibility", () => {
+  it("hides recipes gated by unmet visibility conditions", () => {
+    const completed = makeCompleted();
+    const progression = deriveProgressionState(completed, trackerData, false);
+
+    const results = searchItems("Strawberry Shortcake", completed, defaultWorld, progression);
+    const recipeResults = results.filter((r) => r.category === "recipes");
+
+    expect(recipeResults).toHaveLength(0);
+  });
+
+  it("shows recipes when visibility conditions are met", () => {
+    const completed = makeCompleted({
+      questStates: { request_for_strawberries: "completed" },
+    } as Partial<CompletedState>);
+    const progression = deriveProgressionState(completed, trackerData, false);
+
+    const results = searchItems("Strawberry Shortcake", completed, defaultWorld, progression);
+    const recipeResults = results.filter((r) => r.category === "recipes");
+
+    expect(recipeResults).toHaveLength(1);
+    expect(recipeResults[0].name).toBe("Strawberry Shortcake");
+  });
+
+  it("shows recipes when showSpoilers is enabled", () => {
+    const completed = makeCompleted();
+    const progression = deriveProgressionState(completed, trackerData, true);
+
+    const results = searchItems("Strawberry Shortcake", completed, defaultWorld, progression);
+    const recipeResults = results.filter((r) => r.category === "recipes");
+
+    expect(recipeResults).toHaveLength(1);
+    expect(recipeResults[0].name).toBe("Strawberry Shortcake");
+  });
+
+  it("marks recipe results as completed when in almanacRecipes", () => {
+    const completed = makeCompleted({
+      almanacRecipes: new Set(["strawberry_shortcake" as RecipeId]),
+      questStates: { request_for_strawberries: "completed" },
+    } as Partial<CompletedState>);
+    const progression = deriveProgressionState(completed, trackerData, false);
+
+    const results = searchItems("Strawberry Shortcake", completed, defaultWorld, progression);
+    const recipeResults = results.filter((r) => r.category === "recipes");
+
+    expect(recipeResults[0].completed).toBe(true);
   });
 });
