@@ -3,7 +3,7 @@
 
   import ConfirmRedactedDialog from "$lib/components/confirm-redacted-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
-  import { Icon } from "$lib/components/icon/index.js";
+  import RedactedCategory from "$lib/components/redacted-category.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
@@ -15,8 +15,9 @@
 
   import AllCompleted from "./all-completed.svelte";
 
+  import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { QuestState } from "$lib/stores/user-state.svelte.js";
-  import type { FetchQuest, QuestId, QuestType } from "$lib/types/tracker-data.js";
+  import type { FetchQuest, NpcId, QuestId, QuestType } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   const redactGuard = createRedactionGuard();
@@ -54,6 +55,25 @@
         .filter(([, c]) => c > 1)
         .map(([n]) => n),
     );
+  }
+
+  function questRowDisplay(questState: QuestState, nameVisible: boolean): TrackerRowDisplay {
+    if (!nameVisible) return { mode: "redacted" };
+    if (questState === "completed") return { mode: "completed" };
+    if (questState === "obtained") return { mode: "obtained" };
+    return { mode: "visible" };
+  }
+
+  function npcSubtitle(
+    npc: NpcId | undefined,
+    questType: QuestType,
+    displayName: string,
+    duplicateNames: Set<string>,
+  ): string | undefined {
+    if (!npc) return undefined;
+    if (questType === "fetch" || duplicateNames.has(displayName)) {
+      return trackerData.npcs[npc].name;
+    }
   }
 
   const typeLabels: Record<QuestType, string> = {
@@ -150,70 +170,37 @@
     const done = getQuestState(q.id) === "completed";
     return done ? userState.state.showCompleted : true;
   })}
-  {#if visibleQuests.length > 0}
-    <ExpandableSection
-      count={quests.filter((q) => getQuestState(q.id) === "completed").length}
-      name={categoryRevealed ? typeLabels[questType] : "Redacted"}
-      total={quests.length}
-    >
-      {#each visibleQuests as quest (quest.id)}
-        {@const questState = getQuestState(quest.id)}
-        {#if !questNameVisible(questType, quest.id)}
-          <TrackerRow
-            display={{ mode: "redacted" }}
-            name={quest.displayName}
-            onToggle={() => {
-              if (questState !== "none") {
-                completeQuest(quest, quests);
-              } else {
-                redactGuard.guard(questVisibility(questType, quest.id), () => {
+  {#if quests.length > 0}
+    <RedactedCategory revealed={categoryRevealed}>
+      {#if visibleQuests.length > 0}
+        <ExpandableSection
+          count={quests.filter((q) => getQuestState(q.id) === "completed").length}
+          name={typeLabels[questType]}
+          total={quests.length}
+        >
+          {#each visibleQuests as quest (quest.id)}
+            {@const questState = getQuestState(quest.id)}
+            {@const nameVisible = questNameVisible(questType, quest.id)}
+            <TrackerRow
+              display={questRowDisplay(questState, nameVisible)}
+              name={quest.displayName}
+              subtitle={nameVisible
+                ? npcSubtitle(quest.npc, questType, quest.displayName, duplicateNames)
+                : undefined}
+              onToggle={() => {
+                if (nameVisible || questState !== "none") {
                   completeQuest(quest, quests);
-                });
-              }
-            }}
-          />
-        {:else}
-          <div
-            class="flex items-center gap-2 rounded-md px-2 py-1 {questState === 'completed'
-              ? 'line-through opacity-40'
-              : ''}"
-          >
-            <button
-              class="flex size-11 shrink-0 items-center justify-center rounded-md transition-colors"
-              type="button"
-              aria-label={questState === "none"
-                ? "Not obtained — click to mark obtained"
-                : questState === "obtained"
-                  ? "Obtained — click to mark completed"
-                  : "Completed — click to reset"}
-              onclick={() => {
-                completeQuest(quest, quests);
+                } else {
+                  redactGuard.guard(questVisibility(questType, quest.id), () => {
+                    completeQuest(quest, quests);
+                  });
+                }
               }}
-            >
-              <Icon.Completion
-                state={questState}
-                class="size-5 {questState === 'none'
-                  ? 'text-muted-foreground/50'
-                  : questState === 'obtained'
-                    ? 'text-amber-500 dark:text-amber-400'
-                    : 'text-green-600 dark:text-green-400'}"
-              />
-            </button>
-            <span class="min-w-0 flex-1 text-base">
-              {quest.displayName}
-              {#if quest.npc && (questType === "fetch" || duplicateNames.has(quest.displayName))}
-                <span class="text-sm text-muted-foreground">
-                  {trackerData.npcs[quest.npc].name}
-                </span>
-              {/if}
-            </span>
-            {#if questState === "obtained"}
-              <span class="text-sm text-amber-600 dark:text-amber-400">Active</span>
-            {/if}
-          </div>
-        {/if}
-      {/each}
-    </ExpandableSection>
+            />
+          {/each}
+        </ExpandableSection>
+      {/if}
+    </RedactedCategory>
   {/if}
 {/each}
 

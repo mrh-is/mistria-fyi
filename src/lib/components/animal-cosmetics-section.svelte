@@ -19,7 +19,7 @@
   }
 
   function isCosmeticVisible(animalId: AnimalId, cosmeticId: CosmeticId): boolean {
-    return !(hasCompletedCosmetic(animalId, cosmeticId) && userState.state.showCompleted);
+    return !hasCompletedCosmetic(animalId, cosmeticId) || userState.state.showCompleted;
   }
 
   function hasDisplayableCosmetic(animalId: AnimalId): boolean {

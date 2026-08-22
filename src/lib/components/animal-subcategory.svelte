@@ -1,7 +1,6 @@
 <script lang="ts" generics="ItemId extends AnyId">
-  import { Lock } from "@lucide/svelte";
-
   import ExpandableSection from "$lib/components/expandable-section.svelte";
+  import RedactedCategory from "$lib/components/redacted-category.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
@@ -48,42 +47,42 @@
     {#each animals as animal (animal.id)}
       {@const { displayableCompletedItemCount, displayableItemCount, isVisible, visibleItems } =
         props.sectionConfig(animal.id)}
-      {#if !isVisible && displayableItemCount > 0}
-        <div class="flex items-center gap-2 rounded-md px-2 py-1.5">
-          <Lock class="size-4 shrink-0 text-muted-foreground/50" />
-          <span class="min-w-0 flex-1 text-base text-muted-foreground italic">Redacted</span>
-        </div>
-      {:else if visibleItems.length > 0}
-        <ExpandableSection
-          count={displayableCompletedItemCount}
-          name={animal.name}
-          total={displayableItemCount}
-        >
-          {#each visibleItems as itemRow (itemRow.id)}
-            <TrackerRow
-              display={rowDisplay(itemRow)}
-              lookups={props.lookups
-                ? { ...props.lookups, entityVisibility: undefined }
-                : undefined}
-              name={itemRow.name}
-              onToggle={() => {
-                props.toggleCompletion(animal.id, itemRow.id);
-                const completed = props.completionCheck(animal.id, itemRow.id);
-                showUndoToast(itemRow.name, completed, () => {
-                  props.toggleCompletion(animal.id, itemRow.id);
-                });
-                if (completed) {
-                  if (props.areAllAnimalsComplete()) {
-                    celebrateCategory();
-                  } else if (props.isAnimalComplete(animal.id)) {
-                    celebrate();
-                  }
-                }
-              }}
-              sources={itemRow.sources}
-            />
-          {/each}
-        </ExpandableSection>
+      {#if displayableItemCount > 0}
+        <RedactedCategory revealed={isVisible}>
+          {#if visibleItems.length > 0}
+            <ExpandableSection
+              count={displayableCompletedItemCount}
+              name={animal.name}
+              total={displayableItemCount}
+            >
+              {#each visibleItems as itemRow (itemRow.id)}
+                <TrackerRow
+                  display={rowDisplay(itemRow)}
+                  lookups={props.lookups
+                    ? { ...props.lookups, entityVisibility: undefined }
+                    : undefined}
+                  name={itemRow.name}
+                  subtitle={itemRow.subtitle}
+                  onToggle={() => {
+                    props.toggleCompletion(animal.id, itemRow.id);
+                    const completed = props.completionCheck(animal.id, itemRow.id);
+                    showUndoToast(itemRow.name, completed, () => {
+                      props.toggleCompletion(animal.id, itemRow.id);
+                    });
+                    if (completed) {
+                      if (props.areAllAnimalsComplete()) {
+                        celebrateCategory();
+                      } else if (props.isAnimalComplete(animal.id)) {
+                        celebrate();
+                      }
+                    }
+                  }}
+                  sources={itemRow.sources}
+                />
+              {/each}
+            </ExpandableSection>
+          {/if}
+        </RedactedCategory>
       {/if}
     {/each}
   </ExpandableSection>

@@ -8,12 +8,14 @@
   import { buildSourceSegments } from "$lib/utils/source-segments.js";
 
   import type { DisplayBadges } from "$lib/engine/availability-condition.js";
+  import type { QuestState } from "$lib/stores/user-state.svelte.js";
   import type { Source } from "$lib/types/acquisition";
   import type { SegmentLookups, SourceSegment } from "$lib/utils/source-segments.js";
 
   export type TrackerRowDisplay =
     | { dimmed?: boolean; mode: "visible" }
     | { leaving?: boolean; mode: "completed" }
+    | { mode: "obtained" }
     | { mode: "redacted" };
 
   let {
@@ -22,12 +24,14 @@
     name,
     onToggle,
     sources = [],
+    subtitle,
   }: {
     display: TrackerRowDisplay;
     lookups?: SegmentLookups;
     name: string;
     onToggle: () => void;
     sources?: Source[];
+    subtitle?: string;
   } = $props();
 
   let uniqueSourceTypes = $derived([...new Set(sources.map((s) => s.type))]);
@@ -39,9 +43,14 @@
   let expanded = $state(false);
 
   let isCompleted = $derived(display.mode === "completed");
+  let isObtained = $derived(display.mode === "obtained");
   let isRedacted = $derived(display.mode === "redacted");
   let isLeaving = $derived(display.mode === "completed" && (display.leaving ?? false));
   let isDimmed = $derived(display.mode === "visible" && (display.dimmed ?? false));
+
+  let completionState: QuestState = $derived(
+    isCompleted ? "completed" : isObtained ? "obtained" : "none",
+  );
 
   function completeOut(node: Element) {
     if (node.getAttribute("data-leaving") !== "true") return { duration: 0 };
@@ -76,17 +85,28 @@
       onclick={onToggle}
     >
       <Icon.Completion
-        state={isCompleted ? "completed" : "none"}
+        state={completionState}
         class="size-5 {isCompleted
           ? 'text-green-600 dark:text-green-400'
-          : 'text-muted-foreground/50'}"
+          : isObtained
+            ? 'text-amber-500 dark:text-amber-400'
+            : 'text-muted-foreground/50'}"
       />
     </button>
 
     {#if isRedacted}
       <span class="min-w-0 flex-1 text-base text-muted-foreground italic">Redacted</span>
     {:else}
-      <span class="min-w-0 flex-1 text-base">{name}</span>
+      <span class="min-w-0 flex-1 text-base">
+        {name}
+        {#if subtitle}
+          <span class="text-sm text-muted-foreground">{subtitle}</span>
+        {/if}
+      </span>
+    {/if}
+
+    {#if isObtained}
+      <span class="text-sm text-amber-600 dark:text-amber-400">Active</span>
     {/if}
 
     {#if uniqueSourceTypes.length > 0}

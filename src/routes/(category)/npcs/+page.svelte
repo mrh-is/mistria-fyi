@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { Lock } from "@lucide/svelte";
-
   import { Icon } from "$lib/components/icon/index.js";
+  import RedactedCategory from "$lib/components/redacted-category.svelte";
   import Stepper from "$lib/components/stepper.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { MAX_NPC_LEVEL } from "$lib/engine/progress.js";
@@ -65,54 +64,51 @@
     {@const level = getNpcLevel(npc.id)}
     {@const maxed = isMaxed(npc)}
     {@const known = isNpcKnown(npc.id)}
-    {#if !known}
-      <div class="flex items-center gap-2 rounded-md px-2 py-1.5">
-        <Lock class="size-4 shrink-0 text-muted-foreground/50" />
-        <span class="min-w-0 flex-1 text-base text-muted-foreground italic">Redacted</span>
-      </div>
-    {:else if maxed ? userState.state.showCompleted : true}
-      <div class="flex flex-col gap-1.5 rounded-md px-2 py-1.5 {maxed ? 'opacity-40' : ''}">
-        <!-- Name row -->
-        <div class="flex items-center gap-2">
-          <span class="min-w-0 flex-1 text-base font-medium">{npc.name}</span>
-          <span class="flex items-center gap-0.5 text-sm text-muted-foreground">
-            <Icon.Season season={npc.birthday.season} class="size-3" />
-            {npc.birthday.day}
-          </span>
-        </div>
-
-        <Stepper
-          decrementDisabled={level <= 0}
-          incrementDisabled={level >= MAX_NPC_LEVEL}
-          decrementLabel="Decrease {npc.name} hearts"
-          incrementLabel="Increase {npc.name} hearts"
-          onDecrement={() => {
-            setNpcLevelWithCelebration(npc.id, level - 1);
-          }}
-          onIncrement={() => {
-            setNpcLevelWithCelebration(npc.id, level + 1);
-          }}
-        >
-          <div class="flex items-center justify-center gap-0.5">
-            {#each { length: MAX_NPC_LEVEL } as _, i (i)}
-              <button
-                class="flex size-7 items-center justify-center"
-                type="button"
-                onclick={() => {
-                  setNpcLevelWithCelebration(npc.id, i < level ? i : i + 1);
-                }}
-              >
-                <Icon.ProgressMark
-                  type={npc.dateable ? "relationship_dateable" : "relationship_platonic"}
-                  class="size-4 transition-colors duration-200 {i < level
-                    ? `${LEVEL_COLORS[i]} fill-current`
-                    : 'fill-transparent text-muted-foreground/30'}"
-                />
-              </button>
-            {/each}
+    <RedactedCategory revealed={known}>
+      {#if maxed ? userState.state.showCompleted : true}
+        <div class="flex flex-col gap-1.5 rounded-md px-2 py-1.5 {maxed ? 'opacity-40' : ''}">
+          <!-- Name row -->
+          <div class="flex items-center gap-2">
+            <span class="min-w-0 flex-1 text-base font-medium">{npc.name}</span>
+            <span class="flex items-center gap-0.5 text-sm text-muted-foreground">
+              <Icon.Season season={npc.birthday.season} class="size-3" />
+              {npc.birthday.day}
+            </span>
           </div>
-        </Stepper>
-      </div>
-    {/if}
+
+          <Stepper
+            decrementDisabled={level <= 0}
+            incrementDisabled={level >= MAX_NPC_LEVEL}
+            decrementLabel="Decrease {npc.name} hearts"
+            incrementLabel="Increase {npc.name} hearts"
+            onDecrement={() => {
+              setNpcLevelWithCelebration(npc.id, level - 1);
+            }}
+            onIncrement={() => {
+              setNpcLevelWithCelebration(npc.id, level + 1);
+            }}
+          >
+            <div class="flex items-center justify-center gap-0.5">
+              {#each { length: MAX_NPC_LEVEL } as _, i (i)}
+                <button
+                  class="flex size-7 items-center justify-center"
+                  type="button"
+                  onclick={() => {
+                    setNpcLevelWithCelebration(npc.id, i < level ? i : i + 1);
+                  }}
+                >
+                  <Icon.ProgressMark
+                    type={npc.dateable ? "relationship_dateable" : "relationship_platonic"}
+                    class="size-4 transition-colors duration-200 {i < level
+                      ? `${LEVEL_COLORS[i]} fill-current`
+                      : 'fill-transparent text-muted-foreground/30'}"
+                  />
+                </button>
+              {/each}
+            </div>
+          </Stepper>
+        </div>
+      {/if}
+    </RedactedCategory>
   {/each}
 </div>
