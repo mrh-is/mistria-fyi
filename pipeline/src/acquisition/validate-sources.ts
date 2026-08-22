@@ -12,6 +12,9 @@ export interface AcquisitionSourceAssembly {
   museum?: Readonly<
     Record<string, { sets?: Readonly<Record<string, { items?: readonly string[] }>> }>
   >;
+  quests?: Readonly<
+    Partial<Record<string, Readonly<Record<string, { itemId?: string; npc?: string }>>>>
+  >;
   recipes: Readonly<Record<string, AcquisitionRecipeEntity>>;
 }
 
@@ -515,6 +518,34 @@ function validateAssemblyReferences(
         );
       }),
     );
+  }
+  for (const [questType, questGroup] of Object.entries(trackerData.quests ?? {}).sort(
+    ([left], [right]) => left.localeCompare(right),
+  )) {
+    for (const [questId, quest] of Object.entries(questGroup ?? {}).sort(([left], [right]) =>
+      left.localeCompare(right),
+    )) {
+      if (quest.itemId) {
+        reference(
+          diagnostics,
+          references,
+          "item",
+          quest.itemId,
+          questId,
+          `quests.${questType}.${questId}.itemId`,
+        );
+      }
+      if (quest.npc) {
+        reference(
+          diagnostics,
+          references,
+          "npc",
+          quest.npc,
+          questId,
+          `quests.${questType}.${questId}.npc`,
+        );
+      }
+    }
   }
 }
 
