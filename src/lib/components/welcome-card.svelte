@@ -77,7 +77,7 @@
         <button
           type="button"
           onclick={startManually}
-          class="flex min-h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-input bg-background px-4 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground active:bg-accent/80"
+          class="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-md border border-input bg-background px-4 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground active:bg-accent/80"
         >
           <Pencil class="size-4 shrink-0" />
           Start tracking manually
