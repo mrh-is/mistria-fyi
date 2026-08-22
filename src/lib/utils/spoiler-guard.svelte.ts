@@ -4,14 +4,9 @@ import { userState } from "$lib/stores/user-state.svelte.js";
 
 import type { VisibilityCondition } from "$lib/types/visibility.js";
 
-export const REDACTED_NAME = "Redacted item";
+export const SPOILER_NAME = "Spoilered item";
 
-/**
- * Shared state machine backing `ConfirmRedactedDialog`. Content components call `guard` from a
- * redacted row's `onToggle` to intercept the click; the actual state mutation only runs once the
- * user confirms (or is folded into "update my progress" via `satisfyCondition`).
- */
-export function createRedactionGuard() {
+export function createSpoilerGuard() {
   let open = $state(false);
   let condition = $state<null | VisibilityCondition>(null);
   let pendingAction: (() => void) | null = null;
@@ -58,5 +53,5 @@ export function createRedactionGuard() {
  * (not reactively) since callers use it right after a state mutation to reflect the fresh state.
  */
 export function resolveName(name: string, visibility: VisibilityCondition): string {
-  return isEntityNameVisible(visibility, userState.progressionState) ? name : REDACTED_NAME;
+  return isEntityNameVisible(visibility, userState.progressionState) ? name : SPOILER_NAME;
 }

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { SvelteSet } from "svelte/reactivity";
 
-  import ConfirmRedactedDialog from "$lib/components/confirm-redacted-dialog.svelte";
+  import ConfirmSpoilerDialog from "$lib/components/confirm-spoiler-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
@@ -11,8 +11,8 @@
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordEntries, recordValues } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
-  import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
+  import { createSpoilerGuard } from "$lib/utils/spoiler-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import AllCompleted from "./all-completed.svelte";
@@ -28,7 +28,7 @@
     MuseumWingSetId,
   } from "$lib/types/tracker-data.js";
 
-  const redactGuard = createRedactionGuard();
+  const spoilerGuard = createSpoilerGuard();
 
   function itemNameVisible(itemId: ItemId): boolean {
     const visibility = trackerData.items[itemId].visibility;
@@ -49,7 +49,7 @@
 
   function rowDisplay(itemId: ItemId, sources: Source[]): TrackerRowDisplay {
     const completed = userState.state.completed.museum.has(itemId);
-    if (!itemNameVisible(itemId)) return { mode: "redacted" };
+    if (!itemNameVisible(itemId)) return { mode: "spoilered" };
     if (completed) return { leaving: recentlyCompleted.has(itemId), mode: "completed" };
     return {
       dimmed: isItemDimmed(
@@ -175,18 +175,18 @@
   }
 </script>
 
-{#if redactGuard.condition}
-  <ConfirmRedactedDialog
-    condition={redactGuard.condition}
-    bind:open={redactGuard.open}
+{#if spoilerGuard.condition}
+  <ConfirmSpoilerDialog
+    condition={spoilerGuard.condition}
+    bind:open={spoilerGuard.open}
     onCancel={() => {
-      redactGuard.cancel();
+      spoilerGuard.cancel();
     }}
     onComplete={() => {
-      redactGuard.complete();
+      spoilerGuard.complete();
     }}
     onCompleteAndUpdate={() => {
-      redactGuard.completeAndUpdate();
+      spoilerGuard.completeAndUpdate();
     }}
   />
 {/if}
@@ -221,7 +221,7 @@
                 if (itemNameVisible(itemId) || museumCompleted) {
                   toggleItem(itemId, set.setId, wingId);
                 } else {
-                  redactGuard.guard(museumItemVisibility, () => {
+                  spoilerGuard.guard(museumItemVisibility, () => {
                     toggleItem(itemId, set.setId, wingId);
                   });
                 }

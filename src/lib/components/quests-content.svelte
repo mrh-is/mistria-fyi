@@ -1,9 +1,9 @@
 <script lang="ts">
   import { toast } from "svelte-sonner";
 
-  import ConfirmRedactedDialog from "$lib/components/confirm-redacted-dialog.svelte";
+  import ConfirmSpoilerDialog from "$lib/components/confirm-spoiler-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
-  import RedactedCategory from "$lib/components/redacted-category.svelte";
+  import SpoilerSection from "$lib/components/spoiler-section.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
@@ -11,7 +11,7 @@
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { displayQuestName } from "$lib/utils/format.js";
-  import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
+  import { createSpoilerGuard } from "$lib/utils/spoiler-guard.svelte.js";
 
   import AllCompleted from "./all-completed.svelte";
 
@@ -20,7 +20,7 @@
   import type { FetchQuest, NpcId, QuestId, QuestType } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
-  const redactGuard = createRedactionGuard();
+  const spoilerGuard = createSpoilerGuard();
 
   function questNameVisible(questType: QuestType, questId: QuestId): boolean {
     return isEntityNameVisible(questVisibility(questType, questId), userState.progressionState);
@@ -58,7 +58,7 @@
   }
 
   function questRowDisplay(questState: QuestState, nameVisible: boolean): TrackerRowDisplay {
-    if (!nameVisible) return { mode: "redacted" };
+    if (!nameVisible) return { mode: "spoilered" };
     if (questState === "completed") return { mode: "completed" };
     if (questState === "obtained") return { mode: "obtained" };
     return { mode: "visible" };
@@ -130,18 +130,18 @@
   }
 </script>
 
-{#if redactGuard.condition}
-  <ConfirmRedactedDialog
-    condition={redactGuard.condition}
-    bind:open={redactGuard.open}
+{#if spoilerGuard.condition}
+  <ConfirmSpoilerDialog
+    condition={spoilerGuard.condition}
+    bind:open={spoilerGuard.open}
     onCancel={() => {
-      redactGuard.cancel();
+      spoilerGuard.cancel();
     }}
     onComplete={() => {
-      redactGuard.complete();
+      spoilerGuard.complete();
     }}
     onCompleteAndUpdate={() => {
-      redactGuard.completeAndUpdate();
+      spoilerGuard.completeAndUpdate();
     }}
   />
 {/if}
@@ -171,7 +171,7 @@
     return done ? userState.state.showCompleted : true;
   })}
   {#if quests.length > 0}
-    <RedactedCategory revealed={categoryRevealed}>
+    <SpoilerSection revealed={categoryRevealed}>
       {#if visibleQuests.length > 0}
         <ExpandableSection
           count={quests.filter((q) => getQuestState(q.id) === "completed").length}
@@ -191,7 +191,7 @@
                 if (nameVisible || questState !== "none") {
                   completeQuest(quest, quests);
                 } else {
-                  redactGuard.guard(questVisibility(questType, quest.id), () => {
+                  spoilerGuard.guard(questVisibility(questType, quest.id), () => {
                     completeQuest(quest, quests);
                   });
                 }
@@ -200,7 +200,7 @@
           {/each}
         </ExpandableSection>
       {/if}
-    </RedactedCategory>
+    </SpoilerSection>
   {/if}
 {/each}
 

@@ -9,20 +9,20 @@ describe("TrackerRow", () => {
     userState.resetAll();
   });
 
-  it("does not reveal a completed row whose visibility remains redacted", () => {
+  it("renders a spoiler overlay for a spoilered row", () => {
     const { body } = render(TrackerRow, {
       props: {
-        display: { mode: "redacted" },
+        display: { mode: "spoilered" },
         name: "Cherry Cobbler",
         onToggle: vi.fn(),
       },
     });
-    expect(body).not.toContain("Cherry Cobbler");
-    expect(body).toContain("Redacted");
-    expect(body).toContain('aria-label="Check redacted item"');
+    expect(body).toContain('aria-label="Reveal spoiler"');
+    expect(body).toContain('aria-hidden="true"');
+    expect(body).toContain('aria-label="Check spoilered item"');
   });
 
-  it("reveals the name for a completed row, unlike a redacted one", () => {
+  it("reveals the name for a completed row, unlike a spoilered one", () => {
     const { body } = render(TrackerRow, {
       props: {
         display: { mode: "completed" },
@@ -32,7 +32,7 @@ describe("TrackerRow", () => {
     });
 
     expect(body).toContain("Cherry Cobbler");
-    expect(body).not.toContain("Redacted");
+    expect(body).not.toContain("Reveal spoiler");
   });
 
   it("shows the entity name for a visible row", () => {

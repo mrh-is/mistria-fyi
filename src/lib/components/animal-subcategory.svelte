@@ -1,6 +1,6 @@
 <script lang="ts" generics="ItemId extends AnyId">
   import ExpandableSection from "$lib/components/expandable-section.svelte";
-  import RedactedCategory from "$lib/components/redacted-category.svelte";
+  import SpoilerSection from "$lib/components/spoiler-section.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
@@ -16,7 +16,7 @@
 
   function rowDisplay(row: AnimalSubcategoryRowProps<ItemId>): TrackerRowDisplay {
     if (row.completed) return { mode: "completed" };
-    if (row.redacted) return { mode: "redacted" };
+    if (row.redacted) return { mode: "spoilered" };
     return { mode: "visible" };
   }
 
@@ -48,7 +48,7 @@
       {@const { displayableCompletedItemCount, displayableItemCount, isVisible, visibleItems } =
         props.sectionConfig(animal.id)}
       {#if displayableItemCount > 0}
-        <RedactedCategory revealed={isVisible}>
+        <SpoilerSection revealed={isVisible}>
           {#if visibleItems.length > 0}
             <ExpandableSection
               count={displayableCompletedItemCount}
@@ -82,7 +82,7 @@
               {/each}
             </ExpandableSection>
           {/if}
-        </RedactedCategory>
+        </SpoilerSection>
       {/if}
     {/each}
   </ExpandableSection>

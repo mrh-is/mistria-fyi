@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Icon } from "$lib/components/icon/index.js";
-  import RedactedCategory from "$lib/components/redacted-category.svelte";
+  import SpoilerSection from "$lib/components/spoiler-section.svelte";
   import Stepper from "$lib/components/stepper.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { MAX_NPC_LEVEL } from "$lib/engine/progress.js";
@@ -64,7 +64,7 @@
     {@const level = getNpcLevel(npc.id)}
     {@const maxed = isMaxed(npc)}
     {@const known = isNpcKnown(npc.id)}
-    <RedactedCategory revealed={known}>
+    <SpoilerSection revealed={known}>
       {#if maxed ? userState.state.showCompleted : true}
         <div class="flex flex-col gap-1.5 rounded-md px-2 py-1.5 {maxed ? 'opacity-40' : ''}">
           <!-- Name row -->
@@ -109,6 +109,6 @@
           </Stepper>
         </div>
       {/if}
-    </RedactedCategory>
+    </SpoilerSection>
   {/each}
 </div>

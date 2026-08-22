@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ConfirmRedactedDialog from "$lib/components/confirm-redacted-dialog.svelte";
+  import ConfirmSpoilerDialog from "$lib/components/confirm-spoiler-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import Stepper from "$lib/components/stepper.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
@@ -7,13 +7,13 @@
   import { isEntityNameVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
-  import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
+  import { createSpoilerGuard } from "$lib/utils/spoiler-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { SpellId } from "$lib/types/tracker-data.js";
 
-  const redactGuard = createRedactionGuard();
+  const spoilerGuard = createSpoilerGuard();
 
   function spellNameVisible(spellId: SpellId): boolean {
     const visibility = trackerData.mines.spells[spellId].visibility;
@@ -21,7 +21,7 @@
   }
 
   function rowDisplay(spellId: SpellId, completed: boolean): TrackerRowDisplay {
-    if (!spellNameVisible(spellId)) return { mode: "redacted" };
+    if (!spellNameVisible(spellId)) return { mode: "spoilered" };
     return completed ? { mode: "completed" } : { mode: "visible" };
   }
 
@@ -83,18 +83,18 @@
   );
 </script>
 
-{#if redactGuard.condition}
-  <ConfirmRedactedDialog
-    condition={redactGuard.condition}
-    bind:open={redactGuard.open}
+{#if spoilerGuard.condition}
+  <ConfirmSpoilerDialog
+    condition={spoilerGuard.condition}
+    bind:open={spoilerGuard.open}
     onCancel={() => {
-      redactGuard.cancel();
+      spoilerGuard.cancel();
     }}
     onComplete={() => {
-      redactGuard.complete();
+      spoilerGuard.complete();
     }}
     onCompleteAndUpdate={() => {
-      redactGuard.completeAndUpdate();
+      spoilerGuard.completeAndUpdate();
     }}
   />
 {/if}
@@ -197,7 +197,7 @@
           if (spellNameVisible(spell.id) || completed) {
             toggleSpell(spell.id);
           } else {
-            redactGuard.guard(trackerData.mines.spells[spell.id].visibility, () => {
+            spoilerGuard.guard(trackerData.mines.spells[spell.id].visibility, () => {
               toggleSpell(spell.id);
             });
           }
