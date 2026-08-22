@@ -68,7 +68,12 @@ function makeProgressionState(overrides: Partial<UserProgressionState> = {}): Us
 }
 
 function search(query: string, completed?: Partial<CompletedState>) {
-  return searchItems(query, makeCompleted(completed), defaultWorld, makeProgressionState());
+  return searchItems(
+    query,
+    makeCompleted(completed),
+    defaultWorld,
+    makeProgressionState({ showSpoilers: true }),
+  );
 }
 
 // ─── Empty & whitespace queries ────────────────────────────────────
