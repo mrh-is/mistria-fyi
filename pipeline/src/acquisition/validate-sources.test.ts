@@ -556,6 +556,88 @@ describe("validateAcquisitionSources", () => {
       ]);
     }
   });
+
+  it("validates fetch quest itemId references against emitted items", () => {
+    const trackerData = {
+      cosmetics: {},
+      items: { wild_berries: { sources: [{ type: "default" }] } },
+      quests: {
+        fetch: {
+          meet_juniper: { itemId: "nonexistent_item", name: "Meet Juniper", npc: "juniper" },
+        },
+      },
+      recipes: {},
+    };
+    const references = AcquisitionReferenceIndex.from({
+      emitted: {
+        cosmetics: trackerData.cosmetics,
+        items: trackerData.items,
+        recipes: trackerData.recipes,
+      },
+      native: { npcs: { juniper: {} } },
+    });
+
+    const diagnostics = captureDiagnostics(trackerData, references);
+    expect(diagnostics).toContainEqual({
+      fieldPath: "quests.fetch.meet_juniper.itemId",
+      kind: "unresolved-reference",
+      message: 'Unknown item ID "nonexistent_item"',
+      targetId: "meet_juniper",
+    });
+  });
+
+  it("validates fetch quest npc references against known NPCs", () => {
+    const trackerData = {
+      cosmetics: {},
+      items: { wild_berries: { sources: [{ type: "default" }] } },
+      quests: {
+        fetch: {
+          meet_juniper: { itemId: "wild_berries", name: "Meet Juniper", npc: "nonexistent_npc" },
+        },
+      },
+      recipes: {},
+    };
+    const references = AcquisitionReferenceIndex.from({
+      emitted: {
+        cosmetics: trackerData.cosmetics,
+        items: trackerData.items,
+        recipes: trackerData.recipes,
+      },
+    });
+
+    const diagnostics = captureDiagnostics(trackerData, references);
+    expect(diagnostics).toContainEqual({
+      fieldPath: "quests.fetch.meet_juniper.npc",
+      kind: "unresolved-reference",
+      message: 'Unknown npc ID "nonexistent_npc"',
+      targetId: "meet_juniper",
+    });
+  });
+
+  it("accepts fetch quests with valid item and NPC references", () => {
+    const trackerData = {
+      cosmetics: {},
+      items: { wild_berries: { sources: [{ type: "default" }] } },
+      quests: {
+        fetch: {
+          meet_juniper: { itemId: "wild_berries", name: "Meet Juniper", npc: "juniper" },
+        },
+      },
+      recipes: {},
+    };
+    const references = AcquisitionReferenceIndex.from({
+      emitted: {
+        cosmetics: trackerData.cosmetics,
+        items: trackerData.items,
+        recipes: trackerData.recipes,
+      },
+      native: { npcs: { juniper: {} } },
+    });
+
+    expect(() => {
+      validateAcquisitionSources(trackerData, references);
+    }).not.toThrow();
+  });
 });
 
 function captureDiagnostics(
