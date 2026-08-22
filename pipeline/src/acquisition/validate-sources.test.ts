@@ -429,6 +429,38 @@ describe("validateAcquisitionSources", () => {
     ]);
   });
 
+  it("emits missing-source for a recipe with no acquisition sources", () => {
+    const trackerData = {
+      almanac: {},
+      cosmetics: {},
+      items: {},
+      museum: {},
+      recipes: { orphan_recipe: { memberItemIds: [], sources: [] } },
+    };
+    const references = AcquisitionReferenceIndex.from({
+      emitted: {
+        cosmetics: trackerData.cosmetics,
+        items: trackerData.items,
+        recipes: trackerData.recipes,
+      },
+    });
+
+    try {
+      validateAcquisitionSources(trackerData, references);
+      expect.unreachable("validation should fail");
+    } catch (error) {
+      expect(error).toBeInstanceOf(AcquisitionSourceValidationError);
+      expect((error as AcquisitionSourceValidationError).diagnostics).toEqual([
+        {
+          fieldPath: "recipes.orphan_recipe.sources",
+          kind: "missing-source",
+          message: 'Recipe "orphan_recipe" has no acquisition sources',
+          targetId: "orphan_recipe",
+        },
+      ]);
+    }
+  });
+
   it("aggregates deterministic diagnostics with field paths and source provenance", () => {
     const malformedSource = {
       type: "store",

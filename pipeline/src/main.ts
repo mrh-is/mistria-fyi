@@ -155,6 +155,7 @@ function collectNativeIdsFromSources(
     switch (source.type) {
       case "animal_product":
       case "artifact_replicator":
+      case "bait_fish":
       case "beach_cave_chest":
       case "breed":
         break;
@@ -191,6 +192,7 @@ function collectNativeIdsFromSources(
       case "letter":
       case "lost_and_found":
       case "mine":
+      case "mine_fish":
         break;
       case "mines_chest":
         if (source.lootGroup) sets.dungeonLootGroups.add(source.lootGroup);
@@ -425,14 +427,6 @@ function main(): void {
       if (itemSrc.length > 0) {
         skin.sources = itemSrc;
       }
-    }
-  }
-
-  // Recipes already have sources: AcquisitionSource[] from the extractor; fall back to a default
-  // source for recipes with none.
-  for (const recipe of Object.values(recipes)) {
-    if (!recipe.sources || recipe.sources.length === 0) {
-      recipe.sources = [{ type: "default" as const }];
     }
   }
 
