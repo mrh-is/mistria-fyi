@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { Lock } from "@lucide/svelte";
-
   import { Icon } from "$lib/components/icon/index.js";
+  import RedactedCategory from "$lib/components/redacted-category.svelte";
   import Stepper from "$lib/components/stepper.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { type CategoryProgress, MAX_NPC_LEVEL } from "$lib/engine/progress.js";
@@ -64,44 +63,41 @@
         {@const level = userState.state.completed.npcLevels[npc.id] ?? 0}
         {@const maxed = level >= MAX_NPC_LEVEL}
         {@const known = isNpcKnown(npc.id)}
-        {#if !known}
-          <div class="flex items-center gap-2 rounded-md px-2 py-1.5">
-            <Lock class="size-4 shrink-0 text-muted-foreground/50" />
-            <span class="min-w-0 flex-1 text-base text-muted-foreground italic">Redacted</span>
-          </div>
-        {:else if maxed ? userState.state.showCompleted : true}
-          <div class="flex items-center gap-2 rounded-md px-2 {maxed ? 'opacity-40' : ''}">
-            <div class="flex min-w-0 flex-1 items-center gap-1.5">
-              <span class="truncate text-base font-medium">{npc.name}</span>
-              <span class="flex shrink-0 items-center gap-0.5 text-xs text-muted-foreground">
-                <Icon.Season season={npc.birthday.season} class="size-2.5" />
-                {npc.birthday.day}
-              </span>
+        <RedactedCategory revealed={known}>
+          {#if maxed ? userState.state.showCompleted : true}
+            <div class="flex items-center gap-2 rounded-md px-2 {maxed ? 'opacity-40' : ''}">
+              <div class="flex min-w-0 flex-1 items-center gap-1.5">
+                <span class="truncate text-base font-medium">{npc.name}</span>
+                <span class="flex shrink-0 items-center gap-0.5 text-xs text-muted-foreground">
+                  <Icon.Season season={npc.birthday.season} class="size-2.5" />
+                  {npc.birthday.day}
+                </span>
+              </div>
+              <div class="w-32 shrink-0">
+                <Stepper
+                  size="sm"
+                  decrementDisabled={level <= 0}
+                  incrementDisabled={level >= MAX_NPC_LEVEL}
+                  decrementLabel="Decrease {npc.name} hearts"
+                  incrementLabel="Increase {npc.name} hearts"
+                  onDecrement={() => {
+                    setNpcLevelWithCelebration(npc.id, level - 1);
+                  }}
+                  onIncrement={() => {
+                    setNpcLevelWithCelebration(npc.id, level + 1);
+                  }}
+                >
+                  <Icon.ProgressMark
+                    type={npc.dateable ? "relationship_dateable" : "relationship_platonic"}
+                    class="size-4 transition-colors duration-200 {level > 0
+                      ? `${LEVEL_COLORS[level - 1]} fill-current`
+                      : 'fill-transparent text-muted-foreground/30'}"
+                  />
+                </Stepper>
+              </div>
             </div>
-            <div class="w-32 shrink-0">
-              <Stepper
-                size="sm"
-                decrementDisabled={level <= 0}
-                incrementDisabled={level >= MAX_NPC_LEVEL}
-                decrementLabel="Decrease {npc.name} hearts"
-                incrementLabel="Increase {npc.name} hearts"
-                onDecrement={() => {
-                  setNpcLevelWithCelebration(npc.id, level - 1);
-                }}
-                onIncrement={() => {
-                  setNpcLevelWithCelebration(npc.id, level + 1);
-                }}
-              >
-                <Icon.ProgressMark
-                  type={npc.dateable ? "relationship_dateable" : "relationship_platonic"}
-                  class="size-4 transition-colors duration-200 {level > 0
-                    ? `${LEVEL_COLORS[level - 1]} fill-current`
-                    : 'fill-transparent text-muted-foreground/30'}"
-                />
-              </Stepper>
-            </div>
-          </div>
-        {/if}
+          {/if}
+        </RedactedCategory>
       {/each}
     </div>
   </div>

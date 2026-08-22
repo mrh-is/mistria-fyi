@@ -35,7 +35,9 @@
     callbackfn: (value: [AnimalVariantId, AnimalVariant], tier: number) => void,
   ) {
     trackerData.animals[animalId].variantTiers.forEach((tier, index) => {
-      tierEntries(tier).forEach(callbackfn, index);
+      tierEntries(tier).forEach(([variantId, variant]) => {
+        callbackfn([variantId, variant], index);
+      });
     });
   }
 
@@ -126,6 +128,7 @@
       if (completed) displayableCompletedItemCount++;
 
       if (!completed || userState.state.showCompleted) {
+        const totalTiers = trackerData.animals[animalId].variantTiers.length;
         visibleItems.push({
           completed,
           id: vid,
@@ -133,6 +136,7 @@
           redacted: isVariantSpoilered(animalId, vid),
           season: seasonForVariant(variant),
           sources: [variant.source],
+          subtitle: totalTiers > 1 ? `Tier ${(tier + 1).toString()}` : undefined,
           tier,
         });
       }

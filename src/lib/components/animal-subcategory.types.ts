@@ -19,6 +19,7 @@ export interface AnimalSubcategoryRowProps<ItemId extends AnyId> {
   name: string;
   redacted: boolean;
   sources: Source[];
+  subtitle?: string;
 }
 
 export interface AnimalSubcategorySectionConfig<ItemId extends AnyId> {
