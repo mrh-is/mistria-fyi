@@ -360,6 +360,7 @@ function collectHardcodedSources(
       },
     ],
     ["engagement_ring", { type: "engagement" }],
+    ["kitchen_salt_and_pepper_shakers", { type: "default" }],
   ];
 
   for (const [itemId, source] of hardcoded) {

@@ -7,11 +7,13 @@ import type { NpcId, QuestId } from "$lib/types/tracker-data.js";
 // Minimal fiddle factory for quest chain tests. Each override merges onto a bare skeleton so
 // individual tests only specify the parts of the data they exercise.
 function makeFiddle(overrides: {
+  cutscenes?: Record<string, Record<string, unknown>>;
   letters?: Record<string, Record<string, unknown>>;
   quests?: Record<string, Record<string, unknown>>;
   requirements?: Record<string, unknown>;
 }): Record<string, unknown> {
   return {
+    cutscenes: overrides.cutscenes ?? {},
     letters: overrides.letters ?? {},
     quests: overrides.quests ?? {},
     requirements: overrides.requirements ?? {},
@@ -74,6 +76,110 @@ describe("extractQuestChains — story chain", () => {
     });
     const result = extractQuestChains(fiddle as never);
     expect(result.story["crafting_tutorial" as QuestId]).toEqual({ prerequisites: [] });
+  });
+
+  it("extracts a story quest prerequisite from a cutscene's completed_quest requirement", () => {
+    const fiddle = makeFiddle({
+      cutscenes: {
+        delivering_the_sealing_scroll: {
+          quest_to_progress: "delivering_the_sealing_scroll",
+          requirements: {
+            completed_quest: { days_after: 1, quest: "procuring_the_sealing_scroll" },
+          },
+        },
+      },
+      quests: {
+        story_quests: {
+          delivering_the_sealing_scroll: { npc_for_icon: "balor", stages: [] },
+        },
+      },
+    });
+    const result = extractQuestChains(fiddle as never);
+    expect(result.story["delivering_the_sealing_scroll" as QuestId]).toEqual({
+      prerequisites: ["procuring_the_sealing_scroll"],
+    });
+  });
+
+  it("extracts prerequisites from a cutscene with array quest_to_start", () => {
+    const fiddle = makeFiddle({
+      cutscenes: {
+        some_cutscene: {
+          quest_to_start: ["quest_a", "quest_b"],
+          requirements: { completed_quest: "prereq_quest" },
+        },
+      },
+      quests: {
+        story_quests: {
+          prereq_quest: { stages: [] },
+          quest_a: { stages: [] },
+          quest_b: { stages: [] },
+        },
+      },
+    });
+    const result = extractQuestChains(fiddle as never);
+    expect(result.story["quest_a" as QuestId]).toEqual({ prerequisites: ["prereq_quest"] });
+    expect(result.story["quest_b" as QuestId]).toEqual({ prerequisites: ["prereq_quest"] });
+  });
+
+  it("applies hardcoded prerequisite overrides for cutscene-started quests", () => {
+    const fiddle = makeFiddle({
+      quests: {
+        story_quests: {
+          breaking_the_final_seal: { stages: [] },
+          breaking_the_fire_seal: { stages: [] },
+          breaking_the_ruins_seal: { stages: [] },
+          creating_the_void_mass: { stages: [] },
+          delivering_the_sealing_scroll: { stages: [] },
+          find_the_magic_key: { stages: [] },
+          procuring_the_sealing_scroll: { stages: [] },
+          the_dragonsworn_tablet: { stages: [] },
+          the_fire_tablet: { stages: [] },
+        },
+      },
+    });
+    const result = extractQuestChains(fiddle as never);
+    expect(result.story["breaking_the_fire_seal" as QuestId].prerequisites).toEqual([
+      "the_fire_tablet",
+    ]);
+    expect(result.story["delivering_the_sealing_scroll" as QuestId].prerequisites).toEqual([
+      "procuring_the_sealing_scroll",
+    ]);
+    expect(result.story["find_the_magic_key" as QuestId].prerequisites).toEqual([
+      "breaking_the_fire_seal",
+    ]);
+    expect(result.story["creating_the_void_mass" as QuestId].prerequisites).toEqual([
+      "find_the_magic_key",
+    ]);
+    expect(result.story["breaking_the_ruins_seal" as QuestId].prerequisites).toEqual([
+      "creating_the_void_mass",
+    ]);
+    expect(result.story["the_dragonsworn_tablet" as QuestId].prerequisites).toEqual([
+      "breaking_the_ruins_seal",
+    ]);
+    expect(result.story["breaking_the_final_seal" as QuestId].prerequisites).toEqual([
+      "the_dragonsworn_tablet",
+    ]);
+  });
+
+  it("does not duplicate prerequisites when both a cutscene and an override supply the same one", () => {
+    const fiddle = makeFiddle({
+      cutscenes: {
+        some_cutscene: {
+          quest_to_start: "breaking_the_fire_seal",
+          requirements: { completed_quest: "the_fire_tablet" },
+        },
+      },
+      quests: {
+        story_quests: {
+          breaking_the_fire_seal: { stages: [] },
+          the_fire_tablet: { stages: [] },
+        },
+      },
+    });
+    const result = extractQuestChains(fiddle as never);
+    expect(result.story["breaking_the_fire_seal" as QuestId].prerequisites).toEqual([
+      "the_fire_tablet",
+    ]);
   });
 
   it("leaves prerequisites empty when the letter has no completed_quest requirement", () => {

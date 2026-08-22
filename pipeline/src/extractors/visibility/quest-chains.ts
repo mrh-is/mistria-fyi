@@ -34,8 +34,9 @@ interface HeartChainEntry {
 export function extractQuestChains(fiddle: ParsedGameData): QuestChainData {
   const questGroups = fiddle.quests as Record<string, Record<string, unknown>> | undefined;
   const letters = fiddle.letters as Record<string, Record<string, unknown>> | undefined;
+  const cutscenes = fiddle.cutscenes as Record<string, Record<string, unknown>> | undefined;
 
-  const story = extractStoryChain(questGroups, letters);
+  const story = extractStoryChain(questGroups, letters, cutscenes);
   const heart = extractHeartChain(letters, questGroups);
   const crown = extractRegistryOrder(questGroups, "crown_registry");
   const stillwell = extractRegistryOrder(questGroups, "stillwell_registry");
@@ -191,13 +192,34 @@ function extractRegistryOrder(
 }
 
 /**
+ * Hardcoded story-quest prerequisites for quests whose triggering mechanism (cutscene, quest
+ * reward, or location gate) can't be extracted from letters or cutscene `completed_quest` fields.
+ * Each entry maps a quest to the quest(s) that must be completed before it becomes available.
+ */
+const STORY_PREREQUISITE_OVERRIDES: Partial<Record<QuestId, QuestId[]>> = {
+  ["breaking_the_final_seal" as QuestId]: ["the_dragonsworn_tablet" as QuestId],
+  ["breaking_the_fire_seal" as QuestId]: ["the_fire_tablet" as QuestId],
+  ["breaking_the_ruins_seal" as QuestId]: ["creating_the_void_mass" as QuestId],
+  ["creating_the_void_mass" as QuestId]: ["find_the_magic_key" as QuestId],
+  ["delivering_the_sealing_scroll" as QuestId]: ["procuring_the_sealing_scroll" as QuestId],
+  ["find_the_magic_key" as QuestId]: ["breaking_the_fire_seal" as QuestId],
+  ["the_dragonsworn_tablet" as QuestId]: ["breaking_the_ruins_seal" as QuestId],
+};
+
+/**
  * Story-quest IDs come from the `story_quests` quest group; every one gets a `story` entry, with
- * prerequisites populated from the `completed_quest` requirement of whichever letter's
- * `quest_to_start` or `quest_to_progress` points at it.
+ * prerequisites populated from three sources:
+ *
+ * 1. Letters whose `quest_to_start`/`quest_to_progress` points at a story quest and whose
+ *    `requirements.completed_quest` names the prerequisite.
+ * 2. Cutscenes with the same `quest_to_start`/`quest_to_progress` + `completed_quest` pattern.
+ * 3. `STORY_PREREQUISITE_OVERRIDES` for quests whose prerequisites can't be extracted from data
+ *    (e.g. quests started by cutscenes without `completed_quest`, or by quest rewards).
  */
 function extractStoryChain(
   questGroups: Record<string, Record<string, unknown>> | undefined,
   letters: Record<string, Record<string, unknown>> | undefined,
+  cutscenes: Record<string, Record<string, unknown>> | undefined,
 ): Record<QuestId, { prerequisites: QuestId[] }> {
   const story: Record<QuestId, { prerequisites: QuestId[] }> = {};
 
@@ -209,16 +231,23 @@ function extractStoryChain(
     }
   }
 
-  if (letters) {
-    for (const letter of Object.values(letters)) {
-      if (typeof letter !== "object" || letter === null) continue;
+  for (const source of [letters, cutscenes]) {
+    if (!source) continue;
+    for (const entry of Object.values(source)) {
+      if (typeof entry !== "object" || entry === null) continue;
 
-      const triggeredQuestIds = [letter.quest_to_start, letter.quest_to_progress].filter(
+      const questToStart = entry.quest_to_start;
+      const questToProgress = entry.quest_to_progress;
+      const candidates = Array.isArray(questToStart)
+        ? [...questToStart, questToProgress]
+        : [questToStart, questToProgress];
+
+      const triggeredQuestIds = candidates.filter(
         (id): id is string => typeof id === "string" && id in story,
       );
       if (triggeredQuestIds.length === 0) continue;
 
-      const prerequisiteId = extractCompletedQuestId(letter.requirements);
+      const prerequisiteId = extractCompletedQuestId(entry.requirements);
       if (!prerequisiteId) continue;
 
       for (const questId of triggeredQuestIds) {
@@ -226,6 +255,16 @@ function extractStoryChain(
         if (!chainEntry.prerequisites.includes(prerequisiteId)) {
           chainEntry.prerequisites.push(prerequisiteId);
         }
+      }
+    }
+  }
+
+  for (const [questId, prerequisites] of Object.entries(STORY_PREREQUISITE_OVERRIDES)) {
+    const chainEntry = story[questId as QuestId];
+    if (!chainEntry || !prerequisites) continue;
+    for (const prereq of prerequisites) {
+      if (!chainEntry.prerequisites.includes(prereq)) {
+        chainEntry.prerequisites.push(prereq);
       }
     }
   }
