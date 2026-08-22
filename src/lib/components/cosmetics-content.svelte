@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ConfirmRedactedDialog from "$lib/components/confirm-redacted-dialog.svelte";
+  import ConfirmSpoilerDialog from "$lib/components/confirm-spoiler-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
@@ -7,8 +7,8 @@
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordEntries } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
-  import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
+  import { createSpoilerGuard } from "$lib/utils/spoiler-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import AllCompleted from "./all-completed.svelte";
@@ -25,7 +25,7 @@
     visibility?: VisibilityCondition;
   }
 
-  const redactGuard = createRedactionGuard();
+  const spoilerGuard = createSpoilerGuard();
 
   let redactedStoreIds = $derived(
     new Set(
@@ -41,7 +41,7 @@
 
   function rowDisplay(cosmetic: CosmeticEntry, completed: boolean): TrackerRowDisplay {
     if (!isEntityNameVisible(cosmetic.visibility, userState.progressionState)) {
-      return { mode: "redacted" };
+      return { mode: "spoilered" };
     }
     if (completed) return { mode: "completed" };
     return { mode: "visible" };
@@ -99,18 +99,18 @@
   }
 </script>
 
-{#if redactGuard.condition}
-  <ConfirmRedactedDialog
-    condition={redactGuard.condition}
-    bind:open={redactGuard.open}
+{#if spoilerGuard.condition}
+  <ConfirmSpoilerDialog
+    condition={spoilerGuard.condition}
+    bind:open={spoilerGuard.open}
     onCancel={() => {
-      redactGuard.cancel();
+      spoilerGuard.cancel();
     }}
     onComplete={() => {
-      redactGuard.complete();
+      spoilerGuard.complete();
     }}
     onCompleteAndUpdate={() => {
-      redactGuard.completeAndUpdate();
+      spoilerGuard.completeAndUpdate();
     }}
   />
 {/if}
@@ -153,7 +153,7 @@
                     ) {
                       toggleCosmetic(cosmetic, allInSlot);
                     } else {
-                      redactGuard.guard(cosmetic.visibility, () => {
+                      spoilerGuard.guard(cosmetic.visibility, () => {
                         toggleCosmetic(cosmetic, allInSlot);
                       });
                     }
@@ -176,7 +176,7 @@
                   ) {
                     toggleCosmetic(cosmetic, allInSlot);
                   } else {
-                    redactGuard.guard(cosmetic.visibility, () => {
+                    spoilerGuard.guard(cosmetic.visibility, () => {
                       toggleCosmetic(cosmetic, allInSlot);
                     });
                   }

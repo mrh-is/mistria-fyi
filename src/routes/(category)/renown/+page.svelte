@@ -152,7 +152,8 @@
 <div class="flex flex-col gap-0.5">
   {#each ranks as rank, i (rank.name)}
     <RankCard
-      name={isRankVisible(i * levelsInCurrentRank) ? rank.name : "Redacted"}
+      name={rank.name}
+      spoilered={!isRankVisible(i * levelsInCurrentRank)}
       starColor={RANK_COLORS[i]}
       minLevel={rank.levels.start}
       maxLevel={rank.levels.end}

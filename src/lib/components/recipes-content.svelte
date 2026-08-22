@@ -1,7 +1,7 @@
 <script lang="ts">
   import { SvelteSet } from "svelte/reactivity";
 
-  import ConfirmRedactedDialog from "$lib/components/confirm-redacted-dialog.svelte";
+  import ConfirmSpoilerDialog from "$lib/components/confirm-spoiler-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import { SOURCE_FILTERS } from "$lib/components/icon/index.js";
   import TrackerRow from "$lib/components/tracker-row.svelte";
@@ -12,8 +12,8 @@
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordEntries, recordForEach } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
-  import { createRedactionGuard } from "$lib/utils/redaction-guard.svelte.js";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
+  import { createSpoilerGuard } from "$lib/utils/spoiler-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import AllCompleted from "./all-completed.svelte";
@@ -23,7 +23,7 @@
   import type { Item, RecipeId } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
-  const redactGuard = createRedactionGuard();
+  const spoilerGuard = createSpoilerGuard();
 
   let recentlyCompleted = new SvelteSet<RecipeId>();
 
@@ -87,7 +87,7 @@
   });
 
   function rowDisplay(entry: RecipeEntry, completed: boolean, leaving: boolean): TrackerRowDisplay {
-    if (!entry.nameVisible) return { mode: "redacted" };
+    if (!entry.nameVisible) return { mode: "spoilered" };
     if (completed) return { leaving, mode: "completed" };
     return { mode: "visible" };
   }
@@ -162,18 +162,18 @@
   }
 </script>
 
-{#if redactGuard.condition}
-  <ConfirmRedactedDialog
-    condition={redactGuard.condition}
-    bind:open={redactGuard.open}
+{#if spoilerGuard.condition}
+  <ConfirmSpoilerDialog
+    condition={spoilerGuard.condition}
+    bind:open={spoilerGuard.open}
     onCancel={() => {
-      redactGuard.cancel();
+      spoilerGuard.cancel();
     }}
     onComplete={() => {
-      redactGuard.complete();
+      spoilerGuard.complete();
     }}
     onCompleteAndUpdate={() => {
-      redactGuard.completeAndUpdate();
+      spoilerGuard.completeAndUpdate();
     }}
   />
 {/if}
@@ -210,7 +210,7 @@
                 group.entries.map((candidate) => candidate.id),
               );
             } else {
-              redactGuard.guard(entry.visibility, () => {
+              spoilerGuard.guard(entry.visibility, () => {
                 toggleRecipe(
                   entry,
                   group.entries.map((candidate) => candidate.id),

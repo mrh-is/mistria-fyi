@@ -25,7 +25,7 @@
 <AlertDialog.Root bind:open>
   <AlertDialog.Content>
     <AlertDialog.Header>
-      <AlertDialog.Title>Complete redacted item?</AlertDialog.Title>
+      <AlertDialog.Title>Complete spoilered item?</AlertDialog.Title>
       <AlertDialog.Description>
         This item is still hidden based on your tracked progression. Are you sure you want to mark
         it as completed?

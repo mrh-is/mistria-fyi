@@ -4,6 +4,7 @@
   import { Icon } from "$lib/components/icon/index.js";
   import RestrictionBadges from "$lib/components/restriction-badges.svelte";
   import SourceList from "$lib/components/source-list.svelte";
+  import Spoiler from "$lib/components/spoiler.svelte";
   import { getDisplayBadges } from "$lib/engine/availability.js";
   import { buildSourceSegments } from "$lib/utils/source-segments.js";
 
@@ -16,7 +17,7 @@
     | { dimmed?: boolean; mode: "visible" }
     | { leaving?: boolean; mode: "completed" }
     | { mode: "obtained" }
-    | { mode: "redacted" };
+    | { mode: "spoilered" };
 
   let {
     display,
@@ -41,10 +42,11 @@
   );
 
   let expanded = $state(false);
+  let spoilerRevealed = $state(false);
 
   let isCompleted = $derived(display.mode === "completed");
   let isObtained = $derived(display.mode === "obtained");
-  let isRedacted = $derived(display.mode === "redacted");
+  let isSpoilered = $derived(display.mode === "spoilered" && !spoilerRevealed);
   let isLeaving = $derived(display.mode === "completed" && (display.leaving ?? false));
   let isDimmed = $derived(display.mode === "visible" && (display.dimmed ?? false));
 
@@ -79,8 +81,8 @@
       type="button"
       aria-label={isCompleted
         ? `Uncheck ${name}`
-        : isRedacted
-          ? "Check redacted item"
+        : isSpoilered
+          ? "Check spoilered item"
           : `Check ${name}`}
       onclick={onToggle}
     >
@@ -94,16 +96,21 @@
       />
     </button>
 
-    {#if isRedacted}
-      <span class="min-w-0 flex-1 text-base text-muted-foreground italic">Redacted</span>
-    {:else}
-      <span class="min-w-0 flex-1 text-base">
+    <span class="min-w-0 flex-1 text-base">
+      {#if isSpoilered}
+        <Spoiler onReveal={() => (spoilerRevealed = true)}>
+          {name}
+          {#if subtitle}
+            <span class="text-sm text-muted-foreground">{subtitle}</span>
+          {/if}
+        </Spoiler>
+      {:else}
         {name}
         {#if subtitle}
           <span class="text-sm text-muted-foreground">{subtitle}</span>
         {/if}
-      </span>
-    {/if}
+      {/if}
+    </span>
 
     {#if isObtained}
       <span class="text-sm text-amber-600 dark:text-amber-400">Active</span>
@@ -114,7 +121,7 @@
         class="group flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted"
         type="button"
         aria-expanded={expanded}
-        aria-label="{isRedacted ? 'Redacted item' : name} sources"
+        aria-label="{isSpoilered ? 'Spoilered item' : name} sources"
         onclick={() => {
           expanded = !expanded;
         }}
@@ -129,7 +136,7 @@
       </button>
     {/if}
 
-    {#if (badges.seasons ?? badges.weathers ?? badges.timeRange) && !isRedacted}
+    {#if badges.seasons ?? badges.weathers ?? badges.timeRange}
       <RestrictionBadges {badges} />
     {/if}
   </div>

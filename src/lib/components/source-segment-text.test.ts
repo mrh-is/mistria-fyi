@@ -11,7 +11,7 @@ afterEach(() => {
 });
 
 describe("SourceSegmentText", () => {
-  it("preserves structural text while hiding a gated fragment", () => {
+  it("preserves structural text while spoilering a gated fragment", () => {
     const segments: SourceSegment[] = [
       "Craft at ",
       {
@@ -21,8 +21,8 @@ describe("SourceSegmentText", () => {
     ];
     const { body } = render(SourceSegmentText, { props: { segments } });
     expect(body).toContain("Craft at");
-    expect(body).toContain("Redacted");
-    expect(body).not.toContain("Dragon Forge");
+    expect(body).toContain('aria-label="Reveal spoiler"');
+    expect(body).toContain('aria-hidden="true"');
   });
 
   it("reveals a fragment when progression satisfies its condition", () => {
@@ -35,6 +35,6 @@ describe("SourceSegmentText", () => {
     ];
     const { body } = render(SourceSegmentText, { props: { segments } });
     expect(body).toContain("Dragon Forge");
-    expect(body).not.toContain("Redacted");
+    expect(body).not.toContain("Reveal spoiler");
   });
 });
