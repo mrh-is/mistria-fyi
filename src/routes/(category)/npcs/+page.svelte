@@ -64,7 +64,7 @@
     {@const level = getNpcLevel(npc.id)}
     {@const maxed = isMaxed(npc)}
     {@const known = isNpcKnown(npc.id)}
-    <SpoilerSection revealed={known}>
+    <SpoilerSection name={npc.name} revealed={known}>
       {#if maxed ? userState.state.showCompleted : true}
         <div class="flex flex-col gap-1.5 rounded-md px-2 py-1.5 {maxed ? 'opacity-40' : ''}">
           <!-- Name row -->

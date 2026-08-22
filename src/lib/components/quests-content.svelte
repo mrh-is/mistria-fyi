@@ -171,7 +171,7 @@
     return done ? userState.state.showCompleted : true;
   })}
   {#if quests.length > 0}
-    <SpoilerSection revealed={categoryRevealed}>
+    <SpoilerSection name={typeLabels[questType]} revealed={categoryRevealed}>
       {#if visibleQuests.length > 0}
         <ExpandableSection
           count={quests.filter((q) => getQuestState(q.id) === "completed").length}

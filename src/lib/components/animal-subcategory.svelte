@@ -48,7 +48,7 @@
       {@const { displayableCompletedItemCount, displayableItemCount, isVisible, visibleItems } =
         props.sectionConfig(animal.id)}
       {#if displayableItemCount > 0}
-        <SpoilerSection revealed={isVisible}>
+        <SpoilerSection name={animal.name} revealed={isVisible}>
           {#if visibleItems.length > 0}
             <ExpandableSection
               count={displayableCompletedItemCount}

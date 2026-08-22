@@ -136,7 +136,7 @@
       </button>
     {/if}
 
-    {#if (badges.seasons ?? badges.weathers ?? badges.timeRange) && !isSpoilered}
+    {#if badges.seasons ?? badges.weathers ?? badges.timeRange}
       <RestrictionBadges {badges} />
     {/if}
   </div>
