@@ -37,8 +37,9 @@ the remote back to SSH.
 
 Follow this sequence for every task:
 
-1. **Read the issue & comments** — use `gh issue view <number> --comments`. Do not start issues
-   labeled `blocked` or `discussion`.
+1. **Read the issue & comments** — use `gh issue view <number> --json title,body,labels,comments`.
+   The `--comments` flag produces empty output when there are no comments; `--json` is reliable in
+   all cases. Do not start issues labeled `blocked` or `discussion`.
 2. **Invoke skills** — load the applicable Superpowers skills before exploration or implementation.
 3. **Approval gates** — obtain explicit user approval at every specification and plan gate.
 4. **Worktree** — create an isolated worktree before editing.
