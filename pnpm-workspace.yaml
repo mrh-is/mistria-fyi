@@ -12,4 +12,5 @@ minimumReleaseAgeExclude:
 
 overrides:
   cookie: ">=0.7.0"
+  nanoid: ">=3.3.18"
   undici: ">=7.29.0"
