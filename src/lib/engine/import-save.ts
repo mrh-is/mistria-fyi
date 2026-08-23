@@ -68,6 +68,7 @@ export function buildImportState(bundle: SaveBundle): {
     animalCosmetics: 0,
     animals: 0,
     cosmetics: 0,
+    dates: 0,
     mineFloor: 0,
     museum: 0,
     npcLevels: 0,

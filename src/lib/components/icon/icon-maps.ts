@@ -79,6 +79,7 @@ export const SOURCE_ICON: Record<Source["type"], LucideIcon> = {
   chicken_statue: Coins,
   crop: Wheat,
   date: Heart,
+  date_inspiration: Heart,
   default: CircleCheck,
   dive: Shell,
   engagement: Heart,

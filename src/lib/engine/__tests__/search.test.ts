@@ -33,6 +33,7 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     animalCosmetics,
     animals,
     cosmetics: new Set(),
+    dates: new Set(),
     marriedNpc: null,
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),

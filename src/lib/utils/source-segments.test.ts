@@ -692,6 +692,17 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Receive on a date"]);
   });
 
+  it("date_inspiration with known item name", () => {
+    const source: Source = { type: "date_inspiration", itemId: "inn_menu" as ItemId };
+    const lookups = { ...BASE_LOOKUPS, itemNames: { inn_menu: "Inn Menu" } };
+    expect(buildSourceSegments(source, lookups)).toEqual(["Find the Inn Menu"]);
+  });
+
+  it("date_inspiration falls back to title case", () => {
+    const source: Source = { type: "date_inspiration", itemId: "fancy_seashell" as ItemId };
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Find the Fancy Seashell"]);
+  });
+
   it("dive with water types", () => {
     const source: Source = { type: "dive", waterTypes: ["ocean" as WaterType] };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Dive in Ocean"]);

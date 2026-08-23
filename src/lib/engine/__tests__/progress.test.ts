@@ -41,6 +41,7 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     animalCosmetics,
     animals,
     cosmetics: new Set(),
+    dates: new Set(),
     marriedNpc: null,
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
@@ -190,9 +191,11 @@ describe("cosmetics progress", () => {
 });
 
 describe("npcs progress", () => {
-  it("total is npc count times MAX_NPC_LEVEL", () => {
+  it("total is npc count times MAX_NPC_LEVEL plus date count", () => {
     const progress = getCategoryProgress("npcs", ctx());
-    expect(progress.total).toBe(recordKeys(trackerData.npcs).length * MAX_NPC_LEVEL);
+    const expectedNpcTotal = recordKeys(trackerData.npcs).length * MAX_NPC_LEVEL;
+    const expectedDateTotal = recordKeys(trackerData.dates).length;
+    expect(progress.total).toBe(expectedNpcTotal + expectedDateTotal);
   });
 
   it("caps individual NPC levels at MAX_NPC_LEVEL", () => {

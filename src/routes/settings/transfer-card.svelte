@@ -130,6 +130,7 @@
     transferResult
       ? transferResult.almanac +
           transferResult.cosmetics +
+          transferResult.dates +
           transferResult.animals +
           transferResult.animalCosmetics +
           transferResult.petCosmetics +
@@ -221,6 +222,9 @@
             {/if}
             {#if transferResult.cosmetics > 0}
               <li>Cosmetics: +{transferResult.cosmetics}</li>
+            {/if}
+            {#if transferResult.dates > 0}
+              <li>Dates: +{transferResult.dates}</li>
             {/if}
             {#if transferResult.animals > 0}
               <li>Animal variants: +{transferResult.animals}</li>

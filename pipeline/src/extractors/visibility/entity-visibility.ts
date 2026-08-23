@@ -100,10 +100,29 @@ export function assignEntityVisibility(
 }
 
 /** Hardcoded category visibility gates (spec Section 3j). */
-export function extractCategoryVisibility(): Record<string, VisibilityCondition> {
+export function extractCategoryVisibility(
+  npcs: TrackerData["npcs"],
+): Record<string, VisibilityCondition> {
+  const dateableNpcIds = Object.entries(npcs)
+    .filter(([, npc]) => npc.dateable)
+    .map(([id]) => id as NpcId);
+
+  const datesVisibility: VisibilityCondition =
+    dateableNpcIds.length > 0
+      ? {
+          type: "or",
+          conditions: dateableNpcIds.map((npcId) => ({
+            type: "heartLevel" as const,
+            level: 8,
+            npcId,
+          })) as [VisibilityCondition, ...VisibilityCondition[]],
+        }
+      : ALWAYS;
+
   return {
     cooking: { type: "npcKnown", npcId: "taliferro" as NpcId },
     crown: { type: "renownLevel", level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER },
+    dates: datesVisibility,
     fetch: ALWAYS,
     heart: ALWAYS,
     mission: { type: "npcKnown", npcId: "stillwell" as NpcId },
@@ -202,6 +221,7 @@ function acquisitionSourceCondition(
     case "chicken_statue":
     case "crop":
     case "date":
+    case "date_inspiration":
     case "default":
     case "dive":
     case "engagement":
@@ -320,7 +340,7 @@ function assignQuestVisibility(
   cutsceneMap: CutsceneQuestMap,
   chains: QuestChainData,
 ): void {
-  const categoryVisibility = extractCategoryVisibility();
+  const categoryVisibility = extractCategoryVisibility(trackerData.npcs);
 
   for (const [questId, quest] of Object.entries(trackerData.quests.story)) {
     const prerequisites = chains.story[questId as QuestId]?.prerequisites ?? [];
@@ -439,6 +459,7 @@ function computeRecipeSourceConditions(
     case "chicken_statue":
     case "crop":
     case "date":
+    case "date_inspiration":
     case "default":
     case "dive":
     case "engagement":

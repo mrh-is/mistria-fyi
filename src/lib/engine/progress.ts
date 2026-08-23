@@ -178,6 +178,9 @@ function getNpcsProgress(ctx: ProgressContext): CategoryProgress {
     total += MAX_NPC_LEVEL;
     completed += Math.min(ctx.completed.npcLevels[id] ?? 0, MAX_NPC_LEVEL);
   }
+  const dateCount = recordKeys(trackerData.dates).length;
+  total += dateCount;
+  completed += ctx.completed.dates.size;
   return { completed, filtered: total - completed, total };
 }
 

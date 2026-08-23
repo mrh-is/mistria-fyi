@@ -130,6 +130,10 @@ export function buildSourceSegments(
     }
     case "date":
       return ["Receive on a date"];
+    case "date_inspiration": {
+      const itemName = lookups.itemNames[source.itemId] ?? titleCase(source.itemId);
+      return [`Find the ${itemName}`];
+    }
     case "default":
       return ["Available from the start"];
     case "dive": {
