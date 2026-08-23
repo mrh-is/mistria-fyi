@@ -1,4 +1,5 @@
 <script lang="ts">
+  import DatesSection from "$lib/components/dates-section.svelte";
   import { Icon } from "$lib/components/icon/index.js";
   import SpoilerSection from "$lib/components/spoiler-section.svelte";
   import Stepper from "$lib/components/stepper.svelte";
@@ -112,3 +113,5 @@
     </SpoilerSection>
   {/each}
 </div>
+
+<DatesSection />

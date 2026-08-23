@@ -1063,6 +1063,9 @@ function validateVariantFields(
     case "date":
       stringReferences.push(["dateId", "date"]);
       break;
+    case "date_inspiration":
+      stringReferences.push(["itemId", "item"]);
+      break;
     case "dive":
     case "fish":
       optionalReferenceArray(

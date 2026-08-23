@@ -30,6 +30,7 @@ import { forEachItem } from "./extractor-helpers.js";
 import { extractAlmanac } from "./extractors/almanac.js";
 import { extractAnimals } from "./extractors/animals.js";
 import { extractCosmetics } from "./extractors/cosmetics.js";
+import { extractDates } from "./extractors/dates.js";
 import { extractFestivals } from "./extractors/festivals.js";
 import { extractMines } from "./extractors/mines.js";
 import { extractMuseum } from "./extractors/museum.js";
@@ -169,6 +170,7 @@ function collectNativeIdsFromSources(
       case "date":
         sets.dates.add(source.dateId);
         break;
+      case "date_inspiration":
       case "default":
         break;
       case "dive":
@@ -334,6 +336,7 @@ function main(): void {
   const quests = extractQuests(fiddle);
   const mines = extractMines(fiddle);
   const storesMeta = extractStoresMeta(fiddle);
+  const dates = extractDates(fiddle);
   const festivals = extractFestivals(fiddle);
   const treasureChestTiers = extractTreasureChestTiers(fiddle);
 
@@ -462,7 +465,7 @@ function main(): void {
   console.log("Step 3b: Extracting visibility data...");
   const questChainsRaw = extractQuestChains(fiddle);
   const heartLevelChangesData = extractHeartLevelChanges(fiddle, cutsceneQuestMap);
-  const categoryVisibilityData = extractCategoryVisibility();
+  const categoryVisibilityData = extractCategoryVisibility(npcs);
 
   for (const [questId, changes] of Object.entries(heartLevelChangesData)) {
     const quest = quests.story[questId as QuestId];
@@ -478,6 +481,7 @@ function main(): void {
     animals,
     categoryVisibility: categoryVisibilityData,
     cosmetics,
+    dates,
     festivals,
     generatedAt: new Date().toISOString(),
     items,

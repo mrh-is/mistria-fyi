@@ -56,6 +56,7 @@ export type Source =
         | { type: "chicken_statue"; cost: number }
         | { type: "crop"; seedItemId: ItemId }
         | { type: "date"; dateId: DateId }
+        | { type: "date_inspiration"; itemId: ItemId }
         | { type: "dive"; waterTypes?: NonEmptyArray<WaterType> }
         | { type: "engagement" }
         | { type: "equipment"; itemId: ItemId }

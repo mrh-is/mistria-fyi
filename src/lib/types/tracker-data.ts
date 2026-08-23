@@ -1,4 +1,4 @@
-import type { Source, SourceTuple } from "./acquisition.js";
+import type { DateId, Source, SourceTuple } from "./acquisition.js";
 import type { VisibilityCondition } from "./visibility.js";
 
 export type {
@@ -64,6 +64,9 @@ export type CosmeticSlot =
   | "suit"
   | "top"
   | "underwear";
+export interface DateType extends TrackerEntity {
+  name: string;
+}
 export interface Day {
   day: number;
   season: Season;
@@ -173,8 +176,9 @@ export interface TownRank {
 export interface TrackerData {
   almanac: Record<AlmanacCategoryId, AlmanacCategory>;
   animals: Record<AnimalId, Animal>;
-  categoryVisibility: Partial<Record<QuestType, VisibilityCondition>>;
+  categoryVisibility: Partial<Record<"dates" | QuestType, VisibilityCondition>>;
   cosmetics: Record<CosmeticId, Cosmetic>;
+  dates: Record<DateId, DateType>;
   festivals: Record<FestivalId, Festival>;
   generatedAt: string;
   items: Record<ItemId, Item>;

@@ -67,6 +67,7 @@ function makeTrackerData(overrides: Record<string, unknown>): TrackerData {
     animals: {},
     categoryVisibility: {},
     cosmetics: {},
+    dates: {},
     festivals: {},
     generatedAt: "",
     items: {},
@@ -199,29 +200,54 @@ describe("stampNpcVisibility", () => {
 });
 
 describe("extractCategoryVisibility", () => {
+  const mockNpcs = {
+    celine: { birthday: { day: 1, season: "spring" as const }, dateable: true, name: "Celine" },
+    holt: { birthday: { day: 2, season: "summer" as const }, name: "Holt" },
+    reina: { birthday: { day: 3, season: "fall" as const }, dateable: true, name: "Reina" },
+  } as unknown as TrackerData["npcs"];
+
   it("gates mission behind knowing Stillwell", () => {
-    const result = extractCategoryVisibility();
+    const result = extractCategoryVisibility(mockNpcs);
     expect(result.mission).toEqual({ type: "npcKnown", npcId: "stillwell" });
   });
 
   it("gates cooking behind knowing Taliferro", () => {
-    const result = extractCategoryVisibility();
+    const result = extractCategoryVisibility(mockNpcs);
     expect(result.cooking).toEqual({ type: "npcKnown", npcId: "taliferro" });
   });
 
   it("leaves story, heart, and fetch always visible", () => {
-    const result = extractCategoryVisibility();
+    const result = extractCategoryVisibility(mockNpcs);
     expect(result.story).toEqual({ type: "always" });
     expect(result.heart).toEqual({ type: "always" });
     expect(result.fetch).toEqual({ type: "always" });
   });
 
   it("gates crown behind the placeholder renown level", () => {
-    const result = extractCategoryVisibility();
+    const result = extractCategoryVisibility(mockNpcs);
     expect(result.crown).toEqual({
       type: "renownLevel",
       level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER,
     });
+  });
+
+  it("gates dates behind OR of dateable NPCs at heart level 8", () => {
+    const result = extractCategoryVisibility(mockNpcs);
+    expect(result.dates).toEqual({
+      type: "or",
+      conditions: [
+        { type: "heartLevel", level: 8, npcId: "celine" },
+        { type: "heartLevel", level: 8, npcId: "reina" },
+      ],
+    });
+  });
+
+  it("sets dates to always when no dateable NPCs exist", () => {
+    const noDateable = {
+      holt: { birthday: { day: 2, season: "summer" as const }, name: "Holt" },
+    } as unknown as TrackerData["npcs"];
+    const result = extractCategoryVisibility(noDateable);
+    expect(result.dates).toEqual({ type: "always" });
   });
 });
 

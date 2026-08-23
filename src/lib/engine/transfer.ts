@@ -6,6 +6,7 @@ import type {
   AnimalId,
   AnimalVariantId,
   CosmeticId,
+  DateId,
   ItemId,
   NpcId,
   PerkId,
@@ -18,7 +19,7 @@ import type {
 
 // ─── Constants ──────────────────────────────────────────────────────
 
-export const TRANSFER_VERSION = 3;
+export const TRANSFER_VERSION = 4;
 
 // ─── Deterministic orderings (derived from trackerData) ─────────────
 
@@ -26,7 +27,7 @@ export const TRANSFER_VERSION = 3;
 export async function decodeTransferPayload(payload: string): Promise<Partial<CompletedState>> {
   const payloadBytes = fromBase64url(payload);
   const version = payloadBytes[0];
-  if (version !== 1 && version !== 2 && version !== 3) {
+  if (version !== 1 && version !== 2 && version !== 3 && version !== 4) {
     throw new Error(`Unsupported transfer version: ${String(version)}`);
   }
 
@@ -159,11 +160,20 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
     petSkins = fromBitfield(petSkinOrder, petSkinBytes) as Set<PetSkinId>;
   }
 
+  // 16. Date bitfield (v4 only)
+  let dates = new Set<DateId>();
+  if (version >= 4) {
+    const dateOrder = getDateOrder();
+    const dateBytes = readBytes(Math.ceil(dateOrder.length / 8));
+    dates = fromBitfield(dateOrder, dateBytes) as Set<DateId>;
+  }
+
   return {
     almanac,
     animalCosmetics,
     animals,
     cosmetics,
+    dates,
     marriedNpc,
     mines: { floor, spells },
     museum,
@@ -284,6 +294,10 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   // 15. Pet skins bitfield (new in v3)
   const petSkinOrder = getPetSkinOrder();
   parts.push(toBitfield(petSkinOrder, completed.petSkins));
+
+  // 16. Date bitfield (new in v4)
+  const dateOrder = getDateOrder();
+  parts.push(toBitfield(dateOrder, completed.dates));
 
   // Concatenate all parts
   const totalLength = parts.reduce((sum, p) => sum + p.length, 0);
@@ -415,13 +429,17 @@ function getCosmeticOrder(): CosmeticId[] {
     .sort();
 }
 
+function getDateOrder(): DateId[] {
+  return (Object.keys(trackerData.dates) as DateId[]).sort();
+}
+
+// ─── Compression (Web Compression Streams API) ─────────────────────
+
 function getMuseumOrder(): ItemId[] {
   return recordValues(trackerData.museum)
     .flatMap(({ sets }) => recordValues(sets).flatMap(({ items }) => items))
     .sort();
 }
-
-// ─── Compression (Web Compression Streams API) ─────────────────────
 
 function getNpcOrder(): NpcId[] {
   return (Object.keys(trackerData.npcs) as NpcId[]).sort();

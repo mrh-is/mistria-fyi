@@ -9,6 +9,7 @@ import type { CompletedState } from "$lib/stores/user-state.svelte.js";
 import type {
   AnimalVariantId,
   CosmeticId,
+  DateId,
   NpcId,
   PetCosmeticSetId,
   PetSkinId,
@@ -34,6 +35,7 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     animalCosmetics,
     animals,
     cosmetics: new Set(),
+    dates: new Set(),
     marriedNpc: null,
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
@@ -48,9 +50,9 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
   };
 }
 
-describe("transfer codec v3", () => {
-  it("has version 3", () => {
-    expect(TRANSFER_VERSION).toBe(3);
+describe("transfer codec v4", () => {
+  it("has version 4", () => {
+    expect(TRANSFER_VERSION).toBe(4);
   });
 
   it("round-trips unlockedPerks", async () => {
@@ -95,12 +97,21 @@ describe("transfer codec v3", () => {
     expect(decoded.petSkins).toEqual(new Set(petSkinIds));
   });
 
-  it("decodes v1 payload without perks, marriedNpc, or pet fields", async () => {
+  it("round-trips dates", async () => {
+    const dateIds = Object.keys(trackerData.dates).slice(0, 3) as DateId[];
+    const completed = makeCompleted({ dates: new Set(dateIds) });
+    const payload = await encodeTransferPayload(completed);
+    const decoded = await decodeTransferPayload(payload);
+    expect(decoded.dates).toEqual(new Set(dateIds));
+  });
+
+  it("decodes v1 payload without perks, marriedNpc, pet, or date fields", async () => {
     const decoded = await decodeTransferPayload(V1_FIXTURE);
     expect(decoded.unlockedPerks).toEqual(new Set());
     expect(decoded.marriedNpc).toBeNull();
     expect(decoded.petCosmetics).toEqual(new Set());
     expect(decoded.petSkins).toEqual(new Set());
+    expect(decoded.dates).toEqual(new Set());
     // Sanity check that pre-existing v1 fields still decode correctly.
     expect(decoded.mines?.floor).toBe(5);
     expect(decoded.npcLevels?.["adeline" as NpcId]).toBe(3);

@@ -10,6 +10,7 @@ import type {
   AnimalId,
   AnimalVariantId,
   CosmeticId,
+  DateId,
   ItemId,
   NpcId,
   PerkId,
@@ -33,6 +34,7 @@ export interface CompletedState {
   animalCosmetics: Record<AnimalId, Set<CosmeticId>>;
   animals: Record<AnimalId, Set<AnimalVariantId>>;
   cosmetics: Set<CosmeticId>;
+  dates: Set<DateId>;
   marriedNpc: NpcId | null;
   mines: { floor: number; spells: Set<SpellId> };
   museum: Set<ItemId>;
@@ -51,6 +53,7 @@ export interface MergeCounts {
   animalCosmetics: number;
   animals: number;
   cosmetics: number;
+  dates: number;
   mineFloor: number;
   museum: number;
   npcLevels: number;
@@ -83,6 +86,7 @@ interface SerializedState {
     animalCosmetics: Record<string, string[]>;
     animals: Record<string, string[]>;
     cosmetics: string[];
+    dates?: string[];
     marriedNpc?: null | string;
     mines: { floor: number; spells: string[] };
     museum: string[];
@@ -143,6 +147,7 @@ function createDefaultCompleted(): CompletedState {
     animalCosmetics,
     animals,
     cosmetics: defaultCosmetics,
+    dates: new SvelteSet<DateId>(),
     marriedNpc: null,
     mines: { floor: 0, spells: new SvelteSet<SpellId>() },
     museum: new SvelteSet<ItemId>(),
@@ -249,6 +254,7 @@ function createUserState() {
         animalCosmetics: 0,
         animals: 0,
         cosmetics: 0,
+        dates: 0,
         mineFloor: 0,
         museum: 0,
         npcLevels: 0,
@@ -287,6 +293,16 @@ function createUserState() {
           if (!state.completed.cosmetics.has(id)) {
             state.completed.cosmetics.add(id);
             counts.cosmetics++;
+          }
+        }
+      }
+
+      // Dates
+      if (imported.dates) {
+        for (const id of imported.dates) {
+          if (!state.completed.dates.has(id)) {
+            state.completed.dates.add(id);
+            counts.dates++;
           }
         }
       }
@@ -472,6 +488,9 @@ function createUserState() {
     toggleCosmetic(id: CosmeticId) {
       toggleInSet(state.completed.cosmetics, id);
     },
+    toggleDate(id: DateId) {
+      toggleInSet(state.completed.dates, id);
+    },
     toggleMuseumItem(id: ItemId) {
       toggleInSet(state.completed.museum, id);
     },
@@ -544,6 +563,7 @@ function deserialize(json: string): null | UserState {
           Object.entries(s.completed.animals).map(([k, v]) => [k, brandedSet<AnimalVariantId>(v)]),
         ),
         cosmetics: brandedSet<CosmeticId>(s.completed.cosmetics),
+        dates: brandedSet<DateId>(s.completed.dates ?? []),
         marriedNpc: (s.completed.marriedNpc as NpcId | null | undefined) ?? null,
         mines: {
           floor: s.completed.mines.floor,
@@ -589,6 +609,7 @@ function serialize(state: UserState): string {
         Object.entries(state.completed.animals).map(([k, v]) => [k, [...v].sort()]),
       ),
       cosmetics: [...state.completed.cosmetics].sort(),
+      dates: [...state.completed.dates].sort(),
       marriedNpc: state.completed.marriedNpc,
       mines: {
         floor: state.completed.mines.floor,
