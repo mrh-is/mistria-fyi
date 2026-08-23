@@ -19,6 +19,7 @@ import type {
 // A payload encoded with the v1 codec (no perk bitfield, no married-NPC byte) for a state with
 // mines.floor = 5, npcLevels.adeline = 3, renown = 10, and all other fields empty. Used to verify
 // the v2 decoder remains backward compatible with payloads generated before this change.
+// cspell:disable-next-line
 const V1_FIXTURE = "AWNgGAVUBqwMXAYDZDUA";
 
 // Helper to create a minimal CompletedState for testing
