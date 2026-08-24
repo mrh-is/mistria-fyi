@@ -131,8 +131,8 @@ function processStoreEntry(
 
   if (obj.recipe_scroll || obj.crafting_scroll) return;
 
-  const animalCosmeticId = obj.animal_cosmetic as string | undefined;
-  const animalId = obj.animal as string | undefined;
+  const animalCosmeticId = obj.animal_cosmetic as CosmeticId | undefined;
+  const animalId = obj.animal as AnimalId | undefined;
   if (animalCosmeticId && animalId && animalCosmeticAccumulator) {
     let requirementAvailability: AvailabilityCondition | undefined;
     if (obj.requirements && typeof obj.requirements === "object") {
@@ -155,12 +155,12 @@ function processStoreEntry(
     }
     const availability = combineAvailability(baseAvailability, requirementAvailability);
     const source = buildStoreSource(storeId, availability);
-    animalCosmeticAccumulator.add(animalId as AnimalId, animalCosmeticId as CosmeticId, source);
+    animalCosmeticAccumulator.add(animalId, animalCosmeticId, source);
     return;
   }
 
-  const itemId = obj.item as string | undefined;
-  const cosmeticId = obj.cosmetic as string | undefined;
+  const itemId = obj.item as ItemId | undefined;
+  const cosmeticId = obj.cosmetic as CosmeticId | undefined;
   const targetId = itemId ?? cosmeticId;
   if (!targetId) return;
 

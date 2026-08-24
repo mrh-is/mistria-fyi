@@ -1,12 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { makeFiddle } from "../test-helpers.js";
 import { extractPetCosmetics, extractPetSkins } from "./pets.js";
-
-import type { ParsedGameData } from "../parse-fiddle.js";
-
-function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGameData {
-  return overrides as unknown as ParsedGameData;
-}
 
 describe("extractPetCosmetics", () => {
   it("extracts cosmetic sets with names and empty sources", () => {

@@ -1,15 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { forEachItem, forEachQuest, TRACKED_QUEST_GROUPS } from "./extractor-helpers.js";
+import { makeFiddle as makeFiddleBase } from "./test-helpers.js";
 
-import type { ParsedGameData } from "./parse-fiddle.js";
-
-function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGameData {
-  return {
-    items: {},
-    quests: {},
-    ...overrides,
-  } as unknown as ParsedGameData;
+function makeFiddle(overrides: Record<string, unknown> = {}) {
+  return makeFiddleBase({ items: {}, quests: {}, ...overrides });
 }
 
 describe("forEachItem", () => {

@@ -1,23 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
 import { extractMines } from "./mines.js";
-
-import type { ParsedGameData } from "../parse-fiddle.js";
 
 vi.mock("../parse-fiddle.js", () => ({
   sourceFileFor: () => "mock-source.toml",
 }));
 
-function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGameData {
-  return {
-    dungeons: {
-      dungeons: {
-        biomes: [],
-      },
-      misc: { max_floors: 100 },
-    },
+function makeFiddle(overrides: Record<string, unknown> = {}) {
+  return makeFiddleBase({
+    dungeons: { dungeons: { biomes: [] }, misc: { max_floors: 100 } },
     ...overrides,
-  } as unknown as ParsedGameData;
+  });
 }
 
 describe("extractMines", () => {
@@ -96,8 +90,8 @@ describe("extractMines", () => {
 
     const result = extractMines(fiddle);
     expect(result.spells).toEqual({
-      fireball: { name: "Fireball" },
-      ice_lance: { name: "Ice Lance" },
+      fireball: { name: "Fireball", sources: [] },
+      ice_lance: { name: "Ice Lance", sources: [] },
     });
   });
 

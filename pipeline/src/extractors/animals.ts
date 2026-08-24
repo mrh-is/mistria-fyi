@@ -1,5 +1,6 @@
-import type { Source } from "$lib/types/acquisition.js";
+import type { Source, SourceTuple } from "$lib/types/acquisition.js";
 import type {
+  Animal,
   AnimalCosmetic,
   AnimalId,
   AnimalVariant,
@@ -20,7 +21,7 @@ export function extractAnimals(fiddle: ParsedGameData): TrackerData["animals"] {
   const animals = ranching?.animals as Record<string, Record<string, unknown>> | undefined;
   if (!animals) return {};
 
-  const result = {} as Record<AnimalId, TrackerData["animals"][AnimalId]>;
+  const result = {} as Record<AnimalId, Animal>;
   let skippedVariants = 0;
 
   for (const [id, animal] of Object.entries(animals)) {
@@ -77,9 +78,10 @@ export function extractAnimals(fiddle: ParsedGameData): TrackerData["animals"] {
         if (cid === "default") continue;
         const rawName = (c.name as string | undefined) ?? cid;
         const stripped = rawName.replace(new RegExp(`\\b${speciesName}\\b\\s*`, "i"), "").trim();
+        const sources: Source[] = breedCosmetics.has(cid) ? [{ type: "breed" }] : [];
         cosmetics[cid as CosmeticId] = {
           name: stripped || rawName,
-          sources: breedCosmetics.has(cid) ? [{ type: "breed" as const }] : [],
+          sources: sources as SourceTuple,
         };
       }
     }

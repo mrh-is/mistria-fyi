@@ -1,4 +1,5 @@
 import { simplifyAvailabilityCondition } from "$lib/engine/availability-condition.js";
+import { isNonEmptyArray, type NonEmptyArray } from "$lib/utils.js";
 
 import type {
   AvailabilityCondition,
@@ -23,30 +24,24 @@ export function projectRequirementExpressionToAvailability(
   sourceLocation: SourceFieldLocation,
 ): AvailabilityCondition {
   if ("all" in expression) {
-    return simplifyAvailabilityCondition({
-      type: "all",
-      conditions: expression.all.map((child) =>
-        projectRequirementExpressionToAvailability(child, context, sourceLocation),
-      ),
-    });
+    const conditions = expression.all.map((child) =>
+      projectRequirementExpressionToAvailability(child, context, sourceLocation),
+    ) as NonEmptyArray<AvailabilityCondition>;
+    return simplifyAvailabilityCondition({ type: "all", conditions }) ?? { type: "always" };
   }
   if ("any" in expression) {
-    return simplifyAvailabilityCondition({
-      type: "any",
-      conditions: expression.any.map((child) =>
-        projectRequirementExpressionToAvailability(child, context, sourceLocation),
-      ),
-    });
+    const conditions = expression.any.map((child) =>
+      projectRequirementExpressionToAvailability(child, context, sourceLocation),
+    ) as NonEmptyArray<AvailabilityCondition>;
+    return simplifyAvailabilityCondition({ type: "any", conditions }) ?? { type: "always" };
   }
   if ("not" in expression) {
-    return simplifyAvailabilityCondition({
-      type: "not",
-      condition: projectRequirementExpressionToAvailability(
-        expression.not,
-        context,
-        sourceLocation,
-      ),
-    });
+    const condition = projectRequirementExpressionToAvailability(
+      expression.not,
+      context,
+      sourceLocation,
+    );
+    return simplifyAvailabilityCondition({ type: "not", condition }) ?? { type: "always" };
   }
 
   return projectPredicate(expression.predicate, expression.value, context, sourceLocation);
@@ -55,7 +50,7 @@ export function projectRequirementExpressionToAvailability(
 function closedStringValues<T extends string>(
   value: unknown,
   allowed: ReadonlySet<T>,
-): T[] | undefined {
+): NonEmptyArray<T> | undefined {
   const values = stringValues(value);
   if (
     !values ||
@@ -65,7 +60,7 @@ function closedStringValues<T extends string>(
   ) {
     return undefined;
   }
-  return values as T[];
+  return values as NonEmptyArray<T>;
 }
 
 function invalidJsonValue(fieldPath: string, sourcePath: string, received: string): Error {
@@ -110,9 +105,10 @@ function projectLevelRecord(
 
   const conditions = entries.map(([id, level]) =>
     type === "heart"
-      ? { type: "heartLevel" as const, level, npcId: id as NpcId }
-      : { type: "skillLevel" as const, level, skillId: id as SkillId },
+      ? { type: "heartLevel" as const, level: level as number, npcId: id as NpcId }
+      : { type: "skillLevel" as const, level: level as number, skillId: id as SkillId },
   );
+  if (!isNonEmptyArray(conditions)) return undefined;
   return simplifyAvailabilityCondition({ type: "all", conditions });
 }
 

@@ -1,15 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
 import { extractTreasureChestTiers } from "./treasure-chest-tiers.js";
 
-import type { ParsedGameData } from "../parse-fiddle.js";
-
-function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGameData {
-  return {
-    fishing: {},
-    items: {},
-    ...overrides,
-  } as unknown as ParsedGameData;
+function makeFiddle(overrides: Record<string, unknown> = {}) {
+  return makeFiddleBase({ fishing: {}, items: {}, ...overrides });
 }
 
 describe("extractTreasureChestTiers", () => {

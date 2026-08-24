@@ -21,14 +21,14 @@ export function extractDates(fiddle: ParsedGameData): Record<DateId, DateType> {
       throw new Error(`Date "${id}" is missing a name`);
     }
 
-    const unlockItemId = unlockItems.get(id);
+    const unlockItemId = unlockItems.get(id) as ItemId;
     if (!unlockItemId) {
       throw new Error(`Date "${id}" has no matching date_unlock item in fiddle.items`);
     }
 
     result[id as DateId] = {
       name,
-      sources: [{ type: "date_inspiration", itemId: unlockItemId as ItemId }],
+      sources: [{ type: "date_inspiration", itemId: unlockItemId }],
     };
   }
 

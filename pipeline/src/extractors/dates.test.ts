@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
 import { extractDates } from "./dates.js";
 
-import type { ParsedGameData } from "../parse-fiddle.js";
+import type { DateId } from "$lib/types/acquisition.js";
 
-function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGameData {
-  return {
+function makeFiddle(overrides: Record<string, unknown> = {}) {
+  return makeFiddleBase({
     items: {
       other: {
         dating: {
@@ -15,7 +16,7 @@ function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGam
       },
     },
     ...overrides,
-  } as ParsedGameData;
+  });
 }
 
 describe("extractDates", () => {
@@ -100,7 +101,7 @@ describe("extractDates", () => {
 
     const dates = extractDates(fiddle);
     expect(Object.keys(dates)).toEqual(["deep_woods_picnic", "inn_meal"]);
-    expect(dates["deep_woods_picnic" as keyof typeof dates]).toEqual({
+    expect(dates["deep_woods_picnic" as DateId]).toEqual({
       name: "Deep Woods Picnic",
       sources: [{ type: "date_inspiration", itemId: "picnic_set" }],
     });

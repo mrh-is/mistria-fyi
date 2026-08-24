@@ -2,11 +2,12 @@ import { forEachItem, forEachQuest } from "../extractor-helpers.js";
 import { buildRequirementDefinitions, parseRequirements } from "../requirements.js";
 import { resolveToVisibility } from "./visibility/requirement-resolver.js";
 
-import type { Source as AcquisitionSource } from "$lib/types/acquisition.js";
+import type { Source as AcquisitionSource, SourceTuple } from "$lib/types/acquisition.js";
 import type {
   FestivalId,
   ItemId,
   MinesBiomeId,
+  MuseumWingId,
   PerkId,
   QuestId,
   QuestType,
@@ -15,7 +16,6 @@ import type {
   Season,
   StoreId,
   TreasureChestTierId,
-  WingId,
 } from "$lib/types/tracker-data.js";
 import type { VisibilityCondition } from "$lib/types/visibility.js";
 
@@ -118,7 +118,7 @@ export function extractRecipes(
 
     recipes[recipeId as RecipeId] = {
       name,
-      sources: allSrc,
+      sources: allSrc as SourceTuple,
     };
   }
 
@@ -556,7 +556,7 @@ function collectMuseumScrollSources(
         if (!recipeId) continue;
 
         const sources = result.get(recipeId) ?? [];
-        sources.push({ type: "museum_donation", setCount, wingId: wingId as WingId });
+        sources.push({ type: "museum_donation", setCount, wingId: wingId as MuseumWingId });
         result.set(recipeId, sources);
       }
     }

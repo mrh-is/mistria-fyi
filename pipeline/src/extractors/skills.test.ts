@@ -1,16 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
 import { extractSkills } from "./skills.js";
 
-import type { ParsedGameData } from "../parse-fiddle.js";
-
-function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGameData {
-  return {
-    perks: {},
-    skills: {},
-    ui: {},
-    ...overrides,
-  } as unknown as ParsedGameData;
+function makeFiddle(overrides: Record<string, unknown> = {}) {
+  return makeFiddleBase({ perks: {}, skills: {}, ui: {}, ...overrides });
 }
 
 describe("extractSkills", () => {
@@ -19,7 +13,7 @@ describe("extractSkills", () => {
   });
 
   it("returns empty defaults when skills data is absent", () => {
-    const fiddle = {} as unknown as ParsedGameData;
+    const fiddle = makeFiddleBase({});
     const result = extractSkills(fiddle);
     expect(result.skills).toEqual({});
     expect(result.perkTierLevels).toEqual([0, 0, 0, 0, 0]);

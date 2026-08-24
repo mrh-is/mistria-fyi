@@ -1,14 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
 import { extractAnimals } from "./animals.js";
 
-import type { ParsedGameData } from "../parse-fiddle.js";
-
-function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGameData {
-  return {
-    ranching: { animals: {} },
-    ...overrides,
-  } as unknown as ParsedGameData;
+function makeFiddle(overrides: Record<string, unknown> = {}) {
+  return makeFiddleBase({ ranching: { animals: {} }, ...overrides });
 }
 
 describe("extractAnimals", () => {
@@ -17,7 +13,7 @@ describe("extractAnimals", () => {
   });
 
   it("returns empty record when ranching data is absent", () => {
-    const fiddle = {} as unknown as ParsedGameData;
+    const fiddle = makeFiddle();
     expect(extractAnimals(fiddle)).toEqual({});
   });
 

@@ -16,9 +16,13 @@ export function isNonEmptyArray<T>(arr: T[]): arr is NonEmptyArray<T> {
   return arr.length > 0;
 }
 
-export function recordEntries<K extends string, T>(record: Record<K, T>): [K, T][] {
-  return Object.entries(record) as [K, T][];
+export function recordEntries<R extends Record<string, unknown>>(
+  record: R,
+): { [K in keyof R]-?: [K, NonNullable<R[K]>] }[keyof R][];
+export function recordEntries(record: Record<string, unknown>) {
+  return Object.entries(record);
 }
+
 export function recordForEach<K extends string, T>(
   record: Record<K, T>,
   callbackfn: (value: [K, T], index: number, record: Record<K, T>) => void,

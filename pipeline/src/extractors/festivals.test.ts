@@ -1,12 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { makeFiddle } from "../test-helpers.js";
 import { extractFestivals } from "./festivals.js";
 
-import type { ParsedGameData } from "../parse-fiddle.js";
-
-function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGameData {
-  return overrides as ParsedGameData;
-}
+import type { FestivalId } from "$lib/types/tracker-data.js";
 
 describe("extractFestivals", () => {
   beforeEach(() => {
@@ -65,7 +62,7 @@ describe("extractFestivals", () => {
       },
     });
     const result = extractFestivals(fiddle);
-    expect(result.harvest_festival).toEqual({
+    expect(result["harvest_festival" as FestivalId]).toEqual({
       date: { day: 10, season: "fall" },
       name: "Harvest Festival",
     });

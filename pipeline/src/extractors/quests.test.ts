@@ -45,6 +45,7 @@ describe("extractQuests", () => {
           itemId: "wild_berries",
           name: "Meet Juniper",
           npc: "juniper",
+          sources: [],
         },
       },
     });

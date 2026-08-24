@@ -1,20 +1,19 @@
 import { describe, expect, it } from "vitest";
 
+import { makeFiddle as makeFiddleBase } from "../../test-helpers.js";
 import { CosmeticSourceAccumulator, ItemSourceAccumulator } from "../source-accumulator.js";
 import { collectExplorationSources } from "./exploration.js";
 
 import type { CosmeticId, ItemId } from "$lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../../parse-fiddle.js";
-
-function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGameData {
-  return {
+function makeFiddle(overrides: Record<string, unknown> = {}) {
+  return makeFiddleBase({
     artifacts: {},
     dungeons: {},
     fishing: {},
     museum_wings: {},
     ...overrides,
-  } as unknown as ParsedGameData;
+  });
 }
 
 describe("collectExplorationSources", () => {

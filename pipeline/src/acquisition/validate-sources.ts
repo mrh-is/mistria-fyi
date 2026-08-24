@@ -81,6 +81,7 @@ const SOURCE_FIELDS = {
   chicken_statue: ["cost"],
   crop: ["seedItemId"],
   date: ["dateId"],
+  date_inspiration: ["itemId"],
   default: [],
   dive: ["waterTypes"],
   engagement: [],

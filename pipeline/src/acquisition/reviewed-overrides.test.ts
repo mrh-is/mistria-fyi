@@ -1,5 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { assert, describe, expect, it } from "vitest";
 
+import { recordEntries } from "$lib/utils.js";
+
+import { makeFiddle } from "../test-helpers.js";
 import {
   applyReviewedOverrides,
   collectDefaultCosmeticSources,
@@ -9,14 +12,14 @@ import {
 } from "./reviewed-overrides.js";
 
 import type { Source } from "$lib/types/acquisition.js";
-import type { CosmeticId, ItemId } from "$lib/types/tracker-data.js";
+import type { CosmeticId, ItemId, StoreId } from "$lib/types/tracker-data.js";
 
 import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator.js";
 
 describe("reviewed overrides", () => {
   describe("override tables", () => {
     it("every item override has a target ID and at least one source", () => {
-      for (const [targetId, sources] of Object.entries(ITEM_OVERRIDES)) {
+      for (const [targetId, sources] of recordEntries(ITEM_OVERRIDES)) {
         expect(targetId).toBeTruthy();
         expect(sources.length).toBeGreaterThan(0);
         for (const source of sources) {
@@ -26,7 +29,7 @@ describe("reviewed overrides", () => {
     });
 
     it("every cosmetic override has a target ID and at least one source", () => {
-      for (const [targetId, sources] of Object.entries(COSMETIC_OVERRIDES)) {
+      for (const [targetId, sources] of recordEntries(COSMETIC_OVERRIDES)) {
         expect(targetId).toBeTruthy();
         expect(sources.length).toBeGreaterThan(0);
         for (const source of sources) {
@@ -37,7 +40,7 @@ describe("reviewed overrides", () => {
 
     it("void_cake has a quest dialogue_choice source from the_dragonsworn_tablet", () => {
       const sources = ITEM_OVERRIDES["void_cake" as ItemId];
-      expect(sources).toBeDefined();
+      assert(sources);
       expect(sources).toHaveLength(1);
       const source = sources[0] as Extract<Source, { type: "quest" }>;
       expect(source.type).toBe("quest");
@@ -62,11 +65,11 @@ describe("reviewed overrides", () => {
         "dingy_garbage_bag_v1",
         "dingy_mouse_hole_v1",
         "dingy_wallpaper_v1",
-      ];
+      ] as ItemId[];
 
       for (const id of dingyIds) {
-        const sources = ITEM_OVERRIDES[id as ItemId];
-        expect(sources, `missing override for ${id}`).toBeDefined();
+        const sources = ITEM_OVERRIDES[id];
+        assert(sources);
         expect(sources).toHaveLength(1);
         const source = sources[0] as Extract<Source, { type: "lost_and_found" }>;
         expect(source.type).toBe("lost_and_found");
@@ -78,17 +81,17 @@ describe("reviewed overrides", () => {
     });
 
     it("Dragon Cleric cosmetics are ritual_chamber sources with lost_to_history perk", () => {
-      const expectedIds: CosmeticId[] = [
-        "back_gear_dragon_cleric_cape" as CosmeticId,
-        "face_gear_dragon_cleric_earrings" as CosmeticId,
-        "head_dragon_cleric_diadem" as CosmeticId,
-        "robe_dragon_cleric" as CosmeticId,
-        "shoes_boots_dragon_cleric" as CosmeticId,
-      ];
+      const expectedIds = [
+        "back_gear_dragon_cleric_cape",
+        "face_gear_dragon_cleric_earrings",
+        "head_dragon_cleric_diadem",
+        "robe_dragon_cleric",
+        "shoes_boots_dragon_cleric",
+      ] as CosmeticId[];
 
       for (const id of expectedIds) {
         const sources = COSMETIC_OVERRIDES[id];
-        expect(sources, `missing override for ${id}`).toBeDefined();
+        assert(sources);
         expect(sources).toHaveLength(1);
         const source = sources[0] as Extract<Source, { type: "ritual_chamber" }>;
         expect(source.type).toBe("ritual_chamber");
@@ -162,12 +165,13 @@ describe("reviewed overrides", () => {
     });
 
     it("skips override sources already present in accumulator with identical identity", () => {
+      const void_cake = "void_cake" as ItemId;
       const itemAdds: [ItemId, Source][] = [];
       const itemAccumulator = {
         add: (id: ItemId, source: Source) => itemAdds.push([id, source]),
         get: (id: ItemId) => {
-          if (id === ("void_cake" as ItemId)) {
-            return ITEM_OVERRIDES["void_cake" as ItemId];
+          if (id === void_cake) {
+            return ITEM_OVERRIDES[void_cake];
           }
           return [];
         },
@@ -188,12 +192,13 @@ describe("reviewed overrides", () => {
     });
 
     it("coexists when native and override paths are distinct", () => {
+      const void_cake = "void_cake" as ItemId;
       const itemAdds: [ItemId, Source][] = [];
       const itemAccumulator = {
         add: (id: ItemId, source: Source) => itemAdds.push([id, source]),
-        get: (id: ItemId) => {
-          if (id === ("void_cake" as ItemId)) {
-            return [{ type: "store", storeId: "some_store" }] as Source[];
+        get: (id: ItemId): Source[] => {
+          if (id === void_cake) {
+            return [{ type: "store", storeId: "some_store" as StoreId }];
           }
           return [];
         },
@@ -211,7 +216,7 @@ describe("reviewed overrides", () => {
       const obsoleteDiags = diagnostics.filter((d) => d.kind === "obsolete-override");
       expect(obsoleteDiags).toHaveLength(0);
 
-      const voidCakeAdds = itemAdds.filter(([id]) => id === ("void_cake" as ItemId));
+      const voidCakeAdds = itemAdds.filter(([id]) => id === void_cake);
       expect(voidCakeAdds).toHaveLength(1);
     });
   });
@@ -226,7 +231,7 @@ describe("reviewed overrides", () => {
       const cosmetics = {
         default_hat: { name: "Default Hat", slot: "head" as const, sources: [{ type: "default" }] },
         store_hat: { name: "Store Hat", slot: "head" as const, sources: [] },
-      } as Record<CosmeticId, { name: string; slot: "head"; sources: Source[] }>;
+      };
 
       collectDefaultCosmeticSources(cosmetics, accumulator);
 
@@ -243,7 +248,7 @@ describe("reviewed overrides", () => {
 
       const cosmetics = {
         store_hat: { name: "Store Hat", slot: "head" as const, sources: [] },
-      } as Record<CosmeticId, { name: string; slot: "head"; sources: Source[] }>;
+      };
 
       collectDefaultCosmeticSources(cosmetics, accumulator);
       expect(adds).toHaveLength(0);
@@ -257,15 +262,15 @@ describe("reviewed overrides", () => {
         add: (id: ItemId, source: Source) => adds.push([id, source]),
       } as unknown as ItemSourceAccumulator;
 
-      const fiddle = {
+      const fiddle = makeFiddle({
         misc: {
           ari_stats: {
             starting_inventory: ["sword_worn"],
           },
         },
-      };
+      });
 
-      const items = { sword_worn: { name: "Worn Sword" } } as Record<string, unknown>;
+      const items = { sword_worn: { name: "Worn Sword" } };
       collectDefaultItemSources(fiddle, accumulator, items);
 
       expect(adds).toHaveLength(1);
@@ -279,7 +284,7 @@ describe("reviewed overrides", () => {
         add: (id: ItemId, source: Source) => adds.push([id, source]),
       } as unknown as ItemSourceAccumulator;
 
-      const fiddle = {
+      const fiddle = makeFiddle({
         misc: {
           ari_stats: {
             starting_armor: {
@@ -289,13 +294,13 @@ describe("reviewed overrides", () => {
             },
           },
         },
-      };
+      });
 
       const items = {
         cloth_chestpiece: { name: "Cloth Chestpiece" },
         cloth_helmet: { name: "Cloth Helmet" },
         cloth_shoes: { name: "Cloth Shoes" },
-      } as Record<string, unknown>;
+      };
 
       collectDefaultItemSources(fiddle, accumulator, items);
 
@@ -310,13 +315,13 @@ describe("reviewed overrides", () => {
         add: (id: ItemId, source: Source) => adds.push([id, source]),
       } as unknown as ItemSourceAccumulator;
 
-      const fiddle = {
+      const fiddle = makeFiddle({
         misc: {
           ari_stats: {
             starting_inventory: ["nonexistent_item"],
           },
         },
-      };
+      });
 
       collectDefaultItemSources(fiddle, accumulator, {});
       expect(adds).toHaveLength(0);

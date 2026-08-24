@@ -1,19 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
 import { extractMuseum } from "./museum.js";
-
-import type { ParsedGameData } from "../parse-fiddle.js";
 
 vi.mock("../parse-fiddle.js", () => ({
   sourceFileFor: () => "mock-source.toml",
 }));
 
-function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGameData {
-  return {
-    museum_wings: {},
-    ui: {},
-    ...overrides,
-  } as unknown as ParsedGameData;
+function makeFiddle(overrides: Record<string, unknown> = {}) {
+  return makeFiddleBase({ museum_wings: {}, ui: {}, ...overrides });
 }
 
 describe("extractMuseum", () => {
@@ -22,7 +17,7 @@ describe("extractMuseum", () => {
   });
 
   it("returns empty record when museum_wings is absent", () => {
-    const fiddle = { ui: {} } as unknown as ParsedGameData;
+    const fiddle = makeFiddleBase({ ui: {} });
     expect(extractMuseum(fiddle)).toEqual({});
   });
 

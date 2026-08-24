@@ -1,17 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
 import { deriveProductionMethod, deriveRecipeProductSources } from "./recipe-products.js";
 import { ItemSourceAccumulator } from "./source-accumulator.js";
 
 import type { ItemId, RecipeId } from "$lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../parse-fiddle.js";
-
-function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGameData {
-  return {
-    items: {},
-    ...overrides,
-  } as unknown as ParsedGameData;
+function makeFiddle(overrides: Record<string, unknown> = {}) {
+  return makeFiddleBase({ items: {}, ...overrides });
 }
 
 function makeRecipeMemberItems(entries: Record<string, string[]>): Map<RecipeId, ItemId[]> {

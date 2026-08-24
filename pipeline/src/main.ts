@@ -6,6 +6,9 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { recordEntries } from "$lib/utils.js";
+import { isNonEmptyArray } from "$lib/utils.js";
+
 import { collectExplorationSources } from "./acquisition/collectors/exploration.js";
 import { collectNaturalSources } from "./acquisition/collectors/natural.js";
 import { collectRewardSources } from "./acquisition/collectors/rewards.js";
@@ -24,7 +27,10 @@ import {
   ItemSourceAccumulator,
   PetCosmeticSourceAccumulator,
 } from "./acquisition/source-accumulator.js";
-import { validateAcquisitionSources } from "./acquisition/validate-sources.js";
+import {
+  type AcquisitionSourceAssembly,
+  validateAcquisitionSources,
+} from "./acquisition/validate-sources.js";
 import { evaluateExpressions } from "./evaluate.js";
 import { forEachItem } from "./extractor-helpers.js";
 import { extractAlmanac } from "./extractors/almanac.js";
@@ -55,7 +61,7 @@ import { parseFiddle } from "./parse-fiddle.js";
 import { createRequirementContext } from "./requirements.js";
 
 import type { Source as AcquisitionSource } from "$lib/types/acquisition.js";
-import type { CosmeticId, ItemId, QuestId, TrackerData } from "$lib/types/tracker-data.js";
+import type { CosmeticId, Item, ItemId, TrackerData } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "./parse-fiddle.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -385,15 +391,15 @@ function main(): void {
   // Attach inline acquisition sources to items
   for (const [itemId, sources] of itemSources.entries()) {
     const item = items[itemId];
-    if (item) {
-      (item as TrackerData["items"][ItemId]).sources = sources;
+    if (item && isNonEmptyArray(sources)) {
+      (item as Item).sources = sources;
     }
   }
 
   // Attach inline acquisition sources to cosmetics
   for (const [cosmeticId, sources] of cosmeticSources.entries()) {
     const cosmetic = cosmetics[cosmeticId];
-    if (cosmetic) {
+    if (cosmetic && isNonEmptyArray(sources)) {
       cosmetic.sources = sources;
     }
   }
@@ -404,13 +410,16 @@ function main(): void {
     if (!animal) continue;
     const cosmetic = animal.cosmetics[cosmeticId];
     if (!cosmetic) continue;
-    cosmetic.sources = [...cosmetic.sources, ...sources];
+    const merged = [...cosmetic.sources, ...sources];
+    if (isNonEmptyArray(merged)) {
+      cosmetic.sources = merged;
+    }
   }
 
   // Attach sources to pet cosmetic sets
   for (const [setId, sources] of petCosmeticSources.entries()) {
     const set = petCosmetics[setId];
-    if (set) {
+    if (set && isNonEmptyArray(sources)) {
       set.sources = sources;
     }
   }
@@ -427,16 +436,14 @@ function main(): void {
     const itemId = petSkinItemMap.get(skinId);
     if (itemId) {
       const itemSrc = itemSources.get(itemId as ItemId);
-      if (itemSrc.length > 0) {
+      if (isNonEmptyArray(itemSrc)) {
         skin.sources = itemSrc;
       }
     }
   }
 
   // Log inline source attachment stats
-  const itemsWithSources = Object.values(items).filter(
-    (i) => (i as TrackerData["items"][ItemId]).sources?.length,
-  ).length;
+  const itemsWithSources = Object.values(items).filter((i) => (i as Item).sources?.length).length;
   const cosmeticsWithSources = Object.values(cosmetics).filter((c) => c.sources?.length).length;
   const recipesWithSources = Object.values(recipes).filter((r) => r.sources?.length).length;
   const animalCosmeticsWithSources = Object.values(animals).reduce(
@@ -467,8 +474,8 @@ function main(): void {
   const heartLevelChangesData = extractHeartLevelChanges(fiddle, cutsceneQuestMap);
   const categoryVisibilityData = extractCategoryVisibility(npcs);
 
-  for (const [questId, changes] of Object.entries(heartLevelChangesData)) {
-    const quest = quests.story[questId as QuestId];
+  for (const [questId, changes] of recordEntries(heartLevelChangesData)) {
+    const quest = quests.story[questId];
     if (quest) {
       quest.heartLevelChanges = changes;
     }
@@ -484,7 +491,7 @@ function main(): void {
     dates,
     festivals,
     generatedAt: new Date().toISOString(),
-    items,
+    items: items as unknown as Record<ItemId, Item>,
     mines,
     museum,
     npcs,
@@ -512,7 +519,10 @@ function main(): void {
     itemSources,
     cosmeticSources,
   );
-  validateAcquisitionSources(trackerData, acquisitionReferences);
+  validateAcquisitionSources(
+    trackerData as unknown as AcquisitionSourceAssembly,
+    acquisitionReferences,
+  );
   console.log("  Acquisition source validation passed");
 
   stampNpcVisibility(trackerData);

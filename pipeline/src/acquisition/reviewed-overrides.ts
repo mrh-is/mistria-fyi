@@ -1,3 +1,5 @@
+import { recordEntries } from "$lib/utils.js";
+
 import { canonicalSourceJson } from "./source-accumulator.js";
 
 import type { ActivityId, MonsterId, Source, StationId } from "$lib/types/acquisition.js";
@@ -446,7 +448,7 @@ export function applyReviewedOverrides(
 ): OverrideDiagnostic[] {
   const diagnostics: OverrideDiagnostic[] = [];
 
-  for (const [targetId, sources] of Object.entries(ITEM_OVERRIDES) as [ItemId, Source[]][]) {
+  for (const [targetId, sources] of recordEntries(ITEM_OVERRIDES)) {
     if (!(targetId in items)) {
       diagnostics.push({
         kind: "missing-target",
@@ -476,10 +478,7 @@ export function applyReviewedOverrides(
     }
   }
 
-  for (const [targetId, sources] of Object.entries(COSMETIC_OVERRIDES) as [
-    CosmeticId,
-    Source[],
-  ][]) {
+  for (const [targetId, sources] of recordEntries(COSMETIC_OVERRIDES)) {
     if (!(targetId in cosmetics)) {
       diagnostics.push({
         kind: "missing-target",
@@ -518,9 +517,9 @@ export function collectDefaultCosmeticSources(
   cosmetics: TrackerData["cosmetics"],
   accumulator: CosmeticSourceAccumulator,
 ): void {
-  for (const [id, cosmetic] of Object.entries(cosmetics)) {
+  for (const [id, cosmetic] of recordEntries(cosmetics)) {
     if (cosmetic.sources?.some((src) => src.type === "default")) {
-      accumulator.add(id as CosmeticId, DEFAULT_SOURCE, {
+      accumulator.add(id, DEFAULT_SOURCE, {
         fieldPath: `cosmetics.${id}.default_unlocked`,
         sourcePath: "player_assets.toml",
       });

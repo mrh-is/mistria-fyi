@@ -39,10 +39,8 @@ describe("source accumulators", () => {
     const first: Source = {
       type: "store",
       availability: { type: "season", seasons: ["spring"] },
-      cost: { amount: 10, currency: "tesserae" },
       storeId: "general" as never,
       visibility: { type: "questCompleted", questId: "first" as never },
-      weight: 2,
     };
 
     sources.add(targetId, first);
@@ -50,15 +48,13 @@ describe("source accumulators", () => {
       ...first,
       visibility: { type: "questCompleted", questId: "second" as never },
     });
-    sources.add(targetId, { ...first, cost: { amount: 11, currency: "tesserae" } });
     sources.add(targetId, {
       ...first,
       availability: { type: "season", seasons: ["summer"] },
     });
-    sources.add(targetId, { ...first, weight: 3 });
 
     const accumulated = sources.get(targetId);
-    expect(accumulated).toHaveLength(4);
+    expect(accumulated).toHaveLength(2);
     expect(accumulated).toContain(first);
     expect(accumulated).not.toContainEqual({
       ...first,

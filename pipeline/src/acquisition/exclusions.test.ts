@@ -55,7 +55,7 @@ describe("cosmetic exclusions", () => {
       const registry = {
         ["baby_back_astrid_darker" as CosmeticId]: { name: "" },
         ["head_mimic_hat" as CosmeticId]: { name: "Mimic Hat" },
-      } as Record<CosmeticId, { name: string }>;
+      };
 
       const result = applyExclusions(registry);
       expect(result).not.toHaveProperty("baby_back_astrid_darker");
@@ -65,7 +65,7 @@ describe("cosmetic exclusions", () => {
     it("does not mutate the input", () => {
       const registry = {
         ["baby_back_astrid_darker" as CosmeticId]: { name: "" },
-      } as Record<CosmeticId, { name: string }>;
+      };
 
       applyExclusions(registry);
       expect(registry).toHaveProperty("baby_back_astrid_darker");

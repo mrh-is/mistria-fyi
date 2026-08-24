@@ -84,10 +84,10 @@ export class AnimalCosmeticSourceAccumulator {
     sources: Source[];
   }[] {
     return this.#inner.entries().map(([key, sources]) => {
-      const [animalId, cosmeticId] = key.split(":") as [string, string];
+      const [animalId, cosmeticId] = key.split(":") as [AnimalId, CosmeticId];
       return {
-        animalId: animalId as AnimalId,
-        cosmeticId: cosmeticId as CosmeticId,
+        animalId,
+        cosmeticId,
         sources,
       };
     });

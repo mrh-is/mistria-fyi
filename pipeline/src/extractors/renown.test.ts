@@ -1,21 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
 import { extractTownRanks } from "./renown.js";
-
-import type { ParsedGameData } from "../parse-fiddle.js";
 
 vi.mock("../parse-fiddle.js", () => ({
   sourceFileFor: () => "mock-source.toml",
 }));
 
-function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGameData {
-  return {
+function makeFiddle(overrides: Record<string, unknown> = {}) {
+  return makeFiddleBase({
     renown: {
       levels_per_rank: 10,
       ranks: [],
     },
     ...overrides,
-  } as unknown as ParsedGameData;
+  });
 }
 
 describe("extractTownRanks", () => {
@@ -24,7 +23,7 @@ describe("extractTownRanks", () => {
   });
 
   it("returns empty array when renown data is absent", () => {
-    const fiddle = {} as unknown as ParsedGameData;
+    const fiddle = makeFiddleBase({});
     expect(extractTownRanks(fiddle)).toEqual([]);
   });
 

@@ -1,4 +1,5 @@
-import type { CosmeticId, CosmeticSlot, TrackerData } from "$lib/types/tracker-data.js";
+import type { SourceTuple } from "$lib/types/acquisition.js";
+import type { Cosmetic, CosmeticId, CosmeticSlot, TrackerData } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
 
@@ -35,7 +36,7 @@ export function extractCosmetics(fiddle: ParsedGameData): TrackerData["cosmetics
   if (!assets) return {};
 
   const subCategoryMap = buildSubCategoryMap(fiddle);
-  const result = {} as Record<CosmeticId, TrackerData["cosmetics"][CosmeticId]>;
+  const result = {} as Record<CosmeticId, Cosmetic>;
   const unknownSlots = new Map<string, number>();
 
   for (const [id, asset] of Object.entries(assets)) {
@@ -44,11 +45,11 @@ export function extractCosmetics(fiddle: ParsedGameData): TrackerData["cosmetics
     const uiSlot = asset.ui_slot as string | undefined;
     const slot = normalizeSlot(uiSlot ?? id, id);
 
-    const cleaned = uiSlot?.replace(/_gear$/, "");
+    const cleaned = uiSlot?.replace(/_gear$/, "") as CosmeticSlot;
     if (
       uiSlot &&
       cleaned &&
-      !VALID_SLOTS.has(cleaned as CosmeticSlot) &&
+      !VALID_SLOTS.has(cleaned) &&
       !(cleaned in SLOT_ALIASES) &&
       !KNOWN_COMPOSITE_SLOTS.has(cleaned)
     ) {
@@ -64,7 +65,9 @@ export function extractCosmetics(fiddle: ParsedGameData): TrackerData["cosmetics
       name: (asset.name as string | undefined) ?? id,
       slot,
       ...(subCategory && { subCategory }),
-      sources: (asset.default_unlocked as boolean | undefined) ? [{ type: "default" }] : [],
+      sources: ((asset.default_unlocked as boolean | undefined)
+        ? [{ type: "default" }]
+        : []) as SourceTuple,
     };
   }
 
@@ -106,8 +109,8 @@ const SLOT_ALIASES: Record<string, CosmeticSlot> = {
 
 function normalizeSlot(raw: string, id: string): CosmeticSlot {
   // Normalize direct slots first, then aliases, ID prefixes, broad raw prefixes, and finally top.
-  const cleaned = raw.replace(/_gear$/, "");
-  if (VALID_SLOTS.has(cleaned as CosmeticSlot)) return cleaned as CosmeticSlot;
+  const cleaned = raw.replace(/_gear$/, "") as CosmeticSlot;
+  if (VALID_SLOTS.has(cleaned)) return cleaned;
 
   if (cleaned in SLOT_ALIASES) return SLOT_ALIASES[cleaned];
 

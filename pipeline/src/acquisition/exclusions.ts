@@ -1,3 +1,5 @@
+import { recordEntries } from "$lib/utils";
+
 import type { CosmeticId } from "$lib/types/tracker-data.js";
 
 export interface CosmeticExclusion {
@@ -9,7 +11,7 @@ export interface CosmeticExclusion {
 // Baby back cosmetics: internal presentation assets for the carried-baby visual. They have no
 // player unlock path, no default_unlocked flag, no store listing, no quest reward, and no
 // equipment reference. Their names are empty strings in the native data.
-const BABY_BACK_IDS: CosmeticId[] = [
+const BABY_BACK_IDS = [
   "baby_back_astrid_darker",
   "baby_back_astrid_lighter",
   "baby_back_brid_darker",
@@ -39,7 +41,7 @@ const BABY_BACK_IDS: CosmeticId[] = [
 // Seridia's Dragonsworn armor variants: NPC outfit assets listed in misc.seridia_armor. They
 // appear in player_assets but have no player unlock path, no default_unlocked, no store listing,
 // and no reward reference. The list is an NPC costume configuration, not a player acquisition path.
-const SERIDIA_ARMOR_IDS: CosmeticId[] = [
+const SERIDIA_ARMOR_IDS = [
   "back_gear_dragonsworn_cloak_seridia",
   "head_dragonsworn_helmet_seridia",
   "pants_dragonsworn_armor_seridia",
@@ -53,7 +55,7 @@ const SERIDIA_ARMOR_IDS: CosmeticId[] = [
 // back_gear_march_mistrian_shield: The wiki describes March's proposal furniture item
 // (marchs_mistrian_shield) but establishes no unlock path for this separate cosmetic. No store,
 // quest, museum, or reward reference found in native data.
-const UNRESOLVED_EXCLUSION_IDS: CosmeticId[] = [
+const UNRESOLVED_EXCLUSION_IDS = [
   "back_gear_march_mistrian_shield",
   "head_flower_hat",
 ] as CosmeticId[];
@@ -89,7 +91,7 @@ export interface ExclusionReferenceDiagnostic {
 
 export function applyExclusions<T>(cosmetics: Record<CosmeticId, T>): Record<CosmeticId, T> {
   const result = {} as Record<CosmeticId, T>;
-  for (const [id, value] of Object.entries(cosmetics) as [CosmeticId, T][]) {
+  for (const [id, value] of recordEntries(cosmetics)) {
     if (!EXCLUDED_COSMETIC_SET.has(id)) {
       result[id] = value;
     }

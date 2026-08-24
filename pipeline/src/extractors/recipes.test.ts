@@ -3,15 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { evaluateExpressions } from "../evaluate.js";
 import { parseFiddle } from "../parse-fiddle.js";
+import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
 import { extractRecipes } from "./recipes.js";
 
 import type { RecipeId } from "$lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../parse-fiddle.js";
 import type { CutsceneQuestMap } from "./visibility/cutscene-quest-map.js";
 
-function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGameData {
-  return {
+function makeFiddle(overrides: Record<string, unknown> = {}) {
+  return makeFiddleBase({
     chicken_statue: {},
     dungeons: {},
     festivals: {},
@@ -28,7 +28,7 @@ function makeFiddle(overrides: Partial<Record<string, unknown>> = {}): ParsedGam
     stores: {},
     wishing_well: {},
     ...overrides,
-  } as unknown as ParsedGameData;
+  });
 }
 
 describe("extractRecipes", () => {

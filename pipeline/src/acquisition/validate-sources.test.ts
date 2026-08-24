@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { assert, describe, expect, it } from "vitest";
 
 import { AcquisitionReferenceIndex } from "./reference-index.js";
 import { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator.js";
@@ -288,8 +288,8 @@ describe("validateAcquisitionSources", () => {
     }
 
     expect(inheritedCalls).toEqual({ every: 0, forEach: 0 });
-    expect(validationError).toBeInstanceOf(AcquisitionSourceValidationError);
-    expect((validationError as AcquisitionSourceValidationError).diagnostics).toEqual([
+    assert.instanceOf(validationError, AcquisitionSourceValidationError);
+    expect(validationError.diagnostics).toEqual([
       {
         fieldPath: "items.custom_conditions.sources[0].availability.conditions",
         kind: "malformed-payload",
@@ -449,8 +449,8 @@ describe("validateAcquisitionSources", () => {
       validateAcquisitionSources(trackerData, references);
       expect.unreachable("validation should fail");
     } catch (error) {
-      expect(error).toBeInstanceOf(AcquisitionSourceValidationError);
-      expect((error as AcquisitionSourceValidationError).diagnostics).toEqual([
+      assert.instanceOf(error, AcquisitionSourceValidationError);
+      expect(error.diagnostics).toEqual([
         {
           fieldPath: "recipes.orphan_recipe.sources",
           kind: "missing-source",
@@ -513,8 +513,8 @@ describe("validateAcquisitionSources", () => {
       validateAcquisitionSources(trackerData, references);
       expect.unreachable("validation should fail");
     } catch (error) {
-      expect(error).toBeInstanceOf(AcquisitionSourceValidationError);
-      expect((error as AcquisitionSourceValidationError).diagnostics).toEqual([
+      assert.instanceOf(error, AcquisitionSourceValidationError);
+      expect(error.diagnostics).toEqual([
         {
           fieldPath: "cosmetics.empty_cosmetic.sources",
           kind: "missing-source",
@@ -648,7 +648,7 @@ function captureDiagnostics(
     validateAcquisitionSources(trackerData, references);
     expect.unreachable("validation should fail");
   } catch (error) {
-    expect(error).toBeInstanceOf(AcquisitionSourceValidationError);
-    return (error as AcquisitionSourceValidationError).diagnostics;
+    assert.instanceOf(error, AcquisitionSourceValidationError);
+    return error.diagnostics;
   }
 }

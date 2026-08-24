@@ -1,4 +1,5 @@
 import { simplifyAvailabilityCondition } from "$lib/engine/availability-condition.js";
+import { isNonEmptyArray, type NonEmptyArray } from "$lib/utils.js";
 
 import { forEachItem } from "../../extractor-helpers.js";
 
@@ -64,7 +65,10 @@ function buildNaturalAvailability(
 
   if (conditions.length === 0) return undefined;
   if (conditions.length === 1) return simplifyAvailabilityCondition(conditions[0]);
-  return simplifyAvailabilityCondition({ type: "all", conditions });
+  return simplifyAvailabilityCondition({
+    type: "all",
+    conditions: conditions as NonEmptyArray<AvailabilityCondition>,
+  });
 }
 
 const MINE_SUBCAT_TO_BIOME: Record<string, MinesBiomeId> = {
@@ -85,11 +89,11 @@ function collectAnimalProductSources(
       : [];
 
     if (tags.includes("animal_product")) {
-      const animalId = item.animal_product as string | undefined;
+      const animalId = item.animal_product as AnimalId | undefined;
       if (animalId) {
         accumulator.add(itemId as ItemId, {
           type: "animal_product",
-          animalId: animalId as AnimalId,
+          animalId,
         });
       }
     }
@@ -109,7 +113,7 @@ function collectBugSources(fiddle: ParsedGameData, accumulator: ItemSourceAccumu
 
     accumulator.add(bugId as ItemId, {
       ...(availability ? { availability } : {}),
-      ...(locationIds ? { locationIds } : {}),
+      ...(locationIds && isNonEmptyArray(locationIds) ? { locationIds } : {}),
       type: "bug_catch",
     });
   }
@@ -121,7 +125,7 @@ function collectCropSources(fiddle: ParsedGameData, accumulator: ItemSourceAccum
   if (!items?.other?.crops_and_forage) return;
 
   const seedToCrop = new Map<string, string>();
-  const seedSeasons = new Map<string, Season[]>();
+  const seedSeasons = new Map<string, NonEmptyArray<Season>>();
 
   for (const [itemId, item] of Object.entries(items.other.crops_and_forage)) {
     if (itemId === "default" || typeof item !== "object" || item === null) continue;
@@ -296,7 +300,7 @@ function collectFishSources(fiddle: ParsedGameData, accumulator: ItemSourceAccum
       }
       accumulator.add(targetId, {
         type: "bait_fish",
-        baitItemIds: baitItemIds as [ItemId, ...ItemId[]],
+        baitItemIds: baitItemIds as NonEmptyArray<ItemId>,
       });
       continue;
     }
@@ -314,7 +318,7 @@ function collectFishSources(fiddle: ParsedGameData, accumulator: ItemSourceAccum
       }
       accumulator.add(targetId, {
         type: "fish_trap",
-        baitItemIds: baitItemIds as [ItemId, ...ItemId[]],
+        baitItemIds: baitItemIds as NonEmptyArray<ItemId>,
       });
       continue;
     }
@@ -448,11 +452,14 @@ function collectMineForageableSources(
     if (!tags.includes("mines_forageable")) return;
 
     const biomeId = topCat === "mines" ? MINE_SUBCAT_TO_BIOME[subCat] : undefined;
+    if (!biomeId) {
+      console.warn(
+        `  Warning: mines_forageable "${itemId}" has no biome mapping (${topCat}/${subCat})`,
+      );
+      return;
+    }
 
-    accumulator.add(itemId as ItemId, {
-      ...(biomeId ? { biomeId } : {}),
-      type: "mine",
-    });
+    accumulator.add(itemId as ItemId, { type: "mine", biomeId });
   });
 }
 
@@ -504,23 +511,23 @@ function collectMonsterDropSources(
       for (const drop of drops) {
         if (typeof drop !== "object" || drop === null) continue;
         const dropObj = drop as Record<string, unknown>;
-        const itemId = dropObj.item as string | undefined;
+        const itemId = dropObj.item as ItemId | undefined;
         if (itemId) {
-          accumulator.add(itemId as ItemId, {
+          accumulator.add(itemId, {
             type: "monster",
             monsterId: monsterId as MonsterId,
           });
         }
-        const cosmeticId = dropObj.cosmetic as string | undefined;
+        const cosmeticId = dropObj.cosmetic as CosmeticId | undefined;
         if (cosmeticId && cosmeticAccumulator) {
-          cosmeticAccumulator.add(cosmeticId as CosmeticId, {
+          cosmeticAccumulator.add(cosmeticId, {
             type: "monster",
             monsterId: monsterId as MonsterId,
           });
         }
-        const petCosmeticId = dropObj.pet_cosmetic as string | undefined;
+        const petCosmeticId = dropObj.pet_cosmetic as PetCosmeticSetId | undefined;
         if (petCosmeticId && petCosmeticAccumulator) {
-          petCosmeticAccumulator.add(petCosmeticId as PetCosmeticSetId, {
+          petCosmeticAccumulator.add(petCosmeticId, {
             type: "monster",
             monsterId: monsterId as MonsterId,
           });
@@ -540,9 +547,9 @@ function collectPumpkinPatchSources(
 
   for (const entry of options) {
     if (typeof entry !== "object" || entry === null) continue;
-    const itemId = (entry as Record<string, unknown>).item as string | undefined;
+    const itemId = (entry as Record<string, unknown>).item as ItemId | undefined;
     if (itemId) {
-      accumulator.add(itemId as ItemId, {
+      accumulator.add(itemId, {
         type: "festival_activity",
         activityId: "pumpkin_patch" as ActivityId,
         availability: { type: "season" as const, seasons: ["fall"] },
@@ -565,9 +572,9 @@ function collectTreeSources(fiddle: ParsedGameData, accumulator: ItemSourceAccum
       : [];
 
     if (tags.includes("sapling")) {
-      const treeProduct = item.tree_product as string | undefined;
+      const treeProduct = item.tree_product as ItemId | undefined;
       if (treeProduct) {
-        accumulator.add(treeProduct as ItemId, {
+        accumulator.add(treeProduct, {
           type: "tree",
           saplingItemId: itemId as ItemId,
         });
@@ -587,13 +594,13 @@ function parseHours(hours: unknown): [number, number] | undefined {
   return undefined;
 }
 
-function parseSeasonsArray(seasons: unknown): Season[] | undefined {
+function parseSeasonsArray(seasons: unknown): NonEmptyArray<Season> | undefined {
   if (seasons === false || seasons === undefined || seasons === null) return undefined;
   if (Array.isArray(seasons)) {
     const arr = seasons.filter((v): v is string => typeof v === "string") as Season[];
     if (arr.length === 0) return undefined;
     if (arr.length === 4) return undefined;
-    return arr;
+    return arr as NonEmptyArray<Season>;
   }
   return undefined;
 }
@@ -607,7 +614,7 @@ function parseStringArray(data: unknown): string[] | undefined {
   return undefined;
 }
 
-function parseWaterTypes(waterType: unknown): undefined | WaterType[] {
+function parseWaterTypes(waterType: unknown): NonEmptyArray<WaterType> | undefined {
   const arr = Array.isArray(waterType)
     ? waterType.filter((v): v is string => typeof v === "string")
     : typeof waterType === "string"
@@ -615,7 +622,7 @@ function parseWaterTypes(waterType: unknown): undefined | WaterType[] {
       : [];
   if (arr.length === 0) return undefined;
   if (arr.length === 3) return undefined;
-  return arr as WaterType[];
+  return arr as NonEmptyArray<WaterType>;
 }
 
 function parseWeathersArray(weathers: unknown): undefined | Weather[] {

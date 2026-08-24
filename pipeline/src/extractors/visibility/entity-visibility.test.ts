@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { assert, describe, expect, it } from "vitest";
 
 import {
   assignEntityVisibility,
@@ -10,6 +10,7 @@ import {
   stampStoreVisibility,
 } from "./entity-visibility.js";
 
+import type { Source } from "$lib/types/acquisition.js";
 import type {
   AnimalId,
   CosmeticId,
@@ -26,6 +27,12 @@ import type {
 
 import type { CutsceneQuestMap } from "./cutscene-quest-map.js";
 import type { QuestChainData } from "./quest-chains.js";
+
+function assertSourceWithDetails(
+  source: Source,
+): asserts source is Exclude<Source, { type: "default" }> {
+  assert(source.type !== "default", "expected a source with details, got { type: 'default' }");
+}
 
 const emptyCutsceneMap: CutsceneQuestMap = {};
 
@@ -75,6 +82,7 @@ function makeTrackerData(overrides: Record<string, unknown>): TrackerData {
     museum: {},
     npcs: {},
     perkTierLevels: [1, 10, 20, 45, 60],
+    pets: { cosmetics: {}, skins: {} },
     questOrder: {},
     quests: { ...DEFAULT_QUESTS, ...(questOverrides as object) },
     recipes: {},
@@ -447,7 +455,10 @@ describe("assignEntityVisibility — recipes", () => {
     );
     const recipe = trackerData.recipes["stew" as RecipeId];
     expect(recipe.visibility).toEqual({ type: "perkUnlocked", perkId: "taste_maker" });
-    expect(recipe.sources?.[0]?.visibility).toEqual({
+    const source = recipe.sources?.[0];
+    assert(source);
+    assertSourceWithDetails(source);
+    expect(source.visibility).toEqual({
       type: "skillLevel",
       level: 20,
       skillId: "cooking",
@@ -480,7 +491,10 @@ describe("assignEntityVisibility — recipes", () => {
       type: "questCompleted",
       questId: "upgrade_the_carpenters_shop",
     });
-    expect(recipe.sources?.[0]?.visibility).toEqual({
+    const source = recipe.sources?.[0];
+    assert(source);
+    assertSourceWithDetails(source);
+    expect(source.visibility).toEqual({
       type: "questAvailable",
       questId: "upgrade_the_carpenters_shop",
     });
@@ -503,7 +517,7 @@ describe("assignEntityVisibility — recipes", () => {
     );
     const recipe = trackerData.recipes["basic_dish" as RecipeId];
     expect(recipe.visibility).toBeUndefined();
-    expect(recipe.sources?.[0]?.visibility).toBeUndefined();
+    expect(recipe.sources?.[0]).toEqual({ type: "default" });
   });
 
   it("gives a quest-sourced recipe entity questCompleted and source questAvailable", () => {
@@ -529,7 +543,10 @@ describe("assignEntityVisibility — recipes", () => {
     );
     const recipe = trackerData.recipes["scroll_of_the_sword" as RecipeId];
     expect(recipe.visibility).toEqual({ type: "questCompleted", questId: "the_final_showdown" });
-    expect(recipe.sources?.[0]?.visibility).toEqual({
+    const source = recipe.sources?.[0];
+    assert(source);
+    assertSourceWithDetails(source);
+    expect(source.visibility).toEqual({
       type: "questAvailable",
       questId: "the_final_showdown",
     });
@@ -571,7 +588,10 @@ describe("assignEntityVisibility — recipes", () => {
         { type: "perkUnlocked", perkId: "taste_maker" },
       ],
     });
-    expect(recipe.sources?.[0]?.visibility).toEqual({ type: "minesLevel", floor: 1 });
+    const source = recipe.sources?.[0];
+    assert(source);
+    assertSourceWithDetails(source);
+    expect(source.visibility).toEqual({ type: "minesLevel", floor: 1 });
   });
 
   it("leaves a museum_donation source's entity and source both always", () => {
@@ -591,7 +611,10 @@ describe("assignEntityVisibility — recipes", () => {
     );
     const recipe = trackerData.recipes["set_reward" as RecipeId];
     expect(recipe.visibility).toBeUndefined();
-    expect(recipe.sources?.[0]?.visibility).toBeUndefined();
+    const source = recipe.sources?.[0];
+    assert(source);
+    assertSourceWithDetails(source);
+    expect(source.visibility).toBeUndefined();
   });
 
   it("treats scroll_bundle sources the same as store sources", () => {
@@ -624,7 +647,10 @@ describe("assignEntityVisibility — recipes", () => {
       type: "questCompleted",
       questId: "upgrade_the_saturday_market_plaza",
     });
-    expect(recipe.sources?.[0]?.visibility).toEqual({
+    const source = recipe.sources?.[0];
+    assert(source);
+    assertSourceWithDetails(source);
+    expect(source.visibility).toEqual({
       type: "questAvailable",
       questId: "upgrade_the_saturday_market_plaza",
     });
@@ -663,7 +689,10 @@ describe("assignEntityVisibility — recipes", () => {
       type: "questCompleted",
       questId: "repair_the_general_store",
     });
-    expect(recipe.sources?.[0]?.visibility).toEqual({
+    const source = recipe.sources?.[0];
+    assert(source);
+    assertSourceWithDetails(source);
+    expect(source.visibility).toEqual({
       type: "questAvailable",
       questId: "repair_the_general_store",
     });
@@ -708,7 +737,10 @@ describe("assignEntityVisibility — recipes", () => {
         { type: "questCompleted", questId: "repair_the_general_store" },
       ],
     });
-    expect(recipe.sources?.[0]?.visibility).toEqual({
+    const source = recipe.sources?.[0];
+    assert(source);
+    assertSourceWithDetails(source);
+    expect(source.visibility).toEqual({
       type: "and",
       conditions: [
         { type: "questAvailable", questId: "repair_the_bridge" },
@@ -756,7 +788,10 @@ describe("assignEntityVisibility — recipes", () => {
         { type: "skillLevel", level: 10, skillId: "cooking" },
       ],
     });
-    expect(recipe.sources?.[0]?.visibility).toEqual({
+    const source = recipe.sources?.[0];
+    assert(source);
+    assertSourceWithDetails(source);
+    expect(source.visibility).toEqual({
       type: "and",
       conditions: [
         { type: "questAvailable", questId: "repair_the_general_store" },
@@ -804,7 +839,10 @@ describe("assignEntityVisibility — recipes", () => {
         { type: "minesLevel", floor: 5 },
       ],
     });
-    expect(recipe.sources?.[0]?.visibility).toEqual({
+    const source = recipe.sources?.[0];
+    assert(source);
+    assertSourceWithDetails(source);
+    expect(source.visibility).toEqual({
       type: "or",
       conditions: [
         { type: "questAvailable", questId: "repair_the_general_store" },

@@ -1,5 +1,6 @@
 import { forEachQuest, QUEST_TYPE_MAP, TRACKED_QUEST_GROUPS } from "../extractor-helpers.js";
 
+import type { SourceTuple } from "$lib/types/acquisition.js";
 import type { ItemId, NpcId, QuestId, QuestType, TrackerData } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
@@ -31,9 +32,12 @@ export function extractQuests(fiddle: ParsedGameData): TrackerData["quests"] {
         itemId: itemId as ItemId,
         name,
         npc: (npc ?? questId) as NpcId,
+        sources: [] as unknown as SourceTuple,
       };
     } else {
-      (result[outputType] as Record<QuestId, { name: string }>)[questId as QuestId] = { name };
+      (result[outputType] as Record<QuestId, { name: string; sources: SourceTuple }>)[
+        questId as QuestId
+      ] = { name, sources: [] as unknown as SourceTuple };
     }
   });
 

@@ -5,12 +5,12 @@ import type {
   DateId,
   FestivalId,
   ItemId,
+  MuseumWingId,
   NpcId,
   PetCosmeticSetId,
   QuestId,
   Season,
   StoreId,
-  WingId,
 } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../../parse-fiddle.js";
@@ -21,7 +21,7 @@ import type {
   PetCosmeticSourceAccumulator,
 } from "../source-accumulator.js";
 
-type LetterTrigger = Omit<Extract<Source, { type: "letter" }>, "type">;
+type LetterSource = Extract<Source, { type: "letter" }>;
 
 const FESTIVAL_SEASON_MAP: Record<string, Season> = {
   fall: "fall",
@@ -56,26 +56,28 @@ export function collectRewardSources(
 const SMALL_ANIMAL_KINDS = ["capybara", "chicken", "duck", "rabbit"];
 const LARGE_ANIMAL_KINDS = ["alpaca", "cow", "horse", "sheep"];
 
-function classifyLetterTrigger(reqs: Record<string, unknown> | undefined): LetterTrigger {
+function classifyLetterTrigger(reqs: Record<string, unknown> | undefined): LetterSource {
   if (!reqs) {
     return {
-      trigger: "reached_date" as const,
-      triggerDate: { day: 1, season: "spring" as Season },
+      type: "letter",
+      trigger: "reached_date",
+      triggerDate: { day: 1, season: "spring" },
     };
   }
 
   if (typeof reqs.shipped_item === "string") {
-    return { trigger: "shipped_item" as const, triggerItemId: reqs.shipped_item };
+    return { type: "letter", trigger: "shipped_item", triggerItemId: reqs.shipped_item as ItemId };
   }
 
   if (typeof reqs.donated_item === "string") {
-    return { trigger: "donated_item" as const, triggerItemId: reqs.donated_item };
+    return { type: "letter", trigger: "donated_item", triggerItemId: reqs.donated_item as ItemId };
   }
 
   const reachedDate = reqs.reached_date as Record<string, unknown> | undefined;
   if (reachedDate && typeof reachedDate === "object") {
     return {
-      trigger: "reached_date" as const,
+      type: "letter",
+      trigger: "reached_date",
       triggerDate: {
         day: (reachedDate.day as number) ?? 1,
         season: (reachedDate.season as Season) ?? "spring",
@@ -84,7 +86,11 @@ function classifyLetterTrigger(reqs: Record<string, unknown> | undefined): Lette
     };
   }
 
-  return { trigger: "reached_date" as const, triggerDate: { day: 1, season: "spring" as Season } };
+  return {
+    type: "letter",
+    trigger: "reached_date",
+    triggerDate: { day: 1, season: "spring" },
+  };
 }
 
 function collectAnimalFestivalRewardSources(
@@ -115,10 +121,10 @@ function collectAnimalFestivalRewardSources(
         accumulator.add(itemId, festivalSource);
       }
 
-      const cosmeticId = obj.cosmetic as string | undefined;
+      const cosmeticId = obj.cosmetic as CosmeticId | undefined;
       if (cosmeticId && animalCosmeticAccumulator) {
         for (const kind of animalKinds) {
-          animalCosmeticAccumulator.add(kind as AnimalId, cosmeticId as CosmeticId, festivalSource);
+          animalCosmeticAccumulator.add(kind as AnimalId, cosmeticId, festivalSource);
         }
       }
     }
@@ -151,18 +157,18 @@ function collectChickenStatueLootSources(
         if (typeof entry !== "object" || entry === null) continue;
         const obj = entry as Record<string, unknown>;
 
-        const animalCosmeticId = obj.animal_cosmetic as string | undefined;
-        const animalId = obj.animal as string | undefined;
+        const animalCosmeticId = obj.animal_cosmetic as CosmeticId | undefined;
+        const animalId = obj.animal as AnimalId | undefined;
         if (animalCosmeticId && animalId && animalCosmeticAccumulator) {
-          animalCosmeticAccumulator.add(animalId as AnimalId, animalCosmeticId as CosmeticId, {
+          animalCosmeticAccumulator.add(animalId, animalCosmeticId, {
             type: "chicken_statue",
             cost,
           });
         }
 
-        const petCosmeticId = obj.pet_cosmetic as string | undefined;
+        const petCosmeticId = obj.pet_cosmetic as PetCosmeticSetId | undefined;
         if (petCosmeticId && petCosmeticAccumulator) {
-          petCosmeticAccumulator.add(petCosmeticId as PetCosmeticSetId, {
+          petCosmeticAccumulator.add(petCosmeticId, {
             type: "chicken_statue",
             cost,
           });
@@ -179,9 +185,9 @@ function collectDateSources(fiddle: ParsedGameData, accumulator: ItemSourceAccum
   for (const [dateId, dateData] of Object.entries(dates)) {
     if (dateId === "default" || typeof dateData !== "object" || dateData === null) continue;
 
-    const photoItem = dateData.photo_item as string | undefined;
+    const photoItem = dateData.photo_item as ItemId | undefined;
     if (photoItem && photoItem !== "<n/a>") {
-      accumulator.add(photoItem as ItemId, {
+      accumulator.add(photoItem, {
         type: "date",
         dateId: dateId as DateId,
       });
@@ -201,9 +207,9 @@ function collectEngagementSources(
     const givenItems = Array.isArray(engagement.given_items) ? engagement.given_items : [];
     for (const entry of givenItems) {
       if (typeof entry !== "object" || entry === null) continue;
-      const itemId = (entry as Record<string, unknown>).item_id as string | undefined;
+      const itemId = (entry as Record<string, unknown>).item_id as ItemId | undefined;
       if (itemId) {
-        accumulator.add(itemId as ItemId, { type: "engagement" });
+        accumulator.add(itemId, { type: "engagement" });
       }
     }
   }
@@ -213,9 +219,9 @@ function collectEngagementSources(
     const givenItems = Array.isArray(wedding.given_items) ? wedding.given_items : [];
     for (const entry of givenItems) {
       if (typeof entry !== "object" || entry === null) continue;
-      const itemId = (entry as Record<string, unknown>).item_id as string | undefined;
+      const itemId = (entry as Record<string, unknown>).item_id as ItemId | undefined;
       if (itemId) {
-        accumulator.add(itemId as ItemId, { type: "wedding" });
+        accumulator.add(itemId, { type: "wedding" });
       }
     }
   }
@@ -252,24 +258,20 @@ function collectFestivalStockSources(
           storeId: storeId as StoreId,
         };
 
-        const animalCosmeticId = obj.animal_cosmetic as string | undefined;
-        const animalId = obj.animal as string | undefined;
+        const animalCosmeticId = obj.animal_cosmetic as CosmeticId | undefined;
+        const animalId = obj.animal as AnimalId | undefined;
         if (animalCosmeticId && animalId && animalCosmeticAccumulator) {
-          animalCosmeticAccumulator.add(
-            animalId as AnimalId,
-            animalCosmeticId as CosmeticId,
-            source,
-          );
+          animalCosmeticAccumulator.add(animalId, animalCosmeticId, source);
           continue;
         }
 
-        const cosmeticId = obj.cosmetic as string | undefined;
-        const itemId = obj.item as string | undefined;
+        const cosmeticId = obj.cosmetic as CosmeticId | undefined;
+        const itemId = obj.item as ItemId | undefined;
         const targetId = cosmeticId ?? itemId;
         if (!targetId) continue;
 
         if (cosmeticId && cosmeticAccumulator) {
-          cosmeticAccumulator.add(cosmeticId as CosmeticId, source);
+          cosmeticAccumulator.add(cosmeticId, source);
         } else {
           accumulator.add(targetId as ItemId, source);
         }
@@ -292,21 +294,21 @@ function collectLetterRewardSources(
     if (items.length === 0) continue;
 
     const reqs = letter.requirements as Record<string, unknown> | undefined;
-    const trigger = classifyLetterTrigger(reqs);
+    const source = classifyLetterTrigger(reqs);
 
     for (const entry of items) {
       if (typeof entry !== "object" || entry === null) continue;
       const obj = entry as Record<string, unknown>;
 
       if (obj.recipe_scroll || obj.crafting_scroll) {
-        const scrollTarget = (obj.recipe_scroll ?? obj.crafting_scroll) as string;
-        accumulator.add(scrollTarget as ItemId, { ...trigger, type: "letter" });
+        const scrollTarget = (obj.recipe_scroll ?? obj.crafting_scroll) as ItemId;
+        accumulator.add(scrollTarget, source);
         continue;
       }
 
-      const itemId = obj.item_name as string | undefined;
+      const itemId = obj.item_name as ItemId | undefined;
       if (itemId) {
-        accumulator.add(itemId as ItemId, { ...trigger, type: "letter" });
+        accumulator.add(itemId, source);
       }
     }
   }
@@ -339,19 +341,19 @@ function collectMuseumDonationRewardSources(
 
         if (obj.crafting_scroll || obj.recipe_scroll) continue;
 
-        const cosmeticId = obj.cosmetic as string | undefined;
-        const itemId = obj.item as string | undefined;
+        const cosmeticId = obj.cosmetic as CosmeticId | undefined;
+        const itemId = obj.item as ItemId | undefined;
         const targetId = cosmeticId ?? itemId;
         if (!targetId) continue;
 
         const source: Source = {
           type: "museum_donation",
           setCount,
-          wingId: wingId as WingId,
+          wingId: wingId as MuseumWingId,
         };
 
         if (cosmeticId && cosmeticAccumulator) {
-          cosmeticAccumulator.add(cosmeticId as CosmeticId, source);
+          cosmeticAccumulator.add(cosmeticId, source);
         } else {
           accumulator.add(targetId as ItemId, source);
         }
@@ -368,16 +370,16 @@ function collectProposalSources(fiddle: ParsedGameData, accumulator: ItemSourceA
     if (!sceneId.endsWith(TEN_HEART_SUFFIX)) continue;
     if (typeof scene !== "object" || scene === null) continue;
 
-    const npcId = sceneId.slice(0, -TEN_HEART_SUFFIX.length);
+    const npcId = sceneId.slice(0, -TEN_HEART_SUFFIX.length) as NpcId;
     const givenItems = Array.isArray(scene.given_items) ? scene.given_items : [];
 
     for (const entry of givenItems) {
       if (typeof entry !== "object" || entry === null) continue;
-      const itemId = (entry as Record<string, unknown>).item_id as string | undefined;
+      const itemId = (entry as Record<string, unknown>).item_id as ItemId | undefined;
       if (itemId) {
-        accumulator.add(itemId as ItemId, {
+        accumulator.add(itemId, {
           type: "proposal",
-          npcId: npcId as NpcId,
+          npcId,
         });
       }
     }
@@ -440,8 +442,8 @@ function collectRenownRewardSources(
     const reward = rewards[i];
     if (typeof reward !== "object" || reward === null) continue;
     const obj = reward as Record<string, unknown>;
-    const cosmeticId = obj.cosmetic as string | undefined;
-    const itemId = obj.item as string | undefined;
+    const cosmeticId = obj.cosmetic as CosmeticId | undefined;
+    const itemId = obj.item as ItemId | undefined;
     const targetId = cosmeticId ?? itemId;
     if (!targetId) continue;
 
@@ -451,7 +453,7 @@ function collectRenownRewardSources(
     };
 
     if (cosmeticId && cosmeticAccumulator) {
-      cosmeticAccumulator.add(cosmeticId as CosmeticId, source);
+      cosmeticAccumulator.add(cosmeticId, source);
     } else {
       accumulator.add(targetId as ItemId, source);
     }
@@ -502,10 +504,10 @@ function processQuestRewards(
       });
     }
 
-    const animalCosmeticId = obj.animal_cosmetic as string | undefined;
-    const animalId = obj.animal as string | undefined;
+    const animalCosmeticId = obj.animal_cosmetic as CosmeticId | undefined;
+    const animalId = obj.animal as AnimalId | undefined;
     if (animalCosmeticId && animalId && animalCosmeticAccumulator) {
-      animalCosmeticAccumulator.add(animalId as AnimalId, animalCosmeticId as CosmeticId, {
+      animalCosmeticAccumulator.add(animalId, animalCosmeticId, {
         type: "quest",
         questId: questId as QuestId,
         trigger: "completion",

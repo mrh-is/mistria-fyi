@@ -1,7 +1,14 @@
 import { expectArray } from "../data-shapes.js";
 import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
 
-import type { MinesBiome, MinesBiomeId, SpellId, TrackerData } from "$lib/types/tracker-data.js";
+import type { SourceTuple } from "$lib/types/acquisition.js";
+import type {
+  MinesBiome,
+  MinesBiomeId,
+  Spell,
+  SpellId,
+  TrackerData,
+} from "$lib/types/tracker-data.js";
 
 export function extractMines(fiddle: ParsedGameData): TrackerData["mines"] {
   const dungeons = fiddle.dungeons as Record<string, unknown> | undefined;
@@ -34,12 +41,13 @@ export function extractMines(fiddle: ParsedGameData): TrackerData["mines"] {
     };
   });
 
-  const spells = {} as Record<SpellId, { name: string }>;
+  const spells = {} as Record<SpellId, Spell>;
   if (spellsData) {
     for (const [id, spell] of Object.entries(spellsData)) {
       if (id === "default") continue;
       spells[id as SpellId] = {
         name: (spell.name as string | undefined) ?? id,
+        sources: [] as unknown as SourceTuple,
       };
     }
   }

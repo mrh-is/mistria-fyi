@@ -1,7 +1,14 @@
+import { isNonEmptyArray } from "$lib/utils.js";
+
 import { forEachItem } from "../../extractor-helpers.js";
 
 import type { LocationId } from "$lib/types/acquisition.js";
-import type { CosmeticId, ItemId, MinesBiomeId } from "$lib/types/tracker-data.js";
+import type {
+  CosmeticId,
+  ItemId,
+  MinesBiomeId,
+  TreasureChestTierId,
+} from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../../parse-fiddle.js";
 import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "../source-accumulator.js";
@@ -50,7 +57,7 @@ function collectArtifactDigSources(
       : undefined;
 
     accumulator.add(itemId as ItemId, {
-      ...(locationIds && locationIds.length > 0 ? { locationIds } : {}),
+      ...(locationIds && isNonEmptyArray(locationIds) ? { locationIds } : {}),
       type: "artifact_dig",
     });
   }
@@ -110,11 +117,11 @@ function collectFishingChestSources(
       const kind = obj.kind as string | undefined;
 
       if (kind === "cosmetic") {
-        const cosmeticId = obj.cosmetic as string | undefined;
+        const cosmeticId = obj.cosmetic as CosmeticId | undefined;
         if (cosmeticId) {
-          cosmeticAccumulator.add(cosmeticId as CosmeticId, {
+          cosmeticAccumulator.add(cosmeticId, {
             type: "treasure_chest",
-            tier,
+            tier: tier as TreasureChestTierId,
           });
         }
         continue;
@@ -126,7 +133,7 @@ function collectFishingChestSources(
       if (value && kind === "item") {
         accumulator.add(value as ItemId, {
           type: "treasure_chest",
-          tier,
+          tier: tier as TreasureChestTierId,
         });
       }
     }
@@ -249,9 +256,9 @@ function collectWishingWellSources(
       for (const entry of roll) {
         if (typeof entry !== "object" || entry === null) continue;
         const obj = entry as Record<string, unknown>;
-        const itemId = obj.item as string | undefined;
+        const itemId = obj.item as ItemId | undefined;
         if (itemId) {
-          accumulator.add(itemId as ItemId, {
+          accumulator.add(itemId, {
             type: "wishing_well",
             cost: 100,
           });

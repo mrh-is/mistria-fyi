@@ -1,5 +1,6 @@
 import { forEachItem } from "../extractor-helpers.js";
 
+import type { SourceTuple } from "$lib/types/acquisition.js";
 import type {
   PetCosmeticSet,
   PetCosmeticSetId,
@@ -19,7 +20,7 @@ export function extractPetCosmetics(
   const result = {} as Record<PetCosmeticSetId, PetCosmeticSet>;
   for (const [id, set] of Object.entries(sets)) {
     const name = (set.name as string | undefined) ?? titleCase(id);
-    result[id as PetCosmeticSetId] = { name, sources: [] };
+    result[id as PetCosmeticSetId] = { name, sources: [] as unknown as SourceTuple };
   }
 
   console.log(`  Pet cosmetic sets: ${Object.keys(result).length}`);
@@ -35,7 +36,7 @@ export function extractPetSkins(fiddle: ParsedGameData): Record<PetSkinId, PetSk
 
     const rawName = (item.name as string | undefined) ?? skinUnlock;
     const name = rawName.replace(/^Pet Skin:\s*/i, "");
-    result[skinUnlock as PetSkinId] = { name, sources: [] };
+    result[skinUnlock as PetSkinId] = { name, sources: [] as unknown as SourceTuple };
   });
 
   console.log(`  Pet skins: ${Object.keys(result).length}`);
