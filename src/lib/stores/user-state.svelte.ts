@@ -4,7 +4,7 @@ import { trackerData } from "$lib/data/index.js";
 import { clampRenownLevel } from "$lib/engine/progress.js";
 import { findRecipesForQuest } from "$lib/engine/quest-rewards.js";
 import { deriveProgressionState, type UserProgressionState } from "$lib/engine/visibility.js";
-import { recordEntries } from "$lib/utils";
+import { recordEntries, recordKeys } from "$lib/utils";
 import { safeLocalStorage } from "$lib/utils/local-storage.js";
 
 import type {
@@ -108,46 +108,46 @@ interface SerializedState {
 }
 
 const STORAGE_KEY = "harvest-helper-v1";
-export const WELCOME_DISMISSED_KEY = "harvest-helper-welcomed";
 
-function createDefaultCompleted(): CompletedState {
-  // Pre-populate default-unlocked cosmetics
-  const defaultCosmetics = new SvelteSet<CosmeticId>();
-  for (const [id, cosmetic] of Object.entries(trackerData.cosmetics)) {
+function addStartingItems(completed: CompletedState): void {
+  for (const [id, cosmetic] of recordEntries(trackerData.cosmetics)) {
     if (cosmetic.sources.some((s) => s.type === "default")) {
-      defaultCosmetics.add(id as CosmeticId);
+      completed.cosmetics.add(id);
     }
   }
 
-  // Initialize sets for each animal type, pre-populating default-unlocked variants
-  const animals: Record<string, Set<AnimalVariantId>> = {};
-  const animalCosmetics: Record<string, Set<CosmeticId>> = {};
-  for (const [animalId, animal] of Object.entries(trackerData.animals)) {
-    const variantSet = new SvelteSet<AnimalVariantId>();
+  for (const [animalId, animal] of recordEntries(trackerData.animals)) {
+    const variantSet = (completed.animals[animalId] ??= new SvelteSet<AnimalVariantId>());
     for (const tier of animal.variantTiers) {
-      for (const [variantId, variant] of Object.entries(tier)) {
+      for (const [variantId, variant] of recordEntries(tier)) {
         if (variant.source.type === "default") {
-          variantSet.add(variantId as AnimalVariantId);
+          variantSet.add(variantId);
         }
       }
     }
-    animals[animalId] = variantSet;
-    animalCosmetics[animalId] = new SvelteSet<CosmeticId>();
   }
 
-  const defaultRecipes = new SvelteSet<RecipeId>();
-  for (const [id, recipe] of Object.entries(trackerData.recipes)) {
+  for (const [id, recipe] of recordEntries(trackerData.recipes)) {
     if (recipe.sources.some((s) => s.type === "default")) {
-      defaultRecipes.add(id as RecipeId);
+      completed.almanacRecipes.add(id);
     }
+  }
+}
+
+function createDefaultCompleted(): CompletedState {
+  const animals: Record<string, Set<AnimalVariantId>> = {};
+  const animalCosmetics: Record<string, Set<CosmeticId>> = {};
+  for (const animalId of recordKeys(trackerData.animals)) {
+    animals[animalId] = new SvelteSet<AnimalVariantId>();
+    animalCosmetics[animalId] = new SvelteSet<CosmeticId>();
   }
 
   return {
     almanac: new SvelteSet<ItemId>(),
-    almanacRecipes: defaultRecipes,
+    almanacRecipes: new SvelteSet<RecipeId>(),
     animalCosmetics,
     animals,
-    cosmetics: defaultCosmetics,
+    cosmetics: new SvelteSet<CosmeticId>(),
     dates: new SvelteSet<DateId>(),
     marriedNpc: null,
     mines: { floor: 0, spells: new SvelteSet<SpellId>() },
@@ -202,16 +202,30 @@ function createUserState() {
     });
   }
 
+  const hasAnyProgress = $derived(
+    state.completed.almanac.size > 0 ||
+      state.completed.almanacRecipes.size > 0 ||
+      state.completed.cosmetics.size > 0 ||
+      state.completed.museum.size > 0 ||
+      state.completed.dates.size > 0 ||
+      state.completed.mines.floor > 0 ||
+      state.completed.mines.spells.size > 0 ||
+      state.completed.renown > 0 ||
+      state.completed.marriedNpc !== null ||
+      state.completed.petCosmetics.size > 0 ||
+      state.completed.petSkins.size > 0 ||
+      state.completed.unlockedPerks.size > 0 ||
+      Object.values(state.completed.npcLevels).some((v) => v > 0) ||
+      Object.values(state.completed.skillLevels).some((v) => v > 0) ||
+      Object.values(state.completed.questStates).some((v) => v !== "none") ||
+      Object.values(state.completed.animals).some((s) => s.size > 0) ||
+      Object.values(state.completed.animalCosmetics).some((s) => s.size > 0),
+  );
+
   return {
-    /**
-     * Transitions a quest from `obtained` → `completed` and idempotently adds
-     * any recipe rewards. Returns the recipe IDs that were **newly** added by
-     * this call (already-complete recipes are excluded). Call this instead of
-     * `cycleQuestState` when the transition should include recipe auto-complete.
-     *
-     * If the quest is not in `obtained` state, it is cycled normally with no
-     * recipe side-effects (covers none→obtained and completed→none).
-     */
+    applyStartingItems() {
+      addStartingItems(state.completed);
+    },
     completeQuestWithRecipes(id: QuestId): RecipeId[] {
       const current = state.completed.questStates[id] ?? "none";
       state.completed.questStates[id] =
@@ -238,12 +252,14 @@ function createUserState() {
     exportState(): string {
       return serialize(state);
     },
+    get hasAnyProgress(): boolean {
+      return hasAnyProgress;
+    },
     /** Import/export user state JSON (full replace) */
     importState(json: string): boolean {
       const imported = deserialize(json);
       if (!imported) return false;
       state = imported;
-      safeLocalStorage.setItem(WELCOME_DISMISSED_KEY, "true");
       return true;
     },
     /** Merge imported data into current progress (union, never removes) */
@@ -430,8 +446,6 @@ function createUserState() {
         }
       }
 
-      safeLocalStorage.setItem(WELCOME_DISMISSED_KEY, "true");
-
       return counts;
     },
     get progressionState(): UserProgressionState {
@@ -439,7 +453,6 @@ function createUserState() {
     },
     resetAll() {
       state = createDefaultState();
-      safeLocalStorage.removeItem(WELCOME_DISMISSED_KEY);
     },
     setAvailabilityMode(mode: AvailabilityMode) {
       state.availabilityMode = mode;

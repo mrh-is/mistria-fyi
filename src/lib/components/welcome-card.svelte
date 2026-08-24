@@ -3,18 +3,10 @@
 
   import { resolve } from "$app/paths";
   import * as Card from "$lib/components/ui/card/index.js";
-  import { WELCOME_DISMISSED_KEY } from "$lib/stores/user-state.svelte";
-  import { safeLocalStorage } from "$lib/utils/local-storage.js";
-
-  let dismissed = $state(safeLocalStorage.getItem(WELCOME_DISMISSED_KEY) === "true");
-
-  function dismiss() {
-    dismissed = true;
-    safeLocalStorage.setItem(WELCOME_DISMISSED_KEY, "true");
-  }
+  import { userState } from "$lib/stores/user-state.svelte.js";
 
   function startManually() {
-    dismiss();
+    userState.applyStartingItems();
   }
 
   // Touch device + width < 1024 = treat as phone/tablet
@@ -29,7 +21,7 @@
   let showMobileFlow = $derived(isMobile && !overrideDesktop);
 </script>
 
-{#if !dismissed}
+{#if !userState.hasAnyProgress}
   <Card.Root>
     <Card.Content class="flex flex-col gap-4">
       <div class="flex flex-col gap-2">
@@ -40,14 +32,14 @@
             instantly.
           </p>
           <p class="text-sm text-muted-foreground">
-            Or start checking things off as you go — search to find an item, tap to mark it done.
+            Or start tracking manually — this will check off the items you begin the game with.
           </p>
         {:else}
           <p class="text-sm text-muted-foreground">
             Import your save file to auto-populate your progress.
           </p>
           <p class="text-sm text-muted-foreground">
-            Or start checking things off as you go — search to find an item, click to mark it done.
+            Or start tracking manually — this will check off the items you begin the game with.
           </p>
         {/if}
       </div>
