@@ -184,9 +184,7 @@
             <TrackerRow
               display={questRowDisplay(questState, nameVisible)}
               name={quest.displayName}
-              subtitle={nameVisible
-                ? npcSubtitle(quest.npc, questType, quest.displayName, duplicateNames)
-                : undefined}
+              subtitle={npcSubtitle(quest.npc, questType, quest.displayName, duplicateNames)}
               onToggle={() => {
                 if (nameVisible || questState !== "none") {
                   completeQuest(quest, quests);
