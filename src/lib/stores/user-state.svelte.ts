@@ -244,6 +244,9 @@ function createUserState() {
       const imported = deserialize(json);
       if (!imported) return false;
       state = imported;
+      if (typeof window !== "undefined") {
+        localStorage.setItem(WELCOME_DISMISSED_KEY, "true");
+      }
       return true;
     },
     /** Merge imported data into current progress (union, never removes) */
@@ -428,6 +431,10 @@ function createUserState() {
             counts.quests++;
           }
         }
+      }
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem(WELCOME_DISMISSED_KEY, "true");
       }
 
       return counts;
