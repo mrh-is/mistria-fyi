@@ -4,16 +4,13 @@
   import { resolve } from "$app/paths";
   import * as Card from "$lib/components/ui/card/index.js";
   import { WELCOME_DISMISSED_KEY } from "$lib/stores/user-state.svelte";
+  import { safeLocalStorage } from "$lib/utils/local-storage.js";
 
-  let dismissed = $state(
-    typeof window !== "undefined" ? localStorage.getItem(WELCOME_DISMISSED_KEY) === "true" : false,
-  );
+  let dismissed = $state(safeLocalStorage.getItem(WELCOME_DISMISSED_KEY) === "true");
 
   function dismiss() {
     dismissed = true;
-    if (typeof window !== "undefined") {
-      localStorage.setItem(WELCOME_DISMISSED_KEY, "true");
-    }
+    safeLocalStorage.setItem(WELCOME_DISMISSED_KEY, "true");
   }
 
   function startManually() {

@@ -1,3 +1,5 @@
+import { safeLocalStorage } from "$lib/utils/local-storage.js";
+
 export type Theme = "dark" | "light" | "system";
 
 const STORAGE_KEY = "harvest-helper-theme";
@@ -16,11 +18,9 @@ function createThemeStore() {
   let preference = $state<Theme>("system");
 
   // Load saved preference
-  if (typeof window !== "undefined") {
-    const stored = localStorage.getItem(STORAGE_KEY) as null | Theme;
-    if (stored && ["dark", "light", "system"].includes(stored)) {
-      preference = stored;
-    }
+  const stored = safeLocalStorage.getItem(STORAGE_KEY) as null | Theme;
+  if (stored && ["dark", "light", "system"].includes(stored)) {
+    preference = stored;
   }
 
   const resolved = $derived<"dark" | "light">(
@@ -32,7 +32,7 @@ function createThemeStore() {
     $effect.root(() => {
       $effect(() => {
         applyTheme(resolved);
-        localStorage.setItem(STORAGE_KEY, preference);
+        safeLocalStorage.setItem(STORAGE_KEY, preference);
       });
     });
 

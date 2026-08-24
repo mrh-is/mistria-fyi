@@ -5,6 +5,7 @@ import { clampRenownLevel } from "$lib/engine/progress.js";
 import { findRecipesForQuest } from "$lib/engine/quest-rewards.js";
 import { deriveProgressionState, type UserProgressionState } from "$lib/engine/visibility.js";
 import { recordEntries } from "$lib/utils";
+import { safeLocalStorage } from "$lib/utils/local-storage.js";
 
 import type {
   AnimalId,
@@ -176,11 +177,9 @@ function createDefaultState(): UserState {
 function createUserState() {
   // Load from localStorage or use defaults
   let initial = createDefaultState();
-  if (typeof window !== "undefined") {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      initial = deserialize(stored) ?? initial;
-    }
+  const stored = safeLocalStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    initial = deserialize(stored) ?? initial;
   }
 
   let state = $state<UserState>(initial);
@@ -197,7 +196,7 @@ function createUserState() {
         const json = serialize(state);
         clearTimeout(timeout);
         timeout = setTimeout(() => {
-          localStorage.setItem(STORAGE_KEY, json);
+          safeLocalStorage.setItem(STORAGE_KEY, json);
         }, 300);
       });
     });
@@ -244,9 +243,7 @@ function createUserState() {
       const imported = deserialize(json);
       if (!imported) return false;
       state = imported;
-      if (typeof window !== "undefined") {
-        localStorage.setItem(WELCOME_DISMISSED_KEY, "true");
-      }
+      safeLocalStorage.setItem(WELCOME_DISMISSED_KEY, "true");
       return true;
     },
     /** Merge imported data into current progress (union, never removes) */
@@ -433,9 +430,7 @@ function createUserState() {
         }
       }
 
-      if (typeof window !== "undefined") {
-        localStorage.setItem(WELCOME_DISMISSED_KEY, "true");
-      }
+      safeLocalStorage.setItem(WELCOME_DISMISSED_KEY, "true");
 
       return counts;
     },
@@ -444,9 +439,7 @@ function createUserState() {
     },
     resetAll() {
       state = createDefaultState();
-      if (typeof window !== "undefined") {
-        localStorage.removeItem(WELCOME_DISMISSED_KEY);
-      }
+      safeLocalStorage.removeItem(WELCOME_DISMISSED_KEY);
     },
     setAvailabilityMode(mode: AvailabilityMode) {
       state.availabilityMode = mode;
