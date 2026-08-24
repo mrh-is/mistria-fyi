@@ -14,7 +14,7 @@ sw.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.addAll([...ASSETS, "/offline.html"]))
+      .then((cache) => cache.addAll(ASSETS))
       .then(() => sw.skipWaiting()),
   );
 });
