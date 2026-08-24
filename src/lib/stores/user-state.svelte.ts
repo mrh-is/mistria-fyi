@@ -175,14 +175,7 @@ function createDefaultState(): UserState {
 // ─── Store ──────────────────────────────────────────────────────────
 
 function createUserState() {
-  // Load from localStorage or use defaults
-  let initial = createDefaultState();
-  const stored = safeLocalStorage.getItem(STORAGE_KEY);
-  if (stored) {
-    initial = deserialize(stored) ?? initial;
-  }
-
-  let state = $state<UserState>(initial);
+  let state = $state<UserState>(createDefaultState());
 
   const progressionState = $derived(
     deriveProgressionState(state.completed, trackerData, state.showSpoilers),
@@ -453,6 +446,12 @@ function createUserState() {
     },
     resetAll() {
       state = createDefaultState();
+    },
+    restorePersistedState() {
+      const stored = safeLocalStorage.getItem(STORAGE_KEY);
+      if (!stored) return;
+
+      state = deserialize(stored) ?? state;
     },
     setAvailabilityMode(mode: AvailabilityMode) {
       state.availabilityMode = mode;

@@ -4,17 +4,24 @@
 
   import "../app.css";
 
+  import { onMount } from "svelte";
+
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
   import ToolbarFooter from "$lib/components/toolbar-footer.svelte";
   import { Toaster } from "$lib/components/ui/sonner/index.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
+  import { userState } from "$lib/stores/user-state.svelte.js";
 
   let { children } = $props();
 
   // Clear search when navigating so home search doesn't bleed into category pages
   afterNavigate(() => {
     toolbarState.closeSearch();
+  });
+
+  onMount(() => {
+    userState.restorePersistedState();
   });
 
   let hasToolbar = $derived(page.url.pathname !== "/settings" && page.url.pathname !== "/privacy");
