@@ -43,6 +43,14 @@
 
   let editingId = $state<SkillId | undefined>(undefined);
   let editValue = $state("");
+  let editInputRef = $state<HTMLInputElement | null>(null);
+
+  $effect(() => {
+    if (editInputRef) {
+      editInputRef.focus();
+      editInputRef.select();
+    }
+  });
 
   function startEditing(skillId: SkillId, skillLevel: number) {
     editingId = skillId;
@@ -112,6 +120,7 @@
 
       {#if editingId === id}
         <Input
+          bind:ref={editInputRef}
           class="h-6 w-16 shrink-0 text-center text-sm"
           type="number"
           max={MAX_LEVEL}

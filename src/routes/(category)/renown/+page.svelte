@@ -51,6 +51,14 @@
 
   let editing = $state(false);
   let editValue = $state("");
+  let editInputRef = $state<HTMLInputElement | null>(null);
+
+  $effect(() => {
+    if (editInputRef) {
+      editInputRef.focus();
+      editInputRef.select();
+    }
+  });
 
   function startEditing() {
     editValue = String(level);
@@ -124,6 +132,7 @@
   >
     {#if editing}
       <Input
+        bind:ref={editInputRef}
         class="h-6 w-20 text-center text-sm"
         type="number"
         max={maxLevel}
