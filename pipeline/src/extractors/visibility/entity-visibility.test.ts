@@ -429,9 +429,142 @@ describe("assignEntityVisibility — items", () => {
     );
     expect(trackerData.items["mystery_item" as ItemId].visibility).toBeUndefined();
   });
+
+  it("ANDs a store gate with supported stock availability", () => {
+    const trackerData = makeTrackerData({
+      items: {
+        gated_stock: {
+          category: "other",
+          name: "Gated Stock",
+          sources: [
+            {
+              type: "store",
+              availability: { type: "skillLevel", level: 15, skillId: "woodcrafting" },
+              storeId: "carpenter",
+            },
+          ],
+        },
+      },
+      stores: {
+        carpenter: {
+          name: "Carpenter",
+          visibility: { type: "questCompleted", questId: "upgrade_the_carpenters_shop" },
+        },
+      },
+    });
+
+    assignEntityVisibility(
+      trackerData,
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
+
+    const item = trackerData.items["gated_stock" as ItemId];
+    expect(item.visibility).toEqual({
+      type: "and",
+      conditions: [
+        { type: "questCompleted", questId: "upgrade_the_carpenters_shop" },
+        { type: "skillLevel", level: 15, skillId: "woodcrafting" },
+      ],
+    });
+    expect(item.sources?.[0]).toMatchObject({
+      visibility: {
+        type: "and",
+        conditions: [
+          { type: "questAvailable", questId: "upgrade_the_carpenters_shop" },
+          { type: "skillLevel", level: 15, skillId: "woodcrafting" },
+        ],
+      },
+    });
+  });
+
+  it("ORs alternative acquisition paths after composing each source", () => {
+    const trackerData = makeTrackerData({
+      items: {
+        alternative_paths: {
+          category: "other",
+          name: "Alternative Paths",
+          sources: [
+            {
+              type: "store",
+              availability: { type: "perkUnlocked", perkId: "heavy_duty" },
+              storeId: "carpenter",
+            },
+            { type: "forage" },
+          ],
+        },
+      },
+      stores: {
+        carpenter: {
+          name: "Carpenter",
+          visibility: { type: "questCompleted", questId: "upgrade_the_carpenters_shop" },
+        },
+      },
+    });
+
+    assignEntityVisibility(
+      trackerData,
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
+
+    expect(trackerData.items["alternative_paths" as ItemId].visibility).toBeUndefined();
+  });
+
+  it("does not mutate a source object shared by two fixtures", () => {
+    const shared: Source = { type: "store", storeId: "general" as StoreId };
+    const first = makeTrackerData({
+      items: {
+        first: { category: "other", name: "First", sources: [shared] },
+      },
+    });
+    const second = makeTrackerData({
+      items: {
+        second: { category: "other", name: "Second", sources: [shared] },
+      },
+    });
+
+    assignEntityVisibility(first, emptyCutsceneMap, makeFiddle({}) as never, makeQuestChains({}));
+    assignEntityVisibility(second, emptyCutsceneMap, makeFiddle({}) as never, makeQuestChains({}));
+
+    expect(shared).not.toHaveProperty("visibility");
+    expect(first.items["first" as ItemId].sources?.[0]).not.toBe(shared);
+    expect(second.items["second" as ItemId].sources?.[0]).not.toBe(shared);
+  });
 });
 
 describe("assignEntityVisibility — recipes", () => {
+  it("projects supported recipe-source availability", () => {
+    const trackerData = makeTrackerData({
+      recipes: {
+        expert_dish: {
+          name: "Expert Dish",
+          sources: [
+            {
+              type: "forage",
+              availability: { type: "skillLevel", level: 30, skillId: "cooking" },
+            },
+          ],
+        },
+      },
+    });
+
+    assignEntityVisibility(
+      trackerData,
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
+
+    const recipe = trackerData.recipes["expert_dish" as RecipeId];
+    expect(recipe.visibility).toEqual({ type: "skillLevel", level: 30, skillId: "cooking" });
+    expect(recipe.sources[0]).toMatchObject({
+      visibility: { type: "skillLevel", level: 30, skillId: "cooking" },
+    });
+  });
+
   it("gives a perk-sourced recipe an entity gate of perkUnlocked and a source gate of skillLevel", () => {
     const trackerData = makeTrackerData({
       recipes: {
@@ -950,6 +1083,36 @@ describe("assignEntityVisibility — cosmetics", () => {
       makeQuestChains({}),
     );
     expect(trackerData.cosmetics["unsourced_hat" as CosmeticId].visibility).toBeUndefined();
+  });
+
+  it("projects supported cosmetic-source availability", () => {
+    const trackerData = makeTrackerData({
+      cosmetics: {
+        veteran_hat: {
+          name: "Veteran Hat",
+          slot: "head",
+          sources: [
+            {
+              type: "forage",
+              availability: { type: "skillLevel", level: 30, skillId: "combat" },
+            },
+          ],
+        },
+      },
+    });
+
+    assignEntityVisibility(
+      trackerData,
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
+
+    const cosmetic = trackerData.cosmetics["veteran_hat" as CosmeticId];
+    expect(cosmetic.visibility).toEqual({ type: "skillLevel", level: 30, skillId: "combat" });
+    expect(cosmetic.sources?.[0]).toMatchObject({
+      visibility: { type: "skillLevel", level: 30, skillId: "combat" },
+    });
   });
 });
 
