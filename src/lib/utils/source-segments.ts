@@ -1,6 +1,6 @@
 import { formatBiomeName, formatStoreName, seasonLabel, withIndefiniteArticle } from "./format.js";
 
-import type { Source } from "$lib/types/acquisition.js";
+import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
 import type {
   LocationId,
   MinesBiomeId,
@@ -261,7 +261,7 @@ export function buildSourceSegments(
     }
     case "scroll_bundle": {
       const storeName = buildStoreName(source.storeId, lookups);
-      const qualifier = buildStoreQualifier(source.visibility, lookups, source.storeId);
+      const qualifier = buildStoreQualifier(source, lookups);
       const bundleSegment: SourceSegment =
         lookups.entityVisibility && lookups.entityVisibility.type !== "always"
           ? { condition: lookups.entityVisibility, revealed: [`the ${source.bundleName}`] }
@@ -274,7 +274,7 @@ export function buildSourceSegments(
     }
     case "store": {
       const storeName = buildStoreName(source.storeId, lookups);
-      const qualifier = buildStoreQualifier(source.visibility, lookups, source.storeId);
+      const qualifier = buildStoreQualifier(source, lookups);
       return joinSegments("Purchase from ", storeName, qualifier);
     }
     case "treasure_chest": {
@@ -297,25 +297,58 @@ export function buildSourceSegments(
 }
 
 export function buildStoreQualifier(
-  sourceVisibility: undefined | VisibilityCondition,
+  source: Source & { type: "scroll_bundle" | "store"; storeId: StoreId },
   lookups: SegmentLookups,
-  storeId: StoreId,
 ): SourceSegment[] {
+  const sourceVisibility = source.visibility;
   if (!sourceVisibility || sourceVisibility.type === "always") return [];
 
-  const action = lookups.stores[storeId]?.upgradeAction ?? "upgrading";
+  const storeGate = lookups.storeVisibility[source.storeId];
+  const hasStoreGate =
+    storeGate !== undefined &&
+    storeGate.type !== "always" &&
+    visibilityContains(sourceVisibility, storeGate);
+  const storeAction = hasStoreGate
+    ? (lookups.stores[source.storeId]?.upgradeAction ?? "upgrading")
+    : undefined;
+  const storeQuestIds = storeGate ? collectQuestIds(storeGate) : new Set<QuestId>();
+  const stockFragments = source.availability
+    ? describeStoreAvailability(source.availability, lookups, storeQuestIds)
+    : [];
+
+  if (stockFragments === undefined && !storeAction) return [];
+
+  const renderedStockFragments = stockFragments ?? [];
+  if (!storeAction && renderedStockFragments.length === 0) return [];
+
+  const revealed = `${storeAction ? ` (after ${storeAction})` : ""}${renderedStockFragments.join("")}`;
+  const redacted: SourceSegment[] = [];
+  if (storeAction) redacted.push(" (after ", { redacted: true }, ")");
+  for (const _fragment of renderedStockFragments) {
+    redacted.push(", ", { redacted: true });
+  }
 
   return [
     {
       condition: sourceVisibility,
-      redacted: [" (after ", { redacted: true }, ")"],
-      revealed: [` (after ${action})`],
+      redacted: redacted as [SourceSegment, ...SourceSegment[]],
+      revealed: [revealed],
     },
   ];
 }
 
 export function formatDateLabel(season: Season, day: number): string {
   return `${seasonLabel(season)} ${String(day)}`;
+}
+
+function anyBranchLabel(fragments: string[]): string {
+  return fragments
+    .join("")
+    .replace(/^, after reaching /, "reaching ")
+    .replace(/^, after completing /, "completing ")
+    .replace(/^, at /, "")
+    .replace(/^, once /, "")
+    .replace(/^, with /, "");
 }
 
 function buildCookingChallengeSegments(
@@ -477,6 +510,67 @@ function buildWaterList(waterTypes: undefined | WaterType[]): string {
   return (waterTypes ?? []).map((w) => titleCase(w)).join(", ");
 }
 
+function collectQuestIds(condition: VisibilityCondition): Set<QuestId> {
+  if (condition.type === "questAvailable" || condition.type === "questCompleted") {
+    return new Set([condition.questId]);
+  }
+  if (condition.type === "and" || condition.type === "or") {
+    return new Set(condition.conditions.flatMap((child) => [...collectQuestIds(child)]));
+  }
+  return new Set();
+}
+
+function describeStoreAvailability(
+  condition: AvailabilityCondition,
+  lookups: SegmentLookups,
+  storeQuestIds: ReadonlySet<QuestId>,
+): string[] | undefined {
+  switch (condition.type) {
+    case "all":
+      return condition.conditions.flatMap(
+        (child) => describeStoreAvailability(child, lookups, storeQuestIds) ?? [],
+      );
+    case "always":
+    case "season":
+    case "time":
+    case "weather":
+      return [];
+    case "any": {
+      const branches = condition.conditions.map((child) =>
+        describeStoreAvailability(child, lookups, storeQuestIds),
+      );
+      if (branches.some((branch) => !branch || branch.length === 0)) return undefined;
+      return [
+        `, after one of: ${branches.map((branch) => anyBranchLabel(branch ?? [])).join(" or ")}`,
+      ];
+    }
+    case "gamePredicate":
+    case "not":
+      return undefined;
+    case "heartLevel": {
+      const npcName = lookups.npcNames[condition.npcId] ?? titleCase(condition.npcId);
+      return [`, at ${String(condition.level)} hearts with ${npcName}`];
+    }
+    case "minesLevel":
+      return [`, after reaching Mines floor ${String(condition.floor)}`];
+    case "perkUnlocked":
+      return [`, with ${plainPerkLabel(condition.perkId, lookups)}`];
+    case "quest": {
+      if (storeQuestIds.has(condition.questId)) return [];
+      if (condition.questId.startsWith("repair_")) return [", after repairing"];
+      if (condition.questId.startsWith("upgrade_")) return [", after upgrading"];
+      const questName = lookups.questNames[condition.questId] ?? titleCase(condition.questId);
+      return condition.state === "completed"
+        ? [`, after completing ${questName}`]
+        : [`, once ${questName} is available`];
+    }
+    case "skillLevel": {
+      const skillName = lookups.skillNames[condition.skillId] ?? titleCase(condition.skillId);
+      return [`, at ${skillName} level ${String(condition.level)}`];
+    }
+  }
+}
+
 function joinSegments(
   ...parts: (SourceSegment | SourceSegment[])[]
 ): [SourceSegment, ...SourceSegment[]] {
@@ -503,6 +597,13 @@ function joinSegments(
   return merged as [SourceSegment, ...SourceSegment[]];
 }
 
+function plainPerkLabel(perkId: PerkId, lookups: SegmentLookups): string {
+  const perk = lookups.perks[perkId];
+  if (!perk) return `the ${titleCase(perkId)} perk`;
+  const skillName = lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId);
+  return `the ${perk.name} perk (${skillName} tier ${String(perk.tier)})`;
+}
+
 function titleCase(s: string): string {
   return s
     .split("_")
@@ -518,4 +619,20 @@ function upgradeSourceText(source: Source & { type: "upgrade" }): string {
     stairs: "Upgrade your home a fourth time",
   };
   return UPGRADE_TEXT[source.upgradeName] ?? `Purchase ${source.upgradeName}`;
+}
+
+function visibilityContains(
+  condition: VisibilityCondition,
+  expected: VisibilityCondition,
+): boolean {
+  if (
+    (condition.type === "questAvailable" || condition.type === "questCompleted") &&
+    (expected.type === "questAvailable" || expected.type === "questCompleted")
+  ) {
+    return condition.questId === expected.questId;
+  }
+  if (condition.type === "and" || condition.type === "or") {
+    return condition.conditions.some((child) => visibilityContains(child, expected));
+  }
+  return JSON.stringify(condition) === JSON.stringify(expected);
 }

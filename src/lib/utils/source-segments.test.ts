@@ -9,7 +9,7 @@ import {
   formatDateLabel,
 } from "./source-segments.js";
 
-import type { Source } from "$lib/types/acquisition.js";
+import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
 import type {
   ActivityId,
   AnimalId,
@@ -31,6 +31,7 @@ import type {
   TreasureChestTierId,
   WaterType,
 } from "$lib/types/tracker-data.js";
+import type { VisibilityCondition } from "$lib/types/visibility.js";
 
 import type { SegmentLookups } from "./source-segments.js";
 
@@ -141,16 +142,35 @@ describe("buildBiomeLabel", () => {
 
 describe("buildStoreQualifier", () => {
   it("returns empty array when visibility is always", () => {
-    expect(buildStoreQualifier(undefined, BASE_LOOKUPS, "inn" as StoreId)).toEqual([]);
+    expect(
+      buildStoreQualifier(
+        { type: "store", storeId: "inn" as StoreId, visibility: { type: "always" } },
+        BASE_LOOKUPS,
+      ),
+    ).toEqual([]);
   });
 
   it("returns empty array when visibility is undefined", () => {
-    expect(buildStoreQualifier(undefined, BASE_LOOKUPS, "inn" as StoreId)).toEqual([]);
+    expect(buildStoreQualifier({ type: "store", storeId: "inn" as StoreId }, BASE_LOOKUPS)).toEqual(
+      [],
+    );
   });
 
   it("uses upgradeAction from store record", () => {
     const vis = { type: "questAvailable" as const, questId: "repair_the_general_store" as QuestId };
-    const result = buildStoreQualifier(vis, BASE_LOOKUPS, "general" as StoreId);
+    const lookups: SegmentLookups = {
+      ...BASE_LOOKUPS,
+      storeVisibility: {
+        ["general" as StoreId]: {
+          type: "questCompleted",
+          questId: "repair_the_general_store" as QuestId,
+        },
+      },
+    };
+    const result = buildStoreQualifier(
+      { type: "store", storeId: "general" as StoreId, visibility: vis },
+      lookups,
+    );
     expect(result).toEqual([
       {
         condition: vis,
@@ -162,10 +182,182 @@ describe("buildStoreQualifier", () => {
 
   it("defaults to upgrading when no upgradeAction", () => {
     const vis = { type: "questAvailable" as const, questId: "repair_the_inn" as QuestId };
-    const result = buildStoreQualifier(vis, BASE_LOOKUPS, "inn" as StoreId);
+    const lookups: SegmentLookups = {
+      ...BASE_LOOKUPS,
+      storeVisibility: {
+        ["inn" as StoreId]: {
+          type: "questCompleted",
+          questId: "repair_the_inn" as QuestId,
+        },
+      },
+    };
+    const result = buildStoreQualifier(
+      { type: "store", storeId: "inn" as StoreId, visibility: vis },
+      lookups,
+    );
     expect(result[0]).toMatchObject({
       revealed: [" (after upgrading)"],
     });
+  });
+
+  it("does not repeat a stock quest that is also the store gate", () => {
+    const questId = "repair_the_general_store" as QuestId;
+    const source: Source = {
+      type: "store",
+      availability: { type: "quest", questId, state: "completed" },
+      storeId: "general" as StoreId,
+      visibility: { type: "questAvailable", questId },
+    };
+    const lookups: SegmentLookups = {
+      ...BASE_LOOKUPS,
+      storeVisibility: {
+        ["general" as StoreId]: { type: "questCompleted", questId },
+      },
+    };
+
+    expect(buildStoreQualifier(source, lookups)).toEqual([
+      {
+        condition: source.visibility,
+        redacted: [" (after ", { redacted: true }, ")"],
+        revealed: [" (after repairing)"],
+      },
+    ]);
+  });
+
+  const STORE_LOOKUPS: SegmentLookups = {
+    ...BASE_LOOKUPS,
+    npcNames: { ["juniper" as NpcId]: "Juniper" },
+    perks: {
+      ...BASE_LOOKUPS.perks,
+      ["taste_maker" as PerkId]: {
+        name: "Taste Maker",
+        skillId: "cooking" as SkillId,
+        tier: 1,
+      },
+    },
+    questNames: { ["stock_the_pantry" as QuestId]: "Stock the Pantry" },
+    skillNames: {
+      ...BASE_LOOKUPS.skillNames,
+      ["woodcrafting" as SkillId]: "Woodcrafting",
+    },
+  };
+
+  it.each([
+    [
+      { type: "perkUnlocked", perkId: "taste_maker" },
+      { type: "perkUnlocked", perkId: "taste_maker" },
+      ", with the Taste Maker perk (Cooking tier 1)",
+    ],
+    [
+      { type: "skillLevel", level: 15, skillId: "woodcrafting" },
+      { type: "skillLevel", level: 15, skillId: "woodcrafting" },
+      ", at Woodcrafting level 15",
+    ],
+    [
+      { type: "minesLevel", floor: 40 },
+      { type: "minesLevel", floor: 40 },
+      ", after reaching Mines floor 40",
+    ],
+    [
+      { type: "heartLevel", level: 4, npcId: "juniper" },
+      { type: "heartLevel", level: 4, npcId: "juniper" },
+      ", at 4 hearts with Juniper",
+    ],
+    [
+      { type: "quest", questId: "stock_the_pantry", state: "completed" },
+      { type: "questAvailable", questId: "stock_the_pantry" },
+      ", after completing Stock the Pantry",
+    ],
+    [
+      { type: "quest", questId: "stock_the_pantry", state: "available" },
+      { type: "questAvailable", questId: "stock_the_pantry" },
+      ", once Stock the Pantry is available",
+    ],
+  ] as const)("renders stock availability %#", (availability, visibility, revealed) => {
+    const source: Source = {
+      type: "store",
+      availability: availability as AvailabilityCondition,
+      storeId: "general" as StoreId,
+      visibility: visibility as unknown as VisibilityCondition,
+    };
+
+    expect(buildStoreQualifier(source, STORE_LOOKUPS)).toContainEqual({
+      condition: source.visibility,
+      redacted: [", ", { redacted: true }],
+      revealed: [revealed],
+    });
+  });
+
+  it("renders every supported all branch in traversal order", () => {
+    const source: Source = {
+      type: "store",
+      availability: {
+        type: "all",
+        conditions: [
+          { type: "minesLevel", floor: 40 },
+          { type: "skillLevel", level: 15, skillId: "woodcrafting" as SkillId },
+        ],
+      },
+      storeId: "general" as StoreId,
+      visibility: { type: "minesLevel", floor: 40 },
+    };
+
+    expect(buildStoreQualifier(source, STORE_LOOKUPS)[0]).toMatchObject({
+      revealed: [", after reaching Mines floor 40, at Woodcrafting level 15"],
+    });
+  });
+
+  it("groups a fully supported any condition", () => {
+    const source: Source = {
+      type: "store",
+      availability: {
+        type: "any",
+        conditions: [
+          { type: "minesLevel", floor: 40 },
+          { type: "skillLevel", level: 15, skillId: "woodcrafting" as SkillId },
+        ],
+      },
+      storeId: "general" as StoreId,
+      visibility: { type: "minesLevel", floor: 40 },
+    };
+
+    expect(buildStoreQualifier(source, STORE_LOOKUPS)[0]).toMatchObject({
+      revealed: [", after one of: reaching Mines floor 40 or Woodcrafting level 15"],
+    });
+  });
+
+  it("omits an any condition containing an unsupported branch", () => {
+    const source: Source = {
+      type: "store",
+      availability: {
+        type: "any",
+        conditions: [
+          { type: "minesLevel", floor: 40 },
+          { type: "gamePredicate", predicate: "native_flag", value: true },
+        ],
+      },
+      storeId: "general" as StoreId,
+      visibility: { type: "always" },
+    };
+
+    expect(buildStoreQualifier(source, STORE_LOOKUPS)).toEqual([]);
+  });
+
+  it.each([
+    { type: "season", seasons: ["spring"] },
+    { type: "weather", weathers: ["sunny"] },
+    { type: "time", start: 600, end: 1800 },
+    { type: "not", condition: { type: "always" } },
+    { type: "gamePredicate", predicate: "native_flag", value: true },
+  ] as const)("omits unsupported stock qualifier %#", (availability) => {
+    const source: Source = {
+      type: "store",
+      availability: availability as AvailabilityCondition,
+      storeId: "general" as StoreId,
+      visibility: { type: "always" },
+    };
+
+    expect(buildStoreQualifier(source, STORE_LOOKUPS)).toEqual([]);
   });
 });
 
@@ -294,14 +486,27 @@ describe("buildSourceSegments — store", () => {
 
   it("store with visibility qualifier", () => {
     const vis = { type: "questAvailable" as const, questId: "repair_the_inn" as QuestId };
+    const lookups: SegmentLookups = {
+      ...BASE_LOOKUPS,
+      storeVisibility: {
+        ["inn" as StoreId]: {
+          type: "questCompleted",
+          questId: "repair_the_inn" as QuestId,
+        },
+      },
+    };
     const source: Source = {
       type: "store",
       storeId: "inn" as StoreId,
       visibility: vis,
     };
-    const result = buildSourceSegments(source, BASE_LOOKUPS);
+    const result = buildSourceSegments(source, lookups);
     expect(result).toEqual([
-      "Purchase from the Sleeping Dragon Inn",
+      "Purchase from ",
+      {
+        condition: { type: "questCompleted", questId: "repair_the_inn" },
+        revealed: ["the Sleeping Dragon Inn"],
+      },
       {
         condition: vis,
         redacted: [" (after ", { redacted: true }, ")"],
@@ -323,6 +528,12 @@ describe("buildSourceSegments — scroll_bundle", () => {
         type: "questCompleted",
         questId: "repair_the_general_store" as QuestId,
       },
+      storeVisibility: {
+        ["general" as StoreId]: {
+          type: "questCompleted",
+          questId: "repair_the_general_store" as QuestId,
+        },
+      },
     };
     const source: Source = {
       type: "scroll_bundle",
@@ -336,7 +547,11 @@ describe("buildSourceSegments — scroll_bundle", () => {
         condition: { type: "questCompleted", questId: "repair_the_general_store" },
         revealed: ["the Fall Crop Sign Scroll Bundle"],
       },
-      " from the General Store",
+      " from ",
+      {
+        condition: { type: "questCompleted", questId: "repair_the_general_store" },
+        revealed: ["the General Store"],
+      },
       {
         condition: sourceVisibility,
         redacted: [" (after ", { redacted: true }, ")"],
