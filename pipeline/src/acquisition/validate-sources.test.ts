@@ -51,6 +51,33 @@ describe("validateAcquisitionSources", () => {
     }).not.toThrow();
   });
 
+  it("rejects a raw native quest group as questType", () => {
+    const trackerData = {
+      cosmetics: {},
+      items: {
+        scroll: {
+          sources: [
+            {
+              type: "quest",
+              questId: "story_quest",
+              questType: "story_quests",
+              trigger: "completion",
+            },
+          ],
+        },
+      },
+      recipes: {},
+    };
+    const references = AcquisitionReferenceIndex.from({
+      emitted: { items: trackerData.items },
+      native: { quests: ["story_quest"], questTypes: ["story"] },
+    });
+
+    expect(() => {
+      validateAcquisitionSources(trackerData, references);
+    }).toThrow('Unknown quest type ID "story_quests"');
+  });
+
   it("validates branded references nested in availability conditions", () => {
     const trackerData = {
       cosmetics: {},

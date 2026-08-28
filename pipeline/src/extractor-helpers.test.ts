@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { forEachItem, forEachQuest, TRACKED_QUEST_GROUPS } from "./extractor-helpers.js";
+import {
+  buildQuestTypeIndex,
+  forEachItem,
+  forEachQuest,
+  TRACKED_QUEST_GROUPS,
+} from "./extractor-helpers.js";
 import { makeFiddle as makeFiddleBase } from "./test-helpers.js";
 
 function makeFiddle(overrides: Record<string, unknown> = {}) {
@@ -127,6 +132,43 @@ describe("TRACKED_QUEST_GROUPS", () => {
       "stillwell_challenges",
       "tali_challenges",
     ]);
+  });
+
+  it("builds a normalized quest-type index for every tracked group", () => {
+    const fiddle = makeFiddle({
+      quests: {
+        crown_quests: { crown_case: {} },
+        fetch_quests: { fetch_case: {} },
+        heart_quests: { heart_case: {} },
+        stillwell_challenges: { mission_case: {} },
+        story_quests: { story_case: {} },
+        tali_challenges: { cooking_case: {} },
+      },
+    });
+
+    expect(buildQuestTypeIndex(fiddle)).toEqual(
+      new Map([
+        ["cooking_case", "cooking"],
+        ["crown_case", "crown"],
+        ["fetch_case", "fetch"],
+        ["heart_case", "heart"],
+        ["mission_case", "mission"],
+        ["story_case", "story"],
+      ]),
+    );
+  });
+
+  it("rejects a quest ID assigned to conflicting normalized types", () => {
+    const fiddle = makeFiddle({
+      quests: {
+        fetch_quests: { duplicate: {} },
+        story_quests: { duplicate: {} },
+      },
+    });
+
+    expect(() => buildQuestTypeIndex(fiddle)).toThrow(
+      'Quest "duplicate" appears in both story and fetch groups',
+    );
   });
 });
 

@@ -213,7 +213,12 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   ],
 
   ["dollhouse_bench" as ItemId]: [
-    { type: "quest", questId: "park_date_unlock" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "park_date_unlock" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   // --- Date inspiration items: unlocked through heart events ---
   // Wiki: https://fieldsofmistria.wiki.gg/wiki/Dates
@@ -221,15 +226,26 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   // tutorial cutscene. Others are unlocked through heart level progression with NPCs.
   // No native reward array encodes these; the dating system handles them at runtime.
   ["inn_menu" as ItemId]: [
-    { type: "quest", questId: "elsies_dating_tutorial" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "elsies_dating_tutorial" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["lovely_seashell" as ItemId]: [
-    { type: "quest", questId: "beach_date_unlock" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "beach_date_unlock" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["rough_gemstone" as ItemId]: [
     {
       type: "quest",
       questId: "gem_cutting_date_unlock" as QuestId,
+      questType: "story",
       trigger: "completion" as const,
     },
   ],
@@ -294,16 +310,31 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   // These items are given during specific quests or cutscenes. The native data encodes the
   // quest/cutscene but not the item reward in the rewards array.
   ["heart_crystal" as ItemId]: [
-    { type: "quest", questId: "break_water_seal" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "break_water_seal" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["mystical_feather" as ItemId]: [
-    { type: "quest", questId: "great_bird_0" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "great_bird_0" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["sealing_scroll" as ItemId]: [
     { type: "quest", questId: "breaking_the_fire_seal" as QuestId, trigger: "completion" as const },
   ],
   ["song_crystal_another_tower" as ItemId]: [
-    { type: "quest", questId: "another_tower" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "another_tower" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
 
   // magic_key: Grown from seed_magic_key
@@ -361,7 +392,12 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   // cutscenes, or special interactions that aren't encoded in reward arrays.
   ["axe_worn" as ItemId]: [{ type: "default" as const }],
   ["balors_crate" as ItemId]: [
-    { type: "quest", questId: "balors_crate" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "balors_crate" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["clay_key" as ItemId]: [
     { type: "quest", questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const },
@@ -380,29 +416,54 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   ["dungeon_fountain_health" as ItemId]: [{ type: "default" as const }],
   ["dungeon_fountain_stamina" as ItemId]: [{ type: "default" as const }],
   ["earth_tablet_rubbing" as ItemId]: [
-    { type: "quest", questId: "break_earth_seal" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "break_earth_seal" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["fake_essence" as ItemId]: [
     { type: "quest", questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const },
   ],
   ["fire_tablet_rubbing" as ItemId]: [
-    { type: "quest", questId: "break_fire_seal" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "break_fire_seal" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["mist_held_item" as ItemId]: [{ type: "perk" as const, perkId: "mist_sight" as PerkId }],
   ["purse" as ItemId]: [{ type: "default" as const }],
   ["recipe_scroll" as ItemId]: [{ type: "default" as const }],
   ["ruins_tablet_rubbing" as ItemId]: [
-    { type: "quest", questId: "break_ruins_seal_pt_3" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "break_ruins_seal_pt_3" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["ryis_lumber" as ItemId]: [
-    { type: "quest", questId: "ryis_lumber" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "ryis_lumber" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["unknown_item" as ItemId]: [{ type: "default" as const }],
   ["unusual_seed" as ItemId]: [
     { type: "quest", questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const },
   ],
   ["water_tablet_rubbing" as ItemId]: [
-    { type: "quest", questId: "break_water_seal" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "break_water_seal" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["world_fountain" as ItemId]: [{ type: "default" as const }],
 };

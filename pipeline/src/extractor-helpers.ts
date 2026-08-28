@@ -1,4 +1,4 @@
-import type { QuestType } from "$lib/types/tracker-data.js";
+import type { QuestId, QuestType } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "./parse-fiddle.js";
 
@@ -25,6 +25,22 @@ export const QUEST_TYPE_MAP: Record<TrackedQuestGroup, QuestType> = {
   story_quests: "story",
   tali_challenges: "cooking",
 };
+
+export function buildQuestTypeIndex(fiddle: ParsedGameData): Map<QuestId, QuestType> {
+  const entries = new Map<QuestId, QuestType>();
+
+  forEachQuest(fiddle, TRACKED_QUEST_GROUPS, (nativeGroup, questId) => {
+    const questType = QUEST_TYPE_MAP[nativeGroup as TrackedQuestGroup];
+    const typedQuestId = questId as QuestId;
+    const existing = entries.get(typedQuestId);
+    if (existing && existing !== questType) {
+      throw new Error(`Quest "${questId}" appears in both ${existing} and ${questType} groups`);
+    }
+    entries.set(typedQuestId, questType);
+  });
+
+  return new Map([...entries].sort(([left], [right]) => left.localeCompare(right)));
+}
 
 /**
  * Iterates every non-default, non-null, object item record in the full
