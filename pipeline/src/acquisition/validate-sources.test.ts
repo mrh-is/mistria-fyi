@@ -10,6 +10,37 @@ import {
 import type { Source } from "$lib/types/acquisition.js";
 
 describe("validateAcquisitionSources", () => {
+  it.each(["mine", "mines_chest", "mines_dig_site"])(
+    "rejects a %s source without biomeId",
+    (type) => {
+      const trackerData = {
+        cosmetics: {},
+        items: { void_herb: { sources: [{ type }] } },
+        recipes: {},
+      };
+      const references = AcquisitionReferenceIndex.from({
+        emitted: { items: trackerData.items },
+      });
+
+      expect(() => {
+        validateAcquisitionSources(trackerData, references);
+      }).toThrow("items.void_herb.sources[0].biomeId");
+    },
+  );
+
+  it("allows mine_fish without biomeId", () => {
+    const trackerData = {
+      cosmetics: {},
+      items: { cave_fish: { sources: [{ type: "mine_fish" }] } },
+      recipes: {},
+    };
+    const references = AcquisitionReferenceIndex.from({ emitted: { items: trackerData.items } });
+
+    expect(() => {
+      validateAcquisitionSources(trackerData, references);
+    }).not.toThrow();
+  });
+
   it("accepts an assembled fixture with emitted and non-emitted native references", () => {
     const trackerData = {
       almanac: {},

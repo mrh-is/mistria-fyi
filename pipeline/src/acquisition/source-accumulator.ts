@@ -50,6 +50,13 @@ abstract class SourceAccumulator<TargetId extends string> {
     return this.#sortedSources(this.#sourcesByTarget.get(targetId));
   }
 
+  replace(targetId: TargetId, sources: Source[], provenance?: SourceProvenance): void {
+    this.#sourcesByTarget.delete(targetId);
+    for (const source of sources) {
+      this.add(targetId, source, provenance);
+    }
+  }
+
   toRecord(): Record<TargetId, Source[]> {
     return Object.fromEntries(this.entries()) as Record<TargetId, Source[]>;
   }

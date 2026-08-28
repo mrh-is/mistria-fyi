@@ -369,6 +369,20 @@ describe("formatDateLabel", () => {
 });
 
 describe("buildSourceSegments — simple types", () => {
+  it("renders reviewed Void Herb foraging throughout the Mines", () => {
+    const source: Source = {
+      type: "forage",
+      availability: {
+        type: "quest",
+        questId: "find_the_magic_key" as QuestId,
+        state: "completed",
+      },
+      locationIds: ["mines" as LocationId],
+    };
+
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Forage at Mines"]);
+  });
+
   it("default", () => {
     const source: Source = { type: "default" };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Available from the start"]);

@@ -2,7 +2,13 @@ import { recordEntries } from "$lib/utils.js";
 
 import { canonicalSourceJson } from "./source-accumulator.js";
 
-import type { ActivityId, MonsterId, Source, StationId } from "$lib/types/acquisition.js";
+import type {
+  ActivityId,
+  LocationId,
+  MonsterId,
+  Source,
+  StationId,
+} from "$lib/types/acquisition.js";
 import type {
   CosmeticId,
   FestivalId,
@@ -468,6 +474,23 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   ["world_fountain" as ItemId]: [{ type: "default" as const }],
 };
 
+// Wiki: https://fieldsofmistria.wiki.gg/wiki/Void_Herb
+// Foraging in any Mines biome is wiki-supported. Completion of “Find the Magic Key” is an
+// explicit project-owner-reviewed gate because the structured assets do not encode it here.
+export const ITEM_SOURCE_REPLACEMENTS: Partial<Record<ItemId, Source[]>> = {
+  ["void_herb" as ItemId]: [
+    {
+      type: "forage",
+      availability: {
+        type: "quest",
+        questId: "find_the_magic_key" as QuestId,
+        state: "completed",
+      },
+      locationIds: ["mines" as LocationId],
+    },
+  ],
+};
+
 // Wiki: https://fieldsofmistria.wiki.gg/wiki/Dragon_Cleric_Set
 // The Dragon Cleric set (Diadem, Earrings, Robes, Boots, Cape) is obtained from the Ritual
 // Chamber in the mines. The Ritual Chamber becomes accessible after unlocking the Lost to History
@@ -537,6 +560,23 @@ export function applyReviewedOverrides(
         sourcePath: "pipeline/src/acquisition/reviewed-overrides.ts",
       });
     }
+  }
+
+  for (const [targetId, sources] of recordEntries(ITEM_SOURCE_REPLACEMENTS)) {
+    if (!(targetId in items)) {
+      diagnostics.push({
+        kind: "missing-target",
+        message: `reviewed item replacement target "${targetId}" not found in item registry`,
+        namespace: "items",
+        targetId,
+      });
+      continue;
+    }
+
+    itemAccumulator.replace(targetId, sources, {
+      fieldPath: `reviewed-overrides.items.${targetId}`,
+      sourcePath: "pipeline/src/acquisition/reviewed-overrides.ts",
+    });
   }
 
   for (const [targetId, sources] of recordEntries(COSMETIC_OVERRIDES)) {

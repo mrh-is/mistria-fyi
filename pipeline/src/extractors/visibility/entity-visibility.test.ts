@@ -533,6 +533,40 @@ describe("assignEntityVisibility — items", () => {
     expect(first.items["first" as ItemId].sources?.[0]).not.toBe(shared);
     expect(second.items["second" as ItemId].sources?.[0]).not.toBe(shared);
   });
+
+  it("projects the reviewed Void Herb quest gate into entity visibility", () => {
+    const trackerData = makeTrackerData({
+      items: {
+        void_herb: {
+          category: "other",
+          name: "Void Herb",
+          sources: [
+            {
+              type: "forage",
+              availability: {
+                type: "quest",
+                questId: "find_the_magic_key",
+                state: "completed",
+              },
+              locationIds: ["mines"],
+            },
+          ],
+        },
+      },
+    });
+
+    assignEntityVisibility(
+      trackerData,
+      emptyCutsceneMap,
+      makeFiddle({}) as never,
+      makeQuestChains({}),
+    );
+
+    expect(trackerData.items["void_herb" as ItemId].visibility).toEqual({
+      type: "questCompleted",
+      questId: "find_the_magic_key",
+    });
+  });
 });
 
 describe("assignEntityVisibility — recipes", () => {

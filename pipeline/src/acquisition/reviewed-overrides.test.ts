@@ -9,12 +9,12 @@ import {
   collectDefaultItemSources,
   COSMETIC_OVERRIDES,
   ITEM_OVERRIDES,
+  ITEM_SOURCE_REPLACEMENTS,
 } from "./reviewed-overrides.js";
+import { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator.js";
 
 import type { Source } from "$lib/types/acquisition.js";
 import type { CosmeticId, ItemId, QuestId, QuestType, StoreId } from "$lib/types/tracker-data.js";
-
-import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator.js";
 
 describe("reviewed overrides", () => {
   describe("override tables", () => {
@@ -63,6 +63,20 @@ describe("reviewed overrides", () => {
           expect(source.type).toBeTruthy();
         }
       }
+    });
+
+    it("replaces Void Herb with quest-gated foraging throughout the Mines", () => {
+      expect(ITEM_SOURCE_REPLACEMENTS["void_herb" as ItemId]).toEqual([
+        {
+          type: "forage",
+          availability: {
+            type: "quest",
+            questId: "find_the_magic_key",
+            state: "completed",
+          },
+          locationIds: ["mines"],
+        },
+      ]);
     });
 
     it("every cosmetic override has a target ID and at least one source", () => {
@@ -138,6 +152,23 @@ describe("reviewed overrides", () => {
   });
 
   describe("applyReviewedOverrides", () => {
+    it("replaces Void Herb native sources while leaving other targets intact", () => {
+      const items = new ItemSourceAccumulator();
+      const cosmetics = new CosmeticSourceAccumulator();
+      items.add("void_herb" as ItemId, {
+        type: "mine",
+        biomeId: "ancient_ruins" as never,
+      });
+      items.add("other_item" as ItemId, { type: "default" });
+
+      applyReviewedOverrides({ other_item: {}, void_herb: {} }, {}, items, cosmetics);
+
+      expect(items.get("void_herb" as ItemId)).toEqual(
+        ITEM_SOURCE_REPLACEMENTS["void_herb" as ItemId],
+      );
+      expect(items.get("other_item" as ItemId)).toEqual([{ type: "default" }]);
+    });
+
     it("adds overrides to accumulators for targets that exist in registries", () => {
       const itemAdds: [ItemId, Source][] = [];
       const cosmeticAdds: [CosmeticId, Source][] = [];
