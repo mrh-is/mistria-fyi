@@ -89,9 +89,31 @@ describe("buildPerkLabel", () => {
     const result = buildPerkLabel("taste_maker" as PerkId, BASE_LOOKUPS);
     expect(result).toEqual([
       {
-        condition: { type: "skillLevel", level: 5, skillId: "cooking" },
+        condition: { type: "skillLevel", level: 1, skillId: "cooking" },
         redacted: ["the ", { redacted: true }, " perk (Cooking tier 1)"],
         revealed: ["the Taste Maker perk (Cooking tier 1)"],
+      },
+    ]);
+  });
+
+  it("uses the final tier threshold for a tier-five perk", () => {
+    const lookups: SegmentLookups = {
+      ...BASE_LOOKUPS,
+      perks: {
+        ...BASE_LOOKUPS.perks,
+        ["master_chef" as PerkId]: {
+          name: "Master Chef",
+          skillId: "cooking" as SkillId,
+          tier: 5,
+        },
+      },
+    };
+
+    expect(buildPerkLabel("master_chef" as PerkId, lookups)).toEqual([
+      {
+        condition: { type: "skillLevel", level: 20, skillId: "cooking" },
+        redacted: ["the ", { redacted: true }, " perk (Cooking tier 5)"],
+        revealed: ["the Master Chef perk (Cooking tier 5)"],
       },
     ]);
   });
@@ -424,7 +446,7 @@ describe("buildSourceSegments — mines_chest (worked example: Chickpea Curry)",
       },
       ", with ",
       {
-        condition: { type: "skillLevel", level: 5, skillId: "cooking" },
+        condition: { type: "skillLevel", level: 1, skillId: "cooking" },
         redacted: ["the ", { redacted: true }, " perk (Cooking tier 1)"],
         revealed: ["the Taste Maker perk (Cooking tier 1)"],
       },

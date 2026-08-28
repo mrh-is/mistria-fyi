@@ -1,7 +1,7 @@
 import { trackerData } from "$lib/data/index.js";
 import { recordMap } from "$lib/utils";
 
-import type { QuestType, StoreId } from "$lib/types/tracker-data";
+import type { QuestType, SkillId, StoreId } from "$lib/types/tracker-data";
 import type { SegmentLookups } from "$lib/utils/source-segments.js";
 
 /**
@@ -17,6 +17,17 @@ import type { SegmentLookups } from "$lib/utils/source-segments.js";
 export function buildBaseSegmentLookups(
   redactedStoreIds: ReadonlySet<StoreId>,
 ): Omit<SegmentLookups, "entityVisibility"> {
+  const perks = Object.fromEntries(
+    Object.entries(trackerData.skills).flatMap(([skillId, skill]) =>
+      skill.perkTiers.flatMap((tier, tierIndex) =>
+        Object.entries(tier).map(([perkId, perk]) => [
+          perkId,
+          { name: perk.name, skillId: skillId as SkillId, tier: tierIndex + 1 },
+        ]),
+      ),
+    ),
+  );
+
   return {
     animalNames: {},
     biomes: trackerData.mines.biomes,
@@ -34,7 +45,7 @@ export function buildBaseSegmentLookups(
     monsterNames: {},
     npcNames: recordMap(trackerData.npcs, ({ name }) => name),
     npcVisibility: recordMap(trackerData.npcs, ({ visibility }) => visibility),
-    perks: trackerData.skills,
+    perks,
     perkTierLevels: trackerData.perkTierLevels,
     questNames: Object.fromEntries(
       Object.values(trackerData.quests).flatMap((group) =>

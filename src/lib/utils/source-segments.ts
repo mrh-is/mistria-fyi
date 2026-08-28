@@ -79,7 +79,7 @@ export function buildPerkLabel(
 
   const skillName = lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId);
   const tierSuffix = ` (${skillName} tier ${String(perk.tier)})`;
-  const level = lookups.perkTierLevels[perk.tier];
+  const level = lookups.perkTierLevels[perk.tier - 1];
   const condition: VisibilityCondition = {
     type: "skillLevel",
     level,
