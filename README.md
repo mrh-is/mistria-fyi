@@ -1,5 +1,7 @@
 # Harvest Helper
 
+[![CI](https://github.com/mrh-is/harvest-helper/actions/workflows/ci.yml/badge.svg)](https://github.com/mrh-is/harvest-helper/actions/workflows/ci.yml)
+
 A mobile-first companion tracker for
 [Fields of Mistria](https://store.steampowered.com/app/2142790/Fields_of_Mistria/). Helps
 completionists track progress toward 100%.
