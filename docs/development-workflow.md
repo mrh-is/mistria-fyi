@@ -79,6 +79,34 @@ Harvest Helper uses explicit planning and approval gates for changes that need d
 - Use the smallest process that fits the change. Small, well-specified maintenance work does not
   require a separate specification or implementation plan.
 
+### Claim & release issue ownership
+
+Issue ownership uses two labels because every agent operates through the repository owner's GitHub
+account:
+
+- `status: in progress` identifies all active work.
+- Exactly one `agent:*` label identifies the top-level agent responsible for it: `agent: claude`,
+  `agent: codex`, `agent: antigravity`, `agent: kilo`, `agent: copilot`, or `agent: lm studio`.
+
+Follow this protocol for every issue-backed task:
+
+1. Refresh the issue immediately before claiming it. Do not start issues marked `status: blocked` or
+   `status: needs decision`. If `status: in progress` or an `agent:*` label is already present,
+   coordinate with the current owner instead of starting duplicate work.
+2. Complete the applicable scope, specification, & plan approval gates.
+3. Immediately before setup or implementation, remove the issue's current `status:*` label, add
+   `status: in progress`, & add exactly one `agent:*` label for the top-level orchestrator.
+   Subagents inherit that identity rather than claiming the issue separately.
+4. Keep both active-work labels while implementation, verification, & PR review remain active.
+5. On handoff, replace the existing `agent:*` label with the receiving agent's label. Do not leave
+   multiple agent labels on an issue.
+6. When the issue closes, remove `status: in progress` & the `agent:*` label. If work stops without
+   closing the issue, remove both active-work labels & set exactly one accurate status:
+   `status: ready`, `status: blocked`, or `status: needs decision`.
+
+An active-work label is a coordination claim, not proof of progress. Do not claim issues merely to
+reserve them, & do not leave stale claims after an agent stops working.
+
 ### Explicit Approval & Planning Gates
 
 1. **Design**: Explore intent, requirements, and subsystem impact before planning.

@@ -1,7 +1,7 @@
 ---
 name: Task
 about: A self-contained task for an agent or human to pick up
-labels: ready
+labels: "status: ready"
 ---
 
 ## Context

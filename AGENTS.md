@@ -38,27 +38,35 @@ Follow this sequence for every task:
 
 1. **Read the issue & comments** — use `gh issue view <number> --json title,body,labels,comments`.
    The `--comments` flag produces empty output when there are no comments; `--json` is reliable in
-   all cases. Do not start issues labeled `blocked` or `discussion`.
+   all cases. Do not start issues labeled `status: blocked` or `status: needs decision`. If an issue
+   has `status: in progress` or an `agent:*` label, coordinate with its current owner rather than
+   starting duplicate work.
 2. **Confirm scope** — identify the affected subsystem, acceptance criteria, and required
    deliverables before implementation.
 3. **Approval gates** — obtain explicit user approval at every specification and plan gate.
-4. **Worktree** — create an isolated worktree before editing, unless the user explicitly directs
+4. **Claim the issue** — after scope and required approvals are settled, replace its current
+   `status:*` label with `status: in progress` and add exactly one `agent:*` label identifying the
+   top-level orchestrator. Subagents use their orchestrator's identity.
+5. **Worktree** — create an isolated worktree before editing, unless the user explicitly directs
    work in the current checkout.
-5. **Baseline** — install dependencies (`Node >=26`, `pnpm install --frozen-lockfile`) and verify a
+6. **Baseline** — install dependencies (`Node >=26`, `pnpm install --frozen-lockfile`) and verify a
    clean baseline.
-6. **Understand contracts** — read the affected subsystem, its boundaries, and existing tests before
+7. **Understand contracts** — read the affected subsystem, its boundaries, and existing tests before
    editing.
-7. **Test first** — add or update tests for behavioral changes, preferably before implementation.
+8. **Test first** — add or update tests for behavioral changes, preferably before implementation.
    Run focused tests during development.
-8. **Verification matrix** — run the complete verification matrix before committing. Lint must
+9. **Verification matrix** — run the complete verification matrix before committing. Lint must
    produce **zero errors and zero warnings**. If a warning requires an eslint-disable comment, add
    the narrowest possible disable with a justification comment.
-9. **Commit specs & plans first** — commit approved specifications (`docs/superpowers/specs/`) and
-   implementation plans (`docs/superpowers/plans/`) **before writing any implementation code**. If
-   these files were created in the main checkout before the worktree existed, copy them into the
-   worktree and commit them there as the first commit on the branch. This is not optional; specs and
-   plans are deliverables that belong in the PR alongside the code they describe.
-10. **Deliver** — commit, push, and open a PR that references the issue (`Closes #N`).
+10. **Commit specs & plans first** — commit approved specifications (`docs/superpowers/specs/`) and
+    implementation plans (`docs/superpowers/plans/`) **before writing any implementation code**. If
+    these files were created in the main checkout before the worktree existed, copy them into the
+    worktree and commit them there as the first commit on the branch. This is not optional; specs
+    and plans are deliverables that belong in the PR alongside the code they describe.
+11. **Deliver** — commit, push, and open a PR that references the issue (`Closes #N`). Keep the
+    active-work labels through PR review. On handoff, replace the `agent:*` label. When work closes,
+    is abandoned, or stops pending a decision or dependency, remove both active-work labels and set
+    the appropriate remaining status.
 
 > Git pre-commit hooks are developer conveniences, not verification evidence. Agents must run the
 > documented commands directly and verify clean exit status before committing.
