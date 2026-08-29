@@ -42,6 +42,7 @@ describe("CI workflow", () => {
     expect(jobs[0]?.["runs-on"]).toBe("ubuntu-latest");
     expect(commands).toEqual([
       "pnpm install --frozen-lockfile",
+      "pnpm exec svelte-kit sync",
       "pnpm run lint",
       "pnpm run check",
       "pnpm run test",
