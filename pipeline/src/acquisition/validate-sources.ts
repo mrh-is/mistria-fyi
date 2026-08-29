@@ -1093,7 +1093,7 @@ function validateVariantFields(
       validateLetter(source, targetId, fieldPath, references, diagnostics);
       break;
     case "mine":
-      optionalReference(source, "biomeId", "biome", targetId, fieldPath, references, diagnostics);
+      stringReferences.push(["biomeId", "biome"]);
       break;
     case "mine_fish":
       optionalReference(source, "biomeId", "biome", targetId, fieldPath, references, diagnostics);

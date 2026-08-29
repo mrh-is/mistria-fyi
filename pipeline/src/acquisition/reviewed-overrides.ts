@@ -2,7 +2,13 @@ import { recordEntries } from "$lib/utils.js";
 
 import { canonicalSourceJson } from "./source-accumulator.js";
 
-import type { ActivityId, MonsterId, Source, StationId } from "$lib/types/acquisition.js";
+import type {
+  ActivityId,
+  LocationId,
+  MonsterId,
+  Source,
+  StationId,
+} from "$lib/types/acquisition.js";
 import type {
   CosmeticId,
   FestivalId,
@@ -191,8 +197,6 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   ],
   // heros_ring: Given in Adeline's 8-heart cutscene
   ["heros_ring" as ItemId]: [{ type: "proposal" as const, npcId: "adeline" as NpcId }],
-  // maples_drawing: Given in mistril_rank cutscene (Maple draws the Aldarian Star)
-  ["maples_drawing" as ItemId]: [{ type: "renown" as const, level: 10 }],
   // mistril_star_trophy: Given in mistril_rank cutscene
   ["mistril_star_trophy" as ItemId]: [{ type: "renown" as const, level: 10 }],
   // star_brooch: Given in shooting_star_morning cutscene
@@ -213,7 +217,12 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   ],
 
   ["dollhouse_bench" as ItemId]: [
-    { type: "quest", questId: "park_date_unlock" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "park_date_unlock" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   // --- Date inspiration items: unlocked through heart events ---
   // Wiki: https://fieldsofmistria.wiki.gg/wiki/Dates
@@ -221,15 +230,26 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   // tutorial cutscene. Others are unlocked through heart level progression with NPCs.
   // No native reward array encodes these; the dating system handles them at runtime.
   ["inn_menu" as ItemId]: [
-    { type: "quest", questId: "elsies_dating_tutorial" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "elsies_dating_tutorial" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["lovely_seashell" as ItemId]: [
-    { type: "quest", questId: "beach_date_unlock" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "beach_date_unlock" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["rough_gemstone" as ItemId]: [
     {
       type: "quest",
       questId: "gem_cutting_date_unlock" as QuestId,
+      questType: "story",
       trigger: "completion" as const,
     },
   ],
@@ -294,16 +314,31 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   // These items are given during specific quests or cutscenes. The native data encodes the
   // quest/cutscene but not the item reward in the rewards array.
   ["heart_crystal" as ItemId]: [
-    { type: "quest", questId: "break_water_seal" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "break_water_seal" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["mystical_feather" as ItemId]: [
-    { type: "quest", questId: "great_bird_0" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "great_bird_0" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["sealing_scroll" as ItemId]: [
     { type: "quest", questId: "breaking_the_fire_seal" as QuestId, trigger: "completion" as const },
   ],
   ["song_crystal_another_tower" as ItemId]: [
-    { type: "quest", questId: "another_tower" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "another_tower" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
 
   // magic_key: Grown from seed_magic_key
@@ -361,7 +396,12 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   // cutscenes, or special interactions that aren't encoded in reward arrays.
   ["axe_worn" as ItemId]: [{ type: "default" as const }],
   ["balors_crate" as ItemId]: [
-    { type: "quest", questId: "balors_crate" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "balors_crate" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["clay_key" as ItemId]: [
     { type: "quest", questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const },
@@ -380,31 +420,95 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   ["dungeon_fountain_health" as ItemId]: [{ type: "default" as const }],
   ["dungeon_fountain_stamina" as ItemId]: [{ type: "default" as const }],
   ["earth_tablet_rubbing" as ItemId]: [
-    { type: "quest", questId: "break_earth_seal" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "break_earth_seal" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["fake_essence" as ItemId]: [
     { type: "quest", questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const },
   ],
   ["fire_tablet_rubbing" as ItemId]: [
-    { type: "quest", questId: "break_fire_seal" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "break_fire_seal" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["mist_held_item" as ItemId]: [{ type: "perk" as const, perkId: "mist_sight" as PerkId }],
   ["purse" as ItemId]: [{ type: "default" as const }],
   ["recipe_scroll" as ItemId]: [{ type: "default" as const }],
   ["ruins_tablet_rubbing" as ItemId]: [
-    { type: "quest", questId: "break_ruins_seal_pt_3" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "break_ruins_seal_pt_3" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["ryis_lumber" as ItemId]: [
-    { type: "quest", questId: "ryis_lumber" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "ryis_lumber" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["unknown_item" as ItemId]: [{ type: "default" as const }],
   ["unusual_seed" as ItemId]: [
     { type: "quest", questId: "the_dragonsworn_tablet" as QuestId, trigger: "completion" as const },
   ],
   ["water_tablet_rubbing" as ItemId]: [
-    { type: "quest", questId: "break_water_seal" as QuestId, trigger: "completion" as const },
+    {
+      type: "quest",
+      questId: "break_water_seal" as QuestId,
+      questType: "story",
+      trigger: "completion" as const,
+    },
   ],
   ["world_fountain" as ItemId]: [{ type: "default" as const }],
+};
+
+export const ITEM_SOURCE_REPLACEMENTS: Partial<Record<ItemId, Source[]>> = {
+  // Wiki: https://fieldsofmistria.wiki.gg/wiki/Big_Cookie
+  // Native evidence: letters.toml adeline_4h_reward_2 grants this when the
+  // adeline_4h_cookie world fact is set; heart_quests.toml identifies A Rewarding Choice as
+  // Adeline's four-heart choice. The runtime-only link is recorded as a reviewed replacement.
+  ["big_cookie" as ItemId]: [
+    {
+      type: "quest",
+      questId: "a_rewarding_choice" as QuestId,
+      trigger: "dialogue_choice",
+    },
+  ],
+  // Wiki: https://fieldsofmistria.wiki.gg/wiki/Maple%27s_Aldarian_Star_Drawing
+  // Native evidence: the item description ties the drawing to the contest won with Reina, and
+  // heart_quests.toml identifies that contest as Reina's eight-heart quest. The reward edge is
+  // runtime-only, so this is a reviewed replacement rather than a native extractor rule.
+  ["maples_drawing" as ItemId]: [
+    {
+      type: "quest",
+      questId: "the_aldarian_cooking_contest" as QuestId,
+      trigger: "completion",
+    },
+  ],
+  // Wiki: https://fieldsofmistria.wiki.gg/wiki/Void_Herb
+  // Foraging in any Mines biome is wiki-supported. Completion of “Find the Magic Key” is an
+  // explicit project-owner-reviewed gate because the structured assets do not encode it here.
+  ["void_herb" as ItemId]: [
+    {
+      type: "forage",
+      availability: {
+        type: "quest",
+        questId: "find_the_magic_key" as QuestId,
+        state: "completed",
+      },
+      locationIds: ["mines" as LocationId],
+    },
+  ],
 };
 
 // Wiki: https://fieldsofmistria.wiki.gg/wiki/Dragon_Cleric_Set
@@ -476,6 +580,23 @@ export function applyReviewedOverrides(
         sourcePath: "pipeline/src/acquisition/reviewed-overrides.ts",
       });
     }
+  }
+
+  for (const [targetId, sources] of recordEntries(ITEM_SOURCE_REPLACEMENTS)) {
+    if (!(targetId in items)) {
+      diagnostics.push({
+        kind: "missing-target",
+        message: `reviewed item replacement target "${targetId}" not found in item registry`,
+        namespace: "items",
+        targetId,
+      });
+      continue;
+    }
+
+    itemAccumulator.replace(targetId, sources, {
+      fieldPath: `reviewed-overrides.items.${targetId}`,
+      sourcePath: "pipeline/src/acquisition/reviewed-overrides.ts",
+    });
   }
 
   for (const [targetId, sources] of recordEntries(COSMETIC_OVERRIDES)) {

@@ -10,6 +10,37 @@ import {
 import type { Source } from "$lib/types/acquisition.js";
 
 describe("validateAcquisitionSources", () => {
+  it.each(["mine", "mines_chest", "mines_dig_site"])(
+    "rejects a %s source without biomeId",
+    (type) => {
+      const trackerData = {
+        cosmetics: {},
+        items: { void_herb: { sources: [{ type }] } },
+        recipes: {},
+      };
+      const references = AcquisitionReferenceIndex.from({
+        emitted: { items: trackerData.items },
+      });
+
+      expect(() => {
+        validateAcquisitionSources(trackerData, references);
+      }).toThrow("items.void_herb.sources[0].biomeId");
+    },
+  );
+
+  it("allows mine_fish without biomeId", () => {
+    const trackerData = {
+      cosmetics: {},
+      items: { cave_fish: { sources: [{ type: "mine_fish" }] } },
+      recipes: {},
+    };
+    const references = AcquisitionReferenceIndex.from({ emitted: { items: trackerData.items } });
+
+    expect(() => {
+      validateAcquisitionSources(trackerData, references);
+    }).not.toThrow();
+  });
+
   it("accepts an assembled fixture with emitted and non-emitted native references", () => {
     const trackerData = {
       almanac: {},
@@ -49,6 +80,33 @@ describe("validateAcquisitionSources", () => {
     expect(() => {
       validateAcquisitionSources(trackerData, references);
     }).not.toThrow();
+  });
+
+  it("rejects a raw native quest group as questType", () => {
+    const trackerData = {
+      cosmetics: {},
+      items: {
+        scroll: {
+          sources: [
+            {
+              type: "quest",
+              questId: "story_quest",
+              questType: "story_quests",
+              trigger: "completion",
+            },
+          ],
+        },
+      },
+      recipes: {},
+    };
+    const references = AcquisitionReferenceIndex.from({
+      emitted: { items: trackerData.items },
+      native: { quests: ["story_quest"], questTypes: ["story"] },
+    });
+
+    expect(() => {
+      validateAcquisitionSources(trackerData, references);
+    }).toThrow('Unknown quest type ID "story_quests"');
   });
 
   it("validates branded references nested in availability conditions", () => {

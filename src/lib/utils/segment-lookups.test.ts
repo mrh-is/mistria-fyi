@@ -1,0 +1,20 @@
+import { describe, expect, it } from "vitest";
+
+import { trackerData } from "$lib/data/index.js";
+
+import { buildBaseSegmentLookups } from "./segment-lookups.js";
+
+describe("buildBaseSegmentLookups", () => {
+  it("flattens every generated perk under its perk ID", () => {
+    const lookups = buildBaseSegmentLookups(new Set());
+    const expected = Object.entries(trackerData.skills).flatMap(([skillId, skill]) =>
+      skill.perkTiers.flatMap((tier, index) =>
+        Object.entries(tier).map(
+          ([perkId, perk]) => [perkId, { name: perk.name, skillId, tier: index + 1 }] as const,
+        ),
+      ),
+    );
+
+    expect(lookups.perks).toEqual(Object.fromEntries(expected));
+  });
+});

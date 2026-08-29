@@ -1,3 +1,4 @@
+import { availabilityToVisibility, toAvailableVisibility } from "./availability-projection.js";
 import { resolveToVisibility, simplifyCondition } from "./requirement-resolver.js";
 
 import type { Source as AcquisitionSource, SourceTuple } from "$lib/types/acquisition.js";
@@ -303,19 +304,13 @@ function assignAnimalVisibility(trackerData: TrackerData, fiddle: ParsedGameData
 
 function assignCosmeticVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
   for (const [, cosmetic] of Object.entries(trackerData.cosmetics)) {
-    const sources = cosmetic.sources;
-    if (!sources || sources.length === 0) continue;
-
-    const conditions = sources.map((source) => acquisitionSourceCondition(source, ctx));
-    cosmetic.visibility = orSimplify(conditions);
+    assignSourcedEntityVisibility(cosmetic, ctx);
   }
 }
 
 function assignItemVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
   for (const [, item] of Object.entries(trackerData.items)) {
-    const sources = item.sources ?? [];
-    const conditions = sources.map((source) => acquisitionSourceCondition(source, ctx));
-    item.visibility = orSimplify(conditions);
+    assignSourcedEntityVisibility(item, ctx);
   }
 }
 
@@ -382,18 +377,7 @@ function assignQuestVisibility(
 
 function assignRecipeVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
   for (const recipe of Object.values(trackerData.recipes)) {
-    const recipeSources = recipe.sources;
-    const computed = recipeSources.map((source) => ({
-      conditions: computeRecipeSourceConditions(source, ctx),
-      source,
-    }));
-
-    recipe.sources = computed.map(({ conditions, source }) => ({
-      ...source,
-      visibility: conditions.source,
-    })) as SourceTuple;
-
-    recipe.visibility = orSimplify(computed.map(({ conditions }) => conditions.entity));
+    assignSourcedEntityVisibility(recipe, ctx);
   }
 }
 
@@ -410,44 +394,12 @@ const SPELL_SOURCES: Partial<Record<string, QuestId>> = {
   summon_rain: "the_water_tablet" as QuestId,
 };
 
-function assignSpellVisibility(trackerData: TrackerData): void {
-  for (const [spellId, spell] of Object.entries(trackerData.mines.spells)) {
-    const questId = SPELL_SOURCES[spellId];
-    if (questId) {
-      spell.visibility = { type: "questCompleted", questId };
-      spell.sources = [{ type: "quest", questId, questType: "story", trigger: "completion" }];
-    }
-  }
-}
-
-function buildFlatPerks(skills: TrackerData["skills"]): Record<string, FlatPerkInfo> {
-  const result: Record<string, FlatPerkInfo> = {};
-  for (const [skillId, skill] of Object.entries(skills)) {
-    skill.perkTiers.forEach((tier, tierIdx) => {
-      for (const perkId of Object.keys(tier)) {
-        result[perkId] = { skillId: skillId as SkillId, tier: tierIdx + 1 };
-      }
-    });
-  }
-  return result;
-}
-
-function buildStoreVisibilityMap(
-  stores: TrackerData["stores"],
-): Record<StoreId, VisibilityCondition> {
-  const result: Record<StoreId, VisibilityCondition> = {};
-  for (const [storeId, store] of Object.entries(stores)) {
-    if (store.visibility) {
-      result[storeId as StoreId] = store.visibility;
-    }
-  }
-  return result;
-}
-
-function computeRecipeSourceConditions(
+function acquisitionSourceConditions(
   source: AcquisitionSource,
   ctx: SourceVisibilityContext,
 ): { entity: VisibilityCondition; source: VisibilityCondition } {
+  const entity = acquisitionSourceCondition(source, ctx);
+
   switch (source.type) {
     case "animal_product":
     case "artifact_dig":
@@ -487,18 +439,14 @@ function computeRecipeSourceConditions(
     case "upgrade":
     case "wedding":
     case "wishing_well":
-      // No dedicated gate data yet; entity and source share the same (currently always) condition.
-      return { entity: ALWAYS, source: ALWAYS };
+      return { entity, source: ALWAYS };
     case "mines_chest":
     case "mines_dig_site": {
       const floor = ctx.biomeFloor(source.biomeId);
       const minesCondition: VisibilityCondition =
         floor === undefined ? ALWAYS : { type: "minesLevel", floor };
-      const perkCondition: VisibilityCondition = source.perkId
-        ? { type: "perkUnlocked", perkId: source.perkId }
-        : ALWAYS;
       return {
-        entity: andSimplify([minesCondition, perkCondition]),
+        entity,
         source: minesCondition,
       };
     }
@@ -506,7 +454,7 @@ function computeRecipeSourceConditions(
       const perk = ctx.perks[source.perkId];
       const level = perk ? ctx.perkTierLevels[perk.tier - 1] : undefined;
       return {
-        entity: { type: "perkUnlocked", perkId: source.perkId },
+        entity,
         source:
           perk && level !== undefined
             ? { type: "skillLevel", level, skillId: perk.skillId }
@@ -515,7 +463,7 @@ function computeRecipeSourceConditions(
     }
     case "quest": {
       return {
-        entity: { type: "questCompleted", questId: source.questId },
+        entity,
         source: { type: "questAvailable", questId: source.questId },
       };
     }
@@ -525,11 +473,83 @@ function computeRecipeSourceConditions(
       // At this point source.visibility carries the extraction-time stock entity gate.
       const stockGate = source.visibility ?? ALWAYS;
       return {
-        entity: andSimplify([storeGate, stockGate]),
-        source: andSimplify([toAvailable(storeGate), toAvailable(stockGate)]),
+        entity: andSimplify([entity, stockGate]),
+        source: andSimplify([toAvailableVisibility(storeGate), toAvailableVisibility(stockGate)]),
       };
     }
   }
+}
+
+function assignSourcedEntityVisibility(
+  entity: { sources?: SourceTuple; visibility?: VisibilityCondition },
+  ctx: SourceVisibilityContext,
+): void {
+  const sources = entity.sources ?? [];
+  if (sources.length === 0) {
+    entity.visibility = ALWAYS;
+    return;
+  }
+
+  const computed = sources.map((source) => ({
+    conditions: computeSourceConditions(source, ctx),
+    source,
+  }));
+
+  entity.sources = computed.map(({ conditions, source }) => ({
+    ...source,
+    visibility: conditions.source,
+  })) as SourceTuple;
+  entity.visibility = orSimplify(computed.map(({ conditions }) => conditions.entity));
+}
+
+function assignSpellVisibility(trackerData: TrackerData): void {
+  for (const [spellId, spell] of Object.entries(trackerData.mines.spells)) {
+    const questId = SPELL_SOURCES[spellId];
+    if (questId) {
+      spell.visibility = { type: "questCompleted", questId };
+      spell.sources = [{ type: "quest", questId, questType: "story", trigger: "completion" }];
+    }
+  }
+}
+
+function buildFlatPerks(skills: TrackerData["skills"]): Record<string, FlatPerkInfo> {
+  const result: Record<string, FlatPerkInfo> = {};
+  for (const [skillId, skill] of Object.entries(skills)) {
+    skill.perkTiers.forEach((tier, tierIdx) => {
+      for (const perkId of Object.keys(tier)) {
+        result[perkId] = { skillId: skillId as SkillId, tier: tierIdx + 1 };
+      }
+    });
+  }
+  return result;
+}
+
+function buildStoreVisibilityMap(
+  stores: TrackerData["stores"],
+): Record<StoreId, VisibilityCondition> {
+  const result: Record<StoreId, VisibilityCondition> = {};
+  for (const [storeId, store] of Object.entries(stores)) {
+    if (store.visibility) {
+      result[storeId as StoreId] = store.visibility;
+    }
+  }
+  return result;
+}
+
+function computeSourceConditions(
+  source: AcquisitionSource,
+  ctx: SourceVisibilityContext,
+): { entity: VisibilityCondition; source: VisibilityCondition } {
+  const variant = acquisitionSourceConditions(source, ctx);
+  const availabilityEntity = availabilityToVisibility(
+    "availability" in source ? source.availability : undefined,
+  );
+  const availabilitySource = toAvailableVisibility(availabilityEntity);
+
+  return {
+    entity: andSimplify([variant.entity, availabilityEntity]),
+    source: andSimplify([variant.source, availabilitySource]),
+  };
 }
 
 /**
@@ -607,30 +627,4 @@ function stripAllAlwaysVisibility(trackerData: TrackerData): void {
     if (!isAlwaysVisible(vis)) filtered[key] = vis;
   }
   trackerData.categoryVisibility = filtered;
-}
-
-function toAvailable(condition: VisibilityCondition): VisibilityCondition {
-  switch (condition.type) {
-    case "always":
-    case "heartLevel":
-    case "married":
-    case "minesLevel":
-    case "npcKnown":
-    case "perkUnlocked":
-    case "questAvailable":
-    case "renownLevel":
-    case "skillLevel":
-      return condition;
-    case "and":
-    case "or":
-      return simplifyCondition({
-        type: condition.type,
-        conditions: condition.conditions.map(toAvailable) as [
-          VisibilityCondition,
-          ...VisibilityCondition[],
-        ],
-      });
-    case "questCompleted":
-      return { type: "questAvailable", questId: condition.questId };
-  }
 }

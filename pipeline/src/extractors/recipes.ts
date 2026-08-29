@@ -1,4 +1,4 @@
-import { forEachItem, forEachQuest } from "../extractor-helpers.js";
+import { buildQuestTypeIndex, forEachItem, forEachQuest } from "../extractor-helpers.js";
 import { buildRequirementDefinitions, parseRequirements } from "../requirements.js";
 import { resolveToVisibility } from "./visibility/requirement-resolver.js";
 
@@ -19,6 +19,7 @@ import type {
 } from "$lib/types/tracker-data.js";
 import type { VisibilityCondition } from "$lib/types/visibility.js";
 
+import type { TrackedQuestGroup } from "../extractor-helpers.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 import type { CutsceneQuestMap } from "./visibility/cutscene-quest-map.js";
 
@@ -152,7 +153,8 @@ export function extractRecipes(
 }
 
 function buildQuestRecipeSource(
-  questType: string,
+  nativeQuestGroup: TrackedQuestGroup,
+  questType: QuestType,
   questId: string,
   quest: Record<string, unknown>,
   itemIdToRecipeId: Map<string, string>,
@@ -160,15 +162,15 @@ function buildQuestRecipeSource(
   const sourceBase = {
     type: "quest" as const,
     questId: questId as QuestId,
-    questType: questType as QuestType,
+    questType,
     trigger: "completion" as const,
   };
 
-  if (questType === "fetch_quests") {
+  if (nativeQuestGroup === "fetch_quests") {
     const itemId = extractQuestRequiredItem(quest);
     return itemId ? { ...sourceBase, requestedItemId: itemId as ItemId } : sourceBase;
   }
-  if (questType === "tali_challenges") {
+  if (nativeQuestGroup === "tali_challenges") {
     const itemId = extractQuestRequiredItem(quest);
     const challengeRecipeId = itemId ? itemIdToRecipeId.get(itemId) : undefined;
     return challengeRecipeId
@@ -602,8 +604,13 @@ function collectQuestScrollSources(
   knownRecipeIds: Set<string>,
 ): Map<string, AcquisitionSource[]> {
   const result = new Map<string, AcquisitionSource[]>();
+  const questTypeIndex = buildQuestTypeIndex(fiddle);
 
-  forEachQuest(fiddle, QUEST_TYPES_WITH_SCROLLS, (questType, questId, quest) => {
+  forEachQuest(fiddle, QUEST_TYPES_WITH_SCROLLS, (nativeQuestGroup, questId, quest) => {
+    const questType = questTypeIndex.get(questId as QuestId);
+    if (!questType) {
+      throw new Error(`Unable to normalize quest type for "${questId}"`);
+    }
     const rewards = Array.isArray(quest.rewards) ? quest.rewards : [];
     for (const reward of rewards) {
       if (typeof reward !== "object" || reward === null) continue;
@@ -617,12 +624,20 @@ function collectQuestScrollSources(
         scrollTarget,
         itemIdToRecipeId,
         knownRecipeIds,
-        `${questType}/${questId}`,
+        `${nativeQuestGroup}/${questId}`,
       );
       if (!recipeId) continue;
 
       const sources = result.get(recipeId) ?? [];
-      sources.push(buildQuestRecipeSource(questType, questId, quest, itemIdToRecipeId));
+      sources.push(
+        buildQuestRecipeSource(
+          nativeQuestGroup as TrackedQuestGroup,
+          questType,
+          questId,
+          quest,
+          itemIdToRecipeId,
+        ),
+      );
       result.set(recipeId, sources);
     }
   });

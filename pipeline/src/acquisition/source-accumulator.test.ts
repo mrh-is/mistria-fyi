@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator.js";
 
 import type { Source } from "$lib/types/acquisition.js";
-import type { CosmeticId, ItemId } from "$lib/types/tracker-data.js";
+import type { CosmeticId, ItemId, MinesBiomeId } from "$lib/types/tracker-data.js";
 
 describe("source accumulators", () => {
   it("keeps item and cosmetic target namespaces independent", () => {
@@ -60,5 +60,23 @@ describe("source accumulators", () => {
       ...first,
       visibility: { type: "questCompleted", questId: "second" },
     });
+  });
+
+  it("replaces sources for only the selected target", () => {
+    const accumulator = new ItemSourceAccumulator();
+    accumulator.add("void_herb" as ItemId, {
+      type: "mine",
+      biomeId: "ancient_ruins" as MinesBiomeId,
+    });
+    accumulator.add("other_item" as ItemId, { type: "default" });
+
+    accumulator.replace("void_herb" as ItemId, [
+      { type: "forage", locationIds: ["mines" as never] },
+    ]);
+
+    expect(accumulator.get("void_herb" as ItemId)).toEqual([
+      { type: "forage", locationIds: ["mines"] },
+    ]);
+    expect(accumulator.get("other_item" as ItemId)).toEqual([{ type: "default" }]);
   });
 });

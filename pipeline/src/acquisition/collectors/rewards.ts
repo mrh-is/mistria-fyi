@@ -21,7 +21,7 @@ import type {
   PetCosmeticSourceAccumulator,
 } from "../source-accumulator.js";
 
-type LetterSource = Extract<Source, { type: "letter" }>;
+type LetterRewardSource = Extract<Source, { type: "letter" | "wedding" }>;
 
 const FESTIVAL_SEASON_MAP: Record<string, Season> = {
   fall: "fall",
@@ -56,13 +56,17 @@ export function collectRewardSources(
 const SMALL_ANIMAL_KINDS = ["capybara", "chicken", "duck", "rabbit"];
 const LARGE_ANIMAL_KINDS = ["alpaca", "cow", "horse", "sheep"];
 
-function classifyLetterTrigger(reqs: Record<string, unknown> | undefined): LetterSource {
+function classifyLetterTrigger(reqs: Record<string, unknown> | undefined): LetterRewardSource {
   if (!reqs) {
     return {
       type: "letter",
       trigger: "reached_date",
       triggerDate: { day: 1, season: "spring" },
     };
+  }
+
+  if (typeof reqs.is_spouse === "string") {
+    return { type: "wedding" };
   }
 
   if (typeof reqs.shipped_item === "string") {

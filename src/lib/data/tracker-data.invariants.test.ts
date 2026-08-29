@@ -124,6 +124,21 @@ describe("non-empty collections", () => {
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
 describe("source integrity", () => {
+  it("uses the reviewed Void Herb source in generated data", () => {
+    expect(trackerData.items["void_herb" as keyof typeof trackerData.items]?.sources).toEqual([
+      {
+        type: "forage",
+        availability: {
+          type: "quest",
+          questId: "find_the_magic_key",
+          state: "completed",
+        },
+        locationIds: ["mines"],
+        visibility: { type: "questAvailable", questId: "find_the_magic_key" },
+      },
+    ]);
+  });
+
   it("every item has at least one source", () => {
     const missing: string[] = [];
     for (const [id, item] of recordEntries(trackerData.items)) {

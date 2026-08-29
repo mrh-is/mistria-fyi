@@ -166,7 +166,7 @@ describe("extractRecipes", () => {
       {
         type: "quest",
         questId: "green_sapling_surprise",
-        questType: "stillwell_challenges",
+        questType: "mission",
         trigger: "completion",
       },
     ]);
@@ -199,7 +199,7 @@ describe("extractRecipes", () => {
     const recipe = recipes["vegetable_soup" as RecipeId];
     expect(recipe).toBeDefined();
     expect(recipe.sources).toEqual([
-      { type: "quest", questId: "cooking_101", questType: "story_quests", trigger: "completion" },
+      { type: "quest", questId: "cooking_101", questType: "story", trigger: "completion" },
     ]);
     expect(recipe.name).toBe("Vegetable Soup");
   });
@@ -964,7 +964,7 @@ describe("extractRecipes", () => {
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["widget" as RecipeId];
     expect(recipe.sources).toEqual([
-      { type: "quest", questId: "widget_quest", questType: "fetch_quests", trigger: "completion" },
+      { type: "quest", questId: "widget_quest", questType: "fetch", trigger: "completion" },
     ]);
   });
 
@@ -1046,7 +1046,7 @@ describe("extractRecipes", () => {
       {
         type: "quest",
         questId: "get_widget",
-        questType: "fetch_quests",
+        questType: "fetch",
         requestedItemId: "wild_berries",
         trigger: "completion",
       },
@@ -1083,7 +1083,7 @@ describe("extractRecipes", () => {
       {
         type: "quest",
         questId: "get_widget",
-        questType: "fetch_quests",
+        questType: "fetch",
         requestedItemId: "wild_berries",
         trigger: "completion",
       },
@@ -1126,7 +1126,7 @@ describe("extractRecipes", () => {
       {
         type: "quest",
         questId: "get_widget",
-        questType: "fetch_quests",
+        questType: "fetch",
         requestedItemId: "wild_berries",
         trigger: "completion",
       },
@@ -1168,7 +1168,7 @@ describe("extractRecipes", () => {
         type: "quest",
         challengeRecipeId: "challenge_dish",
         questId: "challenge_one",
-        questType: "tali_challenges",
+        questType: "cooking",
         trigger: "completion",
       },
     ]);
