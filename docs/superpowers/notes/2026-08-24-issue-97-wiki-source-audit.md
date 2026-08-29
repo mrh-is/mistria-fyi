@@ -268,3 +268,10 @@ incompletely propagated sources rather than absent arrays.
    already match the wiki.
 6. Re-run this fixed-seed audit after the blockers are corrected. Preserve “unverifiable” as a
    distinct state so wiki omissions never become synthetic matches.
+
+## Follow-up
+
+[Issue #133](https://github.com/mrh-is/harvest-helper/issues/133) tracks all 97 deterministic
+availability-only records that still use unsupported `has_upper_floor`, `is_dating_someone`,
+`reached_date`, unmapped `seen_cutscene`, or `unlocked_animal` predicates. It also carries the
+save/backup/transfer compatibility requirements for any new progression state.
