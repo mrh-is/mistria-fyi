@@ -75,10 +75,13 @@ function collectGamePredicates(
     case "any":
       return condition.conditions.flatMap(collectGamePredicates);
     case "always":
+    case "hasUpperFloor":
     case "heartLevel":
+    case "isDating":
     case "minesLevel":
     case "perkUnlocked":
     case "quest":
+    case "reachedSeason":
     case "season":
     case "skillLevel":
     case "time":
@@ -207,7 +210,7 @@ describe("generated source rendering contract", () => {
     }
   });
 
-  it("keeps unsupported predicate diagnostics deterministic", () => {
+  it("has no unsupported predicate diagnostics", () => {
     const diagnostics: UnsupportedPredicateDiagnostic[] = sourcedEntities
       .flatMap(({ entity, path }) => {
         const { entityId, entityKind } = pathIdentity(path);
@@ -226,13 +229,6 @@ describe("generated source rendering contract", () => {
       );
     const details = JSON.stringify(diagnostics, null, 2);
 
-    expect(diagnostics, details).toHaveLength(97);
-    expect([...new Set(diagnostics.map(({ predicate }) => predicate))], details).toEqual([
-      "has_upper_floor",
-      "is_dating_someone",
-      "reached_date",
-      "seen_cutscene",
-      "unlocked_animal",
-    ]);
+    expect(diagnostics, details).toHaveLength(0);
   });
 });

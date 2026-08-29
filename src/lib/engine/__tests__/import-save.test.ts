@@ -6,6 +6,8 @@ import { buildImportState, validatePlayerSave } from "../import-save.js";
 
 import type { RecipeId } from "$lib/types/tracker-data.js";
 
+import type { SaveBundle } from "../import-save.js";
+
 function getDefaultRecipeIds(): Set<RecipeId> {
   const ids = new Set<RecipeId>();
   for (const [id, recipe] of Object.entries(trackerData.recipes)) {
@@ -48,6 +50,52 @@ describe("buildImportState", () => {
     expect(unlockedPerks.has("green_thumb" as never)).toBe(true);
     expect(unlockedPerks.has("unknown_perk" as never)).toBe(false);
     expect(result.warnings).toContain("Unknown perk: unknown_perk");
+  });
+
+  describe("new progression fields from save", () => {
+    it("extracts hasUpperFloor from t2_world_facts", () => {
+      const bundle: SaveBundle = {
+        gamedata: { t2_world_facts: { has_upper_floor: true } },
+      };
+      const { completed } = buildImportState(bundle);
+      expect(completed.hasUpperFloor).toBe(true);
+    });
+
+    it("defaults hasUpperFloor to false when missing", () => {
+      const bundle: SaveBundle = {
+        gamedata: { t2_world_facts: {} },
+      };
+      const { completed } = buildImportState(bundle);
+      expect(completed.hasUpperFloor).toBe(false);
+    });
+
+    it("extracts romanticNpcs from t2_world_facts dating keys", () => {
+      const bundle: SaveBundle = {
+        gamedata: {
+          t2_world_facts: {
+            adeline_is_dating: false,
+            juniper_is_dating: true,
+            march_is_dating: true,
+          },
+        },
+      };
+      const { completed } = buildImportState(bundle);
+      expect(completed.romanticNpcs).toEqual(new Set(["juniper", "march"]));
+    });
+
+    it("extracts reachedSeason from t2_world_facts current_season", () => {
+      const bundle: SaveBundle = {
+        gamedata: { t2_world_facts: { current_season: "fall" } },
+      };
+      const { completed } = buildImportState(bundle);
+      expect(completed.reachedSeason).toBe("fall");
+    });
+
+    it("defaults reachedSeason to spring when missing", () => {
+      const bundle: SaveBundle = { gamedata: { t2_world_facts: {} } };
+      const { completed } = buildImportState(bundle);
+      expect(completed.reachedSeason).toBe("spring");
+    });
   });
 });
 

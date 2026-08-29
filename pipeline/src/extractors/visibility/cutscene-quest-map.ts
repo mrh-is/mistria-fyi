@@ -97,6 +97,14 @@ export function buildCutsceneQuestMap(fiddle: ParsedGameData): CutsceneQuestMap 
     }
   }
 
+  // Explicit overrides for cutscenes that cannot be derived from quest data
+  if (!("destroy_vines_eastern_road" in map)) {
+    map.destroy_vines_eastern_road = {
+      phase: "completed",
+      questId: "breaking_the_fire_seal" as QuestId,
+    };
+  }
+
   console.log(`  Cutscene-quest map: ${Object.keys(map).length} cutscenes mapped`);
   return map;
 }

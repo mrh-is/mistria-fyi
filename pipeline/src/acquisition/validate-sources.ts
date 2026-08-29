@@ -56,11 +56,14 @@ const AVAILABILITY_FIELDS = {
   always: [],
   any: ["conditions"],
   gamePredicate: ["predicate", "value"],
+  hasUpperFloor: [],
   heartLevel: ["level", "npcId"],
+  isDating: [],
   minesLevel: ["floor"],
   not: ["condition"],
   perkUnlocked: ["perkId"],
   quest: ["questId", "state"],
+  reachedSeason: ["season"],
   season: ["seasons"],
   skillLevel: ["level", "skillId"],
   time: ["end", "start"],
@@ -623,6 +626,9 @@ function validateAvailability(
           malformed(diagnostics, targetId, `${fieldPath}.value`, "Expected a JSON value", source);
         }
         return;
+      case "hasUpperFloor":
+      case "isDating":
+        return;
       case "heartLevel":
         requireNumber(value, "level", targetId, fieldPath, source, diagnostics);
         if (requireString(value, "npcId", targetId, fieldPath, source, diagnostics)) {
@@ -684,6 +690,19 @@ function validateAvailability(
             'Expected "available" or "completed"',
             source,
           );
+        }
+        return;
+      case "reachedSeason":
+        if (requireString(value, "season", targetId, fieldPath, source, diagnostics)) {
+          if (!SEASONS.has(value.season as string)) {
+            malformed(
+              diagnostics,
+              targetId,
+              `${fieldPath}.season`,
+              `Unknown season "${value.season as string}"`,
+              source,
+            );
+          }
         }
         return;
       case "season":

@@ -41,6 +41,9 @@ export function evaluateAvailabilityCondition(
     case "any":
       return evaluateAny(condition.conditions, context);
     case "gamePredicate":
+    case "hasUpperFloor":
+    case "isDating":
+    case "reachedSeason":
       return "unknown";
     case "heartLevel": {
       const level = context.heartLevels?.get(condition.npcId);
@@ -92,10 +95,13 @@ export function hasTimelyCondition(condition: AvailabilityCondition): boolean {
       return condition.conditions.some(hasTimelyCondition);
     case "always":
     case "gamePredicate":
+    case "hasUpperFloor":
     case "heartLevel":
+    case "isDating":
     case "minesLevel":
     case "perkUnlocked":
     case "quest":
+    case "reachedSeason":
     case "skillLevel":
       return false;
     case "not":
@@ -124,10 +130,13 @@ export function simplifyAvailabilityCondition(
     }
     case "always":
     case "gamePredicate":
+    case "hasUpperFloor":
     case "heartLevel":
+    case "isDating":
     case "minesLevel":
     case "perkUnlocked":
     case "quest":
+    case "reachedSeason":
     case "skillLevel":
     case "time":
     case "weather":
@@ -166,10 +175,13 @@ function collectBadges(condition: AvailabilityCondition, badges: DisplayBadges):
       break;
     case "always":
     case "gamePredicate":
+    case "hasUpperFloor":
     case "heartLevel":
+    case "isDating":
     case "minesLevel":
     case "perkUnlocked":
     case "quest":
+    case "reachedSeason":
     case "skillLevel":
       break;
     case "not":
@@ -220,10 +232,13 @@ function hasSelectiveSeasonConditionInSimplified(condition?: AvailabilityConditi
       return condition.conditions.some(hasSelectiveSeasonConditionInSimplified);
     case "always":
     case "gamePredicate":
+    case "hasUpperFloor":
     case "heartLevel":
+    case "isDating":
     case "minesLevel":
     case "perkUnlocked":
     case "quest":
+    case "reachedSeason":
     case "skillLevel":
     case "time":
     case undefined:

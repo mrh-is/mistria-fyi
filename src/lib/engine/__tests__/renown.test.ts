@@ -12,6 +12,7 @@ function completedAtRenown(renown: number): CompletedState {
     animals: {},
     cosmetics: new Set(),
     dates: new Set(),
+    hasUpperFloor: false,
     marriedNpc: null,
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
@@ -19,7 +20,9 @@ function completedAtRenown(renown: number): CompletedState {
     petCosmetics: new Set(),
     petSkins: new Set(),
     questStates: {},
+    reachedSeason: "spring",
     renown,
+    romanticNpcs: new Set(),
     skillLevels: {},
     unlockedPerks: new Set(),
   };

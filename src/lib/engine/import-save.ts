@@ -6,10 +6,12 @@ import type {
   AnimalVariantId,
   CosmeticId,
   ItemId,
+  NpcId,
   PerkId,
   PetCosmeticSetId,
   PetSkinId,
   RecipeId,
+  Season,
   SpellId,
 } from "$lib/types/tracker-data.js";
 
@@ -69,6 +71,7 @@ export function buildImportState(bundle: SaveBundle): {
     animals: 0,
     cosmetics: 0,
     dates: 0,
+    hasUpperFloor: 0,
     mineFloor: 0,
     museum: 0,
     npcLevels: 0,
@@ -76,7 +79,9 @@ export function buildImportState(bundle: SaveBundle): {
     petCosmetics: 0,
     petSkins: 0,
     quests: 0,
+    reachedSeason: 0,
     renown: 0,
+    romanticNpcs: 0,
     skillLevels: 0,
     spells: 0,
   };
@@ -289,6 +294,33 @@ export function buildImportState(bundle: SaveBundle): {
     }
   }
 
+  // ── Has upper floor (from gamedata.json → t2_world_facts) ──
+  const hasUpperFloor = facts?.has_upper_floor === true;
+  if (hasUpperFloor) counts.hasUpperFloor = 1;
+
+  // ── Romantic NPCs (from gamedata.json → t2_world_facts → {npc}_is_dating) ──
+  const romanticNpcs = new Set<NpcId>();
+  if (facts) {
+    const dateableNpcs = Object.entries(trackerData.npcs)
+      .filter(([, npc]) => npc.dateable === true)
+      .map(([id]) => id);
+    for (const npcId of dateableNpcs) {
+      if (facts[`${npcId}_is_dating`] === true) {
+        romanticNpcs.add(npcId as NpcId);
+      }
+    }
+  }
+  counts.romanticNpcs = romanticNpcs.size;
+
+  // ── Reached season (from gamedata.json → t2_world_facts → current_season) ──
+  const VALID_SEASONS = new Set(["fall", "spring", "summer", "winter"]);
+  const reachedSeason: Season = (
+    typeof facts?.current_season === "string" && VALID_SEASONS.has(facts.current_season)
+      ? facts.current_season
+      : "spring"
+  ) as Season;
+  if (reachedSeason !== "spring") counts.reachedSeason = 1;
+
   // ── Quest completion (from quests.json) ──
   const questStates: Record<string, QuestState> = {};
   if (bundle.quests) {
@@ -324,13 +356,16 @@ export function buildImportState(bundle: SaveBundle): {
       animalCosmetics,
       animals: animalVariants,
       cosmetics: cosmeticIds,
+      hasUpperFloor,
       mines: { floor: mineFloor, spells },
       museum: museumIds,
       npcLevels,
       petCosmetics,
       petSkins,
       questStates,
+      reachedSeason,
       renown,
+      romanticNpcs,
       skillLevels,
       unlockedPerks: perkIds,
     },

@@ -19,9 +19,12 @@ export function availabilityToVisibility(condition?: AvailabilityCondition): Vis
         ],
       });
     case "always":
+    case "hasUpperFloor":
     case "heartLevel":
+    case "isDating":
     case "minesLevel":
     case "perkUnlocked":
+    case "reachedSeason":
     case "skillLevel":
       return condition;
     case "gamePredicate":
@@ -40,12 +43,15 @@ export function availabilityToVisibility(condition?: AvailabilityCondition): Vis
 export function toAvailableVisibility(condition: VisibilityCondition): VisibilityCondition {
   switch (condition.type) {
     case "always":
+    case "hasUpperFloor":
     case "heartLevel":
+    case "isDating":
     case "married":
     case "minesLevel":
     case "npcKnown":
     case "perkUnlocked":
     case "questAvailable":
+    case "reachedSeason":
     case "renownLevel":
     case "skillLevel":
       return condition;

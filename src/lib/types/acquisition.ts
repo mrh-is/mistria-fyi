@@ -26,11 +26,14 @@ export type AvailabilityCondition =
   | { type: "always" }
   | { type: "any"; conditions: NonEmptyArray<AvailabilityCondition> }
   | { type: "gamePredicate"; predicate: string; value: JsonValue }
+  | { type: "hasUpperFloor" }
   | { type: "heartLevel"; level: number; npcId: NpcId }
+  | { type: "isDating" }
   | { type: "minesLevel"; floor: number }
   | { type: "not"; condition: AvailabilityCondition }
   | { type: "perkUnlocked"; perkId: PerkId }
   | { type: "quest"; questId: QuestId; state: Omit<QuestVisibility, "unavailable"> }
+  | { type: "reachedSeason"; season: Season }
   | { type: "season"; seasons: NonEmptyArray<Season> }
   | { type: "skillLevel"; level: number; skillId: SkillId }
   | { type: "time"; start: number; end: number }

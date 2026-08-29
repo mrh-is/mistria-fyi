@@ -31,6 +31,7 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     animals: {},
     cosmetics: new Set(),
     dates: new Set(),
+    hasUpperFloor: false,
     marriedNpc: null,
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
@@ -38,7 +39,9 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     petCosmetics: new Set(),
     petSkins: new Set(),
     questStates: {},
+    reachedSeason: "spring",
     renown: 0,
+    romanticNpcs: new Set(),
     skillLevels: {},
     unlockedPerks: new Set(),
     ...overrides,
@@ -47,11 +50,14 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
 
 function makeState(overrides: Partial<UserProgressionState> = {}): UserProgressionState {
   return {
+    hasUpperFloor: false,
+    isDating: false,
     knownNpcs: new Set(),
     marriedNpc: null,
     minesFloor: 0,
     npcLevels: {},
     questVisibility: {},
+    reachedSeason: "spring" as const,
     renown: 0,
     showSpoilers: false,
     skillLevels: {},

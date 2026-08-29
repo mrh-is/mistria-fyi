@@ -136,11 +136,21 @@ function projectPredicate(
         return { type: "perkUnlocked", perkId: jsonValue as PerkId };
       }
       break;
+    case "has_upper_floor":
+      if (jsonValue === true) {
+        return { type: "hasUpperFloor" };
+      }
+      break;
     case "in_time_range": {
       const range = numberPair(jsonValue);
       if (range) return { type: "time", start: range[0], end: range[1] };
       break;
     }
+    case "is_dating_someone":
+      if (jsonValue === true) {
+        return { type: "isDating" };
+      }
+      break;
     case "is_season": {
       const seasons = closedStringValues(jsonValue, ALL_SEASONS);
       if (seasons) {
@@ -157,6 +167,17 @@ function projectPredicate(
     case "is_weather": {
       const weathers = closedStringValues(jsonValue, ALL_WEATHERS);
       if (weathers) return { type: "weather", weathers };
+      break;
+    }
+    case "reached_date": {
+      if (typeof jsonValue === "string" && ALL_SEASONS.has(jsonValue as Season)) {
+        return { type: "reachedSeason", season: jsonValue as Season };
+      }
+      if (typeof jsonValue === "object" && jsonValue !== null) {
+        throw new Error(
+          `Day-level reached_date is not supported at ${sourceFieldPath(sourceLocation, predicate)} in ${sourceLocation.sourcePath}`,
+        );
+      }
       break;
     }
     case "reached_heart_level": {
@@ -176,10 +197,18 @@ function projectPredicate(
     }
     case "seen_cutscene":
       if (typeof jsonValue === "string") {
+        if (jsonValue === "elsie_dating_tutorial") {
+          return { type: "isDating" };
+        }
         const cutscene = context.cutsceneMap[jsonValue];
         if (cutscene) {
           return { type: "quest", questId: cutscene.questId, state: cutscene.phase };
         }
+      }
+      break;
+    case "unlocked_animal":
+      if (typeof jsonValue === "string") {
+        return { type: "quest", questId: "repair_haydens_barn" as QuestId, state: "completed" };
       }
       break;
   }
