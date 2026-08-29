@@ -189,12 +189,14 @@ describe("reference integrity", () => {
   const npcIds = new Set(recordKeys(trackerData.npcs));
   const storeIds = new Set(recordKeys(trackerData.stores));
 
-  it("almanac categories reference valid item IDs", () => {
+  it("almanac entries reference valid item IDs", () => {
     const invalid: string[] = [];
     for (const [catId, cat] of recordEntries(trackerData.almanac)) {
-      for (const itemId of cat.items) {
-        if (!itemIds.has(itemId)) {
-          invalid.push(`${catId}/${itemId}`);
+      for (const entry of cat.items) {
+        for (const memberId of entry.itemIds) {
+          if (!itemIds.has(memberId)) {
+            invalid.push(`${catId}/${memberId}`);
+          }
         }
       }
     }
@@ -308,10 +310,11 @@ describe("no duplicate IDs", () => {
     expect(dupes, `Duplicate quest IDs: ${dupes.join(", ")}`).toEqual([]);
   });
 
-  it("no duplicate almanac item IDs within a category", () => {
+  it("no duplicate almanac canonical IDs within a category", () => {
     for (const [catId, cat] of recordEntries(trackerData.almanac)) {
-      const dupes = cat.items.filter((id, i) => cat.items.indexOf(id) !== i);
-      expect(dupes, `Duplicate items in almanac/${catId}: ${dupes.join(", ")}`).toEqual([]);
+      const canonicalIds = cat.items.map((entry) => entry.itemIds[0]);
+      const dupes = canonicalIds.filter((id, i) => canonicalIds.indexOf(id) !== i);
+      expect(dupes, `Duplicate canonical IDs in almanac/${catId}: ${dupes.join(", ")}`).toEqual([]);
     }
   });
 

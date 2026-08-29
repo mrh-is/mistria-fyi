@@ -19,10 +19,15 @@ export type {
 } from "./acquisition.js";
 
 export interface AlmanacCategory {
-  items: ItemId[];
+  items: AlmanacEntry[];
   name: string;
 }
 export type AlmanacCategoryId = string & { readonly __brand: "AlmanacCategoryId" };
+export interface AlmanacEntry {
+  itemIds: ItemId[];
+  name: string;
+  recipeId?: RecipeId;
+}
 export interface Animal {
   cosmetics: Record<CosmeticId, AnimalCosmetic>;
   name: string;

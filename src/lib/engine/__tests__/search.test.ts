@@ -289,3 +289,29 @@ describe("recipe visibility", () => {
     expect(recipeResults[0].completed).toBe(true);
   });
 });
+
+// ─── Colorway deduplication ──────────────────────────────────────
+
+describe("colorway deduplication", () => {
+  it("produces one deduplicated result for a collapsed colorway group", () => {
+    const results = search("Animated Waterfall");
+    const almanacResults = results.filter(
+      (r) => r.category === "almanac" && r.name === "Animated Waterfall",
+    );
+    expect(almanacResults).toHaveLength(1);
+  });
+
+  it("uses the canonical (alphabetically-first) ID", () => {
+    const results = search("Animated Waterfall");
+    const match = results.find((r) => r.category === "almanac" && r.name === "Animated Waterfall");
+    expect(match?.id).toBe("animated_waterfall_v1");
+  });
+
+  it("marks the canonical entry complete when its canonical ID is in completed set", () => {
+    const results = search("Animated Waterfall", {
+      almanac: new Set(["animated_waterfall_v1" as never]),
+    });
+    const match = results.find((r) => r.category === "almanac" && r.name === "Animated Waterfall");
+    expect(match?.completed).toBe(true);
+  });
+});

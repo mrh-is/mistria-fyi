@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
-import { recordKeys } from "$lib/utils.js";
+import { recordKeys, recordValues } from "$lib/utils.js";
 
 import { decodeTransferPayload, encodeTransferPayload, TRANSFER_VERSION } from "../transfer.js";
 
@@ -21,6 +21,12 @@ import type {
 // the v2 decoder remains backward compatible with payloads generated before this change.
 // cspell:disable-next-line
 const V1_FIXTURE = "AWNgGAVUBqwMXAYDZDUA";
+
+// A payload encoded with the v5 codec using the pre-v6 almanac ordering. Contains two almanac
+// completions: bakery_bread_basket_pastel (old canonical, now bakery_bread_basket_coffee) and
+// animated_waterfall_v1 (unchanged canonical). All other fields are empty/zero.
+// cspell:disable-next-line
+const V5_ALMANAC_FIXTURE = "BWNgoBXgQOE10MyeUTAKqA0A";
 
 // Helper to create a minimal CompletedState for testing
 function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState {
@@ -54,9 +60,9 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
   };
 }
 
-describe("transfer codec v5", () => {
-  it("has version 5", () => {
-    expect(TRANSFER_VERSION).toBe(5);
+describe("transfer codec v6", () => {
+  it("has version 6", () => {
+    expect(TRANSFER_VERSION).toBe(6);
   });
 
   it("round-trips unlockedPerks", async () => {
@@ -149,6 +155,38 @@ describe("transfer codec v5", () => {
     expect(decoded.mines?.floor).toBe(5);
     expect(decoded.npcLevels?.["adeline" as NpcId]).toBe(3);
     expect(decoded.renown).toBe(10);
+  });
+
+  it("decodes v5 payload and normalizes old almanac canonicals to new", async () => {
+    const decoded = await decodeTransferPayload(V5_ALMANAC_FIXTURE);
+    const almanac = decoded.almanac ?? new Set();
+    expect(almanac.has("bakery_bread_basket_coffee" as never)).toBe(true);
+    expect(almanac.has("bakery_bread_basket_pastel" as never)).toBe(false);
+    expect(almanac.has("animated_waterfall_v1" as never)).toBe(true);
+    expect(almanac.size).toBe(2);
+  });
+
+  it("round-trips almanac with canonical IDs", async () => {
+    const colorwayEntry = recordValues(trackerData.almanac)
+      .flatMap(({ items }) => items)
+      .find((entry) => entry.itemIds.length > 1);
+    if (!colorwayEntry) throw new Error("expected a colorway entry in test data");
+    const canonicalId = colorwayEntry.itemIds[0];
+    const completed = makeCompleted({ almanac: new Set([canonicalId]) });
+    const payload = await encodeTransferPayload(completed);
+    const decoded = await decodeTransferPayload(payload);
+    const decodedAlmanac = decoded.almanac ?? new Set();
+    expect(decodedAlmanac.has(canonicalId)).toBe(true);
+  });
+
+  it("uses deterministic almanac ordering derived from canonical IDs", async () => {
+    const allCanonicalIds = recordValues(trackerData.almanac)
+      .flatMap(({ items }) => items.map((entry) => entry.itemIds[0]))
+      .toSorted();
+    const completed = makeCompleted({ almanac: new Set(allCanonicalIds) });
+    const payload = await encodeTransferPayload(completed);
+    const decoded = await decodeTransferPayload(payload);
+    expect(decoded.almanac).toEqual(new Set(allCanonicalIds));
   });
 
   it("rejects unsupported versions", async () => {

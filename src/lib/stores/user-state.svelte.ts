@@ -1,6 +1,6 @@
 import { SvelteSet } from "svelte/reactivity";
 
-import { trackerData } from "$lib/data/index.js";
+import { canonicalAlmanacId, trackerData } from "$lib/data/index.js";
 import { clampRenownLevel } from "$lib/engine/progress.js";
 import { findRecipesForQuest } from "$lib/engine/quest-rewards.js";
 import { deriveProgressionState, type UserProgressionState } from "$lib/engine/visibility.js";
@@ -625,7 +625,7 @@ function deserialize(json: string): null | UserState {
     return {
       availabilityMode: s.availabilityMode,
       completed: {
-        almanac: brandedSet<ItemId>(s.completed.almanac),
+        almanac: normalizeAlmanacIds(s.completed.almanac),
         almanacRecipes: brandedSet<RecipeId>(s.completed.almanacRecipes ?? []),
         animalCosmetics: Object.fromEntries(
           Object.entries(s.completed.animalCosmetics).map(([k, v]) => [
@@ -671,6 +671,17 @@ function filterRecord<V>(
   predicate: (v: V) => boolean,
 ): Record<string, V> {
   return Object.fromEntries(Object.entries(record).filter(([, v]) => predicate(v)));
+}
+
+function normalizeAlmanacIds(ids: string[]): Set<ItemId> {
+  const result = new SvelteSet<ItemId>();
+  for (const id of ids) {
+    const canonical = canonicalAlmanacId.get(id as ItemId);
+    if (canonical) {
+      result.add(canonical);
+    }
+  }
+  return result;
 }
 
 function serialize(state: UserState): string {

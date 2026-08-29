@@ -1,9 +1,10 @@
 import { trackerData } from "$lib/data/index.js";
-import { filterAvailableItems } from "$lib/engine/availability.js";
+import { filterAvailableItems, isItemAvailable } from "$lib/engine/availability.js";
 import { recordEntries, recordKeys, recordValues } from "$lib/utils";
 
 import type { CategoryKey } from "$lib/data/categories.js";
 import type { AvailabilityMode, CompletedState } from "$lib/stores/user-state.svelte.js";
+import type { Source } from "$lib/types/acquisition.js";
 import type { ItemId, Season, Weather } from "$lib/types/tracker-data.js";
 
 export const MAX_NPC_LEVEL = 10;
@@ -74,9 +75,50 @@ export function getCategoryProgress(category: CategoryKey, ctx: ProgressContext)
   }
 }
 
+function aggregateEntrySources(canonicalId: ItemId): Source[] {
+  const almanacEntry = recordValues(trackerData.almanac)
+    .flatMap(({ items }) => items)
+    .find((entry) => entry.itemIds[0] === canonicalId);
+  if (!almanacEntry) return trackerData.items[canonicalId].sources;
+  const seen = new Set<string>();
+  const sources: Source[] = [];
+  for (const id of almanacEntry.itemIds) {
+    const item = trackerData.items[id];
+    for (const source of item.sources) {
+      const key = JSON.stringify(source);
+      if (!seen.has(key)) {
+        seen.add(key);
+        sources.push(source);
+      }
+    }
+  }
+  return sources;
+}
+
+function almanacEntryProgress(
+  canonicalIds: ItemId[],
+  completedSet: Set<ItemId>,
+  ctx: ProgressContext,
+): CategoryProgress {
+  const incompleteIds = canonicalIds.filter((id) => !completedSet.has(id));
+  const filtered =
+    ctx.availabilityMode === "everything"
+      ? incompleteIds
+      : incompleteIds.filter((id) =>
+          isItemAvailable(aggregateEntrySources(id), ctx.worldState, ctx.availabilityMode),
+        );
+  return {
+    completed: canonicalIds.length - incompleteIds.length,
+    filtered: filtered.length,
+    total: canonicalIds.length,
+  };
+}
+
 function getAlmanacProgress(ctx: ProgressContext): CategoryProgress {
-  const allIds = recordValues(trackerData.almanac).flatMap(({ items }) => items);
-  return itemProgress(allIds, ctx.completed.almanac, ctx);
+  const allCanonicalIds = recordValues(trackerData.almanac).flatMap(({ items }) =>
+    items.map((entry) => entry.itemIds[0]),
+  );
+  return almanacEntryProgress(allCanonicalIds, ctx.completed.almanac, ctx);
 }
 
 function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
@@ -196,6 +238,8 @@ function getQuestsProgress(ctx: ProgressContext): CategoryProgress {
   return { completed, filtered: total - completed, total };
 }
 
+// ─── All categories ─────────────────────────────────────────────────
+
 function getRecipesProgress(ctx: ProgressContext): CategoryProgress {
   const allIds = recordKeys(trackerData.recipes);
   const completed = allIds.filter((id) => ctx.completed.almanacRecipes.has(id)).length;
@@ -208,8 +252,6 @@ function getRenownProgress(ctx: ProgressContext): CategoryProgress {
   const completed = Math.max(0, Math.min(ctx.completed.renown, total));
   return { completed, filtered: total - completed, total };
 }
-
-// ─── All categories ─────────────────────────────────────────────────
 
 function getSkillsProgress(ctx: ProgressContext): CategoryProgress {
   let total = 0;

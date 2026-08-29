@@ -1,4 +1,4 @@
-import { trackerData } from "$lib/data/index.js";
+import { canonicalAlmanacId, trackerData } from "$lib/data/index.js";
 import { recordKeys, recordValues } from "$lib/utils.js";
 
 import type { CompletedState, MergeCounts, QuestState } from "$lib/stores/user-state.svelte.js";
@@ -92,7 +92,6 @@ export function buildImportState(bundle: SaveBundle): {
 
   // ── Almanac: union of items_acquired + items_sold keys + recipes_created ──
   const almanacIds = new Set<ItemId>();
-  const validItems = new Set(Object.keys(trackerData.items));
 
   const allPlayerItems = new Set<string>([
     ...(save?.items_acquired ?? []),
@@ -101,8 +100,9 @@ export function buildImportState(bundle: SaveBundle): {
   ]);
 
   for (const id of allPlayerItems) {
-    if (validItems.has(id)) {
-      almanacIds.add(id as ItemId);
+    const canonical = canonicalAlmanacId.get(id as ItemId);
+    if (canonical) {
+      almanacIds.add(canonical);
     }
   }
   counts.almanac = almanacIds.size;
@@ -120,7 +120,7 @@ export function buildImportState(bundle: SaveBundle): {
   for (const id of save?.recipe_unlocks ?? []) {
     if (validRecipes.has(id)) {
       almanacRecipes.add(id as RecipeId);
-    } else if (validItems.has(id)) {
+    } else if (id in trackerData.items) {
       const recipeId = trackerData.items[id as ItemId].sources.find(
         (source) => source.type === "recipe",
       )?.recipeId;

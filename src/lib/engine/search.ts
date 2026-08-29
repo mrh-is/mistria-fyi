@@ -5,7 +5,8 @@ import { recordEntries } from "$lib/utils";
 
 import type { UserProgressionState } from "$lib/engine/visibility.js";
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { Season, Weather } from "$lib/types/tracker-data.js";
+import type { Source } from "$lib/types/acquisition.js";
+import type { ItemId, Season, Weather } from "$lib/types/tracker-data.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -34,20 +35,48 @@ export function searchItems(
   const q = query.toLowerCase();
   const results: SearchResult[] = [];
 
-  // Items (covers museum + almanac) — always search all, flag availability
-  for (const [id, item] of recordEntries(trackerData.items)) {
-    if (item.visibility && !isVisible(item.visibility, progressionState)) continue;
+  // Almanac entries — one result per collapsed row, canonical ID
+  for (const category of Object.values(trackerData.almanac)) {
+    for (const entry of category.items) {
+      const canonicalId = entry.itemIds[0];
+      const item = trackerData.items[canonicalId];
+      if (item.visibility && !isVisible(item.visibility, progressionState)) continue;
 
-    if (item.name.toLowerCase().includes(q)) {
-      results.push({
-        available: isItemAvailable(item.sources, worldState, "available"),
-        category: "almanac",
-        completed: completed.almanac.has(id),
-        id,
-        name: item.name,
-      });
+      if (entry.name.toLowerCase().includes(q)) {
+        const sources = aggregateSources(entry.itemIds);
+        results.push({
+          available: isItemAvailable(sources, worldState, "available"),
+          category: "almanac",
+          completed: completed.almanac.has(canonicalId),
+          id: canonicalId,
+          name: entry.name,
+        });
+      }
+      if (results.length >= MAX_RESULTS) return rankResults(results, q);
     }
-    if (results.length >= MAX_RESULTS) return rankResults(results, q);
+  }
+
+  // Museum items — these use raw item IDs, not almanac entries
+  for (const wing of Object.values(trackerData.museum)) {
+    for (const set of Object.values(wing.sets)) {
+      for (const id of set.items) {
+        const item = trackerData.items[id];
+        if (item.visibility && !isVisible(item.visibility, progressionState)) continue;
+
+        if (item.name.toLowerCase().includes(q)) {
+          // Skip if already covered by an almanac result with same ID
+          if (results.some((r) => r.id === id && r.category === "almanac")) continue;
+          results.push({
+            available: isItemAvailable(item.sources, worldState, "available"),
+            category: "museum",
+            completed: completed.museum.has(id),
+            id,
+            name: item.name,
+          });
+        }
+        if (results.length >= MAX_RESULTS) return rankResults(results, q);
+      }
+    }
   }
 
   // NPCs — not season-gated
@@ -190,6 +219,22 @@ export function searchItems(
   }
 
   return rankResults(results, q);
+}
+
+function aggregateSources(itemIds: ItemId[]): Source[] {
+  const seen = new Set<string>();
+  const sources: Source[] = [];
+  for (const id of itemIds) {
+    const item = trackerData.items[id];
+    for (const source of item.sources) {
+      const key = JSON.stringify(source);
+      if (!seen.has(key)) {
+        seen.add(key);
+        sources.push(source);
+      }
+    }
+  }
+  return sources;
 }
 
 /** Prefix matches first, then available before unavailable, then alphabetical */

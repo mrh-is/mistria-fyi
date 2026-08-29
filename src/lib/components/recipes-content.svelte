@@ -62,8 +62,9 @@
     recordForEach(trackerData.almanac, ([catId, cat]) => {
       const seen = new SvelteSet<string>();
       const entries: RecipeEntry[] = [];
-      for (const itemId of cat.items) {
-        const item = trackerData.items[itemId];
+      for (const entry of cat.items) {
+        const canonicalId = entry.itemIds[0];
+        const item = trackerData.items[canonicalId];
         const recipeId = recipeForItem(item);
         if (!recipeId || seen.has(recipeId)) continue;
         seen.add(recipeId);
@@ -72,7 +73,7 @@
         const sources = recipe.sources;
         entries.push({
           id: recipeId,
-          name: item.name,
+          name: entry.name,
           nameVisible: isVisible(visibility, userState.progressionState),
           sources,
           visibility,
