@@ -528,10 +528,6 @@ function createUserState() {
     },
     setSeason(season: Season) {
       state.worldState.season = season;
-      const seasonOrd: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
-      if (seasonOrd[season] > seasonOrd[state.completed.reachedSeason]) {
-        state.completed.reachedSeason = season;
-      }
     },
     setSkillLevel(id: SkillId, level: number) {
       state.completed.skillLevels[id] = Math.max(0, Math.min(level, 60));

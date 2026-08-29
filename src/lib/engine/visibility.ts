@@ -120,7 +120,6 @@ export function isConditionInvertible(condition: VisibilityCondition): boolean {
     case "always":
     case "hasUpperFloor":
     case "heartLevel":
-    case "isDating":
     case "married":
     case "minesLevel":
     case "perkUnlocked":
@@ -133,6 +132,7 @@ export function isConditionInvertible(condition: VisibilityCondition): boolean {
     case "and":
     case "or":
       return condition.conditions.every(isConditionInvertible);
+    case "isDating":
     case "npcKnown":
       return false;
   }

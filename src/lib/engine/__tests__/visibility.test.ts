@@ -249,6 +249,10 @@ describe("isConditionInvertible", () => {
     expect(isConditionInvertible({ type: "married", npcId: "n" as NpcId })).toBe(true);
   });
 
+  it("returns false for isDating (requires NPC choice)", () => {
+    expect(isConditionInvertible({ type: "isDating" })).toBe(false);
+  });
+
   it("returns false for npcKnown", () => {
     expect(isConditionInvertible({ type: "npcKnown", npcId: "n" as NpcId })).toBe(false);
   });
@@ -475,6 +479,12 @@ describe("satisfyCondition", () => {
     const perkId = "magic_design" as PerkId;
     satisfyCondition({ type: "perkUnlocked", perkId }, completed, makeTrackerData());
     expect(completed.unlockedPerks.has(perkId)).toBe(true);
+  });
+
+  it("does not modify state for isDating (requires NPC choice)", () => {
+    const completed = makeCompleted();
+    satisfyCondition({ type: "isDating" }, completed, makeTrackerData());
+    expect(completed.romanticNpcs.size).toBe(0);
   });
 
   it("sets marriedNpc", () => {
