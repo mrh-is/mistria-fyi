@@ -246,10 +246,17 @@ function collectWishingWellSources(
   const wishingWell = fiddle.wishing_well as Record<string, Record<string, unknown>> | undefined;
   if (!wishingWell) return;
 
+  const misc = fiddle.misc as Record<string, Record<string, unknown>> | undefined;
+  const wellMisc = misc?.wishing_well;
+  const rollCosts: [string, number][] = [
+    ["small_roll", requireNumber(wellMisc?.low_price, "misc.wishing_well.low_price")],
+    ["large_roll", requireNumber(wellMisc?.high_price, "misc.wishing_well.high_price")],
+  ];
+
   for (const [, tierData] of Object.entries(wishingWell)) {
     if (typeof tierData !== "object" || tierData === null) continue;
 
-    for (const rollKey of ["small_roll", "large_roll"]) {
+    for (const [rollKey, cost] of rollCosts) {
       const roll = tierData[rollKey];
       if (!Array.isArray(roll)) continue;
 
@@ -260,7 +267,7 @@ function collectWishingWellSources(
         if (itemId) {
           accumulator.add(itemId, {
             type: "wishing_well",
-            cost: 100,
+            cost,
           });
         }
       }
@@ -283,4 +290,11 @@ function getArtifactSetItems(fiddle: ParsedGameData, setName: string): string[] 
     }
   }
   return [];
+}
+
+function requireNumber(value: unknown, path: string): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new Error(`Invalid or missing numeric value "${path}"`);
+  }
+  return value;
 }

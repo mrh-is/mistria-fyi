@@ -79,6 +79,27 @@ describe("reviewed overrides", () => {
       ]);
     });
 
+    it.each([
+      [
+        "big_cookie",
+        [{ type: "quest", questId: "a_rewarding_choice", trigger: "dialogue_choice" }],
+      ],
+      ["dozy_pet_bed", [{ type: "wedding" }]],
+      [
+        "maples_drawing",
+        [
+          {
+            type: "quest",
+            questId: "the_aldarian_cooking_contest",
+            trigger: "completion",
+          },
+        ],
+      ],
+      ["valen_workstation", [{ type: "wedding" }]],
+    ] as const)("replaces %s with its reviewed runtime source", (itemId, expected) => {
+      expect(ITEM_SOURCE_REPLACEMENTS[itemId as ItemId]).toEqual(expected);
+    });
+
     it("every cosmetic override has a target ID and at least one source", () => {
       for (const [targetId, sources] of recordEntries(COSMETIC_OVERRIDES)) {
         expect(targetId).toBeTruthy();

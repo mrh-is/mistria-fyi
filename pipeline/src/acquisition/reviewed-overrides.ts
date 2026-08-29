@@ -197,8 +197,6 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   ],
   // heros_ring: Given in Adeline's 8-heart cutscene
   ["heros_ring" as ItemId]: [{ type: "proposal" as const, npcId: "adeline" as NpcId }],
-  // maples_drawing: Given in mistril_rank cutscene (Maple draws the Aldarian Star)
-  ["maples_drawing" as ItemId]: [{ type: "renown" as const, level: 10 }],
   // mistril_star_trophy: Given in mistril_rank cutscene
   ["mistril_star_trophy" as ItemId]: [{ type: "renown" as const, level: 10 }],
   // star_brooch: Given in shooting_star_morning cutscene
@@ -474,10 +472,36 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   ["world_fountain" as ItemId]: [{ type: "default" as const }],
 };
 
-// Wiki: https://fieldsofmistria.wiki.gg/wiki/Void_Herb
-// Foraging in any Mines biome is wiki-supported. Completion of “Find the Magic Key” is an
-// explicit project-owner-reviewed gate because the structured assets do not encode it here.
 export const ITEM_SOURCE_REPLACEMENTS: Partial<Record<ItemId, Source[]>> = {
+  // Wiki: https://fieldsofmistria.wiki.gg/wiki/Big_Cookie
+  // Native evidence: letters.toml adeline_4h_reward_2 grants this when the
+  // adeline_4h_cookie world fact is set; heart_quests.toml identifies A Rewarding Choice as
+  // Adeline's four-heart choice. The runtime-only link is recorded as a reviewed replacement.
+  ["big_cookie" as ItemId]: [
+    {
+      type: "quest",
+      questId: "a_rewarding_choice" as QuestId,
+      trigger: "dialogue_choice",
+    },
+  ],
+  // Native evidence: letters.toml wedding_gifts_juniper requires Juniper as spouse.
+  ["dozy_pet_bed" as ItemId]: [{ type: "wedding" }],
+  // Wiki: https://fieldsofmistria.wiki.gg/wiki/Maple%27s_Aldarian_Star_Drawing
+  // Native evidence: the item description ties the drawing to the contest won with Reina, and
+  // heart_quests.toml identifies that contest as Reina's eight-heart quest. The reward edge is
+  // runtime-only, so this is a reviewed replacement rather than a native extractor rule.
+  ["maples_drawing" as ItemId]: [
+    {
+      type: "quest",
+      questId: "the_aldarian_cooking_contest" as QuestId,
+      trigger: "completion",
+    },
+  ],
+  // Native evidence: letters.toml wedding_gifts_valen requires Valen as spouse.
+  ["valen_workstation" as ItemId]: [{ type: "wedding" }],
+  // Wiki: https://fieldsofmistria.wiki.gg/wiki/Void_Herb
+  // Foraging in any Mines biome is wiki-supported. Completion of “Find the Magic Key” is an
+  // explicit project-owner-reviewed gate because the structured assets do not encode it here.
   ["void_herb" as ItemId]: [
     {
       type: "forage",

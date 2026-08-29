@@ -211,6 +211,32 @@ describe("collectExplorationSources", () => {
     });
   });
 
+  describe("wishing well sources", () => {
+    it("uses the configured low and high prices for small and large rolls", () => {
+      const fiddle = makeFiddle({
+        misc: {
+          wishing_well: {
+            high_price: 500,
+            low_price: 100,
+          },
+        },
+        wishing_well: {
+          common: {
+            large_roll: [{ item: "dragon_road_wall" }],
+            small_roll: [{ item: "small_prize" }],
+          },
+        },
+      });
+
+      const acc = new ItemSourceAccumulator();
+      const cosAcc = new CosmeticSourceAccumulator();
+      collectExplorationSources(fiddle, acc, cosAcc);
+
+      expect(acc.get("small_prize" as ItemId)).toEqual([{ type: "wishing_well", cost: 100 }]);
+      expect(acc.get("dragon_road_wall" as ItemId)).toEqual([{ type: "wishing_well", cost: 500 }]);
+    });
+  });
+
   describe("artifact dig sources", () => {
     it("adds artifact_dig sources for all loot entries", () => {
       const fiddle = makeFiddle({
