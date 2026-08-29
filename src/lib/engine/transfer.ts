@@ -1,4 +1,4 @@
-import { trackerData } from "$lib/data/index.js";
+import { canonicalAlmanacId, trackerData } from "$lib/data/index.js";
 import { recordEntries, recordKeys, recordValues } from "$lib/utils";
 
 import type { CompletedState, QuestState } from "$lib/stores/user-state.svelte.js";
@@ -47,12 +47,13 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   }
 
   // 1. Almanac items
-  const almanacOrder = getAlmanacOrder();
+  const almanacOrder = version >= 6 ? getAlmanacOrder() : getLegacyAlmanacOrder();
   const almanacBytes = readBytes(Math.ceil(almanacOrder.length / 8));
-  // v6 changed canonical IDs from TOML-order-first to alphabetical-first,
-  // so the bit ordering differs. Old versions' almanac bits are unrecoverable.
+  const rawAlmanac = fromBitfield(almanacOrder, almanacBytes) as Set<ItemId>;
   const almanac =
-    version >= 6 ? (fromBitfield(almanacOrder, almanacBytes) as Set<ItemId>) : new Set<ItemId>();
+    version >= 6
+      ? rawAlmanac
+      : new Set([...rawAlmanac].map((id) => canonicalAlmanacId.get(id) ?? id));
 
   // 2. Cosmetics (non-default-unlocked)
   const cosmeticOrder = getCosmeticOrder();
@@ -428,6 +429,100 @@ function getAlmanacOrder(): ItemId[] {
     .toSorted();
 }
 
+// v1–v5 used TOML-order-first representatives; v6 switched to alphabetical-first.
+// This table maps the 88 new canonical IDs back to their old representatives so the
+// legacy bit ordering can be reconstructed from the current tracker data.
+const V5_CANONICAL_REMAP = new Map<string, string>([
+  ["bakery_bread_basket_coffee", "bakery_bread_basket_pastel"],
+  ["bakery_cake_case_coffee", "bakery_cake_case_pastel"],
+  ["bakery_cake_coffee", "bakery_cake_pastel"],
+  ["bakery_cake_slice_coffee", "bakery_cake_slice_pastel"],
+  ["bakery_cookie_jar_coffee", "bakery_cookie_jar_pastel"],
+  ["bakery_cutting_board_coffee", "bakery_cutting_board_pastel"],
+  ["basic_area_rug_green", "basic_area_rug_yellow"],
+  ["basic_doormat_green", "basic_doormat_yellow"],
+  ["basic_wood_chest_black", "basic_wood_chest_dark"],
+  ["bathroom_curtain_stand_black", "bathroom_curtain_stand_blue"],
+  ["bathroom_wall_towel_black", "bathroom_wall_towel_blue"],
+  ["broken_pillar_v1_gray", "broken_pillar_v1_white"],
+  ["butterfly_wall_lamp_bronze", "butterfly_wall_lamp_gold"],
+  ["cavern_floor_brazier_blue", "cavern_floor_brazier_purple"],
+  ["cavern_wall_brazier_blue", "cavern_wall_brazier_purple"],
+  ["chess_bishop_black", "chess_bishop_white"],
+  ["chess_king_black", "chess_king_white"],
+  ["chess_knight_black", "chess_knight_white"],
+  ["chess_pawn_black", "chess_pawn_white"],
+  ["chess_queen_black", "chess_queen_white"],
+  ["chess_rook_black", "chess_rook_white"],
+  ["chess_table_black", "chess_table_white"],
+  ["cottage_bed_ash", "cottage_bed_oak"],
+  ["cottage_bed_double_ash", "cottage_bed_double_oak"],
+  ["cottage_chair_ash", "cottage_chair_oak"],
+  ["cottage_dresser_ash", "cottage_dresser_oak"],
+  ["cottage_flooring_ash", "cottage_flooring_oak"],
+  ["cottage_fridge_ash", "cottage_fridge_oak"],
+  ["cottage_nightstand_ash", "cottage_nightstand_oak"],
+  ["cottage_plant_shelf_ash", "cottage_plant_shelf_oak"],
+  ["cottage_potted_fig_ash", "cottage_potted_fig_oak"],
+  ["cottage_potted_flowers_ash", "cottage_potted_flowers_oak"],
+  ["cottage_rug_ash", "cottage_rug_oak"],
+  ["cottage_table_ash", "cottage_table_oak"],
+  ["cottage_wall_flowers_ash", "cottage_wall_flowers_oak"],
+  ["cottage_wall_window_ash", "cottage_wall_window_oak"],
+  ["cottage_wallpaper_ash", "cottage_wallpaper_oak"],
+  ["counter_kitchen_blue", "counter_kitchen_pink"],
+  ["dragon_altar_earth", "dragon_altar_water"],
+  ["enchantern_lamp_blue", "enchantern_lamp_yellow"],
+  ["essence_bat_garland_blue", "essence_bat_garland_purple"],
+  ["fall_bed_cream", "fall_bed_red"],
+  ["fall_double_bed_cream", "fall_double_bed_red"],
+  ["fall_table_cream", "fall_table_orange"],
+  ["fishing_tank_gold", "fishing_tank_silver"],
+  ["fishing_window_gold", "fishing_window_silver"],
+  ["haunted_attic_armoire_dark", "haunted_attic_armoire_dusty"],
+  ["haunted_attic_bed_dark", "haunted_attic_bed_dusty"],
+  ["haunted_attic_chair_dark", "haunted_attic_chair_dusty"],
+  ["haunted_attic_double_bed_dark", "haunted_attic_double_bed_dusty"],
+  ["haunted_attic_dress_form_dark", "haunted_attic_dress_form_dusty"],
+  ["haunted_attic_flooring_dark", "haunted_attic_flooring_dusty"],
+  ["haunted_attic_nightstand_dark", "haunted_attic_nightstand_dusty"],
+  ["haunted_attic_rocking_chair_dark", "haunted_attic_rocking_chair_dusty"],
+  ["haunted_attic_table_dark", "haunted_attic_table_dusty"],
+  ["haunted_attic_wall_shelf_dark", "haunted_attic_wall_shelf_dusty"],
+  ["haunted_attic_wall_window_dark", "haunted_attic_wall_window_dusty"],
+  ["haunted_attic_wallpaper_dark", "haunted_attic_wallpaper_dusty"],
+  ["kitchen_scale_blue", "kitchen_scale_yellow"],
+  ["kitchen_utensil_holder_blue", "kitchen_utensil_holder_pink"],
+  ["large_fluffy_rug_beige", "large_fluffy_rug_blue"],
+  ["lava_caves_obsidian_fence_blue", "lava_caves_obsidian_fence_purple"],
+  ["mushroom_sofa_blue", "mushroom_sofa_red"],
+  ["ornate_rug_large_rectangle_blue", "ornate_rug_large_rectangle_red"],
+  ["ornate_rug_large_round_blue", "ornate_rug_large_round_red"],
+  ["ornate_rug_large_square_blue", "ornate_rug_large_square_red"],
+  ["ornate_rug_medium_round_blue", "ornate_rug_medium_round_red"],
+  ["ornate_rug_medium_square_blue", "ornate_rug_medium_square_red"],
+  ["ornate_rug_small_blue", "ornate_rug_small_red"],
+  ["picnic_place_setting_pink", "picnic_place_setting_red"],
+  ["picnic_rug_pink", "picnic_rug_red"],
+  ["round_cushioned_stool_beige", "round_cushioned_stool_blue"],
+  ["royal_chest_blue", "royal_chest_wood"],
+  ["sapling_beanbag_chair_blue", "sapling_beanbag_chair_green"],
+  ["small_bathmat_beige", "small_bathmat_blue"],
+  ["star_cushion_blue", "star_cushion_yellow"],
+  ["star_lantern_blue", "star_lantern_yellow"],
+  ["star_viewing_blanket_blue", "star_viewing_blanket_yellow"],
+  ["summer_bed_red", "summer_bed_yellow"],
+  ["summer_chair_red", "summer_chair_yellow"],
+  ["summer_double_bed_red", "summer_double_bed_yellow"],
+  ["summer_flooring_red", "summer_flooring_yellow"],
+  ["summer_jar_lamp_red", "summer_jar_lamp_yellow"],
+  ["summer_rug_red", "summer_rug_yellow"],
+  ["summer_table_red", "summer_table_yellow"],
+  ["summer_wallpaper_red", "summer_wallpaper_yellow"],
+  ["training_dummy_clod", "training_dummy_sapling"],
+  ["void_gryphon_statue_blue", "void_gryphon_statue_purple"],
+]);
+
 function getAnimalCosmeticOrder(): { animalId: AnimalId; cosmeticId: CosmeticId }[] {
   const result: { animalId: AnimalId; cosmeticId: CosmeticId }[] = [];
   for (const [animalId, animal] of Object.entries(trackerData.animals).sort(([a], [b]) =>
@@ -458,13 +553,13 @@ function getAnimalVariantOrder(): { animalId: AnimalId; variantId: AnimalVariant
   return result;
 }
 
-// ─── Bitfield helpers ───────────────────────────────────────────────
-
 function getCosmeticOrder(): CosmeticId[] {
   return (Object.keys(trackerData.cosmetics) as CosmeticId[])
     .filter((id) => !trackerData.cosmetics[id].sources.some((s) => s.type === "default"))
     .sort();
 }
+
+// ─── Bitfield helpers ───────────────────────────────────────────────
 
 function getDateableNpcOrder(): NpcId[] {
   return (Object.keys(trackerData.npcs) as NpcId[])
@@ -474,6 +569,14 @@ function getDateableNpcOrder(): NpcId[] {
 
 function getDateOrder(): DateId[] {
   return (Object.keys(trackerData.dates) as DateId[]).sort();
+}
+
+function getLegacyAlmanacOrder(): ItemId[] {
+  return recordValues(trackerData.almanac).flatMap(({ items }) =>
+    items
+      .map((entry) => (V5_CANONICAL_REMAP.get(entry.itemIds[0]) ?? entry.itemIds[0]) as ItemId)
+      .toSorted(),
+  );
 }
 
 // ─── Compression (Web Compression Streams API) ─────────────────────

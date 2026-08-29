@@ -22,6 +22,12 @@ import type {
 // cspell:disable-next-line
 const V1_FIXTURE = "AWNgGAVUBqwMXAYDZDUA";
 
+// A payload encoded with the v5 codec using the pre-v6 almanac ordering. Contains two almanac
+// completions: bakery_bread_basket_pastel (old canonical, now bakery_bread_basket_coffee) and
+// animated_waterfall_v1 (unchanged canonical). All other fields are empty/zero.
+// cspell:disable-next-line
+const V5_ALMANAC_FIXTURE = "BWNgoBXgQOE10MyeUTAKqA0A";
+
 // Helper to create a minimal CompletedState for testing
 function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState {
   const animals: Record<string, Set<AnimalVariantId>> = {};
@@ -149,6 +155,15 @@ describe("transfer codec v6", () => {
     expect(decoded.mines?.floor).toBe(5);
     expect(decoded.npcLevels?.["adeline" as NpcId]).toBe(3);
     expect(decoded.renown).toBe(10);
+  });
+
+  it("decodes v5 payload and normalizes old almanac canonicals to new", async () => {
+    const decoded = await decodeTransferPayload(V5_ALMANAC_FIXTURE);
+    const almanac = decoded.almanac ?? new Set();
+    expect(almanac.has("bakery_bread_basket_coffee" as never)).toBe(true);
+    expect(almanac.has("bakery_bread_basket_pastel" as never)).toBe(false);
+    expect(almanac.has("animated_waterfall_v1" as never)).toBe(true);
+    expect(almanac.size).toBe(2);
   });
 
   it("round-trips almanac with canonical IDs", async () => {
