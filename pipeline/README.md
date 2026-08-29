@@ -14,11 +14,31 @@ assets are ignored by Git and are not present in a fresh clone.
 pnpm run pipeline -- /path/to/assets
 MISTRIA_ASSETS=/path/to/assets pnpm run pipeline
 pnpm run pipeline -- /path/to/assets --parse-only
-pnpm exec vitest run pipeline/
 ```
 
 `--parse-only` currently enforces the v1.0.2 fixture’s 295 non-metadata files and three
 representative paths, so it is not a version-agnostic validator.
+
+### Test tiers
+
+The default pipeline suite uses synthetic fixtures and passes in a fresh clone without game assets.
+It is part of the public CI verification matrix:
+
+```sh
+pnpm run test:pipeline
+```
+
+The canonical v1.0.2 integration suite is an explicit local check. It uses `pipeline/input/assets`
+by default or `MISTRIA_ASSETS` when set, and fails with the resolved missing path instead of
+silently skipping when assets are unavailable:
+
+```sh
+pnpm run test:pipeline:assets
+MISTRIA_ASSETS=/path/to/assets pnpm run test:pipeline:assets
+```
+
+The asset suite validates the parser profile plus fixture-wide evaluator, requirement, & recipe
+contracts. It does not regenerate data; `pnpm run pipeline -- <path>` remains a separate operation.
 
 ## Data flow
 
@@ -166,21 +186,6 @@ written until every transform succeeds, and `generatedAt` changes on every succe
 
 These are implementation briefs, not current pipeline behavior. They preserve the present contract
 until a separately reviewed change adopts them.
-
-### Make tests portable
-
-- **Current behavior:** `.gitignore` excludes `pipeline/input/`, but parser, evaluator, and
-  requirement tests read `pipeline/input/assets/`. A fresh clone cannot run the complete suite. The
-  local v1.0.2 assets occupy roughly 972 MB and cannot be assumed distributable.
-- **Affected files:** `.gitignore`, `pipeline/src/*.test.ts`, pipeline test helpers, and pipeline
-  setup documentation.
-- **Desired result:** Add a small synthetic distributable fixture, or an explicit asset-provisioning
-  mechanism that skips fixture-dependent tests with an actionable message. Prefer synthetic unit
-  fixtures and an opt-in real-assets integration test.
-- **Constraints:** Do not commit licensed game assets. Do not weaken the existing 295-file
-  integration assertion when v1.0.2 assets are available.
-- **Verification:** `pnpm exec vitest run pipeline/` passes in a fresh clone without private assets,
-  and a documented integration command validates the complete v1.0.2 fixture.
 
 ### Preserve requirement logic
 
