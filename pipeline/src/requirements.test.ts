@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { parseFiddle } from "./parse-fiddle.js";
 import {
   buildRequirementDefinitions,
   createRequirementContext,
@@ -204,29 +203,6 @@ describe("buildRequirementDefinitions", () => {
     expect(primitivePredicates.has("repaired_general_store")).toBe(false);
     expect(namedRequirements.repaired_general_store).toEqual({
       seen_cutscene: "repair_the_general_store_pt_2",
-    });
-  });
-
-  it("parses the full requirements.toml fixture", () => {
-    const parsed = parseFiddle("pipeline/input/assets");
-    const requirementsData = parsed.data.requirements as Record<string, unknown>;
-    expect(requirementsData).toBeDefined();
-
-    const { namedRequirements, primitivePredicates } =
-      buildRequirementDefinitions(requirementsData);
-    expect(primitivePredicates.size).toBeGreaterThan(30);
-    expect(Object.keys(namedRequirements).length).toBeGreaterThan(20);
-
-    // Verify repaired_general_store resolves
-    const result = parseRequirements(
-      { repaired_general_store: true },
-      namedRequirements,
-      primitivePredicates,
-      { entityId: "test", fieldPath: "requirements", sourcePath: "stores.toml" },
-    );
-    expect(result).toEqual({
-      predicate: "seen_cutscene",
-      value: "repair_the_general_store_pt_2",
     });
   });
 });

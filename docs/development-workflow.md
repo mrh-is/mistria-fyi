@@ -109,6 +109,8 @@ pipelines.
   ```sh
   pnpm run test
   ```
+  This command passes in a fresh clone without `pipeline/input/` and is the test command issue #90’s
+  planned public CI will run.
 - **Run Application Logic Tests Only** (`src/`):
   ```sh
   pnpm run test:app
@@ -117,22 +119,41 @@ pipelines.
   ```sh
   pnpm run test:pipeline
   ```
+  This command is also asset-independent.
+
+### Local real-data verification
+
+Changes to the pipeline parser, evaluator, extractors, or shared tracker-data contract require two
+additional local checks against the installed game assets:
+
+```sh
+pnpm run test:pipeline:assets
+pnpm run pipeline -- pipeline/input/assets
+```
+
+`test:pipeline:assets` validates the canonical v1.0.2 fixture and fails when its resolved assets
+path is missing. Set `MISTRIA_ASSETS=/path/to/assets` to use another local assets root. The pipeline
+command regenerates `src/lib/data/tracker-data.json`; review that diff before committing.
 
 ---
 
 ## 5. Verification Matrix
 
 Before committing code or submitting a Pull Request, every change (including documentation-only
-updates) must pass the complete verification matrix.
+updates) must pass the core verification matrix.
 
-| Command                       | Description & Purpose                                   | Scope                     |
-| ----------------------------- | ------------------------------------------------------- | ------------------------- |
-| `pnpm run lint:fix`           | Formats code with Prettier and auto-fixes ESLint errors | All files                 |
-| `pnpm run lint`               | Checks formatting and ESLint compliance (CI equivalent) | All files                 |
-| `pnpm run check`              | Synchronizes SvelteKit types and runs `svelte-check`    | `src/` & SvelteKit routes |
-| `pnpm run test`               | Executes the complete Vitest test suite                 | Unit & logic tests        |
-| `pnpm run build`              | Compiles SvelteKit app and verifies Cloudflare adapter  | Build validation          |
-| `pnpm run pipeline -- <path>` | Regenerates `tracker-data.json` from game assets        | Data schema / extractors  |
+| Command             | Description & Purpose                                   | Scope                     |
+| ------------------- | ------------------------------------------------------- | ------------------------- |
+| `pnpm run lint:fix` | Formats code with Prettier and auto-fixes ESLint errors | All files                 |
+| `pnpm run lint`     | Checks formatting and ESLint compliance (CI equivalent) | All files                 |
+| `pnpm run check`    | Synchronizes SvelteKit types and runs `svelte-check`    | `src/` & SvelteKit routes |
+| `pnpm run test`     | Executes the complete Vitest test suite                 | Unit & logic tests        |
+| `pnpm run build`    | Compiles SvelteKit app and verifies Cloudflare adapter  | Build validation          |
+
+Pipeline parser, evaluator, extractor, & shared data-contract changes must additionally pass
+`pnpm run test:pipeline:assets` and `pnpm run pipeline -- <path>` as described above. These local
+commands are deliberately excluded from issue #90’s planned public CI because licensed game assets
+are not distributed with the repository.
 
 > [!IMPORTANT] Git pre-commit hooks are developer conveniences, not verification evidence. Agents
 > must run the matrix commands directly in their shell and verify clean exit status before

@@ -1,26 +1,22 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { parseFiddle, sourceFileFor } from "./parse-fiddle.js";
-
-const temporaryDirectories: string[] = [];
-
-afterEach(() => {
-  for (const directory of temporaryDirectories.splice(0)) {
-    rmSync(directory, { force: true, recursive: true });
-  }
-});
+import { createAssetsFixture } from "./test-helpers.js";
 
 describe("parseFiddle", () => {
-  it("parses the complete v1.0.2 fixture with representative paths", () => {
-    const parsed = parseFiddle("pipeline/input/assets");
+  it("assembles nested TOML files and records source provenance", () => {
+    const assetsDir = createAssetsFixture({
+      "items/other/cooked_dishes.meta.toml": "ignored = true",
+      "items/other/cooked_dishes.toml":
+        'turnip_soup = { name = "Turnip Soup", value = { bin = 100 } }',
+      "npcs/holt.toml": 'name = "Holt"',
+    });
 
-    expect(parsed.fileCount).toBe(295);
-    expect(parsed.data).toHaveProperty("items.other.cooked_dishes");
-    expect(parsed.data).toHaveProperty("npcs.holt");
-    expect(parsed.data).toHaveProperty("dungeons.dungeons.biomes");
+    const parsed = parseFiddle(assetsDir);
+
+    expect(parsed.fileCount).toBe(2);
+    expect(parsed.data).toHaveProperty("items.other.cooked_dishes.turnip_soup");
+    expect(parsed.data).toHaveProperty("npcs.holt.name", "Holt");
     expect(parsed.sourceFileByRootPath.get("items.other.cooked_dishes")).toBe(
       "items/other/cooked_dishes.toml",
     );
@@ -59,17 +55,3 @@ describe("parseFiddle", () => {
     );
   });
 });
-
-function createAssetsFixture(files: Record<string, string>): string {
-  const assetsDir = mkdtempSync(join(tmpdir(), "harvest-helper-parse-fiddle-"));
-  temporaryDirectories.push(assetsDir);
-
-  const fiddleDir = join(assetsDir, "fiddle");
-  for (const [relativePath, contents] of Object.entries(files)) {
-    const filePath = join(fiddleDir, relativePath);
-    mkdirSync(join(filePath, ".."), { recursive: true });
-    writeFileSync(filePath, contents);
-  }
-
-  return assetsDir;
-}

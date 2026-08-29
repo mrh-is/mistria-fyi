@@ -1,8 +1,5 @@
-import { existsSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { evaluateExpressions } from "../evaluate.js";
-import { parseFiddle } from "../parse-fiddle.js";
 import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
 import { extractRecipes } from "./recipes.js";
 
@@ -1405,49 +1402,5 @@ describe("extractRecipes — stock requirement visibility", () => {
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["espresso" as RecipeId];
     expect(recipe.sources).toEqual([{ type: "store", storeId: "darcy_stall" }]);
-  });
-});
-
-const ASSETS_DIR = process.env.MISTRIA_ASSETS ?? "pipeline/input/assets";
-const HAS_ASSETS = existsSync(`${ASSETS_DIR}/fiddle`);
-
-describe.skipIf(!HAS_ASSETS)("extractRecipes — real data", () => {
-  it("produces recipes with expected source type counts", () => {
-    const { data: fiddle } = parseFiddle(ASSETS_DIR);
-    evaluateExpressions(fiddle);
-
-    const { recipeIdByItemId, recipes } = extractRecipes(fiddle);
-
-    const totalRecipes = Object.keys(recipes).length;
-    expect(totalRecipes).toBeGreaterThan(100);
-
-    const withDefault = Object.values(recipes).filter((r) =>
-      r.sources.some((s) => s.type === "default"),
-    ).length;
-    expect(withDefault).toBeGreaterThan(50);
-
-    const withQuest = Object.values(recipes).filter((r) =>
-      r.sources.some((s) => s.type === "quest"),
-    ).length;
-    expect(withQuest).toBeGreaterThan(10);
-
-    const withLetter = Object.values(recipes).filter((r) =>
-      r.sources.some((s) => s.type === "letter"),
-    ).length;
-    expect(withLetter).toBeGreaterThan(10);
-
-    const withStore = Object.values(recipes).filter((r) =>
-      r.sources.some((s) => s.type === "store"),
-    ).length;
-    expect(withStore).toBeGreaterThan(10);
-
-    for (const [, recipeId] of recipeIdByItemId) {
-      expect(recipes[recipeId]).toBeDefined();
-    }
-
-    for (const recipe of Object.values(recipes)) {
-      expect(typeof recipe.name).toBe("string");
-      expect(recipe.name.length).toBeGreaterThan(0);
-    }
   });
 });

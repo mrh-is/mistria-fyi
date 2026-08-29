@@ -25,5 +25,5 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 # Pipeline inputs/outputs (large game data files)
-pipeline/input/
-pipeline/output/
+pipeline/input
+pipeline/output
