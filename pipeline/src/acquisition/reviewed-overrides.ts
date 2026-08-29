@@ -484,8 +484,6 @@ export const ITEM_SOURCE_REPLACEMENTS: Partial<Record<ItemId, Source[]>> = {
       trigger: "dialogue_choice",
     },
   ],
-  // Native evidence: letters.toml wedding_gifts_juniper requires Juniper as spouse.
-  ["dozy_pet_bed" as ItemId]: [{ type: "wedding" }],
   // Wiki: https://fieldsofmistria.wiki.gg/wiki/Maple%27s_Aldarian_Star_Drawing
   // Native evidence: the item description ties the drawing to the contest won with Reina, and
   // heart_quests.toml identifies that contest as Reina's eight-heart quest. The reward edge is
@@ -497,8 +495,6 @@ export const ITEM_SOURCE_REPLACEMENTS: Partial<Record<ItemId, Source[]>> = {
       trigger: "completion",
     },
   ],
-  // Native evidence: letters.toml wedding_gifts_valen requires Valen as spouse.
-  ["valen_workstation" as ItemId]: [{ type: "wedding" }],
   // Wiki: https://fieldsofmistria.wiki.gg/wiki/Void_Herb
   // Foraging in any Mines biome is wiki-supported. Completion of “Find the Magic Key” is an
   // explicit project-owner-reviewed gate because the structured assets do not encode it here.

@@ -257,6 +257,31 @@ describe("collectRewardSources", () => {
       ]);
     });
 
+    it("classifies every item in an is_spouse letter as a wedding source", () => {
+      const fiddle = makeFiddle({
+        letters: {
+          wedding_gifts_juniper: {
+            items: [
+              { count: 1, item_name: "juniper_desk" },
+              { count: 1, item_name: "dozy_pet_bed" },
+            ],
+            requirements: { is_spouse: "juniper" },
+          },
+          wedding_gifts_valen: {
+            items: [{ count: 1, item_name: "valen_workstation" }],
+            requirements: { is_spouse: "valen" },
+          },
+        },
+      });
+
+      const acc = new ItemSourceAccumulator();
+      collectRewardSources(fiddle, acc);
+
+      expect(acc.get("juniper_desk" as ItemId)).toEqual([{ type: "wedding" }]);
+      expect(acc.get("dozy_pet_bed" as ItemId)).toEqual([{ type: "wedding" }]);
+      expect(acc.get("valen_workstation" as ItemId)).toEqual([{ type: "wedding" }]);
+    });
+
     it("adds a letter source for item_name entries", () => {
       const fiddle = makeFiddle({
         letters: {

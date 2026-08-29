@@ -84,7 +84,6 @@ describe("reviewed overrides", () => {
         "big_cookie",
         [{ type: "quest", questId: "a_rewarding_choice", trigger: "dialogue_choice" }],
       ],
-      ["dozy_pet_bed", [{ type: "wedding" }]],
       [
         "maples_drawing",
         [
@@ -95,7 +94,6 @@ describe("reviewed overrides", () => {
           },
         ],
       ],
-      ["valen_workstation", [{ type: "wedding" }]],
     ] as const)("replaces %s with its reviewed runtime source", (itemId, expected) => {
       expect(ITEM_SOURCE_REPLACEMENTS[itemId as ItemId]).toEqual(expected);
     });
