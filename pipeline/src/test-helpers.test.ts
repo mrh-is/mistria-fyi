@@ -1,11 +1,17 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createAssetsFixture, removeAssetsFixtures, requireGameAssetsDir } from "./test-helpers.js";
 
+const temporaryDirectories: string[] = [];
+
 afterEach(() => {
   removeAssetsFixtures();
+  for (const directory of temporaryDirectories.splice(0)) {
+    rmSync(directory, { force: true, recursive: true });
+  }
   vi.unstubAllEnvs();
 });
 
@@ -35,5 +41,14 @@ describe("asset test helpers", () => {
     expect(() => requireGameAssetsDir()).toThrow(
       "Game assets not found at /definitely/missing/mistria-assets/fiddle",
     );
+  });
+
+  it("rejects a regular file in place of the fiddle directory", () => {
+    const assetsDir = mkdtempSync(join(tmpdir(), "harvest-helper-invalid-assets-"));
+    temporaryDirectories.push(assetsDir);
+    writeFileSync(join(assetsDir, "fiddle"), "not a directory");
+    vi.stubEnv("MISTRIA_ASSETS", assetsDir);
+
+    expect(() => requireGameAssetsDir()).toThrow(`Game assets not found at ${assetsDir}/fiddle`);
   });
 });

@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -32,7 +32,7 @@ export function removeAssetsFixtures(): void {
 export function requireGameAssetsDir(): string {
   const assetsDir = process.env.MISTRIA_ASSETS ?? "pipeline/input/assets";
   const fiddleDir = join(assetsDir, "fiddle");
-  if (!existsSync(fiddleDir)) {
+  if (!existsSync(fiddleDir) || !statSync(fiddleDir).isDirectory()) {
     throw new Error(
       `Game assets not found at ${fiddleDir}. Set MISTRIA_ASSETS to the assets directory.`,
     );

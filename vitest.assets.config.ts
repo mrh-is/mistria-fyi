@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [sveltekit()],
   test: {
     exclude: [...configDefaults.exclude, "**/.worktrees/**", "**/.claude/worktrees/**"],
+    globalSetup: ["pipeline/src/assets-test-setup.ts"],
     include: ["pipeline/**/*.assets.test.ts"],
   },
 });
