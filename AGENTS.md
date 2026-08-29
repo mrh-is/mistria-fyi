@@ -49,7 +49,9 @@ Follow this sequence for every task:
    editing.
 7. **Test first** — add or update tests for behavioral changes, preferably before implementation.
    Run focused tests during development.
-8. **Verification matrix** — run the complete verification matrix before committing.
+8. **Verification matrix** — run the complete verification matrix before committing. Lint must
+   produce **zero errors and zero warnings**. If a warning requires an eslint-disable comment, add
+   the narrowest possible disable with a justification comment.
 9. **Commit specs & plans first** — commit approved specifications (`docs/superpowers/specs/`) and
    implementation plans (`docs/superpowers/plans/`) **before writing any implementation code**. If
    these files were created in the main checkout before the worktree existed, copy them into the
