@@ -31,7 +31,7 @@ const SEASON_ORD: Record<Season, number> = { fall: 2, spring: 0, summer: 1, wint
 export async function decodeTransferPayload(payload: string): Promise<Partial<CompletedState>> {
   const payloadBytes = fromBase64url(payload);
   const version = payloadBytes[0];
-  if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== 5) {
+  if (version < 1 || version > TRANSFER_VERSION) {
     throw new Error(`Unsupported transfer version: ${String(version)}`);
   }
 

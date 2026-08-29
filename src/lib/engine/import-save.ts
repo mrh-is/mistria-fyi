@@ -34,6 +34,7 @@ export interface SaveBundle {
 }
 
 interface GamedataSave {
+  date?: number;
   maximum_mines_level?: number;
   museum_progress?: string[];
   t2_world_facts?: Record<string, unknown>;
@@ -52,6 +53,7 @@ interface PlayerSave {
   recipes_created?: string[];
   skill_xp?: Record<string, number>;
   spells_learned?: string[];
+  upper_floor?: boolean;
 }
 
 interface QuestsSave {
@@ -294,8 +296,8 @@ export function buildImportState(bundle: SaveBundle): {
     }
   }
 
-  // ── Has upper floor (from gamedata.json → t2_world_facts) ──
-  const hasUpperFloor = facts?.has_upper_floor === true;
+  // ── Has upper floor (from player.json → upper_floor) ──
+  const hasUpperFloor = save?.upper_floor === true;
   if (hasUpperFloor) counts.hasUpperFloor = 1;
 
   // ── Romantic NPCs (from gamedata.json → t2_world_facts → {npc}_is_dating) ──
@@ -305,20 +307,16 @@ export function buildImportState(bundle: SaveBundle): {
       .filter(([, npc]) => npc.dateable === true)
       .map(([id]) => id);
     for (const npcId of dateableNpcs) {
-      if (facts[`${npcId}_is_dating`] === true) {
+      const val = facts[`${npcId}_is_dating`];
+      if (val === true || val === 1) {
         romanticNpcs.add(npcId as NpcId);
       }
     }
   }
   counts.romanticNpcs = romanticNpcs.size;
 
-  // ── Reached season (from gamedata.json → t2_world_facts → current_season) ──
-  const VALID_SEASONS = new Set(["fall", "spring", "summer", "winter"]);
-  const reachedSeason: Season = (
-    typeof facts?.current_season === "string" && VALID_SEASONS.has(facts.current_season)
-      ? facts.current_season
-      : "spring"
-  ) as Season;
+  // ── Reached season (from gamedata.json → date timestamp) ──
+  const reachedSeason = deriveReachedSeason(bundle.gamedata?.date);
   if (reachedSeason !== "spring") counts.reachedSeason = 1;
 
   // ── Quest completion (from quests.json) ──
@@ -379,6 +377,19 @@ export function buildImportState(bundle: SaveBundle): {
 // ─── .sav file unpacking (client-side) ──────────────────────────────
 
 export { parseSavFile as unpackSavFile } from "./parse-sav.js";
+
+// ─── Season derivation ─────────────────────────────────────────────
+
+const GAME_DAY = 259200;
+const GAME_SEASON = 28 * GAME_DAY;
+const SEASON_ORDER: Season[] = ["spring", "summer", "fall", "winter"];
+
+function deriveReachedSeason(date: number | undefined): Season {
+  if (typeof date !== "number" || date < 0) return "spring";
+  const seasonIndex = Math.floor(date / GAME_SEASON) % 4;
+  if (date >= 4 * GAME_SEASON) return "winter";
+  return SEASON_ORDER[seasonIndex];
+}
 
 // ─── Parse save files ----------------───────────────────────────────
 

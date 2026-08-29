@@ -173,12 +173,9 @@ function projectPredicate(
       if (typeof jsonValue === "string" && ALL_SEASONS.has(jsonValue as Season)) {
         return { type: "reachedSeason", season: jsonValue as Season };
       }
-      if (typeof jsonValue === "object" && jsonValue !== null) {
-        throw new Error(
-          `Day-level reached_date is not supported at ${sourceFieldPath(sourceLocation, predicate)} in ${sourceLocation.sourcePath}`,
-        );
-      }
-      break;
+      throw new Error(
+        `Day-level reached_date is not supported at ${sourceFieldPath(sourceLocation, predicate)} in ${sourceLocation.sourcePath}`,
+      );
     }
     case "reached_heart_level": {
       const condition = projectLevelRecord(jsonValue, "heart");

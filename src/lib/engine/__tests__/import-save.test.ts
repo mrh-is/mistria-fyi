@@ -53,9 +53,9 @@ describe("buildImportState", () => {
   });
 
   describe("new progression fields from save", () => {
-    it("extracts hasUpperFloor from t2_world_facts", () => {
+    it("extracts hasUpperFloor from player.upper_floor", () => {
       const bundle: SaveBundle = {
-        gamedata: { t2_world_facts: { has_upper_floor: true } },
+        player: { items_acquired: [], upper_floor: true },
       };
       const { completed } = buildImportState(bundle);
       expect(completed.hasUpperFloor).toBe(true);
@@ -63,7 +63,7 @@ describe("buildImportState", () => {
 
     it("defaults hasUpperFloor to false when missing", () => {
       const bundle: SaveBundle = {
-        gamedata: { t2_world_facts: {} },
+        player: { items_acquired: [] },
       };
       const { completed } = buildImportState(bundle);
       expect(completed.hasUpperFloor).toBe(false);
@@ -73,9 +73,9 @@ describe("buildImportState", () => {
       const bundle: SaveBundle = {
         gamedata: {
           t2_world_facts: {
-            adeline_is_dating: false,
-            juniper_is_dating: true,
-            march_is_dating: true,
+            adeline_is_dating: 0,
+            juniper_is_dating: 1,
+            march_is_dating: 1,
           },
         },
       };
@@ -83,16 +83,26 @@ describe("buildImportState", () => {
       expect(completed.romanticNpcs).toEqual(new Set(["juniper", "march"]));
     });
 
-    it("extracts reachedSeason from t2_world_facts current_season", () => {
+    it("derives reachedSeason from gamedata.date timestamp", () => {
+      const GAME_SEASON = 28 * 259200;
       const bundle: SaveBundle = {
-        gamedata: { t2_world_facts: { current_season: "fall" } },
+        gamedata: { date: 2 * GAME_SEASON + 100 },
       };
       const { completed } = buildImportState(bundle);
       expect(completed.reachedSeason).toBe("fall");
     });
 
-    it("defaults reachedSeason to spring when missing", () => {
-      const bundle: SaveBundle = { gamedata: { t2_world_facts: {} } };
+    it("returns winter for saves past year 1", () => {
+      const GAME_SEASON = 28 * 259200;
+      const bundle: SaveBundle = {
+        gamedata: { date: 5 * GAME_SEASON },
+      };
+      const { completed } = buildImportState(bundle);
+      expect(completed.reachedSeason).toBe("winter");
+    });
+
+    it("defaults reachedSeason to spring when date is missing", () => {
+      const bundle: SaveBundle = { gamedata: {} };
       const { completed } = buildImportState(bundle);
       expect(completed.reachedSeason).toBe("spring");
     });
