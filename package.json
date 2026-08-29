@@ -16,7 +16,8 @@
     "pipeline": "cd pipeline && tsx src/main.ts",
     "test": "vitest run",
     "test:app": "vitest run src/",
-    "test:pipeline": "vitest run pipeline/"
+    "test:pipeline": "vitest run pipeline/",
+    "test:pipeline:assets": "vitest run --config vitest.assets.config.ts"
   },
   "devDependencies": {
     "@eslint/compat": "^2.1.0",

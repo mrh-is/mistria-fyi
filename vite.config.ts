@@ -14,6 +14,11 @@ export default defineConfig({
   },
   plugins: [tailwindcss(), sveltekit(), devtoolsJson()],
   test: {
-    exclude: [...configDefaults.exclude, "**/.worktrees/**", "**/.claude/worktrees/**"],
+    exclude: [
+      ...configDefaults.exclude,
+      "**/*.assets.test.ts",
+      "**/.worktrees/**",
+      "**/.claude/worktrees/**",
+    ],
   },
 });
