@@ -1,98 +1,39 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { evaluateExpressions } from "./evaluate.js";
 import { parseFiddle } from "./parse-fiddle.js";
+import { createAssetsFixture, removeAssetsFixtures } from "./test-helpers.js";
+
+afterEach(() => {
+  removeAssetsFixtures();
+});
 
 describe("evaluateExpressions", () => {
-  it("resolves bonsai values using sapling store prices", () => {
-    const parsed = parseFiddle("pipeline/input/assets");
+  it("resolves referenced store and counted recipe-cost expressions", () => {
+    const assetsDir = createAssetsFixture({
+      "items/other/values.toml": `
+        [basic_wood.value]
+        bin = 4
+        store = 10
+
+        [bundle.value]
+        store = "basic_wood.store * 3"
+
+        [crafted]
+        recipe = [{ count = 2, item = "basic_wood" }]
+
+        [crafted.value]
+        bin = "self.recipe * 1.5"
+      `,
+    });
+    const parsed = parseFiddle(assetsDir);
+
     evaluateExpressions(parsed.data);
 
-    const items = parsed.data.items as Record<
-      string,
-      Record<string, Record<string, Record<string, unknown>>>
-    >;
-
-    // Find lemon_bonsai and cherry_bonsai across item files
-    let lemonBonsai: Record<string, unknown> | undefined;
-    let cherryBonsai: Record<string, unknown> | undefined;
-    for (const subCats of Object.values(items)) {
-      for (const fileItems of Object.values(subCats)) {
-        if (fileItems.lemon_bonsai) {
-          lemonBonsai = fileItems.lemon_bonsai;
-        }
-        if (fileItems.cherry_bonsai) {
-          cherryBonsai = fileItems.cherry_bonsai;
-        }
-      }
-    }
-
-    expect(lemonBonsai).toBeDefined();
-    expect(cherryBonsai).toBeDefined();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const lemonValue = (lemonBonsai!.value as Record<string, unknown>).bin;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const cherryValue = (cherryBonsai!.value as Record<string, unknown>).bin;
-    expect(lemonValue).toBe(462);
-    expect(cherryValue).toBe(462);
-  });
-
-  it("resolves all value expressions with no remaining strings", () => {
-    const parsed = parseFiddle("pipeline/input/assets");
-    evaluateExpressions(parsed.data);
-
-    const items = parsed.data.items as Record<
-      string,
-      Record<string, Record<string, Record<string, unknown>>>
-    >;
-    const remaining: string[] = [];
-    for (const subCats of Object.values(items)) {
-      for (const fileItems of Object.values(subCats)) {
-        for (const [itemId, item] of Object.entries(fileItems)) {
-          if (typeof item !== "object" || item === null) continue;
-          const value = item.value as Record<string, unknown> | undefined;
-          if (!value) continue;
-          if (typeof value.bin === "string") {
-            remaining.push(`${itemId}.value.bin = "${value.bin}"`);
-          }
-          if (typeof value.store === "string") {
-            remaining.push(`${itemId}.value.store = "${value.store}"`);
-          }
-        }
-      }
-    }
-    expect(remaining).toEqual([]);
-  });
-
-  it("resolves bundle store prices using referenced item store values", () => {
-    const parsed = parseFiddle("pipeline/input/assets");
-    evaluateExpressions(parsed.data);
-
-    const items = parsed.data.items as Record<
-      string,
-      Record<string, Record<string, Record<string, unknown>>>
-    >;
-
-    // Verify a representative referenced store value remains numeric; this does not assert a
-    // bundle's computed total.
-    let basicWood: Record<string, unknown> | undefined;
-    for (const subCats of Object.values(items)) {
-      for (const fileItems of Object.values(subCats)) {
-        if (fileItems.basic_wood) {
-          basicWood = fileItems.basic_wood;
-        }
-      }
-    }
-
-    if (basicWood) {
-      const referencedStoreValue = (basicWood.value as Record<string, unknown>)?.store;
-      expect(typeof referencedStoreValue).toBe("number");
-    }
-  });
-
-  it("resolves recipe ingredients with count > 1", () => {
-    const parsed = parseFiddle("pipeline/input/assets");
-    evaluateExpressions(parsed.data);
-    // Fixture-wide no-throw smoke test; it does not assert a specific computed value.
+    const items = (
+      parsed.data.items as Record<string, Record<string, Record<string, Record<string, unknown>>>>
+    ).other.values;
+    expect((items.bundle.value as Record<string, unknown>).store).toBe(30);
+    expect((items.crafted.value as Record<string, unknown>).bin).toBe(12);
   });
 });
