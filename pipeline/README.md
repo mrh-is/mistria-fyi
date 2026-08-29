@@ -22,7 +22,7 @@ representative paths, so it is not a version-agnostic validator.
 ### Test tiers
 
 The default pipeline suite uses synthetic fixtures and passes in a fresh clone without game assets.
-It is part of the public CI verification matrix:
+Issue #90’s planned public CI verification matrix will run it:
 
 ```sh
 pnpm run test:pipeline

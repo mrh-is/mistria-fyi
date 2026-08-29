@@ -1,11 +1,7 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { parseFiddle, sourceFileFor } from "./parse-fiddle.js";
-import { createAssetsFixture, removeAssetsFixtures } from "./test-helpers.js";
-
-afterEach(() => {
-  removeAssetsFixtures();
-});
+import { createAssetsFixture } from "./test-helpers.js";
 
 describe("parseFiddle", () => {
   it("assembles nested TOML files and records source provenance", () => {

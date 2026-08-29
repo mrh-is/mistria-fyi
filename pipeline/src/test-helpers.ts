@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { onTestFinished } from "vitest";
 
 import type { ParsedGameData } from "./parse-fiddle.js";
 
@@ -9,6 +10,13 @@ const temporaryAssetsDirectories: string[] = [];
 export function createAssetsFixture(files: Record<string, string>): string {
   const assetsDir = mkdtempSync(join(tmpdir(), "harvest-helper-assets-"));
   temporaryAssetsDirectories.push(assetsDir);
+  onTestFinished(() => {
+    const fixtureIndex = temporaryAssetsDirectories.indexOf(assetsDir);
+    if (fixtureIndex !== -1) {
+      temporaryAssetsDirectories.splice(fixtureIndex, 1);
+    }
+    rmSync(assetsDir, { force: true, recursive: true });
+  });
 
   for (const [relativePath, contents] of Object.entries(files)) {
     const filePath = join(assetsDir, "fiddle", relativePath);

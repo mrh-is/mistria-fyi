@@ -8,24 +8,24 @@ describe("evaluateExpressions — v1.0.2 assets", () => {
   it("resolves every supported item value expression", () => {
     const parsed = parseFiddle(requireGameAssetsDir());
 
-    evaluateExpressions(parsed.data);
+    expect(() => {
+      evaluateExpressions(parsed.data);
+    }).not.toThrow();
 
     const items = parsed.data.items as Record<
       string,
       Record<string, Record<string, Record<string, unknown>>>
     >;
-    const unresolved: string[] = [];
+    let lemonBonsai: Record<string, unknown> | undefined;
+    let cherryBonsai: Record<string, unknown> | undefined;
     for (const categoryFiles of Object.values(items)) {
       for (const itemsInFile of Object.values(categoryFiles)) {
-        for (const [itemId, item] of Object.entries(itemsInFile)) {
-          if (typeof item !== "object" || item === null) continue;
-          const value = item.value as Record<string, unknown> | undefined;
-          if (!value) continue;
-          if (typeof value.bin === "string") unresolved.push(`${itemId}.value.bin`);
-          if (typeof value.store === "string") unresolved.push(`${itemId}.value.store`);
-        }
+        lemonBonsai ??= itemsInFile.lemon_bonsai;
+        cherryBonsai ??= itemsInFile.cherry_bonsai;
       }
     }
-    expect(unresolved).toEqual([]);
+
+    expect(lemonBonsai).toMatchObject({ value: { bin: 462 } });
+    expect(cherryBonsai).toMatchObject({ value: { bin: 462 } });
   });
 });

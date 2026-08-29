@@ -8,7 +8,6 @@ import { createAssetsFixture, removeAssetsFixtures, requireGameAssetsDir } from 
 const temporaryDirectories: string[] = [];
 
 afterEach(() => {
-  removeAssetsFixtures();
   for (const directory of temporaryDirectories.splice(0)) {
     rmSync(directory, { force: true, recursive: true });
   }

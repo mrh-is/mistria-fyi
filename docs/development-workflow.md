@@ -109,8 +109,8 @@ pipelines.
   ```sh
   pnpm run test
   ```
-  This command passes in a fresh clone without `pipeline/input/` and is the test command used by
-  public CI.
+  This command passes in a fresh clone without `pipeline/input/` and is the test command issue #90’s
+  planned public CI will run.
 - **Run Application Logic Tests Only** (`src/`):
   ```sh
   pnpm run test:app
@@ -152,8 +152,8 @@ updates) must pass the core verification matrix.
 
 Pipeline parser, evaluator, extractor, & shared data-contract changes must additionally pass
 `pnpm run test:pipeline:assets` and `pnpm run pipeline -- <path>` as described above. These local
-commands are deliberately excluded from public CI because licensed game assets are not distributed
-with the repository.
+commands are deliberately excluded from issue #90’s planned public CI because licensed game assets
+are not distributed with the repository.
 
 > [!IMPORTANT] Git pre-commit hooks are developer conveniences, not verification evidence. Agents
 > must run the matrix commands directly in their shell and verify clean exit status before
