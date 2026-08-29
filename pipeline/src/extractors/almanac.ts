@@ -5,7 +5,9 @@ import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
 import type {
   AlmanacCategory,
   AlmanacCategoryId,
+  AlmanacEntry,
   ItemId,
+  RecipeId,
   TrackerData,
 } from "$lib/types/tracker-data.js";
 
@@ -24,7 +26,10 @@ const CATEGORY_NAME_OVERRIDES: Record<string, string> = {
   fish: "Fishing and Diving",
 };
 
-export function extractAlmanac(fiddle: ParsedGameData): {
+export function extractAlmanac(
+  fiddle: ParsedGameData,
+  recipeMemberItems: Map<RecipeId, ItemId[]>,
+): {
   almanac: TrackerData["almanac"];
   items: ItemMetadataIndex;
 } {
@@ -130,22 +135,26 @@ export function extractAlmanac(fiddle: ParsedGameData): {
     const bucket = categoryBuckets[i];
     if (bucket.size === 0) continue;
 
-    const collapsed = collapseFurnitureColorways(bucket);
+    const entries = collapseColorways(bucket, recipeMemberItems);
 
-    const sortedIds = [...collapsed.entries()]
-      .sort(([, a], [, b]) => a.name.localeCompare(b.name))
-      .map(([id]) => id as ItemId);
+    entries.sort((a, b) => a.name.localeCompare(b.name));
 
     const displayName = CATEGORY_NAME_OVERRIDES[cat.key] ?? snakeToTitle(cat.key);
 
     almanac[cat.key as AlmanacCategoryId] = {
-      items: sortedIds,
+      items: entries,
       name: displayName,
     };
   }
 
-  const totalItems = Object.values(almanac).reduce((n, cat) => n + cat.items.length, 0);
-  console.log(`  Almanac: ${Object.keys(almanac).length} categories, ${totalItems} items`);
+  const totalEntries = Object.values(almanac).reduce((n, cat) => n + cat.items.length, 0);
+  const totalColorways = Object.values(almanac).reduce(
+    (n, cat) => n + cat.items.reduce((m, entry) => m + entry.itemIds.length, 0),
+    0,
+  );
+  console.log(
+    `  Almanac: ${Object.keys(almanac).length} categories, ${totalEntries} entries (${totalColorways} item IDs)`,
+  );
   if (namelessItems.length > 0) {
     console.log(`  Nameless items skipped (${namelessItems.length}):`);
     for (const path of namelessItems) {
@@ -170,25 +179,55 @@ function buildChestIdSet(fiddle: ParsedGameData): Set<string> {
   return ids;
 }
 
-function collapseFurnitureColorways(
+/**
+ * Collapses colorway variants into single almanac entries. Items sharing the same
+ * `recipe_key + name` are grouped. The canonical ID is the alphabetically-first
+ * item ID, matching the game's own almanac icon selection.
+ *
+ * Uses recipeMemberItems from the recipe extractor to ensure grouping consistency
+ * between almanac entries and recipe presentations.
+ */
+function collapseColorways(
   bucket: Map<string, { id: string; name: string; recipeKey?: string }>,
-): Map<string, { name: string }> {
-  const result = new Map<string, { name: string }>();
-  const seenRecipeGroups = new Map<string, { count: number; representativeId: string }>();
+  recipeMemberItems: Map<RecipeId, ItemId[]>,
+): AlmanacEntry[] {
+  const result: AlmanacEntry[] = [];
+  const seenRecipeGroups = new Map<string, number>();
+
+  // Build a reverse lookup: item ID → recipe member list (from the recipe extractor)
+  const itemToRecipeMembers = new Map<string, ItemId[]>();
+  for (const [, members] of recipeMemberItems) {
+    for (const memberId of members) {
+      itemToRecipeMembers.set(memberId, members);
+    }
+  }
 
   for (const [id, entry] of bucket) {
     if (entry.recipeKey) {
       const groupKey = `${entry.recipeKey}::${entry.name}`;
-      const existing = seenRecipeGroups.get(groupKey);
-      if (existing) {
-        existing.count++;
+      const existingIdx = seenRecipeGroups.get(groupKey);
+      if (existingIdx !== undefined) {
+        const existing = result[existingIdx];
+        existing.itemIds.push(id as ItemId);
         continue;
       }
-      seenRecipeGroups.set(groupKey, { count: 1, representativeId: id });
-      result.set(id, { name: entry.name });
+      seenRecipeGroups.set(groupKey, result.length);
+      result.push({
+        itemIds: [id as ItemId],
+        name: entry.name,
+        recipeId: entry.recipeKey as RecipeId,
+      });
     } else {
-      result.set(id, { name: entry.name });
+      result.push({
+        itemIds: [id as ItemId],
+        name: entry.name,
+      });
     }
+  }
+
+  // Sort member IDs alphabetically; canonical ID = first element
+  for (const entry of result) {
+    entry.itemIds.sort((a, b) => a.localeCompare(b));
   }
 
   return result;

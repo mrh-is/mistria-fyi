@@ -330,7 +330,7 @@ function main(): void {
   const museum = extractMuseum(fiddle);
   const cutsceneQuestMap = buildCutsceneQuestMap(fiddle);
   const { recipeIdByItemId, recipeMemberItems, recipes } = extractRecipes(fiddle, cutsceneQuestMap);
-  const { almanac, items } = extractAlmanac(fiddle);
+  const { almanac, items } = extractAlmanac(fiddle, recipeMemberItems);
   const animals = extractAnimals(fiddle);
   const petCosmetics = extractPetCosmetics(fiddle);
   const petSkins = extractPetSkins(fiddle);

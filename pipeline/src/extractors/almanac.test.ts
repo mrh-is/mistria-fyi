@@ -6,6 +6,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseFiddle } from "../parse-fiddle.js";
 import { extractAlmanac } from "./almanac.js";
 
+import type { AlmanacCategoryId, AlmanacEntry } from "$lib/types/tracker-data.js";
+
 const temporaryDirectories: string[] = [];
 
 afterEach(() => {
@@ -55,10 +57,10 @@ tags = ["crop"]
     });
     const fiddle = parseFiddle(assetsDir).data;
 
-    expect(extractAlmanac(fiddle)).toEqual({
+    expect(extractAlmanac(fiddle, new Map())).toEqual({
       almanac: {
         crops: {
-          items: ["turnip"],
+          items: [{ itemIds: ["turnip"], name: "Turnip" }],
           name: "Crops",
         },
       },
@@ -66,6 +68,100 @@ tags = ["crop"]
         turnip: { category: "crops", name: "Turnip" },
       },
     });
+  });
+
+  it("collapses colorways by recipe_key + name with alphabetical-first canonical ID", () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const assetsDir = createAssetsFixture({
+      "items/other/furniture.toml": `
+[default]
+
+[basic_chest_black]
+name = "Basic Chest"
+tags = ["furniture"]
+recipe_key = "basic_chest"
+
+[basic_chest_dark]
+name = "Basic Chest"
+tags = ["furniture"]
+recipe_key = "basic_chest"
+
+[basic_chest_white]
+name = "Basic Chest"
+tags = ["furniture"]
+recipe_key = "basic_chest"
+`,
+      "ui/menus/sub_menus/almanac.toml": `
+[[categories]]
+key = "furniture"
+tags = ["furniture"]
+`,
+    });
+    const fiddle = parseFiddle(assetsDir).data;
+
+    const result = extractAlmanac(fiddle, new Map());
+    const cat = result.almanac["furniture" as AlmanacCategoryId];
+    const entry = cat.items[0];
+
+    expect(entry.name).toBe("Basic Chest");
+    expect(entry.itemIds).toEqual(["basic_chest_black", "basic_chest_dark", "basic_chest_white"]);
+    expect(entry.recipeId).toBe("basic_chest");
+    expect(cat.items).toHaveLength(1);
+  });
+
+  it("keeps different names under the same recipe_key as separate entries", () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const assetsDir = createAssetsFixture({
+      "items/other/furniture.toml": `
+[default]
+
+[bed_single_v1]
+name = "Bed"
+tags = ["furniture"]
+recipe_key = "bed"
+
+[bed_double_v1]
+name = "Double Bed"
+tags = ["furniture"]
+recipe_key = "bed"
+`,
+      "ui/menus/sub_menus/almanac.toml": `
+[[categories]]
+key = "furniture"
+tags = ["furniture"]
+`,
+    });
+    const fiddle = parseFiddle(assetsDir).data;
+
+    const result = extractAlmanac(fiddle, new Map());
+    const cat = result.almanac["furniture" as AlmanacCategoryId];
+    expect(cat.items).toHaveLength(2);
+    const names = cat.items.map((e: AlmanacEntry) => e.name).sort();
+    expect(names).toEqual(["Bed", "Double Bed"]);
+  });
+
+  it("singleton entries have a single-element itemIds array", () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const assetsDir = createAssetsFixture({
+      "items/other/crops.toml": `
+[default]
+
+[turnip]
+name = "Turnip"
+tags = ["crop"]
+`,
+      "ui/menus/sub_menus/almanac.toml": `
+[[categories]]
+key = "crops"
+tags = ["crop"]
+`,
+    });
+    const fiddle = parseFiddle(assetsDir).data;
+
+    const result = extractAlmanac(fiddle, new Map());
+    const entry = result.almanac["crops" as AlmanacCategoryId].items[0];
+    expect(entry.itemIds).toEqual(["turnip"]);
+    expect(entry.recipeId).toBeUndefined();
   });
 });
 

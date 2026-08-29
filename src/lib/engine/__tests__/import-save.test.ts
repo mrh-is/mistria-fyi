@@ -109,6 +109,35 @@ describe("buildImportState", () => {
   });
 });
 
+describe("colorway normalization", () => {
+  it("importing only a nonrepresentative colorway completes the canonical entry", () => {
+    const bundle: SaveBundle = {
+      player: { items_acquired: ["animated_waterfall_v2"] },
+    };
+    const { completed } = buildImportState(bundle);
+    const almanac = completed.almanac ?? new Set();
+    expect(almanac.has("animated_waterfall_v1" as never)).toBe(true);
+    expect(almanac.has("animated_waterfall_v2" as never)).toBe(false);
+  });
+
+  it("importing several members of one group counts as one completion", () => {
+    const bundle: SaveBundle = {
+      player: { items_acquired: ["animated_waterfall_v1", "animated_waterfall_v2"] },
+    };
+    const { completed, result } = buildImportState(bundle);
+    const almanac = completed.almanac ?? new Set();
+    expect(almanac.has("animated_waterfall_v1" as never)).toBe(true);
+    expect(result.counts.almanac).toBeGreaterThanOrEqual(1);
+    const countWithBoth = result.counts.almanac;
+
+    const bundleSingle: SaveBundle = {
+      player: { items_acquired: ["animated_waterfall_v1"] },
+    };
+    const { result: resultSingle } = buildImportState(bundleSingle);
+    expect(resultSingle.counts.almanac).toBe(countWithBoth);
+  });
+});
+
 describe("validatePlayerSave", () => {
   it("accepts a save containing recipe unlocks", () => {
     expect(validatePlayerSave({ recipe_unlocks: ["ocarina_sprite_statue"] })).toBe(true);

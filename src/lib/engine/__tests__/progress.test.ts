@@ -160,7 +160,7 @@ describe("getCategoryProgress", () => {
 // ─── Category-specific progress ────────────────────────────────────
 
 describe("almanac progress", () => {
-  it("counts items across all almanac sub-categories", () => {
+  it("counts entries across all almanac sub-categories", () => {
     const progress = getCategoryProgress("almanac", ctx());
     const expectedTotal = recordValues(trackerData.almanac).reduce(
       (sum, cat) => sum + cat.items.length,
@@ -169,11 +169,34 @@ describe("almanac progress", () => {
     expect(progress.total).toBe(expectedTotal);
   });
 
-  it("reflects completed almanac items", () => {
-    const allIds = recordValues(trackerData.almanac).flatMap(({ items }) => items);
-    const subset = new Set(allIds.slice(0, 3));
+  it("reflects completed almanac entries", () => {
+    const allCanonicalIds = recordValues(trackerData.almanac).flatMap(({ items }) =>
+      items.map((entry) => entry.itemIds[0]),
+    );
+    const subset = new Set(allCanonicalIds.slice(0, 3));
     const progress = getCategoryProgress("almanac", ctx({ completed: { almanac: subset } }));
     expect(progress.completed).toBe(3);
+  });
+
+  it("aggregates source availability across all member IDs in a colorway group", () => {
+    const colorwayEntry = recordValues(trackerData.almanac)
+      .flatMap(({ items }) => items)
+      .find((entry) => entry.itemIds.length > 1);
+    expect(colorwayEntry).toBeDefined();
+    const canonicalId = colorwayEntry?.itemIds[0];
+
+    const progressAll = getCategoryProgress(
+      "almanac",
+      ctx({ availabilityMode: "everything" as AvailabilityMode }),
+    );
+    const progressAvailable = getCategoryProgress(
+      "almanac",
+      ctx({ availabilityMode: "available" as AvailabilityMode }),
+    );
+
+    expect(progressAll.total).toBe(progressAvailable.total);
+    expect(progressAll.total).toBeGreaterThan(0);
+    expect(typeof canonicalId).toBe("string");
   });
 });
 
@@ -334,8 +357,10 @@ describe("availability filtering on item-based categories", () => {
   });
 
   it("completed count is the same regardless of availability mode", () => {
-    const allIds = recordValues(trackerData.almanac).flatMap(({ items }) => items);
-    const subset = new Set(allIds.slice(0, 3));
+    const allCanonicalIds = recordValues(trackerData.almanac).flatMap(({ items }) =>
+      items.map((entry) => entry.itemIds[0]),
+    );
+    const subset = new Set(allCanonicalIds.slice(0, 3));
     const c1 = ctx({ availabilityMode: "everything", completed: { almanac: subset } });
     const c2 = ctx({ availabilityMode: "available", completed: { almanac: subset } });
     expect(getCategoryProgress("almanac", c1).completed).toBe(

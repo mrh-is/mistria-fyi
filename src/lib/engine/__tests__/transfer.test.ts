@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
-import { recordKeys } from "$lib/utils.js";
+import { recordKeys, recordValues } from "$lib/utils.js";
 
 import { decodeTransferPayload, encodeTransferPayload, TRANSFER_VERSION } from "../transfer.js";
 
@@ -54,9 +54,9 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
   };
 }
 
-describe("transfer codec v5", () => {
-  it("has version 5", () => {
-    expect(TRANSFER_VERSION).toBe(5);
+describe("transfer codec v6", () => {
+  it("has version 6", () => {
+    expect(TRANSFER_VERSION).toBe(6);
   });
 
   it("round-trips unlockedPerks", async () => {
@@ -149,6 +149,29 @@ describe("transfer codec v5", () => {
     expect(decoded.mines?.floor).toBe(5);
     expect(decoded.npcLevels?.["adeline" as NpcId]).toBe(3);
     expect(decoded.renown).toBe(10);
+  });
+
+  it("round-trips almanac with canonical IDs", async () => {
+    const colorwayEntry = recordValues(trackerData.almanac)
+      .flatMap(({ items }) => items)
+      .find((entry) => entry.itemIds.length > 1);
+    if (!colorwayEntry) throw new Error("expected a colorway entry in test data");
+    const canonicalId = colorwayEntry.itemIds[0];
+    const completed = makeCompleted({ almanac: new Set([canonicalId]) });
+    const payload = await encodeTransferPayload(completed);
+    const decoded = await decodeTransferPayload(payload);
+    const decodedAlmanac = decoded.almanac ?? new Set();
+    expect(decodedAlmanac.has(canonicalId)).toBe(true);
+  });
+
+  it("uses deterministic almanac ordering derived from canonical IDs", async () => {
+    const allCanonicalIds = recordValues(trackerData.almanac)
+      .flatMap(({ items }) => items.map((entry) => entry.itemIds[0]))
+      .toSorted();
+    const completed = makeCompleted({ almanac: new Set(allCanonicalIds) });
+    const payload = await encodeTransferPayload(completed);
+    const decoded = await decodeTransferPayload(payload);
+    expect(decoded.almanac).toEqual(new Set(allCanonicalIds));
   });
 
   it("rejects unsupported versions", async () => {

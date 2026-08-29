@@ -20,7 +20,7 @@ import type {
 
 // ─── Constants ──────────────────────────────────────────────────────
 
-export const TRANSFER_VERSION = 5;
+export const TRANSFER_VERSION = 6;
 
 const SEASON_BY_ORD: Season[] = ["spring", "summer", "fall", "winter"];
 const SEASON_ORD: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
@@ -49,7 +49,10 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   // 1. Almanac items
   const almanacOrder = getAlmanacOrder();
   const almanacBytes = readBytes(Math.ceil(almanacOrder.length / 8));
-  const almanac = fromBitfield(almanacOrder, almanacBytes) as Set<ItemId>;
+  // v6 changed canonical IDs from TOML-order-first to alphabetical-first,
+  // so the bit ordering differs. Old versions' almanac bits are unrecoverable.
+  const almanac =
+    version >= 6 ? (fromBitfield(almanacOrder, almanacBytes) as Set<ItemId>) : new Set<ItemId>();
 
   // 2. Cosmetics (non-default-unlocked)
   const cosmeticOrder = getCosmeticOrder();
@@ -420,7 +423,9 @@ function fromBitfield(ordered: string[], bytes: Uint8Array): Set<string> {
 }
 
 function getAlmanacOrder(): ItemId[] {
-  return recordValues(trackerData.almanac).flatMap(({ items }) => items.toSorted());
+  return recordValues(trackerData.almanac)
+    .flatMap(({ items }) => items.map((entry) => entry.itemIds[0]))
+    .toSorted();
 }
 
 function getAnimalCosmeticOrder(): { animalId: AnimalId; cosmeticId: CosmeticId }[] {
