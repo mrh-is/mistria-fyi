@@ -354,6 +354,7 @@ function assignQuestVisibility(
     for (const entry of entries) {
       const quest = trackerData.quests.heart[entry.questId];
       if (!quest) continue;
+      quest.heartLevel = entry.heartLevel;
       const conditions: VisibilityCondition[] = [
         { type: "npcKnown", npcId: npcId as NpcId },
         { type: "heartLevel", level: entry.heartLevel, npcId: npcId as NpcId },

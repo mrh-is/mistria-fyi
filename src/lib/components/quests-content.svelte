@@ -9,18 +9,52 @@
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { recordEntries } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { displayQuestName } from "$lib/utils/format.js";
+  import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
   import { createSpoilerGuard } from "$lib/utils/spoiler-guard.svelte.js";
 
   import AllCompleted from "./all-completed.svelte";
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { QuestState } from "$lib/stores/user-state.svelte.js";
-  import type { FetchQuest, NpcId, QuestId, QuestType } from "$lib/types/tracker-data.js";
+  import type { Source } from "$lib/types/acquisition";
+  import type {
+    FetchQuest,
+    HeartQuest,
+    NpcId,
+    QuestId,
+    QuestType,
+  } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   const spoilerGuard = createSpoilerGuard();
+
+  let redactedStoreIds = $derived(
+    new Set(
+      recordEntries(trackerData.stores)
+        .filter(
+          ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
+        )
+        .map(([id]) => id),
+    ),
+  );
+
+  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
+
+  function questSources(questType: QuestType, questId: QuestId): Source[] {
+    if (questType === "fetch") {
+      const { itemId } = trackerData.quests.fetch[questId];
+      return [...trackerData.items[itemId].sources];
+    }
+    if (questType === "cooking") {
+      const quest = trackerData.quests.cooking[questId];
+      const recipe = "recipeId" in quest ? trackerData.recipes[quest.recipeId] : undefined;
+      if (recipe) return [...recipe.sources];
+    }
+    return [];
+  }
 
   function questNameVisible(questType: QuestType, questId: QuestId): boolean {
     return isEntityNameVisible(questVisibility(questType, questId), userState.progressionState);
@@ -64,15 +98,19 @@
     return { mode: "visible" };
   }
 
-  function npcSubtitle(
-    npc: NpcId | undefined,
+  function questSubtitle(
+    quest: { displayName: string; npc?: NpcId; rewardRecipeName?: string },
     questType: QuestType,
-    displayName: string,
     duplicateNames: Set<string>,
   ): string | undefined {
+    const { displayName, npc, rewardRecipeName } = quest;
     if (!npc) return undefined;
-    if (questType === "fetch" || duplicateNames.has(displayName)) {
-      return trackerData.npcs[npc].name;
+    if (questType === "fetch" || questType === "heart" || duplicateNames.has(displayName)) {
+      const npcName = trackerData.npcs[npc].name;
+      if (duplicateNames.has(displayName) && rewardRecipeName) {
+        return `${npcName} · ${rewardRecipeName}`;
+      }
+      return npcName;
     }
   }
 
@@ -153,15 +191,40 @@
   )}
   {@const chainOrder = trackerData.questOrder[questType] ?? null}
   {@const quests = Object.entries(trackerData.quests[questType])
-    .map(([id, q]) => ({
-      displayName: displayQuestName(q.name, questType),
-      id: id as QuestId,
-      name: q.name,
-      npc: questType === "fetch" ? (q as FetchQuest).npc : undefined,
-    }))
+    .map(([id, q]) => {
+      const fetchQuest = questType === "fetch" ? (q as FetchQuest) : undefined;
+      const heartQuest = questType === "heart" ? (q as HeartQuest) : undefined;
+      const rewardRecipeName = fetchQuest?.rewardRecipeId
+        ? trackerData.recipes[fetchQuest.rewardRecipeId].name
+        : undefined;
+      return {
+        displayName: fetchQuest
+          ? trackerData.items[fetchQuest.itemId].name
+          : displayQuestName(q.name, questType),
+        heartLevel: heartQuest?.heartLevel,
+        id: id as QuestId,
+        name: q.name,
+        npc: fetchQuest?.npc ?? heartQuest?.npc,
+        rewardRecipeName,
+      };
+    })
     .sort((a, b) => {
       if (chainOrder) {
         return chainOrder.indexOf(a.id) - chainOrder.indexOf(b.id);
+      }
+      if (questType === "heart") {
+        const npcA = a.npc ? trackerData.npcs[a.npc].name : "";
+        const npcB = b.npc ? trackerData.npcs[b.npc].name : "";
+        const npcCmp = npcA.localeCompare(npcB);
+        if (npcCmp !== 0) return npcCmp;
+        return (a.heartLevel ?? 0) - (b.heartLevel ?? 0);
+      }
+      if (questType === "fetch") {
+        const nameCmp = a.displayName.localeCompare(b.displayName);
+        if (nameCmp !== 0) return nameCmp;
+        const npcA = a.npc ? trackerData.npcs[a.npc].name : "";
+        const npcB = b.npc ? trackerData.npcs[b.npc].name : "";
+        return npcA.localeCompare(npcB);
       }
       return a.displayName.localeCompare(b.displayName);
     })}
@@ -183,8 +246,10 @@
             {@const nameVisible = questNameVisible(questType, quest.id)}
             <TrackerRow
               display={questRowDisplay(questState, nameVisible)}
+              lookups={{ ...baseLookups, entityVisibility: questVisibility(questType, quest.id) }}
               name={quest.displayName}
-              subtitle={npcSubtitle(quest.npc, questType, quest.displayName, duplicateNames)}
+              sources={questSources(questType, quest.id)}
+              subtitle={questSubtitle(quest, questType, duplicateNames)}
               onToggle={() => {
                 if (nameVisible || questState !== "none") {
                   completeQuest(quest, quests);

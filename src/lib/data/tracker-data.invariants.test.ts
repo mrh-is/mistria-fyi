@@ -238,6 +238,42 @@ describe("reference integrity", () => {
     }
     expect(invalid, `Invalid NPC refs in item sources: ${invalid.join(", ")}`).toEqual([]);
   });
+
+  // Runtime JSON is cast via `as unknown as TrackerData` — the type system says these lookups
+  // always succeed, but these guards catch pipeline regressions where a foreign key is stale.
+  /* eslint-disable @typescript-eslint/no-unnecessary-condition */
+  it("every fetch quest references a valid item", () => {
+    const invalid: string[] = [];
+    for (const [id, quest] of recordEntries(trackerData.quests.fetch)) {
+      if (!trackerData.items[quest.itemId]) {
+        invalid.push(`${id} → ${quest.itemId}`);
+      }
+    }
+    expect(invalid, `Fetch quests referencing missing items: ${invalid.join(", ")}`).toEqual([]);
+  });
+
+  it("every heart quest references a valid NPC", () => {
+    const invalid: string[] = [];
+    for (const [id, quest] of recordEntries(trackerData.quests.heart)) {
+      if (!trackerData.npcs[quest.npc]) {
+        invalid.push(`${id} → ${quest.npc}`);
+      }
+    }
+    expect(invalid, `Heart quests referencing missing NPCs: ${invalid.join(", ")}`).toEqual([]);
+  });
+
+  it("every cooking quest references a valid recipe", () => {
+    const invalid: string[] = [];
+    for (const [id, quest] of recordEntries(trackerData.quests.cooking)) {
+      if (!trackerData.recipes[quest.recipeId]) {
+        invalid.push(`${id} → ${quest.recipeId}`);
+      }
+    }
+    expect(invalid, `Cooking quests referencing missing recipes: ${invalid.join(", ")}`).toEqual(
+      [],
+    );
+  });
+  /* eslint-enable @typescript-eslint/no-unnecessary-condition */
 });
 
 // ─── No duplicate IDs ──────────────────────────────────────────────

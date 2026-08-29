@@ -329,7 +329,7 @@ function main(): void {
   console.log("Step 3: Extracting tracker data...");
   const museum = extractMuseum(fiddle);
   const cutsceneQuestMap = buildCutsceneQuestMap(fiddle);
-  const { recipeMemberItems, recipes } = extractRecipes(fiddle, cutsceneQuestMap);
+  const { recipeIdByItemId, recipeMemberItems, recipes } = extractRecipes(fiddle, cutsceneQuestMap);
   const { almanac, items } = extractAlmanac(fiddle);
   const animals = extractAnimals(fiddle);
   const petCosmetics = extractPetCosmetics(fiddle);
@@ -339,7 +339,7 @@ function main(): void {
   const cosmetics = applyExclusions(cosmeticsRaw);
   const { perkTierLevels, skills } = extractSkills(fiddle);
   const townRanks = extractTownRanks(fiddle);
-  const quests = extractQuests(fiddle);
+  const quests = extractQuests(fiddle, recipeIdByItemId);
   const mines = extractMines(fiddle);
   const storesMeta = extractStoresMeta(fiddle);
   const dates = extractDates(fiddle);

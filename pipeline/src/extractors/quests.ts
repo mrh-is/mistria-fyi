@@ -1,11 +1,21 @@
 import { forEachQuest, QUEST_TYPE_MAP, TRACKED_QUEST_GROUPS } from "../extractor-helpers.js";
 
 import type { SourceTuple } from "$lib/types/acquisition.js";
-import type { ItemId, NpcId, QuestId, QuestType, TrackerData } from "$lib/types/tracker-data.js";
+import type {
+  ItemId,
+  NpcId,
+  QuestId,
+  QuestType,
+  RecipeId,
+  TrackerData,
+} from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
 
-export function extractQuests(fiddle: ParsedGameData): TrackerData["quests"] {
+export function extractQuests(
+  fiddle: ParsedGameData,
+  recipeIdByItemId?: Map<string, RecipeId>,
+): TrackerData["quests"] {
   const quests = fiddle.quests as
     Record<string, Record<string, Record<string, unknown>>> | undefined;
   if (!quests) {
@@ -28,10 +38,28 @@ export function extractQuests(fiddle: ParsedGameData): TrackerData["quests"] {
     if (outputType === "fetch") {
       const npc = quest.npc_for_icon as string | undefined;
       const itemId = extractFetchQuestItemId(questId, quest);
+      const rewardRecipeId = extractRewardRecipeId(quest);
       result.fetch[questId as QuestId] = {
         itemId: itemId as ItemId,
         name,
         npc: (npc ?? questId) as NpcId,
+        ...(rewardRecipeId ? { rewardRecipeId: rewardRecipeId as RecipeId } : {}),
+        sources: [] as unknown as SourceTuple,
+      };
+    } else if (outputType === "heart") {
+      const npc = quest.npc_for_icon as string | undefined;
+      const isPregnancy = questId.endsWith("_pregnancy_request");
+      result.heart[questId as QuestId] = {
+        heartLevel: isPregnancy ? 10 : 0,
+        name,
+        npc: (npc ?? extractStageQueryNpc(quest) ?? questId) as NpcId,
+        sources: [] as unknown as SourceTuple,
+      };
+    } else if (outputType === "cooking") {
+      const recipeId = extractCookingQuestRecipeId(questId, quest, recipeIdByItemId);
+      result.cooking[questId as QuestId] = {
+        name,
+        recipeId,
         sources: [] as unknown as SourceTuple,
       };
     } else {
@@ -47,6 +75,39 @@ export function extractQuests(fiddle: ParsedGameData): TrackerData["quests"] {
     .join(", ");
   console.log(`  Quests: ${total} (${breakdown})`);
   return result;
+}
+
+function extractCookingQuestRecipeId(
+  questId: string,
+  quest: Record<string, unknown>,
+  recipeIdByItemId: Map<string, RecipeId> | undefined,
+): RecipeId {
+  const stages = quest.stages as Record<string, unknown>[] | undefined;
+  if (Array.isArray(stages)) {
+    for (const stage of stages) {
+      const requirements = stage.requirements as Record<string, unknown> | undefined;
+      const hasItem = requirements?.has_item;
+      let itemId: string | undefined;
+      if (typeof hasItem === "string") {
+        itemId = hasItem;
+      } else if (Array.isArray(hasItem) && hasItem.length > 0) {
+        const first: unknown = hasItem[0];
+        if (typeof first === "object" && first !== null) {
+          itemId = Object.keys(first)[0];
+        }
+      } else if (typeof hasItem === "object" && hasItem !== null) {
+        itemId = Object.keys(hasItem)[0];
+      }
+      if (itemId) {
+        const recipeId = recipeIdByItemId?.get(itemId);
+        if (recipeId) return recipeId;
+        throw new Error(
+          `Cooking quest "${questId}" requires item "${itemId}" which has no matching recipe`,
+        );
+      }
+    }
+  }
+  throw new Error(`Cooking quest "${questId}" has no has_item requirement in any stage`);
 }
 
 function extractFetchQuestItemId(questId: string, quest: Record<string, unknown>): string {
@@ -68,4 +129,26 @@ function extractFetchQuestItemId(questId: string, quest: Record<string, unknown>
     }
   }
   throw new Error(`Fetch quest "${questId}" has no has_item requirement in any stage`);
+}
+
+function extractRewardRecipeId(quest: Record<string, unknown>): string | undefined {
+  const rewards = quest.rewards as Record<string, unknown>[] | undefined;
+  if (!Array.isArray(rewards)) return undefined;
+  for (const reward of rewards) {
+    if (typeof reward.recipe_scroll === "string") return reward.recipe_scroll;
+  }
+  return undefined;
+}
+
+function extractStageQueryNpc(quest: Record<string, unknown>): string | undefined {
+  const stages = quest.stages as Record<string, unknown>[] | undefined;
+  if (!Array.isArray(stages)) return undefined;
+  for (const stage of stages) {
+    const queries = stage.queries as Record<string, unknown>[] | undefined;
+    if (!Array.isArray(queries)) continue;
+    for (const query of queries) {
+      if (typeof query.npc === "string") return query.npc;
+    }
+  }
+  return undefined;
 }

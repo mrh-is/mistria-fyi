@@ -40,6 +40,9 @@ export interface AnimalVariant {
 export type AnimalVariantId = string & { readonly __brand: "VariantId" };
 export type AnimalVariantTier = Record<AnimalVariantId, AnimalVariant>;
 export type AnyId = string & { readonly __brand: string };
+export interface CookingQuest extends Quest {
+  recipeId: RecipeId;
+}
 export interface Cosmetic extends TrackerEntity {
   name: string;
   slot: CosmeticSlot;
@@ -79,10 +82,15 @@ export type FestivalId = string & { readonly __brand: "FestivalId" };
 export interface FetchQuest extends Quest {
   itemId: ItemId;
   npc: NpcId;
+  rewardRecipeId?: RecipeId;
 }
 export interface HeartLevelChange {
   level: number;
   npcId: NpcId;
+}
+export interface HeartQuest extends Quest {
+  heartLevel: number;
+  npc: NpcId;
 }
 export interface Item extends TrackerEntity {
   category: string;
@@ -130,7 +138,9 @@ export interface Quest extends TrackerEntity {
 }
 export type QuestId = string & { readonly __brand: "QuestId" };
 export interface QuestOverrides {
+  cooking: CookingQuest;
   fetch: FetchQuest;
+  heart: HeartQuest;
   story: StoryQuest;
 }
 export type QuestType = "cooking" | "crown" | "fetch" | "heart" | "mission" | "story";
