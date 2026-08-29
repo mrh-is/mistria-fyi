@@ -13,13 +13,17 @@ import type {
   PetCosmeticSetId,
   PetSkinId,
   QuestId,
+  Season,
   SkillId,
   SpellId,
 } from "$lib/types/tracker-data.js";
 
 // ─── Constants ──────────────────────────────────────────────────────
 
-export const TRANSFER_VERSION = 4;
+export const TRANSFER_VERSION = 5;
+
+const SEASON_BY_ORD: Season[] = ["spring", "summer", "fall", "winter"];
+const SEASON_ORD: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
 
 // ─── Deterministic orderings (derived from trackerData) ─────────────
 
@@ -27,7 +31,7 @@ export const TRANSFER_VERSION = 4;
 export async function decodeTransferPayload(payload: string): Promise<Partial<CompletedState>> {
   const payloadBytes = fromBase64url(payload);
   const version = payloadBytes[0];
-  if (version !== 1 && version !== 2 && version !== 3 && version !== 4) {
+  if (version < 1 || version > TRANSFER_VERSION) {
     throw new Error(`Unsupported transfer version: ${String(version)}`);
   }
 
@@ -168,12 +172,29 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
     dates = fromBitfield(dateOrder, dateBytes) as Set<DateId>;
   }
 
+  // 17. Progression byte (v5 only) — bits 7-6: reachedSeason, bit 5: hasUpperFloor, bits 4-0: reserved
+  // 18. Romantic NPC bitfield (v5 only)
+  let hasUpperFloor = false;
+  let reachedSeason: Season = "spring";
+  let romanticNpcs = new Set<NpcId>();
+
+  if (version >= 5) {
+    const progressionByte = readBytes(1)[0];
+    reachedSeason = SEASON_BY_ORD[(progressionByte >> 6) & 0x3];
+    hasUpperFloor = !!(progressionByte & 0x20);
+
+    const romanticOrder = getDateableNpcOrder();
+    const romanticBytes = readBytes(Math.ceil(romanticOrder.length / 8));
+    romanticNpcs = fromBitfield(romanticOrder, romanticBytes) as Set<NpcId>;
+  }
+
   return {
     almanac,
     animalCosmetics,
     animals,
     cosmetics,
     dates,
+    hasUpperFloor,
     marriedNpc,
     mines: { floor, spells },
     museum,
@@ -181,7 +202,9 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
     petCosmetics,
     petSkins,
     questStates,
+    reachedSeason,
     renown,
+    romanticNpcs,
     skillLevels,
     unlockedPerks,
   };
@@ -298,6 +321,15 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   // 16. Date bitfield (new in v4)
   const dateOrder = getDateOrder();
   parts.push(toBitfield(dateOrder, completed.dates));
+
+  // 17. Progression byte (new in v5) — bits 7-6: reachedSeason, bit 5: hasUpperFloor
+  const progressionByte =
+    ((SEASON_ORD[completed.reachedSeason] & 0x3) << 6) | (completed.hasUpperFloor ? 0x20 : 0);
+  parts.push(new Uint8Array([progressionByte]));
+
+  // 18. Romantic NPC bitfield (new in v5)
+  const romanticOrder = getDateableNpcOrder();
+  parts.push(toBitfield(romanticOrder, completed.romanticNpcs));
 
   // Concatenate all parts
   const totalLength = parts.reduce((sum, p) => sum + p.length, 0);
@@ -426,6 +458,12 @@ function getAnimalVariantOrder(): { animalId: AnimalId; variantId: AnimalVariant
 function getCosmeticOrder(): CosmeticId[] {
   return (Object.keys(trackerData.cosmetics) as CosmeticId[])
     .filter((id) => !trackerData.cosmetics[id].sources.some((s) => s.type === "default"))
+    .sort();
+}
+
+function getDateableNpcOrder(): NpcId[] {
+  return (Object.keys(trackerData.npcs) as NpcId[])
+    .filter((id) => trackerData.npcs[id].dateable)
     .sort();
 }
 

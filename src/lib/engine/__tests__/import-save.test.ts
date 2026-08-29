@@ -6,6 +6,8 @@ import { buildImportState, validatePlayerSave } from "../import-save.js";
 
 import type { RecipeId } from "$lib/types/tracker-data.js";
 
+import type { SaveBundle } from "../import-save.js";
+
 function getDefaultRecipeIds(): Set<RecipeId> {
   const ids = new Set<RecipeId>();
   for (const [id, recipe] of Object.entries(trackerData.recipes)) {
@@ -48,6 +50,62 @@ describe("buildImportState", () => {
     expect(unlockedPerks.has("green_thumb" as never)).toBe(true);
     expect(unlockedPerks.has("unknown_perk" as never)).toBe(false);
     expect(result.warnings).toContain("Unknown perk: unknown_perk");
+  });
+
+  describe("new progression fields from save", () => {
+    it("extracts hasUpperFloor from player.upper_floor", () => {
+      const bundle: SaveBundle = {
+        player: { items_acquired: [], upper_floor: true },
+      };
+      const { completed } = buildImportState(bundle);
+      expect(completed.hasUpperFloor).toBe(true);
+    });
+
+    it("defaults hasUpperFloor to false when missing", () => {
+      const bundle: SaveBundle = {
+        player: { items_acquired: [] },
+      };
+      const { completed } = buildImportState(bundle);
+      expect(completed.hasUpperFloor).toBe(false);
+    });
+
+    it("extracts romanticNpcs from t2_world_facts dating keys", () => {
+      const bundle: SaveBundle = {
+        gamedata: {
+          t2_world_facts: {
+            adeline_is_dating: 0,
+            juniper_is_dating: 1,
+            march_is_dating: 1,
+          },
+        },
+      };
+      const { completed } = buildImportState(bundle);
+      expect(completed.romanticNpcs).toEqual(new Set(["juniper", "march"]));
+    });
+
+    it("derives reachedSeason from gamedata.date timestamp", () => {
+      const GAME_SEASON = 28 * 259200;
+      const bundle: SaveBundle = {
+        gamedata: { date: 2 * GAME_SEASON + 100 },
+      };
+      const { completed } = buildImportState(bundle);
+      expect(completed.reachedSeason).toBe("fall");
+    });
+
+    it("returns winter for saves past year 1", () => {
+      const GAME_SEASON = 28 * 259200;
+      const bundle: SaveBundle = {
+        gamedata: { date: 5 * GAME_SEASON },
+      };
+      const { completed } = buildImportState(bundle);
+      expect(completed.reachedSeason).toBe("winter");
+    });
+
+    it("defaults reachedSeason to spring when date is missing", () => {
+      const bundle: SaveBundle = { gamedata: {} };
+      const { completed } = buildImportState(bundle);
+      expect(completed.reachedSeason).toBe("spring");
+    });
   });
 });
 

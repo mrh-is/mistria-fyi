@@ -36,6 +36,7 @@ export interface CompletedState {
   animals: Record<AnimalId, Set<AnimalVariantId>>;
   cosmetics: Set<CosmeticId>;
   dates: Set<DateId>;
+  hasUpperFloor: boolean;
   marriedNpc: NpcId | null;
   mines: { floor: number; spells: Set<SpellId> };
   museum: Set<ItemId>;
@@ -43,7 +44,9 @@ export interface CompletedState {
   petCosmetics: Set<PetCosmeticSetId>;
   petSkins: Set<PetSkinId>;
   questStates: Record<QuestId, QuestState>;
+  reachedSeason: Season;
   renown: number;
+  romanticNpcs: Set<NpcId>;
   skillLevels: Record<SkillId, number>;
   unlockedPerks: Set<PerkId>;
 }
@@ -55,6 +58,7 @@ export interface MergeCounts {
   animals: number;
   cosmetics: number;
   dates: number;
+  hasUpperFloor: number;
   mineFloor: number;
   museum: number;
   npcLevels: number;
@@ -62,7 +66,9 @@ export interface MergeCounts {
   petCosmetics: number;
   petSkins: number;
   quests: number;
+  reachedSeason: number;
   renown: number;
+  romanticNpcs: number;
   skillLevels: number;
   spells: number;
 }
@@ -88,6 +94,7 @@ interface SerializedState {
     animals: Record<string, string[]>;
     cosmetics: string[];
     dates?: string[];
+    hasUpperFloor?: boolean;
     marriedNpc?: null | string;
     mines: { floor: number; spells: string[] };
     museum: string[];
@@ -97,7 +104,9 @@ interface SerializedState {
     petSkins?: string[];
     quests?: string[];
     questStates?: Record<string, QuestState>;
+    reachedSeason?: Season;
     renown: number;
+    romanticNpcs?: string[];
     skillLevels?: Record<string, number>;
     skills?: string[];
     unlockedPerks?: string[];
@@ -149,6 +158,7 @@ function createDefaultCompleted(): CompletedState {
     animals,
     cosmetics: new SvelteSet<CosmeticId>(),
     dates: new SvelteSet<DateId>(),
+    hasUpperFloor: false,
     marriedNpc: null,
     mines: { floor: 0, spells: new SvelteSet<SpellId>() },
     museum: new SvelteSet<ItemId>(),
@@ -156,7 +166,9 @@ function createDefaultCompleted(): CompletedState {
     petCosmetics: new SvelteSet<PetCosmeticSetId>(),
     petSkins: new SvelteSet<PetSkinId>(),
     questStates: {},
+    reachedSeason: "spring",
     renown: 0,
+    romanticNpcs: new SvelteSet<NpcId>(),
     skillLevels: {},
     unlockedPerks: new SvelteSet<PerkId>(),
   };
@@ -199,8 +211,11 @@ function createUserState() {
     state.completed.almanac.size > 0 ||
       state.completed.almanacRecipes.size > 0 ||
       state.completed.cosmetics.size > 0 ||
+      state.completed.hasUpperFloor ||
       state.completed.museum.size > 0 ||
       state.completed.dates.size > 0 ||
+      state.completed.reachedSeason !== "spring" ||
+      state.completed.romanticNpcs.size > 0 ||
       state.completed.mines.floor > 0 ||
       state.completed.mines.spells.size > 0 ||
       state.completed.renown > 0 ||
@@ -264,6 +279,7 @@ function createUserState() {
         animals: 0,
         cosmetics: 0,
         dates: 0,
+        hasUpperFloor: 0,
         mineFloor: 0,
         museum: 0,
         npcLevels: 0,
@@ -271,7 +287,9 @@ function createUserState() {
         petCosmetics: 0,
         petSkins: 0,
         quests: 0,
+        reachedSeason: 0,
         renown: 0,
+        romanticNpcs: 0,
         skillLevels: 0,
         spells: 0,
       };
@@ -439,6 +457,31 @@ function createUserState() {
         }
       }
 
+      // Reached season (take later season)
+      if (imported.reachedSeason !== undefined) {
+        const seasonOrd: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
+        if (seasonOrd[imported.reachedSeason] > seasonOrd[state.completed.reachedSeason]) {
+          state.completed.reachedSeason = imported.reachedSeason;
+          counts.reachedSeason = 1;
+        }
+      }
+
+      // Has upper floor (logical OR)
+      if (imported.hasUpperFloor && !state.completed.hasUpperFloor) {
+        state.completed.hasUpperFloor = true;
+        counts.hasUpperFloor = 1;
+      }
+
+      // Romantic NPCs (union)
+      if (imported.romanticNpcs) {
+        for (const id of imported.romanticNpcs) {
+          if (!state.completed.romanticNpcs.has(id)) {
+            state.completed.romanticNpcs.add(id);
+            counts.romanticNpcs++;
+          }
+        }
+      }
+
       return counts;
     },
     get progressionState(): UserProgressionState {
@@ -456,8 +499,14 @@ function createUserState() {
     setAvailabilityMode(mode: AvailabilityMode) {
       state.availabilityMode = mode;
     },
+    setHasUpperFloor(value: boolean) {
+      state.completed.hasUpperFloor = value;
+    },
     setMarriedNpc(npcId: NpcId | null) {
       state.completed.marriedNpc = npcId;
+      if (npcId !== null) {
+        state.completed.romanticNpcs.clear();
+      }
     },
     setMineFloor(floor: number) {
       const biomes = trackerData.mines.biomes;
@@ -467,6 +516,12 @@ function createUserState() {
     setNpcLevel(id: NpcId, level: number) {
       const max = trackerData.npcs[id].dateable ? 12 : 10;
       state.completed.npcLevels[id] = Math.max(0, Math.min(level, max));
+    },
+    setReachedSeason(season: Season) {
+      const seasonOrd: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
+      if (seasonOrd[season] > seasonOrd[state.completed.reachedSeason]) {
+        state.completed.reachedSeason = season;
+      }
     },
     setRenown(level: number) {
       state.completed.renown = clampRenownLevel(level);
@@ -514,6 +569,13 @@ function createUserState() {
     },
     togglePetSkin(id: PetSkinId) {
       toggleInSet(state.completed.petSkins, id);
+    },
+    toggleRomanticNpc(npcId: NpcId) {
+      if (state.completed.romanticNpcs.has(npcId)) {
+        state.completed.romanticNpcs.delete(npcId);
+      } else {
+        state.completed.romanticNpcs.add(npcId);
+      }
     },
     toggleShowCompleted() {
       state.showCompleted = !state.showCompleted;
@@ -576,6 +638,7 @@ function deserialize(json: string): null | UserState {
         ),
         cosmetics: brandedSet<CosmeticId>(s.completed.cosmetics),
         dates: brandedSet<DateId>(s.completed.dates ?? []),
+        hasUpperFloor: s.completed.hasUpperFloor ?? false,
         marriedNpc: (s.completed.marriedNpc as NpcId | null | undefined) ?? null,
         mines: {
           floor: s.completed.mines.floor,
@@ -586,7 +649,9 @@ function deserialize(json: string): null | UserState {
         petCosmetics: brandedSet<PetCosmeticSetId>(s.completed.petCosmetics ?? []),
         petSkins: brandedSet<PetSkinId>(s.completed.petSkins ?? []),
         questStates,
+        reachedSeason: s.completed.reachedSeason ?? "spring",
         renown: clampRenownLevel(s.completed.renown),
+        romanticNpcs: brandedSet<NpcId>(s.completed.romanticNpcs ?? []),
         skillLevels,
         unlockedPerks: brandedSet<PerkId>(s.completed.unlockedPerks ?? []),
       },
@@ -622,6 +687,7 @@ function serialize(state: UserState): string {
       ),
       cosmetics: [...state.completed.cosmetics].sort(),
       dates: [...state.completed.dates].sort(),
+      hasUpperFloor: state.completed.hasUpperFloor,
       marriedNpc: state.completed.marriedNpc,
       mines: {
         floor: state.completed.mines.floor,
@@ -632,7 +698,9 @@ function serialize(state: UserState): string {
       petCosmetics: [...state.completed.petCosmetics].sort(),
       petSkins: [...state.completed.petSkins].sort(),
       questStates: filterRecord(state.completed.questStates, (v) => v !== "none"),
+      reachedSeason: state.completed.reachedSeason,
       renown: state.completed.renown,
+      romanticNpcs: [...state.completed.romanticNpcs].sort(),
       skillLevels: filterRecord(state.completed.skillLevels, (v) => v > 0),
       unlockedPerks: [...state.completed.unlockedPerks].sort(),
     },

@@ -6,17 +6,23 @@ import type {
   PerkId,
   QuestId,
   QuestType,
+  Season,
   SkillId,
   TrackerData,
 } from "$lib/types/tracker-data.js";
 import type { QuestVisibility, VisibilityCondition } from "$lib/types/visibility.js";
 
+const SEASON_ORD: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
+
 export interface UserProgressionState {
+  hasUpperFloor: boolean;
+  isDating: boolean;
   knownNpcs: Set<NpcId>;
   marriedNpc: NpcId | null;
   minesFloor: number;
   npcLevels: Record<NpcId, number>;
   questVisibility: Record<QuestId, QuestVisibility>;
+  reachedSeason: Season;
   renown: number;
   showSpoilers: boolean;
   skillLevels: Record<SkillId, number>;
@@ -62,11 +68,14 @@ export function deriveProgressionState(
     for (const npcId of npcIds) knownNpcs.add(npcId);
   } else {
     const tempState: UserProgressionState = {
+      hasUpperFloor: completed.hasUpperFloor,
+      isDating: completed.romanticNpcs.size > 0 || completed.marriedNpc !== null,
       knownNpcs: new Set(),
       marriedNpc,
       minesFloor: completed.mines.floor,
       npcLevels: completed.npcLevels,
       questVisibility,
+      reachedSeason: completed.reachedSeason,
       renown: completed.renown,
       showSpoilers: false,
       skillLevels: completed.skillLevels,
@@ -89,11 +98,14 @@ export function deriveProgressionState(
   }
 
   return {
+    hasUpperFloor: completed.hasUpperFloor,
+    isDating: completed.romanticNpcs.size > 0 || completed.marriedNpc !== null,
     knownNpcs,
     marriedNpc,
     minesFloor: completed.mines.floor,
     npcLevels,
     questVisibility,
+    reachedSeason: completed.reachedSeason,
     renown: completed.renown,
     showSpoilers,
     skillLevels: completed.skillLevels,
@@ -106,18 +118,21 @@ export function deriveProgressionState(
 export function isConditionInvertible(condition: VisibilityCondition): boolean {
   switch (condition.type) {
     case "always":
+    case "hasUpperFloor":
     case "heartLevel":
     case "married":
     case "minesLevel":
     case "perkUnlocked":
     case "questAvailable":
     case "questCompleted":
+    case "reachedSeason":
     case "renownLevel":
     case "skillLevel":
       return true;
     case "and":
     case "or":
       return condition.conditions.every(isConditionInvertible);
+    case "isDating":
     case "npcKnown":
       return false;
   }
@@ -144,8 +159,12 @@ export function isVisible(
       return true;
     case "and":
       return condition.conditions.every((c) => isVisible(c, state));
+    case "hasUpperFloor":
+      return state.hasUpperFloor;
     case "heartLevel":
       return (state.npcLevels[condition.npcId] ?? 0) >= condition.level;
+    case "isDating":
+      return state.isDating;
     case "married":
       return state.marriedNpc === condition.npcId;
     case "minesLevel":
@@ -162,6 +181,8 @@ export function isVisible(
     }
     case "questCompleted":
       return state.questVisibility[condition.questId] === "completed";
+    case "reachedSeason":
+      return SEASON_ORD[state.reachedSeason] >= SEASON_ORD[condition.season];
     case "renownLevel":
       return state.renown >= condition.level;
     case "skillLevel":
@@ -183,10 +204,14 @@ export function satisfyCondition(
 ): void {
   switch (condition.type) {
     case "always":
+    case "isDating":
     case "npcKnown":
       return;
     case "and":
       for (const sub of condition.conditions) satisfyCondition(sub, completed, trackerData);
+      return;
+    case "hasUpperFloor":
+      completed.hasUpperFloor = true;
       return;
     case "heartLevel":
       completed.npcLevels[condition.npcId] = Math.max(
@@ -215,6 +240,11 @@ export function satisfyCondition(
       return;
     case "questCompleted":
       markQuestCompleted(condition.questId, completed, trackerData);
+      return;
+    case "reachedSeason":
+      if (SEASON_ORD[condition.season] > SEASON_ORD[completed.reachedSeason]) {
+        completed.reachedSeason = condition.season;
+      }
       return;
     case "renownLevel":
       completed.renown = Math.max(completed.renown, condition.level);
@@ -279,11 +309,14 @@ function evaluateQuestPrerequisites(
   if (!quest.visibility) return "available";
 
   const tempState: UserProgressionState = {
+    hasUpperFloor: completed.hasUpperFloor,
+    isDating: completed.romanticNpcs.size > 0 || completed.marriedNpc !== null,
     knownNpcs: new Set(),
     marriedNpc: completed.marriedNpc,
     minesFloor: completed.mines.floor,
     npcLevels: completed.npcLevels,
     questVisibility: questVisibilitySoFar,
+    reachedSeason: completed.reachedSeason,
     renown: completed.renown,
     showSpoilers: false,
     skillLevels: completed.skillLevels,
@@ -311,8 +344,12 @@ function isBaseConditionMet(
       return true;
     case "and":
       return condition.conditions.every((c) => isBaseConditionMet(c, completed, trackerData));
+    case "hasUpperFloor":
+      return completed.hasUpperFloor;
     case "heartLevel":
       return (completed.npcLevels[condition.npcId] ?? 0) >= condition.level;
+    case "isDating":
+      return completed.romanticNpcs.size > 0 || completed.marriedNpc !== null;
     case "married":
       return completed.marriedNpc === condition.npcId;
     case "minesLevel":
@@ -330,6 +367,8 @@ function isBaseConditionMet(
       return (completed.questStates[condition.questId] ?? "none") !== "none";
     case "questCompleted":
       return completed.questStates[condition.questId] === "completed";
+    case "reachedSeason":
+      return SEASON_ORD[completed.reachedSeason] >= SEASON_ORD[condition.season];
     case "renownLevel":
       return completed.renown >= condition.level;
     case "skillLevel":

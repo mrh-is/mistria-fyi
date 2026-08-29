@@ -547,10 +547,14 @@ function describeStoreAvailability(
     case "gamePredicate":
     case "not":
       return undefined;
+    case "hasUpperFloor":
+      return [", after upgrading your home"];
     case "heartLevel": {
       const npcName = lookups.npcNames[condition.npcId] ?? titleCase(condition.npcId);
       return [`, at ${String(condition.level)} hearts with ${npcName}`];
     }
+    case "isDating":
+      return [", while dating someone"];
     case "minesLevel":
       return [`, after reaching Mines floor ${String(condition.floor)}`];
     case "perkUnlocked":
@@ -563,6 +567,10 @@ function describeStoreAvailability(
       return condition.state === "completed"
         ? [`, after completing ${questName}`]
         : [`, once ${questName} is available`];
+    }
+    case "reachedSeason": {
+      const seasonName = condition.season.charAt(0).toUpperCase() + condition.season.slice(1);
+      return [`, after reaching ${seasonName}`];
     }
     case "skillLevel": {
       const skillName = lookups.skillNames[condition.skillId] ?? titleCase(condition.skillId);

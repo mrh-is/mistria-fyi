@@ -31,6 +31,7 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     animals: {},
     cosmetics: new Set(),
     dates: new Set(),
+    hasUpperFloor: false,
     marriedNpc: null,
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
@@ -38,7 +39,9 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     petCosmetics: new Set(),
     petSkins: new Set(),
     questStates: {},
+    reachedSeason: "spring",
     renown: 0,
+    romanticNpcs: new Set(),
     skillLevels: {},
     unlockedPerks: new Set(),
     ...overrides,
@@ -47,11 +50,14 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
 
 function makeState(overrides: Partial<UserProgressionState> = {}): UserProgressionState {
   return {
+    hasUpperFloor: false,
+    isDating: false,
     knownNpcs: new Set(),
     marriedNpc: null,
     minesFloor: 0,
     npcLevels: {},
     questVisibility: {},
+    reachedSeason: "spring" as const,
     renown: 0,
     showSpoilers: false,
     skillLevels: {},
@@ -241,6 +247,10 @@ describe("isConditionInvertible", () => {
     expect(isConditionInvertible({ type: "minesLevel", floor: 10 })).toBe(true);
     expect(isConditionInvertible({ type: "perkUnlocked", perkId: "p" as PerkId })).toBe(true);
     expect(isConditionInvertible({ type: "married", npcId: "n" as NpcId })).toBe(true);
+  });
+
+  it("returns false for isDating (requires NPC choice)", () => {
+    expect(isConditionInvertible({ type: "isDating" })).toBe(false);
   });
 
   it("returns false for npcKnown", () => {
@@ -469,6 +479,12 @@ describe("satisfyCondition", () => {
     const perkId = "magic_design" as PerkId;
     satisfyCondition({ type: "perkUnlocked", perkId }, completed, makeTrackerData());
     expect(completed.unlockedPerks.has(perkId)).toBe(true);
+  });
+
+  it("does not modify state for isDating (requires NPC choice)", () => {
+    const completed = makeCompleted();
+    satisfyCondition({ type: "isDating" }, completed, makeTrackerData());
+    expect(completed.romanticNpcs.size).toBe(0);
   });
 
   it("sets marriedNpc", () => {

@@ -37,6 +37,7 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     animals,
     cosmetics: new Set(),
     dates: new Set(),
+    hasUpperFloor: false,
     marriedNpc: null,
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
@@ -44,16 +45,18 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     petCosmetics: new Set(),
     petSkins: new Set(),
     questStates: {},
+    reachedSeason: "spring",
     renown: 0,
+    romanticNpcs: new Set(),
     skillLevels: {},
     unlockedPerks: new Set(),
     ...overrides,
   };
 }
 
-describe("transfer codec v4", () => {
-  it("has version 4", () => {
-    expect(TRANSFER_VERSION).toBe(4);
+describe("transfer codec v5", () => {
+  it("has version 5", () => {
+    expect(TRANSFER_VERSION).toBe(5);
   });
 
   it("round-trips unlockedPerks", async () => {
@@ -106,14 +109,43 @@ describe("transfer codec v4", () => {
     expect(decoded.dates).toEqual(new Set(dateIds));
   });
 
-  it("decodes v1 payload without perks, marriedNpc, pet, or date fields", async () => {
+  it("round-trips hasUpperFloor", async () => {
+    const completed = makeCompleted({ hasUpperFloor: true });
+    const payload = await encodeTransferPayload(completed);
+    const decoded = await decodeTransferPayload(payload);
+    expect(decoded.hasUpperFloor).toBe(true);
+  });
+
+  it("round-trips reachedSeason", async () => {
+    for (const season of ["spring", "summer", "fall", "winter"] as const) {
+      const completed = makeCompleted({ reachedSeason: season });
+      const payload = await encodeTransferPayload(completed);
+      const decoded = await decodeTransferPayload(payload);
+      expect(decoded.reachedSeason).toBe(season);
+    }
+  });
+
+  it("round-trips romanticNpcs", async () => {
+    const dateableNpcs = (Object.keys(trackerData.npcs) as NpcId[]).filter(
+      (id) => trackerData.npcs[id].dateable,
+    );
+    const subset = new Set(dateableNpcs.slice(0, 3));
+    const completed = makeCompleted({ romanticNpcs: subset });
+    const payload = await encodeTransferPayload(completed);
+    const decoded = await decodeTransferPayload(payload);
+    expect(decoded.romanticNpcs).toEqual(subset);
+  });
+
+  it("decodes v1 payload without perks, marriedNpc, pet, date, or progression fields", async () => {
     const decoded = await decodeTransferPayload(V1_FIXTURE);
     expect(decoded.unlockedPerks).toEqual(new Set());
     expect(decoded.marriedNpc).toBeNull();
     expect(decoded.petCosmetics).toEqual(new Set());
     expect(decoded.petSkins).toEqual(new Set());
     expect(decoded.dates).toEqual(new Set());
-    // Sanity check that pre-existing v1 fields still decode correctly.
+    expect(decoded.hasUpperFloor).toBe(false);
+    expect(decoded.reachedSeason).toBe("spring");
+    expect(decoded.romanticNpcs).toEqual(new Set());
     expect(decoded.mines?.floor).toBe(5);
     expect(decoded.npcLevels?.["adeline" as NpcId]).toBe(3);
     expect(decoded.renown).toBe(10);

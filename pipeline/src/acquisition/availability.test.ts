@@ -162,16 +162,45 @@ describe("projectRequirementExpressionToAvailability", () => {
     });
   });
 
-  it("preserves reached dates without truncating their payload", () => {
-    expect(
+  it("maps reached_date with season string to reachedSeason", () => {
+    expect(project({ predicate: "reached_date", value: "summer" })).toEqual({
+      type: "reachedSeason",
+      season: "summer",
+    });
+  });
+
+  it("throws on reached_date with object value (day-level granularity)", () => {
+    expect(() =>
       project({
         predicate: "reached_date",
         value: { day: 28, exact: true, season: "summer", year: 2 },
       }),
-    ).toEqual({
-      type: "gamePredicate",
-      predicate: "reached_date",
-      value: { day: 28, exact: true, season: "summer", year: 2 },
+    ).toThrow("Day-level reached_date is not supported");
+  });
+
+  it("maps has_upper_floor to hasUpperFloor", () => {
+    expect(project({ predicate: "has_upper_floor", value: true })).toEqual({
+      type: "hasUpperFloor",
+    });
+  });
+
+  it("maps is_dating_someone to isDating", () => {
+    expect(project({ predicate: "is_dating_someone", value: true })).toEqual({
+      type: "isDating",
+    });
+  });
+
+  it("maps unlocked_animal to repair_haydens_barn quest", () => {
+    expect(project({ predicate: "unlocked_animal", value: "duck" })).toEqual({
+      type: "quest",
+      questId: "repair_haydens_barn",
+      state: "completed",
+    });
+  });
+
+  it("maps seen_cutscene elsie_dating_tutorial to isDating", () => {
+    expect(project({ predicate: "seen_cutscene", value: "elsie_dating_tutorial" })).toEqual({
+      type: "isDating",
     });
   });
 
