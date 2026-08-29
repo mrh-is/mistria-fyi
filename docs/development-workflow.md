@@ -1,7 +1,7 @@
 # Development Workflow Guide
 
 > Detailed workflow reference for Harvest Helper development, including setup, worktree management,
-> Superpowers skill execution, test-driven development, and verification.
+> planning, test-driven development, and verification.
 
 ---
 
@@ -68,24 +68,26 @@ The `.worktreeinclude` file lists ignored local entries required for development
 
 ---
 
-## 3. Superpowers & Skill Workflow
+## 3. Planning & approval workflow
 
-Harvest Helper enforces structured agent execution using Superpowers skills.
+Harvest Helper uses explicit planning and approval gates for changes that need design work.
 
-### Invoking Skills Before Action
+### Scope the change
 
-- Invoke relevant skills (such as `brainstorming`, `writing-plans`, `executing-plans`,
-  `systematic-debugging`, `test-driven-development`, `using-git-worktrees`, and
-  `verification-before-completion`) **before** taking action or inspecting codebase files.
+- Read the issue and comments before beginning issue work.
+- Identify affected contracts, tests, generated files, and documentation before editing.
+- Use the smallest process that fits the change. Small, well-specified maintenance work does not
+  require a separate specification or implementation plan.
 
 ### Explicit Approval & Planning Gates
 
-1. **Brainstorming & Design**: Explore intent, requirements, and subsystem impact before planning.
-2. **Specification Gate**: Obtain explicit user approval on specifications before drafting
-   implementation steps.
-3. **Plan Gate**: Obtain explicit user approval on implementation plans before editing code.
-4. **Commit Approved Artifacts**: Always commit approved specifications and plans to Git _before_
-   starting the implementation work they describe.
+1. **Design**: Explore intent, requirements, and subsystem impact before planning.
+2. **Specification Gate**: For changes that need a written design, obtain explicit user approval on
+   specifications before drafting implementation steps.
+3. **Plan Gate**: For changes that need a written implementation plan, obtain explicit user approval
+   before editing code.
+4. **Commit Approved Artifacts**: Commit approved specifications and plans to Git _before_ starting
+   the implementation work they describe.
 5. **Execution Checkpoints**: Respect pause points and review checkpoints specified in execution
    plans.
 

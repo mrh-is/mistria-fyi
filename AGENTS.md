@@ -13,7 +13,6 @@ collisions, dirty-state confusion, & branch-switch destruction.
 
 - Create worktrees under `.worktrees/<issue-number>-<short-description>`.
 - Verify `.worktrees/` is ignored before creating: `git check-ignore -q .worktrees/placeholder`.
-- Use the `superpowers:using-git-worktrees` skill.
 - After `git worktree add`, recreate each entry listed in `.worktreeinclude` from the main checkout.
 - Do **not** copy dependencies, caches, build artifacts, or writable generated directories.
 - Run `pnpm install --frozen-lockfile` inside the new worktree.
@@ -40,9 +39,11 @@ Follow this sequence for every task:
 1. **Read the issue & comments** — use `gh issue view <number> --json title,body,labels,comments`.
    The `--comments` flag produces empty output when there are no comments; `--json` is reliable in
    all cases. Do not start issues labeled `blocked` or `discussion`.
-2. **Invoke skills** — load the applicable Superpowers skills before exploration or implementation.
+2. **Confirm scope** — identify the affected subsystem, acceptance criteria, and required
+   deliverables before implementation.
 3. **Approval gates** — obtain explicit user approval at every specification and plan gate.
-4. **Worktree** — create an isolated worktree before editing.
+4. **Worktree** — create an isolated worktree before editing, unless the user explicitly directs
+   work in the current checkout.
 5. **Baseline** — install dependencies (`Node >=26`, `pnpm install --frozen-lockfile`) and verify a
    clean baseline.
 6. **Understand contracts** — read the affected subsystem, its boundaries, and existing tests before
@@ -135,11 +136,8 @@ reasonable.
 
 - **Keep sessions focused.** One concern per session. Don't let sessions grow past ~100 turns if
   avoidable; long sessions pay a compounding context-compression tax.
-- **Prefer forks over fresh subagents for research.** Forks share the parent's prompt cache; fresh
-  agents pay the full context setup cost and re-read the same files from scratch.
-- **Use subagent-driven development (SDD) sparingly.** SDD is expensive because each agent re-reads
-  shared context files independently. Reserve it for genuinely parallelizable work with independent
-  file sets. For most tasks in this project, sequential work with targeted forks is far cheaper.
+- **Use delegation sparingly.** Reserve additional agents for independent work that can proceed in
+  parallel without overlapping files. Most tasks are cheaper and clearer when handled sequentially.
 - **Don't paste handoff reports when continuing across sessions.** Give the new session the branch
   name and issue number and let it read the PR/issue via `gh`. Handoff blobs duplicate what
   `gh issue view` and `git log` already provide.
