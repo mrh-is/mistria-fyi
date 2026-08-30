@@ -61,7 +61,14 @@ import { parseFiddle } from "./parse-fiddle.js";
 import { createRequirementContext } from "./requirements.js";
 
 import type { Source as AcquisitionSource } from "$lib/types/acquisition.js";
-import type { CosmeticId, Item, ItemId, TrackerData } from "$lib/types/tracker-data.js";
+import type {
+  CosmeticId,
+  Item,
+  ItemId,
+  NpcId,
+  QuestId,
+  TrackerData,
+} from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "./parse-fiddle.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -215,6 +222,7 @@ function collectNativeIdsFromSources(
       case "perk":
       case "perk_drop":
       case "proposal":
+      case "spouseGift":
         break;
       case "quest":
         sets.quests.add(source.questId);
@@ -483,6 +491,13 @@ function main(): void {
   console.log();
 
   console.log("Step 4: Assembling tracker-data.json...");
+  const pregnancyQuestByNpc: Partial<Record<NpcId, QuestId>> = {};
+  for (const [questId, quest] of Object.entries(quests.heart)) {
+    if (questId.endsWith("_pregnancy_request")) {
+      pregnancyQuestByNpc[(quest as { npc: NpcId }).npc] = questId as QuestId;
+    }
+  }
+
   const trackerData: TrackerData = {
     almanac,
     animals,
@@ -497,6 +512,7 @@ function main(): void {
     npcs,
     perkTierLevels,
     pets: { cosmetics: petCosmetics, skins: petSkins },
+    pregnancyQuestByNpc,
     questOrder: {
       cooking: questChainsRaw.tali,
       crown: questChainsRaw.crown,

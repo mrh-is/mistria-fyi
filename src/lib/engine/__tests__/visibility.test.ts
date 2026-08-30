@@ -29,19 +29,19 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     almanacRecipes: new Set(),
     animalCosmetics: {},
     animals: {},
+    childChoice: "undeclared",
     cosmetics: new Set(),
     dates: new Set(),
     hasUpperFloor: false,
-    marriedNpc: null,
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
     npcLevels: {},
+    npcRelationships: {},
     petCosmetics: new Set(),
     petSkins: new Set(),
     questStates: {},
     reachedSeason: "spring",
     renown: 0,
-    romanticNpcs: new Set(),
     skillLevels: {},
     unlockedPerks: new Set(),
     ...overrides,
@@ -88,6 +88,7 @@ function makeTrackerData(overrides: DeepPartial<TrackerData> = {}): TrackerData 
     npcs: {},
     perkTierLevels: [1, 15, 30, 45, 60],
     pets: { cosmetics: {}, skins: {} },
+    pregnancyQuestByNpc: {},
     questOrder: {},
     quests: {
       cooking: {},
@@ -484,13 +485,13 @@ describe("satisfyCondition", () => {
   it("does not modify state for isDating (requires NPC choice)", () => {
     const completed = makeCompleted();
     satisfyCondition({ type: "isDating" }, completed, makeTrackerData());
-    expect(completed.romanticNpcs.size).toBe(0);
+    expect(Object.keys(completed.npcRelationships).length).toBe(0);
   });
 
-  it("sets marriedNpc", () => {
+  it("sets npcRelationships to married", () => {
     const completed = makeCompleted();
     satisfyCondition({ type: "married", npcId: holt }, completed, makeTrackerData());
-    expect(completed.marriedNpc).toBe(holt);
+    expect(completed.npcRelationships[holt]).toBe("married");
   });
 
   it("marks quest as completed for questCompleted", () => {

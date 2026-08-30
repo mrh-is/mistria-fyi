@@ -104,6 +104,7 @@ export type Source =
         | { type: "renown"; level: number }
         | { type: "ritual_chamber"; perkId: PerkId }
         | { type: "scroll_bundle"; bundleName: string; storeId: StoreId }
+        | { type: "spouseGift"; npcId: NpcId }
         | { type: "station"; stationId: StationId }
         | { type: "store"; storeId: StoreId }
         | { type: "treasure_chest"; tier: TreasureChestTierId }

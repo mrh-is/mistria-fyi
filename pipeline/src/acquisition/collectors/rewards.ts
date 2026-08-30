@@ -21,7 +21,7 @@ import type {
   PetCosmeticSourceAccumulator,
 } from "../source-accumulator.js";
 
-type LetterRewardSource = Extract<Source, { type: "letter" | "wedding" }>;
+type LetterRewardSource = Extract<Source, { type: "letter" | "spouseGift" | "wedding" }>;
 
 const FESTIVAL_SEASON_MAP: Record<string, Season> = {
   fall: "fall",
@@ -66,7 +66,7 @@ function classifyLetterTrigger(reqs: Record<string, unknown> | undefined): Lette
   }
 
   if (typeof reqs.is_spouse === "string") {
-    return { type: "wedding" };
+    return { type: "spouseGift", npcId: reqs.is_spouse as NpcId };
   }
 
   if (typeof reqs.shipped_item === "string") {

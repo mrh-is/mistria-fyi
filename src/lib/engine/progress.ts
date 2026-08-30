@@ -1,18 +1,20 @@
 import { trackerData } from "$lib/data/index.js";
+import { isItemApplicable, isItemApplicableForAlmanac } from "$lib/engine/applicability.js";
 import { filterAvailableItems, isItemAvailable } from "$lib/engine/availability.js";
+import { getMarriedNpc } from "$lib/engine/relationships.js";
 import { recordEntries, recordKeys, recordValues } from "$lib/utils";
 
 import type { CategoryKey } from "$lib/data/categories.js";
 import type { AvailabilityMode, CompletedState } from "$lib/stores/user-state.svelte.js";
 import type { Source } from "$lib/types/acquisition.js";
-import type { ItemId, Season, Weather } from "$lib/types/tracker-data.js";
+import type { ItemId, NpcId, QuestId, Season, Weather } from "$lib/types/tracker-data.js";
 
 export const MAX_NPC_LEVEL = 10;
 export const MAX_SKILL_LEVEL = 60;
 
-// ─── Types ──────────────────────────────────────────────────────────
-
 export type AllProgress = Record<CategoryKey, CategoryProgress>;
+
+// ─── Types ──────────────────────────────────────────────────────────
 
 export interface CategoryProgress {
   completed: number;
@@ -20,20 +22,18 @@ export interface CategoryProgress {
   total: number;
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────
-
 interface ProgressContext {
   availabilityMode: AvailabilityMode;
   completed: CompletedState;
   worldState: { season: Season; weather: Weather };
 }
 
+// ─── Helpers ────────────────────────────────────────────────────────
+
 export function clampRenownLevel(level: number): number {
   const maxLevel = trackerData.townRanks[trackerData.townRanks.length - 1].levels.end;
   return Math.max(0, Math.min(level, maxLevel));
 }
-
-// ─── Per-category progress ──────────────────────────────────────────
 
 export function getAllProgress(ctx: ProgressContext): AllProgress {
   return {
@@ -49,6 +49,8 @@ export function getAllProgress(ctx: ProgressContext): AllProgress {
     skills: getSkillsProgress(ctx),
   };
 }
+
+// ─── Per-category progress ──────────────────────────────────────────
 
 export function getCategoryProgress(category: CategoryKey, ctx: ProgressContext): CategoryProgress {
   switch (category) {
@@ -73,6 +75,20 @@ export function getCategoryProgress(category: CategoryKey, ctx: ProgressContext)
     case "skills":
       return getSkillsProgress(ctx);
   }
+}
+
+export function isNpcComplete(npcId: NpcId, completed: CompletedState): boolean {
+  const npc = trackerData.npcs[npcId];
+  const level = completed.npcLevels[npcId] ?? 0;
+  if (level < MAX_NPC_LEVEL) return false;
+
+  if (!npc.dateable) return true;
+
+  const relationship = completed.npcRelationships[npcId] ?? "undecided";
+  if (relationship === "platonic") return true;
+  if (relationship === "married") return completed.childChoice !== "undeclared";
+
+  return false;
 }
 
 function aggregateEntrySources(canonicalId: ItemId): Source[] {
@@ -100,7 +116,16 @@ function almanacEntryProgress(
   completedSet: Set<ItemId>,
   ctx: ProgressContext,
 ): CategoryProgress {
-  const incompleteIds = canonicalIds.filter((id) => !completedSet.has(id));
+  const applicableIds = canonicalIds.filter((id) => {
+    if (completedSet.has(id)) return true;
+    const entry = recordValues(trackerData.almanac)
+      .flatMap(({ items }) => items)
+      .find((e) => e.itemIds[0] === id);
+    if (!entry) return isItemApplicable(id, ctx.completed);
+    return isItemApplicableForAlmanac(entry.itemIds, ctx.completed);
+  });
+
+  const incompleteIds = applicableIds.filter((id) => !completedSet.has(id));
   const filtered =
     ctx.availabilityMode === "everything"
       ? incompleteIds
@@ -108,9 +133,9 @@ function almanacEntryProgress(
           isItemAvailable(aggregateEntrySources(id), ctx.worldState, ctx.availabilityMode),
         );
   return {
-    completed: canonicalIds.length - incompleteIds.length,
+    completed: applicableIds.length - incompleteIds.length,
     filtered: filtered.length,
-    total: canonicalIds.length,
+    total: applicableIds.length,
   };
 }
 
@@ -196,6 +221,28 @@ function getCosmeticsProgress(ctx: ProgressContext): CategoryProgress {
   return { completed, filtered: total - completed, total };
 }
 
+function getCravingQuestCount(
+  marriedNpc: NpcId | null,
+  isWife: boolean,
+  activePregnancyQuestId: QuestId | undefined,
+  ctx: ProgressContext,
+): { completed: number; total: number } {
+  if (!marriedNpc) {
+    return { completed: 0, total: 1 };
+  }
+  if (!isWife) {
+    return { completed: 0, total: 0 };
+  }
+  if (ctx.completed.childChoice === "no") {
+    return { completed: 0, total: 0 };
+  }
+  if (activePregnancyQuestId) {
+    const isCompleted = ctx.completed.questStates[activePregnancyQuestId] === "completed";
+    return { completed: isCompleted ? 1 : 0, total: 1 };
+  }
+  return { completed: 0, total: 1 };
+}
+
 function getMinesProgress(ctx: ProgressContext): CategoryProgress {
   const biomes = trackerData.mines.biomes;
   const maxFloor = biomes[biomes.length - 1].floors.end;
@@ -227,14 +274,29 @@ function getNpcsProgress(ctx: ProgressContext): CategoryProgress {
 }
 
 function getQuestsProgress(ctx: ProgressContext): CategoryProgress {
+  const pregnancyQuestIds = new Set(
+    Object.values(trackerData.pregnancyQuestByNpc).filter((id): id is QuestId => id !== undefined),
+  );
+  const marriedNpc = getMarriedNpc(ctx.completed.npcRelationships);
+  const isWife = marriedNpc ? marriedNpc in trackerData.pregnancyQuestByNpc : false;
+  const activePregnancyQuestId = marriedNpc
+    ? trackerData.pregnancyQuestByNpc[marriedNpc]
+    : undefined;
+
   let total = 0;
   let completed = 0;
   for (const questType of recordValues(trackerData.quests)) {
     for (const id of recordKeys(questType)) {
+      if (pregnancyQuestIds.has(id)) continue;
       total++;
       if (ctx.completed.questStates[id] === "completed") completed++;
     }
   }
+
+  const cravingCount = getCravingQuestCount(marriedNpc, isWife, activePregnancyQuestId, ctx);
+  total += cravingCount.total;
+  completed += cravingCount.completed;
+
   return { completed, filtered: total - completed, total };
 }
 
@@ -268,7 +330,10 @@ function itemProgress(
   completedSet: Set<ItemId>,
   ctx: ProgressContext,
 ): CategoryProgress {
-  const incompleteIds = allIds.filter((id) => !completedSet.has(id));
+  const applicableIds = allIds.filter(
+    (id) => completedSet.has(id) || isItemApplicable(id, ctx.completed),
+  );
+  const incompleteIds = applicableIds.filter((id) => !completedSet.has(id));
   const filtered = filterAvailableItems(
     incompleteIds,
     (id) => trackerData.items[id].sources,
@@ -276,8 +341,8 @@ function itemProgress(
     ctx.availabilityMode,
   );
   return {
-    completed: allIds.length - incompleteIds.length,
+    completed: applicableIds.length - incompleteIds.length,
     filtered: filtered.length,
-    total: allIds.length,
+    total: applicableIds.length,
   };
 }

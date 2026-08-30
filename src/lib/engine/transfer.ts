@@ -1,7 +1,8 @@
 import { canonicalAlmanacId, trackerData } from "$lib/data/index.js";
+import { normalizeRelationships } from "$lib/engine/relationships.js";
 import { recordEntries, recordKeys, recordValues } from "$lib/utils";
 
-import type { CompletedState, QuestState } from "$lib/stores/user-state.svelte.js";
+import type { ChildChoice, CompletedState, QuestState } from "$lib/stores/user-state.svelte.js";
 import type {
   AnimalId,
   AnimalVariantId,
@@ -9,6 +10,7 @@ import type {
   DateId,
   ItemId,
   NpcId,
+  NpcRelationship,
   PerkId,
   PetCosmeticSetId,
   PetSkinId,
@@ -20,7 +22,7 @@ import type {
 
 // ─── Constants ──────────────────────────────────────────────────────
 
-export const TRANSFER_VERSION = 6;
+export const TRANSFER_VERSION = 7;
 
 const SEASON_BY_ORD: Season[] = ["spring", "summer", "fall", "winter"];
 const SEASON_ORD: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
@@ -180,7 +182,7 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   // 18. Romantic NPC bitfield (v5 only)
   let hasUpperFloor = false;
   let reachedSeason: Season = "spring";
-  let romanticNpcs = new Set<NpcId>();
+  const npcRelationships: Partial<Record<NpcId, NpcRelationship>> = {};
 
   if (version >= 5) {
     const progressionByte = readBytes(1)[0];
@@ -189,26 +191,72 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
 
     const romanticOrder = getDateableNpcOrder();
     const romanticBytes = readBytes(Math.ceil(romanticOrder.length / 8));
-    romanticNpcs = fromBitfield(romanticOrder, romanticBytes) as Set<NpcId>;
+    const romanticNpcs = fromBitfield(romanticOrder, romanticBytes) as Set<NpcId>;
+
+    for (const npcId of romanticNpcs) {
+      npcRelationships[npcId] = "romantic";
+    }
   }
+
+  if (marriedNpc) {
+    npcRelationships[marriedNpc] = "married";
+  }
+
+  // 19. NPC relationship states (v7) — 3 bits per dateable NPC
+  // 20. Child choice (v7) — 1 byte
+  let childChoice: ChildChoice = "undeclared";
+
+  if (version >= 7) {
+    const dateableOrder = getDateableNpcOrder();
+    const relByteCount = Math.ceil((dateableOrder.length * 3) / 8);
+    const relBytes = readBytes(relByteCount);
+    const RELATIONSHIP_MAP: NpcRelationship[] = [
+      "undecided",
+      "platonic",
+      "romantic",
+      "proposed",
+      "married",
+    ];
+    for (let i = 0; i < dateableOrder.length; i++) {
+      const bitOffset = i * 3;
+      const byteIndex = Math.floor(bitOffset / 8);
+      const bitShift = 5 - (bitOffset % 8);
+      let bits: number;
+      if (bitShift >= 0) {
+        bits = (relBytes[byteIndex] >> bitShift) & 0x7;
+      } else {
+        bits =
+          ((relBytes[byteIndex] << -bitShift) | (relBytes[byteIndex + 1] >> (8 + bitShift))) & 0x7;
+      }
+      const rel = RELATIONSHIP_MAP[bits] ?? "undecided";
+      if (rel !== "undecided") {
+        npcRelationships[dateableOrder[i]] = rel;
+      }
+    }
+
+    const childByte = readBytes(1)[0];
+    childChoice = childByte === 0x01 ? "yes" : childByte === 0x02 ? "no" : "undeclared";
+  }
+
+  normalizeRelationships(npcRelationships);
 
   return {
     almanac,
     animalCosmetics,
     animals,
+    childChoice,
     cosmetics,
     dates,
     hasUpperFloor,
-    marriedNpc,
     mines: { floor, spells },
     museum,
     npcLevels,
+    npcRelationships,
     petCosmetics,
     petSkins,
     questStates,
     reachedSeason,
     renown,
-    romanticNpcs,
     skillLevels,
     unlockedPerks,
   };
@@ -310,8 +358,11 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   const perkOrder = getPerkOrder();
   parts.push(toBitfield(perkOrder, completed.unlockedPerks));
 
-  // 13. Married NPC index (new in v2) — 1 byte: 0xFF = no spouse, else index into npcOrder
-  const marriedIndex = completed.marriedNpc ? npcOrder.indexOf(completed.marriedNpc) : -1;
+  // 13. Married NPC index (v2+, still written for v6 backward compat)
+  const marriedNpc = Object.entries(completed.npcRelationships).find(
+    ([, r]) => r === "married",
+  )?.[0] as NpcId | undefined;
+  const marriedIndex = marriedNpc ? npcOrder.indexOf(marriedNpc) : -1;
   parts.push(new Uint8Array([marriedIndex === -1 ? 0xff : marriedIndex]));
 
   // 14. Pet cosmetic sets bitfield (new in v3)
@@ -331,9 +382,47 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
     ((SEASON_ORD[completed.reachedSeason] & 0x3) << 6) | (completed.hasUpperFloor ? 0x20 : 0);
   parts.push(new Uint8Array([progressionByte]));
 
-  // 18. Romantic NPC bitfield (new in v5)
+  // 18. Romantic NPC bitfield (v5+, still written for v6 backward compat)
   const romanticOrder = getDateableNpcOrder();
-  parts.push(toBitfield(romanticOrder, completed.romanticNpcs));
+  const romanticSet = new Set<string>();
+  for (const [id, rel] of Object.entries(completed.npcRelationships)) {
+    if (rel === "romantic" || rel === "proposed" || rel === "married") {
+      romanticSet.add(id);
+    }
+  }
+  parts.push(toBitfield(romanticOrder, romanticSet));
+
+  // 19. NPC relationship states (new in v7) — 3 bits per dateable NPC
+  const RELATIONSHIP_ENCODE: Record<NpcRelationship, number> = {
+    married: 4,
+    platonic: 1,
+    proposed: 3,
+    romantic: 2,
+    undecided: 0,
+  };
+  const dateableOrder = getDateableNpcOrder();
+  const relBitCount = dateableOrder.length * 3;
+  const relByteCount = Math.ceil(relBitCount / 8);
+  const relBytes = new Uint8Array(relByteCount);
+  for (let i = 0; i < dateableOrder.length; i++) {
+    const rel = completed.npcRelationships[dateableOrder[i]] ?? "undecided";
+    const bits = RELATIONSHIP_ENCODE[rel];
+    const bitOffset = i * 3;
+    const byteIndex = Math.floor(bitOffset / 8);
+    const bitShift = 5 - (bitOffset % 8);
+    if (bitShift >= 0) {
+      relBytes[byteIndex] |= (bits & 0x7) << bitShift;
+    } else {
+      relBytes[byteIndex] |= (bits & 0x7) >> -bitShift;
+      relBytes[byteIndex + 1] |= (bits & 0x7) << (8 + bitShift);
+    }
+  }
+  parts.push(relBytes);
+
+  // 20. Child choice (new in v7) — 1 byte
+  const childByte =
+    completed.childChoice === "yes" ? 0x01 : completed.childChoice === "no" ? 0x02 : 0x00;
+  parts.push(new Uint8Array([childByte]));
 
   // Concatenate all parts
   const totalLength = parts.reduce((sum, p) => sum + p.length, 0);

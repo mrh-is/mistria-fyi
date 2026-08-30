@@ -83,6 +83,7 @@ function makeTrackerData(overrides: Record<string, unknown>): TrackerData {
     npcs: {},
     perkTierLevels: [1, 10, 20, 45, 60],
     pets: { cosmetics: {}, skins: {} },
+    pregnancyQuestByNpc: {},
     questOrder: {},
     quests: { ...DEFAULT_QUESTS, ...(questOverrides as object) },
     recipes: {},

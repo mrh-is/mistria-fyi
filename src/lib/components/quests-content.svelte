@@ -7,6 +7,7 @@
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
+  import { getMarriedNpc } from "$lib/engine/relationships.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordEntries } from "$lib/utils";
@@ -28,6 +29,10 @@
     QuestType,
   } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
+
+  const pregnancyQuestIds = new Set(
+    Object.values(trackerData.pregnancyQuestByNpc).filter((id): id is QuestId => id !== undefined),
+  );
 
   const spoilerGuard = createSpoilerGuard();
 
@@ -72,11 +77,23 @@
   }
 
   function isQuestsComplete(): boolean {
-    return typeOrder.every((type) =>
-      Object.keys(trackerData.quests[type]).every(
-        (id) => getQuestState(id as QuestId) === "completed",
-      ),
-    );
+    for (const type of typeOrder) {
+      for (const id of Object.keys(trackerData.quests[type]) as QuestId[]) {
+        if (pregnancyQuestIds.has(id)) continue;
+        if (getQuestState(id) !== "completed") return false;
+      }
+    }
+    if (!isCravingQuestComplete()) return false;
+    return true;
+  }
+
+  function isCravingQuestComplete(): boolean {
+    const marriedNpc = getMarriedNpc(userState.state.completed.npcRelationships);
+    if (!marriedNpc) return false;
+    if (!(marriedNpc in trackerData.pregnancyQuestByNpc)) return true;
+    if (userState.state.completed.childChoice === "no") return true;
+    const questId = trackerData.pregnancyQuestByNpc[marriedNpc];
+    return questId ? getQuestState(questId) === "completed" : true;
   }
 
   function findDuplicateNames(entries: { displayName: string }[]): Set<string> {
@@ -128,6 +145,31 @@
   function getQuestState(id: QuestId): QuestState {
     return userState.state.completed.questStates[id] ?? "none";
   }
+
+  let cravingQuestEntry = $derived.by(() => {
+    const marriedNpc = getMarriedNpc(userState.state.completed.npcRelationships);
+    const isWife = marriedNpc ? marriedNpc in trackerData.pregnancyQuestByNpc : false;
+    const activeQuestId = marriedNpc ? trackerData.pregnancyQuestByNpc[marriedNpc] : undefined;
+
+    const shouldShow = !marriedNpc || (isWife && userState.state.completed.childChoice !== "no");
+
+    const subtitle = activeQuestId && marriedNpc ? trackerData.npcs[marriedNpc].name : undefined;
+
+    const isCompleted = activeQuestId ? getQuestState(activeQuestId) === "completed" : false;
+
+    return {
+      displayName: "A Craving",
+      heartLevel: 99,
+      id: (activeQuestId ?? "craving_synthetic") as QuestId,
+      isCompleted,
+      isCraving: true,
+      name: "A Craving",
+      npc: marriedNpc ?? undefined,
+      rewardRecipeName: undefined,
+      shouldShow,
+      subtitle,
+    };
+  });
 
   function completeQuest(quest: { displayName: string; id: QuestId }, quests: { id: QuestId }[]) {
     const newlyAdded = userState.completeQuestWithRecipes(quest.id);
@@ -191,6 +233,7 @@
   )}
   {@const chainOrder = trackerData.questOrder[questType] ?? null}
   {@const quests = Object.entries(trackerData.quests[questType])
+    .filter(([id]) => !pregnancyQuestIds.has(id as QuestId))
     .map(([id, q]) => {
       const fetchQuest = questType === "fetch" ? (q as FetchQuest) : undefined;
       const heartQuest = questType === "heart" ? (q as HeartQuest) : undefined;
@@ -203,16 +246,26 @@
           : displayQuestName(q.name, questType),
         heartLevel: heartQuest?.heartLevel,
         id: id as QuestId,
+        isCompleted: false,
+        isCraving: false,
         name: q.name,
         npc: fetchQuest?.npc ?? heartQuest?.npc,
         rewardRecipeName,
+        shouldShow: true,
+        subtitle: undefined as string | undefined,
       };
     })
+    .concat(questType === "heart" ? [cravingQuestEntry] : [])
     .sort((a, b) => {
       if (chainOrder) {
-        return chainOrder.indexOf(a.id) - chainOrder.indexOf(b.id);
+        const aIdx = chainOrder.indexOf(a.id);
+        const bIdx = chainOrder.indexOf(b.id);
+        if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+        if (aIdx !== -1) return -1;
+        if (bIdx !== -1) return 1;
       }
       if (questType === "heart") {
+        if (a.isCraving !== b.isCraving) return a.isCraving ? 1 : -1;
         const npcA = a.npc ? trackerData.npcs[a.npc].name : "";
         const npcB = b.npc ? trackerData.npcs[b.npc].name : "";
         const npcCmp = npcA.localeCompare(npcB);
@@ -230,36 +283,60 @@
     })}
   {@const duplicateNames = findDuplicateNames(quests)}
   {@const visibleQuests = quests.filter((q) => {
+    if (q.isCraving) {
+      if (!q.shouldShow) return false;
+      return q.isCompleted ? userState.state.showCompleted : true;
+    }
     const done = getQuestState(q.id) === "completed";
     return done ? userState.state.showCompleted : true;
   })}
   {#if quests.length > 0}
     <SpoilerSection name={typeLabels[questType]} revealed={categoryRevealed}>
       {#if visibleQuests.length > 0}
+        {@const shownQuests = quests.filter((q) => (q.isCraving ? q.shouldShow : true))}
         <ExpandableSection
-          count={quests.filter((q) => getQuestState(q.id) === "completed").length}
+          count={shownQuests.filter((q) =>
+            q.isCraving ? q.isCompleted : getQuestState(q.id) === "completed",
+          ).length}
           name={typeLabels[questType]}
-          total={quests.length}
+          total={shownQuests.length}
         >
           {#each visibleQuests as quest (quest.id)}
-            {@const questState = getQuestState(quest.id)}
-            {@const nameVisible = questNameVisible(questType, quest.id)}
-            <TrackerRow
-              display={questRowDisplay(questState, nameVisible)}
-              lookups={{ ...baseLookups, entityVisibility: questVisibility(questType, quest.id) }}
-              name={quest.displayName}
-              sources={questSources(questType, quest.id)}
-              subtitle={questSubtitle(quest, questType, duplicateNames)}
-              onToggle={() => {
-                if (nameVisible || questState !== "none") {
-                  completeQuest(quest, quests);
-                } else {
-                  spoilerGuard.guard(questVisibility(questType, quest.id), () => {
+            {#if quest.isCraving}
+              {@const cravingState = quest.isCompleted ? "completed" : "none"}
+              {@const cravingNameVisible = !!quest.npc}
+              <TrackerRow
+                display={questRowDisplay(cravingState, cravingNameVisible)}
+                lookups={baseLookups}
+                name={quest.displayName}
+                sources={[]}
+                subtitle={quest.subtitle}
+                onToggle={() => {
+                  if (quest.npc && cravingQuestEntry.id !== "craving_synthetic") {
                     completeQuest(quest, quests);
-                  });
-                }
-              }}
-            />
+                  }
+                }}
+              />
+            {:else}
+              {@const questState = getQuestState(quest.id)}
+              {@const nameVisible = questNameVisible(questType, quest.id)}
+              <TrackerRow
+                display={questRowDisplay(questState, nameVisible)}
+                lookups={{ ...baseLookups, entityVisibility: questVisibility(questType, quest.id) }}
+                name={quest.displayName}
+                sources={questSources(questType, quest.id)}
+                subtitle={questSubtitle(quest, questType, duplicateNames)}
+                onToggle={() => {
+                  if (nameVisible || questState !== "none") {
+                    completeQuest(quest, quests);
+                  } else {
+                    spoilerGuard.guard(questVisibility(questType, quest.id), () => {
+                      completeQuest(quest, quests);
+                    });
+                  }
+                }}
+              />
+            {/if}
           {/each}
         </ExpandableSection>
       {/if}
