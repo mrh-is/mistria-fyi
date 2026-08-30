@@ -125,6 +125,7 @@ export interface Npc {
   visibility?: VisibilityCondition;
 }
 export type NpcId = string & { readonly __brand: "NpcId" };
+export type NpcRelationship = "married" | "platonic" | "proposed" | "romantic" | "undecided";
 export interface Perk {
   name: string;
 }
@@ -208,6 +209,7 @@ export interface TrackerData {
     cosmetics: Record<PetCosmeticSetId, PetCosmeticSet>;
     skins: Record<PetSkinId, PetSkin>;
   };
+  pregnancyQuestByNpc: Partial<Record<NpcId, QuestId>>;
   questOrder: Partial<Record<QuestType, QuestId[]>>;
   quests: {
     [K in QuestType]: Record<QuestId, QuestTypeMap[K]>;

@@ -69,7 +69,7 @@ describe("buildImportState", () => {
       expect(completed.hasUpperFloor).toBe(false);
     });
 
-    it("extracts romanticNpcs from t2_world_facts dating keys", () => {
+    it("extracts npcRelationships from t2_world_facts dating keys", () => {
       const bundle: SaveBundle = {
         gamedata: {
           t2_world_facts: {
@@ -80,7 +80,10 @@ describe("buildImportState", () => {
         },
       };
       const { completed } = buildImportState(bundle);
-      expect(completed.romanticNpcs).toEqual(new Set(["juniper", "march"]));
+      expect(completed.npcRelationships).toEqual({
+        juniper: "romantic",
+        march: "romantic",
+      });
     });
 
     it("derives reachedSeason from gamedata.date timestamp", () => {

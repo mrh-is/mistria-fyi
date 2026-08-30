@@ -3,7 +3,7 @@
   import SpoilerSection from "$lib/components/spoiler-section.svelte";
   import Stepper from "$lib/components/stepper.svelte";
   import { trackerData } from "$lib/data/index.js";
-  import { type CategoryProgress, MAX_NPC_LEVEL } from "$lib/engine/progress.js";
+  import { type CategoryProgress, isNpcComplete, MAX_NPC_LEVEL } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordKeys } from "$lib/utils";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
@@ -32,16 +32,14 @@
     "text-rose-700 dark:text-rose-400",
   ];
 
-  function areAllNpcsMaxed(): boolean {
-    return recordKeys(trackerData.npcs).every(
-      (id) => (userState.state.completed.npcLevels[id] ?? 0) >= MAX_NPC_LEVEL,
-    );
+  function areAllNpcsComplete(): boolean {
+    return recordKeys(trackerData.npcs).every((id) => isNpcComplete(id, userState.state.completed));
   }
 
   function setNpcLevelWithCelebration(id: NpcId, newLevel: number): void {
-    const wasCategoryComplete = areAllNpcsMaxed();
+    const wasCategoryComplete = areAllNpcsComplete();
     userState.setNpcLevel(id, newLevel);
-    if (!wasCategoryComplete && areAllNpcsMaxed()) {
+    if (!wasCategoryComplete && areAllNpcsComplete()) {
       celebrateCategory();
     }
   }
@@ -61,11 +59,11 @@
     <div class="flex flex-col gap-1">
       {#each npcs as npc (npc.id)}
         {@const level = userState.state.completed.npcLevels[npc.id] ?? 0}
-        {@const maxed = level >= MAX_NPC_LEVEL}
+        {@const complete = isNpcComplete(npc.id, userState.state.completed)}
         {@const known = isNpcKnown(npc.id)}
         <SpoilerSection name={npc.name} revealed={known}>
-          {#if maxed ? userState.state.showCompleted : true}
-            <div class="flex items-center gap-2 rounded-md px-2 {maxed ? 'opacity-40' : ''}">
+          {#if complete ? userState.state.showCompleted : true}
+            <div class="flex items-center gap-2 rounded-md px-2 {complete ? 'opacity-40' : ''}">
               <div class="flex min-w-0 flex-1 items-center gap-1.5">
                 <span class="truncate text-base font-medium">{npc.name}</span>
                 <span class="flex shrink-0 items-center gap-0.5 text-xs text-muted-foreground">

@@ -111,6 +111,7 @@ const SOURCE_FIELDS = {
   renown: ["level"],
   ritual_chamber: ["perkId"],
   scroll_bundle: ["bundleName", "storeId"],
+  spouseGift: ["npcId"],
   station: ["stationId"],
   store: ["storeId"],
   treasure_chest: ["tier"],
@@ -1228,6 +1229,9 @@ function validateVariantFields(
     case "scroll_bundle":
       requiredStrings.push("bundleName");
       stringReferences.push(["storeId", "store"]);
+      break;
+    case "spouseGift":
+      stringReferences.push(["npcId", "npc"]);
       break;
     case "station":
       stringReferences.push(["stationId", "station"]);

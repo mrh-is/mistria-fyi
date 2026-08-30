@@ -7,6 +7,7 @@ import type {
   CosmeticId,
   ItemId,
   NpcId,
+  NpcRelationship,
   PerkId,
   PetCosmeticSetId,
   PetSkinId,
@@ -71,19 +72,20 @@ export function buildImportState(bundle: SaveBundle): {
     almanacRecipes: 0,
     animalCosmetics: 0,
     animals: 0,
+    childChoice: 0,
     cosmetics: 0,
     dates: 0,
     hasUpperFloor: 0,
     mineFloor: 0,
     museum: 0,
     npcLevels: 0,
+    npcRelationships: 0,
     perks: 0,
     petCosmetics: 0,
     petSkins: 0,
     quests: 0,
     reachedSeason: 0,
     renown: 0,
-    romanticNpcs: 0,
     skillLevels: 0,
     spells: 0,
   };
@@ -300,8 +302,8 @@ export function buildImportState(bundle: SaveBundle): {
   const hasUpperFloor = save?.upper_floor === true;
   if (hasUpperFloor) counts.hasUpperFloor = 1;
 
-  // ── Romantic NPCs (from gamedata.json → t2_world_facts → {npc}_is_dating) ──
-  const romanticNpcs = new Set<NpcId>();
+  // ── NPC relationships (from gamedata.json → t2_world_facts → {npc}_is_dating) ──
+  const npcRelationships: Partial<Record<NpcId, NpcRelationship>> = {};
   if (facts) {
     const dateableNpcs = Object.entries(trackerData.npcs)
       .filter(([, npc]) => npc.dateable === true)
@@ -309,11 +311,11 @@ export function buildImportState(bundle: SaveBundle): {
     for (const npcId of dateableNpcs) {
       const val = facts[`${npcId}_is_dating`];
       if (val === true || val === 1) {
-        romanticNpcs.add(npcId as NpcId);
+        npcRelationships[npcId as NpcId] = "romantic";
+        counts.npcRelationships++;
       }
     }
   }
-  counts.romanticNpcs = romanticNpcs.size;
 
   // ── Reached season (from gamedata.json → date timestamp) ──
   const reachedSeason = deriveReachedSeason(bundle.gamedata?.date);
@@ -358,12 +360,12 @@ export function buildImportState(bundle: SaveBundle): {
       mines: { floor: mineFloor, spells },
       museum: museumIds,
       npcLevels,
+      npcRelationships,
       petCosmetics,
       petSkins,
       questStates,
       reachedSeason,
       renown,
-      romanticNpcs,
       skillLevels,
       unlockedPerks: perkIds,
     },

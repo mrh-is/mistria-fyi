@@ -1,3 +1,4 @@
+import { getMarriedNpc, normalizeRelationships } from "$lib/engine/relationships.js";
 import { recordEntries, recordKeys } from "$lib/utils";
 
 import type { CompletedState, QuestState } from "$lib/stores/user-state.svelte.js";
@@ -35,7 +36,7 @@ export function deriveProgressionState(
   showSpoilers: boolean,
 ): UserProgressionState {
   const unlockedPerks = completed.unlockedPerks;
-  const marriedNpc = completed.marriedNpc;
+  const marriedNpc = getMarriedNpc(completed.npcRelationships);
 
   // 1. Quest visibility, per-quest, from actual quest state + chain prerequisites.
   const questVisibility: Record<string, QuestVisibility> = {};
@@ -69,7 +70,9 @@ export function deriveProgressionState(
   } else {
     const tempState: UserProgressionState = {
       hasUpperFloor: completed.hasUpperFloor,
-      isDating: completed.romanticNpcs.size > 0 || completed.marriedNpc !== null,
+      isDating: Object.values(completed.npcRelationships).some(
+        (r) => r === "romantic" || r === "proposed" || r === "married",
+      ),
       knownNpcs: new Set(),
       marriedNpc,
       minesFloor: completed.mines.floor,
@@ -99,7 +102,9 @@ export function deriveProgressionState(
 
   return {
     hasUpperFloor: completed.hasUpperFloor,
-    isDating: completed.romanticNpcs.size > 0 || completed.marriedNpc !== null,
+    isDating: Object.values(completed.npcRelationships).some(
+      (r) => r === "romantic" || r === "proposed" || r === "married",
+    ),
     knownNpcs,
     marriedNpc,
     minesFloor: completed.mines.floor,
@@ -220,7 +225,10 @@ export function satisfyCondition(
       );
       return;
     case "married":
-      completed.marriedNpc ??= condition.npcId;
+      if (!getMarriedNpc(completed.npcRelationships)) {
+        completed.npcRelationships[condition.npcId] = "married";
+        normalizeRelationships(completed.npcRelationships);
+      }
       return;
     case "minesLevel":
       completed.mines.floor = Math.max(completed.mines.floor, condition.floor);
@@ -310,9 +318,11 @@ function evaluateQuestPrerequisites(
 
   const tempState: UserProgressionState = {
     hasUpperFloor: completed.hasUpperFloor,
-    isDating: completed.romanticNpcs.size > 0 || completed.marriedNpc !== null,
+    isDating: Object.values(completed.npcRelationships).some(
+      (r) => r === "romantic" || r === "proposed" || r === "married",
+    ),
     knownNpcs: new Set(),
-    marriedNpc: completed.marriedNpc,
+    marriedNpc: getMarriedNpc(completed.npcRelationships),
     minesFloor: completed.mines.floor,
     npcLevels: completed.npcLevels,
     questVisibility: questVisibilitySoFar,
@@ -349,9 +359,11 @@ function isBaseConditionMet(
     case "heartLevel":
       return (completed.npcLevels[condition.npcId] ?? 0) >= condition.level;
     case "isDating":
-      return completed.romanticNpcs.size > 0 || completed.marriedNpc !== null;
+      return Object.values(completed.npcRelationships).some(
+        (r) => r === "romantic" || r === "proposed" || r === "married",
+      );
     case "married":
-      return completed.marriedNpc === condition.npcId;
+      return getMarriedNpc(completed.npcRelationships) === condition.npcId;
     case "minesLevel":
       return completed.mines.floor >= condition.floor;
     case "npcKnown": {

@@ -1,12 +1,14 @@
 import { trackerData } from "$lib/data/index.js";
+import { isItemApplicable, isItemApplicableForAlmanac } from "$lib/engine/applicability.js";
 import { isItemAvailable } from "$lib/engine/availability.js";
+import { isNpcComplete } from "$lib/engine/progress.js";
 import { isVisible } from "$lib/engine/visibility.js";
 import { recordEntries } from "$lib/utils";
 
 import type { UserProgressionState } from "$lib/engine/visibility.js";
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
 import type { Source } from "$lib/types/acquisition.js";
-import type { ItemId, Season, Weather } from "$lib/types/tracker-data.js";
+import type { ItemId, QuestId, Season, Weather } from "$lib/types/tracker-data.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -41,6 +43,7 @@ export function searchItems(
       const canonicalId = entry.itemIds[0];
       const item = trackerData.items[canonicalId];
       if (item.visibility && !isVisible(item.visibility, progressionState)) continue;
+      if (!isItemApplicableForAlmanac(entry.itemIds, completed)) continue;
 
       if (entry.name.toLowerCase().includes(q)) {
         const sources = aggregateSources(entry.itemIds);
@@ -62,6 +65,7 @@ export function searchItems(
       for (const id of set.items) {
         const item = trackerData.items[id];
         if (item.visibility && !isVisible(item.visibility, progressionState)) continue;
+        if (!isItemApplicable(id, completed)) continue;
 
         if (item.name.toLowerCase().includes(q)) {
           // Skip if already covered by an almanac result with same ID
@@ -85,11 +89,10 @@ export function searchItems(
     if (npcVis && !isVisible(npcVis, progressionState)) continue;
 
     if (npc.name.toLowerCase().includes(q)) {
-      const max = npc.dateable ? 12 : 10;
       results.push({
         available: true,
         category: "npcs",
-        completed: (completed.npcLevels[id] ?? 0) >= max,
+        completed: isNpcComplete(id, completed),
         id,
         name: npc.name,
       });
@@ -201,8 +204,12 @@ export function searchItems(
   }
 
   // Quests — not season-gated
+  const pregnancyQuestIds = new Set(
+    Object.values(trackerData.pregnancyQuestByNpc).filter((id): id is QuestId => id !== undefined),
+  );
   for (const [, quests] of recordEntries(trackerData.quests)) {
     for (const [id, quest] of recordEntries(quests)) {
+      if (pregnancyQuestIds.has(id)) continue;
       if (quest.visibility && !isVisible(quest.visibility, progressionState)) continue;
 
       if (quest.name.toLowerCase().includes(q)) {

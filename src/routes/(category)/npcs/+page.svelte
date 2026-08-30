@@ -1,10 +1,11 @@
 <script lang="ts">
   import DatesSection from "$lib/components/dates-section.svelte";
   import { Icon } from "$lib/components/icon/index.js";
+  import NpcRelationshipPicker from "$lib/components/npc-relationship-picker.svelte";
   import SpoilerSection from "$lib/components/spoiler-section.svelte";
   import Stepper from "$lib/components/stepper.svelte";
   import { trackerData } from "$lib/data/index.js";
-  import { MAX_NPC_LEVEL } from "$lib/engine/progress.js";
+  import { isNpcComplete, MAX_NPC_LEVEL } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordKeys } from "$lib/utils";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
@@ -15,16 +16,14 @@
     return userState.progressionState.knownNpcs.has(id);
   }
 
-  function areAllNpcsMaxed(): boolean {
-    return recordKeys(trackerData.npcs).every(
-      (id) => (userState.state.completed.npcLevels[id] ?? 0) >= MAX_NPC_LEVEL,
-    );
+  function areAllNpcsComplete(): boolean {
+    return recordKeys(trackerData.npcs).every((id) => isNpcComplete(id, userState.state.completed));
   }
 
   function setNpcLevelWithCelebration(id: NpcId, newLevel: number): void {
-    const wasCategoryComplete = areAllNpcsMaxed();
+    const wasCategoryComplete = areAllNpcsComplete();
     userState.setNpcLevel(id, newLevel);
-    if (!wasCategoryComplete && areAllNpcsMaxed()) {
+    if (!wasCategoryComplete && areAllNpcsComplete()) {
       celebrateCategory();
     }
   }
@@ -55,15 +54,15 @@
     return userState.state.completed.npcLevels[id] ?? 0;
   }
 
-  function isMaxed(npc: { id: NpcId }): boolean {
-    return getNpcLevel(npc.id) >= MAX_NPC_LEVEL;
+  function isComplete(npc: { id: NpcId }): boolean {
+    return isNpcComplete(npc.id, userState.state.completed);
   }
 </script>
 
 <div class="flex flex-col gap-2">
   {#each npcs as npc (npc.id)}
     {@const level = getNpcLevel(npc.id)}
-    {@const maxed = isMaxed(npc)}
+    {@const maxed = isComplete(npc)}
     {@const known = isNpcKnown(npc.id)}
     <SpoilerSection name={npc.name} revealed={known}>
       {#if maxed ? userState.state.showCompleted : true}
@@ -108,6 +107,10 @@
               {/each}
             </div>
           </Stepper>
+
+          {#if npc.dateable}
+            <NpcRelationshipPicker npcId={npc.id} />
+          {/if}
         </div>
       {/if}
     </SpoilerSection>

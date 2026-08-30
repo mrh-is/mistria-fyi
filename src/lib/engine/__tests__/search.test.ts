@@ -10,6 +10,7 @@ import type { CompletedState } from "$lib/stores/user-state.svelte.js";
 import type {
   AnimalVariantId,
   CosmeticId,
+  QuestId,
   RecipeId,
   Season,
   Weather,
@@ -32,19 +33,19 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     almanacRecipes: new Set(),
     animalCosmetics,
     animals,
+    childChoice: "undeclared",
     cosmetics: new Set(),
     dates: new Set(),
     hasUpperFloor: false,
-    marriedNpc: null,
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
     npcLevels: {},
+    npcRelationships: {},
     petCosmetics: new Set(),
     petSkins: new Set(),
     questStates: {},
     reachedSeason: "spring",
     renown: 0,
-    romanticNpcs: new Set(),
     skillLevels: {},
     unlockedPerks: new Set(),
     ...overrides,
@@ -313,5 +314,22 @@ describe("colorway deduplication", () => {
     });
     const match = results.find((r) => r.category === "almanac" && r.name === "Animated Waterfall");
     expect(match?.completed).toBe(true);
+  });
+});
+
+// ─── Pregnancy quest filtering ────────────────────────────────────
+
+describe("pregnancy quest filtering", () => {
+  const pregnancyQuestIds = Object.values(trackerData.pregnancyQuestByNpc).filter(
+    (id): id is QuestId => id !== undefined,
+  );
+
+  it("excludes individual pregnancy quests from search results", () => {
+    for (const questId of pregnancyQuestIds) {
+      const quest = trackerData.quests.heart[questId];
+      const results = search(quest.name);
+      const match = results.find((r) => r.category === "quests" && r.id === questId);
+      expect(match, `pregnancy quest ${questId} should not appear in search`).toBeUndefined();
+    }
   });
 });

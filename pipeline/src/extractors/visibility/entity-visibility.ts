@@ -238,6 +238,7 @@ function acquisitionSourceCondition(
     case "museum_donation":
     case "proposal":
     case "recipe":
+    case "spouseGift":
     case "station":
     case "treasure_chest":
     case "tree":
@@ -434,6 +435,7 @@ function acquisitionSourceConditions(
     case "recipe":
     case "renown":
     case "ritual_chamber":
+    case "spouseGift":
     case "station":
     case "treasure_chest":
     case "tree":

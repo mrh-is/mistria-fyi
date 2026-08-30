@@ -106,6 +106,7 @@ export const SOURCE_ICON: Record<Source["type"], LucideIcon> = {
   renown: Crown,
   ritual_chamber: Sparkles,
   scroll_bundle: ShoppingCart,
+  spouseGift: Heart,
   station: HardHat,
   store: ShoppingCart,
   treasure_chest: FishingRod,
@@ -119,7 +120,11 @@ export const SOURCE_FILTERS: SourceFilter[] = [
   { icon: Archive, label: "Chest", types: ["beach_cave_chest", "treasure_chest"] },
   { icon: HardHat, label: "Construction", types: ["upgrade", "station"] },
   { icon: CircleCheck, label: "Default", types: ["default"] },
-  { icon: Heart, label: "Dating", types: ["engagement", "date", "proposal", "wedding"] },
+  {
+    icon: Heart,
+    label: "Dating",
+    types: ["engagement", "date", "proposal", "spouseGift", "wedding"],
+  },
   {
     icon: Salad,
     label: "Gathering",

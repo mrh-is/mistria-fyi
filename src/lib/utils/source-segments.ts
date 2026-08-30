@@ -268,6 +268,10 @@ export function buildSourceSegments(
           : `the ${source.bundleName}`;
       return joinSegments("Purchase ", bundleSegment, " from ", storeName, qualifier);
     }
+    case "spouseGift": {
+      const npcName = lookups.npcNames[source.npcId] ?? titleCase(source.npcId);
+      return [`Get married to ${npcName}`];
+    }
     case "station": {
       const stationName = lookups.stationNames[source.stationId] ?? titleCase(source.stationId);
       return [`Process at ${stationName}`];

@@ -257,7 +257,7 @@ describe("collectRewardSources", () => {
       ]);
     });
 
-    it("classifies every item in an is_spouse letter as a wedding source", () => {
+    it("classifies every item in an is_spouse letter as a spouseGift source", () => {
       const fiddle = makeFiddle({
         letters: {
           wedding_gifts_juniper: {
@@ -277,9 +277,11 @@ describe("collectRewardSources", () => {
       const acc = new ItemSourceAccumulator();
       collectRewardSources(fiddle, acc);
 
-      expect(acc.get("juniper_desk" as ItemId)).toEqual([{ type: "wedding" }]);
-      expect(acc.get("dozy_pet_bed" as ItemId)).toEqual([{ type: "wedding" }]);
-      expect(acc.get("valen_workstation" as ItemId)).toEqual([{ type: "wedding" }]);
+      expect(acc.get("juniper_desk" as ItemId)).toEqual([{ type: "spouseGift", npcId: "juniper" }]);
+      expect(acc.get("dozy_pet_bed" as ItemId)).toEqual([{ type: "spouseGift", npcId: "juniper" }]);
+      expect(acc.get("valen_workstation" as ItemId)).toEqual([
+        { type: "spouseGift", npcId: "valen" },
+      ]);
     });
 
     it("adds a letter source for item_name entries", () => {

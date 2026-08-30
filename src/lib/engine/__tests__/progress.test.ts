@@ -7,6 +7,7 @@ import {
   clampRenownLevel,
   getAllProgress,
   getCategoryProgress,
+  isNpcComplete,
   MAX_NPC_LEVEL,
   MAX_SKILL_LEVEL,
 } from "../progress.js";
@@ -20,6 +21,8 @@ import type {
 import type {
   AnimalVariantId,
   CosmeticId,
+  NpcId,
+  NpcRelationship,
   QuestId,
   Season,
   Weather,
@@ -40,19 +43,19 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     almanacRecipes: new Set(),
     animalCosmetics,
     animals,
+    childChoice: "undeclared",
     cosmetics: new Set(),
     dates: new Set(),
     hasUpperFloor: false,
-    marriedNpc: null,
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
     npcLevels: {},
+    npcRelationships: {},
     petCosmetics: new Set(),
     petSkins: new Set(),
     questStates: {},
     reachedSeason: "spring",
     renown: 0,
-    romanticNpcs: new Set(),
     skillLevels: {},
     unlockedPerks: new Set(),
     ...overrides,
@@ -235,12 +238,16 @@ describe("npcs progress", () => {
 });
 
 describe("quests progress", () => {
-  it("total matches total quest count across all types", () => {
+  it("total matches total quest count minus pregnancy quests plus synthetic craving row", () => {
     const progress = getCategoryProgress("quests", ctx());
     let expected = 0;
+    const pregnancyQuestIds = new Set(Object.values(trackerData.pregnancyQuestByNpc));
     for (const questType of recordValues(trackerData.quests)) {
-      expected += recordKeys(questType).length;
+      for (const id of recordKeys(questType)) {
+        if (!pregnancyQuestIds.has(id)) expected++;
+      }
     }
+    expected += 1;
     expect(progress.total).toBe(expected);
   });
 
@@ -366,5 +373,158 @@ describe("availability filtering on item-based categories", () => {
     expect(getCategoryProgress("almanac", c1).completed).toBe(
       getCategoryProgress("almanac", c2).completed,
     );
+  });
+});
+
+// ─── isNpcComplete ────────────────────────────────────────────────
+
+describe("isNpcComplete", () => {
+  it("non-dateable NPC is complete at max hearts", () => {
+    const completed = makeCompleted({
+      npcLevels: { darcy: MAX_NPC_LEVEL } as Record<NpcId, number>,
+    });
+    expect(isNpcComplete("darcy" as NpcId, completed)).toBe(true);
+  });
+
+  it("non-dateable NPC is incomplete below max hearts", () => {
+    const completed = makeCompleted({ npcLevels: { darcy: 5 } as Record<NpcId, number> });
+    expect(isNpcComplete("darcy" as NpcId, completed)).toBe(false);
+  });
+
+  it("dateable NPC with undecided relationship is never complete", () => {
+    const completed = makeCompleted({
+      npcLevels: { adeline: MAX_NPC_LEVEL } as Record<NpcId, number>,
+    });
+    expect(isNpcComplete("adeline" as NpcId, completed)).toBe(false);
+  });
+
+  it("dateable NPC is complete when platonic at max hearts", () => {
+    const completed = makeCompleted({
+      npcLevels: { adeline: MAX_NPC_LEVEL } as Record<NpcId, number>,
+      npcRelationships: { adeline: "platonic" } as Partial<Record<NpcId, NpcRelationship>>,
+    });
+    expect(isNpcComplete("adeline" as NpcId, completed)).toBe(true);
+  });
+
+  it("dateable NPC is incomplete when platonic below max hearts", () => {
+    const completed = makeCompleted({
+      npcLevels: { adeline: 8 } as Record<NpcId, number>,
+      npcRelationships: { adeline: "platonic" } as Partial<Record<NpcId, NpcRelationship>>,
+    });
+    expect(isNpcComplete("adeline" as NpcId, completed)).toBe(false);
+  });
+
+  it("dateable NPC is incomplete when romantic (not married)", () => {
+    const completed = makeCompleted({
+      npcLevels: { adeline: MAX_NPC_LEVEL } as Record<NpcId, number>,
+      npcRelationships: { adeline: "romantic" } as Partial<Record<NpcId, NpcRelationship>>,
+    });
+    expect(isNpcComplete("adeline" as NpcId, completed)).toBe(false);
+  });
+
+  it("dateable NPC is incomplete when proposed (not married)", () => {
+    const completed = makeCompleted({
+      npcLevels: { adeline: MAX_NPC_LEVEL } as Record<NpcId, number>,
+      npcRelationships: { adeline: "proposed" } as Partial<Record<NpcId, NpcRelationship>>,
+    });
+    expect(isNpcComplete("adeline" as NpcId, completed)).toBe(false);
+  });
+
+  it("married NPC is incomplete below max hearts even with child choice", () => {
+    const completed = makeCompleted({
+      childChoice: "yes",
+      npcLevels: { adeline: 8 } as Record<NpcId, number>,
+      npcRelationships: { adeline: "married" } as Partial<Record<NpcId, NpcRelationship>>,
+    });
+    expect(isNpcComplete("adeline" as NpcId, completed)).toBe(false);
+  });
+
+  it("married NPC at max hearts is incomplete with undeclared child choice", () => {
+    const completed = makeCompleted({
+      childChoice: "undeclared",
+      npcLevels: { adeline: MAX_NPC_LEVEL } as Record<NpcId, number>,
+      npcRelationships: { adeline: "married" } as Partial<Record<NpcId, NpcRelationship>>,
+    });
+    expect(isNpcComplete("adeline" as NpcId, completed)).toBe(false);
+  });
+
+  it("married NPC at max hearts is complete when child choice is yes", () => {
+    const completed = makeCompleted({
+      childChoice: "yes",
+      npcLevels: { adeline: MAX_NPC_LEVEL } as Record<NpcId, number>,
+      npcRelationships: { adeline: "married" } as Partial<Record<NpcId, NpcRelationship>>,
+    });
+    expect(isNpcComplete("adeline" as NpcId, completed)).toBe(true);
+  });
+
+  it("married NPC at max hearts is complete when child choice is no", () => {
+    const completed = makeCompleted({
+      childChoice: "no",
+      npcLevels: { adeline: MAX_NPC_LEVEL } as Record<NpcId, number>,
+      npcRelationships: { adeline: "married" } as Partial<Record<NpcId, NpcRelationship>>,
+    });
+    expect(isNpcComplete("adeline" as NpcId, completed)).toBe(true);
+  });
+});
+
+// ─── Quests progress with marriage state ──────────────────────────
+
+describe("quests progress with marriage state", () => {
+  it("excludes craving row when married to a husband NPC (no pregnancy quest)", () => {
+    const progress = getCategoryProgress(
+      "quests",
+      ctx({
+        completed: {
+          childChoice: "yes",
+          npcRelationships: { balor: "married" } as Partial<Record<NpcId, NpcRelationship>>,
+        },
+      }),
+    );
+    const baseProgress = getCategoryProgress("quests", ctx());
+    expect(progress.total).toBe(baseProgress.total - 1);
+  });
+
+  it("excludes craving row when married to wife with DINK choice", () => {
+    const progress = getCategoryProgress(
+      "quests",
+      ctx({
+        completed: {
+          childChoice: "no",
+          npcRelationships: { adeline: "married" } as Partial<Record<NpcId, NpcRelationship>>,
+        },
+      }),
+    );
+    const baseProgress = getCategoryProgress("quests", ctx());
+    expect(progress.total).toBe(baseProgress.total - 1);
+  });
+
+  it("includes craving row when married to wife with kids choice", () => {
+    const progress = getCategoryProgress(
+      "quests",
+      ctx({
+        completed: {
+          childChoice: "yes",
+          npcRelationships: { adeline: "married" } as Partial<Record<NpcId, NpcRelationship>>,
+        },
+      }),
+    );
+    const baseProgress = getCategoryProgress("quests", ctx());
+    expect(progress.total).toBe(baseProgress.total);
+  });
+
+  it("counts craving quest as completed when the wife's pregnancy quest is completed", () => {
+    const progress = getCategoryProgress(
+      "quests",
+      ctx({
+        completed: {
+          childChoice: "yes",
+          npcRelationships: { adeline: "married" } as Partial<Record<NpcId, NpcRelationship>>,
+          questStates: { adeline_pregnancy_request: "completed" } as Record<QuestId, QuestState>,
+        },
+      }),
+    );
+    const baseProgress = getCategoryProgress("quests", ctx());
+    expect(progress.completed).toBe(1);
+    expect(progress.total).toBe(baseProgress.total);
   });
 });

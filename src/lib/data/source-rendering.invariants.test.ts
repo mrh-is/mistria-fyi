@@ -57,6 +57,7 @@ const SOURCE_TYPES: Record<Source["type"], true> = {
   renown: true,
   ritual_chamber: true,
   scroll_bundle: true,
+  spouseGift: true,
   station: true,
   store: true,
   treasure_chest: true,
