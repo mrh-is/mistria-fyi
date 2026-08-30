@@ -24,7 +24,7 @@
   <Card.Root
     class={variant === "danger" ? "gap-0 border-red-200 py-0 dark:border-red-900" : "gap-0 py-0"}
   >
-    <Card.Header class="p-0">
+    <Card.Header class="gap-0 p-0">
       <Collapsible.Trigger
         class="flex w-full items-start gap-3 rounded-xl px-4 py-3 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
       >
@@ -36,7 +36,9 @@
           >
             {title}
           </span>
-          <span class="text-xs text-muted-foreground">{summary}</span>
+          {#if !open}
+            <span class="text-xs text-muted-foreground">{summary}</span>
+          {/if}
         </span>
         <Icon.UI
           type="disclosure"

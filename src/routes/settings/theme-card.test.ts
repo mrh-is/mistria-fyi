@@ -36,6 +36,13 @@ describe("ThemeCard", () => {
     expect(body).toContain('data-state="open"');
   });
 
+  it("hides its summary while open", () => {
+    const { body } = render(ThemeCard, { props: { open: true } });
+    const trigger = /<button[^>]*data-slot="collapsible-trigger".*?<\/button>/s.exec(body)?.[0];
+
+    expect(trigger).not.toContain("Current preference: System");
+  });
+
   it("uses phrasing content inside its disclosure button", () => {
     const { body } = render(ThemeCard, { props: { open: false } });
     const trigger = /<button[^>]*data-slot="collapsible-trigger".*?<\/button>/s.exec(body)?.[0];
@@ -48,10 +55,12 @@ describe("ThemeCard", () => {
   it("uses compact spacing and small summary text", () => {
     const { body } = render(ThemeCard, { props: { open: false } });
     const card = /<div[^>]*data-slot="card"[^>]*>/.exec(body)?.[0];
+    const header = /<div[^>]*data-slot="card-header"[^>]*>/.exec(body)?.[0];
     const trigger = /<button[^>]*data-slot="collapsible-trigger".*?<\/button>/s.exec(body)?.[0];
 
     expect(card).toContain("gap-0");
     expect(card).toContain("py-0");
+    expect(header).toContain("gap-0");
     expect(trigger).toContain("px-4");
     expect(trigger).toContain("py-3");
     expect(trigger).toContain("text-xs");
