@@ -265,6 +265,7 @@
         if (bIdx !== -1) return 1;
       }
       if (questType === "heart") {
+        if (a.isCraving !== b.isCraving) return a.isCraving ? 1 : -1;
         const npcA = a.npc ? trackerData.npcs[a.npc].name : "";
         const npcB = b.npc ? trackerData.npcs[b.npc].name : "";
         const npcCmp = npcA.localeCompare(npcB);
