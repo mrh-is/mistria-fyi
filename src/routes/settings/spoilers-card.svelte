@@ -3,8 +3,11 @@
 
   import BlockySwitch from "$lib/components/blocky-switch.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
-  import * as Card from "$lib/components/ui/card/index.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+
+  import SettingsCard from "./settings-card.svelte";
+
+  let { open = $bindable(false) }: { open?: boolean } = $props();
 
   let showConfirm = $state(false);
   let switchChecked = $state(userState.state.showSpoilers);
@@ -48,18 +51,17 @@
   </AlertDialog.Content>
 </AlertDialog.Root>
 
-<Card.Root>
-  <Card.Header>
-    <Card.Title>Spoilers</Card.Title>
-  </Card.Header>
-  <Card.Content>
-    <BlockySwitch
-      bind:checked={switchChecked}
-      onCheckedChange={handleSpoilersChange}
-      checkedIcon={Eye}
-      uncheckedIcon={EyeOff}
-    >
-      Show all spoilers
-    </BlockySwitch>
-  </Card.Content>
-</Card.Root>
+<SettingsCard
+  bind:open
+  title="Spoilers"
+  summary={userState.state.showSpoilers ? "Spoilers are shown" : "Spoilers are hidden"}
+>
+  <BlockySwitch
+    bind:checked={switchChecked}
+    onCheckedChange={handleSpoilersChange}
+    checkedIcon={Eye}
+    uncheckedIcon={EyeOff}
+  >
+    Show all spoilers
+  </BlockySwitch>
+</SettingsCard>

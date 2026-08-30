@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { tick } from "svelte";
+
   import { version } from "$app/environment";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
@@ -8,23 +10,38 @@
   import BackupCard from "./backup-card.svelte";
   import DangerZoneCard from "./danger-zone-card.svelte";
   import ImportCard from "./import-card.svelte";
+  import { openThenScroll } from "./settings-effects.js";
   import SpoilersCard from "./spoilers-card.svelte";
   import ThemeCard from "./theme-card.svelte";
   import TransferCard from "./transfer-card.svelte";
 
   let importSection = $state<HTMLElement | null>(null);
   let transferSection = $state<HTMLElement | null>(null);
+  let importOpen = $state(page.url.searchParams.get("section") === "import");
+  let transferOpen = $state(page.url.searchParams.get("section") === "transfer");
 
   function scrollToTransfer() {
-    transferSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+    void openThenScroll(
+      () => (transferOpen = true),
+      () => transferSection?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      tick,
+    );
   }
 
   $effect(() => {
     const section = page.url.searchParams.get("section");
     if (section === "transfer") {
-      transferSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+      void openThenScroll(
+        () => (transferOpen = true),
+        () => transferSection?.scrollIntoView({ behavior: "smooth", block: "start" }),
+        tick,
+      );
     } else if (section === "import") {
-      importSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+      void openThenScroll(
+        () => (importOpen = true),
+        () => importSection?.scrollIntoView({ behavior: "smooth", block: "start" }),
+        tick,
+      );
     }
   });
 </script>
@@ -49,10 +66,10 @@
       Getting started
     </h2>
     <div bind:this={importSection}>
-      <ImportCard onScrollToTransfer={scrollToTransfer} />
+      <ImportCard bind:open={importOpen} onScrollToTransfer={scrollToTransfer} />
     </div>
     <div bind:this={transferSection}>
-      <TransferCard />
+      <TransferCard bind:open={transferOpen} />
     </div>
   </section>
 

@@ -1,15 +1,19 @@
 <script lang="ts">
-  import { Camera, ImagePlus, LoaderCircle, QrCode, Smartphone } from "@lucide/svelte";
+  import { Camera, ImagePlus, LoaderCircle, QrCode } from "@lucide/svelte";
   import QrScanner from "qr-scanner";
   import QRCode from "qrcode";
 
   import { Icon } from "$lib/components/icon/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
-  import * as Card from "$lib/components/ui/card/index.js";
   import { decodeTransferPayload, encodeTransferPayload } from "$lib/engine/transfer.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
+  import SettingsCard from "./settings-card.svelte";
+  import { closeScanner } from "./settings-effects.js";
+
   import type { MergeCounts } from "$lib/stores/user-state.svelte.js";
+
+  let { open = $bindable(false) }: { open?: boolean } = $props();
 
   // ── State ──
   let generating = $state(false);
@@ -18,6 +22,7 @@
   let scanning = $state(false);
   let videoEl = $state<HTMLVideoElement | null>(null);
   let scanner: null | QrScanner = null;
+  let scanAttempt = 0;
 
   let transferResult = $state<MergeCounts | null>(null);
   let transferError = $state<null | string>(null);
@@ -46,6 +51,7 @@
 
   // ── Scan QR Code (camera) ──
   async function handleScan() {
+    const attempt = ++scanAttempt;
     transferResult = null;
     transferError = null;
     qrDataUrl = null;
@@ -53,6 +59,8 @@
 
     // Wait for video element to bind
     await new Promise((r) => setTimeout(r, 50));
+
+    if (!open || attempt !== scanAttempt) return;
 
     if (!videoEl) {
       transferError = "Could not initialize camera.";
@@ -84,13 +92,16 @@
   }
 
   function stopScanning() {
-    if (scanner) {
-      scanner.stop();
-      scanner.destroy();
-      scanner = null;
-    }
+    scanAttempt += 1;
+    scanner = closeScanner(scanner);
     scanning = false;
   }
+
+  $effect(() => {
+    if (!open) {
+      stopScanning();
+    }
+  });
 
   // ── Scan from image file ──
   function handleImageUpload() {
@@ -146,18 +157,12 @@
   );
 </script>
 
-<Card.Root>
-  <Card.Header>
-    <Card.Title class="flex items-center gap-2">
-      <Smartphone class="size-4" />
-      Transfer to Another Device
-    </Card.Title>
-    <Card.Description>
-      Transfer your progress between devices using a QR code. Generate on one device, scan on
-      another.
-    </Card.Description>
-  </Card.Header>
-  <Card.Content class="flex flex-col gap-3">
+<SettingsCard
+  bind:open
+  title="Transfer to Another Device"
+  summary="Move progress between devices with a QR code."
+>
+  <div class="flex flex-col gap-3">
     <!-- Generate QR Code -->
     <Button class="w-full" disabled={generating} variant="outline" onclick={handleGenerate}>
       {#if generating}
@@ -276,5 +281,5 @@
         {transferError}
       </div>
     {/if}
-  </Card.Content>
-</Card.Root>
+  </div>
+</SettingsCard>
