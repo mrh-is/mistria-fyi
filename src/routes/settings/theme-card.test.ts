@@ -44,4 +44,16 @@ describe("ThemeCard", () => {
     expect(trigger).not.toContain("<div");
     expect(trigger).not.toMatch(/<p(?:\s|>)/);
   });
+
+  it("uses compact spacing and small summary text", () => {
+    const { body } = render(ThemeCard, { props: { open: false } });
+    const card = /<div[^>]*data-slot="card"[^>]*>/.exec(body)?.[0];
+    const trigger = /<button[^>]*data-slot="collapsible-trigger".*?<\/button>/s.exec(body)?.[0];
+
+    expect(card).toContain("gap-0");
+    expect(card).toContain("py-0");
+    expect(trigger).toContain("px-4");
+    expect(trigger).toContain("py-3");
+    expect(trigger).toContain("text-xs");
+  });
 });

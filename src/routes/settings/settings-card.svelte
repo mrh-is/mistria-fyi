@@ -21,10 +21,12 @@
 </script>
 
 <Collapsible.Root bind:open>
-  <Card.Root class={variant === "danger" ? "border-red-200 dark:border-red-900" : undefined}>
+  <Card.Root
+    class={variant === "danger" ? "gap-0 border-red-200 py-0 dark:border-red-900" : "gap-0 py-0"}
+  >
     <Card.Header class="p-0">
       <Collapsible.Trigger
-        class="flex w-full items-start gap-3 rounded-xl px-6 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+        class="flex w-full items-start gap-3 rounded-xl px-4 py-3 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
       >
         <span class="flex min-w-0 flex-1 flex-col gap-1.5">
           <span
@@ -34,7 +36,7 @@
           >
             {title}
           </span>
-          <span class="text-base text-muted-foreground">{summary}</span>
+          <span class="text-xs text-muted-foreground">{summary}</span>
         </span>
         <Icon.UI
           type="disclosure"
@@ -45,7 +47,7 @@
       </Collapsible.Trigger>
     </Card.Header>
     <Collapsible.Content forceMount class="data-[state=closed]:hidden">
-      <Card.Content>
+      <Card.Content class="px-4 pt-2 pb-4">
         {@render children()}
       </Card.Content>
     </Collapsible.Content>
