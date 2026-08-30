@@ -40,7 +40,29 @@ describe("ThemeCard", () => {
     const { body } = render(ThemeCard, { props: { open: true } });
     const trigger = /<button[^>]*data-slot="collapsible-trigger".*?<\/button>/s.exec(body)?.[0];
 
-    expect(trigger).not.toContain("Current preference: System");
+    expect(trigger).toContain("Current preference: System");
+    expect(trigger).toContain('aria-hidden="true"');
+    expect(trigger).toContain("max-h-0");
+    expect(trigger).toContain("opacity-0");
+  });
+
+  it("animates mounted content between collapsed and expanded states", () => {
+    const collapsed = render(ThemeCard, { props: { open: false } }).body;
+    const expanded = render(ThemeCard, { props: { open: true } }).body;
+    const collapsedContent = /<div[^>]*data-slot="collapsible-content"[^>]*>/.exec(collapsed)?.[0];
+    const expandedContent = /<div[^>]*data-slot="collapsible-content"[^>]*>/.exec(expanded)?.[0];
+
+    expect(collapsedContent).toContain("grid");
+    expect(collapsedContent).toContain("grid-rows-[0fr]");
+    expect(collapsedContent).toContain("opacity-0");
+    expect(collapsedContent).toContain("duration-200");
+    expect(collapsedContent).toContain("motion-reduce:transition-none");
+    expect(collapsedContent).toContain('aria-hidden="true"');
+    expect(collapsedContent).toContain("inert");
+    expect(expandedContent).toContain("grid-rows-[1fr]");
+    expect(expandedContent).toContain("opacity-100");
+    expect(expandedContent).toContain('aria-hidden="false"');
+    expect(expandedContent).not.toContain("inert");
   });
 
   it("uses phrasing content inside its disclosure button", () => {
@@ -64,5 +86,7 @@ describe("ThemeCard", () => {
     expect(trigger).toContain("px-4");
     expect(trigger).toContain("py-3");
     expect(trigger).toContain("text-xs");
+    expect(trigger).toContain("duration-150");
+    expect(trigger).toContain("motion-reduce:transition-none");
   });
 });
