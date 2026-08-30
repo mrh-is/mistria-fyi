@@ -2,8 +2,11 @@
   import { FileUp, Upload } from "@lucide/svelte";
 
   import { Button } from "$lib/components/ui/button/index.js";
-  import * as Card from "$lib/components/ui/card/index.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+
+  import SettingsCard from "./settings-card.svelte";
+
+  let { open = $bindable(false) }: { open?: boolean } = $props();
 
   function handleExport() {
     const json = userState.exportState();
@@ -30,12 +33,8 @@
   }
 </script>
 
-<Card.Root>
-  <Card.Header>
-    <Card.Title>Backup & Restore</Card.Title>
-    <Card.Description>Export or import your full tracker progress.</Card.Description>
-  </Card.Header>
-  <Card.Content class="flex flex-col gap-2">
+<SettingsCard bind:open title="Backup & Restore" summary="Export or restore all tracker data.">
+  <div class="flex flex-col gap-2">
     <Button variant="outline" onclick={handleExport}>
       <FileUp />
       Export backup
@@ -44,5 +43,5 @@
       <Upload />
       Restore from backup
     </Button>
-  </Card.Content>
-</Card.Root>
+  </div>
+</SettingsCard>

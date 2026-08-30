@@ -2,15 +2,19 @@
   import { Check, Copy, Monitor, Upload } from "@lucide/svelte";
 
   import { Button } from "$lib/components/ui/button/index.js";
-  import * as Card from "$lib/components/ui/card/index.js";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
   import { Separator } from "$lib/components/ui/separator/index.js";
   import { buildImportState, parseSaveFiles, unpackSavFile } from "$lib/engine/import-save.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
+  import SettingsCard from "./settings-card.svelte";
+
   import type { ImportResult } from "$lib/engine/import-save.js";
 
-  let { onScrollToTransfer }: { onScrollToTransfer?: () => void } = $props();
+  let {
+    onScrollToTransfer,
+    open = $bindable(false),
+  }: { onScrollToTransfer?: () => void; open?: boolean } = $props();
 
   // ── Desktop detection (simple heuristic) ──
   let isDesktop = $derived(
@@ -158,18 +162,12 @@
   );
 </script>
 
-<Card.Root>
-  <Card.Header>
-    <Card.Title class="flex items-center gap-2">
-      <Upload class="size-4" />
-      Import from Save File
-    </Card.Title>
-    <Card.Description>
-      Import your Fields of Mistria save to auto-populate your progress. Processed entirely in your
-      browser — your save file is never uploaded anywhere.
-    </Card.Description>
-  </Card.Header>
-  <Card.Content>
+<SettingsCard
+  bind:open
+  title="Import from Save File"
+  summary="Import progress from a Fields of Mistria save."
+>
+  <div>
     <!-- Hidden file input -->
     <input
       bind:this={fileInput}
@@ -369,5 +367,5 @@
         </button>
       {/if}
     {/if}
-  </Card.Content>
-</Card.Root>
+  </div>
+</SettingsCard>
