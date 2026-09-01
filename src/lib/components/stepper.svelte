@@ -30,8 +30,8 @@
   <button
     class="group flex shrink-0 touch-manipulation items-center justify-center disabled:opacity-50 {size ===
     'sm'
-      ? 'size-9'
-      : '-mx-1.5 size-11'}"
+      ? 'size-11'
+      : 'size-11'}"
     type="button"
     disabled={decrementDisabled}
     aria-label={decrementLabel}
@@ -40,8 +40,8 @@
     <span
       class="flex items-center justify-center rounded-md border border-border transition-colors group-hover:bg-accent group-hover:text-foreground {size ===
       'sm'
-        ? 'size-7'
-        : 'size-8'}"
+        ? 'size-9'
+        : 'size-9'}"
     >
       <Minus class="size-4" />
     </span>
@@ -56,8 +56,8 @@
   <button
     class="group flex shrink-0 touch-manipulation items-center justify-center disabled:opacity-50 {size ===
     'sm'
-      ? 'size-9'
-      : '-mx-1.5 size-11'}"
+      ? 'size-11'
+      : 'size-11'}"
     type="button"
     disabled={incrementDisabled}
     aria-label={incrementLabel}
@@ -66,8 +66,8 @@
     <span
       class="flex items-center justify-center rounded-md border border-border transition-colors group-hover:bg-accent group-hover:text-foreground {size ===
       'sm'
-        ? 'size-7'
-        : 'size-8'}"
+        ? 'size-9'
+        : 'size-9'}"
     >
       <Plus class="size-4" />
     </span>

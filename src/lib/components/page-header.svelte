@@ -33,7 +33,7 @@
 
 <div
   bind:this={ref}
-  class="sticky top-0 z-10 -mx-4 flex items-center gap-2 border-b border-border/50 bg-background px-4 pt-safe-or-4 pb-3"
+  class="sticky top-0 z-10 flex min-w-0 items-center gap-2 border-b border-border/50 bg-background px-4 pt-safe-or-4 pb-3"
 >
   <a
     class="-ml-3 flex min-h-11 min-w-11 items-center justify-center text-muted-foreground hover:text-foreground"
@@ -43,7 +43,7 @@
     <ArrowLeft class="size-5" />
   </a>
   {@render icon?.("size-5")}
-  <h1 class="flex-1 text-xl font-semibold">{title}</h1>
+  <h1 class="min-w-0 flex-1 truncate text-xl font-semibold">{title}</h1>
   {#if pct !== undefined && progress !== undefined}
     <span class="shrink-0 text-sm text-muted-foreground">
       <span class="sm:hidden">{pct}%</span>

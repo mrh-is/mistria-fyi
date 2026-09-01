@@ -94,9 +94,9 @@
     <div class="text-center text-sm text-muted-foreground">
       <p>Game data: Fields of Mistria v{trackerData.version}</p>
       <p>Mistria Field Guide v{version}</p>
-      <div class="mt-1 flex items-center justify-center gap-3">
+      <div class="mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
         <button
-          class="inline-flex items-center gap-1 underline hover:text-foreground"
+          class="inline-flex min-h-11 items-center gap-1 underline hover:text-foreground"
           type="button"
           onclick={() => (feedbackOpen = true)}
         >
@@ -104,10 +104,14 @@
           Send feedback
         </button>
         <span class="text-border">·</span>
-        <a href={resolve("/privacy")} class="underline hover:text-foreground">Privacy policy</a>
+        <a
+          href={resolve("/privacy")}
+          class="inline-flex min-h-11 items-center underline hover:text-foreground"
+          >Privacy policy</a
+        >
         <span class="text-border">·</span>
         <button
-          class="inline-flex items-center gap-1 underline hover:text-foreground"
+          class="inline-flex min-h-11 items-center gap-1 underline hover:text-foreground"
           type="button"
           onclick={() => (aiDisclosureOpen = true)}
         >

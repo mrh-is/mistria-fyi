@@ -76,6 +76,25 @@
             </span>
           </div>
 
+          <div class="grid grid-cols-6 justify-items-center gap-0.5">
+            {#each { length: MAX_NPC_LEVEL } as _, i (i)}
+              <button
+                class="flex size-11 items-center justify-center"
+                type="button"
+                onclick={() => {
+                  setNpcLevelWithCelebration(npc.id, i < level ? i : i + 1);
+                }}
+              >
+                <Icon.ProgressMark
+                  type={npc.dateable ? "relationship_dateable" : "relationship_platonic"}
+                  class="size-4 transition-colors duration-200 {i < level
+                    ? `${LEVEL_COLORS[i]} fill-current`
+                    : 'fill-transparent text-muted-foreground/30'}"
+                />
+              </button>
+            {/each}
+          </div>
+
           <Stepper
             decrementDisabled={level <= 0}
             incrementDisabled={level >= MAX_NPC_LEVEL}
@@ -87,26 +106,7 @@
             onIncrement={() => {
               setNpcLevelWithCelebration(npc.id, level + 1);
             }}
-          >
-            <div class="flex items-center justify-center gap-0.5">
-              {#each { length: MAX_NPC_LEVEL } as _, i (i)}
-                <button
-                  class="flex size-7 items-center justify-center"
-                  type="button"
-                  onclick={() => {
-                    setNpcLevelWithCelebration(npc.id, i < level ? i : i + 1);
-                  }}
-                >
-                  <Icon.ProgressMark
-                    type={npc.dateable ? "relationship_dateable" : "relationship_platonic"}
-                    class="size-4 transition-colors duration-200 {i < level
-                      ? `${LEVEL_COLORS[i]} fill-current`
-                      : 'fill-transparent text-muted-foreground/30'}"
-                  />
-                </button>
-              {/each}
-            </div>
-          </Stepper>
+          />
 
           {#if npc.dateable}
             <NpcRelationshipPicker npcId={npc.id} />

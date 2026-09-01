@@ -84,5 +84,6 @@ describe("TrackerRow", () => {
     });
 
     expect(body).toContain('aria-label="Cherry Cobbler sources"');
+    expect(body).toContain("min-h-11 min-w-11");
   });
 });

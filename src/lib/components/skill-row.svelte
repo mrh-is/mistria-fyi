@@ -153,7 +153,7 @@
         />
       {:else}
         <button
-          class="flex h-8 w-10 shrink-0 items-center justify-end text-sm text-muted-foreground hover:underline"
+          class="flex min-h-11 min-w-11 shrink-0 items-center justify-end text-sm text-muted-foreground hover:underline"
           type="button"
           onclick={() => {
             startEditing(id, level);

@@ -33,6 +33,8 @@ describe("VisibilityPanel", () => {
     expect(body).toContain("Source types");
     expect(body).toContain('aria-pressed="true"');
     expect(body).toContain("Show completed items");
+    expect(body.match(/min-h-11/g)?.length).toBeGreaterThanOrEqual(4);
+    expect(body).toContain("min-h-11 items-center gap-1");
   });
 
   it("omits seasonality, source types, and reset controls when they are inapplicable", () => {
