@@ -66,7 +66,11 @@
     {@const known = isNpcKnown(npc.id)}
     <SpoilerSection name={npc.name} revealed={known}>
       {#if maxed ? userState.state.showCompleted : true}
-        <div class="flex flex-col gap-1.5 rounded-md px-2 py-1.5 {maxed ? 'opacity-40' : ''}">
+        <div
+          class="flex flex-col gap-1.5 rounded-md px-2 py-1.5 {maxed
+            ? 'text-muted-foreground'
+            : ''}"
+        >
           <!-- Name row -->
           <div class="flex items-center gap-2">
             <span class="min-w-0 flex-1 text-base font-medium">{npc.name}</span>

@@ -105,8 +105,8 @@
 <div out:completeOut data-leaving={isLeaving} {@attach feedbackContext.reportable(reportable)}>
   <div
     class="flex items-center gap-0 pr-2 transition-opacity duration-200 motion-reduce:transition-none
-      {isDimmed ? 'opacity-50' : ''}
-      {isCompleted || isLeaving ? 'line-through opacity-40' : ''}"
+      {isDimmed ? 'text-muted-foreground' : ''}
+      {isCompleted || isLeaving ? 'text-muted-foreground line-through' : ''}"
   >
     <button
       class="flex min-h-11 min-w-11 shrink-0 items-center justify-center"
@@ -164,7 +164,7 @@
         {/each}
         <Icon.UI
           type="disclosure"
-          class="size-3 shrink-0 opacity-40 transition-transform motion-reduce:transition-none {expanded
+          class="size-3 shrink-0 transition-transform motion-reduce:transition-none {expanded
             ? 'rotate-90'
             : ''}"
         />

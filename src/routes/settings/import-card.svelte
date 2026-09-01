@@ -207,7 +207,7 @@
       {:else}
         <Upload class="size-6 text-muted-foreground" />
         <p class="text-sm text-muted-foreground">Drag your save file here</p>
-        <p class="text-xs text-muted-foreground/60">or</p>
+        <p class="text-xs text-muted-foreground">or</p>
         <button
           class="text-sm font-medium text-primary underline decoration-dotted underline-offset-2 hover:text-primary/80"
           onclick={() => fileInput?.click()}
