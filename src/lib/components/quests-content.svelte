@@ -9,11 +9,13 @@
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
   import { getMarriedNpc } from "$lib/engine/relationships.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
+  import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordEntries } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { displayQuestName } from "$lib/utils/format.js";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
+  import { registerSourceFilters } from "$lib/utils/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "$lib/utils/spoiler-guard.svelte.js";
 
   import AllCompleted from "./all-completed.svelte";
@@ -141,6 +143,14 @@
   };
 
   const typeOrder = ["story", "heart", "fetch", "crown", "mission", "cooking"] as QuestType[];
+
+  registerSourceFilters("quests", () =>
+    typeOrder.flatMap((questType) =>
+      Object.keys(trackerData.quests[questType]).flatMap((questId) =>
+        questSources(questType, questId as QuestId),
+      ),
+    ),
+  );
 
   function getQuestState(id: QuestId): QuestState {
     return userState.state.completed.questStates[id] ?? "none";
@@ -287,18 +297,25 @@
       if (!q.shouldShow) return false;
       return q.isCompleted ? userState.state.showCompleted : true;
     }
+    if (!toolbarState.matchesSourceFilters(questSources(questType, q.id))) return false;
     const done = getQuestState(q.id) === "completed";
     return done ? userState.state.showCompleted : true;
   })}
   {#if quests.length > 0}
     <SpoilerSection name={typeLabels[questType]} revealed={categoryRevealed}>
       {#if visibleQuests.length > 0}
-        {@const shownQuests = quests.filter((q) => (q.isCraving ? q.shouldShow : true))}
+        {@const shownQuests = quests.filter(
+          (q) =>
+            (q.isCraving ? q.shouldShow : true) &&
+            toolbarState.matchesSourceFilters(q.isCraving ? [] : questSources(questType, q.id)),
+        )}
         <ExpandableSection
           count={shownQuests.filter((q) =>
             q.isCraving ? q.isCompleted : getQuestState(q.id) === "completed",
           ).length}
           name={typeLabels[questType]}
+          reportCategory="quest section"
+          reportEntityId={questType}
           total={shownQuests.length}
         >
           {#each visibleQuests as quest (quest.id)}
@@ -309,6 +326,8 @@
                 display={questRowDisplay(cravingState, cravingNameVisible)}
                 lookups={baseLookups}
                 name={quest.displayName}
+                reportCategory="craving quest"
+                reportEntityId={quest.id}
                 sources={[]}
                 subtitle={quest.subtitle}
                 onToggle={() => {
@@ -324,6 +343,8 @@
                 display={questRowDisplay(questState, nameVisible)}
                 lookups={{ ...baseLookups, entityVisibility: questVisibility(questType, quest.id) }}
                 name={quest.displayName}
+                reportCategory="quest"
+                reportEntityId={quest.id}
                 sources={questSources(questType, quest.id)}
                 subtitle={questSubtitle(quest, questType, duplicateNames)}
                 onToggle={() => {
@@ -339,6 +360,10 @@
             {/if}
           {/each}
         </ExpandableSection>
+      {:else}
+        <p class="py-4 text-center text-sm text-muted-foreground">
+          No items match the current filters
+        </p>
       {/if}
     </SpoilerSection>
   {/if}

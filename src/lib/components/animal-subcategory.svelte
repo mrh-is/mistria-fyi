@@ -2,6 +2,7 @@
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import SpoilerSection from "$lib/components/spoiler-section.svelte";
   import { trackerData } from "$lib/data/index.js";
+  import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
@@ -43,7 +44,12 @@
 </script>
 
 {#if animals.some((a) => props.hasDisplayableItem(a.id))}
-  <ExpandableSection count={completedCount} name={props.name} total={totalCount}>
+  <ExpandableSection
+    count={completedCount}
+    name={props.name}
+    reportCategory={props.name.toLowerCase()}
+    total={totalCount}
+  >
     {#each animals as animal (animal.id)}
       {@const { displayableCompletedItemCount, displayableItemCount, isVisible, visibleItems } =
         props.sectionConfig(animal.id)}
@@ -53,6 +59,8 @@
             <ExpandableSection
               count={displayableCompletedItemCount}
               name={animal.name}
+              reportCategory={props.name.toLowerCase()}
+              reportEntityId={animal.id}
               total={displayableItemCount}
             >
               {#each visibleItems as itemRow (itemRow.id)}
@@ -62,6 +70,8 @@
                     ? { ...props.lookups, entityVisibility: undefined }
                     : undefined}
                   name={itemRow.name}
+                  reportCategory={props.name.toLowerCase()}
+                  reportEntityId={`${animal.id}:${itemRow.id}`}
                   subtitle={itemRow.subtitle}
                   onToggle={() => {
                     props.toggleCompletion(animal.id, itemRow.id);
@@ -86,4 +96,6 @@
       {/if}
     {/each}
   </ExpandableSection>
+{:else if toolbarState.sourceFilterActive}
+  <p class="py-4 text-center text-sm text-muted-foreground">No items match the current filters</p>
 {/if}

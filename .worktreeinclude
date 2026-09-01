@@ -1,3 +1,4 @@
 pipeline/input/
 .env
 .env.*
+.dev.vars

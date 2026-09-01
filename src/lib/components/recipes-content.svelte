@@ -3,7 +3,6 @@
 
   import ConfirmSpoilerDialog from "$lib/components/confirm-spoiler-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
-  import { SOURCE_FILTERS } from "$lib/components/icon/index.js";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
   import { trackerData } from "$lib/data/index.js";
@@ -13,6 +12,7 @@
   import { recordEntries, recordForEach } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
+  import { registerSourceFilters } from "$lib/utils/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "$lib/utils/spoiler-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
@@ -95,41 +95,12 @@
 
   let nameFilter = $derived(toolbarState.searchQuery);
 
-  $effect(() => {
-    const allTypes = new SvelteSet<Source["type"]>();
-    for (const group of recipesByCategory) {
-      for (const entry of group.entries) {
-        for (const source of entry.sources) {
-          allTypes.add(source.type);
-        }
-      }
-    }
-    toolbarState.setRecipeSourceFilters(
-      SOURCE_FILTERS.filter((f) => f.types.some((t) => allTypes.has(t))),
-    );
-    return () => {
-      toolbarState.setRecipeSourceFilters([]);
-      toolbarState.clearSourceFilter();
-    };
-  });
+  registerSourceFilters("recipes", () =>
+    recipesByCategory.flatMap(({ entries }) => entries.flatMap(({ sources }) => sources)),
+  );
 
-  let activeSourceTypes = $derived.by(() => {
-    if (!toolbarState.sourceFilterActive) return null;
-    const types = new SvelteSet<Source["type"]>();
-    for (const filter of toolbarState.recipeSourceFilters) {
-      if (toolbarState.activeSourceLabels.has(filter.label)) {
-        for (const t of filter.types) types.add(t);
-      }
-    }
-    return types;
-  });
-
-  function matchesFilter(entry: RecipeEntry): boolean {
-    if (nameFilter && !entry.name.toLowerCase().includes(nameFilter.toLowerCase())) return false;
-    if (activeSourceTypes) {
-      return entry.sources.some((s) => activeSourceTypes.has(s.type));
-    }
-    return true;
+  function matchesName(entry: RecipeEntry): boolean {
+    return !nameFilter || entry.name.toLowerCase().includes(nameFilter.toLowerCase());
   }
 
   function isAllComplete(): boolean {
@@ -180,18 +151,23 @@
 {/if}
 
 {#each recipesByCategory as group (group.id)}
-  {@const scopedEntries = group.entries.filter(matchesFilter)}
+  {@const namedEntries = group.entries.filter(matchesName)}
+  {@const scopedEntries = namedEntries.filter(({ sources }) =>
+    toolbarState.matchesSourceFilters(sources),
+  )}
   {@const filteredEntries = scopedEntries.filter((e) => {
     if (!userState.state.showCompleted && userState.state.completed.almanacRecipes.has(e.id)) {
       return recentlyCompleted.has(e.id);
     }
     return true;
   })}
-  {#if filteredEntries.length > 0}
+  {#if namedEntries.length > 0}
     <ExpandableSection
       count={scopedEntries.filter((e) => userState.state.completed.almanacRecipes.has(e.id)).length}
       forceOpen={!!nameFilter || toolbarState.sourceFilterActive}
       name={group.name}
+      reportCategory="recipe category"
+      reportEntityId={group.id}
       total={scopedEntries.length}
     >
       {@const showAll = expandedSections[group.id] ?? false}
@@ -203,6 +179,8 @@
           display={rowDisplay(entry, completed, leaving)}
           lookups={{ ...baseSegmentLookups, entityVisibility: entry.visibility }}
           name={entry.name}
+          reportCategory="recipe"
+          reportEntityId={entry.id}
           sources={entry.sources}
           onToggle={() => {
             if (entry.nameVisible || completed) {
@@ -221,6 +199,11 @@
           }}
         />
       {/each}
+      {#if filteredEntries.length === 0}
+        <p class="py-4 text-center text-sm text-muted-foreground">
+          No items match the current filters
+        </p>
+      {/if}
       {#if !showAll && filteredEntries.length > SECTION_LIMIT}
         <div class="flex justify-center py-1">
           <Button

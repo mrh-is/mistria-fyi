@@ -9,6 +9,6 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
-    "types": ["@types/wicg-file-system-access"]
+    "types": ["@testing-library/jest-dom", "@types/wicg-file-system-access"]
   }
 }

@@ -3,6 +3,7 @@
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { isVisible } from "$lib/engine/visibility.js";
+  import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordEntries } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
@@ -38,23 +39,32 @@
       .sort((a, b) => a.name.localeCompare(b.name)),
   );
 
+  let scopedPetCosmeticEntries = $derived(
+    petCosmeticEntries.filter(({ sources }) => toolbarState.matchesSourceFilters(sources)),
+  );
+
+  let scopedPetSkinEntries = $derived(
+    petSkinEntries.filter(({ sources }) => toolbarState.matchesSourceFilters(sources)),
+  );
+
   let cosmeticCompletedCount = $derived(
-    petCosmeticEntries.filter((e) => userState.state.completed.petCosmetics.has(e.id)).length,
+    scopedPetCosmeticEntries.filter((entry) => userState.state.completed.petCosmetics.has(entry.id))
+      .length,
   );
 
   let skinCompletedCount = $derived(
-    petSkinEntries.filter((e) => userState.state.completed.petSkins.has(e.id)).length,
+    scopedPetSkinEntries.filter((entry) => userState.state.completed.petSkins.has(entry.id)).length,
   );
 
   let visibleCosmeticEntries = $derived(
-    petCosmeticEntries.filter((e) => {
+    scopedPetCosmeticEntries.filter((e) => {
       const done = userState.state.completed.petCosmetics.has(e.id);
       return done ? userState.state.showCompleted : true;
     }),
   );
 
   let visibleSkinEntries = $derived(
-    petSkinEntries.filter((e) => {
+    scopedPetSkinEntries.filter((e) => {
       const done = userState.state.completed.petSkins.has(e.id);
       return done ? userState.state.showCompleted : true;
     }),
@@ -82,13 +92,16 @@
   <ExpandableSection
     count={cosmeticCompletedCount}
     name="Pet cosmetics"
-    total={petCosmeticEntries.length}
+    reportCategory="pet cosmetics"
+    total={scopedPetCosmeticEntries.length}
   >
     {#each visibleCosmeticEntries as entry (entry.id)}
       <TrackerRow
         display={cosmeticDisplay(entry.id)}
         lookups={baseLookups}
         name={entry.name}
+        reportCategory="pet cosmetic"
+        reportEntityId={entry.id}
         sources={entry.sources}
         onToggle={() => {
           userState.togglePetCosmetic(entry.id);
@@ -108,12 +121,19 @@
 {/if}
 
 {#if visibleSkinEntries.length > 0}
-  <ExpandableSection count={skinCompletedCount} name="Pet skins" total={petSkinEntries.length}>
+  <ExpandableSection
+    count={skinCompletedCount}
+    name="Pet skins"
+    reportCategory="pet skins"
+    total={scopedPetSkinEntries.length}
+  >
     {#each visibleSkinEntries as entry (entry.id)}
       <TrackerRow
         display={skinDisplay(entry.id)}
         lookups={baseLookups}
         name={entry.name}
+        reportCategory="pet skin"
+        reportEntityId={entry.id}
         sources={entry.sources}
         onToggle={() => {
           userState.togglePetSkin(entry.id);
@@ -130,4 +150,8 @@
       />
     {/each}
   </ExpandableSection>
+{/if}
+
+{#if toolbarState.sourceFilterActive && visibleCosmeticEntries.length === 0 && visibleSkinEntries.length === 0}
+  <p class="py-4 text-center text-sm text-muted-foreground">No items match the current filters</p>
 {/if}

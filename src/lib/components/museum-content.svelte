@@ -12,6 +12,7 @@
   import { recordEntries, recordValues } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
+  import { registerSourceFilters } from "$lib/utils/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "$lib/utils/spoiler-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
@@ -87,19 +88,34 @@
 
   let nameFilter = $derived(toolbarState.searchQuery);
 
+  registerSourceFilters("museum", () =>
+    recordValues(trackerData.museum).flatMap(({ sets }) =>
+      recordValues(sets).flatMap(({ items }) =>
+        items.flatMap((itemId) => trackerData.items[itemId].sources),
+      ),
+    ),
+  );
+
   function matchesFilter(itemId: ItemId): boolean {
     if (!nameFilter) return true;
     const name = trackerData.items[itemId].name;
     return name ? name.toLowerCase().includes(nameFilter.toLowerCase()) : false;
   }
 
-  function isItemScoped(itemId: ItemId): boolean {
+  function isItemBaseScoped(itemId: ItemId): boolean {
     if (!matchesFilter(itemId)) return false;
     return shouldCountItem(
       trackerData.items[itemId].sources,
       isItemComplete(itemId),
       userState.state.worldState,
       userState.state.availabilityMode,
+    );
+  }
+
+  function isItemScoped(itemId: ItemId): boolean {
+    return (
+      isItemBaseScoped(itemId) &&
+      toolbarState.matchesSourceFilters(trackerData.items[itemId].sources)
     );
   }
 
@@ -114,6 +130,7 @@
   }
 
   interface WingConfig {
+    baseItemCount: number;
     isVisible: boolean;
     scopedCompletedItemCount: number;
     scopedItemCount: number;
@@ -124,9 +141,10 @@
       .map(([id, set]) => {
         return { setId: id, ...setConfig(set) };
       })
-      .filter(({ visibleItems }) => visibleItems.length > 0);
+      .filter(({ baseItemCount }) => baseItemCount > 0);
     return {
-      isVisible: setConfigs.length > 0,
+      baseItemCount: setConfigs.reduce((sum, { baseItemCount }) => sum + baseItemCount, 0),
+      isVisible: setConfigs.some(({ baseItemCount }) => baseItemCount > 0),
       scopedCompletedItemCount: setConfigs.reduce(
         (sum, { scopedCompletedItemCount }) => sum + scopedCompletedItemCount,
         0,
@@ -137,6 +155,7 @@
   }
 
   interface SetConfig {
+    baseItemCount: number;
     name: string;
     scopedCompletedItemCount: number;
     scopedItemCount: number;
@@ -144,6 +163,7 @@
   }
   function setConfig(set: MuseumWingSet): SetConfig {
     return {
+      baseItemCount: set.items.filter(isItemBaseScoped).length,
       name: set.name,
       scopedCompletedItemCount: set.items.filter(
         (itemId) => isItemScoped(itemId) && isItemComplete(itemId),
@@ -198,6 +218,8 @@
       count={config.scopedCompletedItemCount}
       forceOpen={!!nameFilter}
       name={wing.name}
+      reportCategory="museum wing"
+      reportEntityId={wingId}
       total={config.scopedItemCount}
     >
       {#each config.setConfigs as set (set.setId)}
@@ -205,6 +227,8 @@
           count={set.scopedCompletedItemCount}
           forceOpen={!!nameFilter}
           name={set.name}
+          reportCategory="museum set"
+          reportEntityId={set.setId}
           total={set.scopedItemCount}
         >
           {#each set.visibleItems as item (item.itemId)}
@@ -216,6 +240,8 @@
               display={rowDisplay(itemId, museumItemSources)}
               lookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
               name={trackerData.items[itemId].name}
+              reportCategory="museum item"
+              reportEntityId={itemId}
               sources={museumItemSources}
               onToggle={() => {
                 if (itemNameVisible(itemId) || museumCompleted) {
@@ -228,6 +254,11 @@
               }}
             />
           {/each}
+          {#if set.visibleItems.length === 0}
+            <p class="py-4 text-center text-sm text-muted-foreground">
+              No items match the current filters
+            </p>
+          {/if}
         </ExpandableSection>
       {/each}
     </ExpandableSection>

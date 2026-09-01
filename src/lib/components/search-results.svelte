@@ -149,6 +149,8 @@
           display={rowDisplay(result)}
           lookups={baseLookups}
           name={result.detail ? `${label} ${result.detail}` : label}
+          reportCategory={CATEGORY_LABELS[result.category] ?? result.category}
+          reportEntityId={result.id}
           sources={getSources(result)}
           onToggle={() => {
             if (result.category === "quests") {

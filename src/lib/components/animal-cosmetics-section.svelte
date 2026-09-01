@@ -1,6 +1,7 @@
 <script lang="ts">
   import { trackerData } from "$lib/data";
   import { isVisible } from "$lib/engine/visibility.js";
+  import { toolbarState } from "$lib/stores/toolbar-state.svelte";
   import { userState } from "$lib/stores/user-state.svelte";
   import { recordEntries } from "$lib/utils";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
@@ -19,6 +20,13 @@
   }
 
   function isCosmeticVisible(animalId: AnimalId, cosmeticId: CosmeticId): boolean {
+    if (
+      !toolbarState.matchesSourceFilters(
+        trackerData.animals[animalId].cosmetics[cosmeticId].sources,
+      )
+    ) {
+      return false;
+    }
     return !hasCompletedCosmetic(animalId, cosmeticId) || userState.state.showCompleted;
   }
 
@@ -27,7 +35,11 @@
     if (isSpeciesVisible(animalId)) {
       return cosmeticIds.some((cid) => isCosmeticVisible(animalId, cid));
     } else {
-      return cosmeticIds.length > 0;
+      return cosmeticIds.some((cosmeticId) =>
+        toolbarState.matchesSourceFilters(
+          trackerData.animals[animalId].cosmetics[cosmeticId].sources,
+        ),
+      );
     }
   }
 
@@ -37,6 +49,7 @@
     let displayableCount = 0;
     let visibleCosmetics: AnimalSubcategoryRowProps<CosmeticId>[] = [];
     recordEntries(animal.cosmetics).forEach(([cid, { name }]) => {
+      if (!toolbarState.matchesSourceFilters(animal.cosmetics[cid].sources)) return;
       displayableCount++;
       const cosmeticId = cid;
       const completed = hasCompletedCosmetic(animalId, cosmeticId);

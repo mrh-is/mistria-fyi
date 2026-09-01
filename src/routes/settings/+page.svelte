@@ -1,9 +1,11 @@
 <script lang="ts">
+  import { MessageCircleWarning } from "@lucide/svelte";
   import { tick } from "svelte";
 
   import { version } from "$app/environment";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
+  import FeedbackPanel from "$lib/components/feedback-panel.svelte";
   import PageHeader from "$lib/components/page-header.svelte";
   import { trackerData } from "$lib/data/index.js";
 
@@ -15,6 +17,7 @@
   import ThemeCard from "./theme-card.svelte";
   import TransferCard from "./transfer-card.svelte";
 
+  let feedbackOpen = $state(false);
   let importSection = $state<HTMLElement | null>(null);
   let transferSection = $state<HTMLElement | null>(null);
   let importOpen = $state(page.url.searchParams.get("section") === "import");
@@ -50,44 +53,64 @@
   <title>Settings — Harvest Helper</title>
 </svelte:head>
 
-<PageHeader title="Settings" />
+<div inert={feedbackOpen ? true : undefined}>
+  <PageHeader title="Settings" />
 
-<div class="flex flex-col gap-6 p-4">
-  <section class="flex flex-col gap-4">
-    <h2 class="text-xs font-semibold tracking-widest text-muted-foreground uppercase">Interface</h2>
-    <ThemeCard />
-    <SpoilersCard />
-  </section>
+  <div class="flex flex-col gap-6 p-4">
+    <section class="flex flex-col gap-4">
+      <h2 class="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+        Interface
+      </h2>
+      <ThemeCard />
+      <SpoilersCard />
+    </section>
 
-  <div class="border-t border-border/50"></div>
+    <div class="border-t border-border/50"></div>
 
-  <section class="flex flex-col gap-4">
-    <h2 class="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-      Getting started
-    </h2>
-    <div bind:this={importSection}>
-      <ImportCard bind:open={importOpen} onScrollToTransfer={scrollToTransfer} />
+    <section class="flex flex-col gap-4">
+      <h2 class="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+        Getting started
+      </h2>
+      <div bind:this={importSection}>
+        <ImportCard bind:open={importOpen} onScrollToTransfer={scrollToTransfer} />
+      </div>
+      <div bind:this={transferSection}>
+        <TransferCard bind:open={transferOpen} />
+      </div>
+    </section>
+
+    <div class="border-t border-border/50"></div>
+
+    <section class="flex flex-col gap-4">
+      <h2 class="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+        Data management
+      </h2>
+      <BackupCard />
+      <DangerZoneCard />
+    </section>
+
+    <div class="text-center text-sm text-muted-foreground">
+      <p>Game data: Fields of Mistria v{trackerData.version}</p>
+      <p>Harvest Helper v{version}</p>
+      <div class="mt-1 flex items-center justify-center gap-3">
+        <button
+          class="inline-flex items-center gap-1 underline hover:text-foreground"
+          type="button"
+          onclick={() => (feedbackOpen = true)}
+        >
+          <MessageCircleWarning class="size-3.5" />
+          Send feedback
+        </button>
+        <span class="text-border">·</span>
+        <a href={resolve("/privacy")} class="underline hover:text-foreground">Privacy policy</a>
+      </div>
     </div>
-    <div bind:this={transferSection}>
-      <TransferCard bind:open={transferOpen} />
-    </div>
-  </section>
-
-  <div class="border-t border-border/50"></div>
-
-  <section class="flex flex-col gap-4">
-    <h2 class="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-      Data management
-    </h2>
-    <BackupCard />
-    <DangerZoneCard />
-  </section>
-
-  <div class="text-center text-sm text-muted-foreground">
-    <p>Game data: Fields of Mistria v{trackerData.version}</p>
-    <p>Harvest Helper v{version}</p>
-    <a href={resolve("/privacy")} class="mt-1 inline-block underline hover:text-foreground">
-      Privacy Policy
-    </a>
   </div>
 </div>
+
+<FeedbackPanel
+  open={feedbackOpen}
+  onclose={() => (feedbackOpen = false)}
+  pickerEnabled={false}
+  resetKey={page.url.pathname}
+/>

@@ -1,14 +1,17 @@
 <script lang="ts">
   import { slide } from "svelte/transition";
 
+  import { page } from "$app/state";
   import { Icon } from "$lib/components/icon/index.js";
   import RestrictionBadges from "$lib/components/restriction-badges.svelte";
   import SourceList from "$lib/components/source-list.svelte";
   import Spoiler from "$lib/components/spoiler.svelte";
   import { getDisplayBadges } from "$lib/engine/availability.js";
+  import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
   import { buildSourceSegments } from "$lib/utils/source-segments.js";
 
   import type { DisplayBadges } from "$lib/engine/availability-condition.js";
+  import type { FeedbackContext } from "$lib/feedback/context.svelte.js";
   import type { QuestState } from "$lib/stores/user-state.svelte.js";
   import type { Source } from "$lib/types/acquisition";
   import type { SegmentLookups, SourceSegment } from "$lib/utils/source-segments.js";
@@ -21,16 +24,24 @@
 
   let {
     display,
+    feedbackContext = getFeedbackContextOrFallback(),
     lookups,
     name,
     onToggle,
+    reportCategory,
+    reportEntityId,
+    reportExtra,
     sources = [],
     subtitle,
   }: {
     display: TrackerRowDisplay;
+    feedbackContext?: FeedbackContext;
     lookups?: SegmentLookups;
     name: string;
     onToggle: () => void;
+    reportCategory: string;
+    reportEntityId: string;
+    reportExtra?: Record<string, number | string>;
     sources?: Source[];
     subtitle?: string;
   } = $props();
@@ -49,6 +60,18 @@
   let isSpoilered = $derived(display.mode === "spoilered" && !spoilerRevealed);
   let isLeaving = $derived(display.mode === "completed" && (display.leaving ?? false));
   let isDimmed = $derived(display.mode === "visible" && (display.dimmed ?? false));
+
+  let reportable = $derived(
+    isSpoilered
+      ? { category: reportCategory, displayName: "Spoilered item", page: page.url.pathname }
+      : {
+          category: reportCategory,
+          displayName: name,
+          entityId: reportEntityId,
+          extra: reportExtra,
+          page: page.url.pathname,
+        },
+  );
 
   let completionState: QuestState = $derived(
     isCompleted ? "completed" : isObtained ? "obtained" : "none",
@@ -70,7 +93,7 @@
   }
 </script>
 
-<div out:completeOut data-leaving={isLeaving}>
+<div out:completeOut data-leaving={isLeaving} {@attach feedbackContext.reportable(reportable)}>
   <div
     class="flex items-center gap-0 rounded-md pr-2 transition-opacity duration-200
       {isDimmed ? 'opacity-50' : ''}

@@ -2,25 +2,48 @@
   import { untrack } from "svelte";
   import { slide } from "svelte/transition";
 
+  import { page } from "$app/state";
   import { Icon } from "$lib/components/icon/index.js";
+  import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
 
   import type { Snippet } from "svelte";
+
+  import type { FeedbackContext } from "$lib/feedback/context.svelte.js";
 
   let {
     children,
     count,
     defaultOpen = false,
+    feedbackContext = getFeedbackContextOrFallback(),
     forceOpen = false,
     name,
+    reportCategory,
+    reportEntityId,
+    reportExtra,
     total,
   }: {
     children: Snippet;
     count?: number;
     defaultOpen?: boolean;
+    feedbackContext?: FeedbackContext;
     forceOpen?: boolean;
     name: string;
+    reportCategory?: string;
+    reportEntityId?: string;
+    reportExtra?: Record<string, number | string>;
     total?: number;
   } = $props();
+  let reportable = $derived(
+    reportCategory
+      ? feedbackContext.reportable({
+          category: reportCategory,
+          displayName: name,
+          entityId: reportEntityId,
+          extra: reportExtra,
+          page: page.url.pathname,
+        })
+      : undefined,
+  );
 
   let expanded = $state(untrack(() => defaultOpen));
   let isOpen = $derived(expanded || forceOpen);
@@ -32,6 +55,7 @@
     onclick={() => (expanded = !expanded)}
     type="button"
     aria-expanded={isOpen}
+    {@attach reportable}
   >
     <Icon.UI
       type="disclosure"

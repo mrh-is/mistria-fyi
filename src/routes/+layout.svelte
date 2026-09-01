@@ -10,14 +10,18 @@
   import { page } from "$app/state";
   import ToolbarFooter from "$lib/components/toolbar-footer.svelte";
   import { Toaster } from "$lib/components/ui/sonner/index.js";
+  import { FeedbackContext, setFeedbackContext } from "$lib/feedback/context.svelte.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   let { children } = $props();
+  let feedbackContext = setFeedbackContext(new FeedbackContext());
 
   // Clear search when navigating so home search doesn't bleed into category pages
   afterNavigate(() => {
+    feedbackContext.reset();
     toolbarState.closeSearch();
+    toolbarState.resetSourceFilters();
   });
 
   onMount(() => {
@@ -25,12 +29,14 @@
   });
 
   let hasToolbar = $derived(page.url.pathname !== "/settings" && page.url.pathname !== "/privacy");
+  let overlayActive = $state(false);
 </script>
 
 <div
   class="mx-auto flex min-h-dvh max-w-lg flex-col bg-background {hasToolbar
     ? 'pb-safe-offset-14'
     : ''}"
+  inert={overlayActive ? true : undefined}
 >
   {#key page.url.pathname}
     <main class="flex flex-1 animate-in flex-col duration-200 fade-in">
@@ -39,5 +45,5 @@
   {/key}
 </div>
 
-<ToolbarFooter hidden={!hasToolbar} />
+<ToolbarFooter hidden={!hasToolbar} bind:overlayActive />
 <Toaster position="bottom-center" offset="calc(56px + env(safe-area-inset-bottom))" />

@@ -17,6 +17,7 @@ export default defineConfig({
     exclude: [
       ...configDefaults.exclude,
       "**/*.assets.test.ts",
+      "**/*.client.test.ts",
       "**/.worktrees/**",
       "**/.claude/worktrees/**",
     ],

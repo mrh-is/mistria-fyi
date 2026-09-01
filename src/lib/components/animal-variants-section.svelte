@@ -1,5 +1,6 @@
 <script lang="ts">
   import { trackerData } from "$lib/data/index.js";
+  import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import AnimalSubcategory from "./animal-subcategory.svelte";
@@ -66,6 +67,7 @@
   const SEASON_ORDER: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
 
   function isVariantInScope(variant: AnimalVariant, completed: boolean): boolean {
+    if (!toolbarState.matchesSourceFilters([variant.source])) return false;
     if (completed) return true;
 
     const season = seasonForVariant(variant);

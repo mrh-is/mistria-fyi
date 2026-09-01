@@ -2,6 +2,7 @@ import { render } from "svelte/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import TrackerRow from "$lib/components/tracker-row.svelte";
+import { FeedbackContext } from "$lib/feedback/context.svelte.js";
 import { userState } from "$lib/stores/user-state.svelte.js";
 
 describe("TrackerRow", () => {
@@ -9,10 +10,17 @@ describe("TrackerRow", () => {
     userState.resetAll();
   });
 
+  const reportProps = {
+    feedbackContext: new FeedbackContext(),
+    reportCategory: "recipe",
+    reportEntityId: "cherry_cobbler",
+  };
+
   it("renders a spoiler overlay for a spoilered row", () => {
     const { body } = render(TrackerRow, {
       props: {
         display: { mode: "spoilered" },
+        ...reportProps,
         name: "Cherry Cobbler",
         onToggle: vi.fn(),
       },
@@ -26,6 +34,7 @@ describe("TrackerRow", () => {
     const { body } = render(TrackerRow, {
       props: {
         display: { mode: "completed" },
+        ...reportProps,
         name: "Cherry Cobbler",
         onToggle: vi.fn(),
       },
@@ -39,6 +48,7 @@ describe("TrackerRow", () => {
     const { body } = render(TrackerRow, {
       props: {
         display: { mode: "visible" },
+        ...reportProps,
         name: "Cherry Cobbler",
         onToggle: vi.fn(),
       },
@@ -52,6 +62,7 @@ describe("TrackerRow", () => {
     const { body } = render(TrackerRow, {
       props: {
         display: { mode: "completed" },
+        ...reportProps,
         name: "Cherry Cobbler",
         onToggle: vi.fn(),
       },
@@ -65,6 +76,7 @@ describe("TrackerRow", () => {
     const { body } = render(TrackerRow, {
       props: {
         display: { mode: "visible" },
+        ...reportProps,
         name: "Cherry Cobbler",
         onToggle: vi.fn(),
         sources: [{ type: "default" }],

@@ -4,10 +4,12 @@
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
+  import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordEntries } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
+  import { registerSourceFilters } from "$lib/utils/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "$lib/utils/spoiler-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
@@ -83,6 +85,10 @@
       }));
   });
 
+  registerSourceFilters("cosmetics", () =>
+    Object.values(trackerData.cosmetics).flatMap(({ sources }) => sources),
+  );
+
   function toggleCosmetic(cosmetic: CosmeticEntry, allInSlot: CosmeticEntry[]): void {
     userState.toggleCosmetic(cosmetic.id);
     const completed = userState.state.completed.cosmetics.has(cosmetic.id);
@@ -117,27 +123,37 @@
 
 {#each groups() as { slot, subCategories } (slot)}
   {@const allInSlot = subCategories.flatMap(([, items]) => items)}
-  {@const visibleInSlot = allInSlot.filter((c) => {
+  {@const scopedInSlot = allInSlot.filter((c) => toolbarState.matchesSourceFilters(c.sources))}
+  {@const visibleInSlot = scopedInSlot.filter((c) => {
     const done = userState.state.completed.cosmetics.has(c.id);
     return done ? userState.state.showCompleted : true;
   })}
-  {#if visibleInSlot.length > 0}
+  {#if visibleInSlot.length > 0 || toolbarState.sourceFilterActive}
     <ExpandableSection
-      count={allInSlot.filter((c) => userState.state.completed.cosmetics.has(c.id)).length}
+      count={scopedInSlot.filter((c) => userState.state.completed.cosmetics.has(c.id)).length}
       name={slot.charAt(0).toUpperCase() + slot.slice(1)}
-      total={allInSlot.length}
+      reportCategory="cosmetic slot"
+      reportEntityId={slot}
+      total={scopedInSlot.length}
     >
       {#each subCategories as [subCategory, cosmetics] (subCategory)}
         {@const visibleCosmetics = cosmetics.filter((c) => {
+          if (!toolbarState.matchesSourceFilters(c.sources)) return false;
           const done = userState.state.completed.cosmetics.has(c.id);
           return done ? userState.state.showCompleted : true;
         })}
         {#if visibleCosmetics.length > 0}
           {#if subCategories.length > 1}
             <ExpandableSection
-              count={cosmetics.filter((c) => userState.state.completed.cosmetics.has(c.id)).length}
+              count={cosmetics.filter(
+                (c) =>
+                  toolbarState.matchesSourceFilters(c.sources) &&
+                  userState.state.completed.cosmetics.has(c.id),
+              ).length}
               name={subCategory}
-              total={cosmetics.length}
+              reportCategory="cosmetic"
+              reportEntityId={`${slot}:${subCategory}`}
+              total={cosmetics.filter((c) => toolbarState.matchesSourceFilters(c.sources)).length}
             >
               {#each visibleCosmetics as cosmetic (cosmetic.id)}
                 {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
@@ -145,6 +161,8 @@
                   display={rowDisplay(cosmetic, completed)}
                   lookups={{ ...baseLookups, entityVisibility: cosmetic.visibility }}
                   name={cosmetic.name}
+                  reportCategory="cosmetic"
+                  reportEntityId={cosmetic.id}
                   sources={cosmetic.sources}
                   onToggle={() => {
                     if (
@@ -168,6 +186,8 @@
                 display={rowDisplay(cosmetic, completed)}
                 lookups={{ ...baseLookups, entityVisibility: cosmetic.visibility }}
                 name={cosmetic.name}
+                reportCategory="cosmetic"
+                reportEntityId={cosmetic.id}
                 sources={cosmetic.sources}
                 onToggle={() => {
                   if (
@@ -186,6 +206,11 @@
           {/if}
         {/if}
       {/each}
+      {#if visibleInSlot.length === 0}
+        <p class="py-4 text-center text-sm text-muted-foreground">
+          No items match the current filters
+        </p>
+      {/if}
     </ExpandableSection>
   {/if}
 {/each}

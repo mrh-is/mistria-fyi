@@ -2,8 +2,11 @@
   import AllCompleted from "$lib/components/all-completed.svelte";
   import { Icon } from "$lib/components/icon";
   import PageHeader from "$lib/components/page-header.svelte";
+  import { trackerData } from "$lib/data/index.js";
   import { getAllProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { registerSourceFilters } from "$lib/utils/source-filter-registration.svelte.js";
+  import { allTrackerSources } from "$lib/utils/tracker-sources.js";
 
   import AlmanacSection from "./AlmanacSection.svelte";
   import AnimalsSection from "./AnimalsSection.svelte";
@@ -14,6 +17,8 @@
   import QuestsSection from "./QuestsSection.svelte";
   import RenownSection from "./RenownSection.svelte";
   import SkillsSection from "./SkillsSection.svelte";
+
+  registerSourceFilters("all", () => allTrackerSources(trackerData));
 
   let headerEl = $state<HTMLDivElement | undefined>(undefined);
   let headerH = $state(0);

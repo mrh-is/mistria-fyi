@@ -1,7 +1,9 @@
 <script lang="ts">
+  import { page } from "$app/state";
   import Stepper from "$lib/components/stepper.svelte";
   import { Input } from "$lib/components/ui/input/index.js";
   import { trackerData } from "$lib/data/index.js";
+  import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordKeys } from "$lib/utils";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
@@ -23,7 +25,17 @@
 
   const { id, name }: Props = $props();
 
+  let feedbackContext = getFeedbackContextOrFallback();
   let level = $derived(userState.state.completed.skillLevels[id] ?? 0);
+  let reportable = $derived(
+    feedbackContext.reportable({
+      category: "skill",
+      displayName: name,
+      entityId: id,
+      extra: { level },
+      page: page.url.pathname,
+    }),
+  );
   let maxed = $derived(level >= MAX_LEVEL);
   let currentSegment = $derived(SEGMENTS.findLastIndex((s) => level >= s.start && level > 0));
 
@@ -85,7 +97,10 @@
   }
 </script>
 
-<div class="flex flex-col gap-1 rounded-md px-2 py-1.5 {maxed ? 'opacity-40' : ''}">
+<div
+  class="flex flex-col gap-1 rounded-md px-2 py-1.5 {maxed ? 'opacity-40' : ''}"
+  {@attach reportable}
+>
   <span class="text-base font-medium">{name}</span>
 
   <Stepper

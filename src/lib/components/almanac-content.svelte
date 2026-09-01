@@ -13,6 +13,7 @@
   import { recordEntries, recordValues } from "$lib/utils";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
+  import { registerSourceFilters } from "$lib/utils/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "$lib/utils/spoiler-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
@@ -108,6 +109,10 @@
 
   let nameFilter = $derived(toolbarState.searchQuery);
 
+  registerSourceFilters("almanac", () =>
+    recordValues(trackerData.almanac).flatMap(({ items }) => items.flatMap(aggregateSources)),
+  );
+
   function matchesFilter(name: string): boolean {
     if (!nameFilter) return true;
     return name.toLowerCase().includes(nameFilter.toLowerCase());
@@ -151,7 +156,7 @@
       return { canonicalId, entry, item };
     })
     .sort((a, b) => a.entry.name.localeCompare(b.entry.name))}
-  {@const scopedItems = catEntries.filter(({ canonicalId, entry }) => {
+  {@const baseItems = catEntries.filter(({ canonicalId, entry }) => {
     if (!matchesFilter(entry.name)) return false;
     const sources = aggregateSources(entry);
     return shouldCountItem(
@@ -161,6 +166,9 @@
       userState.state.availabilityMode,
     );
   })}
+  {@const scopedItems = baseItems.filter(({ entry }) =>
+    toolbarState.matchesSourceFilters(aggregateSources(entry)),
+  )}
   {@const filteredItems = scopedItems.filter(({ canonicalId }) =>
     isRowVisible(
       canonicalId,
@@ -169,11 +177,13 @@
       recentlyCompleted,
     ),
   )}
-  {#if filteredItems.length > 0}
+  {#if baseItems.length > 0}
     <ExpandableSection
       count={scopedItems.filter(({ canonicalId }) => isItemCompleted(canonicalId)).length}
       forceOpen={!!nameFilter}
       name={cat.name}
+      reportCategory="almanac"
+      reportEntityId={id}
       total={scopedItems.length}
     >
       {@const showAll = expandedSections[id] ?? false}
@@ -186,6 +196,8 @@
           display={rowDisplay(canonicalId, { visibility: itemVisibility }, itemSources)}
           lookups={{ ...baseLookups, entityVisibility: itemVisibility }}
           name={entry.name}
+          reportCategory="almanac item"
+          reportEntityId={canonicalId}
           sources={itemSources}
           onToggle={() => {
             if (itemNameVisible({ visibility: itemVisibility }) || itemCompleted) {
@@ -198,6 +210,11 @@
           }}
         />
       {/each}
+      {#if filteredItems.length === 0}
+        <p class="py-4 text-center text-sm text-muted-foreground">
+          No items match the current filters
+        </p>
+      {/if}
       {#if !showAll && filteredItems.length > SECTION_LIMIT}
         <div class="flex justify-center py-1">
           <Button

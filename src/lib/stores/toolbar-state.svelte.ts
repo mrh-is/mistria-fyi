@@ -1,4 +1,4 @@
-import { SvelteSet } from "svelte/reactivity";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
 import type { Component } from "svelte";
 
@@ -10,23 +10,20 @@ export interface SourceFilter {
   types: Source["type"][];
 }
 
-class ToolbarState {
+export class ToolbarState {
   activeSourceLabels = $state<SvelteSet<string>>(new SvelteSet());
-  recipeSourceFilters = $state<SourceFilter[]>([]);
-
   searchOpen = $state(false);
+
   searchQuery = $state("");
 
+  sourceFilters = $state<SourceFilter[]>([]);
   get sourceFilterActive(): boolean {
     return (
-      this.recipeSourceFilters.length > 0 &&
-      this.activeSourceLabels.size !== this.recipeSourceFilters.length
+      this.sourceFilters.length > 0 && this.activeSourceLabels.size !== this.sourceFilters.length
     );
   }
 
-  clearSourceFilter() {
-    this.activeSourceLabels = new SvelteSet(this.recipeSourceFilters.map((f) => f.label));
-  }
+  private sourceFilterRegistrations = new SvelteMap<string, SourceFilter[]>();
 
   closeSearch() {
     this.searchOpen = false;
@@ -37,21 +34,41 @@ class ToolbarState {
     this.activeSourceLabels = new SvelteSet();
   }
 
+  matchesSourceFilters(sources: Source[]): boolean {
+    if (!this.sourceFilterActive) return true;
+    return (
+      sources.length === 0 ||
+      sources.some((source) => {
+        const group = this.sourceFilters.find((filter) => filter.types.includes(source.type));
+        return group === undefined || this.activeSourceLabels.has(group.label);
+      })
+    );
+  }
+
   openSearch() {
     this.searchOpen = true;
   }
 
-  setRecipeSourceFilters(filters: SourceFilter[]) {
-    this.recipeSourceFilters = filters;
-    this.activeSourceLabels = new SvelteSet(filters.map((f) => f.label));
+  removeSourceFilters(owner: string) {
+    this.sourceFilterRegistrations.delete(owner);
+    this.rebuildSourceFilters();
+  }
+
+  resetSourceFilters() {
+    this.activeSourceLabels = new SvelteSet(this.sourceFilters.map((filter) => filter.label));
   }
 
   setSearch(query: string) {
     this.searchQuery = query;
   }
 
+  setSourceFilters(owner: string, filters: SourceFilter[]) {
+    this.sourceFilterRegistrations.set(owner, filters);
+    this.rebuildSourceFilters();
+  }
+
   showAllSourceFilters() {
-    this.activeSourceLabels = new SvelteSet(this.recipeSourceFilters.map((f) => f.label));
+    this.resetSourceFilters();
   }
 
   toggleSourceFilter(filter: SourceFilter) {
@@ -59,6 +76,20 @@ class ToolbarState {
       this.activeSourceLabels.delete(filter.label);
     } else {
       this.activeSourceLabels.add(filter.label);
+    }
+  }
+
+  private rebuildSourceFilters() {
+    const filtersByLabel = new SvelteMap<string, SourceFilter>();
+    for (const filters of this.sourceFilterRegistrations.values()) {
+      for (const filter of filters) filtersByLabel.set(filter.label, filter);
+    }
+    const nextFilters = [...filtersByLabel.values()].sort((a, b) => a.label.localeCompare(b.label));
+    const currentLabels = this.sourceFilters.map(({ label }) => label).join("\0");
+    const nextLabels = nextFilters.map(({ label }) => label).join("\0");
+    if (currentLabels !== nextLabels) {
+      this.sourceFilters = nextFilters;
+      this.resetSourceFilters();
     }
   }
 }

@@ -1,18 +1,23 @@
 <script lang="ts">
+  import { page } from "$app/state";
   import ConfirmSpoilerDialog from "$lib/components/confirm-spoiler-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import Stepper from "$lib/components/stepper.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { isEntityNameVisible } from "$lib/engine/visibility.js";
+  import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
+  import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
+  import { registerSourceFilters } from "$lib/utils/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "$lib/utils/spoiler-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { SpellId } from "$lib/types/tracker-data.js";
 
+  const feedbackContext = getFeedbackContextOrFallback();
   const spoilerGuard = createSpoilerGuard();
 
   function spellNameVisible(spellId: SpellId): boolean {
@@ -69,14 +74,29 @@
     return biome;
   });
 
+  let floorReportable = $derived(
+    feedbackContext.reportable({
+      category: "mines",
+      displayName: "Floor Progress",
+      extra: { biome: currentBiome().name, floor: userState.state.completed.mines.floor },
+      page: page.url.pathname,
+    }),
+  );
+
   let spells = $derived(
     Object.entries(trackerData.mines.spells)
-      .map(([id, spell]) => ({ id: id as SpellId, name: spell.name }))
+      .map(([id, spell]) => ({ id: id as SpellId, name: spell.name, sources: spell.sources }))
       .sort((a, b) => a.name.localeCompare(b.name)),
   );
 
+  registerSourceFilters("mines", () => spells.flatMap(({ sources }) => sources));
+
+  let scopedSpells = $derived(
+    spells.filter(({ sources }) => toolbarState.matchesSourceFilters(sources)),
+  );
+
   let visibleSpells = $derived(
-    spells.filter((spell) => {
+    scopedSpells.filter((spell) => {
       const completed = userState.state.completed.mines.spells.has(spell.id);
       return completed ? userState.state.showCompleted : true;
     }),
@@ -100,7 +120,7 @@
 {/if}
 
 {#if compact}
-  <div class="flex items-center gap-2 rounded-md px-2">
+  <div class="flex items-center gap-2 rounded-md px-2" {@attach floorReportable}>
     <span class="min-w-0 flex-1 text-base font-medium">Floor Progress</span>
     <div class="w-32 shrink-0">
       <Stepper
@@ -131,6 +151,9 @@
   <ExpandableSection
     count={userState.state.completed.mines.floor}
     name="Floor Progress"
+    reportCategory="mines"
+    reportEntityId="floors"
+    reportExtra={{ biome: currentBiome().name, floor: userState.state.completed.mines.floor }}
     {defaultOpen}
     total={maxFloors}
   >
@@ -181,18 +204,24 @@
   </ExpandableSection>
 {/if}
 
-{#if visibleSpells.length > 0}
+{#if scopedSpells.length > 0}
   <ExpandableSection
-    count={spells.filter((s) => userState.state.completed.mines.spells.has(s.id)).length}
+    count={scopedSpells.filter((spell) => userState.state.completed.mines.spells.has(spell.id))
+      .length}
     name="Spells"
+    reportCategory="mines"
+    reportEntityId="spells"
     {defaultOpen}
-    total={spells.length}
+    total={scopedSpells.length}
   >
     {#each visibleSpells as spell (spell.id)}
       {@const completed = userState.state.completed.mines.spells.has(spell.id)}
       <TrackerRow
         display={rowDisplay(spell.id, completed)}
         name={spell.name}
+        reportCategory="spell"
+        reportEntityId={spell.id}
+        sources={spell.sources}
         onToggle={() => {
           if (spellNameVisible(spell.id) || completed) {
             toggleSpell(spell.id);
@@ -204,5 +233,12 @@
         }}
       />
     {/each}
+    {#if visibleSpells.length === 0}
+      <p class="py-4 text-center text-sm text-muted-foreground">
+        No items match the current filters
+      </p>
+    {/if}
   </ExpandableSection>
+{:else if toolbarState.sourceFilterActive}
+  <p class="py-4 text-center text-sm text-muted-foreground">No items match the current filters</p>
 {/if}

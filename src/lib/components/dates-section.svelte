@@ -4,10 +4,12 @@
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
+  import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordEntries } from "$lib/utils";
   import { celebrate } from "$lib/utils/celebrate.js";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
+  import { registerSourceFilters } from "$lib/utils/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "$lib/utils/spoiler-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
@@ -74,28 +76,52 @@
       .sort((a, b) => a.name.localeCompare(b.name)),
   );
 
+  registerSourceFilters("dates", () => dates.flatMap(({ sources }) => sources));
+
+  let scopedDates = $derived(
+    dates.filter(({ sources }) => toolbarState.matchesSourceFilters(sources)),
+  );
+
   let completedCount = $derived(
-    dates.filter((d) => userState.state.completed.dates.has(d.id)).length,
+    scopedDates.filter((date) => userState.state.completed.dates.has(date.id)).length,
+  );
+
+  let visibleDates = $derived(
+    scopedDates.filter((date) => {
+      const completed = userState.state.completed.dates.has(date.id);
+      return completed ? userState.state.showCompleted : true;
+    }),
   );
 </script>
 
 {#if categoryVisible || userState.state.showSpoilers}
-  <ExpandableSection name="Dates" count={completedCount} total={dates.length} defaultOpen={false}>
+  <ExpandableSection
+    name="Dates"
+    reportCategory="dates"
+    count={completedCount}
+    total={scopedDates.length}
+    defaultOpen={false}
+  >
     <div class="flex flex-col gap-0.5">
-      {#each dates as date (date.id)}
+      {#each visibleDates as date (date.id)}
         {@const completed = userState.state.completed.dates.has(date.id)}
-        {#if completed ? userState.state.showCompleted : true}
-          <TrackerRow
-            name={date.name}
-            display={rowDisplay(date.id, completed)}
-            sources={date.sources}
-            lookups={{ ...baseLookups, entityVisibility: date.visibility }}
-            onToggle={() => {
-              toggleDate(date.id);
-            }}
-          />
-        {/if}
+        <TrackerRow
+          name={date.name}
+          reportCategory="date"
+          reportEntityId={date.id}
+          display={rowDisplay(date.id, completed)}
+          sources={date.sources}
+          lookups={{ ...baseLookups, entityVisibility: date.visibility }}
+          onToggle={() => {
+            toggleDate(date.id);
+          }}
+        />
       {/each}
+      {#if visibleDates.length === 0}
+        <p class="py-4 text-center text-sm text-muted-foreground">
+          No items match the current filters
+        </p>
+      {/if}
     </div>
   </ExpandableSection>
 {/if}
