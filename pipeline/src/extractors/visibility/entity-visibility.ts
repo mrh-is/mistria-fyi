@@ -225,19 +225,21 @@ function acquisitionSourceCondition(
     case "date_inspiration":
     case "default":
     case "dive":
+    case "donate_item":
     case "engagement":
     case "equipment":
     case "festival_activity":
     case "fish":
     case "fish_trap":
     case "forage":
-    case "letter":
     case "lost_and_found":
     case "monster":
     case "monster_feed":
     case "museum_donation":
     case "proposal":
+    case "reach_day":
     case "recipe":
+    case "ship_item":
     case "spouseGift":
     case "station":
     case "treasure_chest":
@@ -416,6 +418,7 @@ function acquisitionSourceConditions(
     case "date_inspiration":
     case "default":
     case "dive":
+    case "donate_item":
     case "engagement":
     case "equipment":
     case "festival":
@@ -423,7 +426,6 @@ function acquisitionSourceConditions(
     case "fish":
     case "fish_trap":
     case "forage":
-    case "letter":
     case "lost_and_found":
     case "mine":
     case "mine_fish":
@@ -432,9 +434,11 @@ function acquisitionSourceConditions(
     case "museum_donation":
     case "perk_drop":
     case "proposal":
+    case "reach_day":
     case "recipe":
     case "renown":
     case "ritual_chamber":
+    case "ship_item":
     case "spouseGift":
     case "station":
     case "treasure_chest":

@@ -308,9 +308,7 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["tomato_soup" as RecipeId];
-    expect(recipe.sources).toEqual([
-      { type: "letter", trigger: "shipped_item", triggerItemId: "tomato" },
-    ]);
+    expect(recipe.sources).toEqual([{ type: "ship_item", triggerItemId: "tomato" }]);
   });
 
   it("maps store recipe_scroll via categories[] to store source", () => {
@@ -789,7 +787,7 @@ describe("extractRecipes", () => {
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["seasonal_dish" as RecipeId];
     expect(recipe.sources).toEqual([
-      { type: "letter", trigger: "reached_date", triggerDate: { day: 15, season: "fall" } },
+      { type: "reach_day", triggerDate: { day: 15, season: "fall" } },
     ]);
   });
 
@@ -821,8 +819,8 @@ describe("extractRecipes", () => {
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["seasonal_dish" as RecipeId];
     expect(recipe.sources).toEqual([
-      { type: "letter", trigger: "reached_date", triggerDate: { day: 15, season: "fall" } },
-      { type: "letter", trigger: "reached_date", triggerDate: { day: 16, season: "fall" } },
+      { type: "reach_day", triggerDate: { day: 15, season: "fall" } },
+      { type: "reach_day", triggerDate: { day: 16, season: "fall" } },
     ]);
   });
 
@@ -988,9 +986,7 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["rare_stew" as RecipeId];
-    expect(recipe.sources).toEqual([
-      { type: "letter", trigger: "donated_item", triggerItemId: "ancient_fossil" },
-    ]);
+    expect(recipe.sources).toEqual([{ type: "donate_item", triggerItemId: "ancient_fossil" }]);
   });
 
   it("emits an engagement source for the engagement ring", () => {

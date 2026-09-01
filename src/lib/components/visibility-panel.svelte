@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ChevronDown, RotateCcw } from "@lucide/svelte";
+  import { cubicOut } from "svelte/easing";
   import { prefersReducedMotion } from "svelte/motion";
   import { slide } from "svelte/transition";
 
@@ -20,8 +21,9 @@
 
   const seasons: Season[] = ["spring", "summer", "fall", "winter"];
   const allWeathers: Weather[] = ["calm", "inclement", "heavy_inclement", "special"];
-  const labelWidth = "w-20 shrink-0";
-  const TRANSITION_MS = 120;
+  const labelWidth = "w-auto shrink-0 sm:w-20";
+  const TRANSITION_MS = 180;
+  const FADE_SWAP_MS = TRANSITION_MS / 2;
   const SESSION_KEY_SEASONALITY = "filter-panel-seasonality-expanded";
   const SESSION_KEY_SOURCES = "filter-panel-sources-expanded";
 
@@ -57,6 +59,9 @@
   let currentSeason = $derived(userState.state.worldState.season);
   let availableWeathers = $derived(weathersForSeason(currentSeason));
   let hasSpecialWeather = $derived(availableWeathers.includes("special"));
+  let weatherColumns = $derived(
+    `repeat(3, minmax(0, 1fr)) minmax(0, ${hasSpecialWeather ? "1fr" : "0fr"})`,
+  );
   let filtersActive = $derived(
     userState.state.availabilityMode !== "available" ||
       userState.state.showCompleted ||
@@ -80,6 +85,10 @@
   let weatherDisplay = $state(
     weatherLabel(userState.state.worldState.weather, userState.state.worldState.season),
   );
+  let weatherTargetLabel = $derived(
+    weatherLabel(userState.state.worldState.weather, currentSeason),
+  );
+  let weatherTargetWidth = $state(0);
   let seasonFading = $state(false);
   let weatherFading = $state(false);
 
@@ -87,21 +96,27 @@
     const next = seasonLabel(currentSeason);
     if (next !== seasonDisplay) {
       seasonFading = true;
-      setTimeout(() => {
+      const timeout = setTimeout(() => {
         seasonDisplay = next;
         seasonFading = false;
-      }, duration());
+      }, fadeSwapDuration());
+      return () => {
+        clearTimeout(timeout);
+      };
     }
   });
 
   $effect(() => {
-    const next = weatherLabel(userState.state.worldState.weather, currentSeason);
+    const next = weatherTargetLabel;
     if (next !== weatherDisplay) {
       weatherFading = true;
-      setTimeout(() => {
+      const timeout = setTimeout(() => {
         weatherDisplay = next;
         weatherFading = false;
-      }, duration());
+      }, fadeSwapDuration());
+      return () => {
+        clearTimeout(timeout);
+      };
     }
   });
 
@@ -123,17 +138,21 @@
   );
 
   $effect(() => {
-    for (const w of allWeathers) {
-      const nextLabel = weatherLabel(w, currentSeason);
-      const nextIcon = weatherIcon(w, currentSeason);
-      if (nextLabel !== weatherSlotDisplay[w].label || nextIcon !== weatherSlotDisplay[w].icon) {
-        weatherSlotFading[w] = true;
-        const weather = w;
-        setTimeout(() => {
-          weatherSlotDisplay[weather] = { icon: nextIcon, label: nextLabel };
-          weatherSlotFading[weather] = false;
-        }, duration());
-      }
+    const next = buildWeatherSlots(currentSeason);
+    const changed = allWeathers.filter(
+      (weather) =>
+        next[weather].label !== weatherSlotDisplay[weather].label ||
+        next[weather].icon !== weatherSlotDisplay[weather].icon,
+    );
+    if (changed.length > 0) {
+      for (const weather of changed) weatherSlotFading[weather] = true;
+      const timeout = setTimeout(() => {
+        weatherSlotDisplay = next;
+        for (const weather of changed) weatherSlotFading[weather] = false;
+      }, fadeSwapDuration());
+      return () => {
+        clearTimeout(timeout);
+      };
     }
   });
 
@@ -151,6 +170,10 @@
 
   function duration(): number {
     return prefersReducedMotion.current ? 0 : TRANSITION_MS;
+  }
+
+  function fadeSwapDuration(): number {
+    return prefersReducedMotion.current ? 0 : FADE_SWAP_MS;
   }
 </script>
 
@@ -181,11 +204,24 @@
             </span>
             <span class="opacity-50">/</span>
             <span
-              class="inline-block transition-opacity motion-reduce:transition-none"
+              class="relative inline-block overflow-hidden align-bottom transition-[width] ease-out motion-reduce:transition-none"
+              style:width={weatherTargetWidth > 0 ? `${weatherTargetWidth}px` : "auto"}
               style:transition-duration="{duration()}ms"
-              style:opacity={weatherFading ? 0 : 1}
             >
-              {weatherDisplay}
+              <span
+                class="invisible absolute whitespace-nowrap"
+                aria-hidden="true"
+                bind:offsetWidth={weatherTargetWidth}
+              >
+                {weatherTargetLabel}
+              </span>
+              <span
+                class="inline-block whitespace-nowrap transition-opacity motion-reduce:transition-none"
+                style:transition-duration="{duration()}ms"
+                style:opacity={weatherFading ? 0 : 1}
+              >
+                {weatherDisplay}
+              </span>
             </span>
           {/if}
         </span>
@@ -197,12 +233,16 @@
       </button>
 
       {#if seasonalityExpanded}
-        <div class="flex flex-col gap-2" transition:slide={{ duration: duration() }}>
-          <div class="flex items-center gap-2">
+        <div
+          class="flex flex-col gap-2"
+          transition:slide={{ duration: duration(), easing: cubicOut }}
+        >
+          <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
             <p class="{labelWidth} text-xs font-medium text-muted-foreground">Only show</p>
-            <div class="flex flex-1 gap-0.5 rounded-lg border border-input p-0.5">
+            <div class="flex w-full min-w-0 flex-1 rounded-lg border border-input p-0.5">
               <ToggleGroup.Root
-                class="flex flex-1"
+                class="flex w-full min-w-0 flex-1"
+                spacing={0.5}
                 type="single"
                 value={userState.state.availabilityMode}
                 onValueChange={(value) => {
@@ -210,7 +250,10 @@
                 }}
               >
                 {#each ["timely", "available", "everything"] as const as mode (mode)}
-                  <ToggleGroup.Item class="flex-1 rounded-full px-2.5 py-1 text-xs" value={mode}>
+                  <ToggleGroup.Item
+                    class="h-12 w-0 min-w-0 flex-1 shrink rounded-md px-1.5 py-1 text-center text-xs leading-tight whitespace-normal sm:h-11 sm:px-2.5"
+                    value={mode}
+                  >
                     {availabilityModeLabel[mode]}
                   </ToggleGroup.Item>
                 {/each}
@@ -219,61 +262,71 @@
           </div>
 
           {#if userState.state.availabilityMode !== "everything"}
-            <div class="flex items-center gap-2">
-              <p class="{labelWidth} text-xs text-muted-foreground">Season</p>
-              <div class="flex flex-1 gap-0.5 rounded-lg border border-input p-0.5">
-                {#each seasons as season (season)}
-                  {@const selected = season === currentSeason}
-                  <button
-                    class="flex flex-1 items-center justify-center gap-1 rounded-full px-2.5 py-1 text-xs transition-colors hover:bg-accent motion-reduce:transition-none {selected
-                      ? 'bg-accent font-semibold text-foreground'
-                      : 'text-muted-foreground'}"
-                    type="button"
-                    aria-pressed={selected}
-                    onclick={() => {
-                      userState.setSeason(season);
-                    }}
-                  >
-                    <Icon.Season {season} class="size-3.5" />
-                    {seasonLabel(season)}
-                  </button>
-                {/each}
-              </div>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <p class="{labelWidth} text-xs text-muted-foreground">Weather</p>
-              <div
-                class="flex flex-1 gap-0.5 rounded-lg border border-input p-0.5 transition-[width] motion-reduce:transition-none"
-                style:transition-duration="{duration()}ms"
-              >
-                {#each allWeathers as weather (weather)}
-                  {@const selected = weather === userState.state.worldState.weather}
-                  {@const isSpecial = weather === "special"}
-                  {@const SlotIcon = weatherSlotDisplay[weather].icon}
-                  {#if !isSpecial || hasSpecialWeather}
+            <div
+              class="flex flex-col gap-2"
+              transition:slide={{ duration: duration(), easing: cubicOut }}
+            >
+              <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
+                <p class="{labelWidth} text-xs text-muted-foreground">Season</p>
+                <div
+                  class="flex w-full min-w-0 flex-1 gap-0.5 rounded-lg border border-input p-0.5"
+                >
+                  {#each seasons as season (season)}
+                    {@const selected = season === currentSeason}
                     <button
-                      class="flex flex-1 items-center justify-center gap-1 rounded-full px-2.5 py-1 text-xs transition-colors hover:bg-accent motion-reduce:transition-none {selected
+                      class="flex min-w-0 flex-1 items-center justify-center gap-1 rounded-md px-1.5 py-1 text-xs transition-colors hover:bg-accent motion-reduce:transition-none {selected
                         ? 'bg-accent font-semibold text-foreground'
                         : 'text-muted-foreground'}"
                       type="button"
                       aria-pressed={selected}
                       onclick={() => {
-                        userState.setWeather(weather);
+                        userState.setSeason(season);
                       }}
-                      transition:slide={{ axis: "x", duration: isSpecial ? duration() : 0 }}
                     >
-                      <span
-                        class="inline-flex items-center gap-1 transition-opacity motion-reduce:transition-none"
-                        style:transition-duration="{duration()}ms"
-                        style:opacity={weatherSlotFading[weather] ? 0 : 1}
-                      >
-                        <SlotIcon class="size-3.5" />
-                        {weatherSlotDisplay[weather].label}
-                      </span>
+                      <Icon.Season {season} class="size-3.5" />
+                      {seasonLabel(season)}
                     </button>
-                  {/if}
-                {/each}
+                  {/each}
+                </div>
+              </div>
+
+              <div class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
+                <p class="{labelWidth} text-xs text-muted-foreground">Weather</p>
+                <div
+                  class="grid w-full min-w-0 flex-1 gap-0.5 rounded-lg border border-input p-0.5 transition-[grid-template-columns] ease-out motion-reduce:transition-none"
+                  style:grid-template-columns={weatherColumns}
+                  style:transition-duration="{duration()}ms"
+                >
+                  {#each allWeathers as weather (weather)}
+                    {@const selected = weather === userState.state.worldState.weather}
+                    {@const isSpecial = weather === "special"}
+                    {@const SlotIcon = weatherSlotDisplay[weather].icon}
+                    <div class="min-w-0 overflow-hidden">
+                      <button
+                        class="flex w-full min-w-0 items-center justify-center gap-1 rounded-md px-1.5 py-1 text-xs transition-colors hover:bg-accent motion-reduce:transition-none {selected
+                          ? 'bg-accent font-semibold text-foreground'
+                          : 'text-muted-foreground'}"
+                        type="button"
+                        aria-pressed={selected}
+                        aria-hidden={isSpecial && !hasSpecialWeather}
+                        disabled={isSpecial && !hasSpecialWeather}
+                        tabindex={isSpecial && !hasSpecialWeather ? -1 : undefined}
+                        onclick={() => {
+                          userState.setWeather(weather);
+                        }}
+                      >
+                        <span
+                          class="inline-flex items-center gap-1 transition-opacity motion-reduce:transition-none"
+                          style:transition-duration="{duration()}ms"
+                          style:opacity={weatherSlotFading[weather] ? 0 : 1}
+                        >
+                          <SlotIcon class="size-3.5" />
+                          {weatherSlotDisplay[weather].label}
+                        </span>
+                      </button>
+                    </div>
+                  {/each}
+                </div>
               </div>
             </div>
           {/if}
@@ -304,7 +357,10 @@
       </button>
 
       {#if sourcesExpanded}
-        <div class="flex flex-col gap-2" transition:slide={{ duration: duration() }}>
+        <div
+          class="flex flex-col gap-2"
+          transition:slide={{ duration: duration(), easing: cubicOut }}
+        >
           <div class="flex justify-end gap-3">
             <button
               class="min-h-11 px-2 text-xs text-muted-foreground hover:text-foreground"
@@ -368,6 +424,7 @@
       class="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground motion-reduce:transition-none"
       type="button"
       onclick={resetFilters}
+      transition:slide={{ duration: duration(), easing: cubicOut }}
     >
       <RotateCcw class="size-3.5" />
       Reset filters

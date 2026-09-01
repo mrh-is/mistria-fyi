@@ -586,8 +586,7 @@ describe("buildSourceSegments — letter and perk", () => {
       },
     };
     const source: Source = {
-      type: "letter",
-      trigger: "shipped_item",
+      type: "ship_item",
       triggerItemId: crystal_berries,
     };
     expect(buildSourceSegments(source, lookups)).toEqual([
@@ -604,8 +603,7 @@ describe("buildSourceSegments — letter and perk", () => {
       itemVisibility: { [cave_kelp]: { type: "minesLevel", floor: 20 } },
     };
     const source: Source = {
-      type: "letter",
-      trigger: "donated_item",
+      type: "donate_item",
       triggerItemId: cave_kelp,
     };
     expect(buildSourceSegments(source, lookups)).toEqual([
@@ -616,8 +614,7 @@ describe("buildSourceSegments — letter and perk", () => {
 
   it("renders a reached-date trigger without redaction", () => {
     const source: Source = {
-      type: "letter",
-      trigger: "reached_date",
+      type: "reach_day",
       triggerDate: { day: 3, season: "winter" },
     };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([

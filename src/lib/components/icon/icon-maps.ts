@@ -82,6 +82,7 @@ export const SOURCE_ICON: Record<Source["type"], LucideIcon> = {
   date_inspiration: Heart,
   default: CircleCheck,
   dive: Shell,
+  donate_item: Mail,
   engagement: Heart,
   equipment: Sword,
   festival: PartyPopper,
@@ -89,7 +90,6 @@ export const SOURCE_ICON: Record<Source["type"], LucideIcon> = {
   fish: Fish,
   fish_trap: FishingRod,
   forage: Salad,
-  letter: Mail,
   lost_and_found: Archive,
   mine: Pickaxe,
   mine_fish: Fish,
@@ -102,10 +102,12 @@ export const SOURCE_ICON: Record<Source["type"], LucideIcon> = {
   perk_drop: Sparkles,
   proposal: Heart,
   quest: Scroll,
+  reach_day: Mail,
   recipe: CookingPot,
   renown: Crown,
   ritual_chamber: Sparkles,
   scroll_bundle: ShoppingCart,
+  ship_item: Mail,
   spouseGift: Heart,
   station: HardHat,
   store: ShoppingCart,
@@ -117,17 +119,22 @@ export const SOURCE_ICON: Record<Source["type"], LucideIcon> = {
 };
 
 export const SOURCE_FILTERS: SourceFilter[] = [
-  { icon: Baby, label: "Breeding", types: ["breed"] },
-  { icon: Archive, label: "Chest", types: ["beach_cave_chest", "treasure_chest"] },
-  { icon: HardHat, label: "Construction", types: ["upgrade", "station"] },
+  {
+    icon: Archive,
+    label: "Chest",
+    types: ["beach_cave_chest", "treasure_chest", "lost_and_found"],
+  },
+  { icon: CookingPot, label: "Craft", types: ["recipe"] },
   {
     icon: Heart,
     label: "Dating",
     types: ["engagement", "date", "date_inspiration", "proposal", "spouseGift", "wedding"],
   },
-  { icon: CircleCheck, label: "Default", types: ["default"] },
-  { icon: Sword, label: "Equipment", types: ["equipment"] },
-  { icon: Wheat, label: "Farming", types: ["crop", "tree"] },
+  {
+    icon: Wheat,
+    label: "Farming",
+    types: ["crop", "tree", "animal_product", "breed", "station", "ship_item"],
+  },
   { icon: PartyPopper, label: "Festival", types: ["festival", "festival_activity"] },
   {
     icon: FishingRod,
@@ -137,25 +144,27 @@ export const SOURCE_FILTERS: SourceFilter[] = [
   {
     icon: Salad,
     label: "Gathering",
-    types: ["forage", "bug_catch", "artifact_dig", "animal_product"],
+    types: ["forage", "bug_catch", "artifact_dig", "equipment"],
   },
-  { icon: Mail, label: "Letter", types: ["letter"] },
-  { icon: Archive, label: "Lost & found", types: ["lost_and_found"] },
-  { icon: Pickaxe, label: "Mines", types: ["mines_chest", "mines_dig_site", "mine", "mine_fish"] },
-  { icon: Skull, label: "Monster", types: ["monster", "monster_feed"] },
-  { icon: Landmark, label: "Museum", types: ["museum_donation", "artifact_replicator"] },
+  {
+    icon: Pickaxe,
+    label: "Mines",
+    types: ["mines_chest", "mines_dig_site", "mine", "mine_fish", "monster", "monster_feed"],
+  },
+  {
+    icon: Landmark,
+    label: "Museum",
+    types: ["museum_donation", "artifact_replicator", "donate_item"],
+  },
   { icon: Coins, label: "Offering", types: ["chicken_statue", "wishing_well"] },
   { icon: Sparkles, label: "Perk", types: ["perk", "perk_drop", "ritual_chamber"] },
-  { icon: Scroll, label: "Quest", types: ["quest"] },
-  { icon: CookingPot, label: "Recipe", types: ["recipe"] },
-  { icon: ShoppingCart, label: "Store", types: ["store", "scroll_bundle"] },
-  { icon: Crown, label: "Town rank", types: ["renown"] },
+  { icon: ShoppingCart, label: "Store", types: ["store", "scroll_bundle", "upgrade"] },
+  {
+    icon: Scroll,
+    label: "Story progress",
+    types: ["default", "quest", "renown", "reach_day"],
+  },
 ];
-
-type _AssertAllSourceTypesCovered = SourceType extends FilteredSourceType ? true : never;
-type FilteredSourceType = (typeof SOURCE_FILTERS)[number]["types"][number];
-type SourceType = Source["type"];
-const _exhaustiveCheck: _AssertAllSourceTypesCovered = true;
 
 // ── Season ──────────────────────────────────────────────────────────────────
 

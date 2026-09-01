@@ -25,10 +25,15 @@ describe("extractRecipes — v1.0.2 assets", () => {
     ).length;
     expect(withQuest).toBeGreaterThan(10);
 
-    const withLetter = Object.values(recipes).filter((recipe) =>
-      recipe.sources.some((source) => source.type === "letter"),
+    const withLetterTrigger = Object.values(recipes).filter((recipe) =>
+      recipe.sources.some(
+        (source) =>
+          source.type === "donate_item" ||
+          source.type === "reach_day" ||
+          source.type === "ship_item",
+      ),
     ).length;
-    expect(withLetter).toBeGreaterThan(10);
+    expect(withLetterTrigger).toBeGreaterThan(10);
 
     const withStore = Object.values(recipes).filter((recipe) =>
       recipe.sources.some((source) => source.type === "store"),

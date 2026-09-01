@@ -1,7 +1,7 @@
 import { render } from "svelte/server";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { SOURCE_FILTERS } from "$lib/components/icon/index.js";
+import { SOURCE_FILTERS, SOURCE_ICON } from "$lib/components/icon/index.js";
 import VisibilityPanel from "$lib/components/visibility-panel.svelte";
 import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
 import { userState } from "$lib/stores/user-state.svelte.js";
@@ -23,6 +23,32 @@ afterEach(() => {
 });
 
 describe("VisibilityPanel", () => {
+  it("SOURCE_FILTERS covers every source type exactly once", () => {
+    const allSourceTypes = new Set(Object.keys(SOURCE_ICON));
+    const filteredTypes = SOURCE_FILTERS.flatMap((filter) => filter.types);
+
+    expect(filteredTypes).toHaveLength(allSourceTypes.size);
+    expect(new Set(filteredTypes)).toEqual(allSourceTypes);
+  });
+
+  it("groups source types by player activity", () => {
+    expect(SOURCE_FILTERS.map(({ label, types }) => [label, types])).toEqual([
+      ["Chest", ["beach_cave_chest", "treasure_chest", "lost_and_found"]],
+      ["Craft", ["recipe"]],
+      ["Dating", ["engagement", "date", "date_inspiration", "proposal", "spouseGift", "wedding"]],
+      ["Farming", ["crop", "tree", "animal_product", "breed", "station", "ship_item"]],
+      ["Festival", ["festival", "festival_activity"]],
+      ["Fishing", ["fish", "fish_trap", "dive", "bait_fish"]],
+      ["Gathering", ["forage", "bug_catch", "artifact_dig", "equipment"]],
+      ["Mines", ["mines_chest", "mines_dig_site", "mine", "mine_fish", "monster", "monster_feed"]],
+      ["Museum", ["museum_donation", "artifact_replicator", "donate_item"]],
+      ["Offering", ["chicken_statue", "wishing_well"]],
+      ["Perk", ["perk", "perk_drop", "ritual_chamber"]],
+      ["Store", ["store", "scroll_bundle", "upgrade"]],
+      ["Story progress", ["default", "quest", "renown", "reach_day"]],
+    ]);
+  });
+
   it("renders collapsed seasonality and source sections by default", () => {
     toolbarState.setSourceFilters("test", [gatheringFilter, storeFilter]);
 

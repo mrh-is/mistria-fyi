@@ -536,7 +536,7 @@ describe("validateAcquisitionSources", () => {
       cosmetics: { empty_cosmetic: { sources: [] } },
       items: {
         excluded_reference: {
-          sources: [{ type: "letter", trigger: "donated_item", triggerItemId: "debug_item" }],
+          sources: [{ type: "donate_item", triggerItemId: "debug_item" }],
         },
         malformed: { sources: accumulator.get("malformed" as never) },
         missing_item: { sources: [] },
