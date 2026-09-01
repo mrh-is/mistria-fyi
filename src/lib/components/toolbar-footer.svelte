@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ChevronDown, ChevronUp, ListFilter, MessageCircleWarning, Search } from "@lucide/svelte";
+  import { ChevronDown, ChevronUp, Funnel, MessageCircleWarning, Search } from "@lucide/svelte";
   import { fly } from "svelte/transition";
 
   import { page } from "$app/state";
@@ -177,7 +177,7 @@
             id="visibility-panel-trigger"
             onclick={toggleVisibilityPanel}
           >
-            <ListFilter class="size-4" />
+            <Funnel class="size-4" />
             {#if activePanel === "visibility"}
               <ChevronUp class="size-3 opacity-50" />
             {:else}

@@ -117,27 +117,30 @@ export const SOURCE_ICON: Record<Source["type"], LucideIcon> = {
 };
 
 export const SOURCE_FILTERS: SourceFilter[] = [
+  { icon: Baby, label: "Breeding", types: ["breed"] },
   { icon: Archive, label: "Chest", types: ["beach_cave_chest", "treasure_chest"] },
   { icon: HardHat, label: "Construction", types: ["upgrade", "station"] },
-  { icon: CircleCheck, label: "Default", types: ["default"] },
   {
     icon: Heart,
     label: "Dating",
-    types: ["engagement", "date", "proposal", "spouseGift", "wedding"],
+    types: ["engagement", "date", "date_inspiration", "proposal", "spouseGift", "wedding"],
   },
-  {
-    icon: Salad,
-    label: "Gathering",
-    types: ["forage", "bug_catch", "artifact_dig", "animal_product"],
-  },
+  { icon: CircleCheck, label: "Default", types: ["default"] },
+  { icon: Sword, label: "Equipment", types: ["equipment"] },
+  { icon: Wheat, label: "Farming", types: ["crop", "tree"] },
   { icon: PartyPopper, label: "Festival", types: ["festival", "festival_activity"] },
   {
     icon: FishingRod,
     label: "Fishing",
     types: ["fish", "fish_trap", "dive", "bait_fish"],
   },
-  { icon: Wheat, label: "Farming", types: ["crop", "tree"] },
+  {
+    icon: Salad,
+    label: "Gathering",
+    types: ["forage", "bug_catch", "artifact_dig", "animal_product"],
+  },
   { icon: Mail, label: "Letter", types: ["letter"] },
+  { icon: Archive, label: "Lost & found", types: ["lost_and_found"] },
   { icon: Pickaxe, label: "Mines", types: ["mines_chest", "mines_dig_site", "mine", "mine_fish"] },
   { icon: Skull, label: "Monster", types: ["monster", "monster_feed"] },
   { icon: Landmark, label: "Museum", types: ["museum_donation", "artifact_replicator"] },
@@ -145,10 +148,14 @@ export const SOURCE_FILTERS: SourceFilter[] = [
   { icon: Sparkles, label: "Perk", types: ["perk", "perk_drop", "ritual_chamber"] },
   { icon: Scroll, label: "Quest", types: ["quest"] },
   { icon: CookingPot, label: "Recipe", types: ["recipe"] },
-  { icon: Sword, label: "Equipment", types: ["equipment"] },
   { icon: ShoppingCart, label: "Store", types: ["store", "scroll_bundle"] },
   { icon: Crown, label: "Town rank", types: ["renown"] },
 ];
+
+type _AssertAllSourceTypesCovered = SourceType extends FilteredSourceType ? true : never;
+type FilteredSourceType = (typeof SOURCE_FILTERS)[number]["types"][number];
+type SourceType = Source["type"];
+const _exhaustiveCheck: _AssertAllSourceTypesCovered = true;
 
 // ── Season ──────────────────────────────────────────────────────────────────
 

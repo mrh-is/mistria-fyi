@@ -32,7 +32,7 @@ describe("VisibilityPanel", () => {
     expect(body).toContain('aria-expanded="false"');
     expect(body).toContain("Source types");
     expect(body).not.toContain("Only show");
-    expect(body).toContain("Show completed items");
+    expect(body).toContain("Completed");
     // Both section triggers, both bulk actions, and source chips use the minimum target size.
     expect(body.match(/min-h-11/g)?.length).toBeGreaterThanOrEqual(4);
     expect(body).toContain("min-h-11 items-center gap-1");
@@ -54,7 +54,8 @@ describe("VisibilityPanel", () => {
     const { body } = render(VisibilityPanel, { props: { showSeasonality: true } });
 
     expect(body).toContain("Reset filters");
-    expect(body).toContain("Summer / Sun");
+    expect(body).toContain("Summer");
+    expect(body).toContain("Sun");
     expect(userState.state.worldState).toEqual({ season: "summer", weather: "calm" });
   });
 });
