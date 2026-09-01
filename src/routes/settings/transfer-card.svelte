@@ -165,6 +165,16 @@
   summary="Move progress between devices with a QR code."
 >
   <div class="flex flex-col gap-3">
+    <div class="sr-only" role="status" aria-live="polite">
+      {#if generating}
+        Generating QR code…
+      {:else if scanning}
+        Starting QR code scanner…
+      {:else if transferResult}
+        QR code scanned successfully.
+      {/if}
+    </div>
+
     <!-- Generate QR Code -->
     <Button
       class="w-full"
@@ -184,11 +194,7 @@
 
     <!-- QR Code display -->
     {#if qrDataUrl}
-      <div
-        class="flex flex-col items-center gap-2 rounded-md border p-4"
-        role="status"
-        aria-live="polite"
-      >
+      <div class="flex flex-col items-center gap-2 rounded-md border p-4">
         <img alt="Transfer QR Code" class="size-48" src={qrDataUrl} />
         <p class="text-center text-sm text-muted-foreground">
           Scan this code on your other device to transfer progress
@@ -232,7 +238,7 @@
 
     <!-- Success -->
     {#if transferResult}
-      <div class="rounded-md bg-green-50 p-3 dark:bg-green-950" role="status" aria-live="polite">
+      <div class="rounded-md bg-green-50 p-3 dark:bg-green-950">
         {#if totalMerged > 0}
           <p class="text-base font-medium text-green-800 dark:text-green-200">
             Transferred {totalMerged} items!

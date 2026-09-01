@@ -168,6 +168,17 @@
   summary="Import progress from a Fields of Mistria save."
 >
   <div>
+    <div class="sr-only" role="status" aria-live="polite">
+      {#if importing}
+        {importStatus || "Importing…"}
+      {:else if importResult}
+        {#if totalImported > 0}Import completed.{:else}No new data to import.{/if}
+        {#if importResult.warnings.length > 0}
+          {importResult.warnings.length} warnings found.
+        {/if}
+      {/if}
+    </div>
+
     <!-- Hidden file input -->
     <input
       bind:this={fileInput}
@@ -192,9 +203,7 @@
       aria-busy={importing}
     >
       {#if importing}
-        <p class="text-sm text-muted-foreground" role="status" aria-live="polite">
-          {importStatus || "Importing\u2026"}
-        </p>
+        <p class="text-sm text-muted-foreground">{importStatus || "Importing\u2026"}</p>
       {:else}
         <Upload class="size-6 text-muted-foreground" />
         <p class="text-sm text-muted-foreground">Drag your save file here</p>
@@ -285,11 +294,7 @@
     {/if}
 
     {#if importResult}
-      <div
-        class="mt-3 rounded-md bg-green-50 p-3 dark:bg-green-950"
-        role="status"
-        aria-live="polite"
-      >
+      <div class="mt-3 rounded-md bg-green-50 p-3 dark:bg-green-950">
         <p class="text-base font-medium text-green-800 dark:text-green-200">
           {#if totalImported > 0}
             Imported from {filesUsed.join(", ")}
