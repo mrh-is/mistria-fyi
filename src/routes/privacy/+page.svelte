@@ -41,7 +41,7 @@
     </h2>
     <p>
       Mistria Field Guide includes an optional feedback feature. When you submit feedback, the
-      following is sent to our server:
+      following is sent to the server:
     </p>
     <ul class="ml-4 list-disc space-y-1">
       <li>Your message text.</li>
@@ -53,8 +53,8 @@
       <li>Your email address, if you choose to provide one.</li>
     </ul>
     <p>
-      Your feedback (minus your email) is used to create a <strong>public issue</strong> on our
-      GitHub issue tracker so we can find and fix problems. This includes your message, the item you
+      Your feedback (minus your email) is used to create a <strong>public issue</strong> on the
+      GitHub issue tracker so I can find and fix problems. This includes your message, the item you
       picked (if any), and your progress data (if you opted in). Avoid including personal
       information in your message, as these fields will be <strong>publicly visible</strong>.
     </p>
@@ -108,6 +108,6 @@
 
   <section class="flex flex-col gap-2">
     <h2 class="text-xs font-semibold tracking-widest text-muted-foreground uppercase">Changes</h2>
-    <p>If this policy ever changes, we will update this page.</p>
+    <p>If this policy ever changes, I will update this page.</p>
   </section>
 </div>
