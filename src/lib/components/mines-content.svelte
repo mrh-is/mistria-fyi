@@ -124,7 +124,6 @@
     <span class="min-w-0 flex-1 text-base font-medium">Floor Progress</span>
     <div class="w-32 shrink-0">
       <Stepper
-        size="sm"
         decrementDisabled={userState.state.completed.mines.floor <= 0}
         incrementDisabled={userState.state.completed.mines.floor >= maxFloors}
         decrementLabel="Go up one floor"

@@ -45,7 +45,6 @@
             <span class="min-w-0 flex-1 text-base font-medium">{skill.name}</span>
             <div class="w-32 shrink-0">
               <Stepper
-                size="sm"
                 decrementDisabled={level <= 0}
                 incrementDisabled={level >= MAX_SKILL_LEVEL}
                 decrementLabel="Decrease {skill.name} level"
