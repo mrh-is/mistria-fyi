@@ -1,7 +1,7 @@
 # Development Workflow Guide
 
-> Detailed workflow reference for Harvest Helper development, including setup, worktree management,
-> planning, test-driven development, and verification.
+> Detailed workflow reference for Mistria Field Guide development, including setup, worktree
+> management, planning, test-driven development, and verification.
 
 ---
 
@@ -70,7 +70,7 @@ The `.worktreeinclude` file lists ignored local entries required for development
 
 ## 3. Planning & approval workflow
 
-Harvest Helper uses explicit planning and approval gates for changes that need design work.
+Mistria Field Guide uses explicit planning and approval gates for changes that need design work.
 
 ### Scope the change
 
@@ -123,7 +123,7 @@ reserve them, & do not leave stale claims after an agent stops working.
 
 ## 4. Test-First Development & Test Matrix
 
-Harvest Helper uses Vitest for unit testing across both application logic and data extraction
+Mistria Field Guide uses Vitest for unit testing across both application logic and data extraction
 pipelines.
 
 ### Test-Driven Development (TDD) Lifecycle

@@ -6,7 +6,7 @@ import type { ReportableElement } from "$lib/feedback/types.js";
 import type { RequestHandler } from "./$types.js";
 
 const REPO_OWNER = "mrh-is";
-const REPO_NAME = "harvest-helper";
+const REPO_NAME = "mistria-fyi";
 const GITHUB_API = "https://api.github.com";
 const MAX_MESSAGE_LENGTH = 5000;
 const MAX_SHORT_STRING = 50;

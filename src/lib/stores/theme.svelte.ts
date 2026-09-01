@@ -2,7 +2,7 @@ import { safeLocalStorage } from "$lib/utils/local-storage.js";
 
 export type Theme = "dark" | "light" | "system";
 
-const STORAGE_KEY = "harvest-helper-theme";
+const STORAGE_KEY = "mistria-fyi-theme";
 
 function applyTheme(resolved: "dark" | "light") {
   if (typeof document === "undefined") return;

@@ -1,9 +1,9 @@
-# Contributing — Harvest Helper
+# Contributing — Mistria Field Guide
 
 ## Task Workflow
 
-All work is tracked via [GitHub Issues](https://github.com/mrh-is/harvest-helper/issues). New tasks
-go in GitHub Issues.
+All work is tracked via [GitHub Issues](https://github.com/mrh-is/mistria-fyi/issues). New tasks go
+in GitHub Issues.
 
 ### Issue lifecycle
 

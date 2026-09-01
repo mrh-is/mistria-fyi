@@ -50,7 +50,7 @@
 </script>
 
 <svelte:head>
-  <title>Settings — Harvest Helper</title>
+  <title>Settings — Mistria Field Guide</title>
 </svelte:head>
 
 <div inert={feedbackOpen ? true : undefined}>
@@ -91,7 +91,7 @@
 
     <div class="text-center text-sm text-muted-foreground">
       <p>Game data: Fields of Mistria v{trackerData.version}</p>
-      <p>Harvest Helper v{version}</p>
+      <p>Mistria Field Guide v{version}</p>
       <div class="mt-1 flex items-center justify-center gap-3">
         <button
           class="inline-flex items-center gap-1 underline hover:text-foreground"

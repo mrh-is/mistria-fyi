@@ -1,9 +1,9 @@
 # Data pipeline
 
 The pipeline converts Fields of Mistria’s native TOML namespaces into the smaller `TrackerData`
-model consumed by Harvest Helper. It deliberately ignores game domains the tracker does not claim,
-but many claimed fields are normalized or omitted according to extractor-specific rules documented
-below.
+model consumed by Mistria Field Guide. It deliberately ignores game domains the tracker does not
+claim, but many claimed fields are normalized or omitted according to extractor-specific rules
+documented below.
 
 ## Setup & commands
 

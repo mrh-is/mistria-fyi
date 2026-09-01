@@ -1,4 +1,4 @@
-# AGENTS.md — Harvest Helper
+# AGENTS.md — Mistria Field Guide
 
 > Universal operating rules for agents. For detailed workflow, architecture, and verification
 > guidance, see [docs/development-workflow.md](docs/development-workflow.md),

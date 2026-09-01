@@ -276,7 +276,7 @@ function extractNestedFiddleKeys(fiddle: ParsedGameData, topKey: string): string
 }
 
 function main(): void {
-  console.log("🌾 Harvest Helper — Data Pipeline\n");
+  console.log("📚 Mistria Field Guide — Data Pipeline\n");
 
   const args = process.argv.slice(2).filter((a) => a !== "--");
   const assetsDir = args.find((a) => !a.startsWith("-")) ?? process.env.MISTRIA_ASSETS;

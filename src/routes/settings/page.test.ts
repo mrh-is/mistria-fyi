@@ -2,7 +2,7 @@ import { render } from "svelte/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const appState = vi.hoisted(() => ({
-  url: new URL("https://harvest-helper.test/settings"),
+  url: new URL("https://mistria-fyi.test/settings"),
 }));
 
 vi.mock("$app/state", () => ({
@@ -28,12 +28,12 @@ function disclosureState(body: string, title: string): string | undefined {
 }
 
 beforeEach(() => {
-  appState.url = new URL("https://harvest-helper.test/settings");
+  appState.url = new URL("https://mistria-fyi.test/settings");
 });
 
 describe("settings page deep links", () => {
   it("opens only the save import card for an import deep link", () => {
-    appState.url = new URL("https://harvest-helper.test/settings?section=import");
+    appState.url = new URL("https://mistria-fyi.test/settings?section=import");
 
     const { body } = render(SettingsPage, { props: {} });
 
@@ -42,7 +42,7 @@ describe("settings page deep links", () => {
   });
 
   it("opens only the device transfer card for a transfer deep link", () => {
-    appState.url = new URL("https://harvest-helper.test/settings?section=transfer");
+    appState.url = new URL("https://mistria-fyi.test/settings?section=transfer");
 
     const { body } = render(SettingsPage, { props: {} });
 

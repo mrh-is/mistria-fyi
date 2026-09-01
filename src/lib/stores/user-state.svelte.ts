@@ -122,7 +122,7 @@ interface SerializedState {
   worldState: { season: Season; weather: Weather };
 }
 
-const STORAGE_KEY = "harvest-helper-v1";
+const STORAGE_KEY = "mistria-fyi-v1";
 
 const VALID_CHILD_CHOICES = new Set<string>(["no", "undeclared", "yes"]);
 const VALID_RELATIONSHIPS = new Set<string>([

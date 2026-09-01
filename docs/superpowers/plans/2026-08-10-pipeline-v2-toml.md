@@ -8,8 +8,8 @@
 > (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use
 > checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Update the harvest-helper data pipeline to read Mistria v1.0.2's TOML directory tree
-instead of the flat `__fiddle__.json` format from v0.13.4.
+**Goal:** Update the mistria-fyi data pipeline to read Mistria v1.0.2's TOML directory tree instead
+of the flat `__fiddle__.json` format from v0.13.4.
 
 **Architecture:** Replace the single-file JSON parser with a strict directory-walking TOML parser
 that preserves source-file provenance. Add a shared requirements resolver for the new typed
@@ -129,7 +129,7 @@ packages:
 Then install the dependency through that workspace importer:
 
 ```bash
-pnpm --filter harvest-helper-pipeline add smol-toml
+pnpm --filter mistria-fyi-pipeline add smol-toml
 ```
 
 - [ ] **Step 2: Rewrite parse-fiddle.ts**

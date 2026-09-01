@@ -2,9 +2,9 @@
 
 ## Purpose
 
-Make Harvest Helper safe and legible for agents with limited repository context. Every agent should
-receive the universal operating rules from `AGENTS.md`, while task-specific details remain easy to
-find without consuming every session’s context.
+Make Mistria Field Guide safe and legible for agents with limited repository context. Every agent
+should receive the universal operating rules from `AGENTS.md`, while task-specific details remain
+easy to find without consuming every session’s context.
 
 This pass covers documentation, workflow ergonomics, and small non-functional cleanup. Functional
 defects and larger maintainability work discovered during the audit will become detailed GitHub

@@ -271,7 +271,7 @@ incompletely propagated sources rather than absent arrays.
 
 ## Follow-up
 
-[Issue #133](https://github.com/mrh-is/harvest-helper/issues/133) tracks all 97 deterministic
+Issue #133 (private beta) tracks all 97 deterministic
 availability-only records that still use unsupported `has_upper_floor`, `is_dating_someone`,
 `reached_date`, unmapped `seen_cutscene`, or `unlocked_animal` predicates. It also carries the
 save/backup/transfer compatibility requirements for any new progression state.

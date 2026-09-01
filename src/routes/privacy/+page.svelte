@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-  <title>Privacy policy — Harvest Helper</title>
+  <title>Privacy policy — Mistria Field Guide</title>
 </svelte:head>
 
 <PageHeader title="Privacy Policy" backHref="/settings" backLabel="Back to settings" />
@@ -14,8 +14,9 @@
       The short version
     </h2>
     <p>
-      Harvest Helper stores your data on your device only. Nothing is collected automatically or
-      shared without your action. If you choose to send feedback, see below for what that includes.
+      Mistria Field Guide stores your data on your device only. Nothing is collected automatically
+      or shared without your action. If you choose to send feedback, see below for what that
+      includes.
     </p>
   </section>
 
@@ -26,9 +27,9 @@
       What is stored on your device
     </h2>
     <p>
-      To remember your progress, Harvest Helper saves your game data (completed items, settings, and
-      world state) in your browser's local storage. This data never leaves your device unless you
-      explicitly choose to send it.
+      To remember your progress, Mistria Field Guide saves your game data (completed items,
+      settings, and world state) in your browser's local storage. This data never leaves your device
+      unless you explicitly choose to send it.
     </p>
   </section>
 
@@ -39,8 +40,8 @@
       Feedback submissions
     </h2>
     <p>
-      Harvest Helper includes an optional feedback feature. When you submit feedback, the following
-      is sent to our server:
+      Mistria Field Guide includes an optional feedback feature. When you submit feedback, the
+      following is sent to our server:
     </p>
     <ul class="ml-4 list-disc space-y-1">
       <li>Your message text.</li>
@@ -83,8 +84,8 @@
       Third-party services
     </h2>
     <p>
-      Harvest Helper does not use any analytics, advertising, or tracking services. The feedback
-      feature uses GitHub (for public issue tracking) and Cloudflare (for hosting and rate
+      Mistria Field Guide does not use any analytics, advertising, or tracking services. The
+      feedback feature uses GitHub (for public issue tracking) and Cloudflare (for hosting and rate
       limiting).
     </p>
   </section>

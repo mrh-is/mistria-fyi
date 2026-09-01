@@ -43,7 +43,7 @@ describe("asset test helpers", () => {
   });
 
   it("rejects a regular file in place of the fiddle directory", () => {
-    const assetsDir = mkdtempSync(join(tmpdir(), "harvest-helper-invalid-assets-"));
+    const assetsDir = mkdtempSync(join(tmpdir(), "mistria-fyi-invalid-assets-"));
     temporaryDirectories.push(assetsDir);
     writeFileSync(join(assetsDir, "fiddle"), "not a directory");
     vi.stubEnv("MISTRIA_ASSETS", assetsDir);

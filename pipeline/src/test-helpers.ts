@@ -8,7 +8,7 @@ import type { ParsedGameData } from "./parse-fiddle.js";
 const temporaryAssetsDirectories: string[] = [];
 
 export function createAssetsFixture(files: Record<string, string>): string {
-  const assetsDir = mkdtempSync(join(tmpdir(), "harvest-helper-assets-"));
+  const assetsDir = mkdtempSync(join(tmpdir(), "mistria-fyi-assets-"));
   temporaryAssetsDirectories.push(assetsDir);
   onTestFinished(() => {
     const fixtureIndex = temporaryAssetsDirectories.indexOf(assetsDir);
