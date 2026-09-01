@@ -346,7 +346,7 @@
 
         {#if importResult.warnings.length > 0}
           <Separator class="my-2" />
-          <details class="text-sm" role="status" aria-live="polite">
+          <details class="text-sm">
             <summary class="text-muted-foreground">
               {importResult.warnings.length} warnings
             </summary>

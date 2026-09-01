@@ -170,7 +170,6 @@
       class="w-full"
       disabled={generating}
       aria-busy={generating}
-      aria-live="polite"
       variant="outline"
       onclick={handleGenerate}
     >
