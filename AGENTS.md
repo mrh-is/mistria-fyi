@@ -32,6 +32,26 @@ SSH key with `gpg.ssh.program = ssh-keygen`. Both are configured to work non-int
 can push and sign commits without triggering 1Password or other interactive prompts. Do not switch
 the remote back to SSH.
 
+### Agent attribution
+
+Agent attribution is mandatory for agent-authored Git and GitHub content:
+
+- Keep the repository owner's configured identity as the commit author. Add the agent's standard
+  `Co-Authored-By` trailer to every commit the agent materially authored. Use a stable product-level
+  identity rather than changing the trailer with each model version; for example,
+  `Co-Authored-By: Claude Code <noreply@anthropic.com>` or
+  `Co-Authored-By: Codex <codex@openai.com>`.
+- Add a final `Agent: <agent-id>` line to every agent-authored issue or PR body. Use `claude-code`
+  for Claude Code, `codex` for Codex, and a stable lowercase product slug for another agent.
+- Add exactly one matching `agent:*` label to every agent-authored issue or PR. The established
+  labels remain `agent: claude`, `agent: codex`, `agent: antigravity`, `agent: kilo`,
+  `agent: copilot`, and `agent: lm studio`; do not create a parallel `agent/...` label family.
+- End every substantive agent-authored GitHub comment with the same `Agent: <agent-id>` line. This
+  remains required when an issue or PR already has an agent label because multiple agents may
+  participate in one thread.
+- Preserve existing attribution during edits and handoffs. The active `agent:*` label identifies the
+  current top-level owner; trailers and `Agent:` lines identify who authored each artifact.
+
 ## 3. Task Lifecycle
 
 Follow this sequence for every task:
@@ -65,10 +85,11 @@ Follow this sequence for every task:
     these files were created in the main checkout before the worktree existed, copy them into the
     worktree and commit them there as the first commit on the branch. This is not optional; specs
     and plans are deliverables that belong in the PR alongside the code they describe.
-11. **Deliver** — commit, push, and open a PR that references the issue (`Closes #N`). Keep the
-    active-work labels through PR review. On handoff, replace the `agent:*` label. When work closes,
-    is abandoned, or stops pending a decision or dependency, remove both active-work labels and set
-    the appropriate remaining status.
+11. **Deliver** — commit with the required co-author trailer, push, and open an attributed PR that
+    references the issue (`Closes #N`). Apply the matching `agent:*` label to the PR. Keep the
+    active-work labels through PR review. On handoff, replace the active `agent:*` labels. When work
+    closes, is abandoned, or stops pending a decision or dependency, remove both active-work labels
+    and set the appropriate remaining status.
 
 > Git pre-commit hooks are developer conveniences, not verification evidence. Agents must run the
 > documented commands directly and verify clean exit status before committing.

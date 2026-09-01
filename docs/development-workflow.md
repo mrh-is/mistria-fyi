@@ -107,6 +107,12 @@ Follow this protocol for every issue-backed task:
 An active-work label is a coordination claim, not proof of progress. Do not claim issues merely to
 reserve them, & do not leave stale claims after an agent stops working.
 
+### Attribute agent-authored content
+
+Attribution records authorship separately from active ownership, particularly when multiple agents
+participate in one issue or PR. Follow the canonical commit, footer, label, comment, & handoff rules
+in [AGENTS.md](../AGENTS.md#agent-attribution).
+
 ### Explicit Approval & Planning Gates
 
 1. **Design**: Explore intent, requirements, and subsystem impact before planning.
