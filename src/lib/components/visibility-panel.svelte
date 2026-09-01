@@ -210,7 +210,7 @@
                 }}
               >
                 {#each ["timely", "available", "everything"] as const as mode (mode)}
-                  <ToggleGroup.Item class="flex-1 rounded-md px-1.5 py-1 text-xs" value={mode}>
+                  <ToggleGroup.Item class="flex-1 rounded-full px-2.5 py-1 text-xs" value={mode}>
                     {availabilityModeLabel[mode]}
                   </ToggleGroup.Item>
                 {/each}
@@ -225,7 +225,7 @@
                 {#each seasons as season (season)}
                   {@const selected = season === currentSeason}
                   <button
-                    class="flex flex-1 items-center justify-center gap-1 rounded-md px-1.5 py-1 text-xs transition-colors hover:bg-accent motion-reduce:transition-none {selected
+                    class="flex flex-1 items-center justify-center gap-1 rounded-full px-2.5 py-1 text-xs transition-colors hover:bg-accent motion-reduce:transition-none {selected
                       ? 'bg-accent font-semibold text-foreground'
                       : 'text-muted-foreground'}"
                     type="button"
@@ -253,7 +253,7 @@
                   {@const SlotIcon = weatherSlotDisplay[weather].icon}
                   {#if !isSpecial || hasSpecialWeather}
                     <button
-                      class="flex flex-1 items-center justify-center gap-1 rounded-md px-1.5 py-1 text-xs transition-colors hover:bg-accent motion-reduce:transition-none {selected
+                      class="flex flex-1 items-center justify-center gap-1 rounded-full px-2.5 py-1 text-xs transition-colors hover:bg-accent motion-reduce:transition-none {selected
                         ? 'bg-accent font-semibold text-foreground'
                         : 'text-muted-foreground'}"
                       type="button"
