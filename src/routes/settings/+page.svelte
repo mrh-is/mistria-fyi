@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Bot, MessageCircleWarning } from "@lucide/svelte";
   import { tick } from "svelte";
+  import { prefersReducedMotion } from "svelte/motion";
 
   import { version } from "$app/environment";
   import { resolve } from "$app/paths";
@@ -28,7 +29,11 @@
   function scrollToTransfer() {
     void openThenScroll(
       () => (transferOpen = true),
-      () => transferSection?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      () =>
+        transferSection?.scrollIntoView({
+          behavior: prefersReducedMotion.current ? "auto" : "smooth",
+          block: "start",
+        }),
       tick,
     );
   }
@@ -38,13 +43,21 @@
     if (section === "transfer") {
       void openThenScroll(
         () => (transferOpen = true),
-        () => transferSection?.scrollIntoView({ behavior: "smooth", block: "start" }),
+        () =>
+          transferSection?.scrollIntoView({
+            behavior: prefersReducedMotion.current ? "auto" : "smooth",
+            block: "start",
+          }),
         tick,
       );
     } else if (section === "import") {
       void openThenScroll(
         () => (importOpen = true),
-        () => importSection?.scrollIntoView({ behavior: "smooth", block: "start" }),
+        () =>
+          importSection?.scrollIntoView({
+            behavior: prefersReducedMotion.current ? "auto" : "smooth",
+            block: "start",
+          }),
         tick,
       );
     }

@@ -198,6 +198,13 @@
   animation: var(--animate-shake);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .animate-check-pulse,
+  .animate-shake {
+    animation: none;
+  }
+}
+
 /* ─────────────────────────────────────────────────────── */
 
 @layer base {

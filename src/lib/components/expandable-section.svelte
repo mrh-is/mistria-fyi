@@ -1,5 +1,6 @@
 <script lang="ts">
   import { untrack } from "svelte";
+  import { prefersReducedMotion } from "svelte/motion";
   import { slide } from "svelte/transition";
 
   import { page } from "$app/state";
@@ -66,7 +67,9 @@
   >
     <Icon.UI
       type="disclosure"
-      class="size-4 shrink-0 text-muted-foreground transition-transform {isOpen ? 'rotate-90' : ''}"
+      class="size-4 shrink-0 text-muted-foreground transition-transform motion-reduce:transition-none {isOpen
+        ? 'rotate-90'
+        : ''}"
     />
     <span class="flex-1 font-medium">{name}</span>
     {#if total !== undefined && count !== undefined}
@@ -75,7 +78,7 @@
   </button>
 
   {#if isOpen}
-    <div id={contentId} class="pl-6" transition:slide={{ duration: 150 }}>
+    <div id={contentId} class="pl-6" transition:slide={{ duration: prefersReducedMotion.current ? 0 : 150 }}>
       {@render children()}
     </div>
   {/if}

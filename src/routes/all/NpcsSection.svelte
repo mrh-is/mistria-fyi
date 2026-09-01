@@ -86,7 +86,8 @@
                 >
                   <Icon.ProgressMark
                     type={npc.dateable ? "relationship_dateable" : "relationship_platonic"}
-                    class="size-4 transition-colors duration-200 {level > 0
+                    class="size-4 transition-colors duration-200 motion-reduce:transition-none {level >
+                    0
                       ? `${LEVEL_COLORS[level - 1]} fill-current`
                       : 'fill-transparent text-muted-foreground/30'}"
                   />
