@@ -30,6 +30,7 @@
     input.accept = ".json";
     input.onchange = async () => {
       const file = input.files?.[0];
+      input.remove();
       if (!file) return;
       restoring = true;
       restoreError = "";
@@ -49,6 +50,11 @@
         restoring = false;
       }
     };
+    input.className = "sr-only";
+    input.oncancel = () => {
+      input.remove();
+    };
+    document.body.append(input);
     input.click();
   }
 </script>

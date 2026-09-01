@@ -116,6 +116,7 @@
     input.accept = "image/*";
     input.onchange = async () => {
       const file = input.files?.[0];
+      input.remove();
       if (!file) return;
       try {
         const result = await QrScanner.scanImage(file, { returnDetailedScanResult: true });
@@ -124,6 +125,11 @@
         transferError = "No QR code found in image. Make sure the image is clear and well-lit.";
       }
     };
+    input.className = "sr-only";
+    input.oncancel = () => {
+      input.remove();
+    };
+    document.body.append(input);
     input.click();
   }
 
