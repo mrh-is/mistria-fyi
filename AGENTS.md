@@ -8,8 +8,10 @@
 
 ## 1. Worktree Isolation
 
-Every agent must operate inside an isolated Git worktree. Shared working trees cause edit
-collisions, dirty-state confusion, & branch-switch destruction.
+Every agent must operate inside an isolated Git worktree. No exceptions for task size, risk level,
+or category (including repo-level housekeeping like licenses, config, & gitignore). Shared working
+trees cause edit collisions, dirty-state confusion, & branch-switch destruction. Only the user can
+grant an exception; agents must not decide to skip this on their own.
 
 - Create worktrees under `.worktrees/<issue-number>-<short-description>`.
 - Verify `.worktrees/` is ignored before creating: `git check-ignore -q .worktrees/placeholder`.
