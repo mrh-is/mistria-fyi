@@ -1,30 +1,62 @@
 <script lang="ts">
   import { ChevronDown, RotateCcw } from "@lucide/svelte";
   import { prefersReducedMotion } from "svelte/motion";
-  import { fade, slide } from "svelte/transition";
+  import { slide } from "svelte/transition";
 
-  import BlockySwitch from "$lib/components/blocky-switch.svelte";
   import { weatherIcon } from "$lib/components/icon/icon-maps.js";
   import { Icon } from "$lib/components/icon/index.js";
+  import { Switch } from "$lib/components/ui/switch/index.js";
   import * as ToggleGroup from "$lib/components/ui/toggle-group/index.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { seasonLabel, weatherLabel, weathersForSeason } from "$lib/utils/format.js";
 
+  import type { LucideIcon } from "@lucide/svelte";
+
   import type { AvailabilityMode } from "$lib/stores/user-state.svelte.js";
-  import type { Season } from "$lib/types/tracker-data.js";
+  import type { Season, Weather } from "$lib/types/tracker-data.js";
 
   let { showSeasonality }: { showSeasonality: boolean } = $props();
 
   const seasons: Season[] = ["spring", "summer", "fall", "winter"];
+  const allWeathers: Weather[] = ["calm", "inclement", "heavy_inclement", "special"];
   const labelWidth = "w-20 shrink-0";
-  const transitionDuration = 150;
+  const TRANSITION_MS = 120;
+  const SESSION_KEY_SEASONALITY = "filter-panel-seasonality-expanded";
+  const SESSION_KEY_SOURCES = "filter-panel-sources-expanded";
 
-  let seasonalityExpanded = $state(false);
-  let sourcesExpanded = $state(false);
+  function readSessionFlag(key: string, fallback: boolean): boolean {
+    if (typeof window === "undefined") return fallback;
+    try {
+      const stored = sessionStorage.getItem(key);
+      return stored === null ? fallback : stored === "true";
+    } catch {
+      return fallback;
+    }
+  }
+
+  function writeSessionFlag(key: string, value: boolean): void {
+    if (typeof window === "undefined") return;
+    try {
+      sessionStorage.setItem(key, String(value));
+    } catch {
+      // blocked
+    }
+  }
+
+  let seasonalityExpanded = $state(readSessionFlag(SESSION_KEY_SEASONALITY, false));
+  let sourcesExpanded = $state(readSessionFlag(SESSION_KEY_SOURCES, false));
+
+  $effect(() => {
+    writeSessionFlag(SESSION_KEY_SEASONALITY, seasonalityExpanded);
+  });
+  $effect(() => {
+    writeSessionFlag(SESSION_KEY_SOURCES, sourcesExpanded);
+  });
 
   let currentSeason = $derived(userState.state.worldState.season);
   let availableWeathers = $derived(weathersForSeason(currentSeason));
+  let hasSpecialWeather = $derived(availableWeathers.includes("special"));
   let filtersActive = $derived(
     userState.state.availabilityMode !== "available" ||
       userState.state.showCompleted ||
@@ -33,8 +65,6 @@
   let hiddenSourceCount = $derived(
     toolbarState.sourceFilters.length - toolbarState.activeSourceLabels.size,
   );
-  let seasonSummary = $derived(seasonLabel(currentSeason));
-  let weatherSummary = $derived(weatherLabel(userState.state.worldState.weather, currentSeason));
   let sourceSummary = $derived(
     hiddenSourceCount === 0 ? "All shown" : `${hiddenSourceCount.toString()} hidden`,
   );
@@ -44,6 +74,68 @@
     everything: "Everything",
     timely: "Current specials",
   };
+
+  // Sequential fade transition for summary text: fade out → swap → fade in
+  let seasonDisplay = $state(seasonLabel(userState.state.worldState.season));
+  let weatherDisplay = $state(
+    weatherLabel(userState.state.worldState.weather, userState.state.worldState.season),
+  );
+  let seasonFading = $state(false);
+  let weatherFading = $state(false);
+
+  $effect(() => {
+    const next = seasonLabel(currentSeason);
+    if (next !== seasonDisplay) {
+      seasonFading = true;
+      setTimeout(() => {
+        seasonDisplay = next;
+        seasonFading = false;
+      }, duration());
+    }
+  });
+
+  $effect(() => {
+    const next = weatherLabel(userState.state.worldState.weather, currentSeason);
+    if (next !== weatherDisplay) {
+      weatherFading = true;
+      setTimeout(() => {
+        weatherDisplay = next;
+        weatherFading = false;
+      }, duration());
+    }
+  });
+
+  // Weather button content transitions: fade icons/labels when they change per-slot
+  interface WeatherSlot {
+    icon: LucideIcon;
+    label: string;
+  }
+
+  function buildWeatherSlots(season: Season): Record<Weather, WeatherSlot> {
+    return Object.fromEntries(
+      allWeathers.map((w) => [w, { icon: weatherIcon(w, season), label: weatherLabel(w, season) }]),
+    ) as Record<Weather, WeatherSlot>;
+  }
+
+  let weatherSlotDisplay = $state(buildWeatherSlots(userState.state.worldState.season));
+  let weatherSlotFading = $state(
+    Object.fromEntries(allWeathers.map((w) => [w, false])) as Record<Weather, boolean>,
+  );
+
+  $effect(() => {
+    for (const w of allWeathers) {
+      const nextLabel = weatherLabel(w, currentSeason);
+      const nextIcon = weatherIcon(w, currentSeason);
+      if (nextLabel !== weatherSlotDisplay[w].label || nextIcon !== weatherSlotDisplay[w].icon) {
+        weatherSlotFading[w] = true;
+        const weather = w;
+        setTimeout(() => {
+          weatherSlotDisplay[weather] = { icon: nextIcon, label: nextLabel };
+          weatherSlotFading[weather] = false;
+        }, duration());
+      }
+    }
+  });
 
   $effect(() => {
     if (!availableWeathers.includes(userState.state.worldState.weather)) {
@@ -58,7 +150,7 @@
   }
 
   function duration(): number {
-    return prefersReducedMotion.current ? 0 : transitionDuration;
+    return prefersReducedMotion.current ? 0 : TRANSITION_MS;
   }
 </script>
 
@@ -80,25 +172,21 @@
           {#if userState.state.availabilityMode === "everything"}
             Everything
           {:else}
-            {#key seasonSummary}
-              <span
-                class="inline-block"
-                in:fade={{ duration: duration() }}
-                out:fade={{ duration: duration() }}
-              >
-                {seasonSummary}
-              </span>
-            {/key}
+            <span
+              class="inline-block transition-opacity motion-reduce:transition-none"
+              style:transition-duration="{duration()}ms"
+              style:opacity={seasonFading ? 0 : 1}
+            >
+              {seasonDisplay}
+            </span>
             <span class="opacity-50">/</span>
-            {#key weatherSummary}
-              <span
-                class="inline-block"
-                in:fade={{ duration: duration() }}
-                out:fade={{ duration: duration() }}
-              >
-                {weatherSummary}
-              </span>
-            {/key}
+            <span
+              class="inline-block transition-opacity motion-reduce:transition-none"
+              style:transition-duration="{duration()}ms"
+              style:opacity={weatherFading ? 0 : 1}
+            >
+              {weatherDisplay}
+            </span>
           {/if}
         </span>
         <ChevronDown
@@ -112,20 +200,22 @@
         <div class="flex flex-col gap-2" transition:slide={{ duration: duration() }}>
           <div class="flex items-center gap-2">
             <p class="{labelWidth} text-xs font-medium text-muted-foreground">Only show</p>
-            <ToggleGroup.Root
-              class="flex-1 rounded-lg border border-input p-0.5"
-              type="single"
-              value={userState.state.availabilityMode}
-              onValueChange={(value) => {
-                if (value) userState.setAvailabilityMode(value as AvailabilityMode);
-              }}
-            >
-              {#each ["timely", "available", "everything"] as const as mode (mode)}
-                <ToggleGroup.Item class="flex-1 rounded-md text-xs" value={mode}>
-                  {availabilityModeLabel[mode]}
-                </ToggleGroup.Item>
-              {/each}
-            </ToggleGroup.Root>
+            <div class="flex flex-1 gap-0.5 rounded-lg border border-input p-0.5">
+              <ToggleGroup.Root
+                class="flex flex-1"
+                type="single"
+                value={userState.state.availabilityMode}
+                onValueChange={(value) => {
+                  if (value) userState.setAvailabilityMode(value as AvailabilityMode);
+                }}
+              >
+                {#each ["timely", "available", "everything"] as const as mode (mode)}
+                  <ToggleGroup.Item class="flex-1 rounded-md px-1.5 py-1 text-xs" value={mode}>
+                    {availabilityModeLabel[mode]}
+                  </ToggleGroup.Item>
+                {/each}
+              </ToggleGroup.Root>
+            </div>
           </div>
 
           {#if userState.state.availabilityMode !== "everything"}
@@ -153,15 +243,15 @@
 
             <div class="flex items-center gap-2">
               <p class="{labelWidth} text-xs text-muted-foreground">Weather</p>
-              {#key currentSeason}
-                <div
-                  class="flex flex-1 gap-0.5 rounded-lg border border-input p-0.5"
-                  in:fade={{ duration: duration() }}
-                  out:fade={{ duration: duration() }}
-                >
-                  {#each availableWeathers as weather (weather)}
-                    {@const selected = weather === userState.state.worldState.weather}
-                    {@const WeatherIcon = weatherIcon(weather, currentSeason)}
+              <div
+                class="flex flex-1 gap-0.5 rounded-lg border border-input p-0.5 transition-[width] motion-reduce:transition-none"
+                style:transition-duration="{duration()}ms"
+              >
+                {#each allWeathers as weather (weather)}
+                  {@const selected = weather === userState.state.worldState.weather}
+                  {@const isSpecial = weather === "special"}
+                  {@const SlotIcon = weatherSlotDisplay[weather].icon}
+                  {#if !isSpecial || hasSpecialWeather}
                     <button
                       class="flex flex-1 items-center justify-center gap-1 rounded-md px-1.5 py-1 text-xs transition-colors hover:bg-accent motion-reduce:transition-none {selected
                         ? 'bg-accent font-semibold text-foreground'
@@ -171,13 +261,20 @@
                       onclick={() => {
                         userState.setWeather(weather);
                       }}
+                      transition:slide={{ axis: "x", duration: isSpecial ? duration() : 0 }}
                     >
-                      <WeatherIcon class="size-3.5" />
-                      {weatherLabel(weather, currentSeason)}
+                      <span
+                        class="inline-flex items-center gap-1 transition-opacity motion-reduce:transition-none"
+                        style:transition-duration="{duration()}ms"
+                        style:opacity={weatherSlotFading[weather] ? 0 : 1}
+                      >
+                        <SlotIcon class="size-3.5" />
+                        {weatherSlotDisplay[weather].label}
+                      </span>
                     </button>
-                  {/each}
-                </div>
-              {/key}
+                  {/if}
+                {/each}
+              </div>
             </div>
           {/if}
         </div>
@@ -254,18 +351,16 @@
 
   <section class="flex min-h-8 items-center" aria-label="Completed items toggle">
     <span class="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-      Completed
+      Show completed items
     </span>
-    <span class="ml-auto">
-      <BlockySwitch
-        checked={userState.state.showCompleted}
-        onCheckedChange={() => {
-          userState.toggleShowCompleted();
-        }}
-      >
-        {userState.state.showCompleted ? "Shown" : "Hidden"}
-      </BlockySwitch>
-    </span>
+    <Switch
+      class="ml-auto h-5 w-9 rounded-md px-px *:data-[slot=switch-thumb]:size-4 *:data-[slot=switch-thumb]:rounded-sm data-[state=checked]:bg-primary *:data-[slot=switch-thumb]:data-[state=checked]:translate-x-full data-[state=unchecked]:bg-input"
+      checked={userState.state.showCompleted}
+      onCheckedChange={() => {
+        userState.toggleShowCompleted();
+      }}
+      aria-label="Show completed items"
+    />
   </section>
 
   {#if filtersActive}
