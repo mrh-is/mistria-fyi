@@ -37,7 +37,7 @@ function oklchToRgb([lightness, chroma, hue]: [number, number, number]): Rgb {
   ) as Rgb;
 }
 
-function parseTheme(selector: string): Record<string, [number, number, number]> {
+function parseTheme(selector: string): Partial<Record<string, [number, number, number]>> {
   const block = new RegExp(`${selector}\\s*\\{([\\s\\S]*?)\\n\\}`).exec(css)?.[1];
   if (!block) throw new Error(`Theme not found: ${selector}`);
 
