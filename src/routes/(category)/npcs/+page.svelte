@@ -93,7 +93,7 @@
                   class="size-4 transition-colors duration-200 motion-reduce:transition-none {i <
                   level
                     ? `${LEVEL_COLORS[i]} fill-current`
-                    : 'fill-transparent text-muted-foreground/30'}"
+                    : 'fill-transparent text-muted-foreground'}"
                 />
               </button>
             {/each}

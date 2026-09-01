@@ -59,7 +59,7 @@
       fill="none"
       stroke="currentColor"
       stroke-width={strokeWidth}
-      class="text-muted-foreground/20"
+      class="text-border"
     />
     <circle
       cx={viewBox / 2}

@@ -124,7 +124,7 @@
           ? 'text-green-600 dark:text-green-400'
           : isObtained
             ? 'text-amber-500 dark:text-amber-400'
-            : 'text-muted-foreground/50'}"
+            : 'text-muted-foreground'}"
       />
     </button>
 
