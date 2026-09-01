@@ -55,7 +55,7 @@
 </script>
 
 {#if progress.completed < progress.total || userState.state.showCompleted}
-  <div class="flex flex-col gap-1">
+  <section aria-labelledby="category-renown" class="flex flex-col gap-1">
     <SectionHeader key="renown" {progress} />
     <div class="flex items-center gap-2 rounded-md px-2 {isMaxed ? 'opacity-40' : ''}">
       <div class="flex min-w-0 flex-1 items-center gap-1.5">
@@ -101,5 +101,5 @@
         </Stepper>
       </div>
     </div>
-  </div>
+  </section>
 {/if}

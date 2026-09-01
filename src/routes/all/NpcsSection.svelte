@@ -54,7 +54,7 @@
 </script>
 
 {#if progress.completed < progress.total || userState.state.showCompleted}
-  <div class="flex flex-col gap-1">
+  <section aria-labelledby="category-npcs" class="flex flex-col gap-1">
     <SectionHeader key="npcs" {progress} />
     <div class="flex flex-col gap-1">
       {#each npcs as npc (npc.id)}
@@ -97,5 +97,5 @@
         </SpoilerSection>
       {/each}
     </div>
-  </div>
+  </section>
 {/if}

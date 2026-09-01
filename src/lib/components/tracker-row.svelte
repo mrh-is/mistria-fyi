@@ -60,6 +60,12 @@
   let isSpoilered = $derived(display.mode === "spoilered" && !spoilerRevealed);
   let isLeaving = $derived(display.mode === "completed" && (display.leaving ?? false));
   let isDimmed = $derived(display.mode === "visible" && (display.dimmed ?? false));
+  let sourceContentId = $derived(
+    `sources-${reportEntityId
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")}`,
+  );
 
   let reportable = $derived(
     isSpoilered
@@ -144,6 +150,7 @@
         class="group flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1 rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted"
         type="button"
         aria-expanded={expanded}
+        aria-controls={sourceContentId}
         aria-label="{isSpoilered ? 'Spoilered item' : name} sources"
         onclick={() => {
           expanded = !expanded;
@@ -164,8 +171,13 @@
     {/if}
   </div>
 
-  {#if expanded && sources.length > 0}
-    <div class="flex flex-col gap-1 py-1 pr-2 pl-8" transition:slide={{ duration: 150 }}>
+  {#if sources.length > 0}
+    <div
+      id={sourceContentId}
+      class="flex flex-col gap-1 py-1 pr-2 pl-8"
+      hidden={!expanded}
+      transition:slide={{ duration: 150 }}
+    >
       <SourceList {sources} {sourceSegments} />
     </div>
   {/if}

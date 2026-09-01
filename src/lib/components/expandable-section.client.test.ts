@@ -5,6 +5,18 @@ import ExpandableSectionHarness from "$lib/components/expandable-section.test-ha
 import { FeedbackContext } from "$lib/feedback/context.svelte.js";
 
 describe("ExpandableSection reportable registration", () => {
+  it("connects the disclosure trigger to its controlled content", () => {
+    const feedbackContext = new FeedbackContext();
+    const view = render(ExpandableSectionHarness, {
+      feedbackContext,
+      name: "Spells",
+    });
+
+    const trigger = view.getByRole("button", { name: "Spells" });
+    expect(trigger).toHaveAttribute("aria-controls", "expandable-spells");
+    expect(view.container.querySelector("#expandable-spells")).toBeInTheDocument();
+  });
+
   it("registers when reportCategory is provided", async () => {
     const feedbackContext = new FeedbackContext();
     const view = render(ExpandableSectionHarness, {

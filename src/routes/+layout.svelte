@@ -38,8 +38,14 @@
     : ''}"
   inert={overlayActive ? true : undefined}
 >
+  <a
+    class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-md focus:bg-background focus:px-3 focus:py-2"
+    href="#main-content"
+  >
+    Skip to main content
+  </a>
   {#key page.url.pathname}
-    <main class="flex flex-1 animate-in flex-col duration-200 fade-in">
+    <main id="main-content" class="flex flex-1 animate-in flex-col duration-200 fade-in">
       {@render children()}
     </main>
   {/key}

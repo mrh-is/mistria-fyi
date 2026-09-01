@@ -23,7 +23,12 @@
   let isComplete = $derived(progress.total > 0 && progress.completed >= progress.total);
 </script>
 
-<a class="block" href={resolve(href)} style="--category-color: var(--{color})">
+<a
+  class="block"
+  href={resolve(href)}
+  aria-label="{name}, {progress.completed} of {displayTotal} completed"
+  style="--category-color: var(--{color})"
+>
   <Card.Root
     class={[
       "gap-0 py-4 transition-colors",
@@ -43,7 +48,7 @@
           <Icon.Category category={key} class="size-4 shrink-0 text-(--category-color)" />
         {/if}
         <span class="min-w-0 flex-1 text-base font-medium">{name}</span>
-        <span class="shrink-0 text-sm text-muted-foreground">
+        <span class="shrink-0 text-sm text-muted-foreground" aria-hidden="true">
           {#if isComplete}
             <span class="font-medium text-yellow-700 dark:text-yellow-400">100%</span>
           {:else}
@@ -53,9 +58,12 @@
         </span>
       </div>
       {#if isComplete}
-        <div class="h-1.5 rounded-full bg-amber-400/80 dark:bg-amber-500/60"></div>
+        <div
+          class="h-1.5 rounded-full bg-amber-400/80 dark:bg-amber-500/60"
+          aria-hidden="true"
+        ></div>
       {:else}
-        <Progress class="h-1.5" value={pct} {color} />
+        <div aria-hidden="true"><Progress class="h-1.5" value={pct} {color} /></div>
       {/if}
     </Card.Content>
   </Card.Root>

@@ -10,8 +10,8 @@
 </script>
 
 {#if progress.completed < progress.total || userState.state.showCompleted}
-  <div class="flex flex-col gap-1">
+  <section aria-labelledby="category-almanac" class="flex flex-col gap-1">
     <SectionHeader key="almanac" {progress} />
     <AlmanacContent />
-  </div>
+  </section>
 {/if}

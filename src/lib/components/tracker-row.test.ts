@@ -85,5 +85,6 @@ describe("TrackerRow", () => {
 
     expect(body).toContain('aria-label="Cherry Cobbler sources"');
     expect(body).toContain("min-h-11 min-w-11");
+    expect(body).toContain('aria-controls="sources-cherry-cobbler"');
   });
 });
