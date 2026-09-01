@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { MessageCircleWarning } from "@lucide/svelte";
+  import { Bot, MessageCircleWarning } from "@lucide/svelte";
   import { tick } from "svelte";
 
   import { version } from "$app/environment";
@@ -9,6 +9,7 @@
   import PageHeader from "$lib/components/page-header.svelte";
   import { trackerData } from "$lib/data/index.js";
 
+  import AiDisclosureDialog from "./ai-disclosure-dialog.svelte";
   import BackupCard from "./backup-card.svelte";
   import DangerZoneCard from "./danger-zone-card.svelte";
   import ImportCard from "./import-card.svelte";
@@ -17,6 +18,7 @@
   import ThemeCard from "./theme-card.svelte";
   import TransferCard from "./transfer-card.svelte";
 
+  let aiDisclosureOpen = $state(false);
   let feedbackOpen = $state(false);
   let importSection = $state<HTMLElement | null>(null);
   let transferSection = $state<HTMLElement | null>(null);
@@ -103,10 +105,21 @@
         </button>
         <span class="text-border">·</span>
         <a href={resolve("/privacy")} class="underline hover:text-foreground">Privacy policy</a>
+        <span class="text-border">·</span>
+        <button
+          class="inline-flex items-center gap-1 underline hover:text-foreground"
+          type="button"
+          onclick={() => (aiDisclosureOpen = true)}
+        >
+          <Bot class="size-3.5" />
+          AI disclosure
+        </button>
       </div>
     </div>
   </div>
 </div>
+
+<AiDisclosureDialog bind:open={aiDisclosureOpen} />
 
 <FeedbackPanel
   open={feedbackOpen}

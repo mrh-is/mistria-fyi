@@ -31,6 +31,14 @@ beforeEach(() => {
   appState.url = new URL("https://mistria-fyi.test/settings");
 });
 
+describe("AI disclosure", () => {
+  it("renders the AI disclosure button in the footer", () => {
+    const { body } = render(SettingsPage, { props: {} });
+
+    expect(body).toContain("AI disclosure");
+  });
+});
+
 describe("settings page deep links", () => {
   it("opens only the save import card for an import deep link", () => {
     appState.url = new URL("https://mistria-fyi.test/settings?section=import");
