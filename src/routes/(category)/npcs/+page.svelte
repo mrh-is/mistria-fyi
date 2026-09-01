@@ -76,7 +76,10 @@
             </span>
           </div>
 
-          <div class="grid grid-cols-6 justify-items-center gap-0.5">
+          <div
+            class="grid justify-items-center gap-0.5"
+            style="grid-template-columns: repeat({Math.min(MAX_NPC_LEVEL, 6)}, minmax(0, 1fr))"
+          >
             {#each { length: MAX_NPC_LEVEL } as _, i (i)}
               <button
                 class="flex size-11 items-center justify-center"
