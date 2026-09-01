@@ -597,11 +597,11 @@
               {showSaveDataPreview ? "Hide" : "Show"} my progress data
             </button>
             {#if showSaveDataPreview}
+              <!-- prettier-ignore -->
               <pre
                 class="max-h-40 overflow-auto rounded border border-border bg-muted/40 p-2 text-[11px] leading-tight"
-                transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}>
-                {saveDataPreview}
-              </pre>
+                transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
+              >{saveDataPreview}</pre>
             {/if}
           </div>
         {/if}
