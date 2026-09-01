@@ -317,6 +317,16 @@ describe("colorway deduplication", () => {
   });
 });
 
+describe("multi-category almanac items", () => {
+  it("produces one result when an item appears in multiple almanac categories", () => {
+    const almanacResults = search("Spirula Shell").filter(
+      (result) => result.category === "almanac" && result.name === "Spirula Shell",
+    );
+
+    expect(almanacResults).toHaveLength(1);
+  });
+});
+
 // ─── Pregnancy quest filtering ────────────────────────────────────
 
 describe("pregnancy quest filtering", () => {

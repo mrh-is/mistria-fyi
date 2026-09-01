@@ -140,6 +140,53 @@ tags = ["furniture"]
     expect(names).toEqual(["Bed", "Double Bed"]);
   });
 
+  it("includes items in every almanac category matched by their tags", () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const assetsDir = createAssetsFixture({
+      "items/other/materials.toml": `
+[wood]
+name = "Wood"
+tags = ["material", "fishable"]
+
+[shell]
+name = "Shell"
+tags = ["dive", "forageable", "material"]
+`,
+      "ui/menus/sub_menus/almanac.toml": `
+[[categories]]
+key = "fish"
+tags = ["fishable", "dive"]
+
+[[categories]]
+key = "forageables"
+tags = ["forageable"]
+
+[[categories]]
+key = "materials"
+tags = ["material"]
+`,
+    });
+    const fiddle = parseFiddle(assetsDir).data;
+
+    const result = extractAlmanac(fiddle, new Map());
+
+    expect(result.almanac["fish" as AlmanacCategoryId].items).toEqual([
+      { itemIds: ["shell"], name: "Shell" },
+      { itemIds: ["wood"], name: "Wood" },
+    ]);
+    expect(result.almanac["forageables" as AlmanacCategoryId].items).toEqual([
+      { itemIds: ["shell"], name: "Shell" },
+    ]);
+    expect(result.almanac["materials" as AlmanacCategoryId].items).toEqual([
+      { itemIds: ["shell"], name: "Shell" },
+      { itemIds: ["wood"], name: "Wood" },
+    ]);
+    expect(result.items).toEqual({
+      shell: { category: "forageables", name: "Shell" },
+      wood: { category: "materials", name: "Wood" },
+    });
+  });
+
   it("singleton entries have a single-element itemIds array", () => {
     vi.spyOn(console, "log").mockImplementation(() => undefined);
     const assetsDir = createAssetsFixture({
