@@ -166,7 +166,7 @@ tags = ["crop"]
 });
 
 function createAssetsFixture(files: Record<string, string>): string {
-  const assetsDir = mkdtempSync(join(tmpdir(), "harvest-helper-almanac-"));
+  const assetsDir = mkdtempSync(join(tmpdir(), "mistria-fyi-almanac-"));
   temporaryDirectories.push(assetsDir);
 
   const fiddleDir = join(assetsDir, "fiddle");

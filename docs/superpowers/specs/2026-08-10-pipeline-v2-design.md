@@ -10,7 +10,7 @@ Mistria switched engines from GameMaker to a Rust-based engine between v0.13.4 a
 data format changed from a single flat `fiddle.json` (slash-delimited path keys) to 295 non-metadata
 TOML files organized in a directory tree under `assets/fiddle/`. The v1.0.2 assets are local and
 ignored at `pipeline/input/assets/`, rather than checked into the repository. The existing
-TypeScript pipeline in `harvest-helper/pipeline/` was updated to read TOML instead of flat JSON.
+TypeScript pipeline in `mistria-fyi/pipeline/` was updated to read TOML instead of flat JSON.
 
 **This is not a rewrite.** The existing pipeline structure remains, but the migration must add
 source-file provenance, expression evaluation, and a reusable requirements parser before updating
@@ -365,7 +365,7 @@ The v1.0.2 data includes categories that didn't exist in v0.13.4:
 | Challenges    | `stillwell_challenges.toml`, `tali_challenges.toml` | Challenge systems                                      |
 
 Some of these (songs, infusions) are already covered by the almanac tag system. Others (children,
-cameos, dating) may need new extractors or `TrackerData` sections depending on what harvest-helper
+cameos, dating) may need new extractors or `TrackerData` sections depending on what mistria-fyi
 wants to display.
 
 ## Item classification: source of truth

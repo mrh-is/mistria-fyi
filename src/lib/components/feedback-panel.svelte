@@ -633,7 +633,7 @@
               class="underline hover:text-foreground"
               type="button"
               onclick={() =>
-                window.open("https://github.com/mrh-is/harvest-helper/issues/new", "_blank")}
+                window.open("https://github.com/mrh-is/mistria-fyi/issues/new", "_blank")}
             >
               submit feedback on GitHub</button
             > directly.

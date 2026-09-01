@@ -1244,8 +1244,8 @@ availability-only and do not appear in generated entity visibility.
 
 Create one issue titled “Track unsupported progression predicates used by acquisition sources”. Its
 Context section must state that issue #97 preserved native acquisition availability predicates that
-Harvest Helper cannot yet evaluate without over-redacting content. Its Initial scope section must
-contain the complete deterministic predicate/entity JSON captured in Step 2, including
+Mistria Field Guide cannot yet evaluate without over-redacting content. Its Initial scope section
+must contain the complete deterministic predicate/entity JSON captured in Step 2, including
 `has_upper_floor`, `is_dating_someone`, and unmapped `seen_cutscene` records. Its Acceptance
 criteria must require importing or deriving each supported fact into `UserProgressionState`, mapping
 each native predicate through the acquisition requirement resolver, adding

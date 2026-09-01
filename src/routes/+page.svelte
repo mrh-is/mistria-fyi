@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Settings, Wheat } from "@lucide/svelte";
+  import { Library, Settings } from "@lucide/svelte";
 
   import { resolve } from "$app/paths";
   import CategoryGrid from "$lib/components/category-grid.svelte";
@@ -33,8 +33,8 @@
 <div class="flex flex-col gap-3 p-4 pt-safe-or-4">
   <div class="flex items-center justify-between">
     <h1 class="flex items-center gap-1.5 text-xl font-semibold">
-      <Wheat class="size-5 text-amber-600 dark:text-amber-400" />
-      Harvest Helper
+      <Library class="size-5 text-amber-600 dark:text-amber-400" />
+      Mistria Field Guide
     </h1>
     <div class="flex items-center gap-2">
       <OverallProgress />

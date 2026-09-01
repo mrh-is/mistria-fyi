@@ -2,7 +2,7 @@
 
 ## Context
 
-The harvest-helper app shows which quests must be completed before items, animals, or spells become
+The mistria-fyi app shows which quests must be completed before items, animals, or spells become
 available. The v0.13.4 pipeline inferred these gates by tracing through cutscenes: find cutscenes
 that unlock progression flags, map those flags to store item requirements, and resolve the cutscene
 back to its quest.

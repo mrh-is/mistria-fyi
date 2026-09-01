@@ -1,6 +1,6 @@
 # Animal cosmetic sources & pet collectibles
 
-Addresses [#107](https://github.com/mrh-is/harvest-helper/issues/107).
+Addresses #107 (private beta).
 
 ## Problem
 

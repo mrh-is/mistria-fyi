@@ -1,6 +1,6 @@
 # Application Architecture
 
-> Canonical reference for Harvest Helper's data flow, state model, and UI composition.
+> Canonical reference for Mistria Field Guide's data flow, state model, and UI composition.
 
 ## 1. Generated Data Contracts
 
@@ -35,7 +35,7 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 
 - Holds the canonical `UserState` shape (`availabilityMode`, `completed`, `showCompleted`,
   `showSpoilers`, `worldState`).
-- Persists to `localStorage` under the key `harvest-helper-v1` with a 300 ms debounce.
+- Persists to `localStorage` under the key `mistria-fyi-v1` with a 300 ms debounce.
 - Exposes methods for toggling individual entries, importing/exporting JSON, merging save data, and
   resetting.
 - Enforces domain constraints at the mutation boundary (e.g., NPC level caps, mine floor bounds,

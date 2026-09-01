@@ -4,9 +4,9 @@
 > (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use
 > checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Transform Harvest Helper documentation and developer ergonomics so agents can work safely
-with minimal context overload, establishing strict task workflows, updating verification commands,
-maintaining worktree rules, and logging audit issues.
+**Goal:** Transform Mistria Field Guide documentation and developer ergonomics so agents can work
+safely with minimal context overload, establishing strict task workflows, updating verification
+commands, maintaining worktree rules, and logging audit issues.
 
 **Architecture:** Universal mandatory instructions reside in `AGENTS.md`. Deep specialized
 architectural and workflow documentation is factored out into `docs/development-workflow.md` and

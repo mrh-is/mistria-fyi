@@ -25,7 +25,7 @@ const STORED_STATE = JSON.stringify({
 });
 
 function storedUserState(): Storage {
-  const values = new Map([["harvest-helper-v1", STORED_STATE]]);
+  const values = new Map([["mistria-fyi-v1", STORED_STATE]]);
 
   return {
     clear: () => {
@@ -72,7 +72,7 @@ it("normalizes historical nonrepresentative almanac IDs to canonical on hydratio
     version: "1",
     worldState: { season: "spring", weather: "calm" },
   });
-  const values = new Map([["harvest-helper-v1", stateWithRawIds]]);
+  const values = new Map([["mistria-fyi-v1", stateWithRawIds]]);
   const storage: Storage = {
     clear: () => {
       values.clear();

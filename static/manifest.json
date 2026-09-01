@@ -1,6 +1,6 @@
 {
-  "name": "Harvest Helper",
-  "short_name": "Harvest",
+  "name": "Mistria Field Guide",
+  "short_name": "Field Guide",
   "description": "Track your Fields of Mistria 100% completion progress",
   "start_url": "/",
   "scope": "/",

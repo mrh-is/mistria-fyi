@@ -21,7 +21,7 @@
 </script>
 
 <svelte:head>
-  <title>{name} — Harvest Helper</title>
+  <title>{name} — Mistria Field Guide</title>
 </svelte:head>
 
 <div class="flex flex-col gap-4 px-4 pb-4" style="--primary: var(--{color})">

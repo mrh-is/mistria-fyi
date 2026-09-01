@@ -4,9 +4,9 @@ import { OPTIONS, POST } from "./+server.js";
 
 function makeRequest(
   body: unknown,
-  { origin = "https://harvest-helper.pages.dev" }: { origin?: string } = {},
+  { origin = "https://mistria.fyi" }: { origin?: string } = {},
 ): Request {
-  return new Request("https://harvest-helper.pages.dev/api/feedback", {
+  return new Request("https://mistria.fyi/api/feedback", {
     body: JSON.stringify(body),
     headers: {
       "Content-Type": "application/json",
@@ -17,7 +17,7 @@ function makeRequest(
 }
 
 function makeUrl(): URL {
-  return new URL("https://harvest-helper.pages.dev/api/feedback");
+  return new URL("https://mistria.fyi/api/feedback");
 }
 
 const validPayload = {
@@ -63,7 +63,7 @@ const turnstileFailureResponse = () =>
 const githubSuccessResponse = () =>
   new Response(
     JSON.stringify({
-      html_url: "https://github.com/mrh-is/harvest-helper/issues/99",
+      html_url: "PR 99 (private beta)",
       number: 99,
     }),
     {
@@ -132,10 +132,10 @@ describe("POST /api/feedback", () => {
 
     expect(response.status).toBe(200);
     const data = (await response.json()) as { issueUrl: string };
-    expect(data).toEqual({ issueUrl: "https://github.com/mrh-is/harvest-helper/issues/99" });
+    expect(data).toEqual({ issueUrl: "PR 99 (private beta)" });
 
     const [url, options] = getGitHubCall(fetchMock);
-    expect(url).toContain("/repos/mrh-is/harvest-helper/issues");
+    expect(url).toContain("/repos/mrh-is/mistria-fyi/issues");
     const body = JSON.parse(options.body as string) as {
       body: string;
       labels: string[];
@@ -343,7 +343,7 @@ describe("POST /api/feedback", () => {
 
     expect(response.status).toBe(200);
     const data = (await response.json()) as { issueUrl: string };
-    expect(data).toEqual({ issueUrl: "https://github.com/mrh-is/harvest-helper/issues/99" });
+    expect(data).toEqual({ issueUrl: "PR 99 (private beta)" });
   });
 
   it("logs a missing KV binding without failing an accepted submission", async () => {
@@ -460,9 +460,9 @@ describe("POST /api/feedback", () => {
   });
 
   it("returns 400 for non-JSON content type", async () => {
-    const request = new Request("https://harvest-helper.pages.dev/api/feedback", {
+    const request = new Request("https://mistria.fyi/api/feedback", {
       body: "hello",
-      headers: { "Content-Type": "text/plain", Origin: "https://harvest-helper.pages.dev" },
+      headers: { "Content-Type": "text/plain", Origin: "https://mistria.fyi" },
       method: "POST",
     });
     await expect(callPost(request)).rejects.toMatchObject({ status: 400 });
@@ -471,20 +471,18 @@ describe("POST /api/feedback", () => {
 
 describe("OPTIONS /api/feedback", () => {
   it("returns CORS headers", async () => {
-    const request = new Request("https://harvest-helper.pages.dev/api/feedback", {
-      headers: { Origin: "https://harvest-helper.pages.dev" },
+    const request = new Request("https://mistria.fyi/api/feedback", {
+      headers: { Origin: "https://mistria.fyi" },
       method: "OPTIONS",
     });
     const response = await OPTIONS({ request, url: makeUrl() } as Parameters<typeof OPTIONS>[0]);
     expect(response.status).toBe(204);
     expect(response.headers.get("Access-Control-Allow-Methods")).toContain("POST");
-    expect(response.headers.get("Access-Control-Allow-Origin")).toBe(
-      "https://harvest-helper.pages.dev",
-    );
+    expect(response.headers.get("Access-Control-Allow-Origin")).toBe("https://mistria.fyi");
   });
 
   it("rejects cross-origin preflight requests", () => {
-    const request = new Request("https://harvest-helper.pages.dev/api/feedback", {
+    const request = new Request("https://mistria.fyi/api/feedback", {
       headers: { Origin: "https://evil.com" },
       method: "OPTIONS",
     });
