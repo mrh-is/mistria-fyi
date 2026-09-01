@@ -18,8 +18,8 @@
 
   const seasons: Season[] = ["spring", "summer", "fall", "winter"];
 
-  let seasonalityExpanded = $state(true);
-  let sourcesExpanded = $state(true);
+  let seasonalityExpanded = $state(false);
+  let sourcesExpanded = $state(false);
 
   let currentSeason = $derived(userState.state.worldState.season);
   let availableWeathers = $derived(weathersForSeason(currentSeason));
@@ -33,12 +33,18 @@
   );
   let seasonalitySummary = $derived(
     userState.state.availabilityMode === "everything"
-      ? "All items"
+      ? "Everything"
       : `${seasonLabel(currentSeason)} / ${weatherLabel(userState.state.worldState.weather, currentSeason)}`,
   );
   let sourceSummary = $derived(
     hiddenSourceCount === 0 ? "All shown" : `${hiddenSourceCount.toString()} hidden`,
   );
+
+  const availabilityModeLabel: Record<AvailabilityMode, string> = {
+    available: "What’s available now",
+    everything: "Everything",
+    timely: "Current specials",
+  };
 
   $effect(() => {
     if (!availableWeathers.includes(userState.state.worldState.weather)) {
@@ -75,68 +81,75 @@
         />
       </button>
 
-      <ToggleGroup.Root
-        class="w-full rounded-md border border-input"
-        type="single"
-        value={userState.state.availabilityMode}
-        onValueChange={(value) => {
-          if (value) userState.setAvailabilityMode(value as AvailabilityMode);
-        }}
-      >
-        <ToggleGroup.Item class="flex-1 text-xs" value="timely">Seasonal</ToggleGroup.Item>
-        <ToggleGroup.Item class="flex-1 text-xs" value="available">Accessible</ToggleGroup.Item>
-        <ToggleGroup.Item class="flex-1 text-xs" value="everything">All items</ToggleGroup.Item>
-      </ToggleGroup.Root>
-
-      {#if seasonalityExpanded && userState.state.availabilityMode !== "everything"}
+      {#if seasonalityExpanded}
         <div
           class="flex flex-col gap-3"
           transition:slide={{ duration: prefersReducedMotion.current ? 0 : 150 }}
         >
-          <div>
-            <p class="mb-1 text-xs font-medium text-muted-foreground">Season</p>
-            <div class="grid grid-cols-4 gap-1">
-              {#each seasons as season (season)}
-                {@const selected = season === currentSeason}
-                <button
-                  class="flex flex-col items-center gap-1 rounded-lg p-1.5 text-xs transition-colors hover:bg-accent motion-reduce:transition-none {selected
-                    ? 'bg-accent font-semibold text-foreground'
-                    : 'text-muted-foreground'}"
-                  type="button"
-                  aria-pressed={selected}
-                  onclick={() => {
-                    userState.setSeason(season);
-                  }}
-                >
-                  <Icon.Season {season} class="size-4" />
-                  {seasonLabel(season)}
-                </button>
+          <div class="flex items-center gap-2">
+            <p class="shrink-0 text-xs font-medium text-muted-foreground">Only show</p>
+            <ToggleGroup.Root
+              class="flex-1 rounded-md border border-input"
+              type="single"
+              value={userState.state.availabilityMode}
+              onValueChange={(value) => {
+                if (value) userState.setAvailabilityMode(value as AvailabilityMode);
+              }}
+            >
+              {#each ["timely", "available", "everything"] as const as mode (mode)}
+                <ToggleGroup.Item class="flex-1 text-xs" value={mode}>
+                  {availabilityModeLabel[mode]}
+                </ToggleGroup.Item>
               {/each}
-            </div>
+            </ToggleGroup.Root>
           </div>
 
-          <div>
-            <p class="mb-1 text-xs font-medium text-muted-foreground">Weather</p>
-            <div class="flex justify-center gap-1">
-              {#each availableWeathers as weather (weather)}
-                {@const selected = weather === userState.state.worldState.weather}
-                {@const WeatherIcon = weatherIcon(weather, currentSeason)}
-                <button
-                  class="flex w-1/4 flex-col items-center gap-1 rounded-lg p-1.5 text-xs transition-colors hover:bg-accent motion-reduce:transition-none {selected
-                    ? 'bg-accent font-semibold text-foreground'
-                    : 'text-muted-foreground'}"
-                  type="button"
-                  aria-pressed={selected}
-                  onclick={() => {
-                    userState.setWeather(weather);
-                  }}
-                >
-                  <WeatherIcon class="size-4" />
-                  {weatherLabel(weather, currentSeason)}
-                </button>
-              {/each}
+          {#if userState.state.availabilityMode !== "everything"}
+            <div class="flex items-center gap-2">
+              <p class="shrink-0 text-xs font-medium text-muted-foreground">Season</p>
+              <div class="flex flex-1 gap-1">
+                {#each seasons as season (season)}
+                  {@const selected = season === currentSeason}
+                  <button
+                    class="flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-accent motion-reduce:transition-none {selected
+                      ? 'bg-accent font-semibold text-foreground'
+                      : 'text-muted-foreground'}"
+                    type="button"
+                    aria-pressed={selected}
+                    onclick={() => {
+                      userState.setSeason(season);
+                    }}
+                  >
+                    <Icon.Season {season} class="size-3.5" />
+                    {seasonLabel(season)}
+                  </button>
+                {/each}
+              </div>
             </div>
-          </div>
+
+            <div class="flex items-center gap-2">
+              <p class="shrink-0 text-xs font-medium text-muted-foreground">Weather</p>
+              <div class="flex flex-1 gap-1">
+                {#each availableWeathers as weather (weather)}
+                  {@const selected = weather === userState.state.worldState.weather}
+                  {@const WeatherIcon = weatherIcon(weather, currentSeason)}
+                  <button
+                    class="flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-accent motion-reduce:transition-none {selected
+                      ? 'bg-accent font-semibold text-foreground'
+                      : 'text-muted-foreground'}"
+                    type="button"
+                    aria-pressed={selected}
+                    onclick={() => {
+                      userState.setWeather(weather);
+                    }}
+                  >
+                    <WeatherIcon class="size-3.5" />
+                    {weatherLabel(weather, currentSeason)}
+                  </button>
+                {/each}
+              </div>
+            </div>
+          {/if}
         </div>
       {/if}
     </section>

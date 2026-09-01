@@ -23,15 +23,15 @@ afterEach(() => {
 });
 
 describe("VisibilityPanel", () => {
-  it("renders expanded seasonality and source sections with accessible controls", () => {
+  it("renders collapsed seasonality and source sections by default", () => {
     toolbarState.setSourceFilters("test", [gatheringFilter, storeFilter]);
 
     const { body } = render(VisibilityPanel, { props: { showSeasonality: true } });
 
     expect(body).toContain("Seasonality");
-    expect(body).toContain('aria-expanded="true"');
+    expect(body).toContain('aria-expanded="false"');
     expect(body).toContain("Source types");
-    expect(body).toContain('aria-pressed="true"');
+    expect(body).not.toContain("Only show");
     expect(body).toContain("Show completed items");
     // Both section triggers, both bulk actions, and source chips use the minimum target size.
     expect(body.match(/min-h-11/g)?.length).toBeGreaterThanOrEqual(4);
