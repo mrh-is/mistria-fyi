@@ -33,6 +33,7 @@ describe("VisibilityPanel", () => {
     expect(body).toContain("Source types");
     expect(body).toContain('aria-pressed="true"');
     expect(body).toContain("Show completed items");
+    // Both section triggers, both bulk actions, and source chips use the minimum target size.
     expect(body.match(/min-h-11/g)?.length).toBeGreaterThanOrEqual(4);
     expect(body).toContain("min-h-11 items-center gap-1");
   });
