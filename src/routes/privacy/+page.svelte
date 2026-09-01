@@ -14,9 +14,9 @@
       The short version
     </h2>
     <p>
-      Mistria Field Guide stores your data on your device only. Nothing is collected automatically
-      or shared without your action. If you choose to send feedback, see below for what that
-      includes.
+      The Mistria Field Guide stores your data on your device only. Nothing is collected
+      automatically or shared without your action. If you choose to send feedback, see below for
+      what that includes.
     </p>
   </section>
 
@@ -27,7 +27,7 @@
       What is stored on your device
     </h2>
     <p>
-      To remember your progress, Mistria Field Guide saves your game data (completed items,
+      To remember your progress, the Mistria Field Guide saves your game data (completed items,
       settings, and world state) in your browser's local storage. This data never leaves your device
       unless you explicitly choose to send it.
     </p>
@@ -40,7 +40,7 @@
       Feedback submissions
     </h2>
     <p>
-      Mistria Field Guide includes an optional feedback feature. When you submit feedback, the
+      The Mistria Field Guide includes an optional feedback feature. When you submit feedback, the
       following is sent to the server:
     </p>
     <ul class="ml-4 list-disc space-y-1">
@@ -84,7 +84,7 @@
       Third-party services
     </h2>
     <p>
-      Mistria Field Guide does not use any analytics, advertising, or tracking services. The
+      The Mistria Field Guide does not use any analytics, advertising, or tracking services. The
       feedback feature uses GitHub (for public issue tracking) and Cloudflare (for hosting and rate
       limiting).
     </p>
