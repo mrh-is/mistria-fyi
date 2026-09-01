@@ -24,7 +24,7 @@
   }: Props = $props();
 </script>
 
-<div class="flex items-center {size === 'sm' ? 'gap-1' : 'w-full gap-2'}">
+<div class="flex w-full items-center gap-2">
   <button
     class="group flex size-11 shrink-0 touch-manipulation items-center justify-center disabled:opacity-50"
     type="button"
