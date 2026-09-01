@@ -196,17 +196,18 @@
       aria-label="Close panel"
       onclick={closePanel}
     ></button>
-
-    <div
-      id="visibility-panel"
-      class="fixed right-0 bottom-safe-offset-14 left-0 z-30 mx-auto max-w-lg px-3"
-      aria-labelledby="visibility-panel-trigger"
-      role="region"
-      transition:fly={{ duration: 150, y: 8 }}
-    >
-      <div class="rounded-xl border border-border bg-background shadow-lg">
-        <VisibilityPanel {showSeasonality} />
-      </div>
-    </div>
   {/if}
+
+  <div
+    id="visibility-panel"
+    class="fixed right-0 bottom-safe-offset-14 left-0 z-30 mx-auto max-w-lg px-3"
+    aria-labelledby="visibility-panel-trigger"
+    hidden={activePanel !== "visibility"}
+    role="region"
+    transition:fly={{ duration: 150, y: 8 }}
+  >
+    <div class="rounded-xl border border-border bg-background shadow-lg">
+      <VisibilityPanel {showSeasonality} />
+    </div>
+  </div>
 {/if}
