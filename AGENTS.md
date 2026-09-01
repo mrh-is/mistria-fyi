@@ -47,8 +47,10 @@ Follow this sequence for every task:
 4. **Claim the issue** — after scope and required approvals are settled, replace its current
    `status:*` label with `status: in progress` and add exactly one `agent:*` label identifying the
    top-level orchestrator. Subagents use their orchestrator's identity.
-5. **Worktree** — create an isolated worktree before editing, unless the user explicitly directs
-   work in the current checkout.
+5. **Worktree** — create an isolated worktree and branch **immediately** when starting work on an
+   issue, not when the first edit happens. The worktree is the workspace for the entire task,
+   including spec and plan commits. Only skip if the user explicitly directs work in the current
+   checkout.
 6. **Baseline** — install dependencies (`Node >=26`, `pnpm install --frozen-lockfile`) and verify a
    clean baseline.
 7. **Understand contracts** — read the affected subsystem, its boundaries, and existing tests before
