@@ -172,6 +172,7 @@
     <input
       bind:this={fileInput}
       type="file"
+      aria-label="Choose save files to import"
       accept=".sav,.json"
       multiple
       class="hidden"
@@ -188,9 +189,12 @@
       ondragleave={handleDragLeave}
       ondragover={handleDragOver}
       ondrop={handleDrop}
+      aria-busy={importing}
     >
       {#if importing}
-        <p class="text-sm text-muted-foreground">{importStatus || "Importing\u2026"}</p>
+        <p class="text-sm text-muted-foreground" role="status" aria-live="polite">
+          {importStatus || "Importing\u2026"}
+        </p>
       {:else}
         <Upload class="size-6 text-muted-foreground" />
         <p class="text-sm text-muted-foreground">Drag your save file here</p>
@@ -253,6 +257,7 @@
     {#if importError}
       <div
         class="mt-3 rounded-md bg-red-50 p-3 text-base text-red-700 dark:bg-red-950 dark:text-red-300"
+        role="alert"
       >
         <p>{importError}</p>
         {#if savFallback}
@@ -280,7 +285,11 @@
     {/if}
 
     {#if importResult}
-      <div class="mt-3 rounded-md bg-green-50 p-3 dark:bg-green-950">
+      <div
+        class="mt-3 rounded-md bg-green-50 p-3 dark:bg-green-950"
+        role="status"
+        aria-live="polite"
+      >
         <p class="text-base font-medium text-green-800 dark:text-green-200">
           {#if totalImported > 0}
             Imported from {filesUsed.join(", ")}
@@ -337,7 +346,7 @@
 
         {#if importResult.warnings.length > 0}
           <Separator class="my-2" />
-          <details class="text-sm">
+          <details class="text-sm" role="status" aria-live="polite">
             <summary class="text-muted-foreground">
               {importResult.warnings.length} warnings
             </summary>

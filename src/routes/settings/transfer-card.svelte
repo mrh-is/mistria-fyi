@@ -111,6 +111,8 @@
 
     const input = document.createElement("input");
     input.type = "file";
+    input.name = "transfer-image";
+    input.setAttribute("aria-label", "Choose an image containing a transfer QR code");
     input.accept = "image/*";
     input.onchange = async () => {
       const file = input.files?.[0];
@@ -164,7 +166,14 @@
 >
   <div class="flex flex-col gap-3">
     <!-- Generate QR Code -->
-    <Button class="w-full" disabled={generating} variant="outline" onclick={handleGenerate}>
+    <Button
+      class="w-full"
+      disabled={generating}
+      aria-busy={generating}
+      aria-live="polite"
+      variant="outline"
+      onclick={handleGenerate}
+    >
       {#if generating}
         <LoaderCircle class="animate-spin" />
         Generating...
@@ -176,7 +185,11 @@
 
     <!-- QR Code display -->
     {#if qrDataUrl}
-      <div class="flex flex-col items-center gap-2 rounded-md border p-4">
+      <div
+        class="flex flex-col items-center gap-2 rounded-md border p-4"
+        role="status"
+        aria-live="polite"
+      >
         <img alt="Transfer QR Code" class="size-48" src={qrDataUrl} />
         <p class="text-center text-sm text-muted-foreground">
           Scan this code on your other device to transfer progress
@@ -194,8 +207,12 @@
 
     <!-- Camera scanner -->
     {#if scanning}
-      <div class="relative overflow-hidden rounded-md border">
-        <video bind:this={videoEl} class="aspect-square w-full object-cover"></video>
+      <div class="relative overflow-hidden rounded-md border" aria-busy="true">
+        <video
+          bind:this={videoEl}
+          class="aspect-square w-full object-cover"
+          aria-label="Camera feed for QR code scanning"
+        ></video>
         <Button
           class="absolute top-2 right-2"
           size="icon"
@@ -216,7 +233,7 @@
 
     <!-- Success -->
     {#if transferResult}
-      <div class="rounded-md bg-green-50 p-3 dark:bg-green-950">
+      <div class="rounded-md bg-green-50 p-3 dark:bg-green-950" role="status" aria-live="polite">
         {#if totalMerged > 0}
           <p class="text-base font-medium text-green-800 dark:text-green-200">
             Transferred {totalMerged} items!
@@ -277,6 +294,7 @@
     {#if transferError}
       <div
         class="rounded-md bg-red-50 p-3 text-base text-red-700 dark:bg-red-950 dark:text-red-300"
+        role="alert"
       >
         {transferError}
       </div>

@@ -7,6 +7,9 @@
   import SettingsCard from "./settings-card.svelte";
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
+  let restoring = $state(false);
+  let restoreError = $state("");
+  let restoreStatus = $state("");
 
   function handleExport() {
     const json = userState.exportState();
@@ -22,12 +25,29 @@
   function handleImportBackup() {
     const input = document.createElement("input");
     input.type = "file";
+    input.name = "backup-file";
+    input.setAttribute("aria-label", "Choose a backup file to restore");
     input.accept = ".json";
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
-      const text = await file.text();
-      userState.importState(text);
+      restoring = true;
+      restoreError = "";
+      restoreStatus = "Restoring backup…";
+      try {
+        const text = await file.text();
+        if (!userState.importState(text)) {
+          restoreStatus = "";
+          restoreError = "This backup file is invalid or could not be restored.";
+        } else {
+          restoreStatus = "Backup restored successfully.";
+        }
+      } catch {
+        restoreStatus = "";
+        restoreError = "Could not read this backup file.";
+      } finally {
+        restoring = false;
+      }
     };
     input.click();
   }
@@ -39,9 +59,20 @@
       <FileUp />
       Export backup
     </Button>
-    <Button variant="outline" onclick={handleImportBackup}>
+    <Button
+      variant="outline"
+      disabled={restoring}
+      aria-busy={restoring}
+      onclick={handleImportBackup}
+    >
       <Upload />
       Restore from backup
     </Button>
+    {#if restoreStatus}
+      <p class="text-sm text-muted-foreground" role="status" aria-live="polite">{restoreStatus}</p>
+    {/if}
+    {#if restoreError}
+      <p class="text-sm text-destructive" role="alert">{restoreError}</p>
+    {/if}
   </div>
 </SettingsCard>
