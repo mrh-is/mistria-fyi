@@ -358,7 +358,7 @@
 
       {#if sourcesExpanded}
         <div
-          class="flex flex-col gap-2"
+          class="flex flex-col gap-1"
           transition:slide={{ duration: duration(), easing: cubicOut }}
         >
           <div class="flex justify-end gap-3">
@@ -381,22 +381,25 @@
               Hide all
             </button>
           </div>
-          <div class="flex flex-wrap gap-1.5">
+          <div class="flex flex-col gap-1">
             {#each toolbarState.sourceFilters as filter (filter.label)}
               {@const active = toolbarState.activeSourceLabels.has(filter.label)}
               {@const FilterIcon = filter.icon}
               <button
-                class="inline-flex min-h-11 items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors motion-reduce:transition-none {active
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border text-muted-foreground hover:bg-muted'}"
+                class="flex min-h-11 w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors motion-reduce:transition-none {active
+                  ? 'bg-accent text-foreground'
+                  : 'text-muted-foreground hover:bg-muted'}"
                 type="button"
                 aria-pressed={active}
                 onclick={() => {
                   toolbarState.toggleSourceFilter(filter);
                 }}
               >
-                <FilterIcon class="size-3" />
-                {filter.label}
+                <FilterIcon class="size-3.5 shrink-0" />
+                <span class="min-w-0">
+                  <span class="text-xs font-medium">{filter.label}</span>
+                  <span class="ml-1.5 text-[11px] opacity-60">{filter.members.join(" · ")}</span>
+                </span>
               </button>
             {/each}
           </div>

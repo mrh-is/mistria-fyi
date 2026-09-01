@@ -9,12 +9,14 @@ import type { StoreId } from "$lib/types/tracker-data.js";
 const gatheringFilter: SourceFilter = {
   icon: Circle,
   label: "Gathering",
+  members: ["Foraging"],
   types: ["forage"],
 };
 
 const storeFilter: SourceFilter = {
   icon: Circle,
   label: "Store",
+  members: ["Shops"],
   types: ["store"],
 };
 
