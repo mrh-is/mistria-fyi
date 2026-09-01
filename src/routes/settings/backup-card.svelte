@@ -68,11 +68,9 @@
       <Upload />
       Restore from backup
     </Button>
-    {#if restoreStatus}
-      <p class="text-sm text-muted-foreground" role="status" aria-live="polite">{restoreStatus}</p>
-    {/if}
-    {#if restoreError}
-      <p class="text-sm text-destructive" role="alert">{restoreError}</p>
-    {/if}
+    <div class="sr-only" role="status" aria-live="polite">{restoreStatus}</div>
+    <div class="sr-only" role="alert">{restoreError}</div>
+    {#if restoreStatus}<p class="text-sm text-muted-foreground">{restoreStatus}</p>{/if}
+    {#if restoreError}<p class="text-sm text-destructive">{restoreError}</p>{/if}
   </div>
 </SettingsCard>
