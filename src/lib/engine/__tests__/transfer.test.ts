@@ -203,9 +203,11 @@ describe("transfer codec v7", () => {
   });
 
   it("uses deterministic almanac ordering derived from canonical IDs", async () => {
-    const allCanonicalIds = recordValues(trackerData.almanac)
-      .flatMap(({ items }) => items.map((entry) => entry.itemIds[0]))
-      .toSorted();
+    const categoryCanonicalIds = recordValues(trackerData.almanac).flatMap(({ items }) =>
+      items.map((entry) => entry.itemIds[0]),
+    );
+    const allCanonicalIds = [...new Set(categoryCanonicalIds)].toSorted();
+    expect(categoryCanonicalIds.length).toBeGreaterThan(allCanonicalIds.length);
     const completed = makeCompleted({ almanac: new Set(allCanonicalIds) });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);

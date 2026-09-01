@@ -38,9 +38,12 @@ export function searchItems(
   const results: SearchResult[] = [];
 
   // Almanac entries — one result per collapsed row, canonical ID
+  const seenAlmanacIds = new Set<ItemId>();
   for (const category of Object.values(trackerData.almanac)) {
     for (const entry of category.items) {
       const canonicalId = entry.itemIds[0];
+      if (seenAlmanacIds.has(canonicalId)) continue;
+      seenAlmanacIds.add(canonicalId);
       const item = trackerData.items[canonicalId];
       if (item.visibility && !isVisible(item.visibility, progressionState)) continue;
       if (!isItemApplicableForAlmanac(entry.itemIds, completed)) continue;

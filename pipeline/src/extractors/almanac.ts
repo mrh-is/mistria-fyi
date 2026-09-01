@@ -81,12 +81,12 @@ export function extractAlmanac(
     });
   });
 
-  const tagToCategoryIdx = new Map<string, number>();
+  const tagToCategoryIndices = new Map<string, number[]>();
   for (let i = 0; i < rawCategories.length; i++) {
     for (const tag of rawCategories[i].tags) {
-      if (!tagToCategoryIdx.has(tag)) {
-        tagToCategoryIdx.set(tag, i);
-      }
+      const indices = tagToCategoryIndices.get(tag) ?? [];
+      indices.push(i);
+      tagToCategoryIndices.set(tag, indices);
     }
   }
 
@@ -101,17 +101,20 @@ export function extractAlmanac(
     let assignedIdx: number | undefined;
     let bestCategoryOrder = Infinity;
     let bestIsAcquisition = true;
+    const matchedCategoryIndices = new Set<number>();
     for (const tag of item.tags) {
-      const idx = tagToCategoryIdx.get(tag);
-      if (idx === undefined) continue;
-      const isAcq = ACQUISITION_TAGS.has(tag);
-      if (
-        (!isAcq && bestIsAcquisition) ||
-        (isAcq === bestIsAcquisition && idx < bestCategoryOrder)
-      ) {
-        bestCategoryOrder = idx;
-        assignedIdx = idx;
-        bestIsAcquisition = isAcq;
+      const indices = tagToCategoryIndices.get(tag) ?? [];
+      for (const idx of indices) {
+        matchedCategoryIndices.add(idx);
+        const isAcq = ACQUISITION_TAGS.has(tag);
+        if (
+          (!isAcq && bestIsAcquisition) ||
+          (isAcq === bestIsAcquisition && idx < bestCategoryOrder)
+        ) {
+          bestCategoryOrder = idx;
+          assignedIdx = idx;
+          bestIsAcquisition = isAcq;
+        }
       }
     }
 
@@ -119,8 +122,8 @@ export function extractAlmanac(
       assignedIdx !== undefined ? rawCategories[assignedIdx].key : item.topCategory;
     items[item.id] = { category: categoryKey, name: item.name };
 
-    if (assignedIdx !== undefined) {
-      categoryBuckets[assignedIdx].set(item.id, {
+    for (const categoryIdx of matchedCategoryIndices) {
+      categoryBuckets[categoryIdx].set(item.id, {
         id: item.id,
         name: item.name,
         recipeKey: item.recipeKey,

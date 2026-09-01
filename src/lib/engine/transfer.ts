@@ -513,9 +513,10 @@ function fromBitfield(ordered: string[], bytes: Uint8Array): Set<string> {
 }
 
 function getAlmanacOrder(): ItemId[] {
-  return recordValues(trackerData.almanac)
-    .flatMap(({ items }) => items.map((entry) => entry.itemIds[0]))
-    .toSorted();
+  const canonicalIds = recordValues(trackerData.almanac).flatMap(({ items }) =>
+    items.map((entry) => entry.itemIds[0]),
+  );
+  return [...new Set(canonicalIds)].toSorted();
 }
 
 // v1–v5 used TOML-order-first representatives; v6 switched to alphabetical-first.
@@ -661,8 +662,9 @@ function getDateOrder(): DateId[] {
 }
 
 function getLegacyAlmanacOrder(): ItemId[] {
-  return recordValues(trackerData.almanac).flatMap(({ items }) =>
+  return recordEntries(trackerData.almanac).flatMap(([categoryId, { items }]) =>
     items
+      .filter((entry) => trackerData.items[entry.itemIds[0]].category === categoryId)
       .map((entry) => (V5_CANONICAL_REMAP.get(entry.itemIds[0]) ?? entry.itemIds[0]) as ItemId)
       .toSorted(),
   );
