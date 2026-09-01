@@ -69,7 +69,7 @@
       Restore from backup
     </Button>
     <div class="sr-only" role="status" aria-live="polite">{restoreStatus}</div>
-    <div class="sr-only" aria-live="assertive">
+    <div class="sr-only">
       {#if restoreError}<span role="alert">{restoreError}</span>{/if}
     </div>
     {#if restoreStatus}<p class="text-sm text-muted-foreground">{restoreStatus}</p>{/if}
