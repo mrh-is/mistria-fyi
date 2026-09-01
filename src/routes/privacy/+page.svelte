@@ -93,6 +93,20 @@
   <div class="border-t border-border/50"></div>
 
   <section class="flex flex-col gap-2">
+    <h2 class="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+      AI in development
+    </h2>
+    <p>
+      The Mistria Field Guide is built with the help of AI coding tools that assist with writing &
+      reviewing code. These tools operate on the project's source code & on user-submitted feedback
+      (your message text & game progress, if you opt in). An AI service will never have access to
+      your email address or any information about how you use the app.
+    </p>
+  </section>
+
+  <div class="border-t border-border/50"></div>
+
+  <section class="flex flex-col gap-2">
     <h2 class="text-xs font-semibold tracking-widest text-muted-foreground uppercase">Changes</h2>
     <p>If this policy ever changes, we will update this page.</p>
   </section>
