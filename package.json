@@ -16,6 +16,8 @@
     "lint:fix": "prettier --write . && eslint . --fix",
     "pipeline": "cd pipeline && tsx src/main.ts",
     "test": "pnpm run test:server && pnpm run test:client",
+    "test:accessibility": "playwright test",
+    "test:accessibility:critical": "playwright test --grep @critical",
     "test:app": "vitest run src/ && pnpm run test:client",
     "test:client": "vitest run --config vitest.client.config.ts",
     "test:pipeline": "vitest run pipeline/",
@@ -23,10 +25,12 @@
     "test:pipeline:assets": "vitest run --config vitest.assets.config.ts"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/compat": "^2.1.0",
     "@eslint/js": "^10.0.1",
     "@internationalized/date": "^3.12.3",
     "@lucide/svelte": "^1.31.0",
+    "@playwright/test": "^1.62.1",
     "@sveltejs/adapter-cloudflare": "^7.2.9",
     "@sveltejs/kit": "^2.70.2",
     "@sveltejs/vite-plugin-svelte": "^7.3.0",

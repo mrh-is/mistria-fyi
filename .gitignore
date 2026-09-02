@@ -7,6 +7,9 @@ node_modules
 .wrangler
 .svelte-kit
 /build
+/.playwright-artifacts
+/.playwright-report
+/.playwright-results
 /.pnpm-store
 
 # OS
