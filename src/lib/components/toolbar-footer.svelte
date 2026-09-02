@@ -82,6 +82,7 @@
   }
 
   let searchInput = $state<HTMLInputElement | null>(null);
+  let searchOpener: HTMLElement | null = null;
   let debounceTimer: ReturnType<typeof setTimeout>;
 
   function handleSearchInput(event: Event): void {
@@ -94,6 +95,7 @@
 
   function openSearch(): void {
     closePanel();
+    searchOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     toolbarState.openSearch();
     setTimeout(() => searchInput?.focus(), 50);
   }
@@ -101,6 +103,16 @@
   function closeSearch(): void {
     clearTimeout(debounceTimer);
     toolbarState.closeSearch();
+    const focusTarget = searchOpener;
+    searchOpener = null;
+    void tick().then(() => {
+      const restoredTarget = focusTarget?.isConnected
+        ? focusTarget
+        : document.querySelector<HTMLElement>(
+            'nav[aria-label="Tracker tools"] button[aria-label="Search"]',
+          );
+      restoredTarget?.focus();
+    });
   }
 
   $effect(() => {
@@ -206,7 +218,7 @@
 
         <div class="flex flex-1 justify-end">
           <button
-            class="flex min-h-11 items-center gap-1.5 rounded-md px-3 transition-colors {activePanel ===
+            class="flex min-h-11 items-center gap-1.5 rounded-md px-3 transition-colors motion-reduce:transition-none {activePanel ===
             'visibility'
               ? 'bg-accent text-foreground'
               : filtersActive

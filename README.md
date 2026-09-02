@@ -19,6 +19,7 @@ pnpm run dev
 - [docs/development-workflow.md](docs/development-workflow.md) — setup, worktrees, verification
 - [docs/app-architecture.md](docs/app-architecture.md) — data contracts, state, persistence,
   composition
+- [docs/accessibility-testing.md](docs/accessibility-testing.md) — automated checks & release matrix
 - [pipeline/README.md](pipeline/README.md) — pipeline contracts & extractor details
 
 ## Data pipeline
@@ -42,6 +43,8 @@ pnpm run pipeline -- /path/to/assets
 | `pnpm run lint`                        | Prettier + ESLint                                 |
 | `pnpm run lint:fix`                    | Auto-fix formatting and lint issues               |
 | `pnpm run test`                        | Complete Vitest suite                             |
+| `pnpm run test:accessibility`          | Complete browser accessibility matrix             |
+| `pnpm run test:accessibility:critical` | Focused browser accessibility contract            |
 | `pnpm run test:app`                    | App tests (`src/`)                                |
 | `pnpm run test:pipeline`               | Pipeline tests (`pipeline/`)                      |
 | `pnpm run pipeline -- /path/to/assets` | Generate tracker-data.json from local TOML assets |

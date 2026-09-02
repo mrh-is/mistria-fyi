@@ -31,7 +31,7 @@
         <span class="flex min-w-0 flex-1 flex-col gap-0">
           <span
             class="leading-none font-semibold {variant === 'danger'
-              ? 'text-red-600 dark:text-red-400'
+              ? 'text-red-700 dark:text-red-400'
               : ''}"
           >
             {title}
