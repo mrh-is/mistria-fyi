@@ -40,6 +40,18 @@ export async function collectVisibleElementBoxes(page: Page): Promise<ElementBox
     };
     const labelFor = (element: Element): string =>
       element.getAttribute("aria-label") ?? element.textContent.trim().slice(0, 80);
+    const clippedByAncestor = (element: Element, rectangle: DOMRect): boolean => {
+      let ancestor = element.parentElement;
+      while (ancestor && ancestor !== document.body) {
+        const style = getComputedStyle(ancestor);
+        if (["auto", "clip", "hidden", "scroll"].includes(style.overflowX)) {
+          const bounds = ancestor.getBoundingClientRect();
+          if (rectangle.left < bounds.left || rectangle.right > bounds.right) return true;
+        }
+        ancestor = ancestor.parentElement;
+      }
+      return false;
+    };
 
     return [...document.body.querySelectorAll("*")].flatMap((element) => {
       const rectangle = element.getBoundingClientRect();
@@ -48,7 +60,9 @@ export async function collectVisibleElementBoxes(page: Page): Promise<ElementBox
         rectangle.width === 0 ||
         rectangle.height === 0 ||
         style.display === "none" ||
-        style.visibility === "hidden"
+        style.visibility === "hidden" ||
+        style.clipPath === "inset(50%)" ||
+        clippedByAncestor(element, rectangle)
       ) {
         return [];
       }
@@ -79,7 +93,8 @@ export async function collectVisibleTargets(page: Page): Promise<ElementBox[]> {
           rectangle.width === 0 ||
           rectangle.height === 0 ||
           style.display === "none" ||
-          style.visibility === "hidden"
+          style.visibility === "hidden" ||
+          style.clipPath === "inset(50%)"
         ) {
           return [];
         }

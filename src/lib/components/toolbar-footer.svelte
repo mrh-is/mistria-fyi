@@ -218,7 +218,7 @@
 
         <div class="flex flex-1 justify-end">
           <button
-            class="flex min-h-11 items-center gap-1.5 rounded-md px-3 transition-colors {activePanel ===
+            class="flex min-h-11 items-center gap-1.5 rounded-md px-3 transition-colors motion-reduce:transition-none {activePanel ===
             'visibility'
               ? 'bg-accent text-foreground'
               : filtersActive
