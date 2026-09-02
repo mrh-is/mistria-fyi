@@ -78,7 +78,11 @@
   </button>
 
   {#if isOpen}
-    <div id={contentId} class="pl-6" transition:slide={{ duration: prefersReducedMotion.current ? 0 : 150 }}>
+    <div
+      id={contentId}
+      class="pl-6"
+      transition:slide={{ duration: prefersReducedMotion.current ? 0 : 150 }}
+    >
       {@render children()}
     </div>
   {/if}

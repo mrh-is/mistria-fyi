@@ -3,7 +3,6 @@ import "@testing-library/jest-dom/vitest";
 import { vi } from "vitest";
 
 Object.defineProperty(window, "matchMedia", {
-  writable: true,
   value: vi.fn().mockImplementation((query: string) => ({
     addEventListener: vi.fn(),
     addListener: vi.fn(),
@@ -14,6 +13,7 @@ Object.defineProperty(window, "matchMedia", {
     removeEventListener: vi.fn(),
     removeListener: vi.fn(),
   })),
+  writable: true,
 });
 
 if (typeof Element !== "undefined") {
