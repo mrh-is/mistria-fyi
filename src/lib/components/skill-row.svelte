@@ -126,7 +126,7 @@
             style="opacity: {segmentOpacity(i)}"
           >
             <div
-              class="h-full bg-primary transition-[width] duration-300 ease-out"
+              class="h-full bg-primary transition-[width] duration-300 ease-out motion-reduce:transition-none"
               style="width: {segmentFill(seg)}%"
             ></div>
           </div>

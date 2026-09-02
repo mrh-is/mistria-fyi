@@ -234,9 +234,9 @@
           {/if}
         </span>
         <ChevronDown
-          class="size-4 text-muted-foreground transition-transform {seasonalityExpanded
+          class="size-4 text-muted-foreground transition-transform motion-reduce:transition-none {seasonalityExpanded
             ? 'rotate-180'
-            : ''} motion-reduce:transition-none"
+            : ''}"
         />
       </button>
 

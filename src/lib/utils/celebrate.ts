@@ -5,6 +5,7 @@ export function celebrate(): void {
   void confetti({
     colors: ["#fbbf24", "#f59e0b", "#d97706", "#fde68a", "#fef3c7"],
     decay: 0.9,
+    disableForReducedMotion: true,
     gravity: 1.2,
     origin: { x: 0.5, y: 0.7 },
     particleCount: 80,
@@ -19,6 +20,7 @@ export function celebrateCategory(): void {
   const defaults = {
     colors: ["#fbbf24", "#f59e0b", "#d97706", "#fde68a", "#a78bfa", "#f9a8d4"],
     decay: 0.92,
+    disableForReducedMotion: true,
     gravity: 1,
     ticks: 150,
   };

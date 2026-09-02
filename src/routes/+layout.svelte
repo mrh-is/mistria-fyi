@@ -45,7 +45,10 @@
     Skip to main content
   </a>
   {#key page.url.pathname}
-    <main id="main-content" class="flex flex-1 animate-in flex-col duration-200 fade-in">
+    <main
+      id="main-content"
+      class="flex flex-1 flex-col motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in"
+    >
       {@render children()}
     </main>
   {/key}

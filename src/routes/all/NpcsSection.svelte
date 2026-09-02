@@ -59,6 +59,7 @@
     <div class="flex flex-col gap-1">
       {#each npcs as npc (npc.id)}
         {@const level = userState.state.completed.npcLevels[npc.id] ?? 0}
+        {@const filled = level > 0}
         {@const complete = isNpcComplete(npc.id, userState.state.completed)}
         {@const known = isNpcKnown(npc.id)}
         <SpoilerSection name={npc.name} revealed={known}>
@@ -86,7 +87,7 @@
                 >
                   <Icon.ProgressMark
                     type={npc.dateable ? "relationship_dateable" : "relationship_platonic"}
-                    class="size-4 transition-colors duration-200 {level > 0
+                    class="size-4 transition-colors duration-200 motion-reduce:transition-none {filled
                       ? `${LEVEL_COLORS[level - 1]} fill-current`
                       : 'fill-transparent text-muted-foreground/30'}"
                   />

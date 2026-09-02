@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { prefersReducedMotion } from "svelte/motion";
   import { slide } from "svelte/transition";
 
   import { page } from "$app/state";
@@ -84,7 +85,9 @@
   );
 
   function completeOut(node: Element) {
-    if (node.getAttribute("data-leaving") !== "true") return { duration: 0 };
+    if (node.getAttribute("data-leaving") !== "true" || prefersReducedMotion.current) {
+      return { duration: 0 };
+    }
     return {
       css: (t: number) => `opacity: ${t}; pointer-events: none;`,
       delay: 800,
@@ -101,7 +104,7 @@
 
 <div out:completeOut data-leaving={isLeaving} {@attach feedbackContext.reportable(reportable)}>
   <div
-    class="flex items-center gap-0 rounded-md pr-2 transition-opacity duration-200
+    class="flex items-center gap-0 pr-2 transition-opacity duration-200 motion-reduce:transition-none
       {isDimmed ? 'opacity-50' : ''}
       {isCompleted || isLeaving ? 'line-through opacity-40' : ''}"
   >
@@ -161,7 +164,9 @@
         {/each}
         <Icon.UI
           type="disclosure"
-          class="size-3 shrink-0 opacity-40 transition-transform {expanded ? 'rotate-90' : ''}"
+          class="size-3 shrink-0 opacity-40 transition-transform motion-reduce:transition-none {expanded
+            ? 'rotate-90'
+            : ''}"
         />
       </button>
     {/if}
@@ -175,7 +180,7 @@
     <div
       id={sourceContentId}
       class="flex flex-col gap-1 py-1 pr-2 pl-8"
-      transition:slide={{ duration: 150 }}
+      transition:slide={{ duration: prefersReducedMotion.current ? 0 : 150 }}
     >
       <SourceList {sources} {sourceSegments} />
     </div>
