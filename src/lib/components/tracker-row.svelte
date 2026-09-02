@@ -171,11 +171,10 @@
     {/if}
   </div>
 
-  {#if sources.length > 0}
+  {#if expanded && sources.length > 0}
     <div
       id={sourceContentId}
       class="flex flex-col gap-1 py-1 pr-2 pl-8"
-      hidden={!expanded}
       transition:slide={{ duration: 150 }}
     >
       <SourceList {sources} {sourceSegments} />

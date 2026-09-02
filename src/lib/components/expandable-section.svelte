@@ -74,7 +74,9 @@
     {/if}
   </button>
 
-  <div id={contentId} class="pl-6" hidden={!isOpen} transition:slide={{ duration: 150 }}>
-    {@render children()}
-  </div>
+  {#if isOpen}
+    <div id={contentId} class="pl-6" transition:slide={{ duration: 150 }}>
+      {@render children()}
+    </div>
+  {/if}
 </div>
