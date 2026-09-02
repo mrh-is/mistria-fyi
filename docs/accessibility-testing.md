@@ -41,6 +41,21 @@ approved budget is no more than two minutes of additional merge-ready wall time.
 GitHub Actions median exceeds that budget, pull requests use the stable `@critical` contract while
 the complete route-and-theme matrix remains nightly and manually dispatchable.
 
+### Initial local measurement
+
+Measured September 2, 2026, on macOS 27 arm64 with Chromium already installed:
+
+| Operation                         | Wall time |
+| --------------------------------- | --------- |
+| Production build                  | 6.68 s    |
+| Complete matrix, reused preview   | 19.43 s   |
+| Critical contract, reused preview | 12.1 s    |
+
+Browser installation was cached and is therefore excluded rather than presented as a meaningful
+install benchmark. The complete matrix contains 93 tests and is locally inexpensive. The workflow
+initially keeps it on pull requests; the GitHub Actions median remains the deciding evidence because
+runner provisioning and browser installation determine merge delay there.
+
 ## Violation policy
 
 Axe runs WCAG 2.2 A and AA rules. Serious and critical findings fail. Minor and moderate findings

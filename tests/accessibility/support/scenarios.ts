@@ -23,6 +23,7 @@ export async function openSearch(page: Page, query: string): Promise<void> {
 
 export async function openSettingsCard(page: Page, name: string): Promise<void> {
   const trigger = page.getByRole("button", { name: new RegExp(`^${name}`) });
+  await expect(trigger).toHaveAttribute("aria-controls", /\S+/);
   await trigger.click();
   await expect(trigger).toHaveAttribute("aria-expanded", "true");
 }
