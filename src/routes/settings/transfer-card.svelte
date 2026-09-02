@@ -111,9 +111,12 @@
 
     const input = document.createElement("input");
     input.type = "file";
+    input.name = "transfer-image";
+    input.setAttribute("aria-label", "Choose an image containing a transfer QR code");
     input.accept = "image/*";
     input.onchange = async () => {
       const file = input.files?.[0];
+      input.remove();
       if (!file) return;
       try {
         const result = await QrScanner.scanImage(file, { returnDetailedScanResult: true });
@@ -122,6 +125,11 @@
         transferError = "No QR code found in image. Make sure the image is clear and well-lit.";
       }
     };
+    input.className = "sr-only";
+    input.oncancel = () => {
+      input.remove();
+    };
+    document.body.append(input);
     input.click();
   }
 
@@ -163,8 +171,24 @@
   summary="Move progress between devices with a QR code."
 >
   <div class="flex flex-col gap-3">
+    <div class="sr-only" role="status" aria-live="polite">
+      {#if generating}
+        Generating QR code…
+      {:else if scanning}
+        Starting QR code scanner…
+      {:else if transferResult}
+        QR code scanned successfully.
+      {/if}
+    </div>
+
     <!-- Generate QR Code -->
-    <Button class="w-full" disabled={generating} variant="outline" onclick={handleGenerate}>
+    <Button
+      class="w-full"
+      disabled={generating}
+      aria-busy={generating}
+      variant="outline"
+      onclick={handleGenerate}
+    >
       {#if generating}
         <LoaderCircle class="animate-spin" />
         Generating...
@@ -194,8 +218,12 @@
 
     <!-- Camera scanner -->
     {#if scanning}
-      <div class="relative overflow-hidden rounded-md border">
-        <video bind:this={videoEl} class="aspect-square w-full object-cover"></video>
+      <div class="relative overflow-hidden rounded-md border" aria-busy="true">
+        <video
+          bind:this={videoEl}
+          class="aspect-square w-full object-cover"
+          aria-label="Camera feed for QR code scanning"
+        ></video>
         <Button
           class="absolute top-2 right-2"
           size="icon"
@@ -277,6 +305,7 @@
     {#if transferError}
       <div
         class="rounded-md bg-red-50 p-3 text-base text-red-700 dark:bg-red-950 dark:text-red-300"
+        role="alert"
       >
         {transferError}
       </div>

@@ -274,6 +274,13 @@
     if (wantsReply && !emailTouched) {
       emailTouched = true;
     }
+    void tick().then(() => {
+      if (messageInvalid) {
+        messageInput?.focus();
+      } else if (emailInvalid) {
+        document.getElementById("feedback-email")?.focus();
+      }
+    });
     submitShake = true;
     setTimeout(() => {
       submitShake = false;
@@ -476,7 +483,10 @@
         <div>
           <textarea
             bind:this={messageInput}
+            id="feedback-message"
             aria-label="Message"
+            aria-invalid={messageInvalid}
+            aria-describedby={messageInvalid ? "feedback-message-error" : undefined}
             class="min-h-20 w-full resize-y rounded-md border bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none {messageInvalid
               ? 'border-destructive ring-destructive/30'
               : 'border-input'} {submitShake && messageInvalid ? 'animate-shake' : ''}"
@@ -484,7 +494,9 @@
             bind:value={message}
             maxlength={5000}></textarea>
           {#if messageInvalid}
-            <p class="mt-1 text-[11px] text-destructive">Please enter a message.</p>
+            <p id="feedback-message-error" class="mt-1 text-[11px] text-destructive" role="alert">
+              Please enter a message.
+            </p>
           {/if}
         </div>
 
@@ -537,11 +549,16 @@
         {#if wantsReply}
           <div transition:slide={{ duration: 120 }}>
             <input
+              id="feedback-email"
               aria-label="Your email"
+              aria-invalid={emailInvalid}
+              aria-describedby={emailInvalid ? "feedback-email-error" : undefined}
+              autocomplete="email"
               class="w-full rounded-md border bg-transparent px-3 py-1.5 text-sm placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none {emailInvalid
                 ? 'border-destructive ring-destructive/30'
                 : 'border-input'} {submitShake && emailInvalid ? 'animate-shake' : ''}"
               type="email"
+              name="email"
               placeholder="your@email.com"
               bind:value={email}
               onblur={() => {
@@ -555,7 +572,7 @@
               }}
             />
             {#if emailInvalid}
-              <p class="mt-1 text-[11px] text-destructive">
+              <p id="feedback-email-error" class="mt-1 text-[11px] text-destructive" role="alert">
                 {emailMissing
                   ? "Oops, forgot to put in your email!"
                   : "Hmmmmmmmmmmmmmm, this doesn't look like an email…"}
@@ -645,7 +662,7 @@
             ? 'bg-primary text-primary-foreground hover:bg-primary/90'
             : 'cursor-default bg-primary/50 text-primary-foreground/60'}"
           type="button"
-          aria-disabled={!canSubmit}
+          disabled={submitting}
           onclick={handleSubmitClick}
         >
           {#if submitting}

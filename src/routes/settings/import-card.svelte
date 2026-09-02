@@ -168,10 +168,22 @@
   summary="Import progress from a Fields of Mistria save."
 >
   <div>
+    <div class="sr-only" role="status" aria-live="polite">
+      {#if importing}
+        {importStatus || "Importing…"}
+      {:else if importResult}
+        {#if totalImported > 0}Import completed.{:else}No new data to import.{/if}
+        {#if importResult.warnings.length > 0}
+          {importResult.warnings.length} warnings found.
+        {/if}
+      {/if}
+    </div>
+
     <!-- Hidden file input -->
     <input
       bind:this={fileInput}
       type="file"
+      aria-label="Choose save files to import"
       accept=".sav,.json"
       multiple
       class="hidden"
@@ -188,6 +200,7 @@
       ondragleave={handleDragLeave}
       ondragover={handleDragOver}
       ondrop={handleDrop}
+      aria-busy={importing}
     >
       {#if importing}
         <p class="text-sm text-muted-foreground">{importStatus || "Importing\u2026"}</p>
@@ -253,6 +266,7 @@
     {#if importError}
       <div
         class="mt-3 rounded-md bg-red-50 p-3 text-base text-red-700 dark:bg-red-950 dark:text-red-300"
+        role="alert"
       >
         <p>{importError}</p>
         {#if savFallback}
