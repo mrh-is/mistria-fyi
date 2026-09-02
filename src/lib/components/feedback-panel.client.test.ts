@@ -159,7 +159,7 @@ describe("FeedbackPanel", () => {
     expect(message).toHaveAttribute("aria-invalid", "true");
     expect(message).toHaveAttribute("aria-describedby", "feedback-message-error");
     expect(message).toHaveFocus();
-    expect(screen.getByRole("alert", { name: "Please enter a message." })).toBeTruthy();
+    expect(screen.getByRole("alert")).toHaveTextContent("Please enter a message.");
   });
 
   it("exposes email purpose and validation relationship", async () => {
@@ -169,6 +169,9 @@ describe("FeedbackPanel", () => {
     const email = screen.getByRole("textbox", { name: "Your email" });
     expect(email).toHaveAttribute("autocomplete", "email");
     expect(email).toHaveAttribute("name", "email");
+
+    const message = screen.getByRole("textbox", { name: "Message" });
+    await fireEvent.input(message, { target: { value: "test message" } });
 
     await fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
     expect(email).toHaveAttribute("aria-invalid", "true");
