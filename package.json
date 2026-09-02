@@ -16,6 +16,7 @@
     "lint:fix": "prettier --write . && eslint . --fix",
     "pipeline": "cd pipeline && tsx src/main.ts",
     "test": "pnpm run test:server && pnpm run test:client",
+    "accessibility:monitor": "tsx scripts/accessibility-monitor.ts",
     "test:accessibility": "playwright test",
     "test:accessibility:critical": "playwright test --grep @critical",
     "test:app": "vitest run src/ && pnpm run test:client",
