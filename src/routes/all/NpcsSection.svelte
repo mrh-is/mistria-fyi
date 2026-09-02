@@ -78,6 +78,8 @@
                   incrementDisabled={level >= MAX_NPC_LEVEL}
                   decrementLabel="Decrease {npc.name} hearts"
                   incrementLabel="Increase {npc.name} hearts"
+                  label="{npc.name} relationship level"
+                  value="{level} of {MAX_NPC_LEVEL}"
                   onDecrement={() => {
                     setNpcLevelWithCelebration(npc.id, level - 1);
                   }}

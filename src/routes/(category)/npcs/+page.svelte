@@ -79,11 +79,15 @@
           <div
             class="grid justify-items-center gap-0.5"
             style="grid-template-columns: repeat({Math.min(MAX_NPC_LEVEL, 6)}, minmax(0, 1fr))"
+            role="group"
+            aria-label="{npc.name} relationship level options"
           >
             {#each { length: MAX_NPC_LEVEL } as _, i (i)}
               <button
                 class="flex size-11 items-center justify-center"
                 type="button"
+                aria-label="Set {npc.name} relationship level to {i + 1}"
+                aria-pressed={i < level}
                 onclick={() => {
                   setNpcLevelWithCelebration(npc.id, i < level ? i : i + 1);
                 }}
@@ -104,6 +108,8 @@
             incrementDisabled={level >= MAX_NPC_LEVEL}
             decrementLabel="Decrease {npc.name} hearts"
             incrementLabel="Increase {npc.name} hearts"
+            label="{npc.name} relationship level"
+            value="{level} of {MAX_NPC_LEVEL}"
             onDecrement={() => {
               setNpcLevelWithCelebration(npc.id, level - 1);
             }}

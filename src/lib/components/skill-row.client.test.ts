@@ -1,4 +1,4 @@
-import { render, waitFor } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 
 import SkillRowHarness from "$lib/components/skill-row.test-harness.svelte";
@@ -25,6 +25,14 @@ describe("SkillRow reportable registration", () => {
       entityId: "mining",
     });
     expect(registration.extra).toHaveProperty("level");
+
+    expect(
+      screen.getByRole("button", { name: "Edit Mining level, currently 0 of 60" }),
+    ).toBeInTheDocument();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Edit Mining level, currently 0 of 60" }),
+    );
+    expect(screen.getByRole("spinbutton", { name: "Mining level" })).toHaveValue(0);
 
     view.unmount();
     expect(feedbackContext.registrations.size).toBe(0);
