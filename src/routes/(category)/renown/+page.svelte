@@ -114,7 +114,11 @@
   </div>
 
   <div class="w-full max-w-xs">
-    <Progress class="h-1.5" value={overallPct} />
+    <Progress
+      class="h-1.5"
+      value={overallPct}
+      aria-label="Renown progress: {level} of {maxLevel} completed"
+    />
   </div>
 
   <!-- Stepper -->
@@ -123,6 +127,8 @@
     incrementDisabled={level >= maxLevel}
     decrementLabel="Decrease renown"
     incrementLabel="Increase renown"
+    label="Renown level"
+    value="{level} of {maxLevel}"
     onDecrement={() => {
       setRenownWithCelebration(level - 1);
     }}
@@ -132,6 +138,7 @@
   >
     {#if editing}
       <Input
+        aria-label="Renown level"
         bind:ref={editInputRef}
         class="h-6 w-20 text-center text-sm"
         type="number"
@@ -148,6 +155,7 @@
       <button
         class="text-sm text-muted-foreground tabular-nums hover:underline"
         title="Click to edit level directly"
+        aria-label="Edit renown level, currently {level} of {maxLevel}"
         type="button"
         onclick={startEditing}
       >

@@ -98,7 +98,7 @@
 </script>
 
 <div
-  class="flex flex-col gap-1 rounded-md px-2 py-1.5 {maxed ? 'opacity-40' : ''}"
+  class="flex flex-col gap-1 rounded-md px-2 py-1.5 {maxed ? 'text-muted-foreground' : ''}"
   {@attach reportable}
 >
   <span class="text-base font-medium">{name}</span>
@@ -108,6 +108,8 @@
     incrementDisabled={level >= MAX_LEVEL}
     decrementLabel="Decrease {name} level"
     incrementLabel="Increase {name} level"
+    label="{name} level"
+    value="{level} of {MAX_LEVEL}"
     onDecrement={() => {
       setLevelWithCelebration(id, level - 1);
     }}
@@ -135,6 +137,7 @@
 
       {#if editingId === id}
         <Input
+          aria-label="{name} level"
           bind:ref={editInputRef}
           class="h-6 w-16 shrink-0 text-center text-sm"
           type="number"
@@ -155,6 +158,7 @@
         <button
           class="flex min-h-11 min-w-11 shrink-0 items-center justify-end text-sm text-muted-foreground hover:underline"
           type="button"
+          aria-label="Edit {name} level, currently {level} of {MAX_LEVEL}"
           onclick={() => {
             startEditing(id, level);
           }}

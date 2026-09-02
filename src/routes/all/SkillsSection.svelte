@@ -41,7 +41,9 @@
         {@const level = userState.state.completed.skillLevels[skill.id] ?? 0}
         {@const maxed = level >= MAX_SKILL_LEVEL}
         {#if maxed ? userState.state.showCompleted : true}
-          <div class="flex items-center gap-2 rounded-md px-2 {maxed ? 'opacity-40' : ''}">
+          <div
+            class="flex items-center gap-2 rounded-md px-2 {maxed ? 'text-muted-foreground' : ''}"
+          >
             <span class="min-w-0 flex-1 text-base font-medium">{skill.name}</span>
             <div class="w-32 shrink-0">
               <Stepper

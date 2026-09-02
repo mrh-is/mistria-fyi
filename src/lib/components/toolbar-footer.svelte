@@ -34,6 +34,9 @@
 
   let activePanel = $state<ActivePanel>(null);
   let previousPathname = $state("");
+  let previousPanel = $state<ActivePanel>(null);
+  let visibilityPanelElement = $state<HTMLElement | null>(null);
+  let visibilityPanelOpener: HTMLElement | null = null;
 
   $effect(() => {
     const currentPathname = pathname;
@@ -41,6 +44,19 @@
       activePanel = null;
     }
     previousPathname = currentPathname;
+  });
+
+  $effect(() => {
+    if (activePanel === "visibility" && previousPanel !== "visibility") {
+      void tick().then(() => visibilityPanelElement?.querySelector<HTMLElement>("button")?.focus());
+    } else if (activePanel !== "visibility" && previousPanel === "visibility") {
+      const focusTarget = visibilityPanelOpener;
+      visibilityPanelOpener = null;
+      void tick().then(() => {
+        if (focusTarget?.isConnected) focusTarget.focus();
+      });
+    }
+    previousPanel = activePanel;
   });
 
   function closePanel(): void {
@@ -52,6 +68,10 @@
   }
 
   function toggleVisibilityPanel(): void {
+    if (activePanel !== "visibility") {
+      visibilityPanelOpener =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    }
     activePanel = activePanel === "visibility" ? null : "visibility";
   }
 
@@ -59,7 +79,6 @@
     if (activePanel !== "visibility" || event.key !== "Escape") return;
     event.preventDefault();
     closePanel();
-    void tick().then(() => document.getElementById("visibility-panel-trigger")?.focus());
   }
 
   let searchInput = $state<HTMLInputElement | null>(null);
@@ -93,6 +112,16 @@
       userState.state.showCompleted ||
       toolbarState.sourceFilterActive,
   );
+  let filterStatus = $state("");
+  let previousFilterState = $state("");
+
+  $effect(() => {
+    const currentFilterState = `${userState.state.availabilityMode}:${userState.state.showCompleted}:${toolbarState.sourceFilterActive}`;
+    if (previousFilterState && currentFilterState !== previousFilterState) {
+      filterStatus = filtersActive ? "Filters applied" : "All filters cleared";
+    }
+    previousFilterState = currentFilterState;
+  });
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -114,9 +143,11 @@
       <div class="flex items-center gap-2 px-3">
         <div class="relative flex-1">
           <Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <label class="sr-only" for="tracker-search">Search items</label>
           <Input
             bind:ref={searchInput}
             class="px-9"
+            id="tracker-search"
             placeholder="Search items..."
             type="text"
             value={toolbarState.searchQuery}
@@ -190,9 +221,9 @@
           >
             <Funnel class="size-4" />
             {#if activePanel === "visibility"}
-              <ChevronUp class="size-3 opacity-50" />
+              <ChevronUp class="size-3" />
             {:else}
-              <ChevronDown class="size-3 opacity-50" />
+              <ChevronDown class="size-3" />
             {/if}
           </button>
         </div>
@@ -217,9 +248,13 @@
       role="region"
       transition:fly={{ duration: prefersReducedMotion.current ? 0 : 150, y: 8 }}
     >
-      <div class="rounded-xl border border-border bg-background shadow-lg">
+      <div
+        bind:this={visibilityPanelElement}
+        class="rounded-xl border border-border bg-background shadow-lg"
+      >
         <VisibilityPanel {showSeasonality} />
       </div>
     </div>
   {/if}
+  <p class="sr-only" role="status" aria-live="polite">{filterStatus}</p>
 {/if}

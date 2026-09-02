@@ -27,15 +27,14 @@
 <div
   class="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors
     {rankState === 'current' ? 'bg-accent' : ''}
-    {rankState === 'completed' ? 'opacity-50' : ''}
-    {rankState === 'upcoming' ? 'opacity-40' : ''}"
+    {rankState !== 'current' ? 'text-muted-foreground' : ''}"
 >
   <!-- Star icon -->
   <div class="relative size-7 shrink-0" aria-hidden="true">
     <!-- Background (empty) star -->
     <Icon.ProgressMark
       type="town_rank"
-      class="absolute inset-0 size-7 {rankState === 'upcoming' ? 'text-muted-foreground/30' : ''}"
+      class="absolute inset-0 size-7 {rankState === 'upcoming' ? 'text-muted-foreground' : ''}"
       style="color: {rankState !== 'upcoming' ? starColor : ''}"
       strokeWidth={1.5}
     />

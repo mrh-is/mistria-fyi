@@ -9,8 +9,10 @@
     decrementLabel?: string;
     incrementDisabled?: boolean;
     incrementLabel?: string;
+    label?: string;
     onDecrement: () => void;
     onIncrement: () => void;
+    value?: string;
   }
 
   const {
@@ -19,12 +21,18 @@
     decrementLabel = "Decrease",
     incrementDisabled = false,
     incrementLabel = "Increase",
+    label,
     onDecrement,
     onIncrement,
+    value,
   }: Props = $props();
 </script>
 
-<div class="flex w-full items-center gap-2">
+<div
+  class="flex w-full items-center gap-2"
+  role={label ? "group" : undefined}
+  aria-label={label && value ? `${label}, ${value}` : label}
+>
   <button
     class="group flex size-11 shrink-0 touch-manipulation items-center justify-center disabled:opacity-50"
     type="button"

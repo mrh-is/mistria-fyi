@@ -128,6 +128,8 @@
         incrementDisabled={userState.state.completed.mines.floor >= maxFloors}
         decrementLabel="Go up one floor"
         incrementLabel="Go down one floor"
+        label="Mine floor"
+        value="{userState.state.completed.mines.floor} of {maxFloors}"
         onDecrement={() => {
           userState.setMineFloor(userState.state.completed.mines.floor - 1);
         }}
@@ -177,6 +179,7 @@
         <span class="inline-flex w-full items-center justify-center gap-1 text-xl font-semibold">
           Floor
           <input
+            aria-label="Mine floor"
             type="number"
             inputmode="numeric"
             min="0"
@@ -195,7 +198,7 @@
           />
         </span>
       </Stepper>
-      <span class="text-sm text-muted-foreground">
+      <span class="text-sm text-muted-foreground" aria-live="polite">
         {currentBiome().name}
         (floors {currentBiome().floors.start}–{currentBiome().floors.end})
       </span>

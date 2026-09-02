@@ -100,13 +100,58 @@
       },
     };
   }
+
+  function focusAdjacentRow(row: HTMLElement): void {
+    const rows = [
+      ...(row.parentElement?.querySelectorAll<HTMLElement>("[data-tracker-row]") ?? []),
+    ];
+    const index = rows.indexOf(row);
+    let focusTarget: HTMLElement | null = null;
+    if (index + 1 < rows.length) {
+      focusTarget = rows[index + 1].querySelector<HTMLElement>("button");
+    } else if (index > 0) {
+      focusTarget = rows[index - 1].querySelector<HTMLElement>("button");
+    }
+    if (focusTarget) {
+      focusTarget.focus();
+      return;
+    }
+
+    row
+      .closest<HTMLElement>("[data-tracker-section]")
+      ?.querySelector<HTMLElement>("button")
+      ?.focus();
+  }
+
+  function handleToggle(event: MouseEvent): void {
+    const shouldFocusAdjacentRow = display.mode === "visible";
+    onToggle();
+    if (!shouldFocusAdjacentRow) return;
+
+    const row = (event.currentTarget as HTMLElement).closest<HTMLElement>("[data-tracker-row]");
+    if (!row) return;
+    requestAnimationFrame(() => {
+      if (
+        row.isConnected &&
+        row.dataset.leaving === "true" &&
+        row.contains(document.activeElement)
+      ) {
+        focusAdjacentRow(row);
+      }
+    });
+  }
 </script>
 
-<div out:completeOut data-leaving={isLeaving} {@attach feedbackContext.reportable(reportable)}>
+<div
+  data-tracker-row
+  out:completeOut
+  data-leaving={isLeaving}
+  {@attach feedbackContext.reportable(reportable)}
+>
   <div
     class="flex items-center gap-0 pr-2 transition-opacity duration-200 motion-reduce:transition-none
-      {isDimmed ? 'opacity-50' : ''}
-      {isCompleted || isLeaving ? 'line-through opacity-40' : ''}"
+      {isDimmed ? 'text-muted-foreground' : ''}
+      {isCompleted || isLeaving ? 'text-muted-foreground line-through' : ''}"
   >
     <button
       class="flex min-h-11 min-w-11 shrink-0 items-center justify-center"
@@ -116,7 +161,7 @@
         : isSpoilered
           ? "Check spoilered item"
           : `Check ${name}`}
-      onclick={onToggle}
+      onclick={handleToggle}
     >
       <Icon.Completion
         state={completionState}
@@ -124,7 +169,7 @@
           ? 'text-green-600 dark:text-green-400'
           : isObtained
             ? 'text-amber-500 dark:text-amber-400'
-            : 'text-muted-foreground/50'}"
+            : 'text-muted-foreground'}"
       />
     </button>
 
@@ -164,7 +209,7 @@
         {/each}
         <Icon.UI
           type="disclosure"
-          class="size-3 shrink-0 opacity-40 transition-transform motion-reduce:transition-none {expanded
+          class="size-3 shrink-0 transition-transform motion-reduce:transition-none {expanded
             ? 'rotate-90'
             : ''}"
         />

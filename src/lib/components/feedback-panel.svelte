@@ -668,7 +668,7 @@
         <button
           class="flex min-h-11 w-full items-center justify-center gap-2 rounded-md px-4 py-1.5 text-sm font-medium transition-colors {canSubmit
             ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-            : 'cursor-default bg-primary/50 text-primary-foreground/60'}"
+            : 'cursor-default bg-muted text-muted-foreground'}"
           type="button"
           disabled={submitting}
           onclick={handleSubmitClick}
