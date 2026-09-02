@@ -1,6 +1,7 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import css from "../app.css?raw";
+const css = readFileSync(new URL("../app.css", import.meta.url), "utf8");
 
 type Rgb = [number, number, number];
 
