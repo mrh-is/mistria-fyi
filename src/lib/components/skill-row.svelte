@@ -98,7 +98,7 @@
 </script>
 
 <div
-  class="flex flex-col gap-1 rounded-md px-2 py-1.5 {maxed ? 'opacity-40' : ''}"
+  class="flex flex-col gap-1 rounded-md px-2 py-1.5 {maxed ? 'text-muted-foreground' : ''}"
   {@attach reportable}
 >
   <span class="text-base font-medium">{name}</span>

@@ -64,7 +64,11 @@
         {@const known = isNpcKnown(npc.id)}
         <SpoilerSection name={npc.name} revealed={known}>
           {#if complete ? userState.state.showCompleted : true}
-            <div class="flex items-center gap-2 rounded-md px-2 {complete ? 'opacity-40' : ''}">
+            <div
+              class="flex items-center gap-2 rounded-md px-2 {complete
+                ? 'text-muted-foreground'
+                : ''}"
+            >
               <div class="flex min-w-0 flex-1 items-center gap-1.5">
                 <span class="truncate text-base font-medium">{npc.name}</span>
                 <span class="flex shrink-0 items-center gap-0.5 text-xs text-muted-foreground">
@@ -91,7 +95,7 @@
                     type={npc.dateable ? "relationship_dateable" : "relationship_platonic"}
                     class="size-4 transition-colors duration-200 motion-reduce:transition-none {filled
                       ? `${LEVEL_COLORS[level - 1]} fill-current`
-                      : 'fill-transparent text-muted-foreground/30'}"
+                      : 'fill-transparent text-muted-foreground'}"
                   />
                 </Stepper>
               </div>

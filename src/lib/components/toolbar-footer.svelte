@@ -213,9 +213,9 @@
           >
             <ListFilter class="size-4" />
             {#if activePanel === "visibility"}
-              <ChevronUp class="size-3 opacity-50" />
+              <ChevronUp class="size-3" />
             {:else}
-              <ChevronDown class="size-3 opacity-50" />
+              <ChevronDown class="size-3" />
             {/if}
           </button>
         </div>

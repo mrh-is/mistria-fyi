@@ -57,7 +57,7 @@
 {#if progress.completed < progress.total || userState.state.showCompleted}
   <section aria-labelledby="category-renown" class="flex flex-col gap-1">
     <SectionHeader key="renown" {progress} />
-    <div class="flex items-center gap-2 rounded-md px-2 {isMaxed ? 'opacity-40' : ''}">
+    <div class="flex items-center gap-2 rounded-md px-2 {isMaxed ? 'text-muted-foreground' : ''}">
       <div class="flex min-w-0 flex-1 items-center gap-1.5">
         <span class="text-base font-medium">{currentRank.name}</span>
         <!-- Partially-filled rank star -->

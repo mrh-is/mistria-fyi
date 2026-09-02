@@ -63,7 +63,7 @@
       <span class="text-sm text-muted-foreground" aria-hidden="true"
         >{totalCompleted}/{grandTotal}</span
       >
-      <Icon.UI type="disclosure" class="size-4 shrink-0 text-muted-foreground/50" />
+      <Icon.UI type="disclosure" class="size-4 shrink-0 text-muted-foreground" />
     </a>
   {/if}
 </div>
