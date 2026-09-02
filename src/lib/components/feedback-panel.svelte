@@ -2,6 +2,7 @@
   import { ChevronDown, Copy, MessageCircleWarning, SquareMousePointer, X } from "@lucide/svelte";
   import { tick } from "svelte";
   import { toast } from "svelte-sonner";
+  import { prefersReducedMotion } from "svelte/motion";
   import { fly, slide } from "svelte/transition";
 
   import { version } from "$app/environment";
@@ -447,7 +448,7 @@
     aria-label="Send feedback"
     aria-modal="true"
     tabindex="-1"
-    in:fly={{ duration: 150, y: 8 }}
+    in:fly={{ duration: prefersReducedMotion.current ? 0 : 150, y: 8 }}
   >
     <div
       class="max-h-[80dvh] overflow-y-auto rounded-xl border border-border bg-background shadow-lg"
@@ -489,7 +490,7 @@
             aria-describedby={messageInvalid ? "feedback-message-error" : undefined}
             class="min-h-20 w-full resize-y rounded-md border bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none {messageInvalid
               ? 'border-destructive ring-destructive/30'
-              : 'border-input'} {submitShake && messageInvalid ? 'animate-shake' : ''}"
+              : 'border-input'} {submitShake && messageInvalid ? 'motion-safe:animate-shake' : ''}"
             placeholder="Describe a problem, suggest an improvement, or report a data error."
             bind:value={message}
             maxlength={5000}></textarea>
@@ -547,7 +548,7 @@
         </div>
 
         {#if wantsReply}
-          <div transition:slide={{ duration: 120 }}>
+          <div transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}>
             <input
               id="feedback-email"
               aria-label="Your email"
@@ -556,7 +557,7 @@
               autocomplete="email"
               class="w-full rounded-md border bg-transparent px-3 py-1.5 text-sm placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none {emailInvalid
                 ? 'border-destructive ring-destructive/30'
-                : 'border-input'} {submitShake && emailInvalid ? 'animate-shake' : ''}"
+                : 'border-input'} {submitShake && emailInvalid ? 'motion-safe:animate-shake' : ''}"
               type="email"
               name="email"
               placeholder="your@email.com"
@@ -590,7 +591,10 @@
         </div>
 
         {#if includeSaveData}
-          <div class="space-y-1" transition:slide={{ duration: 120 }}>
+          <div
+            class="space-y-1"
+            transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
+          >
             <p class="text-[11px] leading-relaxed text-muted-foreground">
               Sends your tracked completion state (items checked off, skill levels, etc.). No
               personal information. <strong>This data will be publicly visible.</strong>
@@ -603,14 +607,18 @@
               }}
             >
               <ChevronDown
-                class="size-3 transition-transform {showSaveDataPreview ? 'rotate-180' : ''}"
+                class="size-3 transition-transform motion-reduce:transition-none {showSaveDataPreview
+                  ? 'rotate-180'
+                  : ''}"
               />
               {showSaveDataPreview ? "Hide" : "Show"} my progress data
             </button>
             {#if showSaveDataPreview}
+              <!-- prettier-ignore -->
               <pre
                 class="max-h-40 overflow-auto rounded border border-border bg-muted/40 p-2 text-[11px] leading-tight"
-                transition:slide={{ duration: 120 }}>{saveDataPreview}</pre>
+                transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
+              >{saveDataPreview}</pre>
             {/if}
           </div>
         {/if}

@@ -71,7 +71,7 @@
       stroke-linecap="round"
       stroke-dasharray={circumference}
       stroke-dashoffset={offset}
-      class="text-primary transition-[stroke-dashoffset] duration-500 ease-out"
+      class="text-primary transition-[stroke-dashoffset] duration-500 ease-out motion-reduce:transition-none"
     />
   </svg>
   <span class="text-sm font-medium text-muted-foreground tabular-nums" aria-hidden="true"
