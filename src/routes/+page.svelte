@@ -7,14 +7,9 @@
   import OverallProgress from "$lib/components/overall-progress.svelte";
   import SearchResults from "$lib/components/search-results.svelte";
   import WelcomeCard from "$lib/components/welcome-card.svelte";
-  import { trackerData } from "$lib/data/index.js";
   import { getAllProgress } from "$lib/engine/progress.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
-  import { registerSourceFilters } from "$lib/utils/source-filter-registration.svelte.js";
-  import { allTrackerSources } from "$lib/utils/tracker-sources.js";
-
-  registerSourceFilters("home", () => allTrackerSources(trackerData));
 
   let allProgress = $derived(
     getAllProgress({

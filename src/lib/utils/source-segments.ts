@@ -140,6 +140,18 @@ export function buildSourceSegments(
       const waters = buildWaterList(source.waterTypes);
       return [waters ? `Dive in ${waters}` : "Dive"];
     }
+    case "donate_item":
+    case "ship_item": {
+      const verb = source.type === "ship_item" ? "shipping" : "donating";
+      const itemName = lookups.itemNames[source.triggerItemId] ?? titleCase(source.triggerItemId);
+      const itemVis = lookups.itemVisibility[source.triggerItemId];
+      const nameWithArticle = withIndefiniteArticle(itemName);
+      const itemSegment: SourceSegment =
+        itemVis && itemVis.type !== "always"
+          ? { condition: itemVis, revealed: [nameWithArticle] }
+          : nameWithArticle;
+      return joinSegments(`Receive in a letter after ${verb} `, itemSegment);
+    }
     case "engagement":
       return ["Receive from Elsie after getting to 10 hearts with a dateable character"];
     case "equipment": {
@@ -169,24 +181,6 @@ export function buildSourceSegments(
     case "forage": {
       const locations = buildLocationList(source.locationIds, lookups);
       return [locations ? `Forage at ${locations}` : "Forage in the wild"];
-    }
-    case "letter": {
-      if (source.trigger === "shipped_item" || source.trigger === "donated_item") {
-        const verb = source.trigger === "shipped_item" ? "shipping" : "donating";
-        const itemName = lookups.itemNames[source.triggerItemId] ?? titleCase(source.triggerItemId);
-        const itemVis = lookups.itemVisibility[source.triggerItemId];
-        const nameWithArticle = withIndefiniteArticle(itemName);
-        const itemSegment: SourceSegment =
-          itemVis && itemVis.type !== "always"
-            ? { condition: itemVis, revealed: [nameWithArticle] }
-            : nameWithArticle;
-        return joinSegments(`Receive in a letter after ${verb} `, itemSegment);
-      }
-      const { day, season, year } = source.triggerDate;
-      const dateStr = year
-        ? `${formatDateLabel(season, day)}, Year ${String(year)}`
-        : formatDateLabel(season, day);
-      return [`Receive in a letter after reaching ${dateStr}`];
     }
     case "lost_and_found":
       return ["Obtain from the Lost and Found chest"];
@@ -220,11 +214,11 @@ export function buildSourceSegments(
         },
       ];
     }
-
     case "monster": {
       const name = lookups.monsterNames[source.monsterId] ?? titleCase(source.monsterId);
       return [`Dropped by ${name}`];
     }
+
     case "monster_feed": {
       const name = lookups.monsterNames[source.monsterId] ?? titleCase(source.monsterId);
       return [`Feed ${name}`];
@@ -248,6 +242,13 @@ export function buildSourceSegments(
     }
     case "quest":
       return buildQuestSegments(source, lookups);
+    case "reach_day": {
+      const { day, season, year } = source.triggerDate;
+      const dateStr = year
+        ? `${formatDateLabel(season, day)}, Year ${String(year)}`
+        : formatDateLabel(season, day);
+      return [`Receive in a letter after reaching ${dateStr}`];
+    }
     case "recipe": {
       const recipeName = lookups.recipeNames[source.recipeId] ?? titleCase(source.recipeId);
       const methodLabel = titleCase(source.method);

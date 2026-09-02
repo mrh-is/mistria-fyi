@@ -213,7 +213,7 @@ describe("collectRewardSources", () => {
       collectRewardSources(fiddle, acc);
 
       expect(acc.get("baked_potato" as ItemId)).toEqual([
-        { type: "letter", trigger: "shipped_item", triggerItemId: "potato" },
+        { type: "ship_item", triggerItemId: "potato" },
       ]);
     });
 
@@ -231,7 +231,7 @@ describe("collectRewardSources", () => {
       collectRewardSources(fiddle, acc);
 
       expect(acc.get("miners_mushroom_stew" as ItemId)).toEqual([
-        { type: "letter", trigger: "donated_item", triggerItemId: "upper_mines_mushroom" },
+        { type: "donate_item", triggerItemId: "upper_mines_mushroom" },
       ]);
     });
 
@@ -250,8 +250,7 @@ describe("collectRewardSources", () => {
 
       expect(acc.get("gift_box" as ItemId)).toEqual([
         {
-          type: "letter",
-          trigger: "reached_date",
+          type: "reach_day",
           triggerDate: { day: 5, season: "spring" },
         },
       ]);

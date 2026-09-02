@@ -7,6 +7,7 @@ import type { Source } from "$lib/types/acquisition";
 export interface SourceFilter {
   icon: Component;
   label: string;
+  members: string[];
   types: Source["type"][];
 }
 

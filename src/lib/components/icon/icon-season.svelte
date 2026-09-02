@@ -11,7 +11,7 @@
   let { season, ...rest }: Props = $props();
 
   const strokeWidth = $derived(
-    season === "summer" ? 2.5 * Number(rest.strokeWidth ?? 2) : rest.strokeWidth,
+    season === "summer" ? 1.5 * Number(rest.strokeWidth ?? 2) : rest.strokeWidth,
   );
   const fallClass = $derived(season === "fall" ? "-scale-y-100 rotate-90" : "");
 

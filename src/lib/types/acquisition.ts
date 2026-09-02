@@ -61,6 +61,7 @@ export type Source =
         | { type: "date"; dateId: DateId }
         | { type: "date_inspiration"; itemId: ItemId }
         | { type: "dive"; waterTypes?: NonEmptyArray<WaterType> }
+        | { type: "donate_item"; triggerItemId: ItemId }
         | { type: "engagement" }
         | { type: "equipment"; itemId: ItemId }
         | { type: "festival"; festivalId: FestivalId; storeId?: StoreId }
@@ -68,13 +69,6 @@ export type Source =
         | { type: "fish"; waterTypes?: NonEmptyArray<WaterType> }
         | { type: "fish_trap"; baitItemIds: NonEmptyArray<ItemId> }
         | { type: "forage"; locationIds?: NonEmptyArray<LocationId> }
-        | { type: "letter"; trigger: "donated_item"; triggerItemId: ItemId }
-        | {
-            type: "letter";
-            trigger: "reached_date";
-            triggerDate: Day & { year?: number };
-          }
-        | { type: "letter"; trigger: "shipped_item"; triggerItemId: ItemId }
         | { type: "lost_and_found" }
         | { type: "mine"; biomeId: MinesBiomeId }
         | { type: "mine_fish"; biomeId?: MinesBiomeId }
@@ -100,10 +94,12 @@ export type Source =
             requestedItemId?: ItemId;
             trigger: "completion" | "dialogue_choice";
           }
+        | { type: "reach_day"; triggerDate: Day & { year?: number } }
         | { type: "recipe"; method: ProductionMethod; recipeId: RecipeId }
         | { type: "renown"; level: number }
         | { type: "ritual_chamber"; perkId: PerkId }
         | { type: "scroll_bundle"; bundleName: string; storeId: StoreId }
+        | { type: "ship_item"; triggerItemId: ItemId }
         | { type: "spouseGift"; npcId: NpcId }
         | { type: "station"; stationId: StationId }
         | { type: "store"; storeId: StoreId }

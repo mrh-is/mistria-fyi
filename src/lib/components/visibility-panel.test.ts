@@ -1,7 +1,7 @@
 import { render } from "svelte/server";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { SOURCE_FILTERS } from "$lib/components/icon/index.js";
+import { SOURCE_FILTERS, SOURCE_ICON } from "$lib/components/icon/index.js";
 import VisibilityPanel from "$lib/components/visibility-panel.svelte";
 import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
 import { userState } from "$lib/stores/user-state.svelte.js";
@@ -15,7 +15,7 @@ function sourceFilter(label: string): SourceFilter {
 }
 
 const gatheringFilter = sourceFilter("Gathering");
-const storeFilter = sourceFilter("Store");
+const storeFilter = sourceFilter("Stores");
 
 afterEach(() => {
   toolbarState.removeSourceFilters("test");
@@ -23,19 +23,46 @@ afterEach(() => {
 });
 
 describe("VisibilityPanel", () => {
-  it("renders expanded seasonality and source sections with accessible controls", () => {
+  it("SOURCE_FILTERS covers every source type exactly once", () => {
+    const allSourceTypes = new Set(Object.keys(SOURCE_ICON));
+    const filteredTypes = SOURCE_FILTERS.flatMap((filter) => filter.types);
+
+    expect(filteredTypes).toHaveLength(allSourceTypes.size);
+    expect(new Set(filteredTypes)).toEqual(allSourceTypes);
+  });
+
+  it("groups source types by player activity", () => {
+    expect(SOURCE_FILTERS.map(({ label, types }) => [label, types])).toEqual([
+      ["Chests", ["beach_cave_chest", "treasure_chest", "lost_and_found"]],
+      ["Crafting", ["recipe"]],
+      ["Dating", ["engagement", "date", "date_inspiration", "proposal", "spouseGift", "wedding"]],
+      ["Farming", ["crop", "tree", "animal_product", "breed", "station", "ship_item"]],
+      ["Festivals", ["festival", "festival_activity"]],
+      ["Fishing", ["fish", "fish_trap", "dive", "bait_fish"]],
+      ["Gathering", ["forage", "bug_catch", "artifact_dig", "equipment"]],
+      ["Mines", ["mines_chest", "mines_dig_site", "mine", "mine_fish", "monster", "monster_feed"]],
+      ["Museum", ["museum_donation", "artifact_replicator", "donate_item"]],
+      ["Offerings", ["chicken_statue", "wishing_well"]],
+      ["Perks", ["perk", "perk_drop", "ritual_chamber"]],
+      ["Stores", ["store", "scroll_bundle", "upgrade"]],
+      ["Progress", ["default", "quest", "renown", "reach_day"]],
+    ]);
+  });
+
+  it("renders collapsed seasonality and source sections by default", () => {
     toolbarState.setSourceFilters("test", [gatheringFilter, storeFilter]);
 
     const { body } = render(VisibilityPanel, { props: { showSeasonality: true } });
 
     expect(body).toContain("Seasonality");
-    expect(body).toContain('aria-expanded="true"');
+    expect(body).toContain('aria-expanded="false"');
     expect(body).toContain("Source types");
-    expect(body).toContain('aria-pressed="true"');
+    expect(body).not.toContain("Only show");
     expect(body).toContain("Show completed items");
-    // Both section triggers, both bulk actions, and source chips use the minimum target size.
-    expect(body.match(/min-h-11/g)?.length).toBeGreaterThanOrEqual(4);
-    expect(body).toContain("min-h-11 items-center gap-1");
+    // The two collapsed disclosure triggers retain the minimum target size.
+    expect(body.match(/min-h-11/g)).toHaveLength(2);
+    expect(body).toContain('aria-controls="seasonality-filter-controls"');
+    expect(body).toContain('aria-controls="source-type-filter-controls"');
   });
 
   it("omits seasonality, source types, and reset controls when they are inapplicable", () => {
@@ -54,7 +81,8 @@ describe("VisibilityPanel", () => {
     const { body } = render(VisibilityPanel, { props: { showSeasonality: true } });
 
     expect(body).toContain("Reset filters");
-    expect(body).toContain("Summer / Sun");
+    expect(body).toContain("Summer");
+    expect(body).toContain("Sun");
     expect(userState.state.worldState).toEqual({ season: "summer", weather: "calm" });
   });
 });

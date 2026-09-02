@@ -87,6 +87,7 @@ const SOURCE_FIELDS = {
   date_inspiration: ["itemId"],
   default: [],
   dive: ["waterTypes"],
+  donate_item: ["triggerItemId"],
   engagement: [],
   equipment: ["itemId"],
   festival: ["festivalId", "storeId"],
@@ -94,7 +95,6 @@ const SOURCE_FIELDS = {
   fish: ["waterTypes"],
   fish_trap: ["baitItemIds"],
   forage: ["locationIds"],
-  letter: ["trigger", "triggerDate", "triggerItemId"],
   lost_and_found: [],
   mine: ["biomeId"],
   mine_fish: ["biomeId"],
@@ -107,10 +107,12 @@ const SOURCE_FIELDS = {
   perk_drop: ["activity", "perkId"],
   proposal: ["npcId"],
   quest: ["challengeRecipeId", "choiceId", "questId", "questType", "requestedItemId", "trigger"],
+  reach_day: ["triggerDate"],
   recipe: ["method", "recipeId"],
   renown: ["level"],
   ritual_chamber: ["perkId"],
   scroll_bundle: ["bundleName", "storeId"],
+  ship_item: ["triggerItemId"],
   spouseGift: ["npcId"],
   station: ["stationId"],
   store: ["storeId"],
@@ -903,66 +905,39 @@ function validateEntities(
   }
 }
 
-function validateLetter(
+function validateReachedDay(
   source: Record<string, unknown>,
   targetId: string,
   fieldPath: string,
-  references: AcquisitionReferenceIndex,
   diagnostics: AcquisitionSourceDiagnostic[],
 ): void {
-  switch (source.trigger) {
-    case "donated_item":
-    case "shipped_item":
-      if (requireString(source, "triggerItemId", targetId, fieldPath, source, diagnostics)) {
-        reference(
-          diagnostics,
-          references,
-          "item",
-          source.triggerItemId,
-          targetId,
-          `${fieldPath}.triggerItemId`,
-          source,
-        );
-      }
-      break;
-    case "reached_date":
-      if (!isRecord(source.triggerDate)) {
-        malformed(
-          diagnostics,
-          targetId,
-          `${fieldPath}.triggerDate`,
-          "Expected a reached date",
-          source,
-        );
-      } else {
-        requireNumber(
-          source.triggerDate,
-          "day",
-          targetId,
-          `${fieldPath}.triggerDate`,
-          source,
-          diagnostics,
-        );
-        requireString(
-          source.triggerDate,
-          "season",
-          targetId,
-          `${fieldPath}.triggerDate`,
-          source,
-          diagnostics,
-        );
-        optionalNumber(
-          source.triggerDate,
-          "year",
-          targetId,
-          `${fieldPath}.triggerDate`,
-          source,
-          diagnostics,
-        );
-      }
-      break;
-    default:
-      malformed(diagnostics, targetId, `${fieldPath}.trigger`, "Expected a letter trigger", source);
+  if (!isRecord(source.triggerDate)) {
+    malformed(diagnostics, targetId, `${fieldPath}.triggerDate`, "Expected a reached date", source);
+  } else {
+    requireNumber(
+      source.triggerDate,
+      "day",
+      targetId,
+      `${fieldPath}.triggerDate`,
+      source,
+      diagnostics,
+    );
+    requireString(
+      source.triggerDate,
+      "season",
+      targetId,
+      `${fieldPath}.triggerDate`,
+      source,
+      diagnostics,
+    );
+    optionalNumber(
+      source.triggerDate,
+      "year",
+      targetId,
+      `${fieldPath}.triggerDate`,
+      source,
+      diagnostics,
+    );
   }
 }
 
@@ -1033,6 +1008,26 @@ function validateSource(
   validateVariantFields(source, targetId, fieldPath, references, diagnostics);
 }
 
+function validateTriggeredItem(
+  source: Record<string, unknown>,
+  targetId: string,
+  fieldPath: string,
+  references: AcquisitionReferenceIndex,
+  diagnostics: AcquisitionSourceDiagnostic[],
+): void {
+  if (requireString(source, "triggerItemId", targetId, fieldPath, source, diagnostics)) {
+    reference(
+      diagnostics,
+      references,
+      "item",
+      source.triggerItemId,
+      targetId,
+      `${fieldPath}.triggerItemId`,
+      source,
+    );
+  }
+}
+
 function validateVariantFields(
   source: Record<string, unknown>,
   targetId: string,
@@ -1099,6 +1094,10 @@ function validateVariantFields(
         diagnostics,
       );
       break;
+    case "donate_item":
+    case "ship_item":
+      validateTriggeredItem(source, targetId, fieldPath, references, diagnostics);
+      break;
     case "equipment":
       stringReferences.push(["itemId", "item"]);
       break;
@@ -1108,9 +1107,6 @@ function validateVariantFields(
       break;
     case "festival_activity":
       stringReferences.push(["activityId", "activity"], ["festivalId", "festival"]);
-      break;
-    case "letter":
-      validateLetter(source, targetId, fieldPath, references, diagnostics);
       break;
     case "mine":
       stringReferences.push(["biomeId", "biome"]);
@@ -1208,6 +1204,9 @@ function validateVariantFields(
           source,
         );
       }
+      break;
+    case "reach_day":
+      validateReachedDay(source, targetId, fieldPath, diagnostics);
       break;
     case "recipe":
       stringReferences.push(["recipeId", "recipe"]);

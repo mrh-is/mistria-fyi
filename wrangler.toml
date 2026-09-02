@@ -1,2 +1,4 @@
+name = "mistria-fyi"
+pages_build_output_dir = "./build"
 compatibility_flags = ["nodejs_compat"]
 compatibility_date = "2025-01-01"

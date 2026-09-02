@@ -21,7 +21,10 @@ import type {
   PetCosmeticSourceAccumulator,
 } from "../source-accumulator.js";
 
-type LetterRewardSource = Extract<Source, { type: "letter" | "spouseGift" | "wedding" }>;
+type LetterRewardSource = Extract<
+  Source,
+  { type: "donate_item" | "reach_day" | "ship_item" | "spouseGift" | "wedding" }
+>;
 
 const FESTIVAL_SEASON_MAP: Record<string, Season> = {
   fall: "fall",
@@ -59,8 +62,7 @@ const LARGE_ANIMAL_KINDS = ["alpaca", "cow", "horse", "sheep"];
 function classifyLetterTrigger(reqs: Record<string, unknown> | undefined): LetterRewardSource {
   if (!reqs) {
     return {
-      type: "letter",
-      trigger: "reached_date",
+      type: "reach_day",
       triggerDate: { day: 1, season: "spring" },
     };
   }
@@ -70,18 +72,17 @@ function classifyLetterTrigger(reqs: Record<string, unknown> | undefined): Lette
   }
 
   if (typeof reqs.shipped_item === "string") {
-    return { type: "letter", trigger: "shipped_item", triggerItemId: reqs.shipped_item as ItemId };
+    return { type: "ship_item", triggerItemId: reqs.shipped_item as ItemId };
   }
 
   if (typeof reqs.donated_item === "string") {
-    return { type: "letter", trigger: "donated_item", triggerItemId: reqs.donated_item as ItemId };
+    return { type: "donate_item", triggerItemId: reqs.donated_item as ItemId };
   }
 
   const reachedDate = reqs.reached_date as Record<string, unknown> | undefined;
   if (reachedDate && typeof reachedDate === "object") {
     return {
-      type: "letter",
-      trigger: "reached_date",
+      type: "reach_day",
       triggerDate: {
         day: (reachedDate.day as number) ?? 1,
         season: (reachedDate.season as Season) ?? "spring",
@@ -91,8 +92,7 @@ function classifyLetterTrigger(reqs: Record<string, unknown> | undefined): Lette
   }
 
   return {
-    type: "letter",
-    trigger: "reached_date",
+    type: "reach_day",
     triggerDate: { day: 1, season: "spring" },
   };
 }

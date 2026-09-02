@@ -189,6 +189,13 @@ function collectNativeIdsFromSources(
       case "dive":
         source.waterTypes?.forEach((id) => sets.waterTypes.add(id));
         break;
+      case "donate_item":
+      case "lost_and_found":
+      case "mine":
+      case "mine_fish":
+      case "reach_day":
+      case "ship_item":
+        break;
       case "engagement":
       case "equipment":
       case "festival":
@@ -203,11 +210,6 @@ function collectNativeIdsFromSources(
         break;
       case "forage":
         source.locationIds?.forEach((id) => sets.locations.add(id));
-        break;
-      case "letter":
-      case "lost_and_found":
-      case "mine":
-      case "mine_fish":
         break;
       case "mines_chest":
         if (source.lootGroup) sets.dungeonLootGroups.add(source.lootGroup);

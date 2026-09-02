@@ -413,8 +413,7 @@ function collectLetterScrollSources(
       if (requirements) {
         if (typeof requirements.shipped_item === "string") {
           sources.push({
-            type: "letter",
-            trigger: "shipped_item",
+            type: "ship_item",
             triggerItemId: requirements.shipped_item as ItemId,
           });
           result.set(recipeId, sources);
@@ -422,8 +421,7 @@ function collectLetterScrollSources(
         }
         if (typeof requirements.donated_item === "string") {
           sources.push({
-            type: "letter",
-            trigger: "donated_item",
+            type: "donate_item",
             triggerItemId: requirements.donated_item as ItemId,
           });
           result.set(recipeId, sources);
@@ -442,7 +440,7 @@ function collectLetterScrollSources(
             }
           }
           if (triggerDate) {
-            sources.push({ type: "letter", trigger: "reached_date", triggerDate });
+            sources.push({ type: "reach_day", triggerDate });
           } else {
             console.warn(
               `  Warning: letter "${letterId}" has reached_date but couldn't parse date — skipping`,
