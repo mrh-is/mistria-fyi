@@ -1,6 +1,6 @@
 # Mistria Field Guide
 
-[![CI](https://github.com/mrh-is/mistria-fyi/actions/workflows/ci.yml/badge.svg)](https://github.com/mrh-is/mistria-fyi/actions/workflows/ci.yml)
+[![CI](https://github.com/mrh-is/mistria-fyi/workflows/CI/badge.svg)](https://github.com/mrh-is/mistria-fyi/actions/workflows/ci.yml)
 
 A mobile-first companion tracker for
 [Fields of Mistria](https://store.steampowered.com/app/2142790/Fields_of_Mistria/). Helps
