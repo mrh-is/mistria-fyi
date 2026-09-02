@@ -56,10 +56,13 @@
     <a
       class="flex items-center gap-3 rounded-xl border border-border/50 bg-accent/20 px-4 py-3 transition-colors hover:bg-accent/40"
       href={resolve("/all")}
+      aria-label="Everything, {totalCompleted} of {grandTotal} completed"
     >
       <Icon.Category category="all" class="size-4 shrink-0 text-muted-foreground" />
       <span class="flex-1 text-sm font-medium text-muted-foreground">Everything</span>
-      <span class="text-sm text-muted-foreground">{totalCompleted}/{grandTotal}</span>
+      <span class="text-sm text-muted-foreground" aria-hidden="true"
+        >{totalCompleted}/{grandTotal}</span
+      >
       <Icon.UI type="disclosure" class="size-4 shrink-0 text-muted-foreground/50" />
     </a>
   {/if}

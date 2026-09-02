@@ -42,12 +42,15 @@
   let offset = $derived(circumference - (visualPct / 100) * circumference);
 </script>
 
-<div class="flex items-center gap-1.5" title="{overall().completed}/{overall().total} completed">
+<div
+  class="flex items-center gap-1.5"
+  aria-label="{overall().completed} of {overall().total} completed overall"
+  role="img"
+>
   <svg
     viewBox="0 0 {viewBox} {viewBox}"
     class="size-[1.2em] shrink-0 -rotate-90"
-    role="img"
-    aria-label="{overall().pct}% overall completion"
+    aria-hidden="true"
   >
     <circle
       cx={viewBox / 2}
@@ -71,5 +74,7 @@
       class="text-primary transition-[stroke-dashoffset] duration-500 ease-out"
     />
   </svg>
-  <span class="text-sm font-medium text-muted-foreground tabular-nums">{overall().pct}%</span>
+  <span class="text-sm font-medium text-muted-foreground tabular-nums" aria-hidden="true"
+    >{overall().pct}%</span
+  >
 </div>

@@ -47,6 +47,12 @@
 
   let expanded = $state(untrack(() => defaultOpen));
   let isOpen = $derived(expanded || forceOpen);
+  let contentId = $derived(
+    `expandable-${name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")}`,
+  );
 </script>
 
 <div>
@@ -55,6 +61,7 @@
     onclick={() => (expanded = !expanded)}
     type="button"
     aria-expanded={isOpen}
+    aria-controls={contentId}
     {@attach reportable}
   >
     <Icon.UI
@@ -68,7 +75,7 @@
   </button>
 
   {#if isOpen}
-    <div class="pl-6" transition:slide={{ duration: 150 }}>
+    <div id={contentId} class="pl-6" transition:slide={{ duration: 150 }}>
       {@render children()}
     </div>
   {/if}

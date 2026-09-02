@@ -20,6 +20,6 @@
   style="top: var(--section-top, 0px); --header-color: var(--{color})"
 >
   <Icon.Category category={key} class="size-4 text-(--header-color)" />
-  <span class="flex-1 text-sm font-semibold tracking-wide">{name}</span>
+  <h2 id="category-{key}" class="flex-1 text-sm font-semibold tracking-wide">{name}</h2>
   <span class="text-sm text-muted-foreground">{progress.completed}/{progress.total}</span>
 </div>

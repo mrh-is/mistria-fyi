@@ -30,11 +30,11 @@
 
 <div class="flex flex-col gap-4">
   {#if activeCategories.length > 0}
-    <div class="grid grid-cols-2 gap-2">
+    <ul class="grid grid-cols-2 gap-2" aria-label="Categories in progress">
       {#each activeCategories as key (key)}
-        <CategoryCard {key} progress={progress[key]} />
+        <li><CategoryCard {key} progress={progress[key]} /></li>
       {/each}
-    </div>
+    </ul>
   {/if}
 
   {#if completedCategories.length > 0}
@@ -43,13 +43,13 @@
         class="flex items-center gap-1.5 text-sm font-medium text-yellow-700 dark:text-yellow-400"
       >
         <Icon.Category category="complete" class="size-3.5" />
-        <span>Completed</span>
+        <h2>Completed</h2>
       </div>
-      <div class="grid grid-cols-2 gap-2">
+      <ul class="grid grid-cols-2 gap-2" aria-label="Completed categories">
         {#each completedCategories as key (key)}
-          <CategoryCard {key} progress={progress[key]} />
+          <li><CategoryCard {key} progress={progress[key]} /></li>
         {/each}
-      </div>
+      </ul>
     </div>
   {/if}
 </div>

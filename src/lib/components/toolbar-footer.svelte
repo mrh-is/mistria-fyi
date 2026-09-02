@@ -87,24 +87,6 @@
 </script>
 
 {#if !hidden}
-  {#if activePanel === "visibility"}
-    <button
-      class="fixed inset-x-0 top-[-100dvh] bottom-[-100dvh] z-0"
-      type="button"
-      aria-label="Close panel"
-      onclick={closePanel}
-    ></button>
-
-    <div
-      class="fixed right-0 bottom-safe-offset-14 left-0 z-30 mx-auto max-w-lg px-3"
-      transition:fly={{ duration: 150, y: 8 }}
-    >
-      <div class="rounded-xl border border-border bg-background shadow-lg">
-        <VisibilityPanel {showSeasonality} />
-      </div>
-    </div>
-  {/if}
-
   <FeedbackPanel
     {feedbackContext}
     open={activePanel === "feedback"}
@@ -113,7 +95,8 @@
     resetKey={pathname}
   />
 
-  <div
+  <nav
+    aria-label="Tracker tools"
     class="fixed right-0 bottom-0 left-0 z-20 mx-auto max-w-lg border-t border-border/50 bg-background pt-1.5 pb-safe-offset-2"
   >
     {#if toolbarState.searchOpen}
@@ -190,6 +173,8 @@
             type="button"
             aria-label="Visibility filters"
             aria-expanded={activePanel === "visibility"}
+            aria-controls={activePanel === "visibility" ? "visibility-panel" : undefined}
+            id="visibility-panel-trigger"
             onclick={toggleVisibilityPanel}
           >
             <ListFilter class="size-4" />
@@ -202,5 +187,26 @@
         </div>
       </div>
     {/if}
-  </div>
+  </nav>
+
+  {#if activePanel === "visibility"}
+    <button
+      class="fixed inset-x-0 top-[-100dvh] bottom-[-100dvh] z-0"
+      type="button"
+      aria-label="Close panel"
+      onclick={closePanel}
+    ></button>
+
+    <div
+      id="visibility-panel"
+      class="fixed right-0 bottom-safe-offset-14 left-0 z-30 mx-auto max-w-lg px-3"
+      aria-labelledby="visibility-panel-trigger"
+      role="region"
+      transition:fly={{ duration: 150, y: 8 }}
+    >
+      <div class="rounded-xl border border-border bg-background shadow-lg">
+        <VisibilityPanel {showSeasonality} />
+      </div>
+    </div>
+  {/if}
 {/if}
