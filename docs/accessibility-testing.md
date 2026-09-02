@@ -56,6 +56,23 @@ install benchmark. The complete matrix contains 93 tests and is locally inexpens
 initially keeps it on pull requests; the GitHub Actions median remains the deciding evidence because
 runner provisioning and browser installation determine merge delay there.
 
+### GitHub Actions measurement and policy
+
+Three completed pull-request attempts produced these job durations:
+
+| Attempt | Browser accessibility | Ordinary CI |
+| ------- | --------------------- | ----------- |
+| 1       | 3m24s                 | 3m59s       |
+| 2       | 3m17s                 | 4m01s       |
+| 3       | 3m20s                 | 4m10s       |
+| Median  | 3m20s                 | 4m01s       |
+
+The complete browser job’s median finishes 41 seconds before ordinary CI. It therefore adds zero
+minutes to merge-ready wall time and remains on every pull request. The `@critical` command remains
+available for efficient affected-test work, but CI does the full route-and-theme lifting. The
+nightly and manual triggers provide repeatability and scheduled issue synchronization, not a place
+to defer coverage that is already inexpensive on the pull-request critical path.
+
 ## Violation policy
 
 Axe runs WCAG 2.2 A and AA rules. Serious and critical findings fail. Minor and moderate findings
