@@ -66,6 +66,7 @@ describe("theme contrast tokens", () => {
       const textSurfaces = ["background", "card", "popover", "muted", "accent"];
 
       expect(contrast(color("primary-foreground"), color("primary"))).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(color("destructive"), color("background"))).toBeGreaterThanOrEqual(4.5);
       for (const surface of textSurfaces) {
         expect(contrast(color("foreground"), color(surface))).toBeGreaterThanOrEqual(4.5);
         expect(contrast(color("muted-foreground"), color(surface))).toBeGreaterThanOrEqual(4.5);

@@ -256,7 +256,9 @@
           </ol>
           <Dialog.Footer class="mt-2">
             <Dialog.Close>
-              <Button variant="outline">Got it</Button>
+              {#snippet child({ props })}
+                <Button variant="outline" {...props}>Got it</Button>
+              {/snippet}
             </Dialog.Close>
           </Dialog.Footer>
         </Dialog.Content>

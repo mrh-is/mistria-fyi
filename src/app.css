@@ -23,7 +23,7 @@
   --muted-foreground: oklch(0.43 0.02 270); /* warm gray */
   --accent: oklch(0.94 0.015 85); /* warm off-white for hover */
   --accent-foreground: oklch(0.2 0.02 270);
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: oklch(0.56 0.245 27.325);
   --border: oklch(0.62 0.01 75); /* warm beige border */
   --input: oklch(0.62 0.01 75);
   --ring: oklch(0.45 0.12 165); /* accessible mint focus ring */

@@ -27,13 +27,13 @@ interface SerializedCompletedState {
 }
 
 interface StoredState {
-  availabilityMode: "accessible" | "all" | "seasonal";
+  availabilityMode: "available" | "everything" | "timely";
   completed: SerializedCompletedState;
   showSpoilers: boolean;
   version: "1";
   worldState: {
     season: "fall" | "spring" | "summer" | "winter";
-    weather: "rainy" | "snowy" | "sunny";
+    weather: "calm" | "heavy_inclement" | "inclement" | "special";
   };
 }
 
@@ -66,11 +66,11 @@ export function createStoredState(
   };
 
   return {
-    availabilityMode: overrides.availabilityMode ?? "accessible",
+    availabilityMode: overrides.availabilityMode ?? "available",
     completed,
     showSpoilers: overrides.showSpoilers ?? false,
     version: "1",
-    worldState: overrides.worldState ?? { season: "spring", weather: "sunny" },
+    worldState: overrides.worldState ?? { season: "spring", weather: "calm" },
   };
 }
 
@@ -81,14 +81,14 @@ export async function expectResolvedTheme(page: Page, theme: AccessibilityTheme)
 export async function initializeApplication(
   page: Page,
   theme: AccessibilityTheme,
-  state: StoredState = createStoredState(),
+  state: null | StoredState = null,
 ): Promise<void> {
   await page.addInitScript(
     ({ serializedState, themePreference }) => {
       localStorage.clear();
       localStorage.setItem("mistria-fyi-theme", themePreference);
-      localStorage.setItem("mistria-fyi-v1", serializedState);
+      if (serializedState !== null) localStorage.setItem("mistria-fyi-v1", serializedState);
     },
-    { serializedState: JSON.stringify(state), themePreference: theme },
+    { serializedState: state ? JSON.stringify(state) : null, themePreference: theme },
   );
 }

@@ -24,6 +24,12 @@ export async function analyzeAccessibility(
   context: AxeRunContext,
   testInfo?: TestInfo,
 ): Promise<AxeAssessment> {
+  await page.waitForFunction(() =>
+    document.getAnimations().every((animation) => {
+      const iterations = animation.effect?.getComputedTiming().iterations;
+      return iterations === Infinity || animation.playState === "finished";
+    }),
+  );
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
     .analyze();
