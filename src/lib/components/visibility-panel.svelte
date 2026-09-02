@@ -57,7 +57,7 @@
   {#if showSeasonality}
     <section class="flex flex-col gap-2" aria-label="Seasonality controls">
       <button
-        class="flex min-h-8 w-full items-center gap-2 text-left"
+        class="flex min-h-11 w-full items-center gap-2 text-left"
         type="button"
         aria-expanded={seasonalityExpanded}
         onclick={() => {
@@ -145,7 +145,7 @@
   {#if toolbarState.sourceFilters.length > 0}
     <section class="flex flex-col gap-2" aria-label="Source type controls">
       <button
-        class="flex min-h-8 w-full items-center gap-2 text-left"
+        class="flex min-h-11 w-full items-center gap-2 text-left"
         type="button"
         aria-expanded={sourcesExpanded}
         onclick={() => {
@@ -170,7 +170,7 @@
         >
           <div class="flex justify-end gap-3">
             <button
-              class="text-xs text-muted-foreground hover:text-foreground"
+              class="min-h-11 px-2 text-xs text-muted-foreground hover:text-foreground"
               type="button"
               onclick={() => {
                 toolbarState.showAllSourceFilters();
@@ -179,7 +179,7 @@
               Show all
             </button>
             <button
-              class="text-xs text-muted-foreground hover:text-foreground"
+              class="min-h-11 px-2 text-xs text-muted-foreground hover:text-foreground"
               type="button"
               onclick={() => {
                 toolbarState.hideAllSourceFilters();
@@ -193,7 +193,7 @@
               {@const active = toolbarState.activeSourceLabels.has(filter.label)}
               {@const FilterIcon = filter.icon}
               <button
-                class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors motion-reduce:transition-none {active
+                class="inline-flex min-h-11 items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors motion-reduce:transition-none {active
                   ? 'border-primary bg-primary text-primary-foreground'
                   : 'border-border text-muted-foreground hover:bg-muted'}"
                 type="button"

@@ -86,7 +86,6 @@
       </div>
       <div class="w-32 shrink-0">
         <Stepper
-          size="sm"
           decrementDisabled={level <= 0}
           incrementDisabled={level >= maxLevel}
           decrementLabel="Decrease renown"

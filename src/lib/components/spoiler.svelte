@@ -16,7 +16,7 @@
   {@render children()}
 {:else}
   <button
-    class="inline-block cursor-pointer rounded-sm bg-muted-foreground/25 align-baseline transition-colors hover:bg-muted-foreground/40"
+    class="inline-block min-h-11 cursor-pointer rounded-sm bg-muted-foreground/25 px-1 align-baseline transition-colors hover:bg-muted-foreground/40"
     type="button"
     onclick={onReveal}
     aria-label="Reveal spoiler"

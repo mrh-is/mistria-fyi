@@ -136,7 +136,7 @@
           </button>
           <span class="ml-0.5 flex items-center gap-1">
             <button
-              class="inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-medium transition-all duration-150 {childChoice ===
+              class="inline-flex min-h-11 items-center gap-0.5 rounded-full border px-2 text-[10px] font-medium transition-all duration-150 {childChoice ===
               'yes'
                 ? 'border-amber-500 bg-amber-100 text-amber-800 dark:border-amber-400 dark:bg-amber-900 dark:text-amber-200'
                 : 'border-amber-300/50 text-amber-600/70 hover:border-amber-400 hover:text-amber-700 dark:border-amber-600/50 dark:text-amber-400/70 dark:hover:border-amber-500'}"
@@ -150,7 +150,7 @@
               Kids
             </button>
             <button
-              class="inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-medium transition-all duration-150 {childChoice ===
+              class="inline-flex min-h-11 items-center gap-0.5 rounded-full border px-2 text-[10px] font-medium transition-all duration-150 {childChoice ===
               'no'
                 ? 'border-emerald-500 bg-emerald-100 text-emerald-800 dark:border-emerald-400 dark:bg-emerald-900 dark:text-emerald-200'
                 : 'border-amber-300/50 text-amber-600/70 hover:border-emerald-400 hover:text-emerald-700 dark:border-amber-600/50 dark:text-amber-400/70 dark:hover:border-emerald-500'}"

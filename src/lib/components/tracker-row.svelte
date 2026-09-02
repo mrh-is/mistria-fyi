@@ -141,7 +141,7 @@
 
     {#if uniqueSourceTypes.length > 0}
       <button
-        class="group flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted"
+        class="group flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1 rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted"
         type="button"
         aria-expanded={expanded}
         aria-label="{isSpoilered ? 'Spoilered item' : name} sources"

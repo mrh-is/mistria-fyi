@@ -452,7 +452,7 @@
             <h2 class="text-sm font-semibold">Send feedback</h2>
           </div>
           <button
-            class="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+            class="flex size-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
             type="button"
             aria-label="Close"
             onclick={onclose}
@@ -499,14 +499,14 @@
             </div>
             <button
               bind:this={pickerButton}
-              class="rounded px-1.5 py-0.5 text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground"
+              class="min-h-11 rounded px-2 text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground"
               type="button"
               onclick={startPicking}
             >
               Change
             </button>
             <button
-              class="flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
+              class="flex size-11 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
               type="button"
               aria-label="Clear selected item"
               onclick={() => (selectedElement = undefined)}
@@ -517,7 +517,7 @@
         {:else if pickerAvailable}
           <button
             bind:this={pickerButton}
-            class="flex min-h-8 w-full items-center justify-center gap-1.5 rounded-md border border-input px-3 text-xs font-medium hover:bg-accent"
+            class="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-md border border-input px-3 text-xs font-medium hover:bg-accent"
             type="button"
             onclick={startPicking}
           >
@@ -609,7 +609,7 @@
           >
             <p class="flex-1">{submitError}</p>
             <button
-              class="flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[11px] hover:bg-destructive/20"
+              class="flex min-h-11 shrink-0 items-center gap-1 rounded px-2 text-[11px] hover:bg-destructive/20"
               type="button"
               onclick={copyMessage}
             >
@@ -641,7 +641,7 @@
         {/if}
 
         <button
-          class="flex w-full items-center justify-center gap-2 rounded-md px-4 py-1.5 text-sm font-medium transition-colors {canSubmit
+          class="flex min-h-11 w-full items-center justify-center gap-2 rounded-md px-4 py-1.5 text-sm font-medium transition-colors {canSubmit
             ? 'bg-primary text-primary-foreground hover:bg-primary/90'
             : 'cursor-default bg-primary/50 text-primary-foreground/60'}"
           type="button"
