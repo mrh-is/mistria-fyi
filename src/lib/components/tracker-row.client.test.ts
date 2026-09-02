@@ -41,13 +41,22 @@ describe("TrackerRow reportable metadata", () => {
 
     const list = document.createElement("div");
     document.body.append(list);
-    const first = render(TrackerRow, {
+    let firstView: ReturnType<typeof render> | undefined;
+    const first = (firstView = render(TrackerRow, {
       display: { mode: "visible" },
       name: "First item",
-      onToggle: vi.fn(),
+      onToggle: () => {
+        void firstView?.rerender({
+          display: { leaving: true, mode: "completed" },
+          name: "First item",
+          onToggle: vi.fn(),
+          reportCategory: "item",
+          reportEntityId: "first",
+        });
+      },
       reportCategory: "item",
       reportEntityId: "first",
-    });
+    }));
     const second = render(TrackerRow, {
       display: { mode: "visible" },
       name: "Second item",
@@ -61,6 +70,7 @@ describe("TrackerRow reportable metadata", () => {
     expect(secondRow).toBeTruthy();
     list.append(firstRow as HTMLElement, secondRow as HTMLElement);
 
+    screen.getByRole("button", { name: "Check First item" }).focus();
     await fireEvent.click(screen.getByRole("button", { name: "Check First item" }));
 
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Check Second item" }));

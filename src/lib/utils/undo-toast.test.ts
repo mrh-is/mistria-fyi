@@ -13,7 +13,7 @@ describe("showUndoToast", () => {
     dismiss.mockClear();
   });
 
-  it("keeps the undo action available without an automatic deadline", () => {
+  it("keeps the undo action available for an extended timeout", () => {
     const onUndo = vi.fn();
 
     showUndoToast("Copper Sword", true, onUndo);
@@ -22,7 +22,7 @@ describe("showUndoToast", () => {
       'Marked "Copper Sword" complete',
       expect.objectContaining({
         cancel: { label: "Undo", onClick: onUndo },
-        duration: Number.POSITIVE_INFINITY,
+        duration: 30_000,
       }),
     );
   });

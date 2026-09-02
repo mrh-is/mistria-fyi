@@ -131,7 +131,7 @@
           userState.undoQuestWithRecipes(questId, newlyAdded);
         },
       },
-      duration: Number.POSITIVE_INFINITY,
+      duration: 30_000,
     });
   }
 </script>
