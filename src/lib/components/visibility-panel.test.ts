@@ -59,9 +59,10 @@ describe("VisibilityPanel", () => {
     expect(body).toContain("Source types");
     expect(body).not.toContain("Only show");
     expect(body).toContain("Show completed items");
-    // Both section triggers, both bulk actions, and source chips use the minimum target size.
-    expect(body.match(/min-h-11/g)?.length).toBeGreaterThanOrEqual(4);
-    expect(body).toContain("min-h-11 items-center gap-1");
+    // The two collapsed disclosure triggers retain the minimum target size.
+    expect(body.match(/min-h-11/g)).toHaveLength(2);
+    expect(body).toContain('aria-controls="seasonality-filter-controls"');
+    expect(body).toContain('aria-controls="source-type-filter-controls"');
   });
 
   it("omits seasonality, source types, and reset controls when they are inapplicable", () => {

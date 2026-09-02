@@ -189,6 +189,7 @@
       <button
         class="flex min-h-11 w-full items-center gap-2 text-left"
         type="button"
+        aria-controls="seasonality-filter-controls"
         aria-expanded={seasonalityExpanded}
         onclick={() => {
           seasonalityExpanded = !seasonalityExpanded;
@@ -241,6 +242,7 @@
 
       {#if seasonalityExpanded}
         <div
+          id="seasonality-filter-controls"
           class="flex flex-col gap-2"
           transition:slide={{ duration: duration(), easing: cubicOut }}
         >
@@ -347,6 +349,7 @@
       <button
         class="flex min-h-11 w-full items-center gap-2 text-left"
         type="button"
+        aria-controls="source-type-filter-controls"
         aria-expanded={sourcesExpanded}
         onclick={() => {
           sourcesExpanded = !sourcesExpanded;
@@ -365,13 +368,15 @@
 
       {#if sourcesExpanded}
         <div
+          id="source-type-filter-controls"
           class="flex flex-col gap-1"
           transition:slide={{ duration: duration(), easing: cubicOut }}
         >
           <div class="grid grid-cols-2 gap-1.5">
             <button
-              class="min-h-11 rounded-md border border-border py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground motion-reduce:transition-none"
+              class="min-h-11 rounded-md border border-border py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none"
               type="button"
+              disabled={hiddenSourceCount === 0}
               onclick={() => {
                 toolbarState.showAllSourceFilters();
               }}
@@ -379,8 +384,9 @@
               Show all
             </button>
             <button
-              class="min-h-11 rounded-md border border-border py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground motion-reduce:transition-none"
+              class="min-h-11 rounded-md border border-border py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none"
               type="button"
+              disabled={toolbarState.activeSourceLabels.size === 0}
               onclick={() => {
                 toolbarState.hideAllSourceFilters();
               }}

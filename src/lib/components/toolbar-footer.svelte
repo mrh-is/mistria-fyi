@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ChevronDown, ChevronUp, Funnel, MessageCircleWarning, Search } from "@lucide/svelte";
+  import { tick } from "svelte";
   import { fly } from "svelte/transition";
 
   import { page } from "$app/state";
@@ -53,6 +54,13 @@
     activePanel = activePanel === "visibility" ? null : "visibility";
   }
 
+  function handleKeydown(event: KeyboardEvent): void {
+    if (activePanel !== "visibility" || event.key !== "Escape") return;
+    event.preventDefault();
+    closePanel();
+    void tick().then(() => document.getElementById("visibility-panel-trigger")?.focus());
+  }
+
   let searchInput = $state<HTMLInputElement | null>(null);
   let debounceTimer: ReturnType<typeof setTimeout>;
 
@@ -85,6 +93,8 @@
       toolbarState.sourceFilterActive,
   );
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 {#if !hidden}
   <FeedbackPanel
@@ -193,7 +203,9 @@
     <button
       class="fixed inset-x-0 top-[-100dvh] bottom-[-100dvh] z-0"
       type="button"
+      aria-hidden="true"
       aria-label="Close panel"
+      tabindex="-1"
       onclick={closePanel}
     ></button>
 
