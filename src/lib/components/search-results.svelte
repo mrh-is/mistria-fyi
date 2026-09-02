@@ -131,7 +131,7 @@
           userState.undoQuestWithRecipes(questId, newlyAdded);
         },
       },
-      duration: 5000,
+      duration: 30_000,
     });
   }
 </script>
@@ -139,6 +139,11 @@
 <div class="flex flex-col gap-1">
   <p class="text-sm text-muted-foreground">
     {results.length} result{results.length === 1 ? "" : "s"}
+  </p>
+  <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">
+    {results.length === 0
+      ? "No items found"
+      : `${results.length.toString()} result${results.length === 1 ? "" : "s"}`}
   </p>
 
   {#each results as result (result.category + result.id)}

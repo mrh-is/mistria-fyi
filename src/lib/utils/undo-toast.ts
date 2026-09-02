@@ -18,6 +18,6 @@ export function showUndoToast(itemName: string, completed: boolean, onUndo: () =
       label: "Undo",
       onClick: onUndo,
     },
-    duration: 5000,
+    duration: 30_000,
   });
 }

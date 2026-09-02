@@ -32,4 +32,48 @@ describe("TrackerRow reportable metadata", () => {
     view.unmount();
     expect(feedbackContext.registrations.size).toBe(0);
   });
+
+  it("moves focus to the next row after toggling a visible item", async () => {
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+      callback(0);
+      return 0;
+    });
+
+    const list = document.createElement("div");
+    document.body.append(list);
+    let firstView: ReturnType<typeof render> | undefined;
+    const first = (firstView = render(TrackerRow, {
+      display: { mode: "visible" },
+      name: "First item",
+      onToggle: () => {
+        void firstView?.rerender({
+          display: { leaving: true, mode: "completed" },
+          name: "First item",
+          onToggle: vi.fn(),
+          reportCategory: "item",
+          reportEntityId: "first",
+        });
+      },
+      reportCategory: "item",
+      reportEntityId: "first",
+    }));
+    const second = render(TrackerRow, {
+      display: { mode: "visible" },
+      name: "Second item",
+      onToggle: vi.fn(),
+      reportCategory: "item",
+      reportEntityId: "second",
+    });
+    const firstRow = first.container.firstElementChild;
+    const secondRow = second.container.firstElementChild;
+    expect(firstRow).toBeTruthy();
+    expect(secondRow).toBeTruthy();
+    list.append(firstRow as HTMLElement, secondRow as HTMLElement);
+
+    screen.getByRole("button", { name: "Check First item" }).focus();
+    await fireEvent.click(screen.getByRole("button", { name: "Check First item" }));
+
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Check Second item" }));
+    vi.unstubAllGlobals();
+  });
 });
