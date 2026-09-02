@@ -121,13 +121,13 @@ export const SOURCE_ICON: Record<Source["type"], LucideIcon> = {
 export const SOURCE_FILTERS: SourceFilter[] = [
   {
     icon: Archive,
-    label: "Chest",
+    label: "Chests",
     members: ["Beach cave", "Treasure boxes", "Lost & found"],
     types: ["beach_cave_chest", "treasure_chest", "lost_and_found"],
   },
   {
     icon: CookingPot,
-    label: "Craft",
+    label: "Crafting",
     members: ["Recipes"],
     types: ["recipe"],
   },
@@ -145,7 +145,7 @@ export const SOURCE_FILTERS: SourceFilter[] = [
   },
   {
     icon: PartyPopper,
-    label: "Festival",
+    label: "Festivals",
     members: ["Shops", "Activities"],
     types: ["festival", "festival_activity"],
   },
@@ -175,25 +175,25 @@ export const SOURCE_FILTERS: SourceFilter[] = [
   },
   {
     icon: Coins,
-    label: "Offering",
+    label: "Offerings",
     members: ["Chicken statue", "Wishing well"],
     types: ["chicken_statue", "wishing_well"],
   },
   {
     icon: Sparkles,
-    label: "Perk",
+    label: "Perks",
     members: ["Unlocks", "Drops", "Ritual chamber"],
     types: ["perk", "perk_drop", "ritual_chamber"],
   },
   {
     icon: ShoppingCart,
-    label: "Store",
+    label: "Stores",
     members: ["Shops", "Scroll bundles", "Upgrades"],
     types: ["store", "scroll_bundle", "upgrade"],
   },
   {
     icon: Scroll,
-    label: "Story progress",
+    label: "Progress",
     members: ["Default", "Quests", "Renown", "Letters"],
     types: ["default", "quest", "renown", "reach_day"],
   },

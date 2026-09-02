@@ -80,6 +80,12 @@
     timely: "Current specials",
   };
 
+  const availabilityModeSummary: Record<AvailabilityMode, string> = {
+    available: "Available",
+    everything: "Everything",
+    timely: "Specials",
+  };
+
   // Sequential fade transition for summary text: fade out → swap → fade in
   let seasonDisplay = $state(seasonLabel(userState.state.worldState.season));
   let weatherDisplay = $state(
@@ -195,6 +201,7 @@
           {#if userState.state.availabilityMode === "everything"}
             Everything
           {:else}
+            {availabilityModeSummary[userState.state.availabilityMode]} in
             <span
               class="inline-block transition-opacity motion-reduce:transition-none"
               style:transition-duration="{duration()}ms"
@@ -361,9 +368,9 @@
           class="flex flex-col gap-1"
           transition:slide={{ duration: duration(), easing: cubicOut }}
         >
-          <div class="flex justify-end gap-3">
+          <div class="grid grid-cols-2 gap-1.5">
             <button
-              class="min-h-11 px-2 text-xs text-muted-foreground hover:text-foreground"
+              class="min-h-11 rounded-md border border-border py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground motion-reduce:transition-none"
               type="button"
               onclick={() => {
                 toolbarState.showAllSourceFilters();
@@ -372,7 +379,7 @@
               Show all
             </button>
             <button
-              class="min-h-11 px-2 text-xs text-muted-foreground hover:text-foreground"
+              class="min-h-11 rounded-md border border-border py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground motion-reduce:transition-none"
               type="button"
               onclick={() => {
                 toolbarState.hideAllSourceFilters();
@@ -381,24 +388,32 @@
               Hide all
             </button>
           </div>
-          <div class="flex flex-col gap-1">
+          <div class="flex flex-col gap-0.5">
             {#each toolbarState.sourceFilters as filter (filter.label)}
               {@const active = toolbarState.activeSourceLabels.has(filter.label)}
               {@const FilterIcon = filter.icon}
               <button
-                class="flex min-h-11 w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors motion-reduce:transition-none {active
-                  ? 'bg-accent text-foreground'
-                  : 'text-muted-foreground hover:bg-muted'}"
+                class="flex min-h-11 w-full items-start gap-1.5 rounded-lg px-1 py-1 text-left transition-colors hover:bg-muted motion-reduce:transition-none"
                 type="button"
                 aria-pressed={active}
                 onclick={() => {
                   toolbarState.toggleSourceFilter(filter);
                 }}
               >
-                <FilterIcon class="size-3.5 shrink-0" />
-                <span class="min-w-0">
-                  <span class="text-xs font-medium">{filter.label}</span>
-                  <span class="ml-1.5 text-[11px] opacity-60">{filter.members.join(" · ")}</span>
+                <span
+                  class="inline-flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs font-medium transition-colors motion-reduce:transition-none {active
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground'}"
+                >
+                  <FilterIcon class="size-3" />
+                  {filter.label}
+                </span>
+                <span
+                  class="pt-0.5 text-[11px] transition-opacity motion-reduce:transition-none {active
+                    ? 'text-muted-foreground'
+                    : 'opacity-40'}"
+                >
+                  {filter.members.join(" · ")}
                 </span>
               </button>
             {/each}

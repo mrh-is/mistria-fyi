@@ -15,7 +15,7 @@ function sourceFilter(label: string): SourceFilter {
 }
 
 const gatheringFilter = sourceFilter("Gathering");
-const storeFilter = sourceFilter("Store");
+const storeFilter = sourceFilter("Stores");
 
 afterEach(() => {
   toolbarState.removeSourceFilters("test");
@@ -33,19 +33,19 @@ describe("VisibilityPanel", () => {
 
   it("groups source types by player activity", () => {
     expect(SOURCE_FILTERS.map(({ label, types }) => [label, types])).toEqual([
-      ["Chest", ["beach_cave_chest", "treasure_chest", "lost_and_found"]],
-      ["Craft", ["recipe"]],
+      ["Chests", ["beach_cave_chest", "treasure_chest", "lost_and_found"]],
+      ["Crafting", ["recipe"]],
       ["Dating", ["engagement", "date", "date_inspiration", "proposal", "spouseGift", "wedding"]],
       ["Farming", ["crop", "tree", "animal_product", "breed", "station", "ship_item"]],
-      ["Festival", ["festival", "festival_activity"]],
+      ["Festivals", ["festival", "festival_activity"]],
       ["Fishing", ["fish", "fish_trap", "dive", "bait_fish"]],
       ["Gathering", ["forage", "bug_catch", "artifact_dig", "equipment"]],
       ["Mines", ["mines_chest", "mines_dig_site", "mine", "mine_fish", "monster", "monster_feed"]],
       ["Museum", ["museum_donation", "artifact_replicator", "donate_item"]],
-      ["Offering", ["chicken_statue", "wishing_well"]],
-      ["Perk", ["perk", "perk_drop", "ritual_chamber"]],
-      ["Store", ["store", "scroll_bundle", "upgrade"]],
-      ["Story progress", ["default", "quest", "renown", "reach_day"]],
+      ["Offerings", ["chicken_statue", "wishing_well"]],
+      ["Perks", ["perk", "perk_drop", "ritual_chamber"]],
+      ["Stores", ["store", "scroll_bundle", "upgrade"]],
+      ["Progress", ["default", "quest", "renown", "reach_day"]],
     ]);
   });
 
