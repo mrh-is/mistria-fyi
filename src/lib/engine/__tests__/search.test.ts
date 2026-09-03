@@ -75,6 +75,21 @@ function makeProgressionState(overrides: Partial<UserProgressionState> = {}): Us
   };
 }
 
+function museumOnlyFixture() {
+  for (const wing of Object.values(trackerData.museum)) {
+    for (const set of Object.values(wing.sets)) {
+      for (const itemId of set.items) {
+        const item = trackerData.items[itemId];
+        const result = search(item.name).find(
+          (candidate) => candidate.category === "museum" && candidate.id === itemId,
+        );
+        if (result) return { item, itemId, result };
+      }
+    }
+  }
+  throw new Error("Expected tracker data to contain a searchable museum-only item");
+}
+
 function search(query: string, completed?: Partial<CompletedState>) {
   return searchItems(
     query,
@@ -348,45 +363,23 @@ describe("pregnancy quest filtering", () => {
 
 describe("museum results", () => {
   it("returns museum category for museum-only items", () => {
-    // Find a museum item that exists in the data
-    const firstWing = Object.values(trackerData.museum)[0];
-    const firstSet = Object.values(firstWing.sets)[0];
-    const firstItemId = firstSet.items[0];
-    const item = trackerData.items[firstItemId];
-
-    const results = search(item.name);
-    const museumMatch = results.find((r) => r.category === "museum" && r.id === firstItemId);
-    // The item might also appear as almanac; if museum-only, it should have a museum result
-    const almanacMatch = results.find((r) => r.category === "almanac" && r.id === firstItemId);
-    if (!almanacMatch) {
-      expect(museumMatch).toBeDefined();
-    }
+    const { result } = museumOnlyFixture();
+    expect(result.category).toBe("museum");
   });
 
   it("uses raw item ID (not prefixed) for museum results", () => {
-    const firstWing = Object.values(trackerData.museum)[0];
-    const firstSet = Object.values(firstWing.sets)[0];
-    const firstItemId = firstSet.items[0];
-    const item = trackerData.items[firstItemId];
-
-    const results = search(item.name);
-    const museumMatch = results.find((r) => r.category === "museum");
-    if (museumMatch) {
-      expect(museumMatch.id).not.toContain(":");
-    }
+    const { itemId, result } = museumOnlyFixture();
+    expect(result.id).toBe(itemId);
+    expect(result.id).not.toContain(":");
   });
 
   it("marks museum items as completed when in completed.museum", () => {
-    const firstWing = Object.values(trackerData.museum)[0];
-    const firstSet = Object.values(firstWing.sets)[0];
-    const firstItemId = firstSet.items[0];
-    const item = trackerData.items[firstItemId];
-
-    const results = search(item.name, { museum: new Set([firstItemId]) });
-    const museumMatch = results.find((r) => r.category === "museum" && r.id === firstItemId);
-    if (museumMatch) {
-      expect(museumMatch.completed).toBe(true);
-    }
+    const { item, itemId } = museumOnlyFixture();
+    const museumMatch = search(item.name, { museum: new Set([itemId]) }).find(
+      (result) => result.category === "museum" && result.id === itemId,
+    );
+    expect(museumMatch).toBeDefined();
+    expect(museumMatch?.completed).toBe(true);
   });
 });
 
