@@ -1,4 +1,5 @@
 import { trackerData } from "$lib/data/index.js";
+import { isVariantInScope } from "$lib/engine/animal-availability.js";
 import { isItemApplicable, isItemApplicableForAlmanac } from "$lib/engine/applicability.js";
 import { filterAvailableItems, isItemAvailable } from "$lib/engine/availability.js";
 import { getMarriedNpc } from "$lib/engine/relationships.js";
@@ -163,30 +164,8 @@ function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
           completed++;
           continue;
         }
-        // Apply seasonal filtering for incomplete variants
-        switch (ctx.availabilityMode) {
-          case "available":
-            if (
-              variant.source.type === "default" ||
-              (variant.source.availability?.type === "season" &&
-                !variant.source.availability.seasons.includes(ctx.worldState.season))
-            ) {
-              filtered++;
-            }
-            break;
-          case "everything":
-            filtered++;
-            break;
-          case "timely":
-            // timely: non-seasonal variants are not shown
-            if (
-              variant.source.type === "breed" &&
-              variant.source.availability?.type === "season" &&
-              !variant.source.availability.seasons.includes(ctx.worldState.season)
-            ) {
-              filtered++;
-            }
-            break;
+        if (isVariantInScope(variant, ctx.worldState.season, ctx.availabilityMode)) {
+          filtered++;
         }
       }
     }

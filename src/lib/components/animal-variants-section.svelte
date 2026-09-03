@@ -1,5 +1,9 @@
 <script lang="ts">
   import { trackerData } from "$lib/data/index.js";
+  import {
+    getVariantSeason,
+    isVariantInScope as isVariantInScopeEngine,
+  } from "$lib/engine/animal-availability.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
@@ -46,12 +50,6 @@
     return userState.state.completed.animals[animalId].has(variantId);
   }
 
-  function seasonForVariant(variant: AnimalVariant): Season | undefined {
-    if (variant.source.type === "breed" && variant.source.availability?.type === "season") {
-      return variant.source.availability.seasons[0];
-    }
-  }
-
   function hasDisplayableVariant(animalId: AnimalId): boolean {
     const isAnimalVisible = isSpeciesVisible(animalId);
     return someVariant(animalId, ([variantId, variant]) => {
@@ -69,18 +67,11 @@
   function isVariantInScope(variant: AnimalVariant, completed: boolean): boolean {
     if (!toolbarState.matchesSourceFilters([variant.source])) return false;
     if (completed) return true;
-
-    const season = seasonForVariant(variant);
-    const currentSeason = userState.state.worldState.season;
-
-    switch (userState.state.availabilityMode) {
-      case "available":
-        return season === currentSeason || season === undefined;
-      case "everything":
-        return true;
-      case "timely":
-        return season === currentSeason;
-    }
+    return isVariantInScopeEngine(
+      variant,
+      userState.state.worldState.season,
+      userState.state.availabilityMode,
+    );
   }
 
   function isVariantVisible(variant: AnimalVariant, completed: boolean): boolean {
@@ -136,7 +127,7 @@
           id: vid,
           name: variant.name,
           redacted: isVariantSpoilered(animalId, vid),
-          season: seasonForVariant(variant),
+          season: getVariantSeason(variant),
           sources: [variant.source],
           subtitle: totalTiers > 1 ? `Tier ${(tier + 1).toString()}` : undefined,
           tier,
