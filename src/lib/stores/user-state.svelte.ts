@@ -31,7 +31,6 @@ import type {
 
 export type AvailabilityMode = "available" | "everything" | "timely";
 export type ChildChoice = "no" | "undeclared" | "yes";
-
 export interface CompletedState {
   almanac: Set<ItemId>;
   almanacRecipes: Set<RecipeId>;
@@ -53,6 +52,9 @@ export interface CompletedState {
   skillLevels: Record<SkillId, number>;
   unlockedPerks: Set<PerkId>;
 }
+export type ImportErrorKind = "invalid-fields" | "malformed-json" | "unsupported-version";
+
+export type ImportResult = { error: ImportErrorKind; ok: false } | { ok: true };
 
 export interface MergeCounts {
   almanac: number;
@@ -133,6 +135,8 @@ const VALID_RELATIONSHIPS = new Set<string>([
   "undecided",
 ]);
 
+type DeserializeResult = { error: ImportErrorKind; ok: false } | { ok: true; state: UserState };
+
 function addStartingItems(completed: CompletedState): void {
   for (const [id, cosmetic] of recordEntries(trackerData.cosmetics)) {
     if (cosmetic.sources.some((s) => s.type === "default")) {
@@ -202,6 +206,8 @@ function createDefaultCompleted(): CompletedState {
   };
 }
 
+// ─── Store ──────────────────────────────────────────────────────────
+
 function createDefaultState(): UserState {
   return {
     availabilityMode: "available",
@@ -211,8 +217,6 @@ function createDefaultState(): UserState {
     worldState: { season: "spring", weather: "calm" },
   };
 }
-
-// ─── Store ──────────────────────────────────────────────────────────
 
 function createUserState() {
   let state = $state<UserState>(createDefaultState());
@@ -301,11 +305,11 @@ function createUserState() {
       return hasAnyProgress;
     },
     /** Import/export user state JSON (full replace) */
-    importState(json: string): boolean {
-      const imported = deserialize(json);
-      if (!imported) return false;
-      state = imported;
-      return true;
+    importState(json: string): ImportResult {
+      const result = deserialize(json);
+      if (!result.ok) return result;
+      state = result.state;
+      return { ok: true };
     },
     /** Merge imported data into current progress (union, never removes) */
     mergeFromSave(imported: Partial<CompletedState>): MergeCounts {
@@ -585,7 +589,10 @@ function createUserState() {
       const stored = safeLocalStorage.getItem(STORAGE_KEY);
       if (!stored) return;
 
-      state = deserialize(stored) ?? state;
+      const result = deserialize(stored);
+      if (result.ok) {
+        state = result.state;
+      }
     },
     setAvailabilityMode(mode: AvailabilityMode) {
       state.availabilityMode = mode;
@@ -692,10 +699,34 @@ function createUserState() {
   };
 }
 
-function deserialize(json: string): null | UserState {
+function deserialize(json: string): DeserializeResult {
+  let parsed: unknown;
   try {
-    const s = JSON.parse(json) as SerializedState;
-    if (s.version !== "1") return null;
+    parsed = JSON.parse(json);
+  } catch {
+    return { error: "malformed-json", ok: false };
+  }
+
+  if (typeof parsed !== "object" || parsed === null) {
+    return { error: "malformed-json", ok: false };
+  }
+
+  const raw = parsed as Record<string, unknown>;
+
+  if (!("version" in raw)) {
+    return { error: "invalid-fields", ok: false };
+  }
+
+  if (raw.version !== "1") {
+    return { error: "unsupported-version", ok: false };
+  }
+
+  if (!raw.completed || typeof raw.completed !== "object") {
+    return { error: "invalid-fields", ok: false };
+  }
+
+  try {
+    const s = parsed as SerializedState;
 
     // Branded ID types require casting through unknown at the serialization boundary
     const brandedSet = <T>(arr: string[]) => new SvelteSet(arr) as unknown as Set<T>;
@@ -774,14 +805,17 @@ function deserialize(json: string): null | UserState {
     backfillAnimalMaps(completed);
 
     return {
-      availabilityMode: s.availabilityMode,
-      completed,
-      showCompleted: false,
-      showSpoilers: s.showSpoilers ?? false,
-      worldState: s.worldState,
+      ok: true,
+      state: {
+        availabilityMode: s.availabilityMode,
+        completed,
+        showCompleted: false,
+        showSpoilers: s.showSpoilers ?? false,
+        worldState: s.worldState,
+      },
     };
   } catch {
-    return null;
+    return { error: "invalid-fields", ok: false };
   }
 }
 
