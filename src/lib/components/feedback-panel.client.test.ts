@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import FeedbackPanel from "$lib/components/feedback-panel.svelte";
 import { FeedbackContext } from "$lib/feedback/context.svelte.js";
 
-const toast = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn() }));
+const toast = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), warning: vi.fn() }));
 
 vi.mock("svelte-sonner", () => ({ toast }));
 
@@ -27,6 +27,7 @@ describe("FeedbackPanel", () => {
   beforeEach(() => {
     toast.mockClear();
     toast.error.mockClear();
+    toast.warning.mockClear();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     mockTurnstile();
@@ -290,6 +291,37 @@ describe("FeedbackPanel", () => {
     });
     expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("");
     expect(toast).toHaveBeenCalledOnce();
+  });
+
+  it("treats partial submission as final without exposing or duplicating contact details", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        Response.json({ emailSaved: false, issueUrl: "https://example.com/issues/1" }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    const onclose = vi.fn();
+    render(FeedbackPanel, { onclose, open: true, resetKey: "/museum" });
+
+    await fireEvent.click(screen.getByRole("checkbox", { name: /reach out if I need more deets/ }));
+    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+      target: { value: "Something is wrong" },
+    });
+    await fireEvent.input(screen.getByRole("textbox", { name: "Your email" }), {
+      target: { value: "private@example.com" },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+
+    await waitFor(() => {
+      expect(toast.warning).toHaveBeenCalledOnce();
+    });
+    const [warning] = toast.warning.mock.calls[0] as [string];
+    expect(warning).toContain("Sending it again would create a duplicate public issue");
+    expect(warning).toContain("submit a new report later");
+    expect(warning).not.toContain("comment");
+    expect(warning).not.toContain("private@example.com");
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(onclose).toHaveBeenCalledOnce();
   });
 
   it("shows the fallback copy action after a failed submission", async () => {

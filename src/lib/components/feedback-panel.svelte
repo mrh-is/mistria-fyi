@@ -358,7 +358,8 @@
       if (data.emailSaved === false) {
         toast.warning(
           "Your feedback was submitted, but your contact email could not be saved. " +
-            "You can add it as a comment on the issue instead.",
+            "Sending it again would create a duplicate public issue. " +
+            "Please submit a new report later if you still need a private reply.",
           {
             action: {
               label: "View issue",
