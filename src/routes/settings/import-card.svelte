@@ -5,17 +5,13 @@
   import * as Dialog from "$lib/components/ui/dialog/index.js";
   import { Separator } from "$lib/components/ui/separator/index.js";
   import { buildImportState, parseSaveFiles, unpackSavFile } from "$lib/engine/import-save.js";
-  import {
-    formatMergeCount,
-    MERGE_COUNT_LABELS,
-    totalMergeCounts,
-  } from "$lib/engine/merge-labels.js";
+  import { totalMergeCounts } from "$lib/engine/merge-labels.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
+  import MergeSummary from "./merge-summary.svelte";
   import SettingsCard from "./settings-card.svelte";
 
   import type { ImportResult } from "$lib/engine/import-save.js";
-  import type { MergeCountKey } from "$lib/engine/merge-labels.js";
 
   let {
     onScrollToTransfer,
@@ -286,26 +282,7 @@
 
     {#if importResult}
       <div class="mt-3 rounded-md bg-green-50 p-3 dark:bg-green-950">
-        <p class="text-base font-medium text-green-800 dark:text-green-200">
-          {#if totalImported > 0}
-            Imported from {filesUsed.join(", ")}
-          {:else}
-            No new data to import
-          {/if}
-        </p>
-        {#if totalImported > 0}
-          <ul class="mt-1 space-y-0.5 text-sm text-muted-foreground">
-            {#each Object.keys(MERGE_COUNT_LABELS) as key (key)}
-              {@const text = formatMergeCount(
-                key as MergeCountKey,
-                importResult.counts[key as MergeCountKey],
-              )}
-              {#if text}
-                <li>{text}</li>
-              {/if}
-            {/each}
-          </ul>
-        {/if}
+        <MergeSummary counts={importResult.counts} {filesUsed} kind="import" />
 
         {#if importResult.warnings.length > 0}
           <Separator class="my-2" />

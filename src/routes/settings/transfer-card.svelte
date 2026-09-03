@@ -5,18 +5,13 @@
 
   import { Icon } from "$lib/components/icon/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
-  import {
-    formatMergeCount,
-    MERGE_COUNT_LABELS,
-    totalMergeCounts,
-  } from "$lib/engine/merge-labels.js";
   import { decodeTransferPayload, encodeTransferPayload } from "$lib/engine/transfer.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
+  import MergeSummary from "./merge-summary.svelte";
   import SettingsCard from "./settings-card.svelte";
   import { closeScanner } from "./settings-effects.js";
 
-  import type { MergeCountKey } from "$lib/engine/merge-labels.js";
   import type { MergeCounts } from "$lib/stores/user-state.svelte.js";
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
@@ -150,8 +145,6 @@
       transferError = `Invalid QR code: ${err instanceof Error ? err.message : "could not decode"}`;
     }
   }
-
-  let totalMerged = $derived(transferResult ? totalMergeCounts(transferResult) : 0);
 </script>
 
 <SettingsCard
@@ -234,26 +227,7 @@
     <!-- Success -->
     {#if transferResult}
       <div class="rounded-md bg-green-50 p-3 dark:bg-green-950">
-        {#if totalMerged > 0}
-          <p class="text-base font-medium text-green-800 dark:text-green-200">
-            Transferred {totalMerged} items!
-          </p>
-          <ul class="mt-1 space-y-0.5 text-sm text-muted-foreground">
-            {#each Object.keys(MERGE_COUNT_LABELS) as key (key)}
-              {@const text = formatMergeCount(
-                key as MergeCountKey,
-                transferResult[key as MergeCountKey],
-              )}
-              {#if text}
-                <li>{text}</li>
-              {/if}
-            {/each}
-          </ul>
-        {:else}
-          <p class="text-base font-medium text-green-800 dark:text-green-200">
-            QR code scanned successfully — no new items to add.
-          </p>
-        {/if}
+        <MergeSummary counts={transferResult} kind="transfer" />
       </div>
     {/if}
 
