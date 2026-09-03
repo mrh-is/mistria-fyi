@@ -3,13 +3,16 @@
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
 
+import {
+  fetchRuntimeRequest,
+  isEligibleForRuntimeCaching,
+} from "$lib/engine/service-worker-cache.js";
 import { build, files, version } from "$service-worker";
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
 const CACHE = `cache-${version}`;
 const ASSETS = [...build, ...files];
-const MAX_RUNTIME_ENTRIES = 50;
 
 sw.addEventListener("install", (event) => {
   event.waitUntil(
@@ -31,23 +34,6 @@ sw.addEventListener("activate", (event) => {
   );
 });
 
-async function evictOldestEntries(cache: Cache): Promise<void> {
-  const keys = await cache.keys();
-  const runtimeKeys = keys.filter((req) => !ASSETS.includes(new URL(req.url).pathname));
-  const excess = runtimeKeys.length - MAX_RUNTIME_ENTRIES;
-  if (excess > 0) {
-    for (const key of runtimeKeys.slice(0, excess)) {
-      await cache.delete(key);
-    }
-  }
-}
-
-function isEligibleForCaching(url: URL): boolean {
-  if (url.origin !== sw.location.origin) return false;
-  if (url.pathname.startsWith("/api/")) return false;
-  return true;
-}
-
 sw.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
@@ -57,30 +43,17 @@ sw.addEventListener("fetch", (event) => {
 
   if (isAsset) {
     event.respondWith(caches.match(event.request).then((r) => r ?? fetch(event.request)));
-  } else if (isEligibleForCaching(url)) {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          if (response.ok) {
-            const clone = response.clone();
-            void caches.open(CACHE).then(async (cache) => {
-              await cache.put(event.request, clone);
-              await evictOldestEntries(cache);
-            });
-          }
-          return response;
-        })
-        .catch(() =>
-          caches
-            .match(event.request)
-            .then(
-              (r) =>
-                r ??
-                (event.request.mode === "navigate" ? caches.match("/offline.html") : undefined),
-            )
-            .then((r) => r ?? Response.error()),
-        ),
+  } else if (isEligibleForRuntimeCaching(url, sw.location.origin)) {
+    const response = caches.open(CACHE).then((cache) =>
+      fetchRuntimeRequest(event.request, {
+        assetPaths: ASSETS,
+        cache,
+        fetcher: fetch,
+        matchCache: (request) => caches.match(request),
+      }),
     );
+    event.respondWith(response);
+    event.waitUntil(response.then(() => undefined));
   } else {
     event.respondWith(fetch(event.request));
   }
