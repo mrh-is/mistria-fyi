@@ -206,6 +206,73 @@ describe("result cap", () => {
   });
 });
 
+// ─── Ranking before truncation ────────────────────────────────────
+
+describe("ranking before truncation", () => {
+  it("includes later-category prefix matches even when earlier categories fill the cap", () => {
+    const results = searchItems(
+      "a",
+      makeCompleted(),
+      defaultWorld,
+      makeProgressionState({ showSpoilers: true }),
+    );
+
+    const categories = new Set(results.map((r) => r.category));
+    expect(
+      categories.size,
+      "broad query should return results from more than one category",
+    ).toBeGreaterThan(1);
+  });
+
+  it("ranks prefix matches from any category above substring-only matches", () => {
+    const [npcId, npc] = recordEntries(trackerData.npcs)[0];
+    const prefix = npc.name.slice(0, 3).toLowerCase();
+
+    const results = searchItems(
+      prefix,
+      makeCompleted(),
+      defaultWorld,
+      makeProgressionState({ showSpoilers: true }),
+    );
+
+    const npcResult = results.find((r) => r.category === "npcs" && r.id === npcId);
+    if (npcResult) {
+      const npcIndex = results.indexOf(npcResult);
+      const laterSubstringOnly = results.slice(npcIndex + 1).filter((r) => {
+        const name = (r.fullName ?? r.name).toLowerCase();
+        return !name.startsWith(prefix);
+      });
+      expect(laterSubstringOnly.length).toBeGreaterThanOrEqual(0);
+
+      const earlierSubstringOnly = results.slice(0, npcIndex).filter((r) => {
+        const name = (r.fullName ?? r.name).toLowerCase();
+        return !name.startsWith(prefix);
+      });
+      expect(
+        earlierSubstringOnly.length,
+        "no substring-only match should rank above a prefix match",
+      ).toBe(0);
+    }
+  });
+
+  it("collects candidates from all categories before truncating to cap", () => {
+    const results = searchItems(
+      "e",
+      makeCompleted(),
+      defaultWorld,
+      makeProgressionState({ showSpoilers: true }),
+    );
+
+    expect(results.length).toBeLessThanOrEqual(50);
+
+    const categories = new Set(results.map((r) => r.category));
+    expect(
+      categories.size,
+      "results for a very broad query should span multiple categories after ranking",
+    ).toBeGreaterThan(1);
+  });
+});
+
 // ─── Cross-category coverage ───────────────────────────────────────
 
 describe("cross-category coverage", () => {
