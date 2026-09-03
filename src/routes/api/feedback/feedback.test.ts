@@ -335,21 +335,33 @@ describe("POST /api/feedback", () => {
     });
   });
 
-  it("succeeds even when KV write fails", async () => {
+  it("reports emailSaved: true when KV write succeeds", async () => {
+    const fetchMock = mockGitHubSuccess();
+    const request = makeRequest({ ...validPayload, email: "user@example.com" });
+    const response = await callPost(request, { fetchMock, platform: mockPlatform() });
+
+    expect(response.status).toBe(200);
+    const data = (await response.json()) as { emailSaved?: boolean; issueUrl: string };
+    expect(data.emailSaved).toBe(true);
+    expect(data.issueUrl).toBe("PR 99 (private beta)");
+  });
+
+  it("reports emailSaved: false when KV write fails", async () => {
     const fetchMock = mockGitHubSuccess();
     const request = makeRequest({ ...validPayload, email: "user@example.com" });
     const platform = mockPlatform({ kvPutFail: true });
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
     const response = await callPost(request, { fetchMock, platform });
 
     expect(response.status).toBe(200);
-    const data = (await response.json()) as { issueUrl: string };
-    expect(data).toEqual({ issueUrl: "PR 99 (private beta)" });
+    const data = (await response.json()) as { emailSaved?: boolean; issueUrl: string };
+    expect(data.emailSaved).toBe(false);
   });
 
-  it("logs a missing KV binding without failing an accepted submission", async () => {
+  it("reports emailSaved: false when KV binding is missing", async () => {
     const fetchMock = mockGitHubSuccess();
     const request = makeRequest({ ...validPayload, email: "user@example.com" });
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
     const platform = {
       env: {
         GITHUB_FEEDBACK_TOKEN: "ghp_test_token",
@@ -360,7 +372,18 @@ describe("POST /api/feedback", () => {
     const response = await callPost(request, { fetchMock, platform });
 
     expect(response.status).toBe(200);
-    expect(consoleError).toHaveBeenCalledWith("KV write failure for issue", 99, expect.any(Error));
+    const data = (await response.json()) as { emailSaved?: boolean; issueUrl: string };
+    expect(data.emailSaved).toBe(false);
+  });
+
+  it("omits emailSaved when no email is provided", async () => {
+    const fetchMock = mockGitHubSuccess();
+    const request = makeRequest(validPayload);
+    const response = await callPost(request, { fetchMock, platform: mockPlatform() });
+
+    expect(response.status).toBe(200);
+    const data = (await response.json()) as { emailSaved?: boolean; issueUrl: string };
+    expect(data.emailSaved).toBeUndefined();
   });
 
   it("truncates long messages in the issue title", async () => {

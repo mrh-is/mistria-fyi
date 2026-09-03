@@ -388,6 +388,7 @@ export const POST: RequestHandler = async ({ platform, request, url }) => {
     clearTimeout(timeout);
   }
 
+  let emailSaved: boolean | undefined;
   if (payload.email) {
     try {
       const emailStore = platform.env.FEEDBACK_EMAIL_STORE as
@@ -399,12 +400,14 @@ export const POST: RequestHandler = async ({ platform, request, url }) => {
         String(issueNumber),
         JSON.stringify({ email: payload.email, timestamp: new Date().toISOString() }),
       );
+      emailSaved = true;
     } catch (err) {
       console.error("KV write failure for issue", issueNumber, err);
+      emailSaved = false;
     }
   }
 
-  return json({ issueUrl }, { headers: corsHeaders(allowedOrigin) });
+  return json({ emailSaved, issueUrl }, { headers: corsHeaders(allowedOrigin) });
 };
 
 function corsHeaders(allowedOrigin: string): Record<string, string> {
