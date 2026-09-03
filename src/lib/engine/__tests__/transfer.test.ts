@@ -14,6 +14,7 @@ import type {
   NpcRelationship,
   PetCosmeticSetId,
   PetSkinId,
+  RecipeId,
   SkillId,
 } from "$lib/types/tracker-data.js";
 
@@ -61,9 +62,9 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
   };
 }
 
-describe("transfer codec v7", () => {
-  it("has version 7", () => {
-    expect(TRANSFER_VERSION).toBe(7);
+describe("transfer codec v8", () => {
+  it("has version 8", () => {
+    expect(TRANSFER_VERSION).toBe(8);
   });
 
   it("round-trips unlockedPerks", async () => {
@@ -165,6 +166,14 @@ describe("transfer codec v7", () => {
     }
   });
 
+  it("round-trips almanacRecipes", async () => {
+    const recipeIds = (Object.keys(trackerData.recipes) as RecipeId[]).slice(0, 3);
+    const completed = makeCompleted({ almanacRecipes: new Set(recipeIds) });
+    const payload = await encodeTransferPayload(completed);
+    const decoded = await decodeTransferPayload(payload);
+    expect(decoded.almanacRecipes).toEqual(new Set(recipeIds));
+  });
+
   it("decodes v1 payload without perks, relationships, pet, date, or progression fields", async () => {
     const decoded = await decodeTransferPayload(V1_FIXTURE);
     expect(decoded.unlockedPerks).toEqual(new Set());
@@ -175,6 +184,7 @@ describe("transfer codec v7", () => {
     expect(decoded.hasUpperFloor).toBe(false);
     expect(decoded.reachedSeason).toBe("spring");
     expect(decoded.childChoice).toBe("undeclared");
+    expect(decoded.almanacRecipes).toEqual(new Set());
     expect(decoded.mines?.floor).toBe(5);
     expect(decoded.npcLevels?.["adeline" as NpcId]).toBe(3);
     expect(decoded.renown).toBe(10);
