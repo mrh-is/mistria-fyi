@@ -235,7 +235,7 @@ test.describe("@critical stateful accessibility", () => {
       mimeType: "application/json",
       name: "invalid-backup.json",
     });
-    await expect(page.getByRole("alert")).toContainText("invalid or could not be restored");
+    await expect(page.getByRole("alert")).toContainText("not valid JSON");
     await analyzeAccessibility(
       page,
       { route: "/settings", state: "backup-restore-error", theme: "light" },
