@@ -61,8 +61,12 @@ ancestor namespace with provenance, which lets a nested field report its source 
 The evaluator indexes every item ID before resolving values. It mutates `value.bin` and
 `value.store` in the parsed tree, resolves dependencies recursively, rejects duplicate IDs, cycles,
 missing dependencies, malformed recipes, unsupported expressions, and unresolved strings. The
-supported forms are `self.recipe * multiplier` and `item_id.store * count`. Recipe valuation uses an
-ingredient’s `bin` value first, then its `store` value, and preserves a numeric zero.
+supported forms are `self.recipe * <multiplier>` and `<item_id>.store * <count>`. The multiplier
+accepts unsigned integer (`1`, `10`) and decimal (`1.5`, `0.75`) literals; both sides of the decimal
+point are required, so `.5` and `2.` are rejected. Signs (`-2`, `+2`), exponent notation (`1.2e3`),
+zero (`0`, `0.0`), negative values, and non-numeric tokens are all rejected. The count in a store
+reference accepts unsigned positive integers only. Recipe valuation uses an ingredient’s `bin` value
+first, then its `store` value, and preserves a numeric zero.
 
 ## Vocabulary
 
@@ -278,14 +282,8 @@ until a separately reviewed change adopts them.
 - **Verification:** Every documented invariant has a test whose name and assertion agree, and the
   unit suite passes without `pipeline/input/assets/`.
 
-### Tighten expression grammar
+### ~~Tighten expression grammar~~ _(done — #190)_
 
-- **Current behavior:** `evaluate.ts` matches decimal multipliers with `([\d.]+)` and passes the
-  result to `parseFloat`, which can accept a malformed prefix such as `1.2.3`.
-- **Affected files:** `pipeline/src/evaluate.ts` and synthetic evaluator tests.
-- **Desired result:** Define and enforce the exact numeric literal grammar supported by TOML value
-  expressions, rejecting malformed or non-finite multipliers before evaluation.
-- **Constraints:** Confirm every supported-fixture expression conforms. Keep the two supported forms
-  and rounding semantics unchanged.
-- **Verification:** Tests accept fixture integer and decimal multipliers, and reject repeated
-  decimal points, empty numeric tokens, non-finite values, and trailing text with source context.
+Implemented in PR #194. The evaluator now uses strict regexes (`\d+(?:\.\d+)?` for recipe
+multipliers, `\d+` for store counts) and rejects zero, negative, non-finite, & malformed literals
+with source-context errors. The exact accepted grammar is documented in the evaluator section above.

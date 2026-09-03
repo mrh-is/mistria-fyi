@@ -99,6 +99,8 @@ describe("evaluateExpressions", () => {
   });
 
   it.each([
+    { desc: "zero integer", multiplier: "0" },
+    { desc: "zero decimal", multiplier: "0.0" },
     { desc: "multiple decimal points", multiplier: "1.2.3" },
     { desc: "scientific notation", multiplier: "1.2e3" },
     { desc: "non-numeric", multiplier: "abc" },
