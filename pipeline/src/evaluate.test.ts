@@ -70,6 +70,63 @@ describe("evaluateExpressions", () => {
     );
   });
 
+  it.each([
+    { expected: 16, multiplier: "2" },
+    { expected: 80, multiplier: "10" },
+    { expected: 12, multiplier: "1.5" },
+    { expected: 6, multiplier: "0.75" },
+  ])("accepts valid recipe multiplier $multiplier", ({ expected, multiplier }) => {
+    const assetsDir = createAssetsFixture({
+      "items/other/values.toml": `
+        [basic_wood.value]
+        bin = 4
+
+        [crafted]
+        recipe = [{ count = 2, item = "basic_wood" }]
+
+        [crafted.value]
+        bin = "self.recipe * ${multiplier}"
+      `,
+    });
+    const parsed = parseFiddle(assetsDir);
+
+    evaluateExpressions(parsed.data);
+
+    const items = (
+      parsed.data.items as Record<string, Record<string, Record<string, Record<string, unknown>>>>
+    ).other.values;
+    expect((items.crafted.value as Record<string, unknown>).bin).toBe(expected);
+  });
+
+  it.each([
+    { desc: "multiple decimal points", multiplier: "1.2.3" },
+    { desc: "scientific notation", multiplier: "1.2e3" },
+    { desc: "non-numeric", multiplier: "abc" },
+    { desc: "negative sign", multiplier: "-2" },
+    { desc: "positive sign", multiplier: "+2" },
+    { desc: "leading decimal point", multiplier: ".5" },
+    { desc: "trailing decimal point", multiplier: "2." },
+    { desc: "empty string", multiplier: "" },
+  ])("rejects malformed recipe multiplier: $desc ($multiplier)", ({ multiplier }) => {
+    const assetsDir = createAssetsFixture({
+      "items/other/values.toml": `
+        [basic_wood.value]
+        bin = 4
+
+        [crafted]
+        recipe = [{ count = 2, item = "basic_wood" }]
+
+        [crafted.value]
+        bin = "self.recipe * ${multiplier}"
+      `,
+    });
+    const parsed = parseFiddle(assetsDir);
+
+    expect(() => {
+      evaluateExpressions(parsed.data);
+    }).toThrow(/items\/other\/values\.toml/);
+  });
+
   it("rejects duplicate item IDs with both source files", () => {
     const assetsDir = createAssetsFixture({
       "items/other/first.toml": "[duplicate.value]\nbin = 1",

@@ -160,9 +160,16 @@ function resolveExpression(
   // Supported inline forms are `self.recipe * N`, which resolves recipe cost, and
   // `<item_id>.store * N`, which multiplies a referenced store value. No other forms are
   // accepted.
-  const selfRecipeMatch = /^self\.recipe\s*\*\s*([\d.]+)$/.exec(expression);
+  const selfRecipeMatch = /^self\.recipe\s*\*\s*(\d+(?:\.\d+)?)$/.exec(expression);
   if (selfRecipeMatch) {
-    const multiplier = parseFloat(selfRecipeMatch[1]);
+    const multiplier = Number(selfRecipeMatch[1]);
+    if (!Number.isFinite(multiplier) || multiplier <= 0) {
+      throw itemError(
+        context,
+        itemId,
+        `Invalid recipe multiplier "${selfRecipeMatch[1]}" in expression "${expression}" on item "${itemId}"`,
+      );
+    }
     const recipeCost = calculateRecipeCost(itemId, item, context);
     return Math.round(recipeCost * multiplier);
   }
