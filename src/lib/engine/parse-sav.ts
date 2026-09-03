@@ -1,10 +1,20 @@
 import type { SaveBundle } from "./import-save.js";
 
-/** Maximum compressed input size: 50 MB. Normal saves are a few MB compressed. */
-export const MAX_COMPRESSED_SIZE = 50 * 1024 * 1024;
+/** Maximum compressed input size: over 27x the measured 298,271-byte late-game fixture. */
+export const MAX_COMPRESSED_SIZE = 8 * 1024 * 1024;
 
-/** Maximum decompressed output size: 500 MB. Real saves decompress to tens of MB. */
-export const MAX_DECOMPRESSED_SIZE = 500 * 1024 * 1024;
+/** Maximum output size: over 20x the measured 3,216,869-byte late-game fixture. */
+export const MAX_DECOMPRESSED_SIZE = 64 * 1024 * 1024;
+
+interface ParseSavLimits {
+  maxCompressedSize: number;
+  maxDecompressedSize: number;
+}
+
+const DEFAULT_LIMITS: ParseSavLimits = {
+  maxCompressedSize: MAX_COMPRESSED_SIZE,
+  maxDecompressedSize: MAX_DECOMPRESSED_SIZE,
+};
 
 /**
  * Parse a Fields of Mistria .sav file entirely in the browser.
@@ -16,21 +26,26 @@ export const MAX_DECOMPRESSED_SIZE = 500 * 1024 * 1024;
  *
  * We extract the "player", "gamedata", and "quests" entries and parse them as JSON.
  */
-export async function parseSavFile(file: File): Promise<SaveBundle> {
-  const compressed = await file.arrayBuffer();
-
-  if (compressed.byteLength > MAX_COMPRESSED_SIZE) {
+export async function parseSavFile(
+  file: File,
+  limits: ParseSavLimits = DEFAULT_LIMITS,
+): Promise<SaveBundle> {
+  if (file.size > limits.maxCompressedSize) {
     throw new Error(
-      `Save file is too large (${formatSize(compressed.byteLength)}). ` +
-        `Maximum supported size is ${formatSize(MAX_COMPRESSED_SIZE)}.`,
+      `Save file is too large (${formatSize(file.size)}). ` +
+        `Maximum supported size is ${formatSize(limits.maxCompressedSize)}.`,
     );
   }
 
-  const decompressed = await decompress(compressed);
+  const compressed = await file.arrayBuffer();
+  const decompressed = await decompress(compressed, limits.maxDecompressedSize);
   return extractBundle(decompressed);
 }
 
-async function decompress(compressed: ArrayBuffer): Promise<Uint8Array> {
+async function decompress(
+  compressed: ArrayBuffer,
+  maxDecompressedSize: number,
+): Promise<Uint8Array> {
   const ds = new DecompressionStream("deflate");
   const writer = ds.writable.getWriter();
   const reader = ds.readable.getReader();
@@ -50,11 +65,11 @@ async function decompress(compressed: ArrayBuffer): Promise<Uint8Array> {
       if (done) break;
       chunks.push(value);
       totalLen += value.length;
-      if (totalLen > MAX_DECOMPRESSED_SIZE) {
+      if (totalLen > maxDecompressedSize) {
         await reader.cancel();
         throw new Error(
           `Decompressed save data exceeds the maximum supported size ` +
-            `(${formatSize(MAX_DECOMPRESSED_SIZE)}). The file may be corrupt.`,
+            `(${formatSize(maxDecompressedSize)}). The file may be corrupt.`,
         );
       }
     }

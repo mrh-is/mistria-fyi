@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { MAX_COMPRESSED_SIZE, MAX_DECOMPRESSED_SIZE, parseSavFile } from "../parse-sav.js";
+import { MAX_COMPRESSED_SIZE, parseSavFile } from "../parse-sav.js";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 
@@ -164,19 +164,17 @@ describe("parseSavFile", () => {
 
 describe("parseSavFile size bounds", () => {
   it("rejects a compressed file exceeding MAX_COMPRESSED_SIZE", async () => {
-    // Create a File whose raw bytes exceed the compressed limit.
-    // We don't need valid deflate content; the size check happens before decompression.
-    const oversized = new Uint8Array(MAX_COMPRESSED_SIZE + 1);
-    const file = new File([oversized], "huge.sav");
+    const file = new File([], "huge.sav");
+    Object.defineProperty(file, "size", { value: MAX_COMPRESSED_SIZE + 1 });
+    const arrayBuffer = vi.spyOn(file, "arrayBuffer");
 
     await expect(parseSavFile(file)).rejects.toThrow("Save file is too large");
+    expect(arrayBuffer).not.toHaveBeenCalled();
   });
 
   it("rejects decompressed data exceeding MAX_DECOMPRESSED_SIZE", async () => {
-    // Compress a buffer of zeros that is small when compressed but enormous when expanded.
-    // We need the compressed size to stay under MAX_COMPRESSED_SIZE but the decompressed
-    // size to exceed MAX_DECOMPRESSED_SIZE.
-    const expandedSize = MAX_DECOMPRESSED_SIZE + 1024;
+    const testDecompressedLimit = 1024;
+    const expandedSize = testDecompressedLimit + 1;
     const raw = new Uint8Array(expandedSize); // all zeros — compresses extremely well
     const file = await compressToFile(raw);
 
@@ -184,9 +182,12 @@ describe("parseSavFile size bounds", () => {
     const compressedBlob = await file.arrayBuffer();
     expect(compressedBlob.byteLength).toBeLessThan(MAX_COMPRESSED_SIZE);
 
-    await expect(parseSavFile(file)).rejects.toThrow(
-      "Decompressed save data exceeds the maximum supported size",
-    );
+    await expect(
+      parseSavFile(file, {
+        maxCompressedSize: MAX_COMPRESSED_SIZE,
+        maxDecompressedSize: testDecompressedLimit,
+      }),
+    ).rejects.toThrow("Decompressed save data exceeds the maximum supported size");
   });
 
   it("accepts a valid save well within both limits", async () => {
