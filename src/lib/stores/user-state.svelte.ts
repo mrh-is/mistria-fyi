@@ -127,6 +127,7 @@ interface SerializedState {
 const STORAGE_KEY = "mistria-fyi-v1";
 
 const VALID_CHILD_CHOICES = new Set<string>(["no", "undeclared", "yes"]);
+const VALID_AVAILABILITY_MODES = new Set<string>(["available", "everything", "timely"]);
 const VALID_RELATIONSHIPS = new Set<string>([
   "married",
   "platonic",
@@ -134,6 +135,9 @@ const VALID_RELATIONSHIPS = new Set<string>([
   "romantic",
   "undecided",
 ]);
+const VALID_QUEST_STATES = new Set<string>(["completed", "none", "obtained"]);
+const VALID_SEASONS = new Set<string>(["fall", "spring", "summer", "winter"]);
+const VALID_WEATHER = new Set<string>(["calm", "heavy_inclement", "inclement", "special"]);
 
 type DeserializeResult = { error: ImportErrorKind; ok: false } | { ok: true; state: UserState };
 
@@ -721,12 +725,12 @@ function deserialize(json: string): DeserializeResult {
     return { error: "unsupported-version", ok: false };
   }
 
-  if (!raw.completed || typeof raw.completed !== "object") {
+  if (!isSerializedState(raw)) {
     return { error: "invalid-fields", ok: false };
   }
 
   try {
-    const s = parsed as SerializedState;
+    const s = raw;
 
     // Branded ID types require casting through unknown at the serialization boundary
     const brandedSet = <T>(arr: string[]) => new SvelteSet(arr) as unknown as Set<T>;
@@ -819,13 +823,99 @@ function deserialize(json: string): DeserializeResult {
   }
 }
 
-// ─── Serialization helpers ───────────────────────────────────────────
-
 function filterRecord<V>(
   record: Record<string, V>,
   predicate: (v: V) => boolean,
 ): Record<string, V> {
   return Object.fromEntries(Object.entries(record).filter(([, v]) => predicate(v)));
+}
+
+function isEnumValue(value: unknown, validValues: Set<string>): value is string {
+  return typeof value === "string" && validValues.has(value);
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isOptionalEnumRecord(value: unknown, validValues: Set<string>): boolean {
+  return (
+    value === undefined ||
+    (isRecord(value) && Object.values(value).every((entry) => isEnumValue(entry, validValues)))
+  );
+}
+
+function isOptionalNumberRecord(value: unknown): boolean {
+  return value === undefined || (isRecord(value) && Object.values(value).every(isFiniteNumber));
+}
+
+function isOptionalStringArray(value: unknown): boolean {
+  return value === undefined || isStringArray(value);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isSerializedState(value: unknown): value is SerializedState {
+  if (!isRecord(value)) return false;
+  const completed = value.completed;
+  const worldState = value.worldState;
+  if (!isRecord(completed) || !isRecord(worldState)) return false;
+
+  if (!isEnumValue(value.availabilityMode, VALID_AVAILABILITY_MODES)) return false;
+  if (
+    !isEnumValue(worldState.season, VALID_SEASONS) ||
+    !isEnumValue(worldState.weather, VALID_WEATHER)
+  ) {
+    return false;
+  }
+  if (value.showSpoilers !== undefined && typeof value.showSpoilers !== "boolean") return false;
+
+  if (!isStringArray(completed.almanac)) return false;
+  if (!isStringArrayRecord(completed.animalCosmetics)) return false;
+  if (!isStringArrayRecord(completed.animals)) return false;
+  if (!isStringArray(completed.cosmetics)) return false;
+  if (!isRecord(completed.mines)) return false;
+  if (!isFiniteNumber(completed.mines.floor) || !isStringArray(completed.mines.spells)) {
+    return false;
+  }
+  if (!isStringArray(completed.museum)) return false;
+  if (!isFiniteNumber(completed.renown)) return false;
+
+  return (
+    isOptionalStringArray(completed.almanacRecipes) &&
+    (completed.childChoice === undefined ||
+      isEnumValue(completed.childChoice, VALID_CHILD_CHOICES)) &&
+    isOptionalStringArray(completed.dates) &&
+    (completed.hasUpperFloor === undefined || typeof completed.hasUpperFloor === "boolean") &&
+    (completed.marriedNpc === undefined ||
+      completed.marriedNpc === null ||
+      typeof completed.marriedNpc === "string") &&
+    isOptionalNumberRecord(completed.npcLevels) &&
+    isOptionalEnumRecord(completed.npcRelationships, VALID_RELATIONSHIPS) &&
+    isOptionalStringArray(completed.npcs) &&
+    isOptionalStringArray(completed.petCosmetics) &&
+    isOptionalStringArray(completed.petSkins) &&
+    isOptionalStringArray(completed.quests) &&
+    isOptionalEnumRecord(completed.questStates, VALID_QUEST_STATES) &&
+    (completed.reachedSeason === undefined ||
+      isEnumValue(completed.reachedSeason, VALID_SEASONS)) &&
+    isOptionalStringArray(completed.romanticNpcs) &&
+    isOptionalNumberRecord(completed.skillLevels) &&
+    isOptionalStringArray(completed.skills) &&
+    isOptionalStringArray(completed.unlockedPerks)
+  );
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((entry) => typeof entry === "string");
+}
+
+// ─── Serialization helpers ───────────────────────────────────────────
+
+function isStringArrayRecord(value: unknown): value is Record<string, string[]> {
+  return isRecord(value) && Object.values(value).every(isStringArray);
 }
 
 function normalizeAlmanacIds(ids: string[]): Set<ItemId> {
