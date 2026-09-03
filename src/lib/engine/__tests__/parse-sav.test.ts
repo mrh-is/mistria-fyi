@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseSavFile } from "../parse-sav.js";
+import { MAX_COMPRESSED_SIZE, MAX_DECOMPRESSED_SIZE, parseSavFile } from "../parse-sav.js";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 
@@ -157,5 +157,51 @@ describe("parseSavFile", () => {
     const bundle = await parseSavFile(file);
 
     expect(bundle.player).toEqual(player);
+  });
+});
+
+// ─── Size bounds ────────────────────────────────────────────────────
+
+describe("parseSavFile size bounds", () => {
+  it("rejects a compressed file exceeding MAX_COMPRESSED_SIZE", async () => {
+    // Create a File whose raw bytes exceed the compressed limit.
+    // We don't need valid deflate content; the size check happens before decompression.
+    const oversized = new Uint8Array(MAX_COMPRESSED_SIZE + 1);
+    const file = new File([oversized], "huge.sav");
+
+    await expect(parseSavFile(file)).rejects.toThrow("Save file is too large");
+  });
+
+  it("rejects decompressed data exceeding MAX_DECOMPRESSED_SIZE", async () => {
+    // Compress a buffer of zeros that is small when compressed but enormous when expanded.
+    // We need the compressed size to stay under MAX_COMPRESSED_SIZE but the decompressed
+    // size to exceed MAX_DECOMPRESSED_SIZE.
+    const expandedSize = MAX_DECOMPRESSED_SIZE + 1024;
+    const raw = new Uint8Array(expandedSize); // all zeros — compresses extremely well
+    const file = await compressToFile(raw);
+
+    // Verify our test data actually fits under the compressed limit
+    const compressedBlob = await file.arrayBuffer();
+    expect(compressedBlob.byteLength).toBeLessThan(MAX_COMPRESSED_SIZE);
+
+    await expect(parseSavFile(file)).rejects.toThrow(
+      "Decompressed save data exceeds the maximum supported size",
+    );
+  });
+
+  it("accepts a valid save well within both limits", async () => {
+    const raw = buildRawSav({ player: { name: "Normal" } });
+    const file = await compressToFile(raw);
+    const bundle = await parseSavFile(file);
+
+    expect(bundle.player).toEqual({ name: "Normal" });
+  });
+
+  it("throws a meaningful error for corrupt non-deflate data", async () => {
+    // Random bytes that are not valid deflate
+    const garbage = new Uint8Array([0xde, 0xad, 0xbe, 0xef, 0x01, 0x02, 0x03, 0x04]);
+    const file = new File([garbage], "corrupt.sav");
+
+    await expect(parseSavFile(file)).rejects.toThrow();
   });
 });

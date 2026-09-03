@@ -1,5 +1,11 @@
 import type { SaveBundle } from "./import-save.js";
 
+/** Maximum compressed input size: 50 MB. Normal saves are a few MB compressed. */
+export const MAX_COMPRESSED_SIZE = 50 * 1024 * 1024;
+
+/** Maximum decompressed output size: 500 MB. Real saves decompress to tens of MB. */
+export const MAX_DECOMPRESSED_SIZE = 500 * 1024 * 1024;
+
 /**
  * Parse a Fields of Mistria .sav file entirely in the browser.
  *
@@ -12,6 +18,14 @@ import type { SaveBundle } from "./import-save.js";
  */
 export async function parseSavFile(file: File): Promise<SaveBundle> {
   const compressed = await file.arrayBuffer();
+
+  if (compressed.byteLength > MAX_COMPRESSED_SIZE) {
+    throw new Error(
+      `Save file is too large (${formatSize(compressed.byteLength)}). ` +
+        `Maximum supported size is ${formatSize(MAX_COMPRESSED_SIZE)}.`,
+    );
+  }
+
   const decompressed = await decompress(compressed);
   return extractBundle(decompressed);
 }
@@ -36,6 +50,13 @@ async function decompress(compressed: ArrayBuffer): Promise<Uint8Array> {
       if (done) break;
       chunks.push(value);
       totalLen += value.length;
+      if (totalLen > MAX_DECOMPRESSED_SIZE) {
+        await reader.cancel();
+        throw new Error(
+          `Decompressed save data exceeds the maximum supported size ` +
+            `(${formatSize(MAX_DECOMPRESSED_SIZE)}). The file may be corrupt.`,
+        );
+      }
     }
     return { chunks, totalLen };
   };
@@ -115,6 +136,13 @@ function extractBundle(data: Uint8Array): SaveBundle {
   }
 
   return bundle;
+}
+
+/** Format a byte count as a human-readable size string. */
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 /** Read a u64 little-endian value as a JS number (safe for lengths up to 2^53). */
