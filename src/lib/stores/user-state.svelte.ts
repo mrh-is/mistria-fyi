@@ -158,6 +158,19 @@ function addStartingItems(completed: CompletedState): void {
   }
 }
 
+/**
+ * Ensures every animal in trackerData has an entry in both the animals and
+ * animalCosmetics records. Deserialized or merged state may predate newly added
+ * animals; this backfills empty sets so downstream code can access maps without
+ * guarding missing keys.
+ */
+function backfillAnimalMaps(completed: CompletedState): void {
+  for (const animalId of recordKeys(trackerData.animals)) {
+    completed.animals[animalId] ??= new SvelteSet<AnimalVariantId>();
+    completed.animalCosmetics[animalId] ??= new SvelteSet<CosmeticId>();
+  }
+}
+
 function createDefaultCompleted(): CompletedState {
   const animals: Record<string, Set<AnimalVariantId>> = {};
   const animalCosmetics: Record<string, Set<CosmeticId>> = {};
@@ -542,6 +555,9 @@ function createUserState() {
         }
       }
 
+      // Backfill animal maps for any animals added since the imported state was created
+      backfillAnimalMaps(state.completed);
+
       return counts;
     },
     get progressionState(): UserProgressionState {
@@ -711,39 +727,40 @@ function deserialize(json: string): null | UserState {
         ? s.completed.childChoice
         : "undeclared";
 
+    const completed: CompletedState = {
+      almanac: normalizeAlmanacIds(s.completed.almanac),
+      almanacRecipes: brandedSet<RecipeId>(s.completed.almanacRecipes ?? []),
+      animalCosmetics: Object.fromEntries(
+        Object.entries(s.completed.animalCosmetics).map(([k, v]) => [k, brandedSet<CosmeticId>(v)]),
+      ),
+      animals: Object.fromEntries(
+        Object.entries(s.completed.animals).map(([k, v]) => [k, brandedSet<AnimalVariantId>(v)]),
+      ),
+      childChoice,
+      cosmetics: brandedSet<CosmeticId>(s.completed.cosmetics),
+      dates: brandedSet<DateId>(s.completed.dates ?? []),
+      hasUpperFloor: s.completed.hasUpperFloor ?? false,
+      mines: {
+        floor: s.completed.mines.floor,
+        spells: brandedSet<SpellId>(s.completed.mines.spells),
+      },
+      museum: brandedSet<ItemId>(s.completed.museum),
+      npcLevels,
+      npcRelationships,
+      petCosmetics: brandedSet<PetCosmeticSetId>(s.completed.petCosmetics ?? []),
+      petSkins: brandedSet<PetSkinId>(s.completed.petSkins ?? []),
+      questStates,
+      reachedSeason: s.completed.reachedSeason ?? "spring",
+      renown: clampRenownLevel(s.completed.renown),
+      skillLevels,
+      unlockedPerks: brandedSet<PerkId>(s.completed.unlockedPerks ?? []),
+    };
+
+    backfillAnimalMaps(completed);
+
     return {
       availabilityMode: s.availabilityMode,
-      completed: {
-        almanac: normalizeAlmanacIds(s.completed.almanac),
-        almanacRecipes: brandedSet<RecipeId>(s.completed.almanacRecipes ?? []),
-        animalCosmetics: Object.fromEntries(
-          Object.entries(s.completed.animalCosmetics).map(([k, v]) => [
-            k,
-            brandedSet<CosmeticId>(v),
-          ]),
-        ),
-        animals: Object.fromEntries(
-          Object.entries(s.completed.animals).map(([k, v]) => [k, brandedSet<AnimalVariantId>(v)]),
-        ),
-        childChoice,
-        cosmetics: brandedSet<CosmeticId>(s.completed.cosmetics),
-        dates: brandedSet<DateId>(s.completed.dates ?? []),
-        hasUpperFloor: s.completed.hasUpperFloor ?? false,
-        mines: {
-          floor: s.completed.mines.floor,
-          spells: brandedSet<SpellId>(s.completed.mines.spells),
-        },
-        museum: brandedSet<ItemId>(s.completed.museum),
-        npcLevels,
-        npcRelationships,
-        petCosmetics: brandedSet<PetCosmeticSetId>(s.completed.petCosmetics ?? []),
-        petSkins: brandedSet<PetSkinId>(s.completed.petSkins ?? []),
-        questStates,
-        reachedSeason: s.completed.reachedSeason ?? "spring",
-        renown: clampRenownLevel(s.completed.renown),
-        skillLevels,
-        unlockedPerks: brandedSet<PerkId>(s.completed.unlockedPerks ?? []),
-      },
+      completed,
       showCompleted: false,
       showSpoilers: s.showSpoilers ?? false,
       worldState: s.worldState,
