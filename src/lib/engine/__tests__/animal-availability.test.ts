@@ -11,6 +11,19 @@ import type { AnimalVariant, Season } from "$lib/types/tracker-data.js";
 const SEASONS: Season[] = ["spring", "summer", "fall", "winter"];
 const MODES: AvailabilityMode[] = ["available", "everything", "timely"];
 
+const SUMMER_BREED: AnimalVariant = {
+  name: "Summer Variant",
+  source: { type: "breed", availability: { type: "season", seasons: ["summer"] } },
+};
+const NONSEASONAL_BREED: AnimalVariant = {
+  name: "Nonseasonal Breed",
+  source: { type: "breed" },
+};
+const DEFAULT_VARIANT: AnimalVariant = {
+  name: "Default",
+  source: { type: "default" },
+};
+
 function allVariants(): { animalId: string; variant: AnimalVariant; variantId: string }[] {
   const results: { animalId: string; variant: AnimalVariant; variantId: string }[] = [];
   for (const [animalId, animal] of recordEntries(trackerData.animals)) {
@@ -25,42 +38,17 @@ function allVariants(): { animalId: string; variant: AnimalVariant; variantId: s
 
 describe("getVariantSeason", () => {
   it("returns undefined for default-type variants", () => {
-    const defaultVariant = allVariants().find((v) => v.variant.source.type === "default");
-    if (!defaultVariant) return;
-    expect(getVariantSeason(defaultVariant.variant)).toBeUndefined();
+    expect(getVariantSeason(DEFAULT_VARIANT)).toBeUndefined();
   });
 
   it("returns undefined for breed variants without seasonal availability", () => {
-    const nonseasonal = allVariants().find(
-      (v) => v.variant.source.type === "breed" && v.variant.source.availability?.type !== "season",
-    );
-    if (!nonseasonal) return;
-    expect(getVariantSeason(nonseasonal.variant)).toBeUndefined();
+    expect(getVariantSeason(NONSEASONAL_BREED)).toBeUndefined();
   });
 
   it("returns the first season for seasonal breed variants", () => {
-    const seasonal = allVariants().find(
-      (v) => v.variant.source.type === "breed" && v.variant.source.availability?.type === "season",
-    );
-    if (!seasonal) return;
-    const season = getVariantSeason(seasonal.variant);
-    expect(SEASONS).toContain(season);
+    expect(getVariantSeason(SUMMER_BREED)).toBe("summer");
   });
 });
-
-// Synthetic variants for testing seasonal logic (real data currently has none)
-const SUMMER_BREED: AnimalVariant = {
-  name: "Summer Variant",
-  source: { type: "breed", availability: { type: "season", seasons: ["summer"] as [Season] } },
-};
-const NONSEASONAL_BREED: AnimalVariant = {
-  name: "Nonseasonal Breed",
-  source: { type: "breed" },
-};
-const DEFAULT_VARIANT: AnimalVariant = {
-  name: "Default",
-  source: { type: "default" },
-};
 
 describe("isVariantInScope", () => {
   it("everything mode always returns true", () => {
