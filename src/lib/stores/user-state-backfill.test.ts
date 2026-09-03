@@ -1,8 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
+import { getAllProgress } from "$lib/engine/progress.js";
+import { searchItems } from "$lib/engine/search.js";
+import { encodeTransferPayload } from "$lib/engine/transfer.js";
+import { deriveProgressionState } from "$lib/engine/visibility.js";
 import { recordKeys } from "$lib/utils";
 
+import type { CompletedState } from "$lib/stores/user-state.svelte.js";
 import type { AnimalId, AnimalVariantId, CosmeticId } from "$lib/types/tracker-data.js";
 
 const ALL_ANIMAL_IDS = recordKeys(trackerData.animals);
@@ -181,5 +186,42 @@ describe("animal map backfill on merge", () => {
         `animalCosmetics["${animalId}"] should exist after merge`,
       ).toBeDefined();
     }
+  });
+});
+
+describe("downstream consumers after backfill", () => {
+  async function getBackfilledState(): Promise<CompletedState> {
+    vi.useFakeTimers();
+    vi.stubGlobal("window", {});
+    vi.stubGlobal("localStorage", makeStorage(buildStoredState()));
+    vi.resetModules();
+
+    const { userState } = await import("$lib/stores/user-state.svelte.js");
+    userState.restorePersistedState();
+    return userState.state.completed;
+  }
+
+  it("getAllProgress does not throw on backfilled state", async () => {
+    const completed = await getBackfilledState();
+    expect(() =>
+      getAllProgress({
+        availabilityMode: "available",
+        completed,
+        worldState: { season: "spring", weather: "calm" },
+      }),
+    ).not.toThrow();
+  });
+
+  it("searchItems does not throw when searching animals on backfilled state", async () => {
+    const completed = await getBackfilledState();
+    const progression = deriveProgressionState(completed, trackerData, false);
+    expect(() =>
+      searchItems("a", completed, { season: "spring", weather: "calm" }, progression),
+    ).not.toThrow();
+  });
+
+  it("encodeTransferPayload does not throw on backfilled state", async () => {
+    const completed = await getBackfilledState();
+    await expect(encodeTransferPayload(completed)).resolves.toBeDefined();
   });
 });
