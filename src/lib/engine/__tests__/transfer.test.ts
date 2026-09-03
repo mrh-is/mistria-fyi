@@ -224,6 +224,41 @@ describe("transfer codec v8", () => {
     expect(decoded.almanac).toEqual(new Set(allCanonicalIds));
   });
 
+  it("round-trips empty almanacRecipes", async () => {
+    const completed = makeCompleted({ almanacRecipes: new Set() });
+    const payload = await encodeTransferPayload(completed);
+    const decoded = await decodeTransferPayload(payload);
+    expect(decoded.almanacRecipes).toEqual(new Set());
+  });
+
+  it("round-trips fully completed almanacRecipes", async () => {
+    const allRecipeIds = Object.keys(trackerData.recipes) as RecipeId[];
+    const completed = makeCompleted({ almanacRecipes: new Set(allRecipeIds) });
+    const payload = await encodeTransferPayload(completed);
+    const decoded = await decodeTransferPayload(payload);
+    expect(decoded.almanacRecipes).toEqual(new Set(allRecipeIds));
+  });
+
+  it("round-trips partial almanacRecipes", async () => {
+    const recipeIds = Object.keys(trackerData.recipes) as RecipeId[];
+    const partial = new Set(recipeIds.filter((_, i) => i % 2 === 0));
+    const completed = makeCompleted({ almanacRecipes: partial });
+    const payload = await encodeTransferPayload(completed);
+    const decoded = await decodeTransferPayload(payload);
+    expect(decoded.almanacRecipes).toEqual(partial);
+  });
+
+  // The v1 fixture (line 25) exercises the pre-v8 path where almanacRecipes is absent:
+  // the decoder defaults it to an empty set. This covers all pre-v8 versions (1-7) because
+  // the recipe bitfield was added in v8 and the `version >= 8` guard is the sole branch.
+  it("defaults almanacRecipes to empty for all pre-v8 versions", async () => {
+    const decodedV1 = await decodeTransferPayload(V1_FIXTURE);
+    expect(decodedV1.almanacRecipes).toEqual(new Set());
+
+    const decodedV5 = await decodeTransferPayload(V5_ALMANAC_FIXTURE);
+    expect(decodedV5.almanacRecipes).toEqual(new Set());
+  });
+
   it("rejects unsupported versions", async () => {
     await expect(decodeTransferPayload("not-a-valid-payload")).rejects.toThrow();
   });
