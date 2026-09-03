@@ -203,7 +203,7 @@ function createDefaultState(): UserState {
 
 function createUserState() {
   let state = $state<UserState>(createDefaultState());
-  let _persistenceFailed = $state(false);
+  let _persistenceFailureGeneration = $state(0);
 
   const progressionState = $derived(
     deriveProgressionState(state.completed, trackerData, state.showSpoilers),
@@ -218,7 +218,11 @@ function createUserState() {
         clearTimeout(timeout);
         timeout = setTimeout(() => {
           const ok = trySetItem(STORAGE_KEY, json);
-          _persistenceFailed = !ok;
+          if (!ok) {
+            _persistenceFailureGeneration++;
+          } else {
+            _persistenceFailureGeneration = 0;
+          }
         }, 300);
       });
     });
@@ -275,7 +279,7 @@ function createUserState() {
       state.completed.questStates[id] = next;
     },
     dismissPersistenceWarning() {
-      _persistenceFailed = false;
+      _persistenceFailureGeneration = 0;
     },
     exportState(): string {
       return serialize(state);
@@ -550,7 +554,10 @@ function createUserState() {
       return counts;
     },
     get persistenceFailed(): boolean {
-      return _persistenceFailed;
+      return _persistenceFailureGeneration > 0;
+    },
+    get persistenceFailureGeneration(): number {
+      return _persistenceFailureGeneration;
     },
     get progressionState(): UserProgressionState {
       return progressionState;
