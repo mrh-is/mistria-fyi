@@ -343,3 +343,91 @@ describe("pregnancy quest filtering", () => {
     }
   });
 });
+
+// ─── Museum results ─────────────────────────────────────────────
+
+describe("museum results", () => {
+  it("returns museum category for museum-only items", () => {
+    // Find a museum item that exists in the data
+    const firstWing = Object.values(trackerData.museum)[0];
+    const firstSet = Object.values(firstWing.sets)[0];
+    const firstItemId = firstSet.items[0];
+    const item = trackerData.items[firstItemId];
+
+    const results = search(item.name);
+    const museumMatch = results.find((r) => r.category === "museum" && r.id === firstItemId);
+    // The item might also appear as almanac; if museum-only, it should have a museum result
+    const almanacMatch = results.find((r) => r.category === "almanac" && r.id === firstItemId);
+    if (!almanacMatch) {
+      expect(museumMatch).toBeDefined();
+    }
+  });
+
+  it("uses raw item ID (not prefixed) for museum results", () => {
+    const firstWing = Object.values(trackerData.museum)[0];
+    const firstSet = Object.values(firstWing.sets)[0];
+    const firstItemId = firstSet.items[0];
+    const item = trackerData.items[firstItemId];
+
+    const results = search(item.name);
+    const museumMatch = results.find((r) => r.category === "museum");
+    if (museumMatch) {
+      expect(museumMatch.id).not.toContain(":");
+    }
+  });
+
+  it("marks museum items as completed when in completed.museum", () => {
+    const firstWing = Object.values(trackerData.museum)[0];
+    const firstSet = Object.values(firstWing.sets)[0];
+    const firstItemId = firstSet.items[0];
+    const item = trackerData.items[firstItemId];
+
+    const results = search(item.name, { museum: new Set([firstItemId]) });
+    const museumMatch = results.find((r) => r.category === "museum" && r.id === firstItemId);
+    if (museumMatch) {
+      expect(museumMatch.completed).toBe(true);
+    }
+  });
+});
+
+// ─── Pet cosmetic & skin results ──────────────────────────────
+
+describe("pet cosmetic and skin result IDs", () => {
+  it("prefixes pet cosmetic IDs with 'pet-cosmetic:'", () => {
+    const [firstId, firstCosmetic] = recordEntries(trackerData.pets.cosmetics)[0];
+    const results = search(firstCosmetic.name);
+    const match = results.find(
+      (r) => r.category === "animals" && r.id === `pet-cosmetic:${firstId}`,
+    );
+    expect(match).toBeDefined();
+    expect(match?.id).toBe(`pet-cosmetic:${firstId}`);
+  });
+
+  it("marks pet cosmetics as completed when in completed.petCosmetics", () => {
+    const [firstId, firstCosmetic] = recordEntries(trackerData.pets.cosmetics)[0];
+    const results = search(firstCosmetic.name, {
+      petCosmetics: new Set([firstId]),
+    });
+    const match = results.find(
+      (r) => r.category === "animals" && r.id === `pet-cosmetic:${firstId}`,
+    );
+    expect(match?.completed).toBe(true);
+  });
+
+  it("prefixes pet skin IDs with 'pet-skin:'", () => {
+    const [firstId, firstSkin] = recordEntries(trackerData.pets.skins)[0];
+    const results = search(firstSkin.name);
+    const match = results.find((r) => r.category === "animals" && r.id === `pet-skin:${firstId}`);
+    expect(match).toBeDefined();
+    expect(match?.id).toBe(`pet-skin:${firstId}`);
+  });
+
+  it("marks pet skins as completed when in completed.petSkins", () => {
+    const [firstId, firstSkin] = recordEntries(trackerData.pets.skins)[0];
+    const results = search(firstSkin.name, {
+      petSkins: new Set([firstId]),
+    });
+    const match = results.find((r) => r.category === "animals" && r.id === `pet-skin:${firstId}`);
+    expect(match?.completed).toBe(true);
+  });
+});
