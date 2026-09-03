@@ -9,6 +9,7 @@ const sw = self as unknown as ServiceWorkerGlobalScope;
 
 const CACHE = `cache-${version}`;
 const ASSETS = [...build, ...files];
+const MAX_RUNTIME_ENTRIES = 50;
 
 sw.addEventListener("install", (event) => {
   event.waitUntil(
@@ -30,6 +31,23 @@ sw.addEventListener("activate", (event) => {
   );
 });
 
+async function evictOldestEntries(cache: Cache): Promise<void> {
+  const keys = await cache.keys();
+  const runtimeKeys = keys.filter((req) => !ASSETS.includes(new URL(req.url).pathname));
+  const excess = runtimeKeys.length - MAX_RUNTIME_ENTRIES;
+  if (excess > 0) {
+    for (const key of runtimeKeys.slice(0, excess)) {
+      await cache.delete(key);
+    }
+  }
+}
+
+function isEligibleForCaching(url: URL): boolean {
+  if (url.origin !== sw.location.origin) return false;
+  if (url.pathname.startsWith("/api/")) return false;
+  return true;
+}
+
 sw.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
@@ -38,15 +56,18 @@ sw.addEventListener("fetch", (event) => {
   const isAsset = ASSETS.includes(url.pathname);
 
   if (isAsset) {
-    // Serve build artifacts and static files from cache
     event.respondWith(caches.match(event.request).then((r) => r ?? fetch(event.request)));
-  } else {
-    // For everything else, try network first, fall back to cache
+  } else if (isEligibleForCaching(url)) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          const clone = response.clone();
-          void caches.open(CACHE).then((cache) => cache.put(event.request, clone));
+          if (response.ok) {
+            const clone = response.clone();
+            void caches.open(CACHE).then(async (cache) => {
+              await cache.put(event.request, clone);
+              await evictOldestEntries(cache);
+            });
+          }
           return response;
         })
         .catch(() =>
@@ -60,5 +81,7 @@ sw.addEventListener("fetch", (event) => {
             .then((r) => r ?? Response.error()),
         ),
     );
+  } else {
+    event.respondWith(fetch(event.request));
   }
 });
