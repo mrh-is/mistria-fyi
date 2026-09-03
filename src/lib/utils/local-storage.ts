@@ -1,5 +1,19 @@
 const isBrowser = typeof window !== "undefined";
 
+/**
+ * Attempt to write to localStorage, returning whether the write succeeded.
+ * Returns false when storage is blocked (private browsing, disabled) or the quota is exceeded.
+ */
+export function trySetItem(key: string, value: string): boolean {
+  if (!isBrowser) return false;
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const safeLocalStorage: Storage = {
   clear: () => {
     if (!isBrowser) return;
@@ -46,7 +60,7 @@ export const safeLocalStorage: Storage = {
     try {
       localStorage.setItem(key, value);
     } catch {
-      // Storage full or blocked — silently ignore
+      // Storage full or blocked — caller can detect via trySetItem
     }
   },
 };

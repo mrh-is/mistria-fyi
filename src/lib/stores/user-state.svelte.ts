@@ -6,7 +6,7 @@ import { findRecipesForQuest } from "$lib/engine/quest-rewards.js";
 import { getMarriedNpc, normalizeRelationships } from "$lib/engine/relationships.js";
 import { deriveProgressionState, type UserProgressionState } from "$lib/engine/visibility.js";
 import { recordEntries, recordKeys } from "$lib/utils";
-import { safeLocalStorage } from "$lib/utils/local-storage.js";
+import { safeLocalStorage, trySetItem } from "$lib/utils/local-storage.js";
 
 import type {
   AnimalId,
@@ -203,6 +203,7 @@ function createDefaultState(): UserState {
 
 function createUserState() {
   let state = $state<UserState>(createDefaultState());
+  let _persistenceFailed = $state(false);
 
   const progressionState = $derived(
     deriveProgressionState(state.completed, trackerData, state.showSpoilers),
@@ -216,7 +217,8 @@ function createUserState() {
         const json = serialize(state);
         clearTimeout(timeout);
         timeout = setTimeout(() => {
-          safeLocalStorage.setItem(STORAGE_KEY, json);
+          const ok = trySetItem(STORAGE_KEY, json);
+          _persistenceFailed = !ok;
         }, 300);
       });
     });
@@ -271,6 +273,9 @@ function createUserState() {
       const next: QuestState =
         current === "none" ? "obtained" : current === "obtained" ? "completed" : "none";
       state.completed.questStates[id] = next;
+    },
+    dismissPersistenceWarning() {
+      _persistenceFailed = false;
     },
     exportState(): string {
       return serialize(state);
@@ -543,6 +548,9 @@ function createUserState() {
       }
 
       return counts;
+    },
+    get persistenceFailed(): boolean {
+      return _persistenceFailed;
     },
     get progressionState(): UserProgressionState {
       return progressionState;
