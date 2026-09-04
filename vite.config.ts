@@ -22,6 +22,7 @@ export default defineConfig({
       "tests/pwa/**",
       "**/.worktrees/**",
       "**/.claude/worktrees/**",
+      "**/.pnpm-store/**",
     ],
   },
 });
