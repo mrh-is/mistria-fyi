@@ -148,6 +148,7 @@
   let totalMerged = $derived(
     transferResult
       ? transferResult.almanac +
+          transferResult.almanacRecipes +
           transferResult.cosmetics +
           transferResult.dates +
           transferResult.animals +
@@ -252,6 +253,9 @@
           <ul class="mt-1 space-y-0.5 text-sm text-muted-foreground">
             {#if transferResult.almanac > 0}
               <li>Almanac: +{transferResult.almanac}</li>
+            {/if}
+            {#if transferResult.almanacRecipes > 0}
+              <li>Recipes: +{transferResult.almanacRecipes}</li>
             {/if}
             {#if transferResult.cosmetics > 0}
               <li>Cosmetics: +{transferResult.cosmetics}</li>

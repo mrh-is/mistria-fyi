@@ -15,6 +15,7 @@ import type {
   PetCosmeticSetId,
   PetSkinId,
   QuestId,
+  RecipeId,
   Season,
   SkillId,
   SpellId,
@@ -22,7 +23,7 @@ import type {
 
 // ─── Constants ──────────────────────────────────────────────────────
 
-export const TRANSFER_VERSION = 7;
+export const TRANSFER_VERSION = 8;
 
 const SEASON_BY_ORD: Season[] = ["spring", "summer", "fall", "winter"];
 const SEASON_ORD: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
@@ -238,10 +239,19 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
     childChoice = childByte === 0x01 ? "yes" : childByte === 0x02 ? "no" : "undeclared";
   }
 
+  // 21. Almanac recipes bitfield (v8+)
+  let almanacRecipes = new Set<RecipeId>();
+  if (version >= 8) {
+    const recipeOrder = getRecipeOrder();
+    const recipeBytes = readBytes(Math.ceil(recipeOrder.length / 8));
+    almanacRecipes = fromBitfield(recipeOrder, recipeBytes) as Set<RecipeId>;
+  }
+
   normalizeRelationships(npcRelationships);
 
   return {
     almanac,
+    almanacRecipes,
     animalCosmetics,
     animals,
     childChoice,
@@ -423,6 +433,10 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   const childByte =
     completed.childChoice === "yes" ? 0x01 : completed.childChoice === "no" ? 0x02 : 0x00;
   parts.push(new Uint8Array([childByte]));
+
+  // 21. Almanac recipes bitfield (new in v8)
+  const recipeOrder = getRecipeOrder();
+  parts.push(toBitfield(recipeOrder, completed.almanacRecipes));
 
   // Concatenate all parts
   const totalLength = parts.reduce((sum, p) => sum + p.length, 0);
@@ -704,6 +718,10 @@ function getQuestOrder(): { type: string; questId: QuestId }[] {
     }
   }
   return result;
+}
+
+function getRecipeOrder(): RecipeId[] {
+  return (Object.keys(trackerData.recipes) as RecipeId[]).sort();
 }
 
 // ─── Base64url ──────────────────────────────────────────────────────

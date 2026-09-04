@@ -14,6 +14,7 @@ import type {
   NpcRelationship,
   PetCosmeticSetId,
   PetSkinId,
+  RecipeId,
   SkillId,
 } from "$lib/types/tracker-data.js";
 
@@ -61,9 +62,9 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
   };
 }
 
-describe("transfer codec v7", () => {
-  it("has version 7", () => {
-    expect(TRANSFER_VERSION).toBe(7);
+describe("transfer codec v8", () => {
+  it("has version 8", () => {
+    expect(TRANSFER_VERSION).toBe(8);
   });
 
   it("round-trips unlockedPerks", async () => {
@@ -165,6 +166,14 @@ describe("transfer codec v7", () => {
     }
   });
 
+  it("round-trips almanacRecipes", async () => {
+    const recipeIds = (Object.keys(trackerData.recipes) as RecipeId[]).slice(0, 3);
+    const completed = makeCompleted({ almanacRecipes: new Set(recipeIds) });
+    const payload = await encodeTransferPayload(completed);
+    const decoded = await decodeTransferPayload(payload);
+    expect(decoded.almanacRecipes).toEqual(new Set(recipeIds));
+  });
+
   it("decodes v1 payload without perks, relationships, pet, date, or progression fields", async () => {
     const decoded = await decodeTransferPayload(V1_FIXTURE);
     expect(decoded.unlockedPerks).toEqual(new Set());
@@ -175,6 +184,7 @@ describe("transfer codec v7", () => {
     expect(decoded.hasUpperFloor).toBe(false);
     expect(decoded.reachedSeason).toBe("spring");
     expect(decoded.childChoice).toBe("undeclared");
+    expect(decoded.almanacRecipes).toEqual(new Set());
     expect(decoded.mines?.floor).toBe(5);
     expect(decoded.npcLevels?.["adeline" as NpcId]).toBe(3);
     expect(decoded.renown).toBe(10);
@@ -212,6 +222,41 @@ describe("transfer codec v7", () => {
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     expect(decoded.almanac).toEqual(new Set(allCanonicalIds));
+  });
+
+  it("round-trips empty almanacRecipes", async () => {
+    const completed = makeCompleted({ almanacRecipes: new Set() });
+    const payload = await encodeTransferPayload(completed);
+    const decoded = await decodeTransferPayload(payload);
+    expect(decoded.almanacRecipes).toEqual(new Set());
+  });
+
+  it("round-trips fully completed almanacRecipes", async () => {
+    const allRecipeIds = Object.keys(trackerData.recipes) as RecipeId[];
+    const completed = makeCompleted({ almanacRecipes: new Set(allRecipeIds) });
+    const payload = await encodeTransferPayload(completed);
+    const decoded = await decodeTransferPayload(payload);
+    expect(decoded.almanacRecipes).toEqual(new Set(allRecipeIds));
+  });
+
+  it("round-trips partial almanacRecipes", async () => {
+    const recipeIds = Object.keys(trackerData.recipes) as RecipeId[];
+    const partial = new Set(recipeIds.filter((_, i) => i % 2 === 0));
+    const completed = makeCompleted({ almanacRecipes: partial });
+    const payload = await encodeTransferPayload(completed);
+    const decoded = await decodeTransferPayload(payload);
+    expect(decoded.almanacRecipes).toEqual(partial);
+  });
+
+  // The v1 fixture (line 25) exercises the pre-v8 path where almanacRecipes is absent:
+  // the decoder defaults it to an empty set. This covers all pre-v8 versions (1-7) because
+  // the recipe bitfield was added in v8 and the `version >= 8` guard is the sole branch.
+  it("defaults almanacRecipes to empty for all pre-v8 versions", async () => {
+    const decodedV1 = await decodeTransferPayload(V1_FIXTURE);
+    expect(decodedV1.almanacRecipes).toEqual(new Set());
+
+    const decodedV5 = await decodeTransferPayload(V5_ALMANAC_FIXTURE);
+    expect(decodedV5.almanacRecipes).toEqual(new Set());
   });
 
   it("rejects unsupported versions", async () => {
