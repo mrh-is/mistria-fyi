@@ -1,7 +1,11 @@
 import { expect, test } from "@playwright/test";
 
 import { accessibilityRoutes } from "./routes.js";
-import { expectResolvedTheme, initializeApplication } from "./support/application-state.js";
+import {
+  expectResolvedTheme,
+  gotoApplication,
+  initializeApplication,
+} from "./support/application-state.js";
 import { analyzeAccessibility } from "./support/axe.js";
 
 import type { AccessibilityTheme } from "./support/violations.js";
@@ -25,7 +29,7 @@ test.describe("complete route and theme axe matrix", () => {
         if (provenance) testInfo.annotations.push({ type: "audit", description: provenance });
 
         await initializeApplication(page, theme);
-        const response = await page.goto(route.path);
+        const response = await gotoApplication(page, route.path);
 
         expect(response?.ok()).toBe(true);
         await expect(page.getByRole("main")).toBeVisible();

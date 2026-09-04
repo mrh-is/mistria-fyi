@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { accessibilityRoutes } from "./routes.js";
-import { initializeApplication } from "./support/application-state.js";
+import { gotoApplication, initializeApplication } from "./support/application-state.js";
 import { openFeedbackValidation, openVisibilityPanel } from "./support/scenarios.js";
 
 test.describe("@critical semantic accessibility", () => {
@@ -11,7 +11,7 @@ test.describe("@critical semantic accessibility", () => {
 
   for (const route of accessibilityRoutes) {
     test(`${route.path} has a named main landmark and page heading`, async ({ page }) => {
-      await page.goto(route.path);
+      await gotoApplication(page, route.path);
       await expect(page.getByRole("main")).toBeVisible();
       const headingName =
         route.path === "/"
@@ -24,10 +24,10 @@ test.describe("@critical semantic accessibility", () => {
   }
 
   test("progress indicators expose their current values", async ({ page }) => {
-    await page.goto("/");
+    await gotoApplication(page, "/");
     await expect(page.getByRole("img", { name: /0 of \d+ completed overall/ })).toBeVisible();
 
-    await page.goto("/renown");
+    await gotoApplication(page, "/renown");
     const progress = page.getByRole("progressbar", { name: /Renown progress/ });
     await expect(progress).toHaveAttribute("aria-valuemin", "0");
     await expect(progress).toHaveAttribute("aria-valuemax", /\d+/);
@@ -35,7 +35,7 @@ test.describe("@critical semantic accessibility", () => {
   });
 
   test("repeated NPC controls retain unique visible names and pressed state", async ({ page }) => {
-    await page.goto("/npcs");
+    await gotoApplication(page, "/npcs");
     const controls = page.getByRole("button", { name: /^Set .+ relationship level to \d+$/ });
     const names = await controls.evaluateAll((buttons) =>
       buttons.map((button) => button.getAttribute("aria-label")),
@@ -47,12 +47,12 @@ test.describe("@critical semantic accessibility", () => {
   });
 
   test("mine and visibility controls expose values and state", async ({ page }) => {
-    await page.goto("/mines");
+    await gotoApplication(page, "/mines");
     const floor = page.getByRole("spinbutton", { name: "Mine floor" });
     await expect(floor).toHaveAttribute("min", "0");
     await expect(floor).toHaveAttribute("max", /\d+/);
 
-    await page.goto("/almanac");
+    await gotoApplication(page, "/almanac");
     await openVisibilityPanel(page);
     await page.getByRole("button", { name: /Seasonality/ }).click();
     const spring = page.getByRole("button", { exact: true, name: "Spring" });
@@ -60,7 +60,7 @@ test.describe("@critical semantic accessibility", () => {
   });
 
   test("feedback validation connects its input and alert", async ({ page }) => {
-    await page.goto("/");
+    await gotoApplication(page, "/");
     await openFeedbackValidation(page);
     const message = page.getByRole("textbox", { name: "Message" });
     const errorId = await message.getAttribute("aria-describedby");

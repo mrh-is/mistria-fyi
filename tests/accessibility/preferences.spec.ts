@@ -1,6 +1,10 @@
 import { expect, test } from "@playwright/test";
 
-import { createStoredState, initializeApplication } from "./support/application-state.js";
+import {
+  createStoredState,
+  gotoApplication,
+  initializeApplication,
+} from "./support/application-state.js";
 import { openFeedbackValidation, openVisibilityPanel } from "./support/scenarios.js";
 
 test.describe("@critical browser accessibility preferences", () => {
@@ -9,7 +13,7 @@ test.describe("@critical browser accessibility preferences", () => {
   }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await initializeApplication(page, "light");
-    await page.goto("/almanac");
+    await gotoApplication(page, "/almanac");
     await openVisibilityPanel(page);
     await page.getByRole("button", { name: /Seasonality/ }).click();
 
@@ -28,7 +32,7 @@ test.describe("@critical browser accessibility preferences", () => {
     );
     expect(activeFiniteAnimations).toEqual([]);
 
-    await page.goto("/");
+    await gotoApplication(page, "/");
     await openFeedbackValidation(page);
     await expect(page.getByRole("alert")).toHaveText("Please enter a message.");
   });
@@ -40,7 +44,7 @@ test.describe("@critical browser accessibility preferences", () => {
       "light",
       createStoredState({ availabilityMode: "everything" }),
     );
-    await page.goto("/almanac");
+    await gotoApplication(page, "/almanac");
     const artifacts = page.getByRole("button", { name: /^Artifacts 0\/\d+$/ });
     await artifacts.focus();
     await artifacts.press("Enter");

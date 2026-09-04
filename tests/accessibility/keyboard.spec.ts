@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { initializeApplication } from "./support/application-state.js";
+import { gotoApplication, initializeApplication } from "./support/application-state.js";
 
 test.describe("@critical keyboard and focus accessibility", () => {
   test.beforeEach(async ({ page }) => {
@@ -8,7 +8,7 @@ test.describe("@critical keyboard and focus accessibility", () => {
   });
 
   test("toolbar controls follow a predictable focus order", async ({ page }) => {
-    await page.goto("/");
+    await gotoApplication(page, "/");
     const tools = page.getByRole("navigation", { name: "Tracker tools" });
     await tools.getByRole("button", { name: "Send feedback" }).focus();
     await page.keyboard.press("Tab");
@@ -18,7 +18,7 @@ test.describe("@critical keyboard and focus accessibility", () => {
   });
 
   test("feedback dialog contains focus and restores it on Escape", async ({ page }) => {
-    await page.goto("/");
+    await gotoApplication(page, "/");
     const trigger = page
       .getByRole("navigation", { name: "Tracker tools" })
       .getByRole("button", { name: "Send feedback" });
@@ -35,7 +35,7 @@ test.describe("@critical keyboard and focus accessibility", () => {
   });
 
   test("settings disclosures operate with Enter and Space", async ({ page }) => {
-    await page.goto("/settings");
+    await gotoApplication(page, "/settings");
     const disclosure = page.getByRole("button", { name: /^Theme/ });
     await disclosure.focus();
     await page.keyboard.press("Enter");
@@ -45,7 +45,7 @@ test.describe("@critical keyboard and focus accessibility", () => {
   });
 
   test("search supports keyboard entry, clearing, and closure", async ({ page }) => {
-    await page.goto("/");
+    await gotoApplication(page, "/");
     const trigger = page.getByRole("button", { name: "Search" });
     await trigger.focus();
     await page.keyboard.press("Enter");
@@ -60,7 +60,7 @@ test.describe("@critical keyboard and focus accessibility", () => {
   });
 
   test("row removal moves focus and Undo is keyboard operable", async ({ page }) => {
-    await page.goto("/almanac");
+    await gotoApplication(page, "/almanac");
     await page.getByRole("button", { name: /^Artifacts 0\/\d+$/ }).click();
     const rows = page.getByRole("button", { name: /^Check (?!spoilered item)/ });
     const nextName = await rows.nth(1).getAttribute("aria-label");
