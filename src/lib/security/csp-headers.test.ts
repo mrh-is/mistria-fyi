@@ -1,73 +1,125 @@
-import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-
-import { handle } from "../../hooks.server.js";
-import { CONTENT_SECURITY_POLICY, CSP_DIRECTIVES } from "./csp.js";
-
-import type { Handle } from "@sveltejs/kit";
 
 const headersPath = resolve(import.meta.dirname, "../../../_headers");
 const headersContent = readFileSync(headersPath, "utf-8");
 const appHtmlPath = resolve(import.meta.dirname, "../../app.html");
 const appHtmlContent = readFileSync(appHtmlPath, "utf-8");
+const svelteConfigPath = resolve(import.meta.dirname, "../../../svelte.config.js");
 
-describe("Content-Security-Policy headers", () => {
+async function loadCspDirectives(): Promise<Record<string, string[]>> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const config = await import(svelteConfigPath);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const directives = config.default?.kit?.csp?.directives as Record<string, string[]> | undefined;
+  if (!directives) {
+    throw new Error("CSP directives not found in svelte.config.js");
+  }
+  return directives;
+}
+
+function parseHeadersCsp(content: string): Map<string, string> {
+  const cspMatch = /Content-Security-Policy:\s*(.+)/.exec(content);
+  if (!cspMatch) {
+    throw new Error("No CSP header found in _headers file");
+  }
+  const parsed = new Map<string, string>();
+  for (const directive of cspMatch[1].split(";")) {
+    const trimmed = directive.trim();
+    const spaceIdx = trimmed.indexOf(" ");
+    if (spaceIdx === -1) {
+      parsed.set(trimmed, "");
+    } else {
+      parsed.set(trimmed.slice(0, spaceIdx), trimmed.slice(spaceIdx + 1));
+    }
+  }
+  return parsed;
+}
+
+const requiredDirectiveNames = [
+  "default-src",
+  "script-src",
+  "style-src",
+  "font-src",
+  "img-src",
+  "connect-src",
+  "frame-src",
+  "frame-ancestors",
+  "form-action",
+  "base-uri",
+  "manifest-src",
+  "worker-src",
+  "object-src",
+];
+
+describe("Content-Security-Policy", () => {
+  it("svelte.config.js defines CSP directives", async () => {
+    const directives = await loadCspDirectives();
+    expect(directives["default-src"]).toContain("none");
+    expect(directives["script-src"]).toContain("self");
+    expect(directives["object-src"]).toContain("none");
+  });
+
   it("_headers file exists and targets all routes", () => {
     expect(headersContent).toContain("/*");
+    expect(headersContent).toContain("Content-Security-Policy:");
   });
 
-  it("includes Content-Security-Policy header", () => {
-    expect(headersContent).toContain(`Content-Security-Policy: ${CONTENT_SECURITY_POLICY}`);
-  });
-
-  const requiredDirectives = [
-    "default-src 'none'",
-    "style-src 'self' 'unsafe-inline'",
-    "font-src 'self'",
-    "img-src 'self' data: blob:",
-    "connect-src 'self' https://challenges.cloudflare.com",
-    "frame-src https://challenges.cloudflare.com",
-    "frame-ancestors 'none'",
-    "form-action 'self'",
-    "base-uri 'self'",
-    "manifest-src 'self'",
-    "worker-src 'self'",
-    "object-src 'none'",
-  ];
-
-  for (const directive of requiredDirectives) {
-    it(`includes directive: ${directive}`, () => {
-      expect(CSP_DIRECTIVES).toContain(directive);
-    });
-  }
-
-  it("sets the CSP on the rendered document response", async () => {
-    const event = {} as Parameters<Handle>[0]["event"];
-    const response = await handle({
-      event,
-      resolve: () => Promise.resolve(new Response("<!doctype html><title>Rendered page</title>")),
-    });
-
-    expect(response.headers.get("Content-Security-Policy")).toBe(CONTENT_SECURITY_POLICY);
-  });
-
-  it("allows each fixed inline script by its exact SHA-256 hash", () => {
-    const scripts = [...appHtmlContent.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(
-      ([, script]) => script,
-    );
-
-    expect(scripts).toHaveLength(2);
-    for (const script of scripts) {
-      const hash = createHash("sha256").update(script).digest("base64");
-      expect(CONTENT_SECURITY_POLICY).toContain(`'sha256-${hash}'`);
+  it("svelte.config.js covers all required directives", async () => {
+    const directives = await loadCspDirectives();
+    for (const name of requiredDirectiveNames) {
+      expect(directives, `missing directive: ${name}`).toHaveProperty(name);
     }
   });
 
-  it("does not allow arbitrary inline scripts or obsolete Google Fonts origins", () => {
-    expect(CONTENT_SECURITY_POLICY).not.toContain("script-src 'self' 'unsafe-inline'");
-    expect(CONTENT_SECURITY_POLICY).not.toContain("fonts.googleapis.com");
-    expect(CONTENT_SECURITY_POLICY).not.toContain("fonts.gstatic.com");
+  it("_headers covers all required directives", () => {
+    const parsed = parseHeadersCsp(headersContent);
+    for (const name of requiredDirectiveNames) {
+      expect(parsed.has(name), `_headers missing directive: ${name}`).toBe(true);
+    }
+  });
+
+  it("svelte.config.js and _headers share the same directive values", async () => {
+    const directives = await loadCspDirectives();
+    const headersParsed = parseHeadersCsp(headersContent);
+
+    for (const name of requiredDirectiveNames) {
+      const configValues = directives[name] ?? [];
+      const headersValue = headersParsed.get(name) ?? "";
+
+      for (const value of configValues) {
+        expect(
+          headersValue.includes(value),
+          `_headers directive "${name}" missing value "${value}" from svelte.config.js`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("inline scripts in app.html use the SvelteKit nonce placeholder", () => {
+    const scripts = [...appHtmlContent.matchAll(/<script([^>]*)>/g)].map(([, attrs]) => attrs);
+    const inlineScripts = scripts.filter((attrs) => !attrs.includes("src="));
+
+    expect(inlineScripts.length).toBeGreaterThanOrEqual(2);
+    for (const attrs of inlineScripts) {
+      expect(attrs).toContain('nonce="%sveltekit.nonce%"');
+    }
+  });
+
+  it("does not allow unsafe-inline scripts or obsolete Google Fonts origins", async () => {
+    const directives = await loadCspDirectives();
+    const scriptSrc = directives["script-src"] ?? [];
+    expect(scriptSrc).not.toContain("unsafe-inline");
+
+    expect(headersContent).not.toContain("fonts.googleapis.com");
+    expect(headersContent).not.toContain("fonts.gstatic.com");
+
+    for (const values of Object.values(directives)) {
+      for (const v of values) {
+        expect(v).not.toContain("fonts.googleapis.com");
+        expect(v).not.toContain("fonts.gstatic.com");
+      }
+    }
   });
 });

@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // copy that could drift.
 const appHtml = readFileSync(resolve(__dirname, "../app.html"), "utf-8");
 
-const scriptBlocks = [...appHtml.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+const scriptBlocks = [...appHtml.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
 const themeBootstrapScript = scriptBlocks[0];
 const themeColorScript = scriptBlocks[1];
 

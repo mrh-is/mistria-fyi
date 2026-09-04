@@ -13,6 +13,23 @@ const commit =
 const config = {
   kit: {
     adapter: adapter(),
+    csp: {
+      directives: {
+        "base-uri": ["self"],
+        "connect-src": ["self", "https://challenges.cloudflare.com"],
+        "default-src": ["none"],
+        "font-src": ["self"],
+        "form-action": ["self"],
+        "frame-ancestors": ["none"],
+        "frame-src": ["https://challenges.cloudflare.com"],
+        "img-src": ["self", "data:", "blob:"],
+        "manifest-src": ["self"],
+        "object-src": ["none"],
+        "script-src": ["self", "https://challenges.cloudflare.com"],
+        "style-src": ["self", "unsafe-inline"],
+        "worker-src": ["self"],
+      },
+    },
     typescript: {
       config: (config) => {
         config.include.push("../scripts/**/*.ts");
