@@ -19,6 +19,10 @@ pnpm run pipeline -- /path/to/assets --parse-only
 `--parse-only` currently enforces the v1.0.2 fixture’s 295 non-metadata files and three
 representative paths, so it is not a version-agnostic validator.
 
+Supporting a new Fields of Mistria version is a reviewed application release, not a routine
+regeneration. Follow the [game version update protocol](../docs/game-version-update-protocol.md)
+before changing version-specific fixtures or committing generated data from different game assets.
+
 ### Test tiers
 
 The default pipeline suite uses synthetic fixtures and passes in a fresh clone without game assets.
