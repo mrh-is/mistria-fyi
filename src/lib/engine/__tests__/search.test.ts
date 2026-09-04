@@ -135,32 +135,10 @@ describe("basic matching", () => {
   });
 
   it("finds quests by name", () => {
-    const results = searchItems(
-      "a",
-      makeCompleted(),
-      defaultWorld,
-      makeProgressionState({ showSpoilers: true }),
-    );
-    const questResult = results.find((r) => r.category === "quests");
-    if (questResult) {
-      expect(questResult.category).toBe("quests");
-    } else {
-      for (const questType of recordValues(trackerData.quests)) {
-        for (const [, quest] of recordEntries(questType)) {
-          const r = searchItems(
-            quest.name,
-            makeCompleted(),
-            defaultWorld,
-            makeProgressionState({ showSpoilers: true }),
-          );
-          const match = r.find((x) => x.category === "quests" && x.name === quest.name);
-          if (match) {
-            expect(match.name).toBe(quest.name);
-            return;
-          }
-        }
-      }
-    }
+    // "The Manor" is a known quest; search for its full name.
+    const results = search("The Manor");
+    const questResult = results.find((r) => r.category === "quests" && r.name === "The Manor");
+    expect(questResult, "quest 'The Manor' should appear in results").toBeDefined();
   });
 
   it("finds cosmetics by name", () => {
@@ -192,23 +170,32 @@ describe("completion status", () => {
 
 describe("result ranking", () => {
   it("ranks prefix matches before substring matches", () => {
-    const firstItem = recordValues(trackerData.items)[0];
-    const query = firstItem.name.toLowerCase().slice(0, 3);
-    const results = search(query);
-    if (results.length >= 2) {
-      const firstIsPrefix = (results[0].fullName ?? results[0].name)
-        .toLowerCase()
-        .startsWith(query);
-      const lastIsPrefix = (
-        results[results.length - 1].fullName ?? results[results.length - 1].name
-      )
-        .toLowerCase()
-        .startsWith(query);
-      if (firstIsPrefix && !lastIsPrefix) {
-        expect(firstIsPrefix).toBe(true);
-        expect(lastIsPrefix).toBe(false);
-      }
-    }
+    // "rei" prefix-matches NPC "Reina" and substring-matches "Song Crystal - Reina's Theme"
+    const results = search("rei");
+    expect(results.length).toBeGreaterThanOrEqual(2);
+
+    const reina = results.find((r) => r.category === "npcs" && r.id === "reina");
+    expect(reina, "Reina should appear in results").toBeDefined();
+    if (!reina) return;
+
+    const reinaIdx = results.indexOf(reina);
+    const substringBefore = results.slice(0, reinaIdx).filter((r) => {
+      const name = (r.fullName ?? r.name).toLowerCase();
+      return !name.startsWith("rei");
+    });
+    expect(
+      substringBefore,
+      "no substring-only match should rank above a prefix match",
+    ).toHaveLength(0);
+
+    const substringAfter = results.slice(reinaIdx + 1).filter((r) => {
+      const name = (r.fullName ?? r.name).toLowerCase();
+      return !name.startsWith("rei");
+    });
+    expect(
+      substringAfter.length,
+      "at least one substring-only match should follow the prefix match",
+    ).toBeGreaterThan(0);
   });
 });
 
@@ -218,6 +205,81 @@ describe("result cap", () => {
   it("returns at most 50 results", () => {
     const results = search("a");
     expect(results.length).toBeLessThanOrEqual(50);
+  });
+});
+
+// ─── Ranking before truncation ────────────────────────────────────
+
+describe("ranking before truncation", () => {
+  it("includes later-category prefix matches even when earlier categories fill the cap", () => {
+    const results = searchItems(
+      "a",
+      makeCompleted(),
+      defaultWorld,
+      makeProgressionState({ showSpoilers: true }),
+    );
+
+    const categories = new Set(results.map((r) => r.category));
+    expect(
+      categories.size,
+      "broad query should return results from more than one category",
+    ).toBeGreaterThan(1);
+  });
+
+  it("ranks a later-category prefix match above an earlier-category substring match", () => {
+    // "nor" prefix-matches NPC "Nora" (later category) and substring-matches
+    // quest "The Manor" (earlier category). The prefix must outrank the substring.
+    const results = search("nor");
+
+    const nora = results.find((r) => r.category === "npcs" && r.id === "nora");
+    expect(nora, "Nora should appear in results").toBeDefined();
+
+    const manor = results.find((r) => r.name === "The Manor");
+    expect(manor, "The Manor should appear as a substring match").toBeDefined();
+    if (!nora || !manor) return;
+
+    const noraIdx = results.indexOf(nora);
+    const manorIdx = results.indexOf(manor);
+    expect(noraIdx, "prefix match Nora should rank before substring match The Manor").toBeLessThan(
+      manorIdx,
+    );
+  });
+
+  it("breaks ties alphabetically within the same rank tier", () => {
+    // "ade" prefix-matches NPC "Adeline" and several other items. Among the
+    // substring-only matches, results should be sorted alphabetically by name.
+    const results = search("ade");
+    const substringOnly = results.filter((r) => {
+      const name = (r.fullName ?? r.name).toLowerCase();
+      return !name.startsWith("ade");
+    });
+    expect(substringOnly.length).toBeGreaterThanOrEqual(2);
+
+    for (let i = 1; i < substringOnly.length; i++) {
+      const prev = (substringOnly[i - 1].fullName ?? substringOnly[i - 1].name).toLowerCase();
+      const curr = (substringOnly[i].fullName ?? substringOnly[i].name).toLowerCase();
+      expect(
+        prev.localeCompare(curr),
+        `"${prev}" should sort before or equal "${curr}"`,
+      ).toBeLessThanOrEqual(0);
+    }
+  });
+
+  it("collects candidates from all categories before truncating to cap", () => {
+    const results = searchItems(
+      "e",
+      makeCompleted(),
+      defaultWorld,
+      makeProgressionState({ showSpoilers: true }),
+    );
+
+    expect(results.length).toBeLessThanOrEqual(50);
+
+    const categories = new Set(results.map((r) => r.category));
+    expect(
+      categories.size,
+      "results for a very broad query should span multiple categories after ranking",
+    ).toBeGreaterThan(1);
   });
 });
 
@@ -232,7 +294,10 @@ describe("cross-category coverage", () => {
       makeProgressionState({ showSpoilers: true }),
     );
     const categories = new Set(results.map((r) => r.category));
-    expect(categories.size).toBeGreaterThanOrEqual(1);
+    expect(
+      categories.size,
+      "broad query should return results from multiple categories",
+    ).toBeGreaterThan(1);
   });
 });
 

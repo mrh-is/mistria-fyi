@@ -58,7 +58,6 @@ export function searchItems(
           name: entry.name,
         });
       }
-      if (results.length >= MAX_RESULTS) return rankResults(results, q);
     }
   }
 
@@ -81,7 +80,6 @@ export function searchItems(
             name: item.name,
           });
         }
-        if (results.length >= MAX_RESULTS) return rankResults(results, q);
       }
     }
   }
@@ -100,7 +98,6 @@ export function searchItems(
         name: npc.name,
       });
     }
-    if (results.length >= MAX_RESULTS) return rankResults(results, q);
   }
 
   // Animal variants — not season-gated
@@ -120,7 +117,6 @@ export function searchItems(
           });
         }
       }
-      if (results.length >= MAX_RESULTS) return rankResults(results, q);
     }
   }
 
@@ -140,7 +136,6 @@ export function searchItems(
           name: cosmetic.name,
         });
       }
-      if (results.length >= MAX_RESULTS) return rankResults(results, q);
     }
   }
 
@@ -156,7 +151,6 @@ export function searchItems(
         name: entry.name,
       });
     }
-    if (results.length >= MAX_RESULTS) return rankResults(results, q);
   }
 
   // Pet skins
@@ -171,7 +165,6 @@ export function searchItems(
         name: entry.name,
       });
     }
-    if (results.length >= MAX_RESULTS) return rankResults(results, q);
   }
 
   // Recipes — gated by recipe visibility, not item visibility
@@ -187,7 +180,6 @@ export function searchItems(
         name: recipe.name,
       });
     }
-    if (results.length >= MAX_RESULTS) return rankResults(results, q);
   }
 
   // Cosmetics — not season-gated
@@ -203,7 +195,6 @@ export function searchItems(
         name: cosmetic.name,
       });
     }
-    if (results.length >= MAX_RESULTS) return rankResults(results, q);
   }
 
   // Quests — not season-gated
@@ -224,11 +215,10 @@ export function searchItems(
           name: quest.name,
         });
       }
-      if (results.length >= MAX_RESULTS) return rankResults(results, q);
     }
   }
 
-  return rankResults(results, q);
+  return rankResults(results, q).slice(0, MAX_RESULTS);
 }
 
 function aggregateSources(itemIds: ItemId[]): Source[] {
