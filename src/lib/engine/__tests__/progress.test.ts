@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
+import { isVariantInScope } from "$lib/engine/animal-availability.js";
 import { recordEntries, recordKeys, recordValues } from "$lib/utils.js";
 
 import {
@@ -349,6 +350,81 @@ describe("animals progress", () => {
     expectedTotal += recordKeys(trackerData.pets.cosmetics).length;
     expectedTotal += recordKeys(trackerData.pets.skins).length;
     expect(progress.total).toBe(expectedTotal);
+  });
+});
+
+// ─── Animal variant availability ──────────────────────────────────
+
+describe("animal progress variant filtering matches UI predicate", () => {
+  const seasons: Season[] = ["spring", "summer", "fall", "winter"];
+  const modes: AvailabilityMode[] = ["available", "everything", "timely"];
+
+  for (const mode of modes) {
+    for (const season of seasons) {
+      it(`${mode}/${season}: variant filtered count matches isVariantInScope`, () => {
+        const c = ctx({
+          availabilityMode: mode,
+          worldState: { season, weather: "calm" as Weather },
+        });
+        const progress = getCategoryProgress("animals", c);
+
+        let expectedVariantFiltered = 0;
+        for (const [, animal] of recordEntries(trackerData.animals)) {
+          for (const tier of animal.variantTiers) {
+            for (const [, variant] of recordEntries(tier)) {
+              if (isVariantInScope(variant, season, mode)) {
+                expectedVariantFiltered++;
+              }
+            }
+          }
+        }
+
+        const cosmeticCount = recordValues(trackerData.animals).reduce(
+          (sum, a) => sum + recordKeys(a.cosmetics).length,
+          0,
+        );
+        const petCosmeticCount = recordKeys(trackerData.pets.cosmetics).length;
+        const petSkinCount = recordKeys(trackerData.pets.skins).length;
+        const nonVariantFiltered = cosmeticCount + petCosmeticCount + petSkinCount;
+
+        expect(progress.filtered).toBe(expectedVariantFiltered + nonVariantFiltered);
+      });
+    }
+  }
+
+  it("everything mode: filtered + completed = total for animals", () => {
+    const c = ctx({ availabilityMode: "everything" });
+    const progress = getCategoryProgress("animals", c);
+    expect(progress.filtered + progress.completed).toBe(progress.total);
+  });
+
+  it("available mode: completed count is independent of season", () => {
+    const variantId = recordEntries(recordValues(trackerData.animals)[0].variantTiers[0])[0][0];
+    const animalId = recordKeys(trackerData.animals)[0];
+    const animals: Record<string, Set<AnimalVariantId>> = {};
+    for (const id of recordKeys(trackerData.animals)) {
+      animals[id] = new Set();
+    }
+    animals[animalId] = new Set([variantId]);
+
+    const springProgress = getCategoryProgress(
+      "animals",
+      ctx({
+        availabilityMode: "available",
+        completed: { animals },
+        worldState: { season: "spring" as Season, weather: "calm" as Weather },
+      }),
+    );
+    const winterProgress = getCategoryProgress(
+      "animals",
+      ctx({
+        availabilityMode: "available",
+        completed: { animals },
+        worldState: { season: "winter" as Season, weather: "calm" as Weather },
+      }),
+    );
+
+    expect(springProgress.completed).toBe(winterProgress.completed);
   });
 });
 
