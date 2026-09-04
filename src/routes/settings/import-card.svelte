@@ -5,8 +5,10 @@
   import * as Dialog from "$lib/components/ui/dialog/index.js";
   import { Separator } from "$lib/components/ui/separator/index.js";
   import { buildImportState, parseSaveFiles, unpackSavFile } from "$lib/engine/import-save.js";
+  import { totalMergeCounts } from "$lib/engine/merge-labels.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
+  import MergeSummary from "./merge-summary.svelte";
   import SettingsCard from "./settings-card.svelte";
 
   import type { ImportResult } from "$lib/engine/import-save.js";
@@ -142,24 +144,7 @@
     }
   }
 
-  let totalImported = $derived(
-    importResult
-      ? importResult.counts.almanac +
-          importResult.counts.cosmetics +
-          importResult.counts.animals +
-          importResult.counts.animalCosmetics +
-          importResult.counts.petCosmetics +
-          importResult.counts.petSkins +
-          importResult.counts.almanacRecipes +
-          importResult.counts.spells +
-          importResult.counts.museum +
-          importResult.counts.npcLevels +
-          importResult.counts.quests +
-          importResult.counts.skillLevels +
-          importResult.counts.mineFloor +
-          importResult.counts.renown
-      : 0,
-  );
+  let totalImported = $derived(importResult ? totalMergeCounts(importResult.counts) : 0);
 </script>
 
 <SettingsCard
@@ -297,59 +282,7 @@
 
     {#if importResult}
       <div class="mt-3 rounded-md bg-green-50 p-3 dark:bg-green-950">
-        <p class="text-base font-medium text-green-800 dark:text-green-200">
-          {#if totalImported > 0}
-            Imported from {filesUsed.join(", ")}
-          {:else}
-            No new data to import
-          {/if}
-        </p>
-        {#if totalImported > 0}
-          <ul class="mt-1 space-y-0.5 text-sm text-muted-foreground">
-            {#if importResult.counts.almanac > 0}
-              <li>Almanac: +{importResult.counts.almanac}</li>
-            {/if}
-            {#if importResult.counts.almanacRecipes > 0}
-              <li>Recipes: +{importResult.counts.almanacRecipes}</li>
-            {/if}
-            {#if importResult.counts.cosmetics > 0}
-              <li>Cosmetics: +{importResult.counts.cosmetics}</li>
-            {/if}
-            {#if importResult.counts.animals > 0}
-              <li>Animal variants: +{importResult.counts.animals}</li>
-            {/if}
-            {#if importResult.counts.animalCosmetics > 0}
-              <li>Animal cosmetics: +{importResult.counts.animalCosmetics}</li>
-            {/if}
-            {#if importResult.counts.petCosmetics > 0}
-              <li>Pet cosmetics: +{importResult.counts.petCosmetics}</li>
-            {/if}
-            {#if importResult.counts.petSkins > 0}
-              <li>Pet skins: +{importResult.counts.petSkins}</li>
-            {/if}
-            {#if importResult.counts.spells > 0}
-              <li>Spells: +{importResult.counts.spells}</li>
-            {/if}
-            {#if importResult.counts.museum > 0}
-              <li>Museum donations: +{importResult.counts.museum}</li>
-            {/if}
-            {#if importResult.counts.npcLevels > 0}
-              <li>NPC hearts: +{importResult.counts.npcLevels} relationships updated</li>
-            {/if}
-            {#if importResult.counts.quests > 0}
-              <li>Quests: +{importResult.counts.quests}</li>
-            {/if}
-            {#if importResult.counts.skillLevels > 0}
-              <li>Skills: +{importResult.counts.skillLevels} skills updated</li>
-            {/if}
-            {#if importResult.counts.mineFloor > 0}
-              <li>Mine floor: +{importResult.counts.mineFloor} floors</li>
-            {/if}
-            {#if importResult.counts.renown > 0}
-              <li>Renown: +{importResult.counts.renown} levels</li>
-            {/if}
-          </ul>
-        {/if}
+        <MergeSummary counts={importResult.counts} {filesUsed} kind="import" />
 
         {#if importResult.warnings.length > 0}
           <Separator class="my-2" />

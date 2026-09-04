@@ -8,6 +8,7 @@
   import { decodeTransferPayload, encodeTransferPayload } from "$lib/engine/transfer.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
+  import MergeSummary from "./merge-summary.svelte";
   import SettingsCard from "./settings-card.svelte";
   import { closeScanner } from "./settings-effects.js";
 
@@ -144,26 +145,6 @@
       transferError = `Invalid QR code: ${err instanceof Error ? err.message : "could not decode"}`;
     }
   }
-
-  let totalMerged = $derived(
-    transferResult
-      ? transferResult.almanac +
-          transferResult.almanacRecipes +
-          transferResult.cosmetics +
-          transferResult.dates +
-          transferResult.animals +
-          transferResult.animalCosmetics +
-          transferResult.petCosmetics +
-          transferResult.petSkins +
-          transferResult.museum +
-          transferResult.spells +
-          transferResult.npcLevels +
-          transferResult.skillLevels +
-          transferResult.quests +
-          transferResult.mineFloor +
-          transferResult.renown
-      : 0,
-  );
 </script>
 
 <SettingsCard
@@ -246,62 +227,7 @@
     <!-- Success -->
     {#if transferResult}
       <div class="rounded-md bg-green-50 p-3 dark:bg-green-950">
-        {#if totalMerged > 0}
-          <p class="text-base font-medium text-green-800 dark:text-green-200">
-            Transferred {totalMerged} items!
-          </p>
-          <ul class="mt-1 space-y-0.5 text-sm text-muted-foreground">
-            {#if transferResult.almanac > 0}
-              <li>Almanac: +{transferResult.almanac}</li>
-            {/if}
-            {#if transferResult.almanacRecipes > 0}
-              <li>Recipes: +{transferResult.almanacRecipes}</li>
-            {/if}
-            {#if transferResult.cosmetics > 0}
-              <li>Cosmetics: +{transferResult.cosmetics}</li>
-            {/if}
-            {#if transferResult.dates > 0}
-              <li>Dates: +{transferResult.dates}</li>
-            {/if}
-            {#if transferResult.animals > 0}
-              <li>Animal variants: +{transferResult.animals}</li>
-            {/if}
-            {#if transferResult.animalCosmetics > 0}
-              <li>Animal cosmetics: +{transferResult.animalCosmetics}</li>
-            {/if}
-            {#if transferResult.petCosmetics > 0}
-              <li>Pet cosmetics: +{transferResult.petCosmetics}</li>
-            {/if}
-            {#if transferResult.petSkins > 0}
-              <li>Pet skins: +{transferResult.petSkins}</li>
-            {/if}
-            {#if transferResult.museum > 0}
-              <li>Museum: +{transferResult.museum}</li>
-            {/if}
-            {#if transferResult.spells > 0}
-              <li>Spells: +{transferResult.spells}</li>
-            {/if}
-            {#if transferResult.mineFloor > 0}
-              <li>Mine floor: +{transferResult.mineFloor} floors</li>
-            {/if}
-            {#if transferResult.npcLevels > 0}
-              <li>NPC hearts: +{transferResult.npcLevels} relationships updated</li>
-            {/if}
-            {#if transferResult.skillLevels > 0}
-              <li>Skills: +{transferResult.skillLevels} skills updated</li>
-            {/if}
-            {#if transferResult.quests > 0}
-              <li>Quests: +{transferResult.quests} quests updated</li>
-            {/if}
-            {#if transferResult.renown > 0}
-              <li>Renown: +{transferResult.renown} levels</li>
-            {/if}
-          </ul>
-        {:else}
-          <p class="text-base font-medium text-green-800 dark:text-green-200">
-            QR code scanned successfully — no new items to add.
-          </p>
-        {/if}
+        <MergeSummary counts={transferResult} kind="transfer" />
       </div>
     {/if}
 
