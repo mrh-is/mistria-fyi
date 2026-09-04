@@ -64,6 +64,11 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   let offset = 0;
 
   function readBytes(count: number): Uint8Array {
+    if (offset + count > raw.length) {
+      throw new Error(
+        `Transfer layout overflow: need ${String(count)} bytes at offset ${String(offset)}, have ${String(raw.length)}`,
+      );
+    }
     const slice = raw.slice(offset, offset + count);
     offset += count;
     return slice;
