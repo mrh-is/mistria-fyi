@@ -27,7 +27,7 @@ const config = {
         "object-src": ["none"],
         "script-src": ["self", "https://challenges.cloudflare.com"],
         "style-src": ["self", "unsafe-inline"],
-        "worker-src": ["self"],
+        "worker-src": ["self", "blob:"],
       },
     },
     typescript: {
