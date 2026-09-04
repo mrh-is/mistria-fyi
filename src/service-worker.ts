@@ -3,6 +3,10 @@
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
 
+import {
+  fetchRuntimeRequest,
+  isEligibleForRuntimeCaching,
+} from "$lib/engine/service-worker-cache.js";
 import { build, files, version } from "$service-worker";
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
@@ -38,27 +42,19 @@ sw.addEventListener("fetch", (event) => {
   const isAsset = ASSETS.includes(url.pathname);
 
   if (isAsset) {
-    // Serve build artifacts and static files from cache
     event.respondWith(caches.match(event.request).then((r) => r ?? fetch(event.request)));
-  } else {
-    // For everything else, try network first, fall back to cache
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const clone = response.clone();
-          void caches.open(CACHE).then((cache) => cache.put(event.request, clone));
-          return response;
-        })
-        .catch(() =>
-          caches
-            .match(event.request)
-            .then(
-              (r) =>
-                r ??
-                (event.request.mode === "navigate" ? caches.match("/offline.html") : undefined),
-            )
-            .then((r) => r ?? Response.error()),
-        ),
+  } else if (isEligibleForRuntimeCaching(url, sw.location.origin)) {
+    const response = caches.open(CACHE).then((cache) =>
+      fetchRuntimeRequest(event.request, {
+        assetPaths: ASSETS,
+        cache,
+        fetcher: fetch,
+        matchCache: (request) => caches.match(request),
+      }),
     );
+    event.respondWith(response);
+    event.waitUntil(response.then(() => undefined));
+  } else {
+    event.respondWith(fetch(event.request));
   }
 });
