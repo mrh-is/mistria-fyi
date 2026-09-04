@@ -6,6 +6,17 @@
 
   import SettingsCard from "./settings-card.svelte";
 
+  import type { ImportErrorKind } from "$lib/stores/user-state.svelte.js";
+
+  const ERROR_MESSAGES: Record<ImportErrorKind, string> = {
+    "invalid-fields":
+      "This backup is missing required data or contains invalid fields. It may be corrupted or from a different app.",
+    "malformed-json":
+      "This file is not valid JSON. Make sure you selected an unmodified backup file.",
+    "unsupported-version":
+      "This backup was created by a newer version of Mistria Field Guide. Update the app and try again.",
+  };
+
   let { open = $bindable(false) }: { open?: boolean } = $props();
   let restoring = $state(false);
   let restoreError = $state("");
@@ -37,9 +48,10 @@
       restoreStatus = "Restoring backup…";
       try {
         const text = await file.text();
-        if (!userState.importState(text)) {
+        const result = userState.importState(text);
+        if (!result.ok) {
           restoreStatus = "";
-          restoreError = "This backup file is invalid or could not be restored.";
+          restoreError = ERROR_MESSAGES[result.error];
         } else {
           restoreStatus = "Backup restored successfully.";
         }

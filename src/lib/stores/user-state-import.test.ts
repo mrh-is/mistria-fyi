@@ -1,0 +1,153 @@
+import { afterEach, describe, expect, it } from "vitest";
+
+import { userState } from "$lib/stores/user-state.svelte.js";
+
+describe("importState validation", () => {
+  afterEach(() => {
+    userState.resetAll();
+  });
+
+  it("succeeds with a valid backup", () => {
+    const json = userState.exportState();
+    const result = userState.importState(json);
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects malformed JSON", () => {
+    const result = userState.importState("not json {{{");
+    expect(result).toEqual({ error: "malformed-json", ok: false });
+  });
+
+  it("rejects non-object JSON", () => {
+    const result = userState.importState('"just a string"');
+    expect(result).toEqual({ error: "malformed-json", ok: false });
+  });
+
+  it("rejects null JSON", () => {
+    const result = userState.importState("null");
+    expect(result).toEqual({ error: "malformed-json", ok: false });
+  });
+
+  it("rejects JSON without a version field", () => {
+    const result = userState.importState(JSON.stringify({ completed: {} }));
+    expect(result).toEqual({ error: "invalid-fields", ok: false });
+  });
+
+  it("rejects an unsupported version", () => {
+    const json = userState.exportState();
+    const data = JSON.parse(json) as Record<string, unknown>;
+    data.version = "99";
+    const result = userState.importState(JSON.stringify(data));
+    expect(result).toEqual({ error: "unsupported-version", ok: false });
+  });
+
+  it("rejects a backup missing the completed object", () => {
+    const result = userState.importState(JSON.stringify({ version: "1" }));
+    expect(result).toEqual({ error: "invalid-fields", ok: false });
+  });
+
+  it("rejects a backup with invalid completed structure", () => {
+    const result = userState.importState(
+      JSON.stringify({ completed: "not an object", version: "1" }),
+    );
+    expect(result).toEqual({ error: "invalid-fields", ok: false });
+  });
+
+  it("preserves existing state after a failed import", () => {
+    const json = userState.exportState();
+    const original = JSON.parse(json) as Record<string, unknown>;
+
+    const badResult = userState.importState("not json");
+    expect(badResult.ok).toBe(false);
+
+    const afterFail = JSON.parse(userState.exportState()) as Record<string, unknown>;
+    expect(afterFail).toEqual(original);
+  });
+
+  it("rejects malformed required and nested fields atomically", () => {
+    const original = userState.exportState();
+    const cases: { mutate: (data: Record<string, unknown>) => void; name: string }[] = [
+      { mutate: (data) => (data.availabilityMode = "sometimes"), name: "availabilityMode" },
+      {
+        mutate: (data) => ((data.worldState as Record<string, unknown>).season = "monsoon"),
+        name: "worldState.season",
+      },
+      {
+        mutate: (data) => ((data.worldState as Record<string, unknown>).weather = 42),
+        name: "worldState.weather",
+      },
+      {
+        mutate: (data) => delete (data.completed as Record<string, unknown>).almanac,
+        name: "completed.almanac",
+      },
+      {
+        mutate: (data) =>
+          ((data.completed as Record<string, unknown>).animalCosmetics = { chicken: "hat" }),
+        name: "completed.animalCosmetics",
+      },
+      {
+        mutate: (data) =>
+          ((data.completed as Record<string, unknown>).animals = { chicken: [123] }),
+        name: "completed.animals",
+      },
+      {
+        mutate: (data) => ((data.completed as Record<string, unknown>).cosmetics = "hat"),
+        name: "completed.cosmetics",
+      },
+      {
+        mutate: (data) =>
+          (((data.completed as Record<string, unknown>).mines as Record<string, unknown>).floor =
+            "deep"),
+        name: "completed.mines.floor",
+      },
+      {
+        mutate: (data) =>
+          (((data.completed as Record<string, unknown>).mines as Record<string, unknown>).spells = [
+            1,
+          ]),
+        name: "completed.mines.spells",
+      },
+      {
+        mutate: (data) => delete (data.completed as Record<string, unknown>).museum,
+        name: "completed.museum",
+      },
+      {
+        mutate: (data) => ((data.completed as Record<string, unknown>).renown = "max"),
+        name: "completed.renown",
+      },
+      {
+        mutate: (data) =>
+          ((data.completed as Record<string, unknown>).skillLevels = { farming: "sixty" }),
+        name: "completed.skillLevels",
+      },
+      {
+        mutate: (data) =>
+          ((data.completed as Record<string, unknown>).questStates = { intro: "finished" }),
+        name: "completed.questStates",
+      },
+    ];
+
+    for (const testCase of cases) {
+      const data = JSON.parse(original) as Record<string, unknown>;
+      testCase.mutate(data);
+
+      expect(userState.importState(JSON.stringify(data)), testCase.name).toEqual({
+        error: "invalid-fields",
+        ok: false,
+      });
+      expect(userState.exportState(), `${testCase.name} should preserve state`).toBe(original);
+    }
+  });
+
+  it("replaces state on successful import", () => {
+    const json = userState.exportState();
+    const data = JSON.parse(json) as Record<string, unknown>;
+    const completed = data.completed as Record<string, unknown>;
+    completed.renown = 15;
+    data.completed = completed;
+
+    const result = userState.importState(JSON.stringify(data));
+    expect(result.ok).toBe(true);
+    expect(userState.state.completed.renown).toBe(15);
+  });
+});
