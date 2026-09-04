@@ -30,7 +30,7 @@ describe("importState validation", () => {
 
   it("rejects JSON without a version field", () => {
     const result = userState.importState(JSON.stringify({ completed: {} }));
-    expect(result).toEqual({ error: "malformed-json", ok: false });
+    expect(result).toEqual({ error: "invalid-fields", ok: false });
   });
 
   it("rejects an unsupported version", () => {
