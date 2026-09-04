@@ -1,6 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const isCi = process.env.CI === "true";
+const worktreePortOffset = [...process.cwd()].reduce(
+  (hash, character) => (hash * 31 + character.charCodeAt(0)) % 10_000,
+  0,
+);
+const testPort = process.env.PLAYWRIGHT_PORT ?? String(40_000 + worktreePortOffset);
+const testUrl = `http://127.0.0.1:${testPort}`;
 
 export default defineConfig({
   expect: {
@@ -23,7 +29,7 @@ export default defineConfig({
   timeout: 30_000,
   use: {
     ...devices["Desktop Chrome"],
-    baseURL: "http://127.0.0.1:4173",
+    baseURL: testUrl,
     locale: "en-US",
     screenshot: "only-on-failure",
     serviceWorkers: "block",
@@ -32,10 +38,10 @@ export default defineConfig({
     viewport: { height: 720, width: 1280 },
   },
   webServer: {
-    command: "pnpm run build && pnpm run preview --host 127.0.0.1 --port 4173",
-    reuseExistingServer: !isCi,
+    command: `pnpm run build && pnpm run preview --host 127.0.0.1 --port ${testPort}`,
+    reuseExistingServer: false,
     timeout: 120_000,
-    url: "http://127.0.0.1:4173",
+    url: testUrl,
   },
   workers: isCi ? 2 : undefined,
 });

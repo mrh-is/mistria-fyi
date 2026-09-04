@@ -3,7 +3,11 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import QRCode from "qrcode";
 
-import { createStoredState, initializeApplication } from "./support/application-state.js";
+import {
+  createStoredState,
+  gotoApplication,
+  initializeApplication,
+} from "./support/application-state.js";
 import { analyzeAccessibility } from "./support/axe.js";
 import {
   openFeedbackValidation,
@@ -28,7 +32,7 @@ test.describe("@critical stateful accessibility", () => {
   });
 
   test("expanded visibility controls pass axe", async ({ page }, testInfo) => {
-    await page.goto("/almanac");
+    await gotoApplication(page, "/almanac");
     await openVisibilityPanel(page);
 
     await analyzeAccessibility(
@@ -39,7 +43,7 @@ test.describe("@critical stateful accessibility", () => {
   });
 
   test("populated and empty search results pass axe", async ({ page }, testInfo) => {
-    await page.goto("/");
+    await gotoApplication(page, "/");
     await openSearch(page, "turnip");
     await expect(page.getByRole("status").filter({ hasText: /\d+ results?/ })).toBeVisible();
     await analyzeAccessibility(
@@ -58,7 +62,7 @@ test.describe("@critical stateful accessibility", () => {
   });
 
   test("feedback validation dialog passes axe", async ({ page }, testInfo) => {
-    await page.goto("/");
+    await gotoApplication(page, "/");
     await openFeedbackValidation(page);
 
     await analyzeAccessibility(
@@ -69,7 +73,7 @@ test.describe("@critical stateful accessibility", () => {
   });
 
   test("spoiler-hidden and revealed rows pass axe", async ({ page }, testInfo) => {
-    await page.goto("/almanac");
+    await gotoApplication(page, "/almanac");
     await page.getByRole("button", { name: /^Artifacts 0\/\d+$/ }).click();
     await page.getByRole("button", { name: /Show \d+ more/ }).click();
     let spoiler = page.getByRole("button", { name: "Reveal spoiler" }).first();
@@ -94,7 +98,7 @@ test.describe("@critical stateful accessibility", () => {
   });
 
   test("completed rows and Undo pass axe", async ({ page }, testInfo) => {
-    await page.goto("/almanac");
+    await gotoApplication(page, "/almanac");
     await page.getByRole("button", { name: /^Artifacts 0\/\d+$/ }).click();
     const completion = page.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
     await completion.click();
@@ -117,7 +121,7 @@ test.describe("@critical stateful accessibility", () => {
   });
 
   test("settings dialog and import results pass axe", async ({ page }, testInfo) => {
-    await page.goto("/settings");
+    await gotoApplication(page, "/settings");
     await openSettingsCard(page, "Import from Save File");
     await page.getByRole("button", { name: "Where is my save file?" }).click();
     await expect(page.getByRole("dialog", { name: "Finding your save file" })).toBeVisible();
@@ -175,7 +179,7 @@ test.describe("@critical stateful accessibility", () => {
 
   test("transfer generation, success, and failure pass axe", async ({ page }, testInfo) => {
     await initializeApplication(page, "light", null);
-    await page.goto("/settings");
+    await gotoApplication(page, "/settings");
     await openSettingsCard(page, "Transfer to Another Device");
     await page.getByRole("button", { name: "Generate QR Code" }).click();
     const generatedQr = page.getByRole("img", { name: "Transfer QR Code" });
@@ -224,7 +228,7 @@ test.describe("@critical stateful accessibility", () => {
   });
 
   test("backup restore failure passes axe", async ({ page }, testInfo) => {
-    await page.goto("/settings");
+    await gotoApplication(page, "/settings");
     await openSettingsCard(page, "Backup & Restore");
     const chooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: "Restore from backup" }).click();
@@ -246,7 +250,7 @@ test.describe("@critical stateful accessibility", () => {
 
 test("dark expanded settings state passes axe", async ({ page }, testInfo) => {
   await initializeApplication(page, "dark", createStoredState({ showSpoilers: true }));
-  await page.goto("/settings");
+  await gotoApplication(page, "/settings");
   await openSettingsCard(page, "Danger Zone");
 
   await analyzeAccessibility(

@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
 
-import type { Page } from "@playwright/test";
+import type { Page, Response } from "@playwright/test";
 
 import type { AccessibilityTheme } from "./violations.js";
 
@@ -76,6 +76,10 @@ export function createStoredState(
 
 export async function expectResolvedTheme(page: Page, theme: AccessibilityTheme): Promise<void> {
   await expect(page.locator("html")).toHaveClass(theme === "dark" ? /\bdark\b/ : /^(?!.*\bdark\b)/);
+}
+
+export async function gotoApplication(page: Page, path: string): Promise<null | Response> {
+  return page.goto(path, { waitUntil: "networkidle" });
 }
 
 export async function initializeApplication(
