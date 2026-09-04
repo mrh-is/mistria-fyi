@@ -20,6 +20,8 @@
     CosmeticId,
     ItemId,
     NpcId,
+    PetCosmeticSetId,
+    PetSkinId,
     QuestId,
     RecipeId,
   } from "$lib/types/tracker-data.js";
@@ -39,6 +41,7 @@
     almanac: "Almanac",
     animals: "Animals",
     cosmetics: "Cosmetics",
+    museum: "Museum",
     npcs: "Relationships",
     quests: "Quests",
     recipes: "Recipes",
@@ -57,7 +60,7 @@
   let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
 
   function getSources(result: SearchResult): Source[] {
-    if (result.category === "almanac") {
+    if (result.category === "almanac" || result.category === "museum") {
       return trackerData.items[result.id as ItemId].sources;
     }
     if (result.category === "cosmetics") {
@@ -80,16 +83,27 @@
         userState.toggleAlmanacItem(result.id as never);
         break;
       case "animals": {
-        const [animalId, subId] = result.id.split(":");
-        if (result.fullName) {
-          userState.toggleAnimalCosmetic(animalId as AnimalId, subId as CosmeticId);
+        if (result.id.startsWith("pet-cosmetic:")) {
+          const petCosmeticId = result.id.slice("pet-cosmetic:".length);
+          userState.togglePetCosmetic(petCosmeticId as PetCosmeticSetId);
+        } else if (result.id.startsWith("pet-skin:")) {
+          const petSkinId = result.id.slice("pet-skin:".length);
+          userState.togglePetSkin(petSkinId as PetSkinId);
         } else {
-          userState.toggleAnimalVariant(animalId as AnimalId, subId as AnimalVariantId);
+          const [animalId, subId] = result.id.split(":");
+          if (result.fullName) {
+            userState.toggleAnimalCosmetic(animalId as AnimalId, subId as CosmeticId);
+          } else {
+            userState.toggleAnimalVariant(animalId as AnimalId, subId as AnimalVariantId);
+          }
         }
         break;
       }
       case "cosmetics":
         userState.toggleCosmetic(result.id as never);
+        break;
+      case "museum":
+        userState.toggleMuseumItem(result.id as ItemId);
         break;
       case "npcs": {
         const npcId = result.id as NpcId;
