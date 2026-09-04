@@ -204,6 +204,10 @@ are not distributed with the repository.
 
 ## 6. Troubleshooting & Recovery Steps
 
+Production service-worker behavior has a separate browser verification procedure in
+[the PWA verification guide](pwa-verification.md). Run `pnpm run test:pwa` when changing caching,
+offline fallback, registration, or activation behavior.
+
 ### `svelte-check` Reports Missing or Outdated SvelteKit Types
 
 - **Symptom**: Type errors on `$app/*` imports or route data after pulling changes or altering

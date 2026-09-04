@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
-import { recordKeys, recordValues } from "$lib/utils.js";
+import { recordEntries, recordKeys, recordValues } from "$lib/utils.js";
 
 import { decodeTransferPayload, encodeTransferPayload, TRANSFER_VERSION } from "../transfer.js";
 
@@ -29,6 +29,36 @@ const V1_FIXTURE = "AWNgGAVUBqwMXAYDZDUA";
 // animated_waterfall_v1 (unchanged canonical). All other fields are empty/zero.
 // cspell:disable-next-line
 const V5_ALMANAC_FIXTURE = "BWNgoBXgQOE10MyeUTAKqA0A";
+
+// A payload encoded with the v8 codec. Contains maximum scalar values, a marriage relationship,
+// one recipe, and all other collection fields empty. This fixture protects the current layout from
+// accidental reinterpretation while the generated tracker data remains compatible.
+// cspell:disable-next-line
+const V8_BOUNDARY_FIXTURE = "CGNgGAVUBv_xgYFzVgNDyyRPlQkMDvS0FAA";
+
+async function compressTransferRaw(version: number, raw: Uint8Array): Promise<string> {
+  const stream = new CompressionStream("deflate-raw");
+  const writer = stream.writable.getWriter();
+  await writer.write(raw as Uint8Array<ArrayBuffer>);
+  await writer.close();
+  const compressed = new Uint8Array(await new Response(stream.readable).arrayBuffer());
+  return toBase64url(new Uint8Array([version, ...compressed]));
+}
+
+async function decompressTransferRaw(payload: string): Promise<Uint8Array> {
+  const bytes = fromBase64url(payload);
+  const stream = new DecompressionStream("deflate-raw");
+  const writer = stream.writable.getWriter();
+  await writer.write(bytes.slice(1));
+  await writer.close();
+  return new Uint8Array(await new Response(stream.readable).arrayBuffer());
+}
+
+function fromBase64url(payload: string): Uint8Array {
+  const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+  const binary = atob(base64 + "=".repeat((4 - (base64.length % 4)) % 4));
+  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
 
 // Helper to create a minimal CompletedState for testing
 function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState {
@@ -62,9 +92,107 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
   };
 }
 
+function toBase64url(bytes: Uint8Array): string {
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
 describe("transfer codec v8", () => {
   it("has version 8", () => {
     expect(TRANSFER_VERSION).toBe(8);
+  });
+
+  it("round-trips maximum scalar and packed relationship values", async () => {
+    const npcIds = recordKeys(trackerData.npcs);
+    const skillIds = recordKeys(trackerData.skills);
+    const dateableNpcs = npcIds.filter((id) => trackerData.npcs[id].dateable);
+    const npcRelationships: Partial<Record<NpcId, NpcRelationship>> = {};
+    for (const npcId of dateableNpcs) npcRelationships[npcId] = "platonic";
+    npcRelationships[dateableNpcs[0]] = "married";
+    const completed = makeCompleted({
+      mines: { floor: 0xff, spells: new Set() },
+      npcLevels: Object.fromEntries(npcIds.map((id) => [id, 0xf])),
+      npcRelationships,
+      renown: 0xffff,
+      skillLevels: Object.fromEntries(skillIds.map((id) => [id, 0xff])),
+    });
+
+    const decoded = await decodeTransferPayload(await encodeTransferPayload(completed));
+
+    expect(decoded.mines?.floor).toBe(0xff);
+    expect(decoded.npcLevels).toEqual(completed.npcLevels);
+    expect(decoded.npcRelationships).toEqual(npcRelationships);
+    expect(decoded.renown).toBe(0xffff);
+    expect(decoded.skillLevels).toEqual(completed.skillLevels);
+  });
+
+  it("round-trips every transferable completion without loss", async () => {
+    const completed = makeCompleted({
+      almanac: new Set(
+        recordValues(trackerData.almanac).flatMap(({ items }) =>
+          items.map((entry) => entry.itemIds[0]),
+        ),
+      ),
+      almanacRecipes: new Set(recordKeys(trackerData.recipes)),
+      childChoice: "yes",
+      cosmetics: new Set(
+        recordEntries(trackerData.cosmetics)
+          .filter(([, cosmetic]) => !cosmetic.sources.some((source) => source.type === "default"))
+          .map(([id]) => id),
+      ),
+      dates: new Set(recordKeys(trackerData.dates)),
+      hasUpperFloor: true,
+      mines: { floor: 0xff, spells: new Set(recordKeys(trackerData.mines.spells)) },
+      museum: new Set(
+        recordValues(trackerData.museum).flatMap(({ sets }) =>
+          recordValues(sets).flatMap(({ items }) => items),
+        ),
+      ),
+      npcLevels: Object.fromEntries(recordKeys(trackerData.npcs).map((id) => [id, 0xf])),
+      petCosmetics: new Set(recordKeys(trackerData.pets.cosmetics)),
+      petSkins: new Set(recordKeys(trackerData.pets.skins)),
+      questStates: Object.fromEntries(
+        recordValues(trackerData.quests).flatMap((quests) =>
+          recordKeys(quests).map((id) => [id, "completed"]),
+        ),
+      ),
+      reachedSeason: "winter",
+      renown: 0xffff,
+      skillLevels: Object.fromEntries(recordKeys(trackerData.skills).map((id) => [id, 0xff])),
+      unlockedPerks: new Set(
+        recordValues(trackerData.skills).flatMap((skill) =>
+          skill.perkTiers.flatMap((tier) => recordKeys(tier)),
+        ),
+      ),
+    });
+    for (const [animalId, animal] of recordEntries(trackerData.animals)) {
+      completed.animalCosmetics[animalId] = new Set(recordKeys(animal.cosmetics));
+      completed.animals[animalId] = new Set(
+        animal.variantTiers.flatMap((tier) =>
+          recordEntries(tier)
+            .filter(([, variant]) => variant.source.type !== "default")
+            .map(([id]) => id),
+        ),
+      );
+    }
+    const dateableNpcs = recordKeys(trackerData.npcs).filter((id) => trackerData.npcs[id].dateable);
+    completed.npcRelationships = Object.fromEntries(dateableNpcs.map((id) => [id, "platonic"]));
+    completed.npcRelationships[dateableNpcs[0]] = "married";
+
+    const decoded = await decodeTransferPayload(await encodeTransferPayload(completed));
+
+    expect(decoded).toEqual({
+      ...completed,
+      almanac: new Set(completed.almanac),
+      animalCosmetics: Object.fromEntries(
+        recordEntries(completed.animalCosmetics).filter(([, ids]) => ids.size > 0),
+      ),
+      animals: Object.fromEntries(
+        recordEntries(completed.animals).filter(([, ids]) => ids.size > 0),
+      ),
+    });
   });
 
   it("round-trips unlockedPerks", async () => {
@@ -199,6 +327,37 @@ describe("transfer codec v8", () => {
     expect(almanac.size).toBe(2);
   });
 
+  it("decodes the current v8 boundary fixture", async () => {
+    const npcIds = recordKeys(trackerData.npcs);
+    const dateableNpcs = npcIds.filter((id) => trackerData.npcs[id].dateable);
+    const recipeId = recordKeys(trackerData.recipes)[0];
+    const relationships = Object.fromEntries(dateableNpcs.map((id) => [id, "platonic"])) as Partial<
+      Record<NpcId, NpcRelationship>
+    >;
+    relationships[dateableNpcs[0]] = "married";
+    const fixtureState = makeCompleted({
+      almanacRecipes: new Set([recipeId]),
+      mines: { floor: 0xff, spells: new Set() },
+      npcLevels: Object.fromEntries(npcIds.map((id) => [id, 0xf])),
+      npcRelationships: relationships,
+      renown: 0xffff,
+      skillLevels: Object.fromEntries(recordKeys(trackerData.skills).map((id) => [id, 0xff])),
+    });
+    expect(await encodeTransferPayload(fixtureState)).toBe(V8_BOUNDARY_FIXTURE);
+
+    const decoded = await decodeTransferPayload(V8_BOUNDARY_FIXTURE);
+    const marriedNpc = recordKeys(trackerData.npcs).find(
+      (id) => decoded.npcRelationships?.[id] === "married",
+    );
+
+    expect(decoded.mines?.floor).toBe(0xff);
+    expect(decoded.renown).toBe(0xffff);
+    expect(new Set(Object.values(decoded.npcLevels ?? {}))).toEqual(new Set([0xf]));
+    expect(new Set(Object.values(decoded.skillLevels ?? {}))).toEqual(new Set([0xff]));
+    expect(marriedNpc).toBeDefined();
+    expect(decoded.almanacRecipes?.size).toBe(1);
+  });
+
   it("round-trips almanac with canonical IDs", async () => {
     const colorwayEntry = recordValues(trackerData.almanac)
       .flatMap(({ items }) => items)
@@ -259,7 +418,43 @@ describe("transfer codec v8", () => {
     expect(decodedV5.almanacRecipes).toEqual(new Set());
   });
 
-  it("rejects unsupported versions", async () => {
-    await expect(decodeTransferPayload("not-a-valid-payload")).rejects.toThrow();
+  it.each(["", "not+a/valid=payload", "A", "%%%%"])(
+    "rejects malformed base64url envelope %j",
+    async (payload) => {
+      await expect(decodeTransferPayload(payload)).rejects.toThrow(/transfer payload/i);
+    },
+  );
+
+  it.each([
+    ["version zero", toBase64url(new Uint8Array([0]))],
+    ["future version", toBase64url(new Uint8Array([TRANSFER_VERSION + 1]))],
+  ])("rejects unsupported %s", async (_, payload) => {
+    await expect(decodeTransferPayload(payload)).rejects.toThrow(/unsupported transfer version/i);
+  });
+
+  it("rejects a missing compressed body", async () => {
+    await expect(
+      decodeTransferPayload(toBase64url(new Uint8Array([TRANSFER_VERSION]))),
+    ).rejects.toThrow(/compressed transfer payload/i);
+  });
+
+  it("rejects truncated compressed data", async () => {
+    const payload = await encodeTransferPayload(makeCompleted());
+    const truncated = toBase64url(fromBase64url(payload).slice(0, -1));
+    await expect(decodeTransferPayload(truncated)).rejects.toThrow(/compressed transfer payload/i);
+  });
+
+  it("rejects malformed compressed data", async () => {
+    const payload = toBase64url(new Uint8Array([TRANSFER_VERSION, 0, 1, 2, 3]));
+    await expect(decodeTransferPayload(payload)).rejects.toThrow(/compressed transfer payload/i);
+  });
+
+  it.each(["truncated", "trailing"])("rejects %s decompressed data", async (kind) => {
+    const payload = await encodeTransferPayload(makeCompleted());
+    const raw = await decompressTransferRaw(payload);
+    const malformed = kind === "truncated" ? raw.slice(0, -1) : new Uint8Array([...raw, 0]);
+    const malformedPayload = await compressTransferRaw(TRANSFER_VERSION, malformed);
+
+    await expect(decodeTransferPayload(malformedPayload)).rejects.toThrow(/length/i);
   });
 });

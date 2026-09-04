@@ -48,7 +48,7 @@ sw.addEventListener("fetch", (event) => {
       fetchRuntimeRequest(event.request, {
         assetPaths: ASSETS,
         cache,
-        fetcher: fetch,
+        fetcher: (request) => fetch(request),
         matchCache: (request) => caches.match(request),
       }),
     );

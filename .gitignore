@@ -10,6 +10,8 @@ node_modules
 /.playwright-artifacts
 /.playwright-report
 /.playwright-results
+/.playwright-pwa-report
+/.playwright-pwa-results
 /.pnpm-store
 
 # OS
