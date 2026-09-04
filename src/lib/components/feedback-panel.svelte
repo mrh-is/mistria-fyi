@@ -340,7 +340,10 @@
         return;
       }
 
-      const data = (await response.json()) as { issueUrl: string };
+      const data = (await response.json()) as {
+        emailSaved?: boolean;
+        issueUrl: string;
+      };
 
       message = "";
       email = "";
@@ -352,13 +355,28 @@
       selectedElement = undefined;
       onclose();
 
-      toast("Thanks for your feedback!", {
-        action: {
-          label: "View issue",
-          onClick: () => window.open(data.issueUrl, "_blank"),
-        },
-        duration: 8000,
-      });
+      if (data.emailSaved === false) {
+        toast.warning(
+          "Your feedback was submitted, but your contact email could not be saved. " +
+            "Sending it again would create a duplicate public issue. " +
+            "Please submit a new report later if you still need a private reply.",
+          {
+            action: {
+              label: "View issue",
+              onClick: () => window.open(data.issueUrl, "_blank"),
+            },
+            duration: 12000,
+          },
+        );
+      } else {
+        toast("Thanks for your feedback!", {
+          action: {
+            label: "View issue",
+            onClick: () => window.open(data.issueUrl, "_blank"),
+          },
+          duration: 8000,
+        });
+      }
     } catch (err) {
       if (generation !== submitGeneration) return;
       if (err instanceof Error && err.name === "AbortError") {
