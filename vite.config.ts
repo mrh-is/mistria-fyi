@@ -19,6 +19,7 @@ export default defineConfig({
       "**/*.assets.test.ts",
       "**/*.client.test.ts",
       "tests/accessibility/**",
+      "tests/pwa/**",
       "**/.worktrees/**",
       "**/.claude/worktrees/**",
     ],

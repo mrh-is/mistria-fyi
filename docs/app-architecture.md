@@ -74,7 +74,8 @@ These flows are not interchangeable:
 - **Backup restore** (`importState`) replaces the entire serialized state with the imported JSON. It
   is a full-state overwrite.
 - **Save import / device transfer** (`mergeFromSave`) unions imported progress into the current
-  state. It is additive and never removes existing entries.
+  state. It is additive and never removes existing entries. The versioned binary contract and
+  failure behavior are documented in [the progress transfer format](transfer-format.md).
 
 ## 4. Route Composition
 

@@ -146,3 +146,36 @@ describe("accessibility workflow", () => {
     expect(upload?.with?.path).toContain(".playwright-results/");
   });
 });
+
+describe("PWA workflow", () => {
+  const workflow = parse(readFileSync(".github/workflows/pwa.yml", "utf8")) as Workflow;
+
+  it("runs for pull requests, main pushes, and manual dispatch", () => {
+    const job = workflow.jobs?.pwa;
+    expect(workflow.on).toEqual({
+      pull_request: null,
+      push: { branches: ["main"] },
+      workflow_dispatch: null,
+    });
+    expect(Object.keys(workflow.jobs ?? {})).toEqual(["pwa"]);
+    expect(job?.["runs-on"]).toBe("ubuntu-latest");
+  });
+
+  it("pins actions and runs the Chromium PWA suite", () => {
+    const job = workflow.jobs?.pwa;
+    const steps = job?.steps ?? [];
+    for (const step of steps.filter((entry) => entry.uses)) {
+      expect(step.uses).toMatch(pinnedAction);
+    }
+    expect(steps.filter((step) => step.run).map((step) => step.run)).toEqual([
+      "pnpm install --frozen-lockfile",
+      "pnpm exec playwright install --with-deps chromium",
+      "pnpm run test:pwa",
+      "exit 1",
+    ]);
+    expect(steps.find((step) => step.id === "pwa-tests")?.["continue-on-error"]).toBe(true);
+    const upload = steps.find((step) => step.uses?.startsWith("actions/upload-artifact@"));
+    expect(upload?.if).toContain("failure");
+    expect(upload?.with?.path).toContain(".playwright-pwa-results/");
+  });
+});

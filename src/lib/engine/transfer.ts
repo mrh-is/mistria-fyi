@@ -27,23 +27,48 @@ export const TRANSFER_VERSION = 8;
 
 const SEASON_BY_ORD: Season[] = ["spring", "summer", "fall", "winter"];
 const SEASON_ORD: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
+const HISTORICAL_RAW_LENGTHS: Partial<Record<number, number>> = { 5: 790 };
 
 // ─── Deterministic orderings (derived from trackerData) ─────────────
 
 /** Decode base64url string → Partial<CompletedState> for merging */
 export async function decodeTransferPayload(payload: string): Promise<Partial<CompletedState>> {
   const payloadBytes = fromBase64url(payload);
+  if (payloadBytes.length === 0) {
+    throw new Error("Malformed transfer payload: missing version byte");
+  }
   const version = payloadBytes[0];
   if (version < 1 || version > TRANSFER_VERSION) {
     throw new Error(`Unsupported transfer version: ${String(version)}`);
   }
 
   const compressed = payloadBytes.slice(1);
-  const raw = await decompressBytes(compressed);
+  if (compressed.length === 0) {
+    throw new Error("Invalid compressed transfer payload: missing compressed data");
+  }
+
+  let raw: Uint8Array;
+  try {
+    raw = await decompressBytes(compressed);
+  } catch (error) {
+    throw new Error("Invalid compressed transfer payload", { cause: error });
+  }
+
+  const expectedLength = HISTORICAL_RAW_LENGTHS[version] ?? getTransferRawLength(version);
+  if (raw.length !== expectedLength) {
+    throw new Error(
+      `Invalid transfer payload length: expected ${String(expectedLength)} bytes, received ${String(raw.length)}`,
+    );
+  }
 
   let offset = 0;
 
   function readBytes(count: number): Uint8Array {
+    if (offset + count > raw.length) {
+      throw new Error(
+        `Transfer layout overflow: need ${String(count)} bytes at offset ${String(offset)}, have ${String(raw.length)}`,
+      );
+    }
     const slice = raw.slice(offset, offset + count);
     offset += count;
     return slice;
@@ -457,61 +482,39 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
 }
 
 async function compressBytes(data: Uint8Array): Promise<Uint8Array> {
-  const cs = new CompressionStream("deflate-raw");
-  const writer = cs.writable.getWriter();
-  void writer.write(data as ArrayBufferView<ArrayBuffer>);
-  void writer.close();
-
-  const reader = cs.readable.getReader();
-  const chunks: Uint8Array[] = [];
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-  }
-
-  const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
-  const result = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return result;
+  const stream = new Blob([data as Uint8Array<ArrayBuffer>])
+    .stream()
+    .pipeThrough(new CompressionStream("deflate-raw"));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
 async function decompressBytes(data: Uint8Array): Promise<Uint8Array> {
-  const ds = new DecompressionStream("deflate-raw");
-  const writer = ds.writable.getWriter();
-  void writer.write(data as ArrayBufferView<ArrayBuffer>);
-  void writer.close();
-
-  const reader = ds.readable.getReader();
-  const chunks: Uint8Array[] = [];
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-  }
-
-  const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
-  const result = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return result;
+  const stream = new Blob([data as Uint8Array<ArrayBuffer>])
+    .stream()
+    .pipeThrough(new DecompressionStream("deflate-raw"));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
 function fromBase64url(str: string): Uint8Array {
+  if (!/^[A-Za-z0-9_-]+$/.test(str) || str.length % 4 === 1) {
+    throw new Error("Malformed transfer payload: invalid base64url encoding");
+  }
+
   // Restore standard base64 characters and padding
   const base64 = str.replace(/-/g, "+").replace(/_/g, "/");
   const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
-  const binary = atob(padded);
+  let binary: string;
+  try {
+    binary = atob(padded);
+  } catch (error) {
+    throw new Error("Malformed transfer payload: invalid base64url encoding", { cause: error });
+  }
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) {
     bytes[i] = binary.charCodeAt(i);
+  }
+  if (toBase64url(bytes) !== str) {
+    throw new Error("Malformed transfer payload: non-canonical base64url encoding");
   }
   return bytes;
 }
@@ -531,6 +534,42 @@ function getAlmanacOrder(): ItemId[] {
     items.map((entry) => entry.itemIds[0]),
   );
   return [...new Set(canonicalIds)].toSorted();
+}
+
+function getTransferRawLength(version: number): number {
+  let length =
+    Math.ceil((version >= 6 ? getAlmanacOrder() : getLegacyAlmanacOrder()).length / 8) +
+    Math.ceil(getCosmeticOrder().length / 8) +
+    Math.ceil(getAnimalVariantOrder().length / 8) +
+    Math.ceil(getAnimalCosmeticOrder().length / 8) +
+    Math.ceil(getMuseumOrder().length / 8) +
+    1 +
+    1 +
+    2 +
+    Math.ceil(getNpcOrder().length / 2) +
+    getSkillOrder().length +
+    Math.ceil(getQuestOrder().length / 4);
+
+  if (version >= 2) {
+    length += Math.ceil(getPerkOrder().length / 8) + 1;
+  }
+  if (version >= 3) {
+    length += Math.ceil(getPetCosmeticOrder().length / 8) + Math.ceil(getPetSkinOrder().length / 8);
+  }
+  if (version >= 4) {
+    length += Math.ceil(getDateOrder().length / 8);
+  }
+  if (version >= 5) {
+    length += 1 + Math.ceil(getDateableNpcOrder().length / 8);
+  }
+  if (version >= 7) {
+    length += Math.ceil((getDateableNpcOrder().length * 3) / 8) + 1;
+  }
+  if (version >= 8) {
+    length += Math.ceil(getRecipeOrder().length / 8);
+  }
+
+  return length;
 }
 
 // v1–v5 used TOML-order-first representatives; v6 switched to alphabetical-first.
