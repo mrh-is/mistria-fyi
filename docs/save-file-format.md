@@ -37,6 +37,10 @@ Compressed on disk: ~290 KB. Decompressed: ~3.1 MB across 42 entries. The larges
 `game_stats` (~1.3 MB), `gamedata` (~610 KB), `farm` (~330 KB), and `player` (~230 KB). Most
 location entries (seals, player home rooms) are under 1 KB.
 
+The checked-in fixture is exactly 298,271 bytes compressed and 3,216,869 bytes decompressed. The
+browser importer caps input at 8 MiB and expanded output at 64 MiB, leaving more than 20x headroom
+over this measured late-game save while bounding memory use on constrained devices.
+
 ## Entries
 
 A save contains a mix of **global state entries** and **per-location entries**. The importer only
