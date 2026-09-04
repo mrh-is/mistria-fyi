@@ -171,9 +171,10 @@ pnpm run pipeline -- pipeline/input/assets
 path is missing. Set `MISTRIA_ASSETS=/path/to/assets` to use another local assets root. The pipeline
 command regenerates `src/lib/data/tracker-data.json`; review that diff before committing.
 
-When moving pipeline input to a new Fields of Mistria version, follow the
-[game version update protocol](game-version-update-protocol.md). It requires a semantic data diff
-and separate compatibility decisions for persisted state, backups, save imports, and transfers.
+The commands above cover routine regeneration from the same game version. When moving pipeline input
+to a new Fields of Mistria version, follow the
+[game version update protocol](game-version-update-protocol.md) instead. It requires a semantic data
+diff and separate compatibility decisions for persisted state, backups, save imports, and transfers.
 
 ---
 

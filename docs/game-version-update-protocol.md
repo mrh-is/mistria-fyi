@@ -24,6 +24,9 @@ Keep the existing versions conceptually separate:
   tracker data.
 - The serialized user-state `version` identifies the localStorage and JSON backup shape. Change it
   only when persisted user state becomes incompatible or needs a new migration path.
+- `STORAGE_KEY` (currently `"mistria-fyi-v1"` in `user-state.svelte.ts`) identifies the localStorage
+  slot itself. Changing the key abandons existing browser state entirely rather than migrating it,
+  which is a different decision from bumping the serialized `version` field.
 - `TRANSFER_VERSION` identifies the progress-transfer codec. Change it only when the encoded fields,
   their interpretation, or their positional layout changes incompatibly.
 - The Mistria Field Guide application version identifies the deployed application release.
@@ -71,14 +74,14 @@ conditions, and acquisition sources.
 
 Classify every compatibility-relevant difference:
 
-| Change            | Required review                                                                                                                                                                                            |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Addition          | Confirm whether the entry should start unchecked, be default-completed, or be inferred from an imported save. Verify that totals and transfer ordering remain correct.                                     |
-| Removal           | Determine whether the ID was deleted, renamed, regrouped, made unobtainable, or intentionally no longer tracked. Decide explicitly whether prior completion is retained, migrated, reported, or discarded. |
-| Rename            | Establish evidence that the old and new IDs represent the same progress. Add the narrowest explicit mapping required at every affected persistence boundary.                                               |
-| Regrouping        | Check whether an almanac canonical ID, recipe identity, museum membership, or another many-to-one representation changed while the underlying game objects remained.                                       |
-| Schema change     | Update the shared tracker-data contract, pipeline assembly, every application consumer, and relevant tests together. Decide whether the change affects persisted state or transfers independently.         |
-| Value-only change | Review user-visible labels, sources, restrictions, visibility, and progress semantics even when IDs are stable.                                                                                            |
+| Change            | Required review                                                                                                                                                                                                                                                                                                                                                   |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Addition          | Confirm whether the entry should start unchecked, be default-completed, or be inferred from an imported save. Verify that totals and transfer ordering remain correct.                                                                                                                                                                                            |
+| Removal           | Determine whether the ID was deleted, renamed, regrouped, made unobtainable, or intentionally no longer tracked. Decide explicitly whether prior completion is retained, migrated, reported, or discarded.                                                                                                                                                        |
+| Rename            | Establish evidence that the old and new IDs represent the same progress. Add the narrowest explicit mapping required at every affected persistence boundary.                                                                                                                                                                                                      |
+| Regrouping        | Check whether an almanac canonical ID, recipe identity, museum membership, or another many-to-one representation changed while the underlying game objects remained. Note that canonical IDs are derived (alphabetically-first member of a recipe group), so adding a new member that sorts earlier silently changes the canonical ID without an explicit rename. |
+| Schema change     | Update the shared tracker-data contract, pipeline assembly, every application consumer, and relevant tests together. Decide whether the change affects persisted state or transfers independently.                                                                                                                                                                |
+| Value-only change | Review user-visible labels, sources, restrictions, visibility, and progress semantics even when IDs are stable.                                                                                                                                                                                                                                                   |
 
 Do not infer a rename merely because one ID disappeared while another appeared. Preserve ambiguity
 in the version-update issue until native data or another authoritative source establishes the
@@ -119,8 +122,12 @@ Transfer payloads use positional orderings derived from tracker data. Adding, re
 reordering an encoded ID can reinterpret bits in a payload created by an earlier application
 release, even when a current-data round-trip test passes.
 
-For every candidate dataset, compare all transfer orderings with the preceding release. If any
-ordering or encoded field changes, choose and document one of these responses:
+For every candidate dataset, compare all transfer orderings with the preceding release. The
+orderings are derived at runtime from tracker data (e.g., `getAlmanacOrder()` in `transfer.ts`), so
+the comparison requires running both datasets through the ordering functions or diffing the existing
+transfer test fixtures against the candidate. Extend the transfer test suite's historical payload
+fixtures to cover each new ordering when the comparison reveals changes. If any ordering or encoded
+field changes, choose and document one of these responses:
 
 - Preserve the historical ordering in the decoder and add a historical payload fixture.
 - Bump the transfer codec and provide a backward-compatible decoding path.
