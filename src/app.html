@@ -4,7 +4,13 @@
     <script>
       // Prevent FOUC: apply dark class before first paint
       (function () {
-        var t = localStorage.getItem("mistria-fyi-theme") || "system";
+        var t;
+        try {
+          t = localStorage.getItem("mistria-fyi-theme");
+        } catch (e) {
+          t = null;
+        }
+        t = t || "system";
         var dark =
           t === "dark" || (t === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
         if (dark) document.documentElement.classList.add("dark");
