@@ -8,6 +8,7 @@
 
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
+  import PersistenceWarning from "$lib/components/persistence-warning.svelte";
   import ToolbarFooter from "$lib/components/toolbar-footer.svelte";
   import { Toaster } from "$lib/components/ui/sonner/index.js";
   import { FeedbackContext, setFeedbackContext } from "$lib/feedback/context.svelte.js";
@@ -56,3 +57,4 @@
 
 <ToolbarFooter hidden={!hasToolbar} bind:overlayActive />
 <Toaster position="bottom-center" offset="calc(56px + env(safe-area-inset-bottom))" />
+<PersistenceWarning />

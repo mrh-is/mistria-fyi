@@ -6,7 +6,7 @@ import { findRecipesForQuest } from "$lib/engine/quest-rewards.js";
 import { getMarriedNpc, normalizeRelationships } from "$lib/engine/relationships.js";
 import { deriveProgressionState, type UserProgressionState } from "$lib/engine/visibility.js";
 import { recordEntries, recordKeys } from "$lib/utils";
-import { safeLocalStorage } from "$lib/utils/local-storage.js";
+import { safeLocalStorage, trySetItem } from "$lib/utils/local-storage.js";
 
 import type {
   AnimalId,
@@ -216,6 +216,7 @@ function createDefaultState(): UserState {
 
 function createUserState() {
   let state = $state<UserState>(createDefaultState());
+  let _persistenceFailureGeneration = $state(0);
 
   const progressionState = $derived(
     deriveProgressionState(state.completed, trackerData, state.showSpoilers),
@@ -229,7 +230,12 @@ function createUserState() {
         const json = serialize(state);
         clearTimeout(timeout);
         timeout = setTimeout(() => {
-          safeLocalStorage.setItem(STORAGE_KEY, json);
+          const ok = trySetItem(STORAGE_KEY, json);
+          if (!ok) {
+            _persistenceFailureGeneration++;
+          } else {
+            _persistenceFailureGeneration = 0;
+          }
         }, 300);
       });
     });
@@ -284,6 +290,9 @@ function createUserState() {
       const next: QuestState =
         current === "none" ? "obtained" : current === "obtained" ? "completed" : "none";
       state.completed.questStates[id] = next;
+    },
+    dismissPersistenceWarning() {
+      _persistenceFailureGeneration = 0;
     },
     exportState(): string {
       return serialize(state);
@@ -559,6 +568,12 @@ function createUserState() {
       backfillAnimalMaps(state.completed);
 
       return counts;
+    },
+    get persistenceFailed(): boolean {
+      return _persistenceFailureGeneration > 0;
+    },
+    get persistenceFailureGeneration(): number {
+      return _persistenceFailureGeneration;
     },
     get progressionState(): UserProgressionState {
       return progressionState;
