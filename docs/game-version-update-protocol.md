@@ -122,12 +122,12 @@ Transfer payloads use positional orderings derived from tracker data. Adding, re
 reordering an encoded ID can reinterpret bits in a payload created by an earlier application
 release, even when a current-data round-trip test passes.
 
-For every candidate dataset, compare all transfer orderings with the preceding release. The
-orderings are derived at runtime from tracker data (e.g., `getAlmanacOrder()` in `transfer.ts`), so
-the comparison requires running both datasets through the ordering functions or diffing the existing
-transfer test fixtures against the candidate. Extend the transfer test suite's historical payload
-fixtures to cover each new ordering when the comparison reveals changes. If any ordering or encoded
-field changes, choose and document one of these responses:
+For every candidate dataset, materialize each transfer ordering from the preceding and candidate
+application revisions, then diff the resulting ID arrays. The runtime helpers in `transfer.ts`, such
+as `getAlmanacOrder()`, define these orderings. Existing historical payload fixtures are a separate
+decoder regression check; they do not prove that the complete layout is unchanged. Run them against
+the candidate decoder, and add fixtures that exercise affected positions when an ordering changes.
+If any ordering or encoded field changes, choose and document one of these responses:
 
 - Preserve the historical ordering in the decoder and add a historical payload fixture.
 - Bump the transfer codec and provide a backward-compatible decoding path.
