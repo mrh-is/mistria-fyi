@@ -10,7 +10,7 @@ function applyTheme(resolved: "dark" | "light") {
   // Update mobile browser chrome color
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) {
-    meta.setAttribute("content", resolved === "dark" ? "#222226" : "#f7f5f0");
+    meta.setAttribute("content", resolved === "dark" ? "#1e1e22" : "#f7f5f0");
   }
 }
 

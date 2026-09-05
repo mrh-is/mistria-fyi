@@ -155,7 +155,7 @@ describe("theme-color sync", () => {
 
     const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     expect(meta).toBeDefined();
-    expect(meta?.content).toBe("#222226");
+    expect(meta?.content).toBe("#1e1e22");
   });
 
   it("preserves light theme-color when bootstrap did not apply dark class", () => {
@@ -176,7 +176,7 @@ describe("theme-color sync", () => {
 
     const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     expect(meta).toBeDefined();
-    expect(meta?.content).toBe("#222226");
+    expect(meta?.content).toBe("#1e1e22");
   });
 
   it("preserves light theme-color when localStorage throws and OS prefers light", () => {
