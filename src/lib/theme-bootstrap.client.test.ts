@@ -70,7 +70,7 @@ describe("theme bootstrap", () => {
       meta.name = "theme-color";
       document.head.appendChild(meta);
     }
-    meta.content = "#f8f5ef";
+    meta.content = "#f7f5f0";
   });
 
   afterEach(() => {
@@ -140,7 +140,7 @@ describe("theme-color sync", () => {
       meta.name = "theme-color";
       document.head.appendChild(meta);
     }
-    meta.content = "#f8f5ef";
+    meta.content = "#f7f5f0";
   });
 
   afterEach(() => {
@@ -155,7 +155,7 @@ describe("theme-color sync", () => {
 
     const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     expect(meta).toBeDefined();
-    expect(meta?.content).toBe("#011011");
+    expect(meta?.content).toBe("#222226");
   });
 
   it("preserves light theme-color when bootstrap did not apply dark class", () => {
@@ -165,7 +165,7 @@ describe("theme-color sync", () => {
 
     const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     expect(meta).toBeDefined();
-    expect(meta?.content).toBe("#f8f5ef");
+    expect(meta?.content).toBe("#f7f5f0");
   });
 
   it("sets dark theme-color when localStorage throws and OS prefers dark", () => {
@@ -176,7 +176,7 @@ describe("theme-color sync", () => {
 
     const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     expect(meta).toBeDefined();
-    expect(meta?.content).toBe("#011011");
+    expect(meta?.content).toBe("#222226");
   });
 
   it("preserves light theme-color when localStorage throws and OS prefers light", () => {
@@ -187,6 +187,6 @@ describe("theme-color sync", () => {
 
     const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     expect(meta).toBeDefined();
-    expect(meta?.content).toBe("#f8f5ef");
+    expect(meta?.content).toBe("#f7f5f0");
   });
 });
