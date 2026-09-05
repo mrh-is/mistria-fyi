@@ -26,13 +26,13 @@
       opacity="0.3"
     />
   {:else if state === "obtained"}
-    <!-- Obtained: amber forward slash -->
-    <path d="M10 20 L18 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+    <!-- Obtained: downslope stroke (top-left to bottom-right) -->
+    <path d="M10 8 L18 20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
   {:else}
-    <!-- Completed: both strokes form X -->
-    <path d="M10 20 L18 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+    <!-- Completed: downslope first, then upslope to form X -->
+    <path d="M10 8 L18 20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
     <path
-      d="M18 20 L10 8"
+      d="M18 8 L10 20"
       stroke="currentColor"
       stroke-width="2.5"
       stroke-linecap="round"

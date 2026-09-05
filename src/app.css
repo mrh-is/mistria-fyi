@@ -131,33 +131,33 @@
 
 .dark {
   /* ── Field Guide palette: dark ("oil lamp") ────────── */
-  --paper: #222226;
+  --paper: #1e1e22;
   --ink: #e4dfd8;
   --ink-muted: #a8a098;
-  --hairline: #787068;
+  --hairline: #706860;
 
-  --fg-green: #3aaa5a;
-  --fg-amber: #d89030;
-  --fg-rose: #d85080;
-  --fg-blue: #4090d0;
-  --fg-brown: #b0885a;
-  --fg-purple: #a070c8;
+  --fg-green: #38984e;
+  --fg-amber: #c07828;
+  --fg-rose: #c04070;
+  --fg-blue: #3878b8;
+  --fg-brown: #9a7848;
+  --fg-purple: #8860b0;
 
-  --card: #2a2a2e;
+  --card: #262628;
   --card-foreground: var(--ink);
   --popover: var(--card);
   --popover-foreground: var(--ink);
   --primary-foreground: #1a1a1e;
   --secondary-foreground: #1a1a1e;
-  --muted: #32322e;
-  --accent: #38382e;
+  --muted: #2c2c2a;
+  --accent: #32322c;
   --accent-foreground: var(--ink);
-  --destructive: #f06060;
-  --sidebar: #28282c;
+  --destructive: #e85858;
+  --sidebar: #222224;
 
-  /* Category colors — boosted for dark ground */
-  --cat-recipes: #e09040;
-  --cat-renown: #d0a830;
+  /* Category colors — adjusted for dark ground */
+  --cat-recipes: #c87838;
+  --cat-renown: #b89028;
 }
 
 @theme inline {
