@@ -10,6 +10,15 @@ function contrast(first: Rgb, second: Rgb): number {
   return (light + 0.05) / (dark + 0.05);
 }
 
+function hexToRgb(hex: string): Rgb {
+  const h = hex.replace("#", "");
+  return [
+    parseInt(h.slice(0, 2), 16) / 255,
+    parseInt(h.slice(2, 4), 16) / 255,
+    parseInt(h.slice(4, 6), 16) / 255,
+  ];
+}
+
 function luminance(rgb: Rgb): number {
   const linear = rgb.map((channel) =>
     channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4,
@@ -17,53 +26,47 @@ function luminance(rgb: Rgb): number {
   return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
 }
 
-function oklchToRgb([lightness, chroma, hue]: [number, number, number]): Rgb {
-  const angle = (hue * Math.PI) / 180;
-  const a = chroma * Math.cos(angle);
-  const b = chroma * Math.sin(angle);
-  const l = Math.pow(lightness + 0.3963377774 * a + 0.2158037573 * b, 3);
-  const m = Math.pow(lightness - 0.1055613458 * a - 0.0638541728 * b, 3);
-  const s = Math.pow(lightness - 0.0894841775 * a - 1.291485548 * b, 3);
-  const channels = [
-    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
-    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
-    -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
-  ];
-
-  return channels.map((channel) =>
-    Math.max(
-      0,
-      Math.min(1, channel <= 0.0031308 ? 12.92 * channel : 1.055 * channel ** (1 / 2.4) - 0.055),
-    ),
-  ) as Rgb;
-}
-
-function parseTheme(selector: string): Partial<Record<string, [number, number, number]>> {
+function parseBlock(selector: string): Record<string, string> {
   const block = new RegExp(`${selector}\\s*\\{([\\s\\S]*?)\\n\\}`).exec(css)?.[1];
   if (!block) throw new Error(`Theme not found: ${selector}`);
 
-  return Object.fromEntries(
-    [...block.matchAll(/--([\w-]+):\s*oklch\(([\d.]+)\s+([\d.]+)\s+([\d.]+)\)/g)].map(
-      ([, name, lightness, chroma, hue]) => [
-        name,
-        [Number(lightness), Number(chroma), Number(hue)],
-      ],
-    ),
-  );
+  const tokens: Record<string, string> = {};
+  for (const [, name, value] of block.matchAll(
+    /--([\w-]+):\s*(#[0-9a-fA-F]{6}|var\(--[\w-]+\))/g,
+  )) {
+    tokens[name] = value;
+  }
+  return tokens;
+}
+
+function resolveColor(tokens: Record<string, string>, name: string): Rgb {
+  let value = tokens[name];
+  if (!value) throw new Error(`Token not found: ${name}`);
+
+  const seen = new Set<string>();
+  while (value.startsWith("var(--")) {
+    const ref = value.slice(6, -1);
+    if (seen.has(ref)) throw new Error(`Circular reference: ${name}`);
+    seen.add(ref);
+    value = tokens[ref];
+    if (!value) throw new Error(`Unresolved reference: ${ref} (from ${name})`);
+  }
+
+  return hexToRgb(value);
 }
 
 describe("theme contrast tokens", () => {
-  for (const [name, theme] of [
-    ["light", parseTheme(":root")],
-    ["dark", parseTheme("\\.dark")],
+  const lightTokens = parseBlock(":root");
+  const darkOverrides = parseBlock("\\.dark");
+  const darkTokens = { ...lightTokens, ...darkOverrides };
+
+  for (const [name, tokens] of [
+    ["light", lightTokens],
+    ["dark", darkTokens],
   ] as const) {
     it(`${name} theme meets intended text and non-text combinations`, () => {
-      const color = (token: string) => {
-        const value = theme[token];
-        if (!value) throw new Error(`Token not found in ${name} theme: ${token}`);
-        return oklchToRgb(value);
-      };
-      const textSurfaces = ["background", "card", "popover", "muted", "accent"];
+      const color = (token: string) => resolveColor(tokens, token);
+      const textSurfaces = ["background", "card", "muted", "accent"];
 
       expect(contrast(color("primary-foreground"), color("primary"))).toBeGreaterThanOrEqual(4.5);
       expect(contrast(color("destructive"), color("background"))).toBeGreaterThanOrEqual(4.5);

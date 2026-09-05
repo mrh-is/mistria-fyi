@@ -3,182 +3,174 @@
 @import "tw-animate-css";
 @import "tailwindcss-safe-area";
 
-/* ── Self-hosted SN Pro font ──────────────────────────── */
+/* ── Field Guide typography ──────────────────────────── */
+
+/* Display: Instrument Serif Italic */
+@font-face {
+  font-family: "Instrument Serif";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/instrument-serif-italic.woff2") format("woff2");
+}
+
+/* Body/reading: Petrona (variable, 400–600) */
+@font-face {
+  font-family: "Petrona";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/petrona-latin.woff2") format("woff2");
+}
 
 @font-face {
-  font-family: "SN Pro";
+  font-family: "Petrona";
+  font-style: italic;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/petrona-italic-latin.woff2") format("woff2");
+}
+
+/* Controls: Fragment Mono */
+@font-face {
+  font-family: "Fragment Mono";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/sn-pro-latin.woff2") format("woff2");
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
-    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  src: url("/fonts/fragment-mono-regular.woff2") format("woff2");
 }
 
+/* Annotations/supporting: Satoshi */
 @font-face {
-  font-family: "SN Pro";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url("/fonts/sn-pro-latin.woff2") format("woff2");
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
-    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-@font-face {
-  font-family: "SN Pro";
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url("/fonts/sn-pro-latin.woff2") format("woff2");
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
-    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-@font-face {
-  font-family: "SN Pro";
+  font-family: "Satoshi";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/sn-pro-latin-ext.woff2") format("woff2");
-  unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
-    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
-    U+A720-A7FF;
+  src: url("/fonts/satoshi-regular.woff2") format("woff2");
 }
 
+/* Data/counts/badges: IBM Plex Mono */
 @font-face {
-  font-family: "SN Pro";
+  font-family: "IBM Plex Mono";
   font-style: normal;
-  font-weight: 500;
+  font-weight: 400;
   font-display: swap;
-  src: url("/fonts/sn-pro-latin-ext.woff2") format("woff2");
-  unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
-    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
-    U+A720-A7FF;
-}
-
-@font-face {
-  font-family: "SN Pro";
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url("/fonts/sn-pro-latin-ext.woff2") format("woff2");
-  unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
-    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
-    U+A720-A7FF;
+  src: url("/fonts/ibm-plex-mono-latin.woff2") format("woff2");
 }
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 0.625rem;
+  --radius: 2px;
 
-  /* Mistria Pastel Palette — Light Mode */
-  --background: oklch(0.97 0.008 85); /* warm ivory */
-  --foreground: oklch(0.2 0.02 270); /* deep blue-gray */
-  --card: oklch(0.98 0.005 85); /* slightly warmer than bg */
-  --card-foreground: oklch(0.2 0.02 270);
-  --popover: oklch(0.98 0.005 85);
-  --popover-foreground: oklch(0.2 0.02 270);
-  --primary: oklch(0.45 0.12 165); /* accessible mint green */
-  --primary-foreground: oklch(0.98 0.005 85);
-  --secondary: oklch(0.82 0.08 350); /* soft rose pink */
-  --secondary-foreground: oklch(0.25 0.02 350);
-  --muted: oklch(0.92 0.01 85); /* warm light gray */
-  --muted-foreground: oklch(0.43 0.02 270); /* warm gray */
-  --accent: oklch(0.94 0.015 85); /* warm off-white for hover */
-  --accent-foreground: oklch(0.2 0.02 270);
-  --destructive: oklch(0.56 0.245 27.325);
-  --border: oklch(0.62 0.01 75); /* warm beige border */
-  --input: oklch(0.62 0.01 75);
-  --ring: oklch(0.45 0.12 165); /* accessible mint focus ring */
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.95 0.008 85);
-  --sidebar-foreground: oklch(0.2 0.02 270);
-  --sidebar-primary: oklch(0.45 0.12 165);
-  --sidebar-primary-foreground: oklch(0.98 0.005 85);
-  --sidebar-accent: oklch(0.94 0.015 85);
-  --sidebar-accent-foreground: oklch(0.2 0.02 270);
-  --sidebar-border: oklch(0.62 0.01 75);
-  --sidebar-ring: oklch(0.45 0.12 165);
+  /* ── Font roles ──────────────────────────────────────── */
+  --font-display: "Instrument Serif", "Georgia", serif;
+  --font-body: "Petrona", "Georgia", serif;
+  --font-controls: "Fragment Mono", "Courier New", monospace;
+  --font-annotation: "Satoshi", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", "Courier New", monospace;
 
-  /* Category colors */
-  --cat-museum: oklch(0.72 0.1 65); /* warm amber */
-  --cat-almanac: oklch(0.72 0.12 145); /* forest green */
-  --cat-recipes: oklch(0.72 0.1 45); /* warm orange */
-  --cat-animals: oklch(0.78 0.1 350); /* soft pink */
-  --cat-npcs: oklch(0.7 0.12 15); /* warm rose-red */
-  --cat-cosmetics: oklch(0.72 0.1 300); /* lavender */
-  --cat-skills: oklch(0.7 0.1 230); /* blue */
-  --cat-renown: oklch(0.78 0.12 85); /* gold */
-  --cat-quests: oklch(0.7 0.1 185); /* teal */
-  --cat-mines: oklch(0.55 0.04 260); /* dark slate */
+  /* ── Field Guide palette: light ──────────────────────── */
+  --paper: #f7f5f0;
+  --ink: #2e2a22;
+  --ink-muted: #6a6460;
+  --hairline: #948a7c;
+
+  --fg-green: #1a7a3a;
+  --fg-amber: #b86510;
+  --fg-rose: #b83060;
+  --fg-blue: #1860a8;
+  --fg-brown: #7a5a3a;
+  --fg-purple: #7848a0;
+
+  /* shadcn semantic tokens mapped to Field Guide */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: #f2efe8;
+  --card-foreground: var(--ink);
+  --popover: var(--card);
+  --popover-foreground: var(--ink);
+  --primary: var(--fg-green);
+  --primary-foreground: var(--paper);
+  --secondary: var(--fg-rose);
+  --secondary-foreground: var(--paper);
+  --muted: #ece8e0;
+  --muted-foreground: var(--ink-muted);
+  --accent: #eae6dc;
+  --accent-foreground: var(--ink);
+  --destructive: #c03030;
+  --border: var(--hairline);
+  --input: var(--hairline);
+  --ring: var(--fg-green);
+  --chart-1: var(--fg-amber);
+  --chart-2: var(--fg-green);
+  --chart-3: var(--fg-blue);
+  --chart-4: var(--fg-rose);
+  --chart-5: var(--fg-purple);
+  --sidebar: #f0ece4;
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--fg-green);
+  --sidebar-primary-foreground: var(--paper);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--hairline);
+  --sidebar-ring: var(--fg-green);
+
+  /* Category colors — jewel tones */
+  --cat-museum: var(--fg-amber);
+  --cat-almanac: var(--fg-green);
+  --cat-recipes: #c87020;
+  --cat-animals: var(--fg-rose);
+  --cat-npcs: var(--fg-rose);
+  --cat-cosmetics: var(--fg-purple);
+  --cat-skills: var(--fg-blue);
+  --cat-renown: #b89020;
+  --cat-quests: var(--fg-blue);
+  --cat-mines: var(--fg-brown);
 }
 
 .dark {
-  /* Mistria Pastel Palette — Dark Mode (warm midnight) */
-  --background: oklch(0.16 0.025 200); /* midnight blue-green */
-  --foreground: oklch(0.93 0.01 85); /* warm white */
-  --card: oklch(0.19 0.02 200); /* slightly lighter than bg */
-  --card-foreground: oklch(0.93 0.01 85);
-  --popover: oklch(0.19 0.02 200);
-  --popover-foreground: oklch(0.93 0.01 85);
-  --primary: oklch(0.78 0.1 165); /* brighter mint for dark bg */
-  --primary-foreground: oklch(0.16 0.025 200);
-  --secondary: oklch(0.8 0.08 350); /* rose, slightly brighter */
-  --secondary-foreground: oklch(0.93 0.01 85);
-  --muted: oklch(0.22 0.015 200);
-  --muted-foreground: oklch(0.65 0.02 200); /* readable in dark mode */
-  --accent: oklch(0.24 0.02 200); /* subtle blue-green for hover */
-  --accent-foreground: oklch(0.93 0.01 85);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(0.5 0.02 200); /* accessible soft borders */
-  --input: oklch(0.5 0.02 200);
-  --ring: oklch(0.78 0.1 165);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.19 0.02 200);
-  --sidebar-foreground: oklch(0.93 0.01 85);
-  --sidebar-primary: oklch(0.78 0.1 165);
-  --sidebar-primary-foreground: oklch(0.93 0.01 85);
-  --sidebar-accent: oklch(0.24 0.02 200);
-  --sidebar-accent-foreground: oklch(0.93 0.01 85);
-  --sidebar-border: oklch(0.5 0.02 200);
-  --sidebar-ring: oklch(0.78 0.1 165);
+  /* ── Field Guide palette: dark ("oil lamp") ────────── */
+  --paper: #222226;
+  --ink: #e4dfd8;
+  --ink-muted: #a8a098;
+  --hairline: #787068;
 
-  /* Category colors — adjusted for dark bg */
-  --cat-museum: oklch(0.78 0.1 65);
-  --cat-almanac: oklch(0.78 0.12 145);
-  --cat-recipes: oklch(0.78 0.1 45);
-  --cat-animals: oklch(0.82 0.1 350);
-  --cat-npcs: oklch(0.76 0.12 15);
-  --cat-cosmetics: oklch(0.78 0.1 300);
-  --cat-skills: oklch(0.76 0.1 230);
-  --cat-renown: oklch(0.82 0.12 85);
-  --cat-quests: oklch(0.76 0.1 185);
-  --cat-mines: oklch(0.65 0.04 260);
+  --fg-green: #3aaa5a;
+  --fg-amber: #d89030;
+  --fg-rose: #d85080;
+  --fg-blue: #4090d0;
+  --fg-brown: #b0885a;
+  --fg-purple: #a070c8;
+
+  --card: #2a2a2e;
+  --card-foreground: var(--ink);
+  --popover: var(--card);
+  --popover-foreground: var(--ink);
+  --primary-foreground: #1a1a1e;
+  --secondary-foreground: #1a1a1e;
+  --muted: #32322e;
+  --accent: #38382e;
+  --accent-foreground: var(--ink);
+  --destructive: #f06060;
+  --sidebar: #28282c;
+
+  /* Category colors — boosted for dark ground */
+  --cat-recipes: #e09040;
+  --cat-renown: #d0a830;
 }
 
 @theme inline {
   --font-sans:
-    "SN Pro", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-    "Segoe UI Symbol", "Noto Color Emoji";
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
+    "Petrona", "Georgia", serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+    "Noto Color Emoji";
+  --font-serif:
+    "Instrument Serif", "Georgia", serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+    "Noto Color Emoji";
+  --font-mono: "Fragment Mono", "IBM Plex Mono", "Courier New", monospace;
+  --radius-sm: calc(var(--radius) - 1px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
   --radius-xl: calc(var(--radius) + 4px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -256,9 +248,19 @@
   }
 }
 
+@keyframes draw-stroke {
+  from {
+    stroke-dashoffset: 20;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
 @theme {
   --animate-check-pulse: check-pulse 100ms ease-out;
   --animate-shake: shake 400ms ease-out;
+  --animate-draw-stroke: draw-stroke 300ms ease-out forwards;
 }
 
 @utility animate-check-pulse {
@@ -269,11 +271,43 @@
   animation: var(--animate-shake);
 }
 
+@utility animate-draw-stroke {
+  animation: var(--animate-draw-stroke);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-check-pulse,
-  .animate-shake {
+  .animate-shake,
+  .animate-draw-stroke {
     animation: none;
   }
+
+  .animate-draw-stroke {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ── Font role utilities ─────────────────────────────── */
+
+@utility font-display {
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+@utility font-body {
+  font-family: var(--font-body);
+}
+
+@utility font-controls {
+  font-family: var(--font-controls);
+}
+
+@utility font-annotation {
+  font-family: var(--font-annotation);
+}
+
+@utility font-data {
+  font-family: var(--font-data);
 }
 
 /* ─────────────────────────────────────────────────────── */
@@ -293,12 +327,10 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* Prevent pull-to-refresh in standalone PWA mode */
+    font-family: var(--font-body);
     overscroll-behavior-y: contain;
-    /* Remove tap highlight on iOS */
     -webkit-tap-highlight-color: transparent;
   }
-  /* Prevent iOS zoom on focused inputs — inputs must be ≥16px */
   input,
   select,
   textarea {
