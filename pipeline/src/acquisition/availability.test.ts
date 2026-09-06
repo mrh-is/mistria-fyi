@@ -204,6 +204,17 @@ describe("projectRequirementExpressionToAvailability", () => {
     });
   });
 
+  it.each([
+    ["break_fire_seal", "breaking_the_fire_seal"],
+    ["dragon_tablet_pt_4", "breaking_the_final_seal"],
+  ])("maps story cutscene %s to completed quest %s", (cutsceneId, questId) => {
+    expect(project({ predicate: "seen_cutscene", value: cutsceneId })).toEqual({
+      type: "quest",
+      questId,
+      state: "completed",
+    });
+  });
+
   it("preserves unknown nested predicates as JSON-safe game predicates", () => {
     expect(
       project({

@@ -50,6 +50,7 @@
   let baseSegmentLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
 
   interface RecipeEntry {
+    iconSprite: string;
     id: RecipeId;
     name: string;
     nameVisible: boolean;
@@ -72,6 +73,7 @@
         const visibility = recipe.visibility;
         const sources = recipe.sources;
         entries.push({
+          iconSprite: item.iconSprite,
           id: recipeId,
           name: entry.name,
           nameVisible: isVisible(visibility, userState.progressionState),
@@ -182,6 +184,8 @@
           reportCategory="recipe"
           reportEntityId={entry.id}
           sources={entry.sources}
+          sprite={entry.iconSprite}
+          spriteClass="text-cat-recipes"
           onToggle={() => {
             if (entry.nameVisible || completed) {
               toggleRecipe(
