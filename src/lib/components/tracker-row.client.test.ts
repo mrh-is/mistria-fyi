@@ -5,6 +5,24 @@ import TrackerRow from "$lib/components/tracker-row.svelte";
 import { FeedbackContext } from "$lib/feedback/context.svelte.js";
 
 describe("TrackerRow reportable metadata", () => {
+  it("reveals a ready sprite with the spoiler name", async () => {
+    const view = render(TrackerRow, {
+      display: { mode: "spoilered" },
+      name: "Turnip",
+      onToggle: vi.fn(),
+      reportCategory: "almanac item",
+      reportEntityId: "turnip",
+      sprite: "spr_ui_item_turnip",
+    });
+
+    expect(view.container.querySelector("[data-item-sprite='spoilered']")).toBeTruthy();
+
+    await fireEvent.click(screen.getByRole("button", { name: "Reveal spoiler" }));
+
+    expect(view.container.querySelector("[data-item-sprite='ready']")).toBeTruthy();
+    expect(screen.getByText("Turnip")).toBeTruthy();
+  });
+
   it("registers the whole row and preserves completion behavior", async () => {
     const feedbackContext = new FeedbackContext();
     const onToggle = vi.fn();

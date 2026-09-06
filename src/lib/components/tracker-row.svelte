@@ -4,6 +4,7 @@
 
   import { page } from "$app/state";
   import { Icon } from "$lib/components/icon/index.js";
+  import ItemSprite from "$lib/components/item-sprite.svelte";
   import RestrictionBadges from "$lib/components/restriction-badges.svelte";
   import SourceList from "$lib/components/source-list.svelte";
   import Spoiler from "$lib/components/spoiler.svelte";
@@ -11,6 +12,7 @@
   import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
   import { buildSourceSegments } from "$lib/utils/source-segments.js";
 
+  import type { ItemSpriteState } from "$lib/components/item-sprite.svelte";
   import type { DisplayBadges } from "$lib/engine/availability-condition.js";
   import type { FeedbackContext } from "$lib/feedback/context.svelte.js";
   import type { QuestState } from "$lib/stores/user-state.svelte.js";
@@ -33,6 +35,8 @@
     reportEntityId,
     reportExtra,
     sources = [],
+    sprite,
+    spriteClass = "text-primary",
     subtitle,
   }: {
     display: TrackerRowDisplay;
@@ -44,6 +48,8 @@
     reportEntityId: string;
     reportExtra?: Record<string, number | string>;
     sources?: Source[];
+    sprite?: string;
+    spriteClass?: string;
     subtitle?: string;
   } = $props();
 
@@ -82,6 +88,9 @@
 
   let completionState: QuestState = $derived(
     isCompleted ? "completed" : isObtained ? "obtained" : "none",
+  );
+  let spriteState: ItemSpriteState = $derived(
+    isSpoilered ? "spoilered" : isCompleted ? "complete" : "ready",
   );
 
   function completeOut(node: Element) {
@@ -172,6 +181,10 @@
             : 'text-muted-foreground'}"
       />
     </button>
+
+    {#if sprite}
+      <ItemSprite {sprite} state={spriteState} class="mr-1 size-10 {spriteClass}" />
+    {/if}
 
     <span class="min-w-0 flex-1 text-base">
       {#if isSpoilered}

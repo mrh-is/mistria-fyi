@@ -17,6 +17,10 @@ import type { RequirementContext, RequirementExpression } from "../requirements.
 
 const ALL_SEASONS = new Set<Season>(["fall", "spring", "summer", "winter"]);
 const ALL_WEATHERS = new Set<Weather>(["calm", "heavy_inclement", "inclement", "special"]);
+const STORY_CUTSCENE_QUESTS: Partial<Record<string, QuestId>> = {
+  break_fire_seal: "breaking_the_fire_seal" as QuestId,
+  dragon_tablet_pt_4: "breaking_the_final_seal" as QuestId,
+};
 
 export function projectRequirementExpressionToAvailability(
   expression: RequirementExpression,
@@ -200,6 +204,10 @@ function projectPredicate(
         const cutscene = context.cutsceneMap[jsonValue];
         if (cutscene) {
           return { type: "quest", questId: cutscene.questId, state: cutscene.phase };
+        }
+        const storyQuestId = STORY_CUTSCENE_QUESTS[jsonValue];
+        if (storyQuestId) {
+          return { type: "quest", questId: storyQuestId, state: "completed" };
         }
       }
       break;

@@ -23,11 +23,13 @@ describe("TrackerRow", () => {
         ...reportProps,
         name: "Cherry Cobbler",
         onToggle: vi.fn(),
+        sprite: "spr_ui_item_cherry_cobbler",
       },
     });
     expect(body).toContain('aria-label="Reveal spoiler"');
     expect(body).toContain('aria-hidden="true"');
     expect(body).toContain('aria-label="Check spoilered item"');
+    expect(body).toContain('data-item-sprite="spoilered"');
   });
 
   it("reveals the name for a completed row, unlike a spoilered one", () => {
@@ -37,11 +39,13 @@ describe("TrackerRow", () => {
         ...reportProps,
         name: "Cherry Cobbler",
         onToggle: vi.fn(),
+        sprite: "spr_ui_item_cherry_cobbler",
       },
     });
 
     expect(body).toContain("Cherry Cobbler");
     expect(body).not.toContain("Reveal spoiler");
+    expect(body).toContain('data-item-sprite="complete"');
   });
 
   it("shows the entity name for a visible row", () => {
@@ -51,11 +55,13 @@ describe("TrackerRow", () => {
         ...reportProps,
         name: "Cherry Cobbler",
         onToggle: vi.fn(),
+        sprite: "spr_ui_item_cherry_cobbler",
       },
     });
 
     expect(body).toContain("Cherry Cobbler");
     expect(body).toContain('aria-label="Check Cherry Cobbler"');
+    expect(body).toContain('data-item-sprite="ready"');
   });
 
   it("marks a completed row for uncheck", () => {

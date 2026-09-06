@@ -243,6 +243,8 @@
               reportCategory="museum item"
               reportEntityId={itemId}
               sources={museumItemSources}
+              sprite={item.iconSprite}
+              spriteClass="text-cat-museum"
               onToggle={() => {
                 if (itemNameVisible(itemId) || museumCompleted) {
                   toggleItem(itemId, set.setId, wingId);
