@@ -15,7 +15,10 @@ import type {
  * Extracts both named item metadata and visible almanac rows. The metadata index includes every
  * accepted named item, while the almanac contains only items assigned to a UI-defined category.
  */
-export type ItemMetadataIndex = Record<string, { category: string; name: string }>;
+export type ItemMetadataIndex = Record<
+  string,
+  { category: string; iconSprite: string; name: string }
+>;
 
 interface RawAlmanacCategory {
   key: string;
@@ -45,6 +48,7 @@ export function extractAlmanac(
   const namelessItems: string[] = [];
 
   const allItems: {
+    iconSprite: string;
     id: string;
     name: string;
     recipeKey?: string;
@@ -67,12 +71,18 @@ export function extractAlmanac(
       return;
     }
 
+    const iconSprite = item.icon_sprite as string | undefined;
+    if (!iconSprite) {
+      throw new Error(`Missing icon_sprite for item "${itemId}" in ${topCategory}/${subCategory}`);
+    }
+
     const tags = Array.isArray(item.tags)
       ? (item.tags as unknown[]).filter((v): v is string => typeof v === "string")
       : [];
     const recipeKey = item.recipe_key as string | undefined;
 
     allItems.push({
+      iconSprite,
       id: itemId,
       name: rawName,
       recipeKey,
@@ -120,7 +130,7 @@ export function extractAlmanac(
 
     const categoryKey =
       assignedIdx !== undefined ? rawCategories[assignedIdx].key : item.topCategory;
-    items[item.id] = { category: categoryKey, name: item.name };
+    items[item.id] = { category: categoryKey, iconSprite: item.iconSprite, name: item.name };
 
     for (const categoryIdx of matchedCategoryIndices) {
       categoryBuckets[categoryIdx].set(item.id, {

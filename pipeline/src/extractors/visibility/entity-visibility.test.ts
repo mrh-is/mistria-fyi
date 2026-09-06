@@ -344,7 +344,13 @@ describe("extractHeartLevelChanges", () => {
 describe("assignEntityVisibility — items", () => {
   it("leaves a non-gated item always visible", () => {
     const trackerData = makeTrackerData({
-      items: { seed_turnip: { category: "seeds", name: "Turnip Seed" } },
+      items: {
+        seed_turnip: {
+          category: "seeds",
+          iconSprite: "spr_ui_item_seed_turnip",
+          name: "Turnip Seed",
+        },
+      },
       stores: { general: { name: "General Store" } },
     });
     assignEntityVisibility(
@@ -361,6 +367,7 @@ describe("assignEntityVisibility — items", () => {
       items: {
         fancy_seed: {
           category: "seeds",
+          iconSprite: "spr_ui_item_fancy_seed",
           name: "Fancy Seed",
           sources: [{ type: "store", storeId: "general" }],
         },
@@ -389,6 +396,7 @@ describe("assignEntityVisibility — items", () => {
       items: {
         dual_source_item: {
           category: "other",
+          iconSprite: "spr_ui_item_dual_source",
           name: "Dual Source Item",
           sources: [
             { type: "store", storeId: "general" },
@@ -420,7 +428,13 @@ describe("assignEntityVisibility — items", () => {
 
   it("defaults an item with no sources to always", () => {
     const trackerData = makeTrackerData({
-      items: { mystery_item: { category: "other", name: "Mystery Item" } },
+      items: {
+        mystery_item: {
+          category: "other",
+          iconSprite: "spr_ui_item_mystery",
+          name: "Mystery Item",
+        },
+      },
     });
     assignEntityVisibility(
       trackerData,
@@ -436,6 +450,7 @@ describe("assignEntityVisibility — items", () => {
       items: {
         gated_stock: {
           category: "other",
+          iconSprite: "spr_ui_item_gated_stock",
           name: "Gated Stock",
           sources: [
             {
@@ -485,6 +500,7 @@ describe("assignEntityVisibility — items", () => {
       items: {
         alternative_paths: {
           category: "other",
+          iconSprite: "spr_ui_item_alternative_paths",
           name: "Alternative Paths",
           sources: [
             {
@@ -518,12 +534,22 @@ describe("assignEntityVisibility — items", () => {
     const shared: Source = { type: "store", storeId: "general" as StoreId };
     const first = makeTrackerData({
       items: {
-        first: { category: "other", name: "First", sources: [shared] },
+        first: {
+          category: "other",
+          iconSprite: "spr_ui_item_first",
+          name: "First",
+          sources: [shared],
+        },
       },
     });
     const second = makeTrackerData({
       items: {
-        second: { category: "other", name: "Second", sources: [shared] },
+        second: {
+          category: "other",
+          iconSprite: "spr_ui_item_second",
+          name: "Second",
+          sources: [shared],
+        },
       },
     });
 
@@ -540,6 +566,7 @@ describe("assignEntityVisibility — items", () => {
       items: {
         void_herb: {
           category: "other",
+          iconSprite: "spr_ui_item_void_herb",
           name: "Void Herb",
           sources: [
             {

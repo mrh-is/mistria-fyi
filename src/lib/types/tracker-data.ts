@@ -99,6 +99,7 @@ export interface HeartQuest extends Quest {
 }
 export interface Item extends TrackerEntity {
   category: string;
+  iconSprite: string;
   name: string;
 }
 export type ItemId = string & { readonly __brand: "ItemId" };
