@@ -338,6 +338,10 @@
   }
 }
 
+[data-sonner-toast] [data-cancel] {
+  color: var(--ink);
+}
+
 @media (forced-colors: active) {
   :disabled,
   [aria-disabled="true"],
