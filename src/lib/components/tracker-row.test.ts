@@ -78,7 +78,7 @@ describe("TrackerRow", () => {
     expect(body).toContain('aria-label="Uncheck Cherry Cobbler"');
   });
 
-  it("renders a source icon strip when sources are provided", () => {
+  it("renders the corner-peek grab triangle when sources are provided", () => {
     const { body } = render(TrackerRow, {
       props: {
         display: { mode: "visible" },
@@ -90,7 +90,22 @@ describe("TrackerRow", () => {
     });
 
     expect(body).toContain('aria-label="Cherry Cobbler sources"');
-    expect(body).toContain("min-h-11 min-w-11");
     expect(body).toContain('aria-controls="sources-cherry-cobbler"');
+    expect(body).toContain("tracker-row--has-sources");
+    expect(body).toContain("tracker-row__grab");
+  });
+
+  it("does not render the grab triangle when there are no sources", () => {
+    const { body } = render(TrackerRow, {
+      props: {
+        display: { mode: "visible" },
+        ...reportProps,
+        name: "Cherry Cobbler",
+        onToggle: vi.fn(),
+      },
+    });
+
+    expect(body).not.toContain("tracker-row__grab");
+    expect(body).not.toContain("tracker-row--has-sources");
   });
 });
