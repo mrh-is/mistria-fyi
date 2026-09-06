@@ -31,17 +31,21 @@ item = "chest_reward"
 
 [turnip]
 name = "Turnip"
+icon_sprite = "spr_ui_item_turnip"
 tags = ["crop"]
 
 [chest_reward]
 name = "Chest Reward"
+icon_sprite = "spr_ui_item_chest_reward"
 tags = ["crop"]
 
 [localized]
 name = "items/names/localized"
+icon_sprite = "spr_ui_item_localized"
 tags = ["crop"]
 
 [nameless]
+icon_sprite = "spr_ui_item_nameless"
 tags = ["crop"]
 `,
       "items/other/unreviewed_new_items.toml": `
@@ -65,7 +69,7 @@ tags = ["crop"]
         },
       },
       items: {
-        turnip: { category: "crops", name: "Turnip" },
+        turnip: { category: "crops", iconSprite: "spr_ui_item_turnip", name: "Turnip" },
       },
     });
   });
@@ -78,16 +82,19 @@ tags = ["crop"]
 
 [basic_chest_black]
 name = "Basic Chest"
+icon_sprite = "spr_ui_item_basic_chest_black"
 tags = ["furniture"]
 recipe_key = "basic_chest"
 
 [basic_chest_dark]
 name = "Basic Chest"
+icon_sprite = "spr_ui_item_basic_chest_dark"
 tags = ["furniture"]
 recipe_key = "basic_chest"
 
 [basic_chest_white]
 name = "Basic Chest"
+icon_sprite = "spr_ui_item_basic_chest_white"
 tags = ["furniture"]
 recipe_key = "basic_chest"
 `,
@@ -117,11 +124,13 @@ tags = ["furniture"]
 
 [bed_single_v1]
 name = "Bed"
+icon_sprite = "spr_ui_item_bed_single"
 tags = ["furniture"]
 recipe_key = "bed"
 
 [bed_double_v1]
 name = "Double Bed"
+icon_sprite = "spr_ui_item_bed_double"
 tags = ["furniture"]
 recipe_key = "bed"
 `,
@@ -146,10 +155,12 @@ tags = ["furniture"]
       "items/other/materials.toml": `
 [wood]
 name = "Wood"
+icon_sprite = "spr_ui_item_wood"
 tags = ["material", "fishable"]
 
 [shell]
 name = "Shell"
+icon_sprite = "spr_ui_item_shell"
 tags = ["dive", "forageable", "material"]
 `,
       "ui/menus/sub_menus/almanac.toml": `
@@ -182,12 +193,37 @@ tags = ["material"]
       { itemIds: ["wood"], name: "Wood" },
     ]);
     expect(result.items).toEqual({
-      shell: { category: "forageables", name: "Shell" },
-      wood: { category: "materials", name: "Wood" },
+      shell: { category: "forageables", iconSprite: "spr_ui_item_shell", name: "Shell" },
+      wood: { category: "materials", iconSprite: "spr_ui_item_wood", name: "Wood" },
     });
   });
 
   it("singleton entries have a single-element itemIds array", () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const assetsDir = createAssetsFixture({
+      "items/other/crops.toml": `
+[default]
+
+[turnip]
+name = "Turnip"
+icon_sprite = "spr_ui_item_turnip"
+tags = ["crop"]
+`,
+      "ui/menus/sub_menus/almanac.toml": `
+[[categories]]
+key = "crops"
+tags = ["crop"]
+`,
+    });
+    const fiddle = parseFiddle(assetsDir).data;
+
+    const result = extractAlmanac(fiddle, new Map());
+    const entry = result.almanac["crops" as AlmanacCategoryId].items[0];
+    expect(entry.itemIds).toEqual(["turnip"]);
+    expect(entry.recipeId).toBeUndefined();
+  });
+
+  it("throws when an item is missing icon_sprite", () => {
     vi.spyOn(console, "log").mockImplementation(() => undefined);
     const assetsDir = createAssetsFixture({
       "items/other/crops.toml": `
@@ -205,10 +241,9 @@ tags = ["crop"]
     });
     const fiddle = parseFiddle(assetsDir).data;
 
-    const result = extractAlmanac(fiddle, new Map());
-    const entry = result.almanac["crops" as AlmanacCategoryId].items[0];
-    expect(entry.itemIds).toEqual(["turnip"]);
-    expect(entry.recipeId).toBeUndefined();
+    expect(() => extractAlmanac(fiddle, new Map())).toThrow(
+      'Missing icon_sprite for item "turnip"',
+    );
   });
 });
 
