@@ -51,6 +51,25 @@ describe("TrackerRow reportable metadata", () => {
     expect(feedbackContext.registrations.size).toBe(0);
   });
 
+  it("closes source details from the row cutout control", async () => {
+    const view = render(TrackerRow, {
+      display: { mode: "visible" },
+      name: "Amberjack",
+      onToggle: vi.fn(),
+      reportCategory: "almanac item",
+      reportEntityId: "amberjack",
+      sources: [{ type: "default" }],
+    });
+    const sourceButton = screen.getByRole("button", { name: "Amberjack sources" });
+
+    await fireEvent.click(sourceButton);
+    expect(sourceButton.getAttribute("aria-expanded")).toBe("true");
+    expect(view.container.querySelector("#sources-amberjack")).toBeTruthy();
+
+    await fireEvent.click(sourceButton);
+    expect(sourceButton.getAttribute("aria-expanded")).toBe("false");
+  });
+
   it("moves focus to the next row after toggling a visible item", async () => {
     vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
       callback(0);

@@ -80,7 +80,7 @@
   {#if isOpen}
     <div
       id={contentId}
-      class="pl-6"
+      class="pl-8"
       transition:slide={{ duration: prefersReducedMotion.current ? 0 : 150 }}
     >
       {@render children()}

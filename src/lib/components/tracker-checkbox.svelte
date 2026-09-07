@@ -82,7 +82,6 @@
   .tracker-checkbox__icon {
     width: 24px;
     height: 24px;
-    filter: url(#pencil);
   }
 
   .tracker-checkbox__crossing-stroke {
