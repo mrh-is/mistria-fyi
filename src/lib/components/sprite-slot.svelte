@@ -132,19 +132,18 @@
     width: 40px;
     height: 40px;
     flex-shrink: 0;
-    border: 1.5px dashed var(--hairline);
+    border: 1px dashed var(--sprite-slot-outline);
     border-radius: 2px;
     opacity: 0.32;
   }
 
   .sprite-slot--active {
-    border-color: currentColor;
     opacity: 1;
   }
 
   .sprite-slot--complete {
     border-style: solid;
-    border-color: var(--hairline);
+    border-color: var(--sprite-slot-outline);
     opacity: 1;
   }
 

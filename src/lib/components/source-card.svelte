@@ -44,21 +44,21 @@
   .source-card {
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 5px;
   }
 
   .source-card__line {
     display: grid;
-    grid-template-columns: 1.125rem minmax(0, auto) minmax(min-content, 1fr);
+    grid-template-columns: 1rem minmax(0, auto) minmax(min-content, 1fr);
     align-items: center;
-    gap: 5px 10px;
-    font-size: 0.875rem;
-    line-height: 1.35;
+    gap: 4px 8px;
+    font-size: 0.8125rem;
+    line-height: 1.3;
   }
 
   :global(.source-card__icon) {
-    width: 1.125rem;
-    height: 1.125rem;
+    width: 1rem;
+    height: 1rem;
     color: color-mix(in srgb, var(--ink-muted) 78%, transparent);
   }
 
@@ -70,9 +70,9 @@
     min-width: 0;
   }
 
-  @media (max-width: 32rem) {
+  @media (max-width: 26rem) {
     .source-card__line {
-      grid-template-columns: 1.125rem minmax(0, 1fr);
+      grid-template-columns: 1rem minmax(0, 1fr);
     }
 
     .source-card__restrictions {
