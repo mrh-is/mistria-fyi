@@ -17,7 +17,7 @@
     sourceSegments: SourceSegment[][];
   } = $props();
 
-  function hasBadges(b: DisplayBadges): boolean {
+  function hasTimingContext(b: DisplayBadges): boolean {
     return Boolean(b.seasons ?? b.weathers ?? b.timeRange);
   }
 </script>
@@ -25,14 +25,16 @@
 <div class="source-card">
   {#each sources as source, i (i)}
     <div class="source-card__line" data-source-type={source.type}>
-      <span class="source-card__info">
-        <Icon.Source type={source.type} class="size-3.5 shrink-0" />
-        {#if sourceSegments[i]}
+      <Icon.Source type={source.type} class="source-card__icon" />
+      <span class="source-card__description">
+        {#if sourceSegments[i]?.length}
           <SourceSegmentText segments={sourceSegments[i]} />
         {/if}
       </span>
-      {#if hasBadges(sourceBadges[i])}
-        <RestrictionBadges badges={sourceBadges[i]} />
+      {#if hasTimingContext(sourceBadges[i])}
+        <span class="source-card__restrictions">
+          <RestrictionBadges badges={sourceBadges[i]} />
+        </span>
       {/if}
     </div>
   {/each}
@@ -42,21 +44,39 @@
   .source-card {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 7px;
   }
 
   .source-card__line {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 8px 8px;
+    display: grid;
+    grid-template-columns: 1.125rem minmax(0, auto) minmax(min-content, 1fr);
+    align-items: center;
+    gap: 5px 10px;
     font-size: 0.875rem;
+    line-height: 1.35;
   }
 
-  .source-card__info {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  :global(.source-card__icon) {
+    width: 1.125rem;
+    height: 1.125rem;
+    color: color-mix(in srgb, var(--ink-muted) 78%, transparent);
+  }
+
+  .source-card__description {
     color: var(--ink-muted);
+  }
+
+  .source-card__restrictions {
+    min-width: 0;
+  }
+
+  @media (max-width: 32rem) {
+    .source-card__line {
+      grid-template-columns: 1.125rem minmax(0, 1fr);
+    }
+
+    .source-card__restrictions {
+      grid-column: 2;
+    }
   }
 </style>

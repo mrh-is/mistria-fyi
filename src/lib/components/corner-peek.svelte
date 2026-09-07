@@ -75,10 +75,11 @@
     display: flex;
     align-items: flex-end;
     justify-content: flex-end;
-    padding: 6px;
+    padding: 7px;
     background: transparent;
     border: none;
     cursor: pointer;
+    border-radius: 2px;
   }
 
   .corner-peek__grab::before {
@@ -90,6 +91,7 @@
     height: 26px;
     background: var(--paper-deep);
     clip-path: polygon(100% 0, 100% 100%, 0 100%);
+    transition: filter 180ms ease;
   }
 
   .corner-peek__grab::after {
@@ -120,17 +122,32 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .corner-peek__chevron {
+    .corner-peek__chevron,
+    .corner-peek__grab::before {
       transition: none;
     }
+  }
+
+  .corner-peek__grab:is(:hover, :focus-visible) {
+    outline: none;
+  }
+
+  .corner-peek__grab:is(:hover, :focus-visible)::before {
+    filter: brightness(0.96) saturate(1.08);
+  }
+
+  .corner-peek__grab:focus-visible::before {
+    filter: drop-shadow(0 0 1px var(--ink)) brightness(0.96);
   }
 
   .corner-peek__card {
     position: relative;
     z-index: 1;
     background: var(--paper-deep);
-    padding: 8px 12px;
-    box-shadow: inset 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    padding: 10px 16px 11px;
+    border-inline: 1px solid color-mix(in srgb, var(--hairline) 24%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--hairline) 30%, transparent);
+    box-shadow: inset 0 2px 4px -3px rgb(0 0 0 / 18%);
   }
 
   :global(.dark) .corner-peek__card {

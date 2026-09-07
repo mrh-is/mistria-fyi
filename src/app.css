@@ -72,6 +72,7 @@
 
   /* ── Field Guide palette: light ──────────────────────── */
   --paper: #f7f5f0;
+  --paper-raised: #fdfcf9;
   --ink: #2e2a22;
   --ink-muted: #6a6460;
   --hairline: #948a7c;
@@ -133,6 +134,7 @@
 .dark {
   /* ── Field Guide palette: dark ("oil lamp") ────────── */
   --paper: #1e1e22;
+  --paper-raised: #242428;
   --ink: #e4dfd8;
   --ink-muted: #a8a098;
   --hairline: #706860;

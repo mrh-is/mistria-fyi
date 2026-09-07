@@ -23,23 +23,28 @@
   aria-label={label}
   {onclick}
 >
-  <svg class="tracker-checkbox__icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+  <svg class="tracker-checkbox__icon" viewBox="0 0 28 28" fill="none" aria-hidden="true">
     <rect
-      x="1.5"
-      y="1.5"
-      width="13"
-      height="13"
-      rx="1.5"
-      stroke="currentColor"
-      stroke-width="1.25"
+      x="3.5"
+      y="3.5"
+      width="21"
+      height="21"
+      rx="1"
+      stroke="var(--hairline)"
+      stroke-width="1.5"
     />
     {#if isChecked || isObtained}
+      <path d="M9.5 20L18.5 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+    {/if}
+    {#if isChecked}
       <path
-        d="M4.5 8.5L7 11L11.5 5.5"
+        class="tracker-checkbox__crossing-stroke"
+        d="M18.5 20L9.5 8"
         stroke="currentColor"
-        stroke-width="1.5"
+        stroke-width="2.5"
         stroke-linecap="round"
-        stroke-linejoin="round"
+        stroke-dasharray="20"
+        stroke-dashoffset="20"
       />
     {/if}
   </svg>
@@ -54,6 +59,16 @@
     min-width: 44px;
     flex-shrink: 0;
     color: var(--ink-muted);
+    border-radius: 2px;
+  }
+
+  .tracker-checkbox:is(:hover, :focus-visible) {
+    background: color-mix(in srgb, currentColor 7%, transparent);
+    outline: none;
+  }
+
+  .tracker-checkbox:focus-visible {
+    box-shadow: inset 0 0 0 1px currentColor;
   }
 
   .tracker-checkbox--checked {
@@ -65,7 +80,25 @@
   }
 
   .tracker-checkbox__icon {
-    width: 18px;
-    height: 18px;
+    width: 24px;
+    height: 24px;
+    filter: url(#pencil);
+  }
+
+  .tracker-checkbox__crossing-stroke {
+    animation: draw-tracker-mark 300ms 50ms ease-out forwards;
+  }
+
+  @keyframes draw-tracker-mark {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tracker-checkbox__crossing-stroke {
+      animation: none;
+      stroke-dashoffset: 0;
+    }
   }
 </style>
