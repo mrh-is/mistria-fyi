@@ -15,11 +15,11 @@ describe("TrackerRow reportable metadata", () => {
       sprite: "spr_ui_item_turnip",
     });
 
-    expect(view.container.querySelector("[data-item-sprite='spoilered']")).toBeTruthy();
+    expect(view.container.querySelector("[data-sprite-slot='spoilered']")).toBeTruthy();
 
     await fireEvent.click(screen.getByRole("button", { name: "Reveal spoiler" }));
 
-    expect(view.container.querySelector("[data-item-sprite='ready']")).toBeTruthy();
+    expect(view.container.querySelector("[data-sprite-slot='ready']")).toBeTruthy();
     expect(screen.getByText("Turnip")).toBeTruthy();
   });
 
