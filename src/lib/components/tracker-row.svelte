@@ -229,12 +229,15 @@
     z-index: 3;
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding-right: 8px;
-    background: var(--paper);
-    border: 1px solid var(--hairline);
+    min-height: 52px;
+    gap: 7px;
+    padding: 4px 12px 4px 0;
+    background: var(--paper-raised);
+    border: 1px solid color-mix(in srgb, var(--hairline) 42%, transparent);
     border-radius: 2px;
-    transition: opacity 200ms;
+    transition:
+      filter 180ms ease,
+      opacity 200ms;
   }
 
   .tracker-row--has-sources .tracker-row__paper {
@@ -254,17 +257,25 @@
     min-width: 0;
     flex: 1;
     font-size: 1rem;
-    line-height: 1.5;
+    line-height: 1.3;
   }
 
   .tracker-row__subtitle {
+    display: block;
     font-size: 0.875rem;
     color: var(--ink-muted);
   }
 
   .tracker-row__active-badge {
-    font-size: 0.875rem;
+    font-family: var(--font-data);
+    font-size: 0.6875rem;
+    font-weight: 600;
     color: var(--fg-amber);
+  }
+
+  .tracker-row__paper-area:has(:global(.corner-peek__grab:is(:hover, :focus-visible)))
+    .tracker-row__paper {
+    filter: drop-shadow(0 2px 2px rgb(46 42 34 / 10%));
   }
 
   @media (prefers-reduced-motion: reduce) {

@@ -129,12 +129,12 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     flex-shrink: 0;
     border: 1.5px dashed var(--hairline);
-    border-radius: 3px;
-    opacity: 0.4;
+    border-radius: 2px;
+    opacity: 0.32;
   }
 
   .sprite-slot--active {
@@ -149,7 +149,7 @@
   }
 
   .sprite-slot__svg {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
   }
 </style>
