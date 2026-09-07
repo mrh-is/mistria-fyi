@@ -1,21 +1,19 @@
 <script lang="ts">
   import { prefersReducedMotion } from "svelte/motion";
-  import { slide } from "svelte/transition";
 
   import { page } from "$app/state";
-  import { Icon } from "$lib/components/icon/index.js";
-  import ItemSprite from "$lib/components/item-sprite.svelte";
-  import RestrictionBadges from "$lib/components/restriction-badges.svelte";
-  import SourceSegmentText from "$lib/components/source-segment-text.svelte";
+  import CornerPeek from "$lib/components/corner-peek.svelte";
   import Spoiler from "$lib/components/spoiler.svelte";
+  import SpriteSlot from "$lib/components/sprite-slot.svelte";
+  import TrackerCheckbox from "$lib/components/tracker-checkbox.svelte";
   import { extractDisplayBadges } from "$lib/engine/availability-condition.js";
   import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
   import { buildSourceSegments } from "$lib/utils/source-segments.js";
 
-  import type { ItemSpriteState } from "$lib/components/item-sprite.svelte";
+  import type { SpriteSlotState } from "$lib/components/sprite-slot.svelte";
+  import type { CheckboxState } from "$lib/components/tracker-checkbox.svelte";
   import type { DisplayBadges } from "$lib/engine/availability-condition.js";
   import type { FeedbackContext } from "$lib/feedback/context.svelte.js";
-  import type { QuestState } from "$lib/stores/user-state.svelte.js";
   import type { Source } from "$lib/types/acquisition";
   import type { SegmentLookups, SourceSegment } from "$lib/utils/source-segments.js";
 
@@ -64,7 +62,6 @@
     lookups ? sources.map((s) => buildSourceSegments(s, lookups)) : [],
   );
 
-  let expanded = $state(false);
   let spoilerRevealed = $state(false);
 
   let isCompleted = $derived(display.mode === "completed");
@@ -91,10 +88,10 @@
         },
   );
 
-  let completionState: QuestState = $derived(
-    isCompleted ? "completed" : isObtained ? "obtained" : "none",
+  let checkboxState: CheckboxState = $derived(
+    isCompleted ? "checked" : isObtained ? "obtained" : "unchecked",
   );
-  let spriteState: ItemSpriteState = $derived(
+  let spriteState: SpriteSlotState = $derived(
     isSpoilered ? "spoilered" : isCompleted ? "complete" : "ready",
   );
 
@@ -154,10 +151,6 @@
       }
     });
   }
-
-  function hasBadges(b: DisplayBadges): boolean {
-    return Boolean(b.seasons ?? b.weathers ?? b.timeRange);
-  }
 </script>
 
 <div
@@ -169,123 +162,57 @@
   class:tracker-row--has-sources={hasSources}
 >
   <!-- Paper area: row content + grab triangle share a positioning context -->
-  <div class="tracker-row__paper-area relative">
-    <!-- Row paper: the main content with a permanent diagonal cut when sources exist -->
+  <div class="tracker-row__paper-area">
     <div
-      class="tracker-row__paper relative z-[3] bg-[var(--paper)] transition-[box-shadow] duration-200 motion-reduce:transition-none
-        {hasSources
-        ? 'hover:shadow-[0_1px_4px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_1px_4px_rgba(0,0,0,0.3)]'
-        : ''}"
+      class="tracker-row__paper"
+      class:tracker-row__paper--dimmed={isDimmed}
+      class:tracker-row__paper--completed={isCompleted || isLeaving}
     >
-      <div
-        class="flex items-center gap-0 pr-2 transition-opacity duration-200 motion-reduce:transition-none
-          {isDimmed ? 'text-muted-foreground' : ''}
-          {isCompleted || isLeaving ? 'text-muted-foreground line-through' : ''}"
-      >
-        <button
-          class="flex min-h-11 min-w-11 shrink-0 items-center justify-center"
-          type="button"
-          aria-label={isCompleted
-            ? `Uncheck ${name}`
-            : isSpoilered
-              ? "Check spoilered item"
-              : `Check ${name}`}
-          onclick={handleToggle}
-        >
-          <Icon.Completion
-            state={completionState}
-            class="size-5 {isCompleted
-              ? 'text-green-600 dark:text-green-400'
-              : isObtained
-                ? 'text-amber-500 dark:text-amber-400'
-                : 'text-muted-foreground'}"
-          />
-        </button>
+      <TrackerCheckbox
+        state={checkboxState}
+        label={isCompleted
+          ? `Uncheck ${name}`
+          : isSpoilered
+            ? "Check spoilered item"
+            : `Check ${name}`}
+        onclick={handleToggle}
+      />
 
-        {#if sprite}
-          <ItemSprite {sprite} state={spriteState} class="mr-1 size-10 {spriteClass}" />
-        {/if}
+      {#if sprite}
+        <SpriteSlot {sprite} state={spriteState} class={spriteClass} />
+      {/if}
 
-        <span class="min-w-0 flex-1 text-base">
-          {#if isSpoilered}
-            <Spoiler onReveal={() => (spoilerRevealed = true)}>
-              {name}
-              {#if subtitle}
-                <span class="text-sm text-muted-foreground">{subtitle}</span>
-              {/if}
-            </Spoiler>
-          {:else}
+      <span class="tracker-row__label">
+        {#if isSpoilered}
+          <Spoiler onReveal={() => (spoilerRevealed = true)}>
             {name}
             {#if subtitle}
-              <span class="text-sm text-muted-foreground">{subtitle}</span>
+              <span class="tracker-row__subtitle">{subtitle}</span>
             {/if}
+          </Spoiler>
+        {:else}
+          {name}
+          {#if subtitle}
+            <span class="tracker-row__subtitle">{subtitle}</span>
           {/if}
-        </span>
-
-        {#if isObtained}
-          <span class="text-sm text-amber-600 dark:text-amber-400">Active</span>
         {/if}
-      </div>
+      </span>
+
+      {#if isObtained}
+        <span class="tracker-row__active-badge">Active</span>
+      {/if}
     </div>
 
-    <!-- Corner-peek grab triangle: visible through the notch in the row paper -->
     {#if hasSources}
-      <button
-        class="tracker-row__grab z-[2] flex items-end justify-end bg-[var(--paper-deep)]"
-        type="button"
-        aria-expanded={expanded}
-        aria-controls={sourceContentId}
-        aria-label="{isSpoilered ? 'Spoilered item' : name} sources"
-        onclick={() => {
-          expanded = !expanded;
-        }}
-      >
-        <svg
-          class="size-3 text-[var(--ink-muted)] transition-transform duration-200 motion-reduce:transition-none"
-          style:transform="rotate({expanded ? -135 : 45}deg)"
-          viewBox="0 0 10 10"
-          fill="none"
-          aria-hidden="true"
-        >
-          <path
-            d="M3 1L7 5L3 9"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
+      <CornerPeek
+        contentId={sourceContentId}
+        label="{isSpoilered ? 'Spoilered item' : name} sources"
+        {sources}
+        {sourceSegments}
+        {sourceBadges}
+      />
     {/if}
   </div>
-
-  <!-- Source card: slides out below the row -->
-  {#if expanded && hasSources}
-    <div
-      id={sourceContentId}
-      class="relative z-[1] bg-[var(--paper-deep)] px-3 py-2"
-      transition:slide={{ duration: prefersReducedMotion.current ? 0 : 200 }}
-    >
-      <div class="flex flex-col gap-1.5">
-        {#each sources as source, i (i)}
-          <div
-            class="flex flex-wrap items-start gap-x-2 gap-y-0.5 text-sm"
-            data-source-type={source.type}
-          >
-            <span class="flex items-center gap-2 text-muted-foreground">
-              <Icon.Source type={source.type} class="size-3.5 shrink-0" />
-              {#if sourceSegments[i]}
-                <SourceSegmentText segments={sourceSegments[i]} />
-              {/if}
-            </span>
-            {#if hasBadges(sourceBadges[i])}
-              <RestrictionBadges badges={sourceBadges[i]} />
-            {/if}
-          </div>
-        {/each}
-      </div>
-    </div>
-  {/if}
 </div>
 
 <style>
@@ -293,29 +220,56 @@
     position: relative;
   }
 
+  .tracker-row__paper-area {
+    position: relative;
+  }
+
+  .tracker-row__paper {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-right: 8px;
+    background: var(--paper);
+    border: 1px solid var(--hairline);
+    border-radius: 2px;
+    transition: opacity 200ms;
+  }
+
   .tracker-row--has-sources .tracker-row__paper {
     clip-path: polygon(0 0, 100% 0, 100% calc(100% - 26px), calc(100% - 26px) 100%, 0 100%);
   }
 
-  .tracker-row__grab {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    width: 26px;
-    height: 26px;
-    clip-path: polygon(100% 0, 100% 100%, 0 100%);
-    padding: 3px;
+  .tracker-row__paper--dimmed {
+    color: var(--ink-muted);
   }
 
-  .tracker-row__grab::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 141.4%;
-    height: 1px;
-    background: var(--hairline);
-    transform: translate(-50%, -50%) rotate(-45deg);
-    pointer-events: none;
+  .tracker-row__paper--completed {
+    color: var(--ink-muted);
+    text-decoration: line-through;
+  }
+
+  .tracker-row__label {
+    min-width: 0;
+    flex: 1;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .tracker-row__subtitle {
+    font-size: 0.875rem;
+    color: var(--ink-muted);
+  }
+
+  .tracker-row__active-badge {
+    font-size: 0.875rem;
+    color: var(--fg-amber);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tracker-row__paper {
+      transition: none;
+    }
   }
 </style>

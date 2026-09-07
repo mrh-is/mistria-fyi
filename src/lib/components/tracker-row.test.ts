@@ -29,7 +29,7 @@ describe("TrackerRow", () => {
     expect(body).toContain('aria-label="Reveal spoiler"');
     expect(body).toContain('aria-hidden="true"');
     expect(body).toContain('aria-label="Check spoilered item"');
-    expect(body).toContain('data-item-sprite="spoilered"');
+    expect(body).toContain('data-sprite-slot="spoilered"');
   });
 
   it("reveals the name for a completed row, unlike a spoilered one", () => {
@@ -45,7 +45,7 @@ describe("TrackerRow", () => {
 
     expect(body).toContain("Cherry Cobbler");
     expect(body).not.toContain("Reveal spoiler");
-    expect(body).toContain('data-item-sprite="complete"');
+    expect(body).toContain('data-sprite-slot="complete"');
   });
 
   it("shows the entity name for a visible row", () => {
@@ -61,7 +61,7 @@ describe("TrackerRow", () => {
 
     expect(body).toContain("Cherry Cobbler");
     expect(body).toContain('aria-label="Check Cherry Cobbler"');
-    expect(body).toContain('data-item-sprite="ready"');
+    expect(body).toContain('data-sprite-slot="ready"');
   });
 
   it("marks a completed row for uncheck", () => {
@@ -92,7 +92,7 @@ describe("TrackerRow", () => {
     expect(body).toContain('aria-label="Cherry Cobbler sources"');
     expect(body).toContain('aria-controls="sources-cherry-cobbler"');
     expect(body).toContain("tracker-row--has-sources");
-    expect(body).toContain("tracker-row__grab");
+    expect(body).toContain("corner-peek__grab");
   });
 
   it("does not render the grab triangle when there are no sources", () => {
@@ -105,7 +105,7 @@ describe("TrackerRow", () => {
       },
     });
 
-    expect(body).not.toContain("tracker-row__grab");
+    expect(body).not.toContain("corner-peek__grab");
     expect(body).not.toContain("tracker-row--has-sources");
   });
 });
