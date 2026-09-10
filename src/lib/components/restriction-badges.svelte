@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { restrictionWeatherIcon } from "$lib/components/icon/icon-maps.js";
   import { Icon } from "$lib/components/icon/index.js";
   import {
     seasonLabel,
@@ -7,6 +8,7 @@
     weathersForSeason,
   } from "$lib/utils/format.js";
 
+  import type { LucideIcon } from "$lib/components/icon/icon-maps.js";
   import type { DisplayBadges } from "$lib/engine/availability-condition.js";
   import type { Season, Weather } from "$lib/types/tracker-data.js";
 
@@ -29,39 +31,70 @@
       : ALL_WEATHERS;
     return availableWeathers.every((weather) => weathers.includes(weather));
   }
+
+  type Chip =
+    | { icons: LucideIcon[]; kind: "weathers"; label: string }
+    | { kind: "seasons"; label: string; seasons: Season[] }
+    | { kind: "time"; label: string };
+
+  let chips: Chip[] = $derived.by(() => {
+    const result: Chip[] = [];
+
+    if (badges.seasons && !isAllSeasons(badges.seasons)) {
+      result.push({
+        kind: "seasons",
+        label: badges.seasons.map(seasonLabel).join(", "),
+        seasons: badges.seasons,
+      });
+    }
+
+    if (badges.weathers && !isAllWeathers(badges.weathers, badges.seasons)) {
+      const seasons = badges.seasons ?? [];
+      const weathers = ALL_WEATHERS.filter((w) => badges.weathers?.includes(w));
+      result.push({
+        icons: weathers.map((w) => restrictionWeatherIcon(w, seasons)),
+        kind: "weathers",
+        label: weathers
+          .map((w) => weatherLabel(w, badges.seasons?.length === 1 ? badges.seasons[0] : undefined))
+          .join(", "),
+      });
+    }
+
+    if (badges.timeRange) {
+      result.push({ kind: "time", label: timeRangeLabel(badges.timeRange) });
+    }
+
+    return result;
+  });
 </script>
 
 <span class="restriction-badges">
-  {#if badges.seasons}
-    {#if isAllSeasons(badges.seasons)}
-      <span class="restriction-badge restriction-badge--neutral">Any season</span>
-    {:else}
-      {#each badges.seasons as season (season)}
-        <span class="restriction-badge" data-season={season}>{seasonLabel(season)}</span>
-      {/each}
-    {/if}
-  {/if}
-
-  {#if badges.weathers}
-    {#if isAllWeathers(badges.weathers, badges.seasons)}
-      <span class="restriction-badge restriction-badge--neutral">Any weather</span>
-    {:else}
-      {#each ALL_WEATHERS.filter( (weather) => badges.weathers?.includes(weather) ) as weather (weather)}
-        <span class="restriction-badge restriction-badge--neutral">
-          {weatherLabel(weather, badges.seasons?.length === 1 ? badges.seasons[0] : undefined)}
+  {#each chips as chip (chip.kind)}
+    {#if chip.kind === "seasons"}
+      <span class="restriction-chip" title={chip.label}>
+        <span class="restriction-chip__label">{chip.label}</span>
+        {#each chip.seasons as season (season)}
+          <span class="restriction-chip__season" data-season={season} aria-hidden="true">
+            <Icon.Season {season} size={14} strokeWidth={2} />
+          </span>
+        {/each}
+      </span>
+    {:else if chip.kind === "weathers"}
+      <span class="restriction-chip restriction-chip--neutral" title={chip.label}>
+        <span class="restriction-chip__label">{chip.label}</span>
+        <span class="restriction-chip__icons" aria-hidden="true">
+          {#each chip.icons as WeatherIcon (WeatherIcon)}
+            <WeatherIcon size={14} strokeWidth={2} />
+          {/each}
         </span>
-      {/each}
+      </span>
+    {:else}
+      <span class="restriction-chip restriction-chip--neutral" title={chip.label}>
+        <span class="restriction-chip__label">{chip.label}</span>
+        <span aria-hidden="true"><Icon.Restriction type="clock" size={14} strokeWidth={2} /></span>
+      </span>
     {/if}
-  {:else if badges.seasons}
-    <span class="restriction-badge restriction-badge--neutral">Any weather</span>
-  {/if}
-
-  {#if badges.timeRange}
-    <span class="restriction-badge restriction-badge--neutral restriction-badge--time">
-      <Icon.Restriction type="clock" class="restriction-badge__icon" />
-      {timeRangeLabel(badges.timeRange)}
-    </span>
-  {/if}
+  {/each}
 </span>
 
 <style>
@@ -69,42 +102,60 @@
     display: inline-flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 3px 12px;
-    font-family: var(--font-data);
-    font-size: 0.6875rem;
-    font-weight: 600;
-    line-height: 1.35;
-  }
-
-  .restriction-badge {
-    color: var(--fg-amber);
-    white-space: nowrap;
-  }
-
-  .restriction-badge[data-season="spring"] {
-    color: var(--fg-green);
-  }
-
-  .restriction-badge[data-season="fall"] {
-    color: var(--fg-brown);
-  }
-
-  .restriction-badge[data-season="winter"] {
-    color: var(--fg-blue);
-  }
-
-  .restriction-badge--neutral {
-    color: color-mix(in srgb, var(--ink-muted) 78%, transparent);
-  }
-
-  .restriction-badge--time {
-    display: inline-flex;
-    align-items: center;
     gap: 3px;
   }
 
-  :global(.restriction-badge__icon) {
-    width: 0.75rem;
-    height: 0.75rem;
+  .restriction-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    height: 22px;
+    padding: 0 4px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--hairline) 18%, transparent);
+    color: var(--ink-muted);
+  }
+
+  .restriction-chip--neutral {
+    color: color-mix(in srgb, var(--ink-muted) 78%, transparent);
+  }
+
+  .restriction-chip__season {
+    display: inline-flex;
+    line-height: 0;
+  }
+
+  .restriction-chip__icons {
+    display: inline-flex;
+    gap: 1px;
+  }
+
+  .restriction-chip__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .restriction-chip__season[data-season="spring"] {
+    color: var(--fg-green);
+  }
+
+  .restriction-chip__season[data-season="summer"] {
+    color: var(--fg-amber);
+  }
+
+  .restriction-chip__season[data-season="fall"] {
+    color: var(--fg-brown);
+  }
+
+  .restriction-chip__season[data-season="winter"] {
+    color: var(--fg-blue);
   }
 </style>

@@ -78,6 +78,7 @@
   --hairline: #948a7c;
   --paper-deep: #ece6da;
   --sprite-slot-outline: #e0dcd4;
+  --shadow-small: 0 1px 1px rgb(46 42 34 / 12%);
 
   --fg-green: #1a7a3a;
   --fg-amber: #b86510;
@@ -141,6 +142,7 @@
   --hairline: #706860;
   --paper-deep: #2a2a2e;
   --sprite-slot-outline: #48464b;
+  --shadow-small: 0 1px 1px rgb(0 0 0 / 30%);
 
   --fg-green: #38984e;
   --fg-amber: #c07828;
@@ -167,6 +169,7 @@
 }
 
 @theme inline {
+  --shadow-sm: var(--shadow-small);
   --font-sans:
     "Petrona", "Georgia", serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
     "Noto Color Emoji";

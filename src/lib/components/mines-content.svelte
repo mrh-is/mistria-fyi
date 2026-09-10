@@ -3,6 +3,7 @@
   import ConfirmSpoilerDialog from "$lib/components/confirm-spoiler-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import Stepper from "$lib/components/stepper.svelte";
+  import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { isEntityNameVisible } from "$lib/engine/visibility.js";
@@ -216,25 +217,27 @@
     {defaultOpen}
     total={scopedSpells.length}
   >
-    {#each visibleSpells as spell (spell.id)}
-      {@const completed = userState.state.completed.mines.spells.has(spell.id)}
-      <TrackerRow
-        display={rowDisplay(spell.id, completed)}
-        name={spell.name}
-        reportCategory="spell"
-        reportEntityId={spell.id}
-        sources={spell.sources}
-        onToggle={() => {
-          if (spellNameVisible(spell.id) || completed) {
-            toggleSpell(spell.id);
-          } else {
-            spoilerGuard.guard(trackerData.mines.spells[spell.id].visibility, () => {
+    <TrackerRowStack>
+      {#each visibleSpells as spell (spell.id)}
+        {@const completed = userState.state.completed.mines.spells.has(spell.id)}
+        <TrackerRow
+          display={rowDisplay(spell.id, completed)}
+          name={spell.name}
+          reportCategory="spell"
+          reportEntityId={spell.id}
+          sources={spell.sources}
+          onToggle={() => {
+            if (spellNameVisible(spell.id) || completed) {
               toggleSpell(spell.id);
-            });
-          }
-        }}
-      />
-    {/each}
+            } else {
+              spoilerGuard.guard(trackerData.mines.spells[spell.id].visibility, () => {
+                toggleSpell(spell.id);
+              });
+            }
+          }}
+        />
+      {/each}
+    </TrackerRowStack>
     {#if visibleSpells.length === 0}
       <p class="py-4 text-center text-sm text-muted-foreground">
         No items match the current filters

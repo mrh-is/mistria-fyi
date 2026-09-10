@@ -4,6 +4,7 @@
   import ConfirmSpoilerDialog from "$lib/components/confirm-spoiler-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import SpoilerSection from "$lib/components/spoiler-section.svelte";
+  import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
@@ -318,47 +319,52 @@
           reportEntityId={questType}
           total={shownQuests.length}
         >
-          {#each visibleQuests as quest (quest.id)}
-            {#if quest.isCraving}
-              {@const cravingState = quest.isCompleted ? "completed" : "none"}
-              {@const cravingNameVisible = !!quest.npc}
-              <TrackerRow
-                display={questRowDisplay(cravingState, cravingNameVisible)}
-                lookups={baseLookups}
-                name={quest.displayName}
-                reportCategory="craving quest"
-                reportEntityId={quest.id}
-                sources={[]}
-                subtitle={quest.subtitle}
-                onToggle={() => {
-                  if (quest.npc && cravingQuestEntry.id !== "craving_synthetic") {
-                    completeQuest(quest, quests);
-                  }
-                }}
-              />
-            {:else}
-              {@const questState = getQuestState(quest.id)}
-              {@const nameVisible = questNameVisible(questType, quest.id)}
-              <TrackerRow
-                display={questRowDisplay(questState, nameVisible)}
-                lookups={{ ...baseLookups, entityVisibility: questVisibility(questType, quest.id) }}
-                name={quest.displayName}
-                reportCategory="quest"
-                reportEntityId={quest.id}
-                sources={questSources(questType, quest.id)}
-                subtitle={questSubtitle(quest, questType, duplicateNames)}
-                onToggle={() => {
-                  if (nameVisible || questState !== "none") {
-                    completeQuest(quest, quests);
-                  } else {
-                    spoilerGuard.guard(questVisibility(questType, quest.id), () => {
+          <TrackerRowStack>
+            {#each visibleQuests as quest (quest.id)}
+              {#if quest.isCraving}
+                {@const cravingState = quest.isCompleted ? "completed" : "none"}
+                {@const cravingNameVisible = !!quest.npc}
+                <TrackerRow
+                  display={questRowDisplay(cravingState, cravingNameVisible)}
+                  lookups={baseLookups}
+                  name={quest.displayName}
+                  reportCategory="craving quest"
+                  reportEntityId={quest.id}
+                  sources={[]}
+                  subtitle={quest.subtitle}
+                  onToggle={() => {
+                    if (quest.npc && cravingQuestEntry.id !== "craving_synthetic") {
                       completeQuest(quest, quests);
-                    });
-                  }
-                }}
-              />
-            {/if}
-          {/each}
+                    }
+                  }}
+                />
+              {:else}
+                {@const questState = getQuestState(quest.id)}
+                {@const nameVisible = questNameVisible(questType, quest.id)}
+                <TrackerRow
+                  display={questRowDisplay(questState, nameVisible)}
+                  lookups={{
+                    ...baseLookups,
+                    entityVisibility: questVisibility(questType, quest.id),
+                  }}
+                  name={quest.displayName}
+                  reportCategory="quest"
+                  reportEntityId={quest.id}
+                  sources={questSources(questType, quest.id)}
+                  subtitle={questSubtitle(quest, questType, duplicateNames)}
+                  onToggle={() => {
+                    if (nameVisible || questState !== "none") {
+                      completeQuest(quest, quests);
+                    } else {
+                      spoilerGuard.guard(questVisibility(questType, quest.id), () => {
+                        completeQuest(quest, quests);
+                      });
+                    }
+                  }}
+                />
+              {/if}
+            {/each}
+          </TrackerRowStack>
         </ExpandableSection>
       {:else}
         <p class="py-4 text-center text-sm text-muted-foreground">

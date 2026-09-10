@@ -1,5 +1,6 @@
 <script lang="ts">
   import ExpandableSection from "$lib/components/expandable-section.svelte";
+  import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { isVisible } from "$lib/engine/visibility.js";
@@ -95,28 +96,30 @@
     reportCategory="pet cosmetics"
     total={scopedPetCosmeticEntries.length}
   >
-    {#each visibleCosmeticEntries as entry (entry.id)}
-      <TrackerRow
-        display={cosmeticDisplay(entry.id)}
-        lookups={baseLookups}
-        name={entry.name}
-        reportCategory="pet cosmetic"
-        reportEntityId={entry.id}
-        sources={entry.sources}
-        onToggle={() => {
-          userState.togglePetCosmetic(entry.id);
-          const completed = userState.state.completed.petCosmetics.has(entry.id);
-          showUndoToast(entry.name, completed, () => {
+    <TrackerRowStack>
+      {#each visibleCosmeticEntries as entry (entry.id)}
+        <TrackerRow
+          display={cosmeticDisplay(entry.id)}
+          lookups={baseLookups}
+          name={entry.name}
+          reportCategory="pet cosmetic"
+          reportEntityId={entry.id}
+          sources={entry.sources}
+          onToggle={() => {
             userState.togglePetCosmetic(entry.id);
-          });
-          if (completed && arePetsComplete() && areAllAnimalsComplete()) {
-            celebrateCategory();
-          } else if (completed && arePetsComplete()) {
-            celebrate();
-          }
-        }}
-      />
-    {/each}
+            const completed = userState.state.completed.petCosmetics.has(entry.id);
+            showUndoToast(entry.name, completed, () => {
+              userState.togglePetCosmetic(entry.id);
+            });
+            if (completed && arePetsComplete() && areAllAnimalsComplete()) {
+              celebrateCategory();
+            } else if (completed && arePetsComplete()) {
+              celebrate();
+            }
+          }}
+        />
+      {/each}
+    </TrackerRowStack>
   </ExpandableSection>
 {/if}
 
@@ -127,28 +130,30 @@
     reportCategory="pet skins"
     total={scopedPetSkinEntries.length}
   >
-    {#each visibleSkinEntries as entry (entry.id)}
-      <TrackerRow
-        display={skinDisplay(entry.id)}
-        lookups={baseLookups}
-        name={entry.name}
-        reportCategory="pet skin"
-        reportEntityId={entry.id}
-        sources={entry.sources}
-        onToggle={() => {
-          userState.togglePetSkin(entry.id);
-          const completed = userState.state.completed.petSkins.has(entry.id);
-          showUndoToast(entry.name, completed, () => {
+    <TrackerRowStack>
+      {#each visibleSkinEntries as entry (entry.id)}
+        <TrackerRow
+          display={skinDisplay(entry.id)}
+          lookups={baseLookups}
+          name={entry.name}
+          reportCategory="pet skin"
+          reportEntityId={entry.id}
+          sources={entry.sources}
+          onToggle={() => {
             userState.togglePetSkin(entry.id);
-          });
-          if (completed && arePetsComplete() && areAllAnimalsComplete()) {
-            celebrateCategory();
-          } else if (completed && arePetsComplete()) {
-            celebrate();
-          }
-        }}
-      />
-    {/each}
+            const completed = userState.state.completed.petSkins.has(entry.id);
+            showUndoToast(entry.name, completed, () => {
+              userState.togglePetSkin(entry.id);
+            });
+            if (completed && arePetsComplete() && areAllAnimalsComplete()) {
+              celebrateCategory();
+            } else if (completed && arePetsComplete()) {
+              celebrate();
+            }
+          }}
+        />
+      {/each}
+    </TrackerRowStack>
   </ExpandableSection>
 {/if}
 

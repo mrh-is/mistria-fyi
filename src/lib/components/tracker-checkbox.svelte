@@ -55,8 +55,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 44px;
-    min-width: 44px;
+    min-height: var(--tracker-target-size, 44px);
+    min-width: var(--tracker-target-size, 44px);
     flex-shrink: 0;
     color: var(--ink-muted);
     border-radius: 2px;
@@ -68,6 +68,8 @@
   }
 
   .tracker-checkbox:focus-visible {
+    outline: 1px solid currentColor;
+    outline-offset: -3px;
     box-shadow: inset 0 0 0 1px currentColor;
   }
 

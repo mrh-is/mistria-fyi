@@ -129,8 +129,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: var(--tracker-sprite-size, 40px);
+    height: var(--tracker-sprite-size, 40px);
     flex-shrink: 0;
     border: 1px dashed var(--sprite-slot-outline);
     border-radius: 2px;
@@ -148,7 +148,7 @@
   }
 
   .sprite-slot__svg {
-    width: 34px;
-    height: 34px;
+    width: calc(var(--tracker-sprite-size, 40px) - 6px);
+    height: calc(var(--tracker-sprite-size, 40px) - 6px);
   }
 </style>
