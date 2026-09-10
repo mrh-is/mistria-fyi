@@ -78,7 +78,7 @@ describe("TrackerRow", () => {
     expect(body).toContain('aria-label="Uncheck Cherry Cobbler"');
   });
 
-  it("renders the corner-peek grab triangle when sources are provided", () => {
+  it("renders a clipped tracker paper and persistent source paper when sourced", () => {
     const { body } = render(TrackerRow, {
       props: {
         display: { mode: "visible" },
@@ -90,12 +90,19 @@ describe("TrackerRow", () => {
     });
 
     expect(body).toContain('aria-label="Cherry Cobbler sources"');
-    expect(body).toContain('aria-controls="sources-cherry-cobbler"');
-    expect(body).toContain("tracker-row--has-sources");
-    expect(body).toContain("corner-peek__grab");
+    expect(body).toContain('aria-controls="sources-cherry-cobbler-');
+    expect(body).toContain('data-source-state="closed"');
+    expect(body).toContain("data-tracker-paper");
+    expect(body).toContain("tracker-paper__surface--cutout");
+    expect(body).toContain("data-tracker-paper-diagonal");
+    expect(body).toContain('d="M 26.5 0.5 L 0.5 26.5"');
+    expect(body).toContain('stroke-width="1"');
+    expect(body).toContain('vector-effect="non-scaling-stroke"');
+    expect(body).toContain('shape-rendering="geometricPrecision"');
+    expect(body).toContain("data-source-paper");
   });
 
-  it("does not render the grab triangle when there are no sources", () => {
+  it("renders no source paper or diagonal when there are no sources", () => {
     const { body } = render(TrackerRow, {
       props: {
         display: { mode: "visible" },
@@ -105,7 +112,9 @@ describe("TrackerRow", () => {
       },
     });
 
-    expect(body).not.toContain("corner-peek__grab");
-    expect(body).not.toContain("tracker-row--has-sources");
+    expect(body).toContain('data-source-state="none"');
+    expect(body).toContain("data-tracker-paper");
+    expect(body).not.toContain("data-tracker-paper-diagonal");
+    expect(body).not.toContain("data-source-paper");
   });
 });

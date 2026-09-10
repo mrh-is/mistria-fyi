@@ -51,7 +51,7 @@ describe("TrackerRow reportable metadata", () => {
     expect(feedbackContext.registrations.size).toBe(0);
   });
 
-  it("closes source details from the row cutout control", async () => {
+  it("keeps one source paper and control while toggling its content", async () => {
     const view = render(TrackerRow, {
       display: { mode: "visible" },
       name: "Amberjack",
@@ -61,13 +61,75 @@ describe("TrackerRow reportable metadata", () => {
       sources: [{ type: "default" }],
     });
     const sourceButton = screen.getByRole("button", { name: "Amberjack sources" });
+    const sourcePaper = view.container.querySelector("[data-source-paper]");
+    const row = view.container.querySelector("[data-tracker-row]");
+    const contentId = sourceButton.getAttribute("aria-controls");
+
+    expect(sourcePaper).toBeTruthy();
+    expect(row?.getAttribute("data-source-state")).toBe("closed");
+    expect(sourceButton.getAttribute("aria-expanded")).toBe("false");
+    expect(contentId).toBeTruthy();
+    expect(document.getElementById(contentId ?? "")).toBeTruthy();
+    expect(view.container.querySelector(".source-paper__panel")?.getAttribute("aria-hidden")).toBe(
+      "true",
+    );
 
     await fireEvent.click(sourceButton);
     expect(sourceButton.getAttribute("aria-expanded")).toBe("true");
-    expect(view.container.querySelector("#sources-amberjack")).toBeTruthy();
+    expect(row?.getAttribute("data-source-state")).toBe("open");
+    expect(view.container.querySelector(".source-card")).toBeTruthy();
+    expect(view.container.querySelector(".source-paper__panel")?.getAttribute("aria-hidden")).toBe(
+      "false",
+    );
+    expect(view.container.querySelector("[data-source-paper]")).toBe(sourcePaper);
+    expect(screen.getByRole("button", { name: "Amberjack sources" })).toBe(sourceButton);
+    expect(sourcePaper?.contains(sourceButton)).toBe(true);
 
-    await fireEvent.click(sourceButton);
+    const stationaryControl = view.container.querySelector(
+      "[data-source-paper-stationary-control]",
+    );
+    expect(stationaryControl).toBeTruthy();
+    if (!stationaryControl) throw new Error("Expected stationary source control");
+    await fireEvent.click(stationaryControl);
     expect(sourceButton.getAttribute("aria-expanded")).toBe("false");
+    expect(row?.getAttribute("data-source-state")).toBe("closed");
+    expect(view.container.querySelector(".source-paper__panel")?.getAttribute("aria-hidden")).toBe(
+      "true",
+    );
+    expect(view.container.querySelector("[data-source-paper]")).toBe(sourcePaper);
+    expect(view.container.querySelector("[data-source-paper-stationary-control]")).toBeNull();
+  });
+
+  it("keeps multiple source papers expanded independently", async () => {
+    const first = render(TrackerRow, {
+      display: { mode: "visible" },
+      name: "Amberjack",
+      onToggle: vi.fn(),
+      reportCategory: "almanac item",
+      reportEntityId: "amberjack",
+      sources: [{ type: "default" }],
+    });
+    const second = render(TrackerRow, {
+      display: { mode: "visible" },
+      name: "Cod",
+      onToggle: vi.fn(),
+      reportCategory: "almanac item",
+      reportEntityId: "cod",
+      sources: [{ type: "default" }],
+    });
+    const firstButton = screen.getByRole("button", { name: "Amberjack sources" });
+    const secondButton = screen.getByRole("button", { name: "Cod sources" });
+
+    await fireEvent.click(firstButton);
+    await fireEvent.click(secondButton);
+    expect(firstButton.getAttribute("aria-expanded")).toBe("true");
+    expect(secondButton.getAttribute("aria-expanded")).toBe("true");
+
+    await fireEvent.click(firstButton);
+    expect(firstButton.getAttribute("aria-expanded")).toBe("false");
+    expect(secondButton.getAttribute("aria-expanded")).toBe("true");
+    first.unmount();
+    second.unmount();
   });
 
   it("moves focus to the next row after toggling a visible item", async () => {
@@ -105,7 +167,12 @@ describe("TrackerRow reportable metadata", () => {
     const secondRow = second.container.firstElementChild;
     expect(firstRow).toBeTruthy();
     expect(secondRow).toBeTruthy();
-    list.append(firstRow as HTMLElement, secondRow as HTMLElement);
+    list.dataset.trackerList = "";
+    const firstStack = document.createElement("div");
+    const secondStack = document.createElement("div");
+    firstStack.append(firstRow as HTMLElement);
+    secondStack.append(secondRow as HTMLElement);
+    list.append(firstStack, secondStack);
 
     screen.getByRole("button", { name: "Check First item" }).focus();
     await fireEvent.click(screen.getByRole("button", { name: "Check First item" }));

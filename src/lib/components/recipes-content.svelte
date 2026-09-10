@@ -3,6 +3,7 @@
 
   import ConfirmSpoilerDialog from "$lib/components/confirm-spoiler-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
+  import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
   import { trackerData } from "$lib/data/index.js";
@@ -174,35 +175,37 @@
     >
       {@const showAll = expandedSections[group.id] ?? false}
       {@const displayEntries = showAll ? filteredEntries : filteredEntries.slice(0, SECTION_LIMIT)}
-      {#each displayEntries as entry (entry.id)}
-        {@const completed = userState.state.completed.almanacRecipes.has(entry.id)}
-        {@const leaving = recentlyCompleted.has(entry.id)}
-        <TrackerRow
-          display={rowDisplay(entry, completed, leaving)}
-          lookups={{ ...baseSegmentLookups, entityVisibility: entry.visibility }}
-          name={entry.name}
-          reportCategory="recipe"
-          reportEntityId={entry.id}
-          sources={entry.sources}
-          sprite={entry.iconSprite}
-          spriteClass="text-cat-recipes"
-          onToggle={() => {
-            if (entry.nameVisible || completed) {
-              toggleRecipe(
-                entry,
-                group.entries.map((candidate) => candidate.id),
-              );
-            } else {
-              spoilerGuard.guard(entry.visibility, () => {
+      <TrackerRowStack>
+        {#each displayEntries as entry (entry.id)}
+          {@const completed = userState.state.completed.almanacRecipes.has(entry.id)}
+          {@const leaving = recentlyCompleted.has(entry.id)}
+          <TrackerRow
+            display={rowDisplay(entry, completed, leaving)}
+            lookups={{ ...baseSegmentLookups, entityVisibility: entry.visibility }}
+            name={entry.name}
+            reportCategory="recipe"
+            reportEntityId={entry.id}
+            sources={entry.sources}
+            sprite={entry.iconSprite}
+            spriteClass="text-cat-recipes"
+            onToggle={() => {
+              if (entry.nameVisible || completed) {
                 toggleRecipe(
                   entry,
                   group.entries.map((candidate) => candidate.id),
                 );
-              });
-            }
-          }}
-        />
-      {/each}
+              } else {
+                spoilerGuard.guard(entry.visibility, () => {
+                  toggleRecipe(
+                    entry,
+                    group.entries.map((candidate) => candidate.id),
+                  );
+                });
+              }
+            }}
+          />
+        {/each}
+      </TrackerRowStack>
       {#if filteredEntries.length === 0}
         <p class="py-4 text-center text-sm text-muted-foreground">
           No items match the current filters

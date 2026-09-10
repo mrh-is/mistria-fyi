@@ -1,6 +1,7 @@
 <script lang="ts">
   import ConfirmSpoilerDialog from "$lib/components/confirm-spoiler-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
+  import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
@@ -103,20 +104,22 @@
     defaultOpen={false}
   >
     <div class="flex flex-col gap-0.5">
-      {#each visibleDates as date (date.id)}
-        {@const completed = userState.state.completed.dates.has(date.id)}
-        <TrackerRow
-          name={date.name}
-          reportCategory="date"
-          reportEntityId={date.id}
-          display={rowDisplay(date.id, completed)}
-          sources={date.sources}
-          lookups={{ ...baseLookups, entityVisibility: date.visibility }}
-          onToggle={() => {
-            toggleDate(date.id);
-          }}
-        />
-      {/each}
+      <TrackerRowStack>
+        {#each visibleDates as date (date.id)}
+          {@const completed = userState.state.completed.dates.has(date.id)}
+          <TrackerRow
+            name={date.name}
+            reportCategory="date"
+            reportEntityId={date.id}
+            display={rowDisplay(date.id, completed)}
+            sources={date.sources}
+            lookups={{ ...baseLookups, entityVisibility: date.visibility }}
+            onToggle={() => {
+              toggleDate(date.id);
+            }}
+          />
+        {/each}
+      </TrackerRowStack>
       {#if visibleDates.length === 0}
         <p class="py-4 text-center text-sm text-muted-foreground">
           No items match the current filters

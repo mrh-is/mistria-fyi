@@ -14,8 +14,7 @@ describe("SourceCard", () => {
     });
 
     expect(body).toContain("Catch fishing in Pond");
-    expect(body).toContain("Summer");
-    expect(body).toContain("Any weather");
+    expect(body).toContain(">Summer</span>");
   });
 
   it("does not invent timing context for an unrestricted source", () => {
@@ -27,7 +26,6 @@ describe("SourceCard", () => {
       },
     });
 
-    expect(body).not.toContain("Any season");
-    expect(body).not.toContain("Any weather");
+    expect(body).not.toContain("restriction-chip");
   });
 });
