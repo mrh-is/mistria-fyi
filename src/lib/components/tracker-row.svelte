@@ -226,9 +226,6 @@
     --tracker-peek-size: 27px;
     --tracker-row-gap: 7px;
     --tracker-sheet-gap: 6px;
-    --tracker-target-size: 44px;
-    --tracker-row-min-size: 48px;
-    --tracker-sprite-size: 40px;
     --tracker-source-inset: calc(var(--tracker-target-size) + var(--tracker-row-gap));
     --tracker-paper-border-start-width: var(--tracker-paper-border-width);
     --tracker-paper-start-start-radius: var(--tracker-paper-radius);

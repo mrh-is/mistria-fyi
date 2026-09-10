@@ -56,11 +56,22 @@ test.describe("@critical interactive target geometry", () => {
     expect(
       await page.evaluate(() => matchMedia("(pointer: fine) and (hover: hover)").matches),
     ).toBe(true);
-    const controls = page.getByRole("button", { name: /^Check / }).first();
-    const box = await controls.boundingBox();
+    const row = page.locator("[data-tracker-row]").first();
+    const responsiveSizes = await row.evaluate((element) => {
+      const styles = getComputedStyle(element);
+      return {
+        row: styles.getPropertyValue("--tracker-row-min-size"),
+        sprite: styles.getPropertyValue("--tracker-sprite-size"),
+        target: styles.getPropertyValue("--tracker-target-size"),
+      };
+    });
+    expect(responsiveSizes).toEqual({ row: "40px", sprite: "36px", target: "32px" });
+
+    const control = row.getByRole("button", { name: /^Check / });
+    const box = await control.boundingBox();
     expect(box).not.toBeNull();
-    expect(box?.width).toBeGreaterThanOrEqual(32);
-    expect(box?.height).toBeGreaterThanOrEqual(32);
+    expect(box?.width).toBe(32);
+    expect(box?.height).toBe(32);
   });
 });
 
