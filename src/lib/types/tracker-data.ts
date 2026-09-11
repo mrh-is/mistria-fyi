@@ -123,6 +123,7 @@ export interface Npc {
   birthday: Day;
   dateable?: true;
   name: string;
+  smallIconSprite?: string;
   visibility?: VisibilityCondition;
 }
 export type NpcId = string & { readonly __brand: "NpcId" };

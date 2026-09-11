@@ -225,6 +225,7 @@
     >
       {#each config.setConfigs as set (set.setId)}
         <ExpandableSection
+          depth={1}
           count={set.scopedCompletedItemCount}
           forceOpen={!!nameFilter}
           name={set.name}

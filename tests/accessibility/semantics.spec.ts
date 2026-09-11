@@ -1,7 +1,11 @@
 import { expect, test } from "@playwright/test";
 
 import { accessibilityRoutes } from "./routes.js";
-import { gotoApplication, initializeApplication } from "./support/application-state.js";
+import {
+  createStoredState,
+  gotoApplication,
+  initializeApplication,
+} from "./support/application-state.js";
 import { openFeedbackValidation, openVisibilityPanel } from "./support/scenarios.js";
 
 test.describe("@critical semantic accessibility", () => {
@@ -35,16 +39,26 @@ test.describe("@critical semantic accessibility", () => {
     await expect(page.getByRole("group", { name: /Renown level, 0 of \d+/ })).toBeVisible();
   });
 
-  test("repeated NPC controls retain unique visible names and pressed state", async ({ page }) => {
-    await gotoApplication(page, "/npcs");
-    const controls = page.getByRole("button", { name: /^Set .+ relationship level to \d+$/ });
-    const names = await controls.evaluateAll((buttons) =>
-      buttons.map((button) => button.getAttribute("aria-label")),
+  test("NPC records expose one level value and non-interactive marks", async ({ page }) => {
+    await initializeApplication(
+      page,
+      "light",
+      createStoredState({
+        completed: { npcLevels: { adeline: 8 } },
+        showSpoilers: true,
+      }),
     );
-    expect(names.length).toBeGreaterThan(1);
-    expect(new Set(names).size).toBe(names.length);
-    await controls.first().click();
-    await expect(controls.first()).toHaveAttribute("aria-pressed", "true");
+    await gotoApplication(page, "/npcs");
+    const record = page.locator("#npc-adeline");
+    await expect(
+      record.getByRole("group", { name: "Adeline relationship level, 8 of 12" }),
+    ).toBeVisible();
+    await expect(record.locator("[data-npc-mark]")).toHaveCount(12);
+    await expect(record.locator("[data-npc-mark] button")).toHaveCount(0);
+    await expect(record.getByRole("button", { name: "Decrease Adeline hearts" })).toBeVisible();
+    await expect(record.getByRole("button", { name: "Increase Adeline hearts" })).toBeVisible();
+    await expect(record.getByRole("button", { name: "Best friends" })).toBeVisible();
+    await expect(record.getByRole("button", { name: "Start dating" })).toBeVisible();
   });
 
   test("mine and visibility controls expose values and state", async ({ page }) => {

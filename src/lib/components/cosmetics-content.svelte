@@ -151,6 +151,7 @@
                   toolbarState.matchesSourceFilters(c.sources) &&
                   userState.state.completed.cosmetics.has(c.id),
               ).length}
+              depth={1}
               name={subCategory}
               reportCategory="cosmetic"
               reportEntityId={`${slot}:${subCategory}`}

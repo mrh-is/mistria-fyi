@@ -2,6 +2,7 @@
   import { SvelteSet } from "svelte/reactivity";
 
   import ConfirmSpoilerDialog from "$lib/components/confirm-spoiler-dialog.svelte";
+  import DatesSection from "$lib/components/dates-section.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
@@ -91,8 +92,10 @@
   }
 
   function isAlmanacComplete(): boolean {
-    return recordValues(trackerData.almanac).every((cat) =>
-      cat.items.every((entry) => isItemCompleted(entry.itemIds[0])),
+    return (
+      recordValues(trackerData.almanac).every((cat) =>
+        cat.items.every((entry) => isItemCompleted(entry.itemIds[0])),
+      ) && userState.state.completed.dates.size === recordValues(trackerData.dates).length
     );
   }
 
@@ -236,5 +239,12 @@
     </ExpandableSection>
   {/if}
 {/each}
+
+<DatesSection
+  onAllComplete={() => {
+    if (isAlmanacComplete()) celebrateCategory();
+    else celebrate();
+  }}
+/>
 
 <AllCompleted isAllCompleted={isAlmanacComplete()} />

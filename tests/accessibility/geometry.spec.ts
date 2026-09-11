@@ -1,7 +1,11 @@
 import { devices, expect, test } from "@playwright/test";
 
 import { accessibilityRoutes } from "./routes.js";
-import { gotoApplication, initializeApplication } from "./support/application-state.js";
+import {
+  createStoredState,
+  gotoApplication,
+  initializeApplication,
+} from "./support/application-state.js";
 import {
   collectVisibleElementBoxes,
   collectVisibleTargets,
@@ -37,6 +41,29 @@ test.describe("@critical 320-pixel reflow", () => {
     await openSettingsCard(page, "Import from Save File");
     expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
   });
+
+  test("populated specialized records reflow without horizontal overflow", async ({ page }) => {
+    await initializeApplication(
+      page,
+      "light",
+      createStoredState({
+        availabilityMode: "everything",
+        completed: {
+          mines: { floor: 21, spells: [] },
+          npcLevels: { adeline: 10 },
+          npcRelationships: { adeline: "romantic" },
+          renown: 14,
+          skillLevels: { mining: 22 },
+        },
+        showSpoilers: true,
+      }),
+    );
+
+    for (const path of ["/npcs", "/skills", "/mines", "/renown", "/all"]) {
+      await gotoApplication(page, path);
+      expect(findOverflow(await collectVisibleElementBoxes(page), 320), path).toEqual([]);
+    }
+  });
 });
 
 test.describe("@critical interactive target geometry", () => {
@@ -59,7 +86,7 @@ test.describe("@critical interactive target geometry", () => {
 
   test("fine-pointer tracker controls retain compact accessible targets", async ({ page }) => {
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts 0\/\d+$/ }).click();
+    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
     expect(
       await page.evaluate(() => matchMedia("(pointer: fine) and (hover: hover)").matches),
     ).toBe(true);
@@ -86,7 +113,7 @@ test.describe("@critical tracker paper geometry", () => {
   test.beforeEach(async ({ page }) => {
     await initializeApplication(page, "light");
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts 0\/\d+$/ }).click();
+    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
   });
 
   test("source control and paper borders preserve the two-sheet geometry", async ({ page }) => {
@@ -185,7 +212,7 @@ test.describe("@critical tracker paper touch geometry", () => {
   test("coarse-pointer targets and expanded sources fit at 320 pixels", async ({ page }) => {
     await initializeApplication(page, "light");
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts 0\/\d+$/ }).click();
+    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
 
     expect(await page.evaluate(() => matchMedia("(pointer: coarse)").matches)).toBe(true);
     expect(await page.evaluate(() => matchMedia("(any-pointer: coarse)").matches)).toBe(true);
@@ -207,5 +234,54 @@ test.describe("@critical tracker paper touch geometry", () => {
     await sourceButton.click();
     await expect(row).toHaveAttribute("data-source-state", "open");
     expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
+  });
+
+  test("specialized record controls retain 44-pixel coarse targets", async ({ page }) => {
+    await initializeApplication(
+      page,
+      "light",
+      createStoredState({
+        availabilityMode: "everything",
+        completed: {
+          npcLevels: { adeline: 10 },
+          npcRelationships: { adeline: "romantic" },
+        },
+        showSpoilers: true,
+      }),
+    );
+
+    await gotoApplication(page, "/npcs");
+    for (const control of await page
+      .locator(
+        "#npc-adeline .npc-stepper, #npc-adeline [data-relationship-action], [data-npc-index-initial]",
+      )
+      .all()) {
+      const box = await control.boundingBox();
+      expect(box?.width).toBeGreaterThanOrEqual(44);
+      expect(box?.height).toBeGreaterThanOrEqual(44);
+    }
+
+    await gotoApplication(page, "/skills");
+    for (const control of await page.locator("[data-skill-record] button").first().all()) {
+      const box = await control.boundingBox();
+      expect(box?.width).toBeGreaterThanOrEqual(44);
+      expect(box?.height).toBeGreaterThanOrEqual(44);
+    }
+
+    await gotoApplication(page, "/mines");
+    for (const control of await page
+      .locator("[data-mine-floor-record] button, [data-mine-floor-record] input")
+      .all()) {
+      const box = await control.boundingBox();
+      expect(box?.width).toBeGreaterThanOrEqual(44);
+      expect(box?.height).toBeGreaterThanOrEqual(44);
+    }
+
+    await gotoApplication(page, "/renown");
+    for (const control of await page.locator("[data-renown-current] button").all()) {
+      const box = await control.boundingBox();
+      expect(box?.width).toBeGreaterThanOrEqual(44);
+      expect(box?.height).toBeGreaterThanOrEqual(44);
+    }
   });
 });

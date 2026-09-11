@@ -10,7 +10,7 @@ import type { AvailabilityMode, CompletedState } from "$lib/stores/user-state.sv
 import type { Source } from "$lib/types/acquisition.js";
 import type { ItemId, NpcId, QuestId, Season, Weather } from "$lib/types/tracker-data.js";
 
-export const MAX_NPC_LEVEL = 10;
+export const MAX_NPC_LEVEL = 12;
 export const MAX_SKILL_LEVEL = 60;
 
 export type AllProgress = Record<CategoryKey, CategoryProgress>;
@@ -144,7 +144,13 @@ function getAlmanacProgress(ctx: ProgressContext): CategoryProgress {
   const allCanonicalIds = recordValues(trackerData.almanac).flatMap(({ items }) =>
     items.map((entry) => entry.itemIds[0]),
   );
-  return almanacEntryProgress(allCanonicalIds, ctx.completed.almanac, ctx);
+  const entries = almanacEntryProgress(allCanonicalIds, ctx.completed.almanac, ctx);
+  const dateCount = recordKeys(trackerData.dates).length;
+  return {
+    completed: entries.completed + ctx.completed.dates.size,
+    filtered: entries.filtered + dateCount - ctx.completed.dates.size,
+    total: entries.total + dateCount,
+  };
 }
 
 function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
@@ -246,9 +252,6 @@ function getNpcsProgress(ctx: ProgressContext): CategoryProgress {
     total += MAX_NPC_LEVEL;
     completed += Math.min(ctx.completed.npcLevels[id] ?? 0, MAX_NPC_LEVEL);
   }
-  const dateCount = recordKeys(trackerData.dates).length;
-  total += dateCount;
-  completed += ctx.completed.dates.size;
   return { completed, filtered: total - completed, total };
 }
 

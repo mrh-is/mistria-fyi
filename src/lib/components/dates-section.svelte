@@ -17,6 +17,8 @@
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { DateId } from "$lib/types/tracker-data.js";
 
+  let { onAllComplete = celebrate }: { onAllComplete?: () => void } = $props();
+
   const spoilerGuard = createSpoilerGuard();
 
   const categoryVisible = $derived(
@@ -61,7 +63,7 @@
       userState.toggleDate(dateId);
     });
     if (completed && allDatesComplete()) {
-      celebrate();
+      onAllComplete();
     }
   }
 
