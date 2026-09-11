@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Minus, Plus } from "@lucide/svelte";
+  import { IconMinus, IconPlus } from "@tabler/icons-svelte-runes";
 
   import { page } from "$app/state";
   import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
@@ -96,7 +96,7 @@
         updateFloor(floor - 1);
       }}
     >
-      <Minus aria-hidden="true" />
+      <IconMinus aria-hidden="true" />
     </button>
 
     <span class="floor-readout">
@@ -121,7 +121,7 @@
         updateFloor(floor + 1);
       }}
     >
-      <Plus aria-hidden="true" />
+      <IconPlus aria-hidden="true" />
     </button>
   </div>
 
