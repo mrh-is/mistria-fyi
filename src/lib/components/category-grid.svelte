@@ -28,9 +28,9 @@
   );
 </script>
 
-<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-5">
   {#if activeCategories.length > 0}
-    <ul class="grid grid-cols-2 gap-2" aria-label="Categories in progress">
+    <ul class="flex flex-col gap-1.5" aria-label="Categories in progress">
       {#each activeCategories as key (key)}
         <li><CategoryCard {key} progress={progress[key]} /></li>
       {/each}
@@ -38,18 +38,18 @@
   {/if}
 
   {#if completedCategories.length > 0}
-    <div class="flex flex-col gap-2">
+    <section class="flex flex-col gap-2">
       <div
-        class="flex items-center gap-1.5 text-sm font-medium text-yellow-700 dark:text-yellow-400"
+        class="flex items-center gap-1.5 px-1 font-controls text-[11px] tracking-[0.14em] text-amber-800 uppercase dark:text-amber-300"
       >
         <Icon.Category category="complete" class="size-3.5" />
         <h2>Completed</h2>
       </div>
-      <ul class="grid grid-cols-2 gap-2" aria-label="Completed categories">
+      <ul class="flex flex-col gap-1.5" aria-label="Completed categories">
         {#each completedCategories as key (key)}
           <li><CategoryCard {key} progress={progress[key]} /></li>
         {/each}
       </ul>
-    </div>
+    </section>
   {/if}
 </div>

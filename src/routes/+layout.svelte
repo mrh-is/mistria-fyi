@@ -36,7 +36,7 @@
 
 <div
   class="mx-auto flex min-h-dvh max-w-lg flex-col bg-background {hasToolbar
-    ? 'pb-safe-offset-14'
+    ? 'pb-safe-offset-18'
     : ''}"
   inert={overlayActive ? true : undefined}
 >
