@@ -461,7 +461,7 @@
 
   <div
     bind:this={dialogElement}
-    class="fixed right-0 bottom-safe-offset-14 left-0 z-30 mx-auto max-w-lg px-3"
+    class="fixed right-0 bottom-safe-offset-16 left-0 z-30 mx-auto max-w-lg px-3"
     role="dialog"
     aria-label="Send feedback"
     aria-modal="true"

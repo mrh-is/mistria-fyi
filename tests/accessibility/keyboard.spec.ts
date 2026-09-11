@@ -10,7 +10,9 @@ test.describe("@critical keyboard and focus accessibility", () => {
   test("toolbar controls follow a predictable focus order", async ({ page }) => {
     await gotoApplication(page, "/");
     const tools = page.getByRole("navigation", { name: "Tracker tools" });
-    await tools.getByRole("button", { name: "Send feedback" }).focus();
+    await tools.getByRole("link", { name: "Settings" }).focus();
+    await page.keyboard.press("Tab");
+    await expect(tools.getByRole("button", { name: "Send feedback" })).toBeFocused();
     await page.keyboard.press("Tab");
     await expect(tools.getByRole("button", { name: "Search" })).toBeFocused();
     await page.keyboard.press("Tab");

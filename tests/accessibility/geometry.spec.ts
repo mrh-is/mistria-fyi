@@ -50,6 +50,13 @@ test.describe("@critical interactive target geometry", () => {
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
   });
 
+  test("home category ribbons stay inside the viewport at 320 pixels", async ({ page }) => {
+    await page.setViewportSize({ height: 720, width: 320 });
+    await gotoApplication(page, "/");
+    await expect(page.locator("[data-category-ribbon]").first()).toBeVisible();
+    expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
+  });
+
   test("fine-pointer tracker controls retain compact accessible targets", async ({ page }) => {
     await gotoApplication(page, "/almanac");
     await page.getByRole("button", { name: /^Artifacts 0\/\d+$/ }).click();
