@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Check, Copy, Monitor, Upload } from "@lucide/svelte";
+  import { IconCheck, IconCopy, IconDeviceDesktop, IconUpload } from "@tabler/icons-svelte-runes";
 
   import { Button } from "$lib/components/ui/button/index.js";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
@@ -190,7 +190,7 @@
       {#if importing}
         <p class="text-sm text-muted-foreground">{importStatus || "Importing\u2026"}</p>
       {:else}
-        <Upload class="size-6 text-muted-foreground" />
+        <IconUpload class="size-6 text-muted-foreground" />
         <p class="text-sm text-muted-foreground">Drag your save file here</p>
         <p class="text-xs text-muted-foreground">or</p>
         <button
@@ -228,9 +228,9 @@
                   aria-label="Copy path"
                 >
                   {#if copied}
-                    <Check class="size-4 text-green-600" />
+                    <IconCheck class="size-4 text-green-600" />
                   {:else}
-                    <Copy class="size-4" />
+                    <IconCopy class="size-4" />
                   {/if}
                 </button>
               </div>
@@ -304,7 +304,7 @@
           class="mt-3 flex w-full items-start gap-3 rounded-md border border-violet-200 bg-violet-50 p-3 text-left transition-colors hover:bg-violet-100 dark:border-violet-800 dark:bg-violet-950 dark:hover:bg-violet-900"
           onclick={onScrollToTransfer}
         >
-          <Monitor class="mt-0.5 size-5 shrink-0 text-violet-600 dark:text-violet-400" />
+          <IconDeviceDesktop class="mt-0.5 size-5 shrink-0 text-violet-600 dark:text-violet-400" />
           <div>
             <p class="text-base font-medium text-violet-800 dark:text-violet-200">
               Playing on your phone?

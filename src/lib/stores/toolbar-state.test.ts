@@ -1,4 +1,4 @@
-import { Circle } from "@lucide/svelte";
+import { IconCircle } from "@tabler/icons-svelte-runes";
 import { describe, expect, it } from "vitest";
 
 import { type SourceFilter, ToolbarState } from "$lib/stores/toolbar-state.svelte.js";
@@ -7,14 +7,14 @@ import type { Source } from "$lib/types/acquisition.js";
 import type { StoreId } from "$lib/types/tracker-data.js";
 
 const gatheringFilter: SourceFilter = {
-  icon: Circle,
+  icon: IconCircle,
   label: "Gathering",
   members: ["Foraging"],
   types: ["forage"],
 };
 
 const storeFilter: SourceFilter = {
-  icon: Circle,
+  icon: IconCircle,
   label: "Store",
   members: ["Shops"],
   types: ["store"],

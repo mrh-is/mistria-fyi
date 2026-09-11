@@ -34,7 +34,7 @@
       <span class="flex items-center gap-1.5">
         <CurrentSeasonIcon
           class="size-4 {currentSeason === 'fall' ? '-scale-y-100 rotate-90' : ''}"
-          strokeWidth={currentSeason === "summer" ? 2.5 : undefined}
+          stroke={currentSeason === "summer" ? 2.5 : undefined}
         />
         {seasonLabel(currentSeason)}
       </span>

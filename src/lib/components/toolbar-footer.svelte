@@ -1,12 +1,12 @@
 <script lang="ts">
   import {
-    ChevronDown,
-    ChevronUp,
-    Funnel,
-    MessageCircleWarning,
-    Search,
-    Settings,
-  } from "@lucide/svelte";
+    IconChevronDown,
+    IconChevronUp,
+    IconFilter,
+    IconMessageReport,
+    IconSearch,
+    IconSettings,
+  } from "@tabler/icons-svelte-runes";
   import { tick } from "svelte";
   import { prefersReducedMotion } from "svelte/motion";
   import { fly } from "svelte/transition";
@@ -164,7 +164,9 @@
         class="pointer-events-auto flex items-center gap-2 rounded-md border border-border/60 bg-background/92 p-1 shadow-lg backdrop-blur-md"
       >
         <div class="relative flex-1">
-          <Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <IconSearch
+            class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+          />
           <label class="sr-only" for="tracker-search">Search items</label>
           <Input
             bind:ref={searchInput}
@@ -199,7 +201,7 @@
     {:else}
       <div class="flex items-end justify-between gap-3">
         <a class="floating-tool" href={resolve("/settings")} aria-label="Settings">
-          <Settings class="size-5 transition-transform motion-reduce:transition-none" />
+          <IconSettings class="size-5 transition-transform motion-reduce:transition-none" />
         </a>
 
         <div class="flex items-center gap-1.5">
@@ -210,12 +212,12 @@
             aria-expanded={activePanel === "feedback"}
             onclick={toggleFeedbackPanel}
           >
-            <MessageCircleWarning class="size-5" />
+            <IconMessageReport class="size-5" />
           </button>
 
           {#if showSearch}
             <button class="floating-tool" type="button" aria-label="Search" onclick={openSearch}>
-              <Search class="size-5" />
+              <IconSearch class="size-5" />
             </button>
           {/if}
 
@@ -232,11 +234,11 @@
             id="visibility-panel-trigger"
             onclick={toggleVisibilityPanel}
           >
-            <Funnel class="size-4" />
+            <IconFilter class="size-4" />
             {#if activePanel === "visibility"}
-              <ChevronUp class="size-3" />
+              <IconChevronUp class="size-3" />
             {:else}
-              <ChevronDown class="size-3" />
+              <IconChevronDown class="size-3" />
             {/if}
           </button>
         </div>

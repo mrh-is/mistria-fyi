@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ArrowLeft } from "@lucide/svelte";
+  import { IconArrowLeft } from "@tabler/icons-svelte-runes";
 
   import { resolve } from "$app/paths";
   import { Icon } from "$lib/components/icon/index.js";
@@ -43,7 +43,7 @@
   style={category !== undefined && pct !== undefined ? `--category-progress: ${pct}%;` : undefined}
 >
   <a class="page-header__back" href={resolve(backHref)} aria-label={backLabel}>
-    <ArrowLeft class="size-5" />
+    <IconArrowLeft class="size-5" />
   </a>
   {#if category === undefined}
     {@render icon?.("size-5")}

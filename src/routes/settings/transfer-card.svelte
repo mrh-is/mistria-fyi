@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Camera, ImagePlus, LoaderCircle, QrCode } from "@lucide/svelte";
+  import { IconCamera, IconLoader2, IconPhotoPlus, IconQrcode } from "@tabler/icons-svelte-runes";
   import QrScanner from "qr-scanner";
   import QRCode from "qrcode";
 
@@ -172,10 +172,10 @@
       onclick={handleGenerate}
     >
       {#if generating}
-        <LoaderCircle class="animate-spin" />
+        <IconLoader2 class="animate-spin" />
         Generating...
       {:else}
-        <QrCode />
+        <IconQrcode />
         Generate QR Code
       {/if}
     </Button>
@@ -193,7 +193,7 @@
     <!-- Scan QR Code -->
     {#if !scanning}
       <Button class="w-full" variant="outline" onclick={handleScan}>
-        <Camera />
+        <IconCamera />
         Scan QR Code
       </Button>
     {/if}
@@ -220,7 +220,7 @@
 
     <!-- Image fallback -->
     <Button class="w-full text-sm" variant="ghost" onclick={handleImageUpload}>
-      <ImagePlus class="size-3" />
+      <IconPhotoPlus class="size-3" />
       Or scan from a screenshot...
     </Button>
 
