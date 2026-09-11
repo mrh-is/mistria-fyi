@@ -63,7 +63,7 @@
     );
   }
 
-  let currentBiome = $derived(() => {
+  let currentBiome = $derived.by(() => {
     const floor = userState.state.completed.mines.floor;
     let biome = trackerData.mines.biomes[0];
     for (const b of trackerData.mines.biomes) {
@@ -132,7 +132,7 @@
     name="Floor Progress"
     reportCategory="mines"
     reportEntityId="floors"
-    reportExtra={{ biome: currentBiome().name, floor: userState.state.completed.mines.floor }}
+    reportExtra={{ biome: currentBiome.name, floor: userState.state.completed.mines.floor }}
     {defaultOpen}
     total={maxFloors}
   >
