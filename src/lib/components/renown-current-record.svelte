@@ -51,7 +51,7 @@
         type="town_rank"
         fill={presentation.color}
         color={presentation.color}
-        strokeWidth={1.5}
+        stroke={1.5}
       />
     </span>
 

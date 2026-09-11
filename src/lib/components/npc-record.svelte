@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Minus, Plus } from "@lucide/svelte";
+  import { IconMinus, IconPlus } from "@tabler/icons-svelte-runes";
   import { tick } from "svelte";
 
   import { Icon } from "$lib/components/icon/index.js";
@@ -174,7 +174,7 @@
         setLevel(storedLevel - 1);
       }}
     >
-      <Minus aria-hidden="true" />
+      <IconMinus aria-hidden="true" />
     </button>
 
     <span class="npc-marks" aria-hidden="true">
@@ -203,7 +203,7 @@
         setLevel(storedLevel + 1);
       }}
     >
-      <Plus aria-hidden="true" />
+      <IconPlus aria-hidden="true" />
     </button>
   </div>
 

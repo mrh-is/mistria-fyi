@@ -36,10 +36,10 @@
   style="--rank-color: {color}; --rank-fill: {fill}%"
 >
   <span class="rank-mark" aria-hidden="true">
-    <Icon.ProgressMark type="town_rank" strokeWidth={1.5} />
+    <Icon.ProgressMark type="town_rank" stroke={1.5} />
     {#if fill > 0}
       <span data-testid="rank-fill" style="clip-path: inset(0 {100 - fill}% 0 0)">
-        <Icon.ProgressMark type="town_rank" fill={color} strokeWidth={1.5} />
+        <Icon.ProgressMark type="town_rank" fill={color} stroke={1.5} />
       </span>
     {/if}
   </span>
