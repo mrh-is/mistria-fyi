@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Minus, Plus } from "@lucide/svelte";
+  import { IconMinus, IconPlus } from "@tabler/icons-svelte-runes";
 
   import type { Snippet } from "svelte";
 
@@ -43,7 +43,7 @@
     <span
       class="flex size-9 items-center justify-center rounded-md border border-border transition-colors group-hover:bg-accent group-hover:text-foreground"
     >
-      <Minus class="size-4" />
+      <IconMinus class="size-4" />
     </span>
   </button>
 
@@ -63,7 +63,7 @@
     <span
       class="flex size-9 items-center justify-center rounded-md border border-border transition-colors group-hover:bg-accent group-hover:text-foreground"
     >
-      <Plus class="size-4" />
+      <IconPlus class="size-4" />
     </span>
   </button>
 </div>

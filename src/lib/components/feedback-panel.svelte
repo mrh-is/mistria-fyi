@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { ChevronDown, Copy, MessageCircleWarning, SquareMousePointer, X } from "@lucide/svelte";
+  import {
+    IconChevronDown,
+    IconCopy,
+    IconMessageReport,
+    IconPointer,
+    IconX,
+  } from "@tabler/icons-svelte-runes";
   import { tick } from "svelte";
   import { toast } from "svelte-sonner";
   import { prefersReducedMotion } from "svelte/motion";
@@ -474,7 +480,7 @@
       <div class="flex flex-col gap-2.5 p-3">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <MessageCircleWarning class="size-4 text-muted-foreground" />
+            <IconMessageReport class="size-4 text-muted-foreground" />
             <h2 class="text-sm font-semibold">Send feedback</h2>
           </div>
           <button
@@ -483,7 +489,7 @@
             aria-label="Close"
             onclick={onclose}
           >
-            <X class="size-4" />
+            <IconX class="size-4" />
           </button>
         </div>
 
@@ -523,7 +529,7 @@
           <div
             class="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-2.5 py-1.5"
           >
-            <SquareMousePointer class="size-3.5 shrink-0 text-muted-foreground" />
+            <IconPointer class="size-3.5 shrink-0 text-muted-foreground" />
             <div class="min-w-0 flex-1">
               <p class="truncate text-xs font-medium">{selectedElement.displayName}</p>
               <p class="text-[11px] text-muted-foreground">{selectedElement.category}</p>
@@ -542,7 +548,7 @@
               aria-label="Clear selected item"
               onclick={() => (selectedElement = undefined)}
             >
-              <X class="size-3" />
+              <IconX class="size-3" />
             </button>
           </div>
         {:else if pickerAvailable}
@@ -552,7 +558,7 @@
             type="button"
             onclick={startPicking}
           >
-            <SquareMousePointer class="size-3.5" />
+            <IconPointer class="size-3.5" />
             Pick an item
           </button>
         {/if}
@@ -624,7 +630,7 @@
                 showSaveDataPreview = !showSaveDataPreview;
               }}
             >
-              <ChevronDown
+              <IconChevronDown
                 class="size-3 transition-transform motion-reduce:transition-none {showSaveDataPreview
                   ? 'rotate-180'
                   : ''}"
@@ -656,7 +662,7 @@
               type="button"
               onclick={copyMessage}
             >
-              <Copy class="size-3" />
+              <IconCopy class="size-3" />
               Copy
             </button>
           </div>

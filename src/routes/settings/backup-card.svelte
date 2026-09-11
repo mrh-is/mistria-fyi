@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FileUp, Upload } from "@lucide/svelte";
+  import { IconFileUpload, IconUpload } from "@tabler/icons-svelte-runes";
 
   import { Button } from "$lib/components/ui/button/index.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -74,7 +74,7 @@
 <SettingsCard bind:open title="Backup & Restore" summary="Export or restore all tracker data.">
   <div class="flex flex-col gap-2">
     <Button variant="outline" onclick={handleExport}>
-      <FileUp />
+      <IconFileUpload />
       Export backup
     </Button>
     <Button
@@ -83,7 +83,7 @@
       aria-busy={restoring}
       onclick={handleImportBackup}
     >
-      <Upload />
+      <IconUpload />
       Restore from backup
     </Button>
     <div class="sr-only" role="status" aria-live="polite">{restoreStatus}</div>

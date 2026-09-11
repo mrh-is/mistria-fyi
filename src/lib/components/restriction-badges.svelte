@@ -8,7 +8,7 @@
     weathersForSeason,
   } from "$lib/utils/format.js";
 
-  import type { LucideIcon } from "$lib/components/icon/icon-maps.js";
+  import type { AppIcon } from "$lib/components/icon/icon-maps.js";
   import type { DisplayBadges } from "$lib/engine/availability-condition.js";
   import type { Season, Weather } from "$lib/types/tracker-data.js";
 
@@ -33,7 +33,7 @@
   }
 
   type Chip =
-    | { icons: LucideIcon[]; kind: "weathers"; label: string }
+    | { icons: AppIcon[]; kind: "weathers"; label: string }
     | { kind: "seasons"; label: string; seasons: Season[] }
     | { kind: "time"; label: string };
 
@@ -75,7 +75,7 @@
         <span class="restriction-chip__label">{chip.label}</span>
         {#each chip.seasons as season (season)}
           <span class="restriction-chip__season" data-season={season} aria-hidden="true">
-            <Icon.Season {season} size={14} strokeWidth={2} />
+            <Icon.Season {season} size={14} stroke={2} />
           </span>
         {/each}
       </span>
@@ -84,14 +84,14 @@
         <span class="restriction-chip__label">{chip.label}</span>
         <span class="restriction-chip__icons" aria-hidden="true">
           {#each chip.icons as WeatherIcon (WeatherIcon)}
-            <WeatherIcon size={14} strokeWidth={2} />
+            <WeatherIcon size={14} stroke={2} />
           {/each}
         </span>
       </span>
     {:else}
       <span class="restriction-chip restriction-chip--neutral" title={chip.label}>
         <span class="restriction-chip__label">{chip.label}</span>
-        <span aria-hidden="true"><Icon.Restriction type="clock" size={14} strokeWidth={2} /></span>
+        <span aria-hidden="true"><Icon.Restriction type="clock" size={14} stroke={2} /></span>
       </span>
     {/if}
   {/each}
