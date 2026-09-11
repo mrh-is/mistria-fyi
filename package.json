@@ -14,6 +14,7 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "prettier --check . && eslint .",
     "lint:fix": "prettier --write . && eslint . --fix",
+    "optimize-icons": "svgo --config svgo.config.js -f src/lib/components/icon/custom/raw -o src/lib/components/icon/custom/optimized",
     "pipeline": "cd pipeline && tsx src/main.ts",
     "test": "pnpm run test:server && pnpm run test:client",
     "accessibility:monitor": "tsx scripts/accessibility-monitor.ts",
