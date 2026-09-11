@@ -39,10 +39,11 @@
   function startScrub(event: PointerEvent): void {
     scrubbing = true;
     lastScrubbedInitial = undefined;
-    const target = event.currentTarget as HTMLElement;
-    const capture = Reflect.get(target, "setPointerCapture") as
-      ((pointerId: number) => void) | undefined;
-    if (capture) capture.call(target, event.pointerId);
+    try {
+      (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    } catch {
+      // jsdom does not implement setPointerCapture
+    }
   }
 
   function scrub(event: PointerEvent): void {
