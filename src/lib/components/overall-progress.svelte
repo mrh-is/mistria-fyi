@@ -2,19 +2,6 @@
   import { getAllProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
-  const categoryKeys = [
-    "museum",
-    "almanac",
-    "animals",
-    "npcs",
-    "cosmetics",
-    "skills",
-    "recipes",
-    "renown",
-    "quests",
-    "mines",
-  ] as const;
-
   let progress = $derived(
     getAllProgress({
       availabilityMode: userState.state.availabilityMode,
@@ -23,11 +10,10 @@
     }),
   );
 
-  let overall = $derived(() => {
+  let overall = $derived.by(() => {
     let completed = 0;
     let total = 0;
-    for (const key of categoryKeys) {
-      const p = progress[key];
+    for (const p of Object.values(progress)) {
       completed += p.completed;
       total += p.total;
     }
@@ -38,11 +24,11 @@
 
 <div
   class="flex shrink-0 flex-col items-end leading-none"
-  aria-label="{overall().completed} of {overall().total} completed overall, {overall().pct}%"
+  aria-label="{overall.completed} of {overall.total} completed overall, {overall.pct}%"
   role="img"
 >
-  <span class="font-data text-sm text-foreground" aria-hidden="true">{overall().pct}%</span>
+  <span class="font-data text-sm text-foreground" aria-hidden="true">{overall.pct}%</span>
   <span class="font-data text-[10px] text-muted-foreground" aria-hidden="true">
-    {overall().completed} / {overall().total}
+    {overall.completed} / {overall.total}
   </span>
 </div>
