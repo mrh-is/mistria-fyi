@@ -45,7 +45,7 @@ test.describe("@critical browser accessibility preferences", () => {
       createStoredState({ availabilityMode: "everything" }),
     );
     await gotoApplication(page, "/almanac");
-    const artifacts = page.getByRole("button", { name: /^Artifacts 0\/\d+$/ });
+    const artifacts = page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ });
     await artifacts.focus();
     await artifacts.press("Enter");
     await page.keyboard.press("Tab");

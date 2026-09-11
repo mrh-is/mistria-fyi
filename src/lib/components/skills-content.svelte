@@ -5,6 +5,8 @@
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordEntries } from "$lib/utils";
 
+  let { compact = false }: { compact?: boolean } = $props();
+
   let skills = $derived(
     recordEntries(trackerData.skills)
       .map(([id, { name }]) => ({ id, name }))
@@ -12,11 +14,20 @@
   );
 </script>
 
-<div class="flex flex-col gap-3">
+<ul class="skill-ledger" aria-label="Skills ledger">
   {#each skills as skill (skill.id)}
     {@const level = userState.state.completed.skillLevels[skill.id] ?? 0}
     {#if level >= MAX_SKILL_LEVEL ? userState.state.showCompleted : true}
-      <SkillRow id={skill.id} name={skill.name} />
+      <SkillRow {compact} id={skill.id} name={skill.name} />
     {/if}
   {/each}
-</div>
+</ul>
+
+<style>
+  .skill-ledger {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+</style>

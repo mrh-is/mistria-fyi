@@ -39,7 +39,7 @@ describe("source-filtered content", () => {
     toolbarState.hideAllSourceFilters();
 
     expect(renderedText(render(CosmeticsContent, { props: {} }).body)).toContain(
-      `${slotLabel} 0/0`,
+      `${slotLabel} 0 / 0`,
     );
   });
 });

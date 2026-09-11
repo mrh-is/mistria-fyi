@@ -58,6 +58,7 @@
         <SpoilerSection name={animal.name} revealed={isVisible}>
           {#if visibleItems.length > 0}
             <ExpandableSection
+              depth={1}
               count={displayableCompletedItemCount}
               name={animal.name}
               reportCategory={props.name.toLowerCase()}

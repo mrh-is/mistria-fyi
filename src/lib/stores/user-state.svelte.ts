@@ -1,7 +1,7 @@
 import { SvelteSet } from "svelte/reactivity";
 
 import { canonicalAlmanacId, trackerData } from "$lib/data/index.js";
-import { clampRenownLevel } from "$lib/engine/progress.js";
+import { clampRenownLevel, MAX_NPC_LEVEL } from "$lib/engine/progress.js";
 import { findRecipesForQuest } from "$lib/engine/quest-rewards.js";
 import { getMarriedNpc, normalizeRelationships } from "$lib/engine/relationships.js";
 import { deriveProgressionState, type UserProgressionState } from "$lib/engine/visibility.js";
@@ -613,8 +613,7 @@ function createUserState() {
       state.completed.mines.floor = Math.max(0, Math.min(floor, maxFloor));
     },
     setNpcLevel(id: NpcId, level: number) {
-      const max = trackerData.npcs[id].dateable ? 12 : 10;
-      state.completed.npcLevels[id] = Math.max(0, Math.min(level, max));
+      state.completed.npcLevels[id] = Math.max(0, Math.min(level, MAX_NPC_LEVEL));
     },
     setNpcRelationship(npcId: NpcId, relationship: NpcRelationship) {
       const oldMarried = getMarriedNpc(state.completed.npcRelationships);

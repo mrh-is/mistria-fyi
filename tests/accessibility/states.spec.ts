@@ -74,7 +74,7 @@ test.describe("@critical stateful accessibility", () => {
 
   test("spoiler-hidden and revealed rows pass axe", async ({ page }, testInfo) => {
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts 0\/\d+$/ }).click();
+    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
     await page.getByRole("button", { name: /Show \d+ more/ }).click();
     let spoiler = page.getByRole("button", { name: "Reveal spoiler" }).first();
     await expect(spoiler).toBeVisible();
@@ -99,7 +99,7 @@ test.describe("@critical stateful accessibility", () => {
 
   test("completed rows and Undo pass axe", async ({ page }, testInfo) => {
     await gotoApplication(page, "/almanac");
-    await page.getByRole("button", { name: /^Artifacts 0\/\d+$/ }).click();
+    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
     const completion = page.getByRole("button", { name: /^Check (?!spoilered item)/ }).first();
     await completion.click();
     await expect(page.getByRole("button", { name: "Undo" })).toBeVisible();

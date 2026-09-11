@@ -10,7 +10,11 @@
 </script>
 
 {#if progress.completed < progress.total || userState.state.showCompleted}
-  <section aria-labelledby="category-cosmetics" class="flex flex-col gap-1">
+  <section
+    aria-labelledby="category-cosmetics"
+    class="flex flex-col gap-1"
+    style="--primary: var(--cat-cosmetics)"
+  >
     <SectionHeader key="cosmetics" {progress} />
     <CosmeticsContent />
   </section>

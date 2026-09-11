@@ -170,7 +170,7 @@ describe("almanac progress", () => {
       (sum, cat) => sum + cat.items.length,
       0,
     );
-    expect(progress.total).toBe(expectedTotal);
+    expect(progress.total).toBe(expectedTotal + recordKeys(trackerData.dates).length);
   });
 
   it("reflects completed almanac entries", () => {
@@ -180,6 +180,15 @@ describe("almanac progress", () => {
     const subset = new Set(allCanonicalIds.slice(0, 3));
     const progress = getCategoryProgress("almanac", ctx({ completed: { almanac: subset } }));
     expect(progress.completed).toBe(3);
+  });
+
+  it("counts completed dates with the almanac", () => {
+    const dateIds = recordKeys(trackerData.dates).slice(0, 2);
+    const progress = getCategoryProgress(
+      "almanac",
+      ctx({ completed: { dates: new Set(dateIds) } }),
+    );
+    expect(progress.completed).toBe(2);
   });
 
   it("aggregates source availability across all member IDs in a colorway group", () => {
@@ -221,11 +230,10 @@ describe("cosmetics progress", () => {
 });
 
 describe("npcs progress", () => {
-  it("total is npc count times MAX_NPC_LEVEL plus date count", () => {
+  it("total is NPC count times MAX_NPC_LEVEL", () => {
     const progress = getCategoryProgress("npcs", ctx());
     const expectedNpcTotal = recordKeys(trackerData.npcs).length * MAX_NPC_LEVEL;
-    const expectedDateTotal = recordKeys(trackerData.dates).length;
-    expect(progress.total).toBe(expectedNpcTotal + expectedDateTotal);
+    expect(progress.total).toBe(expectedNpcTotal);
   });
 
   it("caps individual NPC levels at MAX_NPC_LEVEL", () => {

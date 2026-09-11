@@ -1,8 +1,10 @@
 <script lang="ts">
   import { page } from "$app/state";
+  import IconCompletion from "$lib/components/icon/icon-completion.svelte";
   import Stepper from "$lib/components/stepper.svelte";
   import { Input } from "$lib/components/ui/input/index.js";
   import { trackerData } from "$lib/data/index.js";
+  import { MAX_SKILL_LEVEL } from "$lib/engine/progress.js";
   import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordKeys } from "$lib/utils";
@@ -10,7 +12,6 @@
 
   import type { SkillId } from "$lib/types/tracker-data.js";
 
-  const MAX_LEVEL = 60;
   const SEGMENTS = [
     { start: 0, end: 15 },
     { start: 15, end: 30 },
@@ -18,15 +19,11 @@
     { start: 45, end: 60 },
   ];
 
-  interface Props {
-    id: SkillId;
-    name: string;
-  }
-
-  const { id, name }: Props = $props();
+  let { compact = false, id, name }: { compact?: boolean; id: SkillId; name: string } = $props();
 
   let feedbackContext = getFeedbackContextOrFallback();
   let level = $derived(userState.state.completed.skillLevels[id] ?? 0);
+  let maxed = $derived(level >= MAX_SKILL_LEVEL);
   let reportable = $derived(
     feedbackContext.reportable({
       category: "skill",
@@ -36,24 +33,7 @@
       page: page.url.pathname,
     }),
   );
-  let maxed = $derived(level >= MAX_LEVEL);
-  let currentSegment = $derived(SEGMENTS.findLastIndex((s) => level >= s.start && level > 0));
-
-  function segmentFill(seg: { start: number; end: number }): number {
-    if (level <= seg.start) return 0;
-    if (level >= seg.end) return 100;
-    return ((level - seg.start) / (seg.end - seg.start)) * 100;
-  }
-
-  function segmentOpacity(segIdx: number): number {
-    if (currentSegment < 0) return 0.25;
-    if (segIdx > currentSegment) return 0.25;
-    if (segIdx === currentSegment) return 1;
-    const distance = currentSegment - segIdx;
-    return Math.max(0.35, 1 - distance * 0.2);
-  }
-
-  let editingId = $state<SkillId | undefined>(undefined);
+  let editing = $state(false);
   let editValue = $state("");
   let editInputRef = $state<HTMLInputElement | null>(null);
 
@@ -64,108 +44,220 @@
     }
   });
 
-  function startEditing(skillId: SkillId, skillLevel: number) {
-    editingId = skillId;
-    editValue = String(skillLevel);
+  function segmentFill(segment: { start: number; end: number }): number {
+    if (level <= segment.start) return 0;
+    if (level >= segment.end) return 100;
+    return ((level - segment.start) / (segment.end - segment.start)) * 100;
   }
 
-  function commitEdit(skillId: SkillId) {
-    const parsed = parseInt(editValue, 10);
-    if (!isNaN(parsed)) {
-      setLevelWithCelebration(skillId, parsed);
+  function startEditing(): void {
+    editing = true;
+    editValue = String(level);
+  }
+
+  function commitEdit(): void {
+    const value = Number(editValue);
+    if (editValue.trim() !== "" && Number.isFinite(value) && Number.isInteger(value)) {
+      setLevelWithCelebration(value);
     }
-    editingId = undefined;
+    editing = false;
   }
 
-  function handleEditKeydown(e: KeyboardEvent, skillId: SkillId) {
-    if (e.key === "Enter") commitEdit(skillId);
-    if (e.key === "Escape") editingId = undefined;
+  function handleEditKeydown(event: KeyboardEvent): void {
+    if (event.key === "Enter") commitEdit();
+    if (event.key === "Escape") editing = false;
   }
 
   function areAllSkillsMaxed(): boolean {
     return recordKeys(trackerData.skills).every(
-      (sid) => (userState.state.completed.skillLevels[sid] ?? 0) >= MAX_LEVEL,
+      (skillId) => (userState.state.completed.skillLevels[skillId] ?? 0) >= MAX_SKILL_LEVEL,
     );
   }
 
-  function setLevelWithCelebration(skillId: SkillId, newLevel: number): void {
+  function setLevelWithCelebration(newLevel: number): void {
     const wasDone = areAllSkillsMaxed();
-    userState.setSkillLevel(skillId, newLevel);
-    if (!wasDone && areAllSkillsMaxed()) {
-      celebrateCategory();
-    }
+    userState.setSkillLevel(id, newLevel);
+    if (!wasDone && areAllSkillsMaxed()) celebrateCategory();
   }
 </script>
 
-<div
-  class="flex flex-col gap-1 rounded-md px-2 py-1.5 {maxed ? 'text-muted-foreground' : ''}"
+<li
+  class="skill-record"
+  data-skill-record
+  data-compact={compact}
+  data-complete={maxed}
   {@attach reportable}
 >
-  <span class="text-base font-medium">{name}</span>
+  <span class="skill-name">
+    {#if maxed}
+      <span data-testid="skill-completion-mark">
+        <IconCompletion state="completed" class="skill-completion-mark" />
+      </span>
+    {/if}
+    <strong>{name}</strong>
+  </span>
 
   <Stepper
     decrementDisabled={level <= 0}
-    incrementDisabled={level >= MAX_LEVEL}
+    incrementDisabled={level >= MAX_SKILL_LEVEL}
     decrementLabel="Decrease {name} level"
     incrementLabel="Increase {name} level"
     label="{name} level"
-    value="{level} of {MAX_LEVEL}"
+    value="{level} of {MAX_SKILL_LEVEL}"
     onDecrement={() => {
-      setLevelWithCelebration(id, level - 1);
+      setLevelWithCelebration(level - 1);
     }}
     onIncrement={() => {
-      setLevelWithCelebration(id, level + 1);
+      setLevelWithCelebration(level + 1);
     }}
   >
-    <div class="flex min-w-0 flex-1 items-center gap-2">
-      <div class="flex min-w-0 flex-1 gap-0.5">
-        {#each SEGMENTS as seg, i (seg.start)}
-          <div
-            class="h-2 flex-1 overflow-hidden bg-primary/15 {i === 0 ? 'rounded-l-full' : ''} {i ===
-            SEGMENTS.length - 1
-              ? 'rounded-r-full'
-              : ''}"
-            style="opacity: {segmentOpacity(i)}"
-          >
-            <div
-              class="h-full bg-primary transition-[width] duration-300 ease-out motion-reduce:transition-none"
-              style="width: {segmentFill(seg)}%"
-            ></div>
-          </div>
+    <div class="skill-meter">
+      <span class="skill-segments" data-testid="skill-segments" aria-hidden="true">
+        {#each SEGMENTS as segment (segment.start)}
+          <span data-skill-segment>
+            <i style="width: {segmentFill(segment)}%"></i>
+          </span>
         {/each}
-      </div>
+      </span>
 
-      {#if editingId === id}
+      {#if editing}
         <Input
           aria-label="{name} level"
           bind:ref={editInputRef}
-          class="h-6 w-16 shrink-0 text-center text-sm"
+          class="h-8 w-16 shrink-0 text-center font-mono text-xs"
           type="number"
-          max={MAX_LEVEL}
+          max={MAX_SKILL_LEVEL}
           min={0}
           value={editValue}
-          onblur={() => {
-            commitEdit(id);
+          onblur={commitEdit}
+          oninput={(event: Event) => {
+            editValue = (event.target as HTMLInputElement).value;
           }}
-          oninput={(e: Event) => {
-            editValue = (e.target as HTMLInputElement).value;
-          }}
-          onkeydown={(e: KeyboardEvent) => {
-            handleEditKeydown(e, id);
-          }}
+          onkeydown={handleEditKeydown}
         />
       {:else}
         <button
-          class="flex min-h-11 min-w-11 shrink-0 items-center justify-end text-sm text-muted-foreground hover:underline"
+          class="skill-count"
           type="button"
-          aria-label="Edit {name} level, currently {level} of {MAX_LEVEL}"
-          onclick={() => {
-            startEditing(id, level);
-          }}
+          aria-label="Edit {name} level, currently {level} of {MAX_SKILL_LEVEL}"
+          onclick={startEditing}
         >
-          {level}/{MAX_LEVEL}
+          {level} / {MAX_SKILL_LEVEL}
         </button>
       {/if}
     </div>
   </Stepper>
-</div>
+</li>
+
+<style>
+  .skill-record {
+    display: grid;
+    min-width: 0;
+    gap: 3px;
+    padding: 6px 8px;
+    border: 1px solid var(--hairline);
+    border-bottom: 0;
+    background: var(--paper-raised);
+    box-shadow: var(--shadow-small);
+    color: var(--ink);
+  }
+
+  .skill-record:first-child {
+    border-radius: 2px 2px 0 0;
+  }
+
+  .skill-record:last-child {
+    border-bottom: 1px solid var(--hairline);
+    border-radius: 0 0 2px 2px;
+  }
+
+  .skill-record[data-complete="true"] {
+    color: var(--ink-muted);
+  }
+
+  .skill-name {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 4px;
+    padding-inline: 4px;
+    font-family: var(--font-body);
+    font-size: 15px;
+  }
+
+  .skill-name strong {
+    overflow: hidden;
+    font-weight: 650;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .skill-name > span {
+    display: contents;
+  }
+
+  .skill-name :global(.skill-completion-mark) {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    color: var(--cat-skills);
+  }
+
+  .skill-meter {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .skill-segments {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    gap: 2px;
+  }
+
+  .skill-segments > span {
+    height: 5px;
+    flex: 1;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--cat-skills) 14%, transparent);
+  }
+
+  .skill-segments i {
+    display: block;
+    height: 100%;
+    background: var(--cat-skills);
+    transition: width 300ms ease-out;
+  }
+
+  .skill-count {
+    min-width: 72px;
+    min-height: 44px;
+    padding: 0 4px;
+    border: 0;
+    background: transparent;
+    color: var(--ink-muted);
+    font-family: var(--font-data);
+    font-size: 12px;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .skill-count:is(:hover, :focus-visible) {
+    color: var(--cat-skills);
+    outline: 2px solid var(--cat-skills);
+    outline-offset: -2px;
+  }
+
+  .skill-record[data-compact="true"] {
+    padding-block: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skill-segments i {
+      transition-duration: 0.01ms;
+    }
+  }
+</style>
