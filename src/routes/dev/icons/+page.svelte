@@ -45,9 +45,9 @@
     }
   }
 
-  const customIcons: IconEntry[] = [
-    { icon: CustomPlaceholder, key: "placeholder" },
-  ];
+  // @ts-expect-error custom icon's IconProps index signature is incompatible with Tabler's Icon type
+  const placeholderIcon: AppIcon = CustomPlaceholder;
+  const customIcons: IconEntry[] = [{ icon: placeholderIcon, key: "placeholder" }];
 
   let darkMode = $state(false);
 </script>
