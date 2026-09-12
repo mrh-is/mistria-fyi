@@ -45,9 +45,9 @@
   .npc-roster-shell {
     display: grid;
     min-width: 0;
-    grid-template-columns: minmax(0, 1fr) 46px;
+    grid-template-columns: minmax(0, 1fr) 24px;
     align-items: start;
-    gap: 8px;
+    gap: 4px;
   }
 
   .npc-roster {
@@ -55,11 +55,5 @@
     margin: 0;
     padding: 0;
     list-style: none;
-  }
-
-  @media (min-width: 701px) and (hover: hover) and (pointer: fine) {
-    .npc-roster-shell {
-      grid-template-columns: minmax(0, 1fr) 32px;
-    }
   }
 </style>

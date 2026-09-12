@@ -116,7 +116,7 @@
     font-size: 24px;
     font-style: italic;
     font-weight: 400;
-    line-height: 1;
+    line-height: 1.15;
     text-overflow: ellipsis;
     white-space: nowrap;
   }

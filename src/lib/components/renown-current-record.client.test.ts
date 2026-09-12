@@ -28,29 +28,19 @@ describe("RenownCurrentRecord", () => {
       "0",
     );
     expect(view.getByRole("group", { name: `Renown level, 0 of ${maxLevel}` })).toBeInTheDocument();
+    expect(view.getByRole("spinbutton", { name: "Renown level" })).toHaveValue(0);
   });
 
   it("commits finite direct edits, changes rank at a boundary, and cancels invalid input", async () => {
     const view = render(RenownCurrentRecordHarness);
-    const edit = () => view.getByRole("button", { name: /Edit renown level, currently/ });
-
-    await fireEvent.click(edit());
-    let input = view.getByRole("spinbutton", { name: "Renown level" });
+    const input = view.getByRole("spinbutton", { name: "Renown level" });
     await fireEvent.input(input, { target: { value: "10" } });
-    await fireEvent.keyDown(input, { key: "Enter" });
+    await fireEvent.change(input);
     expect(view.getByText(trackerData.townRanks[1].name)).toBeInTheDocument();
 
-    await fireEvent.click(edit());
-    input = view.getByRole("spinbutton", { name: "Renown level" });
     await fireEvent.input(input, { target: { value: "" } });
-    await fireEvent.blur(input);
-    expect(view.getByRole("button", { name: /currently 10 of/ })).toBeInTheDocument();
-
-    await fireEvent.click(edit());
-    input = view.getByRole("spinbutton", { name: "Renown level" });
-    await fireEvent.input(input, { target: { value: "15" } });
-    await fireEvent.keyDown(input, { key: "Escape" });
-    expect(view.getByRole("button", { name: /currently 10 of/ })).toBeInTheDocument();
+    await fireEvent.change(input);
+    expect(input).toHaveValue(10);
   });
 
   it("clamps at both boundaries and exposes the compact variant", async () => {

@@ -93,7 +93,7 @@ the image request fails, so the UI branch remains runnable before the Gaming PC 
 
 - `src/lib/components/mine-floor-record.svelte`: reusable full survey and compact floor record.
 - `src/lib/components/mine-floor-record.client.test.ts`: clamping, direct editing, biome boundaries,
-  marker state, and compact behavior.
+  persistent segment divisions, and compact behavior.
 - `src/lib/components/mines-content.svelte`: compose the new floor record and preserve shared spell
   rows and source filtering.
 
@@ -207,9 +207,10 @@ Create a client-test harness with repeated and missing initials. Prove that the 
 - does not begin scrubbing from outside the index; and
 - selects immediate rather than smooth scroll behavior under reduced motion.
 
-Implement the index with a sticky, vertically centered position. Use element geometry only during an
-active pointer gesture, and retain direct activation as the complete interaction. Avoid a global
-pointer listener when no scrub is active.
+Implement the index as a visually quiet, vertically centered viewport-fixed rail. Condense its
+letter spacing to fit between the header and toolbar, and never give it an independent scroll area.
+Use element geometry only during an active pointer gesture, and retain direct activation as the
+complete interaction. Avoid a global pointer listener when no scrub is active.
 
 Add the index only to the dedicated Townsfolk page. Everything retains ordinary document flow.
 
@@ -229,13 +230,14 @@ not fork level mutation or progress math between them.
 
 ## Phase 7: Build the mine survey
 
-Add failing tests for biome segment proportions derived from representative tracker data, current
-marker position at zero, biome boundaries, maximum floor, direct numeric clamping, decrement and
-increment labels, and the compact variant.
+Add failing tests for biome segment proportions derived from representative tracker data, persistent
+segment divisions, biome boundaries, maximum floor, direct numeric clamping, decrement and increment
+labels, and the compact variant.
 
 Extract the floor UI from `mines-content.svelte` into `mine-floor-record.svelte`. Compute segment
-widths and marker position from the supplied biome ranges and maximum. The rule is not interactive
-and exposes no slider role. Keep the editable number and Stepper as the sole mutation path.
+widths and per-biome fill from the supplied biome ranges and maximum, preserving visible divisions
+through completed and unreached depth. The rule is not interactive and exposes no slider role. Keep
+the editable number and Stepper as the sole mutation path.
 
 Recompose Mines and its Everything section with the full and compact variants. Verify that spell
 source filtering, spoiler guards, tracker-row expansion, and celebrations remain unchanged.
@@ -247,9 +249,9 @@ boundaries, maximum state, completed/current/upcoming rows, partially filled cur
 spoiler reveal.
 
 Extract the current-rank UI into a reusable full and compact component. Replace the generic accent
-card and progress component with the pressed seal, amber rule, formatted count, and existing numeric
-controls. Rename `RankCard.svelte` to a kebab-case record component and render all ranks as one
-contiguous register.
+card and progress component with the pressed seal, amber rule, permanently visible numeric input,
+and existing stepper controls. Rename `RankCard.svelte` to a kebab-case record component and render
+all ranks as one contiguous register.
 
 Keep rank-specific colors inside marks only. Use category amber for current state, progress, focus,
 and the pressed print mark. Reuse the compact current record in Everything.
@@ -283,7 +285,8 @@ Extend browser tests before the final matrix. At minimum, verify:
 - alphabet activation moves focus to the correct record;
 - every specialized numeric control works by keyboard;
 - spoilered Townsfolk and ranks do not leak hidden names through accessible text;
-- phone targets meet the 44-pixel contract;
+- phone record controls meet the 44-pixel contract, while the compact alphabet rail remains within
+  the viewport and meets the 24-pixel target minimum when space permits;
 - all four specialized pages reflow at 320 CSS pixels without horizontal page overflow; and
 - reduced motion disables smooth alphabet scrolling and progress transitions.
 

@@ -64,6 +64,19 @@ test.describe("@critical 320-pixel reflow", () => {
       expect(findOverflow(await collectVisibleElementBoxes(page), 320), path).toEqual([]);
     }
   });
+
+  test("category headings leave room for display-font descenders", async ({ page }) => {
+    await gotoApplication(page, "/recipes");
+    const metrics = await page.locator(".page-header__title").evaluate((heading) => {
+      const style = getComputedStyle(heading);
+      return {
+        fontSize: Number.parseFloat(style.fontSize),
+        lineHeight: Number.parseFloat(style.lineHeight),
+      };
+    });
+
+    expect(metrics.lineHeight).toBeGreaterThan(metrics.fontSize);
+  });
 });
 
 test.describe("@critical interactive target geometry", () => {
@@ -252,14 +265,38 @@ test.describe("@critical tracker paper touch geometry", () => {
 
     await gotoApplication(page, "/npcs");
     for (const control of await page
-      .locator(
-        "#npc-adeline .npc-stepper, #npc-adeline [data-relationship-action], [data-npc-index-initial]",
-      )
+      .locator("#npc-adeline .npc-stepper, #npc-adeline [data-relationship-action]")
       .all()) {
       const box = await control.boundingBox();
       expect(box?.width).toBeGreaterThanOrEqual(44);
       expect(box?.height).toBeGreaterThanOrEqual(44);
     }
+
+    const index = page.getByRole("navigation", { name: "Townsfolk alphabet" });
+    const beforeScroll = await index.boundingBox();
+    const indexGeometry = await index.evaluate((element) => {
+      const style = getComputedStyle(element);
+      const buttons = [...element.querySelectorAll("button")];
+      return {
+        buttonHeights: buttons.map((button) => button.getBoundingClientRect().height),
+        clientHeight: element.clientHeight,
+        overflowY: style.overflowY,
+        position: style.position,
+        scrollHeight: element.scrollHeight,
+      };
+    });
+    expect(indexGeometry.position).toBe("fixed");
+    expect(indexGeometry.overflowY).not.toMatch(/auto|scroll/);
+    expect(indexGeometry.scrollHeight).toBe(indexGeometry.clientHeight);
+    expect(Math.max(...indexGeometry.buttonHeights)).toBeLessThanOrEqual(24);
+
+    await page.evaluate(() => {
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+    const afterScroll = await index.boundingBox();
+    expect(Math.abs((afterScroll?.y ?? 0) - (beforeScroll?.y ?? 0))).toBeLessThanOrEqual(0.5);
+    expect(afterScroll?.y).toBeGreaterThanOrEqual(62);
+    expect((afterScroll?.y ?? 0) + (afterScroll?.height ?? 0)).toBeLessThanOrEqual(652);
 
     await gotoApplication(page, "/skills");
     for (const control of await page.locator("[data-skill-record] button").first().all()) {
@@ -278,7 +315,9 @@ test.describe("@critical tracker paper touch geometry", () => {
     }
 
     await gotoApplication(page, "/renown");
-    for (const control of await page.locator("[data-renown-current] button").all()) {
+    for (const control of await page
+      .locator("[data-renown-current] button, [data-renown-current] input")
+      .all()) {
       const box = await control.boundingBox();
       expect(box?.width).toBeGreaterThanOrEqual(44);
       expect(box?.height).toBeGreaterThanOrEqual(44);
