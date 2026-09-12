@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { RotateCcw, Trash2 } from "@lucide/svelte";
+  import { IconRotate, IconTrash } from "@tabler/icons-svelte-runes";
 
   import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
@@ -21,7 +21,7 @@
     <AlertDialog.Trigger>
       {#snippet child({ props })}
         <Button class="w-full" variant="outline" {...props}>
-          <RotateCcw />
+          <IconRotate />
           Reset all progress
         </Button>
       {/snippet}
@@ -39,7 +39,7 @@
           class="bg-destructive text-white hover:bg-destructive/90"
           onclick={handleReset}
         >
-          <Trash2 />
+          <IconTrash />
           Yes, reset everything
         </AlertDialog.Action>
       </AlertDialog.Footer>

@@ -10,7 +10,11 @@
 </script>
 
 {#if progress.completed < progress.total || userState.state.showCompleted}
-  <section aria-labelledby="category-almanac" class="flex flex-col gap-1">
+  <section
+    aria-labelledby="category-almanac"
+    class="flex flex-col gap-1"
+    style="--primary: var(--cat-almanac)"
+  >
     <SectionHeader key="almanac" {progress} />
     <AlmanacContent />
   </section>

@@ -10,8 +10,12 @@
 </script>
 
 {#if progress.completed < progress.total || userState.state.showCompleted}
-  <section aria-labelledby="category-mines" class="flex flex-col gap-1">
+  <section
+    aria-labelledby="category-mines"
+    class="flex flex-col gap-1"
+    style="--primary: var(--cat-mines)"
+  >
     <SectionHeader key="mines" {progress} />
-    <MinesContent compact={true} />
+    <MinesContent compact />
   </section>
 {/if}

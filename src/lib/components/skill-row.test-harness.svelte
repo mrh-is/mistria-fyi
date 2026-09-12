@@ -8,12 +8,15 @@
   import type { SkillId } from "$lib/types/tracker-data.js";
 
   let {
+    compact = false,
     feedbackContext,
     id,
     name,
-  }: { feedbackContext: FeedbackContext; id: SkillId; name: string } = $props();
+  }: { compact?: boolean; feedbackContext: FeedbackContext; id: SkillId; name: string } = $props();
 
   setFeedbackContext(untrack(() => feedbackContext));
 </script>
 
-<SkillRow {id} {name} />
+<ul>
+  <SkillRow {compact} {id} {name} />
+</ul>

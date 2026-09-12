@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ChevronDown, RotateCcw } from "@lucide/svelte";
+  import { IconChevronDown, IconRotate } from "@tabler/icons-svelte-runes";
   import { cubicOut } from "svelte/easing";
   import { prefersReducedMotion } from "svelte/motion";
   import { slide } from "svelte/transition";
@@ -12,7 +12,7 @@
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { seasonLabel, weatherLabel, weathersForSeason } from "$lib/utils/format.js";
 
-  import type { LucideIcon } from "@lucide/svelte";
+  import type { Icon as AppIcon } from "@tabler/icons-svelte-runes";
 
   import type { AvailabilityMode } from "$lib/stores/user-state.svelte.js";
   import type { Season, Weather } from "$lib/types/tracker-data.js";
@@ -128,7 +128,7 @@
 
   // Weather button content transitions: fade icons/labels when they change per-slot
   interface WeatherSlot {
-    icon: LucideIcon;
+    icon: AppIcon;
     label: string;
   }
 
@@ -233,7 +233,7 @@
             </span>
           {/if}
         </span>
-        <ChevronDown
+        <IconChevronDown
           class="size-4 text-muted-foreground transition-transform motion-reduce:transition-none {seasonalityExpanded
             ? 'rotate-180'
             : ''}"
@@ -359,7 +359,7 @@
           Source types
         </span>
         <span class="ml-auto text-xs text-muted-foreground">{sourceSummary}</span>
-        <ChevronDown
+        <IconChevronDown
           class="size-4 text-muted-foreground transition-transform {sourcesExpanded
             ? 'rotate-180'
             : ''} motion-reduce:transition-none"
@@ -450,7 +450,7 @@
       onclick={resetFilters}
       transition:slide={{ duration: duration(), easing: cubicOut }}
     >
-      <RotateCcw class="size-3.5" />
+      <IconRotate class="size-3.5" />
       Reset filters
     </button>
   {/if}

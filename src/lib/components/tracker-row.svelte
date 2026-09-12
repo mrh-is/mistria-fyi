@@ -1,19 +1,20 @@
 <script lang="ts">
   import { prefersReducedMotion } from "svelte/motion";
-  import { slide } from "svelte/transition";
 
   import { page } from "$app/state";
-  import { Icon } from "$lib/components/icon/index.js";
-  import RestrictionBadges from "$lib/components/restriction-badges.svelte";
-  import SourceList from "$lib/components/source-list.svelte";
+  import SourcePaper from "$lib/components/source-paper.svelte";
   import Spoiler from "$lib/components/spoiler.svelte";
-  import { getDisplayBadges } from "$lib/engine/availability.js";
+  import SpriteSlot from "$lib/components/sprite-slot.svelte";
+  import TrackerCheckbox from "$lib/components/tracker-checkbox.svelte";
+  import TrackerPaper from "$lib/components/tracker-paper.svelte";
+  import { extractDisplayBadges } from "$lib/engine/availability-condition.js";
   import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
   import { buildSourceSegments } from "$lib/utils/source-segments.js";
 
+  import type { SpriteSlotState } from "$lib/components/sprite-slot.svelte";
+  import type { CheckboxState } from "$lib/components/tracker-checkbox.svelte";
   import type { DisplayBadges } from "$lib/engine/availability-condition.js";
   import type { FeedbackContext } from "$lib/feedback/context.svelte.js";
-  import type { QuestState } from "$lib/stores/user-state.svelte.js";
   import type { Source } from "$lib/types/acquisition";
   import type { SegmentLookups, SourceSegment } from "$lib/utils/source-segments.js";
 
@@ -33,6 +34,8 @@
     reportEntityId,
     reportExtra,
     sources = [],
+    sprite,
+    spriteClass = "text-primary",
     subtitle,
   }: {
     display: TrackerRowDisplay;
@@ -44,17 +47,26 @@
     reportEntityId: string;
     reportExtra?: Record<string, number | string>;
     sources?: Source[];
+    sprite?: string;
+    spriteClass?: string;
     subtitle?: string;
   } = $props();
 
-  let uniqueSourceTypes = $derived([...new Set(sources.map((s) => s.type))]);
-  let badges: DisplayBadges = $derived(getDisplayBadges(sources));
-  let sourceSegments: SourceSegment[][] = $derived(
-    lookups ? sources.map((s) => buildSourceSegments(s, lookups)) : [],
-  );
+  const rawInstanceId = $props.id();
+  const instanceId = rawInstanceId.replace(/[^a-zA-Z0-9_-]/g, "-");
 
   let expanded = $state(false);
   let spoilerRevealed = $state(false);
+  let hasSources = $derived(sources.length > 0);
+  let sourceBadges: DisplayBadges[] = $derived(
+    sources.map((source) => {
+      const condition = "availability" in source ? source.availability : undefined;
+      return condition ? extractDisplayBadges(condition) : {};
+    }),
+  );
+  let sourceSegments: SourceSegment[][] = $derived(
+    lookups ? sources.map((source) => buildSourceSegments(source, lookups)) : [],
+  );
 
   let isCompleted = $derived(display.mode === "completed");
   let isObtained = $derived(display.mode === "obtained");
@@ -65,8 +77,9 @@
     `sources-${reportEntityId
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")}`,
+      .replace(/^-|-$/g, "")}-${instanceId}`,
   );
+  let sourceState = $derived(hasSources ? (expanded ? "open" : "closed") : "none");
 
   let reportable = $derived(
     isSpoilered
@@ -79,9 +92,11 @@
           page: page.url.pathname,
         },
   );
-
-  let completionState: QuestState = $derived(
-    isCompleted ? "completed" : isObtained ? "obtained" : "none",
+  let checkboxState: CheckboxState = $derived(
+    isCompleted ? "checked" : isObtained ? "obtained" : "unchecked",
+  );
+  let spriteState: SpriteSlotState = $derived(
+    isSpoilered ? "spoilered" : isCompleted ? "complete" : "ready",
   );
 
   function completeOut(node: Element) {
@@ -102,9 +117,9 @@
   }
 
   function focusAdjacentRow(row: HTMLElement): void {
-    const rows = [
-      ...(row.parentElement?.querySelectorAll<HTMLElement>("[data-tracker-row]") ?? []),
-    ];
+    const list = row.closest<HTMLElement>("[data-tracker-list], [data-tracker-section]");
+    const searchRoot = list ?? row.parentElement;
+    const rows = [...(searchRoot?.querySelectorAll<HTMLElement>("[data-tracker-row]") ?? [])];
     const index = rows.indexOf(row);
     let focusTarget: HTMLElement | null = null;
     if (index + 1 < rows.length) {
@@ -144,90 +159,111 @@
 
 <div
   data-tracker-row
+  data-source-state={sourceState}
   out:completeOut
   data-leaving={isLeaving}
   {@attach feedbackContext.reportable(reportable)}
+  class="tracker-row"
+  class:tracker-row--dimmed={isDimmed}
+  class:tracker-row--completed={isCompleted || isLeaving}
 >
-  <div
-    class="flex items-center gap-0 pr-2 transition-opacity duration-200 motion-reduce:transition-none
-      {isDimmed ? 'text-muted-foreground' : ''}
-      {isCompleted || isLeaving ? 'text-muted-foreground line-through' : ''}"
-  >
-    <button
-      class="flex min-h-11 min-w-11 shrink-0 items-center justify-center"
-      type="button"
-      aria-label={isCompleted
+  <TrackerPaper hasCutout={hasSources}>
+    <TrackerCheckbox
+      state={checkboxState}
+      label={isCompleted
         ? `Uncheck ${name}`
         : isSpoilered
           ? "Check spoilered item"
           : `Check ${name}`}
       onclick={handleToggle}
-    >
-      <Icon.Completion
-        state={completionState}
-        class="size-5 {isCompleted
-          ? 'text-green-600 dark:text-green-400'
-          : isObtained
-            ? 'text-amber-500 dark:text-amber-400'
-            : 'text-muted-foreground'}"
-      />
-    </button>
+    />
 
-    <span class="min-w-0 flex-1 text-base">
+    {#if sprite}
+      <SpriteSlot {sprite} state={spriteState} class={spriteClass} />
+    {/if}
+
+    <span class="tracker-row__label">
       {#if isSpoilered}
         <Spoiler onReveal={() => (spoilerRevealed = true)}>
           {name}
           {#if subtitle}
-            <span class="text-sm text-muted-foreground">{subtitle}</span>
+            <span class="tracker-row__subtitle">{subtitle}</span>
           {/if}
         </Spoiler>
       {:else}
         {name}
         {#if subtitle}
-          <span class="text-sm text-muted-foreground">{subtitle}</span>
+          <span class="tracker-row__subtitle">{subtitle}</span>
         {/if}
       {/if}
     </span>
 
     {#if isObtained}
-      <span class="text-sm text-amber-600 dark:text-amber-400">Active</span>
+      <span class="tracker-row__active-badge">Active</span>
     {/if}
+  </TrackerPaper>
 
-    {#if uniqueSourceTypes.length > 0}
-      <button
-        class="group flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1 rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted"
-        type="button"
-        aria-expanded={expanded}
-        aria-controls={sourceContentId}
-        aria-label="{isSpoilered ? 'Spoilered item' : name} sources"
-        onclick={() => {
-          expanded = !expanded;
-        }}
-      >
-        {#each uniqueSourceTypes as sourceType (sourceType)}
-          <Icon.Source type={sourceType} class="size-3.5 shrink-0" />
-        {/each}
-        <Icon.UI
-          type="disclosure"
-          class="size-3 shrink-0 transition-transform motion-reduce:transition-none {expanded
-            ? 'rotate-90'
-            : ''}"
-        />
-      </button>
-    {/if}
-
-    {#if badges.seasons ?? badges.weathers ?? badges.timeRange}
-      <RestrictionBadges {badges} />
-    {/if}
-  </div>
-
-  {#if expanded && sources.length > 0}
-    <div
-      id={sourceContentId}
-      class="flex flex-col gap-1 py-1 pr-2 pl-8"
-      transition:slide={{ duration: prefersReducedMotion.current ? 0 : 150 }}
-    >
-      <SourceList {sources} {sourceSegments} />
-    </div>
+  {#if hasSources}
+    <SourcePaper
+      {expanded}
+      contentId={sourceContentId}
+      label="{isSpoilered ? 'Spoilered item' : name} sources"
+      {sources}
+      {sourceSegments}
+      {sourceBadges}
+      onToggle={() => {
+        expanded = !expanded;
+      }}
+    />
   {/if}
 </div>
+
+<style>
+  .tracker-row {
+    --tracker-paper-border-width: 1px;
+    --tracker-paper-line: color-mix(in srgb, var(--hairline) 42%, transparent);
+    --tracker-paper-radius: 2px;
+    --tracker-peek-size: 27px;
+    --tracker-row-gap: 7px;
+    --tracker-sheet-gap: 6px;
+    --tracker-source-inset: calc(var(--tracker-target-size) + var(--tracker-row-gap));
+    --tracker-paper-border-start-width: var(--tracker-paper-border-width);
+    --tracker-paper-start-start-radius: var(--tracker-paper-radius);
+    --tracker-paper-start-end-radius: var(--tracker-paper-radius);
+    --tracker-paper-end-start-radius: var(--tracker-paper-radius);
+    --tracker-paper-end-end-radius: var(--tracker-paper-radius);
+    --tracker-source-end-start-radius: 0px;
+    --tracker-source-end-end-radius: var(--tracker-paper-radius);
+
+    position: relative;
+  }
+
+  .tracker-row--dimmed {
+    color: var(--ink-muted);
+  }
+
+  .tracker-row--completed {
+    color: var(--ink-muted);
+    text-decoration: line-through;
+  }
+
+  .tracker-row__label {
+    min-width: 0;
+    flex: 1;
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+
+  .tracker-row__subtitle {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--ink-muted);
+  }
+
+  .tracker-row__active-badge {
+    font-family: var(--font-data);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--fg-amber);
+  }
+</style>

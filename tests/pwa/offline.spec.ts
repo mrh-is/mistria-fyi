@@ -18,6 +18,19 @@ test("registers, activates, and precaches the offline shell", async ({ page }) =
         );
       });
     }
+    const activeWorker = registration.active;
+    if (activeWorker && activeWorker.state !== "activated") {
+      await new Promise<void>((resolve) => {
+        const handleStateChange = () => {
+          if (activeWorker.state === "activated") {
+            activeWorker.removeEventListener("statechange", handleStateChange);
+            resolve();
+          }
+        };
+        activeWorker.addEventListener("statechange", handleStateChange);
+        handleStateChange();
+      });
+    }
     return {
       activeState: registration.active?.state,
       controlled: navigator.serviceWorker.controller !== null,

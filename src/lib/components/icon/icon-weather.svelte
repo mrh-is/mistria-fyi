@@ -1,10 +1,10 @@
 <script lang="ts">
   import { weatherIcon } from "$lib/components/icon/icon-maps.js";
 
-  import type { LucideProps } from "$lib/components/icon/icon-maps.js";
+  import type { IconProps } from "$lib/components/icon/icon-maps.js";
   import type { Season, Weather } from "$lib/types/tracker-data.js";
 
-  interface Props extends LucideProps {
+  interface Props extends IconProps {
     season: Season;
     weather: Weather;
   }

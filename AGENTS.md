@@ -127,6 +127,9 @@ These rules prevent accidental damage to generated or vendored code:
   schema changes require compatibility tests & deliberate versioning.
 - **`src/lib/components/ui/`** is vendored shadcn-svelte code. Do not manually edit.
 - Category pages are layout compositors. Shared or stateful concerns belong in focused components.
+- **Componentize along logical lines.** Break complex components into sub-components that each own
+  one concern (a checkbox, a sprite slot, a source card), even when they have only one call site.
+  The goal is reasoning clarity, not reuse.
 
 ## 6. Code Style
 

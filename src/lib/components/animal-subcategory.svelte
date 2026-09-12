@@ -6,6 +6,7 @@
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
+  import TrackerRowStack from "./tracker-row-stack.svelte";
   import TrackerRow, { type TrackerRowDisplay } from "./tracker-row.svelte";
 
   import type { AnimalId, AnyId } from "$lib/types/tracker-data.js";
@@ -57,39 +58,42 @@
         <SpoilerSection name={animal.name} revealed={isVisible}>
           {#if visibleItems.length > 0}
             <ExpandableSection
+              depth={1}
               count={displayableCompletedItemCount}
               name={animal.name}
               reportCategory={props.name.toLowerCase()}
               reportEntityId={animal.id}
               total={displayableItemCount}
             >
-              {#each visibleItems as itemRow (itemRow.id)}
-                <TrackerRow
-                  display={rowDisplay(itemRow)}
-                  lookups={props.lookups
-                    ? { ...props.lookups, entityVisibility: undefined }
-                    : undefined}
-                  name={itemRow.name}
-                  reportCategory={props.name.toLowerCase()}
-                  reportEntityId={`${animal.id}:${itemRow.id}`}
-                  subtitle={itemRow.subtitle}
-                  onToggle={() => {
-                    props.toggleCompletion(animal.id, itemRow.id);
-                    const completed = props.completionCheck(animal.id, itemRow.id);
-                    showUndoToast(itemRow.name, completed, () => {
+              <TrackerRowStack>
+                {#each visibleItems as itemRow (itemRow.id)}
+                  <TrackerRow
+                    display={rowDisplay(itemRow)}
+                    lookups={props.lookups
+                      ? { ...props.lookups, entityVisibility: undefined }
+                      : undefined}
+                    name={itemRow.name}
+                    reportCategory={props.name.toLowerCase()}
+                    reportEntityId={`${animal.id}:${itemRow.id}`}
+                    subtitle={itemRow.subtitle}
+                    onToggle={() => {
                       props.toggleCompletion(animal.id, itemRow.id);
-                    });
-                    if (completed) {
-                      if (props.areAllAnimalsComplete()) {
-                        celebrateCategory();
-                      } else if (props.isAnimalComplete(animal.id)) {
-                        celebrate();
+                      const completed = props.completionCheck(animal.id, itemRow.id);
+                      showUndoToast(itemRow.name, completed, () => {
+                        props.toggleCompletion(animal.id, itemRow.id);
+                      });
+                      if (completed) {
+                        if (props.areAllAnimalsComplete()) {
+                          celebrateCategory();
+                        } else if (props.isAnimalComplete(animal.id)) {
+                          celebrate();
+                        }
                       }
-                    }
-                  }}
-                  sources={itemRow.sources}
-                />
-              {/each}
+                    }}
+                    sources={itemRow.sources}
+                  />
+                {/each}
+              </TrackerRowStack>
             </ExpandableSection>
           {/if}
         </SpoilerSection>

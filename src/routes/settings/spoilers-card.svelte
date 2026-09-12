@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Eye, EyeOff } from "@lucide/svelte";
+  import { IconEye, IconEyeOff } from "@tabler/icons-svelte-runes";
 
   import BlockySwitch from "$lib/components/blocky-switch.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
@@ -59,8 +59,8 @@
   <BlockySwitch
     bind:checked={switchChecked}
     onCheckedChange={handleSpoilersChange}
-    checkedIcon={Eye}
-    uncheckedIcon={EyeOff}
+    checkedIcon={IconEye}
+    uncheckedIcon={IconEyeOff}
   >
     Show all spoilers
   </BlockySwitch>

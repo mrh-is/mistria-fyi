@@ -1,6 +1,7 @@
 <script lang="ts">
   import ConfirmSpoilerDialog from "$lib/components/confirm-spoiler-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
+  import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
@@ -150,11 +151,40 @@
                   toolbarState.matchesSourceFilters(c.sources) &&
                   userState.state.completed.cosmetics.has(c.id),
               ).length}
+              depth={1}
               name={subCategory}
               reportCategory="cosmetic"
               reportEntityId={`${slot}:${subCategory}`}
               total={cosmetics.filter((c) => toolbarState.matchesSourceFilters(c.sources)).length}
             >
+              <TrackerRowStack>
+                {#each visibleCosmetics as cosmetic (cosmetic.id)}
+                  {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
+                  <TrackerRow
+                    display={rowDisplay(cosmetic, completed)}
+                    lookups={{ ...baseLookups, entityVisibility: cosmetic.visibility }}
+                    name={cosmetic.name}
+                    reportCategory="cosmetic"
+                    reportEntityId={cosmetic.id}
+                    sources={cosmetic.sources}
+                    onToggle={() => {
+                      if (
+                        isEntityNameVisible(cosmetic.visibility, userState.progressionState) ||
+                        completed
+                      ) {
+                        toggleCosmetic(cosmetic, allInSlot);
+                      } else {
+                        spoilerGuard.guard(cosmetic.visibility, () => {
+                          toggleCosmetic(cosmetic, allInSlot);
+                        });
+                      }
+                    }}
+                  />
+                {/each}
+              </TrackerRowStack>
+            </ExpandableSection>
+          {:else}
+            <TrackerRowStack>
               {#each visibleCosmetics as cosmetic (cosmetic.id)}
                 {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
                 <TrackerRow
@@ -178,31 +208,7 @@
                   }}
                 />
               {/each}
-            </ExpandableSection>
-          {:else}
-            {#each visibleCosmetics as cosmetic (cosmetic.id)}
-              {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
-              <TrackerRow
-                display={rowDisplay(cosmetic, completed)}
-                lookups={{ ...baseLookups, entityVisibility: cosmetic.visibility }}
-                name={cosmetic.name}
-                reportCategory="cosmetic"
-                reportEntityId={cosmetic.id}
-                sources={cosmetic.sources}
-                onToggle={() => {
-                  if (
-                    isEntityNameVisible(cosmetic.visibility, userState.progressionState) ||
-                    completed
-                  ) {
-                    toggleCosmetic(cosmetic, allInSlot);
-                  } else {
-                    spoilerGuard.guard(cosmetic.visibility, () => {
-                      toggleCosmetic(cosmetic, allInSlot);
-                    });
-                  }
-                }}
-              />
-            {/each}
+            </TrackerRowStack>
           {/if}
         {/if}
       {/each}

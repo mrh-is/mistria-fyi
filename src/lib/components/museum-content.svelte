@@ -3,6 +3,7 @@
 
   import ConfirmSpoilerDialog from "$lib/components/confirm-spoiler-dialog.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
+  import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { isItemDimmed, isRowVisible, shouldCountItem } from "$lib/engine/availability.js";
@@ -224,6 +225,7 @@
     >
       {#each config.setConfigs as set (set.setId)}
         <ExpandableSection
+          depth={1}
           count={set.scopedCompletedItemCount}
           forceOpen={!!nameFilter}
           name={set.name}
@@ -231,29 +233,33 @@
           reportEntityId={set.setId}
           total={set.scopedItemCount}
         >
-          {#each set.visibleItems as item (item.itemId)}
-            {@const itemId = item.itemId}
-            {@const museumCompleted = isItemComplete(itemId)}
-            {@const museumItemSources = trackerData.items[itemId].sources}
-            {@const museumItemVisibility = trackerData.items[itemId].visibility}
-            <TrackerRow
-              display={rowDisplay(itemId, museumItemSources)}
-              lookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
-              name={trackerData.items[itemId].name}
-              reportCategory="museum item"
-              reportEntityId={itemId}
-              sources={museumItemSources}
-              onToggle={() => {
-                if (itemNameVisible(itemId) || museumCompleted) {
-                  toggleItem(itemId, set.setId, wingId);
-                } else {
-                  spoilerGuard.guard(museumItemVisibility, () => {
+          <TrackerRowStack>
+            {#each set.visibleItems as item (item.itemId)}
+              {@const itemId = item.itemId}
+              {@const museumCompleted = isItemComplete(itemId)}
+              {@const museumItemSources = trackerData.items[itemId].sources}
+              {@const museumItemVisibility = trackerData.items[itemId].visibility}
+              <TrackerRow
+                display={rowDisplay(itemId, museumItemSources)}
+                lookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
+                name={trackerData.items[itemId].name}
+                reportCategory="museum item"
+                reportEntityId={itemId}
+                sources={museumItemSources}
+                sprite={item.iconSprite}
+                spriteClass="text-cat-museum"
+                onToggle={() => {
+                  if (itemNameVisible(itemId) || museumCompleted) {
                     toggleItem(itemId, set.setId, wingId);
-                  });
-                }
-              }}
-            />
-          {/each}
+                  } else {
+                    spoilerGuard.guard(museumItemVisibility, () => {
+                      toggleItem(itemId, set.setId, wingId);
+                    });
+                  }
+                }}
+              />
+            {/each}
+          </TrackerRowStack>
           {#if set.visibleItems.length === 0}
             <p class="py-4 text-center text-sm text-muted-foreground">
               No items match the current filters
