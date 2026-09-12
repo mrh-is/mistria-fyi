@@ -150,7 +150,9 @@ focus to the first record for that letter without changing the URL.
 
 Touch scrubbing is progressive enhancement. Direct letter activation, keyboard navigation, and the
 browser’s ordinary page scroll remain complete single-pointer alternatives. Scrubbing cannot capture
-page scrolling until the pointer begins on the index, and reduced motion removes animated scrolling.
+page scrolling until the pointer begins on the index. During a scrub, the highlight follows the
+currently selected letter and clears on release; the pointer-generated click after a drag cannot
+reactivate its starting letter. Reduced motion removes animated scrolling.
 
 ## Skills ledger
 

@@ -124,6 +124,7 @@ test.describe("@critical interactive target geometry", () => {
 
 test.describe("@critical tracker paper geometry", () => {
   test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await initializeApplication(page, "light");
     await gotoApplication(page, "/almanac");
     await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
@@ -274,6 +275,11 @@ test.describe("@critical tracker paper touch geometry", () => {
 
     const index = page.getByRole("navigation", { name: "Townsfolk alphabet" });
     const beforeScroll = await index.boundingBox();
+    const roster = await page.locator(".npc-roster").boundingBox();
+    const whitespaceCenter = ((roster?.x ?? 0) + (roster?.width ?? 0) + 320) / 2;
+    expect(
+      Math.abs((beforeScroll?.x ?? 0) + (beforeScroll?.width ?? 0) / 2 - whitespaceCenter),
+    ).toBe(0);
     const indexGeometry = await index.evaluate((element) => {
       const style = getComputedStyle(element);
       const buttons = [...element.querySelectorAll("button")];

@@ -58,10 +58,18 @@ describe("NpcAlphabetIndex", () => {
     expect(scrollIntoView).not.toHaveBeenCalled();
 
     await fireEvent.pointerDown(letterA, { pointerId: 1 });
+    expect(document.activeElement).toBe(view.container.querySelector("#npc-adeline"));
+    expect(letterA).toHaveAttribute("data-active", "true");
     await fireEvent.pointerMove(index, { clientX: 10, clientY: 10, pointerId: 1 });
     expect(document.activeElement).toBe(view.container.querySelector("#npc-zara"));
+    expect(letterA).toHaveAttribute("data-active", "false");
+    expect(letterZ).toHaveAttribute("data-active", "true");
 
     await fireEvent.pointerUp(index, { pointerId: 1 });
+    await fireEvent.click(letterA, { detail: 1 });
+    expect(document.activeElement).toBe(view.container.querySelector("#npc-zara"));
+    expect(letterZ).toHaveAttribute("data-active", "false");
+
     elementFromPoint.mockReturnValue(letterA);
     await fireEvent.pointerMove(index, { clientX: 10, clientY: 10, pointerId: 1 });
     expect(document.activeElement).toBe(view.container.querySelector("#npc-zara"));
