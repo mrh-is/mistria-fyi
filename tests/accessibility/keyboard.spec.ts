@@ -125,10 +125,9 @@ test.describe("@critical keyboard and focus accessibility", () => {
     await expect(page.getByRole("group", { name: /Mine floor, 21 of/ })).toBeVisible();
 
     await gotoApplication(page, "/renown");
-    await page.getByRole("button", { name: /Edit renown level, currently/ }).press("Enter");
     const renownInput = page.getByRole("spinbutton", { name: "Renown level" });
     await renownInput.fill("10");
-    await renownInput.press("Enter");
+    await renownInput.press("Tab");
     await expect(page.getByRole("group", { name: /Renown level, 10 of/ })).toBeVisible();
   });
 });

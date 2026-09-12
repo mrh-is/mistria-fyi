@@ -90,6 +90,8 @@ respected for the sticky header, page bottom padding, tools, and panels.
   color or the visual progress rule.
 - Keyboard focus produces the same ribbon feedback as hover without moving focus or changing
   document order.
+- Display-font page titles preserve enough line-box height for ascenders and descenders without
+  losing horizontal truncation behavior.
 - Tool order remains predictable: settings, feedback, search where available, then filters.
 - All interactive targets remain at least 44 × 44 CSS pixels in the phone layout and satisfy the
   project’s desktop target-size-or-spacing rule.

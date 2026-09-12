@@ -25,9 +25,6 @@
   let currentBiome = $derived(
     biomes.find((biome) => floor >= biome.floors.start && floor <= biome.floors.end) ?? biomes[0],
   );
-  let markerPosition = $derived(
-    maxFloor > 0 ? (Math.min(Math.max(floor, 0), maxFloor) / maxFloor) * 100 : 0,
-  );
   let reportable = $derived(
     registerFeedback
       ? feedbackContext.reportable({
@@ -42,6 +39,13 @@
   function segmentWidth(biome: MinesBiome): number {
     if (maxFloor <= 0) return 0;
     return ((biome.floors.end - biome.floors.start + 1) / maxFloor) * 100;
+  }
+
+  function segmentProgress(biome: MinesBiome): number {
+    const span = biome.floors.end - biome.floors.start + 1;
+    if (span <= 0) return 0;
+    const completed = Math.min(Math.max(floor - biome.floors.start + 1, 0), span);
+    return (completed / span) * 100;
   }
 
   function updateFloor(value: number): void {
@@ -65,14 +69,21 @@
   {/if}
 
   {#if !compact}
+    {#if currentBiome}
+      <span class="biome-readout" aria-live="polite">
+        <strong>{currentBiome.name}</strong>
+        <span>floors {currentBiome.floors.start}–{currentBiome.floors.end}</span>
+      </span>
+    {/if}
+
     <div class="mine-survey" data-testid="mine-survey" aria-hidden="true">
       <span class="mine-biomes">
         {#each biomes as biome (biome.id)}
-          <i data-mine-biome-segment={biome.id} style="width: {segmentWidth(biome)}%"></i>
+          <i data-mine-biome-segment={biome.id} style="width: {segmentWidth(biome)}%">
+            <b data-mine-biome-progress style="width: {segmentProgress(biome)}%"></b>
+          </i>
         {/each}
       </span>
-      <span class="mine-progress" style="width: {markerPosition}%"></span>
-      <span class="mine-marker" data-testid="mine-marker" style="left: {markerPosition}%"></span>
     </div>
   {/if}
 
@@ -114,7 +125,7 @@
     </button>
   </div>
 
-  {#if currentBiome}
+  {#if compact && currentBiome}
     <span class="biome-readout" aria-live="polite">
       <strong>{currentBiome.name}</strong>
       <span>floors {currentBiome.floors.start}–{currentBiome.floors.end}</span>
@@ -147,42 +158,28 @@
     margin-inline: 6px;
   }
 
-  .mine-biomes,
-  .mine-progress {
+  .mine-biomes {
     position: absolute;
     top: 5px;
     right: 0;
     left: 0;
     display: flex;
     height: 4px;
+    gap: 2px;
+  }
+
+  .mine-biomes i {
+    display: block;
+    height: 100%;
     overflow: hidden;
     background: color-mix(in srgb, var(--cat-mines) 13%, transparent);
   }
 
-  .mine-biomes i {
+  .mine-biomes b {
+    display: block;
     height: 100%;
-    border-right: 1px solid var(--paper-raised);
-  }
-
-  .mine-biomes i:last-child {
-    border-right: 0;
-  }
-
-  .mine-progress {
-    right: auto;
     background: var(--cat-mines);
     transition: width 300ms ease-out;
-  }
-
-  .mine-marker {
-    position: absolute;
-    top: 1px;
-    width: 2px;
-    height: 12px;
-    background: var(--ink);
-    box-shadow: 0 0 0 2px var(--paper-raised);
-    transform: translateX(-1px);
-    transition: left 300ms ease-out;
   }
 
   .floor-controls {
@@ -305,8 +302,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .mine-progress,
-    .mine-marker {
+    .mine-biomes b {
       transition-duration: 0.01ms;
     }
   }

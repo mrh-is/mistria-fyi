@@ -12,15 +12,25 @@ const biomes: MinesBiome[] = [
 ];
 
 describe("MineFloorRecord", () => {
-  it("derives inclusive biome proportions and the marker from supplied ranges", () => {
-    const view = render(MineFloorRecordHarness, { biomes, initialFloor: 0 });
+  it("segments progress by biome without presenting a slider handle", () => {
+    const view = render(MineFloorRecordHarness, { biomes, initialFloor: 21 });
     const segments = view.container.querySelectorAll("[data-mine-biome-segment]");
+    const progress = view.container.querySelectorAll("[data-mine-biome-progress]");
 
     expect(segments).toHaveLength(3);
     for (const segment of segments) expect(segment).toHaveStyle("width: 33.33333333333333%");
+    expect([...progress].map((segment) => (segment as HTMLElement).style.width)).toEqual([
+      "100%",
+      "5%",
+      "0%",
+    ]);
     expect(view.getByTestId("mine-survey")).toHaveAttribute("aria-hidden", "true");
-    expect(view.getByTestId("mine-marker")).toHaveStyle("left: 0%");
-    expect(view.getByText("Upper Mines")).toBeInTheDocument();
+    expect(view.queryByTestId("mine-marker")).not.toBeInTheDocument();
+    expect(view.getByText("Tide Caverns")).toBeInTheDocument();
+    expect(
+      view.getByText("Tide Caverns").compareDocumentPosition(view.getByTestId("mine-survey")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(view.queryByRole("slider")).not.toBeInTheDocument();
   });
 

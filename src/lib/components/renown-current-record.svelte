@@ -2,7 +2,6 @@
   import { page } from "$app/state";
   import { Icon } from "$lib/components/icon/index.js";
   import Stepper from "$lib/components/stepper.svelte";
-  import { Input } from "$lib/components/ui/input/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { getRenownPresentation } from "$lib/engine/renown-presentation.js";
   import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
@@ -22,33 +21,14 @@
       page: page.url.pathname,
     }),
   );
-  let editing = $state(false);
-  let editValue = $state("");
-  let editInputRef = $state<HTMLInputElement | null>(null);
-
-  $effect(() => {
-    if (editInputRef) {
-      editInputRef.focus();
-      editInputRef.select();
+  function commitInput(event: Event): void {
+    const input = event.currentTarget as HTMLInputElement;
+    const value = Number(input.value);
+    if (input.value.trim() === "" || !Number.isFinite(value) || !Number.isInteger(value)) {
+      input.value = String(level);
+      return;
     }
-  });
-
-  function startEditing(): void {
-    editValue = String(level);
-    editing = true;
-  }
-
-  function commitEdit(): void {
-    const value = Number(editValue);
-    if (editValue.trim() !== "" && Number.isFinite(value) && Number.isInteger(value)) {
-      setRenownWithCelebration(value);
-    }
-    editing = false;
-  }
-
-  function handleEditKeydown(event: KeyboardEvent): void {
-    if (event.key === "Enter") commitEdit();
-    if (event.key === "Escape") editing = false;
+    setRenownWithCelebration(value);
   }
 
   function setRenownWithCelebration(newLevel: number): void {
@@ -110,31 +90,18 @@
       setRenownWithCelebration(level + 1);
     }}
   >
-    {#if editing}
-      <Input
+    <span class="renown-readout">
+      <input
         aria-label="Renown level"
-        bind:ref={editInputRef}
-        class="h-8 w-20 text-center font-mono text-xs"
         type="number"
+        inputmode="numeric"
         max={presentation.maxLevel}
         min={0}
-        value={editValue}
-        onblur={commitEdit}
-        oninput={(event: Event) => {
-          editValue = (event.target as HTMLInputElement).value;
-        }}
-        onkeydown={handleEditKeydown}
+        value={level}
+        onchange={commitInput}
       />
-    {:else}
-      <button
-        class="renown-count"
-        aria-label="Edit renown level, currently {level} of {presentation.maxLevel}"
-        type="button"
-        onclick={startEditing}
-      >
-        {level} / {presentation.maxLevel}
-      </button>
-    {/if}
+      <span aria-hidden="true">/ {presentation.maxLevel}</span>
+    </span>
   </Stepper>
 </div>
 
@@ -213,20 +180,38 @@
     grid-column: 1 / -1;
   }
 
-  .renown-count {
-    min-width: 88px;
-    min-height: 44px;
-    border: 0;
-    background: transparent;
+  .renown-readout {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 4px;
     color: var(--ink-muted);
     font-family: var(--font-data);
     font-size: 12px;
+    white-space: nowrap;
   }
 
-  .renown-count:is(:hover, :focus-visible) {
-    color: var(--cat-renown);
+  .renown-readout input {
+    width: 5ch;
+    min-height: 44px;
+    appearance: textfield;
+    border: 0;
+    border-bottom: 1px solid var(--cat-renown);
+    background: transparent;
+    color: var(--ink);
+    font-family: var(--font-data);
+    font-size: 16px;
+    text-align: center;
+  }
+
+  .renown-readout input::-webkit-inner-spin-button,
+  .renown-readout input::-webkit-outer-spin-button {
+    appearance: none;
+  }
+
+  .renown-readout input:focus-visible {
     outline: 2px solid var(--cat-renown);
-    outline-offset: -2px;
+    outline-offset: 2px;
   }
 
   .renown-current[data-maxed="true"] .rank-copy {

@@ -64,6 +64,7 @@
 
 <nav
   class="npc-index"
+  style="--npc-index-count: {initials.length}"
   aria-label="Townsfolk alphabet"
   onpointermove={scrub}
   onpointerup={stopScrub}
@@ -86,62 +87,36 @@
 
 <style>
   .npc-index {
-    position: sticky;
+    position: fixed;
     top: 50dvh;
-    display: flex;
-    width: 46px;
-    max-height: min(68dvh, 572px);
-    align-self: start;
-    flex-direction: column;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    border: 1px solid color-mix(in srgb, var(--cat-npcs) 24%, var(--hairline));
-    border-radius: 2px;
-    background: color-mix(in srgb, var(--paper-raised) 94%, transparent);
-    box-shadow: var(--shadow-small);
-    scrollbar-width: none;
-    touch-action: pan-y;
+    right: max(4px, calc((100vw - 32rem) / 2 + 4px));
+    z-index: 9;
+    display: grid;
+    width: 24px;
+    height: min(calc(100dvh - 152px), calc(var(--npc-index-count) * 24px));
+    grid-template-rows: repeat(var(--npc-index-count), minmax(0, 1fr));
+    background: transparent;
+    touch-action: none;
     transform: translateY(-50%);
-  }
-
-  .npc-index::-webkit-scrollbar {
-    display: none;
   }
 
   .npc-index button {
     display: grid;
-    min-width: 44px;
-    min-height: 44px;
-    flex: 0 0 44px;
+    min-width: 24px;
+    min-height: 0;
     place-items: center;
     border: 0;
-    border-bottom: 1px solid color-mix(in srgb, var(--hairline) 65%, transparent);
     background: transparent;
     color: var(--ink-muted);
     font-family: var(--font-data);
-    font-size: 11px;
-  }
-
-  .npc-index button:last-child {
-    border-bottom: 0;
+    font-size: 10px;
+    line-height: 1;
   }
 
   .npc-index button:is(:hover, :focus-visible) {
     background: color-mix(in srgb, var(--cat-npcs) 12%, transparent);
     color: var(--cat-npcs);
     outline: 2px solid var(--cat-npcs);
-    outline-offset: -2px;
-  }
-
-  @media (min-width: 701px) and (hover: hover) and (pointer: fine) {
-    .npc-index {
-      width: 32px;
-    }
-
-    .npc-index button {
-      min-width: 30px;
-      min-height: 32px;
-      flex-basis: 32px;
-    }
+    outline-offset: 0;
   }
 </style>

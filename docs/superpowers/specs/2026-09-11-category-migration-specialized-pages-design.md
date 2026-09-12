@@ -142,9 +142,11 @@ before activation and associated with the action for assistive technology.
 
 ### Alphabetic index
 
-A vertically centered alphabetic index sits at the roster’s inline end and includes only initials
-present in the dataset. Each letter is a direct activation target that moves focus to the first
-record for that letter without changing the URL.
+A visually quiet, vertically centered alphabetic index sits at the roster’s inline end and includes
+only initials present in the dataset. It remains anchored to the viewport instead of the roster’s
+scroll boundary, never becomes an independent scroll area, and condenses its letter spacing to fit
+between the sticky header and floating toolbar. Each letter is a direct activation target that moves
+focus to the first record for that letter without changing the URL.
 
 Touch scrubbing is progressive enhancement. Direct letter activation, keyboard navigation, and the
 browser’s ordinary page scroll remain complete single-pointer alternatives. Scrubbing cannot capture
@@ -179,15 +181,16 @@ The expanded floor section becomes a compact horizontal survey strip:
 - One full-width depth rule represents floors zero through the current maximum.
 - The rule is divided at biome boundaries derived from tracker data rather than hardcoded visual
   percentages.
+- The divisions remain visible across completed and unreached depth, following the segmented Skills
+  treatment.
 - Completed depth uses the Mines brown. Unreached depth uses a pale brown track.
-- A small marker identifies the current floor.
 - The current readout shows `Floor X / Y`, the biome name, and its floor range.
 - Decrement and increment controls flank the readout, and the number remains directly editable.
 
 Biome names are not repeated inside narrow segments where they would collide. The current biome is
-always named in text beneath the rule, and wider layouts may add abbreviated segment labels when
-space permits. The strip is a visual summary, not a slider; the adjacent controls and numeric input
-remain the only editing mechanisms.
+always named in text above the rule, and wider layouts may add abbreviated segment labels when space
+permits. The strip is a visual summary, not a slider; the adjacent controls and numeric input remain
+the only editing mechanisms.
 
 Everything uses the existing compact floor row, updated to share the same count typography and
 progress color without rendering the full survey strip.
@@ -199,7 +202,8 @@ Renown becomes a rank register rather than a generic dashboard card.
 The top record shows the current rank as a pressed category-colored seal, the rank name in
 Instrument Serif, the within-rank level, the overall `X / Y` value, and decrement and increment
 controls. A thin amber progress rule replaces the generic progress component. Direct numeric editing
-remains available from the count.
+remains permanently visible from the count, matching the Mines record rather than requiring a
+separate edit mode.
 
 The rank list is one contiguous white register. Each row contains the rank mark, name, level range,
 and current-state value when relevant:
