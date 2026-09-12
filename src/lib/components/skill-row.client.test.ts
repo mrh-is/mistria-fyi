@@ -1,17 +1,27 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import SkillRowHarness from "$lib/components/skill-row.test-harness.svelte";
 import { FeedbackContext } from "$lib/feedback/context.svelte.js";
+import { userState } from "$lib/stores/user-state.svelte.js";
 
 import type { SkillId } from "$lib/types/tracker-data.js";
 
-describe("SkillRow reportable registration", () => {
+const skillId = "mining" as SkillId;
+
+describe("SkillRow", () => {
+  beforeEach(() => {
+    userState.resetAll();
+  });
+  afterEach(() => {
+    userState.resetAll();
+  });
+
   it("registers with skill metadata", async () => {
     const feedbackContext = new FeedbackContext();
     const view = render(SkillRowHarness, {
       feedbackContext,
-      id: "mining" as SkillId,
+      id: skillId,
       name: "Mining",
     });
 
@@ -36,5 +46,74 @@ describe("SkillRow reportable registration", () => {
 
     view.unmount();
     expect(feedbackContext.registrations.size).toBe(0);
+  });
+
+  it("renders four decorative fifteen-level segments and a spaced count", () => {
+    userState.setSkillLevel(skillId, 22);
+    const view = render(SkillRowHarness, {
+      feedbackContext: new FeedbackContext(),
+      id: skillId,
+      name: "Mining",
+    });
+
+    const segments = view.container.querySelectorAll("[data-skill-segment]");
+    expect(segments).toHaveLength(4);
+    expect(view.getByTestId("skill-segments")).toHaveAttribute("aria-hidden", "true");
+    expect(segments[0].querySelector("i")).toHaveStyle("width: 100%");
+    expect(segments[1].querySelector("i")).toHaveStyle("width: 46.666666666666664%");
+    expect(segments[2].querySelector("i")).toHaveStyle("width: 0%");
+    expect(view.getByText("22 / 60")).toBeInTheDocument();
+    expect(view.getByRole("group", { name: "Mining level, 22 of 60" })).toBeInTheDocument();
+  });
+
+  it("commits finite direct edits and cancels invalid or escaped edits", async () => {
+    const view = render(SkillRowHarness, {
+      feedbackContext: new FeedbackContext(),
+      id: skillId,
+      name: "Mining",
+    });
+    const editButton = () => view.getByRole("button", { name: /Edit Mining level, currently/ });
+
+    await fireEvent.click(editButton());
+    let input = view.getByRole("spinbutton", { name: "Mining level" });
+    await fireEvent.input(input, { target: { value: "31" } });
+    await fireEvent.keyDown(input, { key: "Enter" });
+    expect(view.getByText("31 / 60")).toBeInTheDocument();
+
+    await fireEvent.click(editButton());
+    input = view.getByRole("spinbutton", { name: "Mining level" });
+    await fireEvent.input(input, { target: { value: "not-a-number" } });
+    await fireEvent.blur(input);
+    expect(view.getByText("31 / 60")).toBeInTheDocument();
+
+    await fireEvent.click(editButton());
+    input = view.getByRole("spinbutton", { name: "Mining level" });
+    await fireEvent.input(input, { target: { value: "55" } });
+    await fireEvent.keyDown(input, { key: "Escape" });
+    expect(view.getByText("31 / 60")).toBeInTheDocument();
+  });
+
+  it("keeps controls bounded and marks completion without color alone", async () => {
+    const view = render(SkillRowHarness, {
+      compact: true,
+      feedbackContext: new FeedbackContext(),
+      id: skillId,
+      name: "Mining",
+    });
+    expect(view.getByRole("button", { name: "Decrease Mining level" })).toBeDisabled();
+    expect(view.container.querySelector("[data-skill-record]")).toHaveAttribute(
+      "data-compact",
+      "true",
+    );
+
+    userState.setSkillLevel(skillId, 60);
+    await waitFor(() => {
+      expect(view.getByRole("button", { name: "Increase Mining level" })).toBeDisabled();
+    });
+    expect(view.container.querySelector("[data-skill-record]")).toHaveAttribute(
+      "data-complete",
+      "true",
+    );
+    expect(view.getByTestId("skill-completion-mark")).toBeInTheDocument();
   });
 });

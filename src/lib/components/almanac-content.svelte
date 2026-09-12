@@ -2,7 +2,9 @@
   import { SvelteSet } from "svelte/reactivity";
 
   import ConfirmSpoilerDialog from "$lib/components/confirm-spoiler-dialog.svelte";
+  import DatesSection from "$lib/components/dates-section.svelte";
   import ExpandableSection from "$lib/components/expandable-section.svelte";
+  import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
   import { trackerData } from "$lib/data/index.js";
@@ -90,8 +92,10 @@
   }
 
   function isAlmanacComplete(): boolean {
-    return recordValues(trackerData.almanac).every((cat) =>
-      cat.items.every((entry) => isItemCompleted(entry.itemIds[0])),
+    return (
+      recordValues(trackerData.almanac).every((cat) =>
+        cat.items.every((entry) => isItemCompleted(entry.itemIds[0])),
+      ) && userState.state.completed.dates.size === recordValues(trackerData.dates).length
     );
   }
 
@@ -188,28 +192,32 @@
     >
       {@const showAll = expandedSections[id] ?? false}
       {@const displayItems = showAll ? filteredItems : filteredItems.slice(0, SECTION_LIMIT)}
-      {#each displayItems as { canonicalId, entry, item } (canonicalId)}
-        {@const itemCompleted = isItemCompleted(canonicalId)}
-        {@const itemSources = aggregateSources(entry)}
-        {@const itemVisibility = item.visibility}
-        <TrackerRow
-          display={rowDisplay(canonicalId, { visibility: itemVisibility }, itemSources)}
-          lookups={{ ...baseLookups, entityVisibility: itemVisibility }}
-          name={entry.name}
-          reportCategory="almanac item"
-          reportEntityId={canonicalId}
-          sources={itemSources}
-          onToggle={() => {
-            if (itemNameVisible({ visibility: itemVisibility }) || itemCompleted) {
-              toggleItem(canonicalId, entry, catCanonicalIds);
-            } else {
-              spoilerGuard.guard(itemVisibility, () => {
+      <TrackerRowStack>
+        {#each displayItems as { canonicalId, entry, item } (canonicalId)}
+          {@const itemCompleted = isItemCompleted(canonicalId)}
+          {@const itemSources = aggregateSources(entry)}
+          {@const itemVisibility = item.visibility}
+          <TrackerRow
+            display={rowDisplay(canonicalId, { visibility: itemVisibility }, itemSources)}
+            lookups={{ ...baseLookups, entityVisibility: itemVisibility }}
+            name={entry.name}
+            reportCategory="almanac item"
+            reportEntityId={canonicalId}
+            sources={itemSources}
+            sprite={item.iconSprite}
+            spriteClass="text-cat-almanac"
+            onToggle={() => {
+              if (itemNameVisible({ visibility: itemVisibility }) || itemCompleted) {
                 toggleItem(canonicalId, entry, catCanonicalIds);
-              });
-            }
-          }}
-        />
-      {/each}
+              } else {
+                spoilerGuard.guard(itemVisibility, () => {
+                  toggleItem(canonicalId, entry, catCanonicalIds);
+                });
+              }
+            }}
+          />
+        {/each}
+      </TrackerRowStack>
       {#if filteredItems.length === 0}
         <p class="py-4 text-center text-sm text-muted-foreground">
           No items match the current filters
@@ -231,5 +239,12 @@
     </ExpandableSection>
   {/if}
 {/each}
+
+<DatesSection
+  onAllComplete={() => {
+    if (isAlmanacComplete()) celebrateCategory();
+    else celebrate();
+  }}
+/>
 
 <AllCompleted isAllCompleted={isAlmanacComplete()} />

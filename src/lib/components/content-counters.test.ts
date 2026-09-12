@@ -34,7 +34,7 @@ describe("subsection counters", () => {
 
     const { body } = render(MinesContent, { props: {} });
 
-    expect(renderedText(body)).toContain(`Spells 1/${spellIds.length}`);
+    expect(renderedText(body)).toContain(`Spells 1 / ${spellIds.length}`);
   });
 
   it("keeps the spells section when every completed row is hidden", () => {
@@ -46,7 +46,7 @@ describe("subsection counters", () => {
 
     const spellCount = Object.keys(trackerData.mines.spells).length;
     expect(renderedText(body)).toContain(
-      `Spells ${spellCount.toString()}/${spellCount.toString()}`,
+      `Spells ${spellCount.toString()} / ${spellCount.toString()}`,
     );
   });
 
@@ -58,7 +58,7 @@ describe("subsection counters", () => {
 
     const { body } = render(AlmanacContent, { props: {} });
 
-    expect(renderedText(body)).toContain("Blacksmithing 1/1");
+    expect(renderedText(body)).toContain("Blacksmithing 1 / 1");
   });
 
   it("hides recipes whose covered sources all belong to hidden groups", () => {
@@ -104,13 +104,13 @@ describe("subsection counters", () => {
     const spellCount = Object.keys(trackerData.mines.spells).length;
 
     const unfiltered = render(MinesContent, { props: {} });
-    expect(renderedText(unfiltered.body)).toContain(`Spells 0/${spellCount.toString()}`);
+    expect(renderedText(unfiltered.body)).toContain(`Spells 0 / ${spellCount.toString()}`);
 
     toolbarState.setSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
     const { body } = render(MinesContent, { props: {} });
-    const match = /Spells (\d+)\/(\d+)/.exec(renderedText(body));
+    const match = /Spells (\d+) \/ (\d+)/.exec(renderedText(body));
     if (match) {
       expect(Number(match[2])).toBeLessThan(spellCount);
     } else {
@@ -122,7 +122,7 @@ describe("subsection counters", () => {
     userState.toggleShowSpoilers();
 
     const unfilteredBody = renderedText(render(QuestsContent, { props: {} }).body);
-    const unfilteredMatch = /Fetch Quests (\d+)\/(\d+)/.exec(unfilteredBody);
+    const unfilteredMatch = /Fetch Quests (\d+) \/ (\d+)/.exec(unfilteredBody);
     if (!unfilteredMatch) throw new Error("Expected Fetch Quests counter in unfiltered render");
     const unfilteredTotal = Number(unfilteredMatch[2]);
 
@@ -130,7 +130,7 @@ describe("subsection counters", () => {
     toolbarState.hideAllSourceFilters();
 
     const filteredBody = renderedText(render(QuestsContent, { props: {} }).body);
-    const filteredMatch = /Fetch Quests (\d+)\/(\d+)/.exec(filteredBody);
+    const filteredMatch = /Fetch Quests (\d+) \/ (\d+)/.exec(filteredBody);
 
     if (filteredMatch) {
       expect(Number(filteredMatch[2])).toBeLessThan(unfilteredTotal);

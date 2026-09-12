@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FileDown, Pencil, QrCode } from "@lucide/svelte";
+  import { IconFileDownload, IconPencil, IconQrcode } from "@tabler/icons-svelte-runes";
 
   import { resolve } from "$app/paths";
   import * as Card from "$lib/components/ui/card/index.js";
@@ -50,7 +50,7 @@
             href="{resolve('/settings')}?section=transfer"
             class="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 active:bg-primary/80"
           >
-            <QrCode class="size-4 shrink-0" />
+            <IconQrcode class="size-4 shrink-0" />
             Scan QR from another device
           </a>
         {:else}
@@ -58,7 +58,7 @@
             href="{resolve('/settings')}?section=import"
             class="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 active:bg-primary/80"
           >
-            <FileDown class="size-4 shrink-0" />
+            <IconFileDownload class="size-4 shrink-0" />
             Import from save file
           </a>
         {/if}
@@ -68,7 +68,7 @@
           onclick={startManually}
           class="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-md border border-input bg-background px-4 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground active:bg-accent/80"
         >
-          <Pencil class="size-4 shrink-0" />
+          <IconPencil class="size-4 shrink-0" />
           Start tracking manually
         </button>
       </div>

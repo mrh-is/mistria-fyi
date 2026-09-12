@@ -14,6 +14,7 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "prettier --check . && eslint .",
     "lint:fix": "prettier --write . && eslint . --fix",
+    "optimize-icons": "svgo --config svgo.config.js -f src/lib/components/icon/custom/raw -o src/lib/components/icon/custom/optimized",
     "pipeline": "cd pipeline && tsx src/main.ts",
     "test": "pnpm run test:server && pnpm run test:client",
     "accessibility:monitor": "tsx scripts/accessibility-monitor.ts",
@@ -31,7 +32,6 @@
     "@eslint/compat": "^2.1.0",
     "@eslint/js": "^10.0.1",
     "@internationalized/date": "^3.12.3",
-    "@lucide/svelte": "^1.31.0",
     "@playwright/test": "^1.62.1",
     "@sveltejs/adapter-cloudflare": "^7.2.9",
     "@sveltejs/kit": "^2.70.2",
@@ -43,6 +43,7 @@
     "@types/node": "^26.2.0",
     "@types/qrcode": "^1.5.6",
     "@types/wicg-file-system-access": "^2023.10.7",
+    "@types/yauzl-promise": "^4.0.1",
     "axe-core": "^4.13.0",
     "bits-ui": "^2.18.1",
     "clsx": "^2.1.1",
@@ -59,9 +60,11 @@
     "prettier-plugin-tailwindcss": "^0.8.1",
     "qr-scanner": "^1.4.2",
     "qrcode": "^1.5.4",
+    "sharp": "^0.35.4",
     "svelte": "^5.56.8",
     "svelte-check": "^4.7.5",
     "svelte-sonner": "^1.1.1",
+    "svgo": "^4.1.0",
     "tailwind-merge": "^3.6.0",
     "tailwind-variants": "^3.3.1",
     "tailwindcss": "^4.3.3",
@@ -73,9 +76,11 @@
     "vite": "^8.2.1",
     "vite-plugin-devtools-json": "^1.1.0",
     "vitest": "^4.1.10",
-    "yaml": "2.9.0"
+    "yaml": "2.9.0",
+    "yauzl-promise": "^4.0.0"
   },
   "dependencies": {
+    "@tabler/icons-svelte-runes": "^3.46.0",
     "canvas-confetti": "^1.9.4"
   },
   "engines": {

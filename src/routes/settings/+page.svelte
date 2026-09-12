@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Bot, MessageCircleWarning } from "@lucide/svelte";
+  import { IconMessageReport, IconRobot } from "@tabler/icons-svelte-runes";
   import { tick } from "svelte";
   import { prefersReducedMotion } from "svelte/motion";
 
@@ -113,7 +113,7 @@
           type="button"
           onclick={() => (feedbackOpen = true)}
         >
-          <MessageCircleWarning class="size-3.5" />
+          <IconMessageReport class="size-3.5" />
           Send feedback
         </button>
         <span class="text-border">·</span>
@@ -128,7 +128,7 @@
           type="button"
           onclick={() => (aiDisclosureOpen = true)}
         >
-          <Bot class="size-3.5" />
+          <IconRobot class="size-3.5" />
           AI disclosure
         </button>
       </div>

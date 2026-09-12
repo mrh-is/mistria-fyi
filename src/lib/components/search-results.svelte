@@ -1,6 +1,7 @@
 <script lang="ts">
   import { toast } from "svelte-sonner";
 
+  import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
@@ -150,7 +151,7 @@
   }
 </script>
 
-<div class="flex flex-col gap-1">
+<div class="flex flex-col gap-1" data-tracker-list>
   <p class="text-sm text-muted-foreground">
     {results.length} result{results.length === 1 ? "" : "s"}
   </p>
@@ -164,24 +165,26 @@
     {@const label = result.fullName ?? result.name}
     <div class="flex items-center gap-2 rounded-md">
       <div class="min-w-0 flex-1">
-        <TrackerRow
-          display={rowDisplay(result)}
-          lookups={baseLookups}
-          name={result.detail ? `${label} ${result.detail}` : label}
-          reportCategory={CATEGORY_LABELS[result.category] ?? result.category}
-          reportEntityId={result.id}
-          sources={getSources(result)}
-          onToggle={() => {
-            if (result.category === "quests") {
-              handleQuestToggle(result);
-            } else {
-              toggleResult(result);
-              showUndoToast(result.name, !result.completed, () => {
+        <TrackerRowStack>
+          <TrackerRow
+            display={rowDisplay(result)}
+            lookups={baseLookups}
+            name={result.detail ? `${label} ${result.detail}` : label}
+            reportCategory={CATEGORY_LABELS[result.category] ?? result.category}
+            reportEntityId={result.id}
+            sources={getSources(result)}
+            onToggle={() => {
+              if (result.category === "quests") {
+                handleQuestToggle(result);
+              } else {
                 toggleResult(result);
-              });
-            }
-          }}
-        />
+                showUndoToast(result.name, !result.completed, () => {
+                  toggleResult(result);
+                });
+              }
+            }}
+          />
+        </TrackerRowStack>
       </div>
       <span class="shrink-0 text-sm text-muted-foreground">
         {CATEGORY_LABELS[result.category] ?? result.category}

@@ -1,16 +1,19 @@
 <script lang="ts">
-  import { ArrowLeft } from "@lucide/svelte";
+  import { IconArrowLeft } from "@tabler/icons-svelte-runes";
 
   import { resolve } from "$app/paths";
+  import { Icon } from "$lib/components/icon/index.js";
 
   import type { Snippet } from "svelte";
 
   import type { Pathname } from "$app/types";
+  import type { CategoryKey } from "$lib/data/categories.js";
   import type { CategoryProgress } from "$lib/engine/progress.js";
 
   let {
     backHref = "/",
     backLabel = "Back to home",
+    category,
     icon,
     progress,
     ref = $bindable<HTMLDivElement | undefined>(undefined),
@@ -18,6 +21,7 @@
   }: {
     backHref?: Pathname;
     backLabel?: string;
+    category?: CategoryKey;
     icon?: Snippet<[string]>;
     progress?: CategoryProgress;
     ref?: HTMLDivElement | undefined;
@@ -33,21 +37,165 @@
 
 <div
   bind:this={ref}
-  class="sticky top-0 z-10 flex min-w-0 items-center gap-2 border-b border-border/50 bg-background px-4 pt-safe-or-4 pb-3"
+  class="page-header"
+  class:page-header--category={category !== undefined}
+  data-page-header={category === undefined ? "generic" : "category"}
+  style={category !== undefined && pct !== undefined ? `--category-progress: ${pct}%;` : undefined}
 >
-  <a
-    class="-ml-3 flex min-h-11 min-w-11 items-center justify-center text-muted-foreground hover:text-foreground"
-    href={resolve(backHref)}
-    aria-label={backLabel}
-  >
-    <ArrowLeft class="size-5" />
+  <a class="page-header__back" href={resolve(backHref)} aria-label={backLabel}>
+    <IconArrowLeft class="size-5" />
   </a>
-  {@render icon?.("size-5")}
-  <h1 class="min-w-0 flex-1 truncate text-xl font-semibold">{title}</h1>
+  {#if category === undefined}
+    {@render icon?.("size-5")}
+  {/if}
+  <h1 class="page-header__title">{title}</h1>
   {#if pct !== undefined && progress !== undefined}
-    <span class="shrink-0 text-sm text-muted-foreground">
-      <span class="sm:hidden">{pct}%</span>
-      <span class="hidden sm:inline">{progress.completed}/{progress.total}</span>
+    <span class="page-header__count">
+      <span class="sr-only">{progress.completed} of {progress.total} completed</span>
+      <span aria-hidden="true">{progress.completed} / {progress.total}</span>
     </span>
   {/if}
+  {#if category !== undefined}
+    <span class="page-header__ribbon" data-page-header-ribbon aria-hidden="true">
+      <Icon.Category {category} class="page-header__icon" />
+    </span>
+    <span class="page-header__edge-mask" aria-hidden="true"></span>
+    <span class="page-header__progress" aria-hidden="true"><i></i></span>
+  {/if}
 </div>
+
+<style>
+  .page-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+    padding: max(16px, env(safe-area-inset-top)) 16px 12px;
+    border-bottom: 1px solid color-mix(in srgb, var(--hairline) 50%, transparent);
+    background: var(--paper);
+  }
+
+  .page-header--category {
+    --header-ribbon-width: 49px;
+    isolation: isolate;
+    min-height: 62px;
+    padding-right: 69px;
+    border-bottom: 0;
+    background: var(--paper-raised);
+    box-shadow: var(--shadow-small);
+  }
+
+  .page-header__back {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    margin-left: -12px;
+    color: var(--ink-muted);
+  }
+
+  .page-header__back:is(:hover, :focus-visible) {
+    color: var(--ink);
+    outline: 2px solid var(--primary);
+    outline-offset: -6px;
+  }
+
+  .page-header__title {
+    position: relative;
+    z-index: 2;
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .page-header__count {
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+    color: var(--ink-muted);
+    font-family: var(--font-data);
+    font-size: 12px;
+  }
+
+  .page-header__ribbon {
+    position: absolute;
+    top: 7px;
+    right: 0;
+    bottom: 7px;
+    z-index: 0;
+    display: grid;
+    place-items: center;
+    width: var(--header-ribbon-width);
+    color: var(--ribbon-ink);
+    background: var(--primary);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 8px 50%);
+  }
+
+  .page-header__ribbon :global(.page-header__icon) {
+    width: 24px;
+    height: 24px;
+  }
+
+  .page-header__edge-mask {
+    display: none;
+  }
+
+  .page-header__progress {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 2;
+    height: 3px;
+    background: color-mix(in srgb, var(--primary) 13%, transparent);
+  }
+
+  .page-header__progress i {
+    display: block;
+    width: var(--category-progress);
+    height: 100%;
+    background: var(--primary);
+    transition: width 300ms ease-out;
+  }
+
+  @media (min-width: 701px) {
+    .page-header--category {
+      padding-right: 16px;
+    }
+
+    .page-header__ribbon {
+      right: calc(-1 * var(--header-ribbon-width));
+      width: var(--header-ribbon-width);
+      padding-left: 0;
+      clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 50%, 100% 100%, 0 100%);
+    }
+
+    .page-header__edge-mask {
+      position: absolute;
+      inset: 0 0 0 auto;
+      z-index: 1;
+      display: block;
+      width: 8px;
+      background: var(--paper-raised);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .page-header__progress i {
+      transition-duration: 0.01ms;
+    }
+  }
+</style>

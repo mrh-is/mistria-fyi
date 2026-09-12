@@ -46,6 +46,7 @@ import { extractQuests } from "./extractors/quests.js";
 import { extractRecipes } from "./extractors/recipes.js";
 import { extractTownRanks } from "./extractors/renown.js";
 import { extractSkills } from "./extractors/skills.js";
+import { extractSprites } from "./extractors/sprites.js";
 import { extractStoresMeta } from "./extractors/stores-meta.js";
 import { extractTreasureChestTiers } from "./extractors/treasure-chest-tiers.js";
 import { buildCutsceneQuestMap } from "./extractors/visibility/cutscene-quest-map.js";
@@ -76,6 +77,7 @@ const PIPELINE_ROOT = resolve(__dirname, "..");
 const OUTPUT_DIR = resolve(PIPELINE_ROOT, "output");
 const APP_DATA_DIR = resolve(PIPELINE_ROOT, "..", "src", "lib", "data");
 const OUTPUT_FILE = "tracker-data.json";
+const SPRITES_DIR = resolve(PIPELINE_ROOT, "..", "static", "sprites");
 
 function buildAcquisitionReferences(
   trackerData: TrackerData,
@@ -277,7 +279,7 @@ function extractNestedFiddleKeys(fiddle: ParsedGameData, topKey: string): string
   return keys;
 }
 
-function main(): void {
+async function main(): Promise<void> {
   console.log("📚 Mistria Field Guide — Data Pipeline\n");
 
   const args = process.argv.slice(2).filter((a) => a !== "--");
@@ -562,7 +564,24 @@ function main(): void {
     `  Copied:  src/lib/data/${OUTPUT_FILE} (${(json.length / 1024).toFixed(1)} KB minified)`,
   );
 
-  console.log("\nStep 5: Writing human-readable outputs...");
+  const extractSpritesFlag = args.includes("--sprites");
+  if (extractSpritesFlag) {
+    console.log("\nStep 5: Extracting item sprites...");
+    const spriteResult = await extractSprites(resolve(assetsDir), trackerData.items, SPRITES_DIR);
+    console.log(
+      `  Extracted ${spriteResult.extracted} new, ${spriteResult.skipped} unchanged, ` +
+        `${spriteResult.total} total`,
+    );
+    if (spriteResult.missing.length > 0) {
+      console.error(`  ❌ ${spriteResult.missing.length} sprites not found:`);
+      for (const name of spriteResult.missing) {
+        console.error(`    - ${name}`);
+      }
+      process.exit(1);
+    }
+  }
+
+  console.log(`\nStep ${extractSpritesFlag ? "6" : "5"}: Writing human-readable outputs...`);
 
   const fiddlePretty = JSON.stringify(fiddle, null, 2);
   writeFileSync(resolve(OUTPUT_DIR, "fiddle-readable.json"), fiddlePretty);
@@ -582,4 +601,4 @@ function toRecord(keys: string[]): Record<string, true> {
   return Object.fromEntries(keys.map((k) => [k, true as const]));
 }
 
-main();
+void main();

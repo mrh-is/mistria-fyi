@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { X } from "@lucide/svelte";
+  import { IconX } from "@tabler/icons-svelte-runes";
   import { tick } from "svelte";
 
   import type { FeedbackContext } from "$lib/feedback/context.svelte.js";
@@ -135,7 +135,7 @@
         feedbackContext.cancel();
       }}
     >
-      <X class="size-4" />
+      <IconX class="size-4" />
       Cancel
     </button>
 

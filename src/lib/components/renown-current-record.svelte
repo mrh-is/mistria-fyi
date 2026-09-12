@@ -1,0 +1,245 @@
+<script lang="ts">
+  import { page } from "$app/state";
+  import { Icon } from "$lib/components/icon/index.js";
+  import Stepper from "$lib/components/stepper.svelte";
+  import { trackerData } from "$lib/data/index.js";
+  import { getRenownPresentation } from "$lib/engine/renown-presentation.js";
+  import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
+  import { userState } from "$lib/stores/user-state.svelte.js";
+  import { celebrateCategory } from "$lib/utils/celebrate.js";
+
+  let { compact = false }: { compact?: boolean } = $props();
+
+  let feedbackContext = getFeedbackContextOrFallback();
+  let level = $derived(userState.state.completed.renown);
+  let presentation = $derived(getRenownPresentation(level, trackerData.townRanks));
+  let reportable = $derived(
+    feedbackContext.reportable({
+      category: "renown",
+      displayName: presentation.currentRank.name,
+      extra: { level },
+      page: page.url.pathname,
+    }),
+  );
+  function commitInput(event: Event): void {
+    const input = event.currentTarget as HTMLInputElement;
+    const value = Number(input.value);
+    if (input.value.trim() === "" || !Number.isFinite(value) || !Number.isInteger(value)) {
+      input.value = String(level);
+      return;
+    }
+    setRenownWithCelebration(value);
+  }
+
+  function setRenownWithCelebration(newLevel: number): void {
+    const wasDone = level >= presentation.maxLevel;
+    userState.setRenown(newLevel);
+    if (!wasDone && userState.state.completed.renown >= presentation.maxLevel) celebrateCategory();
+  }
+</script>
+
+<div
+  class="renown-current"
+  data-renown-current
+  data-compact={compact}
+  data-maxed={presentation.isMaxed}
+  {@attach reportable}
+>
+  {#if presentation.currentRank}
+    <span class="rank-seal" style="--rank-color: {presentation.color}" aria-hidden="true">
+      <Icon.ProgressMark
+        type="town_rank"
+        fill={presentation.color}
+        color={presentation.color}
+        stroke={1.5}
+      />
+    </span>
+
+    <span class="rank-copy">
+      <strong>{presentation.currentRank.name}</strong>
+      {#if presentation.isMaxed}
+        <small>Max rank reached</small>
+      {:else}
+        <small>{presentation.withinRank} / {presentation.rankSpan} in rank</small>
+      {/if}
+    </span>
+  {/if}
+
+  <span
+    class="renown-rule"
+    role="progressbar"
+    aria-label="Renown progress"
+    aria-valuemin="0"
+    aria-valuemax={presentation.maxLevel}
+    aria-valuenow={level}
+  >
+    <i style="width: {presentation.overallPercent}%"></i>
+  </span>
+
+  <Stepper
+    decrementDisabled={level <= 0}
+    incrementDisabled={level >= presentation.maxLevel}
+    decrementLabel="Decrease renown"
+    incrementLabel="Increase renown"
+    label="Renown level"
+    value="{level} of {presentation.maxLevel}"
+    onDecrement={() => {
+      setRenownWithCelebration(level - 1);
+    }}
+    onIncrement={() => {
+      setRenownWithCelebration(level + 1);
+    }}
+  >
+    <span class="renown-readout">
+      <input
+        aria-label="Renown level"
+        type="number"
+        inputmode="numeric"
+        max={presentation.maxLevel}
+        min={0}
+        value={level}
+        onchange={commitInput}
+      />
+      <span aria-hidden="true">/ {presentation.maxLevel}</span>
+    </span>
+  </Stepper>
+</div>
+
+<style>
+  .renown-current {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 54px minmax(0, 1fr);
+    align-items: center;
+    gap: 5px 10px;
+    padding: 12px;
+    border: 1px solid var(--hairline);
+    border-radius: 2px;
+    background: var(--paper-raised);
+    box-shadow: var(--shadow-small);
+    color: var(--ink);
+  }
+
+  .rank-seal {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    grid-row: span 2;
+    place-items: center;
+    border: 2px solid color-mix(in srgb, var(--rank-color) 70%, var(--ink));
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--rank-color) 15%, var(--paper-raised));
+    box-shadow: 1px 2px 0 color-mix(in srgb, var(--rank-color) 25%, transparent);
+    transform: rotate(-2deg);
+  }
+
+  .rank-seal :global(svg) {
+    width: 28px;
+    height: 28px;
+  }
+
+  .rank-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+  }
+
+  .rank-copy strong {
+    overflow: hidden;
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .rank-copy small {
+    color: var(--ink-muted);
+    font-family: var(--font-data);
+    font-size: 11px;
+  }
+
+  .renown-rule {
+    position: relative;
+    display: block;
+    height: 4px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--cat-renown) 14%, transparent);
+  }
+
+  .renown-rule i {
+    display: block;
+    height: 100%;
+    background: var(--cat-renown);
+    transition: width 300ms ease-out;
+  }
+
+  .renown-current > :global([role="group"]) {
+    grid-column: 1 / -1;
+  }
+
+  .renown-readout {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 4px;
+    color: var(--ink-muted);
+    font-family: var(--font-data);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .renown-readout input {
+    width: 5ch;
+    min-height: 44px;
+    appearance: textfield;
+    border: 0;
+    border-bottom: 1px solid var(--cat-renown);
+    background: transparent;
+    color: var(--ink);
+    font-family: var(--font-data);
+    font-size: 16px;
+    text-align: center;
+  }
+
+  .renown-readout input::-webkit-inner-spin-button,
+  .renown-readout input::-webkit-outer-spin-button {
+    appearance: none;
+  }
+
+  .renown-readout input:focus-visible {
+    outline: 2px solid var(--cat-renown);
+    outline-offset: 2px;
+  }
+
+  .renown-current[data-maxed="true"] .rank-copy {
+    color: var(--ink-muted);
+  }
+
+  .renown-current[data-compact="true"] {
+    grid-template-columns: 40px minmax(0, 1fr);
+    padding: 8px;
+  }
+
+  .renown-current[data-compact="true"] .rank-seal {
+    width: 36px;
+    height: 36px;
+  }
+
+  .renown-current[data-compact="true"] .rank-seal :global(svg) {
+    width: 21px;
+    height: 21px;
+  }
+
+  .renown-current[data-compact="true"] .rank-copy strong {
+    font-size: 20px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .renown-rule i {
+      transition-duration: 0.01ms;
+    }
+  }
+</style>

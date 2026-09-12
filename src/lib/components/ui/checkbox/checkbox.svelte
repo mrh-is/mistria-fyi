@@ -1,6 +1,6 @@
 <script lang="ts">
-  import CheckIcon from "@lucide/svelte/icons/check";
-  import MinusIcon from "@lucide/svelte/icons/minus";
+  import { IconCheck as CheckIcon } from "@tabler/icons-svelte-runes";
+  import { IconMinus as MinusIcon } from "@tabler/icons-svelte-runes";
   import { Checkbox as CheckboxPrimitive } from "bits-ui";
 
   import { cn, type WithoutChildrenOrChild } from "$lib/utils.js";

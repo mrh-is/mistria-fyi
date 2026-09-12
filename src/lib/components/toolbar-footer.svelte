@@ -1,9 +1,17 @@
 <script lang="ts">
-  import { ChevronDown, ChevronUp, Funnel, MessageCircleWarning, Search } from "@lucide/svelte";
+  import {
+    IconChevronDown,
+    IconChevronUp,
+    IconFilter,
+    IconMessageReport,
+    IconSearch,
+    IconSettings,
+  } from "@tabler/icons-svelte-runes";
   import { tick } from "svelte";
   import { prefersReducedMotion } from "svelte/motion";
   import { fly } from "svelte/transition";
 
+  import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import FeedbackPanel from "$lib/components/feedback-panel.svelte";
   import { Input } from "$lib/components/ui/input/index.js";
@@ -149,12 +157,16 @@
 
   <nav
     aria-label="Tracker tools"
-    class="fixed right-0 bottom-0 left-0 z-20 mx-auto max-w-lg border-t border-border/50 bg-background pt-1.5 pb-safe-offset-2"
+    class="pointer-events-none fixed right-0 bottom-safe-offset-3 left-0 z-20 mx-auto max-w-lg px-3"
   >
     {#if toolbarState.searchOpen}
-      <div class="flex items-center gap-2 px-3">
+      <div
+        class="pointer-events-auto flex items-center gap-2 rounded-md border border-border/60 bg-background/92 p-1 shadow-lg backdrop-blur-md"
+      >
         <div class="relative flex-1">
-          <Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <IconSearch
+            class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+          />
           <label class="sr-only" for="tracker-search">Search items</label>
           <Input
             bind:ref={searchInput}
@@ -187,43 +199,34 @@
         </button>
       </div>
     {:else}
-      <div class="flex items-center px-3">
-        <div class="flex flex-1 justify-start">
+      <div class="flex items-end justify-between gap-3">
+        <a class="floating-tool" href={resolve("/settings")} aria-label="Settings">
+          <IconSettings class="size-5 transition-transform motion-reduce:transition-none" />
+        </a>
+
+        <div class="flex items-center gap-1.5">
           <button
-            class="flex min-h-11 min-w-11 items-center justify-center rounded-md transition-colors {activePanel ===
-            'feedback'
-              ? 'bg-accent text-foreground'
-              : 'text-muted-foreground hover:bg-accent hover:text-foreground'}"
+            class="floating-tool {activePanel === 'feedback' ? 'floating-tool--active' : ''}"
             type="button"
             aria-label="Send feedback"
             aria-expanded={activePanel === "feedback"}
             onclick={toggleFeedbackPanel}
           >
-            <MessageCircleWarning class="size-5" />
+            <IconMessageReport class="size-5" />
           </button>
-        </div>
 
-        <div class="flex flex-1 justify-center">
           {#if showSearch}
-            <button
-              class="flex min-h-11 min-w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              type="button"
-              aria-label="Search"
-              onclick={openSearch}
-            >
-              <Search class="size-5" />
+            <button class="floating-tool" type="button" aria-label="Search" onclick={openSearch}>
+              <IconSearch class="size-5" />
             </button>
           {/if}
-        </div>
 
-        <div class="flex flex-1 justify-end">
           <button
-            class="flex min-h-11 items-center gap-1.5 rounded-md px-3 transition-colors motion-reduce:transition-none {activePanel ===
-            'visibility'
-              ? 'bg-accent text-foreground'
+            class="floating-tool gap-1.5 {activePanel === 'visibility'
+              ? 'floating-tool--active'
               : filtersActive
-                ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
-                : 'text-muted-foreground hover:bg-accent hover:text-foreground'}"
+                ? 'floating-tool--filtered'
+                : ''}"
             type="button"
             aria-label="Visibility filters"
             aria-expanded={activePanel === "visibility"}
@@ -231,11 +234,11 @@
             id="visibility-panel-trigger"
             onclick={toggleVisibilityPanel}
           >
-            <Funnel class="size-4" />
+            <IconFilter class="size-4" />
             {#if activePanel === "visibility"}
-              <ChevronUp class="size-3" />
+              <IconChevronUp class="size-3" />
             {:else}
-              <ChevronDown class="size-3" />
+              <IconChevronDown class="size-3" />
             {/if}
           </button>
         </div>
@@ -255,7 +258,7 @@
 
     <div
       id="visibility-panel"
-      class="fixed right-0 bottom-safe-offset-14 left-0 z-30 mx-auto max-w-lg px-3"
+      class="fixed right-0 bottom-safe-offset-16 left-0 z-30 mx-auto max-w-lg px-3"
       aria-labelledby="visibility-panel-trigger"
       role="region"
       transition:fly={{ duration: prefersReducedMotion.current ? 0 : 150, y: 8 }}
@@ -270,3 +273,56 @@
   {/if}
   <p class="sr-only" role="status" aria-live="polite">{filterStatus}</p>
 {/if}
+
+<style>
+  .floating-tool {
+    display: flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid color-mix(in srgb, var(--hairline) 42%, transparent);
+    border-radius: var(--radius-md);
+    color: var(--ink-muted);
+    background: color-mix(in srgb, var(--paper-raised) 91%, transparent);
+    box-shadow: 0 3px 12px rgb(0 0 0 / 13%);
+    backdrop-filter: blur(13px);
+    pointer-events: auto;
+    transition:
+      box-shadow 150ms ease-out,
+      color 150ms ease-out,
+      transform 150ms ease-out;
+  }
+
+  .floating-tool:is(:hover, :focus-visible),
+  .floating-tool--active {
+    color: var(--primary);
+    background: var(--paper-raised);
+    box-shadow: 0 6px 16px rgb(0 0 0 / 18%);
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    transform: translateY(-2px);
+  }
+
+  .floating-tool--filtered {
+    color: var(--fg-amber);
+    background: color-mix(in srgb, var(--paper-raised) 86%, var(--fg-amber));
+  }
+
+  .floating-tool:first-child:is(:hover, :focus-visible) :global(svg) {
+    transform: rotate(-7deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .floating-tool,
+    .floating-tool:first-child :global(svg) {
+      transition-duration: 0.01ms;
+    }
+
+    .floating-tool:is(:hover, :focus-visible),
+    .floating-tool--active,
+    .floating-tool:first-child:is(:hover, :focus-visible) :global(svg) {
+      transform: none;
+    }
+  }
+</style>

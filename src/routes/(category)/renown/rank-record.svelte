@@ -1,0 +1,187 @@
+<script lang="ts">
+  import IconCompletion from "$lib/components/icon/icon-completion.svelte";
+  import { Icon } from "$lib/components/icon/index.js";
+  import Spoiler from "$lib/components/spoiler.svelte";
+  import { getRankState } from "$lib/engine/renown-presentation.js";
+
+  import type { TownRank } from "$lib/types/tracker-data.js";
+
+  let {
+    color,
+    currentLevel,
+    rank,
+    spoilered = false,
+  }: { color: string; currentLevel: number; rank: TownRank; spoilered?: boolean } = $props();
+
+  let rankState = $derived(getRankState(currentLevel, rank));
+  let span = $derived(Math.max(rank.levels.end - rank.levels.start + 1, 1));
+  let within = $derived(Math.max(currentLevel - rank.levels.start, 0));
+  let fill = $derived(
+    rankState === "completed"
+      ? 100
+      : rankState === "upcoming"
+        ? 0
+        : span === 1 && currentLevel >= rank.levels.end
+          ? 100
+          : Math.min((within / span) * 100, 100),
+  );
+  let revealed = $state(false);
+  let hidden = $derived(spoilered && !revealed);
+</script>
+
+<li
+  class="rank-record"
+  data-rank-record
+  data-rank-state={rankState}
+  style="--rank-color: {color}; --rank-fill: {fill}%"
+>
+  <span class="rank-mark" aria-hidden="true">
+    <Icon.ProgressMark type="town_rank" stroke={1.5} />
+    {#if fill > 0}
+      <span data-testid="rank-fill" style="clip-path: inset(0 {100 - fill}% 0 0)">
+        <Icon.ProgressMark type="town_rank" fill={color} stroke={1.5} />
+      </span>
+    {/if}
+  </span>
+
+  <span class="rank-copy">
+    <strong>
+      {#if hidden}
+        <Spoiler onReveal={() => (revealed = true)}>{rank.name}</Spoiler>
+      {:else}
+        {rank.name}
+      {/if}
+    </strong>
+    <small>
+      {#if rank.levels.start === rank.levels.end}
+        Lv {rank.levels.start}
+      {:else}
+        Lv {rank.levels.start}–{rank.levels.end}
+      {/if}
+    </small>
+  </span>
+
+  {#if rankState === "completed"}
+    <span class="rank-state rank-state--completed">
+      <IconCompletion state="completed" class="rank-completion" />
+      Completed
+    </span>
+  {:else if rankState === "current"}
+    <span class="rank-state"><strong>Current</strong> {within} / {span}</span>
+  {:else}
+    <span class="rank-state">Upcoming</span>
+  {/if}
+</li>
+
+<style>
+  .rank-record {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 9px;
+    border: 1px solid var(--hairline);
+    border-bottom: 0;
+    background: var(--paper-raised);
+    color: var(--ink-muted);
+  }
+
+  .rank-record:first-child {
+    border-radius: 2px 2px 0 0;
+  }
+
+  .rank-record:last-child {
+    border-bottom: 1px solid var(--hairline);
+    border-radius: 0 0 2px 2px;
+  }
+
+  .rank-mark {
+    position: relative;
+    display: block;
+    width: 28px;
+    height: 28px;
+    color: color-mix(in srgb, var(--ink-muted) 55%, transparent);
+  }
+
+  .rank-mark > :global(svg),
+  .rank-mark > span,
+  .rank-mark > span :global(svg) {
+    position: absolute;
+    inset: 0;
+    width: 28px;
+    height: 28px;
+  }
+
+  .rank-mark > span {
+    overflow: hidden;
+    color: var(--rank-color);
+  }
+
+  .rank-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+  }
+
+  .rank-copy strong {
+    position: relative;
+    width: fit-content;
+    max-width: 100%;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 650;
+  }
+
+  .rank-copy small,
+  .rank-state {
+    font-family: var(--font-data);
+    font-size: 10px;
+  }
+
+  .rank-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+  }
+
+  .rank-state :global(.rank-completion) {
+    width: 17px;
+    height: 17px;
+    color: var(--cat-renown);
+  }
+
+  .rank-record[data-rank-state="completed"] .rank-copy strong {
+    text-decoration: line-through;
+  }
+
+  .rank-record[data-rank-state="current"] {
+    position: relative;
+    z-index: 1;
+    color: var(--ink);
+    box-shadow: inset 3px 0 0 var(--cat-renown);
+  }
+
+  .rank-record[data-rank-state="current"] .rank-copy strong::after {
+    position: absolute;
+    right: -5px;
+    bottom: 0;
+    left: -3px;
+    z-index: -1;
+    height: 45%;
+    background: color-mix(in srgb, var(--cat-renown) 18%, transparent);
+    content: "";
+    transform: rotate(-0.6deg);
+  }
+
+  @media (max-width: 380px) {
+    .rank-record {
+      grid-template-columns: 28px minmax(0, 1fr);
+    }
+
+    .rank-state {
+      grid-column: 2;
+    }
+  }
+</style>
