@@ -11,6 +11,8 @@
 
   let scrubbing = $state(false);
   let lastScrubbedInitial = $state<string>();
+  let scrubStartInitial = $state<string>();
+  let suppressPointerClick = $state(false);
   let initials = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- short-lived projection local
     const firstByInitial = new Map<string, string>();
@@ -36,14 +38,17 @@
     });
   }
 
-  function startScrub(event: PointerEvent): void {
+  function startScrub(event: PointerEvent, entry: { id: string; initial: string }): void {
     scrubbing = true;
+    scrubStartInitial = entry.initial;
+    suppressPointerClick = false;
     lastScrubbedInitial = undefined;
     try {
       (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
     } catch {
       // jsdom does not implement setPointerCapture
     }
+    activate(entry);
   }
 
   function scrub(event: PointerEvent): void {
@@ -57,8 +62,27 @@
   }
 
   function stopScrub(): void {
+    suppressPointerClick =
+      lastScrubbedInitial !== undefined && lastScrubbedInitial !== scrubStartInitial;
     scrubbing = false;
     lastScrubbedInitial = undefined;
+    scrubStartInitial = undefined;
+  }
+
+  function cancelScrub(): void {
+    scrubbing = false;
+    lastScrubbedInitial = undefined;
+    scrubStartInitial = undefined;
+    suppressPointerClick = false;
+  }
+
+  function handleClick(event: MouseEvent, entry: { id: string; initial: string }): void {
+    if (suppressPointerClick && event.detail > 0) {
+      suppressPointerClick = false;
+      return;
+    }
+    suppressPointerClick = false;
+    activate(entry);
   }
 </script>
 
@@ -66,18 +90,22 @@
   class="npc-index"
   style="--npc-index-count: {initials.length}"
   aria-label="Townsfolk alphabet"
+  data-scrubbing={scrubbing}
   onpointermove={scrub}
   onpointerup={stopScrub}
-  onpointercancel={stopScrub}
+  onpointercancel={cancelScrub}
 >
   {#each initials as entry (entry.initial)}
     <button
       type="button"
       data-npc-index-initial={entry.initial}
+      data-active={scrubbing && lastScrubbedInitial === entry.initial}
       aria-label="Jump to {entry.initial}, first Townsfolk record"
-      onpointerdown={startScrub}
-      onclick={() => {
-        activate(entry);
+      onpointerdown={(event) => {
+        startScrub(event, entry);
+      }}
+      onclick={(event) => {
+        handleClick(event, entry);
       }}
     >
       {entry.initial}
@@ -89,7 +117,7 @@
   .npc-index {
     position: fixed;
     top: 50dvh;
-    right: max(4px, calc((100vw - 32rem) / 2 + 4px));
+    right: max(10px, calc((100vw - 32rem) / 2 + 10px));
     z-index: 9;
     display: grid;
     width: 24px;
@@ -113,10 +141,19 @@
     line-height: 1;
   }
 
-  .npc-index button:is(:hover, :focus-visible) {
+  .npc-index button:is(:focus-visible, [data-active="true"]) {
     background: color-mix(in srgb, var(--cat-npcs) 12%, transparent);
     color: var(--cat-npcs);
     outline: 2px solid var(--cat-npcs);
     outline-offset: 0;
+  }
+
+  @media (hover: hover) {
+    .npc-index:not([data-scrubbing="true"]) button:hover {
+      background: color-mix(in srgb, var(--cat-npcs) 12%, transparent);
+      color: var(--cat-npcs);
+      outline: 2px solid var(--cat-npcs);
+      outline-offset: 0;
+    }
   }
 </style>

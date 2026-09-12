@@ -107,6 +107,36 @@ test.describe("@critical keyboard and focus accessibility", () => {
     ).toBeFocused();
   });
 
+  test("Townsfolk pointer scrubbing follows the active letter without snapping back", async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await initializeApplication(page, "light", createStoredState({ showSpoilers: true }));
+    await gotoApplication(page, "/npcs");
+
+    const initialD = page.getByRole("button", { name: "Jump to D, first Townsfolk record" });
+    const initialO = page.getByRole("button", { name: "Jump to O, first Townsfolk record" });
+    const initialT = page.getByRole("button", { name: "Jump to T, first Townsfolk record" });
+    await initialO.click();
+    await expect(page.locator('[id^="npc-o"]:focus')).toHaveCount(1);
+    const dBox = await initialD.boundingBox();
+    const tBox = await initialT.boundingBox();
+
+    await page.mouse.move((dBox?.x ?? 0) + 12, (dBox?.y ?? 0) + (dBox?.height ?? 0) / 2);
+    await page.mouse.down();
+    await expect(initialD).toHaveAttribute("data-active", "true");
+    await page.mouse.move((tBox?.x ?? 0) + 12, (tBox?.y ?? 0) + (tBox?.height ?? 0) / 2, {
+      steps: 8,
+    });
+    await expect(page.locator('[id^="npc-t"]:focus')).toHaveCount(1);
+    await expect(initialD).toHaveAttribute("data-active", "false");
+    await expect(initialT).toHaveAttribute("data-active", "true");
+
+    await page.mouse.up();
+    await expect(page.locator('[id^="npc-t"]:focus')).toHaveCount(1);
+    await expect(initialT).toHaveAttribute("data-active", "false");
+  });
+
   test("specialized numeric records support direct keyboard editing", async ({ page }) => {
     await gotoApplication(page, "/skills");
     await page

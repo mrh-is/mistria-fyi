@@ -204,6 +204,8 @@ Create a client-test harness with repeated and missing initials. Prove that the 
 - moves focus to the first matching record;
 - supports Enter and Space through native button behavior;
 - updates while pointer-scrubbing across represented letters;
+- keeps the transient highlight on the currently scrubbed letter and clears it on release;
+- suppresses the starting letter’s pointer-generated click after a completed drag;
 - does not begin scrubbing from outside the index; and
 - selects immediate rather than smooth scroll behavior under reduced motion.
 
