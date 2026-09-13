@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  classifyItemAvailability,
   filterAvailableItems,
   getDisplayBadges,
   hasSelectiveSeasonRestriction,
@@ -12,10 +13,12 @@ import {
 } from "../availability.js";
 
 import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
+import type { AvailabilityWindow } from "$lib/types/availability.js";
 import type { ItemId, Season, StoreId, Weather } from "$lib/types/tracker-data.js";
 import type { NonEmptyArray } from "$lib/utils.js";
 
 const spring = { season: "spring" as const, weather: "calm" as const };
+const defaultWindows: AvailabilityWindow[] = ["now", "anytime"];
 
 function src(availability?: AvailabilityCondition): Source {
   return { ...(availability ? { availability } : {}), type: "store", storeId: "test" as StoreId };
@@ -143,6 +146,33 @@ describe("isItemAvailable", () => {
 
   it("timely mode: available when a source has a selective season condition that matches", () => {
     expect(isItemAvailable([src(seasonCondition(["spring"]))], spring, "timely")).toBe(true);
+  });
+});
+
+describe("classifyItemAvailability", () => {
+  it("partitions unrestricted entries as anytime", () => {
+    expect(classifyItemAvailability([], spring)).toBe("anytime");
+    expect(classifyItemAvailability([src()], spring)).toBe("anytime");
+    expect(classifyItemAvailability([src(allSeasonsCondition)], spring)).toBe("anytime");
+  });
+
+  it("partitions matching timely entries as now and non-matches as later", () => {
+    expect(classifyItemAvailability([src(seasonCondition(["spring"]))], spring)).toBe("now");
+    expect(classifyItemAvailability([src(seasonCondition(["winter"]))], spring)).toBe("later");
+  });
+
+  it("uses an unrestricted source when an item also has a timely source", () => {
+    expect(classifyItemAvailability([src(), src(seasonCondition(["winter"]))], spring)).toBe(
+      "anytime",
+    );
+  });
+
+  it("supports independently selected windows", () => {
+    expect(isItemAvailable([src(seasonCondition(["spring"]))], spring, ["now"])).toBe(true);
+    expect(isItemAvailable([src()], spring, ["now"])).toBe(false);
+    expect(isItemAvailable([src()], spring, ["anytime"])).toBe(true);
+    expect(isItemAvailable([src(seasonCondition(["winter"]))], spring, ["later"])).toBe(true);
+    expect(isItemAvailable([src(seasonCondition(["winter"]))], spring, defaultWindows)).toBe(false);
   });
 });
 

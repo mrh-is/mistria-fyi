@@ -39,6 +39,7 @@
   bind:this={ref}
   class="page-header"
   class:page-header--category={category !== undefined}
+  class:page-header--complete={pct === 100}
   data-page-header={category === undefined ? "generic" : "category"}
   style={category !== undefined && pct !== undefined ? `--category-progress: ${pct}%;` : undefined}
 >
@@ -149,6 +150,20 @@
     height: 24px;
   }
 
+  .page-header--complete .page-header__ribbon::after {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 9px;
+    background:
+      linear-gradient(to bottom right, transparent 46%, #d4a72c 48% 57%, transparent 59%) top / 9px
+        50% no-repeat,
+      linear-gradient(to top right, transparent 46%, #d4a72c 48% 57%, transparent 59%) bottom / 9px
+        50% no-repeat;
+    content: "";
+  }
+
   .page-header__edge-mask {
     display: none;
   }
@@ -190,6 +205,16 @@
       display: block;
       width: 8px;
       background: var(--paper-raised);
+    }
+
+    .page-header--complete .page-header__ribbon::after {
+      right: 0;
+      left: auto;
+      background:
+        linear-gradient(to bottom left, transparent 46%, #d4a72c 48% 57%, transparent 59%) top / 9px
+          50% no-repeat,
+        linear-gradient(to top left, transparent 46%, #d4a72c 48% 57%, transparent 59%) bottom / 9px
+          50% no-repeat;
     }
   }
 

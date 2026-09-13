@@ -58,7 +58,7 @@
         sources,
         completed,
         userState.state.worldState,
-        userState.state.availabilityMode,
+        userState.state.availabilityWindows,
       ),
       mode: "visible",
     };
@@ -109,7 +109,7 @@
       trackerData.items[itemId].sources,
       isItemComplete(itemId),
       userState.state.worldState,
-      userState.state.availabilityMode,
+      userState.state.availabilityWindows,
     );
   }
 

@@ -6,8 +6,9 @@ import { getMarriedNpc } from "$lib/engine/relationships.js";
 import { recordEntries, recordKeys, recordValues } from "$lib/utils";
 
 import type { CategoryKey } from "$lib/data/categories.js";
-import type { AvailabilityMode, CompletedState } from "$lib/stores/user-state.svelte.js";
+import type { CompletedState } from "$lib/stores/user-state.svelte.js";
 import type { Source } from "$lib/types/acquisition.js";
+import type { AvailabilitySelection } from "$lib/types/availability.js";
 import type { ItemId, NpcId, QuestId, Season, Weather } from "$lib/types/tracker-data.js";
 
 export const MAX_NPC_LEVEL = 12;
@@ -24,7 +25,7 @@ export interface CategoryProgress {
 }
 
 interface ProgressContext {
-  availabilityMode: AvailabilityMode;
+  availabilityWindows: AvailabilitySelection;
   completed: CompletedState;
   worldState: { season: Season; weather: Weather };
 }
@@ -127,12 +128,9 @@ function almanacEntryProgress(
   });
 
   const incompleteIds = applicableIds.filter((id) => !completedSet.has(id));
-  const filtered =
-    ctx.availabilityMode === "everything"
-      ? incompleteIds
-      : incompleteIds.filter((id) =>
-          isItemAvailable(aggregateEntrySources(id), ctx.worldState, ctx.availabilityMode),
-        );
+  const filtered = incompleteIds.filter((id) =>
+    isItemAvailable(aggregateEntrySources(id), ctx.worldState, ctx.availabilityWindows),
+  );
   return {
     completed: applicableIds.length - incompleteIds.length,
     filtered: filtered.length,
@@ -170,7 +168,7 @@ function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
           completed++;
           continue;
         }
-        if (isVariantInScope(variant, ctx.worldState.season, ctx.availabilityMode)) {
+        if (isVariantInScope(variant, ctx.worldState.season, ctx.availabilityWindows)) {
           filtered++;
         }
       }
@@ -320,7 +318,7 @@ function itemProgress(
     incompleteIds,
     (id) => trackerData.items[id].sources,
     ctx.worldState,
-    ctx.availabilityMode,
+    ctx.availabilityWindows,
   );
   return {
     completed: applicableIds.length - incompleteIds.length,

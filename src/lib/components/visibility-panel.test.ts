@@ -14,8 +14,8 @@ function sourceFilter(label: string): SourceFilter {
   return filter;
 }
 
-const gatheringFilter = sourceFilter("Gathering");
-const storeFilter = sourceFilter("Stores");
+const foragingFilter = sourceFilter("Foraging");
+const shopsFilter = sourceFilter("Shops");
 
 afterEach(() => {
   toolbarState.removeSourceFilters("test");
@@ -32,55 +32,48 @@ describe("VisibilityPanel", () => {
   });
 
   it("groups source types by player activity", () => {
-    expect(SOURCE_FILTERS.map(({ label, types }) => [label, types])).toEqual([
-      ["Chests", ["beach_cave_chest", "treasure_chest", "lost_and_found"]],
-      ["Crafting", ["recipe"]],
-      ["Dating", ["engagement", "date", "date_inspiration", "proposal", "spouseGift", "wedding"]],
-      ["Farming", ["crop", "tree", "animal_product", "breed", "station", "ship_item"]],
-      ["Festivals", ["festival", "festival_activity"]],
-      ["Fishing", ["fish", "fish_trap", "dive", "bait_fish"]],
-      ["Gathering", ["forage", "bug_catch", "artifact_dig", "equipment"]],
-      ["Mines", ["mines_chest", "mines_dig_site", "mine", "mine_fish", "monster", "monster_feed"]],
-      ["Museum", ["museum_donation", "artifact_replicator", "donate_item"]],
-      ["Offerings", ["chicken_statue", "wishing_well"]],
-      ["Perks", ["perk", "perk_drop", "ritual_chamber"]],
-      ["Stores", ["store", "scroll_bundle", "upgrade"]],
-      ["Progress", ["default", "quest", "renown", "reach_day"]],
+    expect(SOURCE_FILTERS.map(({ label }) => label)).toEqual([
+      "Foraging",
+      "Fishing",
+      "Shops",
+      "NPCs",
+      "Events",
+      "Crafting",
     ]);
   });
 
-  it("renders collapsed seasonality and source sections by default", () => {
-    toolbarState.setSourceFilters("test", [gatheringFilter, storeFilter]);
+  it("renders availability, world-state, and source controls in one view", () => {
+    toolbarState.setSourceFilters("test", [foragingFilter, shopsFilter]);
 
     const { body } = render(VisibilityPanel, { props: { showSeasonality: true } });
 
-    expect(body).toContain("Seasonality");
-    expect(body).toContain('aria-expanded="false"');
-    expect(body).toContain("Source types");
-    expect(body).not.toContain("Only show");
+    expect(body).toContain("When to find");
+    expect(body).toContain('aria-label="Season"');
+    expect(body).toContain('aria-label="Weather"');
+    expect(body).toContain("Sources");
+    expect(body).toContain("Foraging");
+    expect(body).toContain("Shops");
+    expect(body).toContain('aria-label="About source groups"');
     expect(body).toContain("Show completed items");
-    // The two collapsed disclosure triggers retain the minimum target size.
-    expect(body.match(/min-h-11/g)).toHaveLength(2);
-    expect(body).toContain('aria-controls="seasonality-filter-controls"');
-    expect(body).toContain('aria-controls="source-type-filter-controls"');
   });
 
-  it("omits seasonality, source types, and reset controls when they are inapplicable", () => {
+  it("omits seasonality and source controls when they are inapplicable", () => {
     const { body } = render(VisibilityPanel, { props: { showSeasonality: false } });
 
-    expect(body).not.toContain("Seasonality");
-    expect(body).not.toContain("Source types");
-    expect(body).not.toContain("Reset filters");
+    expect(body).not.toContain("When to find");
+    expect(body).not.toContain("Sources");
+    expect(body).not.toContain("Clear all filters");
+    expect(body).toContain("Show completed items");
   });
 
   it("shows reset for hidden source groups while retaining current world state", () => {
-    toolbarState.setSourceFilters("test", [gatheringFilter]);
+    toolbarState.setSourceFilters("test", [foragingFilter]);
     toolbarState.hideAllSourceFilters();
     userState.setSeason("summer");
 
     const { body } = render(VisibilityPanel, { props: { showSeasonality: true } });
 
-    expect(body).toContain("Reset filters");
+    expect(body).toContain("Clear all filters");
     expect(body).toContain("Summer");
     expect(body).toContain("Sun");
     expect(userState.state.worldState).toEqual({ season: "summer", weather: "calm" });

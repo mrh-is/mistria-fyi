@@ -73,7 +73,7 @@ function ctx(
   }> = {},
 ) {
   return {
-    availabilityMode: overrides.availabilityMode ?? "everything",
+    availabilityWindows: overrides.availabilityMode ?? "everything",
     completed: makeCompleted(overrides.completed ?? {}),
     worldState: overrides.worldState ?? defaultWorld,
   };
