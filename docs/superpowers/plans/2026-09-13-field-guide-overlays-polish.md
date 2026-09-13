@@ -41,13 +41,14 @@ Primary files:
 
 Create a focused foldout frame that supplies the opaque raised-paper surface, title row, close
 control, bounded scrolling, safe-area placement, 150 ms entrance motion, and reduced-motion path.
-`ToolbarFooter` remains the sole coordinator for the mutually exclusive `settings`, `feedback`,
-`search`, and `filters` states, focus restoration, Escape behavior, route changes, and background
-inertness.
+`ToolbarFooter` remains the sole coordinator for the mutually exclusive `settings`, `feedback`, and
+`filters` states, focus restoration, Escape behavior, route changes, and background inertness.
 
-Move the settings tool into the same button-and-panel model as the other tools. Keep the visual
-order as settings and feedback on the left, then search and filters on the right. Remove translucent
-materials and backdrop blur from utility surfaces.
+Move the settings tool into the same button-and-panel model as feedback and filters. Keep the visual
+order as settings and feedback on the left, then search and filters on the right. Search retains its
+existing inline behavior: its toolbar input filters the list already in front of the user rather
+than nesting results inside another surface. Remove translucent materials and backdrop blur from
+utility surfaces.
 
 Primary files:
 
@@ -57,42 +58,47 @@ Primary files:
 
 ## Phase 3: Search & filters
 
-Render search inside its foldout while keeping the existing engine, completion mutations, undo
-behavior, spoiler visibility, and route availability. Group results by category, add compact
-category ribbons, retain per-result completion controls, and announce result counts.
+Keep the existing search interaction: activating search replaces the toolbar controls with an input,
+and the visible page content filters to matching results. Preserve the existing engine, completion
+mutations, undo behavior, spoiler visibility, route availability, and result announcements. Apply
+Field Guide styling to the input and results without putting them in a foldout.
 
 Recompose filters as three visible sections. “When to find” uses separated multi-select chips for
 the availability windows and joined single-select strips for season and weather. “Sources” uses the
 real source-filter registrations as separated chips. “Show completed” remains a switch, and one
 clear action restores the default availability windows, all sources, and hidden completed items.
 
-Add a specimen-tag source explainer generated from the canonical source groups. It must trap and
+Add a specimen-tag source explainer generated from the canonical source groups. Its visual reference
+is a horizontal manila inventory tag: clipped corners, ruled sections, condensed printed labels, a
+rust-colored reinforcement ring, and a short white string emerging from the eyelet. It must trap and
 restore focus, close on Escape or outside activation, and remain legible in both themes.
 
 Primary files:
 
 - `src/lib/components/search-results.svelte`
 - `src/lib/components/visibility-panel.svelte`
-- new source explainer and search-panel components
+- new source explainer component
 - `src/lib/stores/toolbar-state.svelte.ts`
 - existing search, visibility, and toolbar tests
 
 ## Phase 4: Quick settings & data management
 
 The quick-settings foldout contains the spoiler switch, a joined Light, Dark, and Auto theme
-selector, and a link to `/settings`. Keep the established theme and user-state stores as the source
-of truth.
+selector, and a link to `/data`. Keep the established theme and user-state stores as the source of
+truth.
 
-Recast `/settings` as “Data management”. Preserve all import, transfer, backup, restore, reset,
-feedback, privacy, and AI-disclosure behavior, but present the four data tools as compact Field Kit
-rows. The destructive row remains visually and semantically distinct. Theme and spoiler controls
-leave this destination page because they now live in quick settings.
+Create `/data` as the “Data management” destination. Preserve all import, transfer, backup, restore,
+reset, feedback, privacy, and AI-disclosure behavior, but present the four data tools as compact
+Field Kit rows. The destructive row remains visually and semantically distinct. Theme and spoiler
+controls live in quick settings. Keep `/settings` as a compatibility redirect to `/data`, and update
+internal links to the new route.
 
 Primary files:
 
 - new quick-settings component
-- `src/routes/settings/+page.svelte`
-- `src/routes/settings/settings-card.svelte` and focused data-management cards as needed
+- new `src/routes/data/` route using the existing focused data-management cards
+- compatibility redirect from `src/routes/settings/`
+- focused data-management components as needed
 - settings and theme tests
 
 ## Phase 5: Feedback specimen tag
