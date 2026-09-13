@@ -132,7 +132,7 @@ describe("ExpandableSection", () => {
     await fireEvent.click(trigger);
     await fireEvent.click(trigger);
 
-    expect(states).toEqual([true, false]);
+    expect(states).toEqual([false, true, false]);
   });
 
   it("registers when reportCategory is provided", async () => {
