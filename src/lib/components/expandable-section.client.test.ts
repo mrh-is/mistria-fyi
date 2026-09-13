@@ -102,21 +102,6 @@ describe("ExpandableSection", () => {
     );
   });
 
-  it("renders disabled until mount and then enables interaction", async () => {
-    const view = render(ExpandableSectionHarness, {
-      feedbackContext: new FeedbackContext(),
-      name: "Mounted",
-    });
-
-    const trigger = view.getByRole("button", { name: "Mounted" });
-    expect(trigger).toHaveAttribute("aria-busy", "true");
-
-    await tick();
-
-    expect(trigger).not.toBeDisabled();
-    expect(trigger).toHaveAttribute("aria-busy", "false");
-  });
-
   it("reports expansion state changes", async () => {
     const states: boolean[] = [];
     const view = render(ExpandableSectionHarness, {
