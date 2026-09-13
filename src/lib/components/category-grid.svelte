@@ -2,6 +2,7 @@
   import CategoryCard from "$lib/components/category-card.svelte";
   import { Icon } from "$lib/components/icon/index.js";
   import { CATEGORY_KEYS } from "$lib/data/categories.js";
+
   import type { AllProgress } from "$lib/engine/progress.js";
 
   let { progress }: { progress: AllProgress } = $props();
