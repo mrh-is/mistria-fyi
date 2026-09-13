@@ -37,7 +37,7 @@ test.describe("@critical 320-pixel reflow", () => {
     await openVisibilityPanel(page);
     expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
 
-    await gotoApplication(page, "/settings");
+    await gotoApplication(page, "/data");
     await openSettingsCard(page, "Import from Save File");
     expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
   });

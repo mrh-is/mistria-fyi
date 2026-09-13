@@ -229,7 +229,7 @@
     min-width: 76px;
     flex-shrink: 0;
     padding: 4px 11px 4px 9px;
-    color: var(--result-category);
+    color: var(--ink);
     border-left: 2px solid var(--result-category);
     background: color-mix(in srgb, var(--result-category) 9%, var(--paper));
     clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 50%, 100% 100%, 0 100%);

@@ -22,7 +22,9 @@ test.describe("@critical semantic accessibility", () => {
           ? "Mistria Field Guide"
           : route.path === "/all"
             ? "Everything"
-            : route.name;
+            : route.path === "/settings"
+              ? "Data management"
+              : route.name;
       await expect(page.getByRole("heading", { level: 1, name: headingName })).toBeVisible();
     });
   }
@@ -69,7 +71,6 @@ test.describe("@critical semantic accessibility", () => {
 
     await gotoApplication(page, "/almanac");
     await openVisibilityPanel(page);
-    await page.getByRole("button", { name: /Seasonality/ }).click();
     const spring = page.getByRole("button", { exact: true, name: "Spring" });
     await expect(spring).toHaveAttribute("aria-pressed", "true");
   });

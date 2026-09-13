@@ -281,7 +281,7 @@
   }
 
   .radio-strip .radio-strip__active {
-    color: var(--primary);
+    color: var(--ink);
     background: color-mix(in srgb, var(--primary) 12%, var(--paper-raised));
   }
 

@@ -254,7 +254,6 @@
     <div
       bind:this={panelElement}
       class="fixed right-0 bottom-safe-offset-16 left-0 z-30 mx-auto max-w-lg px-3"
-      role="region"
       transition:fly={{ duration: prefersReducedMotion.current ? 0 : 150, y: 8 }}
     >
       {#if activePanel === "settings"}

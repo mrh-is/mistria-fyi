@@ -81,6 +81,7 @@ test.describe("@critical stateful accessibility", () => {
     const spoilerName = (await spoiler.textContent())?.trim();
     if (!spoilerName) throw new Error("Spoiler control had no searchable item name");
     await openSearch(page, spoilerName);
+    await expect(page.getByText("Replica Perfect Copper Ore", { exact: true })).toBeVisible();
     spoiler = page.getByRole("button", { name: "Reveal spoiler" }).first();
     await expect(spoiler).toBeVisible();
     await analyzeAccessibility(
@@ -121,13 +122,13 @@ test.describe("@critical stateful accessibility", () => {
   });
 
   test("settings dialog and import results pass axe", async ({ page }, testInfo) => {
-    await gotoApplication(page, "/settings");
+    await gotoApplication(page, "/data");
     await openSettingsCard(page, "Import from Save File");
     await page.getByRole("button", { name: "Where is my save file?" }).click();
     await expect(page.getByRole("dialog", { name: "Finding your save file" })).toBeVisible();
     await analyzeAccessibility(
       page,
-      { route: "/settings", state: "save-location-dialog", theme: "light" },
+      { route: "/data", state: "save-location-dialog", theme: "light" },
       testInfo,
     );
     await page.getByRole("button", { name: "Got it" }).click();
@@ -147,7 +148,7 @@ test.describe("@critical stateful accessibility", () => {
     await expect(page.getByText("No new data to import", { exact: true })).toBeVisible();
     await analyzeAccessibility(
       page,
-      { route: "/settings", state: "import-empty-result", theme: "light" },
+      { route: "/data", state: "import-empty-result", theme: "light" },
       testInfo,
     );
 
@@ -160,7 +161,7 @@ test.describe("@critical stateful accessibility", () => {
     await expect(page.getByText("1 warnings", { exact: true })).toBeVisible();
     await analyzeAccessibility(
       page,
-      { route: "/settings", state: "import-success-warning", theme: "light" },
+      { route: "/data", state: "import-success-warning", theme: "light" },
       testInfo,
     );
 
@@ -172,21 +173,21 @@ test.describe("@critical stateful accessibility", () => {
     await expect(page.getByRole("alert")).toContainText("player.json: invalid JSON");
     await analyzeAccessibility(
       page,
-      { route: "/settings", state: "import-error", theme: "light" },
+      { route: "/data", state: "import-error", theme: "light" },
       testInfo,
     );
   });
 
   test("transfer generation, success, and failure pass axe", async ({ page }, testInfo) => {
     await initializeApplication(page, "light", null);
-    await gotoApplication(page, "/settings");
+    await gotoApplication(page, "/data");
     await openSettingsCard(page, "Transfer to Another Device");
     await page.getByRole("button", { name: "Generate QR Code" }).click();
     const generatedQr = page.getByRole("img", { name: "Transfer QR Code" });
     await expect(generatedQr).toBeVisible();
     await analyzeAccessibility(
       page,
-      { route: "/settings", state: "transfer-generated", theme: "light" },
+      { route: "/data", state: "transfer-generated", theme: "light" },
       testInfo,
     );
 
@@ -205,7 +206,7 @@ test.describe("@critical stateful accessibility", () => {
     await expect(page.getByText(/QR code scanned successfully/).last()).toBeVisible();
     await analyzeAccessibility(
       page,
-      { route: "/settings", state: "transfer-success", theme: "light" },
+      { route: "/data", state: "transfer-success", theme: "light" },
       testInfo,
     );
 
@@ -222,13 +223,13 @@ test.describe("@critical stateful accessibility", () => {
     await expect(page.getByRole("alert")).toContainText("Invalid QR code");
     await analyzeAccessibility(
       page,
-      { route: "/settings", state: "transfer-error", theme: "light" },
+      { route: "/data", state: "transfer-error", theme: "light" },
       testInfo,
     );
   });
 
   test("backup restore failure passes axe", async ({ page }, testInfo) => {
-    await gotoApplication(page, "/settings");
+    await gotoApplication(page, "/data");
     await openSettingsCard(page, "Backup & Restore");
     const chooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: "Restore from backup" }).click();
@@ -242,7 +243,7 @@ test.describe("@critical stateful accessibility", () => {
     await expect(page.getByRole("alert")).toContainText("missing required data");
     await analyzeAccessibility(
       page,
-      { route: "/settings", state: "backup-restore-error", theme: "light" },
+      { route: "/data", state: "backup-restore-error", theme: "light" },
       testInfo,
     );
   });
@@ -250,12 +251,12 @@ test.describe("@critical stateful accessibility", () => {
 
 test("dark expanded settings state passes axe", async ({ page }, testInfo) => {
   await initializeApplication(page, "dark", createStoredState({ showSpoilers: true }));
-  await gotoApplication(page, "/settings");
+  await gotoApplication(page, "/data");
   await openSettingsCard(page, "Danger Zone");
 
   await analyzeAccessibility(
     page,
-    { route: "/settings", state: "danger-zone-expanded", theme: "dark" },
+    { route: "/data", state: "danger-zone-expanded", theme: "dark" },
     testInfo,
   );
 });
