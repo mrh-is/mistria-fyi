@@ -30,5 +30,5 @@ export async function openSettingsCard(page: Page, name: string): Promise<void> 
 
 export async function openVisibilityPanel(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Visibility filters" }).click();
-  await expect(page.getByRole("region", { name: "Visibility filters" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Filters" })).toBeVisible();
 }
