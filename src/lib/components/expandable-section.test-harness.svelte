@@ -10,6 +10,7 @@
     feedbackContext,
     forceOpen = false,
     name = "Test Section",
+    onExpandedChange,
     reportCategory,
     reportEntityId,
     reportExtra,
@@ -21,6 +22,7 @@
     feedbackContext: FeedbackContext;
     forceOpen?: boolean;
     name?: string;
+    onExpandedChange?: (expanded: boolean) => void;
     reportCategory?: string;
     reportEntityId?: string;
     reportExtra?: Record<string, number | string>;
@@ -35,6 +37,7 @@
   {feedbackContext}
   {forceOpen}
   {name}
+  {onExpandedChange}
   {reportCategory}
   {reportEntityId}
   {reportExtra}

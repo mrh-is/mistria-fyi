@@ -31,7 +31,7 @@
       <IconLibrary class="size-5 shrink-0 text-amber-700 dark:text-amber-400" />
       Mistria Field Guide
     </h1>
-    <OverallProgress />
+    <OverallProgress progress={allProgress} />
     <span class="overall-progress-rule" aria-hidden="true"><i></i></span>
   </header>
 
@@ -42,7 +42,7 @@
       <h2 class="px-1 font-controls text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
         Index
       </h2>
-      <CategoryGrid />
+      <CategoryGrid progress={allProgress} />
       <a
         class="everything-link"
         href={resolve("/all")}

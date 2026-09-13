@@ -6,7 +6,7 @@
   import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
-  import { trackerData } from "$lib/data/index.js";
+  import { trackerData, trackerIndex } from "$lib/data/index.js";
   import { isVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -98,9 +98,7 @@
 
   let nameFilter = $derived(toolbarState.searchQuery);
 
-  registerSourceFilters("recipes", () =>
-    recipesByCategory.flatMap(({ entries }) => entries.flatMap(({ sources }) => sources)),
-  );
+  registerSourceFilters("recipes", () => trackerIndex.categorySourceTypes.recipes);
 
   function matchesName(entry: RecipeEntry): boolean {
     return !nameFilter || entry.name.toLowerCase().includes(nameFilter.toLowerCase());

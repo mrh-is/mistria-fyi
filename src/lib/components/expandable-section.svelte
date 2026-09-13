@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { untrack } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { prefersReducedMotion } from "svelte/motion";
   import { slide } from "svelte/transition";
 
@@ -19,6 +19,7 @@
     feedbackContext = getFeedbackContextOrFallback(),
     forceOpen = false,
     name,
+    onExpandedChange,
     reportCategory,
     reportEntityId,
     reportExtra,
@@ -31,6 +32,7 @@
     feedbackContext?: FeedbackContext;
     forceOpen?: boolean;
     name: string;
+    onExpandedChange?: (expanded: boolean) => void;
     reportCategory?: string;
     reportEntityId?: string;
     reportExtra?: Record<string, number | string>;
@@ -49,7 +51,9 @@
   );
 
   let expanded = $state(untrack(() => defaultOpen));
+  let hydrated = $state(false);
   let isOpen = $derived(expanded || forceOpen);
+  let lastReportedOpen = $state<boolean | undefined>(undefined);
   let boundedCount = $derived(
     total === undefined || count === undefined ? undefined : Math.min(Math.max(count, 0), total),
   );
@@ -65,6 +69,20 @@
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "")}`,
   );
+
+  onMount(() => {
+    hydrated = true;
+  });
+
+  $effect(() => {
+    if (lastReportedOpen === isOpen) return;
+    lastReportedOpen = isOpen;
+    onExpandedChange?.(isOpen);
+  });
+
+  function toggleExpanded(): void {
+    expanded = !expanded;
+  }
 </script>
 
 <div
@@ -76,8 +94,10 @@
 >
   <button
     class="section-trigger"
-    onclick={() => (expanded = !expanded)}
+    disabled={!hydrated}
+    onclick={toggleExpanded}
     type="button"
+    aria-busy={!hydrated}
     aria-expanded={isOpen}
     aria-controls={contentId}
     aria-label={total !== undefined && boundedCount !== undefined

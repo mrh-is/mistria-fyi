@@ -1,4 +1,4 @@
-import { trackerData } from "$lib/data/index.js";
+import { trackerData, trackerIndex } from "$lib/data/index.js";
 import { isVariantInScope } from "$lib/engine/animal-availability.js";
 import { isItemApplicable, isItemApplicableForAlmanac } from "$lib/engine/applicability.js";
 import { filterAvailableItems, isItemAvailable } from "$lib/engine/availability.js";
@@ -7,7 +7,6 @@ import { recordEntries, recordKeys, recordValues } from "$lib/utils";
 
 import type { CategoryKey } from "$lib/data/categories.js";
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { Source } from "$lib/types/acquisition.js";
 import type { AvailabilitySelection } from "$lib/types/availability.js";
 import type { ItemId, NpcId, QuestId, Season, Weather } from "$lib/types/tracker-data.js";
 
@@ -93,26 +92,6 @@ export function isNpcComplete(npcId: NpcId, completed: CompletedState): boolean 
   return false;
 }
 
-function aggregateEntrySources(canonicalId: ItemId): Source[] {
-  const almanacEntry = recordValues(trackerData.almanac)
-    .flatMap(({ items }) => items)
-    .find((entry) => entry.itemIds[0] === canonicalId);
-  if (!almanacEntry) return trackerData.items[canonicalId].sources;
-  const seen = new Set<string>();
-  const sources: Source[] = [];
-  for (const id of almanacEntry.itemIds) {
-    const item = trackerData.items[id];
-    for (const source of item.sources) {
-      const key = JSON.stringify(source);
-      if (!seen.has(key)) {
-        seen.add(key);
-        sources.push(source);
-      }
-    }
-  }
-  return sources;
-}
-
 function almanacEntryProgress(
   canonicalIds: ItemId[],
   completedSet: Set<ItemId>,
@@ -120,16 +99,18 @@ function almanacEntryProgress(
 ): CategoryProgress {
   const applicableIds = canonicalIds.filter((id) => {
     if (completedSet.has(id)) return true;
-    const entry = recordValues(trackerData.almanac)
-      .flatMap(({ items }) => items)
-      .find((e) => e.itemIds[0] === id);
+    const entry = trackerIndex.almanacEntryByCanonicalId.get(id);
     if (!entry) return isItemApplicable(id, ctx.completed);
     return isItemApplicableForAlmanac(entry.itemIds, ctx.completed);
   });
 
   const incompleteIds = applicableIds.filter((id) => !completedSet.has(id));
   const filtered = incompleteIds.filter((id) =>
-    isItemAvailable(aggregateEntrySources(id), ctx.worldState, ctx.availabilityWindows),
+    isItemAvailable(
+      trackerIndex.getAggregatedAlmanacSources(id),
+      ctx.worldState,
+      ctx.availabilityWindows,
+    ),
   );
   return {
     completed: applicableIds.length - incompleteIds.length,
@@ -139,15 +120,15 @@ function almanacEntryProgress(
 }
 
 function getAlmanacProgress(ctx: ProgressContext): CategoryProgress {
-  const allCanonicalIds = recordValues(trackerData.almanac).flatMap(({ items }) =>
-    items.map((entry) => entry.itemIds[0]),
+  const entries = almanacEntryProgress(
+    trackerIndex.almanacCanonicalIds,
+    ctx.completed.almanac,
+    ctx,
   );
-  const entries = almanacEntryProgress(allCanonicalIds, ctx.completed.almanac, ctx);
-  const dateCount = recordKeys(trackerData.dates).length;
   return {
     completed: entries.completed + ctx.completed.dates.size,
-    filtered: entries.filtered + dateCount - ctx.completed.dates.size,
-    total: entries.total + dateCount,
+    filtered: entries.filtered + trackerIndex.almanacDateCount - ctx.completed.dates.size,
+    total: entries.total + trackerIndex.almanacDateCount,
   };
 }
 
