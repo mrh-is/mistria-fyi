@@ -1,4 +1,4 @@
-import { trackerData } from "$lib/data/index.js";
+import { trackerData, trackerIndex } from "$lib/data/index.js";
 import { isItemApplicable, isItemApplicableForAlmanac } from "$lib/engine/applicability.js";
 import { isItemAvailable } from "$lib/engine/availability.js";
 import { isNpcComplete } from "$lib/engine/progress.js";
@@ -7,8 +7,7 @@ import { recordEntries } from "$lib/utils";
 
 import type { UserProgressionState } from "$lib/engine/visibility.js";
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { Source } from "$lib/types/acquisition.js";
-import type { ItemId, QuestId, Season, Weather } from "$lib/types/tracker-data.js";
+import type { QuestId, Season, Weather } from "$lib/types/tracker-data.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -38,26 +37,24 @@ export function searchItems(
   const results: SearchResult[] = [];
 
   // Almanac entries — one result per collapsed row, canonical ID
-  const seenAlmanacIds = new Set<ItemId>();
-  for (const category of Object.values(trackerData.almanac)) {
-    for (const entry of category.items) {
-      const canonicalId = entry.itemIds[0];
-      if (seenAlmanacIds.has(canonicalId)) continue;
-      seenAlmanacIds.add(canonicalId);
-      const item = trackerData.items[canonicalId];
-      if (item.visibility && !isVisible(item.visibility, progressionState)) continue;
-      if (!isItemApplicableForAlmanac(entry.itemIds, completed)) continue;
+  for (const entry of trackerIndex.almanacEntries) {
+    const canonicalId = entry.itemIds[0];
+    const item = trackerData.items[canonicalId];
+    if (item.visibility && !isVisible(item.visibility, progressionState)) continue;
+    if (!isItemApplicableForAlmanac(entry.itemIds, completed)) continue;
 
-      if (entry.name.toLowerCase().includes(q)) {
-        const sources = aggregateSources(entry.itemIds);
-        results.push({
-          available: isItemAvailable(sources, worldState, "available"),
-          category: "almanac",
-          completed: completed.almanac.has(canonicalId),
-          id: canonicalId,
-          name: entry.name,
-        });
-      }
+    if (entry.name.toLowerCase().includes(q)) {
+      results.push({
+        available: isItemAvailable(
+          trackerIndex.getAggregatedAlmanacSources(canonicalId),
+          worldState,
+          "available",
+        ),
+        category: "almanac",
+        completed: completed.almanac.has(canonicalId),
+        id: canonicalId,
+        name: entry.name,
+      });
     }
   }
 
@@ -219,22 +216,6 @@ export function searchItems(
   }
 
   return rankResults(results, q).slice(0, MAX_RESULTS);
-}
-
-function aggregateSources(itemIds: ItemId[]): Source[] {
-  const seen = new Set<string>();
-  const sources: Source[] = [];
-  for (const id of itemIds) {
-    const item = trackerData.items[id];
-    for (const source of item.sources) {
-      const key = JSON.stringify(source);
-      if (!seen.has(key)) {
-        seen.add(key);
-        sources.push(source);
-      }
-    }
-  }
-  return sources;
 }
 
 /** Prefix matches first, then available before unavailable, then alphabetical */

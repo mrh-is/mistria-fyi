@@ -1,14 +1,7 @@
 <script lang="ts">
-  import { getAllProgress } from "$lib/engine/progress.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
+  import type { AllProgress } from "$lib/engine/progress.js";
 
-  let progress = $derived(
-    getAllProgress({
-      availabilityMode: userState.state.availabilityMode,
-      completed: userState.state.completed,
-      worldState: userState.state.worldState,
-    }),
-  );
+  let { progress }: { progress: AllProgress } = $props();
 
   let overall = $derived.by(() => {
     let completed = 0;

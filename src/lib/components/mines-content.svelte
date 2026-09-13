@@ -4,7 +4,7 @@
   import MineFloorRecord from "$lib/components/mine-floor-record.svelte";
   import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
-  import { trackerData } from "$lib/data/index.js";
+  import { trackerData, trackerIndex } from "$lib/data/index.js";
   import { isEntityNameVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -89,7 +89,7 @@
       .sort((a, b) => a.name.localeCompare(b.name)),
   );
 
-  registerSourceFilters("mines", () => spells.flatMap(({ sources }) => sources));
+  registerSourceFilters("mines", () => trackerIndex.categorySourceTypes.mines);
 
   let scopedSpells = $derived(
     spells.filter(({ sources }) => toolbarState.matchesSourceFilters(sources)),
