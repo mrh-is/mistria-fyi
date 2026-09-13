@@ -7,6 +7,7 @@ import {
   hasSelectiveSeasonRestriction,
   hasTimelyRestriction,
   isItemAvailable,
+  isItemDimmed,
   isRowVisible,
   isSourceAvailable,
   shouldCountItem,
@@ -173,6 +174,33 @@ describe("classifyItemAvailability", () => {
     expect(isItemAvailable([src()], spring, ["anytime"])).toBe(true);
     expect(isItemAvailable([src(seasonCondition(["winter"]))], spring, ["later"])).toBe(true);
     expect(isItemAvailable([src(seasonCondition(["winter"]))], spring, defaultWindows)).toBe(false);
+  });
+});
+
+// ─── isItemDimmed ───────────────────────────────────────────────────
+
+describe("isItemDimmed", () => {
+  const laterItem = [src(seasonCondition(["winter"]))];
+
+  it("never dims completed items", () => {
+    expect(isItemDimmed(laterItem, true, spring, ["now", "anytime", "later"])).toBe(false);
+  });
+
+  it("dims a later item when shown alongside now/anytime windows for contrast", () => {
+    expect(isItemDimmed(laterItem, false, spring, ["now", "anytime", "later"])).toBe(true);
+    expect(isItemDimmed(laterItem, false, spring, ["now", "later"])).toBe(true);
+  });
+
+  it("does not dim when later is the only selected window", () => {
+    expect(isItemDimmed(laterItem, false, spring, ["later"])).toBe(false);
+  });
+
+  it("does not dim when later isn't selected at all", () => {
+    expect(isItemDimmed(laterItem, false, spring, defaultWindows)).toBe(false);
+  });
+
+  it("does not dim items that aren't classified as later", () => {
+    expect(isItemDimmed([src()], false, spring, ["now", "anytime", "later"])).toBe(false);
   });
 });
 

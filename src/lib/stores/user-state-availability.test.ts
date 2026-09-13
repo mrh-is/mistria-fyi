@@ -19,6 +19,14 @@ describe("availability windows", () => {
     expect(userState.state.availabilityWindows).toEqual(["anytime", "later"]);
   });
 
+  it("refuses to deselect the last remaining window", () => {
+    userState.toggleAvailabilityWindow("now");
+    expect(userState.state.availabilityWindows).toEqual(["anytime"]);
+
+    userState.toggleAvailabilityWindow("anytime");
+    expect(userState.state.availabilityWindows).toEqual(["anytime"]);
+  });
+
   it("serializes the new windows without the legacy mode", () => {
     const exported = JSON.parse(userState.exportState()) as Record<string, unknown>;
     expect(exported.availabilityWindows).toEqual(["now", "anytime"]);
@@ -42,6 +50,18 @@ describe("availability windows", () => {
     const original = userState.exportState();
     const exported = JSON.parse(original) as Record<string, unknown>;
     exported.availabilityWindows = ["now", "eventually"];
+
+    expect(userState.importState(JSON.stringify(exported))).toEqual({
+      error: "invalid-fields",
+      ok: false,
+    });
+    expect(userState.exportState()).toBe(original);
+  });
+
+  it("rejects an empty windows array", () => {
+    const original = userState.exportState();
+    const exported = JSON.parse(original) as Record<string, unknown>;
+    exported.availabilityWindows = [];
 
     expect(userState.importState(JSON.stringify(exported))).toEqual({
       error: "invalid-fields",
