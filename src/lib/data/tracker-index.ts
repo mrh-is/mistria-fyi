@@ -32,13 +32,14 @@ export function buildTrackerIndex(trackerData: TrackerData): TrackerIndex {
   const aggregatedAlmanacSources = new Map<ItemId, Source[]>();
 
   function getAggregatedAlmanacSources(canonicalId: ItemId): Source[] {
-    const cached = aggregatedAlmanacSources.get(canonicalId);
+    const resolvedCanonicalId = memberToCanonicalAlmanacId.get(canonicalId) ?? canonicalId;
+    const cached = aggregatedAlmanacSources.get(resolvedCanonicalId);
     if (cached) return cached;
 
-    const entry = almanacEntryByCanonicalId.get(canonicalId);
+    const entry = almanacEntryByCanonicalId.get(resolvedCanonicalId);
     if (!entry || entry.itemIds.length <= 1) {
-      const singleItemSources = trackerData.items[canonicalId].sources;
-      aggregatedAlmanacSources.set(canonicalId, singleItemSources);
+      const singleItemSources = trackerData.items[resolvedCanonicalId].sources;
+      aggregatedAlmanacSources.set(resolvedCanonicalId, singleItemSources);
       return singleItemSources;
     }
 
@@ -54,7 +55,7 @@ export function buildTrackerIndex(trackerData: TrackerData): TrackerIndex {
       }
     }
 
-    aggregatedAlmanacSources.set(canonicalId, sources);
+    aggregatedAlmanacSources.set(resolvedCanonicalId, sources);
     return sources;
   }
 
