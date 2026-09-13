@@ -3,7 +3,7 @@
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
-  import { trackerData } from "$lib/data/index.js";
+  import { trackerData, trackerIndex } from "$lib/data/index.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -79,7 +79,7 @@
       .sort((a, b) => a.name.localeCompare(b.name)),
   );
 
-  registerSourceFilters("dates", () => dates.flatMap(({ sources }) => sources));
+  registerSourceFilters("dates", () => trackerIndex.categorySourceTypes.dates);
 
   let scopedDates = $derived(
     dates.filter(({ sources }) => toolbarState.matchesSourceFilters(sources)),

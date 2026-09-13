@@ -4,6 +4,8 @@ import { trackerData } from "$lib/data/index.js";
 
 import { buildBaseSegmentLookups } from "./segment-lookups.js";
 
+import type { StoreId } from "$lib/types/tracker-data.js";
+
 describe("buildBaseSegmentLookups", () => {
   it("flattens every generated perk under its perk ID", () => {
     const lookups = buildBaseSegmentLookups(new Set());
@@ -16,5 +18,19 @@ describe("buildBaseSegmentLookups", () => {
     );
 
     expect(lookups.perks).toEqual(Object.fromEntries(expected));
+  });
+
+  it("reuses the static lookup tables across calls while keeping redacted stores contextual", () => {
+    const firstRedactedStoreIds = new Set<StoreId>();
+    const secondRedactedStoreIds = new Set<StoreId>(["bathhouse" as StoreId]);
+
+    const first = buildBaseSegmentLookups(firstRedactedStoreIds);
+    const second = buildBaseSegmentLookups(secondRedactedStoreIds);
+
+    expect(first.itemNames).toBe(second.itemNames);
+    expect(first.perks).toBe(second.perks);
+    expect(first.questNames).toBe(second.questNames);
+    expect(first.redactedStoreIds).toBe(firstRedactedStoreIds);
+    expect(second.redactedStoreIds).toBe(secondRedactedStoreIds);
   });
 });

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { trackerData } from "$lib/data/index.js";
+  import { trackerData, trackerIndex } from "$lib/data/index.js";
   import { isEntityNameVisible } from "$lib/engine/visibility.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { registerSourceFilters } from "$lib/utils/source-filter-registration.svelte.js";
@@ -63,14 +63,7 @@
     return allAnimals && allPetCosmetics && allPetSkins;
   }
 
-  registerSourceFilters("animals", () => [
-    ...Object.values(trackerData.animals).flatMap((animal) => [
-      ...animal.variantTiers.flatMap((tier) => Object.values(tier).map(({ source }) => source)),
-      ...Object.values(animal.cosmetics).flatMap(({ sources }) => sources),
-    ]),
-    ...Object.values(trackerData.pets.cosmetics).flatMap(({ sources }) => sources),
-    ...Object.values(trackerData.pets.skins).flatMap(({ sources }) => sources),
-  ]);
+  registerSourceFilters("animals", () => trackerIndex.categorySourceTypes.animals);
 </script>
 
 <AnimalVariantsSection {areAllAnimalsComplete} {isAnimalComplete} {isSpeciesVisible} />

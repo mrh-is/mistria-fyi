@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { SvelteSet } from "svelte/reactivity";
+  import { onDestroy } from "svelte";
+  import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
   import ConfirmSpoilerDialog from "$lib/components/confirm-spoiler-dialog.svelte";
   import DatesSection from "$lib/components/dates-section.svelte";
@@ -7,7 +8,7 @@
   import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
-  import { trackerData } from "$lib/data/index.js";
+  import { trackerData, trackerIndex } from "$lib/data/index.js";
   import { isItemDimmed, isRowVisible, shouldCountItem } from "$lib/engine/availability.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
@@ -37,20 +38,7 @@
   }
 
   function aggregateSources(entry: AlmanacEntry): Source[] {
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local dedup set, not reactive state
-    const seen = new Set<string>();
-    const sources: Source[] = [];
-    for (const id of entry.itemIds) {
-      const item = trackerData.items[id];
-      for (const source of item.sources) {
-        const key = JSON.stringify(source);
-        if (!seen.has(key)) {
-          seen.add(key);
-          sources.push(source);
-        }
-      }
-    }
-    return sources;
+    return trackerIndex.getAggregatedAlmanacSources(entry.itemIds[0]);
   }
 
   function rowDisplay(
@@ -108,14 +96,63 @@
   }
 
   const SECTION_LIMIT = 50;
+  const SECTION_BATCH_SIZE = 12;
 
   let expandedSections = $state<Record<string, boolean>>({});
+  let openSections = $state<Record<string, boolean>>({});
+  let renderedSectionCounts = $state<Record<string, number>>({});
+  const sectionFrames = new SvelteMap<string, number>();
 
   let nameFilter = $derived(toolbarState.searchQuery);
 
-  registerSourceFilters("almanac", () =>
-    recordValues(trackerData.almanac).flatMap(({ items }) => items.flatMap(aggregateSources)),
-  );
+  registerSourceFilters("almanac", () => trackerIndex.categorySourceTypes.almanac);
+
+  onDestroy(() => {
+    for (const frame of sectionFrames.values()) {
+      cancelAnimationFrame(frame);
+    }
+    sectionFrames.clear();
+  });
+
+  function stopSectionRendering(sectionId: string): void {
+    const frame = sectionFrames.get(sectionId);
+    if (frame !== undefined) {
+      cancelAnimationFrame(frame);
+      sectionFrames.delete(sectionId);
+    }
+  }
+
+  function scheduleSectionRendering(sectionId: string, targetCount: number): void {
+    stopSectionRendering(sectionId);
+    renderedSectionCounts[sectionId] = 0;
+
+    if (targetCount <= 0) return;
+
+    const renderNextBatch = (): void => {
+      const nextCount = Math.min(
+        (renderedSectionCounts[sectionId] ?? 0) + SECTION_BATCH_SIZE,
+        targetCount,
+      );
+      renderedSectionCounts[sectionId] = nextCount;
+      if (nextCount < targetCount) {
+        sectionFrames.set(sectionId, requestAnimationFrame(renderNextBatch));
+      } else {
+        sectionFrames.delete(sectionId);
+      }
+    };
+
+    sectionFrames.set(sectionId, requestAnimationFrame(renderNextBatch));
+  }
+
+  function setSectionOpen(sectionId: string, open: boolean, targetCount: number): void {
+    openSections[sectionId] = open;
+    if (!open) {
+      stopSectionRendering(sectionId);
+      renderedSectionCounts[sectionId] = 0;
+      return;
+    }
+    scheduleSectionRendering(sectionId, targetCount);
+  }
 
   function matchesFilter(name: string): boolean {
     if (!nameFilter) return true;
@@ -182,16 +219,35 @@
     ),
   )}
   {#if baseItems.length > 0}
+    {@const showAll = expandedSections[id] ?? false}
+    {@const isOpen = openSections[id] ?? false}
+    {@const renderTarget = showAll
+      ? filteredItems.length
+      : Math.min(filteredItems.length, SECTION_LIMIT)}
+    {@const shouldBypassBatching =
+      isOpen && !sectionFrames.has(id) && (renderedSectionCounts[id] ?? 0) < renderTarget}
+    {@const renderedCount =
+      nameFilter || shouldBypassBatching
+        ? renderTarget
+        : Math.min(renderedSectionCounts[id] ?? renderTarget, renderTarget)}
+    {@const displayItems = filteredItems.slice(0, renderedCount)}
     <ExpandableSection
       count={scopedItems.filter(({ canonicalId }) => isItemCompleted(canonicalId)).length}
       forceOpen={!!nameFilter}
       name={cat.name}
+      onExpandedChange={(open: boolean) => {
+        setSectionOpen(
+          id,
+          open,
+          expandedSections[id]
+            ? filteredItems.length
+            : Math.min(filteredItems.length, SECTION_LIMIT),
+        );
+      }}
       reportCategory="almanac"
       reportEntityId={id}
       total={scopedItems.length}
     >
-      {@const showAll = expandedSections[id] ?? false}
-      {@const displayItems = showAll ? filteredItems : filteredItems.slice(0, SECTION_LIMIT)}
       <TrackerRowStack>
         {#each displayItems as { canonicalId, entry, item } (canonicalId)}
           {@const itemCompleted = isItemCompleted(canonicalId)}
@@ -222,6 +278,8 @@
         <p class="py-4 text-center text-sm text-muted-foreground">
           No items match the current filters
         </p>
+      {:else if !nameFilter && renderedCount === 0}
+        <p class="py-4 text-center text-sm text-muted-foreground">Loading items…</p>
       {/if}
       {#if !showAll && filteredItems.length > SECTION_LIMIT}
         <div class="flex justify-center py-1">
@@ -230,6 +288,9 @@
             variant="ghost"
             onclick={() => {
               expandedSections[id] = true;
+              if (openSections[id]) {
+                scheduleSectionRendering(id, filteredItems.length);
+              }
             }}
           >
             Show {filteredItems.length - SECTION_LIMIT} more...
