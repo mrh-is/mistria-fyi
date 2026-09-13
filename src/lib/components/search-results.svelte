@@ -151,8 +151,8 @@
   }
 </script>
 
-<div class="flex flex-col gap-1" data-tracker-list>
-  <p class="text-sm text-muted-foreground">
+<div class="search-results" data-tracker-list>
+  <p class="search-results__count">
     {results.length} result{results.length === 1 ? "" : "s"}
   </p>
   <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">
@@ -163,7 +163,7 @@
 
   {#each results as result (result.category + result.id)}
     {@const label = result.fullName ?? result.name}
-    <div class="flex items-center gap-2 rounded-md">
+    <div class="search-result">
       <div class="min-w-0 flex-1">
         <TrackerRowStack>
           <TrackerRow
@@ -186,13 +186,73 @@
           />
         </TrackerRowStack>
       </div>
-      <span class="shrink-0 text-sm text-muted-foreground">
+      <span
+        class="search-result__category"
+        style="--result-category: var(--cat-{result.category}, var(--ink-muted))"
+      >
         {CATEGORY_LABELS[result.category] ?? result.category}
       </span>
     </div>
   {/each}
 
   {#if results.length === 0}
-    <p class="py-8 text-center text-base text-muted-foreground">No items found</p>
+    <p class="search-results__empty">No items found</p>
   {/if}
 </div>
+
+<style>
+  .search-results {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .search-results__count {
+    margin-bottom: 3px;
+    color: var(--ink-muted);
+    font-family: var(--font-data);
+    font-size: 11px;
+  }
+
+  .search-result {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .search-result > div {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .search-result__category {
+    min-width: 76px;
+    flex-shrink: 0;
+    padding: 4px 11px 4px 9px;
+    color: var(--result-category);
+    border-left: 2px solid var(--result-category);
+    background: color-mix(in srgb, var(--result-category) 9%, var(--paper));
+    clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 50%, 100% 100%, 0 100%);
+    font-family: var(--font-annotation);
+    font-size: 10px;
+    text-align: center;
+  }
+
+  .search-results__empty {
+    padding: 32px 0;
+    color: var(--ink-muted);
+    font-family: var(--font-body);
+    font-size: 16px;
+    text-align: center;
+  }
+
+  @media (max-width: 380px) {
+    .search-result__category {
+      min-width: 62px;
+      max-width: 72px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+</style>

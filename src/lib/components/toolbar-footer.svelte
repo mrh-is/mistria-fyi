@@ -1,8 +1,6 @@
 <script lang="ts">
   import {
-    IconChevronDown,
-    IconChevronUp,
-    IconFilter,
+    IconAdjustmentsHorizontal,
     IconMessageReport,
     IconSearch,
     IconSettings,
@@ -11,16 +9,17 @@
   import { prefersReducedMotion } from "svelte/motion";
   import { fly } from "svelte/transition";
 
-  import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import FeedbackPanel from "$lib/components/feedback-panel.svelte";
+  import FoldoutPanel from "$lib/components/foldout-panel.svelte";
+  import QuickSettingsPanel from "$lib/components/quick-settings-panel.svelte";
   import { Input } from "$lib/components/ui/input/index.js";
   import VisibilityPanel from "$lib/components/visibility-panel.svelte";
   import { getFeedbackContext } from "$lib/feedback/context.svelte.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
-  type ActivePanel = "feedback" | "visibility" | null;
+  type ActivePanel = "feedback" | "settings" | "visibility" | null;
 
   /* eslint-disable no-useless-assignment -- $bindable default; reassigned reactively in $effect */
   let {
@@ -31,11 +30,11 @@
     overlayActive?: boolean;
   } = $props();
   /* eslint-enable no-useless-assignment */
-  let feedbackContext = getFeedbackContext();
 
   const SEARCH_ROUTES = new Set(["/", "/almanac", "/museum"]);
   const WORLD_STATE_ROUTES = new Set(["/", "/all", "/almanac", "/animals", "/museum"]);
 
+  let feedbackContext = getFeedbackContext();
   let pathname = $derived(page.url.pathname);
   let showSearch = $derived(SEARCH_ROUTES.has(pathname));
   let showSeasonality = $derived(WORLD_STATE_ROUTES.has(pathname));
@@ -43,23 +42,21 @@
   let activePanel = $state<ActivePanel>(null);
   let previousPathname = $state("");
   let previousPanel = $state<ActivePanel>(null);
-  let visibilityPanelElement = $state<HTMLElement | null>(null);
-  let visibilityPanelOpener: HTMLElement | null = null;
+  let panelElement = $state<HTMLElement | null>(null);
+  let panelOpener: HTMLElement | null = null;
 
   $effect(() => {
     const currentPathname = pathname;
-    if (previousPathname && currentPathname !== previousPathname) {
-      activePanel = null;
-    }
+    if (previousPathname && currentPathname !== previousPathname) activePanel = null;
     previousPathname = currentPathname;
   });
 
   $effect(() => {
-    if (activePanel === "visibility" && previousPanel !== "visibility") {
-      void tick().then(() => visibilityPanelElement?.querySelector<HTMLElement>("button")?.focus());
-    } else if (activePanel !== "visibility" && previousPanel === "visibility") {
-      const focusTarget = visibilityPanelOpener;
-      visibilityPanelOpener = null;
+    if (activePanel !== null && activePanel !== "feedback" && previousPanel === null) {
+      void tick().then(() => panelElement?.querySelector<HTMLElement>("button, a")?.focus());
+    } else if (activePanel === null && previousPanel !== null) {
+      const focusTarget = panelOpener;
+      panelOpener = null;
       void tick().then(() => {
         if (focusTarget?.isConnected) focusTarget.focus();
       });
@@ -71,20 +68,15 @@
     activePanel = null;
   }
 
-  function toggleFeedbackPanel(): void {
-    activePanel = activePanel === "feedback" ? null : "feedback";
-  }
-
-  function toggleVisibilityPanel(): void {
-    if (activePanel !== "visibility") {
-      visibilityPanelOpener =
-        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  function togglePanel(panel: Exclude<ActivePanel, null>): void {
+    if (activePanel !== panel && activePanel === null) {
+      panelOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     }
-    activePanel = activePanel === "visibility" ? null : "visibility";
+    activePanel = activePanel === panel ? null : panel;
   }
 
   function handleKeydown(event: KeyboardEvent): void {
-    if (activePanel !== "visibility" || event.key !== "Escape") return;
+    if (activePanel === null || activePanel === "feedback" || event.key !== "Escape") return;
     event.preventDefault();
     closePanel();
   }
@@ -127,16 +119,19 @@
     overlayActive = activePanel !== null || feedbackContext.isPicking;
   });
 
+  let availabilityIsDefault = $derived(
+    userState.state.availabilityWindows.length === 2 &&
+      userState.state.availabilityWindows[0] === "now" &&
+      userState.state.availabilityWindows[1] === "anytime",
+  );
   let filtersActive = $derived(
-    userState.state.availabilityMode !== "available" ||
-      userState.state.showCompleted ||
-      toolbarState.sourceFilterActive,
+    !availabilityIsDefault || userState.state.showCompleted || toolbarState.sourceFilterActive,
   );
   let filterStatus = $state("");
   let previousFilterState = $state("");
 
   $effect(() => {
-    const currentFilterState = `${userState.state.availabilityMode}:${userState.state.showCompleted}:${toolbarState.sourceFilterActive}`;
+    const currentFilterState = `${userState.state.availabilityWindows.join(",")}:${userState.state.showCompleted}:${toolbarState.sourceFilterActive}`;
     if (previousFilterState && currentFilterState !== previousFilterState) {
       filterStatus = filtersActive ? "Filters applied" : "All filters cleared";
     }
@@ -160,9 +155,7 @@
     class="pointer-events-none fixed right-0 bottom-safe-offset-3 left-0 z-20 mx-auto max-w-lg px-3"
   >
     {#if toolbarState.searchOpen}
-      <div
-        class="pointer-events-auto flex items-center gap-2 rounded-md border border-border/60 bg-background/92 p-1 shadow-lg backdrop-blur-md"
-      >
+      <div class="search-bar pointer-events-auto flex items-center gap-2 p-1 shadow-lg">
         <div class="relative flex-1">
           <IconSearch
             class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
@@ -172,57 +165,64 @@
             bind:ref={searchInput}
             class="px-9"
             id="tracker-search"
-            placeholder="Search items..."
+            placeholder="Search items…"
             type="text"
             value={toolbarState.searchQuery}
             oninput={handleSearchInput}
           />
           {#if toolbarState.searchQuery}
             <button
-              class="absolute top-1/2 right-0 flex size-11 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
+              class="absolute top-1/2 right-0 flex size-11 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground"
               type="button"
               aria-label="Clear search"
               onclick={() => {
                 toolbarState.setSearch("");
-              }}
+              }}>×</button
             >
-              ×
-            </button>
           {/if}
         </div>
         <button
-          class="min-h-11 px-2 text-sm text-muted-foreground hover:text-foreground"
+          class="min-h-11 px-2 font-controls text-xs text-muted-foreground hover:text-foreground"
           type="button"
-          onclick={closeSearch}
+          onclick={closeSearch}>Cancel</button
         >
-          Cancel
-        </button>
       </div>
     {:else}
       <div class="flex items-end justify-between gap-3">
-        <a class="floating-tool" href={resolve("/settings")} aria-label="Settings">
-          <IconSettings class="size-5 transition-transform motion-reduce:transition-none" />
-        </a>
-
         <div class="flex items-center gap-1.5">
+          <button
+            class="floating-tool {activePanel === 'settings' ? 'floating-tool--active' : ''}"
+            type="button"
+            aria-label="Quick settings"
+            aria-expanded={activePanel === "settings"}
+            aria-controls="quick-settings-panel"
+            onclick={() => {
+              togglePanel("settings");
+            }}
+          >
+            <IconSettings class="size-5 transition-transform motion-reduce:transition-none" />
+          </button>
           <button
             class="floating-tool {activePanel === 'feedback' ? 'floating-tool--active' : ''}"
             type="button"
             aria-label="Send feedback"
             aria-expanded={activePanel === "feedback"}
-            onclick={toggleFeedbackPanel}
+            onclick={() => {
+              togglePanel("feedback");
+            }}
           >
             <IconMessageReport class="size-5" />
           </button>
+        </div>
 
+        <div class="flex items-center gap-1.5">
           {#if showSearch}
             <button class="floating-tool" type="button" aria-label="Search" onclick={openSearch}>
               <IconSearch class="size-5" />
             </button>
           {/if}
-
           <button
-            class="floating-tool gap-1.5 {activePanel === 'visibility'
+            class="floating-tool {activePanel === 'visibility'
               ? 'floating-tool--active'
               : filtersActive
                 ? 'floating-tool--filtered'
@@ -230,23 +230,19 @@
             type="button"
             aria-label="Visibility filters"
             aria-expanded={activePanel === "visibility"}
-            aria-controls={activePanel === "visibility" ? "visibility-panel" : undefined}
-            id="visibility-panel-trigger"
-            onclick={toggleVisibilityPanel}
+            aria-controls="visibility-panel"
+            onclick={() => {
+              togglePanel("visibility");
+            }}
           >
-            <IconFilter class="size-4" />
-            {#if activePanel === "visibility"}
-              <IconChevronUp class="size-3" />
-            {:else}
-              <IconChevronDown class="size-3" />
-            {/if}
+            <IconAdjustmentsHorizontal class="size-5" />
           </button>
         </div>
       </div>
     {/if}
   </nav>
 
-  {#if activePanel === "visibility"}
+  {#if activePanel === "settings" || activePanel === "visibility"}
     <button
       class="fixed inset-x-0 top-[-100dvh] bottom-[-100dvh] z-0"
       type="button"
@@ -255,38 +251,43 @@
       tabindex="-1"
       onclick={closePanel}
     ></button>
-
     <div
-      id="visibility-panel"
+      bind:this={panelElement}
       class="fixed right-0 bottom-safe-offset-16 left-0 z-30 mx-auto max-w-lg px-3"
-      aria-labelledby="visibility-panel-trigger"
       role="region"
       transition:fly={{ duration: prefersReducedMotion.current ? 0 : 150, y: 8 }}
     >
-      <div
-        bind:this={visibilityPanelElement}
-        class="rounded-xl border border-border bg-background shadow-lg"
-      >
-        <VisibilityPanel {showSeasonality} />
-      </div>
+      {#if activePanel === "settings"}
+        <FoldoutPanel id="quick-settings-panel" title="Quick settings" onclose={closePanel}>
+          <QuickSettingsPanel />
+        </FoldoutPanel>
+      {:else}
+        <FoldoutPanel id="visibility-panel" title="Filters" onclose={closePanel}>
+          <VisibilityPanel {showSeasonality} />
+        </FoldoutPanel>
+      {/if}
     </div>
   {/if}
+
   <p class="sr-only" role="status" aria-live="polite">{filterStatus}</p>
 {/if}
 
 <style>
+  .search-bar,
+  .floating-tool {
+    border: 1px solid color-mix(in srgb, var(--hairline) 48%, transparent);
+    border-radius: var(--radius-md);
+    background: var(--paper-raised);
+  }
+
   .floating-tool {
     display: flex;
     min-width: 44px;
     min-height: 44px;
     align-items: center;
     justify-content: center;
-    border: 1px solid color-mix(in srgb, var(--hairline) 42%, transparent);
-    border-radius: var(--radius-md);
     color: var(--ink-muted);
-    background: color-mix(in srgb, var(--paper-raised) 91%, transparent);
     box-shadow: 0 3px 12px rgb(0 0 0 / 13%);
-    backdrop-filter: blur(13px);
     pointer-events: auto;
     transition:
       box-shadow 150ms ease-out,
@@ -297,7 +298,6 @@
   .floating-tool:is(:hover, :focus-visible),
   .floating-tool--active {
     color: var(--primary);
-    background: var(--paper-raised);
     box-shadow: 0 6px 16px rgb(0 0 0 / 18%);
     outline: 2px solid var(--primary);
     outline-offset: 2px;

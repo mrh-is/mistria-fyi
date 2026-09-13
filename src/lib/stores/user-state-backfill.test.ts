@@ -205,7 +205,7 @@ describe("downstream consumers after backfill", () => {
     const completed = await getBackfilledState();
     expect(() =>
       getAllProgress({
-        availabilityMode: "available",
+        availabilityWindows: "available",
         completed,
         worldState: { season: "spring", weather: "calm" },
       }),

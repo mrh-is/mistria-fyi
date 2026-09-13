@@ -74,17 +74,13 @@ describe("ThemeCard", () => {
     expect(trigger).not.toMatch(/<p(?:\s|>)/);
   });
 
-  it("uses compact spacing and small summary text", () => {
+  it("uses an inventory-row treatment and small summary text", () => {
     const { body } = render(ThemeCard, { props: { open: false } });
-    const card = /<div[^>]*data-slot="card"[^>]*>/.exec(body)?.[0];
-    const header = /<div[^>]*data-slot="card-header"[^>]*>/.exec(body)?.[0];
+    const card = /<div[^>]*class="[^"]*settings-card[^"]*"[^>]*>/.exec(body)?.[0];
     const trigger = /<button[^>]*data-slot="collapsible-trigger".*?<\/button>/s.exec(body)?.[0];
 
-    expect(card).toContain("gap-0");
-    expect(card).toContain("py-0");
-    expect(header).toContain("gap-0");
-    expect(trigger).toContain("px-4");
-    expect(trigger).toContain("py-3");
+    expect(card).toContain("settings-card");
+    expect(trigger).toContain("settings-card__trigger");
     expect(trigger).toContain("text-xs");
     expect(trigger).toContain("duration-150");
     expect(trigger).toContain("motion-reduce:transition-none");

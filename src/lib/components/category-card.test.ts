@@ -33,4 +33,16 @@ describe("CategoryCard", () => {
     expect(body).toContain('aria-label="Museum, 4 of 10 completed"');
     expect(body).toContain("--category-progress: 40%");
   });
+
+  it("keeps the category identity when adding the completed gold-leaf edge", () => {
+    const { body } = render(CategoryCard, {
+      props: {
+        key: "animals",
+        progress: { completed: 20, filtered: 0, total: 20 },
+      },
+    });
+
+    expect(body).toContain("category-stripe--complete");
+    expect(body).toContain("--category-color: var(--cat-animals)");
+  });
 });

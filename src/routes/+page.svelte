@@ -12,7 +12,7 @@
 
   let allProgress = $derived(
     getAllProgress({
-      availabilityMode: userState.state.availabilityMode,
+      availabilityWindows: userState.state.availabilityWindows,
       completed: userState.state.completed,
       worldState: userState.state.worldState,
     }),
@@ -90,7 +90,7 @@
     display: block;
     width: var(--overall-progress);
     height: 100%;
-    background: var(--fg-green);
+    background: var(--home-accent);
     transition: width 300ms ease-out;
   }
 
@@ -106,7 +106,7 @@
 
   .everything-link:is(:hover, :focus-visible) {
     color: var(--ink);
-    outline: 2px solid var(--fg-green);
+    outline: 2px solid var(--home-accent);
     outline-offset: 0;
   }
 

@@ -5,8 +5,8 @@ import {
   hasTimelyCondition,
 } from "./availability-condition.js";
 
-import type { AvailabilityMode } from "$lib/stores/user-state.svelte.js";
 import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
+import type { AvailabilitySelection, AvailabilityWindow } from "$lib/types/availability.js";
 import type { ItemId, Season, Weather } from "$lib/types/tracker-data.js";
 
 import type { DisplayBadges } from "./availability-condition.js";
@@ -16,6 +16,21 @@ interface WorldState {
   weather: Weather;
 }
 
+/** Assign an item to exactly one independently selectable availability window. */
+export function classifyItemAvailability(
+  sources: Source[],
+  worldState: WorldState,
+): AvailabilityWindow {
+  if (sources.length === 0) return "anytime";
+
+  const sourceWindows = sources.map((source) => classifySourceAvailability(source, worldState));
+  if (sourceWindows.includes("anytime")) return "anytime";
+  if (sourceWindows.includes("now")) return "now";
+  return "later";
+}
+
+// ─── Source-level availability ──────────────────────────────────────
+
 /**
  * Filter a list of item IDs to only those passing availability check.
  */
@@ -23,13 +38,10 @@ export function filterAvailableItems(
   itemIds: ItemId[],
   sourceLookup: (id: ItemId) => Source[],
   worldState: WorldState,
-  mode: AvailabilityMode,
+  selection: AvailabilitySelection,
 ): ItemId[] {
-  if (mode === "everything") return itemIds;
-  return itemIds.filter((id) => isItemAvailable(sourceLookup(id), worldState, mode));
+  return itemIds.filter((id) => isItemAvailable(sourceLookup(id), worldState, selection));
 }
-
-// ─── Source-level availability ──────────────────────────────────────
 
 /**
  * Get a merged, deduplicated set of display badges from a list of sources.
@@ -55,6 +67,8 @@ export function hasSelectiveSeasonRestriction(source: Source): boolean {
   return availability !== undefined && hasSelectiveSeasonCondition(availability);
 }
 
+// ─── Item-level availability ────────────────────────────────────────
+
 /**
  * Does this source have any timely (season/weather/time) condition?
  */
@@ -62,8 +76,6 @@ export function hasTimelyRestriction(source: Source): boolean {
   const availability = getAvailabilityCondition(source);
   return availability !== undefined && hasTimelyCondition(availability);
 }
-
-// ─── Item-level availability ────────────────────────────────────────
 
 /**
  * Check if an item is available: ANY source must pass (OR logic).
@@ -73,16 +85,9 @@ export function hasTimelyRestriction(source: Source): boolean {
 export function isItemAvailable(
   sources: Source[],
   worldState: WorldState,
-  mode: AvailabilityMode,
+  selection: AvailabilitySelection,
 ): boolean {
-  if (mode === "everything") return true;
-
-  if (sources.length === 0) {
-    // No sources — available but not timely
-    return mode === "available";
-  }
-
-  return sources.some((source) => isSourceAvailable(source, worldState, mode));
+  return selectedWindows(selection).includes(classifyItemAvailability(sources, worldState));
 }
 
 // ─── Composite display helpers ───────────────────────────────────────
@@ -95,11 +100,11 @@ export function isItemDimmed(
   sources: Source[],
   isCompleted: boolean,
   worldState: WorldState,
-  mode: AvailabilityMode,
+  selection: AvailabilitySelection,
 ): boolean {
   if (isCompleted) return false;
-  if (mode !== "everything") return false;
-  return !isItemAvailable(sources, worldState, "available");
+  if (!selectedWindows(selection).includes("later")) return false;
+  return classifyItemAvailability(sources, worldState) === "later";
 }
 
 /**
@@ -123,21 +128,9 @@ export function isRowVisible(
 export function isSourceAvailable(
   source: Source,
   worldState: WorldState,
-  mode: AvailabilityMode,
+  selection: AvailabilitySelection,
 ): boolean {
-  if (mode === "everything") return true;
-  const availability = getAvailabilityCondition(source);
-  if (!availability) return mode === "available";
-
-  if (mode === "timely") {
-    if (!hasSelectiveSeasonCondition(availability)) return false;
-  }
-
-  const result = evaluateAvailabilityCondition(availability, {
-    season: worldState.season,
-    weather: worldState.weather,
-  });
-  return result !== false;
+  return selectedWindows(selection).includes(classifySourceAvailability(source, worldState));
 }
 
 /**
@@ -149,10 +142,10 @@ export function shouldCountItem(
   sources: Source[],
   isCompleted: boolean,
   worldState: WorldState,
-  mode: AvailabilityMode,
+  selection: AvailabilitySelection,
 ): boolean {
   if (isCompleted) return true;
-  return isItemAvailable(sources, worldState, mode);
+  return isItemAvailable(sources, worldState, selection);
 }
 
 /**
@@ -163,14 +156,25 @@ export function shouldShowItem(
   sources: Source[],
   isCompleted: boolean,
   worldState: WorldState,
-  mode: AvailabilityMode,
+  selection: AvailabilitySelection,
   showCompleted: boolean,
   isRecentlyCompleted = false,
 ): boolean {
   if (isRecentlyCompleted) return true;
   if (isCompleted && !showCompleted) return false;
   if (isCompleted) return true;
-  return isItemAvailable(sources, worldState, mode);
+  return isItemAvailable(sources, worldState, selection);
+}
+
+function classifySourceAvailability(source: Source, worldState: WorldState): AvailabilityWindow {
+  const availability = getAvailabilityCondition(source);
+  if (!availability || !hasWindowRestriction(availability)) return "anytime";
+
+  const result = evaluateAvailabilityCondition(availability, {
+    season: worldState.season,
+    weather: worldState.weather,
+  });
+  return result === false ? "later" : "now";
 }
 
 /**
@@ -179,4 +183,42 @@ export function shouldShowItem(
  */
 function getAvailabilityCondition(source: Source): AvailabilityCondition | undefined {
   return "availability" in source ? source.availability : undefined;
+}
+
+function hasWindowRestriction(condition: AvailabilityCondition): boolean {
+  switch (condition.type) {
+    case "all":
+    case "any":
+      return condition.conditions.some(hasWindowRestriction);
+    case "always":
+    case "gamePredicate":
+    case "hasUpperFloor":
+    case "heartLevel":
+    case "isDating":
+    case "minesLevel":
+    case "perkUnlocked":
+    case "quest":
+    case "reachedSeason":
+    case "skillLevel":
+      return false;
+    case "not":
+      return hasWindowRestriction(condition.condition);
+    case "season":
+      return hasSelectiveSeasonCondition(condition);
+    case "time":
+    case "weather":
+      return true;
+  }
+}
+
+function selectedWindows(selection: AvailabilitySelection): readonly AvailabilityWindow[] {
+  if (typeof selection !== "string") return selection;
+  switch (selection) {
+    case "available":
+      return ["now", "anytime"];
+    case "everything":
+      return ["now", "anytime", "later"];
+    case "timely":
+      return ["now"];
+  }
 }

@@ -66,7 +66,7 @@
         sources,
         completed,
         userState.state.worldState,
-        userState.state.availabilityMode,
+        userState.state.availabilityWindows,
       ),
       mode: "visible",
     };
@@ -167,7 +167,7 @@
       sources,
       isItemCompleted(canonicalId),
       userState.state.worldState,
-      userState.state.availabilityMode,
+      userState.state.availabilityWindows,
     );
   })}
   {@const scopedItems = baseItems.filter(({ entry }) =>

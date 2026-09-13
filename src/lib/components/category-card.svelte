@@ -188,8 +188,21 @@
   }
 
   .category-stripe--complete {
-    --category-color: var(--fg-amber) !important;
-    background: color-mix(in srgb, var(--paper-raised) 91%, var(--fg-amber));
+    background: color-mix(in srgb, var(--paper-raised) 96%, var(--fg-amber));
+  }
+
+  .category-stripe--complete .category-ribbon::after {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 9px;
+    background:
+      linear-gradient(to bottom right, transparent 46%, #d4a72c 48% 57%, transparent 59%) top / 9px
+        50% no-repeat,
+      linear-gradient(to top right, transparent 46%, #d4a72c 48% 57%, transparent 59%) bottom / 9px
+        50% no-repeat;
+    content: "";
   }
 
   .category-stripe:is(:hover, :focus-visible) {
@@ -233,6 +246,32 @@
 
     .category-stripe:is(:hover, :focus-visible) .category-ribbon {
       transform: translateX(3px);
+    }
+
+    .category-stripe--complete .category-ribbon::after {
+      right: 0;
+      left: auto;
+      background:
+        linear-gradient(to bottom left, transparent 46%, #d4a72c 48% 57%, transparent 59%) top / 9px
+          50% no-repeat,
+        linear-gradient(to top left, transparent 46%, #d4a72c 48% 57%, transparent 59%) bottom / 9px
+          50% no-repeat;
+    }
+  }
+
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .category-stripe--complete:is(:hover, :focus-visible) .category-ribbon::after {
+      animation: gold-leaf-glint 650ms ease-out;
+    }
+  }
+
+  @keyframes gold-leaf-glint {
+    0%,
+    100% {
+      filter: brightness(1);
+    }
+    45% {
+      filter: brightness(1.65);
     }
   }
 

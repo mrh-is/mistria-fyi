@@ -12,7 +12,7 @@
 
   let progress = $derived(
     getCategoryProgress(key, {
-      availabilityMode: userState.state.availabilityMode,
+      availabilityWindows: userState.state.availabilityWindows,
       completed: userState.state.completed,
       worldState: userState.state.worldState,
     }),

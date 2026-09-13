@@ -17,9 +17,9 @@
       "Your changes may not be saved. Check your browser storage settings or export a backup.",
       {
         action: {
-          label: "Settings",
+          label: "Data management",
           onClick: () => {
-            window.location.href = "/settings";
+            window.location.href = "/data";
           },
         },
         duration: Infinity,

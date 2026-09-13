@@ -474,9 +474,7 @@
     tabindex="-1"
     in:fly={{ duration: prefersReducedMotion.current ? 0 : 150, y: 8 }}
   >
-    <div
-      class="max-h-[80dvh] overflow-y-auto rounded-xl border border-border bg-background shadow-lg"
-    >
+    <div class="feedback-tag max-h-[80dvh] overflow-y-auto">
       <div class="flex flex-col gap-2.5 p-3">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
@@ -707,3 +705,35 @@
     </div>
   </div>
 {/if}
+
+<style>
+  .feedback-tag {
+    position: relative;
+    border: 1px solid color-mix(in srgb, var(--hairline) 42%, transparent);
+    color: var(--ink);
+    background:
+      linear-gradient(
+          178deg,
+          transparent 0 48%,
+          color-mix(in srgb, var(--hairline) 6%, transparent) 49% 50%,
+          transparent 51%
+        )
+        0 0 / 100% 52px,
+      var(--paper-raised);
+    box-shadow: 0 7px 24px rgb(46 42 34 / 20%);
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+  }
+
+  .feedback-tag::after {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 15px;
+    height: 15px;
+    border-top: 1px solid color-mix(in srgb, var(--hairline) 42%, transparent);
+    background: var(--paper-deep);
+    content: "";
+    transform: rotate(-45deg) translate(5px, 11px);
+    transform-origin: center;
+  }
+</style>

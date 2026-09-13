@@ -70,7 +70,7 @@
     return isVariantInScopeEngine(
       variant,
       userState.state.worldState.season,
-      userState.state.availabilityMode,
+      userState.state.availabilityWindows,
     );
   }
 
