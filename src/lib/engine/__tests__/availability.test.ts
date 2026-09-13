@@ -221,7 +221,17 @@ describe("filterAvailableItems", () => {
   });
 
   it("everything returns all", () => {
-    expect(filterAvailableItems(ids, lookup, spring, "everything")).toEqual(ids);
+    expect(filterAvailableItems(ids, lookup, spring, "everything")).toBe(ids);
+  });
+
+  it("skips source lookup when every availability window is selected", () => {
+    const unexpectedLookup = () => {
+      throw new Error("source lookup should not run");
+    };
+
+    expect(filterAvailableItems(ids, unexpectedLookup, spring, ["later", "now", "anytime"])).toBe(
+      ids,
+    );
   });
 });
 
