@@ -6,6 +6,10 @@ A mobile-first companion tracker for
 [Fields of Mistria](https://store.steampowered.com/app/2142790/Fields_of_Mistria/). Helps
 completionists track progress toward 100%.
 
+> **This is an unofficial fan project.** It is not produced, endorsed, or affiliated with
+> [NPC Studio](https://www.npcstudio.com/). "Fields of Mistria" and related marks are trademarks of
+> NPC Studio. See [DISCLAIMER.md](DISCLAIMER.md) for the full notice.
+
 ## Quick start
 
 ```bash
@@ -55,3 +59,12 @@ pnpm run pipeline -- /path/to/assets
 - Tailwind 4 + shadcn-svelte
 - Cloudflare Pages
 - PWA (offline-capable)
+
+## License & legal
+
+This project's source code is licensed under [GPL-3.0-only](LICENSE). Bundled fonts and game-derived
+assets have their own licenses. See:
+
+- [COPYRIGHT.md](COPYRIGHT.md) — what the project license covers (and what it does not)
+- [DISCLAIMER.md](DISCLAIMER.md) — unofficial fan-project and trademark notice
+- [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) — bundled font licenses
