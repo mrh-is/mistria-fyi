@@ -6,7 +6,7 @@
   import SpoilerSection from "$lib/components/spoiler-section.svelte";
   import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
-  import { trackerData } from "$lib/data/index.js";
+  import { trackerData, trackerIndex } from "$lib/data/index.js";
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
   import { getMarriedNpc } from "$lib/engine/relationships.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
@@ -145,13 +145,7 @@
 
   const typeOrder = ["story", "heart", "fetch", "crown", "mission", "cooking"] as QuestType[];
 
-  registerSourceFilters("quests", () =>
-    typeOrder.flatMap((questType) =>
-      Object.keys(trackerData.quests[questType]).flatMap((questId) =>
-        questSources(questType, questId as QuestId),
-      ),
-    ),
-  );
+  registerSourceFilters("quests", () => trackerIndex.categorySourceTypes.quests);
 
   function getQuestState(id: QuestId): QuestState {
     return userState.state.completed.questStates[id] ?? "none";
