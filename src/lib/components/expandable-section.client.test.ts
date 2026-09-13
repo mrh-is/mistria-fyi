@@ -1,4 +1,5 @@
 import { fireEvent, render, waitFor } from "@testing-library/svelte";
+import { tick } from "svelte";
 import { describe, expect, it } from "vitest";
 
 import ExpandableSectionHarness from "$lib/components/expandable-section.test-harness.svelte";
@@ -16,6 +17,7 @@ describe("ExpandableSection", () => {
     const contentId = trigger.getAttribute("aria-controls");
     if (!contentId) throw new Error("Expected disclosure trigger to control section content");
     expect(contentId).toMatch(/^expandable-.+-spells$/);
+    await tick();
     expect(trigger).toHaveAttribute("aria-expanded", "false");
 
     await fireEvent.click(trigger);
@@ -98,6 +100,39 @@ describe("ExpandableSection", () => {
       "aria-expanded",
       "false",
     );
+  });
+
+  it("renders disabled until mount and then enables interaction", async () => {
+    const view = render(ExpandableSectionHarness, {
+      feedbackContext: new FeedbackContext(),
+      name: "Mounted",
+    });
+
+    const trigger = view.getByRole("button", { name: "Mounted" });
+    expect(trigger).toHaveAttribute("aria-busy", "true");
+
+    await tick();
+
+    expect(trigger).not.toBeDisabled();
+    expect(trigger).toHaveAttribute("aria-busy", "false");
+  });
+
+  it("reports expansion state changes", async () => {
+    const states: boolean[] = [];
+    const view = render(ExpandableSectionHarness, {
+      feedbackContext: new FeedbackContext(),
+      name: "Spells",
+      onExpandedChange: (expanded: boolean) => {
+        states.push(expanded);
+      },
+    });
+
+    const trigger = view.getByRole("button", { name: "Spells" });
+    await tick();
+    await fireEvent.click(trigger);
+    await fireEvent.click(trigger);
+
+    expect(states).toEqual([true, false]);
   });
 
   it("registers when reportCategory is provided", async () => {

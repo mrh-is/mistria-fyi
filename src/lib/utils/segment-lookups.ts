@@ -17,6 +17,15 @@ import type { SegmentLookups } from "$lib/utils/source-segments.js";
 export function buildBaseSegmentLookups(
   redactedStoreIds: ReadonlySet<StoreId>,
 ): Omit<SegmentLookups, "entityVisibility"> {
+  return { ...staticBaseSegmentLookups, redactedStoreIds };
+}
+
+const staticBaseSegmentLookups = buildStaticBaseSegmentLookups();
+
+function buildStaticBaseSegmentLookups(): Omit<
+  SegmentLookups,
+  "entityVisibility" | "redactedStoreIds"
+> {
   const perks = Object.fromEntries(
     Object.entries(trackerData.skills).flatMap(([skillId, skill]) =>
       skill.perkTiers.flatMap((tier, tierIndex) =>
@@ -59,7 +68,6 @@ export function buildBaseSegmentLookups(
       ),
     ),
     recipeNames: recordMap(trackerData.recipes, ({ name }) => name),
-    redactedStoreIds,
     skillNames: recordMap(trackerData.skills, ({ name }) => name),
     stationNames: {},
     stores: trackerData.stores,

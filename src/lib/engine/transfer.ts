@@ -1,4 +1,4 @@
-import { canonicalAlmanacId, trackerData } from "$lib/data/index.js";
+import { canonicalAlmanacId, trackerData, trackerIndex } from "$lib/data/index.js";
 import { normalizeRelationships } from "$lib/engine/relationships.js";
 import { recordEntries, recordKeys, recordValues } from "$lib/utils";
 
@@ -530,10 +530,7 @@ function fromBitfield(ordered: string[], bytes: Uint8Array): Set<string> {
 }
 
 function getAlmanacOrder(): ItemId[] {
-  const canonicalIds = recordValues(trackerData.almanac).flatMap(({ items }) =>
-    items.map((entry) => entry.itemIds[0]),
-  );
-  return [...new Set(canonicalIds)].toSorted();
+  return trackerIndex.almanacCanonicalIds;
 }
 
 function getTransferRawLength(version: number): number {

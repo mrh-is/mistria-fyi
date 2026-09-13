@@ -3,7 +3,7 @@
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
-  import { trackerData } from "$lib/data/index.js";
+  import { trackerData, trackerIndex } from "$lib/data/index.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -86,9 +86,7 @@
       }));
   });
 
-  registerSourceFilters("cosmetics", () =>
-    Object.values(trackerData.cosmetics).flatMap(({ sources }) => sources),
-  );
+  registerSourceFilters("cosmetics", () => trackerIndex.categorySourceTypes.cosmetics);
 
   function toggleCosmetic(cosmetic: CosmeticEntry, allInSlot: CosmeticEntry[]): void {
     userState.toggleCosmetic(cosmetic.id);
