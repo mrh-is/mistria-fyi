@@ -52,7 +52,7 @@
   });
 
   $effect(() => {
-    if (activePanel !== null && activePanel !== "feedback" && previousPanel === null) {
+    if (activePanel !== null && activePanel !== "feedback" && activePanel !== previousPanel) {
       void tick().then(() => panelElement?.querySelector<HTMLElement>("button, a")?.focus());
     } else if (activePanel === null && previousPanel !== null) {
       const focusTarget = panelOpener;
@@ -69,7 +69,7 @@
   }
 
   function togglePanel(panel: Exclude<ActivePanel, null>): void {
-    if (activePanel !== panel && activePanel === null) {
+    if (activePanel !== panel) {
       panelOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     }
     activePanel = activePanel === panel ? null : panel;

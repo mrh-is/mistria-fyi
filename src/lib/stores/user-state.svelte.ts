@@ -678,6 +678,7 @@ function createUserState() {
     toggleAvailabilityWindow(window: AvailabilityWindow) {
       const selected = new SvelteSet(state.availabilityWindows);
       if (selected.has(window)) {
+        if (selected.size === 1) return;
         selected.delete(window);
       } else {
         selected.add(window);
@@ -887,6 +888,7 @@ function isSerializedState(value: unknown): value is SerializedState {
   const hasValidWindows =
     value.availabilityWindows !== undefined &&
     isStringArray(value.availabilityWindows) &&
+    value.availabilityWindows.length > 0 &&
     new Set(value.availabilityWindows).size === value.availabilityWindows.length &&
     value.availabilityWindows.every((window) => VALID_AVAILABILITY_WINDOWS.has(window));
   const hasValidLegacyMode = isEnumValue(value.availabilityMode, VALID_AVAILABILITY_MODES);

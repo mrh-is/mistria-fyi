@@ -1,3 +1,5 @@
+import { legacyAvailabilityWindows } from "$lib/types/availability.js";
+
 import {
   evaluateAvailabilityCondition,
   extractDisplayBadges,
@@ -103,7 +105,8 @@ export function isItemDimmed(
   selection: AvailabilitySelection,
 ): boolean {
   if (isCompleted) return false;
-  if (!selectedWindows(selection).includes("later")) return false;
+  const windows = selectedWindows(selection);
+  if (!windows.includes("later") || !windows.some((window) => window !== "later")) return false;
   return classifyItemAvailability(sources, worldState) === "later";
 }
 
@@ -212,13 +215,5 @@ function hasWindowRestriction(condition: AvailabilityCondition): boolean {
 }
 
 function selectedWindows(selection: AvailabilitySelection): readonly AvailabilityWindow[] {
-  if (typeof selection !== "string") return selection;
-  switch (selection) {
-    case "available":
-      return ["now", "anytime"];
-    case "everything":
-      return ["now", "anytime", "later"];
-    case "timely":
-      return ["now"];
-  }
+  return typeof selection === "string" ? legacyAvailabilityWindows(selection) : selection;
 }
