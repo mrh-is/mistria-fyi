@@ -20,9 +20,9 @@
 </script>
 
 <Collapsible.Root bind:open>
-  <div class:settings-card--danger={variant === "danger"} class="settings-card">
+  <div class:data-card--danger={variant === "danger"} class="data-card">
     <div>
-      <Collapsible.Trigger class="settings-card__trigger">
+      <Collapsible.Trigger class="data-card__trigger">
         <span class="flex min-w-0 flex-1 flex-col gap-0">
           <span
             class="leading-none font-semibold {variant === 'danger'
@@ -57,7 +57,7 @@
         : 'grid-rows-[0fr] opacity-0'}"
     >
       <div class="min-h-0 overflow-hidden">
-        <div class="settings-card__content">
+        <div class="data-card__content">
           {@render children()}
         </div>
       </div>
@@ -66,19 +66,19 @@
 </Collapsible.Root>
 
 <style>
-  .settings-card {
+  .data-card {
     border: 1px solid color-mix(in srgb, var(--hairline) 34%, transparent);
     border-left: 3px solid var(--home-accent);
     background: var(--paper-raised);
     box-shadow: var(--shadow-small);
   }
 
-  .settings-card--danger {
+  .data-card--danger {
     border-color: color-mix(in srgb, var(--destructive) 35%, transparent);
     border-left-color: var(--destructive);
   }
 
-  :global(.settings-card__trigger) {
+  :global(.data-card__trigger) {
     display: flex;
     width: 100%;
     align-items: flex-start;
@@ -87,12 +87,12 @@
     text-align: left;
   }
 
-  :global(.settings-card__trigger:focus-visible) {
+  :global(.data-card__trigger:focus-visible) {
     outline: 2px solid var(--primary);
     outline-offset: 2px;
   }
 
-  .settings-card__content {
+  .data-card__content {
     padding: 8px 14px 16px;
     border-top: 1px dashed color-mix(in srgb, var(--hairline) 34%, transparent);
   }

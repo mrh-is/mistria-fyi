@@ -1,4 +1,4 @@
-import { legacyAvailabilityWindows } from "$lib/types/availability.js";
+import { AVAILABILITY_WINDOWS, legacyAvailabilityWindows } from "$lib/types/availability.js";
 
 import {
   evaluateAvailabilityCondition,
@@ -42,6 +42,13 @@ export function filterAvailableItems(
   worldState: WorldState,
   selection: AvailabilitySelection,
 ): ItemId[] {
+  if (selection === "everything") return itemIds;
+  if (
+    typeof selection !== "string" &&
+    AVAILABILITY_WINDOWS.every((window) => selection.includes(window))
+  ) {
+    return itemIds;
+  }
   return itemIds.filter((id) => isItemAvailable(sourceLookup(id), worldState, selection));
 }
 

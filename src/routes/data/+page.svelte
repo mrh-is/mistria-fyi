@@ -10,12 +10,12 @@
   import PageHeader from "$lib/components/page-header.svelte";
   import { trackerData } from "$lib/data/index.js";
 
-  import AiDisclosureDialog from "../settings/ai-disclosure-dialog.svelte";
-  import BackupCard from "../settings/backup-card.svelte";
-  import DangerZoneCard from "../settings/danger-zone-card.svelte";
-  import ImportCard from "../settings/import-card.svelte";
-  import { openThenScroll } from "../settings/settings-effects.js";
-  import TransferCard from "../settings/transfer-card.svelte";
+  import AiDisclosureDialog from "./ai-disclosure-dialog.svelte";
+  import BackupCard from "./backup-card.svelte";
+  import DangerZoneCard from "./danger-zone-card.svelte";
+  import { openThenScroll } from "./data-effects.js";
+  import ImportCard from "./import-card.svelte";
+  import TransferCard from "./transfer-card.svelte";
 
   let aiDisclosureOpen = $state(false);
   let feedbackOpen = $state(false);

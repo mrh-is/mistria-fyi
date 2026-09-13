@@ -8,8 +8,8 @@
   import { totalMergeCounts } from "$lib/engine/merge-labels.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
+  import DataCard from "./data-card.svelte";
   import MergeSummary from "./merge-summary.svelte";
-  import SettingsCard from "./settings-card.svelte";
 
   import type { ImportResult } from "$lib/engine/import-save.js";
 
@@ -147,7 +147,7 @@
   let totalImported = $derived(importResult ? totalMergeCounts(importResult.counts) : 0);
 </script>
 
-<SettingsCard
+<DataCard
   bind:open
   title="Import from Save File"
   summary="Import progress from a Fields of Mistria save."
@@ -317,4 +317,4 @@
       {/if}
     {/if}
   </div>
-</SettingsCard>
+</DataCard>
