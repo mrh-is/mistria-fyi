@@ -226,9 +226,8 @@
       : Math.min(filteredItems.length, SECTION_LIMIT)}
     {@const shouldBypassBatching =
       isOpen && !sectionFrames.has(id) && (renderedSectionCounts[id] ?? 0) < renderTarget}
-    {@const renderedCount = nameFilter
-      ? renderTarget
-      : shouldBypassBatching
+    {@const renderedCount =
+      nameFilter || shouldBypassBatching
         ? renderTarget
         : Math.min(renderedSectionCounts[id] ?? renderTarget, renderTarget)}
     {@const displayItems = filteredItems.slice(0, renderedCount)}

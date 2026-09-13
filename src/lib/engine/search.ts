@@ -7,7 +7,7 @@ import { recordEntries } from "$lib/utils";
 
 import type { UserProgressionState } from "$lib/engine/visibility.js";
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { QuestId, Season, Weather } from "$lib/types/tracker-data.js";
+import type { ItemId, QuestId, Season, Weather } from "$lib/types/tracker-data.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -37,7 +37,7 @@ export function searchItems(
   const results: SearchResult[] = [];
 
   // Almanac entries — one result per collapsed row, canonical ID
-  const seenAlmanacIds = new Set<string>();
+  const seenAlmanacIds = new Set<ItemId>();
   for (const entry of trackerIndex.almanacEntries) {
     const canonicalId = entry.itemIds[0];
     if (seenAlmanacIds.has(canonicalId)) continue;
