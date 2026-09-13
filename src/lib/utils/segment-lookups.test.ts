@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
+
 import { buildBaseSegmentLookups } from "./segment-lookups.js";
 
 import type { StoreId } from "$lib/types/tracker-data.js";

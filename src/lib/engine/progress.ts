@@ -122,7 +122,11 @@ function almanacEntryProgress(
 }
 
 function getAlmanacProgress(ctx: ProgressContext): CategoryProgress {
-  const entries = almanacEntryProgress(trackerIndex.almanacCanonicalIds, ctx.completed.almanac, ctx);
+  const entries = almanacEntryProgress(
+    trackerIndex.almanacCanonicalIds,
+    ctx.completed.almanac,
+    ctx,
+  );
   return {
     completed: entries.completed + ctx.completed.dates.size,
     filtered: entries.filtered + trackerIndex.almanacDateCount - ctx.completed.dates.size,

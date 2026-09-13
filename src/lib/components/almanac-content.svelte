@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { SvelteSet } from "svelte/reactivity";
-
   import { onDestroy } from "svelte";
   import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
@@ -21,6 +19,7 @@
   import { registerSourceFilters } from "$lib/utils/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "$lib/utils/spoiler-guard.svelte.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
+
   import AllCompleted from "./all-completed.svelte";
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
@@ -219,7 +218,9 @@
   )}
   {#if baseItems.length > 0}
     {@const showAll = expandedSections[id] ?? false}
-    {@const renderTarget = showAll ? filteredItems.length : Math.min(filteredItems.length, SECTION_LIMIT)}
+    {@const renderTarget = showAll
+      ? filteredItems.length
+      : Math.min(filteredItems.length, SECTION_LIMIT)}
     {@const renderedCount = nameFilter
       ? renderTarget
       : Math.min(renderedSectionCounts[id] ?? renderTarget, renderTarget)}

@@ -530,7 +530,7 @@ function fromBitfield(ordered: string[], bytes: Uint8Array): Set<string> {
 }
 
 function getAlmanacOrder(): ItemId[] {
-  return trackerIndex.almanacCanonicalIds;
+  return trackerIndex.uniqueAlmanacCanonicalIds;
 }
 
 function getTransferRawLength(version: number): number {
