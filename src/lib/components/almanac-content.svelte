@@ -99,6 +99,7 @@
   const SECTION_BATCH_SIZE = 12;
 
   let expandedSections = $state<Record<string, boolean>>({});
+  let openSections = $state<Record<string, boolean>>({});
   let renderedSectionCounts = $state<Record<string, number>>({});
   const sectionFrames = new SvelteMap<string, number>();
 
@@ -144,6 +145,7 @@
   }
 
   function setSectionOpen(sectionId: string, open: boolean, targetCount: number): void {
+    openSections[sectionId] = open;
     if (!open) {
       stopSectionRendering(sectionId);
       renderedSectionCounts[sectionId] = 0;
@@ -218,19 +220,30 @@
   )}
   {#if baseItems.length > 0}
     {@const showAll = expandedSections[id] ?? false}
+    {@const isOpen = openSections[id] ?? false}
     {@const renderTarget = showAll
       ? filteredItems.length
       : Math.min(filteredItems.length, SECTION_LIMIT)}
+    {@const shouldBypassBatching =
+      isOpen && !sectionFrames.has(id) && (renderedSectionCounts[id] ?? 0) < renderTarget}
     {@const renderedCount = nameFilter
       ? renderTarget
-      : Math.min(renderedSectionCounts[id] ?? renderTarget, renderTarget)}
+      : shouldBypassBatching
+        ? renderTarget
+        : Math.min(renderedSectionCounts[id] ?? renderTarget, renderTarget)}
     {@const displayItems = filteredItems.slice(0, renderedCount)}
     <ExpandableSection
       count={scopedItems.filter(({ canonicalId }) => isItemCompleted(canonicalId)).length}
       forceOpen={!!nameFilter}
       name={cat.name}
       onExpandedChange={(open: boolean) => {
-        setSectionOpen(id, open, renderTarget);
+        setSectionOpen(
+          id,
+          open,
+          expandedSections[id]
+            ? filteredItems.length
+            : Math.min(filteredItems.length, SECTION_LIMIT),
+        );
       }}
       reportCategory="almanac"
       reportEntityId={id}
@@ -276,7 +289,9 @@
             variant="ghost"
             onclick={() => {
               expandedSections[id] = true;
-              scheduleSectionRendering(id, filteredItems.length);
+              if (openSections[id]) {
+                scheduleSectionRendering(id, filteredItems.length);
+              }
             }}
           >
             Show {filteredItems.length - SECTION_LIMIT} more...
