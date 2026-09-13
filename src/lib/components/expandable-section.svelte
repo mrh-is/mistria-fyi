@@ -53,6 +53,7 @@
   let expanded = $state(untrack(() => defaultOpen));
   let hydrated = $state(false);
   let isOpen = $derived(expanded || forceOpen);
+  let lastReportedOpen = $state<boolean | undefined>(undefined);
   let boundedCount = $derived(
     total === undefined || count === undefined ? undefined : Math.min(Math.max(count, 0), total),
   );
@@ -73,10 +74,14 @@
     hydrated = true;
   });
 
+  $effect(() => {
+    if (lastReportedOpen === isOpen) return;
+    lastReportedOpen = isOpen;
+    onExpandedChange?.(isOpen);
+  });
+
   function toggleExpanded(): void {
-    const nextExpanded = !expanded;
-    expanded = nextExpanded;
-    onExpandedChange?.(nextExpanded || forceOpen);
+    expanded = !expanded;
   }
 </script>
 
