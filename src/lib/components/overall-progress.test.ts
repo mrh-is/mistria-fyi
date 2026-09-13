@@ -21,7 +21,7 @@ describe("OverallProgress", () => {
       0,
     );
 
-    const { body } = render(OverallProgress);
+    const { body } = render(OverallProgress, { props: { progress } });
 
     expect(body).toContain(`aria-label="0 of ${expectedTotal.toString()} completed overall, 0%"`);
   });

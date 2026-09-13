@@ -5,7 +5,7 @@
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
-  import { trackerData } from "$lib/data/index.js";
+  import { trackerData, trackerIndex } from "$lib/data/index.js";
   import { isItemDimmed, isRowVisible, shouldCountItem } from "$lib/engine/availability.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
@@ -89,13 +89,7 @@
 
   let nameFilter = $derived(toolbarState.searchQuery);
 
-  registerSourceFilters("museum", () =>
-    recordValues(trackerData.museum).flatMap(({ sets }) =>
-      recordValues(sets).flatMap(({ items }) =>
-        items.flatMap((itemId) => trackerData.items[itemId].sources),
-      ),
-    ),
-  );
+  registerSourceFilters("museum", () => trackerIndex.categorySourceTypes.museum);
 
   function matchesFilter(itemId: ItemId): boolean {
     if (!nameFilter) return true;
