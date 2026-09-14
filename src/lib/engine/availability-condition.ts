@@ -88,31 +88,6 @@ export function hasSelectiveSeasonCondition(condition: AvailabilityCondition): b
   return hasSelectiveSeasonConditionInSimplified(simplifyAvailabilityCondition(condition));
 }
 
-export function hasTimelyCondition(condition: AvailabilityCondition): boolean {
-  switch (condition.type) {
-    case "all":
-    case "any":
-      return condition.conditions.some(hasTimelyCondition);
-    case "always":
-    case "gamePredicate":
-    case "hasUpperFloor":
-    case "heartLevel":
-    case "isDating":
-    case "minesLevel":
-    case "perkUnlocked":
-    case "quest":
-    case "reachedSeason":
-    case "skillLevel":
-      return false;
-    case "not":
-      return hasTimelyCondition(condition.condition);
-    case "season":
-    case "time":
-    case "weather":
-      return true;
-  }
-}
-
 export function simplifyAvailabilityCondition(
   condition: AvailabilityCondition,
 ): AvailabilityCondition | undefined {
