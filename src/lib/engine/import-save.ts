@@ -397,26 +397,6 @@ function deriveReachedSeason(date: number | undefined): Season {
 
 const SAVE_FILES = new Set(["gamedata.json", "player.json", "quests.json"]);
 
-export function parsePlayerSave(jsonString: string): {
-  error?: string;
-  save?: PlayerSave;
-} {
-  try {
-    const data: unknown = JSON.parse(jsonString);
-    if (!validatePlayerSave(data)) {
-      return {
-        error:
-          "This doesn't look like a Fields of Mistria player.json file. Expected fields like items_acquired or cosmetic_unlocks.",
-      };
-    }
-    return { save: data };
-  } catch {
-    return { error: "Invalid JSON. Make sure you selected your player.json file." };
-  }
-}
-
-// ─── Legacy single-file parse (kept for backward compatibility) ─────
-
 export async function parseSaveFiles(files: File[]): Promise<{
   bundle?: SaveBundle;
   error?: string;

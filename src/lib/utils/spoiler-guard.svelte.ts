@@ -1,10 +1,8 @@
 import { trackerData } from "$lib/data/index.js";
-import { isEntityNameVisible, satisfyCondition } from "$lib/engine/visibility.js";
+import { satisfyCondition } from "$lib/engine/visibility.js";
 import { userState } from "$lib/stores/user-state.svelte.js";
 
 import type { VisibilityCondition } from "$lib/types/visibility.js";
-
-export const SPOILER_NAME = "Spoilered item";
 
 export function createSpoilerGuard() {
   let open = $state(false);
@@ -45,13 +43,4 @@ export function createSpoilerGuard() {
       open = value;
     },
   };
-}
-
-/**
- * Resolves a display name for toasts and accessible labels: the real name once `visibility` is
- * satisfied by current progression, otherwise a spoiler-safe placeholder. Evaluated at call time
- * (not reactively) since callers use it right after a state mutation to reflect the fresh state.
- */
-export function resolveName(name: string, visibility: VisibilityCondition): string {
-  return isEntityNameVisible(visibility, userState.progressionState) ? name : SPOILER_NAME;
 }
