@@ -45,10 +45,10 @@
   }
 
   :global(.blocky-switch [data-slot="switch-thumb"]) {
-    background: var(--ink-muted);
+    background: color-mix(in srgb, var(--hairline) 60%, var(--paper-raised));
   }
 
   :global(.blocky-switch[data-state="checked"] [data-slot="switch-thumb"]) {
-    background: var(--primary);
+    background: color-mix(in srgb, var(--primary) 72%, var(--paper-raised));
   }
 </style>

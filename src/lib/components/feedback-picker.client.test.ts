@@ -94,7 +94,7 @@ describe("FeedbackPicker", () => {
     context.startPicking(vi.fn());
     render(FeedbackPicker, { active: true, feedbackContext: context });
 
-    const cancel = await screen.findByRole("button", { name: "Cancel" });
+    const cancel = await screen.findByRole("button", { name: "Cancel item picker" });
     await waitFor(() => {
       expect(cancel).toHaveFocus();
     });

@@ -62,7 +62,7 @@
     --tag-accent: #c36d5a;
     --tag-ink: #e8e3dc;
     --tag-muted: #aaa39b;
-    --tag-paper: #303036;
+    --tag-paper: #352f2a;
   }
 
   .inventory-tag {
@@ -74,7 +74,9 @@
     overflow: hidden;
     color: var(--tag-ink);
     background: var(--tag-paper);
-    box-shadow: 4px 9px 18px rgb(31 23 15 / 24%);
+    box-shadow:
+      0 0 0 1px rgb(31 23 15 / 8%),
+      4px 9px 18px rgb(31 23 15 / 24%);
     clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%, 0 14px);
     -webkit-mask: radial-gradient(circle at 50% 31px, transparent 0 7px, #000 7.5px);
     mask: radial-gradient(circle at 50% 31px, transparent 0 7px, #000 7.5px);
@@ -128,7 +130,7 @@
 
   .inventory-tag__heading {
     padding-bottom: 8px;
-    border-bottom: 2px solid color-mix(in srgb, var(--tag-ink) 74%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--tag-ink) 42%, transparent);
   }
 
   .inventory-tag__overline {
@@ -161,8 +163,8 @@
     min-width: 0;
     gap: 7px;
     padding: 7px 6px;
-    border-right: 1px solid color-mix(in srgb, var(--tag-ink) 42%, transparent);
-    border-bottom: 1px solid color-mix(in srgb, var(--tag-ink) 42%, transparent);
+    border-right: 1px solid color-mix(in srgb, var(--tag-ink) 22%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--tag-ink) 22%, transparent);
   }
 
   .inventory-tag__list li:nth-child(even) {
@@ -284,7 +286,7 @@
     }
 
     .inventory-tag__list li:not(:last-child) {
-      border-bottom: 1px solid color-mix(in srgb, var(--tag-ink) 42%, transparent);
+      border-bottom: 1px solid color-mix(in srgb, var(--tag-ink) 22%, transparent);
     }
 
     .inventory-tag__footer {

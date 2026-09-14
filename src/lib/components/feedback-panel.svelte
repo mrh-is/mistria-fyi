@@ -50,6 +50,7 @@
   let email = $state("");
   let wantsReply = $state(false);
   let includeSaveData = $state(false);
+  let showProgressInfo = $state(false);
   let showSaveDataPreview = $state(false);
   let submitting = $state(false);
   let submitError = $state("");
@@ -129,6 +130,7 @@
       showSaveDataPreview = false;
       selectedElement = undefined;
       pickerActive = false;
+      showProgressInfo = false;
       feedbackContext.reset();
       submitError = "";
       submitShake = false;
@@ -360,6 +362,7 @@
       messageTouched = false;
       emailTouched = false;
       includeSaveData = false;
+      showProgressInfo = false;
       showSaveDataPreview = false;
       selectedElement = undefined;
       onclose();
@@ -510,11 +513,58 @@
           <div class="flex items-center gap-2">
             <Checkbox class="rounded-sm" id="include-save-data" bind:checked={includeSaveData} />
             <label for="include-save-data" class="flex-1 text-xs select-none">
-              Attach my tracker progress <span class="text-muted-foreground"
-                >(helps with debugging)</span
-              >
+              Attach my tracker progress
             </label>
+            <button
+              class="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+              type="button"
+              onclick={() => {
+                showProgressInfo = !showProgressInfo;
+              }}
+            >
+              <IconChevronDown
+                class="size-3 transition-transform motion-reduce:transition-none {showProgressInfo
+                  ? 'rotate-180'
+                  : ''}"
+              />
+              {showProgressInfo ? "Less" : "More"}
+            </button>
           </div>
+
+          {#if showProgressInfo}
+            <div
+              class="space-y-1 pl-7"
+              transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
+            >
+              <p class="text-[11px] leading-relaxed text-muted-foreground">
+                Sends your tracked completion state (items checked off, skill levels, etc.). No
+                personal information. <strong>This data will be publicly visible.</strong>
+              </p>
+              {#if includeSaveData}
+                <button
+                  class="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+                  type="button"
+                  onclick={() => {
+                    showSaveDataPreview = !showSaveDataPreview;
+                  }}
+                >
+                  <IconChevronDown
+                    class="size-3 transition-transform motion-reduce:transition-none {showSaveDataPreview
+                      ? 'rotate-180'
+                      : ''}"
+                  />
+                  {showSaveDataPreview ? "Hide" : "Show"} my progress data
+                </button>
+                {#if showSaveDataPreview}
+                  <!-- prettier-ignore -->
+                  <pre
+                    class="max-h-40 overflow-auto rounded border border-border bg-muted/40 p-2 text-[11px] leading-tight"
+                    transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
+                  >{saveDataPreview}</pre>
+                {/if}
+              {/if}
+            </div>
+          {/if}
 
           <div class="flex items-center gap-2">
             <Checkbox class="rounded-sm" id="wants-reply" bind:checked={wantsReply} />
@@ -565,39 +615,6 @@
             </div>
           {/if}
         </div>
-
-        {#if includeSaveData}
-          <div
-            class="space-y-1"
-            transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
-          >
-            <p class="text-[11px] leading-relaxed text-muted-foreground">
-              Sends your tracked completion state (items checked off, skill levels, etc.). No
-              personal information. <strong>This data will be publicly visible.</strong>
-            </p>
-            <button
-              class="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
-              type="button"
-              onclick={() => {
-                showSaveDataPreview = !showSaveDataPreview;
-              }}
-            >
-              <IconChevronDown
-                class="size-3 transition-transform motion-reduce:transition-none {showSaveDataPreview
-                  ? 'rotate-180'
-                  : ''}"
-              />
-              {showSaveDataPreview ? "Hide" : "Show"} my progress data
-            </button>
-            {#if showSaveDataPreview}
-              <!-- prettier-ignore -->
-              <pre
-                class="max-h-40 overflow-auto rounded border border-border bg-muted/40 p-2 text-[11px] leading-tight"
-                transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
-              >{saveDataPreview}</pre>
-            {/if}
-          </div>
-        {/if}
 
         <p class="feedback-form__version">
           App v{version} · Game data v{trackerData.version}
