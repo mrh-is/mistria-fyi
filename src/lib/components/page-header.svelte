@@ -15,6 +15,7 @@
     backLabel = "Back to home",
     category,
     icon,
+    onback,
     progress,
     ref = $bindable<HTMLDivElement | undefined>(undefined),
     title,
@@ -23,6 +24,7 @@
     backLabel?: string;
     category?: CategoryKey;
     icon?: Snippet<[string]>;
+    onback?: (event: MouseEvent) => void;
     progress?: CategoryProgress;
     ref?: HTMLDivElement | undefined;
     title: string;
@@ -43,7 +45,7 @@
   data-page-header={category === undefined ? "generic" : "category"}
   style={category !== undefined && pct !== undefined ? `--category-progress: ${pct}%;` : undefined}
 >
-  <a class="page-header__back" href={resolve(backHref)} aria-label={backLabel}>
+  <a class="page-header__back" href={resolve(backHref)} aria-label={backLabel} onclick={onback}>
     <IconArrowLeft class="size-5" />
   </a>
   {#if category === undefined}

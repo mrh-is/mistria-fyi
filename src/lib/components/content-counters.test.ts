@@ -8,6 +8,7 @@ import MuseumContent from "$lib/components/museum-content.svelte";
 import QuestsContent from "$lib/components/quests-content.svelte";
 import RecipesContent from "$lib/components/recipes-content.svelte";
 import { trackerData } from "$lib/data/index.js";
+import { isEntityNameVisible } from "$lib/engine/visibility.js";
 import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
 import { userState } from "$lib/stores/user-state.svelte.js";
 
@@ -59,6 +60,21 @@ describe("subsection counters", () => {
     const { body } = render(AlmanacContent, { props: {} });
 
     expect(renderedText(body)).toContain("Blacksmithing 1 / 1");
+  });
+
+  it("does not return spoilered almanac rows from search", () => {
+    const hiddenEntry = Object.values(trackerData.almanac)
+      .flatMap(({ items }) => items)
+      .find(({ itemIds }) => {
+        const item = trackerData.items[itemIds[0]];
+        return !isEntityNameVisible(item.visibility, userState.progressionState);
+      });
+    if (!hiddenEntry) throw new Error("Expected a spoilered almanac entry");
+
+    toolbarState.setSearch(hiddenEntry.name);
+    const { body } = render(AlmanacContent, { props: {} });
+
+    expect(body).not.toContain('aria-label="Reveal spoiler"');
   });
 
   it("hides recipes whose covered sources all belong to hidden groups", () => {

@@ -32,9 +32,9 @@ test.describe("@critical keyboard and focus accessibility", () => {
     await page.keyboard.press("Enter");
     const dialog = page.getByRole("dialog", { name: "Send feedback" });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole("textbox", { name: "Message" })).toBeFocused();
-    await page.keyboard.press("Shift+Tab");
-    await expect(dialog.getByRole("button", { name: "Close" })).toBeFocused();
+    await expect(dialog).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(dialog.getByRole("button", { name: "Close Send feedback" })).toBeFocused();
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
     await expect(trigger).toBeFocused();
@@ -65,6 +65,17 @@ test.describe("@critical keyboard and focus accessibility", () => {
     await expect(search).toHaveValue("");
     await page.getByRole("button", { name: "Cancel" }).press("Enter");
     await expect(trigger).toBeFocused();
+  });
+
+  test("data management returns to the page that opened it", async ({ page }) => {
+    await gotoApplication(page, "/museum");
+    await page.getByRole("button", { name: "Quick settings" }).click();
+    await page.getByRole("link", { name: "Data management" }).click();
+    await expect(page).toHaveURL(/\/data$/);
+
+    await page.getByRole("link", { name: "Go back" }).click();
+
+    await expect(page).toHaveURL(/\/museum$/);
   });
 
   test("row removal moves focus and Undo is keyboard operable", async ({ page }) => {

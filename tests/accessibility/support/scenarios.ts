@@ -10,7 +10,7 @@ export async function openFeedbackValidation(page: Page): Promise<void> {
   await expect(trigger).toHaveAttribute("aria-expanded", "true");
   const dialog = page.getByRole("dialog", { name: "Send feedback" });
   await expect(dialog).toBeVisible();
-  await dialog.getByRole("button", { name: "Send feedback" }).click();
+  await dialog.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(dialog.getByRole("alert")).toHaveText("Please enter a message.");
 }
 

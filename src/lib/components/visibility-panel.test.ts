@@ -14,8 +14,8 @@ function sourceFilter(label: string): SourceFilter {
   return filter;
 }
 
-const foragingFilter = sourceFilter("Foraging");
-const shopsFilter = sourceFilter("Shops");
+const gatheringFilter = sourceFilter("Gathering");
+const storesFilter = sourceFilter("Stores");
 
 afterEach(() => {
   toolbarState.removeSourceFilters("test");
@@ -31,19 +31,26 @@ describe("VisibilityPanel", () => {
     expect(new Set(filteredTypes)).toEqual(allSourceTypes);
   });
 
-  it("groups source types by player activity", () => {
+  it("preserves the established source groups and order", () => {
     expect(SOURCE_FILTERS.map(({ label }) => label)).toEqual([
-      "Foraging",
-      "Fishing",
-      "Shops",
-      "NPCs",
-      "Events",
+      "Chests",
       "Crafting",
+      "Dating",
+      "Farming",
+      "Festivals",
+      "Fishing",
+      "Gathering",
+      "Mines",
+      "Museum",
+      "Offerings",
+      "Perks",
+      "Stores",
+      "Progress",
     ]);
   });
 
   it("renders availability, world-state, and source controls in one view", () => {
-    toolbarState.setSourceFilters("test", [foragingFilter, shopsFilter]);
+    toolbarState.setSourceFilters("test", [gatheringFilter, storesFilter]);
 
     const { body } = render(VisibilityPanel, { props: { showSeasonality: true } });
 
@@ -51,10 +58,10 @@ describe("VisibilityPanel", () => {
     expect(body).toContain('aria-label="Season"');
     expect(body).toContain('aria-label="Weather"');
     expect(body).toContain("Sources");
-    expect(body).toContain("Foraging");
-    expect(body).toContain("Shops");
+    expect(body).toContain("Gathering");
+    expect(body).toContain("Stores");
     expect(body).toContain('aria-label="About source groups"');
-    expect(body).toContain("Show completed items");
+    expect(body).toContain("Show completed?");
   });
 
   it("omits seasonality and source controls when they are inapplicable", () => {
@@ -62,18 +69,17 @@ describe("VisibilityPanel", () => {
 
     expect(body).not.toContain("When to find");
     expect(body).not.toContain("Sources");
-    expect(body).not.toContain("Clear all filters");
-    expect(body).toContain("Show completed items");
+    expect(body).not.toContain("Reset");
+    expect(body).toContain("Show completed?");
   });
 
-  it("shows reset for hidden source groups while retaining current world state", () => {
-    toolbarState.setSourceFilters("test", [foragingFilter]);
+  it("retains current world state when source groups are hidden", () => {
+    toolbarState.setSourceFilters("test", [gatheringFilter]);
     toolbarState.hideAllSourceFilters();
     userState.setSeason("summer");
 
     const { body } = render(VisibilityPanel, { props: { showSeasonality: true } });
 
-    expect(body).toContain("Clear all filters");
     expect(body).toContain("Summer");
     expect(body).toContain("Sun");
     expect(userState.state.worldState).toEqual({ season: "summer", weather: "calm" });

@@ -5,11 +5,13 @@
 
   let {
     children,
+    headerActions,
     id,
     onclose,
     title,
   }: {
     children: Snippet;
+    headerActions?: Snippet;
     id: string;
     onclose: () => void;
     title: string;
@@ -19,6 +21,9 @@
 <section class="foldout" {id} aria-labelledby="{id}-title">
   <header class="foldout__header">
     <h2 class="foldout__title" id="{id}-title">{title}</h2>
+    <div class="foldout__header-actions">
+      {@render headerActions?.()}
+    </div>
     <button class="foldout__close" type="button" aria-label="Close {title}" onclick={onclose}>
       <IconX class="size-4" />
     </button>
@@ -47,11 +52,17 @@
   }
 
   .foldout__title {
+    flex: 1;
     font-family: var(--font-controls);
     font-size: 11px;
     font-weight: 400;
     letter-spacing: 0.14em;
     text-transform: uppercase;
+  }
+
+  .foldout__header-actions {
+    display: flex;
+    align-items: center;
   }
 
   .foldout__close {
