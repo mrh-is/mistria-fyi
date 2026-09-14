@@ -177,6 +177,7 @@
     aria-label="Tracker tools"
     class="pointer-events-none fixed right-0 bottom-safe-offset-3 left-0 z-20 mx-auto max-w-lg px-3"
     style="--primary: {toolbarAccent}; --ring: {toolbarAccent}"
+    hidden={feedbackContext.isPicking}
   >
     {#if toolbarState.searchOpen}
       <div class="search-bar pointer-events-auto flex items-center gap-2 p-1 shadow-lg">

@@ -114,9 +114,9 @@
     z-index: 2;
     min-width: 0;
     flex: 1;
-    margin-block: -0.25em;
+    margin: -0.35em 0 -0.35em -0.06em;
     overflow: hidden;
-    padding-block: 0.25em;
+    padding: 0.35em 0 0.35em 0.06em;
     font-family: var(--font-display);
     font-size: 24px;
     font-style: italic;

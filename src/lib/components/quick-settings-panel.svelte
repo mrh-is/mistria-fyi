@@ -180,7 +180,7 @@
   }
 
   .spoiler-tag-wrap {
-    --tag-accent: var(--primary);
+    --tag-accent: #a65343;
     --tag-ink: #312e2b;
     --tag-muted: #68635e;
     --tag-paper: #f1eee8;
@@ -190,6 +190,7 @@
   }
 
   :global(.dark) .spoiler-tag-wrap {
+    --tag-accent: #c36d5a;
     --tag-ink: #e8e3dc;
     --tag-muted: #aaa39b;
     --tag-paper: #352f2a;
