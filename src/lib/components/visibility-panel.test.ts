@@ -57,10 +57,10 @@ describe("VisibilityPanel", () => {
     expect(body).toContain("When to find");
     expect(body).toContain('aria-label="Season"');
     expect(body).toContain('aria-label="Weather"');
-    expect(body).toContain("Sources");
+    expect(body).toContain("Source types");
     expect(body).toContain("Gathering");
     expect(body).toContain("Stores");
-    expect(body).toContain('aria-label="About source groups"');
+    expect(body).toContain('aria-label="About source types"');
     expect(body).toContain("Show completed?");
   });
 
@@ -68,7 +68,7 @@ describe("VisibilityPanel", () => {
     const { body } = render(VisibilityPanel, { props: { showSeasonality: false } });
 
     expect(body).not.toContain("When to find");
-    expect(body).not.toContain("Sources");
+    expect(body).not.toContain("Source types");
     expect(body).not.toContain("Reset");
     expect(body).toContain("Show completed?");
   });

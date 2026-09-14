@@ -13,19 +13,19 @@
     <DialogPrimitive.Overlay class="source-dialog__overlay" />
     <DialogPrimitive.Content class="source-dialog">
       <div class="inventory-tag-wrap">
-        <svg class="inventory-tag__string" viewBox="0 0 100 65" aria-hidden="true">
-          <path d="M96 3 C70 1 58 28 43 61" />
+        <svg class="inventory-tag__string" viewBox="0 0 120 70" aria-hidden="true">
+          <path d="M117 3 C89 2 82 27 60 59" />
         </svg>
         <div class="inventory-tag">
           <div class="inventory-tag__stub" aria-hidden="true">
-            <span class="inventory-tag__ring"><i></i></span>
+            <span class="inventory-tag__ring"></span>
           </div>
           <div class="inventory-tag__body">
             <div class="inventory-tag__heading">
               <span class="inventory-tag__overline">Field Guide inventory</span>
-              <Dialog.Title>Source groups</Dialog.Title>
+              <Dialog.Title>Source types</Dialog.Title>
               <Dialog.Description class="sr-only"
-                >The source filter groups shown in the filter panel.</Dialog.Description
+                >The source types shown in the filter panel.</Dialog.Description
               >
             </div>
             <ul class="inventory-tag__list">
@@ -37,9 +37,9 @@
                 </li>
               {/each}
             </ul>
-            <div class="inventory-tag__footer">
-              <Dialog.Close class="inventory-tag__close">Got it</Dialog.Close>
-            </div>
+          </div>
+          <div class="inventory-tag__footer">
+            <Dialog.Close class="inventory-tag__close">Got it</Dialog.Close>
           </div>
         </div>
       </div>
@@ -50,10 +50,9 @@
 <style>
   .inventory-tag-wrap {
     --tag-accent: #a65343;
-    --tag-ink: #382d24;
-    --tag-muted: #695647;
-    --tag-paper-end: #e9c98f;
-    --tag-paper-middle: #f0d8aa;
+    --tag-ink: #312e2b;
+    --tag-muted: #68635e;
+    --tag-paper: #f1eee8;
 
     position: relative;
     width: 100%;
@@ -61,38 +60,33 @@
 
   :global(.dark) .inventory-tag-wrap {
     --tag-accent: #c36d5a;
-    --tag-ink: #eee3d2;
-    --tag-muted: #c7b7a1;
-    --tag-paper-end: #34302b;
-    --tag-paper-middle: #413a31;
+    --tag-ink: #e8e3dc;
+    --tag-muted: #aaa39b;
+    --tag-paper: #303036;
   }
 
   .inventory-tag {
     position: relative;
-    display: grid;
-    grid-template-columns: 74px minmax(0, 1fr);
+    display: flex;
     width: 100%;
     max-height: calc(100dvh - 48px);
-    overflow-y: auto;
+    flex-direction: column;
+    overflow: hidden;
     color: var(--tag-ink);
-    background: linear-gradient(
-      104deg,
-      var(--tag-paper-end),
-      var(--tag-paper-middle) 48%,
-      var(--tag-paper-end)
-    );
+    background: var(--tag-paper);
     box-shadow: 4px 9px 18px rgb(31 23 15 / 24%);
-    -webkit-mask: radial-gradient(circle at 37px 35px, transparent 0 7px, #000 7.5px);
-    mask: radial-gradient(circle at 37px 35px, transparent 0 7px, #000 7.5px);
+    clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%, 0 14px);
+    -webkit-mask: radial-gradient(circle at 50% 31px, transparent 0 7px, #000 7.5px);
+    mask: radial-gradient(circle at 50% 31px, transparent 0 7px, #000 7.5px);
   }
 
   .inventory-tag__string {
     position: absolute;
-    top: -26px;
-    left: -6px;
+    top: -28px;
+    left: calc(50% - 60px);
     z-index: 3;
-    width: 100px;
-    height: 65px;
+    width: 120px;
+    height: 70px;
     overflow: visible;
     fill: none;
     filter: drop-shadow(0 1px 1px rgb(0 0 0 / 30%));
@@ -104,35 +98,32 @@
 
   .inventory-tag__stub {
     display: flex;
+    min-height: 62px;
     align-items: center;
-    flex-direction: column;
-    justify-content: flex-start;
-    padding-top: 18px;
-    border-right: 1px dashed color-mix(in srgb, var(--tag-ink) 35%, transparent);
+    flex: 0 0 auto;
+    justify-content: center;
+    border-bottom: 1px dashed color-mix(in srgb, var(--tag-ink) 35%, transparent);
   }
 
   .inventory-tag__ring {
-    position: relative;
-    display: grid;
     width: 34px;
     height: 34px;
-    place-items: center;
+    border: 8px solid var(--tag-accent);
     border-radius: 50%;
-    background: var(--tag-accent);
+    background: transparent;
     box-shadow:
-      inset 0 0 0 2px color-mix(in srgb, var(--tag-accent) 72%, #000),
+      inset 0 0 0 1px color-mix(in srgb, var(--tag-accent) 60%, #000),
+      0 0 0 1px color-mix(in srgb, var(--tag-accent) 68%, #000),
       0 1px 1px rgb(57 36 23 / 22%);
   }
 
-  .inventory-tag__ring i {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-  }
-
   .inventory-tag__body {
+    display: flex;
     min-width: 0;
-    padding: 15px 16px 13px;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    padding: 15px 16px 0;
   }
 
   .inventory-tag__heading {
@@ -159,6 +150,10 @@
   .inventory-tag__list {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .inventory-tag__list li {
@@ -172,6 +167,10 @@
 
   .inventory-tag__list li:nth-child(even) {
     border-right: 0;
+  }
+
+  .inventory-tag__list li:last-child {
+    border-bottom: 0;
   }
 
   .inventory-tag__list :global(svg) {
@@ -202,9 +201,10 @@
   .inventory-tag__footer {
     display: flex;
     min-height: 44px;
-    align-items: end;
-    justify-content: end;
-    padding-top: 8px;
+    align-items: center;
+    flex: 0 0 auto;
+    justify-content: flex-end;
+    padding: 8px 16px 13px;
   }
 
   :global(.inventory-tag__close) {
@@ -270,12 +270,6 @@
   }
 
   @media (max-width: 380px) {
-    .inventory-tag {
-      grid-template-columns: 62px minmax(0, 1fr);
-      -webkit-mask: radial-gradient(circle at 31px 35px, transparent 0 7px, #000 7.5px);
-      mask: radial-gradient(circle at 31px 35px, transparent 0 7px, #000 7.5px);
-    }
-
     .inventory-tag__body {
       padding-inline: 11px;
     }
@@ -289,8 +283,12 @@
       border-right: 0;
     }
 
-    .inventory-tag__string {
-      left: -12px;
+    .inventory-tag__list li:not(:last-child) {
+      border-bottom: 1px solid color-mix(in srgb, var(--tag-ink) 42%, transparent);
+    }
+
+    .inventory-tag__footer {
+      padding-inline: 11px;
     }
   }
 
