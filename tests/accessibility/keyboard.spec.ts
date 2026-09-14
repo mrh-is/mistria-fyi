@@ -14,7 +14,7 @@ test.describe("@critical keyboard and focus accessibility", () => {
   test("toolbar controls follow a predictable focus order", async ({ page }) => {
     await gotoApplication(page, "/");
     const tools = page.getByRole("navigation", { name: "Tracker tools" });
-    await tools.getByRole("link", { name: "Settings" }).focus();
+    await tools.getByRole("button", { name: "Quick settings" }).focus();
     await page.keyboard.press("Tab");
     await expect(tools.getByRole("button", { name: "Send feedback" })).toBeFocused();
     await page.keyboard.press("Tab");
@@ -32,22 +32,24 @@ test.describe("@critical keyboard and focus accessibility", () => {
     await page.keyboard.press("Enter");
     const dialog = page.getByRole("dialog", { name: "Send feedback" });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole("textbox", { name: "Message" })).toBeFocused();
-    await page.keyboard.press("Shift+Tab");
-    await expect(dialog.getByRole("button", { name: "Close" })).toBeFocused();
+    await expect(dialog).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(dialog.getByRole("button", { name: "Close Send feedback" })).toBeFocused();
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
     await expect(trigger).toBeFocused();
   });
 
-  test("settings disclosures operate with Enter and Space", async ({ page }) => {
-    await gotoApplication(page, "/settings");
-    const disclosure = page.getByRole("button", { name: /^Theme/ });
-    await disclosure.focus();
+  test("quick settings operates with Enter and Space", async ({ page }) => {
+    await gotoApplication(page, "/");
+    const trigger = page.getByRole("button", { exact: true, name: "Quick settings" });
+    await trigger.focus();
     await page.keyboard.press("Enter");
-    await expect(disclosure).toHaveAttribute("aria-expanded", "true");
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    await expect(page.getByRole("region", { name: "Quick settings" })).toBeVisible();
+    await trigger.focus();
     await page.keyboard.press("Space");
-    await expect(disclosure).toHaveAttribute("aria-expanded", "false");
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
 
   test("search supports keyboard entry, clearing, and closure", async ({ page }) => {
@@ -63,6 +65,17 @@ test.describe("@critical keyboard and focus accessibility", () => {
     await expect(search).toHaveValue("");
     await page.getByRole("button", { name: "Cancel" }).press("Enter");
     await expect(trigger).toBeFocused();
+  });
+
+  test("data management returns to the page that opened it", async ({ page }) => {
+    await gotoApplication(page, "/museum");
+    await page.getByRole("button", { name: "Quick settings" }).click();
+    await page.getByRole("link", { name: "Data management" }).click();
+    await expect(page).toHaveURL(/\/data$/);
+
+    await page.getByRole("link", { name: "Go back" }).click();
+
+    await expect(page).toHaveURL(/\/museum$/);
   });
 
   test("row removal moves focus and Undo is keyboard operable", async ({ page }) => {

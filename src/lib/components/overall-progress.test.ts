@@ -12,7 +12,7 @@ describe("OverallProgress", () => {
 
   it("includes every category in the overall total", () => {
     const progress = getAllProgress({
-      availabilityMode: userState.state.availabilityMode,
+      availabilityWindows: userState.state.availabilityWindows,
       completed: userState.state.completed,
       worldState: userState.state.worldState,
     });

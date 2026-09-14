@@ -1,21 +1,25 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  classifyItemAvailability,
   filterAvailableItems,
   getDisplayBadges,
   hasSelectiveSeasonRestriction,
   hasTimelyRestriction,
   isItemAvailable,
+  isItemDimmed,
   isRowVisible,
   isSourceAvailable,
   shouldCountItem,
 } from "../availability.js";
 
 import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
+import type { AvailabilityWindow } from "$lib/types/availability.js";
 import type { ItemId, Season, StoreId, Weather } from "$lib/types/tracker-data.js";
 import type { NonEmptyArray } from "$lib/utils.js";
 
 const spring = { season: "spring" as const, weather: "calm" as const };
+const defaultWindows: AvailabilityWindow[] = ["now", "anytime"];
 
 function src(availability?: AvailabilityCondition): Source {
   return { ...(availability ? { availability } : {}), type: "store", storeId: "test" as StoreId };
@@ -146,6 +150,60 @@ describe("isItemAvailable", () => {
   });
 });
 
+describe("classifyItemAvailability", () => {
+  it("partitions unrestricted entries as anytime", () => {
+    expect(classifyItemAvailability([], spring)).toBe("anytime");
+    expect(classifyItemAvailability([src()], spring)).toBe("anytime");
+    expect(classifyItemAvailability([src(allSeasonsCondition)], spring)).toBe("anytime");
+  });
+
+  it("partitions matching timely entries as now and non-matches as later", () => {
+    expect(classifyItemAvailability([src(seasonCondition(["spring"]))], spring)).toBe("now");
+    expect(classifyItemAvailability([src(seasonCondition(["winter"]))], spring)).toBe("later");
+  });
+
+  it("uses an unrestricted source when an item also has a timely source", () => {
+    expect(classifyItemAvailability([src(), src(seasonCondition(["winter"]))], spring)).toBe(
+      "anytime",
+    );
+  });
+
+  it("supports independently selected windows", () => {
+    expect(isItemAvailable([src(seasonCondition(["spring"]))], spring, ["now"])).toBe(true);
+    expect(isItemAvailable([src()], spring, ["now"])).toBe(false);
+    expect(isItemAvailable([src()], spring, ["anytime"])).toBe(true);
+    expect(isItemAvailable([src(seasonCondition(["winter"]))], spring, ["later"])).toBe(true);
+    expect(isItemAvailable([src(seasonCondition(["winter"]))], spring, defaultWindows)).toBe(false);
+  });
+});
+
+// ─── isItemDimmed ───────────────────────────────────────────────────
+
+describe("isItemDimmed", () => {
+  const laterItem = [src(seasonCondition(["winter"]))];
+
+  it("never dims completed items", () => {
+    expect(isItemDimmed(laterItem, true, spring, ["now", "anytime", "later"])).toBe(false);
+  });
+
+  it("dims a later item when shown alongside now/anytime windows for contrast", () => {
+    expect(isItemDimmed(laterItem, false, spring, ["now", "anytime", "later"])).toBe(true);
+    expect(isItemDimmed(laterItem, false, spring, ["now", "later"])).toBe(true);
+  });
+
+  it("does not dim when later is the only selected window", () => {
+    expect(isItemDimmed(laterItem, false, spring, ["later"])).toBe(false);
+  });
+
+  it("does not dim when later isn't selected at all", () => {
+    expect(isItemDimmed(laterItem, false, spring, defaultWindows)).toBe(false);
+  });
+
+  it("does not dim items that aren't classified as later", () => {
+    expect(isItemDimmed([src()], false, spring, ["now", "anytime", "later"])).toBe(false);
+  });
+});
+
 // ─── filterAvailableItems ───────────────────────────────────────────
 
 describe("filterAvailableItems", () => {
@@ -163,7 +221,17 @@ describe("filterAvailableItems", () => {
   });
 
   it("everything returns all", () => {
-    expect(filterAvailableItems(ids, lookup, spring, "everything")).toEqual(ids);
+    expect(filterAvailableItems(ids, lookup, spring, "everything")).toBe(ids);
+  });
+
+  it("skips source lookup when every availability window is selected", () => {
+    const unexpectedLookup = () => {
+      throw new Error("source lookup should not run");
+    };
+
+    expect(filterAvailableItems(ids, unexpectedLookup, spring, ["later", "now", "anytime"])).toBe(
+      ids,
+    );
   });
 });
 

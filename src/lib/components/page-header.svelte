@@ -15,6 +15,7 @@
     backLabel = "Back to home",
     category,
     icon,
+    onback,
     progress,
     ref = $bindable<HTMLDivElement | undefined>(undefined),
     title,
@@ -23,6 +24,7 @@
     backLabel?: string;
     category?: CategoryKey;
     icon?: Snippet<[string]>;
+    onback?: (event: MouseEvent) => void;
     progress?: CategoryProgress;
     ref?: HTMLDivElement | undefined;
     title: string;
@@ -39,10 +41,11 @@
   bind:this={ref}
   class="page-header"
   class:page-header--category={category !== undefined}
+  class:page-header--complete={pct === 100}
   data-page-header={category === undefined ? "generic" : "category"}
   style={category !== undefined && pct !== undefined ? `--category-progress: ${pct}%;` : undefined}
 >
-  <a class="page-header__back" href={resolve(backHref)} aria-label={backLabel}>
+  <a class="page-header__back" href={resolve(backHref)} aria-label={backLabel} onclick={onback}>
     <IconArrowLeft class="size-5" />
   </a>
   {#if category === undefined}
@@ -111,7 +114,9 @@
     z-index: 2;
     min-width: 0;
     flex: 1;
+    margin: -0.35em 0 -0.35em -0.06em;
     overflow: hidden;
+    padding: 0.35em 0 0.35em 0.06em;
     font-family: var(--font-display);
     font-size: 24px;
     font-style: italic;
@@ -147,6 +152,20 @@
   .page-header__ribbon :global(.page-header__icon) {
     width: 24px;
     height: 24px;
+  }
+
+  .page-header--complete .page-header__ribbon::after {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 9px;
+    background:
+      linear-gradient(to bottom right, transparent 46%, #d4a72c 48% 57%, transparent 59%) top / 9px
+        50% no-repeat,
+      linear-gradient(to top right, transparent 46%, #d4a72c 48% 57%, transparent 59%) bottom / 9px
+        50% no-repeat;
+    content: "";
   }
 
   .page-header__edge-mask {
@@ -190,6 +209,16 @@
       display: block;
       width: 8px;
       background: var(--paper-raised);
+    }
+
+    .page-header--complete .page-header__ribbon::after {
+      right: 0;
+      left: auto;
+      background:
+        linear-gradient(to bottom left, transparent 46%, #d4a72c 48% 57%, transparent 59%) top / 9px
+          50% no-repeat,
+        linear-gradient(to top left, transparent 46%, #d4a72c 48% 57%, transparent 59%) bottom / 9px
+          50% no-repeat;
     }
   }
 

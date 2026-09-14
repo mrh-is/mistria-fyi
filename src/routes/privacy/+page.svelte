@@ -6,7 +6,7 @@
   <title>Privacy policy — Mistria Field Guide</title>
 </svelte:head>
 
-<PageHeader title="Privacy Policy" backHref="/settings" backLabel="Back to settings" />
+<PageHeader title="Privacy Policy" backHref="/data" backLabel="Back to data management" />
 
 <div class="flex flex-col gap-6 p-4 text-sm">
   <section class="flex flex-col gap-2">

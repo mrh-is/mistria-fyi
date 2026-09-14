@@ -30,7 +30,11 @@
     userState.restorePersistedState();
   });
 
-  let hasToolbar = $derived(page.url.pathname !== "/settings" && page.url.pathname !== "/privacy");
+  let hasToolbar = $derived(
+    page.url.pathname !== "/data" &&
+      page.url.pathname !== "/settings" &&
+      page.url.pathname !== "/privacy",
+  );
   let overlayActive = $state(false);
 </script>
 

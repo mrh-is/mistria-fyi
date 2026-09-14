@@ -76,7 +76,7 @@
   --ink: #2e2a22;
   --ink-muted: #6a6460;
   --hairline: #948a7c;
-  --paper-deep: #ece6da;
+  --paper-deep: #eeedea;
   --ribbon-ink: #fdfcf9;
   --sprite-slot-outline: #e0dcd4;
   --shadow-small: 0 1px 1px rgb(46 42 34 / 12%);
@@ -87,6 +87,7 @@
   --fg-blue: #1860a8;
   --fg-brown: #7a5a3a;
   --fg-purple: #7848a0;
+  --home-accent: #8a642e;
 
   /* shadcn semantic tokens mapped to Field Guide */
   --background: var(--paper);
@@ -122,26 +123,26 @@
   --sidebar-ring: var(--fg-green);
 
   /* Category colors — jewel tones */
-  --cat-museum: var(--fg-amber);
-  --cat-almanac: var(--fg-green);
-  --cat-recipes: #c87020;
-  --cat-animals: var(--fg-rose);
-  --cat-npcs: var(--fg-rose);
-  --cat-cosmetics: var(--fg-purple);
-  --cat-skills: var(--fg-blue);
+  --cat-museum: #2e8a30;
+  --cat-almanac: #5848c0;
+  --cat-recipes: #b87028;
+  --cat-animals: #c03838;
+  --cat-npcs: #c03060;
+  --cat-cosmetics: #9838a8;
+  --cat-skills: #1a8878;
   --cat-renown: #b89020;
-  --cat-quests: var(--fg-blue);
-  --cat-mines: var(--fg-brown);
+  --cat-quests: #1878b8;
+  --cat-mines: #7a5a3a;
 }
 
 .dark {
   /* ── Field Guide palette: dark ("oil lamp") ────────── */
-  --paper: #1e1e22;
-  --paper-raised: #242428;
+  --paper: #222226;
+  --paper-raised: #28282c;
   --ink: #e4dfd8;
   --ink-muted: #a8a098;
-  --hairline: #706860;
-  --paper-deep: #2a2a2e;
+  --hairline: #746c64;
+  --paper-deep: #2e2e32;
   --ribbon-ink: #f7f5f0;
   --sprite-slot-outline: #48464b;
   --shadow-small: 0 1px 1px rgb(0 0 0 / 30%);
@@ -152,8 +153,9 @@
   --fg-blue: #3878b8;
   --fg-brown: #9a7848;
   --fg-purple: #8860b0;
+  --home-accent: #a87838;
 
-  --card: #262628;
+  --card: #2a2a2e;
   --card-foreground: var(--ink);
   --popover: var(--card);
   --popover-foreground: var(--ink);
@@ -163,11 +165,19 @@
   --accent: #32322c;
   --accent-foreground: var(--ink);
   --destructive: #e85858;
-  --sidebar: #222224;
+  --sidebar: #26262a;
 
   /* Category colors — adjusted for dark ground */
-  --cat-recipes: #c87838;
-  --cat-renown: #b89028;
+  --cat-animals: #b84040;
+  --cat-recipes: #b87830;
+  --cat-renown: #a88820;
+  --cat-museum: #38902e;
+  --cat-skills: #2e8878;
+  --cat-quests: #2e82b8;
+  --cat-almanac: #7868c8;
+  --cat-cosmetics: #8838a0;
+  --cat-npcs: #b83060;
+  --cat-mines: #886838;
 }
 
 @theme inline {

@@ -8,9 +8,9 @@
   import { decodeTransferPayload, encodeTransferPayload } from "$lib/engine/transfer.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
+  import DataCard from "./data-card.svelte";
+  import { closeScanner } from "./data-effects.js";
   import MergeSummary from "./merge-summary.svelte";
-  import SettingsCard from "./settings-card.svelte";
-  import { closeScanner } from "./settings-effects.js";
 
   import type { MergeCounts } from "$lib/stores/user-state.svelte.js";
 
@@ -147,7 +147,7 @@
   }
 </script>
 
-<SettingsCard
+<DataCard
   bind:open
   title="Transfer to Another Device"
   summary="Move progress between devices with a QR code."
@@ -241,4 +241,4 @@
       </div>
     {/if}
   </div>
-</SettingsCard>
+</DataCard>

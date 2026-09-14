@@ -16,6 +16,7 @@ export const accessibilityRoutes = [
   { name: "Renown", path: "/renown" },
   { name: "Skills", path: "/skills" },
   { name: "All categories", path: "/all" },
+  { name: "Data management", path: "/data" },
   { name: "Privacy", path: "/privacy" },
-  { name: "Settings", path: "/settings" },
+  { name: "Legacy settings redirect", path: "/settings" },
 ] as const satisfies readonly AccessibilityRoute[];

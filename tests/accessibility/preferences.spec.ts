@@ -15,7 +15,6 @@ test.describe("@critical browser accessibility preferences", () => {
     await initializeApplication(page, "light");
     await gotoApplication(page, "/almanac");
     await openVisibilityPanel(page);
-    await page.getByRole("button", { name: /Seasonality/ }).click();
 
     const activeFiniteAnimations = await page.evaluate(() =>
       document.getAnimations().flatMap((animation) => {

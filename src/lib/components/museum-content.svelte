@@ -58,7 +58,7 @@
         sources,
         completed,
         userState.state.worldState,
-        userState.state.availabilityMode,
+        userState.state.availabilityWindows,
       ),
       mode: "visible",
     };
@@ -93,6 +93,7 @@
 
   function matchesFilter(itemId: ItemId): boolean {
     if (!nameFilter) return true;
+    if (!itemNameVisible(itemId)) return false;
     const name = trackerData.items[itemId].name;
     return name ? name.toLowerCase().includes(nameFilter.toLowerCase()) : false;
   }
@@ -103,7 +104,7 @@
       trackerData.items[itemId].sources,
       isItemComplete(itemId),
       userState.state.worldState,
-      userState.state.availabilityMode,
+      userState.state.availabilityWindows,
     );
   }
 

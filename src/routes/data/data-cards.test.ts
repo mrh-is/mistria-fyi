@@ -6,7 +6,6 @@ import { userState } from "$lib/stores/user-state.svelte.js";
 import BackupCard from "./backup-card.svelte";
 import DangerZoneCard from "./danger-zone-card.svelte";
 import ImportCard from "./import-card.svelte";
-import SpoilersCard from "./spoilers-card.svelte";
 import TransferCard from "./transfer-card.svelte";
 
 function expectCollapsed(body: string, summary: string) {
@@ -18,17 +17,7 @@ afterEach(() => {
   userState.resetAll();
 });
 
-describe("settings cards", () => {
-  it("summarizes the current spoiler visibility", () => {
-    const hidden = render(SpoilersCard, { props: { open: false } });
-    expectCollapsed(hidden.body, "Spoilers are hidden");
-
-    userState.toggleShowSpoilers();
-
-    const shown = render(SpoilersCard, { props: { open: false } });
-    expectCollapsed(shown.body, "Spoilers are shown");
-  });
-
+describe("data cards", () => {
   it("summarizes save import while collapsed", () => {
     const { body } = render(ImportCard, { props: { open: false } });
 
