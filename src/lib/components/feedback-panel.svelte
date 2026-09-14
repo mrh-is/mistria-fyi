@@ -793,7 +793,7 @@
   }
 
   .feedback-form__send {
-    color: var(--primary-foreground);
+    color: var(--ink);
     background: color-mix(in srgb, var(--primary) 48%, var(--paper-deep));
   }
 
@@ -804,6 +804,7 @@
   }
 
   .feedback-form__send--ready {
+    color: var(--primary-foreground);
     background: var(--primary);
   }
 
