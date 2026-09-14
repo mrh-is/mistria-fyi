@@ -540,28 +540,26 @@
                 Sends your tracked completion state (items checked off, skill levels, etc.). No
                 personal information. <strong>This data will be publicly visible.</strong>
               </p>
-              {#if includeSaveData}
-                <button
-                  class="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
-                  type="button"
-                  onclick={() => {
-                    showSaveDataPreview = !showSaveDataPreview;
-                  }}
-                >
-                  <IconChevronDown
-                    class="size-3 transition-transform motion-reduce:transition-none {showSaveDataPreview
-                      ? 'rotate-180'
-                      : ''}"
-                  />
-                  {showSaveDataPreview ? "Hide" : "Show"} my progress data
-                </button>
-                {#if showSaveDataPreview}
-                  <!-- prettier-ignore -->
-                  <pre
-                    class="max-h-40 overflow-auto rounded border border-border bg-muted/40 p-2 text-[11px] leading-tight"
-                    transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
-                  >{saveDataPreview}</pre>
-                {/if}
+              <button
+                class="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+                type="button"
+                onclick={() => {
+                  showSaveDataPreview = !showSaveDataPreview;
+                }}
+              >
+                <IconChevronDown
+                  class="size-3 transition-transform motion-reduce:transition-none {showSaveDataPreview
+                    ? 'rotate-180'
+                    : ''}"
+                />
+                {showSaveDataPreview ? "Hide" : "Show"} my progress data
+              </button>
+              {#if showSaveDataPreview}
+                <!-- prettier-ignore -->
+                <pre
+                  class="max-h-40 overflow-auto rounded border border-border bg-muted/40 p-2 text-[11px] leading-tight"
+                  transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
+                >{saveDataPreview}</pre>
               {/if}
             </div>
           {/if}

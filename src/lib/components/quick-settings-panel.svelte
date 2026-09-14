@@ -183,11 +183,12 @@
     --tag-accent: #a65343;
     --tag-ink: #312e2b;
     --tag-muted: #68635e;
-    --tag-paper: #ece7de;
+    --tag-paper: #e2dace;
 
     position: relative;
     width: 100%;
-    filter: drop-shadow(3px 6px 12px rgb(31 23 15 / 22%));
+    filter: drop-shadow(1px -2px 6px rgb(31 23 15 / 18%))
+      drop-shadow(3px 8px 16px rgb(31 23 15 / 28%));
   }
 
   :global(.dark) .spoiler-tag-wrap {
