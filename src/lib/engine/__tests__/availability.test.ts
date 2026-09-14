@@ -4,8 +4,6 @@ import {
   classifyItemAvailability,
   filterAvailableItems,
   getDisplayBadges,
-  hasSelectiveSeasonRestriction,
-  hasTimelyRestriction,
   isItemAvailable,
   isItemDimmed,
   isRowVisible,
@@ -39,46 +37,6 @@ const timeCondition = (start: number, end: number): AvailabilityCondition => ({
   end,
 });
 const allSeasonsCondition = seasonCondition(["spring", "summer", "fall", "winter"]);
-
-// ─── hasSelectiveSeasonRestriction ──────────────────────────────────
-
-describe("hasSelectiveSeasonRestriction", () => {
-  it("returns false when the source has no availability condition", () => {
-    expect(hasSelectiveSeasonRestriction(src())).toBe(false);
-  });
-
-  it("returns false when all seasons are included", () => {
-    expect(hasSelectiveSeasonRestriction(src(allSeasonsCondition))).toBe(false);
-  });
-
-  it("returns true when only some seasons are included", () => {
-    expect(hasSelectiveSeasonRestriction(src(seasonCondition(["spring"])))).toBe(true);
-  });
-});
-
-// ─── hasTimelyRestriction ────────────────────────────────────────────
-
-describe("hasTimelyRestriction", () => {
-  it("returns false when the source has no availability condition", () => {
-    expect(hasTimelyRestriction(src())).toBe(false);
-  });
-
-  it("returns true for a season condition", () => {
-    expect(hasTimelyRestriction(src(seasonCondition(["spring"])))).toBe(true);
-  });
-
-  it("returns true for a weather condition", () => {
-    expect(hasTimelyRestriction(src(weatherCondition(["calm"])))).toBe(true);
-  });
-
-  it("returns true for a time condition", () => {
-    expect(hasTimelyRestriction(src(timeCondition(6, 12)))).toBe(true);
-  });
-
-  it("returns false for a non-timely condition", () => {
-    expect(hasTimelyRestriction(src({ type: "minesLevel", floor: 5 }))).toBe(false);
-  });
-});
 
 // ─── isSourceAvailable ──────────────────────────────────────────────
 
