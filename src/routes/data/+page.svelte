@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { IconMessageReport, IconRobot } from "@tabler/icons-svelte-runes";
+  import { IconInfoCircle, IconMessageReport, IconRobot } from "@tabler/icons-svelte-runes";
   import { tick } from "svelte";
   import { prefersReducedMotion } from "svelte/motion";
 
@@ -94,6 +94,8 @@
         </button>
         <span>·</span>
         <a href={resolve("/privacy")}>Privacy</a>
+        <span>·</span>
+        <a href={resolve("/about")}><IconInfoCircle class="size-3.5" />About this guide</a>
         <span>·</span>
         <button type="button" onclick={() => (aiDisclosureOpen = true)}>
           <IconRobot class="size-3.5" />AI disclosure

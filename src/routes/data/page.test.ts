@@ -39,6 +39,8 @@ describe("data management page", () => {
     expect(body).toContain("Transfer to Another Device");
     expect(body).toContain("Backup &amp; Restore");
     expect(body).toContain("Danger Zone");
+    expect(body).toContain('href="/about"');
+    expect(body).toContain("About this guide");
   });
 
   it("opens the requested deep-linked tool", () => {

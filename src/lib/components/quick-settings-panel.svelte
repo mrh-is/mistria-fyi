@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { IconChevronRight, IconEye, IconPalette, IconTool } from "@tabler/icons-svelte-runes";
+  import {
+    IconChevronRight,
+    IconEye,
+    IconInfoCircle,
+    IconPalette,
+    IconTool,
+  } from "@tabler/icons-svelte-runes";
   import { Dialog as DialogPrimitive } from "bits-ui";
 
   import { resolve } from "$app/paths";
@@ -101,6 +107,11 @@
   <a class="quick-settings__link" href={resolve("/data")}>
     <IconTool class="size-4" />
     <span>Data management</span>
+    <IconChevronRight class="size-4" />
+  </a>
+  <a class="quick-settings__link" href={resolve("/about")}>
+    <IconInfoCircle class="size-4" />
+    <span>About this guide</span>
     <IconChevronRight class="size-4" />
   </a>
 </div>

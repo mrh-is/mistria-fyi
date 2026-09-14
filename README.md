@@ -6,9 +6,10 @@ A mobile-first companion tracker for
 [Fields of Mistria](https://store.steampowered.com/app/2142790/Fields_of_Mistria/). Helps
 completionists track progress toward 100%.
 
-> **This is an unofficial fan project.** It is not produced, endorsed, or affiliated with
-> [NPC Studio](https://www.npcstudio.com/). "Fields of Mistria" and related marks are trademarks of
-> NPC Studio. See [DISCLAIMER.md](DISCLAIMER.md) for the full notice.
+> **This is an independent, unofficial, noncommercial fan project.** It is not produced, endorsed,
+> supported, sponsored, or affiliated with [NPC Studio](https://www.npcstudio.com/). “Fields of
+> Mistria” and related marks belong to NPC Studio. See [DISCLAIMER.md](DISCLAIMER.md) for the full
+> notice.
 
 ## Quick start
 
@@ -29,8 +30,11 @@ pnpm run dev
 ## Data pipeline
 
 The app is powered by `tracker-data.json`, generated from locally supplied Fields of Mistria TOML
-assets. The pipeline lives in `pipeline/` and runs via `tsx`. Game assets are not checked in. See
-the [pipeline guide](pipeline/README.md) for setup, contracts, & extractor details.
+assets. The pipeline lives in `pipeline/` and runs via `tsx`. Original game data files and local
+pipeline inputs are not checked in. This private repository currently includes the generated tracker
+dataset and selected extracted icons used by the deployed app; those materials are excluded from the
+project license. See the [pipeline guide](pipeline/README.md) for setup, contracts, & extractor
+details.
 
 ```bash
 pnpm run pipeline -- /path/to/assets
@@ -62,8 +66,8 @@ pnpm run pipeline -- /path/to/assets
 
 ## License & legal
 
-This project's source code is licensed under [GPL-3.0-only](LICENSE). Bundled fonts and game-derived
-assets have their own licenses. See:
+Project-authored source code is licensed under [GPL-3.0-only](LICENSE). The license does not cover
+NPC Studio material or other third-party assets. See:
 
 - [COPYRIGHT.md](COPYRIGHT.md) — what the project license covers (and what it does not)
 - [DISCLAIMER.md](DISCLAIMER.md) — unofficial fan-project and trademark notice
