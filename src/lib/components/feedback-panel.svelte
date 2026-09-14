@@ -2,8 +2,8 @@
   import {
     IconChevronDown,
     IconCopy,
-    IconMessageReport,
     IconPointer,
+    IconShield,
     IconX,
   } from "@tabler/icons-svelte-runes";
   import { tick } from "svelte";
@@ -13,6 +13,7 @@
 
   import { version } from "$app/environment";
   import FeedbackPicker from "$lib/components/feedback-picker.svelte";
+  import FoldoutPanel from "$lib/components/foldout-panel.svelte";
   import { Checkbox } from "$lib/components/ui/checkbox/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { FeedbackContext } from "$lib/feedback/context.svelte.js";
@@ -256,7 +257,7 @@
     if (visible && !wasOpen) {
       opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       wasOpen = true;
-      void tick().then(() => messageInput?.focus());
+      void tick().then(() => dialogElement?.focus());
     } else if (!open && wasOpen) {
       messageTouched = false;
       emailTouched = false;
@@ -467,42 +468,15 @@
 
   <div
     bind:this={dialogElement}
-    class="fixed right-0 bottom-safe-offset-16 left-0 z-30 mx-auto max-w-lg px-3"
+    class="fixed right-0 bottom-safe-offset-16 left-0 z-30 mx-auto max-w-lg px-3 outline-none"
     role="dialog"
     aria-label="Send feedback"
     aria-modal="true"
     tabindex="-1"
     in:fly={{ duration: prefersReducedMotion.current ? 0 : 150, y: 8 }}
   >
-    <div class="feedback-tag max-h-[80dvh] overflow-y-auto">
-      <div class="flex flex-col gap-2.5 p-3">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <IconMessageReport class="size-4 text-muted-foreground" />
-            <h2 class="text-sm font-semibold">Send feedback</h2>
-          </div>
-          <button
-            class="flex size-11 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
-            type="button"
-            aria-label="Close"
-            onclick={onclose}
-          >
-            <IconX class="size-4" />
-          </button>
-        </div>
-
-        <p class="text-xs leading-relaxed text-muted-foreground">
-          Comments, questions, suggestions, praise? Send me a note!
-        </p>
-        <p class="text-xs leading-relaxed text-muted-foreground">
-          The info you provide below will be visible by me &amp; anyone else who helps build this
-          tracker, so <strong class="text-primary">don&rsquo;t include personal details</strong>.
-        </p>
-        <p class="text-xs leading-relaxed text-muted-foreground">
-          But your email (if you provide it) will be stored separately, where only I can see it. Is
-          it ok to reach out if I need more deets?
-        </p>
-
+    <FoldoutPanel id="feedback-panel" title="Send feedback" {onclose}>
+      <div class="feedback-form">
         <div>
           <textarea
             bind:this={messageInput}
@@ -510,10 +484,10 @@
             aria-label="Message"
             aria-invalid={messageInvalid}
             aria-describedby={messageInvalid ? "feedback-message-error" : undefined}
-            class="min-h-20 w-full resize-y rounded-md border bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none {messageInvalid
+            class="feedback-form__message {messageInvalid
               ? 'border-destructive ring-destructive/30'
               : 'border-input'} {submitShake && messageInvalid ? 'motion-safe:animate-shake' : ''}"
-            placeholder="Describe a problem, suggest an improvement, or report a data error."
+            placeholder="Comments, questions, suggestions, praise?"
             bind:value={message}
             maxlength={5000}></textarea>
           {#if messageInvalid}
@@ -523,93 +497,70 @@
           {/if}
         </div>
 
-        {#if selectedElement}
-          <div
-            class="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-2.5 py-1.5"
-          >
-            <IconPointer class="size-3.5 shrink-0 text-muted-foreground" />
-            <div class="min-w-0 flex-1">
-              <p class="truncate text-xs font-medium">{selectedElement.displayName}</p>
-              <p class="text-[11px] text-muted-foreground">{selectedElement.category}</p>
+        <p class="feedback-form__privacy">
+          <IconShield class="size-4 shrink-0" />Please don&rsquo;t include personal data in your
+          message.
+        </p>
+
+        <p class="feedback-form__optional">Optional</p>
+        <div class="feedback-form__options">
+          <div class="flex items-center gap-2">
+            <Checkbox id="include-save-data" bind:checked={includeSaveData} />
+            <label for="include-save-data" class="flex-1 text-xs select-none">
+              Attach my tracker progress <span class="text-muted-foreground"
+                >(helps with debugging)</span
+              >
+            </label>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <Checkbox id="wants-reply" bind:checked={wantsReply} />
+            <label for="wants-reply" class="text-xs select-none">I&rsquo;d like a reply</label>
+          </div>
+
+          {#if wantsReply}
+            <div
+              class="feedback-form__email"
+              transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
+            >
+              <input
+                id="feedback-email"
+                aria-label="Your email"
+                aria-invalid={emailInvalid}
+                aria-describedby={emailInvalid ? "feedback-email-error" : "feedback-email-note"}
+                autocomplete="email"
+                class="w-full border bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none {emailInvalid
+                  ? 'border-destructive ring-destructive/30'
+                  : 'border-input'} {submitShake && emailInvalid
+                  ? 'motion-safe:animate-shake'
+                  : ''}"
+                type="email"
+                name="email"
+                placeholder="you@example.com"
+                bind:value={email}
+                onblur={() => {
+                  emailTouched = true;
+                }}
+                onkeydown={(e: KeyboardEvent) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSubmitClick();
+                  }
+                }}
+              />
+              {#if emailInvalid}
+                <p id="feedback-email-error" class="mt-1 text-[11px] text-destructive" role="alert">
+                  {emailMissing
+                    ? "Oops, forgot to put in your email!"
+                    : "Hmmmmmmmmmmmmmm, this doesn't look like an email…"}
+                </p>
+              {:else}
+                <p id="feedback-email-note" class="mt-2 text-[11px] text-muted-foreground">
+                  Your email is stored separately and never added to the public issue.
+                </p>
+              {/if}
             </div>
-            <button
-              bind:this={pickerButton}
-              class="min-h-11 rounded px-2 text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground"
-              type="button"
-              onclick={startPicking}
-            >
-              Change
-            </button>
-            <button
-              class="flex size-11 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
-              type="button"
-              aria-label="Clear selected item"
-              onclick={() => (selectedElement = undefined)}
-            >
-              <IconX class="size-3" />
-            </button>
-          </div>
-        {:else if pickerAvailable}
-          <button
-            bind:this={pickerButton}
-            class="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-md border border-input px-3 text-xs font-medium hover:bg-accent"
-            type="button"
-            onclick={startPicking}
-          >
-            <IconPointer class="size-3.5" />
-            Pick an item
-          </button>
-        {/if}
-
-        <div class="flex items-center gap-2">
-          <Checkbox id="wants-reply" bind:checked={wantsReply} />
-          <label for="wants-reply" class="text-xs select-none">
-            Is it ok to reach out if I need more deets?
-            <span class="text-muted-foreground">(totally optional)</span>
-          </label>
-        </div>
-
-        {#if wantsReply}
-          <div transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}>
-            <input
-              id="feedback-email"
-              aria-label="Your email"
-              aria-invalid={emailInvalid}
-              aria-describedby={emailInvalid ? "feedback-email-error" : undefined}
-              autocomplete="email"
-              class="w-full rounded-md border bg-transparent px-3 py-1.5 text-sm placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none {emailInvalid
-                ? 'border-destructive ring-destructive/30'
-                : 'border-input'} {submitShake && emailInvalid ? 'motion-safe:animate-shake' : ''}"
-              type="email"
-              name="email"
-              placeholder="your@email.com"
-              bind:value={email}
-              onblur={() => {
-                emailTouched = true;
-              }}
-              onkeydown={(e: KeyboardEvent) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleSubmitClick();
-                }
-              }}
-            />
-            {#if emailInvalid}
-              <p id="feedback-email-error" class="mt-1 text-[11px] text-destructive" role="alert">
-                {emailMissing
-                  ? "Oops, forgot to put in your email!"
-                  : "Hmmmmmmmmmmmmmm, this doesn't look like an email…"}
-              </p>
-            {/if}
-          </div>
-        {/if}
-
-        <div class="flex items-center gap-2">
-          <Checkbox id="include-save-data" bind:checked={includeSaveData} />
-          <label for="include-save-data" class="flex-1 text-xs select-none">
-            Include my progress data
-            <span class="text-muted-foreground">(helps reproduce issues)</span>
-          </label>
+          {/if}
         </div>
 
         {#if includeSaveData}
@@ -645,7 +596,7 @@
           </div>
         {/if}
 
-        <p class="text-[11px] text-muted-foreground">
+        <p class="feedback-form__version">
           App v{version} · Game data v{trackerData.version}
         </p>
 
@@ -687,53 +638,167 @@
           </p>
         {/if}
 
-        <button
-          class="flex min-h-11 w-full items-center justify-center gap-2 rounded-md px-4 py-1.5 text-sm font-medium transition-colors {canSubmit
-            ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-            : 'cursor-default bg-muted text-muted-foreground'}"
-          type="button"
-          disabled={submitting}
-          onclick={handleSubmitClick}
-        >
-          {#if submitting}
-            Sending…
-          {:else}
-            Send feedback
+        <div class="feedback-form__actions">
+          {#if selectedElement}
+            <div class="feedback-form__selection">
+              <IconPointer class="size-3.5 shrink-0" />
+              <span class="min-w-0 flex-1 truncate">{selectedElement.displayName}</span>
+              <button bind:this={pickerButton} type="button" onclick={startPicking}>Change</button>
+              <button
+                class="feedback-form__clear"
+                type="button"
+                aria-label="Clear selected item"
+                onclick={() => (selectedElement = undefined)}
+              >
+                <IconX class="size-3" />
+              </button>
+            </div>
+          {:else if pickerAvailable}
+            <button
+              bind:this={pickerButton}
+              class="feedback-form__pick"
+              type="button"
+              onclick={startPicking}
+            >
+              <IconPointer class="size-3.5" />Point at something
+            </button>
           {/if}
-        </button>
+          <button class="feedback-form__cancel" type="button" onclick={onclose}>Cancel</button>
+          <button
+            class="feedback-form__send {canSubmit ? 'feedback-form__send--ready' : ''}"
+            type="button"
+            disabled={submitting}
+            onclick={handleSubmitClick}
+          >
+            {submitting ? "Sending…" : "Send"}
+          </button>
+        </div>
       </div>
-    </div>
+    </FoldoutPanel>
   </div>
 {/if}
 
 <style>
-  .feedback-tag {
-    position: relative;
-    border: 1px solid color-mix(in srgb, var(--hairline) 42%, transparent);
-    color: var(--ink);
-    background:
-      linear-gradient(
-          178deg,
-          transparent 0 48%,
-          color-mix(in srgb, var(--hairline) 6%, transparent) 49% 50%,
-          transparent 51%
-        )
-        0 0 / 100% 52px,
-      var(--paper-raised);
-    box-shadow: 0 7px 24px rgb(46 42 34 / 20%);
-    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+  .feedback-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
   }
 
-  .feedback-tag::after {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    width: 15px;
-    height: 15px;
-    border-top: 1px solid color-mix(in srgb, var(--hairline) 42%, transparent);
+  .feedback-form__message {
+    min-height: 120px;
+    width: 100%;
+    resize: vertical;
+    border-width: 1px;
     background: var(--paper-deep);
-    content: "";
-    transform: rotate(-45deg) translate(5px, 11px);
-    transform-origin: center;
+    padding: 12px 14px;
+    font-family: var(--font-body);
+    font-size: 15px;
+  }
+
+  .feedback-form__message:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  .feedback-form__privacy {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink-muted);
+    font-family: var(--font-annotation);
+    font-size: 12px;
+  }
+
+  .feedback-form__optional,
+  .feedback-form__version {
+    color: var(--ink-muted);
+    font-family: var(--font-controls);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .feedback-form__options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 13px;
+    border: 1px solid color-mix(in srgb, var(--hairline) 42%, transparent);
+    background: var(--paper-deep);
+  }
+
+  .feedback-form__email {
+    padding-left: 28px;
+  }
+
+  .feedback-form__actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 8px;
+  }
+
+  .feedback-form__actions > button,
+  .feedback-form__selection {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border: 1px solid color-mix(in srgb, var(--hairline) 48%, transparent);
+    padding: 6px 13px;
+    font-family: var(--font-controls);
+    font-size: 10px;
+  }
+
+  .feedback-form__actions > button:is(:hover, :focus-visible) {
+    background: var(--accent);
+    outline: 2px solid var(--primary);
+    outline-offset: -4px;
+  }
+
+  .feedback-form__selection {
+    min-width: 0;
+    justify-content: flex-start;
+    color: var(--ink-muted);
+  }
+
+  .feedback-form__selection button {
+    min-height: 32px;
+    padding-inline: 5px;
+  }
+
+  .feedback-form__clear {
+    display: grid;
+    width: 32px;
+    place-items: center;
+  }
+
+  .feedback-form__send {
+    min-width: 76px;
+    color: var(--ink-muted);
+    background: var(--paper-deep);
+  }
+
+  .feedback-form__send--ready {
+    color: var(--primary-foreground);
+    background: var(--primary);
+  }
+
+  .feedback-form__send--ready:is(:hover, :focus-visible) {
+    color: var(--primary-foreground);
+    background: color-mix(in srgb, var(--primary) 88%, var(--ink));
+  }
+
+  @media (max-width: 380px) {
+    .feedback-form__actions {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .feedback-form__pick,
+    .feedback-form__selection {
+      grid-column: 1 / -1;
+    }
   }
 </style>

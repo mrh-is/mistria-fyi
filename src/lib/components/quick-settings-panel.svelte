@@ -2,13 +2,18 @@
   import { IconChevronRight, IconEye, IconPalette, IconTool } from "@tabler/icons-svelte-runes";
 
   import { resolve } from "$app/paths";
+  import BlockySwitch from "$lib/components/blocky-switch.svelte";
   import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
-  import { Switch } from "$lib/components/ui/switch/index.js";
   import * as ToggleGroup from "$lib/components/ui/toggle-group/index.js";
   import { theme, type Theme } from "$lib/stores/theme.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   let confirmSpoilers = $state(false);
+  let spoilerToggleChecked = $state(userState.state.showSpoilers);
+
+  $effect(() => {
+    if (!confirmSpoilers) spoilerToggleChecked = userState.state.showSpoilers;
+  });
 
   function setSpoilers(checked: boolean): void {
     if (checked === userState.state.showSpoilers) return;
@@ -23,13 +28,15 @@
 <AlertDialog.Root bind:open={confirmSpoilers}>
   <AlertDialog.Content>
     <AlertDialog.Header>
-      <AlertDialog.Title>Show all spoilers?</AlertDialog.Title>
+      <AlertDialog.Title>Show spoilers?</AlertDialog.Title>
       <AlertDialog.Description
         >This will reveal hidden content throughout the guide.</AlertDialog.Description
       >
     </AlertDialog.Header>
     <AlertDialog.Footer>
-      <AlertDialog.Cancel>Never mind</AlertDialog.Cancel>
+      <AlertDialog.Cancel onclick={() => (spoilerToggleChecked = false)}
+        >Never mind</AlertDialog.Cancel
+      >
       <AlertDialog.Action
         onclick={() => {
           userState.toggleShowSpoilers();
@@ -42,10 +49,10 @@
 
 <div class="quick-settings">
   <div class="quick-settings__row">
-    <span class="quick-settings__label"><IconEye class="size-4" />Spoilers</span>
-    <Switch
-      aria-label="Show all spoilers"
-      checked={userState.state.showSpoilers}
+    <span class="quick-settings__label"><IconEye class="size-4" />Show spoilers?</span>
+    <BlockySwitch
+      bind:checked={spoilerToggleChecked}
+      label="Show spoilers?"
       onCheckedChange={setSpoilers}
     />
   </div>

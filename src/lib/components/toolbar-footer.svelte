@@ -1,13 +1,14 @@
 <script lang="ts">
   import {
-    IconAdjustmentsHorizontal,
+    IconFilter,
     IconMessageReport,
+    IconRotate,
     IconSearch,
     IconSettings,
   } from "@tabler/icons-svelte-runes";
-  import { tick } from "svelte";
+  import { flushSync, tick } from "svelte";
   import { prefersReducedMotion } from "svelte/motion";
-  import { fly } from "svelte/transition";
+  import { fade, fly } from "svelte/transition";
 
   import { page } from "$app/state";
   import FeedbackPanel from "$lib/components/feedback-panel.svelte";
@@ -18,6 +19,7 @@
   import { getFeedbackContext } from "$lib/feedback/context.svelte.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { DEFAULT_AVAILABILITY_WINDOWS } from "$lib/types/availability.js";
 
   type ActivePanel = "feedback" | "settings" | "visibility" | null;
 
@@ -38,6 +40,19 @@
   let pathname = $derived(page.url.pathname);
   let showSearch = $derived(SEARCH_ROUTES.has(pathname));
   let showSeasonality = $derived(WORLD_STATE_ROUTES.has(pathname));
+  const TOOLBAR_ACCENTS: Record<string, string> = {
+    "/almanac": "var(--cat-almanac)",
+    "/animals": "var(--cat-animals)",
+    "/cosmetics": "var(--cat-cosmetics)",
+    "/mines": "var(--cat-mines)",
+    "/museum": "var(--cat-museum)",
+    "/npcs": "var(--cat-npcs)",
+    "/quests": "var(--cat-quests)",
+    "/recipes": "var(--cat-recipes)",
+    "/renown": "var(--cat-renown)",
+    "/skills": "var(--cat-skills)",
+  };
+  let toolbarAccent = $derived(TOOLBAR_ACCENTS[pathname] ?? "var(--home-accent)");
 
   let activePanel = $state<ActivePanel>(null);
   let previousPathname = $state("");
@@ -97,7 +112,8 @@
     closePanel();
     searchOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     toolbarState.openSearch();
-    setTimeout(() => searchInput?.focus(), 50);
+    flushSync();
+    searchInput?.focus();
   }
 
   function closeSearch(): void {
@@ -127,6 +143,12 @@
   let filtersActive = $derived(
     !availabilityIsDefault || userState.state.showCompleted || toolbarState.sourceFilterActive,
   );
+
+  function resetFilters(): void {
+    userState.setAvailabilityWindows(DEFAULT_AVAILABILITY_WINDOWS);
+    if (userState.state.showCompleted) userState.toggleShowCompleted();
+    toolbarState.resetSourceFilters();
+  }
   let filterStatus = $state("");
   let previousFilterState = $state("");
 
@@ -153,6 +175,7 @@
   <nav
     aria-label="Tracker tools"
     class="pointer-events-none fixed right-0 bottom-safe-offset-3 left-0 z-20 mx-auto max-w-lg px-3"
+    style="--primary: {toolbarAccent}; --ring: {toolbarAccent}"
   >
     {#if toolbarState.searchOpen}
       <div class="search-bar pointer-events-auto flex items-center gap-2 p-1 shadow-lg">
@@ -235,7 +258,7 @@
               togglePanel("visibility");
             }}
           >
-            <IconAdjustmentsHorizontal class="size-5" />
+            <IconFilter class="size-5" />
           </button>
         </div>
       </div>
@@ -254,6 +277,7 @@
     <div
       bind:this={panelElement}
       class="fixed right-0 bottom-safe-offset-16 left-0 z-30 mx-auto max-w-lg px-3"
+      style="--primary: {toolbarAccent}; --ring: {toolbarAccent}"
       transition:fly={{ duration: prefersReducedMotion.current ? 0 : 150, y: 8 }}
     >
       {#if activePanel === "settings"}
@@ -262,6 +286,18 @@
         </FoldoutPanel>
       {:else}
         <FoldoutPanel id="visibility-panel" title="Filters" onclose={closePanel}>
+          {#snippet headerActions()}
+            {#if filtersActive}
+              <button
+                class="text-fg-amber focus-visible:outline-fg-amber flex min-h-11 items-center gap-1.5 px-2 font-controls text-[10px] hover:bg-accent focus-visible:outline-2 focus-visible:-outline-offset-4"
+                type="button"
+                onclick={resetFilters}
+                transition:fade={{ duration: prefersReducedMotion.current ? 0 : 120 }}
+              >
+                <IconRotate class="size-3.5" />Reset
+              </button>
+            {/if}
+          {/snippet}
           <VisibilityPanel {showSeasonality} />
         </FoldoutPanel>
       {/if}

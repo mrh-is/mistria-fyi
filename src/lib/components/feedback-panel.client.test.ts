@@ -37,8 +37,8 @@ describe("FeedbackPanel", () => {
     render(FeedbackPanel, { onclose: vi.fn(), open: true, resetKey: "/museum" });
 
     expect(screen.getByRole("dialog", { name: "Send feedback" })).toBeTruthy();
-    expect(screen.getByRole("checkbox", { name: /reach out if I need more deets/ })).toBeTruthy();
-    expect(screen.getByText(/Send me a note/)).toBeTruthy();
+    expect(screen.getByRole("checkbox", { name: /I’d like a reply/ })).toBeTruthy();
+    expect(screen.getByPlaceholderText("Comments, questions, suggestions, praise?")).toBeTruthy();
   });
 
   it("renders nothing when closed", () => {
@@ -74,7 +74,7 @@ describe("FeedbackPanel", () => {
       resetKey: "/recipes",
     });
 
-    await fireEvent.click(screen.getByRole("button", { name: "Pick an item" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Point at something" }));
     expect(feedbackContext.isPicking).toBe(true);
     await waitFor(() => {
       expect(screen.queryByRole("dialog", { name: "Send feedback" })).toBeNull();
@@ -120,7 +120,7 @@ describe("FeedbackPanel", () => {
       resetKey: "/recipes",
     });
 
-    await fireEvent.click(screen.getByRole("button", { name: "Pick an item" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Point at something" }));
     feedbackContext.select({
       category: "recipe",
       displayName: "Tomato Soup",
@@ -130,7 +130,7 @@ describe("FeedbackPanel", () => {
     await fireEvent.input(await screen.findByRole("textbox", { name: "Message" }), {
       target: { value: "The ingredients are wrong" },
     });
-    await fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledOnce();
@@ -152,7 +152,7 @@ describe("FeedbackPanel", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(FeedbackPanel, { onclose: vi.fn(), open: true, resetKey: "/museum" });
 
-    const sendButton = screen.getByRole("button", { name: "Send feedback" });
+    const sendButton = screen.getByRole("button", { name: "Send" });
     expect(sendButton).not.toHaveAttribute("aria-disabled");
     await fireEvent.click(sendButton);
     expect(fetchMock).not.toHaveBeenCalled();
@@ -166,7 +166,7 @@ describe("FeedbackPanel", () => {
   it("exposes email purpose and validation relationship", async () => {
     render(FeedbackPanel, { onclose: vi.fn(), open: true, resetKey: "/museum" });
 
-    await fireEvent.click(screen.getByRole("checkbox", { name: /reach out if I need more deets/ }));
+    await fireEvent.click(screen.getByRole("checkbox", { name: /I’d like a reply/ }));
     const email = screen.getByRole("textbox", { name: "Your email" });
     expect(email).toHaveAttribute("autocomplete", "email");
     expect(email).toHaveAttribute("name", "email");
@@ -174,7 +174,7 @@ describe("FeedbackPanel", () => {
     const message = screen.getByRole("textbox", { name: "Message" });
     await fireEvent.input(message, { target: { value: "test message" } });
 
-    await fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
     expect(email).toHaveAttribute("aria-invalid", "true");
     expect(email).toHaveAttribute("aria-describedby", "feedback-email-error");
     expect(email).toHaveFocus();
@@ -212,14 +212,14 @@ describe("FeedbackPanel", () => {
   it("contains keyboard focus within the open dialog", async () => {
     render(FeedbackPanel, { onclose: vi.fn(), open: true, resetKey: "/museum" });
     await waitFor(() => {
-      expect(screen.getByRole("textbox", { name: "Message" })).toHaveFocus();
+      expect(screen.getByRole("dialog", { name: "Send feedback" })).toHaveFocus();
     });
-    const closeButton = screen.getByRole("button", { name: "Close" });
+    const closeButton = screen.getByRole("button", { name: "Close Send feedback" });
     closeButton.focus();
 
     await fireEvent.keyDown(window, { key: "Tab", shiftKey: true });
 
-    const sendButton = screen.getByRole("button", { name: "Send feedback" });
+    const sendButton = screen.getByRole("button", { name: "Send" });
     expect(document.activeElement).toBe(sendButton);
   });
 
@@ -235,7 +235,7 @@ describe("FeedbackPanel", () => {
         resetKey: "/museum",
       });
       await waitFor(() => {
-        expect(screen.getByRole("textbox", { name: "Message" })).toHaveFocus();
+        expect(screen.getByRole("dialog", { name: "Send feedback" })).toHaveFocus();
       });
 
       await view.rerender({ onclose: vi.fn(), open: false, resetKey: "/museum" });
@@ -264,7 +264,7 @@ describe("FeedbackPanel", () => {
     await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
       target: { value: "Something is wrong" },
     });
-    await fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     expect(screen.getByRole("button", { name: "Sending…" })).toBeDisabled();
     resolveRequest(Response.json({ issueUrl: "https://example.com/issues/1" }));
@@ -284,7 +284,7 @@ describe("FeedbackPanel", () => {
     await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
       target: { value: "Something is wrong" },
     });
-    await fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     await waitFor(() => {
       expect(onclose).toHaveBeenCalledOnce();
@@ -303,14 +303,14 @@ describe("FeedbackPanel", () => {
     const onclose = vi.fn();
     render(FeedbackPanel, { onclose, open: true, resetKey: "/museum" });
 
-    await fireEvent.click(screen.getByRole("checkbox", { name: /reach out if I need more deets/ }));
+    await fireEvent.click(screen.getByRole("checkbox", { name: /I’d like a reply/ }));
     await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
       target: { value: "Something is wrong" },
     });
     await fireEvent.input(screen.getByRole("textbox", { name: "Your email" }), {
       target: { value: "private@example.com" },
     });
-    await fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     await waitFor(() => {
       expect(toast.warning).toHaveBeenCalledOnce();
@@ -331,7 +331,7 @@ describe("FeedbackPanel", () => {
     await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
       target: { value: "Something is wrong" },
     });
-    await fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Could not connect. Please try again or copy your message.",
