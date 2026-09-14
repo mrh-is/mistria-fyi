@@ -4,7 +4,6 @@ import {
   evaluateAvailabilityCondition,
   extractDisplayBadges,
   hasSelectiveSeasonCondition,
-  hasTimelyCondition,
 } from "./availability-condition.js";
 
 import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
@@ -68,23 +67,7 @@ export function getDisplayBadges(sources: Source[]): DisplayBadges {
   return merged;
 }
 
-/**
- * Whether the source has a season condition that excludes at least one season.
- */
-export function hasSelectiveSeasonRestriction(source: Source): boolean {
-  const availability = getAvailabilityCondition(source);
-  return availability !== undefined && hasSelectiveSeasonCondition(availability);
-}
-
 // ─── Item-level availability ────────────────────────────────────────
-
-/**
- * Does this source have any timely (season/weather/time) condition?
- */
-export function hasTimelyRestriction(source: Source): boolean {
-  const availability = getAvailabilityCondition(source);
-  return availability !== undefined && hasTimelyCondition(availability);
-}
 
 /**
  * Check if an item is available: ANY source must pass (OR logic).
@@ -154,24 +137,6 @@ export function shouldCountItem(
   worldState: WorldState,
   selection: AvailabilitySelection,
 ): boolean {
-  if (isCompleted) return true;
-  return isItemAvailable(sources, worldState, selection);
-}
-
-/**
- * Whether an item should be visible in a list given filter state.
- * Handles the recentlyCompleted linger, showCompleted toggle, and availability.
- */
-export function shouldShowItem(
-  sources: Source[],
-  isCompleted: boolean,
-  worldState: WorldState,
-  selection: AvailabilitySelection,
-  showCompleted: boolean,
-  isRecentlyCompleted = false,
-): boolean {
-  if (isRecentlyCompleted) return true;
-  if (isCompleted && !showCompleted) return false;
   if (isCompleted) return true;
   return isItemAvailable(sources, worldState, selection);
 }
