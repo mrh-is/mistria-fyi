@@ -24,7 +24,7 @@
 
 <label class="flex cursor-pointer items-center gap-3 text-sm">
   <Switch
-    class="h-5 w-9 rounded-md px-px *:data-[slot=switch-thumb]:size-4 *:data-[slot=switch-thumb]:rounded-sm data-[state=checked]:bg-primary *:data-[slot=switch-thumb]:data-[state=checked]:translate-x-full data-[state=unchecked]:bg-input"
+    class="blocky-switch h-[34px] w-[58px] rounded-none border px-px *:data-[slot=switch-thumb]:size-7 *:data-[slot=switch-thumb]:rounded-none *:data-[slot=switch-thumb]:data-[state=checked]:translate-x-7"
     bind:checked
     aria-label={label}
     {onCheckedChange}
@@ -32,3 +32,23 @@
   />
   {@render children?.()}
 </label>
+
+<style>
+  :global(.blocky-switch[data-state="unchecked"]) {
+    border-color: color-mix(in srgb, var(--hairline) 34%, transparent);
+    background: var(--paper-deep);
+  }
+
+  :global(.blocky-switch[data-state="checked"]) {
+    border-color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 12%, var(--paper-raised));
+  }
+
+  :global(.blocky-switch [data-slot="switch-thumb"]) {
+    background: var(--ink-muted);
+  }
+
+  :global(.blocky-switch[data-state="checked"] [data-slot="switch-thumb"]) {
+    background: var(--primary);
+  }
+</style>

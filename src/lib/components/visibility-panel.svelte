@@ -30,7 +30,6 @@
   let sourcesExplainerOpen = $state(false);
   let currentSeason = $derived(userState.state.worldState.season);
   let availableWeathers = $derived(weathersForSeason(currentSeason));
-  let CurrentWeather = $derived(weatherIcon(userState.state.worldState.weather, currentSeason));
   let hasSpecialWeather = $derived(availableWeathers.includes("special"));
   let weatherColumns = $derived(
     `repeat(3, minmax(0, 1fr)) minmax(0, ${hasSpecialWeather ? "1fr" : "0fr"})`,
@@ -111,7 +110,7 @@
 
       <div class="world-state-grid">
         <div>
-          <p><Icon.Season season={currentSeason} class="size-3" />Season</p>
+          <p>Season</p>
           <div class="radio-strip" aria-label="Season">
             {#each seasons as season (season)}
               {@const selected = season === currentSeason}
@@ -129,9 +128,7 @@
         </div>
 
         <div>
-          <p>
-            <CurrentWeather class="size-3" />Weather
-          </p>
+          <p>Weather</p>
           <div
             class="radio-strip radio-strip--weather"
             aria-label="Weather"
@@ -175,11 +172,11 @@
   {#if toolbarState.sourceFilters.length > 0}
     <section class="filter-section" aria-labelledby="source-filter-label">
       <div class="filter-section__heading">
-        <h3 id="source-filter-label"><IconTags class="size-3.5" />Sources</h3>
+        <h3 id="source-filter-label"><IconTags class="size-3.5" />Source types</h3>
         <button
           class="info-button"
           type="button"
-          aria-label="About source groups"
+          aria-label="About source types"
           onclick={() => (sourcesExplainerOpen = true)}><IconInfoCircle class="size-4" /></button
         >
       </div>
@@ -309,9 +306,13 @@
   }
 
   .radio-strip button {
+    display: flex;
     min-width: 0;
     min-height: 34px;
     flex: 1;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
     overflow: hidden;
     padding: 4px 5px;
     border-right: 1px solid color-mix(in srgb, var(--hairline) 28%, transparent);
@@ -386,7 +387,7 @@
     font-size: 13px;
   }
 
-  @media (max-width: 359px) {
+  @media (max-width: 479px) {
     .world-state-grid {
       grid-template-columns: 1fr;
     }

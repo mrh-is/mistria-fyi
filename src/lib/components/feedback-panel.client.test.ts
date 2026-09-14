@@ -34,11 +34,21 @@ describe("FeedbackPanel", () => {
   });
 
   it("renders form fields when open", () => {
-    render(FeedbackPanel, { onclose: vi.fn(), open: true, resetKey: "/museum" });
+    render(FeedbackPanel, {
+      accent: "var(--cat-museum)",
+      onclose: vi.fn(),
+      open: true,
+      resetKey: "/museum",
+    });
 
-    expect(screen.getByRole("dialog", { name: "Send feedback" })).toBeTruthy();
+    const dialog = screen.getByRole("dialog", { name: "Send feedback" });
+    expect(dialog).toHaveAttribute(
+      "style",
+      "--primary: var(--cat-museum); --ring: var(--cat-museum);",
+    );
     expect(screen.getByRole("checkbox", { name: /I’d like a reply/ })).toBeTruthy();
     expect(screen.getByPlaceholderText("Comments, questions, suggestions, praise?")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
   });
 
   it("renders nothing when closed", () => {

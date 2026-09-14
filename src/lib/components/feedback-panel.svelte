@@ -29,12 +29,14 @@
   const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
   let {
+    accent,
     feedbackContext = new FeedbackContext(),
     onclose,
     open,
     pickerEnabled = false,
     resetKey,
   }: {
+    accent?: string;
     feedbackContext?: FeedbackContext;
     onclose: () => void;
     open: boolean;
@@ -473,6 +475,7 @@
     aria-label="Send feedback"
     aria-modal="true"
     tabindex="-1"
+    style={accent === undefined ? undefined : `--primary: ${accent}; --ring: ${accent};`}
     in:fly={{ duration: prefersReducedMotion.current ? 0 : 150, y: 8 }}
   >
     <FoldoutPanel id="feedback-panel" title="Send feedback" {onclose}>
@@ -505,7 +508,7 @@
         <p class="feedback-form__optional">Optional</p>
         <div class="feedback-form__options">
           <div class="flex items-center gap-2">
-            <Checkbox id="include-save-data" bind:checked={includeSaveData} />
+            <Checkbox class="rounded-sm" id="include-save-data" bind:checked={includeSaveData} />
             <label for="include-save-data" class="flex-1 text-xs select-none">
               Attach my tracker progress <span class="text-muted-foreground"
                 >(helps with debugging)</span
@@ -514,7 +517,7 @@
           </div>
 
           <div class="flex items-center gap-2">
-            <Checkbox id="wants-reply" bind:checked={wantsReply} />
+            <Checkbox class="rounded-sm" id="wants-reply" bind:checked={wantsReply} />
             <label for="wants-reply" class="text-xs select-none">I&rsquo;d like a reply</label>
           </div>
 
@@ -663,7 +666,6 @@
               <IconPointer class="size-3.5" />Point at something
             </button>
           {/if}
-          <button class="feedback-form__cancel" type="button" onclick={onclose}>Cancel</button>
           <button
             class="feedback-form__send {canSubmit ? 'feedback-form__send--ready' : ''}"
             type="button"
@@ -735,7 +737,7 @@
 
   .feedback-form__actions {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) minmax(112px, 0.5fr);
     gap: 8px;
   }
 
@@ -776,7 +778,6 @@
   }
 
   .feedback-form__send {
-    min-width: 76px;
     color: var(--ink-muted);
     background: var(--paper-deep);
   }
@@ -793,12 +794,12 @@
 
   @media (max-width: 380px) {
     .feedback-form__actions {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
     }
 
     .feedback-form__pick,
     .feedback-form__selection {
-      grid-column: 1 / -1;
+      grid-column: auto;
     }
   }
 </style>

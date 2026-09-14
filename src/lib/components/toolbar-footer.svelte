@@ -165,6 +165,7 @@
 
 {#if !hidden}
   <FeedbackPanel
+    accent={toolbarAccent}
     {feedbackContext}
     open={activePanel === "feedback"}
     onclose={closePanel}
@@ -186,7 +187,7 @@
           <label class="sr-only" for="tracker-search">Search items</label>
           <Input
             bind:ref={searchInput}
-            class="px-9"
+            class="min-h-11 px-9"
             id="tracker-search"
             placeholder="Search items…"
             type="text"
@@ -315,6 +316,10 @@
     background: var(--paper-raised);
   }
 
+  .floating-tool :global(svg) {
+    transition: transform 150ms ease-out;
+  }
+
   .floating-tool {
     display: flex;
     min-width: 44px;
@@ -344,19 +349,19 @@
     background: color-mix(in srgb, var(--paper-raised) 86%, var(--fg-amber));
   }
 
-  .floating-tool:first-child:is(:hover, :focus-visible) :global(svg) {
+  .floating-tool:is(:hover, :focus-visible) :global(svg) {
     transform: rotate(-7deg);
   }
 
   @media (prefers-reduced-motion: reduce) {
     .floating-tool,
-    .floating-tool:first-child :global(svg) {
+    .floating-tool :global(svg) {
       transition-duration: 0.01ms;
     }
 
     .floating-tool:is(:hover, :focus-visible),
     .floating-tool--active,
-    .floating-tool:first-child:is(:hover, :focus-visible) :global(svg) {
+    .floating-tool:is(:hover, :focus-visible) :global(svg) {
       transform: none;
     }
   }
