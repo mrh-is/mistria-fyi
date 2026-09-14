@@ -7,6 +7,9 @@
     <loc>https://mistria.fyi/settings</loc>
   </url>
   <url>
+    <loc>https://mistria.fyi/about</loc>
+  </url>
+  <url>
     <loc>https://mistria.fyi/privacy</loc>
   </url>
 </urlset>

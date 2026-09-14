@@ -2,8 +2,10 @@
 
 ## Unofficial fan project
 
-**Mistria Field Guide is an unofficial fan project.** It is not produced, endorsed, supported, or
-affiliated with [NPC Studio](https://www.npcstudio.com/) or any of its partners or subsidiaries.
+**Mistria Field Guide is an independent, unofficial, noncommercial fan project.** It is not
+produced, endorsed, supported, sponsored, or affiliated with
+[NPC Studio](https://www.npcstudio.com/) or any of its partners or subsidiaries. The project has no
+advertising, subscriptions, paid features, or donations.
 
 [Fields of Mistria](https://store.steampowered.com/app/2142790/Fields_of_Mistria/) is developed and
 published by NPC Studio. All game content, including but not limited to character names, item names,
@@ -17,10 +19,22 @@ other trademarks referenced in this project belong to their respective owners. U
 in this project is for identification and reference purposes only and does not imply any association
 with or endorsement by the trademark holder.
 
-## Game-derived content
+## Project authorship
 
-This project uses data and images extracted from Fields of Mistria to help players track their
-in-game progress. This use is intended to be consistent with fair use for fan-created companion
-tools. If NPC Studio or any rights holder objects to the use of their materials, please
-[open an issue](https://github.com/mrh-is/mistria-fyi/issues) or contact the maintainer, and the
-relevant content will be promptly removed or modified.
+Michael Helmbrecht and the project’s contributors claim authorship only of the project’s original
+code, interface, organization, and editorial work. The project does not claim ownership of Fields of
+Mistria or its names, marks, characters, artwork, sprites, or other game-derived material.
+
+## Data & accuracy
+
+This project uses a generated factual dataset and selected images extracted from Fields of Mistria
+to help players track their in-game progress. Original game data files are not distributed. Tracker
+information may be incomplete, inaccurate, or outdated after a game update. The game itself remains
+the authoritative source.
+
+## Rights-holder requests
+
+The presence of game-derived material does not imply that NPC Studio has licensed, approved, or
+endorsed this project. No ownership or redistribution license for that material is claimed. Rights
+holders may [contact the maintainer privately](mailto:me@mrh.is) to request review, correction,
+modification, or removal.

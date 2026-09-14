@@ -11,6 +11,16 @@ afterEach(async () => {
 });
 
 describe("QuickSettingsPanel", () => {
+  it("links to the data and legal information pages", () => {
+    render(QuickSettingsPanel);
+
+    expect(screen.getByRole("link", { name: "Data management" })).toHaveAttribute("href", "/data");
+    expect(screen.getByRole("link", { name: "About this guide" })).toHaveAttribute(
+      "href",
+      "/about",
+    );
+  });
+
   it("returns the spoiler toggle to off when confirmation is canceled", async () => {
     render(QuickSettingsPanel);
 
