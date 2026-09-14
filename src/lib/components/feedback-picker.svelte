@@ -127,23 +127,62 @@
       ></button>
     {/each}
 
-    <button
-      bind:this={cancelButton}
-      class="pointer-events-auto fixed top-safe-offset-3 right-3 flex min-h-11 items-center gap-2 rounded-full border border-border bg-background px-4 text-sm font-medium shadow-lg"
-      type="button"
-      onclick={() => {
-        feedbackContext.cancel();
-      }}
-    >
-      <IconX class="size-4" />
-      Cancel
-    </button>
-
-    <p
-      class="pointer-events-none fixed right-4 bottom-safe-offset-20 left-4 rounded-lg bg-background/95 p-3 text-center text-sm font-medium shadow-lg"
-      aria-live="polite"
-    >
-      Pick the item you want to report
-    </p>
+    <div class="picker-header pointer-events-auto">
+      <button
+        bind:this={cancelButton}
+        class="picker-header__back"
+        type="button"
+        aria-label="Cancel item picker"
+        onclick={() => {
+          feedbackContext.cancel();
+        }}
+      >
+        <IconX class="size-5" />
+      </button>
+      <p class="picker-header__title" aria-live="polite">Pick an item to report</p>
+    </div>
   </div>
 {/if}
+
+<style>
+  .picker-header {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 50;
+    display: flex;
+    min-height: 62px;
+    align-items: center;
+    gap: 8px;
+    padding: max(16px, env(safe-area-inset-top)) 16px 12px;
+    border-bottom: 1px solid color-mix(in srgb, var(--hairline) 50%, transparent);
+    background: var(--paper-raised);
+    box-shadow: var(--shadow-small);
+  }
+
+  .picker-header__back {
+    display: flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    margin-left: -12px;
+    color: var(--ink-muted);
+  }
+
+  .picker-header__back:is(:hover, :focus-visible) {
+    color: var(--ink);
+    outline: 2px solid var(--primary);
+    outline-offset: -6px;
+  }
+
+  .picker-header__title {
+    flex: 1;
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.15;
+  }
+</style>

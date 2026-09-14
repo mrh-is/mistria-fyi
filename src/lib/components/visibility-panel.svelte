@@ -139,7 +139,11 @@
               {@const selected = weather === userState.state.worldState.weather}
               {@const isSpecial = weather === "special"}
               {@const SlotIcon = weatherSlotDisplay[weather].icon}
-              <div class="radio-strip__slot">
+              <div
+                class="radio-strip__slot"
+                class:radio-strip__slot--last-visible={!hasSpecialWeather &&
+                  weather === "heavy_inclement"}
+              >
                 <button
                   type="button"
                   aria-label={weatherLabel(weather, currentSeason)}
@@ -201,7 +205,7 @@
   {/if}
 
   <section class="filter-section filter-section--completed" aria-label="Completion visibility">
-    <span><IconSquareX class="size-4" />Show completed?</span>
+    <span><IconSquareX class="size-3.5" />Show completed?</span>
     <BlockySwitch
       label="Show completed?"
       checked={userState.state.showCompleted}
@@ -272,7 +276,7 @@
   .filter-chip--active {
     border-color: var(--primary);
     color: var(--primary);
-    background: color-mix(in srgb, var(--primary) 11%, var(--paper-raised));
+    background: color-mix(in srgb, var(--primary) 14%, var(--paper-raised));
   }
 
   .filter-chip:is(:hover, :focus-visible),
@@ -364,6 +368,10 @@
     border-right: 0;
   }
 
+  .radio-strip__slot--last-visible button {
+    border-right: 0;
+  }
+
   .radio-strip .radio-strip__active {
     color: var(--ink);
     background: color-mix(in srgb, var(--primary) 12%, var(--paper-raised));
@@ -383,8 +391,12 @@
   }
 
   .filter-section--completed span {
-    gap: 8px;
-    font-size: 13px;
+    gap: 6px;
+    color: var(--ink-muted);
+    font-family: var(--font-annotation);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
   }
 
   @media (max-width: 479px) {

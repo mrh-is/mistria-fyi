@@ -16,14 +16,14 @@ describe("QuickSettingsPanel", () => {
 
     const spoilers = screen.getByRole("switch", { name: "Show spoilers?" });
     await fireEvent.click(spoilers);
-    expect(await screen.findByRole("alertdialog")).toBeTruthy();
+    expect(await screen.findByRole("dialog")).toBeTruthy();
     await fireEvent.click(screen.getByRole("button", { name: "Never mind" }));
 
     await waitFor(() => {
       expect(spoilers).not.toBeChecked();
     });
     await waitFor(() => {
-      expect(screen.queryByRole("alertdialog")).toBeNull();
+      expect(screen.queryByRole("dialog")).toBeNull();
     });
     expect(userState.state.showSpoilers).toBe(false);
   });
