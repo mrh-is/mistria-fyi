@@ -183,10 +183,11 @@
     --tag-accent: #a65343;
     --tag-ink: #312e2b;
     --tag-muted: #68635e;
-    --tag-paper: #f1eee8;
+    --tag-paper: #ece7de;
 
     position: relative;
     width: 100%;
+    filter: drop-shadow(3px 6px 12px rgb(31 23 15 / 22%));
   }
 
   :global(.dark) .spoiler-tag-wrap {
@@ -203,9 +204,6 @@
     flex-direction: column;
     color: var(--tag-ink);
     background: var(--tag-paper);
-    box-shadow:
-      0 0 0 1px rgb(31 23 15 / 8%),
-      4px 9px 18px rgb(31 23 15 / 24%);
     clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%, 0 14px);
     -webkit-mask: radial-gradient(circle at 50% 31px, transparent 0 7px, #000 7.5px);
     mask: radial-gradient(circle at 50% 31px, transparent 0 7px, #000 7.5px);

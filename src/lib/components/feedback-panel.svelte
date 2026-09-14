@@ -533,41 +533,35 @@
 
           {#if showProgressInfo}
             <div
-              class="pl-7"
+              class="space-y-1 pl-7"
               transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
             >
               <p class="text-[11px] leading-relaxed text-muted-foreground">
                 Sends your tracked completion state (items checked off, skill levels, etc.). No
                 personal information. <strong>This data will be publicly visible.</strong>
               </p>
-            </div>
-          {/if}
-
-          {#if includeSaveData}
-            <div
-              class="space-y-1 pl-7"
-              transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
-            >
-              <button
-                class="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
-                type="button"
-                onclick={() => {
-                  showSaveDataPreview = !showSaveDataPreview;
-                }}
-              >
-                <IconChevronDown
-                  class="size-3 transition-transform motion-reduce:transition-none {showSaveDataPreview
-                    ? 'rotate-180'
-                    : ''}"
-                />
-                {showSaveDataPreview ? "Hide" : "Show"} my progress data
-              </button>
-              {#if showSaveDataPreview}
-                <!-- prettier-ignore -->
-                <pre
-                  class="max-h-40 overflow-auto rounded border border-border bg-muted/40 p-2 text-[11px] leading-tight"
-                  transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
-                >{saveDataPreview}</pre>
+              {#if includeSaveData}
+                <button
+                  class="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+                  type="button"
+                  onclick={() => {
+                    showSaveDataPreview = !showSaveDataPreview;
+                  }}
+                >
+                  <IconChevronDown
+                    class="size-3 transition-transform motion-reduce:transition-none {showSaveDataPreview
+                      ? 'rotate-180'
+                      : ''}"
+                  />
+                  {showSaveDataPreview ? "Hide" : "Show"} my progress data
+                </button>
+                {#if showSaveDataPreview}
+                  <!-- prettier-ignore -->
+                  <pre
+                    class="max-h-40 overflow-auto rounded border border-border bg-muted/40 p-2 text-[11px] leading-tight"
+                    transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
+                  >{saveDataPreview}</pre>
+                {/if}
               {/if}
             </div>
           {/if}
@@ -777,7 +771,7 @@
     font-size: 10px;
   }
 
-  .feedback-form__actions > button:is(:hover, :focus-visible) {
+  .feedback-form__actions > button:not(.feedback-form__send):is(:hover, :focus-visible) {
     background: var(--accent);
     outline: 2px solid var(--primary);
     outline-offset: -4px;
@@ -803,6 +797,12 @@
   .feedback-form__send {
     color: var(--primary-foreground);
     background: color-mix(in srgb, var(--primary) 48%, var(--paper-deep));
+  }
+
+  .feedback-form__send:is(:hover, :focus-visible) {
+    background: color-mix(in srgb, var(--primary) 64%, var(--paper-deep));
+    outline: 2px solid var(--primary);
+    outline-offset: -4px;
   }
 
   .feedback-form__send--ready {
