@@ -35,7 +35,7 @@ describe("renown maximum", () => {
 
   it("reports max level as complete", () => {
     const progress = getCategoryProgress("renown", {
-      availabilityMode: "everything",
+      availabilityWindows: "everything",
       completed: completedAtRenown(100),
       worldState: { season: "spring", weather: "calm" },
     });
@@ -45,7 +45,7 @@ describe("renown maximum", () => {
 
   it("normalizes progress saved above max level", () => {
     const progress = getCategoryProgress("renown", {
-      availabilityMode: "everything",
+      availabilityWindows: "everything",
       completed: completedAtRenown(120),
       worldState: { season: "spring", weather: "calm" },
     });

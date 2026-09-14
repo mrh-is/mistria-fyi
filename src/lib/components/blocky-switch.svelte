@@ -7,12 +7,14 @@
     checked = $bindable(false),
     checkedIcon,
     children,
+    label,
     onCheckedChange,
     uncheckedIcon,
   }: {
     checked?: boolean;
     checkedIcon?: Component<{ class?: string }>;
     children?: Snippet;
+    label?: string;
     onCheckedChange?: (checked: boolean) => void;
     uncheckedIcon?: Component<{ class?: string }>;
   } = $props();
@@ -24,6 +26,7 @@
   <Switch
     class="h-5 w-9 rounded-md px-px *:data-[slot=switch-thumb]:size-4 *:data-[slot=switch-thumb]:rounded-sm data-[state=checked]:bg-primary *:data-[slot=switch-thumb]:data-[state=checked]:translate-x-full data-[state=unchecked]:bg-input"
     bind:checked
+    aria-label={label}
     {onCheckedChange}
     {thumbIcon}
   />

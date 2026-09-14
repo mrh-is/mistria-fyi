@@ -26,4 +26,17 @@ describe("PageHeader", () => {
     expect(body).not.toContain("data-page-header-ribbon");
     expect(body).not.toContain("--category-progress");
   });
+
+  it("marks a completed category header for its gold-leaf edge", () => {
+    const { body } = render(PageHeader, {
+      props: {
+        category: "museum",
+        progress: { completed: 20, filtered: 0, total: 20 },
+        title: "Museum",
+      },
+    });
+
+    expect(body).toContain("page-header--complete");
+    expect(body).toContain("--category-progress: 100%");
+  });
 });

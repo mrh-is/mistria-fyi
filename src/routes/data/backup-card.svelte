@@ -4,7 +4,7 @@
   import { Button } from "$lib/components/ui/button/index.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
-  import SettingsCard from "./settings-card.svelte";
+  import DataCard from "./data-card.svelte";
 
   import type { ImportErrorKind } from "$lib/stores/user-state.svelte.js";
 
@@ -71,7 +71,7 @@
   }
 </script>
 
-<SettingsCard bind:open title="Backup & Restore" summary="Export or restore all tracker data.">
+<DataCard bind:open title="Backup & Restore" summary="Export or restore all tracker data.">
   <div class="flex flex-col gap-2">
     <Button variant="outline" onclick={handleExport}>
       <IconFileUpload />
@@ -93,4 +93,4 @@
     {#if restoreStatus}<p class="text-sm text-muted-foreground">{restoreStatus}</p>{/if}
     {#if restoreError}<p class="text-sm text-destructive">{restoreError}</p>{/if}
   </div>
-</SettingsCard>
+</DataCard>

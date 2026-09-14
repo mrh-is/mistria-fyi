@@ -54,7 +54,7 @@
         sources,
         completed,
         userState.state.worldState,
-        userState.state.availabilityMode,
+        userState.state.availabilityWindows,
       ),
       mode: "visible",
     };
@@ -199,12 +199,13 @@
     .sort((a, b) => a.entry.name.localeCompare(b.entry.name))}
   {@const baseItems = catEntries.filter(({ canonicalId, entry }) => {
     if (!matchesFilter(entry.name)) return false;
+    if (nameFilter && !itemNameVisible(trackerData.items[canonicalId])) return false;
     const sources = aggregateSources(entry);
     return shouldCountItem(
       sources,
       isItemCompleted(canonicalId),
       userState.state.worldState,
-      userState.state.availabilityMode,
+      userState.state.availabilityWindows,
     );
   })}
   {@const scopedItems = baseItems.filter(({ entry }) =>

@@ -5,9 +5,15 @@ import { clampRenownLevel, MAX_NPC_LEVEL } from "$lib/engine/progress.js";
 import { findRecipesForQuest } from "$lib/engine/quest-rewards.js";
 import { getMarriedNpc, normalizeRelationships } from "$lib/engine/relationships.js";
 import { deriveProgressionState, type UserProgressionState } from "$lib/engine/visibility.js";
+import {
+  AVAILABILITY_WINDOWS,
+  DEFAULT_AVAILABILITY_WINDOWS,
+  legacyAvailabilityWindows,
+} from "$lib/types/availability.js";
 import { recordEntries, recordKeys } from "$lib/utils";
 import { safeLocalStorage, trySetItem } from "$lib/utils/local-storage.js";
 
+import type { AvailabilityWindow, LegacyAvailabilityMode } from "$lib/types/availability.js";
 import type {
   AnimalId,
   AnimalVariantId,
@@ -29,7 +35,7 @@ import type {
 
 // ─── Types ──────────────────────────────────────────────────────────
 
-export type AvailabilityMode = "available" | "everything" | "timely";
+export type AvailabilityMode = LegacyAvailabilityMode;
 export type ChildChoice = "no" | "undeclared" | "yes";
 export interface CompletedState {
   almanac: Set<ItemId>;
@@ -82,7 +88,7 @@ export interface MergeCounts {
 export type QuestState = "completed" | "none" | "obtained";
 
 export interface UserState {
-  availabilityMode: AvailabilityMode;
+  availabilityWindows: AvailabilityWindow[];
   completed: CompletedState;
   showCompleted: boolean;
   showSpoilers: boolean;
@@ -92,7 +98,8 @@ export interface UserState {
 // ─── Serialization ──────────────────────────────────────────────────
 
 interface SerializedState {
-  availabilityMode: AvailabilityMode;
+  availabilityMode?: LegacyAvailabilityMode;
+  availabilityWindows?: AvailabilityWindow[];
   completed: {
     almanac: string[];
     almanacRecipes?: string[];
@@ -128,6 +135,7 @@ const STORAGE_KEY = "mistria-fyi-v1";
 
 const VALID_CHILD_CHOICES = new Set<string>(["no", "undeclared", "yes"]);
 const VALID_AVAILABILITY_MODES = new Set<string>(["available", "everything", "timely"]);
+const VALID_AVAILABILITY_WINDOWS = new Set<string>(AVAILABILITY_WINDOWS);
 const VALID_RELATIONSHIPS = new Set<string>([
   "married",
   "platonic",
@@ -214,7 +222,7 @@ function createDefaultCompleted(): CompletedState {
 
 function createDefaultState(): UserState {
   return {
-    availabilityMode: "available",
+    availabilityWindows: [...DEFAULT_AVAILABILITY_WINDOWS],
     completed: createDefaultCompleted(),
     showCompleted: false,
     showSpoilers: false,
@@ -599,7 +607,10 @@ function createUserState() {
       }
     },
     setAvailabilityMode(mode: AvailabilityMode) {
-      state.availabilityMode = mode;
+      state.availabilityWindows = legacyAvailabilityWindows(mode);
+    },
+    setAvailabilityWindows(windows: readonly AvailabilityWindow[]) {
+      state.availabilityWindows = AVAILABILITY_WINDOWS.filter((window) => windows.includes(window));
     },
     setChildChoice(choice: ChildChoice) {
       state.completed.childChoice = choice;
@@ -663,6 +674,18 @@ function createUserState() {
     toggleAnimalVariant(animalId: AnimalId, variantId: AnimalVariantId) {
       const set = (state.completed.animals[animalId] ??= new SvelteSet<AnimalVariantId>());
       toggleInSet(set, variantId);
+    },
+    toggleAvailabilityWindow(window: AvailabilityWindow) {
+      const selected = new SvelteSet(state.availabilityWindows);
+      if (selected.has(window)) {
+        if (selected.size === 1) return;
+        selected.delete(window);
+      } else {
+        selected.add(window);
+      }
+      state.availabilityWindows = AVAILABILITY_WINDOWS.filter((candidate) =>
+        selected.has(candidate),
+      );
     },
     toggleCosmetic(id: CosmeticId) {
       toggleInSet(state.completed.cosmetics, id);
@@ -810,7 +833,7 @@ function deserialize(json: string): DeserializeResult {
     return {
       ok: true,
       state: {
-        availabilityMode: s.availabilityMode,
+        availabilityWindows: serializedAvailabilityWindows(s),
         completed,
         showCompleted: false,
         showSpoilers: s.showSpoilers ?? false,
@@ -862,7 +885,16 @@ function isSerializedState(value: unknown): value is SerializedState {
   const worldState = value.worldState;
   if (!isRecord(completed) || !isRecord(worldState)) return false;
 
-  if (!isEnumValue(value.availabilityMode, VALID_AVAILABILITY_MODES)) return false;
+  const hasValidWindows =
+    value.availabilityWindows !== undefined &&
+    isStringArray(value.availabilityWindows) &&
+    value.availabilityWindows.length > 0 &&
+    new Set(value.availabilityWindows).size === value.availabilityWindows.length &&
+    value.availabilityWindows.every((window) => VALID_AVAILABILITY_WINDOWS.has(window));
+  const hasValidLegacyMode = isEnumValue(value.availabilityMode, VALID_AVAILABILITY_MODES);
+  if (value.availabilityWindows !== undefined && !hasValidWindows) return false;
+  if (value.availabilityMode !== undefined && !hasValidLegacyMode) return false;
+  if (!hasValidWindows && !hasValidLegacyMode) return false;
   if (
     !isEnumValue(worldState.season, VALID_SEASONS) ||
     !isEnumValue(worldState.weather, VALID_WEATHER)
@@ -911,11 +943,11 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((entry) => typeof entry === "string");
 }
 
-// ─── Serialization helpers ───────────────────────────────────────────
-
 function isStringArrayRecord(value: unknown): value is Record<string, string[]> {
   return isRecord(value) && Object.values(value).every(isStringArray);
 }
+
+// ─── Serialization helpers ───────────────────────────────────────────
 
 function normalizeAlmanacIds(ids: string[]): Set<ItemId> {
   const result = new SvelteSet<ItemId>();
@@ -930,7 +962,7 @@ function normalizeAlmanacIds(ids: string[]): Set<ItemId> {
 
 function serialize(state: UserState): string {
   const s: SerializedState = {
-    availabilityMode: state.availabilityMode,
+    availabilityWindows: [...state.availabilityWindows],
     completed: {
       almanac: [...state.completed.almanac].sort(),
       almanacRecipes: [...state.completed.almanacRecipes].sort(),
@@ -967,6 +999,11 @@ function serialize(state: UserState): string {
     worldState: state.worldState,
   };
   return JSON.stringify(s);
+}
+
+function serializedAvailabilityWindows(state: SerializedState): AvailabilityWindow[] {
+  if (state.availabilityWindows) return [...state.availabilityWindows];
+  return legacyAvailabilityWindows(state.availabilityMode ?? "available");
 }
 
 function toggleInSet<T>(set: Set<T>, item: T): void {

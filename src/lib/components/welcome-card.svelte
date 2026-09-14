@@ -47,7 +47,7 @@
       <div class="flex flex-col gap-2 sm:flex-row">
         {#if showMobileFlow}
           <a
-            href="{resolve('/settings')}?section=transfer"
+            href="{resolve('/data')}?section=transfer"
             class="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 active:bg-primary/80"
           >
             <IconQrcode class="size-4 shrink-0" />
@@ -55,7 +55,7 @@
           </a>
         {:else}
           <a
-            href="{resolve('/settings')}?section=import"
+            href="{resolve('/data')}?section=import"
             class="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 active:bg-primary/80"
           >
             <IconFileDownload class="size-4 shrink-0" />

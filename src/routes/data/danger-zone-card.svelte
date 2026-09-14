@@ -5,7 +5,7 @@
   import { Button } from "$lib/components/ui/button/index.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
-  import SettingsCard from "./settings-card.svelte";
+  import DataCard from "./data-card.svelte";
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
   let resetDialogOpen = $state(false);
@@ -16,7 +16,7 @@
   }
 </script>
 
-<SettingsCard bind:open title="Danger Zone" summary="Erase all tracked progress." variant="danger">
+<DataCard bind:open title="Danger Zone" summary="Erase all tracked progress." variant="danger">
   <AlertDialog.Root bind:open={resetDialogOpen}>
     <AlertDialog.Trigger>
       {#snippet child({ props })}
@@ -45,4 +45,4 @@
       </AlertDialog.Footer>
     </AlertDialog.Content>
   </AlertDialog.Root>
-</SettingsCard>
+</DataCard>

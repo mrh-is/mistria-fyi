@@ -1,6 +1,5 @@
 <script lang="ts">
   import { Icon } from "$lib/components/icon/index.js";
-  import * as Card from "$lib/components/ui/card/index.js";
   import * as Collapsible from "$lib/components/ui/collapsible/index.js";
 
   import type { Snippet } from "svelte";
@@ -21,13 +20,9 @@
 </script>
 
 <Collapsible.Root bind:open>
-  <Card.Root
-    class={variant === "danger" ? "gap-0 border-red-200 py-0 dark:border-red-900" : "gap-0 py-0"}
-  >
-    <Card.Header class="gap-0 p-0">
-      <Collapsible.Trigger
-        class="flex w-full items-start gap-3 rounded-xl px-4 py-3 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-      >
+  <div class:data-card--danger={variant === "danger"} class="data-card">
+    <div>
+      <Collapsible.Trigger class="data-card__trigger">
         <span class="flex min-w-0 flex-1 flex-col gap-0">
           <span
             class="leading-none font-semibold {variant === 'danger'
@@ -52,7 +47,7 @@
             : ''}"
         />
       </Collapsible.Trigger>
-    </Card.Header>
+    </div>
     <Collapsible.Content
       forceMount
       aria-hidden={!open}
@@ -62,10 +57,43 @@
         : 'grid-rows-[0fr] opacity-0'}"
     >
       <div class="min-h-0 overflow-hidden">
-        <Card.Content class="px-4 pt-2 pb-4">
+        <div class="data-card__content">
           {@render children()}
-        </Card.Content>
+        </div>
       </div>
     </Collapsible.Content>
-  </Card.Root>
+  </div>
 </Collapsible.Root>
+
+<style>
+  .data-card {
+    border: 1px solid color-mix(in srgb, var(--hairline) 34%, transparent);
+    border-left: 3px solid var(--home-accent);
+    background: var(--paper-raised);
+    box-shadow: var(--shadow-small);
+  }
+
+  .data-card--danger {
+    border-color: color-mix(in srgb, var(--destructive) 35%, transparent);
+    border-left-color: var(--destructive);
+  }
+
+  :global(.data-card__trigger) {
+    display: flex;
+    width: 100%;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 13px 14px;
+    text-align: left;
+  }
+
+  :global(.data-card__trigger:focus-visible) {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  .data-card__content {
+    padding: 8px 14px 16px;
+    border-top: 1px dashed color-mix(in srgb, var(--hairline) 34%, transparent);
+  }
+</style>
