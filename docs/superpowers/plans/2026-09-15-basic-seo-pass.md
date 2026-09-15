@@ -9,7 +9,10 @@ engines while preserving the app’s existing server-rendered content and semant
 
 ## Decisions
 
-- Centralize route metadata in typed page data rather than scattering tags across route components.
+- Require every rendered route to provide typed metadata through `App.PageData`, colocated in its
+  `+page.ts` module.
+- Add the ` — Mistria Field Guide` title suffix in the shared head component so individual routes
+  only own their meaningful page title.
 - Give every public page a descriptive title, description, canonical URL, Open Graph text, and
   Twitter Card text.
 - Defer `og:image`, its dimensions, and `twitter:image` to #171, where the share artwork will be
@@ -25,19 +28,20 @@ engines while preserving the app’s existing server-rendered content and semant
 
 ## Implementation
 
-1. Add a typed metadata registry covering every supported page path. Route literals must satisfy
-   SvelteKit’s generated `Pathname` type, and exported indexable paths will be the sitemap contract.
-2. Add one head component that renders the resolved title, description, canonical URL, Open Graph
-   text, Twitter Card text, and optional robots directive. Resolve it from the current pathname and
-   response status in the root layout.
+1. Add typed metadata to each page load. Route literals must satisfy SvelteKit’s generated
+   `Pathname` type, and `App.PageData` requires the shared metadata contract.
+2. Add one head component that appends the site name and renders the title, description, canonical
+   URL, Open Graph text, Twitter Card text, and optional robots directive from current page data.
+   Resolve error metadata from the response status in the root layout because missing routes cannot
+   provide page data.
 3. Remove the global canonical and generic SEO tags from `app.html`, plus route-local titles and
-   descriptions now owned by the registry, so each document has one authoritative set.
-4. Replace the sitemap with the complete set of canonical, indexable routes. Exclude the legacy
-   `/settings` redirect and non-indexable `/data` route.
+   descriptions now owned by page data, so each document has one authoritative set.
+4. Generate and prerender the sitemap from every page module’s indexable metadata. Exclude the
+   legacy `/settings` redirect and pages with a `noindex` directive.
 5. Add the targeted sprite exclusion to `robots.txt` while retaining the sitemap declaration and
    general page access.
-6. Add focused tests for registry completeness, canonical URLs, index policies, rendered head tags,
-   sitemap membership, and crawler directives.
+6. Add focused tests that compare rendered page routes with metadata providers and cover canonical
+   URLs, index policies, rendered head tags, generated sitemap membership, and crawler directives.
 
 ## Verification
 

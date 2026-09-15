@@ -2,64 +2,72 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { CATEGORY_KEYS } from "./categories.js";
-import {
-  INDEXABLE_PAGE_PATHS,
-  PAGE_METADATA,
-  resolvePageMetadata,
-  SITE_ORIGIN,
-} from "./page-metadata.js";
+import { PAGE_METADATA, PAGE_METADATA_ENTRIES } from "$lib/server/page-metadata.js";
 
-const PUBLIC_PATHS = [
-  "/",
-  ...CATEGORY_KEYS.map((key) => `/${key}` as const),
-  "/all",
-  "/about",
-  "/data",
-  "/privacy",
-  "/dev/icons",
-] as const;
+import { GET } from "../../routes/sitemap.xml/+server.js";
+import { errorPageMetadata, SITE_NAME, SITE_ORIGIN } from "./page-metadata.js";
+
+const pageComponents = Object.keys(import.meta.glob("/src/routes/**/+page.svelte"));
+
+function routePathForModule(modulePath: string): string {
+  const routeSegments = modulePath
+    .replace(/^\/src\/routes\/?/, "")
+    .replace(/(^|\/)\+page\.ts$/, "")
+    .split("/")
+    .filter((segment) => segment && !(segment.startsWith("(") && segment.endsWith(")")));
+
+  return `/${routeSegments.join("/")}`;
+}
 
 describe("page metadata", () => {
-  it("covers every public, utility, and development page", () => {
-    expect(Object.keys(PAGE_METADATA).toSorted()).toEqual(PUBLIC_PATHS.toSorted());
+  it("is provided by every rendered page", () => {
+    const metadataModules = PAGE_METADATA_ENTRIES.map(({ modulePath }) =>
+      modulePath.replace(/\.ts$/, ".svelte"),
+    );
+
+    expect(metadataModules.toSorted()).toEqual(pageComponents.toSorted());
+
+    for (const { metadata, modulePath } of PAGE_METADATA_ENTRIES) {
+      expect(metadata.path).toBe(routePathForModule(modulePath));
+    }
   });
 
   it("gives every page distinct, meaningful search text and a canonical URL", () => {
-    const resolved = PUBLIC_PATHS.map((path) => resolvePageMetadata(path, 200));
-
-    expect(new Set(resolved.map(({ title }) => title))).toHaveLength(PUBLIC_PATHS.length);
-    expect(new Set(resolved.map(({ description }) => description))).toHaveLength(
-      PUBLIC_PATHS.length,
+    expect(new Set(PAGE_METADATA.map(({ title }) => title))).toHaveLength(PAGE_METADATA.length);
+    expect(new Set(PAGE_METADATA.map(({ description }) => description))).toHaveLength(
+      PAGE_METADATA.length,
     );
+    expect(new Set(PAGE_METADATA.map(({ path }) => path))).toHaveLength(PAGE_METADATA.length);
 
-    for (const [index, metadata] of resolved.entries()) {
-      expect(metadata.title).toContain("Mistria Field Guide");
+    for (const metadata of PAGE_METADATA) {
+      expect(metadata.title).not.toContain(SITE_NAME);
       expect(metadata.description).toContain("Fields of Mistria");
-      expect(metadata.canonicalUrl).toBe(new URL(PUBLIC_PATHS[index], SITE_ORIGIN).href);
+      expect(new URL(metadata.path, SITE_ORIGIN).origin).toBe(SITE_ORIGIN);
     }
   });
 
   it("keeps utility, development, and error pages out of search results", () => {
-    expect(resolvePageMetadata("/data", 200).robots).toBe("noindex, follow");
-    expect(resolvePageMetadata("/dev/icons", 200).robots).toBe("noindex, nofollow");
-    expect(resolvePageMetadata("/missing", 404)).toMatchObject({
+    expect(PAGE_METADATA.find(({ path }) => path === "/data")?.robots).toBe("noindex, follow");
+    expect(PAGE_METADATA.find(({ path }) => path === "/dev/icons")?.robots).toBe(
+      "noindex, nofollow",
+    );
+    expect(errorPageMetadata("/missing", 404)).toMatchObject({
       robots: "noindex, nofollow",
-      title: "404 — Mistria Field Guide",
+      title: "404",
     });
   });
 });
 
 describe("crawler files", () => {
-  it("lists exactly the canonical, indexable pages in the sitemap", () => {
-    const sitemap = readFileSync(
-      resolve(import.meta.dirname, "../../../static/sitemap.xml"),
-      "utf8",
-    );
+  it("generates the sitemap from indexable page metadata", async () => {
+    const sitemap = await GET().text();
     const locations = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
-    const expected = INDEXABLE_PAGE_PATHS.map((path) => new URL(path, SITE_ORIGIN).href);
+    const expected = PAGE_METADATA.filter(({ robots }) => robots === undefined).map(
+      ({ path }) => new URL(path, SITE_ORIGIN).href,
+    );
 
     expect(locations).toEqual(expected);
+    expect(locations).not.toContain(new URL("/data", SITE_ORIGIN).href);
   });
 
   it("keeps pages crawlable while excluding sprites from Google Images", () => {

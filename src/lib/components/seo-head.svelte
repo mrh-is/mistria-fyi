@@ -1,20 +1,24 @@
 <script lang="ts">
-  import type { ResolvedPageMetadata } from "$lib/data/page-metadata.js";
+  import { SITE_NAME, SITE_ORIGIN } from "$lib/data/page-metadata.js";
 
-  let { metadata }: { metadata: ResolvedPageMetadata } = $props();
+  import type { PageMetadata } from "$lib/data/page-metadata.js";
+
+  let { metadata }: { metadata: PageMetadata<string> } = $props();
+  let canonicalUrl = $derived(new URL(metadata.path, SITE_ORIGIN).href);
+  let title = $derived(`${metadata.title} — ${SITE_NAME}`);
 </script>
 
 <svelte:head>
-  <title>{metadata.title}</title>
+  <title>{title}</title>
   <meta name="description" content={metadata.description} />
-  <link rel="canonical" href={metadata.canonicalUrl} />
-  <meta property="og:title" content={metadata.title} />
+  <link rel="canonical" href={canonicalUrl} />
+  <meta property="og:title" content={title} />
   <meta property="og:description" content={metadata.description} />
-  <meta property="og:url" content={metadata.canonicalUrl} />
+  <meta property="og:url" content={canonicalUrl} />
   <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="Mistria Field Guide" />
+  <meta property="og:site_name" content={SITE_NAME} />
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content={metadata.title} />
+  <meta name="twitter:title" content={title} />
   <meta name="twitter:description" content={metadata.description} />
   {#if metadata.robots}
     <meta name="robots" content={metadata.robots} />
