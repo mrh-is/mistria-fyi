@@ -44,13 +44,19 @@ function requestUrl(request: RequestInfo | URL): string {
 }
 
 describe("service-worker runtime cache eligibility", () => {
-  it("accepts only same-origin non-API requests", () => {
+  it("accepts same-origin non-API requests and approved external assets", () => {
     expect(isEligibleForRuntimeCaching(new URL("/animals", ORIGIN), ORIGIN)).toBe(true);
     expect(isEligibleForRuntimeCaching(new URL("/apikeys", ORIGIN), ORIGIN)).toBe(true);
     expect(isEligibleForRuntimeCaching(new URL("/api/feedback", ORIGIN), ORIGIN)).toBe(false);
     expect(isEligibleForRuntimeCaching(new URL("https://cdn.example.com/app.js"), ORIGIN)).toBe(
       false,
     );
+    expect(
+      isEligibleForRuntimeCaching(
+        new URL("https://assets.mistria.fyi/fonts/satoshi-regular.woff2"),
+        ORIGIN,
+      ),
+    ).toBe(true);
   });
 });
 

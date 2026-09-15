@@ -1,5 +1,7 @@
 export const MAX_RUNTIME_ENTRIES = 50;
 
+const EXTERNAL_RUNTIME_ASSETS = new Set(["https://assets.mistria.fyi/fonts/satoshi-regular.woff2"]);
+
 type RuntimeCache = Pick<Cache, "delete" | "keys" | "put">;
 
 interface RuntimeRequestDependencies {
@@ -55,5 +57,8 @@ export async function fetchRuntimeRequest(
 }
 
 export function isEligibleForRuntimeCaching(url: URL, origin: string): boolean {
-  return url.origin === origin && !url.pathname.startsWith("/api/");
+  return (
+    (url.origin === origin && !url.pathname.startsWith("/api/")) ||
+    EXTERNAL_RUNTIME_ASSETS.has(url.href)
+  );
 }

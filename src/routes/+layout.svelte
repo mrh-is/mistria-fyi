@@ -32,6 +32,7 @@
 
   let hasToolbar = $derived(
     page.url.pathname !== "/data" &&
+      page.url.pathname !== "/about" &&
       page.url.pathname !== "/settings" &&
       page.url.pathname !== "/privacy",
   );

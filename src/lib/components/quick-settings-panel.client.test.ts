@@ -11,6 +11,14 @@ afterEach(async () => {
 });
 
 describe("QuickSettingsPanel", () => {
+  it("groups compact links to the data and About pages", () => {
+    const { container } = render(QuickSettingsPanel);
+
+    expect(screen.getByRole("link", { name: "Data" })).toHaveAttribute("href", "/data");
+    expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("href", "/about");
+    expect(container.querySelector(".quick-settings__links")?.children).toHaveLength(2);
+  });
+
   it("returns the spoiler toggle to off when confirmation is canceled", async () => {
     render(QuickSettingsPanel);
 
