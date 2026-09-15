@@ -20,11 +20,12 @@
     "accessibility:monitor": "tsx scripts/accessibility-monitor.ts",
     "test:accessibility": "playwright test",
     "test:accessibility:critical": "playwright test --grep @critical",
-    "test:app": "vitest run src/ && pnpm run test:client",
+    "test:app": "vitest run src/ && pnpm run test:mocked && pnpm run test:client",
     "test:client": "vitest run --config vitest.client.config.ts",
+    "test:mocked": "vitest run --config vitest.mocked.config.ts",
     "test:pipeline": "vitest run pipeline/",
     "test:pwa": "playwright test --config playwright.pwa.config.ts",
-    "test:server": "vitest run",
+    "test:server": "vitest run && pnpm run test:mocked",
     "test:pipeline:assets": "vitest run --config vitest.assets.config.ts"
   },
   "devDependencies": {
