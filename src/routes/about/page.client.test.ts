@@ -3,10 +3,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import AboutPage from "./+page.svelte";
 
-afterEach(() => {
+afterEach(async () => {
   cleanup();
   vi.restoreAllMocks();
   Reflect.deleteProperty(window.history, "length");
+  await new Promise((resolve) => setTimeout(resolve, 250));
 });
 
 describe("About page navigation and disclosures", () => {
