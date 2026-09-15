@@ -11,8 +11,11 @@ the shared browser accessibility matrix so smoke, semantic-heading, theme, and a
 ## Two: build the product surface
 
 Create `src/routes/about/+page.svelte` using the established `PageHeader` and informational-page
-layout patterns. Add “About this guide” links to `quick-settings-panel.svelte` and the data
-management footer. Exclude the route from the floating tracker toolbar and add it to
+layout patterns. Add About beside Data in a two-column quick-settings action row. Move the privacy
+and AI disclosure controls from the data management footer into the About footer, leaving only the
+version line on Data and making About the privacy page’s back target. Make the About header return
+through browser history with a home fallback. Relocate the AI disclosure dialog to the shared
+component boundary. Exclude the route from the floating tracker toolbar and add it to
 `static/sitemap.xml`.
 
 ## Three: align repository statements
