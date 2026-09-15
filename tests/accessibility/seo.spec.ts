@@ -5,6 +5,13 @@ import { SITE_NAME, SITE_ORIGIN } from "../../src/lib/data/page-metadata.js";
 test.use({ javaScriptEnabled: false });
 
 test.describe("server-rendered search metadata", () => {
+  test("the former NPCs route is not redirected", async ({ page }) => {
+    const response = await page.goto("/npcs");
+
+    expect(response?.status()).toBe(404);
+    await expect(page).toHaveURL(/\/npcs$/);
+  });
+
   test("every sitemap page is useful without JavaScript", async ({ page, request }) => {
     const sitemap = await (await request.get("/sitemap.xml")).text();
     const paths = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map(

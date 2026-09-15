@@ -14,8 +14,8 @@ const themes = ["light", "dark"] as const satisfies readonly AccessibilityTheme[
 
 const auditRegressionByRoute: Partial<Record<string, string>> = {
   "/": "c166673 unnamed progress bars, fixed by #155",
+  "/characters": "c166673 unnamed buttons and contrast violations, fixed by #154 and #155",
   "/mines": "c166673 unlabeled input and contrast violations, fixed by #154 and #155",
-  "/npcs": "c166673 unnamed buttons and contrast violations, fixed by #154 and #155",
   "/settings": "c166673 contrast violations, fixed by #154",
 };
 

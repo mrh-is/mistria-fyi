@@ -50,7 +50,7 @@ test.describe("@critical semantic accessibility", () => {
         showSpoilers: true,
       }),
     );
-    await gotoApplication(page, "/npcs");
+    await gotoApplication(page, "/characters");
     const record = page.locator("#npc-adeline");
     await expect(
       record.getByRole("group", { name: "Adeline relationship level, 8 of 12" }),

@@ -43,10 +43,10 @@
   const TOOLBAR_ACCENTS: Record<string, string> = {
     "/almanac": "var(--cat-almanac)",
     "/animals": "var(--cat-animals)",
+    "/characters": "var(--cat-npcs)",
     "/cosmetics": "var(--cat-cosmetics)",
     "/mines": "var(--cat-mines)",
     "/museum": "var(--cat-museum)",
-    "/npcs": "var(--cat-npcs)",
     "/quests": "var(--cat-quests)",
     "/recipes": "var(--cat-recipes)",
     "/renown": "var(--cat-renown)",
