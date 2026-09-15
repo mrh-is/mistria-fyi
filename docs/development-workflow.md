@@ -200,6 +200,20 @@ are not distributed with the repository.
 > must run the matrix commands directly in their shell and verify clean exit status before
 > committing work.
 
+### Required branch/PR delivery check before handoff
+
+Before reporting task completion, confirm your commits are on the branch that backs the target PR:
+
+```sh
+git branch --show-current
+git branch -vv
+```
+
+- Ensure `git branch --show-current` matches the PR branch name.
+- Ensure `git branch -vv` shows that branch tracking the expected `origin/<branch>`.
+- Push through the agent delivery mechanism (for Copilot runs, `report_progress`) after committing,
+  then verify the branch is clean with `git status --short`.
+
 ---
 
 ## 6. Troubleshooting & Recovery Steps
