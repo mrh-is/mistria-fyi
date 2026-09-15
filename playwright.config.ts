@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const isCi = process.env.CI === "true";
+const skipBuild = process.env.PLAYWRIGHT_SKIP_BUILD === "true";
 const worktreePortOffset = [...process.cwd()].reduce(
   (hash, character) => (hash * 31 + character.charCodeAt(0)) % 10_000,
   0,
@@ -38,10 +39,12 @@ export default defineConfig({
     viewport: { height: 720, width: 1280 },
   },
   webServer: {
-    command: `pnpm run build && pnpm run preview --host 127.0.0.1 --port ${testPort}`,
+    command: skipBuild
+      ? `pnpm run preview --host 127.0.0.1 --port ${testPort}`
+      : `pnpm run build && pnpm run preview --host 127.0.0.1 --port ${testPort}`,
     reuseExistingServer: false,
     timeout: 120_000,
     url: testUrl,
   },
-  workers: isCi ? 2 : undefined,
+  workers: isCi ? 4 : undefined,
 });
