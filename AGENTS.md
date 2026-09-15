@@ -6,12 +6,17 @@
 > [docs/save-file-format.md](docs/save-file-format.md), and
 > [docs/mistria-wiki-api.md](docs/mistria-wiki-api.md).
 
-## 1. Worktree Isolation
+## 1. Worktree isolation
 
-Every agent must operate inside an isolated Git worktree. No exceptions for task size, risk level,
-or category (including repo-level housekeeping like licenses, config, & gitignore). Shared working
-trees cause edit collisions, dirty-state confusion, & branch-switch destruction. Only the user can
-grant an exception; agents must not decide to skip this on their own.
+Every agent must operate inside an isolated Git worktree when **modifying tracked files**. Shared
+working trees cause edit collisions, dirty-state confusion, & branch-switch destruction. Agents must
+not decide to skip this on their own — only the user can grant an exception.
+
+**Worktree required** for any task that creates, edits, or deletes tracked files (code, config,
+documentation, tests, CI, licenses, gitignore).
+
+**Worktree not required** for read-only work: audits, log analysis, issue triage, review of existing
+code, scratchpad-only output. These may run in the main checkout.
 
 - Create worktrees under `.worktrees/<issue-number>-<short-description>`.
 - Verify `.worktrees/` is ignored before creating: `git check-ignore -q .worktrees/placeholder`.
@@ -27,7 +32,7 @@ grant an exception; agents must not decide to skip this on their own.
 - `pipeline/input/` — shared read-only game assets. Symlink from the main checkout.
 - `.env` / `.env.*` — machine-local configuration. Symlink or copy from the main checkout.
 
-## 2. Git Configuration
+## 2. Git configuration
 
 The repo remote uses HTTPS (not SSH) and authenticates via `gh auth`. Commit signing uses a local
 SSH key with `gpg.ssh.program = ssh-keygen`. Both are configured to work non-interactively so agents
@@ -54,7 +59,7 @@ Agent attribution is mandatory for agent-authored Git and GitHub content:
 - Preserve existing attribution during edits and handoffs. The active `agent:*` label identifies the
   current top-level owner; trailers and `Agent:` lines identify who authored each artifact.
 
-## 3. Task Lifecycle
+## 3. Task lifecycle
 
 Follow this sequence for every task:
 
@@ -63,35 +68,34 @@ Follow this sequence for every task:
    all cases. Do not start issues labeled `status: blocked` or `status: needs decision`. If an issue
    has `status: in progress` or an `agent:*` label, coordinate with its current owner rather than
    starting duplicate work.
-2. **Confirm scope** — identify the affected subsystem, acceptance criteria, and required
-   deliverables before implementation.
-3. **Approval gates** — obtain explicit user approval at every specification and plan gate.
-4. **Claim the issue** — after scope and required approvals are settled, replace its current
-   `status:*` label with `status: in progress` and add exactly one `agent:*` label identifying the
-   top-level orchestrator. Subagents use their orchestrator's identity.
+2. **Ask questions before starting.** After reading the issue but before any implementation, surface
+   uncertainties. If the task has ambiguous scope, multiple valid approaches, or unclear acceptance
+   criteria, ask the user. "I'm about to do X; any concerns?" is cheap. A wrong assumption that
+   compounds across 50 tool calls is expensive.
+3. **Scope the change** — identify the affected subsystem, acceptance criteria, & deliverables. For
+   nontrivial features, write a short acceptance checklist (3–7 items describing the states the
+   finished feature must satisfy). Get user approval on the checklist before implementing.
+4. **Claim the issue** — replace its current `status:*` label with `status: in progress` and add
+   exactly one `agent:*` label identifying the top-level orchestrator. Subagents use their
+   orchestrator's identity.
 5. **Worktree** — create an isolated worktree and branch **immediately** when starting work on an
-   issue, not when the first edit happens. The worktree is the workspace for the entire task,
-   including spec and plan commits. Only skip if the user explicitly directs work in the current
-   checkout.
+   issue (see §1 for when worktrees are required). The worktree is the workspace for the entire
+   task. Only skip if the user explicitly directs work in the current checkout.
 6. **Baseline** — install dependencies (`Node >=26`, `pnpm install --frozen-lockfile`) and verify a
    clean baseline.
 7. **Understand contracts** — read the affected subsystem, its boundaries, and existing tests before
    editing.
 8. **Test first** — add or update tests for behavioral changes, preferably before implementation.
-   Run focused tests during development.
-9. **Verification matrix** — run the complete verification matrix before committing. Lint must
-   produce **zero errors and zero warnings**. If a warning requires an eslint-disable comment, add
-   the narrowest possible disable with a justification comment.
-10. **Commit specs & plans first** — commit approved specifications (`docs/superpowers/specs/`) and
-    implementation plans (`docs/superpowers/plans/`) **before writing any implementation code**. If
-    these files were created in the main checkout before the worktree existed, copy them into the
-    worktree and commit them there as the first commit on the branch. This is not optional; specs
-    and plans are deliverables that belong in the PR alongside the code they describe.
-11. **Deliver** — commit with the required co-author trailer, push, and open an attributed PR that
+   Run focused tests during development (see §7).
+9. **Verify** — run `pnpm run verify` once when commit-ready (see §7).
+10. **Deliver** — commit with the required co-author trailer, push, and open an attributed PR that
     references the issue (`Closes #N`). Apply the matching `agent:*` label to the PR. Keep the
     active-work labels through PR review. On handoff, replace the active `agent:*` labels. When work
     closes, is abandoned, or stops pending a decision or dependency, remove both active-work labels
     and set the appropriate remaining status.
+11. **Monitor CI** — after opening the PR, bind it and enable monitoring so CI failures are caught
+    and fixed without requiring the user to relay status. Use `ccd_pr bind_pr` and `set_monitor` in
+    Claude Code, or check `gh pr checks` periodically in other agents.
 
 > Git pre-commit hooks are developer conveniences, not verification evidence. Agents must run the
 > documented commands directly and verify clean exit status before committing.
@@ -110,9 +114,10 @@ Use **pnpm** exclusively. Do **not** use `npm`, `npx`, `yarn`, or `bun`.
 | `pnpm run test`               | Complete Vitest suite (asset-independent)  |
 | `pnpm run test:app`           | App tests (`src/`)                         |
 | `pnpm run test:pipeline`      | Pipeline tests (`pipeline/`)               |
+| `pnpm run verify`             | Full matrix with compact output (see §7)   |
 | `pnpm run pipeline -- <path>` | Regenerate `tracker-data.json` from assets |
 
-## 5. Architecture Boundaries
+## 5. Architecture boundaries
 
 These rules prevent accidental damage to generated or vendored code:
 
@@ -131,7 +136,7 @@ These rules prevent accidental damage to generated or vendored code:
   one concern (a checkbox, a sprite slot, a source card), even when they have only one call site.
   The goal is reasoning clarity, not reuse.
 
-## 6. Code Style
+## 6. Code style
 
 - **TypeScript**: `strictTypeChecked` ESLint + `strict: true` tsconfig. Use `type` imports
   (`consistent-type-imports`).
@@ -145,10 +150,136 @@ These rules prevent accidental damage to generated or vendored code:
 - **Rules**: `eqeqeq`, `prefer-const` (except `.svelte`), `no-var`, `object-shorthand`,
   `prefer-template`, `curly` (multi-line).
 
-## 7. Token Efficiency
+## 7. Verification
 
-This project has a history of heavy agent usage. Follow these rules to keep token consumption
-reasonable.
+This project has a history of agents running the full verification matrix dozens of times per
+session. That pattern wastes tokens, bloats context, and accelerates compaction. Follow these rules
+precisely.
+
+### During development
+
+Run **only** the specific test covering your change:
+
+```sh
+pnpm exec vitest run path/to/file.test.ts 2>&1 | tail -30
+```
+
+After a TypeScript or Svelte contract edit that could cause type errors elsewhere, also run:
+
+```sh
+pnpm run check 2>&1 | tail -10
+```
+
+Do **not** run `pnpm run test`, `pnpm run lint`, `pnpm run build`, or any other full-suite command
+during development. Those are for the final verification pass only.
+
+### When commit-ready
+
+Run the verification script **once**:
+
+```sh
+pnpm run verify
+```
+
+This runs lint:fix, lint, check, test, & build in sequence with compact output, stopping on first
+failure. If a step fails, fix the issue and rerun **only that step** to confirm the fix, then rerun
+`pnpm run verify` once more.
+
+Lint must produce **zero errors and zero warnings**. If a warning requires an eslint-disable
+comment, add the narrowest possible disable with a justification comment.
+
+### After the matrix passes
+
+Do not rerun the full matrix unless you make further code changes. If you only modify the commit
+message, PR description, or issue labels after the matrix passes, commit and push without rerunning.
+
+### Documentation-only changes
+
+Changes that touch only `.md` files, comments, or non-executable content: run `pnpm run lint:fix`
+and `pnpm run lint` only. No build, no tests.
+
+### Output handling
+
+Always pipe verbose commands through `tail` unless diagnosing a failure:
+
+```sh
+pnpm run lint 2>&1 | tail -30
+pnpm exec vitest run path/to/test.ts 2>&1 | tail -30
+```
+
+For CI failures, prefer `gh run view <id> --log-failed` once over repeated full-log downloads.
+
+## 8. Visual verification
+
+When a task changes `.svelte` files, CSS, layout, or routes, verify visually before declaring done.
+Screenshot accumulation is expensive; use a bounded checklist, not exploratory browsing.
+
+### Required checklist
+
+1. Start the dev server and navigate to every changed route.
+2. Screenshot at desktop width (~1280) and mobile width (~390).
+3. Exercise every changed interaction and one reversal or undo path.
+4. Check light mode and dark mode.
+5. Check relevant states: empty, loaded, error, disabled.
+6. Check browser console for errors.
+
+### Limits
+
+- Cap at **10 screenshots** per PR. One per materially changed state, not one per interaction step.
+- If a design reference exists (Figma file, existing page to match), screenshot both and compare.
+- Record what was **not** visually verified in the PR description under a "Not verified" section.
+
+### When to skip
+
+Documentation-only changes, pipeline-only changes, and test-only changes do not need visual
+verification. Changes to engine logic (`src/lib/engine/`) do not need visual verification unless
+they affect rendered output.
+
+## 9. Reviews
+
+### Self-review (default)
+
+For most PRs, review your own diff in a fresh context before requesting human review. A subagent
+reading the diff cold catches mistakes the implementing context has normalized.
+
+### Cross-agent adversarial review
+
+Reserve independent cross-agent review for PRs that touch **high-risk surfaces**:
+
+- Engine logic, state machines, or transfer encoding
+- Data pipeline extractors or schema changes
+- Store persistence or save/import/export flows
+- Authentication, abuse controls, or security boundaries
+- Changes spanning 5+ files with cross-cutting concerns
+
+Use one review pass with a deterministic target (the merge-base diff). Do not run spec reviews, plan
+reviews, and implementation reviews as separate passes. If the review finds high-severity issues
+that require substantial changes, one re-review is justified; otherwise, fix and move on.
+
+### Review prompts
+
+Keep review prompts compact: the base commit, the changed files, the relevant invariants, and the
+requested severity threshold. Do not restate the full plan or spec in the review prompt.
+
+## 10. Session lifecycle
+
+### Budget
+
+- **One concern per session.** One issue, one PR-sized deliverable.
+- **Stop at 100 model requests** or the **first context compaction**, whichever comes first.
+- When approaching limits, write a handoff note to the worktree or issue, then stop. A fresh session
+  reading the issue and branch is 50–100x cheaper than re-tokenizing a cold conversation.
+
+### Handoffs
+
+Do **not** paste handoff narratives. Give the new session:
+
+- The branch name
+- The issue number
+- Optionally, a short note in the worktree (`HANDOFF.md`) if there's state that isn't captured in
+  the issue or commit history
+
+The new session reads `gh issue view`, `git log`, and `git diff` to reconstruct context.
 
 ### Reading files
 
@@ -159,21 +290,15 @@ reasonable.
 - **Don't re-read files you already have in context.** If compression has dropped a file's contents,
   re-read only the section you need, not the entire file.
 
-### Verification & commands
+### Model routing
 
-- **Run the full verification matrix once before committing**, not after every edit. During
-  development, run only the specific test file or check that covers your change.
-- **Truncate verbose output.** Pipe lint, test, & build commands through `tail -30` unless you need
-  the full output to diagnose a failure. Example: `pnpm run lint 2>&1 | tail -30`.
-- **Batch grep patterns** into a single `rg` call with alternation rather than running separate
-  searches.
+Evaluate task complexity before starting work. Use the cheapest model that can handle the task. See
+[DELEGATION.md](../../.agents/DELEGATION.md) for the full routing table with model names per agent.
 
-### Session & agent strategy
+- **Simple** (single-file fix, lint issue, doc update, dependency bump): cheapest tier.
+- **Medium** (bug fix, single-component feature, test additions): default tier.
+- **Complex** (multi-file feature, architecture decision, difficult debugging): most capable tier.
 
-- **Keep sessions focused.** One concern per session. Don't let sessions grow past ~100 turns if
-  avoidable; long sessions pay a compounding context-compression tax.
-- **Use delegation sparingly.** Reserve additional agents for independent work that can proceed in
-  parallel without overlapping files. Most tasks are cheaper and clearer when handled sequentially.
-- **Don't paste handoff reports when continuing across sessions.** Give the new session the branch
-  name and issue number and let it read the PR/issue via `gh`. Handoff blobs duplicate what
-  `gh issue view` and `git log` already provide.
+Don't run an entire session at the most expensive model for a task the default could handle. The
+routing decision happens once, at the start; don't reevaluate mid-session unless you discover
+unexpected complexity.
