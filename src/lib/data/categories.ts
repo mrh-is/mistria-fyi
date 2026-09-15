@@ -41,7 +41,7 @@ export function categoryForKey(key: CategoryKey): CategoryInfo {
     color: `cat-${key}`,
     description: CATEGORY_DESCRIPTIONS[key],
     href: `/${key}`,
-    name: key === "npcs" ? "NPCs" : capitalize(key),
+    name: key === "npcs" ? "Characters" : capitalize(key),
   };
 }
 
