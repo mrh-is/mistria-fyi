@@ -16,7 +16,8 @@ test.describe("server-rendered search metadata", () => {
       const expectedCanonicalUrl = new URL(path, SITE_ORIGIN).href;
 
       expect(response?.ok()).toBe(true);
-      await expect(page).toHaveTitle(new RegExp(` — ${SITE_NAME}$`));
+      await expect(page).toHaveTitle(path === "/" ? SITE_NAME : new RegExp(` — ${SITE_NAME}$`));
+      await expect(page).not.toHaveTitle(/tracker/i);
       await expect(page.locator('meta[name="description"]')).toHaveAttribute(
         "content",
         /Fields of Mistria/,
