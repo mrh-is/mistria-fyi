@@ -14,6 +14,7 @@ interface Workflow {
       permissions?: Record<string, string>;
       "runs-on"?: string;
       steps?: WorkflowStep[];
+      strategy?: { "fail-fast"?: boolean; matrix?: Record<string, string[]> };
     }
   >;
   on?: {
@@ -115,7 +116,12 @@ describe("browser tests workflow", () => {
     expect(workflow.on?.schedule).toEqual([{ cron: "17 3 * * *" }]);
     expect(workflow.on).toHaveProperty("workflow_dispatch");
     expect(workflow.on).not.toHaveProperty("pull_request_target");
-    expect(Object.keys(workflow.jobs ?? {})).toEqual(["browser-tests", "issue-sync"]);
+    expect(Object.keys(workflow.jobs ?? {})).toEqual([
+      "build",
+      "accessibility",
+      "pwa",
+      "issue-sync",
+    ]);
   });
 
   it("has a cancel-in-progress concurrency group", () => {
@@ -142,37 +148,67 @@ describe("browser tests workflow", () => {
     );
   });
 
-  it("caches Playwright browsers and only installs on a cache miss", () => {
-    const steps = workflow.jobs?.["browser-tests"].steps ?? [];
-    const cacheStep = steps.find((step) => step.uses?.startsWith("actions/cache@"));
-    expect(cacheStep?.id).toBe("playwright-cache");
-    expect(cacheStep?.with?.path).toBe("~/.cache/ms-playwright");
+  it("caches Playwright browsers and only installs on a cache miss in each test job", () => {
+    for (const jobName of ["accessibility", "pwa"] as const) {
+      const steps = workflow.jobs?.[jobName].steps ?? [];
+      const cacheStep = steps.find((step) => step.uses?.startsWith("actions/cache@"));
+      expect(cacheStep?.id).toBe("playwright-cache");
+      expect(cacheStep?.with?.path).toBe("~/.cache/ms-playwright");
 
-    const installStep = steps.find(
-      (step) => step.run === "pnpm exec playwright install --with-deps chromium",
-    );
-    expect(installStep?.if).toContain("!= 'true'");
-    const installDepsStep = steps.find(
-      (step) => step.run === "pnpm exec playwright install-deps chromium",
-    );
-    expect(installDepsStep?.if).toContain("== 'true'");
+      const installStep = steps.find(
+        (step) => step.run === "pnpm exec playwright install --with-deps chromium",
+      );
+      expect(installStep?.if).toContain("!= 'true'");
+      const installDepsStep = steps.find(
+        (step) => step.run === "pnpm exec playwright install-deps chromium",
+      );
+      expect(installDepsStep?.if).toContain("== 'true'");
+    }
   });
 
-  it("shares one build and skips rebuilding for each Playwright suite", () => {
-    const steps = workflow.jobs?.["browser-tests"].steps ?? [];
-    const commands = steps.flatMap((step) => (step.run === undefined ? [] : [step.run]));
-    expect(commands).toContain("pnpm run build");
-    expect(commands.filter((command) => command.includes("pnpm run build"))).toHaveLength(1);
+  it("builds once and shares the output with sharded accessibility and PWA jobs", () => {
+    expect(workflow.jobs?.build.steps?.map((step) => step.run).filter(Boolean)).toContain(
+      "pnpm run build",
+    );
+    const buildUpload = workflow.jobs?.build.steps?.find((step) =>
+      step.uses?.startsWith("actions/upload-artifact@"),
+    );
+    expect(buildUpload?.with?.name).toBe("build-output");
+    expect(buildUpload?.with?.path).toBe(".svelte-kit/output/");
 
-    const accessibilityStep = steps.find((step) => step.id === "accessibility-tests");
-    const pwaStep = steps.find((step) => step.id === "pwa-tests");
-    expect(accessibilityStep?.run).toBe("pnpm run test:accessibility");
+    expect(workflow.jobs?.accessibility.needs).toBe("build");
+    expect(workflow.jobs?.pwa.needs).toBe("build");
+    for (const jobName of ["accessibility", "pwa"] as const) {
+      const steps = workflow.jobs?.[jobName].steps ?? [];
+      expect(steps.some((step) => step.run === "pnpm run build")).toBe(false);
+      const download = steps.find((step) => step.uses?.startsWith("actions/download-artifact@"));
+      expect(download?.with?.name).toBe("build-output");
+      expect(download?.with?.path).toBe(".svelte-kit/output/");
+    }
+
+    const accessibilityStep = workflow.jobs?.accessibility.steps?.find(
+      (step) => step.id === "accessibility-tests",
+    );
+    const pwaStep = workflow.jobs?.pwa.steps?.find((step) => step.id === "pwa-tests");
+    expect(accessibilityStep?.run).toBe(
+      "pnpm run test:accessibility -- --shard=${{ matrix.shard }}",
+    );
     expect(pwaStep?.run).toBe("pnpm run test:pwa");
+  });
+
+  it("shards accessibility across parallel matrix jobs without sharding PWA", () => {
+    expect(workflow.jobs?.accessibility.strategy).toEqual({
+      "fail-fast": false,
+      matrix: { shard: ["1/3", "2/3", "3/3"] },
+    });
+    expect(workflow.jobs?.pwa.strategy).toBeUndefined();
   });
 
   it("keeps pull-request tests read-only and scopes issue writes to scheduled synchronization", () => {
     expect(workflow.permissions).toEqual({ contents: "read" });
-    expect(workflow.jobs?.["browser-tests"].permissions).toBeUndefined();
+    expect(workflow.jobs?.accessibility.permissions).toBeUndefined();
+    expect(workflow.jobs?.pwa.permissions).toBeUndefined();
+    expect(workflow.jobs?.["issue-sync"]?.needs).toBe("accessibility");
     expect(workflow.jobs?.["issue-sync"]?.permissions).toEqual({
       contents: "read",
       issues: "write",
@@ -181,17 +217,34 @@ describe("browser tests workflow", () => {
   });
 
   it("publishes failure evidence for both suites before preserving the failed outcome", () => {
-    const steps = workflow.jobs?.["browser-tests"].steps ?? [];
-    expect(steps.find((step) => step.id === "accessibility-tests")?.["continue-on-error"]).toBe(
-      true,
+    const accessibilitySteps = workflow.jobs?.accessibility.steps ?? [];
+    expect(
+      accessibilitySteps.find((step) => step.id === "accessibility-tests")?.["continue-on-error"],
+    ).toBe(true);
+    const accessibilityUpload = accessibilitySteps.find((step) =>
+      step.uses?.startsWith("actions/upload-artifact@"),
     );
-    expect(steps.find((step) => step.id === "pwa-tests")?.["continue-on-error"]).toBe(true);
-    const upload = steps.find((step) => step.uses?.startsWith("actions/upload-artifact@"));
-    expect(upload?.if).toContain("failure");
-    expect(upload?.with?.path).toContain(".playwright-artifacts/");
-    expect(upload?.with?.path).toContain(".playwright-results/");
-    expect(upload?.with?.path).toContain(".playwright-pwa-report/");
-    expect(upload?.with?.path).toContain(".playwright-pwa-results/");
-    expect(upload?.with?.["if-no-files-found"]).toBe("ignore");
+    expect(accessibilityUpload?.if).toContain("failure");
+    expect(accessibilityUpload?.with?.name).toBe("accessibility-report-${{ strategy.job-index }}");
+    expect(accessibilityUpload?.with?.path).toContain(".playwright-artifacts/");
+    expect(accessibilityUpload?.with?.path).toContain(".playwright-results/");
+    expect(accessibilityUpload?.with?.["if-no-files-found"]).toBe("ignore");
+
+    const pwaSteps = workflow.jobs?.pwa.steps ?? [];
+    expect(pwaSteps.find((step) => step.id === "pwa-tests")?.["continue-on-error"]).toBe(true);
+    const pwaUpload = pwaSteps.find((step) => step.uses?.startsWith("actions/upload-artifact@"));
+    expect(pwaUpload?.if).toContain("failure");
+    expect(pwaUpload?.with?.path).toContain(".playwright-pwa-report/");
+    expect(pwaUpload?.with?.path).toContain(".playwright-pwa-results/");
+    expect(pwaUpload?.with?.["if-no-files-found"]).toBe("ignore");
+  });
+
+  it("downloads every shard's failure reports into distinct directories for issue-sync", () => {
+    const download = workflow.jobs?.["issue-sync"].steps?.find((step) =>
+      step.uses?.startsWith("actions/download-artifact@"),
+    );
+    expect(download?.with?.pattern).toBe("accessibility-report-*");
+    expect(download?.with?.path).toBe("playwright-shard-reports");
+    expect(download?.with?.["merge-multiple"]).toBeUndefined();
   });
 });
