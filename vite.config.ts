@@ -24,5 +24,6 @@ export default defineConfig({
       "**/.claude/worktrees/**",
       "**/.pnpm-store/**",
     ],
+    isolate: false,
   },
 });

@@ -77,7 +77,7 @@ export async function synchronizeAccessibilityIssue(options: {
     ...failures.map((failure) => `\`\`\`text\n${failure}\n\`\`\``),
     "",
     `[Workflow run](${options.workflowUrl})`,
-    "Artifact: `accessibility-report`",
+    "Artifact: `browser-test-reports`",
     "Reproduce: `pnpm run test:accessibility`",
     "",
     "Agent: codex",
