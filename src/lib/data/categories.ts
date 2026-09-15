@@ -41,8 +41,15 @@ export function categoryForKey(key: CategoryKey): CategoryInfo {
     color: `cat-${key}`,
     description: CATEGORY_DESCRIPTIONS[key],
     href: `/${key}`,
-    name: key === "npcs" ? "NPCs" : capitalize(key),
+    name: key === "npcs" ? "Characters" : capitalize(key),
   };
+}
+
+export function sortCategoryKeysByName(keys: readonly CategoryKey[]): CategoryKey[] {
+  return [...keys].sort((left, right) => {
+    const nameOrder = categoryForKey(left).name.localeCompare(categoryForKey(right).name);
+    return nameOrder !== 0 ? nameOrder : left.localeCompare(right);
+  });
 }
 
 const capitalize = <T extends string>(s: T) =>

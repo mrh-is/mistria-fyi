@@ -1,24 +1,28 @@
 <script lang="ts">
   import CategoryCard from "$lib/components/category-card.svelte";
   import { Icon } from "$lib/components/icon/index.js";
-  import { CATEGORY_KEYS } from "$lib/data/categories.js";
+  import { CATEGORY_KEYS, sortCategoryKeysByName } from "$lib/data/categories.js";
 
   import type { AllProgress } from "$lib/engine/progress.js";
 
   let { progress }: { progress: AllProgress } = $props();
 
   let activeCategories = $derived(
-    CATEGORY_KEYS.filter((key) => {
-      const p = progress[key];
-      return p.total === 0 || p.completed < p.total;
-    }),
+    sortCategoryKeysByName(
+      CATEGORY_KEYS.filter((key) => {
+        const p = progress[key];
+        return p.total === 0 || p.completed < p.total;
+      }),
+    ),
   );
 
   let completedCategories = $derived(
-    CATEGORY_KEYS.filter((key) => {
-      const p = progress[key];
-      return p.total > 0 && p.completed >= p.total;
-    }),
+    sortCategoryKeysByName(
+      CATEGORY_KEYS.filter((key) => {
+        const p = progress[key];
+        return p.total > 0 && p.completed >= p.total;
+      }),
+    ),
   );
 </script>
 
