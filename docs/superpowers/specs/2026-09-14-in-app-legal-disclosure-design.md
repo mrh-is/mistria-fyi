@@ -15,23 +15,20 @@ publish the repository.
 
 ## Product surface
 
-Add an `/about` route titled “About this guide”. Link it from the quick-settings panel and the data
-management footer, beside the existing privacy and AI disclosures. Add it to the sitemap and the
-browser accessibility route matrix.
+Add an `/about` route titled “About”. Link it from the quick-settings panel and the data management
+footer, beside the existing privacy and AI disclosures. Add it to the sitemap and the browser
+accessibility route matrix.
 
 The page must state that:
 
 - Mistria Field Guide is an independent, unofficial, noncommercial fan project maintained by Michael
   Helmbrecht, without NPC Studio affiliation, endorsement, support, or sponsorship.
-- The maintainer claims the project’s original code, interface, organization, and editorial work,
-  but not Fields of Mistria or its names, marks, characters, artwork, sprites, or other game-derived
-  material.
-- Tracker data is generated for a specific game version, may be incomplete or outdated, and is not
-  an official source or a substitute for the game.
-- Original game input files are not distributed, while the deployed tracker currently contains
-  selected extracted icons and a generated factual dataset.
-- Rights holders can contact the maintainer privately at `me@mrh.is` to request review, correction,
-  modification, or removal. Ordinary users should continue to use the in-app feedback flow.
+- Fields of Mistria and its game content remain the property of NPC Studio and the applicable rights
+  holders.
+- Tracker data identifies the game version from which it was generated and warns that the guide will
+  be out of date after a game update.
+- Visitors can contact the maintainer privately at `michael@mistria.fyi`. Ordinary users should
+  continue to use the in-app feedback flow, identified by its toolbar icon.
 
 The page must link to the official Fields of Mistria website and NPC Studio website. It must not
 state that fair use, permission, or any other legal defense has been established.

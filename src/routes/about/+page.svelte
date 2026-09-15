@@ -1,66 +1,46 @@
 <script lang="ts">
+  import { IconMessageReport } from "@tabler/icons-svelte-runes";
+
   import PageHeader from "$lib/components/page-header.svelte";
+  import { trackerData } from "$lib/data";
 </script>
 
 <svelte:head>
-  <title>About this guide — Mistria Field Guide</title>
+  <title>About — Mistria Field Guide</title>
   <meta
     name="description"
-    content="The Mistria Field Guide’s unofficial status, ownership boundaries, and data policy."
+    content="All about the Mistria Field Guide! What it is, who made it, etc etc and so on."
   />
 </svelte:head>
 
-<PageHeader title="About this guide" backHref="/data" backLabel="Back to data management" />
+<PageHeader title="About" backHref="/data" backLabel="Back to data management" />
 
 <div class="about-page">
   <section>
     <h2>Project status</h2>
     <p>
-      Mistria Field Guide is an independent, unofficial, noncommercial fan project maintained by
-      Michael Helmbrecht. It is not affiliated with, endorsed by, supported by, or sponsored by
-      <a href="https://www.npcstudio.com/">NPC Studio</a>.
-    </p>
-    <p>
-      The guide has no advertising, subscriptions, paid features, or donations. It exists to help
-      players track their own progress in
+      The Mistria Field Guide is an independent, unofficial, & noncommercial fan project to help
+      players track their progress in
       <a href="https://www.fieldsofmistria.com/">Fields of Mistria</a>.
     </p>
-  </section>
-
-  <div class="divider"></div>
-
-  <section>
-    <h2>What I made</h2>
     <p>
-      I claim authorship of the guide’s original code, interface, organization, and editorial work,
-      together with contributions made by this project’s contributors.
+      The guide is maintained by <a href="https://mrh.is/">Michael Helmbrecht</a>. It’s not
+      affiliated with, endorsed by, supported by, or sponsored by
+      <a href="https://www.npcstudio.com/">NPC Studio</a> (though, call me!).
     </p>
   </section>
 
   <div class="divider"></div>
 
   <section>
-    <h2>What I don’t claim</h2>
+    <h2>Data</h2>
     <p>
-      This project does not claim ownership of Fields of Mistria or its names, marks, characters,
-      artwork, sprites, or other game-derived material. Those materials belong to NPC Studio and
-      their respective rights holders. Their presence does not imply that NPC Studio has licensed,
-      approved, or endorsed this project.
-    </p>
-  </section>
-
-  <div class="divider"></div>
-
-  <section>
-    <h2>Data & accuracy</h2>
-    <p>
-      Tracker data is generated for the game version shown on the data management page. It may be
-      incomplete, inaccurate, or outdated after a game update. The game itself remains the
-      authoritative source.
+      Fields of Mistria (the game) & all the content therein, including data & images, remain
+      properties of NPC Studio & their respective rightsholders.
     </p>
     <p>
-      Original game data files are not distributed. The deployed guide currently includes a
-      generated factual dataset and selected extracted icons needed to identify tracked items.
+      The current guide data was generated based on game version {trackerData.version}. When there's
+      a game update, this guide will briefly be out of date while I update everything.
     </p>
   </section>
 
@@ -69,9 +49,10 @@
   <section>
     <h2>Questions & requests</h2>
     <p>
-      Players can report mistakes through “Send feedback” in the tracker. Rights holders can
-      <a href="mailto:me@mrh.is">contact me privately</a> to request review, correction, modification,
-      or removal of material.
+      Report issues through the feedback tool (the
+      <IconMessageReport class="feedback-icon" aria-hidden="true" /> icon in the bottom toolbar) at any
+      point! For anything more serious, you can also
+      <a href="mailto:michael@mistria.fyi">contact me privately</a>.
     </p>
   </section>
 </div>
@@ -114,6 +95,16 @@
 
   a:is(:hover, :focus-visible) {
     text-decoration-style: solid;
+  }
+
+  :global(.feedback-icon) {
+    display: inline-block;
+    width: 1.15em;
+    height: 1.15em;
+    margin-inline: 0.08em;
+    color: var(--primary);
+    stroke-width: 2.25;
+    vertical-align: -0.2em;
   }
 
   .divider {
