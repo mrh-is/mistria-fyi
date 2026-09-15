@@ -51,32 +51,25 @@
 
   let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
 
-  function questSources(questType: QuestType, questId: QuestId): Source[] {
-    if (questType === "fetch") {
-      const { itemId } = trackerData.quests.fetch[questId];
-      return [...trackerData.items[itemId].sources];
+  function findDuplicateNames(entries: { displayName: string }[]): Set<string> {
+    const counts: Record<string, number> = {};
+    for (const e of entries) {
+      counts[e.displayName] = (counts[e.displayName] ?? 0) + 1;
     }
-    if (questType === "cooking") {
-      const quest = trackerData.quests.cooking[questId];
-      const recipe = "recipeId" in quest ? trackerData.recipes[quest.recipeId] : undefined;
-      if (recipe) return [...recipe.sources];
-    }
-    return [];
+    return new Set(
+      Object.entries(counts)
+        .filter(([, c]) => c > 1)
+        .map(([n]) => n),
+    );
   }
 
-  function questNameVisible(questType: QuestType, questId: QuestId): boolean {
-    return isEntityNameVisible(questVisibility(questType, questId), userState.progressionState);
-  }
-
-  function questVisibility(
-    questType: QuestType,
-    questId: QuestId,
-  ): undefined | VisibilityCondition {
-    return trackerData.quests[questType][questId].visibility;
-  }
-
-  function isQuestTypeComplete(questIds: QuestId[]): boolean {
-    return questIds.every((id) => getQuestState(id) === "completed");
+  function isCravingQuestComplete(): boolean {
+    const marriedNpc = getMarriedNpc(userState.state.completed.npcRelationships);
+    if (!marriedNpc) return false;
+    if (!(marriedNpc in trackerData.pregnancyQuestByNpc)) return true;
+    if (userState.state.completed.childChoice === "no") return true;
+    const questId = trackerData.pregnancyQuestByNpc[marriedNpc];
+    return questId ? getQuestState(questId) === "completed" : true;
   }
 
   function isQuestsComplete(): boolean {
@@ -90,25 +83,12 @@
     return true;
   }
 
-  function isCravingQuestComplete(): boolean {
-    const marriedNpc = getMarriedNpc(userState.state.completed.npcRelationships);
-    if (!marriedNpc) return false;
-    if (!(marriedNpc in trackerData.pregnancyQuestByNpc)) return true;
-    if (userState.state.completed.childChoice === "no") return true;
-    const questId = trackerData.pregnancyQuestByNpc[marriedNpc];
-    return questId ? getQuestState(questId) === "completed" : true;
+  function isQuestTypeComplete(questIds: QuestId[]): boolean {
+    return questIds.every((id) => getQuestState(id) === "completed");
   }
 
-  function findDuplicateNames(entries: { displayName: string }[]): Set<string> {
-    const counts: Record<string, number> = {};
-    for (const e of entries) {
-      counts[e.displayName] = (counts[e.displayName] ?? 0) + 1;
-    }
-    return new Set(
-      Object.entries(counts)
-        .filter(([, c]) => c > 1)
-        .map(([n]) => n),
-    );
+  function questNameVisible(questType: QuestType, questId: QuestId): boolean {
+    return isEntityNameVisible(questVisibility(questType, questId), userState.progressionState);
   }
 
   function questRowDisplay(questState: QuestState, nameVisible: boolean): TrackerRowDisplay {
@@ -116,6 +96,19 @@
     if (questState === "completed") return { mode: "completed" };
     if (questState === "obtained") return { mode: "obtained" };
     return { mode: "visible" };
+  }
+
+  function questSources(questType: QuestType, questId: QuestId): Source[] {
+    if (questType === "fetch") {
+      const { itemId } = trackerData.quests.fetch[questId];
+      return [...trackerData.items[itemId].sources];
+    }
+    if (questType === "cooking") {
+      const quest = trackerData.quests.cooking[questId];
+      const recipe = "recipeId" in quest ? trackerData.recipes[quest.recipeId] : undefined;
+      if (recipe) return [...recipe.sources];
+    }
+    return [];
   }
 
   function questSubtitle(
@@ -132,6 +125,13 @@
       }
       return npcName;
     }
+  }
+
+  function questVisibility(
+    questType: QuestType,
+    questId: QuestId,
+  ): undefined | VisibilityCondition {
+    return trackerData.quests[questType][questId].visibility;
   }
 
   const typeLabels: Record<QuestType, string> = {

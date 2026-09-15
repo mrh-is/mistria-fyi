@@ -37,6 +37,12 @@
 
   let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
 
+  function allDatesComplete(): boolean {
+    return Object.keys(trackerData.dates).every((id) =>
+      userState.state.completed.dates.has(id as DateId),
+    );
+  }
+
   function dateNameVisible(dateId: DateId): boolean {
     const visibility = trackerData.dates[dateId].visibility;
     return isEntityNameVisible(visibility, userState.progressionState);
@@ -65,12 +71,6 @@
     if (completed && allDatesComplete()) {
       onAllComplete();
     }
-  }
-
-  function allDatesComplete(): boolean {
-    return Object.keys(trackerData.dates).every((id) =>
-      userState.state.completed.dates.has(id as DateId),
-    );
   }
 
   let dates = $derived(

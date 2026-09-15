@@ -21,6 +21,11 @@
   const ALL_SEASONS: Season[] = ["spring", "summer", "fall", "winter"];
   const ALL_WEATHERS: Weather[] = ["calm", "inclement", "heavy_inclement", "special"];
 
+  type Chip =
+    | { icons: AppIcon[]; kind: "weathers"; label: string }
+    | { kind: "seasons"; label: string; seasons: Season[] }
+    | { kind: "time"; label: string };
+
   function isAllSeasons(seasons: Season[]): boolean {
     return ALL_SEASONS.every((s) => seasons.includes(s));
   }
@@ -31,11 +36,6 @@
       : ALL_WEATHERS;
     return availableWeathers.every((weather) => weathers.includes(weather));
   }
-
-  type Chip =
-    | { icons: AppIcon[]; kind: "weathers"; label: string }
-    | { kind: "seasons"; label: string; seasons: Season[] }
-    | { kind: "time"; label: string };
 
   let chips: Chip[] = $derived.by(() => {
     const result: Chip[] = [];

@@ -44,15 +44,10 @@
     }
   });
 
-  function segmentFill(segment: { start: number; end: number }): number {
-    if (level <= segment.start) return 0;
-    if (level >= segment.end) return 100;
-    return ((level - segment.start) / (segment.end - segment.start)) * 100;
-  }
-
-  function startEditing(): void {
-    editing = true;
-    editValue = String(level);
+  function areAllSkillsMaxed(): boolean {
+    return recordKeys(trackerData.skills).every(
+      (skillId) => (userState.state.completed.skillLevels[skillId] ?? 0) >= MAX_SKILL_LEVEL,
+    );
   }
 
   function commitEdit(): void {
@@ -68,16 +63,21 @@
     if (event.key === "Escape") editing = false;
   }
 
-  function areAllSkillsMaxed(): boolean {
-    return recordKeys(trackerData.skills).every(
-      (skillId) => (userState.state.completed.skillLevels[skillId] ?? 0) >= MAX_SKILL_LEVEL,
-    );
+  function segmentFill(segment: { start: number; end: number }): number {
+    if (level <= segment.start) return 0;
+    if (level >= segment.end) return 100;
+    return ((level - segment.start) / (segment.end - segment.start)) * 100;
   }
 
   function setLevelWithCelebration(newLevel: number): void {
     const wasDone = areAllSkillsMaxed();
     userState.setSkillLevel(id, newLevel);
     if (!wasDone && areAllSkillsMaxed()) celebrateCategory();
+  }
+
+  function startEditing(): void {
+    editing = true;
+    editValue = String(level);
   }
 </script>
 

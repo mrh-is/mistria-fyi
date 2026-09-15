@@ -71,6 +71,13 @@
     }),
   );
 
+  function arePetsComplete(): boolean {
+    return (
+      petCosmeticEntries.every((e) => userState.state.completed.petCosmetics.has(e.id)) &&
+      petSkinEntries.every((e) => userState.state.completed.petSkins.has(e.id))
+    );
+  }
+
   function cosmeticDisplay(id: PetCosmeticSetId): TrackerRowDisplay {
     return userState.state.completed.petCosmetics.has(id)
       ? { mode: "completed" }
@@ -79,13 +86,6 @@
 
   function skinDisplay(id: PetSkinId): TrackerRowDisplay {
     return userState.state.completed.petSkins.has(id) ? { mode: "completed" } : { mode: "visible" };
-  }
-
-  function arePetsComplete(): boolean {
-    return (
-      petCosmeticEntries.every((e) => userState.state.completed.petCosmetics.has(e.id)) &&
-      petSkinEntries.every((e) => userState.state.completed.petSkins.has(e.id))
-    );
   }
 </script>
 

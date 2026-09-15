@@ -18,14 +18,14 @@
 
   const spoilerGuard = createSpoilerGuard();
 
-  function spellNameVisible(spellId: SpellId): boolean {
-    const visibility = trackerData.mines.spells[spellId].visibility;
-    return isEntityNameVisible(visibility, userState.progressionState);
-  }
-
   function rowDisplay(spellId: SpellId, completed: boolean): TrackerRowDisplay {
     if (!spellNameVisible(spellId)) return { mode: "spoilered" };
     return completed ? { mode: "completed" } : { mode: "visible" };
+  }
+
+  function spellNameVisible(spellId: SpellId): boolean {
+    const visibility = trackerData.mines.spells[spellId].visibility;
+    return isEntityNameVisible(visibility, userState.progressionState);
   }
 
   function toggleSpell(spellId: SpellId): void {
@@ -50,17 +50,17 @@
   const biomes = trackerData.mines.biomes;
   const maxFloors = biomes[biomes.length - 1].floors.end;
 
+  function allSpellsComplete(): boolean {
+    return Object.keys(trackerData.mines.spells).every((id) =>
+      userState.state.completed.mines.spells.has(id as SpellId),
+    );
+  }
+
   function isMinesComplete(): boolean {
     const allSpells = Object.keys(trackerData.mines.spells).every((id) =>
       userState.state.completed.mines.spells.has(id as SpellId),
     );
     return allSpells && userState.state.completed.mines.floor >= maxFloors;
-  }
-
-  function allSpellsComplete(): boolean {
-    return Object.keys(trackerData.mines.spells).every((id) =>
-      userState.state.completed.mines.spells.has(id as SpellId),
-    );
   }
 
   let currentBiome = $derived.by(() => {

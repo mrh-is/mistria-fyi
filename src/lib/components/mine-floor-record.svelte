@@ -36,9 +36,14 @@
       : undefined,
   );
 
-  function segmentWidth(biome: MinesBiome): number {
-    if (maxFloor <= 0) return 0;
-    return ((biome.floors.end - biome.floors.start + 1) / maxFloor) * 100;
+  function commitInput(event: Event): void {
+    const input = event.currentTarget as HTMLInputElement;
+    const value = Number(input.value);
+    if (input.value.trim() === "" || !Number.isFinite(value)) {
+      input.value = String(floor);
+      return;
+    }
+    updateFloor(value);
   }
 
   function segmentProgress(biome: MinesBiome): number {
@@ -48,18 +53,13 @@
     return (completed / span) * 100;
   }
 
-  function updateFloor(value: number): void {
-    onChange(Math.min(Math.max(Math.round(value), 0), maxFloor));
+  function segmentWidth(biome: MinesBiome): number {
+    if (maxFloor <= 0) return 0;
+    return ((biome.floors.end - biome.floors.start + 1) / maxFloor) * 100;
   }
 
-  function commitInput(event: Event): void {
-    const input = event.currentTarget as HTMLInputElement;
-    const value = Number(input.value);
-    if (input.value.trim() === "" || !Number.isFinite(value)) {
-      input.value = String(floor);
-      return;
-    }
-    updateFloor(value);
+  function updateFloor(value: number): void {
+    onChange(Math.min(Math.max(Math.round(value), 0), maxFloor));
   }
 </script>
 

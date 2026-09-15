@@ -19,17 +19,6 @@
     return userState.state.completed.animalCosmetics[animalId].has(cosmeticId);
   }
 
-  function isCosmeticVisible(animalId: AnimalId, cosmeticId: CosmeticId): boolean {
-    if (
-      !toolbarState.matchesSourceFilters(
-        trackerData.animals[animalId].cosmetics[cosmeticId].sources,
-      )
-    ) {
-      return false;
-    }
-    return !hasCompletedCosmetic(animalId, cosmeticId) || userState.state.showCompleted;
-  }
-
   function hasDisplayableCosmetic(animalId: AnimalId): boolean {
     const cosmeticIds = Object.keys(trackerData.animals[animalId].cosmetics) as CosmeticId[];
     if (isSpeciesVisible(animalId)) {
@@ -41,6 +30,17 @@
         ),
       );
     }
+  }
+
+  function isCosmeticVisible(animalId: AnimalId, cosmeticId: CosmeticId): boolean {
+    if (
+      !toolbarState.matchesSourceFilters(
+        trackerData.animals[animalId].cosmetics[cosmeticId].sources,
+      )
+    ) {
+      return false;
+    }
+    return !hasCompletedCosmetic(animalId, cosmeticId) || userState.state.showCompleted;
   }
 
   function sectionConfig(animalId: AnimalId): AnimalSubcategorySectionConfig<CosmeticId> {

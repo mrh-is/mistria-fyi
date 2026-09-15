@@ -29,16 +29,16 @@
 
   const spoilerGuard = createSpoilerGuard();
 
+  function aggregateSources(entry: AlmanacEntry): Source[] {
+    return trackerIndex.getAggregatedAlmanacSources(entry.itemIds[0]);
+  }
+
   function isItemCompleted(itemId: ItemId): boolean {
     return userState.state.completed.almanac.has(itemId);
   }
 
   function itemNameVisible(item: { visibility?: VisibilityCondition }): boolean {
     return isEntityNameVisible(item.visibility, userState.progressionState);
-  }
-
-  function aggregateSources(entry: AlmanacEntry): Source[] {
-    return trackerIndex.getAggregatedAlmanacSources(entry.itemIds[0]);
   }
 
   function rowDisplay(
@@ -74,9 +74,12 @@
 
   let recentlyCompleted = new SvelteSet<ItemId>();
 
-  function markLeaving(itemId: ItemId): void {
-    recentlyCompleted.add(itemId);
-    setTimeout(() => recentlyCompleted.delete(itemId), 1050);
+  function checkCelebration(canonicalIds: ItemId[]): void {
+    if (isAlmanacComplete()) {
+      celebrateCategory();
+    } else if (canonicalIds.every((id) => isItemCompleted(id))) {
+      celebrate();
+    }
   }
 
   function isAlmanacComplete(): boolean {
@@ -87,12 +90,9 @@
     );
   }
 
-  function checkCelebration(canonicalIds: ItemId[]): void {
-    if (isAlmanacComplete()) {
-      celebrateCategory();
-    } else if (canonicalIds.every((id) => isItemCompleted(id))) {
-      celebrate();
-    }
+  function markLeaving(itemId: ItemId): void {
+    recentlyCompleted.add(itemId);
+    setTimeout(() => recentlyCompleted.delete(itemId), 1050);
   }
 
   const SECTION_LIMIT = 50;
@@ -114,12 +114,9 @@
     sectionFrames.clear();
   });
 
-  function stopSectionRendering(sectionId: string): void {
-    const frame = sectionFrames.get(sectionId);
-    if (frame !== undefined) {
-      cancelAnimationFrame(frame);
-      sectionFrames.delete(sectionId);
-    }
+  function matchesFilter(name: string): boolean {
+    if (!nameFilter) return true;
+    return name.toLowerCase().includes(nameFilter.toLowerCase());
   }
 
   function scheduleSectionRendering(sectionId: string, targetCount: number): void {
@@ -154,9 +151,12 @@
     scheduleSectionRendering(sectionId, targetCount);
   }
 
-  function matchesFilter(name: string): boolean {
-    if (!nameFilter) return true;
-    return name.toLowerCase().includes(nameFilter.toLowerCase());
+  function stopSectionRendering(sectionId: string): void {
+    const frame = sectionFrames.get(sectionId);
+    if (frame !== undefined) {
+      cancelAnimationFrame(frame);
+      sectionFrames.delete(sectionId);
+    }
   }
 
   function toggleItem(canonicalId: ItemId, entry: AlmanacEntry, catCanonicalIds: ItemId[]): void {

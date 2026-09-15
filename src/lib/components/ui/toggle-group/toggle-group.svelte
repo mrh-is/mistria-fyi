@@ -3,18 +3,18 @@
   import type { VariantProps } from "tailwind-variants";
   import { toggleVariants } from "$lib/components/ui/toggle/index.js";
 
-  type ToggleVariants = VariantProps<typeof toggleVariants>;
-
   interface ToggleGroupContext extends ToggleVariants {
     spacing?: number;
   }
 
-  export function setToggleGroupCtx(props: ToggleGroupContext) {
-    setContext("toggleGroup", props);
-  }
+  type ToggleVariants = VariantProps<typeof toggleVariants>;
 
   export function getToggleGroupCtx() {
     return getContext<Required<ToggleGroupContext>>("toggleGroup");
+  }
+
+  export function setToggleGroupCtx(props: ToggleGroupContext) {
+    setContext("toggleGroup", props);
   }
 </script>
 
