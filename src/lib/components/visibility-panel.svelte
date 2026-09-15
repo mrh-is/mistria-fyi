@@ -257,7 +257,7 @@
 
   .filter-chip {
     display: inline-flex;
-    min-height: 34px;
+    min-height: 44px;
     align-items: center;
     justify-content: center;
     gap: 5px;
@@ -267,6 +267,12 @@
     background: var(--paper-deep);
     font-family: var(--font-controls);
     font-size: 10px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .filter-chip {
+      min-height: 34px;
+    }
   }
 
   .filter-chip--wide {
@@ -312,7 +318,7 @@
   .radio-strip button {
     display: flex;
     min-width: 0;
-    min-height: 34px;
+    min-height: 44px;
     flex: 1;
     align-items: center;
     justify-content: center;
@@ -326,6 +332,12 @@
     font-size: 9px;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .radio-strip button {
+      min-height: 34px;
+    }
   }
 
   .radio-strip button:is(:hover, :focus-visible) {

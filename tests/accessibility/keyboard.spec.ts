@@ -46,7 +46,7 @@ test.describe("@critical keyboard and focus accessibility", () => {
     await trigger.focus();
     await page.keyboard.press("Enter");
     await expect(trigger).toHaveAttribute("aria-expanded", "true");
-    await expect(page.getByRole("region", { name: "Quick settings" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Quick settings" })).toBeVisible();
     await trigger.focus();
     await page.keyboard.press("Space");
     await expect(trigger).toHaveAttribute("aria-expanded", "false");
