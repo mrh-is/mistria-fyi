@@ -178,6 +178,17 @@
     });
   }
 
+  function removeTurnstileWidget(): void {
+    if (turnstileWidgetId !== undefined && window.turnstile) {
+      window.turnstile.remove(turnstileWidgetId);
+    }
+    turnstileWidgetId = undefined;
+    turnstileToken = "";
+    turnstileReady = false;
+    turnstileError = false;
+    turnstileInteractive = false;
+  }
+
   function renderTurnstile(container: HTMLDivElement): void {
     if (!window.turnstile || !container.isConnected) return;
     if (turnstileWidgetId !== undefined) {
@@ -218,17 +229,6 @@
       turnstileReady = false;
       turnstileInteractive = false;
     }
-  }
-
-  function removeTurnstileWidget(): void {
-    if (turnstileWidgetId !== undefined && window.turnstile) {
-      window.turnstile.remove(turnstileWidgetId);
-    }
-    turnstileWidgetId = undefined;
-    turnstileToken = "";
-    turnstileReady = false;
-    turnstileError = false;
-    turnstileInteractive = false;
   }
 
   $effect(() => {
@@ -277,26 +277,41 @@
     }
   });
 
-  function handleSubmitClick() {
-    if (canSubmit) {
-      void handleSubmit();
+  async function copyMessage() {
+    try {
+      await navigator.clipboard.writeText(message);
+      toast("Message copied to clipboard");
+    } catch {
+      toast.error("Could not copy to clipboard");
+    }
+  }
+
+  function handleKeydown(event: KeyboardEvent) {
+    if (visible && event.key === "Escape") {
+      onclose();
       return;
     }
-    messageTouched = true;
-    if (wantsReply && !emailTouched) {
-      emailTouched = true;
+    if (!visible || event.key !== "Tab") return;
+
+    const focusable = [...(dialogElement?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? [])];
+    const first = focusable.at(0);
+    const last = focusable.at(-1);
+    if (!first || !last) {
+      event.preventDefault();
+      return;
     }
-    void tick().then(() => {
-      if (messageInvalid) {
-        messageInput?.focus();
-      } else if (emailInvalid) {
-        document.getElementById("feedback-email")?.focus();
-      }
-    });
-    submitShake = true;
-    setTimeout(() => {
-      submitShake = false;
-    }, 500);
+
+    const activeElement = document.activeElement;
+    if (event.shiftKey && (activeElement === first || !dialogElement?.contains(activeElement))) {
+      event.preventDefault();
+      last.focus();
+    } else if (
+      !event.shiftKey &&
+      (activeElement === last || !dialogElement?.contains(activeElement))
+    ) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   async function handleSubmit() {
@@ -406,13 +421,26 @@
     }
   }
 
-  async function copyMessage() {
-    try {
-      await navigator.clipboard.writeText(message);
-      toast("Message copied to clipboard");
-    } catch {
-      toast.error("Could not copy to clipboard");
+  function handleSubmitClick() {
+    if (canSubmit) {
+      void handleSubmit();
+      return;
     }
+    messageTouched = true;
+    if (wantsReply && !emailTouched) {
+      emailTouched = true;
+    }
+    void tick().then(() => {
+      if (messageInvalid) {
+        messageInput?.focus();
+      } else if (emailInvalid) {
+        document.getElementById("feedback-email")?.focus();
+      }
+    });
+    submitShake = true;
+    setTimeout(() => {
+      submitShake = false;
+    }, 500);
   }
 
   function startPicking(): void {
@@ -426,34 +454,6 @@
         void tick().then(() => pickerButton?.focus());
       },
     );
-  }
-
-  function handleKeydown(event: KeyboardEvent) {
-    if (visible && event.key === "Escape") {
-      onclose();
-      return;
-    }
-    if (!visible || event.key !== "Tab") return;
-
-    const focusable = [...(dialogElement?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? [])];
-    const first = focusable.at(0);
-    const last = focusable.at(-1);
-    if (!first || !last) {
-      event.preventDefault();
-      return;
-    }
-
-    const activeElement = document.activeElement;
-    if (event.shiftKey && (activeElement === first || !dialogElement?.contains(activeElement))) {
-      event.preventDefault();
-      last.focus();
-    } else if (
-      !event.shiftKey &&
-      (activeElement === last || !dialogElement?.contains(activeElement))
-    ) {
-      event.preventDefault();
-      first.focus();
-    }
   }
 </script>
 

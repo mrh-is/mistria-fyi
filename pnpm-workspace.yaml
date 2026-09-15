@@ -9,8 +9,11 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - globals@17.10.0
+  - miniflare@5.20260911.1-alpha
+  - wrangler@4.131.2
 
 overrides:
   cookie: ">=0.7.0"
   nanoid: ">=3.3.18"
   undici: ">=7.29.0"
+  wrangler: ">=4.131.2"
