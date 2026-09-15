@@ -164,6 +164,7 @@
     class="npc-meter"
     role="group"
     aria-label="{visibleName} relationship level, {displayedLevel} of {MAX_NPC_LEVEL}"
+    aria-live="polite"
   >
     <button
       class="npc-stepper"

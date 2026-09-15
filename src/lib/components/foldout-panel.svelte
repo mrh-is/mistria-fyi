@@ -3,22 +3,67 @@
 
   import type { Snippet } from "svelte";
 
+  const FOCUSABLE_SELECTOR =
+    'a[href], button:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
   let {
     children,
+    dialog = true,
     headerActions,
     id,
     onclose,
     title,
   }: {
     children: Snippet;
+    dialog?: boolean;
     headerActions?: Snippet;
     id: string;
     onclose: () => void;
     title: string;
   } = $props();
+
+  let panelElement = $state<HTMLElement | null>(null);
+
+  function handleKeydown(event: KeyboardEvent) {
+    if (!dialog) return;
+    if (event.key === "Escape") {
+      onclose();
+      return;
+    }
+    if (event.key !== "Tab") return;
+
+    const focusable = [...(panelElement?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? [])];
+    const first = focusable.at(0);
+    const last = focusable.at(-1);
+    if (!first || !last) {
+      event.preventDefault();
+      return;
+    }
+
+    const activeElement = document.activeElement;
+    if (event.shiftKey && (activeElement === first || !panelElement?.contains(activeElement))) {
+      event.preventDefault();
+      last.focus();
+    } else if (
+      !event.shiftKey &&
+      (activeElement === last || !panelElement?.contains(activeElement))
+    ) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
 </script>
 
-<section class="foldout" {id} aria-labelledby="{id}-title">
+<svelte:window onkeydown={handleKeydown} />
+
+<section
+  bind:this={panelElement}
+  class="foldout"
+  {id}
+  aria-labelledby="{id}-title"
+  role={dialog ? "dialog" : undefined}
+  aria-modal={dialog ? "true" : undefined}
+>
   <header class="foldout__header">
     <h2 class="foldout__title" id="{id}-title">{title}</h2>
     <div class="foldout__header-actions">
