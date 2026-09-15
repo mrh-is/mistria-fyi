@@ -15,5 +15,9 @@ describe("about and legal page", () => {
     expect(body).toContain("briefly be out of date");
     expect(body).toContain("mailto:michael@mistria.fyi");
     expect(body).toContain("feedback-icon");
+    expect(body).toContain('href="/privacy"');
+    expect(body).toContain("AI disclosure");
+    expect(body).toContain('aria-label="Go back"');
+    expect(body).toContain('href="/"');
   });
 });

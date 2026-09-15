@@ -32,7 +32,9 @@
           rel="noopener noreferrer"
           class="underline hover:text-foreground">the GitHub repo</a
         >, or
-        <a href="mailto:me@mrh.is" class="underline hover:text-foreground">drop me a line</a>.
+        <a href="mailto:michael@mistria.fyi" class="underline hover:text-foreground"
+          >drop me a line</a
+        >.
       </p>
     </div>
   </Dialog.Content>
