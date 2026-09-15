@@ -143,13 +143,19 @@
   }
 
   :global(.theme-strip .theme-strip__item) {
-    min-height: 34px;
+    min-height: 44px;
     padding: 4px 9px;
     border: 0;
     border-right: 1px solid color-mix(in srgb, var(--hairline) 26%, transparent);
     border-radius: 0;
     font-family: var(--font-controls);
     font-size: 10px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    :global(.theme-strip .theme-strip__item) {
+      min-height: 34px;
+    }
   }
 
   :global(.theme-strip .theme-strip__item:last-child) {

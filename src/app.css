@@ -82,7 +82,7 @@
   --shadow-small: 0 1px 1px rgb(46 42 34 / 12%);
 
   --fg-green: #1a7a3a;
-  --fg-amber: #b86510;
+  --fg-amber: #a85a0e;
   --fg-rose: #b83060;
   --fg-blue: #1860a8;
   --fg-brown: #7a5a3a;
@@ -130,7 +130,7 @@
   --cat-npcs: #c03060;
   --cat-cosmetics: #9838a8;
   --cat-skills: #1a8878;
-  --cat-renown: #b89020;
+  --cat-renown: #a48018;
   --cat-quests: #1878b8;
   --cat-mines: #7a5a3a;
 }
@@ -148,7 +148,7 @@
   --shadow-small: 0 1px 1px rgb(0 0 0 / 30%);
 
   --fg-green: #38984e;
-  --fg-amber: #c07828;
+  --fg-amber: #c88030;
   --fg-rose: #c04070;
   --fg-blue: #3878b8;
   --fg-brown: #9a7848;

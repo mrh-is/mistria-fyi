@@ -18,6 +18,7 @@
 <div
   class="flex shrink-0 flex-col items-end leading-none"
   aria-label="{overall.completed} of {overall.total} completed overall, {overall.pct}%"
+  aria-live="polite"
   role="img"
 >
   <span class="font-data text-sm text-foreground" aria-hidden="true">{overall.pct}%</span>

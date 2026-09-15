@@ -54,7 +54,9 @@
   <h1 class="page-header__title">{title}</h1>
   {#if pct !== undefined && progress !== undefined}
     <span class="page-header__count">
-      <span class="sr-only">{progress.completed} of {progress.total} completed</span>
+      <span class="sr-only" aria-live="polite"
+        >{progress.completed} of {progress.total} completed</span
+      >
       <span aria-hidden="true">{progress.completed} / {progress.total}</span>
     </span>
   {/if}

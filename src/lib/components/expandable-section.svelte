@@ -50,6 +50,8 @@
       : undefined,
   );
 
+  let headingTag = $derived<"h2" | "h3">(depth === 0 ? "h2" : "h3");
+
   let expanded = $state(untrack(() => defaultOpen));
   let hydrated = $state(false);
   let isOpen = $derived(expanded || forceOpen);
@@ -111,7 +113,7 @@
         ? 'rotate-90'
         : ''}"
     />
-    <span class="section-name">{name}</span>
+    <svelte:element this={headingTag} class="section-name">{name}</svelte:element>
     {#if total !== undefined && boundedCount !== undefined}
       <span class="section-count" aria-hidden="true">{boundedCount} / {total}</span>
       <span class="section-progress" data-testid="section-progress" aria-hidden="true">
@@ -163,6 +165,7 @@
   }
 
   .section-name {
+    margin: 0;
     overflow: hidden;
     font-family: var(--font-body);
     font-size: 16px;
