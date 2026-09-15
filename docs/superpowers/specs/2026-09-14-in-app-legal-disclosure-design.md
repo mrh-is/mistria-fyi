@@ -40,9 +40,22 @@ game-derived content wherever it occurs, including within generated data, rather
 license whole mixed files. Describe redistributed game material accurately and do not say that it
 has a project-granted or third-party redistribution license.
 
+## Proprietary font boundary
+
+Do not include the proprietary Satoshi font file in the publishable repository tree. The application
+must prefer a locally installed copy and otherwise load the production web font from the
+project-controlled `assets.mistria.fyi` Cloudflare R2 domain. Keep a system-font fallback so a fresh
+clone remains usable when the hosted asset is unavailable.
+
+Ignore the expected local font file, document how contributors obtain Satoshi directly from
+Fontshare, and identify the production object path and required R2 CORS configuration. Repository
+notices must distinguish self-hosted use from redistribution through the source repository and must
+warn that deleting the current-tree file does not remove its blob from existing Git history.
+
 ## Non-goals
 
 - This work does not grant or document NPC Studio permission.
 - This work does not make the repository public.
-- This work does not resolve the Satoshi font redistribution question.
+- This work does not create the Cloudflare R2 bucket, custom domain, DNS records, or object upload.
+- This work does not remove Satoshi or game-derived assets from existing Git history.
 - This work does not add terms of service or change the privacy model.

@@ -22,7 +22,15 @@ the GPL boundary to project-authored material, describe extracted icons and gene
 accurately, state the noncommercial posture, add the private rights-holder contact, and avoid
 implying a license for game-derived material.
 
-## Four: verify and deliver
+## Four: separate the proprietary font
+
+Add a source-tree policy test for the Satoshi font boundary. Remove the tracked Satoshi binary,
+ignore its expected local path, and point its `@font-face` source at the project-controlled R2
+custom domain after preferring a local installation. Permit that exact domain in the font CSP and
+allow its font response to participate in the service worker runtime cache. Document the direct
+Fontshare download, local installation, R2 object path, CORS requirement, and Git-history caveat.
+
+## Five: verify and deliver
 
 Run focused route and component tests during implementation. Then run lint, check, test, build, PWA,
 and accessibility verification. Commit with Codex attribution, push the rebased PR branch, and wait
