@@ -5,7 +5,7 @@ import type { PageLoad } from "./$types.js";
 export const load: PageLoad = () => ({
   metadata: {
     description:
-      "Track museum donations, almanac finds, recipes, relationships, skills, quests, and more in Fields of Mistria.",
+      "Track museum donations, almanac finds, recipes, relationships, skills, quests, & more in Fields of Mistria, as you work toward 100% completion.",
     title: SITE_NAME,
   },
 });
