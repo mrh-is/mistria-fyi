@@ -15,9 +15,14 @@ publish the repository.
 
 ## Product surface
 
-Add an `/about` route titled “About”. Link it from the quick-settings panel and the data management
-footer, beside the existing privacy and AI disclosures. Add it to the sitemap and the browser
-accessibility route matrix.
+Add an `/about` route titled “About”. Link it from the quick-settings panel beside the data
+management link. Present those two quick-settings actions in a compact two-column row. Add the route
+to the sitemap and the browser accessibility route matrix.
+
+The About header back control must return through browser history, with home as its no-history
+fallback. Move the privacy link and AI disclosure control from the data management footer to the
+About footer, and make About the privacy page’s static back target. The data management footer
+retains only the game and Field Guide version line.
 
 The page must state that:
 
