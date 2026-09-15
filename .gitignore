@@ -36,3 +36,6 @@ src/lib/components/icon/custom/optimized
 # Pipeline inputs/outputs (large game data files)
 pipeline/input
 pipeline/output
+
+# Proprietary local font; obtain directly from Fontshare
+/static/fonts/satoshi-regular.woff2

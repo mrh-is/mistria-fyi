@@ -18,6 +18,11 @@ pnpm install
 pnpm run dev
 ```
 
+Satoshi is a proprietary Fontshare font and is not distributed through this source repository. The
+app uses the project’s self-hosted production copy by default. For exact typography without a
+network connection, download Satoshi directly from Fontshare and install it locally. See
+[docs/font-assets.md](docs/font-assets.md) for contributor and deployment setup.
+
 ## Developer docs
 
 - [CONTRIBUTING.md](CONTRIBUTING.md) — conventions, architecture, & code style
@@ -25,6 +30,7 @@ pnpm run dev
 - [docs/app-architecture.md](docs/app-architecture.md) — data contracts, state, persistence,
   composition
 - [docs/accessibility-testing.md](docs/accessibility-testing.md) — automated checks & release matrix
+- [docs/font-assets.md](docs/font-assets.md) — proprietary font boundary and Cloudflare setup
 - [pipeline/README.md](pipeline/README.md) — pipeline contracts & extractor details
 
 ## Data pipeline
