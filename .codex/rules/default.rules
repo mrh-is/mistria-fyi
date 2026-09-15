@@ -1,0 +1,57 @@
+# Permit the project commands used by the documented development workflow.
+prefix_rule(
+    pattern = [
+        "pnpm",
+        "run",
+        [
+            "build",
+            "check",
+            "dev",
+            "lint",
+            "lint:fix",
+            "pipeline",
+            "prepare",
+            "test",
+            "test:app",
+            "test:client",
+            "test:mocked",
+            "test:pipeline",
+            "test:server",
+            "verify",
+        ],
+    ],
+    decision = "allow",
+    justification = "These are the repository's documented pnpm scripts.",
+)
+
+# Permit the package-local tools used for focused development and verification.
+prefix_rule(
+    pattern = [
+        "pnpm",
+        "exec",
+        [
+            "eslint",
+            "playwright",
+            "prettier",
+            "svelte-check",
+            "svelte-kit",
+            "vitest",
+        ],
+    ],
+    decision = "allow",
+    justification = "These package-local tools are required by the repository workflow.",
+)
+
+# Permit reproducible dependency installation only.
+prefix_rule(
+    pattern = ["pnpm", "install", "--frozen-lockfile"],
+    decision = "allow",
+    justification = "The frozen lockfile keeps dependency installation reproducible.",
+)
+
+# Enforce the repository's pnpm-only package-manager policy.
+prefix_rule(
+    pattern = [["bun", "npm", "npx", "yarn"]],
+    decision = "forbidden",
+    justification = "Use the equivalent pnpm command required by AGENTS.md.",
+)

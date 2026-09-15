@@ -178,10 +178,37 @@ diff and separate compatibility decisions for persisted state, backups, save imp
 
 ---
 
-## 5. Verification Matrix
+## 5. Verification matrix
 
-Before committing code or submitting a Pull Request, every change (including documentation-only
-updates) must pass the core verification matrix.
+### During development
+
+Run **only** the specific test covering your change:
+
+```sh
+pnpm exec vitest run path/to/file.test.ts 2>&1 | tail -30
+```
+
+After a TypeScript or Svelte contract edit that could cause type errors elsewhere, also run:
+
+```sh
+pnpm run check 2>&1 | tail -10
+```
+
+Do not run `pnpm run test`, `pnpm run lint`, `pnpm run build`, or any other full-suite command
+during development. Those are for the final verification pass only.
+
+### When commit-ready
+
+Run the compact verification script **once**:
+
+```sh
+pnpm run verify
+```
+
+This runs lint:fix, lint, check, test, & build in sequence with compact output, stopping on first
+failure. If a step fails, fix the issue and rerun only that step, then rerun `pnpm run verify` once.
+
+The individual matrix commands remain available for reference:
 
 | Command             | Description & Purpose                                   | Scope                     |
 | ------------------- | ------------------------------------------------------- | ------------------------- |
@@ -195,6 +222,16 @@ Pipeline parser, evaluator, extractor, & shared data-contract changes must addit
 `pnpm run test:pipeline:assets` and `pnpm run pipeline -- <path>` as described above. These local
 commands are deliberately excluded from issue #90’s planned public CI because licensed game assets
 are not distributed with the repository.
+
+### Documentation-only changes
+
+Changes that touch only `.md` files, comments, or non-executable content need only:
+
+```sh
+pnpm run lint:fix && pnpm run lint
+```
+
+No build, no tests.
 
 > [!IMPORTANT] Git pre-commit hooks are developer conveniences, not verification evidence. Agents
 > must run the matrix commands directly in their shell and verify clean exit status before

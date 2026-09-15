@@ -17,6 +17,7 @@
     "optimize-icons": "svgo --config svgo.config.js -f src/lib/components/icon/custom/raw -o src/lib/components/icon/custom/optimized",
     "pipeline": "cd pipeline && tsx src/main.ts",
     "test": "pnpm run test:server && pnpm run test:client",
+    "verify": "bash scripts/verify.sh",
     "accessibility:monitor": "tsx scripts/accessibility-monitor.ts",
     "test:accessibility": "playwright test",
     "test:accessibility:critical": "playwright test --grep @critical",
