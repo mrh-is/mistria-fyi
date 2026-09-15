@@ -78,3 +78,4 @@ NPC Studio material or other third-party assets. See:
 - [COPYRIGHT.md](COPYRIGHT.md) — what the project license covers (and what it does not)
 - [DISCLAIMER.md](DISCLAIMER.md) — unofficial fan-project and trademark notice
 - [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) — bundled font licenses
+- [SECURITY.md](SECURITY.md) — vulnerability reporting
