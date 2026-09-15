@@ -7,24 +7,39 @@ in GitHub Issues.
 
 ### Issue lifecycle
 
-1. **Create an issue** — use the "Task" template. Include enough context that someone unfamiliar
-   with the codebase can act on it (what, where, why, acceptance criteria).
-2. **Label it** — `ready` means it can be picked up. `blocked` means it's waiting on something.
-   `discussion` means it needs design input before work.
-3. **Work it** — create a branch, make changes, open a PR that references the issue (`Closes #N`).
+1. **Create an issue** — include enough context that someone unfamiliar with the codebase can act on
+   it (what, where, why, acceptance criteria).
+2. **Label it** — apply a `status:` label and a `type:` label. Add an `area:` label if the change is
+   scoped to one subsystem.
+3. **Work it** — create a branch (`<issue-number>-<short-description>`), make changes, open a PR
+   that references the issue (`Closes #N`).
 4. **Merge** — squash merge to `main`.
 
 ### Labels
 
-| Label         | Meaning                                          |
-| ------------- | ------------------------------------------------ |
-| `ready`       | Triaged and ready to be picked up                |
-| `blocked`     | Waiting on external input (art, UX decision)     |
-| `discussion`  | Needs design/architecture discussion before work |
-| `pipeline`    | Data extraction pipeline changes                 |
-| `ui`          | Frontend / visual changes                        |
-| `bug`         | Something isn't working correctly                |
-| `enhancement` | New feature or improvement                       |
+Status labels track where an issue is in its lifecycle:
+
+| Label                    | Meaning                                                      |
+| ------------------------ | ------------------------------------------------------------ |
+| `status: ready`          | Triaged and ready to be picked up                            |
+| `status: in progress`    | Actively being worked on                                     |
+| `status: blocked`        | Waiting on an external dependency                            |
+| `status: needs decision` | Requires a product, UX, or architecture decision before work |
+
+Type labels describe the kind of change:
+
+| Label               | Meaning                                          |
+| ------------------- | ------------------------------------------------ |
+| `type: bug`         | Something isn't working correctly                |
+| `type: enhancement` | New feature or improvement                       |
+| `type: maintenance` | Repository, release, verification, or operations |
+
+Area labels scope the change to a subsystem:
+
+| Label            | Meaning                          |
+| ---------------- | -------------------------------- |
+| `area: pipeline` | Data extraction pipeline changes |
+| `area: ui`       | Frontend / visual changes        |
 
 ### Branch naming
 
@@ -67,6 +82,10 @@ contracts, and state management rules, see [docs/app-architecture.md](docs/app-a
 | `pnpm run test:app`                    | App tests (`src/`)                                    |
 | `pnpm run test:pipeline`               | Pipeline tests (`pipeline/`)                          |
 | `pnpm run pipeline -- /path/to/assets` | Regenerate `tracker-data.json` from local TOML assets |
+
+## Security
+
+Report vulnerabilities privately — see [SECURITY.md](SECURITY.md).
 
 ## Code Conventions
 
