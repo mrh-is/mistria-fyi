@@ -42,14 +42,6 @@
 
   let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
 
-  function rowDisplay(cosmetic: CosmeticEntry, completed: boolean): TrackerRowDisplay {
-    if (!isEntityNameVisible(cosmetic.visibility, userState.progressionState)) {
-      return { mode: "spoilered" };
-    }
-    if (completed) return { mode: "completed" };
-    return { mode: "visible" };
-  }
-
   function isCosmeticsComplete(): boolean {
     return Object.keys(trackerData.cosmetics).every((id) =>
       userState.state.completed.cosmetics.has(id as CosmeticId),
@@ -58,6 +50,14 @@
 
   function isSlotComplete(items: CosmeticEntry[]): boolean {
     return items.every((c) => userState.state.completed.cosmetics.has(c.id));
+  }
+
+  function rowDisplay(cosmetic: CosmeticEntry, completed: boolean): TrackerRowDisplay {
+    if (!isEntityNameVisible(cosmetic.visibility, userState.progressionState)) {
+      return { mode: "spoilered" };
+    }
+    if (completed) return { mode: "completed" };
+    return { mode: "visible" };
   }
 
   let groups = $derived(() => {

@@ -77,6 +77,18 @@
   let completed = $derived(isNpcComplete(id, userState.state.completed));
   let visibleName = $derived(revealed ? npc.name : "Hidden NPC");
 
+  async function applyAction(value: RelationshipActionValue): Promise<void> {
+    mutateWithCelebration(() => {
+      if (value === "yes" || value === "no") userState.setChildChoice(value);
+      else userState.setNpcRelationship(id, value);
+    });
+
+    await tick();
+    const nextAction = recordElement.querySelector<HTMLButtonElement>("[data-relationship-action]");
+    if (nextAction) nextAction.focus();
+    else recordElement.focus();
+  }
+
   function areAllNpcsComplete(): boolean {
     return recordKeys(trackerData.npcs).every((npcId) =>
       isNpcComplete(npcId, userState.state.completed),
@@ -93,18 +105,6 @@
     mutateWithCelebration(() => {
       userState.setNpcLevel(id, level);
     });
-  }
-
-  async function applyAction(value: RelationshipActionValue): Promise<void> {
-    mutateWithCelebration(() => {
-      if (value === "yes" || value === "no") userState.setChildChoice(value);
-      else userState.setNpcRelationship(id, value);
-    });
-
-    await tick();
-    const nextAction = recordElement.querySelector<HTMLButtonElement>("[data-relationship-action]");
-    if (nextAction) nextAction.focus();
-    else recordElement.focus();
   }
 </script>
 

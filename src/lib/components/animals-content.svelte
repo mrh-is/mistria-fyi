@@ -18,26 +18,25 @@
     PetSkinId,
   } from "$lib/types/tracker-data";
 
-  function someVariant(
-    animalId: AnimalId,
-    predicate: (value: [AnimalVariantId, AnimalVariant]) => boolean,
-  ): boolean {
-    return trackerData.animals[animalId].variantTiers.some((tier) => {
-      return (Object.entries(tier) as [AnimalVariantId, AnimalVariant][]).some(predicate);
-    });
-  }
-
-  function hasCompletedVariant(animalId: AnimalId, variantId: AnimalVariantId): boolean {
-    return userState.state.completed.animals[animalId].has(variantId);
+  function areAllAnimalsComplete(): boolean {
+    const allAnimals = Object.keys(trackerData.animals).every((id) =>
+      isAnimalComplete(id as AnimalId),
+    );
+    const allPetCosmetics = Object.keys(trackerData.pets.cosmetics).every((id) =>
+      userState.state.completed.petCosmetics.has(id as PetCosmeticSetId),
+    );
+    const allPetSkins = Object.keys(trackerData.pets.skins).every((id) =>
+      userState.state.completed.petSkins.has(id as PetSkinId),
+    );
+    return allAnimals && allPetCosmetics && allPetSkins;
   }
 
   function hasCompletedCosmetic(animalId: AnimalId, cosmeticId: CosmeticId): boolean {
     return userState.state.completed.animalCosmetics[animalId].has(cosmeticId);
   }
 
-  function isSpeciesVisible(animalId: AnimalId): boolean {
-    const visibility = trackerData.animals[animalId].visibility;
-    return isEntityNameVisible(visibility, userState.progressionState);
+  function hasCompletedVariant(animalId: AnimalId, variantId: AnimalVariantId): boolean {
+    return userState.state.completed.animals[animalId].has(variantId);
   }
 
   function isAnimalComplete(animalId: AnimalId): boolean {
@@ -50,17 +49,18 @@
     return cosmeticIds.every((cosmeticId) => hasCompletedCosmetic(animalId, cosmeticId));
   }
 
-  function areAllAnimalsComplete(): boolean {
-    const allAnimals = Object.keys(trackerData.animals).every((id) =>
-      isAnimalComplete(id as AnimalId),
-    );
-    const allPetCosmetics = Object.keys(trackerData.pets.cosmetics).every((id) =>
-      userState.state.completed.petCosmetics.has(id as PetCosmeticSetId),
-    );
-    const allPetSkins = Object.keys(trackerData.pets.skins).every((id) =>
-      userState.state.completed.petSkins.has(id as PetSkinId),
-    );
-    return allAnimals && allPetCosmetics && allPetSkins;
+  function isSpeciesVisible(animalId: AnimalId): boolean {
+    const visibility = trackerData.animals[animalId].visibility;
+    return isEntityNameVisible(visibility, userState.progressionState);
+  }
+
+  function someVariant(
+    animalId: AnimalId,
+    predicate: (value: [AnimalVariantId, AnimalVariant]) => boolean,
+  ): boolean {
+    return trackerData.animals[animalId].variantTiers.some((tier) => {
+      return (Object.entries(tier) as [AnimalVariantId, AnimalVariant][]).some(predicate);
+    });
   }
 
   registerSourceFilters("animals", () => trackerIndex.categorySourceTypes.animals);

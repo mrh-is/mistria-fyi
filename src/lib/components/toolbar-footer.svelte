@@ -83,6 +83,12 @@
     activePanel = null;
   }
 
+  function handleKeydown(event: KeyboardEvent): void {
+    if (activePanel === null || activePanel === "feedback" || event.key !== "Escape") return;
+    event.preventDefault();
+    closePanel();
+  }
+
   function togglePanel(panel: Exclude<ActivePanel, null>): void {
     if (activePanel !== panel) {
       panelOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -90,15 +96,24 @@
     activePanel = activePanel === panel ? null : panel;
   }
 
-  function handleKeydown(event: KeyboardEvent): void {
-    if (activePanel === null || activePanel === "feedback" || event.key !== "Escape") return;
-    event.preventDefault();
-    closePanel();
-  }
-
   let searchInput = $state<HTMLInputElement | null>(null);
   let searchOpener: HTMLElement | null = null;
   let debounceTimer: ReturnType<typeof setTimeout>;
+
+  function closeSearch(): void {
+    clearTimeout(debounceTimer);
+    toolbarState.closeSearch();
+    const focusTarget = searchOpener;
+    searchOpener = null;
+    void tick().then(() => {
+      const restoredTarget = focusTarget?.isConnected
+        ? focusTarget
+        : document.querySelector<HTMLElement>(
+            'nav[aria-label="Tracker tools"] button[aria-label="Search"]',
+          );
+      restoredTarget?.focus();
+    });
+  }
 
   function handleSearchInput(event: Event): void {
     const target = event.target as HTMLInputElement;
@@ -114,21 +129,6 @@
     toolbarState.openSearch();
     flushSync();
     searchInput?.focus();
-  }
-
-  function closeSearch(): void {
-    clearTimeout(debounceTimer);
-    toolbarState.closeSearch();
-    const focusTarget = searchOpener;
-    searchOpener = null;
-    void tick().then(() => {
-      const restoredTarget = focusTarget?.isConnected
-        ? focusTarget
-        : document.querySelector<HTMLElement>(
-            'nav[aria-label="Tracker tools"] button[aria-label="Search"]',
-          );
-      restoredTarget?.focus();
-    });
   }
 
   $effect(() => {

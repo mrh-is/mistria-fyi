@@ -74,17 +74,6 @@
     }
   }
 
-  function handleInputChange(e: Event) {
-    const files = (e.target as HTMLInputElement).files;
-    if (files?.length) {
-      void handleFileChange(Array.from(files));
-    }
-  }
-
-  function isSavFile(file: File): boolean {
-    return file.name.toLowerCase().endsWith(".sav");
-  }
-
   async function handleFileChange(files: File[] | null) {
     if (!files || files.length === 0) return;
 
@@ -142,6 +131,17 @@
         fileInput.value = "";
       }
     }
+  }
+
+  function handleInputChange(e: Event) {
+    const files = (e.target as HTMLInputElement).files;
+    if (files?.length) {
+      void handleFileChange(Array.from(files));
+    }
+  }
+
+  function isSavFile(file: File): boolean {
+    return file.name.toLowerCase().endsWith(".sav");
   }
 
   let totalImported = $derived(importResult ? totalMergeCounts(importResult.counts) : 0);

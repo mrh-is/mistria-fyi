@@ -100,8 +100,12 @@
 
   registerSourceFilters("recipes", () => trackerIndex.categorySourceTypes.recipes);
 
-  function matchesName(entry: RecipeEntry): boolean {
-    return !nameFilter || entry.name.toLowerCase().includes(nameFilter.toLowerCase());
+  function checkCelebration(sectionRecipeIds: RecipeId[]): void {
+    if (isAllComplete()) {
+      celebrateCategory();
+    } else if (sectionRecipeIds.every((id) => userState.state.completed.almanacRecipes.has(id))) {
+      celebrate();
+    }
   }
 
   function isAllComplete(): boolean {
@@ -110,12 +114,8 @@
     );
   }
 
-  function checkCelebration(sectionRecipeIds: RecipeId[]): void {
-    if (isAllComplete()) {
-      celebrateCategory();
-    } else if (sectionRecipeIds.every((id) => userState.state.completed.almanacRecipes.has(id))) {
-      celebrate();
-    }
+  function matchesName(entry: RecipeEntry): boolean {
+    return !nameFilter || entry.name.toLowerCase().includes(nameFilter.toLowerCase());
   }
 
   const SECTION_LIMIT = 50;
