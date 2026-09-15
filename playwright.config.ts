@@ -46,5 +46,5 @@ export default defineConfig({
     timeout: 120_000,
     url: testUrl,
   },
-  workers: isCi ? 2 : undefined,
+  workers: isCi ? 4 : undefined,
 });
