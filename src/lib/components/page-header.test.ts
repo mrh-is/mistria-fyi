@@ -14,6 +14,7 @@ describe("PageHeader", () => {
     });
 
     expect(body).toContain('data-page-header="category"');
+    expect(body).toContain("<header");
     expect(body).toContain("data-page-header-ribbon");
     expect(body).toContain("7 / 20");
     expect(body).toContain("--category-progress: 35%");
