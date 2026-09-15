@@ -17,7 +17,7 @@
     icon,
     onback,
     progress,
-    ref = $bindable<HTMLDivElement | undefined>(undefined),
+    ref = $bindable<HTMLElement | undefined>(undefined),
     title,
   }: {
     backHref?: Pathname;
@@ -26,7 +26,7 @@
     icon?: Snippet<[string]>;
     onback?: (event: MouseEvent) => void;
     progress?: CategoryProgress;
-    ref?: HTMLDivElement | undefined;
+    ref?: HTMLElement | undefined;
     title: string;
   } = $props();
 
@@ -37,7 +37,7 @@
   );
 </script>
 
-<div
+<header
   bind:this={ref}
   class="page-header"
   class:page-header--category={category !== undefined}
@@ -65,7 +65,7 @@
     <span class="page-header__edge-mask" aria-hidden="true"></span>
     <span class="page-header__progress" aria-hidden="true"><i></i></span>
   {/if}
-</div>
+</header>
 
 <style>
   .page-header {

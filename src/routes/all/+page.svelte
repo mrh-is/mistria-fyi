@@ -19,7 +19,7 @@
 
   registerSourceFilters("all", () => trackerIndex.categorySourceTypes.all);
 
-  let headerEl = $state<HTMLDivElement | undefined>(undefined);
+  let headerEl = $state<HTMLElement | undefined>(undefined);
   let headerH = $state(0);
 
   $effect(() => {
