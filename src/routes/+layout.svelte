@@ -13,7 +13,7 @@
   import SeoHead from "$lib/components/seo-head.svelte";
   import ToolbarFooter from "$lib/components/toolbar-footer.svelte";
   import { Toaster } from "$lib/components/ui/sonner/index.js";
-  import { resolvePageMetadata } from "$lib/data/page-metadata.js";
+  import { errorPageMetadata } from "$lib/data/page-metadata.js";
   import { FeedbackContext, setFeedbackContext } from "$lib/feedback/context.svelte.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -38,7 +38,9 @@
       page.url.pathname !== "/settings" &&
       page.url.pathname !== "/privacy",
   );
-  let metadata = $derived(resolvePageMetadata(page.url.pathname, page.status));
+  let metadata = $derived(
+    page.status >= 400 ? errorPageMetadata(page.url.pathname, page.status) : page.data.metadata,
+  );
   let overlayActive = $state(false);
 </script>
 
