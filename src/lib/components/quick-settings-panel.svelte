@@ -104,31 +104,29 @@
     </ToggleGroup.Root>
   </div>
 
-  <a class="quick-settings__link" href={resolve("/data")}>
-    <IconTool class="size-4" />
-    <span>Data management</span>
-    <IconChevronRight class="size-4" />
-  </a>
-  <a class="quick-settings__link" href={resolve("/about")}>
-    <IconInfoCircle class="size-4" />
-    <span>About this guide</span>
-    <IconChevronRight class="size-4" />
-  </a>
+  <div class="quick-settings__links">
+    <a class="quick-settings__link" href={resolve("/data")}>
+      <IconTool class="size-4" />
+      <span>Data</span>
+      <IconChevronRight class="size-4" />
+    </a>
+    <a class="quick-settings__link" href={resolve("/about")}>
+      <IconInfoCircle class="size-4" />
+      <span>About</span>
+      <IconChevronRight class="size-4" />
+    </a>
+  </div>
 </div>
 
 <style>
-  .quick-settings__row,
-  .quick-settings__link {
+  .quick-settings__row {
     display: flex;
     min-height: 52px;
     align-items: center;
+    justify-content: space-between;
     gap: 10px;
     padding: 6px 18px;
     border-bottom: 1px solid color-mix(in srgb, var(--hairline) 24%, transparent);
-  }
-
-  .quick-settings__row {
-    justify-content: space-between;
   }
 
   .quick-settings__label {
@@ -173,10 +171,26 @@
   }
 
   .quick-settings__link {
+    display: flex;
+    min-width: 0;
+    min-height: 52px;
+    align-items: center;
     justify-content: center;
+    gap: 8px;
+    padding: 6px 12px;
     color: var(--ink-muted);
     font-family: var(--font-controls);
     font-size: 11px;
+  }
+
+  .quick-settings__links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-bottom: 1px solid color-mix(in srgb, var(--hairline) 24%, transparent);
+  }
+
+  .quick-settings__link + .quick-settings__link {
+    border-left: 1px solid color-mix(in srgb, var(--hairline) 24%, transparent);
   }
 
   .quick-settings__link:is(:hover, :focus-visible) {

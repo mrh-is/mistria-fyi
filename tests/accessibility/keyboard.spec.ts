@@ -70,7 +70,7 @@ test.describe("@critical keyboard and focus accessibility", () => {
   test("data management returns to the page that opened it", async ({ page }) => {
     await gotoApplication(page, "/museum");
     await page.getByRole("button", { name: "Quick settings" }).click();
-    await page.getByRole("link", { name: "Data management" }).click();
+    await page.getByRole("link", { name: "Data" }).click();
     await expect(page).toHaveURL(/\/data$/);
 
     await page.getByRole("link", { name: "Go back" }).click();

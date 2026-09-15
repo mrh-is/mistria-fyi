@@ -1,8 +1,18 @@
 <script lang="ts">
-  import { IconMessageReport } from "@tabler/icons-svelte-runes";
+  import { IconMessageReport, IconRobot } from "@tabler/icons-svelte-runes";
 
+  import { resolve } from "$app/paths";
+  import AiDisclosureDialog from "$lib/components/ai-disclosure-dialog.svelte";
   import PageHeader from "$lib/components/page-header.svelte";
   import { trackerData } from "$lib/data";
+
+  let aiDisclosureOpen = $state(false);
+
+  function goBack(event: MouseEvent): void {
+    if (history.length <= 1) return;
+    event.preventDefault();
+    history.back();
+  }
 </script>
 
 <svelte:head>
@@ -13,7 +23,7 @@
   />
 </svelte:head>
 
-<PageHeader title="About" backHref="/data" backLabel="Back to data management" />
+<PageHeader title="About" backLabel="Go back" onback={goBack} />
 
 <div class="about-page">
   <section>
@@ -55,7 +65,17 @@
       <a href="mailto:michael@mistria.fyi">contact me privately</a>.
     </p>
   </section>
+
+  <footer class="about-page__footer">
+    <a href={resolve("/privacy")}>Privacy</a>
+    <span>·</span>
+    <button type="button" onclick={() => (aiDisclosureOpen = true)}>
+      <IconRobot class="size-3.5" />AI disclosure
+    </button>
+  </footer>
 </div>
+
+<AiDisclosureDialog bind:open={aiDisclosureOpen} />
 
 <style>
   .about-page {
@@ -105,6 +125,30 @@
     color: var(--primary);
     stroke-width: 2.25;
     vertical-align: -0.2em;
+  }
+
+  .about-page__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0 8px;
+    padding-top: 8px;
+    color: var(--ink-muted);
+    font-family: var(--font-annotation);
+    font-size: 11px;
+  }
+
+  .about-page__footer :is(button, a) {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    gap: 4px;
+    text-decoration: underline;
+  }
+
+  .about-page__footer :is(button, a):is(:hover, :focus-visible) {
+    color: var(--ink);
   }
 
   .divider {
