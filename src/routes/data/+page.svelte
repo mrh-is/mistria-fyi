@@ -52,10 +52,6 @@
   });
 </script>
 
-<svelte:head>
-  <title>Data management — Mistria Field Guide</title>
-</svelte:head>
-
 <PageHeader title="Data management" backLabel="Go back" onback={goBack} />
 
 <div class="data-page">

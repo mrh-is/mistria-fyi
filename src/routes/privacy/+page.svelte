@@ -2,10 +2,6 @@
   import PageHeader from "$lib/components/page-header.svelte";
 </script>
 
-<svelte:head>
-  <title>Privacy policy — Mistria Field Guide</title>
-</svelte:head>
-
 <PageHeader title="Privacy Policy" backHref="/about" backLabel="Back to About" />
 
 <div class="flex flex-col gap-6 p-4 text-sm">

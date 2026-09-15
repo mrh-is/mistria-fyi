@@ -4,7 +4,37 @@
     <loc>https://mistria.fyi/</loc>
   </url>
   <url>
-    <loc>https://mistria.fyi/settings</loc>
+    <loc>https://mistria.fyi/almanac</loc>
+  </url>
+  <url>
+    <loc>https://mistria.fyi/animals</loc>
+  </url>
+  <url>
+    <loc>https://mistria.fyi/cosmetics</loc>
+  </url>
+  <url>
+    <loc>https://mistria.fyi/mines</loc>
+  </url>
+  <url>
+    <loc>https://mistria.fyi/museum</loc>
+  </url>
+  <url>
+    <loc>https://mistria.fyi/npcs</loc>
+  </url>
+  <url>
+    <loc>https://mistria.fyi/quests</loc>
+  </url>
+  <url>
+    <loc>https://mistria.fyi/recipes</loc>
+  </url>
+  <url>
+    <loc>https://mistria.fyi/renown</loc>
+  </url>
+  <url>
+    <loc>https://mistria.fyi/skills</loc>
+  </url>
+  <url>
+    <loc>https://mistria.fyi/all</loc>
   </url>
   <url>
     <loc>https://mistria.fyi/about</loc>
