@@ -45,5 +45,12 @@ export function categoryForKey(key: CategoryKey): CategoryInfo {
   };
 }
 
+export function sortCategoryKeysByName(keys: readonly CategoryKey[]): CategoryKey[] {
+  return [...keys].sort((left, right) => {
+    const nameOrder = categoryForKey(left).name.localeCompare(categoryForKey(right).name);
+    return nameOrder !== 0 ? nameOrder : left.localeCompare(right);
+  });
+}
+
 const capitalize = <T extends string>(s: T) =>
   (s[0].toUpperCase() + s.slice(1)) as Capitalize<typeof s>;
