@@ -18,7 +18,7 @@ const config = {
         "base-uri": ["self"],
         "connect-src": ["self", "https://challenges.cloudflare.com"],
         "default-src": ["none"],
-        "font-src": ["self"],
+        "font-src": ["self", "https://assets.mistria.fyi"],
         "form-action": ["self"],
         "frame-ancestors": ["none"],
         "frame-src": ["https://challenges.cloudflare.com"],

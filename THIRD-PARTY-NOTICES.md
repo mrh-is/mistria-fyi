@@ -48,14 +48,17 @@ Copyright 2017 IBM Corp. (https://github.com/IBM/plex)
 
 ### Satoshi
 
-- **File:** `static/fonts/satoshi-regular.woff2`
+- **Production asset:** `https://assets.mistria.fyi/fonts/satoshi-regular.woff2`
 - **Designer:** Deni Anggara
 - **Source:** [Fontshare](https://www.fontshare.com/fonts/satoshi) (Indian Type Foundry)
-- **License:** ITF Free Font License v2.0
+- **License:** ITF Free Font License
 
-Satoshi is a proprietary freeware font distributed by Indian Type Foundry through Fontshare. It is
-free for personal and commercial use but may not be modified or redistributed independently. The
-full license text is available at: https://www.fontshare.com/licenses/itf-ffl
+Satoshi is proprietary freeware distributed by Indian Type Foundry through Fontshare. It is
+self-hosted for the deployed application under Fontshare’s published web-font guidance, but its font
+file is not distributed through this source repository or licensed under GPL-3.0-only. Contributors
+who need a local copy must obtain it directly from Fontshare. The license and self-hosting guidance
+are available at [Fontshare’s license page](https://www.fontshare.com/licenses/itf-ffl) and
+[FAQ](https://www.fontshare.com/faq).
 
 Copyright Indian Type Foundry. All rights reserved.
 
