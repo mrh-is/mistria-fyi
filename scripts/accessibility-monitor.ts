@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { glob, readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 const MARKER = "<!-- mistria-accessibility-monitor -->";
@@ -77,7 +77,7 @@ export async function synchronizeAccessibilityIssue(options: {
     ...failures.map((failure) => `\`\`\`text\n${failure}\n\`\`\``),
     "",
     `[Workflow run](${options.workflowUrl})`,
-    "Artifact: `accessibility-report`",
+    "Artifact: `accessibility-report-*`",
     "Reproduce: `pnpm run test:accessibility`",
     "",
     "Agent: codex",
@@ -139,7 +139,13 @@ async function main(): Promise<void> {
   const result = process.env.ACCESSIBILITY_RESULT ?? "";
   let report: unknown;
   if (result === "failure") {
-    report = JSON.parse(await readFile(".playwright-artifacts/results.json", "utf8"));
+    const reports: unknown[] = [];
+    for await (const path of glob(
+      "playwright-shard-reports/*/.playwright-artifacts/results.json",
+    )) {
+      reports.push(JSON.parse(await readFile(path, "utf8")));
+    }
+    report = reports;
   }
   await synchronizeAccessibilityIssue({
     report,
