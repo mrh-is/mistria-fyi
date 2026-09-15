@@ -1,7 +1,20 @@
-name: Accessibility
+name: Browser tests
 
 on:
   pull_request:
+    paths:
+      - "src/**"
+      - "static/**"
+      - "tests/**"
+      - "playwright*.config.ts"
+      - "svelte.config.*"
+      - "vite.config.*"
+      - "tailwind.*"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/browser-tests.yml"
+  push:
+    branches:
+      - main
   schedule:
     - cron: "17 3 * * *"
   workflow_dispatch:
@@ -9,9 +22,13 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  accessibility:
-    name: Browser accessibility
+  browser-tests:
+    name: Accessibility & PWA
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -30,33 +47,60 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('pnpm-lock.yaml') }}
+
       - name: Install Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install Chromium system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
+
+      - name: Build
+        run: pnpm run build
 
       - name: Run accessibility suite
         id: accessibility-tests
         continue-on-error: true
         run: pnpm run test:accessibility
+        env:
+          PLAYWRIGHT_SKIP_BUILD: "true"
 
-      - name: Upload accessibility failure report
-        if: steps.accessibility-tests.outcome == 'failure'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - name: Run PWA suite
+        id: pwa-tests
+        continue-on-error: true
+        run: pnpm run test:pwa
+        env:
+          PLAYWRIGHT_SKIP_BUILD: "true"
+
+      - name: Upload failure reports
+        if: steps.accessibility-tests.outcome == 'failure' || steps.pwa-tests.outcome == 'failure'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: accessibility-report
+          name: browser-test-reports
           path: |
             .playwright-artifacts/
             .playwright-report/
             .playwright-results/
+            .playwright-pwa-report/
+            .playwright-pwa-results/
           retention-days: 14
+          if-no-files-found: ignore
 
       - name: Preserve test outcome
-        if: steps.accessibility-tests.outcome == 'failure'
+        if: steps.accessibility-tests.outcome == 'failure' || steps.pwa-tests.outcome == 'failure'
         run: exit 1
 
   issue-sync:
     name: Synchronize scheduled accessibility issue
     if: always() && github.event_name == 'schedule'
-    needs: accessibility
+    needs: browser-tests
     permissions:
       contents: read
       issues: write
@@ -78,15 +122,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Download accessibility report
-        if: needs.accessibility.result == 'failure'
-        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
+      - name: Download failure reports
+        if: needs.browser-tests.result == 'failure'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: accessibility-report
+          name: browser-test-reports
 
       - name: Synchronize issue
         env:
-          ACCESSIBILITY_RESULT: ${{ needs.accessibility.result }}
+          ACCESSIBILITY_RESULT: ${{ needs.browser-tests.result }}
           GH_TOKEN: ${{ github.token }}
           WORKFLOW_URL:
             ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
