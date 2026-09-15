@@ -60,12 +60,19 @@ describe("CI workflow", () => {
     expect(workflow.jobs?.test.needs).toBe("setup");
     expect(workflow.jobs?.build.needs).toBe("setup");
 
-    for (const job of Object.values(workflow.jobs ?? {})) {
-      expect(job.steps?.filter((step) => step.run).map((step) => step.run)).not.toContain(
-        "pnpm exec svelte-kit sync",
-      );
+    for (const jobName of ["check", "test", "build"] as const) {
+      expect(
+        workflow.jobs?.[jobName].steps?.filter((step) => step.run).map((step) => step.run),
+      ).not.toContain("pnpm exec svelte-kit sync");
     }
 
+    // Lint needs its own sync step: it runs on a separate runner from `check`, which is the
+    // only script that generates .svelte-kit/tsconfig.json (required by eslint-plugin-perfectionist).
+    expect(workflow.jobs?.lint.steps?.filter((step) => step.run).map((step) => step.run)).toEqual([
+      "pnpm install --frozen-lockfile",
+      "pnpm exec svelte-kit sync",
+      "pnpm run lint",
+    ]);
     expect(workflow.jobs?.lint.steps?.at(-1)?.run).toBe("pnpm run lint");
     expect(workflow.jobs?.check.steps?.at(-1)?.run).toBe("pnpm run check");
     expect(workflow.jobs?.test.steps?.at(-1)?.run).toBe("pnpm run test");
