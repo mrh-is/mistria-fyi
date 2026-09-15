@@ -10,7 +10,7 @@ export const accessibilityRoutes = [
   { name: "Cosmetics", path: "/cosmetics" },
   { name: "Mines", path: "/mines" },
   { name: "Museum", path: "/museum" },
-  { name: "NPCs", path: "/npcs" },
+  { name: "Characters", path: "/npcs" },
   { name: "Quests", path: "/quests" },
   { name: "Recipes", path: "/recipes" },
   { name: "Renown", path: "/renown" },
