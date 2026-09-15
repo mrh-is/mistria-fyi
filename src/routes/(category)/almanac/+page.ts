@@ -3,7 +3,7 @@ import type { PageLoad } from "./$types.js";
 export const load: PageLoad = () => ({
   metadata: {
     description:
-      "Track crops, forage, fish, insects, artifacts, and other almanac discoveries in Fields of Mistria.",
+      "Track crops, forage, fish, insects, artifacts, & other almanac entries in Fields of Mistria.",
     title: "Almanac",
   },
 });

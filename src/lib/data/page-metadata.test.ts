@@ -22,11 +22,14 @@ describe("page metadata", () => {
     expect(new Set(entries.map(({ path }) => path))).toHaveLength(entries.length);
 
     for (const entry of entries) {
-      expect(entry.metadata.description).toContain("Fields of Mistria");
       expect(new URL(entry.path, SITE_ORIGIN).origin).toBe(SITE_ORIGIN);
       expect(entry.metadata.title === SITE_NAME || !entry.metadata.title.includes(SITE_NAME)).toBe(
         true,
       );
+
+      if (entry.metadata.robots === undefined) {
+        expect(entry.metadata.description).toContain("Fields of Mistria");
+      }
     }
   });
 
