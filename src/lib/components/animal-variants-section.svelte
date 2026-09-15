@@ -22,19 +22,6 @@
     AnimalSubcategorySectionConfig,
   } from "./animal-subcategory.types";
 
-  function tierEntries(tier: AnimalVariantTier): [AnimalVariantId, AnimalVariant][] {
-    return Object.entries(tier) as [AnimalVariantId, AnimalVariant][];
-  }
-
-  function someVariant(
-    animalId: AnimalId,
-    predicate: (value: [AnimalVariantId, AnimalVariant]) => boolean,
-  ): boolean {
-    return trackerData.animals[animalId].variantTiers.some((tier) => {
-      return tierEntries(tier).some(predicate);
-    });
-  }
-
   function forEachVariant(
     animalId: AnimalId,
     callbackfn: (value: [AnimalVariantId, AnimalVariant], tier: number) => void,
@@ -62,7 +49,25 @@
     });
   }
 
+  function someVariant(
+    animalId: AnimalId,
+    predicate: (value: [AnimalVariantId, AnimalVariant]) => boolean,
+  ): boolean {
+    return trackerData.animals[animalId].variantTiers.some((tier) => {
+      return tierEntries(tier).some(predicate);
+    });
+  }
+
+  function tierEntries(tier: AnimalVariantTier): [AnimalVariantId, AnimalVariant][] {
+    return Object.entries(tier) as [AnimalVariantId, AnimalVariant][];
+  }
+
   const SEASON_ORDER: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
+
+  interface VariantRowConfig extends AnimalSubcategoryRowProps<AnimalVariantId> {
+    season?: Season;
+    tier: number;
+  }
 
   function isVariantInScope(variant: AnimalVariant, completed: boolean): boolean {
     if (!toolbarState.matchesSourceFilters([variant.source])) return false;
@@ -72,11 +77,6 @@
       userState.state.worldState.season,
       userState.state.availabilityWindows,
     );
-  }
-
-  function isVariantVisible(variant: AnimalVariant, completed: boolean): boolean {
-    if (!isVariantInScope(variant, completed)) return false;
-    return !completed || userState.state.showCompleted;
   }
 
   function isVariantSpoilered(animalId: AnimalId, variantId: AnimalVariantId): boolean {
@@ -106,9 +106,9 @@
     return true;
   }
 
-  interface VariantRowConfig extends AnimalSubcategoryRowProps<AnimalVariantId> {
-    season?: Season;
-    tier: number;
+  function isVariantVisible(variant: AnimalVariant, completed: boolean): boolean {
+    if (!isVariantInScope(variant, completed)) return false;
+    return !completed || userState.state.showCompleted;
   }
   function sectionConfig(animalId: AnimalId): AnimalSubcategorySectionConfig<AnimalVariantId> {
     let displayableCompletedItemCount = 0;

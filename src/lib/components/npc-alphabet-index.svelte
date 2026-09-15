@@ -38,37 +38,6 @@
     });
   }
 
-  function startScrub(event: PointerEvent, entry: { id: string; initial: string }): void {
-    scrubbing = true;
-    scrubStartInitial = entry.initial;
-    suppressPointerClick = false;
-    lastScrubbedInitial = undefined;
-    try {
-      (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-    } catch {
-      // jsdom does not implement setPointerCapture
-    }
-    activate(entry);
-  }
-
-  function scrub(event: PointerEvent): void {
-    if (!scrubbing) return;
-    const button = document
-      .elementFromPoint(event.clientX, event.clientY)
-      ?.closest<HTMLButtonElement>("[data-npc-index-initial]");
-    const initial = button?.dataset.npcIndexInitial;
-    const entry = initials.find((candidate) => candidate.initial === initial);
-    if (entry) activate(entry);
-  }
-
-  function stopScrub(): void {
-    suppressPointerClick =
-      lastScrubbedInitial !== undefined && lastScrubbedInitial !== scrubStartInitial;
-    scrubbing = false;
-    lastScrubbedInitial = undefined;
-    scrubStartInitial = undefined;
-  }
-
   function cancelScrub(): void {
     scrubbing = false;
     lastScrubbedInitial = undefined;
@@ -83,6 +52,37 @@
     }
     suppressPointerClick = false;
     activate(entry);
+  }
+
+  function scrub(event: PointerEvent): void {
+    if (!scrubbing) return;
+    const button = document
+      .elementFromPoint(event.clientX, event.clientY)
+      ?.closest<HTMLButtonElement>("[data-npc-index-initial]");
+    const initial = button?.dataset.npcIndexInitial;
+    const entry = initials.find((candidate) => candidate.initial === initial);
+    if (entry) activate(entry);
+  }
+
+  function startScrub(event: PointerEvent, entry: { id: string; initial: string }): void {
+    scrubbing = true;
+    scrubStartInitial = entry.initial;
+    suppressPointerClick = false;
+    lastScrubbedInitial = undefined;
+    try {
+      (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    } catch {
+      // jsdom does not implement setPointerCapture
+    }
+    activate(entry);
+  }
+
+  function stopScrub(): void {
+    suppressPointerClick =
+      lastScrubbedInitial !== undefined && lastScrubbedInitial !== scrubStartInitial;
+    scrubbing = false;
+    lastScrubbedInitial = undefined;
+    scrubStartInitial = undefined;
   }
 </script>
 

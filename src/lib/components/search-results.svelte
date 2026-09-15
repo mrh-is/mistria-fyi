@@ -73,6 +73,38 @@
     return [];
   }
 
+  function handleQuestToggle(result: SearchResult): void {
+    const questId = result.id as QuestId;
+    const newlyAdded = userState.completeQuestWithRecipes(questId);
+    const newState = userState.state.completed.questStates[questId] ?? "none";
+
+    let message: string;
+    if (newState === "obtained") {
+      message = `Marked "${result.name}" obtained`;
+    } else if (newState === "completed") {
+      if (newlyAdded.length === 1) {
+        const names = recipeDisplayNames(newlyAdded);
+        message = `Marked "${result.name}" completed and unlocked "${names[0]}"`;
+      } else if (newlyAdded.length > 1) {
+        message = `Marked "${result.name}" completed and unlocked ${newlyAdded.length.toString()} recipes`;
+      } else {
+        message = `Marked "${result.name}" completed`;
+      }
+    } else {
+      message = `Reset "${result.name}"`;
+    }
+
+    toast(message, {
+      cancel: {
+        label: "Undo",
+        onClick: () => {
+          userState.undoQuestWithRecipes(questId, newlyAdded);
+        },
+      },
+      duration: 30_000,
+    });
+  }
+
   function rowDisplay(result: SearchResult): TrackerRowDisplay {
     if (result.completed) return { mode: "completed" };
     return { dimmed: !result.available, mode: "visible" };
@@ -116,38 +148,6 @@
         userState.toggleAlmanacRecipe(result.id as RecipeId);
         break;
     }
-  }
-
-  function handleQuestToggle(result: SearchResult): void {
-    const questId = result.id as QuestId;
-    const newlyAdded = userState.completeQuestWithRecipes(questId);
-    const newState = userState.state.completed.questStates[questId] ?? "none";
-
-    let message: string;
-    if (newState === "obtained") {
-      message = `Marked "${result.name}" obtained`;
-    } else if (newState === "completed") {
-      if (newlyAdded.length === 1) {
-        const names = recipeDisplayNames(newlyAdded);
-        message = `Marked "${result.name}" completed and unlocked "${names[0]}"`;
-      } else if (newlyAdded.length > 1) {
-        message = `Marked "${result.name}" completed and unlocked ${newlyAdded.length.toString()} recipes`;
-      } else {
-        message = `Marked "${result.name}" completed`;
-      }
-    } else {
-      message = `Reset "${result.name}"`;
-    }
-
-    toast(message, {
-      cancel: {
-        label: "Undo",
-        onClick: () => {
-          userState.undoQuestWithRecipes(questId, newlyAdded);
-        },
-      },
-      duration: 30_000,
-    });
   }
 </script>
 

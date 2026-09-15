@@ -21,8 +21,8 @@
     },
   });
 
-  export type ToggleVariant = VariantProps<typeof toggleVariants>["variant"];
   export type ToggleSize = VariantProps<typeof toggleVariants>["size"];
+  export type ToggleVariant = VariantProps<typeof toggleVariants>["variant"];
   export type ToggleVariants = VariantProps<typeof toggleVariants>;
 </script>
 

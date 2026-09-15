@@ -66,17 +66,8 @@
 
   let recentlyCompleted = new SvelteSet<ItemId>();
 
-  function markLeaving(itemId: ItemId): void {
-    recentlyCompleted.add(itemId);
-    setTimeout(() => recentlyCompleted.delete(itemId), 1050);
-  }
-
   function isItemComplete(itemId: ItemId): boolean {
     return userState.state.completed.museum.has(itemId);
-  }
-
-  function isWingComplete(wing: MuseumWing): boolean {
-    return recordValues(wing.sets).every(isSetComplete);
   }
 
   function isMuseumComplete(): boolean {
@@ -87,15 +78,33 @@
     return set.items.every(isItemComplete);
   }
 
+  function isWingComplete(wing: MuseumWing): boolean {
+    return recordValues(wing.sets).every(isSetComplete);
+  }
+
+  function markLeaving(itemId: ItemId): void {
+    recentlyCompleted.add(itemId);
+    setTimeout(() => recentlyCompleted.delete(itemId), 1050);
+  }
+
   let nameFilter = $derived(toolbarState.searchQuery);
 
   registerSourceFilters("museum", () => trackerIndex.categorySourceTypes.museum);
 
-  function matchesFilter(itemId: ItemId): boolean {
-    if (!nameFilter) return true;
-    if (!itemNameVisible(itemId)) return false;
-    const name = trackerData.items[itemId].name;
-    return name ? name.toLowerCase().includes(nameFilter.toLowerCase()) : false;
+  interface SetConfig {
+    baseItemCount: number;
+    name: string;
+    scopedCompletedItemCount: number;
+    scopedItemCount: number;
+    visibleItems: (Item & { itemId: ItemId })[];
+  }
+
+  interface WingConfig {
+    baseItemCount: number;
+    isVisible: boolean;
+    scopedCompletedItemCount: number;
+    scopedItemCount: number;
+    setConfigs: (SetConfig & { setId: MuseumWingSetId })[];
   }
 
   function isItemBaseScoped(itemId: ItemId): boolean {
@@ -124,39 +133,13 @@
       recentlyCompleted,
     );
   }
-
-  interface WingConfig {
-    baseItemCount: number;
-    isVisible: boolean;
-    scopedCompletedItemCount: number;
-    scopedItemCount: number;
-    setConfigs: (SetConfig & { setId: MuseumWingSetId })[];
-  }
-  function wingConfig(wing: MuseumWing): WingConfig {
-    const setConfigs = recordEntries(wing.sets)
-      .map(([id, set]) => {
-        return { setId: id, ...setConfig(set) };
-      })
-      .filter(({ baseItemCount }) => baseItemCount > 0);
-    return {
-      baseItemCount: setConfigs.reduce((sum, { baseItemCount }) => sum + baseItemCount, 0),
-      isVisible: setConfigs.some(({ baseItemCount }) => baseItemCount > 0),
-      scopedCompletedItemCount: setConfigs.reduce(
-        (sum, { scopedCompletedItemCount }) => sum + scopedCompletedItemCount,
-        0,
-      ),
-      scopedItemCount: setConfigs.reduce((sum, { scopedItemCount }) => sum + scopedItemCount, 0),
-      setConfigs,
-    };
+  function matchesFilter(itemId: ItemId): boolean {
+    if (!nameFilter) return true;
+    if (!itemNameVisible(itemId)) return false;
+    const name = trackerData.items[itemId].name;
+    return name ? name.toLowerCase().includes(nameFilter.toLowerCase()) : false;
   }
 
-  interface SetConfig {
-    baseItemCount: number;
-    name: string;
-    scopedCompletedItemCount: number;
-    scopedItemCount: number;
-    visibleItems: (Item & { itemId: ItemId })[];
-  }
   function setConfig(set: MuseumWingSet): SetConfig {
     return {
       baseItemCount: set.items.filter(isItemBaseScoped).length,
@@ -170,7 +153,6 @@
       }),
     };
   }
-
   function toggleItem(itemId: ItemId, setId: MuseumWingSetId, wingId: MuseumWingId): void {
     userState.toggleMuseumItem(itemId);
     const completed = isItemComplete(itemId);
@@ -188,6 +170,24 @@
         celebrate();
       }
     }
+  }
+
+  function wingConfig(wing: MuseumWing): WingConfig {
+    const setConfigs = recordEntries(wing.sets)
+      .map(([id, set]) => {
+        return { setId: id, ...setConfig(set) };
+      })
+      .filter(({ baseItemCount }) => baseItemCount > 0);
+    return {
+      baseItemCount: setConfigs.reduce((sum, { baseItemCount }) => sum + baseItemCount, 0),
+      isVisible: setConfigs.some(({ baseItemCount }) => baseItemCount > 0),
+      scopedCompletedItemCount: setConfigs.reduce(
+        (sum, { scopedCompletedItemCount }) => sum + scopedCompletedItemCount,
+        0,
+      ),
+      scopedItemCount: setConfigs.reduce((sum, { scopedItemCount }) => sum + scopedItemCount, 0),
+      setConfigs,
+    };
   }
 </script>
 
