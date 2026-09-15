@@ -49,10 +49,6 @@
   });
 </script>
 
-<svelte:head>
-  <title>Everything — Mistria Field Guide</title>
-</svelte:head>
-
 <PageHeader bind:ref={headerEl} title="Everything" progress={overallProgress}>
   {#snippet icon(cls)}
     <Icon.Category category="all" useCategoryColor class={cls} />

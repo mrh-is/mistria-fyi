@@ -1,3 +1,5 @@
+import type { PageMetadata } from "$lib/data/page-metadata.js";
+
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
 
@@ -31,7 +33,9 @@ declare global {
   namespace App {
     // interface Error {}
     // interface Locals {}
-    // interface PageData {}
+    interface PageData {
+      metadata: PageMetadata;
+    }
     // interface PageState {}
     interface Platform {
       env: {

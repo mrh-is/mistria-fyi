@@ -15,14 +15,6 @@
   }
 </script>
 
-<svelte:head>
-  <title>About — Mistria Field Guide</title>
-  <meta
-    name="description"
-    content="All about the Mistria Field Guide! What it is, who made it, etc etc and so on."
-  />
-</svelte:head>
-
 <PageHeader title="About" backLabel="Go back" onback={goBack} />
 
 <div class="about-page">
