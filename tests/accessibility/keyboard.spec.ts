@@ -106,7 +106,7 @@ test.describe("@critical keyboard and focus accessibility", () => {
         showSpoilers: true,
       }),
     );
-    await gotoApplication(page, "/npcs");
+    await gotoApplication(page, "/characters");
     const letter = page.getByRole("button", { name: "Jump to A, first Townsfolk record" });
     await letter.focus();
     await page.keyboard.press("Enter");
@@ -125,7 +125,7 @@ test.describe("@critical keyboard and focus accessibility", () => {
   }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await initializeApplication(page, "light", createStoredState({ showSpoilers: true }));
-    await gotoApplication(page, "/npcs");
+    await gotoApplication(page, "/characters");
 
     const initialD = page.getByRole("button", { name: "Jump to D, first Townsfolk record" });
     const initialO = page.getByRole("button", { name: "Jump to O, first Townsfolk record" });

@@ -35,14 +35,32 @@ const CATEGORY_DESCRIPTIONS: Record<CategoryKey, string> = {
   skills: "Skill levels",
 };
 
+const CATEGORY_HREFS: Record<CategoryKey, Pathname> = {
+  almanac: "/almanac",
+  animals: "/animals",
+  cosmetics: "/cosmetics",
+  mines: "/mines",
+  museum: "/museum",
+  npcs: "/characters",
+  quests: "/quests",
+  recipes: "/recipes",
+  renown: "/renown",
+  skills: "/skills",
+};
+
 /** Lookup a single category by key. */
 export function categoryForKey(key: CategoryKey): CategoryInfo {
   return {
     color: `cat-${key}`,
     description: CATEGORY_DESCRIPTIONS[key],
-    href: `/${key}`,
+    href: CATEGORY_HREFS[key],
     name: key === "npcs" ? "Characters" : capitalize(key),
   };
+}
+
+/** Look up a category key from its public route. */
+export function categoryKeyForPathname(pathname: string): CategoryKey | undefined {
+  return CATEGORY_KEYS.find((key) => CATEGORY_HREFS[key] === pathname);
 }
 
 export function sortCategoryKeysByName(keys: readonly CategoryKey[]): CategoryKey[] {
