@@ -481,7 +481,7 @@
     style={accent === undefined ? undefined : `--primary: ${accent}; --ring: ${accent};`}
     in:fly={{ duration: prefersReducedMotion.current ? 0 : 150, y: 8 }}
   >
-    <FoldoutPanel id="feedback-panel" title="Send feedback" {onclose}>
+    <FoldoutPanel id="feedback-panel" title="Send feedback" dialog={false} {onclose}>
       <div class="feedback-form">
         <div>
           <textarea
@@ -782,14 +782,24 @@
   }
 
   .feedback-form__selection button {
-    min-height: 32px;
+    min-height: 44px;
     padding-inline: 5px;
   }
 
   .feedback-form__clear {
     display: grid;
-    width: 32px;
+    width: 44px;
     place-items: center;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .feedback-form__selection button {
+      min-height: 32px;
+    }
+
+    .feedback-form__clear {
+      width: 32px;
+    }
   }
 
   .feedback-form__send {
