@@ -5,10 +5,6 @@
   import { page } from "$app/state";
 </script>
 
-<svelte:head>
-  <title>{page.status} — Mistria Field Guide</title>
-</svelte:head>
-
 <div class="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
   <span class="text-6xl font-bold text-muted-foreground/50">{page.status}</span>
   <p class="text-lg text-muted-foreground">
