@@ -52,10 +52,6 @@
   let darkMode = $state(false);
 </script>
 
-<svelte:head>
-  <title>Icon proof gallery</title>
-</svelte:head>
-
 <div class="gallery" class:dark={darkMode}>
   <header class="gallery-header">
     <h1>Icon proof gallery</h1>

@@ -10,8 +10,10 @@
   import { page } from "$app/state";
   import PencilFilter from "$lib/components/pencil-filter.svelte";
   import PersistenceWarning from "$lib/components/persistence-warning.svelte";
+  import SeoHead from "$lib/components/seo-head.svelte";
   import ToolbarFooter from "$lib/components/toolbar-footer.svelte";
   import { Toaster } from "$lib/components/ui/sonner/index.js";
+  import { errorPageMetadata } from "$lib/data/page-metadata.js";
   import { FeedbackContext, setFeedbackContext } from "$lib/feedback/context.svelte.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -36,8 +38,11 @@
       page.url.pathname !== "/settings" &&
       page.url.pathname !== "/privacy",
   );
+  let metadata = $derived(page.status >= 400 ? errorPageMetadata(page.status) : page.data.metadata);
   let overlayActive = $state(false);
 </script>
+
+<SeoHead {metadata} pathname={page.url.pathname} />
 
 <div
   class="mx-auto flex min-h-dvh max-w-lg flex-col bg-background {hasToolbar
