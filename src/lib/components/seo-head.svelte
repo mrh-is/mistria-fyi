@@ -3,9 +3,11 @@
 
   import type { PageMetadata } from "$lib/data/page-metadata.js";
 
-  let { metadata }: { metadata: PageMetadata<string> } = $props();
-  let canonicalUrl = $derived(new URL(metadata.path, SITE_ORIGIN).href);
-  let title = $derived(`${metadata.title} — ${SITE_NAME}`);
+  let { metadata, pathname }: { metadata: PageMetadata; pathname: string } = $props();
+  let canonicalUrl = $derived(new URL(pathname, SITE_ORIGIN).href);
+  let title = $derived(
+    metadata.title === SITE_NAME ? SITE_NAME : `${metadata.title} — ${SITE_NAME}`,
+  );
 </script>
 
 <svelte:head>

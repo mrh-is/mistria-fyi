@@ -38,13 +38,11 @@
       page.url.pathname !== "/settings" &&
       page.url.pathname !== "/privacy",
   );
-  let metadata = $derived(
-    page.status >= 400 ? errorPageMetadata(page.url.pathname, page.status) : page.data.metadata,
-  );
+  let metadata = $derived(page.status >= 400 ? errorPageMetadata(page.status) : page.data.metadata);
   let overlayActive = $state(false);
 </script>
 
-<SeoHead {metadata} />
+<SeoHead {metadata} pathname={page.url.pathname} />
 
 <div
   class="mx-auto flex min-h-dvh max-w-lg flex-col bg-background {hasToolbar

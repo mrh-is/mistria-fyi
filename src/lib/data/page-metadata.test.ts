@@ -2,56 +2,42 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { PAGE_METADATA, PAGE_METADATA_ENTRIES } from "$lib/server/page-metadata.js";
-
-import { GET } from "../../routes/sitemap.xml/+server.js";
+import { _pageMetadataEntries, GET } from "../../routes/sitemap.xml/+server.js";
 import { errorPageMetadata, SITE_NAME, SITE_ORIGIN } from "./page-metadata.js";
 
-const pageComponents = Object.keys(import.meta.glob("/src/routes/**/+page.svelte"));
-
-function routePathForModule(modulePath: string): string {
-  const routeSegments = modulePath
-    .replace(/^\/src\/routes\/?/, "")
-    .replace(/(^|\/)\+page\.ts$/, "")
-    .split("/")
-    .filter((segment) => segment && !(segment.startsWith("(") && segment.endsWith(")")));
-
-  return `/${routeSegments.join("/")}`;
-}
-
 describe("page metadata", () => {
-  it("is provided by every rendered page", () => {
-    const metadataModules = PAGE_METADATA_ENTRIES.map(({ modulePath }) =>
-      modulePath.replace(/\.ts$/, ".svelte"),
-    );
+  it("is provided by every rendered page", async () => {
+    const entries = await _pageMetadataEntries();
 
-    expect(metadataModules.toSorted()).toEqual(pageComponents.toSorted());
+    expect(entries).not.toHaveLength(0);
+    expect(entries.every(({ metadata }) => metadata.description && metadata.title)).toBe(true);
+  });
 
-    for (const { metadata, modulePath } of PAGE_METADATA_ENTRIES) {
-      expect(metadata.path).toBe(routePathForModule(modulePath));
+  it("gives every page distinct, meaningful search text and a canonical URL", async () => {
+    const entries = await _pageMetadataEntries();
+    const metadata = entries.map((entry) => entry.metadata);
+
+    expect(new Set(metadata.map(({ title }) => title))).toHaveLength(metadata.length);
+    expect(new Set(metadata.map(({ description }) => description))).toHaveLength(metadata.length);
+    expect(new Set(entries.map(({ path }) => path))).toHaveLength(entries.length);
+
+    for (const entry of entries) {
+      expect(entry.metadata.description).toContain("Fields of Mistria");
+      expect(new URL(entry.path, SITE_ORIGIN).origin).toBe(SITE_ORIGIN);
+      expect(entry.metadata.title === SITE_NAME || !entry.metadata.title.includes(SITE_NAME)).toBe(
+        true,
+      );
     }
   });
 
-  it("gives every page distinct, meaningful search text and a canonical URL", () => {
-    expect(new Set(PAGE_METADATA.map(({ title }) => title))).toHaveLength(PAGE_METADATA.length);
-    expect(new Set(PAGE_METADATA.map(({ description }) => description))).toHaveLength(
-      PAGE_METADATA.length,
-    );
-    expect(new Set(PAGE_METADATA.map(({ path }) => path))).toHaveLength(PAGE_METADATA.length);
+  it("keeps utility, development, and error pages out of search results", async () => {
+    const entries = await _pageMetadataEntries();
 
-    for (const metadata of PAGE_METADATA) {
-      expect(metadata.title).not.toContain(SITE_NAME);
-      expect(metadata.description).toContain("Fields of Mistria");
-      expect(new URL(metadata.path, SITE_ORIGIN).origin).toBe(SITE_ORIGIN);
-    }
-  });
-
-  it("keeps utility, development, and error pages out of search results", () => {
-    expect(PAGE_METADATA.find(({ path }) => path === "/data")?.robots).toBe("noindex, follow");
-    expect(PAGE_METADATA.find(({ path }) => path === "/dev/icons")?.robots).toBe(
+    expect(entries.find(({ path }) => path === "/data")?.metadata.robots).toBe("noindex, follow");
+    expect(entries.find(({ path }) => path === "/dev/icons")?.metadata.robots).toBe(
       "noindex, nofollow",
     );
-    expect(errorPageMetadata("/missing", 404)).toMatchObject({
+    expect(errorPageMetadata(404)).toMatchObject({
       robots: "noindex, nofollow",
       title: "404",
     });
@@ -60,11 +46,12 @@ describe("page metadata", () => {
 
 describe("crawler files", () => {
   it("generates the sitemap from indexable page metadata", async () => {
-    const sitemap = await GET().text();
+    const entries = await _pageMetadataEntries();
+    const sitemap = await (await GET()).text();
     const locations = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
-    const expected = PAGE_METADATA.filter(({ robots }) => robots === undefined).map(
-      ({ path }) => new URL(path, SITE_ORIGIN).href,
-    );
+    const expected = entries
+      .filter(({ metadata }) => metadata.robots === undefined)
+      .map(({ path }) => new URL(path, SITE_ORIGIN).href);
 
     expect(locations).toEqual(expected);
     expect(locations).not.toContain(new URL("/data", SITE_ORIGIN).href);

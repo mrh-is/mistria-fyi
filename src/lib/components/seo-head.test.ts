@@ -9,11 +9,10 @@ describe("SEO head", () => {
   it("renders one complete set of text metadata without claiming a share image", () => {
     const metadata = {
       description: "Track every museum collection and donation in Fields of Mistria.",
-      path: "/museum" as const,
-      title: "Museum tracker",
+      title: "Museum",
     };
-    const { head } = render(SeoHead, { props: { metadata } });
-    const canonicalUrl = new URL(metadata.path, SITE_ORIGIN).href;
+    const { head } = render(SeoHead, { props: { metadata, pathname: "/museum" } });
+    const canonicalUrl = new URL("/museum", SITE_ORIGIN).href;
     const title = `${metadata.title} — ${SITE_NAME}`;
 
     expect(head).toContain(`<title>${title}</title>`);
@@ -35,12 +34,22 @@ describe("SEO head", () => {
   it("renders an explicit robots directive for non-indexable pages", () => {
     const metadata = {
       description: "Manage Fields of Mistria tracking data.",
-      path: "/data" as const,
       robots: "noindex, follow" as const,
       title: "Data management",
     };
-    const { head } = render(SeoHead, { props: { metadata } });
+    const { head } = render(SeoHead, { props: { metadata, pathname: "/data" } });
 
     expect(head).toContain('<meta name="robots" content="noindex, follow"/>');
+  });
+
+  it("uses the site name without duplicating it on the homepage", () => {
+    const metadata = {
+      description: "Track Fields of Mistria completion progress.",
+      title: SITE_NAME,
+    };
+    const { head } = render(SeoHead, { props: { metadata, pathname: "/" } });
+
+    expect(head).toContain(`<title>${SITE_NAME}</title>`);
+    expect(head).not.toContain(`${SITE_NAME} — ${SITE_NAME}`);
   });
 });
