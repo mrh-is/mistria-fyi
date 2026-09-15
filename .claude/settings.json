@@ -1,0 +1,29 @@
+{
+  "model": "claude-sonnet-5",
+  "permissions": {
+    "allow": [
+      "Bash(pnpm run lint *)",
+      "Bash(pnpm run lint:fix *)",
+      "Bash(pnpm run check *)",
+      "Bash(pnpm run test *)",
+      "Bash(pnpm run test:app *)",
+      "Bash(pnpm run test:pipeline *)",
+      "Bash(pnpm run test:client *)",
+      "Bash(pnpm run test:server *)",
+      "Bash(pnpm run test:mocked *)",
+      "Bash(pnpm run build *)",
+      "Bash(pnpm run verify *)",
+      "Bash(pnpm run dev *)",
+      "Bash(pnpm run pipeline *)",
+      "Bash(pnpm exec vitest *)",
+      "Bash(pnpm exec svelte-check *)",
+      "Bash(pnpm exec svelte-kit *)",
+      "Bash(pnpm exec prettier *)",
+      "Bash(pnpm exec eslint *)",
+      "Bash(pnpm exec playwright *)",
+      "Bash(pnpm install --frozen-lockfile *)",
+      "Bash(pnpm run prepare *)"
+    ],
+    "deny": ["Bash(npm *)", "Bash(npx *)", "Bash(yarn *)", "Bash(bun *)"]
+  }
+}
