@@ -1,24 +1,18 @@
 <script lang="ts">
-  import { IconMessageReport, IconRobot } from "@tabler/icons-svelte-runes";
   import { tick } from "svelte";
   import { prefersReducedMotion } from "svelte/motion";
 
   import { version } from "$app/environment";
-  import { resolve } from "$app/paths";
   import { page } from "$app/state";
-  import FeedbackPanel from "$lib/components/feedback-panel.svelte";
   import PageHeader from "$lib/components/page-header.svelte";
   import { trackerData } from "$lib/data/index.js";
 
-  import AiDisclosureDialog from "./ai-disclosure-dialog.svelte";
   import BackupCard from "./backup-card.svelte";
   import DangerZoneCard from "./danger-zone-card.svelte";
   import { openThenScroll } from "./data-effects.js";
   import ImportCard from "./import-card.svelte";
   import TransferCard from "./transfer-card.svelte";
 
-  let aiDisclosureOpen = $state(false);
-  let feedbackOpen = $state(false);
   let importSection = $state<HTMLElement | null>(null);
   let transferSection = $state<HTMLElement | null>(null);
   let importOpen = $state(page.url.searchParams.get("section") === "import");
@@ -62,54 +56,33 @@
   <title>Data management — Mistria Field Guide</title>
 </svelte:head>
 
-<div inert={feedbackOpen ? true : undefined}>
-  <PageHeader title="Data management" backLabel="Go back" onback={goBack} />
+<PageHeader title="Data management" backLabel="Go back" onback={goBack} />
 
-  <div class="data-page">
-    <p class="data-page__intro">Import, move, back up, or reset your Field Guide progress.</p>
+<div class="data-page">
+  <p class="data-page__intro">Import, move, back up, or reset your Field Guide progress.</p>
 
-    <section aria-labelledby="data-tools-heading">
-      <h2 id="data-tools-heading">Field kit</h2>
-      <div class="data-page__tools">
-        <div bind:this={importSection}>
-          <ImportCard bind:open={importOpen} onScrollToTransfer={scrollToTransfer} />
-        </div>
-        <div bind:this={transferSection}>
-          <TransferCard bind:open={transferOpen} />
-        </div>
-        <BackupCard />
+  <section aria-labelledby="data-tools-heading">
+    <h2 id="data-tools-heading">Field kit</h2>
+    <div class="data-page__tools">
+      <div bind:this={importSection}>
+        <ImportCard bind:open={importOpen} onScrollToTransfer={scrollToTransfer} />
       </div>
-    </section>
-
-    <section class="data-page__danger" aria-labelledby="reset-heading">
-      <h2 id="reset-heading">Reset</h2>
-      <DangerZoneCard />
-    </section>
-
-    <footer class="data-page__footer">
-      <p>Fields of Mistria v{trackerData.version} · Field Guide v{version}</p>
-      <div>
-        <button type="button" onclick={() => (feedbackOpen = true)}>
-          <IconMessageReport class="size-3.5" />Send feedback
-        </button>
-        <span>·</span>
-        <a href={resolve("/privacy")}>Privacy</a>
-        <span>·</span>
-        <button type="button" onclick={() => (aiDisclosureOpen = true)}>
-          <IconRobot class="size-3.5" />AI disclosure
-        </button>
+      <div bind:this={transferSection}>
+        <TransferCard bind:open={transferOpen} />
       </div>
-    </footer>
-  </div>
+      <BackupCard />
+    </div>
+  </section>
+
+  <section class="data-page__danger" aria-labelledby="reset-heading">
+    <h2 id="reset-heading">Reset</h2>
+    <DangerZoneCard />
+  </section>
+
+  <footer class="data-page__footer">
+    <p>Fields of Mistria v{trackerData.version} · Field Guide v{version}</p>
+  </footer>
 </div>
-
-<AiDisclosureDialog bind:open={aiDisclosureOpen} />
-<FeedbackPanel
-  open={feedbackOpen}
-  onclose={() => (feedbackOpen = false)}
-  pickerEnabled={false}
-  resetKey={page.url.pathname}
-/>
 
 <style>
   .data-page {
@@ -152,28 +125,5 @@
     font-family: var(--font-annotation);
     font-size: 11px;
     text-align: center;
-  }
-
-  .data-page__footer div,
-  .data-page__footer :is(button, a) {
-    display: inline-flex;
-    align-items: center;
-  }
-
-  .data-page__footer div {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0 8px;
-    margin-top: 3px;
-  }
-
-  .data-page__footer :is(button, a) {
-    min-height: 44px;
-    gap: 4px;
-    text-decoration: underline;
-  }
-
-  .data-page__footer :is(button, a):is(:hover, :focus-visible) {
-    color: var(--ink);
   }
 </style>

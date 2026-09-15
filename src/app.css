@@ -46,7 +46,10 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/satoshi-regular.woff2") format("woff2");
+  src:
+    local("Satoshi Regular"),
+    local("Satoshi"),
+    url("https://assets.mistria.fyi/fonts/satoshi-regular.woff2") format("woff2");
 }
 
 /* Data/counts/badges: IBM Plex Mono */
