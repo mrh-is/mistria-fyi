@@ -22,7 +22,8 @@
       "Bash(pnpm exec eslint *)",
       "Bash(pnpm exec playwright *)",
       "Bash(pnpm install --frozen-lockfile *)",
-      "Bash(pnpm run prepare *)"
+      "Bash(pnpm run prepare *)",
+      "Bash(pnpm run worktree:new *)"
     ],
     "deny": ["Bash(npm *)", "Bash(npx *)", "Bash(yarn *)", "Bash(bun *)"]
   }
