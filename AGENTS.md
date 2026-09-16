@@ -18,19 +18,17 @@ documentation, tests, CI, licenses, gitignore).
 **Worktree not required** for read-only work: audits, log analysis, issue triage, review of existing
 code, scratchpad-only output. These may run in the main checkout.
 
-- Create worktrees under `.worktrees/<issue-number>-<short-description>`.
-- Verify `.worktrees/` is ignored before creating: `git check-ignore -q .worktrees/placeholder`.
-- After `git worktree add`, recreate each entry listed in `.worktreeinclude` from the main checkout.
-- Do **not** copy dependencies, caches, build artifacts, or writable generated directories.
-- Run `pnpm install --frozen-lockfile` inside the new worktree.
-- Run `pnpm run prepare` after installation to install Husky git hooks explicitly. (Lifecycle
-  scripts may be disabled or skipped in some environments; this step ensures deterministic hook
-  installation regardless.)
+Create and set up a worktree with one command:
 
-`.worktreeinclude` currently covers:
+```sh
+pnpm run worktree:new <issue-number>-<short-description>
+```
 
-- `pipeline/input/` — shared read-only game assets. Symlink from the main checkout.
-- `.env` / `.env.*` — machine-local configuration. Symlink or copy from the main checkout.
+This creates `.worktrees/<slug>` on a matching branch, symlinks the `.worktreeinclude` entries in
+from the main checkout, and runs `pnpm install --frozen-lockfile` and `pnpm run prepare`. It never
+copies dependencies, caches, build artifacts, or other writable generated directories. See
+[docs/development-workflow.md §2](docs/development-workflow.md#2-git-worktree-mechanics--workspace-isolation)
+for the manual steps and troubleshooting.
 
 ## 2. Git configuration
 
@@ -153,61 +151,24 @@ These rules prevent accidental damage to generated or vendored code:
 ## 7. Verification
 
 This project has a history of agents running the full verification matrix dozens of times per
-session. That pattern wastes tokens, bloats context, and accelerates compaction. Follow these rules
-precisely.
+session. That pattern wastes tokens, bloats context, and accelerates compaction.
 
-### During development
+- **During development**: run only the specific test covering your change
+  (`pnpm exec vitest run path/to/file.test.ts`), and `pnpm run check` after a TypeScript or Svelte
+  contract edit. Don't run `pnpm run test`, `pnpm run lint`, `pnpm run build`, or `pnpm run verify`
+  until you're commit-ready.
+- **When commit-ready**: run `pnpm run verify` once. It chains lint:fix, lint, check, test, & build
+  and stops on first failure. Lint must produce zero errors and zero warnings — a warning that needs
+  an eslint-disable comment gets the narrowest possible disable with a justification. If a step
+  fails, fix it and rerun only that step to confirm, then rerun `pnpm run verify` once more.
+- **After the matrix passes**: don't rerun it unless you make further code changes.
+- **Documentation-only changes**: `pnpm run lint:fix && pnpm run lint` only — no build, no tests.
+- **Output handling**: pipe verbose commands through `tail` unless diagnosing a failure (e.g.
+  `pnpm run lint 2>&1 | tail -30`). For CI failures, prefer `gh run view <id> --log-failed` once
+  over repeated full-log downloads.
 
-Run **only** the specific test covering your change:
-
-```sh
-pnpm exec vitest run path/to/file.test.ts 2>&1 | tail -30
-```
-
-After a TypeScript or Svelte contract edit that could cause type errors elsewhere, also run:
-
-```sh
-pnpm run check 2>&1 | tail -10
-```
-
-Do **not** run `pnpm run test`, `pnpm run lint`, `pnpm run build`, or any other full-suite command
-during development. Those are for the final verification pass only.
-
-### When commit-ready
-
-Run the verification script **once**:
-
-```sh
-pnpm run verify
-```
-
-This runs lint:fix, lint, check, test, & build in sequence with compact output, stopping on first
-failure. If a step fails, fix the issue and rerun **only that step** to confirm the fix, then rerun
-`pnpm run verify` once more.
-
-Lint must produce **zero errors and zero warnings**. If a warning requires an eslint-disable
-comment, add the narrowest possible disable with a justification comment.
-
-### After the matrix passes
-
-Do not rerun the full matrix unless you make further code changes. If you only modify the commit
-message, PR description, or issue labels after the matrix passes, commit and push without rerunning.
-
-### Documentation-only changes
-
-Changes that touch only `.md` files, comments, or non-executable content: run `pnpm run lint:fix`
-and `pnpm run lint` only. No build, no tests.
-
-### Output handling
-
-Always pipe verbose commands through `tail` unless diagnosing a failure:
-
-```sh
-pnpm run lint 2>&1 | tail -30
-pnpm exec vitest run path/to/test.ts 2>&1 | tail -30
-```
-
-For CI failures, prefer `gh run view <id> --log-failed` once over repeated full-log downloads.
+Full command reference and troubleshooting:
+[docs/development-workflow.md §5](docs/development-workflow.md#5-verification-matrix).
 
 ## 8. Visual verification
 
@@ -293,7 +254,7 @@ The new session reads `gh issue view`, `git log`, and `git diff` to reconstruct 
 ### Model routing
 
 Evaluate task complexity before starting work. Use the cheapest model that can handle the task. See
-[DELEGATION.md](../../.agents/DELEGATION.md) for the full routing table with model names per agent.
+[DELEGATION.md](.agents/DELEGATION.md) for the full routing table with model names per agent.
 
 - **Simple** (single-file fix, lint issue, doc update, dependency bump): cheapest tier.
 - **Medium** (bug fix, single-component feature, test additions): default tier.
