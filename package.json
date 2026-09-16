@@ -18,6 +18,7 @@
     "pipeline": "cd pipeline && tsx src/main.ts",
     "test": "pnpm run test:server && pnpm run test:client",
     "verify": "bash scripts/verify.sh",
+    "worktree:new": "bash scripts/new-worktree.sh",
     "accessibility:monitor": "tsx scripts/accessibility-monitor.ts",
     "test:accessibility": "playwright test",
     "test:accessibility:critical": "playwright test --grep @critical",
