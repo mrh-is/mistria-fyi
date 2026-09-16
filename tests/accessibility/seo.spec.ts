@@ -37,6 +37,22 @@ test.describe("server-rendered search metadata", () => {
         "content",
         expectedCanonicalUrl,
       );
+      await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+        "content",
+        `${SITE_ORIGIN}/og-image.png`,
+      );
+      await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute(
+        "content",
+        "1200",
+      );
+      await expect(page.locator('meta[property="og:image:height"]')).toHaveAttribute(
+        "content",
+        "630",
+      );
+      await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute(
+        "content",
+        `${SITE_ORIGIN}/og-image.png`,
+      );
       await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
       await expect(page.getByRole("main")).toBeVisible();
       await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
