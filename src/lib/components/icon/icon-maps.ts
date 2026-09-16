@@ -27,6 +27,7 @@ import {
   IconLeaf,
   IconLock,
   IconMail,
+  IconNotebook,
   IconOctagon,
   IconPaw,
   IconPick,
@@ -38,7 +39,6 @@ import {
   IconSnowflake,
   IconSparkles,
   IconSpiral,
-  IconStack2,
   IconStar,
   IconSun,
   IconSunLow,
@@ -235,7 +235,7 @@ export function weatherIcon(weather: Weather, season: Season): Icon {
 // ── Category ────────────────────────────────────────────────────────────────
 
 export const CATEGORY_ICON: Record<"all" | "complete" | CategoryKey, Icon> = {
-  all: IconStack2,
+  all: IconNotebook,
   almanac: IconBook2,
   animals: IconPaw,
   complete: IconTrophy,
