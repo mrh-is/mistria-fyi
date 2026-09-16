@@ -59,7 +59,7 @@ test.describe("@critical 320-pixel reflow", () => {
       }),
     );
 
-    for (const path of ["/npcs", "/skills", "/mines", "/renown", "/all"]) {
+    for (const path of ["/characters", "/skills", "/mines", "/renown", "/all"]) {
       await gotoApplication(page, path);
       expect(findOverflow(await collectVisibleElementBoxes(page), 320), path).toEqual([]);
     }
@@ -264,7 +264,7 @@ test.describe("@critical tracker paper touch geometry", () => {
       }),
     );
 
-    await gotoApplication(page, "/npcs");
+    await gotoApplication(page, "/characters");
     for (const control of await page
       .locator("#npc-adeline .npc-stepper, #npc-adeline [data-relationship-action]")
       .all()) {

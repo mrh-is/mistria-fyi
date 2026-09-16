@@ -4,7 +4,7 @@ import { assessAxeResults, formatAxeFailures, validateAxeExceptions } from "./ax
 
 import type { AxeResults, Result } from "axe-core";
 
-const context = { route: "/npcs", state: "initial", theme: "light" } as const;
+const context = { route: "/characters", state: "initial", theme: "light" } as const;
 
 function axeResults(violations: Result[]): AxeResults {
   return {
@@ -22,7 +22,7 @@ function axeResults(violations: Result[]): AxeResults {
     testRunner: { name: "axe" },
     timestamp: "2026-09-02T00:00:00.000Z",
     toolOptions: {},
-    url: "http://localhost/npcs",
+    url: "http://localhost/characters",
     violations,
   };
 }
@@ -54,7 +54,7 @@ describe("axe violation policy", () => {
     expect(assessment.failures).toHaveLength(1);
     expect(formatAxeFailures(assessment)).toContain(
       [
-        "route: /npcs",
+        "route: /characters",
         "theme: light",
         "state: initial",
         "rule: button-name (critical)",
@@ -84,7 +84,7 @@ describe("axe violation policy", () => {
       impact: "critical" as const,
       rationale: "Temporary upstream limitation.",
       reviewer: "Michael",
-      route: "/npcs",
+      route: "/characters",
       rule: "button-name",
       state: "initial",
       target: "button:nth-child(2)",

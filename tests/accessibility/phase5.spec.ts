@@ -23,7 +23,7 @@ const specializedState = createStoredState({
 
 test.describe("@critical Phase 5 stateful accessibility", () => {
   for (const theme of ["light", "dark"] satisfies AccessibilityTheme[]) {
-    for (const path of ["/npcs", "/skills", "/mines", "/renown", "/all"] as const) {
+    for (const path of ["/characters", "/skills", "/mines", "/renown", "/all"] as const) {
       test(`${path} populated specialized records pass axe in ${theme} theme`, async ({
         page,
       }, testInfo) => {

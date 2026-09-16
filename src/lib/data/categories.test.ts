@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { categoryForKey, sortCategoryKeysByName } from "./categories.js";
+import { categoryForKey, categoryKeyForPathname, sortCategoryKeysByName } from "./categories.js";
 
 describe("categoryForKey", () => {
   it("labels the npcs category as Characters", () => {
-    expect(categoryForKey("npcs").name).toBe("Characters");
+    expect(categoryForKey("npcs")).toMatchObject({ href: "/characters", name: "Characters" });
+  });
+
+  it("maps the characters route to the npcs category key", () => {
+    expect(categoryKeyForPathname("/characters")).toBe("npcs");
+    expect(categoryKeyForPathname("/npcs")).toBeUndefined();
   });
 });
 
