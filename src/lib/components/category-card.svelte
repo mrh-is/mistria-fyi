@@ -2,6 +2,7 @@
   import { resolve } from "$app/paths";
   import { Icon } from "$lib/components/icon/index.js";
   import { categoryForKey, type CategoryKey } from "$lib/data/categories.js";
+  import { localizeHref } from "$lib/paraglide/runtime.js";
 
   import type { CategoryProgress } from "$lib/engine/progress.js";
 
@@ -21,14 +22,16 @@
   let isComplete = $derived(progress.total > 0 && progress.completed >= progress.total);
 </script>
 
+<!-- eslint-disable svelte/no-navigation-without-resolve -- href is resolve()d before localizing -->
 <a
   class="category-stripe"
   class:category-stripe--complete={isComplete}
   data-category-stripe
-  href={resolve(href)}
+  href={localizeHref(resolve(href))}
   aria-label="{name}, {progress.completed} of {displayTotal} completed"
   style="--category-color: var(--{color}); --category-progress: {pct}%"
 >
+  <!-- eslint-enable svelte/no-navigation-without-resolve -->
   <span class="category-copy">
     <strong class="category-name">{name}</strong>
     <span class="category-note">{description}</span>

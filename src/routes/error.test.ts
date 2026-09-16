@@ -24,7 +24,7 @@ describe("error page", () => {
     expect(body).toContain(">404</span>");
     expect(body).toContain("This page doesn't exist");
     expect(body).toContain("tend the fields");
-    expect(body).toContain('href="/"');
+    expect(body).toContain('href="/en"');
     expect(body).toContain("Back to home");
   });
 

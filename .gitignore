@@ -39,3 +39,9 @@ pipeline/output
 
 # Proprietary local font; obtain directly from Fontshare
 /static/fonts/satoshi-regular.woff2
+
+# Paraglide (generated) and inlang project state — each has its own nested .gitignore too, but
+# ESLint's flat-config ignore only reads this root file.
+/src/lib/paraglide/
+/project.inlang/*
+!/project.inlang/settings.json

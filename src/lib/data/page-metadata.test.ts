@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { _pageMetadataEntries, GET } from "../../routes/sitemap.xml/+server.js";
+import { locales, localizeUrl } from "../paraglide/runtime.js";
 import { errorPageMetadata, SITE_NAME, SITE_ORIGIN } from "./page-metadata.js";
 
 describe("page metadata", () => {
@@ -49,16 +50,30 @@ describe("page metadata", () => {
 });
 
 describe("crawler files", () => {
-  it("generates the sitemap from indexable page metadata", async () => {
+  it("generates the sitemap from indexable page metadata, one locale-prefixed URL per locale", async () => {
     const entries = await _pageMetadataEntries();
     const sitemap = await (await GET()).text();
     const locations = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
     const expected = entries
       .filter(({ metadata }) => metadata.robots === undefined)
-      .map(({ path }) => new URL(path, SITE_ORIGIN).href);
+      .flatMap(({ path }) =>
+        locales.map((locale) => localizeUrl(new URL(path, SITE_ORIGIN), { locale }).href),
+      );
 
     expect(locations).toEqual(expected);
     expect(locations).not.toContain(new URL("/data", SITE_ORIGIN).href);
+    expect(locations.some((loc) => loc.includes("[locale]"))).toBe(false);
+  });
+
+  it("cross-links every locale's sitemap entry to every other locale via hreflang", async () => {
+    const sitemap = await (await GET()).text();
+
+    expect(sitemap).toContain(
+      `<xhtml:link rel="alternate" hreflang="ja" href="${localizeUrl(new URL("/almanac", SITE_ORIGIN), { locale: "ja" }).href}" />`,
+    );
+    expect(sitemap).toContain(
+      `<xhtml:link rel="alternate" hreflang="en" href="${localizeUrl(new URL("/almanac", SITE_ORIGIN), { locale: "en" }).href}" />`,
+    );
   });
 
   it("keeps pages crawlable while excluding sprites from Google Images", () => {

@@ -15,6 +15,7 @@
   import { Toaster } from "$lib/components/ui/sonner/index.js";
   import { errorPageMetadata } from "$lib/data/page-metadata.js";
   import { FeedbackContext, setFeedbackContext } from "$lib/feedback/context.svelte.js";
+  import { deLocalizeHref } from "$lib/paraglide/runtime.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
@@ -32,11 +33,13 @@
     userState.restorePersistedState();
   });
 
+  // Route matching below is keyed by the unprefixed route, not the locale-prefixed browser URL.
+  let canonicalPathname = $derived(deLocalizeHref(page.url.pathname));
   let hasToolbar = $derived(
-    page.url.pathname !== "/data" &&
-      page.url.pathname !== "/about" &&
-      page.url.pathname !== "/settings" &&
-      page.url.pathname !== "/privacy",
+    canonicalPathname !== "/data" &&
+      canonicalPathname !== "/about" &&
+      canonicalPathname !== "/settings" &&
+      canonicalPathname !== "/privacy",
   );
   let metadata = $derived(page.status >= 400 ? errorPageMetadata(page.status) : page.data.metadata);
   let overlayActive = $state(false);
