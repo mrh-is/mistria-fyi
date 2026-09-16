@@ -120,6 +120,9 @@ async function main(): Promise<void> {
     favicon.png().toFile(join(STATIC, "favicon.png")),
     createIcon(180).then((image) => sharp(image).toFile(join(STATIC, "apple-touch-icon.png"))),
     createIcon(192).then((image) => sharp(image).toFile(join(STATIC, "icon-192.png"))),
+    createIcon(192, true).then((image) =>
+      sharp(image).toFile(join(STATIC, "icon-maskable-192.png")),
+    ),
     createIcon(512).then((image) => sharp(image).toFile(join(STATIC, "icon-512.png"))),
     createIcon(512, true).then((image) =>
       sharp(image).toFile(join(STATIC, "icon-maskable-512.png")),
