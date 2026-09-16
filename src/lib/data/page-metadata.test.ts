@@ -11,6 +11,7 @@ describe("page metadata", () => {
 
     expect(entries).not.toHaveLength(0);
     expect(entries.every(({ metadata }) => metadata.description && metadata.title)).toBe(true);
+    expect(entries.some(({ path }) => path === "/characters")).toBe(true);
   });
 
   it("gives every page distinct, meaningful search text and a canonical URL", async () => {

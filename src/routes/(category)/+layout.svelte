@@ -1,13 +1,17 @@
 <script lang="ts">
   import { page } from "$app/state";
   import PageHeader from "$lib/components/page-header.svelte";
-  import { categoryForKey, type CategoryKey } from "$lib/data/categories.js";
+  import { categoryForKey, categoryKeyForPathname } from "$lib/data/categories.js";
   import { getCategoryProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   let { children } = $props();
 
-  let key = $derived(page.url.pathname.slice(1) as CategoryKey);
+  let key = $derived.by(() => {
+    const categoryKey = categoryKeyForPathname(page.url.pathname);
+    if (!categoryKey) throw new Error(`Unknown category route: ${page.url.pathname}`);
+    return categoryKey;
+  });
   const { color, name } = $derived(categoryForKey(key));
 
   let progress = $derived(
