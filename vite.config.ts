@@ -1,8 +1,24 @@
+import { paraglideVitePlugin } from "@inlang/paraglide-js";
 import { sveltekit } from "@sveltejs/kit/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 import devtoolsJson from "vite-plugin-devtools-json";
 import { configDefaults } from "vitest/config";
+
+import { LOCALE_CODES } from "./src/lib/types/locale.js";
+
+// All 8 locales are prefixed symmetrically, including the base locale "en" — there is no
+// unprefixed default. Paraglide's built-in default pattern never prefixes the base locale, so a
+// custom pattern is required to opt every locale into a prefix. The root "/" pattern is listed
+// separately so each locale's home page resolves to `/<locale>` rather than `/<locale>/`.
+const localizedRootPattern: [string, string][] = LOCALE_CODES.map((locale) => [
+  locale,
+  `/${locale}`,
+]);
+const localizedCatchAllPattern: [string, string][] = LOCALE_CODES.map((locale) => [
+  locale,
+  `/${locale}/:path(.*)?`,
+]);
 
 export default defineConfig({
   build: {
@@ -12,7 +28,26 @@ export default defineConfig({
     // is long-term cached via content-hashed filenames and the service worker.
     chunkSizeWarningLimit: 1000,
   },
-  plugins: [tailwindcss(), sveltekit(), devtoolsJson()],
+  plugins: [
+    tailwindcss(),
+    sveltekit(),
+    devtoolsJson(),
+    paraglideVitePlugin({
+      outdir: "./src/lib/paraglide",
+      project: "./project.inlang",
+      // /api/* is a JSON endpoint and /sitemap.xml is a prerendered SEO file — neither is a
+      // player-facing page, and neither is ever locale-prefixed.
+      routeStrategies: [
+        { exclude: true, match: "/api/:path(.*)?" },
+        { exclude: true, match: "/sitemap.xml" },
+      ],
+      strategy: ["url", "cookie", "baseLocale"],
+      urlPatterns: [
+        { localized: localizedRootPattern, pattern: "/" },
+        { localized: localizedCatchAllPattern, pattern: "/:path(.*)?" },
+      ],
+    }),
+  ],
   test: {
     exclude: [
       ...configDefaults.exclude,

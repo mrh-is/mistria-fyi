@@ -13,3 +13,8 @@ build/
 pipeline/input/
 pipeline/output/
 src/lib/data/tracker-data.json
+
+# Paraglide/inlang generated output
+src/lib/paraglide/
+project.inlang/*
+!project.inlang/settings.json

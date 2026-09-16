@@ -3,6 +3,7 @@
 
   import { resolve } from "$app/paths";
   import { Icon } from "$lib/components/icon/index.js";
+  import { localizeHref } from "$lib/paraglide/runtime.js";
 
   import type { Snippet } from "svelte";
 
@@ -45,7 +46,14 @@
   data-page-header={category === undefined ? "generic" : "category"}
   style={category !== undefined && pct !== undefined ? `--category-progress: ${pct}%;` : undefined}
 >
-  <a class="page-header__back" href={resolve(backHref)} aria-label={backLabel} onclick={onback}>
+  <!-- eslint-disable svelte/no-navigation-without-resolve -- href is resolve()d before localizing -->
+  <a
+    class="page-header__back"
+    href={localizeHref(resolve(backHref))}
+    aria-label={backLabel}
+    onclick={onback}
+  >
+    <!-- eslint-enable svelte/no-navigation-without-resolve -->
     <IconArrowLeft class="size-5" />
   </a>
   {#if category === undefined}

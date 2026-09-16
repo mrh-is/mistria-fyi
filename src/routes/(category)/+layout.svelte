@@ -3,13 +3,15 @@
   import PageHeader from "$lib/components/page-header.svelte";
   import { categoryForKey, categoryKeyForPathname } from "$lib/data/categories.js";
   import { getCategoryProgress } from "$lib/engine/progress.js";
+  import { deLocalizeHref } from "$lib/paraglide/runtime.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   let { children } = $props();
 
   let key = $derived.by(() => {
-    const categoryKey = categoryKeyForPathname(page.url.pathname);
-    if (!categoryKey) throw new Error(`Unknown category route: ${page.url.pathname}`);
+    const pathname = deLocalizeHref(page.url.pathname);
+    const categoryKey = categoryKeyForPathname(pathname);
+    if (!categoryKey) throw new Error(`Unknown category route: ${pathname}`);
     return categoryKey;
   });
   const { color, name } = $derived(categoryForKey(key));

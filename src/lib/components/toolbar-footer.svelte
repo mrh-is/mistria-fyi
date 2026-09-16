@@ -17,6 +17,7 @@
   import { Input } from "$lib/components/ui/input/index.js";
   import VisibilityPanel from "$lib/components/visibility-panel.svelte";
   import { getFeedbackContext } from "$lib/feedback/context.svelte.js";
+  import { deLocalizeHref } from "$lib/paraglide/runtime.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { DEFAULT_AVAILABILITY_WINDOWS } from "$lib/types/availability.js";
@@ -37,7 +38,8 @@
   const WORLD_STATE_ROUTES = new Set(["/", "/all", "/almanac", "/animals", "/museum"]);
 
   let feedbackContext = getFeedbackContext();
-  let pathname = $derived(page.url.pathname);
+  // Route matching below is keyed by the unprefixed route, not the locale-prefixed browser URL.
+  let pathname = $derived(deLocalizeHref(page.url.pathname));
   let showSearch = $derived(SEARCH_ROUTES.has(pathname));
   let showSeasonality = $derived(WORLD_STATE_ROUTES.has(pathname));
   const TOOLBAR_ACCENTS: Record<string, string> = {
