@@ -1,4 +1,5 @@
-import { readFile } from "node:fs/promises";
+import { chromium } from "@playwright/test";
+import { spawn } from "node:child_process";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
@@ -8,7 +9,8 @@ import { getAllProgress } from "../src/lib/engine/progress.js";
 
 import type { CompletedState } from "../src/lib/stores/user-state.svelte.js";
 
-const STATIC = fileURLToPath(new URL("../static/", import.meta.url));
+const ROOT = fileURLToPath(new URL("..", import.meta.url));
+const STATIC = join(ROOT, "static");
 
 const COLORS = {
   hairline: "#948a7c",
@@ -48,28 +50,33 @@ async function createIcon(size: number, maskable = false): Promise<Buffer> {
     .toBuffer();
 }
 
-async function createOgImage(): Promise<Buffer> {
-  const [displayFont, dataFont] = await Promise.all([
-    font("instrument-serif-italic.woff2"),
-    font("ibm-plex-mono-latin.woff2"),
-  ]);
-  const stripeX = 126;
-  const stripeY = 352;
-  const stripeWidth = 882;
-  const stripeHeight = 160;
-  const ribbonWidth = 142;
-  const ribbonX = stripeX + stripeWidth - ribbonWidth + 28;
-  const countX = ribbonX - 34;
-
-  return sharp(
-    svg(
-      `<style>@font-face{font-family:Instrument;src:url(data:font/woff2;base64,${displayFont})}@font-face{font-family:Data;src:url(data:font/woff2;base64,${dataFont})}</style><rect width="1200" height="630" fill="${COLORS.paper}"/><rect x="28" y="28" width="1144" height="574" fill="none" stroke="${COLORS.hairline}" stroke-width="2"/><text x="126" y="190" fill="${COLORS.ink}" font-family="Instrument, Georgia, serif" font-size="79" font-style="italic">Mistria Field Guide</text><text x="130" y="245" fill="${COLORS.muted}" font-family="Data, monospace" font-size="20" letter-spacing="2.5">YOUR UNOFFICIAL COMPLETION COMPANION</text><rect x="${stripeX + 4}" y="${stripeY + 5}" width="${stripeWidth}" height="${stripeHeight}" fill="#2e2a2220"/><rect x="${stripeX}" y="${stripeY}" width="${stripeWidth}" height="${stripeHeight}" fill="${COLORS.raised}"/><rect x="161" y="397" width="245" height="26" fill="#8a642e33" transform="rotate(-0.7 161 397)"/><path d="M 0 0 H 100 V 100 H 0 L 16 50 Z" transform="translate(${ribbonX} ${stripeY + 8}) scale(${ribbonWidth / 100} ${(stripeHeight - 16) / 100})" fill="${COLORS.ochre}"/>${notebookIcon(ribbonX + ribbonWidth * 0.4, stripeY + stripeHeight / 2 - 23, 46)}<text x="166" y="421" fill="${COLORS.ink}" font-family="Georgia, serif" font-size="43" font-weight="600">Everything</text><text x="166" y="470" fill="${COLORS.muted}" font-family="Arial, sans-serif" font-size="22">Track every collection, quest, skill, &amp; more.</text><text x="${countX}" y="440" fill="${COLORS.ink}" font-family="Data, monospace" font-size="25" text-anchor="end">${ogProgress.completed.toLocaleString()} <tspan fill="${COLORS.ochre}">/</tspan> ${ogProgress.total.toLocaleString()}</text><rect x="${stripeX}" y="${stripeY + stripeHeight - 4}" width="${stripeWidth}" height="4" fill="#e4ddcf"/><rect x="${stripeX}" y="${stripeY + stripeHeight - 4}" width="${(stripeWidth * ogProgress.percent) / 100}" height="4" fill="${COLORS.ochre}"/>`,
-      1200,
-      630,
-    ),
-  )
-    .png()
-    .toBuffer();
+async function createOgImage(): Promise<void> {
+  const port = 48171;
+  const server = spawn(
+    "pnpm",
+    ["exec", "vite", "dev", "--host", "127.0.0.1", "--port", String(port)],
+    {
+      cwd: ROOT,
+      stdio: "ignore",
+    },
+  );
+  try {
+    for (let attempt = 0; attempt < 50; attempt += 1) {
+      try {
+        await fetch(`http://127.0.0.1:${port}/dev/og-image`);
+        break;
+      } catch {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    }
+    const browser = await chromium.launch();
+    const page = await browser.newPage({ viewport: { height: 630, width: 1200 } });
+    await page.goto(`http://127.0.0.1:${port}/dev/og-image`, { waitUntil: "networkidle" });
+    await page.screenshot({ path: join(STATIC, "og-image.png") });
+    await browser.close();
+  } finally {
+    server.kill();
+  }
 }
 
 function emptyCompletedState(): CompletedState {
@@ -98,11 +105,6 @@ function emptyCompletedState(): CompletedState {
   };
 }
 
-async function font(name: string): Promise<string> {
-  const path = new URL(`../static/fonts/${name}`, import.meta.url);
-  return (await readFile(path)).toString("base64");
-}
-
 function grandTotal(): number {
   const progress = getAllProgress({
     availabilityWindows: ["now", "anytime", "later"],
@@ -125,8 +127,8 @@ async function main(): Promise<void> {
     createIcon(512, true).then((image) =>
       sharp(image).toFile(join(STATIC, "icon-maskable-512.png")),
     ),
-    createOgImage().then((image) => sharp(image).toFile(join(STATIC, "og-image.png"))),
   ]);
+  await createOgImage();
   console.log(
     `Generated brand assets with ${ogProgress.total.toLocaleString()} total trackable entries.`,
   );

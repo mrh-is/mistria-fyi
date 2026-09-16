@@ -5,15 +5,27 @@
 
   import type { CategoryProgress } from "$lib/engine/progress.js";
 
+  interface DisplayCategory {
+    color: string;
+    description: string;
+    href: "/";
+    icon: "all" | CategoryKey;
+    name: string;
+  }
+
   let {
+    displayCategory,
     key,
     progress,
   }: {
+    displayCategory?: DisplayCategory;
     key: CategoryKey;
     progress: CategoryProgress;
   } = $props();
 
-  const { color, description, href, name } = $derived(categoryForKey(key));
+  const { color, description, href, icon, name } = $derived(
+    displayCategory ?? { ...categoryForKey(key), icon: key },
+  );
 
   // Show available count when filtering is active (filtered < total - completed)
   let displayTotal = $derived(progress.completed + progress.filtered);
@@ -35,12 +47,13 @@
   </span>
 
   <span class="category-count" aria-hidden="true">
-    <span>{progress.completed}</span><span class="category-slash">/</span><span>{displayTotal}</span
+    <span>{progress.completed.toLocaleString()}</span><span class="category-slash">/</span><span
+      >{displayTotal.toLocaleString()}</span
     >
   </span>
 
   <span class="category-ribbon" data-category-ribbon aria-hidden="true">
-    <Icon.Category category={key} class="category-icon" />
+    <Icon.Category category={icon} class="category-icon" />
   </span>
   <span class="paper-edge-mask" aria-hidden="true"></span>
   <span class="category-progress" aria-hidden="true"><i></i></span>
