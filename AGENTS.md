@@ -293,7 +293,7 @@ The new session reads `gh issue view`, `git log`, and `git diff` to reconstruct 
 ### Model routing
 
 Evaluate task complexity before starting work. Use the cheapest model that can handle the task. See
-[DELEGATION.md](../../.agents/DELEGATION.md) for the full routing table with model names per agent.
+[DELEGATION.md](.agents/DELEGATION.md) for the full routing table with model names per agent.
 
 - **Simple** (single-file fix, lint issue, doc update, dependency bump): cheapest tier.
 - **Medium** (bug fix, single-component feature, test additions): default tier.
