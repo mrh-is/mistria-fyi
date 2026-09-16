@@ -58,6 +58,7 @@ import {
   stampStoreVisibility,
 } from "./extractors/visibility/entity-visibility.js";
 import { extractQuestChains } from "./extractors/visibility/quest-chains.js";
+import { generateLocaleManifest } from "./localize.js";
 import { parseFiddle } from "./parse-fiddle.js";
 import { createRequirementContext } from "./requirements.js";
 
@@ -563,6 +564,11 @@ async function main(): Promise<void> {
   console.log(
     `  Copied:  src/lib/data/${OUTPUT_FILE} (${(json.length / 1024).toFixed(1)} KB minified)`,
   );
+
+  const localeManifest = generateLocaleManifest(assetsDir);
+  const localeManifestJson = JSON.stringify(localeManifest, null, 2);
+  writeFileSync(resolve(APP_DATA_DIR, "locales.json"), localeManifestJson);
+  console.log(`  Written: src/lib/data/locales.json (${localeManifest.length} locales)`);
 
   const extractSpritesFlag = args.includes("--sprites");
   if (extractSpritesFlag) {
