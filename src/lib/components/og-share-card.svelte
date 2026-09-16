@@ -15,11 +15,12 @@
 <div class="og-card">
   <header>
     <h1>Mistria Field Guide</h1>
-    <p>Your unofficial completion companion</p>
+    <p>Track every collection,<br />quest, skill &amp; more</p>
   </header>
   <div class="stripe-scale">
     <CategoryCard
       key="almanac"
+      mobileRibbon
       {progress}
       displayCategory={{
         color: "home-accent",
@@ -45,7 +46,7 @@
   header {
     position: absolute;
     top: 92px;
-    left: 126px;
+    left: 80px;
   }
 
   h1 {
@@ -60,20 +61,19 @@
   }
 
   p {
-    margin: 30px 0 0 4px;
-    color: var(--ink-muted);
-    font-family: var(--font-controls);
-    font-size: 23px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    margin: 28px 0 0 4px;
+    color: #514b45;
+    font-family: var(--font-annotation);
+    font-size: 34px;
+    line-height: 0.98;
   }
 
   .stripe-scale {
     position: absolute;
-    top: 352px;
-    left: 126px;
-    width: 350px;
-    transform: scale(2.48);
+    top: 372px;
+    left: 60px;
+    width: 360px;
+    transform: scale(3);
     transform-origin: top left;
   }
 </style>

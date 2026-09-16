@@ -16,10 +16,12 @@
   let {
     displayCategory,
     key,
+    mobileRibbon = false,
     progress,
   }: {
     displayCategory?: DisplayCategory;
     key: CategoryKey;
+    mobileRibbon?: boolean;
     progress: CategoryProgress;
   } = $props();
 
@@ -36,6 +38,7 @@
 <a
   class="category-stripe"
   class:category-stripe--complete={isComplete}
+  class:category-stripe--mobile-ribbon={mobileRibbon}
   data-category-stripe
   href={resolve(href)}
   aria-label="{name}, {progress.completed} of {displayTotal} completed"
@@ -270,6 +273,21 @@
         linear-gradient(to top left, transparent 46%, #d4a72c 48% 57%, transparent 59%) bottom / 9px
           50% no-repeat;
     }
+  }
+
+  .category-stripe--mobile-ribbon {
+    padding-right: 69px;
+  }
+
+  .category-stripe--mobile-ribbon .category-ribbon {
+    right: -8px;
+    width: calc(var(--ribbon-width) + 8px);
+    padding-left: 8px;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 8px 50%);
+  }
+
+  .category-stripe--mobile-ribbon .paper-edge-mask {
+    display: none;
   }
 
   @media (hover: hover) and (prefers-reduced-motion: no-preference) {
