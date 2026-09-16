@@ -251,6 +251,43 @@ git branch -vv
 - Push through the agent delivery mechanism (for Copilot runs, `report_progress`) after committing,
   then verify the branch is clean with `git status --short`.
 
+### Attach visual evidence & prototype code
+
+Use `--attach` when adding screenshots to GitHub CLI-created issues, pull requests, or pull-request
+comments. The flag can be repeated, and image alt text follows the file path after `#`:
+
+```sh
+gh pr create --attach './desktop.png#Desktop tracker view' --attach './mobile.png#Mobile tracker view'
+```
+
+When the Markdown body already includes a local attachment reference, such as
+`![Desktop tracker](./desktop.png)`, GitHub CLI replaces it with the uploaded asset. Keep useful
+prototype code available to reviewers in a collapsed `<details>` element:
+
+````markdown
+<details>
+<summary>Prototype implementation</summary>
+
+```ts
+// Relevant prototype excerpt.
+```
+
+</details>
+````
+
+### Clean merged local branches & worktrees
+
+Run the cleanup helper from the repository root to preview eligible removals:
+
+```sh
+scripts/cleanup-merged-worktrees.sh
+```
+
+Pass `--apply` only after reviewing the preview. The helper removes a local branch only when its
+current commit exactly matches the head commit of a merged GitHub pull request, and it has no open
+pull request. It removes an associated worktree only when that worktree is clean; Git itself still
+must accept the removal. It leaves every other branch and worktree alone.
+
 ---
 
 ## 6. Troubleshooting & Recovery Steps
