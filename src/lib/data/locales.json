@@ -1,0 +1,42 @@
+[
+  {
+    "displayName": "English",
+    "status": "stable",
+    "tag": "en"
+  },
+  {
+    "displayName": "日本語",
+    "status": "beta",
+    "tag": "ja"
+  },
+  {
+    "displayName": "简体中文",
+    "status": "beta",
+    "tag": "zh-Hans"
+  },
+  {
+    "displayName": "繁體中文",
+    "status": "beta",
+    "tag": "zh-Hant"
+  },
+  {
+    "displayName": "Español",
+    "status": "beta",
+    "tag": "es"
+  },
+  {
+    "displayName": "Français",
+    "status": "beta",
+    "tag": "fr"
+  },
+  {
+    "displayName": "한국어",
+    "status": "beta",
+    "tag": "ko"
+  },
+  {
+    "displayName": "Русский",
+    "status": "beta",
+    "tag": "ru"
+  }
+]
