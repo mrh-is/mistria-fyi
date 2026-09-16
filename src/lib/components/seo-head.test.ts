@@ -24,10 +24,17 @@ describe("SEO head", () => {
     expect(head).toContain('<meta property="og:type" content="website"/>');
     expect(head).toContain('<meta property="og:site_name" content="Mistria Field Guide"/>');
     expect(head).toContain(`<meta property="og:image" content="${SITE_ORIGIN}/og-image.png"/>`);
+    expect(head).toContain('<meta property="og:image:type" content="image/png"/>');
     expect(head).toContain('<meta property="og:image:width" content="1200"/>');
     expect(head).toContain('<meta property="og:image:height" content="630"/>');
+    expect(head).toContain(
+      '<meta property="og:image:alt" content="Mistria Field Guide showing an Everything progress stripe at 27% completion."/>',
+    );
     expect(head).toContain('<meta name="twitter:card" content="summary_large_image"/>');
     expect(head).toContain(`<meta name="twitter:image" content="${SITE_ORIGIN}/og-image.png"/>`);
+    expect(head).toContain(
+      '<meta name="twitter:image:alt" content="Mistria Field Guide showing an Everything progress stripe at 27% completion."/>',
+    );
     expect(head).toContain(`<meta name="twitter:title" content="${title}"/>`);
     expect(head).toContain(`<meta name="twitter:description" content="${metadata.description}"/>`);
     expect(head).not.toContain('name="robots"');

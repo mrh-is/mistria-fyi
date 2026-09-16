@@ -41,6 +41,10 @@ test.describe("server-rendered search metadata", () => {
         "content",
         `${SITE_ORIGIN}/og-image.png`,
       );
+      await expect(page.locator('meta[property="og:image:type"]')).toHaveAttribute(
+        "content",
+        "image/png",
+      );
       await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute(
         "content",
         "1200",
@@ -52,6 +56,14 @@ test.describe("server-rendered search metadata", () => {
       await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute(
         "content",
         `${SITE_ORIGIN}/og-image.png`,
+      );
+      await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute(
+        "content",
+        "Mistria Field Guide showing an Everything progress stripe at 27% completion.",
+      );
+      await expect(page.locator('meta[name="twitter:image:alt"]')).toHaveAttribute(
+        "content",
+        "Mistria Field Guide showing an Everything progress stripe at 27% completion.",
       );
       await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
       await expect(page.getByRole("main")).toBeVisible();
