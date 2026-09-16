@@ -95,6 +95,13 @@ Follow this sequence for every task:
     and fixed without requiring the user to relay status. Use `ccd_pr bind_pr` and `set_monitor` in
     Claude Code, or check `gh pr checks` periodically in other agents.
 
+### GitHub evidence & prototypes
+
+- Attach screenshots with GitHub CLI's `--attach` flag. Include useful prototype code in a collapsed
+  `<details>` element. See the
+  [development workflow](docs/development-workflow.md#attach-visual-evidence--prototype-code) for
+  the exact syntax and examples.
+
 > Git pre-commit hooks are developer conveniences, not verification evidence. Agents must run the
 > documented commands directly and verify clean exit status before committing.
 
