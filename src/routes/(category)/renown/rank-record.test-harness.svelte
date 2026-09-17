@@ -6,11 +6,18 @@
   let {
     color = "#123456",
     currentLevel,
+    name = "",
     rank,
     spoilered = false,
-  }: { color?: string; currentLevel: number; rank: TownRank; spoilered?: boolean } = $props();
+  }: {
+    color?: string;
+    currentLevel: number;
+    name?: string;
+    rank: TownRank;
+    spoilered?: boolean;
+  } = $props();
 </script>
 
 <ul>
-  <RankRecord {color} {currentLevel} {rank} {spoilered} />
+  <RankRecord {color} {currentLevel} {name} {rank} {spoilered} />
 </ul>

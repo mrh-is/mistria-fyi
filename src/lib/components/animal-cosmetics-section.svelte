@@ -1,5 +1,6 @@
 <script lang="ts">
   import { trackerData } from "$lib/data";
+  import { animalNameId, getName } from "$lib/data/names.js";
   import { isVisible } from "$lib/engine/visibility.js";
   import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte";
@@ -50,7 +51,7 @@
     let completedCount = 0;
     let displayableCount = 0;
     let visibleCosmetics: AnimalSubcategoryRowProps<CosmeticId>[] = [];
-    recordEntries(animal.cosmetics).forEach(([cid, { name }]) => {
+    recordEntries(animal.cosmetics).forEach(([cid]) => {
       if (!toolbarState.matchesSourceFilters(animal.cosmetics[cid].sources)) return;
       displayableCount++;
       const cosmeticId = cid;
@@ -60,7 +61,7 @@
         visibleCosmetics.push({
           completed,
           id: cosmeticId,
-          name,
+          name: getName("animals", animalNameId(animalId, "cosmetics", cosmeticId), locale),
           redacted: false,
           sources: animal.cosmetics[cosmeticId].sources,
         });
@@ -104,6 +105,7 @@
   completionCheck={hasCompletedCosmetic}
   hasDisplayableItem={hasDisplayableCosmetic}
   {isAnimalComplete}
+  {locale}
   lookups={baseLookups}
   name={m.animals_cosmetics_section_name()}
   {sectionConfig}

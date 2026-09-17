@@ -69,7 +69,7 @@
   registerSourceFilters("animals", () => trackerIndex.categorySourceTypes.animals);
 </script>
 
-<AnimalVariantsSection {areAllAnimalsComplete} {isAnimalComplete} {isSpeciesVisible} />
+<AnimalVariantsSection {areAllAnimalsComplete} {isAnimalComplete} {isSpeciesVisible} {locale} />
 
 <AnimalCosmeticsSection {areAllAnimalsComplete} {isAnimalComplete} {isSpeciesVisible} {locale} />
 

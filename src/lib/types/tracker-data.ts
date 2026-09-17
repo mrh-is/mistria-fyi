@@ -30,16 +30,12 @@ export interface AlmanacEntry {
 }
 export interface Animal {
   cosmetics: Record<CosmeticId, AnimalCosmetic>;
-  name: string;
   variantTiers: AnimalVariantTier[];
   visibility?: VisibilityCondition;
 }
-export interface AnimalCosmetic extends TrackerEntity {
-  name: string;
-}
+export type AnimalCosmetic = TrackerEntity;
 export type AnimalId = string & { readonly __brand: "AnimalId" };
 export interface AnimalVariant {
-  name: string;
   source: Extract<Source, { type: "breed" | "default" }>;
 }
 export type AnimalVariantId = string & { readonly __brand: "VariantId" };
@@ -49,7 +45,6 @@ export interface CookingQuest extends Quest {
   recipeId: RecipeId;
 }
 export interface Cosmetic extends TrackerEntity {
-  name: string;
   slot: CosmeticSlot;
   subCategory?: string;
 }
@@ -103,7 +98,6 @@ export type ItemId = string & { readonly __brand: "ItemId" };
 export interface MinesBiome {
   floors: Range;
   id: MinesBiomeId;
-  name: string;
 }
 export type MinesBiomeId = string & { readonly __brand: "BiomeId" };
 export interface MuseumWing {
@@ -178,7 +172,6 @@ export interface StoryQuest extends Quest {
 }
 export interface TownRank {
   levels: Range;
-  name: string;
 }
 export interface TrackerData {
   almanac: Record<AlmanacCategoryId, AlmanacCategory>;

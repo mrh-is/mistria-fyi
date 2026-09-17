@@ -32,11 +32,12 @@ export function buildBaseSegmentLookups(
 const staticBaseSegmentLookups = buildStaticBaseSegmentLookups();
 const localizedBaseSegmentLookups = new Map<
   LocaleCode,
-  Pick<SegmentLookups, "festivals" | "perks" | "questNames" | "stores">
+  Pick<SegmentLookups, "biomes" | "festivals" | "perks" | "questNames" | "stores">
 >();
 
 function buildStaticBaseSegmentLookups(): Omit<
   SegmentLookups,
+  | "biomes"
   | "entityVisibility"
   | "festivals"
   | "npcNames"
@@ -48,7 +49,6 @@ function buildStaticBaseSegmentLookups(): Omit<
 > {
   return {
     animalNames: {},
-    biomes: trackerData.mines.biomes,
     categoryVisibility: trackerData.categoryVisibility,
     itemNames: Object.fromEntries(
       Object.entries(trackerData.items).map(([id, item]) => [id, item.name]),
@@ -77,11 +77,15 @@ function buildStaticBaseSegmentLookups(): Omit<
 
 function getLocalizedBaseSegmentLookups(
   locale: LocaleCode,
-): Pick<SegmentLookups, "festivals" | "perks" | "questNames" | "stores"> {
+): Pick<SegmentLookups, "biomes" | "festivals" | "perks" | "questNames" | "stores"> {
   const cached = localizedBaseSegmentLookups.get(locale);
   if (cached) return cached;
 
   const lookups = {
+    biomes: trackerData.mines.biomes.map((biome) => ({
+      ...biome,
+      name: getName("mines", biome.id, locale),
+    })),
     festivals: Object.fromEntries(
       Object.entries(trackerData.festivals).map(([id, festival]) => [
         id,
