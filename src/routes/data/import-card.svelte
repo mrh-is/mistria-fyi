@@ -260,26 +260,32 @@
         {#if savFallback}
           <p class="mt-2 text-sm">
             {m.import_fallback_before_vaultc()}
+            <!-- eslint-disable local/no-hardcoded-ui-text -- proper noun, same in every locale -->
             <a
               href="https://github.com/NPC-Studio/vaultc"
               target="_blank"
               rel="noopener noreferrer"
               class="underline">vaultc</a
             >
+            <!-- eslint-enable local/no-hardcoded-ui-text -->
             {m.import_fallback_between()}
+            <!-- eslint-disable local/no-hardcoded-ui-text -- proper noun, same in every locale -->
             <a
               href="https://github.com/NPC-Studio/vaultgo"
               target="_blank"
               rel="noopener noreferrer"
               class="underline">VaultGo</a
             >
+            <!-- eslint-enable local/no-hardcoded-ui-text -->
             {m.import_fallback_after_vaultgo()}
           </p>
+          <!-- eslint-disable local/no-hardcoded-ui-text -- "and" connects filenames, not worth its own message key -->
           <p class="mt-2 text-sm">
             {m.import_fallback_files_intro()} <code>player.json</code>, <code>gamedata.json</code>,
             and <code>quests.json</code>
             {m.import_fallback_files_suffix()}
           </p>
+          <!-- eslint-enable local/no-hardcoded-ui-text -->
         {/if}
       </div>
     {/if}

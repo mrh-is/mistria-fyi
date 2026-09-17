@@ -19,6 +19,7 @@
 <PageHeader title={m.about_title()} backLabel={m.common_go_back()} onback={goBack} />
 
 <div class="about-page">
+  <!-- eslint-disable local/no-hardcoded-ui-text -- proper nouns (product/person/studio names), same in every locale -->
   <section>
     <h2>{m.about_status_heading()}</h2>
     <p>
@@ -32,6 +33,7 @@
       {m.about_maintainer_suffix2()}
     </p>
   </section>
+  <!-- eslint-enable local/no-hardcoded-ui-text -->
 
   <div class="divider"></div>
 
