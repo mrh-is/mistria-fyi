@@ -1,4 +1,47 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-  "app_name": "Mistria Field Guide"
+  "app_name": "Mistria Field Guide",
+  "toolbar_nav_label": "トラッカーツール",
+  "toolbar_search_label": "アイテムを検索",
+  "toolbar_search_placeholder": "アイテムを検索…",
+  "toolbar_clear_search": "検索をクリア",
+  "toolbar_cancel_search": "キャンセル",
+  "toolbar_search": "検索",
+  "toolbar_quick_settings": "クイック設定",
+  "toolbar_send_feedback": "フィードバックを送信",
+  "toolbar_visibility_filters": "表示フィルター",
+  "toolbar_close_panel": "パネルを閉じる",
+  "toolbar_filters": "フィルター",
+  "toolbar_reset_filters": "リセット",
+  "toolbar_filters_applied": "フィルターを適用しました",
+  "toolbar_filters_cleared": "フィルターをすべて解除しました",
+  "page_header_back_to_home": "ホームに戻る",
+  "page_header_progress": "{total}件中{completed}件完了",
+  "foldout_close": "{title}を閉じる",
+  "search_results_count": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "{count}件の結果"
+      }
+    }
+  ],
+  "search_no_results": "アイテムが見つかりません",
+  "search_marked_obtained": "「{name}」を入手済みにしました",
+  "search_marked_completed": "「{name}」を完了にしました",
+  "search_marked_completed_with_recipe": "「{name}」を完了にし、「{recipe}」を解放しました",
+  "search_marked_completed_with_recipes": [
+    {
+      "declarations": ["input name", "input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "「{name}」を完了にし、レシピを{count}件解放しました"
+      }
+    }
+  ],
+  "search_reset": "「{name}」をリセットしました",
+  "action_undo": "元に戻す",
+  "undo_marked_complete": "「{name}」を完了にしました",
+  "undo_unmarked": "「{name}」を未完了に戻しました"
 }

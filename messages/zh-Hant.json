@@ -1,4 +1,47 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-  "app_name": "Mistria Field Guide"
+  "app_name": "Mistria Field Guide",
+  "toolbar_nav_label": "追蹤工具",
+  "toolbar_search_label": "搜尋物品",
+  "toolbar_search_placeholder": "搜尋物品…",
+  "toolbar_clear_search": "清除搜尋",
+  "toolbar_cancel_search": "取消",
+  "toolbar_search": "搜尋",
+  "toolbar_quick_settings": "快速設定",
+  "toolbar_send_feedback": "傳送意見回饋",
+  "toolbar_visibility_filters": "顯示篩選",
+  "toolbar_close_panel": "關閉面板",
+  "toolbar_filters": "篩選",
+  "toolbar_reset_filters": "重設",
+  "toolbar_filters_applied": "已套用篩選",
+  "toolbar_filters_cleared": "已清除所有篩選",
+  "page_header_back_to_home": "返回首頁",
+  "page_header_progress": "已完成 {completed}/{total}",
+  "foldout_close": "關閉{title}",
+  "search_results_count": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "{count} 項結果"
+      }
+    }
+  ],
+  "search_no_results": "找不到任何物品",
+  "search_marked_obtained": "已將「{name}」標記為已取得",
+  "search_marked_completed": "已將「{name}」標記為已完成",
+  "search_marked_completed_with_recipe": "已將「{name}」標記為已完成，並解鎖「{recipe}」",
+  "search_marked_completed_with_recipes": [
+    {
+      "declarations": ["input name", "input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "已將「{name}」標記為已完成，並解鎖 {count} 項食譜"
+      }
+    }
+  ],
+  "search_reset": "已重設「{name}」",
+  "action_undo": "復原",
+  "undo_marked_complete": "已將「{name}」標記為已完成",
+  "undo_unmarked": "已取消標記「{name}」"
 }

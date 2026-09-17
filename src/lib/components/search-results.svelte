@@ -7,6 +7,7 @@
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
   import { searchItems } from "$lib/engine/search.js";
   import { isVisible } from "$lib/engine/visibility.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordEntries } from "$lib/utils";
   import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
@@ -82,23 +83,26 @@
 
     let message: string;
     if (newState === "obtained") {
-      message = `Marked "${result.name}" obtained`;
+      message = m.search_marked_obtained({ name: result.name });
     } else if (newState === "completed") {
       if (newlyAdded.length === 1) {
         const names = recipeDisplayNames(newlyAdded);
-        message = `Marked "${result.name}" completed and unlocked "${names[0]}"`;
+        message = m.search_marked_completed_with_recipe({ name: result.name, recipe: names[0] });
       } else if (newlyAdded.length > 1) {
-        message = `Marked "${result.name}" completed and unlocked ${newlyAdded.length.toString()} recipes`;
+        message = m.search_marked_completed_with_recipes({
+          count: newlyAdded.length,
+          name: result.name,
+        });
       } else {
-        message = `Marked "${result.name}" completed`;
+        message = m.search_marked_completed({ name: result.name });
       }
     } else {
-      message = `Reset "${result.name}"`;
+      message = m.search_reset({ name: result.name });
     }
 
     toast(message, {
       cancel: {
-        label: "Undo",
+        label: m.action_undo(),
         onClick: () => {
           userState.undoQuestWithRecipes(questId, newlyAdded);
         },
@@ -155,12 +159,12 @@
 
 <div class="search-results" data-tracker-list>
   <p class="search-results__count">
-    {results.length} result{results.length === 1 ? "" : "s"}
+    {m.search_results_count({ count: results.length })}
   </p>
   <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">
     {results.length === 0
-      ? "No items found"
-      : `${results.length.toString()} result${results.length === 1 ? "" : "s"}`}
+      ? m.search_no_results()
+      : m.search_results_count({ count: results.length })}
   </p>
 
   {#each results as result (result.category + result.id)}
@@ -198,7 +202,7 @@
   {/each}
 
   {#if results.length === 0}
-    <p class="search-results__empty">No items found</p>
+    <p class="search-results__empty">{m.search_no_results()}</p>
   {/if}
 </div>
 
