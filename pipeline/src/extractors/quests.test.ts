@@ -6,6 +6,23 @@ import type { QuestId, RecipeId } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
 
+vi.mock("../localize.js", () => ({
+  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
+    fallbackLocales: [],
+    values: {
+      en: input.englishValue,
+      es: input.englishValue,
+      fr: input.englishValue,
+      ja: input.englishValue,
+      ko: input.englishValue,
+      ru: input.englishValue,
+      "zh-Hans": input.englishValue,
+      "zh-Hant": input.englishValue,
+    },
+  })),
+}));
+const assetsDir = "test-assets";
+
 describe("extractQuests", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -23,7 +40,7 @@ describe("extractQuests", () => {
       },
     } as unknown as ParsedGameData;
 
-    expect(extractQuests(fiddle)).toEqual(emptyQuests);
+    expect(extractQuests(fiddle, assetsDir).quests).toEqual(emptyQuests);
   });
 
   it("maps a populated tracked quest with its name, NPC, and itemId", () => {
@@ -40,23 +57,24 @@ describe("extractQuests", () => {
       },
     } as unknown as ParsedGameData;
 
-    expect(extractQuests(fiddle)).toEqual({
+    const { localeNames, quests } = extractQuests(fiddle, assetsDir);
+    expect(quests).toEqual({
       ...emptyQuests,
       fetch: {
         meet_juniper: {
           itemId: "wild_berries",
-          name: "Meet Juniper",
           npc: "juniper",
           sources: [],
         },
       },
     });
+    expect(localeNames.ja["meet_juniper" as QuestId]).toBe("Meet Juniper");
   });
 
   it("does not log a summary when the quest root is absent", () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
 
-    expect(extractQuests({} as ParsedGameData)).toEqual(emptyQuests);
+    expect(extractQuests({} as ParsedGameData, assetsDir).quests).toEqual(emptyQuests);
     expect(logSpy).not.toHaveBeenCalled();
   });
 
@@ -74,12 +92,11 @@ describe("extractQuests", () => {
       },
     } as unknown as ParsedGameData;
 
-    expect(extractQuests(fiddle)).toEqual({
+    expect(extractQuests(fiddle, assetsDir).quests).toEqual({
       ...emptyQuests,
       heart: {
         tall_dark_and_mysterious: {
           heartLevel: 0,
-          name: "Tall, Dark and Mysterious",
           npc: "balor",
           sources: [],
         },
@@ -100,12 +117,11 @@ describe("extractQuests", () => {
       },
     } as unknown as ParsedGameData;
 
-    expect(extractQuests(fiddle)).toEqual({
+    expect(extractQuests(fiddle, assetsDir).quests).toEqual({
       ...emptyQuests,
       heart: {
         adeline_pregnancy_request: {
           heartLevel: 10,
-          name: "A Craving",
           npc: "adeline",
           sources: [],
         },
@@ -130,11 +146,10 @@ describe("extractQuests", () => {
       ["crispy_fried_earthshroom", "crispy_fried_earthshroom" as RecipeId],
     ]);
 
-    expect(extractQuests(fiddle, recipeIdByItemId)).toEqual({
+    expect(extractQuests(fiddle, assetsDir, recipeIdByItemId).quests).toEqual({
       ...emptyQuests,
       cooking: {
         crispy_fried_earthshroom_challenge: {
-          name: "Crispy Fried Earthshroom",
           recipeId: "crispy_fried_earthshroom",
           sources: [],
         },
@@ -155,7 +170,7 @@ describe("extractQuests", () => {
       },
     } as unknown as ParsedGameData;
 
-    expect(() => extractQuests(fiddle, new Map())).toThrow(
+    expect(() => extractQuests(fiddle, assetsDir, new Map())).toThrow(
       'Cooking quest "bad_challenge" has no has_item requirement in any stage',
     );
   });
@@ -173,7 +188,7 @@ describe("extractQuests", () => {
       },
     } as unknown as ParsedGameData;
 
-    expect(() => extractQuests(fiddle, new Map())).toThrow(
+    expect(() => extractQuests(fiddle, assetsDir, new Map())).toThrow(
       'Cooking quest "orphan_challenge" requires item "unknown_item" which has no matching recipe',
     );
   });
@@ -193,7 +208,9 @@ describe("extractQuests", () => {
 
     const recipeIdByItemId = new Map([["some_dish", "some_dish" as RecipeId]]);
 
-    const result = extractQuests(fiddle, recipeIdByItemId);
-    expect(result.cooking["qty_challenge" as QuestId]).toMatchObject({ recipeId: "some_dish" });
+    const result = extractQuests(fiddle, assetsDir, recipeIdByItemId);
+    expect(result.quests.cooking["qty_challenge" as QuestId]).toMatchObject({
+      recipeId: "some_dish",
+    });
   });
 });

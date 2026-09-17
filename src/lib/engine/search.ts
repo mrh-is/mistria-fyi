@@ -147,15 +147,16 @@ export function searchItems(
   }
 
   // Pet cosmetics
-  for (const [id, entry] of recordEntries(trackerData.pets.cosmetics)) {
-    if (entry.name.toLowerCase().includes(q)) {
+  for (const [id] of recordEntries(trackerData.pets.cosmetics)) {
+    const name = getName("pets/cosmetic_sets", id, locale);
+    if (name.toLowerCase().includes(q)) {
       results.push({
         available: true,
         category: "animals",
         completed: completed.petCosmetics.has(id),
-        fullName: entry.name,
+        fullName: name,
         id: `pet-cosmetic:${id}`,
-        name: entry.name,
+        name,
       });
     }
   }
@@ -213,13 +214,14 @@ export function searchItems(
       if (pregnancyQuestIds.has(id)) continue;
       if (quest.visibility && !isVisible(quest.visibility, progressionState)) continue;
 
-      if (quest.name.toLowerCase().includes(q)) {
+      const name = getName("quests", id, locale);
+      if (name.toLowerCase().includes(q)) {
         results.push({
           available: true,
           category: "quests",
           completed: completed.questStates[id] === "completed",
           id,
-          name: quest.name,
+          name,
         });
       }
     }

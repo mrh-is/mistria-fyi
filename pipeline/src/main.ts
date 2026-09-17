@@ -342,27 +342,38 @@ async function main(): Promise<void> {
   console.log();
 
   console.log("Step 3: Extracting tracker data...");
-  const museum = extractMuseum(fiddle);
+  const { localeNames: museumLocaleNames, museum } = extractMuseum(fiddle, assetsDir);
   const cutsceneQuestMap = buildCutsceneQuestMap(fiddle);
   const { recipeIdByItemId, recipeMemberItems, recipes } = extractRecipes(fiddle, cutsceneQuestMap);
   const { almanac, items } = extractAlmanac(fiddle, recipeMemberItems);
   const animals = extractAnimals(fiddle);
-  const petCosmetics = extractPetCosmetics(fiddle);
+  const { cosmetics: petCosmetics, localeNames: petCosmeticLocaleNames } = extractPetCosmetics(
+    fiddle,
+    assetsDir,
+  );
   const petSkins = extractPetSkins(fiddle);
   const { localeNames: npcLocaleNames, npcs } = extractNpcs(fiddle, assetsDir);
   const cosmeticsRaw = extractCosmetics(fiddle);
   const cosmetics = applyExclusions(cosmeticsRaw);
   const {
     localeNames: skillLocaleNames,
+    perkLocaleNames,
     perkTierLevels,
     skills,
   } = extractSkills(fiddle, assetsDir);
   const townRanks = extractTownRanks(fiddle);
-  const quests = extractQuests(fiddle, recipeIdByItemId);
-  const mines = extractMines(fiddle);
-  const storesMeta = extractStoresMeta(fiddle);
-  const dates = extractDates(fiddle);
-  const festivals = extractFestivals(fiddle);
+  const { localeNames: questLocaleNames, quests } = extractQuests(
+    fiddle,
+    assetsDir,
+    recipeIdByItemId,
+  );
+  const { localeNames: spellLocaleNames, mines } = extractMines(fiddle, assetsDir);
+  const { localeNames: storeLocaleNames, stores: storesMeta } = extractStoresMeta(
+    fiddle,
+    assetsDir,
+  );
+  const { dates, localeNames: dateLocaleNames } = extractDates(fiddle, assetsDir);
+  const { festivals, localeNames: festivalLocaleNames } = extractFestivals(fiddle, assetsDir);
   const treasureChestTiers = extractTreasureChestTiers(fiddle);
 
   const requirementContext = createRequirementContext(
@@ -577,7 +588,15 @@ async function main(): Promise<void> {
   console.log(`  Written: src/lib/data/locales.json (${localeManifest.length} locales)`);
 
   writeLocaleChunks("npcs", npcLocaleNames);
+  writeLocaleChunks("dates", dateLocaleNames);
+  writeLocaleChunks("festivals", festivalLocaleNames);
+  writeLocaleChunks("museum_wings", museumLocaleNames);
+  writeLocaleChunks("perks", perkLocaleNames);
+  writeLocaleChunks("pets/cosmetic_sets", petCosmeticLocaleNames);
+  writeLocaleChunks("quests", questLocaleNames);
   writeLocaleChunks("skills", skillLocaleNames);
+  writeLocaleChunks("spells", spellLocaleNames);
+  writeLocaleChunks("stores", storeLocaleNames);
 
   const extractSpritesFlag = args.includes("--sprites");
   if (extractSpritesFlag) {
@@ -625,9 +644,10 @@ function writeLocaleChunks(category: string, byLocale: Record<LocaleCode, Record
   let totalBytes = 0;
   for (const locale of LOCALE_CODES) {
     const directory = resolve(APP_DATA_DIR, "locales", locale);
-    mkdirSync(directory, { recursive: true });
+    const chunkPath = resolve(directory, `${category}.json`);
+    mkdirSync(dirname(chunkPath), { recursive: true });
     const chunkJson = `${JSON.stringify(byLocale[locale], null, 2)}\n`;
-    writeFileSync(resolve(directory, `${category}.json`), chunkJson);
+    writeFileSync(chunkPath, chunkJson);
     totalBytes += chunkJson.length;
   }
   console.log(

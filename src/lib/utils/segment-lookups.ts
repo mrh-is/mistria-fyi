@@ -1,5 +1,5 @@
 import { trackerData } from "$lib/data/index.js";
-import { getNameTable } from "$lib/data/names.js";
+import { getName, getNameTable } from "$lib/data/names.js";
 import { recordMap } from "$lib/utils";
 
 import type { LocaleCode } from "$lib/types/locale.js";
@@ -22,6 +22,7 @@ export function buildBaseSegmentLookups(
 ): Omit<SegmentLookups, "entityVisibility"> {
   return {
     ...staticBaseSegmentLookups,
+    ...getLocalizedBaseSegmentLookups(locale),
     npcNames: getNameTable("npcs", locale),
     redactedStoreIds,
     skillNames: getNameTable("skills", locale),
@@ -29,27 +30,26 @@ export function buildBaseSegmentLookups(
 }
 
 const staticBaseSegmentLookups = buildStaticBaseSegmentLookups();
+const localizedBaseSegmentLookups = new Map<
+  LocaleCode,
+  Pick<SegmentLookups, "festivals" | "perks" | "questNames" | "stores">
+>();
 
 function buildStaticBaseSegmentLookups(): Omit<
   SegmentLookups,
-  "entityVisibility" | "npcNames" | "redactedStoreIds" | "skillNames"
+  | "entityVisibility"
+  | "festivals"
+  | "npcNames"
+  | "perks"
+  | "questNames"
+  | "redactedStoreIds"
+  | "skillNames"
+  | "stores"
 > {
-  const perks = Object.fromEntries(
-    Object.entries(trackerData.skills).flatMap(([skillId, skill]) =>
-      skill.perkTiers.flatMap((tier, tierIndex) =>
-        Object.entries(tier).map(([perkId, perk]) => [
-          perkId,
-          { name: perk.name, skillId: skillId as SkillId, tier: tierIndex + 1 },
-        ]),
-      ),
-    ),
-  );
-
   return {
     animalNames: {},
     biomes: trackerData.mines.biomes,
     categoryVisibility: trackerData.categoryVisibility,
-    festivals: trackerData.festivals,
     itemNames: Object.fromEntries(
       Object.entries(trackerData.items).map(([id, item]) => [id, item.name]),
     ),
@@ -61,13 +61,7 @@ function buildStaticBaseSegmentLookups(): Omit<
     locationNames: {},
     monsterNames: {},
     npcVisibility: recordMap(trackerData.npcs, ({ visibility }) => visibility),
-    perks,
     perkTierLevels: trackerData.perkTierLevels,
-    questNames: Object.fromEntries(
-      Object.values(trackerData.quests).flatMap((group) =>
-        Object.entries(group).map(([id, quest]) => [id, quest.name]),
-      ),
-    ),
     questNpcIds: recordMap(trackerData.quests.fetch, ({ npc }) => npc),
     questTypes: Object.fromEntries(
       (Object.entries(trackerData.quests) as [QuestType, Record<string, unknown>][]).flatMap(
@@ -76,8 +70,50 @@ function buildStaticBaseSegmentLookups(): Omit<
     ),
     recipeNames: recordMap(trackerData.recipes, ({ name }) => name),
     stationNames: {},
-    stores: trackerData.stores,
     storeVisibility: recordMap(trackerData.stores, ({ visibility }) => visibility),
     treasureChestTiers: trackerData.treasureChestTiers,
   };
+}
+
+function getLocalizedBaseSegmentLookups(
+  locale: LocaleCode,
+): Pick<SegmentLookups, "festivals" | "perks" | "questNames" | "stores"> {
+  const cached = localizedBaseSegmentLookups.get(locale);
+  if (cached) return cached;
+
+  const lookups = {
+    festivals: Object.fromEntries(
+      Object.entries(trackerData.festivals).map(([id, festival]) => [
+        id,
+        { ...festival, name: getName("festivals", id as never, locale) },
+      ]),
+    ),
+    perks: Object.fromEntries(
+      Object.entries(trackerData.skills).flatMap(([skillId, skill]) =>
+        skill.perkTiers.flatMap((tier, tierIndex) =>
+          Object.keys(tier).map((perkId) => [
+            perkId,
+            {
+              name: getName("perks", perkId as never, locale),
+              skillId: skillId as SkillId,
+              tier: tierIndex + 1,
+            },
+          ]),
+        ),
+      ),
+    ),
+    questNames: Object.fromEntries(
+      Object.values(trackerData.quests).flatMap((group) =>
+        Object.keys(group).map((id) => [id, getName("quests", id as never, locale)]),
+      ),
+    ),
+    stores: Object.fromEntries(
+      Object.entries(trackerData.stores).map(([id, store]) => [
+        id,
+        { ...store, name: getName("stores", id as never, locale) },
+      ]),
+    ),
+  };
+  localizedBaseSegmentLookups.set(locale, lookups);
+  return lookups;
 }
