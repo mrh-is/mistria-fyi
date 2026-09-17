@@ -21,11 +21,14 @@
     compact = false,
     id,
     known,
+    name,
     npc,
   }: {
     compact?: boolean;
     id: NpcId;
     known: boolean;
+    /** Already resolved for the active locale by the roster via `getName("npcs", id, locale)`. */
+    name: string;
     npc: Npc;
   } = $props();
 
@@ -75,7 +78,7 @@
     }),
   );
   let completed = $derived(isNpcComplete(id, userState.state.completed));
-  let visibleName = $derived(revealed ? npc.name : "Hidden NPC");
+  let visibleName = $derived(revealed ? name : "Hidden NPC");
 
   async function applyAction(value: RelationshipActionValue): Promise<void> {
     mutateWithCelebration(() => {
@@ -129,16 +132,16 @@
           onerror={() => (imageFailed = true)}
         />
       {:else}
-        <span data-testid="npc-icon-fallback">{revealed ? npc.name.charAt(0) : "?"}</span>
+        <span data-testid="npc-icon-fallback">{revealed ? name.charAt(0) : "?"}</span>
       {/if}
     </span>
 
     <span class="npc-copy">
-      <strong>
+      <strong data-npc-name>
         {#if revealed}
-          {npc.name}
+          {name}
         {:else}
-          <Spoiler onReveal={() => (locallyRevealed = true)}>{npc.name}</Spoiler>
+          <Spoiler onReveal={() => (locallyRevealed = true)}>{name}</Spoiler>
         {/if}
       </strong>
       {#if revealed && npc.dateable && presentation.label}
@@ -170,7 +173,7 @@
       class="npc-stepper"
       type="button"
       disabled={!revealed || storedLevel <= 0}
-      aria-label="Decrease {revealed ? npc.name : 'hidden NPC'} hearts"
+      aria-label="Decrease {revealed ? name : 'hidden NPC'} hearts"
       onclick={() => {
         setLevel(storedLevel - 1);
       }}
@@ -199,7 +202,7 @@
       class="npc-stepper"
       type="button"
       disabled={!revealed || storedLevel >= MAX_NPC_LEVEL}
-      aria-label="Increase {revealed ? npc.name : 'hidden NPC'} hearts"
+      aria-label="Increase {revealed ? name : 'hidden NPC'} hearts"
       onclick={() => {
         setLevel(storedLevel + 1);
       }}

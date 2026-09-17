@@ -11,12 +11,10 @@ const balorId = "balor" as NpcId;
 const adeline: Npc = {
   birthday: { day: 3, season: "spring" },
   dateable: true,
-  name: "Adeline",
   smallIconSprite: "spr_npc_adeline_small",
 };
 const balor: Npc = {
   birthday: { day: 10, season: "summer" },
-  name: "Balor",
 };
 
 describe("NpcRecord", () => {
@@ -30,7 +28,7 @@ describe("NpcRecord", () => {
 
   it("renders a known dateable NPC as one compact, accessible record", () => {
     userState.setNpcLevel(adelineId, 8);
-    const view = render(NpcRecordHarness, { id: adelineId, npc: adeline });
+    const view = render(NpcRecordHarness, { id: adelineId, name: "Adeline", npc: adeline });
 
     expect(view.getByText("Adeline")).toBeInTheDocument();
     expect(view.getByText("SPR 03")).toHaveAccessibleName("Birthday: Spring 3");
@@ -51,10 +49,10 @@ describe("NpcRecord", () => {
   });
 
   it("falls back to a stable initial when the local icon is absent or fails", async () => {
-    const absent = render(NpcRecordHarness, { id: balorId, npc: balor });
+    const absent = render(NpcRecordHarness, { id: balorId, name: "Balor", npc: balor });
     expect(absent.getByTestId("npc-icon-fallback")).toHaveTextContent("B");
 
-    const failed = render(NpcRecordHarness, { id: adelineId, npc: adeline });
+    const failed = render(NpcRecordHarness, { id: adelineId, name: "Adeline", npc: adeline });
     const image = failed.container.querySelector("img");
     if (!image) throw new Error("Expected NPC icon image");
     await fireEvent.error(image);
@@ -65,7 +63,12 @@ describe("NpcRecord", () => {
 
   it("keeps an unmet NPC in place without exposing identity or stored progress", async () => {
     userState.setNpcLevel(adelineId, 6);
-    const view = render(NpcRecordHarness, { id: adelineId, known: false, npc: adeline });
+    const view = render(NpcRecordHarness, {
+      id: adelineId,
+      known: false,
+      name: "Adeline",
+      npc: adeline,
+    });
 
     expect(view.getByRole("button", { name: "Reveal spoiler" })).toBeInTheDocument();
     expect(view.getByText("Birthday hidden")).toBeInTheDocument();
@@ -83,7 +86,12 @@ describe("NpcRecord", () => {
   });
 
   it("renders non-dateable marks without relationship decisions", () => {
-    const view = render(NpcRecordHarness, { compact: true, id: balorId, npc: balor });
+    const view = render(NpcRecordHarness, {
+      compact: true,
+      id: balorId,
+      name: "Balor",
+      npc: balor,
+    });
 
     expect(view.container.querySelectorAll('[data-npc-mark-kind="platonic"]')).toHaveLength(12);
     expect(view.container.querySelector("[data-npc-record]")).toHaveAttribute(
@@ -96,7 +104,7 @@ describe("NpcRecord", () => {
   it("advances through only the next relationship decisions and preserves focus", async () => {
     userState.setNpcLevel(adelineId, 10);
     userState.setNpcRelationship(adelineId, "romantic");
-    const view = render(NpcRecordHarness, { id: adelineId, npc: adeline });
+    const view = render(NpcRecordHarness, { id: adelineId, name: "Adeline", npc: adeline });
 
     await fireEvent.click(view.getByRole("button", { name: "Record proposal" }));
     const marriage = await view.findByRole("button", { name: "Record marriage" });
@@ -117,7 +125,7 @@ describe("NpcRecord", () => {
   });
 
   it("updates level only through bounded adjacent controls", async () => {
-    const view = render(NpcRecordHarness, { id: adelineId, npc: adeline });
+    const view = render(NpcRecordHarness, { id: adelineId, name: "Adeline", npc: adeline });
     const decrement = view.getByRole("button", { name: "Decrease Adeline hearts" });
     const increment = view.getByRole("button", { name: "Increase Adeline hearts" });
 

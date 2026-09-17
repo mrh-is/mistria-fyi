@@ -10,6 +10,10 @@
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { localizedHref } from "$lib/utils/localized-href.js";
 
+  import type { PageProps } from "./$types.js";
+
+  let { data }: PageProps = $props();
+
   let allProgress = $derived(
     getAllProgress({
       availabilityWindows: userState.state.availabilityWindows,
@@ -37,7 +41,7 @@
 
   <div class="flex flex-col gap-3 px-4 pb-4">
     {#if toolbarState.searchQuery}
-      <SearchResults query={toolbarState.searchQuery} />
+      <SearchResults locale={data.locale} query={toolbarState.searchQuery} />
     {:else}
       <h2 class="px-1 font-controls text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
         Index

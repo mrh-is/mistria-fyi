@@ -119,10 +119,14 @@ export interface MuseumWingSet {
   name: string;
 }
 export type MuseumWingSetId = string & { readonly __brand: "SetId" };
+/**
+ * Player-facing NPC names are deliberately absent: they live in the per-locale `npcs` chunks and
+ * are resolved through `getName("npcs", id, locale)`. A `name` field that doesn't exist on the
+ * type is the guardrail against rendering untranslated data.
+ */
 export interface Npc {
   birthday: Day;
   dateable?: true;
-  name: string;
   smallIconSprite?: string;
   visibility?: VisibilityCondition;
 }

@@ -57,7 +57,7 @@ describe("subsection counters", () => {
     userState.toggleShowCompleted();
     toolbarState.setSearch("Copper Axe");
 
-    const { body } = render(AlmanacContent, { props: {} });
+    const { body } = render(AlmanacContent, { props: { locale: "en" } });
 
     expect(renderedText(body)).toContain("Blacksmithing 1 / 1");
   });
@@ -72,7 +72,7 @@ describe("subsection counters", () => {
     if (!hiddenEntry) throw new Error("Expected a spoilered almanac entry");
 
     toolbarState.setSearch(hiddenEntry.name);
-    const { body } = render(AlmanacContent, { props: {} });
+    const { body } = render(AlmanacContent, { props: { locale: "en" } });
 
     expect(body).not.toContain('aria-label="Reveal spoiler"');
   });
@@ -87,7 +87,7 @@ describe("subsection counters", () => {
     toolbarState.setSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
-    const { body } = render(RecipesContent, { props: {} });
+    const { body } = render(RecipesContent, { props: { locale: "en" } });
 
     expect(renderedText(body)).not.toContain(hiddenRecipe.name);
   });
@@ -106,13 +106,13 @@ describe("subsection counters", () => {
 
     userState.setAvailabilityMode("everything");
     toolbarState.setSearch(itemName);
-    const unfiltered = render(MuseumContent, { props: {} });
+    const unfiltered = render(MuseumContent, { props: { locale: "en" } });
     expect(renderedText(unfiltered.body)).toContain(itemName);
 
     toolbarState.setSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
-    const { body } = render(MuseumContent, { props: {} });
+    const { body } = render(MuseumContent, { props: { locale: "en" } });
     expect(renderedText(body)).not.toContain(itemName);
   });
 
@@ -137,7 +137,7 @@ describe("subsection counters", () => {
   it("reduces fetch quest count when source groups are hidden", () => {
     userState.toggleShowSpoilers();
 
-    const unfilteredBody = renderedText(render(QuestsContent, { props: {} }).body);
+    const unfilteredBody = renderedText(render(QuestsContent, { props: { locale: "en" } }).body);
     const unfilteredMatch = /Fetch Quests (\d+) \/ (\d+)/.exec(unfilteredBody);
     if (!unfilteredMatch) throw new Error("Expected Fetch Quests counter in unfiltered render");
     const unfilteredTotal = Number(unfilteredMatch[2]);
@@ -145,7 +145,7 @@ describe("subsection counters", () => {
     toolbarState.setSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
-    const filteredBody = renderedText(render(QuestsContent, { props: {} }).body);
+    const filteredBody = renderedText(render(QuestsContent, { props: { locale: "en" } }).body);
     const filteredMatch = /Fetch Quests (\d+) \/ (\d+)/.exec(filteredBody);
 
     if (filteredMatch) {
@@ -167,13 +167,13 @@ describe("subsection counters", () => {
 
     userState.setAvailabilityMode("everything");
     toolbarState.setSearch(hiddenEntry.name);
-    const unfiltered = render(AlmanacContent, { props: {} });
+    const unfiltered = render(AlmanacContent, { props: { locale: "en" } });
     expect(renderedText(unfiltered.body)).toContain(hiddenEntry.name);
 
     toolbarState.setSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
-    const { body } = render(AlmanacContent, { props: {} });
+    const { body } = render(AlmanacContent, { props: { locale: "en" } });
 
     expect(renderedText(body)).not.toContain(hiddenEntry.name);
   });

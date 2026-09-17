@@ -8,7 +8,7 @@ import type { StoreId } from "$lib/types/tracker-data.js";
 
 describe("buildBaseSegmentLookups", () => {
   it("flattens every generated perk under its perk ID", () => {
-    const lookups = buildBaseSegmentLookups(new Set());
+    const lookups = buildBaseSegmentLookups(new Set(), "en");
     const expected = Object.entries(trackerData.skills).flatMap(([skillId, skill]) =>
       skill.perkTiers.flatMap((tier, index) =>
         Object.entries(tier).map(
@@ -24,8 +24,8 @@ describe("buildBaseSegmentLookups", () => {
     const firstRedactedStoreIds = new Set<StoreId>();
     const secondRedactedStoreIds = new Set<StoreId>(["bathhouse" as StoreId]);
 
-    const first = buildBaseSegmentLookups(firstRedactedStoreIds);
-    const second = buildBaseSegmentLookups(secondRedactedStoreIds);
+    const first = buildBaseSegmentLookups(firstRedactedStoreIds, "en");
+    const second = buildBaseSegmentLookups(secondRedactedStoreIds, "en");
 
     expect(first.itemNames).toBe(second.itemNames);
     expect(first.perks).toBe(second.perks);

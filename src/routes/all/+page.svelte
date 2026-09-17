@@ -17,6 +17,10 @@
   import RenownSection from "./RenownSection.svelte";
   import SkillsSection from "./SkillsSection.svelte";
 
+  import type { PageProps } from "./$types.js";
+
+  let { data }: PageProps = $props();
+
   registerSourceFilters("all", () => trackerIndex.categorySourceTypes.all);
 
   let headerEl = $state<HTMLElement | undefined>(undefined);
@@ -56,14 +60,14 @@
 </PageHeader>
 
 <div class="flex flex-col gap-6 px-4 pb-4" style="--section-top: {headerH}px">
-  <MuseumSection progress={progress.museum} />
-  <AlmanacSection progress={progress.almanac} />
-  <AnimalsSection progress={progress.animals} />
-  <NpcsSection progress={progress.npcs} />
-  <CosmeticsSection progress={progress.cosmetics} />
+  <MuseumSection locale={data.locale} progress={progress.museum} />
+  <AlmanacSection locale={data.locale} progress={progress.almanac} />
+  <AnimalsSection locale={data.locale} progress={progress.animals} />
+  <NpcsSection locale={data.locale} progress={progress.npcs} />
+  <CosmeticsSection locale={data.locale} progress={progress.cosmetics} />
   <SkillsSection progress={progress.skills} />
   <RenownSection progress={progress.renown} />
-  <QuestsSection progress={progress.quests} />
+  <QuestsSection locale={data.locale} progress={progress.quests} />
   <MinesSection progress={progress.mines} />
 
   <AllCompleted isAllCompleted={overallProgress.completed >= overallProgress.total} />

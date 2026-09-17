@@ -6,6 +6,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { LOCALE_CODES } from "$lib/types/locale.js";
 import { recordEntries } from "$lib/utils.js";
 import { isNonEmptyArray } from "$lib/utils.js";
 
@@ -63,6 +64,7 @@ import { parseFiddle } from "./parse-fiddle.js";
 import { createRequirementContext } from "./requirements.js";
 
 import type { Source as AcquisitionSource } from "$lib/types/acquisition.js";
+import type { LocaleCode } from "$lib/types/locale.js";
 import type {
   CosmeticId,
   Item,
@@ -347,7 +349,7 @@ async function main(): Promise<void> {
   const animals = extractAnimals(fiddle);
   const petCosmetics = extractPetCosmetics(fiddle);
   const petSkins = extractPetSkins(fiddle);
-  const npcs = extractNpcs(fiddle);
+  const { localeNames: npcLocaleNames, npcs } = extractNpcs(fiddle, assetsDir);
   const cosmeticsRaw = extractCosmetics(fiddle);
   const cosmetics = applyExclusions(cosmeticsRaw);
   const { perkTierLevels, skills } = extractSkills(fiddle);
@@ -570,6 +572,8 @@ async function main(): Promise<void> {
   writeFileSync(resolve(APP_DATA_DIR, "locales.json"), localeManifestJson);
   console.log(`  Written: src/lib/data/locales.json (${localeManifest.length} locales)`);
 
+  writeLocaleChunks("npcs", npcLocaleNames);
+
   const extractSpritesFlag = args.includes("--sprites");
   if (extractSpritesFlag) {
     console.log("\nStep 5: Extracting item sprites...");
@@ -605,6 +609,26 @@ async function main(): Promise<void> {
 
 function toRecord(keys: string[]): Record<string, true> {
   return Object.fromEntries(keys.map((k) => [k, true as const]));
+}
+
+/**
+ * Writes one `src/lib/data/locales/<bcp47-tag>/<category>.json` chunk per locale. Chunks are
+ * emitted for every locale including `en`, which is both a locale in its own right and the
+ * fallback every other locale resolves through.
+ */
+function writeLocaleChunks(category: string, byLocale: Record<LocaleCode, Record<string, string>>) {
+  let totalBytes = 0;
+  for (const locale of LOCALE_CODES) {
+    const directory = resolve(APP_DATA_DIR, "locales", locale);
+    mkdirSync(directory, { recursive: true });
+    const chunkJson = `${JSON.stringify(byLocale[locale], null, 2)}\n`;
+    writeFileSync(resolve(directory, `${category}.json`), chunkJson);
+    totalBytes += chunkJson.length;
+  }
+  console.log(
+    `  Written: src/lib/data/locales/*/${category}.json ` +
+      `(${LOCALE_CODES.length.toString()} locales, ${(totalBytes / 1024).toFixed(1)} KB total)`,
+  );
 }
 
 void main();

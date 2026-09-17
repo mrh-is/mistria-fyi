@@ -1,6 +1,8 @@
 import { trackerData } from "$lib/data/index.js";
+import { getNameTable } from "$lib/data/names.js";
 import { recordMap } from "$lib/utils";
 
+import type { LocaleCode } from "$lib/types/locale.js";
 import type { QuestType, SkillId, StoreId } from "$lib/types/tracker-data";
 import type { SegmentLookups } from "$lib/utils/source-segments.js";
 
@@ -16,15 +18,20 @@ import type { SegmentLookups } from "$lib/utils/source-segments.js";
  */
 export function buildBaseSegmentLookups(
   redactedStoreIds: ReadonlySet<StoreId>,
+  locale: LocaleCode,
 ): Omit<SegmentLookups, "entityVisibility"> {
-  return { ...staticBaseSegmentLookups, redactedStoreIds };
+  return {
+    ...staticBaseSegmentLookups,
+    npcNames: getNameTable("npcs", locale),
+    redactedStoreIds,
+  };
 }
 
 const staticBaseSegmentLookups = buildStaticBaseSegmentLookups();
 
 function buildStaticBaseSegmentLookups(): Omit<
   SegmentLookups,
-  "entityVisibility" | "redactedStoreIds"
+  "entityVisibility" | "npcNames" | "redactedStoreIds"
 > {
   const perks = Object.fromEntries(
     Object.entries(trackerData.skills).flatMap(([skillId, skill]) =>
@@ -52,7 +59,6 @@ function buildStaticBaseSegmentLookups(): Omit<
     ),
     locationNames: {},
     monsterNames: {},
-    npcNames: recordMap(trackerData.npcs, ({ name }) => name),
     npcVisibility: recordMap(trackerData.npcs, ({ visibility }) => visibility),
     perks,
     perkTierLevels: trackerData.perkTierLevels,
