@@ -5,9 +5,10 @@ import { getName, getNameTable, nameCollator } from "$lib/data/names.js";
 import { LOCALE_CODES } from "$lib/types/locale.js";
 import { recordKeys } from "$lib/utils.js";
 
-import type { NpcId } from "$lib/types/tracker-data.js";
+import type { NpcId, SkillId } from "$lib/types/tracker-data.js";
 
 const balor = "balor" as NpcId;
+const farming = "farming" as SkillId;
 
 describe("getName", () => {
   it("resolves the localized name for a translated locale", () => {
@@ -21,6 +22,18 @@ describe("getName", () => {
         expect(getName("npcs", id, locale).length, `${id}/${locale}`).toBeGreaterThan(0);
       }
     }
+  });
+
+  it("resolves localized skill names without retaining them in structural data", () => {
+    expect(getName("skills", farming, "en")).toBe("Farming");
+    expect(getName("skills", farming, "ja")).toBe("農業");
+
+    for (const id of recordKeys(trackerData.skills)) {
+      for (const locale of LOCALE_CODES) {
+        expect(getName("skills", id, locale).length, `skills/${id}/${locale}`).toBeGreaterThan(0);
+      }
+    }
+    expect("name" in trackerData.skills[farming]).toBe(false);
   });
 
   // The locale-missing → English fallback path lives in `names.fallback.test.ts`, which needs a
