@@ -11,7 +11,7 @@ export const load: PageLoad = (event?: Partial<Parameters<PageLoad>[0]>) => {
   return {
     metadata: {
       description: m.almanac_page_description({}, { locale }),
-      title: m.almanac_page_title({}, { locale }),
+      title: m.category_almanac_name({}, { locale }),
     },
   };
 };
