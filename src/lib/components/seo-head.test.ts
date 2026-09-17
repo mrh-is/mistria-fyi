@@ -6,7 +6,7 @@ import { SITE_NAME, SITE_ORIGIN } from "$lib/data/page-metadata.js";
 import SeoHead from "./seo-head.svelte";
 
 describe("SEO head", () => {
-  it("renders one complete set of text metadata without claiming a share image", () => {
+  it("renders one complete set of text and share-image metadata", () => {
     const metadata = {
       description: "Track every museum collection and donation in Fields of Mistria.",
       title: "Museum",
@@ -23,11 +23,20 @@ describe("SEO head", () => {
     expect(head).toContain(`<meta property="og:url" content="${canonicalUrl}"/>`);
     expect(head).toContain('<meta property="og:type" content="website"/>');
     expect(head).toContain('<meta property="og:site_name" content="Mistria Field Guide"/>');
-    expect(head).toContain('<meta name="twitter:card" content="summary"/>');
+    expect(head).toContain(`<meta property="og:image" content="${SITE_ORIGIN}/og-image.png"/>`);
+    expect(head).toContain('<meta property="og:image:type" content="image/png"/>');
+    expect(head).toContain('<meta property="og:image:width" content="1200"/>');
+    expect(head).toContain('<meta property="og:image:height" content="630"/>');
+    expect(head).toContain(
+      '<meta property="og:image:alt" content="Mistria Field Guide showing an Everything progress stripe at 27% completion."/>',
+    );
+    expect(head).toContain('<meta name="twitter:card" content="summary_large_image"/>');
+    expect(head).toContain(`<meta name="twitter:image" content="${SITE_ORIGIN}/og-image.png"/>`);
+    expect(head).toContain(
+      '<meta name="twitter:image:alt" content="Mistria Field Guide showing an Everything progress stripe at 27% completion."/>',
+    );
     expect(head).toContain(`<meta name="twitter:title" content="${title}"/>`);
     expect(head).toContain(`<meta name="twitter:description" content="${metadata.description}"/>`);
-    expect(head).not.toContain("og:image");
-    expect(head).not.toContain("twitter:image");
     expect(head).not.toContain('name="robots"');
   });
 
