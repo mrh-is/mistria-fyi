@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import SearchResults from "$lib/components/search-results.svelte";
 import { trackerData } from "$lib/data/index.js";
+import { getName } from "$lib/data/names.js";
 import { searchItems } from "$lib/engine/search.js";
 import { userState } from "$lib/stores/user-state.svelte.js";
 import { recordEntries } from "$lib/utils.js";
@@ -34,11 +35,12 @@ describe("SearchResults completion dispatch", () => {
   });
 
   it("toggles and undoes a pet cosmetic without creating a bogus animal key", async () => {
-    const [id, cosmetic] = recordEntries(trackerData.pets.cosmetics)[0];
+    const [id] = recordEntries(trackerData.pets.cosmetics)[0];
     const animalKeys = Object.keys(userState.state.completed.animalCosmetics);
 
-    render(SearchResults, { locale: "en", query: cosmetic.name });
-    await fireEvent.click(screen.getByRole("button", { name: `Check ${cosmetic.name}` }));
+    const name = getName("pets/cosmetic_sets", id, "en");
+    render(SearchResults, { locale: "en", query: name });
+    await fireEvent.click(screen.getByRole("button", { name: `Check ${name}` }));
 
     expect(userState.state.completed.petCosmetics.has(id)).toBe(true);
     expect(Object.keys(userState.state.completed.animalCosmetics)).toEqual(animalKeys);

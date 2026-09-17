@@ -5,10 +5,12 @@ import { getName, getNameTable, nameCollator } from "$lib/data/names.js";
 import { LOCALE_CODES } from "$lib/types/locale.js";
 import { recordKeys } from "$lib/utils.js";
 
-import type { NpcId, SkillId } from "$lib/types/tracker-data.js";
+import type { FestivalId, NpcId, PetCosmeticSetId, SkillId } from "$lib/types/tracker-data.js";
 
 const balor = "balor" as NpcId;
 const farming = "farming" as SkillId;
+const harvestFestival = "harvest" as FestivalId;
+const halo = "halo" as PetCosmeticSetId;
 
 describe("getName", () => {
   it("resolves the localized name for a translated locale", () => {
@@ -34,6 +36,14 @@ describe("getName", () => {
       }
     }
     expect("name" in trackerData.skills[farming]).toBe(false);
+  });
+
+  it("resolves migrated direct and nested metadata names from non-Latin chunks", () => {
+    expect(getName("festivals", harvestFestival, "ja")).toBe("収穫祭");
+    expect(getName("pets/cosmetic_sets", halo, "ja")).toBe("天使の輪");
+    expect(getName("museum_wings", "archaeology/sets/aldarian", "ja")).toBe("アルダリア遺物セット");
+    expect("name" in trackerData.festivals[harvestFestival]).toBe(false);
+    expect("name" in trackerData.pets.cosmetics[halo]).toBe(false);
   });
 
   // The locale-missing → English fallback path lives in `names.fallback.test.ts`, which needs a

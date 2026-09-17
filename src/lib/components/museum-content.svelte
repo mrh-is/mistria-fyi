@@ -6,6 +6,7 @@
   import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData, trackerIndex } from "$lib/data/index.js";
+  import { getName } from "$lib/data/names.js";
   import { isItemDimmed, isRowVisible, shouldCountItem } from "$lib/engine/availability.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
@@ -143,10 +144,10 @@
     return name ? name.toLowerCase().includes(nameFilter.toLowerCase()) : false;
   }
 
-  function setConfig(set: MuseumWingSet): SetConfig {
+  function setConfig(wingId: MuseumWingId, setId: MuseumWingSetId, set: MuseumWingSet): SetConfig {
     return {
       baseItemCount: set.items.filter(isItemBaseScoped).length,
-      name: set.name,
+      name: getName("museum_wings", `${wingId}/sets/${setId}`, locale),
       scopedCompletedItemCount: set.items.filter(
         (itemId) => isItemScoped(itemId) && isItemComplete(itemId),
       ).length,
@@ -175,10 +176,10 @@
     }
   }
 
-  function wingConfig(wing: MuseumWing): WingConfig {
+  function wingConfig(wingId: MuseumWingId, wing: MuseumWing): WingConfig {
     const setConfigs = recordEntries(wing.sets)
       .map(([id, set]) => {
-        return { setId: id, ...setConfig(set) };
+        return { setId: id, ...setConfig(wingId, id, set) };
       })
       .filter(({ baseItemCount }) => baseItemCount > 0);
     return {
@@ -211,12 +212,12 @@
 {/if}
 
 {#each recordEntries(trackerData.museum) as [wingId, wing] (wingId)}
-  {@const config = wingConfig(wing)}
+  {@const config = wingConfig(wingId, wing)}
   {#if config.isVisible}
     <ExpandableSection
       count={config.scopedCompletedItemCount}
       forceOpen={!!nameFilter}
-      name={wing.name}
+      name={getName("museum_wings", wingId, locale)}
       reportCategory="museum wing"
       reportEntityId={wingId}
       total={config.scopedItemCount}

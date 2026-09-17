@@ -1,14 +1,27 @@
-import type { FestivalId, Season } from "$lib/types/tracker-data.js";
+import { LOCALE_CODES } from "$lib/types/locale.js";
+
+import { localizeField } from "../localize.js";
+
+import type { LocaleCode } from "$lib/types/locale.js";
+import type { FestivalId, Season, TrackerData } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
 
 export function extractFestivals(
   fiddle: ParsedGameData,
-): Record<FestivalId, { date: { day: number; season: Season }; name: string }> {
+  assetsDir: string,
+): {
+  festivals: TrackerData["festivals"];
+  localeNames: Record<LocaleCode, Record<FestivalId, string>>;
+} {
+  const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
+    LocaleCode,
+    Record<FestivalId, string>
+  >;
   const festivals = fiddle.festivals as Record<string, unknown> | undefined;
-  if (!festivals) return {};
+  if (!festivals) return { festivals: {}, localeNames };
 
-  const result = {} as Record<FestivalId, { date: { day: number; season: Season }; name: string }>;
+  const result = {} as TrackerData["festivals"];
   for (const festivalId of Object.keys(festivals).sort()) {
     if (festivalId === "default") continue;
 
@@ -35,12 +48,19 @@ export function extractFestivals(
       throw new Error(`Festival "${festivalId}" has no valid date`);
     }
 
-    result[festivalId as FestivalId] = {
-      date: { day, season: season as Season },
-      name,
-    };
+    result[festivalId as FestivalId] = { date: { day, season: season as Season } };
+    const { values } = localizeField(assetsDir, {
+      category: "festivals",
+      classification: "localizable",
+      englishValue: name,
+      field: "name",
+      id: festivalId,
+    });
+    for (const locale of LOCALE_CODES) {
+      localeNames[locale][festivalId as FestivalId] = values[locale];
+    }
   }
 
   console.log(`  Festivals: ${Object.keys(result).length}`);
-  return result;
+  return { festivals: result, localeNames };
 }

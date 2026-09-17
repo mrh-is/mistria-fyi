@@ -72,16 +72,13 @@ export type CosmeticSlot =
   | "suit"
   | "top"
   | "underwear";
-export interface DateType extends TrackerEntity {
-  name: string;
-}
+export type DateType = TrackerEntity;
 export interface Day {
   day: number;
   season: Season;
 }
 export interface Festival {
   date: Day;
-  name: string;
 }
 export type FestivalId = string & { readonly __brand: "FestivalId" };
 export interface FetchQuest extends Quest {
@@ -110,13 +107,11 @@ export interface MinesBiome {
 }
 export type MinesBiomeId = string & { readonly __brand: "BiomeId" };
 export interface MuseumWing {
-  name: string;
   sets: Record<MuseumWingSetId, MuseumWingSet>;
 }
 export type MuseumWingId = string & { readonly __brand: "WingId" };
 export interface MuseumWingSet {
   items: ItemId[];
-  name: string;
 }
 export type MuseumWingSetId = string & { readonly __brand: "SetId" };
 /**
@@ -132,22 +127,16 @@ export interface Npc {
 }
 export type NpcId = string & { readonly __brand: "NpcId" };
 export type NpcRelationship = "married" | "platonic" | "proposed" | "romantic" | "undecided";
-export interface Perk {
-  name: string;
-}
+export type Perk = object;
 export type PerkId = string & { readonly __brand: "PerkId" };
 export type PerkTier = Record<PerkId, Perk>;
-export interface PetCosmeticSet extends TrackerEntity {
-  name: string;
-}
+export type PetCosmeticSet = TrackerEntity;
 export type PetCosmeticSetId = string & { readonly __brand: "PetCosmeticSetId" };
 export interface PetSkin extends TrackerEntity {
   name: string;
 }
 export type PetSkinId = string & { readonly __brand: "PetSkinId" };
-export interface Quest extends TrackerEntity {
-  name: string;
-}
+export type Quest = TrackerEntity;
 export type QuestId = string & { readonly __brand: "QuestId" };
 export interface QuestOverrides {
   cooking: CookingQuest;
@@ -176,13 +165,10 @@ export interface Skill {
   perkTiers: [PerkTier, PerkTier, PerkTier, PerkTier, PerkTier];
 }
 export type SkillId = string & { readonly __brand: "SkillId" };
-export interface Spell extends TrackerEntity {
-  name: string;
-}
+export type Spell = TrackerEntity;
 export type SpellId = string & { readonly __brand: "SpellId" };
 export interface Store {
   article?: "the";
-  name: string;
   upgradeAction?: string;
   visibility?: VisibilityCondition;
 }

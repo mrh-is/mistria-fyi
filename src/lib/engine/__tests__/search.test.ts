@@ -422,8 +422,7 @@ describe("pregnancy quest filtering", () => {
 
   it("excludes individual pregnancy quests from search results", () => {
     for (const questId of pregnancyQuestIds) {
-      const quest = trackerData.quests.heart[questId];
-      const results = search(quest.name);
+      const results = search(getName("quests", questId, "en"));
       const match = results.find((r) => r.category === "quests" && r.id === questId);
       expect(match, `pregnancy quest ${questId} should not appear in search`).toBeUndefined();
     }
@@ -458,8 +457,8 @@ describe("museum results", () => {
 
 describe("pet cosmetic and skin result IDs", () => {
   it("prefixes pet cosmetic IDs with 'pet-cosmetic:'", () => {
-    const [firstId, firstCosmetic] = recordEntries(trackerData.pets.cosmetics)[0];
-    const results = search(firstCosmetic.name);
+    const [firstId] = recordEntries(trackerData.pets.cosmetics)[0];
+    const results = search(getName("pets/cosmetic_sets", firstId, "en"));
     const match = results.find(
       (r) => r.category === "animals" && r.id === `pet-cosmetic:${firstId}`,
     );
@@ -468,8 +467,8 @@ describe("pet cosmetic and skin result IDs", () => {
   });
 
   it("marks pet cosmetics as completed when in completed.petCosmetics", () => {
-    const [firstId, firstCosmetic] = recordEntries(trackerData.pets.cosmetics)[0];
-    const results = search(firstCosmetic.name, {
+    const [firstId] = recordEntries(trackerData.pets.cosmetics)[0];
+    const results = search(getName("pets/cosmetic_sets", firstId, "en"), {
       petCosmetics: new Set([firstId]),
     });
     const match = results.find(

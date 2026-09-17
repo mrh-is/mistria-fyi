@@ -1,7 +1,6 @@
 import type {
   MinesBiome,
   MinesBiomeId,
-  Perk,
   PerkId,
   QuestType,
   Season,
@@ -42,18 +41,17 @@ export type PartialPick<T, K extends keyof T> = {
   [P in K]: Partial<T[P]>;
 };
 
-export type RecipeSourceLookups = PartialPick<
-  TrackerData,
-  "festivals" | "stores" | "treasureChestTiers"
-> &
+export type RecipeSourceLookups = PartialPick<TrackerData, "treasureChestTiers"> &
   Pick<TrackerData, "perkTierLevels"> & {
     biomes: MinesBiome[];
+    festivals: Partial<Record<string, { date: { day: number; season: Season }; name: string }>>;
     itemNames: NameLookup<TrackerData["items"]>;
-    perks: Partial<Record<PerkId, Perk & { skillId: SkillId; tier: number }>>;
+    perks: Partial<Record<PerkId, { name: string; skillId: SkillId; tier: number }>>;
     questNames: NameLookup<TrackerData["quests"][QuestType]>;
     recipeNames: NameLookup<TrackerData["recipes"]>;
     redactedStoreIds?: ReadonlySet<StoreId>;
     skillNames: NameLookup<TrackerData["skills"]>;
+    stores: Partial<Record<StoreId, { article?: "the"; name: string; upgradeAction?: string }>>;
   };
 
 /** Shorten repetitive quest name prefixes */

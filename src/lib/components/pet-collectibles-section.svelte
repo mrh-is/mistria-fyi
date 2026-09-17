@@ -3,6 +3,7 @@
   import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData } from "$lib/data/index.js";
+  import { getName, nameCollator } from "$lib/data/names.js";
   import { isVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -34,8 +35,12 @@
 
   let petCosmeticEntries = $derived(
     Object.entries(trackerData.pets.cosmetics)
-      .map(([id, entry]) => ({ id: id as PetCosmeticSetId, ...entry }))
-      .sort((a, b) => a.name.localeCompare(b.name)),
+      .map(([id, entry]) => ({
+        id: id as PetCosmeticSetId,
+        ...entry,
+        name: getName("pets/cosmetic_sets", id as PetCosmeticSetId, locale),
+      }))
+      .sort((a, b) => nameCollator(locale).compare(a.name, b.name)),
   );
 
   let petSkinEntries = $derived(

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
+import { getName } from "$lib/data/names.js";
 
 import { buildBaseSegmentLookups } from "./segment-lookups.js";
 
@@ -11,8 +12,12 @@ describe("buildBaseSegmentLookups", () => {
     const lookups = buildBaseSegmentLookups(new Set(), "en");
     const expected = Object.entries(trackerData.skills).flatMap(([skillId, skill]) =>
       skill.perkTiers.flatMap((tier, index) =>
-        Object.entries(tier).map(
-          ([perkId, perk]) => [perkId, { name: perk.name, skillId, tier: index + 1 }] as const,
+        Object.keys(tier).map(
+          (perkId) =>
+            [
+              perkId,
+              { name: getName("perks", perkId as never, "en"), skillId, tier: index + 1 },
+            ] as const,
         ),
       ),
     );

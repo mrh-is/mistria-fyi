@@ -4,6 +4,7 @@
   import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData, trackerIndex } from "$lib/data/index.js";
+  import { getName, nameCollator } from "$lib/data/names.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -66,8 +67,7 @@
 
     userState.toggleDate(dateId);
     const completed = userState.state.completed.dates.has(dateId);
-    const date = trackerData.dates[dateId];
-    showUndoToast(date.name, completed, () => {
+    showUndoToast(getName("dates", dateId, locale), completed, () => {
       userState.toggleDate(dateId);
     });
     if (completed && allDatesComplete()) {
@@ -77,8 +77,12 @@
 
   let dates = $derived(
     Object.entries(trackerData.dates)
-      .map(([id, date]) => ({ ...date, id: id as DateId }))
-      .sort((a, b) => a.name.localeCompare(b.name)),
+      .map(([id, date]) => ({
+        ...date,
+        id: id as DateId,
+        name: getName("dates", id as DateId, locale),
+      }))
+      .sort((a, b) => nameCollator(locale).compare(a.name, b.name)),
   );
 
   registerSourceFilters("dates", () => trackerIndex.categorySourceTypes.dates);

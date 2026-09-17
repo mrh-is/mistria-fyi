@@ -6,6 +6,22 @@ import { extractMuseum } from "./museum.js";
 vi.mock("../parse-fiddle.js", () => ({
   sourceFileFor: () => "mock-source.toml",
 }));
+vi.mock("../localize.js", () => ({
+  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
+    fallbackLocales: [],
+    values: {
+      en: input.englishValue,
+      es: input.englishValue,
+      fr: input.englishValue,
+      ja: input.englishValue,
+      ko: input.englishValue,
+      ru: input.englishValue,
+      "zh-Hans": input.englishValue,
+      "zh-Hant": input.englishValue,
+    },
+  })),
+}));
+const assetsDir = "test-assets";
 
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({ museum_wings: {}, ui: {}, ...overrides });
@@ -18,7 +34,7 @@ describe("extractMuseum", () => {
 
   it("returns empty record when museum_wings is absent", () => {
     const fiddle = makeFiddleBase({ ui: {} });
-    expect(extractMuseum(fiddle)).toEqual({});
+    expect(extractMuseum(fiddle, assetsDir).museum).toEqual({});
   });
 
   it("extracts wings and sets as records", () => {
@@ -36,17 +52,18 @@ describe("extractMuseum", () => {
       },
     });
 
-    expect(extractMuseum(fiddle)).toEqual({
+    const { localeNames, museum } = extractMuseum(fiddle, assetsDir);
+    expect(museum).toEqual({
       archaeology: {
-        name: "Archaeology",
         sets: {
           aldarian: {
             items: ["sword", "shield"],
-            name: "Aldarian",
           },
         },
       },
     });
+    expect(localeNames.ja.archaeology).toBe("Archaeology");
+    expect(localeNames.ja["archaeology/sets/aldarian"]).toBe("Aldarian");
   });
 
   it("uses wing ID as name fallback", () => {
@@ -60,11 +77,10 @@ describe("extractMuseum", () => {
       },
     });
 
-    expect(extractMuseum(fiddle)).toEqual({
+    expect(extractMuseum(fiddle, assetsDir).museum).toEqual({
       gems: {
-        name: "gems",
         sets: {
-          rubies: { items: ["ruby"], name: "Rubies" },
+          rubies: { items: ["ruby"] },
         },
       },
     });
@@ -82,11 +98,10 @@ describe("extractMuseum", () => {
       },
     });
 
-    expect(extractMuseum(fiddle)).toEqual({
+    expect(extractMuseum(fiddle, assetsDir).museum).toEqual({
       archaeology: {
-        name: "Archaeology",
         sets: {
-          fossils: { items: ["bone"], name: "fossils" },
+          fossils: { items: ["bone"] },
         },
       },
     });
@@ -121,7 +136,7 @@ describe("extractMuseum", () => {
       },
     });
 
-    expect(Object.keys(extractMuseum(fiddle))).toEqual(["gamma", "beta"]);
+    expect(Object.keys(extractMuseum(fiddle, assetsDir).museum)).toEqual(["gamma", "beta"]);
   });
 
   it("skips wings referenced in UI order but missing from data", () => {
@@ -145,7 +160,7 @@ describe("extractMuseum", () => {
       },
     });
 
-    expect(Object.keys(extractMuseum(fiddle))).toEqual(["alpha"]);
+    expect(Object.keys(extractMuseum(fiddle, assetsDir).museum)).toEqual(["alpha"]);
   });
 
   it("respects set ordering from UI menus", () => {
@@ -172,7 +187,7 @@ describe("extractMuseum", () => {
       },
     });
 
-    const result = extractMuseum(fiddle);
+    const { museum: result } = extractMuseum(fiddle, assetsDir);
     const sets = result[Object.keys(result)[0] as keyof typeof result];
     expect(Object.keys((sets as { sets: Record<string, unknown> }).sets)).toEqual([
       "relics",
@@ -190,7 +205,7 @@ describe("extractMuseum", () => {
       },
     });
 
-    expect(extractMuseum(fiddle)).toEqual({});
+    expect(extractMuseum(fiddle, assetsDir).museum).toEqual({});
   });
 
   it("handles multiple wings with multiple sets", () => {
@@ -212,18 +227,16 @@ describe("extractMuseum", () => {
       },
     });
 
-    expect(extractMuseum(fiddle)).toEqual({
+    expect(extractMuseum(fiddle, assetsDir).museum).toEqual({
       archaeology: {
-        name: "Archaeology",
         sets: {
-          aldarian: { items: ["sword"], name: "Aldarian" },
-          fossils: { items: ["bone", "shell"], name: "Fossils" },
+          aldarian: { items: ["sword"] },
+          fossils: { items: ["bone", "shell"] },
         },
       },
       natural: {
-        name: "Natural History",
         sets: {
-          fish: { items: ["trout"], name: "Fish" },
+          fish: { items: ["trout"] },
         },
       },
     });
