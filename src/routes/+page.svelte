@@ -5,6 +5,7 @@
   import { Icon } from "$lib/components/icon/index.js";
   import OverallProgress from "$lib/components/overall-progress.svelte";
   import SearchResults from "$lib/components/search-results.svelte";
+  import WelcomeCard from "$lib/components/welcome-card.svelte";
   import { getAllProgress } from "$lib/engine/progress.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -43,6 +44,7 @@
     {#if toolbarState.searchQuery}
       <SearchResults locale={data.locale} query={toolbarState.searchQuery} />
     {:else}
+      <WelcomeCard />
       <h2 class="px-1 font-controls text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
         Index
       </h2>
