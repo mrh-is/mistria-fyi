@@ -6,6 +6,7 @@
   import { trackerData, trackerIndex } from "$lib/data/index.js";
   import { getName, nameCollator } from "$lib/data/names.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordEntries } from "$lib/utils";
@@ -105,7 +106,7 @@
 
 {#if categoryVisible || userState.state.showSpoilers}
   <ExpandableSection
-    name="Dates"
+    name={m.dates_section_name()}
     reportCategory="dates"
     count={completedCount}
     total={scopedDates.length}
@@ -129,9 +130,7 @@
         {/each}
       </TrackerRowStack>
       {#if visibleDates.length === 0}
-        <p class="py-4 text-center text-sm text-muted-foreground">
-          No items match the current filters
-        </p>
+        <p class="py-4 text-center text-sm text-muted-foreground">{m.almanac_no_matches()}</p>
       {/if}
     </div>
   </ExpandableSection>

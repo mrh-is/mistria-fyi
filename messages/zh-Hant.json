@@ -43,5 +43,32 @@
   "search_reset": "已重設「{name}」",
   "action_undo": "復原",
   "undo_marked_complete": "已將「{name}」標記為已完成",
-  "undo_unmarked": "已取消標記「{name}」"
+  "undo_unmarked": "已取消標記「{name}」",
+  "almanac_page_title": "年鑑",
+  "almanac_page_description": "追蹤《Fields of Mistria》中的作物、採集、釣魚、昆蟲、文物等年鑑項目。",
+  "almanac_no_matches": "沒有符合目前篩選條件的物品",
+  "almanac_loading_items": "正在載入物品…",
+  "almanac_show_more": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "顯示另外 {count} 個…"
+      }
+    }
+  ],
+  "dates_section_name": "約會",
+  "section_progress_label": "{name}，已完成 {completed}/{total}",
+  "spoiler_dialog_title": "完成劇透項目？",
+  "spoiler_dialog_description": "根據你記錄的進度，此項目仍處於隱藏狀態。確定要將其標記為已完成嗎？",
+  "spoiler_dialog_cancel": "取消",
+  "spoiler_dialog_confirm_item": "是，僅此項目",
+  "spoiler_dialog_confirm_and_update": "是，並更新我的進度",
+  "tracker_row_spoilered_item": "劇透項目",
+  "tracker_row_uncheck": "取消勾選{name}",
+  "tracker_row_check_spoilered": "勾選劇透項目",
+  "tracker_row_check": "勾選{name}",
+  "tracker_row_active_badge": "使用中",
+  "tracker_row_sources_label": "{name}的取得來源",
+  "all_completed_message": "全部完成！切換「顯示已完成」即可查看。"
 }

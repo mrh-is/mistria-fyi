@@ -49,5 +49,35 @@
   "search_reset": "«{name}» сброшено",
   "action_undo": "Отменить",
   "undo_marked_complete": "«{name}» отмечено как выполненное",
-  "undo_unmarked": "«{name}» отмечено как невыполненное"
+  "undo_unmarked": "«{name}» отмечено как невыполненное",
+  "almanac_page_title": "Альманах",
+  "almanac_page_description": "Отслеживайте урожай, собирательство, рыбалку, насекомых, артефакты и другие записи альманаха в Fields of Mistria.",
+  "almanac_no_matches": "Ничего не соответствует текущим фильтрам",
+  "almanac_loading_items": "Загрузка предметов…",
+  "almanac_show_more": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Показать ещё {count}…",
+        "countPlural=few": "Показать ещё {count}…",
+        "countPlural=many": "Показать ещё {count}…",
+        "countPlural=other": "Показать ещё {count}…"
+      }
+    }
+  ],
+  "dates_section_name": "Свидания",
+  "section_progress_label": "{name}, выполнено {completed} из {total}",
+  "spoiler_dialog_title": "Отметить заспойлеренный предмет как выполненный?",
+  "spoiler_dialog_description": "Этот предмет всё ещё скрыт на основе отслеживаемого прогресса. Вы уверены, что хотите отметить его как выполненный?",
+  "spoiler_dialog_cancel": "Отмена",
+  "spoiler_dialog_confirm_item": "Да, только этот предмет",
+  "spoiler_dialog_confirm_and_update": "Да, и обновить мой прогресс",
+  "tracker_row_spoilered_item": "Заспойлеренный предмет",
+  "tracker_row_uncheck": "Снять отметку с «{name}»",
+  "tracker_row_check_spoilered": "Отметить заспойлеренный предмет",
+  "tracker_row_check": "Отметить «{name}»",
+  "tracker_row_active_badge": "Активно",
+  "tracker_row_sources_label": "Источники «{name}»",
+  "all_completed_message": "Всё готово! Включите «Показать выполненные», чтобы просмотреть."
 }

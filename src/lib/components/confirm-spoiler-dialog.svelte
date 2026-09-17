@@ -2,6 +2,7 @@
   import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
   import { buttonVariants } from "$lib/components/ui/button/button.svelte";
   import { isConditionInvertible } from "$lib/engine/visibility.js";
+  import * as m from "$lib/paraglide/messages.js";
 
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
@@ -25,23 +26,22 @@
 <AlertDialog.Root bind:open>
   <AlertDialog.Content>
     <AlertDialog.Header>
-      <AlertDialog.Title>Complete spoilered item?</AlertDialog.Title>
+      <AlertDialog.Title>{m.spoiler_dialog_title()}</AlertDialog.Title>
       <AlertDialog.Description>
-        This item is still hidden based on your tracked progression. Are you sure you want to mark
-        it as completed?
+        {m.spoiler_dialog_description()}
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer class="flex-wrap">
-      <AlertDialog.Cancel onclick={onCancel}>Cancel</AlertDialog.Cancel>
+      <AlertDialog.Cancel onclick={onCancel}>{m.spoiler_dialog_cancel()}</AlertDialog.Cancel>
       <AlertDialog.Action
         class={`${buttonVariants({ variant: "outline" })} text-foreground`}
         onclick={onComplete}
       >
-        Yes, just this item
+        {m.spoiler_dialog_confirm_item()}
       </AlertDialog.Action>
       {#if invertible}
         <AlertDialog.Action onclick={onCompleteAndUpdate}>
-          Yes, and update my progress
+          {m.spoiler_dialog_confirm_and_update()}
         </AlertDialog.Action>
       {/if}
     </AlertDialog.Footer>
