@@ -390,5 +390,65 @@
   "transfer_unknown_error": "error desconocido",
   "merge_imported_from": "Importado desde {files}",
   "merge_transferred_items": "¡{count} elementos transferidos!",
-  "merge_qr_no_new_items": "Código QR escaneado con éxito: no hay elementos nuevos que agregar."
+  "merge_qr_no_new_items": "Código QR escaneado con éxito: no hay elementos nuevos que agregar.",
+  "merge_label_almanac": "Almanaque: +{count}",
+  "merge_label_almanac_recipes": "Recetas: +{count}",
+  "merge_label_animal_cosmetics": "Cosméticos de animales: +{count}",
+  "merge_label_animals": "Variantes de animales: +{count}",
+  "merge_label_cosmetics": "Cosméticos: +{count}",
+  "merge_label_dates": "Fechas: +{count}",
+  "merge_label_museum": "Donaciones al museo: +{count}",
+  "merge_label_npc_relationships": "Relaciones con PNJ: +{count}",
+  "merge_label_perks": "Ventajas: +{count}",
+  "merge_label_pet_cosmetics": "Cosméticos de mascotas: +{count}",
+  "merge_label_pet_skins": "Pieles de mascotas: +{count}",
+  "merge_label_quests": "Misiones: +{count}",
+  "merge_label_spells": "Hechizos: +{count}",
+  "merge_label_child_choice": "Elección del hijo actualizada",
+  "merge_label_has_upper_floor": "Piso superior desbloqueado",
+  "merge_label_reached_season": "Progreso de temporada actualizado",
+  "merge_label_mine_floor": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Piso de mina: +{count} piso",
+        "countPlural=many": "Piso de mina: +{count} pisos",
+        "countPlural=other": "Piso de mina: +{count} pisos"
+      }
+    }
+  ],
+  "merge_label_npc_levels": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Corazones de PNJ: +{count} relación actualizada",
+        "countPlural=many": "Corazones de PNJ: +{count} relaciones actualizadas",
+        "countPlural=other": "Corazones de PNJ: +{count} relaciones actualizadas"
+      }
+    }
+  ],
+  "merge_label_renown": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Renombre: +{count} nivel",
+        "countPlural=many": "Renombre: +{count} niveles",
+        "countPlural=other": "Renombre: +{count} niveles"
+      }
+    }
+  ],
+  "merge_label_skill_levels": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Habilidades: +{count} habilidad actualizada",
+        "countPlural=many": "Habilidades: +{count} habilidades actualizadas",
+        "countPlural=other": "Habilidades: +{count} habilidades actualizadas"
+      }
+    }
+  ]
 }

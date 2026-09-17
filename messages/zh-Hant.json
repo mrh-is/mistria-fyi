@@ -384,5 +384,57 @@
   "transfer_unknown_error": "未知錯誤",
   "merge_imported_from": "已從 {files} 匯入",
   "merge_transferred_items": "已傳輸 {count} 個項目！",
-  "merge_qr_no_new_items": "QR code 掃描成功——沒有需要新增的項目。"
+  "merge_qr_no_new_items": "QR code 掃描成功——沒有需要新增的項目。",
+  "merge_label_almanac": "年鑑：+{count}",
+  "merge_label_almanac_recipes": "食譜：+{count}",
+  "merge_label_animal_cosmetics": "動物裝飾：+{count}",
+  "merge_label_animals": "動物變體：+{count}",
+  "merge_label_cosmetics": "裝飾：+{count}",
+  "merge_label_dates": "日期：+{count}",
+  "merge_label_museum": "博物館捐贈：+{count}",
+  "merge_label_npc_relationships": "NPC關係：+{count}",
+  "merge_label_perks": "特典：+{count}",
+  "merge_label_pet_cosmetics": "寵物裝飾：+{count}",
+  "merge_label_pet_skins": "寵物皮膚：+{count}",
+  "merge_label_quests": "任務：+{count}",
+  "merge_label_spells": "法術：+{count}",
+  "merge_label_child_choice": "已更新孩子的選擇",
+  "merge_label_has_upper_floor": "已解鎖上層",
+  "merge_label_reached_season": "已更新季節進度",
+  "merge_label_mine_floor": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "礦井層數：+{count}層"
+      }
+    }
+  ],
+  "merge_label_npc_levels": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "NPC好感度：已更新{count}段關係"
+      }
+    }
+  ],
+  "merge_label_renown": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "名望：+{count}級"
+      }
+    }
+  ],
+  "merge_label_skill_levels": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "技能：已更新{count}項技能"
+      }
+    }
+  ]
 }
