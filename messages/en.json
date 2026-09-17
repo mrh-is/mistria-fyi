@@ -387,5 +387,61 @@
   "transfer_unknown_error": "unknown error",
   "merge_imported_from": "Imported from {files}",
   "merge_transferred_items": "Transferred {count} items!",
-  "merge_qr_no_new_items": "QR code scanned successfully — no new items to add."
+  "merge_qr_no_new_items": "QR code scanned successfully — no new items to add.",
+  "merge_label_almanac": "Almanac: +{count}",
+  "merge_label_almanac_recipes": "Recipes: +{count}",
+  "merge_label_animal_cosmetics": "Animal cosmetics: +{count}",
+  "merge_label_animals": "Animal variants: +{count}",
+  "merge_label_cosmetics": "Cosmetics: +{count}",
+  "merge_label_dates": "Dates: +{count}",
+  "merge_label_museum": "Museum donations: +{count}",
+  "merge_label_npc_relationships": "NPC relationships: +{count}",
+  "merge_label_perks": "Perks: +{count}",
+  "merge_label_pet_cosmetics": "Pet cosmetics: +{count}",
+  "merge_label_pet_skins": "Pet skins: +{count}",
+  "merge_label_quests": "Quests: +{count}",
+  "merge_label_spells": "Spells: +{count}",
+  "merge_label_child_choice": "Child choice updated",
+  "merge_label_has_upper_floor": "Upper floor unlocked",
+  "merge_label_reached_season": "Season progression updated",
+  "merge_label_mine_floor": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Mine floor: +{count} floor",
+        "countPlural=other": "Mine floor: +{count} floors"
+      }
+    }
+  ],
+  "merge_label_npc_levels": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "NPC hearts: +{count} relationship updated",
+        "countPlural=other": "NPC hearts: +{count} relationships updated"
+      }
+    }
+  ],
+  "merge_label_renown": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Renown: +{count} level",
+        "countPlural=other": "Renown: +{count} levels"
+      }
+    }
+  ],
+  "merge_label_skill_levels": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Skills: +{count} skill updated",
+        "countPlural=other": "Skills: +{count} skills updated"
+      }
+    }
+  ]
 }

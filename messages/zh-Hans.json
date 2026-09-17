@@ -384,5 +384,57 @@
   "transfer_unknown_error": "未知错误",
   "merge_imported_from": "已从 {files} 导入",
   "merge_transferred_items": "已传输 {count} 个项目！",
-  "merge_qr_no_new_items": "二维码扫描成功——没有需要添加的新项目。"
+  "merge_qr_no_new_items": "二维码扫描成功——没有需要添加的新项目。",
+  "merge_label_almanac": "年鉴：+{count}",
+  "merge_label_almanac_recipes": "食谱：+{count}",
+  "merge_label_animal_cosmetics": "动物装饰：+{count}",
+  "merge_label_animals": "动物变体：+{count}",
+  "merge_label_cosmetics": "装饰：+{count}",
+  "merge_label_dates": "日期：+{count}",
+  "merge_label_museum": "博物馆捐赠：+{count}",
+  "merge_label_npc_relationships": "NPC关系：+{count}",
+  "merge_label_perks": "特典：+{count}",
+  "merge_label_pet_cosmetics": "宠物装饰：+{count}",
+  "merge_label_pet_skins": "宠物皮肤：+{count}",
+  "merge_label_quests": "任务：+{count}",
+  "merge_label_spells": "法术：+{count}",
+  "merge_label_child_choice": "已更新孩子的选择",
+  "merge_label_has_upper_floor": "已解锁上层",
+  "merge_label_reached_season": "已更新季节进度",
+  "merge_label_mine_floor": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "矿井层数：+{count}层"
+      }
+    }
+  ],
+  "merge_label_npc_levels": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "NPC好感度：已更新{count}段关系"
+      }
+    }
+  ],
+  "merge_label_renown": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "名望：+{count}级"
+      }
+    }
+  ],
+  "merge_label_skill_levels": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "技能：已更新{count}项技能"
+      }
+    }
+  ]
 }

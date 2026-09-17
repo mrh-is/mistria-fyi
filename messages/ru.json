@@ -393,5 +393,69 @@
   "transfer_unknown_error": "неизвестная ошибка",
   "merge_imported_from": "Импортировано из {files}",
   "merge_transferred_items": "Перенесено предметов: {count}!",
-  "merge_qr_no_new_items": "QR-код успешно отсканирован — новых элементов не найдено."
+  "merge_qr_no_new_items": "QR-код успешно отсканирован — новых элементов не найдено.",
+  "merge_label_almanac": "Альманах: +{count}",
+  "merge_label_almanac_recipes": "Рецепты: +{count}",
+  "merge_label_animal_cosmetics": "Косметика животных: +{count}",
+  "merge_label_animals": "Варианты животных: +{count}",
+  "merge_label_cosmetics": "Косметика: +{count}",
+  "merge_label_dates": "Даты: +{count}",
+  "merge_label_museum": "Пожертвования музею: +{count}",
+  "merge_label_npc_relationships": "Отношения с NPC: +{count}",
+  "merge_label_perks": "Перки: +{count}",
+  "merge_label_pet_cosmetics": "Косметика питомцев: +{count}",
+  "merge_label_pet_skins": "Скины питомцев: +{count}",
+  "merge_label_quests": "Задания: +{count}",
+  "merge_label_spells": "Заклинания: +{count}",
+  "merge_label_child_choice": "Выбор ребёнка обновлён",
+  "merge_label_has_upper_floor": "Верхний этаж разблокирован",
+  "merge_label_reached_season": "Прогресс сезона обновлён",
+  "merge_label_mine_floor": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Шахтный этаж: +{count} этаж",
+        "countPlural=few": "Шахтный этаж: +{count} этажа",
+        "countPlural=many": "Шахтный этаж: +{count} этажей",
+        "countPlural=other": "Шахтный этаж: +{count} этажа"
+      }
+    }
+  ],
+  "merge_label_npc_levels": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Симпатия NPC: +{count} отношение обновлено",
+        "countPlural=few": "Симпатия NPC: +{count} отношения обновлено",
+        "countPlural=many": "Симпатия NPC: +{count} отношений обновлено",
+        "countPlural=other": "Симпатия NPC: +{count} отношения обновлено"
+      }
+    }
+  ],
+  "merge_label_renown": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Известность: +{count} уровень",
+        "countPlural=few": "Известность: +{count} уровня",
+        "countPlural=many": "Известность: +{count} уровней",
+        "countPlural=other": "Известность: +{count} уровня"
+      }
+    }
+  ],
+  "merge_label_skill_levels": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Навыки: +{count} навык обновлён",
+        "countPlural=few": "Навыки: +{count} навыка обновлено",
+        "countPlural=many": "Навыки: +{count} навыков обновлено",
+        "countPlural=other": "Навыки: +{count} навыка обновлено"
+      }
+    }
+  ]
 }

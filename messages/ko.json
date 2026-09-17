@@ -384,5 +384,57 @@
   "transfer_unknown_error": "알 수 없는 오류",
   "merge_imported_from": "{files}에서 가져왔습니다",
   "merge_transferred_items": "{count}개 항목을 전송했습니다!",
-  "merge_qr_no_new_items": "QR 코드 스캔에 성공했지만 추가할 새 항목이 없습니다."
+  "merge_qr_no_new_items": "QR 코드 스캔에 성공했지만 추가할 새 항목이 없습니다.",
+  "merge_label_almanac": "알마낙: +{count}",
+  "merge_label_almanac_recipes": "레시피: +{count}",
+  "merge_label_animal_cosmetics": "동물 코스메틱: +{count}",
+  "merge_label_animals": "동물 변형: +{count}",
+  "merge_label_cosmetics": "코스메틱: +{count}",
+  "merge_label_dates": "날짜: +{count}",
+  "merge_label_museum": "박물관 기증: +{count}",
+  "merge_label_npc_relationships": "NPC 관계: +{count}",
+  "merge_label_perks": "특전: +{count}",
+  "merge_label_pet_cosmetics": "펫 코스메틱: +{count}",
+  "merge_label_pet_skins": "펫 스킨: +{count}",
+  "merge_label_quests": "퀘스트: +{count}",
+  "merge_label_spells": "주문: +{count}",
+  "merge_label_child_choice": "자녀 선택 업데이트됨",
+  "merge_label_has_upper_floor": "위층 해제됨",
+  "merge_label_reached_season": "계절 진행 업데이트됨",
+  "merge_label_mine_floor": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "광산 층: +{count}층"
+      }
+    }
+  ],
+  "merge_label_npc_levels": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "NPC 호감도: 관계 {count}개 업데이트됨"
+      }
+    }
+  ],
+  "merge_label_renown": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "명성: +{count}레벨"
+      }
+    }
+  ],
+  "merge_label_skill_levels": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "스킬: {count}개 업데이트됨"
+      }
+    }
+  ]
 }
