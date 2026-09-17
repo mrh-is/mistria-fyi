@@ -1,4 +1,5 @@
 import type { PageMetadata } from "$lib/data/page-metadata.js";
+import type { LocaleCode } from "$lib/types/locale.js";
 
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
@@ -34,6 +35,7 @@ declare global {
     // interface Error {}
     // interface Locals {}
     interface PageData {
+      locale: LocaleCode;
       metadata: PageMetadata;
     }
     // interface PageState {}

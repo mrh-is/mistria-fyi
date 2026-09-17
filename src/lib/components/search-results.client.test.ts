@@ -23,7 +23,7 @@ describe("SearchResults completion dispatch", () => {
     const { id, name } = museumOnlyFixture();
     const animalKeys = Object.keys(userState.state.completed.animalCosmetics);
 
-    render(SearchResults, { query: name });
+    render(SearchResults, { locale: "en", query: name });
     await fireEvent.click(screen.getByRole("button", { name: `Check ${name}` }));
 
     expect(userState.state.completed.museum.has(id)).toBe(true);
@@ -37,7 +37,7 @@ describe("SearchResults completion dispatch", () => {
     const [id, cosmetic] = recordEntries(trackerData.pets.cosmetics)[0];
     const animalKeys = Object.keys(userState.state.completed.animalCosmetics);
 
-    render(SearchResults, { query: cosmetic.name });
+    render(SearchResults, { locale: "en", query: cosmetic.name });
     await fireEvent.click(screen.getByRole("button", { name: `Check ${cosmetic.name}` }));
 
     expect(userState.state.completed.petCosmetics.has(id)).toBe(true);
@@ -50,7 +50,7 @@ describe("SearchResults completion dispatch", () => {
     const [id, skin] = recordEntries(trackerData.pets.skins)[0];
     const animalKeys = Object.keys(userState.state.completed.animalCosmetics);
 
-    render(SearchResults, { query: skin.name });
+    render(SearchResults, { locale: "en", query: skin.name });
     await fireEvent.click(screen.getByRole("button", { name: `Check ${skin.name}` }));
 
     expect(userState.state.completed.petSkins.has(id)).toBe(true);
@@ -70,6 +70,7 @@ function museumOnlyFixture(): { id: ItemId; name: string } {
           userState.state.completed,
           userState.state.worldState,
           userState.progressionState,
+          "en",
         );
         if (results.some((result) => result.category === "museum" && result.id === id)) {
           return { id, name };

@@ -12,9 +12,13 @@
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
+  import type { LocaleCode } from "$lib/types/locale.js";
   import type { PetCosmeticSetId, PetSkinId } from "$lib/types/tracker-data.js";
 
-  let { areAllAnimalsComplete }: { areAllAnimalsComplete: () => boolean } = $props();
+  let {
+    areAllAnimalsComplete,
+    locale,
+  }: { areAllAnimalsComplete: () => boolean; locale: LocaleCode } = $props();
 
   let redactedStoreIds = $derived(
     new Set(
@@ -26,7 +30,7 @@
     ),
   );
 
-  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
+  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
 
   let petCosmeticEntries = $derived(
     Object.entries(trackerData.pets.cosmetics)

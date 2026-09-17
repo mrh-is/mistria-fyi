@@ -9,6 +9,7 @@
   import AnimalVariantsSection from "./animal-variants-section.svelte";
   import PetCollectiblesSection from "./pet-collectibles-section.svelte";
 
+  import type { LocaleCode } from "$lib/types/locale.js";
   import type {
     AnimalId,
     AnimalVariant,
@@ -17,6 +18,8 @@
     PetCosmeticSetId,
     PetSkinId,
   } from "$lib/types/tracker-data";
+
+  let { locale }: { locale: LocaleCode } = $props();
 
   function areAllAnimalsComplete(): boolean {
     const allAnimals = Object.keys(trackerData.animals).every((id) =>
@@ -68,8 +71,8 @@
 
 <AnimalVariantsSection {areAllAnimalsComplete} {isAnimalComplete} {isSpeciesVisible} />
 
-<AnimalCosmeticsSection {areAllAnimalsComplete} {isAnimalComplete} {isSpeciesVisible} />
+<AnimalCosmeticsSection {areAllAnimalsComplete} {isAnimalComplete} {isSpeciesVisible} {locale} />
 
-<PetCollectiblesSection {areAllAnimalsComplete} />
+<PetCollectiblesSection {areAllAnimalsComplete} {locale} />
 
 <AllCompleted isAllCompleted={areAllAnimalsComplete()} />

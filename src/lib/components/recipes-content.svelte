@@ -21,8 +21,11 @@
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { Source } from "$lib/types/acquisition";
+  import type { LocaleCode } from "$lib/types/locale.js";
   import type { Item, RecipeId } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
+
+  let { locale }: { locale: LocaleCode } = $props();
 
   const spoilerGuard = createSpoilerGuard();
 
@@ -48,7 +51,7 @@
   }
 
   // The current recipe condition is added when each tree is built.
-  let baseSegmentLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
+  let baseSegmentLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
 
   interface RecipeEntry {
     iconSprite: string;

@@ -5,8 +5,9 @@
   import SectionHeader from "./SectionHeader.svelte";
 
   import type { CategoryProgress } from "$lib/engine/progress.js";
+  import type { LocaleCode } from "$lib/types/locale.js";
 
-  const { progress }: { progress: CategoryProgress } = $props();
+  const { locale, progress }: { locale: LocaleCode; progress: CategoryProgress } = $props();
 </script>
 
 {#if progress.completed < progress.total || userState.state.showCompleted}
@@ -16,6 +17,6 @@
     style="--primary: var(--cat-almanac)"
   >
     <SectionHeader key="almanac" {progress} />
-    <AlmanacContent />
+    <AlmanacContent {locale} />
   </section>
 {/if}
