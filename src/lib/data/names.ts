@@ -1,6 +1,7 @@
 import { LOCALE_CODES } from "$lib/types/locale.js";
 
 import type { LocaleCode } from "$lib/types/locale.js";
+import type { NpcId } from "$lib/types/tracker-data.js";
 
 /**
  * Categories whose player-facing names have been migrated out of `tracker-data.json` and into
@@ -9,6 +10,9 @@ import type { LocaleCode } from "$lib/types/locale.js";
  */
 export type LocalizedCategory = "npcs";
 
+interface LocalizedCategoryId {
+  npcs: NpcId;
+}
 type NameChunk = Record<string, string>;
 
 /**
@@ -35,7 +39,11 @@ const collators = new Map<LocaleCode, Intl.Collator>();
  * read from module-level state: SSR on Cloudflare Workers serves concurrent requests in different
  * locales from one module instance.
  */
-export function getName(category: LocalizedCategory, id: string, locale: LocaleCode): string {
+export function getName<Category extends LocalizedCategory>(
+  category: Category,
+  id: LocalizedCategoryId[Category],
+  locale: LocaleCode,
+): string {
   const localized = chunks.get(chunkKey(locale, category))?.[id];
   if (localized !== undefined) return localized;
 
@@ -46,10 +54,15 @@ export function getName(category: LocalizedCategory, id: string, locale: LocaleC
 }
 
 /** The whole `category` chunk for `locale`, English-merged. Use for bulk lookups (sorting, search). */
-export function getNameTable(category: LocalizedCategory, locale: LocaleCode): Readonly<NameChunk> {
+export function getNameTable<Category extends LocalizedCategory>(
+  category: Category,
+  locale: LocaleCode,
+): Readonly<Record<LocalizedCategoryId[Category], string>> {
   const english = chunks.get(chunkKey("en", category)) ?? {};
-  if (locale === "en") return english;
-  return { ...english, ...chunks.get(chunkKey(locale, category)) };
+  if (locale === "en") return english as Readonly<Record<LocalizedCategoryId[Category], string>>;
+  return { ...english, ...chunks.get(chunkKey(locale, category)) } as Readonly<
+    Record<LocalizedCategoryId[Category], string>
+  >;
 }
 
 /**
