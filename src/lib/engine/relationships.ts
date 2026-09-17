@@ -2,20 +2,26 @@ import { trackerData } from "$lib/data/index.js";
 
 import type { NpcId, NpcRelationship } from "$lib/types/tracker-data.js";
 
-export interface RelationshipAction {
-  label: string;
-  value: RelationshipActionValue;
-}
-
 export type RelationshipActionValue =
   "married" | "no" | "platonic" | "proposed" | "romantic" | "yes";
 
 export interface RelationshipPresentation {
-  actions: RelationshipAction[];
-  label?: string;
-  prompt?: "Choose path" | "Household" | "Next note";
-  warning?: string;
+  actions: RelationshipActionValue[];
+  prompt?: RelationshipPrompt;
+  status?: RelationshipStatus;
+  warning?: boolean;
 }
+
+export type RelationshipPrompt = "choose_path" | "household" | "next_note";
+
+export type RelationshipStatus =
+  | "best_friends"
+  | "dating"
+  | "engaged"
+  | "married"
+  | "married_child_free"
+  | "married_kids"
+  | "path_not_chosen";
 
 interface RelationshipPresentationInput {
   childChoice: "no" | "undeclared" | "yes";
@@ -72,53 +78,47 @@ export function relationshipPresentation({
   relationship,
 }: RelationshipPresentationInput): RelationshipPresentation {
   if (marriedNpc !== null && marriedNpc !== npcId) {
-    return { actions: [], label: "Best friends" };
+    return { actions: [], status: "best_friends" };
   }
 
   if (relationship === "undecided") {
     if (level < 8) return { actions: [] };
     return {
-      actions: [
-        { label: "Best friends", value: "platonic" },
-        { label: "Start dating", value: "romantic" },
-      ],
-      label: "Path not chosen",
-      prompt: "Choose path",
+      actions: ["platonic", "romantic"],
+      prompt: "choose_path",
+      status: "path_not_chosen",
     };
   }
 
-  if (relationship === "platonic") return { actions: [], label: "Best friends" };
+  if (relationship === "platonic") return { actions: [], status: "best_friends" };
 
   if (relationship === "romantic") {
     return {
-      actions: level >= 10 ? [{ label: "Record proposal", value: "proposed" }] : [],
-      label: "Dating",
-      prompt: level >= 10 ? "Next note" : undefined,
+      actions: level >= 10 ? ["proposed"] : [],
+      prompt: level >= 10 ? "next_note" : undefined,
+      status: "dating",
     };
   }
 
   if (relationship === "proposed") {
     return {
-      actions: [{ label: "Record marriage", value: "married" }],
-      label: "Engaged",
-      prompt: "Next note",
-      warning: "Marriage closes every other romantic path.",
+      actions: ["married"],
+      prompt: "next_note",
+      status: "engaged",
+      warning: true,
     };
   }
 
   if (childChoice === "undeclared") {
     return {
-      actions: [
-        { label: "Kids", value: "yes" },
-        { label: "Child-free", value: "no" },
-      ],
-      label: "Married",
-      prompt: "Household",
+      actions: ["yes", "no"],
+      prompt: "household",
+      status: "married",
     };
   }
 
   return {
     actions: [],
-    label: childChoice === "yes" ? "Married · kids" : "Married · child-free",
+    status: childChoice === "yes" ? "married_kids" : "married_child_free",
   };
 }

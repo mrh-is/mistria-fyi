@@ -168,5 +168,5 @@
 {/if}
 
 {#if toolbarState.sourceFilterActive && visibleCosmeticEntries.length === 0 && visibleSkinEntries.length === 0}
-  <p class="py-4 text-center text-sm text-muted-foreground">{m.animals_no_matches()}</p>
+  <p class="py-4 text-center text-sm text-muted-foreground">{m.no_items_match_filters()}</p>
 {/if}

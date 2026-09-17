@@ -11,6 +11,7 @@
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
   import { getMarriedNpc } from "$lib/engine/relationships.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordEntries } from "$lib/utils";
@@ -138,14 +139,22 @@
     return trackerData.quests[questType][questId].visibility;
   }
 
-  const typeLabels: Record<QuestType, string> = {
-    cooking: "Cooking Challenges",
-    crown: "Crown Quests",
-    fetch: "Fetch Quests",
-    heart: "Heart Quests",
-    mission: "Mission Quests",
-    story: "Story Quests",
-  };
+  function typeLabel(type: QuestType): string {
+    switch (type) {
+      case "cooking":
+        return m.quest_type_cooking();
+      case "crown":
+        return m.quest_type_crown();
+      case "fetch":
+        return m.quest_type_fetch();
+      case "heart":
+        return m.quest_type_heart();
+      case "mission":
+        return m.quest_type_mission();
+      case "story":
+        return m.quest_type_story();
+    }
+  }
 
   const typeOrder = ["story", "heart", "fetch", "crown", "mission", "cooking"] as QuestType[];
 
@@ -167,12 +176,12 @@
     const isCompleted = activeQuestId ? getQuestState(activeQuestId) === "completed" : false;
 
     return {
-      displayName: "A Craving",
+      displayName: m.quest_craving_name(),
       heartLevel: 99,
       id: (activeQuestId ?? "craving_synthetic") as QuestId,
       isCompleted,
       isCraving: true,
-      name: "A Craving",
+      name: m.quest_craving_name(),
       npc: marriedNpc ?? undefined,
       rewardRecipeName: undefined,
       shouldShow,
@@ -186,22 +195,25 @@
     const displayName = quest.displayName;
     let message: string;
     if (newState === "obtained") {
-      message = `Marked "${displayName}" obtained`;
+      message = m.quest_marked_obtained({ name: displayName });
     } else if (newState === "completed") {
       if (newlyAdded.length === 1) {
         const names = recipeDisplayNames(newlyAdded);
-        message = `Marked "${displayName}" completed and unlocked "${names[0]}"`;
+        message = m.quest_marked_completed_with_recipe({ name: displayName, recipe: names[0] });
       } else if (newlyAdded.length > 1) {
-        message = `Marked "${displayName}" completed and unlocked ${newlyAdded.length.toString()} recipes`;
+        message = m.quest_marked_completed_with_recipes({
+          count: newlyAdded.length,
+          name: displayName,
+        });
       } else {
-        message = `Marked "${displayName}" completed`;
+        message = m.quest_marked_completed({ name: displayName });
       }
     } else {
-      message = `Reset "${displayName}"`;
+      message = m.quest_reset({ name: displayName });
     }
     toast(message, {
       cancel: {
-        label: "Undo",
+        label: m.action_undo(),
         onClick: () => {
           userState.undoQuestWithRecipes(quest.id, newlyAdded);
         },
@@ -301,7 +313,7 @@
     return done ? userState.state.showCompleted : true;
   })}
   {#if quests.length > 0}
-    <SpoilerSection name={typeLabels[questType]} revealed={categoryRevealed}>
+    <SpoilerSection name={typeLabel(questType)} revealed={categoryRevealed}>
       {#if visibleQuests.length > 0}
         {@const shownQuests = quests.filter(
           (q) =>
@@ -312,7 +324,7 @@
           count={shownQuests.filter((q) =>
             q.isCraving ? q.isCompleted : getQuestState(q.id) === "completed",
           ).length}
-          name={typeLabels[questType]}
+          name={typeLabel(questType)}
           reportCategory="quest section"
           reportEntityId={questType}
           total={shownQuests.length}
@@ -366,7 +378,7 @@
         </ExpandableSection>
       {:else}
         <p class="py-4 text-center text-sm text-muted-foreground">
-          No items match the current filters
+          {m.no_items_match_filters()}
         </p>
       {/if}
     </SpoilerSection>

@@ -9,6 +9,7 @@
   import { getName } from "$lib/data/names.js";
   import { isItemDimmed, isRowVisible, shouldCountItem } from "$lib/engine/availability.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordEntries, recordValues } from "$lib/utils";
@@ -261,7 +262,7 @@
           </TrackerRowStack>
           {#if set.visibleItems.length === 0}
             <p class="py-4 text-center text-sm text-muted-foreground">
-              No items match the current filters
+              {m.no_items_match_filters()}
             </p>
           {/if}
         </ExpandableSection>

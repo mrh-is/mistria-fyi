@@ -280,7 +280,7 @@
         {/each}
       </TrackerRowStack>
       {#if filteredItems.length === 0}
-        <p class="py-4 text-center text-sm text-muted-foreground">{m.almanac_no_matches()}</p>
+        <p class="py-4 text-center text-sm text-muted-foreground">{m.no_items_match_filters()}</p>
       {:else if !nameFilter && renderedCount === 0}
         <p class="py-4 text-center text-sm text-muted-foreground">{m.almanac_loading_items()}</p>
       {/if}
@@ -296,7 +296,7 @@
               }
             }}
           >
-            {m.almanac_show_more({ count: filteredItems.length - SECTION_LIMIT })}
+            {m.show_more_count({ count: filteredItems.length - SECTION_LIMIT })}
           </Button>
         </div>
       {/if}

@@ -6,6 +6,7 @@
   import { trackerData } from "$lib/data/index.js";
   import { MAX_SKILL_LEVEL } from "$lib/engine/progress.js";
   import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordKeys } from "$lib/utils";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
@@ -100,10 +101,10 @@
   <Stepper
     decrementDisabled={level <= 0}
     incrementDisabled={level >= MAX_SKILL_LEVEL}
-    decrementLabel="Decrease {name} level"
-    incrementLabel="Increase {name} level"
-    label="{name} level"
-    value="{level} of {MAX_SKILL_LEVEL}"
+    decrementLabel={m.skill_decrease_level({ name })}
+    incrementLabel={m.skill_increase_level({ name })}
+    label={m.skill_level_label({ name })}
+    value={m.stepper_level_progress({ level, max: MAX_SKILL_LEVEL })}
     onDecrement={() => {
       setLevelWithCelebration(level - 1);
     }}
@@ -122,7 +123,7 @@
 
       {#if editing}
         <Input
-          aria-label="{name} level"
+          aria-label={m.skill_level_label({ name })}
           bind:ref={editInputRef}
           class="h-8 w-16 shrink-0 text-center font-mono text-xs"
           type="number"
@@ -139,7 +140,7 @@
         <button
           class="skill-count"
           type="button"
-          aria-label="Edit {name} level, currently {level} of {MAX_SKILL_LEVEL}"
+          aria-label={m.skill_edit_level_aria({ level, max: MAX_SKILL_LEVEL, name })}
           onclick={startEditing}
         >
           {level} / {MAX_SKILL_LEVEL}
