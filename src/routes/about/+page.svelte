@@ -4,6 +4,7 @@
   import AiDisclosureDialog from "$lib/components/ai-disclosure-dialog.svelte";
   import PageHeader from "$lib/components/page-header.svelte";
   import { trackerData } from "$lib/data";
+  import * as m from "$lib/paraglide/messages.js";
   import { localizedHref } from "$lib/utils/localized-href.js";
 
   let aiDisclosureOpen = $state(false);
@@ -15,54 +16,52 @@
   }
 </script>
 
-<PageHeader title="About" backLabel="Go back" onback={goBack} />
+<PageHeader title={m.about_title()} backLabel={m.common_go_back()} onback={goBack} />
 
 <div class="about-page">
   <section>
-    <h2>Project status</h2>
+    <h2>{m.about_status_heading()}</h2>
     <p>
-      The Mistria Field Guide is an independent, unofficial, & noncommercial fan project to help
-      players track their progress in
+      {m.about_status_intro()}
       <a href="https://www.fieldsofmistria.com/">Fields of Mistria</a>.
     </p>
     <p>
-      The guide is maintained by <a href="https://mrh.is/">Michael Helmbrecht</a>. It’s not
-      affiliated with, endorsed by, supported by, or sponsored by
-      <a href="https://www.npcstudio.com/">NPC Studio</a> (though, call me!).
+      {m.about_maintainer_intro()} <a href="https://mrh.is/">Michael Helmbrecht</a>.
+      {m.about_maintainer_suffix()}
+      <a href="https://www.npcstudio.com/">NPC Studio</a>
+      {m.about_maintainer_suffix2()}
     </p>
   </section>
 
   <div class="divider"></div>
 
   <section>
-    <h2>Data</h2>
+    <h2>{m.about_data_heading()}</h2>
     <p>
-      Fields of Mistria (the game) & all the content therein, including data & images, remain
-      properties of NPC Studio & their respective rightsholders.
+      {m.about_data_rights()}
     </p>
     <p>
-      The current guide data was generated based on game version {trackerData.version}. When there's
-      a game update, this guide will briefly be out of date while I update everything.
+      {m.about_data_version_notice({ version: trackerData.version })}
     </p>
   </section>
 
   <div class="divider"></div>
 
   <section>
-    <h2>Questions & requests</h2>
+    <h2>{m.about_questions_heading()}</h2>
     <p>
-      Report issues through the feedback tool (the
-      <IconMessageReport class="feedback-icon" aria-hidden="true" /> icon in the bottom toolbar) at any
-      point! For anything more serious, you can also
-      <a href="mailto:michael@mistria.fyi">contact me privately</a>.
+      {m.about_questions_intro_before_icon()}
+      <IconMessageReport class="feedback-icon" aria-hidden="true" />
+      {m.about_questions_intro_after_icon()}
+      <a href="mailto:michael@mistria.fyi">{m.about_contact_privately_link()}</a>.
     </p>
   </section>
 
   <footer class="about-page__footer">
-    <a href={localizedHref("/privacy")}>Privacy</a>
+    <a href={localizedHref("/privacy")}>{m.about_privacy_link()}</a>
     <span>·</span>
     <button type="button" onclick={() => (aiDisclosureOpen = true)}>
-      <IconRobot class="size-3.5" />AI disclosure
+      <IconRobot class="size-3.5" />{m.about_ai_disclosure_link()}
     </button>
   </footer>
 </div>

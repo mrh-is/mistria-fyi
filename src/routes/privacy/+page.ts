@@ -1,10 +1,18 @@
+import * as m from "$lib/paraglide/messages.js";
+import { baseLocale, getLocaleForUrl } from "$lib/paraglide/runtime.js";
+
 import type { PageLoad } from "./$types.js";
 
-export const load: PageLoad = () => ({
-  metadata: {
-    description:
-      "Read how the Mistria Field Guide stores your Fields of Mistria progress, handles feedback, and protects your privacy.",
-    hideToolbar: true,
-    title: "Privacy policy",
-  },
-});
+// The sitemap generator harvests `metadata.robots` from every route by calling `load()` with no
+// event at all (see `MetadataPageModule` in `src/routes/sitemap.xml/+server.ts`), so `url` isn't
+// always present; fall back to the base locale in that case.
+export const load: PageLoad = (event?: Partial<Parameters<PageLoad>[0]>) => {
+  const locale = event?.url ? getLocaleForUrl(event.url) : baseLocale;
+  return {
+    metadata: {
+      description: m.privacy_page_description({}, { locale }),
+      hideToolbar: true,
+      title: m.privacy_title({}, { locale }),
+    },
+  };
+};

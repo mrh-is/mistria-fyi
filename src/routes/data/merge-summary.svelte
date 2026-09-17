@@ -4,6 +4,7 @@
     MERGE_COUNT_LABELS,
     totalMergeCounts,
   } from "$lib/engine/merge-labels.js";
+  import * as m from "$lib/paraglide/messages.js";
 
   import type { MergeCountKey } from "$lib/engine/merge-labels.js";
   import type { MergeCounts } from "$lib/stores/user-state.svelte.js";
@@ -19,7 +20,9 @@
 
 {#if total > 0}
   <p class="text-base font-medium text-green-800 dark:text-green-200">
-    {kind === "import" ? `Imported from ${filesUsed.join(", ")}` : `Transferred ${total} items!`}
+    {kind === "import"
+      ? m.merge_imported_from({ files: filesUsed.join(", ") })
+      : m.merge_transferred_items({ count: total })}
   </p>
   <ul class="mt-1 space-y-0.5 text-sm text-muted-foreground">
     {#each Object.keys(MERGE_COUNT_LABELS) as key (key)}
@@ -31,8 +34,6 @@
   </ul>
 {:else}
   <p class="text-base font-medium text-green-800 dark:text-green-200">
-    {kind === "import"
-      ? "No new data to import"
-      : "QR code scanned successfully — no new items to add."}
+    {kind === "import" ? m.data_no_new_data_import() : m.merge_qr_no_new_items()}
   </p>
 {/if}

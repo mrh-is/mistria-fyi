@@ -3,6 +3,7 @@
 
   import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import DataCard from "./data-card.svelte";
@@ -16,31 +17,36 @@
   }
 </script>
 
-<DataCard bind:open title="Danger Zone" summary="Erase all tracked progress." variant="danger">
+<DataCard
+  bind:open
+  title={m.danger_zone_title()}
+  summary={m.danger_zone_summary()}
+  variant="danger"
+>
   <AlertDialog.Root bind:open={resetDialogOpen}>
     <AlertDialog.Trigger>
       {#snippet child({ props })}
         <Button class="w-full" variant="outline" {...props}>
           <IconRotate />
-          Reset all progress
+          {m.danger_zone_reset_action()}
         </Button>
       {/snippet}
     </AlertDialog.Trigger>
     <AlertDialog.Content>
       <AlertDialog.Header>
-        <AlertDialog.Title>Reset all progress?</AlertDialog.Title>
+        <AlertDialog.Title>{m.danger_zone_confirm_title()}</AlertDialog.Title>
         <AlertDialog.Description>
-          This will erase all your tracked progress. This cannot be undone.
+          {m.danger_zone_confirm_description()}
         </AlertDialog.Description>
       </AlertDialog.Header>
       <AlertDialog.Footer>
-        <AlertDialog.Cancel>Never mind</AlertDialog.Cancel>
+        <AlertDialog.Cancel>{m.settings_spoilers_cancel()}</AlertDialog.Cancel>
         <AlertDialog.Action
           class="bg-destructive text-white hover:bg-destructive/90"
           onclick={handleReset}
         >
           <IconTrash />
-          Yes, reset everything
+          {m.danger_zone_confirm_action()}
         </AlertDialog.Action>
       </AlertDialog.Footer>
     </AlertDialog.Content>
