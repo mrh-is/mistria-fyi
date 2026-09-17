@@ -384,5 +384,57 @@
   "transfer_unknown_error": "不明なエラー",
   "merge_imported_from": "{files}からインポートしました",
   "merge_transferred_items": "{count}件のアイテムを転送しました!",
-  "merge_qr_no_new_items": "QRコードのスキャンに成功しましたが、追加する新しい項目はありません。"
+  "merge_qr_no_new_items": "QRコードのスキャンに成功しましたが、追加する新しい項目はありません。",
+  "merge_label_almanac": "アルマナック：+{count}",
+  "merge_label_almanac_recipes": "レシピ：+{count}",
+  "merge_label_animal_cosmetics": "動物のコスメ：+{count}",
+  "merge_label_animals": "動物のバリエーション：+{count}",
+  "merge_label_cosmetics": "コスメ：+{count}",
+  "merge_label_dates": "日付：+{count}",
+  "merge_label_museum": "博物館への寄贈：+{count}",
+  "merge_label_npc_relationships": "NPCとの関係：+{count}",
+  "merge_label_perks": "特典：+{count}",
+  "merge_label_pet_cosmetics": "ペットのコスメ：+{count}",
+  "merge_label_pet_skins": "ペットのスキン：+{count}",
+  "merge_label_quests": "クエスト：+{count}",
+  "merge_label_spells": "呪文：+{count}",
+  "merge_label_child_choice": "子供の選択を更新しました",
+  "merge_label_has_upper_floor": "上階を解放しました",
+  "merge_label_reached_season": "季節の進行を更新しました",
+  "merge_label_mine_floor": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "鉱山の階層：+{count}階"
+      }
+    }
+  ],
+  "merge_label_npc_levels": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "NPCとの好感度：{count}件の関係を更新"
+      }
+    }
+  ],
+  "merge_label_renown": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "名声：+{count}レベル"
+      }
+    }
+  ],
+  "merge_label_skill_levels": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "スキル：{count}件を更新"
+      }
+    }
+  ]
 }

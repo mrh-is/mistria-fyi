@@ -390,5 +390,65 @@
   "transfer_unknown_error": "erreur inconnue",
   "merge_imported_from": "Importé depuis {files}",
   "merge_transferred_items": "{count} éléments transférés !",
-  "merge_qr_no_new_items": "QR code scanné avec succès — aucun nouvel élément à ajouter."
+  "merge_qr_no_new_items": "QR code scanné avec succès — aucun nouvel élément à ajouter.",
+  "merge_label_almanac": "Almanach : +{count}",
+  "merge_label_almanac_recipes": "Recettes : +{count}",
+  "merge_label_animal_cosmetics": "Cosmétiques d’animaux : +{count}",
+  "merge_label_animals": "Variantes d’animaux : +{count}",
+  "merge_label_cosmetics": "Cosmétiques : +{count}",
+  "merge_label_dates": "Dates : +{count}",
+  "merge_label_museum": "Dons au musée : +{count}",
+  "merge_label_npc_relationships": "Relations avec les PNJ : +{count}",
+  "merge_label_perks": "Avantages : +{count}",
+  "merge_label_pet_cosmetics": "Cosmétiques d’animaux de compagnie : +{count}",
+  "merge_label_pet_skins": "Apparences d’animaux de compagnie : +{count}",
+  "merge_label_quests": "Quêtes : +{count}",
+  "merge_label_spells": "Sorts : +{count}",
+  "merge_label_child_choice": "Choix de l’enfant mis à jour",
+  "merge_label_has_upper_floor": "Étage supérieur débloqué",
+  "merge_label_reached_season": "Progression de saison mise à jour",
+  "merge_label_mine_floor": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Étage de mine : +{count} étage",
+        "countPlural=many": "Étage de mine : +{count} étages",
+        "countPlural=other": "Étage de mine : +{count} étages"
+      }
+    }
+  ],
+  "merge_label_npc_levels": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Cœurs des PNJ : +{count} relation mise à jour",
+        "countPlural=many": "Cœurs des PNJ : +{count} relations mises à jour",
+        "countPlural=other": "Cœurs des PNJ : +{count} relations mises à jour"
+      }
+    }
+  ],
+  "merge_label_renown": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Renommée : +{count} niveau",
+        "countPlural=many": "Renommée : +{count} niveaux",
+        "countPlural=other": "Renommée : +{count} niveaux"
+      }
+    }
+  ],
+  "merge_label_skill_levels": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Compétences : +{count} compétence mise à jour",
+        "countPlural=many": "Compétences : +{count} compétences mises à jour",
+        "countPlural=other": "Compétences : +{count} compétences mises à jour"
+      }
+    }
+  ]
 }
