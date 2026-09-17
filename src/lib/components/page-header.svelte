@@ -2,6 +2,7 @@
   import { IconArrowLeft } from "@tabler/icons-svelte-runes";
 
   import { Icon } from "$lib/components/icon/index.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { localizedHref } from "$lib/utils/localized-href.js";
 
   import type { Snippet } from "svelte";
@@ -12,7 +13,7 @@
 
   let {
     backHref = "/",
-    backLabel = "Back to home",
+    backLabel = m.page_header_back_to_home(),
     category,
     icon,
     onback,
@@ -60,7 +61,7 @@
   {#if pct !== undefined && progress !== undefined}
     <span class="page-header__count">
       <span class="sr-only" aria-live="polite"
-        >{progress.completed} of {progress.total} completed</span
+        >{m.page_header_progress({ completed: progress.completed, total: progress.total })}</span
       >
       <span aria-hidden="true">{progress.completed} / {progress.total}</span>
     </span>

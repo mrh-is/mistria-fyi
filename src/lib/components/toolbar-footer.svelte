@@ -17,6 +17,7 @@
   import { Input } from "$lib/components/ui/input/index.js";
   import VisibilityPanel from "$lib/components/visibility-panel.svelte";
   import { getFeedbackContext } from "$lib/feedback/context.svelte.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { deLocalizeHref } from "$lib/paraglide/runtime.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -110,9 +111,7 @@
     void tick().then(() => {
       const restoredTarget = focusTarget?.isConnected
         ? focusTarget
-        : document.querySelector<HTMLElement>(
-            'nav[aria-label="Tracker tools"] button[aria-label="Search"]',
-          );
+        : document.querySelector<HTMLElement>("[data-toolbar-search-trigger]");
       restoredTarget?.focus();
     });
   }
@@ -157,7 +156,7 @@
   $effect(() => {
     const currentFilterState = `${userState.state.availabilityWindows.join(",")}:${userState.state.showCompleted}:${toolbarState.sourceFilterActive}`;
     if (previousFilterState && currentFilterState !== previousFilterState) {
-      filterStatus = filtersActive ? "Filters applied" : "All filters cleared";
+      filterStatus = filtersActive ? m.toolbar_filters_applied() : m.toolbar_filters_cleared();
     }
     previousFilterState = currentFilterState;
   });
@@ -176,7 +175,7 @@
   />
 
   <nav
-    aria-label="Tracker tools"
+    aria-label={m.toolbar_nav_label()}
     class="pointer-events-none fixed right-0 bottom-safe-offset-3 left-0 z-20 mx-auto max-w-lg px-3"
     style="--primary: {toolbarAccent}; --ring: {toolbarAccent}"
     hidden={feedbackContext.isPicking}
@@ -187,12 +186,12 @@
           <IconSearch
             class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
           />
-          <label class="sr-only" for="tracker-search">Search items</label>
+          <label class="sr-only" for="tracker-search">{m.toolbar_search_label()}</label>
           <Input
             bind:ref={searchInput}
             class="min-h-11 px-9"
             id="tracker-search"
-            placeholder="Search items…"
+            placeholder={m.toolbar_search_placeholder()}
             type="text"
             value={toolbarState.searchQuery}
             oninput={handleSearchInput}
@@ -201,7 +200,7 @@
             <button
               class="absolute top-1/2 right-0 flex size-11 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground"
               type="button"
-              aria-label="Clear search"
+              aria-label={m.toolbar_clear_search()}
               onclick={() => {
                 toolbarState.setSearch("");
               }}>×</button
@@ -211,7 +210,7 @@
         <button
           class="min-h-11 px-2 font-controls text-xs text-muted-foreground hover:text-foreground"
           type="button"
-          onclick={closeSearch}>Cancel</button
+          onclick={closeSearch}>{m.toolbar_cancel_search()}</button
         >
       </div>
     {:else}
@@ -220,7 +219,7 @@
           <button
             class="floating-tool {activePanel === 'settings' ? 'floating-tool--active' : ''}"
             type="button"
-            aria-label="Quick settings"
+            aria-label={m.toolbar_quick_settings()}
             aria-expanded={activePanel === "settings"}
             aria-controls="quick-settings-panel"
             onclick={() => {
@@ -232,7 +231,7 @@
           <button
             class="floating-tool {activePanel === 'feedback' ? 'floating-tool--active' : ''}"
             type="button"
-            aria-label="Send feedback"
+            aria-label={m.toolbar_send_feedback()}
             aria-expanded={activePanel === "feedback"}
             onclick={() => {
               togglePanel("feedback");
@@ -244,7 +243,13 @@
 
         <div class="flex items-center gap-1.5">
           {#if showSearch}
-            <button class="floating-tool" type="button" aria-label="Search" onclick={openSearch}>
+            <button
+              class="floating-tool"
+              type="button"
+              aria-label={m.toolbar_search()}
+              data-toolbar-search-trigger
+              onclick={openSearch}
+            >
               <IconSearch class="size-5" />
             </button>
           {/if}
@@ -255,7 +260,7 @@
                 ? 'floating-tool--filtered'
                 : ''}"
             type="button"
-            aria-label="Visibility filters"
+            aria-label={m.toolbar_visibility_filters()}
             aria-expanded={activePanel === "visibility"}
             aria-controls="visibility-panel"
             onclick={() => {
@@ -274,7 +279,7 @@
       class="fixed inset-x-0 top-[-100dvh] bottom-[-100dvh] z-0"
       type="button"
       aria-hidden="true"
-      aria-label="Close panel"
+      aria-label={m.toolbar_close_panel()}
       tabindex="-1"
       onclick={closePanel}
     ></button>
@@ -285,11 +290,15 @@
       transition:fly={{ duration: prefersReducedMotion.current ? 0 : 150, y: 8 }}
     >
       {#if activePanel === "settings"}
-        <FoldoutPanel id="quick-settings-panel" title="Quick settings" onclose={closePanel}>
+        <FoldoutPanel
+          id="quick-settings-panel"
+          title={m.toolbar_quick_settings()}
+          onclose={closePanel}
+        >
           <QuickSettingsPanel />
         </FoldoutPanel>
       {:else}
-        <FoldoutPanel id="visibility-panel" title="Filters" onclose={closePanel}>
+        <FoldoutPanel id="visibility-panel" title={m.toolbar_filters()} onclose={closePanel}>
           {#snippet headerActions()}
             {#if filtersActive}
               <button
@@ -298,7 +307,7 @@
                 onclick={resetFilters}
                 transition:fade={{ duration: prefersReducedMotion.current ? 0 : 120 }}
               >
-                <IconRotate class="size-3.5" />Reset
+                <IconRotate class="size-3.5" />{m.toolbar_reset_filters()}
               </button>
             {/if}
           {/snippet}

@@ -1,4 +1,49 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-  "app_name": "Mistria Field Guide"
+  "app_name": "Mistria Field Guide",
+  "toolbar_nav_label": "Tracker tools",
+  "toolbar_search_label": "Search items",
+  "toolbar_search_placeholder": "Search items…",
+  "toolbar_clear_search": "Clear search",
+  "toolbar_cancel_search": "Cancel",
+  "toolbar_search": "Search",
+  "toolbar_quick_settings": "Quick settings",
+  "toolbar_send_feedback": "Send feedback",
+  "toolbar_visibility_filters": "Visibility filters",
+  "toolbar_close_panel": "Close panel",
+  "toolbar_filters": "Filters",
+  "toolbar_reset_filters": "Reset",
+  "toolbar_filters_applied": "Filters applied",
+  "toolbar_filters_cleared": "All filters cleared",
+  "page_header_back_to_home": "Back to home",
+  "page_header_progress": "{completed} of {total} completed",
+  "foldout_close": "Close {title}",
+  "search_results_count": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} result",
+        "countPlural=other": "{count} results"
+      }
+    }
+  ],
+  "search_no_results": "No items found",
+  "search_marked_obtained": "Marked \"{name}\" obtained",
+  "search_marked_completed": "Marked \"{name}\" completed",
+  "search_marked_completed_with_recipe": "Marked \"{name}\" completed and unlocked \"{recipe}\"",
+  "search_marked_completed_with_recipes": [
+    {
+      "declarations": ["input name", "input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Marked \"{name}\" completed and unlocked {count} recipe",
+        "countPlural=other": "Marked \"{name}\" completed and unlocked {count} recipes"
+      }
+    }
+  ],
+  "search_reset": "Reset \"{name}\"",
+  "action_undo": "Undo",
+  "undo_marked_complete": "Marked \"{name}\" complete",
+  "undo_unmarked": "Unmarked \"{name}\""
 }
