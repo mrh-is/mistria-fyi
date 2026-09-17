@@ -6,9 +6,9 @@ import MineFloorRecordHarness from "$lib/components/mine-floor-record.test-harne
 import type { MinesBiome, MinesBiomeId } from "$lib/types/tracker-data.js";
 
 const biomes: MinesBiome[] = [
-  { floors: { start: 1, end: 20 }, id: "upper" as MinesBiomeId, name: "Upper Mines" },
-  { floors: { start: 21, end: 40 }, id: "tide" as MinesBiomeId, name: "Tide Caverns" },
-  { floors: { start: 41, end: 60 }, id: "deep" as MinesBiomeId, name: "Deep Earth" },
+  { floors: { start: 1, end: 20 }, id: "upper_mines" as MinesBiomeId },
+  { floors: { start: 21, end: 40 }, id: "tide_caverns" as MinesBiomeId },
+  { floors: { start: 41, end: 60 }, id: "deep_earth" as MinesBiomeId },
 ];
 
 describe("MineFloorRecord", () => {
@@ -26,9 +26,9 @@ describe("MineFloorRecord", () => {
     ]);
     expect(view.getByTestId("mine-survey")).toHaveAttribute("aria-hidden", "true");
     expect(view.queryByTestId("mine-marker")).not.toBeInTheDocument();
-    expect(view.getByText("Tide Caverns")).toBeInTheDocument();
+    expect(view.getByText("The Tide Caverns")).toBeInTheDocument();
     expect(
-      view.getByText("Tide Caverns").compareDocumentPosition(view.getByTestId("mine-survey")) &
+      view.getByText("The Tide Caverns").compareDocumentPosition(view.getByTestId("mine-survey")) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(view.queryByRole("slider")).not.toBeInTheDocument();
@@ -36,7 +36,7 @@ describe("MineFloorRecord", () => {
 
   it.each([
     { biome: "Upper Mines", floor: 20 },
-    { biome: "Tide Caverns", floor: 21 },
+    { biome: "The Tide Caverns", floor: 21 },
     { biome: "Deep Earth", floor: 60 },
   ])("names $biome at floor $floor", ({ biome, floor }) => {
     const view = render(MineFloorRecordHarness, { biomes, initialFloor: floor });

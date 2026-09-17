@@ -1,4 +1,5 @@
 import type { Source } from "$lib/types/acquisition";
+import type { LocaleCode } from "$lib/types/locale.js";
 import type { AnimalId, AnyId } from "$lib/types/tracker-data.js";
 import type { SegmentLookups } from "$lib/utils/source-segments.js";
 
@@ -7,6 +8,7 @@ export interface AnimalSubcategoryProps<ItemId extends AnyId> {
   completionCheck: (animalId: AnimalId, itemId: ItemId) => boolean;
   hasDisplayableItem: (animalId: AnimalId) => boolean;
   isAnimalComplete: (animalId: AnimalId) => boolean;
+  locale: LocaleCode;
   lookups?: Omit<SegmentLookups, "entityVisibility">;
   name: string;
   sectionConfig: (animalId: AnimalId) => AnimalSubcategorySectionConfig<ItemId>;

@@ -2,21 +2,25 @@
   import { IconMinus, IconPlus } from "@tabler/icons-svelte-runes";
 
   import { page } from "$app/state";
+  import { getName } from "$lib/data/names.js";
   import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
   import * as m from "$lib/paraglide/messages.js";
 
+  import type { LocaleCode } from "$lib/types/locale.js";
   import type { MinesBiome } from "$lib/types/tracker-data.js";
 
   let {
     biomes,
     compact = false,
     floor,
+    locale = "en",
     onChange,
     registerFeedback = true,
   }: {
     biomes: MinesBiome[];
     compact?: boolean;
     floor: number;
+    locale?: LocaleCode;
     onChange: (floor: number) => void;
     registerFeedback?: boolean;
   } = $props();
@@ -31,7 +35,7 @@
       ? feedbackContext.reportable({
           category: "mines",
           displayName: "Floor progress",
-          extra: { biome: currentBiome.name, floor },
+          extra: { biome: getName("mines", currentBiome.id, locale), floor },
           page: page.url.pathname,
         })
       : undefined,
@@ -72,7 +76,7 @@
   {#if !compact}
     {#if currentBiome}
       <span class="biome-readout" aria-live="polite">
-        <strong>{currentBiome.name}</strong>
+        <strong>{getName("mines", currentBiome.id, locale)}</strong>
         <span
           >{m.mines_floor_range({
             start: currentBiome.floors.start,
@@ -137,7 +141,7 @@
 
   {#if compact && currentBiome}
     <span class="biome-readout" aria-live="polite">
-      <strong>{currentBiome.name}</strong>
+      <strong>{getName("mines", currentBiome.id, locale)}</strong>
       <span
         >{m.mines_floor_range({
           start: currentBiome.floors.start,

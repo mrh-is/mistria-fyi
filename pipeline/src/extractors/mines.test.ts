@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
-import { extractMines } from "./mines.js";
+import { extractMines as extractLocalizedMines } from "./mines.js";
 
 vi.mock("../parse-fiddle.js", () => ({
   sourceFileFor: () => "mock-source.toml",
@@ -22,6 +22,10 @@ vi.mock("../localize.js", () => ({
   })),
 }));
 const assetsDir = "test-assets";
+
+function extractMines(fiddle: ReturnType<typeof makeFiddleBase>, _assetsDir = assetsDir) {
+  return extractLocalizedMines(fiddle, assetsDir);
+}
 
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({
@@ -52,9 +56,9 @@ describe("extractMines", () => {
     const { mines: result } = extractMines(fiddle, assetsDir);
 
     expect(result.biomes).toEqual([
-      { floors: { start: 1, end: 20 }, id: "upper_mines", name: "Upper Mines" },
-      { floors: { start: 21, end: 40 }, id: "tide_caverns", name: "The Tide Caverns" },
-      { floors: { start: 41, end: 60 }, id: "deep_earth", name: "Deep Earth" },
+      { floors: { start: 1, end: 20 }, id: "upper_mines" },
+      { floors: { start: 21, end: 40 }, id: "tide_caverns" },
+      { floors: { start: 41, end: 60 }, id: "deep_earth" },
     ]);
   });
 
@@ -104,12 +108,12 @@ describe("extractMines", () => {
       },
     });
 
-    const { localeNames, mines: result } = extractMines(fiddle, assetsDir);
+    const { mines: result, spellLocaleNames } = extractMines(fiddle, assetsDir);
     expect(result.spells).toEqual({
       fireball: { sources: [] },
       ice_lance: { sources: [] },
     });
-    expect(localeNames.ja["fireball" as never]).toBe("Fireball");
+    expect(spellLocaleNames.ja["fireball" as never]).toBe("Fireball");
   });
 
   it("skips the default spell entry", () => {

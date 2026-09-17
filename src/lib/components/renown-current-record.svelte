@@ -3,13 +3,16 @@
   import { Icon } from "$lib/components/icon/index.js";
   import Stepper from "$lib/components/stepper.svelte";
   import { trackerData } from "$lib/data/index.js";
+  import { getName } from "$lib/data/names.js";
   import { getRenownPresentation } from "$lib/engine/renown-presentation.js";
   import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
   import * as m from "$lib/paraglide/messages.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
 
-  let { compact = false }: { compact?: boolean } = $props();
+  import type { LocaleCode } from "$lib/types/locale.js";
+
+  let { compact = false, locale = "en" }: { compact?: boolean; locale?: LocaleCode } = $props();
 
   let feedbackContext = getFeedbackContextOrFallback();
   let level = $derived(userState.state.completed.renown);
@@ -17,7 +20,7 @@
   let reportable = $derived(
     feedbackContext.reportable({
       category: "renown",
-      displayName: presentation.currentRank.name,
+      displayName: getName("town-ranks", presentation.currentRankIndex.toString(), locale),
       extra: { level },
       page: page.url.pathname,
     }),
@@ -57,7 +60,7 @@
     </span>
 
     <span class="rank-copy">
-      <strong>{presentation.currentRank.name}</strong>
+      <strong>{getName("town-ranks", presentation.currentRankIndex.toString(), locale)}</strong>
       {#if presentation.isMaxed}
         <small>{m.renown_max_rank_reached()}</small>
       {:else}

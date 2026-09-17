@@ -2,8 +2,12 @@ import { LOCALE_CODES } from "$lib/types/locale.js";
 
 import type { LocaleCode } from "$lib/types/locale.js";
 import type {
+  AnimalId,
+  AnimalVariantId,
+  CosmeticId,
   DateId,
   FestivalId,
+  MinesBiomeId,
   NpcId,
   PerkId,
   PetCosmeticSetId,
@@ -13,14 +17,19 @@ import type {
   StoreId,
 } from "$lib/types/tracker-data.js";
 
+export type AnimalNameId = string & { readonly __brand: "AnimalNameId" };
+
 /**
  * Categories whose player-facing names have been migrated out of `tracker-data.json` and into
  * per-locale chunks. Phase 4 extends this union as each remaining category is migrated; until
  * then, unmigrated categories still carry an inline `name` field on their `tracker-data` type.
  */
 export type LocalizedCategory =
+  | "animals"
+  | "cosmetics"
   | "dates"
   | "festivals"
+  | "mines"
   | "museum_wings"
   | "npcs"
   | "perks"
@@ -28,11 +37,15 @@ export type LocalizedCategory =
   | "quests"
   | "skills"
   | "spells"
-  | "stores";
+  | "stores"
+  | "town-ranks";
 
 interface LocalizedCategoryId {
+  animals: AnimalNameId;
+  cosmetics: CosmeticId;
   dates: DateId;
   festivals: FestivalId;
+  mines: MinesBiomeId;
   museum_wings: string;
   npcs: NpcId;
   perks: PerkId;
@@ -41,6 +54,7 @@ interface LocalizedCategoryId {
   skills: SkillId;
   spells: SpellId;
   stores: StoreId;
+  "town-ranks": string;
 }
 type NameChunk = Record<string, string>;
 
@@ -58,6 +72,15 @@ const chunkModules = import.meta.glob<NameChunk>("./locales/**/*.json", {
 
 const chunks = buildChunkIndex();
 const collators = new Map<LocaleCode, Intl.Collator>();
+
+/** Path-qualified keys mirror the nested ranching localization paths, preventing cross-species ID collisions. */
+export function animalNameId(
+  animalId: AnimalId,
+  section: "core" | "cosmetics" | "variants",
+  id?: AnimalVariantId | CosmeticId,
+): AnimalNameId {
+  return `${animalId}/${section}${id ? `/${id}` : ""}` as AnimalNameId;
+}
 
 /**
  * Resolves an entity's display name in `locale`, falling back to the English chunk whenever the
