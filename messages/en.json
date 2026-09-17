@@ -45,5 +45,33 @@
   "search_reset": "Reset \"{name}\"",
   "action_undo": "Undo",
   "undo_marked_complete": "Marked \"{name}\" complete",
-  "undo_unmarked": "Unmarked \"{name}\""
+  "undo_unmarked": "Unmarked \"{name}\"",
+  "almanac_page_title": "Almanac",
+  "almanac_page_description": "Track crops, forage, fish, insects, artifacts, & other almanac entries in Fields of Mistria.",
+  "almanac_no_matches": "No items match the current filters",
+  "almanac_loading_items": "Loading items…",
+  "almanac_show_more": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Show {count} more…",
+        "countPlural=other": "Show {count} more…"
+      }
+    }
+  ],
+  "dates_section_name": "Dates",
+  "section_progress_label": "{name}, {completed} of {total} completed",
+  "spoiler_dialog_title": "Complete spoilered item?",
+  "spoiler_dialog_description": "This item is still hidden based on your tracked progression. Are you sure you want to mark it as completed?",
+  "spoiler_dialog_cancel": "Cancel",
+  "spoiler_dialog_confirm_item": "Yes, just this item",
+  "spoiler_dialog_confirm_and_update": "Yes, and update my progress",
+  "tracker_row_spoilered_item": "Spoilered item",
+  "tracker_row_uncheck": "Uncheck {name}",
+  "tracker_row_check_spoilered": "Check spoilered item",
+  "tracker_row_check": "Check {name}",
+  "tracker_row_active_badge": "Active",
+  "tracker_row_sources_label": "{name} sources",
+  "all_completed_message": "All done! Toggle \"Show completed\" to review."
 }
