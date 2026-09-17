@@ -17,6 +17,7 @@
   import { Checkbox } from "$lib/components/ui/checkbox/index.js";
   import { trackerData } from "$lib/data/index.js";
   import { FeedbackContext } from "$lib/feedback/context.svelte.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import type { ReportableElement } from "$lib/feedback/types.js";
@@ -280,9 +281,9 @@
   async function copyMessage() {
     try {
       await navigator.clipboard.writeText(message);
-      toast("Message copied to clipboard");
+      toast(m.feedback_toast_copied());
     } catch {
-      toast.error("Could not copy to clipboard");
+      toast.error(m.feedback_toast_copy_failed());
     }
   }
 
@@ -360,8 +361,7 @@
 
       if (!response.ok) {
         const data = (await response.json().catch(() => null)) as null | { message?: string };
-        submitError =
-          data?.message ?? "Something went wrong. Please try again or copy your message.";
+        submitError = data?.message ?? m.feedback_error_generic();
         resetTurnstileWidget();
         return;
       }
@@ -383,22 +383,17 @@
       onclose();
 
       if (data.emailSaved === false) {
-        toast.warning(
-          "Your feedback was submitted, but your contact email could not be saved. " +
-            "Sending it again would create a duplicate public issue. " +
-            "Please submit a new report later if you still need a private reply.",
-          {
-            action: {
-              label: "View issue",
-              onClick: () => window.open(data.issueUrl, "_blank"),
-            },
-            duration: 12000,
-          },
-        );
-      } else {
-        toast("Thanks for your feedback!", {
+        toast.warning(m.feedback_toast_email_not_saved(), {
           action: {
-            label: "View issue",
+            label: m.feedback_action_view_issue(),
+            onClick: () => window.open(data.issueUrl, "_blank"),
+          },
+          duration: 12000,
+        });
+      } else {
+        toast(m.feedback_toast_thanks(), {
+          action: {
+            label: m.feedback_action_view_issue(),
             onClick: () => window.open(data.issueUrl, "_blank"),
           },
           duration: 8000,
@@ -407,9 +402,9 @@
     } catch (err) {
       if (generation !== submitGeneration) return;
       if (err instanceof Error && err.name === "AbortError") {
-        submitError = "Request timed out. Please try again or copy your message.";
+        submitError = m.feedback_error_timeout();
       } else {
-        submitError = "Could not connect. Please try again or copy your message.";
+        submitError = m.feedback_error_offline();
       }
       resetTurnstileWidget();
     } finally {
@@ -466,7 +461,7 @@
     class="fixed inset-x-0 top-[-100dvh] bottom-[-100dvh] z-0"
     type="button"
     aria-hidden="true"
-    aria-label="Close feedback"
+    aria-label={m.feedback_close_aria()}
     tabindex="-1"
     onclick={onclose}
   ></button>
@@ -475,45 +470,44 @@
     bind:this={dialogElement}
     class="fixed right-0 bottom-safe-offset-16 left-0 z-30 mx-auto max-w-lg px-3 outline-none"
     role="dialog"
-    aria-label="Send feedback"
+    aria-label={m.toolbar_send_feedback()}
     aria-modal="true"
     tabindex="-1"
     style={accent === undefined ? undefined : `--primary: ${accent}; --ring: ${accent};`}
     in:fly={{ duration: prefersReducedMotion.current ? 0 : 150, y: 8 }}
   >
-    <FoldoutPanel id="feedback-panel" title="Send feedback" dialog={false} {onclose}>
+    <FoldoutPanel id="feedback-panel" title={m.toolbar_send_feedback()} dialog={false} {onclose}>
       <div class="feedback-form">
         <div>
           <textarea
             bind:this={messageInput}
             id="feedback-message"
-            aria-label="Message"
+            aria-label={m.feedback_message_label()}
             aria-invalid={messageInvalid}
             aria-describedby={messageInvalid ? "feedback-message-error" : undefined}
             class="feedback-form__message {messageInvalid
               ? 'border-destructive ring-destructive/30'
               : 'border-input'} {submitShake && messageInvalid ? 'motion-safe:animate-shake' : ''}"
-            placeholder="Comments, questions, suggestions, praise?"
+            placeholder={m.feedback_message_placeholder()}
             bind:value={message}
             maxlength={5000}></textarea>
           {#if messageInvalid}
             <p id="feedback-message-error" class="mt-1 text-[11px] text-destructive" role="alert">
-              Please enter a message.
+              {m.feedback_message_required()}
             </p>
           {/if}
         </div>
 
         <p class="feedback-form__privacy">
-          <IconShield class="size-4 shrink-0" />Please don&rsquo;t include personal data in your
-          message.
+          <IconShield class="size-4 shrink-0" />{m.feedback_privacy_notice()}
         </p>
 
-        <p class="feedback-form__optional">Optional</p>
+        <p class="feedback-form__optional">{m.feedback_optional_label()}</p>
         <div class="feedback-form__options">
           <div class="flex items-center gap-2">
             <Checkbox class="rounded-sm" id="include-save-data" bind:checked={includeSaveData} />
             <label for="include-save-data" class="flex-1 text-xs select-none">
-              Attach my tracker progress
+              {m.feedback_attach_progress_label()}
             </label>
             <button
               class="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
@@ -527,7 +521,7 @@
                   ? 'rotate-180'
                   : ''}"
               />
-              {showProgressInfo ? "Less" : "Read more"}
+              {showProgressInfo ? m.feedback_toggle_less() : m.feedback_toggle_read_more()}
             </button>
           </div>
 
@@ -537,8 +531,8 @@
               transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
             >
               <p class="text-[11px] leading-relaxed text-muted-foreground">
-                Sends your tracked completion state (items checked off, skill levels, etc.). No
-                personal information. <strong>This data will be publicly visible.</strong>
+                {m.feedback_save_data_description()}
+                <strong>{m.feedback_save_data_public_warning()}</strong>
               </p>
               <button
                 class="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
@@ -552,7 +546,9 @@
                     ? 'rotate-180'
                     : ''}"
                 />
-                {showSaveDataPreview ? "Hide" : "Show"} my progress data
+                {showSaveDataPreview
+                  ? m.feedback_hide_progress_data()
+                  : m.feedback_show_progress_data()}
               </button>
               {#if showSaveDataPreview}
                 <!-- prettier-ignore -->
@@ -566,7 +562,9 @@
 
           <div class="flex items-center gap-2">
             <Checkbox class="rounded-sm" id="wants-reply" bind:checked={wantsReply} />
-            <label for="wants-reply" class="text-xs select-none">I&rsquo;d like a reply</label>
+            <label for="wants-reply" class="text-xs select-none"
+              >{m.feedback_wants_reply_label()}</label
+            >
           </div>
 
           {#if wantsReply}
@@ -576,7 +574,7 @@
             >
               <input
                 id="feedback-email"
-                aria-label="Your email"
+                aria-label={m.feedback_email_aria()}
                 aria-invalid={emailInvalid}
                 aria-describedby={emailInvalid ? "feedback-email-error" : "feedback-email-note"}
                 autocomplete="email"
@@ -587,7 +585,7 @@
                   : ''}"
                 type="email"
                 name="email"
-                placeholder="you@example.com"
+                placeholder={m.feedback_email_placeholder()}
                 bind:value={email}
                 onblur={() => {
                   emailTouched = true;
@@ -601,13 +599,11 @@
               />
               {#if emailInvalid}
                 <p id="feedback-email-error" class="mt-1 text-[11px] text-destructive" role="alert">
-                  {emailMissing
-                    ? "Oops, forgot to put in your email!"
-                    : "Hmmmmmmmmmmmmmm, this doesn't look like an email…"}
+                  {emailMissing ? m.feedback_email_missing() : m.feedback_email_invalid()}
                 </p>
               {:else}
                 <p id="feedback-email-note" class="mt-2 text-[11px] text-muted-foreground">
-                  Your email is stored separately and never added to the public issue.
+                  {m.feedback_email_note()}
                 </p>
               {/if}
             </div>
@@ -615,7 +611,7 @@
         </div>
 
         <p class="feedback-form__version">
-          App v{version} · Game data v{trackerData.version}
+          {m.feedback_version_info({ appVersion: version, gameVersion: trackerData.version })}
         </p>
 
         {#if submitError}
@@ -630,7 +626,7 @@
               onclick={copyMessage}
             >
               <IconCopy class="size-3" />
-              Copy
+              {m.feedback_copy_action()}
             </button>
           </div>
         {/if}
@@ -644,15 +640,16 @@
 
         {#if turnstileError}
           <p class="text-[11px] text-muted-foreground">
-            Verification unavailable. You can still
+            {m.feedback_turnstile_unavailable_intro()}
             <button
               class="underline hover:text-foreground"
               type="button"
               onclick={() =>
                 window.open("https://github.com/mrh-is/mistria-fyi/issues/new", "_blank")}
             >
-              submit feedback on GitHub</button
-            > directly.
+              {m.feedback_turnstile_github_action()}</button
+            >
+            {m.feedback_turnstile_unavailable_suffix()}
           </p>
         {/if}
 
@@ -661,11 +658,13 @@
             <div class="feedback-form__selection">
               <IconPointer class="size-3.5 shrink-0" />
               <span class="min-w-0 flex-1 truncate">{selectedElement.displayName}</span>
-              <button bind:this={pickerButton} type="button" onclick={startPicking}>Change</button>
+              <button bind:this={pickerButton} type="button" onclick={startPicking}
+                >{m.feedback_change_selection()}</button
+              >
               <button
                 class="feedback-form__clear"
                 type="button"
-                aria-label="Clear selected item"
+                aria-label={m.feedback_clear_selection_aria()}
                 onclick={() => (selectedElement = undefined)}
               >
                 <IconX class="size-3" />
@@ -678,7 +677,7 @@
               type="button"
               onclick={startPicking}
             >
-              <IconPointer class="size-3.5" />Point at something
+              <IconPointer class="size-3.5" />{m.feedback_pick_action()}
             </button>
           {/if}
           <button
@@ -687,7 +686,7 @@
             disabled={submitting}
             onclick={handleSubmitClick}
           >
-            {submitting ? "Sending…" : "Send"}
+            {submitting ? m.feedback_sending_action() : m.feedback_send_action()}
           </button>
         </div>
       </div>

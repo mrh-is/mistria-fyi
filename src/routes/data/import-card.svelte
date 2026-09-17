@@ -6,6 +6,7 @@
   import { Separator } from "$lib/components/ui/separator/index.js";
   import { buildImportState, parseSaveFiles, unpackSavFile } from "$lib/engine/import-save.js";
   import { totalMergeCounts } from "$lib/engine/merge-labels.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import DataCard from "./data-card.svelte";
@@ -90,11 +91,11 @@
 
       let bundle;
       if (savFile) {
-        importStatus = "Unpacking save file\u2026";
+        importStatus = m.import_status_unpacking();
         try {
           bundle = await unpackSavFile(savFile);
         } catch (err) {
-          const message = err instanceof Error ? err.message : "Unknown error";
+          const message = err instanceof Error ? err.message : m.import_status_generic_error();
           importError = message;
           savFallback = true;
           return;
@@ -102,7 +103,7 @@
       } else {
         const result = await parseSaveFiles(files);
         if (result.error || !result.bundle) {
-          importError = result.error ?? "Failed to parse save files.";
+          importError = result.error ?? m.import_error_parse_failed();
           return;
         }
         bundle = result.bundle;
@@ -113,7 +114,7 @@
       if (bundle.gamedata) filesUsed.push("gamedata.json");
       if (bundle.quests) filesUsed.push("quests.json");
 
-      importStatus = "Importing\u2026";
+      importStatus = m.import_status_importing();
       const { completed, result } = buildImportState(bundle);
       const merged = userState.mergeFromSave(completed);
 
@@ -122,7 +123,7 @@
         warnings: result.warnings,
       };
     } catch {
-      importError = "An unexpected error occurred while importing.";
+      importError = m.import_error_unexpected();
     } finally {
       importing = false;
       importStatus = "";
@@ -147,19 +148,15 @@
   let totalImported = $derived(importResult ? totalMergeCounts(importResult.counts) : 0);
 </script>
 
-<DataCard
-  bind:open
-  title="Import from Save File"
-  summary="Import progress from a Fields of Mistria save."
->
+<DataCard bind:open title={m.import_card_title()} summary={m.import_card_summary()}>
   <div>
     <div class="sr-only" role="status" aria-live="polite">
       {#if importing}
-        {importStatus || "Importing…"}
+        {importStatus || m.import_status_importing()}
       {:else if importResult}
-        {#if totalImported > 0}Import completed.{:else}No new data to import.{/if}
+        {#if totalImported > 0}{m.import_status_completed()}{:else}{m.data_no_new_data_import()}.{/if}
         {#if importResult.warnings.length > 0}
-          {importResult.warnings.length} warnings found.
+          {m.import_status_warnings_found({ count: importResult.warnings.length })}
         {/if}
       {/if}
     </div>
@@ -168,7 +165,7 @@
     <input
       bind:this={fileInput}
       type="file"
-      aria-label="Choose save files to import"
+      aria-label={m.import_file_input_aria()}
       accept=".sav,.json"
       multiple
       class="hidden"
@@ -188,44 +185,47 @@
       aria-busy={importing}
     >
       {#if importing}
-        <p class="text-sm text-muted-foreground">{importStatus || "Importing\u2026"}</p>
+        <p class="text-sm text-muted-foreground">{importStatus || m.import_status_importing()}</p>
       {:else}
         <IconUpload class="size-6 text-muted-foreground" />
-        <p class="text-sm text-muted-foreground">Drag your save file here</p>
-        <p class="text-xs text-muted-foreground">or</p>
+        <p class="text-sm text-muted-foreground">{m.import_drag_here()}</p>
+        <p class="text-xs text-muted-foreground">{m.import_or()}</p>
         <button
           class="text-sm font-medium text-primary underline decoration-dotted underline-offset-2 hover:text-primary/80"
           onclick={() => fileInput?.click()}
         >
-          browse files
+          {m.import_browse_files()}
         </button>
       {/if}
     </div>
 
     <p class="mt-1.5 text-center text-xs text-muted-foreground">
       <Dialog.Root>
-        <Dialog.Trigger class="underline decoration-dotted">Where is my save file?</Dialog.Trigger>
+        <Dialog.Trigger class="underline decoration-dotted"
+          >{m.import_where_is_save()}</Dialog.Trigger
+        >
         <Dialog.Content class="max-w-sm">
           <Dialog.Header>
-            <Dialog.Title>Finding your save file</Dialog.Title>
+            <Dialog.Title>{m.import_finding_save_title()}</Dialog.Title>
             <Dialog.Description>
-              Fields of Mistria saves are stored in your Windows user folder.
+              {m.import_finding_save_description()}
             </Dialog.Description>
           </Dialog.Header>
           <ol class="mt-2 list-decimal space-y-2 pl-5 text-sm marker:text-muted-foreground">
             <li>
-              Press
+              {m.import_step_press_prefix()}
               <kbd class="rounded border px-1 font-mono text-xs">Win</kbd>
-              + <kbd class="rounded border px-1 font-mono text-xs">R</kbd> to open the Run dialog
+              + <kbd class="rounded border px-1 font-mono text-xs">R</kbd>
+              {m.import_step_press_suffix()}
             </li>
             <li>
-              Paste this path and press Enter:
+              {m.import_step_paste_path()}
               <div class="mt-1 flex items-center gap-2 rounded-md border bg-muted px-3 py-2">
                 <code class="flex-1 text-xs break-all">{SAV_PATH}</code>
                 <button
                   onclick={copyPath}
                   class="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
-                  aria-label="Copy path"
+                  aria-label={m.import_copy_path_aria()}
                 >
                   {#if copied}
                     <IconCheck class="size-4 text-green-600" />
@@ -236,13 +236,14 @@
               </div>
             </li>
             <li>
-              Drag the file ending in <code>-autosave.sav</code> onto the drop zone above.
+              {m.import_step_drag_autosave_before()} <code>-autosave.sav</code>
+              {m.import_step_drag_autosave_after()}
             </li>
           </ol>
           <Dialog.Footer class="mt-2">
             <Dialog.Close>
               {#snippet child({ props })}
-                <Button variant="outline" {...props}>Got it</Button>
+                <Button variant="outline" {...props}>{m.source_explainer_dismiss()}</Button>
               {/snippet}
             </Dialog.Close>
           </Dialog.Footer>
@@ -258,23 +259,26 @@
         <p>{importError}</p>
         {#if savFallback}
           <p class="mt-2 text-sm">
-            As a fallback, you can extract the JSON files manually using <a
+            {m.import_fallback_before_vaultc()}
+            <a
               href="https://github.com/NPC-Studio/vaultc"
               target="_blank"
               rel="noopener noreferrer"
               class="underline">vaultc</a
             >
-            (on Windows) or
+            {m.import_fallback_between()}
             <a
               href="https://github.com/NPC-Studio/vaultgo"
               target="_blank"
               rel="noopener noreferrer"
               class="underline">VaultGo</a
-            > (on macOS or Linux).
+            >
+            {m.import_fallback_after_vaultgo()}
           </p>
           <p class="mt-2 text-sm">
-            Then import from the resulting <code>player.json</code>, <code>gamedata.json</code>, and
-            <code>quests.json</code> files.
+            {m.import_fallback_files_intro()} <code>player.json</code>, <code>gamedata.json</code>,
+            and <code>quests.json</code>
+            {m.import_fallback_files_suffix()}
           </p>
         {/if}
       </div>
@@ -288,7 +292,7 @@
           <Separator class="my-2" />
           <details class="text-sm">
             <summary class="text-muted-foreground">
-              {importResult.warnings.length} warnings
+              {m.import_warnings_summary({ count: importResult.warnings.length })}
             </summary>
             <ul class="mt-1 max-h-32 space-y-0.5 overflow-y-auto text-muted-foreground">
               {#each importResult.warnings as warning (warning)}
@@ -307,10 +311,10 @@
           <IconDeviceDesktop class="mt-0.5 size-5 shrink-0 text-violet-600 dark:text-violet-400" />
           <div>
             <p class="text-base font-medium text-violet-800 dark:text-violet-200">
-              Playing on your phone?
+              {m.import_playing_on_phone()}
             </p>
             <p class="mt-0.5 text-sm text-muted-foreground">
-              Transfer this progress to your mobile device →
+              {m.import_transfer_to_mobile()}
             </p>
           </div>
         </button>
