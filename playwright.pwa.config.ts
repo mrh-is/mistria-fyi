@@ -32,7 +32,9 @@ export default defineConfig({
       : `pnpm run build && pnpm run preview --host 127.0.0.1 --port ${String(port)}`,
     reuseExistingServer: false,
     timeout: 120_000,
-    url: `http://127.0.0.1:${String(port)}`,
+    // A bare "/" 404s without an Accept-Language header (no unprefixed default locale), and
+    // Playwright's readiness probe sends none — check a locale-prefixed path instead.
+    url: `http://127.0.0.1:${String(port)}/en`,
   },
   workers: 1,
 });
