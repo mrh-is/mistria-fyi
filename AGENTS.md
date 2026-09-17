@@ -3,8 +3,9 @@
 > Universal operating rules for agents. For detailed workflow, architecture, and verification
 > guidance, see [docs/development-workflow.md](docs/development-workflow.md),
 > [docs/app-architecture.md](docs/app-architecture.md), [pipeline/README.md](pipeline/README.md),
-> [docs/save-file-format.md](docs/save-file-format.md), and
-> [docs/mistria-wiki-api.md](docs/mistria-wiki-api.md).
+> [docs/save-file-format.md](docs/save-file-format.md),
+> [docs/mistria-wiki-api.md](docs/mistria-wiki-api.md), and
+> [docs/localization.md](docs/localization.md).
 
 ## 1. Worktree isolation
 
@@ -114,6 +115,7 @@ Use **pnpm** exclusively. Do **not** use `npm`, `npx`, `yarn`, or `bun`.
 | `pnpm run dev`                | Dev server                                 |
 | `pnpm run build`              | Production build (Cloudflare Pages)        |
 | `pnpm run check`              | SvelteKit type checking                    |
+| `pnpm run check:i18n`         | Verify locale files match `en.json`'s keys |
 | `pnpm run lint`               | Prettier + ESLint check                    |
 | `pnpm run lint:fix`           | Auto-fix formatting & lint                 |
 | `pnpm run test`               | Complete Vitest suite (asset-independent)  |
