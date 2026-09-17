@@ -43,7 +43,7 @@ export type PartialPick<T, K extends keyof T> = {
 
 export type RecipeSourceLookups = PartialPick<TrackerData, "treasureChestTiers"> &
   Pick<TrackerData, "perkTierLevels"> & {
-    biomes: MinesBiome[];
+    biomes: (MinesBiome & { name: string })[];
     festivals: Partial<Record<string, { date: { day: number; season: Season }; name: string }>>;
     itemNames: NameLookup<TrackerData["items"]>;
     perks: Partial<Record<PerkId, { name: string; skillId: SkillId; tier: number }>>;
@@ -73,7 +73,7 @@ export function displayQuestName(name: string, questType: QuestType): string {
 
 export function formatBiomeName(
   biomeId: MinesBiomeId,
-  biomes: TrackerData["mines"]["biomes"],
+  biomes: RecipeSourceLookups["biomes"],
 ): string {
   const biome = biomes.find((b) => b.id === biomeId);
   if (!biome) return titleCase(biomeId);

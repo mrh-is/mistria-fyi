@@ -346,14 +346,17 @@ async function main(): Promise<void> {
   const cutsceneQuestMap = buildCutsceneQuestMap(fiddle);
   const { recipeIdByItemId, recipeMemberItems, recipes } = extractRecipes(fiddle, cutsceneQuestMap);
   const { almanac, items } = extractAlmanac(fiddle, recipeMemberItems);
-  const animals = extractAnimals(fiddle);
+  const { animals, localeNames: animalLocaleNames } = extractAnimals(fiddle, assetsDir);
   const { cosmetics: petCosmetics, localeNames: petCosmeticLocaleNames } = extractPetCosmetics(
     fiddle,
     assetsDir,
   );
   const petSkins = extractPetSkins(fiddle);
   const { localeNames: npcLocaleNames, npcs } = extractNpcs(fiddle, assetsDir);
-  const cosmeticsRaw = extractCosmetics(fiddle);
+  const { cosmetics: cosmeticsRaw, localeNames: cosmeticLocaleNames } = extractCosmetics(
+    fiddle,
+    assetsDir,
+  );
   const cosmetics = applyExclusions(cosmeticsRaw);
   const {
     localeNames: skillLocaleNames,
@@ -361,13 +364,17 @@ async function main(): Promise<void> {
     perkTierLevels,
     skills,
   } = extractSkills(fiddle, assetsDir);
-  const townRanks = extractTownRanks(fiddle);
+  const { localeNames: townRankLocaleNames, townRanks } = extractTownRanks(fiddle, assetsDir);
   const { localeNames: questLocaleNames, quests } = extractQuests(
     fiddle,
     assetsDir,
     recipeIdByItemId,
   );
-  const { localeNames: spellLocaleNames, mines } = extractMines(fiddle, assetsDir);
+  const {
+    biomeLocaleNames: mineLocaleNames,
+    mines,
+    spellLocaleNames,
+  } = extractMines(fiddle, assetsDir);
   const { localeNames: storeLocaleNames, stores: storesMeta } = extractStoresMeta(
     fiddle,
     assetsDir,
@@ -597,6 +604,10 @@ async function main(): Promise<void> {
   writeLocaleChunks("skills", skillLocaleNames);
   writeLocaleChunks("spells", spellLocaleNames);
   writeLocaleChunks("stores", storeLocaleNames);
+  writeLocaleChunks("animals", animalLocaleNames);
+  writeLocaleChunks("cosmetics", cosmeticLocaleNames);
+  writeLocaleChunks("mines", mineLocaleNames);
+  writeLocaleChunks("town-ranks", townRankLocaleNames);
 
   const extractSpritesFlag = args.includes("--sprites");
   if (extractSpritesFlag) {

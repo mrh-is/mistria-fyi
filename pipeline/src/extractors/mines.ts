@@ -14,13 +14,24 @@ import type {
   TrackerData,
 } from "$lib/types/tracker-data.js";
 
-export function extractMines(
-  fiddle: ParsedGameData,
-  assetsDir: string,
-): { localeNames: Record<LocaleCode, Record<SpellId, string>>; mines: TrackerData["mines"] } {
-  const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
+export interface MinesExtraction {
+  biomeLocaleNames: Record<LocaleCode, Record<MinesBiomeId, string>>;
+  mines: TrackerData["mines"];
+  spellLocaleNames: Record<LocaleCode, Record<SpellId, string>>;
+}
+
+const BIOME_ENGLISH_NAMES = [
+  "Upper Mines",
+  "The Tide Caverns",
+  "Deep Earth",
+  "The Lava Caves",
+  "Ancient Ruins",
+] as const;
+
+export function extractMines(fiddle: ParsedGameData, assetsDir: string): MinesExtraction {
+  const biomeLocaleNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
     LocaleCode,
-    Record<SpellId, string>
+    Record<MinesBiomeId, string>
   >;
   const dungeons = fiddle.dungeons as Record<string, unknown> | undefined;
   const spellsData = fiddle.spells as Record<string, Record<string, unknown>> | undefined;
@@ -45,14 +56,27 @@ export function extractMines(
       i + 1 < rawBiomes.length
         ? ((rawBiomes[i + 1].floor as number | undefined) ?? (i + 1) * 20 + 1) - 1
         : maxFloors;
+    const id = nameToId(name);
+    const { values } = localizeField(assetsDir, {
+      category: "dungeons/dungeons/biomes",
+      classification: "localizable",
+      englishValue: name,
+      expectedEnglishValue: BIOME_ENGLISH_NAMES[i],
+      field: "name",
+      id: i.toString(),
+    });
+    for (const locale of LOCALE_CODES) biomeLocaleNames[locale][id] = values[locale];
     return {
       floors: { start, end },
-      id: nameToId(name),
-      name,
+      id,
     };
   });
 
   const spells = {} as Record<SpellId, Spell>;
+  const spellLocaleNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
+    LocaleCode,
+    Record<SpellId, string>
+  >;
   if (spellsData) {
     for (const [id, spell] of Object.entries(spellsData)) {
       if (id === "default") continue;
@@ -67,7 +91,7 @@ export function extractMines(
         field: "name",
         id,
       });
-      for (const locale of LOCALE_CODES) localeNames[locale][id as SpellId] = values[locale];
+      for (const locale of LOCALE_CODES) spellLocaleNames[locale][id as SpellId] = values[locale];
     }
   }
 
@@ -75,7 +99,7 @@ export function extractMines(
   console.log(
     `  Mines: ${biomes.length} biomes, ${lastBiome?.floors.end ?? 0} max floors, ${Object.keys(spells).length} spells`,
   );
-  return { localeNames, mines: { biomes, spells } };
+  return { biomeLocaleNames, mines: { biomes, spells }, spellLocaleNames };
 }
 
 function nameToId(name: string): MinesBiomeId {

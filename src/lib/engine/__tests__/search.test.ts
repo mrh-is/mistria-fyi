@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
-import { getName } from "$lib/data/names.js";
+import { animalNameId, getName } from "$lib/data/names.js";
 import { deriveProgressionState } from "$lib/engine/visibility.js";
 import { recordEntries, recordKeys, recordValues } from "$lib/utils.js";
 
@@ -145,9 +145,29 @@ describe("basic matching", () => {
   });
 
   it("finds cosmetics by name", () => {
-    const [, cosmetic] = recordEntries(trackerData.cosmetics)[0];
-    const results = search(cosmetic.name);
-    expect(results.some((r) => r.category === "cosmetics" && r.name === cosmetic.name)).toBe(true);
+    const [cosmeticId] = recordEntries(trackerData.cosmetics)[0];
+    const name = getName("cosmetics", cosmeticId, "en");
+    const results = search(name);
+    expect(results.some((r) => r.category === "cosmetics" && r.name === name)).toBe(true);
+  });
+
+  it("finds an animal cosmetic by its full English name in another locale", () => {
+    const [animalId, animal] = recordEntries(trackerData.animals)[0];
+    const [cosmeticId] = recordEntries(animal.cosmetics)[0];
+    const englishFullName = `${getName("animals", animalNameId(animalId, "core"), "en")} ${getName("animals", animalNameId(animalId, "cosmetics", cosmeticId), "en")}`;
+    const results = searchItems(
+      englishFullName,
+      makeCompleted(),
+      defaultWorld,
+      makeProgressionState({ showSpoilers: true }),
+      "ja",
+    );
+
+    expect(
+      results.some(
+        (result) => result.category === "animals" && result.id === `${animalId}:${cosmeticId}`,
+      ),
+    ).toBe(true);
   });
 });
 

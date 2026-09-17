@@ -12,15 +12,12 @@ const SEASONS: Season[] = ["spring", "summer", "fall", "winter"];
 const MODES: AvailabilityMode[] = ["available", "everything", "timely"];
 
 const SUMMER_BREED: AnimalVariant = {
-  name: "Summer Variant",
   source: { type: "breed", availability: { type: "season", seasons: ["summer"] } },
 };
 const NONSEASONAL_BREED: AnimalVariant = {
-  name: "Nonseasonal Breed",
   source: { type: "breed" },
 };
 const DEFAULT_VARIANT: AnimalVariant = {
-  name: "Default",
   source: { type: "default" },
 };
 

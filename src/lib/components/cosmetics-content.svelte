@@ -4,6 +4,7 @@
   import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData, trackerIndex } from "$lib/data/index.js";
+  import { getName, nameCollator } from "$lib/data/names.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
@@ -72,14 +73,14 @@
       const sources = cosmetic.sources;
       ((bySlot[slot] ??= {})[subCategory] ??= []).push({
         id: id as CosmeticId,
-        name: cosmetic.name,
+        name: getName("cosmetics", id as CosmeticId, locale),
         sources,
         visibility: cosmetic.visibility,
       });
     }
     for (const subCats of Object.values(bySlot)) {
       for (const items of Object.values(subCats)) {
-        items.sort((a, b) => a.name.localeCompare(b.name));
+        items.sort((a, b) => nameCollator(locale).compare(a.name, b.name));
       }
     }
     return Object.entries(bySlot)
@@ -95,7 +96,7 @@
   function toggleCosmetic(cosmetic: CosmeticEntry, allInSlot: CosmeticEntry[]): void {
     userState.toggleCosmetic(cosmetic.id);
     const completed = userState.state.completed.cosmetics.has(cosmetic.id);
-    showUndoToast(cosmetic.name, completed, () => {
+    showUndoToast(getName("cosmetics", cosmetic.id, locale), completed, () => {
       userState.toggleCosmetic(cosmetic.id);
     });
     if (completed) {

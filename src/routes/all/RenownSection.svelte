@@ -5,13 +5,14 @@
   import SectionHeader from "./SectionHeader.svelte";
 
   import type { CategoryProgress } from "$lib/engine/progress.js";
+  import type { LocaleCode } from "$lib/types/locale.js";
 
-  const { progress }: { progress: CategoryProgress } = $props();
+  const { locale, progress }: { locale: LocaleCode; progress: CategoryProgress } = $props();
 </script>
 
 {#if progress.completed < progress.total || userState.state.showCompleted}
   <section aria-labelledby="category-renown" style="--primary: var(--cat-renown)">
     <SectionHeader key="renown" {progress} />
-    <RenownCurrentRecord compact />
+    <RenownCurrentRecord compact {locale} />
   </section>
 {/if}

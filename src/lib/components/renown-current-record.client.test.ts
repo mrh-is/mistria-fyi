@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import RenownCurrentRecordHarness from "$lib/components/renown-current-record.test-harness.svelte";
 import { trackerData } from "$lib/data/index.js";
+import { getName } from "$lib/data/names.js";
 import { userState } from "$lib/stores/user-state.svelte.js";
 
 describe("RenownCurrentRecord", () => {
@@ -17,7 +18,7 @@ describe("RenownCurrentRecord", () => {
     const view = render(RenownCurrentRecordHarness);
     const maxLevel = trackerData.townRanks[trackerData.townRanks.length - 1].levels.end;
 
-    expect(view.getByText(trackerData.townRanks[0].name)).toBeInTheDocument();
+    expect(view.getByText(getName("town-ranks", "0", "en"))).toBeInTheDocument();
     expect(view.getByText("0 / 10 in rank")).toBeInTheDocument();
     expect(view.getByRole("progressbar", { name: "Renown progress" })).toHaveAttribute(
       "aria-valuemax",
@@ -36,7 +37,7 @@ describe("RenownCurrentRecord", () => {
     const input = view.getByRole("spinbutton", { name: "Renown level" });
     await fireEvent.input(input, { target: { value: "10" } });
     await fireEvent.change(input);
-    expect(view.getByText(trackerData.townRanks[1].name)).toBeInTheDocument();
+    expect(view.getByText(getName("town-ranks", "1", "en"))).toBeInTheDocument();
 
     await fireEvent.input(input, { target: { value: "" } });
     await fireEvent.change(input);

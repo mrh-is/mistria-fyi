@@ -1,11 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
-import { extractTownRanks } from "./renown.js";
+import { extractTownRanks as extractLocalizedTownRanks } from "./renown.js";
 
 vi.mock("../parse-fiddle.js", () => ({
   sourceFileFor: () => "mock-source.toml",
 }));
+
+vi.mock("../localize.js", () => ({
+  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
+    fallbackLocales: [],
+    values: { en: input.englishValue },
+  })),
+}));
+
+function extractTownRanks(fiddle: ReturnType<typeof makeFiddleBase>) {
+  const { localeNames, townRanks } = extractLocalizedTownRanks(fiddle, "test-assets");
+  return townRanks.map((rank, index) => ({ ...rank, name: localeNames.en[index.toString()] }));
+}
 
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({
@@ -68,7 +80,7 @@ describe("extractTownRanks", () => {
     expect(result[1].levels).toEqual({ start: 10, end: 10 });
   });
 
-  it("uses 'Unknown' as name fallback", () => {
+  it("rejects a rank without an English name", () => {
     const fiddle = makeFiddle({
       renown: {
         levels_per_rank: 10,
@@ -76,8 +88,7 @@ describe("extractTownRanks", () => {
       },
     });
 
-    const result = extractTownRanks(fiddle);
-    expect(result[0].name).toBe("Unknown");
+    expect(() => extractTownRanks(fiddle)).toThrow("Town rank at ordinal 0 has no English name");
   });
 
   it("handles many ranks for extended level ranges", () => {
