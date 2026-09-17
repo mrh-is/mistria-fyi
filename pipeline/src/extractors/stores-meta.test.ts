@@ -5,6 +5,23 @@ import { extractStoresMeta } from "./stores-meta.js";
 
 import type { StoreId } from "$lib/types/tracker-data.js";
 
+vi.mock("../localize.js", () => ({
+  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
+    fallbackLocales: [],
+    values: {
+      en: input.englishValue,
+      es: input.englishValue,
+      fr: input.englishValue,
+      ja: input.englishValue,
+      ko: input.englishValue,
+      ru: input.englishValue,
+      "zh-Hans": input.englishValue,
+      "zh-Hant": input.englishValue,
+    },
+  })),
+}));
+const assetsDir = "test-assets";
+
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({ stores: {}, ...overrides });
 }
@@ -27,11 +44,12 @@ describe("extractStoresMeta", () => {
       },
     });
 
-    const stores = extractStoresMeta(fiddle);
+    const { localeNames, stores } = extractStoresMeta(fiddle, assetsDir);
     expect(stores).toEqual({
-      general: { article: "the", name: "General Store", upgradeAction: "repairing" },
-      merri: { name: "Merri's Stall" },
+      general: { article: "the", upgradeAction: "repairing" },
+      merri: {},
     });
+    expect(localeNames.ja["general" as StoreId]).toBe("General Store");
   });
 
   it("uses the canonical store name from game data", () => {
@@ -41,8 +59,8 @@ describe("extractStoresMeta", () => {
       },
     });
 
-    expect(extractStoresMeta(fiddle)).toEqual({
-      general: { article: "the", name: "General Store and Market", upgradeAction: "repairing" },
+    expect(extractStoresMeta(fiddle, assetsDir).stores).toEqual({
+      general: { article: "the", upgradeAction: "repairing" },
     });
   });
 
@@ -56,14 +74,13 @@ describe("extractStoresMeta", () => {
       },
     });
 
-    const stores = extractStoresMeta(fiddle);
-    expect(stores["carpenter" as StoreId]).toEqual({ article: "the", name: "Carpenter's Shop" });
-    expect(stores["inn" as StoreId]).toEqual({ article: "the", name: "Sleeping Dragon Inn" });
+    const { stores } = extractStoresMeta(fiddle, assetsDir);
+    expect(stores["carpenter" as StoreId]).toEqual({ article: "the" });
+    expect(stores["inn" as StoreId]).toEqual({ article: "the" });
     expect(stores["blacksmith" as StoreId]).toEqual({
       article: "the",
-      name: "Blacksmith's Shop",
     });
-    expect(stores["terithia" as StoreId]).toEqual({ article: "the", name: "Tackle Shop" });
+    expect(stores["terithia" as StoreId]).toEqual({ article: "the" });
   });
 
   it("omits article for personal and bare-noun stalls", () => {
@@ -75,10 +92,10 @@ describe("extractStoresMeta", () => {
       },
     });
 
-    const stores = extractStoresMeta(fiddle);
-    expect(stores["darcy" as StoreId]).toEqual({ name: "Darcy's Stall" });
-    expect(stores["hayden" as StoreId]).toEqual({ name: "Hayden's Shop" });
-    expect(stores["maple_spring_festival" as StoreId]).toEqual({ name: "Food Stall" });
+    const { stores } = extractStoresMeta(fiddle, assetsDir);
+    expect(stores["darcy" as StoreId]).toEqual({});
+    expect(stores["hayden" as StoreId]).toEqual({});
+    expect(stores["maple_spring_festival" as StoreId]).toEqual({});
   });
 
   it("adds upgradeAction for the general store and omits it for the inn", () => {
@@ -89,13 +106,12 @@ describe("extractStoresMeta", () => {
       },
     });
 
-    const stores = extractStoresMeta(fiddle);
+    const { stores } = extractStoresMeta(fiddle, assetsDir);
     expect(stores["general" as StoreId]).toEqual({
       article: "the",
-      name: "General Store",
       upgradeAction: "repairing",
     });
-    expect(stores["inn" as StoreId]).toEqual({ article: "the", name: "Sleeping Dragon Inn" });
+    expect(stores["inn" as StoreId]).toEqual({ article: "the" });
   });
 
   it("throws on unknown store ID", () => {
@@ -105,7 +121,7 @@ describe("extractStoresMeta", () => {
       },
     });
 
-    expect(() => extractStoresMeta(fiddle)).toThrow(
+    expect(() => extractStoresMeta(fiddle, assetsDir)).toThrow(
       'Unknown store "mystery_vendor" — add it to KNOWN_STORES in stores-meta.ts',
     );
   });
@@ -117,14 +133,14 @@ describe("extractStoresMeta", () => {
       },
     });
 
-    expect(() => extractStoresMeta(fiddle)).toThrow(
+    expect(() => extractStoresMeta(fiddle, assetsDir)).toThrow(
       'Store "general" has no name in stores.toml — check data assembly',
     );
   });
 
   it("returns empty when no stores data", () => {
     const fiddle = makeFiddle({ stores: undefined });
-    const stores = extractStoresMeta(fiddle);
+    const { stores } = extractStoresMeta(fiddle, assetsDir);
     expect(Object.keys(stores)).toEqual([]);
   });
 });

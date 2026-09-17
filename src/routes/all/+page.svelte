@@ -68,7 +68,7 @@
   <SkillsSection locale={data.locale} progress={progress.skills} />
   <RenownSection progress={progress.renown} />
   <QuestsSection locale={data.locale} progress={progress.quests} />
-  <MinesSection progress={progress.mines} />
+  <MinesSection locale={data.locale} progress={progress.mines} />
 
   <AllCompleted isAllCompleted={overallProgress.completed >= overallProgress.total} />
 </div>

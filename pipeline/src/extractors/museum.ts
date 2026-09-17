@@ -1,6 +1,10 @@
+import { LOCALE_CODES } from "$lib/types/locale.js";
+
 import { expectArray, expectStringArray } from "../data-shapes.js";
+import { localizeField } from "../localize.js";
 import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
 
+import type { LocaleCode } from "$lib/types/locale.js";
 import type {
   ItemId,
   MuseumWing,
@@ -14,9 +18,16 @@ import type {
  * Projects museum wings and sets in the canonical UI display order. Object insertion order is only
  * a fallback when UI ordering is unavailable; ordered wing and set IDs absent from game data are skipped.
  */
-export function extractMuseum(fiddle: ParsedGameData): TrackerData["museum"] {
+export function extractMuseum(
+  fiddle: ParsedGameData,
+  assetsDir: string,
+): { localeNames: Record<LocaleCode, Record<string, string>>; museum: TrackerData["museum"] } {
+  const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
+    LocaleCode,
+    Record<string, string>
+  >;
   const wings = fiddle.museum_wings as Record<string, Record<string, unknown>> | undefined;
-  if (!wings) return {};
+  if (!wings) return { localeNames, museum: {} };
 
   const { setOrders, wingOrder } = readMuseumOrdering(fiddle);
   const orderedWingIds = wingOrder.length > 0 ? wingOrder : Object.keys(wings);
@@ -46,16 +57,29 @@ export function extractMuseum(fiddle: ParsedGameData): TrackerData["museum"] {
         sourcePath: sourceFile,
       });
 
-      sets[setId as MuseumWingSetId] = {
-        items: items as ItemId[],
-        name: (set.name as string | undefined) ?? setId,
-      };
+      sets[setId as MuseumWingSetId] = { items: items as ItemId[] };
+      const name = (set.name as string | undefined) ?? setId;
+      const key = `${wingId}/sets/${setId}`;
+      const { values } = localizeField(assetsDir, {
+        category: `museum_wings/${wingId}/sets`,
+        classification: "localizable",
+        englishValue: name,
+        field: "name",
+        id: setId,
+      });
+      for (const locale of LOCALE_CODES) localeNames[locale][key] = values[locale];
     }
 
-    result[wingId as MuseumWingId] = {
-      name: (wing.name as string | undefined) ?? wingId,
-      sets,
-    };
+    result[wingId as MuseumWingId] = { sets };
+    const name = (wing.name as string | undefined) ?? wingId;
+    const { values } = localizeField(assetsDir, {
+      category: "museum_wings",
+      classification: "localizable",
+      englishValue: name,
+      field: "name",
+      id: wingId,
+    });
+    for (const locale of LOCALE_CODES) localeNames[locale][wingId] = values[locale];
   }
 
   const totalSets = Object.values(result).reduce((n, w) => n + Object.keys(w.sets).length, 0);
@@ -66,7 +90,7 @@ export function extractMuseum(fiddle: ParsedGameData): TrackerData["museum"] {
   console.log(
     `  Museum: ${Object.keys(result).length} wings, ${totalSets} sets, ${totalItems} items`,
   );
-  return result;
+  return { localeNames, museum: result };
 }
 
 function readMuseumOrdering(fiddle: ParsedGameData): {

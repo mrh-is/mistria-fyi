@@ -132,13 +132,7 @@ describe("extractSkills", () => {
     const result = extractSkills(fiddle, assetsDir);
     expect(result.skills).toEqual({
       farming: {
-        perkTiers: [
-          { green_thumb: { name: "Green Thumb" } },
-          { harvest_moon: { name: "Harvest Moon" } },
-          {},
-          {},
-          {},
-        ],
+        perkTiers: [{ green_thumb: {} }, { harvest_moon: {} }, {}, {}, {}],
       },
     });
   });
@@ -186,7 +180,7 @@ describe("extractSkills", () => {
     const result = extractSkills(fiddle, assetsDir);
     expect(result.skills).toEqual({
       mining: {
-        perkTiers: [{}, {}, { perk_a: { name: "Perk A" }, perk_b: { name: "Perk B" } }, {}, {}],
+        perkTiers: [{}, {}, { perk_a: {}, perk_b: {} }, {}, {}],
       },
     });
   });
@@ -226,7 +220,7 @@ describe("extractSkills", () => {
     const result = extractSkills(fiddle, assetsDir);
     expect(result.skills).toEqual({
       farming: {
-        perkTiers: [{ real_perk: { name: "Real Perk" } }, {}, {}, {}, {}],
+        perkTiers: [{ real_perk: {} }, {}, {}, {}, {}],
       },
     });
   });

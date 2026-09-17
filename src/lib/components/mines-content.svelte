@@ -5,6 +5,7 @@
   import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData, trackerIndex } from "$lib/data/index.js";
+  import { getName, nameCollator } from "$lib/data/names.js";
   import { isEntityNameVisible } from "$lib/engine/visibility.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -14,8 +15,14 @@
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
+  import type { LocaleCode } from "$lib/types/locale.js";
   import type { SpellId } from "$lib/types/tracker-data.js";
 
+  let {
+    compact = false,
+    defaultOpen = false,
+    locale = "en",
+  }: { compact?: boolean; defaultOpen?: boolean; locale?: LocaleCode } = $props();
   const spoilerGuard = createSpoilerGuard();
 
   function rowDisplay(spellId: SpellId, completed: boolean): TrackerRowDisplay {
@@ -31,8 +38,7 @@
   function toggleSpell(spellId: SpellId): void {
     userState.toggleSpell(spellId);
     const completed = userState.state.completed.mines.spells.has(spellId);
-    const spell = trackerData.mines.spells[spellId];
-    showUndoToast(spell.name, completed, () => {
+    showUndoToast(getName("spells", spellId, locale), completed, () => {
       userState.toggleSpell(spellId);
     });
     if (completed) {
@@ -43,9 +49,6 @@
       }
     }
   }
-
-  const { compact = false, defaultOpen = false }: { compact?: boolean; defaultOpen?: boolean } =
-    $props();
 
   const biomes = trackerData.mines.biomes;
   const maxFloors = biomes[biomes.length - 1].floors.end;
@@ -85,8 +88,12 @@
 
   let spells = $derived(
     Object.entries(trackerData.mines.spells)
-      .map(([id, spell]) => ({ id: id as SpellId, name: spell.name, sources: spell.sources }))
-      .sort((a, b) => a.name.localeCompare(b.name)),
+      .map(([id, spell]) => ({
+        id: id as SpellId,
+        name: getName("spells", id as SpellId, locale),
+        sources: spell.sources,
+      }))
+      .sort((a, b) => nameCollator(locale).compare(a.name, b.name)),
   );
 
   registerSourceFilters("mines", () => trackerIndex.categorySourceTypes.mines);

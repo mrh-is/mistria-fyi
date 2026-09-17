@@ -1,12 +1,23 @@
-import { forEachItem } from "../extractor-helpers.js";
+import { LOCALE_CODES } from "$lib/types/locale.js";
 
+import { forEachItem } from "../extractor-helpers.js";
+import { localizeField } from "../localize.js";
+
+import type { LocaleCode } from "$lib/types/locale.js";
 import type { DateId, DateType, ItemId } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
 
-export function extractDates(fiddle: ParsedGameData): Record<DateId, DateType> {
+export function extractDates(
+  fiddle: ParsedGameData,
+  assetsDir: string,
+): { dates: Record<DateId, DateType>; localeNames: Record<LocaleCode, Record<DateId, string>> } {
+  const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
+    LocaleCode,
+    Record<DateId, string>
+  >;
   const dates = fiddle.dates as Record<string, Record<string, unknown>> | undefined;
-  if (!dates) return {};
+  if (!dates) return { dates: {}, localeNames };
 
   const unlockItems = buildDateUnlockMap(fiddle);
 
@@ -26,14 +37,19 @@ export function extractDates(fiddle: ParsedGameData): Record<DateId, DateType> {
       throw new Error(`Date "${id}" has no matching date_unlock item in fiddle.items`);
     }
 
-    result[id as DateId] = {
-      name,
-      sources: [{ type: "date_inspiration", itemId: unlockItemId }],
-    };
+    result[id as DateId] = { sources: [{ type: "date_inspiration", itemId: unlockItemId }] };
+    const { values } = localizeField(assetsDir, {
+      category: "dates",
+      classification: "localizable",
+      englishValue: name,
+      field: "name",
+      id,
+    });
+    for (const locale of LOCALE_CODES) localeNames[locale][id as DateId] = values[locale];
   }
 
   console.log(`  Dates: ${Object.keys(result).length}`);
-  return result;
+  return { dates: result, localeNames };
 }
 
 function buildDateUnlockMap(fiddle: ParsedGameData): Map<string, string> {
