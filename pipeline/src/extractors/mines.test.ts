@@ -6,6 +6,22 @@ import { extractMines } from "./mines.js";
 vi.mock("../parse-fiddle.js", () => ({
   sourceFileFor: () => "mock-source.toml",
 }));
+vi.mock("../localize.js", () => ({
+  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
+    fallbackLocales: [],
+    values: {
+      en: input.englishValue,
+      es: input.englishValue,
+      fr: input.englishValue,
+      ja: input.englishValue,
+      ko: input.englishValue,
+      ru: input.englishValue,
+      "zh-Hans": input.englishValue,
+      "zh-Hant": input.englishValue,
+    },
+  })),
+}));
+const assetsDir = "test-assets";
 
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({
@@ -33,7 +49,7 @@ describe("extractMines", () => {
       },
     });
 
-    const result = extractMines(fiddle);
+    const { mines: result } = extractMines(fiddle, assetsDir);
 
     expect(result.biomes).toEqual([
       { floors: { start: 1, end: 20 }, id: "upper_mines", name: "Upper Mines" },
@@ -55,7 +71,7 @@ describe("extractMines", () => {
       },
     });
 
-    const result = extractMines(fiddle);
+    const { mines: result } = extractMines(fiddle, assetsDir);
     expect(result.biomes[0].id).toBe("lava_caves");
     expect(result.biomes[1].id).toBe("ancient_ruins");
   });
@@ -70,7 +86,7 @@ describe("extractMines", () => {
       },
     });
 
-    const result = extractMines(fiddle);
+    const { mines: result } = extractMines(fiddle, assetsDir);
     expect(result.biomes[0].floors).toEqual({ start: 1, end: 20 });
     expect(result.biomes[1].floors).toEqual({ start: 21, end: 50 });
   });
@@ -88,11 +104,12 @@ describe("extractMines", () => {
       },
     });
 
-    const result = extractMines(fiddle);
+    const { localeNames, mines: result } = extractMines(fiddle, assetsDir);
     expect(result.spells).toEqual({
-      fireball: { name: "Fireball", sources: [] },
-      ice_lance: { name: "Ice Lance", sources: [] },
+      fireball: { sources: [] },
+      ice_lance: { sources: [] },
     });
+    expect(localeNames.ja["fireball" as never]).toBe("Fireball");
   });
 
   it("skips the default spell entry", () => {
@@ -107,7 +124,7 @@ describe("extractMines", () => {
       },
     });
 
-    const result = extractMines(fiddle);
+    const { mines: result } = extractMines(fiddle, assetsDir);
     expect(result.spells).not.toHaveProperty("default");
     expect(result.spells).toHaveProperty("zap");
   });
@@ -120,12 +137,14 @@ describe("extractMines", () => {
       },
     });
 
-    expect(() => extractMines(fiddle)).toThrow("Missing numeric dungeons.misc.max_floors");
+    expect(() => extractMines(fiddle, assetsDir)).toThrow(
+      "Missing numeric dungeons.misc.max_floors",
+    );
   });
 
   it("returns empty spells when spells data is absent", () => {
     const fiddle = makeFiddle();
-    const result = extractMines(fiddle);
+    const { mines: result } = extractMines(fiddle, assetsDir);
     expect(result.spells).toEqual({});
   });
 
@@ -139,7 +158,7 @@ describe("extractMines", () => {
       },
     });
 
-    const result = extractMines(fiddle);
+    const { mines: result } = extractMines(fiddle, assetsDir);
     expect(result.biomes[0].id).toBe("abyss");
   });
 });

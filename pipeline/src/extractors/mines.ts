@@ -1,7 +1,11 @@
+import { LOCALE_CODES } from "$lib/types/locale.js";
+
 import { expectArray } from "../data-shapes.js";
+import { localizeField } from "../localize.js";
 import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
 
 import type { SourceTuple } from "$lib/types/acquisition.js";
+import type { LocaleCode } from "$lib/types/locale.js";
 import type {
   MinesBiome,
   MinesBiomeId,
@@ -10,7 +14,14 @@ import type {
   TrackerData,
 } from "$lib/types/tracker-data.js";
 
-export function extractMines(fiddle: ParsedGameData): TrackerData["mines"] {
+export function extractMines(
+  fiddle: ParsedGameData,
+  assetsDir: string,
+): { localeNames: Record<LocaleCode, Record<SpellId, string>>; mines: TrackerData["mines"] } {
+  const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
+    LocaleCode,
+    Record<SpellId, string>
+  >;
   const dungeons = fiddle.dungeons as Record<string, unknown> | undefined;
   const spellsData = fiddle.spells as Record<string, Record<string, unknown>> | undefined;
 
@@ -46,9 +57,17 @@ export function extractMines(fiddle: ParsedGameData): TrackerData["mines"] {
     for (const [id, spell] of Object.entries(spellsData)) {
       if (id === "default") continue;
       spells[id as SpellId] = {
-        name: (spell.name as string | undefined) ?? id,
         sources: [] as unknown as SourceTuple,
       };
+      const name = (spell.name as string | undefined) ?? id;
+      const { values } = localizeField(assetsDir, {
+        category: "spells",
+        classification: "localizable",
+        englishValue: name,
+        field: "name",
+        id,
+      });
+      for (const locale of LOCALE_CODES) localeNames[locale][id as SpellId] = values[locale];
     }
   }
 
@@ -56,7 +75,7 @@ export function extractMines(fiddle: ParsedGameData): TrackerData["mines"] {
   console.log(
     `  Mines: ${biomes.length} biomes, ${lastBiome?.floors.end ?? 0} max floors, ${Object.keys(spells).length} spells`,
   );
-  return { biomes, spells };
+  return { localeNames, mines: { biomes, spells } };
 }
 
 function nameToId(name: string): MinesBiomeId {

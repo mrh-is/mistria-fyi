@@ -1,6 +1,10 @@
+import { LOCALE_CODES } from "$lib/types/locale.js";
+
 import { forEachQuest, QUEST_TYPE_MAP, TRACKED_QUEST_GROUPS } from "../extractor-helpers.js";
+import { localizeField } from "../localize.js";
 
 import type { SourceTuple } from "$lib/types/acquisition.js";
+import type { LocaleCode } from "$lib/types/locale.js";
 import type {
   ItemId,
   NpcId,
@@ -14,12 +18,20 @@ import type { ParsedGameData } from "../parse-fiddle.js";
 
 export function extractQuests(
   fiddle: ParsedGameData,
+  assetsDir: string,
   recipeIdByItemId?: Map<string, RecipeId>,
-): TrackerData["quests"] {
+): { localeNames: Record<LocaleCode, Record<QuestId, string>>; quests: TrackerData["quests"] } {
+  const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
+    LocaleCode,
+    Record<QuestId, string>
+  >;
   const quests = fiddle.quests as
     Record<string, Record<string, Record<string, unknown>>> | undefined;
   if (!quests) {
-    return { cooking: {}, crown: {}, fetch: {}, heart: {}, mission: {}, story: {} };
+    return {
+      localeNames,
+      quests: { cooking: {}, crown: {}, fetch: {}, heart: {}, mission: {}, story: {} },
+    };
   }
 
   const result: TrackerData["quests"] = {
@@ -34,6 +46,14 @@ export function extractQuests(
   forEachQuest(fiddle, TRACKED_QUEST_GROUPS, (tomlType, questId, quest) => {
     const outputType = QUEST_TYPE_MAP[tomlType as keyof typeof QUEST_TYPE_MAP];
     const name = (quest.name as string | undefined) ?? questId;
+    const { values } = localizeField(assetsDir, {
+      category: `quests/${tomlType}`,
+      classification: "localizable",
+      englishValue: name,
+      field: "name",
+      id: questId,
+    });
+    for (const locale of LOCALE_CODES) localeNames[locale][questId as QuestId] = values[locale];
 
     if (outputType === "fetch") {
       const npc = quest.npc_for_icon as string | undefined;
@@ -41,7 +61,6 @@ export function extractQuests(
       const rewardRecipeId = extractRewardRecipeId(quest);
       result.fetch[questId as QuestId] = {
         itemId: itemId as ItemId,
-        name,
         npc: (npc ?? questId) as NpcId,
         ...(rewardRecipeId ? { rewardRecipeId: rewardRecipeId as RecipeId } : {}),
         sources: [] as unknown as SourceTuple,
@@ -51,21 +70,19 @@ export function extractQuests(
       const isPregnancy = questId.endsWith("_pregnancy_request");
       result.heart[questId as QuestId] = {
         heartLevel: isPregnancy ? 10 : 0,
-        name,
         npc: (npc ?? extractStageQueryNpc(quest) ?? questId) as NpcId,
         sources: [] as unknown as SourceTuple,
       };
     } else if (outputType === "cooking") {
       const recipeId = extractCookingQuestRecipeId(questId, quest, recipeIdByItemId);
       result.cooking[questId as QuestId] = {
-        name,
         recipeId,
         sources: [] as unknown as SourceTuple,
       };
     } else {
-      (result[outputType] as Record<QuestId, { name: string; sources: SourceTuple }>)[
-        questId as QuestId
-      ] = { name, sources: [] as unknown as SourceTuple };
+      (result[outputType] as Record<QuestId, { sources: SourceTuple }>)[questId as QuestId] = {
+        sources: [] as unknown as SourceTuple,
+      };
     }
   });
 
@@ -74,7 +91,7 @@ export function extractQuests(
     .map((t) => `${t}: ${Object.keys(result[t]).length}`)
     .join(", ");
   console.log(`  Quests: ${total} (${breakdown})`);
-  return result;
+  return { localeNames, quests: result };
 }
 
 function extractCookingQuestRecipeId(

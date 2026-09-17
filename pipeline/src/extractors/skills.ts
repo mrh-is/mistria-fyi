@@ -16,6 +16,7 @@ export function extractSkills(
   assetsDir: string,
 ): {
   localeNames: Record<LocaleCode, Record<SkillId, string>>;
+  perkLocaleNames: Record<LocaleCode, Record<PerkId, string>>;
   perkTierLevels: TrackerData["perkTierLevels"];
   skills: TrackerData["skills"];
 } {
@@ -23,8 +24,14 @@ export function extractSkills(
     LocaleCode,
     Record<SkillId, string>
   >;
+  const perkLocaleNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
+    LocaleCode,
+    Record<PerkId, string>
+  >;
   const skillsData = fiddle.skills as Record<string, Record<string, unknown>> | undefined;
-  if (!skillsData) return { localeNames, perkTierLevels: [0, 0, 0, 0, 0], skills: {} };
+  if (!skillsData) {
+    return { localeNames, perkLocaleNames, perkTierLevels: [0, 0, 0, 0, 0], skills: {} };
+  }
 
   const ui = fiddle.ui as Record<string, unknown> | undefined;
   const skillMenus = ui?.skill_menu as Record<string, Record<string, unknown>> | undefined;
@@ -48,7 +55,7 @@ export function extractSkills(
   for (const id of Object.keys(skillsData)) {
     if (id === "default") continue;
     const name = (skillsData[id].name as string | undefined) ?? snakeToTitle(id);
-    const perkTiers = buildPerkTiers(id, skillMenus, perksData);
+    const perkTiers = buildPerkTiers(id, skillMenus, perksData, assetsDir, perkLocaleNames);
     skills[id as SkillId] = { perkTiers };
 
     const { values } = localizeField(assetsDir, {
@@ -66,13 +73,15 @@ export function extractSkills(
     0,
   );
   console.log(`  Skills: ${Object.keys(skills).length}, ${totalPerks} perks`);
-  return { localeNames, perkTierLevels, skills };
+  return { localeNames, perkLocaleNames, perkTierLevels, skills };
 }
 
 function buildPerkTiers(
   skillId: string,
   skillMenus: Record<string, Record<string, unknown>> | undefined,
   perksData: Record<string, Record<string, unknown>> | undefined,
+  assetsDir: string,
+  perkLocaleNames: Record<LocaleCode, Record<PerkId, string>>,
 ): [PerkTier, PerkTier, PerkTier, PerkTier, PerkTier] {
   const tiers: [PerkTier, PerkTier, PerkTier, PerkTier, PerkTier] = [{}, {}, {}, {}, {}];
   const menu = skillMenus?.[skillId];
@@ -93,7 +102,15 @@ function buildPerkTiers(
         throw new Error(`Perk "${perkId}" found in skill menu but has no name in perks data`);
       }
 
-      tiers[tierIdx][perkId as PerkId] = { name };
+      tiers[tierIdx][perkId as PerkId] = {};
+      const { values } = localizeField(assetsDir, {
+        category: "perks",
+        classification: "localizable",
+        englishValue: name,
+        field: "name",
+        id: perkId,
+      });
+      for (const locale of LOCALE_CODES) perkLocaleNames[locale][perkId as PerkId] = values[locale];
     }
   }
 

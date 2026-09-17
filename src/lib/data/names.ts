@@ -1,18 +1,46 @@
 import { LOCALE_CODES } from "$lib/types/locale.js";
 
 import type { LocaleCode } from "$lib/types/locale.js";
-import type { NpcId, SkillId } from "$lib/types/tracker-data.js";
+import type {
+  DateId,
+  FestivalId,
+  NpcId,
+  PerkId,
+  PetCosmeticSetId,
+  QuestId,
+  SkillId,
+  SpellId,
+  StoreId,
+} from "$lib/types/tracker-data.js";
 
 /**
  * Categories whose player-facing names have been migrated out of `tracker-data.json` and into
  * per-locale chunks. Phase 4 extends this union as each remaining category is migrated; until
  * then, unmigrated categories still carry an inline `name` field on their `tracker-data` type.
  */
-export type LocalizedCategory = "npcs" | "skills";
+export type LocalizedCategory =
+  | "dates"
+  | "festivals"
+  | "museum_wings"
+  | "npcs"
+  | "perks"
+  | "pets/cosmetic_sets"
+  | "quests"
+  | "skills"
+  | "spells"
+  | "stores";
 
 interface LocalizedCategoryId {
+  dates: DateId;
+  festivals: FestivalId;
+  museum_wings: string;
   npcs: NpcId;
+  perks: PerkId;
+  "pets/cosmetic_sets": PetCosmeticSetId;
+  quests: QuestId;
   skills: SkillId;
+  spells: SpellId;
+  stores: StoreId;
 }
 type NameChunk = Record<string, string>;
 
@@ -23,7 +51,7 @@ type NameChunk = Record<string, string>;
  * All 8 locales ship in the bundle today. That's cheap at NPC scale (~5 KB total for 34 entries)
  * and is the measured baseline Phase 4 revisits before migrating the ~2,700-entry item category.
  */
-const chunkModules = import.meta.glob<NameChunk>("./locales/*/*.json", {
+const chunkModules = import.meta.glob<NameChunk>("./locales/**/*.json", {
   eager: true,
   import: "default",
 });
@@ -85,7 +113,7 @@ function buildChunkIndex(): ReadonlyMap<string, NameChunk> {
   const index = new Map<string, NameChunk>();
 
   for (const [path, chunk] of Object.entries(chunkModules)) {
-    const match = /^\.\/locales\/(?<locale>[^/]+)\/(?<category>[^/]+)\.json$/.exec(path);
+    const match = /^\.\/locales\/(?<locale>[^/]+)\/(?<category>.+)\.json$/.exec(path);
     if (!match?.groups) continue;
 
     const { category, locale } = match.groups;

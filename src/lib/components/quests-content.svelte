@@ -252,12 +252,12 @@
       return {
         displayName: fetchQuest
           ? trackerData.items[fetchQuest.itemId].name
-          : displayQuestName(q.name, questType),
+          : displayQuestName(getName("quests", id as QuestId, locale), questType),
         heartLevel: heartQuest?.heartLevel,
         id: id as QuestId,
         isCompleted: false,
         isCraving: false,
-        name: q.name,
+        name: getName("quests", id as QuestId, locale),
         npc: fetchQuest?.npc ?? heartQuest?.npc,
         rewardRecipeName,
         shouldShow: true,
