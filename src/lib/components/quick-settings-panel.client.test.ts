@@ -30,13 +30,13 @@ describe("QuickSettingsPanel", () => {
     );
 
     expect(screen.getByRole("button", { name: "English" })).toHaveAttribute("aria-current", "true");
-    expect(screen.getByRole("button", { name: "日本語 Beta" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "简体中文 Beta" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "繁體中文 Beta" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "Español Beta" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "Français Beta" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "한국어 Beta" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "Русский Beta" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "日本語 Beta translation" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "简体中文 Beta translation" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "繁體中文 Beta translation" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Español Beta translation" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Français Beta translation" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "한국어 Beta translation" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Русский Beta translation" })).toBeVisible();
   });
 
   it("returns the spoiler toggle to off when confirmation is canceled", async () => {
