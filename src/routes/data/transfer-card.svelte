@@ -6,6 +6,7 @@
   import { Icon } from "$lib/components/icon/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
   import { decodeTransferPayload, encodeTransferPayload } from "$lib/engine/transfer.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import DataCard from "./data-card.svelte";
@@ -44,7 +45,7 @@
       });
       qrDataUrl = dataUrl;
     } catch (err) {
-      transferError = `Failed to generate QR code: ${err instanceof Error ? err.message : "unknown error"}`;
+      transferError = `${m.transfer_error_generate_prefix()} ${err instanceof Error ? err.message : m.transfer_unknown_error()}`;
     } finally {
       generating = false;
     }
@@ -64,7 +65,7 @@
     if (!open || attempt !== scanAttempt) return;
 
     if (!videoEl) {
-      transferError = "Could not initialize camera.";
+      transferError = m.transfer_error_camera_init();
       scanning = false;
       return;
     }
@@ -85,9 +86,9 @@
     } catch (err) {
       scanning = false;
       if (err instanceof Error && err.message.includes("permission")) {
-        transferError = "Camera access denied. Try scanning from an image instead.";
+        transferError = m.transfer_error_camera_denied();
       } else {
-        transferError = `Camera error: ${err instanceof Error ? err.message : "Could not access camera"}`;
+        transferError = `${m.transfer_error_camera_prefix()} ${err instanceof Error ? err.message : m.transfer_error_unknown_camera()}`;
       }
     }
   }
@@ -113,7 +114,7 @@
     const input = document.createElement("input");
     input.type = "file";
     input.name = "transfer-image";
-    input.setAttribute("aria-label", "Choose an image containing a transfer QR code");
+    input.setAttribute("aria-label", m.transfer_image_upload_aria());
     input.accept = "image/*";
     input.onchange = async () => {
       const file = input.files?.[0];
@@ -123,7 +124,7 @@
         const result = await QrScanner.scanImage(file, { returnDetailedScanResult: true });
         await handleScanResult(result.data);
       } catch {
-        transferError = "No QR code found in image. Make sure the image is clear and well-lit.";
+        transferError = m.transfer_error_no_qr_in_image();
       }
     };
     input.className = "sr-only";
@@ -142,24 +143,20 @@
       const counts = userState.mergeFromSave(decoded);
       transferResult = counts;
     } catch (err) {
-      transferError = `Invalid QR code: ${err instanceof Error ? err.message : "could not decode"}`;
+      transferError = `${m.transfer_error_invalid_qr_prefix()} ${err instanceof Error ? err.message : m.transfer_error_could_not_decode()}`;
     }
   }
 </script>
 
-<DataCard
-  bind:open
-  title="Transfer to Another Device"
-  summary="Move progress between devices with a QR code."
->
+<DataCard bind:open title={m.transfer_card_title()} summary={m.transfer_card_summary()}>
   <div class="flex flex-col gap-3">
     <div class="sr-only" role="status" aria-live="polite">
       {#if generating}
-        Generating QR code…
+        {m.transfer_generating_status()}
       {:else if scanning}
-        Starting QR code scanner…
+        {m.transfer_scanning_status()}
       {:else if transferResult}
-        QR code scanned successfully.
+        {m.transfer_scanned_success_status()}
       {/if}
     </div>
 
@@ -173,19 +170,19 @@
     >
       {#if generating}
         <IconLoader2 class="animate-spin" />
-        Generating...
+        {m.transfer_generating_action()}
       {:else}
         <IconQrcode />
-        Generate QR Code
+        {m.transfer_generate_action()}
       {/if}
     </Button>
 
     <!-- QR Code display -->
     {#if qrDataUrl}
       <div class="flex flex-col items-center gap-2 rounded-md border p-4">
-        <img alt="Transfer QR Code" class="size-48" src={qrDataUrl} />
+        <img alt={m.transfer_qr_alt()} class="size-48" src={qrDataUrl} />
         <p class="text-center text-sm text-muted-foreground">
-          Scan this code on your other device to transfer progress
+          {m.transfer_scan_instruction()}
         </p>
       </div>
     {/if}
@@ -194,7 +191,7 @@
     {#if !scanning}
       <Button class="w-full" variant="outline" onclick={handleScan}>
         <IconCamera />
-        Scan QR Code
+        {m.transfer_scan_action()}
       </Button>
     {/if}
 
@@ -204,14 +201,14 @@
         <video
           bind:this={videoEl}
           class="aspect-square w-full object-cover"
-          aria-label="Camera feed for QR code scanning"
+          aria-label={m.transfer_camera_feed_aria()}
         ></video>
         <Button
           class="absolute top-2 right-2"
           size="icon"
           variant="ghost"
           onclick={stopScanning}
-          aria-label="Close camera"
+          aria-label={m.transfer_close_camera_aria()}
         >
           <Icon.UI type="dismiss" />
         </Button>
@@ -221,7 +218,7 @@
     <!-- Image fallback -->
     <Button class="w-full text-sm" variant="ghost" onclick={handleImageUpload}>
       <IconPhotoPlus class="size-3" />
-      Or scan from a screenshot...
+      {m.transfer_scan_screenshot_action()}
     </Button>
 
     <!-- Success -->

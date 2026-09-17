@@ -2,6 +2,7 @@
   import { IconFileUpload, IconUpload } from "@tabler/icons-svelte-runes";
 
   import { Button } from "$lib/components/ui/button/index.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import DataCard from "./data-card.svelte";
@@ -9,12 +10,9 @@
   import type { ImportErrorKind } from "$lib/stores/user-state.svelte.js";
 
   const ERROR_MESSAGES: Record<ImportErrorKind, string> = {
-    "invalid-fields":
-      "This backup is missing required data or contains invalid fields. It may be corrupted or from a different app.",
-    "malformed-json":
-      "This file is not valid JSON. Make sure you selected an unmodified backup file.",
-    "unsupported-version":
-      "This backup was created by a newer version of Mistria Field Guide. Update the app and try again.",
+    "invalid-fields": m.backup_error_invalid_fields(),
+    "malformed-json": m.backup_error_malformed_json(),
+    "unsupported-version": m.backup_error_unsupported_version(),
   };
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
@@ -37,7 +35,7 @@
     const input = document.createElement("input");
     input.type = "file";
     input.name = "backup-file";
-    input.setAttribute("aria-label", "Choose a backup file to restore");
+    input.setAttribute("aria-label", m.backup_choose_file_aria());
     input.accept = ".json";
     input.onchange = async () => {
       const file = input.files?.[0];
@@ -45,7 +43,7 @@
       if (!file) return;
       restoring = true;
       restoreError = "";
-      restoreStatus = "Restoring backup…";
+      restoreStatus = m.backup_restoring_status();
       try {
         const text = await file.text();
         const result = userState.importState(text);
@@ -53,11 +51,11 @@
           restoreStatus = "";
           restoreError = ERROR_MESSAGES[result.error];
         } else {
-          restoreStatus = "Backup restored successfully.";
+          restoreStatus = m.backup_restored_success();
         }
       } catch {
         restoreStatus = "";
-        restoreError = "Could not read this backup file.";
+        restoreError = m.backup_could_not_read();
       } finally {
         restoring = false;
       }
@@ -71,11 +69,11 @@
   }
 </script>
 
-<DataCard bind:open title="Backup & Restore" summary="Export or restore all tracker data.">
+<DataCard bind:open title={m.backup_card_title()} summary={m.backup_card_summary()}>
   <div class="flex flex-col gap-2">
     <Button variant="outline" onclick={handleExport}>
       <IconFileUpload />
-      Export backup
+      {m.backup_export_action()}
     </Button>
     <Button
       variant="outline"
@@ -84,7 +82,7 @@
       onclick={handleImportBackup}
     >
       <IconUpload />
-      Restore from backup
+      {m.backup_restore_action()}
     </Button>
     <div class="sr-only" role="status" aria-live="polite">{restoreStatus}</div>
     <div class="sr-only">
