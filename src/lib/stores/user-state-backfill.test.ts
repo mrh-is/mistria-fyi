@@ -216,7 +216,7 @@ describe("downstream consumers after backfill", () => {
     const completed = await getBackfilledState();
     const progression = deriveProgressionState(completed, trackerData, false);
     expect(() =>
-      searchItems("a", completed, { season: "spring", weather: "calm" }, progression),
+      searchItems("a", completed, { season: "spring", weather: "calm" }, progression, "en"),
     ).not.toThrow();
   });
 

@@ -7,6 +7,7 @@
   import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData, trackerIndex } from "$lib/data/index.js";
+  import { getName, nameCollator } from "$lib/data/names.js";
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
   import { getMarriedNpc } from "$lib/engine/relationships.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
@@ -24,6 +25,7 @@
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { QuestState } from "$lib/stores/user-state.svelte.js";
   import type { Source } from "$lib/types/acquisition";
+  import type { LocaleCode } from "$lib/types/locale.js";
   import type {
     FetchQuest,
     HeartQuest,
@@ -32,6 +34,8 @@
     QuestType,
   } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
+
+  let { locale }: { locale: LocaleCode } = $props();
 
   const pregnancyQuestIds = new Set(
     Object.values(trackerData.pregnancyQuestByNpc).filter((id): id is QuestId => id !== undefined),
@@ -49,7 +53,7 @@
     ),
   );
 
-  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
+  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
 
   function findDuplicateNames(entries: { displayName: string }[]): Set<string> {
     const counts: Record<string, number> = {};
@@ -119,7 +123,7 @@
     const { displayName, npc, rewardRecipeName } = quest;
     if (!npc) return undefined;
     if (questType === "fetch" || questType === "heart" || duplicateNames.has(displayName)) {
-      const npcName = trackerData.npcs[npc].name;
+      const npcName = getName("npcs", npc, locale);
       if (duplicateNames.has(displayName) && rewardRecipeName) {
         return `${npcName} · ${rewardRecipeName}`;
       }
@@ -158,7 +162,7 @@
 
     const shouldShow = !marriedNpc || (isWife && userState.state.completed.childChoice !== "no");
 
-    const subtitle = activeQuestId && marriedNpc ? trackerData.npcs[marriedNpc].name : undefined;
+    const subtitle = activeQuestId && marriedNpc ? getName("npcs", marriedNpc, locale) : undefined;
 
     const isCompleted = activeQuestId ? getQuestState(activeQuestId) === "completed" : false;
 
@@ -271,18 +275,18 @@
       }
       if (questType === "heart") {
         if (a.isCraving !== b.isCraving) return a.isCraving ? 1 : -1;
-        const npcA = a.npc ? trackerData.npcs[a.npc].name : "";
-        const npcB = b.npc ? trackerData.npcs[b.npc].name : "";
-        const npcCmp = npcA.localeCompare(npcB);
+        const npcA = a.npc ? getName("npcs", a.npc, locale) : "";
+        const npcB = b.npc ? getName("npcs", b.npc, locale) : "";
+        const npcCmp = nameCollator(locale).compare(npcA, npcB);
         if (npcCmp !== 0) return npcCmp;
         return (a.heartLevel ?? 0) - (b.heartLevel ?? 0);
       }
       if (questType === "fetch") {
         const nameCmp = a.displayName.localeCompare(b.displayName);
         if (nameCmp !== 0) return nameCmp;
-        const npcA = a.npc ? trackerData.npcs[a.npc].name : "";
-        const npcB = b.npc ? trackerData.npcs[b.npc].name : "";
-        return npcA.localeCompare(npcB);
+        const npcA = a.npc ? getName("npcs", a.npc, locale) : "";
+        const npcB = b.npc ? getName("npcs", b.npc, locale) : "";
+        return nameCollator(locale).compare(npcA, npcB);
       }
       return a.displayName.localeCompare(b.displayName);
     })}

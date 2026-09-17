@@ -7,15 +7,17 @@
     compact = false,
     id,
     known = true,
+    name,
     npc,
   }: {
     compact?: boolean;
     id: NpcId;
     known?: boolean;
+    name: string;
     npc: Npc;
   } = $props();
 </script>
 
 <ul>
-  <NpcRecord {compact} {id} {known} {npc} />
+  <NpcRecord {compact} {id} {known} {name} {npc} />
 </ul>

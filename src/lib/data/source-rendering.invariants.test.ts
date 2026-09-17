@@ -154,7 +154,7 @@ function walkSegments(segments: SourceSegment[], context: string): void {
 describe("generated source rendering contract", () => {
   const sourcedEntities = collectSourcedEntities(trackerData);
   const paths = sourcedEntities.map(({ path }) => path);
-  const baseLookups = buildBaseSegmentLookups(new Set());
+  const baseLookups = buildBaseSegmentLookups(new Set(), "en");
 
   it.each([
     "trackerData.items.",

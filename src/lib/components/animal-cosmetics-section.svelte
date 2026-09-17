@@ -8,6 +8,7 @@
 
   import AnimalSubcategory from "./animal-subcategory.svelte";
 
+  import type { LocaleCode } from "$lib/types/locale.js";
   import type { AnimalId, CosmeticId } from "$lib/types/tracker-data";
 
   import type {
@@ -82,17 +83,19 @@
     ),
   );
 
-  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
-
   let {
     areAllAnimalsComplete,
     isAnimalComplete,
     isSpeciesVisible,
+    locale,
   }: {
     areAllAnimalsComplete: () => boolean;
     isAnimalComplete: (animalId: AnimalId) => boolean;
     isSpeciesVisible: (animalId: AnimalId) => boolean;
+    locale: LocaleCode;
   } = $props();
+
+  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
 </script>
 
 <AnimalSubcategory
