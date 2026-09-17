@@ -64,12 +64,18 @@ test("serves cached routes and assets offline, then falls back for an uncached n
   await page.goto("/animals");
   await expect(page.locator("main")).toBeVisible();
 
+  // There's no unprefixed default locale, so /animals redirects to /en/animals — that's the
+  // URL the service worker actually caches the navigation under.
+  const cachedRoutePath = new URL(page.url()).pathname;
   await expect
     .poll(() =>
-      page.evaluate(async () => ({
-        asset: (await caches.match("/favicon.png")) !== undefined,
-        route: (await caches.match("/animals")) !== undefined,
-      })),
+      page.evaluate(
+        async (routePath) => ({
+          asset: (await caches.match("/favicon.png")) !== undefined,
+          route: (await caches.match(routePath)) !== undefined,
+        }),
+        cachedRoutePath,
+      ),
     )
     .toEqual({ asset: true, route: true });
 
