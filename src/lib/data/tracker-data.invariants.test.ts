@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
-import { getName } from "$lib/data/names.js";
+import { animalNameId, getName } from "$lib/data/names.js";
 import { recordEntries, recordKeys, recordValues } from "$lib/utils.js";
 
 import type { Source } from "$lib/types/acquisition.js";
@@ -343,8 +343,8 @@ describe("town ranks", () => {
   });
 
   it("every rank has a name", () => {
-    for (const rank of trackerData.townRanks) {
-      expect(rank.name.length).toBeGreaterThan(0);
+    for (const [index] of trackerData.townRanks.entries()) {
+      expect(getName("town-ranks", index.toString(), "en").length).toBeGreaterThan(0);
     }
   });
 
@@ -363,8 +363,11 @@ describe("animals structural integrity", () => {
   });
 
   it("every animal has a name", () => {
-    for (const [id, animal] of recordEntries(trackerData.animals)) {
-      expect(animal.name.length, `${id} has no name`).toBeGreaterThan(0);
+    for (const [id] of recordEntries(trackerData.animals)) {
+      expect(
+        getName("animals", animalNameId(id, "core"), "en").length,
+        `${id} has no name`,
+      ).toBeGreaterThan(0);
     }
   });
 });
@@ -402,7 +405,7 @@ describe("mine biomes structural integrity", () => {
 
   it("every biome has a name", () => {
     for (const biome of trackerData.mines.biomes) {
-      expect(biome.name.length).toBeGreaterThan(0);
+      expect(getName("mines", biome.id, "en").length).toBeGreaterThan(0);
     }
   });
 

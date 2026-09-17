@@ -1,5 +1,5 @@
 import { trackerData, trackerIndex } from "$lib/data/index.js";
-import { getName, nameCollator } from "$lib/data/names.js";
+import { animalNameId, getName, nameCollator } from "$lib/data/names.js";
 import { isItemApplicable, isItemApplicableForAlmanac } from "$lib/engine/applicability.js";
 import { isItemAvailable } from "$lib/engine/availability.js";
 import { isNpcComplete } from "$lib/engine/progress.js";
@@ -112,15 +112,17 @@ export function searchItems(
     if (animal.visibility && !isVisible(animal.visibility, progressionState)) continue;
 
     for (const tier of animal.variantTiers) {
-      for (const [variantId, variant] of recordEntries(tier)) {
-        if (variant.name.toLowerCase().includes(q)) {
+      for (const [variantId] of recordEntries(tier)) {
+        const name = getName("animals", animalNameId(animalId, "variants", variantId), locale);
+        const englishName = getName("animals", animalNameId(animalId, "variants", variantId), "en");
+        if (name.toLowerCase().includes(q) || englishName.toLowerCase().includes(q)) {
           results.push({
             available: true,
             category: "animals",
             completed: completed.animals[animalId].has(variantId),
-            detail: animal.name,
+            detail: getName("animals", animalNameId(animalId, "core"), locale),
             id: `${animalId}:${variantId}`,
-            name: variant.name,
+            name,
           });
         }
       }
@@ -131,16 +133,19 @@ export function searchItems(
   for (const [animalId, animal] of recordEntries(trackerData.animals)) {
     if (animal.visibility && !isVisible(animal.visibility, progressionState)) continue;
 
-    for (const [cosmeticId, cosmetic] of recordEntries(animal.cosmetics)) {
-      const fullName = `${animal.name} ${cosmetic.name}`;
-      if (fullName.toLowerCase().includes(q)) {
+    for (const [cosmeticId] of recordEntries(animal.cosmetics)) {
+      const name = getName("animals", animalNameId(animalId, "cosmetics", cosmeticId), locale);
+      const englishName = getName("animals", animalNameId(animalId, "cosmetics", cosmeticId), "en");
+      const fullName = `${getName("animals", animalNameId(animalId, "core"), locale)} ${name}`;
+      const englishFullName = `${getName("animals", animalNameId(animalId, "core"), "en")} ${englishName}`;
+      if (fullName.toLowerCase().includes(q) || englishFullName.toLowerCase().includes(q)) {
         results.push({
           available: true,
           category: "animals",
           completed: completed.animalCosmetics[animalId].has(cosmeticId),
           fullName,
           id: `${animalId}:${cosmeticId}`,
-          name: cosmetic.name,
+          name,
         });
       }
     }
@@ -194,13 +199,15 @@ export function searchItems(
   for (const [id, cosmetic] of recordEntries(trackerData.cosmetics)) {
     if (cosmetic.visibility && !isVisible(cosmetic.visibility, progressionState)) continue;
 
-    if (cosmetic.name.toLowerCase().includes(q)) {
+    const name = getName("cosmetics", id, locale);
+    const englishName = getName("cosmetics", id, "en");
+    if (name.toLowerCase().includes(q) || englishName.toLowerCase().includes(q)) {
       results.push({
         available: true,
         category: "cosmetics",
         completed: completed.cosmetics.has(id),
         id,
-        name: cosmetic.name,
+        name,
       });
     }
   }

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { trackerData } from "$lib/data/index.js";
+  import { animalNameId, getName, nameCollator } from "$lib/data/names.js";
   import {
     getVariantSeason,
     isVariantInScope as isVariantInScopeEngine,
@@ -10,6 +11,7 @@
 
   import AnimalSubcategory from "./animal-subcategory.svelte";
 
+  import type { LocaleCode } from "$lib/types/locale.js";
   import type {
     AnimalId,
     AnimalVariant,
@@ -126,7 +128,7 @@
         visibleItems.push({
           completed,
           id: vid,
-          name: variant.name,
+          name: getName("animals", animalNameId(animalId, "variants", vid), locale),
           redacted: isVariantSpoilered(animalId, vid),
           season: getVariantSeason(variant),
           sources: [variant.source],
@@ -142,7 +144,7 @@
       const orderB = SEASON_ORDER[b.season ?? "winter"];
       if (orderA !== orderB) return orderA - orderB;
 
-      return a.name.localeCompare(b.name);
+      return nameCollator(locale).compare(a.name, b.name);
     });
     return {
       displayableCompletedItemCount,
@@ -156,10 +158,12 @@
     areAllAnimalsComplete,
     isAnimalComplete,
     isSpeciesVisible,
+    locale,
   }: {
     areAllAnimalsComplete: () => boolean;
     isAnimalComplete: (animalId: AnimalId) => boolean;
     isSpeciesVisible: (animalId: AnimalId) => boolean;
+    locale: LocaleCode;
   } = $props();
 </script>
 
@@ -168,6 +172,7 @@
   completionCheck={hasCompletedVariant}
   hasDisplayableItem={hasDisplayableVariant}
   {isAnimalComplete}
+  {locale}
   name={m.animals_color_variants_section_name()}
   {sectionConfig}
   toggleCompletion={(animalId: AnimalId, variantId: AnimalVariantId) => {

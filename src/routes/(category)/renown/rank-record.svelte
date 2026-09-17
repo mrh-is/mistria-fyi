@@ -10,9 +10,16 @@
   let {
     color,
     currentLevel,
+    name = "",
     rank,
     spoilered = false,
-  }: { color: string; currentLevel: number; rank: TownRank; spoilered?: boolean } = $props();
+  }: {
+    color: string;
+    currentLevel: number;
+    name?: string;
+    rank: TownRank;
+    spoilered?: boolean;
+  } = $props();
 
   let rankState = $derived(getRankState(currentLevel, rank));
   let span = $derived(Math.max(rank.levels.end - rank.levels.start + 1, 1));
@@ -48,9 +55,9 @@
   <span class="rank-copy">
     <strong>
       {#if hidden}
-        <Spoiler onReveal={() => (revealed = true)}>{rank.name}</Spoiler>
+        <Spoiler onReveal={() => (revealed = true)}>{name}</Spoiler>
       {:else}
-        {rank.name}
+        {name}
       {/if}
     </strong>
     <small>

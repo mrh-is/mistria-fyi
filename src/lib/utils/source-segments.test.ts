@@ -38,7 +38,11 @@ import type { SegmentLookups } from "./source-segments.js";
 const BASE_LOOKUPS: SegmentLookups = {
   animalNames: {},
   biomes: [
-    { floors: { start: 1, end: 19 }, id: "upper_mines" as MinesBiomeId, name: "Upper Mines" },
+    {
+      floors: { start: 1, end: 19 },
+      id: "upper_mines" as MinesBiomeId,
+      name: "Upper Mines",
+    },
     {
       floors: { start: 20, end: 39 },
       id: "tide_caverns" as MinesBiomeId,

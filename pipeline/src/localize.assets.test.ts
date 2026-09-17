@@ -45,6 +45,21 @@ describe("localizeField — real assets", () => {
     expect(result.fallbackLocales).toHaveLength(7);
   });
 
+  it("rejects an ordinal translation when the English source order changes", () => {
+    expect(() =>
+      localizeField(requireGameAssetsDir(), {
+        category: "renown/ranks",
+        classification: "localizable",
+        englishValue: "Stone",
+        expectedEnglishValue: "Wood",
+        field: "name",
+        id: "0",
+      }),
+    ).toThrow(
+      'English localization mismatch for ordinal key "renown/ranks/0/name": expected "Wood", got "Stone"',
+    );
+  });
+
   it("passes structural fields through unchanged for every locale", () => {
     const result = localizeField(requireGameAssetsDir(), {
       category: "npcs",

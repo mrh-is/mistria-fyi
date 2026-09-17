@@ -1,7 +1,41 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
-import { extractAnimals } from "./animals.js";
+import { extractAnimals as extractLocalizedAnimals } from "./animals.js";
+
+vi.mock("../localize.js", () => ({
+  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
+    fallbackLocales: [],
+    values: { en: input.englishValue },
+  })),
+}));
+
+function extractAnimals(fiddle: ReturnType<typeof makeFiddleBase>) {
+  const { animals, localeNames } = extractLocalizedAnimals(fiddle, "test-assets");
+  return Object.fromEntries(
+    Object.entries(animals).map(([animalId, animal]) => [
+      animalId,
+      {
+        ...animal,
+        cosmetics: Object.fromEntries(
+          Object.entries(animal.cosmetics).map(([cosmeticId, cosmetic]) => [
+            cosmeticId,
+            { ...cosmetic, name: localeNames.en[`${animalId}/cosmetics/${cosmeticId}`] },
+          ]),
+        ),
+        name: localeNames.en[`${animalId}/core`],
+        variantTiers: animal.variantTiers.map((tier) =>
+          Object.fromEntries(
+            Object.entries(tier).map(([variantId, variant]) => [
+              variantId,
+              { ...variant, name: localeNames.en[`${animalId}/variants/${variantId}`] },
+            ]),
+          ),
+        ),
+      },
+    ]),
+  );
+}
 
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({ ranching: { animals: {} }, ...overrides });

@@ -19,11 +19,6 @@
   import type { LocaleCode } from "$lib/types/locale.js";
   import type { SpellId } from "$lib/types/tracker-data.js";
 
-  let {
-    compact = false,
-    defaultOpen = false,
-    locale = "en",
-  }: { compact?: boolean; defaultOpen?: boolean; locale?: LocaleCode } = $props();
   const spoilerGuard = createSpoilerGuard();
 
   function rowDisplay(spellId: SpellId, completed: boolean): TrackerRowDisplay {
@@ -50,6 +45,16 @@
       }
     }
   }
+
+  const {
+    compact = false,
+    defaultOpen = false,
+    locale = "en",
+  }: {
+    compact?: boolean;
+    defaultOpen?: boolean;
+    locale?: LocaleCode;
+  } = $props();
 
   const biomes = trackerData.mines.biomes;
   const maxFloors = biomes[biomes.length - 1].floors.end;
@@ -132,6 +137,7 @@
     {biomes}
     compact
     floor={userState.state.completed.mines.floor}
+    {locale}
     onChange={setFloorWithCelebration}
   />
 {:else}
@@ -140,13 +146,17 @@
     name={m.mines_floor_progress_section()}
     reportCategory="mines"
     reportEntityId="floors"
-    reportExtra={{ biome: currentBiome.name, floor: userState.state.completed.mines.floor }}
+    reportExtra={{
+      biome: getName("mines", currentBiome.id, locale),
+      floor: userState.state.completed.mines.floor,
+    }}
     {defaultOpen}
     total={maxFloors}
   >
     <MineFloorRecord
       {biomes}
       floor={userState.state.completed.mines.floor}
+      {locale}
       onChange={setFloorWithCelebration}
       registerFeedback={false}
     />

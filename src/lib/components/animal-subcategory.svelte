@@ -2,6 +2,7 @@
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import SpoilerSection from "$lib/components/spoiler-section.svelte";
   import { trackerData } from "$lib/data/index.js";
+  import { animalNameId, getName, nameCollator } from "$lib/data/names.js";
   import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
@@ -27,8 +28,11 @@
 
   let animals = $derived(
     Object.entries(trackerData.animals)
-      .map(([id, animal]) => ({ id: id as AnimalId, name: animal.name }))
-      .sort((a, b) => a.name.localeCompare(b.name)),
+      .map(([id]) => ({
+        id: id as AnimalId,
+        name: getName("animals", animalNameId(id as AnimalId, "core"), props.locale),
+      }))
+      .sort((a, b) => nameCollator(props.locale).compare(a.name, b.name)),
   );
 
   let { completedCount, totalCount } = $derived(

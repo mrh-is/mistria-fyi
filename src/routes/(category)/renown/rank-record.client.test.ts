@@ -13,7 +13,8 @@ describe("RankRecord", () => {
     {
       currentLevel: 14,
       expected: "current",
-      rank: { levels: { start: 10, end: 19 }, name: "Stone" },
+      name: "Stone",
+      rank: { levels: { start: 10, end: 19 } },
     },
     {
       currentLevel: 10,
@@ -32,7 +33,8 @@ describe("RankRecord", () => {
   it("shows a partially filled current mark from the inclusive range", () => {
     const view = render(RankRecordHarness, {
       currentLevel: 14,
-      rank: { levels: { start: 10, end: 19 }, name: "Stone" },
+      name: "Stone",
+      rank: { levels: { start: 10, end: 19 } },
     });
     expect(view.getByTestId("rank-fill")).toHaveStyle("clip-path: inset(0 60% 0 0)");
     expect(view.getByText("4 / 10")).toBeInTheDocument();
@@ -41,7 +43,8 @@ describe("RankRecord", () => {
   it("reveals a spoilered upcoming rank explicitly", async () => {
     const view = render(RankRecordHarness, {
       currentLevel: 0,
-      rank: { levels: { start: 10, end: 19 }, name: "Secret rank" },
+      name: "Secret rank",
+      rank: { levels: { start: 10, end: 19 } },
       spoilered: true,
     });
     expect(view.getByRole("button", { name: "Reveal spoiler" })).toBeInTheDocument();
