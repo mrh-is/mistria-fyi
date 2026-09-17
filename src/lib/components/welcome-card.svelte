@@ -188,6 +188,10 @@
     background: var(--home-accent);
   }
 
+  :global(.dark) .welcome-card__primary {
+    color: #101014;
+  }
+
   .welcome-card__secondary {
     color: var(--ink);
     background: color-mix(in srgb, var(--paper-raised) 92%, var(--home-accent));
