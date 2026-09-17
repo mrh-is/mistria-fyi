@@ -19,6 +19,26 @@ describe("QuickSettingsPanel", () => {
     expect(container.querySelector(".quick-settings__links")?.children).toHaveLength(2);
   });
 
+  it("lists every shipped language by its native name, with beta translations marked", async () => {
+    render(QuickSettingsPanel);
+
+    await fireEvent.click(screen.getByRole("button", { name: "Choose language" }));
+
+    expect(screen.getByRole("button", { name: "Choose language" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+
+    expect(screen.getByRole("button", { name: "English" })).toHaveAttribute("aria-current", "true");
+    expect(screen.getByRole("button", { name: "日本語 Beta translation" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "简体中文 Beta translation" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "繁體中文 Beta translation" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Español Beta translation" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Français Beta translation" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "한국어 Beta translation" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Русский Beta translation" })).toBeVisible();
+  });
+
   it("returns the spoiler toggle to off when confirmation is canceled", async () => {
     render(QuickSettingsPanel);
 
