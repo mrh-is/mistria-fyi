@@ -92,6 +92,12 @@
     }
   ],
   "dates_section_name": "Citas",
+  "animals_no_matches": "Ningún elemento coincide con los filtros actuales",
+  "animals_cosmetics_section_name": "Cosméticos",
+  "animals_color_variants_section_name": "Variantes de color",
+  "animals_variant_tier_label": "Nivel {tier}",
+  "animals_pet_cosmetics_section_name": "Cosméticos de mascota",
+  "animals_pet_skins_section_name": "Aspectos de mascota",
   "section_progress_label": "{name}, {completed} de {total} completados",
   "spoiler_dialog_title": "¿Completar elemento con spoiler?",
   "spoiler_dialog_description": "Este elemento sigue oculto según tu progreso registrado. ¿Seguro que quieres marcarlo como completado?",

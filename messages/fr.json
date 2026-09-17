@@ -92,6 +92,12 @@
     }
   ],
   "dates_section_name": "Rendez-vous",
+  "animals_no_matches": "Aucun élément ne correspond aux filtres actuels",
+  "animals_cosmetics_section_name": "Cosmétiques",
+  "animals_color_variants_section_name": "Variantes de couleur",
+  "animals_variant_tier_label": "Niveau {tier}",
+  "animals_pet_cosmetics_section_name": "Cosmétiques d'animal",
+  "animals_pet_skins_section_name": "Apparences d'animal",
   "section_progress_label": "{name}, {completed} sur {total} terminés",
   "spoiler_dialog_title": "Terminer un élément spoilé ?",
   "spoiler_dialog_description": "Cet élément est toujours masqué en fonction de votre progression suivie. Voulez-vous vraiment le marquer comme terminé ?",

@@ -95,6 +95,12 @@
     }
   ],
   "dates_section_name": "Свидания",
+  "animals_no_matches": "Ничего не соответствует текущим фильтрам",
+  "animals_cosmetics_section_name": "Косметика",
+  "animals_color_variants_section_name": "Цветовые вариации",
+  "animals_variant_tier_label": "Уровень {tier}",
+  "animals_pet_cosmetics_section_name": "Косметика питомца",
+  "animals_pet_skins_section_name": "Скины питомца",
   "section_progress_label": "{name}, выполнено {completed} из {total}",
   "spoiler_dialog_title": "Отметить заспойлеренный предмет как выполненный?",
   "spoiler_dialog_description": "Этот предмет всё ещё скрыт на основе отслеживаемого прогресса. Вы уверены, что хотите отметить его как выполненный?",
