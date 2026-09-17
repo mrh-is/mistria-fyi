@@ -352,7 +352,11 @@ async function main(): Promise<void> {
   const { localeNames: npcLocaleNames, npcs } = extractNpcs(fiddle, assetsDir);
   const cosmeticsRaw = extractCosmetics(fiddle);
   const cosmetics = applyExclusions(cosmeticsRaw);
-  const { perkTierLevels, skills } = extractSkills(fiddle);
+  const {
+    localeNames: skillLocaleNames,
+    perkTierLevels,
+    skills,
+  } = extractSkills(fiddle, assetsDir);
   const townRanks = extractTownRanks(fiddle);
   const quests = extractQuests(fiddle, recipeIdByItemId);
   const mines = extractMines(fiddle);
@@ -573,6 +577,7 @@ async function main(): Promise<void> {
   console.log(`  Written: src/lib/data/locales.json (${localeManifest.length} locales)`);
 
   writeLocaleChunks("npcs", npcLocaleNames);
+  writeLocaleChunks("skills", skillLocaleNames);
 
   const extractSpritesFlag = args.includes("--sprites");
   if (extractSpritesFlag) {
