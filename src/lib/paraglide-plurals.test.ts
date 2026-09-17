@@ -27,6 +27,16 @@ describe("plural messages", () => {
         );
         expect(questRecipesResult).not.toBe("quest_marked_completed_with_recipes");
         expect(questRecipesResult).toContain(count.toString());
+
+        for (const message of [
+          m.merge_label_mine_floor,
+          m.merge_label_npc_levels,
+          m.merge_label_renown,
+          m.merge_label_skill_levels,
+        ]) {
+          const result = message({ count }, { locale });
+          expect(result).toContain(count.toString());
+        }
       }
     }
   });
@@ -64,5 +74,14 @@ describe("plural messages", () => {
     expect(
       m.quest_marked_completed_with_recipes({ count: 3, name: "Copper Sword" }, { locale: "ru" }),
     ).toBe("«Copper Sword» отмечено как выполненное, разблокировано 3 рецепта");
+  });
+
+  it("resolves all four Russian plural categories for the mine-floor merge-count label", () => {
+    const locale: Locale = "ru";
+
+    expect(m.merge_label_mine_floor({ count: 1 }, { locale })).toBe("Шахтный этаж: +1 этаж");
+    expect(m.merge_label_mine_floor({ count: 3 }, { locale })).toBe("Шахтный этаж: +3 этажа");
+    expect(m.merge_label_mine_floor({ count: 5 }, { locale })).toBe("Шахтный этаж: +5 этажей");
+    expect(m.merge_label_mine_floor({ count: 11 }, { locale })).toBe("Шахтный этаж: +11 этажей");
   });
 });
