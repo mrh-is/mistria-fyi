@@ -2,6 +2,8 @@
   import { IconX } from "@tabler/icons-svelte-runes";
   import { tick } from "svelte";
 
+  import * as m from "$lib/paraglide/messages.js";
+
   import type { FeedbackContext } from "$lib/feedback/context.svelte.js";
   import type { ReportableElement } from "$lib/feedback/types.js";
 
@@ -97,13 +99,13 @@
   <div
     class="pointer-events-none fixed inset-0 z-40"
     role="dialog"
-    aria-label="Pick an item to report"
+    aria-label={m.feedback_picker_dialog_title()}
     aria-modal="true"
   >
     <button
       class="pointer-events-auto fixed inset-0 bg-black/45 motion-safe:transition-opacity"
       type="button"
-      aria-label="Cancel item picker by clicking outside"
+      aria-label={m.feedback_picker_cancel_outside_aria()}
       tabindex="-1"
       style="touch-action: pan-y"
       onclick={() => {
@@ -115,7 +117,7 @@
       <button
         class="pointer-events-auto fixed rounded-md border-2 border-primary bg-primary/10 shadow-[0_0_0_2px_hsl(var(--background))] outline-none focus:border-primary-foreground focus:bg-primary/25 motion-safe:transition-[border-color,background-color]"
         type="button"
-        aria-label={`Report feedback about ${highlight.metadata.displayName}`}
+        aria-label={m.feedback_picker_report_about_aria({ name: highlight.metadata.displayName })}
         data-feedback-picker-target
         style:left={`${highlight.left}px`}
         style:top={`${highlight.top}px`}
@@ -132,14 +134,14 @@
         bind:this={cancelButton}
         class="picker-header__back"
         type="button"
-        aria-label="Cancel item picker"
+        aria-label={m.feedback_picker_cancel_aria()}
         onclick={() => {
           feedbackContext.cancel();
         }}
       >
         <IconX class="size-5" />
       </button>
-      <p class="picker-header__title" aria-live="polite">Pick an item to report</p>
+      <p class="picker-header__title" aria-live="polite">{m.feedback_picker_dialog_title()}</p>
     </div>
   </div>
 {/if}

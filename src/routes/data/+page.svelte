@@ -6,6 +6,7 @@
   import { page } from "$app/state";
   import PageHeader from "$lib/components/page-header.svelte";
   import { trackerData } from "$lib/data/index.js";
+  import * as m from "$lib/paraglide/messages.js";
 
   import BackupCard from "./backup-card.svelte";
   import DangerZoneCard from "./danger-zone-card.svelte";
@@ -52,13 +53,13 @@
   });
 </script>
 
-<PageHeader title="Data management" backLabel="Go back" onback={goBack} />
+<PageHeader title={m.data_title()} backLabel={m.common_go_back()} onback={goBack} />
 
 <div class="data-page">
-  <p class="data-page__intro">Import, move, back up, or reset your Field Guide progress.</p>
+  <p class="data-page__intro">{m.data_intro()}</p>
 
   <section aria-labelledby="data-tools-heading">
-    <h2 id="data-tools-heading">Field kit</h2>
+    <h2 id="data-tools-heading">{m.data_field_kit_heading()}</h2>
     <div class="data-page__tools">
       <div bind:this={importSection}>
         <ImportCard bind:open={importOpen} onScrollToTransfer={scrollToTransfer} />
@@ -71,12 +72,12 @@
   </section>
 
   <section class="data-page__danger" aria-labelledby="reset-heading">
-    <h2 id="reset-heading">Reset</h2>
+    <h2 id="reset-heading">{m.data_reset_heading()}</h2>
     <DangerZoneCard />
   </section>
 
   <footer class="data-page__footer">
-    <p>Fields of Mistria v{trackerData.version} · Field Guide v{version}</p>
+    <p>{m.data_footer_versions({ appVersion: version, gameVersion: trackerData.version })}</p>
   </footer>
 </div>
 
