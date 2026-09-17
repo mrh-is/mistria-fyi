@@ -26,8 +26,14 @@ describe("getName", () => {
   // The locale-missing → English fallback path lives in `names.fallback.test.ts`, which needs a
   // partial chunk the pipeline never emits.
   it("throws rather than inventing a name when not even English has the ID", () => {
-    expect(() => getName("npcs", "not_a_real_npc", "ja")).toThrow(/No "npcs" name/);
-    expect(() => getName("npcs", "not_a_real_npc", "en")).toThrow(/en fallback/);
+    const missingNpcId = "not_a_real_npc" as NpcId;
+    expect(() => getName("npcs", missingNpcId, "ja")).toThrow(/No "npcs" name/);
+    expect(() => getName("npcs", missingNpcId, "en")).toThrow(/en fallback/);
+  });
+
+  it("accepts only NPC IDs for the NPC category", () => {
+    // @ts-expect-error Localized name lookups preserve the category's branded ID type.
+    getName("npcs", "balor", "en");
   });
 
   it("gives independent results for two locales interleaved in one process", () => {

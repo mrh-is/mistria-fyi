@@ -18,7 +18,10 @@
   let npcs = $derived.by(() => {
     const collator = nameCollator(locale);
     return Object.entries(trackerData.npcs)
-      .map(([id, npc]) => ({ ...npc, id: id as NpcId, name: getName("npcs", id, locale) }))
+      .map(([id, npc]) => {
+        const npcId = id as NpcId;
+        return { ...npc, id: npcId, name: getName("npcs", npcId, locale) };
+      })
       .sort((a, b) => collator.compare(a.name, b.name));
   });
   let visibleNpcs = $derived(
