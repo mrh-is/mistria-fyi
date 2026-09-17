@@ -3,6 +3,7 @@
 
   import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
+  import { categoryNameForKey } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
   import { searchItems } from "$lib/engine/search.js";
@@ -40,16 +41,6 @@
       locale,
     ),
   );
-
-  const CATEGORY_LABELS: Record<string, string> = {
-    almanac: "Almanac",
-    animals: "Animals",
-    cosmetics: "Cosmetics",
-    museum: "Museum",
-    npcs: "Relationships",
-    quests: "Quests",
-    recipes: "Recipes",
-  };
 
   let redactedStoreIds = $derived(
     new Set(
@@ -176,7 +167,7 @@
             display={rowDisplay(result)}
             lookups={baseLookups}
             name={result.detail ? `${label} ${result.detail}` : label}
-            reportCategory={CATEGORY_LABELS[result.category] ?? result.category}
+            reportCategory={categoryNameForKey(result.category)}
             reportEntityId={result.id}
             sources={getSources(result)}
             onToggle={() => {
@@ -196,7 +187,7 @@
         class="search-result__category"
         style="--result-category: var(--cat-{result.category}, var(--ink-muted))"
       >
-        {CATEGORY_LABELS[result.category] ?? result.category}
+        {categoryNameForKey(result.category)}
       </span>
     </div>
   {/each}
