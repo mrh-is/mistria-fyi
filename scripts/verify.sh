@@ -20,10 +20,11 @@ run_step() {
   fi
 }
 
-run_step lint:fix  pnpm run lint:fix
-run_step lint      pnpm run lint
-run_step check     pnpm run check
-run_step test      pnpm run test
-run_step build     pnpm run build
+run_step lint:fix   pnpm run lint:fix
+run_step lint       pnpm run lint
+run_step check      pnpm run check
+run_step check:i18n pnpm run check:i18n
+run_step test       pnpm run test
+run_step build      pnpm run build
 
 printf '\n=== All checks passed ===\n'
