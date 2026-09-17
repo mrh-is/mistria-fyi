@@ -10,7 +10,10 @@
     getMarriedNpc,
     type RelationshipActionValue,
     relationshipPresentation,
+    type RelationshipPrompt,
+    type RelationshipStatus,
   } from "$lib/engine/relationships.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordKeys } from "$lib/utils";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
@@ -34,18 +37,40 @@
 
   const instanceId = $props.id();
   const warningId = `${instanceId}-marriage-warning`;
-  const seasonAbbreviation: Record<Season, string> = {
-    fall: "FAL",
-    spring: "SPR",
-    summer: "SUM",
-    winter: "WIN",
-  };
-  const seasonName: Record<Season, string> = {
-    fall: "Fall",
-    spring: "Spring",
-    summer: "Summer",
-    winter: "Winter",
-  };
+  let seasonAbbreviation: Record<Season, string> = $derived({
+    fall: m.season_fall_abbr(),
+    spring: m.season_spring_abbr(),
+    summer: m.season_summer_abbr(),
+    winter: m.season_winter_abbr(),
+  });
+  let seasonName: Record<Season, string> = $derived({
+    fall: m.season_fall(),
+    spring: m.season_spring(),
+    summer: m.season_summer(),
+    winter: m.season_winter(),
+  });
+  let relationshipStatusLabel: Record<RelationshipStatus, string> = $derived({
+    best_friends: m.relationship_status_best_friends(),
+    dating: m.relationship_status_dating(),
+    engaged: m.relationship_status_engaged(),
+    married: m.relationship_status_married(),
+    married_child_free: m.relationship_status_married_child_free(),
+    married_kids: m.relationship_status_married_kids(),
+    path_not_chosen: m.relationship_status_path_not_chosen(),
+  });
+  let relationshipPromptLabel: Record<RelationshipPrompt, string> = $derived({
+    choose_path: m.relationship_prompt_choose_path(),
+    household: m.relationship_prompt_household(),
+    next_note: m.relationship_prompt_next_note(),
+  });
+  let relationshipActionLabel: Record<RelationshipActionValue, string> = $derived({
+    married: m.relationship_action_married(),
+    no: m.relationship_action_no(),
+    platonic: m.relationship_status_best_friends(),
+    proposed: m.relationship_action_proposed(),
+    romantic: m.relationship_action_romantic(),
+    yes: m.relationship_action_yes(),
+  });
   const levelColors = [
     "#7c3aed",
     "#4338ca",
@@ -78,7 +103,7 @@
     }),
   );
   let completed = $derived(isNpcComplete(id, userState.state.completed));
-  let visibleName = $derived(revealed ? name : "Hidden NPC");
+  let visibleName = $derived(revealed ? name : m.npc_hidden_name());
 
   async function applyAction(value: RelationshipActionValue): Promise<void> {
     mutateWithCelebration(() => {
@@ -144,36 +169,43 @@
           <Spoiler onReveal={() => (locallyRevealed = true)}>{name}</Spoiler>
         {/if}
       </strong>
-      {#if revealed && npc.dateable && presentation.label}
-        <small>{presentation.label}</small>
+      {#if revealed && npc.dateable && presentation.status}
+        <small>{relationshipStatusLabel[presentation.status]}</small>
       {/if}
     </span>
 
     {#if revealed}
       <span
         class="npc-birthday"
-        aria-label="Birthday: {seasonName[npc.birthday.season]} {npc.birthday.day}"
+        aria-label={m.npc_birthday_aria({
+          day: npc.birthday.day,
+          season: seasonName[npc.birthday.season],
+        })}
       >
         <Icon.Season season={npc.birthday.season} class="size-3" aria-hidden="true" />
         {seasonAbbreviation[npc.birthday.season]}
         {String(npc.birthday.day).padStart(2, "0")}
       </span>
     {:else}
-      <span class="npc-birthday npc-birthday--hidden">Birthday hidden</span>
+      <span class="npc-birthday npc-birthday--hidden">{m.npc_birthday_hidden()}</span>
     {/if}
   </header>
 
   <div
     class="npc-meter"
     role="group"
-    aria-label="{visibleName} relationship level, {displayedLevel} of {MAX_NPC_LEVEL}"
+    aria-label={m.npc_relationship_level_aria({
+      level: displayedLevel,
+      max: MAX_NPC_LEVEL,
+      name: visibleName,
+    })}
     aria-live="polite"
   >
     <button
       class="npc-stepper"
       type="button"
       disabled={!revealed || storedLevel <= 0}
-      aria-label="Decrease {revealed ? name : 'hidden NPC'} hearts"
+      aria-label={m.npc_decrease_hearts({ name: revealed ? name : m.npc_hidden_name_lower() })}
       onclick={() => {
         setLevel(storedLevel - 1);
       }}
@@ -202,7 +234,7 @@
       class="npc-stepper"
       type="button"
       disabled={!revealed || storedLevel >= MAX_NPC_LEVEL}
-      aria-label="Increase {revealed ? name : 'hidden NPC'} hearts"
+      aria-label={m.npc_increase_hearts({ name: revealed ? name : m.npc_hidden_name_lower() })}
       onclick={() => {
         setLevel(storedLevel + 1);
       }}
@@ -213,21 +245,25 @@
 
   {#if revealed && npc.dateable && presentation.actions.length > 0}
     <div class="relationship-decision">
-      <span class="relationship-prompt">{presentation.prompt}</span>
+      <span class="relationship-prompt">
+        {presentation.prompt ? relationshipPromptLabel[presentation.prompt] : ""}
+      </span>
       <span class="relationship-actions">
-        {#each presentation.actions as action (action.value)}
+        {#each presentation.actions as action (action)}
           <button
             type="button"
             data-relationship-action
-            aria-describedby={action.value === "married" ? warningId : undefined}
-            onclick={() => applyAction(action.value)}
+            aria-describedby={action === "married" ? warningId : undefined}
+            onclick={() => applyAction(action)}
           >
-            {action.label}
+            {relationshipActionLabel[action]}
           </button>
         {/each}
       </span>
       {#if presentation.warning}
-        <small id={warningId} class="relationship-warning">{presentation.warning}</small>
+        <small id={warningId} class="relationship-warning">
+          {m.relationship_warning_marriage()}
+        </small>
       {/if}
     </div>
   {/if}

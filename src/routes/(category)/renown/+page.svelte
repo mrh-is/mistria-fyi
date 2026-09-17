@@ -3,6 +3,7 @@
   import { trackerData } from "$lib/data/index.js";
   import { RANK_COLORS } from "$lib/engine/renown-presentation.js";
   import { isEntityNameVisible } from "$lib/engine/visibility.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import RankRecord from "./rank-record.svelte";
@@ -17,7 +18,7 @@
 
 <RenownCurrentRecord />
 
-<ul class="rank-register" aria-label="Town rank register">
+<ul class="rank-register" aria-label={m.renown_rank_register_aria()}>
   {#each trackerData.townRanks as rank, index (rank.name)}
     <RankRecord
       color={RANK_COLORS[index] ?? "#a78bfa"}

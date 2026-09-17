@@ -106,83 +106,83 @@ describe("relationshipPresentation", () => {
     {
       actions: [],
       childChoice: "undeclared",
-      label: undefined,
       level: 0,
       relationship: "undecided",
+      status: undefined,
     },
     {
       actions: [],
       childChoice: "undeclared",
-      label: undefined,
       level: 7,
       relationship: "undecided",
+      status: undefined,
     },
     {
       actions: ["platonic", "romantic"],
       childChoice: "undeclared",
-      label: "Path not chosen",
       level: 8,
       relationship: "undecided",
+      status: "path_not_chosen",
     },
     {
       actions: ["platonic", "romantic"],
       childChoice: "undeclared",
-      label: "Path not chosen",
       level: 12,
       relationship: "undecided",
+      status: "path_not_chosen",
     },
     {
       actions: [],
       childChoice: "undeclared",
-      label: "Best friends",
       level: 12,
       relationship: "platonic",
+      status: "best_friends",
     },
     {
       actions: [],
       childChoice: "undeclared",
-      label: "Dating",
       level: 9,
       relationship: "romantic",
+      status: "dating",
     },
     {
       actions: ["proposed"],
       childChoice: "undeclared",
-      label: "Dating",
       level: 10,
       relationship: "romantic",
+      status: "dating",
     },
     {
       actions: ["married"],
       childChoice: "undeclared",
-      label: "Engaged",
       level: 10,
       relationship: "proposed",
+      status: "engaged",
     },
     {
       actions: ["yes", "no"],
       childChoice: "undeclared",
-      label: "Married",
       level: 12,
       relationship: "married",
+      status: "married",
     },
     {
       actions: [],
       childChoice: "yes",
-      label: "Married · kids",
       level: 12,
       relationship: "married",
+      status: "married_kids",
     },
     {
       actions: [],
       childChoice: "no",
-      label: "Married · child-free",
       level: 12,
       relationship: "married",
+      status: "married_child_free",
     },
   ] as const)(
     "projects $relationship at level $level with household choice $childChoice",
-    ({ actions, childChoice, label, level, relationship }) => {
+    ({ actions, childChoice, level, relationship, status }) => {
       const presentation = relationshipPresentation({
         childChoice,
         level,
@@ -191,8 +191,8 @@ describe("relationshipPresentation", () => {
         relationship,
       });
 
-      expect(presentation.label).toBe(label);
-      expect(presentation.actions.map((action) => action.value)).toEqual(actions);
+      expect(presentation.status).toBe(status);
+      expect(presentation.actions).toEqual(actions);
     },
   );
 
@@ -205,8 +205,8 @@ describe("relationshipPresentation", () => {
       relationship: "proposed",
     });
 
-    expect(presentation.warning).toMatch(/closes every other romantic path/i);
-    expect(presentation.actions).toEqual([{ label: "Record marriage", value: "married" }]);
+    expect(presentation.warning).toBe(true);
+    expect(presentation.actions).toEqual(["married"]);
   });
 
   it("closes romantic actions when another NPC is married", () => {
@@ -218,6 +218,6 @@ describe("relationshipPresentation", () => {
         npcId,
         relationship: "romantic",
       }),
-    ).toEqual({ actions: [], label: "Best friends" });
+    ).toEqual({ actions: [], status: "best_friends" });
   });
 });

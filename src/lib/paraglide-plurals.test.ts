@@ -17,9 +17,16 @@ describe("plural messages", () => {
         expect(result).not.toBe("search_results_count");
         expect(result).toContain(count.toString());
 
-        const showMoreResult = m.almanac_show_more({ count }, { locale });
-        expect(showMoreResult).not.toBe("almanac_show_more");
+        const showMoreResult = m.show_more_count({ count }, { locale });
+        expect(showMoreResult).not.toBe("show_more_count");
         expect(showMoreResult).toContain(count.toString());
+
+        const questRecipesResult = m.quest_marked_completed_with_recipes(
+          { count, name: "Copper Sword" },
+          { locale },
+        );
+        expect(questRecipesResult).not.toBe("quest_marked_completed_with_recipes");
+        expect(questRecipesResult).toContain(count.toString());
       }
     }
   });
@@ -41,21 +48,21 @@ describe("plural messages", () => {
   it("resolves all four Russian plural categories for the almanac show-more count", () => {
     const locale: Locale = "ru";
 
-    expect(m.almanac_show_more({ count: 1 }, { locale })).toBe("Показать ещё 1…");
-    expect(m.almanac_show_more({ count: 3 }, { locale })).toBe("Показать ещё 3…");
-    expect(m.almanac_show_more({ count: 5 }, { locale })).toBe("Показать ещё 5…");
-    expect(m.almanac_show_more({ count: 11 }, { locale })).toBe("Показать ещё 11…");
+    expect(m.show_more_count({ count: 1 }, { locale })).toBe("Показать ещё 1…");
+    expect(m.show_more_count({ count: 3 }, { locale })).toBe("Показать ещё 3…");
+    expect(m.show_more_count({ count: 5 }, { locale })).toBe("Показать ещё 5…");
+    expect(m.show_more_count({ count: 11 }, { locale })).toBe("Показать ещё 11…");
   });
 
   it("interpolates the item name alongside the recipe-count plural", () => {
     expect(
-      m.search_marked_completed_with_recipes({ count: 1, name: "Copper Sword" }, { locale: "en" }),
+      m.quest_marked_completed_with_recipes({ count: 1, name: "Copper Sword" }, { locale: "en" }),
     ).toBe('Marked "Copper Sword" completed and unlocked 1 recipe');
     expect(
-      m.search_marked_completed_with_recipes({ count: 3, name: "Copper Sword" }, { locale: "en" }),
+      m.quest_marked_completed_with_recipes({ count: 3, name: "Copper Sword" }, { locale: "en" }),
     ).toBe('Marked "Copper Sword" completed and unlocked 3 recipes');
     expect(
-      m.search_marked_completed_with_recipes({ count: 3, name: "Copper Sword" }, { locale: "ru" }),
+      m.quest_marked_completed_with_recipes({ count: 3, name: "Copper Sword" }, { locale: "ru" }),
     ).toBe("«Copper Sword» отмечено как выполненное, разблокировано 3 рецепта");
   });
 });
