@@ -47,5 +47,34 @@
   "search_reset": "«{name}» restablecido",
   "action_undo": "Deshacer",
   "undo_marked_complete": "«{name}» marcado como completado",
-  "undo_unmarked": "«{name}» desmarcado"
+  "undo_unmarked": "«{name}» desmarcado",
+  "almanac_page_title": "Almanaque",
+  "almanac_page_description": "Sigue cultivos, forrajeo, pesca, insectos, artefactos y demás entradas del almanaque en Fields of Mistria.",
+  "almanac_no_matches": "Ningún elemento coincide con los filtros actuales",
+  "almanac_loading_items": "Cargando elementos…",
+  "almanac_show_more": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Mostrar {count} más…",
+        "countPlural=many": "Mostrar {count} más…",
+        "countPlural=other": "Mostrar {count} más…"
+      }
+    }
+  ],
+  "dates_section_name": "Citas",
+  "section_progress_label": "{name}, {completed} de {total} completados",
+  "spoiler_dialog_title": "¿Completar elemento con spoiler?",
+  "spoiler_dialog_description": "Este elemento sigue oculto según tu progreso registrado. ¿Seguro que quieres marcarlo como completado?",
+  "spoiler_dialog_cancel": "Cancelar",
+  "spoiler_dialog_confirm_item": "Sí, solo este elemento",
+  "spoiler_dialog_confirm_and_update": "Sí, y actualizar mi progreso",
+  "tracker_row_spoilered_item": "Elemento con spoiler",
+  "tracker_row_uncheck": "Desmarcar {name}",
+  "tracker_row_check_spoilered": "Marcar elemento con spoiler",
+  "tracker_row_check": "Marcar {name}",
+  "tracker_row_active_badge": "Activo",
+  "tracker_row_sources_label": "Fuentes de {name}",
+  "all_completed_message": "¡Todo listo! Activa «Mostrar completados» para revisar."
 }

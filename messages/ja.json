@@ -43,5 +43,32 @@
   "search_reset": "「{name}」をリセットしました",
   "action_undo": "元に戻す",
   "undo_marked_complete": "「{name}」を完了にしました",
-  "undo_unmarked": "「{name}」を未完了に戻しました"
+  "undo_unmarked": "「{name}」を未完了に戻しました",
+  "almanac_page_title": "アルマナック",
+  "almanac_page_description": "Fields of Mistriaの作物、採集、釣り、昆虫、アーティファクトなどのアルマナック項目を記録します。",
+  "almanac_no_matches": "現在のフィルターに一致するアイテムがありません",
+  "almanac_loading_items": "アイテムを読み込み中…",
+  "almanac_show_more": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "他{count}件を表示…"
+      }
+    }
+  ],
+  "dates_section_name": "デート",
+  "section_progress_label": "{name}、{total}件中{completed}件完了",
+  "spoiler_dialog_title": "ネタバレ項目を完了しますか？",
+  "spoiler_dialog_description": "この項目は記録された進行状況に基づいてまだ非表示になっています。完了としてマークしてもよろしいですか？",
+  "spoiler_dialog_cancel": "キャンセル",
+  "spoiler_dialog_confirm_item": "はい、この項目のみ",
+  "spoiler_dialog_confirm_and_update": "はい、進行状況も更新する",
+  "tracker_row_spoilered_item": "ネタバレ項目",
+  "tracker_row_uncheck": "{name}のチェックを外す",
+  "tracker_row_check_spoilered": "ネタバレ項目をチェック",
+  "tracker_row_check": "{name}をチェック",
+  "tracker_row_active_badge": "アクティブ",
+  "tracker_row_sources_label": "{name}の入手先",
+  "all_completed_message": "すべて完了しました！確認するには「完了済みを表示」を切り替えてください。"
 }

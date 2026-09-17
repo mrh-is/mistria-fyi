@@ -11,6 +11,7 @@
   import { trackerData, trackerIndex } from "$lib/data/index.js";
   import { isItemDimmed, isRowVisible, shouldCountItem } from "$lib/engine/availability.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordEntries, recordValues } from "$lib/utils";
@@ -279,11 +280,9 @@
         {/each}
       </TrackerRowStack>
       {#if filteredItems.length === 0}
-        <p class="py-4 text-center text-sm text-muted-foreground">
-          No items match the current filters
-        </p>
+        <p class="py-4 text-center text-sm text-muted-foreground">{m.almanac_no_matches()}</p>
       {:else if !nameFilter && renderedCount === 0}
-        <p class="py-4 text-center text-sm text-muted-foreground">Loading items…</p>
+        <p class="py-4 text-center text-sm text-muted-foreground">{m.almanac_loading_items()}</p>
       {/if}
       {#if !showAll && filteredItems.length > SECTION_LIMIT}
         <div class="flex justify-center py-1">
@@ -297,7 +296,7 @@
               }
             }}
           >
-            Show {filteredItems.length - SECTION_LIMIT} more...
+            {m.almanac_show_more({ count: filteredItems.length - SECTION_LIMIT })}
           </Button>
         </div>
       {/if}

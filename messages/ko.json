@@ -43,5 +43,32 @@
   "search_reset": "“{name}”을(를) 초기화했습니다",
   "action_undo": "실행 취소",
   "undo_marked_complete": "“{name}”을(를) 완료로 표시했습니다",
-  "undo_unmarked": "“{name}” 표시를 해제했습니다"
+  "undo_unmarked": "“{name}” 표시를 해제했습니다",
+  "almanac_page_title": "알마낙",
+  "almanac_page_description": "Fields of Mistria의 작물, 채집, 낚시, 곤충, 유물 등 알마낙 항목을 기록하세요.",
+  "almanac_no_matches": "현재 필터와 일치하는 항목이 없습니다",
+  "almanac_loading_items": "항목을 불러오는 중…",
+  "almanac_show_more": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "{count}개 더 보기…"
+      }
+    }
+  ],
+  "dates_section_name": "데이트",
+  "section_progress_label": "{name}, {total}개 중 {completed}개 완료",
+  "spoiler_dialog_title": "스포일러 항목을 완료하시겠습니까?",
+  "spoiler_dialog_description": "이 항목은 기록된 진행 상황에 따라 아직 숨겨져 있습니다. 완료로 표시하시겠습니까?",
+  "spoiler_dialog_cancel": "취소",
+  "spoiler_dialog_confirm_item": "예, 이 항목만",
+  "spoiler_dialog_confirm_and_update": "예, 진행 상황도 업데이트",
+  "tracker_row_spoilered_item": "스포일러 항목",
+  "tracker_row_uncheck": "{name} 선택 해제",
+  "tracker_row_check_spoilered": "스포일러 항목 선택",
+  "tracker_row_check": "{name} 선택",
+  "tracker_row_active_badge": "활성",
+  "tracker_row_sources_label": "{name} 획득처",
+  "all_completed_message": "모두 완료했습니다! 확인하려면 \"완료 항목 표시\"를 켜세요."
 }

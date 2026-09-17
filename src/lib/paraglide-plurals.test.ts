@@ -16,6 +16,10 @@ describe("plural messages", () => {
         const result = m.search_results_count({ count }, { locale });
         expect(result).not.toBe("search_results_count");
         expect(result).toContain(count.toString());
+
+        const showMoreResult = m.almanac_show_more({ count }, { locale });
+        expect(showMoreResult).not.toBe("almanac_show_more");
+        expect(showMoreResult).toContain(count.toString());
       }
     }
   });
@@ -32,6 +36,15 @@ describe("plural messages", () => {
     expect(m.search_results_count({ count: 5 }, { locale })).toBe("5 результатов");
     expect(m.search_results_count({ count: 11 }, { locale })).toBe("11 результатов");
     expect(m.search_results_count({ count: 0 }, { locale })).toBe("0 результатов");
+  });
+
+  it("resolves all four Russian plural categories for the almanac show-more count", () => {
+    const locale: Locale = "ru";
+
+    expect(m.almanac_show_more({ count: 1 }, { locale })).toBe("Показать ещё 1…");
+    expect(m.almanac_show_more({ count: 3 }, { locale })).toBe("Показать ещё 3…");
+    expect(m.almanac_show_more({ count: 5 }, { locale })).toBe("Показать ещё 5…");
+    expect(m.almanac_show_more({ count: 11 }, { locale })).toBe("Показать ещё 11…");
   });
 
   it("interpolates the item name alongside the recipe-count plural", () => {

@@ -9,6 +9,7 @@
   import TrackerPaper from "$lib/components/tracker-paper.svelte";
   import { extractDisplayBadges } from "$lib/engine/availability-condition.js";
   import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { buildSourceSegments } from "$lib/utils/source-segments.js";
 
   import type { SpriteSlotState } from "$lib/components/sprite-slot.svelte";
@@ -83,7 +84,11 @@
 
   let reportable = $derived(
     isSpoilered
-      ? { category: reportCategory, displayName: "Spoilered item", page: page.url.pathname }
+      ? {
+          category: reportCategory,
+          displayName: m.tracker_row_spoilered_item(),
+          page: page.url.pathname,
+        }
       : {
           category: reportCategory,
           displayName: name,
@@ -171,10 +176,10 @@
     <TrackerCheckbox
       state={checkboxState}
       label={isCompleted
-        ? `Uncheck ${name}`
+        ? m.tracker_row_uncheck({ name })
         : isSpoilered
-          ? "Check spoilered item"
-          : `Check ${name}`}
+          ? m.tracker_row_check_spoilered()
+          : m.tracker_row_check({ name })}
       onclick={handleToggle}
     />
 
@@ -199,7 +204,7 @@
     </span>
 
     {#if isObtained}
-      <span class="tracker-row__active-badge">Active</span>
+      <span class="tracker-row__active-badge">{m.tracker_row_active_badge()}</span>
     {/if}
   </TrackerPaper>
 
@@ -207,7 +212,9 @@
     <SourcePaper
       {expanded}
       contentId={sourceContentId}
-      label="{isSpoilered ? 'Spoilered item' : name} sources"
+      label={m.tracker_row_sources_label({
+        name: isSpoilered ? m.tracker_row_spoilered_item() : name,
+      })}
       {sources}
       {sourceSegments}
       {sourceBadges}

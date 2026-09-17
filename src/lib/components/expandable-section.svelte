@@ -6,6 +6,7 @@
   import { page } from "$app/state";
   import { Icon } from "$lib/components/icon/index.js";
   import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
+  import * as m from "$lib/paraglide/messages.js";
 
   import type { Snippet } from "svelte";
 
@@ -103,7 +104,7 @@
     aria-expanded={isOpen}
     aria-controls={contentId}
     aria-label={total !== undefined && boundedCount !== undefined
-      ? `${name}, ${boundedCount} of ${total} completed`
+      ? m.section_progress_label({ completed: boundedCount, name, total })
       : undefined}
     {@attach reportable}
   >

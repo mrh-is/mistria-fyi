@@ -47,5 +47,34 @@
   "search_reset": "« {name} » réinitialisé",
   "action_undo": "Annuler",
   "undo_marked_complete": "« {name} » marqué comme terminé",
-  "undo_unmarked": "« {name} » démarqué"
+  "undo_unmarked": "« {name} » démarqué",
+  "almanac_page_title": "Almanach",
+  "almanac_page_description": "Suivez les cultures, la cueillette, la pêche, les insectes, les artefacts et les autres entrées de l'almanach dans Fields of Mistria.",
+  "almanac_no_matches": "Aucun élément ne correspond aux filtres actuels",
+  "almanac_loading_items": "Chargement des éléments…",
+  "almanac_show_more": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Afficher {count} de plus…",
+        "countPlural=many": "Afficher {count} de plus…",
+        "countPlural=other": "Afficher {count} de plus…"
+      }
+    }
+  ],
+  "dates_section_name": "Rendez-vous",
+  "section_progress_label": "{name}, {completed} sur {total} terminés",
+  "spoiler_dialog_title": "Terminer un élément spoilé ?",
+  "spoiler_dialog_description": "Cet élément est toujours masqué en fonction de votre progression suivie. Voulez-vous vraiment le marquer comme terminé ?",
+  "spoiler_dialog_cancel": "Annuler",
+  "spoiler_dialog_confirm_item": "Oui, seulement cet élément",
+  "spoiler_dialog_confirm_and_update": "Oui, et mettre à jour ma progression",
+  "tracker_row_spoilered_item": "Élément spoilé",
+  "tracker_row_uncheck": "Décocher {name}",
+  "tracker_row_check_spoilered": "Cocher l'élément spoilé",
+  "tracker_row_check": "Cocher {name}",
+  "tracker_row_active_badge": "Actif",
+  "tracker_row_sources_label": "Sources de {name}",
+  "all_completed_message": "Tout est fait ! Activez « Afficher terminés » pour vérifier."
 }
