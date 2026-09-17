@@ -86,6 +86,12 @@
     }
   ],
   "dates_section_name": "约会",
+  "animals_no_matches": "没有符合当前筛选条件的物品",
+  "animals_cosmetics_section_name": "装饰",
+  "animals_color_variants_section_name": "颜色变体",
+  "animals_variant_tier_label": "第{tier}阶",
+  "animals_pet_cosmetics_section_name": "宠物装饰",
+  "animals_pet_skins_section_name": "宠物皮肤",
   "section_progress_label": "{name}，已完成 {completed}/{total}",
   "spoiler_dialog_title": "完成剧透物品？",
   "spoiler_dialog_description": "根据你记录的进度，此物品仍处于隐藏状态。确定要将其标记为已完成吗？",

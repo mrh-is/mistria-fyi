@@ -86,6 +86,12 @@
     }
   ],
   "dates_section_name": "約會",
+  "animals_no_matches": "沒有符合目前篩選條件的物品",
+  "animals_cosmetics_section_name": "裝飾",
+  "animals_color_variants_section_name": "顏色變體",
+  "animals_variant_tier_label": "第{tier}階",
+  "animals_pet_cosmetics_section_name": "寵物裝飾",
+  "animals_pet_skins_section_name": "寵物皮膚",
   "section_progress_label": "{name}，已完成 {completed}/{total}",
   "spoiler_dialog_title": "完成劇透項目？",
   "spoiler_dialog_description": "根據你記錄的進度，此項目仍處於隱藏狀態。確定要將其標記為已完成嗎？",
