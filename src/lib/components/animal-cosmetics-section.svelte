@@ -1,6 +1,7 @@
 <script lang="ts">
   import { trackerData } from "$lib/data";
   import { isVisible } from "$lib/engine/visibility.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte";
   import { userState } from "$lib/stores/user-state.svelte";
   import { recordEntries } from "$lib/utils";
@@ -104,7 +105,7 @@
   hasDisplayableItem={hasDisplayableCosmetic}
   {isAnimalComplete}
   lookups={baseLookups}
-  name="Cosmetics"
+  name={m.animals_cosmetics_section_name()}
   {sectionConfig}
   toggleCompletion={(animalId: AnimalId, variantId: CosmeticId) => {
     userState.toggleAnimalCosmetic(animalId, variantId);

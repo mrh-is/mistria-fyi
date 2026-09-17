@@ -5,6 +5,7 @@
   import { trackerData } from "$lib/data/index.js";
   import { getName, nameCollator } from "$lib/data/names.js";
   import { isVisible } from "$lib/engine/visibility.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordEntries } from "$lib/utils";
@@ -101,7 +102,7 @@
 {#if visibleCosmeticEntries.length > 0}
   <ExpandableSection
     count={cosmeticCompletedCount}
-    name="Pet cosmetics"
+    name={m.animals_pet_cosmetics_section_name()}
     reportCategory="pet cosmetics"
     total={scopedPetCosmeticEntries.length}
   >
@@ -135,7 +136,7 @@
 {#if visibleSkinEntries.length > 0}
   <ExpandableSection
     count={skinCompletedCount}
-    name="Pet skins"
+    name={m.animals_pet_skins_section_name()}
     reportCategory="pet skins"
     total={scopedPetSkinEntries.length}
   >
@@ -167,5 +168,5 @@
 {/if}
 
 {#if toolbarState.sourceFilterActive && visibleCosmeticEntries.length === 0 && visibleSkinEntries.length === 0}
-  <p class="py-4 text-center text-sm text-muted-foreground">No items match the current filters</p>
+  <p class="py-4 text-center text-sm text-muted-foreground">{m.animals_no_matches()}</p>
 {/if}
