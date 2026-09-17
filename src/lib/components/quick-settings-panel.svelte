@@ -1,33 +1,16 @@
 <script lang="ts">
-  import {
-    IconChevronRight,
-    IconEye,
-    IconInfoCircle,
-    IconLanguage,
-    IconPalette,
-    IconTool,
-  } from "@tabler/icons-svelte-runes";
+  import { IconChevronRight, IconEye, IconInfoCircle, IconTool } from "@tabler/icons-svelte-runes";
   import { Dialog as DialogPrimitive } from "bits-ui";
 
   import BlockySwitch from "$lib/components/blocky-switch.svelte";
+  import QuickSettingsLanguagePicker from "$lib/components/quick-settings-language-picker.svelte";
+  import QuickSettingsThemePicker from "$lib/components/quick-settings-theme-picker.svelte";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
-  import * as ToggleGroup from "$lib/components/ui/toggle-group/index.js";
-  import localeManifest from "$lib/data/locales.json";
-  import { getLocale } from "$lib/paraglide/runtime.js";
-  import { localePreference } from "$lib/stores/locale-preference.svelte.js";
-  import { theme, type Theme } from "$lib/stores/theme.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { localizedHref } from "$lib/utils/localized-href.js";
 
-  import type { LocaleManifest } from "$lib/types/locale.js";
-
   let confirmSpoilers = $state(false);
   let spoilerToggleChecked = $state(userState.state.showSpoilers);
-  let languagePickerOpen = $state(false);
-  const locales = localeManifest as LocaleManifest;
-  const currentLocale = getLocale();
-  const currentLocaleName =
-    locales.find(({ tag }) => tag === currentLocale)?.displayName ?? "English";
 
   $effect(() => {
     if (!confirmSpoilers) spoilerToggleChecked = userState.state.showSpoilers;
@@ -97,68 +80,9 @@
     />
   </div>
 
-  <div class="quick-settings__row quick-settings__row--theme">
-    <span class="quick-settings__label"><IconPalette class="size-3.5" />Theme</span>
-    <ToggleGroup.Root
-      class="theme-strip"
-      type="single"
-      value={theme.preference}
-      onValueChange={(value) => {
-        if (value) theme.set(value as Theme);
-      }}
-    >
-      {#each ["light", "dark", "system"] as const as value (value)}
-        <ToggleGroup.Item class="theme-strip__item" {value}>
-          {value === "system" ? "Auto" : value === "light" ? "Light" : "Dark"}
-        </ToggleGroup.Item>
-      {/each}
-    </ToggleGroup.Root>
-  </div>
+  <QuickSettingsThemePicker />
 
-  <div class="quick-settings__row quick-settings__row--language">
-    <span class="quick-settings__label"><IconLanguage class="size-3.5" />Language</span>
-    <div class="language-picker">
-      <button
-        aria-controls="language-picker-options"
-        aria-expanded={languagePickerOpen}
-        aria-label="Choose language"
-        class="language-picker__trigger"
-        type="button"
-        onclick={() => {
-          languagePickerOpen = !languagePickerOpen;
-        }}
-      >
-        <span>{currentLocaleName}</span>
-        <IconChevronRight class="size-3.5" />
-      </button>
-    </div>
-  </div>
-
-  {#if languagePickerOpen}
-    <div
-      aria-label="Languages"
-      class="language-picker__options"
-      id="language-picker-options"
-      role="group"
-    >
-      {#each locales as locale (locale.tag)}
-        <button
-          aria-current={locale.tag === currentLocale ? "true" : undefined}
-          class:language-picker__option--current={locale.tag === currentLocale}
-          class="language-picker__option"
-          type="button"
-          onclick={() => {
-            localePreference.select(locale.tag);
-          }}
-        >
-          <span>{locale.displayName}</span>
-          {#if locale.status === "beta"}
-            <span class="language-picker__beta">Beta</span>
-          {/if}
-        </button>
-      {/each}
-    </div>
-  {/if}
+  <QuickSettingsLanguagePicker />
 
   <div class="quick-settings__links">
     <a class="quick-settings__link" href={localizedHref("/data")}>
@@ -196,112 +120,8 @@
     letter-spacing: 0.02em;
   }
 
-  .quick-settings__row--language {
-    position: relative;
-  }
-
-  .language-picker {
-    position: relative;
-  }
-
-  .language-picker__trigger {
-    display: flex;
-    min-height: 34px;
-    min-width: 110px;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 4px 9px;
-    border: 1px solid color-mix(in srgb, var(--hairline) 42%, transparent);
-    color: var(--ink);
-    font-family: var(--font-controls);
-    font-size: 10px;
-  }
-
-  .language-picker__trigger[aria-expanded="true"] {
-    color: var(--primary);
-    background: color-mix(in srgb, var(--primary) 12%, var(--paper-raised));
-  }
-
-  .language-picker__options {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--hairline) 58%, transparent);
-    border-right: 0;
-    border-bottom: 0;
-    background: var(--paper-raised);
-  }
-
-  .language-picker__option {
-    display: flex;
-    min-height: 36px;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 6px 10px;
-    border-right: 1px solid color-mix(in srgb, var(--hairline) 24%, transparent);
-    border-bottom: 1px solid color-mix(in srgb, var(--hairline) 24%, transparent);
-    color: var(--ink);
-    font-family: var(--font-controls);
-    font-size: 11px;
-    text-align: left;
-  }
-
-  .language-picker__option:hover,
-  .language-picker__option:focus-visible,
-  .language-picker__option--current {
-    color: var(--primary);
-    background: color-mix(in srgb, var(--primary) 12%, var(--paper-raised));
-    outline: 2px solid var(--primary);
-    outline-offset: -2px;
-  }
-
-  .language-picker__beta {
-    padding: 1px 5px;
-    border: 1px solid color-mix(in srgb, var(--primary) 42%, transparent);
-    color: var(--ink-muted);
-    font-family: var(--font-annotation);
-    font-size: 8px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
   .quick-settings__link :global(svg) {
     color: var(--ink-muted);
-  }
-
-  :global(.theme-strip) {
-    gap: 0;
-    overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--hairline) 42%, transparent);
-    border-radius: 0;
-  }
-
-  :global(.theme-strip .theme-strip__item) {
-    min-height: 44px;
-    padding: 4px 9px;
-    border: 0;
-    border-right: 1px solid color-mix(in srgb, var(--hairline) 26%, transparent);
-    border-radius: 0;
-    font-family: var(--font-controls);
-    font-size: 10px;
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    :global(.theme-strip .theme-strip__item) {
-      min-height: 34px;
-    }
-  }
-
-  :global(.theme-strip .theme-strip__item:last-child) {
-    border-right: 0;
-  }
-
-  :global(.theme-strip .theme-strip__item[data-state="on"]) {
-    color: var(--primary);
-    background: color-mix(in srgb, var(--primary) 12%, var(--paper-raised));
   }
 
   .quick-settings__link {
@@ -508,22 +328,6 @@
   @media (prefers-reduced-motion: reduce) {
     :global(.spoiler-dialog[data-state]) {
       animation-duration: 0.01ms;
-    }
-  }
-
-  @media (max-width: 359px) {
-    .quick-settings__row--theme {
-      align-items: flex-start;
-      flex-direction: column;
-      padding-block: 10px;
-    }
-
-    :global(.theme-strip) {
-      width: 100%;
-    }
-
-    :global(.theme-strip .theme-strip__item) {
-      flex: 1;
     }
   }
 </style>
