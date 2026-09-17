@@ -65,7 +65,7 @@
   <AnimalsSection locale={data.locale} progress={progress.animals} />
   <NpcsSection locale={data.locale} progress={progress.npcs} />
   <CosmeticsSection locale={data.locale} progress={progress.cosmetics} />
-  <SkillsSection progress={progress.skills} />
+  <SkillsSection locale={data.locale} progress={progress.skills} />
   <RenownSection progress={progress.renown} />
   <QuestsSection locale={data.locale} progress={progress.quests} />
   <MinesSection progress={progress.mines} />

@@ -24,6 +24,7 @@ export function buildBaseSegmentLookups(
     ...staticBaseSegmentLookups,
     npcNames: getNameTable("npcs", locale),
     redactedStoreIds,
+    skillNames: getNameTable("skills", locale),
   };
 }
 
@@ -31,7 +32,7 @@ const staticBaseSegmentLookups = buildStaticBaseSegmentLookups();
 
 function buildStaticBaseSegmentLookups(): Omit<
   SegmentLookups,
-  "entityVisibility" | "npcNames" | "redactedStoreIds"
+  "entityVisibility" | "npcNames" | "redactedStoreIds" | "skillNames"
 > {
   const perks = Object.fromEntries(
     Object.entries(trackerData.skills).flatMap(([skillId, skill]) =>
@@ -74,7 +75,6 @@ function buildStaticBaseSegmentLookups(): Omit<
       ),
     ),
     recipeNames: recordMap(trackerData.recipes, ({ name }) => name),
-    skillNames: recordMap(trackerData.skills, ({ name }) => name),
     stationNames: {},
     stores: trackerData.stores,
     storeVisibility: recordMap(trackerData.stores, ({ visibility }) => visibility),

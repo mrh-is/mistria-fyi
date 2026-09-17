@@ -1,17 +1,18 @@
 import { LOCALE_CODES } from "$lib/types/locale.js";
 
 import type { LocaleCode } from "$lib/types/locale.js";
-import type { NpcId } from "$lib/types/tracker-data.js";
+import type { NpcId, SkillId } from "$lib/types/tracker-data.js";
 
 /**
  * Categories whose player-facing names have been migrated out of `tracker-data.json` and into
  * per-locale chunks. Phase 4 extends this union as each remaining category is migrated; until
  * then, unmigrated categories still carry an inline `name` field on their `tracker-data` type.
  */
-export type LocalizedCategory = "npcs";
+export type LocalizedCategory = "npcs" | "skills";
 
 interface LocalizedCategoryId {
   npcs: NpcId;
+  skills: SkillId;
 }
 type NameChunk = Record<string, string>;
 

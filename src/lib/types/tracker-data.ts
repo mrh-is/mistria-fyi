@@ -173,7 +173,6 @@ export interface RecipePresentation {
 }
 export type Season = "fall" | "spring" | "summer" | "winter";
 export interface Skill {
-  name: string;
   perkTiers: [PerkTier, PerkTier, PerkTier, PerkTier, PerkTier];
 }
 export type SkillId = string & { readonly __brand: "SkillId" };

@@ -1,17 +1,21 @@
 <script lang="ts">
   import SkillRow from "$lib/components/skill-row.svelte";
   import { trackerData } from "$lib/data/index.js";
+  import { getName, nameCollator } from "$lib/data/names.js";
   import { MAX_SKILL_LEVEL } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
-  import { recordEntries } from "$lib/utils";
+  import { recordKeys } from "$lib/utils";
 
-  let { compact = false }: { compact?: boolean } = $props();
+  import type { LocaleCode } from "$lib/types/locale.js";
 
-  let skills = $derived(
-    recordEntries(trackerData.skills)
-      .map(([id, { name }]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name)),
-  );
+  let { compact = false, locale }: { compact?: boolean; locale: LocaleCode } = $props();
+
+  let skills = $derived.by(() => {
+    const collator = nameCollator(locale);
+    return recordKeys(trackerData.skills)
+      .map((id) => ({ id, name: getName("skills", id, locale) }))
+      .sort((a, b) => collator.compare(a.name, b.name));
+  });
 </script>
 
 <ul class="skill-ledger" aria-label="Skills ledger">

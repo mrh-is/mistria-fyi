@@ -1,13 +1,30 @@
+import { LOCALE_CODES } from "$lib/types/locale.js";
+
+import { localizeField } from "../localize.js";
+
+import type { LocaleCode } from "$lib/types/locale.js";
 import type { PerkId, PerkTier, Skill, SkillId, TrackerData } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
 
-export function extractSkills(fiddle: ParsedGameData): {
+/**
+ * Skill display names are localized from `ui/skill_menu/<skill-id>/name`, e.g.
+ * `ui/skill_menu/farming/name = "農業"` in the Japanese translation table.
+ */
+export function extractSkills(
+  fiddle: ParsedGameData,
+  assetsDir: string,
+): {
+  localeNames: Record<LocaleCode, Record<SkillId, string>>;
   perkTierLevels: TrackerData["perkTierLevels"];
   skills: TrackerData["skills"];
 } {
+  const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
+    LocaleCode,
+    Record<SkillId, string>
+  >;
   const skillsData = fiddle.skills as Record<string, Record<string, unknown>> | undefined;
-  if (!skillsData) return { perkTierLevels: [0, 0, 0, 0, 0], skills: {} };
+  if (!skillsData) return { localeNames, perkTierLevels: [0, 0, 0, 0, 0], skills: {} };
 
   const ui = fiddle.ui as Record<string, unknown> | undefined;
   const skillMenus = ui?.skill_menu as Record<string, Record<string, unknown>> | undefined;
@@ -32,7 +49,16 @@ export function extractSkills(fiddle: ParsedGameData): {
     if (id === "default") continue;
     const name = (skillsData[id].name as string | undefined) ?? snakeToTitle(id);
     const perkTiers = buildPerkTiers(id, skillMenus, perksData);
-    skills[id as SkillId] = { name, perkTiers };
+    skills[id as SkillId] = { perkTiers };
+
+    const { values } = localizeField(assetsDir, {
+      category: "ui/skill_menu",
+      classification: "localizable",
+      englishValue: name,
+      field: "name",
+      id,
+    });
+    for (const locale of LOCALE_CODES) localeNames[locale][id as SkillId] = values[locale];
   }
 
   const totalPerks = Object.values(skills).reduce(
@@ -40,7 +66,7 @@ export function extractSkills(fiddle: ParsedGameData): {
     0,
   );
   console.log(`  Skills: ${Object.keys(skills).length}, ${totalPerks} perks`);
-  return { perkTierLevels, skills };
+  return { localeNames, perkTierLevels, skills };
 }
 
 function buildPerkTiers(
