@@ -1,10 +1,5 @@
 <script lang="ts">
-  import {
-    IconBeta,
-    IconChevronRight,
-    IconLanguage,
-    IconRosetteFilled,
-  } from "@tabler/icons-svelte-runes";
+  import { IconBeta, IconChevronRight, IconLanguage } from "@tabler/icons-svelte-runes";
   import { slide } from "svelte/transition";
 
   import localeManifest from "$lib/data/locales.json";
@@ -59,8 +54,7 @@
           <span>{locale.displayName}</span>
           {#if locale.status === "beta"}
             <span aria-label="Beta translation" class="language-setting__beta">
-              <IconRosetteFilled class="language-setting__beta-rosette size-5" />
-              <IconBeta class="language-setting__beta-icon size-3" />
+              <IconBeta class="size-3" />
             </span>
           {/if}
         </button>
@@ -153,20 +147,14 @@
   }
 
   .language-setting__beta {
-    position: relative;
-    display: grid;
-    width: 20px;
-    height: 20px;
+    display: inline-flex;
+    width: 18px;
+    height: 16px;
     flex: none;
-    place-items: center;
-  }
-
-  :global(.language-setting__beta-rosette) {
-    color: color-mix(in srgb, var(--primary) 76%, var(--paper-raised));
-  }
-
-  :global(.language-setting__beta-icon) {
-    position: absolute;
-    color: var(--paper-raised);
+    align-items: center;
+    justify-content: center;
+    border: 1px solid color-mix(in srgb, var(--hairline) 58%, transparent);
+    border-radius: 3px;
+    color: var(--ink-muted);
   }
 </style>
