@@ -86,6 +86,12 @@
     }
   ],
   "dates_section_name": "デート",
+  "animals_no_matches": "現在のフィルターに一致するアイテムがありません",
+  "animals_cosmetics_section_name": "コスメ",
+  "animals_color_variants_section_name": "カラーバリエーション",
+  "animals_variant_tier_label": "ティア{tier}",
+  "animals_pet_cosmetics_section_name": "ペットのコスメ",
+  "animals_pet_skins_section_name": "ペットのスキン",
   "section_progress_label": "{name}、{total}件中{completed}件完了",
   "spoiler_dialog_title": "ネタバレ項目を完了しますか？",
   "spoiler_dialog_description": "この項目は記録された進行状況に基づいてまだ非表示になっています。完了としてマークしてもよろしいですか？",

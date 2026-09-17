@@ -2,6 +2,7 @@
   import ExpandableSection from "$lib/components/expandable-section.svelte";
   import SpoilerSection from "$lib/components/spoiler-section.svelte";
   import { trackerData } from "$lib/data/index.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
   import { showUndoToast } from "$lib/utils/undo-toast.js";
@@ -101,5 +102,5 @@
     {/each}
   </ExpandableSection>
 {:else if toolbarState.sourceFilterActive}
-  <p class="py-4 text-center text-sm text-muted-foreground">No items match the current filters</p>
+  <p class="py-4 text-center text-sm text-muted-foreground">{m.animals_no_matches()}</p>
 {/if}

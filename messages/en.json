@@ -89,6 +89,12 @@
     }
   ],
   "dates_section_name": "Dates",
+  "animals_no_matches": "No items match the current filters",
+  "animals_cosmetics_section_name": "Cosmetics",
+  "animals_color_variants_section_name": "Color Variants",
+  "animals_variant_tier_label": "Tier {tier}",
+  "animals_pet_cosmetics_section_name": "Pet cosmetics",
+  "animals_pet_skins_section_name": "Pet skins",
   "section_progress_label": "{name}, {completed} of {total} completed",
   "spoiler_dialog_title": "Complete spoilered item?",
   "spoiler_dialog_description": "This item is still hidden based on your tracked progression. Are you sure you want to mark it as completed?",

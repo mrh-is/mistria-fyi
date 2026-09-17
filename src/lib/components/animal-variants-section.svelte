@@ -4,6 +4,7 @@
     getVariantSeason,
     isVariantInScope as isVariantInScopeEngine,
   } from "$lib/engine/animal-availability.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
@@ -129,7 +130,7 @@
           redacted: isVariantSpoilered(animalId, vid),
           season: getVariantSeason(variant),
           sources: [variant.source],
-          subtitle: totalTiers > 1 ? `Tier ${(tier + 1).toString()}` : undefined,
+          subtitle: totalTiers > 1 ? m.animals_variant_tier_label({ tier: tier + 1 }) : undefined,
           tier,
         });
       }
@@ -167,7 +168,7 @@
   completionCheck={hasCompletedVariant}
   hasDisplayableItem={hasDisplayableVariant}
   {isAnimalComplete}
-  name="Color Variants"
+  name={m.animals_color_variants_section_name()}
   {sectionConfig}
   toggleCompletion={(animalId: AnimalId, variantId: AnimalVariantId) => {
     userState.toggleAnimalVariant(animalId, variantId);
