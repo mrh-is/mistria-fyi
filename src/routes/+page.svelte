@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { IconLibrary } from "@tabler/icons-svelte-runes";
+  import { IconNotebook } from "@tabler/icons-svelte-runes";
 
   import { resolve } from "$app/paths";
   import CategoryGrid from "$lib/components/category-grid.svelte";
@@ -28,7 +28,7 @@
 <div class="home-page">
   <header class="home-header" style="--overall-progress: {overallPct}%">
     <h1 class="flex min-w-0 items-center gap-2 font-display text-2xl leading-none">
-      <IconLibrary class="size-5 shrink-0 text-amber-700 dark:text-amber-400" />
+      <IconNotebook class="size-5 shrink-0 text-amber-700 dark:text-amber-400" />
       Mistria Field Guide
     </h1>
     <OverallProgress progress={allProgress} />

@@ -36,7 +36,8 @@
     page.url.pathname !== "/data" &&
       page.url.pathname !== "/about" &&
       page.url.pathname !== "/settings" &&
-      page.url.pathname !== "/privacy",
+      page.url.pathname !== "/privacy" &&
+      page.url.pathname !== "/dev/og-image",
   );
   let metadata = $derived(page.status >= 400 ? errorPageMetadata(page.status) : page.data.metadata);
   let overlayActive = $state(false);

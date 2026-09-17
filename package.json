@@ -20,6 +20,7 @@
     "verify": "bash scripts/verify.sh",
     "worktree:new": "bash scripts/new-worktree.sh",
     "accessibility:monitor": "tsx scripts/accessibility-monitor.ts",
+    "generate:brand-assets": "tsx scripts/generate-brand-assets.ts",
     "test:accessibility": "playwright test",
     "test:accessibility:critical": "playwright test --grep @critical",
     "test:app": "vitest run src/ && pnpm run test:mocked && pnpm run test:client",
