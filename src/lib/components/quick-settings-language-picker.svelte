@@ -3,6 +3,7 @@
   import { slide } from "svelte/transition";
 
   import localeManifest from "$lib/data/locales.json";
+  import * as m from "$lib/paraglide/messages.js";
   import { getLocale } from "$lib/paraglide/runtime.js";
   import { localePreference } from "$lib/stores/locale-preference.svelte.js";
 
@@ -17,11 +18,13 @@
 
 <div class="language-setting">
   <div class="language-setting__row">
-    <span class="language-setting__label"><IconLanguage class="size-3.5" />Language</span>
+    <span class="language-setting__label"
+      ><IconLanguage class="size-3.5" />{m.settings_language_label()}</span
+    >
     <button
       aria-controls="language-picker-options"
       aria-expanded={open}
-      aria-label="Choose language"
+      aria-label={m.settings_choose_language()}
       class="language-setting__trigger"
       type="button"
       onclick={() => {
@@ -35,7 +38,7 @@
 
   {#if open}
     <div
-      aria-label="Languages"
+      aria-label={m.settings_languages_group_aria()}
       class="language-setting__options"
       id="language-picker-options"
       role="group"
@@ -53,7 +56,7 @@
         >
           <span>{locale.displayName}</span>
           {#if locale.status === "beta"}
-            <span aria-label="Beta translation" class="language-setting__beta">
+            <span aria-label={m.settings_beta_translation_aria()} class="language-setting__beta">
               <IconBeta class="size-3" />
             </span>
           {/if}

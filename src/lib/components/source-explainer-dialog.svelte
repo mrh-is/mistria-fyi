@@ -2,6 +2,7 @@
   import { Dialog as DialogPrimitive } from "bits-ui";
 
   import * as Dialog from "$lib/components/ui/dialog/index.js";
+  import * as m from "$lib/paraglide/messages.js";
 
   import type { SourceFilter } from "$lib/stores/toolbar-state.svelte.js";
 
@@ -22,10 +23,10 @@
           </div>
           <div class="inventory-tag__body">
             <div class="inventory-tag__heading">
-              <span class="inventory-tag__overline">Field Guide inventory</span>
-              <Dialog.Title>Source types</Dialog.Title>
+              <span class="inventory-tag__overline">{m.source_explainer_overline()}</span>
+              <Dialog.Title>{m.visibility_source_types()}</Dialog.Title>
               <Dialog.Description class="sr-only"
-                >The source types shown in the filter panel.</Dialog.Description
+                >{m.source_explainer_description()}</Dialog.Description
               >
             </div>
             <ul class="inventory-tag__list">
@@ -39,7 +40,7 @@
             </ul>
           </div>
           <div class="inventory-tag__footer">
-            <Dialog.Close class="inventory-tag__close">Got it</Dialog.Close>
+            <Dialog.Close class="inventory-tag__close">{m.source_explainer_dismiss()}</Dialog.Close>
           </div>
         </div>
       </div>
