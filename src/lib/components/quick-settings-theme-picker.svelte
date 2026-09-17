@@ -2,11 +2,20 @@
   import { IconPalette } from "@tabler/icons-svelte-runes";
 
   import * as ToggleGroup from "$lib/components/ui/toggle-group/index.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { theme, type Theme } from "$lib/stores/theme.svelte.js";
+
+  const themeLabels: Record<Theme, string> = {
+    dark: m.settings_theme_dark(),
+    light: m.settings_theme_light(),
+    system: m.settings_theme_auto(),
+  };
 </script>
 
 <div class="theme-setting">
-  <span class="theme-setting__label"><IconPalette class="size-3.5" />Theme</span>
+  <span class="theme-setting__label"
+    ><IconPalette class="size-3.5" />{m.settings_theme_label()}</span
+  >
   <ToggleGroup.Root
     class="theme-setting__strip"
     type="single"
@@ -17,7 +26,7 @@
   >
     {#each ["light", "dark", "system"] as const as value (value)}
       <ToggleGroup.Item class="theme-setting__item" {value}>
-        {value === "system" ? "Auto" : value === "light" ? "Light" : "Dark"}
+        {themeLabels[value]}
       </ToggleGroup.Item>
     {/each}
   </ToggleGroup.Root>
