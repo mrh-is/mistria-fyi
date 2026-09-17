@@ -1,4 +1,51 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-  "app_name": "Mistria Field Guide"
+  "app_name": "Mistria Field Guide",
+  "toolbar_nav_label": "Herramientas de seguimiento",
+  "toolbar_search_label": "Buscar elementos",
+  "toolbar_search_placeholder": "Buscar elementos…",
+  "toolbar_clear_search": "Borrar búsqueda",
+  "toolbar_cancel_search": "Cancelar",
+  "toolbar_search": "Buscar",
+  "toolbar_quick_settings": "Ajustes rápidos",
+  "toolbar_send_feedback": "Enviar comentarios",
+  "toolbar_visibility_filters": "Filtros de visibilidad",
+  "toolbar_close_panel": "Cerrar panel",
+  "toolbar_filters": "Filtros",
+  "toolbar_reset_filters": "Restablecer",
+  "toolbar_filters_applied": "Filtros aplicados",
+  "toolbar_filters_cleared": "Todos los filtros borrados",
+  "page_header_back_to_home": "Volver al inicio",
+  "page_header_progress": "{completed} de {total} completados",
+  "foldout_close": "Cerrar {title}",
+  "search_results_count": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} resultado",
+        "countPlural=many": "{count} resultados",
+        "countPlural=other": "{count} resultados"
+      }
+    }
+  ],
+  "search_no_results": "No se encontraron elementos",
+  "search_marked_obtained": "«{name}» marcado como obtenido",
+  "search_marked_completed": "«{name}» marcado como completado",
+  "search_marked_completed_with_recipe": "«{name}» marcado como completado y se desbloqueó «{recipe}»",
+  "search_marked_completed_with_recipes": [
+    {
+      "declarations": ["input name", "input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "«{name}» marcado como completado y se desbloqueó {count} receta",
+        "countPlural=many": "«{name}» marcado como completado y se desbloquearon {count} recetas",
+        "countPlural=other": "«{name}» marcado como completado y se desbloquearon {count} recetas"
+      }
+    }
+  ],
+  "search_reset": "«{name}» restablecido",
+  "action_undo": "Deshacer",
+  "undo_marked_complete": "«{name}» marcado como completado",
+  "undo_unmarked": "«{name}» desmarcado"
 }

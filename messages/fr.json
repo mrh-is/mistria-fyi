@@ -1,4 +1,51 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-  "app_name": "Mistria Field Guide"
+  "app_name": "Mistria Field Guide",
+  "toolbar_nav_label": "Outils de suivi",
+  "toolbar_search_label": "Rechercher des éléments",
+  "toolbar_search_placeholder": "Rechercher des éléments…",
+  "toolbar_clear_search": "Effacer la recherche",
+  "toolbar_cancel_search": "Annuler",
+  "toolbar_search": "Rechercher",
+  "toolbar_quick_settings": "Réglages rapides",
+  "toolbar_send_feedback": "Envoyer un commentaire",
+  "toolbar_visibility_filters": "Filtres de visibilité",
+  "toolbar_close_panel": "Fermer le panneau",
+  "toolbar_filters": "Filtres",
+  "toolbar_reset_filters": "Réinitialiser",
+  "toolbar_filters_applied": "Filtres appliqués",
+  "toolbar_filters_cleared": "Tous les filtres effacés",
+  "page_header_back_to_home": "Retour à l’accueil",
+  "page_header_progress": "{completed} sur {total} terminés",
+  "foldout_close": "Fermer {title}",
+  "search_results_count": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} résultat",
+        "countPlural=many": "{count} résultats",
+        "countPlural=other": "{count} résultats"
+      }
+    }
+  ],
+  "search_no_results": "Aucun élément trouvé",
+  "search_marked_obtained": "« {name} » marqué comme obtenu",
+  "search_marked_completed": "« {name} » marqué comme terminé",
+  "search_marked_completed_with_recipe": "« {name} » marqué comme terminé, débloquant « {recipe} »",
+  "search_marked_completed_with_recipes": [
+    {
+      "declarations": ["input name", "input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "« {name} » marqué comme terminé, débloquant {count} recette",
+        "countPlural=many": "« {name} » marqué comme terminé, débloquant {count} recettes",
+        "countPlural=other": "« {name} » marqué comme terminé, débloquant {count} recettes"
+      }
+    }
+  ],
+  "search_reset": "« {name} » réinitialisé",
+  "action_undo": "Annuler",
+  "undo_marked_complete": "« {name} » marqué comme terminé",
+  "undo_unmarked": "« {name} » démarqué"
 }
