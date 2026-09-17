@@ -1,4 +1,53 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-  "app_name": "Mistria Field Guide"
+  "app_name": "Mistria Field Guide",
+  "toolbar_nav_label": "Инструменты трекера",
+  "toolbar_search_label": "Поиск предметов",
+  "toolbar_search_placeholder": "Поиск предметов…",
+  "toolbar_clear_search": "Очистить поиск",
+  "toolbar_cancel_search": "Отмена",
+  "toolbar_search": "Поиск",
+  "toolbar_quick_settings": "Быстрые настройки",
+  "toolbar_send_feedback": "Отправить отзыв",
+  "toolbar_visibility_filters": "Фильтры видимости",
+  "toolbar_close_panel": "Закрыть панель",
+  "toolbar_filters": "Фильтры",
+  "toolbar_reset_filters": "Сбросить",
+  "toolbar_filters_applied": "Фильтры применены",
+  "toolbar_filters_cleared": "Все фильтры сброшены",
+  "page_header_back_to_home": "Назад на главную",
+  "page_header_progress": "Выполнено {completed} из {total}",
+  "foldout_close": "Закрыть {title}",
+  "search_results_count": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} результат",
+        "countPlural=few": "{count} результата",
+        "countPlural=many": "{count} результатов",
+        "countPlural=other": "{count} результата"
+      }
+    }
+  ],
+  "search_no_results": "Ничего не найдено",
+  "search_marked_obtained": "«{name}» отмечено как полученное",
+  "search_marked_completed": "«{name}» отмечено как выполненное",
+  "search_marked_completed_with_recipe": "«{name}» отмечено как выполненное, разблокирован рецепт «{recipe}»",
+  "search_marked_completed_with_recipes": [
+    {
+      "declarations": ["input name", "input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "«{name}» отмечено как выполненное, разблокирован {count} рецепт",
+        "countPlural=few": "«{name}» отмечено как выполненное, разблокировано {count} рецепта",
+        "countPlural=many": "«{name}» отмечено как выполненное, разблокировано {count} рецептов",
+        "countPlural=other": "«{name}» отмечено как выполненное, разблокировано {count} рецепта"
+      }
+    }
+  ],
+  "search_reset": "«{name}» сброшено",
+  "action_undo": "Отменить",
+  "undo_marked_complete": "«{name}» отмечено как выполненное",
+  "undo_unmarked": "«{name}» отмечено как невыполненное"
 }

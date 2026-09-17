@@ -1,6 +1,8 @@
 <script lang="ts">
   import { IconX } from "@tabler/icons-svelte-runes";
 
+  import * as m from "$lib/paraglide/messages.js";
+
   import type { Snippet } from "svelte";
 
   const FOCUSABLE_SELECTOR =
@@ -69,7 +71,12 @@
     <div class="foldout__header-actions">
       {@render headerActions?.()}
     </div>
-    <button class="foldout__close" type="button" aria-label="Close {title}" onclick={onclose}>
+    <button
+      class="foldout__close"
+      type="button"
+      aria-label={m.foldout_close({ title })}
+      onclick={onclose}
+    >
       <IconX class="size-4" />
     </button>
   </header>

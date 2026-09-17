@@ -1,4 +1,47 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-  "app_name": "Mistria Field Guide"
+  "app_name": "Mistria Field Guide",
+  "toolbar_nav_label": "추적 도구",
+  "toolbar_search_label": "항목 검색",
+  "toolbar_search_placeholder": "항목 검색…",
+  "toolbar_clear_search": "검색 지우기",
+  "toolbar_cancel_search": "취소",
+  "toolbar_search": "검색",
+  "toolbar_quick_settings": "빠른 설정",
+  "toolbar_send_feedback": "피드백 보내기",
+  "toolbar_visibility_filters": "표시 필터",
+  "toolbar_close_panel": "패널 닫기",
+  "toolbar_filters": "필터",
+  "toolbar_reset_filters": "초기화",
+  "toolbar_filters_applied": "필터 적용됨",
+  "toolbar_filters_cleared": "모든 필터 해제됨",
+  "page_header_back_to_home": "홈으로 돌아가기",
+  "page_header_progress": "{total}개 중 {completed}개 완료",
+  "foldout_close": "{title} 닫기",
+  "search_results_count": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "결과 {count}개"
+      }
+    }
+  ],
+  "search_no_results": "항목을 찾을 수 없습니다",
+  "search_marked_obtained": "“{name}”을(를) 획득으로 표시했습니다",
+  "search_marked_completed": "“{name}”을(를) 완료로 표시했습니다",
+  "search_marked_completed_with_recipe": "“{name}”을(를) 완료로 표시하고 “{recipe}”을(를) 해제했습니다",
+  "search_marked_completed_with_recipes": [
+    {
+      "declarations": ["input name", "input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=other": "“{name}”을(를) 완료로 표시하고 레시피 {count}개를 해제했습니다"
+      }
+    }
+  ],
+  "search_reset": "“{name}”을(를) 초기화했습니다",
+  "action_undo": "실행 취소",
+  "undo_marked_complete": "“{name}”을(를) 완료로 표시했습니다",
+  "undo_unmarked": "“{name}” 표시를 해제했습니다"
 }
