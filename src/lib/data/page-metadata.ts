@@ -3,6 +3,8 @@ export const SITE_NAME = "Mistria Field Guide";
 
 export interface PageMetadata {
   description: string;
+  /** Hides the bottom toolbar — for pages that aren't tracker categories (settings, legal). */
+  hideToolbar?: boolean;
   robots?: RobotsDirective;
   title: string;
 }

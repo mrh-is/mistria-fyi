@@ -1,15 +1,14 @@
 <script lang="ts">
   import { IconLibrary } from "@tabler/icons-svelte-runes";
 
-  import { resolve } from "$app/paths";
   import CategoryGrid from "$lib/components/category-grid.svelte";
   import { Icon } from "$lib/components/icon/index.js";
   import OverallProgress from "$lib/components/overall-progress.svelte";
   import SearchResults from "$lib/components/search-results.svelte";
   import { getAllProgress } from "$lib/engine/progress.js";
-  import { localizeHref } from "$lib/paraglide/runtime.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { localizedHref } from "$lib/utils/localized-href.js";
 
   let allProgress = $derived(
     getAllProgress({
@@ -44,13 +43,11 @@
         Index
       </h2>
       <CategoryGrid progress={allProgress} />
-      <!-- eslint-disable svelte/no-navigation-without-resolve -- href is resolve()d before localizing -->
       <a
         class="everything-link"
-        href={localizeHref(resolve("/all"))}
+        href={localizedHref("/all")}
         aria-label="Everything, {totalCompleted} of {grandTotal} completed"
       >
-        <!-- eslint-enable svelte/no-navigation-without-resolve -->
         <Icon.Category category="all" class="size-4 shrink-0" />
         <span class="flex-1">Everything</span>
         <span class="font-data text-xs" aria-hidden="true">{totalCompleted} / {grandTotal}</span>

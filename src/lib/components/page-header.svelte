@@ -1,9 +1,8 @@
 <script lang="ts">
   import { IconArrowLeft } from "@tabler/icons-svelte-runes";
 
-  import { resolve } from "$app/paths";
   import { Icon } from "$lib/components/icon/index.js";
-  import { localizeHref } from "$lib/paraglide/runtime.js";
+  import { localizedHref } from "$lib/utils/localized-href.js";
 
   import type { Snippet } from "svelte";
 
@@ -46,14 +45,12 @@
   data-page-header={category === undefined ? "generic" : "category"}
   style={category !== undefined && pct !== undefined ? `--category-progress: ${pct}%;` : undefined}
 >
-  <!-- eslint-disable svelte/no-navigation-without-resolve -- href is resolve()d before localizing -->
   <a
     class="page-header__back"
-    href={localizeHref(resolve(backHref))}
+    href={localizedHref(backHref)}
     aria-label={backLabel}
     onclick={onback}
   >
-    <!-- eslint-enable svelte/no-navigation-without-resolve -->
     <IconArrowLeft class="size-5" />
   </a>
   {#if category === undefined}

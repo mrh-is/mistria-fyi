@@ -8,13 +8,12 @@
   } from "@tabler/icons-svelte-runes";
   import { Dialog as DialogPrimitive } from "bits-ui";
 
-  import { resolve } from "$app/paths";
   import BlockySwitch from "$lib/components/blocky-switch.svelte";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
   import * as ToggleGroup from "$lib/components/ui/toggle-group/index.js";
-  import { localizeHref } from "$lib/paraglide/runtime.js";
   import { theme, type Theme } from "$lib/stores/theme.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { localizedHref } from "$lib/utils/localized-href.js";
 
   let confirmSpoilers = $state(false);
   let spoilerToggleChecked = $state(userState.state.showSpoilers);
@@ -106,14 +105,12 @@
   </div>
 
   <div class="quick-settings__links">
-    <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- href is resolve()d before localizing -->
-    <a class="quick-settings__link" href={localizeHref(resolve("/data"))}>
+    <a class="quick-settings__link" href={localizedHref("/data")}>
       <IconTool class="size-4" />
       <span>Data</span>
       <IconChevronRight class="size-4" />
     </a>
-    <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- href is resolve()d before localizing -->
-    <a class="quick-settings__link" href={localizeHref(resolve("/about"))}>
+    <a class="quick-settings__link" href={localizedHref("/about")}>
       <IconInfoCircle class="size-4" />
       <span>About</span>
       <IconChevronRight class="size-4" />
