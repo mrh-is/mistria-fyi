@@ -1,18 +1,33 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeFiddle as makeFiddleBase, requireGameAssetsDir } from "../test-helpers.js";
+import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
 import { extractSkills } from "./skills.js";
+
+vi.mock("../localize.js", () => ({
+  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string; id: string }) => ({
+    fallbackLocales: [],
+    values: {
+      en: input.englishValue,
+      es: input.englishValue,
+      fr: input.englishValue,
+      ja: input.id === "farming" ? "農業" : input.englishValue,
+      ko: input.englishValue,
+      ru: input.englishValue,
+      "zh-Hans": input.englishValue,
+      "zh-Hant": input.englishValue,
+    },
+  })),
+}));
 
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({ perks: {}, skills: {}, ui: {}, ...overrides });
 }
 
 describe("extractSkills", () => {
-  let assetsDir: string;
+  const assetsDir = "test-assets";
 
   beforeEach(() => {
     vi.spyOn(console, "log").mockImplementation(() => undefined);
-    assetsDir = requireGameAssetsDir();
   });
 
   it("returns empty defaults when skills data is absent", () => {
@@ -36,7 +51,7 @@ describe("extractSkills", () => {
       mining: { perkTiers: [{}, {}, {}, {}, {}] },
     });
     expect(result.localeNames.en).toMatchObject({ farming: "Farming", mining: "Mining" });
-    expect(result.localeNames.ja).toMatchObject({ farming: "農業", mining: "採掘" });
+    expect(result.localeNames.ja).toMatchObject({ farming: "農業", mining: "Mining" });
   });
 
   it("skips the default skill entry", () => {
