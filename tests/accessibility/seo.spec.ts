@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
 
 import { SITE_NAME, SITE_ORIGIN } from "../../src/lib/data/page-metadata.js";
+import { LOCALE_CODES } from "../../src/lib/types/locale.js";
+
+const HOME_PATH_PATTERN = new RegExp(`^/(?:${LOCALE_CODES.join("|")})$`);
 
 test.use({ javaScriptEnabled: false });
 
@@ -13,6 +16,10 @@ test.describe("server-rendered search metadata", () => {
   });
 
   test("every sitemap page is useful without JavaScript", async ({ page, request }) => {
+    // The sitemap now lists one URL per locale per page (8 locales), so this loop does
+    // several times the page loads it used to.
+    test.setTimeout(120_000);
+
     const sitemap = await (await request.get("/sitemap.xml")).text();
     const paths = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map(
       ([, location]) => new URL(location).pathname,
@@ -23,7 +30,9 @@ test.describe("server-rendered search metadata", () => {
       const expectedCanonicalUrl = new URL(path, SITE_ORIGIN).href;
 
       expect(response?.ok()).toBe(true);
-      await expect(page).toHaveTitle(path === "/" ? SITE_NAME : new RegExp(` — ${SITE_NAME}$`));
+      await expect(page).toHaveTitle(
+        HOME_PATH_PATTERN.test(path) ? SITE_NAME : new RegExp(` — ${SITE_NAME}$`),
+      );
       await expect(page).not.toHaveTitle(/tracker/i);
       await expect(page.locator('meta[name="description"]')).toHaveAttribute(
         "content",

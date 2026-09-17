@@ -5,7 +5,8 @@
   "version": "0.15.1",
   "type": "module",
   "scripts": {
-    "prepare": "husky",
+    "prepare": "husky && pnpm run paraglide:compile",
+    "paraglide:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide",
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
@@ -84,6 +85,7 @@
     "yauzl-promise": "^4.0.0"
   },
   "dependencies": {
+    "@inlang/paraglide-js": "^2.25.2",
     "@tabler/icons-svelte-runes": "^3.46.0",
     "canvas-confetti": "^1.9.4"
   },

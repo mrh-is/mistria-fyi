@@ -1,8 +1,8 @@
 <script lang="ts">
   import { IconArrowLeft } from "@tabler/icons-svelte-runes";
 
-  import { resolve } from "$app/paths";
   import { Icon } from "$lib/components/icon/index.js";
+  import { localizedHref } from "$lib/utils/localized-href.js";
 
   import type { Snippet } from "svelte";
 
@@ -45,7 +45,12 @@
   data-page-header={category === undefined ? "generic" : "category"}
   style={category !== undefined && pct !== undefined ? `--category-progress: ${pct}%;` : undefined}
 >
-  <a class="page-header__back" href={resolve(backHref)} aria-label={backLabel} onclick={onback}>
+  <a
+    class="page-header__back"
+    href={localizedHref(backHref)}
+    aria-label={backLabel}
+    onclick={onback}
+  >
     <IconArrowLeft class="size-5" />
   </a>
   {#if category === undefined}
