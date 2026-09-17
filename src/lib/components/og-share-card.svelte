@@ -74,6 +74,7 @@
     top: 372px;
     left: 60px;
     width: 360px;
+    filter: drop-shadow(0 4px 10px rgb(26 122 58 / 18%));
     transform: scale(3);
     transform-origin: top left;
   }
