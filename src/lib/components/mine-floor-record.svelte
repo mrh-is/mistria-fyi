@@ -3,6 +3,7 @@
 
   import { page } from "$app/state";
   import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
+  import * as m from "$lib/paraglide/messages.js";
 
   import type { MinesBiome } from "$lib/types/tracker-data.js";
 
@@ -65,14 +66,19 @@
 
 <div class="mine-floor-record" data-mine-floor-record data-compact={compact} {@attach reportable}>
   {#if compact}
-    <span class="floor-label">Floor progress</span>
+    <span class="floor-label">{m.mines_floor_progress_compact_label()}</span>
   {/if}
 
   {#if !compact}
     {#if currentBiome}
       <span class="biome-readout" aria-live="polite">
         <strong>{currentBiome.name}</strong>
-        <span>floors {currentBiome.floors.start}–{currentBiome.floors.end}</span>
+        <span
+          >{m.mines_floor_range({
+            start: currentBiome.floors.start,
+            end: currentBiome.floors.end,
+          })}</span
+        >
       </span>
     {/if}
 
@@ -87,11 +93,15 @@
     </div>
   {/if}
 
-  <div class="floor-controls" role="group" aria-label="Mine floor, {floor} of {maxFloor}">
+  <div
+    class="floor-controls"
+    role="group"
+    aria-label={m.mines_floor_group_aria({ floor, max: maxFloor })}
+  >
     <button
       type="button"
       disabled={floor <= 0}
-      aria-label="Go up one floor"
+      aria-label={m.mines_floor_up()}
       onclick={() => {
         updateFloor(floor - 1);
       }}
@@ -100,9 +110,9 @@
     </button>
 
     <span class="floor-readout">
-      <span>Floor</span>
+      <span>{m.mines_floor_label()}</span>
       <input
-        aria-label="Mine floor"
+        aria-label={m.mines_floor_input_aria()}
         type="number"
         inputmode="numeric"
         min="0"
@@ -116,7 +126,7 @@
     <button
       type="button"
       disabled={floor >= maxFloor}
-      aria-label="Go down one floor"
+      aria-label={m.mines_floor_down()}
       onclick={() => {
         updateFloor(floor + 1);
       }}
@@ -128,7 +138,12 @@
   {#if compact && currentBiome}
     <span class="biome-readout" aria-live="polite">
       <strong>{currentBiome.name}</strong>
-      <span>floors {currentBiome.floors.start}–{currentBiome.floors.end}</span>
+      <span
+        >{m.mines_floor_range({
+          start: currentBiome.floors.start,
+          end: currentBiome.floors.end,
+        })}</span
+      >
     </span>
   {/if}
 </div>

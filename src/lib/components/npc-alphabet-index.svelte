@@ -1,6 +1,8 @@
 <script lang="ts">
   import { prefersReducedMotion } from "svelte/motion";
 
+  import * as m from "$lib/paraglide/messages.js";
+
   let {
     entries,
     reducedMotion,
@@ -89,7 +91,7 @@
 <nav
   class="npc-index"
   style="--npc-index-count: {initials.length}"
-  aria-label="Townsfolk alphabet"
+  aria-label={m.characters_alphabet_aria()}
   data-scrubbing={scrubbing}
   onpointermove={scrub}
   onpointerup={stopScrub}
@@ -100,7 +102,7 @@
       type="button"
       data-npc-index-initial={entry.initial}
       data-active={scrubbing && lastScrubbedInitial === entry.initial}
-      aria-label="Jump to {entry.initial}, first Townsfolk record"
+      aria-label={m.characters_jump_to_initial_aria({ initial: entry.initial })}
       onpointerdown={(event) => {
         startScrub(event, entry);
       }}

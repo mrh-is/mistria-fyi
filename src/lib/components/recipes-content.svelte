@@ -8,6 +8,7 @@
   import { Button } from "$lib/components/ui/button/index.js";
   import { trackerData, trackerIndex } from "$lib/data/index.js";
   import { isVisible } from "$lib/engine/visibility.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordEntries, recordForEach } from "$lib/utils";
@@ -209,7 +210,7 @@
       </TrackerRowStack>
       {#if filteredEntries.length === 0}
         <p class="py-4 text-center text-sm text-muted-foreground">
-          No items match the current filters
+          {m.no_items_match_filters()}
         </p>
       {/if}
       {#if !showAll && filteredEntries.length > SECTION_LIMIT}
@@ -221,7 +222,7 @@
               expandedSections[group.id] = true;
             }}
           >
-            Show {filteredEntries.length - SECTION_LIMIT} more...
+            {m.show_more_count({ count: filteredEntries.length - SECTION_LIMIT })}
           </Button>
         </div>
       {/if}

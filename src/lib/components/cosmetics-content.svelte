@@ -5,6 +5,7 @@
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { trackerData, trackerIndex } from "$lib/data/index.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordEntries } from "$lib/utils";
@@ -67,7 +68,7 @@
     const bySlot: Record<string, Record<string, CosmeticEntry[]>> = {};
     for (const [id, cosmetic] of Object.entries(trackerData.cosmetics)) {
       const slot = cosmetic.slot;
-      const subCategory = cosmetic.subCategory ?? "Other";
+      const subCategory = cosmetic.subCategory ?? m.cosmetics_other_subcategory();
       const sources = cosmetic.sources;
       ((bySlot[slot] ??= {})[subCategory] ??= []).push({
         id: id as CosmeticId,
@@ -215,7 +216,7 @@
       {/each}
       {#if visibleInSlot.length === 0}
         <p class="py-4 text-center text-sm text-muted-foreground">
-          No items match the current filters
+          {m.no_items_match_filters()}
         </p>
       {/if}
     </ExpandableSection>

@@ -7,6 +7,7 @@
   import { trackerData, trackerIndex } from "$lib/data/index.js";
   import { getName, nameCollator } from "$lib/data/names.js";
   import { isEntityNameVisible } from "$lib/engine/visibility.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
@@ -136,7 +137,7 @@
 {:else}
   <ExpandableSection
     count={userState.state.completed.mines.floor}
-    name="Floor Progress"
+    name={m.mines_floor_progress_section()}
     reportCategory="mines"
     reportEntityId="floors"
     reportExtra={{ biome: currentBiome.name, floor: userState.state.completed.mines.floor }}
@@ -156,7 +157,7 @@
   <ExpandableSection
     count={scopedSpells.filter((spell) => userState.state.completed.mines.spells.has(spell.id))
       .length}
-    name="Spells"
+    name={m.mines_spells_section()}
     reportCategory="mines"
     reportEntityId="spells"
     {defaultOpen}
@@ -185,10 +186,10 @@
     </TrackerRowStack>
     {#if visibleSpells.length === 0}
       <p class="py-4 text-center text-sm text-muted-foreground">
-        No items match the current filters
+        {m.no_items_match_filters()}
       </p>
     {/if}
   </ExpandableSection>
 {:else if toolbarState.sourceFilterActive}
-  <p class="py-4 text-center text-sm text-muted-foreground">No items match the current filters</p>
+  <p class="py-4 text-center text-sm text-muted-foreground">{m.no_items_match_filters()}</p>
 {/if}

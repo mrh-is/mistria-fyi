@@ -5,6 +5,7 @@
   import { trackerData } from "$lib/data/index.js";
   import { getRenownPresentation } from "$lib/engine/renown-presentation.js";
   import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
 
@@ -58,9 +59,11 @@
     <span class="rank-copy">
       <strong>{presentation.currentRank.name}</strong>
       {#if presentation.isMaxed}
-        <small>Max rank reached</small>
+        <small>{m.renown_max_rank_reached()}</small>
       {:else}
-        <small>{presentation.withinRank} / {presentation.rankSpan} in rank</small>
+        <small>
+          {m.renown_within_rank({ span: presentation.rankSpan, within: presentation.withinRank })}
+        </small>
       {/if}
     </span>
   {/if}
@@ -68,7 +71,7 @@
   <span
     class="renown-rule"
     role="progressbar"
-    aria-label="Renown progress"
+    aria-label={m.renown_progress_aria()}
     aria-valuemin="0"
     aria-valuemax={presentation.maxLevel}
     aria-valuenow={level}
@@ -79,10 +82,10 @@
   <Stepper
     decrementDisabled={level <= 0}
     incrementDisabled={level >= presentation.maxLevel}
-    decrementLabel="Decrease renown"
-    incrementLabel="Increase renown"
-    label="Renown level"
-    value="{level} of {presentation.maxLevel}"
+    decrementLabel={m.renown_decrease()}
+    incrementLabel={m.renown_increase()}
+    label={m.renown_level_label()}
+    value={m.stepper_level_progress({ level, max: presentation.maxLevel })}
     onDecrement={() => {
       setRenownWithCelebration(level - 1);
     }}
@@ -92,7 +95,7 @@
   >
     <span class="renown-readout">
       <input
-        aria-label="Renown level"
+        aria-label={m.renown_level_label()}
         type="number"
         inputmode="numeric"
         max={presentation.maxLevel}

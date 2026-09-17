@@ -130,7 +130,7 @@
         {/each}
       </TrackerRowStack>
       {#if visibleDates.length === 0}
-        <p class="py-4 text-center text-sm text-muted-foreground">{m.almanac_no_matches()}</p>
+        <p class="py-4 text-center text-sm text-muted-foreground">{m.no_items_match_filters()}</p>
       {/if}
     </div>
   </ExpandableSection>
