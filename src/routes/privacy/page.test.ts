@@ -12,7 +12,7 @@ describe("privacy policy", () => {
     expect(body).toContain("AI in development");
     expect(body).toContain("AI coding tools");
     expect(body).toContain("your email address");
-    expect(body).toContain('href="/about"');
+    expect(body).toContain('href="/en/about"');
     expect(body).toContain('aria-label="Back to About"');
   });
 });

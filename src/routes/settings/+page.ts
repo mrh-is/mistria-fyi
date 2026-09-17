@@ -1,7 +1,7 @@
 import { redirect } from "@sveltejs/kit";
 
-import { resolve } from "$app/paths";
+import { localizedHref } from "$lib/utils/localized-href.js";
 
 export function load({ url }: { url: URL }): never {
-  redirect(308, `${resolve("/data")}${url.search}`);
+  redirect(308, `${localizedHref("/data")}${url.search}`);
 }

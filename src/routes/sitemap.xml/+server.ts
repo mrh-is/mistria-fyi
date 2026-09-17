@@ -1,6 +1,8 @@
 import { SITE_ORIGIN } from "$lib/data/page-metadata.js";
+import { locales, localizeUrl } from "$lib/paraglide/runtime.js";
 
 import type { Pathname } from "$app/types";
+import type { Locale } from "$lib/paraglide/runtime.js";
 
 export const prerender = true;
 
@@ -34,18 +36,38 @@ export async function GET(): Promise<Response> {
   const metadataEntries = await _pageMetadataEntries();
   const urls = metadataEntries
     .filter(({ metadata }) => metadata.robots === undefined)
-    .map(({ path }) => `  <url>\n    <loc>${new URL(path, SITE_ORIGIN).href}</loc>\n  </url>`)
+    .flatMap(({ path }) => localizedUrlEntries(path))
     .join("\n");
 
   return new Response(
     `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${urls}
 </urlset>
 `,
     {
       headers: { "Content-Type": "application/xml" },
     },
+  );
+}
+
+/** One `<url>` entry per locale for `path`, each cross-linked to the other locales' URLs. */
+function localizedUrlEntries(path: Pathname): string[] {
+  const canonicalUrl = new URL(path, SITE_ORIGIN);
+  const hrefByLocale = new Map(
+    locales.map((locale) => [locale, localizeUrl(canonicalUrl, { locale }).href]),
+  );
+
+  const alternateLinks = locales
+    .map(
+      (locale) =>
+        `    <xhtml:link rel="alternate" hreflang="${locale}" href="${hrefByLocale.get(locale)}" />`,
+    )
+    .join("\n");
+
+  return locales.map(
+    (locale: Locale) =>
+      `  <url>\n    <loc>${hrefByLocale.get(locale)}</loc>\n${alternateLinks}\n  </url>`,
   );
 }
 

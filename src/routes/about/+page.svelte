@@ -1,10 +1,10 @@
 <script lang="ts">
   import { IconMessageReport, IconRobot } from "@tabler/icons-svelte-runes";
 
-  import { resolve } from "$app/paths";
   import AiDisclosureDialog from "$lib/components/ai-disclosure-dialog.svelte";
   import PageHeader from "$lib/components/page-header.svelte";
   import { trackerData } from "$lib/data";
+  import { localizedHref } from "$lib/utils/localized-href.js";
 
   let aiDisclosureOpen = $state(false);
 
@@ -59,7 +59,7 @@
   </section>
 
   <footer class="about-page__footer">
-    <a href={resolve("/privacy")}>Privacy</a>
+    <a href={localizedHref("/privacy")}>Privacy</a>
     <span>·</span>
     <button type="button" onclick={() => (aiDisclosureOpen = true)}>
       <IconRobot class="size-3.5" />AI disclosure

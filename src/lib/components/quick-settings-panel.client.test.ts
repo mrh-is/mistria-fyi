@@ -14,8 +14,8 @@ describe("QuickSettingsPanel", () => {
   it("groups compact links to the data and About pages", () => {
     const { container } = render(QuickSettingsPanel);
 
-    expect(screen.getByRole("link", { name: "Data" })).toHaveAttribute("href", "/data");
-    expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("href", "/about");
+    expect(screen.getByRole("link", { name: "Data" })).toHaveAttribute("href", "/en/data");
+    expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("href", "/en/about");
     expect(container.querySelector(".quick-settings__links")?.children).toHaveLength(2);
   });
 

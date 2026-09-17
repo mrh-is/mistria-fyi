@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
   import { Icon } from "$lib/components/icon/index.js";
   import { categoryForKey, type CategoryKey } from "$lib/data/categories.js";
+  import { localizedHref } from "$lib/utils/localized-href.js";
 
   import type { CategoryProgress } from "$lib/engine/progress.js";
 
@@ -42,7 +42,7 @@
   class:category-stripe--complete={isComplete}
   class:category-stripe--mobile-ribbon={mobileRibbon}
   data-category-stripe
-  href={resolve(href)}
+  href={localizedHref(href)}
   aria-label="{name}, {progress.completed} of {displayTotal} completed"
   style="--category-color: var(--{color}); --category-progress: {pct}%"
 >

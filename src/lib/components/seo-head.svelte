@@ -1,5 +1,6 @@
 <script lang="ts">
   import { SITE_NAME, SITE_ORIGIN } from "$lib/data/page-metadata.js";
+  import { deLocalizeHref, locales, localizeHref } from "$lib/paraglide/runtime.js";
 
   import type { PageMetadata } from "$lib/data/page-metadata.js";
 
@@ -8,12 +9,25 @@
   let title = $derived(
     metadata.title === SITE_NAME ? SITE_NAME : `${metadata.title} — ${SITE_NAME}`,
   );
+  // hreflang alternates for the other locales this same page is available in.
+  let alternateLocaleHrefs = $derived(
+    locales
+      .map((locale) => ({ href: localizeHref(deLocalizeHref(pathname), { locale }), locale }))
+      .filter((alternate) => alternate.href !== pathname),
+  );
 </script>
 
 <svelte:head>
   <title>{title}</title>
   <meta name="description" content={metadata.description} />
   <link rel="canonical" href={canonicalUrl} />
+  {#each alternateLocaleHrefs as alternate (alternate.locale)}
+    <link
+      rel="alternate"
+      hreflang={alternate.locale}
+      href={new URL(alternate.href, SITE_ORIGIN).href}
+    />
+  {/each}
   <meta property="og:title" content={title} />
   <meta property="og:description" content={metadata.description} />
   <meta property="og:url" content={canonicalUrl} />
