@@ -6,6 +6,7 @@
   import { weatherIcon } from "$lib/components/icon/icon-maps.js";
   import { Icon } from "$lib/components/icon/index.js";
   import SourceExplainerDialog from "$lib/components/source-explainer-dialog.svelte";
+  import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { AVAILABILITY_WINDOWS } from "$lib/types/availability.js";
@@ -22,9 +23,9 @@
   const allWeathers: Weather[] = ["calm", "inclement", "heavy_inclement", "special"];
   const TRANSITION_MS = 180;
   const availabilityLabels: Record<AvailabilityWindow, string> = {
-    anytime: "Anytime",
-    later: "Later",
-    now: "Now",
+    anytime: m.availability_anytime(),
+    later: m.availability_later(),
+    now: m.availability_now(),
   };
 
   let sourcesExplainerOpen = $state(false);
@@ -92,7 +93,9 @@
 <div class="filters">
   {#if showSeasonality}
     <section class="filter-section" aria-labelledby="availability-filter-label">
-      <h3 id="availability-filter-label"><IconClock class="size-3.5" />When to find</h3>
+      <h3 id="availability-filter-label">
+        <IconClock class="size-3.5" />{m.visibility_when_to_find()}
+      </h3>
       <div class="chip-row chip-row--availability">
         {#each AVAILABILITY_WINDOWS as window (window)}
           {@const selected = userState.state.availabilityWindows.includes(window)}
@@ -110,8 +113,8 @@
 
       <div class="world-state-grid">
         <div>
-          <p>Season</p>
-          <div class="radio-strip" aria-label="Season">
+          <p>{m.visibility_season_label()}</p>
+          <div class="radio-strip" aria-label={m.visibility_season_label()}>
             {#each seasons as season (season)}
               {@const selected = season === currentSeason}
               <button
@@ -128,10 +131,10 @@
         </div>
 
         <div>
-          <p>Weather</p>
+          <p>{m.visibility_weather_label()}</p>
           <div
             class="radio-strip radio-strip--weather"
-            aria-label="Weather"
+            aria-label={m.visibility_weather_label()}
             style:grid-template-columns={weatherColumns}
             style:transition-duration="{transitionDuration()}ms"
           >
@@ -176,11 +179,11 @@
   {#if toolbarState.sourceFilters.length > 0}
     <section class="filter-section" aria-labelledby="source-filter-label">
       <div class="filter-section__heading">
-        <h3 id="source-filter-label"><IconTags class="size-3.5" />Source types</h3>
+        <h3 id="source-filter-label"><IconTags class="size-3.5" />{m.visibility_source_types()}</h3>
         <button
           class="info-button"
           type="button"
-          aria-label="About source types"
+          aria-label={m.visibility_source_types_about_aria()}
           onclick={() => (sourcesExplainerOpen = true)}><IconInfoCircle class="size-4" /></button
         >
       </div>
@@ -204,10 +207,13 @@
     </section>
   {/if}
 
-  <section class="filter-section filter-section--completed" aria-label="Completion visibility">
-    <span><IconSquareX class="size-3.5" />Show completed?</span>
+  <section
+    class="filter-section filter-section--completed"
+    aria-label={m.visibility_completion_aria()}
+  >
+    <span><IconSquareX class="size-3.5" />{m.visibility_show_completed()}</span>
     <BlockySwitch
-      label="Show completed?"
+      label={m.visibility_show_completed()}
       checked={userState.state.showCompleted}
       onCheckedChange={() => {
         userState.toggleShowCompleted();
