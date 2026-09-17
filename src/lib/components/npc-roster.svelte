@@ -4,6 +4,7 @@
   import { trackerData } from "$lib/data/index.js";
   import { getName, nameCollator } from "$lib/data/names.js";
   import { isNpcComplete } from "$lib/engine/progress.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import type { LocaleCode } from "$lib/types/locale.js";
@@ -35,7 +36,7 @@
 </script>
 
 <div class:npc-roster-shell={indexed}>
-  <ul class="npc-roster" aria-label="Townsfolk roster">
+  <ul class="npc-roster" aria-label={m.characters_roster_aria()}>
     {#each visibleNpcs as npc (npc.id)}
       <NpcRecord
         {compact}

@@ -74,21 +74,21 @@
 
     let message: string;
     if (newState === "obtained") {
-      message = m.search_marked_obtained({ name: result.name });
+      message = m.quest_marked_obtained({ name: result.name });
     } else if (newState === "completed") {
       if (newlyAdded.length === 1) {
         const names = recipeDisplayNames(newlyAdded);
-        message = m.search_marked_completed_with_recipe({ name: result.name, recipe: names[0] });
+        message = m.quest_marked_completed_with_recipe({ name: result.name, recipe: names[0] });
       } else if (newlyAdded.length > 1) {
-        message = m.search_marked_completed_with_recipes({
+        message = m.quest_marked_completed_with_recipes({
           count: newlyAdded.length,
           name: result.name,
         });
       } else {
-        message = m.search_marked_completed({ name: result.name });
+        message = m.quest_marked_completed({ name: result.name });
       }
     } else {
-      message = m.search_reset({ name: result.name });
+      message = m.quest_reset({ name: result.name });
     }
 
     toast(message, {

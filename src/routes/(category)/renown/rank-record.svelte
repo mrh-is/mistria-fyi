@@ -3,6 +3,7 @@
   import { Icon } from "$lib/components/icon/index.js";
   import Spoiler from "$lib/components/spoiler.svelte";
   import { getRankState } from "$lib/engine/renown-presentation.js";
+  import * as m from "$lib/paraglide/messages.js";
 
   import type { TownRank } from "$lib/types/tracker-data.js";
 
@@ -54,9 +55,9 @@
     </strong>
     <small>
       {#if rank.levels.start === rank.levels.end}
-        Lv {rank.levels.start}
+        {m.rank_level_single({ level: rank.levels.start })}
       {:else}
-        Lv {rank.levels.start}–{rank.levels.end}
+        {m.rank_level_range({ start: rank.levels.start, end: rank.levels.end })}
       {/if}
     </small>
   </span>
@@ -64,12 +65,12 @@
   {#if rankState === "completed"}
     <span class="rank-state rank-state--completed">
       <IconCompletion state="completed" class="rank-completion" />
-      Completed
+      {m.rank_state_completed()}
     </span>
   {:else if rankState === "current"}
-    <span class="rank-state"><strong>Current</strong> {within} / {span}</span>
+    <span class="rank-state"><strong>{m.rank_state_current()}</strong> {within} / {span}</span>
   {:else}
-    <span class="rank-state">Upcoming</span>
+    <span class="rank-state">{m.rank_state_upcoming()}</span>
   {/if}
 </li>
 
