@@ -5,15 +5,31 @@
 
   import type { CategoryProgress } from "$lib/engine/progress.js";
 
+  interface DisplayCategory {
+    color: string;
+    description: string;
+    href: "/";
+    icon: "all" | CategoryKey;
+    name: string;
+  }
+
   let {
+    displayCategory,
+    displayCompleted,
     key,
+    mobileRibbon = false,
     progress,
   }: {
+    displayCategory?: DisplayCategory;
+    displayCompleted?: string;
     key: CategoryKey;
+    mobileRibbon?: boolean;
     progress: CategoryProgress;
   } = $props();
 
-  const { color, description, href, name } = $derived(categoryForKey(key));
+  const { color, description, href, icon, name } = $derived(
+    displayCategory ?? { ...categoryForKey(key), icon: key },
+  );
 
   // Show available count when filtering is active (filtered < total - completed)
   let displayTotal = $derived(progress.completed + progress.filtered);
@@ -24,6 +40,7 @@
 <a
   class="category-stripe"
   class:category-stripe--complete={isComplete}
+  class:category-stripe--mobile-ribbon={mobileRibbon}
   data-category-stripe
   href={resolve(href)}
   aria-label="{name}, {progress.completed} of {displayTotal} completed"
@@ -35,12 +52,13 @@
   </span>
 
   <span class="category-count" aria-hidden="true">
-    <span>{progress.completed}</span><span class="category-slash">/</span><span>{displayTotal}</span
-    >
+    <span>{displayCompleted ?? progress.completed.toLocaleString()}</span>
+    <span class="category-slash">/</span>
+    <span>{displayTotal.toLocaleString()}</span>
   </span>
 
   <span class="category-ribbon" data-category-ribbon aria-hidden="true">
-    <Icon.Category category={key} class="category-icon" />
+    <Icon.Category category={icon} class="category-icon" />
   </span>
   <span class="paper-edge-mask" aria-hidden="true"></span>
   <span class="category-progress" aria-hidden="true"><i></i></span>
@@ -257,6 +275,21 @@
         linear-gradient(to top left, transparent 46%, #d4a72c 48% 57%, transparent 59%) bottom / 9px
           50% no-repeat;
     }
+  }
+
+  .category-stripe--mobile-ribbon {
+    padding-right: 69px;
+  }
+
+  .category-stripe--mobile-ribbon .category-ribbon {
+    right: -8px;
+    width: calc(var(--ribbon-width) + 8px);
+    padding-left: 8px;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 8px 50%);
+  }
+
+  .category-stripe--mobile-ribbon .paper-edge-mask {
+    display: none;
   }
 
   @media (hover: hover) and (prefers-reduced-motion: no-preference) {
