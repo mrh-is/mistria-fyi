@@ -15,16 +15,17 @@
 <div class="og-card">
   <header>
     <h1>Mistria Field Guide</h1>
-    <p>Track every collection,<br />quest, skill &amp; more</p>
+    <p>Track every collection, quest, skill &amp; more</p>
   </header>
   <div class="stripe-scale">
     <CategoryCard
       key="almanac"
       mobileRibbon
       {progress}
+      displayCompleted="??"
       displayCategory={{
-        color: "home-accent",
-        description: "Track every collection, quest, skill, & more.",
+        color: "fg-green",
+        description: "All of Mistria in one place",
         href: "/",
         icon: "all",
         name: "Everything",
@@ -57,14 +58,14 @@
     font-style: italic;
     font-weight: 400;
     line-height: 0.9;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.02em;
   }
 
   p {
     margin: 28px 0 0 4px;
     color: #514b45;
     font-family: var(--font-annotation);
-    font-size: 34px;
+    font-size: 40px;
     line-height: 0.98;
   }
 

@@ -15,11 +15,13 @@
 
   let {
     displayCategory,
+    displayCompleted,
     key,
     mobileRibbon = false,
     progress,
   }: {
     displayCategory?: DisplayCategory;
+    displayCompleted?: string;
     key: CategoryKey;
     mobileRibbon?: boolean;
     progress: CategoryProgress;
@@ -50,9 +52,9 @@
   </span>
 
   <span class="category-count" aria-hidden="true">
-    <span>{progress.completed.toLocaleString()}</span><span class="category-slash">/</span><span
-      >{displayTotal.toLocaleString()}</span
-    >
+    <span>{displayCompleted ?? progress.completed.toLocaleString()}</span>
+    <span class="category-slash">/</span>
+    <span>{displayTotal.toLocaleString()}</span>
   </span>
 
   <span class="category-ribbon" data-category-ribbon aria-hidden="true">
