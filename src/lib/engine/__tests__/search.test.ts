@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
+import { getName } from "$lib/data/names.js";
 import { deriveProgressionState } from "$lib/engine/visibility.js";
 import { recordEntries, recordKeys, recordValues } from "$lib/utils.js";
 
@@ -96,6 +97,7 @@ function search(query: string, completed?: Partial<CompletedState>) {
     makeCompleted(completed),
     defaultWorld,
     makeProgressionState({ showSpoilers: true }),
+    "en",
   );
 }
 
@@ -129,9 +131,10 @@ describe("basic matching", () => {
   });
 
   it("finds NPCs by name", () => {
-    const [, npc] = recordEntries(trackerData.npcs)[0];
-    const results = search(npc.name);
-    expect(results.some((r) => r.category === "npcs" && r.name === npc.name)).toBe(true);
+    const [npcId] = recordEntries(trackerData.npcs)[0];
+    const npcName = getName("npcs", npcId, "en");
+    const results = search(npcName);
+    expect(results.some((r) => r.category === "npcs" && r.name === npcName)).toBe(true);
   });
 
   it("finds quests by name", () => {
@@ -217,6 +220,7 @@ describe("ranking before truncation", () => {
       makeCompleted(),
       defaultWorld,
       makeProgressionState({ showSpoilers: true }),
+      "en",
     );
 
     const categories = new Set(results.map((r) => r.category));
@@ -271,6 +275,7 @@ describe("ranking before truncation", () => {
       makeCompleted(),
       defaultWorld,
       makeProgressionState({ showSpoilers: true }),
+      "en",
     );
 
     expect(results.length).toBeLessThanOrEqual(50);
@@ -292,6 +297,7 @@ describe("cross-category coverage", () => {
       makeCompleted(),
       defaultWorld,
       makeProgressionState({ showSpoilers: true }),
+      "en",
     );
     const categories = new Set(results.map((r) => r.category));
     expect(
@@ -327,7 +333,7 @@ describe("recipe visibility", () => {
     const completed = makeCompleted();
     const progression = deriveProgressionState(completed, trackerData, false);
 
-    const results = searchItems("Strawberry Shortcake", completed, defaultWorld, progression);
+    const results = searchItems("Strawberry Shortcake", completed, defaultWorld, progression, "en");
     const recipeResults = results.filter((r) => r.category === "recipes");
 
     expect(recipeResults).toHaveLength(0);
@@ -339,7 +345,7 @@ describe("recipe visibility", () => {
     } as Partial<CompletedState>);
     const progression = deriveProgressionState(completed, trackerData, false);
 
-    const results = searchItems("Strawberry Shortcake", completed, defaultWorld, progression);
+    const results = searchItems("Strawberry Shortcake", completed, defaultWorld, progression, "en");
     const recipeResults = results.filter((r) => r.category === "recipes");
 
     expect(recipeResults).toHaveLength(1);
@@ -350,7 +356,7 @@ describe("recipe visibility", () => {
     const completed = makeCompleted();
     const progression = deriveProgressionState(completed, trackerData, true);
 
-    const results = searchItems("Strawberry Shortcake", completed, defaultWorld, progression);
+    const results = searchItems("Strawberry Shortcake", completed, defaultWorld, progression, "en");
     const recipeResults = results.filter((r) => r.category === "recipes");
 
     expect(recipeResults).toHaveLength(1);
@@ -364,7 +370,7 @@ describe("recipe visibility", () => {
     } as Partial<CompletedState>);
     const progression = deriveProgressionState(completed, trackerData, false);
 
-    const results = searchItems("Strawberry Shortcake", completed, defaultWorld, progression);
+    const results = searchItems("Strawberry Shortcake", completed, defaultWorld, progression, "en");
     const recipeResults = results.filter((r) => r.category === "recipes");
 
     expect(recipeResults[0].completed).toBe(true);

@@ -15,6 +15,7 @@
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { SearchResult } from "$lib/engine/search.js";
   import type { Source } from "$lib/types/acquisition";
+  import type { LocaleCode } from "$lib/types/locale.js";
   import type {
     AnimalId,
     AnimalVariantId,
@@ -27,7 +28,7 @@
     RecipeId,
   } from "$lib/types/tracker-data.js";
 
-  let { query }: { query: string } = $props();
+  let { locale, query }: { locale: LocaleCode; query: string } = $props();
 
   let results = $derived(
     searchItems(
@@ -35,6 +36,7 @@
       userState.state.completed,
       userState.state.worldState,
       userState.progressionState,
+      locale,
     ),
   );
 
@@ -58,7 +60,7 @@
     ),
   );
 
-  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
+  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
 
   function getSources(result: SearchResult): Source[] {
     if (result.category === "almanac" || result.category === "museum") {

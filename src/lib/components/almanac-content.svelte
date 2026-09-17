@@ -24,8 +24,11 @@
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { Source } from "$lib/types/acquisition";
+  import type { LocaleCode } from "$lib/types/locale.js";
   import type { AlmanacEntry, ItemId } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
+
+  let { locale }: { locale: LocaleCode } = $props();
 
   const spoilerGuard = createSpoilerGuard();
 
@@ -70,7 +73,7 @@
     ),
   );
 
-  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
+  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
 
   let recentlyCompleted = new SvelteSet<ItemId>();
 
@@ -303,6 +306,7 @@
 {/each}
 
 <DatesSection
+  {locale}
   onAllComplete={() => {
     if (isAlmanacComplete()) celebrateCategory();
     else celebrate();

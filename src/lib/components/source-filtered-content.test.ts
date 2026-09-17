@@ -33,12 +33,14 @@ describe("source-filtered content", () => {
     if (!coveredSlot) throw new Error("Expected a cosmetic slot with covered source types");
     const slotLabel = coveredSlot[0].charAt(0).toUpperCase() + coveredSlot[0].slice(1);
 
-    expect(renderedText(render(CosmeticsContent, { props: {} }).body)).toContain(slotLabel);
+    expect(renderedText(render(CosmeticsContent, { props: { locale: "en" } }).body)).toContain(
+      slotLabel,
+    );
 
     toolbarState.setSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
-    expect(renderedText(render(CosmeticsContent, { props: {} }).body)).toContain(
+    expect(renderedText(render(CosmeticsContent, { props: { locale: "en" } }).body)).toContain(
       `${slotLabel} 0 / 0`,
     );
   });

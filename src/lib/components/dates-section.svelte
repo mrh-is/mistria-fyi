@@ -15,9 +15,11 @@
   import { showUndoToast } from "$lib/utils/undo-toast.js";
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
+  import type { LocaleCode } from "$lib/types/locale.js";
   import type { DateId } from "$lib/types/tracker-data.js";
 
-  let { onAllComplete = celebrate }: { onAllComplete?: () => void } = $props();
+  let { locale, onAllComplete = celebrate }: { locale: LocaleCode; onAllComplete?: () => void } =
+    $props();
 
   const spoilerGuard = createSpoilerGuard();
 
@@ -35,7 +37,7 @@
     ),
   );
 
-  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
+  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
 
   function allDatesComplete(): boolean {
     return Object.keys(trackerData.dates).every((id) =>

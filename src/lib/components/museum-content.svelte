@@ -21,6 +21,7 @@
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { Source } from "$lib/types/acquisition";
+  import type { LocaleCode } from "$lib/types/locale.js";
   import type {
     Item,
     ItemId,
@@ -29,6 +30,8 @@
     MuseumWingSet,
     MuseumWingSetId,
   } from "$lib/types/tracker-data.js";
+
+  let { locale }: { locale: LocaleCode } = $props();
 
   const spoilerGuard = createSpoilerGuard();
 
@@ -47,7 +50,7 @@
     ),
   );
 
-  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
+  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
 
   function rowDisplay(itemId: ItemId, sources: Source[]): TrackerRowDisplay {
     const completed = userState.state.completed.museum.has(itemId);

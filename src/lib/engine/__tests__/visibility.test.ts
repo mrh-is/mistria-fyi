@@ -342,7 +342,6 @@ describe("deriveProgressionState", () => {
       npcs: {
         [seridia]: {
           birthday: { day: 1, season: "spring" },
-          name: "Seridia",
           visibility: { type: "questCompleted", questId: breakingTheFinalSeal },
         },
       },
@@ -367,7 +366,6 @@ describe("deriveProgressionState", () => {
       npcs: {
         [caldarus]: {
           birthday: { day: 1, season: "spring" },
-          name: "Caldarus",
           visibility: { type: "questCompleted", questId: breakingTheFireSeal },
         },
       },
@@ -385,7 +383,6 @@ describe("deriveProgressionState", () => {
         [holt]: {
           birthday: { day: 1, season: "spring" },
           dateable: true,
-          name: "Holt",
           visibility: { type: "always" },
         },
       },
@@ -402,7 +399,6 @@ describe("deriveProgressionState", () => {
       npcs: {
         [caldarus]: {
           birthday: { day: 1, season: "spring" },
-          name: "Caldarus",
           visibility: { type: "questCompleted", questId: breakingTheFireSeal },
         },
       },
@@ -619,7 +615,6 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
       npcs: {
         [caldarus]: {
           birthday: { day: 1, season: "spring" },
-          name: "Caldarus",
           visibility: { type: "questCompleted", questId: breakingTheFireSeal },
         },
       },

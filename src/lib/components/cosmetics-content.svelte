@@ -18,8 +18,11 @@
 
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { Source } from "$lib/types/acquisition";
+  import type { LocaleCode } from "$lib/types/locale.js";
   import type { CosmeticId } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
+
+  let { locale }: { locale: LocaleCode } = $props();
 
   interface CosmeticEntry {
     id: CosmeticId;
@@ -40,7 +43,7 @@
     ),
   );
 
-  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds));
+  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
 
   function isCosmeticsComplete(): boolean {
     return Object.keys(trackerData.cosmetics).every((id) =>

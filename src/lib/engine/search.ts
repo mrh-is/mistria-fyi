@@ -1,4 +1,5 @@
 import { trackerData, trackerIndex } from "$lib/data/index.js";
+import { getName, nameCollator } from "$lib/data/names.js";
 import { isItemApplicable, isItemApplicableForAlmanac } from "$lib/engine/applicability.js";
 import { isItemAvailable } from "$lib/engine/availability.js";
 import { isNpcComplete } from "$lib/engine/progress.js";
@@ -7,6 +8,7 @@ import { recordEntries } from "$lib/utils";
 
 import type { UserProgressionState } from "$lib/engine/visibility.js";
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
+import type { LocaleCode } from "$lib/types/locale.js";
 import type { ItemId, QuestId, Season, Weather } from "$lib/types/tracker-data.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -30,6 +32,7 @@ export function searchItems(
   completed: CompletedState,
   worldState: { season: Season; weather: Weather },
   progressionState: UserProgressionState,
+  locale: LocaleCode,
 ): SearchResult[] {
   if (!query.trim()) return [];
 
@@ -84,18 +87,22 @@ export function searchItems(
     }
   }
 
-  // NPCs — not season-gated
-  for (const [id, npc] of recordEntries(trackerData.npcs)) {
+  // NPCs — not season-gated. Matched on the localized name, then on the English name as a
+  // fallback, so an English query still finds an NPC while browsing a non-Latin locale.
+  for (const [id] of recordEntries(trackerData.npcs)) {
     const npcVis = trackerData.npcs[id].visibility;
     if (npcVis && !isVisible(npcVis, progressionState)) continue;
 
-    if (npc.name.toLowerCase().includes(q)) {
+    const localizedName = getName("npcs", id, locale);
+    const englishName = getName("npcs", id, "en");
+
+    if (localizedName.toLowerCase().includes(q) || englishName.toLowerCase().includes(q)) {
       results.push({
         available: true,
         category: "npcs",
         completed: isNpcComplete(id, completed),
         id,
-        name: npc.name,
+        name: localizedName,
       });
     }
   }
@@ -218,11 +225,12 @@ export function searchItems(
     }
   }
 
-  return rankResults(results, q).slice(0, MAX_RESULTS);
+  return rankResults(results, q, locale).slice(0, MAX_RESULTS);
 }
 
 /** Prefix matches first, then available before unavailable, then alphabetical */
-function rankResults(results: SearchResult[], query: string): SearchResult[] {
+function rankResults(results: SearchResult[], query: string, locale: LocaleCode): SearchResult[] {
+  const collator = nameCollator(locale);
   return results.sort((a, b) => {
     const aName = (a.fullName ?? a.name).toLowerCase();
     const bName = (b.fullName ?? b.name).toLowerCase();
@@ -230,6 +238,6 @@ function rankResults(results: SearchResult[], query: string): SearchResult[] {
     const bPrefix = bName.startsWith(query) ? 0 : 1;
     if (aPrefix !== bPrefix) return aPrefix - bPrefix;
     if (a.available !== b.available) return a.available ? -1 : 1;
-    return aName.localeCompare(bName);
+    return collator.compare(aName, bName);
   });
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
+import { getName } from "$lib/data/names.js";
 import { recordEntries, recordKeys, recordValues } from "$lib/utils.js";
 
 import type { Source } from "$lib/types/acquisition.js";
@@ -451,9 +452,9 @@ describe("NPC structural integrity", () => {
     }
   });
 
-  it("every NPC has a name", () => {
-    for (const [id, npc] of recordEntries(trackerData.npcs)) {
-      expect(npc.name.length, `${id} has no name`).toBeGreaterThan(0);
+  it("every NPC has an English name in the generated locale chunk", () => {
+    for (const id of recordKeys(trackerData.npcs)) {
+      expect(getName("npcs", id, "en").length, `${id} has no name`).toBeGreaterThan(0);
     }
   });
 });
