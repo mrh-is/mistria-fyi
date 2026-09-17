@@ -1,17 +1,11 @@
 <script lang="ts">
-  import {
-    IconChevronRight,
-    IconEye,
-    IconInfoCircle,
-    IconPalette,
-    IconTool,
-  } from "@tabler/icons-svelte-runes";
+  import { IconChevronRight, IconEye, IconInfoCircle, IconTool } from "@tabler/icons-svelte-runes";
   import { Dialog as DialogPrimitive } from "bits-ui";
 
   import BlockySwitch from "$lib/components/blocky-switch.svelte";
+  import QuickSettingsLanguagePicker from "$lib/components/quick-settings-language-picker.svelte";
+  import QuickSettingsThemePicker from "$lib/components/quick-settings-theme-picker.svelte";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
-  import * as ToggleGroup from "$lib/components/ui/toggle-group/index.js";
-  import { theme, type Theme } from "$lib/stores/theme.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { localizedHref } from "$lib/utils/localized-href.js";
 
@@ -86,23 +80,9 @@
     />
   </div>
 
-  <div class="quick-settings__row quick-settings__row--theme">
-    <span class="quick-settings__label"><IconPalette class="size-3.5" />Theme</span>
-    <ToggleGroup.Root
-      class="theme-strip"
-      type="single"
-      value={theme.preference}
-      onValueChange={(value) => {
-        if (value) theme.set(value as Theme);
-      }}
-    >
-      {#each ["light", "dark", "system"] as const as value (value)}
-        <ToggleGroup.Item class="theme-strip__item" {value}>
-          {value === "system" ? "Auto" : value === "light" ? "Light" : "Dark"}
-        </ToggleGroup.Item>
-      {/each}
-    </ToggleGroup.Root>
-  </div>
+  <QuickSettingsThemePicker />
+
+  <QuickSettingsLanguagePicker />
 
   <div class="quick-settings__links">
     <a class="quick-settings__link" href={localizedHref("/data")}>
@@ -142,38 +122,6 @@
 
   .quick-settings__link :global(svg) {
     color: var(--ink-muted);
-  }
-
-  :global(.theme-strip) {
-    gap: 0;
-    overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--hairline) 42%, transparent);
-    border-radius: 0;
-  }
-
-  :global(.theme-strip .theme-strip__item) {
-    min-height: 44px;
-    padding: 4px 9px;
-    border: 0;
-    border-right: 1px solid color-mix(in srgb, var(--hairline) 26%, transparent);
-    border-radius: 0;
-    font-family: var(--font-controls);
-    font-size: 10px;
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    :global(.theme-strip .theme-strip__item) {
-      min-height: 34px;
-    }
-  }
-
-  :global(.theme-strip .theme-strip__item:last-child) {
-    border-right: 0;
-  }
-
-  :global(.theme-strip .theme-strip__item[data-state="on"]) {
-    color: var(--primary);
-    background: color-mix(in srgb, var(--primary) 12%, var(--paper-raised));
   }
 
   .quick-settings__link {
@@ -380,22 +328,6 @@
   @media (prefers-reduced-motion: reduce) {
     :global(.spoiler-dialog[data-state]) {
       animation-duration: 0.01ms;
-    }
-  }
-
-  @media (max-width: 359px) {
-    .quick-settings__row--theme {
-      align-items: flex-start;
-      flex-direction: column;
-      padding-block: 10px;
-    }
-
-    :global(.theme-strip) {
-      width: 100%;
-    }
-
-    :global(.theme-strip .theme-strip__item) {
-      flex: 1;
     }
   }
 </style>

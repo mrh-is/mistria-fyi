@@ -1,0 +1,95 @@
+<script lang="ts">
+  import { IconPalette } from "@tabler/icons-svelte-runes";
+
+  import * as ToggleGroup from "$lib/components/ui/toggle-group/index.js";
+  import { theme, type Theme } from "$lib/stores/theme.svelte.js";
+</script>
+
+<div class="theme-setting">
+  <span class="theme-setting__label"><IconPalette class="size-3.5" />Theme</span>
+  <ToggleGroup.Root
+    class="theme-setting__strip"
+    type="single"
+    value={theme.preference}
+    onValueChange={(value) => {
+      if (value) theme.set(value as Theme);
+    }}
+  >
+    {#each ["light", "dark", "system"] as const as value (value)}
+      <ToggleGroup.Item class="theme-setting__item" {value}>
+        {value === "system" ? "Auto" : value === "light" ? "Light" : "Dark"}
+      </ToggleGroup.Item>
+    {/each}
+  </ToggleGroup.Root>
+</div>
+
+<style>
+  .theme-setting {
+    display: flex;
+    min-height: 52px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 6px 18px;
+    border-bottom: 1px solid color-mix(in srgb, var(--hairline) 24%, transparent);
+  }
+
+  .theme-setting__label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-muted);
+    font-family: var(--font-annotation);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  :global(.theme-setting__strip) {
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--hairline) 42%, transparent);
+    border-radius: 0;
+  }
+
+  :global(.theme-setting__strip .theme-setting__item) {
+    min-height: 44px;
+    padding: 4px 9px;
+    border: 0;
+    border-right: 1px solid color-mix(in srgb, var(--hairline) 26%, transparent);
+    border-radius: 0;
+    font-family: var(--font-controls);
+    font-size: 10px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    :global(.theme-setting__strip .theme-setting__item) {
+      min-height: 34px;
+    }
+  }
+
+  :global(.theme-setting__strip .theme-setting__item:last-child) {
+    border-right: 0;
+  }
+
+  :global(.theme-setting__strip .theme-setting__item[data-state="on"]) {
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 12%, var(--paper-raised));
+  }
+
+  @media (max-width: 359px) {
+    .theme-setting {
+      align-items: flex-start;
+      flex-direction: column;
+      padding-block: 10px;
+    }
+
+    :global(.theme-setting__strip) {
+      width: 100%;
+    }
+
+    :global(.theme-setting__strip .theme-setting__item) {
+      flex: 1;
+    }
+  }
+</style>
