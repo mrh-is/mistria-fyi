@@ -450,5 +450,11 @@
         "countPlural=other": "Habilidades: +{count} habilidades actualizadas"
       }
     }
-  ]
+  ],
+  "weather_calm": "Sol",
+  "weather_inclement": "Lluvia",
+  "weather_heavy_inclement": "Tormenta",
+  "weather_special": "Brisa",
+  "weather_winter_inclement": "Nieve",
+  "weather_winter_heavy_inclement": "Ventisca"
 }

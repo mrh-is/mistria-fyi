@@ -436,5 +436,11 @@
         "countPlural=other": "스킬: {count}개 업데이트됨"
       }
     }
-  ]
+  ],
+  "weather_calm": "맑음",
+  "weather_inclement": "비",
+  "weather_heavy_inclement": "폭풍",
+  "weather_special": "산들바람",
+  "weather_winter_inclement": "눈",
+  "weather_winter_heavy_inclement": "눈보라"
 }

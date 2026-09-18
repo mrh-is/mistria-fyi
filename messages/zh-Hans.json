@@ -436,5 +436,11 @@
         "countPlural=other": "技能：已更新{count}项技能"
       }
     }
-  ]
+  ],
+  "weather_calm": "晴",
+  "weather_inclement": "雨",
+  "weather_heavy_inclement": "暴风雨",
+  "weather_special": "微风",
+  "weather_winter_inclement": "雪",
+  "weather_winter_heavy_inclement": "暴风雪"
 }

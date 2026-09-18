@@ -450,5 +450,11 @@
         "countPlural=other": "Compétences : +{count} compétences mises à jour"
       }
     }
-  ]
+  ],
+  "weather_calm": "Soleil",
+  "weather_inclement": "Pluie",
+  "weather_heavy_inclement": "Orage",
+  "weather_special": "Brise",
+  "weather_winter_inclement": "Neige",
+  "weather_winter_heavy_inclement": "Blizzard"
 }
