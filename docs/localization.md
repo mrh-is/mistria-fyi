@@ -87,6 +87,15 @@ Be honest with yourself (and reviewers) about what this catches:
 Do your best with these; don't treat a clean `pnpm run verify` as proof that a feature is fully
 localized.
 
+## Fonts
+
+The base typefaces cover Latin only. `ja`, `zh-Hans`, `zh-Hant`, `ko`, and `ru` swap every font role
+via `html:lang()` rules in `src/app.css` and a per-locale generated stylesheet; see
+[`docs/font-assets.md`](font-assets.md#locale-fonts) for the pipeline and `/dev/fonts` for a
+specimen. When adding UI that sets `font-family` directly, use the `--font-*` roles (or the
+`font-display` / `font-body` / … utilities) so the locale overrides apply; hard-coded family names
+will render tofu or system fallbacks on non-Latin locales.
+
 ## Improving a translation (humans)
 
 - **Game data & names** (items, NPCs, festival text, ...): this content comes from the game itself,

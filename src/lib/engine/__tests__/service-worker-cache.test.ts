@@ -4,6 +4,8 @@ import {
   cacheRuntimeResponse,
   fetchRuntimeRequest,
   isEligibleForRuntimeCaching,
+  isExternalFontAsset,
+  isLazyAsset,
 } from "../service-worker-cache.js";
 
 const ORIGIN = "https://mistria.fyi";
@@ -147,5 +149,35 @@ describe("service-worker eviction path", () => {
     expect(await cache.match(`${ORIGIN}/page-0`)).toBeUndefined();
     expect(await (await cache.match(`${ORIGIN}/newest`))?.text()).toBe("new");
     expect(cache.entries.size).toBe(51);
+  });
+});
+
+describe("service-worker font asset handling", () => {
+  it("treats every versioned R2 font chunk as an approved external asset", () => {
+    const chunk = new URL(
+      "https://assets.mistria.fyi/fonts/shippori-mincho-5.3.0/shippori-mincho-12-400-normal.woff2",
+    );
+    expect(isExternalFontAsset(chunk)).toBe(true);
+    expect(isEligibleForRuntimeCaching(chunk, ORIGIN)).toBe(true);
+    expect(isExternalFontAsset(new URL("https://assets.mistria.fyi/images/x.png"))).toBe(false);
+  });
+
+  it("exempts font chunks from LRU eviction", async () => {
+    const cache = new MemoryCache();
+    const font = new Request("https://assets.mistria.fyi/fonts/lora-5.3.0/lora-cyrillic-400.woff2");
+    await cacheRuntimeResponse(cache, font, new Response("font"), [], 1);
+    await cacheRuntimeResponse(cache, new Request(`${ORIGIN}/animals`), new Response("a"), [], 1);
+    await cacheRuntimeResponse(cache, new Request(`${ORIGIN}/fish`), new Response("b"), [], 1);
+
+    expect(await cache.match(font)).toBeDefined();
+    expect(await cache.match(new Request(`${ORIGIN}/animals`))).toBeUndefined();
+    expect(await cache.match(new Request(`${ORIGIN}/fish`))).toBeDefined();
+  });
+
+  it("marks per-locale font stylesheets as lazy build assets", () => {
+    expect(isLazyAsset("/_app/immutable/assets/locale-fonts-ja.C1a2b3.css")).toBe(true);
+    expect(isLazyAsset("/_app/immutable/assets/locale-fonts-zh-Hans.C1a2b3.css")).toBe(true);
+    expect(isLazyAsset("/_app/immutable/assets/0.C1a2b3.css")).toBe(false);
+    expect(isLazyAsset("/fonts/petrona-latin.woff2")).toBe(false);
   });
 });

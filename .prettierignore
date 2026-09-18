@@ -18,3 +18,6 @@ src/lib/data/tracker-data.json
 src/lib/paraglide/
 project.inlang/*
 !project.inlang/settings.json
+
+# Generated locale font stylesheets
+src/lib/fonts/locale-fonts-*.css

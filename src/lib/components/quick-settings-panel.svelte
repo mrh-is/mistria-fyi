@@ -240,7 +240,7 @@
   .spoiler-tag__heading :global(h2) {
     font-family: var(--font-display);
     font-size: 24px;
-    font-style: italic;
+    font-style: var(--font-display-style);
     line-height: 1;
   }
 
