@@ -52,7 +52,7 @@ describe("VisibilityPanel", () => {
   it("renders availability, world-state, and source controls in one view", () => {
     toolbarState.setSourceFilters("test", [gatheringFilter, storesFilter]);
 
-    const { body } = render(VisibilityPanel, { props: { locale: "en", showSeasonality: true } });
+    const { body } = render(VisibilityPanel, { props: { showSeasonality: true } });
 
     expect(body).toContain("When to find");
     expect(body).toContain('aria-label="Season"');
@@ -65,7 +65,7 @@ describe("VisibilityPanel", () => {
   });
 
   it("omits seasonality and source controls when they are inapplicable", () => {
-    const { body } = render(VisibilityPanel, { props: { locale: "en", showSeasonality: false } });
+    const { body } = render(VisibilityPanel, { props: { showSeasonality: false } });
 
     expect(body).not.toContain("When to find");
     expect(body).not.toContain("Source types");
@@ -78,7 +78,7 @@ describe("VisibilityPanel", () => {
     toolbarState.hideAllSourceFilters();
     userState.setSeason("summer");
 
-    const { body } = render(VisibilityPanel, { props: { locale: "en", showSeasonality: true } });
+    const { body } = render(VisibilityPanel, { props: { showSeasonality: true } });
 
     expect(body).toContain("Summer");
     expect(body).toContain("Sun");

@@ -7,7 +7,6 @@ describe("CategoryGrid", () => {
   it("renders in-progress categories alphabetized by displayed name", () => {
     const { body } = render(CategoryGrid, {
       props: {
-        locale: "en",
         progress: {
           almanac: { completed: 1, filtered: 1, total: 2 },
           animals: { completed: 0, filtered: 1, total: 2 },

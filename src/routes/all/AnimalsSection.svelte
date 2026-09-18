@@ -16,7 +16,7 @@
     class="flex flex-col gap-1"
     style="--primary: var(--cat-animals)"
   >
-    <SectionHeader key="animals" {locale} {progress} />
+    <SectionHeader key="animals" {progress} />
     <AnimalsContent {locale} />
   </section>
 {/if}
