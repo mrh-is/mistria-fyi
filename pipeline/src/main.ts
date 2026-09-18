@@ -363,6 +363,7 @@ async function main(): Promise<void> {
   const { localeNames: npcLocaleNames, npcs } = extractNpcs(fiddle, assetsDir);
   const {
     cosmetics: cosmeticsRaw,
+    cosmeticSlots,
     localeNames: cosmeticLocaleNames,
     subCategoryLocaleNames: cosmeticSubCategoryLocaleNames,
   } = extractCosmetics(fiddle, assetsDir);
@@ -397,7 +398,10 @@ async function main(): Promise<void> {
     ...Object.values(animals).map((animal) => animal.variantTiers.length),
   );
   const { localeNames: uiLocaleNames } = extractUiStrings(fiddle, assetsDir, [
-    ...readAlmanacCategories(fiddle).map((category) => category.key),
+    ...readAlmanacCategories(fiddle).map((category) => ({
+      id: category.key,
+      miscLocalKey: category.localKey,
+    })),
     ...tierKeys(maxVariantTiers),
   ]);
 
@@ -550,6 +554,7 @@ async function main(): Promise<void> {
     animals,
     categoryVisibility: categoryVisibilityData,
     cosmetics,
+    cosmeticSlots,
     dates,
     festivals,
     generatedAt: new Date().toISOString(),

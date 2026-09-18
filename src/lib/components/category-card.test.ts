@@ -13,7 +13,7 @@ describe("CategoryCard", () => {
     });
 
     expect(body).toContain("data-category-stripe");
-    expect(body).toContain('aria-label="Almanac, 7 of 20 completed"');
+    expect(body).toContain('aria-label="The Almanac, 7 of 20 completed"');
     expect(body).toContain("data-category-ribbon");
     expect(body).toContain('aria-hidden="true"');
     expect(body).toContain("7");
@@ -30,7 +30,7 @@ describe("CategoryCard", () => {
       },
     });
 
-    expect(body).toContain('aria-label="Museum, 4 of 10 completed"');
+    expect(body).toContain('aria-label="The Museum, 4 of 10 completed"');
     expect(body).toContain("--category-progress: 40%");
   });
 

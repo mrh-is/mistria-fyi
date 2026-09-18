@@ -5,12 +5,12 @@ export interface AccessibilityRoute {
 
 export const accessibilityRoutes = [
   { name: "Home", path: "/" },
-  { name: "Almanac", path: "/almanac" },
+  { name: "The Almanac", path: "/almanac" },
   { name: "Animals", path: "/animals" },
   { name: "Cosmetics", path: "/cosmetics" },
   { name: "Mines", path: "/mines" },
-  { name: "Museum", path: "/museum" },
-  { name: "Characters", path: "/characters" },
+  { name: "The Museum", path: "/museum" },
+  { name: "Villagers", path: "/characters" },
   { name: "Quests", path: "/quests" },
   { name: "Recipes", path: "/recipes" },
   { name: "Renown", path: "/renown" },
