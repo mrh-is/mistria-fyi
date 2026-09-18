@@ -2,7 +2,9 @@
   import { IconBeta, IconChevronRight, IconLanguage } from "@tabler/icons-svelte-runes";
   import { slide } from "svelte/transition";
 
+  import { page } from "$app/state";
   import localeManifest from "$lib/data/locales.json";
+  import { getName } from "$lib/data/names.js";
   import * as m from "$lib/paraglide/messages.js";
   import { getLocale } from "$lib/paraglide/runtime.js";
   import { localePreference } from "$lib/stores/locale-preference.svelte.js";
@@ -19,7 +21,7 @@
 <div class="language-setting">
   <div class="language-setting__row">
     <span class="language-setting__label"
-      ><IconLanguage class="size-3.5" />{m.settings_language_label()}</span
+      ><IconLanguage class="size-3.5" />{getName("ui", "language", page.data.locale)}</span
     >
     <button
       aria-controls="language-picker-options"

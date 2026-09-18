@@ -21,7 +21,7 @@
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { Source } from "$lib/types/acquisition";
   import type { LocaleCode } from "$lib/types/locale.js";
-  import type { CosmeticId } from "$lib/types/tracker-data.js";
+  import type { CosmeticId, CosmeticSlot } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   let { locale }: { locale: LocaleCode } = $props();
@@ -47,6 +47,15 @@
 
   let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
 
+  interface SlotGroup {
+    /** The game's own heading when the slot has one sub-category; MFG's otherwise. */
+    name: string;
+    /** Whether the wardrobe menu splits this slot, and so whether sub-category headings render. */
+    nested: boolean;
+    slot: CosmeticSlot;
+    subCategories: { cosmetics: CosmeticEntry[]; key: string; name: string }[];
+  }
+
   function isCosmeticsComplete(): boolean {
     return Object.keys(trackerData.cosmetics).every((id) =>
       userState.state.completed.cosmetics.has(id as CosmeticId),
@@ -65,34 +74,57 @@
     return { mode: "visible" };
   }
 
-  let groups = $derived(() => {
-    const bySlot: Record<string, Record<string, CosmeticEntry[]>> = {};
-    for (const [id, cosmetic] of Object.entries(trackerData.cosmetics)) {
-      const slot = cosmetic.slot;
-      const subCategory = cosmetic.subCategory
-        ? getName("cosmetics/subcategories", cosmetic.subCategory, locale)
-        : m.cosmetics_other_subcategory();
-      const sources = cosmetic.sources;
-      ((bySlot[slot] ??= {})[subCategory] ??= []).push({
-        id: id as CosmeticId,
-        name: getName("cosmetics", id as CosmeticId, locale),
-        sources,
+  /**
+   * The game's wardrobe slots have no text labels (they're icon tabs), so MFG names the split
+   * ones itself; a slot with a single sub-category borrows that sub-category's game label.
+   */
+  const slotLabels: Partial<Record<CosmeticSlot, () => string>> = {
+    back: m.cosmetic_slot_back,
+    bottom: m.cosmetic_slot_bottom,
+    face_gear: m.cosmetic_slot_face_gear,
+    feet: m.cosmetic_slot_feet,
+    hair: m.cosmetic_slot_hair,
+    head_gear: m.cosmetic_slot_head_gear,
+    top: m.cosmetic_slot_top,
+  };
+
+  let groups = $derived((): SlotGroup[] => {
+    const bySlot: Partial<Record<CosmeticSlot, Partial<Record<string, CosmeticEntry[]>>>> = {};
+    for (const [id, cosmetic] of recordEntries(trackerData.cosmetics)) {
+      ((bySlot[cosmetic.slot] ??= {})[cosmetic.subCategory] ??= []).push({
+        id,
+        name: getName("cosmetics", id, locale),
+        sources: cosmetic.sources,
         visibility: cosmetic.visibility,
       });
     }
-    for (const subCats of Object.values(bySlot)) {
-      for (const items of Object.values(subCats)) {
-        items.sort((a, b) => nameCollator(locale).compare(a.name, b.name));
+    const groups: SlotGroup[] = [];
+    for (const [slot, { subCategories }] of recordEntries(trackerData.cosmeticSlots)) {
+      const cosmeticsBySubCategory = bySlot[slot];
+      if (!cosmeticsBySubCategory) continue;
+      const nested = subCategories.length > 1;
+      const label = slotLabels[slot];
+      let name: string;
+      if (!nested) {
+        name = getName("cosmetics/subcategories", subCategories[0], locale);
+      } else if (label) {
+        name = label();
+      } else {
+        throw new Error(`Cosmetic slot "${slot}" has sub-categories but no heading message`);
       }
-    }
-    return Object.entries(bySlot)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([slot, subCats]) => ({
+      groups.push({
+        name,
+        nested,
         slot,
-        subCategories: Object.entries(subCats).sort(([a], [b]) =>
-          nameCollator(locale).compare(a, b),
-        ),
-      }));
+        subCategories: subCategories.flatMap((key) => {
+          const cosmetics = cosmeticsBySubCategory[key];
+          if (!cosmetics) return [];
+          cosmetics.sort((a, b) => nameCollator(locale).compare(a.name, b.name));
+          return [{ cosmetics, key, name: getName("cosmetics/subcategories", key, locale) }];
+        }),
+      });
+    }
+    return groups;
   });
 
   registerSourceFilters("cosmetics", () => trackerIndex.categorySourceTypes.cosmetics);
@@ -129,8 +161,8 @@
   />
 {/if}
 
-{#each groups() as { slot, subCategories } (slot)}
-  {@const allInSlot = subCategories.flatMap(([, items]) => items)}
+{#each groups() as { name, nested, slot, subCategories } (slot)}
+  {@const allInSlot = subCategories.flatMap(({ cosmetics }) => cosmetics)}
   {@const scopedInSlot = allInSlot.filter((c) => toolbarState.matchesSourceFilters(c.sources))}
   {@const visibleInSlot = scopedInSlot.filter((c) => {
     const done = userState.state.completed.cosmetics.has(c.id);
@@ -139,19 +171,19 @@
   {#if visibleInSlot.length > 0 || toolbarState.sourceFilterActive}
     <ExpandableSection
       count={scopedInSlot.filter((c) => userState.state.completed.cosmetics.has(c.id)).length}
-      name={slot.charAt(0).toUpperCase() + slot.slice(1)}
+      {name}
       reportCategory="cosmetic slot"
       reportEntityId={slot}
       total={scopedInSlot.length}
     >
-      {#each subCategories as [subCategory, cosmetics] (subCategory)}
+      {#each subCategories as { cosmetics, key: subCategory, name: subCategoryName } (subCategory)}
         {@const visibleCosmetics = cosmetics.filter((c) => {
           if (!toolbarState.matchesSourceFilters(c.sources)) return false;
           const done = userState.state.completed.cosmetics.has(c.id);
           return done ? userState.state.showCompleted : true;
         })}
         {#if visibleCosmetics.length > 0}
-          {#if subCategories.length > 1}
+          {#if nested}
             <ExpandableSection
               count={cosmetics.filter(
                 (c) =>
@@ -159,7 +191,7 @@
                   userState.state.completed.cosmetics.has(c.id),
               ).length}
               depth={1}
-              name={subCategory}
+              name={subCategoryName}
               reportCategory="cosmetic"
               reportEntityId={`${slot}:${subCategory}`}
               total={cosmetics.filter((c) => toolbarState.matchesSourceFilters(c.sources)).length}

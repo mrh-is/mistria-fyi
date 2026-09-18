@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from "$app/state";
   import { Icon } from "$lib/components/icon/index.js";
   import { categoryForKey, type CategoryKey } from "$lib/data/categories.js";
   import { localizedHref } from "$lib/utils/localized-href.js";
@@ -28,7 +29,7 @@
   } = $props();
 
   const { color, description, href, icon, name } = $derived(
-    displayCategory ?? { ...categoryForKey(key), icon: key },
+    displayCategory ?? { ...categoryForKey(key, page.data.locale), icon: key },
   );
 
   // Show available count when filtering is active (filtered < total - completed)

@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
 
   import { page } from "$app/state";
+  import { getName } from "$lib/data/names.js";
   import * as m from "$lib/paraglide/messages.js";
   import { LOCALE_CODES } from "$lib/types/locale.js";
   import { localizedHref } from "$lib/utils/localized-href.js";
@@ -24,7 +25,7 @@
     {
       name: "controls",
       note: "",
-      sample: () => m.category_almanac_name(),
+      sample: () => getName("ui", "almanac", page.data.locale),
       utility: "font-controls",
     },
     {
@@ -91,10 +92,14 @@
     <h2 class="font-controls text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
       composition
     </h2>
-    <p class="font-display text-xl">{m.category_npcs_name()}</p>
+    <p class="font-display text-xl">{getName("ui", "villagers", page.data.locale)}</p>
     <p class="font-body text-sm">{m.category_npcs_description()}</p>
     <p class="font-annotation text-xs text-muted-foreground">
-      {m.section_progress_label({ completed: 12, name: m.category_museum_name(), total: 48 })}
+      {m.section_progress_label({
+        completed: 12,
+        name: getName("ui", "museum", page.data.locale),
+        total: 48,
+      })}
     </p>
   </section>
 </div>

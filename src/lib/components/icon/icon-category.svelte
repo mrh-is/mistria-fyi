@@ -1,6 +1,6 @@
 <script lang="ts">
   import { CATEGORY_ICON } from "$lib/components/icon/icon-maps.js";
-  import { categoryForKey, type CategoryKey } from "$lib/data/categories.js";
+  import { categoryColor, type CategoryKey } from "$lib/data/categories.js";
 
   import type { IconProps } from "$lib/components/icon/icon-maps.js";
 
@@ -14,7 +14,7 @@
   const { color } = $derived.by(() => {
     if (category === "all") return { color: "muted-foreground" };
     if (category === "complete") return { color: "yellow-700" };
-    return categoryForKey(category);
+    return { color: categoryColor(category) };
   });
 
   const IconComp = $derived(CATEGORY_ICON[category]);

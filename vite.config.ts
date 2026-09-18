@@ -65,6 +65,6 @@ export default defineConfig({
       "src/lib/utils/undo-toast.test.ts",
     ],
     isolate: false,
-    setupFiles: ["./src/vitest-setup-names.ts"],
+    setupFiles: ["./src/vitest-setup-app-state.ts", "./src/vitest-setup-names.ts"],
   },
 });

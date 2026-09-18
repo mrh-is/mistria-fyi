@@ -16,10 +16,33 @@ translation data is a pipeline extraction problem, not something to work around 
 The game's own UI vocabulary lives here too. Labels the game shows in its menus (almanac category
 headings, animal variant tiers) have English text as bare entries in `fiddle/misc_local.toml` and
 translations keyed `misc_local/<key>`; the pipeline emits the keys the app uses into the `ui` chunk
-(`getName("ui", key, locale)`). Cosmetic sub-category labels come from the ordinal
-`ui/character_customization/<slot>/<n>/name` keys into `cosmetics/subcategories`. When a label
-matches something the game already names, pull it from there rather than adding a Paraglide message:
-the in-game term is the one players recognize.
+(`getName("ui", key, locale)`). An almanac category's `local_key` redirects its label to another
+`misc_local` entry (fish → "Fishing and Diving"). Cosmetic sub-category labels come from the ordinal
+`ui/character_customization/<slot>/<n>/name` keys into `cosmetics/subcategories`; the slots
+themselves are icon tabs in the game with no text, so a slot with one sub-category borrows that
+label and the rest use MFG's own `cosmetic_slot_*` messages. When a label matches something the game
+already names, pull it from there rather than adding a Paraglide message: the in-game term is the
+one players recognize.
+
+### Game vocabulary in UI chrome
+
+MFG's own chrome names plenty of concepts the game names too: category names ("Almanac",
+"Villagers", "Renown"), seasons, quest types, relationship statuses, "Cancel". Those are not
+Paraglide messages. `APP_UI_STRINGS` in `pipeline/src/extractors/ui-strings.ts` lists the
+`misc_local` keys the app displays, the pipeline writes them into the `ui` chunk, and the root
+layout (`src/routes/+layout.ts`) awaits that chunk on every route, so `getName("ui", id, locale)`
+works anywhere. Sitewide chrome without a `locale` prop reads `page.data.locale`.
+
+Two adjustments happen in the extractor rather than the app. A request with `stripArticle` drops the
+leading definite article the game puts on a menu title ("The Almanac" → "Almanac", "Le musée" →
+"Musée") for the languages that write one; the others pass through. Player-gendered strings
+(`<he>Casado</he><she>Casada</she><they>Casade</they>`, as Spanish `married` is) collapse to their
+`<they>` form; any other inline markup throws, since the app renders these as plain text.
+
+When you add a UI string that names something the game names, add its `misc_local` key to
+`APP_UI_STRINGS` and call `getName("ui", …)` instead of adding a message. A key the game hasn't
+translated yet (`mission_quests`, as of 1.0.2) falls back to English in every locale, the same as
+any other game-data gap, and gets picked up at the next game-data update.
 
 ### How name chunks load
 

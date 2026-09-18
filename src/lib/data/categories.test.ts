@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { categoryForKey, categoryKeyForPathname, sortCategoryKeysByName } from "./categories.js";
 
 describe("categoryForKey", () => {
-  it("labels the npcs category as Characters", () => {
-    expect(categoryForKey("npcs")).toMatchObject({ href: "/characters", name: "Characters" });
+  it("labels the npcs category with the game's Villagers term", () => {
+    expect(categoryForKey("npcs", "en")).toMatchObject({ href: "/characters", name: "Villagers" });
   });
 
   it("maps the characters route to the npcs category key", () => {
@@ -15,10 +15,11 @@ describe("categoryForKey", () => {
 
 describe("sortCategoryKeysByName", () => {
   it("sorts categories by their displayed names", () => {
-    expect(sortCategoryKeysByName(["skills", "npcs", "animals"])).toEqual([
+    // Animals, Skills, Villagers: npcs sorts by its displayed name, not its key.
+    expect(sortCategoryKeysByName(["skills", "npcs", "animals"], "en")).toEqual([
       "animals",
-      "npcs",
       "skills",
+      "npcs",
     ]);
   });
 });

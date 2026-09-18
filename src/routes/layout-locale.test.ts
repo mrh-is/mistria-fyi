@@ -6,13 +6,16 @@ const runtime = vi.hoisted(() => ({
   getLocaleForUrl: vi.fn(() => "ru"),
 }));
 
+const names = vi.hoisted(() => ({ loadNames: vi.fn(() => Promise.resolve()) }));
+
 vi.mock("$app/environment", () => environment);
 vi.mock("$lib/paraglide/runtime.js", () => runtime);
+vi.mock("$lib/data/names.js", () => names);
 
 const { load } = await import("./+layout.js");
 
-function run(): { locale: string } {
-  return load({ url: new URL("https://mistria.fyi/ru") } as never) as { locale: string };
+async function run(): Promise<{ locale: string }> {
+  return (await load({ url: new URL("https://mistria.fyi/ru") } as never)) as { locale: string };
 }
 
 describe("root layout locale", () => {
@@ -21,15 +24,16 @@ describe("root layout locale", () => {
     runtime.getLocaleForUrl.mockClear();
   });
 
-  it("reads the middleware-resolved locale during SSR", () => {
+  it("reads the middleware-resolved locale during SSR", async () => {
     environment.browser = false;
-    expect(run().locale).toBe("ja");
+    expect((await run()).locale).toBe("ja");
     expect(runtime.getLocaleForUrl).not.toHaveBeenCalled();
+    expect(names.loadNames).toHaveBeenCalledWith("ja", ["ui"]);
   });
 
-  it("resolves the locale from the target URL in the browser", () => {
+  it("resolves the locale from the target URL in the browser", async () => {
     environment.browser = true;
-    expect(run().locale).toBe("ru");
+    expect((await run()).locale).toBe("ru");
     expect(runtime.getLocale).not.toHaveBeenCalled();
   });
 });

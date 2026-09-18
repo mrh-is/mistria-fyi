@@ -75,6 +75,7 @@ const BASE_LOOKUPS: SegmentLookups = {
   questNpcIds: {},
   questTypes: {},
   recipeNames: {},
+  seasonNames: { fall: "Fall", spring: "Spring", summer: "Summer", winter: "Winter" },
   skillNames: { ["cooking" as SkillId]: "Cooking" },
   stationNames: {},
   stores: {
@@ -367,8 +368,8 @@ describe("buildStoreQualifier", () => {
 
 describe("formatDateLabel", () => {
   it("formats as Season day", () => {
-    expect(formatDateLabel("winter", 3)).toBe("Winter 3");
-    expect(formatDateLabel("fall", 10)).toBe("Fall 10");
+    expect(formatDateLabel("winter", 3, BASE_LOOKUPS.seasonNames)).toBe("Winter 3");
+    expect(formatDateLabel("fall", 10, BASE_LOOKUPS.seasonNames)).toBe("Fall 10");
   });
 });
 

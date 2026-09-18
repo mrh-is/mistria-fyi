@@ -47,29 +47,28 @@ export interface CookingQuest extends Quest {
   recipeId: RecipeId;
 }
 export interface Cosmetic extends TrackerEntity {
+  /** A `ui/character_customization.toml` section; the wardrobe menu's slot. */
   slot: CosmeticSlot;
   /** A `ui_sub_category` key; its label resolves via `getName("cosmetics/subcategories", key, locale)`. */
-  subCategory?: string;
+  subCategory: string;
 }
 export type CosmeticId = string & { readonly __brand: "CosmeticId" };
+/** The sections of `ui/character_customization.toml`, verbatim. */
 export type CosmeticSlot =
   | "back"
-  | "dress"
+  | "bottom"
   | "eyes"
-  | "face"
-  | "facial"
+  | "face_gear"
+  | "facial_hair"
+  | "feet"
   | "hair"
-  | "head"
-  | "overalls"
-  | "pants"
-  | "robe"
-  | "shirt"
-  | "shoes"
-  | "shorts"
-  | "skirt"
-  | "suit"
-  | "top"
-  | "underwear";
+  | "head_gear"
+  | "skin"
+  | "top";
+export interface CosmeticSlotMeta {
+  /** `ui_sub_category` keys in the game's menu order. */
+  subCategories: string[];
+}
 export type DateType = TrackerEntity;
 export interface Day {
   day: number;
@@ -172,6 +171,8 @@ export interface TrackerData {
   animals: Record<AnimalId, Animal>;
   categoryVisibility: Partial<Record<"dates" | QuestType, VisibilityCondition>>;
   cosmetics: Record<CosmeticId, Cosmetic>;
+  /** Wardrobe slots in the game's menu order (object key order), including slots with no cosmetics. */
+  cosmeticSlots: Record<CosmeticSlot, CosmeticSlotMeta>;
   dates: Record<DateId, DateType>;
   festivals: Record<FestivalId, Festival>;
   generatedAt: string;
