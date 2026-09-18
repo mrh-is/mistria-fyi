@@ -6,7 +6,7 @@
   import { deLocalizeHref } from "$lib/paraglide/runtime.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
-  import type { LayoutProps } from "./$types.js";
+  import type { LayoutProps } from "./$types";
 
   let { children, data }: LayoutProps = $props();
 

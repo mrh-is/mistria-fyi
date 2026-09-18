@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { findRecipesForQuest, recipeDisplayNames } from "../quest-rewards.js";
+import { findRecipesForQuest, recipeDisplayNames } from "../quest-rewards";
 
 import type { QuestId, RecipeId } from "$lib/types/tracker-data.js";
 

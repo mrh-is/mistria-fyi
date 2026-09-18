@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { makeFiddle, requireGameAssetsDir } from "../test-helpers.js";
-import { extractNpcs } from "./npcs.js";
+import { makeFiddle, requireGameAssetsDir } from "../test-helpers";
+import { extractNpcs } from "./npcs";
 
 import type { NpcId } from "$lib/types/tracker-data.js";
 

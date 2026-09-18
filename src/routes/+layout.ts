@@ -2,7 +2,7 @@ import { browser } from "$app/environment";
 import { loadNames } from "$lib/data/names.js";
 import { getLocale, getLocaleForUrl } from "$lib/paraglide/runtime.js";
 
-import type { LayoutLoad } from "./$types.js";
+import type { LayoutLoad } from "./$types";
 
 /**
  * Resolves the route's locale once, at the top of the tree, so every page and component can source

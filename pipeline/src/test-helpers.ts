@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { onTestFinished } from "vitest";
 
-import type { ParsedGameData } from "./parse-fiddle.js";
+import type { ParsedGameData } from "./parse-fiddle";
 
 const temporaryAssetsDirectories: string[] = [];
 

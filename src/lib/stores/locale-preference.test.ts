@@ -10,7 +10,7 @@ vi.mock("$lib/paraglide/runtime.js", () => ({
   setLocale,
 }));
 
-import { localePreference } from "./locale-preference.svelte.js";
+import { localePreference } from "./locale-preference.svelte";
 
 describe("localePreference", () => {
   beforeEach(() => {

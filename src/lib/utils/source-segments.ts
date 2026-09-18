@@ -1,4 +1,4 @@
-import { formatBiomeName, formatStoreName, withIndefiniteArticle } from "./format.js";
+import { formatBiomeName, formatStoreName, withIndefiniteArticle } from "./format";
 
 import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
 import type {
@@ -15,7 +15,7 @@ import type {
 } from "$lib/types/tracker-data.js";
 import type { VisibilityCondition } from "$lib/types/visibility.js";
 
-import type { NameLookup, RecipeSourceLookups } from "./format.js";
+import type { NameLookup, RecipeSourceLookups } from "./format";
 
 export type SegmentLookups = Pick<TrackerData, "categoryVisibility"> &
   RecipeSourceLookups & {

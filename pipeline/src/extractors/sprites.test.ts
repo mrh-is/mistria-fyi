@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { extractSprites } from "./sprites.js";
+import { extractSprites } from "./sprites";
 
 import type { Item, ItemId } from "$lib/types/tracker-data.js";
 

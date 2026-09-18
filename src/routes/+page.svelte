@@ -11,7 +11,7 @@
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { localizedHref } from "$lib/utils/localized-href.js";
 
-  import type { PageProps } from "./$types.js";
+  import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
 

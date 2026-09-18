@@ -6,7 +6,7 @@ import {
   getExcludedCosmeticIds,
   isExcludedCosmetic,
   validateExclusionReferences,
-} from "./exclusions.js";
+} from "./exclusions";
 
 import type { CosmeticId } from "$lib/types/tracker-data.js";
 

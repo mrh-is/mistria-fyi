@@ -4,13 +4,13 @@ import {
   evaluateAvailabilityCondition,
   extractDisplayBadges,
   hasSelectiveSeasonCondition,
-} from "./availability-condition.js";
+} from "./availability-condition";
 
 import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
 import type { AvailabilitySelection, AvailabilityWindow } from "$lib/types/availability.js";
 import type { ItemId, Season, Weather } from "$lib/types/tracker-data.js";
 
-import type { DisplayBadges } from "./availability-condition.js";
+import type { DisplayBadges } from "./availability-condition";
 
 interface WorldState {
   season: Season;

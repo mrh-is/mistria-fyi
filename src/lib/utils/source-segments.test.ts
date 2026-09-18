@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { deepMerge } from "./deep-partial.js";
+import { deepMerge } from "./deep-partial";
 import {
   buildBiomeLabel,
   buildPerkLabel,
   buildSourceSegments,
   buildStoreQualifier,
   formatDateLabel,
-} from "./source-segments.js";
+} from "./source-segments";
 
 import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
 import type {
@@ -33,7 +33,7 @@ import type {
 } from "$lib/types/tracker-data.js";
 import type { VisibilityCondition } from "$lib/types/visibility.js";
 
-import type { SegmentLookups } from "./source-segments.js";
+import type { SegmentLookups } from "./source-segments";
 
 const BASE_LOOKUPS: SegmentLookups = {
   animalNames: {},

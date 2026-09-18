@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
-import { extractMuseum } from "./museum.js";
+import { makeFiddle as makeFiddleBase } from "../test-helpers";
+import { extractMuseum } from "./museum";
 
-vi.mock("../parse-fiddle.js", () => ({
+vi.mock("../parse-fiddle", () => ({
   sourceFileFor: () => "mock-source.toml",
 }));
-vi.mock("../localize.js", () => ({
+vi.mock("../localize", () => ({
   localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
     fallbackLocales: [],
     values: {

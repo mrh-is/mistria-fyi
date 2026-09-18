@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { extractQuestChains } from "./quest-chains.js";
+import { extractQuestChains } from "./quest-chains";
 
 import type { NpcId, QuestId } from "$lib/types/tracker-data.js";
 

@@ -1,4 +1,4 @@
-import { requireGameAssetsDir } from "./test-helpers.js";
+import { requireGameAssetsDir } from "./test-helpers";
 
 export function setup(): void {
   requireGameAssetsDir();

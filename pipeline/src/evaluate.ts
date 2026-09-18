@@ -1,4 +1,4 @@
-import { type ParsedGameData, sourceFileFor } from "./parse-fiddle.js";
+import { type ParsedGameData, sourceFileFor } from "./parse-fiddle";
 
 type ResolutionState = "resolved" | "visiting";
 type ResolvableValueField = "bin" | "store";

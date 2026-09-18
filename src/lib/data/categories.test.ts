@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { categoryForKey, categoryKeyForPathname, sortCategoryKeysByName } from "./categories.js";
+import { categoryForKey, categoryKeyForPathname, sortCategoryKeysByName } from "./categories";
 
 describe("categoryForKey", () => {
   it("labels the npcs category with the game's Villagers term", () => {

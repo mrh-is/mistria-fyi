@@ -1,8 +1,8 @@
 import type { NpcId, QuestId, SkillId } from "$lib/types/tracker-data.js";
 import type { VisibilityCondition } from "$lib/types/visibility.js";
 
-import type { RequirementExpression } from "../../requirements.js";
-import type { CutsceneQuestMap } from "./cutscene-quest-map.js";
+import type { RequirementExpression } from "../../requirements";
+import type { CutsceneQuestMap } from "./cutscene-quest-map";
 
 const NON_SPOILER_PREDICATES = new Set([
   "acquired_item",

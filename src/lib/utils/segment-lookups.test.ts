@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { trackerData } from "$lib/data/index.js";
 import { getName } from "$lib/data/names.js";
 
-import { buildBaseSegmentLookups } from "./segment-lookups.js";
+import { buildBaseSegmentLookups } from "./segment-lookups";
 
 import type { StoreId } from "$lib/types/tracker-data.js";
 

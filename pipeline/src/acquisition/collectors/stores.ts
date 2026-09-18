@@ -1,19 +1,19 @@
 import { simplifyAvailabilityCondition } from "$lib/engine/availability-condition.js";
 
-import { parseRequirements } from "../../requirements.js";
-import { projectRequirementExpressionToAvailability } from "../availability.js";
+import { parseRequirements } from "../../requirements";
+import { projectRequirementExpressionToAvailability } from "../availability";
 
 import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
 import type { AnimalId, CosmeticId, ItemId, Season, StoreId } from "$lib/types/tracker-data.js";
 
-import type { SourceFieldLocation } from "../../data-shapes.js";
-import type { ParsedGameData } from "../../parse-fiddle.js";
-import type { RequirementContext } from "../../requirements.js";
+import type { SourceFieldLocation } from "../../data-shapes";
+import type { ParsedGameData } from "../../parse-fiddle";
+import type { RequirementContext } from "../../requirements";
 import type {
   AnimalCosmeticSourceAccumulator,
   CosmeticSourceAccumulator,
   ItemSourceAccumulator,
-} from "../source-accumulator.js";
+} from "../source-accumulator";
 
 export function collectStoreSources(
   fiddle: ParsedGameData,

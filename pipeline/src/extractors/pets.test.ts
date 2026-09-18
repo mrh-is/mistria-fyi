@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { makeFiddle } from "../test-helpers.js";
-import { extractPetCosmetics, extractPetSkins } from "./pets.js";
+import { makeFiddle } from "../test-helpers";
+import { extractPetCosmetics, extractPetSkins } from "./pets";
 
-vi.mock("../localize.js", () => ({
+vi.mock("../localize", () => ({
   localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
     fallbackLocales: [],
     values: {

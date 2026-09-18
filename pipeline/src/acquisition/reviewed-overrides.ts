@@ -1,6 +1,6 @@
 import { recordEntries } from "$lib/utils.js";
 
-import { canonicalSourceJson } from "./source-accumulator.js";
+import { canonicalSourceJson } from "./source-accumulator";
 
 import type {
   ActivityId,
@@ -21,8 +21,8 @@ import type {
 } from "$lib/types/tracker-data.js";
 import type { TrackerData } from "$lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../parse-fiddle.js";
-import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator.js";
+import type { ParsedGameData } from "../parse-fiddle";
+import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator";
 
 export interface OverrideDiagnostic {
   kind: "missing-target" | "obsolete-override";
