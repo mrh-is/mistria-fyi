@@ -4,12 +4,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import AlmanacContent from "$lib/components/almanac-content.svelte";
 import { trackerData } from "$lib/data/index.js";
+import { getName } from "$lib/data/names.js";
+import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
 import { userState } from "$lib/stores/user-state.svelte.js";
+
+import type { ItemId } from "$lib/types/tracker-data.js";
 
 describe("AlmanacContent", () => {
   beforeEach(() => {
     userState.resetAll();
     userState.setAvailabilityMode("everything");
+    toolbarState.closeSearch();
   });
 
   afterEach(() => {
@@ -27,7 +32,7 @@ describe("AlmanacContent", () => {
     const category = Object.values(trackerData.almanac).find(({ items }) => items.length > 12);
     if (!category) throw new Error("Expected an Almanac category with enough entries for batching");
 
-    const view = render(AlmanacContent);
+    const view = render(AlmanacContent, { locale: "en" });
     await tick();
 
     const trigger = view.getByRole("button", {
@@ -56,6 +61,17 @@ describe("AlmanacContent", () => {
         firstBatchCount,
       );
     });
+  });
+
+  it("renders an item name from the Japanese locale chunk", async () => {
+    const turnip = "turnip" as ItemId;
+    const japaneseName = getName("items", turnip, "ja");
+    expect(japaneseName).not.toBe(getName("items", turnip, "en"));
+    toolbarState.setSearch(japaneseName);
+
+    const view = render(AlmanacContent, { locale: "ja" });
+
+    expect(await view.findByText(japaneseName)).toBeInTheDocument();
   });
 });
 

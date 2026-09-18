@@ -3,6 +3,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
 import { extractTreasureChestTiers } from "./treasure-chest-tiers.js";
 
+vi.mock("../localize.js", () => ({
+  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
+    fallbackLocales: [],
+    values: Object.fromEntries(
+      ["en", "es", "fr", "ja", "ko", "ru", "zh-Hans", "zh-Hant"].map((locale) => [
+        locale,
+        locale === "ja" ? `JA ${input.englishValue}` : input.englishValue,
+      ]),
+    ),
+  })),
+}));
+
+const assetsDir = "test-assets";
+
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({ fishing: {}, items: {}, ...overrides });
 }
@@ -16,7 +30,7 @@ describe("extractTreasureChestTiers", () => {
     vi.restoreAllMocks();
   });
 
-  it("maps chest_tables keys to treasure box item names", () => {
+  it("maps chest_tables keys to localized tier names", () => {
     const fiddle = makeFiddle({
       fishing: {
         chest_tables: {
@@ -37,12 +51,13 @@ describe("extractTreasureChestTiers", () => {
       },
     });
 
-    const tiers = extractTreasureChestTiers(fiddle);
+    const { localeNames, tiers } = extractTreasureChestTiers(fiddle, assetsDir);
     expect(tiers).toEqual({
-      copper: { name: "Copper Treasure Box" },
-      gold: { name: "Golden Treasure Box" },
-      wood: { name: "Wooden Treasure Box" },
+      copper: {},
+      gold: {},
+      wood: {},
     });
+    expect(localeNames.ja["gold" as never]).toBe("JA Golden Treasure Box");
   });
 
   it("skips tiers without a matching treasure box item", () => {
@@ -55,13 +70,13 @@ describe("extractTreasureChestTiers", () => {
       items: {},
     });
 
-    const tiers = extractTreasureChestTiers(fiddle);
+    const { tiers } = extractTreasureChestTiers(fiddle, assetsDir);
     expect(Object.keys(tiers)).toEqual([]);
   });
 
   it("returns empty when no fishing data", () => {
     const fiddle = makeFiddle({ fishing: undefined });
-    const tiers = extractTreasureChestTiers(fiddle);
+    const { tiers } = extractTreasureChestTiers(fiddle, assetsDir);
     expect(Object.keys(tiers)).toEqual([]);
   });
 });

@@ -141,8 +141,7 @@
   function matchesFilter(itemId: ItemId): boolean {
     if (!nameFilter) return true;
     if (!itemNameVisible(itemId)) return false;
-    const name = trackerData.items[itemId].name;
-    return name ? name.toLowerCase().includes(nameFilter.toLowerCase()) : false;
+    return getName("items", itemId, locale).toLowerCase().includes(nameFilter.toLowerCase());
   }
 
   function setConfig(wingId: MuseumWingId, setId: MuseumWingSetId, set: MuseumWingSet): SetConfig {
@@ -161,8 +160,7 @@
   function toggleItem(itemId: ItemId, setId: MuseumWingSetId, wingId: MuseumWingId): void {
     userState.toggleMuseumItem(itemId);
     const completed = isItemComplete(itemId);
-    const item = trackerData.items[itemId];
-    showUndoToast(item.name, completed, () => {
+    showUndoToast(getName("items", itemId, locale), completed, () => {
       userState.toggleMuseumItem(itemId);
     });
     if (completed) {
@@ -242,7 +240,7 @@
               <TrackerRow
                 display={rowDisplay(itemId, museumItemSources)}
                 lookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
-                name={trackerData.items[itemId].name}
+                name={getName("items", itemId, locale)}
                 reportCategory="museum item"
                 reportEntityId={itemId}
                 sources={museumItemSources}

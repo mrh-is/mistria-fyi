@@ -47,20 +47,37 @@ export function extractPetCosmetics(
   return { cosmetics: result, localeNames };
 }
 
-export function extractPetSkins(fiddle: ParsedGameData): Record<PetSkinId, PetSkin> {
+export function extractPetSkins(
+  fiddle: ParsedGameData,
+  itemLocaleNames: Record<LocaleCode, Record<string, string>>,
+): {
+  localeNames: Record<LocaleCode, Record<PetSkinId, string>>;
+  skins: Record<PetSkinId, PetSkin>;
+} {
   const result = {} as Record<PetSkinId, PetSkin>;
+  const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
+    LocaleCode,
+    Record<PetSkinId, string>
+  >;
 
-  forEachItem(fiddle, (_itemId, item) => {
+  forEachItem(fiddle, (itemId, item) => {
     const skinUnlock = item.pet_skin_unlock as string | undefined;
     if (!skinUnlock) return;
 
-    const rawName = (item.name as string | undefined) ?? skinUnlock;
-    const name = rawName.replace(/^Pet Skin:\s*/i, "");
-    result[skinUnlock as PetSkinId] = { name, sources: [] as unknown as SourceTuple };
+    const skinId = skinUnlock as PetSkinId;
+    result[skinId] = { sources: [] as unknown as SourceTuple };
+    const englishName = itemLocaleNames.en[itemId];
+    if (!englishName) throw new Error(`Pet skin "${skinUnlock}" has no localized item "${itemId}"`);
+    for (const locale of LOCALE_CODES) {
+      const name = itemLocaleNames[locale][itemId];
+      if (!name) throw new Error(`Pet skin "${skinUnlock}" has no "${locale}" item name`);
+      localeNames[locale][skinId] =
+        locale === "en" || name === englishName ? name.replace(/^Pet Skin:\s*/i, "") : name;
+    }
   });
 
   console.log(`  Pet skins: ${Object.keys(result).length}`);
-  return result;
+  return { localeNames, skins: result };
 }
 
 function titleCase(key: string): string {

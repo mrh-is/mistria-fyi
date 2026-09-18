@@ -77,7 +77,7 @@
       message = m.quest_marked_obtained({ name: result.name });
     } else if (newState === "completed") {
       if (newlyAdded.length === 1) {
-        const names = recipeDisplayNames(newlyAdded);
+        const names = recipeDisplayNames(newlyAdded, locale);
         message = m.quest_marked_completed_with_recipe({ name: result.name, recipe: names[0] });
       } else if (newlyAdded.length > 1) {
         message = m.quest_marked_completed_with_recipes({

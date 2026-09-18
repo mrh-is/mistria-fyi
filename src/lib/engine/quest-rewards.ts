@@ -1,5 +1,7 @@
 import { trackerData } from "$lib/data/index.js";
+import { getName } from "$lib/data/names.js";
 
+import type { LocaleCode } from "$lib/types/locale.js";
 import type { QuestId, RecipeId } from "$lib/types/tracker-data.js";
 
 /**
@@ -20,7 +22,7 @@ export function findRecipesForQuest(questId: QuestId): RecipeId[] {
  * Returns a deduplicated list of display names for the given recipe IDs,
  * using the first presentation name for each recipe.
  */
-export function recipeDisplayNames(recipeIds: RecipeId[]): string[] {
-  const names = recipeIds.map((id) => trackerData.recipes[id].name);
+export function recipeDisplayNames(recipeIds: RecipeId[], locale: LocaleCode): string[] {
+  const names = recipeIds.map((id) => getName("recipes", id, locale));
   return [...new Set(names)];
 }

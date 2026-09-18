@@ -4,16 +4,15 @@ import { evaluateExpressions } from "../evaluate.js";
 import { parseFiddle } from "../parse-fiddle.js";
 import { requireGameAssetsDir } from "../test-helpers.js";
 import { extractAlmanac } from "./almanac.js";
-import { extractRecipes } from "./recipes.js";
 
 import type { AlmanacCategoryId, ItemId } from "$lib/types/tracker-data.js";
 
 describe("extractAlmanac — v1.0.2 assets", () => {
   it("matches the verified category totals while preserving distinct bed presentations", () => {
-    const fiddle = parseFiddle(requireGameAssetsDir()).data;
+    const assetsDir = requireGameAssetsDir();
+    const fiddle = parseFiddle(assetsDir).data;
     evaluateExpressions(fiddle);
-    const { recipeMemberItems } = extractRecipes(fiddle);
-    const { almanac } = extractAlmanac(fiddle, recipeMemberItems);
+    const { almanac, localeNames, localizationReport } = extractAlmanac(fiddle, assetsDir);
     const fish = almanac["fish" as AlmanacCategoryId];
     const furniture = almanac["furniture" as AlmanacCategoryId];
     const materials = almanac["materials" as AlmanacCategoryId];
@@ -27,5 +26,16 @@ describe("extractAlmanac — v1.0.2 assets", () => {
       true,
     );
     expect(furniture.items.filter((entry) => entry.recipeId === "emerald_bed")).toHaveLength(2);
+    expect(Object.keys(localeNames.en)).toHaveLength(2653);
+    expect(localeNames.ja["turnip" as ItemId]).not.toBe(localeNames.en["turnip" as ItemId]);
+    expect(localizationReport.fallbackItemIds.ja).toHaveLength(249);
+    expect(localizationReport.nonLocalizableItems).toEqual([
+      "other/misc/animal_cosmetic (missing name)",
+      "other/misc/cosmetic (missing name)",
+      "other/misc/horse_potion (missing name)",
+      "other/misc/lurid_colored_drink (missing name)",
+      "other/misc/pet_cosmetic (missing name)",
+      "other/misc/stinky_stamina_potion (missing name)",
+    ]);
   });
 });

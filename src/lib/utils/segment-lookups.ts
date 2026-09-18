@@ -32,7 +32,17 @@ export function buildBaseSegmentLookups(
 const staticBaseSegmentLookups = buildStaticBaseSegmentLookups();
 const localizedBaseSegmentLookups = new Map<
   LocaleCode,
-  Pick<SegmentLookups, "biomes" | "festivals" | "perks" | "questNames" | "stores">
+  Pick<
+    SegmentLookups,
+    | "biomes"
+    | "festivals"
+    | "itemNames"
+    | "perks"
+    | "questNames"
+    | "recipeNames"
+    | "stores"
+    | "treasureChestTiers"
+  >
 >();
 
 function buildStaticBaseSegmentLookups(): Omit<
@@ -40,19 +50,19 @@ function buildStaticBaseSegmentLookups(): Omit<
   | "biomes"
   | "entityVisibility"
   | "festivals"
+  | "itemNames"
   | "npcNames"
   | "perks"
   | "questNames"
+  | "recipeNames"
   | "redactedStoreIds"
   | "skillNames"
   | "stores"
+  | "treasureChestTiers"
 > {
   return {
     animalNames: {},
     categoryVisibility: trackerData.categoryVisibility,
-    itemNames: Object.fromEntries(
-      Object.entries(trackerData.items).map(([id, item]) => [id, item.name]),
-    ),
     itemVisibility: Object.fromEntries(
       Object.entries(trackerData.items)
         .filter(([, item]) => item.visibility)
@@ -68,16 +78,24 @@ function buildStaticBaseSegmentLookups(): Omit<
         ([questType, group]) => Object.keys(group).map((id) => [id, questType]),
       ),
     ),
-    recipeNames: recordMap(trackerData.recipes, ({ name }) => name),
     stationNames: {},
     storeVisibility: recordMap(trackerData.stores, ({ visibility }) => visibility),
-    treasureChestTiers: trackerData.treasureChestTiers,
   };
 }
 
 function getLocalizedBaseSegmentLookups(
   locale: LocaleCode,
-): Pick<SegmentLookups, "biomes" | "festivals" | "perks" | "questNames" | "stores"> {
+): Pick<
+  SegmentLookups,
+  | "biomes"
+  | "festivals"
+  | "itemNames"
+  | "perks"
+  | "questNames"
+  | "recipeNames"
+  | "stores"
+  | "treasureChestTiers"
+> {
   const cached = localizedBaseSegmentLookups.get(locale);
   if (cached) return cached;
 
@@ -92,6 +110,7 @@ function getLocalizedBaseSegmentLookups(
         { ...festival, name: getName("festivals", id as never, locale) },
       ]),
     ),
+    itemNames: getNameTable("items", locale),
     perks: Object.fromEntries(
       Object.entries(trackerData.skills).flatMap(([skillId, skill]) =>
         skill.perkTiers.flatMap((tier, tierIndex) =>
@@ -111,10 +130,17 @@ function getLocalizedBaseSegmentLookups(
         Object.keys(group).map((id) => [id, getName("quests", id as never, locale)]),
       ),
     ),
+    recipeNames: getNameTable("recipes", locale),
     stores: Object.fromEntries(
       Object.entries(trackerData.stores).map(([id, store]) => [
         id,
         { ...store, name: getName("stores", id as never, locale) },
+      ]),
+    ),
+    treasureChestTiers: Object.fromEntries(
+      Object.keys(trackerData.treasureChestTiers).map((id) => [
+        id,
+        { name: getName("treasure-chest-tiers", id as never, locale) },
       ]),
     ),
   };

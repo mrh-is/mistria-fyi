@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
-import { extractRecipes } from "./recipes.js";
+import { deriveRecipeLocaleNames, extractRecipes } from "./recipes.js";
 
 import type { RecipeId } from "$lib/types/tracker-data.js";
 
@@ -64,10 +64,14 @@ describe("extractRecipes", () => {
       },
     });
 
-    const { recipeIdByItemId, recipeMemberItems, recipes } = extractRecipes(fiddle);
+    const { recipeIdByItemId, recipeMemberItems, recipeNameSources, recipes } =
+      extractRecipes(fiddle);
     const recipe = recipes["sapling_chair" as RecipeId];
     expect(recipe).toBeDefined();
-    expect(recipe.name).toBe("Sapling Chair");
+    expect(recipeNameSources["sapling_chair" as RecipeId]).toEqual({
+      englishName: "Sapling Chair",
+      itemId: "chair_blue",
+    });
     expect(recipeMemberItems.get("sapling_chair" as RecipeId)).toEqual([
       "chair_blue",
       "chair_green",
@@ -192,13 +196,13 @@ describe("extractRecipes", () => {
       },
     });
 
-    const { recipes } = extractRecipes(fiddle);
+    const { recipeNameSources, recipes } = extractRecipes(fiddle);
     const recipe = recipes["vegetable_soup" as RecipeId];
     expect(recipe).toBeDefined();
     expect(recipe.sources).toEqual([
       { type: "quest", questId: "cooking_101", questType: "story", trigger: "completion" },
     ]);
-    expect(recipe.name).toBe("Vegetable Soup");
+    expect(recipeNameSources["vegetable_soup" as RecipeId].englishName).toBe("Vegetable Soup");
   });
 
   it("ignores recipe scroll rewards from quest groups outside the explicit subset", () => {
@@ -905,12 +909,12 @@ describe("extractRecipes", () => {
               recipe_key: "mermaid_bed",
             },
             mermaid_bed_single_blue: {
-              name: "Mermaid Bed",
+              name: "Mermaid Single Bed",
               recipe: [{ count: 5, item: "wood" }],
               recipe_key: "mermaid_bed",
             },
             mermaid_bed_single_green: {
-              name: "Mermaid Bed",
+              name: "Mermaid Single Bed",
               recipe: [{ count: 5, item: "wood" }],
               recipe_key: "mermaid_bed",
             },
@@ -919,9 +923,24 @@ describe("extractRecipes", () => {
       },
     });
 
-    const { recipes } = extractRecipes(fiddle);
-    const recipe = recipes["mermaid_bed" as RecipeId];
-    expect(recipe.name).toBe("Mermaid Bed");
+    const { recipeNameSources } = extractRecipes(fiddle);
+    expect(recipeNameSources["mermaid_bed" as RecipeId]).toEqual({
+      englishName: "Mermaid Bed",
+      itemId: "mermaid_bed_single_blue",
+    });
+
+    const itemLocaleNames = Object.fromEntries(
+      ["en", "es", "fr", "ja", "ko", "ru", "zh-Hans", "zh-Hant"].map((locale) => [
+        locale,
+        {
+          mermaid_bed_single_blue:
+            locale === "ja" ? "マーメイドシングルベッド" : "Mermaid Single Bed",
+        },
+      ]),
+    ) as never;
+    const localeNames = deriveRecipeLocaleNames(recipeNameSources, itemLocaleNames);
+    expect(localeNames.en["mermaid_bed" as RecipeId]).toBe("Mermaid Bed");
+    expect(localeNames.ja["mermaid_bed" as RecipeId]).toBe("マーメイドシングルベッド");
   });
 
   it("produces empty results for empty data", () => {
