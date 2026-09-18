@@ -16,7 +16,7 @@
     class="flex flex-col gap-1"
     style="--primary: var(--cat-mines)"
   >
-    <SectionHeader key="mines" {progress} />
+    <SectionHeader key="mines" {locale} {progress} />
     <MinesContent compact {locale} />
   </section>
 {/if}

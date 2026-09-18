@@ -4,6 +4,7 @@
   import { localizedHref } from "$lib/utils/localized-href.js";
 
   import type { CategoryProgress } from "$lib/engine/progress.js";
+  import type { LocaleCode } from "$lib/types/locale.js";
 
   interface DisplayCategory {
     color: string;
@@ -17,18 +18,20 @@
     displayCategory,
     displayCompleted,
     key,
+    locale,
     mobileRibbon = false,
     progress,
   }: {
     displayCategory?: DisplayCategory;
     displayCompleted?: string;
     key: CategoryKey;
+    locale: LocaleCode;
     mobileRibbon?: boolean;
     progress: CategoryProgress;
   } = $props();
 
   const { color, description, href, icon, name } = $derived(
-    displayCategory ?? { ...categoryForKey(key), icon: key },
+    displayCategory ?? { ...categoryForKey(key, locale), icon: key },
   );
 
   // Show available count when filtering is active (filtered < total - completed)

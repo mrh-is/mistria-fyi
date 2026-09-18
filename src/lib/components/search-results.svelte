@@ -206,7 +206,7 @@
               display={rowDisplay(result)}
               lookups={baseLookups}
               name={result.detail ? `${label} ${result.detail}` : label}
-              reportCategory={categoryNameForKey(result.category)}
+              reportCategory={categoryNameForKey(result.category, locale)}
               reportEntityId={result.id}
               sources={getSources(result)}
               onToggle={() => {
@@ -226,7 +226,7 @@
           class="search-result__category"
           style="--result-category: var(--cat-{result.category}, var(--ink-muted))"
         >
-          {categoryNameForKey(result.category)}
+          {categoryNameForKey(result.category, locale)}
         </span>
       </div>
     {/each}

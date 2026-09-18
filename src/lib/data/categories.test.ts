@@ -4,7 +4,7 @@ import { categoryForKey, categoryKeyForPathname, sortCategoryKeysByName } from "
 
 describe("categoryForKey", () => {
   it("labels the npcs category with the game's Villagers term", () => {
-    expect(categoryForKey("npcs")).toMatchObject({ href: "/characters", name: "Villagers" });
+    expect(categoryForKey("npcs", "en")).toMatchObject({ href: "/characters", name: "Villagers" });
   });
 
   it("maps the characters route to the npcs category key", () => {
@@ -16,7 +16,7 @@ describe("categoryForKey", () => {
 describe("sortCategoryKeysByName", () => {
   it("sorts categories by their displayed names", () => {
     // Animals, Skills, Villagers: npcs sorts by its displayed name, not its key.
-    expect(sortCategoryKeysByName(["skills", "npcs", "animals"])).toEqual([
+    expect(sortCategoryKeysByName(["skills", "npcs", "animals"], "en")).toEqual([
       "animals",
       "skills",
       "npcs",

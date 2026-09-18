@@ -1,12 +1,7 @@
 <script lang="ts">
   import { restrictionWeatherIcon } from "$lib/components/icon/icon-maps.js";
   import { Icon } from "$lib/components/icon/index.js";
-  import {
-    seasonLabel,
-    timeRangeLabel,
-    weatherLabel,
-    weathersForSeason,
-  } from "$lib/utils/format.js";
+  import { timeRangeLabel, weatherLabel, weathersForSeason } from "$lib/utils/format.js";
 
   import type { AppIcon } from "$lib/components/icon/icon-maps.js";
   import type { DisplayBadges } from "$lib/engine/availability-condition.js";
@@ -14,8 +9,11 @@
 
   let {
     badges,
+    seasonNames,
   }: {
     badges: DisplayBadges;
+    /** The game's season names for the active locale; required once a badge names a season. */
+    seasonNames?: Record<Season, string>;
   } = $props();
 
   const ALL_SEASONS: Season[] = ["spring", "summer", "fall", "winter"];
@@ -41,9 +39,10 @@
     const result: Chip[] = [];
 
     if (badges.seasons && !isAllSeasons(badges.seasons)) {
+      if (!seasonNames) throw new Error("RestrictionBadges needs seasonNames to label seasons");
       result.push({
         kind: "seasons",
-        label: badges.seasons.map(seasonLabel).join(", "),
+        label: badges.seasons.map((season) => seasonNames[season]).join(", "),
         seasons: badges.seasons,
       });
     }

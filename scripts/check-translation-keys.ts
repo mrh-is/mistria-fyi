@@ -7,8 +7,6 @@ import { pathToFileURL } from "node:url";
 
 const MESSAGES_DIR = path.join(import.meta.dirname, "..", "messages");
 const BASE_LOCALE = "en";
-/** `messages/` also holds `game-terms.json`; only BCP 47-shaped names are locale files. */
-const LOCALE_FILE = /^[a-z]{2,3}(-[A-Za-z0-9]+)*\.json$/;
 
 export interface KeyMismatch {
   extraKeys: string[];
@@ -19,7 +17,7 @@ export interface KeyMismatch {
 export async function checkTranslationKeys(messagesDir = MESSAGES_DIR): Promise<KeyMismatch[]> {
   const files = await readdir(messagesDir);
   const locales = files
-    .filter((file) => LOCALE_FILE.test(file))
+    .filter((file) => file.endsWith(".json"))
     .map((file) => file.replace(/\.json$/, ""))
     .filter((locale) => locale !== BASE_LOCALE);
 

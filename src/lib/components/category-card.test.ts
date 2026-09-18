@@ -8,12 +8,13 @@ describe("CategoryCard", () => {
     const { body } = render(CategoryCard, {
       props: {
         key: "almanac",
+        locale: "en",
         progress: { completed: 7, filtered: 13, total: 20 },
       },
     });
 
     expect(body).toContain("data-category-stripe");
-    expect(body).toContain('aria-label="The Almanac, 7 of 20 completed"');
+    expect(body).toContain('aria-label="Almanac, 7 of 20 completed"');
     expect(body).toContain("data-category-ribbon");
     expect(body).toContain('aria-hidden="true"');
     expect(body).toContain("7");
@@ -26,11 +27,12 @@ describe("CategoryCard", () => {
     const { body } = render(CategoryCard, {
       props: {
         key: "museum",
+        locale: "en",
         progress: { completed: 4, filtered: 6, total: 20 },
       },
     });
 
-    expect(body).toContain('aria-label="The Museum, 4 of 10 completed"');
+    expect(body).toContain('aria-label="Museum, 4 of 10 completed"');
     expect(body).toContain("--category-progress: 40%");
   });
 
@@ -38,6 +40,7 @@ describe("CategoryCard", () => {
     const { body } = render(CategoryCard, {
       props: {
         key: "animals",
+        locale: "en",
         progress: { completed: 20, filtered: 0, total: 20 },
       },
     });

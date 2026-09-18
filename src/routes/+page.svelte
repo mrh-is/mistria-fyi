@@ -48,7 +48,7 @@
       <h2 class="px-1 font-controls text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
         Index
       </h2>
-      <CategoryGrid progress={allProgress} />
+      <CategoryGrid locale={data.locale} progress={allProgress} />
       <a
         class="everything-link"
         href={localizedHref("/all")}

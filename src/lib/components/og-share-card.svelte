@@ -20,6 +20,7 @@
   <div class="stripe-scale">
     <CategoryCard
       key="almanac"
+      locale="en"
       mobileRibbon
       {progress}
       displayCompleted="??"

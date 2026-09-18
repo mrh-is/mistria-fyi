@@ -20,9 +20,10 @@
   import type { Icon as AppIcon } from "@tabler/icons-svelte-runes";
 
   import type { AvailabilityWindow } from "$lib/types/availability.js";
+  import type { LocaleCode } from "$lib/types/locale.js";
   import type { Season, Weather } from "$lib/types/tracker-data.js";
 
-  let { showSeasonality }: { showSeasonality: boolean } = $props();
+  let { locale, showSeasonality }: { locale: LocaleCode; showSeasonality: boolean } = $props();
 
   const seasons: Season[] = ["spring", "summer", "fall", "winter"];
   const allWeathers: Weather[] = ["calm", "inclement", "heavy_inclement", "special"];
@@ -124,7 +125,7 @@
               {@const selected = season === currentSeason}
               <button
                 type="button"
-                aria-label={seasonLabel(season)}
+                aria-label={seasonLabel(season, locale)}
                 aria-pressed={selected}
                 class:radio-strip__active={selected}
                 onclick={() => {

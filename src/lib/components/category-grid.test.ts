@@ -7,6 +7,7 @@ describe("CategoryGrid", () => {
   it("renders in-progress categories alphabetized by displayed name", () => {
     const { body } = render(CategoryGrid, {
       props: {
+        locale: "en",
         progress: {
           almanac: { completed: 1, filtered: 1, total: 2 },
           animals: { completed: 0, filtered: 1, total: 2 },
@@ -22,8 +23,7 @@ describe("CategoryGrid", () => {
       },
     });
 
-    expect(body.indexOf(">Animals<")).toBeLessThan(body.indexOf(">Cosmetics<"));
-    expect(body.indexOf(">Skills<")).toBeLessThan(body.indexOf(">The Almanac<"));
-    expect(body.indexOf(">The Museum<")).toBeLessThan(body.indexOf(">Villagers<"));
+    expect(body.indexOf(">Almanac<")).toBeLessThan(body.indexOf(">Animals<"));
+    expect(body.indexOf(">Skills<")).toBeLessThan(body.indexOf(">Villagers<"));
   });
 });

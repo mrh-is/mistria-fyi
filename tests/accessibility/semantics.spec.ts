@@ -32,7 +32,7 @@ test.describe("@critical semantic accessibility", () => {
   test("progress indicators expose their current values", async ({ page }) => {
     await gotoApplication(page, "/");
     await expect(page.getByRole("img", { name: /0 of \d+ completed overall/ })).toBeVisible();
-    await expect(page.getByRole("link", { name: /The Almanac, 0 of \d+ completed/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Almanac, 0 of \d+ completed/ })).toBeVisible();
 
     await gotoApplication(page, "/renown");
     const progress = page.getByRole("progressbar", { name: /Renown progress/ });

@@ -19,5 +19,5 @@
 </script>
 
 <ul>
-  <NpcRecord {compact} {id} {known} {name} {npc} />
+  <NpcRecord {compact} {id} {known} locale="en" {name} {npc} />
 </ul>

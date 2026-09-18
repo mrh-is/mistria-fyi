@@ -16,7 +16,7 @@
     class="flex flex-col gap-1"
     style="--primary: var(--cat-museum)"
   >
-    <SectionHeader key="museum" {progress} />
+    <SectionHeader key="museum" {locale} {progress} />
     <MuseumContent {locale} />
   </section>
 {/if}

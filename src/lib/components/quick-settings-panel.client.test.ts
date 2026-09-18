@@ -12,7 +12,7 @@ afterEach(async () => {
 
 describe("QuickSettingsPanel", () => {
   it("groups compact links to the data and About pages", () => {
-    const { container } = render(QuickSettingsPanel);
+    const { container } = render(QuickSettingsPanel, { locale: "en" });
 
     expect(screen.getByRole("link", { name: "Data" })).toHaveAttribute("href", "/en/data");
     expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("href", "/en/about");
@@ -20,7 +20,7 @@ describe("QuickSettingsPanel", () => {
   });
 
   it("lists every shipped language by its native name, with beta translations marked", async () => {
-    render(QuickSettingsPanel);
+    render(QuickSettingsPanel, { locale: "en" });
 
     await fireEvent.click(screen.getByRole("button", { name: "Choose language" }));
 
@@ -40,7 +40,7 @@ describe("QuickSettingsPanel", () => {
   });
 
   it("returns the spoiler toggle to off when confirmation is canceled", async () => {
-    render(QuickSettingsPanel);
+    render(QuickSettingsPanel, { locale: "en" });
 
     const spoilers = screen.getByRole("switch", { name: "Show spoilers?" });
     await fireEvent.click(spoilers);
