@@ -39,6 +39,33 @@ describe("extractUiStrings", () => {
     });
   });
 
+  it("stores an aliased request under its id, localized from its misc_local key", () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const fiddle = makeFiddle({
+      misc_local: { fish: "Fish", fishing_and_diving: "Fishing and Diving" },
+    });
+
+    const { localeNames } = extractUiStrings(fiddle, "assets", [
+      { id: "fish", miscLocalKey: "fishing_and_diving" },
+    ]);
+
+    expect(localeNames.en).toEqual({ fish: "Fishing and Diving" });
+    expect(localeNames.ja).toEqual({ fish: "JA Fishing and Diving" });
+    expect(localizeField).toHaveBeenCalledWith("assets", {
+      category: "misc_local",
+      classification: "localizable",
+      englishValue: "Fishing and Diving",
+      id: "fishing_and_diving",
+    });
+  });
+
+  it("throws when one id is requested with two misc_local keys", () => {
+    const fiddle = makeFiddle({ misc_local: { fish: "Fish", other: "Other" } });
+    expect(() =>
+      extractUiStrings(fiddle, "assets", ["fish", { id: "fish", miscLocalKey: "other" }]),
+    ).toThrow(/conflicting misc_local keys/);
+  });
+
   it("throws when misc_local lacks the English string", () => {
     const fiddle = makeFiddle({ misc_local: { crops: "Crops" } });
     expect(() => extractUiStrings(fiddle, "assets", ["song_crystal"])).toThrow(

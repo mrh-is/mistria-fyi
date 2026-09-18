@@ -16,10 +16,31 @@ translation data is a pipeline extraction problem, not something to work around 
 The game's own UI vocabulary lives here too. Labels the game shows in its menus (almanac category
 headings, animal variant tiers) have English text as bare entries in `fiddle/misc_local.toml` and
 translations keyed `misc_local/<key>`; the pipeline emits the keys the app uses into the `ui` chunk
-(`getName("ui", key, locale)`). Cosmetic sub-category labels come from the ordinal
-`ui/character_customization/<slot>/<n>/name` keys into `cosmetics/subcategories`. When a label
-matches something the game already names, pull it from there rather than adding a Paraglide message:
-the in-game term is the one players recognize.
+(`getName("ui", key, locale)`). An almanac category's `local_key` redirects its label to another
+`misc_local` entry (fish → "Fishing and Diving"). Cosmetic sub-category labels come from the ordinal
+`ui/character_customization/<slot>/<n>/name` keys into `cosmetics/subcategories`; the slots
+themselves are icon tabs in the game with no text, so a slot with one sub-category borrows that
+label and the rest use MFG's own `cosmetic_slot_*` messages. When a label matches something the game
+already names, pull it from there rather than adding a Paraglide message: the in-game term is the
+one players recognize.
+
+### Game vocabulary in UI chrome
+
+Some Paraglide messages name a concept the game names too ("The Almanac", "Renown", seasons, quest
+types, relationship statuses). Those are not translated by us: `messages/game-terms.json` maps each
+such message key to the `misc_local` key that carries it, and `pnpm run i18n:sync-game-terms` copies
+the game's string into every `messages/<locale>.json`, English included, then you run
+`pnpm run paraglide:compile`. The pipeline assets tests (`pipeline/src/game-terms.assets.test.ts`)
+fail when a mapped message drifts from the game, so a hand edit to one of these keys is caught the
+next time the assets suite runs. The game data only changes on a deliberate version update, so the
+sync is part of that protocol, not a routine step.
+
+The sync refuses a game string that carries player-gender markup (`<he>…</he><she>…</she>`, as
+`misc_local/engaged` does in Spanish) because Paraglide can't render it. `notes` in the same file
+records near-misses the audit considered and left hand-written (singular/plural mismatches, terms
+the game only has in a longer phrase, strings with placeholders), so a later audit doesn't repeat
+the work. When you add a UI string that names something the game names, add it to `terms` instead of
+translating it.
 
 ### How name chunks load
 

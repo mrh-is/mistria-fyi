@@ -16,6 +16,14 @@ describe("checkTranslationKeys", () => {
     await rm(dir, { force: true, recursive: true });
   });
 
+  it("ignores non-locale JSON files such as game-terms.json", async () => {
+    await writeFile(path.join(dir, "en.json"), JSON.stringify({ greeting: "Hello" }));
+    await writeFile(path.join(dir, "fr.json"), JSON.stringify({ greeting: "Bonjour" }));
+    await writeFile(path.join(dir, "game-terms.json"), JSON.stringify({ terms: {} }));
+
+    expect(await checkTranslationKeys(dir)).toEqual([]);
+  });
+
   it("reports no mismatches when key shapes match, regardless of content", async () => {
     await writeFile(
       path.join(dir, "en.json"),

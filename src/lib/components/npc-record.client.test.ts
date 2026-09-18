@@ -44,7 +44,7 @@ describe("NpcRecord", () => {
     ).toBeInTheDocument();
     expect(view.getByRole("button", { name: "Decrease Adeline hearts" })).toBeEnabled();
     expect(view.getByRole("button", { name: "Increase Adeline hearts" })).toBeEnabled();
-    expect(view.getByRole("button", { name: "Best friends" })).toBeInTheDocument();
+    expect(view.getByRole("button", { name: "Best Friend" })).toBeInTheDocument();
     expect(view.getByRole("button", { name: "Start dating" })).toBeInTheDocument();
   });
 

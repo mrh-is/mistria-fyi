@@ -22,7 +22,8 @@ describe("CategoryGrid", () => {
       },
     });
 
-    expect(body.indexOf(">Animals<")).toBeLessThan(body.indexOf(">Characters<"));
-    expect(body.indexOf(">Characters<")).toBeLessThan(body.indexOf(">Cosmetics<"));
+    expect(body.indexOf(">Animals<")).toBeLessThan(body.indexOf(">Cosmetics<"));
+    expect(body.indexOf(">Skills<")).toBeLessThan(body.indexOf(">The Almanac<"));
+    expect(body.indexOf(">The Museum<")).toBeLessThan(body.indexOf(">Villagers<"));
   });
 });

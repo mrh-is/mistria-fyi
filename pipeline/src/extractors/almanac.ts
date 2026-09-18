@@ -28,6 +28,8 @@ export type ItemMetadataIndex = Record<string, { category: string; iconSprite: s
 
 export interface RawAlmanacCategory {
   key: string;
+  /** The `misc_local` key of the category's label; defaults to `key` unless `local_key` overrides it. */
+  localKey: string;
   tags: string[];
 }
 
@@ -222,7 +224,8 @@ export function extractAlmanac(
 
 /**
  * The almanac's UI-defined categories, in game order. Their player-facing labels are game UI
- * strings keyed `misc_local/<key>`, localized by {@link extractUiStrings}, not stored here.
+ * strings keyed `misc_local/<key>`, or `misc_local/<other>` when the category sets `local_key`,
+ * localized by {@link extractUiStrings}, not stored here.
  */
 export function readAlmanacCategories(fiddle: ParsedGameData): RawAlmanacCategory[] {
   const ui = fiddle.ui as Record<string, unknown> | undefined;
@@ -239,6 +242,7 @@ export function readAlmanacCategories(fiddle: ParsedGameData): RawAlmanacCategor
 
   return arr.map((cat: Record<string, unknown>) => ({
     key: cat.key as string,
+    localKey: readLocalKey(cat, sourceFile),
     tags: expectStringArray(cat.tags, {
       entityId: cat.key as string,
       fieldPath: "tags",
@@ -305,4 +309,17 @@ function collapseColorways(
   }
 
   return result;
+}
+
+/** `local_key` is a full l10n key (`misc_local/<key>`); only the `misc_local` namespace is expected. */
+function readLocalKey(cat: Record<string, unknown>, sourceFile: string): string {
+  const key = cat.key as string;
+  const localKey = cat.local_key;
+  if (localKey === undefined) return key;
+  if (typeof localKey !== "string" || !localKey.startsWith("misc_local/")) {
+    throw new Error(
+      `Almanac category "${key}" in ${sourceFile} has local_key ${JSON.stringify(localKey)}; expected "misc_local/<key>"`,
+    );
+  }
+  return localKey.slice("misc_local/".length);
 }
