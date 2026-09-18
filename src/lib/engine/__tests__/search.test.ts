@@ -171,6 +171,36 @@ describe("basic matching", () => {
       ),
     ).toBe(true);
   });
+
+  it("matches a translated query across categories with localized result names", () => {
+    // "ベジタブルスープ" (vegetable soup) is both an almanac item and a recipe in Japanese, so a
+    // single non-English query must surface localized names from two categories at once.
+    const results = searchItems(
+      "ベジタブルスープ",
+      makeCompleted(),
+      defaultWorld,
+      makeProgressionState({ showSpoilers: true }),
+      "ja",
+    );
+
+    const categories = new Set(results.map((result) => result.category));
+    expect(categories.has("almanac")).toBe(true);
+    expect(categories.has("recipes")).toBe(true);
+    expect(results.every((result) => result.name === "ベジタブルスープ")).toBe(true);
+  });
+
+  it("matches the English fallback term while reporting the localized name", () => {
+    const results = searchItems(
+      "Vegetable Soup",
+      makeCompleted(),
+      defaultWorld,
+      makeProgressionState({ showSpoilers: true }),
+      "ja",
+    );
+
+    const recipe = results.find((result) => result.category === "recipes");
+    expect(recipe?.name).toBe("ベジタブルスープ");
+  });
 });
 
 // ─── Completion status ─────────────────────────────────────────────
