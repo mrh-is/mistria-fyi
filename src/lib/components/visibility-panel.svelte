@@ -10,7 +10,12 @@
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { AVAILABILITY_WINDOWS } from "$lib/types/availability.js";
-  import { seasonLabel, weatherLabel, weathersForSeason } from "$lib/utils/format.js";
+  import {
+    seasonLabel,
+    seasonLabelAbbr,
+    weatherLabel,
+    weathersForSeason,
+  } from "$lib/utils/format.js";
 
   import type { Icon as AppIcon } from "@tabler/icons-svelte-runes";
 
@@ -124,7 +129,7 @@
                 class:radio-strip__active={selected}
                 onclick={() => {
                   userState.setSeason(season);
-                }}><Icon.Season {season} class="size-3" />{seasonLabel(season).slice(0, 3)}</button
+                }}><Icon.Season {season} class="size-3" />{seasonLabelAbbr(season)}</button
               >
             {/each}
           </div>

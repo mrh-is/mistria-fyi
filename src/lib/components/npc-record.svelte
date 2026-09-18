@@ -17,8 +17,9 @@
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordKeys } from "$lib/utils";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
+  import { seasonLabel, seasonLabelAbbr } from "$lib/utils/format.js";
 
-  import type { Npc, NpcId, Season } from "$lib/types/tracker-data.js";
+  import type { Npc, NpcId } from "$lib/types/tracker-data.js";
 
   let {
     compact = false,
@@ -37,18 +38,6 @@
 
   const instanceId = $props.id();
   const warningId = `${instanceId}-marriage-warning`;
-  let seasonAbbreviation: Record<Season, string> = $derived({
-    fall: m.season_fall_abbr(),
-    spring: m.season_spring_abbr(),
-    summer: m.season_summer_abbr(),
-    winter: m.season_winter_abbr(),
-  });
-  let seasonName: Record<Season, string> = $derived({
-    fall: m.season_fall(),
-    spring: m.season_spring(),
-    summer: m.season_summer(),
-    winter: m.season_winter(),
-  });
   let relationshipStatusLabel: Record<RelationshipStatus, string> = $derived({
     best_friends: m.relationship_status_best_friends(),
     dating: m.relationship_status_dating(),
@@ -179,11 +168,11 @@
         class="npc-birthday"
         aria-label={m.npc_birthday_aria({
           day: npc.birthday.day,
-          season: seasonName[npc.birthday.season],
+          season: seasonLabel(npc.birthday.season),
         })}
       >
         <Icon.Season season={npc.birthday.season} class="size-3" aria-hidden="true" />
-        {seasonAbbreviation[npc.birthday.season]}
+        {seasonLabelAbbr(npc.birthday.season)}
         {String(npc.birthday.day).padStart(2, "0")}
       </span>
     {:else}

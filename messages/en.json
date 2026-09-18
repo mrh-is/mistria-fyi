@@ -443,5 +443,11 @@
         "countPlural=other": "Skills: +{count} skills updated"
       }
     }
-  ]
+  ],
+  "weather_calm": "Sun",
+  "weather_inclement": "Rain",
+  "weather_heavy_inclement": "Storm",
+  "weather_special": "Breeze",
+  "weather_winter_inclement": "Snow",
+  "weather_winter_heavy_inclement": "Blizzard"
 }

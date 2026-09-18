@@ -457,5 +457,11 @@
         "countPlural=other": "Навыки: +{count} навыка обновлено"
       }
     }
-  ]
+  ],
+  "weather_calm": "Солнце",
+  "weather_inclement": "Дождь",
+  "weather_heavy_inclement": "Гроза",
+  "weather_special": "Ветерок",
+  "weather_winter_inclement": "Снег",
+  "weather_winter_heavy_inclement": "Метель"
 }

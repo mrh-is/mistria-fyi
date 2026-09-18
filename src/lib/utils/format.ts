@@ -1,3 +1,5 @@
+import * as m from "$lib/paraglide/messages.js";
+
 import type {
   MinesBiome,
   MinesBiomeId,
@@ -10,29 +12,36 @@ import type {
   Weather,
 } from "$lib/types/tracker-data.js";
 
-const SEASON_LABEL: Record<Season, string> = {
-  fall: "Fall",
-  spring: "Spring",
-  summer: "Summer",
-  winter: "Winter",
+const SEASON_LABEL: Record<Season, () => string> = {
+  fall: m.season_fall,
+  spring: m.season_spring,
+  summer: m.season_summer,
+  winter: m.season_winter,
+};
+
+const SEASON_LABEL_ABBR: Record<Season, () => string> = {
+  fall: m.season_fall_abbr,
+  spring: m.season_spring_abbr,
+  summer: m.season_summer_abbr,
+  winter: m.season_winter_abbr,
 };
 
 /** Season-specific weather display names */
-const WEATHER_LABEL_BY_SEASON: Record<Season, Partial<Record<Weather, string>>> = {
+const WEATHER_LABEL_BY_SEASON: Record<Season, Partial<Record<Weather, () => string>>> = {
   fall: {},
   spring: {},
   summer: {},
   winter: {
-    heavy_inclement: "Blizzard",
-    inclement: "Snow",
+    heavy_inclement: m.weather_winter_heavy_inclement,
+    inclement: m.weather_winter_inclement,
   },
 };
 
-const WEATHER_LABEL: Record<Weather, string> = {
-  calm: "Sun",
-  heavy_inclement: "Storm",
-  inclement: "Rain",
-  special: "Breeze",
+const WEATHER_LABEL: Record<Weather, () => string> = {
+  calm: m.weather_calm,
+  heavy_inclement: m.weather_heavy_inclement,
+  inclement: m.weather_inclement,
+  special: m.weather_special,
 };
 
 export type NameLookup<T> = Partial<Record<keyof T, string>>;
@@ -91,7 +100,11 @@ export function formatStoreName(
 }
 
 export function seasonLabel(season: Season): string {
-  return SEASON_LABEL[season];
+  return SEASON_LABEL[season]();
+}
+
+export function seasonLabelAbbr(season: Season): string {
+  return SEASON_LABEL_ABBR[season]();
 }
 
 export function timeRangeLabel(hours: [number, number]): string {
@@ -105,9 +118,9 @@ export function timeRangeLabel(hours: [number, number]): string {
 
 export function weatherLabel(weather: Weather, season?: Season): string {
   if (season) {
-    return WEATHER_LABEL_BY_SEASON[season][weather] ?? WEATHER_LABEL[weather];
+    return (WEATHER_LABEL_BY_SEASON[season][weather] ?? WEATHER_LABEL[weather])();
   }
-  return WEATHER_LABEL[weather];
+  return WEATHER_LABEL[weather]();
 }
 
 /** Weathers available for a given season (special only in spring/fall) */
