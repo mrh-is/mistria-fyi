@@ -1,7 +1,7 @@
 <script lang="ts">
   import MinesContent from "$lib/components/mines-content.svelte";
 
-  import type { PageProps } from "./$types.js";
+  import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
 </script>

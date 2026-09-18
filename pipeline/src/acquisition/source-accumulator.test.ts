@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator.js";
+import { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator";
 
 import type { Source } from "$lib/types/acquisition.js";
 import type { CosmeticId, ItemId, MinesBiomeId } from "$lib/types/tracker-data.js";

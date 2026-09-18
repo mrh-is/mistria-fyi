@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatBiomeName, formatStoreName, withIndefiniteArticle } from "./format.js";
+import { formatBiomeName, formatStoreName, withIndefiniteArticle } from "./format";
 
 import type { MinesBiomeId, StoreId } from "$lib/types/tracker-data.js";
 

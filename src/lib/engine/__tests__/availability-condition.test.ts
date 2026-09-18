@@ -4,7 +4,7 @@ import {
   evaluateAvailabilityCondition,
   hasSelectiveSeasonCondition,
   simplifyAvailabilityCondition,
-} from "../availability-condition.js";
+} from "../availability-condition";
 
 import type {
   AvailabilityCondition,

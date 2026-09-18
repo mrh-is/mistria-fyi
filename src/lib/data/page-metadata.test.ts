@@ -2,9 +2,9 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { _pageMetadataEntries, GET } from "../../routes/sitemap.xml/+server.js";
+import { _pageMetadataEntries, GET } from "../../routes/sitemap.xml/+server";
 import { locales, localizeUrl } from "../paraglide/runtime.js";
-import { errorPageMetadata, SITE_NAME, SITE_ORIGIN } from "./page-metadata.js";
+import { errorPageMetadata, SITE_NAME, SITE_ORIGIN } from "./page-metadata";
 
 describe("page metadata", () => {
   it("is provided by every rendered page", async () => {

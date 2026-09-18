@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveToVisibility, simplifyCondition } from "./requirement-resolver.js";
+import { resolveToVisibility, simplifyCondition } from "./requirement-resolver";
 
-import type { RequirementExpression } from "../../requirements.js";
-import type { CutsceneQuestMap } from "./cutscene-quest-map.js";
+import type { RequirementExpression } from "../../requirements";
+import type { CutsceneQuestMap } from "./cutscene-quest-map";
 
 const emptyCutsceneMap: CutsceneQuestMap = {};
 

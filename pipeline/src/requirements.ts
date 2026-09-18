@@ -1,5 +1,5 @@
-import type { SourceFieldLocation } from "./data-shapes.js";
-import type { CutsceneQuestMap } from "./extractors/visibility/cutscene-quest-map.js";
+import type { SourceFieldLocation } from "./data-shapes";
+import type { CutsceneQuestMap } from "./extractors/visibility/cutscene-quest-map";
 
 /**
  * Empty top-level definition tables identify primitive predicate names; nonempty tables identify

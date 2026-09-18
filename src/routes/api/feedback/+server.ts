@@ -3,7 +3,7 @@ import { error, isHttpError, json } from "@sveltejs/kit";
 
 import type { ReportableElement } from "$lib/feedback/types.js";
 
-import type { RequestHandler } from "./$types.js";
+import type { RequestHandler } from "./$types";
 
 const REPO_OWNER = "mrh-is";
 const REPO_NAME = "mistria-fyi";

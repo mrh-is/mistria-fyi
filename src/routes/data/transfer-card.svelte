@@ -10,7 +10,7 @@
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import DataCard from "./data-card.svelte";
-  import { closeScanner } from "./data-effects.js";
+  import { closeScanner } from "./data-effects";
   import MergeSummary from "./merge-summary.svelte";
 
   import type { MergeCounts } from "$lib/stores/user-state.svelte.js";

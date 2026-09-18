@@ -1,4 +1,4 @@
-import { simplifyCondition } from "./requirement-resolver.js";
+import { simplifyCondition } from "./requirement-resolver";
 
 import type { AvailabilityCondition } from "$lib/types/acquisition.js";
 import type { VisibilityCondition } from "$lib/types/visibility.js";

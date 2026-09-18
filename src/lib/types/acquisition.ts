@@ -17,8 +17,8 @@ import type {
   StoreId,
   TreasureChestTierId,
   Weather,
-} from "./tracker-data.js";
-import type { QuestVisibility, VisibilityCondition } from "./visibility.js";
+} from "./tracker-data";
+import type { QuestVisibility, VisibilityCondition } from "./visibility";
 
 export type ActivityId = string & { readonly __brand: "ActivityId" };
 export type AvailabilityCondition =

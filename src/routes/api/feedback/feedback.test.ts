@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { OPTIONS, POST } from "./+server.js";
+import { OPTIONS, POST } from "./+server";
 
 function makeRequest(
   body: unknown,

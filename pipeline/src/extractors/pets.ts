@@ -1,7 +1,7 @@
 import { LOCALE_CODES } from "$lib/types/locale.js";
 
-import { forEachItem } from "../extractor-helpers.js";
-import { localizeField } from "../localize.js";
+import { forEachItem } from "../extractor-helpers";
+import { localizeField } from "../localize";
 
 import type { SourceTuple } from "$lib/types/acquisition.js";
 import type { LocaleCode } from "$lib/types/locale.js";
@@ -12,7 +12,7 @@ import type {
   PetSkinId,
 } from "$lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../parse-fiddle.js";
+import type { ParsedGameData } from "../parse-fiddle";
 
 export function extractPetCosmetics(
   fiddle: ParsedGameData,

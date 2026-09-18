@@ -1,10 +1,10 @@
 import { LOCALE_CODES } from "$lib/types/locale.js";
 
-import { localizeField } from "../localize.js";
+import { localizeField } from "../localize";
 
 import type { LocaleCode } from "$lib/types/locale.js";
 
-import type { ParsedGameData } from "../parse-fiddle.js";
+import type { ParsedGameData } from "../parse-fiddle";
 
 export interface UiStringExtraction {
   localeNames: Record<LocaleCode, Record<string, string>>;

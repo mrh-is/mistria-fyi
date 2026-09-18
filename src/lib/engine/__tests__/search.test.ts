@@ -5,7 +5,7 @@ import { animalNameId, getName } from "$lib/data/names.js";
 import { deriveProgressionState } from "$lib/engine/visibility.js";
 import { recordEntries, recordKeys } from "$lib/utils.js";
 
-import { searchItems } from "../search.js";
+import { searchItems } from "../search";
 
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
 import type {
@@ -17,7 +17,7 @@ import type {
   Weather,
 } from "$lib/types/tracker-data.js";
 
-import type { UserProgressionState } from "../visibility.js";
+import type { UserProgressionState } from "../visibility";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 

@@ -1,4 +1,4 @@
-import type { SaveBundle } from "./import-save.js";
+import type { SaveBundle } from "./import-save";
 
 /** Maximum compressed input size: over 27x the measured 298,271-byte late-game fixture. */
 export const MAX_COMPRESSED_SIZE = 8 * 1024 * 1024;

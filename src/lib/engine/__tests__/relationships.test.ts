@@ -7,7 +7,7 @@ import {
   isRomantic,
   normalizeRelationships,
   relationshipPresentation,
-} from "../relationships.js";
+} from "../relationships";
 
 import type { NpcId, NpcRelationship } from "$lib/types/tracker-data.js";
 

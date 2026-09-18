@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
-import { extractPerks } from "./perks.js";
+import { makeFiddle as makeFiddleBase } from "../test-helpers";
+import { extractPerks } from "./perks";
 
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({ perks: {}, ui: { skill_menu: { defaults: {} } }, ...overrides });
