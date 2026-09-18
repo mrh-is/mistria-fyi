@@ -119,6 +119,25 @@ describe("non-empty collections", () => {
   });
 });
 
+describe("localized structural contracts", () => {
+  it("keeps item-derived display names out of tracker data", () => {
+    for (const item of recordValues(trackerData.items)) expect(item).not.toHaveProperty("name");
+    for (const recipe of recordValues(trackerData.recipes)) {
+      expect(recipe).not.toHaveProperty("name");
+    }
+    for (const category of recordValues(trackerData.almanac)) {
+      for (const entry of category.items) expect(entry).not.toHaveProperty("name");
+    }
+    for (const skin of recordValues(trackerData.pets.skins)) {
+      expect(skin).not.toHaveProperty("name");
+    }
+    for (const [tierId, tier] of recordEntries(trackerData.treasureChestTiers)) {
+      expect(tier).not.toHaveProperty("name");
+      expect(getName("treasure-chest-tiers", tierId, "en").length).toBeGreaterThan(0);
+    }
+  });
+});
+
 // ─── Source integrity ──────────────────────────────────────────────
 // These tests validate runtime JSON, which is cast via `as unknown as TrackerData`.
 // The type system says sources is always present, but these guards catch pipeline regressions.

@@ -1,8 +1,11 @@
+import { LOCALE_CODES } from "$lib/types/locale.js";
+
 import { buildQuestTypeIndex, forEachItem, forEachQuest } from "../extractor-helpers.js";
 import { buildRequirementDefinitions, parseRequirements } from "../requirements.js";
 import { resolveToVisibility } from "./visibility/requirement-resolver.js";
 
 import type { Source as AcquisitionSource, SourceTuple } from "$lib/types/acquisition.js";
+import type { LocaleCode } from "$lib/types/locale.js";
 import type {
   FestivalId,
   ItemId,
@@ -30,6 +33,11 @@ const QUEST_TYPES_WITH_SCROLLS = [
   "tali_challenges",
 ] as const;
 
+export interface RecipeNameSource {
+  englishName: string;
+  itemId: ItemId;
+}
+
 interface RawRecipeEntry {
   isDefault: boolean;
   itemId: string;
@@ -43,12 +51,35 @@ interface StockVisibilityContext {
   primitivePredicates: ReturnType<typeof buildRequirementDefinitions>["primitivePredicates"];
 }
 
+export function deriveRecipeLocaleNames(
+  sources: Record<RecipeId, RecipeNameSource>,
+  itemLocaleNames: Record<LocaleCode, Record<ItemId, string>>,
+): Record<LocaleCode, Record<RecipeId, string>> {
+  const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
+    LocaleCode,
+    Record<RecipeId, string>
+  >;
+  for (const [recipeId, source] of Object.entries(sources) as [RecipeId, RecipeNameSource][]) {
+    localeNames.en[recipeId] = source.englishName;
+    for (const locale of LOCALE_CODES) {
+      if (locale === "en") continue;
+      const name = itemLocaleNames[locale][source.itemId];
+      if (!name) {
+        throw new Error(`Recipe "${recipeId}" has no "${locale}" item name for "${source.itemId}"`);
+      }
+      localeNames[locale][recipeId] = name;
+    }
+  }
+  return localeNames;
+}
+
 export function extractRecipes(
   fiddle: ParsedGameData,
   cutsceneMap: CutsceneQuestMap = {},
 ): {
   recipeIdByItemId: Map<string, RecipeId>;
   recipeMemberItems: Map<RecipeId, ItemId[]>;
+  recipeNameSources: Record<RecipeId, RecipeNameSource>;
   recipes: Record<RecipeId, Recipe>;
 } {
   const definitions = buildRequirementDefinitions(
@@ -98,6 +129,7 @@ export function extractRecipes(
   mergeSources(collectHardcodedSources(itemIdToRecipeId));
 
   const recipes: Record<RecipeId, Recipe> = {};
+  const recipeNameSources = {} as Record<RecipeId, RecipeNameSource>;
   const recipeMemberItems = new Map<RecipeId, ItemId[]>();
 
   for (const [recipeId, group] of grouped) {
@@ -113,14 +145,13 @@ export function extractRecipes(
       );
     }
 
-    const name = deriveRecipeName(recipeId, group);
+    const nameSource = deriveRecipeNameSource(recipeId, group);
     const sources = deduplicateSources(allSources.get(recipeId) ?? []);
     const allSrc: AcquisitionSource[] = allDefault ? [{ type: "default" }, ...sources] : sources;
 
-    recipes[recipeId as RecipeId] = {
-      name,
-      sources: allSrc as SourceTuple,
-    };
+    const typedRecipeId = recipeId as RecipeId;
+    recipeNameSources[typedRecipeId] = nameSource;
+    recipes[typedRecipeId] = { sources: allSrc as SourceTuple };
   }
 
   const recipeIdByItemId = new Map<string, RecipeId>();
@@ -149,7 +180,7 @@ export function extractRecipes(
     `  Recipes: ${totalRecipes} total, ${withDefault} default, ${withSources} with acquired sources (${countParts.join(", ")})`,
   );
 
-  return { recipeIdByItemId, recipeMemberItems, recipes };
+  return { recipeIdByItemId, recipeMemberItems, recipeNameSources, recipes };
 }
 
 function buildQuestRecipeSource(
@@ -941,16 +972,28 @@ function deduplicateSources(sources: AcquisitionSource[]): AcquisitionSource[] {
   return result;
 }
 
-function deriveRecipeName(recipeId: string, group: RawRecipeEntry[]): string {
+function deriveRecipeNameSource(recipeId: string, group: RawRecipeEntry[]): RecipeNameSource {
   const uniqueNames = [...new Set(group.map((e) => e.name))].sort();
-  if (uniqueNames.length === 1) return uniqueNames[0];
+  if (uniqueNames.length === 1) {
+    return {
+      englishName: uniqueNames[0],
+      itemId: group.map(({ itemId }) => itemId).sort()[0] as ItemId,
+    };
+  }
 
   if (uniqueNames.length === 2) {
-    const plainBed = uniqueNames.find((n) => n.endsWith(" Bed") || n.endsWith(" Single Bed"));
+    const plainBed = uniqueNames.find(
+      (name) =>
+        name.endsWith(" Single Bed") || (name.endsWith(" Bed") && !name.endsWith(" Double Bed")),
+    );
     const doubleBed = uniqueNames.find((n) => n.endsWith(" Double Bed"));
     if (plainBed && doubleBed) {
       const prefix = doubleBed.slice(0, -" Double Bed".length);
-      return `${prefix} Bed`;
+      const representative = group
+        .filter(({ name }) => name === plainBed)
+        .map(({ itemId }) => itemId)
+        .sort()[0];
+      return { englishName: `${prefix} Bed`, itemId: representative as ItemId };
     }
   }
 

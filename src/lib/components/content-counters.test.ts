@@ -8,6 +8,7 @@ import MuseumContent from "$lib/components/museum-content.svelte";
 import QuestsContent from "$lib/components/quests-content.svelte";
 import RecipesContent from "$lib/components/recipes-content.svelte";
 import { trackerData } from "$lib/data/index.js";
+import { getName } from "$lib/data/names.js";
 import { isEntityNameVisible } from "$lib/engine/visibility.js";
 import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
 import { userState } from "$lib/stores/user-state.svelte.js";
@@ -71,7 +72,7 @@ describe("subsection counters", () => {
       });
     if (!hiddenEntry) throw new Error("Expected a spoilered almanac entry");
 
-    toolbarState.setSearch(hiddenEntry.name);
+    toolbarState.setSearch(getName("items", hiddenEntry.itemIds[0], "en"));
     const { body } = render(AlmanacContent, { props: { locale: "en" } });
 
     expect(body).not.toContain('aria-label="Reveal spoiler"');
@@ -79,17 +80,18 @@ describe("subsection counters", () => {
 
   it("hides recipes whose covered sources all belong to hidden groups", () => {
     const coveredTypes = new Set(SOURCE_FILTERS.flatMap(({ types }) => types));
-    const hiddenRecipe = Object.values(trackerData.recipes).find(({ sources }) =>
+    const hiddenRecipe = Object.entries(trackerData.recipes).find(([, { sources }]) =>
       sources.every(({ type }) => coveredTypes.has(type)),
     );
     if (!hiddenRecipe) throw new Error("Expected a recipe with covered source types");
+    const hiddenRecipeName = getName("recipes", hiddenRecipe[0] as never, "en");
 
     toolbarState.setSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
     const { body } = render(RecipesContent, { props: { locale: "en" } });
 
-    expect(renderedText(body)).not.toContain(hiddenRecipe.name);
+    expect(renderedText(body)).not.toContain(hiddenRecipeName);
   });
 
   it("hides museum items whose covered sources all belong to hidden groups", () => {
@@ -102,7 +104,7 @@ describe("subsection counters", () => {
       return item.sources.every(({ type }) => coveredTypes.has(type));
     });
     if (!hiddenItem) throw new Error("Expected a museum item with covered source types");
-    const itemName = trackerData.items[hiddenItem].name;
+    const itemName = getName("items", hiddenItem, "en");
 
     userState.setAvailabilityMode("everything");
     toolbarState.setSearch(itemName);
@@ -159,22 +161,26 @@ describe("subsection counters", () => {
     const coveredTypes = new Set(SOURCE_FILTERS.flatMap(({ types }) => types));
     const entries = Object.values(trackerData.almanac).flatMap(({ items }) => items);
     const hiddenEntry = entries.find((entry) => {
-      const nameIsUnique = entries.filter(({ name }) => name === entry.name).length === 1;
+      const entryName = getName("items", entry.itemIds[0], "en");
+      const nameIsUnique =
+        entries.filter((candidate) => getName("items", candidate.itemIds[0], "en") === entryName)
+          .length === 1;
       const sources = entry.itemIds.flatMap((itemId) => trackerData.items[itemId].sources);
       return nameIsUnique && sources.every(({ type }) => coveredTypes.has(type));
     });
     if (!hiddenEntry) throw new Error("Expected an almanac row with covered source types");
 
     userState.setAvailabilityMode("everything");
-    toolbarState.setSearch(hiddenEntry.name);
+    const hiddenEntryName = getName("items", hiddenEntry.itemIds[0], "en");
+    toolbarState.setSearch(hiddenEntryName);
     const unfiltered = render(AlmanacContent, { props: { locale: "en" } });
-    expect(renderedText(unfiltered.body)).toContain(hiddenEntry.name);
+    expect(renderedText(unfiltered.body)).toContain(hiddenEntryName);
 
     toolbarState.setSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
     const { body } = render(AlmanacContent, { props: { locale: "en" } });
 
-    expect(renderedText(body)).not.toContain(hiddenEntry.name);
+    expect(renderedText(body)).not.toContain(hiddenEntryName);
   });
 });
