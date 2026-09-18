@@ -1,4 +1,4 @@
-import { formatBiomeName, formatStoreName, seasonLabel, withIndefiniteArticle } from "./format.js";
+import { formatBiomeName, formatStoreName, withIndefiniteArticle } from "./format.js";
 
 import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
 import type {
@@ -28,6 +28,8 @@ export type SegmentLookups = Pick<TrackerData, "categoryVisibility"> &
     npcVisibility: VisibilityLookup<TrackerData["npcs"]>;
     questNpcIds: Partial<Record<QuestId, NpcId>>;
     questTypes: Partial<Record<QuestId, QuestType>>;
+    /** The game's season names in the active locale (`ui` chunk). */
+    seasonNames: Record<Season, string>;
     stationNames: Partial<Record<string, string>>;
     storeVisibility: VisibilityLookup<TrackerData["stores"]>;
   };
@@ -162,7 +164,9 @@ export function buildSourceSegments(
       const festivalName =
         lookups.festivals[source.festivalId]?.name ?? titleCase(source.festivalId);
       const date = lookups.festivals[source.festivalId]?.date;
-      const dateSuffix = date ? ` (${formatDateLabel(date.season, date.day)})` : "";
+      const dateSuffix = date
+        ? ` (${formatDateLabel(date.season, date.day, lookups.seasonNames)})`
+        : "";
       if (!source.storeId) return [`Obtain at the ${festivalName}${dateSuffix}`];
       const storeName = formatStoreName(source.storeId, lookups.stores);
       return [`Purchase from ${storeName} at the ${festivalName}${dateSuffix}`];
@@ -245,8 +249,8 @@ export function buildSourceSegments(
     case "reach_day": {
       const { day, season, year } = source.triggerDate;
       const dateStr = year
-        ? `${formatDateLabel(season, day)}, Year ${String(year)}`
-        : formatDateLabel(season, day);
+        ? `${formatDateLabel(season, day, lookups.seasonNames)}, Year ${String(year)}`
+        : formatDateLabel(season, day, lookups.seasonNames);
       return [`Receive in a letter after reaching ${dateStr}`];
     }
     case "recipe": {
@@ -342,8 +346,12 @@ export function buildStoreQualifier(
   ];
 }
 
-export function formatDateLabel(season: Season, day: number): string {
-  return `${seasonLabel(season)} ${String(day)}`;
+export function formatDateLabel(
+  season: Season,
+  day: number,
+  seasonNames: SegmentLookups["seasonNames"],
+): string {
+  return `${seasonNames[season]} ${String(day)}`;
 }
 
 function anyBranchLabel(fragments: string[]): string {

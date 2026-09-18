@@ -42,6 +42,7 @@
         {compact}
         id={npc.id}
         known={userState.progressionState.knownNpcs.has(npc.id)}
+        {locale}
         name={npc.name}
         {npc}
       />

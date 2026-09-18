@@ -1,6 +1,8 @@
+import { getName } from "$lib/data/names.js";
 import * as m from "$lib/paraglide/messages.js";
 
 import type { Pathname } from "$app/types";
+import type { LocaleCode } from "$lib/types/locale.js";
 
 export const CATEGORY_KEYS = [
   "almanac",
@@ -24,30 +26,34 @@ export interface CategoryInfo {
 
 export type CategoryKey = (typeof CATEGORY_KEYS)[number];
 
-const CATEGORY_NAMES: Record<CategoryKey, () => string> = {
-  almanac: m.category_almanac_name,
-  animals: m.category_animals_name,
-  cosmetics: m.category_cosmetics_name,
-  mines: m.category_mines_name,
-  museum: m.category_museum_name,
-  npcs: m.category_npcs_name,
-  quests: m.category_quests_name,
-  recipes: m.category_recipes_name,
-  renown: m.category_renown_name,
-  skills: m.category_skills_name,
+/**
+ * Category names are the game's own words wherever it has one (the `ui` chunk, awaited by the
+ * root layout); only concepts the game never labels on their own fall back to MFG's messages.
+ */
+const CATEGORY_NAMES: Record<CategoryKey, (locale: LocaleCode) => string> = {
+  almanac: (locale) => getName("ui", "almanac", locale),
+  animals: (locale) => getName("ui", "animals", locale),
+  cosmetics: () => m.category_cosmetics_name(),
+  mines: () => m.category_mines_name(),
+  museum: (locale) => getName("ui", "museum", locale),
+  npcs: (locale) => getName("ui", "villagers", locale),
+  quests: () => m.category_quests_name(),
+  recipes: () => m.category_recipes_name(),
+  renown: (locale) => getName("ui", "renown", locale),
+  skills: (locale) => getName("ui", "skills", locale),
 };
 
-const CATEGORY_DESCRIPTIONS: Record<CategoryKey, () => string> = {
-  almanac: m.category_almanac_description,
-  animals: m.category_animals_description,
-  cosmetics: m.category_cosmetics_description,
-  mines: m.category_mines_description,
-  museum: m.category_museum_description,
-  npcs: m.category_npcs_description,
-  quests: m.category_quests_description,
-  recipes: m.category_recipes_description,
-  renown: m.category_renown_description,
-  skills: m.category_skills_description,
+const CATEGORY_DESCRIPTIONS: Record<CategoryKey, (locale: LocaleCode) => string> = {
+  almanac: () => m.category_almanac_description(),
+  animals: () => m.category_animals_description(),
+  cosmetics: () => m.category_cosmetics_description(),
+  mines: () => m.category_mines_description(),
+  museum: () => m.category_museum_description(),
+  npcs: () => m.category_npcs_description(),
+  quests: () => m.category_quests_description(),
+  recipes: () => m.category_recipes_description(),
+  renown: (locale) => getName("ui", "town_rank", locale),
+  skills: (locale) => getName("ui", "skill_levels", locale),
 };
 
 const CATEGORY_HREFS: Record<CategoryKey, Pathname> = {
@@ -63,13 +69,18 @@ const CATEGORY_HREFS: Record<CategoryKey, Pathname> = {
   skills: "/skills",
 };
 
+/** The CSS color token for a category; the one lookup that needs no locale. */
+export function categoryColor(key: CategoryKey): string {
+  return `cat-${key}`;
+}
+
 /** Lookup a single category by key. */
-export function categoryForKey(key: CategoryKey): CategoryInfo {
+export function categoryForKey(key: CategoryKey, locale: LocaleCode): CategoryInfo {
   return {
-    color: `cat-${key}`,
-    description: CATEGORY_DESCRIPTIONS[key](),
+    color: categoryColor(key),
+    description: CATEGORY_DESCRIPTIONS[key](locale),
     href: CATEGORY_HREFS[key],
-    name: CATEGORY_NAMES[key](),
+    name: CATEGORY_NAMES[key](locale),
   };
 }
 
@@ -79,13 +90,16 @@ export function categoryKeyForPathname(pathname: string): CategoryKey | undefine
 }
 
 /** Display name for a category, or the raw key when it isn't a known category. */
-export function categoryNameForKey(key: string): string {
-  return isCategoryKey(key) ? CATEGORY_NAMES[key]() : key;
+export function categoryNameForKey(key: string, locale: LocaleCode): string {
+  return isCategoryKey(key) ? CATEGORY_NAMES[key](locale) : key;
 }
 
-export function sortCategoryKeysByName(keys: readonly CategoryKey[]): CategoryKey[] {
+export function sortCategoryKeysByName(
+  keys: readonly CategoryKey[],
+  locale: LocaleCode,
+): CategoryKey[] {
   return [...keys].sort((left, right) => {
-    const nameOrder = categoryForKey(left).name.localeCompare(categoryForKey(right).name);
+    const nameOrder = CATEGORY_NAMES[left](locale).localeCompare(CATEGORY_NAMES[right](locale));
     return nameOrder !== 0 ? nameOrder : left.localeCompare(right);
   });
 }

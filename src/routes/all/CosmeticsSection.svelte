@@ -16,7 +16,7 @@
     class="flex flex-col gap-1"
     style="--primary: var(--cat-cosmetics)"
   >
-    <SectionHeader key="cosmetics" {progress} />
+    <SectionHeader key="cosmetics" {locale} {progress} />
     <CosmeticsContent {locale} />
   </section>
 {/if}

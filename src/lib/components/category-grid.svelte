@@ -4,8 +4,9 @@
   import { CATEGORY_KEYS, sortCategoryKeysByName } from "$lib/data/categories.js";
 
   import type { AllProgress } from "$lib/engine/progress.js";
+  import type { LocaleCode } from "$lib/types/locale.js";
 
-  let { progress }: { progress: AllProgress } = $props();
+  let { locale, progress }: { locale: LocaleCode; progress: AllProgress } = $props();
 
   let activeCategories = $derived(
     sortCategoryKeysByName(
@@ -13,6 +14,7 @@
         const p = progress[key];
         return p.total === 0 || p.completed < p.total;
       }),
+      locale,
     ),
   );
 
@@ -22,6 +24,7 @@
         const p = progress[key];
         return p.total > 0 && p.completed >= p.total;
       }),
+      locale,
     ),
   );
 </script>
@@ -30,7 +33,7 @@
   {#if activeCategories.length > 0}
     <ul class="flex flex-col gap-1.5" aria-label="Categories in progress">
       {#each activeCategories as key (key)}
-        <li><CategoryCard {key} progress={progress[key]} /></li>
+        <li><CategoryCard {key} {locale} progress={progress[key]} /></li>
       {/each}
     </ul>
   {/if}
@@ -45,7 +48,7 @@
       </div>
       <ul class="flex flex-col gap-1.5" aria-label="Completed categories">
         {#each completedCategories as key (key)}
-          <li><CategoryCard {key} progress={progress[key]} /></li>
+          <li><CategoryCard {key} {locale} progress={progress[key]} /></li>
         {/each}
       </ul>
     </section>

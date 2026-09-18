@@ -3,11 +3,14 @@
   import { slide } from "svelte/transition";
 
   import localeManifest from "$lib/data/locales.json";
+  import { getName } from "$lib/data/names.js";
   import * as m from "$lib/paraglide/messages.js";
   import { getLocale } from "$lib/paraglide/runtime.js";
   import { localePreference } from "$lib/stores/locale-preference.svelte.js";
 
-  import type { LocaleManifest } from "$lib/types/locale.js";
+  import type { LocaleCode, LocaleManifest } from "$lib/types/locale.js";
+
+  let { locale }: { locale: LocaleCode } = $props();
 
   let open = $state(false);
   const locales = localeManifest as LocaleManifest;
@@ -19,7 +22,7 @@
 <div class="language-setting">
   <div class="language-setting__row">
     <span class="language-setting__label"
-      ><IconLanguage class="size-3.5" />{m.settings_language_label()}</span
+      ><IconLanguage class="size-3.5" />{getName("ui", "language", locale)}</span
     >
     <button
       aria-controls="language-picker-options"

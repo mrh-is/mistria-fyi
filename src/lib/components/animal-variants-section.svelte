@@ -5,7 +5,6 @@
     getVariantSeason,
     isVariantInScope as isVariantInScopeEngine,
   } from "$lib/engine/animal-availability.js";
-  import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
@@ -174,7 +173,7 @@
   hasDisplayableItem={hasDisplayableVariant}
   {isAnimalComplete}
   {locale}
-  name={m.animals_color_variants_section_name()}
+  name={getName("ui", "color_variant", locale)}
   {sectionConfig}
   toggleCompletion={(animalId: AnimalId, variantId: AnimalVariantId) => {
     userState.toggleAnimalVariant(animalId, variantId);

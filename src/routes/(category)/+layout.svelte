@@ -6,7 +6,9 @@
   import { deLocalizeHref } from "$lib/paraglide/runtime.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
-  let { children } = $props();
+  import type { LayoutProps } from "./$types.js";
+
+  let { children, data }: LayoutProps = $props();
 
   let key = $derived.by(() => {
     const pathname = deLocalizeHref(page.url.pathname);
@@ -14,7 +16,7 @@
     if (!categoryKey) throw new Error(`Unknown category route: ${pathname}`);
     return categoryKey;
   });
-  const { color, name } = $derived(categoryForKey(key));
+  const { color, name } = $derived(categoryForKey(key, data.locale));
 
   let progress = $derived(
     getCategoryProgress(key, {

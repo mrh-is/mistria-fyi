@@ -10,6 +10,10 @@
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { localizedHref } from "$lib/utils/localized-href.js";
 
+  import type { LocaleCode } from "$lib/types/locale.js";
+
+  let { locale }: { locale: LocaleCode } = $props();
+
   let confirmSpoilers = $state(false);
   let spoilerToggleChecked = $state(userState.state.showSpoilers);
 
@@ -85,7 +89,7 @@
 
   <QuickSettingsThemePicker />
 
-  <QuickSettingsLanguagePicker />
+  <QuickSettingsLanguagePicker {locale} />
 
   <div class="quick-settings__links">
     <a class="quick-settings__link" href={localizedHref("/data")}>

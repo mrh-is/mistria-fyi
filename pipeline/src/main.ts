@@ -50,7 +50,7 @@ import { extractSkills } from "./extractors/skills.js";
 import { extractSprites } from "./extractors/sprites.js";
 import { extractStoresMeta } from "./extractors/stores-meta.js";
 import { extractTreasureChestTiers } from "./extractors/treasure-chest-tiers.js";
-import { extractUiStrings, tierKeys } from "./extractors/ui-strings.js";
+import { APP_UI_STRINGS, extractUiStrings, tierKeys } from "./extractors/ui-strings.js";
 import { buildCutsceneQuestMap } from "./extractors/visibility/cutscene-quest-map.js";
 import {
   assignEntityVisibility,
@@ -398,6 +398,7 @@ async function main(): Promise<void> {
     ...Object.values(animals).map((animal) => animal.variantTiers.length),
   );
   const { localeNames: uiLocaleNames } = extractUiStrings(fiddle, assetsDir, [
+    ...APP_UI_STRINGS,
     ...readAlmanacCategories(fiddle).map((category) => ({
       id: category.key,
       miscLocalKey: category.localKey,

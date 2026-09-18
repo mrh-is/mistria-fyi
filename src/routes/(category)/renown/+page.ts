@@ -1,4 +1,4 @@
-import { loadPageNames } from "$lib/data/names.js";
+import { getName, loadNames, loadPageNames } from "$lib/data/names.js";
 import * as m from "$lib/paraglide/messages.js";
 import { baseLocale, getLocaleForUrl } from "$lib/paraglide/runtime.js";
 
@@ -9,11 +9,12 @@ import type { PageLoad } from "./$types.js";
 // always present; fall back to the base locale in that case.
 export const load: PageLoad = async (event?: Partial<Parameters<PageLoad>[0]>) => {
   const locale = event?.url ? getLocaleForUrl(event.url) : baseLocale;
+  await loadNames(locale, ["ui"]);
   await loadPageNames(event, ["town-ranks"]);
   return {
     metadata: {
       description: m.renown_page_description({}, { locale }),
-      title: m.category_renown_name({}, { locale }),
+      title: getName("ui", "renown", locale),
     },
   };
 };

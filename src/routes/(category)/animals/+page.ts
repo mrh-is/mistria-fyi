@@ -1,4 +1,4 @@
-import { loadPageNames } from "$lib/data/names.js";
+import { getName, loadNames, loadPageNames } from "$lib/data/names.js";
 import * as m from "$lib/paraglide/messages.js";
 import { baseLocale, getLocaleForUrl } from "$lib/paraglide/runtime.js";
 import { SEGMENT_LOOKUP_CATEGORIES } from "$lib/utils/segment-lookups.js";
@@ -10,6 +10,7 @@ import type { PageLoad } from "./$types.js";
 // always present; fall back to the base locale in that case.
 export const load: PageLoad = async (event?: Partial<Parameters<PageLoad>[0]>) => {
   const locale = event?.url ? getLocaleForUrl(event.url) : baseLocale;
+  await loadNames(locale, ["ui"]);
   await loadPageNames(event, [
     "animals",
     "pets/cosmetic_sets",
@@ -20,7 +21,7 @@ export const load: PageLoad = async (event?: Partial<Parameters<PageLoad>[0]>) =
   return {
     metadata: {
       description: m.animals_page_description({}, { locale }),
-      title: m.category_animals_name({}, { locale }),
+      title: getName("ui", "animals", locale),
     },
   };
 };

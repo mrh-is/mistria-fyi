@@ -5,13 +5,16 @@
 
   import type { DisplayBadges } from "$lib/engine/availability-condition.js";
   import type { Source } from "$lib/types/acquisition";
+  import type { Season } from "$lib/types/tracker-data.js";
   import type { SourceSegment } from "$lib/utils/source-segments.js";
 
   let {
+    seasonNames,
     sourceBadges,
     sources,
     sourceSegments,
   }: {
+    seasonNames?: Record<Season, string>;
     sourceBadges: DisplayBadges[];
     sources: Source[];
     sourceSegments: SourceSegment[][];
@@ -33,7 +36,7 @@
       </span>
       {#if hasTimingContext(sourceBadges[i])}
         <span class="source-card__restrictions">
-          <RestrictionBadges badges={sourceBadges[i]} />
+          <RestrictionBadges badges={sourceBadges[i]} {seasonNames} />
         </span>
       {/if}
     </div>

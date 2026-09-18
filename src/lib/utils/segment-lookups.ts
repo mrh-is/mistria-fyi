@@ -26,6 +26,12 @@ export function buildBaseSegmentLookups(
     ...getLocalizedBaseSegmentLookups(locale),
     npcNames: getNameTable("npcs", locale),
     redactedStoreIds,
+    seasonNames: {
+      fall: getName("ui", "fall", locale),
+      spring: getName("ui", "spring", locale),
+      summer: getName("ui", "summer", locale),
+      winter: getName("ui", "winter", locale),
+    },
     skillNames: getNameTable("skills", locale),
   };
 }
@@ -57,6 +63,7 @@ function buildStaticBaseSegmentLookups(): Omit<
   | "questNames"
   | "recipeNames"
   | "redactedStoreIds"
+  | "seasonNames"
   | "skillNames"
   | "stores"
   | "treasureChestTiers"

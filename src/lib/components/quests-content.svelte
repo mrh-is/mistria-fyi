@@ -142,17 +142,17 @@
   function typeLabel(type: QuestType): string {
     switch (type) {
       case "cooking":
-        return m.quest_type_cooking();
+        return getName("ui", "cooking_challenges", locale);
       case "crown":
-        return m.quest_type_crown();
+        return getName("ui", "crown_requests", locale);
       case "fetch":
         return m.quest_type_fetch();
       case "heart":
-        return m.quest_type_heart();
+        return getName("ui", "heart_quests", locale);
       case "mission":
-        return m.quest_type_mission();
+        return getName("ui", "mission_quests", locale);
       case "story":
-        return m.quest_type_story();
+        return getName("ui", "story_quests", locale);
     }
   }
 
@@ -234,6 +234,7 @@
 {#if spoilerGuard.condition}
   <ConfirmSpoilerDialog
     condition={spoilerGuard.condition}
+    {locale}
     bind:open={spoilerGuard.open}
     onCancel={() => {
       spoilerGuard.cancel();

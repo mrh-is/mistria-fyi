@@ -21,6 +21,23 @@ const localizeField = vi.hoisted(() =>
 
 vi.mock("../localize.js", () => ({ localizeField }));
 
+function stubLocalized(perLocale: Partial<Record<string, string>>): void {
+  localizeField.mockImplementationOnce((_assetsDir, input) => ({
+    fallbackLocales: [],
+    values: {
+      en: input.englishValue,
+      es: input.englishValue,
+      fr: input.englishValue,
+      ja: input.englishValue,
+      ko: input.englishValue,
+      ru: input.englishValue,
+      "zh-Hans": input.englishValue,
+      "zh-Hant": input.englishValue,
+      ...perLocale,
+    },
+  }));
+}
+
 describe("extractUiStrings", () => {
   it("localizes each requested misc_local key without a field segment", () => {
     vi.spyOn(console, "log").mockImplementation(() => undefined);
@@ -71,6 +88,56 @@ describe("extractUiStrings", () => {
     expect(() => extractUiStrings(fiddle, "assets", ["song_crystal"])).toThrow(
       /no English string for UI key "song_crystal"/,
     );
+  });
+
+  it("collapses player-gender variants to the they form", () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    stubLocalized({ es: "<he>Casado</he><she>Casada</she><they>Casade</they>" });
+    const fiddle = makeFiddle({ misc_local: { married: "Married" } });
+
+    const { localeNames } = extractUiStrings(fiddle, "assets", ["married"]);
+
+    expect(localeNames.es.married).toBe("Casade");
+    expect(localeNames.en.married).toBe("Married");
+  });
+
+  it("throws on inline markup it cannot collapse", () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    stubLocalized({ fr: "Appuyez sur <input_confirm>" });
+    const fiddle = makeFiddle({ misc_local: { confirm: "Confirm" } });
+
+    expect(() => extractUiStrings(fiddle, "assets", ["confirm"])).toThrow(
+      /misc_local\/confirm in fr has inline markup/,
+    );
+  });
+
+  it("strips a leading article per language and re-capitalizes", () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    stubLocalized({ es: "El museo", fr: "Le musée", ja: "博物館", ru: "Музей" });
+    const fiddle = makeFiddle({ misc_local: { the_museum: "The Museum" } });
+
+    const { localeNames } = extractUiStrings(fiddle, "assets", [
+      { id: "museum", miscLocalKey: "the_museum", stripArticle: true },
+    ]);
+
+    expect(localeNames.en.museum).toBe("Museum");
+    expect(localeNames.es.museum).toBe("Museo");
+    expect(localeNames.fr.museum).toBe("Musée");
+    expect(localeNames.ja.museum).toBe("博物館");
+    expect(localeNames.ru.museum).toBe("Музей");
+  });
+
+  it("leaves a title alone when the language wrote it without an article", () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    stubLocalized({ es: "Almanaque", fr: "L'almanach" });
+    const fiddle = makeFiddle({ misc_local: { the_almanac: "The Almanac" } });
+
+    const { localeNames } = extractUiStrings(fiddle, "assets", [
+      { id: "almanac", miscLocalKey: "the_almanac", stripArticle: true },
+    ]);
+
+    expect(localeNames.es.almanac).toBe("Almanaque");
+    expect(localeNames.fr.almanac).toBe("Almanach");
   });
 
   it("names tiers one-based", () => {

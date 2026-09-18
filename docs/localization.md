@@ -26,21 +26,23 @@ one players recognize.
 
 ### Game vocabulary in UI chrome
 
-Some Paraglide messages name a concept the game names too ("The Almanac", "Renown", seasons, quest
-types, relationship statuses). Those are not translated by us: `messages/game-terms.json` maps each
-such message key to the `misc_local` key that carries it, and `pnpm run i18n:sync-game-terms` copies
-the game's string into every `messages/<locale>.json`, English included, then you run
-`pnpm run paraglide:compile`. The pipeline assets tests (`pipeline/src/game-terms.assets.test.ts`)
-fail when a mapped message drifts from the game, so a hand edit to one of these keys is caught the
-next time the assets suite runs. The game data only changes on a deliberate version update, so the
-sync is part of that protocol, not a routine step.
+MFG's own chrome names plenty of concepts the game names too: category names ("Almanac",
+"Villagers", "Renown"), seasons, quest types, relationship statuses, "Cancel". Those are not
+Paraglide messages. `APP_UI_STRINGS` in `pipeline/src/extractors/ui-strings.ts` lists the
+`misc_local` keys the app displays, the pipeline writes them into the `ui` chunk, and the root
+layout (`src/routes/+layout.ts`) awaits that chunk on every route, so `getName("ui", id, locale)`
+works anywhere. Sitewide chrome without a `locale` prop reads `page.data.locale`.
 
-The sync refuses a game string that carries player-gender markup (`<he>…</he><she>…</she>`, as
-`misc_local/engaged` does in Spanish) because Paraglide can't render it. `notes` in the same file
-records near-misses the audit considered and left hand-written (singular/plural mismatches, terms
-the game only has in a longer phrase, strings with placeholders), so a later audit doesn't repeat
-the work. When you add a UI string that names something the game names, add it to `terms` instead of
-translating it.
+Two adjustments happen in the extractor rather than the app. A request with `stripArticle` drops the
+leading definite article the game puts on a menu title ("The Almanac" → "Almanac", "Le musée" →
+"Musée") for the languages that write one; the others pass through. Player-gendered strings
+(`<he>Casado</he><she>Casada</she><they>Casade</they>`, as Spanish `married` is) collapse to their
+`<they>` form; any other inline markup throws, since the app renders these as plain text.
+
+When you add a UI string that names something the game names, add its `misc_local` key to
+`APP_UI_STRINGS` and call `getName("ui", …)` instead of adding a message. A key the game hasn't
+translated yet (`mission_quests`, as of 1.0.2) falls back to English in every locale, the same as
+any other game-data gap, and gets picked up at the next game-data update.
 
 ### How name chunks load
 

@@ -1,19 +1,23 @@
 <script lang="ts">
   import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
   import { buttonVariants } from "$lib/components/ui/button/button.svelte";
+  import { getName } from "$lib/data/names.js";
   import { isConditionInvertible } from "$lib/engine/visibility.js";
   import * as m from "$lib/paraglide/messages.js";
 
+  import type { LocaleCode } from "$lib/types/locale.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   let {
     condition,
+    locale,
     onCancel,
     onComplete,
     onCompleteAndUpdate,
     open = $bindable(false),
   }: {
     condition: VisibilityCondition;
+    locale: LocaleCode;
     onCancel: () => void;
     onComplete: () => void;
     onCompleteAndUpdate: () => void;
@@ -32,7 +36,7 @@
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer class="flex-wrap">
-      <AlertDialog.Cancel onclick={onCancel}>{m.spoiler_dialog_cancel()}</AlertDialog.Cancel>
+      <AlertDialog.Cancel onclick={onCancel}>{getName("ui", "cancel", locale)}</AlertDialog.Cancel>
       <AlertDialog.Action
         class={`${buttonVariants({ variant: "outline" })} text-foreground`}
         onclick={onComplete}
