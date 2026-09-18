@@ -106,7 +106,6 @@
   "dates_section_name": "Rendez-vous",
   "animals_cosmetics_section_name": "Cosmétiques",
   "animals_color_variants_section_name": "Variantes de couleur",
-  "animals_variant_tier_label": "Niveau {tier}",
   "animals_pet_cosmetics_section_name": "Cosmétiques d'animal",
   "animals_pet_skins_section_name": "Apparences d'animal",
   "section_progress_label": "{name}, {completed} sur {total} terminés",
@@ -457,5 +456,6 @@
   "weather_heavy_inclement": "Orage",
   "weather_special": "Brise",
   "weather_winter_inclement": "Neige",
-  "weather_winter_heavy_inclement": "Blizzard"
+  "weather_winter_heavy_inclement": "Blizzard",
+  "skip_to_main_content": "Aller au contenu principal"
 }

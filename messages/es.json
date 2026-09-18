@@ -106,7 +106,6 @@
   "dates_section_name": "Citas",
   "animals_cosmetics_section_name": "Cosméticos",
   "animals_color_variants_section_name": "Variantes de color",
-  "animals_variant_tier_label": "Nivel {tier}",
   "animals_pet_cosmetics_section_name": "Cosméticos de mascota",
   "animals_pet_skins_section_name": "Aspectos de mascota",
   "section_progress_label": "{name}, {completed} de {total} completados",
@@ -457,5 +456,6 @@
   "weather_heavy_inclement": "Tormenta",
   "weather_special": "Brisa",
   "weather_winter_inclement": "Nieve",
-  "weather_winter_heavy_inclement": "Ventisca"
+  "weather_winter_heavy_inclement": "Ventisca",
+  "skip_to_main_content": "Saltar al contenido principal"
 }

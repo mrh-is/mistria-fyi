@@ -430,36 +430,43 @@ spec resolves up front.
 
 ## Acceptance checklist
 
-- [ ] Language picker exists, lists all 8 locales by native display name (no flags), marks the 7
+- [x] Language picker exists, lists all 8 locales by native display name (no flags), marks the 7
       beta locales as such, and persists the user's choice across reloads.
-- [ ] Locale is a URL path segment using BCP 47 tags (English included, always prefixed, no
+- [x] Locale is a URL path segment using BCP 47 tags (English included, always prefixed, no
       unprefixed default locale), with untranslated (English) route slugs across all locales, via
       Paraglide's routing strategy; visiting a bare/locale-less path redirects to a stored
       preference or negotiated `Accept-Language` locale when one is determinable, else 404; each
       locale's pages set `<html lang>` correctly and emit valid `hreflang` alternates; `sitemap.xml`
       reflects real locale-prefixed URLs with no broken `[locale]` segments.
-- [ ] `tracker-data.json` no longer embeds English names; a generated `en` locale chunk set exists
+- [x] `tracker-data.json` no longer embeds English names; a generated `en` locale chunk set exists
       and is structurally identical to the other 7.
-- [ ] Every entity category with a user-facing name resolves its displayed name from the active
+- [x] Every entity category with a user-facing name resolves its displayed name from the active
       locale's chunk via `getName(category, id, locale)`, with fallback to English when a
-      translation is missing. Categories confirmed in scope: items, npcs, festivals, pets, perks,
-      quests, stores, renown, museum wings, dungeons/mines biomes, cosmetics, animals, recipes,
-      skills (final list per the implementation plan's category audit).
-- [ ] The category audit's output (a category → key-pattern table) and the resulting manual-override
+      translation is missing. (Delivered as a build-time fill: the pipeline writes English into
+      every locale chunk for untranslated keys, so chunks are key-complete and the app fetches only
+      the active locale; `names.completeness.test.ts` guards this.) Categories confirmed in scope:
+      items, npcs, festivals, pets, perks, quests, stores, renown, museum wings, dungeons/mines
+      biomes, cosmetics, animals, recipes, skills (final list per the implementation plan's category
+      audit).
+- [x] The category audit's output (a category → key-pattern table) and the resulting manual-override
       data file both exist and are reviewable, separate from any single category's extractor PR.
-- [ ] `getName()` takes locale as an explicit parameter; no ambient/module-level "current locale"
+      (Audit table:
+      #267's "Phase 4 audit" comment (private beta); overrides:
+      `pipeline/src/localize-overrides.json`.)
+- [x] `getName()` takes locale as an explicit parameter; no ambient/module-level "current locale"
       state exists that could leak across concurrent SSR requests.
-- [ ] Switching locale updates all currently-rendered entity names without a full page reload.
-- [ ] Sitewide search resolves names in the active locale (with English fallback) across every
+- [x] Switching locale updates all currently-rendered entity names without a full page reload.
+- [x] Sitewide search resolves names in the active locale (with English fallback) across every
       searchable category, using an `Intl.Collator` constructed with the active locale's BCP 47 tag.
-- [ ] MFG's own UI chrome text is translated via Paraglide (static, machine-translated, checked in)
+- [x] MFG's own UI chrome text is translated via Paraglide (static, machine-translated, checked in)
       for all 8 locales, with English fallback for any untranslated string, and correct plural
       handling verified for at least one string in Russian.
-- [ ] Pipeline changes are covered by tests validating locale-key derivation, manual overrides, and
+- [x] Pipeline changes are covered by tests validating locale-key derivation, manual overrides, and
       fallback behavior for at least one entity per category touched.
-- [ ] Save import/export and transfer-encoding tests still pass unmodified (confirms the no-impact
+- [x] Save import/export and transfer-encoding tests still pass unmodified (confirms the no-impact
       assumption in Scope boundaries).
-- [ ] CJK/Cyrillic locales render with a legible, chosen (not default-Noto) font, no tofu boxes;
+- [x] CJK/Cyrillic locales render with a legible, chosen (not default-Noto) font, no tofu boxes;
       Latin-script locales are visually unaffected; Russian text doesn't break layout.
-- [ ] Per-category chunk payload size (a non-English route's locale + English chunks vs. today's
-      inline baseline) has been measured, not assumed.
+- [x] Per-category chunk payload size (a non-English route's locale + English chunks vs. today's
+      inline baseline) has been measured, not assumed. (Recorded under Phase 8 in the
+      [implementation plan](../plans/2026-09-16-localization-support.md#phase-8-full-verification-and-delivery).)

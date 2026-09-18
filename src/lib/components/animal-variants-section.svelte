@@ -132,7 +132,8 @@
           redacted: isVariantSpoilered(animalId, vid),
           season: getVariantSeason(variant),
           sources: [variant.source],
-          subtitle: totalTiers > 1 ? m.animals_variant_tier_label({ tier: tier + 1 }) : undefined,
+          subtitle:
+            totalTiers > 1 ? getName("ui", `tier_${(tier + 1).toString()}`, locale) : undefined,
           tier,
         });
       }

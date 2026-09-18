@@ -100,7 +100,6 @@
   "dates_section_name": "デート",
   "animals_cosmetics_section_name": "コスメ",
   "animals_color_variants_section_name": "カラーバリエーション",
-  "animals_variant_tier_label": "ティア{tier}",
   "animals_pet_cosmetics_section_name": "ペットのコスメ",
   "animals_pet_skins_section_name": "ペットのスキン",
   "section_progress_label": "{name}、{total}件中{completed}件完了",
@@ -443,5 +442,6 @@
   "weather_heavy_inclement": "嵐",
   "weather_special": "そよ風",
   "weather_winter_inclement": "雪",
-  "weather_winter_heavy_inclement": "吹雪"
+  "weather_winter_heavy_inclement": "吹雪",
+  "skip_to_main_content": "メインコンテンツへスキップ"
 }

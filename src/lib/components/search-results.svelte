@@ -34,25 +34,33 @@
 
   let { locale, query }: { locale: LocaleCode; query: string } = $props();
 
-  // Search spans every category, so it needs every category's chunk for the active locale (plus
-  // English fallback) rather than the per-route subset a category page awaits in `load()`. The
-  // fetch happens here, on first search-open, not at page load; `loadNames` caches per chunk for
-  // the session, so re-opening search or retyping never re-fetches. Until the chunks land, the
-  // `$derived` name lookups below must not run, since they'd throw on an unloaded chunk.
-  // Seeded synchronously (hence `untrack`: the initial prop value is all that's wanted) so an
-  // already-cached locale renders results on the first paint with no loading flash.
+  // Search spans every category, so it needs every category's chunk for the active locale, plus
+  // English because `searchItems` also matches English terms, rather than the per-route subset a
+  // category page awaits in `load()`. The fetch happens here, on first search-open, not at page
+  // load; `loadNames` caches per chunk for the session, so re-opening search or retyping never
+  // re-fetches. Until the chunks land, the `$derived` name lookups below must not run, since
+  // they'd throw on an unloaded chunk. Seeded synchronously (hence `untrack`: the initial prop
+  // value is all that's wanted) so an already-cached locale renders results on the first paint
+  // with no loading flash.
   let namesLocale = $state<LocaleCode | undefined>(
-    untrack(() => (hasNames(locale, LOCALIZED_CATEGORIES) ? locale : undefined)),
+    untrack(() => (hasSearchNames(locale) ? locale : undefined)),
   );
   let namesReady = $derived(namesLocale === locale);
 
+  function hasSearchNames(searchLocale: LocaleCode): boolean {
+    return hasNames(searchLocale, LOCALIZED_CATEGORIES) && hasNames("en", LOCALIZED_CATEGORIES);
+  }
+
   $effect(() => {
-    if (hasNames(locale, LOCALIZED_CATEGORIES)) {
+    if (hasSearchNames(locale)) {
       namesLocale = locale;
       return;
     }
     let cancelled = false;
-    void loadNames(locale, LOCALIZED_CATEGORIES).then(() => {
+    void Promise.all([
+      loadNames(locale, LOCALIZED_CATEGORIES),
+      loadNames("en", LOCALIZED_CATEGORIES),
+    ]).then(() => {
       if (!cancelled) namesLocale = locale;
     });
     return () => {

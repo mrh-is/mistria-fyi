@@ -100,7 +100,6 @@
   "dates_section_name": "约会",
   "animals_cosmetics_section_name": "装饰",
   "animals_color_variants_section_name": "颜色变体",
-  "animals_variant_tier_label": "第{tier}阶",
   "animals_pet_cosmetics_section_name": "宠物装饰",
   "animals_pet_skins_section_name": "宠物皮肤",
   "section_progress_label": "{name}，已完成 {completed}/{total}",
@@ -443,5 +442,6 @@
   "weather_heavy_inclement": "暴风雨",
   "weather_special": "微风",
   "weather_winter_inclement": "雪",
-  "weather_winter_heavy_inclement": "暴风雪"
+  "weather_winter_heavy_inclement": "暴风雪",
+  "skip_to_main_content": "跳转到主要内容"
 }

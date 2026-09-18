@@ -18,9 +18,12 @@ export type {
   WaterType,
 } from "./acquisition.js";
 
+/**
+ * The category's label is the game's own UI string, resolved through `getName("ui", id, locale)`,
+ * so no `name` is stored here.
+ */
 export interface AlmanacCategory {
   items: AlmanacEntry[];
-  name: string;
 }
 export type AlmanacCategoryId = string & { readonly __brand: "AlmanacCategoryId" };
 export interface AlmanacEntry {
@@ -45,6 +48,7 @@ export interface CookingQuest extends Quest {
 }
 export interface Cosmetic extends TrackerEntity {
   slot: CosmeticSlot;
+  /** A `ui_sub_category` key; its label resolves via `getName("cosmetics/subcategories", key, locale)`. */
   subCategory?: string;
 }
 export type CosmeticId = string & { readonly __brand: "CosmeticId" };

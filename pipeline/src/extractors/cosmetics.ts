@@ -1,13 +1,13 @@
 import { LOCALE_CODES } from "$lib/types/locale.js";
 
 import { isExcludedCosmetic } from "../acquisition/exclusions.js";
+import { expectArray } from "../data-shapes.js";
 import { localizeField } from "../localize.js";
+import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
 
 import type { SourceTuple } from "$lib/types/acquisition.js";
 import type { LocaleCode } from "$lib/types/locale.js";
 import type { Cosmetic, CosmeticId, CosmeticSlot, TrackerData } from "$lib/types/tracker-data.js";
-
-import type { ParsedGameData } from "../parse-fiddle.js";
 
 const VALID_SLOTS = new Set<CosmeticSlot>([
   "back",
@@ -40,6 +40,8 @@ const KNOWN_COMPOSITE_SLOTS = new Set(["bottom"]);
 export interface CosmeticExtraction {
   cosmetics: TrackerData["cosmetics"];
   localeNames: Record<LocaleCode, Record<CosmeticId, string>>;
+  /** Localized labels for every `ui_sub_category` key, from the character-customization menu. */
+  subCategoryLocaleNames: Record<LocaleCode, Record<string, string>>;
 }
 
 /**
@@ -52,9 +54,9 @@ export function extractCosmetics(fiddle: ParsedGameData, assetsDir: string): Cos
     Record<CosmeticId, string>
   >;
   const assets = fiddle.player_assets as Record<string, Record<string, unknown>> | undefined;
-  if (!assets) return { cosmetics: {}, localeNames };
+  const subCategoryLocaleNames = localizeSubCategories(fiddle, assetsDir);
+  if (!assets) return { cosmetics: {}, localeNames, subCategoryLocaleNames };
 
-  const subCategoryMap = buildSubCategoryMap(fiddle);
   const result = {} as Record<CosmeticId, Cosmetic>;
   const unknownSlots = new Map<string, number>();
 
@@ -77,9 +79,12 @@ export function extractCosmetics(fiddle: ParsedGameData, assetsDir: string): Cos
     }
 
     const uiSubCategory = asset.ui_sub_category as string | undefined;
-    const subCategory = uiSubCategory
-      ? (subCategoryMap[uiSubCategory] ?? titleCase(uiSubCategory))
-      : undefined;
+    if (uiSubCategory !== undefined && !(uiSubCategory in subCategoryLocaleNames.en)) {
+      throw new Error(
+        `Player cosmetic "${id}" has ui_sub_category "${uiSubCategory}" with no entry in ui/character_customization.toml`,
+      );
+    }
+    const subCategory = uiSubCategory;
 
     const name = asset.name as string | undefined;
     if (!name) {
@@ -110,28 +115,53 @@ export function extractCosmetics(fiddle: ParsedGameData, assetsDir: string): Cos
   } else {
     console.log(`  Cosmetics: ${Object.keys(result).length}`);
   }
-  return { cosmetics: result, localeNames };
+  return { cosmetics: result, localeNames, subCategoryLocaleNames };
 }
 
-function buildSubCategoryMap(fiddle: ParsedGameData): Record<string, string> {
+/**
+ * Sub-category labels come from the character-customization menu (`ui/character_customization.toml`),
+ * where each slot section is an ordered array of `{ key, name }`. The game localizes them by
+ * ordinal (`ui/character_customization/<section>/<index>/name`), so the English `name` doubles as
+ * the guard against upstream reordering. Keyed by `key`, which is what `ui_sub_category` references.
+ */
+function localizeSubCategories(
+  fiddle: ParsedGameData,
+  assetsDir: string,
+): Record<LocaleCode, Record<string, string>> {
+  const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
+    LocaleCode,
+    Record<string, string>
+  >;
   const ui = fiddle.ui as Record<string, unknown> | undefined;
-  const menus = ui?.menus as Record<string, unknown> | undefined;
-  const subMenus = menus?.sub_menus as Record<string, unknown> | undefined;
-  const customization = subMenus?.customization as
-    Record<string, Record<string, { key?: string; name?: string }>> | undefined;
-  if (!customization) return {};
+  const customization = ui?.character_customization as Record<string, unknown> | undefined;
+  if (!customization) throw new Error("ui/character_customization.toml is missing");
+  const sourceFile = sourceFileFor(fiddle, "ui.character_customization");
 
-  const map: Record<string, string> = {};
-  for (const slotEntries of Object.values(customization)) {
-    if (typeof slotEntries !== "object" || slotEntries === null) continue;
-    for (const entry of Object.values(slotEntries)) {
-      if (typeof entry !== "object" || entry === null) continue;
-      if (entry.key && entry.name) {
-        map[entry.key] = entry.name;
+  for (const [section, rawEntries] of Object.entries(customization)) {
+    const entries = expectArray<Record<string, unknown>>(rawEntries, {
+      fieldPath: `character_customization.${section}`,
+      sourcePath: sourceFile,
+    });
+    entries.forEach((entry, index) => {
+      const key = entry.key as string | undefined;
+      const name = entry.name as string | undefined;
+      if (!key || !name) {
+        throw new Error(
+          `character_customization.${section}[${index.toString()}] needs both key and name`,
+        );
       }
-    }
+      const { values } = localizeField(assetsDir, {
+        category: `ui/character_customization/${section}`,
+        classification: "localizable",
+        englishValue: name,
+        expectedEnglishValue: name,
+        field: "name",
+        id: index.toString(),
+      });
+      for (const locale of LOCALE_CODES) localeNames[locale][key] = values[locale];
+    });
   }
-  return map;
+  return localeNames;
 }
 
 const SLOT_ALIASES: Record<string, CosmeticSlot> = {
@@ -154,11 +184,4 @@ function normalizeSlot(raw: string, id: string): CosmeticSlot {
     if (raw.startsWith(slot)) return slot;
   }
   return "top";
-}
-
-function titleCase(key: string): string {
-  return key
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
 }

@@ -10,7 +10,7 @@ import type { PageLoad } from "./$types.js";
 // always present; fall back to the base locale in that case.
 export const load: PageLoad = async (event?: Partial<Parameters<PageLoad>[0]>) => {
   const locale = event?.url ? getLocaleForUrl(event.url) : baseLocale;
-  await loadPageNames(event, ["dates", "items", ...SEGMENT_LOOKUP_CATEGORIES]);
+  await loadPageNames(event, ["dates", "items", "ui", ...SEGMENT_LOOKUP_CATEGORIES]);
   return {
     metadata: {
       description: m.almanac_page_description({}, { locale }),

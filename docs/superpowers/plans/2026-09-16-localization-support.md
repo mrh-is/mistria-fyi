@@ -291,6 +291,22 @@ string in Russian.
    across the deployed app, not just in route tests.
 5. Record the Phase 3 payload-size measurement here or link to where it's recorded, so the
    per-category fallback design's actual cost is documented, not just assumed.
+
+   **Recorded.** The Phase 3 NPC measurement lives in
+   PR #277 (private beta) ("Payload measurement"): NPC chunk pair
+   ~5.5 KB raw for all 8 locales, with an extrapolation to ~110 KB raw / ~30 KB gzip for an items
+   chunk pair. That extrapolation held: at delivery, `en/items.json` is 114 KB raw / 26 KB gzip,
+   `ja/items.json` 130 KB / 30 KB, `ru/items.json` 156 KB / 33 KB. Phase 8 then removed the runtime
+   English fallback (the pipeline already English-fills every chunk, so all 4,866 keys are present
+   in every locale), which halves what a non-English category route fetches: `/ja/almanac` now ships
+   only `ja/items.json` (30 KB gzip) rather than `ja` + `en` (56 KB gzip). Sitewide search still
+   loads `en` alongside the active locale because it matches English terms too. For scale, the
+   pre-localization `tracker-data.json` at the Phase 8 merge-base was 957 KB raw / 84 KB gzip.
+
 6. Update the spec's acceptance checklist, check off completed items.
 7. Close out remaining sub-issues under #153, or leave open with clear scope if any phase slipped to
    a follow-up.
+
+   **Follow-up filed:** #305 (private beta) covers the cosmetic
+   slot headings (MFG's own grouping, no game string) and an audit of the Paraglide machine
+   translations against the game's `misc_local` vocabulary.
