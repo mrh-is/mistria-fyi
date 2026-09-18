@@ -19,7 +19,7 @@
   "category_mines_name": "Mines",
   "category_mines_description": "Floors & spells",
   "category_museum_description": "Collections & donations",
-  "category_npcs_description": "Friendship & relationships",
+  "category_villagers_description": "Friendship & relationships",
   "category_quests_name": "Quests",
   "category_quests_description": "Story & requests",
   "category_recipes_name": "Recipes",
@@ -71,7 +71,7 @@
   "undo_unmarked": "Unmarked \"{name}\"",
   "almanac_page_description": "Track crops, forage, fish, insects, artifacts, & other almanac entries in Fields of Mistria.",
   "animals_page_description": "Track animal breeds, colors, & cosmetics on your Fields of Mistria farm.",
-  "characters_page_description": "Track friendship & romance with the characters of Fields of Mistria.",
+  "villagers_page_description": "Track friendship & romance with the villagers of Fields of Mistria.",
   "cosmetics_page_description": "Track wardrobe & appearance unlocks in Fields of Mistria.",
   "mines_page_description": "Track mine floors, spells, & exploration progress in Fields of Mistria.",
   "museum_page_description": "Track every museum collection & donation in Fields of Mistria.",
@@ -123,18 +123,18 @@
   "mines_floor_down": "Go down one floor",
   "mines_floor_label": "Floor",
   "mines_floor_input_aria": "Mine floor",
-  "characters_roster_aria": "Townsfolk roster",
-  "characters_alphabet_aria": "Townsfolk alphabet",
+  "villagers_roster_aria": "Townsfolk roster",
+  "villagers_alphabet_aria": "Townsfolk alphabet",
   "season_spring_abbr": "SPR",
   "season_summer_abbr": "SUM",
   "season_fall_abbr": "FAL",
   "season_winter_abbr": "WIN",
-  "npc_birthday_aria": "Birthday: {season} {day}",
-  "npc_birthday_hidden": "Birthday hidden",
-  "npc_hidden_name": "Hidden NPC",
-  "npc_relationship_level_aria": "{name} relationship level, {level} of {max}",
-  "npc_decrease_hearts": "Decrease {name} hearts",
-  "npc_increase_hearts": "Increase {name} hearts",
+  "villager_birthday_aria": "Birthday: {season} {day}",
+  "villager_birthday_hidden": "Birthday hidden",
+  "villager_hidden_name": "Hidden villager",
+  "villager_relationship_level_aria": "{name} relationship level, {level} of {max}",
+  "villager_decrease_hearts": "Decrease {name} hearts",
+  "villager_increase_hearts": "Increase {name} hearts",
   "relationship_status_path_not_chosen": "Path not chosen",
   "relationship_status_married_kids": "Married · kids",
   "relationship_status_married_child_free": "Married · child-free",
@@ -159,8 +159,8 @@
   "rank_state_completed": "Completed",
   "rank_state_current": "Current",
   "rank_state_upcoming": "Upcoming",
-  "npc_hidden_name_lower": "hidden NPC",
-  "characters_jump_to_initial_aria": "Jump to {initial}, first Townsfolk record",
+  "villager_hidden_name_lower": "hidden villager",
+  "villagers_jump_to_initial_aria": "Jump to {initial}, first Townsfolk record",
   "cosmetic_slot_head_gear": "Head Gear",
   "cosmetic_slot_face_gear": "Face Gear",
   "cosmetic_slot_hair": "Hair",
@@ -375,7 +375,7 @@
   "merge_label_cosmetics": "Cosmetics: +{count}",
   "merge_label_dates": "Dates: +{count}",
   "merge_label_museum": "Museum donations: +{count}",
-  "merge_label_npc_relationships": "NPC relationships: +{count}",
+  "merge_label_villager_relationships": "Villager relationships: +{count}",
   "merge_label_perks": "Perks: +{count}",
   "merge_label_pet_cosmetics": "Pet cosmetics: +{count}",
   "merge_label_pet_skins": "Pet skins: +{count}",
@@ -394,13 +394,13 @@
       }
     }
   ],
-  "merge_label_npc_levels": [
+  "merge_label_villager_levels": [
     {
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "NPC hearts: +{count} relationship updated",
-        "countPlural=other": "NPC hearts: +{count} relationships updated"
+        "countPlural=one": "Villager hearts: +{count} relationship updated",
+        "countPlural=other": "Villager hearts: +{count} relationships updated"
       }
     }
   ],

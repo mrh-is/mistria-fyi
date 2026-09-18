@@ -151,12 +151,12 @@ describe("projectRequirementExpressionToAvailability", () => {
         {
           type: "heartLevel",
           level: 4,
-          npcId: "celine",
+          villagerId: "celine",
         },
         {
           type: "heartLevel",
           level: 6,
-          npcId: "march",
+          villagerId: "march",
         },
       ],
     });

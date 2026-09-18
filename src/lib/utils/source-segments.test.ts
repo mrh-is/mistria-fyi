@@ -20,7 +20,6 @@ import type {
   MinesBiomeId,
   MonsterId,
   MuseumWingId,
-  NpcId,
   PerkId,
   QuestId,
   QuestType,
@@ -29,6 +28,7 @@ import type {
   StationId,
   StoreId,
   TreasureChestTierId,
+  VillagerId,
   WaterType,
 } from "$lib/types/tracker-data.js";
 import type { VisibilityCondition } from "$lib/types/visibility.js";
@@ -61,8 +61,6 @@ const BASE_LOOKUPS: SegmentLookups = {
   itemVisibility: {},
   locationNames: {},
   monsterNames: {},
-  npcNames: {},
-  npcVisibility: {},
   perks: {
     ["taste_maker" as PerkId]: {
       name: "Taste Maker",
@@ -72,8 +70,8 @@ const BASE_LOOKUPS: SegmentLookups = {
   },
   perkTierLevels: [1, 5, 10, 15, 20],
   questNames: {},
-  questNpcIds: {},
   questTypes: {},
+  questVillagerIds: {},
   recipeNames: {},
   seasonNames: { fall: "Fall", spring: "Spring", summer: "Summer", winter: "Winter" },
   skillNames: { ["cooking" as SkillId]: "Cooking" },
@@ -88,6 +86,8 @@ const BASE_LOOKUPS: SegmentLookups = {
   },
   storeVisibility: {},
   treasureChestTiers: {},
+  villagerNames: {},
+  villagerVisibility: {},
 };
 
 describe("buildPerkLabel", () => {
@@ -231,7 +231,6 @@ describe("buildStoreQualifier", () => {
 
   const STORE_LOOKUPS: SegmentLookups = {
     ...BASE_LOOKUPS,
-    npcNames: { ["juniper" as NpcId]: "Juniper" },
     perks: {
       ...BASE_LOOKUPS.perks,
       ["taste_maker" as PerkId]: {
@@ -245,6 +244,7 @@ describe("buildStoreQualifier", () => {
       ...BASE_LOOKUPS.skillNames,
       ["woodcrafting" as SkillId]: "Woodcrafting",
     },
+    villagerNames: { ["juniper" as VillagerId]: "Juniper" },
   };
 
   it.each([
@@ -264,8 +264,8 @@ describe("buildStoreQualifier", () => {
       ", after reaching Mines floor 40",
     ],
     [
-      { type: "heartLevel", level: 4, npcId: "juniper" },
-      { type: "heartLevel", level: 4, npcId: "juniper" },
+      { type: "heartLevel", level: 4, villagerId: "juniper" },
+      { type: "heartLevel", level: 4, villagerId: "juniper" },
       ", at 4 hearts with Juniper",
     ],
     [
@@ -478,7 +478,7 @@ describe("buildSourceSegments — simple types", () => {
   it("engagement", () => {
     const source: Source = { type: "engagement" };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([
-      "Receive from Elsie after getting to 10 hearts with a dateable character",
+      "Receive from Elsie after getting to 10 hearts with a dateable villager",
     ]);
   });
 });
@@ -738,15 +738,15 @@ describe("buildSourceSegments — quest types", () => {
     ]);
   });
 
-  it("heart quest with NPC and quest name independently gated", () => {
+  it("heart quest with Villager and quest name independently gated", () => {
     const lookups = {
       ...BASE_LOOKUPS,
-      npcNames: { balor: "Balor" },
-      npcVisibility: {
+      questNames: { tall_dark: "Tall, Dark and Mysterious" },
+      questVillagerIds: { tall_dark: "balor" as VillagerId },
+      villagerNames: { balor: "Balor" },
+      villagerVisibility: {
         balor: { type: "questCompleted" as const, questId: "repair_the_bridge" as QuestId },
       },
-      questNames: { tall_dark: "Tall, Dark and Mysterious" },
-      questNpcIds: { tall_dark: "balor" as NpcId },
     };
     const source: Source = {
       type: "quest",
@@ -790,7 +790,7 @@ describe("buildSourceSegments — quest types", () => {
     });
   });
 
-  it("fetch quest gates NPC and requested item independently", () => {
+  it("fetch quest gates Villager and requested item independently", () => {
     const source: Source = {
       type: "quest",
       questId: "request_for_berries" as QuestId,
@@ -802,9 +802,9 @@ describe("buildSourceSegments — quest types", () => {
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
       itemNames: { ["wild_berries" as ItemId]: "Wild Berries" },
-      npcNames: { ["eiland" as NpcId]: "Eiland" },
-      npcVisibility: { ["eiland" as NpcId]: { type: "always" } },
-      questNpcIds: { ["request_for_berries" as QuestId]: "eiland" as NpcId },
+      questVillagerIds: { ["request_for_berries" as QuestId]: "eiland" as VillagerId },
+      villagerNames: { ["eiland" as VillagerId]: "Eiland" },
+      villagerVisibility: { ["eiland" as VillagerId]: { type: "always" } },
     };
     expect(buildSourceSegments(source, lookups)).toEqual([
       "Complete Eiland's request for ",
@@ -826,13 +826,13 @@ describe("buildSourceSegments — quest types", () => {
     };
     const lookups = deepMerge(BASE_LOOKUPS, {
       categoryVisibility: {
-        cooking: { type: "npcKnown", npcId: "taliferro" },
+        cooking: { type: "villagerKnown", villagerId: "taliferro" },
       },
       recipeNames: { ["crispy_fried_earthshroom" as RecipeId]: "Crispy Fried Earthshroom" },
     });
     expect(buildSourceSegments(source, lookups)).toEqual([
       {
-        condition: { type: "npcKnown", npcId: "taliferro" },
+        condition: { type: "villagerKnown", villagerId: "taliferro" },
         revealed: [
           "Complete the ",
           {
@@ -855,12 +855,12 @@ describe("buildSourceSegments — quest types", () => {
     };
     const lookups = deepMerge(BASE_LOOKUPS, {
       categoryVisibility: {
-        cooking: { type: "npcKnown", npcId: "stillwell" },
+        cooking: { type: "villagerKnown", villagerId: "stillwell" },
       },
       questNames: { ["lost_relic" as QuestId]: "Lost Relic" },
     });
     expect(buildSourceSegments(source, lookups)[0]).toMatchObject({
-      condition: { type: "npcKnown", npcId: "stillwell" },
+      condition: { type: "villagerKnown", villagerId: "stillwell" },
     });
   });
 });
@@ -1065,10 +1065,10 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   });
 
   it("proposal", () => {
-    const source: Source = { type: "proposal", npcId: "elsie" as NpcId };
+    const source: Source = { type: "proposal", villagerId: "elsie" as VillagerId };
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
-      npcNames: { elsie: "Elsie" } as Record<NpcId, string>,
+      villagerNames: { elsie: "Elsie" } as Record<VillagerId, string>,
     };
     expect(buildSourceSegments(source, lookups)).toEqual(["Propose to Elsie"]);
   });

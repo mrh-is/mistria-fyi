@@ -2,7 +2,7 @@ import { trackerData, trackerIndex } from "$lib/data/index.js";
 import { animalNameId, getName, nameCollator } from "$lib/data/names.js";
 import { isItemApplicable, isItemApplicableForAlmanac } from "$lib/engine/applicability.js";
 import { isItemAvailable } from "$lib/engine/availability.js";
-import { isNpcComplete } from "$lib/engine/progress.js";
+import { isVillagerComplete } from "$lib/engine/progress.js";
 import { isVisible } from "$lib/engine/visibility.js";
 import { recordEntries } from "$lib/utils";
 
@@ -91,20 +91,20 @@ export function searchItems(
     }
   }
 
-  // NPCs — not season-gated. Matched on the localized name, then on the English name as a
-  // fallback, so an English query still finds an NPC while browsing a non-Latin locale.
-  for (const [id] of recordEntries(trackerData.npcs)) {
-    const npcVis = trackerData.npcs[id].visibility;
-    if (npcVis && !isVisible(npcVis, progressionState)) continue;
+  // Villagers — not season-gated. Matched on the localized name, then on the English name as a
+  // fallback, so an English query still finds a villager while browsing a non-Latin locale.
+  for (const [id] of recordEntries(trackerData.villagers)) {
+    const villagerVis = trackerData.villagers[id].visibility;
+    if (villagerVis && !isVisible(villagerVis, progressionState)) continue;
 
-    const localizedName = getName("npcs", id, locale);
-    const englishName = getName("npcs", id, "en");
+    const localizedName = getName("villagers", id, locale);
+    const englishName = getName("villagers", id, "en");
 
     if (localizedName.toLowerCase().includes(q) || englishName.toLowerCase().includes(q)) {
       results.push({
         available: true,
-        category: "npcs",
-        completed: isNpcComplete(id, completed),
+        category: "villagers",
+        completed: isVillagerComplete(id, completed),
         id,
         name: localizedName,
       });
@@ -222,7 +222,9 @@ export function searchItems(
 
   // Quests — not season-gated
   const pregnancyQuestIds = new Set(
-    Object.values(trackerData.pregnancyQuestByNpc).filter((id): id is QuestId => id !== undefined),
+    Object.values(trackerData.pregnancyQuestByVillager).filter(
+      (id): id is QuestId => id !== undefined,
+    ),
   );
   for (const [, quests] of recordEntries(trackerData.quests)) {
     for (const [id, quest] of recordEntries(quests)) {

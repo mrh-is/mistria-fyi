@@ -48,12 +48,12 @@ export function toAvailableVisibility(condition: VisibilityCondition): Visibilit
     case "isDating":
     case "married":
     case "minesLevel":
-    case "npcKnown":
     case "perkUnlocked":
     case "questAvailable":
     case "reachedSeason":
     case "renownLevel":
     case "skillLevel":
+    case "villagerKnown":
       return condition;
     case "and":
     case "or":

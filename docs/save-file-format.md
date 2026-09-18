@@ -44,22 +44,22 @@ over this measured late-game save while bounding memory use on constrained devic
 ## Entries
 
 A save contains a mix of **global state entries** and **per-location entries**. The importer only
-needs the global state entries; location entries store placed objects, NPC positions, and similar
-scene data.
+needs the global state entries; location entries store placed objects, villager positions, and
+similar scene data.
 
 ### Global state entries
 
 These are the entries relevant to progress tracking:
 
-| Entry        | Description                                                       |
-| ------------ | ----------------------------------------------------------------- |
-| `player`     | Player identity, inventory, unlocks, skills, relationships        |
-| `gamedata`   | World-level state: calendar, museum, mines, NPC facts, weather    |
-| `quests`     | Quest journal: active, completed, request board                   |
-| `header`     | Summary metadata: player name, farm name, playtime, appearance    |
-| `info`       | Save format version (`creation_version`, `version`)               |
-| `game_stats` | Detailed gameplay statistics (largest entry; not used by tracker) |
-| `npcs`       | Per-NPC state: schedules, gift history, dialogue flags            |
+| Entry        | Description                                                         |
+| ------------ | ------------------------------------------------------------------- |
+| `player`     | Player identity, inventory, unlocks, skills, relationships          |
+| `gamedata`   | World-level state: calendar, museum, mines, villager facts, weather |
+| `quests`     | Quest journal: active, completed, request board                     |
+| `header`     | Summary metadata: player name, farm name, playtime, appearance      |
+| `info`       | Save format version (`creation_version`, `version`)                 |
+| `game_stats` | Detailed gameplay statistics (largest entry; not used by tracker)   |
+| `villagers`  | Per-Villager state: schedules, gift history, dialogue flags         |
 
 ### Per-location entries
 
@@ -160,7 +160,7 @@ World-level state shared across all save slots.
 A flat key-value map (~8,700+ entries in a late-game save) encoding most of the game's persistent
 world state. Keys follow naming conventions:
 
-- **`{npc_id}_heart_level`** → `number`: NPC relationship level (0–10+)
+- **`{npc_id}_heart_level`** → `number`: Villager relationship level (0–10+)
 - **`{skill_id}_level`** → `number`: Skill level
 - **`renown`** → `number`: Player's renown level
 - **Various flags** → `boolean | number | string`: quest triggers, event flags, world unlocks
@@ -226,7 +226,7 @@ versions, though new items, recipes, and quests are added in content updates.
 - **Item IDs** identify specific item variants: `"apple_pie"`, `"animated_waterfall_v1"`
 - **Recipe IDs** identify crafting recipes, which may produce multiple item variants:
   `"animated_waterfall"` covers both `v1` and `v2`
-- **NPC IDs** are lowercase names: `"juniper"`, `"hayden"`, `"celine"`
+- **Villager IDs** are lowercase names: `"juniper"`, `"hayden"`, `"celine"`
 - **Skill IDs**: `"farming"`, `"mining"`, `"cooking"`, etc.
 - **Quest IDs**: `"main_quest_1"`, `"deliver_hayden_seeds"`, etc.
 
@@ -236,5 +236,5 @@ versions, though new items, recipes, and quests are added in content updates.
 2. Recipe unlock IDs need resolution: some are recipe IDs, some are item IDs. Look up items by their
    `recipeId` field to normalize.
 3. The union of `items_acquired`, `items_sold` keys, and `recipes_created` forms the almanac.
-4. `t2_world_facts` NPC heart levels are floats in practice; floor them for display.
+4. `t2_world_facts` villager heart levels are floats in practice; floor them for display.
 5. Skill levels come from `t2_world_facts`, not `skill_xp` (which stores raw XP).

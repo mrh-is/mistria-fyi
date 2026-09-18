@@ -47,7 +47,6 @@
   const TOOLBAR_ACCENTS: Record<string, string> = {
     "/almanac": "var(--cat-almanac)",
     "/animals": "var(--cat-animals)",
-    "/characters": "var(--cat-npcs)",
     "/cosmetics": "var(--cat-cosmetics)",
     "/mines": "var(--cat-mines)",
     "/museum": "var(--cat-museum)",
@@ -55,6 +54,7 @@
     "/recipes": "var(--cat-recipes)",
     "/renown": "var(--cat-renown)",
     "/skills": "var(--cat-skills)",
+    "/villagers": "var(--cat-villagers)",
   };
   let toolbarAccent = $derived(TOOLBAR_ACCENTS[pathname] ?? "var(--home-accent)");
 

@@ -28,8 +28,6 @@ export const MERGE_COUNT_LABELS = {
   hasUpperFloor: { boolean: true, format: () => m.merge_label_has_upper_floor() },
   mineFloor: { format: (count: number) => m.merge_label_mine_floor({ count }) },
   museum: { format: (count: number) => m.merge_label_museum({ count }) },
-  npcLevels: { format: (count: number) => m.merge_label_npc_levels({ count }) },
-  npcRelationships: { format: (count: number) => m.merge_label_npc_relationships({ count }) },
   perks: { format: (count: number) => m.merge_label_perks({ count }) },
   petCosmetics: { format: (count: number) => m.merge_label_pet_cosmetics({ count }) },
   petSkins: { format: (count: number) => m.merge_label_pet_skins({ count }) },
@@ -38,6 +36,10 @@ export const MERGE_COUNT_LABELS = {
   renown: { format: (count: number) => m.merge_label_renown({ count }) },
   skillLevels: { format: (count: number) => m.merge_label_skill_levels({ count }) },
   spells: { format: (count: number) => m.merge_label_spells({ count }) },
+  villagerLevels: { format: (count: number) => m.merge_label_villager_levels({ count }) },
+  villagerRelationships: {
+    format: (count: number) => m.merge_label_villager_relationships({ count }),
+  },
 } as const satisfies Record<keyof MergeCounts, MergeCountLabel>;
 
 export type MergeCountKey = keyof typeof MERGE_COUNT_LABELS;

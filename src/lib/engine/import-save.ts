@@ -6,14 +6,14 @@ import type {
   AnimalVariantId,
   CosmeticId,
   ItemId,
-  NpcId,
-  NpcRelationship,
   PerkId,
   PetCosmeticSetId,
   PetSkinId,
   RecipeId,
   Season,
   SpellId,
+  VillagerId,
+  VillagerRelationship,
 } from "$lib/types/tracker-data.js";
 
 // ─── Import result ──────────────────────────────────────────────────
@@ -78,8 +78,6 @@ export function buildImportState(bundle: SaveBundle): {
     hasUpperFloor: 0,
     mineFloor: 0,
     museum: 0,
-    npcLevels: 0,
-    npcRelationships: 0,
     perks: 0,
     petCosmetics: 0,
     petSkins: 0,
@@ -88,6 +86,8 @@ export function buildImportState(bundle: SaveBundle): {
     renown: 0,
     skillLevels: 0,
     spells: 0,
+    villagerLevels: 0,
+    villagerRelationships: 0,
   };
 
   const save = bundle.player;
@@ -264,20 +264,20 @@ export function buildImportState(bundle: SaveBundle): {
     : 0;
   counts.mineFloor = mineFloor;
 
-  // ── NPC levels, skill levels, renown (from gamedata.json → t2_world_facts) ──
-  const npcLevels: Record<string, number> = {};
+  // ── Villager levels, skill levels, renown (from gamedata.json → t2_world_facts) ──
+  const villagerLevels: Record<string, number> = {};
   const skillLevels: Record<string, number> = {};
   let renown = 0;
 
   const facts = bundle.gamedata?.t2_world_facts;
   if (facts) {
-    // NPC heart levels: "{npc}_heart_level" keys in t2_world_facts
-    const validNpcs = new Set(Object.keys(trackerData.npcs));
-    for (const npcId of validNpcs) {
-      const level = facts[`${npcId}_heart_level`];
+    // Villager heart levels: "{villager}_heart_level" keys in t2_world_facts
+    const validVillagers = new Set(Object.keys(trackerData.villagers));
+    for (const villagerId of validVillagers) {
+      const level = facts[`${villagerId}_heart_level`];
       if (typeof level === "number" && level > 0) {
-        npcLevels[npcId] = Math.floor(level);
-        counts.npcLevels++;
+        villagerLevels[villagerId] = Math.floor(level);
+        counts.villagerLevels++;
       }
     }
 
@@ -302,17 +302,17 @@ export function buildImportState(bundle: SaveBundle): {
   const hasUpperFloor = save?.upper_floor === true;
   if (hasUpperFloor) counts.hasUpperFloor = 1;
 
-  // ── NPC relationships (from gamedata.json → t2_world_facts → {npc}_is_dating) ──
-  const npcRelationships: Partial<Record<NpcId, NpcRelationship>> = {};
+  // ── Villager relationships (from gamedata.json → t2_world_facts → {villager}_is_dating) ──
+  const villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>> = {};
   if (facts) {
-    const dateableNpcs = Object.entries(trackerData.npcs)
-      .filter(([, npc]) => npc.dateable === true)
+    const dateableVillagers = Object.entries(trackerData.villagers)
+      .filter(([, villager]) => villager.dateable === true)
       .map(([id]) => id);
-    for (const npcId of dateableNpcs) {
-      const val = facts[`${npcId}_is_dating`];
+    for (const villagerId of dateableVillagers) {
+      const val = facts[`${villagerId}_is_dating`];
       if (val === true || val === 1) {
-        npcRelationships[npcId as NpcId] = "romantic";
-        counts.npcRelationships++;
+        villagerRelationships[villagerId as VillagerId] = "romantic";
+        counts.villagerRelationships++;
       }
     }
   }
@@ -359,8 +359,6 @@ export function buildImportState(bundle: SaveBundle): {
       hasUpperFloor,
       mines: { floor: mineFloor, spells },
       museum: museumIds,
-      npcLevels,
-      npcRelationships,
       petCosmetics,
       petSkins,
       questStates,
@@ -368,6 +366,8 @@ export function buildImportState(bundle: SaveBundle): {
       renown,
       skillLevels,
       unlockedPerks: perkIds,
+      villagerLevels,
+      villagerRelationships,
     },
     result: {
       counts,

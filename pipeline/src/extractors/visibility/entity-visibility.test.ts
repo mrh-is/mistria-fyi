@@ -6,8 +6,8 @@ import {
   extractCategoryVisibility,
   extractFetchQuestVisibility,
   extractHeartLevelChanges,
-  stampNpcVisibility,
   stampStoreVisibility,
+  stampVillagerVisibility,
 } from "./entity-visibility";
 
 import type { Source } from "$lib/types/acquisition.js";
@@ -15,7 +15,6 @@ import type {
   AnimalId,
   CosmeticId,
   ItemId,
-  NpcId,
   PerkId,
   QuestId,
   RecipeId,
@@ -23,6 +22,7 @@ import type {
   SpellId,
   StoreId,
   TrackerData,
+  VillagerId,
 } from "$lib/types/tracker-data.js";
 
 import type { CutsceneQuestMap } from "./cutscene-quest-map";
@@ -81,10 +81,9 @@ function makeTrackerData(overrides: Record<string, unknown>): TrackerData {
     items: {},
     mines: { biomes: [], spells: {} },
     museum: {},
-    npcs: {},
     perkTierLevels: [1, 10, 20, 45, 60],
     pets: { cosmetics: {}, skins: {} },
-    pregnancyQuestByNpc: {},
+    pregnancyQuestByVillager: {},
     questOrder: {},
     quests: { ...DEFAULT_QUESTS, ...(questOverrides as object) },
     recipes: {},
@@ -93,6 +92,7 @@ function makeTrackerData(overrides: Record<string, unknown>): TrackerData {
     townRanks: [],
     treasureChestTiers: {},
     version: "test",
+    villagers: {},
     ...rest,
   };
 }
@@ -114,7 +114,7 @@ describe("stampStoreVisibility", () => {
     expect(trackerData.stores["inn" as StoreId].visibility).toBeUndefined();
   });
 
-  it("stamps questCompleted for NPC market stalls", () => {
+  it("stamps questCompleted for Villager market stalls", () => {
     const trackerData = makeTrackerData({
       stores: {
         darcy: { name: "Darcy" },
@@ -141,15 +141,15 @@ describe("stampStoreVisibility", () => {
   });
 });
 
-describe("stampNpcVisibility", () => {
+describe("stampVillagerVisibility", () => {
   it("gates Caldarus behind breaking the fire seal", () => {
     const trackerData = makeTrackerData({
-      npcs: {
+      villagers: {
         caldarus: { birthday: { day: 1, season: "spring" }, name: "Caldarus" },
       },
     });
-    stampNpcVisibility(trackerData);
-    expect(trackerData.npcs["caldarus" as NpcId].visibility).toEqual({
+    stampVillagerVisibility(trackerData);
+    expect(trackerData.villagers["caldarus" as VillagerId].visibility).toEqual({
       type: "questCompleted",
       questId: "breaking_the_fire_seal",
     });
@@ -157,12 +157,12 @@ describe("stampNpcVisibility", () => {
 
   it("gates Seridia behind breaking the final seal", () => {
     const trackerData = makeTrackerData({
-      npcs: {
+      villagers: {
         seridia: { birthday: { day: 1, season: "spring" }, name: "Seridia" },
       },
     });
-    stampNpcVisibility(trackerData);
-    expect(trackerData.npcs["seridia" as NpcId].visibility).toEqual({
+    stampVillagerVisibility(trackerData);
+    expect(trackerData.villagers["seridia" as VillagerId].visibility).toEqual({
       type: "questCompleted",
       questId: "breaking_the_final_seal",
     });
@@ -170,92 +170,92 @@ describe("stampNpcVisibility", () => {
 
   it("gates Saturday Market vendors in their respective waves", () => {
     const trackerData = makeTrackerData({
-      npcs: {
+      villagers: {
         stillwell: { birthday: { day: 1, season: "spring" }, name: "Stillwell" },
         taliferro: { birthday: { day: 1, season: "spring" }, name: "Taliferro" },
         wheedle: { birthday: { day: 1, season: "spring" }, name: "Wheedle" },
         zorel: { birthday: { day: 1, season: "spring" }, name: "Zorel" },
       },
     });
-    stampNpcVisibility(trackerData);
-    expect(trackerData.npcs["taliferro" as NpcId].visibility).toEqual({
+    stampVillagerVisibility(trackerData);
+    expect(trackerData.villagers["taliferro" as VillagerId].visibility).toEqual({
       type: "questCompleted",
       questId: "upgrade_the_saturday_market",
     });
-    expect(trackerData.npcs["wheedle" as NpcId].visibility).toEqual({
+    expect(trackerData.villagers["wheedle" as VillagerId].visibility).toEqual({
       type: "questCompleted",
       questId: "upgrade_the_saturday_market",
     });
-    expect(trackerData.npcs["stillwell" as NpcId].visibility).toEqual({
+    expect(trackerData.villagers["stillwell" as VillagerId].visibility).toEqual({
       type: "questCompleted",
       questId: "upgrade_the_saturday_market_plaza",
     });
-    expect(trackerData.npcs["zorel" as NpcId].visibility).toEqual({
+    expect(trackerData.villagers["zorel" as VillagerId].visibility).toEqual({
       type: "questCompleted",
       questId: "upgrade_the_saturday_market_plaza",
     });
   });
 
-  it("leaves regular NPCs without visibility", () => {
+  it("leaves regular Villagers without visibility", () => {
     const trackerData = makeTrackerData({
-      npcs: {
+      villagers: {
         adeline: { birthday: { day: 1, season: "spring" }, name: "Adeline" },
         holt: { birthday: { day: 1, season: "spring" }, name: "Holt" },
       },
     });
-    stampNpcVisibility(trackerData);
-    expect(trackerData.npcs["holt" as NpcId].visibility).toBeUndefined();
-    expect(trackerData.npcs["adeline" as NpcId].visibility).toBeUndefined();
+    stampVillagerVisibility(trackerData);
+    expect(trackerData.villagers["holt" as VillagerId].visibility).toBeUndefined();
+    expect(trackerData.villagers["adeline" as VillagerId].visibility).toBeUndefined();
   });
 });
 
 describe("extractCategoryVisibility", () => {
-  const mockNpcs = {
+  const mockVillagers = {
     celine: { birthday: { day: 1, season: "spring" as const }, dateable: true, name: "Celine" },
     holt: { birthday: { day: 2, season: "summer" as const }, name: "Holt" },
     reina: { birthday: { day: 3, season: "fall" as const }, dateable: true, name: "Reina" },
-  } as unknown as TrackerData["npcs"];
+  } as unknown as TrackerData["villagers"];
 
   it("gates mission behind knowing Stillwell", () => {
-    const result = extractCategoryVisibility(mockNpcs);
-    expect(result.mission).toEqual({ type: "npcKnown", npcId: "stillwell" });
+    const result = extractCategoryVisibility(mockVillagers);
+    expect(result.mission).toEqual({ type: "villagerKnown", villagerId: "stillwell" });
   });
 
   it("gates cooking behind knowing Taliferro", () => {
-    const result = extractCategoryVisibility(mockNpcs);
-    expect(result.cooking).toEqual({ type: "npcKnown", npcId: "taliferro" });
+    const result = extractCategoryVisibility(mockVillagers);
+    expect(result.cooking).toEqual({ type: "villagerKnown", villagerId: "taliferro" });
   });
 
   it("leaves story, heart, and fetch always visible", () => {
-    const result = extractCategoryVisibility(mockNpcs);
+    const result = extractCategoryVisibility(mockVillagers);
     expect(result.story).toEqual({ type: "always" });
     expect(result.heart).toEqual({ type: "always" });
     expect(result.fetch).toEqual({ type: "always" });
   });
 
   it("gates crown behind the placeholder renown level", () => {
-    const result = extractCategoryVisibility(mockNpcs);
+    const result = extractCategoryVisibility(mockVillagers);
     expect(result.crown).toEqual({
       type: "renownLevel",
       level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER,
     });
   });
 
-  it("gates dates behind OR of dateable NPCs at heart level 8", () => {
-    const result = extractCategoryVisibility(mockNpcs);
+  it("gates dates behind OR of dateable Villagers at heart level 8", () => {
+    const result = extractCategoryVisibility(mockVillagers);
     expect(result.dates).toEqual({
       type: "or",
       conditions: [
-        { type: "heartLevel", level: 8, npcId: "celine" },
-        { type: "heartLevel", level: 8, npcId: "reina" },
+        { type: "heartLevel", level: 8, villagerId: "celine" },
+        { type: "heartLevel", level: 8, villagerId: "reina" },
       ],
     });
   });
 
-  it("sets dates to always when no dateable NPCs exist", () => {
+  it("sets dates to always when no dateable Villagers exist", () => {
     const noDateable = {
       holt: { birthday: { day: 2, season: "summer" as const }, name: "Holt" },
-    } as unknown as TrackerData["npcs"];
+    } as unknown as TrackerData["villagers"];
     const result = extractCategoryVisibility(noDateable);
     expect(result.dates).toEqual({ type: "always" });
   });
@@ -297,8 +297,8 @@ describe("extractHeartLevelChanges", () => {
     };
     const result = extractHeartLevelChanges(fiddle as never, cutsceneMap);
     expect(result["breaking_the_water_seal" as QuestId]).toEqual([
-      { level: 2, npcId: "caldarus" },
-      { level: 1, npcId: "seridia" },
+      { level: 2, villagerId: "caldarus" },
+      { level: 1, villagerId: "seridia" },
     ]);
   });
 
@@ -318,8 +318,8 @@ describe("extractHeartLevelChanges", () => {
     };
     const result = extractHeartLevelChanges(fiddle as never, cutsceneMap);
     expect(result["breaking_the_final_seal" as QuestId]).toEqual([
-      { level: 6, npcId: "caldarus" },
-      { level: 6, npcId: "seridia" },
+      { level: 6, villagerId: "caldarus" },
+      { level: 6, villagerId: "seridia" },
     ]);
   });
 
@@ -1199,7 +1199,7 @@ describe("assignEntityVisibility — spells", () => {
 });
 
 describe("assignEntityVisibility — quests", () => {
-  it("gates a heart quest behind npcKnown, heartLevel, and the prerequisite quest", () => {
+  it("gates a heart quest behind villagerKnown, heartLevel, and the prerequisite quest", () => {
     const trackerData = makeTrackerData({
       quests: { heart: { bird_song: { name: "Bird Song" } } },
     });
@@ -1219,8 +1219,8 @@ describe("assignEntityVisibility — quests", () => {
     expect(trackerData.quests.heart["bird_song" as QuestId].visibility).toEqual({
       type: "and",
       conditions: [
-        { type: "npcKnown", npcId: "ryis" },
-        { type: "heartLevel", level: 4, npcId: "ryis" },
+        { type: "villagerKnown", villagerId: "ryis" },
+        { type: "heartLevel", level: 4, villagerId: "ryis" },
         { type: "questCompleted", questId: "bird_song_prereq" },
       ],
     });
@@ -1254,7 +1254,7 @@ describe("assignEntityVisibility — quests", () => {
 
   it("resolves a fetch quest's request board requirement", () => {
     const trackerData = makeTrackerData({
-      quests: { fetch: { deliver_the_goods: { name: "Deliver the Goods", npc: "holt" } } },
+      quests: { fetch: { deliver_the_goods: { name: "Deliver the Goods", villager: "holt" } } },
     });
     const questChains = makeQuestChains({
       fetch: {

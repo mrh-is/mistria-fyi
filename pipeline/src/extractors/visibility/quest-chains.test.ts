@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { extractQuestChains } from "./quest-chains";
 
-import type { NpcId, QuestId } from "$lib/types/tracker-data.js";
+import type { QuestId, VillagerId } from "$lib/types/tracker-data.js";
 
 // Minimal fiddle factory for quest chain tests. Each override merges onto a bare skeleton so
 // individual tests only specify the parts of the data they exercise.
@@ -25,9 +25,9 @@ describe("extractQuestChains — story chain", () => {
     const fiddle = makeFiddle({
       letters: {
         repair_the_mill: {
-          npc: "adeline",
           quest_to_start: "repair_the_mill",
           requirements: { completed_quest: "replenishing_mistrias_food_reserves_1" },
+          villager: "adeline",
         },
       },
       quests: {
@@ -47,11 +47,11 @@ describe("extractQuestChains — story chain", () => {
     const fiddle = makeFiddle({
       letters: {
         repair_the_mill: {
-          npc: "adeline",
           quest_to_start: "repair_the_mill",
           requirements: {
             completed_quest: { days_after: 3, quest: "replenishing_mistrias_food_reserves_1" },
           },
+          villager: "adeline",
         },
       },
       quests: {
@@ -186,9 +186,9 @@ describe("extractQuestChains — story chain", () => {
     const fiddle = makeFiddle({
       letters: {
         friday_at_the_sleeping_dragon_inn: {
-          npc: "reina",
           quest_to_start: "friday_at_the_sleeping_dragon_inn",
           requirements: { reached_date: { day: 5, season: "spring" } },
+          villager: "reina",
         },
       },
       quests: {
@@ -251,26 +251,26 @@ describe("extractQuestChains — registry ordering", () => {
 });
 
 describe("extractQuestChains — heart chain", () => {
-  it("orders a single NPC's heart quests by level", () => {
+  it("orders a single Villager's heart quests by level", () => {
     const fiddle = makeFiddle({
       letters: {
         the_unusual_seed: {
-          npc: "celine",
           quest_to_start: "the_unusual_seed",
           requirements: { reached_heart_level: { celine: 2 } },
+          villager: "celine",
         },
         water_and_soil: {
-          npc: "celine",
           quest_to_start: "water_and_soil",
           requirements: {
             completed_quest: "the_unusual_seed",
             reached_heart_level: { celine: 4 },
           },
+          villager: "celine",
         },
       },
     });
     const result = extractQuestChains(fiddle as never);
-    expect(result.heart["celine" as NpcId]).toEqual([
+    expect(result.heart["celine" as VillagerId]).toEqual([
       { heartLevel: 2, questId: "the_unusual_seed" },
       { heartLevel: 4, prerequisiteQuest: "the_unusual_seed", questId: "water_and_soil" },
     ]);
@@ -280,25 +280,27 @@ describe("extractQuestChains — heart chain", () => {
     const fiddle = makeFiddle({
       letters: {
         surprise_me: {
-          npc: "march",
           quest_to_start: "surprise_me",
           requirements: { reached_heart_level: { march: 2 } },
+          villager: "march",
         },
       },
     });
     const result = extractQuestChains(fiddle as never);
-    expect(result.heart["march" as NpcId]).toEqual([{ heartLevel: 2, questId: "surprise_me" }]);
+    expect(result.heart["march" as VillagerId]).toEqual([
+      { heartLevel: 2, questId: "surprise_me" },
+    ]);
   });
 
-  it("uses the letter's reached_heart_level NPC key rather than the quest's npc_for_icon", () => {
-    // Landen's "Bird Song" letter gates on Ryis's heart level, not Landen's — the letter's NPC
-    // field ("landen") must not leak into the chain's NPC key.
+  it("uses the letter's reached_heart_level villager key rather than the quest's npc_for_icon", () => {
+    // Landen's "Bird Song" letter gates on Ryis's heart level, not Landen's — the letter's Villager
+    // field ("landen") must not leak into the chain's Villager key.
     const fiddle = makeFiddle({
       letters: {
         bird_song: {
-          npc: "landen",
           quest_to_start: "bird_song",
           requirements: { reached_heart_level: { ryis: 2 } },
+          villager: "landen",
         },
       },
       quests: {
@@ -308,35 +310,35 @@ describe("extractQuestChains — heart chain", () => {
       },
     });
     const result = extractQuestChains(fiddle as never);
-    expect(result.heart["ryis" as NpcId]).toEqual([{ heartLevel: 2, questId: "bird_song" }]);
-    expect(result.heart["landen" as NpcId]).toBeUndefined();
+    expect(result.heart["ryis" as VillagerId]).toEqual([{ heartLevel: 2, questId: "bird_song" }]);
+    expect(result.heart["landen" as VillagerId]).toBeUndefined();
   });
 
-  it("chains level 4+ heart quests to the immediately preceding quest for that NPC", () => {
+  it("chains level 4+ heart quests to the immediately preceding quest for that Villager", () => {
     const fiddle = makeFiddle({
       letters: {
         adeline_l2: {
-          npc: "adeline",
           quest_to_start: "the_smell_of_drying_ink",
           requirements: { reached_heart_level: { adeline: 2 } },
+          villager: "adeline",
         },
         adeline_l4: {
-          npc: "adeline",
           quest_to_start: "a_rewarding_choice",
           requirements: {
             completed_quest: "the_smell_of_drying_ink",
             reached_heart_level: { adeline: 4 },
           },
+          villager: "adeline",
         },
         adeline_l8: {
-          npc: "adeline",
           quest_to_start: "adeline_8h",
           requirements: { reached_heart_level: { adeline: 8 } },
+          villager: "adeline",
         },
       },
     });
     const result = extractQuestChains(fiddle as never);
-    expect(result.heart["adeline" as NpcId]).toEqual([
+    expect(result.heart["adeline" as VillagerId]).toEqual([
       { heartLevel: 2, questId: "the_smell_of_drying_ink" },
       {
         heartLevel: 4,

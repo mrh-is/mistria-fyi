@@ -40,8 +40,6 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     hasUpperFloor: false,
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
-    npcLevels: {},
-    npcRelationships: {},
     petCosmetics: new Set(),
     petSkins: new Set(),
     questStates: {},
@@ -49,6 +47,8 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     renown: 0,
     skillLevels: {},
     unlockedPerks: new Set(),
+    villagerLevels: {},
+    villagerRelationships: {},
     ...overrides,
   };
 }
@@ -62,16 +62,16 @@ function makeProgressionState(overrides: Partial<UserProgressionState> = {}): Us
   return {
     hasUpperFloor: false,
     isDating: false,
-    knownNpcs: new Set(),
-    marriedNpc: null,
+    knownVillagers: new Set(),
+    marriedVillager: null,
     minesFloor: 0,
-    npcLevels: {},
     questVisibility: {},
     reachedSeason: "spring" as const,
     renown: 0,
     showSpoilers: false,
     skillLevels: {},
     unlockedPerks: new Set(),
+    villagerLevels: {},
     ...overrides,
   };
 }
@@ -132,11 +132,11 @@ describe("basic matching", () => {
     expect(lower.length).toBe(upper.length);
   });
 
-  it("finds NPCs by name", () => {
-    const [npcId] = recordEntries(trackerData.npcs)[0];
-    const npcName = getName("npcs", npcId, "en");
-    const results = search(npcName);
-    expect(results.some((r) => r.category === "npcs" && r.name === npcName)).toBe(true);
+  it("finds Villagers by name", () => {
+    const [villagerId] = recordEntries(trackerData.villagers)[0];
+    const villagerName = getName("villagers", villagerId, "en");
+    const results = search(villagerName);
+    expect(results.some((r) => r.category === "villagers" && r.name === villagerName)).toBe(true);
   });
 
   it("finds quests by name", () => {
@@ -227,11 +227,11 @@ describe("completion status", () => {
 
 describe("result ranking", () => {
   it("ranks prefix matches before substring matches", () => {
-    // "rei" prefix-matches NPC "Reina" and substring-matches "Song Crystal - Reina's Theme"
+    // "rei" prefix-matches Villager "Reina" and substring-matches "Song Crystal - Reina's Theme"
     const results = search("rei");
     expect(results.length).toBeGreaterThanOrEqual(2);
 
-    const reina = results.find((r) => r.category === "npcs" && r.id === "reina");
+    const reina = results.find((r) => r.category === "villagers" && r.id === "reina");
     expect(reina, "Reina should appear in results").toBeDefined();
     if (!reina) return;
 
@@ -285,11 +285,11 @@ describe("ranking before truncation", () => {
   });
 
   it("ranks a later-category prefix match above an earlier-category substring match", () => {
-    // "nor" prefix-matches NPC "Nora" (later category) and substring-matches
+    // "nor" prefix-matches Villager "Nora" (later category) and substring-matches
     // quest "The Manor" (earlier category). The prefix must outrank the substring.
     const results = search("nor");
 
-    const nora = results.find((r) => r.category === "npcs" && r.id === "nora");
+    const nora = results.find((r) => r.category === "villagers" && r.id === "nora");
     expect(nora, "Nora should appear in results").toBeDefined();
 
     const manor = results.find((r) => r.name === "The Manor");
@@ -304,7 +304,7 @@ describe("ranking before truncation", () => {
   });
 
   it("breaks ties alphabetically within the same rank tier", () => {
-    // "ade" prefix-matches NPC "Adeline" and several other items. Among the
+    // "ade" prefix-matches Villager "Adeline" and several other items. Among the
     // substring-only matches, results should be sorted alphabetically by name.
     const results = search("ade");
     const substringOnly = results.filter((r) => {
@@ -470,7 +470,7 @@ describe("multi-category almanac items", () => {
 // ─── Pregnancy quest filtering ────────────────────────────────────
 
 describe("pregnancy quest filtering", () => {
-  const pregnancyQuestIds = Object.values(trackerData.pregnancyQuestByNpc).filter(
+  const pregnancyQuestIds = Object.values(trackerData.pregnancyQuestByVillager).filter(
     (id): id is QuestId => id !== undefined,
   );
 

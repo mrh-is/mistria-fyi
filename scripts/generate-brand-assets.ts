@@ -93,8 +93,6 @@ function emptyCompletedState(): CompletedState {
     hasUpperFloor: false,
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
-    npcLevels: {},
-    npcRelationships: {},
     petCosmetics: new Set(),
     petSkins: new Set(),
     questStates: {},
@@ -102,6 +100,8 @@ function emptyCompletedState(): CompletedState {
     renown: 0,
     skillLevels: {},
     unlockedPerks: new Set(),
+    villagerLevels: {},
+    villagerRelationships: {},
   };
 }
 

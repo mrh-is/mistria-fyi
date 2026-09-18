@@ -41,22 +41,22 @@ test.describe("@critical semantic accessibility", () => {
     await expect(page.getByRole("group", { name: /Renown level, 0 of \d+/ })).toBeVisible();
   });
 
-  test("NPC records expose one level value and non-interactive marks", async ({ page }) => {
+  test("Villager records expose one level value and non-interactive marks", async ({ page }) => {
     await initializeApplication(
       page,
       "light",
       createStoredState({
-        completed: { npcLevels: { adeline: 8 } },
+        completed: { villagerLevels: { adeline: 8 } },
         showSpoilers: true,
       }),
     );
-    await gotoApplication(page, "/characters");
-    const record = page.locator("#npc-adeline");
+    await gotoApplication(page, "/villagers");
+    const record = page.locator("#villager-adeline");
     await expect(
       record.getByRole("group", { name: "Adeline relationship level, 8 of 12" }),
     ).toBeVisible();
-    await expect(record.locator("[data-npc-mark]")).toHaveCount(12);
-    await expect(record.locator("[data-npc-mark] button")).toHaveCount(0);
+    await expect(record.locator("[data-villager-mark]")).toHaveCount(12);
+    await expect(record.locator("[data-villager-mark] button")).toHaveCount(0);
     await expect(record.getByRole("button", { name: "Decrease Adeline hearts" })).toBeVisible();
     await expect(record.getByRole("button", { name: "Increase Adeline hearts" })).toBeVisible();
     await expect(record.getByRole("button", { name: "Best Friend" })).toBeVisible();

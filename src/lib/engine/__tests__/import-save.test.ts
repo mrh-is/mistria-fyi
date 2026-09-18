@@ -69,7 +69,7 @@ describe("buildImportState", () => {
       expect(completed.hasUpperFloor).toBe(false);
     });
 
-    it("extracts npcRelationships from t2_world_facts dating keys", () => {
+    it("extracts villagerRelationships from t2_world_facts dating keys", () => {
       const bundle: SaveBundle = {
         gamedata: {
           t2_world_facts: {
@@ -80,7 +80,7 @@ describe("buildImportState", () => {
         },
       };
       const { completed } = buildImportState(bundle);
-      expect(completed.npcRelationships).toEqual({
+      expect(completed.villagerRelationships).toEqual({
         juniper: "romantic",
         march: "romantic",
       });

@@ -7,7 +7,6 @@ import type {
   ItemId,
   MinesBiomeId,
   MuseumWingId,
-  NpcId,
   PerkId,
   QuestId,
   QuestType,
@@ -16,6 +15,7 @@ import type {
   SkillId,
   StoreId,
   TreasureChestTierId,
+  VillagerId,
   Weather,
 } from "./tracker-data";
 import type { QuestVisibility, VisibilityCondition } from "./visibility";
@@ -27,7 +27,7 @@ export type AvailabilityCondition =
   | { type: "any"; conditions: NonEmptyArray<AvailabilityCondition> }
   | { type: "gamePredicate"; predicate: string; value: JsonValue }
   | { type: "hasUpperFloor" }
-  | { type: "heartLevel"; level: number; npcId: NpcId }
+  | { type: "heartLevel"; level: number; villagerId: VillagerId }
   | { type: "isDating" }
   | { type: "minesLevel"; floor: number }
   | { type: "not"; condition: AvailabilityCondition }
@@ -84,7 +84,7 @@ export type Source =
         | { type: "museum_donation"; setCount: number; wingId: MuseumWingId }
         | { type: "perk"; perkId: PerkId }
         | { type: "perk_drop"; activity: "crop_harvest"; perkId: PerkId }
-        | { type: "proposal"; npcId: NpcId }
+        | { type: "proposal"; villagerId: VillagerId }
         | {
             type: "quest";
             challengeRecipeId?: RecipeId;
@@ -100,7 +100,7 @@ export type Source =
         | { type: "ritual_chamber"; perkId: PerkId }
         | { type: "scroll_bundle"; bundleName: string; storeId: StoreId }
         | { type: "ship_item"; triggerItemId: ItemId }
-        | { type: "spouseGift"; npcId: NpcId }
+        | { type: "spouseGift"; villagerId: VillagerId }
         | { type: "station"; stationId: StationId }
         | { type: "store"; storeId: StoreId }
         | { type: "treasure_chest"; tier: TreasureChestTierId }

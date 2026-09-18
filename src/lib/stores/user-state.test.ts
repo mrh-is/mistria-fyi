@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { MAX_NPC_LEVEL } from "$lib/engine/progress.js";
+import { MAX_VILLAGER_LEVEL } from "$lib/engine/progress.js";
 import { userState } from "$lib/stores/user-state.svelte.js";
 
-import type { NpcId, QuestId, RecipeId } from "$lib/types/tracker-data.js";
+import type { QuestId, RecipeId, VillagerId } from "$lib/types/tracker-data.js";
 
 const NO_REWARD_QUEST = "a_birdhouse" as QuestId;
 const ONE_REWARD_QUEST = "bell_berry_bakewell_tart_challenge" as QuestId;
@@ -12,31 +12,31 @@ const MULTIPLE_REWARD_QUEST = "apiaries_and_terrariums" as QuestId;
 const PREVIOUSLY_COMPLETE_RECIPE = "apiary" as RecipeId;
 const NEWLY_COMPLETE_RECIPE = "terrarium" as RecipeId;
 
-describe("NPC progression", () => {
+describe("Villager progression", () => {
   afterEach(() => {
     userState.resetAll();
   });
 
   it("clamps relationship levels to the twelve-mark range", () => {
-    const npcId = "adeline" as NpcId;
+    const villagerId = "adeline" as VillagerId;
 
-    userState.setNpcLevel(npcId, MAX_NPC_LEVEL + 10);
-    expect(userState.state.completed.npcLevels[npcId]).toBe(MAX_NPC_LEVEL);
+    userState.setVillagerLevel(villagerId, MAX_VILLAGER_LEVEL + 10);
+    expect(userState.state.completed.villagerLevels[villagerId]).toBe(MAX_VILLAGER_LEVEL);
 
-    userState.setNpcLevel(npcId, -1);
-    expect(userState.state.completed.npcLevels[npcId]).toBe(0);
+    userState.setVillagerLevel(villagerId, -1);
+    expect(userState.state.completed.villagerLevels[villagerId]).toBe(0);
   });
 
   it("closes other romantic paths and resets the household choice when a spouse changes", () => {
-    const spouse = "adeline" as NpcId;
-    const other = "celine" as NpcId;
-    userState.setNpcRelationship(other, "romantic");
+    const spouse = "adeline" as VillagerId;
+    const other = "celine" as VillagerId;
+    userState.setVillagerRelationship(other, "romantic");
     userState.setChildChoice("yes");
 
-    userState.setNpcRelationship(spouse, "married");
+    userState.setVillagerRelationship(spouse, "married");
 
-    expect(userState.state.completed.npcRelationships[spouse]).toBe("married");
-    expect(userState.state.completed.npcRelationships[other]).toBe("platonic");
+    expect(userState.state.completed.villagerRelationships[spouse]).toBe("married");
+    expect(userState.state.completed.villagerRelationships[other]).toBe("platonic");
     expect(userState.state.completed.childChoice).toBe("undeclared");
   });
 });

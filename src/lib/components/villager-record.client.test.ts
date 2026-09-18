@@ -1,23 +1,23 @@
 import { fireEvent, render, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import NpcRecordHarness from "$lib/components/npc-record.test-harness.svelte";
+import VillagerRecordHarness from "$lib/components/villager-record.test-harness.svelte";
 import { userState } from "$lib/stores/user-state.svelte.js";
 
-import type { Npc, NpcId } from "$lib/types/tracker-data.js";
+import type { Villager, VillagerId } from "$lib/types/tracker-data.js";
 
-const adelineId = "adeline" as NpcId;
-const balorId = "balor" as NpcId;
-const adeline: Npc = {
+const adelineId = "adeline" as VillagerId;
+const balorId = "balor" as VillagerId;
+const adeline: Villager = {
   birthday: { day: 3, season: "spring" },
   dateable: true,
-  smallIconSprite: "spr_npc_adeline_small",
+  smallIconSprite: "spr_villager_adeline_small",
 };
-const balor: Npc = {
+const balor: Villager = {
   birthday: { day: 10, season: "summer" },
 };
 
-describe("NpcRecord", () => {
+describe("VillagerRecord", () => {
   beforeEach(() => {
     userState.resetAll();
   });
@@ -26,19 +26,23 @@ describe("NpcRecord", () => {
     userState.resetAll();
   });
 
-  it("renders a known dateable NPC as one compact, accessible record", () => {
-    userState.setNpcLevel(adelineId, 8);
-    const view = render(NpcRecordHarness, { id: adelineId, name: "Adeline", npc: adeline });
+  it("renders a known dateable Villager as one compact, accessible record", () => {
+    userState.setVillagerLevel(adelineId, 8);
+    const view = render(VillagerRecordHarness, {
+      id: adelineId,
+      name: "Adeline",
+      villager: adeline,
+    });
 
     expect(view.getByText("Adeline")).toBeInTheDocument();
     expect(view.getByText("SPR 03")).toHaveAccessibleName("Birthday: Spring 3");
     expect(view.container.querySelector("img")).toHaveAttribute(
       "src",
-      "/npc-sprites/spr_npc_adeline_small.webp",
+      "/villager-sprites/spr_villager_adeline_small.webp",
     );
     expect(view.container.querySelector("img")).toHaveAttribute("alt", "");
-    expect(view.container.querySelectorAll("[data-npc-mark]")).toHaveLength(12);
-    expect(view.container.querySelectorAll('[data-npc-mark-filled="true"]')).toHaveLength(8);
+    expect(view.container.querySelectorAll("[data-villager-mark]")).toHaveLength(12);
+    expect(view.container.querySelectorAll('[data-villager-mark-filled="true"]')).toHaveLength(8);
     expect(
       view.getByRole("group", { name: "Adeline relationship level, 8 of 12" }),
     ).toBeInTheDocument();
@@ -49,34 +53,38 @@ describe("NpcRecord", () => {
   });
 
   it("falls back to a stable initial when the local icon is absent or fails", async () => {
-    const absent = render(NpcRecordHarness, { id: balorId, name: "Balor", npc: balor });
-    expect(absent.getByTestId("npc-icon-fallback")).toHaveTextContent("B");
+    const absent = render(VillagerRecordHarness, { id: balorId, name: "Balor", villager: balor });
+    expect(absent.getByTestId("villager-icon-fallback")).toHaveTextContent("B");
 
-    const failed = render(NpcRecordHarness, { id: adelineId, name: "Adeline", npc: adeline });
+    const failed = render(VillagerRecordHarness, {
+      id: adelineId,
+      name: "Adeline",
+      villager: adeline,
+    });
     const image = failed.container.querySelector("img");
-    if (!image) throw new Error("Expected NPC icon image");
+    if (!image) throw new Error("Expected Villager icon image");
     await fireEvent.error(image);
-    expect(failed.container.querySelector('[data-testid="npc-icon-fallback"]')).toHaveTextContent(
-      "A",
-    );
+    expect(
+      failed.container.querySelector('[data-testid="villager-icon-fallback"]'),
+    ).toHaveTextContent("A");
   });
 
-  it("keeps an unmet NPC in place without exposing identity or stored progress", async () => {
-    userState.setNpcLevel(adelineId, 6);
-    const view = render(NpcRecordHarness, {
+  it("keeps an unmet Villager in place without exposing identity or stored progress", async () => {
+    userState.setVillagerLevel(adelineId, 6);
+    const view = render(VillagerRecordHarness, {
       id: adelineId,
       known: false,
       name: "Adeline",
-      npc: adeline,
+      villager: adeline,
     });
 
     expect(view.getByRole("button", { name: "Reveal spoiler" })).toBeInTheDocument();
     expect(view.getByText("Birthday hidden")).toBeInTheDocument();
-    expect(view.container.querySelectorAll('[data-npc-mark-filled="true"]')).toHaveLength(0);
+    expect(view.container.querySelectorAll('[data-villager-mark-filled="true"]')).toHaveLength(0);
     expect(
-      view.getByRole("group", { name: "Hidden NPC relationship level, 0 of 12" }),
+      view.getByRole("group", { name: "Hidden villager relationship level, 0 of 12" }),
     ).toBeInTheDocument();
-    expect(view.getByRole("button", { name: "Decrease hidden NPC hearts" })).toBeDisabled();
+    expect(view.getByRole("button", { name: "Decrease hidden villager hearts" })).toBeDisabled();
     expect(view.queryByRole("button", { name: /Adeline hearts/ })).not.toBeInTheDocument();
 
     await fireEvent.click(view.getByRole("button", { name: "Reveal spoiler" }));
@@ -86,15 +94,17 @@ describe("NpcRecord", () => {
   });
 
   it("renders non-dateable marks without relationship decisions", () => {
-    const view = render(NpcRecordHarness, {
+    const view = render(VillagerRecordHarness, {
       compact: true,
       id: balorId,
       name: "Balor",
-      npc: balor,
+      villager: balor,
     });
 
-    expect(view.container.querySelectorAll('[data-npc-mark-kind="platonic"]')).toHaveLength(12);
-    expect(view.container.querySelector("[data-npc-record]")).toHaveAttribute(
+    expect(view.container.querySelectorAll('[data-villager-mark-kind="platonic"]')).toHaveLength(
+      12,
+    );
+    expect(view.container.querySelector("[data-villager-record]")).toHaveAttribute(
       "data-compact",
       "true",
     );
@@ -102,9 +112,13 @@ describe("NpcRecord", () => {
   });
 
   it("advances through only the next relationship decisions and preserves focus", async () => {
-    userState.setNpcLevel(adelineId, 10);
-    userState.setNpcRelationship(adelineId, "romantic");
-    const view = render(NpcRecordHarness, { id: adelineId, name: "Adeline", npc: adeline });
+    userState.setVillagerLevel(adelineId, 10);
+    userState.setVillagerRelationship(adelineId, "romantic");
+    const view = render(VillagerRecordHarness, {
+      id: adelineId,
+      name: "Adeline",
+      villager: adeline,
+    });
 
     await fireEvent.click(view.getByRole("button", { name: "Record proposal" }));
     const marriage = await view.findByRole("button", { name: "Record marriage" });
@@ -121,11 +135,15 @@ describe("NpcRecord", () => {
     await waitFor(() => {
       expect(view.getByText("Married · child-free")).toBeInTheDocument();
     });
-    expect(document.activeElement).toBe(view.container.querySelector("[data-npc-record]"));
+    expect(document.activeElement).toBe(view.container.querySelector("[data-villager-record]"));
   });
 
   it("updates level only through bounded adjacent controls", async () => {
-    const view = render(NpcRecordHarness, { id: adelineId, name: "Adeline", npc: adeline });
+    const view = render(VillagerRecordHarness, {
+      id: adelineId,
+      name: "Adeline",
+      villager: adeline,
+    });
     const decrement = view.getByRole("button", { name: "Decrease Adeline hearts" });
     const increment = view.getByRole("button", { name: "Increase Adeline hearts" });
 
@@ -135,7 +153,7 @@ describe("NpcRecord", () => {
       view.getByRole("group", { name: "Adeline relationship level, 1 of 12" }),
     ).toBeInTheDocument();
 
-    userState.setNpcLevel(adelineId, 12);
+    userState.setVillagerLevel(adelineId, 12);
     await waitFor(() => {
       expect(increment).toBeDisabled();
     });

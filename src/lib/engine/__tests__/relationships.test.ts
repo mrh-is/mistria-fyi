@@ -3,33 +3,35 @@ import { describe, expect, it } from "vitest";
 import { trackerData } from "$lib/data/index.js";
 
 import {
-  getMarriedNpc,
+  getMarriedVillager,
   isRomantic,
   normalizeRelationships,
   relationshipPresentation,
 } from "../relationships";
 
-import type { NpcId, NpcRelationship } from "$lib/types/tracker-data.js";
+import type { VillagerId, VillagerRelationship } from "$lib/types/tracker-data.js";
 
-function rels(obj: Record<string, NpcRelationship>): Partial<Record<NpcId, NpcRelationship>> {
+function rels(
+  obj: Record<string, VillagerRelationship>,
+): Partial<Record<VillagerId, VillagerRelationship>> {
   return obj;
 }
 
-// ─── getMarriedNpc ────────────────────────────────────────────────
+// ─── getMarriedVillager ────────────────────────────────────────────────
 
-describe("getMarriedNpc", () => {
-  it("returns null when no NPC is married", () => {
-    expect(getMarriedNpc({})).toBeNull();
+describe("getMarriedVillager", () => {
+  it("returns null when no Villager is married", () => {
+    expect(getMarriedVillager({})).toBeNull();
   });
 
   it("returns null when all relationships are non-married", () => {
     expect(
-      getMarriedNpc(rels({ adeline: "romantic", balor: "platonic", celine: "proposed" })),
+      getMarriedVillager(rels({ adeline: "romantic", balor: "platonic", celine: "proposed" })),
     ).toBeNull();
   });
 
-  it("returns the married NPC ID", () => {
-    expect(getMarriedNpc(rels({ adeline: "married", balor: "platonic" }))).toBe("adeline");
+  it("returns the married Villager ID", () => {
+    expect(getMarriedVillager(rels({ adeline: "married", balor: "platonic" }))).toBe("adeline");
   });
 });
 
@@ -44,23 +46,23 @@ describe("isRomantic", () => {
   });
 
   it("returns true for romantic", () => {
-    expect(isRomantic(r, "adeline" as NpcId)).toBe(true);
+    expect(isRomantic(r, "adeline" as VillagerId)).toBe(true);
   });
 
   it("returns true for proposed", () => {
-    expect(isRomantic(r, "balor" as NpcId)).toBe(true);
+    expect(isRomantic(r, "balor" as VillagerId)).toBe(true);
   });
 
   it("returns true for married", () => {
-    expect(isRomantic(r, "caldarus" as NpcId)).toBe(true);
+    expect(isRomantic(r, "caldarus" as VillagerId)).toBe(true);
   });
 
   it("returns false for platonic", () => {
-    expect(isRomantic(r, "celine" as NpcId)).toBe(false);
+    expect(isRomantic(r, "celine" as VillagerId)).toBe(false);
   });
 
   it("returns false for undecided (absent)", () => {
-    expect(isRomantic(r, "juniper" as NpcId)).toBe(false);
+    expect(isRomantic(r, "juniper" as VillagerId)).toBe(false);
   });
 });
 
@@ -74,33 +76,33 @@ describe("normalizeRelationships", () => {
     expect(copy).toEqual(input);
   });
 
-  it("forces all other dateable NPCs to platonic when one is married", () => {
+  it("forces all other dateable Villagers to platonic when one is married", () => {
     const input = rels({ adeline: "married", balor: "romantic" });
     normalizeRelationships(input);
-    expect(input["adeline" as NpcId]).toBe("married");
-    expect(input["balor" as NpcId]).toBe("platonic");
+    expect(input["adeline" as VillagerId]).toBe("married");
+    expect(input["balor" as VillagerId]).toBe("platonic");
   });
 
-  it("adds platonic for dateable NPCs not yet in the map", () => {
+  it("adds platonic for dateable Villagers not yet in the map", () => {
     const input = rels({ adeline: "married" });
     normalizeRelationships(input);
 
-    const dateableNpcs = Object.entries(trackerData.npcs)
-      .filter(([, npc]) => npc.dateable)
-      .map(([id]) => id as NpcId);
+    const dateableVillagers = Object.entries(trackerData.villagers)
+      .filter(([, villager]) => villager.dateable)
+      .map(([id]) => id as VillagerId);
 
-    for (const npcId of dateableNpcs) {
-      if (npcId === ("adeline" as NpcId)) {
-        expect(input[npcId]).toBe("married");
+    for (const villagerId of dateableVillagers) {
+      if (villagerId === ("adeline" as VillagerId)) {
+        expect(input[villagerId]).toBe("married");
       } else {
-        expect(input[npcId]).toBe("platonic");
+        expect(input[villagerId]).toBe("platonic");
       }
     }
   });
 });
 
 describe("relationshipPresentation", () => {
-  const npcId = "adeline" as NpcId;
+  const villagerId = "adeline" as VillagerId;
 
   it.each([
     {
@@ -186,9 +188,9 @@ describe("relationshipPresentation", () => {
       const presentation = relationshipPresentation({
         childChoice,
         level,
-        marriedNpc: relationship === "married" ? npcId : null,
-        npcId,
+        marriedVillager: relationship === "married" ? villagerId : null,
         relationship,
+        villagerId,
       });
 
       expect(presentation.status).toBe(status);
@@ -200,23 +202,23 @@ describe("relationshipPresentation", () => {
     const presentation = relationshipPresentation({
       childChoice: "undeclared",
       level: 10,
-      marriedNpc: null,
-      npcId,
+      marriedVillager: null,
       relationship: "proposed",
+      villagerId,
     });
 
     expect(presentation.warning).toBe(true);
     expect(presentation.actions).toEqual(["married"]);
   });
 
-  it("closes romantic actions when another NPC is married", () => {
+  it("closes romantic actions when another Villager is married", () => {
     expect(
       relationshipPresentation({
         childChoice: "undeclared",
         level: 12,
-        marriedNpc: "celine" as NpcId,
-        npcId,
+        marriedVillager: "celine" as VillagerId,
         relationship: "romantic",
+        villagerId,
       }),
     ).toEqual({ actions: [], status: "best_friends" });
   });

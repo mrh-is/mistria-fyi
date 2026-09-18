@@ -80,16 +80,16 @@ export interface Festival {
 export type FestivalId = string & { readonly __brand: "FestivalId" };
 export interface FetchQuest extends Quest {
   itemId: ItemId;
-  npc: NpcId;
   rewardRecipeId?: RecipeId;
+  villager: VillagerId;
 }
 export interface HeartLevelChange {
   level: number;
-  npcId: NpcId;
+  villagerId: VillagerId;
 }
 export interface HeartQuest extends Quest {
   heartLevel: number;
-  npc: NpcId;
+  villager: VillagerId;
 }
 export interface Item extends TrackerEntity {
   category: string;
@@ -109,19 +109,6 @@ export interface MuseumWingSet {
   items: ItemId[];
 }
 export type MuseumWingSetId = string & { readonly __brand: "SetId" };
-/**
- * Player-facing NPC names are deliberately absent: they live in the per-locale `npcs` chunks and
- * are resolved through `getName("npcs", id, locale)`. A `name` field that doesn't exist on the
- * type is the guardrail against rendering untranslated data.
- */
-export interface Npc {
-  birthday: Day;
-  dateable?: true;
-  smallIconSprite?: string;
-  visibility?: VisibilityCondition;
-}
-export type NpcId = string & { readonly __brand: "NpcId" };
-export type NpcRelationship = "married" | "platonic" | "proposed" | "romantic" | "undecided";
 export type Perk = object;
 export type PerkId = string & { readonly __brand: "PerkId" };
 export type PerkTier = Record<PerkId, Perk>;
@@ -182,13 +169,12 @@ export interface TrackerData {
     spells: Record<SpellId, Spell>;
   };
   museum: Record<MuseumWingId, MuseumWing>;
-  npcs: Record<NpcId, Npc>;
   perkTierLevels: [number, number, number, number, number];
   pets: {
     cosmetics: Record<PetCosmeticSetId, PetCosmeticSet>;
     skins: Record<PetSkinId, PetSkin>;
   };
-  pregnancyQuestByNpc: Partial<Record<NpcId, QuestId>>;
+  pregnancyQuestByVillager: Partial<Record<VillagerId, QuestId>>;
   questOrder: Partial<Record<QuestType, QuestId[]>>;
   quests: {
     [K in QuestType]: Record<QuestId, QuestTypeMap[K]>;
@@ -199,10 +185,24 @@ export interface TrackerData {
   townRanks: TownRank[];
   treasureChestTiers: Record<TreasureChestTierId, object>;
   version: string;
+  villagers: Record<VillagerId, Villager>;
 }
 export interface TrackerEntity {
   sources: SourceTuple;
   visibility?: VisibilityCondition;
 }
 export type TreasureChestTierId = string & { readonly __brand: "TreasureChestTier" };
+/**
+ * Player-facing villager names are deliberately absent: they live in the per-locale `villagers`
+ * chunks and are resolved through `getName("villagers", id, locale)`. A `name` field that doesn't
+ * exist on the type is the guardrail against rendering untranslated data.
+ */
+export interface Villager {
+  birthday: Day;
+  dateable?: true;
+  smallIconSprite?: string;
+  visibility?: VisibilityCondition;
+}
+export type VillagerId = string & { readonly __brand: "VillagerId" };
+export type VillagerRelationship = "married" | "platonic" | "proposed" | "romantic" | "undecided";
 export type Weather = "calm" | "heavy_inclement" | "inclement" | "special";
