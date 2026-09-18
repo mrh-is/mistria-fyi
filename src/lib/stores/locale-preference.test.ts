@@ -1,19 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { setLocale } = vi.hoisted(() => ({ setLocale: vi.fn() }));
+const { goto, setLocale } = vi.hoisted(() => ({ goto: vi.fn(), setLocale: vi.fn() }));
 
-vi.mock("$lib/paraglide/runtime.js", () => ({ setLocale }));
+vi.mock("$app/navigation", () => ({ goto }));
+vi.mock("$app/state", () => ({ page: { url: new URL("https://mistria.fyi/ru/almanac") } }));
+vi.mock("$lib/paraglide/runtime.js", () => ({
+  deLocalizeHref: (pathname: string) => pathname.replace(/^\/[^/]+/, ""),
+  localizeHref: (pathname: string, { locale }: { locale: string }) => `/${locale}${pathname}`,
+  setLocale,
+}));
 
 import { localePreference } from "./locale-preference.svelte.js";
 
 describe("localePreference", () => {
   beforeEach(() => {
+    goto.mockReset();
     setLocale.mockReset();
   });
 
-  it("persists a selected locale through Paraglide before navigation", () => {
+  it("persists the locale without Paraglide's reload, then client-navigates to the same page", () => {
     localePreference.select("ja");
 
-    expect(setLocale).toHaveBeenCalledWith("ja");
+    expect(setLocale).toHaveBeenCalledWith("ja", { reload: false });
+    expect(goto).toHaveBeenCalledWith("/ja/almanac");
   });
 });

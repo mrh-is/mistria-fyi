@@ -34,7 +34,7 @@ import {
 } from "./acquisition/validate-sources.js";
 import { evaluateExpressions } from "./evaluate.js";
 import { forEachItem } from "./extractor-helpers.js";
-import { extractAlmanac } from "./extractors/almanac.js";
+import { extractAlmanac, readAlmanacCategories } from "./extractors/almanac.js";
 import { extractAnimals } from "./extractors/animals.js";
 import { extractCosmetics } from "./extractors/cosmetics.js";
 import { extractDates } from "./extractors/dates.js";
@@ -50,6 +50,7 @@ import { extractSkills } from "./extractors/skills.js";
 import { extractSprites } from "./extractors/sprites.js";
 import { extractStoresMeta } from "./extractors/stores-meta.js";
 import { extractTreasureChestTiers } from "./extractors/treasure-chest-tiers.js";
+import { extractUiStrings, tierKeys } from "./extractors/ui-strings.js";
 import { buildCutsceneQuestMap } from "./extractors/visibility/cutscene-quest-map.js";
 import {
   assignEntityVisibility,
@@ -360,10 +361,11 @@ async function main(): Promise<void> {
     itemLocaleNames,
   );
   const { localeNames: npcLocaleNames, npcs } = extractNpcs(fiddle, assetsDir);
-  const { cosmetics: cosmeticsRaw, localeNames: cosmeticLocaleNames } = extractCosmetics(
-    fiddle,
-    assetsDir,
-  );
+  const {
+    cosmetics: cosmeticsRaw,
+    localeNames: cosmeticLocaleNames,
+    subCategoryLocaleNames: cosmeticSubCategoryLocaleNames,
+  } = extractCosmetics(fiddle, assetsDir);
   const cosmetics = applyExclusions(cosmeticsRaw);
   const {
     localeNames: skillLocaleNames,
@@ -390,6 +392,14 @@ async function main(): Promise<void> {
   const { festivals, localeNames: festivalLocaleNames } = extractFestivals(fiddle, assetsDir);
   const { localeNames: treasureChestTierLocaleNames, tiers: treasureChestTiers } =
     extractTreasureChestTiers(fiddle, assetsDir);
+  const maxVariantTiers = Math.max(
+    0,
+    ...Object.values(animals).map((animal) => animal.variantTiers.length),
+  );
+  const { localeNames: uiLocaleNames } = extractUiStrings(fiddle, assetsDir, [
+    ...readAlmanacCategories(fiddle).map((category) => category.key),
+    ...tierKeys(maxVariantTiers),
+  ]);
 
   const requirementContext = createRequirementContext(
     fiddle.requirements as Record<string, unknown> | undefined,
@@ -614,6 +624,8 @@ async function main(): Promise<void> {
   writeLocaleChunks("stores", storeLocaleNames);
   writeLocaleChunks("animals", animalLocaleNames);
   writeLocaleChunks("cosmetics", cosmeticLocaleNames);
+  writeLocaleChunks("cosmetics/subcategories", cosmeticSubCategoryLocaleNames);
+  writeLocaleChunks("ui", uiLocaleNames);
   writeLocaleChunks("mines", mineLocaleNames);
   writeLocaleChunks("town-ranks", townRankLocaleNames);
   writeLocaleChunks("items", itemLocaleNames);

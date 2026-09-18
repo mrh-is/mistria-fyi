@@ -14,6 +14,7 @@ export const load: PageLoad = async (event?: Partial<Parameters<PageLoad>[0]>) =
     "animals",
     "pets/cosmetic_sets",
     "pets/skins",
+    "ui",
     ...SEGMENT_LOOKUP_CATEGORIES,
   ]);
   return {

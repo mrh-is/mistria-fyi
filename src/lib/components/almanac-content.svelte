@@ -240,7 +240,7 @@
     <ExpandableSection
       count={scopedItems.filter(({ canonicalId }) => isItemCompleted(canonicalId)).length}
       forceOpen={!!nameFilter}
-      name={cat.name}
+      name={getName("ui", id, locale)}
       onExpandedChange={(open: boolean) => {
         setSectionOpen(
           id,

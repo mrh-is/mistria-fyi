@@ -109,7 +109,6 @@
   "dates_section_name": "Свидания",
   "animals_cosmetics_section_name": "Косметика",
   "animals_color_variants_section_name": "Цветовые вариации",
-  "animals_variant_tier_label": "Уровень {tier}",
   "animals_pet_cosmetics_section_name": "Косметика питомца",
   "animals_pet_skins_section_name": "Скины питомца",
   "section_progress_label": "{name}, выполнено {completed} из {total}",
@@ -464,5 +463,6 @@
   "weather_heavy_inclement": "Гроза",
   "weather_special": "Ветерок",
   "weather_winter_inclement": "Снег",
-  "weather_winter_heavy_inclement": "Метель"
+  "weather_winter_heavy_inclement": "Метель",
+  "skip_to_main_content": "Перейти к основному содержимому"
 }

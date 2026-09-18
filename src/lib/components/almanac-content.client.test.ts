@@ -7,6 +7,7 @@ import { trackerData } from "$lib/data/index.js";
 import { getName } from "$lib/data/names.js";
 import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
 import { userState } from "$lib/stores/user-state.svelte.js";
+import { recordEntries } from "$lib/utils.js";
 
 import type { ItemId } from "$lib/types/tracker-data.js";
 
@@ -29,14 +30,15 @@ describe("AlmanacContent", () => {
     });
     vi.stubGlobal("cancelAnimationFrame", vi.fn());
 
-    const category = Object.values(trackerData.almanac).find(({ items }) => items.length > 12);
+    const category = recordEntries(trackerData.almanac).find(([, { items }]) => items.length > 12);
     if (!category) throw new Error("Expected an Almanac category with enough entries for batching");
+    const categoryName = getName("ui", category[0], "en");
 
     const view = render(AlmanacContent, { locale: "en" });
     await tick();
 
     const trigger = view.getByRole("button", {
-      name: new RegExp(`^${escapeRegExp(category.name)}`),
+      name: new RegExp(`^${escapeRegExp(categoryName)}`),
     });
     await fireEvent.click(trigger);
 

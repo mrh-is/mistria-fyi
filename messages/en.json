@@ -103,7 +103,6 @@
   "dates_section_name": "Dates",
   "animals_cosmetics_section_name": "Cosmetics",
   "animals_color_variants_section_name": "Color Variants",
-  "animals_variant_tier_label": "Tier {tier}",
   "animals_pet_cosmetics_section_name": "Pet cosmetics",
   "animals_pet_skins_section_name": "Pet skins",
   "section_progress_label": "{name}, {completed} of {total} completed",
@@ -450,5 +449,6 @@
   "weather_heavy_inclement": "Storm",
   "weather_special": "Breeze",
   "weather_winter_inclement": "Snow",
-  "weather_winter_heavy_inclement": "Blizzard"
+  "weather_winter_heavy_inclement": "Blizzard",
+  "skip_to_main_content": "Skip to main content"
 }

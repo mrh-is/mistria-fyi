@@ -26,14 +26,10 @@ export interface ItemLocalizationReport {
  */
 export type ItemMetadataIndex = Record<string, { category: string; iconSprite: string }>;
 
-interface RawAlmanacCategory {
+export interface RawAlmanacCategory {
   key: string;
   tags: string[];
 }
-
-const CATEGORY_NAME_OVERRIDES: Record<string, string> = {
-  fish: "Fishing and Diving",
-};
 
 export function extractAlmanac(
   fiddle: ParsedGameData,
@@ -186,14 +182,11 @@ export function extractAlmanac(
 
     entries.sort((a, b) => a.sortName.localeCompare(b.sortName));
 
-    const displayName = CATEGORY_NAME_OVERRIDES[cat.key] ?? snakeToTitle(cat.key);
-
     almanac[cat.key as AlmanacCategoryId] = {
       items: entries.map(({ itemIds, recipeId }) => ({
         itemIds,
         ...(recipeId ? { recipeId } : {}),
       })),
-      name: displayName,
     };
   }
 
@@ -225,6 +218,33 @@ export function extractAlmanac(
     localeNames,
     localizationReport: { fallbackItemIds, nonLocalizableItems: namelessItems },
   };
+}
+
+/**
+ * The almanac's UI-defined categories, in game order. Their player-facing labels are game UI
+ * strings keyed `misc_local/<key>`, localized by {@link extractUiStrings}, not stored here.
+ */
+export function readAlmanacCategories(fiddle: ParsedGameData): RawAlmanacCategory[] {
+  const ui = fiddle.ui as Record<string, unknown> | undefined;
+  const menus = ui?.menus as Record<string, unknown> | undefined;
+  const subMenus = menus?.sub_menus as Record<string, unknown> | undefined;
+  const almanac = subMenus?.almanac as Record<string, unknown> | undefined;
+  if (!almanac?.categories) return [];
+
+  const sourceFile = sourceFileFor(fiddle, "ui.menus.sub_menus.almanac.categories");
+  const arr = expectArray<Record<string, unknown>>(almanac.categories, {
+    fieldPath: "almanac.categories",
+    sourcePath: sourceFile,
+  });
+
+  return arr.map((cat: Record<string, unknown>) => ({
+    key: cat.key as string,
+    tags: expectStringArray(cat.tags, {
+      entityId: cat.key as string,
+      fieldPath: "tags",
+      sourcePath: sourceFile,
+    }),
+  }));
 }
 
 function buildChestIdSet(fiddle: ParsedGameData): Set<string> {
@@ -285,34 +305,4 @@ function collapseColorways(
   }
 
   return result;
-}
-
-function readAlmanacCategories(fiddle: ParsedGameData): RawAlmanacCategory[] {
-  const ui = fiddle.ui as Record<string, unknown> | undefined;
-  const menus = ui?.menus as Record<string, unknown> | undefined;
-  const subMenus = menus?.sub_menus as Record<string, unknown> | undefined;
-  const almanac = subMenus?.almanac as Record<string, unknown> | undefined;
-  if (!almanac?.categories) return [];
-
-  const sourceFile = sourceFileFor(fiddle, "ui.menus.sub_menus.almanac.categories");
-  const arr = expectArray<Record<string, unknown>>(almanac.categories, {
-    fieldPath: "almanac.categories",
-    sourcePath: sourceFile,
-  });
-
-  return arr.map((cat: Record<string, unknown>) => ({
-    key: cat.key as string,
-    tags: expectStringArray(cat.tags, {
-      entityId: cat.key as string,
-      fieldPath: "tags",
-      sourcePath: sourceFile,
-    }),
-  }));
-}
-
-function snakeToTitle(s: string): string {
-  return s
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
 }

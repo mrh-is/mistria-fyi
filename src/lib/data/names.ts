@@ -29,6 +29,7 @@ export type AnimalNameId = string & { readonly __brand: "AnimalNameId" };
 export const LOCALIZED_CATEGORIES = [
   "animals",
   "cosmetics",
+  "cosmetics/subcategories",
   "dates",
   "festivals",
   "items",
@@ -45,12 +46,14 @@ export const LOCALIZED_CATEGORIES = [
   "stores",
   "town-ranks",
   "treasure-chest-tiers",
+  "ui",
 ] as const;
 export type LocalizedCategory = (typeof LOCALIZED_CATEGORIES)[number];
 
 interface LocalizedCategoryId {
   animals: AnimalNameId;
   cosmetics: CosmeticId;
+  "cosmetics/subcategories": string;
   dates: DateId;
   festivals: FestivalId;
   items: ItemId;
@@ -67,8 +70,10 @@ interface LocalizedCategoryId {
   stores: StoreId;
   "town-ranks": string;
   "treasure-chest-tiers": TreasureChestTierId;
+  /** Game UI vocabulary keyed by `misc_local` key: almanac categories, `tier_<n>`, etc. */
+  ui: string;
 }
-type NameChunk = Record<string, string>;
+type NameChunk = Partial<Record<string, string>>;
 
 /**
  * Every generated chunk, keyed `./locales/<locale>/<category>.json`, as a lazy loader. Each chunk
@@ -102,9 +107,9 @@ export function animalNameId(
 }
 
 /**
- * Resolves an entity's display name in `locale`, falling back to the English chunk whenever the
- * requested locale has no chunk for the category or no entry for the ID. Beta locales legitimately
- * miss keys; a missing *English* entry is a data bug and throws.
+ * Resolves an entity's display name in `locale`. The pipeline fills every locale's chunk with
+ * English for any key the game doesn't translate, so each chunk is key-complete and there is no
+ * runtime English fallback: a missing entry is a data bug and throws.
  *
  * `locale` is always an explicit argument sourced from route `load()` data. It is deliberately not
  * read from module-level state: SSR on Cloudflare Workers serves concurrent requests in different
@@ -115,49 +120,38 @@ export function getName<Category extends LocalizedCategory>(
   id: LocalizedCategoryId[Category],
   locale: LocaleCode,
 ): string {
-  const localized = readChunk(locale, category)?.[id];
-  if (localized !== undefined) return localized;
+  const name = readChunk(locale, category)[id];
+  if (name !== undefined) return name;
 
-  const english = readChunk("en", category)?.[id];
-  if (english !== undefined) return english;
-
-  throw new Error(`No "${category}" name for id "${id}" in locale "${locale}" or the en fallback`);
+  throw new Error(`No "${category}" name for id "${id}" in locale "${locale}"`);
 }
 
-/** The whole `category` chunk for `locale`, English-merged. Use for bulk lookups (sorting, search). */
+/** The whole `category` chunk for `locale`. Use for bulk lookups (sorting, search). */
 export function getNameTable<Category extends LocalizedCategory>(
   category: Category,
   locale: LocaleCode,
 ): Readonly<Record<LocalizedCategoryId[Category], string>> {
-  const english = readChunk("en", category) ?? {};
-  if (locale === "en") return english as Readonly<Record<LocalizedCategoryId[Category], string>>;
-  return { ...english, ...readChunk(locale, category) } as Readonly<
-    Record<LocalizedCategoryId[Category], string>
-  >;
+  return readChunk(locale, category) as Readonly<Record<LocalizedCategoryId[Category], string>>;
 }
 
 /** Whether every chunk {@link loadNames} would fetch for these arguments is already resident. */
 export function hasNames(locale: LocaleCode, categories: readonly LocalizedCategory[]): boolean {
-  return categories.every(
-    (category) => isChunkReady("en", category) && isChunkReady(locale, category),
-  );
+  return categories.every((category) => chunks.has(chunkKey(locale, category)));
 }
 
 /**
- * Loads `categories` for `locale` plus their English fallback chunks, caching each for the
- * session. Resolves once every synchronous {@link getName} call for those categories can succeed.
- * Repeat calls for already-loaded chunks resolve immediately without a second fetch.
+ * Loads `categories` for `locale`, caching each chunk for the session. Resolves once every
+ * synchronous {@link getName} call for those categories in that locale can succeed. Repeat calls
+ * for already-loaded chunks resolve immediately without a second fetch. Only `locale` is fetched:
+ * search, which matches English terms too, loads `"en"` explicitly.
  */
 export function loadNames(
   locale: LocaleCode,
   categories: readonly LocalizedCategory[],
 ): Promise<void> {
-  const loads: Promise<void>[] = [];
-  for (const category of categories) {
-    loads.push(loadChunk("en", category));
-    if (locale !== "en") loads.push(loadChunk(locale, category));
-  }
-  return Promise.all(loads).then(() => undefined);
+  return Promise.all(categories.map((category) => loadChunk(locale, category))).then(
+    () => undefined,
+  );
 }
 
 /**
@@ -196,15 +190,12 @@ function chunkPath(locale: LocaleCode, category: LocalizedCategory): string {
   return `./locales/${locale}/${category}.json`;
 }
 
-/** A chunk that was never generated for this locale is "ready" in the sense that there is nothing to await. */
-function isChunkReady(locale: LocaleCode, category: LocalizedCategory): boolean {
-  return !(chunkPath(locale, category) in chunkLoaders) || chunks.has(chunkKey(locale, category));
-}
-
 function loadChunk(locale: LocaleCode, category: LocalizedCategory): Promise<void> {
   const key = chunkKey(locale, category);
   const loader = chunkLoaders[chunkPath(locale, category)];
-  if (!loader) return Promise.resolve();
+  if (!loader) {
+    return Promise.reject(new Error(`The pipeline generated no name chunk "${key}"`));
+  }
 
   let load = chunkLoads.get(key);
   if (!load) {
@@ -219,16 +210,18 @@ function loadChunk(locale: LocaleCode, category: LocalizedCategory): Promise<voi
 }
 
 /**
- * The resident chunk for `locale`/`category`, or `undefined` when the pipeline never generated
- * one (beta locales legitimately lack categories, and English then covers them). A chunk that
- * exists but hasn't been loaded is a programming error — the route's `load()` forgot to await it —
- * and throws rather than silently degrading to English.
+ * The resident chunk for `locale`/`category`. The pipeline generates every category for every
+ * locale, so a missing chunk file is a data bug. A chunk that exists but hasn't been loaded is a
+ * programming error — the route's `load()` forgot to await it — and throws rather than silently
+ * degrading.
  */
-function readChunk(locale: LocaleCode, category: LocalizedCategory): NameChunk | undefined {
+function readChunk(locale: LocaleCode, category: LocalizedCategory): NameChunk {
   const key = chunkKey(locale, category);
   const chunk = chunks.get(key);
   if (chunk) return chunk;
-  if (!(chunkPath(locale, category) in chunkLoaders)) return undefined;
+  if (!(chunkPath(locale, category) in chunkLoaders)) {
+    throw new Error(`The pipeline generated no name chunk "${key}"`);
+  }
   throw new Error(
     `Name chunk "${key}" is not loaded; await loadNames("${locale}", ["${category}"]) before resolving names`,
   );
