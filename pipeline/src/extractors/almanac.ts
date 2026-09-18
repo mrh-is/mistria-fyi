@@ -1,7 +1,11 @@
+import { LOCALE_CODES } from "$lib/types/locale.js";
+
 import { expectArray, expectStringArray } from "../data-shapes.js";
 import { forEachItem } from "../extractor-helpers.js";
+import { localizeField } from "../localize.js";
 import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
 
+import type { LocaleCode } from "$lib/types/locale.js";
 import type {
   AlmanacCategory,
   AlmanacCategoryId,
@@ -11,14 +15,16 @@ import type {
   TrackerData,
 } from "$lib/types/tracker-data.js";
 
+export interface ItemLocalizationReport {
+  fallbackItemIds: Record<LocaleCode, ItemId[]>;
+  nonLocalizableItems: string[];
+}
+
 /**
  * Extracts both named item metadata and visible almanac rows. The metadata index includes every
  * accepted named item, while the almanac contains only items assigned to a UI-defined category.
  */
-export type ItemMetadataIndex = Record<
-  string,
-  { category: string; iconSprite: string; name: string }
->;
+export type ItemMetadataIndex = Record<string, { category: string; iconSprite: string }>;
 
 interface RawAlmanacCategory {
   key: string;
@@ -31,17 +37,32 @@ const CATEGORY_NAME_OVERRIDES: Record<string, string> = {
 
 export function extractAlmanac(
   fiddle: ParsedGameData,
-  recipeMemberItems: Map<RecipeId, ItemId[]>,
+  assetsDir: string,
 ): {
   almanac: TrackerData["almanac"];
   items: ItemMetadataIndex;
+  localeNames: Record<LocaleCode, Record<ItemId, string>>;
+  localizationReport: ItemLocalizationReport;
 } {
-  if (!fiddle.items) return { almanac: {}, items: {} };
+  const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
+    LocaleCode,
+    Record<ItemId, string>
+  >;
+  const fallbackItemIds = Object.fromEntries(
+    LOCALE_CODES.map((locale) => [locale, [] as ItemId[]]),
+  ) as unknown as Record<LocaleCode, ItemId[]>;
+  const emptyResult = {
+    almanac: {},
+    items: {},
+    localeNames,
+    localizationReport: { fallbackItemIds, nonLocalizableItems: [] },
+  };
+  if (!fiddle.items) return emptyResult;
 
   const rawCategories = readAlmanacCategories(fiddle);
   if (rawCategories.length === 0) {
     console.warn("  Warning: No almanac categories found in UI data, falling back to empty");
-    return { almanac: {}, items: {} };
+    return emptyResult;
   }
 
   const chestIds = buildChestIdSet(fiddle);
@@ -52,6 +73,7 @@ export function extractAlmanac(
     id: string;
     name: string;
     recipeKey?: string;
+    subCategory: string;
     tags: string[];
     topCategory: string;
   }[] = [];
@@ -62,7 +84,7 @@ export function extractAlmanac(
 
     const rawName = item.name as string | undefined;
     if (!rawName) {
-      namelessItems.push(`${topCategory}/${subCategory}/${itemId}`);
+      namelessItems.push(`${topCategory}/${subCategory}/${itemId} (missing name)`);
       return;
     }
 
@@ -86,6 +108,7 @@ export function extractAlmanac(
       id: itemId,
       name: rawName,
       recipeKey,
+      subCategory,
       tags,
       topCategory,
     });
@@ -130,7 +153,18 @@ export function extractAlmanac(
 
     const categoryKey =
       assignedIdx !== undefined ? rawCategories[assignedIdx].key : item.topCategory;
-    items[item.id] = { category: categoryKey, iconSprite: item.iconSprite, name: item.name };
+    const itemId = item.id as ItemId;
+    items[item.id] = { category: categoryKey, iconSprite: item.iconSprite };
+    const { fallbackLocales, values } = localizeField(assetsDir, {
+      category: `items/${item.topCategory}/${item.subCategory}`,
+      classification: "localizable",
+      englishValue: item.name,
+      field: "name",
+      id: item.id,
+      logMissing: false,
+    });
+    for (const locale of LOCALE_CODES) localeNames[locale][itemId] = values[locale];
+    for (const locale of fallbackLocales) fallbackItemIds[locale].push(itemId);
 
     for (const categoryIdx of matchedCategoryIndices) {
       categoryBuckets[categoryIdx].set(item.id, {
@@ -148,14 +182,17 @@ export function extractAlmanac(
     const bucket = categoryBuckets[i];
     if (bucket.size === 0) continue;
 
-    const entries = collapseColorways(bucket, recipeMemberItems);
+    const entries = collapseColorways(bucket);
 
-    entries.sort((a, b) => a.name.localeCompare(b.name));
+    entries.sort((a, b) => a.sortName.localeCompare(b.sortName));
 
     const displayName = CATEGORY_NAME_OVERRIDES[cat.key] ?? snakeToTitle(cat.key);
 
     almanac[cat.key as AlmanacCategoryId] = {
-      items: entries,
+      items: entries.map(({ itemIds, recipeId }) => ({
+        itemIds,
+        ...(recipeId ? { recipeId } : {}),
+      })),
       name: displayName,
     };
   }
@@ -168,13 +205,26 @@ export function extractAlmanac(
   console.log(
     `  Almanac: ${Object.keys(almanac).length} categories, ${totalEntries} entries (${totalColorways} item IDs)`,
   );
+  namelessItems.sort((a, b) => a.localeCompare(b));
+  for (const locale of LOCALE_CODES) {
+    fallbackItemIds[locale].sort((a, b) => a.localeCompare(b));
+  }
   if (namelessItems.length > 0) {
     console.log(`  Nameless items skipped (${namelessItems.length}):`);
     for (const path of namelessItems) {
       console.log(`    - ${path}`);
     }
   }
-  return { almanac, items };
+  const fallbackSummary = LOCALE_CODES.map(
+    (locale) => `${locale}: ${fallbackItemIds[locale].length.toString()}`,
+  ).join(", ");
+  console.log(`  Item localization fallbacks: ${fallbackSummary}`);
+  return {
+    almanac,
+    items,
+    localeNames,
+    localizationReport: { fallbackItemIds, nonLocalizableItems: namelessItems },
+  };
 }
 
 function buildChestIdSet(fiddle: ParsedGameData): Set<string> {
@@ -197,23 +247,14 @@ function buildChestIdSet(fiddle: ParsedGameData): Set<string> {
  * `recipe_key + name` are grouped. The canonical ID is the alphabetically-first
  * item ID, matching the game's own almanac icon selection.
  *
- * Uses recipeMemberItems from the recipe extractor to ensure grouping consistency
- * between almanac entries and recipe presentations.
+ * Grouping stays anchored to the English source name so locale-specific translations never change
+ * structural IDs or completion behavior.
  */
 function collapseColorways(
   bucket: Map<string, { id: string; name: string; recipeKey?: string }>,
-  recipeMemberItems: Map<RecipeId, ItemId[]>,
-): AlmanacEntry[] {
-  const result: AlmanacEntry[] = [];
+): (AlmanacEntry & { sortName: string })[] {
+  const result: (AlmanacEntry & { sortName: string })[] = [];
   const seenRecipeGroups = new Map<string, number>();
-
-  // Build a reverse lookup: item ID → recipe member list (from the recipe extractor)
-  const itemToRecipeMembers = new Map<string, ItemId[]>();
-  for (const [, members] of recipeMemberItems) {
-    for (const memberId of members) {
-      itemToRecipeMembers.set(memberId, members);
-    }
-  }
 
   for (const [id, entry] of bucket) {
     if (entry.recipeKey) {
@@ -227,13 +268,13 @@ function collapseColorways(
       seenRecipeGroups.set(groupKey, result.length);
       result.push({
         itemIds: [id as ItemId],
-        name: entry.name,
         recipeId: entry.recipeKey as RecipeId,
+        sortName: entry.name,
       });
     } else {
       result.push({
         itemIds: [id as ItemId],
-        name: entry.name,
+        sortName: entry.name,
       });
     }
   }

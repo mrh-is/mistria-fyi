@@ -44,7 +44,7 @@ import { extractMuseum } from "./extractors/museum.js";
 import { extractNpcs } from "./extractors/npcs.js";
 import { extractPetCosmetics, extractPetSkins } from "./extractors/pets.js";
 import { extractQuests } from "./extractors/quests.js";
-import { extractRecipes } from "./extractors/recipes.js";
+import { deriveRecipeLocaleNames, extractRecipes } from "./extractors/recipes.js";
 import { extractTownRanks } from "./extractors/renown.js";
 import { extractSkills } from "./extractors/skills.js";
 import { extractSprites } from "./extractors/sprites.js";
@@ -344,14 +344,21 @@ async function main(): Promise<void> {
   console.log("Step 3: Extracting tracker data...");
   const { localeNames: museumLocaleNames, museum } = extractMuseum(fiddle, assetsDir);
   const cutsceneQuestMap = buildCutsceneQuestMap(fiddle);
-  const { recipeIdByItemId, recipeMemberItems, recipes } = extractRecipes(fiddle, cutsceneQuestMap);
-  const { almanac, items } = extractAlmanac(fiddle, recipeMemberItems);
+  const { recipeIdByItemId, recipeMemberItems, recipeNameSources, recipes } = extractRecipes(
+    fiddle,
+    cutsceneQuestMap,
+  );
+  const { almanac, items, localeNames: itemLocaleNames } = extractAlmanac(fiddle, assetsDir);
+  const recipeLocaleNames = deriveRecipeLocaleNames(recipeNameSources, itemLocaleNames);
   const { animals, localeNames: animalLocaleNames } = extractAnimals(fiddle, assetsDir);
   const { cosmetics: petCosmetics, localeNames: petCosmeticLocaleNames } = extractPetCosmetics(
     fiddle,
     assetsDir,
   );
-  const petSkins = extractPetSkins(fiddle);
+  const { localeNames: petSkinLocaleNames, skins: petSkins } = extractPetSkins(
+    fiddle,
+    itemLocaleNames,
+  );
   const { localeNames: npcLocaleNames, npcs } = extractNpcs(fiddle, assetsDir);
   const { cosmetics: cosmeticsRaw, localeNames: cosmeticLocaleNames } = extractCosmetics(
     fiddle,
@@ -381,7 +388,8 @@ async function main(): Promise<void> {
   );
   const { dates, localeNames: dateLocaleNames } = extractDates(fiddle, assetsDir);
   const { festivals, localeNames: festivalLocaleNames } = extractFestivals(fiddle, assetsDir);
-  const treasureChestTiers = extractTreasureChestTiers(fiddle);
+  const { localeNames: treasureChestTierLocaleNames, tiers: treasureChestTiers } =
+    extractTreasureChestTiers(fiddle, assetsDir);
 
   const requirementContext = createRequirementContext(
     fiddle.requirements as Record<string, unknown> | undefined,
@@ -590,7 +598,7 @@ async function main(): Promise<void> {
   );
 
   const localeManifest = generateLocaleManifest(assetsDir);
-  const localeManifestJson = JSON.stringify(localeManifest, null, 2);
+  const localeManifestJson = `${JSON.stringify(localeManifest, null, 2)}\n`;
   writeFileSync(resolve(APP_DATA_DIR, "locales.json"), localeManifestJson);
   console.log(`  Written: src/lib/data/locales.json (${localeManifest.length} locales)`);
 
@@ -608,6 +616,10 @@ async function main(): Promise<void> {
   writeLocaleChunks("cosmetics", cosmeticLocaleNames);
   writeLocaleChunks("mines", mineLocaleNames);
   writeLocaleChunks("town-ranks", townRankLocaleNames);
+  writeLocaleChunks("items", itemLocaleNames);
+  writeLocaleChunks("recipes", recipeLocaleNames);
+  writeLocaleChunks("pets/skins", petSkinLocaleNames);
+  writeLocaleChunks("treasure-chest-tiers", treasureChestTierLocaleNames);
 
   const extractSpritesFlag = args.includes("--sprites");
   if (extractSpritesFlag) {

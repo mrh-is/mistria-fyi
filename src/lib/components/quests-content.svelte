@@ -198,7 +198,7 @@
       message = m.quest_marked_obtained({ name: displayName });
     } else if (newState === "completed") {
       if (newlyAdded.length === 1) {
-        const names = recipeDisplayNames(newlyAdded);
+        const names = recipeDisplayNames(newlyAdded, locale);
         message = m.quest_marked_completed_with_recipe({ name: displayName, recipe: names[0] });
       } else if (newlyAdded.length > 1) {
         message = m.quest_marked_completed_with_recipes({
@@ -259,11 +259,11 @@
       const fetchQuest = questType === "fetch" ? (q as FetchQuest) : undefined;
       const heartQuest = questType === "heart" ? (q as HeartQuest) : undefined;
       const rewardRecipeName = fetchQuest?.rewardRecipeId
-        ? trackerData.recipes[fetchQuest.rewardRecipeId].name
+        ? getName("recipes", fetchQuest.rewardRecipeId, locale)
         : undefined;
       return {
         displayName: fetchQuest
-          ? trackerData.items[fetchQuest.itemId].name
+          ? getName("items", fetchQuest.itemId, locale)
           : displayQuestName(getName("quests", id as QuestId, locale), questType),
         heartLevel: heartQuest?.heartLevel,
         id: id as QuestId,
@@ -294,13 +294,13 @@
         return (a.heartLevel ?? 0) - (b.heartLevel ?? 0);
       }
       if (questType === "fetch") {
-        const nameCmp = a.displayName.localeCompare(b.displayName);
+        const nameCmp = nameCollator(locale).compare(a.displayName, b.displayName);
         if (nameCmp !== 0) return nameCmp;
         const npcA = a.npc ? getName("npcs", a.npc, locale) : "";
         const npcB = b.npc ? getName("npcs", b.npc, locale) : "";
         return nameCollator(locale).compare(npcA, npcB);
       }
-      return a.displayName.localeCompare(b.displayName);
+      return nameCollator(locale).compare(a.displayName, b.displayName);
     })}
   {@const duplicateNames = findDuplicateNames(quests)}
   {@const visibleQuests = quests.filter((q) => {

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { NpcId } from "$lib/types/tracker-data.js";
+import type { ItemId, NpcId } from "$lib/types/tracker-data.js";
 
 /**
  * The generated chunks are English-filled by the pipeline, so a shipped beta locale never actually
@@ -8,9 +8,12 @@ import type { NpcId } from "$lib/types/tracker-data.js";
  * would otherwise be unreachable: a locale chunk that exists but has no entry for the requested ID.
  */
 vi.mock("$lib/data/locales/ja/npcs.json", () => ({ default: { balor: "バロル" } }));
+vi.mock("$lib/data/locales/ja/items.json", () => ({ default: { turnip: "カブ" } }));
 
 const balor = "balor" as NpcId;
 const adeline = "adeline" as NpcId;
+const copperAxe = "axe_copper" as ItemId;
+const turnip = "turnip" as ItemId;
 
 describe("getName — English fallback", () => {
   it("uses the locale's entry when present and English when it is missing", async () => {
@@ -28,5 +31,7 @@ describe("getName — English fallback", () => {
     const table = getNameTable("npcs", "ja");
     expect(table[balor]).toBe("バロル");
     expect(table[adeline]).toBe("Adeline");
+    expect(getName("items", turnip, "ja")).toBe("カブ");
+    expect(getName("items", copperAxe, "ja")).toBe(getName("items", copperAxe, "en"));
   });
 });

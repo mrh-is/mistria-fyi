@@ -46,8 +46,12 @@
 
   let petSkinEntries = $derived(
     Object.entries(trackerData.pets.skins)
-      .map(([id, entry]) => ({ id: id as PetSkinId, ...entry }))
-      .sort((a, b) => a.name.localeCompare(b.name)),
+      .map(([id, entry]) => ({
+        id: id as PetSkinId,
+        ...entry,
+        name: getName("pets/skins", id as PetSkinId, locale),
+      }))
+      .sort((a, b) => nameCollator(locale).compare(a.name, b.name)),
   );
 
   let scopedPetCosmeticEntries = $derived(

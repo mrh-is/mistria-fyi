@@ -31,14 +31,16 @@ describe("findRecipesForQuest", () => {
 
 describe("recipeDisplayNames", () => {
   it("returns the first presentation name for each recipe", () => {
-    expect(recipeDisplayNames([ONE_REWARD_RECIPE])).toEqual(["Herb Planter"]);
+    expect(recipeDisplayNames([ONE_REWARD_RECIPE], "en")).toEqual(["Herb Planter"]);
   });
 
   it("deduplicates presentation names", () => {
-    expect(recipeDisplayNames([ONE_REWARD_RECIPE, ONE_REWARD_RECIPE])).toEqual(["Herb Planter"]);
+    expect(recipeDisplayNames([ONE_REWARD_RECIPE, ONE_REWARD_RECIPE], "en")).toEqual([
+      "Herb Planter",
+    ]);
   });
 
   it("returns empty array for empty input", () => {
-    expect(recipeDisplayNames([])).toEqual([]);
+    expect(recipeDisplayNames([], "en")).toEqual([]);
   });
 });

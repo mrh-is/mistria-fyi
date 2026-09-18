@@ -5,12 +5,20 @@ import { getName, getNameTable, nameCollator } from "$lib/data/names.js";
 import { LOCALE_CODES } from "$lib/types/locale.js";
 import { recordKeys } from "$lib/utils.js";
 
-import type { FestivalId, NpcId, PetCosmeticSetId, SkillId } from "$lib/types/tracker-data.js";
+import type {
+  FestivalId,
+  ItemId,
+  NpcId,
+  PetCosmeticSetId,
+  RecipeId,
+  SkillId,
+} from "$lib/types/tracker-data.js";
 
 const balor = "balor" as NpcId;
 const farming = "farming" as SkillId;
 const harvestFestival = "harvest" as FestivalId;
 const halo = "halo" as PetCosmeticSetId;
+const turnip = "turnip" as ItemId;
 
 describe("getName", () => {
   it("resolves the localized name for a translated locale", () => {
@@ -44,6 +52,18 @@ describe("getName", () => {
     expect(getName("museum_wings", "archaeology/sets/aldarian", "ja")).toBe("アルダリア遺物セット");
     expect("name" in trackerData.festivals[harvestFestival]).toBe(false);
     expect("name" in trackerData.pets.cosmetics[halo]).toBe(false);
+  });
+
+  it("resolves item-derived names without retaining structural display fields", () => {
+    expect(getName("items", turnip, "en")).toBe("Turnip");
+    expect(getName("items", turnip, "ja")).not.toBe("Turnip");
+    expect(getName("recipes", "vegetable_soup" as RecipeId, "ja").length).toBeGreaterThan(0);
+
+    const [petSkinId] = recordKeys(trackerData.pets.skins);
+    expect(getName("pets/skins", petSkinId, "ja")).not.toMatch(/^Pet Skin:/i);
+    expect("name" in trackerData.items[turnip]).toBe(false);
+    expect("name" in trackerData.recipes["vegetable_soup" as RecipeId]).toBe(false);
+    expect("name" in trackerData.pets.skins[petSkinId]).toBe(false);
   });
 
   // The locale-missing → English fallback path lives in `names.fallback.test.ts`, which needs a

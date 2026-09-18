@@ -25,7 +25,6 @@ export interface AlmanacCategory {
 export type AlmanacCategoryId = string & { readonly __brand: "AlmanacCategoryId" };
 export interface AlmanacEntry {
   itemIds: ItemId[];
-  name: string;
   recipeId?: RecipeId;
 }
 export interface Animal {
@@ -92,7 +91,6 @@ export interface HeartQuest extends Quest {
 export interface Item extends TrackerEntity {
   category: string;
   iconSprite: string;
-  name: string;
 }
 export type ItemId = string & { readonly __brand: "ItemId" };
 export interface MinesBiome {
@@ -126,9 +124,7 @@ export type PerkId = string & { readonly __brand: "PerkId" };
 export type PerkTier = Record<PerkId, Perk>;
 export type PetCosmeticSet = TrackerEntity;
 export type PetCosmeticSetId = string & { readonly __brand: "PetCosmeticSetId" };
-export interface PetSkin extends TrackerEntity {
-  name: string;
-}
+export type PetSkin = TrackerEntity;
 export type PetSkinId = string & { readonly __brand: "PetSkinId" };
 export type Quest = TrackerEntity;
 export type QuestId = string & { readonly __brand: "QuestId" };
@@ -146,14 +142,8 @@ export interface Range {
   end: number;
   start: number;
 }
-export interface Recipe extends TrackerEntity {
-  name: string;
-}
+export type Recipe = TrackerEntity;
 export type RecipeId = string & { readonly __brand: "RecipeId" };
-export interface RecipePresentation {
-  itemIds: ItemId[];
-  name: string;
-}
 export type Season = "fall" | "spring" | "summer" | "winter";
 export interface Skill {
   perkTiers: [PerkTier, PerkTier, PerkTier, PerkTier, PerkTier];
@@ -202,7 +192,7 @@ export interface TrackerData {
   skills: Record<SkillId, Skill>;
   stores: Record<StoreId, Store>;
   townRanks: TownRank[];
-  treasureChestTiers: Record<TreasureChestTierId, { name: string }>;
+  treasureChestTiers: Record<TreasureChestTierId, object>;
   version: string;
 }
 export interface TrackerEntity {

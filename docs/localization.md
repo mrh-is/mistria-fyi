@@ -8,9 +8,10 @@ Confusing them, or assuming one guarantees the other, is the most common mistake
 **Game data names** (items, NPCs, locations, festivals, recipes, ...) come from Fields of Mistria's
 own translation tables in `pipeline/input/assets/localization/`. The pipeline
 (`pipeline/src/localize.ts`) reads them and writes localized names into
-`src/lib/data/tracker-data.json` per category. MFG never edits this content and never invents a
-translation for it — a category with missing or unclear game-side translation data is a pipeline
-extraction problem, not something to work around in the app.
+`src/lib/data/locales/<locale>/<category>.json` chunks. Structural records in
+`src/lib/data/tracker-data.json` deliberately omit migrated display names. MFG never edits this
+content and never invents a translation for it — a category with missing or unclear game-side
+translation data is a pipeline extraction problem, not something to work around in the app.
 
 **MFG's own UI chrome text** (buttons, labels, dialogs, descriptions) is machine-translated by us
 and built on [Paraglide JS](https://inlang.com/m/gerre34r/library-inlang-paraglideJs). Source

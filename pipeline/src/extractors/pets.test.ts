@@ -51,7 +51,7 @@ describe("extractPetCosmetics", () => {
 });
 
 describe("extractPetSkins", () => {
-  it("extracts skins from items with pet_skin_unlock field", () => {
+  it("extracts structural skins and derives locale names without stripping translated prefixes", () => {
     const fiddle = makeFiddle({
       items: {
         other: {
@@ -74,15 +74,31 @@ describe("extractPetSkins", () => {
       },
     });
 
-    const result = extractPetSkins(fiddle);
-    expect(result).toEqual({
-      mushroom: { name: "Mushroom", sources: [] },
-      sapling: { name: "Sapling", sources: [] },
+    const itemLocaleNames = {
+      en: { pet_skin_mushroom: "Pet Skin: Mushroom", pet_skin_sapling: "Pet Skin: Sapling" },
+      es: { pet_skin_mushroom: "Pet Skin: Mushroom", pet_skin_sapling: "Pet Skin: Sapling" },
+      fr: { pet_skin_mushroom: "Pet Skin: Mushroom", pet_skin_sapling: "Pet Skin: Sapling" },
+      ja: { pet_skin_mushroom: "キノコのペットスキン", pet_skin_sapling: "若木のペットスキン" },
+      ko: { pet_skin_mushroom: "Pet Skin: Mushroom", pet_skin_sapling: "Pet Skin: Sapling" },
+      ru: { pet_skin_mushroom: "Pet Skin: Mushroom", pet_skin_sapling: "Pet Skin: Sapling" },
+      "zh-Hans": { pet_skin_mushroom: "Pet Skin: Mushroom", pet_skin_sapling: "Pet Skin: Sapling" },
+      "zh-Hant": { pet_skin_mushroom: "Pet Skin: Mushroom", pet_skin_sapling: "Pet Skin: Sapling" },
+    } as never;
+
+    const result = extractPetSkins(fiddle, itemLocaleNames);
+    expect(result.skins).toEqual({
+      mushroom: { sources: [] },
+      sapling: { sources: [] },
+    });
+    expect(result.localeNames.en).toEqual({ mushroom: "Mushroom", sapling: "Sapling" });
+    expect(result.localeNames.ja).toEqual({
+      mushroom: "キノコのペットスキン",
+      sapling: "若木のペットスキン",
     });
   });
 
   it("returns empty record when no pet skin items exist", () => {
     const fiddle = makeFiddle({ items: {} });
-    expect(extractPetSkins(fiddle)).toEqual({});
+    expect(extractPetSkins(fiddle, {} as never).skins).toEqual({});
   });
 });

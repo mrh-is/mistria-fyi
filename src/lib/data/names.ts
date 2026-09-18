@@ -7,14 +7,18 @@ import type {
   CosmeticId,
   DateId,
   FestivalId,
+  ItemId,
   MinesBiomeId,
   NpcId,
   PerkId,
   PetCosmeticSetId,
+  PetSkinId,
   QuestId,
+  RecipeId,
   SkillId,
   SpellId,
   StoreId,
+  TreasureChestTierId,
 } from "$lib/types/tracker-data.js";
 
 export type AnimalNameId = string & { readonly __brand: "AnimalNameId" };
@@ -29,32 +33,40 @@ export type LocalizedCategory =
   | "cosmetics"
   | "dates"
   | "festivals"
+  | "items"
   | "mines"
   | "museum_wings"
   | "npcs"
   | "perks"
   | "pets/cosmetic_sets"
+  | "pets/skins"
   | "quests"
+  | "recipes"
   | "skills"
   | "spells"
   | "stores"
-  | "town-ranks";
+  | "town-ranks"
+  | "treasure-chest-tiers";
 
 interface LocalizedCategoryId {
   animals: AnimalNameId;
   cosmetics: CosmeticId;
   dates: DateId;
   festivals: FestivalId;
+  items: ItemId;
   mines: MinesBiomeId;
   museum_wings: string;
   npcs: NpcId;
   perks: PerkId;
   "pets/cosmetic_sets": PetCosmeticSetId;
+  "pets/skins": PetSkinId;
   quests: QuestId;
+  recipes: RecipeId;
   skills: SkillId;
   spells: SpellId;
   stores: StoreId;
   "town-ranks": string;
+  "treasure-chest-tiers": TreasureChestTierId;
 }
 type NameChunk = Record<string, string>;
 
