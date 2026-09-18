@@ -9,7 +9,7 @@
 
   import RankRecord from "./rank-record.svelte";
 
-  import type { PageProps } from "./$types.js";
+  import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
 

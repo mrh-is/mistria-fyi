@@ -12,8 +12,8 @@ import type {
   Weather,
 } from "$lib/types/tracker-data.js";
 
-import type { SourceFieldLocation } from "../data-shapes.js";
-import type { RequirementContext, RequirementExpression } from "../requirements.js";
+import type { SourceFieldLocation } from "../data-shapes";
+import type { RequirementContext, RequirementExpression } from "../requirements";
 
 const ALL_SEASONS = new Set<Season>(["fall", "spring", "summer", "winter"]);
 const ALL_WEATHERS = new Set<Weather>(["calm", "heavy_inclement", "inclement", "special"]);

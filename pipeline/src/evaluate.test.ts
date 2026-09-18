@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { evaluateExpressions } from "./evaluate.js";
-import { parseFiddle } from "./parse-fiddle.js";
-import { createAssetsFixture } from "./test-helpers.js";
+import { evaluateExpressions } from "./evaluate";
+import { parseFiddle } from "./parse-fiddle";
+import { createAssetsFixture } from "./test-helpers";
 
 describe("evaluateExpressions", () => {
   it("resolves referenced store and counted recipe-cost expressions", () => {

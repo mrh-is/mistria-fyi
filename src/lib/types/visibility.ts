@@ -1,4 +1,4 @@
-import type { NpcId, PerkId, QuestId, Season, SkillId } from "./tracker-data.js";
+import type { NpcId, PerkId, QuestId, Season, SkillId } from "./tracker-data";
 
 export type QuestVisibility = "available" | "completed" | "unavailable";
 

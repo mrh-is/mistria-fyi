@@ -1,8 +1,8 @@
 import { LOCALE_CODES } from "$lib/types/locale.js";
 
-import { expectArray } from "../data-shapes.js";
-import { localizeField } from "../localize.js";
-import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
+import { expectArray } from "../data-shapes";
+import { localizeField } from "../localize";
+import { type ParsedGameData, sourceFileFor } from "../parse-fiddle";
 
 import type { SourceTuple } from "$lib/types/acquisition.js";
 import type { LocaleCode } from "$lib/types/locale.js";

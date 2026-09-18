@@ -13,13 +13,13 @@ import type {
   StoreId,
 } from "$lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../../parse-fiddle.js";
+import type { ParsedGameData } from "../../parse-fiddle";
 import type {
   AnimalCosmeticSourceAccumulator,
   CosmeticSourceAccumulator,
   ItemSourceAccumulator,
   PetCosmeticSourceAccumulator,
-} from "../source-accumulator.js";
+} from "../source-accumulator";
 
 type LetterRewardSource = Extract<
   Source,

@@ -1,7 +1,7 @@
 import { simplifyAvailabilityCondition } from "$lib/engine/availability-condition.js";
 import { isNonEmptyArray, type NonEmptyArray } from "$lib/utils.js";
 
-import { forEachItem } from "../../extractor-helpers.js";
+import { forEachItem } from "../../extractor-helpers";
 
 import type {
   ActivityId,
@@ -22,12 +22,12 @@ import type {
 } from "$lib/types/tracker-data.js";
 import type { PetCosmeticSetId } from "$lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../../parse-fiddle.js";
+import type { ParsedGameData } from "../../parse-fiddle";
 import type {
   CosmeticSourceAccumulator,
   ItemSourceAccumulator,
   PetCosmeticSourceAccumulator,
-} from "../source-accumulator.js";
+} from "../source-accumulator";
 
 export function collectNaturalSources(
   fiddle: ParsedGameData,

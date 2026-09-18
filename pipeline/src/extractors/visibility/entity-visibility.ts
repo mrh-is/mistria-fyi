@@ -1,5 +1,5 @@
-import { availabilityToVisibility, toAvailableVisibility } from "./availability-projection.js";
-import { resolveToVisibility, simplifyCondition } from "./requirement-resolver.js";
+import { availabilityToVisibility, toAvailableVisibility } from "./availability-projection";
+import { resolveToVisibility, simplifyCondition } from "./requirement-resolver";
 
 import type { Source as AcquisitionSource, SourceTuple } from "$lib/types/acquisition.js";
 import type {
@@ -12,10 +12,10 @@ import type {
 } from "$lib/types/tracker-data.js";
 import type { VisibilityCondition } from "$lib/types/visibility.js";
 
-import type { ParsedGameData } from "../../parse-fiddle.js";
-import type { RequirementExpression } from "../../requirements.js";
-import type { CutsceneQuestMap } from "./cutscene-quest-map.js";
-import type { QuestChainData } from "./quest-chains.js";
+import type { ParsedGameData } from "../../parse-fiddle";
+import type { RequirementExpression } from "../../requirements";
+import type { CutsceneQuestMap } from "./cutscene-quest-map";
+import type { QuestChainData } from "./quest-chains";
 
 const ALWAYS: VisibilityCondition = { type: "always" };
 

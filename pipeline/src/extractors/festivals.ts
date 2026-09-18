@@ -1,11 +1,11 @@
 import { LOCALE_CODES } from "$lib/types/locale.js";
 
-import { localizeField } from "../localize.js";
+import { localizeField } from "../localize";
 
 import type { LocaleCode } from "$lib/types/locale.js";
 import type { FestivalId, Season, TrackerData } from "$lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../parse-fiddle.js";
+import type { ParsedGameData } from "../parse-fiddle";
 
 export function extractFestivals(
   fiddle: ParsedGameData,

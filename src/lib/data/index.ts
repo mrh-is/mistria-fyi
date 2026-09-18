@@ -1,5 +1,5 @@
 import trackerDataJson from "./tracker-data.json";
-import { buildTrackerIndex } from "./tracker-index.js";
+import { buildTrackerIndex } from "./tracker-index";
 
 import type { ItemId, TrackerData } from "$lib/types/tracker-data.js";
 

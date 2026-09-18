@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { extractQuests } from "./quests.js";
+import { extractQuests } from "./quests";
 
 import type { QuestId, RecipeId } from "$lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../parse-fiddle.js";
+import type { ParsedGameData } from "../parse-fiddle";
 
-vi.mock("../localize.js", () => ({
+vi.mock("../localize", () => ({
   localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
     fallbackLocales: [],
     values: {

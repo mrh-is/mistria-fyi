@@ -1,12 +1,12 @@
 import { LOCALE_CODES } from "$lib/types/locale.js";
 
-import { forEachItem } from "../extractor-helpers.js";
-import { localizeField } from "../localize.js";
+import { forEachItem } from "../extractor-helpers";
+import { localizeField } from "../localize";
 
 import type { LocaleCode } from "$lib/types/locale.js";
 import type { DateId, DateType, ItemId } from "$lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../parse-fiddle.js";
+import type { ParsedGameData } from "../parse-fiddle";
 
 export function extractDates(
   fiddle: ParsedGameData,
