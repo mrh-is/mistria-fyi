@@ -10,7 +10,7 @@ import type { PageLoad } from "./$types.js";
 // always present; fall back to the base locale in that case.
 export const load: PageLoad = async (event?: Partial<Parameters<PageLoad>[0]>) => {
   const locale = event?.url ? getLocaleForUrl(event.url) : baseLocale;
-  await loadPageNames(event, ["items", ...SEGMENT_LOOKUP_CATEGORIES]);
+  await loadPageNames(event, ["items", "ui", ...SEGMENT_LOOKUP_CATEGORIES]);
   return {
     metadata: {
       description: m.recipes_page_description({}, { locale }),

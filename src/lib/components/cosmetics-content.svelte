@@ -69,7 +69,9 @@
     const bySlot: Record<string, Record<string, CosmeticEntry[]>> = {};
     for (const [id, cosmetic] of Object.entries(trackerData.cosmetics)) {
       const slot = cosmetic.slot;
-      const subCategory = cosmetic.subCategory ?? m.cosmetics_other_subcategory();
+      const subCategory = cosmetic.subCategory
+        ? getName("cosmetics/subcategories", cosmetic.subCategory, locale)
+        : m.cosmetics_other_subcategory();
       const sources = cosmetic.sources;
       ((bySlot[slot] ??= {})[subCategory] ??= []).push({
         id: id as CosmeticId,
@@ -87,7 +89,9 @@
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([slot, subCats]) => ({
         slot,
-        subCategories: Object.entries(subCats).sort(([a], [b]) => a.localeCompare(b)),
+        subCategories: Object.entries(subCats).sort(([a], [b]) =>
+          nameCollator(locale).compare(a, b),
+        ),
       }));
   });
 

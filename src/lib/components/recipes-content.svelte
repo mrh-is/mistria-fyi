@@ -89,7 +89,7 @@
       }
       if (entries.length > 0) {
         entries.sort((a, b) => nameCollator(locale).compare(a.name, b.name));
-        groups.push({ entries, id: catId, name: cat.name });
+        groups.push({ entries, id: catId, name: getName("ui", catId, locale) });
       }
     });
     return groups;

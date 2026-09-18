@@ -22,7 +22,7 @@ vi.mock("$lib/data/names.js", async (importOriginal) => ({
 }));
 
 describe("SearchResults chunk loading", () => {
-  it("fetches every category for the locale on open, and searches once they land", async () => {
+  it("fetches every category for the locale and English on open, and searches once they land", async () => {
     let release = (): void => undefined;
     names.loadNames.mockReturnValue(
       new Promise<void>((resolve) => {
@@ -35,6 +35,7 @@ describe("SearchResults chunk loading", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Loading search");
     await waitFor(() => {
       expect(names.loadNames).toHaveBeenCalledWith("ja", LOCALIZED_CATEGORIES);
+      expect(names.loadNames).toHaveBeenCalledWith("en", LOCALIZED_CATEGORIES);
     });
     expect(screen.queryAllByRole("button", { name: /カブ/ })).toHaveLength(0);
 

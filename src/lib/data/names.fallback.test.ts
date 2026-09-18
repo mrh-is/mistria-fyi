@@ -1,33 +1,29 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ItemId, NpcId } from "$lib/types/tracker-data.js";
+import type { NpcId } from "$lib/types/tracker-data.js";
 
 /**
- * The generated chunks are English-filled by the pipeline, so a shipped beta locale never actually
- * misses a key. Replacing the `ja` chunk with a partial one exercises the app-side fallback that
- * would otherwise be unreachable: a locale chunk that exists but has no entry for the requested ID.
+ * The pipeline English-fills every locale chunk, so a shipped chunk never misses a key and the
+ * app has no runtime English fallback. Replacing the `ja` chunk with a partial one is the only way
+ * to prove that a missing entry throws rather than quietly reading the English chunk, which would
+ * be a regression back to fetching two chunks per category on every non-English route.
  */
 vi.mock("$lib/data/locales/ja/npcs.json", () => ({ default: { balor: "バロル" } }));
-vi.mock("$lib/data/locales/ja/items.json", () => ({ default: { turnip: "カブ" } }));
 
 const balor = "balor" as NpcId;
 const adeline = "adeline" as NpcId;
-const copperAxe = "axe_copper" as ItemId;
-const turnip = "turnip" as ItemId;
 
-describe("getName — English fallback", () => {
-  it("uses the locale's entry when present and English when it is missing", async () => {
-    const { getName, getNameTable, loadNames } = await import("$lib/data/names.js");
-    await loadNames("ja", ["npcs", "items"]);
+describe("getName — no runtime English fallback", () => {
+  it("throws on an entry missing from the locale chunk even when English has it", async () => {
+    const { getName, getNameTable, hasNames, loadNames } = await import("$lib/data/names.js");
+    await loadNames("ja", ["npcs"]);
+    await loadNames("en", ["npcs"]);
 
     expect(getName("npcs", balor, "ja")).toBe("バロル");
-    expect(getName("npcs", adeline, "ja")).toBe("Adeline");
     expect(getName("npcs", adeline, "en")).toBe("Adeline");
+    expect(() => getName("npcs", adeline, "ja")).toThrow(/No "npcs" name for id "adeline"/);
 
-    const table = getNameTable("npcs", "ja");
-    expect(table[balor]).toBe("バロル");
-    expect(table[adeline]).toBe("Adeline");
-    expect(getName("items", turnip, "ja")).toBe("カブ");
-    expect(getName("items", copperAxe, "ja")).toBe(getName("items", copperAxe, "en"));
+    expect(hasNames("ja", ["npcs"])).toBe(true);
+    expect(getNameTable("npcs", "ja")).toEqual({ balor: "バロル" });
   });
 });

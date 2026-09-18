@@ -20,16 +20,15 @@ describe("name chunk loading", () => {
     expect(() => getName("npcs", balor, "en")).toThrow(/"en\/npcs" is not loaded/);
   });
 
-  it("loads only the requested categories, with their English fallback", async () => {
+  it("loads only the requested categories in the requested locale, with no English chunk", async () => {
     await loadNames("ja", ["npcs"]);
 
     expect(hasNames("ja", ["npcs"])).toBe(true);
-    expect(hasNames("en", ["npcs"])).toBe(true);
+    expect(hasNames("en", ["npcs"])).toBe(false);
     expect(getName("npcs", balor, "ja")).toBe("バロル");
-    expect(getName("npcs", balor, "en")).toBe("Balor");
+    expect(() => getName("npcs", balor, "en")).toThrow(/"en\/npcs" is not loaded/);
 
     expect(hasNames("ja", ["items"])).toBe(false);
-    expect(hasNames("en", ["items"])).toBe(false);
     expect(() => getName("items", turnip, "ja")).toThrow(/not loaded/);
   });
 
@@ -63,7 +62,8 @@ describe("loadPageNames", () => {
     // Not on the characters page, so not fetched.
     expect(hasNames("ru", ["items"])).toBe(false);
     expect(hasNames("ru", ["cosmetics"])).toBe(false);
-    // Only the layout-resolved locale, plus English fallback.
+    // Only the layout-resolved locale: no English chunk rides along.
     expect(hasNames("zh-Hant", ["npcs"])).toBe(false);
+    expect(hasNames("en", ["npcs"])).toBe(false);
   });
 });

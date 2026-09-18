@@ -84,7 +84,6 @@ tags = ["crop"]
       almanac: {
         crops: {
           items: [{ itemIds: ["turnip"] }],
-          name: "Crops",
         },
       },
       items: {
