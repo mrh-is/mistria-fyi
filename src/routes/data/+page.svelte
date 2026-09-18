@@ -10,7 +10,7 @@
 
   import BackupCard from "./backup-card.svelte";
   import DangerZoneCard from "./danger-zone-card.svelte";
-  import { openThenScroll } from "./data-effects.js";
+  import { openThenScroll } from "./data-effects";
   import ImportCard from "./import-card.svelte";
   import TransferCard from "./transfer-card.svelte";
 

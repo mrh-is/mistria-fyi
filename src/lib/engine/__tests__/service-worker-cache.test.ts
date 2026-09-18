@@ -6,7 +6,7 @@ import {
   isEligibleForRuntimeCaching,
   isExternalFontAsset,
   isLazyAsset,
-} from "../service-worker-cache.js";
+} from "../service-worker-cache";
 
 const ORIGIN = "https://mistria.fyi";
 

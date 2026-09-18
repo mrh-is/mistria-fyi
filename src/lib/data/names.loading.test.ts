@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { getName, hasNames, loadNames, loadPageNames } from "$lib/data/names.js";
 
-import { load as loadCharacters } from "../../routes/(category)/characters/+page.js";
+import { load as loadCharacters } from "../../routes/(category)/characters/+page";
 
 import type { ItemId, NpcId } from "$lib/types/tracker-data.js";
 

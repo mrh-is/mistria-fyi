@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
-import { extractSkills } from "./skills.js";
+import { makeFiddle as makeFiddleBase } from "../test-helpers";
+import { extractSkills } from "./skills";
 
-vi.mock("../localize.js", () => ({
+vi.mock("../localize", () => ({
   localizeField: vi.fn((_assetsDir: string, input: { englishValue: string; id: string }) => ({
     fallbackLocales: [],
     values: {

@@ -149,7 +149,12 @@ These rules prevent accidental damage to generated or vendored code:
   (`consistent-type-imports`).
 - **Formatting**: Prettier — double quotes, no tabs, trailing commas, 100 char width, semicolons.
 - **Imports**: Auto-sorted by `perfectionist/sort-imports` — externals first, then `$lib`/`$app`
-  internals, then relative.
+  internals, then relative. With `moduleResolution: "bundler"`, extensionless specifiers resolve TS
+  modules directly, so write relative and aliased imports of TypeScript modules without a `.js`
+  suffix (e.g. `./availability`, not `./availability.js`). Keep the extension only when it names a
+  real, non-TypeScript asset (a generated `.js` file with no `.ts` source, such as
+  `src/lib/paraglide/runtime.js`) or is required by an external tool. `vi.mock(...)` specifiers must
+  match the import path exactly, so update them alongside the imports they mock.
 - **Svelte**: Use `let` (not `const`) for `$props()` destructuring. Use runes (`$state`, `$derived`,
   `$effect`), not legacy stores.
 - **Naming**: `camelCase` variables/functions, `PascalCase` types/components, `kebab-case` files.

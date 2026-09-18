@@ -1,6 +1,6 @@
 import { LOCALE_CODES } from "$lib/types/locale.js";
 
-import { localizeField } from "../localize.js";
+import { localizeField } from "../localize";
 
 import type { Source, SourceTuple } from "$lib/types/acquisition.js";
 import type { LocaleCode } from "$lib/types/locale.js";
@@ -15,7 +15,7 @@ import type {
   TrackerData,
 } from "$lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../parse-fiddle.js";
+import type { ParsedGameData } from "../parse-fiddle";
 
 export interface AnimalExtraction {
   animals: TrackerData["animals"];

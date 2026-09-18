@@ -11,7 +11,7 @@ import {
   isNpcComplete,
   MAX_NPC_LEVEL,
   MAX_SKILL_LEVEL,
-} from "../progress.js";
+} from "../progress";
 
 import type { CategoryKey } from "$lib/data/categories.js";
 import type {

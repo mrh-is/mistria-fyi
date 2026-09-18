@@ -3,7 +3,7 @@ import * as m from "$lib/paraglide/messages.js";
 import { baseLocale, getLocaleForUrl } from "$lib/paraglide/runtime.js";
 import { SEGMENT_LOOKUP_CATEGORIES } from "$lib/utils/segment-lookups.js";
 
-import type { PageLoad } from "./$types.js";
+import type { PageLoad } from "./$types";
 
 // The sitemap generator harvests `metadata.robots` from every route by calling `load()` with no
 // event at all (see `MetadataPageModule` in `src/routes/sitemap.xml/+server.ts`), so `url` isn't

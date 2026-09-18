@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { availabilityToVisibility, toAvailableVisibility } from "./availability-projection.js";
+import { availabilityToVisibility, toAvailableVisibility } from "./availability-projection";
 
 import type { AvailabilityCondition } from "$lib/types/acquisition.js";
 import type { QuestId } from "$lib/types/tracker-data.js";

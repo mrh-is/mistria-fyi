@@ -378,7 +378,7 @@ export function buildImportState(bundle: SaveBundle): {
 
 // ─── .sav file unpacking (client-side) ──────────────────────────────
 
-export { parseSavFile as unpackSavFile } from "./parse-sav.js";
+export { parseSavFile as unpackSavFile } from "./parse-sav";
 
 // ─── Season derivation ─────────────────────────────────────────────
 

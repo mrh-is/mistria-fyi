@@ -8,7 +8,7 @@ import {
   extractHeartLevelChanges,
   stampNpcVisibility,
   stampStoreVisibility,
-} from "./entity-visibility.js";
+} from "./entity-visibility";
 
 import type { Source } from "$lib/types/acquisition.js";
 import type {
@@ -25,8 +25,8 @@ import type {
   TrackerData,
 } from "$lib/types/tracker-data.js";
 
-import type { CutsceneQuestMap } from "./cutscene-quest-map.js";
-import type { QuestChainData } from "./quest-chains.js";
+import type { CutsceneQuestMap } from "./cutscene-quest-map";
+import type { QuestChainData } from "./quest-chains";
 
 function assertSourceWithDetails(
   source: Source,

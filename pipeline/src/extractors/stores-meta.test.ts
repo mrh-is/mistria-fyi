@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
-import { extractStoresMeta } from "./stores-meta.js";
+import { makeFiddle as makeFiddleBase } from "../test-helpers";
+import { extractStoresMeta } from "./stores-meta";
 
 import type { StoreId } from "$lib/types/tracker-data.js";
 
-vi.mock("../localize.js", () => ({
+vi.mock("../localize", () => ({
   localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
     fallbackLocales: [],
     values: {

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { trackerData } from "$lib/data/index.js";
 import { recordEntries, recordKeys, recordValues } from "$lib/utils.js";
 
-import { decodeTransferPayload, encodeTransferPayload, TRANSFER_VERSION } from "../transfer.js";
+import { decodeTransferPayload, encodeTransferPayload, TRANSFER_VERSION } from "../transfer";
 
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
 import type {

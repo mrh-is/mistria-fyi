@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createAssetsFixture, removeAssetsFixtures, requireGameAssetsDir } from "./test-helpers.js";
+import { createAssetsFixture, removeAssetsFixtures, requireGameAssetsDir } from "./test-helpers";
 
 const temporaryDirectories: string[] = [];
 

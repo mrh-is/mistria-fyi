@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { evaluateExpressions } from "../evaluate.js";
-import { parseFiddle } from "../parse-fiddle.js";
-import { requireGameAssetsDir } from "../test-helpers.js";
-import { extractRecipes } from "./recipes.js";
+import { evaluateExpressions } from "../evaluate";
+import { parseFiddle } from "../parse-fiddle";
+import { requireGameAssetsDir } from "../test-helpers";
+import { extractRecipes } from "./recipes";
 
 import type { RecipeId } from "$lib/types/tracker-data.js";
 

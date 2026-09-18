@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
 
-import { buildImportState, validatePlayerSave } from "../import-save.js";
+import { buildImportState, validatePlayerSave } from "../import-save";
 
 import type { RecipeId } from "$lib/types/tracker-data.js";
 
-import type { SaveBundle } from "../import-save.js";
+import type { SaveBundle } from "../import-save";
 
 function getDefaultRecipeIds(): Set<RecipeId> {
   const ids = new Set<RecipeId>();

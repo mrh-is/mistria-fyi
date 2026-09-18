@@ -17,7 +17,7 @@
   import RenownSection from "./RenownSection.svelte";
   import SkillsSection from "./SkillsSection.svelte";
 
-  import type { PageProps } from "./$types.js";
+  import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
 
