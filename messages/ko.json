@@ -100,7 +100,6 @@
   "dates_section_name": "데이트",
   "animals_cosmetics_section_name": "코스메틱",
   "animals_color_variants_section_name": "색상 변형",
-  "animals_variant_tier_label": "티어 {tier}",
   "animals_pet_cosmetics_section_name": "펫 코스메틱",
   "animals_pet_skins_section_name": "펫 스킨",
   "section_progress_label": "{name}, {total}개 중 {completed}개 완료",
@@ -443,5 +442,6 @@
   "weather_heavy_inclement": "폭풍",
   "weather_special": "산들바람",
   "weather_winter_inclement": "눈",
-  "weather_winter_heavy_inclement": "눈보라"
+  "weather_winter_heavy_inclement": "눈보라",
+  "skip_to_main_content": "본문으로 건너뛰기"
 }

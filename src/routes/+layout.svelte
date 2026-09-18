@@ -16,6 +16,8 @@
   import { errorPageMetadata } from "$lib/data/page-metadata.js";
   import { FeedbackContext, setFeedbackContext } from "$lib/feedback/context.svelte.js";
   import { localeFontStylesheet } from "$lib/fonts/locale-fonts.js";
+  import * as m from "$lib/paraglide/messages.js";
+  import { getTextDirection } from "$lib/paraglide/runtime.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
@@ -37,6 +39,13 @@
   let hasToolbar = $derived(!metadata.hideToolbar);
   let overlayActive = $state(false);
   let fontStylesheet = $derived(localeFontStylesheet(page.data.locale));
+
+  // The server stamps `<html lang>`/`dir` for the first paint; a client-side locale switch (the
+  // picker navigates without a reload) has to keep them in step.
+  $effect(() => {
+    document.documentElement.lang = page.data.locale;
+    document.documentElement.dir = getTextDirection(page.data.locale);
+  });
 </script>
 
 <svelte:head>
@@ -47,29 +56,32 @@
 
 <SeoHead {metadata} pathname={page.url.pathname} />
 
-<div
-  class="mx-auto flex min-h-dvh max-w-lg flex-col bg-background {hasToolbar
-    ? 'pb-safe-offset-18'
-    : ''}"
-  inert={overlayActive ? true : undefined}
->
-  <a
-    class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-md focus:bg-background focus:px-3 focus:py-2"
-    href="#main-content"
+<!-- Paraglide message calls aren't reactive to the locale, so all chrome re-mounts when a client-side locale switch lands. -->
+{#key page.data.locale}
+  <div
+    class="mx-auto flex min-h-dvh max-w-lg flex-col bg-background {hasToolbar
+      ? 'pb-safe-offset-18'
+      : ''}"
+    inert={overlayActive ? true : undefined}
   >
-    Skip to main content
-  </a>
-  {#key page.url.pathname}
-    <main
-      id="main-content"
-      class="flex flex-1 flex-col motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in"
+    <a
+      class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-md focus:bg-background focus:px-3 focus:py-2"
+      href="#main-content"
     >
-      {@render children()}
-    </main>
-  {/key}
-</div>
+      {m.skip_to_main_content()}
+    </a>
+    {#key page.url.pathname}
+      <main
+        id="main-content"
+        class="flex flex-1 flex-col motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in"
+      >
+        {@render children()}
+      </main>
+    {/key}
+  </div>
 
-<ToolbarFooter hidden={!hasToolbar} bind:overlayActive />
-<Toaster position="bottom-center" offset="calc(56px + env(safe-area-inset-bottom))" />
-<PersistenceWarning />
-<PencilFilter />
+  <ToolbarFooter hidden={!hasToolbar} bind:overlayActive />
+  <Toaster position="bottom-center" offset="calc(56px + env(safe-area-inset-bottom))" />
+  <PersistenceWarning />
+  <PencilFilter />
+{/key}

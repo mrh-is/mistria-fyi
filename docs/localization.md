@@ -13,22 +13,33 @@ own translation tables in `pipeline/input/assets/localization/`. The pipeline
 content and never invents a translation for it — a category with missing or unclear game-side
 translation data is a pipeline extraction problem, not something to work around in the app.
 
+The game's own UI vocabulary lives here too. Labels the game shows in its menus (almanac category
+headings, animal variant tiers) have English text as bare entries in `fiddle/misc_local.toml` and
+translations keyed `misc_local/<key>`; the pipeline emits the keys the app uses into the `ui` chunk
+(`getName("ui", key, locale)`). Cosmetic sub-category labels come from the ordinal
+`ui/character_customization/<slot>/<n>/name` keys into `cosmetics/subcategories`. When a label
+matches something the game already names, pull it from there rather than adding a Paraglide message:
+the in-game term is the one players recognize.
+
 ### How name chunks load
 
 Chunks are code-split: `src/lib/data/names.ts` declares them through a lazy `import.meta.glob`, so a
-page fetches only the categories it renders, in the active locale plus the English fallback.
-`getName()` & `getNameTable()` stay synchronous (components resolve names inside `$derived`) and
-read from a session cache that `loadNames()` fills; reading a chunk that exists but was never
-awaited throws rather than silently falling back to English.
+page fetches only the categories it renders, in the active locale only. There is no runtime English
+fallback: the pipeline English-fills every key the game doesn't translate, so every locale's chunk
+set is key-identical to `en`'s (`names.completeness.test.ts` guards this), and a missing entry
+throws as a data bug. `getName()` & `getNameTable()` stay synchronous (components resolve names
+inside `$derived`) and read from a session cache that `loadNames()` fills; reading a chunk that
+exists but was never awaited throws rather than silently degrading.
 
 - **Category routes** await their chunks in `+page.ts` via `loadPageNames(event, [...])`. A page
   that renders source segments also spreads `SEGMENT_LOOKUP_CATEGORIES` from
   `src/lib/utils/segment-lookups.ts`. If you add a `getName()` call for a new category to a page's
   component tree, add the category to that route's list; the thrown error names the missing chunk.
 - **`/all`** awaits every category (`LOCALIZED_CATEGORIES`).
-- **Sitewide search** (`search-results.svelte`) awaits every category for the active locale on first
-  open, not at page load, and gates its results on that load. Chunks are cached per
-  `<locale>/<category>` for the session, so reopening search never refetches.
+- **Sitewide search** (`search-results.svelte`) awaits every category for the active locale, plus
+  English (search also matches English terms), on first open, not at page load, and gates its
+  results on that load. Chunks are cached per `<locale>/<category>` for the session, so reopening
+  search never refetches.
 - **Tests** run with every chunk preloaded by `src/vitest-setup-names.ts`. Tests of the loading
   boundary itself live under `vitest.mocked.config.ts`, which skips that setup.
 

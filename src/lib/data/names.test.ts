@@ -66,12 +66,12 @@ describe("getName", () => {
     expect("name" in trackerData.pets.skins[petSkinId]).toBe(false);
   });
 
-  // The locale-missing → English fallback path lives in `names.fallback.test.ts`, which needs a
-  // partial chunk the pipeline never emits.
-  it("throws rather than inventing a name when not even English has the ID", () => {
+  // The locale-missing → throw path lives in `names.fallback.test.ts`, which needs a partial chunk
+  // the pipeline never emits.
+  it("throws rather than inventing a name for an unknown ID", () => {
     const missingNpcId = "not_a_real_npc" as NpcId;
     expect(() => getName("npcs", missingNpcId, "ja")).toThrow(/No "npcs" name/);
-    expect(() => getName("npcs", missingNpcId, "en")).toThrow(/en fallback/);
+    expect(() => getName("npcs", missingNpcId, "en")).toThrow(/in locale "en"/);
   });
 
   it("accepts only NPC IDs for the NPC category", () => {

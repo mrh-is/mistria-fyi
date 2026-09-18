@@ -9,11 +9,11 @@
   let title = $derived(
     metadata.title === SITE_NAME ? SITE_NAME : `${metadata.title} — ${SITE_NAME}`,
   );
-  // hreflang alternates for the other locales this same page is available in.
+  // hreflang alternates for every locale this same page is available in. The current locale is
+  // included on purpose: a page must list itself alongside the others for the set to be valid,
+  // matching what `sitemap.xml` emits.
   let alternateLocaleHrefs = $derived(
-    locales
-      .map((locale) => ({ href: localizeHref(deLocalizeHref(pathname), { locale }), locale }))
-      .filter((alternate) => alternate.href !== pathname),
+    locales.map((locale) => ({ href: localizeHref(deLocalizeHref(pathname), { locale }), locale })),
   );
 </script>
 

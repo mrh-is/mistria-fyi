@@ -2,6 +2,7 @@ import { render } from "svelte/server";
 import { describe, expect, it } from "vitest";
 
 import { SITE_NAME, SITE_ORIGIN } from "$lib/data/page-metadata.js";
+import { LOCALE_CODES } from "$lib/types/locale.js";
 
 import SeoHead from "./seo-head.svelte";
 
@@ -38,6 +39,20 @@ describe("SEO head", () => {
     expect(head).toContain(`<meta name="twitter:title" content="${title}"/>`);
     expect(head).toContain(`<meta name="twitter:description" content="${metadata.description}"/>`);
     expect(head).not.toContain('name="robots"');
+  });
+
+  it("emits one hreflang alternate per locale, including the page's own locale", () => {
+    const metadata = { description: "Track every museum collection.", title: "Museum" };
+    const { head } = render(SeoHead, { props: { metadata, pathname: "/ja/museum" } });
+
+    const alternates = head.match(/<link rel="alternate" hreflang="[^"]+" href="[^"]+"\/>/g) ?? [];
+    expect(alternates).toHaveLength(LOCALE_CODES.length);
+    for (const locale of LOCALE_CODES) {
+      expect(head).toContain(
+        `<link rel="alternate" hreflang="${locale}" href="${SITE_ORIGIN}/${locale}/museum"/>`,
+      );
+    }
+    expect(head).not.toContain("[locale]");
   });
 
   it("renders an explicit robots directive for non-indexable pages", () => {
