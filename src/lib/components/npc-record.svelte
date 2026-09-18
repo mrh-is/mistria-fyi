@@ -2,6 +2,7 @@
   import { IconMinus, IconPlus } from "@tabler/icons-svelte-runes";
   import { tick } from "svelte";
 
+  import { page } from "$app/state";
   import { Icon } from "$lib/components/icon/index.js";
   import Spoiler from "$lib/components/spoiler.svelte";
   import { trackerData } from "$lib/data/index.js";
@@ -20,21 +21,18 @@
   import { celebrateCategory } from "$lib/utils/celebrate.js";
   import { seasonLabel, seasonLabelAbbr } from "$lib/utils/format.js";
 
-  import type { LocaleCode } from "$lib/types/locale.js";
   import type { Npc, NpcId } from "$lib/types/tracker-data.js";
 
   let {
     compact = false,
     id,
     known,
-    locale,
     name,
     npc,
   }: {
     compact?: boolean;
     id: NpcId;
     known: boolean;
-    locale: LocaleCode;
     /** Already resolved for the active locale by the roster via `getName("npcs", id, locale)`. */
     name: string;
     npc: Npc;
@@ -43,10 +41,10 @@
   const instanceId = $props.id();
   const warningId = `${instanceId}-marriage-warning`;
   let relationshipStatusLabel: Record<RelationshipStatus, string> = $derived({
-    best_friends: getName("ui", "best_friend", locale),
-    dating: getName("ui", "dating", locale),
-    engaged: getName("ui", "engaged", locale),
-    married: getName("ui", "married", locale),
+    best_friends: getName("ui", "best_friend", page.data.locale),
+    dating: getName("ui", "dating", page.data.locale),
+    engaged: getName("ui", "engaged", page.data.locale),
+    married: getName("ui", "married", page.data.locale),
     married_child_free: m.relationship_status_married_child_free(),
     married_kids: m.relationship_status_married_kids(),
     path_not_chosen: m.relationship_status_path_not_chosen(),
@@ -59,7 +57,7 @@
   let relationshipActionLabel: Record<RelationshipActionValue, string> = $derived({
     married: m.relationship_action_married(),
     no: m.relationship_action_no(),
-    platonic: getName("ui", "best_friend", locale),
+    platonic: getName("ui", "best_friend", page.data.locale),
     proposed: m.relationship_action_proposed(),
     romantic: m.relationship_action_romantic(),
     yes: m.relationship_action_yes(),
@@ -172,7 +170,7 @@
         class="npc-birthday"
         aria-label={m.npc_birthday_aria({
           day: npc.birthday.day,
-          season: seasonLabel(npc.birthday.season, locale),
+          season: seasonLabel(npc.birthday.season, page.data.locale),
         })}
       >
         <Icon.Season season={npc.birthday.season} class="size-3" aria-hidden="true" />

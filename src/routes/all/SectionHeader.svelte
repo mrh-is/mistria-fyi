@@ -1,21 +1,19 @@
 <script lang="ts">
+  import { page } from "$app/state";
   import { Icon } from "$lib/components/icon/index.js";
   import { categoryForKey, type CategoryKey } from "$lib/data/categories.js";
 
   import type { CategoryProgress } from "$lib/engine/progress.js";
-  import type { LocaleCode } from "$lib/types/locale.js";
 
   let {
     key,
-    locale,
     progress,
   }: {
     key: CategoryKey;
-    locale: LocaleCode;
     progress: CategoryProgress;
   } = $props();
 
-  const { color, name } = $derived(categoryForKey(key, locale));
+  const { color, name } = $derived(categoryForKey(key, page.data.locale));
 </script>
 
 <div

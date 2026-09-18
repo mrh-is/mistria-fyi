@@ -16,7 +16,7 @@
     class="flex flex-col gap-1"
     style="--primary: var(--cat-almanac)"
   >
-    <SectionHeader key="almanac" {locale} {progress} />
+    <SectionHeader key="almanac" {progress} />
     <AlmanacContent {locale} />
   </section>
 {/if}

@@ -296,7 +296,7 @@
           title={m.toolbar_quick_settings()}
           onclose={closePanel}
         >
-          <QuickSettingsPanel locale={page.data.locale} />
+          <QuickSettingsPanel />
         </FoldoutPanel>
       {:else}
         <FoldoutPanel id="visibility-panel" title={m.toolbar_filters()} onclose={closePanel}>
@@ -312,7 +312,7 @@
               </button>
             {/if}
           {/snippet}
-          <VisibilityPanel locale={page.data.locale} {showSeasonality} />
+          <VisibilityPanel {showSeasonality} />
         </FoldoutPanel>
       {/if}
     </div>

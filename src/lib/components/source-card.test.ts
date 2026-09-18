@@ -7,7 +7,6 @@ describe("SourceCard", () => {
   it("renders readable timing context beside a source description", () => {
     const { body } = render(SourceCard, {
       props: {
-        seasonNames: { fall: "Fall", spring: "Spring", summer: "Summer", winter: "Winter" },
         sourceBadges: [{ seasons: ["summer"] }],
         sources: [{ type: "default" }],
         sourceSegments: [["Catch fishing in Pond"]],

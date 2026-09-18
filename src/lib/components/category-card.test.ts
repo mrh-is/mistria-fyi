@@ -8,7 +8,6 @@ describe("CategoryCard", () => {
     const { body } = render(CategoryCard, {
       props: {
         key: "almanac",
-        locale: "en",
         progress: { completed: 7, filtered: 13, total: 20 },
       },
     });
@@ -27,7 +26,6 @@ describe("CategoryCard", () => {
     const { body } = render(CategoryCard, {
       props: {
         key: "museum",
-        locale: "en",
         progress: { completed: 4, filtered: 6, total: 20 },
       },
     });
@@ -40,7 +38,6 @@ describe("CategoryCard", () => {
     const { body } = render(CategoryCard, {
       props: {
         key: "animals",
-        locale: "en",
         progress: { completed: 20, filtered: 0, total: 20 },
       },
     });

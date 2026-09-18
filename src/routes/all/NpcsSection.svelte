@@ -12,7 +12,7 @@
 
 {#if progress.completed < progress.total || userState.state.showCompleted}
   <section aria-labelledby="category-npcs" style="--primary: var(--cat-npcs)">
-    <SectionHeader key="npcs" {locale} {progress} />
+    <SectionHeader key="npcs" {progress} />
     <NpcRoster compact {locale} />
   </section>
 {/if}

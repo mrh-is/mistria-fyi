@@ -180,7 +180,6 @@
 {#if spoilerGuard.condition}
   <ConfirmSpoilerDialog
     condition={spoilerGuard.condition}
-    {locale}
     bind:open={spoilerGuard.open}
     onCancel={() => {
       spoilerGuard.cancel();

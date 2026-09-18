@@ -12,7 +12,7 @@
 
 {#if progress.completed < progress.total || userState.state.showCompleted}
   <section aria-labelledby="category-renown" style="--primary: var(--cat-renown)">
-    <SectionHeader key="renown" {locale} {progress} />
+    <SectionHeader key="renown" {progress} />
     <RenownCurrentRecord compact {locale} />
   </section>
 {/if}

@@ -3,7 +3,6 @@
 
   import type { DisplayBadges } from "$lib/engine/availability-condition.js";
   import type { Source } from "$lib/types/acquisition";
-  import type { Season } from "$lib/types/tracker-data.js";
   import type { SourceSegment } from "$lib/utils/source-segments.js";
 
   let {
@@ -11,7 +10,6 @@
     expanded,
     label,
     onToggle,
-    seasonNames,
     sourceBadges,
     sources,
     sourceSegments,
@@ -20,7 +18,6 @@
     expanded: boolean;
     label: string;
     onToggle: () => void;
-    seasonNames?: Record<Season, string>;
     sourceBadges: DisplayBadges[];
     sources: Source[];
     sourceSegments: SourceSegment[][];
@@ -39,7 +36,7 @@
   >
     <div class="source-paper__clip">
       <div class="source-paper__content">
-        <SourceCard {sources} {sourceSegments} {sourceBadges} {seasonNames} />
+        <SourceCard {sources} {sourceSegments} {sourceBadges} />
       </div>
     </div>
   </div>

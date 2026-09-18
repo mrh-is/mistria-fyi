@@ -218,7 +218,6 @@
       {sources}
       {sourceSegments}
       {sourceBadges}
-      seasonNames={lookups?.seasonNames}
       onToggle={() => {
         expanded = !expanded;
       }}
