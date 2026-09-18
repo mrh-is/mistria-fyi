@@ -154,7 +154,7 @@
     overflow: hidden;
     font-family: var(--font-display);
     font-size: 24px;
-    font-style: italic;
+    font-style: var(--font-display-style);
     font-weight: 400;
     line-height: 1;
     text-overflow: ellipsis;

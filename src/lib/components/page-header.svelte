@@ -127,7 +127,7 @@
     padding: 0.35em 0 0.35em 0.06em;
     font-family: var(--font-display);
     font-size: 24px;
-    font-style: italic;
+    font-style: var(--font-display-style);
     font-weight: 400;
     line-height: 1.15;
     text-overflow: ellipsis;

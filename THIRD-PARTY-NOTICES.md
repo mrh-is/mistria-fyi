@@ -62,11 +62,71 @@ are available at [Fontshare’s license page](https://www.fontshare.com/licenses
 
 Copyright Indian Type Foundry. All rights reserved.
 
+### Locale fonts (Fontsource)
+
+- **Production assets:** `https://assets.mistria.fyi/fonts/<package>-<version>/…`
+- **Source:** [Fontsource](https://fontsource.org) packages under `@fontsource/*`, pinned in
+  `package.json`; the served chunks are copied unmodified by `scripts/locale-fonts`
+- **License:** SIL Open Font License 1.1 (full text below)
+
+| Family                 | Locale  | Copyright                                                                                                             |
+| ---------------------- | ------- | --------------------------------------------------------------------------------------------------------------------- |
+| Shippori Mincho        | ja      | Copyright 2021 The Shippori Mincho Project Authors (https://github.com/fontdasu/ShipporiMincho)                       |
+| BIZ UDPMincho          | ja      | Copyright 2022 The BIZ UDMincho Project Authors (https://github.com/googlefonts/morisawa-biz-ud-mincho)               |
+| M PLUS 1 Code          | ja      | Copyright 2021 The M+ FONTS Project Authors (https://github.com/coz-m/MPLUS_FONTS)                                    |
+| M PLUS 1p              | ja      | Copyright 2016 The M+ Project Authors                                                                                 |
+| Cactus Classical Serif | zh-Hant | Copyright 2024 The Cactus Classical Serif Project Authors (https://github.com/MoonlitOwen/CactusSerif)                |
+| Noto Serif TC          | zh-Hant | Google Inc.                                                                                                           |
+| Noto Sans TC           | zh-Hant | Google Inc.                                                                                                           |
+| LXGW WenKai TC         | zh-Hant | Copyright 2024 The LXGW WenKai Project Authors (https://github.com/lxgw/LxgwWenkaiTC)                                 |
+| LXGW WenKai Mono TC    | zh-Hant | Copyright 2024 The LXGW WenKai Project Authors (https://github.com/lxgw/LxgwWenkaiTC)                                 |
+| Gowun Batang           | ko      | Copyright 2021 The Gowun Batang Project Authors (https://github.com/yangheeryu/Gowun-Batang)                          |
+| Nanum Gothic           | ko      | Copyright © 2010 NHN Corporation. Font designed by Sandoll Communications Inc.                                        |
+| Nanum Gothic Coding    | ko      | Copyright © 2009 NHN Corporation. Font designed by Sandoll Communications Inc.                                        |
+| Lora                   | ru      | Copyright 2011 The Lora Project Authors (https://github.com/cyrealtype/Lora-Cyrillic), with Reserved Font Name "Lora" |
+| Golos Text             | ru      | Copyright 2019 The Golos Text Project Authors (https://github.com/googlefonts/golos-text)                             |
+
+### LXGW WenKai GB, LXGW WenKai Mono GB
+
+- **Production assets:** `https://assets.mistria.fyi/fonts/lxgw-wenkai-gb-1.522/…`,
+  `https://assets.mistria.fyi/fonts/lxgw-wenkai-mono-gb-1.522/…`
+- **Designer:** LXGW (霞鹜), derived from Klee One by FONTWORKS
+- **Source:** [GitHub](https://github.com/lxgw/LxgwWenkaiGB), release v1.522
+- **License:** SIL Open Font License 1.1 (full text below)
+- **Modification:** subset into `unicode-range` chunks and converted to WOFF2 by
+  `scripts/locale-fonts`; glyphs are otherwise unmodified
+
+Copyright 2021 The LXGW WenKai GB Project Authors (https://github.com/lxgw/LxgwWenkaiGB)
+
+### Chill Round Gothic
+
+- **Production asset:** `https://assets.mistria.fyi/fonts/chill-round-gothic-3.750/…`
+- **Designer:** Warren2060, derived from Source Han Sans SC
+- **Source:** [GitHub](https://github.com/Warren2060/ChillRoundGothic), release v3.750
+- **License:** SIL Open Font License 1.1 (full text below)
+- **Modification:** subset into `unicode-range` chunks and converted to WOFF2 by
+  `scripts/locale-fonts`; glyphs are otherwise unmodified
+
+Copyright 2023 The ChillRoundGothic Project Authors
+
+### Smiley Sans
+
+- **Production asset:** `https://assets.mistria.fyi/fonts/smiley-sans-2.0.1/…`
+- **Designer:** atelier Anchor (锚点工作室)
+- **Source:** [GitHub](https://github.com/atelier-anchor/smiley-sans), release v2.0.1
+- **License:** SIL Open Font License 1.1 (full text below)
+- **Modification:** subset into `unicode-range` chunks and converted to WOFF2 by
+  `scripts/locale-fonts`; glyphs are otherwise unmodified
+
+Copyright 2022 The Smiley Sans Project Authors (https://github.com/atelier-anchor/smiley-sans)
+
 ---
 
 ## SIL Open Font License, Version 1.1
 
-This license applies to Instrument Serif, Petrona, Fragment Mono, and IBM Plex Mono as noted above.
+This license applies to Instrument Serif, Petrona, Fragment Mono, IBM Plex Mono, the Fontsource
+locale fonts, LXGW WenKai GB, LXGW WenKai Mono GB, Chill Round Gothic, and Smiley Sans as noted
+above.
 
 ```
 SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
