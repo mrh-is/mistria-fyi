@@ -38,9 +38,9 @@ const BABY_BACK_IDS = [
   "baby_back_wilder_lighter",
 ] as CosmeticId[];
 
-// Seridia's Dragonsworn armor variants: NPC outfit assets listed in misc.seridia_armor. They
+// Seridia's Dragonsworn armor variants: villager outfit assets listed in misc.seridia_armor. They
 // appear in player_assets but have no player unlock path, no default_unlocked, no store listing,
-// and no reward reference. The list is an NPC costume configuration, not a player acquisition path.
+// and no reward reference. The list is a villager costume configuration, not a player acquisition path.
 const SERIDIA_ARMOR_IDS = [
   "back_gear_dragonsworn_cloak_seridia",
   "head_dragonsworn_helmet_seridia",
@@ -67,9 +67,9 @@ export const COSMETIC_EXCLUSIONS: CosmeticExclusion[] = [
     reason: "internal baby-carrying presentation asset",
   })),
   ...SERIDIA_ARMOR_IDS.map((id): CosmeticExclusion => ({
-    evidence: "misc.seridia_armor lists these as NPC outfit, no player unlock path in data",
+    evidence: "misc.seridia_armor lists these as villager outfit, no player unlock path in data",
     id,
-    reason: "NPC outfit asset (Seridia's Dragonsworn armor variant)",
+    reason: "Villager outfit asset (Seridia's Dragonsworn armor variant)",
   })),
   ...UNRESOLVED_EXCLUSION_IDS.map((id): CosmeticExclusion => ({
     evidence:

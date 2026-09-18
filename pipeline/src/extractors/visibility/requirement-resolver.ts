@@ -1,4 +1,4 @@
-import type { NpcId, QuestId, SkillId } from "$lib/types/tracker-data.js";
+import type { QuestId, SkillId, VillagerId } from "$lib/types/tracker-data.js";
 import type { VisibilityCondition } from "$lib/types/visibility.js";
 
 import type { RequirementExpression } from "../../requirements";
@@ -53,14 +53,14 @@ export function resolveToVisibility(
     return { type: "questCompleted", questId: value as QuestId };
   }
 
-  if (predicate === "met_npc") {
+  if (predicate === "met_villager") {
     if (typeof value === "string") {
-      return { type: "npcKnown", npcId: value as NpcId };
+      return { type: "villagerKnown", villagerId: value as VillagerId };
     }
     if (Array.isArray(value)) {
-      const conditions = value.map((npc) => ({
-        type: "npcKnown" as const,
-        npcId: npc as NpcId,
+      const conditions = value.map((villager) => ({
+        type: "villagerKnown" as const,
+        villagerId: villager as VillagerId,
       }));
       return simplifyCondition({
         type: "and",
@@ -94,13 +94,13 @@ export function resolveToVisibility(
   if (predicate === "reached_heart_level" && typeof value === "object" && value !== null) {
     const entries = Object.entries(value as Record<string, number>);
     if (entries.length === 1) {
-      const [npcId, level] = entries[0];
-      return { type: "heartLevel", level, npcId: npcId as NpcId };
+      const [villagerId, level] = entries[0];
+      return { type: "heartLevel", level, villagerId: villagerId as VillagerId };
     }
-    const conditions = entries.map(([npcId, level]) => ({
+    const conditions = entries.map(([villagerId, level]) => ({
       type: "heartLevel" as const,
       level,
-      npcId: npcId as NpcId,
+      villagerId: villagerId as VillagerId,
     }));
     return simplifyCondition({
       type: "and",

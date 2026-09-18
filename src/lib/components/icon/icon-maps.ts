@@ -242,11 +242,11 @@ export const CATEGORY_ICON: Record<"all" | "complete" | CategoryKey, Icon> = {
   cosmetics: IconShirt,
   mines: IconPick,
   museum: IconBuildingBank,
-  npcs: IconHeart,
   quests: IconFileText,
   recipes: IconToolsKitchen2,
   renown: IconCrown,
   skills: IconBook,
+  villagers: IconHeart,
 };
 
 // ── Completion ──────────────────────────────────────────────────────────────

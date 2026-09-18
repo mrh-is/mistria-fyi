@@ -9,8 +9,6 @@ import type {
   CosmeticId,
   DateId,
   ItemId,
-  NpcId,
-  NpcRelationship,
   PerkId,
   PetCosmeticSetId,
   PetSkinId,
@@ -19,6 +17,8 @@ import type {
   Season,
   SkillId,
   SpellId,
+  VillagerId,
+  VillagerRelationship,
 } from "$lib/types/tracker-data.js";
 
 // ─── Constants ──────────────────────────────────────────────────────
@@ -134,14 +134,15 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   const renownBytes = readBytes(2);
   const renown = (renownBytes[0] << 8) | renownBytes[1];
 
-  // 9. NPC levels (4 bits each, high nibble first)
-  const npcOrder = getNpcOrder();
-  const npcBytes = readBytes(Math.ceil(npcOrder.length / 2));
-  const npcLevels: Record<string, number> = {};
-  for (let i = 0; i < npcOrder.length; i++) {
+  // 9. Villager levels (4 bits each, high nibble first)
+  const villagerOrder = getVillagerOrder();
+  const villagerBytes = readBytes(Math.ceil(villagerOrder.length / 2));
+  const villagerLevels: Record<string, number> = {};
+  for (let i = 0; i < villagerOrder.length; i++) {
     const byteIndex = Math.floor(i / 2);
-    const level = i % 2 === 0 ? (npcBytes[byteIndex] >> 4) & 0xf : npcBytes[byteIndex] & 0xf;
-    npcLevels[npcOrder[i]] = level;
+    const level =
+      i % 2 === 0 ? (villagerBytes[byteIndex] >> 4) & 0xf : villagerBytes[byteIndex] & 0xf;
+    villagerLevels[villagerOrder[i]] = level;
   }
 
   // 10. Skill levels (1 byte each)
@@ -166,9 +167,9 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   }
 
   // 12. Perk bitfield (v2 only)
-  // 13. Married NPC index (v2 only) — 1 byte: 0xFF = no spouse, else index into npcOrder
+  // 13. Married villager index (v2 only) — 1 byte: 0xFF = no spouse, else index into villagerOrder
   let unlockedPerks = new Set<PerkId>();
-  let marriedNpc: NpcId | null = null;
+  let marriedVillager: null | VillagerId = null;
 
   if (version >= 2) {
     const perkOrder = getPerkOrder();
@@ -177,7 +178,7 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
 
     const marriedByte = readBytes(1)[0];
     if (marriedByte !== 0xff) {
-      marriedNpc = npcOrder[marriedByte] ?? null;
+      marriedVillager = villagerOrder[marriedByte] ?? null;
     }
   }
 
@@ -205,38 +206,38 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   }
 
   // 17. Progression byte (v5 only) — bits 7-6: reachedSeason, bit 5: hasUpperFloor, bits 4-0: reserved
-  // 18. Romantic NPC bitfield (v5 only)
+  // 18. Romantic villager bitfield (v5 only)
   let hasUpperFloor = false;
   let reachedSeason: Season = "spring";
-  const npcRelationships: Partial<Record<NpcId, NpcRelationship>> = {};
+  const villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>> = {};
 
   if (version >= 5) {
     const progressionByte = readBytes(1)[0];
     reachedSeason = SEASON_BY_ORD[(progressionByte >> 6) & 0x3];
     hasUpperFloor = !!(progressionByte & 0x20);
 
-    const romanticOrder = getDateableNpcOrder();
+    const romanticOrder = getDateableVillagerOrder();
     const romanticBytes = readBytes(Math.ceil(romanticOrder.length / 8));
-    const romanticNpcs = fromBitfield(romanticOrder, romanticBytes) as Set<NpcId>;
+    const romanticVillagers = fromBitfield(romanticOrder, romanticBytes) as Set<VillagerId>;
 
-    for (const npcId of romanticNpcs) {
-      npcRelationships[npcId] = "romantic";
+    for (const villagerId of romanticVillagers) {
+      villagerRelationships[villagerId] = "romantic";
     }
   }
 
-  if (marriedNpc) {
-    npcRelationships[marriedNpc] = "married";
+  if (marriedVillager) {
+    villagerRelationships[marriedVillager] = "married";
   }
 
-  // 19. NPC relationship states (v7) — 3 bits per dateable NPC
+  // 19. Villager relationship states (v7) — 3 bits per dateable villager
   // 20. Child choice (v7) — 1 byte
   let childChoice: ChildChoice = "undeclared";
 
   if (version >= 7) {
-    const dateableOrder = getDateableNpcOrder();
+    const dateableOrder = getDateableVillagerOrder();
     const relByteCount = Math.ceil((dateableOrder.length * 3) / 8);
     const relBytes = readBytes(relByteCount);
-    const RELATIONSHIP_MAP: NpcRelationship[] = [
+    const RELATIONSHIP_MAP: VillagerRelationship[] = [
       "undecided",
       "platonic",
       "romantic",
@@ -256,7 +257,7 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
       }
       const rel = RELATIONSHIP_MAP[bits] ?? "undecided";
       if (rel !== "undecided") {
-        npcRelationships[dateableOrder[i]] = rel;
+        villagerRelationships[dateableOrder[i]] = rel;
       }
     }
 
@@ -272,7 +273,7 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
     almanacRecipes = fromBitfield(recipeOrder, recipeBytes) as Set<RecipeId>;
   }
 
-  normalizeRelationships(npcRelationships);
+  normalizeRelationships(villagerRelationships);
 
   return {
     almanac,
@@ -285,8 +286,6 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
     hasUpperFloor,
     mines: { floor, spells },
     museum,
-    npcLevels,
-    npcRelationships,
     petCosmetics,
     petSkins,
     questStates,
@@ -294,6 +293,8 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
     renown,
     skillLevels,
     unlockedPerks,
+    villagerLevels,
+    villagerRelationships,
   };
 }
 
@@ -354,19 +355,19 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   const renown = Math.min(0xffff, completed.renown);
   parts.push(new Uint8Array([(renown >> 8) & 0xff, renown & 0xff]));
 
-  // 9. NPC levels (4 bits each, high nibble first)
-  const npcOrder = getNpcOrder();
-  const npcBytes = new Uint8Array(Math.ceil(npcOrder.length / 2));
-  for (let i = 0; i < npcOrder.length; i++) {
-    const level = Math.min(15, completed.npcLevels[npcOrder[i]] ?? 0);
+  // 9. Villager levels (4 bits each, high nibble first)
+  const villagerOrder = getVillagerOrder();
+  const villagerBytes = new Uint8Array(Math.ceil(villagerOrder.length / 2));
+  for (let i = 0; i < villagerOrder.length; i++) {
+    const level = Math.min(15, completed.villagerLevels[villagerOrder[i]] ?? 0);
     const byteIndex = Math.floor(i / 2);
     if (i % 2 === 0) {
-      npcBytes[byteIndex] |= (level & 0xf) << 4;
+      villagerBytes[byteIndex] |= (level & 0xf) << 4;
     } else {
-      npcBytes[byteIndex] |= level & 0xf;
+      villagerBytes[byteIndex] |= level & 0xf;
     }
   }
-  parts.push(npcBytes);
+  parts.push(villagerBytes);
 
   // 10. Skill levels (1 byte each)
   const skillOrder = getSkillOrder();
@@ -393,11 +394,11 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   const perkOrder = getPerkOrder();
   parts.push(toBitfield(perkOrder, completed.unlockedPerks));
 
-  // 13. Married NPC index (v2+, still written for v6 backward compat)
-  const marriedNpc = Object.entries(completed.npcRelationships).find(
+  // 13. Married villager index (v2+, still written for v6 backward compat)
+  const marriedVillager = Object.entries(completed.villagerRelationships).find(
     ([, r]) => r === "married",
-  )?.[0] as NpcId | undefined;
-  const marriedIndex = marriedNpc ? npcOrder.indexOf(marriedNpc) : -1;
+  )?.[0] as undefined | VillagerId;
+  const marriedIndex = marriedVillager ? villagerOrder.indexOf(marriedVillager) : -1;
   parts.push(new Uint8Array([marriedIndex === -1 ? 0xff : marriedIndex]));
 
   // 14. Pet cosmetic sets bitfield (new in v3)
@@ -417,30 +418,30 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
     ((SEASON_ORD[completed.reachedSeason] & 0x3) << 6) | (completed.hasUpperFloor ? 0x20 : 0);
   parts.push(new Uint8Array([progressionByte]));
 
-  // 18. Romantic NPC bitfield (v5+, still written for v6 backward compat)
-  const romanticOrder = getDateableNpcOrder();
+  // 18. Romantic villager bitfield (v5+, still written for v6 backward compat)
+  const romanticOrder = getDateableVillagerOrder();
   const romanticSet = new Set<string>();
-  for (const [id, rel] of Object.entries(completed.npcRelationships)) {
+  for (const [id, rel] of Object.entries(completed.villagerRelationships)) {
     if (rel === "romantic" || rel === "proposed" || rel === "married") {
       romanticSet.add(id);
     }
   }
   parts.push(toBitfield(romanticOrder, romanticSet));
 
-  // 19. NPC relationship states (new in v7) — 3 bits per dateable NPC
-  const RELATIONSHIP_ENCODE: Record<NpcRelationship, number> = {
+  // 19. Villager relationship states (new in v7) — 3 bits per dateable villager
+  const RELATIONSHIP_ENCODE: Record<VillagerRelationship, number> = {
     married: 4,
     platonic: 1,
     proposed: 3,
     romantic: 2,
     undecided: 0,
   };
-  const dateableOrder = getDateableNpcOrder();
+  const dateableOrder = getDateableVillagerOrder();
   const relBitCount = dateableOrder.length * 3;
   const relByteCount = Math.ceil(relBitCount / 8);
   const relBytes = new Uint8Array(relByteCount);
   for (let i = 0; i < dateableOrder.length; i++) {
-    const rel = completed.npcRelationships[dateableOrder[i]] ?? "undecided";
+    const rel = completed.villagerRelationships[dateableOrder[i]] ?? "undecided";
     const bits = RELATIONSHIP_ENCODE[rel];
     const bitOffset = i * 3;
     const byteIndex = Math.floor(bitOffset / 8);
@@ -543,7 +544,7 @@ function getTransferRawLength(version: number): number {
     1 +
     1 +
     2 +
-    Math.ceil(getNpcOrder().length / 2) +
+    Math.ceil(getVillagerOrder().length / 2) +
     getSkillOrder().length +
     Math.ceil(getQuestOrder().length / 4);
 
@@ -557,10 +558,10 @@ function getTransferRawLength(version: number): number {
     length += Math.ceil(getDateOrder().length / 8);
   }
   if (version >= 5) {
-    length += 1 + Math.ceil(getDateableNpcOrder().length / 8);
+    length += 1 + Math.ceil(getDateableVillagerOrder().length / 8);
   }
   if (version >= 7) {
-    length += Math.ceil((getDateableNpcOrder().length * 3) / 8) + 1;
+    length += Math.ceil((getDateableVillagerOrder().length * 3) / 8) + 1;
   }
   if (version >= 8) {
     length += Math.ceil(getRecipeOrder().length / 8);
@@ -701,9 +702,9 @@ function getCosmeticOrder(): CosmeticId[] {
 
 // ─── Bitfield helpers ───────────────────────────────────────────────
 
-function getDateableNpcOrder(): NpcId[] {
-  return (Object.keys(trackerData.npcs) as NpcId[])
-    .filter((id) => trackerData.npcs[id].dateable)
+function getDateableVillagerOrder(): VillagerId[] {
+  return (Object.keys(trackerData.villagers) as VillagerId[])
+    .filter((id) => trackerData.villagers[id].dateable)
     .sort();
 }
 
@@ -726,10 +727,6 @@ function getMuseumOrder(): ItemId[] {
   return recordValues(trackerData.museum)
     .flatMap(({ sets }) => recordValues(sets).flatMap(({ items }) => items))
     .sort();
-}
-
-function getNpcOrder(): NpcId[] {
-  return (Object.keys(trackerData.npcs) as NpcId[]).sort();
 }
 
 function getPerkOrder(): PerkId[] {
@@ -760,14 +757,18 @@ function getRecipeOrder(): RecipeId[] {
   return (Object.keys(trackerData.recipes) as RecipeId[]).sort();
 }
 
-// ─── Base64url ──────────────────────────────────────────────────────
-
 function getSkillOrder(): SkillId[] {
   return (Object.keys(trackerData.skills) as SkillId[]).sort();
 }
 
+// ─── Base64url ──────────────────────────────────────────────────────
+
 function getSpellOrder(): SpellId[] {
   return (Object.keys(trackerData.mines.spells) as SpellId[]).sort();
+}
+
+function getVillagerOrder(): VillagerId[] {
+  return (Object.keys(trackerData.villagers) as VillagerId[]).sort();
 }
 
 // ─── Encode ─────────────────────────────────────────────────────────

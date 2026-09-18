@@ -93,7 +93,7 @@
       composition
     </h2>
     <p class="font-display text-xl">{getName("ui", "villagers", page.data.locale)}</p>
-    <p class="font-body text-sm">{m.category_npcs_description()}</p>
+    <p class="font-body text-sm">{m.category_villagers_description()}</p>
     <p class="font-annotation text-xs text-muted-foreground">
       {m.section_progress_label({
         completed: 12,

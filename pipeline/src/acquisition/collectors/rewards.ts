@@ -6,11 +6,11 @@ import type {
   FestivalId,
   ItemId,
   MuseumWingId,
-  NpcId,
   PetCosmeticSetId,
   QuestId,
   Season,
   StoreId,
+  VillagerId,
 } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../../parse-fiddle";
@@ -68,7 +68,7 @@ function classifyLetterTrigger(reqs: Record<string, unknown> | undefined): Lette
   }
 
   if (typeof reqs.is_spouse === "string") {
-    return { type: "spouseGift", npcId: reqs.is_spouse as NpcId };
+    return { type: "spouseGift", villagerId: reqs.is_spouse as VillagerId };
   }
 
   if (typeof reqs.shipped_item === "string") {
@@ -374,7 +374,7 @@ function collectProposalSources(fiddle: ParsedGameData, accumulator: ItemSourceA
     if (!sceneId.endsWith(TEN_HEART_SUFFIX)) continue;
     if (typeof scene !== "object" || scene === null) continue;
 
-    const npcId = sceneId.slice(0, -TEN_HEART_SUFFIX.length) as NpcId;
+    const villagerId = sceneId.slice(0, -TEN_HEART_SUFFIX.length) as VillagerId;
     const givenItems = Array.isArray(scene.given_items) ? scene.given_items : [];
 
     for (const entry of givenItems) {
@@ -383,7 +383,7 @@ function collectProposalSources(fiddle: ParsedGameData, accumulator: ItemSourceA
       if (itemId) {
         accumulator.add(itemId, {
           type: "proposal",
-          npcId,
+          villagerId,
         });
       }
     }

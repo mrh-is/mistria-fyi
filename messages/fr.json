@@ -19,7 +19,7 @@
   "category_mines_name": "Mines",
   "category_mines_description": "Étages et sorts",
   "category_museum_description": "Collections et dons",
-  "category_npcs_description": "Amitié et relations",
+  "category_villagers_description": "Amitié et relations",
   "category_quests_name": "Quêtes",
   "category_quests_description": "Histoire et requêtes",
   "category_recipes_name": "Recettes",
@@ -73,7 +73,7 @@
   "undo_unmarked": "« {name} » démarqué",
   "almanac_page_description": "Suivez les cultures, la cueillette, la pêche, les insectes, les artefacts et les autres entrées de l'almanach dans Fields of Mistria.",
   "animals_page_description": "Suivez les races, couleurs et cosmétiques des animaux de votre ferme dans Fields of Mistria.",
-  "characters_page_description": "Suivez l'amitié et les romances avec les personnages de Fields of Mistria.",
+  "villagers_page_description": "Suivez l'amitié et les romances avec les habitants de Fields of Mistria.",
   "cosmetics_page_description": "Suivez les déblocages de garde-robe et d'apparence dans Fields of Mistria.",
   "mines_page_description": "Suivez les étages des mines, les sorts et la progression de l'exploration dans Fields of Mistria.",
   "museum_page_description": "Suivez toutes les collections et dons du musée dans Fields of Mistria.",
@@ -126,18 +126,18 @@
   "mines_floor_down": "Descendre d'un étage",
   "mines_floor_label": "Étage",
   "mines_floor_input_aria": "Étage de la mine",
-  "characters_roster_aria": "Liste des habitants",
-  "characters_alphabet_aria": "Index alphabétique des habitants",
+  "villagers_roster_aria": "Liste des habitants",
+  "villagers_alphabet_aria": "Index alphabétique des habitants",
   "season_spring_abbr": "PRI",
   "season_summer_abbr": "ÉTÉ",
   "season_fall_abbr": "AUT",
   "season_winter_abbr": "HIV",
-  "npc_birthday_aria": "Anniversaire : {day} {season}",
-  "npc_birthday_hidden": "Anniversaire masqué",
-  "npc_hidden_name": "PNJ masqué",
-  "npc_relationship_level_aria": "Niveau de relation avec {name}, {level} sur {max}",
-  "npc_decrease_hearts": "Diminuer les cœurs de {name}",
-  "npc_increase_hearts": "Augmenter les cœurs de {name}",
+  "villager_birthday_aria": "Anniversaire : {day} {season}",
+  "villager_birthday_hidden": "Anniversaire masqué",
+  "villager_hidden_name": "Habitant masqué",
+  "villager_relationship_level_aria": "Niveau de relation avec {name}, {level} sur {max}",
+  "villager_decrease_hearts": "Diminuer les cœurs de {name}",
+  "villager_increase_hearts": "Augmenter les cœurs de {name}",
   "relationship_status_path_not_chosen": "Voie non choisie",
   "relationship_status_married_kids": "Mariés · avec enfants",
   "relationship_status_married_child_free": "Mariés · sans enfants",
@@ -162,8 +162,8 @@
   "rank_state_completed": "Terminé",
   "rank_state_current": "Actuel",
   "rank_state_upcoming": "À venir",
-  "npc_hidden_name_lower": "PNJ masqué",
-  "characters_jump_to_initial_aria": "Aller à {initial}, premier habitant",
+  "villager_hidden_name_lower": "Habitant masqué",
+  "villagers_jump_to_initial_aria": "Aller à {initial}, premier habitant",
   "cosmetic_slot_head_gear": "Accessoires de tête",
   "cosmetic_slot_face_gear": "Accessoires de visage",
   "cosmetic_slot_hair": "Cheveux",
@@ -378,7 +378,7 @@
   "merge_label_cosmetics": "Cosmétiques : +{count}",
   "merge_label_dates": "Dates : +{count}",
   "merge_label_museum": "Dons au musée : +{count}",
-  "merge_label_npc_relationships": "Relations avec les PNJ : +{count}",
+  "merge_label_villager_relationships": "Relations avec les habitants : +{count}",
   "merge_label_perks": "Avantages : +{count}",
   "merge_label_pet_cosmetics": "Cosmétiques d’animaux de compagnie : +{count}",
   "merge_label_pet_skins": "Apparences d’animaux de compagnie : +{count}",
@@ -398,14 +398,14 @@
       }
     }
   ],
-  "merge_label_npc_levels": [
+  "merge_label_villager_levels": [
     {
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Cœurs des PNJ : +{count} relation mise à jour",
-        "countPlural=many": "Cœurs des PNJ : +{count} relations mises à jour",
-        "countPlural=other": "Cœurs des PNJ : +{count} relations mises à jour"
+        "countPlural=one": "Cœurs des habitants : +{count} relation mise à jour",
+        "countPlural=many": "Cœurs des habitants : +{count} relations mises à jour",
+        "countPlural=other": "Cœurs des habitants : +{count} relations mises à jour"
       }
     }
   ],

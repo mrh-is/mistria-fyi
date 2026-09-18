@@ -41,7 +41,6 @@ import { extractDates } from "./extractors/dates";
 import { extractFestivals } from "./extractors/festivals";
 import { extractMines } from "./extractors/mines";
 import { extractMuseum } from "./extractors/museum";
-import { extractNpcs } from "./extractors/npcs";
 import { extractPetCosmetics, extractPetSkins } from "./extractors/pets";
 import { extractQuests } from "./extractors/quests";
 import { deriveRecipeLocaleNames, extractRecipes } from "./extractors/recipes";
@@ -51,13 +50,14 @@ import { extractSprites } from "./extractors/sprites";
 import { extractStoresMeta } from "./extractors/stores-meta";
 import { extractTreasureChestTiers } from "./extractors/treasure-chest-tiers";
 import { APP_UI_STRINGS, extractUiStrings, tierKeys } from "./extractors/ui-strings";
+import { extractVillagers } from "./extractors/villagers";
 import { buildCutsceneQuestMap } from "./extractors/visibility/cutscene-quest-map";
 import {
   assignEntityVisibility,
   extractCategoryVisibility,
   extractHeartLevelChanges,
-  stampNpcVisibility,
   stampStoreVisibility,
+  stampVillagerVisibility,
 } from "./extractors/visibility/entity-visibility";
 import { extractQuestChains } from "./extractors/visibility/quest-chains";
 import { generateLocaleManifest } from "./localize";
@@ -70,9 +70,9 @@ import type {
   CosmeticId,
   Item,
   ItemId,
-  NpcId,
   QuestId,
   TrackerData,
+  VillagerId,
 } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "./parse-fiddle";
@@ -123,7 +123,6 @@ function buildAcquisitionReferences(
       items: trackerData.items,
       locations: nativeIds.locations,
       monsters: nativeIds.monsters,
-      npcs: trackerData.npcs,
       perks: Object.values(trackerData.skills).reduce<Record<string, unknown>>((acc, skill) => {
         for (const tier of skill.perkTiers) {
           for (const perkId of Object.keys(tier)) acc[perkId] = true;
@@ -136,6 +135,7 @@ function buildAcquisitionReferences(
       stations: nativeIds.stations,
       stores: trackerData.stores,
       treasureChestTiers: { ...toRecord(nativeChestTiers), ...trackerData.treasureChestTiers },
+      villagers: trackerData.villagers,
       waterTypes: nativeIds.waterTypes,
       wings: trackerData.museum,
     },
@@ -360,7 +360,7 @@ async function main(): Promise<void> {
     fiddle,
     itemLocaleNames,
   );
-  const { localeNames: npcLocaleNames, npcs } = extractNpcs(fiddle, assetsDir);
+  const { localeNames: villagerLocaleNames, villagers } = extractVillagers(fiddle, assetsDir);
   const {
     cosmetics: cosmeticsRaw,
     cosmeticSlots,
@@ -532,7 +532,7 @@ async function main(): Promise<void> {
   console.log("Step 3b: Extracting visibility data...");
   const questChainsRaw = extractQuestChains(fiddle);
   const heartLevelChangesData = extractHeartLevelChanges(fiddle, cutsceneQuestMap);
-  const categoryVisibilityData = extractCategoryVisibility(npcs);
+  const categoryVisibilityData = extractCategoryVisibility(villagers);
 
   for (const [questId, changes] of recordEntries(heartLevelChangesData)) {
     const quest = quests.story[questId];
@@ -543,10 +543,10 @@ async function main(): Promise<void> {
   console.log();
 
   console.log("Step 4: Assembling tracker-data.json...");
-  const pregnancyQuestByNpc: Partial<Record<NpcId, QuestId>> = {};
+  const pregnancyQuestByVillager: Partial<Record<VillagerId, QuestId>> = {};
   for (const [questId, quest] of Object.entries(quests.heart)) {
     if (questId.endsWith("_pregnancy_request")) {
-      pregnancyQuestByNpc[(quest as { npc: NpcId }).npc] = questId as QuestId;
+      pregnancyQuestByVillager[(quest as { villager: VillagerId }).villager] = questId as QuestId;
     }
   }
 
@@ -562,10 +562,9 @@ async function main(): Promise<void> {
     items: items as unknown as Record<ItemId, Item>,
     mines,
     museum,
-    npcs,
     perkTierLevels,
     pets: { cosmetics: petCosmetics, skins: petSkins },
-    pregnancyQuestByNpc,
+    pregnancyQuestByVillager,
     questOrder: {
       cooking: questChainsRaw.tali,
       crown: questChainsRaw.crown,
@@ -578,6 +577,7 @@ async function main(): Promise<void> {
     townRanks,
     treasureChestTiers,
     version,
+    villagers,
   };
 
   const acquisitionReferences = buildAcquisitionReferences(
@@ -594,7 +594,7 @@ async function main(): Promise<void> {
   );
   console.log("  Acquisition source validation passed");
 
-  stampNpcVisibility(trackerData);
+  stampVillagerVisibility(trackerData);
   stampStoreVisibility(trackerData);
   assignEntityVisibility(trackerData, cutsceneQuestMap, fiddle, questChainsRaw);
 
@@ -618,7 +618,7 @@ async function main(): Promise<void> {
   writeFileSync(resolve(APP_DATA_DIR, "locales.json"), localeManifestJson);
   console.log(`  Written: src/lib/data/locales.json (${localeManifest.length} locales)`);
 
-  writeLocaleChunks("npcs", npcLocaleNames);
+  writeLocaleChunks("villagers", villagerLocaleNames);
   writeLocaleChunks("dates", dateLocaleNames);
   writeLocaleChunks("festivals", festivalLocaleNames);
   writeLocaleChunks("museum_wings", museumLocaleNames);

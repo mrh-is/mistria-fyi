@@ -3,23 +3,26 @@ import { describe, expect, it } from "vitest";
 import { categoryForKey, categoryKeyForPathname, sortCategoryKeysByName } from "./categories";
 
 describe("categoryForKey", () => {
-  it("labels the npcs category with the game's Villagers term", () => {
-    expect(categoryForKey("npcs", "en")).toMatchObject({ href: "/characters", name: "Villagers" });
+  it("labels the villagers category with the game's Villagers term", () => {
+    expect(categoryForKey("villagers", "en")).toMatchObject({
+      href: "/villagers",
+      name: "Villagers",
+    });
   });
 
-  it("maps the characters route to the npcs category key", () => {
-    expect(categoryKeyForPathname("/characters")).toBe("npcs");
-    expect(categoryKeyForPathname("/npcs")).toBeUndefined();
+  it("maps the villagers route to the villagers category key", () => {
+    expect(categoryKeyForPathname("/villagers")).toBe("villagers");
+    expect(categoryKeyForPathname("/characters")).toBeUndefined();
   });
 });
 
 describe("sortCategoryKeysByName", () => {
   it("sorts categories by their displayed names", () => {
-    // Animals, Skills, Villagers: npcs sorts by its displayed name, not its key.
-    expect(sortCategoryKeysByName(["skills", "npcs", "animals"], "en")).toEqual([
+    // Animals, Skills, Villagers: villagers sorts by its displayed name, not its key.
+    expect(sortCategoryKeysByName(["skills", "villagers", "animals"], "en")).toEqual([
       "animals",
       "skills",
-      "npcs",
+      "villagers",
     ]);
   });
 });

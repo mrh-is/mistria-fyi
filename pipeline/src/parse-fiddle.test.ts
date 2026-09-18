@@ -9,14 +9,14 @@ describe("parseFiddle", () => {
       "items/other/cooked_dishes.meta.toml": "ignored = true",
       "items/other/cooked_dishes.toml":
         'turnip_soup = { name = "Turnip Soup", value = { bin = 100 } }',
-      "npcs/holt.toml": 'name = "Holt"',
+      "villagers/holt.toml": 'name = "Holt"',
     });
 
     const parsed = parseFiddle(assetsDir);
 
     expect(parsed.fileCount).toBe(2);
     expect(parsed.data).toHaveProperty("items.other.cooked_dishes.turnip_soup");
-    expect(parsed.data).toHaveProperty("npcs.holt.name", "Holt");
+    expect(parsed.data).toHaveProperty("villagers.holt.name", "Holt");
     expect(parsed.sourceFileByRootPath.get("items.other.cooked_dishes")).toBe(
       "items/other/cooked_dishes.toml",
     );
@@ -46,12 +46,12 @@ describe("parseFiddle", () => {
 
   it("reports both paths when a TOML file collides with a directory destination", () => {
     const assetsDir = createAssetsFixture({
-      "npcs/holt.toml": 'name = "Holt"',
-      "npcs/holt/profile.toml": 'birthday = "spring 1"',
+      "villagers/holt.toml": 'name = "Holt"',
+      "villagers/holt/profile.toml": 'birthday = "spring 1"',
     });
 
     expect(() => parseFiddle(assetsDir)).toThrow(
-      /npcs\/holt(?:\/profile)?\.toml[\s\S]*npcs\.holt(?:\.profile)?|npcs\.holt(?:\.profile)?[\s\S]*npcs\/holt(?:\/profile)?\.toml/,
+      /villagers\/holt(?:\/profile)?\.toml[\s\S]*villagers\.holt(?:\.profile)?|villagers\.holt(?:\.profile)?[\s\S]*villagers\/holt(?:\/profile)?\.toml/,
     );
   });
 });

@@ -25,11 +25,11 @@
     AnimalVariantId,
     CosmeticId,
     ItemId,
-    NpcId,
     PetCosmeticSetId,
     PetSkinId,
     QuestId,
     RecipeId,
+    VillagerId,
   } from "$lib/types/tracker-data.js";
 
   let { locale, query }: { locale: LocaleCode; query: string } = $props();
@@ -171,15 +171,15 @@
       case "museum":
         userState.toggleMuseumItem(result.id as ItemId);
         break;
-      case "npcs": {
-        const npcId = result.id as NpcId;
-        const current = userState.state.completed.npcLevels[npcId] ?? 0;
-        userState.setNpcLevel(npcId, current >= 10 ? 0 : 10);
-        break;
-      }
       case "recipes":
         userState.toggleAlmanacRecipe(result.id as RecipeId);
         break;
+      case "villagers": {
+        const villagerId = result.id as VillagerId;
+        const current = userState.state.completed.villagerLevels[villagerId] ?? 0;
+        userState.setVillagerLevel(villagerId, current >= 10 ? 0 : 10);
+        break;
+      }
     }
   }
 </script>

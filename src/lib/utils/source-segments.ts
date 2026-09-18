@@ -4,13 +4,13 @@ import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
 import type {
   LocationId,
   MinesBiomeId,
-  NpcId,
   PerkId,
   QuestId,
   QuestType,
   Season,
   StoreId,
   TrackerData,
+  VillagerId,
   WaterType,
 } from "$lib/types/tracker-data.js";
 import type { VisibilityCondition } from "$lib/types/visibility.js";
@@ -24,14 +24,14 @@ export type SegmentLookups = Pick<TrackerData, "categoryVisibility"> &
     itemVisibility: VisibilityLookup<TrackerData["items"]>;
     locationNames: Partial<Record<string, string>>;
     monsterNames: Partial<Record<string, string>>;
-    npcNames: NameLookup<TrackerData["npcs"]>;
-    npcVisibility: VisibilityLookup<TrackerData["npcs"]>;
-    questNpcIds: Partial<Record<QuestId, NpcId>>;
     questTypes: Partial<Record<QuestId, QuestType>>;
+    questVillagerIds: Partial<Record<QuestId, VillagerId>>;
     /** The game's season names in the active locale (`ui` chunk). */
     seasonNames: Record<Season, string>;
     stationNames: Partial<Record<string, string>>;
     storeVisibility: VisibilityLookup<TrackerData["stores"]>;
+    villagerNames: NameLookup<TrackerData["villagers"]>;
+    villagerVisibility: VisibilityLookup<TrackerData["villagers"]>;
   };
 
 export type SourceSegment =
@@ -155,7 +155,7 @@ export function buildSourceSegments(
       return joinSegments(`Receive in a letter after ${verb} `, itemSegment);
     }
     case "engagement":
-      return ["Receive from Elsie after getting to 10 hearts with a dateable character"];
+      return ["Receive from Elsie after getting to 10 hearts with a dateable villager"];
     case "equipment": {
       const itemName = lookups.itemNames[source.itemId] ?? titleCase(source.itemId);
       return [`Use ${itemName}`];
@@ -241,8 +241,8 @@ export function buildSourceSegments(
       return joinSegments("Random drop with ", perkLabel);
     }
     case "proposal": {
-      const npcName = lookups.npcNames[source.npcId] ?? titleCase(source.npcId);
-      return [`Propose to ${npcName}`];
+      const villagerName = lookups.villagerNames[source.villagerId] ?? titleCase(source.villagerId);
+      return [`Propose to ${villagerName}`];
     }
     case "quest":
       return buildQuestSegments(source, lookups);
@@ -274,8 +274,8 @@ export function buildSourceSegments(
       return joinSegments("Purchase ", bundleSegment, " from ", storeName, qualifier);
     }
     case "spouseGift": {
-      const npcName = lookups.npcNames[source.npcId] ?? titleCase(source.npcId);
-      return [`Get married to ${npcName}`];
+      const villagerName = lookups.villagerNames[source.villagerId] ?? titleCase(source.villagerId);
+      return [`Get married to ${villagerName}`];
     }
     case "station": {
       const stationName = lookups.stationNames[source.stationId] ?? titleCase(source.stationId);
@@ -407,13 +407,17 @@ function buildFetchQuestSegments(
   source: Source & { type: "quest" },
   lookups: SegmentLookups,
 ): [SourceSegment, ...SourceSegment[]] {
-  const npcId = lookups.questNpcIds[source.questId];
-  const npcName = npcId ? (lookups.npcNames[npcId] ?? titleCase(npcId)) : "???";
-  const npcVis = npcId ? lookups.npcVisibility[npcId] : undefined;
+  const villagerId = lookups.questVillagerIds[source.questId];
+  const villagerName = villagerId
+    ? (lookups.villagerNames[villagerId] ?? titleCase(villagerId))
+    : "???";
+  const villagerVis = villagerId ? lookups.villagerVisibility[villagerId] : undefined;
   const questVis = source.visibility;
 
-  const npcSegment: SourceSegment =
-    npcVis && npcVis.type !== "always" ? { condition: npcVis, revealed: [npcName] } : npcName;
+  const villagerSegment: SourceSegment =
+    villagerVis && villagerVis.type !== "always"
+      ? { condition: villagerVis, revealed: [villagerName] }
+      : villagerName;
 
   const itemId = source.requestedItemId;
   const itemName = itemId ? (lookups.itemNames[itemId] ?? titleCase(itemId)) : "???";
@@ -422,7 +426,7 @@ function buildFetchQuestSegments(
       ? { condition: questVis, revealed: [itemName] }
       : itemName;
 
-  return joinSegments("Complete ", npcSegment, "'s request for ", itemSegment);
+  return joinSegments("Complete ", villagerSegment, "'s request for ", itemSegment);
 }
 
 function buildHeartQuestSegments(
@@ -432,18 +436,22 @@ function buildHeartQuestSegments(
   const questName = lookups.questNames[source.questId] ?? titleCase(source.questId);
   const questVis = source.visibility;
 
-  const npcId = lookups.questNpcIds[source.questId];
-  const npcName = npcId ? (lookups.npcNames[npcId] ?? titleCase(npcId)) : "???";
-  const npcVis = npcId ? lookups.npcVisibility[npcId] : undefined;
+  const villagerId = lookups.questVillagerIds[source.questId];
+  const villagerName = villagerId
+    ? (lookups.villagerNames[villagerId] ?? titleCase(villagerId))
+    : "???";
+  const villagerVis = villagerId ? lookups.villagerVisibility[villagerId] : undefined;
 
-  const npcSegment: SourceSegment =
-    npcVis && npcVis.type !== "always" ? { condition: npcVis, revealed: [npcName] } : npcName;
+  const villagerSegment: SourceSegment =
+    villagerVis && villagerVis.type !== "always"
+      ? { condition: villagerVis, revealed: [villagerName] }
+      : villagerName;
   const questSegment: SourceSegment =
     questVis && questVis.type !== "always"
       ? { condition: questVis, revealed: [questName] }
       : questName;
 
-  return joinSegments("Complete ", npcSegment, "'s ", questSegment, " quest");
+  return joinSegments("Complete ", villagerSegment, "'s ", questSegment, " quest");
 }
 
 function buildLocationList(locationIds: LocationId[] | undefined, lookups: SegmentLookups): string {
@@ -563,8 +571,9 @@ function describeStoreAvailability(
     case "hasUpperFloor":
       return [", after upgrading your home"];
     case "heartLevel": {
-      const npcName = lookups.npcNames[condition.npcId] ?? titleCase(condition.npcId);
-      return [`, at ${String(condition.level)} hearts with ${npcName}`];
+      const villagerName =
+        lookups.villagerNames[condition.villagerId] ?? titleCase(condition.villagerId);
+      return [`, at ${String(condition.level)} hearts with ${villagerName}`];
     }
     case "isDating":
       return [", while dating someone"];

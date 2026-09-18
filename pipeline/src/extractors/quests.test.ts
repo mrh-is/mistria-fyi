@@ -43,7 +43,7 @@ describe("extractQuests", () => {
     expect(extractQuests(fiddle, assetsDir).quests).toEqual(emptyQuests);
   });
 
-  it("maps a populated tracked quest with its name, NPC, and itemId", () => {
+  it("maps a populated tracked quest with its name, Villager, and itemId", () => {
     vi.spyOn(console, "log").mockImplementation(() => undefined);
     const fiddle = {
       quests: {
@@ -63,8 +63,8 @@ describe("extractQuests", () => {
       fetch: {
         meet_juniper: {
           itemId: "wild_berries",
-          npc: "juniper",
           sources: [],
+          villager: "juniper",
         },
       },
     });
@@ -78,7 +78,7 @@ describe("extractQuests", () => {
     expect(logSpy).not.toHaveBeenCalled();
   });
 
-  it("maps a heart quest with npc and heartLevel 0 (stamped later by visibility)", () => {
+  it("maps a heart quest with villager and heartLevel 0 (stamped later by visibility)", () => {
     vi.spyOn(console, "log").mockImplementation(() => undefined);
     const fiddle = {
       quests: {
@@ -97,14 +97,14 @@ describe("extractQuests", () => {
       heart: {
         tall_dark_and_mysterious: {
           heartLevel: 0,
-          npc: "balor",
           sources: [],
+          villager: "balor",
         },
       },
     });
   });
 
-  it("extracts NPC from stage query for pregnancy quests and sets heartLevel to 10", () => {
+  it("extracts villager from stage query for pregnancy quests and sets heartLevel to 10", () => {
     vi.spyOn(console, "log").mockImplementation(() => undefined);
     const fiddle = {
       quests: {
@@ -122,8 +122,8 @@ describe("extractQuests", () => {
       heart: {
         adeline_pregnancy_request: {
           heartLevel: 10,
-          npc: "adeline",
           sources: [],
+          villager: "adeline",
         },
       },
     });

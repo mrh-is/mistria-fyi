@@ -3,34 +3,35 @@ import { LOCALE_CODES } from "$lib/types/locale.js";
 import { localizeField } from "../localize";
 
 import type { LocaleCode } from "$lib/types/locale.js";
-import type { NpcId, Season, TrackerData } from "$lib/types/tracker-data.js";
+import type { Season, TrackerData, VillagerId } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle";
 
-export interface NpcExtraction {
-  /** Per-locale `npcs` name chunks, written to `src/lib/data/locales/<tag>/npcs.json`. */
-  localeNames: Record<LocaleCode, Record<NpcId, string>>;
-  /** The structural NPC records. Player-facing names live in {@link localeNames}, not here. */
-  npcs: TrackerData["npcs"];
+export interface VillagerExtraction {
+  /** Per-locale `villagers` name chunks, written to `src/lib/data/locales/<tag>/villagers.json`. */
+  localeNames: Record<LocaleCode, Record<VillagerId, string>>;
+  /** The structural villager records. Player-facing names live in {@link localeNames}, not here. */
+  villagers: TrackerData["villagers"];
 }
 
 /**
- * Extracts NPC records plus their per-locale display names.
+ * Extracts villager records plus their per-locale display names.
  *
  * `name` is deliberately absent from the emitted {@link TrackerData} records: a field that doesn't
  * exist on the type is the guardrail against rendering untranslated data. Callers resolve names
- * through `getName("npcs", id, locale)` instead.
+ * through `getName("villagers", id, locale)` instead.
  */
-export function extractNpcs(fiddle: ParsedGameData, assetsDir: string): NpcExtraction {
+export function extractVillagers(fiddle: ParsedGameData, assetsDir: string): VillagerExtraction {
   const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
     LocaleCode,
-    Record<NpcId, string>
+    Record<VillagerId, string>
   >;
 
+  // "npcs" here is the game's own asset folder / localization key namespace, not our naming.
   const npcs = fiddle.npcs as Record<string, Record<string, unknown>> | undefined;
-  if (!npcs) return { localeNames, npcs: {} };
+  if (!npcs) return { localeNames, villagers: {} };
 
-  const result = {} as Record<NpcId, TrackerData["npcs"][NpcId]>;
+  const result = {} as Record<VillagerId, TrackerData["villagers"][VillagerId]>;
   for (const [id, npc] of Object.entries(npcs)) {
     if (id === "default") continue;
 
@@ -42,7 +43,7 @@ export function extractNpcs(fiddle: ParsedGameData, assetsDir: string): NpcExtra
 
     const dateable = npc.dateable === true;
 
-    result[id as NpcId] = {
+    result[id as VillagerId] = {
       birthday: {
         day: birthday.day,
         season: birthday.season as Season,
@@ -58,9 +59,9 @@ export function extractNpcs(fiddle: ParsedGameData, assetsDir: string): NpcExtra
       id,
     });
 
-    for (const locale of LOCALE_CODES) localeNames[locale][id as NpcId] = values[locale];
+    for (const locale of LOCALE_CODES) localeNames[locale][id as VillagerId] = values[locale];
   }
 
-  console.log(`  NPCs: ${Object.keys(result).length}`);
-  return { localeNames, npcs: result };
+  console.log(`  Villagers: ${Object.keys(result).length}`);
+  return { localeNames, villagers: result };
 }

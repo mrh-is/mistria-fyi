@@ -10,17 +10,19 @@ import type {
   AnimalVariantId,
   CosmeticId,
   ItemId,
-  NpcId,
-  NpcRelationship,
+  VillagerId,
+  VillagerRelationship,
 } from "$lib/types/tracker-data.js";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 
-function findItemWithSource(sourceType: string): undefined | { itemId: ItemId; npcId: NpcId } {
+function findItemWithSource(
+  sourceType: string,
+): undefined | { itemId: ItemId; villagerId: VillagerId } {
   for (const [itemId, item] of Object.entries(trackerData.items)) {
     for (const source of item.sources) {
-      if (source.type === sourceType && "npcId" in source) {
-        return { itemId: itemId as ItemId, npcId: source.npcId };
+      if (source.type === sourceType && "villagerId" in source) {
+        return { itemId: itemId as ItemId, villagerId: source.villagerId };
       }
     }
   }
@@ -46,8 +48,6 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     hasUpperFloor: false,
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
-    npcLevels: {},
-    npcRelationships: {},
     petCosmetics: new Set(),
     petSkins: new Set(),
     questStates: {},
@@ -55,6 +55,8 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     renown: 0,
     skillLevels: {},
     unlockedPerks: new Set(),
+    villagerLevels: {},
+    villagerRelationships: {},
     ...overrides,
   };
 }
@@ -76,48 +78,48 @@ describe("isItemApplicable", () => {
     if (!proposalItem) return;
     const completed = makeCompleted({
       almanac: new Set([proposalItem.itemId]),
-      npcRelationships: { [proposalItem.npcId]: "platonic" },
+      villagerRelationships: { [proposalItem.villagerId]: "platonic" },
     });
     expect(isItemApplicable(proposalItem.itemId, completed)).toBe(true);
   });
 
-  it("suppresses proposal items when the NPC is platonic", () => {
+  it("suppresses proposal items when the Villager is platonic", () => {
     const proposalItem = findItemWithSource("proposal");
     if (!proposalItem) return;
     const completed = makeCompleted({
-      npcRelationships: { [proposalItem.npcId]: "platonic" },
+      villagerRelationships: { [proposalItem.villagerId]: "platonic" },
     });
     expect(isItemApplicable(proposalItem.itemId, completed)).toBe(false);
   });
 
-  it("shows proposal items when the NPC relationship is undecided", () => {
+  it("shows proposal items when the Villager relationship is undecided", () => {
     const proposalItem = findItemWithSource("proposal");
     if (!proposalItem) return;
     expect(isItemApplicable(proposalItem.itemId, makeCompleted())).toBe(true);
   });
 
-  it("suppresses spouse gifts when married to a different NPC", () => {
+  it("suppresses spouse gifts when married to a different Villager", () => {
     const spouseItem = findItemWithSource("spouseGift");
     if (!spouseItem) return;
-    const otherNpc = Object.entries(trackerData.npcs).find(
-      ([id, npc]) => npc.dateable && id !== spouseItem.npcId,
+    const otherVillager = Object.entries(trackerData.villagers).find(
+      ([id, villager]) => villager.dateable && id !== spouseItem.villagerId,
     );
-    if (!otherNpc) return;
+    if (!otherVillager) return;
 
     const completed = makeCompleted({
-      npcRelationships: {
-        [otherNpc[0]]: "married",
-        [spouseItem.npcId]: "platonic",
-      } as Partial<Record<NpcId, NpcRelationship>>,
+      villagerRelationships: {
+        [otherVillager[0]]: "married",
+        [spouseItem.villagerId]: "platonic",
+      } as Partial<Record<VillagerId, VillagerRelationship>>,
     });
     expect(isItemApplicable(spouseItem.itemId, completed)).toBe(false);
   });
 
-  it("shows spouse gifts when married to the matching NPC", () => {
+  it("shows spouse gifts when married to the matching Villager", () => {
     const spouseItem = findItemWithSource("spouseGift");
     if (!spouseItem) return;
     const completed = makeCompleted({
-      npcRelationships: { [spouseItem.npcId]: "married" },
+      villagerRelationships: { [spouseItem.villagerId]: "married" },
     });
     expect(isItemApplicable(spouseItem.itemId, completed)).toBe(true);
   });

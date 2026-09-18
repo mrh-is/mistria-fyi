@@ -19,7 +19,7 @@
   "category_mines_name": "矿井",
   "category_mines_description": "楼层与法术",
   "category_museum_description": "收藏与捐赠",
-  "category_npcs_description": "友情与关系",
+  "category_villagers_description": "友情与关系",
   "category_quests_name": "任务",
   "category_quests_description": "剧情与委托",
   "category_recipes_name": "食谱",
@@ -69,7 +69,7 @@
   "undo_unmarked": "已取消标记“{name}”",
   "almanac_page_description": "追踪《Fields of Mistria》中的作物、采集、钓鱼、昆虫、文物等年鉴条目。",
   "animals_page_description": "追踪《Fields of Mistria》农场中动物的品种、颜色与装饰。",
-  "characters_page_description": "追踪《Fields of Mistria》中与角色的友情与恋爱进度。",
+  "villagers_page_description": "追踪《Fields of Mistria》中与居民的友情与恋爱进度。",
   "cosmetics_page_description": "追踪《Fields of Mistria》中服装与外观的解锁进度。",
   "mines_page_description": "追踪《Fields of Mistria》中矿井楼层、法术与探索进度。",
   "museum_page_description": "追踪《Fields of Mistria》中所有博物馆收藏与捐赠。",
@@ -120,18 +120,18 @@
   "mines_floor_down": "下降一层",
   "mines_floor_label": "楼层",
   "mines_floor_input_aria": "矿层",
-  "characters_roster_aria": "镇民名册",
-  "characters_alphabet_aria": "镇民字母索引",
+  "villagers_roster_aria": "镇民名册",
+  "villagers_alphabet_aria": "镇民字母索引",
   "season_spring_abbr": "春",
   "season_summer_abbr": "夏",
   "season_fall_abbr": "秋",
   "season_winter_abbr": "冬",
-  "npc_birthday_aria": "生日：{season}{day}日",
-  "npc_birthday_hidden": "生日已隐藏",
-  "npc_hidden_name": "隐藏的NPC",
-  "npc_relationship_level_aria": "与{name}的关系等级，{max}级中的{level}级",
-  "npc_decrease_hearts": "减少{name}的心心",
-  "npc_increase_hearts": "增加{name}的心心",
+  "villager_birthday_aria": "生日：{season}{day}日",
+  "villager_birthday_hidden": "生日已隐藏",
+  "villager_hidden_name": "隐藏的居民",
+  "villager_relationship_level_aria": "与{name}的关系等级，{max}级中的{level}级",
+  "villager_decrease_hearts": "减少{name}的心心",
+  "villager_increase_hearts": "增加{name}的心心",
   "relationship_status_path_not_chosen": "尚未选择关系",
   "relationship_status_married_kids": "已结婚·有孩子",
   "relationship_status_married_child_free": "已结婚·无孩子",
@@ -156,8 +156,8 @@
   "rank_state_completed": "已完成",
   "rank_state_current": "当前",
   "rank_state_upcoming": "即将到来",
-  "npc_hidden_name_lower": "隐藏的NPC",
-  "characters_jump_to_initial_aria": "跳转到{initial}，第一个镇民记录",
+  "villager_hidden_name_lower": "隐藏的居民",
+  "villagers_jump_to_initial_aria": "跳转到{initial}，第一个镇民记录",
   "cosmetic_slot_head_gear": "头部装备",
   "cosmetic_slot_face_gear": "面部装备",
   "cosmetic_slot_hair": "发型",
@@ -372,7 +372,7 @@
   "merge_label_cosmetics": "装饰：+{count}",
   "merge_label_dates": "日期：+{count}",
   "merge_label_museum": "博物馆捐赠：+{count}",
-  "merge_label_npc_relationships": "NPC关系：+{count}",
+  "merge_label_villager_relationships": "居民关系：+{count}",
   "merge_label_perks": "特典：+{count}",
   "merge_label_pet_cosmetics": "宠物装饰：+{count}",
   "merge_label_pet_skins": "宠物皮肤：+{count}",
@@ -390,12 +390,12 @@
       }
     }
   ],
-  "merge_label_npc_levels": [
+  "merge_label_villager_levels": [
     {
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "NPC好感度：已更新{count}段关系"
+        "countPlural=other": "居民好感度：已更新{count}段关系"
       }
     }
   ],

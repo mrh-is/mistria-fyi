@@ -60,8 +60,8 @@
     if (!scrubbing) return;
     const button = document
       .elementFromPoint(event.clientX, event.clientY)
-      ?.closest<HTMLButtonElement>("[data-npc-index-initial]");
-    const initial = button?.dataset.npcIndexInitial;
+      ?.closest<HTMLButtonElement>("[data-villager-index-initial]");
+    const initial = button?.dataset.villagerIndexInitial;
     const entry = initials.find((candidate) => candidate.initial === initial);
     if (entry) activate(entry);
   }
@@ -89,9 +89,9 @@
 </script>
 
 <nav
-  class="npc-index"
-  style="--npc-index-count: {initials.length}"
-  aria-label={m.characters_alphabet_aria()}
+  class="villager-index"
+  style="--villager-index-count: {initials.length}"
+  aria-label={m.villagers_alphabet_aria()}
   data-scrubbing={scrubbing}
   onpointermove={scrub}
   onpointerup={stopScrub}
@@ -100,9 +100,9 @@
   {#each initials as entry (entry.initial)}
     <button
       type="button"
-      data-npc-index-initial={entry.initial}
+      data-villager-index-initial={entry.initial}
       data-active={scrubbing && lastScrubbedInitial === entry.initial}
-      aria-label={m.characters_jump_to_initial_aria({ initial: entry.initial })}
+      aria-label={m.villagers_jump_to_initial_aria({ initial: entry.initial })}
       onpointerdown={(event) => {
         startScrub(event, entry);
       }}
@@ -116,21 +116,21 @@
 </nav>
 
 <style>
-  .npc-index {
+  .villager-index {
     position: fixed;
     top: 50dvh;
     right: max(10px, calc((100vw - 32rem) / 2 + 10px));
     z-index: 9;
     display: grid;
     width: 24px;
-    height: min(calc(100dvh - 152px), calc(var(--npc-index-count) * 24px));
-    grid-template-rows: repeat(var(--npc-index-count), minmax(0, 1fr));
+    height: min(calc(100dvh - 152px), calc(var(--villager-index-count) * 24px));
+    grid-template-rows: repeat(var(--villager-index-count), minmax(0, 1fr));
     background: transparent;
     touch-action: none;
     transform: translateY(-50%);
   }
 
-  .npc-index button {
+  .villager-index button {
     display: grid;
     min-width: 24px;
     min-height: 0;
@@ -143,18 +143,18 @@
     line-height: 1;
   }
 
-  .npc-index button:is(:focus-visible, [data-active="true"]) {
-    background: color-mix(in srgb, var(--cat-npcs) 12%, transparent);
-    color: var(--cat-npcs);
-    outline: 2px solid var(--cat-npcs);
+  .villager-index button:is(:focus-visible, [data-active="true"]) {
+    background: color-mix(in srgb, var(--cat-villagers) 12%, transparent);
+    color: var(--cat-villagers);
+    outline: 2px solid var(--cat-villagers);
     outline-offset: 0;
   }
 
   @media (hover: hover) {
-    .npc-index:not([data-scrubbing="true"]) button:hover {
-      background: color-mix(in srgb, var(--cat-npcs) 12%, transparent);
-      color: var(--cat-npcs);
-      outline: 2px solid var(--cat-npcs);
+    .villager-index:not([data-scrubbing="true"]) button:hover {
+      background: color-mix(in srgb, var(--cat-villagers) 12%, transparent);
+      color: var(--cat-villagers);
+      outline: 2px solid var(--cat-villagers);
       outline-offset: 0;
     }
   }

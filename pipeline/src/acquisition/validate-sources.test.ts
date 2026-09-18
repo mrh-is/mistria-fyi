@@ -114,7 +114,7 @@ describe("validateAcquisitionSources", () => {
           sources: [
             {
               type: "store",
-              availability: { type: "heartLevel", level: 4, npcId: "missing_npc" },
+              availability: { type: "heartLevel", level: 4, villagerId: "missing_villager" },
               storeId: "general",
             },
           ],
@@ -128,7 +128,7 @@ describe("validateAcquisitionSources", () => {
 
     expect(() => {
       validateAcquisitionSources(trackerData, references);
-    }).toThrow('Unknown npc ID "missing_npc"');
+    }).toThrow('Unknown villager ID "missing_villager"');
   });
 
   it("rejects unexpected fields on every availability variant", () => {
@@ -138,7 +138,7 @@ describe("validateAcquisitionSources", () => {
       { type: "not", condition: { type: "always" } },
       { type: "always" },
       { type: "gamePredicate", predicate: "native_flag", value: true },
-      { type: "heartLevel", level: 4, npcId: "npc" },
+      { type: "heartLevel", level: 4, villagerId: "villager" },
       { type: "minesLevel", floor: 20 },
       { type: "perkUnlocked", perkId: "perk" },
       { type: "quest", questId: "quest", state: "completed" },
@@ -164,11 +164,11 @@ describe("validateAcquisitionSources", () => {
     const references = AcquisitionReferenceIndex.from({
       emitted: {
         items,
-        npcs: { npc: {} },
         perks: { perk: {} },
         quests: { quest: { name: "Quest" } },
         skills: { skill: {} },
         stores: { general: {} },
+        villagers: { villager: {} },
       },
     });
 
@@ -618,7 +618,7 @@ describe("validateAcquisitionSources", () => {
       items: { wild_berries: { sources: [{ type: "default" }] } },
       quests: {
         fetch: {
-          meet_juniper: { itemId: "nonexistent_item", name: "Meet Juniper", npc: "juniper" },
+          meet_juniper: { itemId: "nonexistent_item", name: "Meet Juniper", villager: "juniper" },
         },
       },
       recipes: {},
@@ -629,7 +629,7 @@ describe("validateAcquisitionSources", () => {
         items: trackerData.items,
         recipes: trackerData.recipes,
       },
-      native: { npcs: { juniper: {} } },
+      native: { villagers: { juniper: {} } },
     });
 
     const diagnostics = captureDiagnostics(trackerData, references);
@@ -641,13 +641,17 @@ describe("validateAcquisitionSources", () => {
     });
   });
 
-  it("validates fetch quest npc references against known NPCs", () => {
+  it("validates fetch quest villager references against known Villagers", () => {
     const trackerData = {
       cosmetics: {},
       items: { wild_berries: { sources: [{ type: "default" }] } },
       quests: {
         fetch: {
-          meet_juniper: { itemId: "wild_berries", name: "Meet Juniper", npc: "nonexistent_npc" },
+          meet_juniper: {
+            itemId: "wild_berries",
+            name: "Meet Juniper",
+            villager: "nonexistent_villager",
+          },
         },
       },
       recipes: {},
@@ -662,20 +666,20 @@ describe("validateAcquisitionSources", () => {
 
     const diagnostics = captureDiagnostics(trackerData, references);
     expect(diagnostics).toContainEqual({
-      fieldPath: "quests.fetch.meet_juniper.npc",
+      fieldPath: "quests.fetch.meet_juniper.villager",
       kind: "unresolved-reference",
-      message: 'Unknown npc ID "nonexistent_npc"',
+      message: 'Unknown villager ID "nonexistent_villager"',
       targetId: "meet_juniper",
     });
   });
 
-  it("accepts fetch quests with valid item and NPC references", () => {
+  it("accepts fetch quests with valid item and Villager references", () => {
     const trackerData = {
       cosmetics: {},
       items: { wild_berries: { sources: [{ type: "default" }] } },
       quests: {
         fetch: {
-          meet_juniper: { itemId: "wild_berries", name: "Meet Juniper", npc: "juniper" },
+          meet_juniper: { itemId: "wild_berries", name: "Meet Juniper", villager: "juniper" },
         },
       },
       recipes: {},
@@ -686,7 +690,7 @@ describe("validateAcquisitionSources", () => {
         items: trackerData.items,
         recipes: trackerData.recipes,
       },
-      native: { npcs: { juniper: {} } },
+      native: { villagers: { juniper: {} } },
     });
 
     expect(() => {

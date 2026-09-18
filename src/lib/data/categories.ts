@@ -10,11 +10,11 @@ export const CATEGORY_KEYS = [
   "cosmetics",
   "mines",
   "museum",
-  "npcs",
   "quests",
   "recipes",
   "renown",
   "skills",
+  "villagers",
 ] as const;
 
 export interface CategoryInfo {
@@ -36,11 +36,11 @@ const CATEGORY_NAMES: Record<CategoryKey, (locale: LocaleCode) => string> = {
   cosmetics: () => m.category_cosmetics_name(),
   mines: () => m.category_mines_name(),
   museum: (locale) => getName("ui", "museum", locale),
-  npcs: (locale) => getName("ui", "villagers", locale),
   quests: () => m.category_quests_name(),
   recipes: () => m.category_recipes_name(),
   renown: (locale) => getName("ui", "renown", locale),
   skills: (locale) => getName("ui", "skills", locale),
+  villagers: (locale) => getName("ui", "villagers", locale),
 };
 
 const CATEGORY_DESCRIPTIONS: Record<CategoryKey, (locale: LocaleCode) => string> = {
@@ -49,11 +49,11 @@ const CATEGORY_DESCRIPTIONS: Record<CategoryKey, (locale: LocaleCode) => string>
   cosmetics: () => m.category_cosmetics_description(),
   mines: () => m.category_mines_description(),
   museum: () => m.category_museum_description(),
-  npcs: () => m.category_npcs_description(),
   quests: () => m.category_quests_description(),
   recipes: () => m.category_recipes_description(),
   renown: (locale) => getName("ui", "town_rank", locale),
   skills: (locale) => getName("ui", "skill_levels", locale),
+  villagers: () => m.category_villagers_description(),
 };
 
 const CATEGORY_HREFS: Record<CategoryKey, Pathname> = {
@@ -62,11 +62,11 @@ const CATEGORY_HREFS: Record<CategoryKey, Pathname> = {
   cosmetics: "/cosmetics",
   mines: "/mines",
   museum: "/museum",
-  npcs: "/characters",
   quests: "/quests",
   recipes: "/recipes",
   renown: "/renown",
   skills: "/skills",
+  villagers: "/villagers",
 };
 
 /** The CSS color token for a category; the one lookup that needs no locale. */

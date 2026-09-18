@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import { makeFiddle, requireGameAssetsDir } from "../test-helpers";
-import { extractNpcs } from "./npcs";
+import { extractVillagers } from "./villagers";
 
-import type { NpcId } from "$lib/types/tracker-data.js";
+import type { VillagerId } from "$lib/types/tracker-data.js";
 
-const balor = "balor" as NpcId;
-const adeline = "adeline" as NpcId;
+const balor = "balor" as VillagerId;
+const adeline = "adeline" as VillagerId;
 /** No `npcs/<id>/name` key exists for this ID in any translation table, so every locale falls back. */
-const untranslated = "definitely_not_a_real_npc_id" as NpcId;
+const untranslated = "definitely_not_a_real_npc_id" as VillagerId;
 
 function extract() {
-  return extractNpcs(
+  return extractVillagers(
     makeFiddle({
       npcs: {
         [adeline]: { birthday: { day: 3, season: "spring" }, dateable: true, name: "Adeline" },
@@ -24,16 +24,16 @@ function extract() {
   );
 }
 
-describe("extractNpcs — real assets", () => {
-  it("omits name from the structural NPC record", () => {
-    const { npcs } = extract();
+describe("extractVillagers — real assets", () => {
+  it("omits name from the structural villager record", () => {
+    const { villagers } = extract();
 
-    expect(npcs[balor]).toStrictEqual({ birthday: { day: 10, season: "summer" } });
-    expect(npcs[adeline]).toStrictEqual({
+    expect(villagers[balor]).toStrictEqual({ birthday: { day: 10, season: "summer" } });
+    expect(villagers[adeline]).toStrictEqual({
       birthday: { day: 3, season: "spring" },
       dateable: true,
     });
-    expect(npcs["default" as NpcId]).toBeUndefined();
+    expect(villagers["default" as VillagerId]).toBeUndefined();
   });
 
   it("emits a name chunk for every locale", () => {
@@ -54,8 +54,8 @@ describe("extractNpcs — real assets", () => {
     expect(localeNames.ja[balor]).toBe("バロル");
     expect(localeNames.ja[adeline]).toBe("アデライン");
 
-    // Every non-English locale should differ from English for at least one sampled NPC, proving
-    // the chunks carry real translation data rather than a silently English-filled table.
+    // Every non-English locale should differ from English for at least one sampled villager,
+    // proving the chunks carry real translation data rather than a silently English-filled table.
     for (const locale of ["ja", "zh-Hans", "zh-Hant", "ko", "ru"] as const) {
       expect(localeNames[locale][balor]).not.toBe("Balor");
     }

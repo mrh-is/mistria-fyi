@@ -7,13 +7,13 @@
 ### `src/lib/data/tracker-data.json`
 
 This file is produced by the pipeline (`pipeline/`) and must never be hand-edited. It contains the
-complete static dataset: items, recipes, animals, cosmetics, NPCs, quests, mines, museum wings,
+complete static dataset: items, recipes, animals, cosmetics, villagers, quests, mines, museum wings,
 skills, stores, and sources.
 
 ### `src/lib/types/tracker-data.ts`
 
 The shared data contract between the pipeline and the app. It defines branded ID types (`ItemId`,
-`RecipeId`, `NpcId`, etc.) and the `TrackerData` interface. The pipeline emits JSON that must
+`RecipeId`, `VillagerId`, etc.) and the `TrackerData` interface. The pipeline emits JSON that must
 conform to these types.
 
 ## 2. Engine vs Stores
@@ -22,7 +22,7 @@ conform to these types.
 
 Pure functions with no side effects. They accept explicit inputs and return computed values.
 
-- **Availability filtering** — determines which items/recipes/NPCs are visible based on season,
+- **Availability filtering** — determines which items/recipes/Villagers are visible based on season,
   weather, quest gates, and world state.
 - **Progress calculation** — computes completion counts and percentages from `CompletedState`.
 - **Search** — filters and ranks tracker entries.
@@ -38,8 +38,8 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 - Persists to `localStorage` under the key `mistria-fyi-v1` with a 300 ms debounce.
 - Exposes methods for toggling individual entries, importing/exporting JSON, merging save data, and
   resetting.
-- Enforces domain constraints at the mutation boundary (e.g., NPC level caps, mine floor bounds,
-  renown clamping).
+- Enforces domain constraints at the mutation boundary (e.g., villager level caps, mine floor
+  bounds, renown clamping).
 
 ## 3. Persistence & Serialization
 
@@ -50,7 +50,7 @@ The `SerializedState` interface defines the persisted shape:
 - `version: "1"` — used for migration detection.
 - `availabilityMode`
 - `completed` — all sets and records are serialized as sorted arrays or filtered records. Legacy
-  formats (`npcs`, `skills`, `quests` as flat arrays) are migrated on load.
+  formats (`villagers`, `skills`, `quests` as flat arrays) are migrated on load.
 - `worldState`
 
 Ephemeral UI-only fields (`showCompleted`, `showSpoilers`) are not persisted.
@@ -64,8 +64,8 @@ The app processes save files entirely client-side. No save data is uploaded.
 3. `buildImportState` maps the bundle to a `Partial<CompletedState>` using `trackerData` for
    validation and warning generation.
 4. `mergeFromSave` unions the imported state into the current `userState.completed`, taking max
-   values for numeric fields (NPC levels, skill levels, renown, mine floor) and the more advanced
-   quest state (`none` → `obtained` → `completed`).
+   values for numeric fields (Villager levels, skill levels, renown, mine floor) and the more
+   advanced quest state (`none` → `obtained` → `completed`).
 
 ### Backup Restore vs Transfer
 

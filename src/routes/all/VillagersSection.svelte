@@ -1,5 +1,5 @@
 <script lang="ts">
-  import NpcRoster from "$lib/components/npc-roster.svelte";
+  import VillagerRoster from "$lib/components/villager-roster.svelte";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import SectionHeader from "./SectionHeader.svelte";
@@ -11,8 +11,8 @@
 </script>
 
 {#if progress.completed < progress.total || userState.state.showCompleted}
-  <section aria-labelledby="category-npcs" style="--primary: var(--cat-npcs)">
-    <SectionHeader key="npcs" {progress} />
-    <NpcRoster compact {locale} />
+  <section aria-labelledby="category-villagers" style="--primary: var(--cat-villagers)">
+    <SectionHeader key="villagers" {progress} />
+    <VillagerRoster compact {locale} />
   </section>
 {/if}

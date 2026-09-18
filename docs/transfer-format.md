@@ -25,11 +25,11 @@ as zero-valued progress.
 
 `src/lib/engine/__tests__/transfer.test.ts` keeps immutable fixtures with these expectations:
 
-| Version | Purpose                                                                       | Compatibility expectation                                                                               |
-| ------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| v1      | Earliest layout, before perks and later progression fields                    | Decode the original floor, NPC level, and renown; default later fields to empty or their initial value. |
-| v5      | Historical pre-v6 almanac ordering                                            | Accept its historical 790-byte raw layout and normalize renamed almanac canonical IDs.                  |
-| v8      | Current boundary fixture with maximum scalar values, marriage, and one recipe | Decode without loss and remain byte-for-byte reproducible while tracker-data ordering is compatible.    |
+| Version | Purpose                                                                       | Compatibility expectation                                                                                    |
+| ------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| v1      | Earliest layout, before perks and later progression fields                    | Decode the original floor, villager level, and renown; default later fields to empty or their initial value. |
+| v5      | Historical pre-v6 almanac ordering                                            | Accept its historical 790-byte raw layout and normalize renamed almanac canonical IDs.                       |
+| v8      | Current boundary fixture with maximum scalar values, marriage, and one recipe | Decode without loss and remain byte-for-byte reproducible while tracker-data ordering is compatible.         |
 
 Every change to a transfer ordering or encoded field must follow the game-version update protocol.
 If a layout’s meaning changes, bump the transfer version and add a fixture for the preceding format.

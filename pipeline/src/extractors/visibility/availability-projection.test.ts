@@ -10,8 +10,8 @@ describe("availabilityToVisibility", () => {
   it.each([
     [{ type: "always" }, { type: "always" }],
     [
-      { type: "heartLevel", level: 4, npcId: "juniper" },
-      { type: "heartLevel", level: 4, npcId: "juniper" },
+      { type: "heartLevel", level: 4, villagerId: "juniper" },
+      { type: "heartLevel", level: 4, villagerId: "juniper" },
     ],
     [
       { type: "minesLevel", floor: 40 },

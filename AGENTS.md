@@ -142,6 +142,11 @@ These rules prevent accidental damage to generated or vendored code:
 - **Componentize along logical lines.** Break complex components into sub-components that each own
   one concern (a checkbox, a sprite slot, a source card), even when they have only one call site.
   The goal is reasoning clarity, not reuse.
+- **`docs/superpowers/plans/` and `docs/superpowers/specs/`** are historical artifacts, dated
+  records of what was planned and designed at the time. Do not edit them to reflect later renames,
+  refactors, or reversals — a later change (e.g. a rename of `npcs` to `villagers`) should not touch
+  their prose even though it makes older identifiers there stale. Update current reference docs
+  (`docs/*.md` outside `superpowers/`) instead.
 
 ## 6. Code style
 
