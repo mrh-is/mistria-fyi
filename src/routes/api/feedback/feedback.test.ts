@@ -143,6 +143,7 @@ describe("POST /api/feedback", () => {
     };
     expect(body.title).toBe("[Feedback] The tomato soup recipe seems wrong");
     expect(body.labels).toEqual(["user feedback"]);
+    expect(new Headers(options.headers).get("User-Agent")).toBe("Mistria-Field-Guide-Feedback");
   });
 
   it("includes email note in issue body when email provided", async () => {
@@ -319,6 +320,36 @@ describe("POST /api/feedback", () => {
     await expect(
       callPost(request, { fetchMock: mockGitHubFailure(403), platform: mockPlatform() }),
     ).rejects.toMatchObject({ status: 503 });
+  });
+
+  it("logs sanitized GitHub failure diagnostics", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const fetchMock = routingFetchMock({
+      github: new Response(
+        JSON.stringify({
+          message: "Resource not accessible by personal access token\nwith extra detail",
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "X-Accepted-GitHub-Permissions": "issues=write",
+            "X-GitHub-Request-Id": "request-123",
+          },
+          status: 403,
+        },
+      ),
+    });
+    const request = makeRequest(validPayload);
+
+    await expect(callPost(request, { fetchMock, platform: mockPlatform() })).rejects.toMatchObject({
+      status: 503,
+    });
+    expect(consoleError).toHaveBeenCalledWith("GitHub API error", {
+      acceptedPermissions: "issues=write",
+      message: "Resource not accessible by personal access token with extra detail",
+      requestId: "request-123",
+      status: 403,
+    });
   });
 
   it("returns 503 when the GitHub request fails", async () => {
