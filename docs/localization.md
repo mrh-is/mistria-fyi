@@ -13,6 +13,25 @@ own translation tables in `pipeline/input/assets/localization/`. The pipeline
 content and never invents a translation for it — a category with missing or unclear game-side
 translation data is a pipeline extraction problem, not something to work around in the app.
 
+### How name chunks load
+
+Chunks are code-split: `src/lib/data/names.ts` declares them through a lazy `import.meta.glob`, so a
+page fetches only the categories it renders, in the active locale plus the English fallback.
+`getName()` & `getNameTable()` stay synchronous (components resolve names inside `$derived`) and
+read from a session cache that `loadNames()` fills; reading a chunk that exists but was never
+awaited throws rather than silently falling back to English.
+
+- **Category routes** await their chunks in `+page.ts` via `loadPageNames(event, [...])`. A page
+  that renders source segments also spreads `SEGMENT_LOOKUP_CATEGORIES` from
+  `src/lib/utils/segment-lookups.ts`. If you add a `getName()` call for a new category to a page's
+  component tree, add the category to that route's list; the thrown error names the missing chunk.
+- **`/all`** awaits every category (`LOCALIZED_CATEGORIES`).
+- **Sitewide search** (`search-results.svelte`) awaits every category for the active locale on first
+  open, not at page load, and gates its results on that load. Chunks are cached per
+  `<locale>/<category>` for the session, so reopening search never refetches.
+- **Tests** run with every chunk preloaded by `src/vitest-setup-names.ts`. Tests of the loading
+  boundary itself live under `vitest.mocked.config.ts`, which skips that setup.
+
 **MFG's own UI chrome text** (buttons, labels, dialogs, descriptions) is machine-translated by us
 and built on [Paraglide JS](https://inlang.com/m/gerre34r/library-inlang-paraglideJs). Source
 strings live in `messages/en.json`; translations live in the other 7 `messages/<locale>.json` files.

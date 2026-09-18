@@ -59,6 +59,7 @@
     }
   ],
   "search_no_results": "항목을 찾을 수 없습니다",
+  "search_loading": "검색 불러오는 중…",
   "quest_marked_obtained": "“{name}”을(를) 획득으로 표시했습니다",
   "quest_marked_completed": "“{name}”을(를) 완료로 표시했습니다",
   "quest_marked_completed_with_recipe": "“{name}”을(를) 완료로 표시하고 “{recipe}”을(를) 해제했습니다",
