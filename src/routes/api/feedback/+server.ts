@@ -16,6 +16,7 @@ const MAX_ENTITY_ID_LENGTH = 100;
 const MAX_EXTRA_KEYS = 10;
 const MAX_SAVE_DATA_BYTES = 50 * 1024;
 const MAX_PAYLOAD_BYTES = 100 * 1024;
+const MAX_GITHUB_ERROR_LOG_LENGTH = 200;
 const GITHUB_TIMEOUT_MS = 10_000;
 const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 const TURNSTILE_TIMEOUT_MS = 5_000;
@@ -27,6 +28,13 @@ interface FeedbackPayload {
   message: string;
   saveData?: Record<string, unknown>;
   selectedElement?: ReportableElement;
+}
+
+interface GitHubFailureDiagnostics {
+  acceptedPermissions: null | string;
+  message?: string;
+  requestId: null | string;
+  status: number;
 }
 
 function buildIssueBody(payload: FeedbackPayload): string {
@@ -97,6 +105,29 @@ function escapeMarkdown(value: string): string {
 
 function formatBodyValue(value: string): string {
   return escapeMarkdown(value.replaceAll(/[\r\n]+/g, " ").trim());
+}
+
+async function getGitHubFailureDiagnostics(response: Response): Promise<GitHubFailureDiagnostics> {
+  let message: string | undefined;
+
+  try {
+    const body = (await response.json()) as unknown;
+    if (typeof body === "object" && body !== null && "message" in body) {
+      const rawMessage = (body as Record<string, unknown>).message;
+      if (typeof rawMessage === "string") {
+        message = rawMessage.replaceAll(/\s+/g, " ").trim().slice(0, MAX_GITHUB_ERROR_LOG_LENGTH);
+      }
+    }
+  } catch {
+    // GitHub occasionally returns an empty or non-JSON error response.
+  }
+
+  return {
+    acceptedPermissions: response.headers.get("x-accepted-github-permissions"),
+    message,
+    requestId: response.headers.get("x-github-request-id"),
+    status: response.status,
+  };
 }
 
 function sanitizeTitlePart(value: string): string {
@@ -353,6 +384,7 @@ export const POST: RequestHandler = async ({ platform, request, url }) => {
         Accept: "application/vnd.github+json",
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
+        "User-Agent": "Mistria-Field-Guide-Feedback",
         "X-GitHub-Api-Version": "2022-11-28",
       },
       method: "POST",
@@ -360,8 +392,7 @@ export const POST: RequestHandler = async ({ platform, request, url }) => {
     });
 
     if (!response.ok) {
-      const status = response.status;
-      console.error(`GitHub API error: ${status}`);
+      console.error("GitHub API error", await getGitHubFailureDiagnostics(response));
       error(
         503,
         "Feedback service temporarily unavailable. Please try again later or copy your message.",
@@ -371,6 +402,7 @@ export const POST: RequestHandler = async ({ platform, request, url }) => {
     const result = (await response.json()) as { html_url: string; number: number };
     issueUrl = result.html_url;
     issueNumber = result.number;
+    console.info("Feedback issue created", { issueNumber });
   } catch (err) {
     if (isHttpError(err)) {
       throw err;
