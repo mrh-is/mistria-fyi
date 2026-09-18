@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { trackerData } from "$lib/data/index.js";
 import { animalNameId, getName } from "$lib/data/names.js";
 import { deriveProgressionState } from "$lib/engine/visibility.js";
-import { recordEntries, recordKeys, recordValues } from "$lib/utils.js";
+import { recordEntries, recordKeys } from "$lib/utils.js";
 
 import { searchItems } from "../search.js";
 
@@ -80,11 +80,11 @@ function museumOnlyFixture() {
   for (const wing of Object.values(trackerData.museum)) {
     for (const set of Object.values(wing.sets)) {
       for (const itemId of set.items) {
-        const item = trackerData.items[itemId];
-        const result = search(item.name).find(
+        const name = getName("items", itemId, "en");
+        const result = search(name).find(
           (candidate) => candidate.category === "museum" && candidate.id === itemId,
         );
-        if (result) return { item, itemId, result };
+        if (result) return { itemId, name, result };
       }
     }
   }
@@ -117,16 +117,18 @@ describe("empty and whitespace queries", () => {
 
 describe("basic matching", () => {
   it("finds items by name substring", () => {
-    const firstItem = recordValues(trackerData.items)[0];
-    const results = search(firstItem.name);
+    const [firstItemId] = recordEntries(trackerData.items)[0];
+    const firstItemName = getName("items", firstItemId, "en");
+    const results = search(firstItemName);
     expect(results.length).toBeGreaterThan(0);
-    expect(results.some((r) => r.name === firstItem.name)).toBe(true);
+    expect(results.some((r) => r.name === firstItemName)).toBe(true);
   });
 
   it("is case-insensitive", () => {
-    const firstItem = recordValues(trackerData.items)[0];
-    const lower = search(firstItem.name.toLowerCase());
-    const upper = search(firstItem.name.toUpperCase());
+    const [firstItemId] = recordEntries(trackerData.items)[0];
+    const firstItemName = getName("items", firstItemId, "en");
+    const lower = search(firstItemName.toLowerCase());
+    const upper = search(firstItemName.toUpperCase());
     expect(lower.length).toBe(upper.length);
   });
 
@@ -175,16 +177,18 @@ describe("basic matching", () => {
 
 describe("completion status", () => {
   it("marks completed items as completed", () => {
-    const [itemId, item] = recordEntries(trackerData.items)[0];
-    const results = search(item.name, { almanac: new Set([itemId]) });
-    const match = results.find((r) => r.name === item.name && r.category === "almanac");
+    const [itemId] = recordEntries(trackerData.items)[0];
+    const itemName = getName("items", itemId, "en");
+    const results = search(itemName, { almanac: new Set([itemId]) });
+    const match = results.find((r) => r.name === itemName && r.category === "almanac");
     expect(match?.completed).toBe(true);
   });
 
   it("marks incomplete items as not completed", () => {
-    const [, item] = recordEntries(trackerData.items)[0];
-    const results = search(item.name);
-    const match = results.find((r) => r.name === item.name && r.category === "almanac");
+    const [itemId] = recordEntries(trackerData.items)[0];
+    const itemName = getName("items", itemId, "en");
+    const results = search(itemName);
+    const match = results.find((r) => r.name === itemName && r.category === "almanac");
     expect(match?.completed).toBe(false);
   });
 });
@@ -464,8 +468,8 @@ describe("museum results", () => {
   });
 
   it("marks museum items as completed when in completed.museum", () => {
-    const { item, itemId } = museumOnlyFixture();
-    const museumMatch = search(item.name, { museum: new Set([itemId]) }).find(
+    const { itemId, name } = museumOnlyFixture();
+    const museumMatch = search(name, { museum: new Set([itemId]) }).find(
       (result) => result.category === "museum" && result.id === itemId,
     );
     expect(museumMatch).toBeDefined();
@@ -498,16 +502,16 @@ describe("pet cosmetic and skin result IDs", () => {
   });
 
   it("prefixes pet skin IDs with 'pet-skin:'", () => {
-    const [firstId, firstSkin] = recordEntries(trackerData.pets.skins)[0];
-    const results = search(firstSkin.name);
+    const [firstId] = recordEntries(trackerData.pets.skins)[0];
+    const results = search(getName("pets/skins", firstId, "en"));
     const match = results.find((r) => r.category === "animals" && r.id === `pet-skin:${firstId}`);
     expect(match).toBeDefined();
     expect(match?.id).toBe(`pet-skin:${firstId}`);
   });
 
   it("marks pet skins as completed when in completed.petSkins", () => {
-    const [firstId, firstSkin] = recordEntries(trackerData.pets.skins)[0];
-    const results = search(firstSkin.name, {
+    const [firstId] = recordEntries(trackerData.pets.skins)[0];
+    const results = search(getName("pets/skins", firstId, "en"), {
       petSkins: new Set([firstId]),
     });
     const match = results.find((r) => r.category === "animals" && r.id === `pet-skin:${firstId}`);

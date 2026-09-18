@@ -7,6 +7,7 @@
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
   import { trackerData, trackerIndex } from "$lib/data/index.js";
+  import { getName, nameCollator } from "$lib/data/names.js";
   import { isVisible } from "$lib/engine/visibility.js";
   import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
@@ -80,14 +81,14 @@
         entries.push({
           iconSprite: item.iconSprite,
           id: recipeId,
-          name: entry.name,
+          name: getName("items", canonicalId, locale),
           nameVisible: isVisible(visibility, userState.progressionState),
           sources,
           visibility,
         });
       }
       if (entries.length > 0) {
-        entries.sort((a, b) => a.name.localeCompare(b.name));
+        entries.sort((a, b) => nameCollator(locale).compare(a.name, b.name));
         groups.push({ entries, id: catId, name: cat.name });
       }
     });

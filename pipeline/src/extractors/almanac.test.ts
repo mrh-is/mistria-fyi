@@ -10,6 +10,25 @@ import type { AlmanacCategoryId, AlmanacEntry } from "$lib/types/tracker-data.js
 
 const temporaryDirectories: string[] = [];
 
+vi.mock("../localize.js", () => ({
+  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string; id: string }) => {
+    const fallsBack = input.id === "turnip";
+    return {
+      fallbackLocales: fallsBack ? ["ja"] : [],
+      values: {
+        en: input.englishValue,
+        es: input.englishValue,
+        fr: input.englishValue,
+        ja: fallsBack ? input.englishValue : `JA ${input.englishValue}`,
+        ko: input.englishValue,
+        ru: input.englishValue,
+        "zh-Hans": input.englishValue,
+        "zh-Hant": input.englishValue,
+      },
+    };
+  }),
+}));
+
 afterEach(() => {
   vi.restoreAllMocks();
   for (const directory of temporaryDirectories.splice(0)) {
@@ -61,15 +80,41 @@ tags = ["crop"]
     });
     const fiddle = parseFiddle(assetsDir).data;
 
-    expect(extractAlmanac(fiddle, new Map())).toEqual({
+    expect(extractAlmanac(fiddle, assetsDir)).toEqual({
       almanac: {
         crops: {
-          items: [{ itemIds: ["turnip"], name: "Turnip" }],
+          items: [{ itemIds: ["turnip"] }],
           name: "Crops",
         },
       },
       items: {
-        turnip: { category: "crops", iconSprite: "spr_ui_item_turnip", name: "Turnip" },
+        turnip: { category: "crops", iconSprite: "spr_ui_item_turnip" },
+      },
+      localeNames: {
+        en: { turnip: "Turnip" },
+        es: { turnip: "Turnip" },
+        fr: { turnip: "Turnip" },
+        ja: { turnip: "Turnip" },
+        ko: { turnip: "Turnip" },
+        ru: { turnip: "Turnip" },
+        "zh-Hans": { turnip: "Turnip" },
+        "zh-Hant": { turnip: "Turnip" },
+      },
+      localizationReport: {
+        fallbackItemIds: {
+          en: [],
+          es: [],
+          fr: [],
+          ja: ["turnip"],
+          ko: [],
+          ru: [],
+          "zh-Hans": [],
+          "zh-Hant": [],
+        },
+        nonLocalizableItems: [
+          "other/crops/localized (localization path: items/names/localized)",
+          "other/crops/nameless (missing name)",
+        ],
       },
     });
   });
@@ -106,11 +151,10 @@ tags = ["furniture"]
     });
     const fiddle = parseFiddle(assetsDir).data;
 
-    const result = extractAlmanac(fiddle, new Map());
+    const result = extractAlmanac(fiddle, assetsDir);
     const cat = result.almanac["furniture" as AlmanacCategoryId];
     const entry = cat.items[0];
 
-    expect(entry.name).toBe("Basic Chest");
     expect(entry.itemIds).toEqual(["basic_chest_black", "basic_chest_dark", "basic_chest_white"]);
     expect(entry.recipeId).toBe("basic_chest");
     expect(cat.items).toHaveLength(1);
@@ -142,11 +186,11 @@ tags = ["furniture"]
     });
     const fiddle = parseFiddle(assetsDir).data;
 
-    const result = extractAlmanac(fiddle, new Map());
+    const result = extractAlmanac(fiddle, assetsDir);
     const cat = result.almanac["furniture" as AlmanacCategoryId];
     expect(cat.items).toHaveLength(2);
-    const names = cat.items.map((e: AlmanacEntry) => e.name).sort();
-    expect(names).toEqual(["Bed", "Double Bed"]);
+    const canonicalIds = cat.items.map((e: AlmanacEntry) => e.itemIds[0]).sort();
+    expect(canonicalIds).toEqual(["bed_double_v1", "bed_single_v1"]);
   });
 
   it("includes items in every almanac category matched by their tags", () => {
@@ -179,22 +223,22 @@ tags = ["material"]
     });
     const fiddle = parseFiddle(assetsDir).data;
 
-    const result = extractAlmanac(fiddle, new Map());
+    const result = extractAlmanac(fiddle, assetsDir);
 
     expect(result.almanac["fish" as AlmanacCategoryId].items).toEqual([
-      { itemIds: ["shell"], name: "Shell" },
-      { itemIds: ["wood"], name: "Wood" },
+      { itemIds: ["shell"] },
+      { itemIds: ["wood"] },
     ]);
     expect(result.almanac["forageables" as AlmanacCategoryId].items).toEqual([
-      { itemIds: ["shell"], name: "Shell" },
+      { itemIds: ["shell"] },
     ]);
     expect(result.almanac["materials" as AlmanacCategoryId].items).toEqual([
-      { itemIds: ["shell"], name: "Shell" },
-      { itemIds: ["wood"], name: "Wood" },
+      { itemIds: ["shell"] },
+      { itemIds: ["wood"] },
     ]);
     expect(result.items).toEqual({
-      shell: { category: "forageables", iconSprite: "spr_ui_item_shell", name: "Shell" },
-      wood: { category: "materials", iconSprite: "spr_ui_item_wood", name: "Wood" },
+      shell: { category: "forageables", iconSprite: "spr_ui_item_shell" },
+      wood: { category: "materials", iconSprite: "spr_ui_item_wood" },
     });
   });
 
@@ -217,7 +261,7 @@ tags = ["crop"]
     });
     const fiddle = parseFiddle(assetsDir).data;
 
-    const result = extractAlmanac(fiddle, new Map());
+    const result = extractAlmanac(fiddle, assetsDir);
     const entry = result.almanac["crops" as AlmanacCategoryId].items[0];
     expect(entry.itemIds).toEqual(["turnip"]);
     expect(entry.recipeId).toBeUndefined();
@@ -241,7 +285,7 @@ tags = ["crop"]
     });
     const fiddle = parseFiddle(assetsDir).data;
 
-    expect(() => extractAlmanac(fiddle, new Map())).toThrow(
+    expect(() => extractAlmanac(fiddle, assetsDir)).toThrow(
       'Missing icon_sprite for item "turnip"',
     );
   });

@@ -49,7 +49,9 @@ export function searchItems(
     if (item.visibility && !isVisible(item.visibility, progressionState)) continue;
     if (!isItemApplicableForAlmanac(entry.itemIds, completed)) continue;
 
-    if (entry.name.toLowerCase().includes(q)) {
+    const name = getName("items", canonicalId, locale);
+    const englishName = getName("items", canonicalId, "en");
+    if (name.toLowerCase().includes(q) || englishName.toLowerCase().includes(q)) {
       results.push({
         available: isItemAvailable(
           trackerIndex.getAggregatedAlmanacSources(canonicalId),
@@ -59,7 +61,7 @@ export function searchItems(
         category: "almanac",
         completed: completed.almanac.has(canonicalId),
         id: canonicalId,
-        name: entry.name,
+        name,
       });
     }
   }
@@ -72,7 +74,9 @@ export function searchItems(
         if (item.visibility && !isVisible(item.visibility, progressionState)) continue;
         if (!isItemApplicable(id, completed)) continue;
 
-        if (item.name.toLowerCase().includes(q)) {
+        const name = getName("items", id, locale);
+        const englishName = getName("items", id, "en");
+        if (name.toLowerCase().includes(q) || englishName.toLowerCase().includes(q)) {
           // Skip if already covered by an almanac result with same ID
           if (results.some((r) => r.id === id && r.category === "almanac")) continue;
           results.push({
@@ -80,7 +84,7 @@ export function searchItems(
             category: "museum",
             completed: completed.museum.has(id),
             id,
-            name: item.name,
+            name,
           });
         }
       }
@@ -167,15 +171,17 @@ export function searchItems(
   }
 
   // Pet skins
-  for (const [id, entry] of recordEntries(trackerData.pets.skins)) {
-    if (entry.name.toLowerCase().includes(q)) {
+  for (const [id] of recordEntries(trackerData.pets.skins)) {
+    const name = getName("pets/skins", id, locale);
+    const englishName = getName("pets/skins", id, "en");
+    if (name.toLowerCase().includes(q) || englishName.toLowerCase().includes(q)) {
       results.push({
         available: true,
         category: "animals",
         completed: completed.petSkins.has(id),
-        fullName: entry.name,
+        fullName: name,
         id: `pet-skin:${id}`,
-        name: entry.name,
+        name,
       });
     }
   }
@@ -184,13 +190,15 @@ export function searchItems(
   for (const [id, recipe] of recordEntries(trackerData.recipes)) {
     if (recipe.visibility && !isVisible(recipe.visibility, progressionState)) continue;
 
-    if (recipe.name.toLowerCase().includes(q)) {
+    const name = getName("recipes", id, locale);
+    const englishName = getName("recipes", id, "en");
+    if (name.toLowerCase().includes(q) || englishName.toLowerCase().includes(q)) {
       results.push({
         available: true,
         category: "recipes",
         completed: completed.almanacRecipes.has(id),
         id,
-        name: recipe.name,
+        name,
       });
     }
   }

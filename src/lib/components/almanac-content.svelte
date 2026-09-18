@@ -9,6 +9,7 @@
   import TrackerRow from "$lib/components/tracker-row.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
   import { trackerData, trackerIndex } from "$lib/data/index.js";
+  import { getName, nameCollator } from "$lib/data/names.js";
   import { isItemDimmed, isRowVisible, shouldCountItem } from "$lib/engine/availability.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import * as m from "$lib/paraglide/messages.js";
@@ -163,10 +164,10 @@
     }
   }
 
-  function toggleItem(canonicalId: ItemId, entry: AlmanacEntry, catCanonicalIds: ItemId[]): void {
+  function toggleItem(canonicalId: ItemId, name: string, catCanonicalIds: ItemId[]): void {
     userState.toggleAlmanacItem(canonicalId);
     const completed = isItemCompleted(canonicalId);
-    showUndoToast(entry.name, completed, () => {
+    showUndoToast(name, completed, () => {
       userState.toggleAlmanacItem(canonicalId);
     });
     if (completed) {
@@ -198,11 +199,11 @@
     .map((entry) => {
       const canonicalId = entry.itemIds[0];
       const item = trackerData.items[canonicalId];
-      return { canonicalId, entry, item };
+      return { canonicalId, entry, item, name: getName("items", canonicalId, locale) };
     })
-    .sort((a, b) => a.entry.name.localeCompare(b.entry.name))}
-  {@const baseItems = catEntries.filter(({ canonicalId, entry }) => {
-    if (!matchesFilter(entry.name)) return false;
+    .sort((a, b) => nameCollator(locale).compare(a.name, b.name))}
+  {@const baseItems = catEntries.filter(({ canonicalId, entry, name }) => {
+    if (!matchesFilter(name)) return false;
     if (nameFilter && !itemNameVisible(trackerData.items[canonicalId])) return false;
     const sources = aggregateSources(entry);
     return shouldCountItem(
@@ -254,14 +255,14 @@
       total={scopedItems.length}
     >
       <TrackerRowStack>
-        {#each displayItems as { canonicalId, entry, item } (canonicalId)}
+        {#each displayItems as { canonicalId, entry, item, name } (canonicalId)}
           {@const itemCompleted = isItemCompleted(canonicalId)}
           {@const itemSources = aggregateSources(entry)}
           {@const itemVisibility = item.visibility}
           <TrackerRow
             display={rowDisplay(canonicalId, { visibility: itemVisibility }, itemSources)}
             lookups={{ ...baseLookups, entityVisibility: itemVisibility }}
-            name={entry.name}
+            {name}
             reportCategory="almanac item"
             reportEntityId={canonicalId}
             sources={itemSources}
@@ -269,10 +270,10 @@
             spriteClass="text-cat-almanac"
             onToggle={() => {
               if (itemNameVisible({ visibility: itemVisibility }) || itemCompleted) {
-                toggleItem(canonicalId, entry, catCanonicalIds);
+                toggleItem(canonicalId, name, catCanonicalIds);
               } else {
                 spoilerGuard.guard(itemVisibility, () => {
-                  toggleItem(canonicalId, entry, catCanonicalIds);
+                  toggleItem(canonicalId, name, catCanonicalIds);
                 });
               }
             }}
