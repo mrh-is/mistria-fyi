@@ -311,7 +311,7 @@
     color: var(--cat-npcs);
     font-family: var(--font-display);
     font-size: 24px;
-    font-style: italic;
+    font-style: var(--font-display-style);
   }
 
   .npc-icon img {

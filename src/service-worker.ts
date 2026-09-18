@@ -6,6 +6,7 @@
 import {
   fetchRuntimeRequest,
   isEligibleForRuntimeCaching,
+  isLazyAsset,
 } from "$lib/engine/service-worker-cache.js";
 import { build, files, version } from "$service-worker";
 
@@ -13,12 +14,13 @@ const sw = self as unknown as ServiceWorkerGlobalScope;
 
 const CACHE = `cache-${version}`;
 const ASSETS = [...build, ...files];
+const PRECACHED_ASSETS = ASSETS.filter((path) => !isLazyAsset(path));
 
 sw.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.addAll(ASSETS))
+      .then((cache) => cache.addAll(PRECACHED_ASSETS))
       .then(() => sw.skipWaiting()),
   );
 });
@@ -42,7 +44,17 @@ sw.addEventListener("fetch", (event) => {
   const isAsset = ASSETS.includes(url.pathname);
 
   if (isAsset) {
-    event.respondWith(caches.match(event.request).then((r) => r ?? fetch(event.request)));
+    event.respondWith(
+      caches.match(event.request).then(async (cached) => {
+        if (cached) return cached;
+        const response = await fetch(event.request);
+        if (response.ok && isLazyAsset(url.pathname)) {
+          const cache = await caches.open(CACHE);
+          await cache.put(event.request, response.clone());
+        }
+        return response;
+      }),
+    );
   } else if (isEligibleForRuntimeCaching(url, sw.location.origin)) {
     const response = caches.open(CACHE).then((cache) =>
       fetchRuntimeRequest(event.request, {
