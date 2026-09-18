@@ -167,7 +167,7 @@
   <ExpandableSection
     count={scopedSpells.filter((spell) => userState.state.completed.mines.spells.has(spell.id))
       .length}
-    name={m.mines_spells_section()}
+    name={getName("ui", "magic_spells", locale)}
     reportCategory="mines"
     reportEntityId="spells"
     {defaultOpen}

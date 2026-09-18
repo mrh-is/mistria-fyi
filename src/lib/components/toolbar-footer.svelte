@@ -16,6 +16,7 @@
   import QuickSettingsPanel from "$lib/components/quick-settings-panel.svelte";
   import { Input } from "$lib/components/ui/input/index.js";
   import VisibilityPanel from "$lib/components/visibility-panel.svelte";
+  import { getName } from "$lib/data/names.js";
   import { getFeedbackContext } from "$lib/feedback/context.svelte.js";
   import * as m from "$lib/paraglide/messages.js";
   import { deLocalizeHref } from "$lib/paraglide/runtime.js";
@@ -210,7 +211,7 @@
         <button
           class="min-h-11 px-2 font-controls text-xs text-muted-foreground hover:text-foreground"
           type="button"
-          onclick={closeSearch}>{m.toolbar_cancel_search()}</button
+          onclick={closeSearch}>{getName("ui", "cancel", page.data.locale)}</button
         >
       </div>
     {:else}

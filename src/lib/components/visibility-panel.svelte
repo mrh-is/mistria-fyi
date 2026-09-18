@@ -2,6 +2,7 @@
   import { IconClock, IconInfoCircle, IconSquareX, IconTags } from "@tabler/icons-svelte-runes";
   import { prefersReducedMotion } from "svelte/motion";
 
+  import { page } from "$app/state";
   import BlockySwitch from "$lib/components/blocky-switch.svelte";
   import { weatherIcon } from "$lib/components/icon/icon-maps.js";
   import { Icon } from "$lib/components/icon/index.js";
@@ -124,7 +125,7 @@
               {@const selected = season === currentSeason}
               <button
                 type="button"
-                aria-label={seasonLabel(season)}
+                aria-label={seasonLabel(season, page.data.locale)}
                 aria-pressed={selected}
                 class:radio-strip__active={selected}
                 onclick={() => {

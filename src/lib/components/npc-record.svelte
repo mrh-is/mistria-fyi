@@ -2,9 +2,11 @@
   import { IconMinus, IconPlus } from "@tabler/icons-svelte-runes";
   import { tick } from "svelte";
 
+  import { page } from "$app/state";
   import { Icon } from "$lib/components/icon/index.js";
   import Spoiler from "$lib/components/spoiler.svelte";
   import { trackerData } from "$lib/data/index.js";
+  import { getName } from "$lib/data/names.js";
   import { isNpcComplete, MAX_NPC_LEVEL } from "$lib/engine/progress.js";
   import {
     getMarriedNpc,
@@ -39,10 +41,10 @@
   const instanceId = $props.id();
   const warningId = `${instanceId}-marriage-warning`;
   let relationshipStatusLabel: Record<RelationshipStatus, string> = $derived({
-    best_friends: m.relationship_status_best_friends(),
-    dating: m.relationship_status_dating(),
-    engaged: m.relationship_status_engaged(),
-    married: m.relationship_status_married(),
+    best_friends: getName("ui", "best_friend", page.data.locale),
+    dating: getName("ui", "dating", page.data.locale),
+    engaged: getName("ui", "engaged", page.data.locale),
+    married: getName("ui", "married", page.data.locale),
     married_child_free: m.relationship_status_married_child_free(),
     married_kids: m.relationship_status_married_kids(),
     path_not_chosen: m.relationship_status_path_not_chosen(),
@@ -55,7 +57,7 @@
   let relationshipActionLabel: Record<RelationshipActionValue, string> = $derived({
     married: m.relationship_action_married(),
     no: m.relationship_action_no(),
-    platonic: m.relationship_status_best_friends(),
+    platonic: getName("ui", "best_friend", page.data.locale),
     proposed: m.relationship_action_proposed(),
     romantic: m.relationship_action_romantic(),
     yes: m.relationship_action_yes(),
@@ -168,7 +170,7 @@
         class="npc-birthday"
         aria-label={m.npc_birthday_aria({
           day: npc.birthday.day,
-          season: seasonLabel(npc.birthday.season),
+          season: seasonLabel(npc.birthday.season, page.data.locale),
         })}
       >
         <Icon.Season season={npc.birthday.season} class="size-3" aria-hidden="true" />

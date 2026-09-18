@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from "$app/state";
   import CategoryCard from "$lib/components/category-card.svelte";
   import { Icon } from "$lib/components/icon/index.js";
   import { CATEGORY_KEYS, sortCategoryKeysByName } from "$lib/data/categories.js";
@@ -13,6 +14,7 @@
         const p = progress[key];
         return p.total === 0 || p.completed < p.total;
       }),
+      page.data.locale,
     ),
   );
 
@@ -22,6 +24,7 @@
         const p = progress[key];
         return p.total > 0 && p.completed >= p.total;
       }),
+      page.data.locale,
     ),
   );
 </script>

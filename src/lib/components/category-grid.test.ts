@@ -22,7 +22,7 @@ describe("CategoryGrid", () => {
       },
     });
 
-    expect(body.indexOf(">Animals<")).toBeLessThan(body.indexOf(">Characters<"));
-    expect(body.indexOf(">Characters<")).toBeLessThan(body.indexOf(">Cosmetics<"));
+    expect(body.indexOf(">Almanac<")).toBeLessThan(body.indexOf(">Animals<"));
+    expect(body.indexOf(">Skills<")).toBeLessThan(body.indexOf(">Villagers<"));
   });
 });

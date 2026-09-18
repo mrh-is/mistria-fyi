@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { parseFiddle } from "../parse-fiddle.js";
-import { extractAlmanac } from "./almanac.js";
+import { extractAlmanac, readAlmanacCategories } from "./almanac.js";
 
 import type { AlmanacCategoryId, AlmanacEntry } from "$lib/types/tracker-data.js";
 
@@ -287,6 +287,43 @@ tags = ["crop"]
     expect(() => extractAlmanac(fiddle, assetsDir)).toThrow(
       'Missing icon_sprite for item "turnip"',
     );
+  });
+});
+
+describe("readAlmanacCategories", () => {
+  it("defaults the label key to the category key and honors local_key", () => {
+    const assetsDir = createAssetsFixture({
+      "ui/menus/sub_menus/almanac.toml": `
+[[categories]]
+key = "crops"
+tags = ["crop"]
+
+[[categories]]
+key = "fish"
+tags = ["fishable", "dive"]
+local_key = "misc_local/fishing_and_diving"
+`,
+    });
+    const fiddle = parseFiddle(assetsDir).data;
+
+    expect(readAlmanacCategories(fiddle)).toEqual([
+      { key: "crops", localKey: "crops", tags: ["crop"] },
+      { key: "fish", localKey: "fishing_and_diving", tags: ["fishable", "dive"] },
+    ]);
+  });
+
+  it("throws on a local_key outside misc_local", () => {
+    const assetsDir = createAssetsFixture({
+      "ui/menus/sub_menus/almanac.toml": `
+[[categories]]
+key = "fish"
+tags = ["fishable"]
+local_key = "ui/fishing"
+`,
+    });
+    const fiddle = parseFiddle(assetsDir).data;
+
+    expect(() => readAlmanacCategories(fiddle)).toThrow(/expected "misc_local\/<key>"/);
   });
 });
 

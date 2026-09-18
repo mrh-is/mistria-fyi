@@ -59,7 +59,7 @@ test.describe("@critical semantic accessibility", () => {
     await expect(record.locator("[data-npc-mark] button")).toHaveCount(0);
     await expect(record.getByRole("button", { name: "Decrease Adeline hearts" })).toBeVisible();
     await expect(record.getByRole("button", { name: "Increase Adeline hearts" })).toBeVisible();
-    await expect(record.getByRole("button", { name: "Best friends" })).toBeVisible();
+    await expect(record.getByRole("button", { name: "Best Friend" })).toBeVisible();
     await expect(record.getByRole("button", { name: "Start dating" })).toBeVisible();
   });
 

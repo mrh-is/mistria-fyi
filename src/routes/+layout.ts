@@ -1,4 +1,5 @@
 import { browser } from "$app/environment";
+import { loadNames } from "$lib/data/names.js";
 import { getLocale, getLocaleForUrl } from "$lib/paraglide/runtime.js";
 
 import type { LayoutLoad } from "./$types.js";
@@ -13,7 +14,12 @@ import type { LayoutLoad } from "./$types.js";
  * the base locale, so SSR must read `getLocale()` instead, which `paraglideMiddleware` has already
  * resolved from the request. The URL form stays on the client because `load` runs before the
  * navigation commits, when `getLocale()` would still report the previous page's locale.
+ *
+ * The `ui` chunk (the game's own vocabulary: category names, seasons, quest types, …) is awaited
+ * here because sitewide chrome reads it on every route.
  */
-export const load: LayoutLoad = ({ url }) => ({
-  locale: browser ? getLocaleForUrl(url) : getLocale(),
-});
+export const load: LayoutLoad = async ({ url }) => {
+  const locale = browser ? getLocaleForUrl(url) : getLocale();
+  await loadNames(locale, ["ui"]);
+  return { locale };
+};

@@ -1,5 +1,7 @@
+import { getName } from "$lib/data/names.js";
 import * as m from "$lib/paraglide/messages.js";
 
+import type { LocaleCode } from "$lib/types/locale.js";
 import type {
   MinesBiome,
   MinesBiomeId,
@@ -12,13 +14,6 @@ import type {
   TreasureChestTierId,
   Weather,
 } from "$lib/types/tracker-data.js";
-
-const SEASON_LABEL: Record<Season, () => string> = {
-  fall: m.season_fall,
-  spring: m.season_spring,
-  summer: m.season_summer,
-  winter: m.season_winter,
-};
 
 const SEASON_LABEL_ABBR: Record<Season, () => string> = {
   fall: m.season_fall_abbr,
@@ -100,8 +95,9 @@ export function formatStoreName(
   return store.article ? `${store.article} ${store.name}` : store.name;
 }
 
-export function seasonLabel(season: Season): string {
-  return SEASON_LABEL[season]();
+/** The game's own season name, from the `ui` chunk the root layout awaits. */
+export function seasonLabel(season: Season, locale: LocaleCode): string {
+  return getName("ui", season, locale);
 }
 
 export function seasonLabelAbbr(season: Season): string {

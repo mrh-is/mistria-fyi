@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from "$app/state";
   import { restrictionWeatherIcon } from "$lib/components/icon/icon-maps.js";
   import { Icon } from "$lib/components/icon/index.js";
   import {
@@ -43,7 +44,7 @@
     if (badges.seasons && !isAllSeasons(badges.seasons)) {
       result.push({
         kind: "seasons",
-        label: badges.seasons.map(seasonLabel).join(", "),
+        label: badges.seasons.map((season) => seasonLabel(season, page.data.locale)).join(", "),
         seasons: badges.seasons,
       });
     }

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from "$app/state";
   import { Icon } from "$lib/components/icon/index.js";
   import { categoryForKey, type CategoryKey } from "$lib/data/categories.js";
 
@@ -12,7 +13,7 @@
     progress: CategoryProgress;
   } = $props();
 
-  const { color, name } = $derived(categoryForKey(key));
+  const { color, name } = $derived(categoryForKey(key, page.data.locale));
 </script>
 
 <div

@@ -31,7 +31,8 @@ describe("source-filtered content", () => {
       cosmetics.every(({ sources }) => sources.every(({ type }) => coveredTypes.has(type))),
     );
     if (!coveredSlot) throw new Error("Expected a cosmetic slot with covered source types");
-    const slotLabel = coveredSlot[0].charAt(0).toUpperCase() + coveredSlot[0].slice(1);
+    const slotLabel = { back: "Back", eyes: "Eyes", facial_hair: "Facial Hair" }[coveredSlot[0]];
+    if (!slotLabel) throw new Error(`Add a heading for slot "${coveredSlot[0]}" to this test`);
 
     expect(renderedText(render(CosmeticsContent, { props: { locale: "en" } }).body)).toContain(
       slotLabel,
