@@ -1,6 +1,10 @@
 export const MAX_RUNTIME_ENTRIES = 50;
 
-const EXTERNAL_RUNTIME_ASSETS = new Set(["https://assets.mistria.fyi/fonts/satoshi-regular.woff2"]);
+/** Self-hosted fonts on R2: Satoshi plus the per-locale families under versioned prefixes. */
+const EXTERNAL_FONT_PREFIX = "https://assets.mistria.fyi/fonts/";
+
+/** Per-locale @font-face stylesheets; large and locale-specific, so cached on demand, not on install. */
+const LAZY_ASSET_PATTERN = /\/locale-fonts-[^/]+\.css$/;
 
 type RuntimeCache = Pick<Cache, "delete" | "keys" | "put">;
 
@@ -22,7 +26,10 @@ export async function cacheRuntimeResponse(
 ): Promise<void> {
   await cache.put(request, response.clone());
   const keys = await cache.keys();
-  const runtimeKeys = keys.filter((key) => !assetPaths.includes(new URL(key.url).pathname));
+  const runtimeKeys = keys.filter((key) => {
+    const url = new URL(key.url);
+    return !assetPaths.includes(url.pathname) && !isExternalFontAsset(url);
+  });
   const excess = runtimeKeys.length - maxEntries;
   for (const key of runtimeKeys.slice(0, Math.max(0, excess))) {
     await cache.delete(key);
@@ -57,8 +64,15 @@ export async function fetchRuntimeRequest(
 }
 
 export function isEligibleForRuntimeCaching(url: URL, origin: string): boolean {
-  return (
-    (url.origin === origin && !url.pathname.startsWith("/api/")) ||
-    EXTERNAL_RUNTIME_ASSETS.has(url.href)
-  );
+  return (url.origin === origin && !url.pathname.startsWith("/api/")) || isExternalFontAsset(url);
+}
+
+/** Versioned, immutable font chunks: cached alongside build assets and exempt from LRU eviction. */
+export function isExternalFontAsset(url: URL): boolean {
+  return url.href.startsWith(EXTERNAL_FONT_PREFIX);
+}
+
+/** Build assets that are fetched and cached on first use instead of during install. */
+export function isLazyAsset(pathname: string): boolean {
+  return LAZY_ASSET_PATTERN.test(pathname);
 }

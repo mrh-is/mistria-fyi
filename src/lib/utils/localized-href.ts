@@ -2,6 +2,7 @@ import { resolve } from "$app/paths";
 import { localizeHref } from "$lib/paraglide/runtime.js";
 
 import type { Pathname, ResolvedPathname } from "$app/types";
+import type { LocaleCode } from "$lib/types/locale.js";
 
 /**
  * `resolve()`s a known route path (accounting for a deployed base path) and localizes it for the
@@ -15,6 +16,6 @@ import type { Pathname, ResolvedPathname } from "$app/types";
  * resolve` rule recognize a call to this function as equivalent to a bare `resolve()` call, with
  * no per-call-site suppression needed.
  */
-export function localizedHref(path: Pathname): ResolvedPathname {
-  return localizeHref(resolve(path)) as ResolvedPathname;
+export function localizedHref(path: Pathname, options?: { locale: LocaleCode }): ResolvedPathname {
+  return localizeHref(resolve(path), options) as ResolvedPathname;
 }

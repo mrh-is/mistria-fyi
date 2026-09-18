@@ -32,7 +32,7 @@
 
 <div class="home-page">
   <header class="home-header" style="--overall-progress: {overallPct}%">
-    <h1 class="flex min-w-0 items-center gap-2 font-display text-2xl leading-none">
+    <h1 class="flex min-w-0 items-center gap-2 font-brand text-2xl leading-none">
       <IconNotebook class="size-5 shrink-0 text-amber-700 dark:text-amber-400" />
       Mistria Field Guide
     </h1>

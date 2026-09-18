@@ -15,6 +15,7 @@
   import { Toaster } from "$lib/components/ui/sonner/index.js";
   import { errorPageMetadata } from "$lib/data/page-metadata.js";
   import { FeedbackContext, setFeedbackContext } from "$lib/feedback/context.svelte.js";
+  import { localeFontStylesheet } from "$lib/fonts/locale-fonts.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
@@ -35,7 +36,14 @@
   let metadata = $derived(page.status >= 400 ? errorPageMetadata(page.status) : page.data.metadata);
   let hasToolbar = $derived(!metadata.hideToolbar);
   let overlayActive = $state(false);
+  let fontStylesheet = $derived(localeFontStylesheet(page.data.locale));
 </script>
+
+<svelte:head>
+  {#if fontStylesheet}
+    <link rel="stylesheet" href={fontStylesheet} />
+  {/if}
+</svelte:head>
 
 <SeoHead {metadata} pathname={page.url.pathname} />
 
