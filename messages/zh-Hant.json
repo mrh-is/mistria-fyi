@@ -59,6 +59,7 @@
     }
   ],
   "search_no_results": "找不到任何物品",
+  "search_loading": "正在載入搜尋…",
   "quest_marked_obtained": "已將「{name}」標記為已取得",
   "quest_marked_completed": "已將「{name}」標記為已完成",
   "quest_marked_completed_with_recipe": "已將「{name}」標記為已完成，並解鎖「{recipe}」",

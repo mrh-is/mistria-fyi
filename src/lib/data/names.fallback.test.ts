@@ -17,12 +17,8 @@ const turnip = "turnip" as ItemId;
 
 describe("getName — English fallback", () => {
   it("uses the locale's entry when present and English when it is missing", async () => {
-    // `vitest.config.ts` runs with `isolate: false`, so the module registry is shared across
-    // test files in a worker. Another file may have already imported `names.js` (evaluating its
-    // eager `import.meta.glob` against the real, unmocked chunk) before this mock was registered;
-    // resetting forces a fresh evaluation that picks up the mock above.
-    vi.resetModules();
-    const { getName, getNameTable } = await import("$lib/data/names.js");
+    const { getName, getNameTable, loadNames } = await import("$lib/data/names.js");
+    await loadNames("ja", ["npcs", "items"]);
 
     expect(getName("npcs", balor, "ja")).toBe("バロル");
     expect(getName("npcs", adeline, "ja")).toBe("Adeline");

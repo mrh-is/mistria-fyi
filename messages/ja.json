@@ -59,6 +59,7 @@
     }
   ],
   "search_no_results": "アイテムが見つかりません",
+  "search_loading": "検索を読み込み中…",
   "quest_marked_obtained": "「{name}」を入手済みにしました",
   "quest_marked_completed": "「{name}」を完了にしました",
   "quest_marked_completed_with_recipe": "「{name}」を完了にし、「{recipe}」を解放しました",

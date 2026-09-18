@@ -59,9 +59,12 @@ export default defineConfig({
       "**/.claude/worktrees/**",
       "**/.pnpm-store/**",
       // Run under vitest.mocked.config.ts instead, with isolation preserved. See that file.
+      "src/lib/data/names.fallback.test.ts",
+      "src/lib/data/names.loading.test.ts",
       "src/lib/utils/celebrate.test.ts",
       "src/lib/utils/undo-toast.test.ts",
     ],
     isolate: false,
+    setupFiles: ["./src/vitest-setup-names.ts"],
   },
 });

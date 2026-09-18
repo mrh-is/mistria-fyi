@@ -2,6 +2,7 @@ import { trackerData } from "$lib/data/index.js";
 import { getName, getNameTable } from "$lib/data/names.js";
 import { recordMap } from "$lib/utils";
 
+import type { LocalizedCategory } from "$lib/data/names.js";
 import type { LocaleCode } from "$lib/types/locale.js";
 import type { QuestType, SkillId, StoreId } from "$lib/types/tracker-data";
 import type { SegmentLookups } from "$lib/utils/source-segments.js";
@@ -82,6 +83,23 @@ function buildStaticBaseSegmentLookups(): Omit<
     storeVisibility: recordMap(trackerData.stores, ({ visibility }) => visibility),
   };
 }
+
+/**
+ * Every name category {@link buildBaseSegmentLookups} resolves. A route whose page renders source
+ * segments must await these (see `loadPageNames`) alongside its own category's chunk.
+ */
+export const SEGMENT_LOOKUP_CATEGORIES = [
+  "festivals",
+  "items",
+  "mines",
+  "npcs",
+  "perks",
+  "quests",
+  "recipes",
+  "skills",
+  "stores",
+  "treasure-chest-tiers",
+] as const satisfies readonly LocalizedCategory[];
 
 function getLocalizedBaseSegmentLookups(
   locale: LocaleCode,

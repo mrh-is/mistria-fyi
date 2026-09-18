@@ -61,6 +61,7 @@
     }
   ],
   "search_no_results": "No se encontraron elementos",
+  "search_loading": "Cargando la búsqueda…",
   "quest_marked_obtained": "«{name}» marcado como obtenido",
   "quest_marked_completed": "«{name}» marcado como completado",
   "quest_marked_completed_with_recipe": "«{name}» marcado como completado y se desbloqueó «{recipe}»",
