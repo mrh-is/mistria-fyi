@@ -110,19 +110,20 @@ Follow this sequence for every task:
 
 Use **pnpm** exclusively. Do **not** use `npm`, `npx`, `yarn`, or `bun`.
 
-| Command                       | Purpose                                    |
-| ----------------------------- | ------------------------------------------ |
-| `pnpm run dev`                | Dev server                                 |
-| `pnpm run build`              | Production build (Cloudflare Pages)        |
-| `pnpm run check`              | SvelteKit type checking                    |
-| `pnpm run check:i18n`         | Verify locale files match `en.json`'s keys |
-| `pnpm run lint`               | Prettier + ESLint check                    |
-| `pnpm run lint:fix`           | Auto-fix formatting & lint                 |
-| `pnpm run test`               | Complete Vitest suite (asset-independent)  |
-| `pnpm run test:app`           | App tests (`src/`)                         |
-| `pnpm run test:pipeline`      | Pipeline tests (`pipeline/`)               |
-| `pnpm run verify`             | Full matrix with compact output (see §7)   |
-| `pnpm run pipeline -- <path>` | Regenerate `tracker-data.json` from assets |
+| Command                       | Purpose                                     |
+| ----------------------------- | ------------------------------------------- |
+| `pnpm run dev`                | Dev server                                  |
+| `pnpm run build`              | Production build (Cloudflare Pages)         |
+| `pnpm run check`              | SvelteKit type checking                     |
+| `pnpm run check:i18n`         | Verify locale files match `en.json`'s keys  |
+| `pnpm run check:routes`       | Verify built static assets bypass Functions |
+| `pnpm run lint`               | Prettier + ESLint check                     |
+| `pnpm run lint:fix`           | Auto-fix formatting & lint                  |
+| `pnpm run test`               | Complete Vitest suite (asset-independent)   |
+| `pnpm run test:app`           | App tests (`src/`)                          |
+| `pnpm run test:pipeline`      | Pipeline tests (`pipeline/`)                |
+| `pnpm run verify`             | Full matrix with compact output (see §7)    |
+| `pnpm run pipeline -- <path>` | Regenerate `tracker-data.json` from assets  |
 
 ## 5. Architecture boundaries
 
