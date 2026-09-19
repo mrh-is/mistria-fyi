@@ -46,7 +46,7 @@ import { extractQuests } from "./extractors/quests";
 import { deriveRecipeLocaleNames, extractRecipes } from "./extractors/recipes";
 import { extractTownRanks } from "./extractors/renown";
 import { extractSkills } from "./extractors/skills";
-import { extractSprites } from "./extractors/sprites";
+import { extractSprites, publishSprites } from "./extractors/sprites";
 import { extractStoresMeta } from "./extractors/stores-meta";
 import { extractTreasureChestTiers } from "./extractors/treasure-chest-tiers";
 import { APP_UI_STRINGS, extractUiStrings, tierKeys } from "./extractors/ui-strings";
@@ -75,6 +75,7 @@ import type {
   VillagerId,
 } from "$lib/types/tracker-data.js";
 
+import type { StagedSprite } from "./extractors/sprites";
 import type { ParsedGameData } from "./parse-fiddle";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PIPELINE_ROOT = resolve(__dirname, "..");
@@ -82,6 +83,11 @@ const OUTPUT_DIR = resolve(PIPELINE_ROOT, "output");
 const APP_DATA_DIR = resolve(PIPELINE_ROOT, "..", "src", "lib", "data");
 const OUTPUT_FILE = "tracker-data.json";
 const SPRITES_DIR = resolve(PIPELINE_ROOT, "..", "static", "sprites");
+
+interface StagedFile {
+  content: string;
+  path: string;
+}
 
 function buildAcquisitionReferences(
   trackerData: TrackerData,
@@ -601,47 +607,60 @@ async function main(): Promise<void> {
   const json = JSON.stringify(trackerData);
   const prettyJson = JSON.stringify(trackerData, null, 2);
 
-  mkdirSync(OUTPUT_DIR, { recursive: true });
-  writeFileSync(resolve(OUTPUT_DIR, OUTPUT_FILE), prettyJson);
+  console.log("Step 5: Staging outputs...");
+  const staged: StagedFile[] = [];
+
+  staged.push({ content: prettyJson, path: resolve(OUTPUT_DIR, OUTPUT_FILE) });
   console.log(
-    `  Written: pipeline/output/${OUTPUT_FILE} (${(prettyJson.length / 1024).toFixed(1)} KB pretty)`,
+    `  Staged: pipeline/output/${OUTPUT_FILE} (${(prettyJson.length / 1024).toFixed(1)} KB pretty)`,
   );
 
-  mkdirSync(APP_DATA_DIR, { recursive: true });
-  writeFileSync(resolve(APP_DATA_DIR, OUTPUT_FILE), json);
+  staged.push({ content: json, path: resolve(APP_DATA_DIR, OUTPUT_FILE) });
   console.log(
-    `  Copied:  src/lib/data/${OUTPUT_FILE} (${(json.length / 1024).toFixed(1)} KB minified)`,
+    `  Staged: src/lib/data/${OUTPUT_FILE} (${(json.length / 1024).toFixed(1)} KB minified)`,
   );
 
   const localeManifest = generateLocaleManifest(assetsDir);
   const localeManifestJson = `${JSON.stringify(localeManifest, null, 2)}\n`;
-  writeFileSync(resolve(APP_DATA_DIR, "locales.json"), localeManifestJson);
-  console.log(`  Written: src/lib/data/locales.json (${localeManifest.length} locales)`);
+  staged.push({ content: localeManifestJson, path: resolve(APP_DATA_DIR, "locales.json") });
+  console.log(`  Staged: src/lib/data/locales.json (${localeManifest.length} locales)`);
 
-  writeLocaleChunks("villagers", villagerLocaleNames);
-  writeLocaleChunks("dates", dateLocaleNames);
-  writeLocaleChunks("festivals", festivalLocaleNames);
-  writeLocaleChunks("museum_wings", museumLocaleNames);
-  writeLocaleChunks("perks", perkLocaleNames);
-  writeLocaleChunks("pets/cosmetic_sets", petCosmeticLocaleNames);
-  writeLocaleChunks("quests", questLocaleNames);
-  writeLocaleChunks("skills", skillLocaleNames);
-  writeLocaleChunks("spells", spellLocaleNames);
-  writeLocaleChunks("stores", storeLocaleNames);
-  writeLocaleChunks("animals", animalLocaleNames);
-  writeLocaleChunks("cosmetics", cosmeticLocaleNames);
-  writeLocaleChunks("cosmetics/subcategories", cosmeticSubCategoryLocaleNames);
-  writeLocaleChunks("ui", uiLocaleNames);
-  writeLocaleChunks("mines", mineLocaleNames);
-  writeLocaleChunks("town-ranks", townRankLocaleNames);
-  writeLocaleChunks("items", itemLocaleNames);
-  writeLocaleChunks("recipes", recipeLocaleNames);
-  writeLocaleChunks("pets/skins", petSkinLocaleNames);
-  writeLocaleChunks("treasure-chest-tiers", treasureChestTierLocaleNames);
+  stageLocaleChunks(staged, "villagers", villagerLocaleNames);
+  stageLocaleChunks(staged, "dates", dateLocaleNames);
+  stageLocaleChunks(staged, "festivals", festivalLocaleNames);
+  stageLocaleChunks(staged, "museum_wings", museumLocaleNames);
+  stageLocaleChunks(staged, "perks", perkLocaleNames);
+  stageLocaleChunks(staged, "pets/cosmetic_sets", petCosmeticLocaleNames);
+  stageLocaleChunks(staged, "quests", questLocaleNames);
+  stageLocaleChunks(staged, "skills", skillLocaleNames);
+  stageLocaleChunks(staged, "spells", spellLocaleNames);
+  stageLocaleChunks(staged, "stores", storeLocaleNames);
+  stageLocaleChunks(staged, "animals", animalLocaleNames);
+  stageLocaleChunks(staged, "cosmetics", cosmeticLocaleNames);
+  stageLocaleChunks(staged, "cosmetics/subcategories", cosmeticSubCategoryLocaleNames);
+  stageLocaleChunks(staged, "ui", uiLocaleNames);
+  stageLocaleChunks(staged, "mines", mineLocaleNames);
+  stageLocaleChunks(staged, "town-ranks", townRankLocaleNames);
+  stageLocaleChunks(staged, "items", itemLocaleNames);
+  stageLocaleChunks(staged, "recipes", recipeLocaleNames);
+  stageLocaleChunks(staged, "pets/skins", petSkinLocaleNames);
+  stageLocaleChunks(staged, "treasure-chest-tiers", treasureChestTierLocaleNames);
 
+  const fiddlePretty = JSON.stringify(fiddle, null, 2);
+  staged.push({ content: fiddlePretty, path: resolve(OUTPUT_DIR, "fiddle-readable.json") });
+  console.log(
+    `  Staged: pipeline/output/fiddle-readable.json (${(fiddlePretty.length / 1024 / 1024).toFixed(1)} MB)`,
+  );
+
+  staged.push({ content: prettyJson, path: resolve(OUTPUT_DIR, "tracker-data-readable.json") });
+  console.log(
+    `  Staged: pipeline/output/tracker-data-readable.json (${(prettyJson.length / 1024).toFixed(1)} KB)`,
+  );
+
+  let stagedSprites: StagedSprite[] = [];
   const extractSpritesFlag = args.includes("--sprites");
   if (extractSpritesFlag) {
-    console.log("\nStep 5: Extracting item sprites...");
+    console.log("\nStep 6: Extracting item sprites...");
     const spriteResult = await extractSprites(resolve(assetsDir), trackerData.items, SPRITES_DIR);
     console.log(
       `  Extracted ${spriteResult.extracted} new, ${spriteResult.skipped} unchanged, ` +
@@ -652,49 +671,58 @@ async function main(): Promise<void> {
       for (const name of spriteResult.missing) {
         console.error(`    - ${name}`);
       }
+      console.error("  Aborting before publish: no tracked output file was written.");
       process.exit(1);
     }
+    stagedSprites = spriteResult.staged;
   }
 
-  console.log(`\nStep ${extractSpritesFlag ? "6" : "5"}: Writing human-readable outputs...`);
-
-  const fiddlePretty = JSON.stringify(fiddle, null, 2);
-  writeFileSync(resolve(OUTPUT_DIR, "fiddle-readable.json"), fiddlePretty);
+  console.log(`\nStep ${extractSpritesFlag ? "7" : "6"}: Publishing outputs...`);
+  publishFiles(staged);
+  publishSprites(stagedSprites);
   console.log(
-    `  Written: pipeline/output/fiddle-readable.json (${(fiddlePretty.length / 1024 / 1024).toFixed(1)} MB)`,
-  );
-
-  writeFileSync(resolve(OUTPUT_DIR, "tracker-data-readable.json"), prettyJson);
-  console.log(
-    `  Written: pipeline/output/tracker-data-readable.json (${(prettyJson.length / 1024).toFixed(1)} KB)`,
+    `  Published ${staged.length} files${
+      stagedSprites.length > 0 ? ` and ${stagedSprites.length} sprites` : ""
+    }`,
   );
 
   console.log("\n✅ Pipeline complete!");
 }
 
-function toRecord(keys: string[]): Record<string, true> {
-  return Object.fromEntries(keys.map((k) => [k, true as const]));
+/** Writes staged text outputs to disk. Call only after every pipeline validation passes. */
+function publishFiles(staged: readonly StagedFile[]): void {
+  for (const { content, path } of staged) {
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, content);
+  }
 }
 
 /**
- * Writes one `src/lib/data/locales/<bcp47-tag>/<category>.json` chunk per locale. Chunks are
+ * Stages one `src/lib/data/locales/<bcp47-tag>/<category>.json` chunk per locale. Chunks are
  * emitted for every locale including `en`, which is both a locale in its own right and the
- * fallback every other locale resolves through.
+ * fallback every other locale resolves through. Nothing is written until {@link publishFiles}.
  */
-function writeLocaleChunks(category: string, byLocale: Record<LocaleCode, Record<string, string>>) {
+function stageLocaleChunks(
+  staged: StagedFile[],
+  category: string,
+  byLocale: Record<LocaleCode, Record<string, string>>,
+) {
   let totalBytes = 0;
   for (const locale of LOCALE_CODES) {
     const directory = resolve(APP_DATA_DIR, "locales", locale);
     const chunkPath = resolve(directory, `${category}.json`);
-    mkdirSync(dirname(chunkPath), { recursive: true });
     const chunkJson = `${JSON.stringify(byLocale[locale], null, 2)}\n`;
-    writeFileSync(chunkPath, chunkJson);
+    staged.push({ content: chunkJson, path: chunkPath });
     totalBytes += chunkJson.length;
   }
   console.log(
-    `  Written: src/lib/data/locales/*/${category}.json ` +
+    `  Staged: src/lib/data/locales/*/${category}.json ` +
       `(${LOCALE_CODES.length.toString()} locales, ${(totalBytes / 1024).toFixed(1)} KB total)`,
   );
+}
+
+function toRecord(keys: string[]): Record<string, true> {
+  return Object.fromEntries(keys.map((k) => [k, true as const]));
 }
 
 void main();

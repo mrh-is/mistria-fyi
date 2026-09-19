@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import sharp from "sharp";
 import { open } from "yauzl-promise";
 
@@ -31,9 +31,21 @@ export interface SpriteExtractionResult {
   overridden: number;
   skipped: number;
   source: "filesystem" | "zip";
+  /** Newly-converted sprites, not yet written to disk. Write with {@link publishSprites}. */
+  staged: StagedSprite[];
   total: number;
 }
 
+export interface StagedSprite {
+  data: Buffer;
+  outPath: string;
+}
+
+/**
+ * Converts newly-needed sprites to webp in memory without touching `outputDir`. Sprites already
+ * present in `outputDir` are counted as skipped and left alone. Call {@link publishSprites} with
+ * the result's `staged` entries once every pipeline validation has passed.
+ */
 export async function extractSprites(
   assetsDir: string,
   items: TrackerData["items"],
@@ -61,6 +73,14 @@ export async function extractSprites(
     : await extractSpritesFromFilesystem(assetsDir, neededSprites, outputDir);
   result.overridden = new Set(overriddenSprites).size;
   return result;
+}
+
+/** Writes staged sprite conversions to disk. Call only after every pipeline validation passes. */
+export function publishSprites(staged: readonly StagedSprite[]): void {
+  for (const { data, outPath } of staged) {
+    mkdirSync(dirname(outPath), { recursive: true });
+    writeFileSync(outPath, data);
+  }
 }
 
 function buildSpriteIndex(rootDir: string, index: Map<string, string>): void {
@@ -110,11 +130,10 @@ async function extractSpritesFromFilesystem(
 
   console.log(`  Sprites: ${neededSprites.size} needed, ${spriteIndex.size} available`);
 
-  mkdirSync(outputDir, { recursive: true });
-
   let extracted = 0;
   let skipped = 0;
   const missing: string[] = [];
+  const staged: StagedSprite[] = [];
 
   for (const spriteName of [...neededSprites].sort()) {
     const sourcePath = spriteIndex.get(spriteName);
@@ -131,7 +150,7 @@ async function extractSpritesFromFilesystem(
 
     const sourceData = readFileSync(sourcePath);
     const webpData = await convertToWebp(sourceData);
-    writeFileSync(outPath, webpData);
+    staged.push({ data: webpData, outPath });
     extracted++;
   }
 
@@ -141,6 +160,7 @@ async function extractSpritesFromFilesystem(
     overridden: 0,
     skipped,
     source: "filesystem",
+    staged,
     total: neededSprites.size,
   };
 }
@@ -183,11 +203,10 @@ async function extractSpritesFromZip(
 
   console.log(`  Sprites: ${neededSprites.size} needed, ${spriteData.size} found in zip`);
 
-  mkdirSync(outputDir, { recursive: true });
-
   let extracted = 0;
   let skipped = 0;
   const missing: string[] = [];
+  const staged: StagedSprite[] = [];
 
   for (const spriteName of [...neededSprites].sort()) {
     const pngData = spriteData.get(spriteName);
@@ -203,11 +222,19 @@ async function extractSpritesFromZip(
     }
 
     const webpData = await convertToWebp(pngData);
-    writeFileSync(outPath, webpData);
+    staged.push({ data: webpData, outPath });
     extracted++;
   }
 
-  return { extracted, missing, overridden: 0, skipped, source: "zip", total: neededSprites.size };
+  return {
+    extracted,
+    missing,
+    overridden: 0,
+    skipped,
+    source: "zip",
+    staged,
+    total: neededSprites.size,
+  };
 }
 
 function resolveZipPath(assetsDir: string): string | undefined {

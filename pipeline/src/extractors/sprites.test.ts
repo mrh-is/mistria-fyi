@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { extractSprites } from "./sprites";
+import { extractSprites, publishSprites } from "./sprites";
 
 import type { Item, ItemId } from "$lib/types/tracker-data.js";
 
@@ -56,6 +56,9 @@ describe("extractSprites", () => {
     expect(result.source).toBe("filesystem");
 
     const webpPath = join(outputDir, "spr_ui_item_turnip.webp");
+    expect(existsSync(webpPath)).toBe(false);
+
+    publishSprites(result.staged);
     expect(existsSync(webpPath)).toBe(true);
     const webpData = readFileSync(webpPath);
     expect(webpData.subarray(0, 4).toString("ascii")).toBe("RIFF");
@@ -95,6 +98,10 @@ describe("extractSprites", () => {
     expect(result.extracted).toBe(1);
     expect(result.missing).toEqual(["spr_ui_item_ghost"]);
     expect(result.total).toBe(2);
+
+    // Conversions are staged in memory, not written — the caller must not publish on failure.
+    expect(existsSync(join(outputDir, "spr_ui_item_turnip.webp"))).toBe(false);
+    expect(result.staged).toHaveLength(1);
   });
 
   it("skips sprites that already exist as webp", async () => {
@@ -111,6 +118,7 @@ describe("extractSprites", () => {
     const first = await extractSprites(assetsDir, items, outputDir);
     expect(first.extracted).toBe(1);
     expect(first.skipped).toBe(0);
+    publishSprites(first.staged);
 
     const second = await extractSprites(assetsDir, items, outputDir);
     expect(second.extracted).toBe(0);
