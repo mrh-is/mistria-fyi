@@ -54,6 +54,8 @@
   ],
   "search_no_results": "Ничего не найдено",
   "search_loading": "Загрузка поиска…",
+  "search_error": "Не удалось загрузить результаты поиска.",
+  "action_retry": "Повторить",
   "quest_marked_obtained": "«{name}» отмечено как полученное",
   "quest_marked_completed": "«{name}» отмечено как выполненное",
   "quest_marked_completed_with_recipe": "«{name}» отмечено как выполненное, разблокирован рецепт «{recipe}»",

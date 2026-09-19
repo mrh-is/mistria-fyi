@@ -52,6 +52,8 @@
   ],
   "search_no_results": "No items found",
   "search_loading": "Loading search…",
+  "search_error": "Couldn’t load search results.",
+  "action_retry": "Try again",
   "quest_marked_obtained": "Marked \"{name}\" obtained",
   "quest_marked_completed": "Marked \"{name}\" completed",
   "quest_marked_completed_with_recipe": "Marked \"{name}\" completed and unlocked \"{recipe}\"",
