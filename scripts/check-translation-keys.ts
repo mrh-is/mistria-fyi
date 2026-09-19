@@ -6,25 +6,38 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const MESSAGES_DIR = path.join(import.meta.dirname, "..", "messages");
+const SETTINGS_PATH = path.join(import.meta.dirname, "..", "project.inlang", "settings.json");
 const BASE_LOCALE = "en";
 
 export interface KeyMismatch {
   extraKeys: string[];
+  /** The locale is declared in project.inlang/settings.json but messages/<locale>.json is absent. */
+  fileMissing?: boolean;
   locale: string;
   missingKeys: string[];
+  /** messages/<locale>.json exists but the locale isn't declared in project.inlang/settings.json. */
+  undeclared?: boolean;
 }
 
-export async function checkTranslationKeys(messagesDir = MESSAGES_DIR): Promise<KeyMismatch[]> {
+export async function checkTranslationKeys(
+  messagesDir = MESSAGES_DIR,
+  locales?: string[],
+): Promise<KeyMismatch[]> {
+  const configuredLocales = locales ?? (await readConfiguredLocales());
   const files = await readdir(messagesDir);
-  const locales = files
-    .filter((file) => file.endsWith(".json"))
-    .map((file) => file.replace(/\.json$/, ""))
-    .filter((locale) => locale !== BASE_LOCALE);
+  const fileLocales = new Set(
+    files.filter((file) => file.endsWith(".json")).map((file) => file.replace(/\.json$/, "")),
+  );
 
   const baseKeys = await readMessageKeys(messagesDir, BASE_LOCALE);
 
   const mismatches: KeyMismatch[] = [];
-  for (const locale of locales) {
+  for (const locale of configuredLocales) {
+    if (locale === BASE_LOCALE) continue;
+    if (!fileLocales.has(locale)) {
+      mismatches.push({ extraKeys: [], fileMissing: true, locale, missingKeys: [] });
+      continue;
+    }
     const localeKeys = await readMessageKeys(messagesDir, locale);
     const missingKeys = [...baseKeys].filter((key) => !localeKeys.has(key));
     const extraKeys = [...localeKeys].filter((key) => !baseKeys.has(key));
@@ -32,7 +45,20 @@ export async function checkTranslationKeys(messagesDir = MESSAGES_DIR): Promise<
       mismatches.push({ extraKeys, locale, missingKeys });
     }
   }
+
+  const configuredSet = new Set(configuredLocales);
+  for (const locale of fileLocales) {
+    if (locale === BASE_LOCALE || configuredSet.has(locale)) continue;
+    mismatches.push({ extraKeys: [], locale, missingKeys: [], undeclared: true });
+  }
+
   return mismatches;
+}
+
+export async function readConfiguredLocales(settingsPath = SETTINGS_PATH): Promise<string[]> {
+  const raw = await readFile(settingsPath, "utf-8");
+  const parsed = JSON.parse(raw) as { locales: string[] };
+  return parsed.locales;
 }
 
 function flattenKeys(value: unknown, prefix = ""): string[] {
@@ -55,8 +81,20 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (mismatches.length === 0) {
     console.log(`All locale files match the key shape of ${BASE_LOCALE}.json.`);
   } else {
-    for (const { extraKeys, locale, missingKeys } of mismatches) {
+    for (const { extraKeys, fileMissing, locale, missingKeys, undeclared } of mismatches) {
       console.error(`\n${locale}.json:`);
+      if (fileMissing) {
+        console.error(
+          `  missing: file not found (locale is declared in project.inlang/settings.json)`,
+        );
+        continue;
+      }
+      if (undeclared) {
+        console.error(
+          `  extra:   file exists but locale is not declared in project.inlang/settings.json`,
+        );
+        continue;
+      }
       for (const key of missingKeys) {
         console.error(`  missing: ${key}`);
       }

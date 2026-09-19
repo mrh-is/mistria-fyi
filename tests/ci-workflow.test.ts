@@ -75,7 +75,10 @@ describe("CI workflow", () => {
       "pnpm run lint",
     ]);
     expect(workflow.jobs?.lint.steps?.at(-1)?.run).toBe("pnpm run lint");
-    expect(workflow.jobs?.check.steps?.at(-1)?.run).toBe("pnpm run check");
+    expect(workflow.jobs?.check.steps?.slice(-2).map((step) => step.run)).toEqual([
+      "pnpm run check",
+      "pnpm run check:i18n",
+    ]);
     expect(workflow.jobs?.test.steps?.at(-1)?.run).toBe("pnpm run test");
     // The build job also proves the Cloudflare route table keeps static assets off Functions.
     expect(workflow.jobs?.build.steps?.slice(-2).map((step) => step.run)).toEqual([
