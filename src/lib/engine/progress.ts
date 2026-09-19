@@ -84,6 +84,19 @@ export function getCategoryProgress(category: CategoryKey, ctx: ProgressContext)
   }
 }
 
+/** Sums every category's progress into one overall total (home page, `/all`). */
+export function getOverallProgress(allProgress: AllProgress): CategoryProgress {
+  let completed = 0;
+  let filtered = 0;
+  let total = 0;
+  for (const p of Object.values(allProgress)) {
+    completed += p.completed;
+    filtered += p.filtered;
+    total += p.total;
+  }
+  return { completed, filtered, total };
+}
+
 export function isVillagerComplete(villagerId: VillagerId, completed: CompletedState): boolean {
   const villager = trackerData.villagers[villagerId];
   const level = completed.villagerLevels[villagerId] ?? 0;

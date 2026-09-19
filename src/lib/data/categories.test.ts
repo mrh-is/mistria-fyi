@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { categoryForKey, categoryKeyForPathname, sortCategoryKeysByName } from "./categories";
+import {
+  CATEGORY_KEYS,
+  categoryForKey,
+  categoryKeyForPathname,
+  SEARCH_RESULT_CATEGORY_KEYS,
+  sortCategoryKeysByName,
+} from "./categories";
 
 describe("categoryForKey", () => {
   it("labels the villagers category with the game's Villagers term", () => {
@@ -13,6 +19,14 @@ describe("categoryForKey", () => {
   it("maps the villagers route to the villagers category key", () => {
     expect(categoryKeyForPathname("/villagers")).toBe("villagers");
     expect(categoryKeyForPathname("/characters")).toBeUndefined();
+  });
+});
+
+describe("SEARCH_RESULT_CATEGORY_KEYS", () => {
+  it("only contains valid category keys", () => {
+    for (const key of SEARCH_RESULT_CATEGORY_KEYS) {
+      expect(CATEGORY_KEYS).toContain(key);
+    }
   });
 });
 

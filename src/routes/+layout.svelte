@@ -36,7 +36,7 @@
   });
 
   let metadata = $derived(page.status >= 400 ? errorPageMetadata(page.status) : page.data.metadata);
-  let hasToolbar = $derived(!metadata.hideToolbar);
+  let hasToolbar = $derived(metadata.toolbar !== "hidden");
   let overlayActive = $state(false);
   let fontStylesheet = $derived(localeFontStylesheet(page.data.locale));
 
@@ -80,7 +80,7 @@
     {/key}
   </div>
 
-  <ToolbarFooter hidden={!hasToolbar} bind:overlayActive />
+  <ToolbarFooter {metadata} bind:overlayActive />
   <Toaster position="bottom-center" offset="calc(56px + env(safe-area-inset-bottom))" />
   <PersistenceWarning />
   <PencilFilter />

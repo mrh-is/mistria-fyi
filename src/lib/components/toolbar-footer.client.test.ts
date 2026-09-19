@@ -7,6 +7,8 @@ import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
 import { userState } from "$lib/stores/user-state.svelte.js";
 import { pageStub } from "$lib/test-utils/page-stub.svelte";
 
+import type { PageMetadataInput } from "$lib/data/page-metadata.js";
+
 vi.mock("$app/state", async () => ({
   page: (await import("$lib/test-utils/page-stub.svelte")).pageStub,
 }));
@@ -15,9 +17,12 @@ function overlayState() {
   return screen.getByTestId("overlay-state").textContent;
 }
 
-function renderToolbar(props: { hidden?: boolean } = {}) {
+function renderToolbar(toolbar: PageMetadataInput["toolbar"] = { search: true, worldState: true }) {
   const feedbackContext = new FeedbackContext();
-  const view = render(ToolbarFooterHarness, { feedbackContext, ...props });
+  const view = render(ToolbarFooterHarness, {
+    feedbackContext,
+    metadata: { description: "Test page.", title: "Test", toolbar },
+  });
   return { ...view, feedbackContext };
 }
 
@@ -147,7 +152,7 @@ describe("ToolbarFooter panels", () => {
   });
 
   it("renders nothing while hidden", () => {
-    renderToolbar({ hidden: true });
+    renderToolbar("hidden");
 
     expect(screen.queryByRole("navigation")).toBeNull();
     expect(screen.queryByRole("button")).toBeNull();
@@ -155,19 +160,13 @@ describe("ToolbarFooter panels", () => {
 });
 
 describe("ToolbarFooter search", () => {
-  it("offers search only on routes that support it", async () => {
-    renderToolbar();
+  it("offers search only when the page's toolbar config enables it", () => {
+    renderToolbar({ search: false });
+    expect(screen.queryByRole("button", { name: "Search" })).toBeNull();
+    cleanup();
+
+    renderToolbar({ search: true });
     expect(screen.getByRole("button", { name: "Search" })).toBeInTheDocument();
-
-    pageStub.navigate("/en/villagers");
-    await waitFor(() => {
-      expect(screen.queryByRole("button", { name: "Search" })).toBeNull();
-    });
-
-    pageStub.navigate("/en/museum");
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Search" })).toBeInTheDocument();
-    });
   });
 
   it("opens the search bar, focuses the input, and debounces the query", async () => {

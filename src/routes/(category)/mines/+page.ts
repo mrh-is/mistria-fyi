@@ -1,4 +1,6 @@
+import { categoryColor } from "$lib/data/categories.js";
 import { loadPageNames } from "$lib/data/names.js";
+import { pageMetadata } from "$lib/data/page-metadata.js";
 import * as m from "$lib/paraglide/messages.js";
 import { baseLocale, getLocaleForUrl } from "$lib/paraglide/runtime.js";
 
@@ -11,9 +13,10 @@ export const load: PageLoad = async (event?: Partial<Parameters<PageLoad>[0]>) =
   const locale = event?.url ? getLocaleForUrl(event.url) : baseLocale;
   await loadPageNames(event, ["mines", "spells"]);
   return {
-    metadata: {
+    metadata: pageMetadata({
+      accent: categoryColor("mines"),
       description: m.mines_page_description({}, { locale }),
       title: m.category_mines_name({}, { locale }),
-    },
+    }),
   };
 };

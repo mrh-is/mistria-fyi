@@ -1,17 +1,17 @@
 import { render } from "svelte/server";
 import { describe, expect, it } from "vitest";
 
-import { SITE_NAME, SITE_ORIGIN } from "$lib/data/page-metadata.js";
+import { pageMetadata, SITE_NAME, SITE_ORIGIN } from "$lib/data/page-metadata.js";
 import { LOCALE_CODES } from "$lib/types/locale.js";
 
 import SeoHead from "./seo-head.svelte";
 
 describe("SEO head", () => {
   it("renders one complete set of text and share-image metadata", () => {
-    const metadata = {
+    const metadata = pageMetadata({
       description: "Track every museum collection and donation in Fields of Mistria.",
       title: "Museum",
-    };
+    });
     const { head } = render(SeoHead, { props: { metadata, pathname: "/museum" } });
     const canonicalUrl = new URL("/museum", SITE_ORIGIN).href;
     const title = `${metadata.title} — ${SITE_NAME}`;
@@ -42,7 +42,10 @@ describe("SEO head", () => {
   });
 
   it("emits one hreflang alternate per locale, including the page's own locale", () => {
-    const metadata = { description: "Track every museum collection.", title: "Museum" };
+    const metadata = pageMetadata({
+      description: "Track every museum collection.",
+      title: "Museum",
+    });
     const { head } = render(SeoHead, { props: { metadata, pathname: "/ja/museum" } });
 
     const alternates = head.match(/<link rel="alternate" hreflang="[^"]+" href="[^"]+"\/>/g) ?? [];
@@ -56,21 +59,21 @@ describe("SEO head", () => {
   });
 
   it("renders an explicit robots directive for non-indexable pages", () => {
-    const metadata = {
+    const metadata = pageMetadata({
       description: "Manage Fields of Mistria tracking data.",
       robots: "noindex, follow" as const,
       title: "Data management",
-    };
+    });
     const { head } = render(SeoHead, { props: { metadata, pathname: "/data" } });
 
     expect(head).toContain('<meta name="robots" content="noindex, follow"/>');
   });
 
   it("uses the site name without duplicating it on the homepage", () => {
-    const metadata = {
+    const metadata = pageMetadata({
       description: "Track Fields of Mistria completion progress.",
       title: SITE_NAME,
-    };
+    });
     const { head } = render(SeoHead, { props: { metadata, pathname: "/" } });
 
     expect(head).toContain(`<title>${SITE_NAME}</title>`);

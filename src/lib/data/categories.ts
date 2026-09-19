@@ -27,6 +27,23 @@ export interface CategoryInfo {
 export type CategoryKey = (typeof CATEGORY_KEYS)[number];
 
 /**
+ * Category keys the cross-category search index produces results for. Kept as an explicit,
+ * type-checked subset (via `satisfies`) rather than a capability flag, since it drives a type
+ * (`SearchCategoryKey`), not runtime branching.
+ */
+export const SEARCH_RESULT_CATEGORY_KEYS = [
+  "almanac",
+  "animals",
+  "cosmetics",
+  "museum",
+  "quests",
+  "recipes",
+  "villagers",
+] as const satisfies readonly CategoryKey[];
+
+export type SearchCategoryKey = (typeof SEARCH_RESULT_CATEGORY_KEYS)[number];
+
+/**
  * Category names are the game's own words wherever it has one (the `ui` chunk, awaited by the
  * root layout); only concepts the game never labels on their own fall back to MFG's messages.
  */
@@ -70,7 +87,7 @@ const CATEGORY_HREFS: Record<CategoryKey, Pathname> = {
 };
 
 /** The CSS color token for a category; the one lookup that needs no locale. */
-export function categoryColor(key: CategoryKey): string {
+export function categoryColor<Key extends CategoryKey>(key: Key): `cat-${Key}` {
   return `cat-${key}`;
 }
 
