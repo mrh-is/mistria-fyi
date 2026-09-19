@@ -78,9 +78,9 @@ export function searchItems(
 
         const name = getName("items", id, locale);
         const englishName = getName("items", id, "en");
+        // An item in both the Almanac and the Museum yields two results: the completion sets and
+        // toggle actions are independent, so each category needs its own row.
         if (name.toLowerCase().includes(q) || englishName.toLowerCase().includes(q)) {
-          // Skip if already covered by an almanac result with same ID
-          if (results.some((r) => r.id === id && r.category === "almanac")) continue;
           results.push({
             available: isItemAvailable(item.sources, worldState, "available"),
             category: "museum",
