@@ -210,13 +210,14 @@ failure. If a step fails, fix the issue and rerun only that step, then rerun `pn
 
 The individual matrix commands remain available for reference:
 
-| Command             | Description & Purpose                                   | Scope                     |
-| ------------------- | ------------------------------------------------------- | ------------------------- |
-| `pnpm run lint:fix` | Formats code with Prettier and auto-fixes ESLint errors | All files                 |
-| `pnpm run lint`     | Checks formatting and ESLint compliance (CI equivalent) | All files                 |
-| `pnpm run check`    | Synchronizes SvelteKit types and runs `svelte-check`    | `src/` & SvelteKit routes |
-| `pnpm run test`     | Executes the complete Vitest test suite                 | Unit & logic tests        |
-| `pnpm run build`    | Compiles SvelteKit app and verifies Cloudflare adapter  | Build validation          |
+| Command                 | Description & Purpose                                                            | Scope                     |
+| ----------------------- | -------------------------------------------------------------------------------- | ------------------------- |
+| `pnpm run lint:fix`     | Formats code with Prettier and auto-fixes ESLint errors                          | All files                 |
+| `pnpm run lint`         | Checks formatting and ESLint compliance (CI equivalent)                          | All files                 |
+| `pnpm run check`        | Synchronizes SvelteKit types and runs `svelte-check`                             | `src/` & SvelteKit routes |
+| `pnpm run test`         | Executes the complete Vitest test suite                                          | Unit & logic tests        |
+| `pnpm run build`        | Compiles SvelteKit app and verifies Cloudflare adapter                           | Build validation          |
+| `pnpm run check:routes` | Proves every built static asset bypasses Cloudflare Functions via `_routes.json` | Build validation          |
 
 Pipeline parser, evaluator, extractor, & shared data-contract changes must additionally pass
 `pnpm run test:pipeline:assets` and `pnpm run pipeline -- <path>` as described above. These local

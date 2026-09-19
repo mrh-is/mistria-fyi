@@ -1,7 +1,12 @@
 import { SvelteSet } from "svelte/reactivity";
 
 import { canonicalAlmanacId, trackerData } from "$lib/data/index.js";
-import { clampRenownLevel, MAX_VILLAGER_LEVEL } from "$lib/engine/progress.js";
+import {
+  clampMineFloor,
+  clampRenownLevel,
+  MAX_SKILL_LEVEL,
+  MAX_VILLAGER_LEVEL,
+} from "$lib/engine/progress.js";
 import { findRecipesForQuest } from "$lib/engine/quest-rewards.js";
 import { getMarriedVillager, normalizeRelationships } from "$lib/engine/relationships.js";
 import { deriveProgressionState, type UserProgressionState } from "$lib/engine/visibility.js";
@@ -619,9 +624,7 @@ function createUserState() {
       state.completed.hasUpperFloor = value;
     },
     setMineFloor(floor: number) {
-      const biomes = trackerData.mines.biomes;
-      const maxFloor = biomes[biomes.length - 1].floors.end;
-      state.completed.mines.floor = Math.max(0, Math.min(floor, maxFloor));
+      state.completed.mines.floor = clampMineFloor(floor);
     },
     setReachedSeason(season: Season) {
       const seasonOrd: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
@@ -636,7 +639,7 @@ function createUserState() {
       state.worldState.season = season;
     },
     setSkillLevel(id: SkillId, level: number) {
-      state.completed.skillLevels[id] = Math.max(0, Math.min(level, 60));
+      state.completed.skillLevels[id] = Math.max(0, Math.min(level, MAX_SKILL_LEVEL));
     },
     setVillagerLevel(id: VillagerId, level: number) {
       state.completed.villagerLevels[id] = Math.max(0, Math.min(level, MAX_VILLAGER_LEVEL));
@@ -852,6 +855,15 @@ function filterRecord<V>(
   return Object.fromEntries(Object.entries(record).filter(([, v]) => predicate(v)));
 }
 
+function getMaxMineFloor(): number {
+  const biomes = trackerData.mines.biomes;
+  return biomes[biomes.length - 1].floors.end;
+}
+
+function isDomainInteger(value: unknown, max: number): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= max;
+}
+
 function isEnumValue(value: unknown, validValues: Set<string>): value is string {
   return typeof value === "string" && validValues.has(value);
 }
@@ -867,8 +879,11 @@ function isOptionalEnumRecord(value: unknown, validValues: Set<string>): boolean
   );
 }
 
-function isOptionalNumberRecord(value: unknown): boolean {
-  return value === undefined || (isRecord(value) && Object.values(value).every(isFiniteNumber));
+function isOptionalIntegerRecord(value: unknown, max: number): boolean {
+  return (
+    value === undefined ||
+    (isRecord(value) && Object.values(value).every((entry) => isDomainInteger(entry, max)))
+  );
 }
 
 function isOptionalStringArray(value: unknown): boolean {
@@ -908,10 +923,15 @@ function isSerializedState(value: unknown): value is SerializedState {
   if (!isStringArrayRecord(completed.animals)) return false;
   if (!isStringArray(completed.cosmetics)) return false;
   if (!isRecord(completed.mines)) return false;
-  if (!isFiniteNumber(completed.mines.floor) || !isStringArray(completed.mines.spells)) {
+  if (
+    !isDomainInteger(completed.mines.floor, getMaxMineFloor()) ||
+    !isStringArray(completed.mines.spells)
+  ) {
     return false;
   }
   if (!isStringArray(completed.museum)) return false;
+  // Renown is normalized (clamped) rather than rejected, matching its existing runtime domain
+  // clamp in clampRenownLevel — only requiring it be finite here preserves that behavior.
   if (!isFiniteNumber(completed.renown)) return false;
 
   return (
@@ -923,7 +943,7 @@ function isSerializedState(value: unknown): value is SerializedState {
     (completed.marriedVillager === undefined ||
       completed.marriedVillager === null ||
       typeof completed.marriedVillager === "string") &&
-    isOptionalNumberRecord(completed.villagerLevels) &&
+    isOptionalIntegerRecord(completed.villagerLevels, MAX_VILLAGER_LEVEL) &&
     isOptionalEnumRecord(completed.villagerRelationships, VALID_RELATIONSHIPS) &&
     isOptionalStringArray(completed.villagers) &&
     isOptionalStringArray(completed.petCosmetics) &&
@@ -933,7 +953,7 @@ function isSerializedState(value: unknown): value is SerializedState {
     (completed.reachedSeason === undefined ||
       isEnumValue(completed.reachedSeason, VALID_SEASONS)) &&
     isOptionalStringArray(completed.romanticVillagers) &&
-    isOptionalNumberRecord(completed.skillLevels) &&
+    isOptionalIntegerRecord(completed.skillLevels, MAX_SKILL_LEVEL) &&
     isOptionalStringArray(completed.skills) &&
     isOptionalStringArray(completed.unlockedPerks)
   );
