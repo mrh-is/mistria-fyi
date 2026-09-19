@@ -15,7 +15,9 @@ export const load: PageLoad = async (event?: Partial<Parameters<PageLoad>[0]>) =
   return {
     metadata: {
       description: m.almanac_page_description({}, { locale }),
+      showSearch: true,
       title: getName("ui", "almanac", locale),
+      usesWorldState: true,
     },
   };
 };

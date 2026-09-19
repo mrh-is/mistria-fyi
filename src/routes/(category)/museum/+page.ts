@@ -15,7 +15,9 @@ export const load: PageLoad = async (event?: Partial<Parameters<PageLoad>[0]>) =
   return {
     metadata: {
       description: m.museum_page_description({}, { locale }),
+      showSearch: true,
       title: getName("ui", "museum", locale),
+      usesWorldState: true,
     },
   };
 };

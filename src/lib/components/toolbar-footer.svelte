@@ -16,11 +16,7 @@
   import QuickSettingsPanel from "$lib/components/quick-settings-panel.svelte";
   import { Input } from "$lib/components/ui/input/index.js";
   import VisibilityPanel from "$lib/components/visibility-panel.svelte";
-  import {
-    CATEGORY_CAPABILITIES,
-    categoryColor,
-    categoryKeyForPathname,
-  } from "$lib/data/categories.js";
+  import { categoryColor, categoryKeyForPathname } from "$lib/data/categories.js";
   import { getName } from "$lib/data/names.js";
   import { getFeedbackContext } from "$lib/feedback/context.svelte.js";
   import * as m from "$lib/paraglide/messages.js";
@@ -43,18 +39,15 @@
 
   let feedbackContext = getFeedbackContext();
   // Route matching below is keyed by the unprefixed route, not the locale-prefixed browser URL.
-  // "/" & "/all" are aggregate routes, kept separate from per-category capability metadata.
   let pathname = $derived(deLocalizeHref(page.url.pathname));
   let categoryKey = $derived(categoryKeyForPathname(pathname));
-  let showSearch = $derived(
-    pathname === "/" ||
-      (categoryKey !== undefined && CATEGORY_CAPABILITIES[categoryKey].supportsSearch),
-  );
-  let showSeasonality = $derived(
-    pathname === "/" ||
-      pathname === "/all" ||
-      (categoryKey !== undefined && CATEGORY_CAPABILITIES[categoryKey].usesWorldState),
-  );
+  // `PageData.metadata` is typed as required, but on an error route no `+page.ts` load ran, so
+  // it's genuinely absent at runtime (the root layout falls back to `errorPageMetadata` for the
+  // same reason).
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  let showSearch = $derived(page.data.metadata?.showSearch ?? false);
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  let showSeasonality = $derived(page.data.metadata?.usesWorldState ?? false);
   let toolbarAccent = $derived(
     categoryKey === undefined ? "var(--home-accent)" : `var(--${categoryColor(categoryKey)})`,
   );
