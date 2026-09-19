@@ -171,6 +171,9 @@
       case "museum":
         userState.toggleMuseumItem(result.id as ItemId);
         break;
+      case "quests":
+        // Quest results route through handleQuestToggle before reaching this function.
+        break;
       case "recipes":
         userState.toggleAlmanacRecipe(result.id as RecipeId);
         break;

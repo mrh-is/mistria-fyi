@@ -3,7 +3,7 @@
   import { Icon } from "$lib/components/icon";
   import PageHeader from "$lib/components/page-header.svelte";
   import { trackerIndex } from "$lib/data/index.js";
-  import { getAllProgress } from "$lib/engine/progress.js";
+  import { getAllProgress, getOverallProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { registerSourceFilters } from "$lib/utils/source-filter-registration.svelte.js";
 
@@ -46,11 +46,7 @@
     }),
   );
 
-  let overallProgress = $derived({
-    completed: Object.values(progress).reduce((sum, p) => sum + p.completed, 0),
-    filtered: Object.values(progress).reduce((sum, p) => sum + p.filtered, 0),
-    total: Object.values(progress).reduce((sum, p) => sum + p.total, 0),
-  });
+  let overallProgress = $derived(getOverallProgress(progress));
 </script>
 
 <PageHeader bind:ref={headerEl} title="Everything" progress={overallProgress}>

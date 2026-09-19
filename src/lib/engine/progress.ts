@@ -1,3 +1,4 @@
+import { OVERALL_PROGRESS_CATEGORY_KEYS } from "$lib/data/categories.js";
 import { trackerData, trackerIndex } from "$lib/data/index.js";
 import { isVariantInScope } from "$lib/engine/animal-availability.js";
 import { isItemApplicable, isItemApplicableForAlmanac } from "$lib/engine/applicability.js";
@@ -51,8 +52,6 @@ export function getAllProgress(ctx: ProgressContext): AllProgress {
   };
 }
 
-// ─── Per-category progress ──────────────────────────────────────────
-
 export function getCategoryProgress(category: CategoryKey, ctx: ProgressContext): CategoryProgress {
   switch (category) {
     case "almanac":
@@ -76,6 +75,21 @@ export function getCategoryProgress(category: CategoryKey, ctx: ProgressContext)
     case "villagers":
       return getVillagersProgress(ctx);
   }
+}
+
+// ─── Per-category progress ──────────────────────────────────────────
+
+/** Sums the categories that count toward overall-progress aggregates (home page, `/all`). */
+export function getOverallProgress(allProgress: AllProgress): CategoryProgress {
+  let completed = 0;
+  let filtered = 0;
+  let total = 0;
+  for (const key of OVERALL_PROGRESS_CATEGORY_KEYS) {
+    completed += allProgress[key].completed;
+    filtered += allProgress[key].filtered;
+    total += allProgress[key].total;
+  }
+  return { completed, filtered, total };
 }
 
 export function isVillagerComplete(villagerId: VillagerId, completed: CompletedState): boolean {
