@@ -45,24 +45,40 @@
   let namesLocale = $state<LocaleCode | undefined>(
     untrack(() => (hasSearchNames(locale) ? locale : undefined)),
   );
+  let namesError = $state(false);
+  let retryToken = $state(0);
   let namesReady = $derived(namesLocale === locale);
 
   function hasSearchNames(searchLocale: LocaleCode): boolean {
     return hasNames(searchLocale, LOCALIZED_CATEGORIES) && hasNames("en", LOCALIZED_CATEGORIES);
   }
 
+  function retryNames(): void {
+    retryToken += 1;
+  }
+
   $effect(() => {
-    if (hasSearchNames(locale)) {
-      namesLocale = locale;
+    const targetLocale = locale;
+    // Referenced only to make the effect re-run on retry; the value itself is unused.
+    const _retryToken = retryToken;
+
+    namesError = false;
+    if (hasSearchNames(targetLocale)) {
+      namesLocale = targetLocale;
       return;
     }
     let cancelled = false;
     void Promise.all([
-      loadNames(locale, LOCALIZED_CATEGORIES),
+      loadNames(targetLocale, LOCALIZED_CATEGORIES),
       loadNames("en", LOCALIZED_CATEGORIES),
-    ]).then(() => {
-      if (!cancelled) namesLocale = locale;
-    });
+    ]).then(
+      () => {
+        if (!cancelled) namesLocale = targetLocale;
+      },
+      () => {
+        if (!cancelled) namesError = true;
+      },
+    );
     return () => {
       cancelled = true;
     };
@@ -184,7 +200,12 @@
   }
 </script>
 
-{#if !namesReady}
+{#if namesError}
+  <div class="search-results__error" role="alert">
+    <p>{m.search_error()}</p>
+    <button type="button" onclick={retryNames}>{m.action_retry()}</button>
+  </div>
+{:else if !namesReady}
   <p class="search-results__loading" role="status" aria-live="polite">{m.search_loading()}</p>
 {:else}
   <div class="search-results" data-tracker-list>
@@ -276,12 +297,35 @@
   }
 
   .search-results__loading,
-  .search-results__empty {
+  .search-results__empty,
+  .search-results__error {
     padding: 32px 0;
     color: var(--ink-muted);
     font-family: var(--font-body);
     font-size: 16px;
     text-align: center;
+  }
+
+  .search-results__error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .search-results__error button {
+    padding: 6px 16px;
+    color: var(--ink);
+    border: 1px solid var(--ink-muted);
+    border-radius: 4px;
+    background: transparent;
+    font-family: var(--font-body);
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .search-results__error button:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
   }
 
   @media (max-width: 380px) {
