@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
+import { MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "$lib/engine/progress.js";
 import { recordEntries, recordKeys, recordValues } from "$lib/utils.js";
 
 import { decodeTransferPayload, encodeTransferPayload, TRANSFER_VERSION } from "../transfer";
@@ -18,6 +19,8 @@ import type {
   VillagerRelationship,
 } from "$lib/types/tracker-data.js";
 
+const CHECKSUM_BYTE_LENGTH = 4;
+
 // A payload encoded with the v1 codec (no perk bitfield, no married-Villager byte) for a state with
 // mines.floor = 5, villagerLevels.adeline = 3, renown = 10, and all other fields empty. Used to verify
 // the v2 decoder remains backward compatible with payloads generated before this change.
@@ -30,26 +33,70 @@ const V1_FIXTURE = "AWNgGAVUBqwMXAYDZDUA";
 // cspell:disable-next-line
 const V5_ALMANAC_FIXTURE = "BWNgoBXgQOE10MyeUTAKqA0A";
 
-// A payload encoded with the v8 codec. Contains maximum scalar values, a marriage relationship,
-// one recipe, and all other collection fields empty. This fixture protects the current layout from
-// accidental reinterpretation while the generated tracker data remains compatible.
+// A payload encoded with the pre-checksum v8 codec, before this codec validated scalar domains.
+// Contains bit-width-maximum scalar values (mine floor 255, renown 65535, every skill level 255,
+// every villager level 15), a marriage relationship, and one recipe. No integrity checksum is
+// present, matching every payload generated before v9. Used to verify that legacy payloads still
+// decode and that their out-of-domain scalars are now clamped rather than trusted verbatim.
 // cspell:disable-next-line
 const V8_BOUNDARY_FIXTURE = "CGNgGAVUBv_xgYFzVgNDyyRPlQkMDvS0FAA";
 
+// A payload encoded with the current v9 codec. Contains the legitimate maximum in-domain scalar
+// values (mine floor 100, renown 100, every skill level 60, every villager level 12), a marriage
+// relationship, one recipe, and a valid integrity checksum. Protects the current layout and
+// checksum placement from accidental reinterpretation while the generated tracker data remains
+// compatible.
+// cspell:disable-next-line
+const V9_BOUNDARY_FIXTURE = "CSG9unJjYBgFVAYpDCln0IENDAycsxoYWiZ5qkxgcKCnpQA";
+
 async function compressTransferRaw(version: number, raw: Uint8Array): Promise<string> {
+  const compressed = await compressRawOnly(raw);
+  const prefix = version >= 9 ? [version, ...crc32ToBytes(crc32(raw))] : [version];
+  return toBase64url(new Uint8Array([...prefix, ...compressed]));
+}
+
+// Mirrors the production CRC-32 (IEEE 802.3) implementation in transfer.ts so tests can build
+// payloads with a correct, or deliberately incorrect, integrity checksum.
+let testCrc32Table: null | Uint32Array = null;
+async function compressRawOnly(raw: Uint8Array): Promise<Uint8Array> {
   const stream = new CompressionStream("deflate-raw");
   const writer = stream.writable.getWriter();
   await writer.write(raw as Uint8Array<ArrayBuffer>);
   await writer.close();
-  const compressed = new Uint8Array(await new Response(stream.readable).arrayBuffer());
-  return toBase64url(new Uint8Array([version, ...compressed]));
+  return new Uint8Array(await new Response(stream.readable).arrayBuffer());
 }
 
+function crc32(bytes: Uint8Array): number {
+  if (!testCrc32Table) {
+    const table = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+      let c = n;
+      for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+      table[n] = c >>> 0;
+    }
+    testCrc32Table = table;
+  }
+  let crc = 0xffffffff;
+  for (const byte of bytes) crc = testCrc32Table[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function crc32ToBytes(checksum: number): number[] {
+  return [
+    (checksum >>> 24) & 0xff,
+    (checksum >>> 16) & 0xff,
+    (checksum >>> 8) & 0xff,
+    checksum & 0xff,
+  ];
+}
+
+/** Decompresses a full transfer payload, skipping the version byte and (for v9+) the checksum. */
 async function decompressTransferRaw(payload: string): Promise<Uint8Array> {
   const bytes = fromBase64url(payload);
+  const bodyStart = bytes[0] >= 9 ? 1 + CHECKSUM_BYTE_LENGTH : 1;
   const stream = new DecompressionStream("deflate-raw");
   const writer = stream.writable.getWriter();
-  await writer.write(bytes.slice(1));
+  await writer.write(bytes.slice(bodyStart));
   await writer.close();
   return new Uint8Array(await new Response(stream.readable).arrayBuffer());
 }
@@ -99,33 +146,55 @@ function toBase64url(bytes: Uint8Array): string {
     .replace(/=+$/, "");
 }
 
-describe("transfer codec v8", () => {
-  it("has version 8", () => {
-    expect(TRANSFER_VERSION).toBe(8);
+describe("transfer codec v9", () => {
+  it("has version 9", () => {
+    expect(TRANSFER_VERSION).toBe(9);
   });
 
-  it("round-trips maximum scalar and packed relationship values", async () => {
+  it("round-trips maximum in-domain scalar and packed relationship values", async () => {
     const villagerIds = recordKeys(trackerData.villagers);
     const skillIds = recordKeys(trackerData.skills);
     const dateableVillagers = villagerIds.filter((id) => trackerData.villagers[id].dateable);
     const villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>> = {};
     for (const villagerId of dateableVillagers) villagerRelationships[villagerId] = "platonic";
     villagerRelationships[dateableVillagers[0]] = "married";
+    const maxFloor = trackerData.mines.biomes.at(-1)?.floors.end ?? 0;
+    const maxRenown = trackerData.townRanks.at(-1)?.levels.end ?? 0;
     const completed = makeCompleted({
-      mines: { floor: 0xff, spells: new Set() },
-      renown: 0xffff,
-      skillLevels: Object.fromEntries(skillIds.map((id) => [id, 0xff])),
-      villagerLevels: Object.fromEntries(villagerIds.map((id) => [id, 0xf])),
+      mines: { floor: maxFloor, spells: new Set() },
+      renown: maxRenown,
+      skillLevels: Object.fromEntries(skillIds.map((id) => [id, MAX_SKILL_LEVEL])),
+      villagerLevels: Object.fromEntries(villagerIds.map((id) => [id, MAX_VILLAGER_LEVEL])),
       villagerRelationships,
     });
 
     const decoded = await decodeTransferPayload(await encodeTransferPayload(completed));
 
-    expect(decoded.mines?.floor).toBe(0xff);
+    expect(decoded.mines?.floor).toBe(maxFloor);
     expect(decoded.villagerLevels).toEqual(completed.villagerLevels);
     expect(decoded.villagerRelationships).toEqual(villagerRelationships);
-    expect(decoded.renown).toBe(0xffff);
+    expect(decoded.renown).toBe(maxRenown);
     expect(decoded.skillLevels).toEqual(completed.skillLevels);
+  });
+
+  it("clamps out-of-domain scalar values instead of trusting the encoded bit pattern", async () => {
+    const villagerIds = recordKeys(trackerData.villagers);
+    const skillIds = recordKeys(trackerData.skills);
+    const maxFloor = trackerData.mines.biomes.at(-1)?.floors.end ?? 0;
+    const maxRenown = trackerData.townRanks.at(-1)?.levels.end ?? 0;
+    const completed = makeCompleted({
+      mines: { floor: 0xff, spells: new Set() },
+      renown: 0xffff,
+      skillLevels: Object.fromEntries(skillIds.map((id) => [id, 0xff])),
+      villagerLevels: Object.fromEntries(villagerIds.map((id) => [id, 0xf])),
+    });
+
+    const decoded = await decodeTransferPayload(await encodeTransferPayload(completed));
+
+    expect(decoded.mines?.floor).toBe(maxFloor);
+    expect(decoded.renown).toBe(maxRenown);
+    for (const id of skillIds) expect(decoded.skillLevels?.[id]).toBe(MAX_SKILL_LEVEL);
+    for (const id of villagerIds) expect(decoded.villagerLevels?.[id]).toBe(MAX_VILLAGER_LEVEL);
   });
 
   it("round-trips every transferable completion without loss", async () => {
@@ -144,7 +213,10 @@ describe("transfer codec v8", () => {
       ),
       dates: new Set(recordKeys(trackerData.dates)),
       hasUpperFloor: true,
-      mines: { floor: 0xff, spells: new Set(recordKeys(trackerData.mines.spells)) },
+      mines: {
+        floor: trackerData.mines.biomes.at(-1)?.floors.end ?? 0,
+        spells: new Set(recordKeys(trackerData.mines.spells)),
+      },
       museum: new Set(
         recordValues(trackerData.museum).flatMap(({ sets }) =>
           recordValues(sets).flatMap(({ items }) => items),
@@ -158,14 +230,18 @@ describe("transfer codec v8", () => {
         ),
       ),
       reachedSeason: "winter",
-      renown: 0xffff,
-      skillLevels: Object.fromEntries(recordKeys(trackerData.skills).map((id) => [id, 0xff])),
+      renown: trackerData.townRanks.at(-1)?.levels.end ?? 0,
+      skillLevels: Object.fromEntries(
+        recordKeys(trackerData.skills).map((id) => [id, MAX_SKILL_LEVEL]),
+      ),
       unlockedPerks: new Set(
         recordValues(trackerData.skills).flatMap((skill) =>
           skill.perkTiers.flatMap((tier) => recordKeys(tier)),
         ),
       ),
-      villagerLevels: Object.fromEntries(recordKeys(trackerData.villagers).map((id) => [id, 0xf])),
+      villagerLevels: Object.fromEntries(
+        recordKeys(trackerData.villagers).map((id) => [id, MAX_VILLAGER_LEVEL]),
+      ),
     });
     for (const [animalId, animal] of recordEntries(trackerData.animals)) {
       completed.animalCosmetics[animalId] = new Set(recordKeys(animal.cosmetics));
@@ -335,7 +411,25 @@ describe("transfer codec v8", () => {
     expect(almanac.size).toBe(2);
   });
 
-  it("decodes the current v8 boundary fixture", async () => {
+  it("decodes the historical v8 boundary fixture and clamps its out-of-domain scalars", async () => {
+    const maxFloor = trackerData.mines.biomes.at(-1)?.floors.end ?? 0;
+    const maxRenown = trackerData.townRanks.at(-1)?.levels.end ?? 0;
+    const decoded = await decodeTransferPayload(V8_BOUNDARY_FIXTURE);
+    const marriedVillager = recordKeys(trackerData.villagers).find(
+      (id) => decoded.villagerRelationships?.[id] === "married",
+    );
+
+    expect(decoded.mines?.floor).toBe(maxFloor);
+    expect(decoded.renown).toBe(maxRenown);
+    expect(new Set(Object.values(decoded.villagerLevels ?? {}))).toEqual(
+      new Set([MAX_VILLAGER_LEVEL]),
+    );
+    expect(new Set(Object.values(decoded.skillLevels ?? {}))).toEqual(new Set([MAX_SKILL_LEVEL]));
+    expect(marriedVillager).toBeDefined();
+    expect(decoded.almanacRecipes?.size).toBe(1);
+  });
+
+  it("decodes the current v9 boundary fixture", async () => {
     const villagerIds = recordKeys(trackerData.villagers);
     const dateableVillagers = villagerIds.filter((id) => trackerData.villagers[id].dateable);
     const recipeId = recordKeys(trackerData.recipes)[0];
@@ -343,25 +437,31 @@ describe("transfer codec v8", () => {
       dateableVillagers.map((id) => [id, "platonic"]),
     ) as Partial<Record<VillagerId, VillagerRelationship>>;
     relationships[dateableVillagers[0]] = "married";
+    const maxFloor = trackerData.mines.biomes.at(-1)?.floors.end ?? 0;
+    const maxRenown = trackerData.townRanks.at(-1)?.levels.end ?? 0;
     const fixtureState = makeCompleted({
       almanacRecipes: new Set([recipeId]),
-      mines: { floor: 0xff, spells: new Set() },
-      renown: 0xffff,
-      skillLevels: Object.fromEntries(recordKeys(trackerData.skills).map((id) => [id, 0xff])),
-      villagerLevels: Object.fromEntries(villagerIds.map((id) => [id, 0xf])),
+      mines: { floor: maxFloor, spells: new Set() },
+      renown: maxRenown,
+      skillLevels: Object.fromEntries(
+        recordKeys(trackerData.skills).map((id) => [id, MAX_SKILL_LEVEL]),
+      ),
+      villagerLevels: Object.fromEntries(villagerIds.map((id) => [id, MAX_VILLAGER_LEVEL])),
       villagerRelationships: relationships,
     });
-    expect(await encodeTransferPayload(fixtureState)).toBe(V8_BOUNDARY_FIXTURE);
+    expect(await encodeTransferPayload(fixtureState)).toBe(V9_BOUNDARY_FIXTURE);
 
-    const decoded = await decodeTransferPayload(V8_BOUNDARY_FIXTURE);
+    const decoded = await decodeTransferPayload(V9_BOUNDARY_FIXTURE);
     const marriedVillager = recordKeys(trackerData.villagers).find(
       (id) => decoded.villagerRelationships?.[id] === "married",
     );
 
-    expect(decoded.mines?.floor).toBe(0xff);
-    expect(decoded.renown).toBe(0xffff);
-    expect(new Set(Object.values(decoded.villagerLevels ?? {}))).toEqual(new Set([0xf]));
-    expect(new Set(Object.values(decoded.skillLevels ?? {}))).toEqual(new Set([0xff]));
+    expect(decoded.mines?.floor).toBe(maxFloor);
+    expect(decoded.renown).toBe(maxRenown);
+    expect(new Set(Object.values(decoded.villagerLevels ?? {}))).toEqual(
+      new Set([MAX_VILLAGER_LEVEL]),
+    );
+    expect(new Set(Object.values(decoded.skillLevels ?? {}))).toEqual(new Set([MAX_SKILL_LEVEL]));
     expect(marriedVillager).toBeDefined();
     expect(decoded.almanacRecipes?.size).toBe(1);
   });
@@ -440,10 +540,19 @@ describe("transfer codec v8", () => {
     await expect(decodeTransferPayload(payload)).rejects.toThrow(/unsupported transfer version/i);
   });
 
-  it("rejects a missing compressed body", async () => {
+  it("rejects a missing integrity checksum", async () => {
     await expect(
       decodeTransferPayload(toBase64url(new Uint8Array([TRANSFER_VERSION]))),
-    ).rejects.toThrow(/compressed transfer payload/i);
+    ).rejects.toThrow(/integrity checksum/i);
+    await expect(
+      decodeTransferPayload(toBase64url(new Uint8Array([TRANSFER_VERSION, 0, 1, 2]))),
+    ).rejects.toThrow(/integrity checksum/i);
+  });
+
+  it("rejects a missing compressed body for a pre-checksum version", async () => {
+    await expect(decodeTransferPayload(toBase64url(new Uint8Array([8])))).rejects.toThrow(
+      /compressed transfer payload/i,
+    );
   });
 
   it("rejects truncated compressed data", async () => {
@@ -453,7 +562,9 @@ describe("transfer codec v8", () => {
   });
 
   it("rejects malformed compressed data", async () => {
-    const payload = toBase64url(new Uint8Array([TRANSFER_VERSION, 0, 1, 2, 3]));
+    const payload = toBase64url(
+      new Uint8Array([TRANSFER_VERSION, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7]),
+    );
     await expect(decodeTransferPayload(payload)).rejects.toThrow(/compressed transfer payload/i);
   });
 
@@ -464,5 +575,36 @@ describe("transfer codec v8", () => {
     const malformedPayload = await compressTransferRaw(TRANSFER_VERSION, malformed);
 
     await expect(decodeTransferPayload(malformedPayload)).rejects.toThrow(/length/i);
+  });
+
+  it("rejects a payload whose compressed content was corrupted, even when it decompresses to the expected length", async () => {
+    // Regression test for a corruption that decompresses to a byte-identical length but different
+    // content: without an integrity checksum this previously decoded silently into wrong progress.
+    const payload = await encodeTransferPayload(
+      makeCompleted({ mines: { floor: 40, spells: new Set() } }),
+    );
+    const raw = await decompressTransferRaw(payload);
+    const corruptedRaw = new Uint8Array(raw);
+    corruptedRaw[0] ^= 0x01;
+    expect(corruptedRaw.length).toBe(raw.length);
+
+    // Keep the checksum bytes from the ORIGINAL (uncorrupted) payload, simulating a bit-flip that
+    // landed in the compressed body after the checksum was computed and stored.
+    const originalChecksumBytes = fromBase64url(payload).slice(1, 1 + CHECKSUM_BYTE_LENGTH);
+    const corruptedCompressed = await compressRawOnly(corruptedRaw);
+    const tamperedPayload = toBase64url(
+      new Uint8Array([TRANSFER_VERSION, ...originalChecksumBytes, ...corruptedCompressed]),
+    );
+
+    await expect(decodeTransferPayload(tamperedPayload)).rejects.toThrow(/integrity check/i);
+  });
+
+  it("rejects a payload whose stored checksum does not match its content", async () => {
+    const payload = await encodeTransferPayload(makeCompleted());
+    const bytes = fromBase64url(payload);
+    const tampered = new Uint8Array(bytes);
+    tampered[1] ^= 0xff;
+
+    await expect(decodeTransferPayload(toBase64url(tampered))).rejects.toThrow(/integrity check/i);
   });
 });
