@@ -57,6 +57,8 @@ export function getAllProgress(ctx: ProgressContext): AllProgress {
   };
 }
 
+// ─── Per-category progress ──────────────────────────────────────────
+
 export function getCategoryProgress(category: CategoryKey, ctx: ProgressContext): CategoryProgress {
   switch (category) {
     case "almanac":
@@ -81,8 +83,6 @@ export function getCategoryProgress(category: CategoryKey, ctx: ProgressContext)
       return getVillagersProgress(ctx);
   }
 }
-
-// ─── Per-category progress ──────────────────────────────────────────
 
 /** Sums every category's progress into one overall total (home page, `/all`). */
 export function getOverallProgress(allProgress: AllProgress): CategoryProgress {

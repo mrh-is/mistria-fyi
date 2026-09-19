@@ -87,7 +87,7 @@ const CATEGORY_HREFS: Record<CategoryKey, Pathname> = {
 };
 
 /** The CSS color token for a category; the one lookup that needs no locale. */
-export function categoryColor(key: CategoryKey): string {
+export function categoryColor<Key extends CategoryKey>(key: Key): `cat-${Key}` {
   return `cat-${key}`;
 }
 

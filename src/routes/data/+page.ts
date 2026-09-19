@@ -1,3 +1,4 @@
+import { pageMetadata } from "$lib/data/page-metadata.js";
 import * as m from "$lib/paraglide/messages.js";
 import { baseLocale, getLocaleForUrl } from "$lib/paraglide/runtime.js";
 
@@ -9,11 +10,11 @@ import type { PageLoad } from "./$types";
 export const load: PageLoad = (event?: Partial<Parameters<PageLoad>[0]>) => {
   const locale = event?.url ? getLocaleForUrl(event.url) : baseLocale;
   return {
-    metadata: {
+    metadata: pageMetadata({
       description: m.data_page_description({}, { locale }),
-      hideToolbar: true,
       robots: "noindex, follow",
       title: m.data_title({}, { locale }),
-    },
+      toolbar: "hidden",
+    }),
   };
 };

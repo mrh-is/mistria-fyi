@@ -16,7 +16,6 @@
   import QuickSettingsPanel from "$lib/components/quick-settings-panel.svelte";
   import { Input } from "$lib/components/ui/input/index.js";
   import VisibilityPanel from "$lib/components/visibility-panel.svelte";
-  import { categoryColor, categoryKeyForPathname } from "$lib/data/categories.js";
   import { getName } from "$lib/data/names.js";
   import { getFeedbackContext } from "$lib/feedback/context.svelte.js";
   import * as m from "$lib/paraglide/messages.js";
@@ -25,14 +24,18 @@
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { DEFAULT_AVAILABILITY_WINDOWS } from "$lib/types/availability.js";
 
+  import type { PageMetadata } from "$lib/data/page-metadata.js";
+
   type ActivePanel = "feedback" | "settings" | "visibility" | null;
 
   /* eslint-disable no-useless-assignment -- $bindable default; reassigned reactively in $effect */
+  // The root layout resolves `metadata` (including the error-page fallback) and passes it down, so
+  // this never reads `page.data.metadata`, which is absent when no `+page.ts` load ran.
   let {
-    hidden = false,
+    metadata,
     overlayActive = $bindable(false),
   }: {
-    hidden?: boolean;
+    metadata: PageMetadata;
     overlayActive?: boolean;
   } = $props();
   /* eslint-enable no-useless-assignment */
@@ -40,17 +43,8 @@
   let feedbackContext = getFeedbackContext();
   // Route matching below is keyed by the unprefixed route, not the locale-prefixed browser URL.
   let pathname = $derived(deLocalizeHref(page.url.pathname));
-  let categoryKey = $derived(categoryKeyForPathname(pathname));
-  // `PageData.metadata` is typed as required, but on an error route no `+page.ts` load ran, so
-  // it's genuinely absent at runtime (the root layout falls back to `errorPageMetadata` for the
-  // same reason).
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  let showSearch = $derived(page.data.metadata?.showSearch ?? false);
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  let showSeasonality = $derived(page.data.metadata?.usesWorldState ?? false);
-  let toolbarAccent = $derived(
-    categoryKey === undefined ? "var(--home-accent)" : `var(--${categoryColor(categoryKey)})`,
-  );
+  let toolbar = $derived(metadata.toolbar === "hidden" ? null : metadata.toolbar);
+  let toolbarAccent = $derived(`var(--${metadata.accent})`);
 
   let activePanel = $state<ActivePanel>(null);
   let previousPathname = $state("");
@@ -159,7 +153,7 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-{#if !hidden}
+{#if toolbar}
   <FeedbackPanel
     accent={toolbarAccent}
     {feedbackContext}
@@ -237,7 +231,7 @@
         </div>
 
         <div class="flex items-center gap-1.5">
-          {#if showSearch}
+          {#if toolbar.search}
             <button
               class="floating-tool"
               type="button"
@@ -306,7 +300,7 @@
               </button>
             {/if}
           {/snippet}
-          <VisibilityPanel {showSeasonality} />
+          <VisibilityPanel showSeasonality={toolbar.worldState} />
         </FoldoutPanel>
       {/if}
     </div>
