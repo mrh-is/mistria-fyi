@@ -44,7 +44,7 @@
   "home_active_categories_label": "Categorías en curso",
   "home_completed_heading": "Completado",
   "home_completed_categories_label": "Categorías completadas",
-  "overall_progress_label": "{completed} de {total} completados en total, {pct}%",
+  "overall_progress_label": "{completed} de {total} completados en total, {pct}",
   "foldout_close": "Cerrar {title}",
   "search_results_count": [
     {
@@ -59,6 +59,8 @@
   ],
   "search_no_results": "No se encontraron elementos",
   "search_loading": "Cargando la búsqueda…",
+  "search_error": "No se pudieron cargar los resultados de la búsqueda.",
+  "action_retry": "Reintentar",
   "quest_marked_obtained": "«{name}» marcado como obtenido",
   "quest_marked_completed": "«{name}» marcado como completado",
   "quest_marked_completed_with_recipe": "«{name}» marcado como completado y se desbloqueó «{recipe}»",

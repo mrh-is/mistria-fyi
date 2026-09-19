@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { formatBiomeName, formatStoreName, withIndefiniteArticle } from "./format";
+import {
+  composeInfusion,
+  formatBiomeName,
+  formatNumber,
+  formatPercent,
+  formatStoreName,
+  withIndefiniteArticle,
+} from "./format";
 
 import type { MinesBiomeId, StoreId } from "$lib/types/tracker-data.js";
 
@@ -33,6 +40,38 @@ describe("formatStoreName", () => {
         {} as Record<StoreId, { article?: "the"; name: string }>,
       ),
     ).toBe("Unknown Shop");
+  });
+});
+
+describe("composeInfusion", () => {
+  it("puts the descriptor first with a space, in English (Adjective order)", () => {
+    expect(composeInfusion("Golden Retriever", "Crown", "en")).toBe("Golden Retriever Crown");
+  });
+  it("puts the descriptor first with no space, in Japanese (Adjective order, no space)", () => {
+    expect(composeInfusion("ゴールデンレトリバー", "クラウン", "ja")).toBe(
+      "ゴールデンレトリバークラウン",
+    );
+  });
+  it("puts the descriptor last, in Russian (Noun order)", () => {
+    expect(composeInfusion("Golden Retriever", "Crown", "ru")).toBe("Crown Golden Retriever");
+  });
+});
+
+describe("formatNumber", () => {
+  it("groups thousands per the English locale", () => {
+    expect(formatNumber(5432, "en")).toBe("5,432");
+  });
+  it("uses the target locale's grouping character", () => {
+    expect(formatNumber(5432, "fr")).toBe("5\u202f432");
+  });
+});
+
+describe("formatPercent", () => {
+  it("formats a 0-100 value with the locale's percent symbol", () => {
+    expect(formatPercent(42, "en")).toBe("42%");
+  });
+  it("adds a space before the percent symbol in French", () => {
+    expect(formatPercent(42, "fr")).toBe("42\u00a0%");
   });
 });
 

@@ -26,14 +26,14 @@ describe("checkTranslationKeys", () => {
       JSON.stringify({ $schema: "x", greeting: "Bonjour", nested: { label: "Aller" } }),
     );
 
-    expect(await checkTranslationKeys(dir)).toEqual([]);
+    expect(await checkTranslationKeys(dir, ["en", "fr"])).toEqual([]);
   });
 
   it("reports missing and extra keys without caring about values", async () => {
     await writeFile(path.join(dir, "en.json"), JSON.stringify({ a: "A", b: "B" }));
     await writeFile(path.join(dir, "fr.json"), JSON.stringify({ a: "A", c: "C" }));
 
-    expect(await checkTranslationKeys(dir)).toEqual([
+    expect(await checkTranslationKeys(dir, ["en", "fr"])).toEqual([
       { extraKeys: ["c"], locale: "fr", missingKeys: ["b"] },
     ]);
   });
@@ -42,7 +42,7 @@ describe("checkTranslationKeys", () => {
     await writeFile(path.join(dir, "en.json"), JSON.stringify({ group: { a: "A", b: "B" } }));
     await writeFile(path.join(dir, "fr.json"), JSON.stringify({ group: { a: "A" } }));
 
-    expect(await checkTranslationKeys(dir)).toEqual([
+    expect(await checkTranslationKeys(dir, ["en", "fr"])).toEqual([
       { extraKeys: [], locale: "fr", missingKeys: ["group.b"] },
     ]);
   });
@@ -51,6 +51,24 @@ describe("checkTranslationKeys", () => {
     await writeFile(path.join(dir, "en.json"), JSON.stringify({ $schema: "x", a: "A" }));
     await writeFile(path.join(dir, "fr.json"), JSON.stringify({ $schema: "y", a: "A" }));
 
-    expect(await checkTranslationKeys(dir)).toEqual([]);
+    expect(await checkTranslationKeys(dir, ["en", "fr"])).toEqual([]);
+  });
+
+  it("reports a configured locale with no messages file as a mismatch", async () => {
+    await writeFile(path.join(dir, "en.json"), JSON.stringify({ a: "A" }));
+    await writeFile(path.join(dir, "fr.json"), JSON.stringify({ a: "A" }));
+
+    expect(await checkTranslationKeys(dir, ["en", "fr", "ja"])).toEqual([
+      { extraKeys: [], fileMissing: true, locale: "ja", missingKeys: [] },
+    ]);
+  });
+
+  it("reports a messages file whose locale isn't declared in settings", async () => {
+    await writeFile(path.join(dir, "en.json"), JSON.stringify({ a: "A" }));
+    await writeFile(path.join(dir, "fr.json"), JSON.stringify({ a: "A" }));
+
+    expect(await checkTranslationKeys(dir, ["en"])).toEqual([
+      { extraKeys: [], locale: "fr", missingKeys: [], undeclared: true },
+    ]);
   });
 });
