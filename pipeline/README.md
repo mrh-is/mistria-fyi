@@ -53,8 +53,19 @@ assets root
   → project claimed namespaces through domain extractors
   → attach direct-reward quest gates
   → assemble TrackerData
-  → write committed and diagnostic JSON artifacts
+  → stage committed and diagnostic JSON artifacts (and, with --sprites, converted sprites) in memory
+  → extract & validate sprites, if requested
+  → publish every staged artifact
 ```
+
+`main.ts` stages every output it will write, including `tracker-data.json`, the locale chunks, and
+the human-readable diagnostic files, as in-memory content rather than writing it immediately. With
+`--sprites`, sprite extraction (`extractors/sprites.ts`) similarly converts needed sprites to webp
+in memory without touching `static/sprites/`. Only after sprite extraction reports no missing
+sprites does `main.ts` publish everything: it writes every staged file and sprite in one final step.
+If sprite validation fails, the process exits before that step runs and no tracked output file is
+modified, so a regeneration either lands as a consistent whole or leaves the previous outputs
+untouched.
 
 The parser walks `fiddle/` recursively, maps each non-metadata TOML file to its relative dotted
 namespace, and excludes files ending in `.meta.toml`. It rejects duplicate destinations, including
@@ -96,7 +107,7 @@ current contract, not a general validation policy.
 
 | Module                      | Input ownership                                                                                                                  | Output                                                    | Important normalization or omission                                                                                                                                                                                                                                                                                                                                                                           |
 | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `main.ts`                   | CLI arguments, `MISTRIA_ASSETS`, parsed tree                                                                                     | `TrackerData` and files                                   | Requires an assets root containing `fiddle/`; parse-only stops before evaluation, extraction, and writes.                                                                                                                                                                                                                                                                                                     |
+| `main.ts`                   | CLI arguments, `MISTRIA_ASSETS`, parsed tree                                                                                     | `TrackerData` and files                                   | Requires an assets root containing `fiddle/`; parse-only stops before evaluation, extraction, and writes. Stages every output in memory and publishes it in one step only after sprite extraction (if requested) reports no missing sprites; a sprite failure exits before any tracked file is written.                                                                                                       |
 | `parse-fiddle.ts`           | Assets root and TOML below fiddle root                                                                                           | Namespace tree, count, provenance                         | Excludes `.meta.toml`; rejects duplicate, colliding, and invalid nested destinations; provenance is non-enumerable.                                                                                                                                                                                                                                                                                           |
 | `evaluate.ts`               | Parsed `items` and provenance                                                                                                    | In-place numeric item values                              | Resolves two expression forms, rounds recipe multipliers, skips time and essence recipe entries, and fails with source context on invalid dependencies.                                                                                                                                                                                                                                                       |
 | `requirements.ts`           | Requirement definitions and an object                                                                                            | Boolean expression                                        | Empty input becomes `all: []`; siblings become `all`; `or` becomes `any`; `invert` becomes `not`; unknown keys remain predicates.                                                                                                                                                                                                                                                                             |
