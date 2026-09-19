@@ -7,6 +7,7 @@
   import SearchResults from "$lib/components/search-results.svelte";
   import WelcomeCard from "$lib/components/welcome-card.svelte";
   import { getAllProgress } from "$lib/engine/progress.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { localizedHref } from "$lib/utils/localized-href.js";
@@ -34,7 +35,7 @@
   <header class="home-header" style="--overall-progress: {overallPct}%">
     <h1 class="flex min-w-0 items-center gap-2 font-brand text-2xl leading-none">
       <IconNotebook class="size-5 shrink-0 text-amber-700 dark:text-amber-400" />
-      Mistria Field Guide
+      {m.app_name()}
     </h1>
     <OverallProgress progress={allProgress} />
     <span class="overall-progress-rule" aria-hidden="true"><i></i></span>
@@ -46,16 +47,20 @@
     {:else}
       <WelcomeCard />
       <h2 class="px-1 font-controls text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
-        Index
+        {m.home_index_heading()}
       </h2>
       <CategoryGrid progress={allProgress} />
       <a
         class="everything-link"
         href={localizedHref("/all")}
-        aria-label="Everything, {totalCompleted} of {grandTotal} completed"
+        aria-label={m.section_progress_label({
+          completed: totalCompleted,
+          name: m.home_everything_label(),
+          total: grandTotal,
+        })}
       >
         <Icon.Category category="all" class="size-4 shrink-0" />
-        <span class="flex-1">Everything</span>
+        <span class="flex-1">{m.home_everything_label()}</span>
         <span class="font-data text-xs" aria-hidden="true">{totalCompleted} / {grandTotal}</span>
       </a>
     {/if}
