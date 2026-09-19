@@ -72,6 +72,7 @@ describe("CI workflow", () => {
     expect(workflow.jobs?.lint.steps?.filter((step) => step.run).map((step) => step.run)).toEqual([
       "pnpm install --frozen-lockfile",
       "pnpm exec svelte-kit sync",
+      "pnpm run check:i18n",
       "pnpm run lint",
     ]);
     expect(workflow.jobs?.lint.steps?.at(-1)?.run).toBe("pnpm run lint");
