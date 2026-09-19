@@ -7,11 +7,11 @@ import type { SourceTuple } from "$lib/types/acquisition.js";
 import type { LocaleCode } from "$lib/types/locale.js";
 import type {
   ItemId,
-  NpcId,
   QuestId,
   QuestType,
   RecipeId,
   TrackerData,
+  VillagerId,
 } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle";
@@ -56,22 +56,22 @@ export function extractQuests(
     for (const locale of LOCALE_CODES) localeNames[locale][questId as QuestId] = values[locale];
 
     if (outputType === "fetch") {
-      const npc = quest.npc_for_icon as string | undefined;
+      const villager = quest.npc_for_icon as string | undefined;
       const itemId = extractFetchQuestItemId(questId, quest);
       const rewardRecipeId = extractRewardRecipeId(quest);
       result.fetch[questId as QuestId] = {
         itemId: itemId as ItemId,
-        npc: (npc ?? questId) as NpcId,
+        villager: (villager ?? questId) as VillagerId,
         ...(rewardRecipeId ? { rewardRecipeId: rewardRecipeId as RecipeId } : {}),
         sources: [] as unknown as SourceTuple,
       };
     } else if (outputType === "heart") {
-      const npc = quest.npc_for_icon as string | undefined;
+      const villager = quest.npc_for_icon as string | undefined;
       const isPregnancy = questId.endsWith("_pregnancy_request");
       result.heart[questId as QuestId] = {
         heartLevel: isPregnancy ? 10 : 0,
-        npc: (npc ?? extractStageQueryNpc(quest) ?? questId) as NpcId,
         sources: [] as unknown as SourceTuple,
+        villager: (villager ?? extractStageQueryVillager(quest) ?? questId) as VillagerId,
       };
     } else if (outputType === "cooking") {
       const recipeId = extractCookingQuestRecipeId(questId, quest, recipeIdByItemId);
@@ -157,7 +157,7 @@ function extractRewardRecipeId(quest: Record<string, unknown>): string | undefin
   return undefined;
 }
 
-function extractStageQueryNpc(quest: Record<string, unknown>): string | undefined {
+function extractStageQueryVillager(quest: Record<string, unknown>): string | undefined {
   const stages = quest.stages as Record<string, unknown>[] | undefined;
   if (!Array.isArray(stages)) return undefined;
   for (const stage of stages) {

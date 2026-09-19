@@ -12,12 +12,12 @@ import {
 
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
 import type {
-  NpcId,
   PerkId,
   QuestId,
   QuestType,
   SkillId,
   TrackerData,
+  VillagerId,
 } from "$lib/types/tracker-data.js";
 import type { VisibilityCondition } from "$lib/types/visibility.js";
 
@@ -35,8 +35,6 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     hasUpperFloor: false,
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
-    npcLevels: {},
-    npcRelationships: {},
     petCosmetics: new Set(),
     petSkins: new Set(),
     questStates: {},
@@ -44,6 +42,8 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     renown: 0,
     skillLevels: {},
     unlockedPerks: new Set(),
+    villagerLevels: {},
+    villagerRelationships: {},
     ...overrides,
   };
 }
@@ -52,16 +52,16 @@ function makeState(overrides: Partial<UserProgressionState> = {}): UserProgressi
   return {
     hasUpperFloor: false,
     isDating: false,
-    knownNpcs: new Set(),
-    marriedNpc: null,
+    knownVillagers: new Set(),
+    marriedVillager: null,
     minesFloor: 0,
-    npcLevels: {},
     questVisibility: {},
     reachedSeason: "spring" as const,
     renown: 0,
     showSpoilers: false,
     skillLevels: {},
     unlockedPerks: new Set(),
+    villagerLevels: {},
     ...overrides,
   };
 }
@@ -86,10 +86,9 @@ function makeTrackerData(overrides: DeepPartial<TrackerData> = {}): TrackerData 
     items: {},
     mines: { biomes: [], spells: {} },
     museum: {},
-    npcs: {},
     perkTierLevels: [1, 15, 30, 45, 60],
     pets: { cosmetics: {}, skins: {} },
-    pregnancyQuestByNpc: {},
+    pregnancyQuestByVillager: {},
     questOrder: {},
     quests: {
       cooking: {},
@@ -105,6 +104,7 @@ function makeTrackerData(overrides: DeepPartial<TrackerData> = {}): TrackerData 
     townRanks: [],
     treasureChestTiers: {},
     version: "test",
+    villagers: {},
   };
   return deepMerge(defaults, overrides);
 }
@@ -145,10 +145,14 @@ describe("isVisible", () => {
     ).toBe(false);
   });
 
-  it("npcKnown checks knownNpcs set", () => {
-    const state = makeState({ knownNpcs: new Set(["holt" as NpcId]) });
-    expect(isVisible({ type: "npcKnown", npcId: "holt" as NpcId }, state)).toBe(true);
-    expect(isVisible({ type: "npcKnown", npcId: "caldarus" as NpcId }, state)).toBe(false);
+  it("villagerKnown checks knownVillagers set", () => {
+    const state = makeState({ knownVillagers: new Set(["holt" as VillagerId]) });
+    expect(isVisible({ type: "villagerKnown", villagerId: "holt" as VillagerId }, state)).toBe(
+      true,
+    );
+    expect(isVisible({ type: "villagerKnown", villagerId: "caldarus" as VillagerId }, state)).toBe(
+      false,
+    );
   });
 
   it("skillLevel checks >= threshold", () => {
@@ -176,10 +180,14 @@ describe("isVisible", () => {
     expect(isVisible({ type: "minesLevel", floor: 41 }, state)).toBe(false);
   });
 
-  it("heartLevel checks npcLevels >= level", () => {
-    const state = makeState({ npcLevels: { ["ryis" as NpcId]: 4 } });
-    expect(isVisible({ type: "heartLevel", level: 4, npcId: "ryis" as NpcId }, state)).toBe(true);
-    expect(isVisible({ type: "heartLevel", level: 5, npcId: "ryis" as NpcId }, state)).toBe(false);
+  it("heartLevel checks villagerLevels >= level", () => {
+    const state = makeState({ villagerLevels: { ["ryis" as VillagerId]: 4 } });
+    expect(
+      isVisible({ type: "heartLevel", level: 4, villagerId: "ryis" as VillagerId }, state),
+    ).toBe(true);
+    expect(
+      isVisible({ type: "heartLevel", level: 5, villagerId: "ryis" as VillagerId }, state),
+    ).toBe(false);
   });
 
   it("renownLevel checks >= level", () => {
@@ -188,10 +196,10 @@ describe("isVisible", () => {
     expect(isVisible({ type: "renownLevel", level: 51 }, state)).toBe(false);
   });
 
-  it("married checks marriedNpc", () => {
-    const state = makeState({ marriedNpc: "adeline" as NpcId });
-    expect(isVisible({ type: "married", npcId: "adeline" as NpcId }, state)).toBe(true);
-    expect(isVisible({ type: "married", npcId: "reina" as NpcId }, state)).toBe(false);
+  it("married checks marriedVillager", () => {
+    const state = makeState({ marriedVillager: "adeline" as VillagerId });
+    expect(isVisible({ type: "married", villagerId: "adeline" as VillagerId }, state)).toBe(true);
+    expect(isVisible({ type: "married", villagerId: "reina" as VillagerId }, state)).toBe(false);
   });
 
   it("and requires all sub-conditions", () => {
@@ -248,23 +256,25 @@ describe("isConditionInvertible", () => {
     );
     expect(isConditionInvertible({ type: "minesLevel", floor: 10 })).toBe(true);
     expect(isConditionInvertible({ type: "perkUnlocked", perkId: "p" as PerkId })).toBe(true);
-    expect(isConditionInvertible({ type: "married", npcId: "n" as NpcId })).toBe(true);
+    expect(isConditionInvertible({ type: "married", villagerId: "n" as VillagerId })).toBe(true);
   });
 
-  it("returns false for isDating (requires NPC choice)", () => {
+  it("returns false for isDating (requires Villager choice)", () => {
     expect(isConditionInvertible({ type: "isDating" })).toBe(false);
   });
 
-  it("returns false for npcKnown", () => {
-    expect(isConditionInvertible({ type: "npcKnown", npcId: "n" as NpcId })).toBe(false);
+  it("returns false for villagerKnown", () => {
+    expect(isConditionInvertible({ type: "villagerKnown", villagerId: "n" as VillagerId })).toBe(
+      false,
+    );
   });
 
-  it("returns false for and containing npcKnown", () => {
+  it("returns false for and containing villagerKnown", () => {
     expect(
       isConditionInvertible({
         type: "and",
         conditions: [
-          { type: "npcKnown", npcId: "n" as NpcId },
+          { type: "villagerKnown", villagerId: "n" as VillagerId },
           { type: "minesLevel", floor: 10 },
         ],
       }),
@@ -291,9 +301,9 @@ const theSecondQuest = "the_second_quest" as QuestId;
 const firstQuest = "first_quest" as QuestId;
 const breakingTheFinalSeal = "breaking_the_final_seal" as QuestId;
 const breakingTheFireSeal = "breaking_the_fire_seal" as QuestId;
-const seridia = "seridia" as NpcId;
-const caldarus = "caldarus" as NpcId;
-const holt = "holt" as NpcId;
+const seridia = "seridia" as VillagerId;
+const caldarus = "caldarus" as VillagerId;
+const holt = "holt" as VillagerId;
 
 describe("deriveProgressionState", () => {
   it("marks completed quests as completed", () => {
@@ -338,49 +348,49 @@ describe("deriveProgressionState", () => {
     expect(state.questVisibility[firstQuest]).toBe("available");
   });
 
-  it("marks NPC as known when unlock quest is completed", () => {
+  it("marks Villager as known when unlock quest is completed", () => {
     const trackerData = makeTrackerData({
-      npcs: {
+      quests: {
+        [story]: { [breakingTheFinalSeal]: { name: "Breaking the Final Seal" } },
+      },
+      villagers: {
         [seridia]: {
           birthday: { day: 1, season: "spring" },
           visibility: { type: "questCompleted", questId: breakingTheFinalSeal },
         },
       },
-      quests: {
-        [story]: { [breakingTheFinalSeal]: { name: "Breaking the Final Seal" } },
-      },
     });
 
     const notYetCompleted = makeCompleted();
     const notYetState = deriveProgressionState(notYetCompleted, trackerData, false);
-    expect(notYetState.knownNpcs.has(seridia)).toBe(false);
+    expect(notYetState.knownVillagers.has(seridia)).toBe(false);
 
     const completed = makeCompleted({
       questStates: { [breakingTheFinalSeal]: "completed" },
     });
     const state = deriveProgressionState(completed, trackerData, false);
-    expect(state.knownNpcs.has(seridia)).toBe(true);
+    expect(state.knownVillagers.has(seridia)).toBe(true);
   });
 
-  it("masks NPC heart level to 0 when NPC not known", () => {
+  it("masks Villager heart level to 0 when Villager not known", () => {
     const trackerData = makeTrackerData({
-      npcs: {
+      villagers: {
         [caldarus]: {
           birthday: { day: 1, season: "spring" },
           visibility: { type: "questCompleted", questId: breakingTheFireSeal },
         },
       },
     });
-    const completed = makeCompleted({ npcLevels: { [caldarus]: 4 } });
+    const completed = makeCompleted({ villagerLevels: { [caldarus]: 4 } });
 
     const state = deriveProgressionState(completed, trackerData, false);
-    expect(state.knownNpcs.has(caldarus)).toBe(false);
-    expect(state.npcLevels[caldarus]).toBe(0);
+    expect(state.knownVillagers.has(caldarus)).toBe(false);
+    expect(state.villagerLevels[caldarus]).toBe(0);
   });
 
-  it("passes through heart level when NPC is always-known", () => {
+  it("passes through heart level when Villager is always-known", () => {
     const trackerData = makeTrackerData({
-      npcs: {
+      villagers: {
         [holt]: {
           birthday: { day: 1, season: "spring" },
           dateable: true,
@@ -388,27 +398,27 @@ describe("deriveProgressionState", () => {
         },
       },
     });
-    const completed = makeCompleted({ npcLevels: { [holt]: 5 } });
+    const completed = makeCompleted({ villagerLevels: { [holt]: 5 } });
 
     const state = deriveProgressionState(completed, trackerData, false);
-    expect(state.knownNpcs.has(holt)).toBe(true);
-    expect(state.npcLevels[holt]).toBe(5);
+    expect(state.knownVillagers.has(holt)).toBe(true);
+    expect(state.villagerLevels[holt]).toBe(5);
   });
 
   it("cascades heart level from heartLevelChanges once the triggering quest is completed", () => {
     const trackerData = makeTrackerData({
-      npcs: {
-        [caldarus]: {
-          birthday: { day: 1, season: "spring" },
-          visibility: { type: "questCompleted", questId: breakingTheFireSeal },
-        },
-      },
       quests: {
         [story]: {
           [breakingTheFireSeal]: {
-            heartLevelChanges: [{ level: 4, npcId: caldarus }],
+            heartLevelChanges: [{ level: 4, villagerId: caldarus }],
             name: "Breaking the Fire Seal",
           },
+        },
+      },
+      villagers: {
+        [caldarus]: {
+          birthday: { day: 1, season: "spring" },
+          visibility: { type: "questCompleted", questId: breakingTheFireSeal },
         },
       },
     });
@@ -417,8 +427,8 @@ describe("deriveProgressionState", () => {
     });
 
     const state = deriveProgressionState(completed, trackerData, false);
-    expect(state.knownNpcs.has(caldarus)).toBe(true);
-    expect(state.npcLevels[caldarus]).toBe(4);
+    expect(state.knownVillagers.has(caldarus)).toBe(true);
+    expect(state.villagerLevels[caldarus]).toBe(4);
   });
 });
 
@@ -429,9 +439,9 @@ describe("satisfyCondition", () => {
     expect(completed).toEqual(makeCompleted());
   });
 
-  it("does nothing for npcKnown (not invertible)", () => {
+  it("does nothing for villagerKnown (not invertible)", () => {
     const completed = makeCompleted();
-    satisfyCondition({ type: "npcKnown", npcId: holt }, completed, makeTrackerData());
+    satisfyCondition({ type: "villagerKnown", villagerId: holt }, completed, makeTrackerData());
     expect(completed.questStates).toEqual({});
   });
 
@@ -462,14 +472,22 @@ describe("satisfyCondition", () => {
 
   it("sets heartLevel", () => {
     const completed = makeCompleted();
-    satisfyCondition({ type: "heartLevel", level: 6, npcId: holt }, completed, makeTrackerData());
-    expect(completed.npcLevels[holt]).toBe(6);
+    satisfyCondition(
+      { type: "heartLevel", level: 6, villagerId: holt },
+      completed,
+      makeTrackerData(),
+    );
+    expect(completed.villagerLevels[holt]).toBe(6);
   });
 
   it("takes max of heartLevel", () => {
-    const completed = makeCompleted({ npcLevels: { [holt]: 8 } });
-    satisfyCondition({ type: "heartLevel", level: 6, npcId: holt }, completed, makeTrackerData());
-    expect(completed.npcLevels[holt]).toBe(8);
+    const completed = makeCompleted({ villagerLevels: { [holt]: 8 } });
+    satisfyCondition(
+      { type: "heartLevel", level: 6, villagerId: holt },
+      completed,
+      makeTrackerData(),
+    );
+    expect(completed.villagerLevels[holt]).toBe(8);
   });
 
   it("adds perkUnlocked", () => {
@@ -479,16 +497,16 @@ describe("satisfyCondition", () => {
     expect(completed.unlockedPerks.has(perkId)).toBe(true);
   });
 
-  it("does not modify state for isDating (requires NPC choice)", () => {
+  it("does not modify state for isDating (requires Villager choice)", () => {
     const completed = makeCompleted();
     satisfyCondition({ type: "isDating" }, completed, makeTrackerData());
-    expect(Object.keys(completed.npcRelationships).length).toBe(0);
+    expect(Object.keys(completed.villagerRelationships).length).toBe(0);
   });
 
-  it("sets npcRelationships to married", () => {
+  it("sets villagerRelationships to married", () => {
     const completed = makeCompleted();
-    satisfyCondition({ type: "married", npcId: holt }, completed, makeTrackerData());
-    expect(completed.npcRelationships[holt]).toBe("married");
+    satisfyCondition({ type: "married", villagerId: holt }, completed, makeTrackerData());
+    expect(completed.villagerRelationships[holt]).toBe("married");
   });
 
   it("marks quest as completed for questCompleted", () => {
@@ -519,7 +537,7 @@ describe("satisfyCondition", () => {
     const condition: VisibilityCondition = {
       type: "or",
       conditions: [
-        { type: "npcKnown", npcId: holt },
+        { type: "villagerKnown", villagerId: holt },
         { type: "minesLevel", floor: 20 },
       ],
     };
@@ -611,23 +629,26 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
     expect(isVisible(sourceCondition, state3)).toBe(true);
   });
 
-  it("satisfying a quest reveals NPC-gated content", () => {
+  it("satisfying a quest reveals Villager-gated content", () => {
     const trackerData = makeTrackerData({
-      npcs: {
+      quests: {
+        [story]: { [breakingTheFireSeal]: { name: "Breaking the Fire Seal" } },
+      },
+      villagers: {
         [caldarus]: {
           birthday: { day: 1, season: "spring" },
           visibility: { type: "questCompleted", questId: breakingTheFireSeal },
         },
       },
-      quests: {
-        [story]: { [breakingTheFireSeal]: { name: "Breaking the Fire Seal" } },
-      },
     });
-    const npcKnownCondition: VisibilityCondition = { type: "npcKnown", npcId: caldarus };
+    const villagerKnownCondition: VisibilityCondition = {
+      type: "villagerKnown",
+      villagerId: caldarus,
+    };
 
     const completed = makeCompleted();
     const stateBefore = deriveProgressionState(completed, trackerData, false);
-    expect(isVisible(npcKnownCondition, stateBefore)).toBe(false);
+    expect(isVisible(villagerKnownCondition, stateBefore)).toBe(false);
 
     satisfyCondition(
       { type: "questCompleted", questId: breakingTheFireSeal },
@@ -635,7 +656,7 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
       trackerData,
     );
     const stateAfter = deriveProgressionState(completed, trackerData, false);
-    expect(isVisible(npcKnownCondition, stateAfter)).toBe(true);
+    expect(isVisible(villagerKnownCondition, stateAfter)).toBe(true);
   });
 
   it("completing a chain quest cascades visibility to gated items", () => {

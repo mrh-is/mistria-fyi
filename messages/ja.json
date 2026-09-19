@@ -19,7 +19,7 @@
   "category_mines_name": "鉱山",
   "category_mines_description": "フロアと魔法",
   "category_museum_description": "コレクションと寄贈",
-  "category_npcs_description": "友情と関係",
+  "category_villagers_description": "友情と関係",
   "category_quests_name": "クエスト",
   "category_quests_description": "ストーリーと依頼",
   "category_recipes_name": "レシピ",
@@ -69,7 +69,7 @@
   "undo_unmarked": "「{name}」を未完了に戻しました",
   "almanac_page_description": "Fields of Mistriaの作物、採集、釣り、昆虫、アーティファクトなどのアルマナック項目を記録します。",
   "animals_page_description": "Fields of Mistriaの農場で動物の品種、カラー、コスメを記録します。",
-  "characters_page_description": "Fields of Mistriaのキャラクターとの友情や恋愛を記録します。",
+  "villagers_page_description": "Fields of Mistriaの町の住民との友情や恋愛を記録します。",
   "cosmetics_page_description": "Fields of Mistriaの服装と見た目の解放要素を記録します。",
   "mines_page_description": "Fields of Mistriaの鉱山のフロア、魔法、探索の進行状況を記録します。",
   "museum_page_description": "Fields of Mistriaの博物館のコレクションと寄贈をすべて記録します。",
@@ -120,18 +120,18 @@
   "mines_floor_down": "1階下がる",
   "mines_floor_label": "階層",
   "mines_floor_input_aria": "鉱山の階層",
-  "characters_roster_aria": "町の人々の名簿",
-  "characters_alphabet_aria": "町の人々の五十音索引",
+  "villagers_roster_aria": "町の人々の名簿",
+  "villagers_alphabet_aria": "町の人々の五十音索引",
   "season_spring_abbr": "春",
   "season_summer_abbr": "夏",
   "season_fall_abbr": "秋",
   "season_winter_abbr": "冬",
-  "npc_birthday_aria": "誕生日：{season}{day}日",
-  "npc_birthday_hidden": "誕生日は非表示",
-  "npc_hidden_name": "非表示のNPC",
-  "npc_relationship_level_aria": "{name}との関係レベル、{max}中{level}",
-  "npc_decrease_hearts": "{name}のハートを減らす",
-  "npc_increase_hearts": "{name}のハートを増やす",
+  "villager_birthday_aria": "誕生日：{season}{day}日",
+  "villager_birthday_hidden": "誕生日は非表示",
+  "villager_hidden_name": "非表示の町の住民",
+  "villager_relationship_level_aria": "{name}との関係レベル、{max}中{level}",
+  "villager_decrease_hearts": "{name}のハートを減らす",
+  "villager_increase_hearts": "{name}のハートを増やす",
   "relationship_status_path_not_chosen": "未選択",
   "relationship_status_married_kids": "結婚・子供あり",
   "relationship_status_married_child_free": "結婚・子供なし",
@@ -156,8 +156,8 @@
   "rank_state_completed": "完了",
   "rank_state_current": "現在",
   "rank_state_upcoming": "今後",
-  "npc_hidden_name_lower": "非表示のNPC",
-  "characters_jump_to_initial_aria": "{initial}へジャンプ、最初の町の人々の記録",
+  "villager_hidden_name_lower": "非表示の町の住民",
+  "villagers_jump_to_initial_aria": "{initial}へジャンプ、最初の町の人々の記録",
   "cosmetic_slot_head_gear": "頭装備",
   "cosmetic_slot_face_gear": "顔装備",
   "cosmetic_slot_hair": "髪型",
@@ -372,7 +372,7 @@
   "merge_label_cosmetics": "コスメ：+{count}",
   "merge_label_dates": "日付：+{count}",
   "merge_label_museum": "博物館への寄贈：+{count}",
-  "merge_label_npc_relationships": "NPCとの関係：+{count}",
+  "merge_label_villager_relationships": "町の住民との関係：+{count}",
   "merge_label_perks": "特典：+{count}",
   "merge_label_pet_cosmetics": "ペットのコスメ：+{count}",
   "merge_label_pet_skins": "ペットのスキン：+{count}",
@@ -390,12 +390,12 @@
       }
     }
   ],
-  "merge_label_npc_levels": [
+  "merge_label_villager_levels": [
     {
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "NPCとの好感度：{count}件の関係を更新"
+        "countPlural=other": "町の住民との好感度：{count}件の関係を更新"
       }
     }
   ],

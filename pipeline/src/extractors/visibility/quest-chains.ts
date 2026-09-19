@@ -4,14 +4,17 @@ import {
   type RequirementExpression,
 } from "../../requirements";
 
-import type { NpcId, QuestId } from "$lib/types/tracker-data.js";
+import type { QuestId, VillagerId } from "$lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../../parse-fiddle";
 
 export interface QuestChainData {
   crown: QuestId[];
   fetch: Record<QuestId, RequirementExpression>;
-  heart: Record<NpcId, { heartLevel: number; prerequisiteQuest?: QuestId; questId: QuestId }[]>;
+  heart: Record<
+    VillagerId,
+    { heartLevel: number; prerequisiteQuest?: QuestId; questId: QuestId }[]
+  >;
   stillwell: QuestId[];
   story: Record<QuestId, { prerequisites: QuestId[] }>;
   tali: QuestId[];
@@ -19,8 +22,8 @@ export interface QuestChainData {
 
 interface HeartChainEntry {
   heartLevel: number;
-  npcId: NpcId;
   questId: QuestId;
+  villagerId: VillagerId;
 }
 
 /**
@@ -44,7 +47,7 @@ export function extractQuestChains(fiddle: ParsedGameData): QuestChainData {
   const fetch = extractFetchChain(fiddle, questGroups);
 
   console.log(
-    `  Quest chains: ${Object.keys(story).length} story, ${Object.keys(heart).length} heart NPCs, ` +
+    `  Quest chains: ${Object.keys(story).length} story, ${Object.keys(heart).length} heart villagers, ` +
       `${crown.length} crown, ${stillwell.length} stillwell, ${tali.length} tali, ` +
       `${Object.keys(fetch).length} fetch`,
   );
@@ -96,15 +99,15 @@ function extractFetchChain(
 }
 
 /**
- * Groups heart-level letters by the NPC key named in the letter's own `reached_heart_level`
- * requirement, not the triggered quest's `npc_for_icon` — the two diverge for cross-NPC gates
+ * Groups heart-level letters by the villager key named in the letter's own `reached_heart_level`
+ * requirement, not the triggered quest's `npc_for_icon` — the two diverge for cross-villager gates
  * like Landen's "Bird Song", which is gated on Ryis's heart level.
  */
 function extractHeartChain(
   letters: Record<string, Record<string, unknown>> | undefined,
   questGroups: Record<string, Record<string, unknown>> | undefined,
-): Record<NpcId, { heartLevel: number; prerequisiteQuest?: QuestId; questId: QuestId }[]> {
-  const entriesByNpc = new Map<NpcId, HeartChainEntry[]>();
+): Record<VillagerId, { heartLevel: number; prerequisiteQuest?: QuestId; questId: QuestId }[]> {
+  const entriesByVillager = new Map<VillagerId, HeartChainEntry[]>();
 
   if (letters) {
     for (const [letterId, letter] of Object.entries(letters)) {
@@ -118,12 +121,16 @@ function extractHeartChain(
       const reachedHeartLevel = (requirements as Record<string, unknown>).reached_heart_level;
       if (typeof reachedHeartLevel !== "object" || reachedHeartLevel === null) continue;
 
-      const [npcId, level] = Object.entries(reachedHeartLevel)[0] ?? [];
-      if (npcId === undefined || typeof level !== "number") continue;
+      const [villagerId, level] = Object.entries(reachedHeartLevel)[0] ?? [];
+      if (villagerId === undefined || typeof level !== "number") continue;
 
-      const entries = entriesByNpc.get(npcId as NpcId) ?? [];
-      entries.push({ heartLevel: level, npcId: npcId as NpcId, questId: questId as QuestId });
-      entriesByNpc.set(npcId as NpcId, entries);
+      const entries = entriesByVillager.get(villagerId as VillagerId) ?? [];
+      entries.push({
+        heartLevel: level,
+        questId: questId as QuestId,
+        villagerId: villagerId as VillagerId,
+      });
+      entriesByVillager.set(villagerId as VillagerId, entries);
     }
   }
 
@@ -138,22 +145,26 @@ function extractHeartChain(
       const reachedHeartLevel = requirements.reached_heart_level;
       if (typeof reachedHeartLevel !== "object" || reachedHeartLevel === null) continue;
 
-      const [npcId, level] = Object.entries(reachedHeartLevel)[0] ?? [];
-      if (npcId === undefined || typeof level !== "number") continue;
+      const [villagerId, level] = Object.entries(reachedHeartLevel)[0] ?? [];
+      if (villagerId === undefined || typeof level !== "number") continue;
 
-      const entries = entriesByNpc.get(npcId as NpcId) ?? [];
-      entries.push({ heartLevel: level, npcId: npcId as NpcId, questId: questId as QuestId });
-      entriesByNpc.set(npcId as NpcId, entries);
+      const entries = entriesByVillager.get(villagerId as VillagerId) ?? [];
+      entries.push({
+        heartLevel: level,
+        questId: questId as QuestId,
+        villagerId: villagerId as VillagerId,
+      });
+      entriesByVillager.set(villagerId as VillagerId, entries);
     }
   }
 
   const heart: Record<
-    NpcId,
+    VillagerId,
     { heartLevel: number; prerequisiteQuest?: QuestId; questId: QuestId }[]
   > = {};
 
-  for (const [npcId, rawEntries] of entriesByNpc) {
-    // Some NPCs have alternate letter variants (e.g. branching by a world-state flag) that gate
+  for (const [villagerId, rawEntries] of entriesByVillager) {
+    // Some Villagers have alternate letter variants (e.g. branching by a world-state flag) that gate
     // the same quest at the same heart level; collapse those duplicates before chaining.
     const seen = new Set<string>();
     const entries = rawEntries.filter((entry) => {
@@ -163,7 +174,7 @@ function extractHeartChain(
       return true;
     });
     entries.sort((a, b) => a.heartLevel - b.heartLevel);
-    heart[npcId] = entries.map((entry, index) => {
+    heart[villagerId] = entries.map((entry, index) => {
       if (entry.heartLevel < 4 || index === 0) {
         return { heartLevel: entry.heartLevel, questId: entry.questId };
       }

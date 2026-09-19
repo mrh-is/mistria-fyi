@@ -1,6 +1,6 @@
 import { trackerData } from "$lib/data/index.js";
 
-import type { NpcId, NpcRelationship } from "$lib/types/tracker-data.js";
+import type { VillagerId, VillagerRelationship } from "$lib/types/tracker-data.js";
 
 export type RelationshipActionValue =
   "married" | "no" | "platonic" | "proposed" | "romantic" | "yes";
@@ -26,46 +26,46 @@ export type RelationshipStatus =
 interface RelationshipPresentationInput {
   childChoice: "no" | "undeclared" | "yes";
   level: number;
-  marriedNpc: NpcId | null;
-  npcId: NpcId;
-  relationship: NpcRelationship;
+  marriedVillager: null | VillagerId;
+  relationship: VillagerRelationship;
+  villagerId: VillagerId;
 }
 
-export function getMarriedNpc(
-  npcRelationships: Partial<Record<NpcId, NpcRelationship>>,
-): NpcId | null {
-  for (const [npcId, rel] of Object.entries(npcRelationships)) {
-    if (rel === "married") return npcId as NpcId;
+export function getMarriedVillager(
+  villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>>,
+): null | VillagerId {
+  for (const [villagerId, rel] of Object.entries(villagerRelationships)) {
+    if (rel === "married") return villagerId as VillagerId;
   }
   return null;
 }
 
 export function isRomantic(
-  npcRelationships: Partial<Record<NpcId, NpcRelationship>>,
-  npcId: NpcId,
+  villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>>,
+  villagerId: VillagerId,
 ): boolean {
-  const rel = npcRelationships[npcId];
+  const rel = villagerRelationships[villagerId];
   return rel === "romantic" || rel === "proposed" || rel === "married";
 }
 
 export function normalizeRelationships(
-  npcRelationships: Partial<Record<NpcId, NpcRelationship>>,
+  villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>>,
 ): void {
-  const marriedNpc = getMarriedNpc(npcRelationships);
-  if (!marriedNpc) return;
+  const marriedVillager = getMarriedVillager(villagerRelationships);
+  if (!marriedVillager) return;
 
-  for (const [npcId, rel] of Object.entries(npcRelationships)) {
-    if (npcId !== marriedNpc && rel !== "platonic") {
-      npcRelationships[npcId as NpcId] = "platonic";
+  for (const [villagerId, rel] of Object.entries(villagerRelationships)) {
+    if (villagerId !== marriedVillager && rel !== "platonic") {
+      villagerRelationships[villagerId as VillagerId] = "platonic";
     }
   }
 
-  const dateableNpcs = Object.entries(trackerData.npcs)
-    .filter(([, npc]) => npc.dateable)
-    .map(([id]) => id as NpcId);
-  for (const npcId of dateableNpcs) {
-    if (npcId !== marriedNpc && !(npcId in npcRelationships)) {
-      npcRelationships[npcId] = "platonic";
+  const dateableVillagers = Object.entries(trackerData.villagers)
+    .filter(([, villager]) => villager.dateable)
+    .map(([id]) => id as VillagerId);
+  for (const villagerId of dateableVillagers) {
+    if (villagerId !== marriedVillager && !(villagerId in villagerRelationships)) {
+      villagerRelationships[villagerId] = "platonic";
     }
   }
 }
@@ -73,11 +73,11 @@ export function normalizeRelationships(
 export function relationshipPresentation({
   childChoice,
   level,
-  marriedNpc,
-  npcId,
+  marriedVillager,
   relationship,
+  villagerId,
 }: RelationshipPresentationInput): RelationshipPresentation {
-  if (marriedNpc !== null && marriedNpc !== npcId) {
+  if (marriedVillager !== null && marriedVillager !== villagerId) {
     return { actions: [], status: "best_friends" };
   }
 

@@ -35,12 +35,12 @@ describe("localizeField — real assets", () => {
     const result = localizeField(requireGameAssetsDir(), {
       category: "npcs",
       classification: "localizable",
-      englishValue: "Nonexistent NPC",
+      englishValue: "Nonexistent villager",
       field: "name",
-      id: "definitely_not_a_real_npc_id",
+      id: "definitely_not_a_real_villager_id",
     });
 
-    expect(result.values.ja).toBe("Nonexistent NPC");
+    expect(result.values.ja).toBe("Nonexistent villager");
     expect(result.fallbackLocales).toContain("ja");
     expect(result.fallbackLocales).toHaveLength(7);
   });

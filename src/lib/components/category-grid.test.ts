@@ -13,11 +13,11 @@ describe("CategoryGrid", () => {
           cosmetics: { completed: 1, filtered: 1, total: 2 },
           mines: { completed: 2, filtered: 0, total: 2 },
           museum: { completed: 1, filtered: 1, total: 2 },
-          npcs: { completed: 1, filtered: 1, total: 2 },
           quests: { completed: 1, filtered: 1, total: 2 },
           recipes: { completed: 1, filtered: 1, total: 2 },
           renown: { completed: 1, filtered: 1, total: 2 },
           skills: { completed: 1, filtered: 1, total: 2 },
+          villagers: { completed: 1, filtered: 1, total: 2 },
         },
       },
     });

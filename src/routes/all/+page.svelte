@@ -12,10 +12,10 @@
   import CosmeticsSection from "./CosmeticsSection.svelte";
   import MinesSection from "./MinesSection.svelte";
   import MuseumSection from "./MuseumSection.svelte";
-  import NpcsSection from "./NpcsSection.svelte";
   import QuestsSection from "./QuestsSection.svelte";
   import RenownSection from "./RenownSection.svelte";
   import SkillsSection from "./SkillsSection.svelte";
+  import VillagersSection from "./VillagersSection.svelte";
 
   import type { PageProps } from "./$types";
 
@@ -63,7 +63,7 @@
   <MuseumSection locale={data.locale} progress={progress.museum} />
   <AlmanacSection locale={data.locale} progress={progress.almanac} />
   <AnimalsSection locale={data.locale} progress={progress.animals} />
-  <NpcsSection locale={data.locale} progress={progress.npcs} />
+  <VillagersSection locale={data.locale} progress={progress.villagers} />
   <CosmeticsSection locale={data.locale} progress={progress.cosmetics} />
   <SkillsSection locale={data.locale} progress={progress.skills} />
   <RenownSection locale={data.locale} progress={progress.renown} />

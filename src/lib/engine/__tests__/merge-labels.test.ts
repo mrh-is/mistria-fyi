@@ -20,8 +20,6 @@ function zeroCounts(): MergeCounts {
     hasUpperFloor: 0,
     mineFloor: 0,
     museum: 0,
-    npcLevels: 0,
-    npcRelationships: 0,
     perks: 0,
     petCosmetics: 0,
     petSkins: 0,
@@ -30,6 +28,8 @@ function zeroCounts(): MergeCounts {
     renown: 0,
     skillLevels: 0,
     spells: 0,
+    villagerLevels: 0,
+    villagerRelationships: 0,
   };
 }
 
@@ -57,7 +57,7 @@ describe("totalMergeCounts", () => {
       "childChoice",
       "dates",
       "hasUpperFloor",
-      "npcRelationships",
+      "villagerRelationships",
       "perks",
       "reachedSeason",
     ] as const;
@@ -94,7 +94,7 @@ describe("formatMergeCount", () => {
       "childChoice",
       "dates",
       "hasUpperFloor",
-      "npcRelationships",
+      "villagerRelationships",
       "perks",
       "reachedSeason",
     ] as const;

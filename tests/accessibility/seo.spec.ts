@@ -8,11 +8,11 @@ const HOME_PATH_PATTERN = new RegExp(`^/(?:${LOCALE_CODES.join("|")})$`);
 test.use({ javaScriptEnabled: false });
 
 test.describe("server-rendered search metadata", () => {
-  test("the former NPCs route is not redirected", async ({ page }) => {
-    const response = await page.goto("/npcs");
+  test("the former characters route is not redirected", async ({ page }) => {
+    const response = await page.goto("/characters");
 
     expect(response?.status()).toBe(404);
-    await expect(page).toHaveURL(/\/npcs$/);
+    await expect(page).toHaveURL(/\/characters$/);
   });
 
   test("every sitemap page is useful without JavaScript", async ({ page, request }) => {

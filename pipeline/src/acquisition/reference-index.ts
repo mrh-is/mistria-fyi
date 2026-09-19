@@ -16,7 +16,6 @@ export type AcquisitionReferenceKind =
   | "item"
   | "location"
   | "monster"
-  | "npc"
   | "perk"
   | "quest"
   | "questType"
@@ -25,6 +24,7 @@ export type AcquisitionReferenceKind =
   | "station"
   | "store"
   | "treasureChestTier"
+  | "villager"
   | "waterType"
   | "wing";
 
@@ -40,7 +40,6 @@ export interface AcquisitionReferenceRegistries {
   items?: ReferenceRegistry;
   locations?: ReferenceRegistry;
   monsters?: ReferenceRegistry;
-  npcs?: ReferenceRegistry;
   perks?: ReferenceRegistry;
   quests?: ReferenceRegistry;
   questTypes?: ReferenceRegistry;
@@ -49,6 +48,7 @@ export interface AcquisitionReferenceRegistries {
   stations?: ReferenceRegistry;
   stores?: ReferenceRegistry;
   treasureChestTiers?: ReferenceRegistry;
+  villagers?: ReferenceRegistry;
   waterTypes?: ReferenceRegistry;
   wings?: ReferenceRegistry;
 }
@@ -67,7 +67,6 @@ const REGISTRY_KIND = {
   items: "item",
   locations: "location",
   monsters: "monster",
-  npcs: "npc",
   perks: "perk",
   quests: "quest",
   questTypes: "questType",
@@ -76,6 +75,7 @@ const REGISTRY_KIND = {
   stations: "station",
   stores: "store",
   treasureChestTiers: "treasureChestTier",
+  villagers: "villager",
   waterTypes: "waterType",
   wings: "wing",
 } as const satisfies Record<keyof AcquisitionReferenceRegistries, AcquisitionReferenceKind>;
@@ -143,7 +143,6 @@ function emptyReferenceSets(): Record<AcquisitionReferenceKind, Set<string>> {
     item: new Set(),
     location: new Set(),
     monster: new Set(),
-    npc: new Set(),
     perk: new Set(),
     quest: new Set(),
     questType: new Set(),
@@ -152,6 +151,7 @@ function emptyReferenceSets(): Record<AcquisitionReferenceKind, Set<string>> {
     station: new Set(),
     store: new Set(),
     treasureChestTier: new Set(),
+    villager: new Set(),
     waterType: new Set(),
     wing: new Set(),
   };

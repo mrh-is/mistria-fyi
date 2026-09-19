@@ -20,28 +20,28 @@ orientation, result, observation, exception, and linked issue.
 
 ## Assistive technology
 
-| Result  | Platform         | Browser           | Technology                   | Route and task                                                              | Observation, exception, or issue |
-| ------- | ---------------- | ----------------- | ---------------------------- | --------------------------------------------------------------------------- | -------------------------------- |
-| Not run | macOS            | Safari            | VoiceOver                    | Complete a tracker row, use Undo, search, and operate Settings dialogs      |                                  |
-| Not run | iOS              | Safari            | VoiceOver                    | Import or transfer progress, navigate categories, and complete a row        |                                  |
-| Not run | Windows          | Firefox           | NVDA                         | Navigate headings and landmarks, change NPC and mine values, and use search |                                  |
-| Not run | Windows          | Chrome            | NVDA                         | Operate dialogs, validation, disclosures, tracker rows, and Undo            |                                  |
-| Not run | Android          | Chrome            | TalkBack                     | Navigate categories, search, complete a row, and use transfer controls      |                                  |
-| Not run | Desktop platform | Supported browser | Voice Control or equivalent  | Activate repeated tracker controls by their spoken names                    |                                  |
-| Not run | Apple platform   | Supported browser | Switch Control or equivalent | Sequentially scan dense tracker rows, toolbar controls, and dialogs         |                                  |
+| Result  | Platform         | Browser           | Technology                   | Route and task                                                                   | Observation, exception, or issue |
+| ------- | ---------------- | ----------------- | ---------------------------- | -------------------------------------------------------------------------------- | -------------------------------- |
+| Not run | macOS            | Safari            | VoiceOver                    | Complete a tracker row, use Undo, search, and operate Settings dialogs           |                                  |
+| Not run | iOS              | Safari            | VoiceOver                    | Import or transfer progress, navigate categories, and complete a row             |                                  |
+| Not run | Windows          | Firefox           | NVDA                         | Navigate headings and landmarks, change villager and mine values, and use search |                                  |
+| Not run | Windows          | Chrome            | NVDA                         | Operate dialogs, validation, disclosures, tracker rows, and Undo                 |                                  |
+| Not run | Android          | Chrome            | TalkBack                     | Navigate categories, search, complete a row, and use transfer controls           |                                  |
+| Not run | Desktop platform | Supported browser | Voice Control or equivalent  | Activate repeated tracker controls by their spoken names                         |                                  |
+| Not run | Apple platform   | Supported browser | Switch Control or equivalent | Sequentially scan dense tracker rows, toolbar controls, and dialogs              |                                  |
 
 ## Input, reflow, and visual preferences
 
 | Result  | Setup                                  | Route and task                                              | Required observation                                                      | Observation, exception, or issue |
 | ------- | -------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------- |
 | Not run | Keyboard only, desktop viewport        | All primary routes                                          | Logical focus order, visible focus, no traps, and restored focus          |                                  |
-| Not run | Keyboard only, 320-pixel viewport      | Home, Almanac, NPCs, Mines, Settings                        | Every action remains reachable without horizontal page scrolling          |                                  |
-| Not run | 200% text zoom                         | Home, All, NPCs, Settings                                   | Text reflows without clipping or lost controls                            |                                  |
+| Not run | Keyboard only, 320-pixel viewport      | Home, Almanac, Villagers, Mines, Settings                   | Every action remains reachable without horizontal page scrolling          |                                  |
+| Not run | 200% text zoom                         | Home, All, Villagers, Settings                              | Text reflows without clipping or lost controls                            |                                  |
 | Not run | 400% page zoom or 320-pixel equivalent | All primary routes                                          | Single-column reflow and no two-dimensional page scrolling                |                                  |
 | Not run | WCAG text spacing override             | Home, tracker rows, dialogs, Settings                       | No clipped, overlapped, or lost text                                      |                                  |
 | Not run | Reduced motion                         | Completion, disclosure, feedback, and Settings navigation   | Status remains available and non-essential motion is removed              |                                  |
-| Not run | Light theme                            | Home, NPCs, Mines, Settings                                 | Text, controls, focus, errors, and disabled states remain distinguishable |                                  |
-| Not run | Dark theme                             | Home, NPCs, Mines, Settings                                 | Text, controls, focus, errors, and disabled states remain distinguishable |                                  |
+| Not run | Light theme                            | Home, Villagers, Mines, Settings                            | Text, controls, focus, errors, and disabled states remain distinguishable |                                  |
+| Not run | Dark theme                             | Home, Villagers, Mines, Settings                            | Text, controls, focus, errors, and disabled states remain distinguishable |                                  |
 | Not run | Windows High Contrast                  | Tracker rows, selected filters, errors, spoilers, and focus | Boundaries and semantic states remain perceivable                         |                                  |
 
 ## Installed PWA

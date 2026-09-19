@@ -1,5 +1,5 @@
 <script lang="ts">
-  import NpcAlphabetIndex from "$lib/components/npc-alphabet-index.svelte";
+  import VillagerAlphabetIndex from "$lib/components/villager-alphabet-index.svelte";
 
   let {
     entries,
@@ -15,4 +15,4 @@
     <div id={entry.id} tabindex="-1" data-index-target>{entry.id}</div>
   {/each}
 </div>
-<NpcAlphabetIndex {entries} {reducedMotion} />
+<VillagerAlphabetIndex {entries} {reducedMotion} />

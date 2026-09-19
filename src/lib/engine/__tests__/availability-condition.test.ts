@@ -8,10 +8,10 @@ import {
 
 import type {
   AvailabilityCondition,
-  NpcId,
   PerkId,
   QuestId,
   SkillId,
+  VillagerId,
 } from "$lib/types/tracker-data.js";
 
 const summer = { season: "summer" as const, weather: "calm" as const };
@@ -32,14 +32,14 @@ describe("evaluateAvailabilityCondition", () => {
         { type: "perkUnlocked", perkId: "green_thumb" as PerkId },
         { type: "quest", questId: "main_quest" as QuestId, state: "completed" },
         { type: "skillLevel", level: 10, skillId: "farming" as SkillId },
-        { type: "heartLevel", level: 4, npcId: "adeline" as NpcId },
+        { type: "heartLevel", level: 4, villagerId: "adeline" as VillagerId },
       ],
     };
 
     expect(
       evaluateAvailabilityCondition(condition, {
         ...summer,
-        heartLevels: new Map([["adeline" as NpcId, 4]]),
+        heartLevels: new Map([["adeline" as VillagerId, 4]]),
         minesLevel: 20,
         perkIds: new Set(["green_thumb" as PerkId]),
         questStates: new Map([["main_quest" as QuestId, "completed"]]),

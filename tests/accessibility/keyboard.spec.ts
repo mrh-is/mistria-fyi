@@ -100,23 +100,25 @@ test.describe("@critical keyboard and focus accessibility", () => {
       "light",
       createStoredState({
         completed: {
-          npcLevels: { adeline: 10 },
-          npcRelationships: { adeline: "romantic" },
+          villagerLevels: { adeline: 10 },
+          villagerRelationships: { adeline: "romantic" },
         },
         showSpoilers: true,
       }),
     );
-    await gotoApplication(page, "/characters");
+    await gotoApplication(page, "/villagers");
     const letter = page.getByRole("button", { name: "Jump to A, first Townsfolk record" });
     await letter.focus();
     await page.keyboard.press("Enter");
-    await expect(page.locator("#npc-adeline")).toBeFocused();
+    await expect(page.locator("#villager-adeline")).toBeFocused();
 
-    const proposal = page.locator("#npc-adeline").getByRole("button", { name: "Record proposal" });
+    const proposal = page
+      .locator("#villager-adeline")
+      .getByRole("button", { name: "Record proposal" });
     await proposal.focus();
     await page.keyboard.press("Enter");
     await expect(
-      page.locator("#npc-adeline").getByRole("button", { name: "Record marriage" }),
+      page.locator("#villager-adeline").getByRole("button", { name: "Record marriage" }),
     ).toBeFocused();
   });
 
@@ -125,13 +127,13 @@ test.describe("@critical keyboard and focus accessibility", () => {
   }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await initializeApplication(page, "light", createStoredState({ showSpoilers: true }));
-    await gotoApplication(page, "/characters");
+    await gotoApplication(page, "/villagers");
 
     const initialD = page.getByRole("button", { name: "Jump to D, first Townsfolk record" });
     const initialO = page.getByRole("button", { name: "Jump to O, first Townsfolk record" });
     const initialT = page.getByRole("button", { name: "Jump to T, first Townsfolk record" });
     await initialO.click();
-    await expect(page.locator('[id^="npc-o"]:focus')).toHaveCount(1);
+    await expect(page.locator('[id^="villager-o"]:focus')).toHaveCount(1);
     const dBox = await initialD.boundingBox();
     const tBox = await initialT.boundingBox();
 
@@ -141,12 +143,12 @@ test.describe("@critical keyboard and focus accessibility", () => {
     await page.mouse.move((tBox?.x ?? 0) + 12, (tBox?.y ?? 0) + (tBox?.height ?? 0) / 2, {
       steps: 8,
     });
-    await expect(page.locator('[id^="npc-t"]:focus')).toHaveCount(1);
+    await expect(page.locator('[id^="villager-t"]:focus')).toHaveCount(1);
     await expect(initialD).toHaveAttribute("data-active", "false");
     await expect(initialT).toHaveAttribute("data-active", "true");
 
     await page.mouse.up();
-    await expect(page.locator('[id^="npc-t"]:focus')).toHaveCount(1);
+    await expect(page.locator('[id^="villager-t"]:focus')).toHaveCount(1);
     await expect(initialT).toHaveAttribute("data-active", "false");
   });
 

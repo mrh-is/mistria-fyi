@@ -14,10 +14,10 @@ import type {
   FestivalId,
   ItemId,
   MinesBiomeId,
-  NpcId,
   PerkId,
   QuestId,
   StoreId,
+  VillagerId,
 } from "$lib/types/tracker-data.js";
 import type { TrackerData } from "$lib/types/tracker-data.js";
 
@@ -196,7 +196,7 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
     { type: "quest", questId: "find_the_weathervane" as QuestId, trigger: "completion" as const },
   ],
   // heros_ring: Given in Adeline's 8-heart cutscene
-  ["heros_ring" as ItemId]: [{ type: "proposal" as const, npcId: "adeline" as NpcId }],
+  ["heros_ring" as ItemId]: [{ type: "proposal" as const, villagerId: "adeline" as VillagerId }],
   // mistril_star_trophy: Given in mistril_rank cutscene
   ["mistril_star_trophy" as ItemId]: [{ type: "renown" as const, level: 10 }],
   // star_brooch: Given in shooting_star_morning cutscene
@@ -227,7 +227,7 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   // --- Date inspiration items: unlocked through heart events ---
   // Wiki: https://fieldsofmistria.wiki.gg/wiki/Dates
   // Date inspiration items unlock new date activities. inn_menu is given in Elsie's dating
-  // tutorial cutscene. Others are unlocked through heart level progression with NPCs.
+  // tutorial cutscene. Others are unlocked through heart level progression with Villagers.
   // No native reward array encodes these; the dating system handles them at runtime.
   ["inn_menu" as ItemId]: [
     {
@@ -265,7 +265,7 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
       festivalId: "harvest" as FestivalId,
     },
   ],
-  // Inn-prepared dishes: made by NPCs at the inn, not player-craftable
+  // Inn-prepared dishes: made by Villagers at the inn, not player-craftable
   ...Object.fromEntries(
     [
       "dragon_horn_mushroom_with_thyme",

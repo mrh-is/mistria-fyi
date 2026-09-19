@@ -16,8 +16,6 @@ function completedAtRenown(renown: number): CompletedState {
     hasUpperFloor: false,
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
-    npcLevels: {},
-    npcRelationships: {},
     petCosmetics: new Set(),
     petSkins: new Set(),
     questStates: {},
@@ -25,6 +23,8 @@ function completedAtRenown(renown: number): CompletedState {
     renown,
     skillLevels: {},
     unlockedPerks: new Set(),
+    villagerLevels: {},
+    villagerRelationships: {},
   };
 }
 
