@@ -59,6 +59,8 @@
   ],
   "search_no_results": "Aucun élément trouvé",
   "search_loading": "Chargement de la recherche…",
+  "search_error": "Impossible de charger les résultats de recherche.",
+  "action_retry": "Réessayer",
   "quest_marked_obtained": "« {name} » marqué comme obtenu",
   "quest_marked_completed": "« {name} » marqué comme terminé",
   "quest_marked_completed_with_recipe": "« {name} » marqué comme terminé, débloquant « {recipe} »",
