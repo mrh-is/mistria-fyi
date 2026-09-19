@@ -1,4 +1,10 @@
 import { canonicalAlmanacId, trackerData, trackerIndex } from "$lib/data/index.js";
+import {
+  clampMineFloor,
+  clampRenownLevel,
+  MAX_SKILL_LEVEL,
+  MAX_VILLAGER_LEVEL,
+} from "$lib/engine/progress.js";
 import { normalizeRelationships } from "$lib/engine/relationships.js";
 import { recordEntries, recordKeys, recordValues } from "$lib/utils";
 
@@ -23,7 +29,11 @@ import type {
 
 // ─── Constants ──────────────────────────────────────────────────────
 
-export const TRANSFER_VERSION = 8;
+export const TRANSFER_VERSION = 9;
+
+/** First version to prepend a CRC-32 integrity checksum of the raw payload before compression. */
+const CHECKSUM_VERSION = 9;
+const CHECKSUM_BYTE_LENGTH = 4;
 
 const SEASON_BY_ORD: Season[] = ["spring", "summer", "fall", "winter"];
 const SEASON_ORD: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
@@ -42,7 +52,22 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
     throw new Error(`Unsupported transfer version: ${String(version)}`);
   }
 
-  const compressed = payloadBytes.slice(1);
+  let expectedChecksum: null | number = null;
+  let bodyStart = 1;
+  if (version >= CHECKSUM_VERSION) {
+    if (payloadBytes.length < 1 + CHECKSUM_BYTE_LENGTH) {
+      throw new Error("Malformed transfer payload: missing integrity checksum");
+    }
+    expectedChecksum =
+      ((payloadBytes[1] << 24) |
+        (payloadBytes[2] << 16) |
+        (payloadBytes[3] << 8) |
+        payloadBytes[4]) >>>
+      0;
+    bodyStart = 1 + CHECKSUM_BYTE_LENGTH;
+  }
+
+  const compressed = payloadBytes.slice(bodyStart);
   if (compressed.length === 0) {
     throw new Error("Invalid compressed transfer payload: missing compressed data");
   }
@@ -52,6 +77,10 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
     raw = await decompressBytes(compressed);
   } catch (error) {
     throw new Error("Invalid compressed transfer payload", { cause: error });
+  }
+
+  if (expectedChecksum !== null && crc32(raw) !== expectedChecksum) {
+    throw new Error("Transfer payload failed integrity check: data may be corrupted");
   }
 
   const expectedLength = HISTORICAL_RAW_LENGTHS[version] ?? getTransferRawLength(version);
@@ -275,6 +304,13 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
 
   normalizeRelationships(villagerRelationships);
 
+  for (const id of recordKeys(skillLevels)) {
+    skillLevels[id] = Math.min(skillLevels[id], MAX_SKILL_LEVEL);
+  }
+  for (const id of recordKeys(villagerLevels)) {
+    villagerLevels[id] = Math.min(villagerLevels[id], MAX_VILLAGER_LEVEL);
+  }
+
   return {
     almanac,
     almanacRecipes,
@@ -284,13 +320,13 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
     cosmetics,
     dates,
     hasUpperFloor,
-    mines: { floor, spells },
+    mines: { floor: clampMineFloor(floor), spells },
     museum,
     petCosmetics,
     petSkins,
     questStates,
     reachedSeason,
-    renown,
+    renown: clampRenownLevel(renown),
     skillLevels,
     unlockedPerks,
     villagerLevels,
@@ -473,11 +509,16 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
     offset += part.length;
   }
 
-  // Compress and prepend version byte
+  // Compress, then prepend the version byte and an integrity checksum of the raw payload
   const compressed = await compressBytes(raw);
-  const payload = new Uint8Array(1 + compressed.length);
+  const checksum = crc32(raw);
+  const payload = new Uint8Array(1 + CHECKSUM_BYTE_LENGTH + compressed.length);
   payload[0] = TRANSFER_VERSION;
-  payload.set(compressed, 1);
+  payload[1] = (checksum >>> 24) & 0xff;
+  payload[2] = (checksum >>> 16) & 0xff;
+  payload[3] = (checksum >>> 8) & 0xff;
+  payload[4] = checksum & 0xff;
+  payload.set(compressed, 1 + CHECKSUM_BYTE_LENGTH);
 
   return toBase64url(payload);
 }
@@ -520,6 +561,19 @@ function fromBase64url(str: string): Uint8Array {
   return bytes;
 }
 
+// ─── Integrity checksum (CRC-32, IEEE 802.3 polynomial) ────────────
+
+let crc32Table: null | Uint32Array = null;
+
+function crc32(bytes: Uint8Array): number {
+  const table = getCrc32Table();
+  let crc = 0xffffffff;
+  for (const byte of bytes) {
+    crc = table[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
 function fromBitfield(ordered: string[], bytes: Uint8Array): Set<string> {
   const result = new Set<string>();
   for (let i = 0; i < ordered.length; i++) {
@@ -532,6 +586,20 @@ function fromBitfield(ordered: string[], bytes: Uint8Array): Set<string> {
 
 function getAlmanacOrder(): ItemId[] {
   return trackerIndex.uniqueAlmanacCanonicalIds;
+}
+
+function getCrc32Table(): Uint32Array {
+  if (crc32Table) return crc32Table;
+  const table = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) {
+      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    }
+    table[n] = c >>> 0;
+  }
+  crc32Table = table;
+  return table;
 }
 
 function getTransferRawLength(version: number): number {
