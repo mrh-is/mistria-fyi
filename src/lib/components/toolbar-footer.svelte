@@ -24,39 +24,27 @@
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { DEFAULT_AVAILABILITY_WINDOWS } from "$lib/types/availability.js";
 
+  import type { PageMetadata } from "$lib/data/page-metadata.js";
+
   type ActivePanel = "feedback" | "settings" | "visibility" | null;
 
   /* eslint-disable no-useless-assignment -- $bindable default; reassigned reactively in $effect */
+  // The root layout resolves `metadata` (including the error-page fallback) and passes it down, so
+  // this never reads `page.data.metadata`, which is absent when no `+page.ts` load ran.
   let {
-    hidden = false,
+    metadata,
     overlayActive = $bindable(false),
   }: {
-    hidden?: boolean;
+    metadata: PageMetadata;
     overlayActive?: boolean;
   } = $props();
   /* eslint-enable no-useless-assignment */
 
-  const SEARCH_ROUTES = new Set(["/", "/almanac", "/museum"]);
-  const WORLD_STATE_ROUTES = new Set(["/", "/all", "/almanac", "/animals", "/museum"]);
-
   let feedbackContext = getFeedbackContext();
   // Route matching below is keyed by the unprefixed route, not the locale-prefixed browser URL.
   let pathname = $derived(deLocalizeHref(page.url.pathname));
-  let showSearch = $derived(SEARCH_ROUTES.has(pathname));
-  let showSeasonality = $derived(WORLD_STATE_ROUTES.has(pathname));
-  const TOOLBAR_ACCENTS: Record<string, string> = {
-    "/almanac": "var(--cat-almanac)",
-    "/animals": "var(--cat-animals)",
-    "/cosmetics": "var(--cat-cosmetics)",
-    "/mines": "var(--cat-mines)",
-    "/museum": "var(--cat-museum)",
-    "/quests": "var(--cat-quests)",
-    "/recipes": "var(--cat-recipes)",
-    "/renown": "var(--cat-renown)",
-    "/skills": "var(--cat-skills)",
-    "/villagers": "var(--cat-villagers)",
-  };
-  let toolbarAccent = $derived(TOOLBAR_ACCENTS[pathname] ?? "var(--home-accent)");
+  let toolbar = $derived(metadata.toolbar === "hidden" ? null : metadata.toolbar);
+  let toolbarAccent = $derived(`var(--${metadata.accent})`);
 
   let activePanel = $state<ActivePanel>(null);
   let previousPathname = $state("");
@@ -165,7 +153,7 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-{#if !hidden}
+{#if toolbar}
   <FeedbackPanel
     accent={toolbarAccent}
     {feedbackContext}
@@ -243,7 +231,7 @@
         </div>
 
         <div class="flex items-center gap-1.5">
-          {#if showSearch}
+          {#if toolbar.search}
             <button
               class="floating-tool"
               type="button"
@@ -312,7 +300,7 @@
               </button>
             {/if}
           {/snippet}
-          <VisibilityPanel {showSeasonality} />
+          <VisibilityPanel showSeasonality={toolbar.worldState} />
         </FoldoutPanel>
       {/if}
     </div>

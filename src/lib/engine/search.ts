@@ -7,6 +7,7 @@ import { isVisible } from "$lib/engine/visibility.js";
 import { recordEntries } from "$lib/utils";
 import { composeInfusion } from "$lib/utils/format.js";
 
+import type { SearchCategoryKey } from "$lib/data/categories.js";
 import type { UserProgressionState } from "$lib/engine/visibility.js";
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
 import type { LocaleCode } from "$lib/types/locale.js";
@@ -16,7 +17,7 @@ import type { ItemId, QuestId, Season, Weather } from "$lib/types/tracker-data.j
 
 export interface SearchResult {
   available: boolean;
-  category: string;
+  category: SearchCategoryKey;
   completed: boolean;
   detail?: string;
   fullName?: string;

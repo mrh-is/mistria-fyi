@@ -4,7 +4,8 @@ import { describe, expect, it } from "vitest";
 
 import { _pageMetadataEntries, GET } from "../../routes/sitemap.xml/+server";
 import { locales, localizeUrl } from "../paraglide/runtime.js";
-import { errorPageMetadata, SITE_NAME, SITE_ORIGIN } from "./page-metadata";
+import { categoryKeyForPathname } from "./categories";
+import { errorPageMetadata, pageMetadata, SITE_NAME, SITE_ORIGIN } from "./page-metadata";
 
 describe("page metadata", () => {
   it("is provided by every rendered page", async () => {
@@ -33,6 +34,43 @@ describe("page metadata", () => {
         expect(entry.metadata.description).toContain("Fields of Mistria");
       }
     }
+  });
+
+  it("resolves toolbar and accent defaults so consumers never see an absent field", () => {
+    const base = { description: "A page.", title: "Page" };
+
+    expect(pageMetadata(base)).toEqual({
+      ...base,
+      accent: "home-accent",
+      toolbar: { search: false, worldState: false },
+    });
+    expect(pageMetadata({ ...base, toolbar: { search: true } }).toolbar).toEqual({
+      search: true,
+      worldState: false,
+    });
+    expect(pageMetadata({ ...base, toolbar: "hidden" }).toolbar).toBe("hidden");
+    expect(pageMetadata({ ...base, accent: "cat-mines" }).accent).toBe("cat-mines");
+  });
+
+  it("colors category pages with their own accent and everything else with the home accent", async () => {
+    const entries = await _pageMetadataEntries();
+
+    for (const { metadata, path } of entries) {
+      const categoryKey = categoryKeyForPathname(path);
+      expect(metadata.accent).toBe(categoryKey ? `cat-${categoryKey}` : "home-accent");
+    }
+  });
+
+  it("hides the toolbar on utility pages and keeps it on the tracker", async () => {
+    const entries = await _pageMetadataEntries();
+    const toolbarFor = (path: string) =>
+      entries.find((entry) => entry.path === path)?.metadata.toolbar;
+
+    expect(toolbarFor("/about")).toBe("hidden");
+    expect(toolbarFor("/data")).toBe("hidden");
+    expect(toolbarFor("/")).toEqual({ search: true, worldState: true });
+    expect(toolbarFor("/mines")).toEqual({ search: false, worldState: false });
+    expect(errorPageMetadata(404).toolbar).toEqual({ search: false, worldState: false });
   });
 
   it("keeps utility, development, and error pages out of search results", async () => {
