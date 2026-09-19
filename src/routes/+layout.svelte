@@ -33,6 +33,9 @@
 
   onMount(() => {
     userState.restorePersistedState();
+    // Browser tests wait for this before interacting: a server-rendered control clicked before
+    // hydration silently drops the event. Root `onMount` runs after every child has mounted.
+    document.documentElement.dataset.hydrated = "true";
   });
 
   let metadata = $derived(page.status >= 400 ? errorPageMetadata(page.status) : page.data.metadata);
