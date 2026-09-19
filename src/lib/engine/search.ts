@@ -5,6 +5,7 @@ import { isItemAvailable } from "$lib/engine/availability.js";
 import { isVillagerComplete } from "$lib/engine/progress.js";
 import { isVisible } from "$lib/engine/visibility.js";
 import { recordEntries } from "$lib/utils";
+import { composeInfusion } from "$lib/utils/format.js";
 
 import type { UserProgressionState } from "$lib/engine/visibility.js";
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
@@ -140,8 +141,16 @@ export function searchItems(
     for (const [cosmeticId] of recordEntries(animal.cosmetics)) {
       const name = getName("animals", animalNameId(animalId, "cosmetics", cosmeticId), locale);
       const englishName = getName("animals", animalNameId(animalId, "cosmetics", cosmeticId), "en");
-      const fullName = `${getName("animals", animalNameId(animalId, "core"), locale)} ${name}`;
-      const englishFullName = `${getName("animals", animalNameId(animalId, "core"), "en")} ${englishName}`;
+      const fullName = composeInfusion(
+        getName("animals", animalNameId(animalId, "core"), locale),
+        name,
+        locale,
+      );
+      const englishFullName = composeInfusion(
+        getName("animals", animalNameId(animalId, "core"), "en"),
+        englishName,
+        "en",
+      );
       if (fullName.toLowerCase().includes(q) || englishFullName.toLowerCase().includes(q)) {
         results.push({
           available: true,

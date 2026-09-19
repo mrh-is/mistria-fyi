@@ -10,6 +10,10 @@ export type LocaleManifest = LocaleManifestEntry[];
 
 export interface LocaleManifestEntry {
   displayName: string;
+  /** Word order for composed phrases; see `InfusionOrder` in the pipeline's `locale-codes.ts`. */
+  infusionOrder: "Adjective" | "Noun";
+  /** Separator between the two parts of a composed phrase; some locales use no space at all. */
+  infusionSpace: string;
   status: LocaleStatus;
   tag: LocaleCode;
 }

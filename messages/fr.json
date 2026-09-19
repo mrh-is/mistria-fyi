@@ -44,7 +44,7 @@
   "home_active_categories_label": "Catégories en cours",
   "home_completed_heading": "Terminé",
   "home_completed_categories_label": "Catégories terminées",
-  "overall_progress_label": "{completed} sur {total} terminés au total, {pct}%",
+  "overall_progress_label": "{completed} sur {total} terminés au total, {pct}",
   "foldout_close": "Fermer {title}",
   "search_results_count": [
     {

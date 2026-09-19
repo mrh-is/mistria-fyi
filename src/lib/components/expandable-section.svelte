@@ -7,6 +7,8 @@
   import { Icon } from "$lib/components/icon/index.js";
   import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
   import * as m from "$lib/paraglide/messages.js";
+  import { getLocale } from "$lib/paraglide/runtime.js";
+  import { formatNumber } from "$lib/utils/format.js";
 
   import type { Snippet } from "svelte";
 
@@ -104,7 +106,11 @@
     aria-expanded={isOpen}
     aria-controls={contentId}
     aria-label={total !== undefined && boundedCount !== undefined
-      ? m.section_progress_label({ completed: boundedCount, name, total })
+      ? m.section_progress_label({
+          completed: formatNumber(boundedCount, getLocale()),
+          name,
+          total: formatNumber(total, getLocale()),
+        })
       : undefined}
     {@attach reportable}
   >
@@ -116,7 +122,9 @@
     />
     <svelte:element this={headingTag} class="section-name">{name}</svelte:element>
     {#if total !== undefined && boundedCount !== undefined}
-      <span class="section-count" aria-hidden="true">{boundedCount} / {total}</span>
+      <span class="section-count" aria-hidden="true"
+        >{formatNumber(boundedCount, getLocale())} / {formatNumber(total, getLocale())}</span
+      >
       <span class="section-progress" data-testid="section-progress" aria-hidden="true">
         <i data-testid="section-progress-fill" style="width: {progress}%"></i>
       </span>

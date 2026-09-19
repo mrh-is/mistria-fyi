@@ -44,7 +44,7 @@
   "home_active_categories_label": "進行中のカテゴリー",
   "home_completed_heading": "完了済み",
   "home_completed_categories_label": "完了済みのカテゴリー",
-  "overall_progress_label": "全体で{total}件中{completed}件完了、{pct}%",
+  "overall_progress_label": "全体で{total}件中{completed}件完了、{pct}",
   "foldout_close": "{title}を閉じる",
   "search_results_count": [
     {
