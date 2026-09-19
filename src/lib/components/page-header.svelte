@@ -3,6 +3,8 @@
 
   import { Icon } from "$lib/components/icon/index.js";
   import * as m from "$lib/paraglide/messages.js";
+  import { getLocale } from "$lib/paraglide/runtime.js";
+  import { formatNumber } from "$lib/utils/format.js";
   import { localizedHref } from "$lib/utils/localized-href.js";
 
   import type { Snippet } from "svelte";
@@ -61,9 +63,17 @@
   {#if pct !== undefined && progress !== undefined}
     <span class="page-header__count">
       <span class="sr-only" aria-live="polite"
-        >{m.page_header_progress({ completed: progress.completed, total: progress.total })}</span
+        >{m.page_header_progress({
+          completed: formatNumber(progress.completed, getLocale()),
+          total: formatNumber(progress.total, getLocale()),
+        })}</span
       >
-      <span aria-hidden="true">{progress.completed} / {progress.total}</span>
+      <span aria-hidden="true"
+        >{formatNumber(progress.completed, getLocale())} / {formatNumber(
+          progress.total,
+          getLocale(),
+        )}</span
+      >
     </span>
   {/if}
   {#if category !== undefined}

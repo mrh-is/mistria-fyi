@@ -28,8 +28,18 @@ export const GAME_LANGUAGE_TO_LOCALE: Readonly<Record<GameLanguageCode, LocaleCo
 
 export interface GameLanguageMeta {
   displayName: string;
+  infusionOrder: InfusionOrder;
+  /** Separator between the two parts of a composed phrase; some locales use no space at all. */
+  infusionSpace: string;
   ship: boolean;
 }
+
+/**
+ * Word order for composed phrases like an animal name + cosmetic name: `"Adjective"` puts the
+ * descriptor first (e.g. "Golden Retriever Crown"), `"Noun"` puts it last (e.g. "Crown Golden
+ * Retriever").
+ */
+export type InfusionOrder = "Adjective" | "Noun";
 
 /**
  * Throws if `l10n.meta.toml` lists a game language code {@link GAME_LANGUAGE_TO_LOCALE} doesn't
@@ -63,17 +73,35 @@ export function assertGameLanguageMapExhaustive(assetsDir: string): void {
   }
 }
 
-/** Reads `l10n.meta.toml`'s `display_name` and `ship` fields, keyed by game language code. */
+/**
+ * Reads `l10n.meta.toml`'s `display_name`, `ship`, `infusion_order`, and `infusion_space` fields,
+ * keyed by game language code.
+ */
 export function readGameLanguages(assetsDir: string): Record<GameLanguageCode, GameLanguageMeta> {
   const path = join(assetsDir, "localization", "l10n.meta.toml");
   const toml = parse(readFileSync(path, "utf-8")) as {
-    asset_properties: { languages: Record<string, { display_name: string; ship: boolean }> };
+    asset_properties: {
+      languages: Record<
+        string,
+        {
+          display_name: string;
+          infusion_order: InfusionOrder;
+          infusion_space: string;
+          ship: boolean;
+        }
+      >;
+    };
   };
 
   const languages = toml.asset_properties.languages;
   const result = {} as Record<GameLanguageCode, GameLanguageMeta>;
   for (const [code, meta] of Object.entries(languages)) {
-    result[code as GameLanguageCode] = { displayName: meta.display_name, ship: meta.ship };
+    result[code as GameLanguageCode] = {
+      displayName: meta.display_name,
+      infusionOrder: meta.infusion_order,
+      infusionSpace: meta.infusion_space,
+      ship: meta.ship,
+    };
   }
   return result;
 }
