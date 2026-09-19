@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest";
 
+import { trackerData } from "$lib/data/index.js";
+import { MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "$lib/engine/progress.js";
 import { userState } from "$lib/stores/user-state.svelte.js";
+
+import type { SkillId, VillagerId } from "$lib/types/tracker-data.js";
+
+const MAX_MINE_FLOOR = trackerData.mines.biomes.at(-1)?.floors.end ?? 0;
 
 describe("importState validation", () => {
   afterEach(() => {
@@ -125,6 +131,58 @@ describe("importState validation", () => {
           ((data.completed as Record<string, unknown>).questStates = { intro: "finished" }),
         name: "completed.questStates",
       },
+      {
+        mutate: (data) =>
+          (((data.completed as Record<string, unknown>).mines as Record<string, unknown>).floor =
+            1.5),
+        name: "completed.mines.floor (fractional)",
+      },
+      {
+        mutate: (data) =>
+          (((data.completed as Record<string, unknown>).mines as Record<string, unknown>).floor =
+            -1),
+        name: "completed.mines.floor (negative)",
+      },
+      {
+        mutate: (data) =>
+          (((data.completed as Record<string, unknown>).mines as Record<string, unknown>).floor =
+            MAX_MINE_FLOOR + 1),
+        name: "completed.mines.floor (above maximum)",
+      },
+      {
+        mutate: (data) =>
+          ((data.completed as Record<string, unknown>).villagerLevels = { adeline: 3.5 }),
+        name: "completed.villagerLevels (fractional)",
+      },
+      {
+        mutate: (data) =>
+          ((data.completed as Record<string, unknown>).villagerLevels = { adeline: -1 }),
+        name: "completed.villagerLevels (negative)",
+      },
+      {
+        mutate: (data) =>
+          ((data.completed as Record<string, unknown>).villagerLevels = {
+            adeline: MAX_VILLAGER_LEVEL + 1,
+          }),
+        name: "completed.villagerLevels (above maximum)",
+      },
+      {
+        mutate: (data) =>
+          ((data.completed as Record<string, unknown>).skillLevels = { farming: 3.5 }),
+        name: "completed.skillLevels (fractional)",
+      },
+      {
+        mutate: (data) =>
+          ((data.completed as Record<string, unknown>).skillLevels = { farming: -1 }),
+        name: "completed.skillLevels (negative)",
+      },
+      {
+        mutate: (data) =>
+          ((data.completed as Record<string, unknown>).skillLevels = {
+            farming: MAX_SKILL_LEVEL + 1,
+          }),
+        name: "completed.skillLevels (above maximum)",
+      },
     ];
 
     for (const testCase of cases) {
@@ -149,5 +207,22 @@ describe("importState validation", () => {
     const result = userState.importState(JSON.stringify(data));
     expect(result.ok).toBe(true);
     expect(userState.state.completed.renown).toBe(15);
+  });
+
+  it("restores boundary values for every numeric domain", () => {
+    const json = userState.exportState();
+    const data = JSON.parse(json) as Record<string, unknown>;
+    const completed = data.completed as Record<string, unknown>;
+    (completed.mines as Record<string, unknown>).floor = MAX_MINE_FLOOR;
+    completed.villagerLevels = { adeline: MAX_VILLAGER_LEVEL };
+    completed.skillLevels = { farming: MAX_SKILL_LEVEL };
+
+    const result = userState.importState(JSON.stringify(data));
+    expect(result.ok).toBe(true);
+    expect(userState.state.completed.mines.floor).toBe(MAX_MINE_FLOOR);
+    expect(userState.state.completed.villagerLevels["adeline" as VillagerId]).toBe(
+      MAX_VILLAGER_LEVEL,
+    );
+    expect(userState.state.completed.skillLevels["farming" as SkillId]).toBe(MAX_SKILL_LEVEL);
   });
 });
