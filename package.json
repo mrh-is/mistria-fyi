@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && tsc --noEmit -p pipeline/tsconfig.json",
     "check:i18n": "tsx scripts/check-translation-keys.ts",
+    "check:routes": "tsx scripts/check-routes.ts",
     "check:pipeline": "tsc --noEmit -p pipeline/tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "prettier --check . && eslint .",
