@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { trackerData } from "$lib/data/index.js";
+import { trackerData, trackerIndex } from "$lib/data/index.js";
 import { animalNameId, getName } from "$lib/data/names.js";
 import { deriveProgressionState } from "$lib/engine/visibility.js";
 import { recordEntries, recordKeys } from "$lib/utils.js";
@@ -77,9 +77,11 @@ function makeProgressionState(overrides: Partial<UserProgressionState> = {}): Us
 }
 
 function museumOnlyFixture() {
+  const canonicalIds = new Set(trackerIndex.almanacEntries.map((entry) => entry.itemIds[0]));
   for (const wing of Object.values(trackerData.museum)) {
     for (const set of Object.values(wing.sets)) {
       for (const itemId of set.items) {
+        if (canonicalIds.has(itemId)) continue;
         const name = getName("items", itemId, "en");
         const result = search(name).find(
           (candidate) => candidate.category === "museum" && candidate.id === itemId,
@@ -89,6 +91,24 @@ function museumOnlyFixture() {
     }
   }
   throw new Error("Expected tracker data to contain a searchable museum-only item");
+}
+
+/** An item that appears both as a canonical almanac entry and in a museum set. */
+function overlappingFixture() {
+  const canonicalIds = new Set(trackerIndex.almanacEntries.map((entry) => entry.itemIds[0]));
+  for (const wing of Object.values(trackerData.museum)) {
+    for (const set of Object.values(wing.sets)) {
+      for (const itemId of set.items) {
+        if (!canonicalIds.has(itemId)) continue;
+        const name = getName("items", itemId, "en");
+        const results = search(name);
+        if (results.some((r) => r.category === "almanac" && r.id === itemId)) {
+          return { itemId, name };
+        }
+      }
+    }
+  }
+  throw new Error("Expected tracker data to contain an item in both the almanac and the museum");
 }
 
 function search(query: string, completed?: Partial<CompletedState>) {
@@ -504,6 +524,38 @@ describe("museum results", () => {
     );
     expect(museumMatch).toBeDefined();
     expect(museumMatch?.completed).toBe(true);
+  });
+});
+
+// ─── Overlapping almanac & museum results ───────────────────────
+
+describe("items in both the almanac and the museum", () => {
+  it("emits one almanac result and one museum result for the same item ID", () => {
+    const { itemId, name } = overlappingFixture();
+    const matches = search(name).filter(
+      (r) => r.id === itemId && (r.category === "almanac" || r.category === "museum"),
+    );
+    expect(matches.map((r) => r.category).sort()).toEqual(["almanac", "museum"]);
+  });
+
+  it("reads completion for each result from its own namespace", () => {
+    const { itemId, name } = overlappingFixture();
+
+    const almanacOnly = search(name, { almanac: new Set([itemId]) });
+    expect(almanacOnly.find((r) => r.category === "almanac" && r.id === itemId)?.completed).toBe(
+      true,
+    );
+    expect(almanacOnly.find((r) => r.category === "museum" && r.id === itemId)?.completed).toBe(
+      false,
+    );
+
+    const museumOnly = search(name, { museum: new Set([itemId]) });
+    expect(museumOnly.find((r) => r.category === "almanac" && r.id === itemId)?.completed).toBe(
+      false,
+    );
+    expect(museumOnly.find((r) => r.category === "museum" && r.id === itemId)?.completed).toBe(
+      true,
+    );
   });
 });
 
