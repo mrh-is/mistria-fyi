@@ -16,6 +16,11 @@
   import QuickSettingsPanel from "$lib/components/quick-settings-panel.svelte";
   import { Input } from "$lib/components/ui/input/index.js";
   import VisibilityPanel from "$lib/components/visibility-panel.svelte";
+  import {
+    CATEGORY_CAPABILITIES,
+    categoryColor,
+    categoryKeyForPathname,
+  } from "$lib/data/categories.js";
   import { getName } from "$lib/data/names.js";
   import { getFeedbackContext } from "$lib/feedback/context.svelte.js";
   import * as m from "$lib/paraglide/messages.js";
@@ -36,27 +41,23 @@
   } = $props();
   /* eslint-enable no-useless-assignment */
 
-  const SEARCH_ROUTES = new Set(["/", "/almanac", "/museum"]);
-  const WORLD_STATE_ROUTES = new Set(["/", "/all", "/almanac", "/animals", "/museum"]);
-
   let feedbackContext = getFeedbackContext();
   // Route matching below is keyed by the unprefixed route, not the locale-prefixed browser URL.
+  // "/" & "/all" are aggregate routes, kept separate from per-category capability metadata.
   let pathname = $derived(deLocalizeHref(page.url.pathname));
-  let showSearch = $derived(SEARCH_ROUTES.has(pathname));
-  let showSeasonality = $derived(WORLD_STATE_ROUTES.has(pathname));
-  const TOOLBAR_ACCENTS: Record<string, string> = {
-    "/almanac": "var(--cat-almanac)",
-    "/animals": "var(--cat-animals)",
-    "/cosmetics": "var(--cat-cosmetics)",
-    "/mines": "var(--cat-mines)",
-    "/museum": "var(--cat-museum)",
-    "/quests": "var(--cat-quests)",
-    "/recipes": "var(--cat-recipes)",
-    "/renown": "var(--cat-renown)",
-    "/skills": "var(--cat-skills)",
-    "/villagers": "var(--cat-villagers)",
-  };
-  let toolbarAccent = $derived(TOOLBAR_ACCENTS[pathname] ?? "var(--home-accent)");
+  let categoryKey = $derived(categoryKeyForPathname(pathname));
+  let showSearch = $derived(
+    pathname === "/" ||
+      (categoryKey !== undefined && CATEGORY_CAPABILITIES[categoryKey].supportsSearch),
+  );
+  let showSeasonality = $derived(
+    pathname === "/" ||
+      pathname === "/all" ||
+      (categoryKey !== undefined && CATEGORY_CAPABILITIES[categoryKey].usesWorldState),
+  );
+  let toolbarAccent = $derived(
+    categoryKey === undefined ? "var(--home-accent)" : `var(--${categoryColor(categoryKey)})`,
+  );
 
   let activePanel = $state<ActivePanel>(null);
   let previousPathname = $state("");

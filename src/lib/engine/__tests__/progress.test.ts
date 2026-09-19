@@ -8,6 +8,7 @@ import {
   clampRenownLevel,
   getAllProgress,
   getCategoryProgress,
+  getOverallProgress,
   isVillagerComplete,
   MAX_SKILL_LEVEL,
   MAX_VILLAGER_LEVEL,
@@ -146,6 +147,23 @@ describe("getAllProgress", () => {
         cat.total,
       );
     }
+  });
+});
+
+// ─── getOverallProgress ────────────────────────────────────────────
+
+describe("getOverallProgress", () => {
+  it("sums to the same totals as reducing every category directly", () => {
+    const all = getAllProgress(ctx());
+    const expected = Object.values(all).reduce(
+      (sum, p) => ({
+        completed: sum.completed + p.completed,
+        filtered: sum.filtered + p.filtered,
+        total: sum.total + p.total,
+      }),
+      { completed: 0, filtered: 0, total: 0 },
+    );
+    expect(getOverallProgress(all)).toEqual(expected);
   });
 });
 

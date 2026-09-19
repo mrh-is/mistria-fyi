@@ -6,7 +6,7 @@
   import OverallProgress from "$lib/components/overall-progress.svelte";
   import SearchResults from "$lib/components/search-results.svelte";
   import WelcomeCard from "$lib/components/welcome-card.svelte";
-  import { getAllProgress } from "$lib/engine/progress.js";
+  import { getAllProgress, getOverallProgress } from "$lib/engine/progress.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { localizedHref } from "$lib/utils/localized-href.js";
@@ -23,10 +23,9 @@
     }),
   );
 
-  let totalCompleted = $derived(
-    Object.values(allProgress).reduce((sum, p) => sum + p.completed, 0),
-  );
-  let grandTotal = $derived(Object.values(allProgress).reduce((sum, p) => sum + p.total, 0));
+  let overall = $derived(getOverallProgress(allProgress));
+  let totalCompleted = $derived(overall.completed);
+  let grandTotal = $derived(overall.total);
   let overallPct = $derived(grandTotal > 0 ? (totalCompleted / grandTotal) * 100 : 0);
 </script>
 

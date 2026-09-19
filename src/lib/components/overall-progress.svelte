@@ -1,15 +1,12 @@
 <script lang="ts">
+  import { getOverallProgress } from "$lib/engine/progress.js";
+
   import type { AllProgress } from "$lib/engine/progress.js";
 
   let { progress }: { progress: AllProgress } = $props();
 
   let overall = $derived.by(() => {
-    let completed = 0;
-    let total = 0;
-    for (const p of Object.values(progress)) {
-      completed += p.completed;
-      total += p.total;
-    }
+    const { completed, total } = getOverallProgress(progress);
     const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
     return { completed, pct, total };
   });
