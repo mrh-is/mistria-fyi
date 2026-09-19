@@ -5,6 +5,7 @@ import OverallProgress from "$lib/components/overall-progress.svelte";
 import { getAllProgress } from "$lib/engine/progress.js";
 import { getLocale, overwriteGetLocale } from "$lib/paraglide/runtime.js";
 import { userState } from "$lib/stores/user-state.svelte.js";
+import { formatNumber } from "$lib/utils/format.js";
 
 describe("OverallProgress", () => {
   const defaultGetLocale = getLocale;
@@ -30,7 +31,9 @@ describe("OverallProgress", () => {
 
     const { body } = render(OverallProgress, { props: { progress } });
 
-    expect(body).toContain(`aria-label="0 of ${expectedTotal.toString()} completed overall, 0%"`);
+    expect(body).toContain(
+      `aria-label="0 of ${formatNumber(expectedTotal, "en")} completed overall, 0%"`,
+    );
   });
 
   it("localizes the overall progress label for Japanese", () => {
@@ -47,7 +50,9 @@ describe("OverallProgress", () => {
 
     const { body } = render(OverallProgress, { props: { progress } });
 
-    expect(body).toContain(`aria-label="全体で${expectedTotal.toString()}件中0件完了、0%"`);
+    expect(body).toContain(
+      `aria-label="全体で${formatNumber(expectedTotal, "ja")}件中0件完了、0%"`,
+    );
   });
 
   it("localizes the overall progress label for Russian", () => {
@@ -64,6 +69,8 @@ describe("OverallProgress", () => {
 
     const { body } = render(OverallProgress, { props: { progress } });
 
-    expect(body).toContain(`aria-label="Выполнено 0 из ${expectedTotal.toString()} всего, 0%"`);
+    expect(body).toContain(
+      `aria-label="Выполнено 0 из ${formatNumber(expectedTotal, "ru")} всего, 0\u00a0%"`,
+    );
   });
 });
