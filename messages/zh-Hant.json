@@ -44,7 +44,7 @@
   "home_active_categories_label": "進行中的分類",
   "home_completed_heading": "已完成",
   "home_completed_categories_label": "已完成的分類",
-  "overall_progress_label": "總計已完成 {completed}/{total}，{pct}%",
+  "overall_progress_label": "總計已完成 {completed}/{total}，{pct}",
   "foldout_close": "關閉{title}",
   "search_results_count": [
     {

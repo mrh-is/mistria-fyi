@@ -44,7 +44,7 @@
   "home_active_categories_label": "Категории в процессе",
   "home_completed_heading": "Выполнено",
   "home_completed_categories_label": "Выполненные категории",
-  "overall_progress_label": "Выполнено {completed} из {total} всего, {pct}%",
+  "overall_progress_label": "Выполнено {completed} из {total} всего, {pct}",
   "foldout_close": "Закрыть {title}",
   "search_results_count": [
     {

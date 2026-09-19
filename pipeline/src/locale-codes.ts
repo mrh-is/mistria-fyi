@@ -4,7 +4,7 @@ import { parse } from "smol-toml";
 
 import { LOCALE_CODES } from "$lib/types/locale.js";
 
-import type { LocaleCode } from "$lib/types/locale.js";
+import type { InfusionFormat, LocaleCode } from "$lib/types/locale.js";
 
 /**
  * The game's own internal language codes, as they appear in `l10n.meta.toml` and as the filename
@@ -28,6 +28,7 @@ export const GAME_LANGUAGE_TO_LOCALE: Readonly<Record<GameLanguageCode, LocaleCo
 
 export interface GameLanguageMeta {
   displayName: string;
+  infusion: InfusionFormat;
   ship: boolean;
 }
 
@@ -63,17 +64,34 @@ export function assertGameLanguageMapExhaustive(assetsDir: string): void {
   }
 }
 
-/** Reads `l10n.meta.toml`'s `display_name` and `ship` fields, keyed by game language code. */
+/**
+ * Reads `l10n.meta.toml`'s `display_name`, `ship`, `infusion_order`, and `infusion_space` fields,
+ * keyed by game language code.
+ */
 export function readGameLanguages(assetsDir: string): Record<GameLanguageCode, GameLanguageMeta> {
   const path = join(assetsDir, "localization", "l10n.meta.toml");
   const toml = parse(readFileSync(path, "utf-8")) as {
-    asset_properties: { languages: Record<string, { display_name: string; ship: boolean }> };
+    asset_properties: {
+      languages: Record<
+        string,
+        {
+          display_name: string;
+          infusion_order: InfusionFormat["order"];
+          infusion_space: string;
+          ship: boolean;
+        }
+      >;
+    };
   };
 
   const languages = toml.asset_properties.languages;
   const result = {} as Record<GameLanguageCode, GameLanguageMeta>;
   for (const [code, meta] of Object.entries(languages)) {
-    result[code as GameLanguageCode] = { displayName: meta.display_name, ship: meta.ship };
+    result[code as GameLanguageCode] = {
+      displayName: meta.display_name,
+      infusion: { order: meta.infusion_order, space: meta.infusion_space },
+      ship: meta.ship,
+    };
   }
   return result;
 }
