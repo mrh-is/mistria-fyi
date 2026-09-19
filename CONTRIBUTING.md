@@ -76,11 +76,14 @@ contracts, and state management rules, see [docs/app-architecture.md](docs/app-a
 | `pnpm run dev`                         | Dev server                                            |
 | `pnpm run build`                       | Production build (Cloudflare Pages)                   |
 | `pnpm run check`                       | SvelteKit type checking                               |
+| `pnpm run check:i18n`                  | Verify locale files match `en.json`'s keys            |
+| `pnpm run check:routes`                | Verify built static assets bypass Functions           |
 | `pnpm run lint`                        | Prettier + ESLint                                     |
 | `pnpm run lint:fix`                    | Auto-fix lint issues                                  |
 | `pnpm run test`                        | Complete Vitest suite                                 |
 | `pnpm run test:app`                    | App tests (`src/`)                                    |
 | `pnpm run test:pipeline`               | Pipeline tests (`pipeline/`)                          |
+| `pnpm run verify`                      | Full CI matrix locally                                |
 | `pnpm run pipeline -- /path/to/assets` | Regenerate `tracker-data.json` from local TOML assets |
 
 ## Security

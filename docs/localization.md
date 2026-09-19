@@ -102,7 +102,8 @@ Two checks exist. Neither is a full localization safety net — see
 against `messages/en.json` and fails on any missing or extra key. It checks **shape only, not
 content** — a translation can legitimately equal its English source (a short string, a proper noun)
 or still be a stale machine translation; this check only prevents a PR from adding an English string
-without adding the corresponding key everywhere else. It's part of `pnpm run verify`.
+without adding the corresponding key everywhere else. CI runs it on every pull request, and it's
+part of `pnpm run verify`.
 
 ### ESLint rule (`local/no-hardcoded-ui-text`)
 
@@ -138,8 +139,7 @@ Be honest with yourself (and reviewers) about what this catches:
 - Both checks are opt-in / allowlisted, not repo-wide. A PR that never touches an allowlisted file
   can still ship hardcoded English text elsewhere without either check firing.
 
-Do your best with these; don't treat a clean `pnpm run verify` as proof that a feature is fully
-localized.
+Do your best with these; don't treat a green CI run as proof that a feature is fully localized.
 
 ## Fonts
 
