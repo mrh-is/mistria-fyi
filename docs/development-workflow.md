@@ -23,31 +23,33 @@
 All agents must operate within an isolated Git worktree to prevent edit collisions, dirty-state
 confusion, and branch switching interference across concurrent sessions.
 
-### Worktree Location Rules
+### Worktree creation
 
-- Worktrees must be located under `.worktrees/<issue-number>-<short-description>` (or an agent's
-  native managed worktree directory).
-- Verify that `.worktrees/` is ignored before creating a new worktree:
-  ```sh
-  git check-ignore -q .worktrees/placeholder
-  ```
+Create and set up a worktree from any checkout with one command:
 
-### Worktree Creation & Setup
+```sh
+pnpm run worktree:new <issue-number>-<short-description>
+```
 
-1. Create the worktree and branch:
-   ```sh
-   git worktree add .worktrees/<issue-number>-<short-description> -b <issue-number>-<short-description>
-   ```
-2. Enter the worktree directory and install locked dependencies:
-   ```sh
-   cd .worktrees/<issue-number>-<short-description>
-   pnpm install --frozen-lockfile
-   ```
-3. Install Husky git hooks explicitly (required in environments where lifecycle scripts are disabled
-   or skipped):
-   ```sh
-   pnpm run prepare
-   ```
+The script creates `.worktrees/<slug>` on a matching branch under the main checkout, refuses to run
+if `.worktrees/` is not gitignored, symlinks every `.worktreeinclude` entry from the main checkout,
+and runs `pnpm install --frozen-lockfile` and `pnpm run prepare` (Husky hooks). Agents with their
+own managed worktree directory (for example `.claude/worktrees/`) may use it instead; the same
+symlink and install steps still apply.
+
+<details>
+<summary>Manual fallback</summary>
+
+```sh
+git check-ignore -q .worktrees/placeholder
+git worktree add .worktrees/<slug> -b <slug>
+cd .worktrees/<slug>
+ln -s /path/to/main/repo/pipeline/input pipeline/input
+pnpm install --frozen-lockfile
+pnpm run prepare
+```
+
+</details>
 
 ### Shared vs. Isolated Worktree Resources (`.worktreeinclude`)
 
@@ -145,8 +147,7 @@ pipelines.
   ```sh
   pnpm run test
   ```
-  This command passes in a fresh clone without `pipeline/input/` and is the test command issue #90’s
-  planned public CI will run.
+  This command passes in a fresh clone without `pipeline/input/` and is the test command CI runs.
 - **Run Application Logic Tests Only** (`src/`):
   ```sh
   pnpm run test:app
@@ -164,12 +165,15 @@ additional local checks against the installed game assets:
 
 ```sh
 pnpm run test:pipeline:assets
-pnpm run pipeline -- pipeline/input/assets
+pnpm run pipeline -- input/assets --version=1.0.2
 ```
 
 `test:pipeline:assets` validates the canonical v1.0.2 fixture and fails when its resolved assets
-path is missing. Set `MISTRIA_ASSETS=/path/to/assets` to use another local assets root. The pipeline
-command regenerates `src/lib/data/tracker-data.json`; review that diff before committing.
+path is missing. Set `MISTRIA_ASSETS=/path/to/assets` to use another local assets root. The
+`pipeline` script changes directory into `pipeline/` before running, so the assets path is relative
+to that directory, and the v1.0.2 fixture has no `misc.version`, so `--version` is required. The
+command regenerates `src/lib/data/tracker-data.json`; review that diff before committing. CI cannot
+run either command because licensed game assets are not distributed with the repository.
 
 The commands above cover routine regeneration from the same game version. When moving pipeline input
 to a new Fields of Mistria version, follow the
@@ -180,9 +184,13 @@ diff and separate compatibility decisions for persisted state, backups, save imp
 
 ## 5. Verification matrix
 
+The contract is stated in [AGENTS.md §7](../AGENTS.md#7-verification): focused checks locally, the
+complete matrix in CI on every pull request, and the full local matrix only for the listed
+exceptions. This section is the command reference.
+
 ### During development
 
-Run **only** the specific test covering your change:
+Run only the specific test covering your change:
 
 ```sh
 pnpm exec vitest run path/to/file.test.ts 2>&1 | tail -30
@@ -194,35 +202,36 @@ After a TypeScript or Svelte contract edit that could cause type errors elsewher
 pnpm run check 2>&1 | tail -10
 ```
 
-Do not run `pnpm run test`, `pnpm run lint`, `pnpm run build`, or any other full-suite command
-during development. Those are for the final verification pass only.
+Run `pnpm run lint:fix` before committing. Do not run `pnpm run test`, `pnpm run build`, or any
+other full-suite command during development.
 
-### When commit-ready
+### CI
 
-Run the compact verification script **once**:
+`.github/workflows/ci.yml` runs on every pull request and main push:
 
-```sh
-pnpm run verify
-```
+| Command                 | Description & Purpose                                                            | Scope                |
+| ----------------------- | -------------------------------------------------------------------------------- | -------------------- |
+| `pnpm run lint`         | Checks formatting and ESLint compliance                                          | All files            |
+| `pnpm run check:i18n`   | Verifies every locale file matches `en.json`'s key shape                         | `messages/`          |
+| `pnpm run check`        | Synchronizes SvelteKit types and runs `svelte-check` plus the pipeline `tsc`     | `src/` & `pipeline/` |
+| `pnpm run test`         | Executes the complete Vitest test suite                                          | Unit & logic tests   |
+| `pnpm run build`        | Compiles SvelteKit app and verifies Cloudflare adapter                           | Build validation     |
+| `pnpm run check:routes` | Proves every built static asset bypasses Cloudflare Functions via `_routes.json` | Build validation     |
 
-This runs lint:fix, lint, check, test, & build in sequence with compact output, stopping on first
-failure. If a step fails, fix the issue and rerun only that step, then rerun `pnpm run verify` once.
+`.github/workflows/browser-tests.yml` adds the accessibility and PWA Playwright suites when `src/`,
+`static/`, `tests/`, or their configs change; see [accessibility testing](accessibility-testing.md)
+and [PWA verification](pwa-verification.md).
 
-The individual matrix commands remain available for reference:
+### Full local matrix
 
-| Command                 | Description & Purpose                                                            | Scope                     |
-| ----------------------- | -------------------------------------------------------------------------------- | ------------------------- |
-| `pnpm run lint:fix`     | Formats code with Prettier and auto-fixes ESLint errors                          | All files                 |
-| `pnpm run lint`         | Checks formatting and ESLint compliance (CI equivalent)                          | All files                 |
-| `pnpm run check`        | Synchronizes SvelteKit types and runs `svelte-check`                             | `src/` & SvelteKit routes |
-| `pnpm run test`         | Executes the complete Vitest test suite                                          | Unit & logic tests        |
-| `pnpm run build`        | Compiles SvelteKit app and verifies Cloudflare adapter                           | Build validation          |
-| `pnpm run check:routes` | Proves every built static asset bypasses Cloudflare Functions via `_routes.json` | Build validation          |
+`pnpm run verify` runs the `ci.yml` matrix locally (plus `lint:fix` first) with compact output,
+stopping on the first failure. Run it once, when commit-ready, only for the exceptions in
+[AGENTS.md §7](../AGENTS.md#7-verification). If a step fails, fix the issue and rerun only that
+step, then rerun `pnpm run verify` once.
 
 Pipeline parser, evaluator, extractor, & shared data-contract changes must additionally pass
-`pnpm run test:pipeline:assets` and `pnpm run pipeline -- <path>` as described above. These local
-commands are deliberately excluded from issue #90’s planned public CI because licensed game assets
-are not distributed with the repository.
+`pnpm run test:pipeline:assets` and the pipeline run described in §4. Those are local-only because
+CI has no game assets.
 
 ### Documentation-only changes
 
@@ -232,10 +241,11 @@ Changes that touch only `.md` files, comments, or non-executable content need on
 pnpm run lint:fix && pnpm run lint
 ```
 
-No build, no tests.
+No build, no tests. In a fresh worktree, run `pnpm exec svelte-kit sync` first if ESLint reports a
+missing `.svelte-kit/tsconfig.json`; `pnpm run check` and `pnpm run verify` do this implicitly.
 
 > [!IMPORTANT] Git pre-commit hooks are developer conveniences, not verification evidence. Agents
-> must run the matrix commands directly in their shell and verify clean exit status before
+> must run the documented commands directly in their shell and verify clean exit status before
 > committing work.
 
 ### Required branch/PR delivery check before handoff
@@ -317,7 +327,7 @@ offline fallback, registration, or activation behavior.
 - **Symptom**: App UI displays stale item fields after pipeline extractor logic updates.
 - **Recovery**: Run the pipeline with local game assets to regenerate the target dataset:
   ```sh
-  pnpm run pipeline -- pipeline/input/assets
+  pnpm run pipeline -- input/assets --version=1.0.2
   ```
   Review `git diff src/lib/data/tracker-data.json` to verify schema and data accuracy.
 
@@ -325,7 +335,7 @@ offline fallback, registration, or activation behavior.
 
 - **Symptom**: Pre-commit hooks fail or block commits inside isolated worktree environments.
 - **Recovery**: Bypass hooks if necessary (`git commit --no-verify`), provided you have directly run
-  and passed `pnpm run lint:fix`, `pnpm run check`, `pnpm run test`, and `pnpm run build`.
+  `pnpm run lint:fix` and the focused checks from §5; CI still runs the full matrix on the PR.
 
 ### Missing Husky Hooks After Worktree Setup
 

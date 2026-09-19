@@ -26,15 +26,16 @@ before changing version-specific fixtures or committing generated data from diff
 ### Test tiers
 
 The default pipeline suite uses synthetic fixtures and passes in a fresh clone without game assets.
-Issue #90’s planned public CI verification matrix will run it:
+CI runs it as part of `pnpm run test` on every pull request:
 
 ```sh
 pnpm run test:pipeline
 ```
 
-The canonical v1.0.2 integration suite is an explicit local check. It uses `pipeline/input/assets`
-by default or `MISTRIA_ASSETS` when set, and fails with the resolved missing path instead of
-silently skipping when assets are unavailable:
+The canonical v1.0.2 integration suite is an explicit local check that CI cannot run, because
+licensed game assets are not distributed with the repository. It uses `pipeline/input/assets` by
+default or `MISTRIA_ASSETS` when set, and fails with the resolved missing path instead of silently
+skipping when assets are unavailable:
 
 ```sh
 pnpm run test:pipeline:assets
