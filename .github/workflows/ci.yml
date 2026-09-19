@@ -63,6 +63,7 @@ jobs:
           version: 11.21.0
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check
+      - run: pnpm run check:i18n
 
   test:
     name: Test
