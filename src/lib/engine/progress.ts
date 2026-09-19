@@ -1,4 +1,3 @@
-import { OVERALL_PROGRESS_CATEGORY_KEYS } from "$lib/data/categories.js";
 import { trackerData, trackerIndex } from "$lib/data/index.js";
 import { isVariantInScope } from "$lib/engine/animal-availability.js";
 import { isItemApplicable, isItemApplicableForAlmanac } from "$lib/engine/applicability.js";
@@ -85,15 +84,15 @@ export function getCategoryProgress(category: CategoryKey, ctx: ProgressContext)
 
 // ─── Per-category progress ──────────────────────────────────────────
 
-/** Sums the categories that count toward overall-progress aggregates (home page, `/all`). */
+/** Sums every category's progress into one overall total (home page, `/all`). */
 export function getOverallProgress(allProgress: AllProgress): CategoryProgress {
   let completed = 0;
   let filtered = 0;
   let total = 0;
-  for (const key of OVERALL_PROGRESS_CATEGORY_KEYS) {
-    completed += allProgress[key].completed;
-    filtered += allProgress[key].filtered;
-    total += allProgress[key].total;
+  for (const p of Object.values(allProgress)) {
+    completed += p.completed;
+    filtered += p.filtered;
+    total += p.total;
   }
   return { completed, filtered, total };
 }

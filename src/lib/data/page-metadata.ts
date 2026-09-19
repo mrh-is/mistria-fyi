@@ -6,7 +6,11 @@ export interface PageMetadata {
   /** Hides the bottom toolbar — for pages that aren't tracker categories (settings, legal). */
   hideToolbar?: boolean;
   robots?: RobotsDirective;
+  /** Shows the toolbar's in-page name filter (`toolbarState.searchQuery`). */
+  showSearch?: boolean;
   title: string;
+  /** Shows the toolbar's season/weather & availability filters. */
+  usesWorldState?: boolean;
 }
 
 type RobotsDirective = "noindex, follow" | "noindex, nofollow";

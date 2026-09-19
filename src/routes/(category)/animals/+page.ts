@@ -22,6 +22,7 @@ export const load: PageLoad = async (event?: Partial<Parameters<PageLoad>[0]>) =
     metadata: {
       description: m.animals_page_description({}, { locale }),
       title: getName("ui", "animals", locale),
+      usesWorldState: true,
     },
   };
 };

@@ -17,19 +17,6 @@ export const CATEGORY_KEYS = [
   "villagers",
 ] as const;
 
-export interface CategoryCapabilities {
-  /**
-   * Whether this category's progress contributes to overall-progress aggregates (home page,
-   * `/all`). The actual recipe policy is undecided (see issue #82); this flag currently mirrors
-   * today's behavior for every category unchanged.
-   */
-  includeInOverallProgress: boolean;
-  /** Whether this category's toolbar exposes the in-page name filter (`toolbarState.searchQuery`). */
-  supportsSearch: boolean;
-  /** Whether this category's toolbar exposes the season/weather & availability filters. */
-  usesWorldState: boolean;
-}
-
 export interface CategoryInfo {
   color: string;
   description: string;
@@ -38,25 +25,6 @@ export interface CategoryInfo {
 }
 
 export type CategoryKey = (typeof CATEGORY_KEYS)[number];
-
-/** Cross-cutting capabilities driving overall-progress & toolbar behavior. One entry per category. */
-export const CATEGORY_CAPABILITIES: Record<CategoryKey, CategoryCapabilities> = {
-  almanac: { includeInOverallProgress: true, supportsSearch: true, usesWorldState: true },
-  animals: { includeInOverallProgress: true, supportsSearch: false, usesWorldState: true },
-  cosmetics: { includeInOverallProgress: true, supportsSearch: false, usesWorldState: false },
-  mines: { includeInOverallProgress: true, supportsSearch: false, usesWorldState: false },
-  museum: { includeInOverallProgress: true, supportsSearch: true, usesWorldState: true },
-  quests: { includeInOverallProgress: true, supportsSearch: false, usesWorldState: false },
-  recipes: { includeInOverallProgress: true, supportsSearch: false, usesWorldState: false },
-  renown: { includeInOverallProgress: true, supportsSearch: false, usesWorldState: false },
-  skills: { includeInOverallProgress: true, supportsSearch: false, usesWorldState: false },
-  villagers: { includeInOverallProgress: true, supportsSearch: false, usesWorldState: false },
-};
-
-/** Category keys that appear in overall-progress aggregates, in display order. */
-export const OVERALL_PROGRESS_CATEGORY_KEYS: readonly CategoryKey[] = CATEGORY_KEYS.filter(
-  (key) => CATEGORY_CAPABILITIES[key].includeInOverallProgress,
-);
 
 /**
  * Category keys the cross-category search index produces results for. Kept as an explicit,

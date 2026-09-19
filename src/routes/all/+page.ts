@@ -9,6 +9,7 @@ export const load: PageLoad = async (event?: Partial<Parameters<PageLoad>[0]>) =
     metadata: {
       description: "View & track every Fields of Mistria completion category in one checklist.",
       title: "Checklist of everything",
+      usesWorldState: true,
     },
   };
 };
