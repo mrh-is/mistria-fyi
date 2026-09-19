@@ -26,5 +26,6 @@ run_step check      pnpm run check
 run_step check:i18n pnpm run check:i18n
 run_step test       pnpm run test
 run_step build      pnpm run build
+run_step check:routes pnpm run check:routes
 
 printf '\n=== All checks passed ===\n'

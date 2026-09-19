@@ -1,7 +1,12 @@
 import { SvelteSet } from "svelte/reactivity";
 
 import { canonicalAlmanacId, trackerData } from "$lib/data/index.js";
-import { clampRenownLevel, MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "$lib/engine/progress.js";
+import {
+  clampMineFloor,
+  clampRenownLevel,
+  MAX_SKILL_LEVEL,
+  MAX_VILLAGER_LEVEL,
+} from "$lib/engine/progress.js";
 import { findRecipesForQuest } from "$lib/engine/quest-rewards.js";
 import { getMarriedVillager, normalizeRelationships } from "$lib/engine/relationships.js";
 import { deriveProgressionState, type UserProgressionState } from "$lib/engine/visibility.js";
@@ -619,7 +624,7 @@ function createUserState() {
       state.completed.hasUpperFloor = value;
     },
     setMineFloor(floor: number) {
-      state.completed.mines.floor = Math.max(0, Math.min(floor, getMaxMineFloor()));
+      state.completed.mines.floor = clampMineFloor(floor);
     },
     setReachedSeason(season: Season) {
       const seasonOrd: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
