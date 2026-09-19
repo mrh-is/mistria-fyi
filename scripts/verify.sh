@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Compact full verification for agents. Stops on first failure.
-# Use ONCE when commit-ready, not during development.
+# Runs the same matrix as CI (ci.yml) locally, with compact output. Stops on first failure.
+# CI runs this matrix on every pull request; run it locally only for the exceptions in
+# AGENTS.md §7 (pipeline/generated-data changes, high-risk surfaces, CI-only failures).
 # During development, run only the specific test:
 #   pnpm exec vitest run path/to/file.test.ts 2>&1 | tail -30
 set -euo pipefail

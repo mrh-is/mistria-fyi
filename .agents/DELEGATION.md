@@ -99,14 +99,10 @@ Use for substantial tasks that need strong reasoning:
 
 ## Session lifecycle
 
-When approaching the 5-hour usage window limit or sensing rate-limiting:
-
-1. Write remaining work to a handoff note (branch, issue #, current state)
-2. Use `ScheduleWakeup` to schedule a fresh session within the next usage window
-3. Do NOT continue the current session after the cache has gone cold
-
-A fresh session reading the issue and branch is 50–100x cheaper than re-tokenizing a cold
-conversation. See [AGENTS.md](../AGENTS.md) §10.
+Session budgets, handoff notes, and the stop rule live in
+[AGENTS.md §10](../AGENTS.md#10-session-lifecycle). When a usage window is about to close, write the
+handoff note, use `ScheduleWakeup` to start a fresh session in the next window, and do not continue
+the current session after the cache has gone cold.
 
 ## Parallel dispatch
 

@@ -29,12 +29,13 @@ assistive-technology behavior belongs in the manual matrix.
 
 ## CI behavior
 
-`.github/workflows/accessibility.yml` is separate from ordinary CI. It runs for pull requests, at
+The `accessibility` job in `.github/workflows/browser-tests.yml` is separate from ordinary CI. It
+runs in three shards for pull requests that touch `src/`, `static/`, `tests/`, or their configs, at
 03:17 UTC nightly, and through manual dispatch. Pull-request jobs have read-only repository access.
-Failed runs upload `accessibility-report`, containing the HTML and JSON reports, traces, and
-screenshots. A trusted scheduled job has narrowly scoped issue-write permission and synchronizes one
-open GitHub issue for accessibility-test failures. Setup failures remain workflow failures and do
-not create misleading regression issues. Recovery adds a comment and closes the automated issue.
+Failed shards upload `accessibility-report-<index>`, containing the HTML and JSON reports, traces,
+and screenshots. A trusted scheduled job has narrowly scoped issue-write permission and synchronizes
+one open GitHub issue for accessibility-test failures. Setup failures remain workflow failures and
+do not create misleading regression issues. Recovery adds a comment and closes the automated issue.
 
 The initial local measurement and the GitHub Actions median are recorded in the pull request. The
 approved budget is no more than two minutes of additional merge-ready wall time. If the measured
