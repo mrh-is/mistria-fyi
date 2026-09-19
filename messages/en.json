@@ -39,6 +39,12 @@
   "toolbar_filters_cleared": "All filters cleared",
   "page_header_back_to_home": "Back to home",
   "page_header_progress": "{completed} of {total} completed",
+  "home_index_heading": "Index",
+  "home_everything_label": "Everything",
+  "home_active_categories_label": "Categories in progress",
+  "home_completed_heading": "Completed",
+  "home_completed_categories_label": "Completed categories",
+  "overall_progress_label": "{completed} of {total} completed overall, {pct}%",
   "foldout_close": "Close {title}",
   "search_results_count": [
     {
