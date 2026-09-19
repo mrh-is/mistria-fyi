@@ -1,4 +1,6 @@
+import { categoryColor } from "$lib/data/categories.js";
 import { getName, loadNames, loadPageNames } from "$lib/data/names.js";
+import { pageMetadata } from "$lib/data/page-metadata.js";
 import * as m from "$lib/paraglide/messages.js";
 import { baseLocale, getLocaleForUrl } from "$lib/paraglide/runtime.js";
 import { SEGMENT_LOOKUP_CATEGORIES } from "$lib/utils/segment-lookups.js";
@@ -19,10 +21,11 @@ export const load: PageLoad = async (event?: Partial<Parameters<PageLoad>[0]>) =
     ...SEGMENT_LOOKUP_CATEGORIES,
   ]);
   return {
-    metadata: {
+    metadata: pageMetadata({
+      accent: categoryColor("animals"),
       description: m.animals_page_description({}, { locale }),
       title: getName("ui", "animals", locale),
-      usesWorldState: true,
-    },
+      toolbar: { worldState: true },
+    }),
   };
 };

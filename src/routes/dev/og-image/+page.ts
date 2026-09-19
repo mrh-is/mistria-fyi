@@ -1,10 +1,12 @@
+import { pageMetadata } from "$lib/data/page-metadata.js";
+
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = () => ({
-  metadata: {
+  metadata: pageMetadata({
     description: "Generate the Mistria Field Guide share card during development.",
-    hideToolbar: true,
     robots: "noindex, nofollow",
     title: "Share card",
-  },
+    toolbar: "hidden",
+  }),
 });
