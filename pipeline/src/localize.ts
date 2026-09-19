@@ -54,8 +54,7 @@ export function generateLocaleManifest(assetsDir: string): LocaleManifest {
     const status: LocaleStatus = meta.ship ? "stable" : "beta";
     return {
       displayName: meta.displayName,
-      infusionOrder: meta.infusionOrder,
-      infusionSpace: meta.infusionSpace,
+      infusion: meta.infusion,
       status,
       tag,
     };

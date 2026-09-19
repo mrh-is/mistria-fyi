@@ -111,11 +111,11 @@ const LOCALE_ENTRIES_BY_TAG = new Map(
  * descriptor leads; some locales put it last instead).
  */
 export function composeInfusion(descriptor: string, base: string, locale: LocaleCode): string {
-  const entry = LOCALE_ENTRIES_BY_TAG.get(locale);
-  if (!entry || entry.infusionOrder === "Adjective") {
-    return `${descriptor}${entry?.infusionSpace ?? " "}${base}`;
+  const infusion = LOCALE_ENTRIES_BY_TAG.get(locale)?.infusion;
+  if (!infusion || infusion.order === "Adjective") {
+    return `${descriptor}${infusion?.space ?? " "}${base}`;
   }
-  return `${base}${entry.infusionSpace}${descriptor}`;
+  return `${base}${infusion.space}${descriptor}`;
 }
 
 /** Formats a plain integer (e.g. a completion count) with the active locale's grouping. */
