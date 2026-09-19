@@ -3,6 +3,7 @@
   import CategoryCard from "$lib/components/category-card.svelte";
   import { Icon } from "$lib/components/icon/index.js";
   import { CATEGORY_KEYS, sortCategoryKeysByName } from "$lib/data/categories.js";
+  import * as m from "$lib/paraglide/messages.js";
 
   import type { AllProgress } from "$lib/engine/progress.js";
 
@@ -31,7 +32,7 @@
 
 <div class="flex flex-col gap-5">
   {#if activeCategories.length > 0}
-    <ul class="flex flex-col gap-1.5" aria-label="Categories in progress">
+    <ul class="flex flex-col gap-1.5" aria-label={m.home_active_categories_label()}>
       {#each activeCategories as key (key)}
         <li><CategoryCard {key} progress={progress[key]} /></li>
       {/each}
@@ -44,9 +45,9 @@
         class="flex items-center gap-1.5 px-1 font-controls text-[11px] tracking-[0.14em] text-amber-800 uppercase dark:text-amber-300"
       >
         <Icon.Category category="complete" class="size-3.5" />
-        <h2>Completed</h2>
+        <h2>{m.home_completed_heading()}</h2>
       </div>
-      <ul class="flex flex-col gap-1.5" aria-label="Completed categories">
+      <ul class="flex flex-col gap-1.5" aria-label={m.home_completed_categories_label()}>
         {#each completedCategories as key (key)}
           <li><CategoryCard {key} progress={progress[key]} /></li>
         {/each}

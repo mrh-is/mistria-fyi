@@ -39,6 +39,12 @@
   "toolbar_filters_cleared": "已清除所有筛选",
   "page_header_back_to_home": "返回首页",
   "page_header_progress": "已完成 {completed}/{total}",
+  "home_index_heading": "索引",
+  "home_everything_label": "全部",
+  "home_active_categories_label": "进行中的分类",
+  "home_completed_heading": "已完成",
+  "home_completed_categories_label": "已完成的分类",
+  "overall_progress_label": "总计已完成 {completed}/{total}，{pct}%",
   "foldout_close": "关闭{title}",
   "search_results_count": [
     {

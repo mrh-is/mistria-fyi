@@ -39,6 +39,12 @@
   "toolbar_filters_cleared": "모든 필터 해제됨",
   "page_header_back_to_home": "홈으로 돌아가기",
   "page_header_progress": "{total}개 중 {completed}개 완료",
+  "home_index_heading": "색인",
+  "home_everything_label": "전체",
+  "home_active_categories_label": "진행 중인 카테고리",
+  "home_completed_heading": "완료",
+  "home_completed_categories_label": "완료된 카테고리",
+  "overall_progress_label": "전체 {total}개 중 {completed}개 완료, {pct}%",
   "foldout_close": "{title} 닫기",
   "search_results_count": [
     {

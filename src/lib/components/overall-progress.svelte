@@ -1,4 +1,6 @@
 <script lang="ts">
+  import * as m from "$lib/paraglide/messages.js";
+
   import type { AllProgress } from "$lib/engine/progress.js";
 
   let { progress }: { progress: AllProgress } = $props();
@@ -17,7 +19,11 @@
 
 <div
   class="flex shrink-0 flex-col items-end leading-none"
-  aria-label="{overall.completed} of {overall.total} completed overall, {overall.pct}%"
+  aria-label={m.overall_progress_label({
+    completed: overall.completed,
+    pct: overall.pct,
+    total: overall.total,
+  })}
   aria-live="polite"
   role="img"
 >
