@@ -1,9 +1,9 @@
 import { trackerData } from "$lib/data/index.js";
-import { getMarriedNpc } from "$lib/engine/relationships.js";
+import { getMarriedVillager } from "$lib/engine/relationships.js";
 
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
 import type { Source } from "$lib/types/acquisition.js";
-import type { ItemId, NpcId, NpcRelationship } from "$lib/types/tracker-data.js";
+import type { ItemId, VillagerId, VillagerRelationship } from "$lib/types/tracker-data.js";
 
 export function isItemApplicable(itemId: ItemId, completed: CompletedState): boolean {
   if (completed.almanac.has(itemId) || completed.museum.has(itemId)) return true;
@@ -15,8 +15,10 @@ export function isItemApplicable(itemId: ItemId, completed: CompletedState): boo
   );
   if (!hasMarriageExclusiveSource) return true;
 
-  const marriedNpc = getMarriedNpc(completed.npcRelationships);
-  return item.sources.some((s) => !isSourceSuppressed(s, completed.npcRelationships, marriedNpc));
+  const marriedVillager = getMarriedVillager(completed.villagerRelationships);
+  return item.sources.some(
+    (s) => !isSourceSuppressed(s, completed.villagerRelationships, marriedVillager),
+  );
 }
 
 export function isItemApplicableForAlmanac(itemIds: ItemId[], completed: CompletedState): boolean {
@@ -27,15 +29,15 @@ export function isItemApplicableForAlmanac(itemIds: ItemId[], completed: Complet
 
 function isSourceSuppressed(
   source: Source,
-  npcRelationships: Partial<Record<NpcId, NpcRelationship>>,
-  marriedNpc: NpcId | null,
+  villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>>,
+  marriedVillager: null | VillagerId,
 ): boolean {
   if (source.type === "proposal") {
-    return npcRelationships[source.npcId] === "platonic";
+    return villagerRelationships[source.villagerId] === "platonic";
   }
   if (source.type === "spouseGift") {
-    if (npcRelationships[source.npcId] === "platonic") return true;
-    if (marriedNpc !== null && marriedNpc !== source.npcId) return true;
+    if (villagerRelationships[source.villagerId] === "platonic") return true;
+    if (marriedVillager !== null && marriedVillager !== source.villagerId) return true;
     return false;
   }
   return false;

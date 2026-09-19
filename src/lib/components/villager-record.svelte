@@ -7,9 +7,9 @@
   import Spoiler from "$lib/components/spoiler.svelte";
   import { trackerData } from "$lib/data/index.js";
   import { getName } from "$lib/data/names.js";
-  import { isNpcComplete, MAX_NPC_LEVEL } from "$lib/engine/progress.js";
+  import { isVillagerComplete, MAX_VILLAGER_LEVEL } from "$lib/engine/progress.js";
   import {
-    getMarriedNpc,
+    getMarriedVillager,
     type RelationshipActionValue,
     relationshipPresentation,
     type RelationshipPrompt,
@@ -21,21 +21,21 @@
   import { celebrateCategory } from "$lib/utils/celebrate.js";
   import { seasonLabel, seasonLabelAbbr } from "$lib/utils/format.js";
 
-  import type { Npc, NpcId } from "$lib/types/tracker-data.js";
+  import type { Villager, VillagerId } from "$lib/types/tracker-data.js";
 
   let {
     compact = false,
     id,
     known,
     name,
-    npc,
+    villager,
   }: {
     compact?: boolean;
-    id: NpcId;
+    id: VillagerId;
     known: boolean;
-    /** Already resolved for the active locale by the roster via `getName("npcs", id, locale)`. */
+    /** Already resolved for the active locale by the roster via `getName("villagers", id, locale)`. */
     name: string;
-    npc: Npc;
+    villager: Villager;
   } = $props();
 
   const instanceId = $props.id();
@@ -81,25 +81,25 @@
   let locallyRevealed = $state(false);
   let imageFailed = $state(false);
   let revealed = $derived(known || locallyRevealed);
-  let storedLevel = $derived(userState.state.completed.npcLevels[id] ?? 0);
+  let storedLevel = $derived(userState.state.completed.villagerLevels[id] ?? 0);
   let displayedLevel = $derived(revealed ? storedLevel : 0);
-  let relationship = $derived(userState.state.completed.npcRelationships[id] ?? "undecided");
+  let relationship = $derived(userState.state.completed.villagerRelationships[id] ?? "undecided");
   let presentation = $derived(
     relationshipPresentation({
       childChoice: userState.state.completed.childChoice,
       level: storedLevel,
-      marriedNpc: getMarriedNpc(userState.state.completed.npcRelationships),
-      npcId: id,
+      marriedVillager: getMarriedVillager(userState.state.completed.villagerRelationships),
       relationship,
+      villagerId: id,
     }),
   );
-  let completed = $derived(isNpcComplete(id, userState.state.completed));
-  let visibleName = $derived(revealed ? name : m.npc_hidden_name());
+  let completed = $derived(isVillagerComplete(id, userState.state.completed));
+  let visibleName = $derived(revealed ? name : m.villager_hidden_name());
 
   async function applyAction(value: RelationshipActionValue): Promise<void> {
     mutateWithCelebration(() => {
       if (value === "yes" || value === "no") userState.setChildChoice(value);
-      else userState.setNpcRelationship(id, value);
+      else userState.setVillagerRelationship(id, value);
     });
 
     await tick();
@@ -108,95 +108,98 @@
     else recordElement.focus();
   }
 
-  function areAllNpcsComplete(): boolean {
-    return recordKeys(trackerData.npcs).every((npcId) =>
-      isNpcComplete(npcId, userState.state.completed),
+  function areAllVillagersComplete(): boolean {
+    return recordKeys(trackerData.villagers).every((villagerId) =>
+      isVillagerComplete(villagerId, userState.state.completed),
     );
   }
 
   function mutateWithCelebration(mutate: () => void): void {
-    const wasCategoryComplete = areAllNpcsComplete();
+    const wasCategoryComplete = areAllVillagersComplete();
     mutate();
-    if (!wasCategoryComplete && areAllNpcsComplete()) celebrateCategory();
+    if (!wasCategoryComplete && areAllVillagersComplete()) celebrateCategory();
   }
 
   function setLevel(level: number): void {
     mutateWithCelebration(() => {
-      userState.setNpcLevel(id, level);
+      userState.setVillagerLevel(id, level);
     });
   }
 </script>
 
 <li
   bind:this={recordElement}
-  class="npc-record"
-  class:npc-record--complete={completed}
-  class:npc-record--spoilered={!revealed}
-  data-npc-record
+  class="villager-record"
+  class:villager-record--complete={completed}
+  class:villager-record--spoilered={!revealed}
+  data-villager-record
   data-compact={compact}
-  id="npc-{id}"
+  id="villager-{id}"
   tabindex="-1"
 >
-  <header class="npc-identity">
-    <span class="npc-icon" data-spoilered={!revealed} aria-hidden="true">
-      {#if npc.smallIconSprite && !imageFailed}
+  <header class="villager-identity">
+    <span class="villager-icon" data-spoilered={!revealed} aria-hidden="true">
+      {#if villager.smallIconSprite && !imageFailed}
         <img
-          src="/npc-sprites/{npc.smallIconSprite}.webp"
+          src="/villager-sprites/{villager.smallIconSprite}.webp"
           alt=""
           width="44"
           height="44"
           onerror={() => (imageFailed = true)}
         />
       {:else}
-        <span data-testid="npc-icon-fallback">{revealed ? name.charAt(0) : "?"}</span>
+        <span data-testid="villager-icon-fallback">{revealed ? name.charAt(0) : "?"}</span>
       {/if}
     </span>
 
-    <span class="npc-copy">
-      <strong data-npc-name>
+    <span class="villager-copy">
+      <strong data-villager-name>
         {#if revealed}
           {name}
         {:else}
           <Spoiler onReveal={() => (locallyRevealed = true)}>{name}</Spoiler>
         {/if}
       </strong>
-      {#if revealed && npc.dateable && presentation.status}
+      {#if revealed && villager.dateable && presentation.status}
         <small>{relationshipStatusLabel[presentation.status]}</small>
       {/if}
     </span>
 
     {#if revealed}
       <span
-        class="npc-birthday"
-        aria-label={m.npc_birthday_aria({
-          day: npc.birthday.day,
-          season: seasonLabel(npc.birthday.season, page.data.locale),
+        class="villager-birthday"
+        aria-label={m.villager_birthday_aria({
+          day: villager.birthday.day,
+          season: seasonLabel(villager.birthday.season, page.data.locale),
         })}
       >
-        <Icon.Season season={npc.birthday.season} class="size-3" aria-hidden="true" />
-        {seasonLabelAbbr(npc.birthday.season)}
-        {String(npc.birthday.day).padStart(2, "0")}
+        <Icon.Season season={villager.birthday.season} class="size-3" aria-hidden="true" />
+        {seasonLabelAbbr(villager.birthday.season)}
+        {String(villager.birthday.day).padStart(2, "0")}
       </span>
     {:else}
-      <span class="npc-birthday npc-birthday--hidden">{m.npc_birthday_hidden()}</span>
+      <span class="villager-birthday villager-birthday--hidden">{m.villager_birthday_hidden()}</span
+      >
     {/if}
   </header>
 
   <div
-    class="npc-meter"
+    class="villager-meter"
     role="group"
-    aria-label={m.npc_relationship_level_aria({
+    aria-label={m.villager_relationship_level_aria({
       level: displayedLevel,
-      max: MAX_NPC_LEVEL,
+      max: MAX_VILLAGER_LEVEL,
       name: visibleName,
     })}
     aria-live="polite"
   >
     <button
-      class="npc-stepper"
+      class="villager-stepper"
       type="button"
       disabled={!revealed || storedLevel <= 0}
-      aria-label={m.npc_decrease_hearts({ name: revealed ? name : m.npc_hidden_name_lower() })}
+      aria-label={m.villager_decrease_hearts({
+        name: revealed ? name : m.villager_hidden_name_lower(),
+      })}
       onclick={() => {
         setLevel(storedLevel - 1);
       }}
@@ -204,28 +207,30 @@
       <IconMinus aria-hidden="true" />
     </button>
 
-    <span class="npc-marks" aria-hidden="true">
-      {#each { length: MAX_NPC_LEVEL } as _, index (index)}
+    <span class="villager-marks" aria-hidden="true">
+      {#each { length: MAX_VILLAGER_LEVEL } as _, index (index)}
         {@const filled = revealed && index < storedLevel}
         <span
-          class="npc-mark"
-          data-npc-mark
-          data-npc-mark-filled={filled}
-          data-npc-mark-kind={npc.dateable ? "dateable" : "platonic"}
+          class="villager-mark"
+          data-villager-mark
+          data-villager-mark-filled={filled}
+          data-villager-mark-kind={villager.dateable ? "dateable" : "platonic"}
           style="--mark-color: {levelColors[index]}"
         >
           <Icon.ProgressMark
-            type={npc.dateable ? "relationship_dateable" : "relationship_platonic"}
+            type={villager.dateable ? "relationship_dateable" : "relationship_platonic"}
           />
         </span>
       {/each}
     </span>
 
     <button
-      class="npc-stepper"
+      class="villager-stepper"
       type="button"
-      disabled={!revealed || storedLevel >= MAX_NPC_LEVEL}
-      aria-label={m.npc_increase_hearts({ name: revealed ? name : m.npc_hidden_name_lower() })}
+      disabled={!revealed || storedLevel >= MAX_VILLAGER_LEVEL}
+      aria-label={m.villager_increase_hearts({
+        name: revealed ? name : m.villager_hidden_name_lower(),
+      })}
       onclick={() => {
         setLevel(storedLevel + 1);
       }}
@@ -234,7 +239,7 @@
     </button>
   </div>
 
-  {#if revealed && npc.dateable && presentation.actions.length > 0}
+  {#if revealed && villager.dateable && presentation.actions.length > 0}
     <div class="relationship-decision">
       <span class="relationship-prompt">
         {presentation.prompt ? relationshipPromptLabel[presentation.prompt] : ""}
@@ -261,7 +266,7 @@
 </li>
 
 <style>
-  .npc-record {
+  .villager-record {
     display: grid;
     min-width: 0;
     gap: 7px;
@@ -273,27 +278,27 @@
     color: var(--ink);
   }
 
-  .npc-record:first-child {
+  .villager-record:first-child {
     border-radius: 2px 2px 0 0;
   }
 
-  .npc-record:last-child {
+  .villager-record:last-child {
     border-bottom: 1px solid var(--hairline);
     border-radius: 0 0 2px 2px;
   }
 
-  .npc-record:focus-visible {
+  .villager-record:focus-visible {
     position: relative;
     z-index: 1;
-    outline: 2px solid var(--cat-npcs);
+    outline: 2px solid var(--cat-villagers);
     outline-offset: -2px;
   }
 
-  .npc-record--complete {
+  .villager-record--complete {
     color: var(--ink-muted);
   }
 
-  .npc-identity {
+  .villager-identity {
     display: grid;
     min-width: 0;
     grid-template-columns: 44px minmax(0, 1fr) auto;
@@ -301,41 +306,41 @@
     gap: 8px;
   }
 
-  .npc-icon {
+  .villager-icon {
     display: grid;
     width: 44px;
     height: 44px;
     place-items: center;
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--cat-npcs) 25%, var(--hairline));
+    border: 1px solid color-mix(in srgb, var(--cat-villagers) 25%, var(--hairline));
     border-radius: 2px;
-    background: color-mix(in srgb, var(--cat-npcs) 11%, var(--paper));
-    color: var(--cat-npcs);
+    background: color-mix(in srgb, var(--cat-villagers) 11%, var(--paper));
+    color: var(--cat-villagers);
     font-family: var(--font-display);
     font-size: 24px;
     font-style: var(--font-display-style);
   }
 
-  .npc-icon img {
+  .villager-icon img {
     width: 44px;
     height: 44px;
     object-fit: contain;
     image-rendering: pixelated;
   }
 
-  .npc-icon[data-spoilered="true"] {
+  .villager-icon[data-spoilered="true"] {
     filter: grayscale(1);
     opacity: 0.35;
   }
 
-  .npc-copy {
+  .villager-copy {
     display: flex;
     min-width: 0;
     flex-direction: column;
     line-height: 1.1;
   }
 
-  .npc-copy strong {
+  .villager-copy strong {
     overflow: hidden;
     font-family: var(--font-body);
     font-size: 16px;
@@ -344,13 +349,13 @@
     white-space: nowrap;
   }
 
-  .npc-copy small {
+  .villager-copy small {
     color: var(--ink);
     font-family: var(--font-data);
     font-size: 10px;
   }
 
-  .npc-birthday {
+  .villager-birthday {
     display: inline-flex;
     align-items: center;
     gap: 3px;
@@ -360,11 +365,11 @@
     white-space: nowrap;
   }
 
-  .npc-birthday--hidden {
+  .villager-birthday--hidden {
     font-size: 10px;
   }
 
-  .npc-meter {
+  .villager-meter {
     display: grid;
     min-width: 0;
     grid-template-columns: 44px minmax(0, 1fr) 44px;
@@ -372,7 +377,7 @@
     gap: 6px;
   }
 
-  .npc-stepper {
+  .villager-stepper {
     display: grid;
     width: 44px;
     height: 44px;
@@ -383,23 +388,23 @@
     color: var(--ink-muted);
   }
 
-  .npc-stepper :global(svg) {
+  .villager-stepper :global(svg) {
     width: 16px;
     height: 16px;
   }
 
-  .npc-stepper:is(:hover, :focus-visible):not(:disabled) {
-    border-color: var(--cat-npcs);
-    color: var(--cat-npcs);
-    outline: 2px solid var(--cat-npcs);
+  .villager-stepper:is(:hover, :focus-visible):not(:disabled) {
+    border-color: var(--cat-villagers);
+    color: var(--cat-villagers);
+    outline: 2px solid var(--cat-villagers);
     outline-offset: -2px;
   }
 
-  .npc-stepper:disabled {
+  .villager-stepper:disabled {
     opacity: 0.38;
   }
 
-  .npc-marks {
+  .villager-marks {
     display: grid;
     min-width: 0;
     grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -408,7 +413,7 @@
     gap: 2px 0;
   }
 
-  .npc-mark {
+  .villager-mark {
     display: grid;
     width: 100%;
     max-width: 20px;
@@ -416,7 +421,7 @@
     color: color-mix(in srgb, var(--ink-muted) 38%, transparent);
   }
 
-  .npc-mark :global(svg) {
+  .villager-mark :global(svg) {
     width: 15px;
     height: 15px;
     fill: transparent;
@@ -425,7 +430,7 @@
       fill 180ms ease-out;
   }
 
-  .npc-mark[data-npc-mark-filled="true"] :global(svg) {
+  .villager-mark[data-villager-mark-filled="true"] :global(svg) {
     fill: var(--mark-color);
     color: var(--mark-color);
   }
@@ -434,8 +439,8 @@
     display: grid;
     gap: 5px;
     padding: 6px 8px;
-    border-top: 1px solid color-mix(in srgb, var(--cat-npcs) 28%, var(--hairline));
-    background: color-mix(in srgb, var(--cat-npcs) 5%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--cat-villagers) 28%, var(--hairline));
+    background: color-mix(in srgb, var(--cat-villagers) 5%, transparent);
   }
 
   .relationship-prompt {
@@ -455,7 +460,7 @@
     min-height: 44px;
     flex: 1 1 9rem;
     padding: 7px 10px;
-    border: 1px solid var(--cat-npcs);
+    border: 1px solid var(--cat-villagers);
     border-radius: 2px;
     background: var(--paper-raised);
     color: var(--ink);
@@ -464,8 +469,8 @@
   }
 
   .relationship-actions button:is(:hover, :focus-visible) {
-    background: color-mix(in srgb, var(--cat-npcs) 10%, var(--paper-raised));
-    outline: 2px solid var(--cat-npcs);
+    background: color-mix(in srgb, var(--cat-villagers) 10%, var(--paper-raised));
+    outline: 2px solid var(--cat-villagers);
     outline-offset: -2px;
   }
 
@@ -476,22 +481,22 @@
     line-height: 1.25;
   }
 
-  .npc-record[data-compact="true"] {
+  .villager-record[data-compact="true"] {
     gap: 5px;
     padding-block: 6px;
   }
 
   @media (min-width: 701px) and (hover: hover) and (pointer: fine) {
-    .npc-meter {
+    .villager-meter {
       grid-template-columns: 32px minmax(0, 1fr) 32px;
     }
 
-    .npc-stepper {
+    .villager-stepper {
       width: 32px;
       height: 32px;
     }
 
-    .npc-marks {
+    .villager-marks {
       grid-template-columns: repeat(12, minmax(0, 1fr));
     }
 
@@ -501,7 +506,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .npc-mark :global(svg) {
+    .villager-mark :global(svg) {
       transition-duration: 0.01ms;
     }
   }

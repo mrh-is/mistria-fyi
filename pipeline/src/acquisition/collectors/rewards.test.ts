@@ -203,8 +203,8 @@ describe("collectRewardSources", () => {
         letters: {
           baked_potato_recipe: {
             items: [{ recipe_scroll: "baked_potato" }],
-            npc: "nora",
             requirements: { shipped_item: "potato" },
+            villager: "nora",
           },
         },
       });
@@ -276,10 +276,14 @@ describe("collectRewardSources", () => {
       const acc = new ItemSourceAccumulator();
       collectRewardSources(fiddle, acc);
 
-      expect(acc.get("juniper_desk" as ItemId)).toEqual([{ type: "spouseGift", npcId: "juniper" }]);
-      expect(acc.get("dozy_pet_bed" as ItemId)).toEqual([{ type: "spouseGift", npcId: "juniper" }]);
+      expect(acc.get("juniper_desk" as ItemId)).toEqual([
+        { type: "spouseGift", villagerId: "juniper" },
+      ]);
+      expect(acc.get("dozy_pet_bed" as ItemId)).toEqual([
+        { type: "spouseGift", villagerId: "juniper" },
+      ]);
       expect(acc.get("valen_workstation" as ItemId)).toEqual([
-        { type: "spouseGift", npcId: "valen" },
+        { type: "spouseGift", villagerId: "valen" },
       ]);
     });
 
@@ -410,10 +414,10 @@ describe("collectRewardSources", () => {
       collectRewardSources(fiddle, acc);
 
       expect(acc.get("adelines_lifetime_planner" as ItemId)).toEqual([
-        { type: "proposal", npcId: "adeline" },
+        { type: "proposal", villagerId: "adeline" },
       ]);
       expect(acc.get("balors_polished_gem" as ItemId)).toEqual([
-        { type: "proposal", npcId: "balor" },
+        { type: "proposal", villagerId: "balor" },
       ]);
     });
 

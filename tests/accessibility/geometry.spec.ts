@@ -50,16 +50,16 @@ test.describe("@critical 320-pixel reflow", () => {
         availabilityMode: "everything",
         completed: {
           mines: { floor: 21, spells: [] },
-          npcLevels: { adeline: 10 },
-          npcRelationships: { adeline: "romantic" },
           renown: 14,
           skillLevels: { mining: 22 },
+          villagerLevels: { adeline: 10 },
+          villagerRelationships: { adeline: "romantic" },
         },
         showSpoilers: true,
       }),
     );
 
-    for (const path of ["/characters", "/skills", "/mines", "/renown", "/all"]) {
+    for (const path of ["/villagers", "/skills", "/mines", "/renown", "/all"]) {
       await gotoApplication(page, path);
       expect(findOverflow(await collectVisibleElementBoxes(page), 320), path).toEqual([]);
     }
@@ -257,16 +257,16 @@ test.describe("@critical tracker paper touch geometry", () => {
       createStoredState({
         availabilityMode: "everything",
         completed: {
-          npcLevels: { adeline: 10 },
-          npcRelationships: { adeline: "romantic" },
+          villagerLevels: { adeline: 10 },
+          villagerRelationships: { adeline: "romantic" },
         },
         showSpoilers: true,
       }),
     );
 
-    await gotoApplication(page, "/characters");
+    await gotoApplication(page, "/villagers");
     for (const control of await page
-      .locator("#npc-adeline .npc-stepper, #npc-adeline [data-relationship-action]")
+      .locator("#villager-adeline .villager-stepper, #villager-adeline [data-relationship-action]")
       .all()) {
       const box = await control.boundingBox();
       expect(box?.width).toBeGreaterThanOrEqual(44);
@@ -275,7 +275,7 @@ test.describe("@critical tracker paper touch geometry", () => {
 
     const index = page.getByRole("navigation", { name: "Townsfolk alphabet" });
     const beforeScroll = await index.boundingBox();
-    const roster = await page.locator(".npc-roster").boundingBox();
+    const roster = await page.locator(".villager-roster").boundingBox();
     const whitespaceCenter = ((roster?.x ?? 0) + (roster?.width ?? 0) + 320) / 2;
     expect(
       Math.abs((beforeScroll?.x ?? 0) + (beforeScroll?.width ?? 0) / 2 - whitespaceCenter),

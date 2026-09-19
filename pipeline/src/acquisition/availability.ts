@@ -4,11 +4,11 @@ import { isNonEmptyArray, type NonEmptyArray } from "$lib/utils.js";
 import type {
   AvailabilityCondition,
   JsonValue,
-  NpcId,
   PerkId,
   QuestId,
   Season,
   SkillId,
+  VillagerId,
   Weather,
 } from "$lib/types/tracker-data.js";
 
@@ -109,7 +109,7 @@ function projectLevelRecord(
 
   const conditions = entries.map(([id, level]) =>
     type === "heart"
-      ? { type: "heartLevel" as const, level: level as number, npcId: id as NpcId }
+      ? { type: "heartLevel" as const, level: level as number, villagerId: id as VillagerId }
       : { type: "skillLevel" as const, level: level as number, skillId: id as SkillId },
   );
   if (!isNonEmptyArray(conditions)) return undefined;

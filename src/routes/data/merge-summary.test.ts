@@ -12,8 +12,8 @@ const CASES: { expected: string; imported: Partial<CompletedState> }[] = [
   { expected: "Dates: +1", imported: { dates: new Set(["review-date" as never]) } },
   { expected: "Upper floor unlocked", imported: { hasUpperFloor: true } },
   {
-    expected: "NPC relationships: +1",
-    imported: { npcRelationships: { ["adeline" as never]: "romantic" } },
+    expected: "Villager relationships: +1",
+    imported: { villagerRelationships: { ["adeline" as never]: "romantic" } },
   },
   { expected: "Perks: +1", imported: { unlockedPerks: new Set(["review-perk" as never]) } },
   { expected: "Season progression updated", imported: { reachedSeason: "summer" } },

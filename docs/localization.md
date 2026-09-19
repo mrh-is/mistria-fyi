@@ -5,8 +5,8 @@ Confusing them, or assuming one guarantees the other, is the most common mistake
 
 ## Two systems
 
-**Game data names** (items, NPCs, locations, festivals, recipes, ...) come from Fields of Mistria's
-own translation tables in `pipeline/input/assets/localization/`. The pipeline
+**Game data names** (items, villagers, locations, festivals, recipes, ...) come from Fields of
+Mistria's own translation tables in `pipeline/input/assets/localization/`. The pipeline
 (`pipeline/src/localize.ts`) reads them and writes localized names into
 `src/lib/data/locales/<locale>/<category>.json` chunks. Structural records in
 `src/lib/data/tracker-data.json` deliberately omit migrated display names. MFG never edits this
@@ -152,8 +152,8 @@ will render tofu or system fallbacks on non-Latin locales.
 
 ## Improving a translation (humans)
 
-- **Game data & names** (items, NPCs, festival text, ...): this content comes from the game itself,
-  not from us. Report it to Fields of Mistria's own
+- **Game data & names** (items, villagers, festival text, ...): this content comes from the game
+  itself, not from us. Report it to Fields of Mistria's own
   [feedback & bug report page](https://www.fieldsofmistria.com/feedback-and-bug-reports) — we have
   no ability to change it here.
 - **MFG's own UI wording**: open a GitHub issue on this repo, same as any other bug or suggestion.

@@ -19,7 +19,7 @@
   "category_mines_name": "광산",
   "category_mines_description": "층과 마법",
   "category_museum_description": "컬렉션과 기증",
-  "category_npcs_description": "우정과 관계",
+  "category_villagers_description": "우정과 관계",
   "category_quests_name": "퀘스트",
   "category_quests_description": "스토리와 의뢰",
   "category_recipes_name": "레시피",
@@ -69,7 +69,7 @@
   "undo_unmarked": "“{name}” 표시를 해제했습니다",
   "almanac_page_description": "Fields of Mistria의 작물, 채집, 낚시, 곤충, 유물 등 알마낙 항목을 기록하세요.",
   "animals_page_description": "Fields of Mistria 농장의 동물 품종, 색상, 코스메틱을 기록하세요.",
-  "characters_page_description": "Fields of Mistria 캐릭터들과의 우정과 로맨스를 기록하세요.",
+  "villagers_page_description": "Fields of Mistria 마을 주민들과의 우정과 로맨스를 기록하세요.",
   "cosmetics_page_description": "Fields of Mistria의 의상과 외형 잠금 해제를 기록하세요.",
   "mines_page_description": "Fields of Mistria의 광산 층, 마법, 탐험 진행 상황을 기록하세요.",
   "museum_page_description": "Fields of Mistria의 모든 박물관 컬렉션과 기증을 기록하세요.",
@@ -120,18 +120,18 @@
   "mines_floor_down": "한 층 아래로",
   "mines_floor_label": "층",
   "mines_floor_input_aria": "광산 층",
-  "characters_roster_aria": "마을 사람 명부",
-  "characters_alphabet_aria": "마을 사람 자모 색인",
+  "villagers_roster_aria": "마을 사람 명부",
+  "villagers_alphabet_aria": "마을 사람 자모 색인",
   "season_spring_abbr": "봄",
   "season_summer_abbr": "여름",
   "season_fall_abbr": "가을",
   "season_winter_abbr": "겨울",
-  "npc_birthday_aria": "생일: {season} {day}일",
-  "npc_birthday_hidden": "생일 숨김",
-  "npc_hidden_name": "숨겨진 NPC",
-  "npc_relationship_level_aria": "{name}와의 관계 레벨, {max}중 {level}",
-  "npc_decrease_hearts": "{name}의 하트 줄이기",
-  "npc_increase_hearts": "{name}의 하트 늘리기",
+  "villager_birthday_aria": "생일: {season} {day}일",
+  "villager_birthday_hidden": "생일 숨김",
+  "villager_hidden_name": "숨겨진 마을 주민",
+  "villager_relationship_level_aria": "{name}와의 관계 레벨, {max}중 {level}",
+  "villager_decrease_hearts": "{name}의 하트 줄이기",
+  "villager_increase_hearts": "{name}의 하트 늘리기",
   "relationship_status_path_not_chosen": "관계 미선택",
   "relationship_status_married_kids": "결혼 · 자녀 있음",
   "relationship_status_married_child_free": "결혼 · 자녀 없음",
@@ -156,8 +156,8 @@
   "rank_state_completed": "완료",
   "rank_state_current": "현재",
   "rank_state_upcoming": "예정",
-  "npc_hidden_name_lower": "숨겨진 NPC",
-  "characters_jump_to_initial_aria": "{initial}(으)로 이동, 첫 번째 마을 사람 기록",
+  "villager_hidden_name_lower": "숨겨진 마을 주민",
+  "villagers_jump_to_initial_aria": "{initial}(으)로 이동, 첫 번째 마을 사람 기록",
   "cosmetic_slot_head_gear": "머리 장비",
   "cosmetic_slot_face_gear": "얼굴 장비",
   "cosmetic_slot_hair": "헤어",
@@ -372,7 +372,7 @@
   "merge_label_cosmetics": "코스메틱: +{count}",
   "merge_label_dates": "날짜: +{count}",
   "merge_label_museum": "박물관 기증: +{count}",
-  "merge_label_npc_relationships": "NPC 관계: +{count}",
+  "merge_label_villager_relationships": "마을 주민 관계: +{count}",
   "merge_label_perks": "특전: +{count}",
   "merge_label_pet_cosmetics": "펫 코스메틱: +{count}",
   "merge_label_pet_skins": "펫 스킨: +{count}",
@@ -390,12 +390,12 @@
       }
     }
   ],
-  "merge_label_npc_levels": [
+  "merge_label_villager_levels": [
     {
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "NPC 호감도: 관계 {count}개 업데이트됨"
+        "countPlural=other": "마을 주민 호감도: 관계 {count}개 업데이트됨"
       }
     }
   ],

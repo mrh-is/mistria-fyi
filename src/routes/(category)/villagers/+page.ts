@@ -10,10 +10,10 @@ import type { PageLoad } from "./$types";
 export const load: PageLoad = async (event?: Partial<Parameters<PageLoad>[0]>) => {
   const locale = event?.url ? getLocaleForUrl(event.url) : baseLocale;
   await loadNames(locale, ["ui"]);
-  await loadPageNames(event, ["npcs"]);
+  await loadPageNames(event, ["villagers"]);
   return {
     metadata: {
-      description: m.characters_page_description({}, { locale }),
+      description: m.villagers_page_description({}, { locale }),
       title: getName("ui", "villagers", locale),
     },
   };

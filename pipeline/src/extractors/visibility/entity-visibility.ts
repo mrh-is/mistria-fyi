@@ -4,11 +4,11 @@ import { resolveToVisibility, simplifyCondition } from "./requirement-resolver";
 import type { Source as AcquisitionSource, SourceTuple } from "$lib/types/acquisition.js";
 import type {
   MinesBiomeId,
-  NpcId,
   QuestId,
   SkillId,
   StoreId,
   TrackerData,
+  VillagerId,
 } from "$lib/types/tracker-data.js";
 import type { VisibilityCondition } from "$lib/types/visibility.js";
 
@@ -40,8 +40,8 @@ const STORE_UNLOCK_QUESTS: Partial<Record<string, QuestId>> = {
   zorel: "upgrade_the_saturday_market_plaza" as QuestId,
 };
 
-/** Hardcoded NPC gates (spec Section 3e). NPCs not listed here are always visible. */
-const NPC_GATES: Partial<Record<string, VisibilityCondition>> = {
+/** Hardcoded villager gates (spec Section 3e). Villagers not listed here are always visible. */
+const VILLAGER_GATES: Partial<Record<string, VisibilityCondition>> = {
   caldarus: { type: "questCompleted", questId: "breaking_the_fire_seal" as QuestId },
   darcy: { type: "questCompleted", questId: "repair_the_bridge" as QuestId },
   louis: { type: "questCompleted", questId: "repair_the_bridge" as QuestId },
@@ -102,31 +102,31 @@ export function assignEntityVisibility(
 
 /** Hardcoded category visibility gates (spec Section 3j). */
 export function extractCategoryVisibility(
-  npcs: TrackerData["npcs"],
+  villagers: TrackerData["villagers"],
 ): Record<string, VisibilityCondition> {
-  const dateableNpcIds = Object.entries(npcs)
-    .filter(([, npc]) => npc.dateable)
-    .map(([id]) => id as NpcId);
+  const dateableVillagerIds = Object.entries(villagers)
+    .filter(([, villager]) => villager.dateable)
+    .map(([id]) => id as VillagerId);
 
   const datesVisibility: VisibilityCondition =
-    dateableNpcIds.length > 0
+    dateableVillagerIds.length > 0
       ? {
           type: "or",
-          conditions: dateableNpcIds.map((npcId) => ({
+          conditions: dateableVillagerIds.map((villagerId) => ({
             type: "heartLevel" as const,
             level: 8,
-            npcId,
+            villagerId,
           })) as [VisibilityCondition, ...VisibilityCondition[]],
         }
       : ALWAYS;
 
   return {
-    cooking: { type: "npcKnown", npcId: "taliferro" as NpcId },
+    cooking: { type: "villagerKnown", villagerId: "taliferro" as VillagerId },
     crown: { type: "renownLevel", level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER },
     dates: datesVisibility,
     fetch: ALWAYS,
     heart: ALWAYS,
-    mission: { type: "npcKnown", npcId: "stillwell" as NpcId },
+    mission: { type: "villagerKnown", villagerId: "stillwell" as VillagerId },
     story: ALWAYS,
   };
 }
@@ -148,16 +148,16 @@ export function extractFetchQuestVisibility(
 }
 
 /**
- * Walks `cutscenes.toml` entries for `heart_level_changes` fields, grouping the resulting NPC
+ * Walks `cutscenes.toml` entries for `heart_level_changes` fields, grouping the resulting villager
  * heart-level bumps by the quest that triggers the cutscene (via the Task 2 cutscene-quest map,
  * passed in by the caller rather than rebuilt here).
  */
 export function extractHeartLevelChanges(
   fiddle: ParsedGameData,
   cutsceneMap: CutsceneQuestMap,
-): Record<QuestId, { level: number; npcId: NpcId }[]> {
+): Record<QuestId, { level: number; villagerId: VillagerId }[]> {
   const cutscenes = getCutsceneRecords(fiddle);
-  const result: Record<QuestId, { level: number; npcId: NpcId }[]> = {};
+  const result: Record<QuestId, { level: number; villagerId: VillagerId }[]> = {};
 
   for (const [cutsceneId, cutscene] of Object.entries(cutscenes)) {
     if (cutsceneId === "default") continue;
@@ -167,14 +167,14 @@ export function extractHeartLevelChanges(
     const entry = cutsceneMap[cutsceneId];
     if (!entry) continue;
 
-    const bumps: { level: number; npcId: NpcId }[] = [];
+    const bumps: { level: number; villagerId: VillagerId }[] = [];
     for (const change of changes) {
       if (typeof change !== "object" || change === null) continue;
       const obj = change as Record<string, unknown>;
-      const npcId = obj.npc_id;
+      const villagerId = obj.npc_id;
       const level = obj.heart_level;
-      if (typeof npcId !== "string" || typeof level !== "number") continue;
-      bumps.push({ level, npcId: npcId as NpcId });
+      if (typeof villagerId !== "string" || typeof level !== "number") continue;
+      bumps.push({ level, villagerId: villagerId as VillagerId });
     }
     if (bumps.length === 0) continue;
 
@@ -185,25 +185,25 @@ export function extractHeartLevelChanges(
   return result;
 }
 
-/** Stamps hardcoded NPC visibility (spec Section 3e) directly onto trackerData.npcs. */
-export function stampNpcVisibility(trackerData: TrackerData): void {
-  for (const [npcId, npc] of Object.entries(trackerData.npcs)) {
-    const gate = NPC_GATES[npcId];
-    if (gate) {
-      npc.visibility = gate;
-    }
-  }
-}
-
 /**
  * Stamps hardcoded store visibility (spec Section 3d) directly onto trackerData.stores.
- * Taliferro and Stillwell have no store entry; their gates are handled by `stampNpcVisibility`.
+ * Taliferro and Stillwell have no store entry; their gates are handled by `stampVillagerVisibility`.
  */
 export function stampStoreVisibility(trackerData: TrackerData): void {
   for (const [storeId, store] of Object.entries(trackerData.stores)) {
     const questId = STORE_UNLOCK_QUESTS[storeId];
     if (questId) {
       store.visibility = { type: "questCompleted", questId };
+    }
+  }
+}
+
+/** Stamps hardcoded villager visibility (spec Section 3e) directly onto trackerData.villagers. */
+export function stampVillagerVisibility(trackerData: TrackerData): void {
+  for (const [villagerId, villager] of Object.entries(trackerData.villagers)) {
+    const gate = VILLAGER_GATES[villagerId];
+    if (gate) {
+      villager.visibility = gate;
     }
   }
 }
@@ -338,7 +338,7 @@ function assignQuestVisibility(
   cutsceneMap: CutsceneQuestMap,
   chains: QuestChainData,
 ): void {
-  const categoryVisibility = extractCategoryVisibility(trackerData.npcs);
+  const categoryVisibility = extractCategoryVisibility(trackerData.villagers);
 
   for (const [questId, quest] of Object.entries(trackerData.quests.story)) {
     const prerequisites = chains.story[questId as QuestId]?.prerequisites ?? [];
@@ -353,14 +353,14 @@ function assignQuestVisibility(
           );
   }
 
-  for (const [npcId, entries] of Object.entries(chains.heart)) {
+  for (const [villagerId, entries] of Object.entries(chains.heart)) {
     for (const entry of entries) {
       const quest = trackerData.quests.heart[entry.questId];
       if (!quest) continue;
       quest.heartLevel = entry.heartLevel;
       const conditions: VisibilityCondition[] = [
-        { type: "npcKnown", npcId: npcId as NpcId },
-        { type: "heartLevel", level: entry.heartLevel, npcId: npcId as NpcId },
+        { type: "villagerKnown", villagerId: villagerId as VillagerId },
+        { type: "heartLevel", level: entry.heartLevel, villagerId: villagerId as VillagerId },
       ];
       if (entry.prerequisiteQuest) {
         conditions.push({ type: "questCompleted", questId: entry.prerequisiteQuest });
@@ -610,8 +610,8 @@ function stripAllAlwaysVisibility(trackerData: TrackerData): void {
       if (isAlwaysVisible(quest.visibility)) delete quest.visibility;
     }
   }
-  for (const npc of Object.values(trackerData.npcs)) {
-    if (isAlwaysVisible(npc.visibility)) delete npc.visibility;
+  for (const villager of Object.values(trackerData.villagers)) {
+    if (isAlwaysVisible(villager.visibility)) delete villager.visibility;
   }
   for (const store of Object.values(trackerData.stores)) {
     if (isAlwaysVisible(store.visibility)) delete store.visibility;

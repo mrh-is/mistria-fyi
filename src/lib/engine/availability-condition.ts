@@ -1,16 +1,16 @@
 import type {
   AvailabilityCondition,
-  NpcId,
   PerkId,
   QuestId,
   Season,
   SkillId,
+  VillagerId,
   Weather,
 } from "$lib/types/tracker-data.js";
 import type { NonEmptyArray } from "$lib/utils";
 
 export interface AvailabilityContext {
-  heartLevels?: ReadonlyMap<NpcId, number>;
+  heartLevels?: ReadonlyMap<VillagerId, number>;
   minesLevel?: number;
   perkIds?: ReadonlySet<PerkId>;
   questStates?: ReadonlyMap<QuestId, "available" | "completed">;
@@ -46,7 +46,7 @@ export function evaluateAvailabilityCondition(
     case "reachedSeason":
       return "unknown";
     case "heartLevel": {
-      const level = context.heartLevels?.get(condition.npcId);
+      const level = context.heartLevels?.get(condition.villagerId);
       return level === undefined ? "unknown" : level >= condition.level;
     }
     case "minesLevel":

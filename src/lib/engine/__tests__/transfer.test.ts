@@ -10,16 +10,16 @@ import type {
   AnimalVariantId,
   CosmeticId,
   DateId,
-  NpcId,
-  NpcRelationship,
   PetCosmeticSetId,
   PetSkinId,
   RecipeId,
   SkillId,
+  VillagerId,
+  VillagerRelationship,
 } from "$lib/types/tracker-data.js";
 
-// A payload encoded with the v1 codec (no perk bitfield, no married-NPC byte) for a state with
-// mines.floor = 5, npcLevels.adeline = 3, renown = 10, and all other fields empty. Used to verify
+// A payload encoded with the v1 codec (no perk bitfield, no married-Villager byte) for a state with
+// mines.floor = 5, villagerLevels.adeline = 3, renown = 10, and all other fields empty. Used to verify
 // the v2 decoder remains backward compatible with payloads generated before this change.
 // cspell:disable-next-line
 const V1_FIXTURE = "AWNgGAVUBqwMXAYDZDUA";
@@ -79,8 +79,6 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     hasUpperFloor: false,
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
-    npcLevels: {},
-    npcRelationships: {},
     petCosmetics: new Set(),
     petSkins: new Set(),
     questStates: {},
@@ -88,6 +86,8 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     renown: 0,
     skillLevels: {},
     unlockedPerks: new Set(),
+    villagerLevels: {},
+    villagerRelationships: {},
     ...overrides,
   };
 }
@@ -105,25 +105,25 @@ describe("transfer codec v8", () => {
   });
 
   it("round-trips maximum scalar and packed relationship values", async () => {
-    const npcIds = recordKeys(trackerData.npcs);
+    const villagerIds = recordKeys(trackerData.villagers);
     const skillIds = recordKeys(trackerData.skills);
-    const dateableNpcs = npcIds.filter((id) => trackerData.npcs[id].dateable);
-    const npcRelationships: Partial<Record<NpcId, NpcRelationship>> = {};
-    for (const npcId of dateableNpcs) npcRelationships[npcId] = "platonic";
-    npcRelationships[dateableNpcs[0]] = "married";
+    const dateableVillagers = villagerIds.filter((id) => trackerData.villagers[id].dateable);
+    const villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>> = {};
+    for (const villagerId of dateableVillagers) villagerRelationships[villagerId] = "platonic";
+    villagerRelationships[dateableVillagers[0]] = "married";
     const completed = makeCompleted({
       mines: { floor: 0xff, spells: new Set() },
-      npcLevels: Object.fromEntries(npcIds.map((id) => [id, 0xf])),
-      npcRelationships,
       renown: 0xffff,
       skillLevels: Object.fromEntries(skillIds.map((id) => [id, 0xff])),
+      villagerLevels: Object.fromEntries(villagerIds.map((id) => [id, 0xf])),
+      villagerRelationships,
     });
 
     const decoded = await decodeTransferPayload(await encodeTransferPayload(completed));
 
     expect(decoded.mines?.floor).toBe(0xff);
-    expect(decoded.npcLevels).toEqual(completed.npcLevels);
-    expect(decoded.npcRelationships).toEqual(npcRelationships);
+    expect(decoded.villagerLevels).toEqual(completed.villagerLevels);
+    expect(decoded.villagerRelationships).toEqual(villagerRelationships);
     expect(decoded.renown).toBe(0xffff);
     expect(decoded.skillLevels).toEqual(completed.skillLevels);
   });
@@ -150,7 +150,6 @@ describe("transfer codec v8", () => {
           recordValues(sets).flatMap(({ items }) => items),
         ),
       ),
-      npcLevels: Object.fromEntries(recordKeys(trackerData.npcs).map((id) => [id, 0xf])),
       petCosmetics: new Set(recordKeys(trackerData.pets.cosmetics)),
       petSkins: new Set(recordKeys(trackerData.pets.skins)),
       questStates: Object.fromEntries(
@@ -166,6 +165,7 @@ describe("transfer codec v8", () => {
           skill.perkTiers.flatMap((tier) => recordKeys(tier)),
         ),
       ),
+      villagerLevels: Object.fromEntries(recordKeys(trackerData.villagers).map((id) => [id, 0xf])),
     });
     for (const [animalId, animal] of recordEntries(trackerData.animals)) {
       completed.animalCosmetics[animalId] = new Set(recordKeys(animal.cosmetics));
@@ -177,9 +177,13 @@ describe("transfer codec v8", () => {
         ),
       );
     }
-    const dateableNpcs = recordKeys(trackerData.npcs).filter((id) => trackerData.npcs[id].dateable);
-    completed.npcRelationships = Object.fromEntries(dateableNpcs.map((id) => [id, "platonic"]));
-    completed.npcRelationships[dateableNpcs[0]] = "married";
+    const dateableVillagers = recordKeys(trackerData.villagers).filter(
+      (id) => trackerData.villagers[id].dateable,
+    );
+    completed.villagerRelationships = Object.fromEntries(
+      dateableVillagers.map((id) => [id, "platonic"]),
+    );
+    completed.villagerRelationships[dateableVillagers[0]] = "married";
 
     const decoded = await decodeTransferPayload(await encodeTransferPayload(completed));
 
@@ -203,26 +207,30 @@ describe("transfer codec v8", () => {
     expect(decoded.unlockedPerks).toEqual(new Set(perkIds));
   });
 
-  it("round-trips married NPC via npcRelationships", async () => {
-    const dateableNpcs = (Object.keys(trackerData.npcs) as NpcId[]).filter(
-      (id) => trackerData.npcs[id].dateable,
+  it("round-trips married Villager via villagerRelationships", async () => {
+    const dateableVillagers = (Object.keys(trackerData.villagers) as VillagerId[]).filter(
+      (id) => trackerData.villagers[id].dateable,
     );
-    const npcId = dateableNpcs[0];
-    const relationships: Partial<Record<NpcId, NpcRelationship>> = { [npcId]: "married" };
-    for (const other of dateableNpcs.slice(1)) {
+    const villagerId = dateableVillagers[0];
+    const relationships: Partial<Record<VillagerId, VillagerRelationship>> = {
+      [villagerId]: "married",
+    };
+    for (const other of dateableVillagers.slice(1)) {
       relationships[other] = "platonic";
     }
-    const completed = makeCompleted({ npcRelationships: relationships });
+    const completed = makeCompleted({ villagerRelationships: relationships });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
-    expect(decoded.npcRelationships?.[npcId]).toBe("married");
+    expect(decoded.villagerRelationships?.[villagerId]).toBe("married");
   });
 
-  it("round-trips no married NPC", async () => {
-    const completed = makeCompleted({ npcRelationships: {} });
+  it("round-trips no married Villager", async () => {
+    const completed = makeCompleted({ villagerRelationships: {} });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
-    const married = Object.entries(decoded.npcRelationships ?? {}).find(([, r]) => r === "married");
+    const married = Object.entries(decoded.villagerRelationships ?? {}).find(
+      ([, r]) => r === "married",
+    );
     expect(married).toBeUndefined();
   });
 
@@ -269,20 +277,20 @@ describe("transfer codec v8", () => {
     }
   });
 
-  it("round-trips npcRelationships", async () => {
-    const dateableNpcs = (Object.keys(trackerData.npcs) as NpcId[]).filter(
-      (id) => trackerData.npcs[id].dateable,
+  it("round-trips villagerRelationships", async () => {
+    const dateableVillagers = (Object.keys(trackerData.villagers) as VillagerId[]).filter(
+      (id) => trackerData.villagers[id].dateable,
     );
-    const relationships: Partial<Record<NpcId, NpcRelationship>> = {};
-    relationships[dateableNpcs[0]] = "romantic";
-    relationships[dateableNpcs[1]] = "proposed";
-    relationships[dateableNpcs[2]] = "platonic";
-    const completed = makeCompleted({ npcRelationships: relationships });
+    const relationships: Partial<Record<VillagerId, VillagerRelationship>> = {};
+    relationships[dateableVillagers[0]] = "romantic";
+    relationships[dateableVillagers[1]] = "proposed";
+    relationships[dateableVillagers[2]] = "platonic";
+    const completed = makeCompleted({ villagerRelationships: relationships });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
-    expect(decoded.npcRelationships?.[dateableNpcs[0]]).toBe("romantic");
-    expect(decoded.npcRelationships?.[dateableNpcs[1]]).toBe("proposed");
-    expect(decoded.npcRelationships?.[dateableNpcs[2]]).toBe("platonic");
+    expect(decoded.villagerRelationships?.[dateableVillagers[0]]).toBe("romantic");
+    expect(decoded.villagerRelationships?.[dateableVillagers[1]]).toBe("proposed");
+    expect(decoded.villagerRelationships?.[dateableVillagers[2]]).toBe("platonic");
   });
 
   it("round-trips childChoice", async () => {
@@ -305,7 +313,7 @@ describe("transfer codec v8", () => {
   it("decodes v1 payload without perks, relationships, pet, date, or progression fields", async () => {
     const decoded = await decodeTransferPayload(V1_FIXTURE);
     expect(decoded.unlockedPerks).toEqual(new Set());
-    expect(decoded.npcRelationships).toEqual({});
+    expect(decoded.villagerRelationships).toEqual({});
     expect(decoded.petCosmetics).toEqual(new Set());
     expect(decoded.petSkins).toEqual(new Set());
     expect(decoded.dates).toEqual(new Set());
@@ -314,7 +322,7 @@ describe("transfer codec v8", () => {
     expect(decoded.childChoice).toBe("undeclared");
     expect(decoded.almanacRecipes).toEqual(new Set());
     expect(decoded.mines?.floor).toBe(5);
-    expect(decoded.npcLevels?.["adeline" as NpcId]).toBe(3);
+    expect(decoded.villagerLevels?.["adeline" as VillagerId]).toBe(3);
     expect(decoded.renown).toBe(10);
   });
 
@@ -328,33 +336,33 @@ describe("transfer codec v8", () => {
   });
 
   it("decodes the current v8 boundary fixture", async () => {
-    const npcIds = recordKeys(trackerData.npcs);
-    const dateableNpcs = npcIds.filter((id) => trackerData.npcs[id].dateable);
+    const villagerIds = recordKeys(trackerData.villagers);
+    const dateableVillagers = villagerIds.filter((id) => trackerData.villagers[id].dateable);
     const recipeId = recordKeys(trackerData.recipes)[0];
-    const relationships = Object.fromEntries(dateableNpcs.map((id) => [id, "platonic"])) as Partial<
-      Record<NpcId, NpcRelationship>
-    >;
-    relationships[dateableNpcs[0]] = "married";
+    const relationships = Object.fromEntries(
+      dateableVillagers.map((id) => [id, "platonic"]),
+    ) as Partial<Record<VillagerId, VillagerRelationship>>;
+    relationships[dateableVillagers[0]] = "married";
     const fixtureState = makeCompleted({
       almanacRecipes: new Set([recipeId]),
       mines: { floor: 0xff, spells: new Set() },
-      npcLevels: Object.fromEntries(npcIds.map((id) => [id, 0xf])),
-      npcRelationships: relationships,
       renown: 0xffff,
       skillLevels: Object.fromEntries(recordKeys(trackerData.skills).map((id) => [id, 0xff])),
+      villagerLevels: Object.fromEntries(villagerIds.map((id) => [id, 0xf])),
+      villagerRelationships: relationships,
     });
     expect(await encodeTransferPayload(fixtureState)).toBe(V8_BOUNDARY_FIXTURE);
 
     const decoded = await decodeTransferPayload(V8_BOUNDARY_FIXTURE);
-    const marriedNpc = recordKeys(trackerData.npcs).find(
-      (id) => decoded.npcRelationships?.[id] === "married",
+    const marriedVillager = recordKeys(trackerData.villagers).find(
+      (id) => decoded.villagerRelationships?.[id] === "married",
     );
 
     expect(decoded.mines?.floor).toBe(0xff);
     expect(decoded.renown).toBe(0xffff);
-    expect(new Set(Object.values(decoded.npcLevels ?? {}))).toEqual(new Set([0xf]));
+    expect(new Set(Object.values(decoded.villagerLevels ?? {}))).toEqual(new Set([0xf]));
     expect(new Set(Object.values(decoded.skillLevels ?? {}))).toEqual(new Set([0xff]));
-    expect(marriedNpc).toBeDefined();
+    expect(marriedVillager).toBeDefined();
     expect(decoded.almanacRecipes?.size).toBe(1);
   });
 

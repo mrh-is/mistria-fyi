@@ -9,7 +9,7 @@ import type { SegmentLookups } from "$lib/utils/source-segments.js";
 
 /**
  * Builds the shared portion of a `SegmentLookups` object from `trackerData`.
- * Every content page needs the same reference tables (items, quests, npcs, stores,
+ * Every content page needs the same reference tables (items, quests, villagers, stores,
  * perks, festivals, biomes, treasure chests, & visibility maps); only `entityVisibility`
  * varies per row, since it reflects the entity currently being rendered.
  *
@@ -24,7 +24,6 @@ export function buildBaseSegmentLookups(
   return {
     ...staticBaseSegmentLookups,
     ...getLocalizedBaseSegmentLookups(locale),
-    npcNames: getNameTable("npcs", locale),
     redactedStoreIds,
     seasonNames: {
       fall: getName("ui", "fall", locale),
@@ -33,6 +32,7 @@ export function buildBaseSegmentLookups(
       winter: getName("ui", "winter", locale),
     },
     skillNames: getNameTable("skills", locale),
+    villagerNames: getNameTable("villagers", locale),
   };
 }
 
@@ -58,7 +58,6 @@ function buildStaticBaseSegmentLookups(): Omit<
   | "entityVisibility"
   | "festivals"
   | "itemNames"
-  | "npcNames"
   | "perks"
   | "questNames"
   | "recipeNames"
@@ -67,6 +66,7 @@ function buildStaticBaseSegmentLookups(): Omit<
   | "skillNames"
   | "stores"
   | "treasureChestTiers"
+  | "villagerNames"
 > {
   return {
     animalNames: {},
@@ -78,16 +78,16 @@ function buildStaticBaseSegmentLookups(): Omit<
     ),
     locationNames: {},
     monsterNames: {},
-    npcVisibility: recordMap(trackerData.npcs, ({ visibility }) => visibility),
     perkTierLevels: trackerData.perkTierLevels,
-    questNpcIds: recordMap(trackerData.quests.fetch, ({ npc }) => npc),
     questTypes: Object.fromEntries(
       (Object.entries(trackerData.quests) as [QuestType, Record<string, unknown>][]).flatMap(
         ([questType, group]) => Object.keys(group).map((id) => [id, questType]),
       ),
     ),
+    questVillagerIds: recordMap(trackerData.quests.fetch, ({ villager }) => villager),
     stationNames: {},
     storeVisibility: recordMap(trackerData.stores, ({ visibility }) => visibility),
+    villagerVisibility: recordMap(trackerData.villagers, ({ visibility }) => visibility),
   };
 }
 
@@ -99,7 +99,7 @@ export const SEGMENT_LOOKUP_CATEGORIES = [
   "festivals",
   "items",
   "mines",
-  "npcs",
+  "villagers",
   "perks",
   "quests",
   "recipes",

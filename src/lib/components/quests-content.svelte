@@ -9,7 +9,7 @@
   import { trackerData, trackerIndex } from "$lib/data/index.js";
   import { getName, nameCollator } from "$lib/data/names.js";
   import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
-  import { getMarriedNpc } from "$lib/engine/relationships.js";
+  import { getMarriedVillager } from "$lib/engine/relationships.js";
   import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
   import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
@@ -30,16 +30,18 @@
   import type {
     FetchQuest,
     HeartQuest,
-    NpcId,
     QuestId,
     QuestType,
+    VillagerId,
   } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   let { locale }: { locale: LocaleCode } = $props();
 
   const pregnancyQuestIds = new Set(
-    Object.values(trackerData.pregnancyQuestByNpc).filter((id): id is QuestId => id !== undefined),
+    Object.values(trackerData.pregnancyQuestByVillager).filter(
+      (id): id is QuestId => id !== undefined,
+    ),
   );
 
   const spoilerGuard = createSpoilerGuard();
@@ -69,11 +71,11 @@
   }
 
   function isCravingQuestComplete(): boolean {
-    const marriedNpc = getMarriedNpc(userState.state.completed.npcRelationships);
-    if (!marriedNpc) return false;
-    if (!(marriedNpc in trackerData.pregnancyQuestByNpc)) return true;
+    const marriedVillager = getMarriedVillager(userState.state.completed.villagerRelationships);
+    if (!marriedVillager) return false;
+    if (!(marriedVillager in trackerData.pregnancyQuestByVillager)) return true;
     if (userState.state.completed.childChoice === "no") return true;
-    const questId = trackerData.pregnancyQuestByNpc[marriedNpc];
+    const questId = trackerData.pregnancyQuestByVillager[marriedVillager];
     return questId ? getQuestState(questId) === "completed" : true;
   }
 
@@ -117,18 +119,18 @@
   }
 
   function questSubtitle(
-    quest: { displayName: string; npc?: NpcId; rewardRecipeName?: string },
+    quest: { displayName: string; rewardRecipeName?: string; villager?: VillagerId },
     questType: QuestType,
     duplicateNames: Set<string>,
   ): string | undefined {
-    const { displayName, npc, rewardRecipeName } = quest;
-    if (!npc) return undefined;
+    const { displayName, rewardRecipeName, villager } = quest;
+    if (!villager) return undefined;
     if (questType === "fetch" || questType === "heart" || duplicateNames.has(displayName)) {
-      const npcName = getName("npcs", npc, locale);
+      const villagerName = getName("villagers", villager, locale);
       if (duplicateNames.has(displayName) && rewardRecipeName) {
-        return `${npcName} · ${rewardRecipeName}`;
+        return `${villagerName} · ${rewardRecipeName}`;
       }
-      return npcName;
+      return villagerName;
     }
   }
 
@@ -165,13 +167,19 @@
   }
 
   let cravingQuestEntry = $derived.by(() => {
-    const marriedNpc = getMarriedNpc(userState.state.completed.npcRelationships);
-    const isWife = marriedNpc ? marriedNpc in trackerData.pregnancyQuestByNpc : false;
-    const activeQuestId = marriedNpc ? trackerData.pregnancyQuestByNpc[marriedNpc] : undefined;
+    const marriedVillager = getMarriedVillager(userState.state.completed.villagerRelationships);
+    const isWife = marriedVillager
+      ? marriedVillager in trackerData.pregnancyQuestByVillager
+      : false;
+    const activeQuestId = marriedVillager
+      ? trackerData.pregnancyQuestByVillager[marriedVillager]
+      : undefined;
 
-    const shouldShow = !marriedNpc || (isWife && userState.state.completed.childChoice !== "no");
+    const shouldShow =
+      !marriedVillager || (isWife && userState.state.completed.childChoice !== "no");
 
-    const subtitle = activeQuestId && marriedNpc ? getName("npcs", marriedNpc, locale) : undefined;
+    const subtitle =
+      activeQuestId && marriedVillager ? getName("villagers", marriedVillager, locale) : undefined;
 
     const isCompleted = activeQuestId ? getQuestState(activeQuestId) === "completed" : false;
 
@@ -182,10 +190,10 @@
       isCompleted,
       isCraving: true,
       name: m.quest_craving_name(),
-      npc: marriedNpc ?? undefined,
       rewardRecipeName: undefined,
       shouldShow,
       subtitle,
+      villager: marriedVillager ?? undefined,
     };
   });
 
@@ -270,10 +278,10 @@
         isCompleted: false,
         isCraving: false,
         name: getName("quests", id as QuestId, locale),
-        npc: fetchQuest?.npc ?? heartQuest?.npc,
         rewardRecipeName,
         shouldShow: true,
         subtitle: undefined as string | undefined,
+        villager: fetchQuest?.villager ?? heartQuest?.villager,
       };
     })
     .concat(questType === "heart" ? [cravingQuestEntry] : [])
@@ -287,18 +295,18 @@
       }
       if (questType === "heart") {
         if (a.isCraving !== b.isCraving) return a.isCraving ? 1 : -1;
-        const npcA = a.npc ? getName("npcs", a.npc, locale) : "";
-        const npcB = b.npc ? getName("npcs", b.npc, locale) : "";
-        const npcCmp = nameCollator(locale).compare(npcA, npcB);
-        if (npcCmp !== 0) return npcCmp;
+        const villagerA = a.villager ? getName("villagers", a.villager, locale) : "";
+        const villagerB = b.villager ? getName("villagers", b.villager, locale) : "";
+        const villagerCmp = nameCollator(locale).compare(villagerA, villagerB);
+        if (villagerCmp !== 0) return villagerCmp;
         return (a.heartLevel ?? 0) - (b.heartLevel ?? 0);
       }
       if (questType === "fetch") {
         const nameCmp = nameCollator(locale).compare(a.displayName, b.displayName);
         if (nameCmp !== 0) return nameCmp;
-        const npcA = a.npc ? getName("npcs", a.npc, locale) : "";
-        const npcB = b.npc ? getName("npcs", b.npc, locale) : "";
-        return nameCollator(locale).compare(npcA, npcB);
+        const villagerA = a.villager ? getName("villagers", a.villager, locale) : "";
+        const villagerB = b.villager ? getName("villagers", b.villager, locale) : "";
+        return nameCollator(locale).compare(villagerA, villagerB);
       }
       return nameCollator(locale).compare(a.displayName, b.displayName);
     })}
@@ -333,7 +341,7 @@
             {#each visibleQuests as quest (quest.id)}
               {#if quest.isCraving}
                 {@const cravingState = quest.isCompleted ? "completed" : "none"}
-                {@const cravingNameVisible = !!quest.npc}
+                {@const cravingNameVisible = !!quest.villager}
                 <TrackerRow
                   display={questRowDisplay(cravingState, cravingNameVisible)}
                   lookups={baseLookups}
@@ -343,7 +351,7 @@
                   sources={[]}
                   subtitle={quest.subtitle}
                   onToggle={() => {
-                    if (quest.npc && cravingQuestEntry.id !== "craving_synthetic") {
+                    if (quest.villager && cravingQuestEntry.id !== "craving_synthetic") {
                       completeQuest(quest, quests);
                     }
                   }}

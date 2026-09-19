@@ -29,7 +29,7 @@
     <p>
       {m.about_maintainer_intro()} <a href="https://mrh.is/">Michael Helmbrecht</a>.
       {m.about_maintainer_suffix()}
-      <a href="https://www.npcstudio.com/">NPC Studio</a>
+      <a href="https://www.villagerstudio.com/">Villager Studio</a>
       {m.about_maintainer_suffix2()}
     </p>
   </section>

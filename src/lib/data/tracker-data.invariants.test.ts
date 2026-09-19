@@ -26,7 +26,7 @@ describe("tracker data structural presence", () => {
     "items",
     "mines",
     "museum",
-    "npcs",
+    "villagers",
     "perkTierLevels",
     "pets",
     "quests",
@@ -90,8 +90,8 @@ describe("non-empty collections", () => {
     expect(recordKeys(trackerData.museum).length).toBeGreaterThan(0);
   });
 
-  it("has NPCs", () => {
-    expect(recordKeys(trackerData.npcs).length).toBeGreaterThan(0);
+  it("has Villagers", () => {
+    expect(recordKeys(trackerData.villagers).length).toBeGreaterThan(0);
   });
 
   it("has recipes", () => {
@@ -206,7 +206,7 @@ describe("source integrity", () => {
 
 describe("reference integrity", () => {
   const itemIds = new Set(recordKeys(trackerData.items));
-  const npcIds = new Set(recordKeys(trackerData.npcs));
+  const villagerIds = new Set(recordKeys(trackerData.villagers));
   const storeIds = new Set(recordKeys(trackerData.stores));
 
   it("almanac entries reference valid item IDs", () => {
@@ -249,16 +249,20 @@ describe("reference integrity", () => {
     expect(invalid, `Invalid store refs: ${invalid.join(", ")}`).toEqual([]);
   });
 
-  it("NPC-referencing sources reference valid NPC IDs", () => {
+  it("Villager-referencing sources reference valid Villager IDs", () => {
     const invalid: string[] = [];
     for (const [itemId, item] of recordEntries(trackerData.items)) {
       for (const source of allSources(item)) {
-        if ("npcId" in source && typeof source.npcId === "string" && !npcIds.has(source.npcId)) {
-          invalid.push(`${itemId} → npc ${source.npcId}`);
+        if (
+          "villagerId" in source &&
+          typeof source.villagerId === "string" &&
+          !villagerIds.has(source.villagerId)
+        ) {
+          invalid.push(`${itemId} → villager ${source.villagerId}`);
         }
       }
     }
-    expect(invalid, `Invalid NPC refs in item sources: ${invalid.join(", ")}`).toEqual([]);
+    expect(invalid, `Invalid Villager refs in item sources: ${invalid.join(", ")}`).toEqual([]);
   });
 
   // Runtime JSON is cast via `as unknown as TrackerData` — the type system says these lookups
@@ -274,14 +278,16 @@ describe("reference integrity", () => {
     expect(invalid, `Fetch quests referencing missing items: ${invalid.join(", ")}`).toEqual([]);
   });
 
-  it("every heart quest references a valid NPC", () => {
+  it("every heart quest references a valid Villager", () => {
     const invalid: string[] = [];
     for (const [id, quest] of recordEntries(trackerData.quests.heart)) {
-      if (!trackerData.npcs[quest.npc]) {
-        invalid.push(`${id} → ${quest.npc}`);
+      if (!trackerData.villagers[quest.villager]) {
+        invalid.push(`${id} → ${quest.villager}`);
       }
     }
-    expect(invalid, `Heart quests referencing missing NPCs: ${invalid.join(", ")}`).toEqual([]);
+    expect(invalid, `Heart quests referencing missing Villagers: ${invalid.join(", ")}`).toEqual(
+      [],
+    );
   });
 
   it("every cooking quest references a valid recipe", () => {
@@ -306,8 +312,8 @@ describe("no duplicate IDs", () => {
     expect(ids.length).toBe(new Set(ids).size);
   });
 
-  it("no duplicate NPC IDs", () => {
-    const ids = recordKeys(trackerData.npcs);
+  it("no duplicate Villager IDs", () => {
+    const ids = recordKeys(trackerData.villagers);
     expect(ids.length).toBe(new Set(ids).size);
   });
 
@@ -461,22 +467,22 @@ describe("festivals structural integrity", () => {
   });
 });
 
-// ─── NPCs ──────────────────────────────────────────────────────────
+// ─── Villagers ──────────────────────────────────────────────────────────
 
-describe("NPC structural integrity", () => {
+describe("Villager structural integrity", () => {
   const validSeasons = ["spring", "summer", "fall", "winter"];
 
-  it("every NPC has a birthday with valid season and day", () => {
-    for (const [id, npc] of recordEntries(trackerData.npcs)) {
-      expect(validSeasons, `${id} has invalid birthday season`).toContain(npc.birthday.season);
-      expect(npc.birthday.day, `${id} birthday day`).toBeGreaterThanOrEqual(1);
-      expect(npc.birthday.day, `${id} birthday day`).toBeLessThanOrEqual(28);
+  it("every Villager has a birthday with valid season and day", () => {
+    for (const [id, villager] of recordEntries(trackerData.villagers)) {
+      expect(validSeasons, `${id} has invalid birthday season`).toContain(villager.birthday.season);
+      expect(villager.birthday.day, `${id} birthday day`).toBeGreaterThanOrEqual(1);
+      expect(villager.birthday.day, `${id} birthday day`).toBeLessThanOrEqual(28);
     }
   });
 
-  it("every NPC has an English name in the generated locale chunk", () => {
-    for (const id of recordKeys(trackerData.npcs)) {
-      expect(getName("npcs", id, "en").length, `${id} has no name`).toBeGreaterThan(0);
+  it("every Villager has an English name in the generated locale chunk", () => {
+    for (const id of recordKeys(trackerData.villagers)) {
+      expect(getName("villagers", id, "en").length, `${id} has no name`).toBeGreaterThan(0);
     }
   });
 });

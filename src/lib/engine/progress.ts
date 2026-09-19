@@ -2,15 +2,15 @@ import { trackerData, trackerIndex } from "$lib/data/index.js";
 import { isVariantInScope } from "$lib/engine/animal-availability.js";
 import { isItemApplicable, isItemApplicableForAlmanac } from "$lib/engine/applicability.js";
 import { filterAvailableItems, isItemAvailable } from "$lib/engine/availability.js";
-import { getMarriedNpc } from "$lib/engine/relationships.js";
+import { getMarriedVillager } from "$lib/engine/relationships.js";
 import { recordEntries, recordKeys, recordValues } from "$lib/utils";
 
 import type { CategoryKey } from "$lib/data/categories.js";
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
 import type { AvailabilitySelection } from "$lib/types/availability.js";
-import type { ItemId, NpcId, QuestId, Season, Weather } from "$lib/types/tracker-data.js";
+import type { ItemId, QuestId, Season, VillagerId, Weather } from "$lib/types/tracker-data.js";
 
-export const MAX_NPC_LEVEL = 12;
+export const MAX_VILLAGER_LEVEL = 12;
 export const MAX_SKILL_LEVEL = 60;
 
 export type AllProgress = Record<CategoryKey, CategoryProgress>;
@@ -43,11 +43,11 @@ export function getAllProgress(ctx: ProgressContext): AllProgress {
     cosmetics: getCosmeticsProgress(ctx),
     mines: getMinesProgress(ctx),
     museum: getMuseumProgress(ctx),
-    npcs: getNpcsProgress(ctx),
     quests: getQuestsProgress(ctx),
     recipes: getRecipesProgress(ctx),
     renown: getRenownProgress(ctx),
     skills: getSkillsProgress(ctx),
+    villagers: getVillagersProgress(ctx),
   };
 }
 
@@ -65,8 +65,6 @@ export function getCategoryProgress(category: CategoryKey, ctx: ProgressContext)
       return getMinesProgress(ctx);
     case "museum":
       return getMuseumProgress(ctx);
-    case "npcs":
-      return getNpcsProgress(ctx);
     case "quests":
       return getQuestsProgress(ctx);
     case "recipes":
@@ -75,17 +73,19 @@ export function getCategoryProgress(category: CategoryKey, ctx: ProgressContext)
       return getRenownProgress(ctx);
     case "skills":
       return getSkillsProgress(ctx);
+    case "villagers":
+      return getVillagersProgress(ctx);
   }
 }
 
-export function isNpcComplete(npcId: NpcId, completed: CompletedState): boolean {
-  const npc = trackerData.npcs[npcId];
-  const level = completed.npcLevels[npcId] ?? 0;
-  if (level < MAX_NPC_LEVEL) return false;
+export function isVillagerComplete(villagerId: VillagerId, completed: CompletedState): boolean {
+  const villager = trackerData.villagers[villagerId];
+  const level = completed.villagerLevels[villagerId] ?? 0;
+  if (level < MAX_VILLAGER_LEVEL) return false;
 
-  if (!npc.dateable) return true;
+  if (!villager.dateable) return true;
 
-  const relationship = completed.npcRelationships[npcId] ?? "undecided";
+  const relationship = completed.villagerRelationships[villagerId] ?? "undecided";
   if (relationship === "platonic") return true;
   if (relationship === "married") return completed.childChoice !== "undeclared";
 
@@ -186,12 +186,12 @@ function getCosmeticsProgress(ctx: ProgressContext): CategoryProgress {
 }
 
 function getCravingQuestCount(
-  marriedNpc: NpcId | null,
+  marriedVillager: null | VillagerId,
   isWife: boolean,
   activePregnancyQuestId: QuestId | undefined,
   ctx: ProgressContext,
 ): { completed: number; total: number } {
-  if (!marriedNpc) {
+  if (!marriedVillager) {
     return { completed: 0, total: 1 };
   }
   if (!isWife) {
@@ -224,24 +224,16 @@ function getMuseumProgress(ctx: ProgressContext): CategoryProgress {
   return itemProgress(allIds, ctx.completed.museum, ctx);
 }
 
-function getNpcsProgress(ctx: ProgressContext): CategoryProgress {
-  let total = 0;
-  let completed = 0;
-  for (const id of recordKeys(trackerData.npcs)) {
-    total += MAX_NPC_LEVEL;
-    completed += Math.min(ctx.completed.npcLevels[id] ?? 0, MAX_NPC_LEVEL);
-  }
-  return { completed, filtered: total - completed, total };
-}
-
 function getQuestsProgress(ctx: ProgressContext): CategoryProgress {
   const pregnancyQuestIds = new Set(
-    Object.values(trackerData.pregnancyQuestByNpc).filter((id): id is QuestId => id !== undefined),
+    Object.values(trackerData.pregnancyQuestByVillager).filter(
+      (id): id is QuestId => id !== undefined,
+    ),
   );
-  const marriedNpc = getMarriedNpc(ctx.completed.npcRelationships);
-  const isWife = marriedNpc ? marriedNpc in trackerData.pregnancyQuestByNpc : false;
-  const activePregnancyQuestId = marriedNpc
-    ? trackerData.pregnancyQuestByNpc[marriedNpc]
+  const marriedVillager = getMarriedVillager(ctx.completed.villagerRelationships);
+  const isWife = marriedVillager ? marriedVillager in trackerData.pregnancyQuestByVillager : false;
+  const activePregnancyQuestId = marriedVillager
+    ? trackerData.pregnancyQuestByVillager[marriedVillager]
     : undefined;
 
   let total = 0;
@@ -254,20 +246,20 @@ function getQuestsProgress(ctx: ProgressContext): CategoryProgress {
     }
   }
 
-  const cravingCount = getCravingQuestCount(marriedNpc, isWife, activePregnancyQuestId, ctx);
+  const cravingCount = getCravingQuestCount(marriedVillager, isWife, activePregnancyQuestId, ctx);
   total += cravingCount.total;
   completed += cravingCount.completed;
 
   return { completed, filtered: total - completed, total };
 }
 
-// ─── All categories ─────────────────────────────────────────────────
-
 function getRecipesProgress(ctx: ProgressContext): CategoryProgress {
   const allIds = recordKeys(trackerData.recipes);
   const completed = allIds.filter((id) => ctx.completed.almanacRecipes.has(id)).length;
   return { completed, filtered: allIds.length - completed, total: allIds.length };
 }
+
+// ─── All categories ─────────────────────────────────────────────────
 
 function getRenownProgress(ctx: ProgressContext): CategoryProgress {
   const ranks = trackerData.townRanks;
@@ -282,6 +274,16 @@ function getSkillsProgress(ctx: ProgressContext): CategoryProgress {
   for (const id of recordKeys(trackerData.skills)) {
     total += MAX_SKILL_LEVEL;
     completed += Math.min(ctx.completed.skillLevels[id] ?? 0, MAX_SKILL_LEVEL);
+  }
+  return { completed, filtered: total - completed, total };
+}
+
+function getVillagersProgress(ctx: ProgressContext): CategoryProgress {
+  let total = 0;
+  let completed = 0;
+  for (const id of recordKeys(trackerData.villagers)) {
+    total += MAX_VILLAGER_LEVEL;
+    completed += Math.min(ctx.completed.villagerLevels[id] ?? 0, MAX_VILLAGER_LEVEL);
   }
   return { completed, filtered: total - completed, total };
 }

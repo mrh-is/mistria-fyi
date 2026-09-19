@@ -13,7 +13,7 @@ export interface AcquisitionSourceAssembly {
     Record<string, { sets?: Readonly<Record<string, { items?: readonly string[] }>> }>
   >;
   quests?: Readonly<
-    Partial<Record<string, Readonly<Record<string, { itemId?: string; npc?: string }>>>>
+    Partial<Record<string, Readonly<Record<string, { itemId?: string; villager?: string }>>>>
   >;
   recipes: Readonly<Record<string, AcquisitionRecipeEntity>>;
 }
@@ -57,7 +57,7 @@ const AVAILABILITY_FIELDS = {
   any: ["conditions"],
   gamePredicate: ["predicate", "value"],
   hasUpperFloor: [],
-  heartLevel: ["level", "npcId"],
+  heartLevel: ["level", "villagerId"],
   isDating: [],
   minesLevel: ["floor"],
   not: ["condition"],
@@ -105,7 +105,7 @@ const SOURCE_FIELDS = {
   museum_donation: ["setCount", "wingId"],
   perk: ["perkId"],
   perk_drop: ["activity", "perkId"],
-  proposal: ["npcId"],
+  proposal: ["villagerId"],
   quest: ["challengeRecipeId", "choiceId", "questId", "questType", "requestedItemId", "trigger"],
   reach_day: ["triggerDate"],
   recipe: ["method", "recipeId"],
@@ -113,7 +113,7 @@ const SOURCE_FIELDS = {
   ritual_chamber: ["perkId"],
   scroll_bundle: ["bundleName", "storeId"],
   ship_item: ["triggerItemId"],
-  spouseGift: ["npcId"],
+  spouseGift: ["villagerId"],
   station: ["stationId"],
   store: ["storeId"],
   treasure_chest: ["tier"],
@@ -542,14 +542,14 @@ function validateAssemblyReferences(
           `quests.${questType}.${questId}.itemId`,
         );
       }
-      if (quest.npc) {
+      if (quest.villager) {
         reference(
           diagnostics,
           references,
-          "npc",
-          quest.npc,
+          "villager",
+          quest.villager,
           questId,
-          `quests.${questType}.${questId}.npc`,
+          `quests.${questType}.${questId}.villager`,
         );
       }
     }
@@ -634,14 +634,14 @@ function validateAvailability(
         return;
       case "heartLevel":
         requireNumber(value, "level", targetId, fieldPath, source, diagnostics);
-        if (requireString(value, "npcId", targetId, fieldPath, source, diagnostics)) {
+        if (requireString(value, "villagerId", targetId, fieldPath, source, diagnostics)) {
           reference(
             diagnostics,
             references,
-            "npc",
-            value.npcId,
+            "villager",
+            value.villagerId,
             targetId,
-            `${fieldPath}.npcId`,
+            `${fieldPath}.villagerId`,
             source,
           );
         }
@@ -1155,7 +1155,7 @@ function validateVariantFields(
       }
       break;
     case "proposal":
-      stringReferences.push(["npcId", "npc"]);
+      stringReferences.push(["villagerId", "villager"]);
       break;
     case "quest":
       stringReferences.push(["questId", "quest"]);
@@ -1230,7 +1230,7 @@ function validateVariantFields(
       stringReferences.push(["storeId", "store"]);
       break;
     case "spouseGift":
-      stringReferences.push(["npcId", "npc"]);
+      stringReferences.push(["villagerId", "villager"]);
       break;
     case "station":
       stringReferences.push(["stationId", "station"]);

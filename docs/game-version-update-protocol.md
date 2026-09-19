@@ -68,7 +68,7 @@ JSON diff.
 ## Classify changes
 
 Compare the previous and candidate datasets by domain. At minimum, inspect almanac entries and their
-canonical members, recipes, museum items, cosmetics, animal variants and cosmetics, pets, NPCs,
+canonical members, recipes, museum items, cosmetics, animal variants and cosmetics, pets, villagers,
 relationships and dates, skills and perks, quests, spells, progression ranges, visibility
 conditions, and acquisition sources.
 

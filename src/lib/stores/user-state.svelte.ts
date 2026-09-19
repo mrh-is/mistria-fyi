@@ -1,9 +1,9 @@
 import { SvelteSet } from "svelte/reactivity";
 
 import { canonicalAlmanacId, trackerData } from "$lib/data/index.js";
-import { clampRenownLevel, MAX_NPC_LEVEL } from "$lib/engine/progress.js";
+import { clampRenownLevel, MAX_VILLAGER_LEVEL } from "$lib/engine/progress.js";
 import { findRecipesForQuest } from "$lib/engine/quest-rewards.js";
-import { getMarriedNpc, normalizeRelationships } from "$lib/engine/relationships.js";
+import { getMarriedVillager, normalizeRelationships } from "$lib/engine/relationships.js";
 import { deriveProgressionState, type UserProgressionState } from "$lib/engine/visibility.js";
 import {
   AVAILABILITY_WINDOWS,
@@ -20,8 +20,6 @@ import type {
   CosmeticId,
   DateId,
   ItemId,
-  NpcId,
-  NpcRelationship,
   PerkId,
   PetCosmeticSetId,
   PetSkinId,
@@ -30,6 +28,8 @@ import type {
   Season,
   SkillId,
   SpellId,
+  VillagerId,
+  VillagerRelationship,
   Weather,
 } from "$lib/types/tracker-data.js";
 
@@ -48,8 +48,6 @@ export interface CompletedState {
   hasUpperFloor: boolean;
   mines: { floor: number; spells: Set<SpellId> };
   museum: Set<ItemId>;
-  npcLevels: Record<NpcId, number>;
-  npcRelationships: Partial<Record<NpcId, NpcRelationship>>;
   petCosmetics: Set<PetCosmeticSetId>;
   petSkins: Set<PetSkinId>;
   questStates: Record<QuestId, QuestState>;
@@ -57,6 +55,8 @@ export interface CompletedState {
   renown: number;
   skillLevels: Record<SkillId, number>;
   unlockedPerks: Set<PerkId>;
+  villagerLevels: Record<VillagerId, number>;
+  villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>>;
 }
 export type ImportErrorKind = "invalid-fields" | "malformed-json" | "unsupported-version";
 
@@ -73,8 +73,6 @@ export interface MergeCounts {
   hasUpperFloor: number;
   mineFloor: number;
   museum: number;
-  npcLevels: number;
-  npcRelationships: number;
   perks: number;
   petCosmetics: number;
   petSkins: number;
@@ -83,6 +81,8 @@ export interface MergeCounts {
   renown: number;
   skillLevels: number;
   spells: number;
+  villagerLevels: number;
+  villagerRelationships: number;
 }
 
 export type QuestState = "completed" | "none" | "obtained";
@@ -109,22 +109,22 @@ interface SerializedState {
     cosmetics: string[];
     dates?: string[];
     hasUpperFloor?: boolean;
-    marriedNpc?: null | string;
+    marriedVillager?: null | string;
     mines: { floor: number; spells: string[] };
     museum: string[];
-    npcLevels?: Record<string, number>;
-    npcRelationships?: Record<string, NpcRelationship>;
-    npcs?: string[];
     petCosmetics?: string[];
     petSkins?: string[];
     quests?: string[];
     questStates?: Record<string, QuestState>;
     reachedSeason?: Season;
     renown: number;
-    romanticNpcs?: string[];
+    romanticVillagers?: string[];
     skillLevels?: Record<string, number>;
     skills?: string[];
     unlockedPerks?: string[];
+    villagerLevels?: Record<string, number>;
+    villagerRelationships?: Record<string, VillagerRelationship>;
+    villagers?: string[];
   };
   showSpoilers?: boolean;
   version: string;
@@ -206,8 +206,6 @@ function createDefaultCompleted(): CompletedState {
     hasUpperFloor: false,
     mines: { floor: 0, spells: new SvelteSet<SpellId>() },
     museum: new SvelteSet<ItemId>(),
-    npcLevels: {},
-    npcRelationships: {},
     petCosmetics: new SvelteSet<PetCosmeticSetId>(),
     petSkins: new SvelteSet<PetSkinId>(),
     questStates: {},
@@ -215,6 +213,8 @@ function createDefaultCompleted(): CompletedState {
     renown: 0,
     skillLevels: {},
     unlockedPerks: new SvelteSet<PerkId>(),
+    villagerLevels: {},
+    villagerRelationships: {},
   };
 }
 
@@ -265,7 +265,7 @@ function createUserState() {
       state.completed.museum.size > 0 ||
       state.completed.dates.size > 0 ||
       state.completed.reachedSeason !== "spring" ||
-      Object.keys(state.completed.npcRelationships).length > 0 ||
+      Object.keys(state.completed.villagerRelationships).length > 0 ||
       state.completed.childChoice !== "undeclared" ||
       state.completed.mines.floor > 0 ||
       state.completed.mines.spells.size > 0 ||
@@ -273,7 +273,7 @@ function createUserState() {
       state.completed.petCosmetics.size > 0 ||
       state.completed.petSkins.size > 0 ||
       state.completed.unlockedPerks.size > 0 ||
-      Object.values(state.completed.npcLevels).some((v) => v > 0) ||
+      Object.values(state.completed.villagerLevels).some((v) => v > 0) ||
       Object.values(state.completed.skillLevels).some((v) => v > 0) ||
       Object.values(state.completed.questStates).some((v) => v !== "none") ||
       Object.values(state.completed.animals).some((s) => s.size > 0) ||
@@ -336,8 +336,6 @@ function createUserState() {
         hasUpperFloor: 0,
         mineFloor: 0,
         museum: 0,
-        npcLevels: 0,
-        npcRelationships: 0,
         perks: 0,
         petCosmetics: 0,
         petSkins: 0,
@@ -346,6 +344,8 @@ function createUserState() {
         renown: 0,
         skillLevels: 0,
         spells: 0,
+        villagerLevels: 0,
+        villagerRelationships: 0,
       };
 
       // Almanac
@@ -467,13 +467,13 @@ function createUserState() {
         state.completed.renown = imported.renown;
       }
 
-      // NPC levels (take max per NPC)
-      if (imported.npcLevels) {
-        for (const [id, level] of recordEntries(imported.npcLevels)) {
-          const current = state.completed.npcLevels[id] ?? 0;
+      // Villager levels (take max per villager)
+      if (imported.villagerLevels) {
+        for (const [id, level] of recordEntries(imported.villagerLevels)) {
+          const current = state.completed.villagerLevels[id] ?? 0;
           if (level > current) {
-            state.completed.npcLevels[id] = level;
-            counts.npcLevels++;
+            state.completed.villagerLevels[id] = level;
+            counts.villagerLevels++;
           }
         }
       }
@@ -526,8 +526,8 @@ function createUserState() {
         counts.hasUpperFloor = 1;
       }
 
-      // NPC relationships (per-NPC merge)
-      if (imported.npcRelationships) {
+      // Villager relationships (per-villager merge)
+      if (imported.villagerRelationships) {
         const romanticRank: Record<string, number> = {
           married: 4,
           platonic: 1,
@@ -536,37 +536,37 @@ function createUserState() {
           undecided: 0,
         };
 
-        const localMarried = getMarriedNpc(state.completed.npcRelationships);
-        const importedMarried = getMarriedNpc(imported.npcRelationships);
+        const localMarried = getMarriedVillager(state.completed.villagerRelationships);
+        const importedMarried = getMarriedVillager(imported.villagerRelationships);
 
-        for (const [npcIdStr, importedRel] of Object.entries(imported.npcRelationships)) {
+        for (const [villagerIdStr, importedRel] of Object.entries(imported.villagerRelationships)) {
           if (!importedRel) continue;
-          const npcId = npcIdStr as NpcId;
-          const localRel = state.completed.npcRelationships[npcId] ?? "undecided";
+          const villagerId = villagerIdStr as VillagerId;
+          const localRel = state.completed.villagerRelationships[villagerId] ?? "undecided";
           if (localRel === importedRel) continue;
 
           if (localRel === "undecided") {
-            state.completed.npcRelationships[npcId] = importedRel;
-            counts.npcRelationships++;
+            state.completed.villagerRelationships[villagerId] = importedRel;
+            counts.villagerRelationships++;
           } else if (importedRel !== "undecided") {
             const localRk = romanticRank[localRel];
             const importedRk = romanticRank[importedRel];
             if (importedRk > localRk) {
-              state.completed.npcRelationships[npcId] = importedRel;
-              counts.npcRelationships++;
+              state.completed.villagerRelationships[villagerId] = importedRel;
+              counts.villagerRelationships++;
             } else if (importedRk === localRk && localRel !== importedRel) {
-              state.completed.npcRelationships[npcId] = importedRel;
-              counts.npcRelationships++;
+              state.completed.villagerRelationships[villagerId] = importedRel;
+              counts.villagerRelationships++;
             }
           }
         }
 
         if (importedMarried && localMarried && importedMarried !== localMarried) {
-          state.completed.npcRelationships[localMarried] = "proposed";
-          counts.npcRelationships++;
+          state.completed.villagerRelationships[localMarried] = "proposed";
+          counts.villagerRelationships++;
         }
 
-        normalizeRelationships(state.completed.npcRelationships);
+        normalizeRelationships(state.completed.villagerRelationships);
       }
 
       // Child choice merge
@@ -623,23 +623,6 @@ function createUserState() {
       const maxFloor = biomes[biomes.length - 1].floors.end;
       state.completed.mines.floor = Math.max(0, Math.min(floor, maxFloor));
     },
-    setNpcLevel(id: NpcId, level: number) {
-      state.completed.npcLevels[id] = Math.max(0, Math.min(level, MAX_NPC_LEVEL));
-    },
-    setNpcRelationship(npcId: NpcId, relationship: NpcRelationship) {
-      const oldMarried = getMarriedNpc(state.completed.npcRelationships);
-      if (relationship === "undecided") {
-        const { [npcId]: _, ...rest } = state.completed.npcRelationships;
-        state.completed.npcRelationships = rest;
-      } else {
-        state.completed.npcRelationships[npcId] = relationship;
-      }
-      normalizeRelationships(state.completed.npcRelationships);
-      const newMarried = getMarriedNpc(state.completed.npcRelationships);
-      if (oldMarried !== newMarried) {
-        state.completed.childChoice = "undeclared";
-      }
-    },
     setReachedSeason(season: Season) {
       const seasonOrd: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
       if (seasonOrd[season] > seasonOrd[state.completed.reachedSeason]) {
@@ -654,6 +637,23 @@ function createUserState() {
     },
     setSkillLevel(id: SkillId, level: number) {
       state.completed.skillLevels[id] = Math.max(0, Math.min(level, 60));
+    },
+    setVillagerLevel(id: VillagerId, level: number) {
+      state.completed.villagerLevels[id] = Math.max(0, Math.min(level, MAX_VILLAGER_LEVEL));
+    },
+    setVillagerRelationship(villagerId: VillagerId, relationship: VillagerRelationship) {
+      const oldMarried = getMarriedVillager(state.completed.villagerRelationships);
+      if (relationship === "undecided") {
+        const { [villagerId]: _, ...rest } = state.completed.villagerRelationships;
+        state.completed.villagerRelationships = rest;
+      } else {
+        state.completed.villagerRelationships[villagerId] = relationship;
+      }
+      normalizeRelationships(state.completed.villagerRelationships);
+      const newMarried = getMarriedVillager(state.completed.villagerRelationships);
+      if (oldMarried !== newMarried) {
+        state.completed.childChoice = "undeclared";
+      }
     },
     setWeather(weather: Weather) {
       state.worldState.weather = weather;
@@ -758,10 +758,10 @@ function deserialize(json: string): DeserializeResult {
     const brandedSet = <T>(arr: string[]) => new SvelteSet(arr) as unknown as Set<T>;
 
     // Migrate legacy Set-based data → level/state Records
-    // Old format: npcs/skills/quests as string[]; New format: npcLevels/skillLevels/questStates as Records
-    const npcLevels: Record<string, number> = s.completed.npcLevels ?? {};
-    if (!s.completed.npcLevels && s.completed.npcs) {
-      for (const id of s.completed.npcs) npcLevels[id] = 10; // legacy "completed" → max standard level
+    // Old format: villagers/skills/quests as string[]; New format: villagerLevels/skillLevels/questStates as Records
+    const villagerLevels: Record<string, number> = s.completed.villagerLevels ?? {};
+    if (!s.completed.villagerLevels && s.completed.villagers) {
+      for (const id of s.completed.villagers) villagerLevels[id] = 10; // legacy "completed" → max standard level
     }
 
     const skillLevels: Record<string, number> = s.completed.skillLevels ?? {};
@@ -774,25 +774,25 @@ function deserialize(json: string): DeserializeResult {
       for (const id of s.completed.quests) questStates[id] = "completed";
     }
 
-    // Migrate npcRelationships from legacy romanticNpcs/marriedNpc
-    let npcRelationships: Partial<Record<NpcId, NpcRelationship>> = {};
-    if (s.completed.npcRelationships) {
-      for (const [id, rel] of Object.entries(s.completed.npcRelationships)) {
+    // Migrate villagerRelationships from legacy romanticVillagers/marriedVillager
+    let villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>> = {};
+    if (s.completed.villagerRelationships) {
+      for (const [id, rel] of Object.entries(s.completed.villagerRelationships)) {
         if (VALID_RELATIONSHIPS.has(rel) && rel !== "undecided") {
-          npcRelationships[id as NpcId] = rel;
+          villagerRelationships[id as VillagerId] = rel;
         }
       }
     } else {
-      if (s.completed.romanticNpcs) {
-        for (const id of s.completed.romanticNpcs) {
-          npcRelationships[id as NpcId] = "romantic";
+      if (s.completed.romanticVillagers) {
+        for (const id of s.completed.romanticVillagers) {
+          villagerRelationships[id as VillagerId] = "romantic";
         }
       }
-      if (s.completed.marriedNpc) {
-        npcRelationships[s.completed.marriedNpc as NpcId] = "married";
+      if (s.completed.marriedVillager) {
+        villagerRelationships[s.completed.marriedVillager as VillagerId] = "married";
       }
     }
-    normalizeRelationships(npcRelationships);
+    normalizeRelationships(villagerRelationships);
 
     const childChoice: ChildChoice =
       s.completed.childChoice && VALID_CHILD_CHOICES.has(s.completed.childChoice)
@@ -817,8 +817,6 @@ function deserialize(json: string): DeserializeResult {
         spells: brandedSet<SpellId>(s.completed.mines.spells),
       },
       museum: brandedSet<ItemId>(s.completed.museum),
-      npcLevels,
-      npcRelationships,
       petCosmetics: brandedSet<PetCosmeticSetId>(s.completed.petCosmetics ?? []),
       petSkins: brandedSet<PetSkinId>(s.completed.petSkins ?? []),
       questStates,
@@ -826,6 +824,8 @@ function deserialize(json: string): DeserializeResult {
       renown: clampRenownLevel(s.completed.renown),
       skillLevels,
       unlockedPerks: brandedSet<PerkId>(s.completed.unlockedPerks ?? []),
+      villagerLevels,
+      villagerRelationships,
     };
 
     backfillAnimalMaps(completed);
@@ -920,19 +920,19 @@ function isSerializedState(value: unknown): value is SerializedState {
       isEnumValue(completed.childChoice, VALID_CHILD_CHOICES)) &&
     isOptionalStringArray(completed.dates) &&
     (completed.hasUpperFloor === undefined || typeof completed.hasUpperFloor === "boolean") &&
-    (completed.marriedNpc === undefined ||
-      completed.marriedNpc === null ||
-      typeof completed.marriedNpc === "string") &&
-    isOptionalNumberRecord(completed.npcLevels) &&
-    isOptionalEnumRecord(completed.npcRelationships, VALID_RELATIONSHIPS) &&
-    isOptionalStringArray(completed.npcs) &&
+    (completed.marriedVillager === undefined ||
+      completed.marriedVillager === null ||
+      typeof completed.marriedVillager === "string") &&
+    isOptionalNumberRecord(completed.villagerLevels) &&
+    isOptionalEnumRecord(completed.villagerRelationships, VALID_RELATIONSHIPS) &&
+    isOptionalStringArray(completed.villagers) &&
     isOptionalStringArray(completed.petCosmetics) &&
     isOptionalStringArray(completed.petSkins) &&
     isOptionalStringArray(completed.quests) &&
     isOptionalEnumRecord(completed.questStates, VALID_QUEST_STATES) &&
     (completed.reachedSeason === undefined ||
       isEnumValue(completed.reachedSeason, VALID_SEASONS)) &&
-    isOptionalStringArray(completed.romanticNpcs) &&
+    isOptionalStringArray(completed.romanticVillagers) &&
     isOptionalNumberRecord(completed.skillLevels) &&
     isOptionalStringArray(completed.skills) &&
     isOptionalStringArray(completed.unlockedPerks)
@@ -981,11 +981,6 @@ function serialize(state: UserState): string {
         spells: [...state.completed.mines.spells].sort(),
       },
       museum: [...state.completed.museum].sort(),
-      npcLevels: filterRecord(state.completed.npcLevels, (v) => v > 0),
-      npcRelationships: filterRecord(
-        state.completed.npcRelationships as Record<string, NpcRelationship>,
-        (v) => v !== "undecided",
-      ),
       petCosmetics: [...state.completed.petCosmetics].sort(),
       petSkins: [...state.completed.petSkins].sort(),
       questStates: filterRecord(state.completed.questStates, (v) => v !== "none"),
@@ -993,6 +988,11 @@ function serialize(state: UserState): string {
       renown: state.completed.renown,
       skillLevels: filterRecord(state.completed.skillLevels, (v) => v > 0),
       unlockedPerks: [...state.completed.unlockedPerks].sort(),
+      villagerLevels: filterRecord(state.completed.villagerLevels, (v) => v > 0),
+      villagerRelationships: filterRecord(
+        state.completed.villagerRelationships as Record<string, VillagerRelationship>,
+        (v) => v !== "undecided",
+      ),
     },
     showSpoilers: state.showSpoilers,
     version: "1",

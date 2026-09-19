@@ -15,8 +15,6 @@ interface SerializedCompletedState {
   hasUpperFloor: boolean;
   mines: { floor: number; spells: string[] };
   museum: string[];
-  npcLevels: Record<string, number>;
-  npcRelationships: Record<string, string>;
   petCosmetics: string[];
   petSkins: string[];
   questStates: Record<string, "completed" | "none" | "obtained">;
@@ -24,6 +22,8 @@ interface SerializedCompletedState {
   renown: number;
   skillLevels: Record<string, number>;
   unlockedPerks: string[];
+  villagerLevels: Record<string, number>;
+  villagerRelationships: Record<string, string>;
 }
 
 interface StoredState {
@@ -53,8 +53,6 @@ export function createStoredState(
     hasUpperFloor: false,
     mines: { floor: 0, spells: [] },
     museum: [],
-    npcLevels: {},
-    npcRelationships: {},
     petCosmetics: [],
     petSkins: [],
     questStates: {},
@@ -62,6 +60,8 @@ export function createStoredState(
     renown: 0,
     skillLevels: {},
     unlockedPerks: [],
+    villagerLevels: {},
+    villagerRelationships: {},
     ...overrides.completed,
   };
 

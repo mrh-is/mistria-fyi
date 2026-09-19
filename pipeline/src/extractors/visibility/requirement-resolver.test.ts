@@ -70,14 +70,14 @@ describe("resolveToVisibility", () => {
     });
   });
 
-  it("maps met_npc to npcKnown", () => {
+  it("maps met_villager to villagerKnown", () => {
     const expr: RequirementExpression = {
-      predicate: "met_npc",
+      predicate: "met_villager",
       value: "stillwell",
     };
     expect(resolveToVisibility(expr, emptyCutsceneMap)).toEqual({
-      type: "npcKnown",
-      npcId: "stillwell",
+      type: "villagerKnown",
+      villagerId: "stillwell",
     });
   });
 
@@ -163,7 +163,7 @@ describe("resolveToVisibility", () => {
     expect(resolveToVisibility(expr, emptyCutsceneMap)).toEqual({
       type: "heartLevel",
       level: 2,
-      npcId: "ryis",
+      villagerId: "ryis",
     });
   });
 });

@@ -7,7 +7,6 @@ import type {
   FestivalId,
   ItemId,
   MinesBiomeId,
-  NpcId,
   PerkId,
   PetCosmeticSetId,
   PetSkinId,
@@ -17,6 +16,7 @@ import type {
   SpellId,
   StoreId,
   TreasureChestTierId,
+  VillagerId,
 } from "$lib/types/tracker-data.js";
 
 export type AnimalNameId = string & { readonly __brand: "AnimalNameId" };
@@ -35,7 +35,6 @@ export const LOCALIZED_CATEGORIES = [
   "items",
   "mines",
   "museum_wings",
-  "npcs",
   "perks",
   "pets/cosmetic_sets",
   "pets/skins",
@@ -47,6 +46,7 @@ export const LOCALIZED_CATEGORIES = [
   "town-ranks",
   "treasure-chest-tiers",
   "ui",
+  "villagers",
 ] as const;
 export type LocalizedCategory = (typeof LOCALIZED_CATEGORIES)[number];
 
@@ -59,7 +59,6 @@ interface LocalizedCategoryId {
   items: ItemId;
   mines: MinesBiomeId;
   museum_wings: string;
-  npcs: NpcId;
   perks: PerkId;
   "pets/cosmetic_sets": PetCosmeticSetId;
   "pets/skins": PetSkinId;
@@ -72,6 +71,7 @@ interface LocalizedCategoryId {
   "treasure-chest-tiers": TreasureChestTierId;
   /** Game UI vocabulary keyed by `misc_local` key: almanac categories, `tier_<n>`, etc. */
   ui: string;
+  villagers: VillagerId;
 }
 type NameChunk = Partial<Record<string, string>>;
 

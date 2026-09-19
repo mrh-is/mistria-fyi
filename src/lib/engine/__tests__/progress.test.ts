@@ -8,9 +8,9 @@ import {
   clampRenownLevel,
   getAllProgress,
   getCategoryProgress,
-  isNpcComplete,
-  MAX_NPC_LEVEL,
+  isVillagerComplete,
   MAX_SKILL_LEVEL,
+  MAX_VILLAGER_LEVEL,
 } from "../progress";
 
 import type { CategoryKey } from "$lib/data/categories.js";
@@ -22,10 +22,10 @@ import type {
 import type {
   AnimalVariantId,
   CosmeticId,
-  NpcId,
-  NpcRelationship,
   QuestId,
   Season,
+  VillagerId,
+  VillagerRelationship,
   Weather,
 } from "$lib/types/tracker-data.js";
 
@@ -50,8 +50,6 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     hasUpperFloor: false,
     mines: { floor: 0, spells: new Set() },
     museum: new Set(),
-    npcLevels: {},
-    npcRelationships: {},
     petCosmetics: new Set(),
     petSkins: new Set(),
     questStates: {},
@@ -59,6 +57,8 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
     renown: 0,
     skillLevels: {},
     unlockedPerks: new Set(),
+    villagerLevels: {},
+    villagerRelationships: {},
     ...overrides,
   };
 }
@@ -116,7 +116,7 @@ describe("getAllProgress", () => {
       "cosmetics",
       "mines",
       "museum",
-      "npcs",
+      "villagers",
       "quests",
       "recipes",
       "renown",
@@ -229,20 +229,20 @@ describe("cosmetics progress", () => {
   });
 });
 
-describe("npcs progress", () => {
-  it("total is NPC count times MAX_NPC_LEVEL", () => {
-    const progress = getCategoryProgress("npcs", ctx());
-    const expectedNpcTotal = recordKeys(trackerData.npcs).length * MAX_NPC_LEVEL;
-    expect(progress.total).toBe(expectedNpcTotal);
+describe("villagers progress", () => {
+  it("total is Villager count times MAX_VILLAGER_LEVEL", () => {
+    const progress = getCategoryProgress("villagers", ctx());
+    const expectedVillagerTotal = recordKeys(trackerData.villagers).length * MAX_VILLAGER_LEVEL;
+    expect(progress.total).toBe(expectedVillagerTotal);
   });
 
-  it("caps individual NPC levels at MAX_NPC_LEVEL", () => {
-    const npcId = recordKeys(trackerData.npcs)[0];
+  it("caps individual Villager levels at MAX_VILLAGER_LEVEL", () => {
+    const villagerId = recordKeys(trackerData.villagers)[0];
     const progress = getCategoryProgress(
-      "npcs",
-      ctx({ completed: { npcLevels: { [npcId]: 999 } } }),
+      "villagers",
+      ctx({ completed: { villagerLevels: { [villagerId]: 999 } } }),
     );
-    expect(progress.completed).toBe(MAX_NPC_LEVEL);
+    expect(progress.completed).toBe(MAX_VILLAGER_LEVEL);
   });
 });
 
@@ -250,7 +250,7 @@ describe("quests progress", () => {
   it("total matches total quest count minus pregnancy quests plus synthetic craving row", () => {
     const progress = getCategoryProgress("quests", ctx());
     let expected = 0;
-    const pregnancyQuestIds = new Set(Object.values(trackerData.pregnancyQuestByNpc));
+    const pregnancyQuestIds = new Set(Object.values(trackerData.pregnancyQuestByVillager));
     for (const questType of recordValues(trackerData.quests)) {
       for (const id of recordKeys(questType)) {
         if (!pregnancyQuestIds.has(id)) expected++;
@@ -460,107 +460,125 @@ describe("availability filtering on item-based categories", () => {
   });
 });
 
-// ─── isNpcComplete ────────────────────────────────────────────────
+// ─── isVillagerComplete ────────────────────────────────────────────────
 
-describe("isNpcComplete", () => {
-  it("non-dateable NPC is complete at max hearts", () => {
+describe("isVillagerComplete", () => {
+  it("non-dateable Villager is complete at max hearts", () => {
     const completed = makeCompleted({
-      npcLevels: { darcy: MAX_NPC_LEVEL } as Record<NpcId, number>,
+      villagerLevels: { darcy: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
     });
-    expect(isNpcComplete("darcy" as NpcId, completed)).toBe(true);
+    expect(isVillagerComplete("darcy" as VillagerId, completed)).toBe(true);
   });
 
-  it("non-dateable NPC is incomplete below max hearts", () => {
-    const completed = makeCompleted({ npcLevels: { darcy: 5 } as Record<NpcId, number> });
-    expect(isNpcComplete("darcy" as NpcId, completed)).toBe(false);
+  it("non-dateable Villager is incomplete below max hearts", () => {
+    const completed = makeCompleted({ villagerLevels: { darcy: 5 } as Record<VillagerId, number> });
+    expect(isVillagerComplete("darcy" as VillagerId, completed)).toBe(false);
   });
 
-  it("dateable NPC with undecided relationship is never complete", () => {
+  it("dateable Villager with undecided relationship is never complete", () => {
     const completed = makeCompleted({
-      npcLevels: { adeline: MAX_NPC_LEVEL } as Record<NpcId, number>,
+      villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
     });
-    expect(isNpcComplete("adeline" as NpcId, completed)).toBe(false);
+    expect(isVillagerComplete("adeline" as VillagerId, completed)).toBe(false);
   });
 
-  it("dateable NPC is complete when platonic at max hearts", () => {
+  it("dateable Villager is complete when platonic at max hearts", () => {
     const completed = makeCompleted({
-      npcLevels: { adeline: MAX_NPC_LEVEL } as Record<NpcId, number>,
-      npcRelationships: { adeline: "platonic" } as Partial<Record<NpcId, NpcRelationship>>,
+      villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
+      villagerRelationships: { adeline: "platonic" } as Partial<
+        Record<VillagerId, VillagerRelationship>
+      >,
     });
-    expect(isNpcComplete("adeline" as NpcId, completed)).toBe(true);
+    expect(isVillagerComplete("adeline" as VillagerId, completed)).toBe(true);
   });
 
-  it("dateable NPC is incomplete when platonic below max hearts", () => {
+  it("dateable Villager is incomplete when platonic below max hearts", () => {
     const completed = makeCompleted({
-      npcLevels: { adeline: 8 } as Record<NpcId, number>,
-      npcRelationships: { adeline: "platonic" } as Partial<Record<NpcId, NpcRelationship>>,
+      villagerLevels: { adeline: 8 } as Record<VillagerId, number>,
+      villagerRelationships: { adeline: "platonic" } as Partial<
+        Record<VillagerId, VillagerRelationship>
+      >,
     });
-    expect(isNpcComplete("adeline" as NpcId, completed)).toBe(false);
+    expect(isVillagerComplete("adeline" as VillagerId, completed)).toBe(false);
   });
 
-  it("dateable NPC is incomplete when romantic (not married)", () => {
+  it("dateable Villager is incomplete when romantic (not married)", () => {
     const completed = makeCompleted({
-      npcLevels: { adeline: MAX_NPC_LEVEL } as Record<NpcId, number>,
-      npcRelationships: { adeline: "romantic" } as Partial<Record<NpcId, NpcRelationship>>,
+      villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
+      villagerRelationships: { adeline: "romantic" } as Partial<
+        Record<VillagerId, VillagerRelationship>
+      >,
     });
-    expect(isNpcComplete("adeline" as NpcId, completed)).toBe(false);
+    expect(isVillagerComplete("adeline" as VillagerId, completed)).toBe(false);
   });
 
-  it("dateable NPC is incomplete when proposed (not married)", () => {
+  it("dateable Villager is incomplete when proposed (not married)", () => {
     const completed = makeCompleted({
-      npcLevels: { adeline: MAX_NPC_LEVEL } as Record<NpcId, number>,
-      npcRelationships: { adeline: "proposed" } as Partial<Record<NpcId, NpcRelationship>>,
+      villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
+      villagerRelationships: { adeline: "proposed" } as Partial<
+        Record<VillagerId, VillagerRelationship>
+      >,
     });
-    expect(isNpcComplete("adeline" as NpcId, completed)).toBe(false);
+    expect(isVillagerComplete("adeline" as VillagerId, completed)).toBe(false);
   });
 
-  it("married NPC is incomplete below max hearts even with child choice", () => {
+  it("married Villager is incomplete below max hearts even with child choice", () => {
     const completed = makeCompleted({
       childChoice: "yes",
-      npcLevels: { adeline: 8 } as Record<NpcId, number>,
-      npcRelationships: { adeline: "married" } as Partial<Record<NpcId, NpcRelationship>>,
+      villagerLevels: { adeline: 8 } as Record<VillagerId, number>,
+      villagerRelationships: { adeline: "married" } as Partial<
+        Record<VillagerId, VillagerRelationship>
+      >,
     });
-    expect(isNpcComplete("adeline" as NpcId, completed)).toBe(false);
+    expect(isVillagerComplete("adeline" as VillagerId, completed)).toBe(false);
   });
 
-  it("married NPC at max hearts is incomplete with undeclared child choice", () => {
+  it("married Villager at max hearts is incomplete with undeclared child choice", () => {
     const completed = makeCompleted({
       childChoice: "undeclared",
-      npcLevels: { adeline: MAX_NPC_LEVEL } as Record<NpcId, number>,
-      npcRelationships: { adeline: "married" } as Partial<Record<NpcId, NpcRelationship>>,
+      villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
+      villagerRelationships: { adeline: "married" } as Partial<
+        Record<VillagerId, VillagerRelationship>
+      >,
     });
-    expect(isNpcComplete("adeline" as NpcId, completed)).toBe(false);
+    expect(isVillagerComplete("adeline" as VillagerId, completed)).toBe(false);
   });
 
-  it("married NPC at max hearts is complete when child choice is yes", () => {
+  it("married Villager at max hearts is complete when child choice is yes", () => {
     const completed = makeCompleted({
       childChoice: "yes",
-      npcLevels: { adeline: MAX_NPC_LEVEL } as Record<NpcId, number>,
-      npcRelationships: { adeline: "married" } as Partial<Record<NpcId, NpcRelationship>>,
+      villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
+      villagerRelationships: { adeline: "married" } as Partial<
+        Record<VillagerId, VillagerRelationship>
+      >,
     });
-    expect(isNpcComplete("adeline" as NpcId, completed)).toBe(true);
+    expect(isVillagerComplete("adeline" as VillagerId, completed)).toBe(true);
   });
 
-  it("married NPC at max hearts is complete when child choice is no", () => {
+  it("married Villager at max hearts is complete when child choice is no", () => {
     const completed = makeCompleted({
       childChoice: "no",
-      npcLevels: { adeline: MAX_NPC_LEVEL } as Record<NpcId, number>,
-      npcRelationships: { adeline: "married" } as Partial<Record<NpcId, NpcRelationship>>,
+      villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
+      villagerRelationships: { adeline: "married" } as Partial<
+        Record<VillagerId, VillagerRelationship>
+      >,
     });
-    expect(isNpcComplete("adeline" as NpcId, completed)).toBe(true);
+    expect(isVillagerComplete("adeline" as VillagerId, completed)).toBe(true);
   });
 });
 
 // ─── Quests progress with marriage state ──────────────────────────
 
 describe("quests progress with marriage state", () => {
-  it("excludes craving row when married to a husband NPC (no pregnancy quest)", () => {
+  it("excludes craving row when married to a husband Villager (no pregnancy quest)", () => {
     const progress = getCategoryProgress(
       "quests",
       ctx({
         completed: {
           childChoice: "yes",
-          npcRelationships: { balor: "married" } as Partial<Record<NpcId, NpcRelationship>>,
+          villagerRelationships: { balor: "married" } as Partial<
+            Record<VillagerId, VillagerRelationship>
+          >,
         },
       }),
     );
@@ -574,7 +592,9 @@ describe("quests progress with marriage state", () => {
       ctx({
         completed: {
           childChoice: "no",
-          npcRelationships: { adeline: "married" } as Partial<Record<NpcId, NpcRelationship>>,
+          villagerRelationships: { adeline: "married" } as Partial<
+            Record<VillagerId, VillagerRelationship>
+          >,
         },
       }),
     );
@@ -588,7 +608,9 @@ describe("quests progress with marriage state", () => {
       ctx({
         completed: {
           childChoice: "yes",
-          npcRelationships: { adeline: "married" } as Partial<Record<NpcId, NpcRelationship>>,
+          villagerRelationships: { adeline: "married" } as Partial<
+            Record<VillagerId, VillagerRelationship>
+          >,
         },
       }),
     );
@@ -602,8 +624,10 @@ describe("quests progress with marriage state", () => {
       ctx({
         completed: {
           childChoice: "yes",
-          npcRelationships: { adeline: "married" } as Partial<Record<NpcId, NpcRelationship>>,
           questStates: { adeline_pregnancy_request: "completed" } as Record<QuestId, QuestState>,
+          villagerRelationships: { adeline: "married" } as Partial<
+            Record<VillagerId, VillagerRelationship>
+          >,
         },
       }),
     );
