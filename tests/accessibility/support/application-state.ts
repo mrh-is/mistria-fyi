@@ -78,8 +78,18 @@ export async function expectResolvedTheme(page: Page, theme: AccessibilityTheme)
   await expect(page.locator("html")).toHaveClass(theme === "dark" ? /\bdark\b/ : /^(?!.*\bdark\b)/);
 }
 
+/** Selector for the marker the root layout stamps once the client has hydrated. */
+export const HYDRATED_SELECTOR = 'html[data-hydrated="true"]';
+
+/**
+ * Navigates and waits for hydration. Network idle alone is not enough: a control clicked between
+ * the server-rendered paint and `onMount` drops the event, which showed up as flaky interaction
+ * failures under parallel workers (#330).
+ */
 export async function gotoApplication(page: Page, path: string): Promise<null | Response> {
-  return page.goto(path, { waitUntil: "networkidle" });
+  const response = await page.goto(path, { waitUntil: "networkidle" });
+  await page.locator(HYDRATED_SELECTOR).waitFor({ state: "attached" });
+  return response;
 }
 
 export async function initializeApplication(

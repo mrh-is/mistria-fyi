@@ -27,6 +27,30 @@ The Playwright configuration builds the app once, starts one preview server, and
 the selected cases. Chromium is the only installed automated browser. Cross-browser and
 assistive-technology behavior belongs in the manual matrix.
 
+## Run isolation
+
+Two mechanisms keep a run deterministic and pinned to its own checkout (#330).
+
+**Hydration signal.** The root layout sets `data-hydrated="true"` on `<html>` from `onMount`, which
+fires once every child component has mounted. `gotoApplication` in
+`tests/accessibility/support/application-state.ts` waits for that attribute after network idle, so
+no test clicks a server-rendered control before its handler exists. Route the initial navigation of
+every interaction test through that helper; the smoke suite asserts the attribute on each route.
+
+**Preview ownership.** Each checkout derives its preview port from its own path, and
+`scripts/playwright-preview.ts` stamps the checkout path into the build output as
+`playwright-owner.json` before serving. When the config loads, it probes the port:
+
+- Nothing listening: the run starts its own preview.
+- A preview stamped by another checkout: the run fails at once and names that checkout.
+- A preview stamped by this checkout: the run fails and reports when the leftover started.
+- Anything else: the run fails and says the server is not a Playwright preview.
+
+`reuseExistingServer` stays `false`, so a run never adopts a server it did not start. Set
+`PLAYWRIGHT_PORT` to move a run to a free port rather than stopping an unrelated process.
+`PLAYWRIGHT_SKIP_BUILD=true` serves the existing build output, which CI uses after downloading the
+shared build artifact.
+
 ## CI behavior
 
 `.github/workflows/accessibility.yml` is separate from ordinary CI. It runs for pull requests, at

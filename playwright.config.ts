@@ -1,13 +1,23 @@
 import { defineConfig, devices } from "@playwright/test";
 
+import { assessPreviewProbe, probePreviewOwner } from "./scripts/playwright-preview-owner";
+
 const isCi = process.env.CI === "true";
-const skipBuild = process.env.PLAYWRIGHT_SKIP_BUILD === "true";
 const worktreePortOffset = [...process.cwd()].reduce(
   (hash, character) => (hash * 31 + character.charCodeAt(0)) % 10_000,
   0,
 );
 const testPort = process.env.PLAYWRIGHT_PORT ?? String(40_000 + worktreePortOffset);
 const testUrl = `http://127.0.0.1:${testPort}`;
+
+// Playwright would also refuse a busy port (`reuseExistingServer: false`), but only with a generic
+// message. Naming the checkout that owns the server makes a worktree collision obvious. This runs
+// at config load because `webServer` starts before `globalSetup`, and only in the runner process:
+// workers reload the config after the server is up. See #330.
+if (process.env.TEST_WORKER_INDEX === undefined) {
+  const previewConflict = assessPreviewProbe(probePreviewOwner(testUrl), testUrl, process.cwd());
+  if (previewConflict !== null) throw new Error(previewConflict);
+}
 
 export default defineConfig({
   expect: {
@@ -39,9 +49,8 @@ export default defineConfig({
     viewport: { height: 720, width: 1280 },
   },
   webServer: {
-    command: skipBuild
-      ? `pnpm run preview --host 127.0.0.1 --port ${testPort}`
-      : `pnpm run build && pnpm run preview --host 127.0.0.1 --port ${testPort}`,
+    command: "pnpm exec tsx scripts/playwright-preview.ts",
+    env: { PLAYWRIGHT_PREVIEW_PORT: testPort },
     reuseExistingServer: false,
     timeout: 120_000,
     // A bare "/" 404s without an Accept-Language header (no unprefixed default locale), and
