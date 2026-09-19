@@ -32,6 +32,12 @@ interface ProgressContext {
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
+export function clampMineFloor(floor: number): number {
+  const biomes = trackerData.mines.biomes;
+  const maxFloor = biomes[biomes.length - 1].floors.end;
+  return Math.max(0, Math.min(floor, maxFloor));
+}
+
 export function clampRenownLevel(level: number): number {
   const maxLevel = trackerData.townRanks[trackerData.townRanks.length - 1].levels.end;
   return Math.max(0, Math.min(level, maxLevel));

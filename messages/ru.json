@@ -39,6 +39,12 @@
   "toolbar_filters_cleared": "Все фильтры сброшены",
   "page_header_back_to_home": "Назад на главную",
   "page_header_progress": "Выполнено {completed} из {total}",
+  "home_index_heading": "Указатель",
+  "home_everything_label": "Всё",
+  "home_active_categories_label": "Категории в процессе",
+  "home_completed_heading": "Выполнено",
+  "home_completed_categories_label": "Выполненные категории",
+  "overall_progress_label": "Выполнено {completed} из {total} всего, {pct}%",
   "foldout_close": "Закрыть {title}",
   "search_results_count": [
     {

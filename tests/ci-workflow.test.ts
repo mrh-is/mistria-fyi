@@ -77,7 +77,11 @@ describe("CI workflow", () => {
     expect(workflow.jobs?.lint.steps?.at(-1)?.run).toBe("pnpm run lint");
     expect(workflow.jobs?.check.steps?.at(-1)?.run).toBe("pnpm run check");
     expect(workflow.jobs?.test.steps?.at(-1)?.run).toBe("pnpm run test");
-    expect(workflow.jobs?.build.steps?.at(-1)?.run).toBe("pnpm run build");
+    // The build job also proves the Cloudflare route table keeps static assets off Functions.
+    expect(workflow.jobs?.build.steps?.slice(-2).map((step) => step.run)).toEqual([
+      "pnpm run build",
+      "pnpm run check:routes",
+    ]);
   });
 
   it("uses pinned tooling without credentials or asset-dependent commands", () => {

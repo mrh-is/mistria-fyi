@@ -1,9 +1,16 @@
 import { render } from "svelte/server";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import CategoryCard from "$lib/components/category-card.svelte";
+import { getLocale, overwriteGetLocale } from "$lib/paraglide/runtime.js";
 
 describe("CategoryCard", () => {
+  const defaultGetLocale = getLocale;
+
+  afterEach(() => {
+    overwriteGetLocale(defaultGetLocale);
+  });
+
   it("renders a named category stripe with progress and a decorative ribbon", () => {
     const { body } = render(CategoryCard, {
       props: {
@@ -44,5 +51,31 @@ describe("CategoryCard", () => {
 
     expect(body).toContain("category-stripe--complete");
     expect(body).toContain("--category-color: var(--cat-animals)");
+  });
+
+  it("localizes the accessible progress phrase for Japanese", () => {
+    overwriteGetLocale(() => "ja");
+
+    const { body } = render(CategoryCard, {
+      props: {
+        key: "almanac",
+        progress: { completed: 7, filtered: 13, total: 20 },
+      },
+    });
+
+    expect(body).toContain('aria-label="Almanac、20件中7件完了"');
+  });
+
+  it("localizes the accessible progress phrase for Russian", () => {
+    overwriteGetLocale(() => "ru");
+
+    const { body } = render(CategoryCard, {
+      props: {
+        key: "almanac",
+        progress: { completed: 7, filtered: 13, total: 20 },
+      },
+    });
+
+    expect(body).toContain('aria-label="Almanac, выполнено 7 из 20"');
   });
 });

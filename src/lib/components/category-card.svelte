@@ -2,6 +2,7 @@
   import { page } from "$app/state";
   import { Icon } from "$lib/components/icon/index.js";
   import { categoryForKey, type CategoryKey } from "$lib/data/categories.js";
+  import * as m from "$lib/paraglide/messages.js";
   import { localizedHref } from "$lib/utils/localized-href.js";
 
   import type { CategoryProgress } from "$lib/engine/progress.js";
@@ -44,7 +45,11 @@
   class:category-stripe--mobile-ribbon={mobileRibbon}
   data-category-stripe
   href={localizedHref(href)}
-  aria-label="{name}, {progress.completed} of {displayTotal} completed"
+  aria-label={m.section_progress_label({
+    completed: progress.completed,
+    name,
+    total: displayTotal,
+  })}
   style="--category-color: var(--{color}); --category-progress: {pct}%"
 >
   <span class="category-copy">
