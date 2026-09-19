@@ -1,7 +1,8 @@
+import localeManifest from "$lib/data/locales.json";
 import { getName } from "$lib/data/names.js";
 import * as m from "$lib/paraglide/messages.js";
 
-import type { LocaleCode } from "$lib/types/locale.js";
+import type { LocaleCode, LocaleManifest } from "$lib/types/locale.js";
 import type {
   MinesBiome,
   MinesBiomeId,
@@ -98,6 +99,33 @@ export function formatStoreName(
 /** The game's own season name, from the `ui` chunk the root layout awaits. */
 export function seasonLabel(season: Season, locale: LocaleCode): string {
   return getName("ui", season, locale);
+}
+
+const LOCALE_ENTRIES_BY_TAG = new Map(
+  (localeManifest as LocaleManifest).map((entry) => [entry.tag, entry]),
+);
+
+/**
+ * Composes a descriptor and a base name into one phrase using the active locale's word order and
+ * spacing (e.g. an animal name + a cosmetic name: "Golden Retriever Crown" in English, where the
+ * descriptor leads; some locales put it last instead).
+ */
+export function composeInfusion(descriptor: string, base: string, locale: LocaleCode): string {
+  const infusion = LOCALE_ENTRIES_BY_TAG.get(locale)?.infusion;
+  if (!infusion || infusion.order === "Adjective") {
+    return `${descriptor}${infusion?.space ?? " "}${base}`;
+  }
+  return `${base}${infusion.space}${descriptor}`;
+}
+
+/** Formats a plain integer (e.g. a completion count) with the active locale's grouping. */
+export function formatNumber(value: number, locale: LocaleCode): string {
+  return new Intl.NumberFormat(locale).format(value);
+}
+
+/** Formats a 0–100 whole-number percentage with the active locale's symbol and spacing. */
+export function formatPercent(value: number, locale: LocaleCode): string {
+  return new Intl.NumberFormat(locale, { style: "percent" }).format(value / 100);
 }
 
 export function seasonLabelAbbr(season: Season): string {

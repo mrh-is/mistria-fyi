@@ -44,7 +44,7 @@
   "home_active_categories_label": "進行中的分類",
   "home_completed_heading": "已完成",
   "home_completed_categories_label": "已完成的分類",
-  "overall_progress_label": "總計已完成 {completed}/{total}，{pct}%",
+  "overall_progress_label": "總計已完成 {completed}/{total}，{pct}",
   "foldout_close": "關閉{title}",
   "search_results_count": [
     {
@@ -57,6 +57,8 @@
   ],
   "search_no_results": "找不到任何物品",
   "search_loading": "正在載入搜尋…",
+  "search_error": "無法載入搜尋結果。",
+  "action_retry": "重試",
   "quest_marked_obtained": "已將「{name}」標記為已取得",
   "quest_marked_completed": "已將「{name}」標記為已完成",
   "quest_marked_completed_with_recipe": "已將「{name}」標記為已完成，並解鎖「{recipe}」",

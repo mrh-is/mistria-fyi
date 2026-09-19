@@ -44,7 +44,7 @@
   "home_active_categories_label": "Категории в процессе",
   "home_completed_heading": "Выполнено",
   "home_completed_categories_label": "Выполненные категории",
-  "overall_progress_label": "Выполнено {completed} из {total} всего, {pct}%",
+  "overall_progress_label": "Выполнено {completed} из {total} всего, {pct}",
   "foldout_close": "Закрыть {title}",
   "search_results_count": [
     {
@@ -60,6 +60,8 @@
   ],
   "search_no_results": "Ничего не найдено",
   "search_loading": "Загрузка поиска…",
+  "search_error": "Не удалось загрузить результаты поиска.",
+  "action_retry": "Повторить",
   "quest_marked_obtained": "«{name}» отмечено как полученное",
   "quest_marked_completed": "«{name}» отмечено как выполненное",
   "quest_marked_completed_with_recipe": "«{name}» отмечено как выполненное, разблокирован рецепт «{recipe}»",
