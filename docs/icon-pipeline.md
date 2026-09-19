@@ -104,13 +104,7 @@ accept the same props at runtime.
 ## 5. Verification
 
 1. Check the proof gallery at `/dev/icons` to confirm the icon renders at 16px, 24px, and 32px.
-2. Run the verification matrix:
-
-```sh
-pnpm run check
-pnpm run lint
-pnpm run test
-```
+2. Run `pnpm run check`; CI runs the full matrix on the pull request.
 
 ---
 

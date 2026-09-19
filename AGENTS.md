@@ -86,7 +86,7 @@ Follow this sequence for every task:
    editing.
 8. **Test first** — add or update tests for behavioral changes, preferably before implementation.
    Run focused tests during development (see §7).
-9. **Verify** — run `pnpm run verify` once when commit-ready (see §7).
+9. **Verify** — run `pnpm run lint:fix` before committing; CI runs the full matrix (see §7).
 10. **Deliver** — commit with the required co-author trailer, push, and open an attributed PR that
     references the issue (`Closes #N`). Apply the matching `agent:*` label to the PR. Keep the
     active-work labels through PR review. On handoff, replace the active `agent:*` labels. When work
@@ -108,7 +108,10 @@ Follow this sequence for every task:
 
 ## 4. Commands
 
-Use **pnpm** exclusively. Do **not** use `npm`, `npx`, `yarn`, or `bun`.
+Use **pnpm** exclusively. Do **not** use `npm`, `npx`, `yarn`, or `bun`. The one exception is
+Wrangler, which is only a transitive dependency: run one-off commands as `pnpx wrangler <command>`.
+Wrangler may need access to Cloudflare's API and to its credentials under
+`~/Library/Preferences/.wrangler/`; never read or expose the stored OAuth token.
 
 | Command                       | Purpose                                     |
 | ----------------------------- | ------------------------------------------- |
@@ -122,7 +125,7 @@ Use **pnpm** exclusively. Do **not** use `npm`, `npx`, `yarn`, or `bun`.
 | `pnpm run test`               | Complete Vitest suite (asset-independent)   |
 | `pnpm run test:app`           | App tests (`src/`)                          |
 | `pnpm run test:pipeline`      | Pipeline tests (`pipeline/`)                |
-| `pnpm run verify`             | Full matrix with compact output (see §7)    |
+| `pnpm run verify`             | Full CI matrix locally (see §7 exceptions)  |
 | `pnpm run pipeline -- <path>` | Regenerate `tracker-data.json` from assets  |
 
 ## 5. Architecture boundaries
@@ -170,22 +173,45 @@ These rules prevent accidental damage to generated or vendored code:
 
 ## 7. Verification
 
-This project has a history of agents running the full verification matrix dozens of times per
-session. That pattern wastes tokens, bloats context, and accelerates compaction.
+Agents verify locally with focused checks; GitHub Actions runs the complete matrix on every pull
+request. Running the full matrix locally by default wastes tokens, bloats context, and accelerates
+compaction.
 
-- **During development**: run only the specific test covering your change
-  (`pnpm exec vitest run path/to/file.test.ts`), and `pnpm run check` after a TypeScript or Svelte
-  contract edit. Don't run `pnpm run test`, `pnpm run lint`, `pnpm run build`, or `pnpm run verify`
-  until you're commit-ready.
-- **When commit-ready**: run `pnpm run verify` once. It chains lint:fix, lint, check, test, & build
-  and stops on first failure. Lint must produce zero errors and zero warnings — a warning that needs
-  an eslint-disable comment gets the narrowest possible disable with a justification. If a step
-  fails, fix it and rerun only that step to confirm, then rerun `pnpm run verify` once more.
-- **After the matrix passes**: don't rerun it unless you make further code changes.
-- **Documentation-only changes**: `pnpm run lint:fix && pnpm run lint` only — no build, no tests.
-- **Output handling**: pipe verbose commands through `tail` unless diagnosing a failure (e.g.
-  `pnpm run lint 2>&1 | tail -30`). For CI failures, prefer `gh run view <id> --log-failed` once
-  over repeated full-log downloads.
+### Local (every change)
+
+- Run only the test covering your change: `pnpm exec vitest run path/to/file.test.ts`.
+- Run `pnpm run check` after a TypeScript or Svelte contract edit.
+- Run `pnpm run lint:fix` before committing. Lint must produce zero errors and zero warnings; a
+  warning that needs an eslint-disable comment gets the narrowest possible disable with a
+  justification.
+- Documentation-only changes: `pnpm run lint:fix && pnpm run lint` only.
+
+### CI (every pull request)
+
+`ci.yml` runs `lint`, `check`, `check:i18n`, `test`, `build`, & `check:routes`. `browser-tests.yml`
+adds the accessibility and PWA suites when `src/`, `static/`, or `tests/` change. A PR merges only
+when both pass; fix CI failures on the branch rather than merging around them (see §3 step 11).
+
+### Full local matrix (exceptions)
+
+Run `pnpm run verify` once, when commit-ready, only when:
+
+- The change regenerates `tracker-data.json` or touches the pipeline parser, evaluator, extractors,
+  or shared tracker contract. CI has no game assets, so `pnpm run test:pipeline:assets` and the
+  pipeline run are local-only checks; see
+  [docs/development-workflow.md §4](docs/development-workflow.md#4-test-first-development--test-matrix).
+- The change touches a high-risk surface listed in §9.
+- A CI failure cannot be reproduced with a focused test.
+- The change edits a check CI does not run for that change (release scripts, browser suites outside
+  their trigger paths).
+
+If a step fails, fix it and rerun only that step, then rerun `pnpm run verify` once. After it
+passes, don't rerun it unless you make further code changes. Pipe verbose commands through `tail`
+(e.g. `pnpm run lint 2>&1 | tail -30`); for CI failures, prefer `gh run view <id> --log-failed`
+once.
+
+> Git pre-commit hooks are developer conveniences, not verification evidence. Run the documented
+> commands directly and confirm clean exit status.
 
 Full command reference and troubleshooting:
 [docs/development-workflow.md §5](docs/development-workflow.md#5-verification-matrix).
@@ -242,12 +268,30 @@ that require substantial changes, one re-review is justified; otherwise, fix and
 Keep review prompts compact: the base commit, the changed files, the relevant invariants, and the
 requested severity threshold. Do not restate the full plan or spec in the review prompt.
 
+### Review trail
+
+Reviews must leave a durable record on GitHub, not only in an agent session, so a later agent can
+aggregate findings across pull requests.
+
+- An agent asked to review posts its findings as a PR review (`gh pr review --comment`) or, when
+  there is no PR, an issue comment. Give each finding a severity, the finding, its impact, and a
+  suggested fix. End the comment with the `Agent:` line from §2.
+- Reviewing does not include fixing. Address findings only when the user asks.
+- When asked to address findings, reply in the same thread with the resolution for each one,
+  including "won't fix" with a reason. The resolution matters as much as the finding: a single
+  review opinion may be mistaken or superseded.
+- Documentation guidance follows the trail
+  `finding → resolution → repeated pattern → narrowly scoped guidance`. Add a rule only for
+  recurring evidence or one severe incident with a clear preventive rule, place it in the narrowest
+  durable document, and keep this file concise rather than a catalogue of past bugs.
+
 ## 10. Session lifecycle
 
 ### Budget
 
 - **One concern per session.** One issue, one PR-sized deliverable.
-- **Stop at 100 model requests** or the **first context compaction**, whichever comes first.
+- **Stop at 100 model requests**, the **first context compaction**, or the end of the agent's usage
+  window, whichever comes first.
 - When approaching limits, write a handoff note to the worktree or issue, then stop. A fresh session
   reading the issue and branch is 50–100x cheaper than re-tokenizing a cold conversation.
 
@@ -273,13 +317,8 @@ The new session reads `gh issue view`, `git log`, and `git diff` to reconstruct 
 
 ### Model routing
 
-Evaluate task complexity before starting work. Use the cheapest model that can handle the task. See
-[DELEGATION.md](.agents/DELEGATION.md) for the full routing table with model names per agent.
-
-- **Simple** (single-file fix, lint issue, doc update, dependency bump): cheapest tier.
-- **Medium** (bug fix, single-component feature, test additions): default tier.
-- **Complex** (multi-file feature, architecture decision, difficult debugging): most capable tier.
-
-Don't run an entire session at the most expensive model for a task the default could handle. The
-routing decision happens once, at the start; don't reevaluate mid-session unless you discover
-unexpected complexity.
+Evaluate task complexity once, at the start, and use the cheapest model that can handle it: cheapest
+tier for single-file fixes and doc updates, default tier for bug fixes and single-component
+features, most capable tier for multi-file features, architecture decisions, and difficult
+debugging. Don't reevaluate mid-session unless you discover unexpected complexity. The routing table
+with model names per agent is in [DELEGATION.md](.agents/DELEGATION.md).
