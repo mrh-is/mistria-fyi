@@ -65,6 +65,7 @@
         <image
           data-sprite-layer="silhouette"
           href={source}
+          crossorigin="anonymous"
           x="0"
           y="0"
           width="18"
@@ -77,6 +78,7 @@
         <image
           data-sprite-layer="silhouette"
           href={source}
+          crossorigin="anonymous"
           x="0"
           y="0"
           width="18"
@@ -91,6 +93,7 @@
         <image
           data-sprite-layer="silhouette"
           href={source}
+          crossorigin="anonymous"
           x="0"
           y="0"
           width="18"
@@ -104,6 +107,7 @@
         <image
           data-sprite-layer="sticker"
           href={source}
+          crossorigin="anonymous"
           x="0"
           y="0"
           width="18"

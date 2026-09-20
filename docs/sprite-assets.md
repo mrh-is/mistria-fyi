@@ -71,6 +71,11 @@ objects immutable, skips keys that already serve publicly (`FORCE=1` to re-uploa
 original game assets must never reach the public bucket by accident — refuses to run if
 `pipeline/output/sprites/` contains anything other than `.webp` files.
 
+Because uploads are skipped once a key returns `200`, re-running the pipeline for the same game
+version after fixing a bad conversion does not overwrite the object already served — pass `FORCE=1`
+to force a re-upload. This is intentional given the immutable, version-prefixed key scheme; see
+#348 (private beta) for a possible content-hashed replacement.
+
 ## Local development
 
 Sprites are not required for local development. With `PUBLIC_ASSET_ORIGIN` unset, `pnpm run dev`

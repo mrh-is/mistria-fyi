@@ -212,6 +212,24 @@ describe("service-worker sprite asset handling", () => {
     expect(await (await cache.match(sprite))?.text()).toBe("sprite");
   });
 
+  it("does not cache an opaque no-cors response (crossorigin is required on every sprite img/image)", async () => {
+    const cache = new MemoryCache();
+    const sprite = new Request("https://assets.mistria.fyi/sprites/1.2.3/spr_ui_item_opaque.webp");
+
+    // An <img>/<image> fetched without crossorigin="anonymous" yields an opaque response here:
+    // status 0, ok false. Response.error() models the same "not ok" shape fetchRuntimeRequest
+    // gates on; a real opaque Response can't be constructed directly in this test environment.
+    const response = await fetchRuntimeRequest(sprite, {
+      assetPaths: [],
+      cache,
+      fetcher: vi.fn().mockResolvedValue(Response.error()),
+      matchCache: (request) => cache.match(request),
+    });
+
+    expect(response.ok).toBe(false);
+    expect(await cache.match(sprite)).toBeUndefined();
+  });
+
   it("evicts the oldest sprite once the 400-entry cap is exceeded", async () => {
     const cache = new MemoryCache();
     for (let index = 0; index < MAX_SPRITE_ENTRIES; index++) {
