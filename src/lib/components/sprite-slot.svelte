@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { itemSpriteUrl } from "$lib/sprites/sprite-url.js";
+
   export type SpriteSlotState = "complete" | "ready" | "spoilered";
 
   let {
@@ -18,7 +20,7 @@
   const tintFilterId = `${instanceId}-sprite-tint`;
 
   let imageFailed = $state(false);
-  let source = $derived(`/sprites/${sprite}.webp`);
+  let source = $derived(itemSpriteUrl(sprite));
 
   function handleImageError(): void {
     imageFailed = true;

@@ -48,6 +48,10 @@ declare global {
     }
   }
 
+  interface ImportMetaEnv {
+    readonly PUBLIC_ASSET_ORIGIN?: string;
+  }
+
   interface Window {
     turnstile?: Turnstile;
   }

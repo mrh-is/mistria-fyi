@@ -5,7 +5,9 @@ import {
   fetchRuntimeRequest,
   isEligibleForRuntimeCaching,
   isExternalFontAsset,
+  isExternalSpriteAsset,
   isLazyAsset,
+  MAX_SPRITE_ENTRIES,
 } from "../service-worker-cache";
 
 const ORIGIN = "https://mistria.fyi";
@@ -179,5 +181,121 @@ describe("service-worker font asset handling", () => {
     expect(isLazyAsset("/_app/immutable/assets/locale-fonts-zh-Hans.C1a2b3.css")).toBe(true);
     expect(isLazyAsset("/_app/immutable/assets/0.C1a2b3.css")).toBe(false);
     expect(isLazyAsset("/fonts/petrona-latin.woff2")).toBe(false);
+  });
+});
+
+describe("service-worker sprite asset handling", () => {
+  it("treats versioned item and villager sprites as external sprite assets", () => {
+    const item = new URL("https://assets.mistria.fyi/sprites/1.2.3/spr_ui_item_apple.webp");
+    const villager = new URL(
+      "https://assets.mistria.fyi/villager-sprites/1.2.3/spr_villager_adeline_small.webp",
+    );
+    expect(isExternalSpriteAsset(item)).toBe(true);
+    expect(isExternalSpriteAsset(villager)).toBe(true);
+    expect(isExternalSpriteAsset(new URL("https://assets.mistria.fyi/fonts/satoshi.woff2"))).toBe(
+      false,
+    );
+  });
+
+  it("caches a sprite on first fetch", async () => {
+    const cache = new MemoryCache();
+    const sprite = new Request("https://assets.mistria.fyi/sprites/1.2.3/spr_ui_item_apple.webp");
+
+    const response = await fetchRuntimeRequest(sprite, {
+      assetPaths: [],
+      cache,
+      fetcher: vi.fn().mockResolvedValue(new Response("sprite", { status: 200 })),
+      matchCache: (request) => cache.match(request),
+    });
+
+    expect(await response.text()).toBe("sprite");
+    expect(await (await cache.match(sprite))?.text()).toBe("sprite");
+  });
+
+  it("evicts the oldest sprite once the 400-entry cap is exceeded", async () => {
+    const cache = new MemoryCache();
+    for (let index = 0; index < MAX_SPRITE_ENTRIES; index++) {
+      await cache.put(
+        `https://assets.mistria.fyi/sprites/1.2.3/spr_${String(index)}.webp`,
+        new Response(String(index)),
+      );
+    }
+
+    await cacheRuntimeResponse(
+      cache,
+      new Request("https://assets.mistria.fyi/sprites/1.2.3/spr_newest.webp"),
+      new Response("newest"),
+      [],
+      MAX_SPRITE_ENTRIES,
+    );
+
+    expect(
+      await cache.match("https://assets.mistria.fyi/sprites/1.2.3/spr_0.webp"),
+    ).toBeUndefined();
+    expect(cache.entries.size).toBe(MAX_SPRITE_ENTRIES);
+  });
+
+  it("does not count font chunks toward the sprite cache's own eviction, and vice versa", async () => {
+    const spriteCache = new MemoryCache();
+    const fontCache = new MemoryCache();
+
+    await cacheRuntimeResponse(
+      fontCache,
+      new Request("https://assets.mistria.fyi/fonts/satoshi.woff2"),
+      new Response("font"),
+      [],
+      1,
+    );
+    await cacheRuntimeResponse(
+      spriteCache,
+      new Request("https://assets.mistria.fyi/sprites/1.2.3/spr_a.webp"),
+      new Response("a"),
+      [],
+      1,
+    );
+    await cacheRuntimeResponse(
+      spriteCache,
+      new Request("https://assets.mistria.fyi/sprites/1.2.3/spr_b.webp"),
+      new Response("b"),
+      [],
+      1,
+    );
+
+    expect(await fontCache.match("https://assets.mistria.fyi/fonts/satoshi.woff2")).toBeDefined();
+    expect(
+      await spriteCache.match("https://assets.mistria.fyi/sprites/1.2.3/spr_a.webp"),
+    ).toBeUndefined();
+    expect(
+      await spriteCache.match("https://assets.mistria.fyi/sprites/1.2.3/spr_b.webp"),
+    ).toBeDefined();
+  });
+
+  it("returns a previously cached sprite when offline", async () => {
+    const cache = new MemoryCache();
+    const sprite = new Request("https://assets.mistria.fyi/sprites/1.2.3/spr_ui_item_apple.webp");
+    await cache.put(sprite, new Response("cached sprite"));
+
+    const response = await fetchRuntimeRequest(sprite, {
+      assetPaths: [],
+      cache,
+      fetcher: vi.fn().mockRejectedValue(new Error("offline")),
+      matchCache: (request) => cache.match(request),
+    });
+
+    expect(await response.text()).toBe("cached sprite");
+  });
+
+  it("falls through to an error response, not the offline page, for a never-loaded sprite", async () => {
+    const cache = new MemoryCache();
+    const sprite = new Request("https://assets.mistria.fyi/sprites/1.2.3/spr_ui_item_never.webp");
+
+    const response = await fetchRuntimeRequest(sprite, {
+      assetPaths: [],
+      cache,
+      fetcher: vi.fn().mockRejectedValue(new Error("network failure")),
+      matchCache: (request) => cache.match(request),
+    });
+
+    expect(response.type).toBe("error");
   });
 });

@@ -82,7 +82,7 @@ const PIPELINE_ROOT = resolve(__dirname, "..");
 const OUTPUT_DIR = resolve(PIPELINE_ROOT, "output");
 const APP_DATA_DIR = resolve(PIPELINE_ROOT, "..", "src", "lib", "data");
 const OUTPUT_FILE = "tracker-data.json";
-const SPRITES_DIR = resolve(PIPELINE_ROOT, "..", "static", "sprites");
+const SPRITES_OUTPUT_ROOT = resolve(OUTPUT_DIR, "sprites");
 
 interface StagedFile {
   content: string;
@@ -661,7 +661,8 @@ async function main(): Promise<void> {
   const extractSpritesFlag = args.includes("--sprites");
   if (extractSpritesFlag) {
     console.log("\nStep 6: Extracting item sprites...");
-    const spriteResult = await extractSprites(resolve(assetsDir), trackerData.items, SPRITES_DIR);
+    const spritesDir = resolve(SPRITES_OUTPUT_ROOT, version);
+    const spriteResult = await extractSprites(resolve(assetsDir), trackerData.items, spritesDir);
     console.log(
       `  Extracted ${spriteResult.extracted} new, ${spriteResult.skipped} unchanged, ` +
         `${spriteResult.total} total`,

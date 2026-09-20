@@ -6,13 +6,16 @@
 import {
   fetchRuntimeRequest,
   isEligibleForRuntimeCaching,
+  isExternalSpriteAsset,
   isLazyAsset,
+  MAX_SPRITE_ENTRIES,
 } from "$lib/engine/service-worker-cache.js";
 import { build, files, version } from "$service-worker";
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
 const CACHE = `cache-${version}`;
+const SPRITES_CACHE = "sprites-v1";
 const ASSETS = [...build, ...files];
 const PRECACHED_ASSETS = ASSETS.filter((path) => !isLazyAsset(path));
 
@@ -29,7 +32,7 @@ sw.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then(async (keys) => {
       for (const key of keys) {
-        if (key !== CACHE) await caches.delete(key);
+        if (key !== CACHE && key !== SPRITES_CACHE) await caches.delete(key);
       }
       await sw.clients.claim();
     }),
@@ -55,6 +58,18 @@ sw.addEventListener("fetch", (event) => {
         return response;
       }),
     );
+  } else if (isExternalSpriteAsset(url)) {
+    const response = caches.open(SPRITES_CACHE).then((cache) =>
+      fetchRuntimeRequest(event.request, {
+        assetPaths: [],
+        cache,
+        fetcher: (request) => fetch(request),
+        matchCache: (request) => cache.match(request),
+        maxEntries: MAX_SPRITE_ENTRIES,
+      }),
+    );
+    event.respondWith(response);
+    event.waitUntil(response.then(() => undefined));
   } else if (isEligibleForRuntimeCaching(url, sw.location.origin)) {
     const response = caches.open(CACHE).then((cache) =>
       fetchRuntimeRequest(event.request, {
