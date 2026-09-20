@@ -5,7 +5,7 @@
   "version": "0.15.1",
   "type": "module",
   "scripts": {
-    "prepare": "husky && pnpm run paraglide:compile",
+    "prepare": "husky && pnpm run paraglide:compile && svelte-kit sync",
     "paraglide:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide",
     "dev": "vite dev",
     "build": "vite build",
