@@ -10,7 +10,7 @@
   import { localizedHref } from "$lib/utils/localized-href.js";
 
   import type { MergeCountKey } from "$lib/engine/merge-labels.js";
-  import type { MergeConflict, MergeCounts } from "$lib/stores/user-state.svelte.js";
+  import type { ChildChoice, MergeConflict, MergeCounts } from "$lib/stores/user-state.svelte.js";
   import type { VillagerRelationship } from "$lib/types/tracker-data.js";
 
   let {
@@ -27,33 +27,34 @@
 
   let total = $derived(totalMergeCounts(counts));
 
-  function childChoiceLabel(choice: "no" | "yes"): string {
+  function childChoiceLabel(choice: Exclude<ChildChoice, "undeclared">): string {
     return choice === "yes" ? m.relationship_action_yes() : m.relationship_action_no();
   }
 
   function conflictMessage(conflict: MergeConflict): string {
-    if (conflict.kind === "spouse") {
-      return m.merge_conflict_spouse({
-        incomingVillager: getName("villagers", conflict.incomingVillagerId, page.data.locale),
-        localVillager: getName("villagers", conflict.localVillagerId, page.data.locale),
-      });
+    switch (conflict.kind) {
+      case "childChoice":
+        return m.merge_conflict_child_choice({
+          incoming: childChoiceLabel(conflict.incomingChildChoice),
+          local: childChoiceLabel(conflict.localChildChoice),
+          villager: getName("villagers", conflict.villagerId, page.data.locale),
+        });
+      case "relationship":
+        return m.merge_conflict_relationship({
+          incoming: relationshipLabel(
+            conflict.incomingRelationship as Exclude<VillagerRelationship, "undecided">,
+          ),
+          local: relationshipLabel(
+            conflict.localRelationship as Exclude<VillagerRelationship, "undecided">,
+          ),
+          villager: getName("villagers", conflict.villagerId, page.data.locale),
+        });
+      case "spouse":
+        return m.merge_conflict_spouse({
+          incomingVillager: getName("villagers", conflict.incomingVillagerId, page.data.locale),
+          localVillager: getName("villagers", conflict.localVillagerId, page.data.locale),
+        });
     }
-    if (conflict.kind === "childChoice") {
-      return m.merge_conflict_child_choice({
-        incoming: childChoiceLabel(conflict.incomingChildChoice),
-        local: childChoiceLabel(conflict.localChildChoice),
-        villager: getName("villagers", conflict.villagerId, page.data.locale),
-      });
-    }
-    return m.merge_conflict_relationship({
-      incoming: relationshipLabel(
-        conflict.incomingRelationship as Exclude<VillagerRelationship, "undecided">,
-      ),
-      local: relationshipLabel(
-        conflict.localRelationship as Exclude<VillagerRelationship, "undecided">,
-      ),
-      villager: getName("villagers", conflict.villagerId, page.data.locale),
-    });
   }
 
   function relationshipLabel(relationship: Exclude<VillagerRelationship, "undecided">): string {
