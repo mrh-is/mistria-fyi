@@ -2,7 +2,6 @@ import { paraglideVitePlugin } from "@inlang/paraglide-js";
 import { sveltekit } from "@sveltejs/kit/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
-import devtoolsJson from "vite-plugin-devtools-json";
 import { configDefaults } from "vitest/config";
 
 import { LOCALE_CODES } from "./src/lib/types/locale.js";
@@ -31,7 +30,6 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     sveltekit(),
-    devtoolsJson(),
     paraglideVitePlugin({
       outdir: "./src/lib/paraglide",
       project: "./project.inlang",
