@@ -2,8 +2,10 @@ import { SvelteSet } from "svelte/reactivity";
 
 import { canonicalAlmanacId, trackerData } from "$lib/data/index.js";
 import {
+  clampLevel,
   clampMineFloor,
   clampRenownLevel,
+  getMaxMineFloor,
   MAX_SKILL_LEVEL,
   MAX_VILLAGER_LEVEL,
 } from "$lib/engine/progress.js";
@@ -460,21 +462,31 @@ function createUserState() {
         }
       }
 
+      // Levels are clamped again here so the canonical state stays inside its domains even if a
+      // caller bypasses buildImportState's normalization.
+
       // Mine floor (take max)
-      if (imported.mines && imported.mines.floor > state.completed.mines.floor) {
-        counts.mineFloor = imported.mines.floor - state.completed.mines.floor;
-        state.completed.mines.floor = imported.mines.floor;
+      if (imported.mines) {
+        const floor = clampMineFloor(imported.mines.floor);
+        if (floor > state.completed.mines.floor) {
+          counts.mineFloor = floor - state.completed.mines.floor;
+          state.completed.mines.floor = floor;
+        }
       }
 
       // Renown (take max)
-      if (imported.renown !== undefined && imported.renown > state.completed.renown) {
-        counts.renown = imported.renown - state.completed.renown;
-        state.completed.renown = imported.renown;
+      if (imported.renown !== undefined) {
+        const renown = clampRenownLevel(imported.renown);
+        if (renown > state.completed.renown) {
+          counts.renown = renown - state.completed.renown;
+          state.completed.renown = renown;
+        }
       }
 
       // Villager levels (take max per villager)
       if (imported.villagerLevels) {
-        for (const [id, level] of recordEntries(imported.villagerLevels)) {
+        for (const [id, rawLevel] of recordEntries(imported.villagerLevels)) {
+          const level = clampLevel(rawLevel, MAX_VILLAGER_LEVEL);
           const current = state.completed.villagerLevels[id] ?? 0;
           if (level > current) {
             state.completed.villagerLevels[id] = level;
@@ -485,7 +497,8 @@ function createUserState() {
 
       // Skill levels (take max per skill)
       if (imported.skillLevels) {
-        for (const [id, level] of recordEntries(imported.skillLevels)) {
+        for (const [id, rawLevel] of recordEntries(imported.skillLevels)) {
+          const level = clampLevel(rawLevel, MAX_SKILL_LEVEL);
           const current = state.completed.skillLevels[id] ?? 0;
           if (level > current) {
             state.completed.skillLevels[id] = level;
@@ -639,10 +652,10 @@ function createUserState() {
       state.worldState.season = season;
     },
     setSkillLevel(id: SkillId, level: number) {
-      state.completed.skillLevels[id] = Math.max(0, Math.min(level, MAX_SKILL_LEVEL));
+      state.completed.skillLevels[id] = clampLevel(level, MAX_SKILL_LEVEL);
     },
     setVillagerLevel(id: VillagerId, level: number) {
-      state.completed.villagerLevels[id] = Math.max(0, Math.min(level, MAX_VILLAGER_LEVEL));
+      state.completed.villagerLevels[id] = clampLevel(level, MAX_VILLAGER_LEVEL);
     },
     setVillagerRelationship(villagerId: VillagerId, relationship: VillagerRelationship) {
       const oldMarried = getMarriedVillager(state.completed.villagerRelationships);
@@ -853,11 +866,6 @@ function filterRecord<V>(
   predicate: (v: V) => boolean,
 ): Record<string, V> {
   return Object.fromEntries(Object.entries(record).filter(([, v]) => predicate(v)));
-}
-
-function getMaxMineFloor(): number {
-  const biomes = trackerData.mines.biomes;
-  return biomes[biomes.length - 1].floors.end;
 }
 
 function isDomainInteger(value: unknown, max: number): value is number {
