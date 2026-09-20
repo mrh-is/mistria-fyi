@@ -4,7 +4,7 @@ export const MAX_SPRITE_ENTRIES = 400;
 /** Self-hosted fonts on R2: Satoshi plus the per-locale families under versioned prefixes. */
 const EXTERNAL_FONT_PREFIX = "https://assets.mistria.fyi/fonts/";
 
-/** Item and villager sprites on R2, under versioned prefixes. See {@link isExternalSpriteAsset}. */
+/** Item and villager sprites on R2 — every path under these roots, versioned or not. */
 const EXTERNAL_SPRITE_PREFIXES = [
   "https://assets.mistria.fyi/sprites/",
   "https://assets.mistria.fyi/villager-sprites/",

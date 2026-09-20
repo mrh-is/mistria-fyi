@@ -146,6 +146,7 @@
           alt=""
           width="44"
           height="44"
+          crossorigin="anonymous"
           onerror={() => (imageFailed = true)}
         />
       {:else}

@@ -42,6 +42,7 @@ describe("VillagerRecord", () => {
       villagerSpriteUrl("spr_villager_adeline_small"),
     );
     expect(view.container.querySelector("img")).toHaveAttribute("alt", "");
+    expect(view.container.querySelector("img")).toHaveAttribute("crossorigin", "anonymous");
     expect(view.container.querySelectorAll("[data-villager-mark]")).toHaveLength(12);
     expect(view.container.querySelectorAll('[data-villager-mark-filled="true"]')).toHaveLength(8);
     expect(
