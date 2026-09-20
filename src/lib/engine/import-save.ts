@@ -1,4 +1,12 @@
 import { canonicalAlmanacId, trackerData } from "$lib/data/index.js";
+import {
+  getMaxMineFloor,
+  getMaxRenownLevel,
+  type LevelIssue,
+  MAX_SKILL_LEVEL,
+  MAX_VILLAGER_LEVEL,
+  normalizeLevel,
+} from "$lib/engine/progress.js";
 import { recordKeys, recordValues } from "$lib/utils.js";
 
 import type {
@@ -257,17 +265,27 @@ export function buildImportState(bundle: SaveBundle): {
     counts.museum = museumIds.size;
   }
 
-  // ── Mine floor (from gamedata.json → maximum_mines_level) ──
-  const biomes = trackerData.mines.biomes;
-  const mineFloor = bundle.gamedata?.maximum_mines_level
-    ? Math.min(
-        Math.floor(bundle.gamedata.maximum_mines_level),
-        biomes[biomes.length - 1].floors.end,
-      )
-    : 0;
+  // ── Numeric levels: mine floor, villager hearts, skill levels, renown ──
+  // Each fact is normalized into its finite domain (see normalizeLevel). Above-maximum values
+  // are clamped and warned about; nonnumeric or negative values are dropped with a warning; a
+  // missing fact is silently treated as unset. Import stays additive, so a warned fact never
+  // blocks the rest of the save. Renown is the exception and clamps silently (see below).
+  const extractLevel = (key: string, raw: unknown, max: number): number => {
+    if (raw === undefined) return 0;
+    const { issue, value } = normalizeLevel(raw, max);
+    if (issue) warnings.push(describeLevelIssue(key, raw, issue, max));
+    return value;
+  };
+
+  // Mine floor (from gamedata.json → maximum_mines_level)
+  const mineFloor = extractLevel(
+    "maximum_mines_level",
+    bundle.gamedata?.maximum_mines_level,
+    getMaxMineFloor(),
+  );
   counts.mineFloor = mineFloor;
 
-  // ── Villager levels, skill levels, renown (from gamedata.json → t2_world_facts) ──
+  // Villager levels, skill levels, renown (from gamedata.json → t2_world_facts)
   const villagerLevels: Record<string, number> = {};
   const skillLevels: Record<string, number> = {};
   let renown = 0;
@@ -275,30 +293,29 @@ export function buildImportState(bundle: SaveBundle): {
   const facts = bundle.gamedata?.t2_world_facts;
   if (facts) {
     // Villager heart levels: "{villager}_heart_level" keys in t2_world_facts
-    const validVillagers = new Set(Object.keys(trackerData.villagers));
-    for (const villagerId of validVillagers) {
-      const level = facts[`${villagerId}_heart_level`];
-      if (typeof level === "number" && level > 0) {
-        villagerLevels[villagerId] = Math.floor(level);
+    for (const villagerId of recordKeys(trackerData.villagers)) {
+      const key = `${villagerId}_heart_level`;
+      const level = extractLevel(key, facts[key], MAX_VILLAGER_LEVEL);
+      if (level > 0) {
+        villagerLevels[villagerId] = level;
         counts.villagerLevels++;
       }
     }
 
     // Skill levels: "{skill}_level" keys in t2_world_facts
-    const validSkills = new Set(Object.keys(trackerData.skills));
-    for (const skillId of validSkills) {
-      const level = facts[`${skillId}_level`];
-      if (typeof level === "number" && level > 0) {
-        skillLevels[skillId] = Math.min(Math.floor(level), 60);
+    for (const skillId of recordKeys(trackerData.skills)) {
+      const key = `${skillId}_level`;
+      const level = extractLevel(key, facts[key], MAX_SKILL_LEVEL);
+      if (level > 0) {
+        skillLevels[skillId] = level;
         counts.skillLevels++;
       }
     }
 
-    // Renown level
-    if (typeof facts.renown === "number") {
-      renown = Math.floor(facts.renown);
-      counts.renown = renown;
-    }
+    // Renown level: clamped silently, matching backup restore. Nothing in ordinary play produces
+    // an out-of-domain value, so a warning would only be noise.
+    renown = normalizeLevel(facts.renown, getMaxRenownLevel()).value;
+    counts.renown = renown;
   }
 
   // ── Has upper floor (from player.json → upper_floor) ──
@@ -467,4 +484,16 @@ export function validatePlayerSave(data: unknown): data is PlayerSave {
     Array.isArray(obj.pet_cosmetic_sets_unlocked) ||
     Array.isArray(obj.pet_skin_unlocks)
   );
+}
+
+function describeLevelIssue(key: string, raw: unknown, issue: LevelIssue, max: number): string {
+  const shown = typeof raw === "string" ? JSON.stringify(raw) : String(raw);
+  switch (issue) {
+    case "above-max":
+      return `${key} ${shown} exceeds the maximum of ${max}; clamped to ${max}`;
+    case "negative":
+      return `${key} ${shown} is negative; ignored`;
+    case "not-a-number":
+      return `${key} ${shown} is not a number; ignored`;
+  }
 }

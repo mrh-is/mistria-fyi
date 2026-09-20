@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
+import {
+  getMaxMineFloor,
+  getMaxRenownLevel,
+  MAX_SKILL_LEVEL,
+  MAX_VILLAGER_LEVEL,
+} from "$lib/engine/progress.js";
 
 import { buildImportState, validatePlayerSave } from "../import-save";
 
-import type { RecipeId } from "$lib/types/tracker-data.js";
+import type { RecipeId, SkillId, VillagerId } from "$lib/types/tracker-data.js";
 
 import type { SaveBundle } from "../import-save";
 
@@ -109,6 +115,102 @@ describe("buildImportState", () => {
       const { completed } = buildImportState(bundle);
       expect(completed.reachedSeason).toBe("spring");
     });
+  });
+});
+
+describe("numeric level domains", () => {
+  const ADELINE = "adeline" as VillagerId;
+  const FARMING = "farming" as SkillId;
+  const facts = (extra: Record<string, unknown>) => ({ gamedata: { t2_world_facts: extra } });
+
+  it("accepts in-domain levels without warnings", () => {
+    const { completed, result } = buildImportState({
+      gamedata: {
+        maximum_mines_level: getMaxMineFloor(),
+        t2_world_facts: {
+          adeline_heart_level: MAX_VILLAGER_LEVEL,
+          farming_level: MAX_SKILL_LEVEL,
+          renown: getMaxRenownLevel(),
+        },
+      },
+    });
+    expect(completed.mines?.floor).toBe(getMaxMineFloor());
+    expect(completed.villagerLevels?.[ADELINE]).toBe(MAX_VILLAGER_LEVEL);
+    expect(completed.skillLevels?.[FARMING]).toBe(MAX_SKILL_LEVEL);
+    expect(completed.renown).toBe(getMaxRenownLevel());
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("clamps above-maximum levels and warns, except renown which clamps silently", () => {
+    const { completed, result } = buildImportState({
+      gamedata: {
+        maximum_mines_level: 9999,
+        t2_world_facts: { adeline_heart_level: 99, farming_level: 999, renown: 9999 },
+      },
+    });
+    expect(completed.mines?.floor).toBe(getMaxMineFloor());
+    expect(completed.villagerLevels?.[ADELINE]).toBe(MAX_VILLAGER_LEVEL);
+    expect(completed.skillLevels?.[FARMING]).toBe(MAX_SKILL_LEVEL);
+    expect(completed.renown).toBe(getMaxRenownLevel());
+    expect(result.counts.renown).toBe(getMaxRenownLevel());
+    expect(result.warnings).toEqual([
+      `maximum_mines_level 9999 exceeds the maximum of ${getMaxMineFloor()}; clamped to ${getMaxMineFloor()}`,
+      `adeline_heart_level 99 exceeds the maximum of ${MAX_VILLAGER_LEVEL}; clamped to ${MAX_VILLAGER_LEVEL}`,
+      `farming_level 999 exceeds the maximum of ${MAX_SKILL_LEVEL}; clamped to ${MAX_SKILL_LEVEL}`,
+    ]);
+  });
+
+  it("floors fractional levels silently", () => {
+    const { completed, result } = buildImportState(
+      facts({ adeline_heart_level: 3.9, farming_level: 7.2, renown: 2.5 }),
+    );
+    expect(completed.villagerLevels?.[ADELINE]).toBe(3);
+    expect(completed.skillLevels?.[FARMING]).toBe(7);
+    expect(completed.renown).toBe(2);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("ignores negative levels with a warning", () => {
+    const { completed, result } = buildImportState(
+      facts({ adeline_heart_level: -1, farming_level: -0.5, renown: -3 }),
+    );
+    expect(completed.villagerLevels?.[ADELINE]).toBeUndefined();
+    expect(completed.skillLevels?.[FARMING]).toBeUndefined();
+    expect(completed.renown).toBe(0);
+    expect(result.warnings).toEqual([
+      "adeline_heart_level -1 is negative; ignored",
+      "farming_level -0.5 is negative; ignored",
+    ]);
+  });
+
+  it("ignores nonfinite and wrong-type levels with a warning", () => {
+    const { completed, result } = buildImportState({
+      gamedata: {
+        maximum_mines_level: Number.NaN,
+        t2_world_facts: {
+          adeline_heart_level: "12",
+          farming_level: Number.POSITIVE_INFINITY,
+          renown: null,
+        },
+      },
+    });
+    expect(completed.mines?.floor).toBe(0);
+    expect(completed.villagerLevels?.[ADELINE]).toBeUndefined();
+    expect(completed.skillLevels?.[FARMING]).toBeUndefined();
+    expect(completed.renown).toBe(0);
+    expect(result.warnings).toEqual([
+      "maximum_mines_level NaN is not a number; ignored",
+      'adeline_heart_level "12" is not a number; ignored',
+      "farming_level Infinity is not a number; ignored",
+    ]);
+  });
+
+  it("treats missing and zero levels as unset without warnings", () => {
+    const { completed, result } = buildImportState(facts({ adeline_heart_level: 0 }));
+    expect(completed.mines?.floor).toBe(0);
+    expect(completed.villagerLevels).toEqual({});
+    expect(completed.renown).toBe(0);
+    expect(result.warnings).toEqual([]);
   });
 });
 

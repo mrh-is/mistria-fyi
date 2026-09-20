@@ -23,23 +23,37 @@ export interface CategoryProgress {
   total: number;
 }
 
+/** Why `normalizeLevel` changed or rejected its input; absent when the value was already valid. */
+export type LevelIssue = "above-max" | "negative" | "not-a-number";
+
+// ─── Helpers ────────────────────────────────────────────────────────
+
+export interface NormalizedLevel {
+  issue?: LevelIssue;
+  value: number;
+}
+
 interface ProgressContext {
   availabilityWindows: AvailabilitySelection;
   completed: CompletedState;
   worldState: { season: Season; weather: Weather };
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────
+/**
+ * Clamp a level into `[0, max]` after flooring. Nonfinite input collapses to 0. Every state
+ * ingress that installs a level (setters, additive merge, native save extraction) routes through
+ * this so the canonical state never holds a value the normal controls could not produce.
+ */
+export function clampLevel(level: number, max: number): number {
+  return normalizeLevel(level, max).value;
+}
 
 export function clampMineFloor(floor: number): number {
-  const biomes = trackerData.mines.biomes;
-  const maxFloor = biomes[biomes.length - 1].floors.end;
-  return Math.max(0, Math.min(floor, maxFloor));
+  return clampLevel(floor, getMaxMineFloor());
 }
 
 export function clampRenownLevel(level: number): number {
-  const maxLevel = trackerData.townRanks[trackerData.townRanks.length - 1].levels.end;
-  return Math.max(0, Math.min(level, maxLevel));
+  return clampLevel(level, getMaxRenownLevel());
 }
 
 export function getAllProgress(ctx: ProgressContext): AllProgress {
@@ -56,8 +70,6 @@ export function getAllProgress(ctx: ProgressContext): AllProgress {
     villagers: getVillagersProgress(ctx),
   };
 }
-
-// ─── Per-category progress ──────────────────────────────────────────
 
 export function getCategoryProgress(category: CategoryKey, ctx: ProgressContext): CategoryProgress {
   switch (category) {
@@ -84,6 +96,17 @@ export function getCategoryProgress(category: CategoryKey, ctx: ProgressContext)
   }
 }
 
+export function getMaxMineFloor(): number {
+  const biomes = trackerData.mines.biomes;
+  return biomes[biomes.length - 1].floors.end;
+}
+
+export function getMaxRenownLevel(): number {
+  return trackerData.townRanks[trackerData.townRanks.length - 1].levels.end;
+}
+
+// ─── Per-category progress ──────────────────────────────────────────
+
 /** Sums every category's progress into one overall total (home page, `/all`). */
 export function getOverallProgress(allProgress: AllProgress): CategoryProgress {
   let completed = 0;
@@ -109,6 +132,27 @@ export function isVillagerComplete(villagerId: VillagerId, completed: CompletedS
   if (relationship === "married") return completed.childChoice !== "undeclared";
 
   return false;
+}
+
+/**
+ * Normalize an untrusted level into its finite domain `[0, max]`:
+ *
+ * - wrong type or nonfinite → `0`, issue `"not-a-number"`
+ * - fractional → floored silently (the game stores whole levels; a fraction is harmless drift)
+ * - negative (after flooring) → `0`, issue `"negative"`
+ * - above `max` → `max`, issue `"above-max"`
+ *
+ * Callers decide whether an issue is a warning (native save import, which accepts usable facts)
+ * or a rejection (backup restore, which requires the whole document to be valid).
+ */
+export function normalizeLevel(level: unknown, max: number): NormalizedLevel {
+  if (typeof level !== "number" || !Number.isFinite(level)) {
+    return { issue: "not-a-number", value: 0 };
+  }
+  const floored = Math.floor(level);
+  if (floored < 0) return { issue: "negative", value: 0 };
+  if (floored > max) return { issue: "above-max", value: max };
+  return { value: floored };
 }
 
 function almanacEntryProgress(
