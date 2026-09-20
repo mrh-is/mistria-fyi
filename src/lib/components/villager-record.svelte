@@ -140,9 +140,9 @@
 >
   <header class="villager-identity">
     <span class="villager-icon" data-spoilered={!revealed} aria-hidden="true">
-      {#if villager.smallIconSprite && !imageFailed}
+      {#if !imageFailed}
         <img
-          src={villagerSpriteUrl(villager.smallIconSprite)}
+          src={villagerSpriteUrl(id)}
           alt=""
           width="44"
           height="44"

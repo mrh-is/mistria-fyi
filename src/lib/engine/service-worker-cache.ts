@@ -4,11 +4,8 @@ export const MAX_SPRITE_ENTRIES = 400;
 /** Self-hosted fonts on R2: Satoshi plus the per-locale families under versioned prefixes. */
 const EXTERNAL_FONT_PREFIX = "https://assets.mistria.fyi/fonts/";
 
-/** Item and villager sprites on R2 — every path under these roots, versioned or not. */
-const EXTERNAL_SPRITE_PREFIXES = [
-  "https://assets.mistria.fyi/sprites/",
-  "https://assets.mistria.fyi/villager-sprites/",
-];
+/** Item and villager sprites on R2 — both live under this one entity-ID-keyed root. */
+const EXTERNAL_SPRITE_PREFIX = "https://assets.mistria.fyi/sprites/";
 
 /** Per-locale @font-face stylesheets; large and locale-specific, so cached on demand, not on install. */
 const LAZY_ASSET_PATTERN = /\/locale-fonts-[^/]+\.css$/;
@@ -79,9 +76,9 @@ export function isExternalFontAsset(url: URL): boolean {
   return url.href.startsWith(EXTERNAL_FONT_PREFIX);
 }
 
-/** Versioned, immutable sprites on R2: cached in their own bounded runtime cache, never precached. */
+/** Entity-ID-keyed, immutable sprites on R2: cached in their own bounded runtime cache, never precached. */
 export function isExternalSpriteAsset(url: URL): boolean {
-  return EXTERNAL_SPRITE_PREFIXES.some((prefix) => url.href.startsWith(prefix));
+  return url.href.startsWith(EXTERNAL_SPRITE_PREFIX);
 }
 
 /** Build assets that are fetched and cached on first use instead of during install. */

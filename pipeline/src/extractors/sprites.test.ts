@@ -5,8 +5,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { extractSprites, publishSprites } from "./sprites";
 
-import type { Item, ItemId } from "$lib/types/tracker-data.js";
-
 const temporaryDirectories: string[] = [];
 
 afterEach(() => {
@@ -15,15 +13,6 @@ afterEach(() => {
     rmSync(directory, { force: true, recursive: true });
   }
 });
-
-function makeItems(entries: Record<string, string>): Record<ItemId, Item> {
-  return Object.fromEntries(
-    Object.entries(entries).map(([id, iconSprite]) => [
-      id,
-      { category: "crops", iconSprite, name: id, sources: [{ type: "default" }] },
-    ]),
-  );
-}
 
 function makeTempDir(): string {
   const dir = mkdtempSync(join(tmpdir(), "mistria-fyi-sprites-"));
@@ -38,7 +27,7 @@ const TINY_PNG = Buffer.from(
 );
 
 describe("extractSprites", () => {
-  it("extracts sprites as webp from Item Icons directory", async () => {
+  it("extracts sprites as webp keyed by item ID under items/", async () => {
     vi.spyOn(console, "log").mockImplementation(() => undefined);
     const assetsDir = makeTempDir();
     const outputDir = join(makeTempDir(), "sprites");
@@ -47,21 +36,44 @@ describe("extractSprites", () => {
     mkdirSync(iconsDir, { recursive: true });
     writeFileSync(join(iconsDir, "spr_ui_item_turnip.png"), TINY_PNG);
 
-    const items = makeItems({ turnip: "spr_ui_item_turnip" });
-    const result = await extractSprites(assetsDir, items, outputDir);
+    const result = await extractSprites(assetsDir, { turnip: "spr_ui_item_turnip" }, outputDir);
 
     expect(result.extracted).toBe(1);
     expect(result.missing).toEqual([]);
     expect(result.total).toBe(1);
     expect(result.source).toBe("filesystem");
 
-    const webpPath = join(outputDir, "spr_ui_item_turnip.webp");
+    const webpPath = join(outputDir, "items", "turnip.webp");
     expect(existsSync(webpPath)).toBe(false);
 
     publishSprites(result.staged);
     expect(existsSync(webpPath)).toBe(true);
     const webpData = readFileSync(webpPath);
     expect(webpData.subarray(0, 4).toString("ascii")).toBe("RIFF");
+  });
+
+  it("stages one output file per item sharing a sprite, converting the source once", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const assetsDir = makeTempDir();
+    const outputDir = join(makeTempDir(), "sprites");
+
+    const iconsDir = join(assetsDir, "animations", "Item Icons", "Special");
+    mkdirSync(iconsDir, { recursive: true });
+    writeFileSync(join(iconsDir, "spr_ui_item_aldarian_artifact.png"), TINY_PNG);
+
+    const result = await extractSprites(
+      assetsDir,
+      { artifact_a: "spr_ui_item_aldarian_artifact", artifact_b: "spr_ui_item_aldarian_artifact" },
+      outputDir,
+    );
+
+    expect(result.extracted).toBe(2);
+    expect(result.total).toBe(2);
+    expect(result.staged).toHaveLength(2);
+
+    publishSprites(result.staged);
+    expect(existsSync(join(outputDir, "items", "artifact_a.webp"))).toBe(true);
+    expect(existsSync(join(outputDir, "items", "artifact_b.webp"))).toBe(true);
   });
 
   it("finds sprites in fallback directories (Placeables, Player)", async () => {
@@ -73,8 +85,11 @@ describe("extractSprites", () => {
     mkdirSync(placeablesDir, { recursive: true });
     writeFileSync(join(placeablesDir, "spr_ui_item_furniture_arch.png"), TINY_PNG);
 
-    const items = makeItems({ arch: "spr_ui_item_furniture_arch" });
-    const result = await extractSprites(assetsDir, items, outputDir);
+    const result = await extractSprites(
+      assetsDir,
+      { arch: "spr_ui_item_furniture_arch" },
+      outputDir,
+    );
 
     expect(result.extracted).toBe(1);
     expect(result.missing).toEqual([]);
@@ -89,18 +104,18 @@ describe("extractSprites", () => {
     mkdirSync(iconsDir, { recursive: true });
     writeFileSync(join(iconsDir, "spr_ui_item_turnip.png"), TINY_PNG);
 
-    const items = makeItems({
-      ghost: "spr_ui_item_ghost",
-      turnip: "spr_ui_item_turnip",
-    });
-    const result = await extractSprites(assetsDir, items, outputDir);
+    const result = await extractSprites(
+      assetsDir,
+      { ghost: "spr_ui_item_ghost", turnip: "spr_ui_item_turnip" },
+      outputDir,
+    );
 
     expect(result.extracted).toBe(1);
     expect(result.missing).toEqual(["spr_ui_item_ghost"]);
     expect(result.total).toBe(2);
 
     // Conversions are staged in memory, not written — the caller must not publish on failure.
-    expect(existsSync(join(outputDir, "spr_ui_item_turnip.webp"))).toBe(false);
+    expect(existsSync(join(outputDir, "items", "turnip.webp"))).toBe(false);
     expect(result.staged).toHaveLength(1);
   });
 
@@ -113,7 +128,7 @@ describe("extractSprites", () => {
     mkdirSync(iconsDir, { recursive: true });
     writeFileSync(join(iconsDir, "spr_ui_item_turnip.png"), TINY_PNG);
 
-    const items = makeItems({ turnip: "spr_ui_item_turnip" });
+    const items = { turnip: "spr_ui_item_turnip" };
 
     const first = await extractSprites(assetsDir, items, outputDir);
     expect(first.extracted).toBe(1);
@@ -136,8 +151,7 @@ describe("extractSprites", () => {
     writeFileSync(join(iconsDir, "spr_ui_item_turnip_outline.png"), TINY_PNG);
     writeFileSync(join(iconsDir, "some_other_sprite.png"), TINY_PNG);
 
-    const items = makeItems({ turnip: "spr_ui_item_turnip" });
-    const result = await extractSprites(assetsDir, items, outputDir);
+    const result = await extractSprites(assetsDir, { turnip: "spr_ui_item_turnip" }, outputDir);
 
     expect(result.extracted).toBe(1);
     expect(result.total).toBe(1);
@@ -147,10 +161,9 @@ describe("extractSprites", () => {
     const assetsDir = makeTempDir();
     const outputDir = join(makeTempDir(), "sprites");
 
-    const items = makeItems({ turnip: "spr_ui_item_turnip" });
-    await expect(extractSprites(assetsDir, items, outputDir)).rejects.toThrow(
-      "No sprite PNGs found in any search directory",
-    );
+    await expect(
+      extractSprites(assetsDir, { turnip: "spr_ui_item_turnip" }, outputDir),
+    ).rejects.toThrow("No sprite PNGs found in any search directory");
   });
 
   it("excludes overridden sprites from extraction", async () => {
@@ -162,11 +175,11 @@ describe("extractSprites", () => {
     mkdirSync(iconsDir, { recursive: true });
     writeFileSync(join(iconsDir, "spr_ui_item_turnip.png"), TINY_PNG);
 
-    const items = makeItems({
-      coin: "spr_mob_coin",
-      turnip: "spr_ui_item_turnip",
-    });
-    const result = await extractSprites(assetsDir, items, outputDir);
+    const result = await extractSprites(
+      assetsDir,
+      { coin: "spr_mob_coin", turnip: "spr_ui_item_turnip" },
+      outputDir,
+    );
 
     expect(result.extracted).toBe(1);
     expect(result.missing).toEqual([]);

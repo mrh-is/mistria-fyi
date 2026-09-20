@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# Uploads staged item sprites (pnpm run pipeline -- <path> --sprites) to the R2 bucket behind
-# assets.mistria.fyi. Objects are keyed by game version, so they are safe to mark immutable, and
-# keys that already serve publicly are skipped (set FORCE=1 to re-upload everything).
+# Uploads staged sprites (pnpm run pipeline -- <path> --sprites) to the R2 bucket behind
+# assets.mistria.fyi. Objects are keyed by stable entity ID (sprites/items/<id>.webp,
+# sprites/villagers/<id>.webp), overwritten in place rather than versioned, so a no-change run must
+# not re-upload: a key is skipped when its remote ETag already matches the local file's MD5 (set
+# FORCE=1 to re-upload everything regardless).
 #
 #   pnpm run sprites:upload [sprites-dir]
 set -euo pipefail
@@ -30,9 +32,11 @@ upload_one() {
   local relpath="$1"
   local key="sprites/$relpath"
   if [ "$FORCE" != "1" ]; then
-    local status
-    status=$(curl -s -o /dev/null -w '%{http_code}' -I "$ORIGIN/$key")
-    if [ "$status" = "200" ]; then
+    local local_md5 remote_etag
+    local_md5=$(md5sum "$relpath" | cut -d' ' -f1)
+    remote_etag=$(curl -s -I "$ORIGIN/$key" | tr -d '\r' \
+      | awk -F': ' 'tolower($1) == "etag" { print $2 }' | tr -d '"')
+    if [ -n "$remote_etag" ] && [ "$remote_etag" = "$local_md5" ]; then
       echo "skip $key"
       return 0
     fi
