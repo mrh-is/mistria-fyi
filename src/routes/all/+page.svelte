@@ -2,6 +2,7 @@
   import AllCompleted from "$lib/components/all-completed.svelte";
   import { Icon } from "$lib/components/icon";
   import PageHeader from "$lib/components/page-header.svelte";
+  import { CATEGORY_KEYS, sortCategoryKeysByName } from "$lib/data/categories.js";
   import { trackerIndex } from "$lib/data/index.js";
   import { getAllProgress, getOverallProgress } from "$lib/engine/progress.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
@@ -13,13 +14,31 @@
   import MinesSection from "./MinesSection.svelte";
   import MuseumSection from "./MuseumSection.svelte";
   import QuestsSection from "./QuestsSection.svelte";
+  import RecipesSection from "./RecipesSection.svelte";
   import RenownSection from "./RenownSection.svelte";
   import SkillsSection from "./SkillsSection.svelte";
   import VillagersSection from "./VillagersSection.svelte";
 
+  import type { CategoryKey } from "$lib/data/categories.js";
+
   import type { PageProps } from "./$types";
 
+  const sectionComponents: Record<CategoryKey, typeof AlmanacSection> = {
+    almanac: AlmanacSection,
+    animals: AnimalsSection,
+    cosmetics: CosmeticsSection,
+    mines: MinesSection,
+    museum: MuseumSection,
+    quests: QuestsSection,
+    recipes: RecipesSection,
+    renown: RenownSection,
+    skills: SkillsSection,
+    villagers: VillagersSection,
+  };
+
   let { data }: PageProps = $props();
+
+  let orderedCategories = $derived(sortCategoryKeysByName(CATEGORY_KEYS, data.locale));
 
   registerSourceFilters("all", () => trackerIndex.categorySourceTypes.all);
 
@@ -56,15 +75,10 @@
 </PageHeader>
 
 <div class="flex flex-col gap-6 px-4 pb-4" style="--section-top: {headerH}px">
-  <MuseumSection locale={data.locale} progress={progress.museum} />
-  <AlmanacSection locale={data.locale} progress={progress.almanac} />
-  <AnimalsSection locale={data.locale} progress={progress.animals} />
-  <VillagersSection locale={data.locale} progress={progress.villagers} />
-  <CosmeticsSection locale={data.locale} progress={progress.cosmetics} />
-  <SkillsSection locale={data.locale} progress={progress.skills} />
-  <RenownSection locale={data.locale} progress={progress.renown} />
-  <QuestsSection locale={data.locale} progress={progress.quests} />
-  <MinesSection locale={data.locale} progress={progress.mines} />
+  {#each orderedCategories as category (category)}
+    {@const SectionComponent = sectionComponents[category]}
+    <SectionComponent locale={data.locale} progress={progress[category]} />
+  {/each}
 
   <AllCompleted isAllCompleted={overallProgress.completed >= overallProgress.total} />
 </div>
