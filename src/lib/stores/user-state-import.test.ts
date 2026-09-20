@@ -248,7 +248,7 @@ describe("mergeFromSave numeric domains", () => {
     );
     expect(userState.state.completed.skillLevels["farming" as SkillId]).toBe(MAX_SKILL_LEVEL);
     expect(userState.state.completed.renown).toBe(getMaxRenownLevel());
-    expect(result.warnings).toHaveLength(4);
+    expect(result.warnings).toHaveLength(3);
   });
 
   it("clamps levels handed directly to the merge", () => {

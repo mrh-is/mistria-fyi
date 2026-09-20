@@ -141,7 +141,7 @@ describe("numeric level domains", () => {
     expect(result.warnings).toEqual([]);
   });
 
-  it("clamps above-maximum levels and warns", () => {
+  it("clamps above-maximum levels and warns, except renown which clamps silently", () => {
     const { completed, result } = buildImportState({
       gamedata: {
         maximum_mines_level: 9999,
@@ -157,7 +157,6 @@ describe("numeric level domains", () => {
       `maximum_mines_level 9999 exceeds the maximum of ${getMaxMineFloor()}; clamped to ${getMaxMineFloor()}`,
       `adeline_heart_level 99 exceeds the maximum of ${MAX_VILLAGER_LEVEL}; clamped to ${MAX_VILLAGER_LEVEL}`,
       `farming_level 999 exceeds the maximum of ${MAX_SKILL_LEVEL}; clamped to ${MAX_SKILL_LEVEL}`,
-      `renown 9999 exceeds the maximum of ${getMaxRenownLevel()}; clamped to ${getMaxRenownLevel()}`,
     ]);
   });
 
@@ -181,7 +180,6 @@ describe("numeric level domains", () => {
     expect(result.warnings).toEqual([
       "adeline_heart_level -1 is negative; ignored",
       "farming_level -0.5 is negative; ignored",
-      "renown -3 is negative; ignored",
     ]);
   });
 
@@ -204,7 +202,6 @@ describe("numeric level domains", () => {
       "maximum_mines_level NaN is not a number; ignored",
       'adeline_heart_level "12" is not a number; ignored',
       "farming_level Infinity is not a number; ignored",
-      "renown null is not a number; ignored",
     ]);
   });
 

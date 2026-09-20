@@ -269,7 +269,7 @@ export function buildImportState(bundle: SaveBundle): {
   // Each fact is normalized into its finite domain (see normalizeLevel). Above-maximum values
   // are clamped and warned about; nonnumeric or negative values are dropped with a warning; a
   // missing fact is silently treated as unset. Import stays additive, so a warned fact never
-  // blocks the rest of the save.
+  // blocks the rest of the save. Renown is the exception and clamps silently (see below).
   const extractLevel = (key: string, raw: unknown, max: number): number => {
     if (raw === undefined) return 0;
     const { issue, value } = normalizeLevel(raw, max);
@@ -312,8 +312,9 @@ export function buildImportState(bundle: SaveBundle): {
       }
     }
 
-    // Renown level
-    renown = extractLevel("renown", facts.renown, getMaxRenownLevel());
+    // Renown level: clamped silently, matching backup restore. Nothing in ordinary play produces
+    // an out-of-domain value, so a warning would only be noise.
+    renown = normalizeLevel(facts.renown, getMaxRenownLevel()).value;
     counts.renown = renown;
   }
 
