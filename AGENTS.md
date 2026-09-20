@@ -164,6 +164,11 @@ These rules prevent accidental damage to generated or vendored code:
   real, non-TypeScript asset (a generated `.js` file with no `.ts` source, such as
   `src/lib/paraglide/runtime.js`) or is required by an external tool. `vi.mock(...)` specifiers must
   match the import path exactly, so update them alongside the imports they mock.
+- **Styling**: The app is a deliberate hybrid. Tailwind utilities handle layout, spacing, & the
+  utilitarian screens (data transfer, feedback, legal pages) and the vendored `ui/` layer; scoped
+  `<style>` blocks handle components with a designed visual identity (records, cards, paper stacks).
+  Design tokens live in `src/app.css` `@theme` blocks; scoped CSS consumes them via `var()`. Follow
+  whichever mode the surrounding component already uses; do not convert one to the other in passing.
 - **Svelte**: Use `let` (not `const`) for `$props()` destructuring. Use runes (`$state`, `$derived`,
   `$effect`), not legacy stores.
 - **Naming**: `camelCase` variables/functions, `PascalCase` types/components, `kebab-case` files.
