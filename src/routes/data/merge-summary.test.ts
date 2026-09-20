@@ -6,9 +6,16 @@ import { userState } from "$lib/stores/user-state.svelte.js";
 import MergeSummary from "./merge-summary.svelte";
 
 import type { CompletedState, MergeCounts } from "$lib/stores/user-state.svelte.js";
+import type { VillagerId } from "$lib/types/tracker-data.js";
 
-const CASES: { expected: string; imported: Partial<CompletedState> }[] = [
-  { expected: "Child choice updated", imported: { childChoice: "yes" } },
+const CASES: { expected: string; imported: Partial<CompletedState>; setup?: () => void }[] = [
+  {
+    expected: "Child choice updated",
+    imported: { childChoice: "yes" },
+    setup: () => {
+      userState.setVillagerRelationship("adeline" as VillagerId, "married");
+    },
+  },
   { expected: "Dates: +1", imported: { dates: new Set(["review-date" as never]) } },
   { expected: "Upper floor unlocked", imported: { hasUpperFloor: true } },
   {
@@ -28,14 +35,46 @@ afterEach(() => {
 });
 
 describe("merge summary integration", () => {
-  for (const { expected, imported } of CASES) {
+  for (const { expected, imported, setup } of CASES) {
     it(`reports ${expected} after an actual merge`, () => {
-      const counts = userState.mergeFromSave(imported);
+      setup?.();
+      const { counts } = userState.mergeFromSave(imported);
 
       assertSummary("import", counts, expected);
       assertSummary("transfer", counts, expected);
     });
   }
+});
+
+describe("merge summary household conflicts", () => {
+  it("renders a spouse conflict with both villager names and a correction link", () => {
+    userState.setVillagerRelationship("adeline" as VillagerId, "married");
+    const { conflicts, counts } = userState.mergeFromSave({
+      villagerRelationships: { ["balor" as VillagerId]: "married" },
+    });
+
+    const { body } = render(MergeSummary, { props: { conflicts, counts, kind: "transfer" } });
+
+    expect(body).toContain("Adeline");
+    expect(body).toContain("Balor");
+    expect(body).toContain("Correct this manually");
+    expect(body).toContain("/villagers");
+  });
+
+  it("renders a child-choice conflict", () => {
+    userState.setVillagerRelationship("adeline" as VillagerId, "married");
+    userState.setChildChoice("yes");
+    const { conflicts, counts } = userState.mergeFromSave({
+      childChoice: "no",
+      villagerRelationships: { ["adeline" as VillagerId]: "married" },
+    });
+
+    const { body } = render(MergeSummary, { props: { conflicts, counts, kind: "transfer" } });
+
+    expect(body).toContain("Adeline");
+    expect(body).toContain("Kids");
+    expect(body).toContain("Child-free");
+  });
 });
 
 function assertSummary(kind: "import" | "transfer", counts: MergeCounts, expected: string): void {

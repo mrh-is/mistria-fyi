@@ -9,7 +9,12 @@ import {
 } from "$lib/engine/progress.js";
 import { recordKeys, recordValues } from "$lib/utils.js";
 
-import type { CompletedState, MergeCounts, QuestState } from "$lib/stores/user-state.svelte.js";
+import type {
+  CompletedState,
+  MergeCounts,
+  MergeResult,
+  QuestState,
+} from "$lib/stores/user-state.svelte.js";
 import type {
   AnimalVariantId,
   CosmeticId,
@@ -26,9 +31,7 @@ import type {
 
 // ─── Import result ──────────────────────────────────────────────────
 
-export interface ImportResult {
-  /** Per-category counts of items imported */
-  counts: MergeCounts;
+export interface ImportResult extends MergeResult {
   /** Human-readable warnings (e.g. unknown IDs) */
   warnings: string[];
 }
@@ -386,6 +389,7 @@ export function buildImportState(bundle: SaveBundle): {
       villagerRelationships,
     },
     result: {
+      conflicts: [],
       counts,
       warnings,
     },
