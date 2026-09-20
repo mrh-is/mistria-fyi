@@ -33,9 +33,9 @@ pnpm run worktree:new <issue-number>-<short-description>
 
 The script creates `.worktrees/<slug>` on a matching branch under the main checkout, refuses to run
 if `.worktrees/` is not gitignored, symlinks every `.worktreeinclude` entry from the main checkout,
-and runs `pnpm install --frozen-lockfile` and `pnpm run prepare` (Husky hooks). Agents with their
-own managed worktree directory (for example `.claude/worktrees/`) may use it instead; the same
-symlink and install steps still apply.
+and runs `pnpm install --frozen-lockfile` and `pnpm run prepare` (Husky hooks, Paraglide output, &
+`svelte-kit sync`). Agents with their own managed worktree directory (for example
+`.claude/worktrees/`) may use it instead; the same symlink and install steps still apply.
 
 <details>
 <summary>Manual fallback</summary>
@@ -241,8 +241,8 @@ Changes that touch only `.md` files, comments, or non-executable content need on
 pnpm run lint:fix && pnpm run lint
 ```
 
-No build, no tests. In a fresh worktree, run `pnpm exec svelte-kit sync` first if ESLint reports a
-missing `.svelte-kit/tsconfig.json`; `pnpm run check` and `pnpm run verify` do this implicitly.
+No build, no tests. `pnpm run prepare` generates `.svelte-kit/tsconfig.json`; if ESLint reports it
+missing (lifecycle scripts skipped), run `pnpm exec svelte-kit sync` first.
 
 > [!IMPORTANT] Git pre-commit hooks are developer conveniences, not verification evidence. Agents
 > must run the documented commands directly in their shell and verify clean exit status before

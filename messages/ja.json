@@ -387,6 +387,10 @@
   "merge_label_quests": "クエスト：+{count}",
   "merge_label_spells": "呪文：+{count}",
   "merge_label_child_choice": "子供の選択を更新しました",
+  "merge_conflict_relationship": "ご参考までに、あなたは{villager}と{local}と記録されていましたが、セーブファイルでは{incoming}となっていました。記録されていた状態を維持しました。",
+  "merge_conflict_spouse": "ご参考までに、あなたは{localVillager}と結婚していると記録されていましたが、セーブファイルでは{incomingVillager}と結婚したことになっていました。配偶者は{localVillager}のまま維持し、インポートされた子供の選択はスキップしました。",
+  "merge_conflict_child_choice": "ご参考までに、{villager}との間で{local}と記録されていましたが、セーブファイルでは{incoming}となっていました。記録されていた選択を維持しました。",
+  "merge_conflict_correction_link": "手動で修正する",
   "merge_label_has_upper_floor": "上階を解放しました",
   "merge_label_reached_season": "季節の進行を更新しました",
   "merge_label_mine_floor": [
