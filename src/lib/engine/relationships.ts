@@ -70,6 +70,19 @@ export function normalizeRelationships(
   }
 }
 
+/**
+ * Which branch of the relationship tree `rel` belongs to: `undecided` splits into a `platonic`
+ * branch and a `romantic` branch (romantic → proposed → married). Used to tell a lateral move
+ * (a household merge conflict) from a forward move up a branch (silent).
+ */
+export function relationshipBranch(
+  rel: VillagerRelationship,
+): "platonic" | "romantic" | "undecided" {
+  if (rel === "platonic") return "platonic";
+  if (rel === "undecided") return "undecided";
+  return "romantic";
+}
+
 export function relationshipPresentation({
   childChoice,
   level,
@@ -121,4 +134,19 @@ export function relationshipPresentation({
     actions: [],
     status: childChoice === "yes" ? "married_kids" : "married_child_free",
   };
+}
+
+/** Progress within a relationship branch; only meaningful when comparing two values on the same branch. */
+export function relationshipRank(rel: VillagerRelationship): number {
+  switch (rel) {
+    case "married":
+      return 3;
+    case "platonic":
+    case "romantic":
+      return 1;
+    case "proposed":
+      return 2;
+    case "undecided":
+      return 0;
+  }
 }

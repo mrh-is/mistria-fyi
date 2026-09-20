@@ -8,7 +8,12 @@ import {
   MAX_VILLAGER_LEVEL,
 } from "$lib/engine/progress.js";
 import { findRecipesForQuest } from "$lib/engine/quest-rewards.js";
-import { getMarriedVillager, normalizeRelationships } from "$lib/engine/relationships.js";
+import {
+  getMarriedVillager,
+  normalizeRelationships,
+  relationshipBranch,
+  relationshipRank,
+} from "$lib/engine/relationships.js";
 import { deriveProgressionState, type UserProgressionState } from "$lib/engine/visibility.js";
 import {
   AVAILABILITY_WINDOWS,
@@ -66,6 +71,30 @@ export interface CompletedState {
 export type ImportErrorKind = "invalid-fields" | "malformed-json" | "unsupported-version";
 
 export type ImportResult = { error: ImportErrorKind; ok: false } | { ok: true };
+
+/**
+ * A household fact (spouse identity or child choice) that a merge could not apply because it
+ * conflicts with locally recorded progress. The merge keeps the local value and reports the
+ * conflict rather than guessing; see docs on `mergeFromSave` for the policy.
+ */
+export type MergeConflict =
+  | {
+      incomingChildChoice: "no" | "yes";
+      kind: "childChoice";
+      localChildChoice: "no" | "yes";
+      villagerId: VillagerId;
+    }
+  | {
+      incomingRelationship: VillagerRelationship;
+      kind: "relationship";
+      localRelationship: VillagerRelationship;
+      villagerId: VillagerId;
+    }
+  | {
+      incomingVillagerId: VillagerId;
+      kind: "spouse";
+      localVillagerId: VillagerId;
+    };
 
 export interface MergeCounts {
   almanac: number;
@@ -329,7 +358,11 @@ function createUserState() {
       return { ok: true };
     },
     /** Merge imported data into current progress (union, never removes) */
-    mergeFromSave(imported: Partial<CompletedState>): MergeCounts {
+    mergeFromSave(imported: Partial<CompletedState>): {
+      conflicts: MergeConflict[];
+      counts: MergeCounts;
+    } {
+      const conflicts: MergeConflict[] = [];
       const counts: MergeCounts = {
         almanac: 0,
         almanacRecipes: 0,
@@ -531,64 +564,124 @@ function createUserState() {
         counts.hasUpperFloor = 1;
       }
 
-      // Villager relationships (per-villager merge)
-      if (imported.villagerRelationships) {
-        const romanticRank: Record<string, number> = {
-          married: 4,
-          platonic: 1,
-          proposed: 3,
-          romantic: 2,
-          undecided: 0,
-        };
-
+      // Villager relationships & child choice (one coherent household merge; see docs on
+      // mergeFromSave for the conflict policy this implements).
+      {
         const localMarried = getMarriedVillager(state.completed.villagerRelationships);
-        const importedMarried = getMarriedVillager(imported.villagerRelationships);
+        const importedRelationships = imported.villagerRelationships ?? {};
+        const importedMarried = imported.villagerRelationships
+          ? getMarriedVillager(importedRelationships)
+          : null;
 
-        for (const [villagerIdStr, importedRel] of Object.entries(imported.villagerRelationships)) {
-          if (!importedRel) continue;
-          const villagerId = villagerIdStr as VillagerId;
-          const localRel = state.completed.villagerRelationships[villagerId] ?? "undecided";
-          if (localRel === importedRel) continue;
+        // Villagers whose relationship the general per-villager loop below must not touch,
+        // because they are (or were) a spouse and are handled explicitly above.
+        const skipVillagerIds = new SvelteSet<VillagerId>();
+        // Whether a household exists (locally or newly created by this merge) that the
+        // incoming child choice may be applied against.
+        let householdVillagerId: null | VillagerId = localMarried;
 
-          if (localRel === "undecided") {
-            state.completed.villagerRelationships[villagerId] = importedRel;
+        if (imported.villagerRelationships) {
+          if (localMarried === null && importedMarried !== null) {
+            // No local spouse: the incoming marriage applies silently, cascading every other
+            // villager to platonic via normalizeRelationships. This is the one allowed downgrade.
+            state.completed.villagerRelationships[importedMarried] = "married";
             counts.villagerRelationships++;
-          } else if (importedRel !== "undecided") {
-            const localRk = romanticRank[localRel];
-            const importedRk = romanticRank[importedRel];
-            if (importedRk > localRk) {
+            skipVillagerIds.add(importedMarried);
+            householdVillagerId = importedMarried;
+          } else if (
+            localMarried !== null &&
+            importedMarried !== null &&
+            importedMarried !== localMarried
+          ) {
+            // Different spouses: one household conflict, never two independent ones. The incoming
+            // marriage and its child choice are both skipped entirely; other villagers still merge
+            // normally.
+            conflicts.push({
+              incomingVillagerId: importedMarried,
+              kind: "spouse",
+              localVillagerId: localMarried,
+            });
+            skipVillagerIds.add(localMarried);
+            skipVillagerIds.add(importedMarried);
+            householdVillagerId = null;
+          } else if (localMarried !== null) {
+            // Same spouse (or incoming doesn't mention a spouse at all): check whether the
+            // incoming data downgrades the local marriage.
+            const importedLocalSpouseRel = importedRelationships[localMarried];
+            if (importedLocalSpouseRel && importedLocalSpouseRel !== "married") {
+              conflicts.push({
+                incomingRelationship: importedLocalSpouseRel,
+                kind: "relationship",
+                localRelationship: "married",
+                villagerId: localMarried,
+              });
+            }
+            skipVillagerIds.add(localMarried);
+          }
+
+          // General per-villager merge for everyone else: silent for a forward move within a
+          // branch (undecided → anything, romantic → proposed), a conflict for a move between
+          // branches or backward. An incoming "undecided" or an omitted villager is always a no-op.
+          for (const [villagerIdStr, importedRel] of Object.entries(importedRelationships)) {
+            const villagerId = villagerIdStr as VillagerId;
+            if (!importedRel || importedRel === "undecided" || skipVillagerIds.has(villagerId)) {
+              continue;
+            }
+
+            const localRel = state.completed.villagerRelationships[villagerId] ?? "undecided";
+            if (localRel === importedRel) continue;
+
+            if (localRel === "undecided") {
               state.completed.villagerRelationships[villagerId] = importedRel;
               counts.villagerRelationships++;
-            } else if (importedRk === localRk && localRel !== importedRel) {
+            } else if (relationshipBranch(localRel) !== relationshipBranch(importedRel)) {
+              conflicts.push({
+                incomingRelationship: importedRel,
+                kind: "relationship",
+                localRelationship: localRel,
+                villagerId,
+              });
+            } else if (relationshipRank(importedRel) > relationshipRank(localRel)) {
               state.completed.villagerRelationships[villagerId] = importedRel;
               counts.villagerRelationships++;
+            } else {
+              conflicts.push({
+                incomingRelationship: importedRel,
+                kind: "relationship",
+                localRelationship: localRel,
+                villagerId,
+              });
             }
           }
+
+          normalizeRelationships(state.completed.villagerRelationships);
         }
 
-        if (importedMarried && localMarried && importedMarried !== localMarried) {
-          state.completed.villagerRelationships[localMarried] = "proposed";
-          counts.villagerRelationships++;
-        }
-
-        normalizeRelationships(state.completed.villagerRelationships);
-      }
-
-      // Child choice merge
-      if (imported.childChoice !== undefined && imported.childChoice !== "undeclared") {
+        // Child choice merge: meaningless without a household, and never carried across a
+        // household conflict (a different spouse, or a disputed downgrade of the local spouse).
         if (
-          state.completed.childChoice === "undeclared" ||
-          state.completed.childChoice !== imported.childChoice
+          householdVillagerId !== null &&
+          imported.childChoice !== undefined &&
+          imported.childChoice !== "undeclared"
         ) {
-          state.completed.childChoice = imported.childChoice;
-          counts.childChoice = 1;
+          if (state.completed.childChoice === "undeclared") {
+            state.completed.childChoice = imported.childChoice;
+            counts.childChoice = 1;
+          } else if (state.completed.childChoice !== imported.childChoice) {
+            conflicts.push({
+              incomingChildChoice: imported.childChoice,
+              kind: "childChoice",
+              localChildChoice: state.completed.childChoice,
+              villagerId: householdVillagerId,
+            });
+          }
         }
       }
 
       // Backfill animal maps for any animals added since the imported state was created
       backfillAnimalMaps(state.completed);
 
-      return counts;
+      return { conflicts, counts };
     },
     get persistenceFailed(): boolean {
       return _persistenceFailureGeneration > 0;

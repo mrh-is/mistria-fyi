@@ -13,7 +13,7 @@
   import { closeScanner } from "./data-effects";
   import MergeSummary from "./merge-summary.svelte";
 
-  import type { MergeCounts } from "$lib/stores/user-state.svelte.js";
+  import type { MergeConflict, MergeCounts } from "$lib/stores/user-state.svelte.js";
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
 
@@ -26,7 +26,7 @@
   let scanner: null | QrScanner = null;
   let scanAttempt = 0;
 
-  let transferResult = $state<MergeCounts | null>(null);
+  let transferResult = $state<null | { conflicts: MergeConflict[]; counts: MergeCounts }>(null);
   let transferError = $state<null | string>(null);
 
   // ── Generate QR Code ──
@@ -140,8 +140,7 @@
     stopScanning();
     try {
       const decoded = await decodeTransferPayload(data);
-      const counts = userState.mergeFromSave(decoded);
-      transferResult = counts;
+      transferResult = userState.mergeFromSave(decoded);
     } catch (err) {
       transferError = `${m.transfer_error_invalid_qr_prefix()} ${err instanceof Error ? err.message : m.transfer_error_could_not_decode()}`;
     }
@@ -224,7 +223,11 @@
     <!-- Success -->
     {#if transferResult}
       <div class="rounded-md bg-green-50 p-3 dark:bg-green-950">
-        <MergeSummary counts={transferResult} kind="transfer" />
+        <MergeSummary
+          conflicts={transferResult.conflicts}
+          counts={transferResult.counts}
+          kind="transfer"
+        />
       </div>
     {/if}
 

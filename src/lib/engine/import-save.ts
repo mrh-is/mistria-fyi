@@ -1,7 +1,12 @@
 import { canonicalAlmanacId, trackerData } from "$lib/data/index.js";
 import { recordKeys, recordValues } from "$lib/utils.js";
 
-import type { CompletedState, MergeCounts, QuestState } from "$lib/stores/user-state.svelte.js";
+import type {
+  CompletedState,
+  MergeConflict,
+  MergeCounts,
+  QuestState,
+} from "$lib/stores/user-state.svelte.js";
 import type {
   AnimalVariantId,
   CosmeticId,
@@ -19,6 +24,8 @@ import type {
 // ─── Import result ──────────────────────────────────────────────────
 
 export interface ImportResult {
+  /** Household conflicts the merge skipped rather than guessing; populated after the real merge. */
+  conflicts: MergeConflict[];
   /** Per-category counts of items imported */
   counts: MergeCounts;
   /** Human-readable warnings (e.g. unknown IDs) */
@@ -370,6 +377,7 @@ export function buildImportState(bundle: SaveBundle): {
       villagerRelationships,
     },
     result: {
+      conflicts: [],
       counts,
       warnings,
     },
