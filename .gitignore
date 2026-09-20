@@ -37,6 +37,10 @@ src/lib/components/icon/custom/optimized
 pipeline/input
 pipeline/output
 
+# Sprites move to assets.mistria.fyi (#247); guard against a stale local copy being recommitted.
+/static/sprites/
+/static/villager-sprites/
+
 # Proprietary local font; obtain directly from Fontshare
 /static/fonts/satoshi-regular.woff2
 

@@ -2,6 +2,7 @@ import { fireEvent, render, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import VillagerRecordHarness from "$lib/components/villager-record.test-harness.svelte";
+import { villagerSpriteUrl } from "$lib/sprites/sprite-url.js";
 import { userState } from "$lib/stores/user-state.svelte.js";
 
 import type { Villager, VillagerId } from "$lib/types/tracker-data.js";
@@ -38,9 +39,10 @@ describe("VillagerRecord", () => {
     expect(view.getByText("SPR 03")).toHaveAccessibleName("Birthday: Spring 3");
     expect(view.container.querySelector("img")).toHaveAttribute(
       "src",
-      "/villager-sprites/spr_villager_adeline_small.webp",
+      villagerSpriteUrl("spr_villager_adeline_small"),
     );
     expect(view.container.querySelector("img")).toHaveAttribute("alt", "");
+    expect(view.container.querySelector("img")).toHaveAttribute("crossorigin", "anonymous");
     expect(view.container.querySelectorAll("[data-villager-mark]")).toHaveLength(12);
     expect(view.container.querySelectorAll('[data-villager-mark-filled="true"]')).toHaveLength(8);
     expect(

@@ -25,8 +25,9 @@ respective licenses:
 
 - **Bundled fonts** in `static/fonts/` are licensed under the SIL Open Font License 1.1 or the ITF
   Free Font License. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for details.
-- **Game-derived material wherever it occurs**, including sprites in `static/sprites/`, source game
-  data supplied locally through `pipeline/input/`, and game-derived portions of generated
+- **Game-derived material wherever it occurs**, including sprites hosted on `assets.mistria.fyi`
+  (extracted by `pipeline/`, see [docs/sprite-assets.md](docs/sprite-assets.md)), source game data
+  supplied locally through `pipeline/input/`, and game-derived portions of generated
   `tracker-data.json`, belongs to NPC Studio or its respective rights holders. It is **not**
   licensed under GPL-3.0-only or licensed for redistribution by this project. See
   [DISCLAIMER.md](DISCLAIMER.md).
