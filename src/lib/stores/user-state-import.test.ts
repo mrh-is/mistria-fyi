@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
-import { MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "$lib/engine/progress.js";
+import { buildImportState } from "$lib/engine/import-save.js";
+import { getMaxRenownLevel, MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "$lib/engine/progress.js";
 import { userState } from "$lib/stores/user-state.svelte.js";
 
 import type { SkillId, VillagerId } from "$lib/types/tracker-data.js";
@@ -224,5 +225,67 @@ describe("importState validation", () => {
       MAX_VILLAGER_LEVEL,
     );
     expect(userState.state.completed.skillLevels["farming" as SkillId]).toBe(MAX_SKILL_LEVEL);
+  });
+});
+
+describe("mergeFromSave numeric domains", () => {
+  afterEach(() => {
+    userState.resetAll();
+  });
+
+  it("never installs out-of-domain levels from a native save", () => {
+    const { completed, result } = buildImportState({
+      gamedata: {
+        maximum_mines_level: 9999,
+        t2_world_facts: { adeline_heart_level: 99, farming_level: 999, renown: 9999 },
+      },
+    });
+    userState.mergeFromSave(completed);
+
+    expect(userState.state.completed.mines.floor).toBe(MAX_MINE_FLOOR);
+    expect(userState.state.completed.villagerLevels["adeline" as VillagerId]).toBe(
+      MAX_VILLAGER_LEVEL,
+    );
+    expect(userState.state.completed.skillLevels["farming" as SkillId]).toBe(MAX_SKILL_LEVEL);
+    expect(userState.state.completed.renown).toBe(getMaxRenownLevel());
+    expect(result.warnings).toHaveLength(4);
+  });
+
+  it("clamps levels handed directly to the merge", () => {
+    userState.mergeFromSave({
+      mines: { floor: 9999, spells: new Set() },
+      renown: Number.POSITIVE_INFINITY,
+      skillLevels: { farming: -5 } as never,
+      villagerLevels: { adeline: 12.7 } as never,
+    });
+
+    expect(userState.state.completed.mines.floor).toBe(MAX_MINE_FLOOR);
+    expect(userState.state.completed.renown).toBe(0);
+    expect(userState.state.completed.skillLevels["farming" as SkillId]).toBeUndefined();
+    expect(userState.state.completed.villagerLevels["adeline" as VillagerId]).toBe(12);
+  });
+
+  it("preserves higher existing progress across an additive import", () => {
+    userState.setVillagerLevel("adeline" as VillagerId, 8);
+    userState.setSkillLevel("farming" as SkillId, 30);
+    userState.setRenown(5);
+    userState.setMineFloor(20);
+
+    const { completed } = buildImportState({
+      gamedata: {
+        maximum_mines_level: 10,
+        t2_world_facts: { adeline_heart_level: 3, farming_level: 10, renown: 2 },
+      },
+    });
+    const counts = userState.mergeFromSave(completed);
+
+    expect(userState.state.completed.villagerLevels["adeline" as VillagerId]).toBe(8);
+    expect(userState.state.completed.skillLevels["farming" as SkillId]).toBe(30);
+    expect(userState.state.completed.renown).toBe(5);
+    expect(userState.state.completed.mines.floor).toBe(20);
+    expect(counts.villagerLevels).toBe(0);
+    expect(counts.skillLevels).toBe(0);
+    expect(counts.renown).toBe(0);
+    expect(counts.mineFloor).toBe(0);
   });
 });
