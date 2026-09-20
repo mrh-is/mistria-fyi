@@ -277,7 +277,7 @@ describe("mergeFromSave numeric domains", () => {
         t2_world_facts: { adeline_heart_level: 3, farming_level: 10, renown: 2 },
       },
     });
-    const counts = userState.mergeFromSave(completed);
+    const { counts } = userState.mergeFromSave(completed);
 
     expect(userState.state.completed.villagerLevels["adeline" as VillagerId]).toBe(8);
     expect(userState.state.completed.skillLevels["farming" as SkillId]).toBe(30);
