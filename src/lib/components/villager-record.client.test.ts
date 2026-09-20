@@ -12,7 +12,6 @@ const balorId = "balor" as VillagerId;
 const adeline: Villager = {
   birthday: { day: 3, season: "spring" },
   dateable: true,
-  smallIconSprite: "spr_villager_adeline_small",
 };
 const balor: Villager = {
   birthday: { day: 10, season: "summer" },
@@ -39,7 +38,7 @@ describe("VillagerRecord", () => {
     expect(view.getByText("SPR 03")).toHaveAccessibleName("Birthday: Spring 3");
     expect(view.container.querySelector("img")).toHaveAttribute(
       "src",
-      villagerSpriteUrl("spr_villager_adeline_small"),
+      villagerSpriteUrl(adelineId),
     );
     expect(view.container.querySelector("img")).toHaveAttribute("alt", "");
     expect(view.container.querySelector("img")).toHaveAttribute("crossorigin", "anonymous");
@@ -54,8 +53,11 @@ describe("VillagerRecord", () => {
     expect(view.getByRole("button", { name: "Start dating" })).toBeInTheDocument();
   });
 
-  it("falls back to a stable initial when the local icon is absent or fails", async () => {
+  it("falls back to a stable initial when the sprite image fails to load", async () => {
     const absent = render(VillagerRecordHarness, { id: balorId, name: "Balor", villager: balor });
+    const absentImage = absent.container.querySelector("img");
+    if (!absentImage) throw new Error("Expected Villager icon image");
+    await fireEvent.error(absentImage);
     expect(absent.getByTestId("villager-icon-fallback")).toHaveTextContent("B");
 
     const failed = render(VillagerRecordHarness, {

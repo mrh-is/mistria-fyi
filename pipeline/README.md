@@ -62,9 +62,9 @@ assets root
 `main.ts` stages every output it will write, including `tracker-data.json`, the locale chunks, and
 the human-readable diagnostic files, as in-memory content rather than writing it immediately. With
 `--sprites`, sprite extraction (`extractors/sprites.ts`) similarly converts needed sprites to webp
-in memory without touching `pipeline/output/sprites/<game-version>/`. Only after sprite extraction
-reports no missing sprites does `main.ts` publish everything: it writes every staged file and sprite
-in one final step. Sprites are uploaded to `assets.mistria.fyi` with `pnpm run sprites:upload` (see
+in memory without touching `pipeline/output/sprites/items/`. Only after sprite extraction reports no
+missing sprites does `main.ts` publish everything: it writes every staged file and sprite in one
+final step. Sprites are uploaded to `assets.mistria.fyi` with `pnpm run sprites:upload` (see
 [docs/sprite-assets.md](../docs/sprite-assets.md)) — they are no longer committed to Git. If sprite
 validation fails, the process exits before that step runs and no tracked output file is modified, so
 a regeneration either lands as a consistent whole or leaves the previous outputs untouched.

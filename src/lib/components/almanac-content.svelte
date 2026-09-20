@@ -266,7 +266,7 @@
             reportCategory="almanac item"
             reportEntityId={canonicalId}
             sources={itemSources}
-            sprite={item.iconSprite}
+            sprite={canonicalId}
             spriteClass="text-cat-almanac"
             onToggle={() => {
               if (itemNameVisible({ visibility: itemVisibility }) || itemCompleted) {

@@ -185,11 +185,9 @@ describe("service-worker font asset handling", () => {
 });
 
 describe("service-worker sprite asset handling", () => {
-  it("treats versioned item and villager sprites as external sprite assets", () => {
-    const item = new URL("https://assets.mistria.fyi/sprites/1.2.3/spr_ui_item_apple.webp");
-    const villager = new URL(
-      "https://assets.mistria.fyi/villager-sprites/1.2.3/spr_villager_adeline_small.webp",
-    );
+  it("treats item and villager sprites as external sprite assets", () => {
+    const item = new URL("https://assets.mistria.fyi/sprites/items/spr_ui_item_apple.webp");
+    const villager = new URL("https://assets.mistria.fyi/sprites/villagers/adeline.webp?g=1");
     expect(isExternalSpriteAsset(item)).toBe(true);
     expect(isExternalSpriteAsset(villager)).toBe(true);
     expect(isExternalSpriteAsset(new URL("https://assets.mistria.fyi/fonts/satoshi.woff2"))).toBe(
@@ -199,7 +197,7 @@ describe("service-worker sprite asset handling", () => {
 
   it("caches a sprite on first fetch", async () => {
     const cache = new MemoryCache();
-    const sprite = new Request("https://assets.mistria.fyi/sprites/1.2.3/spr_ui_item_apple.webp");
+    const sprite = new Request("https://assets.mistria.fyi/sprites/items/spr_ui_item_apple.webp");
 
     const response = await fetchRuntimeRequest(sprite, {
       assetPaths: [],
@@ -214,7 +212,7 @@ describe("service-worker sprite asset handling", () => {
 
   it("does not cache an opaque no-cors response (crossorigin is required on every sprite img/image)", async () => {
     const cache = new MemoryCache();
-    const sprite = new Request("https://assets.mistria.fyi/sprites/1.2.3/spr_ui_item_opaque.webp");
+    const sprite = new Request("https://assets.mistria.fyi/sprites/items/spr_ui_item_opaque.webp");
 
     // An <img>/<image> fetched without crossorigin="anonymous" yields an opaque response here:
     // status 0, ok false. Response.error() models the same "not ok" shape fetchRuntimeRequest
@@ -234,21 +232,21 @@ describe("service-worker sprite asset handling", () => {
     const cache = new MemoryCache();
     for (let index = 0; index < MAX_SPRITE_ENTRIES; index++) {
       await cache.put(
-        `https://assets.mistria.fyi/sprites/1.2.3/spr_${String(index)}.webp`,
+        `https://assets.mistria.fyi/sprites/items/spr_${String(index)}.webp`,
         new Response(String(index)),
       );
     }
 
     await cacheRuntimeResponse(
       cache,
-      new Request("https://assets.mistria.fyi/sprites/1.2.3/spr_newest.webp"),
+      new Request("https://assets.mistria.fyi/sprites/items/spr_newest.webp"),
       new Response("newest"),
       [],
       MAX_SPRITE_ENTRIES,
     );
 
     expect(
-      await cache.match("https://assets.mistria.fyi/sprites/1.2.3/spr_0.webp"),
+      await cache.match("https://assets.mistria.fyi/sprites/items/spr_0.webp"),
     ).toBeUndefined();
     expect(cache.entries.size).toBe(MAX_SPRITE_ENTRIES);
   });
@@ -266,14 +264,14 @@ describe("service-worker sprite asset handling", () => {
     );
     await cacheRuntimeResponse(
       spriteCache,
-      new Request("https://assets.mistria.fyi/sprites/1.2.3/spr_a.webp"),
+      new Request("https://assets.mistria.fyi/sprites/items/spr_a.webp"),
       new Response("a"),
       [],
       1,
     );
     await cacheRuntimeResponse(
       spriteCache,
-      new Request("https://assets.mistria.fyi/sprites/1.2.3/spr_b.webp"),
+      new Request("https://assets.mistria.fyi/sprites/items/spr_b.webp"),
       new Response("b"),
       [],
       1,
@@ -281,16 +279,16 @@ describe("service-worker sprite asset handling", () => {
 
     expect(await fontCache.match("https://assets.mistria.fyi/fonts/satoshi.woff2")).toBeDefined();
     expect(
-      await spriteCache.match("https://assets.mistria.fyi/sprites/1.2.3/spr_a.webp"),
+      await spriteCache.match("https://assets.mistria.fyi/sprites/items/spr_a.webp"),
     ).toBeUndefined();
     expect(
-      await spriteCache.match("https://assets.mistria.fyi/sprites/1.2.3/spr_b.webp"),
+      await spriteCache.match("https://assets.mistria.fyi/sprites/items/spr_b.webp"),
     ).toBeDefined();
   });
 
   it("returns a previously cached sprite when offline", async () => {
     const cache = new MemoryCache();
-    const sprite = new Request("https://assets.mistria.fyi/sprites/1.2.3/spr_ui_item_apple.webp");
+    const sprite = new Request("https://assets.mistria.fyi/sprites/items/spr_ui_item_apple.webp");
     await cache.put(sprite, new Response("cached sprite"));
 
     const response = await fetchRuntimeRequest(sprite, {
@@ -305,7 +303,7 @@ describe("service-worker sprite asset handling", () => {
 
   it("falls through to an error response, not the offline page, for a never-loaded sprite", async () => {
     const cache = new MemoryCache();
-    const sprite = new Request("https://assets.mistria.fyi/sprites/1.2.3/spr_ui_item_never.webp");
+    const sprite = new Request("https://assets.mistria.fyi/sprites/items/spr_ui_item_never.webp");
 
     const response = await fetchRuntimeRequest(sprite, {
       assetPaths: [],
