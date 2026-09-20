@@ -393,6 +393,10 @@
   "merge_label_quests": "Misiones: +{count}",
   "merge_label_spells": "Hechizos: +{count}",
   "merge_label_child_choice": "Elección del hijo actualizada",
+  "merge_conflict_relationship": "Ten en cuenta que tenías registrado que estás {local} con {villager}, pero el archivo de guardado decía {incoming}. Hemos mantenido tu estado registrado.",
+  "merge_conflict_spouse": "Ten en cuenta que tenías registrado que estás casado/a con {localVillager}, pero el archivo de guardado decía que te casaste con {incomingVillager}. Hemos mantenido a {localVillager} como tu cónyuge y hemos omitido la elección de hijos importada.",
+  "merge_conflict_child_choice": "Ten en cuenta que tenías registrado {local} con {villager}, pero el archivo de guardado decía {incoming}. Hemos mantenido tu elección registrada.",
+  "merge_conflict_correction_link": "Corregir esto manualmente",
   "merge_label_has_upper_floor": "Piso superior desbloqueado",
   "merge_label_reached_season": "Progreso de temporada actualizado",
   "merge_label_mine_floor": [

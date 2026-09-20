@@ -390,6 +390,10 @@
   "merge_label_quests": "Quests: +{count}",
   "merge_label_spells": "Spells: +{count}",
   "merge_label_child_choice": "Child choice updated",
+  "merge_conflict_relationship": "FYI, you had recorded that you are {local} with {villager}, but the save file said {incoming}. We've kept your recorded status.",
+  "merge_conflict_spouse": "FYI, you had recorded that you are married to {localVillager}, but the save file said you married {incomingVillager}. We've kept {localVillager} as your spouse, and skipped the imported child choice.",
+  "merge_conflict_child_choice": "FYI, you had recorded {local} with {villager}, but the save file said {incoming}. We've kept your recorded choice.",
+  "merge_conflict_correction_link": "Correct this manually",
   "merge_label_has_upper_floor": "Upper floor unlocked",
   "merge_label_reached_season": "Season progression updated",
   "merge_label_mine_floor": [
