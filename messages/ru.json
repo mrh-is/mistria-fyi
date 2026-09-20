@@ -396,6 +396,10 @@
   "merge_label_quests": "Задания: +{count}",
   "merge_label_spells": "Заклинания: +{count}",
   "merge_label_child_choice": "Выбор ребёнка обновлён",
+  "merge_conflict_relationship": "К вашему сведению: у вас было записано, что вы {local} с {villager}, но в файле сохранения указано {incoming}. Мы сохранили ваш записанный статус.",
+  "merge_conflict_spouse": "К вашему сведению: у вас было записано, что вы состоите в браке с {localVillager}, но в файле сохранения указано, что вы вступили в брак с {incomingVillager}. Мы сохранили {localVillager} в качестве супруга(и) и пропустили импортированный выбор по поводу детей.",
+  "merge_conflict_child_choice": "К вашему сведению: у вас было записано {local} с {villager}, но в файле сохранения указано {incoming}. Мы сохранили ваш записанный выбор.",
+  "merge_conflict_correction_link": "Исправить вручную",
   "merge_label_has_upper_floor": "Верхний этаж разблокирован",
   "merge_label_reached_season": "Прогресс сезона обновлён",
   "merge_label_mine_floor": [

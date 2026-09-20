@@ -387,6 +387,10 @@
   "merge_label_quests": "任务：+{count}",
   "merge_label_spells": "法术：+{count}",
   "merge_label_child_choice": "已更新孩子的选择",
+  "merge_conflict_relationship": "提示:你之前记录的是与{villager}的关系为{local},但存档文件显示为{incoming}。我们保留了你记录的状态。",
+  "merge_conflict_spouse": "提示:你之前记录的配偶是{localVillager},但存档文件显示你与{incomingVillager}结婚。我们保留了{localVillager}作为你的配偶,并跳过了导入的孩子选择。",
+  "merge_conflict_child_choice": "提示:你之前记录的与{villager}的选择是{local},但存档文件显示为{incoming}。我们保留了你记录的选择。",
+  "merge_conflict_correction_link": "手动更正",
   "merge_label_has_upper_floor": "已解锁上层",
   "merge_label_reached_season": "已更新季节进度",
   "merge_label_mine_floor": [

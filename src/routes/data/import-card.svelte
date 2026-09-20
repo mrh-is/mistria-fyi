@@ -119,7 +119,8 @@
       const merged = userState.mergeFromSave(completed);
 
       importResult = {
-        counts: merged,
+        conflicts: merged.conflicts,
+        counts: merged.counts,
         warnings: result.warnings,
       };
     } catch {
@@ -292,7 +293,12 @@
 
     {#if importResult}
       <div class="mt-3 rounded-md bg-green-50 p-3 dark:bg-green-950">
-        <MergeSummary counts={importResult.counts} {filesUsed} kind="import" />
+        <MergeSummary
+          conflicts={importResult.conflicts}
+          counts={importResult.counts}
+          {filesUsed}
+          kind="import"
+        />
 
         {#if importResult.warnings.length > 0}
           <Separator class="my-2" />
