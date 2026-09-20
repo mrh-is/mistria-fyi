@@ -67,6 +67,24 @@ The app processes save files entirely client-side. No save data is uploaded.
    values for numeric fields (Villager levels, skill levels, renown, mine floor) and the more
    advanced quest state (`none` → `obtained` → `completed`).
 
+Numeric levels are normalized by `normalizeLevel` in `src/lib/engine/progress.ts` at extraction
+time, and `mergeFromSave` clamps them again before installing. Import stays additive, so an invalid
+fact produces a warning rather than aborting the import:
+
+| Input                          | Result                        |
+| ------------------------------ | ----------------------------- |
+| Missing or `0`                 | Treated as unset, no warning  |
+| Fractional                     | Floored, no warning           |
+| Above the domain maximum       | Clamped to the maximum, warns |
+| Negative                       | Ignored, warns                |
+| Wrong type, `NaN`, or infinite | Ignored, warns                |
+
+Renown is the exception: it clamps silently at every boundary, since nothing in ordinary play
+produces an out-of-domain value. Backup restore (`importState`) uses the same domain maximums but
+rejects the whole document when a mine floor, villager level, or skill level is out of domain;
+renown is clamped there too rather than rejected. See
+[Backup Restore vs Transfer](#backup-restore-vs-transfer).
+
 ### Backup Restore vs Transfer
 
 These flows are not interchangeable:
