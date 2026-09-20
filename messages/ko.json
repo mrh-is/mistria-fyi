@@ -387,6 +387,10 @@
   "merge_label_quests": "퀘스트: +{count}",
   "merge_label_spells": "주문: +{count}",
   "merge_label_child_choice": "자녀 선택 업데이트됨",
+  "merge_conflict_relationship": "참고로, {villager}와(과) {local} 관계로 기록되어 있었지만 저장 파일에는 {incoming}(으)로 되어 있었습니다. 기록된 상태를 유지했습니다.",
+  "merge_conflict_spouse": "참고로, {localVillager}와(과) 결혼한 것으로 기록되어 있었지만 저장 파일에는 {incomingVillager}와(과) 결혼한 것으로 되어 있었습니다. 배우자는 {localVillager}로 유지했으며, 가져온 자녀 선택은 건너뛰었습니다.",
+  "merge_conflict_child_choice": "참고로, {villager}와(과) {local}(으)로 기록되어 있었지만 저장 파일에는 {incoming}(으)로 되어 있었습니다. 기록된 선택을 유지했습니다.",
+  "merge_conflict_correction_link": "수동으로 수정하기",
   "merge_label_has_upper_floor": "위층 해제됨",
   "merge_label_reached_season": "계절 진행 업데이트됨",
   "merge_label_mine_floor": [

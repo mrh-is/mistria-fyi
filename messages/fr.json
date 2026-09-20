@@ -393,6 +393,10 @@
   "merge_label_quests": "Quêtes : +{count}",
   "merge_label_spells": "Sorts : +{count}",
   "merge_label_child_choice": "Choix de l’enfant mis à jour",
+  "merge_conflict_relationship": "Pour info, vous aviez enregistré que vous êtes {local} avec {villager}, mais le fichier de sauvegarde indiquait {incoming}. Nous avons conservé votre statut enregistré.",
+  "merge_conflict_spouse": "Pour info, vous aviez enregistré que vous êtes marié(e) à {localVillager}, mais le fichier de sauvegarde indiquait que vous vous étiez marié(e) à {incomingVillager}. Nous avons conservé {localVillager} comme conjoint(e) et ignoré le choix d’enfant importé.",
+  "merge_conflict_child_choice": "Pour info, vous aviez enregistré {local} avec {villager}, mais le fichier de sauvegarde indiquait {incoming}. Nous avons conservé votre choix enregistré.",
+  "merge_conflict_correction_link": "Corriger manuellement",
   "merge_label_has_upper_floor": "Étage supérieur débloqué",
   "merge_label_reached_season": "Progression de saison mise à jour",
   "merge_label_mine_floor": [
