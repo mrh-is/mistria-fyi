@@ -579,6 +579,10 @@ function createUserState() {
         // Whether a household exists (locally or newly created by this merge) that the
         // incoming child choice may be applied against.
         let householdVillagerId: null | VillagerId = localMarried;
+        // A new marriage forces every other dateable villager to platonic via
+        // normalizeRelationships regardless of what the incoming data says about them, so the
+        // general per-villager loop below must not evaluate them for conflicts at all.
+        let skipGeneralLoop = false;
 
         if (imported.villagerRelationships) {
           if (localMarried === null && importedMarried !== null) {
@@ -588,6 +592,7 @@ function createUserState() {
             counts.villagerRelationships++;
             skipVillagerIds.add(importedMarried);
             householdVillagerId = importedMarried;
+            skipGeneralLoop = true;
           } else if (
             localMarried !== null &&
             importedMarried !== null &&
@@ -615,6 +620,9 @@ function createUserState() {
                 localRelationship: "married",
                 villagerId: localMarried,
               });
+              // The marriage itself is disputed, so the household it would apply a child choice
+              // to is not a settled fact this merge can act on.
+              householdVillagerId = null;
             }
             skipVillagerIds.add(localMarried);
           }
@@ -622,35 +630,37 @@ function createUserState() {
           // General per-villager merge for everyone else: silent for a forward move within a
           // branch (undecided → anything, romantic → proposed), a conflict for a move between
           // branches or backward. An incoming "undecided" or an omitted villager is always a no-op.
-          for (const [villagerIdStr, importedRel] of Object.entries(importedRelationships)) {
-            const villagerId = villagerIdStr as VillagerId;
-            if (!importedRel || importedRel === "undecided" || skipVillagerIds.has(villagerId)) {
-              continue;
-            }
+          if (!skipGeneralLoop) {
+            for (const [villagerIdStr, importedRel] of Object.entries(importedRelationships)) {
+              const villagerId = villagerIdStr as VillagerId;
+              if (!importedRel || importedRel === "undecided" || skipVillagerIds.has(villagerId)) {
+                continue;
+              }
 
-            const localRel = state.completed.villagerRelationships[villagerId] ?? "undecided";
-            if (localRel === importedRel) continue;
+              const localRel = state.completed.villagerRelationships[villagerId] ?? "undecided";
+              if (localRel === importedRel) continue;
 
-            if (localRel === "undecided") {
-              state.completed.villagerRelationships[villagerId] = importedRel;
-              counts.villagerRelationships++;
-            } else if (relationshipBranch(localRel) !== relationshipBranch(importedRel)) {
-              conflicts.push({
-                incomingRelationship: importedRel,
-                kind: "relationship",
-                localRelationship: localRel,
-                villagerId,
-              });
-            } else if (relationshipRank(importedRel) > relationshipRank(localRel)) {
-              state.completed.villagerRelationships[villagerId] = importedRel;
-              counts.villagerRelationships++;
-            } else {
-              conflicts.push({
-                incomingRelationship: importedRel,
-                kind: "relationship",
-                localRelationship: localRel,
-                villagerId,
-              });
+              if (localRel === "undecided") {
+                state.completed.villagerRelationships[villagerId] = importedRel;
+                counts.villagerRelationships++;
+              } else if (relationshipBranch(localRel) !== relationshipBranch(importedRel)) {
+                conflicts.push({
+                  incomingRelationship: importedRel,
+                  kind: "relationship",
+                  localRelationship: localRel,
+                  villagerId,
+                });
+              } else if (relationshipRank(importedRel) > relationshipRank(localRel)) {
+                state.completed.villagerRelationships[villagerId] = importedRel;
+                counts.villagerRelationships++;
+              } else {
+                conflicts.push({
+                  incomingRelationship: importedRel,
+                  kind: "relationship",
+                  localRelationship: localRel,
+                  villagerId,
+                });
+              }
             }
           }
 

@@ -218,4 +218,38 @@ describe("mergeFromSave household policy", () => {
     expect(userState.state.completed.villagerRelationships[CELINE]).toBe("platonic");
     expect(conflicts).toEqual([]);
   });
+
+  it("does not falsely flag a conflict for a villager the marriage cascade will flatten anyway", () => {
+    userState.setVillagerRelationship(CELINE, "proposed");
+
+    // A real transfer payload is normalized before merge, so a non-spouse villager already
+    // carries the post-cascade "platonic" value the incoming marriage will force everyone else to.
+    const { conflicts } = userState.mergeFromSave({
+      villagerRelationships: { [ADELINE]: "married", [CELINE]: "platonic" },
+    });
+
+    expect(userState.state.completed.villagerRelationships[ADELINE]).toBe("married");
+    expect(userState.state.completed.villagerRelationships[CELINE]).toBe("platonic");
+    expect(conflicts).toEqual([]);
+  });
+
+  it("never applies a child choice when the local spouse's marriage is itself disputed", () => {
+    userState.setVillagerRelationship(ADELINE, "married");
+
+    const { conflicts, counts } = userState.mergeFromSave({
+      childChoice: "yes",
+      villagerRelationships: { [ADELINE]: "romantic" },
+    });
+
+    expect(userState.state.completed.childChoice).toBe("undeclared");
+    expect(counts.childChoice).toBe(0);
+    expect(conflicts).toEqual([
+      {
+        incomingRelationship: "romantic",
+        kind: "relationship",
+        localRelationship: "married",
+        villagerId: ADELINE,
+      },
+    ]);
+  });
 });
