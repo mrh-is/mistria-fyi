@@ -48,6 +48,13 @@ export default defineConfig({
       ],
     }),
   ],
+  server: {
+    // Claude Code's preview tool sets PORT when 5173 is already bound by another worktree's dev
+    // server (`autoPort` in .claude/launch.json). Vite ignores PORT on its own, so read it here
+    // and bind strictly so the server never drifts from the tab Claude opened.
+    port: Number(process.env.PORT) || 5173,
+    strictPort: Boolean(process.env.PORT),
+  },
   test: {
     exclude: [
       ...configDefaults.exclude,
