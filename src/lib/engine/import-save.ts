@@ -3,8 +3,8 @@ import { recordKeys, recordValues } from "$lib/utils.js";
 
 import type {
   CompletedState,
-  MergeConflict,
   MergeCounts,
+  MergeResult,
   QuestState,
 } from "$lib/stores/user-state.svelte.js";
 import type {
@@ -23,11 +23,7 @@ import type {
 
 // ─── Import result ──────────────────────────────────────────────────
 
-export interface ImportResult {
-  /** Household conflicts the merge skipped rather than guessing; populated after the real merge. */
-  conflicts: MergeConflict[];
-  /** Per-category counts of items imported */
-  counts: MergeCounts;
+export interface ImportResult extends MergeResult {
   /** Human-readable warnings (e.g. unknown IDs) */
   warnings: string[];
 }

@@ -13,7 +13,7 @@
   import { closeScanner } from "./data-effects";
   import MergeSummary from "./merge-summary.svelte";
 
-  import type { MergeConflict, MergeCounts } from "$lib/stores/user-state.svelte.js";
+  import type { MergeResult } from "$lib/stores/user-state.svelte.js";
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
 
@@ -26,7 +26,7 @@
   let scanner: null | QrScanner = null;
   let scanAttempt = 0;
 
-  let transferResult = $state<null | { conflicts: MergeConflict[]; counts: MergeCounts }>(null);
+  let transferResult = $state<MergeResult | null>(null);
   let transferError = $state<null | string>(null);
 
   // ── Generate QR Code ──

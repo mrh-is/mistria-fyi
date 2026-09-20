@@ -79,9 +79,9 @@ export type ImportResult = { error: ImportErrorKind; ok: false } | { ok: true };
  */
 export type MergeConflict =
   | {
-      incomingChildChoice: "no" | "yes";
+      incomingChildChoice: Exclude<ChildChoice, "undeclared">;
       kind: "childChoice";
-      localChildChoice: "no" | "yes";
+      localChildChoice: Exclude<ChildChoice, "undeclared">;
       villagerId: VillagerId;
     }
   | {
@@ -117,6 +117,12 @@ export interface MergeCounts {
   spells: number;
   villagerLevels: number;
   villagerRelationships: number;
+}
+
+/** What {@link mergeFromSave} applied and what it skipped rather than guessing. */
+export interface MergeResult {
+  conflicts: MergeConflict[];
+  counts: MergeCounts;
 }
 
 export type QuestState = "completed" | "none" | "obtained";
@@ -358,10 +364,7 @@ function createUserState() {
       return { ok: true };
     },
     /** Merge imported data into current progress (union, never removes) */
-    mergeFromSave(imported: Partial<CompletedState>): {
-      conflicts: MergeConflict[];
-      counts: MergeCounts;
-    } {
+    mergeFromSave(imported: Partial<CompletedState>): MergeResult {
       const conflicts: MergeConflict[] = [];
       const counts: MergeCounts = {
         almanac: 0,
