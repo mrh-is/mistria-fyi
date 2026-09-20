@@ -250,6 +250,42 @@ test.describe("@critical tracker paper touch geometry", () => {
     expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
   });
 
+  test("spoiler covers stay text-height while their targets reach 44 pixels", async ({ page }) => {
+    await initializeApplication(
+      page,
+      "light",
+      createStoredState({ availabilityMode: "everything" }),
+    );
+    await gotoApplication(page, "/almanac");
+    await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
+    await page.getByRole("button", { name: /Show \d+ more/ }).click();
+
+    await expect(page.getByRole("button", { name: "Reveal spoiler" }).first()).toBeVisible();
+    // Long names wrap at 320 pixels; measure a cover that fits on one line.
+    const singleLineIndex = await page
+      .locator(".spoiler-cover__mask")
+      .evaluateAll((masks) => masks.findIndex((mask) => mask.getBoundingClientRect().height <= 24));
+    expect(singleLineIndex).toBeGreaterThanOrEqual(0);
+    const spoiler = page.getByRole("button", { name: "Reveal spoiler" }).nth(singleLineIndex);
+    const rowIndex = await spoiler.evaluate((element) => {
+      const rows = [...document.querySelectorAll("[data-tracker-row]")];
+      return rows.findIndex((candidate) => candidate.contains(element));
+    });
+    const row = page.locator("[data-tracker-row]").nth(rowIndex);
+    await spoiler.scrollIntoViewIfNeeded();
+    const rowBefore = await row.boundingBox();
+    const button = await spoiler.boundingBox();
+    const cover = await spoiler.locator(".spoiler-cover__mask").boundingBox();
+    expect(button?.height).toBeGreaterThanOrEqual(44);
+    expect(cover?.height).toBeLessThanOrEqual(24);
+    expect(rowBefore?.height).toBeLessThan(60);
+
+    await page.mouse.click((cover?.x ?? 0) + 8, (cover?.y ?? 0) - 6);
+    await expect(row.getByRole("button", { name: "Reveal spoiler" })).toHaveCount(0);
+    const rowAfter = await row.boundingBox();
+    expect(Math.abs((rowAfter?.height ?? 0) - (rowBefore?.height ?? 0))).toBeLessThanOrEqual(0.5);
+  });
+
   test("specialized record controls retain 44-pixel coarse targets", async ({ page }) => {
     await initializeApplication(
       page,
