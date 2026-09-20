@@ -27,6 +27,11 @@ export default defineConfig({
     // is long-term cached via content-hashed filenames and the service worker.
     chunkSizeWarningLimit: 1000,
   },
+  // Vite only exposes VITE_-prefixed vars via import.meta.env by default. PUBLIC_ASSET_ORIGIN
+  // (src/lib/sprites/sprite-url.ts) uses SvelteKit's own "PUBLIC_" convention, so it must be added
+  // here too — SvelteKit's $env/static/public requires the var to be declared at build time, which
+  // breaks an optional override with no committed .env file.
+  envPrefix: ["VITE_", "PUBLIC_"],
   plugins: [
     tailwindcss(),
     sveltekit(),

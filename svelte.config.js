@@ -11,11 +11,11 @@ const commit =
 
 /**
  * Cloudflare Pages caps `_routes.json` at 100 rules. The adapter's default `<files>` exclusion
- * lists every static asset individually, so `static/sprites/` (~2,500 files) overflows the cap
- * and the adapter silently drops the excess; those sprites then invoke the Function on every
- * request. Exclude each top-level `static/` directory with one wildcard instead, and keep
- * top-level files as individual rules. Dynamic routes (locale pages, `/api/feedback`) stay
- * covered by the `/*` include. See #312; #247 retires the sprite rule once sprites leave `static/`.
+ * lists every static asset individually, which can overflow that cap once `static/` holds enough
+ * files (it did for the ~2,500 sprites now hosted on assets.mistria.fyi instead, see #312, #247).
+ * Exclude each top-level `static/` directory with one wildcard instead, and keep top-level files
+ * as individual rules. Dynamic routes (locale pages, `/api/feedback`) stay covered by the `/*`
+ * include.
  */
 const staticExcludes = readdirSync("static", { withFileTypes: true })
   .filter((entry) => !entry.name.startsWith("."))
@@ -45,7 +45,7 @@ const config = {
         "form-action": ["self"],
         "frame-ancestors": ["none"],
         "frame-src": ["https://challenges.cloudflare.com"],
-        "img-src": ["self", "data:", "blob:"],
+        "img-src": ["self", "data:", "blob:", "https://assets.mistria.fyi"],
         "manifest-src": ["self"],
         "object-src": ["none"],
         "script-src": ["self", "https://challenges.cloudflare.com"],

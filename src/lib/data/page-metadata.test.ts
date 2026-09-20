@@ -114,10 +114,9 @@ describe("crawler files", () => {
     );
   });
 
-  it("keeps pages crawlable while excluding sprites from Google Images", () => {
+  it("keeps every page crawlable", () => {
     const robots = readFileSync(resolve(import.meta.dirname, "../../../static/robots.txt"), "utf8");
 
-    expect(robots).toContain("User-agent: Googlebot-Image\nDisallow: /sprites/");
     expect(robots).toContain("User-agent: *\nAllow: /");
     expect(robots).toContain("Sitemap: https://mistria.fyi/sitemap.xml");
   });

@@ -30,6 +30,7 @@ describe("TrackerRow", () => {
     expect(body).toContain('aria-hidden="true"');
     expect(body).toContain('aria-label="Check spoilered item"');
     expect(body).toContain('data-sprite-slot="spoilered"');
+    expect(body).toContain('crossorigin="anonymous"');
   });
 
   it("reveals the name for a completed row, unlike a spoilered one", () => {

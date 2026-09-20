@@ -16,6 +16,7 @@
     type RelationshipStatus,
   } from "$lib/engine/relationships.js";
   import * as m from "$lib/paraglide/messages.js";
+  import { villagerSpriteUrl } from "$lib/sprites/sprite-url.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { recordKeys } from "$lib/utils";
   import { celebrateCategory } from "$lib/utils/celebrate.js";
@@ -141,10 +142,11 @@
     <span class="villager-icon" data-spoilered={!revealed} aria-hidden="true">
       {#if villager.smallIconSprite && !imageFailed}
         <img
-          src="/villager-sprites/{villager.smallIconSprite}.webp"
+          src={villagerSpriteUrl(villager.smallIconSprite)}
           alt=""
           width="44"
           height="44"
+          crossorigin="anonymous"
           onerror={() => (imageFailed = true)}
         />
       {:else}
