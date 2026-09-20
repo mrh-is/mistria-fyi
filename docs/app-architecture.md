@@ -79,8 +79,11 @@ fact produces a warning rather than aborting the import:
 | Negative                       | Ignored, warns                |
 | Wrong type, `NaN`, or infinite | Ignored, warns                |
 
-Backup restore (`importState`) uses the same domain maximums but rejects the whole document instead
-of normalizing; see [Backup Restore vs Transfer](#backup-restore-vs-transfer).
+Renown is the exception: it clamps silently at every boundary, since nothing in ordinary play
+produces an out-of-domain value. Backup restore (`importState`) uses the same domain maximums but
+rejects the whole document when a mine floor, villager level, or skill level is out of domain;
+renown is clamped there too rather than rejected. See
+[Backup Restore vs Transfer](#backup-restore-vs-transfer).
 
 ### Backup Restore vs Transfer
 
