@@ -91,7 +91,11 @@ Follow this sequence for every task:
     references the issue (`Closes #N`). Apply the matching `agent:*` label to the PR. Keep the
     active-work labels through PR review. On handoff, replace the active `agent:*` labels. When work
     closes, is abandoned, or stops pending a decision or dependency, remove both active-work labels
-    and set the appropriate remaining status.
+    and set the appropriate remaining status. CI bumps `package.json`'s patch version automatically
+    on merge (see [version-bump.yml](.github/workflows/version-bump.yml)) — apply `semver: minor`
+    for a user-visible feature or notable behavior change, or `semver: major` for a breaking change
+    (save format, transfer encoding, URL structure). Leave both off for fixes, chores, and internal
+    refactors.
 11. **Monitor CI** — after opening the PR, bind it and enable monitoring so CI failures are caught
     and fixed without requiring the user to relay status. Use `ccd_pr bind_pr` and `set_monitor` in
     Claude Code, or check `gh pr checks` periodically in other agents.
