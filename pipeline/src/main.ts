@@ -355,7 +355,12 @@ async function main(): Promise<void> {
     fiddle,
     cutsceneQuestMap,
   );
-  const { almanac, items, localeNames: itemLocaleNames } = extractAlmanac(fiddle, assetsDir);
+  const {
+    almanac,
+    iconSpritesByItemId,
+    items,
+    localeNames: itemLocaleNames,
+  } = extractAlmanac(fiddle, assetsDir);
   const recipeLocaleNames = deriveRecipeLocaleNames(recipeNameSources, itemLocaleNames);
   const { animals, localeNames: animalLocaleNames } = extractAnimals(fiddle, assetsDir);
   const { cosmetics: petCosmetics, localeNames: petCosmeticLocaleNames } = extractPetCosmetics(
@@ -661,8 +666,11 @@ async function main(): Promise<void> {
   const extractSpritesFlag = args.includes("--sprites");
   if (extractSpritesFlag) {
     console.log("\nStep 6: Extracting item sprites...");
-    const spritesDir = resolve(SPRITES_OUTPUT_ROOT, version);
-    const spriteResult = await extractSprites(resolve(assetsDir), trackerData.items, spritesDir);
+    const spriteResult = await extractSprites(
+      resolve(assetsDir),
+      iconSpritesByItemId,
+      SPRITES_OUTPUT_ROOT,
+    );
     console.log(
       `  Extracted ${spriteResult.extracted} new, ${spriteResult.skipped} unchanged, ` +
         `${spriteResult.total} total`,

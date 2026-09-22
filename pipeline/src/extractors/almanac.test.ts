@@ -86,8 +86,11 @@ tags = ["crop"]
           items: [{ itemIds: ["turnip"] }],
         },
       },
+      iconSpritesByItemId: {
+        turnip: "spr_ui_item_turnip",
+      },
       items: {
-        turnip: { category: "crops", iconSprite: "spr_ui_item_turnip" },
+        turnip: { category: "crops" },
       },
       localeNames: {
         en: { turnip: "Turnip" },
@@ -236,8 +239,12 @@ tags = ["material"]
       { itemIds: ["wood"] },
     ]);
     expect(result.items).toEqual({
-      shell: { category: "forageables", iconSprite: "spr_ui_item_shell" },
-      wood: { category: "materials", iconSprite: "spr_ui_item_wood" },
+      shell: { category: "forageables" },
+      wood: { category: "materials" },
+    });
+    expect(result.iconSpritesByItemId).toEqual({
+      shell: "spr_ui_item_shell",
+      wood: "spr_ui_item_wood",
     });
   });
 

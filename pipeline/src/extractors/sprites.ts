@@ -3,8 +3,6 @@ import { dirname, join, resolve } from "node:path";
 import sharp from "sharp";
 import { open } from "yauzl-promise";
 
-import type { TrackerData } from "$lib/types/tracker-data.js";
-
 const SPRITE_SEARCH_DIRS = [
   join("animations", "Item Icons"),
   join("animations", "Placeables"),
@@ -26,9 +24,12 @@ const MISSING_SPRITE_OVERRIDES: Record<string, string> = {
 };
 
 export interface SpriteExtractionResult {
+  /** Item-keyed output files newly staged (a sprite shared by several items counts once per item). */
   extracted: number;
+  /** Game sprite names that were needed but not found in the source assets. */
   missing: string[];
   overridden: number;
+  /** Item-keyed output files already present on disk, left untouched. */
   skipped: number;
   source: "filesystem" | "zip";
   /** Newly-converted sprites, not yet written to disk. Write with {@link publishSprites}. */
@@ -42,36 +43,47 @@ export interface StagedSprite {
 }
 
 /**
- * Converts newly-needed sprites to webp in memory without touching `outputDir`. Sprites already
- * present in `outputDir` are counted as skipped and left alone. Call {@link publishSprites} with
- * the result's `staged` entries once every pipeline validation has passed.
+ * Converts newly-needed item sprites to webp in memory without touching `outputDir`, writing one
+ * output file per item ID under `outputDir/items/` (a sprite shared by several items, e.g. Aldarian
+ * artifact pairs, is converted once but staged once per item — duplicate objects are cheap and
+ * simpler than deduping). Sprites already present in `outputDir` are counted as skipped and left
+ * alone. Call {@link publishSprites} with the result's `staged` entries once every pipeline
+ * validation has passed.
  */
 export async function extractSprites(
   assetsDir: string,
-  items: TrackerData["items"],
+  iconSpritesByItemId: Record<string, string>,
   outputDir: string,
 ): Promise<SpriteExtractionResult> {
-  const neededSprites = new Set<string>();
-  const overriddenSprites: string[] = [];
-  for (const item of Object.values(items)) {
-    const reason = MISSING_SPRITE_OVERRIDES[item.iconSprite];
+  const itemIdsBySprite = new Map<string, string[]>();
+  const overriddenItemIds: string[] = [];
+  for (const [itemId, iconSprite] of Object.entries(iconSpritesByItemId)) {
+    const reason = MISSING_SPRITE_OVERRIDES[iconSprite];
     if (reason) {
-      overriddenSprites.push(item.iconSprite);
+      overriddenItemIds.push(itemId);
     } else {
-      neededSprites.add(item.iconSprite);
+      const itemIds = itemIdsBySprite.get(iconSprite);
+      if (itemIds) {
+        itemIds.push(itemId);
+      } else {
+        itemIdsBySprite.set(iconSprite, [itemId]);
+      }
     }
   }
 
-  if (overriddenSprites.length > 0) {
-    const unique = [...new Set(overriddenSprites)].sort();
-    console.log(`  Skipping ${unique.length} overridden sprites (no standard icon available)`);
+  if (overriddenItemIds.length > 0) {
+    console.log(
+      `  Skipping ${overriddenItemIds.length.toString()} items with overridden sprites ` +
+        `(no standard icon available)`,
+    );
   }
 
+  const itemsOutputDir = join(outputDir, "items");
   const zipPath = resolveZipPath(assetsDir);
   const result = zipPath
-    ? await extractSpritesFromZip(zipPath, neededSprites, outputDir)
-    : await extractSpritesFromFilesystem(assetsDir, neededSprites, outputDir);
-  result.overridden = new Set(overriddenSprites).size;
+    ? await extractSpritesFromZip(zipPath, itemIdsBySprite, itemsOutputDir)
+    : await extractSpritesFromFilesystem(assetsDir, itemIdsBySprite, itemsOutputDir);
+  result.overridden = overriddenItemIds.length;
   return result;
 }
 
@@ -110,8 +122,8 @@ async function convertToWebp(pngData: Buffer): Promise<Buffer> {
 
 async function extractSpritesFromFilesystem(
   assetsDir: string,
-  neededSprites: Set<string>,
-  outputDir: string,
+  itemIdsBySprite: Map<string, string[]>,
+  itemsOutputDir: string,
 ): Promise<SpriteExtractionResult> {
   const spriteIndex = new Map<string, string>();
   for (const subdir of SPRITE_SEARCH_DIRS) {
@@ -128,30 +140,33 @@ async function extractSpritesFromFilesystem(
     );
   }
 
-  console.log(`  Sprites: ${neededSprites.size} needed, ${spriteIndex.size} available`);
+  const total = totalItemCount(itemIdsBySprite);
+  console.log(
+    `  Sprites: ${itemIdsBySprite.size.toString()} unique sprites for ${total.toString()} items, ` +
+      `${spriteIndex.size.toString()} available`,
+  );
 
   let extracted = 0;
   let skipped = 0;
   const missing: string[] = [];
   const staged: StagedSprite[] = [];
 
-  for (const spriteName of [...neededSprites].sort()) {
+  for (const spriteName of [...itemIdsBySprite.keys()].sort()) {
+    const itemIds = itemIdsBySprite.get(spriteName) ?? [];
     const sourcePath = spriteIndex.get(spriteName);
     if (!sourcePath) {
       missing.push(spriteName);
       continue;
     }
 
-    const outPath = join(outputDir, `${spriteName}.webp`);
-    if (existsSync(outPath)) {
-      skipped++;
-      continue;
-    }
-
-    const sourceData = readFileSync(sourcePath);
-    const webpData = await convertToWebp(sourceData);
-    staged.push({ data: webpData, outPath });
-    extracted++;
+    const counts = await stageItemsForSprite(
+      itemIds,
+      itemsOutputDir,
+      () => convertToWebp(readFileSync(sourcePath)),
+      staged,
+    );
+    extracted += counts.extracted;
+    skipped += counts.skipped;
   }
 
   return {
@@ -161,14 +176,14 @@ async function extractSpritesFromFilesystem(
     skipped,
     source: "filesystem",
     staged,
-    total: neededSprites.size,
+    total,
   };
 }
 
 async function extractSpritesFromZip(
   zipPath: string,
-  neededSprites: Set<string>,
-  outputDir: string,
+  itemIdsBySprite: Map<string, string[]>,
+  itemsOutputDir: string,
 ): Promise<SpriteExtractionResult> {
   console.log(`  Reading sprites from ${zipPath}`);
 
@@ -188,7 +203,7 @@ async function extractSpritesFromZip(
       if (!basename.startsWith("spr_ui_item_")) continue;
 
       const spriteName = basename.slice(0, -4);
-      if (neededSprites.has(spriteName) && !spriteData.has(spriteName)) {
+      if (itemIdsBySprite.has(spriteName) && !spriteData.has(spriteName)) {
         const stream = await entry.openReadStream();
         const chunks: Buffer[] = [];
         for await (const chunk of stream) {
@@ -201,29 +216,33 @@ async function extractSpritesFromZip(
     await zipFile.close();
   }
 
-  console.log(`  Sprites: ${neededSprites.size} needed, ${spriteData.size} found in zip`);
+  const total = totalItemCount(itemIdsBySprite);
+  console.log(
+    `  Sprites: ${itemIdsBySprite.size.toString()} unique sprites for ${total.toString()} items, ` +
+      `${spriteData.size.toString()} found in zip`,
+  );
 
   let extracted = 0;
   let skipped = 0;
   const missing: string[] = [];
   const staged: StagedSprite[] = [];
 
-  for (const spriteName of [...neededSprites].sort()) {
+  for (const spriteName of [...itemIdsBySprite.keys()].sort()) {
+    const itemIds = itemIdsBySprite.get(spriteName) ?? [];
     const pngData = spriteData.get(spriteName);
     if (!pngData) {
       missing.push(spriteName);
       continue;
     }
 
-    const outPath = join(outputDir, `${spriteName}.webp`);
-    if (existsSync(outPath)) {
-      skipped++;
-      continue;
-    }
-
-    const webpData = await convertToWebp(pngData);
-    staged.push({ data: webpData, outPath });
-    extracted++;
+    const counts = await stageItemsForSprite(
+      itemIds,
+      itemsOutputDir,
+      () => convertToWebp(pngData),
+      staged,
+    );
+    extracted += counts.extracted;
+    skipped += counts.skipped;
   }
 
   return {
@@ -233,11 +252,42 @@ async function extractSpritesFromZip(
     skipped,
     source: "zip",
     staged,
-    total: neededSprites.size,
+    total,
   };
 }
 
 function resolveZipPath(assetsDir: string): string | undefined {
   const candidates = [resolve(assetsDir, "assets.zip"), resolve(assetsDir, "..", "assets.zip")];
   return candidates.find((p) => existsSync(p));
+}
+
+/** Stages one output file per item ID sharing `spriteName`, converting the source data once. */
+async function stageItemsForSprite(
+  itemIds: readonly string[],
+  itemsOutputDir: string,
+  loadWebp: () => Promise<Buffer>,
+  staged: StagedSprite[],
+): Promise<{ extracted: number; skipped: number }> {
+  let extracted = 0;
+  let skipped = 0;
+  let webpData: Buffer | undefined;
+
+  for (const itemId of [...itemIds].sort()) {
+    const outPath = join(itemsOutputDir, `${itemId}.webp`);
+    if (existsSync(outPath)) {
+      skipped++;
+      continue;
+    }
+    webpData ??= await loadWebp();
+    staged.push({ data: webpData, outPath });
+    extracted++;
+  }
+
+  return { extracted, skipped };
+}
+
+function totalItemCount(itemIdsBySprite: Map<string, string[]>): number {
+  let total = 0;
+  for (const itemIds of itemIdsBySprite.values()) total += itemIds.length;
+  return total;
 }

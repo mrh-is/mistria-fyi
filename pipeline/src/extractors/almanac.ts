@@ -15,6 +15,13 @@ import type {
   TrackerData,
 } from "$lib/types/tracker-data.js";
 
+/**
+ * The game's `icon_sprite` name per item, keyed by item ID. Used only to locate the source PNG
+ * during sprite extraction; the final `Item` in `tracker-data.json` has no icon field, since sprite
+ * URLs are resolved from the item ID itself (see `src/lib/sprites/sprite-url.ts`).
+ */
+export type ItemIconSpriteIndex = Record<string, string>;
+
 export interface ItemLocalizationReport {
   fallbackItemIds: Record<LocaleCode, ItemId[]>;
   nonLocalizableItems: string[];
@@ -24,7 +31,7 @@ export interface ItemLocalizationReport {
  * Extracts both named item metadata and visible almanac rows. The metadata index includes every
  * accepted named item, while the almanac contains only items assigned to a UI-defined category.
  */
-export type ItemMetadataIndex = Record<string, { category: string; iconSprite: string }>;
+export type ItemMetadataIndex = Record<string, { category: string }>;
 
 export interface RawAlmanacCategory {
   key: string;
@@ -38,6 +45,7 @@ export function extractAlmanac(
   assetsDir: string,
 ): {
   almanac: TrackerData["almanac"];
+  iconSpritesByItemId: ItemIconSpriteIndex;
   items: ItemMetadataIndex;
   localeNames: Record<LocaleCode, Record<ItemId, string>>;
   localizationReport: ItemLocalizationReport;
@@ -51,6 +59,7 @@ export function extractAlmanac(
   ) as unknown as Record<LocaleCode, ItemId[]>;
   const emptyResult = {
     almanac: {},
+    iconSpritesByItemId: {},
     items: {},
     localeNames,
     localizationReport: { fallbackItemIds, nonLocalizableItems: [] },
@@ -125,6 +134,7 @@ export function extractAlmanac(
     rawCategories.map(() => new Map());
 
   const items: ItemMetadataIndex = {};
+  const iconSpritesByItemId: ItemIconSpriteIndex = {};
 
   const ACQUISITION_TAGS = new Set(["dive", "fishable"]);
 
@@ -152,7 +162,8 @@ export function extractAlmanac(
     const categoryKey =
       assignedIdx !== undefined ? rawCategories[assignedIdx].key : item.topCategory;
     const itemId = item.id as ItemId;
-    items[item.id] = { category: categoryKey, iconSprite: item.iconSprite };
+    items[item.id] = { category: categoryKey };
+    iconSpritesByItemId[item.id] = item.iconSprite;
     const { fallbackLocales, values } = localizeField(assetsDir, {
       category: `items/${item.topCategory}/${item.subCategory}`,
       classification: "localizable",
@@ -216,6 +227,7 @@ export function extractAlmanac(
   console.log(`  Item localization fallbacks: ${fallbackSummary}`);
   return {
     almanac,
+    iconSpritesByItemId,
     items,
     localeNames,
     localizationReport: { fallbackItemIds, nonLocalizableItems: namelessItems },
