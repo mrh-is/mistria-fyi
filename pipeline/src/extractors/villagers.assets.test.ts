@@ -14,10 +14,23 @@ function extract() {
   return extractVillagers(
     makeFiddle({
       npcs: {
-        [adeline]: { birthday: { day: 3, season: "spring" }, dateable: true, name: "Adeline" },
-        [balor]: { birthday: { day: 10, season: "summer" }, name: "Balor" },
+        [adeline]: {
+          birthday: { day: 3, season: "spring" },
+          dateable: true,
+          icon_sprite: "spr_ui_generic_icon_npc_adeline",
+          name: "Adeline",
+        },
+        [balor]: {
+          birthday: { day: 10, season: "summer" },
+          icon_sprite: "spr_ui_generic_icon_npc_balor",
+          name: "Balor",
+        },
         default: { birthday: { day: 1, season: "spring" }, name: "Default" },
-        [untranslated]: { birthday: { day: 1, season: "fall" }, name: "Nonexistent NPC" },
+        [untranslated]: {
+          birthday: { day: 1, season: "fall" },
+          icon_sprite: "spr_ui_generic_icon_npc_definitely_not_a_real_npc_id",
+          name: "Nonexistent NPC",
+        },
       },
     }),
     requireGameAssetsDir(),

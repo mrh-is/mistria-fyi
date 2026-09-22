@@ -46,7 +46,7 @@ import { extractQuests } from "./extractors/quests";
 import { deriveRecipeLocaleNames, extractRecipes } from "./extractors/recipes";
 import { extractTownRanks } from "./extractors/renown";
 import { extractSkills } from "./extractors/skills";
-import { extractSprites, publishSprites } from "./extractors/sprites";
+import { extractSprites, extractVillagerSprites, publishSprites } from "./extractors/sprites";
 import { extractStoresMeta } from "./extractors/stores-meta";
 import { extractTreasureChestTiers } from "./extractors/treasure-chest-tiers";
 import { APP_UI_STRINGS, extractUiStrings, tierKeys } from "./extractors/ui-strings";
@@ -371,7 +371,11 @@ async function main(): Promise<void> {
     fiddle,
     itemLocaleNames,
   );
-  const { localeNames: villagerLocaleNames, villagers } = extractVillagers(fiddle, assetsDir);
+  const {
+    iconSpritesByVillagerId,
+    localeNames: villagerLocaleNames,
+    villagers,
+  } = extractVillagers(fiddle, assetsDir);
   const {
     cosmetics: cosmeticsRaw,
     cosmeticSlots,
@@ -665,25 +669,35 @@ async function main(): Promise<void> {
   let stagedSprites: StagedSprite[] = [];
   const extractSpritesFlag = args.includes("--sprites");
   if (extractSpritesFlag) {
-    console.log("\nStep 6: Extracting item sprites...");
-    const spriteResult = await extractSprites(
+    console.log("\nStep 6: Extracting item and villager sprites...");
+    const itemSpriteResult = await extractSprites(
       resolve(assetsDir),
       iconSpritesByItemId,
       SPRITES_OUTPUT_ROOT,
     );
-    console.log(
-      `  Extracted ${spriteResult.extracted} new, ${spriteResult.skipped} unchanged, ` +
-        `${spriteResult.total} total`,
+    const villagerSpriteResult = await extractVillagerSprites(
+      resolve(assetsDir),
+      iconSpritesByVillagerId,
+      SPRITES_OUTPUT_ROOT,
     );
-    if (spriteResult.missing.length > 0) {
-      console.error(`  ❌ ${spriteResult.missing.length} sprites not found:`);
-      for (const name of spriteResult.missing) {
+    console.log(
+      `  Items: extracted ${itemSpriteResult.extracted} new, ${itemSpriteResult.skipped} unchanged, ` +
+        `${itemSpriteResult.total} total`,
+    );
+    console.log(
+      `  Villagers: extracted ${villagerSpriteResult.extracted} new, ` +
+        `${villagerSpriteResult.skipped} unchanged, ${villagerSpriteResult.total} total`,
+    );
+    const missing = [...itemSpriteResult.missing, ...villagerSpriteResult.missing];
+    if (missing.length > 0) {
+      console.error(`  ❌ ${missing.length} sprites not found:`);
+      for (const name of missing) {
         console.error(`    - ${name}`);
       }
       console.error("  Aborting before publish: no tracked output file was written.");
       process.exit(1);
     }
-    stagedSprites = spriteResult.staged;
+    stagedSprites = [...itemSpriteResult.staged, ...villagerSpriteResult.staged];
   }
 
   console.log(`\nStep ${extractSpritesFlag ? "7" : "6"}: Publishing outputs...`);
