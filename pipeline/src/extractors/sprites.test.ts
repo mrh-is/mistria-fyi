@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { extractSprites, publishSprites } from "./sprites";
+import { extractSprites, extractVillagerSprites, publishSprites } from "./sprites";
 
 const temporaryDirectories: string[] = [];
 
@@ -185,5 +185,90 @@ describe("extractSprites", () => {
     expect(result.missing).toEqual([]);
     expect(result.overridden).toBe(1);
     expect(result.total).toBe(1);
+  });
+});
+
+describe("extractVillagerSprites", () => {
+  it("extracts sprites as webp keyed by villager ID under villagers/", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const assetsDir = makeTempDir();
+    const outputDir = join(makeTempDir(), "sprites");
+
+    const iconsDir = join(assetsDir, "animations", "UI NEW", "Generic", "Icons", "NPC");
+    mkdirSync(iconsDir, { recursive: true });
+    writeFileSync(join(iconsDir, "spr_ui_generic_icon_npc_adeline.png"), TINY_PNG);
+
+    const result = await extractVillagerSprites(
+      assetsDir,
+      { adeline: "spr_ui_generic_icon_npc_adeline" },
+      outputDir,
+    );
+
+    expect(result.extracted).toBe(1);
+    expect(result.missing).toEqual([]);
+    expect(result.total).toBe(1);
+    expect(result.source).toBe("filesystem");
+
+    const webpPath = join(outputDir, "villagers", "adeline.webp");
+    expect(existsSync(webpPath)).toBe(false);
+
+    publishSprites(result.staged);
+    expect(existsSync(webpPath)).toBe(true);
+    const webpData = readFileSync(webpPath);
+    expect(webpData.subarray(0, 4).toString("ascii")).toBe("RIFF");
+  });
+
+  it("reports missing villager sprites", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const assetsDir = makeTempDir();
+    const outputDir = join(makeTempDir(), "sprites");
+
+    const iconsDir = join(assetsDir, "animations", "UI NEW", "Generic", "Icons", "NPC");
+    mkdirSync(iconsDir, { recursive: true });
+    writeFileSync(join(iconsDir, "spr_ui_generic_icon_npc_adeline.png"), TINY_PNG);
+
+    const result = await extractVillagerSprites(
+      assetsDir,
+      { adeline: "spr_ui_generic_icon_npc_adeline", ghost: "spr_ui_generic_icon_npc_ghost" },
+      outputDir,
+    );
+
+    expect(result.extracted).toBe(1);
+    expect(result.missing).toEqual(["spr_ui_generic_icon_npc_ghost"]);
+    expect(result.total).toBe(2);
+  });
+
+  it("skips outline PNGs in the NPC icon directory", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const assetsDir = makeTempDir();
+    const outputDir = join(makeTempDir(), "sprites");
+
+    const iconsDir = join(assetsDir, "animations", "UI NEW", "Generic", "Icons", "NPC");
+    mkdirSync(iconsDir, { recursive: true });
+    writeFileSync(join(iconsDir, "spr_ui_generic_icon_npc_adeline.png"), TINY_PNG);
+    writeFileSync(join(iconsDir, "spr_ui_generic_icon_npc_adeline_outline.png"), TINY_PNG);
+
+    const result = await extractVillagerSprites(
+      assetsDir,
+      { adeline: "spr_ui_generic_icon_npc_adeline" },
+      outputDir,
+    );
+
+    expect(result.extracted).toBe(1);
+    expect(result.total).toBe(1);
+  });
+
+  it("does not extract villager sprites from the item icon search directories", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const assetsDir = makeTempDir();
+    const outputDir = join(makeTempDir(), "sprites");
+
+    const iconsDir = join(assetsDir, "animations", "Item Icons", "Crops");
+    mkdirSync(iconsDir, { recursive: true });
+    writeFileSync(join(iconsDir, "spr_ui_generic_icon_npc_adeline.png"), TINY_PNG);
+
+    await expect(
+      extractVillagerSprites(assetsDir, { adeline: "spr_ui_generic_icon_npc_adeline" }, outputDir),
+    ).rejects.toThrow("No sprite PNGs found in any search directory");
   });
 });

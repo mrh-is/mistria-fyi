@@ -23,10 +23,11 @@ via the `PUBLIC_ASSET_ORIGIN` build-time env var (see [Local development](#local
 other module constructs a sprite path; `sprite-slot.svelte` and `villager-record.svelte` both call
 the resolver.
 
-The villager path is resolver-only today: no pipeline extractor yet populates villager sprites, so
-`villager-record.svelte`'s `<img>` always points at a `sprites/villagers/<id>.webp` URL that 404s,
-and falls through to its initials placeholder on that image error. The resolver, CSP, and service
-worker predicate cover `sprites/villagers/` already so a future extractor is a drop-in.
+Villager icons come from a different source than items: each `fiddle/npcs/<id>.toml` has an
+`icon_sprite` field (e.g. `spr_ui_generic_icon_npc_adeline`), and the matching PNG lives under
+`animations/UI NEW/Generic/Icons/NPC/<icon_sprite>.png`. That name is used only to locate the source
+file, the same way an item's `icon_sprite` is — the output is still keyed by villager ID
+(`sprites/villagers/<villagerId>.webp`), not by the sprite name.
 
 ## Production hosting
 
@@ -63,16 +64,28 @@ clone with no sprites uploaded (or an unreachable bucket) degrades gracefully ra
 
 ## Generating and uploading sprites
 
-Item sprites are extracted by `pipeline/src/extractors/sprites.ts` and staged during a pipeline run:
+Item and villager sprites are extracted by `pipeline/src/extractors/sprites.ts` and staged during a
+pipeline run:
 
 ```bash
 pnpm run pipeline -- <path-to-extracted-assets> --sprites
 ```
 
-This writes converted WebP files to `pipeline/output/sprites/items/<itemId>.webp` (gitignored),
-resolving each item's source PNG from the game's own `icon_sprite` name internally — that name never
-reaches `tracker-data.json` or the app, since the resolver builds URLs from the item ID alone.
-Upload the result with:
+This writes converted WebP files to `pipeline/output/sprites/items/<itemId>.webp` and
+`pipeline/output/sprites/villagers/<villagerId>.webp` (both gitignored), resolving each entity's
+source PNG from the game's own `icon_sprite` name internally — that name never reaches
+`tracker-data.json` or the app, since the resolver builds URLs from the entity's own ID alone. A
+missing sprite fails the run before anything is published, the same way for both entity kinds.
+
+To regenerate only villager sprites — no `fiddle/` extraction needed, works directly off a Steam
+install's `assets.zip` — use the narrower command instead (see
+[pipeline/README.md](../pipeline/README.md) for how the two commands differ):
+
+```bash
+pnpm run sprites:villagers
+```
+
+Upload either result with:
 
 ```bash
 pnpm run sprites:upload
