@@ -5,6 +5,7 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { open, type ZipFile } from "yauzl-promise";
 
 import { LOCALE_CODES } from "$lib/types/locale.js";
 import { recordEntries } from "$lib/utils.js";
@@ -76,7 +77,7 @@ import type {
   VillagerId,
 } from "$lib/types/tracker-data.js";
 
-import type { StagedSprite } from "./extractors/sprites";
+import type { SpriteExtractionResult, StagedSprite } from "./extractors/sprites";
 import type { ParsedGameData } from "./parse-fiddle";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PIPELINE_ROOT = resolve(__dirname, "..");
@@ -290,6 +291,13 @@ function extractNestedFiddleKeys(fiddle: ParsedGameData, topKey: string): string
   return keys;
 }
 
+/** Logs sprite extraction results for a given entity kind. */
+function logSpriteExtraction(label: string, result: SpriteExtractionResult): void {
+  console.log(
+    `  ${label}: extracted ${result.extracted} new, ${result.skipped} unchanged, ${result.total} total`,
+  );
+}
+
 async function main(): Promise<void> {
   console.log("📚 Mistria Field Guide — Data Pipeline\n");
 
@@ -336,8 +344,16 @@ async function main(): Promise<void> {
   const parsed =
     fiddleSource.kind === "disk"
       ? parseFiddle(assetsDir)
-      : await parseFiddleFromZip(fiddleSource.zipPath);
+      : await parseFiddleFromZip(fiddleSource.zipPath, spritesOnly ? ["npcs"] : undefined);
   const fiddle = parsed.data;
+
+  if (fiddleSource.kind === "zip" && !spritesOnly) {
+    console.error("❌ Full pipeline extraction requires an on-disk fiddle/ directory.");
+    console.error(
+      "   Extract your game assets first, or use --sprites-only for sprite regeneration from assets.zip.",
+    );
+    process.exit(1);
+  }
 
   if (spritesOnly) {
     await runVillagerSpritesOnly(fiddle, assetsDir);
@@ -697,36 +713,34 @@ async function main(): Promise<void> {
 
   let stagedSprites: StagedSprite[] = [];
   const extractSpritesFlag = args.includes("--sprites");
+  const zipPath = resolveAssetsZipPath(resolve(assetsDir));
   if (extractSpritesFlag) {
     console.log("\nStep 6: Extracting item and villager sprites...");
-    const itemSpriteResult = await extractSprites(
-      resolve(assetsDir),
-      iconSpritesByItemId,
-      SPRITES_OUTPUT_ROOT,
-    );
-    const villagerSpriteResult = await extractVillagerSprites(
-      resolve(assetsDir),
-      iconSpritesByVillagerId,
-      SPRITES_OUTPUT_ROOT,
-    );
-    console.log(
-      `  Items: extracted ${itemSpriteResult.extracted} new, ${itemSpriteResult.skipped} unchanged, ` +
-        `${itemSpriteResult.total} total`,
-    );
-    console.log(
-      `  Villagers: extracted ${villagerSpriteResult.extracted} new, ` +
-        `${villagerSpriteResult.skipped} unchanged, ${villagerSpriteResult.total} total`,
-    );
-    const missing = [...itemSpriteResult.missing, ...villagerSpriteResult.missing];
-    if (missing.length > 0) {
-      console.error(`  ❌ ${missing.length} sprites not found:`);
-      for (const name of missing) {
-        console.error(`    - ${name}`);
-      }
-      console.error("  Aborting before publish: no tracked output file was written.");
-      process.exit(1);
+    const zipFile: undefined | ZipFile = zipPath ? await open(zipPath) : undefined;
+    if (zipPath) console.log(`  Reading sprites from ${zipPath}`);
+    try {
+      const itemSpriteResult = await extractSprites(
+        resolve(assetsDir),
+        iconSpritesByItemId,
+        SPRITES_OUTPUT_ROOT,
+        zipPath,
+        zipFile,
+      );
+      const villagerSpriteResult = await extractVillagerSprites(
+        resolve(assetsDir),
+        iconSpritesByVillagerId,
+        SPRITES_OUTPUT_ROOT,
+        zipPath,
+        zipFile,
+      );
+      logSpriteExtraction("Items", itemSpriteResult);
+      logSpriteExtraction("Villagers", villagerSpriteResult);
+      const missing = [...itemSpriteResult.missing, ...villagerSpriteResult.missing];
+      reportMissingSpritesAndAbort(missing);
+      stagedSprites = [...itemSpriteResult.staged, ...villagerSpriteResult.staged];
+    } finally {
+      if (zipFile) await zipFile.close();
     }
-    stagedSprites = [...itemSpriteResult.staged, ...villagerSpriteResult.staged];
   }
 
   console.log(`\nStep ${extractSpritesFlag ? "7" : "6"}: Publishing outputs...`);
@@ -749,6 +763,17 @@ function publishFiles(staged: readonly StagedFile[]): void {
   }
 }
 
+/** Reports missing sprites and aborts the pipeline. */
+function reportMissingSpritesAndAbort(missing: readonly string[]): void {
+  if (missing.length === 0) return;
+  console.error(`  ❌ ${missing.length} sprites not found:`);
+  for (const name of missing) {
+    console.error(`    - ${name}`);
+  }
+  console.error("  Aborting before publish: no tracked output file was written.");
+  process.exit(1);
+}
+
 /**
  * A lightweight pipeline mode for regenerating only villager sprites: `fiddle.npcs` plus
  * `assets.zip`'s NPC icon PNGs are enough, so this never touches `tracker-data.json`, locale
@@ -765,17 +790,8 @@ async function runVillagerSpritesOnly(fiddle: ParsedGameData, assetsDir: string)
     iconSpritesByVillagerId,
     SPRITES_OUTPUT_ROOT,
   );
-  console.log(
-    `  Extracted ${result.extracted} new, ${result.skipped} unchanged, ${result.total} total`,
-  );
-  if (result.missing.length > 0) {
-    console.error(`  ❌ ${result.missing.length} sprites not found:`);
-    for (const name of result.missing) {
-      console.error(`    - ${name}`);
-    }
-    console.error("  Aborting before publish: no tracked output file was written.");
-    process.exit(1);
-  }
+  logSpriteExtraction("Villagers", result);
+  reportMissingSpritesAndAbort(result.missing);
 
   publishSprites(result.staged);
   console.log(`  Published ${result.staged.length} villager sprites`);

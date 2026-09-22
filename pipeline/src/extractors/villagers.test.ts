@@ -44,19 +44,22 @@ describe("extractVillagers", () => {
     });
   });
 
-  it("throws when a villager is missing icon_sprite", () => {
+  it("includes a villager missing icon_sprite in tracker data but not in icon sprite index", () => {
     vi.spyOn(console, "log").mockImplementation(() => undefined);
 
-    expect(() =>
-      extractVillagers(
-        makeFiddle({
-          npcs: {
-            adeline: { birthday: { day: 3, season: "spring" }, name: "Adeline" },
-          },
-        }),
-        "unused-assets-dir",
-      ),
-    ).toThrow('Missing icon_sprite for villager "adeline"');
+    const { iconSpritesByVillagerId, villagers } = extractVillagers(
+      makeFiddle({
+        npcs: {
+          adeline: { birthday: { day: 3, season: "spring" }, name: "Adeline" },
+        },
+      }),
+      "unused-assets-dir",
+    );
+
+    expect(iconSpritesByVillagerId).toStrictEqual({});
+    expect(villagers["adeline" as VillagerId]).toStrictEqual({
+      birthday: { day: 3, season: "spring" },
+    });
   });
 
   it("skips the default template entry without requiring icon_sprite", () => {

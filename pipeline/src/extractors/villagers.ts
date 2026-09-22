@@ -26,7 +26,7 @@ export type VillagerIconSpriteIndex = Record<string, string>;
 interface RawVillagerRecord {
   birthday: { day: number; season: Season };
   dateable: boolean;
-  iconSprite: string;
+  iconSprite?: string;
   id: string;
   name: string;
 }
@@ -40,6 +40,9 @@ interface RawVillagerRecord {
 export function extractVillagerIconSprites(fiddle: ParsedGameData): VillagerIconSpriteIndex {
   const iconSpritesByVillagerId: VillagerIconSpriteIndex = {};
   for (const record of collectVillagerRecords(fiddle)) {
+    if (!record.iconSprite) {
+      throw new Error(`Missing icon_sprite for villager "${record.id}"`);
+    }
     iconSpritesByVillagerId[record.id] = record.iconSprite;
   }
   return iconSpritesByVillagerId;
@@ -58,7 +61,7 @@ export function extractVillagers(fiddle: ParsedGameData, assetsDir: string): Vil
     Record<VillagerId, string>
   >;
 
-  const records = collectVillagerRecords(fiddle);
+  const records = collectVillagerRecords(fiddle, false);
   const result = {} as Record<VillagerId, TrackerData["villagers"][VillagerId]>;
   const iconSpritesByVillagerId: VillagerIconSpriteIndex = {};
 
@@ -67,7 +70,9 @@ export function extractVillagers(fiddle: ParsedGameData, assetsDir: string): Vil
       birthday: record.birthday,
       ...(record.dateable ? { dateable: record.dateable } : {}),
     };
-    iconSpritesByVillagerId[record.id] = record.iconSprite;
+    if (record.iconSprite) {
+      iconSpritesByVillagerId[record.id] = record.iconSprite;
+    }
 
     const { values } = localizeField(assetsDir, {
       category: "npcs",
@@ -88,10 +93,13 @@ export function extractVillagers(fiddle: ParsedGameData, assetsDir: string): Vil
 
 /**
  * Walks `fiddle.npcs` once, applying every villager's acceptance rules (present name, valid
- * birthday, required `icon_sprite`). Shared by {@link extractVillagers} and
+ * birthday, and optionally required `icon_sprite`). Shared by {@link extractVillagers} and
  * {@link extractVillagerIconSprites} so both agree on exactly which IDs count as real villagers.
  */
-function collectVillagerRecords(fiddle: ParsedGameData): RawVillagerRecord[] {
+function collectVillagerRecords(
+  fiddle: ParsedGameData,
+  requireIconSprite = true,
+): RawVillagerRecord[] {
   // "npcs" here is the game's own asset folder / localization key namespace, not our naming.
   const npcs = fiddle.npcs as Record<string, Record<string, unknown>> | undefined;
   if (!npcs) return [];
@@ -107,7 +115,7 @@ function collectVillagerRecords(fiddle: ParsedGameData): RawVillagerRecord[] {
     if (!birthday?.season || typeof birthday.day !== "number") continue;
 
     const iconSprite = npc.icon_sprite as string | undefined;
-    if (!iconSprite) {
+    if (requireIconSprite && !iconSprite) {
       throw new Error(`Missing icon_sprite for villager "${id}"`);
     }
 

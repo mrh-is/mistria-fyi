@@ -15,6 +15,13 @@ export interface ParsedGameDataResult {
   sourceFileByRootPath: ReadonlyMap<string, string>;
 }
 
+interface TomlEntry {
+  keyPath: string[];
+  relPath: string;
+  sourceKey: string;
+  text: string;
+}
+
 /**
  * Parses the assets root's fiddle/ directory, mapping relative TOML paths to dotted data roots.
  * Non-TOML and .meta.toml files are skipped, while ancestor and descendant root collisions are
@@ -26,7 +33,10 @@ export function parseFiddle(assetsDir: string): ParsedGameDataResult {
   const data = {} as ParsedGameData;
   const sourceFileByRootPath = new Map<string, string>();
 
-  walkDirectory(fiddleDir, fiddleDir, data, sourceFileByRootPath);
+  walkDirectory(fiddleDir, fiddleDir, (entry) => {
+    processTomlEntry(data, sourceFileByRootPath, entry);
+  });
+
   Object.defineProperty(data, SOURCE_FILE_BY_ROOT_PATH, {
     enumerable: false,
     value: sourceFileByRootPath,
@@ -42,40 +52,29 @@ const FIDDLE_ZIP_PREFIX = "assets/fiddle/";
  * Parses `fiddle/` directly out of the game's `assets.zip`, without extracting it to disk. Reads
  * only the small TOML entries the pipeline needs; the zip's PNGs and other binary assets are never
  * decompressed. Produces the same {@link ParsedGameDataResult} shape as {@link parseFiddle}, so
- * every downstream extractor works unmodified regardless of source.
+ * every downstream extractor works unmodified regardless of source. When `paths` is given, only
+ * TOML entries whose dotted root path starts with one of those paths is parsed — useful for
+ * lightweight runs that only need a subset of the data (e.g. villager sprite extraction needs
+ * only `npcs`).
  */
-export async function parseFiddleFromZip(zipPath: string): Promise<ParsedGameDataResult> {
+export async function parseFiddleFromZip(
+  zipPath: string,
+  paths?: readonly string[],
+): Promise<ParsedGameDataResult> {
   const data = {} as ParsedGameData;
   const sourceFileByRootPath = new Map<string, string>();
 
   const zipFile = await open(zipPath);
   try {
     for await (const entry of zipFile) {
-      if (entry.filename.endsWith("/")) continue;
-      if (!entry.filename.startsWith(FIDDLE_ZIP_PREFIX)) continue;
-      if (!entry.filename.endsWith(".toml") || entry.filename.endsWith(".meta.toml")) continue;
+      const tomlEntry = await zipEntryToTomlEntry(entry);
+      if (!tomlEntry) continue;
 
-      const relPath = entry.filename.slice(FIDDLE_ZIP_PREFIX.length);
-      const keyPath = relPath.replace(/\.toml$/, "").split("/");
-      const sourceKey = keyPath.join(".");
-      assertNoCollision(sourceFileByRootPath, sourceKey, relPath);
-
-      const stream = await entry.openReadStream();
-      const chunks: Buffer[] = [];
-      for await (const chunk of stream) {
-        chunks.push(chunk as Buffer);
-      }
-      const text = Buffer.concat(chunks).toString("utf-8");
-
-      let parsed: Record<string, unknown>;
-      try {
-        parsed = parse(text);
-      } catch (error) {
-        throw new Error(`Failed to parse ${relPath} at ${sourceKey}`, { cause: error });
+      if (paths !== undefined && !paths.some((p) => tomlEntry.sourceKey.startsWith(p))) {
+        continue;
       }
 
-      setNestedValue(data, keyPath, parsed, relPath);
-      sourceFileByRootPath.set(sourceKey, relPath);
+      processTomlEntry(data, sourceFileByRootPath, tomlEntry);
     }
   } finally {
     await zipFile.close();
@@ -126,6 +125,37 @@ function assertNoCollision(
   }
 }
 
+function parseTOMLEntry(text: string, relPath: string, sourceKey: string): Record<string, unknown> {
+  try {
+    return parse(text);
+  } catch (error) {
+    throw new Error(`Failed to parse ${relPath} at ${sourceKey}`, { cause: error });
+  }
+}
+
+/** Processes a single TOML entry: checks collisions, parses, and registers in the data map. */
+function processTomlEntry(
+  data: ParsedGameData,
+  sourceFileByRootPath: Map<string, string>,
+  entry: TomlEntry,
+): void {
+  assertNoCollision(sourceFileByRootPath, entry.sourceKey, entry.relPath);
+
+  const parsed = parseTOMLEntry(entry.text, entry.relPath, entry.sourceKey);
+  registerSource(data, sourceFileByRootPath, entry.keyPath, parsed, entry.relPath);
+}
+
+function registerSource(
+  data: ParsedGameData,
+  sourceFileByRootPath: Map<string, string>,
+  keyPath: string[],
+  parsed: Record<string, unknown>,
+  relPath: string,
+): void {
+  setNestedValue(data, keyPath, parsed, relPath);
+  sourceFileByRootPath.set(keyPath.join("."), relPath);
+}
+
 function setNestedValue(
   target: Record<string, unknown>,
   path: string[],
@@ -153,12 +183,7 @@ function setNestedValue(
   current[lastKey] = value;
 }
 
-function walkDirectory(
-  dir: string,
-  rootDir: string,
-  data: ParsedGameData,
-  sourceFileByRootPath: Map<string, string>,
-): void {
+function walkDirectory(dir: string, rootDir: string, onEntry: (entry: TomlEntry) => void): void {
   const entries = readdirSync(dir);
 
   for (const entry of entries) {
@@ -166,7 +191,7 @@ function walkDirectory(
     const stat = statSync(fullPath);
 
     if (stat.isDirectory()) {
-      walkDirectory(fullPath, rootDir, data, sourceFileByRootPath);
+      walkDirectory(fullPath, rootDir, onEntry);
       continue;
     }
 
@@ -177,16 +202,31 @@ function walkDirectory(
     const relPath = relative(rootDir, fullPath).split(sep).join("/");
     const keyPath = relPath.replace(/\.toml$/, "").split("/");
     const sourceKey = keyPath.join(".");
-    assertNoCollision(sourceFileByRootPath, sourceKey, relPath);
+    const text = readFileSync(fullPath, "utf-8");
 
-    let parsed: Record<string, unknown>;
-    try {
-      parsed = parse(readFileSync(fullPath, "utf-8"));
-    } catch (error) {
-      throw new Error(`Failed to parse ${relPath} at ${sourceKey}`, { cause: error });
-    }
-
-    setNestedValue(data, keyPath, parsed, relPath);
-    sourceFileByRootPath.set(sourceKey, relPath);
+    onEntry({ keyPath, relPath, sourceKey, text });
   }
+}
+
+/** Converts a zip entry to a TomlEntry by reading its content, or returns null if not a valid fiddle TOML file. */
+async function zipEntryToTomlEntry(entry: {
+  filename: string;
+  openReadStream(): Promise<AsyncIterable<Buffer>>;
+}): Promise<null | TomlEntry> {
+  if (entry.filename.endsWith("/")) return null;
+  if (!entry.filename.startsWith(FIDDLE_ZIP_PREFIX)) return null;
+  if (!entry.filename.endsWith(".toml") || entry.filename.endsWith(".meta.toml")) return null;
+
+  const relPath = entry.filename.slice(FIDDLE_ZIP_PREFIX.length);
+  const keyPath = relPath.replace(/\.toml$/, "").split("/");
+  const sourceKey = keyPath.join(".");
+
+  const stream = await entry.openReadStream();
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) {
+    chunks.push(chunk);
+  }
+  const text = Buffer.concat(chunks).toString("utf-8");
+
+  return { keyPath, relPath, sourceKey, text };
 }

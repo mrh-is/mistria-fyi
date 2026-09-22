@@ -80,6 +80,20 @@ describe("parseFiddleFromZip", () => {
     );
   });
 
+  it("accepts a paths filter to parse only matching TOML entries", async () => {
+    const zipPath = writeStoredZipFixture({
+      "assets/fiddle/items/other/cooked_dishes.toml":
+        'turnip_soup = { name = "Turnip Soup", value = { bin = 100 } }',
+      "assets/fiddle/npcs/holt.toml": 'name = "Holt"',
+    });
+
+    const parsed = await parseFiddleFromZip(zipPath, ["npcs"]);
+
+    expect(parsed.fileCount).toBe(1);
+    expect(parsed.data).toHaveProperty("npcs.holt.name", "Holt");
+    expect(parsed.data).not.toHaveProperty("items.other.cooked_dishes.turnip_soup");
+  });
+
   it("reports both destinations for duplicate destinations", async () => {
     const zipPath = writeStoredZipFixture({
       "assets/fiddle/items.toml": "enabled = true",
