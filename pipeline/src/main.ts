@@ -5,6 +5,7 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { open, type ZipFile } from "yauzl-promise";
 
 import { LOCALE_CODES } from "$lib/types/locale.js";
 import { recordEntries } from "$lib/utils.js";
@@ -32,6 +33,7 @@ import {
   type AcquisitionSourceAssembly,
   validateAcquisitionSources,
 } from "./acquisition/validate-sources";
+import { DEFAULT_WINDOWS_STEAM_ASSETS_DIR, resolveAssetsZipPath } from "./assets-zip";
 import { evaluateExpressions } from "./evaluate";
 import { forEachItem } from "./extractor-helpers";
 import { extractAlmanac, readAlmanacCategories } from "./extractors/almanac";
@@ -46,11 +48,11 @@ import { extractQuests } from "./extractors/quests";
 import { deriveRecipeLocaleNames, extractRecipes } from "./extractors/recipes";
 import { extractTownRanks } from "./extractors/renown";
 import { extractSkills } from "./extractors/skills";
-import { extractSprites, publishSprites } from "./extractors/sprites";
+import { extractSprites, extractVillagerSprites, publishSprites } from "./extractors/sprites";
 import { extractStoresMeta } from "./extractors/stores-meta";
 import { extractTreasureChestTiers } from "./extractors/treasure-chest-tiers";
 import { APP_UI_STRINGS, extractUiStrings, tierKeys } from "./extractors/ui-strings";
-import { extractVillagers } from "./extractors/villagers";
+import { extractVillagerIconSprites, extractVillagers } from "./extractors/villagers";
 import { buildCutsceneQuestMap } from "./extractors/visibility/cutscene-quest-map";
 import {
   assignEntityVisibility,
@@ -61,7 +63,7 @@ import {
 } from "./extractors/visibility/entity-visibility";
 import { extractQuestChains } from "./extractors/visibility/quest-chains";
 import { generateLocaleManifest } from "./localize";
-import { parseFiddle } from "./parse-fiddle";
+import { parseFiddle, parseFiddleFromZip } from "./parse-fiddle";
 import { createRequirementContext } from "./requirements";
 
 import type { Source as AcquisitionSource } from "$lib/types/acquisition.js";
@@ -75,7 +77,7 @@ import type {
   VillagerId,
 } from "$lib/types/tracker-data.js";
 
-import type { StagedSprite } from "./extractors/sprites";
+import type { SpriteExtractionResult, StagedSprite } from "./extractors/sprites";
 import type { ParsedGameData } from "./parse-fiddle";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PIPELINE_ROOT = resolve(__dirname, "..");
@@ -289,31 +291,74 @@ function extractNestedFiddleKeys(fiddle: ParsedGameData, topKey: string): string
   return keys;
 }
 
+/** Logs sprite extraction results for a given entity kind. */
+function logSpriteExtraction(label: string, result: SpriteExtractionResult): void {
+  console.log(
+    `  ${label}: extracted ${result.extracted} new, ${result.skipped} unchanged, ${result.total} total`,
+  );
+}
+
 async function main(): Promise<void> {
   console.log("📚 Mistria Field Guide — Data Pipeline\n");
 
   const args = process.argv.slice(2).filter((a) => a !== "--");
-  const assetsDir = args.find((a) => !a.startsWith("-")) ?? process.env.MISTRIA_ASSETS;
+  const assetsDir =
+    args.find((a) => !a.startsWith("-")) ??
+    process.env.MISTRIA_ASSETS ??
+    (existsSync(DEFAULT_WINDOWS_STEAM_ASSETS_DIR) ? DEFAULT_WINDOWS_STEAM_ASSETS_DIR : undefined);
   if (!assetsDir) {
     console.error("Usage: tsx src/main.ts <path-to-assets-dir> [--version=X.Y.Z]");
     console.error("  Or set MISTRIA_ASSETS environment variable");
+    console.error(`  Or install the game at its default Steam location on Windows:`);
+    console.error(`    ${DEFAULT_WINDOWS_STEAM_ASSETS_DIR}`);
     process.exit(1);
   }
 
+  // Prefer an already-extracted fiddle/ on disk; otherwise read straight out of assets.zip
+  // (Steam's own distribution format) without ever extracting it. Either shape produces the same
+  // ParsedGameData, so every downstream extractor is source-agnostic.
   const fiddleDir = resolve(assetsDir, "fiddle");
-  if (!existsSync(fiddleDir)) {
-    console.error(`❌ Missing input: ${fiddleDir}`);
-    console.error("   Pass the path to the assets directory containing fiddle/");
-    process.exit(1);
-  }
+  const fiddleSource: { kind: "disk" } | { kind: "zip"; zipPath: string } = existsSync(fiddleDir)
+    ? { kind: "disk" }
+    : (() => {
+        const zipPath = resolveAssetsZipPath(assetsDir);
+        if (!zipPath) {
+          console.error(
+            `❌ Missing input: no fiddle/ directory and no assets.zip found under ${assetsDir}`,
+          );
+          console.error(
+            "   Pass the path to the assets directory containing fiddle/, or to a directory",
+          );
+          console.error("   containing assets.zip (e.g. the Steam install directory).");
+          process.exit(1);
+        }
+        return { kind: "zip" as const, zipPath };
+      })();
 
   const parseOnly = args.includes("--parse-only");
+  const spritesOnly = args.includes("--sprites-only");
   const versionFlag = args.find((a) => a.startsWith("--version="));
   const versionArg = versionFlag?.split("=")[1];
 
   console.log("Step 1: Parsing TOML data...");
-  const parsed = parseFiddle(assetsDir);
+  const parsed =
+    fiddleSource.kind === "disk"
+      ? parseFiddle(assetsDir)
+      : await parseFiddleFromZip(fiddleSource.zipPath, spritesOnly ? ["npcs"] : undefined);
   const fiddle = parsed.data;
+
+  if (fiddleSource.kind === "zip" && !spritesOnly) {
+    console.error("❌ Full pipeline extraction requires an on-disk fiddle/ directory.");
+    console.error(
+      "   Extract your game assets first, or use --sprites-only for sprite regeneration from assets.zip.",
+    );
+    process.exit(1);
+  }
+
+  if (spritesOnly) {
+    await runVillagerSpritesOnly(fiddle, assetsDir);
+    return;
+  }
 
   const misc = fiddle.misc as Record<string, unknown> | undefined;
   const version = versionArg ?? (misc?.version as string | undefined);
@@ -371,7 +416,11 @@ async function main(): Promise<void> {
     fiddle,
     itemLocaleNames,
   );
-  const { localeNames: villagerLocaleNames, villagers } = extractVillagers(fiddle, assetsDir);
+  const {
+    iconSpritesByVillagerId,
+    localeNames: villagerLocaleNames,
+    villagers,
+  } = extractVillagers(fiddle, assetsDir);
   const {
     cosmetics: cosmeticsRaw,
     cosmeticSlots,
@@ -664,26 +713,34 @@ async function main(): Promise<void> {
 
   let stagedSprites: StagedSprite[] = [];
   const extractSpritesFlag = args.includes("--sprites");
+  const zipPath = resolveAssetsZipPath(resolve(assetsDir));
   if (extractSpritesFlag) {
-    console.log("\nStep 6: Extracting item sprites...");
-    const spriteResult = await extractSprites(
-      resolve(assetsDir),
-      iconSpritesByItemId,
-      SPRITES_OUTPUT_ROOT,
-    );
-    console.log(
-      `  Extracted ${spriteResult.extracted} new, ${spriteResult.skipped} unchanged, ` +
-        `${spriteResult.total} total`,
-    );
-    if (spriteResult.missing.length > 0) {
-      console.error(`  ❌ ${spriteResult.missing.length} sprites not found:`);
-      for (const name of spriteResult.missing) {
-        console.error(`    - ${name}`);
-      }
-      console.error("  Aborting before publish: no tracked output file was written.");
-      process.exit(1);
+    console.log("\nStep 6: Extracting item and villager sprites...");
+    const zipFile: undefined | ZipFile = zipPath ? await open(zipPath) : undefined;
+    if (zipPath) console.log(`  Reading sprites from ${zipPath}`);
+    try {
+      const itemSpriteResult = await extractSprites(
+        resolve(assetsDir),
+        iconSpritesByItemId,
+        SPRITES_OUTPUT_ROOT,
+        zipPath,
+        zipFile,
+      );
+      const villagerSpriteResult = await extractVillagerSprites(
+        resolve(assetsDir),
+        iconSpritesByVillagerId,
+        SPRITES_OUTPUT_ROOT,
+        zipPath,
+        zipFile,
+      );
+      logSpriteExtraction("Items", itemSpriteResult);
+      logSpriteExtraction("Villagers", villagerSpriteResult);
+      const missing = [...itemSpriteResult.missing, ...villagerSpriteResult.missing];
+      reportMissingSpritesAndAbort(missing);
+      stagedSprites = [...itemSpriteResult.staged, ...villagerSpriteResult.staged];
+    } finally {
+      if (zipFile) await zipFile.close();
     }
-    stagedSprites = spriteResult.staged;
   }
 
   console.log(`\nStep ${extractSpritesFlag ? "7" : "6"}: Publishing outputs...`);
@@ -704,6 +761,41 @@ function publishFiles(staged: readonly StagedFile[]): void {
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, content);
   }
+}
+
+/** Reports missing sprites and aborts the pipeline. */
+function reportMissingSpritesAndAbort(missing: readonly string[]): void {
+  if (missing.length === 0) return;
+  console.error(`  ❌ ${missing.length} sprites not found:`);
+  for (const name of missing) {
+    console.error(`    - ${name}`);
+  }
+  console.error("  Aborting before publish: no tracked output file was written.");
+  process.exit(1);
+}
+
+/**
+ * A lightweight pipeline mode for regenerating only villager sprites: `fiddle.npcs` plus
+ * `assets.zip`'s NPC icon PNGs are enough, so this never touches `tracker-data.json`, locale
+ * chunks, or any other output, and never requires an on-disk `fiddle/` extraction — it works
+ * directly off `assets.zip` (see {@link parseFiddleFromZip}), including at the default Steam
+ * install location with zero configuration. Invoke with `pnpm run pipeline -- --sprites-only` or
+ * `pnpm run sprites:villagers`.
+ */
+async function runVillagerSpritesOnly(fiddle: ParsedGameData, assetsDir: string): Promise<void> {
+  console.log("Step 2: Extracting villager sprites...");
+  const iconSpritesByVillagerId = extractVillagerIconSprites(fiddle);
+  const result = await extractVillagerSprites(
+    resolve(assetsDir),
+    iconSpritesByVillagerId,
+    SPRITES_OUTPUT_ROOT,
+  );
+  logSpriteExtraction("Villagers", result);
+  reportMissingSpritesAndAbort(result.missing);
+
+  publishSprites(result.staged);
+  console.log(`  Published ${result.staged.length} villager sprites`);
+  console.log("\n✅ Villager sprites regenerated. Run `pnpm run sprites:upload` to publish them.");
 }
 
 /**

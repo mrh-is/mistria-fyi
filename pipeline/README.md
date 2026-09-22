@@ -7,14 +7,41 @@ documented below.
 
 ## Setup & commands
 
-The input argument is an assets root containing `fiddle/`, not the `fiddle/` directory itself. Game
-assets are ignored by Git and are not present in a fresh clone.
+The input argument is an assets root containing either an extracted `fiddle/`, or `assets.zip`
+itself (Steam's own distribution format — see below). Game assets are ignored by Git and are not
+present in a fresh clone.
 
 ```sh
 pnpm run pipeline -- /path/to/assets
 MISTRIA_ASSETS=/path/to/assets pnpm run pipeline
 pnpm run pipeline -- /path/to/assets --parse-only
 ```
+
+With no path argument and no `MISTRIA_ASSETS`, the pipeline falls back to Fields of Mistria's
+default Steam install location — the only platform the game ships on:
+
+```text
+C:\Program Files (x86)\Steam\steamapps\common\Fields of Mistria
+```
+
+so `pnpm run pipeline -- --sprites` (or the other commands below) works with no configuration on a
+stock Windows dev machine that owns the game.
+
+That directory contains `assets.zip` rather than an extracted `fiddle/`. `parseFiddle` (disk) and
+`parseFiddleFromZip` (`parse-fiddle.ts`) both produce the same `ParsedGameData` shape, so every
+extractor is source-agnostic: when `assetsDir` has no `fiddle/` on disk, the pipeline reads TOML
+entries straight out of `assets.zip` via streaming instead — it never extracts the archive to disk,
+so a full run doesn't cost the archive's multiple gigabytes of disk space or the time to unzip it.
+Sprite extraction (`extractors/sprites.ts`) has always read PNGs the same way, directly out of
+`assets.zip`.
+
+`--sprites-only` (alias: `pnpm run sprites:villagers`) is the narrowest of these: it parses only
+`fiddle.npcs` and regenerates villager sprites alone, skipping `tracker-data.json`, locale chunks,
+and every other output — the right command for "just get me fresh villager icons," including
+straight off a bare Steam install with nothing extracted. Item sprites don't have an equivalent
+zip-only-without-extraction mode yet; producing `iconSpritesByItemId` still goes through
+`extractAlmanac`, which also does per-locale name lookups that read from disk, so a full item-sprite
+regeneration still needs `fiddle/` extracted first and `--sprites` on the full pipeline run.
 
 `--parse-only` currently enforces the v1.0.2 fixture’s 295 non-metadata files and three
 representative paths, so it is not a version-agnostic validator.
@@ -61,13 +88,16 @@ assets root
 
 `main.ts` stages every output it will write, including `tracker-data.json`, the locale chunks, and
 the human-readable diagnostic files, as in-memory content rather than writing it immediately. With
-`--sprites`, sprite extraction (`extractors/sprites.ts`) similarly converts needed sprites to webp
-in memory without touching `pipeline/output/sprites/items/`. Only after sprite extraction reports no
-missing sprites does `main.ts` publish everything: it writes every staged file and sprite in one
-final step. Sprites are uploaded to `assets.mistria.fyi` with `pnpm run sprites:upload` (see
-[docs/sprite-assets.md](../docs/sprite-assets.md)) — they are no longer committed to Git. If sprite
-validation fails, the process exits before that step runs and no tracked output file is modified, so
-a regeneration either lands as a consistent whole or leaves the previous outputs untouched.
+`--sprites`, sprite extraction (`extractors/sprites.ts`) similarly converts needed item and villager
+sprites to webp in memory without touching `pipeline/output/sprites/items/` or
+`pipeline/output/sprites/villagers/`. Villager sprites resolve their source PNG from each npc's own
+`icon_sprite` field the same way items do, under `animations/UI NEW/Generic/Icons/NPC/`. Only after
+sprite extraction reports no missing sprites does `main.ts` publish everything: it writes every
+staged file and sprite in one final step. Sprites are uploaded to `assets.mistria.fyi` with
+`pnpm run sprites:upload` (see [docs/sprite-assets.md](../docs/sprite-assets.md)) — they are no
+longer committed to Git. If sprite validation fails, the process exits before that step runs and no
+tracked output file is modified, so a regeneration either lands as a consistent whole or leaves the
+previous outputs untouched.
 
 The parser walks `fiddle/` recursively, maps each non-metadata TOML file to its relative dotted
 namespace, and excludes files ending in `.meta.toml`. It rejects duplicate destinations, including

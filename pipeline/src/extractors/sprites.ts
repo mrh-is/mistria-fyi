@@ -1,15 +1,17 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import sharp from "sharp";
-import { open } from "yauzl-promise";
+import { open, type ZipFile } from "yauzl-promise";
 
-const SPRITE_SEARCH_DIRS = [
+import { resolveAssetsZipPath } from "../assets-zip";
+
+const ITEM_SPRITE_SEARCH_DIRS = [
   join("animations", "Item Icons"),
   join("animations", "Placeables"),
   join("animations", "Player"),
 ];
 
-const SPRITE_ZIP_PREFIXES = SPRITE_SEARCH_DIRS.map((d) => `assets/${d.replaceAll("\\", "/")}/`);
+const VILLAGER_SPRITE_SEARCH_DIRS = [join("animations", "UI NEW", "Generic", "Icons", "NPC")];
 
 // Sprites that are known to be unavailable as standard item icons.
 // Each entry must have an explicit reason — the pipeline errors on any unlisted missing sprite.
@@ -23,13 +25,35 @@ const MISSING_SPRITE_OVERRIDES: Record<string, string> = {
   spr_town_crate_cutscene_spring: "quest prop sprite (Balor's Crate)",
 };
 
+/** Recognizes the game's on-disk sprite filenames for one entity kind and how to file its output. */
+interface SpriteKind {
+  /** Returns the sprite name (filename minus `.png`) if `basename` is a sprite this kind owns. */
+  matchesFilename(basename: string): boolean;
+  /** Subdirectory of the sprites output root this kind's converted files are staged under. */
+  outputSubdir: string;
+  searchDirs: string[];
+}
+
+const ITEM_SPRITE_KIND: SpriteKind = {
+  matchesFilename: (basename) =>
+    basename.startsWith("spr_ui_item_") && !basename.endsWith("_outline.png"),
+  outputSubdir: "items",
+  searchDirs: ITEM_SPRITE_SEARCH_DIRS,
+};
+
+const VILLAGER_SPRITE_KIND: SpriteKind = {
+  matchesFilename: (basename) => !basename.endsWith("_outline.png"),
+  outputSubdir: "villagers",
+  searchDirs: VILLAGER_SPRITE_SEARCH_DIRS,
+};
+
 export interface SpriteExtractionResult {
-  /** Item-keyed output files newly staged (a sprite shared by several items counts once per item). */
+  /** Entity-keyed output files newly staged (a sprite shared by several entities counts once each). */
   extracted: number;
   /** Game sprite names that were needed but not found in the source assets. */
   missing: string[];
   overridden: number;
-  /** Item-keyed output files already present on disk, left untouched. */
+  /** Entity-keyed output files already present on disk, left untouched. */
   skipped: number;
   source: "filesystem" | "zip";
   /** Newly-converted sprites, not yet written to disk. Write with {@link publishSprites}. */
@@ -54,37 +78,41 @@ export async function extractSprites(
   assetsDir: string,
   iconSpritesByItemId: Record<string, string>,
   outputDir: string,
+  zipPath?: string,
+  zipFile?: ZipFile,
 ): Promise<SpriteExtractionResult> {
-  const itemIdsBySprite = new Map<string, string[]>();
-  const overriddenItemIds: string[] = [];
-  for (const [itemId, iconSprite] of Object.entries(iconSpritesByItemId)) {
-    const reason = MISSING_SPRITE_OVERRIDES[iconSprite];
-    if (reason) {
-      overriddenItemIds.push(itemId);
-    } else {
-      const itemIds = itemIdsBySprite.get(iconSprite);
-      if (itemIds) {
-        itemIds.push(itemId);
-      } else {
-        itemIdsBySprite.set(iconSprite, [itemId]);
-      }
-    }
-  }
+  return extractSpritesForKind(
+    ITEM_SPRITE_KIND,
+    assetsDir,
+    iconSpritesByItemId,
+    outputDir,
+    true,
+    zipPath,
+    zipFile,
+  );
+}
 
-  if (overriddenItemIds.length > 0) {
-    console.log(
-      `  Skipping ${overriddenItemIds.length.toString()} items with overridden sprites ` +
-        `(no standard icon available)`,
-    );
-  }
-
-  const itemsOutputDir = join(outputDir, "items");
-  const zipPath = resolveZipPath(assetsDir);
-  const result = zipPath
-    ? await extractSpritesFromZip(zipPath, itemIdsBySprite, itemsOutputDir)
-    : await extractSpritesFromFilesystem(assetsDir, itemIdsBySprite, itemsOutputDir);
-  result.overridden = overriddenItemIds.length;
-  return result;
+/**
+ * Converts newly-needed villager sprites to webp in memory without touching `outputDir`, writing
+ * one output file per villager ID under `outputDir/villagers/`. Behaves like {@link extractSprites}
+ * otherwise, including deferring writes to {@link publishSprites}.
+ */
+export async function extractVillagerSprites(
+  assetsDir: string,
+  iconSpritesByVillagerId: Record<string, string>,
+  outputDir: string,
+  zipPath?: string,
+  zipFile?: ZipFile,
+): Promise<SpriteExtractionResult> {
+  return extractSpritesForKind(
+    VILLAGER_SPRITE_KIND,
+    assetsDir,
+    iconSpritesByVillagerId,
+    outputDir,
+    false,
+    zipPath,
+    zipFile,
+  );
 }
 
 /** Writes staged sprite conversions to disk. Call only after every pipeline validation passes. */
@@ -95,16 +123,12 @@ export function publishSprites(staged: readonly StagedSprite[]): void {
   }
 }
 
-function buildSpriteIndex(rootDir: string, index: Map<string, string>): void {
+function buildSpriteIndex(kind: SpriteKind, rootDir: string, index: Map<string, string>): void {
   function walk(dir: string): void {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       if (entry.isDirectory()) {
         walk(join(dir, entry.name));
-      } else if (
-        entry.name.startsWith("spr_ui_item_") &&
-        entry.name.endsWith(".png") &&
-        !entry.name.endsWith("_outline.png")
-      ) {
+      } else if (entry.name.endsWith(".png") && kind.matchesFilename(entry.name)) {
         const spriteName = entry.name.slice(0, -4);
         if (!index.has(spriteName)) {
           index.set(spriteName, join(dir, entry.name));
@@ -120,16 +144,60 @@ async function convertToWebp(pngData: Buffer): Promise<Buffer> {
   return sharp(pngData).webp({ effort: 6, lossless: true }).toBuffer();
 }
 
-async function extractSpritesFromFilesystem(
+async function extractSpritesForKind(
+  kind: SpriteKind,
   assetsDir: string,
-  itemIdsBySprite: Map<string, string[]>,
-  itemsOutputDir: string,
+  iconSpritesByEntityId: Record<string, string>,
+  outputDir: string,
+  applyOverrides: boolean,
+  zipPathOverride?: string,
+  zipFileOverride?: ZipFile,
+): Promise<SpriteExtractionResult> {
+  const entityIdsBySprite = new Map<string, string[]>();
+  const overriddenEntityIds: string[] = [];
+  for (const [entityId, iconSprite] of Object.entries(iconSpritesByEntityId)) {
+    const reason = applyOverrides ? MISSING_SPRITE_OVERRIDES[iconSprite] : undefined;
+    if (reason) {
+      overriddenEntityIds.push(entityId);
+    } else {
+      const entityIds = entityIdsBySprite.get(iconSprite);
+      if (entityIds) {
+        entityIds.push(entityId);
+      } else {
+        entityIdsBySprite.set(iconSprite, [entityId]);
+      }
+    }
+  }
+
+  if (overriddenEntityIds.length > 0) {
+    console.log(
+      `  Skipping ${overriddenEntityIds.length.toString()} entities with overridden sprites ` +
+        `(no standard icon available)`,
+    );
+  }
+
+  const kindOutputDir = join(outputDir, kind.outputSubdir);
+  const zipPath = zipPathOverride ?? resolveAssetsZipPath(assetsDir);
+  const result = zipFileOverride
+    ? await extractSpritesFromZip(kind, zipFileOverride, entityIdsBySprite, kindOutputDir)
+    : zipPath
+      ? await extractSpritesFromZip(kind, zipPath, entityIdsBySprite, kindOutputDir)
+      : await extractSpritesFromFilesystem(kind, assetsDir, entityIdsBySprite, kindOutputDir);
+  result.overridden = overriddenEntityIds.length;
+  return result;
+}
+
+async function extractSpritesFromFilesystem(
+  kind: SpriteKind,
+  assetsDir: string,
+  entityIdsBySprite: Map<string, string[]>,
+  entityOutputDir: string,
 ): Promise<SpriteExtractionResult> {
   const spriteIndex = new Map<string, string>();
-  for (const subdir of SPRITE_SEARCH_DIRS) {
+  for (const subdir of kind.searchDirs) {
     const dir = resolve(assetsDir, subdir);
     if (existsSync(dir) && statSync(dir).isDirectory()) {
-      buildSpriteIndex(dir, spriteIndex);
+      buildSpriteIndex(kind, dir, spriteIndex);
     }
   }
 
@@ -140,9 +208,9 @@ async function extractSpritesFromFilesystem(
     );
   }
 
-  const total = totalItemCount(itemIdsBySprite);
+  const total = totalEntityCount(entityIdsBySprite);
   console.log(
-    `  Sprites: ${itemIdsBySprite.size.toString()} unique sprites for ${total.toString()} items, ` +
+    `  Sprites: ${entityIdsBySprite.size.toString()} unique sprites for ${total.toString()} entities, ` +
       `${spriteIndex.size.toString()} available`,
   );
 
@@ -151,17 +219,17 @@ async function extractSpritesFromFilesystem(
   const missing: string[] = [];
   const staged: StagedSprite[] = [];
 
-  for (const spriteName of [...itemIdsBySprite.keys()].sort()) {
-    const itemIds = itemIdsBySprite.get(spriteName) ?? [];
+  for (const spriteName of [...entityIdsBySprite.keys()].sort()) {
+    const entityIds = entityIdsBySprite.get(spriteName) ?? [];
     const sourcePath = spriteIndex.get(spriteName);
     if (!sourcePath) {
       missing.push(spriteName);
       continue;
     }
 
-    const counts = await stageItemsForSprite(
-      itemIds,
-      itemsOutputDir,
+    const counts = await stageEntitiesForSprite(
+      entityIds,
+      entityOutputDir,
       () => convertToWebp(readFileSync(sourcePath)),
       staged,
     );
@@ -181,29 +249,32 @@ async function extractSpritesFromFilesystem(
 }
 
 async function extractSpritesFromZip(
-  zipPath: string,
-  itemIdsBySprite: Map<string, string[]>,
-  itemsOutputDir: string,
+  kind: SpriteKind,
+  zipSource: string | ZipFile,
+  entityIdsBySprite: Map<string, string[]>,
+  entityOutputDir: string,
 ): Promise<SpriteExtractionResult> {
-  console.log(`  Reading sprites from ${zipPath}`);
-
-  const zipFile = await open(zipPath);
+  const zipPrefixes = kind.searchDirs.map((d) => `assets/${d.replaceAll("\\", "/")}/`);
+  const ownsZip = typeof zipSource === "string";
+  const zipFile = ownsZip ? await open(zipSource) : zipSource;
+  if (ownsZip) {
+    console.log(`  Reading sprites from ${zipSource}`);
+  }
 
   const spriteData = new Map<string, Buffer>();
   try {
     for await (const entry of zipFile) {
       if (entry.filename.endsWith("/")) continue;
       if (!entry.filename.endsWith(".png")) continue;
-      if (entry.filename.endsWith("_outline.png")) continue;
 
-      const inSearchDir = SPRITE_ZIP_PREFIXES.some((prefix) => entry.filename.startsWith(prefix));
+      const inSearchDir = zipPrefixes.some((prefix) => entry.filename.startsWith(prefix));
       if (!inSearchDir) continue;
 
       const basename = entry.filename.split("/").at(-1) ?? "";
-      if (!basename.startsWith("spr_ui_item_")) continue;
+      if (!kind.matchesFilename(basename)) continue;
 
       const spriteName = basename.slice(0, -4);
-      if (itemIdsBySprite.has(spriteName) && !spriteData.has(spriteName)) {
+      if (entityIdsBySprite.has(spriteName) && !spriteData.has(spriteName)) {
         const stream = await entry.openReadStream();
         const chunks: Buffer[] = [];
         for await (const chunk of stream) {
@@ -213,12 +284,20 @@ async function extractSpritesFromZip(
       }
     }
   } finally {
-    await zipFile.close();
+    if (ownsZip) await zipFile.close();
   }
 
-  const total = totalItemCount(itemIdsBySprite);
+  if (spriteData.size === 0) {
+    throw new Error(
+      `No sprite PNGs found in any search directory.\n` +
+        `The full assets directory must be extracted (not just fiddle/).`,
+    );
+  }
+
+  const total = totalEntityCount(entityIdsBySprite);
+
   console.log(
-    `  Sprites: ${itemIdsBySprite.size.toString()} unique sprites for ${total.toString()} items, ` +
+    `  Sprites: ${entityIdsBySprite.size.toString()} unique sprites for ${total.toString()} entities, ` +
       `${spriteData.size.toString()} found in zip`,
   );
 
@@ -227,17 +306,17 @@ async function extractSpritesFromZip(
   const missing: string[] = [];
   const staged: StagedSprite[] = [];
 
-  for (const spriteName of [...itemIdsBySprite.keys()].sort()) {
-    const itemIds = itemIdsBySprite.get(spriteName) ?? [];
+  for (const spriteName of [...entityIdsBySprite.keys()].sort()) {
+    const entityIds = entityIdsBySprite.get(spriteName) ?? [];
     const pngData = spriteData.get(spriteName);
     if (!pngData) {
       missing.push(spriteName);
       continue;
     }
 
-    const counts = await stageItemsForSprite(
-      itemIds,
-      itemsOutputDir,
+    const counts = await stageEntitiesForSprite(
+      entityIds,
+      entityOutputDir,
       () => convertToWebp(pngData),
       staged,
     );
@@ -256,15 +335,10 @@ async function extractSpritesFromZip(
   };
 }
 
-function resolveZipPath(assetsDir: string): string | undefined {
-  const candidates = [resolve(assetsDir, "assets.zip"), resolve(assetsDir, "..", "assets.zip")];
-  return candidates.find((p) => existsSync(p));
-}
-
-/** Stages one output file per item ID sharing `spriteName`, converting the source data once. */
-async function stageItemsForSprite(
-  itemIds: readonly string[],
-  itemsOutputDir: string,
+/** Stages one output file per entity ID sharing `spriteName`, converting the source data once. */
+async function stageEntitiesForSprite(
+  entityIds: readonly string[],
+  entityOutputDir: string,
   loadWebp: () => Promise<Buffer>,
   staged: StagedSprite[],
 ): Promise<{ extracted: number; skipped: number }> {
@@ -272,8 +346,8 @@ async function stageItemsForSprite(
   let skipped = 0;
   let webpData: Buffer | undefined;
 
-  for (const itemId of [...itemIds].sort()) {
-    const outPath = join(itemsOutputDir, `${itemId}.webp`);
+  for (const entityId of [...entityIds].sort()) {
+    const outPath = join(entityOutputDir, `${entityId}.webp`);
     if (existsSync(outPath)) {
       skipped++;
       continue;
@@ -286,8 +360,8 @@ async function stageItemsForSprite(
   return { extracted, skipped };
 }
 
-function totalItemCount(itemIdsBySprite: Map<string, string[]>): number {
+function totalEntityCount(entityIdsBySprite: Map<string, string[]>): number {
   let total = 0;
-  for (const itemIds of itemIdsBySprite.values()) total += itemIds.length;
+  for (const entityIds of entityIdsBySprite.values()) total += entityIds.length;
   return total;
 }

@@ -35,7 +35,8 @@
     "test:pipeline:assets": "vitest run --config vitest.assets.config.ts",
     "fonts:build": "tsx scripts/locale-fonts/build-locale-fonts.ts",
     "fonts:upload": "bash scripts/locale-fonts/upload-locale-fonts.sh",
-    "sprites:upload": "bash scripts/sprites/upload-sprites.sh"
+    "sprites:upload": "bash scripts/sprites/upload-sprites.sh",
+    "sprites:villagers": "pnpm run pipeline -- --sprites-only"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
