@@ -9,7 +9,7 @@ describe("parseFiddle — v1.0.2 assets", () => {
 
     expect(parsed.fileCount).toBe(295);
     expect(parsed.data).toHaveProperty("items.other.cooked_dishes");
-    expect(parsed.data).toHaveProperty("villagers.holt");
+    expect(parsed.data).toHaveProperty("npcs.holt");
     expect(parsed.data).toHaveProperty("dungeons.dungeons.biomes");
     expect(parsed.sourceFileByRootPath.get("items.other.cooked_dishes")).toBe(
       "items/other/cooked_dishes.toml",

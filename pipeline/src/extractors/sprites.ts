@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import sharp from "sharp";
-import { open } from "yauzl-promise";
+import { open, type ZipFile } from "yauzl-promise";
 
 import { resolveAssetsZipPath } from "../assets-zip";
 
@@ -78,8 +78,18 @@ export async function extractSprites(
   assetsDir: string,
   iconSpritesByItemId: Record<string, string>,
   outputDir: string,
+  zipPath?: string,
+  zipFile?: ZipFile,
 ): Promise<SpriteExtractionResult> {
-  return extractSpritesForKind(ITEM_SPRITE_KIND, assetsDir, iconSpritesByItemId, outputDir, true);
+  return extractSpritesForKind(
+    ITEM_SPRITE_KIND,
+    assetsDir,
+    iconSpritesByItemId,
+    outputDir,
+    true,
+    zipPath,
+    zipFile,
+  );
 }
 
 /**
@@ -91,6 +101,8 @@ export async function extractVillagerSprites(
   assetsDir: string,
   iconSpritesByVillagerId: Record<string, string>,
   outputDir: string,
+  zipPath?: string,
+  zipFile?: ZipFile,
 ): Promise<SpriteExtractionResult> {
   return extractSpritesForKind(
     VILLAGER_SPRITE_KIND,
@@ -98,6 +110,8 @@ export async function extractVillagerSprites(
     iconSpritesByVillagerId,
     outputDir,
     false,
+    zipPath,
+    zipFile,
   );
 }
 
@@ -136,6 +150,8 @@ async function extractSpritesForKind(
   iconSpritesByEntityId: Record<string, string>,
   outputDir: string,
   applyOverrides: boolean,
+  zipPathOverride?: string,
+  zipFileOverride?: ZipFile,
 ): Promise<SpriteExtractionResult> {
   const entityIdsBySprite = new Map<string, string[]>();
   const overriddenEntityIds: string[] = [];
@@ -161,10 +177,12 @@ async function extractSpritesForKind(
   }
 
   const kindOutputDir = join(outputDir, kind.outputSubdir);
-  const zipPath = resolveAssetsZipPath(assetsDir);
-  const result = zipPath
-    ? await extractSpritesFromZip(kind, zipPath, entityIdsBySprite, kindOutputDir)
-    : await extractSpritesFromFilesystem(kind, assetsDir, entityIdsBySprite, kindOutputDir);
+  const zipPath = zipPathOverride ?? resolveAssetsZipPath(assetsDir);
+  const result = zipFileOverride
+    ? await extractSpritesFromZip(kind, zipFileOverride, entityIdsBySprite, kindOutputDir)
+    : zipPath
+      ? await extractSpritesFromZip(kind, zipPath, entityIdsBySprite, kindOutputDir)
+      : await extractSpritesFromFilesystem(kind, assetsDir, entityIdsBySprite, kindOutputDir);
   result.overridden = overriddenEntityIds.length;
   return result;
 }
@@ -232,14 +250,16 @@ async function extractSpritesFromFilesystem(
 
 async function extractSpritesFromZip(
   kind: SpriteKind,
-  zipPath: string,
+  zipSource: string | ZipFile,
   entityIdsBySprite: Map<string, string[]>,
   entityOutputDir: string,
 ): Promise<SpriteExtractionResult> {
-  console.log(`  Reading sprites from ${zipPath}`);
-
   const zipPrefixes = kind.searchDirs.map((d) => `assets/${d.replaceAll("\\", "/")}/`);
-  const zipFile = await open(zipPath);
+  const ownsZip = typeof zipSource === "string";
+  const zipFile = ownsZip ? await open(zipSource) : zipSource;
+  if (ownsZip) {
+    console.log(`  Reading sprites from ${zipSource}`);
+  }
 
   const spriteData = new Map<string, Buffer>();
   try {
@@ -264,10 +284,18 @@ async function extractSpritesFromZip(
       }
     }
   } finally {
-    await zipFile.close();
+    if (ownsZip) await zipFile.close();
+  }
+
+  if (spriteData.size === 0) {
+    throw new Error(
+      `No sprite PNGs found in any search directory.\n` +
+        `The full assets directory must be extracted (not just fiddle/).`,
+    );
   }
 
   const total = totalEntityCount(entityIdsBySprite);
+
   console.log(
     `  Sprites: ${entityIdsBySprite.size.toString()} unique sprites for ${total.toString()} entities, ` +
       `${spriteData.size.toString()} found in zip`,
