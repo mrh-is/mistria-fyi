@@ -348,7 +348,6 @@ describe("assignEntityVisibility — items", () => {
       items: {
         seed_turnip: {
           category: "seeds",
-          iconSprite: "spr_ui_item_seed_turnip",
           name: "Turnip Seed",
         },
       },
@@ -368,7 +367,6 @@ describe("assignEntityVisibility — items", () => {
       items: {
         fancy_seed: {
           category: "seeds",
-          iconSprite: "spr_ui_item_fancy_seed",
           name: "Fancy Seed",
           sources: [{ type: "store", storeId: "general" }],
         },
@@ -397,7 +395,6 @@ describe("assignEntityVisibility — items", () => {
       items: {
         dual_source_item: {
           category: "other",
-          iconSprite: "spr_ui_item_dual_source",
           name: "Dual Source Item",
           sources: [
             { type: "store", storeId: "general" },
@@ -432,7 +429,6 @@ describe("assignEntityVisibility — items", () => {
       items: {
         mystery_item: {
           category: "other",
-          iconSprite: "spr_ui_item_mystery",
           name: "Mystery Item",
         },
       },
@@ -451,7 +447,6 @@ describe("assignEntityVisibility — items", () => {
       items: {
         gated_stock: {
           category: "other",
-          iconSprite: "spr_ui_item_gated_stock",
           name: "Gated Stock",
           sources: [
             {
@@ -501,7 +496,6 @@ describe("assignEntityVisibility — items", () => {
       items: {
         alternative_paths: {
           category: "other",
-          iconSprite: "spr_ui_item_alternative_paths",
           name: "Alternative Paths",
           sources: [
             {
@@ -537,7 +531,6 @@ describe("assignEntityVisibility — items", () => {
       items: {
         first: {
           category: "other",
-          iconSprite: "spr_ui_item_first",
           name: "First",
           sources: [shared],
         },
@@ -547,7 +540,6 @@ describe("assignEntityVisibility — items", () => {
       items: {
         second: {
           category: "other",
-          iconSprite: "spr_ui_item_second",
           name: "Second",
           sources: [shared],
         },
@@ -567,7 +559,6 @@ describe("assignEntityVisibility — items", () => {
       items: {
         void_herb: {
           category: "other",
-          iconSprite: "spr_ui_item_void_herb",
           name: "Void Herb",
           sources: [
             {

@@ -93,7 +93,6 @@ export interface HeartQuest extends Quest {
 }
 export interface Item extends TrackerEntity {
   category: string;
-  iconSprite: string;
 }
 export type ItemId = string & { readonly __brand: "ItemId" };
 export interface MinesBiome {
@@ -200,7 +199,6 @@ export type TreasureChestTierId = string & { readonly __brand: "TreasureChestTie
 export interface Villager {
   birthday: Day;
   dateable?: true;
-  smallIconSprite?: string;
   visibility?: VisibilityCondition;
 }
 export type VillagerId = string & { readonly __brand: "VillagerId" };

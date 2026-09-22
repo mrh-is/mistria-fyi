@@ -1,18 +1,19 @@
-import { trackerData } from "$lib/data/index.js";
-
 /** Production R2 bucket; overridable via `PUBLIC_ASSET_ORIGIN` for local development. */
 const DEFAULT_ASSET_ORIGIN = "https://assets.mistria.fyi";
 
 /**
- * Sprites are hosted under a game-version prefix so objects are immutable and cacheable forever;
- * a version bump changes the URL instead of the object's contents.
+ * Bump only when an existing sprite's pixels change (not for newly-added sprites). Objects are
+ * overwritten in place at a stable, entity-ID-keyed path, so this query parameter is what busts
+ * the edge cache and the service worker's cache on a pixel change.
  */
-export function itemSpriteUrl(name: string): string {
-  return `${assetOrigin()}/sprites/${trackerData.version}/${name}.webp`;
+const spriteGeneration = 1;
+
+export function itemSpriteUrl(itemId: string): string {
+  return `${assetOrigin()}/sprites/items/${itemId}.webp?g=${String(spriteGeneration)}`;
 }
 
-export function villagerSpriteUrl(name: string): string {
-  return `${assetOrigin()}/villager-sprites/${trackerData.version}/${name}.webp`;
+export function villagerSpriteUrl(villagerId: string): string {
+  return `${assetOrigin()}/sprites/villagers/${villagerId}.webp?g=${String(spriteGeneration)}`;
 }
 
 function assetOrigin(): string {

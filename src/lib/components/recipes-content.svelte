@@ -24,7 +24,7 @@
   import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
   import type { Source } from "$lib/types/acquisition";
   import type { LocaleCode } from "$lib/types/locale.js";
-  import type { Item, RecipeId } from "$lib/types/tracker-data.js";
+  import type { Item, ItemId, RecipeId } from "$lib/types/tracker-data.js";
   import type { VisibilityCondition } from "$lib/types/visibility.js";
 
   let { locale }: { locale: LocaleCode } = $props();
@@ -56,8 +56,8 @@
   let baseSegmentLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
 
   interface RecipeEntry {
-    iconSprite: string;
     id: RecipeId;
+    itemId: ItemId;
     name: string;
     nameVisible: boolean;
     sources: Source[];
@@ -79,8 +79,8 @@
         const visibility = recipe.visibility;
         const sources = recipe.sources;
         entries.push({
-          iconSprite: item.iconSprite,
           id: recipeId,
+          itemId: canonicalId,
           name: getName("items", canonicalId, locale),
           nameVisible: isVisible(visibility, userState.progressionState),
           sources,
@@ -189,7 +189,7 @@
             reportCategory="recipe"
             reportEntityId={entry.id}
             sources={entry.sources}
-            sprite={entry.iconSprite}
+            sprite={entry.itemId}
             spriteClass="text-cat-recipes"
             onToggle={() => {
               if (entry.nameVisible || completed) {
