@@ -3,6 +3,8 @@ import { dirname, join, resolve } from "node:path";
 import sharp from "sharp";
 import { open } from "yauzl-promise";
 
+import { resolveAssetsZipPath } from "../assets-zip";
+
 const ITEM_SPRITE_SEARCH_DIRS = [
   join("animations", "Item Icons"),
   join("animations", "Placeables"),
@@ -159,7 +161,7 @@ async function extractSpritesForKind(
   }
 
   const kindOutputDir = join(outputDir, kind.outputSubdir);
-  const zipPath = resolveZipPath(assetsDir);
+  const zipPath = resolveAssetsZipPath(assetsDir);
   const result = zipPath
     ? await extractSpritesFromZip(kind, zipPath, entityIdsBySprite, kindOutputDir)
     : await extractSpritesFromFilesystem(kind, assetsDir, entityIdsBySprite, kindOutputDir);
@@ -303,11 +305,6 @@ async function extractSpritesFromZip(
     staged,
     total,
   };
-}
-
-function resolveZipPath(assetsDir: string): string | undefined {
-  const candidates = [resolve(assetsDir, "assets.zip"), resolve(assetsDir, "..", "assets.zip")];
-  return candidates.find((p) => existsSync(p));
 }
 
 /** Stages one output file per entity ID sharing `spriteName`, converting the source data once. */

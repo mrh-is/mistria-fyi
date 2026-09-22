@@ -32,6 +32,7 @@ import {
   type AcquisitionSourceAssembly,
   validateAcquisitionSources,
 } from "./acquisition/validate-sources";
+import { DEFAULT_WINDOWS_STEAM_ASSETS_DIR, resolveAssetsZipPath } from "./assets-zip";
 import { evaluateExpressions } from "./evaluate";
 import { forEachItem } from "./extractor-helpers";
 import { extractAlmanac, readAlmanacCategories } from "./extractors/almanac";
@@ -50,7 +51,7 @@ import { extractSprites, extractVillagerSprites, publishSprites } from "./extrac
 import { extractStoresMeta } from "./extractors/stores-meta";
 import { extractTreasureChestTiers } from "./extractors/treasure-chest-tiers";
 import { APP_UI_STRINGS, extractUiStrings, tierKeys } from "./extractors/ui-strings";
-import { extractVillagers } from "./extractors/villagers";
+import { extractVillagerIconSprites, extractVillagers } from "./extractors/villagers";
 import { buildCutsceneQuestMap } from "./extractors/visibility/cutscene-quest-map";
 import {
   assignEntityVisibility,
@@ -61,7 +62,7 @@ import {
 } from "./extractors/visibility/entity-visibility";
 import { extractQuestChains } from "./extractors/visibility/quest-chains";
 import { generateLocaleManifest } from "./localize";
-import { parseFiddle } from "./parse-fiddle";
+import { parseFiddle, parseFiddleFromZip } from "./parse-fiddle";
 import { createRequirementContext } from "./requirements";
 
 import type { Source as AcquisitionSource } from "$lib/types/acquisition.js";
@@ -293,27 +294,55 @@ async function main(): Promise<void> {
   console.log("📚 Mistria Field Guide — Data Pipeline\n");
 
   const args = process.argv.slice(2).filter((a) => a !== "--");
-  const assetsDir = args.find((a) => !a.startsWith("-")) ?? process.env.MISTRIA_ASSETS;
+  const assetsDir =
+    args.find((a) => !a.startsWith("-")) ??
+    process.env.MISTRIA_ASSETS ??
+    (existsSync(DEFAULT_WINDOWS_STEAM_ASSETS_DIR) ? DEFAULT_WINDOWS_STEAM_ASSETS_DIR : undefined);
   if (!assetsDir) {
     console.error("Usage: tsx src/main.ts <path-to-assets-dir> [--version=X.Y.Z]");
     console.error("  Or set MISTRIA_ASSETS environment variable");
+    console.error(`  Or install the game at its default Steam location on Windows:`);
+    console.error(`    ${DEFAULT_WINDOWS_STEAM_ASSETS_DIR}`);
     process.exit(1);
   }
 
+  // Prefer an already-extracted fiddle/ on disk; otherwise read straight out of assets.zip
+  // (Steam's own distribution format) without ever extracting it. Either shape produces the same
+  // ParsedGameData, so every downstream extractor is source-agnostic.
   const fiddleDir = resolve(assetsDir, "fiddle");
-  if (!existsSync(fiddleDir)) {
-    console.error(`❌ Missing input: ${fiddleDir}`);
-    console.error("   Pass the path to the assets directory containing fiddle/");
-    process.exit(1);
-  }
+  const fiddleSource: { kind: "disk" } | { kind: "zip"; zipPath: string } = existsSync(fiddleDir)
+    ? { kind: "disk" }
+    : (() => {
+        const zipPath = resolveAssetsZipPath(assetsDir);
+        if (!zipPath) {
+          console.error(
+            `❌ Missing input: no fiddle/ directory and no assets.zip found under ${assetsDir}`,
+          );
+          console.error(
+            "   Pass the path to the assets directory containing fiddle/, or to a directory",
+          );
+          console.error("   containing assets.zip (e.g. the Steam install directory).");
+          process.exit(1);
+        }
+        return { kind: "zip" as const, zipPath };
+      })();
 
   const parseOnly = args.includes("--parse-only");
+  const spritesOnly = args.includes("--sprites-only");
   const versionFlag = args.find((a) => a.startsWith("--version="));
   const versionArg = versionFlag?.split("=")[1];
 
   console.log("Step 1: Parsing TOML data...");
-  const parsed = parseFiddle(assetsDir);
+  const parsed =
+    fiddleSource.kind === "disk"
+      ? parseFiddle(assetsDir)
+      : await parseFiddleFromZip(fiddleSource.zipPath);
   const fiddle = parsed.data;
+
+  if (spritesOnly) {
+    await runVillagerSpritesOnly(fiddle, assetsDir);
+    return;
+  }
 
   const misc = fiddle.misc as Record<string, unknown> | undefined;
   const version = versionArg ?? (misc?.version as string | undefined);
@@ -718,6 +747,39 @@ function publishFiles(staged: readonly StagedFile[]): void {
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, content);
   }
+}
+
+/**
+ * A lightweight pipeline mode for regenerating only villager sprites: `fiddle.npcs` plus
+ * `assets.zip`'s NPC icon PNGs are enough, so this never touches `tracker-data.json`, locale
+ * chunks, or any other output, and never requires an on-disk `fiddle/` extraction — it works
+ * directly off `assets.zip` (see {@link parseFiddleFromZip}), including at the default Steam
+ * install location with zero configuration. Invoke with `pnpm run pipeline -- --sprites-only` or
+ * `pnpm run sprites:villagers`.
+ */
+async function runVillagerSpritesOnly(fiddle: ParsedGameData, assetsDir: string): Promise<void> {
+  console.log("Step 2: Extracting villager sprites...");
+  const iconSpritesByVillagerId = extractVillagerIconSprites(fiddle);
+  const result = await extractVillagerSprites(
+    resolve(assetsDir),
+    iconSpritesByVillagerId,
+    SPRITES_OUTPUT_ROOT,
+  );
+  console.log(
+    `  Extracted ${result.extracted} new, ${result.skipped} unchanged, ${result.total} total`,
+  );
+  if (result.missing.length > 0) {
+    console.error(`  ❌ ${result.missing.length} sprites not found:`);
+    for (const name of result.missing) {
+      console.error(`    - ${name}`);
+    }
+    console.error("  Aborting before publish: no tracked output file was written.");
+    process.exit(1);
+  }
+
+  publishSprites(result.staged);
+  console.log(`  Published ${result.staged.length} villager sprites`);
+  console.log("\n✅ Villager sprites regenerated. Run `pnpm run sprites:upload` to publish them.");
 }
 
 /**
