@@ -355,3 +355,24 @@ offline fallback, registration, or activation behavior.
   git config --get core.hooksPath   # should print .husky/_
   ls .husky/_/pre-commit            # should exist
   ```
+
+### `worktree:new` Fails Partway Through on Windows
+
+- **Symptom**: `pnpm run worktree:new` prints
+  `ln: failed to create symbolic link '.../.worktrees/<slug>/.env': No such file or directory` and
+  exits before running `pnpm install`/`pnpm run prepare`, leaving the worktree without dependencies
+  installed.
+- **Cause**: `scripts/new-worktree.sh` symlinks every `.worktreeinclude` entry, including bare
+  filenames like `.env` and `.env.*` that only exist if the main checkout has them. On some Windows
+  Git Bash setups, `ln -s` for a _file_ symlink to a nonexistent target fails outright (directory
+  symlinks, like `pipeline/input/`, are unaffected), and the script's `set -euo pipefail` aborts the
+  whole run right there — before the install step. This is a false alarm when the main checkout
+  genuinely has no `.env`; there is nothing to symlink or fix.
+- **Recovery**: Finish the two steps the script didn't reach, from inside the worktree directory:
+  ```sh
+  cd .worktrees/<slug>
+  pnpm install --frozen-lockfile
+  pnpm run prepare
+  ```
+  Re-run `git worktree list` first if you're unsure whether the worktree itself was created — the
+  failure happens after `git worktree add` succeeds, so the branch and directory already exist.

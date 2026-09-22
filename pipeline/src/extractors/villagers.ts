@@ -23,6 +23,28 @@ export interface VillagerExtraction {
  */
 export type VillagerIconSpriteIndex = Record<string, string>;
 
+interface RawVillagerRecord {
+  birthday: { day: number; season: Season };
+  dateable: boolean;
+  iconSprite: string;
+  id: string;
+  name: string;
+}
+
+/**
+ * Builds only the villager icon-sprite index, with no localization lookup and no disk reads beyond
+ * `fiddle` itself. Lets sprite-only pipeline runs work directly off `assets.zip` (see
+ * `pnpm run pipeline -- <path> --sprites-only` in `pipeline/README.md`), where per-locale name
+ * files aren't available without a full on-disk asset extraction.
+ */
+export function extractVillagerIconSprites(fiddle: ParsedGameData): VillagerIconSpriteIndex {
+  const iconSpritesByVillagerId: VillagerIconSpriteIndex = {};
+  for (const record of collectVillagerRecords(fiddle)) {
+    iconSpritesByVillagerId[record.id] = record.iconSprite;
+  }
+  return iconSpritesByVillagerId;
+}
+
 /**
  * Extracts villager records plus their per-locale display names.
  *
@@ -36,12 +58,45 @@ export function extractVillagers(fiddle: ParsedGameData, assetsDir: string): Vil
     Record<VillagerId, string>
   >;
 
-  // "npcs" here is the game's own asset folder / localization key namespace, not our naming.
-  const npcs = fiddle.npcs as Record<string, Record<string, unknown>> | undefined;
-  if (!npcs) return { iconSpritesByVillagerId: {}, localeNames, villagers: {} };
-
+  const records = collectVillagerRecords(fiddle);
   const result = {} as Record<VillagerId, TrackerData["villagers"][VillagerId]>;
   const iconSpritesByVillagerId: VillagerIconSpriteIndex = {};
+
+  for (const record of records) {
+    result[record.id as VillagerId] = {
+      birthday: record.birthday,
+      ...(record.dateable ? { dateable: record.dateable } : {}),
+    };
+    iconSpritesByVillagerId[record.id] = record.iconSprite;
+
+    const { values } = localizeField(assetsDir, {
+      category: "npcs",
+      classification: "localizable",
+      englishValue: record.name,
+      field: "name",
+      id: record.id,
+    });
+
+    for (const locale of LOCALE_CODES) {
+      localeNames[locale][record.id as VillagerId] = values[locale];
+    }
+  }
+
+  console.log(`  Villagers: ${records.length}`);
+  return { iconSpritesByVillagerId, localeNames, villagers: result };
+}
+
+/**
+ * Walks `fiddle.npcs` once, applying every villager's acceptance rules (present name, valid
+ * birthday, required `icon_sprite`). Shared by {@link extractVillagers} and
+ * {@link extractVillagerIconSprites} so both agree on exactly which IDs count as real villagers.
+ */
+function collectVillagerRecords(fiddle: ParsedGameData): RawVillagerRecord[] {
+  // "npcs" here is the game's own asset folder / localization key namespace, not our naming.
+  const npcs = fiddle.npcs as Record<string, Record<string, unknown>> | undefined;
+  if (!npcs) return [];
+
+  const records: RawVillagerRecord[] = [];
   for (const [id, npc] of Object.entries(npcs)) {
     if (id === "default") continue;
 
@@ -56,28 +111,13 @@ export function extractVillagers(fiddle: ParsedGameData, assetsDir: string): Vil
       throw new Error(`Missing icon_sprite for villager "${id}"`);
     }
 
-    const dateable = npc.dateable === true;
-
-    result[id as VillagerId] = {
-      birthday: {
-        day: birthday.day,
-        season: birthday.season as Season,
-      },
-      ...(dateable ? { dateable } : {}),
-    };
-    iconSpritesByVillagerId[id] = iconSprite;
-
-    const { values } = localizeField(assetsDir, {
-      category: "npcs",
-      classification: "localizable",
-      englishValue: name,
-      field: "name",
+    records.push({
+      birthday: { day: birthday.day, season: birthday.season as Season },
+      dateable: npc.dateable === true,
+      iconSprite,
       id,
+      name,
     });
-
-    for (const locale of LOCALE_CODES) localeNames[locale][id as VillagerId] = values[locale];
   }
-
-  console.log(`  Villagers: ${Object.keys(result).length}`);
-  return { iconSpritesByVillagerId, localeNames, villagers: result };
+  return records;
 }

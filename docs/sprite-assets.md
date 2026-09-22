@@ -76,7 +76,16 @@ This writes converted WebP files to `pipeline/output/sprites/items/<itemId>.webp
 source PNG from the game's own `icon_sprite` name internally — that name never reaches
 `tracker-data.json` or the app, since the resolver builds URLs from the entity's own ID alone. A
 missing sprite fails the run before anything is published, the same way for both entity kinds.
-Upload the result with:
+
+To regenerate only villager sprites — no `fiddle/` extraction needed, works directly off a Steam
+install's `assets.zip` — use the narrower command instead (see
+[pipeline/README.md](../pipeline/README.md) for how the two commands differ):
+
+```bash
+pnpm run sprites:villagers
+```
+
+Upload either result with:
 
 ```bash
 pnpm run sprites:upload

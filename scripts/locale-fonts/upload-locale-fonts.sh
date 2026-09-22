@@ -30,7 +30,10 @@ upload_one() {
   # wrangler occasionally fails with a transient "fetch failed"; retry before giving up.
   local attempt
   for attempt in 1 2 3; do
-    if pnpx wrangler r2 object put "$BUCKET/$key" --remote --file "$key" \
+    # --allow-build lets wrangler's native deps (esbuild, workerd) run their install scripts
+    # non-interactively; without it, a pnpm store that hasn't approved them yet fails every upload.
+    if pnpx --allow-build=esbuild --allow-build=workerd wrangler r2 object put "$BUCKET/$key" \
+      --remote --file "$key" \
       --content-type font/woff2 --cache-control "public, max-age=31536000, immutable" >/dev/null 2>&1; then
       echo "put  $key"
       return 0

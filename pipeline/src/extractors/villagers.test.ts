@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { makeFiddle } from "../test-helpers";
-import { extractVillagers } from "./villagers";
+import { extractVillagerIconSprites, extractVillagers } from "./villagers";
 
 import type { VillagerId } from "$lib/types/tracker-data.js";
 
@@ -73,5 +73,62 @@ describe("extractVillagers", () => {
 
     expect(iconSpritesByVillagerId).toStrictEqual({});
     expect(villagers).toStrictEqual({});
+  });
+});
+
+describe("extractVillagerIconSprites", () => {
+  it("builds the icon-sprite index without calling localizeField", async () => {
+    const { localizeField } = await import("../localize");
+
+    const iconSpritesByVillagerId = extractVillagerIconSprites(
+      makeFiddle({
+        npcs: {
+          adeline: {
+            birthday: { day: 3, season: "spring" },
+            icon_sprite: "spr_ui_generic_icon_npc_adeline",
+            name: "Adeline",
+          },
+          default: { birthday: { day: 1, season: "spring" }, name: "Default" },
+        },
+      }),
+    );
+
+    expect(iconSpritesByVillagerId).toStrictEqual({ adeline: "spr_ui_generic_icon_npc_adeline" });
+    expect(localizeField).not.toHaveBeenCalled();
+  });
+
+  it("throws when a villager is missing icon_sprite", () => {
+    expect(() =>
+      extractVillagerIconSprites(
+        makeFiddle({
+          npcs: {
+            adeline: { birthday: { day: 3, season: "spring" }, name: "Adeline" },
+          },
+        }),
+      ),
+    ).toThrow('Missing icon_sprite for villager "adeline"');
+  });
+
+  it("agrees with extractVillagers on which IDs count as real villagers", () => {
+    const fiddle = makeFiddle({
+      npcs: {
+        adeline: {
+          birthday: { day: 3, season: "spring" },
+          icon_sprite: "spr_ui_generic_icon_npc_adeline",
+          name: "Adeline",
+        },
+        default: { birthday: { day: 1, season: "spring" }, name: "Default" },
+        nameless: { birthday: { day: 1, season: "spring" }, icon_sprite: "spr_x" },
+      },
+    });
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+
+    const iconSpritesByVillagerId = extractVillagerIconSprites(fiddle);
+    const { iconSpritesByVillagerId: fromFullExtraction } = extractVillagers(
+      fiddle,
+      "unused-assets-dir",
+    );
+
+    expect(iconSpritesByVillagerId).toStrictEqual(fromFullExtraction);
   });
 });

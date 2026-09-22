@@ -110,7 +110,12 @@ Follow this sequence for every task:
 
 Use **pnpm** exclusively. Do **not** use `npm`, `npx`, `yarn`, or `bun`. The one exception is
 Wrangler, which is only a transitive dependency: run one-off commands as `pnpx wrangler <command>`.
-Wrangler may need access to Cloudflare's API and to its credentials under
+On a pnpm store that hasn't approved Wrangler's native dependencies yet (`esbuild`, `workerd`), that
+fails non-interactively with `ERR_PNPM_IGNORED_BUILDS`; add
+`--allow-build=esbuild --allow-build=workerd` to the `pnpx` invocation rather than running the
+interactive `pnpm approve-builds` (unsupported in an agent shell).
+`scripts/sprites/upload-sprites.sh` and `scripts/locale-fonts/upload-locale-fonts.sh` already pass
+it. Wrangler may need access to Cloudflare's API and to its credentials under
 `~/Library/Preferences/.wrangler/`; never read or expose the stored OAuth token.
 
 | Command                       | Purpose                                     |
