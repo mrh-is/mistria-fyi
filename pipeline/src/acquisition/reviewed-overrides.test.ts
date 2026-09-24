@@ -65,6 +65,12 @@ describe("reviewed overrides", () => {
       }
     });
 
+    it("records the Big Egg as the one-time all-chicken-tiers reward", () => {
+      expect(ITEM_OVERRIDES["big_egg" as ItemId]).toEqual([
+        { type: "chicken_statue", unlockCondition: "breed_all_chicken_tiers" },
+      ]);
+    });
+
     it("replaces Void Herb with quest-gated foraging throughout the Mines", () => {
       expect(ITEM_SOURCE_REPLACEMENTS["void_herb" as ItemId]).toEqual([
         {

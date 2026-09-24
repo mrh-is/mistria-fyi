@@ -20,6 +20,17 @@ describe("importState validation", () => {
     expect(result.ok).toBe(true);
   });
 
+  it("restores a preceding-release backup without losing tracked IDs", () => {
+    const data = JSON.parse(userState.exportState()) as Record<string, unknown>;
+    const completed = data.completed as Record<string, unknown>;
+    completed.almanac = ["animated_waterfall_v1"];
+    completed.cosmetics = ["hair_long_braid"];
+
+    expect(userState.importState(JSON.stringify(data))).toEqual({ ok: true });
+    expect(userState.state.completed.almanac).toContain("animated_waterfall_v1");
+    expect(userState.state.completed.cosmetics).toContain("hair_long_braid");
+  });
+
   it("rejects malformed JSON", () => {
     const result = userState.importState("not json {{{");
     expect(result).toEqual({ error: "malformed-json", ok: false });

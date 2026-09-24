@@ -6,7 +6,7 @@ Confusing them, or assuming one guarantees the other, is the most common mistake
 ## Two systems
 
 **Game data names** (items, villagers, locations, festivals, recipes, ...) come from Fields of
-Mistria's own translation tables in `pipeline/input/assets/localization/`. The pipeline
+Mistria's own translation tables in `assets.zip` under `assets/localization/`. The pipeline
 (`pipeline/src/localize.ts`) reads them and writes localized names into
 `src/lib/data/locales/<locale>/<category>.json` chunks. Structural records in
 `src/lib/data/tracker-data.json` deliberately omit migrated display names. MFG never edits this

@@ -7,11 +7,12 @@ documented below.
 
 ## Setup & commands
 
-The input argument is an assets root containing either an extracted `fiddle/`, or `assets.zip`
-itself (Steam's own distribution format — see below). Game assets are ignored by Git and are not
-present in a fresh clone.
+The full pipeline takes an extracted assets root containing `fiddle/` and `localization/`. The
+real-asset integration suite and the narrow villager-sprite command also accept `assets.zip`
+directly (see below). Game assets are ignored by Git and are not present in a fresh clone.
 
 ```sh
+pnpm run pipeline -- input/assets --version=1.0.5
 pnpm run pipeline -- /path/to/assets
 MISTRIA_ASSETS=/path/to/assets pnpm run pipeline
 pnpm run pipeline -- /path/to/assets --parse-only
@@ -24,26 +25,27 @@ default Steam install location — the only platform the game ships on:
 C:\Program Files (x86)\Steam\steamapps\common\Fields of Mistria
 ```
 
-so `pnpm run pipeline -- --sprites` (or the other commands below) works with no configuration on a
-stock Windows dev machine that owns the game.
+so the integration suite and `pnpm run pipeline -- --sprites-only` work with no configuration on a
+stock Windows dev machine that owns the game. Full tracker-data regeneration still requires an
+extracted structured-assets root.
 
-That directory contains `assets.zip` rather than an extracted `fiddle/`. `parseFiddle` (disk) and
-`parseFiddleFromZip` (`parse-fiddle.ts`) both produce the same `ParsedGameData` shape, so every
-extractor is source-agnostic: when `assetsDir` has no `fiddle/` on disk, the pipeline reads TOML
-entries straight out of `assets.zip` via streaming instead — it never extracts the archive to disk,
-so a full run doesn't cost the archive's multiple gigabytes of disk space or the time to unzip it.
-Sprite extraction (`extractors/sprites.ts`) has always read PNGs the same way, directly out of
-`assets.zip`.
+The pipeline reads `FieldsOfMistria.exe`'s Product Version beside the archive automatically. On
+macOS and Linux, pass `--version=X.Y.Z` when the assets omit a native version value.
+
+That directory contains `assets.zip` rather than an extracted `fiddle/`. The real-asset integration
+suite temporarily materializes only `fiddle/` and `localization/`; it never expands the archive's
+multi-gigabyte animation and audio trees. The full pipeline does not yet use that adapter because
+its localization extractors retain an on-disk contract. Sprite extraction (`extractors/sprites.ts`)
+can read PNGs directly from `assets.zip`.
 
 `--sprites-only` (alias: `pnpm run sprites:villagers`) is the narrowest of these: it parses only
 `fiddle.npcs` and regenerates villager sprites alone, skipping `tracker-data.json`, locale chunks,
 and every other output — the right command for "just get me fresh villager icons," including
-straight off a bare Steam install with nothing extracted. Item sprites don't have an equivalent
-zip-only-without-extraction mode yet; producing `iconSpritesByItemId` still goes through
-`extractAlmanac`, which also does per-locale name lookups that read from disk, so a full item-sprite
-regeneration still needs `fiddle/` extracted first and `--sprites` on the full pipeline run.
+straight off a bare Steam install with nothing extracted. Item sprite regeneration uses the full
+pipeline because producing `iconSpritesByItemId` also requires almanac and localization extraction;
+pass an extracted structured-assets root together with `--sprites`.
 
-`--parse-only` currently enforces the v1.0.2 fixture’s 295 non-metadata files and three
+`--parse-only` currently enforces the v1.0.5 fixture’s 297 non-metadata files and three
 representative paths, so it is not a version-agnostic validator.
 
 Supporting a new Fields of Mistria version is a reviewed application release, not a routine
@@ -59,7 +61,7 @@ CI runs it as part of `pnpm run test` on every pull request:
 pnpm run test:pipeline
 ```
 
-The canonical v1.0.2 integration suite is an explicit local check that CI cannot run, because
+The canonical v1.0.5 integration suite is an explicit local check that CI cannot run, because
 licensed game assets are not distributed with the repository. It uses `pipeline/input/assets` by
 default or `MISTRIA_ASSETS` when set, and fails with the resolved missing path instead of silently
 skipping when assets are unavailable:
@@ -139,7 +141,7 @@ current contract, not a general validation policy.
 
 | Module                      | Input ownership                                                                                                                  | Output                                                    | Important normalization or omission                                                                                                                                                                                                                                                                                                                                                                           |
 | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `main.ts`                   | CLI arguments, `MISTRIA_ASSETS`, parsed tree                                                                                     | `TrackerData` and files                                   | Requires an assets root containing `fiddle/`; parse-only stops before evaluation, extraction, and writes. Stages every output in memory and publishes it in one step only after sprite extraction (if requested) reports no missing sprites; a sprite failure exits before any tracked file is written.                                                                                                       |
+| `main.ts`                   | CLI arguments, `MISTRIA_ASSETS`, parsed tree                                                                                     | `TrackerData` and files                                   | Requires an assets root containing `fiddle/` for a full run; `--sprites-only` can parse directly from `assets.zip`. Parse-only stops before evaluation, extraction, and writes. Stages every output in memory and publishes it in one step only after sprite extraction (if requested) reports no missing sprites; a sprite failure exits before any tracked file is written.                                 |
 | `parse-fiddle.ts`           | Assets root and TOML below fiddle root                                                                                           | Namespace tree, count, provenance                         | Excludes `.meta.toml`; rejects duplicate, colliding, and invalid nested destinations; provenance is non-enumerable.                                                                                                                                                                                                                                                                                           |
 | `evaluate.ts`               | Parsed `items` and provenance                                                                                                    | In-place numeric item values                              | Resolves two expression forms, rounds recipe multipliers, skips time and essence recipe entries, and fails with source context on invalid dependencies.                                                                                                                                                                                                                                                       |
 | `requirements.ts`           | Requirement definitions and an object                                                                                            | Boolean expression                                        | Empty input becomes `all: []`; siblings become `all`; `or` becomes `any`; `invert` becomes `not`; unknown keys remain predicates.                                                                                                                                                                                                                                                                             |
@@ -302,14 +304,14 @@ until a separately reviewed change adopts them.
 
 ### Version parse-only checks
 
-- **Current behavior:** `main.ts` makes `--parse-only` require exactly 295 parsed files and three
-  v1.0.2 paths, even when another assets version is supplied.
+- **Current behavior:** `main.ts` makes `--parse-only` require exactly 297 parsed files and three
+  v1.0.5 paths, even when another assets version is supplied.
 - **Affected files:** `pipeline/src/main.ts`, CLI documentation, and parser integration tests.
 - **Desired result:** Separate version-agnostic parse validation from named fixture profiles. The
-  default smoke test validates structural invariants; an explicit v1.0.2 profile retains the
-  295-file and representative-path assertions.
-- **Constraints:** Preserve a strict regression check for the canonical v1.0.2 integration fixture.
-- **Verification:** Synthetic assets pass generic parse-only, the v1.0.2 profile enforces 295 files
+  default smoke test validates structural invariants; an explicit v1.0.5 profile retains the
+  297-file and representative-path assertions.
+- **Constraints:** Preserve a strict regression check for the canonical v1.0.5 integration fixture.
+- **Verification:** Synthetic assets pass generic parse-only, the v1.0.5 profile enforces 297 files
   and representative paths, and a mismatched profile fails with an actionable message.
 
 ### Add contract coverage

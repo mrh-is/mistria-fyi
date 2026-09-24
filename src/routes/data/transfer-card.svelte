@@ -5,7 +5,11 @@
 
   import { Icon } from "$lib/components/icon/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
-  import { decodeTransferPayload, encodeTransferPayload } from "$lib/engine/transfer.js";
+  import {
+    decodeTransferPayload,
+    encodeTransferPayload,
+    OutdatedTransferPayloadError,
+  } from "$lib/engine/transfer.js";
   import * as m from "$lib/paraglide/messages.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
@@ -28,6 +32,8 @@
 
   let transferResult = $state<MergeResult | null>(null);
   let transferError = $state<null | string>(null);
+  let outdatedTransfer = $state(false);
+  let copiedRecoverySteps = $state(false);
 
   // ── Generate QR Code ──
   async function handleGenerate() {
@@ -35,6 +41,8 @@
     qrDataUrl = null;
     transferResult = null;
     transferError = null;
+    outdatedTransfer = false;
+    copiedRecoverySteps = false;
 
     try {
       const payload = await encodeTransferPayload(userState.state.completed);
@@ -56,6 +64,8 @@
     const attempt = ++scanAttempt;
     transferResult = null;
     transferError = null;
+    outdatedTransfer = false;
+    copiedRecoverySteps = false;
     qrDataUrl = null;
     scanning = true;
 
@@ -105,10 +115,21 @@
     }
   });
 
+  function copyRecoverySteps() {
+    void navigator.clipboard
+      .writeText(m.transfer_error_outdated_recovery())
+      .then(() => {
+        copiedRecoverySteps = true;
+      })
+      .catch(() => undefined);
+  }
+
   // ── Scan from image file ──
   function handleImageUpload() {
     transferResult = null;
     transferError = null;
+    outdatedTransfer = false;
+    copiedRecoverySteps = false;
     qrDataUrl = null;
 
     const input = document.createElement("input");
@@ -142,6 +163,10 @@
       const decoded = await decodeTransferPayload(data);
       transferResult = userState.mergeFromSave(decoded);
     } catch (err) {
+      if (err instanceof OutdatedTransferPayloadError) {
+        outdatedTransfer = true;
+        return;
+      }
       transferError = `${m.transfer_error_invalid_qr_prefix()} ${err instanceof Error ? err.message : m.transfer_error_could_not_decode()}`;
     }
   }
@@ -232,7 +257,20 @@
     {/if}
 
     <!-- Error -->
-    {#if transferError}
+    {#if outdatedTransfer}
+      <div
+        class="flex flex-col gap-3 rounded-md bg-amber-50 p-3 text-base text-amber-900 dark:bg-amber-950 dark:text-amber-100"
+        role="alert"
+      >
+        <p class="font-medium">{m.transfer_error_outdated_title()}</p>
+        <p>{m.transfer_error_outdated_recovery()}</p>
+        <Button class="self-start" size="sm" variant="outline" onclick={copyRecoverySteps}>
+          {copiedRecoverySteps
+            ? m.transfer_error_outdated_copied()
+            : m.transfer_error_outdated_copy_steps()}
+        </Button>
+      </div>
+    {:else if transferError}
       <div
         class="rounded-md bg-red-50 p-3 text-base text-red-700 dark:bg-red-950 dark:text-red-300"
         role="alert"

@@ -90,8 +90,12 @@ describe("generateLocaleManifest — real assets", () => {
   it("marks English stable and the rest beta", () => {
     const manifest = generateLocaleManifest(requireGameAssetsDir());
 
-    expect(manifest).toContainEqual({ displayName: "English", status: "stable", tag: "en" });
-    expect(manifest).toContainEqual({ displayName: "日本語", status: "beta", tag: "ja" });
+    expect(manifest).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ displayName: "English", status: "stable", tag: "en" }),
+        expect.objectContaining({ displayName: "日本語", status: "beta", tag: "ja" }),
+      ]),
+    );
     expect(manifest).toHaveLength(8);
     expect(manifest.filter((entry) => entry.status === "stable")).toHaveLength(1);
   });

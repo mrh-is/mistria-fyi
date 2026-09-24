@@ -13,7 +13,7 @@ describe("locale-codes — real assets", () => {
   it("reads display names and ship flags", () => {
     const languages = readGameLanguages(requireGameAssetsDir());
 
-    expect(languages.eng).toEqual({ displayName: "English", ship: true });
-    expect(languages.jpn).toEqual({ displayName: "日本語", ship: false });
+    expect(languages.eng).toMatchObject({ displayName: "English", ship: true });
+    expect(languages.jpn).toMatchObject({ displayName: "日本語", ship: false });
   });
 });

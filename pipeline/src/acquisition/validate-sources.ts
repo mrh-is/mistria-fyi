@@ -81,7 +81,7 @@ const SOURCE_FIELDS = {
   beach_cave_chest: [],
   breed: [],
   bug_catch: ["locationIds"],
-  chicken_statue: ["cost"],
+  chicken_statue: [],
   crop: ["seedItemId"],
   date: ["dateId"],
   date_inspiration: ["itemId"],
@@ -990,6 +990,7 @@ function validateSource(
   const allowedFields = new Set([
     "type",
     ...SOURCE_FIELDS[source.type as Source["type"]],
+    ...(source.type === "chicken_statue" ? ["cost", "unlockCondition"] : []),
     ...(source.type === "default" ? [] : SOURCE_DETAIL_FIELDS),
   ]);
   for (const field of Object.keys(source)) {
@@ -1072,6 +1073,25 @@ function validateVariantFields(
       );
       break;
     case "chicken_statue":
+      if ("cost" in source && "unlockCondition" in source) {
+        malformed(
+          diagnostics,
+          targetId,
+          fieldPath,
+          "Chicken Statue sources must have either a cost or an unlock condition, not both",
+          source,
+        );
+      } else if ("cost" in source) {
+        requireNumber(source, "cost", targetId, fieldPath, source, diagnostics);
+      } else if (source.unlockCondition !== "breed_all_chicken_tiers") {
+        malformed(
+          diagnostics,
+          targetId,
+          `${fieldPath}.unlockCondition`,
+          'Expected unlockCondition "breed_all_chicken_tiers"',
+          source,
+        );
+      }
       break;
     case "crop":
       stringReferences.push(["seedItemId", "item"]);
