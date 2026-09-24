@@ -150,19 +150,19 @@ describe("buildBiomeLabel", () => {
 });
 
 describe("buildStoreQualifier", () => {
-  it("returns empty array when visibility is always", () => {
+  it("returns undefined when visibility is always", () => {
     expect(
       buildStoreQualifier(
         { type: "store", storeId: "inn" as StoreId, visibility: { type: "always" } },
         BASE_LOOKUPS,
       ),
-    ).toEqual([]);
+    ).toBeUndefined();
   });
 
-  it("returns empty array when visibility is undefined", () => {
-    expect(buildStoreQualifier({ type: "store", storeId: "inn" as StoreId }, BASE_LOOKUPS)).toEqual(
-      [],
-    );
+  it("returns undefined when visibility is undefined", () => {
+    expect(
+      buildStoreQualifier({ type: "store", storeId: "inn" as StoreId }, BASE_LOOKUPS),
+    ).toBeUndefined();
   });
 
   it("uses upgradeAction from store record", () => {
@@ -180,13 +180,11 @@ describe("buildStoreQualifier", () => {
       { type: "store", storeId: "general" as StoreId, visibility: vis },
       lookups,
     );
-    expect(result).toEqual([
-      {
-        condition: vis,
-        redacted: [" (after ", { redacted: true }, ")"],
-        revealed: [" (after repairing)"],
-      },
-    ]);
+    expect(result).toEqual({
+      condition: vis,
+      redacted: [{ redacted: true }],
+      revealed: ["after repairing"],
+    });
   });
 
   it("defaults to upgrading when no upgradeAction", () => {
@@ -204,8 +202,8 @@ describe("buildStoreQualifier", () => {
       { type: "store", storeId: "inn" as StoreId, visibility: vis },
       lookups,
     );
-    expect(result[0]).toMatchObject({
-      revealed: [" (after upgrading)"],
+    expect(result).toMatchObject({
+      revealed: ["after upgrading"],
     });
   });
 
@@ -224,13 +222,11 @@ describe("buildStoreQualifier", () => {
       },
     };
 
-    expect(buildStoreQualifier(source, lookups)).toEqual([
-      {
-        condition: source.visibility,
-        redacted: [" (after ", { redacted: true }, ")"],
-        revealed: [" (after repairing)"],
-      },
-    ]);
+    expect(buildStoreQualifier(source, lookups)).toEqual({
+      condition: source.visibility,
+      redacted: [{ redacted: true }],
+      revealed: ["after repairing"],
+    });
   });
 
   const STORE_LOOKUPS: SegmentLookups = {
@@ -255,32 +251,32 @@ describe("buildStoreQualifier", () => {
     [
       { type: "perkUnlocked", perkId: "taste_maker" },
       { type: "perkUnlocked", perkId: "taste_maker" },
-      ", with the Taste Maker perk (Cooking tier 1)",
+      "with the Taste Maker perk (Cooking tier 1)",
     ],
     [
       { type: "skillLevel", level: 15, skillId: "woodcrafting" },
       { type: "skillLevel", level: 15, skillId: "woodcrafting" },
-      ", at Woodcrafting level 15",
+      "at Woodcrafting level 15",
     ],
     [
       { type: "minesLevel", floor: 40 },
       { type: "minesLevel", floor: 40 },
-      ", after reaching Mines floor 40",
+      "after reaching Mines floor 40",
     ],
     [
       { type: "heartLevel", level: 4, villagerId: "juniper" },
       { type: "heartLevel", level: 4, villagerId: "juniper" },
-      ", at 4 hearts with Juniper",
+      "at 4 hearts with Juniper",
     ],
     [
       { type: "quest", questId: "stock_the_pantry", state: "completed" },
       { type: "questAvailable", questId: "stock_the_pantry" },
-      ", after completing Stock the Pantry",
+      "after completing Stock the Pantry",
     ],
     [
       { type: "quest", questId: "stock_the_pantry", state: "available" },
       { type: "questAvailable", questId: "stock_the_pantry" },
-      ", once Stock the Pantry is available",
+      "once Stock the Pantry is available",
     ],
   ] as const)("renders stock availability %#", (availability, visibility, revealed) => {
     const source: Source = {
@@ -290,9 +286,9 @@ describe("buildStoreQualifier", () => {
       visibility: visibility as unknown as VisibilityCondition,
     };
 
-    expect(buildStoreQualifier(source, STORE_LOOKUPS)).toContainEqual({
+    expect(buildStoreQualifier(source, STORE_LOOKUPS)).toEqual({
       condition: source.visibility,
-      redacted: [", ", { redacted: true }],
+      redacted: [{ redacted: true }],
       revealed: [revealed],
     });
   });
@@ -311,8 +307,9 @@ describe("buildStoreQualifier", () => {
       visibility: { type: "minesLevel", floor: 40 },
     };
 
-    expect(buildStoreQualifier(source, STORE_LOOKUPS)[0]).toMatchObject({
-      revealed: [", after reaching Mines floor 40, at Woodcrafting level 15"],
+    expect(buildStoreQualifier(source, STORE_LOOKUPS)).toMatchObject({
+      redacted: [{ redacted: true }, " and ", { redacted: true }],
+      revealed: ["after reaching Mines floor 40 and at Woodcrafting level 15"],
     });
   });
 
@@ -330,8 +327,8 @@ describe("buildStoreQualifier", () => {
       visibility: { type: "minesLevel", floor: 40 },
     };
 
-    expect(buildStoreQualifier(source, STORE_LOOKUPS)[0]).toMatchObject({
-      revealed: [", after one of: reaching Mines floor 40 or Woodcrafting level 15"],
+    expect(buildStoreQualifier(source, STORE_LOOKUPS)).toMatchObject({
+      revealed: ["after one of: reaching Mines floor 40 or Woodcrafting level 15"],
     });
   });
 
@@ -349,7 +346,7 @@ describe("buildStoreQualifier", () => {
       visibility: { type: "always" },
     };
 
-    expect(buildStoreQualifier(source, STORE_LOOKUPS)).toEqual([]);
+    expect(buildStoreQualifier(source, STORE_LOOKUPS)).toBeUndefined();
   });
 
   it.each([
@@ -366,7 +363,7 @@ describe("buildStoreQualifier", () => {
       visibility: { type: "always" },
     };
 
-    expect(buildStoreQualifier(source, STORE_LOOKUPS)).toEqual([]);
+    expect(buildStoreQualifier(source, STORE_LOOKUPS)).toBeUndefined();
   });
 });
 
@@ -540,11 +537,13 @@ describe("buildSourceSegments — store", () => {
         condition: { type: "questCompleted", questId: "repair_the_inn" },
         revealed: ["the Sleeping Dragon Inn"],
       },
+      " (",
       {
         condition: vis,
-        redacted: [" (after ", { redacted: true }, ")"],
-        revealed: [" (after upgrading)"],
+        redacted: [{ redacted: true }],
+        revealed: ["after upgrading"],
       },
+      ")",
     ]);
   });
 });
@@ -585,11 +584,13 @@ describe("buildSourceSegments — scroll_bundle", () => {
         condition: { type: "questCompleted", questId: "repair_the_general_store" },
         revealed: ["the General Store"],
       },
+      " (",
       {
         condition: sourceVisibility,
-        redacted: [" (after ", { redacted: true }, ")"],
-        revealed: [" (after repairing)"],
+        redacted: [{ redacted: true }],
+        revealed: ["after repairing"],
       },
+      ")",
     ]);
   });
 });
@@ -1217,6 +1218,58 @@ describe("buildSourceSegments — localized rendering", () => {
         revealed: ["野いちご"],
       },
       "」を完了する",
+    ]);
+  });
+
+  it("places the store qualifier where the locale's word order puts it", () => {
+    const questId = "repair_the_general_store" as QuestId;
+    const source: Source = {
+      type: "store",
+      availability: { type: "minesLevel", floor: 20 },
+      storeId: "general" as StoreId,
+      visibility: {
+        type: "and",
+        conditions: [
+          { type: "questCompleted", questId },
+          { type: "minesLevel", floor: 20 },
+        ],
+      },
+    };
+    const render = (locale: SegmentLookups["locale"], storeName: string) =>
+      buildSourceSegments(source, {
+        ...BASE_LOOKUPS,
+        locale,
+        stores: {
+          ["general" as StoreId]: {
+            article: "the" as const,
+            name: storeName,
+            upgradeAction: "repairing",
+          },
+        },
+        storeVisibility: { ["general" as StoreId]: { type: "questCompleted", questId } },
+      });
+    const qualifier = (revealed: string, conjunction: string) => ({
+      condition: source.visibility,
+      redacted: [{ redacted: true }, conjunction, { redacted: true }],
+      revealed: [revealed],
+    });
+    const storeGate = (name: string) => ({
+      condition: { type: "questCompleted", questId },
+      revealed: [name],
+    });
+
+    expect(render("en", "General Store")).toEqual([
+      "Purchase from ",
+      storeGate("the General Store"),
+      " (",
+      qualifier("after repairing and after reaching Mines floor 20", " and "),
+      ")",
+    ]);
+    expect(render("ja", "雑貨屋")).toEqual([
+      qualifier("修理後、鉱山20階に到達した後", "、"),
+      "、",
+      storeGate("雑貨屋"),
+      "で購入",
     ]);
   });
 

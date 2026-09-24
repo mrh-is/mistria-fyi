@@ -515,9 +515,11 @@
   "source_renown": "Поднять ранг известности города до уровня {level}",
   "source_ritual_chamber": "Изготовить в ритуальном зале с {perk}",
   "source_scroll_bundle": "Купить: {bundle}, место: {store}",
+  "source_scroll_bundle_qualified": "Купить: {bundle}, место: {store} ({qualifier})",
   "source_spouse_gift": "Вступить в брак: {villager}",
   "source_station": "Переработать: {station}",
   "source_store": "Купить: {store}",
+  "source_store_qualified": "Купить: {store} ({qualifier})",
   "source_treasure_chest": "Выловить: {chest}",
   "source_tree": "Собрать с дерева: {sapling}",
   "source_upgrade_adept_kitchen": "Улучшить до кухни мастера",
@@ -538,8 +540,6 @@
   "source_perk_label_unknown": "умение «{perk}»",
   "source_date_label": "{day}-й день сезона «{season}»",
   "source_date_label_year": "{day}-й день сезона «{season}», год {year}",
-  "source_qualifier_after_action": " (после: {action})",
-  "source_store_action_repairing": "ремонта",
   "source_clause_append": ", {clause}",
   "source_clause_after_one_of": "после одного из условий: {options}",
   "source_clause_upgraded_home": "после улучшения дома",
@@ -595,6 +595,5 @@
         "countPlural=other": "Собрать {count} коллекции в крыле «{wing}»"
       }
     }
-  ],
-  "source_store_action_upgrading": "улучшения"
+  ]
 }

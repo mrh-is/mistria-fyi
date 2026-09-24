@@ -91,6 +91,11 @@ English grammar stays in English: the definite article on stores and biomes ("th
 messages handle articles themselves. Lists of alternatives ("Pond, River, or Ocean") use
 `Intl.ListFormat`'s disjunction for the active locale.
 
+A store's availability qualifier is a slot, not a suffix. `buildStoreQualifier` returns bare clauses
+("after repairing") joined by `Intl.ListFormat`'s conjunction, and the `source_store_qualified` &
+`source_scroll_bundle_qualified` messages place it: in parentheses after the store in English, ahead
+of the verb in Japanese, Korean, & Chinese.
+
 Most names come from game-translated chunks: monsters use their `pets/skins` family name plus a
 variant message, farm animals use `animals` `<id>/core`, stations are items, and museum wings use
 `museum_wings`. Location & water names have no extracted translations yet, so `source-names.ts` maps

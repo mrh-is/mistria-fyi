@@ -494,9 +494,11 @@
   "source_renown": "마을 명성 등급을 레벨 {level}까지 올리기",
   "source_ritual_chamber": "{perk} 보유 시 의식의 방에서 제작",
   "source_scroll_bundle": "{store}에서 {bundle} 구매",
+  "source_scroll_bundle_qualified": "{qualifier} {store}에서 {bundle} 구매",
   "source_spouse_gift": "{villager}와(과) 결혼",
   "source_station": "{station}에서 가공",
   "source_store": "{store}에서 구매",
+  "source_store_qualified": "{qualifier} {store}에서 구매",
   "source_treasure_chest": "{chest} 낚아 올리기",
   "source_tree": "{sapling}에서 수확",
   "source_upgrade_adept_kitchen": "숙련된 주방으로 업그레이드",
@@ -517,8 +519,6 @@
   "source_perk_label_unknown": "특전 '{perk}'",
   "source_date_label": "{season} {day}일",
   "source_date_label_year": "{year}년차 {season} {day}일",
-  "source_qualifier_after_action": " ({action} 후)",
-  "source_store_action_repairing": "수리",
   "source_clause_append": ", {clause}",
   "source_clause_after_one_of": "다음 중 하나 이후: {options}",
   "source_clause_upgraded_home": "집 업그레이드 후",
@@ -571,6 +571,5 @@
         "countPlural=other": "{wing} 전시관의 세트 {count}개 완성"
       }
     }
-  ],
-  "source_store_action_upgrading": "업그레이드"
+  ]
 }

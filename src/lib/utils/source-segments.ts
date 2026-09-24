@@ -91,10 +91,10 @@ const UPGRADE_MESSAGES: Partial<
 };
 
 /** Keyed by the English `upgradeAction` the pipeline emits for a store; absent means upgrading. */
-const STORE_ACTION_MESSAGES: Partial<
+const STORE_ACTION_CLAUSES: Partial<
   Record<string, (inputs: Record<string, never>, options: { locale: LocaleCode }) => string>
 > = {
-  repairing: m.source_store_action_repairing,
+  repairing: m.source_clause_repairing,
 };
 
 const SLOT_MARKER = /(\d+)/;
@@ -344,11 +344,13 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
         lookups.entityVisibility && lookups.entityVisibility.type !== "always"
           ? { condition: lookups.entityVisibility, revealed: [bundleName] }
           : bundleName;
-      return joinSegments(
-        fillMessage((slot) =>
-          m.source_scroll_bundle({ bundle: slot(bundleSegment), store: slot(storeName) }, opts),
-        ),
-        qualifier,
+      return fillMessage((slot) =>
+        qualifier
+          ? m.source_scroll_bundle_qualified(
+              { bundle: slot(bundleSegment), qualifier: slot(qualifier), store: slot(storeName) },
+              opts,
+            )
+          : m.source_scroll_bundle({ bundle: slot(bundleSegment), store: slot(storeName) }, opts),
       );
     }
     case "spouseGift": {
@@ -362,9 +364,10 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
     case "store": {
       const storeName = buildStoreName(source.storeId, lookups);
       const qualifier = buildStoreQualifier(source, lookups);
-      return joinSegments(
-        fillMessage((slot) => m.source_store({ store: slot(storeName) }, opts)),
-        qualifier,
+      return fillMessage((slot) =>
+        qualifier
+          ? m.source_store_qualified({ qualifier: slot(qualifier), store: slot(storeName) }, opts)
+          : m.source_store({ store: slot(storeName) }, opts),
       );
     }
     case "treasure_chest": {
@@ -389,13 +392,18 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
   }
 }
 
+/**
+ * The conditions a store source needs before it sells the item, as one gated segment for the
+ * `*_qualified` messages to place. Each clause is a bare phrase ("after repairing"), joined by the
+ * locale's conjunction, so the message alone decides where the qualifier sits in the sentence.
+ */
 export function buildStoreQualifier(
   source: Source & { type: "scroll_bundle" | "store"; storeId: StoreId },
   lookups: SegmentLookups,
-): SourceSegment[] {
+): SourceSegment | undefined {
   const { locale } = lookups;
   const sourceVisibility = source.visibility;
-  if (!sourceVisibility || sourceVisibility.type === "always") return [];
+  if (!sourceVisibility || sourceVisibility.type === "always") return undefined;
 
   const storeGate = lookups.storeVisibility[source.storeId];
   const hasStoreGate =
@@ -403,43 +411,29 @@ export function buildStoreQualifier(
     storeGate.type !== "always" &&
     visibilityContains(sourceVisibility, storeGate);
   const storeAction = hasStoreGate
-    ? storeActionLabel(lookups.stores[source.storeId]?.upgradeAction, locale)
+    ? storeActionClause(lookups.stores[source.storeId]?.upgradeAction, locale)
     : undefined;
   const storeQuestIds = storeGate ? collectQuestIds(storeGate) : new Set<QuestId>();
   const stockClauses = source.availability
     ? describeStoreAvailability(source.availability, lookups, storeQuestIds)
     : [];
 
-  if (stockClauses === undefined && !storeAction) return [];
-
-  const renderedClauses = stockClauses ?? [];
-  if (!storeAction && renderedClauses.length === 0) return [];
-
-  const revealed = [
-    storeAction ? m.source_qualifier_after_action({ action: storeAction }, { locale }) : "",
-    ...renderedClauses.map(({ clause }) => m.source_clause_append({ clause }, { locale })),
-  ].join("");
-  const redacted: SourceSegment[] = [];
-  if (storeAction) {
-    redacted.push(
-      ...fillMessage((slot) =>
-        m.source_qualifier_after_action({ action: slot(REDACTED) }, { locale }),
-      ),
-    );
-  }
-  for (const _clause of renderedClauses) {
-    redacted.push(
-      ...fillMessage((slot) => m.source_clause_append({ clause: slot(REDACTED) }, { locale })),
-    );
-  }
-
-  return [
-    {
-      condition: sourceVisibility,
-      redacted: joinSegments(redacted),
-      revealed: [revealed],
-    },
+  const clauses = [
+    ...(storeAction ? [storeAction] : []),
+    ...(stockClauses ?? []).map(({ clause }) => clause),
   ];
+  if (clauses.length === 0) return undefined;
+
+  return {
+    condition: sourceVisibility,
+    redacted: fillMessage((slot) =>
+      formatConjunction(
+        clauses.map(() => slot(REDACTED)),
+        locale,
+      ),
+    ),
+    revealed: [formatConjunction(clauses, locale)],
+  };
 }
 
 export function formatDateLabel(
@@ -808,6 +802,11 @@ function formatAlternatives(items: string[], locale: LocaleCode): string {
   return new Intl.ListFormat(locale, { type: "disjunction" }).format(items);
 }
 
+/** Joins required conditions the way the locale writes "A, B, and C". */
+function formatConjunction(items: string[], locale: LocaleCode): string {
+  return new Intl.ListFormat(locale, { type: "conjunction" }).format(items);
+}
+
 /** English prefixes "a"/"an"; other locales' messages handle articles themselves. */
 function indefiniteName(name: string, locale: LocaleCode): string {
   return locale === "en" ? withIndefiniteArticle(name) : name;
@@ -850,9 +849,9 @@ function plainPerkLabel(perkId: PerkId, lookups: SegmentLookups): string {
   return m.source_perk_label({ perk: perk.name, skill, tier: String(perk.tier) }, { locale });
 }
 
-function storeActionLabel(action: string | undefined, locale: LocaleCode): string {
-  if (action === undefined) return m.source_store_action_upgrading({}, { locale });
-  return STORE_ACTION_MESSAGES[action]?.({}, { locale }) ?? action;
+function storeActionClause(action: string | undefined, locale: LocaleCode): string {
+  if (action === undefined) return m.source_clause_upgrading({}, { locale });
+  return STORE_ACTION_CLAUSES[action]?.({}, { locale }) ?? action;
 }
 
 /** The store name with English's definite article where the store takes one; others as-is. */

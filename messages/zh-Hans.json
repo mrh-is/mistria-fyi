@@ -494,9 +494,11 @@
   "source_renown": "将小镇声望等级提升至{level}级",
   "source_ritual_chamber": "拥有{perk}时，在仪式室制作",
   "source_scroll_bundle": "在{store}购买{bundle}",
+  "source_scroll_bundle_qualified": "{qualifier}，在{store}购买{bundle}",
   "source_spouse_gift": "与{villager}结婚",
   "source_station": "在{station}加工",
   "source_store": "在{store}购买",
+  "source_store_qualified": "{qualifier}，在{store}购买",
   "source_treasure_chest": "钓起{chest}",
   "source_tree": "从{sapling}收获",
   "source_upgrade_adept_kitchen": "升级为熟练厨房",
@@ -517,8 +519,6 @@
   "source_perk_label_unknown": "特长“{perk}”",
   "source_date_label": "{season}{day}日",
   "source_date_label_year": "第{year}年{season}{day}日",
-  "source_qualifier_after_action": "（{action}后）",
-  "source_store_action_repairing": "修复",
   "source_clause_append": "，{clause}",
   "source_clause_after_one_of": "满足以下任一条件后：{options}",
   "source_clause_upgraded_home": "升级房屋后",
@@ -571,6 +571,5 @@
         "countPlural=other": "在{wing}展区完成{count}套收藏"
       }
     }
-  ],
-  "source_store_action_upgrading": "升级"
+  ]
 }

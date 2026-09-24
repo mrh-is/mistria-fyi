@@ -501,9 +501,11 @@
   "source_renown": "Get the town’s renown rank to level {level}",
   "source_ritual_chamber": "Craft at the Ritual Chamber with {perk}",
   "source_scroll_bundle": "Purchase the {bundle} from {store}",
+  "source_scroll_bundle_qualified": "Purchase the {bundle} from {store} ({qualifier})",
   "source_spouse_gift": "Get married to {villager}",
   "source_station": "Process at {station}",
   "source_store": "Purchase from {store}",
+  "source_store_qualified": "Purchase from {store} ({qualifier})",
   "source_treasure_chest": "Fish up {chest}",
   "source_tree": "Harvest from {sapling}",
   "source_upgrade_adept_kitchen": "Upgrade to the adept kitchen",
@@ -524,8 +526,6 @@
   "source_perk_label_unknown": "the {perk} perk",
   "source_date_label": "{season} {day}",
   "source_date_label_year": "{season} {day}, Year {year}",
-  "source_qualifier_after_action": " (after {action})",
-  "source_store_action_repairing": "repairing",
   "source_clause_append": ", {clause}",
   "source_clause_after_one_of": "after one of: {options}",
   "source_clause_upgraded_home": "after upgrading your home",
@@ -579,6 +579,5 @@
         "countPlural=other": "Complete {count} sets in the {wing} wing"
       }
     }
-  ],
-  "source_store_action_upgrading": "upgrading"
+  ]
 }
