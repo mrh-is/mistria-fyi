@@ -421,6 +421,16 @@ describe("buildSourceSegments — simple types", () => {
     ]);
   });
 
+  it("chicken statue unlock reward", () => {
+    const source: Source = {
+      type: "chicken_statue",
+      unlockCondition: "breed_all_chicken_tiers",
+    };
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([
+      "Obtain from the Chicken Statue after breeding every chicken tier",
+    ]);
+  });
+
   it("wishing well", () => {
     const source: Source = {
       type: "wishing_well",

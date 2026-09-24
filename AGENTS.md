@@ -31,6 +31,10 @@ copies dependencies, caches, build artifacts, or other writable generated direct
 [docs/development-workflow.md §2](docs/development-workflow.md#2-git-worktree-mechanics--workspace-isolation)
 for the manual steps and troubleshooting.
 
+The installed game assets are a massive `assets.zip` archive. Do not unpack the full archive without
+the user's explicit approval. The pipeline should read the archive directly or materialize only the
+small required subtrees.
+
 ## 2. Git configuration
 
 The repo remote uses HTTPS (not SSH) and authenticates via `gh auth`. Commit signing uses a local
@@ -55,6 +59,9 @@ Agent attribution is mandatory for agent-authored Git and GitHub content:
 - End every substantive agent-authored GitHub comment with the same `Agent: <agent-id>` line. This
   remains required when an issue or PR already has an agent label because multiple agents may
   participate in one thread.
+- For multiline GitHub CLI issue or PR bodies, pass a file or stdin with literal line breaks (for
+  example, `gh issue edit --body-file -`). Do not embed escaped `\\n` sequences in `--body`; GitHub
+  renders them literally. Re-read the published body after creating or editing it.
 - Preserve existing attribution during edits and handoffs. The active `agent:*` label identifies the
   current top-level owner; trailers and `Agent:` lines identify who authored each artifact.
 

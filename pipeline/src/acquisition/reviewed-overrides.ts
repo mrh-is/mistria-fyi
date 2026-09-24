@@ -36,6 +36,12 @@ export interface OverrideDiagnostic {
 // receives it by repeatedly refusing to raise friendship with Eiland when speaking to the Priestess.
 // No native data table encodes this acquisition path.
 export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
+  // Wiki: https://fieldsofmistria.wiki.gg/wiki/Big_Egg
+  // The Chicken Statue awards one Big Egg after the player has bred at least one Chicken of every
+  // tier. The item and its soulbind flag are native, but this one-time unlock is runtime-only.
+  ["big_egg" as ItemId]: [
+    { type: "chicken_statue" as const, unlockCondition: "breed_all_chicken_tiers" as const },
+  ],
   // Wiki: https://fieldsofmistria.wiki.gg/wiki/Void_Cake
   // Void Cake is a conditional dialogue reward in "The Dragonsworn Tablet" quest. The player
   // receives it by repeatedly refusing to raise friendship with Eiland when speaking to the

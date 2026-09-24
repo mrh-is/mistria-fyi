@@ -227,6 +227,26 @@ test.describe("@critical stateful accessibility", () => {
       { route: "/data", state: "transfer-error", theme: "light" },
       testInfo,
     );
+
+    const outdatedBuffer = await QRCode.toBuffer("CSG9unJjYBgFVAYpDCln0IENDAycsxoYWiZ5qkxgcKCnpQA");
+    const outdatedChooser = page.waitForEvent("filechooser");
+    await page.getByRole("button", { name: /scan from a screenshot/i }).click();
+    await (
+      await outdatedChooser
+    ).setFiles({
+      buffer: outdatedBuffer,
+      mimeType: "image/png",
+      name: "outdated-transfer.png",
+    });
+    await expect(page.getByRole("alert")).toContainText(
+      "This QR code was created by an older version of Mistria Field Guide.",
+    );
+    await expect(page.getByRole("button", { name: "Copy recovery steps" })).toBeVisible();
+    await analyzeAccessibility(
+      page,
+      { route: "/data", state: "transfer-outdated", theme: "light" },
+      testInfo,
+    );
   });
 
   test("backup restore failure passes axe", async ({ page }, testInfo) => {

@@ -57,6 +57,7 @@ export type Source =
         | { type: "breed" }
         | { type: "bug_catch"; locationIds?: NonEmptyArray<LocationId> }
         | { type: "chicken_statue"; cost: number }
+        | { type: "chicken_statue"; unlockCondition: "breed_all_chicken_tiers" }
         | { type: "crop"; seedItemId: ItemId }
         | { type: "date"; dateId: DateId }
         | { type: "date_inspiration"; itemId: ItemId }
