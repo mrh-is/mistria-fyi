@@ -39,7 +39,7 @@ describe("data management page", () => {
     expect(body).toContain("Transfer to Another Device");
     expect(body).toContain("Backup &amp; Restore");
     expect(body).toContain("Danger Zone");
-    expect(body).toContain("Fields of Mistria v1.0.2");
+    expect(body).toContain("Fields of Mistria v1.0.5");
     expect(body).not.toContain('href="/about"');
     expect(body).not.toContain('href="/privacy"');
     expect(body).not.toContain("Send feedback");

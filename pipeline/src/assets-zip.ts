@@ -1,5 +1,6 @@
+import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 /**
  * Fields of Mistria's default Steam install location on Windows, the only platform the game ships
@@ -8,6 +9,23 @@ import { resolve } from "node:path";
  */
 export const DEFAULT_WINDOWS_STEAM_ASSETS_DIR =
   "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Fields of Mistria";
+
+/** Reads the installed Windows game's Product Version without opening or extracting assets.zip. */
+export function readInstalledGameVersion(assetsZipPath: string | undefined): string | undefined {
+  if (process.platform !== "win32" || !assetsZipPath) return undefined;
+  const executablePath = join(dirname(assetsZipPath), "FieldsOfMistria.exe");
+  if (!existsSync(executablePath)) return undefined;
+  const version = execFileSync(
+    "powershell.exe",
+    [
+      "-NoProfile",
+      "-Command",
+      `(Get-Item -LiteralPath '${executablePath}').VersionInfo.ProductVersion`,
+    ],
+    { encoding: "utf8" },
+  ).trim();
+  return /^\d+\.\d+\.\d+$/.test(version) ? version : undefined;
+}
 
 /**
  * Finds `assets.zip` alongside or one level above `assetsDir`, the two shapes callers pass: the

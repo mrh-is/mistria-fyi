@@ -11,7 +11,7 @@ describe("about and legal page", () => {
     expect(body).toContain("affiliated with, endorsed by, supported by, or sponsored by");
     expect(body).toContain("Michael Helmbrecht");
     expect(body).toContain("all the content therein");
-    expect(body).toContain("game version 1.0.2");
+    expect(body).toContain("game version 1.0.5");
     expect(body).toContain("briefly be out of date");
     expect(body).toContain("mailto:michael@mistria.fyi");
     expect(body).toContain("feedback-icon");

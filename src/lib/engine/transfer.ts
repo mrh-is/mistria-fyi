@@ -29,7 +29,8 @@ import type {
 
 // ─── Constants ──────────────────────────────────────────────────────
 
-export const TRANSFER_VERSION = 9;
+export const TRANSFER_VERSION = 10;
+const MIN_SUPPORTED_TRANSFER_VERSION = 10;
 
 /** First version to prepend a CRC-32 integrity checksum of the raw payload before compression. */
 const CHECKSUM_VERSION = 9;
@@ -37,7 +38,12 @@ const CHECKSUM_BYTE_LENGTH = 4;
 
 const SEASON_BY_ORD: Season[] = ["spring", "summer", "fall", "winter"];
 const SEASON_ORD: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
-const HISTORICAL_RAW_LENGTHS: Partial<Record<number, number>> = { 5: 790 };
+export class OutdatedTransferPayloadError extends Error {
+  constructor() {
+    super("This QR code was created by an older version of Mistria Field Guide.");
+    this.name = "OutdatedTransferPayloadError";
+  }
+}
 
 // ─── Deterministic orderings (derived from trackerData) ─────────────
 
@@ -50,6 +56,9 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   const version = payloadBytes[0];
   if (version < 1 || version > TRANSFER_VERSION) {
     throw new Error(`Unsupported transfer version: ${String(version)}`);
+  }
+  if (version < MIN_SUPPORTED_TRANSFER_VERSION) {
+    throw new OutdatedTransferPayloadError();
   }
 
   let expectedChecksum: null | number = null;
@@ -83,7 +92,7 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
     throw new Error("Transfer payload failed integrity check: data may be corrupted");
   }
 
-  const expectedLength = HISTORICAL_RAW_LENGTHS[version] ?? getTransferRawLength(version);
+  const expectedLength = getTransferRawLength(version);
   if (raw.length !== expectedLength) {
     throw new Error(
       `Invalid transfer payload length: expected ${String(expectedLength)} bytes, received ${String(raw.length)}`,
