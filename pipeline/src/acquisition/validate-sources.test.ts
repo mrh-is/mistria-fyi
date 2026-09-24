@@ -38,6 +38,39 @@ describe("validateAcquisitionSources", () => {
     }).not.toThrow();
   });
 
+  it.each([
+    { type: "chicken_statue", cost: 10 },
+    { type: "chicken_statue", unlockCondition: "breed_all_chicken_tiers" },
+  ])("accepts a valid Chicken Statue source variant", (source) => {
+    const trackerData = {
+      cosmetics: {},
+      items: { reward: { sources: [source] } },
+      recipes: {},
+    };
+    const references = AcquisitionReferenceIndex.from({ emitted: { items: trackerData.items } });
+
+    expect(() => {
+      validateAcquisitionSources(trackerData, references);
+    }).not.toThrow();
+  });
+
+  it.each([
+    { type: "chicken_statue" },
+    { type: "chicken_statue", cost: 10, unlockCondition: "breed_all_chicken_tiers" },
+    { type: "chicken_statue", unlockCondition: "unknown" },
+  ])("rejects an invalid Chicken Statue source variant", (source) => {
+    const trackerData = {
+      cosmetics: {},
+      items: { reward: { sources: [source] } },
+      recipes: {},
+    };
+    const references = AcquisitionReferenceIndex.from({ emitted: { items: trackerData.items } });
+
+    expect(() => {
+      validateAcquisitionSources(trackerData, references);
+    }).toThrow(AcquisitionSourceValidationError);
+  });
+
   it("accepts an assembled fixture with emitted and non-emitted native references", () => {
     const trackerData = {
       almanac: {},

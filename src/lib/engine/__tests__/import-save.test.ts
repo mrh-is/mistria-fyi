@@ -25,6 +25,30 @@ function getDefaultRecipeIds(): Set<RecipeId> {
 }
 
 describe("buildImportState", () => {
+  it("imports tracked progress from a preceding 1.0.2 save shape", () => {
+    const { completed, result } = buildImportState({
+      player: { items_acquired: ["animated_waterfall_v2"] },
+    });
+
+    expect(completed.almanac).toContain("animated_waterfall_v1");
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("imports new 1.0.5 item, cosmetic, and recipe progress", () => {
+    const { completed, result } = buildImportState({
+      player: {
+        cosmetic_unlocks: ["facial_hair_friendly_mutton_chops"],
+        items_acquired: ["cottage_sofa_oak"],
+        recipe_unlocks: ["cottage_sofa"],
+      },
+    });
+
+    expect(completed.almanac).toContain("cottage_sofa_ash");
+    expect(completed.cosmetics).toContain("facial_hair_friendly_mutton_chops");
+    expect(completed.almanacRecipes).toContain("cottage_sofa");
+    expect(result.warnings).toEqual([]);
+  });
+
   it("imports direct and item-derived recipe unlocks alongside default recipes", () => {
     const defaultRecipeIds = getDefaultRecipeIds();
 
