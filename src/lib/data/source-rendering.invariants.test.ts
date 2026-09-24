@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
+import { LOCALE_CODES } from "$lib/types/locale.js";
 import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
 import { buildSourceSegments, type SourceSegment } from "$lib/utils/source-segments.js";
 
@@ -211,6 +212,67 @@ describe("generated source rendering contract", () => {
         }, context).not.toThrow();
       });
     }
+  });
+
+  it.each(LOCALE_CODES.filter((locale) => locale !== "en"))(
+    "renders every generated source in %s",
+    (locale) => {
+      const lookups = buildBaseSegmentLookups(new Set(), locale);
+      for (const { entity, path } of sourcedEntities) {
+        entity.sources.forEach((source, index) => {
+          const context = `${locale} ${path} source[${String(index)}] ${JSON.stringify(source)}`;
+          expect(() => {
+            walkSegments(
+              buildSourceSegments(source, { ...lookups, entityVisibility: entity.visibility }),
+              context,
+            );
+          }, context).not.toThrow();
+        });
+      }
+    },
+  );
+
+  it.each(LOCALE_CODES)("resolves every source name reference in %s", (locale) => {
+    const lookups = buildBaseSegmentLookups(new Set(), locale);
+    const missing = new Set<string>();
+    const check = (table: Partial<Record<string, string>>, kind: string, id: string) => {
+      if (table[id] === undefined) missing.add(`${kind}:${id}`);
+    };
+
+    for (const { entity } of sourcedEntities) {
+      for (const source of entity.sources) {
+        if (source.type === "animal_product") {
+          check(lookups.animalNames, "animal", source.animalId);
+        }
+        if (
+          source.type === "artifact_dig" ||
+          source.type === "bug_catch" ||
+          source.type === "forage"
+        ) {
+          for (const id of source.locationIds ?? []) check(lookups.locationNames, "location", id);
+        }
+        if (source.type === "dive" || source.type === "fish") {
+          for (const id of source.waterTypes ?? []) check(lookups.waterNames, "water", id);
+        }
+        if (
+          (source.type === "monster" || source.type === "monster_feed") &&
+          source.monsterId !== "any"
+        ) {
+          check(lookups.monsterNames, "monster", source.monsterId);
+        }
+        if (source.type === "museum_donation") {
+          check(lookups.museumWingNames, "wing", source.wingId);
+        }
+        if (source.type === "scroll_bundle") {
+          check(lookups.bundleNames, "bundle", source.bundleName);
+        }
+        if (source.type === "station") {
+          check(lookups.stationNames, "station", source.stationId);
+        }
+      }
+    }
+
+    expect([...missing].sort()).toEqual([]);
   });
 
   it("has no unsupported predicate diagnostics", () => {
