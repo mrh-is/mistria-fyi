@@ -76,6 +76,28 @@ field (a plain property access like `entity.name`, syntactically indistinguishab
 localized one) with no tooling able to catch it — that's a type/pipeline-contract concern, not a
 lint concern. See [Limits of the tooling](#limits-of-the-tooling) below.
 
+### Source text
+
+Acquisition sources ("Purchase from the General Store (after repairing)") are sentences assembled
+from game names, and parts of them can be redacted or gated behind progress. `source-segments.ts`
+renders each sentence from a `source_*` Paraglide message and `fillMessage` fills its placeholders
+with segments rather than plain text: it passes private-use markers into the message, then splits
+the result at the markers, so each locale's word order decides where a gated name lands. A message
+that drops a placeholder throws; the source-rendering invariants test renders every generated source
+in every locale to catch that.
+
+English grammar stays in English: the definite article on stores and biomes ("the General Store"),
+"a"/"an", and stripping a quest name's own "The" apply only when the locale is `en`. Other locales'
+messages handle articles themselves. Lists of alternatives ("Pond, River, or Ocean") use
+`Intl.ListFormat`'s disjunction for the active locale.
+
+Most names come from game-translated chunks: monsters use their `pets/skins` family name plus a
+variant message, farm animals use `animals` `<id>/core`, stations are items, and museum wings use
+`museum_wings`. Location & water names have no extracted translations yet, so `source-names.ts` maps
+them to interim machine-translated `source_location_*` & `source_water_*` messages. Scroll bundles
+are keyed by English `bundleName` through a static id map. Replace these with pipeline extraction
+once the game's translation keys are read from `assets/localization/`.
+
 ## Adding a new UI string (agents & humans)
 
 1. Add the English string to `messages/en.json` under a descriptive key (snake_case, prefixed by
