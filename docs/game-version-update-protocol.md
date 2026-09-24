@@ -134,6 +134,12 @@ If any ordering or encoded field changes, choose and document one of these respo
 - Declare older payloads unsupported, reject them rather than misinterpreting them, and communicate
   the limitation.
 
+When rejecting older payloads, bump the transfer version and test every supported historical fixture
+for the explicit rejection. The receiving device cannot repair a stale QR code: tell the player to
+reload Mistria Field Guide on the device that created it, generate a replacement QR code under
+**Data → Transfer**, then scan the replacement. Offer a copyable version of those steps when the
+transfer UI can help relay them to the other device.
+
 Never allow an old transfer payload to decode successfully into different progress. If this review
 becomes repetitive or error-prone, add a committed layout fingerprint or immutable layout manifest
 as part of the concrete version-update work.
@@ -173,7 +179,8 @@ Before merging, verify that:
 - The committed generated-data diff contains only reviewed changes.
 - A preceding-release local state and backup load with the decided behavior.
 - Save imports behave as documented for every supported game-save version.
-- Historical transfer fixtures decode to their original progress.
+- Historical transfer fixtures either decode to their original progress or fail with the explicitly
+  documented compatibility error.
 - Release notes describe any migration, dropped compatibility, or required player action.
 
 Ship application code and generated tracker data in the same deployment. Do not publish candidate

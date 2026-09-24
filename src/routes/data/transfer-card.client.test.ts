@@ -133,6 +133,35 @@ describe("TransferCard scan from image", () => {
     expect(userState.exportState()).toBe(before);
   });
 
+  it("explains how to replace a QR code from an older tracker-data version", async () => {
+    qrScanner.scanImage.mockResolvedValue({
+      data: "CSG9unJjYBgFVAYpDCln0IENDAycsxoYWiZ5qkxgcKCnpQA",
+    });
+    render(TransferCard, { open: true });
+
+    await scanImage(new File(["png"], "old-qr.png", { type: "image/png" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "This QR code was created by an older version of Mistria Field Guide.",
+    );
+    expect(screen.getByRole("button", { name: "Copy recovery steps" })).toBeInTheDocument();
+  });
+
+  it("resets recovery-copy state before another scan", async () => {
+    vi.stubGlobal("navigator", { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+    qrScanner.scanImage.mockResolvedValue({
+      data: "CSG9unJjYBgFVAYpDCln0IENDAycsxoYWiZ5qkxgcKCnpQA",
+    });
+    render(TransferCard, { open: true });
+
+    await scanImage(new File(["png"], "old-qr.png", { type: "image/png" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Copy recovery steps" }));
+    expect(await screen.findByRole("button", { name: "Recovery steps copied" })).toBeInTheDocument();
+
+    await scanImage(new File(["png"], "old-qr-again.png", { type: "image/png" }));
+    expect(await screen.findByRole("button", { name: "Copy recovery steps" })).toBeInTheDocument();
+  });
+
   it("clears a previous result when a new scan starts", async () => {
     qrScanner.scanImage.mockRejectedValue(new Error("No QR code found"));
     render(TransferCard, { open: true });

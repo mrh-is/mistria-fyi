@@ -1,6 +1,6 @@
 /**
  * The pipeline parses, evaluates in place, extracts, assembles, and serializes output. Writes begin only after every transformation succeeds.
- * --parse-only is a v1.0.2-specific smoke test that exits before evaluation.
+ * --parse-only is a v1.0.5-specific smoke test that exits before evaluation.
  */
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -33,7 +33,11 @@ import {
   type AcquisitionSourceAssembly,
   validateAcquisitionSources,
 } from "./acquisition/validate-sources";
-import { DEFAULT_WINDOWS_STEAM_ASSETS_DIR, resolveAssetsZipPath } from "./assets-zip";
+import {
+  DEFAULT_WINDOWS_STEAM_ASSETS_DIR,
+  readInstalledGameVersion,
+  resolveAssetsZipPath,
+} from "./assets-zip";
 import { evaluateExpressions } from "./evaluate";
 import { forEachItem } from "./extractor-helpers";
 import { extractAlmanac, readAlmanacCategories } from "./extractors/almanac";
@@ -361,7 +365,10 @@ async function main(): Promise<void> {
   }
 
   const misc = fiddle.misc as Record<string, unknown> | undefined;
-  const version = versionArg ?? (misc?.version as string | undefined);
+  const version =
+    versionArg ??
+    (misc?.version as string | undefined) ??
+    readInstalledGameVersion(resolveAssetsZipPath(assetsDir));
   if (!version) {
     console.error("❌ No game version found. Pass --version=X.Y.Z or ensure misc.version exists.");
     process.exit(1);
@@ -369,8 +376,8 @@ async function main(): Promise<void> {
   console.log(`  Game version: ${version}\n`);
 
   if (parseOnly) {
-    if (parsed.fileCount !== 295) {
-      console.error(`  ❌ Expected 295 files, got ${parsed.fileCount}`);
+    if (parsed.fileCount !== 297) {
+      console.error(`  ❌ Expected 297 files, got ${parsed.fileCount}`);
       process.exit(1);
     }
     const checks = ["items.other.cooked_dishes", "npcs.holt", "dungeons.dungeons.biomes"];

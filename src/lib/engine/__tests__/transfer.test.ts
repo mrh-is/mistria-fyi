@@ -4,7 +4,12 @@ import { trackerData } from "$lib/data/index.js";
 import { MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "$lib/engine/progress.js";
 import { recordEntries, recordKeys, recordValues } from "$lib/utils.js";
 
-import { decodeTransferPayload, encodeTransferPayload, TRANSFER_VERSION } from "../transfer";
+import {
+  decodeTransferPayload,
+  encodeTransferPayload,
+  OutdatedTransferPayloadError,
+  TRANSFER_VERSION,
+} from "../transfer";
 
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
 import type {
@@ -21,31 +26,23 @@ import type {
 
 const CHECKSUM_BYTE_LENGTH = 4;
 
-// A payload encoded with the v1 codec (no perk bitfield, no married-Villager byte) for a state with
-// mines.floor = 5, villagerLevels.adeline = 3, renown = 10, and all other fields empty. Used to verify
-// the v2 decoder remains backward compatible with payloads generated before this change.
+// A payload encoded with the v1 codec. Kept to verify that stale positional data is rejected before
+// decoding rather than being interpreted against the current tracker-data ordering.
 // cspell:disable-next-line
 const V1_FIXTURE = "AWNgGAVUBqwMXAYDZDUA";
 
-// A payload encoded with the v5 codec using the pre-v6 almanac ordering. Contains two almanac
-// completions: bakery_bread_basket_pastel (old canonical, now bakery_bread_basket_coffee) and
-// animated_waterfall_v1 (unchanged canonical). All other fields are empty/zero.
+// A payload encoded with the v5 codec using a historical almanac ordering. It must be rejected
+// before the ordering can be interpreted as current progress.
 // cspell:disable-next-line
 const V5_ALMANAC_FIXTURE = "BWNgoBXgQOE10MyeUTAKqA0A";
 
-// A payload encoded with the pre-checksum v8 codec, before this codec validated scalar domains.
-// Contains bit-width-maximum scalar values (mine floor 255, renown 65535, every skill level 255,
-// every villager level 15), a marriage relationship, and one recipe. No integrity checksum is
-// present, matching every payload generated before v9. Used to verify that legacy payloads still
-// decode and that their out-of-domain scalars are now clamped rather than trusted verbatim.
+// A payload encoded with the pre-checksum v8 codec. It represents the final pre-checksum layout and
+// must be rejected before its positional fields are decoded.
 // cspell:disable-next-line
 const V8_BOUNDARY_FIXTURE = "CGNgGAVUBv_xgYFzVgNDyyRPlQkMDvS0FAA";
 
-// A payload encoded with the current v9 codec. Contains the legitimate maximum in-domain scalar
-// values (mine floor 100, renown 100, every skill level 60, every villager level 12), a marriage
-// relationship, one recipe, and a valid integrity checksum. Protects the current layout and
-// checksum placement from accidental reinterpretation while the generated tracker data remains
-// compatible.
+// A payload encoded with the v9 codec. It is the immediately preceding layout and must be rejected
+// after the v1.0.5 tracker data changed positional orderings.
 // cspell:disable-next-line
 const V9_BOUNDARY_FIXTURE = "CSG9unJjYBgFVAYpDCln0IENDAycsxoYWiZ5qkxgcKCnpQA";
 
@@ -146,9 +143,9 @@ function toBase64url(bytes: Uint8Array): string {
     .replace(/=+$/, "");
 }
 
-describe("transfer codec v9", () => {
-  it("has version 9", () => {
-    expect(TRANSFER_VERSION).toBe(9);
+describe("transfer codec v10", () => {
+  it("has version 10", () => {
+    expect(TRANSFER_VERSION).toBe(10);
   });
 
   it("round-trips maximum in-domain scalar and packed relationship values", async () => {
@@ -386,85 +383,19 @@ describe("transfer codec v9", () => {
     expect(decoded.almanacRecipes).toEqual(new Set(recipeIds));
   });
 
-  it("decodes v1 payload without perks, relationships, pet, date, or progression fields", async () => {
-    const decoded = await decodeTransferPayload(V1_FIXTURE);
-    expect(decoded.unlockedPerks).toEqual(new Set());
-    expect(decoded.villagerRelationships).toEqual({});
-    expect(decoded.petCosmetics).toEqual(new Set());
-    expect(decoded.petSkins).toEqual(new Set());
-    expect(decoded.dates).toEqual(new Set());
-    expect(decoded.hasUpperFloor).toBe(false);
-    expect(decoded.reachedSeason).toBe("spring");
-    expect(decoded.childChoice).toBe("undeclared");
-    expect(decoded.almanacRecipes).toEqual(new Set());
-    expect(decoded.mines?.floor).toBe(5);
-    expect(decoded.villagerLevels?.["adeline" as VillagerId]).toBe(3);
-    expect(decoded.renown).toBe(10);
-  });
-
-  it("decodes v5 payload and normalizes old almanac canonicals to new", async () => {
-    const decoded = await decodeTransferPayload(V5_ALMANAC_FIXTURE);
-    const almanac = decoded.almanac ?? new Set();
-    expect(almanac.has("bakery_bread_basket_coffee" as never)).toBe(true);
-    expect(almanac.has("bakery_bread_basket_pastel" as never)).toBe(false);
-    expect(almanac.has("animated_waterfall_v1" as never)).toBe(true);
-    expect(almanac.size).toBe(2);
-  });
-
-  it("decodes the historical v8 boundary fixture and clamps its out-of-domain scalars", async () => {
-    const maxFloor = trackerData.mines.biomes.at(-1)?.floors.end ?? 0;
-    const maxRenown = trackerData.townRanks.at(-1)?.levels.end ?? 0;
-    const decoded = await decodeTransferPayload(V8_BOUNDARY_FIXTURE);
-    const marriedVillager = recordKeys(trackerData.villagers).find(
-      (id) => decoded.villagerRelationships?.[id] === "married",
-    );
-
-    expect(decoded.mines?.floor).toBe(maxFloor);
-    expect(decoded.renown).toBe(maxRenown);
-    expect(new Set(Object.values(decoded.villagerLevels ?? {}))).toEqual(
-      new Set([MAX_VILLAGER_LEVEL]),
-    );
-    expect(new Set(Object.values(decoded.skillLevels ?? {}))).toEqual(new Set([MAX_SKILL_LEVEL]));
-    expect(marriedVillager).toBeDefined();
-    expect(decoded.almanacRecipes?.size).toBe(1);
-  });
-
-  it("decodes the current v9 boundary fixture", async () => {
-    const villagerIds = recordKeys(trackerData.villagers);
-    const dateableVillagers = villagerIds.filter((id) => trackerData.villagers[id].dateable);
-    const recipeId = recordKeys(trackerData.recipes)[0];
-    const relationships = Object.fromEntries(
-      dateableVillagers.map((id) => [id, "platonic"]),
-    ) as Partial<Record<VillagerId, VillagerRelationship>>;
-    relationships[dateableVillagers[0]] = "married";
-    const maxFloor = trackerData.mines.biomes.at(-1)?.floors.end ?? 0;
-    const maxRenown = trackerData.townRanks.at(-1)?.levels.end ?? 0;
-    const fixtureState = makeCompleted({
-      almanacRecipes: new Set([recipeId]),
-      mines: { floor: maxFloor, spells: new Set() },
-      renown: maxRenown,
-      skillLevels: Object.fromEntries(
-        recordKeys(trackerData.skills).map((id) => [id, MAX_SKILL_LEVEL]),
-      ),
-      villagerLevels: Object.fromEntries(villagerIds.map((id) => [id, MAX_VILLAGER_LEVEL])),
-      villagerRelationships: relationships,
-    });
-    expect(await encodeTransferPayload(fixtureState)).toBe(V9_BOUNDARY_FIXTURE);
-
-    const decoded = await decodeTransferPayload(V9_BOUNDARY_FIXTURE);
-    const marriedVillager = recordKeys(trackerData.villagers).find(
-      (id) => decoded.villagerRelationships?.[id] === "married",
-    );
-
-    expect(decoded.mines?.floor).toBe(maxFloor);
-    expect(decoded.renown).toBe(maxRenown);
-    expect(new Set(Object.values(decoded.villagerLevels ?? {}))).toEqual(
-      new Set([MAX_VILLAGER_LEVEL]),
-    );
-    expect(new Set(Object.values(decoded.skillLevels ?? {}))).toEqual(new Set([MAX_SKILL_LEVEL]));
-    expect(marriedVillager).toBeDefined();
-    expect(decoded.almanacRecipes?.size).toBe(1);
-  });
+  it.each([
+    ["v1", V1_FIXTURE],
+    ["v5", V5_ALMANAC_FIXTURE],
+    ["v8", V8_BOUNDARY_FIXTURE],
+    ["v9", V9_BOUNDARY_FIXTURE],
+  ])(
+    "rejects %s payloads so their shifted item ordering cannot corrupt progress",
+    async (_, payload) => {
+      await expect(decodeTransferPayload(payload)).rejects.toBeInstanceOf(
+        OutdatedTransferPayloadError,
+      );
+    },
+  );
 
   it("round-trips almanac with canonical IDs", async () => {
     const colorwayEntry = recordValues(trackerData.almanac)
@@ -515,17 +446,6 @@ describe("transfer codec v9", () => {
     expect(decoded.almanacRecipes).toEqual(partial);
   });
 
-  // The v1 fixture (line 25) exercises the pre-v8 path where almanacRecipes is absent:
-  // the decoder defaults it to an empty set. This covers all pre-v8 versions (1-7) because
-  // the recipe bitfield was added in v8 and the `version >= 8` guard is the sole branch.
-  it("defaults almanacRecipes to empty for all pre-v8 versions", async () => {
-    const decodedV1 = await decodeTransferPayload(V1_FIXTURE);
-    expect(decodedV1.almanacRecipes).toEqual(new Set());
-
-    const decodedV5 = await decodeTransferPayload(V5_ALMANAC_FIXTURE);
-    expect(decodedV5.almanacRecipes).toEqual(new Set());
-  });
-
   it.each(["", "not+a/valid=payload", "A", "%%%%"])(
     "rejects malformed base64url envelope %j",
     async (payload) => {
@@ -549,9 +469,9 @@ describe("transfer codec v9", () => {
     ).rejects.toThrow(/integrity checksum/i);
   });
 
-  it("rejects a missing compressed body for a pre-checksum version", async () => {
-    await expect(decodeTransferPayload(toBase64url(new Uint8Array([8])))).rejects.toThrow(
-      /compressed transfer payload/i,
+  it("rejects pre-v10 payloads before attempting decompression", async () => {
+    await expect(decodeTransferPayload(toBase64url(new Uint8Array([9])))).rejects.toBeInstanceOf(
+      OutdatedTransferPayloadError,
     );
   });
 

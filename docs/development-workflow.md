@@ -165,15 +165,16 @@ additional local checks against the installed game assets:
 
 ```sh
 pnpm run test:pipeline:assets
-pnpm run pipeline -- input/assets --version=1.0.2
+pnpm run pipeline -- --version=1.0.5
 ```
 
-`test:pipeline:assets` validates the canonical v1.0.2 fixture and fails when its resolved assets
-path is missing. Set `MISTRIA_ASSETS=/path/to/assets` to use another local assets root. The
-`pipeline` script changes directory into `pipeline/` before running, so the assets path is relative
-to that directory, and the v1.0.2 fixture has no `misc.version`, so `--version` is required. The
-command regenerates `src/lib/data/tracker-data.json`; review that diff before committing. CI cannot
-run either command because licensed game assets are not distributed with the repository.
+`test:pipeline:assets` validates the canonical v1.0.5 fixture and fails when its resolved assets
+path is missing. On Windows it defaults to Steam's `Fields of Mistria/assets.zip`; never unpack the
+full archive without explicit approval. Set `MISTRIA_ASSETS=/path/to/assets` or
+`MISTRIA_ASSETS=/path/to/assets.zip` to use another input. The pipeline reads the sibling
+`FieldsOfMistria.exe` Product Version when available; otherwise pass `--version=X.Y.Z`. The command
+regenerates `src/lib/data/tracker-data.json`; review that diff before committing. CI cannot run
+either command because licensed game assets are not distributed with the repository.
 
 The commands above cover routine regeneration from the same game version. When moving pipeline input
 to a new Fields of Mistria version, follow the

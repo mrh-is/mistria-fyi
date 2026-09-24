@@ -12,7 +12,9 @@ itself (Steam's own distribution format — see below). Game assets are ignored 
 present in a fresh clone.
 
 ```sh
+pnpm run pipeline -- --version=1.0.5
 pnpm run pipeline -- /path/to/assets
+pnpm run pipeline -- /path/to/assets.zip
 MISTRIA_ASSETS=/path/to/assets pnpm run pipeline
 pnpm run pipeline -- /path/to/assets --parse-only
 ```
@@ -26,6 +28,9 @@ C:\Program Files (x86)\Steam\steamapps\common\Fields of Mistria
 
 so `pnpm run pipeline -- --sprites` (or the other commands below) works with no configuration on a
 stock Windows dev machine that owns the game.
+
+The pipeline reads `FieldsOfMistria.exe`'s Product Version beside the archive automatically. On
+macOS and Linux, pass `--version=X.Y.Z` when the assets omit a native version value.
 
 That directory contains `assets.zip` rather than an extracted `fiddle/`. `parseFiddle` (disk) and
 `parseFiddleFromZip` (`parse-fiddle.ts`) both produce the same `ParsedGameData` shape, so every
@@ -43,7 +48,7 @@ zip-only-without-extraction mode yet; producing `iconSpritesByItemId` still goes
 `extractAlmanac`, which also does per-locale name lookups that read from disk, so a full item-sprite
 regeneration still needs `fiddle/` extracted first and `--sprites` on the full pipeline run.
 
-`--parse-only` currently enforces the v1.0.2 fixture’s 295 non-metadata files and three
+`--parse-only` currently enforces the v1.0.5 fixture’s 297 non-metadata files and three
 representative paths, so it is not a version-agnostic validator.
 
 Supporting a new Fields of Mistria version is a reviewed application release, not a routine

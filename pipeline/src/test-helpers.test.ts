@@ -38,7 +38,7 @@ describe("asset test helpers", () => {
     vi.stubEnv("MISTRIA_ASSETS", "/definitely/missing/mistria-assets");
 
     expect(() => requireGameAssetsDir()).toThrow(
-      "Game assets not found at /definitely/missing/mistria-assets/fiddle",
+      `Game assets not found at ${join("/definitely/missing/mistria-assets", "fiddle")}`,
     );
   });
 
@@ -48,6 +48,8 @@ describe("asset test helpers", () => {
     writeFileSync(join(assetsDir, "fiddle"), "not a directory");
     vi.stubEnv("MISTRIA_ASSETS", assetsDir);
 
-    expect(() => requireGameAssetsDir()).toThrow(`Game assets not found at ${assetsDir}/fiddle`);
+    expect(() => requireGameAssetsDir()).toThrow(
+      `Game assets not found at ${join(assetsDir, "fiddle")}`,
+    );
   });
 });
