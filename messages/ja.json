@@ -494,9 +494,11 @@
   "source_renown": "町の評判ランクをレベル{level}にする",
   "source_ritual_chamber": "{perk}を習得した状態で、儀式の間で作る",
   "source_scroll_bundle": "{store}で{bundle}を購入",
+  "source_scroll_bundle_qualified": "{qualifier}、{store}で{bundle}を購入",
   "source_spouse_gift": "{villager}と結婚する",
   "source_station": "{station}で加工",
   "source_store": "{store}で購入",
+  "source_store_qualified": "{qualifier}、{store}で購入",
   "source_treasure_chest": "{chest}を釣り上げる",
   "source_tree": "{sapling}から収穫",
   "source_upgrade_adept_kitchen": "熟練のキッチンにアップグレード",
@@ -517,8 +519,6 @@
   "source_perk_label_unknown": "特技「{perk}」",
   "source_date_label": "{season}{day}日",
   "source_date_label_year": "{year}年目{season}{day}日",
-  "source_qualifier_after_action": "（{action}後）",
-  "source_store_action_repairing": "修理",
   "source_clause_append": "、{clause}",
   "source_clause_after_one_of": "次のいずれかの後：{options}",
   "source_clause_upgraded_home": "家をアップグレードした後",
@@ -571,6 +571,5 @@
         "countPlural=other": "{wing}の展示セットを{count}個完成させる"
       }
     }
-  ],
-  "source_store_action_upgrading": "アップグレード"
+  ]
 }

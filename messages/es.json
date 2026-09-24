@@ -508,9 +508,11 @@
   "source_renown": "Subir el rango de renombre del pueblo al nivel {level}",
   "source_ritual_chamber": "Fabricar en la cámara ritual con {perk}",
   "source_scroll_bundle": "Comprar {bundle} en {store}",
+  "source_scroll_bundle_qualified": "Comprar {bundle} en {store} ({qualifier})",
   "source_spouse_gift": "Casarse con {villager}",
   "source_station": "Procesar en: {station}",
   "source_store": "Comprar en {store}",
+  "source_store_qualified": "Comprar en {store} ({qualifier})",
   "source_treasure_chest": "Pescar: {chest}",
   "source_tree": "Cosechar de: {sapling}",
   "source_upgrade_adept_kitchen": "Mejorar a la cocina experta",
@@ -531,8 +533,6 @@
   "source_perk_label_unknown": "la ventaja {perk}",
   "source_date_label": "{day} de {season}",
   "source_date_label_year": "{day} de {season}, año {year}",
-  "source_qualifier_after_action": " (tras {action})",
-  "source_store_action_repairing": "la reparación",
   "source_clause_append": ", {clause}",
   "source_clause_after_one_of": "tras una de estas condiciones: {options}",
   "source_clause_upgraded_home": "tras mejorar tu casa",
@@ -587,6 +587,5 @@
         "countPlural=other": "Completar {count} colecciones en el ala de {wing}"
       }
     }
-  ],
-  "source_store_action_upgrading": "la mejora"
+  ]
 }
