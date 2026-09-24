@@ -156,7 +156,9 @@ describe("TransferCard scan from image", () => {
 
     await scanImage(new File(["png"], "old-qr.png", { type: "image/png" }));
     await fireEvent.click(screen.getByRole("button", { name: "Copy recovery steps" }));
-    expect(await screen.findByRole("button", { name: "Recovery steps copied" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Recovery steps copied" }),
+    ).toBeInTheDocument();
 
     await scanImage(new File(["png"], "old-qr-again.png", { type: "image/png" }));
     expect(await screen.findByRole("button", { name: "Copy recovery steps" })).toBeInTheDocument();
