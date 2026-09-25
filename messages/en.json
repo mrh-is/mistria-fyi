@@ -482,7 +482,7 @@
   "source_lost_and_found": "Obtain from the Lost and Found chest",
   "source_mine": "Mine in {biome}",
   "source_mine_fish": "Fish in {biome}",
-  "source_mine_fish_any": "Fish in the mines",
+  "source_mine_fish_any": "Fish in the Mines",
   "source_mines_chest": "Find in a Treasure Chest in {biome}",
   "source_mines_chest_perk": "Find in a Treasure Chest in {biome}, with {perk}",
   "source_mines_dig_site": "Dig up in {biome}",
