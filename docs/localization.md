@@ -52,26 +52,29 @@ message that mentions one of these concepts, use the term below.
 
 - **Terms inside sentences** ("Decrease renown", "Mines floor {floor}") stay Paraglide messages,
   since interpolating a game label into a sentence breaks grammar across languages. Their wording
-  follows the game's term for the same concept (`renown`, `town_rank`, & `villagers` in the `ui`
-  chunk; the mine & quest names in `mines`, `items`, & `quests`).
+  follows the game's own sentence-level term, checked against the 1.0.5 translation tables
+  (`misc_local/confirm_leave_dungeon`, `town_rank`, `rank`, `select_a_villager`, &
+  `invite_npc_to_festival`).
 - **Mines, Quests, Recipes, & Cosmetics** (`category_*_name`, `source_location_mines`) are
-  standalone labels, but the game's `fiddle/misc_local.toml` (as of 1.0.2) has no key for any of
-  them. The game names the mines only inside sentences (`confirm_leave_dungeon`: "Are you sure you
-  want to exit the Mines?") and in proper names (`unlocking_the_mines_pt_2`, `mines_wooden_arch`),
-  so the Mines message matches the noun those names use.
+  standalone labels, but the game's `fiddle/misc_local.toml` has no key for any of them. The game
+  names the mines only inside sentences ("Are you sure you want to exit the Mines?"), so the Mines
+  message uses that sentence's noun.
 - **Perks** have no game label at all (`misc_local` has none, and perk names don't include the
   noun), so each locale's word is our own choice, held consistent. Replace it if the game adds one.
 
-| Concept   | en        | es                      | fr                 | ja           | ko        | ru          | zh-Hans  | zh-Hant  |
-| --------- | --------- | ----------------------- | ------------------ | ------------ | --------- | ----------- | -------- | -------- |
-| Mines     | Mines     | minas                   | mines              | 鉱坑         | 광산      | шахты       | 矿洞     | 礦洞     |
-| Renown    | renown    | reputación              | renommée           | 名声         | 명성      | репутация   | 声望     | 聲望     |
-| Town rank | town rank | categoría (de la aldea) | rang (de la ville) | タウンランク | 마을 등급 | ранг города | 城镇等级 | 城鎮段位 |
-| Villagers | villager  | aldeano                 | habitant           | 町の住民     | 마을 주민 | житель      | 居民     | 居民     |
-| Perks     | perk      | ventaja                 | atout              | パーク       | 특전      | перк        | 天赋     | 天賦     |
+| Concept   | en        | es                      | fr                       | ja           | ko        | ru          | zh-Hans  | zh-Hant  |
+| --------- | --------- | ----------------------- | ------------------------ | ------------ | --------- | ----------- | -------- | -------- |
+| Mines     | Mines     | minas                   | mines                    | 鉱坑         | 광산      | шахты       | 矿洞     | 礦洞     |
+| Renown    | renown    | reputación              | renommée                 | 名声         | 명성      | репутация   | 声望     | 聲望     |
+| Town rank | town rank | categoría (de la aldea) | classement (de la ville) | タウンランク | 마을 등급 | ранг города | 城镇等级 | 城鎮段位 |
+| Villagers | villager  | aldeano                 | habitant                 | 町の住民     | 마을 주민 | житель      | 村民     | 村民     |
+| Perks     | perk      | ventaja                 | atout                    | パーク       | 특전      | перк        | 天赋     | 天賦     |
 
-Note: the game's French town-rank label is abbreviated ("Class. de la ville"), so the French
-messages keep "rang" rather than guessing at the expansion.
+Note: in both Chinese scripts the game titles its villager list 居民列表 (the `ui` chunk's
+`villagers`) but calls an individual villager 村民 (`select_a_villager`). The category heading reads
+the `ui` chunk; every message uses 村民. Hearts follow the game's phrasing too: a heart count is
+"好感度達到10心" in zh-Hant and "N颗心" in zh-Hans, and adjusting hearts is "好感度" in zh-Hans (the
+game never writes 心心).
 
 ### How name chunks load
 
