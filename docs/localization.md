@@ -54,13 +54,13 @@ message that mentions one of these concepts, use the term below.
   since interpolating a game label into a sentence breaks grammar across languages. Their wording
   follows the game's term for the same concept (`renown`, `town_rank`, & `villagers` in the `ui`
   chunk; the mine & quest names in `mines`, `items`, & `quests`).
-- **Mines** (`category_mines_name`, `source_location_mines`) is a standalone label, but it has no
-  `misc_local` key in `APP_UI_STRINGS` yet, and finding one needs the game assets. The message
-  matches the noun the game's own mine names use (`unlocking_the_mines_pt_2`, `mines_wooden_arch`).
-  The same holds for the Quests, Recipes, & Cosmetics category names until someone checks
-  `misc_local` for them.
-- **Perks** have no extracted game term at all, so each locale's word is our own choice, held
-  consistent. Replace it once the pipeline extracts the game's label.
+- **Mines, Quests, Recipes, & Cosmetics** (`category_*_name`, `source_location_mines`) are
+  standalone labels, but the game's `fiddle/misc_local.toml` (as of 1.0.2) has no key for any of
+  them. The game names the mines only inside sentences (`confirm_leave_dungeon`: "Are you sure you
+  want to exit the Mines?") and in proper names (`unlocking_the_mines_pt_2`, `mines_wooden_arch`),
+  so the Mines message matches the noun those names use.
+- **Perks** have no game label at all (`misc_local` has none, and perk names don't include the
+  noun), so each locale's word is our own choice, held consistent. Replace it if the game adds one.
 
 | Concept   | en        | es                      | fr                 | ja           | ko        | ru          | zh-Hans  | zh-Hant  |
 | --------- | --------- | ----------------------- | ------------------ | ------------ | --------- | ----------- | -------- | -------- |
