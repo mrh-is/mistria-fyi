@@ -182,6 +182,7 @@
   "settings_choose_language": "언어 선택",
   "settings_languages_group_aria": "언어 목록",
   "settings_beta_translation_aria": "베타 번역",
+  "settings_language_offline": "{language} 텍스트를 다운로드하려면 온라인에 연결한 후 다시 시도하세요.",
   "settings_theme_label": "테마",
   "settings_theme_auto": "자동",
   "settings_theme_light": "라이트",

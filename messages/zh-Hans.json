@@ -182,6 +182,7 @@
   "settings_choose_language": "选择语言",
   "settings_languages_group_aria": "语言列表",
   "settings_beta_translation_aria": "测试版翻译",
+  "settings_language_offline": "请联网下载{language}文本，然后重试。",
   "settings_theme_label": "主题",
   "settings_theme_auto": "自动",
   "settings_theme_light": "浅色",

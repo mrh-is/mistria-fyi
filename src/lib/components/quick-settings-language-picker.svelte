@@ -9,13 +9,22 @@
   import { getLocale } from "$lib/paraglide/runtime.js";
   import { localePreference } from "$lib/stores/locale-preference.svelte.js";
 
-  import type { LocaleManifest } from "$lib/types/locale.js";
+  import type { LocaleCode, LocaleManifest } from "$lib/types/locale.js";
 
   let open = $state(false);
+  /** A locale the player tried to switch to while offline, before it was downloaded. */
+  let unavailableLocale = $state<LocaleCode | null>(null);
   const locales = localeManifest as LocaleManifest;
   const currentLocale = getLocale();
   const currentLocaleName =
     locales.find(({ tag }) => tag === currentLocale)?.displayName ?? "English";
+  // Named in the reader's own language ("Japanese", not "日本語"), since it sits inside a sentence.
+  const languageNames = new Intl.DisplayNames([currentLocale], { type: "language" });
+
+  async function select(locale: LocaleCode): Promise<void> {
+    unavailableLocale = null;
+    if (!(await localePreference.select(locale))) unavailableLocale = locale;
+  }
 </script>
 
 <div class="language-setting">
@@ -52,9 +61,7 @@
           class:language-setting__option--current={locale.tag === currentLocale}
           class="language-setting__option"
           type="button"
-          onclick={() => {
-            localePreference.select(locale.tag);
-          }}
+          onclick={() => void select(locale.tag)}
         >
           <span>{locale.displayName}</span>
           {#if locale.status === "beta"}
@@ -64,6 +71,17 @@
           {/if}
         </button>
       {/each}
+      <p
+        class="language-setting__offline"
+        class:language-setting__offline--shown={unavailableLocale}
+        role="status"
+      >
+        {#if unavailableLocale}
+          {m.settings_language_offline({
+            language: languageNames.of(unavailableLocale) ?? unavailableLocale,
+          })}
+        {/if}
+      </p>
     </div>
   {/if}
 </div>
@@ -149,6 +167,18 @@
     background: color-mix(in srgb, var(--primary) 12%, var(--paper-raised));
     outline: 2px solid var(--primary);
     outline-offset: -2px;
+  }
+
+  .language-setting__offline {
+    grid-column: 1 / -1;
+    color: var(--ink-muted);
+    font-family: var(--font-annotation);
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .language-setting__offline--shown {
+    padding: 6px 8px;
   }
 
   .language-setting__beta {

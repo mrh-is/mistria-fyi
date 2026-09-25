@@ -191,6 +191,7 @@
   "settings_choose_language": "Выбрать язык",
   "settings_languages_group_aria": "Языки",
   "settings_beta_translation_aria": "Бета-перевод",
+  "settings_language_offline": "Подключитесь к интернету, чтобы загрузить текст на языке «{language}», и повторите попытку.",
   "settings_theme_label": "Тема",
   "settings_theme_auto": "Авто",
   "settings_theme_light": "Светлая",

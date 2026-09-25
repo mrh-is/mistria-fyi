@@ -185,6 +185,7 @@
   "settings_choose_language": "Choose language",
   "settings_languages_group_aria": "Languages",
   "settings_beta_translation_aria": "Beta translation",
+  "settings_language_offline": "Go online to download the {language} text, then try again.",
   "settings_theme_label": "Theme",
   "settings_theme_auto": "Auto",
   "settings_theme_light": "Light",
