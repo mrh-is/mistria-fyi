@@ -4,6 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 import { configDefaults } from "vitest/config";
 
+import { localeNameChunksPlugin } from "./src/lib/build/locale-name-chunks.js";
 import { LOCALE_CODES } from "./src/lib/types/locale.js";
 
 // All 8 locales are prefixed symmetrically, including the base locale "en" — there is no
@@ -35,6 +36,7 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     sveltekit(),
+    localeNameChunksPlugin(),
     paraglideVitePlugin({
       outdir: "./src/lib/paraglide",
       project: "./project.inlang",
