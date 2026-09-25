@@ -182,6 +182,7 @@
   "settings_choose_language": "選擇語言",
   "settings_languages_group_aria": "語言列表",
   "settings_beta_translation_aria": "測試版翻譯",
+  "settings_language_offline": "請連上網路下載{language}文字，然後再試一次。",
   "settings_theme_label": "主題",
   "settings_theme_auto": "自動",
   "settings_theme_light": "淺色",

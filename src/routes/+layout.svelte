@@ -20,6 +20,7 @@
   import { getTextDirection } from "$lib/paraglide/runtime.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
+  import { keepLocaleOffline } from "$lib/utils/offline-locales";
 
   let { children } = $props();
   let feedbackContext = setFeedbackContext(new FeedbackContext());
@@ -48,6 +49,11 @@
   $effect(() => {
     document.documentElement.lang = page.data.locale;
     document.documentElement.dir = getTextDirection(page.data.locale);
+  });
+
+  // The service worker precaches no name chunks; the locale being read is the one kept offline.
+  $effect(() => {
+    keepLocaleOffline(page.data.locale);
   });
 </script>
 
