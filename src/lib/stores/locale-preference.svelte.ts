@@ -1,7 +1,7 @@
 import { goto } from "$app/navigation";
 import { page } from "$app/state";
-import { loadNames } from "$lib/data/names";
 import { deLocalizeHref, localizeHref, setLocale } from "$lib/paraglide/runtime.js";
+import { downloadLocale } from "$lib/utils/offline-locales";
 
 import type { LocaleCode } from "$lib/types/locale";
 
@@ -14,17 +14,13 @@ import type { LocaleCode } from "$lib/types/locale";
  */
 export const localePreference = {
   /**
-   * Resolves `false`, without switching, when `locale`'s names can't be loaded: the player is
-   * offline and hasn't downloaded that locale yet. Its `ui` chunk is the probe: every page needs
-   * it, and the service worker caches a kept-offline locale's chunks together, so a cached `ui`
-   * chunk almost always means the rest are cached too.
+   * Resolves `false`, without switching, when `locale` isn't fully downloaded and can't be now:
+   * the player is offline. The service worker fetches any missing name chunks first, so a switch
+   * never lands on a page whose names are missing. Without a controlling worker there's no
+   * offline cache to check, and the switch goes ahead.
    */
   async select(locale: LocaleCode): Promise<boolean> {
-    try {
-      await loadNames(locale, ["ui"]);
-    } catch {
-      return false;
-    }
+    if ((await downloadLocale(locale)) === false) return false;
     void setLocale(locale, { reload: false });
     // The target is the page already being displayed, re-localized: `page.url.pathname` is the
     // router's own resolved path, so there is no route literal here for `resolve()` to check.

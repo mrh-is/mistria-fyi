@@ -88,6 +88,14 @@ test("keeps the visited locale offline and leaves other locales to download on d
   await expect.poll(() => cachedPaths(page, enChunks), { timeout: 15_000 }).toEqual(enChunks);
   expect(await cachedPaths(page, jaChunks)).toEqual([]);
 
+  // Leave Japanese one chunk short of complete, as a download the network cut off would.
+  const [, ...partialJaChunks] = jaChunks;
+  await page.evaluate(async (paths) => {
+    const version = (await caches.keys()).find((name) => name.startsWith("cache-"));
+    if (!version) throw new Error("The service worker has no versioned cache");
+    await (await caches.open(version)).addAll(paths);
+  }, partialJaChunks);
+
   await context.setOffline(true);
 
   // A category this session never opened still renders its names offline.
@@ -103,7 +111,7 @@ test("keeps the visited locale offline and leaves other locales to download on d
   await expect(page.getByRole("status").filter({ hasText: /\d+ results?/ })).toBeVisible();
   await page.getByRole("button", { name: "Cancel" }).click();
 
-  // An undownloaded locale explains itself instead of navigating to a broken page.
+  // An incomplete locale explains itself instead of navigating to a broken page.
   await page.getByRole("button", { name: "Quick settings" }).click();
   await page.getByRole("button", { name: "Choose language" }).click();
   await page.getByRole("button", { name: "日本語 Beta translation" }).click();

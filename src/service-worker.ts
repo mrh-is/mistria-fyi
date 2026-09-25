@@ -5,6 +5,7 @@
 
 import {
   cacheLocaleChunks,
+  type CacheLocalesReply,
   cacheLocalesRequest,
   fetchRuntimeRequest,
   isEligibleForRuntimeCaching,
@@ -49,11 +50,20 @@ sw.addEventListener("install", (event) => {
 
 sw.addEventListener("message", (event) => {
   const locales = cacheLocalesRequest(event.data, LOCALE_NAME_CHUNKS);
-  if (!locales?.length) return;
+  if (!locales) return;
+  // A reply is this version's cache speaking for itself, which a page can't infer: the modules it
+  // already imported may come from a cache an update has since deleted.
+  const [reply] = event.ports;
   event.waitUntil(
     (async () => {
+      // Answer even if caching throws, so a waiting page never stalls until its timeout.
+      let failed = ["cache unavailable"];
+      try {
+        failed = await cacheLocaleChunks(await caches.open(CACHE), locales, LOCALE_NAME_CHUNKS);
+      } finally {
+        reply?.postMessage({ failed } satisfies CacheLocalesReply);
+      }
       await rememberOfflineLocales(await caches.open(OFFLINE_LOCALES_CACHE), locales);
-      await cacheLocaleChunks(await caches.open(CACHE), locales, LOCALE_NAME_CHUNKS);
     })(),
   );
 });
