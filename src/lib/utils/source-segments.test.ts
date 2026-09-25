@@ -54,13 +54,16 @@ const BASE_LOOKUPS: SegmentLookups = {
       name: "Deep Earth",
     },
   ],
+  bundleNames: {},
   categoryVisibility: {},
   entityVisibility: undefined,
   festivals: {},
   itemNames: {},
   itemVisibility: {},
+  locale: "en",
   locationNames: {},
   monsterNames: {},
+  museumWingNames: {},
   perks: {
     ["taste_maker" as PerkId]: {
       name: "Taste Maker",
@@ -88,6 +91,7 @@ const BASE_LOOKUPS: SegmentLookups = {
   treasureChestTiers: {},
   villagerNames: {},
   villagerVisibility: {},
+  waterNames: {},
 };
 
 describe("buildPerkLabel", () => {
@@ -146,19 +150,19 @@ describe("buildBiomeLabel", () => {
 });
 
 describe("buildStoreQualifier", () => {
-  it("returns empty array when visibility is always", () => {
+  it("returns undefined when visibility is always", () => {
     expect(
       buildStoreQualifier(
         { type: "store", storeId: "inn" as StoreId, visibility: { type: "always" } },
         BASE_LOOKUPS,
       ),
-    ).toEqual([]);
+    ).toBeUndefined();
   });
 
-  it("returns empty array when visibility is undefined", () => {
-    expect(buildStoreQualifier({ type: "store", storeId: "inn" as StoreId }, BASE_LOOKUPS)).toEqual(
-      [],
-    );
+  it("returns undefined when visibility is undefined", () => {
+    expect(
+      buildStoreQualifier({ type: "store", storeId: "inn" as StoreId }, BASE_LOOKUPS),
+    ).toBeUndefined();
   });
 
   it("uses upgradeAction from store record", () => {
@@ -176,13 +180,11 @@ describe("buildStoreQualifier", () => {
       { type: "store", storeId: "general" as StoreId, visibility: vis },
       lookups,
     );
-    expect(result).toEqual([
-      {
-        condition: vis,
-        redacted: [" (after ", { redacted: true }, ")"],
-        revealed: [" (after repairing)"],
-      },
-    ]);
+    expect(result).toEqual({
+      condition: vis,
+      redacted: [{ redacted: true }],
+      revealed: ["after repairing"],
+    });
   });
 
   it("defaults to upgrading when no upgradeAction", () => {
@@ -200,8 +202,8 @@ describe("buildStoreQualifier", () => {
       { type: "store", storeId: "inn" as StoreId, visibility: vis },
       lookups,
     );
-    expect(result[0]).toMatchObject({
-      revealed: [" (after upgrading)"],
+    expect(result).toMatchObject({
+      revealed: ["after upgrading"],
     });
   });
 
@@ -220,13 +222,11 @@ describe("buildStoreQualifier", () => {
       },
     };
 
-    expect(buildStoreQualifier(source, lookups)).toEqual([
-      {
-        condition: source.visibility,
-        redacted: [" (after ", { redacted: true }, ")"],
-        revealed: [" (after repairing)"],
-      },
-    ]);
+    expect(buildStoreQualifier(source, lookups)).toEqual({
+      condition: source.visibility,
+      redacted: [{ redacted: true }],
+      revealed: ["after repairing"],
+    });
   });
 
   const STORE_LOOKUPS: SegmentLookups = {
@@ -251,32 +251,32 @@ describe("buildStoreQualifier", () => {
     [
       { type: "perkUnlocked", perkId: "taste_maker" },
       { type: "perkUnlocked", perkId: "taste_maker" },
-      ", with the Taste Maker perk (Cooking tier 1)",
+      "with the Taste Maker perk (Cooking tier 1)",
     ],
     [
       { type: "skillLevel", level: 15, skillId: "woodcrafting" },
       { type: "skillLevel", level: 15, skillId: "woodcrafting" },
-      ", at Woodcrafting level 15",
+      "at Woodcrafting level 15",
     ],
     [
       { type: "minesLevel", floor: 40 },
       { type: "minesLevel", floor: 40 },
-      ", after reaching Mines floor 40",
+      "after reaching Mines floor 40",
     ],
     [
       { type: "heartLevel", level: 4, villagerId: "juniper" },
       { type: "heartLevel", level: 4, villagerId: "juniper" },
-      ", at 4 hearts with Juniper",
+      "at 4 hearts with Juniper",
     ],
     [
       { type: "quest", questId: "stock_the_pantry", state: "completed" },
       { type: "questAvailable", questId: "stock_the_pantry" },
-      ", after completing Stock the Pantry",
+      "after completing Stock the Pantry",
     ],
     [
       { type: "quest", questId: "stock_the_pantry", state: "available" },
       { type: "questAvailable", questId: "stock_the_pantry" },
-      ", once Stock the Pantry is available",
+      "once Stock the Pantry is available",
     ],
   ] as const)("renders stock availability %#", (availability, visibility, revealed) => {
     const source: Source = {
@@ -286,9 +286,9 @@ describe("buildStoreQualifier", () => {
       visibility: visibility as unknown as VisibilityCondition,
     };
 
-    expect(buildStoreQualifier(source, STORE_LOOKUPS)).toContainEqual({
+    expect(buildStoreQualifier(source, STORE_LOOKUPS)).toEqual({
       condition: source.visibility,
-      redacted: [", ", { redacted: true }],
+      redacted: [{ redacted: true }],
       revealed: [revealed],
     });
   });
@@ -307,8 +307,9 @@ describe("buildStoreQualifier", () => {
       visibility: { type: "minesLevel", floor: 40 },
     };
 
-    expect(buildStoreQualifier(source, STORE_LOOKUPS)[0]).toMatchObject({
-      revealed: [", after reaching Mines floor 40, at Woodcrafting level 15"],
+    expect(buildStoreQualifier(source, STORE_LOOKUPS)).toMatchObject({
+      redacted: [{ redacted: true }, " and ", { redacted: true }],
+      revealed: ["after reaching Mines floor 40 and at Woodcrafting level 15"],
     });
   });
 
@@ -326,8 +327,8 @@ describe("buildStoreQualifier", () => {
       visibility: { type: "minesLevel", floor: 40 },
     };
 
-    expect(buildStoreQualifier(source, STORE_LOOKUPS)[0]).toMatchObject({
-      revealed: [", after one of: reaching Mines floor 40 or Woodcrafting level 15"],
+    expect(buildStoreQualifier(source, STORE_LOOKUPS)).toMatchObject({
+      revealed: ["after one of: reaching Mines floor 40 or Woodcrafting level 15"],
     });
   });
 
@@ -345,7 +346,7 @@ describe("buildStoreQualifier", () => {
       visibility: { type: "always" },
     };
 
-    expect(buildStoreQualifier(source, STORE_LOOKUPS)).toEqual([]);
+    expect(buildStoreQualifier(source, STORE_LOOKUPS)).toBeUndefined();
   });
 
   it.each([
@@ -362,14 +363,14 @@ describe("buildStoreQualifier", () => {
       visibility: { type: "always" },
     };
 
-    expect(buildStoreQualifier(source, STORE_LOOKUPS)).toEqual([]);
+    expect(buildStoreQualifier(source, STORE_LOOKUPS)).toBeUndefined();
   });
 });
 
 describe("formatDateLabel", () => {
   it("formats as Season day", () => {
-    expect(formatDateLabel("winter", 3, BASE_LOOKUPS.seasonNames)).toBe("Winter 3");
-    expect(formatDateLabel("fall", 10, BASE_LOOKUPS.seasonNames)).toBe("Fall 10");
+    expect(formatDateLabel("winter", 3, BASE_LOOKUPS.seasonNames, "en")).toBe("Winter 3");
+    expect(formatDateLabel("fall", 10, BASE_LOOKUPS.seasonNames, "en")).toBe("Fall 10");
   });
 });
 
@@ -396,7 +397,7 @@ describe("buildSourceSegments — simple types", () => {
   it("renown", () => {
     const source: Source = { type: "renown", level: 3 };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([
-      "Get the town's renown rank to level 3",
+      "Get the town’s renown rank to level 3",
     ]);
   });
 
@@ -536,11 +537,13 @@ describe("buildSourceSegments — store", () => {
         condition: { type: "questCompleted", questId: "repair_the_inn" },
         revealed: ["the Sleeping Dragon Inn"],
       },
+      " (",
       {
         condition: vis,
-        redacted: [" (after ", { redacted: true }, ")"],
-        revealed: [" (after upgrading)"],
+        redacted: [{ redacted: true }],
+        revealed: ["after upgrading"],
       },
+      ")",
     ]);
   });
 });
@@ -571,21 +574,23 @@ describe("buildSourceSegments — scroll_bundle", () => {
       visibility: sourceVisibility,
     };
     expect(buildSourceSegments(source, lookups)).toEqual([
-      "Purchase ",
+      "Purchase the ",
       {
         condition: { type: "questCompleted", questId: "repair_the_general_store" },
-        revealed: ["the Fall Crop Sign Scroll Bundle"],
+        revealed: ["Fall Crop Sign Scroll Bundle"],
       },
       " from ",
       {
         condition: { type: "questCompleted", questId: "repair_the_general_store" },
         revealed: ["the General Store"],
       },
+      " (",
       {
         condition: sourceVisibility,
-        redacted: [" (after ", { redacted: true }, ")"],
-        revealed: [" (after repairing)"],
+        redacted: [{ redacted: true }],
+        revealed: ["after repairing"],
       },
+      ")",
     ]);
   });
 });
@@ -772,7 +777,7 @@ describe("buildSourceSegments — quest types", () => {
         condition: { type: "questCompleted", questId: "repair_the_bridge" },
         revealed: ["Balor"],
       },
-      "'s ",
+      "’s ",
       {
         condition: { type: "questAvailable", questId: "tall_dark" },
         revealed: ["Tall, Dark and Mysterious"],
@@ -817,7 +822,7 @@ describe("buildSourceSegments — quest types", () => {
       villagerVisibility: { ["eiland" as VillagerId]: { type: "always" } },
     };
     expect(buildSourceSegments(source, lookups)).toEqual([
-      "Complete Eiland's request for ",
+      "Complete Eiland’s request for ",
       {
         condition: { type: "questAvailable", questId: "request_for_berries" },
         revealed: ["Wild Berries"],
@@ -899,7 +904,7 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
       ...BASE_LOOKUPS,
       locationNames: { eastern_road: "Eastern Road", narrows: "Narrows" },
     };
-    expect(buildSourceSegments(source, lookups)).toEqual(["Dig up at Narrows, Eastern Road"]);
+    expect(buildSourceSegments(source, lookups)).toEqual(["Dig up at Narrows or Eastern Road"]);
   });
 
   it("artifact_dig without locations", () => {
@@ -928,7 +933,7 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
       ...BASE_LOOKUPS,
       locationNames: { eastern_road: "Eastern Road", narrows: "Narrows" },
     };
-    expect(buildSourceSegments(source, lookups)).toEqual(["Catch at Narrows, Eastern Road"]);
+    expect(buildSourceSegments(source, lookups)).toEqual(["Catch at Narrows or Eastern Road"]);
   });
 
   it("bug_catch without locations", () => {
@@ -1121,5 +1126,191 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
   it("wedding", () => {
     const source: Source = { type: "wedding" };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Receive after getting married"]);
+  });
+});
+
+describe("buildSourceSegments — localized rendering", () => {
+  const FR_LOOKUPS: SegmentLookups = {
+    ...BASE_LOOKUPS,
+    biomes: [
+      { floors: { start: 20, end: 39 }, id: "tide_caverns" as MinesBiomeId, name: "Mines marines" },
+    ],
+    locale: "fr",
+    stores: { ["general" as StoreId]: { article: "the" as const, name: "Magasin général" } },
+    treasureChestTiers: { ["gold" as TreasureChestTierId]: { name: "Coffre au trésor en or" } },
+  };
+
+  it("drops English articles from store & chest names outside English", () => {
+    expect(
+      buildSourceSegments({ type: "store", storeId: "general" as StoreId }, FR_LOOKUPS),
+    ).toEqual(["Acheter à : Magasin général"]);
+    expect(
+      buildSourceSegments(
+        { type: "treasure_chest", tier: "gold" as TreasureChestTierId },
+        FR_LOOKUPS,
+      ),
+    ).toEqual(["Pêcher : Coffre au trésor en or"]);
+  });
+
+  it("renders the biome label with the locale's floor range & redaction", () => {
+    expect(buildBiomeLabel("tide_caverns" as MinesBiomeId, FR_LOOKUPS)).toEqual([
+      {
+        condition: { type: "minesLevel", floor: 20 },
+        redacted: [
+          { redacted: true },
+          " (étages ",
+          { redacted: true },
+          " à ",
+          { redacted: true },
+          " des mines)",
+        ],
+        revealed: ["Mines marines (étages 20 à 39 des mines)"],
+      },
+    ]);
+  });
+
+  it("joins alternatives with the locale's disjunction", () => {
+    const lookups: SegmentLookups = {
+      ...FR_LOOKUPS,
+      waterNames: { ocean: "Mer", pond: "Étang", river: "Rivière" },
+    };
+    expect(
+      buildSourceSegments(
+        {
+          type: "fish",
+          waterTypes: ["pond" as WaterType, "river" as WaterType, "ocean" as WaterType],
+        },
+        lookups,
+      ),
+    ).toEqual(["Pêcher : Étang, Rivière ou Mer"]);
+  });
+
+  it("places gated segments where the locale's word order puts them", () => {
+    const lookups: SegmentLookups = {
+      ...BASE_LOOKUPS,
+      itemNames: { ["wild_berries" as ItemId]: "野いちご" },
+      locale: "ja",
+      questVillagerIds: { ["request_for_berries" as QuestId]: "eiland" as VillagerId },
+      villagerNames: { ["eiland" as VillagerId]: "エイランド" },
+      villagerVisibility: {
+        ["eiland" as VillagerId]: {
+          type: "questCompleted",
+          questId: "repair_the_bridge" as QuestId,
+        },
+      },
+    };
+    const source: Source = {
+      type: "quest",
+      questId: "request_for_berries" as QuestId,
+      questType: "fetch" as QuestType,
+      requestedItemId: "wild_berries" as ItemId,
+      trigger: "completion",
+      visibility: { type: "questAvailable", questId: "request_for_berries" as QuestId },
+    };
+    expect(buildSourceSegments(source, lookups)).toEqual([
+      {
+        condition: { type: "questCompleted", questId: "repair_the_bridge" },
+        revealed: ["エイランド"],
+      },
+      "の依頼「",
+      {
+        condition: { type: "questAvailable", questId: "request_for_berries" },
+        revealed: ["野いちご"],
+      },
+      "」を完了する",
+    ]);
+  });
+
+  it("places the store qualifier where the locale's word order puts it", () => {
+    const questId = "repair_the_general_store" as QuestId;
+    const source: Source = {
+      type: "store",
+      availability: { type: "minesLevel", floor: 20 },
+      storeId: "general" as StoreId,
+      visibility: {
+        type: "and",
+        conditions: [
+          { type: "questCompleted", questId },
+          { type: "minesLevel", floor: 20 },
+        ],
+      },
+    };
+    const render = (locale: SegmentLookups["locale"], storeName: string) =>
+      buildSourceSegments(source, {
+        ...BASE_LOOKUPS,
+        locale,
+        stores: {
+          ["general" as StoreId]: {
+            article: "the" as const,
+            name: storeName,
+            upgradeAction: "repairing",
+          },
+        },
+        storeVisibility: { ["general" as StoreId]: { type: "questCompleted", questId } },
+      });
+    const qualifier = (revealed: string, conjunction: string) => ({
+      condition: source.visibility,
+      redacted: [{ redacted: true }, conjunction, { redacted: true }],
+      revealed: [revealed],
+    });
+    const storeGate = (name: string) => ({
+      condition: { type: "questCompleted", questId },
+      revealed: [name],
+    });
+
+    expect(render("en", "General Store")).toEqual([
+      "Purchase from ",
+      storeGate("the General Store"),
+      " (",
+      qualifier("after repairing and after reaching Mines floor 20", " and "),
+      ")",
+    ]);
+    expect(render("ja", "雑貨屋")).toEqual([
+      qualifier("修理後、鉱山20階に到達した後", "、"),
+      "、",
+      storeGate("雑貨屋"),
+      "で購入",
+    ]);
+  });
+
+  it("strips each locale's crown request prefix", () => {
+    const source: Source = {
+      type: "quest",
+      questId: "crown_crops" as QuestId,
+      questType: "crown" as QuestType,
+      trigger: "completion",
+    };
+    const render = (locale: SegmentLookups["locale"], name: string) =>
+      buildSourceSegments(source, {
+        ...BASE_LOOKUPS,
+        locale,
+        questNames: { ["crown_crops" as QuestId]: name },
+      });
+    expect(render("en", "Crown Request: Crops")).toEqual(["Complete the Crown Request for Crops"]);
+    expect(render("ja", "ロイヤルリクエスト\n作物")).toEqual([
+      "ロイヤルリクエスト「作物」を完了する",
+    ]);
+    expect(render("fr", "Requête royale : récoltes")).toEqual([
+      "Terminer la requête royale : récoltes",
+    ]);
+  });
+
+  it("keeps the story quest's own article outside English", () => {
+    const source: Source = {
+      type: "quest",
+      questId: "the_caldosian_vault" as QuestId,
+      questType: "story" as QuestType,
+      trigger: "completion",
+    };
+    const render = (locale: SegmentLookups["locale"], name: string) =>
+      buildSourceSegments(source, {
+        ...BASE_LOOKUPS,
+        locale,
+        questNames: { ["the_caldosian_vault" as QuestId]: name },
+      });
+    expect(render("en", "The Caldosian Vault")).toEqual(["Complete the Caldosian Vault quest"]);
+    expect(render("fr", "La chambre forte caldosienne")).toEqual([
+      "Terminer la quête : La chambre forte caldosienne",
+    ]);
   });
 });
