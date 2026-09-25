@@ -44,6 +44,35 @@ When you add a UI string that names something the game names, add its `misc_loca
 translated yet (`mission_quests`, as of 1.0.2) falls back to English in every locale, the same as
 any other game-data gap, and gets picked up at the next game-data update.
 
+### Hand-aligned game terms
+
+Some game nouns can't come from the `ui` chunk, so their messages carry the game's term by hand.
+Each locale uses exactly one term per concept across all of its messages; when you add or edit a
+message that mentions one of these concepts, use the term below.
+
+- **Terms inside sentences** ("Decrease renown", "Mines floor {floor}") stay Paraglide messages,
+  since interpolating a game label into a sentence breaks grammar across languages. Their wording
+  follows the game's term for the same concept (`renown`, `town_rank`, & `villagers` in the `ui`
+  chunk; the mine & quest names in `mines`, `items`, & `quests`).
+- **Mines** (`category_mines_name`, `source_location_mines`) is a standalone label, but it has no
+  `misc_local` key in `APP_UI_STRINGS` yet, and finding one needs the game assets. The message
+  matches the noun the game's own mine names use (`unlocking_the_mines_pt_2`, `mines_wooden_arch`).
+  The same holds for the Quests, Recipes, & Cosmetics category names until someone checks
+  `misc_local` for them.
+- **Perks** have no extracted game term at all, so each locale's word is our own choice, held
+  consistent. Replace it once the pipeline extracts the game's label.
+
+| Concept   | en        | es                      | fr                 | ja           | ko        | ru          | zh-Hans  | zh-Hant  |
+| --------- | --------- | ----------------------- | ------------------ | ------------ | --------- | ----------- | -------- | -------- |
+| Mines     | Mines     | minas                   | mines              | 鉱坑         | 광산      | шахты       | 矿洞     | 礦洞     |
+| Renown    | renown    | reputación              | renommée           | 名声         | 명성      | репутация   | 声望     | 聲望     |
+| Town rank | town rank | categoría (de la aldea) | rang (de la ville) | タウンランク | 마을 등급 | ранг города | 城镇等级 | 城鎮段位 |
+| Villagers | villager  | aldeano                 | habitant           | 町の住民     | 마을 주민 | житель      | 居民     | 居民     |
+| Perks     | perk      | ventaja                 | atout              | パーク       | 특전      | перк        | 天赋     | 天賦     |
+
+Note: the game's French town-rank label is abbreviated ("Class. de la ville"), so the French
+messages keep "rang" rather than guessing at the expansion.
+
 ### How name chunks load
 
 Chunks are code-split: `src/lib/data/names.ts` declares them through a lazy `import.meta.glob`, so a
