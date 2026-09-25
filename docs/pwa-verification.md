@@ -21,8 +21,11 @@ Other languages download the first time the player uses them, then stay availabl
 - **Updates keep what the player had.** The worker records requested locales in the
   version-independent `offline-locales-v1` cache, and each new version’s install re-caches those
   locales’ chunks. This step is best-effort and never blocks the install.
-- **An undownloaded language says so.** Offline, choosing a language whose names aren’t cached
-  leaves the page in place and shows “Go online to download the Japanese text, then try again.”
+- **An undownloaded language says so.** Before switching, the picker asks the controlling worker to
+  cache every chunk for the new language and waits for its answer. The worker’s cache is the
+  authority: a download the network cut off leaves a locale partly cached, and modules the page
+  already imported may come from a cache an update has replaced. If any chunk is still missing, the
+  page stays in place and shows “Go online to download the Japanese text, then try again.”
 
 ### Byte budget
 

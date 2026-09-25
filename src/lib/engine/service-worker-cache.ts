@@ -14,12 +14,20 @@ const LAZY_ASSET_PATTERN = /\/locale-fonts-[^/]+\.css$/;
 export const OFFLINE_LOCALES_CACHE = "offline-locales-v1";
 const OFFLINE_LOCALES_KEY = "/__offline-locales";
 
-/** Page → service worker: cache every name chunk for these locales, now and after each update. */
+/**
+ * Page → service worker: cache every name chunk for these locales, now and after each update. A
+ * message sent with a `MessagePort` gets a {@link CacheLocalesReply} on it once caching settles.
+ */
 export const CACHE_LOCALES_MESSAGE = "mfg:cache-locales";
 
 export interface CacheLocalesMessage {
   locales: string[];
   type: typeof CACHE_LOCALES_MESSAGE;
+}
+
+/** The chunk paths still missing from the worker's cache after it tried to fetch them. */
+export interface CacheLocalesReply {
+  failed: string[];
 }
 
 /** Name-chunk paths per locale, as the build hands them to the service worker. */
