@@ -109,7 +109,8 @@ once the game's translation keys are read from `assets/localization/`.
    feature area — e.g. `feedback_submit_button`, `about_maintainer_intro`).
 2. Add the same key to all 7 other `messages/<locale>.json` files (`es`, `fr`, `ja`, `ko`, `ru`,
    `zh-Hans`, `zh-Hant`), translated. Machine translation is acceptable to start — see
-   [Improving a translation](#improving-a-translation-humans) below for how these get refined.
+   [Improving a translation](#improving-a-translation-humans) below for how these get refined. Match
+   the game's regional variant and terminology; see [Regional variants](#regional-variants).
 3. Run `pnpm run paraglide:compile` to regenerate `src/lib/paraglide`.
 4. Use the generated message in your component: `import * as m from "$lib/paraglide/messages"`, then
    `{m.feedback_submit_button()}` in the template. Never hardcode the English string directly in a
@@ -117,6 +118,42 @@ once the game's translation keys are read from `assets/localization/`.
 5. If the component's file is in the `no-hardcoded-ui-text` allowlist in `eslint.config.js` already,
    `pnpm run lint` will catch any string you forgot to wrap. If the file isn't in that list yet (see
    below), add it in the same PR.
+
+### Regional variants
+
+A locale tag doesn't pin down a region, but the game's translation does. MFG's chrome text sits
+beside game-data names on every page, so it follows whatever regional variant the game ships;
+otherwise the two read as different dialects side by side.
+
+- **`zh-Hant` is Taiwan Traditional Chinese** (`zh-TW` usage), not Hong Kong. The game's strings use
+  Taiwan vocabulary throughout (馬鈴薯, 起司, 巧克力, 鮭魚, 高麗菜) and Taiwan standard glyphs
+  (線, 為, 麵, not 綫, 爲, 麪), with no Cantonese or Hong Kong terms. When machine-translating,
+  prompt for Taiwan usage explicitly, then check the output for Mainland terms that survive script
+  conversion:
+
+  | Avoid (Mainland or HK) | Use (Taiwan)           |
+  | ---------------------- | ---------------------- |
+  | 劇透                   | 爆雷                   |
+  | 保存 (data)            | 儲存                   |
+  | 本地                   | 本機                   |
+  | 列表                   | 清單                   |
+  | 可選                   | 選填 / 選用            |
+  | 跳轉                   | 跳至                   |
+  | 點擊                   | 點選                   |
+  | 聯繫                   | 聯絡                   |
+  | 暫不可用               | 暫時無法使用           |
+  | 條 (warnings, notices) | 則                     |
+  | 橙 (color)             | 橘                     |
+  | 數據, 文件, 網絡, 默認 | 資料, 檔案, 網路, 預設 |
+
+- **Punctuation**: `zh-Hant` uses full-width punctuation (`，：（）！`) and `…`, not ASCII
+  `, : ( ) !` or `...`.
+- **Game terminology wins.** Before translating a noun the game also uses (pet skins, mines, renown,
+  perks), check the game's term in `src/lib/data/locales/<locale>/` and reuse it. The game calls pet
+  skins 寵物外觀, so MFG does too.
+
+The other locales' regional variants haven't been audited. Check the game's strings the same way
+before assuming one (for example, Spain vs. Latin American Spanish in `es`).
 
 ## Tooling
 
