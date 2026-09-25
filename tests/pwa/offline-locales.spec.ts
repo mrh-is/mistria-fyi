@@ -95,7 +95,9 @@ test("keeps the visited locale offline and leaves other locales to download on d
   await expect(page).toHaveURL(/\/en\/recipes$/);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
-  // Sitewide search loads every category's names on first open.
+  // Sitewide search, on the home page, loads every category's names on first open.
+  await page.goBack();
+  await expect(page).toHaveURL(/\/en$/);
   await page.getByRole("button", { name: "Search" }).click();
   await page.getByRole("textbox", { name: "Search items" }).fill("turnip");
   await expect(page.getByRole("status").filter({ hasText: /\d+ results?/ })).toBeVisible();
@@ -110,5 +112,5 @@ test("keeps the visited locale offline and leaves other locales to download on d
       hasText: "Go online to download the Japanese text, then try again.",
     }),
   ).toBeVisible();
-  await expect(page).toHaveURL(/\/en\/recipes$/);
+  await expect(page).toHaveURL(/\/en$/);
 });
