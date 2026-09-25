@@ -109,7 +109,8 @@ once the game's translation keys are read from `assets/localization/`.
    feature area — e.g. `feedback_submit_button`, `about_maintainer_intro`).
 2. Add the same key to all 7 other `messages/<locale>.json` files (`es`, `fr`, `ja`, `ko`, `ru`,
    `zh-Hans`, `zh-Hant`), translated. Machine translation is acceptable to start — see
-   [Improving a translation](#improving-a-translation-humans) below for how these get refined.
+   [Improving a translation](#improving-a-translation-humans) below for how these get refined. Match
+   the game's regional variant and terminology; see [Regional variants](#regional-variants).
 3. Run `pnpm run paraglide:compile` to regenerate `src/lib/paraglide`.
 4. Use the generated message in your component: `import * as m from "$lib/paraglide/messages"`, then
    `{m.feedback_submit_button()}` in the template. Never hardcode the English string directly in a
@@ -117,6 +118,58 @@ once the game's translation keys are read from `assets/localization/`.
 5. If the component's file is in the `no-hardcoded-ui-text` allowlist in `eslint.config.js` already,
    `pnpm run lint` will catch any string you forgot to wrap. If the file isn't in that list yet (see
    below), add it in the same PR.
+
+### Regional variants
+
+A locale tag doesn't pin down a region, but the game's translation does. MFG's chrome text sits
+beside game-data names on every page, so it follows whatever regional variant the game ships;
+otherwise the two read as different dialects side by side.
+
+Each locale's target, as established from the game's own strings:
+
+- **`es` is Spain Spanish**, not Latin American. The game uses patata, zumo, melocotón, nata, and
+  gafas (not papa, jugo, durazno, crema, or lentes). In chrome, prefer ordenador over computadora,
+  móvil over celular, and pulsa over presiona; keys are named as on Spanish keyboards (Intro, not
+  Entrar).
+- **`fr` is France French**, not Quebec. The game uses myrtille, not bleuet; e-mail is fine.
+- **`zh-Hant` is Taiwan Traditional Chinese** (`zh-TW` usage), not Hong Kong. The game's strings use
+  Taiwan vocabulary throughout (馬鈴薯, 起司, 巧克力, 鮭魚, 高麗菜) and Taiwan standard glyphs
+  (線, 為, 麵, not 綫, 爲, 麪), with no Cantonese or Hong Kong terms. When machine-translating,
+  prompt for Taiwan usage explicitly, then check the output for Mainland terms that survive script
+  conversion:
+
+  | Avoid (Mainland or HK) | Use (Taiwan)           |
+  | ---------------------- | ---------------------- |
+  | 劇透                   | 爆雷                   |
+  | 保存 (data)            | 儲存                   |
+  | 本地                   | 本機                   |
+  | 列表                   | 清單                   |
+  | 可選                   | 選填 / 選用            |
+  | 跳轉                   | 跳至                   |
+  | 點擊                   | 點選                   |
+  | 聯繫                   | 聯絡                   |
+  | 暫不可用               | 暫時無法使用           |
+  | 條 (warnings, notices) | 則                     |
+  | 橙 (color)             | 橘                     |
+  | 數據, 文件, 網絡, 默認 | 資料, 檔案, 網路, 預設 |
+
+- **`ja`, `ko`, `ru`, and `zh-Hans`** have no regional split worth tracking; write standard
+  Japanese, Korean, Russian, and Mainland Simplified Chinese.
+
+These rules apply to every locale:
+
+- **Game terminology wins.** Before writing or translating a noun the game also uses, in any locale
+  including `en` (pet skins, mines, renown, perks), check the game's term in
+  `src/lib/data/locales/<locale>/` and reuse it. The game calls pet skins 寵物外觀, so MFG does too.
+- **Carry the voice, not the orthography.** The English is direct, dry, and conversational: it
+  addresses the reader as "you", states things plainly, and allows a little wit ("Oops, forgot to
+  put in your email!"). Keep that register in every locale within that language's own UI conventions
+  (tú in `es`, vous in `fr`, 你 in Chinese). Don't carry over marks that are only English house
+  style: `en.json` uses `&` for close pairs ("Questions & requests"), but other locales write their
+  own conjunction (y, et, and so on). In Spanish, y becomes e before an i sound ("datos e
+  imágenes").
+- **Native punctuation.** `zh-Hans` and `zh-Hant` use full-width punctuation (`，：（）！`) and `…`,
+  not ASCII `, : ( ) !` or `...`.
 
 ## Tooling
 
