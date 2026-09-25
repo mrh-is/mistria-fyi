@@ -2,21 +2,26 @@ import { expect, type Page, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 
-import { localeNameChunks } from "../../src/lib/build/locale-name-chunks";
-
-import type { Manifest } from "vite";
+import { LOCALE_CODES } from "../../src/lib/types/locale";
 
 const CLIENT_OUTPUT = ".svelte-kit/output/client";
 /** Per-locale gzipped name data; see docs/pwa-verification.md#byte-budget. */
 const MAX_LOCALE_GZIP_BYTES = 100_000;
 
 /**
- * The name chunks of the build being served. Read inside each test, not at import: Playwright
- * imports spec files to list them before its web server has run the build.
+ * The per-locale name chunks inlined into the built service worker, so the spec checks the map the
+ * worker actually received. Read inside each test, not at import: Playwright imports spec files to
+ * list them before its web server has run the build. (The Vite manifest isn't an option: CI's
+ * build artifact omits hidden directories like `.vite/`.)
  */
 function builtChunks(): Record<string, string[]> {
-  return localeNameChunks(
-    JSON.parse(readFileSync(`${CLIENT_OUTPUT}/.vite/manifest.json`, "utf-8")) as Manifest,
+  const worker = readFileSync(`${CLIENT_OUTPUT}/service-worker.js`, "utf-8");
+  return Object.fromEntries(
+    LOCALE_CODES.map((locale) => {
+      const list =
+        new RegExp(`[{,]\\s*["']?${locale}["']?\\s*:\\s*\\[([^\\]]*)\\]`).exec(worker)?.[1] ?? "";
+      return [locale, [...list.matchAll(/["'`]([^"'`]+)["'`]/g)].map(([, path]) => path)];
+    }),
   );
 }
 
@@ -44,7 +49,13 @@ async function waitForControl(page: Page): Promise<void> {
 
 // eslint-disable-next-line no-empty-pattern -- Playwright requires a destructured fixtures argument.
 test("keeps each locale's name data within the byte budget", ({}, testInfo) => {
-  const sizes = Object.entries(builtChunks()).map(([locale, paths]) => ({
+  const chunks = builtChunks();
+  for (const [locale, paths] of Object.entries(chunks)) {
+    expect(paths.length, `${locale} name chunks inlined into the service worker`).toBeGreaterThan(
+      0,
+    );
+  }
+  const sizes = Object.entries(chunks).map(([locale, paths]) => ({
     gzip: paths.reduce(
       (total, path) => total + gzipSync(readFileSync(`${CLIENT_OUTPUT}${path}`)).length,
       0,
@@ -57,7 +68,6 @@ test("keeps each locale's name data within the byte budget", ({}, testInfo) => {
     description: `${sizes.map(({ gzip, locale }) => `${locale} ${String(gzip)}`).join(", ")}; all ${String(total)} (none precached)`,
   });
 
-  expect(sizes).toHaveLength(8);
   for (const { gzip, locale } of sizes) {
     expect(gzip, locale).toBeLessThanOrEqual(MAX_LOCALE_GZIP_BYTES);
   }
