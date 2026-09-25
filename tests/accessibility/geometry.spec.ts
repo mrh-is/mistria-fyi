@@ -309,7 +309,7 @@ test.describe("@critical tracker paper touch geometry", () => {
       expect(box?.height).toBeGreaterThanOrEqual(44);
     }
 
-    const index = page.getByRole("navigation", { name: "Townsfolk alphabet" });
+    const index = page.getByRole("navigation", { name: "Villager alphabet" });
     const beforeScroll = await index.boundingBox();
     const roster = await page.locator(".villager-roster").boundingBox();
     const whitespaceCenter = ((roster?.x ?? 0) + (roster?.width ?? 0) + 320) / 2;
