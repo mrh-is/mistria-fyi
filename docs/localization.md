@@ -125,6 +125,13 @@ A locale tag doesn't pin down a region, but the game's translation does. MFG's c
 beside game-data names on every page, so it follows whatever regional variant the game ships;
 otherwise the two read as different dialects side by side.
 
+Each locale's target, as established from the game's own strings:
+
+- **`es` is Spain Spanish**, not Latin American. The game uses patata, zumo, melocotón, nata, and
+  gafas (not papa, jugo, durazno, crema, or lentes). In chrome, prefer ordenador over computadora,
+  móvil over celular, and pulsa over presiona; keys are named as on Spanish keyboards (Intro, not
+  Entrar).
+- **`fr` is France French**, not Quebec. The game uses myrtille, not bleuet; e-mail is fine.
 - **`zh-Hant` is Taiwan Traditional Chinese** (`zh-TW` usage), not Hong Kong. The game's strings use
   Taiwan vocabulary throughout (馬鈴薯, 起司, 巧克力, 鮭魚, 高麗菜) and Taiwan standard glyphs
   (線, 為, 麵, not 綫, 爲, 麪), with no Cantonese or Hong Kong terms. When machine-translating,
@@ -146,14 +153,19 @@ otherwise the two read as different dialects side by side.
   | 橙 (color)             | 橘                     |
   | 數據, 文件, 網絡, 默認 | 資料, 檔案, 網路, 預設 |
 
-- **Punctuation**: `zh-Hant` uses full-width punctuation (`，：（）！`) and `…`, not ASCII
-  `, : ( ) !` or `...`.
+- **`ja`, `ko`, `ru`, and `zh-Hans`** have no regional split worth tracking; write standard
+  Japanese, Korean, Russian, and Mainland Simplified Chinese.
+
+These rules apply to every locale:
+
 - **Game terminology wins.** Before translating a noun the game also uses (pet skins, mines, renown,
   perks), check the game's term in `src/lib/data/locales/<locale>/` and reuse it. The game calls pet
   skins 寵物外觀, so MFG does too.
-
-The other locales' regional variants haven't been audited. Check the game's strings the same way
-before assuming one (for example, Spain vs. Latin American Spanish in `es`).
+- **English house style stays in English.** `en.json` uses `&` for close pairs ("Questions &
+  requests"); other locales write their own conjunction (y, et, and so on). In Spanish, y becomes e
+  before an i sound ("datos e imágenes").
+- **Native punctuation.** `zh-Hans` and `zh-Hant` use full-width punctuation (`，：（）！`) and `…`,
+  not ASCII `, : ( ) !` or `...`.
 
 ## Tooling
 
