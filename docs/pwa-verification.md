@@ -4,6 +4,36 @@ The production service worker precaches build and static assets, claims open cli
 activation, runtime-caches successful same-origin non-API requests, and serves `/offline.html` for
 an uncached navigation when the network fails.
 
+## Offline contract
+
+Decided in #313. After a player’s first online visit, **their language works fully offline**:
+client-side navigation to any category, including ones they haven’t opened, and sitewide search.
+Other languages download the first time the player uses them, then stay available offline too.
+
+- **Install precaches no name data.** The 160 locale name chunks (8 locales × 20 categories) are
+  excluded from the install-time precache. `localeNameChunksPlugin` (`src/lib/build/`) identifies
+  them from the Vite client manifest by source module, never by hashed filename, and inlines the
+  per-locale map into the service worker.
+- **The page asks for its locale.** The root layout sends the active worker a `mfg:cache-locales`
+  message naming the current locale plus English, which search always matches against. The worker
+  fetches every missing chunk for those locales itself, since chunks loaded before it took control
+  never passed through it.
+- **Updates keep what the player had.** The worker records requested locales in the
+  version-independent `offline-locales-v1` cache, and each new version’s install re-caches those
+  locales’ chunks. This step is best-effort and never blocks the install.
+- **An undownloaded language says so.** Before switching, the picker asks the controlling worker to
+  cache every chunk for the new language and waits for its answer. The worker’s cache is the
+  authority: a download the network cut off leaves a locale partly cached, and modules the page
+  already imported may come from a cache an update has replaced. If any chunk is still missing, the
+  page stays in place and shows “Go online to download the Japanese text, then try again.”
+
+### Byte budget
+
+Name data is about 60 KB gzipped per locale; all eight measured 1.61 MB raw and 476 KB gzipped at
+#313’s baseline. Install now downloads none of it; a first visit then downloads one locale (about 60
+KB) for English readers or two (about 120 KB) for everyone else. The PWA suite reports each build’s
+per-locale sizes and fails if any locale exceeds 100 KB gzipped.
+
 ## Automated verification
 
 Run the production-preview suite with:
@@ -22,7 +52,10 @@ The suite verifies:
 - precached `/offline.html`, `/favicon.png`, and hashed application assets;
 - successful online navigation through the controlling worker and runtime caching of `/animals`;
 - offline reload of the cached route and offline retrieval of a static asset;
-- the offline document for a previously uncached navigation; and
+- the offline document for a previously uncached navigation;
+- no name chunks at install, then every chunk for the visited locale and none for another;
+- offline navigation to an unopened category, offline search, and the offline language-switch
+  message; and
 - normal online rendering when Playwright blocks service workers.
 
 The `pwa` job in `.github/workflows/browser-tests.yml` runs the same Chromium suite for pull

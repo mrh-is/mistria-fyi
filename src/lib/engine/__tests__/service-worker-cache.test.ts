@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  CACHE_LOCALES_MESSAGE,
+  cacheLocaleChunks,
+  cacheLocalesRequest,
   cacheRuntimeResponse,
   fetchRuntimeRequest,
   isEligibleForRuntimeCaching,
@@ -8,6 +11,8 @@ import {
   isExternalSpriteAsset,
   isLazyAsset,
   MAX_SPRITE_ENTRIES,
+  readOfflineLocales,
+  rememberOfflineLocales,
 } from "../service-worker-cache";
 
 const ORIGIN = "https://mistria.fyi";
@@ -177,10 +182,13 @@ describe("service-worker font asset handling", () => {
   });
 
   it("marks per-locale font stylesheets as lazy build assets", () => {
-    expect(isLazyAsset("/_app/immutable/assets/locale-fonts-ja.C1a2b3.css")).toBe(true);
-    expect(isLazyAsset("/_app/immutable/assets/locale-fonts-zh-Hans.C1a2b3.css")).toBe(true);
-    expect(isLazyAsset("/_app/immutable/assets/0.C1a2b3.css")).toBe(false);
-    expect(isLazyAsset("/fonts/petrona-latin.woff2")).toBe(false);
+    const noChunks = new Set<string>();
+    expect(isLazyAsset("/_app/immutable/assets/locale-fonts-ja.C1a2b3.css", noChunks)).toBe(true);
+    expect(isLazyAsset("/_app/immutable/assets/locale-fonts-zh-Hans.C1a2b3.css", noChunks)).toBe(
+      true,
+    );
+    expect(isLazyAsset("/_app/immutable/assets/0.C1a2b3.css", noChunks)).toBe(false);
+    expect(isLazyAsset("/fonts/petrona-latin.woff2", noChunks)).toBe(false);
   });
 });
 
@@ -313,5 +321,98 @@ describe("service-worker sprite asset handling", () => {
     });
 
     expect(response.type).toBe("error");
+  });
+});
+
+describe("service-worker locale name chunks", () => {
+  const CHUNKS = {
+    en: ["/_app/immutable/chunks/en-a.js", "/_app/immutable/chunks/en-b.js"],
+    ja: ["/_app/immutable/chunks/ja-a.js"],
+  };
+
+  class LocaleCache extends MemoryCache {
+    readonly added: string[] = [];
+
+    constructor(private readonly failing: ReadonlySet<string> = new Set()) {
+      super();
+    }
+
+    add(request: RequestInfo | URL): Promise<void> {
+      const url = requestUrl(request);
+      this.added.push(new URL(url).pathname);
+      if (this.failing.has(new URL(url).pathname)) {
+        return Promise.reject(new TypeError("Failed to fetch"));
+      }
+      this.entries.set(url, new Response("chunk"));
+      return Promise.resolve();
+    }
+  }
+
+  it("marks only the build's locale name chunks as lazy", () => {
+    const chunkPaths = new Set(Object.values(CHUNKS).flat());
+    expect(isLazyAsset("/_app/immutable/chunks/ja-a.js", chunkPaths)).toBe(true);
+    expect(isLazyAsset("/_app/immutable/chunks/shared.js", chunkPaths)).toBe(false);
+  });
+
+  it("accepts a cache request for known locales only", () => {
+    expect(
+      cacheLocalesRequest(
+        { type: CACHE_LOCALES_MESSAGE, locales: ["ja", "en", "ja", "xx"] },
+        CHUNKS,
+      ),
+    ).toEqual(["ja", "en"]);
+    expect(
+      cacheLocalesRequest({ type: CACHE_LOCALES_MESSAGE, locales: ["constructor"] }, CHUNKS),
+    ).toEqual([]);
+    expect(cacheLocalesRequest({ type: "other", locales: ["ja"] }, CHUNKS)).toBeUndefined();
+    expect(cacheLocalesRequest({ type: CACHE_LOCALES_MESSAGE }, CHUNKS)).toBeUndefined();
+    expect(cacheLocalesRequest("mfg:cache-locales", CHUNKS)).toBeUndefined();
+    expect(cacheLocalesRequest(null, CHUNKS)).toBeUndefined();
+  });
+
+  it("caches every chunk of the requested locales and nothing else", async () => {
+    const cache = new LocaleCache();
+
+    expect(await cacheLocaleChunks(cache, ["en"], CHUNKS)).toEqual([]);
+
+    expect(cache.added).toEqual(CHUNKS.en);
+    expect(await cache.match(`${ORIGIN}/_app/immutable/chunks/ja-a.js`)).toBeUndefined();
+  });
+
+  it("skips chunks that are already cached", async () => {
+    const cache = new LocaleCache();
+    await cache.put(`${ORIGIN}/_app/immutable/chunks/en-a.js`, new Response("chunk"));
+
+    await cacheLocaleChunks(cache, ["en"], CHUNKS);
+
+    expect(cache.added).toEqual(["/_app/immutable/chunks/en-b.js"]);
+  });
+
+  it("keeps the chunks that arrived when one fails, and reports the failure", async () => {
+    const cache = new LocaleCache(new Set(["/_app/immutable/chunks/en-a.js"]));
+
+    expect(await cacheLocaleChunks(cache, ["en", "ja"], CHUNKS)).toEqual([
+      "/_app/immutable/chunks/en-a.js",
+    ]);
+
+    expect(await cache.match(`${ORIGIN}/_app/immutable/chunks/en-b.js`)).toBeDefined();
+    expect(await cache.match(`${ORIGIN}/_app/immutable/chunks/ja-a.js`)).toBeDefined();
+  });
+
+  it("remembers offline locales as a growing set", async () => {
+    const cache = new MemoryCache();
+    expect(await readOfflineLocales(cache)).toEqual([]);
+
+    await rememberOfflineLocales(cache, ["ja", "en"]);
+    await rememberOfflineLocales(cache, ["en", "fr"]);
+
+    expect(await readOfflineLocales(cache)).toEqual(["en", "fr", "ja"]);
+  });
+
+  it("treats a corrupt offline-locale record as empty", async () => {
+    const cache = new MemoryCache();
+    await cache.put(`${ORIGIN}/__offline-locales`, new Response("{not json"));
+
+    expect(await readOfflineLocales(cache)).toEqual([]);
   });
 });

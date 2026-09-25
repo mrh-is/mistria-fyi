@@ -4,27 +4,67 @@
 /// <reference lib="webworker" />
 
 import {
+  cacheLocaleChunks,
+  type CacheLocalesReply,
+  cacheLocalesRequest,
   fetchRuntimeRequest,
   isEligibleForRuntimeCaching,
   isExternalSpriteAsset,
   isLazyAsset,
+  type LocaleNameChunks,
   MAX_SPRITE_ENTRIES,
+  OFFLINE_LOCALES_CACHE,
+  readOfflineLocales,
+  rememberOfflineLocales,
 } from "$lib/engine/service-worker-cache.js";
 import { build, files, version } from "$service-worker";
+
+/** Inlined by `localeNameChunksPlugin` (src/lib/build/locale-name-chunks.ts); absent in dev. */
+declare const __LOCALE_NAME_CHUNKS__: LocaleNameChunks | undefined;
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
 const CACHE = `cache-${version}`;
 const SPRITES_CACHE = "sprites-v1";
 const ASSETS = [...build, ...files];
-const PRECACHED_ASSETS = ASSETS.filter((path) => !isLazyAsset(path));
+const LOCALE_NAME_CHUNKS: LocaleNameChunks =
+  typeof __LOCALE_NAME_CHUNKS__ === "undefined" ? {} : __LOCALE_NAME_CHUNKS__;
+const LOCALE_NAME_CHUNK_PATHS: ReadonlySet<string> = new Set(
+  Object.values(LOCALE_NAME_CHUNKS).flat(),
+);
+const PRECACHED_ASSETS = ASSETS.filter((path) => !isLazyAsset(path, LOCALE_NAME_CHUNK_PATHS));
 
 sw.addEventListener("install", (event) => {
   event.waitUntil(
-    caches
-      .open(CACHE)
-      .then((cache) => cache.addAll(PRECACHED_ASSETS))
-      .then(() => sw.skipWaiting()),
+    (async () => {
+      const cache = await caches.open(CACHE);
+      await cache.addAll(PRECACHED_ASSETS);
+      // Carry the player's offline locales across the update. Best-effort: a failed chunk must not
+      // block the install, and the page's next request retries it.
+      const offlineLocales = await readOfflineLocales(await caches.open(OFFLINE_LOCALES_CACHE));
+      await cacheLocaleChunks(cache, offlineLocales, LOCALE_NAME_CHUNKS);
+      await sw.skipWaiting();
+    })(),
+  );
+});
+
+sw.addEventListener("message", (event) => {
+  const locales = cacheLocalesRequest(event.data, LOCALE_NAME_CHUNKS);
+  if (!locales) return;
+  // A reply is this version's cache speaking for itself, which a page can't infer: the modules it
+  // already imported may come from a cache an update has since deleted.
+  const [reply] = event.ports;
+  event.waitUntil(
+    (async () => {
+      // Answer even if caching throws, so a waiting page never stalls until its timeout.
+      let failed = ["cache unavailable"];
+      try {
+        failed = await cacheLocaleChunks(await caches.open(CACHE), locales, LOCALE_NAME_CHUNKS);
+      } finally {
+        reply?.postMessage({ failed } satisfies CacheLocalesReply);
+      }
+      await rememberOfflineLocales(await caches.open(OFFLINE_LOCALES_CACHE), locales);
+    })(),
   );
 });
 
@@ -32,7 +72,9 @@ sw.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then(async (keys) => {
       for (const key of keys) {
-        if (key !== CACHE && key !== SPRITES_CACHE) await caches.delete(key);
+        if (key !== CACHE && key !== SPRITES_CACHE && key !== OFFLINE_LOCALES_CACHE) {
+          await caches.delete(key);
+        }
       }
       await sw.clients.claim();
     }),
@@ -51,7 +93,7 @@ sw.addEventListener("fetch", (event) => {
       caches.match(event.request).then(async (cached) => {
         if (cached) return cached;
         const response = await fetch(event.request);
-        if (response.ok && isLazyAsset(url.pathname)) {
+        if (response.ok && isLazyAsset(url.pathname, LOCALE_NAME_CHUNK_PATHS)) {
           const cache = await caches.open(CACHE);
           await cache.put(event.request, response.clone());
         }

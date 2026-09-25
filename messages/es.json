@@ -188,6 +188,7 @@
   "settings_choose_language": "Elegir idioma",
   "settings_languages_group_aria": "Idiomas",
   "settings_beta_translation_aria": "Traducción beta",
+  "settings_language_offline": "Conéctate a internet para descargar el texto en {language} y vuelve a intentarlo.",
   "settings_theme_label": "Tema",
   "settings_theme_auto": "Auto",
   "settings_theme_light": "Claro",
