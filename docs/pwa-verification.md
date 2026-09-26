@@ -23,7 +23,9 @@ Other languages download the first time the player uses them, then stay availabl
   never passed through it.
 - **Updates keep what the player had.** The worker records requested locales in the
   version-independent `offline-locales-v1` cache, and each new version’s install re-caches those
-  locales’ chunks. This step is best-effort and never blocks the install.
+  locales’ chunks. This step is best-effort and never blocks the install. The page also sends its
+  request to a version waiting to take over (see [Update flow](#update-flow)), which installed
+  before a later language switch and would otherwise miss it.
 - **An undownloaded language says so.** Before switching, the picker asks the controlling worker to
   cache every chunk for the new language and waits for its answer. The worker’s cache is the
   authority: a download the network cut off leaves a locale partly cached, and modules the page
