@@ -119,6 +119,10 @@ export async function cacheRuntimeResponse(
  * this one is stale art, so it goes at once rather than waiting to age out. Past that, the entry
  * bound evicts from the front of `keys()`, which is insertion order; {@link fetchSpriteRequest}
  * re-inserts on every hit, so the front is the least recently used.
+ *
+ * Only this sprite's own generation is evictable. A tab still running an older deploy must not
+ * push out a newer deploy's art, so when newer sprites fill the cache, the older sprite just
+ * stored is the one that goes.
  */
 export async function cacheSpriteResponse(
   cache: SpriteCache,
@@ -130,9 +134,9 @@ export async function cacheSpriteResponse(
   const generation = spriteGeneration(request.url);
   const keys = await cache.keys();
   const stale = keys.filter((key) => spriteGeneration(key.url) < generation);
-  const current = keys.filter((key) => spriteGeneration(key.url) >= generation);
-  const excess = current.slice(0, Math.max(0, current.length - maxEntries));
-  for (const key of [...stale, ...excess]) {
+  const evictable = keys.filter((key) => spriteGeneration(key.url) === generation);
+  const excess = keys.length - stale.length - maxEntries;
+  for (const key of [...stale, ...evictable.slice(0, Math.max(0, excess))]) {
     await cache.delete(key);
   }
 }

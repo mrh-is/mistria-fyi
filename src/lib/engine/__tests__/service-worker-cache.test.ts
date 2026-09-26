@@ -347,6 +347,29 @@ describe("service-worker sprite asset handling", () => {
     expect([...cache.entries.keys()]).toEqual([spriteUrl("spr_a", 2)]);
   });
 
+  it("never evicts a newer generation to make room for an older one", async () => {
+    const cache = new MemoryCache();
+    for (let index = 0; index < MAX_SPRITE_ENTRIES; index++) {
+      await cache.put(spriteUrl(`spr_${String(index)}`, 2), new Response(String(index)));
+    }
+
+    await cacheSpriteResponse(cache, new Request(spriteUrl("spr_old", 1)), new Response("old"));
+
+    expect(await cache.match(spriteUrl("spr_0", 2))).toBeDefined();
+    expect(await cache.match(spriteUrl("spr_old", 1))).toBeUndefined();
+    expect(cache.entries.size).toBe(MAX_SPRITE_ENTRIES);
+  });
+
+  it("evicts the older generation's own least recently used sprite when over the cap", async () => {
+    const cache = new MemoryCache();
+    await cache.put(spriteUrl("spr_old_a", 1), new Response("a"));
+    await cache.put(spriteUrl("spr_new", 2), new Response("new"));
+
+    await cacheSpriteResponse(cache, new Request(spriteUrl("spr_old_b", 1)), new Response("b"), 2);
+
+    expect([...cache.entries.keys()]).toEqual([spriteUrl("spr_new", 2), spriteUrl("spr_old_b", 1)]);
+  });
+
   it("keeps newer-generation sprites when an older tab caches one", async () => {
     const cache = new MemoryCache();
     await cache.put(spriteUrl("spr_a", 2), new Response("a2"));
