@@ -2,7 +2,10 @@
 
 The production service worker precaches build and static assets, claims open clients after
 activation, runtime-caches successful same-origin non-API requests, and serves `/offline.html` for
-an uncached navigation when the network fails.
+an uncached navigation when the network fails. Sprites from `assets.mistria.fyi/sprites/` are served
+cache-first from their own `sprites-v1` cache: their URLs are immutable, so a cached sprite makes no
+network request. That cache holds at most 400 sprites, evicts the least recently used, and drops
+every sprite from an older `?g=` generation once a newer one is cached.
 
 ## Offline contract
 

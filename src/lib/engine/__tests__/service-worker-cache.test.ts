@@ -5,7 +5,9 @@ import {
   cacheLocaleChunks,
   cacheLocalesRequest,
   cacheRuntimeResponse,
+  cacheSpriteResponse,
   fetchRuntimeRequest,
+  fetchSpriteRequest,
   isEligibleForRuntimeCaching,
   isExternalFontAsset,
   isExternalSpriteAsset,
@@ -50,6 +52,24 @@ function dependencies(cache: MemoryCache, fetcher: (request: Request) => Promise
 function requestUrl(request: RequestInfo | URL): string {
   if (request instanceof Request) return request.url;
   return new URL(request.toString(), ORIGIN).href;
+}
+
+/** Sprite dependencies whose deferred cache writes a test can await with `settled()`. */
+function spriteDependencies(cache: MemoryCache, fetcher: (request: Request) => Promise<Response>) {
+  const pending: Promise<unknown>[] = [];
+  return {
+    cache,
+    fetcher,
+    settled: () => Promise.all(pending),
+    waitUntil: (promise: Promise<unknown>) => {
+      pending.push(promise);
+    },
+  };
+}
+
+function spriteUrl(name: string, generation: null | number = 1): string {
+  const url = `https://assets.mistria.fyi/sprites/items/${name}.webp`;
+  return generation === null ? url : `${url}?g=${String(generation)}`;
 }
 
 describe("service-worker runtime cache eligibility", () => {
@@ -203,16 +223,28 @@ describe("service-worker sprite asset handling", () => {
     );
   });
 
-  it("caches a sprite on first fetch", async () => {
+  it("serves a cached sprite without a network request", async () => {
     const cache = new MemoryCache();
-    const sprite = new Request("https://assets.mistria.fyi/sprites/items/spr_ui_item_apple.webp");
+    const sprite = new Request(spriteUrl("spr_ui_item_apple"));
+    await cache.put(sprite, new Response("cached sprite"));
+    const fetcher = vi.fn();
 
-    const response = await fetchRuntimeRequest(sprite, {
-      assetPaths: [],
+    const response = await fetchSpriteRequest(sprite, spriteDependencies(cache, fetcher));
+
+    expect(await response.text()).toBe("cached sprite");
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("fetches and caches an uncached sprite", async () => {
+    const cache = new MemoryCache();
+    const sprite = new Request(spriteUrl("spr_ui_item_apple"));
+    const dependencies = spriteDependencies(
       cache,
-      fetcher: vi.fn().mockResolvedValue(new Response("sprite", { status: 200 })),
-      matchCache: (request) => cache.match(request),
-    });
+      vi.fn().mockResolvedValue(new Response("sprite", { status: 200 })),
+    );
+
+    const response = await fetchSpriteRequest(sprite, dependencies);
+    await dependencies.settled();
 
     expect(await response.text()).toBe("sprite");
     expect(await (await cache.match(sprite))?.text()).toBe("sprite");
@@ -220,107 +252,107 @@ describe("service-worker sprite asset handling", () => {
 
   it("does not cache an opaque no-cors response (crossorigin is required on every sprite img/image)", async () => {
     const cache = new MemoryCache();
-    const sprite = new Request("https://assets.mistria.fyi/sprites/items/spr_ui_item_opaque.webp");
-
+    const sprite = new Request(spriteUrl("spr_ui_item_opaque"));
     // An <img>/<image> fetched without crossorigin="anonymous" yields an opaque response here:
-    // status 0, ok false. Response.error() models the same "not ok" shape fetchRuntimeRequest
+    // status 0, ok false. Response.error() models the same "not ok" shape fetchSpriteRequest
     // gates on; a real opaque Response can't be constructed directly in this test environment.
-    const response = await fetchRuntimeRequest(sprite, {
-      assetPaths: [],
-      cache,
-      fetcher: vi.fn().mockResolvedValue(Response.error()),
-      matchCache: (request) => cache.match(request),
-    });
+    const dependencies = spriteDependencies(cache, vi.fn().mockResolvedValue(Response.error()));
+
+    const response = await fetchSpriteRequest(sprite, dependencies);
+    await dependencies.settled();
 
     expect(response.ok).toBe(false);
     expect(await cache.match(sprite)).toBeUndefined();
   });
 
-  it("evicts the oldest sprite once the 400-entry cap is exceeded", async () => {
+  it("does not cache a failed response", async () => {
     const cache = new MemoryCache();
-    for (let index = 0; index < MAX_SPRITE_ENTRIES; index++) {
-      await cache.put(
-        `https://assets.mistria.fyi/sprites/items/spr_${String(index)}.webp`,
-        new Response(String(index)),
-      );
-    }
-
-    await cacheRuntimeResponse(
+    const sprite = new Request(spriteUrl("spr_ui_item_missing"));
+    const dependencies = spriteDependencies(
       cache,
-      new Request("https://assets.mistria.fyi/sprites/items/spr_newest.webp"),
-      new Response("newest"),
-      [],
-      MAX_SPRITE_ENTRIES,
+      vi.fn().mockResolvedValue(new Response("not found", { status: 404 })),
     );
 
-    expect(
-      await cache.match("https://assets.mistria.fyi/sprites/items/spr_0.webp"),
-    ).toBeUndefined();
-    expect(cache.entries.size).toBe(MAX_SPRITE_ENTRIES);
-  });
+    const response = await fetchSpriteRequest(sprite, dependencies);
+    await dependencies.settled();
 
-  it("does not count font chunks toward the sprite cache's own eviction, and vice versa", async () => {
-    const spriteCache = new MemoryCache();
-    const fontCache = new MemoryCache();
-
-    await cacheRuntimeResponse(
-      fontCache,
-      new Request("https://assets.mistria.fyi/fonts/satoshi.woff2"),
-      new Response("font"),
-      [],
-      1,
-    );
-    await cacheRuntimeResponse(
-      spriteCache,
-      new Request("https://assets.mistria.fyi/sprites/items/spr_a.webp"),
-      new Response("a"),
-      [],
-      1,
-    );
-    await cacheRuntimeResponse(
-      spriteCache,
-      new Request("https://assets.mistria.fyi/sprites/items/spr_b.webp"),
-      new Response("b"),
-      [],
-      1,
-    );
-
-    expect(await fontCache.match("https://assets.mistria.fyi/fonts/satoshi.woff2")).toBeDefined();
-    expect(
-      await spriteCache.match("https://assets.mistria.fyi/sprites/items/spr_a.webp"),
-    ).toBeUndefined();
-    expect(
-      await spriteCache.match("https://assets.mistria.fyi/sprites/items/spr_b.webp"),
-    ).toBeDefined();
+    expect(response.status).toBe(404);
+    expect(cache.entries.size).toBe(0);
   });
 
   it("returns a previously cached sprite when offline", async () => {
     const cache = new MemoryCache();
-    const sprite = new Request("https://assets.mistria.fyi/sprites/items/spr_ui_item_apple.webp");
+    const sprite = new Request(spriteUrl("spr_ui_item_apple"));
     await cache.put(sprite, new Response("cached sprite"));
 
-    const response = await fetchRuntimeRequest(sprite, {
-      assetPaths: [],
-      cache,
-      fetcher: vi.fn().mockRejectedValue(new Error("offline")),
-      matchCache: (request) => cache.match(request),
-    });
+    const response = await fetchSpriteRequest(
+      sprite,
+      spriteDependencies(cache, vi.fn().mockRejectedValue(new Error("offline"))),
+    );
 
     expect(await response.text()).toBe("cached sprite");
   });
 
   it("falls through to an error response, not the offline page, for a never-loaded sprite", async () => {
     const cache = new MemoryCache();
-    const sprite = new Request("https://assets.mistria.fyi/sprites/items/spr_ui_item_never.webp");
+    const sprite = new Request(spriteUrl("spr_ui_item_never"));
 
-    const response = await fetchRuntimeRequest(sprite, {
-      assetPaths: [],
-      cache,
-      fetcher: vi.fn().mockRejectedValue(new Error("network failure")),
-      matchCache: (request) => cache.match(request),
-    });
+    const response = await fetchSpriteRequest(
+      sprite,
+      spriteDependencies(cache, vi.fn().mockRejectedValue(new Error("network failure"))),
+    );
 
     expect(response.type).toBe("error");
+    expect(cache.entries.size).toBe(0);
+  });
+
+  it("evicts the oldest sprite once the 400-entry cap is exceeded", async () => {
+    const cache = new MemoryCache();
+    for (let index = 0; index < MAX_SPRITE_ENTRIES; index++) {
+      await cache.put(spriteUrl(`spr_${String(index)}`), new Response(String(index)));
+    }
+
+    await cacheSpriteResponse(cache, new Request(spriteUrl("spr_newest")), new Response("newest"));
+
+    expect(await cache.match(spriteUrl("spr_0"))).toBeUndefined();
+    expect(await cache.match(spriteUrl("spr_newest"))).toBeDefined();
+    expect(cache.entries.size).toBe(MAX_SPRITE_ENTRIES);
+  });
+
+  it("evicts the least recently used sprite, not the oldest-inserted one", async () => {
+    const cache = new MemoryCache();
+    await cache.put(spriteUrl("spr_a"), new Response("a"));
+    await cache.put(spriteUrl("spr_b"), new Response("b"));
+    const dependencies = spriteDependencies(cache, vi.fn());
+
+    await fetchSpriteRequest(new Request(spriteUrl("spr_a")), dependencies);
+    await dependencies.settled();
+    await cacheSpriteResponse(cache, new Request(spriteUrl("spr_c")), new Response("c"), 2);
+
+    expect(await cache.match(spriteUrl("spr_a"))).toBeDefined();
+    expect(await cache.match(spriteUrl("spr_b"))).toBeUndefined();
+    expect(await cache.match(spriteUrl("spr_c"))).toBeDefined();
+  });
+
+  it("prunes sprites from an older generation when a newer one is cached", async () => {
+    const cache = new MemoryCache();
+    await cache.put(spriteUrl("spr_a", 1), new Response("a1"));
+    await cache.put(spriteUrl("spr_b", 1), new Response("b1"));
+    await cache.put(spriteUrl("spr_legacy", null), new Response("legacy"));
+
+    await cacheSpriteResponse(cache, new Request(spriteUrl("spr_a", 2)), new Response("a2"));
+
+    expect([...cache.entries.keys()]).toEqual([spriteUrl("spr_a", 2)]);
+  });
+
+  it("keeps newer-generation sprites when an older tab caches one", async () => {
+    const cache = new MemoryCache();
+    await cache.put(spriteUrl("spr_a", 2), new Response("a2"));
+
+    await cacheSpriteResponse(cache, new Request(spriteUrl("spr_b", 1)), new Response("b1"));
+
+    expect(await cache.match(spriteUrl("spr_a", 2))).toBeDefined();
+    expect(await cache.match(spriteUrl("spr_b", 1))).toBeDefined();
   });
 });
 

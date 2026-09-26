@@ -8,11 +8,11 @@ import {
   type CacheLocalesReply,
   cacheLocalesRequest,
   fetchRuntimeRequest,
+  fetchSpriteRequest,
   isEligibleForRuntimeCaching,
   isExternalSpriteAsset,
   isLazyAsset,
   type LocaleNameChunks,
-  MAX_SPRITE_ENTRIES,
   OFFLINE_LOCALES_CACHE,
   readOfflineLocales,
   rememberOfflineLocales,
@@ -101,17 +101,17 @@ sw.addEventListener("fetch", (event) => {
       }),
     );
   } else if (isExternalSpriteAsset(url)) {
-    const response = caches.open(SPRITES_CACHE).then((cache) =>
-      fetchRuntimeRequest(event.request, {
-        assetPaths: [],
-        cache,
-        fetcher: (request) => fetch(request),
-        matchCache: (request) => cache.match(request),
-        maxEntries: MAX_SPRITE_ENTRIES,
-      }),
+    event.respondWith(
+      caches.open(SPRITES_CACHE).then((cache) =>
+        fetchSpriteRequest(event.request, {
+          cache,
+          fetcher: (request) => fetch(request),
+          waitUntil: (promise) => {
+            event.waitUntil(promise);
+          },
+        }),
+      ),
     );
-    event.respondWith(response);
-    event.waitUntil(response.then(() => undefined));
   } else if (isEligibleForRuntimeCaching(url, sw.location.origin)) {
     const response = caches.open(CACHE).then((cache) =>
       fetchRuntimeRequest(event.request, {
