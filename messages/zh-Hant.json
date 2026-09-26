@@ -1,6 +1,9 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Mistria Field Guide",
+  "app_update_available": "Mistria Field Guide 已更新！重新整理頁面即可取得最新版本。",
+  "app_update_later": "稍後",
+  "app_update_refresh": "重新整理",
   "onboarding_region_label": "開始使用",
   "onboarding_overline": "新田野指南",
   "onboarding_title": "歡迎你，農場主！",

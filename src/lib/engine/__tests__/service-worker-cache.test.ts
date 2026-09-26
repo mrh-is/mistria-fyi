@@ -12,9 +12,11 @@ import {
   isExternalFontAsset,
   isExternalSpriteAsset,
   isLazyAsset,
+  isSkipWaitingRequest,
   MAX_SPRITE_ENTRIES,
   readOfflineLocales,
   rememberOfflineLocales,
+  SKIP_WAITING_MESSAGE,
 } from "../service-worker-cache";
 
 const ORIGIN = "https://mistria.fyi";
@@ -446,5 +448,14 @@ describe("service-worker locale name chunks", () => {
     await cache.put(`${ORIGIN}/__offline-locales`, new Response("{not json"));
 
     expect(await readOfflineLocales(cache)).toEqual([]);
+  });
+});
+
+describe("service-worker update handoff", () => {
+  it("recognizes only the skip-waiting message", () => {
+    expect(isSkipWaitingRequest({ type: SKIP_WAITING_MESSAGE })).toBe(true);
+    expect(isSkipWaitingRequest({ type: CACHE_LOCALES_MESSAGE, locales: ["en"] })).toBe(false);
+    expect(isSkipWaitingRequest(SKIP_WAITING_MESSAGE)).toBe(false);
+    expect(isSkipWaitingRequest(null)).toBe(false);
   });
 });

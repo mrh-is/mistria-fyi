@@ -37,6 +37,33 @@ Name data is about 60 KB gzipped per locale; all eight measured 1.61 MB raw and 
 KB) for English readers or two (about 120 KB) for everyone else. The PWA suite reports each build’s
 per-locale sizes and fails if any locale exceeds 100 KB gzipped.
 
+## Update flow
+
+Decided in #360. A deploy never swaps the worker out from under an open tab. Cloudflare Pages serves
+only the current deployment, so once the old version’s cache is gone, a tab still running the old
+JavaScript can’t load any chunk it hasn’t imported yet.
+
+- **A new version waits.** The worker doesn’t call `skipWaiting()` on install. With a previous
+  version active, the new one installs into its own `cache-<version>` and waits; old tabs keep the
+  old worker and its cache. The first-ever install has nothing to wait for, so it activates and
+  claims the page at once.
+- **Open tabs offer it.** `watchForAppUpdate` (`src/lib/utils/app-update.ts`) finds a worker that is
+  already waiting when the page loads, or one that finishes installing later, and the root layout’s
+  `UpdatePrompt` shows a toast: “The Mistria Field Guide has been updated! Refresh to get the newest
+  version.” The toast stays until the player acts on it, is announced through the toaster’s live
+  region, and has “Refresh” and “Not now” buttons. Dismissing it hides it for that page; the next
+  page load offers the update again.
+- **Accepting updates every tab.** “Refresh” posts `mfg:skip-waiting` to the waiting worker, which
+  activates, deletes the old cache, and claims every tab. Each tab that was already controlled
+  reloads on `controllerchange`, including tabs that dismissed the prompt.
+- **Long-lived tabs still find updates.** Browsers check for a new worker only on full navigations,
+  and client-side routing never makes one, so a tab that becomes visible again calls
+  `registration.update()`, at most once every five minutes.
+
+Note: A player who ignores the prompt stays on the old version until they accept it or close every
+tab. Progress data doesn’t depend on the app version, so that’s safe. An old tab still can’t load a
+chunk its version never cached, such as another language’s names, since the server no longer has it.
+
 ## Automated verification
 
 Run the production-preview suite with:
@@ -58,7 +85,10 @@ The suite verifies:
 - the offline document for a previously uncached navigation;
 - no name chunks at install, then every chunk for the visited locale and none for another;
 - offline navigation to an unopened category, offline search, and the offline language-switch
-  message; and
+  message;
+- an update with two tabs open: the new version waits while the old tabs keep working on the old
+  cache, both tabs offer it, dismissing it in one tab doesn’t block it, and accepting it in the
+  other reloads both onto the new version and deletes the old cache; and
 - normal online rendering when Playwright blocks service workers.
 
 The `pwa` job in `.github/workflows/browser-tests.yml` runs the same Chromium suite for pull
@@ -92,7 +122,11 @@ Use a production deployment or `pnpm run test:pwa`’s preview, not the Vite dev
    displays the “You’re offline” heading from `/offline.html`.
 7. Return online, unregister the worker or disable service workers, and reload `/animals`. Confirm
    the online application renders normally.
-8. Record the browser name and exact version, OS, whether the app was installed or in a tab, commit
+8. To check the update flow, keep a tab open on the deployment, deploy a new version, then switch
+   away from the tab and back after five minutes (or click “Update” in the service-worker panel).
+   Confirm the new worker shows as waiting, the tab shows the update toast, and “Refresh” reloads
+   onto the new version with only the new `cache-<version>` left.
+9. Record the browser name and exact version, OS, whether the app was installed or in a tab, commit
    or release, date, and result. File each verified failure as a separate issue.
 
 Note: Browser developer tools may bypass the worker when “Update on reload” or an equivalent option
