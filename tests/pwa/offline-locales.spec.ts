@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 
 import { LOCALE_CODES } from "../../src/lib/types/locale";
+import { waitForControl } from "./service-worker";
 
 const CLIENT_OUTPUT = ".svelte-kit/output/client";
 /** Per-locale gzipped name data; see docs/pwa-verification.md#byte-budget. */
@@ -32,19 +33,6 @@ function cachedPaths(page: Page, paths: readonly string[]): Promise<string[]> {
     );
     return cached.filter((path): path is string => path !== undefined);
   }, paths);
-}
-
-async function waitForControl(page: Page): Promise<void> {
-  await page.waitForFunction(() => document.documentElement.dataset.hydrated === "true");
-  await page.evaluate(async () => {
-    await navigator.serviceWorker.ready;
-    if (navigator.serviceWorker.controller) return;
-    await new Promise<void>((resolve) => {
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        resolve();
-      });
-    });
-  });
 }
 
 // eslint-disable-next-line no-empty-pattern -- Playwright requires a destructured fixtures argument.

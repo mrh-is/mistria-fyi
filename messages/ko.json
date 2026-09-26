@@ -1,6 +1,9 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Mistria Field Guide",
+  "app_update_available": "Mistria Field Guide가 업데이트되었습니다! 새로 고침하여 최신 버전을 받으세요.",
+  "app_update_later": "나중에",
+  "app_update_refresh": "새로 고침",
   "onboarding_region_label": "시작하기",
   "onboarding_overline": "새 필드 가이드",
   "onboarding_title": "농부님, 환영해요!",

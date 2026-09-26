@@ -12,6 +12,7 @@ import {
   isEligibleForRuntimeCaching,
   isExternalSpriteAsset,
   isLazyAsset,
+  isSkipWaitingRequest,
   type LocaleNameChunks,
   OFFLINE_LOCALES_CACHE,
   readOfflineLocales,
@@ -43,12 +44,17 @@ sw.addEventListener("install", (event) => {
       // block the install, and the page's next request retries it.
       const offlineLocales = await readOfflineLocales(await caches.open(OFFLINE_LOCALES_CACHE));
       await cacheLocaleChunks(cache, offlineLocales, LOCALE_NAME_CHUNKS);
-      await sw.skipWaiting();
+      // No `skipWaiting()`. A first install activates at once; an update waits until a tab accepts
+      // the update prompt, since taking over would delete the cache open tabs still import from.
     })(),
   );
 });
 
 sw.addEventListener("message", (event) => {
+  if (isSkipWaitingRequest(event.data)) {
+    event.waitUntil(sw.skipWaiting());
+    return;
+  }
   const locales = cacheLocalesRequest(event.data, LOCALE_NAME_CHUNKS);
   if (!locales) return;
   // A reply is this version's cache speaking for itself, which a page can't infer: the modules it

@@ -13,6 +13,7 @@
   import SeoHead from "$lib/components/seo-head.svelte";
   import ToolbarFooter from "$lib/components/toolbar-footer.svelte";
   import { Toaster } from "$lib/components/ui/sonner/index.js";
+  import UpdatePrompt from "$lib/components/update-prompt.svelte";
   import { errorPageMetadata } from "$lib/data/page-metadata.js";
   import { FeedbackContext, setFeedbackContext } from "$lib/feedback/context.svelte.js";
   import { localeFontStylesheet } from "$lib/fonts/locale-fonts.js";
@@ -92,5 +93,6 @@
   <ToolbarFooter {metadata} bind:overlayActive />
   <Toaster position="bottom-center" offset="calc(56px + env(safe-area-inset-bottom))" />
   <PersistenceWarning />
+  <UpdatePrompt />
   <PencilFilter />
 {/key}

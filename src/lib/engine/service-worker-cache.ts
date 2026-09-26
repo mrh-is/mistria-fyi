@@ -25,6 +25,13 @@ export interface CacheLocalesMessage {
   type: typeof CACHE_LOCALES_MESSAGE;
 }
 
+/**
+ * Page → waiting service worker: take over now. A new version installs and then waits, so tabs
+ * running the old version keep the cache their modules came from until the player accepts the
+ * update prompt.
+ */
+export const SKIP_WAITING_MESSAGE = "mfg:skip-waiting";
+
 /** The chunk paths still missing from the worker's cache after it tried to fetch them. */
 export interface CacheLocalesReply {
   failed: string[];
@@ -215,6 +222,15 @@ export function isExternalSpriteAsset(url: URL): boolean {
  */
 export function isLazyAsset(pathname: string, localeChunkPaths: ReadonlySet<string>): boolean {
   return LAZY_ASSET_PATTERN.test(pathname) || localeChunkPaths.has(pathname);
+}
+
+/** Whether a page asked the waiting service worker to take over. */
+export function isSkipWaitingRequest(data: unknown): boolean {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    (data as { type?: unknown }).type === SKIP_WAITING_MESSAGE
+  );
 }
 
 /** The locales the player has asked to keep offline, across every version so far. */

@@ -48,6 +48,7 @@ const localizedFiles = [
   "src/lib/components/source-explainer-dialog.svelte",
   "src/lib/components/toolbar-footer.svelte",
   "src/lib/components/tracker-row.svelte",
+  "src/lib/components/update-prompt.svelte",
   "src/lib/components/villager-alphabet-index.svelte",
   "src/lib/components/villager-record.svelte",
   "src/lib/components/villager-roster.svelte",
