@@ -14,6 +14,10 @@ import type { LocaleCode } from "$lib/types/locale";
  *
  * The worker does the fetching, not the page. Chunks the page loaded before the worker took
  * control never passed through it, and `loadNames` won't import them twice.
+ *
+ * A new version waiting to take over hears it too. It read the remembered locales when it
+ * installed, and activating deletes the active worker's cache, so a locale added since then would
+ * otherwise be missing offline after the update.
  */
 export function keepLocaleOffline(
   locale: LocaleCode,
@@ -28,6 +32,7 @@ export function keepLocaleOffline(
   };
   void target.ready.then((registration) => {
     registration.active?.postMessage(message);
+    registration.waiting?.postMessage(message);
   });
 }
 

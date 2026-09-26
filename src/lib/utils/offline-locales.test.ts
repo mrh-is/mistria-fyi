@@ -34,6 +34,22 @@ describe("keepLocaleOffline", () => {
     expect(postMessage).toHaveBeenCalledWith({ type: CACHE_LOCALES_MESSAGE, locales: ["en"] });
   });
 
+  it("also asks a new version waiting to take over", async () => {
+    const active = vi.fn();
+    const waiting = vi.fn();
+    const ready = Promise.resolve({
+      active: { postMessage: active },
+      waiting: { postMessage: waiting },
+    } as unknown as ServiceWorkerRegistration);
+
+    keepLocaleOffline("ja", { ready });
+    await ready;
+
+    const message = { type: CACHE_LOCALES_MESSAGE, locales: ["en", "ja"] };
+    expect(active).toHaveBeenCalledWith(message);
+    expect(waiting).toHaveBeenCalledWith(message);
+  });
+
   it("does nothing without service worker support", () => {
     expect(() => {
       keepLocaleOffline("ja");
