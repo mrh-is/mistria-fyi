@@ -1,6 +1,9 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Mistria Field Guide",
+  "app_update_available": "¡Mistria Field Guide se ha actualizado! Actualiza la página para obtener la versión más reciente.",
+  "app_update_later": "Ahora no",
+  "app_update_refresh": "Actualizar",
   "onboarding_region_label": "Primeros pasos",
   "onboarding_overline": "Nueva guía de campo",
   "onboarding_title": "¡Te damos la bienvenida!",

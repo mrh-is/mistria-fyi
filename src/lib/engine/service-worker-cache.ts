@@ -25,6 +25,13 @@ export interface CacheLocalesMessage {
   type: typeof CACHE_LOCALES_MESSAGE;
 }
 
+/**
+ * Page → waiting service worker: take over now. A new version installs and then waits, so tabs
+ * running the old version keep the cache their modules came from until the player accepts the
+ * update prompt.
+ */
+export const SKIP_WAITING_MESSAGE = "mfg:skip-waiting";
+
 /** The chunk paths still missing from the worker's cache after it tried to fetch them. */
 export interface CacheLocalesReply {
   failed: string[];
@@ -45,6 +52,16 @@ interface RuntimeRequestDependencies {
   matchCache: (request: RequestInfo | URL) => Promise<Response | undefined>;
   maxEntries?: number;
   offlinePath?: string;
+}
+
+type SpriteCache = Pick<Cache, "delete" | "keys" | "match" | "put">;
+
+interface SpriteRequestDependencies {
+  cache: SpriteCache;
+  fetcher: (request: Request) => Promise<Response>;
+  maxEntries?: number;
+  /** Keeps the worker alive for cache writes that settle after the response is returned. */
+  waitUntil: (promise: Promise<unknown>) => void;
 }
 
 /**
@@ -97,6 +114,33 @@ export async function cacheRuntimeResponse(
   }
 }
 
+/**
+ * Stores a sprite and enforces the cache's bounds. A sprite from an older `?g=` generation than
+ * this one is stale art, so it goes at once rather than waiting to age out. Past that, the entry
+ * bound evicts from the front of `keys()`, which is insertion order; {@link fetchSpriteRequest}
+ * re-inserts on every hit, so the front is the least recently used.
+ *
+ * Only this sprite's own generation is evictable. A tab still running an older deploy must not
+ * push out a newer deploy's art, so when newer sprites fill the cache, the older sprite just
+ * stored is the one that goes.
+ */
+export async function cacheSpriteResponse(
+  cache: SpriteCache,
+  request: Request,
+  response: Response,
+  maxEntries = MAX_SPRITE_ENTRIES,
+): Promise<void> {
+  await cache.put(request, response);
+  const generation = spriteGeneration(request.url);
+  const keys = await cache.keys();
+  const stale = keys.filter((key) => spriteGeneration(key.url) < generation);
+  const evictable = keys.filter((key) => spriteGeneration(key.url) === generation);
+  const excess = keys.length - stale.length - maxEntries;
+  for (const key of [...stale, ...evictable.slice(0, Math.max(0, excess))]) {
+    await cache.delete(key);
+  }
+}
+
 export async function fetchRuntimeRequest(
   request: Request,
   dependencies: RuntimeRequestDependencies,
@@ -124,6 +168,43 @@ export async function fetchRuntimeRequest(
   }
 }
 
+/**
+ * Serves a sprite cache-first. Sprite URLs are immutable (changed art gets a new `?g=`), so a cached
+ * copy never needs revalidating and a hit makes no network request. A miss fetches, caches a
+ * successful response, and returns it. Cache writes are best-effort and happen off the response
+ * path.
+ */
+export async function fetchSpriteRequest(
+  request: Request,
+  dependencies: SpriteRequestDependencies,
+): Promise<Response> {
+  const { cache, maxEntries } = dependencies;
+  const cached = await cache.match(request);
+  if (cached) {
+    // Re-insert to move the entry to the back of the eviction order.
+    const copy = cached.clone();
+    dependencies.waitUntil(
+      (async () => {
+        await cache.delete(request);
+        await cache.put(request, copy);
+      })().catch(() => undefined),
+    );
+    return cached;
+  }
+  let response: Response;
+  try {
+    response = await dependencies.fetcher(request);
+  } catch {
+    return Response.error();
+  }
+  if (response.ok) {
+    dependencies.waitUntil(
+      cacheSpriteResponse(cache, request, response.clone(), maxEntries).catch(() => undefined),
+    );
+  }
+  return response;
+}
+
 export function isEligibleForRuntimeCaching(url: URL, origin: string): boolean {
   return (url.origin === origin && !url.pathname.startsWith("/api/")) || isExternalFontAsset(url);
 }
@@ -145,6 +226,15 @@ export function isExternalSpriteAsset(url: URL): boolean {
  */
 export function isLazyAsset(pathname: string, localeChunkPaths: ReadonlySet<string>): boolean {
   return LAZY_ASSET_PATTERN.test(pathname) || localeChunkPaths.has(pathname);
+}
+
+/** Whether a page asked the waiting service worker to take over. */
+export function isSkipWaitingRequest(data: unknown): boolean {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    (data as { type?: unknown }).type === SKIP_WAITING_MESSAGE
+  );
 }
 
 /** The locales the player has asked to keep offline, across every version so far. */
@@ -173,4 +263,10 @@ export async function rememberOfflineLocales(
     OFFLINE_LOCALES_KEY,
     new Response(JSON.stringify(next), { headers: { "Content-Type": "application/json" } }),
   );
+}
+
+/** A sprite URL's `?g=` generation; URLs without one count as generation 0. */
+function spriteGeneration(url: string): number {
+  const generation = Number(new URL(url).searchParams.get("g") ?? 0);
+  return Number.isFinite(generation) ? generation : 0;
 }
