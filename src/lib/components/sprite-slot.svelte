@@ -113,7 +113,7 @@
           width="18"
           height="18"
           onerror={handleImageError}
-          style="filter: drop-shadow(0.8px 1.2px 0.7px rgb(46 42 34 / 35%)); image-rendering: pixelated; transform: rotate(2.5deg); transform-box: fill-box; transform-origin: center;"
+          style="filter: drop-shadow(var(--shadow-sticker)); image-rendering: pixelated; transform: rotate(2.5deg); transform-box: fill-box; transform-origin: center;"
         />
       {/if}
     {:else}
@@ -139,7 +139,7 @@
     height: var(--tracker-sprite-size, 40px);
     flex-shrink: 0;
     border: 1px dashed var(--sprite-slot-outline);
-    border-radius: 2px;
+    border-radius: var(--radius);
     opacity: 0.32;
   }
 

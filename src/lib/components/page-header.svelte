@@ -136,7 +136,7 @@
     overflow: hidden;
     padding: 0.35em 0 0.35em 0.06em;
     font-family: var(--font-display);
-    font-size: 24px;
+    font-size: var(--text-2xl);
     font-style: var(--font-display-style);
     font-weight: 400;
     line-height: 1.15;
@@ -150,7 +150,7 @@
     flex-shrink: 0;
     color: var(--ink-muted);
     font-family: var(--font-data);
-    font-size: 12px;
+    font-size: var(--text-xs);
   }
 
   .page-header__ribbon {
@@ -179,10 +179,10 @@
     left: 0;
     width: 9px;
     background:
-      linear-gradient(to bottom right, transparent 46%, #d4a72c 48% 57%, transparent 59%) top / 9px
-        50% no-repeat,
-      linear-gradient(to top right, transparent 46%, #d4a72c 48% 57%, transparent 59%) bottom / 9px
-        50% no-repeat;
+      linear-gradient(to bottom right, transparent 46%, var(--ribbon-gold) 48% 57%, transparent 59%)
+        top / 9px 50% no-repeat,
+      linear-gradient(to top right, transparent 46%, var(--ribbon-gold) 48% 57%, transparent 59%)
+        bottom / 9px 50% no-repeat;
     content: "";
   }
 
@@ -233,10 +233,15 @@
       right: 0;
       left: auto;
       background:
-        linear-gradient(to bottom left, transparent 46%, #d4a72c 48% 57%, transparent 59%) top / 9px
-          50% no-repeat,
-        linear-gradient(to top left, transparent 46%, #d4a72c 48% 57%, transparent 59%) bottom / 9px
-          50% no-repeat;
+        linear-gradient(
+            to bottom left,
+            transparent 46%,
+            var(--ribbon-gold) 48% 57%,
+            transparent 59%
+          )
+          top / 9px 50% no-repeat,
+        linear-gradient(to top left, transparent 46%, var(--ribbon-gold) 48% 57%, transparent 59%)
+          bottom / 9px 50% no-repeat;
     }
   }
 

@@ -62,7 +62,7 @@
   .spoiler-cover__mask {
     display: inline-block;
     padding-inline: 4px;
-    border-radius: 2px;
+    border-radius: var(--radius);
     background: color-mix(in srgb, var(--muted-foreground) 25%, transparent);
     transition: background-color 150ms;
   }

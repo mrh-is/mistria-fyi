@@ -164,12 +164,12 @@
   }
 
   .skill-record:first-child {
-    border-radius: 2px 2px 0 0;
+    border-radius: var(--radius) var(--radius) 0 0;
   }
 
   .skill-record:last-child {
     border-bottom: 1px solid var(--hairline);
-    border-radius: 0 0 2px 2px;
+    border-radius: 0 0 var(--radius) var(--radius);
   }
 
   .skill-record[data-complete="true"] {
@@ -183,7 +183,7 @@
     gap: 4px;
     padding-inline: 4px;
     font-family: var(--font-body);
-    font-size: 15px;
+    font-size: var(--text-sm-plus);
   }
 
   .skill-name strong {
@@ -241,7 +241,7 @@
     background: transparent;
     color: var(--ink-muted);
     font-family: var(--font-data);
-    font-size: 12px;
+    font-size: var(--text-xs);
     text-align: right;
     white-space: nowrap;
   }

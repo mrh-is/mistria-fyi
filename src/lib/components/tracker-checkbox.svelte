@@ -59,7 +59,7 @@
     min-width: var(--tracker-target-size, 44px);
     flex-shrink: 0;
     color: var(--ink-muted);
-    border-radius: 2px;
+    border-radius: var(--radius);
   }
 
   .tracker-checkbox:is(:hover, :focus-visible) {
@@ -70,6 +70,7 @@
   .tracker-checkbox:focus-visible {
     outline: 1px solid currentColor;
     outline-offset: -3px;
+    /* stylelint-disable-next-line declaration-property-unit-disallowed-list -- an inset focus ring, not an elevation */
     box-shadow: inset 0 0 0 1px currentColor;
   }
 

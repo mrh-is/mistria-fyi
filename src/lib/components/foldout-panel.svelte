@@ -91,7 +91,7 @@
     overflow: hidden;
     border: 1px solid color-mix(in srgb, var(--hairline) 58%, transparent);
     background: var(--paper-raised);
-    box-shadow: 0 9px 24px rgb(32 28 24 / 18%);
+    box-shadow: var(--shadow-overlay);
   }
 
   .foldout__header {
@@ -106,7 +106,7 @@
   .foldout__title {
     flex: 1;
     font-family: var(--font-controls);
-    font-size: 11px;
+    font-size: var(--text-2xs);
     font-weight: 400;
     letter-spacing: 0.14em;
     text-transform: uppercase;

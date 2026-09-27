@@ -103,7 +103,7 @@
     gap: 6px;
     color: var(--ink-muted);
     font-family: var(--font-annotation);
-    font-size: 11px;
+    font-size: var(--text-2xs);
     font-weight: 500;
     letter-spacing: 0.02em;
   }
@@ -122,7 +122,7 @@
     padding: 6px 12px;
     color: var(--ink-muted);
     font-family: var(--font-controls);
-    font-size: 11px;
+    font-size: var(--text-2xs);
   }
 
   .quick-settings__links {
@@ -158,7 +158,7 @@
     margin-top: 6px;
     color: var(--tag-muted);
     font-family: var(--font-annotation);
-    font-size: 13px;
+    font-size: var(--text-xs-plus);
     line-height: 1.4;
   }
 
@@ -173,7 +173,7 @@
     flex: 1;
     border: 1px solid color-mix(in srgb, var(--tag-ink) 42%, transparent);
     font-family: var(--font-controls);
-    font-size: 10px;
+    font-size: var(--text-3xs);
   }
 
   .spoiler-tag__btn:is(:hover, :focus-visible) {

@@ -48,7 +48,7 @@
   .inventory-tag__overline {
     display: block;
     font-family: var(--font-controls);
-    font-size: 8px;
+    font-size: var(--text-5xs);
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
@@ -95,7 +95,7 @@
 
   .inventory-tag__list strong {
     font-family: var(--font-controls);
-    font-size: 9px;
+    font-size: var(--text-4xs);
     letter-spacing: 0.04em;
     text-transform: uppercase;
   }
@@ -104,7 +104,7 @@
     margin-top: 1px;
     color: var(--tag-muted);
     font-family: var(--font-annotation);
-    font-size: 9px;
+    font-size: var(--text-4xs);
     line-height: 1.25;
   }
 
@@ -122,7 +122,7 @@
     min-height: 40px;
     border: 1px solid color-mix(in srgb, var(--tag-ink) 72%, transparent);
     font-family: var(--font-controls);
-    font-size: 10px;
+    font-size: var(--text-3xs);
   }
 
   :global(.inventory-tag__close:is(:hover, :focus-visible)) {

@@ -85,6 +85,12 @@
   --ribbon-ink: #fdfcf9;
   --sprite-slot-outline: #e0dcd4;
   --shadow-small: 0 1px 1px rgb(46 42 34 / 12%);
+  --shadow-medium: 0 3px 10px rgb(46 42 34 / 15%);
+  --shadow-large: 0 6px 16px rgb(46 42 34 / 18%);
+  --shadow-overlay: 0 9px 24px rgb(46 42 34 / 18%);
+  /* For filter: drop-shadow(), which follows a shape's outline rather than its box */
+  --shadow-ribbon: 0 3px 2px rgb(46 42 34 / 30%);
+  --shadow-sticker: 0.8px 1.2px 0.7px rgb(46 42 34 / 35%);
 
   --fg-green: #1a7a3a;
   --fg-amber: #a85a0e;
@@ -92,6 +98,9 @@
   --fg-blue: #1860a8;
   --fg-brown: #7a5a3a;
   --home-accent: #8a642e;
+  --home-accent-ink: var(--ribbon-ink);
+  /* Gilt edge on the ribbon of a completed category */
+  --ribbon-gold: #d4a72c;
 
   /* shadcn semantic tokens mapped to Field Guide */
   --background: var(--paper);
@@ -150,6 +159,9 @@
   --ribbon-ink: #f7f5f0;
   --sprite-slot-outline: #48464b;
   --shadow-small: 0 1px 1px rgb(0 0 0 / 30%);
+  --shadow-medium: 0 3px 10px rgb(0 0 0 / 15%);
+  --shadow-large: 0 6px 16px rgb(0 0 0 / 18%);
+  --shadow-overlay: 0 9px 24px rgb(0 0 0 / 18%);
 
   --fg-green: #38984e;
   --fg-amber: #c88030;
@@ -157,6 +169,7 @@
   --fg-blue: #3878b8;
   --fg-brown: #9a7848;
   --home-accent: #a87838;
+  --home-accent-ink: #101014;
 
   --card: #2a2a2e;
   --card-foreground: var(--ink);
@@ -250,6 +263,17 @@ html:lang(ru) {
   --font-controls: "IBM Plex Mono", "Courier New", monospace;
   --font-annotation: "Golos Text", system-ui, sans-serif;
   --font-data: "IBM Plex Mono", "Courier New", monospace;
+}
+
+/* Type sizes below Tailwind's --text-xs, and the half steps the dense record layouts use. The rest
+ * of the scale (--text-xs, --text-sm, --text-base, --text-xl, --text-2xl, …) is Tailwind's. */
+@theme {
+  --text-5xs: 0.5rem;
+  --text-4xs: 0.5625rem;
+  --text-3xs: 0.625rem;
+  --text-2xs: 0.6875rem;
+  --text-xs-plus: 0.8125rem;
+  --text-sm-plus: 0.9375rem;
 }
 
 @theme inline {

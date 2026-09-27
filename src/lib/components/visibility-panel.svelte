@@ -246,7 +246,7 @@
     gap: 6px;
     color: var(--ink-muted);
     font-family: var(--font-annotation);
-    font-size: 11px;
+    font-size: var(--text-2xs);
     font-weight: 500;
     letter-spacing: 0.02em;
   }
@@ -278,7 +278,7 @@
     color: var(--ink-muted);
     background: var(--paper-deep);
     font-family: var(--font-controls);
-    font-size: 10px;
+    font-size: var(--text-3xs);
   }
 
   @media (hover: hover) and (pointer: fine) {
@@ -317,7 +317,7 @@
     margin-bottom: 4px;
     color: var(--ink-muted);
     font-family: var(--font-annotation);
-    font-size: 10px;
+    font-size: var(--text-3xs);
   }
 
   .radio-strip {
@@ -341,7 +341,7 @@
     color: var(--ink-muted);
     background: var(--paper-deep);
     font-family: var(--font-controls);
-    font-size: 9px;
+    font-size: var(--text-4xs);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -354,6 +354,7 @@
 
   .radio-strip button:is(:hover, :focus-visible) {
     outline: 0;
+    /* stylelint-disable-next-line declaration-property-unit-disallowed-list -- an inset hover ring, not an elevation */
     box-shadow: inset 0 0 0 2px var(--primary);
   }
 
@@ -418,7 +419,7 @@
     gap: 6px;
     color: var(--ink-muted);
     font-family: var(--font-annotation);
-    font-size: 11px;
+    font-size: var(--text-2xs);
     font-weight: 500;
     letter-spacing: 0.02em;
   }
