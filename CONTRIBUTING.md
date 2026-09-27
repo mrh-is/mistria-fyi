@@ -78,7 +78,7 @@ contracts, and state management rules, see [docs/app-architecture.md](docs/app-a
 | `pnpm run check`                       | SvelteKit type checking                               |
 | `pnpm run check:i18n`                  | Verify locale files match `en.json`'s keys            |
 | `pnpm run check:routes`                | Verify built static assets bypass Functions           |
-| `pnpm run lint`                        | Prettier + ESLint                                     |
+| `pnpm run lint`                        | Prettier + ESLint + Stylelint                         |
 | `pnpm run lint:fix`                    | Auto-fix lint issues                                  |
 | `pnpm run test`                        | Complete Vitest suite                                 |
 | `pnpm run test:app`                    | App tests (`src/`)                                    |
@@ -105,6 +105,9 @@ Report vulnerabilities privately — see [SECURITY.md](SECURITY.md).
   layout compositors. Colocate page-specific components in the route directory; move to
   `$lib/components/` when shared.
 - **shadcn-svelte**: Vendored in `src/lib/components/ui/` — do not manually edit these.
+- **Styling**: Tailwind utilities & scoped `<style>` blocks, both on the design tokens in
+  `src/app.css`. Stylelint rejects color, type-size, shadow, & radius literals in scoped CSS. See
+  [docs/styling.md](docs/styling.md).
 
 ## Pipeline
 
