@@ -59,16 +59,18 @@ message that mentions one of these concepts, use the term below.
   standalone labels, but the game's `fiddle/misc_local.toml` has no key for any of them. The game
   names the mines only inside sentences ("Are you sure you want to exit the Mines?"), so the Mines
   message uses that sentence's noun.
-- **Perks** have no game label at all (`misc_local` has none, and perk names don't include the
-  noun), so each locale's word is our own choice, held consistent. Replace it if the game adds one.
+- **Perks** follow the game's skill-perk tutorial (`ui/tutorials/skill_perks/title`) and its
+  dialogue. Standalone labels use the full term; English keeps "perk", which the game uses on its
+  own ("Select a perk to see its description"). Note: the game calls skills умения in Russian and
+  perks навыки.
 
-| Concept   | en        | es                      | fr                       | ja           | ko        | ru          | zh-Hans  | zh-Hant  |
-| --------- | --------- | ----------------------- | ------------------------ | ------------ | --------- | ----------- | -------- | -------- |
-| Mines     | Mines     | minas                   | mines                    | 鉱坑         | 광산      | шахты       | 矿洞     | 礦洞     |
-| Renown    | renown    | reputación              | renommée                 | 名声         | 명성      | репутация   | 声望     | 聲望     |
-| Town rank | town rank | categoría (de la aldea) | classement (de la ville) | タウンランク | 마을 등급 | ранг города | 城镇等级 | 城鎮段位 |
-| Villagers | villager  | aldeano                 | habitant                 | 町の住民     | 마을 주민 | житель      | 村民     | 村民     |
-| Perks     | perk      | ventaja                 | atout                    | パーク       | 특전      | перк        | 天赋     | 天賦     |
+| Concept   | en        | es                      | fr                       | ja             | ko        | ru          | zh-Hans  | zh-Hant  |
+| --------- | --------- | ----------------------- | ------------------------ | -------------- | --------- | ----------- | -------- | -------- |
+| Mines     | Mines     | minas                   | mines                    | 鉱坑           | 광산      | шахты       | 矿洞     | 礦洞     |
+| Renown    | renown    | reputación              | renommée                 | 名声           | 명성      | репутация   | 声望     | 聲望     |
+| Town rank | town rank | categoría (de la aldea) | classement (de la ville) | タウンランク   | 마을 등급 | ранг города | 城镇等级 | 城鎮段位 |
+| Villagers | villager  | aldeano                 | habitant                 | 町の住民       | 마을 주민 | житель      | 村民     | 村民     |
+| Perks     | perk      | don de habilidad        | bonus de compétence      | スキルボーナス | 스킬 특성 | навык       | 技能特长 | 技能特長 |
 
 Note: in both Chinese scripts the game titles its villager list 居民列表 (the `ui` chunk's
 `villagers`) but calls an individual villager 村民 (`select_a_villager`). The category heading reads
