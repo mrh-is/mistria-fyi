@@ -20,8 +20,10 @@ import { deriveProgressionState, type UserProgressionState } from "$lib/engine/v
 import {
   AVAILABILITY_WINDOWS,
   DEFAULT_AVAILABILITY_WINDOWS,
+  LEGACY_AVAILABILITY_MODES,
   legacyAvailabilityWindows,
 } from "$lib/types/availability.js";
+import { SEASONS, VILLAGER_RELATIONSHIPS, WEATHERS } from "$lib/types/tracker-data.js";
 import { recordEntries, recordKeys } from "$lib/utils";
 import { tryGetItem, trySetItem } from "$lib/utils/local-storage.js";
 
@@ -48,7 +50,9 @@ import type {
 // ─── Types ──────────────────────────────────────────────────────────
 
 export type AvailabilityMode = LegacyAvailabilityMode;
-export type ChildChoice = "no" | "undeclared" | "yes";
+export const CHILD_CHOICES = ["no", "undeclared", "yes"] as const;
+export const QUEST_STATES = ["completed", "none", "obtained"] as const;
+export type ChildChoice = (typeof CHILD_CHOICES)[number];
 export interface CompletedState {
   almanac: Set<ItemId>;
   almanacRecipes: Set<RecipeId>;
@@ -127,7 +131,7 @@ export interface MergeResult {
   counts: MergeCounts;
 }
 
-export type QuestState = "completed" | "none" | "obtained";
+export type QuestState = (typeof QUEST_STATES)[number];
 
 export interface UserState {
   availabilityWindows: AvailabilityWindow[];
@@ -176,21 +180,30 @@ interface SerializedState {
 const STORAGE_KEY = "mistria-fyi-v1";
 const QUARANTINE_KEY = `${STORAGE_KEY}-quarantine`;
 
-const VALID_CHILD_CHOICES = new Set<string>(["no", "undeclared", "yes"]);
-const VALID_AVAILABILITY_MODES = new Set<string>(["available", "everything", "timely"]);
+const VALID_CHILD_CHOICES = new Set<string>(CHILD_CHOICES);
+const VALID_AVAILABILITY_MODES = new Set<string>(LEGACY_AVAILABILITY_MODES);
 const VALID_AVAILABILITY_WINDOWS = new Set<string>(AVAILABILITY_WINDOWS);
-const VALID_RELATIONSHIPS = new Set<string>([
-  "married",
-  "platonic",
-  "proposed",
-  "romantic",
-  "undecided",
-]);
-const VALID_QUEST_STATES = new Set<string>(["completed", "none", "obtained"]);
-const VALID_SEASONS = new Set<string>(["fall", "spring", "summer", "winter"]);
-const VALID_WEATHER = new Set<string>(["calm", "heavy_inclement", "inclement", "special"]);
+const VALID_RELATIONSHIPS = new Set<string>(VILLAGER_RELATIONSHIPS);
+const VALID_QUEST_STATES = new Set<string>(QUEST_STATES);
+const VALID_SEASONS = new Set<string>(SEASONS);
+const VALID_WEATHER = new Set<string>(WEATHERS);
 
 type DeserializeResult = { error: ImportErrorKind; ok: false } | { ok: true; state: UserState };
+type ValidationMode = "local" | "strict";
+
+const QUEST_IDS = new Set(
+  Object.values(trackerData.quests).flatMap((quests) => Object.keys(quests)),
+);
+const MUSEUM_ITEM_IDS = new Set(
+  Object.values(trackerData.museum).flatMap((wing) =>
+    Object.values(wing.sets).flatMap((set) => set.items),
+  ),
+);
+const PERK_IDS = new Set(
+  Object.values(trackerData.skills).flatMap((skill) =>
+    skill.perkTiers.flatMap((tier) => Object.keys(tier)),
+  ),
+);
 
 function addStartingItems(completed: CompletedState): void {
   for (const [id, cosmetic] of recordEntries(trackerData.cosmetics)) {
@@ -378,7 +391,7 @@ function createUserState() {
     },
     /** Import/export user state JSON (full replace) */
     importState(json: string): ImportResult {
-      const result = deserialize(json);
+      const result = deserialize(json, "strict");
       if (!result.ok) return result;
       state = result.state;
       enablePersistenceAfterExplicitReplace();
@@ -759,7 +772,7 @@ function createUserState() {
         return;
       }
 
-      const result = deserialize(stored);
+      const result = deserialize(stored, "local");
       if (result.ok) {
         state = result.state;
         persistenceBlocked = false;
@@ -889,7 +902,7 @@ function createUserState() {
   };
 }
 
-function deserialize(json: string): DeserializeResult {
+function deserialize(json: string, mode: ValidationMode): DeserializeResult {
   let parsed: unknown;
   try {
     parsed = JSON.parse(json);
@@ -911,48 +924,69 @@ function deserialize(json: string): DeserializeResult {
     return { error: "unsupported-version", ok: false };
   }
 
-  if (!isSerializedState(raw)) {
+  if (!isSerializedState(raw, mode)) {
     return { error: "invalid-fields", ok: false };
   }
 
   try {
     const s = raw;
 
-    // Branded ID types require casting through unknown at the serialization boundary
-    const brandedSet = <T>(arr: string[]) => new SvelteSet(arr) as unknown as Set<T>;
-
     // Migrate legacy Set-based data → level/state Records
     // Old format: villagers/skills/quests as string[]; New format: villagerLevels/skillLevels/questStates as Records
-    const villagerLevels: Record<string, number> = s.completed.villagerLevels ?? {};
+    const rawVillagerLevels: Record<string, unknown> = { ...s.completed.villagerLevels };
     if (!s.completed.villagerLevels && s.completed.villagers) {
-      for (const id of s.completed.villagers) villagerLevels[id] = 10; // legacy "completed" → max standard level
+      for (const id of s.completed.villagers) rawVillagerLevels[id] = 10;
     }
+    const villagerLevels = normalizeLevelRecord<VillagerId>(
+      rawVillagerLevels,
+      trackerData.villagers,
+      MAX_VILLAGER_LEVEL,
+    );
 
-    const skillLevels: Record<string, number> = s.completed.skillLevels ?? {};
+    const rawSkillLevels: Record<string, unknown> = { ...s.completed.skillLevels };
     if (!s.completed.skillLevels && s.completed.skills) {
-      for (const id of s.completed.skills) skillLevels[id] = 60; // legacy "completed" → max level
+      for (const id of s.completed.skills) rawSkillLevels[id] = MAX_SKILL_LEVEL;
     }
+    const skillLevels = normalizeLevelRecord<SkillId>(
+      rawSkillLevels,
+      trackerData.skills,
+      MAX_SKILL_LEVEL,
+    );
 
-    const questStates: Record<string, QuestState> = s.completed.questStates ?? {};
+    const rawQuestStates: Record<string, unknown> = { ...s.completed.questStates };
     if (!s.completed.questStates && s.completed.quests) {
-      for (const id of s.completed.quests) questStates[id] = "completed";
+      for (const id of s.completed.quests) rawQuestStates[id] = "completed";
     }
+    const questStates = normalizeEnumRecord<QuestId, QuestState>(
+      rawQuestStates,
+      QUEST_IDS,
+      VALID_QUEST_STATES,
+    );
 
     // Migrate villagerRelationships from legacy romanticVillagers/marriedVillager
     let villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>> = {};
     if (s.completed.villagerRelationships) {
       for (const [id, rel] of Object.entries(s.completed.villagerRelationships)) {
-        if (VALID_RELATIONSHIPS.has(rel) && rel !== "undecided") {
+        if (
+          Object.hasOwn(trackerData.villagers, id) &&
+          isEnumValue(rel, VALID_RELATIONSHIPS) &&
+          rel !== "undecided"
+        ) {
           villagerRelationships[id as VillagerId] = rel;
         }
       }
     } else {
       if (s.completed.romanticVillagers) {
         for (const id of s.completed.romanticVillagers) {
-          villagerRelationships[id as VillagerId] = "romantic";
+          if (Object.hasOwn(trackerData.villagers, id)) {
+            villagerRelationships[id as VillagerId] = "romantic";
+          }
         }
       }
-      if (s.completed.marriedVillager) {
+      if (
+        s.completed.marriedVillager &&
+        Object.hasOwn(trackerData.villagers, s.completed.marriedVillager)
+      ) {
         villagerRelationships[s.completed.marriedVillager as VillagerId] = "married";
       }
     }
@@ -965,29 +999,36 @@ function deserialize(json: string): DeserializeResult {
 
     const completed: CompletedState = {
       almanac: normalizeAlmanacIds(s.completed.almanac),
-      almanacRecipes: brandedSet<RecipeId>(s.completed.almanacRecipes ?? []),
-      animalCosmetics: Object.fromEntries(
-        Object.entries(s.completed.animalCosmetics).map(([k, v]) => [k, brandedSet<CosmeticId>(v)]),
+      almanacRecipes: knownBrandedSet<RecipeId>(
+        s.completed.almanacRecipes ?? [],
+        trackerData.recipes,
       ),
-      animals: Object.fromEntries(
-        Object.entries(s.completed.animals).map(([k, v]) => [k, brandedSet<AnimalVariantId>(v)]),
-      ),
+      animalCosmetics: normalizeAnimalCosmetics(s.completed.animalCosmetics),
+      animals: normalizeAnimalVariants(s.completed.animals),
       childChoice,
-      cosmetics: brandedSet<CosmeticId>(s.completed.cosmetics),
-      dates: brandedSet<DateId>(s.completed.dates ?? []),
-      hasUpperFloor: s.completed.hasUpperFloor ?? false,
+      cosmetics: knownBrandedSet<CosmeticId>(s.completed.cosmetics, trackerData.cosmetics),
+      dates: knownBrandedSet<DateId>(s.completed.dates ?? [], trackerData.dates),
+      hasUpperFloor:
+        typeof s.completed.hasUpperFloor === "boolean" ? s.completed.hasUpperFloor : false,
       mines: {
-        floor: s.completed.mines.floor,
-        spells: brandedSet<SpellId>(s.completed.mines.spells),
+        floor: isFiniteNumber(s.completed.mines.floor)
+          ? clampMineFloor(s.completed.mines.floor)
+          : 0,
+        spells: knownBrandedSet<SpellId>(s.completed.mines.spells, trackerData.mines.spells),
       },
-      museum: brandedSet<ItemId>(s.completed.museum),
-      petCosmetics: brandedSet<PetCosmeticSetId>(s.completed.petCosmetics ?? []),
-      petSkins: brandedSet<PetSkinId>(s.completed.petSkins ?? []),
+      museum: knownBrandedSet<ItemId>(s.completed.museum, MUSEUM_ITEM_IDS),
+      petCosmetics: knownBrandedSet<PetCosmeticSetId>(
+        s.completed.petCosmetics ?? [],
+        trackerData.pets.cosmetics,
+      ),
+      petSkins: knownBrandedSet<PetSkinId>(s.completed.petSkins ?? [], trackerData.pets.skins),
       questStates,
-      reachedSeason: s.completed.reachedSeason ?? "spring",
-      renown: clampRenownLevel(s.completed.renown),
+      reachedSeason: isEnumValue(s.completed.reachedSeason, VALID_SEASONS)
+        ? s.completed.reachedSeason
+        : "spring",
+      renown: isFiniteNumber(s.completed.renown) ? clampRenownLevel(s.completed.renown) : 0,
       skillLevels,
-      unlockedPerks: brandedSet<PerkId>(s.completed.unlockedPerks ?? []),
+      unlockedPerks: knownBrandedSet<PerkId>(s.completed.unlockedPerks ?? [], PERK_IDS),
       villagerLevels,
       villagerRelationships,
     };
@@ -997,11 +1038,14 @@ function deserialize(json: string): DeserializeResult {
     return {
       ok: true,
       state: {
-        availabilityWindows: serializedAvailabilityWindows(s),
+        availabilityWindows: serializedAvailabilityWindows(s, mode),
         completed,
         showCompleted: false,
-        showSpoilers: s.showSpoilers ?? false,
-        worldState: s.worldState,
+        showSpoilers: typeof s.showSpoilers === "boolean" ? s.showSpoilers : false,
+        worldState: {
+          season: isEnumValue(s.worldState.season, VALID_SEASONS) ? s.worldState.season : "spring",
+          weather: isEnumValue(s.worldState.weather, VALID_WEATHER) ? s.worldState.weather : "calm",
+        },
       },
     };
   } catch {
@@ -1014,6 +1058,10 @@ function filterRecord<V>(
   predicate: (v: V) => boolean,
 ): Record<string, V> {
   return Object.fromEntries(Object.entries(record).filter(([, v]) => predicate(v)));
+}
+
+function hasKnownId(knownIds: object | ReadonlySet<string>, id: string): boolean {
+  return knownIds instanceof Set ? knownIds.has(id) : Object.hasOwn(knownIds, id);
 }
 
 function isDomainInteger(value: unknown, max: number): value is number {
@@ -1042,6 +1090,10 @@ function isOptionalIntegerRecord(value: unknown, max: number): boolean {
   );
 }
 
+function isOptionalRecord(value: unknown): boolean {
+  return value === undefined || isRecord(value);
+}
+
 function isOptionalStringArray(value: unknown): boolean {
   return value === undefined || isStringArray(value);
 }
@@ -1050,66 +1102,93 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function isSerializedState(value: unknown): value is SerializedState {
+function isSerializedState(value: unknown, mode: ValidationMode): value is SerializedState {
   if (!isRecord(value)) return false;
   const completed = value.completed;
   const worldState = value.worldState;
   if (!isRecord(completed) || !isRecord(worldState)) return false;
 
+  const availabilityWindows = isStringArray(value.availabilityWindows)
+    ? value.availabilityWindows
+    : undefined;
+  const hasWindowsShape = availabilityWindows !== undefined && availabilityWindows.length > 0;
   const hasValidWindows =
-    value.availabilityWindows !== undefined &&
-    isStringArray(value.availabilityWindows) &&
-    value.availabilityWindows.length > 0 &&
-    new Set(value.availabilityWindows).size === value.availabilityWindows.length &&
-    value.availabilityWindows.every((window) => VALID_AVAILABILITY_WINDOWS.has(window));
+    hasWindowsShape &&
+    new Set(availabilityWindows).size === availabilityWindows.length &&
+    availabilityWindows.every((window) => VALID_AVAILABILITY_WINDOWS.has(window));
+  const hasLegacyModeShape = typeof value.availabilityMode === "string";
   const hasValidLegacyMode = isEnumValue(value.availabilityMode, VALID_AVAILABILITY_MODES);
-  if (value.availabilityWindows !== undefined && !hasValidWindows) return false;
-  if (value.availabilityMode !== undefined && !hasValidLegacyMode) return false;
-  if (!hasValidWindows && !hasValidLegacyMode) return false;
+  if (mode === "strict") {
+    if (value.availabilityWindows !== undefined && !hasValidWindows) return false;
+    if (value.availabilityMode !== undefined && !hasValidLegacyMode) return false;
+    if (!hasValidWindows && !hasValidLegacyMode) return false;
+    if (
+      !isEnumValue(worldState.season, VALID_SEASONS) ||
+      !isEnumValue(worldState.weather, VALID_WEATHER)
+    ) {
+      return false;
+    }
+    if (value.showSpoilers !== undefined && typeof value.showSpoilers !== "boolean") return false;
+  } else if (!hasWindowsShape && !hasLegacyModeShape) {
+    return false;
+  }
+
+  if (!isStringArray(completed.almanac)) return false;
   if (
-    !isEnumValue(worldState.season, VALID_SEASONS) ||
-    !isEnumValue(worldState.weather, VALID_WEATHER)
+    !(mode === "local"
+      ? isRecord(completed.animalCosmetics)
+      : isStringArrayRecord(completed.animalCosmetics))
   ) {
     return false;
   }
-  if (value.showSpoilers !== undefined && typeof value.showSpoilers !== "boolean") return false;
-
-  if (!isStringArray(completed.almanac)) return false;
-  if (!isStringArrayRecord(completed.animalCosmetics)) return false;
-  if (!isStringArrayRecord(completed.animals)) return false;
+  if (!(mode === "local" ? isRecord(completed.animals) : isStringArrayRecord(completed.animals))) {
+    return false;
+  }
   if (!isStringArray(completed.cosmetics)) return false;
   if (!isRecord(completed.mines)) return false;
   if (
-    !isDomainInteger(completed.mines.floor, getMaxMineFloor()) ||
+    (mode === "strict" && !isDomainInteger(completed.mines.floor, getMaxMineFloor())) ||
     !isStringArray(completed.mines.spells)
   ) {
     return false;
   }
   if (!isStringArray(completed.museum)) return false;
-  // Renown is normalized (clamped) rather than rejected, matching its existing runtime domain
-  // clamp in clampRenownLevel — only requiring it be finite here preserves that behavior.
-  if (!isFiniteNumber(completed.renown)) return false;
+  // Strict backup imports require a numeric value; local recovery defaults malformed values and
+  // clamps numeric drift so one scalar cannot discard otherwise valid persisted progress.
+  if (mode === "strict" && !isFiniteNumber(completed.renown)) return false;
 
   return (
     isOptionalStringArray(completed.almanacRecipes) &&
-    (completed.childChoice === undefined ||
+    (mode === "local" ||
+      completed.childChoice === undefined ||
       isEnumValue(completed.childChoice, VALID_CHILD_CHOICES)) &&
     isOptionalStringArray(completed.dates) &&
-    (completed.hasUpperFloor === undefined || typeof completed.hasUpperFloor === "boolean") &&
+    (mode === "local" ||
+      completed.hasUpperFloor === undefined ||
+      typeof completed.hasUpperFloor === "boolean") &&
     (completed.marriedVillager === undefined ||
       completed.marriedVillager === null ||
       typeof completed.marriedVillager === "string") &&
-    isOptionalIntegerRecord(completed.villagerLevels, MAX_VILLAGER_LEVEL) &&
-    isOptionalEnumRecord(completed.villagerRelationships, VALID_RELATIONSHIPS) &&
+    (mode === "local"
+      ? isOptionalRecord(completed.villagerLevels)
+      : isOptionalIntegerRecord(completed.villagerLevels, MAX_VILLAGER_LEVEL)) &&
+    (mode === "local"
+      ? isOptionalRecord(completed.villagerRelationships)
+      : isOptionalEnumRecord(completed.villagerRelationships, VALID_RELATIONSHIPS)) &&
     isOptionalStringArray(completed.villagers) &&
     isOptionalStringArray(completed.petCosmetics) &&
     isOptionalStringArray(completed.petSkins) &&
     isOptionalStringArray(completed.quests) &&
-    isOptionalEnumRecord(completed.questStates, VALID_QUEST_STATES) &&
-    (completed.reachedSeason === undefined ||
+    (mode === "local"
+      ? isOptionalRecord(completed.questStates)
+      : isOptionalEnumRecord(completed.questStates, VALID_QUEST_STATES)) &&
+    (mode === "local" ||
+      completed.reachedSeason === undefined ||
       isEnumValue(completed.reachedSeason, VALID_SEASONS)) &&
     isOptionalStringArray(completed.romanticVillagers) &&
-    isOptionalIntegerRecord(completed.skillLevels, MAX_SKILL_LEVEL) &&
+    (mode === "local"
+      ? isOptionalRecord(completed.skillLevels)
+      : isOptionalIntegerRecord(completed.skillLevels, MAX_SKILL_LEVEL)) &&
     isOptionalStringArray(completed.skills) &&
     isOptionalStringArray(completed.unlockedPerks)
   );
@@ -1119,11 +1198,18 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((entry) => typeof entry === "string");
 }
 
+// ─── Serialization helpers ───────────────────────────────────────────
+
 function isStringArrayRecord(value: unknown): value is Record<string, string[]> {
   return isRecord(value) && Object.values(value).every(isStringArray);
 }
 
-// ─── Serialization helpers ───────────────────────────────────────────
+function knownBrandedSet<T>(
+  ids: readonly string[],
+  knownIds: object | ReadonlySet<string>,
+): Set<T> {
+  return new SvelteSet(ids.filter((id) => hasKnownId(knownIds, id))) as unknown as Set<T>;
+}
 
 function normalizeAlmanacIds(ids: string[]): Set<ItemId> {
   const result = new SvelteSet<ItemId>();
@@ -1131,6 +1217,62 @@ function normalizeAlmanacIds(ids: string[]): Set<ItemId> {
     const canonical = canonicalAlmanacId.get(id as ItemId);
     if (canonical) {
       result.add(canonical);
+    }
+  }
+  return result;
+}
+
+function normalizeAnimalCosmetics(
+  record: Record<string, unknown>,
+): Record<AnimalId, Set<CosmeticId>> {
+  const result: Record<string, Set<CosmeticId>> = {};
+  for (const [animalId, ids] of Object.entries(record)) {
+    if (Object.hasOwn(trackerData.animals, animalId) && isStringArray(ids)) {
+      const animal = trackerData.animals[animalId as AnimalId];
+      result[animalId] = knownBrandedSet<CosmeticId>(ids, animal.cosmetics);
+    }
+  }
+  return result;
+}
+
+function normalizeAnimalVariants(
+  record: Record<string, unknown>,
+): Record<AnimalId, Set<AnimalVariantId>> {
+  const result: Record<string, Set<AnimalVariantId>> = {};
+  for (const [animalId, ids] of Object.entries(record)) {
+    if (Object.hasOwn(trackerData.animals, animalId) && isStringArray(ids)) {
+      const animal = trackerData.animals[animalId as AnimalId];
+      const variantIds = new Set(animal.variantTiers.flatMap((tier) => Object.keys(tier)));
+      result[animalId] = knownBrandedSet<AnimalVariantId>(ids, variantIds);
+    }
+  }
+  return result;
+}
+
+function normalizeEnumRecord<K extends string, V extends string>(
+  record: Record<string, unknown>,
+  knownIds: object | ReadonlySet<string>,
+  validValues: ReadonlySet<string>,
+): Record<K, V> {
+  const result: Record<string, V> = {};
+  for (const [id, value] of Object.entries(record)) {
+    if (hasKnownId(knownIds, id) && typeof value === "string" && validValues.has(value)) {
+      result[id] = value as V;
+    }
+  }
+  return result;
+}
+
+function normalizeLevelRecord<K extends string>(
+  record: Record<string, unknown>,
+  knownIds: object | ReadonlySet<string>,
+  max: number,
+): Record<K, number> {
+  const result: Record<string, number> = {};
+  for (const [id, value] of Object.entries(record)) {
+    if (hasKnownId(knownIds, id) && isFiniteNumber(value)) {
+      const level = clampLevel(value, max);
+      if (level > 0) result[id] = level;
     }
   }
   return result;
@@ -1177,9 +1319,21 @@ function serialize(state: UserState): string {
   return JSON.stringify(s);
 }
 
-function serializedAvailabilityWindows(state: SerializedState): AvailabilityWindow[] {
-  if (state.availabilityWindows) return [...state.availabilityWindows];
-  return legacyAvailabilityWindows(state.availabilityMode ?? "available");
+function serializedAvailabilityWindows(
+  state: SerializedState,
+  mode: ValidationMode,
+): AvailabilityWindow[] {
+  if (state.availabilityWindows) {
+    const validWindows = state.availabilityWindows.filter(
+      (window, index, windows) =>
+        VALID_AVAILABILITY_WINDOWS.has(window) && windows.indexOf(window) === index,
+    );
+    if (validWindows.length > 0) return validWindows;
+  }
+  if (isEnumValue(state.availabilityMode, VALID_AVAILABILITY_MODES)) {
+    return legacyAvailabilityWindows(state.availabilityMode);
+  }
+  return mode === "local" ? [...DEFAULT_AVAILABILITY_WINDOWS] : [];
 }
 
 function toggleInSet<T>(set: Set<T>, item: T): void {

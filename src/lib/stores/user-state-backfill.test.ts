@@ -111,10 +111,14 @@ describe("animal map backfill on deserialization", () => {
 
   it("preserves existing animal progress when backfilling", async () => {
     const { animalCosmetics, animals } = buildPartialAnimalMaps();
-    // Give the first kept animal some progress
-    const progressAnimal = KEPT_ANIMALS[0];
-    animals[progressAnimal] = ["white"];
-    animalCosmetics[progressAnimal] = ["some_cosmetic"];
+    const progressAnimal = KEPT_ANIMALS.find(
+      (id) => recordKeys(trackerData.animals[id].cosmetics).length > 0,
+    );
+    if (!progressAnimal) throw new Error("tracker data must contain an animal cosmetic");
+    const progressVariant = trackerData.animals[progressAnimal].variantTiers.flatMap(recordKeys)[0];
+    const progressCosmetic = recordKeys(trackerData.animals[progressAnimal].cosmetics)[0];
+    animals[progressAnimal] = [progressVariant];
+    animalCosmetics[progressAnimal] = [progressCosmetic];
 
     vi.useFakeTimers();
     vi.stubGlobal("window", {});
@@ -124,12 +128,10 @@ describe("animal map backfill on deserialization", () => {
     const { userState } = await import("$lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
 
-    expect(userState.state.completed.animals[progressAnimal].has("white" as AnimalVariantId)).toBe(
+    expect(userState.state.completed.animals[progressAnimal].has(progressVariant)).toBe(true);
+    expect(userState.state.completed.animalCosmetics[progressAnimal].has(progressCosmetic)).toBe(
       true,
     );
-    expect(
-      userState.state.completed.animalCosmetics[progressAnimal].has("some_cosmetic" as CosmeticId),
-    ).toBe(true);
   });
 
   it("provides every tracker-data animal after restoring state with no animal maps", async () => {
