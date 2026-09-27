@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import QRCode from "qrcode";
+import encodeQR from "qr";
 
 import {
   createStoredState,
@@ -211,15 +211,15 @@ test.describe("@critical stateful accessibility", () => {
       testInfo,
     );
 
-    const invalidBuffer = await QRCode.toBuffer("invalid-transfer-payload");
+    const invalidBuffer = Buffer.from(encodeQR("invalid-transfer-payload", "gif", { scale: 4 }));
     const errorChooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: /scan from a screenshot/i }).click();
     await (
       await errorChooser
     ).setFiles({
       buffer: invalidBuffer,
-      mimeType: "image/png",
-      name: "invalid-transfer.png",
+      mimeType: "image/gif",
+      name: "invalid-transfer.gif",
     });
     await expect(page.getByRole("alert")).toContainText("Invalid QR code");
     await analyzeAccessibility(
@@ -228,15 +228,17 @@ test.describe("@critical stateful accessibility", () => {
       testInfo,
     );
 
-    const outdatedBuffer = await QRCode.toBuffer("CSG9unJjYBgFVAYpDCln0IENDAycsxoYWiZ5qkxgcKCnpQA");
+    const outdatedBuffer = Buffer.from(
+      encodeQR("CSG9unJjYBgFVAYpDCln0IENDAycsxoYWiZ5qkxgcKCnpQA", "gif", { scale: 4 }),
+    );
     const outdatedChooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: /scan from a screenshot/i }).click();
     await (
       await outdatedChooser
     ).setFiles({
       buffer: outdatedBuffer,
-      mimeType: "image/png",
-      name: "outdated-transfer.png",
+      mimeType: "image/gif",
+      name: "outdated-transfer.gif",
     });
     await expect(page.getByRole("alert")).toContainText(
       "This QR code was created by an older version of Mistria Field Guide.",
