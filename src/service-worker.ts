@@ -8,11 +8,12 @@ import {
   type CacheLocalesReply,
   cacheLocalesRequest,
   fetchRuntimeRequest,
+  fetchSpriteRequest,
   isEligibleForRuntimeCaching,
   isExternalSpriteAsset,
   isLazyAsset,
+  isSkipWaitingRequest,
   type LocaleNameChunks,
-  MAX_SPRITE_ENTRIES,
   OFFLINE_LOCALES_CACHE,
   readOfflineLocales,
   rememberOfflineLocales,
@@ -43,12 +44,17 @@ sw.addEventListener("install", (event) => {
       // block the install, and the page's next request retries it.
       const offlineLocales = await readOfflineLocales(await caches.open(OFFLINE_LOCALES_CACHE));
       await cacheLocaleChunks(cache, offlineLocales, LOCALE_NAME_CHUNKS);
-      await sw.skipWaiting();
+      // No `skipWaiting()`. A first install activates at once; an update waits until a tab accepts
+      // the update prompt, since taking over would delete the cache open tabs still import from.
     })(),
   );
 });
 
 sw.addEventListener("message", (event) => {
+  if (isSkipWaitingRequest(event.data)) {
+    event.waitUntil(sw.skipWaiting());
+    return;
+  }
   const locales = cacheLocalesRequest(event.data, LOCALE_NAME_CHUNKS);
   if (!locales) return;
   // A reply is this version's cache speaking for itself, which a page can't infer: the modules it
@@ -101,17 +107,17 @@ sw.addEventListener("fetch", (event) => {
       }),
     );
   } else if (isExternalSpriteAsset(url)) {
-    const response = caches.open(SPRITES_CACHE).then((cache) =>
-      fetchRuntimeRequest(event.request, {
-        assetPaths: [],
-        cache,
-        fetcher: (request) => fetch(request),
-        matchCache: (request) => cache.match(request),
-        maxEntries: MAX_SPRITE_ENTRIES,
-      }),
+    event.respondWith(
+      caches.open(SPRITES_CACHE).then((cache) =>
+        fetchSpriteRequest(event.request, {
+          cache,
+          fetcher: (request) => fetch(request),
+          waitUntil: (promise) => {
+            event.waitUntil(promise);
+          },
+        }),
+      ),
     );
-    event.respondWith(response);
-    event.waitUntil(response.then(() => undefined));
   } else if (isEligibleForRuntimeCaching(url, sw.location.origin)) {
     const response = caches.open(CACHE).then((cache) =>
       fetchRuntimeRequest(event.request, {
