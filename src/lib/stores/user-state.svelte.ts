@@ -276,7 +276,17 @@ function createDefaultState(): UserState {
 function createUserState() {
   let state = $state<UserState>(createDefaultState());
   let _persistenceFailureGeneration = $state(0);
-  let _persistenceRestored = $state(false);
+  let _persistenceReady = $state(false);
+  let persistenceBlocked = false;
+  let quarantineAvailable = false;
+
+  function enablePersistenceAfterExplicitReplace(): void {
+    if (!persistenceBlocked || !quarantineAvailable) return;
+
+    persistenceBlocked = false;
+    quarantineAvailable = false;
+    _persistenceReady = true;
+  }
 
   const progressionState = $derived(
     deriveProgressionState(state.completed, trackerData, state.showSpoilers),
@@ -287,7 +297,7 @@ function createUserState() {
     let timeout: ReturnType<typeof setTimeout>;
     $effect.root(() => {
       $effect(() => {
-        if (!_persistenceRestored) return;
+        if (!_persistenceReady) return;
 
         const json = serialize(state);
         clearTimeout(timeout);
@@ -354,7 +364,11 @@ function createUserState() {
       state.completed.questStates[id] = next;
     },
     dismissPersistenceWarning() {
-      _persistenceFailureGeneration = 0;
+      if (persistenceBlocked) {
+        _persistenceFailureGeneration++;
+      } else {
+        _persistenceFailureGeneration = 0;
+      }
     },
     exportState(): string {
       return serialize(state);
@@ -367,6 +381,7 @@ function createUserState() {
       const result = deserialize(json);
       if (!result.ok) return result;
       state = result.state;
+      enablePersistenceAfterExplicitReplace();
       return { ok: true };
     },
     /** Merge imported data into current progress (union, never removes) */
@@ -724,26 +739,36 @@ function createUserState() {
     },
     resetAll() {
       state = createDefaultState();
+      enablePersistenceAfterExplicitReplace();
     },
     restorePersistedState() {
       const storedResult = tryGetItem(STORAGE_KEY);
       if (!storedResult.ok) {
+        _persistenceReady = false;
+        persistenceBlocked = true;
+        quarantineAvailable = false;
         _persistenceFailureGeneration++;
         return;
       }
 
       const stored = storedResult.value;
       if (stored === null) {
-        _persistenceRestored = true;
+        persistenceBlocked = false;
+        quarantineAvailable = false;
+        _persistenceReady = true;
         return;
       }
 
       const result = deserialize(stored);
       if (result.ok) {
         state = result.state;
-        _persistenceRestored = true;
+        persistenceBlocked = false;
+        quarantineAvailable = false;
+        _persistenceReady = true;
       } else {
-        trySetItem(QUARANTINE_KEY, stored);
+        _persistenceReady = false;
+        persistenceBlocked = true;
+        quarantineAvailable = trySetItem(QUARANTINE_KEY, stored);
         _persistenceFailureGeneration++;
       }
     },
