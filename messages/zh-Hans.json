@@ -19,7 +19,7 @@
   "category_animals_description": "品种、变体与装饰",
   "category_cosmetics_name": "装饰",
   "category_cosmetics_description": "服装与外观",
-  "category_mines_name": "矿井",
+  "category_mines_name": "矿洞",
   "category_mines_description": "楼层与法术",
   "category_museum_description": "收藏与捐赠",
   "category_villagers_description": "友情与关系",
@@ -80,14 +80,14 @@
   "undo_unmarked": "已取消标记“{name}”",
   "almanac_page_description": "追踪《Fields of Mistria》中的作物、采集、钓鱼、昆虫、文物等年鉴条目。",
   "animals_page_description": "追踪《Fields of Mistria》农场中动物的品种、颜色与装饰。",
-  "villagers_page_description": "追踪《Fields of Mistria》中与居民的友情与恋爱进度。",
+  "villagers_page_description": "追踪《Fields of Mistria》中与村民的友情与恋爱进度。",
   "cosmetics_page_description": "追踪《Fields of Mistria》中服装与外观的解锁进度。",
-  "mines_page_description": "追踪《Fields of Mistria》中矿井楼层、法术与探索进度。",
+  "mines_page_description": "追踪《Fields of Mistria》中矿洞楼层、法术与探索进度。",
   "museum_page_description": "追踪《Fields of Mistria》中所有博物馆收藏与捐赠。",
   "quests_page_description": "追踪《Fields of Mistria》中的剧情任务、委托及其他目标。",
   "recipes_page_description": "追踪《Fields of Mistria》中的烹饪与制作食谱。",
-  "renown_page_description": "追踪《Fields of Mistria》中你的城镇名望等级与奖励。",
-  "skills_page_description": "追踪《Fields of Mistria》中的技能等级与天赋。",
+  "renown_page_description": "追踪《Fields of Mistria》中你的城镇等级、声望与奖励。",
+  "skills_page_description": "追踪《Fields of Mistria》中的技能等级与技能特长。",
   "no_items_match_filters": "没有符合当前筛选条件的物品",
   "almanac_loading_items": "正在加载物品…",
   "show_more_count": [
@@ -126,23 +126,23 @@
   "mines_floor_progress_section": "楼层进度",
   "mines_floor_progress_compact_label": "楼层进度",
   "mines_floor_range": "第{start}–{end}层",
-  "mines_floor_group_aria": "矿层，{max}层中的第{floor}层",
+  "mines_floor_group_aria": "矿洞楼层，{max}层中的第{floor}层",
   "mines_floor_up": "上升一层",
   "mines_floor_down": "下降一层",
   "mines_floor_label": "楼层",
-  "mines_floor_input_aria": "矿层",
-  "villagers_roster_aria": "镇民名册",
-  "villagers_alphabet_aria": "镇民字母索引",
+  "mines_floor_input_aria": "矿洞楼层",
+  "villagers_roster_aria": "村民名册",
+  "villagers_alphabet_aria": "村民字母索引",
   "season_spring_abbr": "春",
   "season_summer_abbr": "夏",
   "season_fall_abbr": "秋",
   "season_winter_abbr": "冬",
   "villager_birthday_aria": "生日：{season}{day}日",
   "villager_birthday_hidden": "生日已隐藏",
-  "villager_hidden_name": "隐藏的居民",
+  "villager_hidden_name": "隐藏的村民",
   "villager_relationship_level_aria": "与{name}的关系等级，{max}级中的{level}级",
-  "villager_decrease_hearts": "减少{name}的心心",
-  "villager_increase_hearts": "增加{name}的心心",
+  "villager_decrease_hearts": "减少{name}的好感度",
+  "villager_increase_hearts": "增加{name}的好感度",
   "relationship_status_path_not_chosen": "尚未选择关系",
   "relationship_status_married_kids": "已结婚·有孩子",
   "relationship_status_married_child_free": "已结婚·无孩子",
@@ -155,7 +155,7 @@
   "relationship_action_married": "记录结婚",
   "relationship_action_yes": "有孩子",
   "relationship_action_no": "无孩子",
-  "renown_rank_register_aria": "小镇等级名册",
+  "renown_rank_register_aria": "城镇等级名册",
   "renown_within_rank": "本等级内{span}中的{within}",
   "renown_max_rank_reached": "已达最高等级",
   "renown_progress_aria": "声望进度",
@@ -167,8 +167,8 @@
   "rank_state_completed": "已完成",
   "rank_state_current": "当前",
   "rank_state_upcoming": "即将到来",
-  "villager_hidden_name_lower": "隐藏的居民",
-  "villagers_jump_to_initial_aria": "跳转到{initial}，第一个镇民记录",
+  "villager_hidden_name_lower": "隐藏的村民",
+  "villagers_jump_to_initial_aria": "跳转到{initial}，第一个村民记录",
   "cosmetic_slot_head_gear": "头部装备",
   "cosmetic_slot_face_gear": "面部装备",
   "cosmetic_slot_hair": "发型",
@@ -388,8 +388,8 @@
   "merge_label_cosmetics": "装饰：+{count}",
   "merge_label_dates": "日期：+{count}",
   "merge_label_museum": "博物馆捐赠：+{count}",
-  "merge_label_villager_relationships": "居民关系：+{count}",
-  "merge_label_perks": "特典：+{count}",
+  "merge_label_villager_relationships": "村民关系：+{count}",
+  "merge_label_perks": "技能特长：+{count}",
   "merge_label_pet_cosmetics": "宠物装饰：+{count}",
   "merge_label_pet_skins": "宠物皮肤：+{count}",
   "merge_label_quests": "任务：+{count}",
@@ -406,7 +406,7 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "矿井层数：+{count}层"
+        "countPlural=other": "矿洞楼层：+{count}层"
       }
     }
   ],
@@ -415,7 +415,7 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "居民好感度：已更新{count}段关系"
+        "countPlural=other": "村民好感度：已更新{count}段关系"
       }
     }
   ],
@@ -424,7 +424,7 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=other": "名望：+{count}级"
+        "countPlural=other": "声望：+{count}级"
       }
     }
   ],
@@ -495,7 +495,7 @@
   "source_recipe_dragon_forge": "通过{recipe}使用龙之熔炉",
   "source_recipe_mill": "通过{recipe}研磨",
   "source_recipe_smith": "通过{recipe}锻造",
-  "source_renown": "将小镇声望等级提升至{level}级",
+  "source_renown": "将城镇等级提升至{level}级",
   "source_ritual_chamber": "拥有{perk}时，在仪式室制作",
   "source_scroll_bundle": "在{store}购买{bundle}",
   "source_scroll_bundle_qualified": "{qualifier}，在{store}购买{bundle}",
@@ -519,8 +519,8 @@
   "source_quest_mission": "完成使命“{quest}”",
   "source_quest_story": "完成任务“{quest}”",
   "source_biome_floors": "{biome}（矿洞第{start}–{end}层）",
-  "source_perk_label": "特长“{perk}”（{skill}第{tier}阶）",
-  "source_perk_label_unknown": "特长“{perk}”",
+  "source_perk_label": "技能特长“{perk}”（{skill}第{tier}阶）",
+  "source_perk_label_unknown": "技能特长“{perk}”",
   "source_date_label": "{season}{day}日",
   "source_date_label_year": "第{year}年{season}{day}日",
   "source_clause_append": "，{clause}",

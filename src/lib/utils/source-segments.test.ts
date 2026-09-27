@@ -396,9 +396,7 @@ describe("buildSourceSegments — simple types", () => {
 
   it("renown", () => {
     const source: Source = { type: "renown", level: 3 };
-    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([
-      "Get the town’s renown rank to level 3",
-    ]);
+    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Get the town rank to level 3"]);
   });
 
   it("museum donation", () => {
@@ -1266,7 +1264,7 @@ describe("buildSourceSegments — localized rendering", () => {
       ")",
     ]);
     expect(render("ja", "雑貨屋")).toEqual([
-      qualifier("修理後、鉱山20階に到達した後", "、"),
+      qualifier("修理後、鉱坑20階に到達した後", "、"),
       "、",
       storeGate("雑貨屋"),
       "で購入",

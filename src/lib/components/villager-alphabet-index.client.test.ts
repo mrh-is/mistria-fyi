@@ -25,7 +25,7 @@ describe("VillagerAlphabetIndex", () => {
       "B",
       "Z",
     ]);
-    const letterA = view.getByRole("button", { name: "Jump to A, first Townsfolk record" });
+    const letterA = view.getByRole("button", { name: "Jump to A, first villager record" });
     await fireEvent.click(letterA);
 
     expect(document.activeElement).toBe(view.container.querySelector("#villager-adeline"));
@@ -37,7 +37,7 @@ describe("VillagerAlphabetIndex", () => {
     Element.prototype.scrollIntoView = scrollIntoView;
     const view = render(VillagerAlphabetIndexHarness, { entries, reducedMotion: true });
 
-    await fireEvent.click(view.getByRole("button", { name: "Jump to B, first Townsfolk record" }));
+    await fireEvent.click(view.getByRole("button", { name: "Jump to B, first villager record" }));
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "auto", block: "center" });
   });
 
@@ -45,9 +45,9 @@ describe("VillagerAlphabetIndex", () => {
     const scrollIntoView = vi.fn();
     Element.prototype.scrollIntoView = scrollIntoView;
     const view = render(VillagerAlphabetIndexHarness, { entries });
-    const index = view.getByRole("navigation", { name: "Townsfolk alphabet" });
-    const letterA = view.getByRole("button", { name: "Jump to A, first Townsfolk record" });
-    const letterZ = view.getByRole("button", { name: "Jump to Z, first Townsfolk record" });
+    const index = view.getByRole("navigation", { name: "Villager alphabet" });
+    const letterA = view.getByRole("button", { name: "Jump to A, first villager record" });
+    const letterZ = view.getByRole("button", { name: "Jump to Z, first villager record" });
     const elementFromPoint = vi.fn(() => letterZ);
     Object.defineProperty(document, "elementFromPoint", {
       configurable: true,

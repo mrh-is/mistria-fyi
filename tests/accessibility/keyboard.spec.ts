@@ -92,7 +92,7 @@ test.describe("@critical keyboard and focus accessibility", () => {
     await expect(page.getByRole("button", { name: /^Check / }).first()).toBeVisible();
   });
 
-  test("Townsfolk alphabet and relationship progression preserve keyboard focus", async ({
+  test("Villager alphabet and relationship progression preserve keyboard focus", async ({
     page,
   }) => {
     await initializeApplication(
@@ -107,7 +107,7 @@ test.describe("@critical keyboard and focus accessibility", () => {
       }),
     );
     await gotoApplication(page, "/villagers");
-    const letter = page.getByRole("button", { name: "Jump to A, first Townsfolk record" });
+    const letter = page.getByRole("button", { name: "Jump to A, first villager record" });
     await letter.focus();
     await page.keyboard.press("Enter");
     await expect(page.locator("#villager-adeline")).toBeFocused();
@@ -122,16 +122,16 @@ test.describe("@critical keyboard and focus accessibility", () => {
     ).toBeFocused();
   });
 
-  test("Townsfolk pointer scrubbing follows the active letter without snapping back", async ({
+  test("Villager pointer scrubbing follows the active letter without snapping back", async ({
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await initializeApplication(page, "light", createStoredState({ showSpoilers: true }));
     await gotoApplication(page, "/villagers");
 
-    const initialD = page.getByRole("button", { name: "Jump to D, first Townsfolk record" });
-    const initialO = page.getByRole("button", { name: "Jump to O, first Townsfolk record" });
-    const initialT = page.getByRole("button", { name: "Jump to T, first Townsfolk record" });
+    const initialD = page.getByRole("button", { name: "Jump to D, first villager record" });
+    const initialO = page.getByRole("button", { name: "Jump to O, first villager record" });
+    const initialT = page.getByRole("button", { name: "Jump to T, first villager record" });
     await initialO.click();
     await expect(page.locator('[id^="villager-o"]:focus')).toHaveCount(1);
     const dBox = await initialD.boundingBox();
