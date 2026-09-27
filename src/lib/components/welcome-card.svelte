@@ -131,7 +131,7 @@
     margin-bottom: 4px;
     color: var(--home-accent);
     font-family: var(--font-controls);
-    font-size: 10px;
+    font-size: var(--text-3xs);
     letter-spacing: 0.14em;
     text-transform: uppercase;
   }
@@ -139,7 +139,7 @@
   .welcome-card h2 {
     margin-bottom: 7px;
     font-family: var(--font-display);
-    font-size: 20px;
+    font-size: var(--text-xl);
     font-weight: 600;
     line-height: 1.15;
   }
@@ -147,7 +147,7 @@
   .welcome-card__copy > p:not(.welcome-card__overline) {
     color: var(--ink-muted);
     font-family: var(--font-annotation);
-    font-size: 12px;
+    font-size: var(--text-xs);
     line-height: 1.45;
   }
 
@@ -173,7 +173,7 @@
     padding: 8px 12px;
     border: 1px solid var(--home-accent);
     font-family: var(--font-controls);
-    font-size: 12px;
+    font-size: var(--text-xs);
     font-weight: 600;
     line-height: 1.2;
     text-align: center;
@@ -184,12 +184,8 @@
   }
 
   .welcome-card__primary {
-    color: var(--ribbon-ink);
+    color: var(--home-accent-ink);
     background: var(--home-accent);
-  }
-
-  :global(.dark) .welcome-card__primary {
-    color: #101014;
   }
 
   .welcome-card__secondary {
@@ -226,7 +222,7 @@
     margin: -5px 0 -7px;
     color: var(--ink-muted);
     font-family: var(--font-annotation);
-    font-size: 11px;
+    font-size: var(--text-2xs);
     text-align: left;
     text-decoration: underline;
     text-decoration-color: color-mix(in srgb, currentColor 42%, transparent);

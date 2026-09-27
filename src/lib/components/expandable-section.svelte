@@ -177,7 +177,7 @@
     margin: 0;
     overflow: hidden;
     font-family: var(--font-body);
-    font-size: 16px;
+    font-size: var(--text-base);
     font-weight: 600;
     line-height: 1.2;
     text-overflow: ellipsis;
@@ -188,7 +188,7 @@
     min-width: 9ch;
     color: var(--ink-muted);
     font-family: var(--font-data);
-    font-size: 12px;
+    font-size: var(--text-xs);
     text-align: right;
     white-space: nowrap;
   }
