@@ -183,7 +183,7 @@
     gap: 4px;
     padding-inline: 4px;
     font-family: var(--font-body);
-    font-size: var(--text-sm-plus);
+    font-size: var(--text-base);
   }
 
   .skill-name strong {

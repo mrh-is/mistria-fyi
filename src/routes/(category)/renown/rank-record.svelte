@@ -137,7 +137,7 @@
     width: fit-content;
     max-width: 100%;
     font-family: var(--font-body);
-    font-size: var(--text-sm-plus);
+    font-size: var(--text-base);
     font-weight: 650;
   }
 

@@ -92,7 +92,7 @@
   .data-page__intro {
     color: var(--ink-muted);
     font-family: var(--font-annotation);
-    font-size: var(--text-xs-plus);
+    font-size: var(--text-sm);
   }
 
   .data-page h2 {

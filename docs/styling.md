@@ -16,15 +16,15 @@ design tokens in `src/app.css`, and Stylelint keeps scoped CSS on those tokens.
 
 Every token is defined in `src/app.css`, and nowhere else.
 
-| Kind          | Tokens                                                                                                                 | Defined in                     |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| Palette       | `--paper`, `--ink`, `--hairline`, `--fg-*`, `--cat-*`, `--tag-*`, …                                                    | `:root` (light) & `.dark`      |
-| Shadcn colors | `--background`, `--primary`, `--muted`, …                                                                              | `:root` & `.dark`              |
-| Elevation     | `--shadow-small`, `--shadow-medium`, `--shadow-large`, `--shadow-overlay`                                              | `:root` & `.dark`              |
-| Drop shadows  | `--shadow-ribbon`, `--shadow-sticker`, `--tag-shadow`                                                                  | `:root`                        |
-| Type size     | `--text-5xs` (8px) … `--text-2xs` (11px), `--text-xs-plus` (13px), `--text-sm-plus` (15px), plus Tailwind's `--text-*` | `@theme`                       |
-| Radius        | `--radius` (2px), `--radius-lg` (4px), `--radius-xl` (6px)                                                             | `:root` & `@theme inline`      |
-| Font roles    | `--font-display`, `--font-body`, `--font-controls`, `--font-annotation`, `--font-data`                                 | `:root`, overridden per locale |
+| Kind          | Tokens                                                                                 | Defined in                     |
+| ------------- | -------------------------------------------------------------------------------------- | ------------------------------ |
+| Palette       | `--paper`, `--ink`, `--hairline`, `--fg-*`, `--cat-*`, `--tag-*`, …                    | `:root` (light) & `.dark`      |
+| Shadcn colors | `--background`, `--primary`, `--muted`, …                                              | `:root` & `.dark`              |
+| Elevation     | `--shadow-small`, `--shadow-medium`, `--shadow-large`, `--shadow-overlay`              | `:root` & `.dark`              |
+| Drop shadows  | `--shadow-ribbon`, `--shadow-sticker`, `--tag-shadow`                                  | `:root`                        |
+| Type size     | `--text-3xs` (10px) & `--text-2xs` (11px), plus Tailwind's `--text-xs` (12px) and up   | `@theme`                       |
+| Radius        | `--radius` (2px), `--radius-lg` (4px), `--radius-xl` (6px)                             | `:root` & `@theme inline`      |
+| Font roles    | `--font-display`, `--font-body`, `--font-controls`, `--font-annotation`, `--font-data` | `:root`, overridden per locale |
 
 Scoped CSS reads tokens with `var()`, and derives tints with `color-mix()`:
 
@@ -44,6 +44,19 @@ something uses it, and a `var()` in a scoped `<style>` block counts as a use.
 
 Sizes are in `rem`, so they follow the reader's browser font size. `--text-2xs` is 11px only at the
 default 16px root.
+
+## Minimum type size
+
+- **11px (`--text-2xs`)** is the floor for anything read as prose: descriptions, annotations, and
+  sentence-case labels. This matches Apple's 11pt minimum.
+- **10px (`--text-3xs`)** is allowed only for uppercase labels in a mono face, where caps & letter
+  spacing carry legibility. This matches Material's 10sp overline.
+- Form fields stay at 16px or larger (`app.css` sets `max(16px, 1em)`), so iOS Safari doesn't zoom
+  in on focus. Don't override that with a smaller scoped `font-size`.
+- Don't add half steps between Tailwind sizes. Round to the nearest step, favoring the larger one.
+
+WCAG sets no minimum size, but small text still needs 4.5:1 contrast (1.4.3) and must survive 200%
+zoom (1.4.4), which `rem` sizing supports.
 
 ## Adding a token vs. a one-off
 
