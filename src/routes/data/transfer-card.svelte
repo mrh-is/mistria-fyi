@@ -1,7 +1,5 @@
 <script lang="ts">
   import { IconCamera, IconLoader2, IconPhotoPlus, IconQrcode } from "@tabler/icons-svelte-runes";
-  import QrScanner from "qr-scanner";
-  import QRCode from "qrcode";
 
   import { Icon } from "$lib/components/icon/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
@@ -16,8 +14,11 @@
   import DataCard from "./data-card.svelte";
   import { closeScanner } from "./data-effects";
   import MergeSummary from "./merge-summary.svelte";
+  import { decodeQrImage, generateTransferQr, startQrCamera } from "./transfer-qr";
 
   import type { MergeResult } from "$lib/stores/user-state.svelte.js";
+
+  import type { ClosableScanner } from "./data-effects";
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
 
@@ -27,7 +28,8 @@
 
   let scanning = $state(false);
   let videoEl = $state<HTMLVideoElement | null>(null);
-  let scanner: null | QrScanner = null;
+  let overlayEl = $state<HTMLCanvasElement | null>(null);
+  let scanner: ClosableScanner | null = null;
   let scanAttempt = 0;
 
   let transferResult = $state<MergeResult | null>(null);
@@ -46,12 +48,7 @@
 
     try {
       const payload = await encodeTransferPayload(userState.state.completed);
-      const dataUrl = await QRCode.toDataURL(payload, {
-        errorCorrectionLevel: "L",
-        margin: 2,
-        width: 300,
-      });
-      qrDataUrl = dataUrl;
+      qrDataUrl = await generateTransferQr(payload);
     } catch (err) {
       transferError = `${m.transfer_error_generate_prefix()} ${err instanceof Error ? err.message : m.transfer_unknown_error()}`;
     } finally {
@@ -72,35 +69,44 @@
     // Wait for video element to bind
     await new Promise((r) => setTimeout(r, 50));
 
-    if (!open || attempt !== scanAttempt) return;
+    if (!isCurrentScan(attempt)) return;
 
-    if (!videoEl) {
+    if (!videoEl || !overlayEl) {
       transferError = m.transfer_error_camera_init();
       scanning = false;
       return;
     }
 
     try {
-      scanner = new QrScanner(
-        videoEl,
-        (result) => {
-          void handleScanResult(result.data);
-        },
-        {
-          highlightCodeOutline: true,
-          highlightScanRegion: true,
-          returnDetailedScanResult: true,
-        },
-      );
-      await scanner.start();
+      const started = await startQrCamera(videoEl, overlayEl, (data) => {
+        void handleScanResult(data);
+      });
+      // The card closed or another scan started while the camera permission prompt was open.
+      if (!isCurrentScan(attempt)) {
+        closeScanner(started);
+        return;
+      }
+      scanner = started;
     } catch (err) {
+      if (attempt !== scanAttempt) return;
       scanning = false;
-      if (err instanceof Error && err.message.includes("permission")) {
+      if (isCameraPermissionError(err)) {
         transferError = m.transfer_error_camera_denied();
       } else {
         transferError = `${m.transfer_error_camera_prefix()} ${err instanceof Error ? err.message : m.transfer_error_unknown_camera()}`;
       }
     }
+  }
+
+  function isCameraPermissionError(err: unknown) {
+    // getUserMedia rejects with a DOMException; not every environment makes that an Error.
+    if (!(err instanceof Error || err instanceof DOMException)) return false;
+    return err.name === "NotAllowedError" || err.message.toLowerCase().includes("permission");
+  }
+
+  // A scan goes stale when the card closes or another scan starts during an await.
+  function isCurrentScan(attempt: number) {
+    return open && attempt === scanAttempt;
   }
 
   function stopScanning() {
@@ -142,8 +148,8 @@
       input.remove();
       if (!file) return;
       try {
-        const result = await QrScanner.scanImage(file, { returnDetailedScanResult: true });
-        await handleScanResult(result.data);
+        const data = await decodeQrImage(file);
+        await handleScanResult(data);
       } catch {
         transferError = m.transfer_error_no_qr_in_image();
       }
@@ -222,11 +228,21 @@
     <!-- Camera scanner -->
     {#if scanning}
       <div class="relative overflow-hidden rounded-md border" aria-busy="true">
+        <!-- The video keeps its natural aspect ratio so the overlay's coordinates match the frame
+             the decoder reads. -->
         <video
           bind:this={videoEl}
-          class="aspect-square w-full object-cover"
+          class="block w-full"
           aria-label={m.transfer_camera_feed_aria()}
+          autoplay
+          muted
+          playsinline
         ></video>
+        <canvas
+          bind:this={overlayEl}
+          class="pointer-events-none absolute inset-0 size-full opacity-50"
+          aria-hidden="true"
+        ></canvas>
         <Button
           class="absolute top-2 right-2"
           size="icon"

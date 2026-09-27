@@ -9,11 +9,13 @@ import { recordValues } from "$lib/utils.js";
 
 import TransferCard from "./transfer-card.svelte";
 
-const qrcode = vi.hoisted(() => ({ toDataURL: vi.fn() }));
-const qrScanner = vi.hoisted(() => ({ scanImage: vi.fn() }));
+const transferQr = vi.hoisted(() => ({
+  decodeQrImage: vi.fn(),
+  generateTransferQr: vi.fn(),
+  startQrCamera: vi.fn(),
+}));
 
-vi.mock("qrcode", () => ({ default: qrcode }));
-vi.mock("qr-scanner", () => ({ default: Object.assign(vi.fn(), qrScanner) }));
+vi.mock("./transfer-qr", () => transferQr);
 
 const museumItemId = recordValues(trackerData.museum)
   .flatMap(({ sets }) => recordValues(sets).flatMap(({ items }) => items))
@@ -36,8 +38,9 @@ afterAll(() => {
 });
 
 beforeEach(() => {
-  qrcode.toDataURL.mockReset();
-  qrScanner.scanImage.mockReset();
+  transferQr.decodeQrImage.mockReset();
+  transferQr.generateTransferQr.mockReset();
+  transferQr.startQrCamera.mockReset();
 });
 
 afterEach(async () => {
@@ -49,7 +52,7 @@ afterEach(async () => {
 describe("TransferCard generate", () => {
   it("renders the QR code for the current progress and announces the in-flight state", async () => {
     let resolveDataUrl: (value: string) => void = () => undefined;
-    qrcode.toDataURL.mockImplementation(
+    transferQr.generateTransferQr.mockImplementation(
       () =>
         new Promise<string>((resolve) => {
           resolveDataUrl = resolve;
@@ -66,7 +69,7 @@ describe("TransferCard generate", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Generating QR code…");
 
     await waitFor(() => {
-      expect(qrcode.toDataURL).toHaveBeenCalledOnce();
+      expect(transferQr.generateTransferQr).toHaveBeenCalledOnce();
     });
     resolveDataUrl("data:image/png;base64,QUJD");
 
@@ -76,14 +79,13 @@ describe("TransferCard generate", () => {
     );
     expect(screen.getByRole("button", { name: "Generate QR Code" })).toBeEnabled();
     expect(screen.getByRole("status")).toHaveTextContent("");
-    expect(qrcode.toDataURL).toHaveBeenCalledWith(
+    expect(transferQr.generateTransferQr).toHaveBeenCalledWith(
       await encodeTransferPayload(userState.state.completed),
-      expect.objectContaining({ errorCorrectionLevel: "L" }),
     );
   });
 
   it("reports a generation failure and re-enables the action", async () => {
-    qrcode.toDataURL.mockRejectedValue(new Error("canvas unavailable"));
+    transferQr.generateTransferQr.mockRejectedValue(new Error("canvas unavailable"));
     render(TransferCard, { open: true });
 
     await fireEvent.click(screen.getByRole("button", { name: "Generate QR Code" }));
@@ -101,7 +103,7 @@ describe("TransferCard scan from image", () => {
     userState.toggleMuseumItem(museumItemId);
     const payload = await encodeTransferPayload(userState.state.completed);
     userState.resetAll();
-    qrScanner.scanImage.mockResolvedValue({ data: payload });
+    transferQr.decodeQrImage.mockResolvedValue(payload);
     render(TransferCard, { open: true });
 
     await scanImage(new File(["png"], "qr.png", { type: "image/png" }));
@@ -114,7 +116,7 @@ describe("TransferCard scan from image", () => {
   });
 
   it("reports when the image has no readable QR code", async () => {
-    qrScanner.scanImage.mockRejectedValue(new Error("No QR code found"));
+    transferQr.decodeQrImage.mockRejectedValue(new Error("No QR code found"));
     render(TransferCard, { open: true });
 
     await scanImage(new File(["png"], "blank.png", { type: "image/png" }));
@@ -123,7 +125,7 @@ describe("TransferCard scan from image", () => {
   });
 
   it("rejects a payload it cannot decode without touching progress", async () => {
-    qrScanner.scanImage.mockResolvedValue({ data: "not-a-transfer-payload" });
+    transferQr.decodeQrImage.mockResolvedValue("not-a-transfer-payload");
     const before = userState.exportState();
     render(TransferCard, { open: true });
 
@@ -134,9 +136,7 @@ describe("TransferCard scan from image", () => {
   });
 
   it("explains how to replace a QR code from an older tracker-data version", async () => {
-    qrScanner.scanImage.mockResolvedValue({
-      data: "CSG9unJjYBgFVAYpDCln0IENDAycsxoYWiZ5qkxgcKCnpQA",
-    });
+    transferQr.decodeQrImage.mockResolvedValue("CSG9unJjYBgFVAYpDCln0IENDAycsxoYWiZ5qkxgcKCnpQA");
     render(TransferCard, { open: true });
 
     await scanImage(new File(["png"], "old-qr.png", { type: "image/png" }));
@@ -149,9 +149,7 @@ describe("TransferCard scan from image", () => {
 
   it("resets recovery-copy state before another scan", async () => {
     vi.stubGlobal("navigator", { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
-    qrScanner.scanImage.mockResolvedValue({
-      data: "CSG9unJjYBgFVAYpDCln0IENDAycsxoYWiZ5qkxgcKCnpQA",
-    });
+    transferQr.decodeQrImage.mockResolvedValue("CSG9unJjYBgFVAYpDCln0IENDAycsxoYWiZ5qkxgcKCnpQA");
     render(TransferCard, { open: true });
 
     await scanImage(new File(["png"], "old-qr.png", { type: "image/png" }));
@@ -165,7 +163,7 @@ describe("TransferCard scan from image", () => {
   });
 
   it("clears a previous result when a new scan starts", async () => {
-    qrScanner.scanImage.mockRejectedValue(new Error("No QR code found"));
+    transferQr.decodeQrImage.mockRejectedValue(new Error("No QR code found"));
     render(TransferCard, { open: true });
     await scanImage(new File(["png"], "blank.png", { type: "image/png" }));
     await screen.findByRole("alert");
@@ -175,5 +173,78 @@ describe("TransferCard scan from image", () => {
     await waitFor(() => {
       expect(screen.queryByRole("alert")).toBeNull();
     });
+  });
+});
+
+describe("TransferCard scan from camera", () => {
+  function fakeScanner() {
+    return { destroy: vi.fn(), stop: vi.fn() };
+  }
+
+  it("merges the first decoded frame and releases the camera", async () => {
+    userState.toggleMuseumItem(museumItemId);
+    const payload = await encodeTransferPayload(userState.state.completed);
+    userState.resetAll();
+    const scanner = fakeScanner();
+    let emit: (data: string) => void = () => undefined;
+    transferQr.startQrCamera.mockImplementation(
+      (_video: HTMLVideoElement, _overlay: HTMLCanvasElement, onResult: (data: string) => void) => {
+        emit = onResult;
+        return Promise.resolve(scanner);
+      },
+    );
+    render(TransferCard, { open: true });
+
+    await fireEvent.click(screen.getByRole("button", { name: "Scan QR Code" }));
+    await waitFor(() => {
+      expect(transferQr.startQrCamera).toHaveBeenCalledOnce();
+    });
+    expect(screen.getByLabelText("Camera feed for QR code scanning")).toBeInTheDocument();
+    emit(payload);
+
+    expect(await screen.findByText("Transferred 1 items!")).toBeInTheDocument();
+    expect(scanner.stop).toHaveBeenCalledOnce();
+    expect(scanner.destroy).toHaveBeenCalledOnce();
+    expect(screen.queryByLabelText("Camera feed for QR code scanning")).toBeNull();
+    expect(userState.state.completed.museum.has(museumItemId)).toBe(true);
+  });
+
+  it("explains a denied camera permission", async () => {
+    transferQr.startQrCamera.mockRejectedValue(
+      new DOMException("The request is not allowed by the user agent", "NotAllowedError"),
+    );
+    render(TransferCard, { open: true });
+
+    await fireEvent.click(screen.getByRole("button", { name: "Scan QR Code" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Camera access denied. Try scanning from an image instead.",
+    );
+    expect(screen.getByRole("button", { name: "Scan QR Code" })).toBeInTheDocument();
+  });
+
+  it("releases a camera that opens after the scan was cancelled", async () => {
+    const scanner = fakeScanner();
+    let resolveCamera: (value: typeof scanner) => void = () => undefined;
+    transferQr.startQrCamera.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveCamera = resolve;
+        }),
+    );
+    render(TransferCard, { open: true });
+
+    await fireEvent.click(screen.getByRole("button", { name: "Scan QR Code" }));
+    await waitFor(() => {
+      expect(transferQr.startQrCamera).toHaveBeenCalledOnce();
+    });
+    await fireEvent.click(screen.getByRole("button", { name: "Close camera" }));
+    resolveCamera(scanner);
+
+    await waitFor(() => {
+      expect(scanner.stop).toHaveBeenCalledOnce();
+    });
+    expect(scanner.destroy).toHaveBeenCalledOnce();
+    expect(screen.getByRole("button", { name: "Scan QR Code" })).toBeInTheDocument();
   });
 });
