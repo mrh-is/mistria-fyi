@@ -281,12 +281,12 @@
   }
 
   .villager-record:first-child {
-    border-radius: 2px 2px 0 0;
+    border-radius: var(--radius) var(--radius) 0 0;
   }
 
   .villager-record:last-child {
     border-bottom: 1px solid var(--hairline);
-    border-radius: 0 0 2px 2px;
+    border-radius: 0 0 var(--radius) var(--radius);
   }
 
   .villager-record:focus-visible {
@@ -315,11 +315,11 @@
     place-items: center;
     overflow: hidden;
     border: 1px solid color-mix(in srgb, var(--cat-villagers) 25%, var(--hairline));
-    border-radius: 2px;
+    border-radius: var(--radius);
     background: color-mix(in srgb, var(--cat-villagers) 11%, var(--paper));
     color: var(--cat-villagers);
     font-family: var(--font-display);
-    font-size: 24px;
+    font-size: var(--text-2xl);
     font-style: var(--font-display-style);
   }
 
@@ -345,7 +345,7 @@
   .villager-copy strong {
     overflow: hidden;
     font-family: var(--font-body);
-    font-size: 16px;
+    font-size: var(--text-base);
     font-weight: 650;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -354,7 +354,7 @@
   .villager-copy small {
     color: var(--ink);
     font-family: var(--font-data);
-    font-size: 10px;
+    font-size: var(--text-3xs);
   }
 
   .villager-birthday {
@@ -363,12 +363,12 @@
     gap: 3px;
     color: var(--ink-muted);
     font-family: var(--font-data);
-    font-size: 11px;
+    font-size: var(--text-2xs);
     white-space: nowrap;
   }
 
   .villager-birthday--hidden {
-    font-size: 10px;
+    font-size: var(--text-3xs);
   }
 
   .villager-meter {
@@ -385,7 +385,7 @@
     height: 44px;
     place-items: center;
     border: 1px solid var(--hairline);
-    border-radius: 2px;
+    border-radius: var(--radius);
     background: color-mix(in srgb, var(--paper-raised) 92%, transparent);
     color: var(--ink-muted);
   }
@@ -448,7 +448,7 @@
   .relationship-prompt {
     color: var(--ink-muted);
     font-family: var(--font-data);
-    font-size: 10px;
+    font-size: var(--text-3xs);
     text-transform: uppercase;
   }
 
@@ -463,7 +463,7 @@
     flex: 1 1 9rem;
     padding: 7px 10px;
     border: 1px solid var(--cat-villagers);
-    border-radius: 2px;
+    border-radius: var(--radius);
     background: var(--paper-raised);
     color: var(--ink);
     font-family: var(--font-body);
@@ -479,7 +479,7 @@
   .relationship-warning {
     color: var(--ink-muted);
     font-family: var(--font-body);
-    font-size: 12px;
+    font-size: var(--text-xs);
     line-height: 1.25;
   }
 

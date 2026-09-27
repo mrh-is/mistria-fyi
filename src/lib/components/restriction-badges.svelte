@@ -113,7 +113,7 @@
     gap: 1px;
     height: 22px;
     padding: 0 4px;
-    border-radius: 4px;
+    border-radius: var(--radius-lg);
     background: color-mix(in srgb, var(--hairline) 18%, transparent);
     color: var(--ink-muted);
   }

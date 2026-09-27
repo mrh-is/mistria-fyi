@@ -111,7 +111,7 @@
     gap: 12px;
     padding: 4px 8px;
     color: var(--ink-muted);
-    font-size: 13px;
+    font-size: var(--text-sm);
   }
 
   .everything-link:is(:hover, :focus-visible) {

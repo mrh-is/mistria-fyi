@@ -49,7 +49,7 @@
     gap: 6px;
     color: var(--ink-muted);
     font-family: var(--font-annotation);
-    font-size: 11px;
+    font-size: var(--text-2xs);
     font-weight: 500;
     letter-spacing: 0.02em;
   }
@@ -68,7 +68,7 @@
     border-right: 1px solid color-mix(in srgb, var(--hairline) 26%, transparent);
     border-radius: 0;
     font-family: var(--font-controls);
-    font-size: 10px;
+    font-size: var(--text-3xs);
   }
 
   @media (hover: hover) and (pointer: fine) {

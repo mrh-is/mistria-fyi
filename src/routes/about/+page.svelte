@@ -76,7 +76,7 @@
     flex-direction: column;
     gap: 24px;
     padding: 16px 16px 28px;
-    font-size: 14px;
+    font-size: var(--text-sm);
   }
 
   section {
@@ -88,7 +88,7 @@
   h2 {
     color: var(--ink-muted);
     font-family: var(--font-controls);
-    font-size: 10px;
+    font-size: var(--text-3xs);
     font-weight: 600;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -129,7 +129,7 @@
     padding-top: 8px;
     color: var(--ink-muted);
     font-family: var(--font-annotation);
-    font-size: 11px;
+    font-size: var(--text-2xs);
   }
 
   .about-page__footer :is(button, a) {

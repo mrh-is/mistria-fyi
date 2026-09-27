@@ -257,19 +257,19 @@
   .tracker-row__label {
     min-width: 0;
     flex: 1;
-    font-size: 1rem;
+    font-size: var(--text-base);
     line-height: 1.3;
   }
 
   .tracker-row__subtitle {
     display: block;
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
     color: var(--ink-muted);
   }
 
   .tracker-row__active-badge {
     font-family: var(--font-data);
-    font-size: 0.6875rem;
+    font-size: var(--text-2xs);
     font-weight: 600;
     color: var(--fg-amber);
   }

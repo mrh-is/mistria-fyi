@@ -182,7 +182,7 @@
   .picker-header__title {
     flex: 1;
     font-family: var(--font-display);
-    font-size: 24px;
+    font-size: var(--text-2xl);
     font-style: var(--font-display-style);
     font-weight: 400;
     line-height: 1.15;

@@ -215,8 +215,8 @@
   }
 
   .gallery.dark {
-    background: #1a1a2e;
-    color: #e0e0e0;
+    background: var(--paper);
+    color: var(--ink);
   }
 
   .gallery-header {
@@ -227,12 +227,12 @@
   }
 
   h1 {
-    font-size: 1.5rem;
+    font-size: var(--text-2xl);
     font-weight: 600;
   }
 
   h2 {
-    font-size: 1rem;
+    font-size: var(--text-base);
     font-weight: 600;
     margin-bottom: 0.75rem;
     border-bottom: 1px solid currentColor;
@@ -244,7 +244,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
     cursor: pointer;
   }
 
@@ -269,11 +269,11 @@
     gap: 0.25rem;
     padding: 0.5rem;
     border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
-    border-radius: 0.375rem;
+    border-radius: var(--radius-xl);
   }
 
   .label {
-    font-size: 0.625rem;
+    font-size: var(--text-3xs);
     font-family: monospace;
     opacity: 0.6;
     text-align: center;

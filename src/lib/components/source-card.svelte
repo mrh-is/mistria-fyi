@@ -52,7 +52,7 @@
     grid-template-columns: 1rem minmax(0, auto) minmax(min-content, 1fr);
     align-items: center;
     gap: 4px 8px;
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
     line-height: 1.3;
   }
 

@@ -154,7 +154,7 @@
       .source-paper__stationary-control:hover
     )
     .source-paper__surface {
-    background: rgb(46 42 34 / 4%);
+    background: color-mix(in srgb, var(--ink) 4%, transparent);
   }
 
   .source-paper__stationary-control {

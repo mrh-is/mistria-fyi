@@ -328,7 +328,7 @@
     align-items: center;
     justify-content: center;
     color: var(--ink-muted);
-    box-shadow: 0 3px 12px rgb(0 0 0 / 13%);
+    box-shadow: var(--shadow-medium);
     pointer-events: auto;
     transition:
       box-shadow 150ms ease-out,
@@ -339,7 +339,7 @@
   .floating-tool:is(:hover, :focus-visible),
   .floating-tool--active {
     color: var(--primary);
-    box-shadow: 0 6px 16px rgb(0 0 0 / 18%);
+    box-shadow: var(--shadow-large);
     outline: 2px solid var(--primary);
     outline-offset: 2px;
     transform: translateY(-2px);

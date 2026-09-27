@@ -96,12 +96,12 @@
   }
 
   .rank-record:first-child {
-    border-radius: 2px 2px 0 0;
+    border-radius: var(--radius) var(--radius) 0 0;
   }
 
   .rank-record:last-child {
     border-bottom: 1px solid var(--hairline);
-    border-radius: 0 0 2px 2px;
+    border-radius: 0 0 var(--radius) var(--radius);
   }
 
   .rank-mark {
@@ -137,14 +137,14 @@
     width: fit-content;
     max-width: 100%;
     font-family: var(--font-body);
-    font-size: 15px;
+    font-size: var(--text-base);
     font-weight: 650;
   }
 
   .rank-copy small,
   .rank-state {
     font-family: var(--font-data);
-    font-size: 10px;
+    font-size: var(--text-3xs);
   }
 
   .rank-state {
@@ -168,6 +168,7 @@
     position: relative;
     z-index: 1;
     color: var(--ink);
+    /* stylelint-disable-next-line declaration-property-unit-disallowed-list -- an inset edge marker, not an elevation */
     box-shadow: inset 3px 0 0 var(--cat-renown);
   }
 

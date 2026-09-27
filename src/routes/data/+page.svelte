@@ -92,14 +92,14 @@
   .data-page__intro {
     color: var(--ink-muted);
     font-family: var(--font-annotation);
-    font-size: 13px;
+    font-size: var(--text-sm);
   }
 
   .data-page h2 {
     margin-bottom: 8px;
     color: var(--ink-muted);
     font-family: var(--font-controls);
-    font-size: 10px;
+    font-size: var(--text-3xs);
     font-weight: 400;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -120,7 +120,7 @@
     padding-top: 8px;
     color: var(--ink-muted);
     font-family: var(--font-annotation);
-    font-size: 11px;
+    font-size: var(--text-2xs);
     text-align: center;
   }
 </style>

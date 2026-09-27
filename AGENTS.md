@@ -4,8 +4,8 @@
 > guidance, see [docs/development-workflow.md](docs/development-workflow.md),
 > [docs/app-architecture.md](docs/app-architecture.md), [pipeline/README.md](pipeline/README.md),
 > [docs/save-file-format.md](docs/save-file-format.md),
-> [docs/mistria-wiki-api.md](docs/mistria-wiki-api.md), and
-> [docs/localization.md](docs/localization.md).
+> [docs/mistria-wiki-api.md](docs/mistria-wiki-api.md),
+> [docs/localization.md](docs/localization.md), and [docs/styling.md](docs/styling.md).
 
 ## 1. Worktree isolation
 
@@ -136,7 +136,7 @@ it. Wrangler may need access to Cloudflare's API and to its credentials under
 | `pnpm run check`              | SvelteKit type checking                     |
 | `pnpm run check:i18n`         | Verify locale files match `en.json`'s keys  |
 | `pnpm run check:routes`       | Verify built static assets bypass Functions |
-| `pnpm run lint`               | Prettier + ESLint check                     |
+| `pnpm run lint`               | Prettier + ESLint + Stylelint check         |
 | `pnpm run lint:fix`           | Auto-fix formatting & lint                  |
 | `pnpm run test`               | Complete Vitest suite (asset-independent)   |
 | `pnpm run test:app`           | App tests (`src/`)                          |
@@ -180,11 +180,9 @@ These rules prevent accidental damage to generated or vendored code:
   real, non-TypeScript asset (a generated `.js` file with no `.ts` source, such as
   `src/lib/paraglide/runtime.js`) or is required by an external tool. `vi.mock(...)` specifiers must
   match the import path exactly, so update them alongside the imports they mock.
-- **Styling**: The app is a deliberate hybrid. Tailwind utilities handle layout, spacing, & the
-  utilitarian screens (data transfer, feedback, legal pages) and the vendored `ui/` layer; scoped
-  `<style>` blocks handle components with a designed visual identity (records, cards, paper stacks).
-  Design tokens live in `src/app.css` `@theme` blocks; scoped CSS consumes them via `var()`. Follow
-  whichever mode the surrounding component already uses; do not convert one to the other in passing.
+- **Styling**: Tailwind utilities & scoped `<style>` blocks, both on the design tokens in
+  `src/app.css`; Stylelint rejects color, type-size, shadow, & radius literals in scoped CSS. See
+  [docs/styling.md](docs/styling.md).
 - **Svelte**: Use `let` (not `const`) for `$props()` destructuring. Use runes (`$state`, `$derived`,
   `$effect`), not legacy stores.
 - **Naming**: `camelCase` variables/functions, `PascalCase` types/components, `kebab-case` files.
@@ -203,8 +201,8 @@ compaction.
 - Run only the test covering your change: `pnpm exec vitest run path/to/file.test.ts`.
 - Run `pnpm run check` after a TypeScript or Svelte contract edit.
 - Run `pnpm run lint:fix` before committing. Lint must produce zero errors and zero warnings; a
-  warning that needs an eslint-disable comment gets the narrowest possible disable with a
-  justification.
+  warning that needs an `eslint-disable` or `stylelint-disable` comment gets the narrowest possible
+  disable with a justification.
 - Documentation-only changes: `pnpm run lint:fix && pnpm run lint` only.
 
 ### CI (every pull request)
