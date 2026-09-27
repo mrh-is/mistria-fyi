@@ -5,7 +5,8 @@
 > [docs/app-architecture.md](docs/app-architecture.md), [pipeline/README.md](pipeline/README.md),
 > [docs/save-file-format.md](docs/save-file-format.md),
 > [docs/mistria-wiki-api.md](docs/mistria-wiki-api.md),
-> [docs/localization.md](docs/localization.md), and [docs/styling.md](docs/styling.md).
+> [docs/localization.md](docs/localization.md), [docs/styling.md](docs/styling.md), and
+> [docs/cloud-agent-environments.md](docs/cloud-agent-environments.md).
 
 ## 1. Worktree isolation
 
@@ -18,6 +19,11 @@ documentation, tests, CI, licenses, gitignore).
 
 **Worktree not required** for read-only work: audits, log analysis, issue triage, review of existing
 code, scratchpad-only output. These may run in the main checkout.
+
+**Cloud-session exception:** An agent running in a fresh, platform-managed ephemeral container on a
+session-assigned branch works directly in that checkout. It must not create a nested worktree or
+replace the assigned branch. This exception applies only when the platform guarantees isolation for
+that session; local and shared checkouts still require worktrees.
 
 Create and set up a worktree with one command:
 
@@ -53,9 +59,12 @@ Agent attribution is mandatory for agent-authored Git and GitHub content:
   `Co-Authored-By: Codex <codex@openai.com>`.
 - Add a final `Agent: <agent-id>` line to every agent-authored issue or PR body. Use `claude-code`
   for Claude Code, `codex` for Codex, and a stable lowercase product slug for another agent.
-- Add exactly one matching `agent:*` label to every agent-authored issue or PR. The established
-  labels remain `agent: claude`, `agent: codex`, `agent: antigravity`, `agent: kilo`,
-  `agent: copilot`, and `agent: lm studio`; do not create a parallel `agent/...` label family.
+- Add exactly one matching `agent:*` label to every agent-authored PR and every issue the agent
+  claims for implementation. Authorship is not ownership: when an agent files an issue, include the
+  `Agent:` attribution line but do not apply an `agent:*` label unless the agent separately claims
+  the issue under §3. The established labels remain `agent: claude`, `agent: codex`,
+  `agent: antigravity`, `agent: kilo`, `agent: copilot`, and `agent: lm studio`; do not create a
+  parallel `agent/...` label family.
 - End every substantive agent-authored GitHub comment with the same `Agent: <agent-id>` line. This
   remains required when an issue or PR already has an agent label because multiple agents may
   participate in one thread.
