@@ -133,7 +133,8 @@ export interface Range {
 }
 export type Recipe = TrackerEntity;
 export type RecipeId = string & { readonly __brand: "RecipeId" };
-export type Season = "fall" | "spring" | "summer" | "winter";
+export const SEASONS = ["fall", "spring", "summer", "winter"] as const;
+export type Season = (typeof SEASONS)[number];
 export interface Skill {
   perkTiers: [PerkTier, PerkTier, PerkTier, PerkTier, PerkTier];
 }
@@ -202,5 +203,13 @@ export interface Villager {
   visibility?: VisibilityCondition;
 }
 export type VillagerId = string & { readonly __brand: "VillagerId" };
-export type VillagerRelationship = "married" | "platonic" | "proposed" | "romantic" | "undecided";
-export type Weather = "calm" | "heavy_inclement" | "inclement" | "special";
+export const VILLAGER_RELATIONSHIPS = [
+  "married",
+  "platonic",
+  "proposed",
+  "romantic",
+  "undecided",
+] as const;
+export const WEATHERS = ["calm", "heavy_inclement", "inclement", "special"] as const;
+export type VillagerRelationship = (typeof VILLAGER_RELATIONSHIPS)[number];
+export type Weather = (typeof WEATHERS)[number];
