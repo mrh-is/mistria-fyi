@@ -174,6 +174,7 @@ interface SerializedState {
 }
 
 const STORAGE_KEY = "mistria-fyi-v1";
+const QUARANTINE_KEY = `${STORAGE_KEY}-quarantine`;
 
 const VALID_CHILD_CHOICES = new Set<string>(["no", "undeclared", "yes"]);
 const VALID_AVAILABILITY_MODES = new Set<string>(["available", "everything", "timely"]);
@@ -275,6 +276,7 @@ function createDefaultState(): UserState {
 function createUserState() {
   let state = $state<UserState>(createDefaultState());
   let _persistenceFailureGeneration = $state(0);
+  let _persistenceRestored = $state(false);
 
   const progressionState = $derived(
     deriveProgressionState(state.completed, trackerData, state.showSpoilers),
@@ -285,6 +287,8 @@ function createUserState() {
     let timeout: ReturnType<typeof setTimeout>;
     $effect.root(() => {
       $effect(() => {
+        if (!_persistenceRestored) return;
+
         const json = serialize(state);
         clearTimeout(timeout);
         timeout = setTimeout(() => {
@@ -723,11 +727,18 @@ function createUserState() {
     },
     restorePersistedState() {
       const stored = safeLocalStorage.getItem(STORAGE_KEY);
-      if (!stored) return;
+      if (stored === null) {
+        _persistenceRestored = true;
+        return;
+      }
 
       const result = deserialize(stored);
       if (result.ok) {
         state = result.state;
+        _persistenceRestored = true;
+      } else {
+        trySetItem(QUARANTINE_KEY, stored);
+        _persistenceFailureGeneration++;
       }
     },
     setAvailabilityMode(mode: AvailabilityMode) {
