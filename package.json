@@ -2,7 +2,7 @@
   "name": "mistria-fyi",
   "private": true,
   "license": "GPL-3.0-only",
-  "version": "0.15.15",
+  "version": "0.15.16",
   "type": "module",
   "scripts": {
     "prepare": "husky && pnpm run paraglide:compile && svelte-kit sync",
