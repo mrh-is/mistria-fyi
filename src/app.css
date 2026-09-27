@@ -123,6 +123,20 @@
   --cat-renown: #a48018;
   --cat-quests: #1878b8;
   --cat-mines: #7a5a3a;
+
+  /* Tag dialogs (tag-dialog.svelte): a paper shipping tag on a string */
+  --tag-accent: #a65343;
+  --tag-ink: #312e2b;
+  --tag-muted: #68635e;
+  --tag-paper: #e2dace;
+  --tag-highlight: #fff8e9;
+  --tag-string: color-mix(in srgb, var(--tag-ink) 35%, #fff);
+  --tag-string-shadow: 0 1px 1px rgb(0 0 0 / 30%);
+  --tag-ring-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--tag-accent) 60%, #000),
+    0 0 0 1px color-mix(in srgb, var(--tag-accent) 68%, #000), 0 1px 1px rgb(57 36 23 / 22%);
+  --tag-shadow: drop-shadow(1px -2px 6px rgb(31 23 15 / 18%))
+    drop-shadow(3px 8px 16px rgb(31 23 15 / 28%));
 }
 
 .dark {
@@ -166,6 +180,11 @@
   --cat-cosmetics: #8838a0;
   --cat-npcs: #b83060;
   --cat-mines: #886838;
+
+  --tag-accent: #c36d5a;
+  --tag-ink: #e8e3dc;
+  --tag-muted: #aaa39b;
+  --tag-paper: #352f2a;
 }
 
 /* ── Locale font stacks (issue #269) ─────────────────── */
