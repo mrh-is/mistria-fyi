@@ -1011,7 +1011,9 @@ function deserialize(json: string, mode: ValidationMode): DeserializeResult {
       hasUpperFloor:
         typeof s.completed.hasUpperFloor === "boolean" ? s.completed.hasUpperFloor : false,
       mines: {
-        floor: clampMineFloor(s.completed.mines.floor),
+        floor: isFiniteNumber(s.completed.mines.floor)
+          ? clampMineFloor(s.completed.mines.floor)
+          : 0,
         spells: knownBrandedSet<SpellId>(s.completed.mines.spells, trackerData.mines.spells),
       },
       museum: knownBrandedSet<ItemId>(s.completed.museum, MUSEUM_ITEM_IDS),
@@ -1024,7 +1026,7 @@ function deserialize(json: string, mode: ValidationMode): DeserializeResult {
       reachedSeason: isEnumValue(s.completed.reachedSeason, VALID_SEASONS)
         ? s.completed.reachedSeason
         : "spring",
-      renown: clampRenownLevel(s.completed.renown),
+      renown: isFiniteNumber(s.completed.renown) ? clampRenownLevel(s.completed.renown) : 0,
       skillLevels,
       unlockedPerks: knownBrandedSet<PerkId>(s.completed.unlockedPerks ?? [], PERK_IDS),
       villagerLevels,
@@ -1145,17 +1147,15 @@ function isSerializedState(value: unknown, mode: ValidationMode): value is Seria
   if (!isStringArray(completed.cosmetics)) return false;
   if (!isRecord(completed.mines)) return false;
   if (
-    !(mode === "local"
-      ? isFiniteNumber(completed.mines.floor)
-      : isDomainInteger(completed.mines.floor, getMaxMineFloor())) ||
+    (mode === "strict" && !isDomainInteger(completed.mines.floor, getMaxMineFloor())) ||
     !isStringArray(completed.mines.spells)
   ) {
     return false;
   }
   if (!isStringArray(completed.museum)) return false;
-  // Renown is normalized (clamped) rather than rejected, matching its existing runtime domain
-  // clamp in clampRenownLevel — only requiring it be finite here preserves that behavior.
-  if (!isFiniteNumber(completed.renown)) return false;
+  // Strict backup imports require a numeric value; local recovery defaults malformed values and
+  // clamps numeric drift so one scalar cannot discard otherwise valid persisted progress.
+  if (mode === "strict" && !isFiniteNumber(completed.renown)) return false;
 
   return (
     isOptionalStringArray(completed.almanacRecipes) &&
