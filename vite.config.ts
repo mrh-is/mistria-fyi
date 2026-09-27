@@ -22,11 +22,25 @@ const localizedCatchAllPattern: [string, string][] = LOCALE_CODES.map((locale) =
 
 export default defineConfig({
   build: {
-    // tracker-data.json (~838 kB) is inlined into a shared chunk used by every route.
-    // Minified: ~885 kB, gzipped transfer: ~108 kB. Lazy-loading isn't viable because the
-    // user-state store and engine layer import it synchronously at initialization. The chunk
-    // is long-term cached via content-hashed filenames and the service worker.
-    chunkSizeWarningLimit: 1000,
+    // tracker-data.json is the largest chunk: ~844 kB minified, ~75 kB gzipped as of the 1.0.5
+    // data. Lazy-loading isn't viable because the user-state store and engine layer import it
+    // synchronously at initialization; Vite emits it as a JSON.parse() string, the cheapest form
+    // to parse. Nothing in the browser or service worker caps chunk size, so this is a tripwire:
+    // it sits ~100 kB above the data so a data update that grows it markedly (the way names did
+    // before they moved to per-locale chunks) triggers a fresh look instead of silently shipping.
+    chunkSizeWarningLimit: 950,
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            // Keep the data in a chunk of its own. Otherwise it shares one with whatever library
+            // code every route also imports, so a game-data update re-downloads that code and a
+            // dependency bump re-downloads the data.
+            { name: "tracker-data", test: /\/src\/lib\/data\/tracker-data\.json$/ },
+          ],
+        },
+      },
+    },
   },
   // Vite only exposes VITE_-prefixed vars via import.meta.env by default. PUBLIC_ASSET_ORIGIN
   // (src/lib/sprites/sprite-url.ts) uses SvelteKit's own "PUBLIC_" convention, so it must be added
