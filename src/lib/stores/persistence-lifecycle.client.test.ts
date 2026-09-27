@@ -50,6 +50,29 @@ function makeStorage(data: Record<string, string> = {}): Storage {
   };
 }
 
+function transientReadFailureStorage(data: Record<string, string>): Storage {
+  const store = new Map(Object.entries(data));
+  let shouldFail = true;
+  return {
+    clear: () => {
+      store.clear();
+    },
+    getItem: (key) => {
+      if (shouldFail) {
+        shouldFail = false;
+        throw new DOMException("Access denied", "SecurityError");
+      }
+      return store.get(key) ?? null;
+    },
+    key: (index) => [...store.keys()][index] ?? null,
+    get length() {
+      return store.size;
+    },
+    removeItem: (key) => store.delete(key),
+    setItem: (key, value) => store.set(key, value),
+  };
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
@@ -91,6 +114,25 @@ describe("persistence lifecycle", () => {
 
     expect(storage.getItem("mistria-fyi-v1")).toBe(invalid);
     expect(storage.getItem("mistria-fyi-v1-quarantine")).toBe(invalid);
+    expect(userState.persistenceFailed).toBe(true);
+  });
+
+  it("keeps persistence gated when reading storage fails", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("window", {});
+    const stored = buildMinimalState(25);
+    const storage = transientReadFailureStorage({ "mistria-fyi-v1": stored });
+    vi.stubGlobal("localStorage", storage);
+    vi.resetModules();
+
+    const { userState } = await import("$lib/stores/user-state.svelte.js");
+    userState.restorePersistedState();
+
+    vi.advanceTimersByTime(400);
+    await vi.runAllTimersAsync();
+
+    expect(storage.getItem("mistria-fyi-v1")).toBe(stored);
+    expect(userState.state.completed.renown).toBe(0);
     expect(userState.persistenceFailed).toBe(true);
   });
 

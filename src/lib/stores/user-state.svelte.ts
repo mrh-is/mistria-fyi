@@ -23,7 +23,7 @@ import {
   legacyAvailabilityWindows,
 } from "$lib/types/availability.js";
 import { recordEntries, recordKeys } from "$lib/utils";
-import { safeLocalStorage, trySetItem } from "$lib/utils/local-storage.js";
+import { tryGetItem, trySetItem } from "$lib/utils/local-storage.js";
 
 import type { AvailabilityWindow, LegacyAvailabilityMode } from "$lib/types/availability.js";
 import type {
@@ -726,7 +726,13 @@ function createUserState() {
       state = createDefaultState();
     },
     restorePersistedState() {
-      const stored = safeLocalStorage.getItem(STORAGE_KEY);
+      const storedResult = tryGetItem(STORAGE_KEY);
+      if (!storedResult.ok) {
+        _persistenceFailureGeneration++;
+        return;
+      }
+
+      const stored = storedResult.value;
       if (stored === null) {
         _persistenceRestored = true;
         return;
