@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
 import { getMaxMineFloor, MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "$lib/engine/progress.js";
@@ -75,8 +75,15 @@ const known = {
 };
 const knownAnimal = firstAnimalEntry();
 
-function buildStoredState(options: { invalidDomains?: boolean } = {}): string {
+beforeEach(() => {
+  vi.resetModules();
+});
+
+function buildStoredState(
+  options: { invalidDomains?: boolean; malformedNumericScalars?: boolean } = {},
+): string {
   const invalidDomains = options.invalidDomains ?? false;
+  const malformedNumericScalars = options.malformedNumericScalars ?? false;
   return JSON.stringify({
     availabilityWindows: invalidDomains ? ["now", "removed_window"] : ["now"],
     completed: {
@@ -94,7 +101,7 @@ function buildStoredState(options: { invalidDomains?: boolean } = {}): string {
       cosmetics: [known.cosmetic, UNKNOWN_ID],
       dates: [known.date, UNKNOWN_ID],
       mines: {
-        floor: invalidDomains ? getMaxMineFloor() + 50 : 0,
+        floor: malformedNumericScalars ? null : invalidDomains ? getMaxMineFloor() + 50 : 0,
         spells: [known.spell, UNKNOWN_ID],
       },
       museum: [known.museum, UNKNOWN_ID],
@@ -106,7 +113,7 @@ function buildStoredState(options: { invalidDomains?: boolean } = {}): string {
         [UNKNOWN_ID]: "completed",
       },
       reachedSeason: invalidDomains ? "monsoon" : "spring",
-      renown: 0,
+      renown: malformedNumericScalars ? "max" : 0,
       skillLevels: {
         [known.skill]: invalidDomains ? MAX_SKILL_LEVEL + 50 : 1,
         ...(invalidDomains ? { [known.skillWithInvalidLevel]: "sixty" } : {}),
@@ -210,6 +217,22 @@ describe("persisted-state normalization", () => {
 
     expect(userState.importState(buildStoredState())).toEqual({ ok: true });
     expectUnknownIdsRemoved(userState.state.completed);
+    expect(userState.state.completed.almanac).toContain(known.almanac);
+    expect((userState.state.completed.questStates as Record<string, string>)[known.quest]).toBe(
+      "completed",
+    );
+  });
+
+  it("defaults malformed local numeric scalars without discarding unrelated progress", async () => {
+    vi.stubGlobal("window", {});
+    vi.stubGlobal("localStorage", makeStorage(buildStoredState({ malformedNumericScalars: true })));
+
+    const { userState } = await import("$lib/stores/user-state.svelte.js");
+    userState.restorePersistedState();
+
+    expect(userState.persistenceFailed).toBe(false);
+    expect(userState.state.completed.mines.floor).toBe(0);
+    expect(userState.state.completed.renown).toBe(0);
     expect(userState.state.completed.almanac).toContain(known.almanac);
     expect((userState.state.completed.questStates as Record<string, string>)[known.quest]).toBe(
       "completed",
