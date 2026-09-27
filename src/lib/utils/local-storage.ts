@@ -1,5 +1,17 @@
 const isBrowser = typeof window !== "undefined";
 
+type StorageReadResult = { ok: false } | { ok: true; value: null | string };
+
+/** Attempt to read localStorage while distinguishing a missing key from blocked storage access. */
+export function tryGetItem(key: string): StorageReadResult {
+  if (!isBrowser) return { ok: false };
+  try {
+    return { ok: true, value: localStorage.getItem(key) };
+  } catch {
+    return { ok: false };
+  }
+}
+
 /**
  * Attempt to write to localStorage, returning whether the write succeeded.
  * Returns false when storage is blocked (private browsing, disabled) or the quota is exceeded.
@@ -24,12 +36,8 @@ export const safeLocalStorage: Storage = {
     }
   },
   getItem: (key: string): null | string => {
-    if (!isBrowser) return null;
-    try {
-      return localStorage.getItem(key);
-    } catch {
-      return null;
-    }
+    const result = tryGetItem(key);
+    return result.ok ? result.value : null;
   },
   key: (index: number): null | string => {
     if (!isBrowser) return null;

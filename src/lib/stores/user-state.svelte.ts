@@ -23,7 +23,7 @@ import {
   legacyAvailabilityWindows,
 } from "$lib/types/availability.js";
 import { recordEntries, recordKeys } from "$lib/utils";
-import { safeLocalStorage, trySetItem } from "$lib/utils/local-storage.js";
+import { tryGetItem, trySetItem } from "$lib/utils/local-storage.js";
 
 import type { AvailabilityWindow, LegacyAvailabilityMode } from "$lib/types/availability.js";
 import type {
@@ -174,6 +174,7 @@ interface SerializedState {
 }
 
 const STORAGE_KEY = "mistria-fyi-v1";
+const QUARANTINE_KEY = `${STORAGE_KEY}-quarantine`;
 
 const VALID_CHILD_CHOICES = new Set<string>(["no", "undeclared", "yes"]);
 const VALID_AVAILABILITY_MODES = new Set<string>(["available", "everything", "timely"]);
@@ -275,6 +276,17 @@ function createDefaultState(): UserState {
 function createUserState() {
   let state = $state<UserState>(createDefaultState());
   let _persistenceFailureGeneration = $state(0);
+  let _persistenceReady = $state(false);
+  let persistenceBlocked = false;
+  let quarantineAvailable = false;
+
+  function enablePersistenceAfterExplicitReplace(): void {
+    if (!persistenceBlocked || !quarantineAvailable) return;
+
+    persistenceBlocked = false;
+    quarantineAvailable = false;
+    _persistenceReady = true;
+  }
 
   const progressionState = $derived(
     deriveProgressionState(state.completed, trackerData, state.showSpoilers),
@@ -285,6 +297,8 @@ function createUserState() {
     let timeout: ReturnType<typeof setTimeout>;
     $effect.root(() => {
       $effect(() => {
+        if (!_persistenceReady) return;
+
         const json = serialize(state);
         clearTimeout(timeout);
         timeout = setTimeout(() => {
@@ -350,7 +364,11 @@ function createUserState() {
       state.completed.questStates[id] = next;
     },
     dismissPersistenceWarning() {
-      _persistenceFailureGeneration = 0;
+      if (persistenceBlocked) {
+        _persistenceFailureGeneration++;
+      } else {
+        _persistenceFailureGeneration = 0;
+      }
     },
     exportState(): string {
       return serialize(state);
@@ -363,6 +381,7 @@ function createUserState() {
       const result = deserialize(json);
       if (!result.ok) return result;
       state = result.state;
+      enablePersistenceAfterExplicitReplace();
       return { ok: true };
     },
     /** Merge imported data into current progress (union, never removes) */
@@ -720,14 +739,37 @@ function createUserState() {
     },
     resetAll() {
       state = createDefaultState();
+      enablePersistenceAfterExplicitReplace();
     },
     restorePersistedState() {
-      const stored = safeLocalStorage.getItem(STORAGE_KEY);
-      if (!stored) return;
+      const storedResult = tryGetItem(STORAGE_KEY);
+      if (!storedResult.ok) {
+        _persistenceReady = false;
+        persistenceBlocked = true;
+        quarantineAvailable = false;
+        _persistenceFailureGeneration++;
+        return;
+      }
+
+      const stored = storedResult.value;
+      if (stored === null) {
+        persistenceBlocked = false;
+        quarantineAvailable = false;
+        _persistenceReady = true;
+        return;
+      }
 
       const result = deserialize(stored);
       if (result.ok) {
         state = result.state;
+        persistenceBlocked = false;
+        quarantineAvailable = false;
+        _persistenceReady = true;
+      } else {
+        _persistenceReady = false;
+        persistenceBlocked = true;
+        quarantineAvailable = trySetItem(QUARANTINE_KEY, stored);
+        _persistenceFailureGeneration++;
       }
     },
     setAvailabilityMode(mode: AvailabilityMode) {
