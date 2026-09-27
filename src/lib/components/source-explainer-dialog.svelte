@@ -48,7 +48,7 @@
   .inventory-tag__overline {
     display: block;
     font-family: var(--font-controls);
-    font-size: var(--text-5xs);
+    font-size: var(--text-3xs);
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
@@ -95,7 +95,7 @@
 
   .inventory-tag__list strong {
     font-family: var(--font-controls);
-    font-size: var(--text-4xs);
+    font-size: var(--text-3xs);
     letter-spacing: 0.04em;
     text-transform: uppercase;
   }
@@ -104,7 +104,7 @@
     margin-top: 1px;
     color: var(--tag-muted);
     font-family: var(--font-annotation);
-    font-size: var(--text-4xs);
+    font-size: var(--text-2xs);
     line-height: 1.25;
   }
 

@@ -341,7 +341,7 @@
     color: var(--ink-muted);
     background: var(--paper-deep);
     font-family: var(--font-controls);
-    font-size: var(--text-4xs);
+    font-size: var(--text-3xs);
     text-overflow: ellipsis;
     white-space: nowrap;
   }

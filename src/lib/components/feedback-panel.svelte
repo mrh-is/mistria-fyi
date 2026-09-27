@@ -710,7 +710,7 @@
     background: var(--paper-deep);
     padding: 12px 14px;
     font-family: var(--font-body);
-    font-size: var(--text-sm-plus);
+    font-size: var(--text-base);
   }
 
   .feedback-form__message:focus-visible {
@@ -731,7 +731,7 @@
   .feedback-form__version {
     color: var(--ink-muted);
     font-family: var(--font-controls);
-    font-size: var(--text-4xs);
+    font-size: var(--text-3xs);
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }

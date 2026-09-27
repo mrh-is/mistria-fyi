@@ -167,7 +167,7 @@
 
   .floor-label {
     font-family: var(--font-body);
-    font-size: var(--text-sm-plus);
+    font-size: var(--text-base);
     font-weight: 650;
   }
 
@@ -282,7 +282,7 @@
   .biome-readout strong {
     color: var(--ink);
     font-family: var(--font-body);
-    font-size: var(--text-xs-plus);
+    font-size: var(--text-sm);
   }
 
   .mine-floor-record[data-compact="true"] {

@@ -158,7 +158,7 @@
     margin-top: 6px;
     color: var(--tag-muted);
     font-family: var(--font-annotation);
-    font-size: var(--text-xs-plus);
+    font-size: var(--text-sm);
     line-height: 1.4;
   }
 
