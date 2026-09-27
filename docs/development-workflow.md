@@ -213,7 +213,7 @@ other full-suite command during development.
 
 | Command                 | Description & Purpose                                                            | Scope                |
 | ----------------------- | -------------------------------------------------------------------------------- | -------------------- |
-| `pnpm run lint`         | Checks formatting and ESLint compliance                                          | All files            |
+| `pnpm run lint`         | Checks formatting, ESLint, and Stylelint compliance                              | All files            |
 | `pnpm run check:i18n`   | Verifies every locale file matches `en.json`'s key shape                         | `messages/`          |
 | `pnpm run check`        | Synchronizes SvelteKit types and runs `svelte-check` plus the pipeline `tsc`     | `src/` & `pipeline/` |
 | `pnpm run test`         | Executes the complete Vitest test suite                                          | Unit & logic tests   |
