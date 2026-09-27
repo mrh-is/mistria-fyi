@@ -69,6 +69,13 @@ is absent.
 9. Start a new cloud session in this environment. Existing sessions do not receive environment
    edits.
 
+Before this guide is merged to the default branch, select `codex/359-cloud-agent-environments` as
+the new session's branch. The setup script does not exist on `main` yet, so a session started from
+`main` exits with `scripts/setup-cloud-agent.sh: No such file or directory`. Claude does not cache a
+setup that exits unsuccessfully. Start a new session on the PR branch; no cache reset is required
+for this failure. If an older successful setup is cached, editing and saving the setup script
+invalidates that cache.
+
 On Team and Enterprise plans, or whenever **API credentials** is unavailable, the only direct
 fallback is adding `CLOUDFLARE_API_TOKEN=...` under **Environment variables**. Anyone who can use
 the environment and any command running in the session can read that value. Use only the
@@ -109,6 +116,21 @@ These steps follow OpenAI’s
 8. Save the environment and select **Reset cache** if it existed before these changes.
 9. Start a new cloud task using this environment.
 
+Codex builds a new environment cache from the repository's default branch before it checks out the
+task branch. Therefore, the permanent setup command above cannot be validated until this guide and
+script are on `main`. To validate PR #379 before merging:
+
+1. Temporarily set the setup script to `true`.
+2. Keep the maintenance script set to `bash scripts/setup-cloud-agent.sh`.
+3. Save the environment and select **Reset cache**.
+4. Start a new cloud task explicitly from `codex/359-cloud-agent-environments`. After Codex checks
+   out that branch, the maintenance script can find the checked-in setup script and install Node
+   26.5.0.
+5. If the first task only creates the default-branch cache and still reports Node 22, start one more
+   new task on the PR branch so Codex resumes the cache and runs the maintenance script.
+6. After PR #379 merges, restore the setup script to `bash scripts/setup-cloud-agent.sh`, keep the
+   same maintenance script, save, and reset the cache once more.
+
 Codex secrets are available to setup scripts but are removed before the agent phase. The log helper
 runs during the agent phase, so storing the token in Codex’s **Secrets** section does not work.
 `CLOUDFLARE_API_TOKEN` is therefore agent-visible. Its account restriction and Pages Read permission
@@ -123,13 +145,25 @@ node --version
 pnpm --version
 pnpm run paraglide:compile
 pnpm run cloudflare:logs -- <deployment-id>
-gh auth status
 ```
 
 The Node command must match `.node-version`; Paraglide must compile without requesting jsDelivr; the
-log command must print timestamped build-log lines; and GitHub authentication must cover the
-attached repository. For Claude with a protected API credential, `CLOUDFLARE_API_TOKEN` should be
-unset even though the log request succeeds.
+log command must print timestamped build-log lines. Use a real deployment ID from the Pages project;
+the command intentionally rejects the `<deployment-id>` placeholder. For Claude with a protected API
+credential, `CLOUDFLARE_API_TOKEN` should be unset even though the log request succeeds.
+
+For Claude, also run:
+
+```sh
+gh auth status
+```
+
+Claude's GitHub proxy should authenticate `gh` for the attached repository. For Codex, an
+unauthenticated `gh auth status` does not mean the repository integration is broken. Codex's product
+integration can attach the repository and manage the task or pull request without placing a GitHub
+token in the agent shell. Confirm that the task opened the requested branch and that
+`git status --short --branch` reports the expected clean checkout; do not add a personal GitHub
+token merely to make `gh auth status` pass.
 
 If setup fails before the agent starts, inspect the setup output first. A checksum error means the
 Node archive or checksum response was incomplete and the environment should be retried. A frozen
