@@ -95,7 +95,7 @@
 
   .tag :global(h2) {
     font-family: var(--font-display);
-    font-size: 24px;
+    font-size: var(--text-2xl);
     font-style: var(--font-display-style);
     line-height: 1;
   }

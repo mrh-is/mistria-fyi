@@ -120,7 +120,7 @@
     gap: 5px 10px;
     padding: 12px;
     border: 1px solid var(--hairline);
-    border-radius: 2px;
+    border-radius: var(--radius);
     background: var(--paper-raised);
     box-shadow: var(--shadow-small);
     color: var(--ink);
@@ -135,6 +135,7 @@
     border: 2px solid color-mix(in srgb, var(--rank-color) 70%, var(--ink));
     border-radius: 50%;
     background: color-mix(in srgb, var(--rank-color) 15%, var(--paper-raised));
+    /* stylelint-disable-next-line declaration-property-unit-disallowed-list -- a hard offset "stamp" edge, not an elevation */
     box-shadow: 1px 2px 0 color-mix(in srgb, var(--rank-color) 25%, transparent);
     transform: rotate(-2deg);
   }
@@ -153,7 +154,7 @@
   .rank-copy strong {
     overflow: hidden;
     font-family: var(--font-display);
-    font-size: 24px;
+    font-size: var(--text-2xl);
     font-style: var(--font-display-style);
     font-weight: 400;
     line-height: 1;
@@ -164,7 +165,7 @@
   .rank-copy small {
     color: var(--ink-muted);
     font-family: var(--font-data);
-    font-size: 11px;
+    font-size: var(--text-2xs);
   }
 
   .renown-rule {
@@ -193,7 +194,7 @@
     gap: 4px;
     color: var(--ink-muted);
     font-family: var(--font-data);
-    font-size: 12px;
+    font-size: var(--text-xs);
     white-space: nowrap;
   }
 
@@ -206,7 +207,7 @@
     background: transparent;
     color: var(--ink);
     font-family: var(--font-data);
-    font-size: 16px;
+    font-size: var(--text-base);
     text-align: center;
   }
 
@@ -240,7 +241,7 @@
   }
 
   .renown-current[data-compact="true"] .rank-copy strong {
-    font-size: 20px;
+    font-size: var(--text-xl);
   }
 
   @media (prefers-reduced-motion: reduce) {

@@ -139,7 +139,7 @@
     background: transparent;
     color: var(--ink-muted);
     font-family: var(--font-data);
-    font-size: 10px;
+    font-size: var(--text-3xs);
     line-height: 1;
   }
 

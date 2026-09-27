@@ -272,7 +272,7 @@
     margin-bottom: 3px;
     color: var(--ink-muted);
     font-family: var(--font-data);
-    font-size: 11px;
+    font-size: var(--text-2xs);
   }
 
   .search-result {
@@ -295,7 +295,7 @@
     background: color-mix(in srgb, var(--result-category) 9%, var(--paper));
     clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 50%, 100% 100%, 0 100%);
     font-family: var(--font-annotation);
-    font-size: 10px;
+    font-size: var(--text-3xs);
     text-align: center;
   }
 
@@ -305,7 +305,7 @@
     padding: 32px 0;
     color: var(--ink-muted);
     font-family: var(--font-body);
-    font-size: 16px;
+    font-size: var(--text-base);
     text-align: center;
   }
 
@@ -320,10 +320,10 @@
     padding: 6px 16px;
     color: var(--ink);
     border: 1px solid var(--ink-muted);
-    border-radius: 4px;
+    border-radius: var(--radius-lg);
     background: transparent;
     font-family: var(--font-body);
-    font-size: 14px;
+    font-size: var(--text-sm);
     cursor: pointer;
   }
 

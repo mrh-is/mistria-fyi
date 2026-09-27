@@ -110,7 +110,7 @@
     isolation: isolate;
     display: block;
     width: fit-content;
-    font-size: 16px;
+    font-size: var(--text-base);
     font-weight: 600;
     line-height: 1.2;
     -webkit-text-stroke: 1.35px var(--paper-raised);
@@ -139,7 +139,7 @@
     margin-top: 2px;
     color: var(--ink-muted);
     font-family: var(--font-annotation);
-    font-size: 11px;
+    font-size: var(--text-2xs);
     line-height: 1.2;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -151,7 +151,7 @@
     column-gap: 0.45ch;
     align-items: baseline;
     font-family: var(--font-data);
-    font-size: 12px;
+    font-size: var(--text-xs);
     white-space: nowrap;
   }
 
@@ -224,23 +224,23 @@
     left: 0;
     width: 9px;
     background:
-      linear-gradient(to bottom right, transparent 46%, #d4a72c 48% 57%, transparent 59%) top / 9px
-        50% no-repeat,
-      linear-gradient(to top right, transparent 46%, #d4a72c 48% 57%, transparent 59%) bottom / 9px
-        50% no-repeat;
+      linear-gradient(to bottom right, transparent 46%, var(--ribbon-gold) 48% 57%, transparent 59%)
+        top / 9px 50% no-repeat,
+      linear-gradient(to top right, transparent 46%, var(--ribbon-gold) 48% 57%, transparent 59%)
+        bottom / 9px 50% no-repeat;
     content: "";
   }
 
   .category-stripe:is(:hover, :focus-visible) {
     z-index: 3;
-    box-shadow: 0 3px 8px rgb(46 42 34 / 16%);
+    box-shadow: var(--shadow-medium);
     outline: 2px solid var(--category-color);
     outline-offset: 2px;
     transform: translateY(-1px);
   }
 
   .category-stripe:is(:hover, :focus-visible) .category-ribbon {
-    filter: drop-shadow(0 3px 2px rgb(46 42 34 / 30%));
+    filter: drop-shadow(var(--shadow-ribbon));
     transform: translateX(-3px);
   }
 
@@ -278,10 +278,15 @@
       right: 0;
       left: auto;
       background:
-        linear-gradient(to bottom left, transparent 46%, #d4a72c 48% 57%, transparent 59%) top / 9px
-          50% no-repeat,
-        linear-gradient(to top left, transparent 46%, #d4a72c 48% 57%, transparent 59%) bottom / 9px
-          50% no-repeat;
+        linear-gradient(
+            to bottom left,
+            transparent 46%,
+            var(--ribbon-gold) 48% 57%,
+            transparent 59%
+          )
+          top / 9px 50% no-repeat,
+        linear-gradient(to top left, transparent 46%, var(--ribbon-gold) 48% 57%, transparent 59%)
+          bottom / 9px 50% no-repeat;
     }
   }
 

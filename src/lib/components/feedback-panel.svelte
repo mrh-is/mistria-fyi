@@ -710,7 +710,7 @@
     background: var(--paper-deep);
     padding: 12px 14px;
     font-family: var(--font-body);
-    font-size: 15px;
+    font-size: var(--text-sm-plus);
   }
 
   .feedback-form__message:focus-visible {
@@ -724,14 +724,14 @@
     gap: 8px;
     color: var(--ink-muted);
     font-family: var(--font-annotation);
-    font-size: 12px;
+    font-size: var(--text-xs);
   }
 
   .feedback-form__optional,
   .feedback-form__version {
     color: var(--ink-muted);
     font-family: var(--font-controls);
-    font-size: 9px;
+    font-size: var(--text-4xs);
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }
@@ -765,7 +765,7 @@
     border: 1px solid color-mix(in srgb, var(--hairline) 48%, transparent);
     padding: 6px 13px;
     font-family: var(--font-controls);
-    font-size: 10px;
+    font-size: var(--text-3xs);
   }
 
   .feedback-form__actions > button:not(.feedback-form__send):is(:hover, :focus-visible) {

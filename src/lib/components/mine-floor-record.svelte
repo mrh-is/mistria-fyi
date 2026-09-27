@@ -159,7 +159,7 @@
     gap: 8px;
     padding: 10px;
     border: 1px solid var(--hairline);
-    border-radius: 2px;
+    border-radius: var(--radius);
     background: var(--paper-raised);
     box-shadow: var(--shadow-small);
     color: var(--ink);
@@ -167,7 +167,7 @@
 
   .floor-label {
     font-family: var(--font-body);
-    font-size: 15px;
+    font-size: var(--text-sm-plus);
     font-weight: 650;
   }
 
@@ -214,7 +214,7 @@
     height: 44px;
     place-items: center;
     border: 1px solid var(--hairline);
-    border-radius: 2px;
+    border-radius: var(--radius);
     background: transparent;
     color: var(--ink-muted);
   }
@@ -242,7 +242,7 @@
     justify-content: center;
     gap: 4px;
     font-family: var(--font-data);
-    font-size: 12px;
+    font-size: var(--text-xs);
     white-space: nowrap;
   }
 
@@ -255,7 +255,7 @@
     background: transparent;
     color: var(--ink);
     font-family: var(--font-data);
-    font-size: 16px;
+    font-size: var(--text-base);
     text-align: center;
   }
 
@@ -276,13 +276,13 @@
     gap: 6px;
     color: var(--ink-muted);
     font-family: var(--font-data);
-    font-size: 11px;
+    font-size: var(--text-2xs);
   }
 
   .biome-readout strong {
     color: var(--ink);
     font-family: var(--font-body);
-    font-size: 13px;
+    font-size: var(--text-xs-plus);
   }
 
   .mine-floor-record[data-compact="true"] {
