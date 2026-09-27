@@ -15,6 +15,8 @@
   ```
 - **Environment Configuration**: Copy `.env.example` to `.env` if local environment variables are
   required.
+- **Cloud agents**: Configure Claude Code cloud and Codex cloud with the shared setup script and
+  read-only Cloudflare access in [cloud-agent-environments.md](cloud-agent-environments.md).
 
 ---
 
@@ -108,6 +110,11 @@ Follow this protocol for every issue-backed task:
 
 An active-work label is a coordination claim, not proof of progress. Do not claim issues merely to
 reserve them, & do not leave stale claims after an agent stops working.
+
+Filing an issue does not claim it. The filer adds the required `Agent:` authorship line, leaves the
+issue without an `agent:*` label, and applies a non-active status such as `status: ready` when the
+issue is already triaged. Add the ownership label only when an agent later completes the approval
+gates and begins the claim protocol above.
 
 ### Attribute agent-authored content
 
