@@ -179,6 +179,8 @@ interface SerializedState {
 
 const STORAGE_KEY = "mistria-fyi-v1";
 const QUARANTINE_KEY = `${STORAGE_KEY}-quarantine`;
+const CURRENT_SERIALIZATION_VERSION = "2";
+const SUPPORTED_SERIALIZATION_VERSIONS = new Set(["1", CURRENT_SERIALIZATION_VERSION]);
 
 const VALID_CHILD_CHOICES = new Set<string>(CHILD_CHOICES);
 const VALID_AVAILABILITY_MODES = new Set<string>(LEGACY_AVAILABILITY_MODES);
@@ -188,7 +190,9 @@ const VALID_QUEST_STATES = new Set<string>(QUEST_STATES);
 const VALID_SEASONS = new Set<string>(SEASONS);
 const VALID_WEATHER = new Set<string>(WEATHERS);
 
-type DeserializeResult = { error: ImportErrorKind; ok: false } | { ok: true; state: UserState };
+type DeserializeResult =
+  | { error: ImportErrorKind; ok: false }
+  | { ok: true; source: Record<string, unknown>; state: UserState };
 type ValidationMode = "local" | "strict";
 
 const QUEST_IDS = new Set(
@@ -292,6 +296,70 @@ function createUserState() {
   let _persistenceReady = $state(false);
   let persistenceBlocked = false;
   let quarantineAvailable = false;
+  let serializedSource: Record<string, unknown> | undefined;
+  let lastKnownStoredValue: null | string = null;
+  let pendingSave: undefined | { expectedStoredValue: null | string; json: string };
+  let saveTimeout: ReturnType<typeof setTimeout> | undefined;
+
+  function clearPendingSave(): void {
+    if (saveTimeout !== undefined) clearTimeout(saveTimeout);
+    saveTimeout = undefined;
+    pendingSave = undefined;
+  }
+
+  function persist(json: string, expectedStoredValue: null | string): void {
+    const storedResult = tryGetItem(STORAGE_KEY);
+    if (!storedResult.ok) {
+      _persistenceFailureGeneration++;
+      return;
+    }
+
+    // A different tab wrote after this save was scheduled. Its storage event will replace local
+    // state, so writing the stale snapshot here would merely restore the race we are avoiding.
+    if (storedResult.value !== expectedStoredValue) return;
+
+    if (!trySetItem(STORAGE_KEY, json)) {
+      _persistenceFailureGeneration++;
+      return;
+    }
+
+    lastKnownStoredValue = json;
+    _persistenceFailureGeneration = 0;
+  }
+
+  function flushPendingSave(): void {
+    const pending = pendingSave;
+    clearPendingSave();
+    if (pending) persist(pending.json, pending.expectedStoredValue);
+  }
+
+  function flushCurrentState(): void {
+    if (!_persistenceReady) return;
+    clearPendingSave();
+    persist(serialize(state, serializedSource), lastKnownStoredValue);
+  }
+
+  function applyStorageValue(value: null | string): void {
+    clearPendingSave();
+    lastKnownStoredValue = value;
+    if (value === null) return;
+
+    const result = deserialize(value, "local");
+    if (result.ok) {
+      state = result.state;
+      serializedSource = result.source;
+      persistenceBlocked = false;
+      quarantineAvailable = false;
+      _persistenceFailureGeneration = 0;
+      _persistenceReady = true;
+      return;
+    }
+
+    _persistenceReady = false;
+    persistenceBlocked = true;
+    quarantineAvailable = trySetItem(QUARANTINE_KEY, value);
+    _persistenceFailureGeneration++;
+  }
 
   function enablePersistenceAfterExplicitReplace(): void {
     if (!persistenceBlocked || !quarantineAvailable) return;
@@ -307,22 +375,26 @@ function createUserState() {
 
   // Auto-save to localStorage (debounced)
   if (typeof window !== "undefined") {
-    let timeout: ReturnType<typeof setTimeout>;
     $effect.root(() => {
       $effect(() => {
         if (!_persistenceReady) return;
 
-        const json = serialize(state);
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-          const ok = trySetItem(STORAGE_KEY, json);
-          if (!ok) {
-            _persistenceFailureGeneration++;
-          } else {
-            _persistenceFailureGeneration = 0;
-          }
-        }, 300);
+        const json = serialize(state, serializedSource);
+        clearPendingSave();
+        if (json === lastKnownStoredValue) return;
+
+        pendingSave = { expectedStoredValue: lastKnownStoredValue, json };
+        saveTimeout = setTimeout(flushPendingSave, 300);
       });
+    });
+
+    const windowWithEvents = window as { addEventListener?: Window["addEventListener"] };
+    windowWithEvents.addEventListener?.("pagehide", flushCurrentState);
+    windowWithEvents.addEventListener?.("storage", (event) => {
+      if (event.key !== STORAGE_KEY || (event.storageArea && event.storageArea !== localStorage)) {
+        return;
+      }
+      applyStorageValue(event.newValue);
     });
   }
 
@@ -384,7 +456,7 @@ function createUserState() {
       }
     },
     exportState(): string {
-      return serialize(state);
+      return serialize(state, serializedSource);
     },
     get hasAnyProgress(): boolean {
       return hasAnyProgress;
@@ -394,6 +466,7 @@ function createUserState() {
       const result = deserialize(json, "strict");
       if (!result.ok) return result;
       state = result.state;
+      serializedSource = result.source;
       enablePersistenceAfterExplicitReplace();
       return { ok: true };
     },
@@ -752,6 +825,7 @@ function createUserState() {
     },
     resetAll() {
       state = createDefaultState();
+      serializedSource = undefined;
       enablePersistenceAfterExplicitReplace();
     },
     restorePersistedState() {
@@ -765,7 +839,9 @@ function createUserState() {
       }
 
       const stored = storedResult.value;
+      lastKnownStoredValue = stored;
       if (stored === null) {
+        serializedSource = undefined;
         persistenceBlocked = false;
         quarantineAvailable = false;
         _persistenceReady = true;
@@ -775,6 +851,7 @@ function createUserState() {
       const result = deserialize(stored, "local");
       if (result.ok) {
         state = result.state;
+        serializedSource = result.source;
         persistenceBlocked = false;
         quarantineAvailable = false;
         _persistenceReady = true;
@@ -920,7 +997,7 @@ function deserialize(json: string, mode: ValidationMode): DeserializeResult {
     return { error: "invalid-fields", ok: false };
   }
 
-  if (raw.version !== "1") {
+  if (typeof raw.version !== "string" || !SUPPORTED_SERIALIZATION_VERSIONS.has(raw.version)) {
     return { error: "unsupported-version", ok: false };
   }
 
@@ -1037,6 +1114,7 @@ function deserialize(json: string, mode: ValidationMode): DeserializeResult {
 
     return {
       ok: true,
+      source: raw,
       state: {
         availabilityWindows: serializedAvailabilityWindows(s, mode),
         completed,
@@ -1278,7 +1356,7 @@ function normalizeLevelRecord<K extends string>(
   return result;
 }
 
-function serialize(state: UserState): string {
+function serialize(state: UserState, source?: Record<string, unknown>): string {
   const s: SerializedState = {
     availabilityWindows: [...state.availabilityWindows],
     completed: {
@@ -1313,10 +1391,37 @@ function serialize(state: UserState): string {
       ),
     },
     showSpoilers: state.showSpoilers,
-    version: "1",
+    version: CURRENT_SERIALIZATION_VERSION,
     worldState: state.worldState,
   };
-  return JSON.stringify(s);
+  if (!source) return JSON.stringify(s);
+
+  const sourceCompleted = isRecord(source.completed) ? source.completed : {};
+  const sourceMines = isRecord(sourceCompleted.mines) ? sourceCompleted.mines : {};
+  const sourceWorldState = isRecord(source.worldState) ? source.worldState : {};
+  const merged: Record<string, unknown> = {
+    ...source,
+    ...s,
+    completed: {
+      ...sourceCompleted,
+      ...s.completed,
+      mines: { ...sourceMines, ...s.completed.mines },
+    },
+    worldState: { ...sourceWorldState, ...s.worldState },
+  };
+
+  // These are known legacy fields, not forward-compatible data. Keeping them would make a
+  // migrated backup advertise two sources of truth for the same setting.
+  delete merged.availabilityMode;
+  delete merged.showCompleted;
+  const mergedCompleted = merged.completed as Record<string, unknown>;
+  delete mergedCompleted.marriedVillager;
+  delete mergedCompleted.quests;
+  delete mergedCompleted.romanticVillagers;
+  delete mergedCompleted.skills;
+  delete mergedCompleted.villagers;
+
+  return JSON.stringify(merged);
 }
 
 function serializedAvailabilityWindows(
