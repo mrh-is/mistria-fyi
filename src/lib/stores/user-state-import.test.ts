@@ -4,6 +4,7 @@ import { trackerData } from "$lib/data/index.js";
 import { buildImportState } from "$lib/engine/import-save.js";
 import { getMaxRenownLevel, MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "$lib/engine/progress.js";
 import { userState } from "$lib/stores/user-state.svelte.js";
+import { recordKeys } from "$lib/utils";
 
 import type { SkillId, VillagerId } from "$lib/types/tracker-data.js";
 
@@ -21,14 +22,16 @@ describe("importState validation", () => {
   });
 
   it("restores a preceding-release backup without losing tracked IDs", () => {
+    const almanacId = Object.values(trackerData.almanac)[0].items[0].itemIds[0];
+    const cosmeticId = recordKeys(trackerData.cosmetics)[0];
     const data = JSON.parse(userState.exportState()) as Record<string, unknown>;
     const completed = data.completed as Record<string, unknown>;
-    completed.almanac = ["animated_waterfall_v1"];
-    completed.cosmetics = ["hair_long_braid"];
+    completed.almanac = [almanacId];
+    completed.cosmetics = [cosmeticId];
 
     expect(userState.importState(JSON.stringify(data))).toEqual({ ok: true });
-    expect(userState.state.completed.almanac).toContain("animated_waterfall_v1");
-    expect(userState.state.completed.cosmetics).toContain("hair_long_braid");
+    expect(userState.state.completed.almanac).toContain(almanacId);
+    expect(userState.state.completed.cosmetics).toContain(cosmeticId);
   });
 
   it("rejects malformed JSON", () => {
