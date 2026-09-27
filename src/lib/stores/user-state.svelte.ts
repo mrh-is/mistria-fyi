@@ -314,9 +314,15 @@ function createUserState() {
       return;
     }
 
-    // A different tab wrote after this save was scheduled. Its storage event will replace local
-    // state, so writing the stale snapshot here would merely restore the race we are avoiding.
-    if (storedResult.value !== expectedStoredValue) return;
+    // A different tab wrote after this save was scheduled. Adopt its value rather than writing the
+    // stale snapshot back; its storage event may never arrive (e.g. while this page sat in the
+    // back/forward cache), and waiting for it would leave every later save comparing against a
+    // value that is no longer stored. Cleared storage has nothing to conflict with, so it's
+    // written normally.
+    if (storedResult.value !== expectedStoredValue && storedResult.value !== null) {
+      applyStorageValue(storedResult.value);
+      return;
+    }
 
     if (!trySetItem(STORAGE_KEY, json)) {
       _persistenceFailureGeneration++;
@@ -361,6 +367,13 @@ function createUserState() {
     _persistenceFailureGeneration++;
   }
 
+  function resyncFromStorage(): void {
+    const storedResult = tryGetItem(STORAGE_KEY);
+    if (storedResult.ok && storedResult.value !== lastKnownStoredValue) {
+      applyStorageValue(storedResult.value);
+    }
+  }
+
   function enablePersistenceAfterExplicitReplace(): void {
     if (!persistenceBlocked || !quarantineAvailable) return;
 
@@ -390,11 +403,18 @@ function createUserState() {
 
     const windowWithEvents = window as { addEventListener?: Window["addEventListener"] };
     windowWithEvents.addEventListener?.("pagehide", flushCurrentState);
+    // A page restored from the back/forward cache missed any storage events fired while frozen.
+    windowWithEvents.addEventListener?.("pageshow", (event) => {
+      if (event.persisted) resyncFromStorage();
+    });
     windowWithEvents.addEventListener?.("storage", (event) => {
-      if (event.key !== STORAGE_KEY || (event.storageArea && event.storageArea !== localStorage)) {
-        return;
+      if (event.storageArea && event.storageArea !== localStorage) return;
+      // A null key means another tab called `localStorage.clear()`.
+      if (event.key === null) {
+        resyncFromStorage();
+      } else if (event.key === STORAGE_KEY) {
+        applyStorageValue(event.newValue);
       }
-      applyStorageValue(event.newValue);
     });
   }
 

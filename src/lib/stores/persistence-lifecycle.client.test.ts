@@ -2,7 +2,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 interface TestWindow {
   addEventListener(type: string, listener: EventListenerOrEventListenerObject): void;
-  dispatch(type: "pagehide" | "storage", event?: Partial<StorageEvent>): void;
+  dispatch(
+    type: "pagehide" | "pageshow" | "storage",
+    event?: Partial<PageTransitionEvent> | Partial<StorageEvent>,
+  ): void;
 }
 
 function buildMinimalState(renown = 0, version = "1"): string {
@@ -197,6 +200,80 @@ describe("persistence lifecycle", () => {
 
     expect(userState.state.completed.renown).toBe(42);
     expect(storage.getItem("mistria-fyi-v1")).toBe(incoming);
+  });
+
+  it("adopts another tab's write when its storage event was missed", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("window", makeWindow());
+    const storage = makeStorage({ "mistria-fyi-v1": buildMinimalState(1, "2") });
+    vi.stubGlobal("localStorage", storage);
+    vi.resetModules();
+
+    const { userState } = await import("$lib/stores/user-state.svelte.js");
+    userState.restorePersistedState();
+    const incomingState = JSON.parse(userState.exportState()) as {
+      completed: { renown: number };
+    };
+    incomingState.completed.renown = 42;
+    const incoming = JSON.stringify(incomingState);
+    storage.setItem("mistria-fyi-v1", incoming);
+    userState.setRenown(10);
+    vi.advanceTimersByTime(400);
+    await vi.runAllTimersAsync();
+
+    expect(userState.state.completed.renown).toBe(42);
+    expect(storage.getItem("mistria-fyi-v1")).toBe(incoming);
+
+    userState.setRenown(11);
+    vi.advanceTimersByTime(400);
+    await vi.runAllTimersAsync();
+
+    const saved = JSON.parse(storage.getItem("mistria-fyi-v1") ?? "null") as {
+      completed: { renown: number };
+    };
+    expect(saved.completed.renown).toBe(11);
+  });
+
+  it("keeps saving after another tab clears storage", async () => {
+    vi.useFakeTimers();
+    const testWindow = makeWindow();
+    vi.stubGlobal("window", testWindow);
+    const storage = makeStorage({ "mistria-fyi-v1": buildMinimalState(1, "2") });
+    vi.stubGlobal("localStorage", storage);
+    vi.resetModules();
+
+    const { userState } = await import("$lib/stores/user-state.svelte.js");
+    userState.restorePersistedState();
+    storage.clear();
+    testWindow.dispatch("storage", { key: null, newValue: null, storageArea: storage });
+    userState.setRenown(11);
+    vi.advanceTimersByTime(400);
+    await vi.runAllTimersAsync();
+
+    const saved = JSON.parse(storage.getItem("mistria-fyi-v1") ?? "null") as {
+      completed: { renown: number };
+    };
+    expect(saved.completed.renown).toBe(11);
+  });
+
+  it("resyncs from storage when restored from the back/forward cache", async () => {
+    vi.useFakeTimers();
+    const testWindow = makeWindow();
+    vi.stubGlobal("window", testWindow);
+    const storage = makeStorage({ "mistria-fyi-v1": buildMinimalState(1, "2") });
+    vi.stubGlobal("localStorage", storage);
+    vi.resetModules();
+
+    const { userState } = await import("$lib/stores/user-state.svelte.js");
+    userState.restorePersistedState();
+    const incomingState = JSON.parse(userState.exportState()) as {
+      completed: { renown: number };
+    };
+    incomingState.completed.renown = 42;
+    storage.setItem("mistria-fyi-v1", JSON.stringify(incomingState));
+    testWindow.dispatch("pageshow", { persisted: true });
+
+    expect(userState.state.completed.renown).toBe(42);
   });
 
   it("blocks a stale tab from overwriting a newer serialization version", async () => {
