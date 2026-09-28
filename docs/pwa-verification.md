@@ -93,9 +93,9 @@ The suite verifies:
   other reloads both onto the new version and deletes the old cache; and
 - normal online rendering when Playwright blocks service workers.
 
-The `pwa` job in `.github/workflows/browser-tests.yml` runs the same Chromium suite for pull
-requests that touch `src/`, `static/`, `tests/`, or their configs, main-branch pushes, and manual
-dispatches. Failure traces, screenshots, and the HTML report are retained as CI artifacts.
+The `pwa` job in `.github/workflows/ci.yml` runs the same Chromium suite for pull requests that
+touch `src/`, `static/`, `tests/`, or their configs, main-branch pushes, and manual dispatches.
+Failure traces, screenshots, and the HTML report are retained as CI artifacts.
 
 ## Browser record
 

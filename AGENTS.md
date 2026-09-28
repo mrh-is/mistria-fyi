@@ -218,9 +218,10 @@ compaction.
 
 ### CI (every pull request)
 
-`ci.yml` runs `lint`, `check`, `check:i18n`, `test`, `build`, & `check:routes`. `browser-tests.yml`
-adds the accessibility and PWA suites when `src/`, `static/`, or `tests/` change. A PR merges only
-when both pass; fix CI failures on the branch rather than merging around them (see §3 step 11).
+`ci.yml` runs `lint`, `check`, `check:i18n`, `test`, `build`, & `check:routes`, then the
+accessibility and PWA suites against that build when `src/`, `static/`, `tests/`, or their tooling
+change. Its "CI passed" job aggregates every result. A PR merges only when it passes; fix CI
+failures on the branch rather than merging around them (see §3 step 11).
 
 ### Full local matrix (exceptions)
 

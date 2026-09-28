@@ -260,9 +260,11 @@ other full-suite command during development.
 | `pnpm run build`        | Compiles SvelteKit app and verifies Cloudflare adapter                           | Build validation     |
 | `pnpm run check:routes` | Proves every built static asset bypasses Cloudflare Functions via `_routes.json` | Build validation     |
 
-`.github/workflows/browser-tests.yml` adds the accessibility and PWA Playwright suites when `src/`,
-`static/`, `tests/`, or their configs change; see [accessibility testing](accessibility-testing.md)
-and [PWA verification](pwa-verification.md).
+`.github/workflows/ci.yml` also runs the accessibility and PWA Playwright suites against the build
+job's output when `src/`, `static/`, `tests/`, or their configs change; see
+[accessibility testing](accessibility-testing.md) and [PWA verification](pwa-verification.md). Its
+"CI passed" job fails when any other job fails and passes when the browser jobs were skipped, so it
+is the one check to require for merging.
 
 ### Full local matrix
 
