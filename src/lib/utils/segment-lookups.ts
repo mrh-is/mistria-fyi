@@ -94,7 +94,7 @@ function buildStaticBaseSegmentLookups(): Omit<
 
 /**
  * Every name category {@link buildBaseSegmentLookups} resolves. A route whose page renders source
- * segments must await these (see `loadPageNames`) alongside its own category's chunk.
+ * segments must await these (see `localizedPageLoad`) alongside its own category's chunk.
  */
 export const SEGMENT_LOOKUP_CATEGORIES = [
   "animals",
