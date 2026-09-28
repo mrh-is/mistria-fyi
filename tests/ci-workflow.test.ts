@@ -228,10 +228,7 @@ describe("CI workflow browser suites", () => {
   it("shards accessibility across parallel matrix jobs without sharding PWA", () => {
     const shards = jobs.accessibility.strategy?.matrix?.shard ?? [];
     expect(jobs.accessibility.strategy?.["fail-fast"]).toBe(false);
-    expect(shards.length).toBeGreaterThan(1);
-    expect(shards).toEqual(
-      shards.map((_, index) => `${String(index + 1)}/${String(shards.length)}`),
-    );
+    expect(shards).toEqual(["1/4", "2/4", "3/4", "4/4"]);
     expect(jobs.pwa.strategy).toBeUndefined();
   });
 
