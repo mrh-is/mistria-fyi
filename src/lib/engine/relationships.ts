@@ -3,7 +3,12 @@ import { trackerData } from "$lib/data/index.js";
 import type { VillagerId, VillagerRelationship } from "$lib/types/tracker-data.js";
 
 export type RelationshipActionValue =
-  "married" | "no" | "platonic" | "proposed" | "romantic" | "yes";
+  | "married"
+  | "no"
+  | "platonic"
+  | "proposed"
+  | "romantic"
+  | "yes";
 
 export interface RelationshipPresentation {
   actions: RelationshipActionValue[];

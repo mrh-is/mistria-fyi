@@ -20,7 +20,8 @@ interface ValueEvaluationContext {
  */
 export function evaluateExpressions(fiddle: ParsedGameData): void {
   const itemsRoot = fiddle.items as
-    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
+    | Record<string, Record<string, Record<string, Record<string, unknown>>>>
+    | undefined;
   if (!itemsRoot) return;
 
   const itemsById = new Map<string, Record<string, unknown>>();

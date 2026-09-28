@@ -12,7 +12,14 @@ import type { InfusionFormat, LocaleCode } from "$lib/types/locale.js";
  * ever sees the translated {@link LocaleCode} tags.
  */
 export type GameLanguageCode =
-  "eng" | "fra" | "jpn" | "kor" | "rus" | "spa" | "zh-Hans" | "zh-Hant";
+  | "eng"
+  | "fra"
+  | "jpn"
+  | "kor"
+  | "rus"
+  | "spa"
+  | "zh-Hans"
+  | "zh-Hant";
 
 /** The one place game language codes map to the BCP 47 tags the app uses. */
 export const GAME_LANGUAGE_TO_LOCALE: Readonly<Record<GameLanguageCode, LocaleCode>> = {

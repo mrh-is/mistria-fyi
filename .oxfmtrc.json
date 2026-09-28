@@ -27,7 +27,8 @@
     "src/lib/paraglide/",
     "project.inlang/*",
     "!project.inlang/settings.json",
-    "src/lib/fonts/locale-fonts-*.css"
+    "src/lib/fonts/locale-fonts-*.css",
+    "docs/superpowers/"
   ],
   "sortImports": {
     "groups": [

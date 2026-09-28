@@ -253,7 +253,7 @@ other full-suite command during development.
 
 | Command                 | Description & Purpose                                                            | Scope                |
 | ----------------------- | -------------------------------------------------------------------------------- | -------------------- |
-| `pnpm run lint`         | Checks formatting, ESLint, and Stylelint compliance                              | All files            |
+| `pnpm run lint`         | Checks oxfmt formatting, oxlint, ESLint (Svelte templates), and Stylelint        | All files            |
 | `pnpm run check:i18n`   | Verifies every locale file matches `en.json`'s key shape                         | `messages/`          |
 | `pnpm run check`        | Synchronizes SvelteKit types and runs `svelte-check` plus the pipeline `tsc`     | `src/` & `pipeline/` |
 | `pnpm run test`         | Executes the complete Vitest test suite                                          | Unit & logic tests   |
@@ -265,6 +265,33 @@ job's output when `src/`, `static/`, `tests/`, or their configs change; see
 [accessibility testing](accessibility-testing.md) and [PWA verification](pwa-verification.md). Its
 "CI passed" job fails when any other job fails and passes when the browser jobs were skipped, so it
 is the one check to require for merging.
+
+### Linting & formatting
+
+`pnpm run lint` runs four tools, each covering what the others can't:
+
+| Tool      | Config                | Covers                                                                                                              |
+| --------- | --------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| oxfmt     | `.oxfmtrc.json`       | Formatting, import-statement sorting, & Tailwind class sorting, in every file type                                  |
+| oxlint    | `.oxlintrc.json`      | Every script, including `.svelte` `<script>` blocks; type-aware rules through tsgolint                              |
+| ESLint    | `eslint.config.js`    | `.svelte` & `.svelte.{js,ts}` only: eslint-plugin-svelte, template-aware unused variables, & `no-hardcoded-ui-text` |
+| Stylelint | `stylelint.config.js` | Scoped CSS; see [styling](styling.md#lint-rules)                                                                    |
+
+oxlint's config starts from its `correctness` category and adds typescript-eslint's strict &
+stylistic type-checked rules, plus eslint-plugin-perfectionist (as an oxlint JS plugin) for sorting
+object keys, types, unions, & named imports and exports.
+
+Type-aware rules (`no-floating-promises`, `no-unsafe-*`, and so on) run on `.ts` and `.svelte.ts`
+files but **not** inside `.svelte` `<script>` blocks: tsgolint doesn't read `.svelte` files, and
+typed ESLint on them took over a minute per run. `svelte-check` still type-checks them. Keep
+nontrivial async or loosely typed logic in `.ts` or `.svelte.ts` modules, where the typed rules
+apply.
+
+Suppressions follow the tool that owns the rule. Use `// oxlint-disable-next-line <rule> -- reason`
+for oxlint rules and `// eslint-disable-next-line svelte/<rule> -- reason` (or the
+`<!-- eslint-disable ... -->` form in templates) for ESLint rules. In `.svelte` files, ESLint
+reports an `eslint-disable` comment for a rule it doesn't run as unused, so use `oxlint-disable`
+there for oxlint's rules.
 
 ### Full local matrix
 
@@ -285,7 +312,7 @@ Changes that touch only `.md` files, comments, or non-executable content need on
 pnpm run lint:fix && pnpm run lint
 ```
 
-No build, no tests. `pnpm run prepare` generates `.svelte-kit/tsconfig.json`; if ESLint reports it
+No build, no tests. `pnpm run prepare` generates `.svelte-kit/tsconfig.json`; if oxlint reports it
 missing (lifecycle scripts skipped), run `pnpm exec svelte-kit sync` first.
 
 > [!IMPORTANT] Git pre-commit hooks are developer conveniences, not verification evidence. Agents

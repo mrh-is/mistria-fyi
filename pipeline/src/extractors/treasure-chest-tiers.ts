@@ -25,7 +25,8 @@ export function extractTreasureChestTiers(
   if (!chestTables) return { localeNames, tiers: {} };
 
   const items = fiddle.items as
-    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
+    | Record<string, Record<string, Record<string, Record<string, unknown>>>>
+    | undefined;
   const fishMisc = items?.fish?.misc;
 
   const result = {} as Record<TreasureChestTierId, object>;

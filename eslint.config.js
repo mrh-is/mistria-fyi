@@ -1,9 +1,7 @@
 // ESLint covers only what oxlint can't: Svelte templates. oxlint (`.oxlintrc.json`) lints every
 // script, including `.svelte` `<script>` blocks; ESLint runs eslint-plugin-svelte, the template-aware
 // `no-unused-vars`, and the local `no-hardcoded-ui-text` rule on `.svelte` & `.svelte.{js,ts}` files,
-// without type information. Type-aware rules for `.svelte` files live in
-// `eslint.svelte-types.config.js` (`pnpm run lint:svelte-types`). See
-// docs/development-workflow.md#linting--formatting.
+// without type information. See docs/development-workflow.md#linting--formatting.
 import { includeIgnoreFile } from "@eslint/compat";
 import svelte from "eslint-plugin-svelte";
 import { defineConfig } from "eslint/config";
@@ -12,9 +10,18 @@ import { fileURLToPath } from "node:url";
 import ts from "typescript-eslint";
 
 import noHardcodedUiText from "./eslint-rules/no-hardcoded-ui-text.js";
-import { svelteFiles, svelteParserOptions } from "./eslint.shared.js";
+import svelteConfig from "./svelte.config.js";
 
 const gitignorePath = fileURLToPath(new URL("./.gitignore", import.meta.url));
+
+// eslint-plugin-svelte reads only these fields. Passing the whole config breaks `eslint --cache`,
+// which serializes parser options and can't handle `kit.typescript.config`'s function value.
+const lintSvelteConfig = {
+  compilerOptions: svelteConfig.compilerOptions,
+  kit: { files: svelteConfig.kit?.files },
+  onwarn: svelteConfig.onwarn,
+  warningFilter: svelteConfig.warningFilter,
+};
 
 // Files already migrated to Paraglide messages. The no-hardcoded-ui-text rule (see
 // docs/localization.md) only applies here — turning it on repo-wide today would flag every
@@ -75,10 +82,19 @@ export default defineConfig(
   // Formatting belongs to oxfmt.
   ...svelte.configs.prettier,
   {
-    files: svelteFiles,
+    files: ["**/*.svelte", "**/*.svelte.js", "**/*.svelte.ts"],
     languageOptions: {
       globals: { ...globals.browser, ...globals.node },
-      parserOptions: svelteParserOptions,
+      parserOptions: {
+        extraFileExtensions: [".svelte"],
+        parser: ts.parser,
+        svelteConfig: lintSvelteConfig,
+      },
+    },
+    rules: {
+      // Without type information, this rule can't see that `localizedHref()` returns a resolved
+      // path, so it flags every localized link. Links go through `localizedHref()` by convention.
+      "svelte/no-navigation-without-resolve": "off",
     },
   },
   {
@@ -93,11 +109,6 @@ export default defineConfig(
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
     },
-  },
-  {
-    // shadcn-svelte generated components — vendored code, relax strict rules
-    files: ["src/lib/components/ui/**/*.svelte"],
-    rules: { "svelte/no-navigation-without-resolve": "off" },
   },
   {
     // See docs/localization.md — catches hardcoded UI text only in files already migrated

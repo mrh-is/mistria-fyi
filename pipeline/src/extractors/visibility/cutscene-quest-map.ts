@@ -31,8 +31,8 @@ export function buildCutsceneQuestMap(fiddle: ParsedGameData): CutsceneQuestMap 
   // Access cutscenes from either the nested structure or flat structure
   const cutscenes =
     ((fiddle.cutscenes as Record<string, unknown> | undefined)?.cutscenes as
-      Record<string, Record<string, unknown>> | undefined) ??
-    (fiddle.cutscenes as Record<string, Record<string, unknown>> | undefined);
+      | Record<string, Record<string, unknown>>
+      | undefined) ?? (fiddle.cutscenes as Record<string, Record<string, unknown>> | undefined);
 
   if (cutscenes) {
     for (const [cutsceneId, cutscene] of Object.entries(cutscenes)) {

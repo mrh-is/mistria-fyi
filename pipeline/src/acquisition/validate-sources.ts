@@ -213,11 +213,11 @@ function getDenseJsonArrayValues(value: unknown): undefined | unknown[] {
     return undefined;
   }
   const descriptors = Object.getOwnPropertyDescriptors(value);
-  const values = new Array<unknown>(value.length);
+  const values: unknown[] = [];
   for (let index = 0; index < value.length; index++) {
     const descriptor = descriptors[index];
     if (!descriptor?.enumerable || !("value" in descriptor)) return undefined;
-    values[index] = descriptor.value;
+    values.push(descriptor.value);
   }
   const validDescriptors = Object.entries(descriptors).every(([key, descriptor]) => {
     if (key === "length") return true;
