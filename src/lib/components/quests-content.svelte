@@ -198,7 +198,8 @@
   });
 
   function completeQuest(quest: { displayName: string; id: QuestId }, quests: { id: QuestId }[]) {
-    const newlyAdded = userState.completeQuestWithRecipes(quest.id);
+    const completion = userState.completeQuestWithRecipes(quest.id);
+    const { newlyAdded } = completion;
     const newState = getQuestState(quest.id);
     const displayName = quest.displayName;
     let message: string;
@@ -223,7 +224,7 @@
       cancel: {
         label: m.action_undo(),
         onClick: () => {
-          userState.undoQuestWithRecipes(quest.id, newlyAdded);
+          userState.undoQuestWithRecipes(quest.id, completion);
         },
       },
       duration: 5000,

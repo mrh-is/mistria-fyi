@@ -1,13 +1,19 @@
 import { render } from "@testing-library/svelte";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import VillagerRoster from "$lib/components/villager-roster.svelte";
 import { trackerData } from "$lib/data/index.js";
 import { getName, nameCollator } from "$lib/data/names.js";
+import { MAX_VILLAGER_LEVEL } from "$lib/engine/progress";
 import { userState } from "$lib/stores/user-state.svelte.js";
+import { pageStub } from "$lib/test-utils/page-stub.svelte";
 import { recordKeys } from "$lib/utils.js";
 
 import type { LocaleCode } from "$lib/types/locale.js";
+
+vi.mock("$app/state", async () => ({
+  page: (await import("$lib/test-utils/page-stub.svelte")).pageStub,
+}));
 
 function rosterNames(locale: LocaleCode): string[] {
   return recordKeys(trackerData.villagers)
@@ -48,5 +54,38 @@ describe("VillagerRoster localization", () => {
       expect(rendered).toStrictEqual(rosterNames(locale));
       view.unmount();
     }
+  });
+});
+
+describe("VillagerRoster with completed villagers hidden", () => {
+  const [completed, other] = recordKeys(trackerData.villagers).filter(
+    (id) => !trackerData.villagers[id].dateable,
+  );
+
+  beforeEach(() => {
+    userState.resetAll();
+    if (userState.state.showCompleted) userState.toggleShowCompleted();
+    userState.setVillagerLevel(completed, MAX_VILLAGER_LEVEL);
+    userState.setVillagerLevel(other, MAX_VILLAGER_LEVEL);
+  });
+
+  afterEach(() => {
+    userState.resetAll();
+    pageStub.reset();
+  });
+
+  it("hides completed villagers", () => {
+    const view = render(VillagerRoster, { locale: "en" });
+
+    expect(view.container.querySelector(`#villager-${completed}`)).toBeNull();
+  });
+
+  it("keeps the villager targeted by the URL hash", () => {
+    pageStub.navigate(`/en/villagers#villager-${completed}`);
+
+    const view = render(VillagerRoster, { locale: "en" });
+
+    expect(view.container.querySelector(`#villager-${completed}`)).not.toBeNull();
+    expect(view.container.querySelector(`#villager-${other}`)).toBeNull();
   });
 });
