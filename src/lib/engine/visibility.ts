@@ -39,26 +39,7 @@ export function deriveProgressionState(
   const marriedVillager = getMarriedVillager(completed.villagerRelationships);
 
   // 1. Quest visibility, per-quest, from actual quest state + chain prerequisites.
-  const questVisibility: Record<string, QuestVisibility> = {};
-  for (const [questType, quests] of recordEntries(trackerData.quests)) {
-    for (const questId of recordKeys(quests)) {
-      const userState: QuestState = completed.questStates[questId] ?? "none";
-
-      if (userState === "completed") {
-        questVisibility[questId] = "completed";
-      } else if (userState === "obtained") {
-        questVisibility[questId] = "available";
-      } else {
-        questVisibility[questId] = evaluateQuestPrerequisites(
-          questId,
-          questType,
-          completed,
-          trackerData,
-          questVisibility,
-        );
-      }
-    }
-  }
+  const questVisibility = deriveQuestVisibility(completed, trackerData);
 
   // 2. Known villagers: always-visible villagers are always known; gated villagers are known once their
   // visibility condition (typically a questCompleted gate) evaluates true.
@@ -285,6 +266,53 @@ function computeStoredVillagerLevel(
   return level;
 }
 
+/**
+ * Quest visibility is independent of quest key order: quests the player has obtained or completed
+ * are fixed by their state, and the rest start "unavailable" and are re-evaluated until nothing
+ * changes. Every condition is monotone, so this reaches the least fixpoint; quests in a
+ * prerequisite cycle stay "unavailable".
+ */
+function deriveQuestVisibility(
+  completed: CompletedState,
+  trackerData: TrackerData,
+): Record<QuestId, QuestVisibility> {
+  const questVisibility: Record<QuestId, QuestVisibility> = {};
+  const pending: [QuestId, QuestType][] = [];
+  for (const [questType, quests] of recordEntries(trackerData.quests)) {
+    for (const questId of recordKeys(quests)) {
+      const userState: QuestState = completed.questStates[questId] ?? "none";
+      if (userState === "completed") {
+        questVisibility[questId] = "completed";
+      } else if (userState === "obtained") {
+        questVisibility[questId] = "available";
+      } else {
+        questVisibility[questId] = "unavailable";
+        pending.push([questId, questType]);
+      }
+    }
+  }
+
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const [questId, questType] of pending) {
+      if (questVisibility[questId] === "available") continue;
+      const visibility = evaluateQuestPrerequisites(
+        questId,
+        questType,
+        completed,
+        trackerData,
+        questVisibility,
+      );
+      if (visibility !== questVisibility[questId]) {
+        questVisibility[questId] = visibility;
+        changed = true;
+      }
+    }
+  }
+  return questVisibility;
+}
+
 function evaluateOrderedChain(
   order: QuestId[],
   questId: QuestId,
@@ -305,7 +333,7 @@ function evaluateQuestPrerequisites(
   questType: QuestType,
   completed: CompletedState,
   trackerData: TrackerData,
-  questVisibilitySoFar: Record<string, QuestVisibility>,
+  questVisibility: Record<QuestId, QuestVisibility>,
 ): QuestVisibility {
   const order = trackerData.questOrder[questType];
   if (order) {
@@ -324,7 +352,7 @@ function evaluateQuestPrerequisites(
     knownVillagers: new Set(),
     marriedVillager: getMarriedVillager(completed.villagerRelationships),
     minesFloor: completed.mines.floor,
-    questVisibility: questVisibilitySoFar,
+    questVisibility,
     reachedSeason: completed.reachedSeason,
     renown: completed.renown,
     showSpoilers: false,
