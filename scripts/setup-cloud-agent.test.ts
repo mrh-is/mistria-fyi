@@ -16,7 +16,8 @@ afterEach(() => {
   }
 });
 
-describe("setup-cloud-agent", () => {
+// The setup script supports only the Linux containers cloud agents run in.
+describe.skipIf(process.platform !== "linux")("setup-cloud-agent", () => {
   it("persists the managed Node path for login and interactive Bash shells", () => {
     const home = mkdtempSync(join(tmpdir(), "mistria-cloud-setup-"));
     temporaryDirectories.push(home);
