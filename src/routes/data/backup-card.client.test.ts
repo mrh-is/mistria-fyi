@@ -85,7 +85,7 @@ describe("BackupCard restore", () => {
   it("rejects a backup from a newer version", async () => {
     render(BackupCard, { open: true });
 
-    await restoreFromFile(new File(['{"version":"2"}'], "future.json"));
+    await restoreFromFile(new File(['{"version":"3"}'], "future.json"));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/newer version/);
   });
