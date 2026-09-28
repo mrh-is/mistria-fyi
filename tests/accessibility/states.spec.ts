@@ -171,7 +171,7 @@ test.describe("@critical stateful accessibility", () => {
       mimeType: "application/json",
       name: "player.json",
     });
-    await expect(page.getByRole("alert")).toContainText("player.json: invalid JSON");
+    await expect(page.getByRole("alert")).toContainText("player.json isn’t valid JSON; skipped");
     await analyzeAccessibility(
       page,
       { route: "/data", state: "import-error", theme: "light" },
@@ -211,7 +211,8 @@ test.describe("@critical stateful accessibility", () => {
       testInfo,
     );
 
-    const invalidBuffer = Buffer.from(encodeQR("invalid-transfer-payload", "gif", { scale: 4 }));
+    // "Cg" is a lone v10 version byte: current enough to decode, but missing its checksum.
+    const invalidBuffer = Buffer.from(encodeQR("Cg", "gif", { scale: 4 }));
     const errorChooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: /scan from a screenshot/i }).click();
     await (
@@ -221,7 +222,9 @@ test.describe("@critical stateful accessibility", () => {
       mimeType: "image/gif",
       name: "invalid-transfer.gif",
     });
-    await expect(page.getByRole("alert")).toContainText("Invalid QR code");
+    await expect(page.getByRole("alert")).toContainText(
+      "This QR code’s data is damaged or incomplete.",
+    );
     await analyzeAccessibility(
       page,
       { route: "/data", state: "transfer-error", theme: "light" },
