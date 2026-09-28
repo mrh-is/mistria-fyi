@@ -59,10 +59,16 @@ Ephemeral UI-only fields (`showCompleted`, `showSpoilers`) are not persisted.
 
 The app processes save files entirely client-side. No save data is uploaded.
 
-1. The user selects extracted JSON files (`player.json`, `gamedata.json`, `quests.json`).
-2. `parseSaveFiles` validates each file and bundles them into a `SaveBundle`.
+1. The user selects a `.sav` file or the extracted JSON files (`player.json`, `gamedata.json`,
+   `quests.json`).
+2. `parseSavFile` or `parseSaveFiles` bundles the sections into a `SaveBundle`. A section must be a
+   JSON object, and `player` must contain at least one recognizable progress field. When some JSON
+   files are unusable but at least one parses, the others are reported as warnings.
 3. `buildImportState` maps the bundle to a `Partial<CompletedState>` using `trackerData` for
-   validation and warning generation.
+   validation and warning generation. Every field is read through a type guard: a field of the wrong
+   shape (a string where a list belongs, `null` where an object belongs) is dropped with a warning,
+   and non-text list entries are dropped individually. A quest listed as both completed and active
+   imports as `completed`.
 4. `mergeFromSave` unions the imported state into the current `userState.completed`, taking max
    values for numeric fields (Villager levels, skill levels, renown, mine floor) and the more
    advanced quest state (`none` → `obtained` → `completed`).
