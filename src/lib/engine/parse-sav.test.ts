@@ -1,13 +1,29 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { MAX_COMPRESSED_SIZE, parseSavFile } from "./parse-sav";
+import { MAX_COMPRESSED_SIZE, parseSavFile, SaveFileError } from "./parse-sav";
+
+import type { SaveFileErrorDetail } from "./parse-sav";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 
+async function expectSaveFileError(
+  parsing: Promise<unknown>,
+  detail: SaveFileErrorDetail,
+  message?: string,
+): Promise<void> {
+  const error: unknown = await parsing.then(
+    () => undefined,
+    (rejection: unknown) => rejection,
+  );
+  expect(error).toBeInstanceOf(SaveFileError);
+  expect(error).toHaveProperty("detail", detail);
+  if (message) expect(error).toHaveProperty("message", expect.stringContaining(message));
+}
+
 const encoder = new TextEncoder();
 
-/** Build an uncompressed .sav-format buffer from named JSON entries. */
-function buildRawSav(entries: Record<string, object>): Uint8Array {
+/** Build an uncompressed .sav-format buffer from named JSON entries; strings are written as is. */
+function buildRawSav(entries: Record<string, object | string>): Uint8Array {
   const parts: Uint8Array[] = [];
   const entryList = Object.entries(entries);
 
@@ -15,7 +31,7 @@ function buildRawSav(entries: Record<string, object>): Uint8Array {
 
   for (const [name, data] of entryList) {
     const nameBytes = encoder.encode(name);
-    const dataBytes = encoder.encode(JSON.stringify(data));
+    const dataBytes = encoder.encode(typeof data === "string" ? data : JSON.stringify(data));
     parts.push(u64LE(nameBytes.length));
     parts.push(nameBytes);
     parts.push(u64LE(dataBytes.length));
@@ -126,21 +142,29 @@ describe("parseSavFile", () => {
     const raw = buildRawSav({ settings: { volume: 0.5 } });
     const file = await compressToFile(raw);
 
-    await expect(parseSavFile(file)).rejects.toThrow("No recognized save data");
+    await expectSaveFileError(
+      parseSavFile(file),
+      { code: "no-save-data" },
+      "No recognized save data",
+    );
   });
 
   it("throws on truncated data", async () => {
     const raw = new Uint8Array([1, 2, 3]);
     const file = await compressToFile(raw);
 
-    await expect(parseSavFile(file)).rejects.toThrow();
+    await expectSaveFileError(parseSavFile(file), { code: "corrupt" });
   });
 
   it("handles empty entries object (zero entry count)", async () => {
     const raw = u64LE(0);
     const file = await compressToFile(raw);
 
-    await expect(parseSavFile(file)).rejects.toThrow("No recognized save data");
+    await expectSaveFileError(
+      parseSavFile(file),
+      { code: "no-save-data" },
+      "No recognized save data",
+    );
   });
 
   it("handles entries with complex nested JSON", async () => {
@@ -168,7 +192,11 @@ describe("parseSavFile size bounds", () => {
     Object.defineProperty(file, "size", { value: MAX_COMPRESSED_SIZE + 1 });
     const arrayBuffer = vi.spyOn(file, "arrayBuffer");
 
-    await expect(parseSavFile(file)).rejects.toThrow("Save file is too large");
+    await expectSaveFileError(
+      parseSavFile(file),
+      { code: "too-large", maxBytes: MAX_COMPRESSED_SIZE, sizeBytes: MAX_COMPRESSED_SIZE + 1 },
+      "Save file is too large",
+    );
     expect(arrayBuffer).not.toHaveBeenCalled();
   });
 
@@ -182,12 +210,14 @@ describe("parseSavFile size bounds", () => {
     const compressedBlob = await file.arrayBuffer();
     expect(compressedBlob.byteLength).toBeLessThan(MAX_COMPRESSED_SIZE);
 
-    await expect(
+    await expectSaveFileError(
       parseSavFile(file, {
         maxCompressedSize: MAX_COMPRESSED_SIZE,
         maxDecompressedSize: testDecompressedLimit,
       }),
-    ).rejects.toThrow("Decompressed save data exceeds the maximum supported size");
+      { code: "decompressed-too-large", maxBytes: testDecompressedLimit },
+      "Decompressed save data exceeds the maximum supported size",
+    );
   });
 
   it("accepts a valid save well within both limits", async () => {
@@ -198,11 +228,20 @@ describe("parseSavFile size bounds", () => {
     expect(bundle.player).toEqual({ name: "Normal" });
   });
 
-  it("throws a meaningful error for corrupt non-deflate data", async () => {
+  it("reports corrupt non-deflate data as corrupt", async () => {
     // Random bytes that are not valid deflate
     const garbage = new Uint8Array([0xde, 0xad, 0xbe, 0xef, 0x01, 0x02, 0x03, 0x04]);
     const file = new File([garbage], "corrupt.sav");
 
-    await expect(parseSavFile(file)).rejects.toThrow();
+    await expectSaveFileError(parseSavFile(file), { code: "corrupt" });
+  });
+
+  it.each([
+    ["is not JSON", "{not json"],
+    ["is not an object", "[1, 2]"],
+  ])("reports a recognized entry that %s as an invalid entry", async (_, text) => {
+    const file = await compressToFile(buildRawSav({ quests: text }));
+
+    await expectSaveFileError(parseSavFile(file), { code: "invalid-entry", entry: "quests" });
   });
 });
