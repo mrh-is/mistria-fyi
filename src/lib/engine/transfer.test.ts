@@ -12,7 +12,7 @@ import {
   TRANSFER_ORDERING_HASH,
   TRANSFER_VERSION,
   TransferDecodeError,
-} from "../transfer";
+} from "./transfer";
 
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
 import type {
@@ -32,7 +32,7 @@ import type {
   VillagerRelationship,
 } from "$lib/types/tracker-data.js";
 
-import type { TransferDecodeErrorCode } from "../transfer";
+import type { TransferDecodeErrorCode } from "./transfer";
 
 const CHECKSUM_BYTE_LENGTH = 4;
 

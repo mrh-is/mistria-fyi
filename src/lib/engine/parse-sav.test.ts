@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { MAX_COMPRESSED_SIZE, parseSavFile, SaveFileError } from "../parse-sav";
+import { MAX_COMPRESSED_SIZE, parseSavFile, SaveFileError } from "./parse-sav";
 
-import type { SaveFileErrorDetail } from "../parse-sav";
+import type { SaveFileErrorDetail } from "./parse-sav";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 

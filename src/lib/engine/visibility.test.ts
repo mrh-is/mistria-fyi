@@ -9,7 +9,7 @@ import {
   isEntityNameVisible,
   isVisible,
   satisfyCondition,
-} from "../visibility";
+} from "./visibility";
 
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
 import type {
@@ -23,7 +23,7 @@ import type {
 } from "$lib/types/tracker-data.js";
 import type { VisibilityCondition } from "$lib/types/visibility.js";
 
-import type { UserProgressionState } from "../visibility";
+import type { UserProgressionState } from "./visibility";
 
 function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState {
   return {
