@@ -39,6 +39,13 @@ test.describe("server-rendered search metadata", () => {
     test(`every ${locale} sitemap page is useful without JavaScript`, async ({ page, request }) => {
       // 14 page loads; the CJK locales take about twice as long as the rest on a busy runner.
       test.setTimeout(60_000);
+      // The assertions read server-rendered markup only. Skipping fonts and images halves the
+      // run, most of all for the CJK locales' large web fonts.
+      await page.route("**/*", (route) =>
+        ["font", "image", "media"].includes(route.request().resourceType())
+          ? route.abort()
+          : route.continue(),
+      );
       const paths = (await sitemapPaths(request)).filter((path) => sitemapLocale(path) === locale);
       expect(paths.length).toBeGreaterThan(0);
 
