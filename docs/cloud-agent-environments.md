@@ -58,8 +58,12 @@ is absent.
 6. Set the setup script to:
 
    ```sh
-   bash scripts/setup-cloud-agent.sh
+   bash mistria-fyi/scripts/setup-cloud-agent.sh
    ```
+
+   Claude runs the setup script from the parent of the repository checkout (`/home/user`), not from
+   the checkout itself, so the path must include the `mistria-fyi/` directory. The script resolves
+   the repository root from its own location, so it works from any working directory.
 
 7. Save the environment. Reopen its settings, find **API credentials**, and select **Add
    credential**.
@@ -69,12 +73,10 @@ is absent.
 9. Start a new cloud session in this environment. Existing sessions do not receive environment
    edits.
 
-Before this guide is merged to the default branch, select `codex/359-cloud-agent-environments` as
-the new session's branch. The setup script does not exist on `main` yet, so a session started from
-`main` exits with `scripts/setup-cloud-agent.sh: No such file or directory`. Claude does not cache a
-setup that exits unsuccessfully. Start a new session on the PR branch; no cache reset is required
-for this failure. If an older successful setup is cached, editing and saving the setup script
-invalidates that cache.
+A setup script that exits with `scripts/setup-cloud-agent.sh: No such file or directory` is using
+the checkout-relative path; add the `mistria-fyi/` prefix. Claude does not cache a setup that exits
+unsuccessfully, so no cache reset is required after fixing it. If an older successful setup is
+cached, editing and saving the setup script invalidates that cache.
 
 On Team and Enterprise plans, or whenever **API credentials** is unavailable, the only direct
 fallback is adding `CLOUDFLARE_API_TOKEN=...` under **Environment variables**. Anyone who can use
@@ -89,6 +91,11 @@ the session. No separate GitHub token belongs in the setup script or environment
 
 These steps follow OpenAI’s
 [cloud environment configuration](https://learn.chatgpt.com/docs/environments/cloud-environment).
+
+Note: The Codex setup below has not been validated end to end since the script reached `main`.
+Claude’s setup script needed a working-directory prefix that the original guide missed; if Codex
+reports `No such file or directory`, check which directory Codex runs setup from and adjust the path
+the same way.
 
 1. Open [Codex environment settings](https://chatgpt.com/codex/settings/environments), then create
    or edit the environment attached to this repository.
@@ -109,27 +116,17 @@ These steps follow OpenAI’s
    ```
 
 6. Set the optional maintenance script to the same command. It is idempotent and refreshes the
-   frozen install when Codex resumes a cached container on a newer commit.
+   frozen install when Codex resumes a cached container on a newer commit. The script adds the
+   repository-managed Node runtime to all common Bash startup files because Codex runs setup and
+   agent commands in separate shells; changing `PATH` only during setup does not persist. Codex also
+   reconstructs `PATH` from its selected runtime for the agent phase, so the script redirects that
+   runtime’s `node` executable to the checksum-verified repository version while retaining the
+   original executable with a `.codex-platform` suffix.
 7. Set agent internet access to the restricted or allowlist mode, and allow `api.cloudflare.com`.
    Setup scripts have internet access separately; the agent needs this host during its working phase
    to fetch Pages logs.
 8. Save the environment and select **Reset cache** if it existed before these changes.
 9. Start a new cloud task using this environment.
-
-Codex builds a new environment cache from the repository's default branch before it checks out the
-task branch. Therefore, the permanent setup command above cannot be validated until this guide and
-script are on `main`. To validate PR #379 before merging:
-
-1. Temporarily set the setup script to `true`.
-2. Keep the maintenance script set to `bash scripts/setup-cloud-agent.sh`.
-3. Save the environment and select **Reset cache**.
-4. Start a new cloud task explicitly from `codex/359-cloud-agent-environments`. After Codex checks
-   out that branch, the maintenance script can find the checked-in setup script and install Node
-   26.5.0.
-5. If the first task only creates the default-branch cache and still reports Node 22, start one more
-   new task on the PR branch so Codex resumes the cache and runs the maintenance script.
-6. After PR #379 merges, restore the setup script to `bash scripts/setup-cloud-agent.sh`, keep the
-   same maintenance script, save, and reset the cache once more.
 
 Codex secrets are available to setup scripts but are removed before the agent phase. The log helper
 runs during the agent phase, so storing the token in Codex’s **Secrets** section does not work.
