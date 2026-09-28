@@ -1,25 +1,32 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { trackerData } from "$lib/data/index.js";
+import { trackerData, trackerIndex } from "$lib/data/index.js";
 import { MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "$lib/engine/progress.js";
 import { recordEntries, recordKeys, recordValues } from "$lib/utils.js";
 
 import {
   decodeTransferPayload,
   encodeTransferPayload,
+  getTransferOrderingHash,
   OutdatedTransferPayloadError,
+  TRANSFER_ORDERING_HASH,
   TRANSFER_VERSION,
 } from "../transfer";
 
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
 import type {
+  AnimalId,
   AnimalVariantId,
   CosmeticId,
   DateId,
+  ItemId,
+  PerkId,
   PetCosmeticSetId,
   PetSkinId,
+  QuestId,
   RecipeId,
   SkillId,
+  SpellId,
   VillagerId,
   VillagerRelationship,
 } from "$lib/types/tracker-data.js";
@@ -45,6 +52,12 @@ const V8_BOUNDARY_FIXTURE = "CGNgGAVUBv_xgYFzVgNDyyRPlQkMDvS0FAA";
 // after the v1.0.5 tracker data changed positional orderings.
 // cspell:disable-next-line
 const V9_BOUNDARY_FIXTURE = "CSG9unJjYBgFVAYpDCln0IENDAycsxoYWiZ5qkxgcKCnpQA";
+
+// A v10 payload encoded from makeGoldenCompleted(). Unlike round-trip tests, this fixture pins the
+// current wire meaning independently of the live encoder and decoder implementation.
+// cspell:disable-next-line
+const V10_GOLDEN_FIXTURE =
+  "CjegUCBjYBiuwAGF10COLhZy7WYCkxwiDIJYjWAn11yircYuwKjAwCDAscCBQQDMAxEKNHQKCgAA";
 
 async function compressTransferRaw(version: number, raw: Uint8Array): Promise<string> {
   const compressed = await compressRawOnly(raw);
@@ -104,6 +117,74 @@ function fromBase64url(payload: string): Uint8Array {
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
 
+function getTransferFieldOffsets(): Record<
+  "child" | "married" | "progression" | "quest" | "relationship" | "spell",
+  number
+> {
+  const bytesForBits = (count: number): number => Math.ceil(count / 8);
+  const animalVariantCount = recordValues(trackerData.animals).reduce(
+    (count, animal) =>
+      count +
+      animal.variantTiers.reduce(
+        (tierCount, tier) =>
+          tierCount +
+          recordValues(tier).filter((variant) => variant.source.type !== "default").length,
+        0,
+      ),
+    0,
+  );
+  const animalCosmeticCount = recordValues(trackerData.animals).reduce(
+    (count, animal) => count + recordKeys(animal.cosmetics).length,
+    0,
+  );
+  const museumCount = recordValues(trackerData.museum).reduce(
+    (count, wing) =>
+      count + recordValues(wing.sets).reduce((setCount, set) => setCount + set.items.length, 0),
+    0,
+  );
+  const questCount = recordValues(trackerData.quests).reduce(
+    (count, quests) => count + recordKeys(quests).length,
+    0,
+  );
+  const perkCount = recordValues(trackerData.skills).reduce(
+    (count, skill) =>
+      count + skill.perkTiers.reduce((tierCount, tier) => tierCount + recordKeys(tier).length, 0),
+    0,
+  );
+  const dateableCount = recordValues(trackerData.villagers).filter(
+    (villager) => villager.dateable,
+  ).length;
+
+  let offset =
+    bytesForBits(trackerIndex.uniqueAlmanacCanonicalIds.length) +
+    bytesForBits(
+      recordValues(trackerData.cosmetics).filter(
+        (cosmetic) => !cosmetic.sources.some((source) => source.type === "default"),
+      ).length,
+    ) +
+    bytesForBits(animalVariantCount) +
+    bytesForBits(animalCosmeticCount) +
+    bytesForBits(museumCount);
+  const spell = offset;
+  offset += 1 + 1 + 2 + bytesForBits(recordKeys(trackerData.villagers).length * 4);
+  offset += recordKeys(trackerData.skills).length;
+  const quest = offset;
+  offset += bytesForBits(questCount * 2) + bytesForBits(perkCount);
+  const married = offset;
+  offset +=
+    1 +
+    bytesForBits(recordKeys(trackerData.pets.cosmetics).length) +
+    bytesForBits(recordKeys(trackerData.pets.skins).length) +
+    bytesForBits(recordKeys(trackerData.dates).length);
+  const progression = offset;
+  offset += 1 + bytesForBits(dateableCount);
+  const relationship = offset;
+  offset += bytesForBits(dateableCount * 3);
+  const child = offset;
+
+  return { child, married, progression, quest, relationship, spell };
+}
+
 // Helper to create a minimal CompletedState for testing
 function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState {
   const animals: Record<string, Set<AnimalVariantId>> = {};
@@ -136,6 +217,70 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
   };
 }
 
+function makeGoldenCompleted(): CompletedState {
+  const chicken = "chicken" as AnimalId;
+  const completed = makeCompleted({
+    almanac: new Set(["turnip" as ItemId]),
+    almanacRecipes: new Set(["basic_wood_chest" as RecipeId]),
+    childChoice: "yes",
+    cosmetics: new Set(["back_gear_ancient_witch_broom" as CosmeticId]),
+    dates: new Set(["inn_meal" as DateId]),
+    hasUpperFloor: true,
+    mines: { floor: 20, spells: new Set(["summon_rain" as SpellId]) },
+    museum: new Set(["turnip" as ItemId]),
+    petCosmetics: new Set(["flower_crown" as PetCosmeticSetId]),
+    petSkins: new Set(["sapling" as PetSkinId]),
+    questStates: { ["repair_the_general_store" as QuestId]: "completed" },
+    reachedSeason: "fall",
+    renown: 17,
+    skillLevels: { ["farming" as SkillId]: 7 },
+    unlockedPerks: new Set(["museum_quality_one" as PerkId]),
+    villagerLevels: { ["balor" as VillagerId]: 4 },
+    villagerRelationships: { ["balor" as VillagerId]: "married" },
+  });
+  completed.animals[chicken] = new Set(["red" as AnimalVariantId]);
+  completed.animalCosmetics[chicken] = new Set(["ribbon_red" as CosmeticId]);
+  return completed;
+}
+
+function makeGoldenDecodedExpectation(): Partial<CompletedState> {
+  const completed = makeGoldenCompleted();
+  const balor = "balor" as VillagerId;
+  const dateableVillagers = recordEntries(trackerData.villagers)
+    .filter(([, villager]) => villager.dateable)
+    .map(([id]) => id);
+
+  return {
+    ...completed,
+    animalCosmetics: Object.fromEntries(
+      recordEntries(completed.animalCosmetics).filter(([, ids]) => ids.size > 0),
+    ),
+    animals: Object.fromEntries(recordEntries(completed.animals).filter(([, ids]) => ids.size > 0)),
+    questStates: Object.fromEntries(
+      recordValues(trackerData.quests).flatMap((quests) =>
+        recordKeys(quests).map((id) => [id, completed.questStates[id] ?? "none"]),
+      ),
+    ),
+    skillLevels: Object.fromEntries(
+      recordKeys(trackerData.skills).map((id) => [id, completed.skillLevels[id] ?? 0]),
+    ),
+    villagerLevels: Object.fromEntries(
+      recordKeys(trackerData.villagers).map((id) => [id, completed.villagerLevels[id] ?? 0]),
+    ),
+    villagerRelationships: Object.fromEntries(
+      dateableVillagers.map((id) => [id, id === balor ? "married" : "platonic"]),
+    ),
+  };
+}
+
+async function mutateEncodedRaw(
+  mutate: (raw: Uint8Array, offsets: ReturnType<typeof getTransferFieldOffsets>) => void,
+): Promise<string> {
+  const raw = await decompressTransferRaw(await encodeTransferPayload(makeCompleted()));
+  mutate(raw, getTransferFieldOffsets());
+  return compressTransferRaw(TRANSFER_VERSION, raw);
+}
+
 function toBase64url(bytes: Uint8Array): string {
   return btoa(String.fromCharCode(...bytes))
     .replace(/\+/g, "-")
@@ -146,6 +291,69 @@ function toBase64url(bytes: Uint8Array): string {
 describe("transfer codec v10", () => {
   it("has version 10", () => {
     expect(TRANSFER_VERSION).toBe(10);
+  });
+
+  it("pins the v10 wire ordering hash", () => {
+    expect(TRANSFER_ORDERING_HASH).toBe("50dbf1b9");
+    expect(getTransferOrderingHash()).toBe(TRANSFER_ORDERING_HASH);
+  });
+
+  it("reproduces the immutable v10 golden payload", async () => {
+    expect(await encodeTransferPayload(makeGoldenCompleted())).toBe(V10_GOLDEN_FIXTURE);
+  });
+
+  it("decodes the immutable v10 golden payload without changing its meaning", async () => {
+    const decoded = await decodeTransferPayload(V10_GOLDEN_FIXTURE);
+
+    expect(decoded).toEqual(makeGoldenDecodedExpectation());
+  });
+
+  it("preserves the prior English order while Lithuanian exposes the collation regression", () => {
+    const chickenTier = ["gray", "red", "yellow"];
+    const english = new Intl.Collator("en");
+    const lithuanian = new Intl.Collator("lt");
+
+    expect(chickenTier.toSorted((left, right) => english.compare(left, right))).toEqual(
+      chickenTier,
+    );
+    expect(chickenTier.toSorted((left, right) => lithuanian.compare(left, right))).toEqual([
+      "gray",
+      "yellow",
+      "red",
+    ]);
+  });
+
+  it.each(["en", "lt", "sv"])(
+    "encodes the golden state identically under %s collation",
+    async (locale) => {
+      const collator = new Intl.Collator(locale);
+      const localeCompare = vi
+        .spyOn(String.prototype, "localeCompare")
+        .mockImplementation(function (this: string, other) {
+          return collator.compare(this, other);
+        });
+
+      try {
+        expect(await encodeTransferPayload(makeGoldenCompleted())).toBe(V10_GOLDEN_FIXTURE);
+      } finally {
+        localeCompare.mockRestore();
+      }
+    },
+  );
+
+  it.each([
+    ["quest state", "quest", 0xc0],
+    ["spouse index", "married", recordKeys(trackerData.villagers).length],
+    ["progression reserved bits", "progression", 0x01],
+    ["relationship state", "relationship", 0xa0],
+    ["child choice", "child", 0x03],
+    ["spell reserved bits", "spell", 0x01],
+  ] as const)("rejects an invalid %s", async (label, field, value) => {
+    const payload = await mutateEncodedRaw((raw, offsets) => {
+      raw[offsets[field]] = value;
+    });
+
+    await expect(decodeTransferPayload(payload)).rejects.toThrow(new RegExp(label, "i"));
   });
 
   it("round-trips maximum in-domain scalar and packed relationship values", async () => {
