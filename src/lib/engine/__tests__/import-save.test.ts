@@ -4,6 +4,7 @@ import { trackerData } from "$lib/data/index.js";
 import {
   getMaxMineFloor,
   getMaxRenownLevel,
+  type LevelIssue,
   MAX_SKILL_LEVEL,
   MAX_VILLAGER_LEVEL,
 } from "$lib/engine/progress.js";
@@ -80,7 +81,11 @@ describe("buildImportState", () => {
     expect(unlockedPerks.has("magic_design" as never)).toBe(true);
     expect(unlockedPerks.has("green_thumb" as never)).toBe(true);
     expect(unlockedPerks.has("unknown_perk" as never)).toBe(false);
-    expect(result.warnings).toContain("Unknown perk: unknown_perk");
+    expect(result.warnings).toContainEqual({
+      code: "unknown-id",
+      id: "unknown_perk",
+      path: "player.perks",
+    });
   });
 
   describe("new progression fields from save", () => {
@@ -147,6 +152,13 @@ describe("numeric level domains", () => {
   const ADELINE = "adeline" as VillagerId;
   const FARMING = "farming" as SkillId;
   const facts = (extra: Record<string, unknown>) => ({ gamedata: { t2_world_facts: extra } });
+  const level = (issue: LevelIssue, key: string, value: string, max: number) => ({
+    code: "level",
+    issue,
+    key,
+    max,
+    value,
+  });
 
   it("accepts in-domain levels without warnings", () => {
     const { completed, result } = buildImportState({
@@ -179,9 +191,9 @@ describe("numeric level domains", () => {
     expect(completed.renown).toBe(getMaxRenownLevel());
     expect(result.counts.renown).toBe(getMaxRenownLevel());
     expect(result.warnings).toEqual([
-      `maximum_mines_level 9999 exceeds the maximum of ${getMaxMineFloor()}; clamped to ${getMaxMineFloor()}`,
-      `adeline_heart_level 99 exceeds the maximum of ${MAX_VILLAGER_LEVEL}; clamped to ${MAX_VILLAGER_LEVEL}`,
-      `farming_level 999 exceeds the maximum of ${MAX_SKILL_LEVEL}; clamped to ${MAX_SKILL_LEVEL}`,
+      level("above-max", "maximum_mines_level", "9999", getMaxMineFloor()),
+      level("above-max", "adeline_heart_level", "99", MAX_VILLAGER_LEVEL),
+      level("above-max", "farming_level", "999", MAX_SKILL_LEVEL),
     ]);
   });
 
@@ -203,8 +215,8 @@ describe("numeric level domains", () => {
     expect(completed.skillLevels?.[FARMING]).toBeUndefined();
     expect(completed.renown).toBe(0);
     expect(result.warnings).toEqual([
-      "adeline_heart_level -1 is negative; ignored",
-      "farming_level -0.5 is negative; ignored",
+      level("negative", "adeline_heart_level", "-1", MAX_VILLAGER_LEVEL),
+      level("negative", "farming_level", "-0.5", MAX_SKILL_LEVEL),
     ]);
   });
 
@@ -224,9 +236,9 @@ describe("numeric level domains", () => {
     expect(completed.skillLevels?.[FARMING]).toBeUndefined();
     expect(completed.renown).toBe(0);
     expect(result.warnings).toEqual([
-      "maximum_mines_level NaN is not a number; ignored",
-      'adeline_heart_level "12" is not a number; ignored',
-      "farming_level Infinity is not a number; ignored",
+      level("not-a-number", "maximum_mines_level", "NaN", getMaxMineFloor()),
+      level("not-a-number", "adeline_heart_level", '"12"', MAX_VILLAGER_LEVEL),
+      level("not-a-number", "farming_level", "Infinity", MAX_SKILL_LEVEL),
     ]);
   });
 
@@ -295,7 +307,7 @@ describe("malformed save fields", () => {
     });
 
     expect(completed.unlockedPerks?.size).toBe(0);
-    expect(result.warnings).toEqual(["player.perks is not a list; ignored"]);
+    expect(result.warnings).toEqual([{ code: "not-a-list", path: "player.perks" }]);
   });
 
   it("drops non-text entries from a list and keeps the rest", () => {
@@ -304,7 +316,9 @@ describe("malformed save fields", () => {
     });
 
     expect([...(completed.unlockedPerks ?? [])]).toEqual([perkId]);
-    expect(result.warnings).toEqual(["player.perks has 3 non-text entries; ignored"]);
+    expect(result.warnings).toEqual([
+      { code: "unreadable-entries", count: 3, path: "player.perks" },
+    ]);
   });
 
   it("drops wrongly shaped gamedata fields without throwing", () => {
@@ -315,8 +329,8 @@ describe("malformed save fields", () => {
     expect(completed.museum?.size).toBe(0);
     expect(completed.renown).toBe(0);
     expect(result.warnings).toEqual([
-      "gamedata.museum_progress is not a list; ignored",
-      "gamedata.t2_world_facts is not an object; ignored",
+      { code: "not-a-list", path: "gamedata.museum_progress" },
+      { code: "not-an-object", path: "gamedata.t2_world_facts" },
     ]);
   });
 
@@ -333,9 +347,9 @@ describe("malformed save fields", () => {
 
     expect(completed.animals?.[animalId]?.size).toBe(0);
     expect(result.warnings).toEqual([
-      "player.items_sold is not an object; ignored",
-      "player.animal_variant_unlocks is not an object; ignored",
-      `player.animal_cosmetic_unlocks.${animalId} is not a list; ignored`,
+      { code: "not-an-object", path: "player.items_sold" },
+      { code: "not-an-object", path: "player.animal_variant_unlocks" },
+      { code: "not-a-list", path: `player.animal_cosmetic_unlocks.${animalId}` },
     ]);
   });
 
@@ -354,7 +368,7 @@ describe("malformed save fields", () => {
     });
 
     expect(completed.unlockedPerks?.size).toBe(0);
-    expect(result.warnings).toEqual(["player has no recognized progress fields; ignored"]);
+    expect(result.warnings).toEqual([{ code: "unrecognized-player", file: "player" }]);
   });
 });
 
@@ -408,9 +422,9 @@ describe("quest import", () => {
     expect(completed.questStates).toEqual({});
     expect(result.counts.quests).toBe(0);
     expect(result.warnings).toEqual([
-      "Unknown quest: constructor",
-      "quests.active_quests has 2 entries without a quest name; ignored",
-      "Unknown quest: not_a_quest",
+      { code: "unknown-id", id: "constructor", path: "quests.completed_quests" },
+      { code: "unreadable-entries", count: 2, path: "quests.active_quests" },
+      { code: "unknown-id", id: "not_a_quest", path: "quests.active_quests" },
     ]);
   });
 });
@@ -429,23 +443,30 @@ describe("parseSaveFiles", () => {
     const result = await parseSaveFiles([json("notes.json", {})]);
 
     expect(result.bundle).toBeUndefined();
-    expect(result.error).toMatch(/No recognized save files found/);
+    expect(result.error).toEqual({ code: "no-save-files" });
   });
 
   it.each([
-    ["an array", "[]", "gamedata.json: not a valid JSON object"],
-    ["a number", "3", "gamedata.json: not a valid JSON object"],
-    ["invalid JSON", "{", "gamedata.json: invalid JSON"],
-  ])("rejects a file containing %s", async (_label, text, error) => {
+    ["an array", "[]", "not-json-object"],
+    ["a number", "3", "not-json-object"],
+    ["invalid JSON", "{", "invalid-json"],
+  ] as const)("rejects a file containing %s", async (_label, text, code) => {
     const result = await parseSaveFiles([new File([text], "gamedata.json")]);
 
-    expect(result).toEqual({ error });
+    expect(result).toEqual({
+      error: { code: "no-valid-files", problems: [{ code, file: "gamedata.json" }] },
+    });
   });
 
   it("rejects an unrecognizable player.json", async () => {
     const result = await parseSaveFiles([json("player.json", { perks: "cook_perk" })]);
 
-    expect(result).toEqual({ error: "player.json: missing expected fields" });
+    expect(result).toEqual({
+      error: {
+        code: "no-valid-files",
+        problems: [{ code: "unrecognized-player", file: "player.json" }],
+      },
+    });
   });
 
   it("imports a partial bundle and reports the files it skipped", async () => {
@@ -458,7 +479,10 @@ describe("parseSaveFiles", () => {
 
     expect(result).toEqual({
       bundle: { quests: { completed_quests: [] } },
-      warnings: ["gamedata.json: invalid JSON", "player.json: missing expected fields"],
+      warnings: [
+        { code: "invalid-json", file: "gamedata.json" },
+        { code: "unrecognized-player", file: "player.json" },
+      ],
     });
   });
 });

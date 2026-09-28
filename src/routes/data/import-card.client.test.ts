@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
@@ -33,8 +33,11 @@ describe("save import", () => {
       expect(screen.getByRole("status")).toHaveTextContent("Import completed.");
     });
     expect(userState.state.completed.cosmetics.has(cosmeticId)).toBe(true);
-    expect(screen.getAllByText("Unknown cosmetic: not_a_cosmetic")).toHaveLength(2);
-    expect(screen.getByText("gamedata.json: invalid JSON")).toBeInTheDocument();
+    // The duplicate warnings also exercise the index-keyed list, which a text key would break.
+    expect(
+      screen.getAllByText("player.cosmetic_unlocks: unrecognized ID not_a_cosmetic; skipped"),
+    ).toHaveLength(2);
+    expect(screen.getByText("gamedata.json isn’t valid JSON; skipped")).toBeInTheDocument();
   });
 
   it("reports unparseable JSON files and preserves tracker state", async () => {
@@ -44,8 +47,13 @@ describe("save import", () => {
     await importFiles([new File(["{"], "player.json")]);
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("player.json: invalid JSON");
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "None of the selected save files could be read.",
+      );
     });
+    expect(
+      within(screen.getByRole("alert")).getByText("player.json isn’t valid JSON; skipped"),
+    ).toBeInTheDocument();
     expect(userState.exportState()).toBe(before);
   });
 
@@ -56,7 +64,9 @@ describe("save import", () => {
     await importFiles([new File([new Uint8Array([1, 2, 3, 4])], "broken.sav")]);
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeInTheDocument();
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "This file isn’t a readable Fields of Mistria save. It may be corrupt.",
+      );
     });
     expect(screen.getByRole("link", { name: "vaultc" })).toBeInTheDocument();
     expect(userState.exportState()).toBe(before);
@@ -74,7 +84,9 @@ describe("save import atomicity", () => {
     await importFiles([file]);
 
     await waitFor(() => {
-      expect(screen.getByText(/Save file is too large/)).toBeInTheDocument();
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "This save file is too large (8 MB). The maximum supported size is 8 MB.",
+      );
     });
     expect(arrayBuffer).not.toHaveBeenCalled();
     expect(userState.exportState()).toBe(before);

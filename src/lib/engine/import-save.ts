@@ -34,9 +34,34 @@ import type {
 // ─── Import result ──────────────────────────────────────────────────
 
 export interface ImportResult extends MergeResult {
-  /** Human-readable warnings (e.g. unknown IDs) */
-  warnings: string[];
+  warnings: SaveImportWarning[];
 }
+
+/** Why no extracted save file could be used. */
+export type SaveFilesError =
+  { code: "no-save-files" } | { code: "no-valid-files"; problems: SaveImportWarning[] };
+
+/**
+ * A problem with part of a save that the import skipped, localized by the UI. `path` names the
+ * save field (e.g. `player.cosmetic_unlocks`) and `file` a save section or file name; both are
+ * save-format identifiers, not UI text.
+ *
+ * - `unknown-id`: an ID the tracker doesn't know.
+ * - `not-a-list` / `not-an-object`: a field of the wrong shape.
+ * - `unreadable-entries`: list entries of the wrong shape.
+ * - `level`: a numeric fact out of its domain; see {@link normalizeLevel}.
+ * - `unrecognized-player`: a player section with no recognized progress fields.
+ * - `invalid-json` / `not-json-object`: an extracted save file that isn't a JSON object.
+ */
+export type SaveImportWarning =
+  | { code: "invalid-json"; file: string }
+  | { code: "level"; issue: LevelIssue; key: string; max: number; value: string }
+  | { code: "not-a-list"; path: string }
+  | { code: "not-an-object"; path: string }
+  | { code: "not-json-object"; file: string }
+  | { code: "unknown-id"; id: string; path: string }
+  | { code: "unreadable-entries"; count: number; path: string }
+  | { code: "unrecognized-player"; file: string };
 
 /** Typed access to one save section; see createSectionReader. */
 interface SectionReader {
@@ -54,7 +79,7 @@ export function buildImportState(bundle: SaveBundle): {
   completed: Partial<CompletedState>;
   result: ImportResult;
 } {
-  const warnings: string[] = [];
+  const warnings: SaveImportWarning[] = [];
   const counts: MergeCounts = {
     almanac: 0,
     almanacRecipes: 0,
@@ -81,7 +106,7 @@ export function buildImportState(bundle: SaveBundle): {
   // parseSaveFiles rejects an unrecognizable player.json outright; a .sav entry reaches here.
   let playerSection = bundle.player;
   if (playerSection && !validatePlayerSave(playerSection)) {
-    warnings.push("player has no recognized progress fields; ignored");
+    warnings.push({ code: "unrecognized-player", file: "player" });
     playerSection = undefined;
   }
   const player = createSectionReader("player", playerSection, warnings);
@@ -137,7 +162,7 @@ export function buildImportState(bundle: SaveBundle): {
     if (validCosmetics.has(id)) {
       cosmeticIds.add(id as CosmeticId);
     } else {
-      warnings.push(`Unknown cosmetic: ${id}`);
+      warnings.push({ code: "unknown-id", id, path: "player.cosmetic_unlocks" });
     }
   }
   counts.cosmetics = cosmeticIds.size;
@@ -156,7 +181,11 @@ export function buildImportState(bundle: SaveBundle): {
       if (validVariants.has(v)) {
         matched.add(v as AnimalVariantId);
       } else {
-        warnings.push(`Unknown ${animalId} variant: ${v}`);
+        warnings.push({
+          code: "unknown-id",
+          id: v,
+          path: `player.animal_variant_unlocks.${animalId}`,
+        });
       }
     }
     animalVariants[animalId] = matched;
@@ -177,7 +206,11 @@ export function buildImportState(bundle: SaveBundle): {
       if (validAnimalCosmetics.has(c)) {
         matched.add(c as CosmeticId);
       } else {
-        warnings.push(`Unknown ${animalId} cosmetic: ${c}`);
+        warnings.push({
+          code: "unknown-id",
+          id: c,
+          path: `player.animal_cosmetic_unlocks.${animalId}`,
+        });
       }
     }
     animalCosmetics[animalId] = matched;
@@ -192,7 +225,7 @@ export function buildImportState(bundle: SaveBundle): {
     if (validPetCosmetics.has(id)) {
       petCosmetics.add(id as PetCosmeticSetId);
     } else {
-      warnings.push(`Unknown pet cosmetic set: ${id}`);
+      warnings.push({ code: "unknown-id", id, path: "player.pet_cosmetic_sets_unlocked" });
     }
   }
   counts.petCosmetics = petCosmetics.size;
@@ -205,7 +238,7 @@ export function buildImportState(bundle: SaveBundle): {
     if (validPetSkins.has(id)) {
       petSkins.add(id as PetSkinId);
     } else {
-      warnings.push(`Unknown pet skin: ${id}`);
+      warnings.push({ code: "unknown-id", id, path: "player.pet_skin_unlocks" });
     }
   }
   counts.petSkins = petSkins.size;
@@ -218,7 +251,7 @@ export function buildImportState(bundle: SaveBundle): {
     if (validSpells.has(id)) {
       spells.add(id as SpellId);
     } else {
-      warnings.push(`Unknown spell: ${id}`);
+      warnings.push({ code: "unknown-id", id, path: "player.spells_learned" });
     }
   }
   counts.spells = spells.size;
@@ -235,7 +268,7 @@ export function buildImportState(bundle: SaveBundle): {
     if (validPerks.has(id)) {
       perkIds.add(id as PerkId);
     } else {
-      warnings.push(`Unknown perk: ${id}`);
+      warnings.push({ code: "unknown-id", id, path: "player.perks" });
     }
   }
   counts.perks = perkIds.size;
@@ -262,7 +295,11 @@ export function buildImportState(bundle: SaveBundle): {
   const extractLevel = (key: string, raw: unknown, max: number): number => {
     if (raw === undefined) return 0;
     const { issue, value } = normalizeLevel(raw, max);
-    if (issue) warnings.push(describeLevelIssue(key, raw, issue, max));
+    if (issue) {
+      // Numbers show as written (NaN, Infinity); anything else as JSON, so "12" reads as text.
+      const shown = typeof raw === "number" ? String(raw) : JSON.stringify(raw);
+      warnings.push({ code: "level", issue, key, max, value: shown });
+    }
     return value;
   };
 
@@ -340,19 +377,19 @@ export function buildImportState(bundle: SaveBundle): {
       validQuests.add(questId);
     }
   }
-  const importQuest = (id: string, questState: QuestState) => {
+  const importQuest = (id: string, path: string, questState: QuestState) => {
     if (!validQuests.has(id)) {
-      warnings.push(`Unknown quest: ${id}`);
+      warnings.push({ code: "unknown-id", id, path });
     } else if (questStates[id] !== "completed") {
       questStates[id] = questState;
     }
   };
 
   for (const id of quests.stringList("completed_quests")) {
-    importQuest(id, "completed");
+    importQuest(id, "quests.completed_quests", "completed");
   }
   for (const id of readActiveQuestNames(quests.value("active_quests"), warnings)) {
-    importQuest(id, "obtained");
+    importQuest(id, "quests.active_quests", "obtained");
   }
   counts.quests = Object.keys(questStates).length;
 
@@ -391,7 +428,7 @@ export function buildImportState(bundle: SaveBundle): {
 function createSectionReader(
   name: string,
   section: SaveSection | undefined,
-  warnings: string[],
+  warnings: SaveImportWarning[],
 ): SectionReader {
   const value = (key: string): unknown =>
     section && Object.hasOwn(section, key) ? section[key] : undefined;
@@ -399,12 +436,12 @@ function createSectionReader(
   const readStrings = (path: string, raw: unknown): string[] => {
     if (raw === undefined) return [];
     if (!Array.isArray(raw)) {
-      warnings.push(`${path} is not a list; ignored`);
+      warnings.push({ code: "not-a-list", path });
       return [];
     }
     const strings = raw.filter((entry): entry is string => typeof entry === "string");
     const dropped = raw.length - strings.length;
-    if (dropped > 0) warnings.push(`${path} has ${dropped} non-text entries; ignored`);
+    if (dropped > 0) warnings.push({ code: "unreadable-entries", count: dropped, path });
     return strings;
   };
 
@@ -412,7 +449,7 @@ function createSectionReader(
     const raw = value(key);
     if (raw === undefined) return undefined;
     if (!isSaveSection(raw)) {
-      warnings.push(`${name}.${key} is not an object; ignored`);
+      warnings.push({ code: "not-an-object", path: `${name}.${key}` });
       return undefined;
     }
     return raw;
@@ -433,10 +470,11 @@ function createSectionReader(
 }
 
 /** Quest IDs from `quests.active_quests`, a list of `{ quest_name }` objects. */
-function readActiveQuestNames(raw: unknown, warnings: string[]): string[] {
+function readActiveQuestNames(raw: unknown, warnings: SaveImportWarning[]): string[] {
+  const path = "quests.active_quests";
   if (raw === undefined) return [];
   if (!Array.isArray(raw)) {
-    warnings.push("quests.active_quests is not a list; ignored");
+    warnings.push({ code: "not-a-list", path });
     return [];
   }
   const names: string[] = [];
@@ -445,15 +483,17 @@ function readActiveQuestNames(raw: unknown, warnings: string[]): string[] {
     if (typeof name === "string") names.push(name);
   }
   const dropped = raw.length - names.length;
-  if (dropped > 0) {
-    warnings.push(`quests.active_quests has ${dropped} entries without a quest name; ignored`);
-  }
+  if (dropped > 0) warnings.push({ code: "unreadable-entries", count: dropped, path });
   return names;
 }
 
 // ─── .sav file unpacking (client-side) ──────────────────────────────
 
-export { parseSavFile as unpackSavFile } from "./parse-sav";
+export {
+  SaveFileError,
+  type SaveFileErrorDetail,
+  parseSavFile as unpackSavFile,
+} from "./parse-sav";
 export type { SaveBundle, SaveSection } from "./save-bundle";
 
 // ─── Season derivation ─────────────────────────────────────────────
@@ -476,15 +516,15 @@ const SAVE_FILES = new Set(["gamedata.json", "player.json", "quests.json"]);
 /**
  * Parse extracted save files into a bundle. Files with other names are ignored. When at least one
  * file parses, the problems with the others are returned as warnings rather than failing the
- * import; when none does, they are joined into the error.
+ * import; when none does, they are returned with the error.
  */
 export async function parseSaveFiles(files: File[]): Promise<{
   bundle?: SaveBundle;
-  error?: string;
-  warnings?: string[];
+  error?: SaveFilesError;
+  warnings?: SaveImportWarning[];
 }> {
   const bundle: SaveBundle = {};
-  const errors: string[] = [];
+  const errors: SaveImportWarning[] = [];
 
   for (const file of files) {
     if (!SAVE_FILES.has(file.name)) continue;
@@ -493,7 +533,7 @@ export async function parseSaveFiles(files: File[]): Promise<{
       const text = await file.text();
       const data: unknown = JSON.parse(text);
       if (!isSaveSection(data)) {
-        errors.push(`${file.name}: not a valid JSON object`);
+        errors.push({ code: "not-json-object", file: file.name });
         continue;
       }
 
@@ -505,7 +545,7 @@ export async function parseSaveFiles(files: File[]): Promise<{
           if (validatePlayerSave(data)) {
             bundle.player = data;
           } else {
-            errors.push("player.json: missing expected fields");
+            errors.push({ code: "unrecognized-player", file: file.name });
           }
           break;
         case "quests.json":
@@ -513,7 +553,7 @@ export async function parseSaveFiles(files: File[]): Promise<{
           break;
       }
     } catch {
-      errors.push(`${file.name}: invalid JSON`);
+      errors.push({ code: "invalid-json", file: file.name });
     }
   }
 
@@ -521,8 +561,8 @@ export async function parseSaveFiles(files: File[]): Promise<{
     return {
       error:
         errors.length > 0
-          ? errors.join(". ")
-          : "No recognized save files found. Select player.json, gamedata.json, and/or quests.json from your extracted save.",
+          ? { code: "no-valid-files", problems: errors }
+          : { code: "no-save-files" },
     };
   }
 
@@ -548,16 +588,4 @@ export function validatePlayerSave(data: unknown): data is SaveSection {
     Array.isArray(data.pet_cosmetic_sets_unlocked) ||
     Array.isArray(data.pet_skin_unlocks)
   );
-}
-
-function describeLevelIssue(key: string, raw: unknown, issue: LevelIssue, max: number): string {
-  const shown = typeof raw === "string" ? JSON.stringify(raw) : String(raw);
-  switch (issue) {
-    case "above-max":
-      return `${key} ${shown} exceeds the maximum of ${max}; clamped to ${max}`;
-    case "negative":
-      return `${key} ${shown} is negative; ignored`;
-    case "not-a-number":
-      return `${key} ${shown} is not a number; ignored`;
-  }
 }

@@ -17,6 +17,33 @@ const DEFAULT_LIMITS: ParseSavLimits = {
 };
 
 /**
+ * Why a .sav file could not be read. The UI localizes the detail; the English message is for
+ * debugging only.
+ *
+ * - `too-large`: the file exceeds the compressed size limit.
+ * - `decompressed-too-large`: the decompressed data exceeds its size limit.
+ * - `corrupt`: the file isn't valid compressed save data.
+ * - `invalid-entry`: a recognized entry isn't a JSON object.
+ * - `no-save-data`: the file has none of the player, gamedata, or quests entries.
+ */
+export type SaveFileErrorDetail =
+  | { code: "corrupt" }
+  | { code: "decompressed-too-large"; maxBytes: number }
+  | { code: "invalid-entry"; entry: string }
+  | { code: "no-save-data" }
+  | { code: "too-large"; maxBytes: number; sizeBytes: number };
+
+export class SaveFileError extends Error {
+  readonly detail: SaveFileErrorDetail;
+
+  constructor(detail: SaveFileErrorDetail, message: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "SaveFileError";
+    this.detail = detail;
+  }
+}
+
+/**
  * Parse a Fields of Mistria .sav file entirely in the browser.
  *
  * Format (after zlib decompression):
@@ -24,22 +51,34 @@ const DEFAULT_LIMITS: ParseSavLimits = {
  *   repeated entry_count times:
  *     [u64 LE name_len][name bytes (UTF-8)][u64 LE data_len][data bytes (UTF-8 JSON)]
  *
- * We extract the "player", "gamedata", and "quests" entries and parse them as JSON.
+ * We extract the "player", "gamedata", and "quests" entries and parse them as JSON. Every
+ * rejection is a {@link SaveFileError}.
  */
 export async function parseSavFile(
   file: File,
   limits: ParseSavLimits = DEFAULT_LIMITS,
 ): Promise<SaveBundle> {
   if (file.size > limits.maxCompressedSize) {
-    throw new Error(
+    throw new SaveFileError(
+      { code: "too-large", maxBytes: limits.maxCompressedSize, sizeBytes: file.size },
       `Save file is too large (${formatSize(file.size)}). ` +
         `Maximum supported size is ${formatSize(limits.maxCompressedSize)}.`,
     );
   }
 
   const compressed = await file.arrayBuffer();
-  const decompressed = await decompress(compressed, limits.maxDecompressedSize);
+  let decompressed: Uint8Array;
+  try {
+    decompressed = await decompress(compressed, limits.maxDecompressedSize);
+  } catch (error) {
+    if (error instanceof SaveFileError) throw error;
+    throw corrupt("Save file is not valid compressed data", { cause: error });
+  }
   return extractBundle(decompressed);
+}
+
+function corrupt(message: string, options?: ErrorOptions): SaveFileError {
+  return new SaveFileError({ code: "corrupt" }, message, options);
 }
 
 async function decompress(
@@ -67,7 +106,8 @@ async function decompress(
       totalLen += value.length;
       if (totalLen > maxDecompressedSize) {
         await reader.cancel();
-        throw new Error(
+        throw new SaveFileError(
+          { code: "decompressed-too-large", maxBytes: maxDecompressedSize },
           `Decompressed save data exceeds the maximum supported size ` +
             `(${formatSize(maxDecompressedSize)}). The file may be corrupt.`,
         );
@@ -91,61 +131,67 @@ function extractBundle(data: Uint8Array): SaveBundle {
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
   const decoder = new TextDecoder();
 
-  if (data.length < 8) throw new Error("Not a valid .sav file: too short");
+  if (data.length < 8) throw corrupt("Not a valid .sav file: too short");
 
   const entryCount = u64(view, 0);
-  if (entryCount > 10_000) throw new Error("Not a valid .sav file: implausible entry count");
+  if (entryCount > 10_000) throw corrupt("Not a valid .sav file: implausible entry count");
 
   let offset = 8;
   const bundle: SaveBundle = {};
 
   for (let i = 0; i < entryCount; i++) {
     if (offset + 8 > data.length) {
-      throw new Error("Unexpected end of .sav file while reading entry name length");
+      throw corrupt("Unexpected end of .sav file while reading entry name length");
     }
 
     const nameLen = u64(view, offset);
     offset += 8;
 
     if (nameLen > 1000 || offset + nameLen > data.length) {
-      throw new Error("Not a valid .sav file: invalid entry name length");
+      throw corrupt("Not a valid .sav file: invalid entry name length");
     }
 
     const name = decoder.decode(data.subarray(offset, offset + nameLen));
     offset += nameLen;
 
     if (offset + 8 > data.length) {
-      throw new Error("Unexpected end of .sav file while reading entry data length");
+      throw corrupt("Unexpected end of .sav file while reading entry data length");
     }
 
     const dataLen = u64(view, offset);
     offset += 8;
 
     if (offset + dataLen > data.length) {
-      throw new Error("Unexpected end of .sav file: entry data extends past end");
+      throw corrupt("Unexpected end of .sav file: entry data extends past end");
     }
 
     if (name === "player" || name === "gamedata" || name === "quests") {
       const jsonStr = decoder.decode(data.subarray(offset, offset + dataLen));
+      let parsed: unknown;
       try {
-        const parsed: unknown = JSON.parse(jsonStr);
-        if (!isSaveSection(parsed)) {
-          throw new Error(`Entry "${name}" is not a JSON object`);
-        }
-        bundle[name] = parsed;
+        parsed = JSON.parse(jsonStr);
       } catch (cause) {
-        throw new Error(
+        throw new SaveFileError(
+          { code: "invalid-entry", entry: name },
           `Failed to parse "${name}" entry: ${cause instanceof Error ? cause.message : String(cause)}`,
           { cause },
         );
       }
+      if (!isSaveSection(parsed)) {
+        throw new SaveFileError(
+          { code: "invalid-entry", entry: name },
+          `Entry "${name}" is not a JSON object`,
+        );
+      }
+      bundle[name] = parsed;
     }
 
     offset += dataLen;
   }
 
   if (!bundle.player && !bundle.gamedata && !bundle.quests) {
-    throw new Error(
+    throw new SaveFileError(
+      { code: "no-save-data" },
       "No recognized save data found in this .sav file. Expected player, gamedata, or quests entries.",
     );
   }
@@ -153,7 +199,7 @@ function extractBundle(data: Uint8Array): SaveBundle {
   return bundle;
 }
 
-/** Format a byte count as a human-readable size string. */
+/** Format a byte count for the English debugging message; the UI formats sizes per locale. */
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;

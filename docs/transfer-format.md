@@ -43,13 +43,13 @@ including historical fixtures, so a payload can never merge an out-of-domain val
 Versions older than v10 are deliberately unsupported because their positional layouts no longer
 match the current tracker data.
 
-| Version | Purpose                                                                            | Compatibility expectation                                                                    |
-| ------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| v1      | Earliest layout, before perks and later progression fields                         | Reject with `OutdatedTransferPayloadError` before decompression.                             |
-| v5      | Historical pre-v6 almanac ordering                                                 | Reject with `OutdatedTransferPayloadError` before interpreting obsolete almanac positions.   |
-| v8      | Final pre-checksum layout                                                          | Reject with `OutdatedTransferPayloadError` before interpreting obsolete positions.           |
-| v9      | Preceding checksummed layout                                                       | Reject with `OutdatedTransferPayloadError` before interpreting obsolete positions.           |
-| v10     | Fixed representative `CompletedState` spanning scalar, enum, and positional fields | Encode to the immutable golden payload and decode that payload to the pinned progress state. |
+| Version | Purpose                                                                            | Compatibility expectation                                                                            |
+| ------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| v1      | Earliest layout, before perks and later progression fields                         | Reject with a `TransferDecodeError` coded `outdated` before decompression.                           |
+| v5      | Historical pre-v6 almanac ordering                                                 | Reject with a `TransferDecodeError` coded `outdated` before interpreting obsolete almanac positions. |
+| v8      | Final pre-checksum layout                                                          | Reject with a `TransferDecodeError` coded `outdated` before interpreting obsolete positions.         |
+| v9      | Preceding checksummed layout                                                       | Reject with a `TransferDecodeError` coded `outdated` before interpreting obsolete positions.         |
+| v10     | Fixed representative `CompletedState` spanning scalar, enum, and positional fields | Encode to the immutable golden payload and decode that payload to the pinned progress state.         |
 
 The codec also pins `TRANSFER_ORDERING_HASH` beside `TRANSFER_VERSION`. The hash covers every ID
 array whose position determines an on-wire bit, using code-unit ordering only. A tracker-data change
