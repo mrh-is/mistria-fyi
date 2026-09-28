@@ -5,8 +5,13 @@ const appState = vi.hoisted(() => ({
   url: new URL("https://mistria-fyi.test/data"),
 }));
 
+// Under the `app` project's `isolate: false`, a component module cached by this file keeps this
+// mock for later files in the same worker, so it carries every field the shared stand-in in
+// src/vitest-setup-app-state.ts does.
 vi.mock("$app/state", () => ({
   page: {
+    data: { locale: "en" },
+    status: 200,
     get url() {
       return appState.url;
     },

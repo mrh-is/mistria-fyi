@@ -74,7 +74,7 @@
     try {
       (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
     } catch {
-      // jsdom does not implement setPointerCapture
+      // Browsers throw if the pointer is no longer active; scrubbing still works without capture.
     }
     activate(entry);
   }

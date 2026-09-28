@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { IconPalette } from "@tabler/icons-svelte-runes";
+  import IconPalette from "@tabler/icons-svelte-runes/icons/palette";
 
   import * as ToggleGroup from "$lib/components/ui/toggle-group/index.js";
   import * as m from "$lib/paraglide/messages.js";

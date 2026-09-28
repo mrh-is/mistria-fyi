@@ -1,11 +1,9 @@
 <script lang="ts">
-  import {
-    IconFilter,
-    IconMessageReport,
-    IconRotate,
-    IconSearch,
-    IconSettings,
-  } from "@tabler/icons-svelte-runes";
+  import IconFilter from "@tabler/icons-svelte-runes/icons/filter";
+  import IconMessageReport from "@tabler/icons-svelte-runes/icons/message-report";
+  import IconRotate from "@tabler/icons-svelte-runes/icons/rotate";
+  import IconSearch from "@tabler/icons-svelte-runes/icons/search";
+  import IconSettings from "@tabler/icons-svelte-runes/icons/settings";
   import { flushSync, tick } from "svelte";
   import { prefersReducedMotion } from "svelte/motion";
   import { fade, fly } from "svelte/transition";

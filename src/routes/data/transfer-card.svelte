@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { IconCamera, IconLoader2, IconPhotoPlus, IconQrcode } from "@tabler/icons-svelte-runes";
+  import IconCamera from "@tabler/icons-svelte-runes/icons/camera";
+  import IconLoader2 from "@tabler/icons-svelte-runes/icons/loader-2";
+  import IconPhotoPlus from "@tabler/icons-svelte-runes/icons/photo-plus";
+  import IconQrcode from "@tabler/icons-svelte-runes/icons/qrcode";
 
   import { Icon } from "$lib/components/icon/index.js";
   import { Button } from "$lib/components/ui/button/index.js";

@@ -191,7 +191,7 @@ colocated tests don’t double the length of directory listings.
 | -------- | ----------------------------------------------------- | ----------------------------------------------------------- |
 | `app`    | `src/**/*.test.ts`                                    | Node, SvelteKit stand-ins & preloaded names, shared modules |
 | `mocked` | The few `src/` files listed in `isolatedTests`        | Node, isolated per file, no names preload                   |
-| `client` | `src/**/*.client.test.ts`                             | jsdom & Testing Library                                     |
+| `client` | `src/**/*.client.test.ts`                             | happy-dom & Testing Library                                 |
 | `node`   | `*.test.ts` under `pipeline/`, `scripts/`, & `tests/` | Plain Node, shared modules                                  |
 | `assets` | `**/*.assets.test.ts`                                 | Installed game assets; local only, excluded from `test`     |
 

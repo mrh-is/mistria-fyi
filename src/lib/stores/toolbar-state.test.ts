@@ -1,4 +1,4 @@
-import { IconCircle } from "@tabler/icons-svelte-runes";
+import IconCircle from "@tabler/icons-svelte-runes/icons/circle";
 import { describe, expect, it } from "vitest";
 
 import { type SourceFilter, ToolbarState } from "$lib/stores/toolbar-state.svelte.js";

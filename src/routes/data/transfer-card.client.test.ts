@@ -1,6 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { Blob as NodeBlob } from "node:buffer";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "$lib/data/index.js";
 import { encodeTransferPayload } from "$lib/engine/transfer.js";
@@ -28,19 +27,14 @@ async function scanImage(file: File) {
   await fireEvent.change(input, { target: { files: [file] } });
 }
 
-// jsdom's Blob has no `stream()`, which the transfer codec needs for compression. Node's Blob does.
-beforeAll(() => {
-  vi.stubGlobal("Blob", NodeBlob);
-});
-
-afterAll(() => {
-  vi.unstubAllGlobals();
-});
-
 beforeEach(() => {
   transferQr.decodeQrImage.mockReset();
   transferQr.generateTransferQr.mockReset();
   transferQr.startQrCamera.mockReset();
+});
+
+afterAll(() => {
+  vi.unstubAllGlobals();
 });
 
 afterEach(async () => {
