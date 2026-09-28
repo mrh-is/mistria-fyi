@@ -4,15 +4,25 @@
   import { Button } from "$lib/components/ui/button/index.js";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
   import { Separator } from "$lib/components/ui/separator/index.js";
-  import { buildImportState, parseSaveFiles, unpackSavFile } from "$lib/engine/import-save.js";
+  import {
+    buildImportState,
+    parseSaveFiles,
+    SaveFileError,
+    unpackSavFile,
+  } from "$lib/engine/import-save.js";
   import { totalMergeCounts } from "$lib/engine/merge-labels.js";
   import * as m from "$lib/paraglide/messages.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import DataCard from "./data-card.svelte";
+  import {
+    formatSaveFileError,
+    formatSaveFilesError,
+    formatSaveImportWarning,
+  } from "./data-error-messages";
   import MergeSummary from "./merge-summary.svelte";
 
-  import type { ImportResult } from "$lib/engine/import-save.js";
+  import type { ImportResult, SaveImportWarning } from "$lib/engine/import-save.js";
 
   let {
     onScrollToTransfer,
@@ -27,6 +37,7 @@
   // ── Import state ──
   let importResult = $state<ImportResult | null>(null);
   let importError = $state<null | string>(null);
+  let importErrorDetails = $state<string[]>([]);
   let savFallback = $state(false);
   let importing = $state(false);
   let importStatus = $state("");
@@ -81,6 +92,7 @@
     importing = true;
     importResult = null;
     importError = null;
+    importErrorDetails = [];
     savFallback = false;
     importStatus = "";
     filesUsed = [];
@@ -90,23 +102,32 @@
       const savFile = Array.from(files).find(isSavFile);
 
       let bundle;
+      let parseWarnings: SaveImportWarning[] = [];
       if (savFile) {
         importStatus = m.import_status_unpacking();
         try {
           bundle = await unpackSavFile(savFile);
         } catch (err) {
-          const message = err instanceof Error ? err.message : m.import_status_generic_error();
-          importError = message;
+          importError =
+            err instanceof SaveFileError
+              ? formatSaveFileError(err.detail)
+              : m.import_error_unexpected();
           savFallback = true;
           return;
         }
       } else {
         const result = await parseSaveFiles(files);
         if (result.error || !result.bundle) {
-          importError = result.error ?? m.import_error_parse_failed();
+          importError = result.error
+            ? formatSaveFilesError(result.error)
+            : m.import_error_parse_failed();
+          if (result.error?.code === "no-valid-files") {
+            importErrorDetails = result.error.problems.map(formatSaveImportWarning);
+          }
           return;
         }
         bundle = result.bundle;
+        parseWarnings = result.warnings ?? [];
       }
 
       // Track which files were loaded
@@ -121,7 +142,7 @@
       importResult = {
         conflicts: merged.conflicts,
         counts: merged.counts,
-        warnings: result.warnings,
+        warnings: [...parseWarnings, ...result.warnings],
       };
     } catch {
       importError = m.import_error_unexpected();
@@ -258,6 +279,13 @@
         role="alert"
       >
         <p>{importError}</p>
+        {#if importErrorDetails.length > 0}
+          <ul class="mt-2 list-disc ps-5 text-sm">
+            {#each importErrorDetails as detail, index (index)}
+              <li>{detail}</li>
+            {/each}
+          </ul>
+        {/if}
         {#if savFallback}
           <p class="mt-2 text-sm">
             {m.import_fallback_before_vaultc()}
@@ -307,8 +335,8 @@
               {m.import_warnings_summary({ count: importResult.warnings.length })}
             </summary>
             <ul class="mt-1 max-h-32 space-y-0.5 overflow-y-auto text-muted-foreground">
-              {#each importResult.warnings as warning (warning)}
-                <li>{warning}</li>
+              {#each importResult.warnings as warning, index (index)}
+                <li>{formatSaveImportWarning(warning)}</li>
               {/each}
             </ul>
           </details>

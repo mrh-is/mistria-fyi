@@ -1,28 +1,38 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { trackerData } from "$lib/data/index.js";
+import { trackerData, trackerIndex } from "$lib/data/index.js";
 import { MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "$lib/engine/progress.js";
 import { recordEntries, recordKeys, recordValues } from "$lib/utils.js";
 
 import {
   decodeTransferPayload,
   encodeTransferPayload,
-  OutdatedTransferPayloadError,
+  getTransferOrderingHash,
+  TRANSFER_MAGIC,
+  TRANSFER_ORDERING_HASH,
   TRANSFER_VERSION,
-} from "../transfer";
+  TransferDecodeError,
+} from "./transfer";
 
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
 import type {
+  AnimalId,
   AnimalVariantId,
   CosmeticId,
   DateId,
+  ItemId,
+  PerkId,
   PetCosmeticSetId,
   PetSkinId,
+  QuestId,
   RecipeId,
   SkillId,
+  SpellId,
   VillagerId,
   VillagerRelationship,
 } from "$lib/types/tracker-data.js";
+
+import type { TransferDecodeErrorCode } from "./transfer";
 
 const CHECKSUM_BYTE_LENGTH = 4;
 
@@ -46,10 +56,46 @@ const V8_BOUNDARY_FIXTURE = "CGNgGAVUBv_xgYFzVgNDyyRPlQkMDvS0FAA";
 // cspell:disable-next-line
 const V9_BOUNDARY_FIXTURE = "CSG9unJjYBgFVAYpDCln0IENDAycsxoYWiZ5qkxgcKCnpQA";
 
+// A payload encoded with the v10 codec, the last layout without the transfer marker. It has v11's
+// fields, so it pins that an unmarked payload is rejected as foreign rather than decoded.
+// cspell:disable-next-line
+const V10_UNMARKED_FIXTURE =
+  "CjegUCBjYBiuwAGF10COLhZy7WYCkxwiDIJYjWAn11yircYuwKjAwCDAscCBQQDMAxEKNHQKCgAA";
+
+// A v11 payload encoded from makeGoldenCompleted(). Unlike round-trip tests, this fixture pins the
+// current wire meaning independently of the live encoder and decoder implementation.
+// cspell:disable-next-line
+const V11_GOLDEN_FIXTURE =
+  "MFGTCzegUCBjYBiuwAGF10COLhZy7WYCkxwiDIJYjWAn11yircYuwKjAwCDAscCBQQDMAxEKNHQKCgAA";
+
 async function compressTransferRaw(version: number, raw: Uint8Array): Promise<string> {
   const compressed = await compressRawOnly(raw);
-  const prefix = version >= 9 ? [version, ...crc32ToBytes(crc32(raw))] : [version];
-  return toBase64url(new Uint8Array([...prefix, ...compressed]));
+  return marked(new Uint8Array([version, ...crc32ToBytes(crc32(raw)), ...compressed]));
+}
+
+async function expectDecodeError(
+  payload: string,
+  code: TransferDecodeErrorCode,
+  message: RegExp,
+): Promise<void> {
+  const error: unknown = await decodeTransferPayload(payload).then(
+    () => undefined,
+    (rejection: unknown) => rejection,
+  );
+  expect(error).toBeInstanceOf(TransferDecodeError);
+  expect(error).toHaveProperty("code", code);
+  expect(error).toHaveProperty("message", expect.stringMatching(message));
+}
+
+/** A marked payload: the transfer marker followed by the base64url bytes. */
+function marked(bytes: Uint8Array): string {
+  return TRANSFER_MAGIC + toBase64url(bytes);
+}
+
+/** The bytes after a payload's transfer marker. */
+function unmarked(payload: string): Uint8Array {
+  expect(payload.startsWith(TRANSFER_MAGIC)).toBe(true);
+  return fromBase64url(payload.slice(TRANSFER_MAGIC.length));
 }
 
 // Mirrors the production CRC-32 (IEEE 802.3) implementation in transfer.ts so tests can build
@@ -87,10 +133,10 @@ function crc32ToBytes(checksum: number): number[] {
   ];
 }
 
-/** Decompresses a full transfer payload, skipping the version byte and (for v9+) the checksum. */
+/** Decompresses a marked transfer payload, skipping the version byte and the checksum. */
 async function decompressTransferRaw(payload: string): Promise<Uint8Array> {
-  const bytes = fromBase64url(payload);
-  const bodyStart = bytes[0] >= 9 ? 1 + CHECKSUM_BYTE_LENGTH : 1;
+  const bytes = unmarked(payload);
+  const bodyStart = 1 + CHECKSUM_BYTE_LENGTH;
   const stream = new DecompressionStream("deflate-raw");
   const writer = stream.writable.getWriter();
   await writer.write(bytes.slice(bodyStart));
@@ -102,6 +148,74 @@ function fromBase64url(payload: string): Uint8Array {
   const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
   const binary = atob(base64 + "=".repeat((4 - (base64.length % 4)) % 4));
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+function getTransferFieldOffsets(): Record<
+  "child" | "married" | "progression" | "quest" | "relationship" | "spell",
+  number
+> {
+  const bytesForBits = (count: number): number => Math.ceil(count / 8);
+  const animalVariantCount = recordValues(trackerData.animals).reduce(
+    (count, animal) =>
+      count +
+      animal.variantTiers.reduce(
+        (tierCount, tier) =>
+          tierCount +
+          recordValues(tier).filter((variant) => variant.source.type !== "default").length,
+        0,
+      ),
+    0,
+  );
+  const animalCosmeticCount = recordValues(trackerData.animals).reduce(
+    (count, animal) => count + recordKeys(animal.cosmetics).length,
+    0,
+  );
+  const museumCount = recordValues(trackerData.museum).reduce(
+    (count, wing) =>
+      count + recordValues(wing.sets).reduce((setCount, set) => setCount + set.items.length, 0),
+    0,
+  );
+  const questCount = recordValues(trackerData.quests).reduce(
+    (count, quests) => count + recordKeys(quests).length,
+    0,
+  );
+  const perkCount = recordValues(trackerData.skills).reduce(
+    (count, skill) =>
+      count + skill.perkTiers.reduce((tierCount, tier) => tierCount + recordKeys(tier).length, 0),
+    0,
+  );
+  const dateableCount = recordValues(trackerData.villagers).filter(
+    (villager) => villager.dateable,
+  ).length;
+
+  let offset =
+    bytesForBits(trackerIndex.uniqueAlmanacCanonicalIds.length) +
+    bytesForBits(
+      recordValues(trackerData.cosmetics).filter(
+        (cosmetic) => !cosmetic.sources.some((source) => source.type === "default"),
+      ).length,
+    ) +
+    bytesForBits(animalVariantCount) +
+    bytesForBits(animalCosmeticCount) +
+    bytesForBits(museumCount);
+  const spell = offset;
+  offset += 1 + 1 + 2 + bytesForBits(recordKeys(trackerData.villagers).length * 4);
+  offset += recordKeys(trackerData.skills).length;
+  const quest = offset;
+  offset += bytesForBits(questCount * 2) + bytesForBits(perkCount);
+  const married = offset;
+  offset +=
+    1 +
+    bytesForBits(recordKeys(trackerData.pets.cosmetics).length) +
+    bytesForBits(recordKeys(trackerData.pets.skins).length) +
+    bytesForBits(recordKeys(trackerData.dates).length);
+  const progression = offset;
+  offset += 1 + bytesForBits(dateableCount);
+  const relationship = offset;
+  offset += bytesForBits(dateableCount * 3);
+  const child = offset;
+
+  return { child, married, progression, quest, relationship, spell };
 }
 
 // Helper to create a minimal CompletedState for testing
@@ -136,6 +250,70 @@ function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState 
   };
 }
 
+function makeGoldenCompleted(): CompletedState {
+  const chicken = "chicken" as AnimalId;
+  const completed = makeCompleted({
+    almanac: new Set(["turnip" as ItemId]),
+    almanacRecipes: new Set(["basic_wood_chest" as RecipeId]),
+    childChoice: "yes",
+    cosmetics: new Set(["back_gear_ancient_witch_broom" as CosmeticId]),
+    dates: new Set(["inn_meal" as DateId]),
+    hasUpperFloor: true,
+    mines: { floor: 20, spells: new Set(["summon_rain" as SpellId]) },
+    museum: new Set(["turnip" as ItemId]),
+    petCosmetics: new Set(["flower_crown" as PetCosmeticSetId]),
+    petSkins: new Set(["sapling" as PetSkinId]),
+    questStates: { ["repair_the_general_store" as QuestId]: "completed" },
+    reachedSeason: "fall",
+    renown: 17,
+    skillLevels: { ["farming" as SkillId]: 7 },
+    unlockedPerks: new Set(["museum_quality_one" as PerkId]),
+    villagerLevels: { ["balor" as VillagerId]: 4 },
+    villagerRelationships: { ["balor" as VillagerId]: "married" },
+  });
+  completed.animals[chicken] = new Set(["red" as AnimalVariantId]);
+  completed.animalCosmetics[chicken] = new Set(["ribbon_red" as CosmeticId]);
+  return completed;
+}
+
+function makeGoldenDecodedExpectation(): Partial<CompletedState> {
+  const completed = makeGoldenCompleted();
+  const balor = "balor" as VillagerId;
+  const dateableVillagers = recordEntries(trackerData.villagers)
+    .filter(([, villager]) => villager.dateable)
+    .map(([id]) => id);
+
+  return {
+    ...completed,
+    animalCosmetics: Object.fromEntries(
+      recordEntries(completed.animalCosmetics).filter(([, ids]) => ids.size > 0),
+    ),
+    animals: Object.fromEntries(recordEntries(completed.animals).filter(([, ids]) => ids.size > 0)),
+    questStates: Object.fromEntries(
+      recordValues(trackerData.quests).flatMap((quests) =>
+        recordKeys(quests).map((id) => [id, completed.questStates[id] ?? "none"]),
+      ),
+    ),
+    skillLevels: Object.fromEntries(
+      recordKeys(trackerData.skills).map((id) => [id, completed.skillLevels[id] ?? 0]),
+    ),
+    villagerLevels: Object.fromEntries(
+      recordKeys(trackerData.villagers).map((id) => [id, completed.villagerLevels[id] ?? 0]),
+    ),
+    villagerRelationships: Object.fromEntries(
+      dateableVillagers.map((id) => [id, id === balor ? "married" : "platonic"]),
+    ),
+  };
+}
+
+async function mutateEncodedRaw(
+  mutate: (raw: Uint8Array, offsets: ReturnType<typeof getTransferFieldOffsets>) => void,
+): Promise<string> {
+  const raw = await decompressTransferRaw(await encodeTransferPayload(makeCompleted()));
+  mutate(raw, getTransferFieldOffsets());
+  return compressTransferRaw(TRANSFER_VERSION, raw);
+}
+
 function toBase64url(bytes: Uint8Array): string {
   return btoa(String.fromCharCode(...bytes))
     .replace(/\+/g, "-")
@@ -143,9 +321,72 @@ function toBase64url(bytes: Uint8Array): string {
     .replace(/=+$/, "");
 }
 
-describe("transfer codec v10", () => {
-  it("has version 10", () => {
-    expect(TRANSFER_VERSION).toBe(10);
+describe("transfer codec v11", () => {
+  it("has version 11", () => {
+    expect(TRANSFER_VERSION).toBe(11);
+  });
+
+  it("pins the v11 wire ordering hash", () => {
+    expect(TRANSFER_ORDERING_HASH).toBe("50dbf1b9");
+    expect(getTransferOrderingHash()).toBe(TRANSFER_ORDERING_HASH);
+  });
+
+  it("reproduces the immutable v11 golden payload", async () => {
+    expect(await encodeTransferPayload(makeGoldenCompleted())).toBe(V11_GOLDEN_FIXTURE);
+  });
+
+  it("decodes the immutable v11 golden payload without changing its meaning", async () => {
+    const decoded = await decodeTransferPayload(V11_GOLDEN_FIXTURE);
+
+    expect(decoded).toEqual(makeGoldenDecodedExpectation());
+  });
+
+  it("preserves the prior English order while Lithuanian exposes the collation regression", () => {
+    const chickenTier = ["gray", "red", "yellow"];
+    const english = new Intl.Collator("en");
+    const lithuanian = new Intl.Collator("lt");
+
+    expect(chickenTier.toSorted((left, right) => english.compare(left, right))).toEqual(
+      chickenTier,
+    );
+    expect(chickenTier.toSorted((left, right) => lithuanian.compare(left, right))).toEqual([
+      "gray",
+      "yellow",
+      "red",
+    ]);
+  });
+
+  it.each(["en", "lt", "sv"])(
+    "encodes the golden state identically under %s collation",
+    async (locale) => {
+      const collator = new Intl.Collator(locale);
+      const localeCompare = vi
+        .spyOn(String.prototype, "localeCompare")
+        .mockImplementation(function (this: string, other) {
+          return collator.compare(this, other);
+        });
+
+      try {
+        expect(await encodeTransferPayload(makeGoldenCompleted())).toBe(V11_GOLDEN_FIXTURE);
+      } finally {
+        localeCompare.mockRestore();
+      }
+    },
+  );
+
+  it.each([
+    ["quest state", "quest", 0xc0],
+    ["spouse index", "married", recordKeys(trackerData.villagers).length],
+    ["progression reserved bits", "progression", 0x01],
+    ["relationship state", "relationship", 0xa0],
+    ["child choice", "child", 0x03],
+    ["spell reserved bits", "spell", 0x01],
+  ] as const)("rejects an invalid %s", async (label, field, value) => {
+    const payload = await mutateEncodedRaw((raw, offsets) => {
+      raw[offsets[field]] = value;
+    });
+
+    await expectDecodeError(payload, "corrupt", new RegExp(label, "i"));
   });
 
   it("round-trips maximum in-domain scalar and packed relationship values", async () => {
@@ -388,14 +629,19 @@ describe("transfer codec v10", () => {
     ["v5", V5_ALMANAC_FIXTURE],
     ["v8", V8_BOUNDARY_FIXTURE],
     ["v9", V9_BOUNDARY_FIXTURE],
-  ])(
-    "rejects %s payloads so their shifted item ordering cannot corrupt progress",
-    async (_, payload) => {
-      await expect(decodeTransferPayload(payload)).rejects.toBeInstanceOf(
-        OutdatedTransferPayloadError,
-      );
-    },
-  );
+    ["v10", V10_UNMARKED_FIXTURE],
+  ])("rejects unmarked %s payloads as foreign before interpreting them", async (_, payload) => {
+    await expectDecodeError(payload, "not-transfer-code", /missing marker/i);
+  });
+
+  it.each([
+    ["an empty string", ""],
+    ["a URL", "https://example.com/MFGT"],
+    ["base64url text", "Wifi0000"],
+    ["a lowercase marker", "mfgtCw"],
+  ])("rejects %s as not a transfer code", async (_, payload) => {
+    await expectDecodeError(payload, "not-transfer-code", /missing marker/i);
+  });
 
   it("round-trips almanac with canonical IDs", async () => {
     const colorwayEntry = recordValues(trackerData.almanac)
@@ -447,45 +693,50 @@ describe("transfer codec v10", () => {
   });
 
   it.each(["", "not+a/valid=payload", "A", "%%%%"])(
-    "rejects malformed base64url envelope %j",
-    async (payload) => {
-      await expect(decodeTransferPayload(payload)).rejects.toThrow(/transfer payload/i);
+    "rejects a marked payload with malformed base64url %j",
+    async (body) => {
+      await expectDecodeError(TRANSFER_MAGIC + body, "corrupt", /transfer payload/i);
     },
   );
 
   it.each([
-    ["version zero", toBase64url(new Uint8Array([0]))],
-    ["future version", toBase64url(new Uint8Array([TRANSFER_VERSION + 1]))],
-  ])("rejects unsupported %s", async (_, payload) => {
-    await expect(decodeTransferPayload(payload)).rejects.toThrow(/unsupported transfer version/i);
+    ["version zero", marked(new Uint8Array([0])), "corrupt"],
+    ["future version", marked(new Uint8Array([TRANSFER_VERSION + 1])), "newer-version"],
+    ["far-future version", marked(new Uint8Array([0xff])), "newer-version"],
+  ] as const)("rejects unsupported %s", async (_, payload, code) => {
+    await expectDecodeError(payload, code, /unsupported transfer version/i);
   });
 
   it("rejects a missing integrity checksum", async () => {
-    await expect(
-      decodeTransferPayload(toBase64url(new Uint8Array([TRANSFER_VERSION]))),
-    ).rejects.toThrow(/integrity checksum/i);
-    await expect(
-      decodeTransferPayload(toBase64url(new Uint8Array([TRANSFER_VERSION, 0, 1, 2]))),
-    ).rejects.toThrow(/integrity checksum/i);
+    await expectDecodeError(
+      marked(new Uint8Array([TRANSFER_VERSION])),
+      "corrupt",
+      /integrity checksum/i,
+    );
+    await expectDecodeError(
+      marked(new Uint8Array([TRANSFER_VERSION, 0, 1, 2])),
+      "corrupt",
+      /integrity checksum/i,
+    );
   });
 
-  it("rejects pre-v10 payloads before attempting decompression", async () => {
-    await expect(decodeTransferPayload(toBase64url(new Uint8Array([9])))).rejects.toBeInstanceOf(
-      OutdatedTransferPayloadError,
+  it("rejects marked payloads from older versions before attempting decompression", async () => {
+    await expectDecodeError(
+      marked(new Uint8Array([TRANSFER_VERSION - 1])),
+      "outdated",
+      /older version/i,
     );
   });
 
   it("rejects truncated compressed data", async () => {
     const payload = await encodeTransferPayload(makeCompleted());
-    const truncated = toBase64url(fromBase64url(payload).slice(0, -1));
-    await expect(decodeTransferPayload(truncated)).rejects.toThrow(/compressed transfer payload/i);
+    const truncated = marked(unmarked(payload).slice(0, -1));
+    await expectDecodeError(truncated, "corrupt", /compressed transfer payload/i);
   });
 
   it("rejects malformed compressed data", async () => {
-    const payload = toBase64url(
-      new Uint8Array([TRANSFER_VERSION, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7]),
-    );
-    await expect(decodeTransferPayload(payload)).rejects.toThrow(/compressed transfer payload/i);
+    const payload = marked(new Uint8Array([TRANSFER_VERSION, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7]));
+    await expectDecodeError(payload, "corrupt", /compressed transfer payload/i);
   });
 
   it.each(["truncated", "trailing"])("rejects %s decompressed data", async (kind) => {
@@ -494,7 +745,7 @@ describe("transfer codec v10", () => {
     const malformed = kind === "truncated" ? raw.slice(0, -1) : new Uint8Array([...raw, 0]);
     const malformedPayload = await compressTransferRaw(TRANSFER_VERSION, malformed);
 
-    await expect(decodeTransferPayload(malformedPayload)).rejects.toThrow(/length/i);
+    await expectDecodeError(malformedPayload, "corrupt", /length/i);
   });
 
   it("rejects a payload whose compressed content was corrupted, even when it decompresses to the expected length", async () => {
@@ -510,21 +761,20 @@ describe("transfer codec v10", () => {
 
     // Keep the checksum bytes from the ORIGINAL (uncorrupted) payload, simulating a bit-flip that
     // landed in the compressed body after the checksum was computed and stored.
-    const originalChecksumBytes = fromBase64url(payload).slice(1, 1 + CHECKSUM_BYTE_LENGTH);
+    const originalChecksumBytes = unmarked(payload).slice(1, 1 + CHECKSUM_BYTE_LENGTH);
     const corruptedCompressed = await compressRawOnly(corruptedRaw);
-    const tamperedPayload = toBase64url(
+    const tamperedPayload = marked(
       new Uint8Array([TRANSFER_VERSION, ...originalChecksumBytes, ...corruptedCompressed]),
     );
 
-    await expect(decodeTransferPayload(tamperedPayload)).rejects.toThrow(/integrity check/i);
+    await expectDecodeError(tamperedPayload, "corrupt", /integrity check/i);
   });
 
   it("rejects a payload whose stored checksum does not match its content", async () => {
     const payload = await encodeTransferPayload(makeCompleted());
-    const bytes = fromBase64url(payload);
-    const tampered = new Uint8Array(bytes);
+    const tampered = new Uint8Array(unmarked(payload));
     tampered[1] ^= 0xff;
 
-    await expect(decodeTransferPayload(toBase64url(tampered))).rejects.toThrow(/integrity check/i);
+    await expectDecodeError(marked(tampered), "corrupt", /integrity check/i);
   });
 });

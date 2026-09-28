@@ -130,7 +130,8 @@ export function simplifyAvailabilityCondition(
     }
     case "not": {
       const simplified = simplifyAvailabilityCondition(condition.condition);
-      if (!simplified) return undefined;
+      // Negating an unrestricted condition means "never", which must not collapse to unrestricted.
+      if (!simplified) return { type: "not", condition: { type: "always" } };
       return simplified.type === "not"
         ? simplified.condition
         : { type: "not", condition: simplified };

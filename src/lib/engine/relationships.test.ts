@@ -7,7 +7,7 @@ import {
   isRomantic,
   normalizeRelationships,
   relationshipPresentation,
-} from "../relationships";
+} from "./relationships";
 
 import type { VillagerId, VillagerRelationship } from "$lib/types/tracker-data.js";
 

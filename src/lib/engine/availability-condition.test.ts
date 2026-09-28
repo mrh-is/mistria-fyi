@@ -4,7 +4,7 @@ import {
   evaluateAvailabilityCondition,
   hasSelectiveSeasonCondition,
   simplifyAvailabilityCondition,
-} from "../availability-condition";
+} from "./availability-condition";
 
 import type {
   AvailabilityCondition,
@@ -128,6 +128,19 @@ describe("simplifyAvailabilityCondition", () => {
         conditions: [{ type: "always" }, { type: "season", seasons: ["summer"] }],
       }),
     ).toBeUndefined();
+  });
+
+  it("keeps the negation of an unrestricted condition as never", () => {
+    const simplified = simplifyAvailabilityCondition({
+      type: "not",
+      condition: {
+        type: "any",
+        conditions: [{ type: "always" }, { type: "season", seasons: ["summer"] }],
+      },
+    });
+
+    expect(simplified).toEqual({ type: "not", condition: { type: "always" } });
+    expect(evaluateAvailabilityCondition(simplified, {})).toBe(false);
   });
 
   it("preserves missing-season evaluation when simplifying a year-round season", () => {

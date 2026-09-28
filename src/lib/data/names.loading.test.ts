@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getName, hasNames, loadNames, loadPageNames } from "$lib/data/names.js";
+import { getName, hasNames, loadNames } from "$lib/data/names.js";
 
 import { load as loadVillagers } from "../../routes/(category)/villagers/+page";
 
@@ -10,7 +10,7 @@ const balor = "balor" as VillagerId;
 const turnip = "turnip" as ItemId;
 
 /**
- * Runs under `vitest.mocked.config.ts` with no preload setup, so `names.js` starts cold: nothing
+ * Runs in the `mocked` Vitest project with no preload setup, so `names.js` starts cold: nothing
  * is resident until a test awaits it. That's the only way to observe the loading boundary.
  */
 describe("name chunk loading", () => {
@@ -46,15 +46,14 @@ describe("name chunk loading", () => {
   });
 });
 
-describe("loadPageNames", () => {
-  it("skips loading when called without an event, as the sitemap harvester does", async () => {
-    await loadPageNames(undefined, ["cosmetics"]);
-    expect(hasNames("en", ["cosmetics"])).toBe(false);
-  });
-
+describe("page loads", () => {
   it("scopes a category route's load() to its own categories in the layout's locale", async () => {
     await loadVillagers({
-      parent: () => Promise.resolve({ locale: "ru" as const }),
+      // Like the root layout, which awaits the `ui` chunk before its data reaches `parent()`.
+      parent: async () => {
+        await loadNames("ru", ["ui"]);
+        return { locale: "ru" as const };
+      },
       url: new URL("https://mistria.fyi/ru/villagers"),
     } as never);
 

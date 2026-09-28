@@ -4,15 +4,17 @@ import { trackerData } from "$lib/data/index.js";
 import {
   getMaxMineFloor,
   getMaxRenownLevel,
+  type LevelIssue,
   MAX_SKILL_LEVEL,
   MAX_VILLAGER_LEVEL,
 } from "$lib/engine/progress.js";
+import { recordKeys, recordValues } from "$lib/utils.js";
 
-import { buildImportState, validatePlayerSave } from "../import-save";
+import { buildImportState, parseSaveFiles, validatePlayerSave } from "./import-save";
 
 import type { RecipeId, SkillId, VillagerId } from "$lib/types/tracker-data.js";
 
-import type { SaveBundle } from "../import-save";
+import type { SaveBundle } from "./import-save";
 
 function getDefaultRecipeIds(): Set<RecipeId> {
   const ids = new Set<RecipeId>();
@@ -79,7 +81,11 @@ describe("buildImportState", () => {
     expect(unlockedPerks.has("magic_design" as never)).toBe(true);
     expect(unlockedPerks.has("green_thumb" as never)).toBe(true);
     expect(unlockedPerks.has("unknown_perk" as never)).toBe(false);
-    expect(result.warnings).toContain("Unknown perk: unknown_perk");
+    expect(result.warnings).toContainEqual({
+      code: "unknown-id",
+      id: "unknown_perk",
+      path: "player.perks",
+    });
   });
 
   describe("new progression fields from save", () => {
@@ -146,6 +152,13 @@ describe("numeric level domains", () => {
   const ADELINE = "adeline" as VillagerId;
   const FARMING = "farming" as SkillId;
   const facts = (extra: Record<string, unknown>) => ({ gamedata: { t2_world_facts: extra } });
+  const level = (issue: LevelIssue, key: string, value: string, max: number) => ({
+    code: "level",
+    issue,
+    key,
+    max,
+    value,
+  });
 
   it("accepts in-domain levels without warnings", () => {
     const { completed, result } = buildImportState({
@@ -178,9 +191,9 @@ describe("numeric level domains", () => {
     expect(completed.renown).toBe(getMaxRenownLevel());
     expect(result.counts.renown).toBe(getMaxRenownLevel());
     expect(result.warnings).toEqual([
-      `maximum_mines_level 9999 exceeds the maximum of ${getMaxMineFloor()}; clamped to ${getMaxMineFloor()}`,
-      `adeline_heart_level 99 exceeds the maximum of ${MAX_VILLAGER_LEVEL}; clamped to ${MAX_VILLAGER_LEVEL}`,
-      `farming_level 999 exceeds the maximum of ${MAX_SKILL_LEVEL}; clamped to ${MAX_SKILL_LEVEL}`,
+      level("above-max", "maximum_mines_level", "9999", getMaxMineFloor()),
+      level("above-max", "adeline_heart_level", "99", MAX_VILLAGER_LEVEL),
+      level("above-max", "farming_level", "999", MAX_SKILL_LEVEL),
     ]);
   });
 
@@ -202,8 +215,8 @@ describe("numeric level domains", () => {
     expect(completed.skillLevels?.[FARMING]).toBeUndefined();
     expect(completed.renown).toBe(0);
     expect(result.warnings).toEqual([
-      "adeline_heart_level -1 is negative; ignored",
-      "farming_level -0.5 is negative; ignored",
+      level("negative", "adeline_heart_level", "-1", MAX_VILLAGER_LEVEL),
+      level("negative", "farming_level", "-0.5", MAX_SKILL_LEVEL),
     ]);
   });
 
@@ -223,9 +236,9 @@ describe("numeric level domains", () => {
     expect(completed.skillLevels?.[FARMING]).toBeUndefined();
     expect(completed.renown).toBe(0);
     expect(result.warnings).toEqual([
-      "maximum_mines_level NaN is not a number; ignored",
-      'adeline_heart_level "12" is not a number; ignored',
-      "farming_level Infinity is not a number; ignored",
+      level("not-a-number", "maximum_mines_level", "NaN", getMaxMineFloor()),
+      level("not-a-number", "adeline_heart_level", '"12"', MAX_VILLAGER_LEVEL),
+      level("not-a-number", "farming_level", "Infinity", MAX_SKILL_LEVEL),
     ]);
   });
 
@@ -270,5 +283,206 @@ describe("colorway normalization", () => {
 describe("validatePlayerSave", () => {
   it("accepts a save containing recipe unlocks", () => {
     expect(validatePlayerSave({ recipe_unlocks: ["ocarina_sprite_statue"] })).toBe(true);
+  });
+});
+
+describe("validatePlayerSave rejections", () => {
+  it.each([
+    ["null", null],
+    ["an array", [{ perks: [] }]],
+    ["an empty object", {}],
+    ["null-valued record fields", { animal_variant_unlocks: null, items_sold: null }],
+    ["wrongly typed list fields", { perks: "cook_perk", recipe_unlocks: { id: true } }],
+  ])("rejects %s", (_label, data) => {
+    expect(validatePlayerSave(data)).toBe(false);
+  });
+});
+
+describe("malformed save fields", () => {
+  const perkId = recordKeys(recordValues(trackerData.skills)[0].perkTiers[0])[0];
+
+  it("drops a string list field with a warning instead of iterating its characters", () => {
+    const { completed, result } = buildImportState({
+      player: { cosmetic_unlocks: [], perks: perkId },
+    });
+
+    expect(completed.unlockedPerks?.size).toBe(0);
+    expect(result.warnings).toEqual([{ code: "not-a-list", path: "player.perks" }]);
+  });
+
+  it("drops non-text entries from a list and keeps the rest", () => {
+    const { completed, result } = buildImportState({
+      player: { perks: [perkId, 7, null, { id: perkId }] },
+    });
+
+    expect([...(completed.unlockedPerks ?? [])]).toEqual([perkId]);
+    expect(result.warnings).toEqual([
+      { code: "unreadable-entries", count: 3, path: "player.perks" },
+    ]);
+  });
+
+  it("drops wrongly shaped gamedata fields without throwing", () => {
+    const { completed, result } = buildImportState({
+      gamedata: { museum_progress: { 0: "anything" }, t2_world_facts: [1, 2] },
+    });
+
+    expect(completed.museum?.size).toBe(0);
+    expect(completed.renown).toBe(0);
+    expect(result.warnings).toEqual([
+      { code: "not-a-list", path: "gamedata.museum_progress" },
+      { code: "not-an-object", path: "gamedata.t2_world_facts" },
+    ]);
+  });
+
+  it("drops null and array records with a warning", () => {
+    const animalId = recordKeys(trackerData.animals)[0];
+    const { completed, result } = buildImportState({
+      player: {
+        animal_cosmetic_unlocks: { [animalId]: "not-a-list" },
+        animal_variant_unlocks: ["not", "a", "record"],
+        cosmetic_unlocks: [],
+        items_sold: null,
+      },
+    });
+
+    expect(completed.animals?.[animalId]?.size).toBe(0);
+    expect(result.warnings).toEqual([
+      { code: "not-an-object", path: "player.items_sold" },
+      { code: "not-an-object", path: "player.animal_variant_unlocks" },
+      { code: "not-a-list", path: `player.animal_cosmetic_unlocks.${animalId}` },
+    ]);
+  });
+
+  it("never matches inherited object properties as tracker IDs", () => {
+    const { completed, result } = buildImportState({
+      player: { recipe_unlocks: ["constructor", "__proto__", "toString"] },
+    });
+
+    expect(completed.almanacRecipes).toEqual(getDefaultRecipeIds());
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("ignores an unrecognizable player section with a warning", () => {
+    const { completed, result } = buildImportState({
+      player: { perks: "cook_perk" },
+    });
+
+    expect(completed.unlockedPerks?.size).toBe(0);
+    expect(result.warnings).toEqual([{ code: "unrecognized-player", file: "player" }]);
+  });
+});
+
+describe("quest import", () => {
+  const [firstQuest, secondQuest] = recordValues(trackerData.quests).flatMap((category) =>
+    recordKeys(category),
+  );
+
+  it("imports completed quests as completed", () => {
+    const { completed, result } = buildImportState({
+      quests: { completed_quests: [firstQuest] },
+    });
+
+    expect(completed.questStates).toEqual({ [firstQuest]: "completed" });
+    expect(result.counts.quests).toBe(1);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("imports active quests as obtained", () => {
+    const { completed, result } = buildImportState({
+      quests: { active_quests: [{ quest_name: secondQuest }] },
+    });
+
+    expect(completed.questStates).toEqual({ [secondQuest]: "obtained" });
+    expect(result.counts.quests).toBe(1);
+  });
+
+  it("keeps a quest in both lists completed and counts it once", () => {
+    const { completed, result } = buildImportState({
+      quests: {
+        active_quests: [{ quest_name: firstQuest }, { quest_name: secondQuest }],
+        completed_quests: [firstQuest, firstQuest],
+      },
+    });
+
+    expect(completed.questStates).toEqual({
+      [firstQuest]: "completed",
+      [secondQuest]: "obtained",
+    });
+    expect(result.counts.quests).toBe(2);
+  });
+
+  it("warns about unknown quest IDs and nameless active entries", () => {
+    const { completed, result } = buildImportState({
+      quests: {
+        active_quests: [{ quest_name: "not_a_quest" }, { progress: 3 }, "loose"],
+        completed_quests: ["constructor"],
+      },
+    });
+
+    expect(completed.questStates).toEqual({});
+    expect(result.counts.quests).toBe(0);
+    expect(result.warnings).toEqual([
+      { code: "unknown-id", id: "constructor", path: "quests.completed_quests" },
+      { code: "unreadable-entries", count: 2, path: "quests.active_quests" },
+      { code: "unknown-id", id: "not_a_quest", path: "quests.active_quests" },
+    ]);
+  });
+});
+
+describe("parseSaveFiles", () => {
+  const json = (name: string, data: unknown) => new File([JSON.stringify(data)], name);
+  const player = json("player.json", { perks: [] });
+
+  it("ignores files with other names", async () => {
+    const result = await parseSaveFiles([player, json("info.json", { perks: [] })]);
+
+    expect(result).toEqual({ bundle: { player: { perks: [] } }, warnings: [] });
+  });
+
+  it("reports that no save files were recognized", async () => {
+    const result = await parseSaveFiles([json("notes.json", {})]);
+
+    expect(result.bundle).toBeUndefined();
+    expect(result.error).toEqual({ code: "no-save-files" });
+  });
+
+  it.each([
+    ["an array", "[]", "not-json-object"],
+    ["a number", "3", "not-json-object"],
+    ["invalid JSON", "{", "invalid-json"],
+  ] as const)("rejects a file containing %s", async (_label, text, code) => {
+    const result = await parseSaveFiles([new File([text], "gamedata.json")]);
+
+    expect(result).toEqual({
+      error: { code: "no-valid-files", problems: [{ code, file: "gamedata.json" }] },
+    });
+  });
+
+  it("rejects an unrecognizable player.json", async () => {
+    const result = await parseSaveFiles([json("player.json", { perks: "cook_perk" })]);
+
+    expect(result).toEqual({
+      error: {
+        code: "no-valid-files",
+        problems: [{ code: "unrecognized-player", file: "player.json" }],
+      },
+    });
+  });
+
+  it("imports a partial bundle and reports the files it skipped", async () => {
+    const quests = json("quests.json", { completed_quests: [] });
+    const result = await parseSaveFiles([
+      quests,
+      new File(["{"], "gamedata.json"),
+      json("player.json", {}),
+    ]);
+
+    expect(result).toEqual({
+      bundle: { quests: { completed_quests: [] } },
+      warnings: [
+        { code: "invalid-json", file: "gamedata.json" },
+        { code: "unrecognized-player", file: "player.json" },
+      ],
+    });
   });
 });

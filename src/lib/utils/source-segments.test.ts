@@ -385,8 +385,9 @@ describe("buildSourceSegments — simple types", () => {
       },
       locationIds: ["mines" as LocationId],
     };
+    const lookups: SegmentLookups = { ...BASE_LOOKUPS, locationNames: { mines: "Mines" } };
 
-    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Forage at Mines"]);
+    expect(buildSourceSegments(source, lookups)).toEqual(["Forage at Mines"]);
   });
 
   it("default", () => {
@@ -405,7 +406,11 @@ describe("buildSourceSegments — simple types", () => {
       setCount: 3,
       wingId: "archaeology" as MuseumWingId,
     };
-    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual([
+    const lookups: SegmentLookups = {
+      ...BASE_LOOKUPS,
+      museumWingNames: { archaeology: "Archaeology" },
+    };
+    expect(buildSourceSegments(source, lookups)).toEqual([
       "Complete 3 sets in the Archaeology wing",
     ]);
   });
@@ -888,9 +893,11 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
     expect(buildSourceSegments(source, lookups)).toEqual(["Collect from Alpaca"]);
   });
 
-  it("animal_product falls back to title-cased id", () => {
+  it("animal_product throws for an animal with no name", () => {
     const source: Source = { type: "animal_product", animalId: "dairy_cow" as AnimalId };
-    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Collect from Dairy Cow"]);
+    expect(() => buildSourceSegments(source, BASE_LOOKUPS)).toThrow(
+      'No "animalNames" entry for id "dairy_cow"',
+    );
   });
 
   it("artifact_dig with locations", () => {
@@ -964,14 +971,17 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
     expect(buildSourceSegments(source, lookups)).toEqual(["Find the Inn Menu"]);
   });
 
-  it("date_inspiration falls back to title case", () => {
+  it("date_inspiration throws for an item with no name", () => {
     const source: Source = { type: "date_inspiration", itemId: "fancy_seashell" as ItemId };
-    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Find the Fancy Seashell"]);
+    expect(() => buildSourceSegments(source, BASE_LOOKUPS)).toThrow(
+      'No "itemNames" entry for id "fancy_seashell"',
+    );
   });
 
   it("dive with water types", () => {
     const source: Source = { type: "dive", waterTypes: ["ocean" as WaterType] };
-    expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Dive in Ocean"]);
+    const lookups: SegmentLookups = { ...BASE_LOOKUPS, waterNames: { ocean: "Ocean" } };
+    expect(buildSourceSegments(source, lookups)).toEqual(["Dive in Ocean"]);
   });
 
   it("dive without water types", () => {
@@ -997,7 +1007,10 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
       festivals: {
-        ["harvest" as FestivalId]: { date: { day: 10, season: "fall" }, name: "Harvest Festival" },
+        ["harvest_festival" as FestivalId]: {
+          date: { day: 10, season: "fall" },
+          name: "Harvest Festival",
+        },
       },
     };
     expect(buildSourceSegments(source, lookups)).toEqual([
@@ -1007,7 +1020,8 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
 
   it("fish with water types", () => {
     const source: Source = { type: "fish", waterTypes: ["river" as WaterType] };
-    const result = buildSourceSegments(source, BASE_LOOKUPS);
+    const lookups: SegmentLookups = { ...BASE_LOOKUPS, waterNames: { river: "River" } };
+    const result = buildSourceSegments(source, lookups);
     expect(result[0]).toContain("Catch");
     expect(result).toEqual(["Catch in River"]);
   });
