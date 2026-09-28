@@ -125,10 +125,12 @@ sw.addEventListener("fetch", (event) => {
         cache,
         fetcher: (request) => fetch(request),
         matchCache: (request) => caches.match(request),
+        waitUntil: (promise) => {
+          event.waitUntil(promise);
+        },
       }),
     );
     event.respondWith(response);
-    event.waitUntil(response.then(() => undefined));
   } else {
     event.respondWith(fetch(event.request));
   }
