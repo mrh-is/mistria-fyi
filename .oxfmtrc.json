@@ -1,0 +1,57 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "arrowParens": "always",
+  "bracketSpacing": true,
+  "endOfLine": "lf",
+  "printWidth": 100,
+  "proseWrap": "always",
+  "semi": true,
+  "singleQuote": false,
+  "trailingComma": "all",
+  "useTabs": false,
+  "sortPackageJson": false,
+  "sortTailwindcss": {
+    "stylesheet": "./src/app.css"
+  },
+  "ignorePatterns": [
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "bun.lock",
+    ".svelte-kit/",
+    "build/",
+    ".wrangler/",
+    "pipeline/input/",
+    "pipeline/output/",
+    "src/lib/data/tracker-data.json",
+    "src/lib/paraglide/",
+    "project.inlang/*",
+    "!project.inlang/settings.json",
+    "src/lib/fonts/locale-fonts-*.css",
+    "docs/superpowers/"
+  ],
+  "sortImports": {
+    "groups": [
+      "side_effect",
+      "side_effect_style",
+      ["builtin", "external"],
+      "internal",
+      ["parent", "sibling", "index"],
+      ["type-builtin", "type-external"],
+      "type-internal",
+      ["type-parent", "type-sibling", "type-index"],
+      "unknown"
+    ],
+    "ignoreCase": true,
+    "internalPattern": ["$lib", "$app", "$env", "$service-worker"],
+    "order": "asc"
+  },
+  "overrides": [
+    {
+      "files": ["src/lib/components/ui/**"],
+      "options": {
+        "sortImports": false
+      }
+    }
+  ]
+}

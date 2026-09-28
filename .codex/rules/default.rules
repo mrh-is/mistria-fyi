@@ -32,8 +32,9 @@ prefix_rule(
         "exec",
         [
             "eslint",
+            "oxfmt",
+            "oxlint",
             "playwright",
-            "prettier",
             "svelte-check",
             "svelte-kit",
             "vitest",

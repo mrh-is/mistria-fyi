@@ -22,9 +22,7 @@ export const localePreference = {
   async select(locale: LocaleCode): Promise<boolean> {
     if ((await downloadLocale(locale)) === false) return false;
     void setLocale(locale, { reload: false });
-    // The target is the page already being displayed, re-localized: `page.url.pathname` is the
-    // router's own resolved path, so there is no route literal here for `resolve()` to check.
-    // eslint-disable-next-line svelte/no-navigation-without-resolve
+    // The target is the page already being displayed, re-localized from the router's own path.
     void goto(localizeHref(deLocalizeHref(page.url.pathname), { locale }));
     return true;
   },

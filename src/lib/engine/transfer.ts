@@ -56,7 +56,10 @@ const SEASON_ORD: Record<Season, number> = { fall: 2, spring: 0, summer: 1, wint
  * - `corrupt`: the payload is malformed, truncated, or fails its integrity check.
  */
 export type TransferDecodeErrorCode =
-  "corrupt" | "newer-version" | "not-transfer-code" | "outdated";
+  | "corrupt"
+  | "newer-version"
+  | "not-transfer-code"
+  | "outdated";
 
 export class TransferDecodeError extends Error {
   readonly code: TransferDecodeErrorCode;

@@ -2,11 +2,12 @@ import type { Configuration } from "lint-staged";
 
 export default {
   "*.{js,ts,svelte}": (files) => {
-    const eslintFiles = files.filter((f) => !f.includes("service-worker"));
+    const svelteFiles = files.filter((f) => /\.svelte(\.[jt]s)?$/.test(f));
     return [
-      `prettier --write ${files.join(" ")}`,
-      ...(eslintFiles.length > 0 ? [`eslint --fix ${eslintFiles.join(" ")}`] : []),
+      `oxfmt --no-error-on-unmatched-pattern ${files.join(" ")}`,
+      `oxlint --type-aware --fix ${files.join(" ")}`,
+      ...(svelteFiles.length > 0 ? [`eslint --fix ${svelteFiles.join(" ")}`] : []),
     ];
   },
-  "*.{json,md,css,html,yaml}": "prettier --write",
+  "*.{json,jsonc,md,css,html,yaml}": "oxfmt --no-error-on-unmatched-pattern",
 } as Configuration;

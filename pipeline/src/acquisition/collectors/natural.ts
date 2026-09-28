@@ -121,7 +121,8 @@ function collectBugSources(fiddle: ParsedGameData, accumulator: ItemSourceAccumu
 
 function collectCropSources(fiddle: ParsedGameData, accumulator: ItemSourceAccumulator): void {
   const items = fiddle.items as
-    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
+    | Record<string, Record<string, Record<string, Record<string, unknown>>>>
+    | undefined;
   if (!items?.other?.crops_and_forage) return;
 
   const seedToCrop = new Map<string, string>();
@@ -203,7 +204,8 @@ type FishRarity = (typeof RARITY_ORDER)[number];
 
 export function buildBaitRanges(fiddle: ParsedGameData): BaitRange[] {
   const items = fiddle.items as
-    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
+    | Record<string, Record<string, Record<string, Record<string, unknown>>>>
+    | undefined;
   const baits = items?.other?.apiaries_and_terrariums;
   if (!baits) return [];
 
@@ -561,7 +563,8 @@ function collectPumpkinPatchSources(
 
 function collectTreeSources(fiddle: ParsedGameData, accumulator: ItemSourceAccumulator): void {
   const items = fiddle.items as
-    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
+    | Record<string, Record<string, Record<string, Record<string, unknown>>>>
+    | undefined;
   if (!items?.other?.crops_and_forage) return;
 
   for (const [itemId, item] of Object.entries(items.other.crops_and_forage)) {

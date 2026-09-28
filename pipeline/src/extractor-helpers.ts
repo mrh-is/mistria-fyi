@@ -64,7 +64,8 @@ export function forEachItem(
   ) => void,
 ): void {
   const items = fiddle.items as
-    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
+    | Record<string, Record<string, Record<string, Record<string, unknown>>>>
+    | undefined;
   if (!items) return;
 
   for (const [topCat, subCategories] of Object.entries(items)) {
@@ -99,7 +100,8 @@ export function forEachQuest(
   callback: (questType: string, questId: string, quest: Record<string, unknown>) => void,
 ): void {
   const quests = fiddle.quests as
-    Record<string, Record<string, Record<string, unknown>>> | undefined;
+    | Record<string, Record<string, Record<string, unknown>>>
+    | undefined;
   if (!quests) return;
 
   for (const questType of questGroups) {
