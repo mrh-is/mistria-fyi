@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from "$app/state";
   import VillagerAlphabetIndex from "$lib/components/villager-alphabet-index.svelte";
   import VillagerRecord from "$lib/components/villager-record.svelte";
   import { trackerData } from "$lib/data/index.js";
@@ -25,10 +26,13 @@
       })
       .sort((a, b) => collator.compare(a.name, b.name));
   });
+  // A villager linked by hash (e.g. from search) stays rendered even when completed ones are hidden.
+  let targetedId = $derived(page.url.hash.replace(/^#villager-/, ""));
   let visibleVillagers = $derived(
     villagers.filter(
       (villager) =>
         userState.state.showCompleted ||
+        villager.id === targetedId ||
         !isVillagerComplete(villager.id, userState.state.completed),
     ),
   );

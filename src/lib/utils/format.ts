@@ -148,14 +148,6 @@ export function weatherLabel(weather: Weather, season?: Season): string {
   return WEATHER_LABEL[weather]();
 }
 
-/** Weathers available for a given season (special only in spring/fall) */
-export function weathersForSeason(season: Season): Weather[] {
-  if (season === "summer" || season === "winter") {
-    return ["calm", "inclement", "heavy_inclement"];
-  }
-  return ["calm", "inclement", "heavy_inclement", "special"];
-}
-
 export function withIndefiniteArticle(name: string): string {
   const firstChar = name.charAt(0).toLowerCase();
   const article = "aeiou".includes(firstChar) ? "an" : "a";

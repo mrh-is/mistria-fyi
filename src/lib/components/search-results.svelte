@@ -4,6 +4,7 @@
 
   import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
   import TrackerRow from "$lib/components/tracker-row.svelte";
+  import VillagerSearchResult from "$lib/components/villager-search-result.svelte";
   import { categoryNameForKey } from "$lib/data/categories.js";
   import { trackerData } from "$lib/data/index.js";
   import { hasNames, loadNames, LOCALIZED_CATEGORIES } from "$lib/data/names.js";
@@ -121,7 +122,8 @@
 
   function handleQuestToggle(result: SearchResult): void {
     const questId = result.id as QuestId;
-    const newlyAdded = userState.completeQuestWithRecipes(questId);
+    const completion = userState.completeQuestWithRecipes(questId);
+    const { newlyAdded } = completion;
     const newState = userState.state.completed.questStates[questId] ?? "none";
 
     let message: string;
@@ -147,7 +149,7 @@
       cancel: {
         label: m.action_undo(),
         onClick: () => {
-          userState.undoQuestWithRecipes(questId, newlyAdded);
+          userState.undoQuestWithRecipes(questId, completion);
         },
       },
       duration: 30_000,
@@ -193,12 +195,9 @@
       case "recipes":
         userState.toggleAlmanacRecipe(result.id as RecipeId);
         break;
-      case "villagers": {
-        const villagerId = result.id as VillagerId;
-        const current = userState.state.completed.villagerLevels[villagerId] ?? 0;
-        userState.setVillagerLevel(villagerId, current >= 10 ? 0 : 10);
+      case "villagers":
+        // Villager results render as links to their records, never as toggles.
         break;
-      }
     }
   }
 </script>
@@ -226,24 +225,32 @@
       <div class="search-result">
         <div class="min-w-0 flex-1">
           <TrackerRowStack>
-            <TrackerRow
-              display={rowDisplay(result)}
-              lookups={baseLookups}
-              name={result.detail ? `${label} ${result.detail}` : label}
-              reportCategory={categoryNameForKey(result.category, locale)}
-              reportEntityId={result.id}
-              sources={getSources(result)}
-              onToggle={() => {
-                if (result.category === "quests") {
-                  handleQuestToggle(result);
-                } else {
-                  toggleResult(result);
-                  showUndoToast(result.name, !result.completed, () => {
+            {#if result.category === "villagers"}
+              <VillagerSearchResult
+                completed={result.completed}
+                id={result.id as VillagerId}
+                name={label}
+              />
+            {:else}
+              <TrackerRow
+                display={rowDisplay(result)}
+                lookups={baseLookups}
+                name={result.detail ? `${label} ${result.detail}` : label}
+                reportCategory={categoryNameForKey(result.category, locale)}
+                reportEntityId={result.id}
+                sources={getSources(result)}
+                onToggle={() => {
+                  if (result.category === "quests") {
+                    handleQuestToggle(result);
+                  } else {
                     toggleResult(result);
-                  });
-                }
-              }}
-            />
+                    showUndoToast(result.name, !result.completed, () => {
+                      toggleResult(result);
+                    });
+                  }
+                }}
+              />
+            {/if}
           </TrackerRowStack>
         </div>
         <span
