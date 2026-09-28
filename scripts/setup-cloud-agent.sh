@@ -54,10 +54,42 @@ if [ ! -x "$install_dir/bin/node" ]; then
 fi
 
 ln -sfn "$install_dir" "$install_root/current"
+
+# Codex reconstructs PATH for the agent phase from its configured runtime after this script exits.
+# When that runtime is older than the repository's version, keep its PATH entry valid but point its
+# Node executable at the verified installation above. The original executable remains available for
+# troubleshooting and a cache reset restores the platform runtime completely.
+if [ -n "${CODEX_ENV_NODE_VERSION:-}" ]; then
+  platform_node=$(command -v node)
+  case "$platform_node" in
+    "$HOME/.nvm/versions/node/"*/bin/node)
+      if [ ! "$platform_node" -ef "$install_dir/bin/node" ]; then
+        platform_node_backup="$platform_node.codex-platform"
+        if [ ! -e "$platform_node_backup" ]; then
+          mv "$platform_node" "$platform_node_backup"
+        else
+          rm "$platform_node"
+        fi
+        ln -s "$install_dir/bin/node" "$platform_node"
+      fi
+      ;;
+    *)
+      echo "error: Codex selected an unexpected Node executable: $platform_node" >&2
+      exit 1
+      ;;
+  esac
+fi
+
 cloud_node_path='$HOME/.local/share/mistria-node/current/bin'
 path_line="export PATH=\"$cloud_node_path:\$PATH\""
-touch "$HOME/.bashrc"
-grep -Fqx "$path_line" "$HOME/.bashrc" || printf '\n%s\n' "$path_line" >>"$HOME/.bashrc"
+
+# Codex starts the agent phase in a fresh login shell. Bash reads .bash_profile for that shell and
+# does not fall back to .profile when .bash_profile exists. Persist the path in all common Bash
+# startup files so the downloaded runtime wins over the platform-selected Node after setup exits.
+for startup_file in "$HOME/.bash_profile" "$HOME/.profile" "$HOME/.bashrc"; do
+  touch "$startup_file"
+  grep -Fqx "$path_line" "$startup_file" || printf '\n%s\n' "$path_line" >>"$startup_file"
+done
 export PATH="$install_root/current/bin:$PATH"
 
 if [ "$(node --version)" != "v$node_version" ]; then

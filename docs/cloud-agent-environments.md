@@ -109,7 +109,12 @@ These steps follow OpenAI’s
    ```
 
 6. Set the optional maintenance script to the same command. It is idempotent and refreshes the
-   frozen install when Codex resumes a cached container on a newer commit.
+   frozen install when Codex resumes a cached container on a newer commit. The script adds the
+   repository-managed Node runtime to all common Bash startup files because Codex runs setup and
+   agent commands in separate shells; changing `PATH` only during setup does not persist. Codex also
+   reconstructs `PATH` from its selected runtime for the agent phase, so the script redirects that
+   runtime's `node` executable to the checksum-verified repository version while retaining the
+   original executable with a `.codex-platform` suffix.
 7. Set agent internet access to the restricted or allowlist mode, and allow `api.cloudflare.com`.
    Setup scripts have internet access separately; the agent needs this host during its working phase
    to fetch Pages logs.
