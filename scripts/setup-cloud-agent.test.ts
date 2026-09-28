@@ -26,7 +26,7 @@ describe("setup-cloud-agent", () => {
     writeExecutable(join(binDirectory, "node"), '#!/usr/bin/env bash\nprintf "v26.5.0\\n"\n');
     writeExecutable(join(binDirectory, "pnpm"), "#!/usr/bin/env bash\nexit 0\n");
 
-    const environment = { ...process.env, HOME: home };
+    const environment: NodeJS.ProcessEnv = { ...process.env, HOME: home };
     delete environment.CODEX_ENV_NODE_VERSION;
     execFileSync("bash", ["scripts/setup-cloud-agent.sh"], {
       cwd: process.cwd(),
