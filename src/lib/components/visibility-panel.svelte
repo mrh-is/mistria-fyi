@@ -7,16 +7,12 @@
   import { weatherIcon } from "$lib/components/icon/icon-maps.js";
   import { Icon } from "$lib/components/icon/index.js";
   import SourceExplainerDialog from "$lib/components/source-explainer-dialog.svelte";
+  import { weathersForSeason } from "$lib/engine/world-state";
   import * as m from "$lib/paraglide/messages.js";
   import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
   import { AVAILABILITY_WINDOWS } from "$lib/types/availability.js";
-  import {
-    seasonLabel,
-    seasonLabelAbbr,
-    weatherLabel,
-    weathersForSeason,
-  } from "$lib/utils/format.js";
+  import { seasonLabel, seasonLabelAbbr, weatherLabel } from "$lib/utils/format.js";
 
   import type { Icon as AppIcon } from "@tabler/icons-svelte-runes";
 
@@ -86,12 +82,6 @@
   function toggleAvailability(window: AvailabilityWindow): void {
     userState.toggleAvailabilityWindow(window);
   }
-
-  $effect(() => {
-    if (!availableWeathers.includes(userState.state.worldState.weather)) {
-      userState.setWeather("calm");
-    }
-  });
 </script>
 
 <SourceExplainerDialog bind:open={sourcesExplainerOpen} filters={toolbarState.sourceFilters} />

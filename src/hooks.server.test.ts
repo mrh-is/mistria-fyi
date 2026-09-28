@@ -99,12 +99,27 @@ describe("bareLocaleRedirect", () => {
     expect(response.headers.get("location")).toBe("/en/data?section=transfer");
   });
 
-  it("404s when neither a cookie nor Accept-Language yields a supported locale", async () => {
-    const response = await bareLocaleRedirect({
+  it("falls back to English when neither a cookie nor Accept-Language yields a supported locale", async () => {
+    const withoutHeader = await bareLocaleRedirect({
       event: makeEvent("/almanac"),
       resolve: vi.fn(),
     });
+    const unsupportedLanguage = await bareLocaleRedirect({
+      event: makeEvent("/", { acceptLanguage: "tlh" }),
+      resolve: vi.fn(),
+    });
 
-    expect(response.status).toBe(404);
+    expect(withoutHeader.status).toBe(307);
+    expect(withoutHeader.headers.get("location")).toBe("/en/almanac");
+    expect(unsupportedLanguage.headers.get("location")).toBe("/en");
+  });
+
+  it("marks the redirect as varying by the inputs that choose its locale", async () => {
+    const response = await bareLocaleRedirect({
+      event: makeEvent("/almanac", { cookie: "fr" }),
+      resolve: vi.fn(),
+    });
+
+    expect(response.headers.get("vary")).toBe("Cookie, Accept-Language");
   });
 });

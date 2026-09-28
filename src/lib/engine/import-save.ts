@@ -9,6 +9,8 @@ import {
 } from "$lib/engine/progress.js";
 import { recordKeys, recordValues } from "$lib/utils.js";
 
+import { isSaveSection, type SaveBundle, type SaveSection } from "./save-bundle";
+
 import type {
   CompletedState,
   MergeCounts,
@@ -36,41 +38,16 @@ export interface ImportResult extends MergeResult {
   warnings: string[];
 }
 
-// ─── Save file shapes ───────────────────────────────────────────────
-
-/** All parsed save files bundled together */
-export interface SaveBundle {
-  gamedata?: GamedataSave;
-  player?: PlayerSave;
-  quests?: QuestsSave;
-}
-
-interface GamedataSave {
-  date?: number;
-  maximum_mines_level?: number;
-  museum_progress?: string[];
-  t2_world_facts?: Record<string, unknown>;
-}
-
-interface PlayerSave {
-  animal_cosmetic_unlocks?: Record<string, string[]>;
-  animal_variant_unlocks?: Record<string, string[]>;
-  cosmetic_unlocks?: string[];
-  items_acquired?: string[];
-  items_sold?: Record<string, unknown>;
-  perks?: string[];
-  pet_cosmetic_sets_unlocked?: string[];
-  pet_skin_unlocks?: string[];
-  recipe_unlocks?: string[];
-  recipes_created?: string[];
-  skill_xp?: Record<string, number>;
-  spells_learned?: string[];
-  upper_floor?: boolean;
-}
-
-interface QuestsSave {
-  active_quests?: { quest_name?: string }[];
-  completed_quests?: string[];
+/** Typed access to one save section; see createSectionReader. */
+interface SectionReader {
+  /** An object field, or `undefined` when missing or malformed. */
+  record(key: string): SaveSection | undefined;
+  /** A list of strings; non-string entries are dropped. */
+  stringList(key: string): string[];
+  /** An object whose values are lists of strings, e.g. unlocks keyed by animal. */
+  stringListRecord(key: string): Record<string, string[]>;
+  /** A raw field for callers that normalize it themselves. */
+  value(key: string): unknown;
 }
 
 export function buildImportState(bundle: SaveBundle): {
@@ -101,15 +78,23 @@ export function buildImportState(bundle: SaveBundle): {
     villagerRelationships: 0,
   };
 
-  const save = bundle.player;
+  // parseSaveFiles rejects an unrecognizable player.json outright; a .sav entry reaches here.
+  let playerSection = bundle.player;
+  if (playerSection && !validatePlayerSave(playerSection)) {
+    warnings.push("player has no recognized progress fields; ignored");
+    playerSection = undefined;
+  }
+  const player = createSectionReader("player", playerSection, warnings);
+  const gamedata = createSectionReader("gamedata", bundle.gamedata, warnings);
+  const quests = createSectionReader("quests", bundle.quests, warnings);
 
   // ── Almanac: union of items_acquired + items_sold keys + recipes_created ──
   const almanacIds = new Set<ItemId>();
 
   const allPlayerItems = new Set<string>([
-    ...(save?.items_acquired ?? []),
-    ...Object.keys(save?.items_sold ?? {}),
-    ...(save?.recipes_created ?? []),
+    ...player.stringList("items_acquired"),
+    ...Object.keys(player.record("items_sold") ?? {}),
+    ...player.stringList("recipes_created"),
   ]);
 
   for (const id of allPlayerItems) {
@@ -130,10 +115,10 @@ export function buildImportState(bundle: SaveBundle): {
     }
   }
 
-  for (const id of save?.recipe_unlocks ?? []) {
+  for (const id of player.stringList("recipe_unlocks")) {
     if (validRecipes.has(id)) {
       almanacRecipes.add(id as RecipeId);
-    } else if (id in trackerData.items) {
+    } else if (Object.hasOwn(trackerData.items, id)) {
       const recipeId = trackerData.items[id as ItemId].sources.find(
         (source) => source.type === "recipe",
       )?.recipeId;
@@ -148,7 +133,7 @@ export function buildImportState(bundle: SaveBundle): {
   const cosmeticIds = new Set<CosmeticId>();
   const validCosmetics = new Set(Object.keys(trackerData.cosmetics));
 
-  for (const id of save?.cosmetic_unlocks ?? []) {
+  for (const id of player.stringList("cosmetic_unlocks")) {
     if (validCosmetics.has(id)) {
       cosmeticIds.add(id as CosmeticId);
     } else {
@@ -159,9 +144,12 @@ export function buildImportState(bundle: SaveBundle): {
 
   // ── Animal variants ──
   const animalVariants: Record<string, Set<AnimalVariantId>> = {};
+  const playerVariantsByAnimal = player.stringListRecord("animal_variant_unlocks");
   for (const [animalId, animal] of Object.entries(trackerData.animals)) {
     const validVariants = new Set(animal.variantTiers.flatMap((tier) => Object.keys(tier)));
-    const playerVariants = save?.animal_variant_unlocks?.[animalId] ?? [];
+    const playerVariants = Object.hasOwn(playerVariantsByAnimal, animalId)
+      ? playerVariantsByAnimal[animalId]
+      : [];
     const matched = new Set<AnimalVariantId>();
 
     for (const v of playerVariants) {
@@ -177,9 +165,12 @@ export function buildImportState(bundle: SaveBundle): {
 
   // ── Animal cosmetics ──
   const animalCosmetics: Record<string, Set<CosmeticId>> = {};
+  const playerCosmeticsByAnimal = player.stringListRecord("animal_cosmetic_unlocks");
   for (const [animalId, animal] of Object.entries(trackerData.animals)) {
     const validAnimalCosmetics = new Set(Object.keys(animal.cosmetics));
-    const playerCosmetics = save?.animal_cosmetic_unlocks?.[animalId] ?? [];
+    const playerCosmetics = Object.hasOwn(playerCosmeticsByAnimal, animalId)
+      ? playerCosmeticsByAnimal[animalId]
+      : [];
     const matched = new Set<CosmeticId>();
 
     for (const c of playerCosmetics) {
@@ -197,7 +188,7 @@ export function buildImportState(bundle: SaveBundle): {
   const petCosmetics = new Set<PetCosmeticSetId>();
   const validPetCosmetics = new Set(Object.keys(trackerData.pets.cosmetics));
 
-  for (const id of save?.pet_cosmetic_sets_unlocked ?? []) {
+  for (const id of player.stringList("pet_cosmetic_sets_unlocked")) {
     if (validPetCosmetics.has(id)) {
       petCosmetics.add(id as PetCosmeticSetId);
     } else {
@@ -210,7 +201,7 @@ export function buildImportState(bundle: SaveBundle): {
   const petSkins = new Set<PetSkinId>();
   const validPetSkins = new Set(Object.keys(trackerData.pets.skins));
 
-  for (const id of save?.pet_skin_unlocks ?? []) {
+  for (const id of player.stringList("pet_skin_unlocks")) {
     if (validPetSkins.has(id)) {
       petSkins.add(id as PetSkinId);
     } else {
@@ -223,7 +214,7 @@ export function buildImportState(bundle: SaveBundle): {
   const spells = new Set<SpellId>();
   const validSpells = new Set(Object.keys(trackerData.mines.spells));
 
-  for (const id of save?.spells_learned ?? []) {
+  for (const id of player.stringList("spells_learned")) {
     if (validSpells.has(id)) {
       spells.add(id as SpellId);
     } else {
@@ -240,7 +231,7 @@ export function buildImportState(bundle: SaveBundle): {
     ) as string[],
   );
 
-  for (const id of save?.perks ?? []) {
+  for (const id of player.stringList("perks")) {
     if (validPerks.has(id)) {
       perkIds.add(id as PerkId);
     } else {
@@ -251,19 +242,17 @@ export function buildImportState(bundle: SaveBundle): {
 
   // ── Museum donations (from gamedata.json → museum_progress) ──
   const museumIds = new Set<ItemId>();
-  if (bundle.gamedata?.museum_progress) {
-    const validMuseum = new Set<string>(
-      recordValues(trackerData.museum).flatMap(({ sets }) =>
-        recordValues(sets).flatMap(({ items }) => items),
-      ),
-    );
-    for (const id of bundle.gamedata.museum_progress) {
-      if (validMuseum.has(id)) {
-        museumIds.add(id as ItemId);
-      }
+  const validMuseum = new Set<string>(
+    recordValues(trackerData.museum).flatMap(({ sets }) =>
+      recordValues(sets).flatMap(({ items }) => items),
+    ),
+  );
+  for (const id of gamedata.stringList("museum_progress")) {
+    if (validMuseum.has(id)) {
+      museumIds.add(id as ItemId);
     }
-    counts.museum = museumIds.size;
   }
+  counts.museum = museumIds.size;
 
   // ── Numeric levels: mine floor, villager hearts, skill levels, renown ──
   // Each fact is normalized into its finite domain (see normalizeLevel). Above-maximum values
@@ -280,7 +269,7 @@ export function buildImportState(bundle: SaveBundle): {
   // Mine floor (from gamedata.json → maximum_mines_level)
   const mineFloor = extractLevel(
     "maximum_mines_level",
-    bundle.gamedata?.maximum_mines_level,
+    gamedata.value("maximum_mines_level"),
     getMaxMineFloor(),
   );
   counts.mineFloor = mineFloor;
@@ -290,7 +279,7 @@ export function buildImportState(bundle: SaveBundle): {
   const skillLevels: Record<string, number> = {};
   let renown = 0;
 
-  const facts = bundle.gamedata?.t2_world_facts;
+  const facts = gamedata.record("t2_world_facts");
   if (facts) {
     // Villager heart levels: "{villager}_heart_level" keys in t2_world_facts
     for (const villagerId of recordKeys(trackerData.villagers)) {
@@ -319,7 +308,7 @@ export function buildImportState(bundle: SaveBundle): {
   }
 
   // ── Has upper floor (from player.json → upper_floor) ──
-  const hasUpperFloor = save?.upper_floor === true;
+  const hasUpperFloor = player.value("upper_floor") === true;
   if (hasUpperFloor) counts.hasUpperFloor = 1;
 
   // ── Villager relationships (from gamedata.json → t2_world_facts → {villager}_is_dating) ──
@@ -338,36 +327,34 @@ export function buildImportState(bundle: SaveBundle): {
   }
 
   // ── Reached season (from gamedata.json → date timestamp) ──
-  const reachedSeason = deriveReachedSeason(bundle.gamedata?.date);
+  const reachedSeason = deriveReachedSeason(gamedata.value("date"));
   if (reachedSeason !== "spring") counts.reachedSeason = 1;
 
   // ── Quest completion (from quests.json) ──
+  // Completed quests import as "completed" and active quests as "obtained". A quest listed in
+  // both keeps "completed", matching mergeFromSave's rule that a merge never lowers a quest.
   const questStates: Record<string, QuestState> = {};
-  if (bundle.quests) {
-    const validQuests = new Set<string>();
-    for (const category of Object.values(trackerData.quests)) {
-      for (const questId of Object.keys(category)) {
-        validQuests.add(questId);
-      }
-    }
-
-    // Completed quests
-    for (const id of bundle.quests.completed_quests ?? []) {
-      if (validQuests.has(id)) {
-        questStates[id] = "completed";
-        counts.quests++;
-      }
-    }
-
-    // Active quests → "obtained"
-    for (const quest of bundle.quests.active_quests ?? []) {
-      const id = quest.quest_name;
-      if (id && validQuests.has(id)) {
-        questStates[id] = "obtained";
-        counts.quests++;
-      }
+  const validQuests = new Set<string>();
+  for (const category of Object.values(trackerData.quests)) {
+    for (const questId of Object.keys(category)) {
+      validQuests.add(questId);
     }
   }
+  const importQuest = (id: string, questState: QuestState) => {
+    if (!validQuests.has(id)) {
+      warnings.push(`Unknown quest: ${id}`);
+    } else if (questStates[id] !== "completed") {
+      questStates[id] = questState;
+    }
+  };
+
+  for (const id of quests.stringList("completed_quests")) {
+    importQuest(id, "completed");
+  }
+  for (const id of readActiveQuestNames(quests.value("active_quests"), warnings)) {
+    importQuest(id, "obtained");
+  }
+  counts.quests = Object.keys(questStates).length;
 
   return {
     completed: {
@@ -397,9 +384,77 @@ export function buildImportState(bundle: SaveBundle): {
   };
 }
 
+// ─── Field readers ──────────────────────────────────────────────────
+// Each reader returns a well-typed value or an empty default. A present field of the wrong shape
+// is dropped with a warning, so one malformed field never blocks the rest of the import.
+
+function createSectionReader(
+  name: string,
+  section: SaveSection | undefined,
+  warnings: string[],
+): SectionReader {
+  const value = (key: string): unknown =>
+    section && Object.hasOwn(section, key) ? section[key] : undefined;
+
+  const readStrings = (path: string, raw: unknown): string[] => {
+    if (raw === undefined) return [];
+    if (!Array.isArray(raw)) {
+      warnings.push(`${path} is not a list; ignored`);
+      return [];
+    }
+    const strings = raw.filter((entry): entry is string => typeof entry === "string");
+    const dropped = raw.length - strings.length;
+    if (dropped > 0) warnings.push(`${path} has ${dropped} non-text entries; ignored`);
+    return strings;
+  };
+
+  const record = (key: string): SaveSection | undefined => {
+    const raw = value(key);
+    if (raw === undefined) return undefined;
+    if (!isSaveSection(raw)) {
+      warnings.push(`${name}.${key} is not an object; ignored`);
+      return undefined;
+    }
+    return raw;
+  };
+
+  return {
+    record,
+    stringList: (key) => readStrings(`${name}.${key}`, value(key)),
+    stringListRecord: (key) => {
+      const result: Record<string, string[]> = {};
+      for (const [entryKey, raw] of Object.entries(record(key) ?? {})) {
+        result[entryKey] = readStrings(`${name}.${key}.${entryKey}`, raw);
+      }
+      return result;
+    },
+    value,
+  };
+}
+
+/** Quest IDs from `quests.active_quests`, a list of `{ quest_name }` objects. */
+function readActiveQuestNames(raw: unknown, warnings: string[]): string[] {
+  if (raw === undefined) return [];
+  if (!Array.isArray(raw)) {
+    warnings.push("quests.active_quests is not a list; ignored");
+    return [];
+  }
+  const names: string[] = [];
+  for (const entry of raw) {
+    const name = isSaveSection(entry) ? entry.quest_name : undefined;
+    if (typeof name === "string") names.push(name);
+  }
+  const dropped = raw.length - names.length;
+  if (dropped > 0) {
+    warnings.push(`quests.active_quests has ${dropped} entries without a quest name; ignored`);
+  }
+  return names;
+}
+
 // ─── .sav file unpacking (client-side) ──────────────────────────────
 
 export { parseSavFile as unpackSavFile } from "./parse-sav";
+export type { SaveBundle, SaveSection } from "./save-bundle";
 
 // ─── Season derivation ─────────────────────────────────────────────
 
@@ -407,7 +462,7 @@ const GAME_DAY = 259200;
 const GAME_SEASON = 28 * GAME_DAY;
 const SEASON_ORDER: Season[] = ["spring", "summer", "fall", "winter"];
 
-function deriveReachedSeason(date: number | undefined): Season {
+function deriveReachedSeason(date: unknown): Season {
   if (typeof date !== "number" || date < 0) return "spring";
   const seasonIndex = Math.floor(date / GAME_SEASON) % 4;
   if (date >= 4 * GAME_SEASON) return "winter";
@@ -418,9 +473,15 @@ function deriveReachedSeason(date: number | undefined): Season {
 
 const SAVE_FILES = new Set(["gamedata.json", "player.json", "quests.json"]);
 
+/**
+ * Parse extracted save files into a bundle. Files with other names are ignored. When at least one
+ * file parses, the problems with the others are returned as warnings rather than failing the
+ * import; when none does, they are joined into the error.
+ */
 export async function parseSaveFiles(files: File[]): Promise<{
   bundle?: SaveBundle;
   error?: string;
+  warnings?: string[];
 }> {
   const bundle: SaveBundle = {};
   const errors: string[] = [];
@@ -431,7 +492,7 @@ export async function parseSaveFiles(files: File[]): Promise<{
     try {
       const text = await file.text();
       const data: unknown = JSON.parse(text);
-      if (typeof data !== "object" || data === null) {
+      if (!isSaveSection(data)) {
         errors.push(`${file.name}: not a valid JSON object`);
         continue;
       }
@@ -465,24 +526,27 @@ export async function parseSaveFiles(files: File[]): Promise<{
     };
   }
 
-  return { bundle };
+  return { bundle, warnings: errors };
 }
 
 // ─── Validation ─────────────────────────────────────────────────────
 
-export function validatePlayerSave(data: unknown): data is PlayerSave {
-  if (typeof data !== "object" || data === null) return false;
-  const obj = data as Record<string, unknown>;
+/**
+ * Whether `data` looks like a player save: an object with at least one progress field of the
+ * expected shape. This recognizes the file; {@link buildImportState} validates each field.
+ */
+export function validatePlayerSave(data: unknown): data is SaveSection {
+  if (!isSaveSection(data)) return false;
   return (
-    Array.isArray(obj.items_acquired) ||
-    Array.isArray(obj.recipe_unlocks) ||
-    Array.isArray(obj.cosmetic_unlocks) ||
-    typeof obj.animal_variant_unlocks === "object" ||
-    typeof obj.items_sold === "object" ||
-    Array.isArray(obj.spells_learned) ||
-    Array.isArray(obj.perks) ||
-    Array.isArray(obj.pet_cosmetic_sets_unlocked) ||
-    Array.isArray(obj.pet_skin_unlocks)
+    Array.isArray(data.items_acquired) ||
+    Array.isArray(data.recipe_unlocks) ||
+    Array.isArray(data.cosmetic_unlocks) ||
+    isSaveSection(data.animal_variant_unlocks) ||
+    isSaveSection(data.items_sold) ||
+    Array.isArray(data.spells_learned) ||
+    Array.isArray(data.perks) ||
+    Array.isArray(data.pet_cosmetic_sets_unlocked) ||
+    Array.isArray(data.pet_skin_unlocks)
   );
 }
 

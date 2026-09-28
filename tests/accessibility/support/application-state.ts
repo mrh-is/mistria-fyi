@@ -1,5 +1,7 @@
 import { expect } from "@playwright/test";
 
+import { THEME_STORAGE_KEY } from "../../../src/lib/theme";
+
 import type { Page, Response } from "@playwright/test";
 
 import type { AccessibilityTheme } from "./violations.js";
@@ -98,11 +100,15 @@ export async function initializeApplication(
   state: null | StoredState = null,
 ): Promise<void> {
   await page.addInitScript(
-    ({ serializedState, themePreference }) => {
+    ({ serializedState, themeKey, themePreference }) => {
       localStorage.clear();
-      localStorage.setItem("mistria-fyi-theme", themePreference);
+      localStorage.setItem(themeKey, themePreference);
       if (serializedState !== null) localStorage.setItem("mistria-fyi-v1", serializedState);
     },
-    { serializedState: state ? JSON.stringify(state) : null, themePreference: theme },
+    {
+      serializedState: state ? JSON.stringify(state) : null,
+      themeKey: THEME_STORAGE_KEY,
+      themePreference: theme,
+    },
   );
 }

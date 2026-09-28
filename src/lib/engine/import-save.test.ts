@@ -7,8 +7,9 @@ import {
   MAX_SKILL_LEVEL,
   MAX_VILLAGER_LEVEL,
 } from "$lib/engine/progress.js";
+import { recordKeys, recordValues } from "$lib/utils.js";
 
-import { buildImportState, validatePlayerSave } from "./import-save";
+import { buildImportState, parseSaveFiles, validatePlayerSave } from "./import-save";
 
 import type { RecipeId, SkillId, VillagerId } from "$lib/types/tracker-data.js";
 
@@ -270,5 +271,194 @@ describe("colorway normalization", () => {
 describe("validatePlayerSave", () => {
   it("accepts a save containing recipe unlocks", () => {
     expect(validatePlayerSave({ recipe_unlocks: ["ocarina_sprite_statue"] })).toBe(true);
+  });
+});
+
+describe("validatePlayerSave rejections", () => {
+  it.each([
+    ["null", null],
+    ["an array", [{ perks: [] }]],
+    ["an empty object", {}],
+    ["null-valued record fields", { animal_variant_unlocks: null, items_sold: null }],
+    ["wrongly typed list fields", { perks: "cook_perk", recipe_unlocks: { id: true } }],
+  ])("rejects %s", (_label, data) => {
+    expect(validatePlayerSave(data)).toBe(false);
+  });
+});
+
+describe("malformed save fields", () => {
+  const perkId = recordKeys(recordValues(trackerData.skills)[0].perkTiers[0])[0];
+
+  it("drops a string list field with a warning instead of iterating its characters", () => {
+    const { completed, result } = buildImportState({
+      player: { cosmetic_unlocks: [], perks: perkId },
+    });
+
+    expect(completed.unlockedPerks?.size).toBe(0);
+    expect(result.warnings).toEqual(["player.perks is not a list; ignored"]);
+  });
+
+  it("drops non-text entries from a list and keeps the rest", () => {
+    const { completed, result } = buildImportState({
+      player: { perks: [perkId, 7, null, { id: perkId }] },
+    });
+
+    expect([...(completed.unlockedPerks ?? [])]).toEqual([perkId]);
+    expect(result.warnings).toEqual(["player.perks has 3 non-text entries; ignored"]);
+  });
+
+  it("drops wrongly shaped gamedata fields without throwing", () => {
+    const { completed, result } = buildImportState({
+      gamedata: { museum_progress: { 0: "anything" }, t2_world_facts: [1, 2] },
+    });
+
+    expect(completed.museum?.size).toBe(0);
+    expect(completed.renown).toBe(0);
+    expect(result.warnings).toEqual([
+      "gamedata.museum_progress is not a list; ignored",
+      "gamedata.t2_world_facts is not an object; ignored",
+    ]);
+  });
+
+  it("drops null and array records with a warning", () => {
+    const animalId = recordKeys(trackerData.animals)[0];
+    const { completed, result } = buildImportState({
+      player: {
+        animal_cosmetic_unlocks: { [animalId]: "not-a-list" },
+        animal_variant_unlocks: ["not", "a", "record"],
+        cosmetic_unlocks: [],
+        items_sold: null,
+      },
+    });
+
+    expect(completed.animals?.[animalId]?.size).toBe(0);
+    expect(result.warnings).toEqual([
+      "player.items_sold is not an object; ignored",
+      "player.animal_variant_unlocks is not an object; ignored",
+      `player.animal_cosmetic_unlocks.${animalId} is not a list; ignored`,
+    ]);
+  });
+
+  it("never matches inherited object properties as tracker IDs", () => {
+    const { completed, result } = buildImportState({
+      player: { recipe_unlocks: ["constructor", "__proto__", "toString"] },
+    });
+
+    expect(completed.almanacRecipes).toEqual(getDefaultRecipeIds());
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("ignores an unrecognizable player section with a warning", () => {
+    const { completed, result } = buildImportState({
+      player: { perks: "cook_perk" },
+    });
+
+    expect(completed.unlockedPerks?.size).toBe(0);
+    expect(result.warnings).toEqual(["player has no recognized progress fields; ignored"]);
+  });
+});
+
+describe("quest import", () => {
+  const [firstQuest, secondQuest] = recordValues(trackerData.quests).flatMap((category) =>
+    recordKeys(category),
+  );
+
+  it("imports completed quests as completed", () => {
+    const { completed, result } = buildImportState({
+      quests: { completed_quests: [firstQuest] },
+    });
+
+    expect(completed.questStates).toEqual({ [firstQuest]: "completed" });
+    expect(result.counts.quests).toBe(1);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("imports active quests as obtained", () => {
+    const { completed, result } = buildImportState({
+      quests: { active_quests: [{ quest_name: secondQuest }] },
+    });
+
+    expect(completed.questStates).toEqual({ [secondQuest]: "obtained" });
+    expect(result.counts.quests).toBe(1);
+  });
+
+  it("keeps a quest in both lists completed and counts it once", () => {
+    const { completed, result } = buildImportState({
+      quests: {
+        active_quests: [{ quest_name: firstQuest }, { quest_name: secondQuest }],
+        completed_quests: [firstQuest, firstQuest],
+      },
+    });
+
+    expect(completed.questStates).toEqual({
+      [firstQuest]: "completed",
+      [secondQuest]: "obtained",
+    });
+    expect(result.counts.quests).toBe(2);
+  });
+
+  it("warns about unknown quest IDs and nameless active entries", () => {
+    const { completed, result } = buildImportState({
+      quests: {
+        active_quests: [{ quest_name: "not_a_quest" }, { progress: 3 }, "loose"],
+        completed_quests: ["constructor"],
+      },
+    });
+
+    expect(completed.questStates).toEqual({});
+    expect(result.counts.quests).toBe(0);
+    expect(result.warnings).toEqual([
+      "Unknown quest: constructor",
+      "quests.active_quests has 2 entries without a quest name; ignored",
+      "Unknown quest: not_a_quest",
+    ]);
+  });
+});
+
+describe("parseSaveFiles", () => {
+  const json = (name: string, data: unknown) => new File([JSON.stringify(data)], name);
+  const player = json("player.json", { perks: [] });
+
+  it("ignores files with other names", async () => {
+    const result = await parseSaveFiles([player, json("info.json", { perks: [] })]);
+
+    expect(result).toEqual({ bundle: { player: { perks: [] } }, warnings: [] });
+  });
+
+  it("reports that no save files were recognized", async () => {
+    const result = await parseSaveFiles([json("notes.json", {})]);
+
+    expect(result.bundle).toBeUndefined();
+    expect(result.error).toMatch(/No recognized save files found/);
+  });
+
+  it.each([
+    ["an array", "[]", "gamedata.json: not a valid JSON object"],
+    ["a number", "3", "gamedata.json: not a valid JSON object"],
+    ["invalid JSON", "{", "gamedata.json: invalid JSON"],
+  ])("rejects a file containing %s", async (_label, text, error) => {
+    const result = await parseSaveFiles([new File([text], "gamedata.json")]);
+
+    expect(result).toEqual({ error });
+  });
+
+  it("rejects an unrecognizable player.json", async () => {
+    const result = await parseSaveFiles([json("player.json", { perks: "cook_perk" })]);
+
+    expect(result).toEqual({ error: "player.json: missing expected fields" });
+  });
+
+  it("imports a partial bundle and reports the files it skipped", async () => {
+    const quests = json("quests.json", { completed_quests: [] });
+    const result = await parseSaveFiles([
+      quests,
+      new File(["{"], "gamedata.json"),
+      json("player.json", {}),
+    ]);
+
+    expect(result).toEqual({
+      bundle: { quests: { completed_quests: [] } },
+      warnings: ["gamedata.json: invalid JSON", "player.json: missing expected fields"],
+    });
   });
 });

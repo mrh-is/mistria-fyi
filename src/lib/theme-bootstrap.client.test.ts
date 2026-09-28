@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { THEME_COLORS, THEME_STORAGE_KEY } from "$lib/theme";
+
 // Extract the two inline <script> blocks from app.html and evaluate them
 // directly, so tests exercise the production code rather than a reimplemented
 // copy that could drift.
@@ -70,7 +72,7 @@ describe("theme bootstrap", () => {
       meta.name = "theme-color";
       document.head.appendChild(meta);
     }
-    meta.content = "#f7f5f0";
+    meta.content = THEME_COLORS.light;
   });
 
   afterEach(() => {
@@ -84,26 +86,26 @@ describe("theme bootstrap", () => {
   });
 
   it("applies dark class when stored preference is dark", () => {
-    vi.stubGlobal("localStorage", makeStorage({ "mistria-fyi-theme": "dark" }));
+    vi.stubGlobal("localStorage", makeStorage({ [THEME_STORAGE_KEY]: "dark" }));
     runBootstrap();
     expect(document.documentElement.classList.contains("dark")).toBe(true);
   });
 
   it("does not apply dark class when stored preference is light", () => {
-    vi.stubGlobal("localStorage", makeStorage({ "mistria-fyi-theme": "light" }));
+    vi.stubGlobal("localStorage", makeStorage({ [THEME_STORAGE_KEY]: "light" }));
     runBootstrap();
     expect(document.documentElement.classList.contains("dark")).toBe(false);
   });
 
   it("follows OS preference when stored preference is system and OS prefers dark", () => {
-    vi.stubGlobal("localStorage", makeStorage({ "mistria-fyi-theme": "system" }));
+    vi.stubGlobal("localStorage", makeStorage({ [THEME_STORAGE_KEY]: "system" }));
     vi.spyOn(window, "matchMedia").mockReturnValue({ matches: true } as MediaQueryList);
     runBootstrap();
     expect(document.documentElement.classList.contains("dark")).toBe(true);
   });
 
   it("follows OS preference when stored preference is system and OS prefers light", () => {
-    vi.stubGlobal("localStorage", makeStorage({ "mistria-fyi-theme": "system" }));
+    vi.stubGlobal("localStorage", makeStorage({ [THEME_STORAGE_KEY]: "system" }));
     vi.spyOn(window, "matchMedia").mockReturnValue({ matches: false } as MediaQueryList);
     runBootstrap();
     expect(document.documentElement.classList.contains("dark")).toBe(false);
@@ -140,7 +142,7 @@ describe("theme-color sync", () => {
       meta.name = "theme-color";
       document.head.appendChild(meta);
     }
-    meta.content = "#f7f5f0";
+    meta.content = THEME_COLORS.light;
   });
 
   afterEach(() => {
@@ -149,23 +151,23 @@ describe("theme-color sync", () => {
   });
 
   it("sets dark theme-color when bootstrap applied dark class", () => {
-    vi.stubGlobal("localStorage", makeStorage({ "mistria-fyi-theme": "dark" }));
+    vi.stubGlobal("localStorage", makeStorage({ [THEME_STORAGE_KEY]: "dark" }));
     runBootstrap();
     runThemeColorSync();
 
     const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     expect(meta).toBeDefined();
-    expect(meta?.content).toBe("#1e1e22");
+    expect(meta?.content).toBe(THEME_COLORS.dark);
   });
 
   it("preserves light theme-color when bootstrap did not apply dark class", () => {
-    vi.stubGlobal("localStorage", makeStorage({ "mistria-fyi-theme": "light" }));
+    vi.stubGlobal("localStorage", makeStorage({ [THEME_STORAGE_KEY]: "light" }));
     runBootstrap();
     runThemeColorSync();
 
     const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     expect(meta).toBeDefined();
-    expect(meta?.content).toBe("#f7f5f0");
+    expect(meta?.content).toBe(THEME_COLORS.light);
   });
 
   it("sets dark theme-color when localStorage throws and OS prefers dark", () => {
@@ -176,7 +178,7 @@ describe("theme-color sync", () => {
 
     const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     expect(meta).toBeDefined();
-    expect(meta?.content).toBe("#1e1e22");
+    expect(meta?.content).toBe(THEME_COLORS.dark);
   });
 
   it("preserves light theme-color when localStorage throws and OS prefers light", () => {
@@ -187,6 +189,6 @@ describe("theme-color sync", () => {
 
     const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     expect(meta).toBeDefined();
-    expect(meta?.content).toBe("#f7f5f0");
+    expect(meta?.content).toBe(THEME_COLORS.light);
   });
 });

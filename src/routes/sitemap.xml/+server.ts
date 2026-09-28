@@ -1,41 +1,51 @@
 import { SITE_ORIGIN } from "$lib/data/page-metadata.js";
 import { locales, localizeUrl } from "$lib/paraglide/runtime.js";
 
+import type { Load } from "@sveltejs/kit";
+
 import type { Pathname } from "$app/types";
+import type { RobotsDirective } from "$lib/data/page-metadata";
 import type { Locale } from "$lib/paraglide/runtime.js";
 
 export const prerender = true;
 
-interface MetadataPageModule {
-  load: () => App.PageData | Promise<App.PageData>;
+/**
+ * What the sitemap reads from each `+page.ts`. It doesn't run `load()`, which needs a real request
+ * to resolve the locale & name chunks; a page that opts out of indexing says so with a static
+ * `_robots` export instead (SvelteKit reserves unprefixed `+page.ts` exports).
+ */
+interface PageModule {
+  _robots?: RobotsDirective;
+  load: Load;
 }
 
 const pageComponents = import.meta.glob("/src/routes/**/+page.svelte");
-const pageModules: Partial<Record<string, MetadataPageModule>> =
-  import.meta.glob<MetadataPageModule>("/src/routes/**/+page.ts", {
-    eager: true,
+const pageModules: Partial<Record<string, PageModule>> = import.meta.glob<PageModule>(
+  "/src/routes/**/+page.ts",
+  { eager: true },
+);
+
+/** Every rendered page's route path and `+page.ts` module, in glob order. */
+export function _pageEntries(): {
+  modulePath: string;
+  pageModule: PageModule;
+  path: Pathname;
+}[] {
+  return Object.keys(pageComponents).map((componentPath) => {
+    const modulePath = componentPath.replace(/\.svelte$/, ".ts");
+    const pageModule = pageModules[modulePath];
+
+    if (!pageModule) {
+      throw new Error(`Page metadata load is missing for ${componentPath}`);
+    }
+
+    return { modulePath, pageModule, path: routePathForModule(modulePath) };
   });
-
-export async function _pageMetadataEntries() {
-  return Promise.all(
-    Object.keys(pageComponents).map(async (componentPath) => {
-      const modulePath = componentPath.replace(/\.svelte$/, ".ts");
-      const pageModule = pageModules[modulePath];
-
-      if (!pageModule) {
-        throw new Error(`Page metadata load is missing for ${componentPath}`);
-      }
-
-      const { metadata } = await pageModule.load();
-      return { metadata, modulePath, path: routePathForModule(modulePath) };
-    }),
-  );
 }
 
-export async function GET(): Promise<Response> {
-  const metadataEntries = await _pageMetadataEntries();
-  const urls = metadataEntries
-    .filter(({ metadata }) => metadata.robots === undefined)
+export function GET(): Response {
+  const urls = _pageEntries()
+    .filter(({ pageModule }) => pageModule._robots === undefined)
     .flatMap(({ path }) => localizedUrlEntries(path))
     .join("\n");
 

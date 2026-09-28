@@ -1,23 +1,12 @@
-import { categoryColor } from "$lib/data/categories.js";
-import { getName, loadNames, loadPageNames } from "$lib/data/names.js";
-import { pageMetadata } from "$lib/data/page-metadata.js";
+import { categoryColor } from "$lib/data/categories";
+import { getName } from "$lib/data/names";
+import { localizedPageLoad } from "$lib/data/page-load";
 import * as m from "$lib/paraglide/messages.js";
-import { baseLocale, getLocaleForUrl } from "$lib/paraglide/runtime.js";
 
 import type { PageLoad } from "./$types";
 
-// The sitemap generator harvests `metadata.robots` from every route by calling `load()` with no
-// event at all (see `MetadataPageModule` in `src/routes/sitemap.xml/+server.ts`), so `url` isn't
-// always present; fall back to the base locale in that case.
-export const load: PageLoad = async (event?: Partial<Parameters<PageLoad>[0]>) => {
-  const locale = event?.url ? getLocaleForUrl(event.url) : baseLocale;
-  await loadNames(locale, ["ui"]);
-  await loadPageNames(event, ["skills"]);
-  return {
-    metadata: pageMetadata({
-      accent: categoryColor("skills"),
-      description: m.skills_page_description({}, { locale }),
-      title: getName("ui", "skills", locale),
-    }),
-  };
-};
+export const load: PageLoad = localizedPageLoad(["skills"], (locale) => ({
+  accent: categoryColor("skills"),
+  description: m.skills_page_description({}, { locale }),
+  title: getName("ui", "skills", locale),
+}));

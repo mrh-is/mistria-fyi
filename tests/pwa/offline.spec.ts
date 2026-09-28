@@ -87,6 +87,21 @@ test("serves cached routes and assets offline, then falls back for an uncached n
 
   await page.goto("/pwa-uncached-offline-probe");
   await expect(page.getByRole("heading", { name: /offline/i })).toBeVisible();
+
+  // The site CSP blocks inline handlers, so retrying must work without script.
+  const retry = page.getByRole("link", { name: "Try again" });
+  await expect(retry).toHaveAttribute("href", "");
+  expect(
+    await page.evaluate(() =>
+      [...document.querySelectorAll("*")].some((element) =>
+        element.getAttributeNames().some((name) => name.startsWith("on")),
+      ),
+    ),
+  ).toBe(false);
+
+  await context.setOffline(false);
+  await retry.click();
+  await expect(page.getByRole("heading", { name: /offline/i })).toBeHidden();
 });
 
 test.describe("without service workers", () => {

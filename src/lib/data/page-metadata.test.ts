@@ -2,14 +2,31 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { _pageMetadataEntries, GET } from "../../routes/sitemap.xml/+server";
+import { _pageEntries, GET } from "../../routes/sitemap.xml/+server";
 import { locales, localizeUrl } from "../paraglide/runtime.js";
 import { categoryKeyForPathname } from "./categories";
 import { errorPageMetadata, pageMetadata, SITE_NAME, SITE_ORIGIN } from "./page-metadata";
 
+import type { PageMetadata } from "./page-metadata";
+
+/**
+ * Runs every rendered page's `load()` as the base locale would render it, with the minimal event
+ * the loads read: the root layout's resolved locale.
+ */
+function pageMetadataEntries() {
+  return Promise.all(
+    _pageEntries().map(async (entry) => {
+      const data = (await entry.pageModule.load({
+        parent: () => Promise.resolve({ locale: "en" }),
+      } as never)) as { metadata: PageMetadata };
+      return { ...entry, metadata: data.metadata };
+    }),
+  );
+}
+
 describe("page metadata", () => {
   it("is provided by every rendered page", async () => {
-    const entries = await _pageMetadataEntries();
+    const entries = await pageMetadataEntries();
 
     expect(entries).not.toHaveLength(0);
     expect(entries.every(({ metadata }) => metadata.description && metadata.title)).toBe(true);
@@ -17,7 +34,7 @@ describe("page metadata", () => {
   });
 
   it("gives every page distinct, meaningful search text and a canonical URL", async () => {
-    const entries = await _pageMetadataEntries();
+    const entries = await pageMetadataEntries();
     const metadata = entries.map((entry) => entry.metadata);
 
     expect(new Set(metadata.map(({ title }) => title))).toHaveLength(metadata.length);
@@ -53,7 +70,7 @@ describe("page metadata", () => {
   });
 
   it("colors category pages with their own accent and everything else with the home accent", async () => {
-    const entries = await _pageMetadataEntries();
+    const entries = await pageMetadataEntries();
 
     for (const { metadata, path } of entries) {
       const categoryKey = categoryKeyForPathname(path);
@@ -62,7 +79,7 @@ describe("page metadata", () => {
   });
 
   it("hides the toolbar on utility pages and keeps it on the tracker", async () => {
-    const entries = await _pageMetadataEntries();
+    const entries = await pageMetadataEntries();
     const toolbarFor = (path: string) =>
       entries.find((entry) => entry.path === path)?.metadata.toolbar;
 
@@ -73,8 +90,14 @@ describe("page metadata", () => {
     expect(errorPageMetadata(404).toolbar).toEqual({ search: false, worldState: false });
   });
 
+  it("declares each page's robots directive statically, where the sitemap reads it", async () => {
+    for (const { metadata, pageModule } of await pageMetadataEntries()) {
+      expect(pageModule._robots).toBe(metadata.robots);
+    }
+  });
+
   it("keeps utility, development, and error pages out of search results", async () => {
-    const entries = await _pageMetadataEntries();
+    const entries = await pageMetadataEntries();
 
     expect(entries.find(({ path }) => path === "/data")?.metadata.robots).toBe("noindex, follow");
     expect(entries.find(({ path }) => path === "/dev/icons")?.metadata.robots).toBe(
@@ -89,8 +112,8 @@ describe("page metadata", () => {
 
 describe("crawler files", () => {
   it("generates the sitemap from indexable page metadata, one locale-prefixed URL per locale", async () => {
-    const entries = await _pageMetadataEntries();
-    const sitemap = await (await GET()).text();
+    const entries = await pageMetadataEntries();
+    const sitemap = await GET().text();
     const locations = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
     const expected = entries
       .filter(({ metadata }) => metadata.robots === undefined)
@@ -104,7 +127,7 @@ describe("crawler files", () => {
   });
 
   it("cross-links every locale's sitemap entry to every other locale via hreflang", async () => {
-    const sitemap = await (await GET()).text();
+    const sitemap = await GET().text();
 
     expect(sitemap).toContain(
       `<xhtml:link rel="alternate" hreflang="ja" href="${localizeUrl(new URL("/almanac", SITE_ORIGIN), { locale: "ja" }).href}" />`,

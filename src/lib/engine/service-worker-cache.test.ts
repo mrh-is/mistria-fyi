@@ -42,12 +42,18 @@ class MemoryCache {
   }
 }
 
+/** Runtime dependencies whose deferred cache writes a test can await with `settled()`. */
 function dependencies(cache: MemoryCache, fetcher: (request: Request) => Promise<Response>) {
+  const pending: Promise<unknown>[] = [];
   return {
     assetPaths: ["/favicon.png"],
     cache,
     fetcher,
     matchCache: (request: RequestInfo | URL) => cache.match(request),
+    settled: () => Promise.all(pending),
+    waitUntil: (promise: Promise<unknown>) => {
+      pending.push(promise);
+    },
   };
 }
 
@@ -96,13 +102,33 @@ describe("service-worker runtime request path", () => {
     const cache = new MemoryCache();
     const request = new Request(`${ORIGIN}/animals`);
 
-    const response = await fetchRuntimeRequest(
-      request,
-      dependencies(cache, vi.fn().mockResolvedValue(new Response("fresh", { status: 200 }))),
+    const deps = dependencies(
+      cache,
+      vi.fn().mockResolvedValue(new Response("fresh", { status: 200 })),
     );
+
+    const response = await fetchRuntimeRequest(request, deps);
+    await deps.settled();
 
     expect(await response.text()).toBe("fresh");
     expect(await (await cache.match(request))?.text()).toBe("fresh");
+  });
+
+  it("returns the network response when the cache write fails", async () => {
+    const cache = new MemoryCache();
+    const request = new Request(`${ORIGIN}/animals`);
+    Object.defineProperty(request, "mode", { value: "navigate" });
+    await cache.put(`${ORIGIN}/offline.html`, new Response("offline page"));
+    vi.spyOn(cache, "put").mockRejectedValue(new DOMException("Full", "QuotaExceededError"));
+    const deps = dependencies(
+      cache,
+      vi.fn().mockResolvedValue(new Response("fresh", { status: 200 })),
+    );
+
+    const response = await fetchRuntimeRequest(request, deps);
+    await deps.settled();
+
+    expect(await response.text()).toBe("fresh");
   });
 
   it.each([404, 500])("does not cache a %i response", async (status) => {
