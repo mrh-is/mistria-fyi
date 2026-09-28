@@ -55,7 +55,7 @@ pnpm run pipeline -- /path/to/assets
 | `pnpm run build`                       | Production build (Cloudflare Pages)               |
 | `pnpm run preview`                     | Preview production build locally                  |
 | `pnpm run check`                       | SvelteKit type checking                           |
-| `pnpm run lint`                        | Prettier + ESLint                                 |
+| `pnpm run lint`                        | oxfmt + oxlint + ESLint + Stylelint               |
 | `pnpm run lint:fix`                    | Auto-fix formatting and lint issues               |
 | `pnpm run test`                        | Complete Vitest suite                             |
 | `pnpm run test:accessibility`          | Complete browser accessibility matrix             |

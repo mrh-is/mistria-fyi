@@ -78,7 +78,7 @@ contracts, and state management rules, see [docs/app-architecture.md](docs/app-a
 | `pnpm run check`                       | SvelteKit type checking                               |
 | `pnpm run check:i18n`                  | Verify locale files match `en.json`'s keys            |
 | `pnpm run check:routes`                | Verify built static assets bypass Functions           |
-| `pnpm run lint`                        | Prettier + ESLint + Stylelint                         |
+| `pnpm run lint`                        | oxfmt + oxlint + ESLint + Stylelint                   |
 | `pnpm run lint:fix`                    | Auto-fix lint issues                                  |
 | `pnpm run test`                        | Complete Vitest suite                                 |
 | `pnpm run test:app`                    | App tests (`src/`)                                    |
@@ -92,11 +92,10 @@ Report vulnerabilities privately — see [SECURITY.md](SECURITY.md).
 
 ## Code Conventions
 
-- **TypeScript**: `strictTypeChecked` ESLint + `strict: true` tsconfig. Use `type` imports
-  (`consistent-type-imports`).
-- **Formatting**: Prettier — double quotes, no tabs, trailing commas, 100 char width, semicolons.
-- **Imports**: Auto-sorted by `perfectionist/sort-imports` — externals first, then `$lib`/`$app`,
-  then relative.
+- **TypeScript**: type-aware oxlint (typescript-eslint's strict & stylistic rules) + `strict: true`
+  tsconfig. Use `type` imports (`consistent-type-imports`).
+- **Formatting**: oxfmt — double quotes, no tabs, trailing commas, 100 char width, semicolons.
+- **Imports**: Auto-sorted by oxfmt — externals first, then `$lib`/`$app`, then relative.
 - **Svelte**: Use `let` (not `const`) for `$props()` destructuring. Use runes (`$state`, `$derived`,
   `$effect`), not legacy stores.
 - **Naming**: `camelCase` variables/functions, `PascalCase` types/components, `kebab-case` files.

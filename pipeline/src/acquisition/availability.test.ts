@@ -281,6 +281,7 @@ describe("projectRequirementExpressionToAvailability", () => {
   });
 
   it("rejects non-JSON array and record structures without discarding their data", () => {
+    // oxlint-disable-next-line unicorn/no-new-array -- the test needs a sparse array
     const sparse: unknown[] = new Array(1);
     const symbolArray: unknown[] = ["calm"];
     Object.defineProperty(symbolArray, Symbol("weather"), { enumerable: true, value: true });

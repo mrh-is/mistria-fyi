@@ -26,7 +26,8 @@ export function extractQuests(
     Record<QuestId, string>
   >;
   const quests = fiddle.quests as
-    Record<string, Record<string, Record<string, unknown>>> | undefined;
+    | Record<string, Record<string, Record<string, unknown>>>
+    | undefined;
   if (!quests) {
     return {
       localeNames,

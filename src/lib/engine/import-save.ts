@@ -39,7 +39,8 @@ export interface ImportResult extends MergeResult {
 
 /** Why no extracted save file could be used. */
 export type SaveFilesError =
-  { code: "no-save-files" } | { code: "no-valid-files"; problems: SaveImportWarning[] };
+  | { code: "no-save-files" }
+  | { code: "no-valid-files"; problems: SaveImportWarning[] };
 
 /**
  * A problem with part of a save that the import skipped, localized by the UI. `path` names the

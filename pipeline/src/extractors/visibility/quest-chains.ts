@@ -135,7 +135,8 @@ function extractHeartChain(
   }
 
   const requestBoard = questGroups?.request_board as
-    Record<string, Record<string, unknown>> | undefined;
+    | Record<string, Record<string, unknown>>
+    | undefined;
   if (requestBoard) {
     for (const [questId, entry] of Object.entries(requestBoard)) {
       if (questId === "default" || typeof entry !== "object" || entry === null) continue;

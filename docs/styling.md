@@ -89,6 +89,9 @@ prevention, not a style guide:
 and generated files. The config is `stylelint.config.js`, and `scripts/stylelint-config.test.ts`
 covers it.
 
+Tailwind class order isn't a lint rule: oxfmt sorts the classes in `class` attributes against
+`src/app.css`, as `prettier-plugin-tailwindcss` did.
+
 ## Escape hatch
 
 When a literal is deliberate, disable the narrowest rule on the narrowest range, with a
