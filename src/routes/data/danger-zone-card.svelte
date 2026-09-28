@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { IconRotate, IconTrash } from "@tabler/icons-svelte-runes";
+  import IconRotate from "@tabler/icons-svelte-runes/icons/rotate";
+  import IconTrash from "@tabler/icons-svelte-runes/icons/trash";
 
   import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
   import { Button } from "$lib/components/ui/button/index.js";

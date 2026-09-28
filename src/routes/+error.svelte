@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { IconHome } from "@tabler/icons-svelte-runes";
+  import IconHome from "@tabler/icons-svelte-runes/icons/home";
 
   import { page } from "$app/state";
   import { localizedHref } from "$lib/utils/localized-href.js";

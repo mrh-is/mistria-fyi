@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { IconNotebook } from "@tabler/icons-svelte-runes";
+  import IconNotebook from "@tabler/icons-svelte-runes/icons/notebook";
 
   import CategoryGrid from "$lib/components/category-grid.svelte";
   import { Icon } from "$lib/components/icon/index.js";

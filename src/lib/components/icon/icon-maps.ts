@@ -1,56 +1,54 @@
-import {
-  IconArchive,
-  IconBabyCarriage,
-  IconBook,
-  IconBook2,
-  IconBug,
-  IconBuildingBank,
-  IconChevronRight,
-  IconCircle,
-  IconCircleCheck,
-  IconCircleDashed,
-  IconClock,
-  IconCloudRain,
-  IconCloudSnow,
-  IconCloudStorm,
-  IconCoins,
-  IconConfetti,
-  IconCrown,
-  IconDiamond,
-  IconEgg,
-  IconFileText,
-  IconFish,
-  IconFishHook,
-  IconFlower,
-  IconHeart,
-  IconHelmet,
-  IconLeaf,
-  IconLock,
-  IconMail,
-  IconNotebook,
-  IconOctagon,
-  IconPaw,
-  IconPick,
-  IconSalad,
-  IconShirt,
-  IconShoppingCart,
-  IconShovel,
-  IconSkull,
-  IconSnowflake,
-  IconSparkles,
-  IconSpiral,
-  IconStar,
-  IconSun,
-  IconSunLow,
-  IconSword,
-  IconToolsKitchen,
-  IconToolsKitchen2,
-  IconTree,
-  IconTrophy,
-  IconWheat,
-  IconWind,
-  IconX,
-} from "@tabler/icons-svelte-runes";
+import IconArchive from "@tabler/icons-svelte-runes/icons/archive";
+import IconBabyCarriage from "@tabler/icons-svelte-runes/icons/baby-carriage";
+import IconBook from "@tabler/icons-svelte-runes/icons/book";
+import IconBook2 from "@tabler/icons-svelte-runes/icons/book-2";
+import IconBug from "@tabler/icons-svelte-runes/icons/bug";
+import IconBuildingBank from "@tabler/icons-svelte-runes/icons/building-bank";
+import IconChevronRight from "@tabler/icons-svelte-runes/icons/chevron-right";
+import IconCircle from "@tabler/icons-svelte-runes/icons/circle";
+import IconCircleCheck from "@tabler/icons-svelte-runes/icons/circle-check";
+import IconCircleDashed from "@tabler/icons-svelte-runes/icons/circle-dashed";
+import IconClock from "@tabler/icons-svelte-runes/icons/clock";
+import IconCloudRain from "@tabler/icons-svelte-runes/icons/cloud-rain";
+import IconCloudSnow from "@tabler/icons-svelte-runes/icons/cloud-snow";
+import IconCloudStorm from "@tabler/icons-svelte-runes/icons/cloud-storm";
+import IconCoins from "@tabler/icons-svelte-runes/icons/coins";
+import IconConfetti from "@tabler/icons-svelte-runes/icons/confetti";
+import IconCrown from "@tabler/icons-svelte-runes/icons/crown";
+import IconDiamond from "@tabler/icons-svelte-runes/icons/diamond";
+import IconEgg from "@tabler/icons-svelte-runes/icons/egg";
+import IconFileText from "@tabler/icons-svelte-runes/icons/file-text";
+import IconFish from "@tabler/icons-svelte-runes/icons/fish";
+import IconFishHook from "@tabler/icons-svelte-runes/icons/fish-hook";
+import IconFlower from "@tabler/icons-svelte-runes/icons/flower";
+import IconHeart from "@tabler/icons-svelte-runes/icons/heart";
+import IconHelmet from "@tabler/icons-svelte-runes/icons/helmet";
+import IconLeaf from "@tabler/icons-svelte-runes/icons/leaf";
+import IconLock from "@tabler/icons-svelte-runes/icons/lock";
+import IconMail from "@tabler/icons-svelte-runes/icons/mail";
+import IconNotebook from "@tabler/icons-svelte-runes/icons/notebook";
+import IconOctagon from "@tabler/icons-svelte-runes/icons/octagon";
+import IconPaw from "@tabler/icons-svelte-runes/icons/paw";
+import IconPick from "@tabler/icons-svelte-runes/icons/pick";
+import IconSalad from "@tabler/icons-svelte-runes/icons/salad";
+import IconShirt from "@tabler/icons-svelte-runes/icons/shirt";
+import IconShoppingCart from "@tabler/icons-svelte-runes/icons/shopping-cart";
+import IconShovel from "@tabler/icons-svelte-runes/icons/shovel";
+import IconSkull from "@tabler/icons-svelte-runes/icons/skull";
+import IconSnowflake from "@tabler/icons-svelte-runes/icons/snowflake";
+import IconSparkles from "@tabler/icons-svelte-runes/icons/sparkles";
+import IconSpiral from "@tabler/icons-svelte-runes/icons/spiral";
+import IconStar from "@tabler/icons-svelte-runes/icons/star";
+import IconSun from "@tabler/icons-svelte-runes/icons/sun";
+import IconSunLow from "@tabler/icons-svelte-runes/icons/sun-low";
+import IconSword from "@tabler/icons-svelte-runes/icons/sword";
+import IconToolsKitchen from "@tabler/icons-svelte-runes/icons/tools-kitchen";
+import IconToolsKitchen2 from "@tabler/icons-svelte-runes/icons/tools-kitchen-2";
+import IconTree from "@tabler/icons-svelte-runes/icons/tree";
+import IconTrophy from "@tabler/icons-svelte-runes/icons/trophy";
+import IconWheat from "@tabler/icons-svelte-runes/icons/wheat";
+import IconWind from "@tabler/icons-svelte-runes/icons/wind";
+import IconX from "@tabler/icons-svelte-runes/icons/x";
 
 import type { Icon } from "@tabler/icons-svelte-runes";
 

@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { IconCheck, IconCopy, IconDeviceDesktop, IconUpload } from "@tabler/icons-svelte-runes";
+  import IconCheck from "@tabler/icons-svelte-runes/icons/check";
+  import IconCopy from "@tabler/icons-svelte-runes/icons/copy";
+  import IconDeviceDesktop from "@tabler/icons-svelte-runes/icons/device-desktop";
+  import IconUpload from "@tabler/icons-svelte-runes/icons/upload";
 
   import { Button } from "$lib/components/ui/button/index.js";
   import * as Dialog from "$lib/components/ui/dialog/index.js";

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { IconX } from "@tabler/icons-svelte-runes";
+  import IconX from "@tabler/icons-svelte-runes/icons/x";
   import { tick } from "svelte";
 
   import * as m from "$lib/paraglide/messages.js";

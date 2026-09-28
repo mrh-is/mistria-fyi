@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { IconBeta, IconChevronRight, IconLanguage } from "@tabler/icons-svelte-runes";
+  import IconBeta from "@tabler/icons-svelte-runes/icons/beta";
+  import IconChevronRight from "@tabler/icons-svelte-runes/icons/chevron-right";
+  import IconLanguage from "@tabler/icons-svelte-runes/icons/language";
   import { slide } from "svelte/transition";
 
   import { page } from "$app/state";
