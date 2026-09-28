@@ -140,6 +140,17 @@ them to interim machine-translated `source_location_*` & `source_water_*` messag
 are keyed by English `bundleName` through a static id map. Replace these with pipeline extraction
 once the game's translation keys are read from `assets/localization/`.
 
+## Falling back to English
+
+When nothing better is available, the app serves English rather than an error or an empty slot. This
+is the rule for every layer: a game-data name with no translation, a UI string a locale hasn't
+translated, and a request with no usable locale all resolve to English.
+
+Every page URL carries a locale prefix (`/ja/almanac`); there is no unprefixed default. A bare path
+redirects (307) to the stored preference cookie's locale, then the best `Accept-Language` match,
+then `/en` (`bareLocaleRedirect` in `src/hooks.server.ts`). The redirect sends
+`Vary: Cookie, Accept-Language` so caches don't hand one visitor's locale to another.
+
 ## Adding a new UI string (agents & humans)
 
 1. Add the English string to `messages/en.json` under a descriptive key (snake_case, prefixed by
