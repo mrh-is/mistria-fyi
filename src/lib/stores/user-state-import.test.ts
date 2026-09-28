@@ -17,6 +17,7 @@ describe("importState validation", () => {
 
   it("succeeds with a valid backup", () => {
     const json = userState.exportState();
+    expect(JSON.parse(json)).toMatchObject({ version: "2" });
     const result = userState.importState(json);
     expect(result.ok).toBe(true);
   });
@@ -25,6 +26,7 @@ describe("importState validation", () => {
     const almanacId = Object.values(trackerData.almanac)[0].items[0].itemIds[0];
     const cosmeticId = recordKeys(trackerData.cosmetics)[0];
     const data = JSON.parse(userState.exportState()) as Record<string, unknown>;
+    data.version = "1";
     const completed = data.completed as Record<string, unknown>;
     completed.almanac = [almanacId];
     completed.cosmetics = [cosmeticId];
