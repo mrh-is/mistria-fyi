@@ -140,12 +140,11 @@ describe("TrackerRow reportable metadata", () => {
 
     const list = document.createElement("div");
     document.body.append(list);
-    let firstView: ReturnType<typeof render> | undefined;
-    const first = (firstView = render(TrackerRow, {
+    const first = render(TrackerRow, {
       display: { mode: "visible" },
       name: "First item",
       onToggle: () => {
-        void firstView?.rerender({
+        void first.rerender({
           display: { leaving: true, mode: "completed" },
           name: "First item",
           onToggle: vi.fn(),
@@ -155,7 +154,7 @@ describe("TrackerRow reportable metadata", () => {
       },
       reportCategory: "item",
       reportEntityId: "first",
-    }));
+    });
     const second = render(TrackerRow, {
       display: { mode: "visible" },
       name: "Second item",
