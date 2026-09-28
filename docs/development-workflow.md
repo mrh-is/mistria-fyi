@@ -162,6 +162,9 @@ Tests sit next to the module they cover, so moving or deleting a module takes it
 - **Whole-app or repo-level suites** (accessibility, PWA, CI workflow checks) live in top-level
   `tests/`, because they exercise the built app or the repository rather than one module.
 
+The committed `.vscode/settings.json` nests each test under its source in the VS Code explorer, so
+colocated tests don’t double the length of directory listings.
+
 ### Executing Tests
 
 - **Run All Unit Tests** (asset-independent):
