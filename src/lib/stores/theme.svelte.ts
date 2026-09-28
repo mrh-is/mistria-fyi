@@ -1,8 +1,9 @@
+import { MediaQuery } from "svelte/reactivity";
+
+import { THEME_COLORS, THEME_STORAGE_KEY } from "$lib/theme";
 import { safeLocalStorage } from "$lib/utils/local-storage.js";
 
 export type Theme = "dark" | "light" | "system";
-
-const STORAGE_KEY = "mistria-fyi-theme";
 
 function applyTheme(resolved: "dark" | "light") {
   if (typeof document === "undefined") return;
@@ -10,37 +11,32 @@ function applyTheme(resolved: "dark" | "light") {
   // Update mobile browser chrome color
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) {
-    meta.setAttribute("content", resolved === "dark" ? "#222226" : "#f7f5f0");
+    meta.setAttribute("content", THEME_COLORS[resolved]);
   }
 }
 
 function createThemeStore() {
   let preference = $state<Theme>("system");
+  // Reactive, so "system" follows the OS theme as it changes.
+  const prefersDark = new MediaQuery("(prefers-color-scheme: dark)");
 
   // Load saved preference
-  const stored = safeLocalStorage.getItem(STORAGE_KEY) as null | Theme;
+  const stored = safeLocalStorage.getItem(THEME_STORAGE_KEY) as null | Theme;
   if (stored && ["dark", "light", "system"].includes(stored)) {
     preference = stored;
   }
 
   const resolved = $derived<"dark" | "light">(
-    preference === "system" ? getSystemTheme() : preference,
+    preference === "system" ? (prefersDark.current ? "dark" : "light") : preference,
   );
 
-  // Apply on change + listen for system theme changes
+  // Apply on change, including OS theme changes in "system" mode
   if (typeof window !== "undefined") {
     $effect.root(() => {
       $effect(() => {
         applyTheme(resolved);
-        safeLocalStorage.setItem(STORAGE_KEY, preference);
+        safeLocalStorage.setItem(THEME_STORAGE_KEY, preference);
       });
-    });
-
-    // React to OS theme changes when in "system" mode
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-      if (preference === "system") {
-        applyTheme(getSystemTheme());
-      }
     });
   }
 
@@ -60,11 +56,6 @@ function createThemeStore() {
       preference = theme;
     },
   };
-}
-
-function getSystemTheme(): "dark" | "light" {
-  if (typeof window === "undefined") return "light";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 export const theme = createThemeStore();
