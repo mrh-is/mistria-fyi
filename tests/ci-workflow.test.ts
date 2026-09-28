@@ -17,7 +17,7 @@ interface Workflow {
 }
 
 interface WorkflowJob {
-  container?: string;
+  container?: string | { image?: string; options?: string };
   if?: string;
   needs?: string | string[];
   outputs?: Record<string, string>;
@@ -197,34 +197,28 @@ describe("CI workflow browser suites", () => {
       (step) => step.id === "accessibility-tests",
     );
     const pwaStep = jobs.pwa.steps?.find((step) => step.id === "pwa-tests");
-    expect(accessibilityStep?.run).toBe(
-      "pnpm run test:accessibility -- --shard=${{ matrix.shard }}",
-    );
+    expect(accessibilityStep?.run).toBe("pnpm run test:accessibility --shard=${{ matrix.shard }}");
     expect(accessibilityStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
     expect(pwaStep?.run).toBe("pnpm run test:pwa");
     expect(pwaStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
   });
 
-  it("runs in the Playwright image that matches the locked Playwright version", () => {
-    const lockfile = readFileSync("pnpm-lock.yaml", "utf8");
-    const lockedVersion = /^ {2}'@playwright\/test@([\d.]+)':$/m.exec(lockfile)?.[1];
-    expect(lockedVersion).toBeDefined();
-
+  it("runs browser suites on host runners with cached Chromium", () => {
     for (const jobName of browserJobs) {
-      expect(jobs[jobName].container).toBe(
-        `mcr.microsoft.com/playwright:v${String(lockedVersion)}-noble`,
-      );
-      // The image already carries Chromium and its system libraries.
-      const commands = runCommands(jobs[jobName]).join("\n");
-      expect(commands).not.toMatch(/playwright install|firefox|webkit/);
-      // The container's root user must trust the runner-owned checkout before the preview server
-      // loads svelte.config.js, which runs `git rev-parse`.
-      const commandList = runCommands(jobs[jobName]);
+      expect(jobs[jobName].container).toBeUndefined();
+      const steps = jobs[jobName].steps ?? [];
+      const cache = steps.find((step) => step.id === "playwright-cache");
+      expect(cache?.uses).toMatch(/^actions\/cache@[a-f0-9]{40}$/);
+      expect(cache?.with?.path).toBe("~/.cache/ms-playwright");
+      expect(cache?.with?.key).toBe("playwright-${{ hashFiles('pnpm-lock.yaml') }}");
       expect(
-        commandList.indexOf('git config --global --add safe.directory "$GITHUB_WORKSPACE"'),
-      ).toBe(1);
-      expect(jobs[jobName].steps?.some((step) => step.uses?.startsWith("actions/cache@"))).toBe(
-        false,
+        steps.find((step) => step.run === "pnpm exec playwright install --with-deps chromium")?.if,
+      ).toBe("steps.playwright-cache.outputs.cache-hit != 'true'");
+      expect(
+        steps.find((step) => step.run === "pnpm exec playwright install-deps chromium")?.if,
+      ).toBe("steps.playwright-cache.outputs.cache-hit == 'true'");
+      expect(runCommands(jobs[jobName])).not.toContain(
+        'git config --global --add safe.directory "$GITHUB_WORKSPACE"',
       );
     }
   });
@@ -232,10 +226,7 @@ describe("CI workflow browser suites", () => {
   it("shards accessibility across parallel matrix jobs without sharding PWA", () => {
     const shards = jobs.accessibility.strategy?.matrix?.shard ?? [];
     expect(jobs.accessibility.strategy?.["fail-fast"]).toBe(false);
-    expect(shards.length).toBeGreaterThan(1);
-    expect(shards).toEqual(
-      shards.map((_, index) => `${String(index + 1)}/${String(shards.length)}`),
-    );
+    expect(shards).toEqual(["1/4", "2/4", "3/4", "4/4"]);
     expect(jobs.pwa.strategy).toBeUndefined();
   });
 
