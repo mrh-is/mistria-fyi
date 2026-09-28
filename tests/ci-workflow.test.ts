@@ -197,9 +197,7 @@ describe("CI workflow browser suites", () => {
       (step) => step.id === "accessibility-tests",
     );
     const pwaStep = jobs.pwa.steps?.find((step) => step.id === "pwa-tests");
-    expect(accessibilityStep?.run).toBe(
-      "pnpm run test:accessibility -- --shard=${{ matrix.shard }}",
-    );
+    expect(accessibilityStep?.run).toBe("pnpm run test:accessibility --shard=${{ matrix.shard }}");
     expect(accessibilityStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
     expect(pwaStep?.run).toBe("pnpm run test:pwa");
     expect(pwaStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
@@ -228,7 +226,7 @@ describe("CI workflow browser suites", () => {
   it("shards accessibility across parallel matrix jobs without sharding PWA", () => {
     const shards = jobs.accessibility.strategy?.matrix?.shard ?? [];
     expect(jobs.accessibility.strategy?.["fail-fast"]).toBe(false);
-    expect(shards).toEqual(["1/4", "2/4", "3/4", "4/4"]);
+    expect(shards).toEqual(["1/3", "2/3", "3/3"]);
     expect(jobs.pwa.strategy).toBeUndefined();
   });
 
