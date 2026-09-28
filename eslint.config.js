@@ -1,7 +1,10 @@
+// ESLint covers only what oxlint can't: Svelte templates. oxlint (`.oxlintrc.json`) lints every
+// script, including `.svelte` `<script>` blocks; ESLint runs eslint-plugin-svelte, the template-aware
+// `no-unused-vars`, and the local `no-hardcoded-ui-text` rule on `.svelte` & `.svelte.{js,ts}` files,
+// without type information. Type-aware rules for `.svelte` files live in
+// `eslint.svelte-types.config.js` (`pnpm run lint:svelte-types`). See
+// docs/development-workflow.md#linting--formatting.
 import { includeIgnoreFile } from "@eslint/compat";
-import js from "@eslint/js";
-import prettier from "eslint-config-prettier";
-import perfectionist from "eslint-plugin-perfectionist";
 import svelte from "eslint-plugin-svelte";
 import { defineConfig } from "eslint/config";
 import globals from "globals";
@@ -9,18 +12,9 @@ import { fileURLToPath } from "node:url";
 import ts from "typescript-eslint";
 
 import noHardcodedUiText from "./eslint-rules/no-hardcoded-ui-text.js";
-import svelteConfig from "./svelte.config.js";
+import { svelteFiles, svelteParserOptions } from "./eslint.shared.js";
 
 const gitignorePath = fileURLToPath(new URL("./.gitignore", import.meta.url));
-
-// eslint-plugin-svelte reads only these fields. Passing the whole config breaks `eslint --cache`,
-// which serializes parser options and can't handle `kit.typescript.config`'s function value.
-const lintSvelteConfig = {
-  compilerOptions: svelteConfig.compilerOptions,
-  kit: { files: svelteConfig.kit?.files },
-  onwarn: svelteConfig.onwarn,
-  warningFilter: svelteConfig.warningFilter,
-};
 
 // Files already migrated to Paraglide messages. The no-hardcoded-ui-text rule (see
 // docs/localization.md) only applies here — turning it on repo-wide today would flag every
@@ -77,186 +71,33 @@ const localizedFiles = [
 
 export default defineConfig(
   includeIgnoreFile(gitignorePath),
-  js.configs.recommended,
-  ...ts.configs.strictTypeChecked,
-  ...ts.configs.stylisticTypeChecked,
   ...svelte.configs.recommended,
-  prettier,
+  // Formatting belongs to oxfmt.
   ...svelte.configs.prettier,
   {
+    files: svelteFiles,
     languageOptions: {
-      globals: {
-        ...globals.browser,
-        ...globals.node,
-      },
-      parserOptions: {
-        extraFileExtensions: [".svelte"],
-        projectService: true,
-      },
+      globals: { ...globals.browser, ...globals.node },
+      parserOptions: svelteParserOptions,
     },
   },
-  perfectionist.configs["recommended-natural"],
   {
+    files: ["**/*.svelte"],
+    plugins: { "@typescript-eslint": ts.plugin },
     rules: {
-      "@typescript-eslint/consistent-type-imports": "error",
-      "@typescript-eslint/no-import-type-side-effects": "error",
-      // The barrel re-exports ~6,000 icon components, and Vitest compiles every one of them in
-      // each worker that imports it. Deep imports cut the test suite's transform time by >60%.
-      "@typescript-eslint/no-restricted-imports": [
-        "error",
-        {
-          paths: [
-            {
-              allowTypeImports: true,
-              message: 'Import icons individually, e.g. from "@tabler/icons-svelte-runes/icons/x".',
-              name: "@tabler/icons-svelte-runes",
-            },
-          ],
-        },
-      ],
-      "@typescript-eslint/no-unnecessary-condition": "warn",
+      // oxlint sees only the `<script>` block, so it can't tell when a variable is used only in the
+      // template and skips the check in `.svelte` files. svelte-eslint-parser's scope analysis can.
+      // (oxlint still checks `.svelte.ts` files, which have no template.)
       "@typescript-eslint/no-unused-vars": [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
-      "@typescript-eslint/prefer-nullish-coalescing": "error",
-      "@typescript-eslint/prefer-optional-chain": "error",
-      "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
-      "@typescript-eslint/switch-exhaustiveness-check": "error",
-      curly: ["error", "multi-line", "consistent"],
-      eqeqeq: "error",
-      "no-alert": "error",
-      "no-console": "warn",
-      "no-debugger": "error",
-      "no-eval": "error",
-      "no-unneeded-ternary": "error",
-      "no-useless-rename": "error",
-      "no-var": "error",
-      "object-shorthand": "error",
-      // Perfectionist — customize import grouping for SvelteKit
-      "perfectionist/sort-imports": [
-        "error",
-        {
-          type: "natural",
-          groups: [
-            "side-effect",
-            "side-effect-style",
-            ["builtin", "external"],
-            "internal",
-            ["parent", "sibling", "index"],
-            ["type-builtin", "type-external"],
-            "type-internal",
-            ["type-parent", "type-sibling", "type-index"],
-            "unknown",
-          ],
-          ignoreCase: true,
-          internalPattern: ["^\\$lib", "^\\$app", "^\\$env", "^\\$service-worker"],
-          order: "asc",
-          tsconfig: { rootDir: "." },
-        },
-      ],
-      "perfectionist/sort-object-types": [
-        "error",
-        {
-          customGroups: [
-            { elementNamePattern: "^start$", groupName: "range-start" },
-            { elementNamePattern: "^end$", groupName: "range-end" },
-            { elementNamePattern: "^type$", groupName: "type-discriminator" },
-          ],
-          groups: ["type-discriminator", "range-start", "range-end", "unknown"],
-        },
-      ],
-      "perfectionist/sort-objects": [
-        "error",
-        {
-          customGroups: [
-            { elementNamePattern: "^start$", groupName: "range-start" },
-            { elementNamePattern: "^end$", groupName: "range-end" },
-            { elementNamePattern: "^type$", groupName: "type-discriminator" },
-          ],
-          groups: ["type-discriminator", "range-start", "range-end", "unknown"],
-          partitionByNewLine: true,
-        },
-      ],
-      "prefer-const": "error",
-      "prefer-template": "error",
-      "sort-keys": "off",
-    },
-  },
-  {
-    // Svelte-specific overrides (must come AFTER general rules)
-    files: ["**/*.svelte", "**/*.svelte.ts"],
-    languageOptions: {
-      parserOptions: {
-        extraFileExtensions: [".svelte"],
-        parser: ts.parser,
-        projectService: true,
-        svelteConfig: lintSvelteConfig,
-        tsconfigRootDir: fileURLToPath(new URL(".", import.meta.url)),
-      },
-    },
-    rules: {
-      // {@render children()} triggers false positive
-      "@typescript-eslint/no-unsafe-call": "off",
-      // Svelte requires `let` for $props() destructuring (reactivity)
-      "prefer-const": "off",
-    },
-  },
-  {
-    // Pipeline is a CLI tool — console output is intentional, and game data
-    // is loosely typed so defensive checks against `unknown` casts are valid
-    files: ["pipeline/**/*.ts"],
-    rules: {
-      "@typescript-eslint/no-unnecessary-condition": "off",
-      "@typescript-eslint/no-unsafe-assignment": "off",
-      "@typescript-eslint/no-unsafe-return": "off",
-      "no-console": "off",
-    },
-  },
-  {
-    // Scripts are utility/CLI files — console output and defensive checks are intentional
-    files: ["scripts/**/*.ts"],
-    rules: {
-      "@typescript-eslint/no-unnecessary-condition": "off",
-      "@typescript-eslint/no-unsafe-assignment": "off",
-      "@typescript-eslint/no-unsafe-return": "off",
-      "no-console": "off",
     },
   },
   {
     // shadcn-svelte generated components — vendored code, relax strict rules
-    files: ["src/lib/components/ui/**/*.svelte", "src/lib/components/ui/**/*.ts"],
-    rules: {
-      "@typescript-eslint/consistent-type-imports": "off",
-      "@typescript-eslint/no-redundant-type-constituents": "off",
-      "@typescript-eslint/no-unnecessary-condition": "off",
-      "@typescript-eslint/no-unsafe-argument": "off",
-      "@typescript-eslint/no-unsafe-assignment": "off",
-      "@typescript-eslint/no-unsafe-member-access": "off",
-      "@typescript-eslint/no-unsafe-return": "off",
-      "@typescript-eslint/prefer-nullish-coalescing": "off",
-      "perfectionist/sort-imports": "off",
-      "perfectionist/sort-named-exports": "off",
-      "perfectionist/sort-object-types": "off",
-      "perfectionist/sort-objects": "off",
-      "svelte/no-navigation-without-resolve": "off",
-    },
-  },
-  {
-    // Service worker uses a separate TS environment (webworker lib) not covered by the project
-    // service, so disable type-checked rules to avoid "not found by project service" errors.
-    files: ["src/service-worker.ts"],
-    ...ts.configs.disableTypeChecked,
-  },
-  {
-    // Relax rules for config files (JS, no tsconfig coverage)
-    files: ["*.config.{js,ts}", "*.config.*.{js,ts}"],
-    ...ts.configs.disableTypeChecked,
-  },
-  {
-    // Local ESLint rule implementations — plain JS, no tsconfig coverage
-    files: ["eslint-rules/**/*.js"],
-    ...ts.configs.disableTypeChecked,
+    files: ["src/lib/components/ui/**/*.svelte"],
+    rules: { "svelte/no-navigation-without-resolve": "off" },
   },
   {
     // See docs/localization.md — catches hardcoded UI text only in files already migrated

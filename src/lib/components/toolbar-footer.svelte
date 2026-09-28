@@ -26,7 +26,6 @@
 
   type ActivePanel = "feedback" | "settings" | "visibility" | null;
 
-  /* eslint-disable no-useless-assignment -- $bindable default; reassigned reactively in $effect */
   // The root layout resolves `metadata` (including the error-page fallback) and passes it down, so
   // this never reads `page.data.metadata`, which is absent when no `+page.ts` load ran.
   let {
@@ -36,7 +35,6 @@
     metadata: PageMetadata;
     overlayActive?: boolean;
   } = $props();
-  /* eslint-enable no-useless-assignment */
 
   let feedbackContext = getFeedbackContext();
   // Route matching below is keyed by the unprefixed route, not the locale-prefixed browser URL.
