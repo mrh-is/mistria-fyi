@@ -1,6 +1,8 @@
 import { paraglideVitePlugin } from "@inlang/paraglide-js";
 import { sveltekit } from "@sveltejs/kit/vite";
 import tailwindcss from "@tailwindcss/vite";
+import { svelteTesting } from "@testing-library/svelte/vite";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import { configDefaults } from "vitest/config";
 
@@ -19,6 +21,21 @@ const localizedCatchAllPattern: [string, string][] = LOCALE_CODES.map((locale) =
   locale,
   `/${locale}/:path(.*)?`,
 ]);
+
+const sharedTestExcludes = [
+  ...configDefaults.exclude,
+  "**/.worktrees/**",
+  "**/.claude/worktrees/**",
+  "**/.pnpm-store/**",
+];
+
+// Run in the `mocked` project, with isolation preserved. See that project's comment.
+const isolatedTests = [
+  "src/lib/data/names.fallback.test.ts",
+  "src/lib/data/names.loading.test.ts",
+  "src/lib/utils/celebrate.test.ts",
+  "src/lib/utils/undo-toast.test.ts",
+];
 
 export default defineConfig({
   build: {
@@ -75,22 +92,75 @@ export default defineConfig({
     strictPort: Boolean(process.env.PORT),
   },
   test: {
-    exclude: [
-      ...configDefaults.exclude,
-      "**/*.assets.test.ts",
-      "**/*.client.test.ts",
-      "tests/accessibility/**",
-      "tests/pwa/**",
-      "**/.worktrees/**",
-      "**/.claude/worktrees/**",
-      "**/.pnpm-store/**",
-      // Run under vitest.mocked.config.ts instead, with isolation preserved. See that file.
-      "src/lib/data/names.fallback.test.ts",
-      "src/lib/data/names.loading.test.ts",
-      "src/lib/utils/celebrate.test.ts",
-      "src/lib/utils/undo-toast.test.ts",
+    // Each project is a tier, split by what its tests need to run. `pnpm run test` runs every
+    // project except `assets`; see docs/development-workflow.md §4.
+    projects: [
+      {
+        extends: true,
+        test: {
+          exclude: [
+            ...sharedTestExcludes,
+            "**/*.assets.test.ts",
+            "**/*.client.test.ts",
+            ...isolatedTests,
+          ],
+          include: ["src/**/*.test.ts"],
+          isolate: false,
+          name: "app",
+          setupFiles: ["./src/vitest-setup-app-state.ts", "./src/vitest-setup-names.ts"],
+        },
+      },
+      {
+        // Pipeline, build scripts, & repo-level checks: plain Node, no SvelteKit stand-ins.
+        extends: true,
+        test: {
+          exclude: [...sharedTestExcludes, "**/*.assets.test.ts"],
+          include: ["pipeline/**/*.test.ts", "scripts/**/*.test.ts", "tests/**/*.test.ts"],
+          isolate: false,
+          name: "node",
+        },
+      },
+      {
+        extends: true,
+        test: {
+          // These files use vi.mock() on shared packages (canvas-confetti, svelte-sonner) or reset
+          // the module registry to observe `names.js` from a cold start. Under the server project's
+          // `isolate: false`, a module cached unmocked by another file in the same worker can win
+          // the race and leave the mock unapplied, and a reset registry would hand later files an
+          // unloaded name cache, so they need real isolation. This project deliberately has no
+          // `vitest-setup-names.ts`: the names tests load exactly the chunks they mean to test.
+          include: isolatedTests,
+          name: "mocked",
+        },
+      },
+      {
+        extends: true,
+        plugins: [svelteTesting()],
+        test: {
+          environment: "jsdom",
+          include: ["src/**/*.client.test.ts"],
+          name: "client",
+          setupFiles: [
+            "./src/vitest-setup.ts",
+            "./src/vitest-setup-app-state.ts",
+            "./src/vitest-setup-names.ts",
+          ],
+        },
+      },
+      {
+        // Needs the installed game assets, so CI never runs it; `pnpm run test` excludes it.
+        resolve: {
+          alias: {
+            $lib: fileURLToPath(new URL("./src/lib", import.meta.url)),
+          },
+        },
+        test: {
+          exclude: sharedTestExcludes,
+          globalSetup: ["pipeline/src/assets-test-setup.ts"],
+          include: ["**/*.assets.test.ts"],
+          name: "assets",
+        },
+      },
     ],
-    isolate: false,
-    setupFiles: ["./src/vitest-setup-app-state.ts", "./src/vitest-setup-names.ts"],
   },
 });

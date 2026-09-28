@@ -10,7 +10,7 @@ const balor = "balor" as VillagerId;
 const turnip = "turnip" as ItemId;
 
 /**
- * Runs under `vitest.mocked.config.ts` with no preload setup, so `names.js` starts cold: nothing
+ * Runs in the `mocked` Vitest project with no preload setup, so `names.js` starts cold: nothing
  * is resident until a test awaits it. That's the only way to observe the loading boundary.
  */
 describe("name chunk loading", () => {

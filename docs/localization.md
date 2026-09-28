@@ -101,7 +101,7 @@ exists but was never awaited throws rather than silently degrading.
   results on that load. Chunks are cached per `<locale>/<category>` for the session, so reopening
   search never refetches.
 - **Tests** run with every chunk preloaded by `src/vitest-setup-names.ts`. Tests of the loading
-  boundary itself live under `vitest.mocked.config.ts`, which skips that setup.
+  boundary itself run in the `mocked` Vitest project, which skips that setup.
 
 **MFG's own UI chrome text** (buttons, labels, dialogs, descriptions) is machine-translated by us
 and built on [Paraglide JS](https://inlang.com/m/gerre34r/library-inlang-paraglideJs). Source
