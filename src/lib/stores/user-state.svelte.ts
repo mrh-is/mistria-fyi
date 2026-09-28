@@ -17,6 +17,7 @@ import {
   relationshipRank,
 } from "$lib/engine/relationships.js";
 import { deriveProgressionState, type UserProgressionState } from "$lib/engine/visibility.js";
+import { isWeatherInSeason } from "$lib/engine/world-state";
 import {
   AVAILABILITY_WINDOWS,
   DEFAULT_AVAILABILITY_WINDOWS,
@@ -129,6 +130,12 @@ export interface MergeCounts {
 export interface MergeResult {
   conflicts: MergeConflict[];
   counts: MergeCounts;
+}
+
+/** The outcome of one `completeQuestWithRecipes` call, enough to undo exactly that call. */
+export interface QuestCompletion {
+  newlyAdded: RecipeId[];
+  previousState: QuestState;
 }
 
 export type QuestState = (typeof QUEST_STATES)[number];
@@ -445,12 +452,12 @@ function createUserState() {
     applyStartingItems() {
       addStartingItems(state.completed);
     },
-    completeQuestWithRecipes(id: QuestId): RecipeId[] {
-      const current = state.completed.questStates[id] ?? "none";
-      state.completed.questStates[id] =
-        current === "none" ? "obtained" : current === "obtained" ? "completed" : "none";
+    /** Cycles the quest's state, completing its recipe rewards on the obtained-to-completed step. */
+    completeQuestWithRecipes(id: QuestId): QuestCompletion {
+      const previousState = state.completed.questStates[id] ?? "none";
+      state.completed.questStates[id] = nextQuestState(previousState);
 
-      if (current !== "obtained") return [];
+      if (previousState !== "obtained") return { newlyAdded: [], previousState };
 
       const candidates = findRecipesForQuest(id);
       const newlyAdded: RecipeId[] = [];
@@ -460,13 +467,10 @@ function createUserState() {
           newlyAdded.push(recipeId);
         }
       }
-      return newlyAdded;
+      return { newlyAdded, previousState };
     },
     cycleQuestState(id: QuestId) {
-      const current = state.completed.questStates[id] ?? "none";
-      const next: QuestState =
-        current === "none" ? "obtained" : current === "obtained" ? "completed" : "none";
-      state.completed.questStates[id] = next;
+      state.completed.questStates[id] = nextQuestState(state.completed.questStates[id] ?? "none");
     },
     dismissPersistenceWarning() {
       if (persistenceBlocked) {
@@ -908,6 +912,9 @@ function createUserState() {
     },
     setSeason(season: Season) {
       state.worldState.season = season;
+      if (!isWeatherInSeason(state.worldState.weather, season)) {
+        state.worldState.weather = "calm";
+      }
     },
     setSkillLevel(id: SkillId, level: number) {
       state.completed.skillLevels[id] = clampLevel(level, MAX_SKILL_LEVEL);
@@ -930,6 +937,7 @@ function createUserState() {
       }
     },
     setWeather(weather: Weather) {
+      if (!isWeatherInSeason(weather, state.worldState.season)) return;
       state.worldState.weather = weather;
     },
     get state(): UserState {
@@ -989,9 +997,8 @@ function createUserState() {
       toggleInSet(state.completed.mines.spells, id);
     },
     /** Restores the quest's prior state and removes only recipes added by that transition. */
-    undoQuestWithRecipes(id: QuestId, newlyAdded: RecipeId[]) {
-      this.cycleQuestState(id);
-      this.cycleQuestState(id);
+    undoQuestWithRecipes(id: QuestId, { newlyAdded, previousState }: QuestCompletion) {
+      state.completed.questStates[id] = previousState;
       for (const recipeId of newlyAdded) {
         state.completed.almanacRecipes.delete(recipeId);
       }
@@ -1296,17 +1303,21 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((entry) => typeof entry === "string");
 }
 
-// ─── Serialization helpers ───────────────────────────────────────────
-
 function isStringArrayRecord(value: unknown): value is Record<string, string[]> {
   return isRecord(value) && Object.values(value).every(isStringArray);
 }
+
+// ─── Serialization helpers ───────────────────────────────────────────
 
 function knownBrandedSet<T>(
   ids: readonly string[],
   knownIds: object | ReadonlySet<string>,
 ): Set<T> {
   return new SvelteSet(ids.filter((id) => hasKnownId(knownIds, id))) as unknown as Set<T>;
+}
+
+function nextQuestState(current: QuestState): QuestState {
+  return current === "none" ? "obtained" : current === "obtained" ? "completed" : "none";
 }
 
 function normalizeAlmanacIds(ids: string[]): Set<ItemId> {
