@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { trackerData } from "$lib/data/index.js";
 import { recordEntries } from "$lib/utils.js";
 
-import { getVariantSeason, isVariantInScope } from "../animal-availability";
+import { getVariantSeason, isVariantInScope } from "./animal-availability";
 
 import type { AvailabilityMode } from "$lib/stores/user-state.svelte.js";
 import type { AnimalVariant, Season } from "$lib/types/tracker-data.js";

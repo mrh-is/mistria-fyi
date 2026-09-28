@@ -148,6 +148,23 @@ pipelines.
 2. **Green**: Write the minimal implementation code necessary to pass the test.
 3. **Refactor**: Clean up the implementation while maintaining passing tests.
 
+### Test file placement
+
+Tests sit next to the module they cover, so moving or deleting a module takes its test with it.
+
+- **Unit & module tests** are siblings: `foo.ts` → `foo.test.ts`. Do not create `__tests__/`
+  directories or mirror the source tree elsewhere.
+- **Runtime or requirement variants** use a suffix, not a directory: `foo.client.test.ts` for
+  browser-only tests and `foo.assets.test.ts` for tests that need game assets. `vite.config.ts`
+  selects them by glob.
+- **Large test files** split by suffix so they sort beside their source: `progress.test.ts` &
+  `progress.renown.test.ts`.
+- **Whole-app or repo-level suites** (accessibility, PWA, CI workflow checks) live in top-level
+  `tests/`, because they exercise the built app or the repository rather than one module.
+
+The committed `.vscode/settings.json` nests each test under its source in the VS Code explorer, so
+colocated tests don’t double the length of directory listings.
+
 ### Executing Tests
 
 - **Run All Unit Tests** (asset-independent):

@@ -196,6 +196,8 @@ These rules prevent accidental damage to generated or vendored code:
   `$effect`), not legacy stores.
 - **Naming**: `camelCase` variables/functions, `PascalCase` types/components, `kebab-case` files.
   Branded IDs for type safety.
+- **Tests**: Colocate as `foo.test.ts` beside `foo.ts`; no `__tests__/` directories. See
+  [docs/development-workflow.md §4](docs/development-workflow.md#test-file-placement).
 - **Rules**: `eqeqeq`, `prefer-const` (except `.svelte`), `no-var`, `object-shorthand`,
   `prefer-template`, `curly` (multi-line).
 
