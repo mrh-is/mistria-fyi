@@ -9,7 +9,7 @@ import {
   encodeTransferPayload,
   OutdatedTransferPayloadError,
   TRANSFER_VERSION,
-} from "../transfer";
+} from "./transfer";
 
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
 import type {

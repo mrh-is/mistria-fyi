@@ -35,7 +35,7 @@ including historical fixtures, so a payload can never merge an out-of-domain val
 
 ## Compatibility fixtures
 
-`src/lib/engine/__tests__/transfer.test.ts` keeps immutable fixtures with these expectations:
+`src/lib/engine/transfer.test.ts` keeps immutable fixtures with these expectations:
 
 | Version | Purpose                                                                                 | Compatibility expectation                                                                                           |
 | ------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
