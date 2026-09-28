@@ -16,9 +16,9 @@ Object.defineProperty(window, "matchMedia", {
   writable: true,
 });
 
-// jsdom has no Web Animations API. Svelte drives `transition:` intros and outros through
-// `Element.animate()` and only removes an outroing element once `onfinish` fires, so the stub
-// completes on the next macrotask (unless cancelled) instead of leaving outroed nodes in the DOM.
+// Svelte drives `transition:` intros and outros through `Element.animate()` and only removes an
+// outroing element once `onfinish` fires. happy-dom runs animations for their real duration, so
+// the stub completes on the next macrotask (unless cancelled) to keep tests fast & deterministic.
 if (typeof Element !== "undefined") {
   Element.prototype.animate = vi.fn(() => {
     let cancelled = false;

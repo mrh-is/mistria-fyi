@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { IconClock, IconInfoCircle, IconSquareX, IconTags } from "@tabler/icons-svelte-runes";
+  import IconClock from "@tabler/icons-svelte-runes/icons/clock";
+  import IconInfoCircle from "@tabler/icons-svelte-runes/icons/info-circle";
+  import IconSquareX from "@tabler/icons-svelte-runes/icons/square-x";
+  import IconTags from "@tabler/icons-svelte-runes/icons/tags";
   import { prefersReducedMotion } from "svelte/motion";
 
   import { page } from "$app/state";

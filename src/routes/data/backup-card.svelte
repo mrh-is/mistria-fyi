@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { IconFileUpload, IconUpload } from "@tabler/icons-svelte-runes";
+  import IconFileUpload from "@tabler/icons-svelte-runes/icons/file-upload";
+  import IconUpload from "@tabler/icons-svelte-runes/icons/upload";
 
   import { Button } from "$lib/components/ui/button/index.js";
   import * as m from "$lib/paraglide/messages.js";

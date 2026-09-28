@@ -1,10 +1,8 @@
 <script lang="ts">
-  import {
-    IconFileDownload,
-    IconPencil,
-    IconQrcode,
-    IconSparkles,
-  } from "@tabler/icons-svelte-runes";
+  import IconFileDownload from "@tabler/icons-svelte-runes/icons/file-download";
+  import IconPencil from "@tabler/icons-svelte-runes/icons/pencil";
+  import IconQrcode from "@tabler/icons-svelte-runes/icons/qrcode";
+  import IconSparkles from "@tabler/icons-svelte-runes/icons/sparkles";
   import { onMount } from "svelte";
 
   import * as m from "$lib/paraglide/messages.js";

@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { IconMinus, IconPlus } from "@tabler/icons-svelte-runes";
+  import IconMinus from "@tabler/icons-svelte-runes/icons/minus";
+  import IconPlus from "@tabler/icons-svelte-runes/icons/plus";
   import { tick } from "svelte";
 
   import { page } from "$app/state";

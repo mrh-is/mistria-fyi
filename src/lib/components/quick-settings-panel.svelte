@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { IconChevronRight, IconEye, IconInfoCircle, IconTool } from "@tabler/icons-svelte-runes";
+  import IconChevronRight from "@tabler/icons-svelte-runes/icons/chevron-right";
+  import IconEye from "@tabler/icons-svelte-runes/icons/eye";
+  import IconInfoCircle from "@tabler/icons-svelte-runes/icons/info-circle";
+  import IconTool from "@tabler/icons-svelte-runes/icons/tool";
 
   import BlockySwitch from "$lib/components/blocky-switch.svelte";
   import QuickSettingsLanguagePicker from "$lib/components/quick-settings-language-picker.svelte";

@@ -10,6 +10,13 @@ The app uses [Tabler Icons](https://tabler.io/icons) (`@tabler/icons-svelte-rune
 icon library. Custom icons follow the same `IconProps` interface and are interchangeable with Tabler
 icons in all mapping tables.
 
+Import each Tabler icon from its own module, e.g.
+`import IconX from "@tabler/icons-svelte-runes/icons/x"`, never from the package root. The root
+barrel re-exports about 6,000 components, and Vitest compiles all of them in every worker that
+imports it. ESLint rejects value imports from the root; type-only imports such as `Icon` are fine.
+This applies to the vendored shadcn-svelte components in `src/lib/components/ui/` too, so re-check
+their icon imports after regenerating them with the shadcn CLI.
+
 The pipeline:
 
 1. Export SVG from Figma.

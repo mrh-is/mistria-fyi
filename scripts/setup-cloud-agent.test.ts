@@ -16,7 +16,8 @@ afterEach(() => {
   }
 });
 
-describe("setup-cloud-agent", () => {
+// The script refuses to run outside Linux, so these tests can only pass there.
+describe.skipIf(process.platform !== "linux")("setup-cloud-agent", () => {
   it("persists the managed Node path for login and interactive Bash shells", () => {
     const home = mkdtempSync(join(tmpdir(), "mistria-cloud-setup-"));
     temporaryDirectories.push(home);

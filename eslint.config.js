@@ -13,6 +13,15 @@ import svelteConfig from "./svelte.config.js";
 
 const gitignorePath = fileURLToPath(new URL("./.gitignore", import.meta.url));
 
+// eslint-plugin-svelte reads only these fields. Passing the whole config breaks `eslint --cache`,
+// which serializes parser options and can't handle `kit.typescript.config`'s function value.
+const lintSvelteConfig = {
+  compilerOptions: svelteConfig.compilerOptions,
+  kit: { files: svelteConfig.kit?.files },
+  onwarn: svelteConfig.onwarn,
+  warningFilter: svelteConfig.warningFilter,
+};
+
 // Files already migrated to Paraglide messages. The no-hardcoded-ui-text rule (see
 // docs/localization.md) only applies here — turning it on repo-wide today would flag every
 // not-yet-localized component. Add a file to this list in the same PR that localizes it; the
@@ -91,6 +100,20 @@ export default defineConfig(
     rules: {
       "@typescript-eslint/consistent-type-imports": "error",
       "@typescript-eslint/no-import-type-side-effects": "error",
+      // The barrel re-exports ~6,000 icon components, and Vitest compiles every one of them in
+      // each worker that imports it. Deep imports cut the test suite's transform time by >60%.
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              allowTypeImports: true,
+              message: 'Import icons individually, e.g. from "@tabler/icons-svelte-runes/icons/x".',
+              name: "@tabler/icons-svelte-runes",
+            },
+          ],
+        },
+      ],
       "@typescript-eslint/no-unnecessary-condition": "warn",
       "@typescript-eslint/no-unused-vars": [
         "error",
@@ -168,7 +191,7 @@ export default defineConfig(
         extraFileExtensions: [".svelte"],
         parser: ts.parser,
         projectService: true,
-        svelteConfig,
+        svelteConfig: lintSvelteConfig,
         tsconfigRootDir: fileURLToPath(new URL(".", import.meta.url)),
       },
     },

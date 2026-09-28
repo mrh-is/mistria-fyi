@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { IconArrowLeft } from "@tabler/icons-svelte-runes";
+  import IconArrowLeft from "@tabler/icons-svelte-runes/icons/arrow-left";
 
   import { Icon } from "$lib/components/icon/index.js";
   import * as m from "$lib/paraglide/messages.js";

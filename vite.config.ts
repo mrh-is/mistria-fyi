@@ -92,6 +92,9 @@ export default defineConfig({
     strictPort: Boolean(process.env.PORT),
   },
   test: {
+    // Persists module transforms under node_modules/.vitest-cache, so warm runs skip most of the
+    // transform work. CI restores the directory with actions/cache.
+    fsModuleCache: true,
     // Each project is a tier, split by what its tests need to run. `pnpm run test` runs every
     // project except `assets`; see docs/development-workflow.md §4.
     projects: [
@@ -137,7 +140,7 @@ export default defineConfig({
         extends: true,
         plugins: [svelteTesting()],
         test: {
-          environment: "jsdom",
+          environment: "happy-dom",
           include: ["src/**/*.client.test.ts"],
           name: "client",
           setupFiles: [
