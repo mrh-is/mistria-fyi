@@ -139,7 +139,11 @@ jobs:
     runs-on: ubuntu-latest
     # The image ships Chromium and its system libraries for this exact Playwright version, so the
     # job needs no browser cache or apt step. Keep the tag in step with @playwright/test.
-    container: mcr.microsoft.com/playwright:v1.63.0-noble
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      # Chromium otherwise shares Docker's 64 MB default /dev/shm, which can throttle or crash
+      # parallel browser workers. Measure this on GitHub-hosted runners before keeping it.
+      options: --ipc=host
     strategy:
       fail-fast: false
       matrix:
@@ -184,7 +188,9 @@ jobs:
     needs: [changes, build]
     if: needs.changes.outputs.browser == 'true'
     runs-on: ubuntu-latest
-    container: mcr.microsoft.com/playwright:v1.63.0-noble
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --ipc=host
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
