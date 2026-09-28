@@ -88,10 +88,13 @@ throws as a data bug. `getName()` & `getNameTable()` stay synchronous (component
 inside `$derived`) and read from a session cache that `loadNames()` fills; reading a chunk that
 exists but was never awaited throws rather than silently degrading.
 
-- **Category routes** await their chunks in `+page.ts` via `loadPageNames(event, [...])`. A page
-  that renders source segments also spreads `SEGMENT_LOOKUP_CATEGORIES` from
-  `src/lib/utils/segment-lookups.ts`. If you add a `getName()` call for a new category to a page's
-  component tree, add the category to that route's list; the thrown error names the missing chunk.
+- **Routes** build their `+page.ts` load with `localizedPageLoad([...], (locale) => metadata)` from
+  `src/lib/data/page-load.ts`, which awaits the listed chunks in the locale the root layout resolved
+  (never the URL: paraglide's `getLocaleForUrl` reports the base locale during SSR). The layout
+  already awaits `ui` on every route, so pages don't list it. A page that renders source segments
+  also spreads `SEGMENT_LOOKUP_CATEGORIES` from `src/lib/utils/segment-lookups.ts`. If you add a
+  `getName()` call for a new category to a page's component tree, add the category to that route's
+  list; the thrown error names the missing chunk.
 - **`/all`** awaits every category (`LOCALIZED_CATEGORIES`).
 - **Sitewide search** (`search-results.svelte`) awaits every category for the active locale, plus
   English (search also matches English terms), on first open, not at page load, and gates its
