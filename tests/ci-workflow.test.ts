@@ -91,7 +91,7 @@ describe("CI workflow jobs", () => {
     }
 
     // Lint needs its own sync step: it runs on a separate runner from `check`, which is the
-    // only script that generates .svelte-kit/tsconfig.json (required by eslint-plugin-perfectionist).
+    // only script that generates .svelte-kit/tsconfig.json (required by oxlint's type-aware rules).
     expect(runCommands(jobs.lint)).toEqual([
       "pnpm install --frozen-lockfile",
       "pnpm exec svelte-kit sync",

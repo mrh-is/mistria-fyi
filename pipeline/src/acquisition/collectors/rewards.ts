@@ -144,7 +144,8 @@ function collectChickenStatueLootSources(
   petCosmeticAccumulator?: PetCosmeticSourceAccumulator,
 ): void {
   const chickenStatue = fiddle.chicken_statue as
-    Record<string, Record<string, unknown>> | undefined;
+    | Record<string, Record<string, unknown>>
+    | undefined;
   if (!chickenStatue) return;
 
   const misc = fiddle.misc as Record<string, unknown> | undefined;

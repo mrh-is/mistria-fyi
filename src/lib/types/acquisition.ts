@@ -42,7 +42,12 @@ export type DateId = string & { readonly __brand: "DateId" };
 export type DialogueChoiceId = string & { readonly __brand: "DialogueChoiceId" };
 export type DungeonLootGroup = string & { readonly __brand: "DungeonLootGroup" };
 export type JsonValue =
-  boolean | JsonValue[] | null | number | string | { [key: string]: JsonValue };
+  | boolean
+  | JsonValue[]
+  | null
+  | number
+  | string
+  | { [key: string]: JsonValue };
 export type LocationId = string & { readonly __brand: "LocationId" };
 export type MonsterId = string & { readonly __brand: "MonsterId" };
 export type ProductionMethod = "cook" | "craft" | "dragon_forge" | "mill" | "smith";

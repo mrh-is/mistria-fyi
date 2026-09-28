@@ -68,7 +68,8 @@ function collectArtifactReplicaSources(
   accumulator: ItemSourceAccumulator,
 ): void {
   const items = fiddle.items as
-    Record<string, Record<string, Record<string, Record<string, unknown>>>> | undefined;
+    | Record<string, Record<string, Record<string, Record<string, unknown>>>>
+    | undefined;
   const replicaSet = items?.furniture?.artifact_replica_set;
   if (!replicaSet || typeof replicaSet !== "object") return;
 

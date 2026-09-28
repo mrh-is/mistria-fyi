@@ -432,7 +432,8 @@ export const POST: RequestHandler = async ({ platform, request, url }) => {
   if (payload.email) {
     try {
       const emailStore = platform.env.FEEDBACK_EMAIL_STORE as
-        App.Platform["env"]["FEEDBACK_EMAIL_STORE"] | undefined;
+        | App.Platform["env"]["FEEDBACK_EMAIL_STORE"]
+        | undefined;
       if (!emailStore) {
         throw new Error("FEEDBACK_EMAIL_STORE is not configured");
       }

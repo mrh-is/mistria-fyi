@@ -145,7 +145,7 @@ it. Wrangler may need access to Cloudflare's API and to its credentials under
 | `pnpm run check`              | SvelteKit type checking                     |
 | `pnpm run check:i18n`         | Verify locale files match `en.json`'s keys  |
 | `pnpm run check:routes`       | Verify built static assets bypass Functions |
-| `pnpm run lint`               | Prettier + ESLint + Stylelint check         |
+| `pnpm run lint`               | oxfmt + oxlint + ESLint + Stylelint check   |
 | `pnpm run lint:fix`           | Auto-fix formatting & lint                  |
 | `pnpm run test`               | Complete Vitest suite (asset-independent)   |
 | `pnpm run test:app`           | App tests (`src/`)                          |
@@ -179,16 +179,19 @@ These rules prevent accidental damage to generated or vendored code:
 
 ## 6. Code style
 
-- **TypeScript**: `strictTypeChecked` ESLint + `strict: true` tsconfig. Use `type` imports
-  (`consistent-type-imports`).
-- **Formatting**: Prettier — double quotes, no tabs, trailing commas, 100 char width, semicolons.
-- **Imports**: Auto-sorted by `perfectionist/sort-imports` — externals first, then `$lib`/`$app`
-  internals, then relative. With `moduleResolution: "bundler"`, extensionless specifiers resolve TS
-  modules directly, so write relative and aliased imports of TypeScript modules without a `.js`
-  suffix (e.g. `./availability`, not `./availability.js`). Keep the extension only when it names a
-  real, non-TypeScript asset (a generated `.js` file with no `.ts` source, such as
-  `src/lib/paraglide/runtime.js`) or is required by an external tool. `vi.mock(...)` specifiers must
-  match the import path exactly, so update them alongside the imports they mock.
+- **TypeScript**: type-aware oxlint (typescript-eslint's strict & stylistic rules) + `strict: true`
+  tsconfig. Use `type` imports (`consistent-type-imports`).
+- **Formatting**: oxfmt — double quotes, no tabs, trailing commas, 100 char width, semicolons.
+- **Linting**: oxlint for every script, ESLint only for Svelte templates. See
+  [docs/development-workflow.md](docs/development-workflow.md#linting--formatting) for which tool
+  owns which rule and how to suppress each.
+- **Imports**: Auto-sorted by oxfmt — externals first, then `$lib`/`$app` internals, then relative.
+  With `moduleResolution: "bundler"`, extensionless specifiers resolve TS modules directly, so write
+  relative and aliased imports of TypeScript modules without a `.js` suffix (e.g. `./availability`,
+  not `./availability.js`). Keep the extension only when it names a real, non-TypeScript asset (a
+  generated `.js` file with no `.ts` source, such as `src/lib/paraglide/runtime.js`) or is required
+  by an external tool. `vi.mock(...)` specifiers must match the import path exactly, so update them
+  alongside the imports they mock.
 - **Styling**: Tailwind utilities & scoped `<style>` blocks, both on the design tokens in
   `src/app.css`; Stylelint rejects color, type-size, shadow, & radius literals in scoped CSS. See
   [docs/styling.md](docs/styling.md).
@@ -212,8 +215,8 @@ compaction.
 - Run only the test covering your change: `pnpm exec vitest run path/to/file.test.ts`.
 - Run `pnpm run check` after a TypeScript or Svelte contract edit.
 - Run `pnpm run lint:fix` before committing. Lint must produce zero errors and zero warnings; a
-  warning that needs an `eslint-disable` or `stylelint-disable` comment gets the narrowest possible
-  disable with a justification.
+  warning that needs an `oxlint-disable`, `eslint-disable`, or `stylelint-disable` comment gets the
+  narrowest possible disable with a justification.
 - Documentation-only changes: `pnpm run lint:fix && pnpm run lint` only.
 
 ### CI (every pull request)
