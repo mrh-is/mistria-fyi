@@ -35,12 +35,9 @@ describe("formatStoreName", () => {
     expect(formatStoreName("merri_stall" as StoreId, stores)).toBe("Merri's Stall");
   });
   it("throws for a store with no name", () => {
-    expect(() =>
-      formatStoreName(
-        "unknown_shop" as StoreId,
-        {} as Record<StoreId, { article?: "the"; name: string }>,
-      ),
-    ).toThrow('No "stores" entry for id "unknown_shop"');
+    expect(() => formatStoreName("unknown_shop" as StoreId, {})).toThrow(
+      'No "stores" entry for id "unknown_shop"',
+    );
   });
 });
 
