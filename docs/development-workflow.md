@@ -165,6 +165,22 @@ pipelines.
   ```
   This command is also asset-independent.
 
+### Test projects
+
+`vite.config.ts` splits Vitest into projects by what each test needs to run. Select one with
+`pnpm exec vitest run --project=<name>`.
+
+| Project  | Files                                                 | Environment & setup                                         |
+| -------- | ----------------------------------------------------- | ----------------------------------------------------------- |
+| `app`    | `src/**/*.test.ts`                                    | Node, SvelteKit stand-ins & preloaded names, shared modules |
+| `mocked` | The few `src/` files listed in `isolatedTests`        | Node, isolated per file, no names preload                   |
+| `client` | `src/**/*.client.test.ts`                             | jsdom & Testing Library                                     |
+| `node`   | `*.test.ts` under `pipeline/`, `scripts/`, & `tests/` | Plain Node, shared modules                                  |
+| `assets` | `**/*.assets.test.ts`                                 | Installed game assets; local only, excluded from `test`     |
+
+A new tier gets its own project rather than another entry in an exclude list. A test that needs
+per-file module isolation (for example, `vi.mock()` of a shared package) goes in `isolatedTests`.
+
 ### Local real-data verification
 
 Changes to the pipeline parser, evaluator, extractors, or shared tracker-data contract require two
