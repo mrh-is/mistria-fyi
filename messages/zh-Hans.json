@@ -390,6 +390,7 @@
   "transfer_error_could_not_decode": "无法解码",
   "transfer_error_newer_version": "此二维码由更新版本的 Mistria Field Guide 创建。请重新加载此页面进行更新，然后再次扫描二维码。",
   "transfer_error_corrupt": "此二维码的数据已损坏或不完整。请创建新的二维码后重试。",
+  "transfer_error_not_transfer_code": "此二维码不是 Mistria Field Guide 的传输码。",
   "transfer_error_outdated_title": "此二维码由旧版本的 Mistria Field Guide 创建。",
   "transfer_error_outdated_recovery": "请在创建此二维码的设备上重新加载 Mistria Field Guide。然后打开数据 → 传输，创建新的二维码并在此处扫描。",
   "transfer_error_outdated_copy_steps": "复制恢复步骤",

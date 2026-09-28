@@ -68,6 +68,8 @@ export function formatTransferDecodeError(code: Exclude<TransferDecodeErrorCode,
       return m.transfer_error_corrupt();
     case "newer-version":
       return m.transfer_error_newer_version();
+    case "not-transfer-code":
+      return m.transfer_error_not_transfer_code();
   }
 }
 

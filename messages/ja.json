@@ -390,6 +390,7 @@
   "transfer_error_could_not_decode": "デコードできませんでした",
   "transfer_error_newer_version": "このQRコードは新しいバージョンの Mistria Field Guide で作成されました。このページを再読み込みして更新してから、もう一度コードをスキャンしてください。",
   "transfer_error_corrupt": "このQRコードのデータは破損しているか不完全です。新しいQRコードを作成して、もう一度お試しください。",
+  "transfer_error_not_transfer_code": "このQRコードは Mistria Field Guide の転送コードではありません。",
   "transfer_error_outdated_title": "このQRコードは古いバージョンのMistria Field Guideで作成されました。",
   "transfer_error_outdated_recovery": "このQRコードを作成した端末でMistria Field Guideを再読み込みしてください。その後、データ → 転送を開き、新しいQRコードを作成してここでスキャンしてください。",
   "transfer_error_outdated_copy_steps": "復旧手順をコピー",

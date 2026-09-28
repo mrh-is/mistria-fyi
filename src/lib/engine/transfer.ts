@@ -29,9 +29,16 @@ import type {
 
 // ─── Constants ──────────────────────────────────────────────────────
 
-export const TRANSFER_VERSION = 10;
+export const TRANSFER_VERSION = 11;
 export const TRANSFER_ORDERING_HASH = "50dbf1b9";
-const MIN_SUPPORTED_TRANSFER_VERSION = 10;
+const MIN_SUPPORTED_TRANSFER_VERSION = 11;
+
+/**
+ * Text every payload starts with, from v11. It marks a QR code as a Mistria Field Guide transfer
+ * code, so an unrelated code is never mistaken for one from another version. Four base64url
+ * characters encode whole bytes, so the rest of the payload stays independently decodable.
+ */
+export const TRANSFER_MAGIC = "MFGT";
 
 /** First version to prepend a CRC-32 integrity checksum of the raw payload before compression. */
 const CHECKSUM_VERSION = 9;
@@ -43,11 +50,13 @@ const SEASON_ORD: Record<Season, number> = { fall: 2, spring: 0, summer: 1, wint
  * Why a transfer payload could not be decoded. The UI localizes the code; the English message is
  * for debugging only.
  *
+ * - `not-transfer-code`: the payload lacks {@link TRANSFER_MAGIC}, so it isn't a transfer code.
  * - `outdated`: an older app version created the payload, and its orderings no longer apply.
  * - `newer-version`: a newer app version created the payload.
  * - `corrupt`: the payload is malformed, truncated, or fails its integrity check.
  */
-export type TransferDecodeErrorCode = "corrupt" | "newer-version" | "outdated";
+export type TransferDecodeErrorCode =
+  "corrupt" | "newer-version" | "not-transfer-code" | "outdated";
 
 export class TransferDecodeError extends Error {
   readonly code: TransferDecodeErrorCode;
@@ -250,7 +259,8 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
     offset += part.length;
   }
 
-  // Compress, then prepend the version byte and an integrity checksum of the raw payload
+  // Compress, then prepend the version byte and an integrity checksum of the raw payload, and mark
+  // the encoded result as a transfer code
   const compressed = await compressBytes(raw);
   const checksum = crc32(raw);
   const payload = new Uint8Array(1 + CHECKSUM_BYTE_LENGTH + compressed.length);
@@ -261,7 +271,7 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   payload[4] = checksum & 0xff;
   payload.set(compressed, 1 + CHECKSUM_BYTE_LENGTH);
 
-  return toBase64url(payload);
+  return TRANSFER_MAGIC + toBase64url(payload);
 }
 
 async function compressBytes(data: Uint8Array): Promise<Uint8Array> {
@@ -272,7 +282,10 @@ async function compressBytes(data: Uint8Array): Promise<Uint8Array> {
 }
 
 async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<CompletedState>> {
-  const payloadBytes = fromBase64url(payload);
+  if (!payload.startsWith(TRANSFER_MAGIC)) {
+    throw new TransferDecodeError("not-transfer-code", "Not a transfer payload: missing marker");
+  }
+  const payloadBytes = fromBase64url(payload.slice(TRANSFER_MAGIC.length));
   if (payloadBytes.length === 0) {
     throw new Error("Malformed transfer payload: missing version byte");
   }

@@ -396,6 +396,7 @@
   "transfer_error_could_not_decode": "impossible de décoder",
   "transfer_error_newer_version": "Ce QR code a été créé par une version plus récente de Mistria Field Guide. Rechargez cette page pour la mettre à jour, puis scannez à nouveau le code.",
   "transfer_error_corrupt": "Les données de ce QR code sont endommagées ou incomplètes. Créez un nouveau QR code et réessayez.",
+  "transfer_error_not_transfer_code": "Ce QR code n’est pas un code de transfert de Mistria Field Guide.",
   "transfer_error_outdated_title": "Ce code QR a été créé avec une ancienne version de Mistria Field Guide.",
   "transfer_error_outdated_recovery": "Sur l'appareil qui a créé ce code QR, rechargez Mistria Field Guide. Ouvrez ensuite Données → Transférer, créez un nouveau code QR et scannez-le ici.",
   "transfer_error_outdated_copy_steps": "Copier les étapes de récupération",

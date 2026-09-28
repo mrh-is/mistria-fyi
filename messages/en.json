@@ -393,6 +393,7 @@
   "transfer_error_could_not_decode": "could not decode",
   "transfer_error_newer_version": "This QR code was created by a newer version of Mistria Field Guide. Reload this page to update it, then scan the code again.",
   "transfer_error_corrupt": "This QR code’s data is damaged or incomplete. Create a new QR code and try again.",
+  "transfer_error_not_transfer_code": "This QR code isn’t a Mistria Field Guide transfer code.",
   "transfer_error_outdated_title": "This QR code was created by an older version of Mistria Field Guide.",
   "transfer_error_outdated_recovery": "On the device that created this QR code, reload Mistria Field Guide. Then open Data → Transfer, create a new QR code, and scan it here.",
   "transfer_error_outdated_copy_steps": "Copy recovery steps",

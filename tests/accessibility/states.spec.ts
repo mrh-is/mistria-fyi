@@ -211,8 +211,8 @@ test.describe("@critical stateful accessibility", () => {
       testInfo,
     );
 
-    // "Cg" is a lone v10 version byte: current enough to decode, but missing its checksum.
-    const invalidBuffer = Buffer.from(encodeQR("Cg", "gif", { scale: 4 }));
+    // A marked, current (v11) version byte with no checksum: recognized, but damaged.
+    const invalidBuffer = Buffer.from(encodeQR("MFGTCw", "gif", { scale: 4 }));
     const errorChooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: /scan from a screenshot/i }).click();
     await (
@@ -231,9 +231,8 @@ test.describe("@critical stateful accessibility", () => {
       testInfo,
     );
 
-    const outdatedBuffer = Buffer.from(
-      encodeQR("CSG9unJjYBgFVAYpDCln0IENDAycsxoYWiZ5qkxgcKCnpQA", "gif", { scale: 4 }),
-    );
+    // A marked v10 version byte: recognized as a transfer code, but from an older version.
+    const outdatedBuffer = Buffer.from(encodeQR("MFGTCg", "gif", { scale: 4 }));
     const outdatedChooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: /scan from a screenshot/i }).click();
     await (
