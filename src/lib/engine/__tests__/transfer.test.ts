@@ -8,9 +8,9 @@ import {
   decodeTransferPayload,
   encodeTransferPayload,
   getTransferOrderingHash,
-  OutdatedTransferPayloadError,
   TRANSFER_ORDERING_HASH,
   TRANSFER_VERSION,
+  TransferDecodeError,
 } from "../transfer";
 
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
@@ -30,6 +30,8 @@ import type {
   VillagerId,
   VillagerRelationship,
 } from "$lib/types/tracker-data.js";
+
+import type { TransferDecodeErrorCode } from "../transfer";
 
 const CHECKSUM_BYTE_LENGTH = 4;
 
@@ -63,6 +65,20 @@ async function compressTransferRaw(version: number, raw: Uint8Array): Promise<st
   const compressed = await compressRawOnly(raw);
   const prefix = version >= 9 ? [version, ...crc32ToBytes(crc32(raw))] : [version];
   return toBase64url(new Uint8Array([...prefix, ...compressed]));
+}
+
+async function expectDecodeError(
+  payload: string,
+  code: TransferDecodeErrorCode,
+  message: RegExp,
+): Promise<void> {
+  const error: unknown = await decodeTransferPayload(payload).then(
+    () => undefined,
+    (rejection: unknown) => rejection,
+  );
+  expect(error).toBeInstanceOf(TransferDecodeError);
+  expect(error).toHaveProperty("code", code);
+  expect(error).toHaveProperty("message", expect.stringMatching(message));
 }
 
 // Mirrors the production CRC-32 (IEEE 802.3) implementation in transfer.ts so tests can build
@@ -353,7 +369,7 @@ describe("transfer codec v10", () => {
       raw[offsets[field]] = value;
     });
 
-    await expect(decodeTransferPayload(payload)).rejects.toThrow(new RegExp(label, "i"));
+    await expectDecodeError(payload, "corrupt", new RegExp(label, "i"));
   });
 
   it("round-trips maximum in-domain scalar and packed relationship values", async () => {
@@ -599,9 +615,7 @@ describe("transfer codec v10", () => {
   ])(
     "rejects %s payloads so their shifted item ordering cannot corrupt progress",
     async (_, payload) => {
-      await expect(decodeTransferPayload(payload)).rejects.toBeInstanceOf(
-        OutdatedTransferPayloadError,
-      );
+      await expect(decodeTransferPayload(payload)).rejects.toMatchObject({ code: "outdated" });
     },
   );
 
@@ -657,43 +671,47 @@ describe("transfer codec v10", () => {
   it.each(["", "not+a/valid=payload", "A", "%%%%"])(
     "rejects malformed base64url envelope %j",
     async (payload) => {
-      await expect(decodeTransferPayload(payload)).rejects.toThrow(/transfer payload/i);
+      await expectDecodeError(payload, "corrupt", /transfer payload/i);
     },
   );
 
   it.each([
-    ["version zero", toBase64url(new Uint8Array([0]))],
-    ["future version", toBase64url(new Uint8Array([TRANSFER_VERSION + 1]))],
-  ])("rejects unsupported %s", async (_, payload) => {
-    await expect(decodeTransferPayload(payload)).rejects.toThrow(/unsupported transfer version/i);
+    ["version zero", toBase64url(new Uint8Array([0])), "corrupt"],
+    ["future version", toBase64url(new Uint8Array([TRANSFER_VERSION + 1])), "newer-version"],
+  ] as const)("rejects unsupported %s", async (_, payload, code) => {
+    await expectDecodeError(payload, code, /unsupported transfer version/i);
   });
 
   it("rejects a missing integrity checksum", async () => {
-    await expect(
-      decodeTransferPayload(toBase64url(new Uint8Array([TRANSFER_VERSION]))),
-    ).rejects.toThrow(/integrity checksum/i);
-    await expect(
-      decodeTransferPayload(toBase64url(new Uint8Array([TRANSFER_VERSION, 0, 1, 2]))),
-    ).rejects.toThrow(/integrity checksum/i);
+    await expectDecodeError(
+      toBase64url(new Uint8Array([TRANSFER_VERSION])),
+      "corrupt",
+      /integrity checksum/i,
+    );
+    await expectDecodeError(
+      toBase64url(new Uint8Array([TRANSFER_VERSION, 0, 1, 2])),
+      "corrupt",
+      /integrity checksum/i,
+    );
   });
 
   it("rejects pre-v10 payloads before attempting decompression", async () => {
-    await expect(decodeTransferPayload(toBase64url(new Uint8Array([9])))).rejects.toBeInstanceOf(
-      OutdatedTransferPayloadError,
-    );
+    await expect(decodeTransferPayload(toBase64url(new Uint8Array([9])))).rejects.toMatchObject({
+      code: "outdated",
+    });
   });
 
   it("rejects truncated compressed data", async () => {
     const payload = await encodeTransferPayload(makeCompleted());
     const truncated = toBase64url(fromBase64url(payload).slice(0, -1));
-    await expect(decodeTransferPayload(truncated)).rejects.toThrow(/compressed transfer payload/i);
+    await expectDecodeError(truncated, "corrupt", /compressed transfer payload/i);
   });
 
   it("rejects malformed compressed data", async () => {
     const payload = toBase64url(
       new Uint8Array([TRANSFER_VERSION, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7]),
     );
-    await expect(decodeTransferPayload(payload)).rejects.toThrow(/compressed transfer payload/i);
+    await expectDecodeError(payload, "corrupt", /compressed transfer payload/i);
   });
 
   it.each(["truncated", "trailing"])("rejects %s decompressed data", async (kind) => {
@@ -702,7 +720,7 @@ describe("transfer codec v10", () => {
     const malformed = kind === "truncated" ? raw.slice(0, -1) : new Uint8Array([...raw, 0]);
     const malformedPayload = await compressTransferRaw(TRANSFER_VERSION, malformed);
 
-    await expect(decodeTransferPayload(malformedPayload)).rejects.toThrow(/length/i);
+    await expectDecodeError(malformedPayload, "corrupt", /length/i);
   });
 
   it("rejects a payload whose compressed content was corrupted, even when it decompresses to the expected length", async () => {
@@ -724,7 +742,7 @@ describe("transfer codec v10", () => {
       new Uint8Array([TRANSFER_VERSION, ...originalChecksumBytes, ...corruptedCompressed]),
     );
 
-    await expect(decodeTransferPayload(tamperedPayload)).rejects.toThrow(/integrity check/i);
+    await expectDecodeError(tamperedPayload, "corrupt", /integrity check/i);
   });
 
   it("rejects a payload whose stored checksum does not match its content", async () => {
@@ -733,6 +751,6 @@ describe("transfer codec v10", () => {
     const tampered = new Uint8Array(bytes);
     tampered[1] ^= 0xff;
 
-    await expect(decodeTransferPayload(toBase64url(tampered))).rejects.toThrow(/integrity check/i);
+    await expectDecodeError(toBase64url(tampered), "corrupt", /integrity check/i);
   });
 });

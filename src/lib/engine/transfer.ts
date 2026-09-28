@@ -39,27 +39,258 @@ const CHECKSUM_BYTE_LENGTH = 4;
 
 const SEASON_BY_ORD: Season[] = ["spring", "summer", "fall", "winter"];
 const SEASON_ORD: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
-export class OutdatedTransferPayloadError extends Error {
-  constructor() {
-    super("This QR code was created by an older version of Mistria Field Guide.");
-    this.name = "OutdatedTransferPayloadError";
+/**
+ * Why a transfer payload could not be decoded. The UI localizes the code; the English message is
+ * for debugging only.
+ *
+ * - `outdated`: an older app version created the payload, and its orderings no longer apply.
+ * - `newer-version`: a newer app version created the payload.
+ * - `corrupt`: the payload is malformed, truncated, or fails its integrity check.
+ */
+export type TransferDecodeErrorCode = "corrupt" | "newer-version" | "outdated";
+
+export class TransferDecodeError extends Error {
+  readonly code: TransferDecodeErrorCode;
+
+  constructor(code: TransferDecodeErrorCode, message: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "TransferDecodeError";
+    this.code = code;
   }
 }
 
 // ─── Deterministic orderings (derived from trackerData) ─────────────
 
-/** Decode base64url string → Partial<CompletedState> for merging */
+/**
+ * Decode base64url string → Partial<CompletedState> for merging. Every rejection is a
+ * {@link TransferDecodeError}; a failure deeper in the layout is reported as `corrupt`.
+ */
 export async function decodeTransferPayload(payload: string): Promise<Partial<CompletedState>> {
+  try {
+    return await decodeTransferPayloadUnchecked(payload);
+  } catch (error) {
+    if (error instanceof TransferDecodeError) throw error;
+    const message = error instanceof Error ? error.message : String(error);
+    throw new TransferDecodeError("corrupt", message, { cause: error });
+  }
+}
+
+/** Encode CompletedState → base64url string for QR code */
+export async function encodeTransferPayload(completed: CompletedState): Promise<string> {
+  const parts: Uint8Array[] = [];
+
+  // 1. Almanac items
+  const almanacOrder = getAlmanacOrder();
+  parts.push(toBitfield(almanacOrder, completed.almanac));
+
+  // 2. Cosmetics (non-default-unlocked)
+  const cosmeticOrder = getCosmeticOrder();
+  parts.push(toBitfield(cosmeticOrder, completed.cosmetics));
+
+  // 3. Animal variants (non-default-unlocked)
+  const animalVariantOrder = getAnimalVariantOrder();
+  const animalVariantKeys = animalVariantOrder.map((v) => `${v.animalId}:${v.variantId}`);
+  const completedAnimalVariants = new Set<string>();
+  for (const { animalId, variantId } of animalVariantOrder) {
+    const animalSet = completed.animals[animalId];
+    if (animalSet.has(variantId)) {
+      completedAnimalVariants.add(`${animalId}:${variantId}`);
+    }
+  }
+  parts.push(toBitfield(animalVariantKeys, completedAnimalVariants));
+
+  // 4. Animal cosmetics
+  const animalCosmeticOrder = getAnimalCosmeticOrder();
+  const animalCosmeticKeys = animalCosmeticOrder.map((v) => `${v.animalId}:${v.cosmeticId}`);
+  const completedAnimalCosmetics = new Set<string>();
+  for (const { animalId, cosmeticId } of animalCosmeticOrder) {
+    const cosmeticSet = completed.animalCosmetics[animalId];
+    if (cosmeticSet.has(cosmeticId)) {
+      completedAnimalCosmetics.add(`${animalId}:${cosmeticId}`);
+    }
+  }
+  parts.push(toBitfield(animalCosmeticKeys, completedAnimalCosmetics));
+
+  // 5. Museum items
+  const museumOrder = getMuseumOrder();
+  parts.push(toBitfield(museumOrder, completed.museum));
+
+  // 6. Spell bitmask (1 byte)
+  const spellOrder = getSpellOrder();
+  let spellByte = 0;
+  for (let i = 0; i < spellOrder.length; i++) {
+    if (completed.mines.spells.has(spellOrder[i])) {
+      spellByte |= 1 << (7 - i);
+    }
+  }
+  parts.push(new Uint8Array([spellByte]));
+
+  // 7. Mine floor (1 byte)
+  parts.push(new Uint8Array([Math.min(255, completed.mines.floor)]));
+
+  // 8. Renown (2 bytes big-endian uint16)
+  const renown = Math.min(0xffff, completed.renown);
+  parts.push(new Uint8Array([(renown >> 8) & 0xff, renown & 0xff]));
+
+  // 9. Villager levels (4 bits each, high nibble first)
+  const villagerOrder = getVillagerOrder();
+  const villagerBytes = new Uint8Array(Math.ceil(villagerOrder.length / 2));
+  for (let i = 0; i < villagerOrder.length; i++) {
+    const level = Math.min(15, completed.villagerLevels[villagerOrder[i]] ?? 0);
+    const byteIndex = Math.floor(i / 2);
+    if (i % 2 === 0) {
+      villagerBytes[byteIndex] |= (level & 0xf) << 4;
+    } else {
+      villagerBytes[byteIndex] |= level & 0xf;
+    }
+  }
+  parts.push(villagerBytes);
+
+  // 10. Skill levels (1 byte each)
+  const skillOrder = getSkillOrder();
+  const skillBytes = new Uint8Array(skillOrder.length);
+  for (let i = 0; i < skillOrder.length; i++) {
+    skillBytes[i] = Math.min(255, completed.skillLevels[skillOrder[i]] ?? 0);
+  }
+  parts.push(skillBytes);
+
+  // 11. Quest states (2 bits each, 4 per byte)
+  const questOrder = getQuestOrder();
+  const questBytes = new Uint8Array(Math.ceil(questOrder.length / 4));
+  for (let i = 0; i < questOrder.length; i++) {
+    const questKey = questOrder[i].questId;
+    const stateVal = completed.questStates[questKey] ?? "none";
+    const bits = stateVal === "none" ? 0 : stateVal === "obtained" ? 1 : 2;
+    const byteIndex = Math.floor(i / 4);
+    const bitOffset = (3 - (i % 4)) * 2;
+    questBytes[byteIndex] |= (bits & 0x3) << bitOffset;
+  }
+  parts.push(questBytes);
+
+  // 12. Perk bitfield (new in v2)
+  const perkOrder = getPerkOrder();
+  parts.push(toBitfield(perkOrder, completed.unlockedPerks));
+
+  // 13. Married villager index (v2+, still written for v6 backward compat)
+  const marriedVillager = Object.entries(completed.villagerRelationships).find(
+    ([, r]) => r === "married",
+  )?.[0] as undefined | VillagerId;
+  const marriedIndex = marriedVillager ? villagerOrder.indexOf(marriedVillager) : -1;
+  parts.push(new Uint8Array([marriedIndex === -1 ? 0xff : marriedIndex]));
+
+  // 14. Pet cosmetic sets bitfield (new in v3)
+  const petCosmeticOrder = getPetCosmeticOrder();
+  parts.push(toBitfield(petCosmeticOrder, completed.petCosmetics));
+
+  // 15. Pet skins bitfield (new in v3)
+  const petSkinOrder = getPetSkinOrder();
+  parts.push(toBitfield(petSkinOrder, completed.petSkins));
+
+  // 16. Date bitfield (new in v4)
+  const dateOrder = getDateOrder();
+  parts.push(toBitfield(dateOrder, completed.dates));
+
+  // 17. Progression byte (new in v5) — bits 7-6: reachedSeason, bit 5: hasUpperFloor
+  const progressionByte =
+    ((SEASON_ORD[completed.reachedSeason] & 0x3) << 6) | (completed.hasUpperFloor ? 0x20 : 0);
+  parts.push(new Uint8Array([progressionByte]));
+
+  // 18. Romantic villager bitfield (v5+, still written for v6 backward compat)
+  const romanticOrder = getDateableVillagerOrder();
+  const romanticSet = new Set<string>();
+  for (const [id, rel] of Object.entries(completed.villagerRelationships)) {
+    if (rel === "romantic" || rel === "proposed" || rel === "married") {
+      romanticSet.add(id);
+    }
+  }
+  parts.push(toBitfield(romanticOrder, romanticSet));
+
+  // 19. Villager relationship states (new in v7) — 3 bits per dateable villager
+  const RELATIONSHIP_ENCODE: Record<VillagerRelationship, number> = {
+    married: 4,
+    platonic: 1,
+    proposed: 3,
+    romantic: 2,
+    undecided: 0,
+  };
+  const dateableOrder = getDateableVillagerOrder();
+  const relBitCount = dateableOrder.length * 3;
+  const relByteCount = Math.ceil(relBitCount / 8);
+  const relBytes = new Uint8Array(relByteCount);
+  for (let i = 0; i < dateableOrder.length; i++) {
+    const rel = completed.villagerRelationships[dateableOrder[i]] ?? "undecided";
+    const bits = RELATIONSHIP_ENCODE[rel];
+    const bitOffset = i * 3;
+    const byteIndex = Math.floor(bitOffset / 8);
+    const bitShift = 5 - (bitOffset % 8);
+    if (bitShift >= 0) {
+      relBytes[byteIndex] |= (bits & 0x7) << bitShift;
+    } else {
+      relBytes[byteIndex] |= (bits & 0x7) >> -bitShift;
+      relBytes[byteIndex + 1] |= (bits & 0x7) << (8 + bitShift);
+    }
+  }
+  parts.push(relBytes);
+
+  // 20. Child choice (new in v7) — 1 byte
+  const childByte =
+    completed.childChoice === "yes" ? 0x01 : completed.childChoice === "no" ? 0x02 : 0x00;
+  parts.push(new Uint8Array([childByte]));
+
+  // 21. Almanac recipes bitfield (new in v8)
+  const recipeOrder = getRecipeOrder();
+  parts.push(toBitfield(recipeOrder, completed.almanacRecipes));
+
+  // Concatenate all parts
+  const totalLength = parts.reduce((sum, p) => sum + p.length, 0);
+  const raw = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const part of parts) {
+    raw.set(part, offset);
+    offset += part.length;
+  }
+
+  // Compress, then prepend the version byte and an integrity checksum of the raw payload
+  const compressed = await compressBytes(raw);
+  const checksum = crc32(raw);
+  const payload = new Uint8Array(1 + CHECKSUM_BYTE_LENGTH + compressed.length);
+  payload[0] = TRANSFER_VERSION;
+  payload[1] = (checksum >>> 24) & 0xff;
+  payload[2] = (checksum >>> 16) & 0xff;
+  payload[3] = (checksum >>> 8) & 0xff;
+  payload[4] = checksum & 0xff;
+  payload.set(compressed, 1 + CHECKSUM_BYTE_LENGTH);
+
+  return toBase64url(payload);
+}
+
+async function compressBytes(data: Uint8Array): Promise<Uint8Array> {
+  const stream = new Blob([data as Uint8Array<ArrayBuffer>])
+    .stream()
+    .pipeThrough(new CompressionStream("deflate-raw"));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+
+async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<CompletedState>> {
   const payloadBytes = fromBase64url(payload);
   if (payloadBytes.length === 0) {
     throw new Error("Malformed transfer payload: missing version byte");
   }
   const version = payloadBytes[0];
-  if (version < 1 || version > TRANSFER_VERSION) {
+  if (version > TRANSFER_VERSION) {
+    throw new TransferDecodeError(
+      "newer-version",
+      `Unsupported transfer version: ${String(version)}`,
+    );
+  }
+  if (version < 1) {
     throw new Error(`Unsupported transfer version: ${String(version)}`);
   }
   if (version < MIN_SUPPORTED_TRANSFER_VERSION) {
-    throw new OutdatedTransferPayloadError();
+    throw new TransferDecodeError(
+      "outdated",
+      "This QR code was created by an older version of Mistria Field Guide.",
+    );
   }
 
   let expectedChecksum: null | number = null;
@@ -380,202 +611,6 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
     villagerLevels,
     villagerRelationships,
   };
-}
-
-/** Encode CompletedState → base64url string for QR code */
-export async function encodeTransferPayload(completed: CompletedState): Promise<string> {
-  const parts: Uint8Array[] = [];
-
-  // 1. Almanac items
-  const almanacOrder = getAlmanacOrder();
-  parts.push(toBitfield(almanacOrder, completed.almanac));
-
-  // 2. Cosmetics (non-default-unlocked)
-  const cosmeticOrder = getCosmeticOrder();
-  parts.push(toBitfield(cosmeticOrder, completed.cosmetics));
-
-  // 3. Animal variants (non-default-unlocked)
-  const animalVariantOrder = getAnimalVariantOrder();
-  const animalVariantKeys = animalVariantOrder.map((v) => `${v.animalId}:${v.variantId}`);
-  const completedAnimalVariants = new Set<string>();
-  for (const { animalId, variantId } of animalVariantOrder) {
-    const animalSet = completed.animals[animalId];
-    if (animalSet.has(variantId)) {
-      completedAnimalVariants.add(`${animalId}:${variantId}`);
-    }
-  }
-  parts.push(toBitfield(animalVariantKeys, completedAnimalVariants));
-
-  // 4. Animal cosmetics
-  const animalCosmeticOrder = getAnimalCosmeticOrder();
-  const animalCosmeticKeys = animalCosmeticOrder.map((v) => `${v.animalId}:${v.cosmeticId}`);
-  const completedAnimalCosmetics = new Set<string>();
-  for (const { animalId, cosmeticId } of animalCosmeticOrder) {
-    const cosmeticSet = completed.animalCosmetics[animalId];
-    if (cosmeticSet.has(cosmeticId)) {
-      completedAnimalCosmetics.add(`${animalId}:${cosmeticId}`);
-    }
-  }
-  parts.push(toBitfield(animalCosmeticKeys, completedAnimalCosmetics));
-
-  // 5. Museum items
-  const museumOrder = getMuseumOrder();
-  parts.push(toBitfield(museumOrder, completed.museum));
-
-  // 6. Spell bitmask (1 byte)
-  const spellOrder = getSpellOrder();
-  let spellByte = 0;
-  for (let i = 0; i < spellOrder.length; i++) {
-    if (completed.mines.spells.has(spellOrder[i])) {
-      spellByte |= 1 << (7 - i);
-    }
-  }
-  parts.push(new Uint8Array([spellByte]));
-
-  // 7. Mine floor (1 byte)
-  parts.push(new Uint8Array([Math.min(255, completed.mines.floor)]));
-
-  // 8. Renown (2 bytes big-endian uint16)
-  const renown = Math.min(0xffff, completed.renown);
-  parts.push(new Uint8Array([(renown >> 8) & 0xff, renown & 0xff]));
-
-  // 9. Villager levels (4 bits each, high nibble first)
-  const villagerOrder = getVillagerOrder();
-  const villagerBytes = new Uint8Array(Math.ceil(villagerOrder.length / 2));
-  for (let i = 0; i < villagerOrder.length; i++) {
-    const level = Math.min(15, completed.villagerLevels[villagerOrder[i]] ?? 0);
-    const byteIndex = Math.floor(i / 2);
-    if (i % 2 === 0) {
-      villagerBytes[byteIndex] |= (level & 0xf) << 4;
-    } else {
-      villagerBytes[byteIndex] |= level & 0xf;
-    }
-  }
-  parts.push(villagerBytes);
-
-  // 10. Skill levels (1 byte each)
-  const skillOrder = getSkillOrder();
-  const skillBytes = new Uint8Array(skillOrder.length);
-  for (let i = 0; i < skillOrder.length; i++) {
-    skillBytes[i] = Math.min(255, completed.skillLevels[skillOrder[i]] ?? 0);
-  }
-  parts.push(skillBytes);
-
-  // 11. Quest states (2 bits each, 4 per byte)
-  const questOrder = getQuestOrder();
-  const questBytes = new Uint8Array(Math.ceil(questOrder.length / 4));
-  for (let i = 0; i < questOrder.length; i++) {
-    const questKey = questOrder[i].questId;
-    const stateVal = completed.questStates[questKey] ?? "none";
-    const bits = stateVal === "none" ? 0 : stateVal === "obtained" ? 1 : 2;
-    const byteIndex = Math.floor(i / 4);
-    const bitOffset = (3 - (i % 4)) * 2;
-    questBytes[byteIndex] |= (bits & 0x3) << bitOffset;
-  }
-  parts.push(questBytes);
-
-  // 12. Perk bitfield (new in v2)
-  const perkOrder = getPerkOrder();
-  parts.push(toBitfield(perkOrder, completed.unlockedPerks));
-
-  // 13. Married villager index (v2+, still written for v6 backward compat)
-  const marriedVillager = Object.entries(completed.villagerRelationships).find(
-    ([, r]) => r === "married",
-  )?.[0] as undefined | VillagerId;
-  const marriedIndex = marriedVillager ? villagerOrder.indexOf(marriedVillager) : -1;
-  parts.push(new Uint8Array([marriedIndex === -1 ? 0xff : marriedIndex]));
-
-  // 14. Pet cosmetic sets bitfield (new in v3)
-  const petCosmeticOrder = getPetCosmeticOrder();
-  parts.push(toBitfield(petCosmeticOrder, completed.petCosmetics));
-
-  // 15. Pet skins bitfield (new in v3)
-  const petSkinOrder = getPetSkinOrder();
-  parts.push(toBitfield(petSkinOrder, completed.petSkins));
-
-  // 16. Date bitfield (new in v4)
-  const dateOrder = getDateOrder();
-  parts.push(toBitfield(dateOrder, completed.dates));
-
-  // 17. Progression byte (new in v5) — bits 7-6: reachedSeason, bit 5: hasUpperFloor
-  const progressionByte =
-    ((SEASON_ORD[completed.reachedSeason] & 0x3) << 6) | (completed.hasUpperFloor ? 0x20 : 0);
-  parts.push(new Uint8Array([progressionByte]));
-
-  // 18. Romantic villager bitfield (v5+, still written for v6 backward compat)
-  const romanticOrder = getDateableVillagerOrder();
-  const romanticSet = new Set<string>();
-  for (const [id, rel] of Object.entries(completed.villagerRelationships)) {
-    if (rel === "romantic" || rel === "proposed" || rel === "married") {
-      romanticSet.add(id);
-    }
-  }
-  parts.push(toBitfield(romanticOrder, romanticSet));
-
-  // 19. Villager relationship states (new in v7) — 3 bits per dateable villager
-  const RELATIONSHIP_ENCODE: Record<VillagerRelationship, number> = {
-    married: 4,
-    platonic: 1,
-    proposed: 3,
-    romantic: 2,
-    undecided: 0,
-  };
-  const dateableOrder = getDateableVillagerOrder();
-  const relBitCount = dateableOrder.length * 3;
-  const relByteCount = Math.ceil(relBitCount / 8);
-  const relBytes = new Uint8Array(relByteCount);
-  for (let i = 0; i < dateableOrder.length; i++) {
-    const rel = completed.villagerRelationships[dateableOrder[i]] ?? "undecided";
-    const bits = RELATIONSHIP_ENCODE[rel];
-    const bitOffset = i * 3;
-    const byteIndex = Math.floor(bitOffset / 8);
-    const bitShift = 5 - (bitOffset % 8);
-    if (bitShift >= 0) {
-      relBytes[byteIndex] |= (bits & 0x7) << bitShift;
-    } else {
-      relBytes[byteIndex] |= (bits & 0x7) >> -bitShift;
-      relBytes[byteIndex + 1] |= (bits & 0x7) << (8 + bitShift);
-    }
-  }
-  parts.push(relBytes);
-
-  // 20. Child choice (new in v7) — 1 byte
-  const childByte =
-    completed.childChoice === "yes" ? 0x01 : completed.childChoice === "no" ? 0x02 : 0x00;
-  parts.push(new Uint8Array([childByte]));
-
-  // 21. Almanac recipes bitfield (new in v8)
-  const recipeOrder = getRecipeOrder();
-  parts.push(toBitfield(recipeOrder, completed.almanacRecipes));
-
-  // Concatenate all parts
-  const totalLength = parts.reduce((sum, p) => sum + p.length, 0);
-  const raw = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const part of parts) {
-    raw.set(part, offset);
-    offset += part.length;
-  }
-
-  // Compress, then prepend the version byte and an integrity checksum of the raw payload
-  const compressed = await compressBytes(raw);
-  const checksum = crc32(raw);
-  const payload = new Uint8Array(1 + CHECKSUM_BYTE_LENGTH + compressed.length);
-  payload[0] = TRANSFER_VERSION;
-  payload[1] = (checksum >>> 24) & 0xff;
-  payload[2] = (checksum >>> 16) & 0xff;
-  payload[3] = (checksum >>> 8) & 0xff;
-  payload[4] = checksum & 0xff;
-  payload.set(compressed, 1 + CHECKSUM_BYTE_LENGTH);
-
-  return toBase64url(payload);
-}
-
-async function compressBytes(data: Uint8Array): Promise<Uint8Array> {
-  const stream = new Blob([data as Uint8Array<ArrayBuffer>])
-    .stream()
-    .pipeThrough(new CompressionStream("deflate-raw"));
-  return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
 async function decompressBytes(data: Uint8Array): Promise<Uint8Array> {

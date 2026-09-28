@@ -131,7 +131,9 @@ describe("TransferCard scan from image", () => {
 
     await scanImage(new File(["png"], "bogus.png", { type: "image/png" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/^Invalid QR code:/);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "This QR code’s data is damaged or incomplete.",
+    );
     expect(userState.exportState()).toBe(before);
   });
 

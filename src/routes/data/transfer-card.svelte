@@ -6,13 +6,14 @@
   import {
     decodeTransferPayload,
     encodeTransferPayload,
-    OutdatedTransferPayloadError,
+    TransferDecodeError,
   } from "$lib/engine/transfer.js";
   import * as m from "$lib/paraglide/messages.js";
   import { userState } from "$lib/stores/user-state.svelte.js";
 
   import DataCard from "./data-card.svelte";
   import { closeScanner } from "./data-effects";
+  import { formatTransferDecodeError } from "./data-error-messages";
   import MergeSummary from "./merge-summary.svelte";
   import { decodeQrImage, generateTransferQr, startQrCamera } from "./transfer-qr";
 
@@ -169,11 +170,13 @@
       const decoded = await decodeTransferPayload(data);
       transferResult = userState.mergeFromSave(decoded);
     } catch (err) {
-      if (err instanceof OutdatedTransferPayloadError) {
+      if (!(err instanceof TransferDecodeError)) {
+        transferError = `${m.transfer_error_invalid_qr_prefix()} ${m.transfer_error_could_not_decode()}`;
+      } else if (err.code === "outdated") {
         outdatedTransfer = true;
-        return;
+      } else {
+        transferError = formatTransferDecodeError(err.code);
       }
-      transferError = `${m.transfer_error_invalid_qr_prefix()} ${err instanceof Error ? err.message : m.transfer_error_could_not_decode()}`;
     }
   }
 </script>
