@@ -49,6 +49,9 @@ afterEach(async () => {
   await new Promise((resolve) => setTimeout(resolve, 100));
 });
 
+// A marked v10 version byte: recognized as a transfer code, but from an older version.
+const OLDER_VERSION_PAYLOAD = "MFGTCg";
+
 describe("TransferCard generate", () => {
   it("renders the QR code for the current progress and announces the in-flight state", async () => {
     let resolveDataUrl: (value: string) => void = () => undefined;
@@ -124,21 +127,23 @@ describe("TransferCard scan from image", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(/No QR code found in image/);
   });
 
-  it("rejects a payload it cannot decode without touching progress", async () => {
-    transferQr.decodeQrImage.mockResolvedValue("not-a-transfer-payload");
+  it.each([
+    ["an unrelated QR code", "https://example.com", "This QR code isn’t a Mistria Field Guide"],
+    // A marked, current (v11) version byte with no checksum.
+    ["a damaged transfer code", "MFGTCw", "This QR code’s data is damaged or incomplete."],
+  ])("rejects %s without touching progress", async (_, payload, message) => {
+    transferQr.decodeQrImage.mockResolvedValue(payload);
     const before = userState.exportState();
     render(TransferCard, { open: true });
 
     await scanImage(new File(["png"], "bogus.png", { type: "image/png" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "This QR code’s data is damaged or incomplete.",
-    );
+    expect(await screen.findByRole("alert")).toHaveTextContent(message);
     expect(userState.exportState()).toBe(before);
   });
 
   it("explains how to replace a QR code from an older tracker-data version", async () => {
-    transferQr.decodeQrImage.mockResolvedValue("CSG9unJjYBgFVAYpDCln0IENDAycsxoYWiZ5qkxgcKCnpQA");
+    transferQr.decodeQrImage.mockResolvedValue(OLDER_VERSION_PAYLOAD);
     render(TransferCard, { open: true });
 
     await scanImage(new File(["png"], "old-qr.png", { type: "image/png" }));
@@ -151,7 +156,7 @@ describe("TransferCard scan from image", () => {
 
   it("resets recovery-copy state before another scan", async () => {
     vi.stubGlobal("navigator", { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
-    transferQr.decodeQrImage.mockResolvedValue("CSG9unJjYBgFVAYpDCln0IENDAycsxoYWiZ5qkxgcKCnpQA");
+    transferQr.decodeQrImage.mockResolvedValue(OLDER_VERSION_PAYLOAD);
     render(TransferCard, { open: true });
 
     await scanImage(new File(["png"], "old-qr.png", { type: "image/png" }));

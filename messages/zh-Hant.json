@@ -390,6 +390,7 @@
   "transfer_error_could_not_decode": "無法解碼",
   "transfer_error_newer_version": "此 QR code 是由較新版本的 Mistria Field Guide 建立。請重新載入此頁面以更新，然後再掃描一次。",
   "transfer_error_corrupt": "此 QR code 的資料已損毀或不完整。請建立新的 QR code 後再試一次。",
+  "transfer_error_not_transfer_code": "此 QR code 不是 Mistria Field Guide 的傳輸碼。",
   "transfer_error_outdated_title": "此 QR code 是由較舊版本的 Mistria Field Guide 建立。",
   "transfer_error_outdated_recovery": "請在建立此 QR code 的裝置上重新載入 Mistria Field Guide。然後開啟資料 → 傳輸，建立新的 QR code 並在此處掃描。",
   "transfer_error_outdated_copy_steps": "複製復原步驟",
