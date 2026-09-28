@@ -21,6 +21,10 @@ Decoding is all-or-nothing. The decoder validates these boundaries before return
   cleanly to the expected length but produces different content.
 - The body is a complete raw-DEFLATE stream.
 - The decompressed byte count is exactly the layout length expected for that version.
+- Every enumerated field contains a defined code, including quest state, spouse index, relationship
+  state, and child choice.
+- Every reserved or unused bit is zero, including bitfield padding, spell padding, progression
+  flags, and relationship padding.
 
 Malformed encoding, corrupt or truncated compressed data, a missing or mismatched checksum, short
 decompressed data, trailing decompressed data, and unsupported versions reject explicitly. Missing
@@ -35,14 +39,22 @@ including historical fixtures, so a payload can never merge an out-of-domain val
 
 ## Compatibility fixtures
 
-`src/lib/engine/__tests__/transfer.test.ts` keeps immutable fixtures with these expectations:
+`src/lib/engine/__tests__/transfer.test.ts` keeps immutable fixtures with these expectations.
+Versions older than v10 are deliberately unsupported because their positional layouts no longer
+match the current tracker data.
 
-| Version | Purpose                                                                                 | Compatibility expectation                                                                                           |
-| ------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| v1      | Earliest layout, before perks and later progression fields                              | Decode the original floor, villager level, and renown; default later fields to empty or their initial value.        |
-| v5      | Historical pre-v6 almanac ordering                                                      | Accept its historical 790-byte raw layout and normalize renamed almanac canonical IDs.                              |
-| v8      | Historical pre-checksum fixture with bit-width-maximum (out-of-domain) scalar values    | Decode without a checksum and clamp its out-of-domain scalars to the real domain maxima.                            |
-| v9      | Current boundary fixture with in-domain maximum scalar values, marriage, and one recipe | Decode with a valid checksum, without loss, and remain byte-for-byte reproducible while tracker data is compatible. |
+| Version | Purpose                                                                            | Compatibility expectation                                                                    |
+| ------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| v1      | Earliest layout, before perks and later progression fields                         | Reject with `OutdatedTransferPayloadError` before decompression.                             |
+| v5      | Historical pre-v6 almanac ordering                                                 | Reject with `OutdatedTransferPayloadError` before interpreting obsolete almanac positions.   |
+| v8      | Final pre-checksum layout                                                          | Reject with `OutdatedTransferPayloadError` before interpreting obsolete positions.           |
+| v9      | Preceding checksummed layout                                                       | Reject with `OutdatedTransferPayloadError` before interpreting obsolete positions.           |
+| v10     | Fixed representative `CompletedState` spanning scalar, enum, and positional fields | Encode to the immutable golden payload and decode that payload to the pinned progress state. |
+
+The codec also pins `TRANSFER_ORDERING_HASH` beside `TRANSFER_VERSION`. The hash covers every ID
+array whose position determines an on-wire bit, using code-unit ordering only. A tracker-data change
+that shifts an ordering must update the compatibility decision, transfer version when required,
+ordering hash, and golden fixture together.
 
 Every change to a transfer ordering or encoded field must follow the game-version update protocol.
 If a layout’s meaning changes, bump the transfer version and add a fixture for the preceding format.
