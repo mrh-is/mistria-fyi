@@ -8,11 +8,11 @@ import {
   MAX_VILLAGER_LEVEL,
 } from "$lib/engine/progress.js";
 
-import { buildImportState, validatePlayerSave } from "../import-save";
+import { buildImportState, validatePlayerSave } from "./import-save";
 
 import type { RecipeId, SkillId, VillagerId } from "$lib/types/tracker-data.js";
 
-import type { SaveBundle } from "../import-save";
+import type { SaveBundle } from "./import-save";
 
 function getDefaultRecipeIds(): Set<RecipeId> {
   const ids = new Set<RecipeId>();

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { MAX_COMPRESSED_SIZE, parseSavFile } from "../parse-sav";
+import { MAX_COMPRESSED_SIZE, parseSavFile } from "./parse-sav";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 
