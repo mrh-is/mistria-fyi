@@ -1,6 +1,7 @@
 import { sequence } from "@sveltejs/kit/hooks";
 
 import {
+  baseLocale,
   cookieName,
   extractLocaleFromHeader,
   getTextDirection,
@@ -29,8 +30,9 @@ function isUnlocalizedPath(pathname: string): boolean {
 
 /**
  * There is no unprefixed default locale, so a bare path (e.g. `/almanac`) can't be rendered as
- * is. Redirect it to a resolved locale — the stored preference cookie, then `Accept-Language`
- * negotiation — or 404 if neither yields a supported locale, rather than silently serving English.
+ * is. Redirect it to a resolved locale: the stored preference cookie, then `Accept-Language`
+ * negotiation, then English. Clients with no usable language (link unfurlers, crawlers, speakers
+ * of unsupported languages) still land on a real page rather than a dead end.
  */
 export const bareLocaleRedirect: Handle = ({ event, resolve }) => {
   const { pathname } = event.url;
@@ -42,16 +44,17 @@ export const bareLocaleRedirect: Handle = ({ event, resolve }) => {
   const cookieLocale = event.cookies.get(cookieName);
   const preferredLocale =
     (cookieLocale && isLocale(cookieLocale) ? cookieLocale : undefined) ??
-    extractLocaleFromHeader(event.request);
-
-  if (!preferredLocale) {
-    return new Response("Not Found", { status: 404 });
-  }
+    extractLocaleFromHeader(event.request) ??
+    baseLocale;
 
   // `event.url.search` is inaccessible while prerendering; every prerendered route is already
   // excluded above, so this only runs for on-demand SSR requests, where reading it is safe.
   const location = `/${preferredLocale}${pathname === "/" ? "" : pathname}${event.url.search}`;
-  return new Response(undefined, { headers: { location }, status: 307 });
+  // The target depends on the cookie & `Accept-Language`, so caches must key on both.
+  return new Response(undefined, {
+    headers: { location, vary: "Cookie, Accept-Language" },
+    status: 307,
+  });
 };
 
 const paraglideHandle: Handle = ({ event, resolve }) =>
