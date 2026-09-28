@@ -88,17 +88,20 @@ throws as a data bug. `getName()` & `getNameTable()` stay synchronous (component
 inside `$derived`) and read from a session cache that `loadNames()` fills; reading a chunk that
 exists but was never awaited throws rather than silently degrading.
 
-- **Category routes** await their chunks in `+page.ts` via `loadPageNames(event, [...])`. A page
-  that renders source segments also spreads `SEGMENT_LOOKUP_CATEGORIES` from
-  `src/lib/utils/segment-lookups.ts`. If you add a `getName()` call for a new category to a page's
-  component tree, add the category to that route's list; the thrown error names the missing chunk.
+- **Routes** build their `+page.ts` load with `localizedPageLoad([...], (locale) => metadata)` from
+  `src/lib/data/page-load.ts`, which awaits the listed chunks in the locale the root layout resolved
+  (never the URL: paraglide's `getLocaleForUrl` reports the base locale during SSR). The layout
+  already awaits `ui` on every route, so pages don't list it. A page that renders source segments
+  also spreads `SEGMENT_LOOKUP_CATEGORIES` from `src/lib/utils/segment-lookups.ts`. If you add a
+  `getName()` call for a new category to a page's component tree, add the category to that route's
+  list; the thrown error names the missing chunk.
 - **`/all`** awaits every category (`LOCALIZED_CATEGORIES`).
 - **Sitewide search** (`search-results.svelte`) awaits every category for the active locale, plus
   English (search also matches English terms), on first open, not at page load, and gates its
   results on that load. Chunks are cached per `<locale>/<category>` for the session, so reopening
   search never refetches.
 - **Tests** run with every chunk preloaded by `src/vitest-setup-names.ts`. Tests of the loading
-  boundary itself live under `vitest.mocked.config.ts`, which skips that setup.
+  boundary itself run in the `mocked` Vitest project, which skips that setup.
 
 **MFG's own UI chrome text** (buttons, labels, dialogs, descriptions) is machine-translated by us
 and built on [Paraglide JS](https://inlang.com/m/gerre34r/library-inlang-paraglideJs). Source
@@ -136,6 +139,17 @@ variant message, farm animals use `animals` `<id>/core`, stations are items, and
 them to interim machine-translated `source_location_*` & `source_water_*` messages. Scroll bundles
 are keyed by English `bundleName` through a static id map. Replace these with pipeline extraction
 once the game's translation keys are read from `assets/localization/`.
+
+## Falling back to English
+
+When nothing better is available, the app serves English rather than an error or an empty slot. This
+is the rule for every layer: a game-data name with no translation, a UI string a locale hasn't
+translated, and a request with no usable locale all resolve to English.
+
+Every page URL carries a locale prefix (`/ja/almanac`); there is no unprefixed default. A bare path
+redirects (307) to the stored preference cookie's locale, then the best `Accept-Language` match,
+then `/en` (`bareLocaleRedirect` in `src/hooks.server.ts`). The redirect sends
+`Vary: Cookie, Accept-Language` so caches don't hand one visitor's locale to another.
 
 ## Adding a new UI string (agents & humans)
 

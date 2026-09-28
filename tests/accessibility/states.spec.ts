@@ -171,7 +171,7 @@ test.describe("@critical stateful accessibility", () => {
       mimeType: "application/json",
       name: "player.json",
     });
-    await expect(page.getByRole("alert")).toContainText("player.json: invalid JSON");
+    await expect(page.getByRole("alert")).toContainText("player.json isn’t valid JSON; skipped");
     await analyzeAccessibility(
       page,
       { route: "/data", state: "import-error", theme: "light" },
@@ -211,7 +211,8 @@ test.describe("@critical stateful accessibility", () => {
       testInfo,
     );
 
-    const invalidBuffer = Buffer.from(encodeQR("invalid-transfer-payload", "gif", { scale: 4 }));
+    // A marked, current (v11) version byte with no checksum: recognized, but damaged.
+    const invalidBuffer = Buffer.from(encodeQR("MFGTCw", "gif", { scale: 4 }));
     const errorChooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: /scan from a screenshot/i }).click();
     await (
@@ -221,16 +222,17 @@ test.describe("@critical stateful accessibility", () => {
       mimeType: "image/gif",
       name: "invalid-transfer.gif",
     });
-    await expect(page.getByRole("alert")).toContainText("Invalid QR code");
+    await expect(page.getByRole("alert")).toContainText(
+      "This QR code’s data is damaged or incomplete.",
+    );
     await analyzeAccessibility(
       page,
       { route: "/data", state: "transfer-error", theme: "light" },
       testInfo,
     );
 
-    const outdatedBuffer = Buffer.from(
-      encodeQR("CSG9unJjYBgFVAYpDCln0IENDAycsxoYWiZ5qkxgcKCnpQA", "gif", { scale: 4 }),
-    );
+    // A marked v10 version byte: recognized as a transfer code, but from an older version.
+    const outdatedBuffer = Buffer.from(encodeQR("MFGTCg", "gif", { scale: 4 }));
     const outdatedChooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: /scan from a screenshot/i }).click();
     await (

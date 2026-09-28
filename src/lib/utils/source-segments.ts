@@ -1,6 +1,12 @@
 import * as m from "$lib/paraglide/messages.js";
 
-import { formatBiomeName, formatStoreName, withIndefiniteArticle } from "./format";
+import {
+  findBiome,
+  formatBiomeName,
+  formatStoreName,
+  requireEntry,
+  withIndefiniteArticle,
+} from "./format";
 
 import type { AvailabilityCondition, ProductionMethod, Source } from "$lib/types/acquisition.js";
 import type { LocaleCode } from "$lib/types/locale.js";
@@ -100,8 +106,7 @@ const STORE_ACTION_CLAUSES: Partial<
 const SLOT_MARKER = /(\d+)/;
 
 export function buildBiomeLabel(biomeId: MinesBiomeId, lookups: SegmentLookups): Segments {
-  const biome = lookups.biomes.find((b) => b.id === biomeId);
-  if (!biome) return [titleCase(biomeId)];
+  const biome = findBiome(biomeId, lookups.biomes);
 
   const { locale } = lookups;
   const condition: VisibilityCondition = { type: "minesLevel", floor: biome.floors.start };
@@ -129,10 +134,9 @@ export function buildBiomeLabel(biomeId: MinesBiomeId, lookups: SegmentLookups):
 
 export function buildPerkLabel(perkId: PerkId, lookups: SegmentLookups): Segments {
   const { locale } = lookups;
-  const perk = lookups.perks[perkId];
-  if (!perk) return [m.source_perk_label_unknown({ perk: titleCase(perkId) }, { locale })];
+  const perk = requireEntry(lookups.perks, perkId, "perks");
 
-  const skill = lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId);
+  const skill = requireEntry(lookups.skillNames, perk.skillId, "skillNames");
   const tier = String(perk.tier);
   const level = lookups.perkTierLevels[perk.tier - 1];
   const condition: VisibilityCondition = {
@@ -158,7 +162,7 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
 
   switch (source.type) {
     case "animal_product": {
-      const animal = lookups.animalNames[source.animalId] ?? titleCase(source.animalId);
+      const animal = requireEntry(lookups.animalNames, source.animalId, "animalNames");
       return [m.source_animal_product({ animal }, opts)];
     }
     case "artifact_dig": {
@@ -170,7 +174,7 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
       ];
     }
     case "artifact_replicator": {
-      const item = lookups.itemNames[source.originalItemId] ?? titleCase(source.originalItemId);
+      const item = requireEntry(lookups.itemNames, source.originalItemId, "itemNames");
       return [m.source_artifact_replicator({ item }, opts)];
     }
     case "bait_fish":
@@ -190,13 +194,13 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
         ? [m.source_chicken_statue_cost({ cost: String(source.cost) }, opts)]
         : [m.source_chicken_statue_all_tiers({}, opts)];
     case "crop": {
-      const seed = lookups.itemNames[source.seedItemId] ?? titleCase(source.seedItemId);
+      const seed = requireEntry(lookups.itemNames, source.seedItemId, "itemNames");
       return [m.source_crop({ seed }, opts)];
     }
     case "date":
       return [m.source_date({}, opts)];
     case "date_inspiration": {
-      const item = lookups.itemNames[source.itemId] ?? titleCase(source.itemId);
+      const item = requireEntry(lookups.itemNames, source.itemId, "itemNames");
       return [m.source_date_inspiration({ item }, opts)];
     }
     case "default":
@@ -208,7 +212,7 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
     case "donate_item":
     case "ship_item": {
       const message = source.type === "ship_item" ? m.source_ship_item : m.source_donate_item;
-      const itemName = lookups.itemNames[source.triggerItemId] ?? titleCase(source.triggerItemId);
+      const itemName = requireEntry(lookups.itemNames, source.triggerItemId, "itemNames");
       const itemVis = lookups.itemVisibility[source.triggerItemId];
       const nameWithArticle = indefiniteName(itemName, locale);
       const itemSegment: SourceSegment =
@@ -220,11 +224,11 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
     case "engagement":
       return [m.source_engagement({}, opts)];
     case "equipment": {
-      const item = lookups.itemNames[source.itemId] ?? titleCase(source.itemId);
+      const item = requireEntry(lookups.itemNames, source.itemId, "itemNames");
       return [m.source_equipment({ item }, opts)];
     }
     case "festival": {
-      const festival = lookups.festivals[source.festivalId]?.name ?? titleCase(source.festivalId);
+      const festival = requireEntry(lookups.festivals, source.festivalId, "festivals").name;
       const festivalDate = lookups.festivals[source.festivalId]?.date;
       const date = festivalDate
         ? formatDateLabel(festivalDate.season, festivalDate.day, lookups.seasonNames, locale)
@@ -244,7 +248,7 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
       ];
     }
     case "festival_activity": {
-      const festival = lookups.festivals[source.festivalId]?.name ?? titleCase(source.festivalId);
+      const festival = requireEntry(lookups.festivals, source.festivalId, "festivals").name;
       return [m.source_festival_activity({ festival }, opts)];
     }
     case "fish": {
@@ -299,7 +303,7 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
     case "monster_feed":
       return [m.source_monster_feed({ monster: monsterName(source.monsterId, lookups) }, opts)];
     case "museum_donation": {
-      const wing = lookups.museumWingNames[source.wingId] ?? titleCase(source.wingId);
+      const wing = requireEntry(lookups.museumWingNames, source.wingId, "museumWingNames");
       return [m.source_museum_donation({ count: source.setCount, wing }, opts)];
     }
     case "perk": {
@@ -311,7 +315,7 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
       return fillMessage((slot) => m.source_perk_drop({ perk: slot(perkLabel) }, opts));
     }
     case "proposal": {
-      const villager = lookups.villagerNames[source.villagerId] ?? titleCase(source.villagerId);
+      const villager = requireEntry(lookups.villagerNames, source.villagerId, "villagerNames");
       return [m.source_proposal({ villager }, opts)];
     }
     case "quest":
@@ -327,7 +331,7 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
       return [m.source_reach_day({ date }, opts)];
     }
     case "recipe": {
-      const recipe = lookups.recipeNames[source.recipeId] ?? titleCase(source.recipeId);
+      const recipe = requireEntry(lookups.recipeNames, source.recipeId, "recipeNames");
       return [RECIPE_METHOD_MESSAGES[source.method]({ recipe }, opts)];
     }
     case "renown":
@@ -354,11 +358,11 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
       );
     }
     case "spouseGift": {
-      const villager = lookups.villagerNames[source.villagerId] ?? titleCase(source.villagerId);
+      const villager = requireEntry(lookups.villagerNames, source.villagerId, "villagerNames");
       return [m.source_spouse_gift({ villager }, opts)];
     }
     case "station": {
-      const station = lookups.stationNames[source.stationId] ?? titleCase(source.stationId);
+      const station = requireEntry(lookups.stationNames, source.stationId, "stationNames");
       return [m.source_station({ station }, opts)];
     }
     case "store": {
@@ -371,12 +375,11 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
       );
     }
     case "treasure_chest": {
-      const tierData = lookups.treasureChestTiers[source.tier];
-      const name = tierData?.name ?? `${titleCase(source.tier)} Treasure Box`;
+      const { name } = requireEntry(lookups.treasureChestTiers, source.tier, "treasureChestTiers");
       return [m.source_treasure_chest({ chest: indefiniteName(name, locale) }, opts)];
     }
     case "tree": {
-      const sapling = lookups.itemNames[source.saplingItemId] ?? titleCase(source.saplingItemId);
+      const sapling = requireEntry(lookups.itemNames, source.saplingItemId, "itemNames");
       return [m.source_tree({ sapling }, opts)];
     }
     case "upgrade": {
@@ -448,7 +451,7 @@ export function formatDateLabel(
 /** The biome name with English's definite article ("the Tide Caverns"); other locales as-is. */
 function biomeDisplayName(biomeId: MinesBiomeId, lookups: SegmentLookups): string {
   if (lookups.locale === "en") return formatBiomeName(biomeId, lookups.biomes);
-  return lookups.biomes.find((b) => b.id === biomeId)?.name ?? titleCase(biomeId);
+  return findBiome(biomeId, lookups.biomes).name;
 }
 
 /** One "after one of" option: its first clause in branch form, any further ones appended. */
@@ -465,8 +468,8 @@ function buildCookingChallengeSegments(
   lookups: SegmentLookups,
 ): Segments {
   const recipeName = source.challengeRecipeId
-    ? (lookups.recipeNames[source.challengeRecipeId] ?? titleCase(source.challengeRecipeId))
-    : (lookups.questNames[source.questId] ?? titleCase(source.questId));
+    ? requireEntry(lookups.recipeNames, source.challengeRecipeId, "recipeNames")
+    : requireEntry(lookups.questNames, source.questId, "questNames");
   const questVis = source.visibility;
   const categoryVis = lookups.categoryVisibility.cooking;
 
@@ -487,7 +490,7 @@ function buildCrownQuestSegments(
   source: Source & { type: "quest" },
   lookups: SegmentLookups,
 ): Segments {
-  const questName = lookups.questNames[source.questId] ?? titleCase(source.questId);
+  const questName = requireEntry(lookups.questNames, source.questId, "questNames");
   const subject = crownRequestSubject(questName);
   const questVis = source.visibility;
   const categoryVis = lookups.categoryVisibility.crown;
@@ -509,7 +512,7 @@ function buildFetchQuestSegments(
 ): Segments {
   const villagerId = lookups.questVillagerIds[source.questId];
   const villagerName = villagerId
-    ? (lookups.villagerNames[villagerId] ?? titleCase(villagerId))
+    ? requireEntry(lookups.villagerNames, villagerId, "villagerNames")
     : "???";
   const villagerVis = villagerId ? lookups.villagerVisibility[villagerId] : undefined;
   const questVis = source.visibility;
@@ -520,7 +523,7 @@ function buildFetchQuestSegments(
       : villagerName;
 
   const itemId = source.requestedItemId;
-  const itemName = itemId ? (lookups.itemNames[itemId] ?? titleCase(itemId)) : "???";
+  const itemName = itemId ? requireEntry(lookups.itemNames, itemId, "itemNames") : "???";
   const itemSegment: SourceSegment =
     questVis && questVis.type !== "always"
       ? { condition: questVis, revealed: [itemName] }
@@ -538,12 +541,12 @@ function buildHeartQuestSegments(
   source: Source & { type: "quest" },
   lookups: SegmentLookups,
 ): Segments {
-  const questName = lookups.questNames[source.questId] ?? titleCase(source.questId);
+  const questName = requireEntry(lookups.questNames, source.questId, "questNames");
   const questVis = source.visibility;
 
   const villagerId = lookups.questVillagerIds[source.questId];
   const villagerName = villagerId
-    ? (lookups.villagerNames[villagerId] ?? titleCase(villagerId))
+    ? requireEntry(lookups.villagerNames, villagerId, "villagerNames")
     : "???";
   const villagerVis = villagerId ? lookups.villagerVisibility[villagerId] : undefined;
 
@@ -566,7 +569,7 @@ function buildHeartQuestSegments(
 
 function buildLocationList(locationIds: LocationId[] | undefined, lookups: SegmentLookups): string {
   return formatAlternatives(
-    (locationIds ?? []).map((id) => lookups.locationNames[id] ?? titleCase(id)),
+    (locationIds ?? []).map((id) => requireEntry(lookups.locationNames, id, "locationNames")),
     lookups.locale,
   );
 }
@@ -575,7 +578,7 @@ function buildMissionQuestSegments(
   source: Source & { type: "quest" },
   lookups: SegmentLookups,
 ): Segments {
-  const questName = lookups.questNames[source.questId] ?? titleCase(source.questId);
+  const questName = requireEntry(lookups.questNames, source.questId, "questNames");
   const questVis = source.visibility;
   const categoryVis = lookups.categoryVisibility.mission;
 
@@ -623,7 +626,7 @@ function buildStoryQuestSegments(
   source: Source & { type: "quest" },
   lookups: SegmentLookups,
 ): Segments {
-  const questName = lookups.questNames[source.questId] ?? titleCase(source.questId);
+  const questName = requireEntry(lookups.questNames, source.questId, "questNames");
   const questVis = source.visibility;
 
   // The English message supplies "the", so drop the name's own to avoid "the The".
@@ -641,7 +644,7 @@ function buildStoryQuestSegments(
 
 function buildWaterList(waterTypes: undefined | WaterType[], lookups: SegmentLookups): string {
   return formatAlternatives(
-    (waterTypes ?? []).map((w) => lookups.waterNames[w] ?? titleCase(w)),
+    (waterTypes ?? []).map((w) => requireEntry(lookups.waterNames, w, "waterNames")),
     lookups.locale,
   );
 }
@@ -701,8 +704,7 @@ function describeStoreAvailability(
     case "hasUpperFloor":
       return [same(m.source_clause_upgraded_home({}, opts))];
     case "heartLevel": {
-      const villager =
-        lookups.villagerNames[condition.villagerId] ?? titleCase(condition.villagerId);
+      const villager = requireEntry(lookups.villagerNames, condition.villagerId, "villagerNames");
       const level = String(condition.level);
       return [
         {
@@ -734,7 +736,7 @@ function describeStoreAvailability(
       if (condition.questId.startsWith("upgrade_")) {
         return [same(m.source_clause_upgrading({}, opts))];
       }
-      const quest = lookups.questNames[condition.questId] ?? titleCase(condition.questId);
+      const quest = requireEntry(lookups.questNames, condition.questId, "questNames");
       return condition.state === "completed"
         ? [
             {
@@ -759,7 +761,7 @@ function describeStoreAvailability(
       ];
     }
     case "skillLevel": {
-      const skill = lookups.skillNames[condition.skillId] ?? titleCase(condition.skillId);
+      const skill = requireEntry(lookups.skillNames, condition.skillId, "skillNames");
       const level = String(condition.level);
       return [
         {
@@ -838,14 +840,13 @@ function joinSegments(...parts: (SourceSegment | SourceSegment[])[]): Segments {
 
 function monsterName(monsterId: string, lookups: SegmentLookups): string {
   if (monsterId === "any") return m.source_monster_any({}, { locale: lookups.locale });
-  return lookups.monsterNames[monsterId] ?? titleCase(monsterId);
+  return requireEntry(lookups.monsterNames, monsterId, "monsterNames");
 }
 
 function plainPerkLabel(perkId: PerkId, lookups: SegmentLookups): string {
   const { locale } = lookups;
-  const perk = lookups.perks[perkId];
-  if (!perk) return m.source_perk_label_unknown({ perk: titleCase(perkId) }, { locale });
-  const skill = lookups.skillNames[perk.skillId] ?? titleCase(perk.skillId);
+  const perk = requireEntry(lookups.perks, perkId, "perks");
+  const skill = requireEntry(lookups.skillNames, perk.skillId, "skillNames");
   return m.source_perk_label({ perk: perk.name, skill, tier: String(perk.tier) }, { locale });
 }
 
@@ -857,14 +858,7 @@ function storeActionClause(action: string | undefined, locale: LocaleCode): stri
 /** The store name with English's definite article where the store takes one; others as-is. */
 function storeDisplayName(storeId: StoreId, lookups: SegmentLookups): string {
   if (lookups.locale === "en") return formatStoreName(storeId, lookups.stores);
-  return lookups.stores[storeId]?.name ?? titleCase(storeId);
-}
-
-function titleCase(s: string): string {
-  return s
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+  return requireEntry(lookups.stores, storeId, "stores").name;
 }
 
 function visibilityContains(

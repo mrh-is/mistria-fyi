@@ -12,7 +12,7 @@ import {
   isVillagerComplete,
   MAX_SKILL_LEVEL,
   MAX_VILLAGER_LEVEL,
-} from "../progress";
+} from "./progress";
 
 import type { CategoryKey } from "$lib/data/categories.js";
 import type {

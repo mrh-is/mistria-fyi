@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { recordKeys } from "$lib/utils";
 import { deepMerge, type DeepPartial } from "$lib/utils/deep-partial.js";
 
 import {
@@ -8,7 +9,7 @@ import {
   isEntityNameVisible,
   isVisible,
   satisfyCondition,
-} from "../visibility";
+} from "./visibility";
 
 import type { CompletedState } from "$lib/stores/user-state.svelte.js";
 import type {
@@ -16,12 +17,13 @@ import type {
   QuestId,
   QuestType,
   SkillId,
+  StoryQuest,
   TrackerData,
   VillagerId,
 } from "$lib/types/tracker-data.js";
 import type { VisibilityCondition } from "$lib/types/visibility.js";
 
-import type { UserProgressionState } from "../visibility";
+import type { UserProgressionState } from "./visibility";
 
 function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState {
   return {
@@ -429,6 +431,82 @@ describe("deriveProgressionState", () => {
     const state = deriveProgressionState(completed, trackerData, false);
     expect(state.knownVillagers.has(caldarus)).toBe(true);
     expect(state.villagerLevels[caldarus]).toBe(4);
+  });
+
+  describe("prerequisites on quests later in key order", () => {
+    const summitStairs = "repair_the_summit_stairs" as QuestId;
+    const generalStore = "repair_the_general_store" as QuestId;
+    const signScroll = "crop_sign_scroll_bundle" as QuestId;
+    const mission = "mission" as QuestType;
+
+    // Dependents first, so a single pass in key order reads prerequisites it hasn't evaluated yet.
+    const storyQuests: [QuestId, Partial<StoryQuest>][] = [
+      [signScroll, { visibility: { type: "questAvailable", questId: generalStore } }],
+      [generalStore, { visibility: { type: "questCompleted", questId: summitStairs } }],
+    ];
+    const missionQuests: [QuestId, Partial<StoryQuest>][] = [[summitStairs, {}]];
+
+    function makeOrderedTrackerData(
+      questTypeOrder: QuestType[],
+      storyEntries: typeof storyQuests,
+    ): TrackerData {
+      const trackerData = makeTrackerData();
+      const byType: Partial<Record<QuestType, typeof storyQuests>> = {
+        [mission]: missionQuests,
+        [story]: storyEntries,
+      };
+      const quests = Object.fromEntries(
+        questTypeOrder.map((questType) => [questType, Object.fromEntries(byType[questType] ?? [])]),
+      ) as TrackerData["quests"];
+      return { ...trackerData, quests };
+    }
+
+    const allTypes = recordKeys(makeTrackerData().quests);
+
+    it("resolves a chain whose prerequisites come later in key order", () => {
+      const trackerData = makeOrderedTrackerData(
+        [story, ...allTypes.filter((t) => t !== story)],
+        storyQuests,
+      );
+      const completed = makeCompleted({ questStates: { [summitStairs]: "completed" } });
+
+      const state = deriveProgressionState(completed, trackerData, false);
+      expect(state.questVisibility[generalStore]).toBe("available");
+      expect(state.questVisibility[signScroll]).toBe("available");
+    });
+
+    it("produces identical visibility for every quest key order", () => {
+      const completed = makeCompleted({ questStates: { [summitStairs]: "completed" } });
+      const typeOrders = [allTypes, [...allTypes].reverse()];
+      const storyOrders = [storyQuests, [...storyQuests].reverse()];
+
+      const results = typeOrders.flatMap((typeOrder) =>
+        storyOrders.map(
+          (storyOrder) =>
+            deriveProgressionState(completed, makeOrderedTrackerData(typeOrder, storyOrder), false)
+              .questVisibility,
+        ),
+      );
+      for (const result of results) expect(result).toEqual(results[0]);
+      expect(results[0][signScroll]).toBe("available");
+    });
+
+    it("leaves a prerequisite cycle unavailable", () => {
+      const cycleA = "cycle_a" as QuestId;
+      const cycleB = "cycle_b" as QuestId;
+      const trackerData = makeTrackerData({
+        quests: {
+          [story]: {
+            [cycleA]: { name: "A", visibility: { type: "questAvailable", questId: cycleB } },
+            [cycleB]: { name: "B", visibility: { type: "questAvailable", questId: cycleA } },
+          },
+        },
+      });
+
+      const state = deriveProgressionState(makeCompleted(), trackerData, false);
+      expect(state.questVisibility[cycleA]).toBe("unavailable");
+      expect(state.questVisibility[cycleB]).toBe("unavailable");
+    });
   });
 });
 

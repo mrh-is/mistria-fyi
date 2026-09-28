@@ -28,14 +28,14 @@ export interface PageMetadataInput {
   toolbar?: "hidden" | Partial<ToolbarConfig>;
 }
 
+export type RobotsDirective = "noindex, follow" | "noindex, nofollow";
+
 export interface ToolbarConfig {
   /** Shows the toolbar's in-page name filter (`toolbarState.searchQuery`). */
   search: boolean;
   /** Shows the toolbar's season/weather & availability filters. */
   worldState: boolean;
 }
-
-type RobotsDirective = "noindex, follow" | "noindex, nofollow";
 
 const DEFAULT_TOOLBAR: ToolbarConfig = { search: false, worldState: false };
 
