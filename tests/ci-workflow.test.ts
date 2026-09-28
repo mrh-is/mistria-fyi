@@ -217,6 +217,12 @@ describe("CI workflow browser suites", () => {
       // The image already carries Chromium and its system libraries.
       const commands = runCommands(jobs[jobName]).join("\n");
       expect(commands).not.toMatch(/playwright install|firefox|webkit/);
+      // The container's root user must trust the runner-owned checkout before the preview server
+      // loads svelte.config.js, which runs `git rev-parse`.
+      const commandList = runCommands(jobs[jobName]);
+      expect(
+        commandList.indexOf('git config --global --add safe.directory "$GITHUB_WORKSPACE"'),
+      ).toBe(1);
       expect(jobs[jobName].steps?.some((step) => step.uses?.startsWith("actions/cache@"))).toBe(
         false,
       );
