@@ -1,4 +1,10 @@
 {
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "*.svelte": "${capture}.test.ts, ${capture}.*.test.ts",
+    "*.ts": "${capture}.test.ts, ${capture}.*.test.ts"
+  },
   "json.schemaDownload.trustedDomains": {
     "https://shadcn-svelte.com/schema.json": true
   },
