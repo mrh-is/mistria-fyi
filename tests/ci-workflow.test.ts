@@ -17,7 +17,7 @@ interface Workflow {
 }
 
 interface WorkflowJob {
-  container?: string;
+  container?: string | { image?: string; options?: string };
   if?: string;
   needs?: string | string[];
   outputs?: Record<string, string>;
@@ -205,15 +205,16 @@ describe("CI workflow browser suites", () => {
     expect(pwaStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
   });
 
-  it("runs in the Playwright image that matches the locked Playwright version", () => {
+  it("runs in the matching Playwright image with host shared memory", () => {
     const lockfile = readFileSync("pnpm-lock.yaml", "utf8");
     const lockedVersion = /^ {2}'@playwright\/test@([\d.]+)':$/m.exec(lockfile)?.[1];
     expect(lockedVersion).toBeDefined();
 
     for (const jobName of browserJobs) {
-      expect(jobs[jobName].container).toBe(
-        `mcr.microsoft.com/playwright:v${String(lockedVersion)}-noble`,
-      );
+      expect(jobs[jobName].container).toEqual({
+        image: `mcr.microsoft.com/playwright:v${String(lockedVersion)}-noble`,
+        options: "--ipc=host",
+      });
       // The image already carries Chromium and its system libraries.
       const commands = runCommands(jobs[jobName]).join("\n");
       expect(commands).not.toMatch(/playwright install|firefox|webkit/);
