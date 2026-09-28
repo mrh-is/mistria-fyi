@@ -10,11 +10,11 @@ import {
 } from "$lib/engine/progress.js";
 import { recordKeys, recordValues } from "$lib/utils.js";
 
-import { buildImportState, parseSaveFiles, validatePlayerSave } from "../import-save";
+import { buildImportState, parseSaveFiles, validatePlayerSave } from "./import-save";
 
 import type { RecipeId, SkillId, VillagerId } from "$lib/types/tracker-data.js";
 
-import type { SaveBundle } from "../import-save";
+import type { SaveBundle } from "./import-save";
 
 function getDefaultRecipeIds(): Set<RecipeId> {
   const ids = new Set<RecipeId>();

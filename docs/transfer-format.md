@@ -49,10 +49,9 @@ including historical fixtures, so a payload can never merge an out-of-domain val
 
 ## Compatibility fixtures
 
-`src/lib/engine/__tests__/transfer.test.ts` keeps immutable fixtures with these expectations.
-Versions older than v11 are deliberately unsupported: v1 through v9 because their positional layouts
-no longer match the current tracker data, and v10 because it predates the marker. v11 has v10’s
-layout.
+`src/lib/engine/transfer.test.ts` keeps immutable fixtures with these expectations. Versions older
+than v11 are deliberately unsupported: v1 through v9 because their positional layouts no longer
+match the current tracker data, and v10 because it predates the marker. v11 has v10’s layout.
 
 | Version | Purpose                                                                            | Compatibility expectation                                                                    |
 | ------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |

@@ -38,7 +38,7 @@ interface GitHubFailureDiagnostics {
 }
 
 function buildIssueBody(payload: FeedbackPayload): string {
-  const lines: string[] = [payload.message, "", "---", ""];
+  const lines: string[] = [escapeMentions(payload.message), "", "---", ""];
 
   lines.push(`**App version:** ${payload.appVersion}`);
   lines.push(`**Game data version:** ${payload.gameDataVersion}`);
@@ -100,7 +100,15 @@ function deriveTitle(payload: FeedbackPayload): string {
 }
 
 function escapeMarkdown(value: string): string {
-  return value.replaceAll(/([*_`<>[\]\\|~#])/g, "\\$1");
+  return value.replaceAll(/([*_`<>[\]\\|~#@])/g, "\\$1");
+}
+
+/**
+ * Backslash-escapes `@` so user-written text can't @-mention (and notify) GitHub users or teams.
+ * The rest of the message stays Markdown, since reporters format it on purpose.
+ */
+function escapeMentions(value: string): string {
+  return value.replaceAll("@", "\\@");
 }
 
 function formatBodyValue(value: string): string {

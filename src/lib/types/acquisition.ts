@@ -32,7 +32,7 @@ export type AvailabilityCondition =
   | { type: "minesLevel"; floor: number }
   | { type: "not"; condition: AvailabilityCondition }
   | { type: "perkUnlocked"; perkId: PerkId }
-  | { type: "quest"; questId: QuestId; state: Omit<QuestVisibility, "unavailable"> }
+  | { type: "quest"; questId: QuestId; state: Exclude<QuestVisibility, "unavailable"> }
   | { type: "reachedSeason"; season: Season }
   | { type: "season"; seasons: NonEmptyArray<Season> }
   | { type: "skillLevel"; level: number; skillId: SkillId }

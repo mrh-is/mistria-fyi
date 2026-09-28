@@ -58,7 +58,10 @@
     }
 
     if (badges.timeRange) {
-      result.push({ kind: "time", label: timeRangeLabel(badges.timeRange) });
+      result.push({
+        kind: "time",
+        label: timeRangeLabel(badges.timeRange, page.data.locale),
+      });
     }
 
     return result;
