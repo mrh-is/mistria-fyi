@@ -161,6 +161,26 @@ describe("POST /api/feedback", () => {
     expect(kvPut).toHaveBeenCalledWith("99", expect.stringContaining("user@example.com"));
   });
 
+  it("escapes @-mentions in user-written text so feedback can't notify GitHub users", async () => {
+    const fetchMock = mockGitHubSuccess();
+    const request = makeRequest({
+      ...validPayload,
+      message: "cc @octocat and @mrh-is/maintainers",
+      selectedElement: {
+        category: "recipe",
+        displayName: "@octocat",
+        page: "/recipes",
+      },
+    });
+    await callPost(request, { fetchMock, platform: mockPlatform() });
+
+    const [, options] = getGitHubCall(fetchMock);
+    const issue = JSON.parse(options.body as string) as { body: string };
+    expect(issue.body).toContain("cc \\@octocat and \\@mrh-is/maintainers");
+    expect(issue.body).toContain("- **Name:** \\@octocat");
+    expect(issue.body).not.toMatch(/(?<!\\)@/);
+  });
+
   it("formats selected element metadata in the issue title and body", async () => {
     const fetchMock = mockGitHubSuccess();
     const request = makeRequest({
