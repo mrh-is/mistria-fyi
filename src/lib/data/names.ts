@@ -155,20 +155,6 @@ export function loadNames(
 }
 
 /**
- * Awaits the name chunks a page renders, in the locale the root layout resolved. For use from a
- * route's `load()`: pass its event through. The sitemap generator calls page `load()`s with no
- * event to harvest metadata; nothing renders there, so nothing needs loading.
- */
-export async function loadPageNames(
-  event: undefined | { parent?: () => Promise<{ locale: LocaleCode }> },
-  categories: readonly LocalizedCategory[],
-): Promise<void> {
-  if (!event?.parent) return;
-  const { locale } = await event.parent();
-  await loadNames(locale, categories);
-}
-
-/**
  * A memoized `Intl.Collator` for `locale`, used wherever localized names are sorted or compared.
  * The cache is keyed by locale and holds immutable collators, so it carries no ambient locale
  * state between concurrent SSR requests.

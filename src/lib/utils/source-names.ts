@@ -2,7 +2,7 @@ import { getName, getNameTable } from "$lib/data/names.js";
 import * as m from "$lib/paraglide/messages.js";
 
 import type { LocaleCode } from "$lib/types/locale.js";
-import type { ItemId, PetSkinId } from "$lib/types/tracker-data.js";
+import type { ItemId, PetSkinId, QuestId, TreasureChestTierId } from "$lib/types/tracker-data.js";
 
 type NameMessage = (inputs: Record<string, never>, options: { locale: LocaleCode }) => string;
 type VariantMessage = (inputs: { monster: string }, options: { locale: LocaleCode }) => string;
@@ -105,6 +105,30 @@ export const SCROLL_BUNDLE_ITEM_IDS: Record<string, ItemId> = {
   "Winter Crop Sign Scroll Bundle": "winter_crop_sign_scroll_bundle" as ItemId,
 };
 
+/**
+ * The only IDs a generated source may reference without a name. Neither the game nor the pipeline
+ * names them: the quests are reviewed runtime-only story beats (cutscenes, items, & flags), and the
+ * `abyss` chest tier has no `treasure_box_abyss` item. They render as their title-cased ID until
+ * #471 gives them reviewed names; every other missing name throws.
+ */
+export const UNNAMED_SOURCE_IDS = {
+  quests: [
+    "another_tower",
+    "balors_crate",
+    "beach_date_unlock",
+    "break_earth_seal",
+    "break_fire_seal",
+    "break_ruins_seal_pt_3",
+    "break_water_seal",
+    "elsies_dating_tutorial",
+    "gem_cutting_date_unlock",
+    "great_bird_0",
+    "park_date_unlock",
+    "ryis_lumber",
+  ] as QuestId[],
+  treasureChestTiers: ["abyss"] as TreasureChestTierId[],
+};
+
 /** Farm animal names, keyed by animal id (`animals` chunk). */
 export function buildAnimalNames(locale: LocaleCode): Partial<Record<string, string>> {
   const table = getNameTable("animals", locale) as Partial<Record<string, string>>;
@@ -144,8 +168,20 @@ export function buildMonsterNames(locale: LocaleCode): Partial<Record<string, st
   );
 }
 
+/** Placeholder names for {@link UNNAMED_SOURCE_IDS}, identical in every locale. */
+export function buildUnnamedSourceNames(ids: readonly string[]): Record<string, string> {
+  return Object.fromEntries(ids.map((id) => [id, titleCase(id)]));
+}
+
 export function buildWaterNames(locale: LocaleCode): Partial<Record<string, string>> {
   return Object.fromEntries(
     Object.entries(WATER_MESSAGES).map(([id, message]) => [id, message({}, { locale })]),
   );
+}
+
+function titleCase(s: string): string {
+  return s
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }

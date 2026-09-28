@@ -6,7 +6,9 @@ import {
   buildBundleNames,
   buildLocationNames,
   buildMonsterNames,
+  buildUnnamedSourceNames,
   buildWaterNames,
+  UNNAMED_SOURCE_IDS,
 } from "$lib/utils/source-names.js";
 
 import type { LocalizedCategory } from "$lib/data/names.js";
@@ -94,7 +96,7 @@ function buildStaticBaseSegmentLookups(): Omit<
 
 /**
  * Every name category {@link buildBaseSegmentLookups} resolves. A route whose page renders source
- * segments must await these (see `loadPageNames`) alongside its own category's chunk.
+ * segments must await these (see `localizedPageLoad`) alongside its own category's chunk.
  */
 export const SEGMENT_LOOKUP_CATEGORIES = [
   "animals",
@@ -150,11 +152,14 @@ function getLocalizedBaseSegmentLookups(
         ),
       ),
     ),
-    questNames: Object.fromEntries(
-      Object.values(trackerData.quests).flatMap((group) =>
-        Object.keys(group).map((id) => [id, getName("quests", id as never, locale)]),
+    questNames: {
+      ...buildUnnamedSourceNames(UNNAMED_SOURCE_IDS.quests),
+      ...Object.fromEntries(
+        Object.values(trackerData.quests).flatMap((group) =>
+          Object.keys(group).map((id) => [id, getName("quests", id as never, locale)]),
+        ),
       ),
-    ),
+    },
     recipeNames: getNameTable("recipes", locale),
     // Processing stations are items.
     stationNames: itemNames,
@@ -164,12 +169,17 @@ function getLocalizedBaseSegmentLookups(
         { ...store, name: getName("stores", id as never, locale) },
       ]),
     ),
-    treasureChestTiers: Object.fromEntries(
-      Object.keys(trackerData.treasureChestTiers).map((id) => [
-        id,
-        { name: getName("treasure-chest-tiers", id as never, locale) },
-      ]),
-    ),
+    treasureChestTiers: {
+      ...recordMap(buildUnnamedSourceNames(UNNAMED_SOURCE_IDS.treasureChestTiers), (name) => ({
+        name,
+      })),
+      ...Object.fromEntries(
+        Object.keys(trackerData.treasureChestTiers).map((id) => [
+          id,
+          { name: getName("treasure-chest-tiers", id as never, locale) },
+        ]),
+      ),
+    },
     waterNames: buildWaterNames(locale),
   };
   localizedBaseSegmentLookups.set(locale, lookups);

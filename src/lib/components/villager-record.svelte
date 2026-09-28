@@ -272,6 +272,8 @@
     display: grid;
     min-width: 0;
     gap: 7px;
+    /* Clears the sticky category header when a search link targets this record by hash. */
+    scroll-margin-block-start: calc(88px + env(safe-area-inset-top));
     padding: 8px;
     border: 1px solid var(--hairline);
     border-bottom: 0;

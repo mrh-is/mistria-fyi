@@ -77,12 +77,21 @@ export function displayQuestName(name: string, questType: QuestType): string {
   return name;
 }
 
+/** The named biome; like {@link requireEntry}, a missing biome is a data bug and throws. */
+export function findBiome<Biome extends { id: MinesBiomeId }>(
+  biomeId: MinesBiomeId,
+  biomes: readonly Biome[],
+): Biome {
+  const biome = biomes.find((b) => b.id === biomeId);
+  if (!biome) throw new Error(`No biome for id "${biomeId}"`);
+  return biome;
+}
+
 export function formatBiomeName(
   biomeId: MinesBiomeId,
   biomes: RecipeSourceLookups["biomes"],
 ): string {
-  const biome = biomes.find((b) => b.id === biomeId);
-  if (!biome) return titleCase(biomeId);
+  const biome = findBiome(biomeId, biomes);
   if (biome.name.startsWith("The ")) return `the ${biome.name.slice(4)}`;
   return `the ${biome.name}`;
 }
@@ -91,9 +100,23 @@ export function formatStoreName(
   storeId: StoreId,
   stores: Partial<Record<StoreId, { article?: "the"; name: string }>>,
 ): string {
-  const store = stores[storeId];
-  if (!store) return titleCase(storeId);
+  const store = requireEntry(stores, storeId, "stores");
   return store.article ? `${store.article} ${store.name}` : store.name;
+}
+
+/**
+ * An entry from a name lookup table. Every table is built from a key-complete name chunk or an
+ * interim message table (see `getName`), so a missing entry is a data bug and throws rather than
+ * rendering an untranslated ID.
+ */
+export function requireEntry<K extends string, T>(
+  table: Partial<Record<K, T>>,
+  id: K,
+  tableName: string,
+): T {
+  const entry = table[id];
+  if (entry === undefined) throw new Error(`No "${tableName}" entry for id "${id}"`);
+  return entry;
 }
 
 /** The game's own season name, from the `ui` chunk the root layout awaits. */
@@ -132,13 +155,20 @@ export function seasonLabelAbbr(season: Season): string {
   return SEASON_LABEL_ABBR[season]();
 }
 
-export function timeRangeLabel(hours: [number, number]): string {
-  const fmt = (h: number) => {
-    if (h === 0 || h === 24) return "12ᴀᴍ";
-    if (h === 12) return "12ᴘᴍ";
-    return h < 12 ? `${String(h)}ᴀᴍ` : `${String(h - 12)}ᴘᴍ`;
-  };
-  return `${fmt(hours[0])}–${fmt(hours[1])}`;
+/**
+ * An hour range in the locale's own clock convention ("6:00 PM–2:00 AM", "18:00–2:00"). Game hours
+ * run past midnight (26 is 2 AM the next day), so each end wraps onto a 24-hour clock. The ends are
+ * formatted separately because `formatRange` rejects an end before its start on older engines.
+ * Minutes stay in: several locales render a bare hour as a bare number.
+ */
+export function timeRangeLabel(hours: [number, number], locale: LocaleCode): string {
+  const format = new Intl.DateTimeFormat(locale, {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "UTC",
+  });
+  const at = (hour: number) => format.format(Date.UTC(2000, 0, 1, hour % 24));
+  return `${at(hours[0])}–${at(hours[1])}`;
 }
 
 export function weatherLabel(weather: Weather, season?: Season): string {
@@ -148,23 +178,8 @@ export function weatherLabel(weather: Weather, season?: Season): string {
   return WEATHER_LABEL[weather]();
 }
 
-/** Weathers available for a given season (special only in spring/fall) */
-export function weathersForSeason(season: Season): Weather[] {
-  if (season === "summer" || season === "winter") {
-    return ["calm", "inclement", "heavy_inclement"];
-  }
-  return ["calm", "inclement", "heavy_inclement", "special"];
-}
-
 export function withIndefiniteArticle(name: string): string {
   const firstChar = name.charAt(0).toLowerCase();
   const article = "aeiou".includes(firstChar) ? "an" : "a";
   return `${article} ${name}`;
-}
-
-function titleCase(s: string): string {
-  return s
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
 }

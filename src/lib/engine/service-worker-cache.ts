@@ -52,6 +52,8 @@ interface RuntimeRequestDependencies {
   matchCache: (request: RequestInfo | URL) => Promise<Response | undefined>;
   maxEntries?: number;
   offlinePath?: string;
+  /** Keeps the worker alive for cache writes that settle after the response is returned. */
+  waitUntil: (promise: Promise<unknown>) => void;
 }
 
 type SpriteCache = Pick<Cache, "delete" | "keys" | "match" | "put">;
@@ -141,22 +143,18 @@ export async function cacheSpriteResponse(
   }
 }
 
+/**
+ * Serves a request network-first, falling back to the cache and then the offline page. Only the
+ * fetch decides between the two paths: the cache write is best-effort and happens off the response
+ * path, so a failed write (a full quota) never discards a good network response.
+ */
 export async function fetchRuntimeRequest(
   request: Request,
   dependencies: RuntimeRequestDependencies,
 ): Promise<Response> {
+  let response: Response;
   try {
-    const response = await dependencies.fetcher(request);
-    if (response.ok) {
-      await cacheRuntimeResponse(
-        dependencies.cache,
-        request,
-        response,
-        dependencies.assetPaths,
-        dependencies.maxEntries,
-      );
-    }
-    return response;
+    response = await dependencies.fetcher(request);
   } catch {
     const cached = await dependencies.matchCache(request);
     if (cached) return cached;
@@ -166,6 +164,18 @@ export async function fetchRuntimeRequest(
     }
     return Response.error();
   }
+  if (response.ok) {
+    dependencies.waitUntil(
+      cacheRuntimeResponse(
+        dependencies.cache,
+        request,
+        response,
+        dependencies.assetPaths,
+        dependencies.maxEntries,
+      ).catch(() => undefined),
+    );
+  }
+  return response;
 }
 
 /**

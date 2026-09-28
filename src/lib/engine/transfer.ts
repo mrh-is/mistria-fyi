@@ -30,6 +30,7 @@ import type {
 // ─── Constants ──────────────────────────────────────────────────────
 
 export const TRANSFER_VERSION = 10;
+export const TRANSFER_ORDERING_HASH = "50dbf1b9";
 const MIN_SUPPORTED_TRANSFER_VERSION = 10;
 
 /** First version to prepend a CRC-32 integrity checksum of the raw payload before compression. */
@@ -115,7 +116,7 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   // 1. Almanac items
   const almanacOrder = version >= 6 ? getAlmanacOrder() : getLegacyAlmanacOrder();
   const almanacBytes = readBytes(Math.ceil(almanacOrder.length / 8));
-  const rawAlmanac = fromBitfield(almanacOrder, almanacBytes) as Set<ItemId>;
+  const rawAlmanac = fromBitfield(almanacOrder, almanacBytes, "almanac bitfield") as Set<ItemId>;
   const almanac =
     version >= 6
       ? rawAlmanac
@@ -124,13 +125,21 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   // 2. Cosmetics (non-default-unlocked)
   const cosmeticOrder = getCosmeticOrder();
   const cosmeticBytes = readBytes(Math.ceil(cosmeticOrder.length / 8));
-  const cosmetics = fromBitfield(cosmeticOrder, cosmeticBytes) as Set<CosmeticId>;
+  const cosmetics = fromBitfield(
+    cosmeticOrder,
+    cosmeticBytes,
+    "cosmetic bitfield",
+  ) as Set<CosmeticId>;
 
   // 3. Animal variants (non-default-unlocked)
   const animalVariantOrder = getAnimalVariantOrder();
   const animalVariantKeys = animalVariantOrder.map((v) => `${v.animalId}:${v.variantId}`);
   const animalVariantBytes = readBytes(Math.ceil(animalVariantKeys.length / 8));
-  const animalVariantSet = fromBitfield(animalVariantKeys, animalVariantBytes);
+  const animalVariantSet = fromBitfield(
+    animalVariantKeys,
+    animalVariantBytes,
+    "animal variant bitfield",
+  );
   const animals: Record<string, Set<AnimalVariantId>> = {};
   for (const key of animalVariantSet) {
     const [animalId, variantId] = key.split(":");
@@ -142,7 +151,11 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   const animalCosmeticOrder = getAnimalCosmeticOrder();
   const animalCosmeticKeys = animalCosmeticOrder.map((v) => `${v.animalId}:${v.cosmeticId}`);
   const animalCosmeticBytes = readBytes(Math.ceil(animalCosmeticKeys.length / 8));
-  const animalCosmeticSet = fromBitfield(animalCosmeticKeys, animalCosmeticBytes);
+  const animalCosmeticSet = fromBitfield(
+    animalCosmeticKeys,
+    animalCosmeticBytes,
+    "animal cosmetic bitfield",
+  );
   const animalCosmetics: Record<string, Set<CosmeticId>> = {};
   for (const key of animalCosmeticSet) {
     const [animalId, cosmeticId] = key.split(":");
@@ -153,11 +166,12 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   // 5. Museum items
   const museumOrder = getMuseumOrder();
   const museumBytes = readBytes(Math.ceil(museumOrder.length / 8));
-  const museum = fromBitfield(museumOrder, museumBytes) as Set<ItemId>;
+  const museum = fromBitfield(museumOrder, museumBytes, "museum bitfield") as Set<ItemId>;
 
   // 6. Spell bitmask (1 byte)
   const spellOrder = getSpellOrder();
   const spellByte = readBytes(1)[0];
+  assertZeroPadding(spellOrder.length, new Uint8Array([spellByte]), "spell reserved bits");
   const spells = new Set<SpellId>();
   for (let i = 0; i < spellOrder.length; i++) {
     if (spellByte & (1 << (7 - i))) {
@@ -195,12 +209,16 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   const questOrder = getQuestOrder();
   const questByteCount = Math.ceil(questOrder.length / 4);
   const questBytes = readBytes(questByteCount);
+  assertZeroPadding(questOrder.length * 2, questBytes, "quest reserved bits");
   const questStates: Record<string, QuestState> = {};
   const questStateMap: QuestState[] = ["none", "obtained", "completed"];
   for (let i = 0; i < questOrder.length; i++) {
     const byteIndex = Math.floor(i / 4);
     const bitOffset = (3 - (i % 4)) * 2;
     const bits = (questBytes[byteIndex] >> bitOffset) & 0x3;
+    if (bits >= questStateMap.length) {
+      throw new Error(`Invalid quest state code: ${String(bits)}`);
+    }
     questStates[questOrder[i].questId] = questStateMap[bits];
   }
 
@@ -212,11 +230,14 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   if (version >= 2) {
     const perkOrder = getPerkOrder();
     const perkBytes = readBytes(Math.ceil(perkOrder.length / 8));
-    unlockedPerks = fromBitfield(perkOrder, perkBytes) as Set<PerkId>;
+    unlockedPerks = fromBitfield(perkOrder, perkBytes, "perk bitfield") as Set<PerkId>;
 
     const marriedByte = readBytes(1)[0];
     if (marriedByte !== 0xff) {
       marriedVillager = villagerOrder[marriedByte] ?? null;
+      if (!marriedVillager) {
+        throw new Error(`Invalid spouse index: ${String(marriedByte)}`);
+      }
     }
   }
 
@@ -228,11 +249,15 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   if (version >= 3) {
     const petCosmeticOrder = getPetCosmeticOrder();
     const petCosmeticBytes = readBytes(Math.ceil(petCosmeticOrder.length / 8));
-    petCosmetics = fromBitfield(petCosmeticOrder, petCosmeticBytes) as Set<PetCosmeticSetId>;
+    petCosmetics = fromBitfield(
+      petCosmeticOrder,
+      petCosmeticBytes,
+      "pet cosmetic bitfield",
+    ) as Set<PetCosmeticSetId>;
 
     const petSkinOrder = getPetSkinOrder();
     const petSkinBytes = readBytes(Math.ceil(petSkinOrder.length / 8));
-    petSkins = fromBitfield(petSkinOrder, petSkinBytes) as Set<PetSkinId>;
+    petSkins = fromBitfield(petSkinOrder, petSkinBytes, "pet skin bitfield") as Set<PetSkinId>;
   }
 
   // 16. Date bitfield (v4 only)
@@ -240,7 +265,7 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   if (version >= 4) {
     const dateOrder = getDateOrder();
     const dateBytes = readBytes(Math.ceil(dateOrder.length / 8));
-    dates = fromBitfield(dateOrder, dateBytes) as Set<DateId>;
+    dates = fromBitfield(dateOrder, dateBytes, "date bitfield") as Set<DateId>;
   }
 
   // 17. Progression byte (v5 only) — bits 7-6: reachedSeason, bit 5: hasUpperFloor, bits 4-0: reserved
@@ -251,12 +276,19 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
 
   if (version >= 5) {
     const progressionByte = readBytes(1)[0];
+    if (progressionByte & 0x1f) {
+      throw new Error("Invalid progression reserved bits: expected zero");
+    }
     reachedSeason = SEASON_BY_ORD[(progressionByte >> 6) & 0x3];
     hasUpperFloor = !!(progressionByte & 0x20);
 
     const romanticOrder = getDateableVillagerOrder();
     const romanticBytes = readBytes(Math.ceil(romanticOrder.length / 8));
-    const romanticVillagers = fromBitfield(romanticOrder, romanticBytes) as Set<VillagerId>;
+    const romanticVillagers = fromBitfield(
+      romanticOrder,
+      romanticBytes,
+      "romantic villager bitfield",
+    ) as Set<VillagerId>;
 
     for (const villagerId of romanticVillagers) {
       villagerRelationships[villagerId] = "romantic";
@@ -275,13 +307,14 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
     const dateableOrder = getDateableVillagerOrder();
     const relByteCount = Math.ceil((dateableOrder.length * 3) / 8);
     const relBytes = readBytes(relByteCount);
-    const RELATIONSHIP_MAP: VillagerRelationship[] = [
+    assertZeroPadding(dateableOrder.length * 3, relBytes, "relationship reserved bits");
+    const RELATIONSHIP_MAP = [
       "undecided",
       "platonic",
       "romantic",
       "proposed",
       "married",
-    ];
+    ] as const satisfies readonly VillagerRelationship[];
     for (let i = 0; i < dateableOrder.length; i++) {
       const bitOffset = i * 3;
       const byteIndex = Math.floor(bitOffset / 8);
@@ -293,13 +326,19 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
         bits =
           ((relBytes[byteIndex] << -bitShift) | (relBytes[byteIndex + 1] >> (8 + bitShift))) & 0x7;
       }
-      const rel = RELATIONSHIP_MAP[bits] ?? "undecided";
+      if (bits >= RELATIONSHIP_MAP.length) {
+        throw new Error(`Invalid relationship state code: ${String(bits)}`);
+      }
+      const rel = RELATIONSHIP_MAP[bits];
       if (rel !== "undecided") {
         villagerRelationships[dateableOrder[i]] = rel;
       }
     }
 
     const childByte = readBytes(1)[0];
+    if (childByte > 0x02) {
+      throw new Error(`Invalid child choice code: ${String(childByte)}`);
+    }
     childChoice = childByte === 0x01 ? "yes" : childByte === 0x02 ? "no" : "undeclared";
   }
 
@@ -308,7 +347,7 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   if (version >= 8) {
     const recipeOrder = getRecipeOrder();
     const recipeBytes = readBytes(Math.ceil(recipeOrder.length / 8));
-    almanacRecipes = fromBitfield(recipeOrder, recipeBytes) as Set<RecipeId>;
+    almanacRecipes = fromBitfield(recipeOrder, recipeBytes, "recipe bitfield") as Set<RecipeId>;
   }
 
   normalizeRelationships(villagerRelationships);
@@ -574,6 +613,38 @@ function fromBase64url(str: string): Uint8Array {
 
 let crc32Table: null | Uint32Array = null;
 
+export function getTransferOrderingHash(): string {
+  const orderings = [
+    getAlmanacOrder(),
+    getCosmeticOrder(),
+    getAnimalVariantOrder().map(({ animalId, variantId }) => `${animalId}:${variantId}`),
+    getAnimalCosmeticOrder().map(({ animalId, cosmeticId }) => `${animalId}:${cosmeticId}`),
+    getMuseumOrder(),
+    getSpellOrder(),
+    getVillagerOrder(),
+    getSkillOrder(),
+    getQuestOrder().map(({ type, questId }) => `${type}:${questId}`),
+    getPerkOrder(),
+    getPetCosmeticOrder(),
+    getPetSkinOrder(),
+    getDateOrder(),
+    getDateableVillagerOrder(),
+    getRecipeOrder(),
+  ];
+  return crc32(new TextEncoder().encode(JSON.stringify(orderings)))
+    .toString(16)
+    .padStart(8, "0");
+}
+
+function assertZeroPadding(usedBitCount: number, bytes: Uint8Array, label: string): void {
+  const reservedBitCount = bytes.length * 8 - usedBitCount;
+  if (reservedBitCount <= 0) return;
+  const reservedMask = (1 << reservedBitCount) - 1;
+  if ((bytes.at(-1) ?? 0) & reservedMask) {
+    throw new Error(`Invalid ${label}: expected zero`);
+  }
+}
+
 function crc32(bytes: Uint8Array): number {
   const table = getCrc32Table();
   let crc = 0xffffffff;
@@ -583,7 +654,8 @@ function crc32(bytes: Uint8Array): number {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
-function fromBitfield(ordered: string[], bytes: Uint8Array): Set<string> {
+function fromBitfield(ordered: string[], bytes: Uint8Array, label: string): Set<string> {
+  assertZeroPadding(ordered.length, bytes, `${label} reserved bits`);
   const result = new Set<string>();
   for (let i = 0; i < ordered.length; i++) {
     if (bytes[Math.floor(i / 8)] & (1 << (7 - (i % 8)))) {
@@ -741,10 +813,14 @@ const V5_CANONICAL_REMAP = new Map<string, string>([
   ["void_gryphon_statue_blue", "void_gryphon_statue_purple"],
 ]);
 
+function compareCodeUnits(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
 function getAnimalCosmeticOrder(): { animalId: AnimalId; cosmeticId: CosmeticId }[] {
   const result: { animalId: AnimalId; cosmeticId: CosmeticId }[] = [];
   for (const [animalId, animal] of Object.entries(trackerData.animals).sort(([a], [b]) =>
-    a.localeCompare(b),
+    compareCodeUnits(a, b),
   )) {
     for (const cosmeticId of (Object.keys(animal.cosmetics) as CosmeticId[]).sort()) {
       result.push({ animalId: animalId as AnimalId, cosmeticId });
@@ -756,11 +832,11 @@ function getAnimalCosmeticOrder(): { animalId: AnimalId; cosmeticId: CosmeticId 
 function getAnimalVariantOrder(): { animalId: AnimalId; variantId: AnimalVariantId }[] {
   const result: { animalId: AnimalId; variantId: AnimalVariantId }[] = [];
   for (const [animalId, animal] of recordEntries(trackerData.animals).sort(([a], [b]) =>
-    a.localeCompare(b),
+    compareCodeUnits(a, b),
   )) {
     for (const tier of animal.variantTiers) {
       for (const [variantId, variant] of recordEntries(tier).sort(([a], [b]) =>
-        a.localeCompare(b),
+        compareCodeUnits(a, b),
       )) {
         if (!(variant.source.type === "default")) {
           result.push({ animalId, variantId });

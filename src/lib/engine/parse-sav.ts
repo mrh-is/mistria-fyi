@@ -1,4 +1,4 @@
-import type { SaveBundle } from "./import-save";
+import { isSaveSection, type SaveBundle } from "./save-bundle";
 
 /** Maximum compressed input size: over 27x the measured 298,271-byte late-game fixture. */
 export const MAX_COMPRESSED_SIZE = 8 * 1024 * 1024;
@@ -129,7 +129,7 @@ function extractBundle(data: Uint8Array): SaveBundle {
       const jsonStr = decoder.decode(data.subarray(offset, offset + dataLen));
       try {
         const parsed: unknown = JSON.parse(jsonStr);
-        if (typeof parsed !== "object" || parsed === null) {
+        if (!isSaveSection(parsed)) {
           throw new Error(`Entry "${name}" is not a JSON object`);
         }
         bundle[name] = parsed;

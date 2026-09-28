@@ -90,12 +90,16 @@
       const savFile = Array.from(files).find(isSavFile);
 
       let bundle;
+      let parseWarnings: string[] = [];
       if (savFile) {
         importStatus = m.import_status_unpacking();
         try {
           bundle = await unpackSavFile(savFile);
         } catch (err) {
-          const message = err instanceof Error ? err.message : m.import_status_generic_error();
+          const message =
+            err instanceof Error && err.message !== ""
+              ? err.message
+              : m.import_status_generic_error();
           importError = message;
           savFallback = true;
           return;
@@ -107,6 +111,7 @@
           return;
         }
         bundle = result.bundle;
+        parseWarnings = result.warnings ?? [];
       }
 
       // Track which files were loaded
@@ -121,7 +126,7 @@
       importResult = {
         conflicts: merged.conflicts,
         counts: merged.counts,
-        warnings: result.warnings,
+        warnings: [...parseWarnings, ...result.warnings],
       };
     } catch {
       importError = m.import_error_unexpected();
@@ -307,7 +312,7 @@
               {m.import_warnings_summary({ count: importResult.warnings.length })}
             </summary>
             <ul class="mt-1 max-h-32 space-y-0.5 overflow-y-auto text-muted-foreground">
-              {#each importResult.warnings as warning (warning)}
+              {#each importResult.warnings as warning, index (index)}
                 <li>{warning}</li>
               {/each}
             </ul>

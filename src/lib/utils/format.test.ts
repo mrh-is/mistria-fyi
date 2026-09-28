@@ -6,6 +6,7 @@ import {
   formatNumber,
   formatPercent,
   formatStoreName,
+  timeRangeLabel,
   withIndefiniteArticle,
 } from "./format";
 
@@ -33,13 +34,13 @@ describe("formatStoreName", () => {
     } as Record<StoreId, { article?: "the"; name: string }>;
     expect(formatStoreName("merri_stall" as StoreId, stores)).toBe("Merri's Stall");
   });
-  it("falls back to titleCase for unknown stores", () => {
-    expect(
+  it("throws for a store with no name", () => {
+    expect(() =>
       formatStoreName(
         "unknown_shop" as StoreId,
         {} as Record<StoreId, { article?: "the"; name: string }>,
       ),
-    ).toBe("Unknown Shop");
+    ).toThrow('No "stores" entry for id "unknown_shop"');
   });
 });
 
@@ -95,5 +96,25 @@ describe("formatBiomeName", () => {
       },
     ];
     expect(formatBiomeName("biome_1" as MinesBiomeId, biomes)).toBe("the Upper Mines");
+  });
+  it("throws for a biome with no name", () => {
+    expect(() => formatBiomeName("biome_9" as MinesBiomeId, [])).toThrow(
+      'No biome for id "biome_9"',
+    );
+  });
+});
+
+describe("timeRangeLabel", () => {
+  it("uses the locale's 12-hour clock", () => {
+    expect(timeRangeLabel([6, 20], "en")).toBe("6:00 AM–8:00 PM");
+  });
+
+  it("wraps game hours past midnight onto the next day's clock", () => {
+    expect(timeRangeLabel([20, 26], "en")).toBe("8:00 PM–2:00 AM");
+  });
+
+  it("uses the locale's 24-hour clock", () => {
+    expect(timeRangeLabel([20, 26], "ru")).toBe("20:00–2:00");
+    expect(timeRangeLabel([6, 20], "ja")).toBe("6:00–20:00");
   });
 });

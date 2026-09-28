@@ -148,7 +148,9 @@
     if (window.turnstile) return Promise.resolve();
 
     return new Promise((resolve, reject) => {
+      let timedOut = false;
       const timer = setTimeout(() => {
+        timedOut = true;
         reject(new Error("Turnstile script load timeout"));
       }, TURNSTILE_SCRIPT_TIMEOUT_MS);
 
@@ -156,7 +158,7 @@
         if (window.turnstile) {
           clearTimeout(timer);
           resolve();
-        } else {
+        } else if (!timedOut) {
           setTimeout(waitForGlobal, 50);
         }
       }
@@ -386,7 +388,7 @@
         toast.warning(m.feedback_toast_email_not_saved(), {
           action: {
             label: m.feedback_action_view_issue(),
-            onClick: () => window.open(data.issueUrl, "_blank"),
+            onClick: () => window.open(data.issueUrl, "_blank", "noopener"),
           },
           duration: 12000,
         });
@@ -394,7 +396,7 @@
         toast(m.feedback_toast_thanks(), {
           action: {
             label: m.feedback_action_view_issue(),
-            onClick: () => window.open(data.issueUrl, "_blank"),
+            onClick: () => window.open(data.issueUrl, "_blank", "noopener"),
           },
           duration: 8000,
         });
@@ -645,7 +647,11 @@
               class="underline hover:text-foreground"
               type="button"
               onclick={() =>
-                window.open("https://github.com/mrh-is/mistria-fyi/issues/new", "_blank")}
+                window.open(
+                  "https://github.com/mrh-is/mistria-fyi/issues/new",
+                  "_blank",
+                  "noopener",
+                )}
             >
               {m.feedback_turnstile_github_action()}</button
             >
