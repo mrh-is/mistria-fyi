@@ -3,11 +3,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const appState = vi.hoisted(() => ({ status: 404 }));
 
+// Under the `app` project's `isolate: false`, a component module cached by this file keeps this
+// mock for later files in the same worker, so it carries every field the shared stand-in in
+// src/vitest-setup-app-state.ts does.
 vi.mock("$app/state", () => ({
   page: {
+    data: { locale: "en" },
     get status() {
       return appState.status;
     },
+    url: new URL("https://mistria.fyi/en"),
   },
 }));
 

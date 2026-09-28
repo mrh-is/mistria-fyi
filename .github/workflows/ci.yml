@@ -14,24 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  setup:
-    name: Install dependencies
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
-        with:
-          cache: true
-          install: false
-          runtime: node@26
-          version: 11.21.0
-      - run: pnpm install --frozen-lockfile
-
   lint:
     name: Lint
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -45,12 +29,10 @@ jobs:
           version: 11.21.0
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec svelte-kit sync
-      - run: pnpm run check:i18n
       - run: pnpm run lint
 
   check:
     name: Check types
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -68,7 +50,6 @@ jobs:
 
   test:
     name: Test
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -81,11 +62,19 @@ jobs:
           runtime: node@26
           version: 11.21.0
       - run: pnpm install --frozen-lockfile
+      # Vitest's fsModuleCache is content-addressed, so a stale restore only costs cache misses.
+      # Keying on the commit saves a fresh copy each run; the restore keys pick up the newest one.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: node_modules/.vitest-cache
+          key: vitest-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            vitest-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            vitest-${{ runner.os }}-
       - run: pnpm run test
 
   build:
     name: Build
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

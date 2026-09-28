@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { IconMessageReport, IconRobot } from "@tabler/icons-svelte-runes";
+  import IconMessageReport from "@tabler/icons-svelte-runes/icons/message-report";
+  import IconRobot from "@tabler/icons-svelte-runes/icons/robot";
 
   import AiDisclosureDialog from "$lib/components/ai-disclosure-dialog.svelte";
   import PageHeader from "$lib/components/page-header.svelte";

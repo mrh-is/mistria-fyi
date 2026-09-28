@@ -7,7 +7,12 @@ const { downloadLocale, goto, setLocale } = vi.hoisted(() => ({
 }));
 
 vi.mock("$app/navigation", () => ({ goto }));
-vi.mock("$app/state", () => ({ page: { url: new URL("https://mistria.fyi/ru/almanac") } }));
+// Under the `app` project's `isolate: false`, a component module cached by this file keeps this
+// mock for later files in the same worker, so it carries every field the shared stand-in in
+// src/vitest-setup-app-state.ts does.
+vi.mock("$app/state", () => ({
+  page: { data: { locale: "en" }, status: 200, url: new URL("https://mistria.fyi/ru/almanac") },
+}));
 vi.mock("$lib/paraglide/runtime.js", () => ({
   deLocalizeHref: (pathname: string) => pathname.replace(/^\/[^/]+/, ""),
   localizeHref: (pathname: string, { locale }: { locale: string }) => `/${locale}${pathname}`,

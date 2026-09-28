@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { IconCheck as CheckIcon } from "@tabler/icons-svelte-runes";
-  import { IconMinus as MinusIcon } from "@tabler/icons-svelte-runes";
+  import CheckIcon from "@tabler/icons-svelte-runes/icons/check";
+  import MinusIcon from "@tabler/icons-svelte-runes/icons/minus";
   import { Checkbox as CheckboxPrimitive } from "bits-ui";
 
   import { cn, type WithoutChildrenOrChild } from "$lib/utils.js";

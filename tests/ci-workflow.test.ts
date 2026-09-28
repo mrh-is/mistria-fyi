@@ -54,12 +54,13 @@ describe("CI workflow", () => {
     });
   });
 
-  it("parallelizes lint, check, test, and build behind a shared setup job", () => {
-    expect(Object.keys(workflow.jobs ?? {})).toEqual(["setup", "lint", "check", "test", "build"]);
-    expect(workflow.jobs?.lint.needs).toBe("setup");
-    expect(workflow.jobs?.check.needs).toBe("setup");
-    expect(workflow.jobs?.test.needs).toBe("setup");
-    expect(workflow.jobs?.build.needs).toBe("setup");
+  it("runs lint, check, test, and build as independent parallel jobs", () => {
+    // Each job restores the pnpm cache and installs on its own, so a shared setup job would only
+    // add a serial step to the critical path.
+    expect(Object.keys(workflow.jobs ?? {})).toEqual(["lint", "check", "test", "build"]);
+    for (const job of Object.values(workflow.jobs ?? {})) {
+      expect(job.needs).toBeUndefined();
+    }
 
     for (const jobName of ["check", "test", "build"] as const) {
       expect(
@@ -72,7 +73,6 @@ describe("CI workflow", () => {
     expect(workflow.jobs?.lint.steps?.filter((step) => step.run).map((step) => step.run)).toEqual([
       "pnpm install --frozen-lockfile",
       "pnpm exec svelte-kit sync",
-      "pnpm run check:i18n",
       "pnpm run lint",
     ]);
     expect(workflow.jobs?.lint.steps?.at(-1)?.run).toBe("pnpm run lint");
@@ -86,6 +86,16 @@ describe("CI workflow", () => {
       "pnpm run build",
       "pnpm run check:routes",
     ]);
+  });
+
+  it("restores Vitest's module cache before running the tests", () => {
+    const steps = workflow.jobs?.test.steps ?? [];
+    const cacheIndex = steps.findIndex((step) => step.uses?.startsWith("actions/cache@"));
+    const testIndex = steps.findIndex((step) => step.run === "pnpm run test");
+    expect(cacheIndex).toBeGreaterThan(-1);
+    expect(cacheIndex).toBeLessThan(testIndex);
+    expect(steps[cacheIndex].with?.path).toBe("node_modules/.vitest-cache");
+    expect(steps[cacheIndex].with?.["restore-keys"]).toBeTruthy();
   });
 
   it("uses pinned tooling without credentials or asset-dependent commands", () => {

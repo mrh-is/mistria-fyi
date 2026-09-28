@@ -1,11 +1,9 @@
 <script lang="ts">
-  import {
-    IconChevronDown,
-    IconCopy,
-    IconPointer,
-    IconShield,
-    IconX,
-  } from "@tabler/icons-svelte-runes";
+  import IconChevronDown from "@tabler/icons-svelte-runes/icons/chevron-down";
+  import IconCopy from "@tabler/icons-svelte-runes/icons/copy";
+  import IconPointer from "@tabler/icons-svelte-runes/icons/pointer";
+  import IconShield from "@tabler/icons-svelte-runes/icons/shield";
+  import IconX from "@tabler/icons-svelte-runes/icons/x";
   import { tick } from "svelte";
   import { toast } from "svelte-sonner";
   import { prefersReducedMotion } from "svelte/motion";
