@@ -10,5 +10,15 @@
     "sourceMap": true,
     "strict": true,
     "types": ["@testing-library/jest-dom"]
-  }
+  },
+  "exclude": [
+    "node_modules/**",
+    "scripts/locale-fonts/**",
+    "src/service-worker.js",
+    "src/service-worker/**/*.js",
+    "src/service-worker.ts",
+    "src/service-worker/**/*.ts",
+    "src/service-worker.d.ts",
+    "src/service-worker/**/*.d.ts"
+  ]
 }
