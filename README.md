@@ -58,6 +58,7 @@ pnpm run pipeline -- /path/to/assets
 | `pnpm run lint`                        | oxfmt + oxlint + ESLint + Stylelint               |
 | `pnpm run lint:fix`                    | Auto-fix formatting and lint issues               |
 | `pnpm run test`                        | Complete Vitest suite                             |
+| `pnpm run test:changed`                | Vitest tests affected by branch changes           |
 | `pnpm run test:accessibility`          | Complete browser accessibility matrix             |
 | `pnpm run test:accessibility:critical` | Focused browser accessibility contract            |
 | `pnpm run test:app`                    | App tests (`src/`)                                |
