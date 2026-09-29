@@ -148,6 +148,7 @@ it. Wrangler may need access to Cloudflare's API and to its credentials under
 | `pnpm run lint`               | oxfmt + oxlint + ESLint + Stylelint check   |
 | `pnpm run lint:fix`           | Auto-fix formatting & lint                  |
 | `pnpm run test`               | Complete Vitest suite (asset-independent)   |
+| `pnpm run test:changed`       | Vitest tests affected by branch changes     |
 | `pnpm run test:app`           | App tests (`src/`)                          |
 | `pnpm run test:pipeline`      | Pipeline tests (`pipeline/`)                |
 | `pnpm run verify`             | Full CI matrix locally (see §7 exceptions)  |
