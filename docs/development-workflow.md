@@ -172,6 +172,15 @@ colocated tests don’t double the length of directory listings.
   pnpm run test
   ```
   This command passes in a fresh clone without `pipeline/input/` and is the test command CI runs.
+- **Run tests affected by branch changes**:
+  ```sh
+  pnpm run test:changed
+  ```
+  This compares committed, staged, modified, and untracked files with the local `origin/main` ref,
+  then lets Vitest select related tests. If the comparison ref is unavailable, Git cannot enumerate
+  the changes, or test configuration changes, the command explains why and runs the complete
+  asset-independent suite instead. A branch with no changes prints that state explicitly instead of
+  relying on Vitest's successful zero-test exit.
 - **Run Application Logic Tests Only** (`src/`):
   ```sh
   pnpm run test:app
@@ -186,6 +195,11 @@ colocated tests don’t double the length of directory listings.
 
 `vite.config.ts` splits Vitest into projects by what each test needs to run. Select one with
 `pnpm exec vitest run --project=<name>`.
+
+`origin/main` is a local remote-tracking ref, so refresh it with `git fetch origin main` when it may
+be stale. A stale behind ref is conservative because it includes extra changed files, but
+`pnpm run test` remains the authoritative local fallback and the command CI runs. Pass another
+comparison ref when needed, for example `pnpm run test:changed -- main`.
 
 | Project  | Files                                                 | Environment & setup                                         |
 | -------- | ----------------------------------------------------- | ----------------------------------------------------------- |

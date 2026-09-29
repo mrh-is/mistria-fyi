@@ -21,6 +21,7 @@
     "optimize-icons": "svgo --config svgo.config.js -f src/lib/components/icon/custom/raw -o src/lib/components/icon/custom/optimized",
     "pipeline": "cd pipeline && tsx src/main.ts",
     "test": "vitest run --project=!assets",
+    "test:changed": "node scripts/test-changed.ts",
     "verify": "bash scripts/verify.sh",
     "worktree:new": "bash scripts/new-worktree.sh",
     "accessibility:monitor": "tsx scripts/accessibility-monitor.ts",
