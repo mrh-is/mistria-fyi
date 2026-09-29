@@ -1,0 +1,42 @@
+{
+  "name": "@mistria-fyi/locale-fonts",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsx build-locale-fonts.ts",
+    "check": "tsc --noEmit -p tsconfig.json",
+    "lint": "oxlint --config .oxlintrc.json --type-aware --deny-warnings ."
+  },
+  "dependencies": {
+    "@fontsource/biz-udpmincho": "^5.3.0",
+    "@fontsource/cactus-classical-serif": "^5.3.0",
+    "@fontsource/golos-text": "^5.3.0",
+    "@fontsource/gowun-batang": "^5.3.0",
+    "@fontsource/lora": "^5.3.0",
+    "@fontsource/lxgw-wenkai-mono-tc": "^5.3.0",
+    "@fontsource/lxgw-wenkai-tc": "^5.3.0",
+    "@fontsource/m-plus-1-code": "^5.3.0",
+    "@fontsource/m-plus-1p": "^5.3.0",
+    "@fontsource/nanum-gothic": "^5.3.0",
+    "@fontsource/nanum-gothic-coding": "^5.3.0",
+    "@fontsource/noto-sans-tc": "^5.3.0",
+    "@fontsource/noto-serif-tc": "^5.3.0",
+    "@fontsource/shippori-mincho": "^5.3.0",
+    "fontkit": "^2.0.4",
+    "subset-font": "2.7.0"
+  },
+  "devDependencies": {
+    "@types/fontkit": "^2.0.9",
+    "@types/node": "^26.6.2",
+    "eslint-plugin-perfectionist": "5.11.1",
+    "oxlint": "^1.85.0",
+    "oxlint-tsgolint": "^7.0.2003",
+    "tsx": "^4.23.13",
+    "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=26.0.0 <27.0.0"
+  },
+  "packageManager": "pnpm@11.21.0"
+}

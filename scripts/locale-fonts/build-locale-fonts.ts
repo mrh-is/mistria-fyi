@@ -20,6 +20,7 @@ import { ASSET_ORIGIN, ASSET_PREFIX, FONTSOURCE_FONTS, SLICED_FONTS } from "./ma
 import type { FontLocale, FontsourceFont, SlicedFont } from "./manifest.js";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
+const TOOL_DIR = fileURLToPath(new URL(".", import.meta.url));
 const CSS_DIR = path.join(ROOT, "src", "lib", "fonts");
 const RANGES_FILE = fileURLToPath(
   new URL("./simplified-chinese-unicode-ranges.json", import.meta.url),
@@ -102,7 +103,7 @@ async function stageFile(key: string, write: (target: string) => Promise<void>):
 }
 
 async function stageFontsource(font: FontsourceFont): Promise<FontFace[]> {
-  const packageDir = path.join(ROOT, "node_modules", "@fontsource", font.package);
+  const packageDir = path.join(TOOL_DIR, "node_modules", "@fontsource", font.package);
   const { version } = JSON.parse(await readFile(path.join(packageDir, "package.json"), "utf8")) as {
     version: string;
   };

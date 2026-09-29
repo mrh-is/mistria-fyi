@@ -66,7 +66,8 @@ Copyright Indian Type Foundry. All rights reserved.
 
 - **Production assets:** `https://assets.mistria.fyi/fonts/<package>-<version>/…`
 - **Source:** [Fontsource](https://fontsource.org) packages under `@fontsource/*`, pinned in
-  `package.json`; the served chunks are copied unmodified by `scripts/locale-fonts`
+  `scripts/locale-fonts/package.json` and its lockfile; the served chunks are copied unmodified by
+  `scripts/locale-fonts`
 - **License:** SIL Open Font License 1.1 (full text below)
 
 | Family                 | Locale  | Copyright                                                                                                             |
