@@ -72,14 +72,19 @@ issue #269 (private beta).
 
 The stylesheets and the woff2 chunks they reference are produced by `scripts/locale-fonts`:
 
-- `manifest.ts` lists every family, weight, and locale. Fontsource families are pinned as
-  `@fontsource/*` devDependencies and copied with their pre-sliced `unicode-range` chunks. The
-  Simplified Chinese faces are not on Google Fonts, so they are sliced here with the unicode-range
-  table Google serves for Noto Sans SC (`simplified-chinese-unicode-ranges.json`).
+- `manifest.ts` lists every family, weight, and locale. Fontsource families are pinned in the
+  isolated `scripts/locale-fonts` package and copied with their pre-sliced `unicode-range` chunks.
+  The Simplified Chinese faces are not on Google Fonts, so they are sliced here with the
+  unicode-range table Google serves for Noto Sans SC (`simplified-chinese-unicode-ranges.json`).
+- `pnpm run fonts:install` installs that package's locked dependencies. Run it once before the other
+  font commands, and whenever `scripts/locale-fonts/pnpm-lock.yaml` changes. Ordinary root
+  installation deliberately omits this roughly 430 MB maintainer-only toolchain.
 - `pnpm run fonts:build` writes the stylesheets (committed) and stages the chunks under
   `.locale-fonts-dist/` (ignored). Only the stylesheets ship with the app; the chunks are served
   from `https://assets.mistria.fyi/fonts/<family>-<version>/…` so the service worker does not
   precache thousands of files and the Pages build stays small.
+- `pnpm run fonts:check` type-checks the isolated builder, and `pnpm run fonts:lint` applies the
+  repository's script lint rules to it.
 - `pnpm run fonts:upload` pushes the staged chunks to the `mistria-fyi-assets` R2 bucket with
   `pnpx wrangler`, marked `immutable`. Keys embed the family version, so a font upgrade means
   bumping the version (or the Fontsource package), rebuilding, uploading, and committing the new
