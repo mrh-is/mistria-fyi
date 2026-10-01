@@ -16,7 +16,12 @@ pnpm run pipeline -- input/assets --version=1.0.5
 pnpm run pipeline -- /path/to/assets
 MISTRIA_ASSETS=/path/to/assets pnpm run pipeline
 pnpm run pipeline -- /path/to/assets --parse-only
+pnpm run pipeline:assets -- --version=1.0.5
 ```
+
+`pnpm run pipeline:assets` is the local-development shortcut for the ignored `pipeline/input/assets`
+directory. Pass pipeline flags after `--`; it avoids a shell environment assignment and is the
+preferred command for routine regeneration in a configured worktree.
 
 With no path argument and no `MISTRIA_ASSETS`, the pipeline falls back to Fields of Mistria's
 default Steam install location — the only platform the game ships on:
