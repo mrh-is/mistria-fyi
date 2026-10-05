@@ -1,11 +1,11 @@
-import { render } from "svelte/server";
 import { describe, expect, it } from "vitest";
 
 import SourceCard from "#lib/components/source-card.svelte";
+import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 describe("SourceCard", () => {
   it("renders readable timing context beside a source description", () => {
-    const { body } = render(SourceCard, {
+    const { container, queries } = renderToFragment(SourceCard, {
       props: {
         sourceBadges: [{ seasons: ["summer"] }],
         sources: [{ type: "default" }],
@@ -13,12 +13,12 @@ describe("SourceCard", () => {
       },
     });
 
-    expect(body).toContain("Catch fishing in Pond");
-    expect(body).toContain(">Summer</span>");
+    expect(queries.getByText("Catch fishing in Pond")).toBeTruthy();
+    expect(container.querySelector(".restriction-chip")?.textContent).toContain("Summer");
   });
 
   it("does not invent timing context for an unrestricted source", () => {
-    const { body } = render(SourceCard, {
+    const { container } = renderToFragment(SourceCard, {
       props: {
         sourceBadges: [{}],
         sources: [{ type: "default" }],
@@ -26,6 +26,6 @@ describe("SourceCard", () => {
       },
     });
 
-    expect(body).not.toContain("restriction-chip");
+    expect(container.querySelector(".restriction-chip")).toBeNull();
   });
 });

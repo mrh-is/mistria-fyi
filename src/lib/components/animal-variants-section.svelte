@@ -114,7 +114,7 @@
   function sectionConfig(animalId: AnimalId): AnimalSubcategorySectionConfig<AnimalVariantId> {
     let displayableCompletedItemCount = 0;
     let displayableItemCount = 0;
-    let visibleItems: VariantRowConfig[] = [];
+    const visibleItems: VariantRowConfig[] = [];
     forEachVariant(animalId, ([vid, variant], tier) => {
       const completed = hasCompletedVariant(animalId, vid);
       if (!isVariantInScope(variant, completed)) return;

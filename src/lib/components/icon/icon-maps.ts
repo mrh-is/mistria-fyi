@@ -54,9 +54,9 @@ import type { Icon } from "@tabler/icons-svelte-runes";
 
 import type { CategoryKey } from "#lib/data/categories.js";
 import type { SourceFilterId } from "#lib/data/source-filters.js";
-import type { QuestState } from "#lib/stores/user-state.svelte.js";
 import type { Source } from "#lib/types/acquisition.js";
 import type { Season, Weather } from "#lib/types/tracker-data.js";
+import type { QuestState } from "#lib/types/user-progress.js";
 
 export type AppIcon = Icon;
 

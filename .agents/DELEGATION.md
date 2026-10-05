@@ -19,9 +19,9 @@ powerful one.** Escalate only when the task demands it.
 | Architecture, difficult debugging, ambiguous requirements | Expensive | Opus            | Sol or Astra  |
 | Design work, visual iteration, complex UI                 | Expensive | Opus            | Sol           |
 
-To switch models mid-session:
+To switch models mid-session (these are per-harness examples; use whatever your harness offers):
 
-- **Claude Code**: `/model <model-id>` or `set_session_model`
+- **Claude Code**: `/model <model-id>`, or `set_session_model` in the desktop app
 - **Claude subagents**: `model: "sonnet"` / `model: "haiku"` in the Agent tool
 - **Codex**: `-c model="<model-id>"`
 
@@ -30,14 +30,31 @@ To switch models mid-session:
 All agents are on free or subscription tiers with usage limits (except LM Studio which is
 local/unlimited). Treat every agent's usage as a shared budget — conserve across the board.
 
-| Agent       | Command (non-interactive)               | Limits                           | Notes                                                                                 |
-| ----------- | --------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------- |
-| Claude Code | `claude -p "prompt"`                    | Pro sub, 5-hour windows          | Default Sonnet (this project), Opus (machine).                                        |
-| Codex       | `codex exec "prompt"`                   | Free tier                        | Default Terra (this project, see `.codex/config.toml`). `-c model="..."` to override. |
-| Antigravity | `agy -p "prompt"`                       | Free tier, weekly quotas         | Gemini 3.5 Flash default. Gemini and Claude/GPT quotas separate.                      |
-| Kilo        | `kilo run "prompt" --auto`              | Free, rate-limited               | Always use the default auto-free model.                                               |
-| Copilot     | `copilot -p "prompt" --allow-all-tools` | Pro sub, 1500 monthly AI credits | Multi-model. Cheaper models use fewer credits.                                        |
-| LM Studio   | `lms chat -p "prompt"`                  | Unlimited (local)                | Qwen 3.5 27B. Slow, no tool use.                                                      |
+The fleet below describes the **maintainer's machine**. Other environments (cloud sandboxes, CI)
+won't have these CLIs or the local LM Studio model; treat the table as machine-specific, not as a
+guarantee.
+
+### Delegation rules
+
+- **Ask first.** Spawning an external agent CLI is outward-facing work. Get the user's consent in
+  chat before the first spawn in a session. Delegating to your own harness's subagents (for example,
+  Claude Code's Agent tool) needs no extra consent.
+- **No permission bypasses.** Never pass `--allow-all-tools`, `--auto`, `--yolo`, or similar flags
+  that skip approval prompts unless the user explicitly asks for that flag. The commands in the
+  table below show the base invocation; run them in each CLI's default approval mode.
+- **Same worktree, same attribution.** A delegate works in the orchestrator's worktree on its branch
+  (never the main checkout), follows [AGENTS.md](../AGENTS.md), & its commits carry the
+  orchestrator's `agent:*` identity plus the delegate's own `Co-Authored-By` trailer.
+- **Orchestrator verifies.** Read the delegate's diff & run the focused checks before committing.
+
+| Agent       | Command (non-interactive) | Limits                           | Notes                                                                                 |
+| ----------- | ------------------------- | -------------------------------- | ------------------------------------------------------------------------------------- |
+| Claude Code | `claude -p "prompt"`      | Pro sub, 5-hour windows          | Sonnet by default. Opus on the maintainer's machine.                                  |
+| Codex       | `codex exec "prompt"`     | Free tier                        | Default Terra (this project, see `.codex/config.toml`). `-c model="..."` to override. |
+| Antigravity | `agy -p "prompt"`         | Free tier, weekly quotas         | Gemini 3.5 Flash default. Gemini and Claude/GPT quotas separate.                      |
+| Kilo        | `kilo run "prompt"`       | Free, rate-limited               | Always use the default auto-free model.                                               |
+| Copilot     | `copilot -p "prompt"`     | Pro sub, 1500 monthly AI credits | Multi-model. Cheaper models use fewer credits.                                        |
+| LM Studio   | `lms chat -p "prompt"`    | Unlimited (local)                | Qwen 3.5 27B. Slow, no tool use.                                                      |
 
 ## When to delegate vs. do it yourself
 
@@ -71,8 +88,7 @@ overhead often exceeds the cost of just doing the task.
 
 Use for well-defined tasks that don't need heavy reasoning:
 
-- **Kilo** (`kilo run "prompt" --auto`): Code tasks with tool use, file operations. Free but
-  rate-limited.
+- **Kilo** (`kilo run "prompt"`): Code tasks with tool use, file operations. Free but rate-limited.
 - **LM Studio** (`lms chat -p "prompt"`): Text-only tasks (no tool use), summarization, formatting.
   Slow but unlimited.
 
@@ -83,7 +99,7 @@ Use for substantial tasks that need strong reasoning:
 - **Codex** (`codex exec "prompt"`): Multi-file changes, refactoring, code review. Free tier.
 - **Antigravity** (`agy -p "prompt"`): Similar capability. Has separate Gemini vs Claude/GPT weekly
   quotas.
-- **Copilot** (`copilot -p "prompt" --allow-all-tools`): Multi-model, GitHub-native tools.
+- **Copilot** (`copilot -p "prompt"`): Multi-model, GitHub-native tools.
 
 ### Tier 3 — Most capable
 
@@ -92,17 +108,18 @@ Use for substantial tasks that need strong reasoning:
 
 ## Proactive behavior
 
-- **Auto-delegate silently** when a task clearly fits a lower tier and would save significant usage
-  (5+ turns worth of work).
-- **Suggest delegation** when it's a judgment call or the savings are moderate (3-5 turns).
+- **Propose delegation** when a task clearly fits a lower tier and would save significant usage (5+
+  turns worth of work), then wait for the user's consent before spawning an external agent.
+- **Mention delegation** when it's a judgment call or the savings are moderate (3-5 turns).
 - **Keep it yourself** when delegation overhead would exceed the savings.
 
 ## Session lifecycle
 
 Session budgets, handoff notes, and the stop rule live in
 [AGENTS.md §10](../AGENTS.md#10-session-lifecycle). When a usage window is about to close, write the
-handoff note, use `ScheduleWakeup` to start a fresh session in the next window, and do not continue
-the current session after the cache has gone cold.
+handoff note, then stop. If the harness can schedule a follow-up (for example, Claude Code's
+`ScheduleWakeup`), use it to start a fresh session in the next window; otherwise leave the handoff
+for the user. Do not continue the current session after the cache has gone cold.
 
 ## Parallel dispatch
 

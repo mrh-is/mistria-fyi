@@ -8,7 +8,7 @@ import sharp from "sharp";
 import { trackerData } from "../src/lib/data/index.js";
 import { getAllProgress } from "../src/lib/engine/progress.js";
 
-import type { CompletedState } from "../src/lib/stores/user-state.svelte.js";
+import type { CompletedState } from "../src/lib/types/user-progress.js";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const STATIC = join(ROOT, "static");

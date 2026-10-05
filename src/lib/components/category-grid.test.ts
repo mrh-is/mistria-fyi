@@ -1,8 +1,8 @@
-import { render } from "svelte/server";
 import { afterEach, describe, expect, it } from "vitest";
 
 import CategoryGrid from "#lib/components/category-grid.svelte";
 import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
+import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 const complete = { completed: 2, filtered: 0, total: 2 };
 
@@ -32,7 +32,7 @@ describe("CategoryGrid", () => {
   });
 
   it("renders in-progress categories alphabetized by displayed name", () => {
-    const { body } = render(CategoryGrid, {
+    const { queries } = renderToFragment(CategoryGrid, {
       props: {
         progress: {
           almanac: { completed: 1, filtered: 1, total: 2 },
@@ -49,34 +49,42 @@ describe("CategoryGrid", () => {
       },
     });
 
-    expect(body.indexOf(">Almanac<")).toBeLessThan(body.indexOf(">Animals<"));
-    expect(body.indexOf(">Skills<")).toBeLessThan(body.indexOf(">Villagers<"));
+    const names = queries
+      .getAllByRole("link")
+      .map((link) => link.querySelector(".category-name")?.textContent);
+    expect(names.indexOf("Almanac")).toBeGreaterThanOrEqual(0);
+    expect(names.indexOf("Almanac")).toBeLessThan(names.indexOf("Animals"));
+    expect(names.indexOf("Skills")).toBeLessThan(names.indexOf("Villagers"));
   });
 
   it("localizes the active and completed group labels and heading", () => {
-    const { body } = render(CategoryGrid, { props: { progress: oneActiveOneComplete } });
+    const { queries } = renderToFragment(CategoryGrid, {
+      props: { progress: oneActiveOneComplete },
+    });
 
-    expect(body).toContain('aria-label="Categories in progress"');
-    expect(body).toContain('aria-label="Completed categories"');
-    expect(body).toContain(">Completed<");
+    expect(queries.getByRole("list", { name: "Categories in progress" })).toBeTruthy();
+    expect(queries.getByRole("list", { name: "Completed categories" })).toBeTruthy();
+    expect(queries.getByRole("heading", { name: "Completed" })).toBeTruthy();
   });
 
   it("localizes the completed heading and label for Japanese", () => {
     overwriteGetLocale(() => "ja");
 
-    const { body } = render(CategoryGrid, { props: { progress: allComplete } });
+    const { queries } = renderToFragment(CategoryGrid, { props: { progress: allComplete } });
 
-    expect(body).toContain('aria-label="完了済みのカテゴリー"');
-    expect(body).toContain(">完了済み<");
+    expect(queries.getByRole("list", { name: "完了済みのカテゴリー" })).toBeTruthy();
+    expect(queries.getByRole("heading", { name: "完了済み" })).toBeTruthy();
   });
 
   it("localizes the active and completed labels for Russian", () => {
     overwriteGetLocale(() => "ru");
 
-    const { body } = render(CategoryGrid, { props: { progress: oneActiveOneComplete } });
+    const { queries } = renderToFragment(CategoryGrid, {
+      props: { progress: oneActiveOneComplete },
+    });
 
-    expect(body).toContain('aria-label="Категории в процессе"');
-    expect(body).toContain('aria-label="Выполненные категории"');
-    expect(body).toContain(">Выполнено<");
+    expect(queries.getByRole("list", { name: "Категории в процессе" })).toBeTruthy();
+    expect(queries.getByRole("list", { name: "Выполненные категории" })).toBeTruthy();
+    expect(queries.getByRole("heading", { name: "Выполнено" })).toBeTruthy();
   });
 });

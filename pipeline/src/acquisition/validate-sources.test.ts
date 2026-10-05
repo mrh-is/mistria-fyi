@@ -9,6 +9,8 @@ import {
 
 import type { Source } from "#lib/types/acquisition.js";
 
+import type { AcquisitionSourceAssembly } from "./validate-sources.js";
+
 describe("validateAcquisitionSources", () => {
   it.each(["mine", "mines_chest", "mines_dig_site"])(
     "rejects a %s source without biomeId",
@@ -23,7 +25,7 @@ describe("validateAcquisitionSources", () => {
       });
 
       expect(() => {
-        validateAcquisitionSources(trackerData, references);
+        validateAcquisitionSources(assembly(trackerData), references);
       }).toThrow("items.void_herb.sources[0].biomeId");
     },
   );
@@ -37,7 +39,7 @@ describe("validateAcquisitionSources", () => {
     const references = AcquisitionReferenceIndex.from({ emitted: { items: trackerData.items } });
 
     expect(() => {
-      validateAcquisitionSources(trackerData, references);
+      validateAcquisitionSources(assembly(trackerData), references);
     }).not.toThrow();
   });
 
@@ -53,7 +55,7 @@ describe("validateAcquisitionSources", () => {
     const references = AcquisitionReferenceIndex.from({ emitted: { items: trackerData.items } });
 
     expect(() => {
-      validateAcquisitionSources(trackerData, references);
+      validateAcquisitionSources(assembly(trackerData), references);
     }).not.toThrow();
   });
 
@@ -70,7 +72,7 @@ describe("validateAcquisitionSources", () => {
     const references = AcquisitionReferenceIndex.from({ emitted: { items: trackerData.items } });
 
     expect(() => {
-      validateAcquisitionSources(trackerData, references);
+      validateAcquisitionSources(assembly(trackerData), references);
     }).toThrow(AcquisitionSourceValidationError);
   });
 
@@ -91,7 +93,7 @@ describe("validateAcquisitionSources", () => {
         },
       },
       museum: {},
-      recipes: { catch_recipe: { memberItemIds: ["catch"], sources: [{ type: "default" }] } },
+      recipes: { catch_recipe: { sources: [{ type: "default" }] } },
     };
     const references = AcquisitionReferenceIndex.from({
       emitted: {
@@ -111,7 +113,7 @@ describe("validateAcquisitionSources", () => {
     });
 
     expect(() => {
-      validateAcquisitionSources(trackerData, references);
+      validateAcquisitionSources(assembly(trackerData), references);
     }).not.toThrow();
   });
 
@@ -138,7 +140,7 @@ describe("validateAcquisitionSources", () => {
     });
 
     expect(() => {
-      validateAcquisitionSources(trackerData, references);
+      validateAcquisitionSources(assembly(trackerData), references);
     }).toThrow('Unknown quest type ID "story_quests"');
   });
 
@@ -163,7 +165,7 @@ describe("validateAcquisitionSources", () => {
     });
 
     expect(() => {
-      validateAcquisitionSources(trackerData, references);
+      validateAcquisitionSources(assembly(trackerData), references);
     }).toThrow('Unknown villager ID "missing_villager"');
   });
 
@@ -373,7 +375,7 @@ describe("validateAcquisitionSources", () => {
     });
     let validationError: unknown;
     try {
-      validateAcquisitionSources({ cosmetics: {}, items, recipes: {} }, references);
+      validateAcquisitionSources(assembly({ items }), references);
     } catch (error) {
       validationError = error;
     }
@@ -455,12 +457,10 @@ describe("validateAcquisitionSources", () => {
   });
 
   it("aggregates malformed recipe source collections without throwing a native error", () => {
-    const recipes = { malformed_recipe: { memberItemIds: [], sources: null } };
+    const recipes = { malformed_recipe: { sources: null } };
     const references = AcquisitionReferenceIndex.from({ emitted: { recipes } });
 
-    expect(
-      captureDiagnostics({ cosmetics: {}, items: {}, recipes: recipes as never }, references),
-    ).toEqual([
+    expect(captureDiagnostics({ cosmetics: {}, items: {}, recipes }, references)).toEqual([
       {
         fieldPath: "recipes.malformed_recipe.sources",
         kind: "malformed-payload",
@@ -527,7 +527,7 @@ describe("validateAcquisitionSources", () => {
       cosmetics: {},
       items: {},
       museum: {},
-      recipes: { orphan_recipe: { memberItemIds: [], sources: [] } },
+      recipes: { orphan_recipe: { sources: [] } },
     };
     const references = AcquisitionReferenceIndex.from({
       emitted: {
@@ -572,15 +572,12 @@ describe("validateAcquisitionSources", () => {
       museum: {},
       recipes: {
         cycle_a: {
-          memberItemIds: [],
           sources: [{ type: "recipe", method: "cook", recipeId: "cycle_b" }],
         },
         cycle_b: {
-          memberItemIds: [],
           sources: [{ type: "recipe", method: "cook", recipeId: "cycle_a" }],
         },
         unresolved: {
-          memberItemIds: [],
           sources: [{ type: "recipe", method: "cook", recipeId: "missing_recipe" }],
         },
       },
@@ -643,7 +640,7 @@ describe("validateAcquisitionSources", () => {
       items: { wild_berries: { sources: [{ type: "default" }] } },
       quests: {
         fetch: {
-          meet_juniper: { itemId: "nonexistent_item", name: "Meet Juniper", villager: "juniper" },
+          meet_juniper: { itemId: "nonexistent_item", sources: [], villager: "juniper" },
         },
       },
       recipes: {},
@@ -674,7 +671,7 @@ describe("validateAcquisitionSources", () => {
         fetch: {
           meet_juniper: {
             itemId: "wild_berries",
-            name: "Meet Juniper",
+            sources: [],
             villager: "nonexistent_villager",
           },
         },
@@ -704,7 +701,7 @@ describe("validateAcquisitionSources", () => {
       items: { wild_berries: { sources: [{ type: "default" }] } },
       quests: {
         fetch: {
-          meet_juniper: { itemId: "wild_berries", name: "Meet Juniper", villager: "juniper" },
+          meet_juniper: { itemId: "wild_berries", sources: [], villager: "juniper" },
         },
       },
       recipes: {},
@@ -715,24 +712,413 @@ describe("validateAcquisitionSources", () => {
         items: trackerData.items,
         recipes: trackerData.recipes,
       },
-      native: { villagers: { juniper: {} } },
+      native: { quests: trackerData.quests, villagers: { juniper: {} } },
     });
 
     expect(() => {
-      validateAcquisitionSources(trackerData, references);
+      validateAcquisitionSources(assembly(trackerData), references);
     }).not.toThrow();
   });
 });
 
+/**
+ * Completes a partial fixture with empty collections. Fixtures are deliberately loose: the
+ * validator exists to reject payloads the `TrackerData` type cannot rule out at runtime.
+ */
+function assembly(partial: Record<string, unknown>): AcquisitionSourceAssembly {
+  return {
+    almanac: {},
+    animals: {},
+    categoryVisibility: {},
+    cosmetics: {},
+    items: {},
+    mines: { biomes: [], spells: {} },
+    museum: {},
+    pets: { cosmetics: {}, skins: {} },
+    quests: {},
+    recipes: {},
+    stores: {},
+    villagers: {},
+    ...partial,
+  } as unknown as AcquisitionSourceAssembly;
+}
+
 function captureDiagnostics(
-  trackerData: Parameters<typeof validateAcquisitionSources>[0],
+  trackerData: Record<string, unknown>,
   references: AcquisitionReferenceIndex,
 ): AcquisitionSourceValidationError["diagnostics"] {
   try {
-    validateAcquisitionSources(trackerData, references);
+    validateAcquisitionSources(assembly(trackerData), references);
     expect.unreachable("validation should fail");
   } catch (error) {
     assert.instanceOf(error, AcquisitionSourceValidationError);
     return error.diagnostics;
   }
+}
+
+describe("validateAcquisitionSources on assembled tracker data", () => {
+  const references = AcquisitionReferenceIndex.from({
+    emitted: {
+      items: ["wild_berries", "honey"],
+      recipes: ["berry_tart"],
+    },
+    native: {
+      animals: ["chicken"],
+      perks: ["mist_sight"],
+      quests: ["repair_the_bridge", "the_water_tablet", "berry_quest", "tart_quest", "date_quest"],
+      questTypes: ["cooking", "fetch", "heart", "story"],
+      skills: ["foraging"],
+      stores: ["darcy"],
+      villagers: ["balor", "darcy"],
+    },
+  });
+
+  it("accepts every collection in its real emitted shape", () => {
+    expect(() => {
+      validateAcquisitionSources(assembly(realShapes()), references);
+    }).not.toThrow();
+  });
+
+  it.each([
+    {
+      expected: {
+        fieldPath: "almanac.cooking.items[0].itemIds[0]",
+        kind: "unresolved-reference",
+        message: 'Unknown item ID "missing_item"',
+      },
+      name: "an unknown almanac item",
+      path: ["almanac", "cooking", "items"],
+      value: [{ itemIds: ["missing_item"], recipeId: "berry_tart" }],
+    },
+    {
+      expected: {
+        fieldPath: "almanac.cooking.items[0].recipeId",
+        kind: "unresolved-reference",
+        message: 'Unknown recipe ID "missing_recipe"',
+      },
+      name: "an unknown almanac recipe",
+      path: ["almanac", "cooking", "items"],
+      value: [{ itemIds: ["wild_berries"], recipeId: "missing_recipe" }],
+    },
+    {
+      expected: {
+        fieldPath: "almanac.cooking.items[0].itemIds[0]",
+        kind: "malformed-payload",
+        message: "Expected a string item ID",
+      },
+      name: "a non-string almanac item ID",
+      path: ["almanac", "cooking", "items"],
+      value: [{ itemIds: [7] }],
+    },
+    {
+      expected: {
+        fieldPath: "almanac.cooking.items[0]",
+        kind: "malformed-payload",
+        message: "Expected an object",
+      },
+      name: "the old string-array almanac shape",
+      path: ["almanac", "cooking", "items"],
+      value: ["wild_berries"],
+    },
+    {
+      expected: {
+        fieldPath: "almanac.forage.items[0].itemIds",
+        kind: "malformed-payload",
+        message: "Expected at least one ID",
+      },
+      name: "an almanac entry without members",
+      path: ["almanac", "forage", "items"],
+      value: [{ itemIds: [] }],
+    },
+    {
+      expected: {
+        fieldPath: "museum.flora.sets.berries.items[0]",
+        kind: "unresolved-reference",
+        message: 'Unknown item ID "missing_item"',
+      },
+      name: "an unknown museum item",
+      path: ["museum", "flora", "sets", "berries", "items"],
+      value: ["missing_item"],
+    },
+    {
+      expected: {
+        fieldPath: "quests.cooking.tart_quest.recipeId",
+        kind: "malformed-payload",
+        message: "Expected a value",
+      },
+      name: "a cooking quest without its recipe",
+      path: ["quests", "cooking", "tart_quest"],
+      value: { sources: [] },
+    },
+    {
+      expected: {
+        fieldPath: "quests.fetch.berry_quest.rewardRecipeId",
+        kind: "unresolved-reference",
+        message: 'Unknown recipe ID "missing_recipe"',
+      },
+      name: "an unknown fetch reward recipe",
+      path: ["quests", "fetch", "berry_quest", "rewardRecipeId"],
+      value: "missing_recipe",
+    },
+    {
+      expected: {
+        fieldPath: "quests.heart.date_quest.heartLevel",
+        kind: "malformed-payload",
+        message: "Expected a finite number",
+      },
+      name: "a heart quest without a numeric level",
+      path: ["quests", "heart", "date_quest", "heartLevel"],
+      value: "2",
+    },
+    {
+      expected: {
+        fieldPath: "quests.story.repair_the_bridge.heartLevelChanges[0].villagerId",
+        kind: "unresolved-reference",
+        message: 'Unknown villager ID "missing_villager"',
+      },
+      name: "an unknown heart-level-change villager",
+      path: ["quests", "story", "repair_the_bridge", "heartLevelChanges"],
+      value: [{ level: 1, villagerId: "missing_villager" }],
+    },
+    {
+      expected: {
+        fieldPath: "quests.side",
+        kind: "malformed-payload",
+        message: "Expected a known quest type",
+      },
+      name: "an unknown quest type",
+      path: ["quests", "side"],
+      value: {},
+    },
+    {
+      expected: {
+        fieldPath: "quests.story.made_up_quest",
+        kind: "unresolved-reference",
+        message: 'Unknown quest ID "made_up_quest"',
+      },
+      name: "an emitted quest the game does not define",
+      path: ["quests", "story", "made_up_quest"],
+      value: { sources: [] },
+    },
+    {
+      expected: {
+        fieldPath: "stores.darcy.visibility.questId",
+        kind: "unresolved-reference",
+        message: 'Unknown quest ID "repair_the_brigde"',
+      },
+      name: "a misspelled store unlock quest",
+      path: ["stores", "darcy", "visibility"],
+      value: { type: "questCompleted", questId: "repair_the_brigde" },
+    },
+    {
+      expected: {
+        fieldPath: "villagers.darcy.visibility.questId",
+        kind: "unresolved-reference",
+        message: 'Unknown quest ID "breaking_the_last_seal"',
+      },
+      name: "a misspelled villager gate",
+      path: ["villagers", "darcy", "visibility"],
+      value: { type: "questCompleted", questId: "breaking_the_last_seal" },
+    },
+    {
+      expected: {
+        fieldPath: "mines.spells.summon_rain.sources[0].questId",
+        kind: "unresolved-reference",
+        message: 'Unknown quest ID "the_watter_tablet"',
+      },
+      name: "an injected spell source with an unknown quest",
+      path: ["mines", "spells", "summon_rain", "sources"],
+      value: [
+        { type: "quest", questId: "the_watter_tablet", questType: "story", trigger: "completion" },
+      ],
+    },
+    {
+      expected: {
+        fieldPath: "animals.chicken.visibility.questId",
+        kind: "unresolved-reference",
+        message: 'Unknown quest ID "repair_haydens_barn"',
+      },
+      name: "an animal gate quest the game does not define",
+      path: ["animals", "chicken", "visibility"],
+      value: { type: "questCompleted", questId: "repair_haydens_barn" },
+    },
+    {
+      expected: {
+        fieldPath: "items.honey.sources[0].visibility.questId",
+        kind: "unresolved-reference",
+        message: 'Unknown quest ID "missing_quest"',
+      },
+      name: "an unknown quest in a source visibility",
+      path: ["items", "honey", "sources"],
+      value: [
+        {
+          type: "store",
+          storeId: "darcy",
+          visibility: { type: "questAvailable", questId: "missing_quest" },
+        },
+      ],
+    },
+    {
+      expected: {
+        fieldPath: "categoryVisibility.dates.conditions[0].villagerId",
+        kind: "unresolved-reference",
+        message: 'Unknown villager ID "missing_villager"',
+      },
+      name: "an unknown villager in category visibility",
+      path: ["categoryVisibility", "dates"],
+      value: {
+        type: "or",
+        conditions: [{ type: "heartLevel", level: 8, villagerId: "missing_villager" }],
+      },
+    },
+    {
+      expected: {
+        fieldPath: "categoryVisibility.dates.conditions",
+        kind: "malformed-payload",
+        message: "Expected a non-empty array of visibility conditions",
+      },
+      name: "an empty visibility conjunction",
+      path: ["categoryVisibility", "dates"],
+      value: { type: "or", conditions: [] },
+    },
+    {
+      expected: {
+        fieldPath: "villagers.balor.visibility.type",
+        kind: "malformed-payload",
+        message: "Expected a known visibility type",
+      },
+      name: "an unknown visibility type",
+      path: ["villagers", "balor", "visibility"],
+      value: { type: "quest", questId: "repair_the_bridge" },
+    },
+    {
+      expected: {
+        fieldPath: "villagers.balor.visibility.state",
+        kind: "malformed-payload",
+        message: "Unexpected field for questCompleted visibility",
+      },
+      name: "an unexpected visibility field",
+      path: ["villagers", "balor", "visibility"],
+      value: { type: "questCompleted", questId: "repair_the_bridge", state: "completed" },
+    },
+    {
+      expected: {
+        fieldPath: "pets.skins.sapling.sources[0].monsterId",
+        kind: "unresolved-reference",
+        message: 'Unknown monster ID "sapling"',
+      },
+      name: "an unknown pet skin monster",
+      path: ["pets", "skins", "sapling", "sources"],
+      value: [{ type: "monster", monsterId: "sapling" }],
+    },
+  ])("reports $name", ({ expected, path, value }) => {
+    expect(captureDiagnostics(withPatch(path, value), references)).toEqual([
+      { ...expected, targetId: expect.any(String) },
+    ]);
+  });
+});
+
+/** One of every collection the validator walks, in the shapes the extractors emit. */
+function realShapes(): Record<string, unknown> {
+  return {
+    almanac: {
+      cooking: { items: [{ itemIds: ["wild_berries"], recipeId: "berry_tart" }] },
+      forage: { items: [{ itemIds: ["honey"] }] },
+    },
+    animals: {
+      chicken: {
+        cosmetics: { egg_hat: { sources: [{ type: "store", storeId: "darcy" }] } },
+        visibility: { type: "questCompleted", questId: "repair_the_bridge" },
+      },
+    },
+    categoryVisibility: {
+      dates: { type: "or", conditions: [{ type: "heartLevel", level: 8, villagerId: "balor" }] },
+    },
+    items: {
+      honey: {
+        sources: [
+          {
+            type: "store",
+            storeId: "darcy",
+            visibility: { type: "questAvailable", questId: "repair_the_bridge" },
+          },
+        ],
+        visibility: { type: "questCompleted", questId: "repair_the_bridge" },
+      },
+      wild_berries: { sources: [{ type: "default" }] },
+    },
+    mines: {
+      biomes: [],
+      spells: {
+        full_restore: { sources: [] },
+        summon_rain: {
+          sources: [
+            {
+              type: "quest",
+              questId: "the_water_tablet",
+              questType: "story",
+              trigger: "completion",
+            },
+          ],
+          visibility: { type: "questCompleted", questId: "the_water_tablet" },
+        },
+      },
+    },
+    museum: { flora: { sets: { berries: { items: ["wild_berries"] } } } },
+    pets: {
+      cosmetics: { halo: { sources: [{ type: "store", storeId: "darcy" }] } },
+      skins: { sapling: { sources: [{ type: "default" }] } },
+    },
+    quests: {
+      cooking: { tart_quest: { recipeId: "berry_tart", sources: [] } },
+      fetch: {
+        berry_quest: {
+          itemId: "wild_berries",
+          rewardRecipeId: "berry_tart",
+          sources: [],
+          villager: "balor",
+        },
+      },
+      heart: {
+        date_quest: {
+          heartLevel: 2,
+          sources: [],
+          villager: "balor",
+          visibility: {
+            type: "and",
+            conditions: [
+              { type: "villagerKnown", villagerId: "balor" },
+              { type: "perkUnlocked", perkId: "mist_sight" },
+              { type: "skillLevel", level: 5, skillId: "foraging" },
+            ],
+          },
+        },
+      },
+      story: {
+        repair_the_bridge: {
+          heartLevelChanges: [{ level: 1, villagerId: "darcy" }],
+          sources: [],
+        },
+      },
+    },
+    recipes: { berry_tart: { sources: [{ type: "default" }] } },
+    stores: { darcy: { visibility: { type: "questCompleted", questId: "repair_the_bridge" } } },
+    villagers: {
+      balor: {},
+      darcy: { visibility: { type: "questCompleted", questId: "repair_the_bridge" } },
+    },
+  };
+}
+
+function withPatch(
+  path: readonly string[],
+  value: unknown,
+  base: Record<string, unknown> = realShapes(),
+): Record<string, unknown> {
+  let target = base;
+  for (const key of path.slice(0, -1)) target = target[key] as Record<string, unknown>;
+  const field = path.at(-1);
+  if (field === undefined) throw new Error("withPatch needs a non-empty path");
+  target[field] = value;
+  return base;
 }

@@ -41,6 +41,18 @@ describe("Villager progression", () => {
   });
 });
 
+describe("renown", () => {
+  afterEach(() => {
+    userState.resetAll();
+  });
+
+  it("clamps tracked renown to max level", () => {
+    userState.setRenown(120);
+
+    expect(userState.state.completed.renown).toBe(100);
+  });
+});
+
 describe("quest recipe rewards", () => {
   afterEach(() => {
     userState.resetAll();

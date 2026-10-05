@@ -162,4 +162,17 @@ describe("VillagerRecord", () => {
       expect(increment).toBeDisabled();
     });
   });
+
+  it("announces level changes through a status region, not the whole meter group", async () => {
+    const view = render(VillagerRecordHarness, {
+      id: adelineId,
+      name: "Adeline",
+      villager: adeline,
+    });
+    const group = view.getByRole("group", { name: /Adeline relationship level/ });
+    expect(group).not.toHaveAttribute("aria-live");
+
+    await fireEvent.click(view.getByRole("button", { name: "Increase Adeline hearts" }));
+    expect(view.getByRole("status")).toHaveTextContent("Adeline relationship level, 1 of 12");
+  });
 });
