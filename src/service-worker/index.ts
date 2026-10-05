@@ -95,7 +95,10 @@ sw.addEventListener("fetch", (event) => {
 
   if (isAsset) {
     event.respondWith(
-      caches.match(event.request).then(async (cached) => {
+      // Build assets are content-addressed, so a `Vary` header can't make a cached copy wrong. Vite's
+      // CORS middleware adds `Vary: Origin`, which would otherwise miss for module imports: they
+      // send an `Origin` header the precache requests didn't.
+      caches.match(event.request, { ignoreVary: true }).then(async (cached) => {
         if (cached) return cached;
         const response = await fetch(event.request);
         if (response.ok && isLazyAsset(url.pathname, LOCALE_NAME_CHUNK_PATHS)) {
