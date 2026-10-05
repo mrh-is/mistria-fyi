@@ -4,7 +4,7 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 
 import { getCategoryProgress } from "./progress.js";
 
-import type { CompletedState } from "#lib/stores/user-state.svelte.js";
+import type { CompletedState } from "#lib/types/user-progress.js";
 
 function completedAtRenown(renown: number): CompletedState {
   return {

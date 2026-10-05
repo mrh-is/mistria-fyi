@@ -5,7 +5,6 @@ import { recordValues } from "#lib/utils.js";
 
 import { isItemApplicable, isItemApplicableForAlmanac } from "./applicability.js";
 
-import type { CompletedState } from "#lib/stores/user-state.svelte.js";
 import type {
   AnimalVariantId,
   CosmeticId,
@@ -13,6 +12,7 @@ import type {
   VillagerId,
   VillagerRelationship,
 } from "#lib/types/tracker-data.js";
+import type { CompletedState } from "#lib/types/user-progress.js";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 

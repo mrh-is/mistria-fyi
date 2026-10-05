@@ -20,7 +20,7 @@
   import MergeSummary from "./merge-summary.svelte";
   import { decodeQrImage, generateTransferQr, startQrCamera } from "./transfer-qr.js";
 
-  import type { MergeResult } from "#lib/stores/user-state.svelte.js";
+  import type { MergeResult } from "#lib/types/user-progress.js";
 
   import type { ClosableScanner } from "./data-effects.js";
 
