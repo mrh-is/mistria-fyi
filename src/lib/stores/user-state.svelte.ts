@@ -1088,7 +1088,7 @@ function deserialize(json: string, mode: ValidationMode): DeserializeResult {
     );
 
     // Migrate villagerRelationships from legacy romanticVillagers/marriedVillager
-    let villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>> = {};
+    const villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>> = {};
     if (s.completed.villagerRelationships) {
       for (const [id, rel] of Object.entries(s.completed.villagerRelationships)) {
         if (
