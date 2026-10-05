@@ -7,19 +7,19 @@ import { LOCALIZED_CATEGORIES } from "#lib/data/names.js";
 import type * as NamesModule from "#lib/data/names.js";
 
 /**
- * The client setup preloads every chunk, so the real `hasNames` would report ready at once.
- * Stubbing the two loading entry points lets the test hold the load open and observe the gate.
+ * The setup preloads English and Japanese; this suite also needs French data after its mocked
+ * loads resolve. Stubbing the loading entry points lets tests hold them open and observe the gate.
  */
 const names = vi.hoisted(() => ({
   hasNames: vi.fn<() => boolean>(() => false),
   loadNames: vi.fn<() => Promise<void>>(),
 }));
 
-vi.mock("#lib/data/names.js", async (importOriginal) => ({
-  ...(await importOriginal<typeof NamesModule>()),
-  hasNames: names.hasNames,
-  loadNames: names.loadNames,
-}));
+vi.mock("#lib/data/names.js", async (importOriginal) => {
+  const original = await importOriginal<typeof NamesModule>();
+  await original.loadNames("fr", original.LOCALIZED_CATEGORIES);
+  return { ...original, hasNames: names.hasNames, loadNames: names.loadNames };
+});
 
 interface PendingLoad {
   reject: (error: Error) => void;

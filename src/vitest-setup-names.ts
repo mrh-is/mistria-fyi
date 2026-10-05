@@ -1,8 +1,6 @@
 import { loadNames, LOCALIZED_CATEGORIES } from "#lib/data/names.js";
-import { LOCALE_CODES } from "#lib/types/locale.js";
 
-// The app awaits name chunks in each route's `load()` before anything calls `getName`. Tests call
-// engine functions and mount components directly, with no route in front of them, so every chunk
-// is loaded up front here instead. Tests of the loading boundary itself run under
-// the `mocked` Vitest project, which skips this file.
-await Promise.all(LOCALE_CODES.map((locale) => loadNames(locale, LOCALIZED_CATEGORIES)));
+// Most app and client tests use English names. A few exercise Japanese rendering, so keep both
+// locales ready before a test imports its component. Full-locale assertions load the remaining
+// chunks explicitly in their own suites. Each isolated test file gets a fresh name cache.
+await Promise.all((["en", "ja"] as const).map((locale) => loadNames(locale, LOCALIZED_CATEGORIES)));
