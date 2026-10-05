@@ -1,8 +1,8 @@
-import { render } from "svelte/server";
 import { describe, expect, it } from "vitest";
 
 import { SOURCE_FILTERS, SOURCE_ICON } from "#lib/components/icon/index.js";
 import VisibilityPanel from "#lib/components/visibility-panel.svelte";
+import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 // Interaction coverage (toggling chips, seasons, weather, source groups, the explainer dialog, and
 // the completed switch) lives in visibility-panel.client.test.ts.
@@ -35,11 +35,11 @@ describe("VisibilityPanel", () => {
   });
 
   it("omits seasonality and source controls when they are inapplicable", () => {
-    const { body } = render(VisibilityPanel, { props: { showSeasonality: false } });
+    const { queries } = renderToFragment(VisibilityPanel, { props: { showSeasonality: false } });
 
-    expect(body).not.toContain("When to find");
-    expect(body).not.toContain("Source types");
-    expect(body).not.toContain("Reset");
-    expect(body).toContain("Show completed?");
+    expect(queries.queryByText("When to find")).toBeNull();
+    expect(queries.queryByText("Source types")).toBeNull();
+    expect(queries.queryByRole("button", { name: "Reset" })).toBeNull();
+    expect(queries.getByRole("switch", { name: "Show completed?" })).toBeTruthy();
   });
 });

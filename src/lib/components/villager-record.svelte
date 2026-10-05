@@ -193,8 +193,14 @@
       max: MAX_VILLAGER_LEVEL,
       name: visibleName,
     })}
-    aria-live="polite"
   >
+    <span class="sr-only" role="status">
+      {m.villager_relationship_level_aria({
+        level: displayedLevel,
+        max: MAX_VILLAGER_LEVEL,
+        name: visibleName,
+      })}
+    </span>
     <button
       class="villager-stepper"
       type="button"

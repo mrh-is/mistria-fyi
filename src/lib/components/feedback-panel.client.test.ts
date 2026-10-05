@@ -350,4 +350,21 @@ describe("FeedbackPanel", () => {
     );
     expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
   });
+
+  it("offers the GitHub fallback as a link when Turnstile fails", async () => {
+    (globalThis as unknown as Record<string, unknown>).turnstile = {
+      remove: vi.fn(),
+      render: (_container: HTMLElement, options: { "error-callback": () => void }) => {
+        options["error-callback"]();
+        return "1";
+      },
+      reset: vi.fn(),
+    };
+    render(FeedbackPanel, { onclose: vi.fn(), open: true, resetKey: "/museum" });
+
+    const link = await screen.findByRole("link", { name: /GitHub/ });
+    expect(link).toHaveAttribute("href", "https://github.com/mrh-is/mistria-fyi/issues/new");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link.getAttribute("rel")).toContain("noopener");
+  });
 });

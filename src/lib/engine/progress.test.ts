@@ -17,11 +17,7 @@ import {
 } from "./progress.js";
 
 import type { CategoryKey } from "#lib/data/categories.js";
-import type {
-  AvailabilityMode,
-  CompletedState,
-  QuestState,
-} from "#lib/stores/user-state.svelte.js";
+import type { LegacyAvailabilityMode } from "#lib/types/availability.js";
 import type {
   AnimalVariantId,
   CosmeticId,
@@ -31,6 +27,7 @@ import type {
   VillagerRelationship,
   Weather,
 } from "#lib/types/tracker-data.js";
+import type { CompletedState, QuestState } from "#lib/types/user-progress.js";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 
@@ -70,7 +67,7 @@ const defaultWorld = { season: "spring" as Season, weather: "calm" as Weather };
 
 function ctx(
   overrides: Partial<{
-    availabilityMode: AvailabilityMode;
+    availabilityMode: LegacyAvailabilityMode;
     completed: Partial<CompletedState>;
     worldState: { season: Season; weather: Weather };
   }> = {},
@@ -218,11 +215,11 @@ describe("almanac progress", () => {
 
     const progressAll = getCategoryProgress(
       "almanac",
-      ctx({ availabilityMode: "everything" as AvailabilityMode }),
+      ctx({ availabilityMode: "everything" as LegacyAvailabilityMode }),
     );
     const progressAvailable = getCategoryProgress(
       "almanac",
-      ctx({ availabilityMode: "available" as AvailabilityMode }),
+      ctx({ availabilityMode: "available" as LegacyAvailabilityMode }),
     );
 
     expect(progressAll.total).toBe(progressAvailable.total);
@@ -382,7 +379,7 @@ describe("animals progress", () => {
 
 describe("animal progress variant filtering matches UI predicate", () => {
   const seasons: Season[] = ["spring", "summer", "fall", "winter"];
-  const modes: AvailabilityMode[] = ["available", "everything", "timely"];
+  const modes: LegacyAvailabilityMode[] = ["available", "everything", "timely"];
 
   it.each(modes.flatMap((mode) => seasons.map((season) => [mode, season] as const)))(
     "%s/%s: variant filtered count matches isVariantInScope",

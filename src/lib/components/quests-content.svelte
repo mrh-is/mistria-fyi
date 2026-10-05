@@ -24,7 +24,6 @@
   import AllCompleted from "./all-completed.svelte";
 
   import type { TrackerRowDisplay } from "#lib/components/tracker-row.svelte";
-  import type { QuestState } from "#lib/stores/user-state.svelte.js";
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type {
@@ -34,6 +33,7 @@
     QuestType,
     VillagerId,
   } from "#lib/types/tracker-data.js";
+  import type { QuestState } from "#lib/types/user-progress.js";
   import type { VisibilityCondition } from "#lib/types/visibility.js";
 
   let { locale }: { locale: LocaleCode } = $props();

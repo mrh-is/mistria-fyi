@@ -7,8 +7,8 @@ import { encodeTransferPayload } from "#lib/engine/transfer.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { recordKeys } from "#lib/utils.js";
 
-import type { CompletedState } from "#lib/stores/user-state.svelte.js";
 import type { AnimalId, AnimalVariantId, CosmeticId } from "#lib/types/tracker-data.js";
+import type { CompletedState } from "#lib/types/user-progress.js";
 
 const ALL_ANIMAL_IDS = recordKeys(trackerData.animals);
 
