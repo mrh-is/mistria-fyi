@@ -66,7 +66,7 @@ describe("getName", () => {
     expect("name" in trackerData.pets.skins[petSkinId]).toBe(false);
   });
 
-  // The locale-missing → throw path lives in `names.fallback.test.ts`, which needs a partial chunk
+  // The locale-missing → throw path lives in `names.fallback.cold.test.ts`, which needs a partial chunk
   // the pipeline never emits.
   it("throws rather than inventing a name for an unknown ID", () => {
     const missingVillagerId = "not_a_real_villager" as VillagerId;
