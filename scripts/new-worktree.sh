@@ -2,7 +2,6 @@
 # Creates and sets up an isolated agent worktree per AGENTS.md §1.
 # Usage: pnpm run worktree:new <issue-number>-<short-description>
 set -euo pipefail
-shopt -s nullglob
 
 if [ $# -ne 1 ]; then
   echo "Usage: pnpm run worktree:new <issue-number>-<short-description>" >&2
@@ -52,22 +51,7 @@ trap cleanup EXIT
 git -C "$repo_root" worktree add "$worktree_dir" -b "$slug" --no-track origin/main
 created=true
 
-while IFS= read -r pattern; do
-  [ -z "$pattern" ] && continue
-  if [[ "$pattern" == */ ]]; then
-    src="$repo_root/${pattern%/}"
-    [ -e "$src" ] && ln -s "$src" "$worktree_dir/${pattern%/}"
-  else
-    for src in "$repo_root"/$pattern; do
-      dest="$worktree_dir/$(basename "$src")"
-      # Skip files the checkout already tracks (e.g. .env.example matches .env.*).
-      [ -e "$dest" ] && continue
-      ln -s "$src" "$dest"
-    done
-  fi
-done <"$repo_root/.worktreeinclude"
-
-(cd "$worktree_dir" && pnpm install --frozen-lockfile && pnpm run prepare)
+(cd "$worktree_dir" && bash scripts/setup-worktree.sh)
 
 printf '\nWorktree ready: %s (branch %s)\n' "$worktree_dir" "$slug"
 printf 'cd %s\n' "$worktree_dir"

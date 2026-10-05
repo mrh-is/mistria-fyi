@@ -23,7 +23,8 @@
       "Bash(pnpm exec playwright *)",
       "Bash(pnpm install --frozen-lockfile *)",
       "Bash(pnpm run prepare *)",
-      "Bash(pnpm run worktree:new *)"
+      "Bash(pnpm run worktree:new *)",
+      "Bash(pnpm run worktree:setup *)"
     ],
     "deny": ["Bash(npm *)", "Bash(npx *)", "Bash(yarn *)", "Bash(bun *)"]
   },
