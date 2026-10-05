@@ -1,10 +1,10 @@
-import { render } from "svelte/server";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { CATEGORY_KEYS, sortCategoryKeysByName } from "#lib/data/categories.js";
 import { pageMetadata } from "#lib/data/page-metadata.js";
 import { getAllProgress, getOverallProgress } from "#lib/engine/progress.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 import { formatNumber } from "#lib/utils/format.js";
 
 import AllPage from "./+page.svelte";
@@ -23,24 +23,22 @@ beforeEach(() => {
 
 describe("/all page", () => {
   it("renders a section for every category, including recipes", () => {
-    const { body } = render(AllPage, { props });
+    const { container } = renderToFragment(AllPage, { props });
 
     for (const key of CATEGORY_KEYS) {
-      expect(body).toContain(`id="category-${key}"`);
+      expect(container.querySelector(`#category-${key}`)).not.toBeNull();
     }
   });
 
   it("orders sections alphabetically by category name, matching the home page", () => {
-    const { body } = render(AllPage, { props });
+    const { container } = renderToFragment(AllPage, { props });
 
     const expectedOrder = sortCategoryKeysByName(CATEGORY_KEYS, "en");
-    const positions = expectedOrder.map((key) => {
-      const index = body.indexOf(`id="category-${key}"`);
-      expect(index).toBeGreaterThan(-1);
-      return index;
-    });
+    const renderedOrder = [...container.querySelectorAll("[id^='category-']")].map((element) =>
+      element.id.replace("category-", ""),
+    );
 
-    expect(positions).toEqual(positions.toSorted((a, b) => a - b));
+    expect(renderedOrder).toEqual(expectedOrder);
   });
 
   it("reconciles the header total with every rendered category, recipes included", () => {
@@ -52,10 +50,12 @@ describe("/all page", () => {
     const overall = getOverallProgress(progress);
     expect(progress.recipes.total).toBeGreaterThan(0);
 
-    const { body } = render(AllPage, { props });
+    const { queries } = renderToFragment(AllPage, { props });
 
-    expect(body).toContain(
-      `${formatNumber(overall.completed, "en")} of ${formatNumber(overall.total, "en")} completed`,
-    );
+    expect(
+      queries.getByText(
+        `${formatNumber(overall.completed, "en")} of ${formatNumber(overall.total, "en")} completed`,
+      ),
+    ).toBeTruthy();
   });
 });
