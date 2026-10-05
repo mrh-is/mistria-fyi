@@ -49,7 +49,7 @@ Area labels scope the change to a subsystem:
 
 Mobile-first PWA tracker for
 [Fields of Mistria](https://store.steampowered.com/app/2142790/Fields_of_Mistria/) 100% completion.
-SvelteKit 2 + Svelte 5 (runes), Tailwind 4, shadcn-svelte, deployed to Cloudflare Pages.
+SvelteKit 3 + Svelte 5 (runes), Tailwind 4, shadcn-svelte, deployed to Cloudflare Pages.
 
 ### Key directories
 
@@ -95,14 +95,15 @@ Report vulnerabilities privately — see [SECURITY.md](SECURITY.md).
 - **TypeScript**: type-aware oxlint (typescript-eslint's strict & stylistic rules) + `strict: true`
   tsconfig. Use `type` imports (`consistent-type-imports`).
 - **Formatting**: oxfmt — double quotes, no tabs, trailing commas, 100 char width, semicolons.
-- **Imports**: Auto-sorted by oxfmt — externals first, then `$lib`/`$app`, then relative.
+- **Imports**: Auto-sorted by oxfmt — externals first, then `#lib`/`$app`, then relative. Always
+  write the extension, `.js` for TypeScript modules (`#lib/utils.js`).
 - **Svelte**: Use `let` (not `const`) for `$props()` destructuring. Use runes (`$state`, `$derived`,
   `$effect`), not legacy stores.
 - **Naming**: `camelCase` variables/functions, `PascalCase` types/components, `kebab-case` files.
   Branded IDs for type safety.
 - **Components**: Extract when a component has its own state/concern OR is reused. Pages should be
   layout compositors. Colocate page-specific components in the route directory; move to
-  `$lib/components/` when shared.
+  `#lib/components/` when shared.
 - **shadcn-svelte**: Vendored in `src/lib/components/ui/` — do not manually edit these.
 - **Styling**: Tailwind utilities & scoped `<style>` blocks, both on the design tokens in
   `src/app.css`. Stylelint rejects color, type-size, shadow, & radius literals in scoped CSS. See

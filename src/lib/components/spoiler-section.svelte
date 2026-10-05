@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Icon } from "$lib/components/icon/index.js";
-  import Spoiler from "$lib/components/spoiler.svelte";
+  import { Icon } from "#lib/components/icon/index.js";
+  import Spoiler from "#lib/components/spoiler.svelte";
 
   import type { Snippet } from "svelte";
 

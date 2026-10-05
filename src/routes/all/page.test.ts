@@ -1,11 +1,11 @@
 import { render } from "svelte/server";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { CATEGORY_KEYS, sortCategoryKeysByName } from "$lib/data/categories.js";
-import { pageMetadata } from "$lib/data/page-metadata.js";
-import { getAllProgress, getOverallProgress } from "$lib/engine/progress.js";
-import { userState } from "$lib/stores/user-state.svelte.js";
-import { formatNumber } from "$lib/utils/format.js";
+import { CATEGORY_KEYS, sortCategoryKeysByName } from "#lib/data/categories.js";
+import { pageMetadata } from "#lib/data/page-metadata.js";
+import { getAllProgress, getOverallProgress } from "#lib/engine/progress.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
+import { formatNumber } from "#lib/utils/format.js";
 
 import AllPage from "./+page.svelte";
 

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import PageHeader from "$lib/components/page-header.svelte";
-  import * as m from "$lib/paraglide/messages.js";
+  import PageHeader from "#lib/components/page-header.svelte";
+  import * as m from "#lib/paraglide/messages.js";
 </script>
 
-<PageHeader title={m.privacy_title()} backHref="/about" backLabel={m.privacy_back_to_about()} />
+<PageHeader title={m.privacy_title()} backHref="about" backLabel={m.privacy_back_to_about()} />
 
 <div class="flex flex-col gap-6 p-4 text-sm">
   <section class="flex flex-col gap-2">

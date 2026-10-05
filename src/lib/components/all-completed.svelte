@@ -1,6 +1,6 @@
 <script lang="ts">
-  import * as m from "$lib/paraglide/messages.js";
-  import { userState } from "$lib/stores/user-state.svelte";
+  import * as m from "#lib/paraglide/messages.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
 
   let { isAllCompleted }: { isAllCompleted: boolean } = $props();
 </script>

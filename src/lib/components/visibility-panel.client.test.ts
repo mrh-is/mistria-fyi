@@ -1,12 +1,12 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { SOURCE_FILTERS } from "$lib/components/icon/index.js";
-import VisibilityPanel from "$lib/components/visibility-panel.svelte";
-import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
-import { userState } from "$lib/stores/user-state.svelte.js";
+import { SOURCE_FILTERS } from "#lib/components/icon/index.js";
+import VisibilityPanel from "#lib/components/visibility-panel.svelte";
+import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
 
-import type { SourceFilter } from "$lib/stores/toolbar-state.svelte.js";
+import type { SourceFilter } from "#lib/stores/toolbar-state.svelte.js";
 
 function sourceFilter(label: string): SourceFilter {
   const filter = SOURCE_FILTERS.find((candidate) => candidate.label === label);

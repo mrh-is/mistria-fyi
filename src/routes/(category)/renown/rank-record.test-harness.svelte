@@ -1,7 +1,7 @@
 <script lang="ts">
   import RankRecord from "./rank-record.svelte";
 
-  import type { TownRank } from "$lib/types/tracker-data.js";
+  import type { TownRank } from "#lib/types/tracker-data.js";
 
   let {
     color = "#123456",

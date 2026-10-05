@@ -1,11 +1,11 @@
 <script lang="ts">
-  import RenownCurrentRecord from "$lib/components/renown-current-record.svelte";
-  import { trackerData } from "$lib/data/index.js";
-  import { getName } from "$lib/data/names.js";
-  import { RANK_COLORS } from "$lib/engine/renown-presentation.js";
-  import { isEntityNameVisible } from "$lib/engine/visibility.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
+  import RenownCurrentRecord from "#lib/components/renown-current-record.svelte";
+  import { trackerData } from "#lib/data/index.js";
+  import { getName } from "#lib/data/names.js";
+  import { RANK_COLORS } from "#lib/engine/renown-presentation.js";
+  import { isEntityNameVisible } from "#lib/engine/visibility.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
 
   import RankRecord from "./rank-record.svelte";
 

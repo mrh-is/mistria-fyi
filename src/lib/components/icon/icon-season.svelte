@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { SEASON_ICON } from "$lib/components/icon/icon-maps.js";
+  import { SEASON_ICON } from "#lib/components/icon/icon-maps.js";
 
-  import type { IconProps } from "$lib/components/icon/icon-maps.js";
-  import type { Season } from "$lib/types/tracker-data.js";
+  import type { IconProps } from "#lib/components/icon/icon-maps.js";
+  import type { Season } from "#lib/types/tracker-data.js";
 
   interface Props extends IconProps {
     season: Season;

@@ -1,6 +1,6 @@
-import { recordEntries } from "$lib/utils.js";
+import { recordEntries } from "#lib/utils.js";
 
-import { canonicalSourceJson } from "./source-accumulator";
+import { canonicalSourceJson } from "./source-accumulator.js";
 
 import type {
   ActivityId,
@@ -8,7 +8,7 @@ import type {
   MonsterId,
   Source,
   StationId,
-} from "$lib/types/acquisition.js";
+} from "#lib/types/acquisition.js";
 import type {
   CosmeticId,
   FestivalId,
@@ -18,11 +18,11 @@ import type {
   QuestId,
   StoreId,
   VillagerId,
-} from "$lib/types/tracker-data.js";
-import type { TrackerData } from "$lib/types/tracker-data.js";
+} from "#lib/types/tracker-data.js";
+import type { TrackerData } from "#lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../parse-fiddle";
-import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator";
+import type { ParsedGameData } from "../parse-fiddle.js";
+import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator.js";
 
 export interface OverrideDiagnostic {
   kind: "missing-target" | "obsolete-override";

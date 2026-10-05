@@ -6,9 +6,9 @@ import { spawn, spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-import { OWNER_FILE } from "./playwright-preview-owner";
+import { OWNER_FILE } from "./playwright-preview-owner.js";
 
-import type { PreviewOwner } from "./playwright-preview-owner";
+import type { PreviewOwner } from "./playwright-preview-owner.js";
 
 const checkout = process.cwd();
 const port = process.env.PLAYWRIGHT_PREVIEW_PORT;

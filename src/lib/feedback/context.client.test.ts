@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { FeedbackContext } from "$lib/feedback/context.svelte.js";
+import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 
 const metadata = {
   category: "recipe",

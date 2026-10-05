@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { THEME_COLORS, THEME_STORAGE_KEY } from "$lib/theme";
+import { THEME_COLORS, THEME_STORAGE_KEY } from "#lib/theme.js";
 
 /** A `prefers-color-scheme: dark` query whose answer a test can flip, as the OS would. */
 class FakeColorSchemeQuery extends EventTarget {

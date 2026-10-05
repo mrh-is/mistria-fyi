@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
 
-import { THEME_STORAGE_KEY } from "../../../src/lib/theme";
+import { THEME_STORAGE_KEY } from "../../../src/lib/theme.js";
 
 import type { Page, Response } from "@playwright/test";
 

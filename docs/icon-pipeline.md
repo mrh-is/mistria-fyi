@@ -61,7 +61,7 @@ Follow the pattern in `custom-placeholder.svelte`:
 
 ```svelte
 <script lang="ts">
-  import type { IconProps } from "$lib/components/icon/icon-maps.js";
+  import type { IconProps } from "#lib/components/icon/icon-maps.js";
 
   let { color = "currentColor", size = 24, stroke = 2, ...rest }: IconProps = $props();
 </script>
@@ -93,7 +93,7 @@ Import the component and add it to the appropriate mapping table in
 `src/lib/components/icon/icon-maps.ts`:
 
 ```ts
-import CustomBlizzard from "$lib/components/icon/custom/custom-blizzard.svelte";
+import CustomBlizzard from "#lib/components/icon/custom/custom-blizzard.svelte";
 
 // In the relevant mapping table:
 export const WEATHER_ICON: Record<string, AppIcon> = {
@@ -123,5 +123,5 @@ accept the same props at runtime.
 | `IconProps` | Defined in `icon-maps.ts`      | Props interface for custom SVG icon components   |
 | `Icon`      | `@tabler/icons-svelte-runes`   | The underlying Tabler component type             |
 
-`AppIcon` is re-exported from `$lib/components/icon` and should be used in application code rather
-than importing `Icon` from Tabler directly.
+`AppIcon` is re-exported from `#lib/components/icon/index.js` and should be used in application code
+rather than importing `Icon` from Tabler directly.

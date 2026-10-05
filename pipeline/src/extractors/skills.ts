@@ -1,11 +1,11 @@
-import { LOCALE_CODES } from "$lib/types/locale.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { localizeField } from "../localize";
+import { localizeField } from "../localize.js";
 
-import type { LocaleCode } from "$lib/types/locale.js";
-import type { PerkId, PerkTier, Skill, SkillId, TrackerData } from "$lib/types/tracker-data.js";
+import type { LocaleCode } from "#lib/types/locale.js";
+import type { PerkId, PerkTier, Skill, SkillId, TrackerData } from "#lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../parse-fiddle";
+import type { ParsedGameData } from "../parse-fiddle.js";
 
 /**
  * Skill display names are localized from `ui/skill_menu/<skill-id>/name`, e.g.

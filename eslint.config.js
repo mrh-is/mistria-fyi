@@ -3,6 +3,7 @@
 // `no-unused-vars`, and the local `no-hardcoded-ui-text` rule on `.svelte` & `.svelte.{js,ts}` files,
 // without type information. See docs/development-workflow.md#linting--formatting.
 import { includeIgnoreFile } from "@eslint/compat";
+import { loadConfig } from "@sveltejs/load-config";
 import svelte from "eslint-plugin-svelte";
 import { defineConfig } from "eslint/config";
 import globals from "globals";
@@ -10,7 +11,13 @@ import { fileURLToPath } from "node:url";
 import ts from "typescript-eslint";
 
 import noHardcodedUiText from "./eslint-rules/no-hardcoded-ui-text.js";
-import svelteConfig from "./svelte.config.js";
+
+// SvelteKit 3 reads its config from the `sveltekit()` plugin in vite.config.ts, flattened (no `kit`).
+const loadedConfig = await loadConfig("./", { traverse: false });
+if (!loadedConfig || !("config" in loadedConfig)) {
+  throw new Error("Could not load the SvelteKit config from vite.config.ts");
+}
+const svelteConfig = loadedConfig.config;
 
 const gitignorePath = fileURLToPath(new URL("./.gitignore", import.meta.url));
 
@@ -18,7 +25,7 @@ const gitignorePath = fileURLToPath(new URL("./.gitignore", import.meta.url));
 // which serializes parser options and can't handle `kit.typescript.config`'s function value.
 const lintSvelteConfig = {
   compilerOptions: svelteConfig.compilerOptions,
-  kit: { files: svelteConfig.kit?.files },
+  kit: { files: svelteConfig.files },
   onwarn: svelteConfig.onwarn,
   warningFilter: svelteConfig.warningFilter,
 };

@@ -1,9 +1,9 @@
-import { loadNames } from "$lib/data/names";
-import { pageMetadata } from "$lib/data/page-metadata";
+import { loadNames } from "#lib/data/names.js";
+import { pageMetadata } from "#lib/data/page-metadata.js";
 
-import type { LocalizedCategory } from "$lib/data/names";
-import type { PageMetadata, PageMetadataInput } from "$lib/data/page-metadata";
-import type { LocaleCode } from "$lib/types/locale";
+import type { LocalizedCategory } from "#lib/data/names.js";
+import type { PageMetadata, PageMetadataInput } from "#lib/data/page-metadata.js";
+import type { LocaleCode } from "#lib/types/locale.js";
 
 /** The slice of a SvelteKit page `load` event that {@link localizedPageLoad} reads. */
 interface LocalizedPageLoadEvent {

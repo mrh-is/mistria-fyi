@@ -4,7 +4,7 @@ import {
   fetchPagesDeploymentLogs,
   formatPagesDeploymentLogs,
   pagesDeploymentLogsUrl,
-} from "./cloudflare-pages-logs";
+} from "./cloudflare-pages-logs.js";
 
 describe("pagesDeploymentLogsUrl", () => {
   it("targets the configured account, project, and deployment", () => {

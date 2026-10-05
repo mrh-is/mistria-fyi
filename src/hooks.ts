@@ -1,6 +1,6 @@
-import { deLocalizeUrl } from "$lib/paraglide/runtime.js";
+import { deLocalizeUrl } from "#lib/paraglide/runtime.js";
 
-import type { Reroute } from "@sveltejs/kit";
+import type { Reroute } from "@sveltejs/kit/hooks";
 
 /**
  * SvelteKit matches routes against the de-localized pathname (e.g. `/ja/almanac` → `/almanac`),

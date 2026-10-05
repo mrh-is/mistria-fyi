@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { THEME_COLORS, THEME_STORAGE_KEY } from "./theme";
+import { THEME_COLORS, THEME_STORAGE_KEY } from "./theme.js";
 
 // app.html and manifest.json are served as written, so they can't import the shared constants.
 const appHtml = readFileSync(resolve(__dirname, "../app.html"), "utf-8");

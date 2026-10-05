@@ -2,11 +2,11 @@
   import IconMessageReport from "@tabler/icons-svelte-runes/icons/message-report";
   import IconRobot from "@tabler/icons-svelte-runes/icons/robot";
 
-  import AiDisclosureDialog from "$lib/components/ai-disclosure-dialog.svelte";
-  import PageHeader from "$lib/components/page-header.svelte";
-  import { trackerData } from "$lib/data";
-  import * as m from "$lib/paraglide/messages.js";
-  import { localizedHref } from "$lib/utils/localized-href.js";
+  import AiDisclosureDialog from "#lib/components/ai-disclosure-dialog.svelte";
+  import PageHeader from "#lib/components/page-header.svelte";
+  import { trackerData } from "#lib/data/index.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { localizedHref } from "#lib/utils/localized-href.js";
 
   let aiDisclosureOpen = $state(false);
 
@@ -61,7 +61,7 @@
   </section>
 
   <footer class="about-page__footer">
-    <a href={localizedHref("/privacy")}>{m.about_privacy_link()}</a>
+    <a href={localizedHref("privacy")}>{m.about_privacy_link()}</a>
     <span>·</span>
     <button type="button" onclick={() => (aiDisclosureOpen = true)}>
       <IconRobot class="size-3.5" />{m.about_ai_disclosure_link()}

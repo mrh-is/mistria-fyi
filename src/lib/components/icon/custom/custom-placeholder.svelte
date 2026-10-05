@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { IconProps } from "$lib/components/icon/icon-maps.js";
+  import type { IconProps } from "#lib/components/icon/icon-maps.js";
 
   let { color = "currentColor", size = 24, stroke = 2, ...rest }: IconProps = $props();
 </script>

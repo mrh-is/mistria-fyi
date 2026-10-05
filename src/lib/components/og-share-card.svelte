@@ -1,7 +1,7 @@
 <script lang="ts">
-  import CategoryCard from "$lib/components/category-card.svelte";
+  import CategoryCard from "#lib/components/category-card.svelte";
 
-  import type { CategoryProgress } from "$lib/engine/progress.js";
+  import type { CategoryProgress } from "#lib/engine/progress.js";
 
   let { total }: { total: number } = $props();
 
@@ -26,7 +26,7 @@
       displayCategory={{
         color: "fg-green",
         description: "All of Mistria in one place",
-        href: "/",
+        href: "",
         icon: "all",
         name: "Everything",
       }}

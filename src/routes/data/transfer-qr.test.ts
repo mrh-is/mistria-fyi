@@ -2,12 +2,12 @@ import encodeQR from "qr";
 import decodeQR from "qr/decode.js";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { trackerData } from "$lib/data/index.js";
-import { encodeTransferPayload } from "$lib/engine/transfer.js";
-import { userState } from "$lib/stores/user-state.svelte.js";
-import { recordValues } from "$lib/utils.js";
+import { trackerData } from "#lib/data/index.js";
+import { encodeTransferPayload } from "#lib/engine/transfer.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
+import { recordValues } from "#lib/utils.js";
 
-import { TRANSFER_QR_OPTIONS } from "./transfer-qr";
+import { TRANSFER_QR_OPTIONS } from "./transfer-qr.js";
 
 /** Paints a module matrix as black-on-white RGBA pixels, `scale` pixels per module. */
 function rasterize(matrix: boolean[][], scale: number) {

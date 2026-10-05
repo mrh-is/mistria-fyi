@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { getRankState, getRenownPresentation } from "$lib/engine/renown-presentation.js";
+import { getRankState, getRenownPresentation } from "#lib/engine/renown-presentation.js";
 
-import type { TownRank } from "$lib/types/tracker-data.js";
+import type { TownRank } from "#lib/types/tracker-data.js";
 
 const ranks: TownRank[] = [
   { levels: { start: 0, end: 9 } },

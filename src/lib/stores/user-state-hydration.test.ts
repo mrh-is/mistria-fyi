@@ -92,7 +92,7 @@ it("normalizes historical nonrepresentative almanac IDs to canonical on hydratio
   vi.stubGlobal("localStorage", storage);
   vi.resetModules();
 
-  const { userState } = await import("$lib/stores/user-state.svelte.js");
+  const { userState } = await import("#lib/stores/user-state.svelte.js");
   userState.restorePersistedState();
 
   expect(userState.state.completed.almanac.has("animated_waterfall_v1" as never)).toBe(true);
@@ -105,7 +105,7 @@ it("restores persisted progress only after hydration initialization", async () =
   vi.stubGlobal("localStorage", storedUserState());
   vi.resetModules();
 
-  const { userState } = await import("$lib/stores/user-state.svelte.js");
+  const { userState } = await import("#lib/stores/user-state.svelte.js");
 
   expect(userState.state.completed.renown).toBe(0);
 

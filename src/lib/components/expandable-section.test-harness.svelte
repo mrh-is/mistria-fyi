@@ -1,7 +1,7 @@
 <script lang="ts">
-  import ExpandableSection from "$lib/components/expandable-section.svelte";
+  import ExpandableSection from "#lib/components/expandable-section.svelte";
 
-  import type { FeedbackContext } from "$lib/feedback/context.svelte.js";
+  import type { FeedbackContext } from "#lib/feedback/context.svelte.js";
 
   let {
     count,

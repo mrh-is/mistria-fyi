@@ -1,7 +1,8 @@
 /* eslint-disable no-console -- server-side error logging */
-import { error, isHttpError, json } from "@sveltejs/kit";
+import { error, isHttpError } from "@sveltejs/kit";
+import { env } from "cloudflare:workers";
 
-import type { ReportableElement } from "$lib/feedback/types.js";
+import type { ReportableElement } from "#lib/feedback/types.js";
 
 import type { RequestHandler } from "./$types";
 
@@ -321,7 +322,7 @@ export const OPTIONS: RequestHandler = ({ request, url }) => {
   });
 };
 
-export const POST: RequestHandler = async ({ platform, request, url }) => {
+export const POST: RequestHandler = async ({ request, url }) => {
   const origin = request.headers.get("origin");
   const allowedOrigin = url.origin;
 
@@ -358,14 +359,14 @@ export const POST: RequestHandler = async ({ platform, request, url }) => {
     error(400, "Verification token is required");
   }
 
-  const turnstileSecret = platform?.env.TURNSTILE_SECRET_KEY;
+  const turnstileSecret = env.TURNSTILE_SECRET_KEY;
   if (!turnstileSecret) {
     console.error("TURNSTILE_SECRET_KEY is not configured");
     error(503, "Feedback service temporarily unavailable");
   }
   await verifyTurnstile(turnstileToken, turnstileSecret);
 
-  const token = platform.env.GITHUB_FEEDBACK_TOKEN;
+  const token = env.GITHUB_FEEDBACK_TOKEN;
   if (!token) {
     console.error("GITHUB_FEEDBACK_TOKEN is not configured");
     error(503, "Feedback service temporarily unavailable");
@@ -431,8 +432,8 @@ export const POST: RequestHandler = async ({ platform, request, url }) => {
   let emailSaved: boolean | undefined;
   if (payload.email) {
     try {
-      const emailStore = platform.env.FEEDBACK_EMAIL_STORE as
-        | App.Platform["env"]["FEEDBACK_EMAIL_STORE"]
+      const emailStore = env.FEEDBACK_EMAIL_STORE as
+        | (typeof env)["FEEDBACK_EMAIL_STORE"]
         | undefined;
       if (!emailStore) {
         throw new Error("FEEDBACK_EMAIL_STORE is not configured");
@@ -448,7 +449,7 @@ export const POST: RequestHandler = async ({ platform, request, url }) => {
     }
   }
 
-  return json({ emailSaved, issueUrl }, { headers: corsHeaders(allowedOrigin) });
+  return Response.json({ emailSaved, issueUrl }, { headers: corsHeaders(allowedOrigin) });
 };
 
 function corsHeaders(allowedOrigin: string): Record<string, string> {

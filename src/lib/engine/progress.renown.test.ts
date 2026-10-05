@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { type CompletedState, userState } from "$lib/stores/user-state.svelte.js";
+import { type CompletedState, userState } from "#lib/stores/user-state.svelte.js";
 
-import { getCategoryProgress } from "./progress";
+import { getCategoryProgress } from "./progress.js";
 
 function completedAtRenown(renown: number): CompletedState {
   return {

@@ -17,7 +17,7 @@ import {
   readOfflineLocales,
   rememberOfflineLocales,
   SKIP_WAITING_MESSAGE,
-} from "./service-worker-cache";
+} from "./service-worker-cache.js";
 
 const ORIGIN = "https://mistria.fyi";
 

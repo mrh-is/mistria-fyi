@@ -2,7 +2,7 @@ import { createRawSnippet } from "svelte";
 import { render } from "svelte/server";
 import { describe, expect, it } from "vitest";
 
-import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
+import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
 
 describe("TrackerRowStack", () => {
   it("renders a direct row sequence with explicit source states", () => {

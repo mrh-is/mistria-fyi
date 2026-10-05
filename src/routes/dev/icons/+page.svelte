@@ -1,5 +1,5 @@
 <script lang="ts">
-  import CustomPlaceholder from "$lib/components/icon/custom/custom-placeholder.svelte";
+  import CustomPlaceholder from "#lib/components/icon/custom/custom-placeholder.svelte";
   import {
     CATEGORY_ICON,
     COMPLETION_ICON,
@@ -9,10 +9,10 @@
     SOURCE_ICON,
     UI_ICON,
     weatherIcon,
-  } from "$lib/components/icon/icon-maps.js";
+  } from "#lib/components/icon/icon-maps.js";
 
-  import type { AppIcon } from "$lib/components/icon/icon-maps.js";
-  import type { Season, Weather } from "$lib/types/tracker-data.js";
+  import type { AppIcon } from "#lib/components/icon/icon-maps.js";
+  import type { Season, Weather } from "#lib/types/tracker-data.js";
 
   const sizes = [16, 24, 32] as const;
   const seasons: Season[] = ["spring", "summer", "fall", "winter"];

@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { trackerData } from "$lib/data/index.js";
-import { getMaxMineFloor, MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "$lib/engine/progress.js";
-import { recordEntries, recordKeys } from "$lib/utils";
+import { trackerData } from "#lib/data/index.js";
+import { getMaxMineFloor, MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
+import { recordEntries, recordKeys } from "#lib/utils.js";
 
-import type { CompletedState } from "$lib/stores/user-state.svelte.js";
+import type { CompletedState } from "#lib/stores/user-state.svelte.js";
 
 const STORAGE_KEY = "mistria-fyi-v1";
 const UNKNOWN_ID = "removed_from_tracker_data";
@@ -190,7 +190,7 @@ describe("persisted-state normalization", () => {
     vi.stubGlobal("window", {});
     vi.stubGlobal("localStorage", makeStorage(buildStoredState({ invalidDomains: true })));
 
-    const { userState } = await import("$lib/stores/user-state.svelte.js");
+    const { userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
 
     expect(userState.persistenceFailed).toBe(false);
@@ -213,7 +213,7 @@ describe("persisted-state normalization", () => {
   });
 
   it("filters IDs removed from tracker data when importing a manual backup", async () => {
-    const { userState } = await import("$lib/stores/user-state.svelte.js");
+    const { userState } = await import("#lib/stores/user-state.svelte.js");
 
     expect(userState.importState(buildStoredState())).toEqual({ ok: true });
     expectUnknownIdsRemoved(userState.state.completed);
@@ -227,7 +227,7 @@ describe("persisted-state normalization", () => {
     vi.stubGlobal("window", {});
     vi.stubGlobal("localStorage", makeStorage(buildStoredState({ malformedNumericScalars: true })));
 
-    const { userState } = await import("$lib/stores/user-state.svelte.js");
+    const { userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
 
     expect(userState.persistenceFailed).toBe(false);

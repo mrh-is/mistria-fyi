@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { load } from "./+page";
+import { load } from "./+page.js";
 
 describe("legacy settings route", () => {
   it("redirects to data management and preserves deep links", () => {

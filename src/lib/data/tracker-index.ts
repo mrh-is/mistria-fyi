@@ -1,5 +1,5 @@
-import type { Source } from "$lib/types/acquisition.js";
-import type { AlmanacEntry, ItemId, TrackerData } from "$lib/types/tracker-data.js";
+import type { Source } from "#lib/types/acquisition.js";
+import type { AlmanacEntry, ItemId, TrackerData } from "#lib/types/tracker-data.js";
 
 export interface TrackerIndex {
   almanacCanonicalIds: ItemId[];

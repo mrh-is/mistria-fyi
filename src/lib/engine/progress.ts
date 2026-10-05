@@ -1,14 +1,14 @@
-import { trackerData, trackerIndex } from "$lib/data/index.js";
-import { isVariantInScope } from "$lib/engine/animal-availability.js";
-import { isItemApplicable, isItemApplicableForAlmanac } from "$lib/engine/applicability.js";
-import { filterAvailableItems, isItemAvailable } from "$lib/engine/availability.js";
-import { getMarriedVillager } from "$lib/engine/relationships.js";
-import { recordEntries, recordKeys, recordValues } from "$lib/utils";
+import { trackerData, trackerIndex } from "#lib/data/index.js";
+import { isVariantInScope } from "#lib/engine/animal-availability.js";
+import { isItemApplicable, isItemApplicableForAlmanac } from "#lib/engine/applicability.js";
+import { filterAvailableItems, isItemAvailable } from "#lib/engine/availability.js";
+import { getMarriedVillager } from "#lib/engine/relationships.js";
+import { recordEntries, recordKeys, recordValues } from "#lib/utils.js";
 
-import type { CategoryKey } from "$lib/data/categories.js";
-import type { CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { AvailabilitySelection } from "$lib/types/availability.js";
-import type { ItemId, QuestId, Season, VillagerId, Weather } from "$lib/types/tracker-data.js";
+import type { CategoryKey } from "#lib/data/categories.js";
+import type { CompletedState } from "#lib/stores/user-state.svelte.js";
+import type { AvailabilitySelection } from "#lib/types/availability.js";
+import type { ItemId, QuestId, Season, VillagerId, Weather } from "#lib/types/tracker-data.js";
 
 export const MAX_VILLAGER_LEVEL = 12;
 export const MAX_SKILL_LEVEL = 60;

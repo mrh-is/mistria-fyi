@@ -1,17 +1,17 @@
-import { isNonEmptyArray } from "$lib/utils.js";
+import { isNonEmptyArray } from "#lib/utils.js";
 
-import { forEachItem } from "../../extractor-helpers";
+import { forEachItem } from "../../extractor-helpers.js";
 
-import type { LocationId } from "$lib/types/acquisition.js";
+import type { LocationId } from "#lib/types/acquisition.js";
 import type {
   CosmeticId,
   ItemId,
   MinesBiomeId,
   TreasureChestTierId,
-} from "$lib/types/tracker-data.js";
+} from "#lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../../parse-fiddle";
-import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "../source-accumulator";
+import type { ParsedGameData } from "../../parse-fiddle.js";
+import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "../source-accumulator.js";
 
 export function collectExplorationSources(
   fiddle: ParsedGameData,

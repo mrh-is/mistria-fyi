@@ -1,6 +1,6 @@
 <script lang="ts">
-  import FoldoutPanel from "$lib/components/foldout-panel.svelte";
-  import { localizedHref } from "$lib/utils/localized-href.js";
+  import FoldoutPanel from "#lib/components/foldout-panel.svelte";
+  import { localizedHref } from "#lib/utils/localized-href.js";
 
   let {
     dialog = true,
@@ -17,7 +17,7 @@
     {/if}
   {/snippet}
   <button type="button">First</button>
-  <a href={localizedHref("/about")}>Middle</a>
+  <a href={localizedHref("about")}>Middle</a>
   <button type="button">Last</button>
 </FoldoutPanel>
 <button type="button">Outside after</button>

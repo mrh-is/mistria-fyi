@@ -1,7 +1,7 @@
 import { render } from "svelte/server";
 import { describe, expect, it } from "vitest";
 
-import PageHeader from "$lib/components/page-header.svelte";
+import PageHeader from "#lib/components/page-header.svelte";
 
 describe("PageHeader", () => {
   it("renders category identity in an edge ribbon with linear progress", () => {

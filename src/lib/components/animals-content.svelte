@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { trackerData, trackerIndex } from "$lib/data/index.js";
-  import { isEntityNameVisible } from "$lib/engine/visibility.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
-  import { registerSourceFilters } from "$lib/utils/source-filter-registration.svelte.js";
+  import { trackerData, trackerIndex } from "#lib/data/index.js";
+  import { isEntityNameVisible } from "#lib/engine/visibility.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
+  import { registerSourceFilters } from "#lib/utils/source-filter-registration.svelte.js";
 
   import AllCompleted from "./all-completed.svelte";
   import AnimalCosmeticsSection from "./animal-cosmetics-section.svelte";
   import AnimalVariantsSection from "./animal-variants-section.svelte";
   import PetCollectiblesSection from "./pet-collectibles-section.svelte";
 
-  import type { LocaleCode } from "$lib/types/locale.js";
+  import type { LocaleCode } from "#lib/types/locale.js";
   import type {
     AnimalId,
     AnimalVariant,
@@ -17,7 +17,7 @@
     CosmeticId,
     PetCosmeticSetId,
     PetSkinId,
-  } from "$lib/types/tracker-data";
+  } from "#lib/types/tracker-data.js";
 
   let { locale }: { locale: LocaleCode } = $props();
 

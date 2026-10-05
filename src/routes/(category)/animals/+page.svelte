@@ -1,5 +1,5 @@
 <script lang="ts">
-  import AnimalsContent from "$lib/components/animals-content.svelte";
+  import AnimalsContent from "#lib/components/animals-content.svelte";
 
   import type { PageProps } from "./$types";
 

@@ -1,7 +1,7 @@
 import { MediaQuery } from "svelte/reactivity";
 
-import { THEME_COLORS, THEME_STORAGE_KEY } from "$lib/theme";
-import { safeLocalStorage } from "$lib/utils/local-storage.js";
+import { THEME_COLORS, THEME_STORAGE_KEY } from "#lib/theme.js";
+import { safeLocalStorage } from "#lib/utils/local-storage.js";
 
 export type Theme = "dark" | "light" | "system";
 

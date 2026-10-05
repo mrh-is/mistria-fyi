@@ -2,13 +2,13 @@
   import IconFileUpload from "@tabler/icons-svelte-runes/icons/file-upload";
   import IconUpload from "@tabler/icons-svelte-runes/icons/upload";
 
-  import { Button } from "$lib/components/ui/button/index.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
+  import { Button } from "#lib/components/ui/button/index.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
 
   import DataCard from "./data-card.svelte";
 
-  import type { ImportErrorKind } from "$lib/stores/user-state.svelte.js";
+  import type { ImportErrorKind } from "#lib/stores/user-state.svelte.js";
 
   const ERROR_MESSAGES: Record<ImportErrorKind, string> = {
     "invalid-fields": m.backup_error_invalid_fields(),

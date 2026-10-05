@@ -1,9 +1,9 @@
-import { trackerData } from "$lib/data/index.js";
-import { getMarriedVillager } from "$lib/engine/relationships.js";
+import { trackerData } from "#lib/data/index.js";
+import { getMarriedVillager } from "#lib/engine/relationships.js";
 
-import type { CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { Source } from "$lib/types/acquisition.js";
-import type { ItemId, VillagerId, VillagerRelationship } from "$lib/types/tracker-data.js";
+import type { CompletedState } from "#lib/stores/user-state.svelte.js";
+import type { Source } from "#lib/types/acquisition.js";
+import type { ItemId, VillagerId, VillagerRelationship } from "#lib/types/tracker-data.js";
 
 export function isItemApplicable(itemId: ItemId, completed: CompletedState): boolean {
   if (completed.almanac.has(itemId) || completed.museum.has(itemId)) return true;

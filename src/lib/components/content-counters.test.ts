@@ -1,19 +1,19 @@
 import { render } from "svelte/server";
 import { afterEach, describe, expect, it } from "vitest";
 
-import AlmanacContent from "$lib/components/almanac-content.svelte";
-import { SOURCE_FILTERS } from "$lib/components/icon/index.js";
-import MinesContent from "$lib/components/mines-content.svelte";
-import MuseumContent from "$lib/components/museum-content.svelte";
-import QuestsContent from "$lib/components/quests-content.svelte";
-import RecipesContent from "$lib/components/recipes-content.svelte";
-import { trackerData } from "$lib/data/index.js";
-import { getName } from "$lib/data/names.js";
-import { isEntityNameVisible } from "$lib/engine/visibility.js";
-import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
-import { userState } from "$lib/stores/user-state.svelte.js";
+import AlmanacContent from "#lib/components/almanac-content.svelte";
+import { SOURCE_FILTERS } from "#lib/components/icon/index.js";
+import MinesContent from "#lib/components/mines-content.svelte";
+import MuseumContent from "#lib/components/museum-content.svelte";
+import QuestsContent from "#lib/components/quests-content.svelte";
+import RecipesContent from "#lib/components/recipes-content.svelte";
+import { trackerData } from "#lib/data/index.js";
+import { getName } from "#lib/data/names.js";
+import { isEntityNameVisible } from "#lib/engine/visibility.js";
+import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
 
-import type { ItemId, SpellId } from "$lib/types/tracker-data.js";
+import type { ItemId, SpellId } from "#lib/types/tracker-data.js";
 
 function renderedText(body: string): string {
   return body

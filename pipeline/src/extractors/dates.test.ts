@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeFiddle as makeFiddleBase } from "../test-helpers";
-import { extractDates } from "./dates";
+import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
+import { extractDates } from "./dates.js";
 
-import type { DateId } from "$lib/types/acquisition.js";
+import type { DateId } from "#lib/types/acquisition.js";
 
-vi.mock("../localize", () => ({
+vi.mock("../localize.js", () => ({
   localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
     fallbackLocales: [],
     values: {

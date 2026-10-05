@@ -43,7 +43,7 @@
       "unknown"
     ],
     "ignoreCase": true,
-    "internalPattern": ["$lib", "$app", "$env", "$service-worker"],
+    "internalPattern": ["#lib", "$app"],
     "order": "asc"
   },
   "overrides": [

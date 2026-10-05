@@ -1,5 +1,5 @@
 <script lang="ts">
-  import AlmanacContent from "$lib/components/almanac-content.svelte";
+  import AlmanacContent from "#lib/components/almanac-content.svelte";
 
   import type { PageProps } from "./$types";
 

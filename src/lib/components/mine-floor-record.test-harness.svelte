@@ -1,9 +1,9 @@
 <script lang="ts">
   import { untrack } from "svelte";
 
-  import MineFloorRecord from "$lib/components/mine-floor-record.svelte";
+  import MineFloorRecord from "#lib/components/mine-floor-record.svelte";
 
-  import type { MinesBiome } from "$lib/types/tracker-data.js";
+  import type { MinesBiome } from "#lib/types/tracker-data.js";
 
   let {
     biomes,

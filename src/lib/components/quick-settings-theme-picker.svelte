@@ -1,9 +1,9 @@
 <script lang="ts">
   import IconPalette from "@tabler/icons-svelte-runes/icons/palette";
 
-  import * as ToggleGroup from "$lib/components/ui/toggle-group/index.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { theme, type Theme } from "$lib/stores/theme.svelte.js";
+  import * as ToggleGroup from "#lib/components/ui/toggle-group/index.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { theme, type Theme } from "#lib/stores/theme.svelte.js";
 
   const themeLabels: Record<Theme, string> = {
     dark: m.settings_theme_dark(),

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { SKIP_WAITING_MESSAGE } from "$lib/engine/service-worker-cache";
+import { SKIP_WAITING_MESSAGE } from "#lib/engine/service-worker-cache.js";
 
-import { UPDATE_CHECK_INTERVAL_MS, watchForAppUpdate } from "./app-update";
+import { UPDATE_CHECK_INTERVAL_MS, watchForAppUpdate } from "./app-update.js";
 
 class FakeRegistration extends EventTarget {
   installing: FakeWorker | null = null;

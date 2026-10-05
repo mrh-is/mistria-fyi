@@ -1,6 +1,6 @@
-import { categoryColor } from "$lib/data/categories";
-import { localizedPageLoad } from "$lib/data/page-load";
-import * as m from "$lib/paraglide/messages.js";
+import { categoryColor } from "#lib/data/categories.js";
+import { localizedPageLoad } from "#lib/data/page-load.js";
+import * as m from "#lib/paraglide/messages.js";
 
 import type { PageLoad } from "./$types";
 

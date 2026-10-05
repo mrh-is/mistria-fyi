@@ -266,7 +266,7 @@
       // No usable type information: the service worker uses the webworker lib outside the main
       // tsconfig, and the JS config files & local ESLint rules are untyped
       "files": [
-        "src/service-worker.ts",
+        "src/service-worker/**/*.ts",
         "*.config.{js,ts}",
         "*.config.*.{js,ts}",
         "eslint-rules/**/*.js"

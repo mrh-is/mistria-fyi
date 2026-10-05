@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { extractQuestChains } from "./quest-chains";
+import { extractQuestChains } from "./quest-chains.js";
 
-import type { QuestId, VillagerId } from "$lib/types/tracker-data.js";
+import type { QuestId, VillagerId } from "#lib/types/tracker-data.js";
 
 // Minimal fiddle factory for quest chain tests. Each override merges onto a bare skeleton so
 // individual tests only specify the parts of the data they exercise.

@@ -1,10 +1,10 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { trackerData } from "$lib/data/index.js";
-import { encodeTransferPayload } from "$lib/engine/transfer.js";
-import { userState } from "$lib/stores/user-state.svelte.js";
-import { recordValues } from "$lib/utils.js";
+import { trackerData } from "#lib/data/index.js";
+import { encodeTransferPayload } from "#lib/engine/transfer.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
+import { recordValues } from "#lib/utils.js";
 
 import TransferCard from "./transfer-card.svelte";
 
@@ -14,7 +14,7 @@ const transferQr = vi.hoisted(() => ({
   startQrCamera: vi.fn(),
 }));
 
-vi.mock("./transfer-qr", () => transferQr);
+vi.mock("./transfer-qr.js", () => transferQr);
 
 const museumItemId = recordValues(trackerData.museum)
   .flatMap(({ sets }) => recordValues(sets).flatMap(({ items }) => items))

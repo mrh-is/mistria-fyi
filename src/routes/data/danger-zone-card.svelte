@@ -2,10 +2,10 @@
   import IconRotate from "@tabler/icons-svelte-runes/icons/rotate";
   import IconTrash from "@tabler/icons-svelte-runes/icons/trash";
 
-  import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
-  import { Button } from "$lib/components/ui/button/index.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
+  import * as AlertDialog from "#lib/components/ui/alert-dialog/index.js";
+  import { Button } from "#lib/components/ui/button/index.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
 
   import DataCard from "./data-card.svelte";
 

@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { trackerData } from "$lib/data/index.js";
-import { getName } from "$lib/data/names.js";
-import { LOCALE_CODES } from "$lib/types/locale.js";
+import { trackerData } from "#lib/data/index.js";
+import { getName } from "#lib/data/names.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { buildBaseSegmentLookups } from "./segment-lookups";
-import { UNNAMED_SOURCE_IDS } from "./source-names";
-import { buildSourceSegments } from "./source-segments";
+import { buildBaseSegmentLookups } from "./segment-lookups.js";
+import { UNNAMED_SOURCE_IDS } from "./source-names.js";
+import { buildSourceSegments } from "./source-segments.js";
 
-import type { Source } from "$lib/types/acquisition.js";
-import type { StoreId } from "$lib/types/tracker-data.js";
+import type { Source } from "#lib/types/acquisition.js";
+import type { StoreId } from "#lib/types/tracker-data.js";
 
 /** Every `sources` entry anywhere in the generated tracker data. */
 function collectSources(value: unknown, found: Source[] = []): Source[] {

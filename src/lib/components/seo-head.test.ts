@@ -1,8 +1,8 @@
 import { render } from "svelte/server";
 import { describe, expect, it } from "vitest";
 
-import { pageMetadata, SITE_NAME, SITE_ORIGIN } from "$lib/data/page-metadata.js";
-import { LOCALE_CODES } from "$lib/types/locale.js";
+import { pageMetadata, SITE_NAME, SITE_ORIGIN } from "#lib/data/page-metadata.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import SeoHead from "./seo-head.svelte";
 

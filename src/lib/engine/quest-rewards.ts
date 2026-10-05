@@ -1,8 +1,8 @@
-import { trackerData } from "$lib/data/index.js";
-import { getName } from "$lib/data/names.js";
+import { trackerData } from "#lib/data/index.js";
+import { getName } from "#lib/data/names.js";
 
-import type { LocaleCode } from "$lib/types/locale.js";
-import type { QuestId, RecipeId } from "$lib/types/tracker-data.js";
+import type { LocaleCode } from "#lib/types/locale.js";
+import type { QuestId, RecipeId } from "#lib/types/tracker-data.js";
 
 /**
  * Returns the IDs of all recipes whose sources include a quest source for the

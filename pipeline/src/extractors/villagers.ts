@@ -1,11 +1,11 @@
-import { LOCALE_CODES } from "$lib/types/locale.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { localizeField } from "../localize";
+import { localizeField } from "../localize.js";
 
-import type { LocaleCode } from "$lib/types/locale.js";
-import type { Season, TrackerData, VillagerId } from "$lib/types/tracker-data.js";
+import type { LocaleCode } from "#lib/types/locale.js";
+import type { Season, TrackerData, VillagerId } from "#lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../parse-fiddle";
+import type { ParsedGameData } from "../parse-fiddle.js";
 
 export interface VillagerExtraction {
   /** The game's `icon_sprite` name per villager, keyed by villager ID. See {@link VillagerIconSpriteIndex}. */

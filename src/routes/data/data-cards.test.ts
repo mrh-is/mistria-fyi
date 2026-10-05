@@ -1,7 +1,7 @@
 import { render } from "svelte/server";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { userState } from "$lib/stores/user-state.svelte.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
 
 import BackupCard from "./backup-card.svelte";
 import DangerZoneCard from "./danger-zone-card.svelte";

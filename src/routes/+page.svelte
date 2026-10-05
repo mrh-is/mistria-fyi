@@ -1,16 +1,16 @@
 <script lang="ts">
   import IconNotebook from "@tabler/icons-svelte-runes/icons/notebook";
 
-  import CategoryGrid from "$lib/components/category-grid.svelte";
-  import { Icon } from "$lib/components/icon/index.js";
-  import OverallProgress from "$lib/components/overall-progress.svelte";
-  import SearchResults from "$lib/components/search-results.svelte";
-  import WelcomeCard from "$lib/components/welcome-card.svelte";
-  import { getAllProgress, getOverallProgress } from "$lib/engine/progress.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
-  import { localizedHref } from "$lib/utils/localized-href.js";
+  import CategoryGrid from "#lib/components/category-grid.svelte";
+  import { Icon } from "#lib/components/icon/index.js";
+  import OverallProgress from "#lib/components/overall-progress.svelte";
+  import SearchResults from "#lib/components/search-results.svelte";
+  import WelcomeCard from "#lib/components/welcome-card.svelte";
+  import { getAllProgress, getOverallProgress } from "#lib/engine/progress.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
+  import { localizedHref } from "#lib/utils/localized-href.js";
 
   import type { PageProps } from "./$types";
 
@@ -51,7 +51,7 @@
       <CategoryGrid progress={allProgress} />
       <a
         class="everything-link"
-        href={localizedHref("/all")}
+        href={localizedHref("all")}
         aria-label={m.section_progress_label({
           completed: totalCompleted,
           name: m.home_everything_label(),
