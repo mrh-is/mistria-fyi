@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
-import { getNameTable, LOCALIZED_CATEGORIES } from "#lib/data/names.js";
+import { getNameTable, loadNames, LOCALIZED_CATEGORIES } from "#lib/data/names.js";
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 /**
@@ -11,6 +11,10 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
  * on a non-English route, not a quietly English name.
  */
 describe("generated locale chunks", () => {
+  beforeAll(async () => {
+    await Promise.all(LOCALE_CODES.map((locale) => loadNames(locale, LOCALIZED_CATEGORIES)));
+  });
+
   const nonEnglishLocales = LOCALE_CODES.filter((locale) => locale !== "en");
 
   it.each(LOCALIZED_CATEGORIES)("%s has identical keys in every locale", (category) => {

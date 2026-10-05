@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
-import { getName, getNameTable, nameCollator } from "#lib/data/names.js";
+import { getName, getNameTable, loadNames, nameCollator } from "#lib/data/names.js";
 import { LOCALE_CODES } from "#lib/types/locale.js";
 import { recordKeys } from "#lib/utils.js";
 
@@ -13,6 +13,10 @@ import type {
   SkillId,
   VillagerId,
 } from "#lib/types/tracker-data.js";
+
+beforeAll(async () => {
+  await Promise.all(LOCALE_CODES.map((locale) => loadNames(locale, ["villagers", "skills"])));
+});
 
 const balor = "balor" as VillagerId;
 const farming = "farming" as SkillId;
