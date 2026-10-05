@@ -392,7 +392,7 @@
             "patterns": [
               {
                 "message": "The engine is pure domain logic; move shared types to src/lib/types/ and keep side effects at store or component boundaries.",
-                "regex": "^(#lib|\\.\\.)/(stores|components)/"
+                "regex": "^(#lib/|(?:\\.\\./)+)(stores|components)/"
               }
             ]
           }
