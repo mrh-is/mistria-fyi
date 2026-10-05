@@ -1,0 +1,42 @@
+name: Attribution
+
+# Agent attribution rules from AGENTS.md §2; scripts/check-attribution.ts documents them. Only the
+# PR's own commits are checked, so existing history never fails.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  attribution:
+    name: Attribution
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          PR_COMMITS=$(gh api --paginate "repos/$REPOSITORY/pulls/$PR_NUMBER/commits" \
+            --jq '.[] | {message: .commit.message, parents: (.parents | length), sha: .sha}')
+          export PR_COMMITS
+          node scripts/check-attribution.ts
