@@ -14,6 +14,7 @@ import { collectNaturalSources } from "./acquisition/collectors/natural.js";
 import { collectRewardSources } from "./acquisition/collectors/rewards.js";
 import { collectStoreSources } from "./acquisition/collectors/stores.js";
 import { applyExclusions } from "./acquisition/exclusions.js";
+import { collectNativeReferenceRegistries } from "./acquisition/native-references.js";
 import { deriveRecipeProductSources } from "./acquisition/recipe-products.js";
 import { AcquisitionReferenceIndex } from "./acquisition/reference-index.js";
 import {
@@ -21,6 +22,7 @@ import {
   collectDefaultCosmeticSources,
   collectDefaultItemSources,
 } from "./acquisition/reviewed-overrides.js";
+import { REVIEWED_NON_NATIVE_REFERENCES } from "./acquisition/reviewed-references.js";
 import {
   AnimalCosmeticSourceAccumulator,
   CosmeticSourceAccumulator,
@@ -67,18 +69,9 @@ import { createRequirementContext } from "./requirements.js";
 
 import type { ZipFile } from "yauzl-promise";
 
-import type { Source as AcquisitionSource } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
-import type {
-  CosmeticId,
-  Item,
-  ItemId,
-  QuestId,
-  TrackerData,
-  VillagerId,
-} from "#lib/types/tracker-data.js";
+import type { Item, ItemId, QuestId, TrackerData, VillagerId } from "#lib/types/tracker-data.js";
 
-import type { AcquisitionSourceAssembly } from "./acquisition/validate-sources.js";
 import type { SpriteExtractionResult, StagedSprite } from "./extractors/sprites.js";
 import type { ParsedGameData } from "./parse-fiddle.js";
 
@@ -94,24 +87,17 @@ interface StagedFile {
   path: string;
 }
 
+/**
+ * Builds the reference index from extracted registries, parsed game tables, and the explicit
+ * reviewed non-native IDs. Acquisition sources never contribute IDs, so an override or collector
+ * that names a nonexistent quest, monster, or location fails validation instead of registering its
+ * own typo.
+ */
 function buildAcquisitionReferences(
   trackerData: TrackerData,
   fiddle: ParsedGameData,
   cosmeticsRaw: Record<string, unknown>,
-  cosmetics: Record<CosmeticId, unknown>,
-  itemSources: ItemSourceAccumulator,
-  cosmeticSources: CosmeticSourceAccumulator,
 ): AcquisitionReferenceIndex {
-  const nativeIds = collectNativeIdsFromSources(itemSources, cosmeticSources, trackerData);
-
-  const nativeQuestIds = [
-    ...extractNestedFiddleKeys(fiddle, "quests"),
-    ...extractFiddleKeys(fiddle, "cutscenes"),
-  ];
-  const fishing = fiddle.fishing as Record<string, unknown> | undefined;
-  const chestTables = (fishing?.chest_tables ?? {}) as Record<string, unknown>;
-  const nativeChestTiers = Object.keys(chestTables).filter((k) => k !== "default");
-
   return AcquisitionReferenceIndex.from({
     emitted: {
       cosmetics: trackerData.cosmetics,
@@ -119,186 +105,28 @@ function buildAcquisitionReferences(
       recipes: trackerData.recipes,
     },
     excluded: {
-      cosmetics: Object.fromEntries(
-        Object.keys(cosmeticsRaw)
-          .filter((id) => !(id in cosmetics))
-          .map((id) => [id, true]),
-      ),
+      cosmetics: Object.keys(cosmeticsRaw).filter((id) => !(id in trackerData.cosmetics)),
     },
     native: {
-      activities: nativeIds.activities,
+      ...collectNativeReferenceRegistries(fiddle),
       animals: trackerData.animals,
       biomes: trackerData.mines.biomes,
-      dates: nativeIds.dates,
-      dialogueChoices: nativeIds.dialogueChoices,
-      dungeonLootGroups: nativeIds.dungeonLootGroups,
       festivals: trackerData.festivals,
-      items: trackerData.items,
-      locations: nativeIds.locations,
-      monsters: nativeIds.monsters,
       perks: collectPerkIds(trackerData),
-      quests: { ...nativeIds.quests, ...toRecord(nativeQuestIds), ...trackerData.quests },
-      questTypes: nativeIds.questTypes,
+      questTypes: Object.keys(trackerData.quests),
       skills: trackerData.skills,
-      stations: nativeIds.stations,
       stores: trackerData.stores,
-      treasureChestTiers: { ...toRecord(nativeChestTiers), ...trackerData.treasureChestTiers },
       villagers: trackerData.villagers,
-      waterTypes: nativeIds.waterTypes,
       wings: trackerData.museum,
     },
+    reviewed: REVIEWED_NON_NATIVE_REFERENCES,
   });
 }
 
-function collectPerkIds(trackerData: TrackerData): Record<string, unknown> {
-  const perks: Record<string, unknown> = {};
-  for (const skill of Object.values(trackerData.skills)) {
-    for (const tier of skill.perkTiers) {
-      for (const perkId of Object.keys(tier)) perks[perkId] = true;
-    }
-  }
-  return perks;
-}
-
-function collectNativeIdsFromSources(
-  itemSources: ItemSourceAccumulator,
-  cosmeticSources: CosmeticSourceAccumulator,
-  trackerData: TrackerData,
-): Record<string, Record<string, true>> {
-  const sets: Record<string, Set<string>> = {
-    activities: new Set(),
-    dates: new Set(),
-    dialogueChoices: new Set(),
-    dungeonLootGroups: new Set(),
-    locations: new Set(),
-    monsters: new Set(),
-    quests: new Set(),
-    questTypes: new Set(),
-    stations: new Set(),
-    waterTypes: new Set(),
-  };
-
-  const allSources: AcquisitionSource[] = [];
-  for (const [, sources] of itemSources.entries()) {
-    allSources.push(...sources);
-  }
-  for (const [, sources] of cosmeticSources.entries()) {
-    allSources.push(...sources);
-  }
-  for (const recipe of Object.values(trackerData.recipes)) {
-    allSources.push(...recipe.sources);
-  }
-
-  for (const source of allSources) {
-    switch (source.type) {
-      case "animal_product":
-      case "artifact_replicator":
-      case "bait_fish":
-      case "beach_cave_chest":
-      case "breed":
-        break;
-      case "artifact_dig":
-      case "bug_catch":
-        for (const id of source.locationIds ?? []) sets.locations.add(id);
-        break;
-      case "chicken_statue":
-      case "crop":
-        break;
-      case "date":
-        sets.dates.add(source.dateId);
-        break;
-      case "date_inspiration":
-      case "default":
-        break;
-      case "dive":
-        for (const id of source.waterTypes ?? []) sets.waterTypes.add(id);
-        break;
-      case "donate_item":
-      case "lost_and_found":
-      case "mine":
-      case "mine_fish":
-      case "reach_day":
-      case "ship_item":
-        break;
-      case "engagement":
-      case "equipment":
-      case "festival":
-        break;
-      case "festival_activity":
-        sets.activities.add(source.activityId);
-        break;
-      case "fish":
-        for (const id of source.waterTypes ?? []) sets.waterTypes.add(id);
-        break;
-      case "fish_trap":
-        break;
-      case "forage":
-        for (const id of source.locationIds ?? []) sets.locations.add(id);
-        break;
-      case "mines_chest":
-        if (source.lootGroup) sets.dungeonLootGroups.add(source.lootGroup);
-        break;
-      case "mines_dig_site":
-        break;
-      case "monster":
-      case "monster_feed":
-        sets.monsters.add(source.monsterId);
-        break;
-      case "museum_donation":
-      case "perk":
-      case "perk_drop":
-      case "proposal":
-      case "spouseGift":
-        break;
-      case "quest":
-        sets.quests.add(source.questId);
-        if (source.questType) sets.questTypes.add(source.questType);
-        if (source.choiceId) sets.dialogueChoices.add(source.choiceId);
-        break;
-      case "recipe":
-      case "renown":
-      case "ritual_chamber":
-      case "scroll_bundle":
-        break;
-      case "station":
-        sets.stations.add(source.stationId);
-        break;
-      case "store":
-      case "treasure_chest":
-      case "tree":
-      case "upgrade":
-      case "wedding":
-      case "wishing_well":
-        break;
-    }
-  }
-
-  return Object.fromEntries(
-    Object.entries(sets).map(([key, set]) => [
-      key,
-      Object.fromEntries([...set].map((id) => [id, true as const])),
-    ]),
+function collectPerkIds(trackerData: TrackerData): string[] {
+  return Object.values(trackerData.skills).flatMap((skill) =>
+    skill.perkTiers.flatMap((tier) => Object.keys(tier)),
   );
-}
-
-function extractFiddleKeys(fiddle: ParsedGameData, topKey: string): string[] {
-  const raw = fiddle[topKey] as Record<string, unknown> | undefined;
-  if (!raw || typeof raw !== "object") return [];
-  const nested = raw[topKey] as Record<string, unknown> | undefined;
-  const target = nested ?? raw;
-  return Object.keys(target).filter((k) => k !== "default");
-}
-
-function extractNestedFiddleKeys(fiddle: ParsedGameData, topKey: string): string[] {
-  const raw = fiddle[topKey] as Record<string, unknown> | undefined;
-  if (!raw || typeof raw !== "object") return [];
-  const keys: string[] = [];
-  for (const child of Object.values(raw)) {
-    if (child && typeof child === "object") {
-      keys.push(...Object.keys(child as Record<string, unknown>).filter((k) => k !== "default"));
-    }
-  }
-  return keys;
 }
 
 /** Logs sprite extraction results for a given entity kind. */
@@ -660,23 +488,17 @@ async function main(): Promise<void> {
     villagers,
   };
 
-  const acquisitionReferences = buildAcquisitionReferences(
-    trackerData,
-    fiddle,
-    cosmeticsRaw,
-    cosmetics,
-    itemSources,
-    cosmeticSources,
-  );
-  validateAcquisitionSources(
-    trackerData as unknown as AcquisitionSourceAssembly,
-    acquisitionReferences,
-  );
-  console.log("  Acquisition source validation passed");
-
   stampVillagerVisibility(trackerData);
   stampStoreVisibility(trackerData);
   assignEntityVisibility(trackerData, cutsceneQuestMap, fiddle, questChainsRaw);
+
+  // Validation is the last step before serialization: visibility assignment rewrites sources and
+  // injects hard-coded quest gates, so validating any earlier would miss the emitted shape.
+  validateAcquisitionSources(
+    trackerData,
+    buildAcquisitionReferences(trackerData, fiddle, cosmeticsRaw),
+  );
+  console.log("  Tracker data validation passed");
 
   const json = JSON.stringify(trackerData);
   const prettyJson = JSON.stringify(trackerData, null, 2);
@@ -842,10 +664,6 @@ function stageLocaleChunks(
     `  Staged: src/lib/data/locales/*/${category}.json ` +
       `(${LOCALE_CODES.length.toString()} locales, ${(totalBytes / 1024).toFixed(1)} KB total)`,
   );
-}
-
-function toRecord(keys: string[]): Record<string, true> {
-  return Object.fromEntries(keys.map((k) => [k, true as const]));
 }
 
 await main();

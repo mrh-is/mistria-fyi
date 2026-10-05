@@ -24,7 +24,7 @@
   import { page } from "$app/state";
 
   let { children } = $props();
-  let feedbackContext = setFeedbackContext(new FeedbackContext());
+  const feedbackContext = setFeedbackContext(new FeedbackContext());
 
   // Clear search when navigating so home search doesn't bleed into category pages
   afterNavigate(({ shallow }) => {

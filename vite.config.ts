@@ -10,22 +10,8 @@ import { configDefaults } from "vitest/config";
 
 import { getAppVersion } from "./scripts/app-version.js";
 import { localeNameChunksPlugin } from "./src/lib/build/locale-name-chunks.js";
+import { PARAGLIDE_OPTIONS } from "./src/lib/i18n/paraglide-options.js";
 import { CSP_DIRECTIVES } from "./src/lib/security/csp-directives.js";
-import { LOCALE_CODES } from "./src/lib/types/locale.js";
-
-// All 8 locales are prefixed symmetrically, including the base locale "en" — there is no
-// unprefixed default. Paraglide's built-in default pattern never prefixes the base locale, so a
-// custom pattern is required to opt every locale into a prefix. The root "/" pattern is listed
-// separately so each locale's home page resolves to `/<locale>` rather than `/<locale>/`.
-const localizedRootPattern: [string, string][] = LOCALE_CODES.map((locale) => [
-  locale,
-  `/${locale}`,
-]);
-
-const localizedCatchAllPattern: [string, string][] = LOCALE_CODES.map((locale) => [
-  locale,
-  `/${locale}/:path(.*)?`,
-]);
 
 const sharedTestExcludes = [
   ...configDefaults.exclude,
@@ -94,21 +80,7 @@ export default defineConfig({
       version: { name: getAppVersion() },
     }),
     localeNameChunksPlugin(),
-    paraglideVitePlugin({
-      outdir: "./src/lib/paraglide",
-      project: "./project.inlang",
-      // /api/* is a JSON endpoint and /sitemap.xml is a prerendered SEO file — neither is a
-      // player-facing page, and neither is ever locale-prefixed.
-      routeStrategies: [
-        { exclude: true, match: "/api/:path(.*)?" },
-        { exclude: true, match: "/sitemap.xml" },
-      ],
-      strategy: ["url", "cookie", "baseLocale"],
-      urlPatterns: [
-        { localized: localizedRootPattern, pattern: "/" },
-        { localized: localizedCatchAllPattern, pattern: "/:path(.*)?" },
-      ],
-    }),
+    paraglideVitePlugin(PARAGLIDE_OPTIONS),
   ],
   server: {
     // Claude Code's preview tool sets PORT when 5173 is already bound by another worktree's dev

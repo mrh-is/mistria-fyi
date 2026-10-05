@@ -47,7 +47,7 @@
     }
   }
 
-  const {
+  let {
     compact = false,
     defaultOpen = false,
     locale = "en",
