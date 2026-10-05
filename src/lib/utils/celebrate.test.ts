@@ -11,7 +11,7 @@ describe("celebrations", () => {
     celebrate();
     celebrateCategory();
 
-    expect(confetti).toHaveBeenCalledWith();
+    expect(confetti.mock.calls.length).toBeGreaterThan(0);
     for (const call of confetti.mock.calls) {
       expect(call[0]).toMatchObject({ disableForReducedMotion: true });
     }
