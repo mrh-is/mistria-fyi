@@ -2,7 +2,7 @@ import { render } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { SOURCE_FILTERS } from "#lib/components/icon/index.js";
+import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import SourceFilterRegistrationHarness from "#lib/utils/source-filter-registration.test-harness.svelte";
 
@@ -17,7 +17,7 @@ describe("registerSourceFilters", () => {
       (async () => {
         render(SourceFilterRegistrationHarness);
         await tick();
-        const externalFilter = SOURCE_FILTERS.find(({ label }) => label !== "Gathering");
+        const externalFilter = SOURCE_FILTERS.find(({ id }) => id !== "gathering");
         expect(externalFilter).toBeDefined();
         if (!externalFilter) return;
         toolbarState.setSourceFilters("external-test", [externalFilter]);

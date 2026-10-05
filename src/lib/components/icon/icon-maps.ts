@@ -53,7 +53,7 @@ import IconX from "@tabler/icons-svelte-runes/icons/x";
 import type { Icon } from "@tabler/icons-svelte-runes";
 
 import type { CategoryKey } from "#lib/data/categories.js";
-import type { SourceFilter } from "#lib/stores/toolbar-state.svelte.js";
+import type { SourceFilterId } from "#lib/data/source-filters.js";
 import type { QuestState } from "#lib/stores/user-state.svelte.js";
 import type { Source } from "#lib/types/acquisition.js";
 import type { Season, Weather } from "#lib/types/tracker-data.js";
@@ -122,86 +122,21 @@ export const SOURCE_ICON: Record<Source["type"], Icon> = {
   wishing_well: IconCoins,
 };
 
-export const SOURCE_FILTERS: SourceFilter[] = [
-  {
-    icon: IconArchive,
-    label: "Chests",
-    members: ["Beach cave", "Treasure boxes", "Lost & found"],
-    types: ["beach_cave_chest", "treasure_chest", "lost_and_found"],
-  },
-  {
-    icon: IconToolsKitchen2,
-    label: "Crafting",
-    members: ["Recipes"],
-    types: ["recipe"],
-  },
-  {
-    icon: IconHeart,
-    label: "Dating",
-    members: ["Dates", "Engagement", "Proposals", "Spouse gifts", "Wedding"],
-    types: ["engagement", "date", "date_inspiration", "proposal", "spouseGift", "wedding"],
-  },
-  {
-    icon: IconWheat,
-    label: "Farming",
-    members: ["Crops", "Trees", "Animal products", "Breeding", "Stations", "Shipping"],
-    types: ["crop", "tree", "animal_product", "breed", "station", "ship_item"],
-  },
-  {
-    icon: IconConfetti,
-    label: "Festivals",
-    members: ["Shops", "Activities"],
-    types: ["festival", "festival_activity"],
-  },
-  {
-    icon: IconFishHook,
-    label: "Fishing",
-    members: ["Fish", "Fish traps", "Diving", "Bait fish"],
-    types: ["fish", "fish_trap", "dive", "bait_fish"],
-  },
-  {
-    icon: IconSalad,
-    label: "Gathering",
-    members: ["Foraging", "Bug catching", "Artifact digs", "Equipment"],
-    types: ["forage", "bug_catch", "artifact_dig", "equipment"],
-  },
-  {
-    icon: IconPick,
-    label: "Mines",
-    members: ["Mining", "Chests", "Dig sites", "Mine fishing", "Monsters"],
-    types: ["mines_chest", "mines_dig_site", "mine", "mine_fish", "monster", "monster_feed"],
-  },
-  {
-    icon: IconBuildingBank,
-    label: "Museum",
-    members: ["Donations", "Replicator", "Donation rewards"],
-    types: ["museum_donation", "artifact_replicator", "donate_item"],
-  },
-  {
-    icon: IconCoins,
-    label: "Offerings",
-    members: ["Chicken statue", "Wishing well"],
-    types: ["chicken_statue", "wishing_well"],
-  },
-  {
-    icon: IconSparkles,
-    label: "Perks",
-    members: ["Unlocks", "Drops", "Ritual chamber"],
-    types: ["perk", "perk_drop", "ritual_chamber"],
-  },
-  {
-    icon: IconShoppingCart,
-    label: "Stores",
-    members: ["Shops", "Scroll bundles", "Upgrades"],
-    types: ["store", "scroll_bundle", "upgrade"],
-  },
-  {
-    icon: IconFileText,
-    label: "Progress",
-    members: ["Default", "Quests", "Renown", "Letters"],
-    types: ["default", "quest", "renown", "reach_day"],
-  },
-];
+export const SOURCE_FILTER_ICON: Record<SourceFilterId, Icon> = {
+  chests: IconArchive,
+  crafting: IconToolsKitchen2,
+  dating: IconHeart,
+  farming: IconWheat,
+  festivals: IconConfetti,
+  fishing: IconFishHook,
+  gathering: IconSalad,
+  mines: IconPick,
+  museum: IconBuildingBank,
+  offerings: IconCoins,
+  perks: IconSparkles,
+  progress: IconFileText,
+  stores: IconShoppingCart,
+};
 
 // ── Season ──────────────────────────────────────────────────────────────────
 

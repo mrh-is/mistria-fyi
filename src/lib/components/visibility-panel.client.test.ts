@@ -1,22 +1,28 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { SOURCE_FILTERS } from "#lib/components/icon/index.js";
 import VisibilityPanel from "#lib/components/visibility-panel.svelte";
+import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 
-import type { SourceFilter } from "#lib/stores/toolbar-state.svelte.js";
+import type { SourceFilter, SourceFilterId } from "#lib/data/source-filters.js";
 
-function sourceFilter(label: string): SourceFilter {
-  const filter = SOURCE_FILTERS.find((candidate) => candidate.label === label);
-  if (!filter) throw new Error(`Missing source filter: ${label}`);
+vi.mock("$app/state", async () => {
+  const stubModule = await import("#lib/test-utils/page-stub.svelte.js");
+  return { page: stubModule.pageStub };
+});
+
+function sourceFilter(id: SourceFilterId): SourceFilter {
+  const filter = SOURCE_FILTERS.find((candidate) => candidate.id === id);
+  if (!filter) throw new Error(`Missing source filter: ${id}`);
   return filter;
 }
 
-const gatheringFilter = sourceFilter("Gathering");
-const storesFilter = sourceFilter("Stores");
+const gatheringFilter = sourceFilter("gathering");
+const storesFilter = sourceFilter("stores");
 
 function weatherStrip() {
   return screen.getByLabelText("Weather");
@@ -26,6 +32,7 @@ afterEach(async () => {
   cleanup();
   toolbarState.removeSourceFilters("test");
   userState.resetAll();
+  pageStub.reset();
   await tick();
 });
 
@@ -117,6 +124,24 @@ describe("VisibilityPanel interactions", () => {
     expect(toolbarState.sourceFilterActive).toBe(false);
   });
 
+  it("labels source groups in the page locale and keys their state on IDs", async () => {
+    pageStub.data = { locale: "ja" };
+    toolbarState.setSourceFilters("test", [gatheringFilter, storesFilter]);
+    render(VisibilityPanel, { showSeasonality: false });
+
+    const gathering = screen.getByRole("button", { name: "採集" });
+    const stores = screen.getByRole("button", { name: "ショップ" });
+    expect(gathering).toHaveAttribute("aria-pressed", "true");
+    expect(stores).toHaveAttribute("aria-pressed", "true");
+
+    await fireEvent.click(gathering);
+    expect(gathering).toHaveAttribute("aria-pressed", "false");
+    expect([...toolbarState.activeSourceIds]).toEqual(["stores"]);
+
+    await fireEvent.click(gathering);
+    expect(toolbarState.activeSourceIds.has("gathering")).toBe(true);
+  });
+
   it("opens and dismisses the source-types explainer", async () => {
     toolbarState.setSourceFilters("test", [gatheringFilter]);
     render(VisibilityPanel, { showSeasonality: false });
@@ -125,6 +150,9 @@ describe("VisibilityPanel interactions", () => {
 
     const dialog = await screen.findByRole("dialog", { name: "Source types" });
     expect(within(dialog).getByText("Gathering")).toBeInTheDocument();
+    expect(
+      within(dialog).getByText("Foraging, Bug catching, Artifact digs, and Equipment"),
+    ).toBeInTheDocument();
 
     await fireEvent.click(within(dialog).getByRole("button", { name: "Got it" }));
 

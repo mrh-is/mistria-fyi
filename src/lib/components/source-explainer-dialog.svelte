@@ -1,11 +1,19 @@
 <script lang="ts">
+  import { SOURCE_FILTER_ICON } from "#lib/components/icon/index.js";
   import TagDialog from "#lib/components/tag-dialog.svelte";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
+  import {
+    sortSourceFiltersByLabel,
+    sourceFilterLabel,
+    sourceFilterMembers,
+  } from "#lib/data/source-filters.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { page } from "$app/state";
 
-  import type { SourceFilter } from "#lib/stores/toolbar-state.svelte.js";
+  import type { SourceFilter } from "#lib/data/source-filters.js";
 
-  let { filters, open = $bindable(false) }: { filters: SourceFilter[]; open?: boolean } = $props();
+  let { filters, open = $bindable(false) }: { filters: readonly SourceFilter[]; open?: boolean } =
+    $props();
 </script>
 
 <TagDialog bind:open>
@@ -16,11 +24,15 @@
       <Dialog.Description class="sr-only">{m.source_explainer_description()}</Dialog.Description>
     </div>
     <ul class="inventory-tag__list">
-      {#each filters as filter (filter.label)}
-        {@const SourceIcon = filter.icon}
+      {#each sortSourceFiltersByLabel(filters, page.data.locale) as filter (filter.id)}
+        {@const SourceIcon = SOURCE_FILTER_ICON[filter.id]}
         <li>
           <SourceIcon class="size-4" />
-          <div><strong>{filter.label}</strong><span>{filter.members.join(", ")}</span></div>
+          <div>
+            <strong>{sourceFilterLabel(filter.id, page.data.locale)}</strong><span
+              >{sourceFilterMembers(filter, page.data.locale)}</span
+            >
+          </div>
         </li>
       {/each}
     </ul>
