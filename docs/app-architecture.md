@@ -27,9 +27,9 @@ these types; the store owns the mutable instance.
 ### `src/lib/engine/`
 
 Pure functions with no side effects. They accept explicit inputs and return computed values.
-oxlint's `no-restricted-imports` enforces the layering: engine modules can't import from
-`src/lib/stores/` or `src/lib/components/`, even for types. Engine tests are exempt so they can
-drive the store as an integration harness.
+oxlint's `no-restricted-imports` enforces the layering: engine modules and their tests can't import
+from `src/lib/stores/` or `src/lib/components/`, even for types. Engine tests build their inputs
+directly rather than driving the store.
 
 - **Availability filtering** — determines which items/recipes/Villagers are visible based on season,
   weather, quest gates, and world state.

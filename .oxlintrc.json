@@ -400,24 +400,6 @@
       }
     },
     {
-      // Engine tests may drive the store as an integration harness; restore the base options.
-      "files": ["src/lib/engine/**/*.test.ts"],
-      "rules": {
-        "no-restricted-imports": [
-          "error",
-          {
-            "paths": [
-              {
-                "allowTypeImports": true,
-                "message": "Import icons individually, e.g. from \"@tabler/icons-svelte-runes/icons/x\".",
-                "name": "@tabler/icons-svelte-runes"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
       // shadcn-svelte generated components: vendored code, so relax strict rules
       "files": ["src/lib/components/ui/**/*.svelte", "src/lib/components/ui/**/*.ts"],
       "rules": {

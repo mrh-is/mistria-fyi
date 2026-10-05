@@ -1,6 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
-
-import { userState } from "#lib/stores/user-state.svelte.js";
+import { describe, expect, it } from "vitest";
 
 import { getCategoryProgress } from "./progress.js";
 
@@ -31,10 +29,6 @@ function completedAtRenown(renown: number): CompletedState {
 }
 
 describe("renown maximum", () => {
-  afterEach(() => {
-    userState.resetAll();
-  });
-
   it("reports max level as complete", () => {
     const progress = getCategoryProgress("renown", {
       availabilityWindows: "everything",
@@ -53,11 +47,5 @@ describe("renown maximum", () => {
     });
 
     expect(progress).toEqual({ completed: 100, filtered: 0, total: 100 });
-  });
-
-  it("clamps tracked renown to max level", () => {
-    userState.setRenown(120);
-
-    expect(userState.state.completed.renown).toBe(100);
   });
 });
