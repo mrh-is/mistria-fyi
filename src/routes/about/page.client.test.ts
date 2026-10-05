@@ -27,7 +27,7 @@ describe("About page navigation and disclosures", () => {
 
     await fireEvent.click(screen.getByRole("button", { name: "AI disclosure" }));
 
-    expect(await screen.findByRole("dialog")).toBeTruthy();
-    expect(screen.getByText("Built with AI assistance")).toBeTruthy();
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText("Built with AI assistance")).toBeInTheDocument();
   });
 });
