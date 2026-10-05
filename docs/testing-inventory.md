@@ -10,7 +10,7 @@ another.
 
 | Layer          | Files                 | Runner                        | Use for                                                             |
 | -------------- | --------------------- | ----------------------------- | ------------------------------------------------------------------- |
-| Server render  | `*.test.ts`           | `pnpm run test:server`        | Static markup, invariants, SEO output, anything with no interaction |
+| Server render  | `*.test.ts`           | `pnpm run test:app`           | Static markup, invariants, SEO output, anything with no interaction |
 | happy-dom      | `*.client.test.ts`    | `pnpm run test:client`        | Clicks, keyboard, focus, async state, store effects, dialogs        |
 | Browser (a11y) | `tests/accessibility` | `pnpm run test:accessibility` | Full-route axe scans, reflow, forced colors, reduced motion         |
 
