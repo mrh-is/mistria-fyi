@@ -16,7 +16,12 @@ expected="v$(tr -d '[:space:]' <"$repo_root/.node-version")"
 # A cached environment keeps the Node its setup installed and skips the setup script, so rerun it
 # after .node-version changes. Its output goes to stderr to stay out of Claude's context.
 if [ ! -x "$node_bin/node" ] || [ "$("$node_bin/node" --version)" != "$expected" ]; then
-  bash "$repo_root/scripts/setup-cloud-agent.sh" >&2
+  bash "$repo_root/scripts/setup-cloud-agent.sh" >&2 ||
+    echo "warning: cloud setup failed; keeping the previously installed Node" >&2
 fi
 
-printf 'export PATH="%s:$PATH"\n' "$node_bin" >>"$CLAUDE_ENV_FILE"
+# A failed first-time setup leaves no Node to expose; the session falls back to the image's.
+[ -x "$node_bin/node" ] || exit 0
+
+path_line="export PATH=\"$node_bin:\$PATH\""
+grep -Fqx "$path_line" "$CLAUDE_ENV_FILE" 2>/dev/null || printf '%s\n' "$path_line" >>"$CLAUDE_ENV_FILE"
