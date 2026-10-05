@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
+import { tick } from "svelte";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { userState } from "#lib/stores/user-state.svelte.js";
@@ -8,9 +9,7 @@ import DangerZoneCard from "./danger-zone-card.svelte";
 afterEach(async () => {
   cleanup();
   userState.resetAll();
-  await new Promise((resolve) => {
-    setTimeout(resolve, 100);
-  });
+  await tick();
 });
 
 describe("DangerZoneCard", () => {

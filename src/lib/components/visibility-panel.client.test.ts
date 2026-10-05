@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
+import { tick } from "svelte";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { SOURCE_FILTERS } from "#lib/components/icon/index.js";
@@ -25,9 +26,7 @@ afterEach(async () => {
   cleanup();
   toolbarState.removeSourceFilters("test");
   userState.resetAll();
-  await new Promise((resolve) => {
-    setTimeout(resolve, 250);
-  });
+  await tick();
 });
 
 describe("VisibilityPanel interactions", () => {
