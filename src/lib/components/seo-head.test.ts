@@ -6,6 +6,8 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import SeoHead from "./seo-head.svelte";
 
+// These assertions stay on the raw `head` string: SSR `<svelte:head>` output is serialized markup
+// with no body to query by role, so the exact tags are the contract.
 describe("SEO head", () => {
   it("renders one complete set of text and share-image metadata", () => {
     const metadata = pageMetadata({

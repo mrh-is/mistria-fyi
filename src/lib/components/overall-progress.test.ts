@@ -1,10 +1,10 @@
-import { render } from "svelte/server";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import OverallProgress from "#lib/components/overall-progress.svelte";
 import { getAllProgress } from "#lib/engine/progress.js";
 import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 import { formatNumber } from "#lib/utils/format.js";
 
 describe("OverallProgress", () => {
@@ -29,11 +29,13 @@ describe("OverallProgress", () => {
       0,
     );
 
-    const { body } = render(OverallProgress, { props: { progress } });
+    const { queries } = renderToFragment(OverallProgress, { props: { progress } });
 
-    expect(body).toContain(
-      `aria-label="0 of ${formatNumber(expectedTotal, "en")} completed overall, 0%"`,
-    );
+    expect(
+      queries.getByRole("img", {
+        name: `0 of ${formatNumber(expectedTotal, "en")} completed overall, 0%`,
+      }),
+    ).toBeTruthy();
   });
 
   it("localizes the overall progress label for Japanese", () => {
@@ -48,11 +50,13 @@ describe("OverallProgress", () => {
       0,
     );
 
-    const { body } = render(OverallProgress, { props: { progress } });
+    const { queries } = renderToFragment(OverallProgress, { props: { progress } });
 
-    expect(body).toContain(
-      `aria-label="全体で${formatNumber(expectedTotal, "ja")}件中0件完了、0%"`,
-    );
+    expect(
+      queries.getByRole("img", {
+        name: `全体で${formatNumber(expectedTotal, "ja")}件中0件完了、0%`,
+      }),
+    ).toBeTruthy();
   });
 
   it("localizes the overall progress label for Russian", () => {
@@ -67,10 +71,12 @@ describe("OverallProgress", () => {
       0,
     );
 
-    const { body } = render(OverallProgress, { props: { progress } });
+    const { queries } = renderToFragment(OverallProgress, { props: { progress } });
 
-    expect(body).toContain(
-      `aria-label="Выполнено 0 из ${formatNumber(expectedTotal, "ru")} всего, 0\u00A0%"`,
-    );
+    expect(
+      queries.getByRole("img", {
+        name: `Выполнено 0 из ${formatNumber(expectedTotal, "ru")} всего, 0\u00A0%`,
+      }),
+    ).toBeTruthy();
   });
 });
