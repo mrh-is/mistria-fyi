@@ -4,27 +4,35 @@
 //
 // Replaces eslint-plugin-svelte's `no-navigation-without-resolve`, which needs type information to
 // recognize `localizedHref()` and so flagged every localized link in this untyped ESLint setup.
-// This rule is purely syntactic: any non-literal expression counts as resolved, and only literal
-// text that isn't an external URL (`https:`, `mailto:`, `//host`) or a fragment (`#id`) is flagged.
+// This rule is purely syntactic: a call, identifier, or member access counts as resolved. Literal
+// text is flagged unless it's an external URL (`https:`, `mailto:`, `//host`), a fragment (`#id`),
+// or a query on the current page (`?tab=x`), whether it stands alone, starts a template literal,
+// starts a `+` concatenation, or is a branch of a conditional or logical expression.
 
 import type { Rule } from "eslint";
 import type { AST } from "svelte-eslint-parser";
 
 type Expression = AST.SvelteMustacheTagText["expression"];
 
-// Resource and document-base links, not navigation.
-const NON_NAVIGATION_ELEMENTS = new Set(["base", "link"]);
+// Resource, document-base, and SVG reference links, not navigation.
+const NON_NAVIGATION_ELEMENTS = new Set(["base", "image", "link", "use"]);
 
 const SCHEME = /^[a-z][\d+.a-z-]*:/iu;
 
 function isRawRoute(text: string): boolean {
   const trimmed = text.trim();
   if (trimmed === "") return false;
-  return !trimmed.startsWith("#") && !trimmed.startsWith("//") && !SCHEME.test(trimmed);
+  // A fragment or query keeps the current, already-localized path.
+  if (trimmed.startsWith("#") || trimmed.startsWith("?")) return false;
+  return !trimmed.startsWith("//") && !SCHEME.test(trimmed);
 }
 
 /** Returns the raw route literal an expression can evaluate to, if any. */
 function rawRouteIn(expression: Expression): string | undefined {
+  // `"/villagers/" + id`: the leftmost operand decides where the URL points.
+  if (expression.type === "BinaryExpression" && expression.operator === "+") {
+    return expression.left.type === "PrivateIdentifier" ? undefined : rawRouteIn(expression.left);
+  }
   if (expression.type === "ConditionalExpression") {
     return rawRouteIn(expression.consequent) ?? rawRouteIn(expression.alternate);
   }
