@@ -14,7 +14,7 @@ completionists track progress toward 100%.
 ## Quick start
 
 ```bash
-pnpm install
+pnpm install --frozen-lockfile
 pnpm run dev
 ```
 
@@ -49,21 +49,7 @@ pnpm run pipeline -- /path/to/assets
 
 ## Scripts
 
-| Command                                | Description                                       |
-| -------------------------------------- | ------------------------------------------------- |
-| `pnpm run dev`                         | Start dev server                                  |
-| `pnpm run build`                       | Production build (Cloudflare Pages)               |
-| `pnpm run preview`                     | Preview production build locally                  |
-| `pnpm run check`                       | SvelteKit type checking                           |
-| `pnpm run lint`                        | oxfmt + oxlint + ESLint + Stylelint               |
-| `pnpm run lint:fix`                    | Auto-fix formatting and lint issues               |
-| `pnpm run test`                        | Complete Vitest suite                             |
-| `pnpm run test:changed`                | Vitest tests affected by branch changes           |
-| `pnpm run test:accessibility`          | Complete browser accessibility matrix             |
-| `pnpm run test:accessibility:critical` | Focused browser accessibility contract            |
-| `pnpm run test:app`                    | App tests (`src/`)                                |
-| `pnpm run test:pipeline`               | Pipeline tests (`pipeline/`)                      |
-| `pnpm run pipeline -- /path/to/assets` | Generate tracker-data.json from local TOML assets |
+See the command table in [AGENTS.md §4](AGENTS.md#4-commands).
 
 ## Tech stack
 
