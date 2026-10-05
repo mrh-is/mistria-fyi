@@ -134,12 +134,19 @@ These steps follow OpenAI’s
    Don’t use `scripts/setup-cloud-agent.sh`; it writes to the home directory, which is read-only
    during Codex’s agent phase.
 
-   The checked-in `pnpm-workspace.yaml` puts pnpm’s store and metadata cache under the ignored
-   `.pnpm-store/` directory. Both setup and agent commands read this configuration, so ordinary
-   `pnpm install` and `pnpm run` commands work without writing to the home directory. Each worktree
-   has its own store; pnpm’s setup action discovers this path for CI caching too. When moving an
-   existing install from the default store, run `CI=true pnpm install --frozen-lockfile` once to
-   allow pnpm to recreate `node_modules` without an interactive confirmation.
+   Keep pnpm’s store and metadata cache writable during both setup and the agent phase by adding
+   these non-secret **Environment variables** to this Codex cloud environment:
+
+   ```dotenv
+   pnpm_config_store_dir=/workspace/.pnpm-store
+   pnpm_config_cache_dir=/workspace/.pnpm-store/cache
+   ```
+
+   pnpm 11 reads these `pnpm_config_*` variables for both installs and automatic dependency
+   refreshes during `pnpm run`. Set them in the environment settings, not only in the install
+   script, so they remain available during the agent phase. Do not put store or cache overrides back
+   in `pnpm-workspace.yaml`: local checkouts and worktrees should use the machine’s shared external
+   store. The cloud paths are covered by the existing `.pnpm-store` ignore rule.
 
    Also add these non-secret **Environment variables**:
 
@@ -151,8 +158,8 @@ These steps follow OpenAI’s
    ```
 
    The XDG settings give tools that honor them writable configuration and cache directories instead
-   of the defaults under the read-only home directory. Keep them alongside the pnpm workspace
-   settings and the explicit Wrangler paths; each controls a different set of writes. Changing
+   of the defaults under the read-only home directory. Keep them alongside the pnpm environment
+   variables and the explicit Wrangler paths; each controls a different set of writes. Changing
    `XDG_CONFIG_HOME` also changes where Wrangler looks for its local configuration, so use the
    environment's `CLOUDFLARE_API_TOKEN` for cloud diagnostics rather than relying on a
    home-directory login.
