@@ -29,14 +29,6 @@ const sharedTestExcludes = [
   "**/.pnpm-store/**",
 ];
 
-// Run in the `mocked` project, with isolation preserved. See that project's comment.
-const isolatedTests = [
-  "src/lib/data/names.fallback.test.ts",
-  "src/lib/data/names.loading.test.ts",
-  "src/lib/utils/celebrate.test.ts",
-  "src/lib/utils/undo-toast.test.ts",
-];
-
 export default defineConfig({
   build: {
     // tracker-data.json is the largest chunk: ~844 kB minified, ~75 kB gzipped as of the 1.0.5
@@ -95,6 +87,8 @@ export default defineConfig({
     // Persists module transforms under node_modules/.vitest-cache, so warm runs skip most of the
     // transform work. CI restores the directory with actions/cache.
     fsModuleCache: true,
+    // Every file gets its own module registry; spies and stubbed globals are restored per test.
+    isolate: true,
     // Each project is a tier, split by what its tests need to run. `pnpm run test` runs every
     // project except `assets`; see docs/development-workflow.md §4.
     projects: [
@@ -105,10 +99,9 @@ export default defineConfig({
             ...sharedTestExcludes,
             "**/*.assets.test.ts",
             "**/*.client.test.ts",
-            ...isolatedTests,
+            "**/*.cold.test.ts",
           ],
           include: ["src/**/*.test.ts"],
-          isolate: false,
           name: "app",
           setupFiles: ["./src/vitest-setup-app-state.ts", "./src/vitest-setup-names.ts"],
         },
@@ -119,20 +112,16 @@ export default defineConfig({
         test: {
           exclude: [...sharedTestExcludes, "**/*.assets.test.ts"],
           include: ["pipeline/**/*.test.ts", "scripts/**/*.test.ts", "tests/**/*.test.ts"],
-          isolate: false,
           name: "node",
         },
       },
       {
         extends: true,
         test: {
-          // These files use vi.mock() on shared packages (canvas-confetti, svelte-sonner) or reset
-          // the module registry to observe `names.js` from a cold start. Under the server project's
-          // `isolate: false`, a module cached unmocked by another file in the same worker can win
-          // the race and leave the mock unapplied, and a reset registry would hand later files an
-          // unloaded name cache, so they need real isolation. This project deliberately has no
-          // `vitest-setup-names.ts`: the names tests load exactly the chunks they mean to test.
-          include: isolatedTests,
+          // Cold-start tests own their name-cache initialization and skip all preload setup.
+          // Other files, including tests that mock shared packages, use the isolated app project.
+          exclude: sharedTestExcludes,
+          include: ["src/**/*.cold.test.ts"],
           name: "mocked",
         },
       },
@@ -143,6 +132,8 @@ export default defineConfig({
           environment: "happy-dom",
           include: ["src/**/*.client.test.ts"],
           name: "client",
+          // Warm two-worker runs are faster with threads; per-file isolation stays enabled.
+          pool: "threads",
           setupFiles: [
             "./src/vitest-setup.ts",
             "./src/vitest-setup-app-state.ts",
@@ -161,9 +152,14 @@ export default defineConfig({
           exclude: sharedTestExcludes,
           globalSetup: ["pipeline/src/assets-test-setup.ts"],
           include: ["**/*.assets.test.ts"],
+          isolate: true,
           name: "assets",
+          restoreMocks: true,
+          unstubGlobals: true,
         },
       },
     ],
+    restoreMocks: true,
+    unstubGlobals: true,
   },
 });
