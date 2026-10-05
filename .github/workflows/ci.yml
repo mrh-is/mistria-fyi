@@ -167,7 +167,9 @@ jobs:
           path: .svelte-kit/output/
       - id: accessibility-tests
         continue-on-error: true
-        run: pnpm run test:accessibility --shard=${{ matrix.shard }}
+        run: |
+          pnpm exec tsx scripts/playwright-allocation.ts ${{ matrix.shard }}
+          pnpm run test:accessibility --test-list=.playwright-artifacts/test-list.txt
         env:
           PLAYWRIGHT_SKIP_BUILD: "true"
       - if: >-
@@ -189,7 +191,10 @@ jobs:
         with:
           name: accessibility-timings-${{ strategy.job-index }}
           include-hidden-files: true
-          path: .playwright-artifacts/results.json
+          path: |
+            .playwright-artifacts/results.json
+            .playwright-artifacts/allocation.json
+            .playwright-artifacts/test-list.txt
           retention-days: 14
           if-no-files-found: ignore
       - name: Preserve test outcome

@@ -201,7 +201,13 @@ describe("CI workflow browser suites", () => {
       (step) => step.id === "accessibility-tests",
     );
     const pwaStep = jobs.pwa.steps?.find((step) => step.id === "pwa-tests");
-    expect(accessibilityStep?.run).toBe("pnpm run test:accessibility --shard=${{ matrix.shard }}");
+    expect(accessibilityStep?.run).toContain(
+      "pnpm exec tsx scripts/playwright-allocation.ts ${{ matrix.shard }}",
+    );
+    expect(accessibilityStep?.run).toContain(
+      "pnpm run test:accessibility --test-list=.playwright-artifacts/test-list.txt",
+    );
+    expect(accessibilityStep?.run).not.toContain("--shard=");
     expect(accessibilityStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
     expect(pwaStep?.run).toBe("pnpm run test:pwa");
     expect(pwaStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
@@ -240,7 +246,9 @@ describe("CI workflow browser suites", () => {
     );
     expect(timingUpload?.if).toBe("always()");
     expect(timingUpload?.with?.name).toBe("accessibility-timings-${{ strategy.job-index }}");
-    expect(timingUpload?.with?.path).toBe(".playwright-artifacts/results.json");
+    expect(timingUpload?.with?.path).toContain(".playwright-artifacts/results.json");
+    expect(timingUpload?.with?.path).toContain(".playwright-artifacts/allocation.json");
+    expect(timingUpload?.with?.path).toContain(".playwright-artifacts/test-list.txt");
     expect(timingUpload?.with?.["include-hidden-files"]).toBe(true);
   });
 
