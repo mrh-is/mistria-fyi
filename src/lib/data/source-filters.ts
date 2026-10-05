@@ -58,6 +58,7 @@ type SourceFilterMemberId =
   | "shops"
   | "spouse_gifts"
   | "stations"
+  | "treasure_boxes"
   | "trees"
   | "unlocks"
   | "upgrades"
@@ -77,7 +78,7 @@ export interface SourceFilter {
 export const SOURCE_FILTERS: readonly SourceFilter[] = [
   {
     id: "chests",
-    members: ["beach_cave", "chests", "lost_and_found"],
+    members: ["beach_cave", "treasure_boxes", "lost_and_found"],
     types: ["beach_cave_chest", "treasure_chest", "lost_and_found"],
   },
   { id: "crafting", members: ["recipes"], types: ["recipe"] },
@@ -195,6 +196,7 @@ const MEMBER_LABELS: Record<SourceFilterMemberId, LabelResolver> = {
   shops: (locale) => m.source_filter_member_shops({}, { locale }),
   spouse_gifts: (locale) => m.source_filter_member_spouse_gifts({}, { locale }),
   stations: (locale) => m.source_filter_member_stations({}, { locale }),
+  treasure_boxes: (locale) => m.source_filter_member_treasure_boxes({}, { locale }),
   trees: (locale) => m.source_filter_member_trees({}, { locale }),
   unlocks: (locale) => m.source_filter_member_unlocks({}, { locale }),
   upgrades: (locale) => m.source_filter_member_upgrades({}, { locale }),
