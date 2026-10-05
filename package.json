@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "prepare": "husky && pnpm run paraglide:compile && svelte-kit sync",
-    "paraglide:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide",
+    "paraglide:compile": "tsx scripts/paraglide-compile.ts",
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
