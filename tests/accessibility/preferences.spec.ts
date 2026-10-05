@@ -4,6 +4,7 @@ import {
   createStoredState,
   gotoApplication,
   initializeApplication,
+  waitForRendering,
 } from "./support/application-state.js";
 import { openFeedbackValidation, openVisibilityPanel } from "./support/scenarios.js";
 
@@ -15,6 +16,18 @@ test.describe("@critical browser accessibility preferences", () => {
     await initializeApplication(page, "light");
     await gotoApplication(page, "/almanac");
     await openVisibilityPanel(page);
+    // Inspect durations before settling: waiting first would conceal a full-duration regression.
+    const finiteDurations = await page.evaluate(() =>
+      document.getAnimations().flatMap((animation) => {
+        const timing = animation.effect?.getComputedTiming();
+        return timing?.iterations === Infinity ? [] : [timing?.activeDuration];
+      }),
+    );
+    // The reduced-motion stylesheet uses a 0.01 ms duration, rather than zero, to retain events.
+    expect(
+      finiteDurations.every((duration) => typeof duration === "number" && duration <= 0.01),
+    ).toBe(true);
+    await waitForRendering(page);
 
     const activeFiniteAnimations = await page.evaluate(() =>
       document.getAnimations().flatMap((animation) => {
@@ -47,6 +60,8 @@ test.describe("@critical browser accessibility preferences", () => {
     const artifacts = page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ });
     await artifacts.focus();
     await artifacts.press("Enter");
+    await expect(artifacts).toHaveAttribute("aria-expanded", "true");
+    await waitForRendering(page);
     await page.keyboard.press("Tab");
     const completion = page.getByRole("button", { name: /^Check / }).first();
     await expect(completion).toBeFocused();
