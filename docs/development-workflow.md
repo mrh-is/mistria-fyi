@@ -57,6 +57,14 @@ pnpm run prepare
 
 </details>
 
+### Open question: Codex sandbox
+
+`.codex/config.toml` sets `sandbox_mode = "workspace-write"` without `network_access = true`. This
+is unconfirmed: in that mode, pushing, `gh`, & `pnpm install` may lack network access, & recent
+Codex releases may keep `.git` read-only, which would block `git worktree add`. Confirm in a real
+Codex session before changing the config. Until then, a Codex agent that hits either failure should
+report it as friction (see AGENTS.md §10) rather than working around the sandbox.
+
 ### Shared vs. Isolated Worktree Resources (`.worktreeinclude`)
 
 The `.worktreeinclude` file lists ignored local entries required for development:
@@ -419,8 +427,9 @@ git branch -vv
 
 - Ensure `git branch --show-current` matches the PR branch name.
 - Ensure `git branch -vv` shows that branch tracking the expected `origin/<branch>`.
-- Push through the agent delivery mechanism (for Copilot runs, `report_progress`) after committing,
-  then verify the branch is clean with `git status --short`.
+- Push through the agent delivery mechanism (for example, Copilot cloud runs push with their
+  `report_progress` tool; elsewhere use `git push`) after committing, then verify the branch is
+  clean with `git status --short`.
 
 ### Attach visual evidence & prototype code
 
