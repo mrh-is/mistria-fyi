@@ -31,7 +31,7 @@
 
   const spoilerGuard = createSpoilerGuard();
 
-  let recentlyCompleted = new SvelteSet<RecipeId>();
+  const recentlyCompleted = new SvelteSet<RecipeId>();
 
   function markLeaving(recipeId: RecipeId): void {
     recentlyCompleted.add(recipeId);
@@ -125,7 +125,7 @@
 
   const SECTION_LIMIT = 50;
 
-  let expandedSections = $state<Record<string, boolean>>({});
+  const expandedSections = $state<Record<string, boolean>>({});
 
   function toggleRecipe(entry: RecipeEntry, sectionRecipeIds: RecipeId[]): void {
     userState.toggleAlmanacRecipe(entry.id);
