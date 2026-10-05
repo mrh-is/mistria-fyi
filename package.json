@@ -25,6 +25,7 @@
     "test:changed": "node scripts/test-changed.ts",
     "verify": "bash scripts/verify.sh",
     "worktree:new": "bash scripts/new-worktree.sh",
+    "worktree:setup": "bash scripts/setup-worktree.sh",
     "worktree:cleanup": "bash scripts/cleanup-merged-worktrees.sh",
     "accessibility:monitor": "tsx scripts/accessibility-monitor.ts",
     "generate:brand-assets": "tsx scripts/generate-brand-assets.ts",

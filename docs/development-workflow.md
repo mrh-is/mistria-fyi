@@ -42,8 +42,20 @@ The script validates the slug (`<issue-number>-<short-description>`, lowercase),
 checkout, removes the worktree & branch again if a later step fails, refuses to run if `.worktrees/`
 is not gitignored, symlinks every `.worktreeinclude` entry from the main checkout, and runs
 `pnpm install --frozen-lockfile` and `pnpm run prepare` (Husky hooks, Paraglide output, &
-`svelte-kit sync`). Agents with their own managed worktree directory (for example
-`.claude/worktrees/`) may use it instead; the same symlink and install steps still apply.
+`svelte-kit sync`). The symlink & install steps live in `scripts/setup-worktree.sh`, which skips
+entries already present.
+
+Agents with their own managed worktree directory (for example `.claude/worktrees/`) may use it
+instead; run the setup steps from inside it:
+
+```sh
+pnpm run worktree:setup
+```
+
+It refuses to run in the main checkout. Claude Code orchestrators should give editing subagents
+harness worktrees (`isolation: "worktree"`) rather than `.worktrees/<slug>`: the session's edit
+guard refuses Write/Edit outside the session's own worktree, which pushed subagents into unguarded
+shell writes (#545).
 
 <details>
 <summary>Manual fallback</summary>
