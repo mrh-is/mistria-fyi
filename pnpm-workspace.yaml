@@ -1,9 +1,5 @@
 engineStrict: true
 
-# Codex cloud cannot write to its home directory; keep pnpm writes in the checkout.
-storeDir: .pnpm-store
-cacheDir: .pnpm-store/cache
-
 packages:
   - pipeline
 
