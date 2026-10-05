@@ -69,8 +69,9 @@ jobs:
           - [ ] Update Fields of Mistria in Steam and confirm the installed build matches
           - [ ] Record the current game, app commit, serialized-state, and transfer versions
           - [ ] Run \`MISTRIA_ASSETS=<path> pnpm run test:pipeline:assets\` and \`pnpm run pipeline -- <path>\`
+          - [ ] Copy the extracted assets to Drive at \`Development/Mistria/Fields of Mistria ${version:-<version>}/assets/\`
           - [ ] Classify changes and review local-state, backup, save-import, and transfer compatibility
-          - [ ] Post the compatibility report on the PR
+          - [ ] Post the compatibility report and the mechanical ID inventory diff as PR comments
           - [ ] Run \`pnpm run verify\`, then open a PR that closes this issue
 
           Agent: github-actions
