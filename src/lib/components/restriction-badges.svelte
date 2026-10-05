@@ -29,7 +29,7 @@
 
   function isAllWeathers(weathers: Weather[], seasons?: Season[]): boolean {
     const availableWeathers = seasons?.length
-      ? [...new Set(seasons.flatMap(weathersForSeason))]
+      ? [...new Set(seasons.flatMap((season) => weathersForSeason(season)))]
       : ALL_WEATHERS;
     return availableWeathers.every((weather) => weathers.includes(weather));
   }

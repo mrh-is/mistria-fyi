@@ -45,7 +45,7 @@ describe("TrackerRow reportable metadata", () => {
     });
 
     await fireEvent.click(screen.getByRole("button", { name: "Check Tomato Soup" }));
-    expect(onToggle).toHaveBeenCalledOnce();
+    expect(onToggle).toHaveBeenCalledTimes(1);
 
     view.unmount();
     expect(feedbackContext.registrations.size).toBe(0);
@@ -62,11 +62,11 @@ describe("TrackerRow reportable metadata", () => {
     });
     const sourceButton = screen.getByRole("button", { name: "Amberjack sources" });
     const sourcePaper = view.container.querySelector("[data-source-paper]");
-    const row = view.container.querySelector("[data-tracker-row]");
+    const row = view.container.querySelector<HTMLElement>("[data-tracker-row]");
     const contentId = sourceButton.getAttribute("aria-controls");
 
     expect(sourcePaper).toBeTruthy();
-    expect(row?.getAttribute("data-source-state")).toBe("closed");
+    expect(row?.dataset.sourceState).toBe("closed");
     expect(sourceButton.getAttribute("aria-expanded")).toBe("false");
     expect(contentId).toBeTruthy();
     expect(document.getElementById(contentId ?? "")).toBeTruthy();
@@ -76,7 +76,7 @@ describe("TrackerRow reportable metadata", () => {
 
     await fireEvent.click(sourceButton);
     expect(sourceButton.getAttribute("aria-expanded")).toBe("true");
-    expect(row?.getAttribute("data-source-state")).toBe("open");
+    expect(row?.dataset.sourceState).toBe("open");
     expect(view.container.querySelector(".source-card")).toBeTruthy();
     expect(view.container.querySelector(".source-paper__panel")?.getAttribute("aria-hidden")).toBe(
       "false",
@@ -92,7 +92,7 @@ describe("TrackerRow reportable metadata", () => {
     if (!stationaryControl) throw new Error("Expected stationary source control");
     await fireEvent.click(stationaryControl);
     expect(sourceButton.getAttribute("aria-expanded")).toBe("false");
-    expect(row?.getAttribute("data-source-state")).toBe("closed");
+    expect(row?.dataset.sourceState).toBe("closed");
     expect(view.container.querySelector(".source-paper__panel")?.getAttribute("aria-hidden")).toBe(
       "true",
     );
@@ -133,8 +133,8 @@ describe("TrackerRow reportable metadata", () => {
   });
 
   it("moves focus to the next row after toggling a visible item", async () => {
-    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
-      callback(0);
+    vi.stubGlobal("requestAnimationFrame", (onFrame: FrameRequestCallback) => {
+      onFrame(0);
       return 0;
     });
 

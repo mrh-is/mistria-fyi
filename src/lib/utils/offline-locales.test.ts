@@ -57,14 +57,14 @@ describe("keepLocaleOffline", () => {
   });
 });
 
-describe("downloadLocale", () => {
-  function controller(reply?: (data: unknown) => { failed: string[] }) {
-    const postMessage = vi.fn((data: unknown, [port]: [MessagePort]) => {
-      if (reply) port.postMessage(reply(data));
-    });
-    return { controller: { postMessage } as unknown as ServiceWorker, postMessage };
-  }
+function controller(reply?: (data: unknown) => { failed: string[] }) {
+  const postMessage = vi.fn((data: unknown, [port]: [MessagePort]) => {
+    if (reply) port.postMessage(reply(data));
+  });
+  return { controller: { postMessage } as unknown as ServiceWorker, postMessage };
+}
 
+describe("downloadLocale", () => {
   it("asks the controlling worker to cache just that locale", async () => {
     const { controller: worker, postMessage } = controller(() => ({ failed: [] }));
 

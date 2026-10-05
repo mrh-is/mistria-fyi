@@ -33,14 +33,16 @@ beforeEach(() => {
   transferQr.startQrCamera.mockReset();
 });
 
-afterAll(() => {
-  vi.unstubAllGlobals();
-});
-
 afterEach(async () => {
   cleanup();
   userState.resetAll();
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  await new Promise((resolve) => {
+    setTimeout(resolve, 100);
+  });
+});
+
+afterAll(() => {
+  vi.unstubAllGlobals();
 });
 
 // A marked v10 version byte: recognized as a transfer code, but from an older version.
@@ -48,7 +50,7 @@ const OLDER_VERSION_PAYLOAD = "MFGTCg";
 
 describe("TransferCard generate", () => {
   it("renders the QR code for the current progress and announces the in-flight state", async () => {
-    let resolveDataUrl: (value: string) => void = () => undefined;
+    let resolveDataUrl: ((value: string) => void) | undefined;
     transferQr.generateTransferQr.mockImplementation(
       () =>
         new Promise<string>((resolve) => {
@@ -66,9 +68,9 @@ describe("TransferCard generate", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Generating QR code…");
 
     await waitFor(() => {
-      expect(transferQr.generateTransferQr).toHaveBeenCalledOnce();
+      expect(transferQr.generateTransferQr).toHaveBeenCalledTimes(1);
     });
-    resolveDataUrl("data:image/png;base64,QUJD");
+    resolveDataUrl?.("data:image/png;base64,QUJD");
 
     expect(await screen.findByRole("img", { name: "Transfer QR Code" })).toHaveAttribute(
       "src",
@@ -177,17 +179,17 @@ describe("TransferCard scan from image", () => {
   });
 });
 
-describe("TransferCard scan from camera", () => {
-  function fakeScanner() {
-    return { destroy: vi.fn(), stop: vi.fn() };
-  }
+function fakeScanner() {
+  return { destroy: vi.fn(), stop: vi.fn() };
+}
 
+describe("TransferCard scan from camera", () => {
   it("merges the first decoded frame and releases the camera", async () => {
     userState.toggleMuseumItem(museumItemId);
     const payload = await encodeTransferPayload(userState.state.completed);
     userState.resetAll();
     const scanner = fakeScanner();
-    let emit: (data: string) => void = () => undefined;
+    let emit: ((data: string) => void) | undefined;
     transferQr.startQrCamera.mockImplementation(
       (_video: HTMLVideoElement, _overlay: HTMLCanvasElement, onResult: (data: string) => void) => {
         emit = onResult;
@@ -198,14 +200,14 @@ describe("TransferCard scan from camera", () => {
 
     await fireEvent.click(screen.getByRole("button", { name: "Scan QR Code" }));
     await waitFor(() => {
-      expect(transferQr.startQrCamera).toHaveBeenCalledOnce();
+      expect(transferQr.startQrCamera).toHaveBeenCalledTimes(1);
     });
     expect(screen.getByLabelText("Camera feed for QR code scanning")).toBeInTheDocument();
-    emit(payload);
+    emit?.(payload);
 
     expect(await screen.findByText("Transferred 1 items!")).toBeInTheDocument();
-    expect(scanner.stop).toHaveBeenCalledOnce();
-    expect(scanner.destroy).toHaveBeenCalledOnce();
+    expect(scanner.stop).toHaveBeenCalledTimes(1);
+    expect(scanner.destroy).toHaveBeenCalledTimes(1);
     expect(screen.queryByLabelText("Camera feed for QR code scanning")).toBeNull();
     expect(userState.state.completed.museum.has(museumItemId)).toBe(true);
   });
@@ -226,7 +228,7 @@ describe("TransferCard scan from camera", () => {
 
   it("releases a camera that opens after the scan was cancelled", async () => {
     const scanner = fakeScanner();
-    let resolveCamera: (value: typeof scanner) => void = () => undefined;
+    let resolveCamera: ((value: typeof scanner) => void) | undefined;
     transferQr.startQrCamera.mockImplementation(
       () =>
         new Promise((resolve) => {
@@ -237,15 +239,15 @@ describe("TransferCard scan from camera", () => {
 
     await fireEvent.click(screen.getByRole("button", { name: "Scan QR Code" }));
     await waitFor(() => {
-      expect(transferQr.startQrCamera).toHaveBeenCalledOnce();
+      expect(transferQr.startQrCamera).toHaveBeenCalledTimes(1);
     });
     await fireEvent.click(screen.getByRole("button", { name: "Close camera" }));
-    resolveCamera(scanner);
+    resolveCamera?.(scanner);
 
     await waitFor(() => {
-      expect(scanner.stop).toHaveBeenCalledOnce();
+      expect(scanner.stop).toHaveBeenCalledTimes(1);
     });
-    expect(scanner.destroy).toHaveBeenCalledOnce();
+    expect(scanner.destroy).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("button", { name: "Scan QR Code" })).toBeInTheDocument();
   });
 });

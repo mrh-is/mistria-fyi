@@ -54,13 +54,18 @@
     previousPathname = currentPathname;
   });
 
+  async function afterTick(run: () => void): Promise<void> {
+    await tick();
+    run();
+  }
+
   $effect(() => {
     if (activePanel !== null && activePanel !== "feedback" && activePanel !== previousPanel) {
-      void tick().then(() => panelElement?.querySelector<HTMLElement>("button, a")?.focus());
+      void afterTick(() => panelElement?.querySelector<HTMLElement>("button, a")?.focus());
     } else if (activePanel === null && previousPanel !== null) {
       const focusTarget = panelOpener;
       panelOpener = null;
-      void tick().then(() => {
+      void afterTick(() => {
         if (focusTarget?.isConnected) focusTarget.focus();
       });
     }
@@ -93,7 +98,7 @@
     toolbarState.closeSearch();
     const focusTarget = searchOpener;
     searchOpener = null;
-    void tick().then(() => {
+    void afterTick(() => {
       const restoredTarget = focusTarget?.isConnected
         ? focusTarget
         : document.querySelector<HTMLElement>("[data-toolbar-search-trigger]");

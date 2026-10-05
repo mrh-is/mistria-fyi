@@ -1,6 +1,8 @@
-import encodeQR, { type QrOpts } from "qr";
-import decodeQR from "qr/decode.js";
+import { encodeQR } from "qr";
+import { decodeQR } from "qr/decode.js";
 import { frameLoop, QRCanvas, rearCamera, svgToPng } from "qr/dom.js";
+
+import type { QrOpts } from "qr";
 
 import type { ClosableScanner } from "./data-effects.js";
 
@@ -56,21 +58,23 @@ export async function startQrCamera(
 
   let reading = false;
   let found = false;
+  async function readFrame(): Promise<void> {
+    try {
+      const result = await camera.readFrame(canvas);
+      if (typeof result !== "string" || found) return;
+      found = true;
+      onResult(result);
+    } catch {
+      // A frame without a readable code is a miss, not a failure; the next frame retries.
+    } finally {
+      reading = false;
+    }
+  }
+
   const cancelLoop = frameLoop(() => {
     if (reading || found) return;
     reading = true;
-    camera
-      .readFrame(canvas)
-      .then((result) => {
-        if (typeof result !== "string" || found) return;
-        found = true;
-        onResult(result);
-      })
-      // A frame without a readable code is a miss, not a failure; the next frame retries.
-      .catch(() => undefined)
-      .finally(() => {
-        reading = false;
-      });
+    void readFrame();
   });
 
   return {

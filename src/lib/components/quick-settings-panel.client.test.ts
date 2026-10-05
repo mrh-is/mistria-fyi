@@ -7,7 +7,9 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 afterEach(async () => {
   userState.resetAll();
   cleanup();
-  await new Promise((resolve) => setTimeout(resolve, 250));
+  await new Promise((resolve) => {
+    setTimeout(resolve, 250);
+  });
 });
 
 describe("QuickSettingsPanel", () => {

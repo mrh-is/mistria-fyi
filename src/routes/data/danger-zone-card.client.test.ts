@@ -8,7 +8,9 @@ import DangerZoneCard from "./danger-zone-card.svelte";
 afterEach(async () => {
   cleanup();
   userState.resetAll();
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  await new Promise((resolve) => {
+    setTimeout(resolve, 100);
+  });
 });
 
 describe("DangerZoneCard", () => {

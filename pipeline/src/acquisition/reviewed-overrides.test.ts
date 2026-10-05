@@ -46,11 +46,9 @@ describe("reviewed overrides", () => {
         for (const source of sources ?? []) {
           if (source.type !== "quest") continue;
           expect(source.questType === undefined || questTypes.has(source.questType)).toBe(true);
-          if (runtimeOnlyQuestIds.has(source.questId)) {
-            expect(source.questType, source.questId).toBe("story");
-          } else {
-            expect(source.questType, source.questId).toBeUndefined();
-          }
+          expect(source.questType, source.questId).toBe(
+            runtimeOnlyQuestIds.has(source.questId) ? "story" : undefined,
+          );
         }
       }
     });
@@ -398,7 +396,7 @@ describe("reviewed overrides", () => {
       collectDefaultItemSources(fiddle, accumulator, items);
 
       expect(adds).toHaveLength(3);
-      const ids = adds.map(([id]) => id).sort();
+      const ids = adds.map(([id]) => id).toSorted();
       expect(ids).toEqual(["cloth_chestpiece", "cloth_helmet", "cloth_shoes"]);
     });
 

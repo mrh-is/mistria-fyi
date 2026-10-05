@@ -1,9 +1,11 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 
 import { LOCALE_CODES } from "../../src/lib/types/locale.js";
 import { waitForControl } from "./service-worker.js";
+
+import type { Page } from "@playwright/test";
 
 const CLIENT_OUTPUT = ".svelte-kit/output/client";
 /** Per-locale gzipped name data; see docs/pwa-verification.md#byte-budget. */
@@ -16,7 +18,7 @@ const MAX_LOCALE_GZIP_BYTES = 100_000;
  * build artifact omits hidden directories like `.vite/`.)
  */
 function builtChunks(): Record<string, string[]> {
-  const worker = readFileSync(`${CLIENT_OUTPUT}/service-worker.js`, "utf-8");
+  const worker = readFileSync(`${CLIENT_OUTPUT}/service-worker.js`, "utf8");
   return Object.fromEntries(
     LOCALE_CODES.map((locale) => {
       const list =
@@ -79,9 +81,11 @@ test("keeps the visited locale offline and leaves other locales to download on d
   // Leave Japanese one chunk short of complete, as a download the network cut off would.
   const [, ...partialJaChunks] = jaChunks;
   await page.evaluate(async (paths) => {
-    const version = (await caches.keys()).find((name) => name.startsWith("cache-"));
+    const cacheKeys = await caches.keys();
+    const version = cacheKeys.find((name) => name.startsWith("cache-"));
     if (!version) throw new Error("The service worker has no versioned cache");
-    await (await caches.open(version)).addAll(paths);
+    const cache = await caches.open(version);
+    await cache.addAll(paths);
   }, partialJaChunks);
 
   await context.setOffline(true);

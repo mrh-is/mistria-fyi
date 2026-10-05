@@ -164,32 +164,33 @@ describe("isItemDimmed", () => {
 
 // ─── filterAvailableItems ───────────────────────────────────────────
 
+function sourcesFor(id: ItemId): Source[] {
+  return id === "c" ? [] : [src()];
+}
+
+function failingLookup(): Source[] {
+  throw new Error("source lookup should not run");
+}
+
 describe("filterAvailableItems", () => {
   const ids = ["a", "b", "c"] as ItemId[];
-  const lookup = (id: ItemId): Source[] => (id === "c" ? [] : [src()]);
 
   it("available mode passes items with sources through", () => {
-    const result = filterAvailableItems(ids, lookup, spring, "available");
+    const result = filterAvailableItems(ids, sourcesFor, spring, "available");
     expect(result).toEqual(ids);
   });
 
   it("timely mode excludes items with no timely condition", () => {
-    const result = filterAvailableItems(ids, lookup, spring, "timely");
+    const result = filterAvailableItems(ids, sourcesFor, spring, "timely");
     expect(result).toEqual([]);
   });
 
   it("everything returns all", () => {
-    expect(filterAvailableItems(ids, lookup, spring, "everything")).toBe(ids);
+    expect(filterAvailableItems(ids, sourcesFor, spring, "everything")).toBe(ids);
   });
 
   it("skips source lookup when every availability window is selected", () => {
-    const unexpectedLookup = () => {
-      throw new Error("source lookup should not run");
-    };
-
-    expect(filterAvailableItems(ids, unexpectedLookup, spring, ["later", "now", "anytime"])).toBe(
-      ids,
-    );
+    expect(filterAvailableItems(ids, failingLookup, spring, ["later", "now", "anytime"])).toBe(ids);
   });
 });
 

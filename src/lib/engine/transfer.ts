@@ -6,7 +6,7 @@ import {
   MAX_VILLAGER_LEVEL,
 } from "#lib/engine/progress.js";
 import { normalizeRelationships } from "#lib/engine/relationships.js";
-import { recordEntries, recordKeys, recordValues } from "#lib/utils.js";
+import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils.js";
 
 import type { ChildChoice, CompletedState, QuestState } from "#lib/stores/user-state.svelte.js";
 import type {
@@ -135,13 +135,12 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
       spellByte |= 1 << (7 - i);
     }
   }
-  parts.push(new Uint8Array([spellByte]));
 
   // 7. Mine floor (1 byte)
-  parts.push(new Uint8Array([Math.min(255, completed.mines.floor)]));
+  parts.push(new Uint8Array([spellByte]), new Uint8Array([Math.min(255, completed.mines.floor)]));
 
   // 8. Renown (2 bytes big-endian uint16)
-  const renown = Math.min(0xffff, completed.renown);
+  const renown = Math.min(0xff_ff, completed.renown);
   parts.push(new Uint8Array([(renown >> 8) & 0xff, renown & 0xff]));
 
   // 9. Villager levels (4 bits each, high nibble first)
@@ -150,11 +149,8 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   for (let i = 0; i < villagerOrder.length; i++) {
     const level = Math.min(15, completed.villagerLevels[villagerOrder[i]] ?? 0);
     const byteIndex = Math.floor(i / 2);
-    if (i % 2 === 0) {
-      villagerBytes[byteIndex] |= (level & 0xf) << 4;
-    } else {
-      villagerBytes[byteIndex] |= level & 0xf;
-    }
+    const nibble = i % 2 === 0 ? (level & 0xf) << 4 : level & 0xf;
+    villagerBytes[byteIndex] |= nibble;
   }
   parts.push(villagerBytes);
 
@@ -172,7 +168,7 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   for (let i = 0; i < questOrder.length; i++) {
     const questKey = questOrder[i].questId;
     const stateVal = completed.questStates[questKey] ?? "none";
-    const bits = stateVal === "none" ? 0 : stateVal === "obtained" ? 1 : 2;
+    const bits = encodeQuestState(stateVal);
     const byteIndex = Math.floor(i / 4);
     const bitOffset = (3 - (i % 4)) * 2;
     questBytes[byteIndex] |= (bits & 0x3) << bitOffset;
@@ -245,8 +241,7 @@ export async function encodeTransferPayload(completed: CompletedState): Promise<
   parts.push(relBytes);
 
   // 20. Child choice (new in v7) — 1 byte
-  const childByte =
-    completed.childChoice === "yes" ? 0x01 : completed.childChoice === "no" ? 0x02 : 0x00;
+  const childByte = encodeChildChoice(completed.childChoice);
   parts.push(new Uint8Array([childByte]));
 
   // 21. Almanac recipes bitfield (new in v8)
@@ -390,7 +385,7 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
   const animals: Record<string, Set<AnimalVariantId>> = {};
   for (const key of animalVariantSet) {
     const [animalId, variantId] = key.split(":");
-    const existing = (animals[animalId] ??= new Set<AnimalVariantId>());
+    const existing = getOrCreate(animals, animalId, () => new Set<AnimalVariantId>());
     existing.add(variantId as AnimalVariantId);
   }
 
@@ -406,7 +401,7 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
   const animalCosmetics: Record<string, Set<CosmeticId>> = {};
   for (const key of animalCosmeticSet) {
     const [animalId, cosmeticId] = key.split(":");
-    const existing = (animalCosmetics[animalId] ??= new Set<CosmeticId>());
+    const existing = getOrCreate(animalCosmetics, animalId, () => new Set<CosmeticId>());
     existing.add(cosmeticId as CosmeticId);
   }
 
@@ -527,7 +522,7 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
       throw new Error("Invalid progression reserved bits: expected zero");
     }
     reachedSeason = SEASON_BY_ORD[(progressionByte >> 6) & 0x3];
-    hasUpperFloor = !!(progressionByte & 0x20);
+    hasUpperFloor = Boolean(progressionByte & 0x20);
 
     const romanticOrder = getDateableVillagerOrder();
     const romanticBytes = readBytes(Math.ceil(romanticOrder.length / 8));
@@ -566,13 +561,11 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
       const bitOffset = i * 3;
       const byteIndex = Math.floor(bitOffset / 8);
       const bitShift = 5 - (bitOffset % 8);
-      let bits: number;
-      if (bitShift >= 0) {
-        bits = (relBytes[byteIndex] >> bitShift) & 0x7;
-      } else {
-        bits =
-          ((relBytes[byteIndex] << -bitShift) | (relBytes[byteIndex + 1] >> (8 + bitShift))) & 0x7;
-      }
+      const bits =
+        bitShift >= 0
+          ? (relBytes[byteIndex] >> bitShift) & 0x7
+          : ((relBytes[byteIndex] << -bitShift) | (relBytes[byteIndex + 1] >> (8 + bitShift))) &
+            0x7;
       if (bits >= RELATIONSHIP_MAP.length) {
         throw new Error(`Invalid relationship state code: ${String(bits)}`);
       }
@@ -586,7 +579,7 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
     if (childByte > 0x02) {
       throw new Error(`Invalid child choice code: ${String(childByte)}`);
     }
-    childChoice = childByte === 0x01 ? "yes" : childByte === 0x02 ? "no" : "undeclared";
+    childChoice = decodeChildChoice(childByte);
   }
 
   // 21. Almanac recipes bitfield (v8+)
@@ -642,7 +635,7 @@ function fromBase64url(str: string): Uint8Array {
   }
 
   // Restore standard base64 characters and padding
-  const base64 = str.replace(/-/g, "+").replace(/_/g, "/");
+  const base64 = str.replaceAll("-", "+").replaceAll("_", "/");
   const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
   let binary: string;
   try {
@@ -652,7 +645,7 @@ function fromBase64url(str: string): Uint8Array {
   }
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
+    bytes[i] = binary.codePointAt(i) ?? 0;
   }
   if (toBase64url(bytes) !== str) {
     throw new Error("Malformed transfer payload: non-canonical base64url encoding");
@@ -698,11 +691,11 @@ function assertZeroPadding(usedBitCount: number, bytes: Uint8Array, label: strin
 
 function crc32(bytes: Uint8Array): number {
   const table = getCrc32Table();
-  let crc = 0xffffffff;
+  let crc = 0xff_ff_ff_ff;
   for (const byte of bytes) {
     crc = table[(crc ^ byte) & 0xff] ^ (crc >>> 8);
   }
-  return (crc ^ 0xffffffff) >>> 0;
+  return (crc ^ 0xff_ff_ff_ff) >>> 0;
 }
 
 function fromBitfield(ordered: string[], bytes: Uint8Array, label: string): Set<string> {
@@ -726,7 +719,7 @@ function getCrc32Table(): Uint32Array {
   for (let n = 0; n < 256; n++) {
     let c = n;
     for (let k = 0; k < 8; k++) {
-      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+      c = c & 1 ? 0xed_b8_83_20 ^ (c >>> 1) : c >>> 1;
     }
     table[n] = c >>> 0;
   }
@@ -864,16 +857,32 @@ const V5_CANONICAL_REMAP = new Map<string, string>([
   ["void_gryphon_statue_blue", "void_gryphon_statue_purple"],
 ]);
 
+function encodeQuestState(state: QuestState): number {
+  if (state === "none") return 0;
+  return state === "obtained" ? 1 : 2;
+}
+
+function encodeChildChoice(choice: ChildChoice): number {
+  if (choice === "yes") return 0x01;
+  return choice === "no" ? 0x02 : 0x00;
+}
+
+function decodeChildChoice(code: number): ChildChoice {
+  if (code === 0x01) return "yes";
+  return code === 0x02 ? "no" : "undeclared";
+}
+
 function compareCodeUnits(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
+  if (left < right) return -1;
+  return left > right ? 1 : 0;
 }
 
 function getAnimalCosmeticOrder(): { animalId: AnimalId; cosmeticId: CosmeticId }[] {
   const result: { animalId: AnimalId; cosmeticId: CosmeticId }[] = [];
-  for (const [animalId, animal] of Object.entries(trackerData.animals).sort(([a], [b]) =>
+  for (const [animalId, animal] of Object.entries(trackerData.animals).toSorted(([a], [b]) =>
     compareCodeUnits(a, b),
   )) {
-    for (const cosmeticId of (Object.keys(animal.cosmetics) as CosmeticId[]).sort()) {
+    for (const cosmeticId of (Object.keys(animal.cosmetics) as CosmeticId[]).toSorted()) {
       result.push({ animalId: animalId as AnimalId, cosmeticId });
     }
   }
@@ -882,11 +891,11 @@ function getAnimalCosmeticOrder(): { animalId: AnimalId; cosmeticId: CosmeticId 
 
 function getAnimalVariantOrder(): { animalId: AnimalId; variantId: AnimalVariantId }[] {
   const result: { animalId: AnimalId; variantId: AnimalVariantId }[] = [];
-  for (const [animalId, animal] of recordEntries(trackerData.animals).sort(([a], [b]) =>
+  for (const [animalId, animal] of recordEntries(trackerData.animals).toSorted(([a], [b]) =>
     compareCodeUnits(a, b),
   )) {
     for (const tier of animal.variantTiers) {
-      for (const [variantId, variant] of recordEntries(tier).sort(([a], [b]) =>
+      for (const [variantId, variant] of recordEntries(tier).toSorted(([a], [b]) =>
         compareCodeUnits(a, b),
       )) {
         if (!(variant.source.type === "default")) {
@@ -901,7 +910,7 @@ function getAnimalVariantOrder(): { animalId: AnimalId; variantId: AnimalVariant
 function getCosmeticOrder(): CosmeticId[] {
   return (Object.keys(trackerData.cosmetics) as CosmeticId[])
     .filter((id) => !trackerData.cosmetics[id].sources.some((s) => s.type === "default"))
-    .sort();
+    .toSorted();
 }
 
 // ─── Bitfield helpers ───────────────────────────────────────────────
@@ -909,11 +918,11 @@ function getCosmeticOrder(): CosmeticId[] {
 function getDateableVillagerOrder(): VillagerId[] {
   return (Object.keys(trackerData.villagers) as VillagerId[])
     .filter((id) => trackerData.villagers[id].dateable)
-    .sort();
+    .toSorted();
 }
 
 function getDateOrder(): DateId[] {
-  return (Object.keys(trackerData.dates) as DateId[]).sort();
+  return (Object.keys(trackerData.dates) as DateId[]).toSorted();
 }
 
 function getLegacyAlmanacOrder(): ItemId[] {
@@ -930,27 +939,27 @@ function getLegacyAlmanacOrder(): ItemId[] {
 function getMuseumOrder(): ItemId[] {
   return recordValues(trackerData.museum)
     .flatMap(({ sets }) => recordValues(sets).flatMap(({ items }) => items))
-    .sort();
+    .toSorted();
 }
 
 function getPerkOrder(): PerkId[] {
   return recordValues(trackerData.skills)
     .flatMap((skill) => skill.perkTiers.flatMap((tier) => recordKeys(tier)))
-    .sort();
+    .toSorted();
 }
 
 function getPetCosmeticOrder(): PetCosmeticSetId[] {
-  return (Object.keys(trackerData.pets.cosmetics) as PetCosmeticSetId[]).sort();
+  return (Object.keys(trackerData.pets.cosmetics) as PetCosmeticSetId[]).toSorted();
 }
 
 function getPetSkinOrder(): PetSkinId[] {
-  return (Object.keys(trackerData.pets.skins) as PetSkinId[]).sort();
+  return (Object.keys(trackerData.pets.skins) as PetSkinId[]).toSorted();
 }
 
 function getQuestOrder(): { type: string; questId: QuestId }[] {
   const result: { type: string; questId: QuestId }[] = [];
-  for (const type of recordKeys(trackerData.quests).sort()) {
-    for (const questId of recordKeys(trackerData.quests[type]).sort()) {
+  for (const type of recordKeys(trackerData.quests).toSorted()) {
+    for (const questId of recordKeys(trackerData.quests[type]).toSorted()) {
       result.push({ type, questId });
     }
   }
@@ -958,21 +967,21 @@ function getQuestOrder(): { type: string; questId: QuestId }[] {
 }
 
 function getRecipeOrder(): RecipeId[] {
-  return (Object.keys(trackerData.recipes) as RecipeId[]).sort();
+  return (Object.keys(trackerData.recipes) as RecipeId[]).toSorted();
 }
 
 function getSkillOrder(): SkillId[] {
-  return (Object.keys(trackerData.skills) as SkillId[]).sort();
+  return (Object.keys(trackerData.skills) as SkillId[]).toSorted();
 }
 
 // ─── Base64url ──────────────────────────────────────────────────────
 
 function getSpellOrder(): SpellId[] {
-  return (Object.keys(trackerData.mines.spells) as SpellId[]).sort();
+  return (Object.keys(trackerData.mines.spells) as SpellId[]).toSorted();
 }
 
 function getVillagerOrder(): VillagerId[] {
-  return (Object.keys(trackerData.villagers) as VillagerId[]).sort();
+  return (Object.keys(trackerData.villagers) as VillagerId[]).toSorted();
 }
 
 // ─── Encode ─────────────────────────────────────────────────────────
@@ -980,9 +989,9 @@ function getVillagerOrder(): VillagerId[] {
 function toBase64url(bytes: Uint8Array): string {
   let binary = "";
   for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
+    binary += String.fromCodePoint(byte);
   }
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
 }
 
 // ─── Decode ─────────────────────────────────────────────────────────

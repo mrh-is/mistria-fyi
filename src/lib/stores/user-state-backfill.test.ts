@@ -191,18 +191,18 @@ describe("animal map backfill on merge", () => {
   });
 });
 
+async function getBackfilledState(): Promise<CompletedState> {
+  vi.useFakeTimers();
+  vi.stubGlobal("window", {});
+  vi.stubGlobal("localStorage", makeStorage(buildStoredState()));
+  vi.resetModules();
+
+  const { userState } = await import("#lib/stores/user-state.svelte.js");
+  userState.restorePersistedState();
+  return userState.state.completed;
+}
+
 describe("downstream consumers after backfill", () => {
-  async function getBackfilledState(): Promise<CompletedState> {
-    vi.useFakeTimers();
-    vi.stubGlobal("window", {});
-    vi.stubGlobal("localStorage", makeStorage(buildStoredState()));
-    vi.resetModules();
-
-    const { userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
-    return userState.state.completed;
-  }
-
   it("getAllProgress does not throw on backfilled state", async () => {
     const completed = await getBackfilledState();
     expect(() =>

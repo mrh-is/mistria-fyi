@@ -4,7 +4,6 @@ import { trackerData } from "#lib/data/index.js";
 import {
   getMaxMineFloor,
   getMaxRenownLevel,
-  type LevelIssue,
   MAX_SKILL_LEVEL,
   MAX_VILLAGER_LEVEL,
 } from "#lib/engine/progress.js";
@@ -12,6 +11,7 @@ import { recordKeys, recordValues } from "#lib/utils.js";
 
 import { buildImportState, parseSaveFiles, validatePlayerSave } from "./import-save.js";
 
+import type { LevelIssue } from "#lib/engine/progress.js";
 import type { RecipeId, SkillId, VillagerId } from "#lib/types/tracker-data.js";
 
 import type { SaveBundle } from "./import-save.js";
@@ -123,7 +123,7 @@ describe("buildImportState", () => {
     });
 
     it("derives reachedSeason from gamedata.date timestamp", () => {
-      const GAME_SEASON = 28 * 259200;
+      const GAME_SEASON = 28 * 259_200;
       const bundle: SaveBundle = {
         gamedata: { date: 2 * GAME_SEASON + 100 },
       };
@@ -132,7 +132,7 @@ describe("buildImportState", () => {
     });
 
     it("returns winter for saves past year 1", () => {
-      const GAME_SEASON = 28 * 259200;
+      const GAME_SEASON = 28 * 259_200;
       const bundle: SaveBundle = {
         gamedata: { date: 5 * GAME_SEASON },
       };
@@ -148,17 +148,28 @@ describe("buildImportState", () => {
   });
 });
 
+function worldFacts(extra: Record<string, unknown>): {
+  gamedata: { t2_world_facts: Record<string, unknown> };
+} {
+  return { gamedata: { t2_world_facts: extra } };
+}
+
+function levelWarning(
+  issue: LevelIssue,
+  key: string,
+  value: string,
+  max: number,
+): { code: "level"; issue: LevelIssue; key: string; max: number; value: string } {
+  return { code: "level", issue, key, max, value };
+}
+
+function jsonFile(name: string, data: unknown): File {
+  return new File([JSON.stringify(data)], name);
+}
+
 describe("numeric level domains", () => {
   const ADELINE = "adeline" as VillagerId;
   const FARMING = "farming" as SkillId;
-  const facts = (extra: Record<string, unknown>) => ({ gamedata: { t2_world_facts: extra } });
-  const level = (issue: LevelIssue, key: string, value: string, max: number) => ({
-    code: "level",
-    issue,
-    key,
-    max,
-    value,
-  });
 
   it("accepts in-domain levels without warnings", () => {
     const { completed, result } = buildImportState({
@@ -191,15 +202,15 @@ describe("numeric level domains", () => {
     expect(completed.renown).toBe(getMaxRenownLevel());
     expect(result.counts.renown).toBe(getMaxRenownLevel());
     expect(result.warnings).toEqual([
-      level("above-max", "maximum_mines_level", "9999", getMaxMineFloor()),
-      level("above-max", "adeline_heart_level", "99", MAX_VILLAGER_LEVEL),
-      level("above-max", "farming_level", "999", MAX_SKILL_LEVEL),
+      levelWarning("above-max", "maximum_mines_level", "9999", getMaxMineFloor()),
+      levelWarning("above-max", "adeline_heart_level", "99", MAX_VILLAGER_LEVEL),
+      levelWarning("above-max", "farming_level", "999", MAX_SKILL_LEVEL),
     ]);
   });
 
   it("floors fractional levels silently", () => {
     const { completed, result } = buildImportState(
-      facts({ adeline_heart_level: 3.9, farming_level: 7.2, renown: 2.5 }),
+      worldFacts({ adeline_heart_level: 3.9, farming_level: 7.2, renown: 2.5 }),
     );
     expect(completed.villagerLevels?.[ADELINE]).toBe(3);
     expect(completed.skillLevels?.[FARMING]).toBe(7);
@@ -209,14 +220,14 @@ describe("numeric level domains", () => {
 
   it("ignores negative levels with a warning", () => {
     const { completed, result } = buildImportState(
-      facts({ adeline_heart_level: -1, farming_level: -0.5, renown: -3 }),
+      worldFacts({ adeline_heart_level: -1, farming_level: -0.5, renown: -3 }),
     );
     expect(completed.villagerLevels?.[ADELINE]).toBeUndefined();
     expect(completed.skillLevels?.[FARMING]).toBeUndefined();
     expect(completed.renown).toBe(0);
     expect(result.warnings).toEqual([
-      level("negative", "adeline_heart_level", "-1", MAX_VILLAGER_LEVEL),
-      level("negative", "farming_level", "-0.5", MAX_SKILL_LEVEL),
+      levelWarning("negative", "adeline_heart_level", "-1", MAX_VILLAGER_LEVEL),
+      levelWarning("negative", "farming_level", "-0.5", MAX_SKILL_LEVEL),
     ]);
   });
 
@@ -236,14 +247,14 @@ describe("numeric level domains", () => {
     expect(completed.skillLevels?.[FARMING]).toBeUndefined();
     expect(completed.renown).toBe(0);
     expect(result.warnings).toEqual([
-      level("not-a-number", "maximum_mines_level", "NaN", getMaxMineFloor()),
-      level("not-a-number", "adeline_heart_level", '"12"', MAX_VILLAGER_LEVEL),
-      level("not-a-number", "farming_level", "Infinity", MAX_SKILL_LEVEL),
+      levelWarning("not-a-number", "maximum_mines_level", "NaN", getMaxMineFloor()),
+      levelWarning("not-a-number", "adeline_heart_level", '"12"', MAX_VILLAGER_LEVEL),
+      levelWarning("not-a-number", "farming_level", "Infinity", MAX_SKILL_LEVEL),
     ]);
   });
 
   it("treats missing and zero levels as unset without warnings", () => {
-    const { completed, result } = buildImportState(facts({ adeline_heart_level: 0 }));
+    const { completed, result } = buildImportState(worldFacts({ adeline_heart_level: 0 }));
     expect(completed.mines?.floor).toBe(0);
     expect(completed.villagerLevels).toEqual({});
     expect(completed.renown).toBe(0);
@@ -430,17 +441,16 @@ describe("quest import", () => {
 });
 
 describe("parseSaveFiles", () => {
-  const json = (name: string, data: unknown) => new File([JSON.stringify(data)], name);
-  const player = json("player.json", { perks: [] });
+  const player = jsonFile("player.json", { perks: [] });
 
   it("ignores files with other names", async () => {
-    const result = await parseSaveFiles([player, json("info.json", { perks: [] })]);
+    const result = await parseSaveFiles([player, jsonFile("info.json", { perks: [] })]);
 
     expect(result).toEqual({ bundle: { player: { perks: [] } }, warnings: [] });
   });
 
   it("reports that no save files were recognized", async () => {
-    const result = await parseSaveFiles([json("notes.json", {})]);
+    const result = await parseSaveFiles([jsonFile("notes.json", {})]);
 
     expect(result.bundle).toBeUndefined();
     expect(result.error).toEqual({ code: "no-save-files" });
@@ -459,7 +469,7 @@ describe("parseSaveFiles", () => {
   });
 
   it("rejects an unrecognizable player.json", async () => {
-    const result = await parseSaveFiles([json("player.json", { perks: "cook_perk" })]);
+    const result = await parseSaveFiles([jsonFile("player.json", { perks: "cook_perk" })]);
 
     expect(result).toEqual({
       error: {
@@ -470,11 +480,11 @@ describe("parseSaveFiles", () => {
   });
 
   it("imports a partial bundle and reports the files it skipped", async () => {
-    const quests = json("quests.json", { completed_quests: [] });
+    const quests = jsonFile("quests.json", { completed_quests: [] });
     const result = await parseSaveFiles([
       quests,
       new File(["{"], "gamedata.json"),
-      json("player.json", {}),
+      jsonFile("player.json", {}),
     ]);
 
     expect(result).toEqual({

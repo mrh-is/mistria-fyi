@@ -1,6 +1,8 @@
 import { render } from "svelte/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import ErrorPage from "./+error.svelte";
+
 const appState = vi.hoisted(() => ({ status: 404 }));
 
 // Under the `app` project's `isolate: false`, a component module cached by this file keeps this
@@ -15,8 +17,6 @@ vi.mock("$app/state", () => ({
     url: new URL("https://mistria.fyi/en"),
   },
 }));
-
-import ErrorPage from "./+error.svelte";
 
 beforeEach(() => {
   appState.status = 404;

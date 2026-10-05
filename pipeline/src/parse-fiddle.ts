@@ -176,7 +176,10 @@ function setNestedValue(
     }
     current = current[key] as Record<string, unknown>;
   }
-  const lastKey = path[path.length - 1];
+  const lastKey = path.at(-1);
+  if (lastKey === undefined) {
+    throw new Error(`Empty assignment path from ${sourceFile}`);
+  }
   if (lastKey in current) {
     throw new Error(`Duplicate or colliding path ${path.join(".")} from ${sourceFile}`);
   }
@@ -202,7 +205,7 @@ function walkDirectory(dir: string, rootDir: string, onEntry: (entry: TomlEntry)
     const relPath = relative(rootDir, fullPath).split(sep).join("/");
     const keyPath = relPath.replace(/\.toml$/, "").split("/");
     const sourceKey = keyPath.join(".");
-    const text = readFileSync(fullPath, "utf-8");
+    const text = readFileSync(fullPath, "utf8");
 
     onEntry({ keyPath, relPath, sourceKey, text });
   }
@@ -211,7 +214,7 @@ function walkDirectory(dir: string, rootDir: string, onEntry: (entry: TomlEntry)
 /** Converts a zip entry to a TomlEntry by reading its content, or returns null if not a valid fiddle TOML file. */
 async function zipEntryToTomlEntry(entry: {
   filename: string;
-  openReadStream(): Promise<AsyncIterable<Buffer>>;
+  openReadStream: () => Promise<AsyncIterable<Buffer>>;
 }): Promise<null | TomlEntry> {
   if (entry.filename.endsWith("/")) return null;
   if (!entry.filename.startsWith(FIDDLE_ZIP_PREFIX)) return null;
@@ -226,7 +229,7 @@ async function zipEntryToTomlEntry(entry: {
   for await (const chunk of stream) {
     chunks.push(chunk);
   }
-  const text = Buffer.concat(chunks).toString("utf-8");
+  const text = Buffer.concat(chunks).toString("utf8");
 
   return { keyPath, relPath, sourceKey, text };
 }

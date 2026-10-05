@@ -8,9 +8,10 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { recordKeys } from "#lib/utils.js";
 
-vi.mock("$app/state", async () => ({
-  page: (await import("#lib/test-utils/page-stub.svelte.js")).pageStub,
-}));
+vi.mock("$app/state", async () => {
+  const stubModule = await import("#lib/test-utils/page-stub.svelte.js");
+  return { page: stubModule.pageStub };
+});
 
 describe("VillagerRoster localization", () => {
   beforeEach(() => {

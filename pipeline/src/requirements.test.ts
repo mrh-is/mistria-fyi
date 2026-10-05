@@ -3,12 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   buildRequirementDefinitions,
   createRequirementContext,
-  type NamedRequirementDefinitions,
   parseRequirements,
-  type RequirementExpression,
 } from "./requirements.js";
 
 import type { SourceFieldLocation } from "./data-shapes.js";
+import type { NamedRequirementDefinitions, RequirementExpression } from "./requirements.js";
 
 const testSourceLocation: SourceFieldLocation = {
   entityId: "test_item",

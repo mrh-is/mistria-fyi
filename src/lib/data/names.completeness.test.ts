@@ -14,11 +14,11 @@ describe("generated locale chunks", () => {
   const nonEnglishLocales = LOCALE_CODES.filter((locale) => locale !== "en");
 
   it.each(LOCALIZED_CATEGORIES)("%s has identical keys in every locale", (category) => {
-    const englishKeys = Object.keys(getNameTable(category, "en")).sort();
+    const englishKeys = Object.keys(getNameTable(category, "en")).toSorted();
     expect(englishKeys.length).toBeGreaterThan(0);
 
     for (const locale of nonEnglishLocales) {
-      expect(Object.keys(getNameTable(category, locale)).sort(), locale).toEqual(englishKeys);
+      expect(Object.keys(getNameTable(category, locale)).toSorted(), locale).toEqual(englishKeys);
     }
   });
 

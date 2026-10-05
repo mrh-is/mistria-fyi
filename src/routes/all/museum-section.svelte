@@ -1,8 +1,8 @@
 <script lang="ts">
-  import AnimalsContent from "#lib/components/animals-content.svelte";
+  import MuseumContent from "#lib/components/museum-content.svelte";
   import { userState } from "#lib/stores/user-state.svelte.js";
 
-  import SectionHeader from "./SectionHeader.svelte";
+  import SectionHeader from "./section-header.svelte";
 
   import type { CategoryProgress } from "#lib/engine/progress.js";
   import type { LocaleCode } from "#lib/types/locale.js";
@@ -12,11 +12,11 @@
 
 {#if progress.completed < progress.total || userState.state.showCompleted}
   <section
-    aria-labelledby="category-animals"
+    aria-labelledby="category-museum"
     class="flex flex-col gap-1"
-    style="--primary: var(--cat-animals)"
+    style="--primary: var(--cat-museum)"
   >
-    <SectionHeader key="animals" {progress} />
-    <AnimalsContent {locale} />
+    <SectionHeader key="museum" {progress} />
+    <MuseumContent {locale} />
   </section>
 {/if}

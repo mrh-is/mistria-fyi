@@ -9,13 +9,8 @@
   import { trackerData } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
   import { isVillagerComplete, MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
-  import {
-    getMarriedVillager,
-    type RelationshipActionValue,
-    relationshipPresentation,
-    type RelationshipPrompt,
-    type RelationshipStatus,
-  } from "#lib/engine/relationships.js";
+  import { getMarriedVillager, relationshipPresentation } from '#lib/engine/relationships.js';
+import type { RelationshipActionValue, RelationshipPrompt, RelationshipStatus } from '#lib/engine/relationships.js';
   import * as m from "#lib/paraglide/messages.js";
   import { villagerSpriteUrl } from "#lib/sprites/sprite-url.js";
   import { userState } from "#lib/stores/user-state.svelte.js";

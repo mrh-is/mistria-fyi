@@ -32,14 +32,17 @@ export interface TargetSizeViolation {
 
 export async function collectVisibleElementBoxes(page: Page): Promise<ElementBox[]> {
   return page.locator("body").evaluate(() => {
+    // oxlint-disable-next-line unicorn/consistent-function-scoping -- runs inside page.evaluate, so helpers must stay within the serialized callback
     const selectorFor = (element: Element): string => {
       if (element.id) return `#${CSS.escape(element.id)}`;
       const label = element.getAttribute("aria-label");
       if (label) return `${element.tagName.toLowerCase()}[aria-label=${JSON.stringify(label)}]`;
       return element.tagName.toLowerCase();
     };
+    // oxlint-disable-next-line unicorn/consistent-function-scoping -- runs inside page.evaluate, so helpers must stay within the serialized callback
     const labelFor = (element: Element): string =>
       element.getAttribute("aria-label") ?? element.textContent.trim().slice(0, 80);
+    // oxlint-disable-next-line unicorn/consistent-function-scoping -- runs inside page.evaluate, so helpers must stay within the serialized callback
     const clippedByAncestor = (element: Element, rectangle: DOMRect): boolean => {
       let ancestor = element.parentElement;
       while (ancestor && ancestor !== document.body) {

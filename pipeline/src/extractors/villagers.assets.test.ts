@@ -52,11 +52,13 @@ describe("extractVillagers — real assets", () => {
   it("emits a name chunk for every locale", () => {
     const { localeNames } = extract();
 
-    expect(Object.keys(localeNames).sort()).toStrictEqual(
-      ["en", "es", "fr", "ja", "ko", "ru", "zh-Hans", "zh-Hant"].sort(),
+    expect(Object.keys(localeNames).toSorted()).toStrictEqual(
+      ["en", "es", "fr", "ja", "ko", "ru", "zh-Hans", "zh-Hant"].toSorted(),
     );
     for (const chunk of Object.values(localeNames)) {
-      expect(Object.keys(chunk).sort()).toStrictEqual([adeline, balor, untranslated].sort());
+      expect(Object.keys(chunk).toSorted()).toStrictEqual(
+        [adeline, balor, untranslated].toSorted(),
+      );
     }
   });
 

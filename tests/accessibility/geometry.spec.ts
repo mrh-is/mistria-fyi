@@ -70,7 +70,9 @@ test.describe("@critical 320-pixel reflow", () => {
     const metrics = await page.locator(".page-header__title").evaluate((heading) => {
       const style = getComputedStyle(heading);
       return {
+        // oxlint-disable-next-line unicorn/prefer-number-coercion -- computed style values carry a "px" suffix that Number() rejects
         fontSize: Number.parseFloat(style.fontSize),
+        // oxlint-disable-next-line unicorn/prefer-number-coercion -- computed style values carry a "px" suffix that Number() rejects
         lineHeight: Number.parseFloat(style.lineHeight),
       };
     });

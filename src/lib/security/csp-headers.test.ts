@@ -5,9 +5,9 @@ import { describe, expect, it } from "vitest";
 import { CSP_DIRECTIVES } from "./csp-directives.js";
 
 const headersPath = resolve(import.meta.dirname, "../../../_headers");
-const headersContent = readFileSync(headersPath, "utf-8");
+const headersContent = readFileSync(headersPath, "utf8");
 const appHtmlPath = resolve(import.meta.dirname, "../../app.html");
-const appHtmlContent = readFileSync(appHtmlPath, "utf-8");
+const appHtmlContent = readFileSync(appHtmlPath, "utf8");
 
 function parseHeadersCsp(content: string): Map<string, string> {
   const cspMatch = /Content-Security-Policy:\s*(.+)/.exec(content);
@@ -79,10 +79,7 @@ describe("Content-Security-Policy", () => {
       const headersValue = headersParsed.get(name) ?? "";
 
       for (const value of configValues) {
-        expect(
-          headersValue.includes(value),
-          `_headers directive "${name}" missing value "${value}" from CSP_DIRECTIVES`,
-        ).toBe(true);
+        expect(headersValue).toContain(value);
       }
     }
   });

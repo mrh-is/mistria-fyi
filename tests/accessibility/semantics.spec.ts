@@ -8,6 +8,12 @@ import {
 } from "./support/application-state.js";
 import { openFeedbackValidation, openVisibilityPanel } from "./support/scenarios.js";
 
+const HEADING_NAME_OVERRIDES: Record<string, string | undefined> = {
+  "/": "Mistria Field Guide",
+  "/all": "Everything",
+  "/settings": "Data management",
+};
+
 test.describe("@critical semantic accessibility", () => {
   test.beforeEach(async ({ page }) => {
     await initializeApplication(page, "light");
@@ -17,14 +23,7 @@ test.describe("@critical semantic accessibility", () => {
     test(`${route.path} has a named main landmark and page heading`, async ({ page }) => {
       await gotoApplication(page, route.path);
       await expect(page.getByRole("main")).toBeVisible();
-      const headingName =
-        route.path === "/"
-          ? "Mistria Field Guide"
-          : route.path === "/all"
-            ? "Everything"
-            : route.path === "/settings"
-              ? "Data management"
-              : route.name;
+      const headingName = HEADING_NAME_OVERRIDES[route.path] ?? route.name;
       await expect(page.getByRole("heading", { level: 1, name: headingName })).toBeVisible();
     });
   }

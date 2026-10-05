@@ -57,13 +57,18 @@
 
     if (!wasPicking) {
       wasPicking = true;
-      void tick().then(() => cancelButton?.focus());
+      void afterTick(() => cancelButton?.focus());
     }
 
     return () => {
       cancelAnimationFrame(frame);
     };
   });
+
+  async function afterTick(run: () => void): Promise<void> {
+    await tick();
+    run();
+  }
 
   function handleKeydown(event: KeyboardEvent): void {
     if (!active) return;
@@ -87,7 +92,7 @@
     const currentIndex = focusable.indexOf(document.activeElement as HTMLButtonElement);
     const direction = event.shiftKey ? -1 : 1;
     const nextIndex =
-      currentIndex < 0 ? 0 : (currentIndex + direction + focusable.length) % focusable.length;
+      currentIndex === -1 ? 0 : (currentIndex + direction + focusable.length) % focusable.length;
     event.preventDefault();
     focusable[nextIndex]?.focus();
   }

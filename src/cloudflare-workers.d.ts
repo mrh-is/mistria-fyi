@@ -2,9 +2,9 @@
 // SvelteKit 2's `event.platform.env`. See https://developers.cloudflare.com/workers/runtime-apis/bindings/
 declare module "cloudflare:workers" {
   interface KVNamespace {
-    delete(key: string): Promise<void>;
-    get(key: string): Promise<null | string>;
-    put(key: string, value: string, options?: KVNamespacePutOptions): Promise<void>;
+    delete: (key: string) => Promise<void>;
+    get: (key: string) => Promise<null | string>;
+    put: (key: string, value: string, options?: KVNamespacePutOptions) => Promise<void>;
   }
 
   interface KVNamespacePutOptions {

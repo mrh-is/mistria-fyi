@@ -15,7 +15,7 @@
     const collator = nameCollator(locale);
     return recordKeys(trackerData.skills)
       .map((id) => ({ id, name: getName("skills", id, locale) }))
-      .sort((a, b) => collator.compare(a.name, b.name));
+      .toSorted((a, b) => collator.compare(a.name, b.name));
   });
 </script>
 

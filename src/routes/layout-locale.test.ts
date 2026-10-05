@@ -26,14 +26,16 @@ describe("root layout locale", () => {
 
   it("reads the middleware-resolved locale during SSR", async () => {
     environment.browser = false;
-    expect((await run()).locale).toBe("ja");
+    const data = await run();
+    expect(data.locale).toBe("ja");
     expect(runtime.getLocaleForUrl).not.toHaveBeenCalled();
     expect(names.loadNames).toHaveBeenCalledWith("ja", ["ui"]);
   });
 
   it("resolves the locale from the target URL in the browser", async () => {
     environment.browser = true;
-    expect((await run()).locale).toBe("ru");
+    const data = await run();
+    expect(data.locale).toBe("ru");
     expect(runtime.getLocale).not.toHaveBeenCalled();
   });
 });

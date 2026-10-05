@@ -303,8 +303,8 @@ describe("collectRewardSources", () => {
       const acc = new ItemSourceAccumulator();
       collectRewardSources(fiddle, acc);
 
-      expect(acc.get("basic_wood" as ItemId).length).toBe(1);
-      expect(acc.get("ore_stone" as ItemId).length).toBe(1);
+      expect(acc.get("basic_wood" as ItemId)).toHaveLength(1);
+      expect(acc.get("ore_stone" as ItemId)).toHaveLength(1);
     });
 
     it("skips letters with empty items array", () => {
@@ -319,7 +319,7 @@ describe("collectRewardSources", () => {
 
       const acc = new ItemSourceAccumulator();
       collectRewardSources(fiddle, acc);
-      expect(acc.entries().length).toBe(0);
+      expect(acc.entries()).toHaveLength(0);
     });
   });
 
@@ -367,7 +367,7 @@ describe("collectRewardSources", () => {
       collectRewardSources(fiddle, acc);
 
       const all = acc.entries();
-      expect(all.length).toBe(1);
+      expect(all).toHaveLength(1);
       expect(all[0][0]).toBe("explorer_bed");
     });
 
@@ -472,7 +472,7 @@ describe("collectRewardSources", () => {
 
       const acc = new ItemSourceAccumulator();
       collectRewardSources(fiddle, acc);
-      expect(acc.entries().length).toBe(0);
+      expect(acc.entries()).toHaveLength(0);
     });
   });
 
@@ -501,7 +501,7 @@ describe("collectRewardSources", () => {
 
       const acc = new ItemSourceAccumulator();
       collectRewardSources(fiddle, acc);
-      expect(acc.entries().length).toBe(0);
+      expect(acc.entries()).toHaveLength(0);
     });
   });
 });

@@ -3,7 +3,7 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
 import { expectArray, expectStringArray } from "../data-shapes.js";
 import { forEachItem } from "../extractor-helpers.js";
 import { localizeField } from "../localize.js";
-import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
+import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type {
@@ -14,6 +14,8 @@ import type {
   RecipeId,
   TrackerData,
 } from "#lib/types/tracker-data.js";
+
+import type { ParsedGameData } from "../parse-fiddle.js";
 
 /**
  * The game's `icon_sprite` name per item, keyed by item ID. Used only to locate the source PNG
@@ -160,7 +162,7 @@ export function extractAlmanac(
     }
 
     const categoryKey =
-      assignedIdx !== undefined ? rawCategories[assignedIdx].key : item.topCategory;
+      assignedIdx === undefined ? item.topCategory : rawCategories[assignedIdx].key;
     const itemId = item.id as ItemId;
     items[item.id] = { category: categoryKey };
     iconSpritesByItemId[item.id] = item.iconSprite;

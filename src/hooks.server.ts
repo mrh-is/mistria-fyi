@@ -1,4 +1,4 @@
-import { type Handle, sequence } from "@sveltejs/kit/hooks";
+import { sequence } from "@sveltejs/kit/hooks";
 
 import {
   baseLocale,
@@ -8,6 +8,8 @@ import {
   isLocale,
 } from "#lib/paraglide/runtime.js";
 import { paraglideMiddleware } from "#lib/paraglide/server.js";
+
+import type { Handle } from "@sveltejs/kit/hooks";
 
 /**
  * Never locale-prefixed: `/api` is a JSON endpoint, and `/sitemap.xml` is a prerendered,

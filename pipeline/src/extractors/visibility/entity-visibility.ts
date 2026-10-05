@@ -254,7 +254,7 @@ function acquisitionSourceCondition(
     case "mine":
     case "mine_fish": {
       const floor = source.biomeId ? ctx.biomeFloor(source.biomeId) : undefined;
-      return floor !== undefined ? { type: "minesLevel", floor } : ALWAYS;
+      return floor === undefined ? ALWAYS : { type: "minesLevel", floor };
     }
     case "mines_chest":
     case "mines_dig_site": {
@@ -468,12 +468,12 @@ function acquisitionSourceConditions(
             : ALWAYS,
       };
     }
-    case "quest": {
+    case "quest":
       return {
         entity,
         source: { type: "questAvailable", questId: source.questId },
       };
-    }
+
     case "scroll_bundle":
     case "store": {
       const storeGate = storeGateCondition(source.storeId, ctx.storeVisibility);
@@ -522,11 +522,11 @@ function assignSpellVisibility(trackerData: TrackerData): void {
 function buildFlatPerks(skills: TrackerData["skills"]): Record<string, FlatPerkInfo> {
   const result: Record<string, FlatPerkInfo> = {};
   for (const [skillId, skill] of Object.entries(skills)) {
-    skill.perkTiers.forEach((tier, tierIdx) => {
+    for (const [tierIdx, tier] of skill.perkTiers.entries()) {
       for (const perkId of Object.keys(tier)) {
         result[perkId] = { skillId: skillId as SkillId, tier: tierIdx + 1 };
       }
-    });
+    }
   }
   return result;
 }

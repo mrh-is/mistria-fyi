@@ -33,7 +33,7 @@ export async function defaultCommandRunner(
 export function summarizePlaywrightReport(report: unknown): string[] {
   const errors: string[] = [];
   collectErrors(report, errors);
-  return [...new Set(errors)].slice(0, 10).map((error) => error.slice(0, 2_000));
+  return [...new Set(errors)].slice(0, 10).map((error) => error.slice(0, 2000));
 }
 
 export async function synchronizeAccessibilityIssue(options: {
@@ -83,28 +83,24 @@ export async function synchronizeAccessibilityIssue(options: {
     "Agent: codex",
   ].join("\n");
 
-  if (issueNumber === undefined) {
-    await run(
-      "gh",
-      [
-        "issue",
-        "create",
-        "--title",
-        TITLE,
-        "--label",
-        "type: bug",
-        "--label",
-        "status: ready",
-        "--label",
-        "agent: codex",
-        "--body-file",
-        "-",
-      ],
-      body,
-    );
-  } else {
-    await run("gh", ["issue", "comment", String(issueNumber), "--body-file", "-"], body);
-  }
+  const args =
+    issueNumber === undefined
+      ? [
+          "issue",
+          "create",
+          "--title",
+          TITLE,
+          "--label",
+          "type: bug",
+          "--label",
+          "status: ready",
+          "--label",
+          "agent: codex",
+          "--body-file",
+          "-",
+        ]
+      : ["issue", "comment", String(issueNumber), "--body-file", "-"];
+  await run("gh", args, body);
 }
 
 function collectErrors(value: unknown, errors: string[]): void {

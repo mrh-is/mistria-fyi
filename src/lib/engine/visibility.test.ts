@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { recordKeys } from "#lib/utils.js";
-import { deepMerge, type DeepPartial } from "#lib/utils/deep-partial.js";
+import { deepMerge } from "#lib/utils/deep-partial.js";
 
 import {
   deriveProgressionState,
@@ -22,6 +22,7 @@ import type {
   VillagerId,
 } from "#lib/types/tracker-data.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
+import type { DeepPartial } from "#lib/utils/deep-partial.js";
 
 import type { UserProgressionState } from "./visibility.js";
 
@@ -477,8 +478,8 @@ describe("deriveProgressionState", () => {
 
     it("produces identical visibility for every quest key order", () => {
       const completed = makeCompleted({ questStates: { [summitStairs]: "completed" } });
-      const typeOrders = [allTypes, [...allTypes].reverse()];
-      const storyOrders = [storyQuests, [...storyQuests].reverse()];
+      const typeOrders = [allTypes, [...allTypes].toReversed()];
+      const storyOrders = [storyQuests, [...storyQuests].toReversed()];
 
       const results = typeOrders.flatMap((typeOrder) =>
         storyOrders.map(
@@ -578,7 +579,7 @@ describe("satisfyCondition", () => {
   it("does not modify state for isDating (requires Villager choice)", () => {
     const completed = makeCompleted();
     satisfyCondition({ type: "isDating" }, completed, makeTrackerData());
-    expect(Object.keys(completed.villagerRelationships).length).toBe(0);
+    expect(Object.keys(completed.villagerRelationships)).toHaveLength(0);
   });
 
   it("sets villagerRelationships to married", () => {

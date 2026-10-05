@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { localePreference } from "./locale-preference.svelte.js";
+
 const { downloadLocale, goto, setLocale } = vi.hoisted(() => ({
   downloadLocale: vi.fn<(locale: string) => Promise<boolean | undefined>>(),
   goto: vi.fn(),
@@ -19,8 +21,6 @@ vi.mock("#lib/paraglide/runtime.js", () => ({
   setLocale,
 }));
 vi.mock("#lib/utils/offline-locales.js", () => ({ downloadLocale }));
-
-import { localePreference } from "./locale-preference.svelte";
 
 describe("localePreference", () => {
   beforeEach(() => {

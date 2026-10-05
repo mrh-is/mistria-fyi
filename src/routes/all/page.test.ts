@@ -40,7 +40,7 @@ describe("/all page", () => {
       return index;
     });
 
-    expect(positions).toEqual([...positions].sort((a, b) => a - b));
+    expect(positions).toEqual(positions.toSorted((a, b) => a - b));
   });
 
   it("reconciles the header total with every rendered category, recipes included", () => {

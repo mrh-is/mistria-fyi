@@ -16,7 +16,7 @@ describe("buildVillagerRoster", () => {
   it.each(["en", "ja"] as const)("orders %s names with the locale's collation", (locale) => {
     const expected = recordKeys(trackerData.villagers)
       .map((id) => getName("villagers", id, locale))
-      .sort((a, b) => nameCollator(locale).compare(a, b));
+      .toSorted((a, b) => nameCollator(locale).compare(a, b));
 
     expect(buildVillagerRoster(locale).map(({ name }) => name)).toStrictEqual(expected);
   });

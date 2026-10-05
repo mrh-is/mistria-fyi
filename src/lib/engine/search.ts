@@ -260,7 +260,7 @@ export function searchItems(
 /** Prefix matches first, then available before unavailable, then alphabetical */
 function rankResults(results: SearchResult[], query: string, locale: LocaleCode): SearchResult[] {
   const collator = nameCollator(locale);
-  return results.sort((a, b) => {
+  return results.toSorted((a, b) => {
     const aName = (a.fullName ?? a.name).toLowerCase();
     const bName = (b.fullName ?? b.name).toLowerCase();
     const aPrefix = aName.startsWith(query) ? 0 : 1;

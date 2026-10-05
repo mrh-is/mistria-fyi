@@ -70,7 +70,7 @@ describe("OverallProgress", () => {
     const { body } = render(OverallProgress, { props: { progress } });
 
     expect(body).toContain(
-      `aria-label="Выполнено 0 из ${formatNumber(expectedTotal, "ru")} всего, 0\u00a0%"`,
+      `aria-label="Выполнено 0 из ${formatNumber(expectedTotal, "ru")} всего, 0\u00A0%"`,
     );
   });
 });

@@ -3,7 +3,7 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
 import { isExcludedCosmetic } from "../acquisition/exclusions.js";
 import { expectArray } from "../data-shapes.js";
 import { localizeField } from "../localize.js";
-import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
+import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { SourceTuple } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -14,6 +14,8 @@ import type {
   CosmeticSlotMeta,
   TrackerData,
 } from "#lib/types/tracker-data.js";
+
+import type { ParsedGameData } from "../parse-fiddle.js";
 
 export interface CosmeticExtraction {
   cosmetics: TrackerData["cosmetics"];
@@ -112,7 +114,7 @@ function readCustomizationMenu(
       sourcePath: sourceFile,
     });
     const subCategories: string[] = [];
-    entries.forEach((entry, index) => {
+    for (const [index, entry] of entries.entries()) {
       const key = entry.key as string | undefined;
       const name = entry.name as string | undefined;
       if (!key || !name) {
@@ -133,7 +135,7 @@ function readCustomizationMenu(
       });
       for (const locale of LOCALE_CODES) subCategoryLocaleNames[locale][key] = values[locale];
       subCategories.push(key);
-    });
+    }
     cosmeticSlots[section as CosmeticSlot] = { subCategories };
   }
   return { cosmeticSlots, subCategoryLocaleNames };

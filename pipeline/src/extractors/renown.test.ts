@@ -31,7 +31,7 @@ function makeFiddle(overrides: Record<string, unknown> = {}) {
 
 describe("extractTownRanks", () => {
   beforeEach(() => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
   });
 
   it("returns empty array when renown data is absent", () => {

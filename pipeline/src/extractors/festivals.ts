@@ -22,7 +22,7 @@ export function extractFestivals(
   if (!festivals) return { festivals: {}, localeNames };
 
   const result = {} as TrackerData["festivals"];
-  for (const festivalId of Object.keys(festivals).sort()) {
+  for (const festivalId of Object.keys(festivals).toSorted()) {
     if (festivalId === "default") continue;
 
     const festival = festivals[festivalId];

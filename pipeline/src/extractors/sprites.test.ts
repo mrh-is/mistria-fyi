@@ -28,7 +28,7 @@ const TINY_PNG = Buffer.from(
 
 describe("extractSprites", () => {
   it("extracts sprites as webp keyed by item ID under items/", async () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = makeTempDir();
     const outputDir = join(makeTempDir(), "sprites");
 
@@ -53,7 +53,7 @@ describe("extractSprites", () => {
   });
 
   it("stages one output file per item sharing a sprite, converting the source once", async () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = makeTempDir();
     const outputDir = join(makeTempDir(), "sprites");
 
@@ -77,7 +77,7 @@ describe("extractSprites", () => {
   });
 
   it("finds sprites in fallback directories (Placeables, Player)", async () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = makeTempDir();
     const outputDir = join(makeTempDir(), "sprites");
 
@@ -96,7 +96,7 @@ describe("extractSprites", () => {
   });
 
   it("reports missing sprites", async () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = makeTempDir();
     const outputDir = join(makeTempDir(), "sprites");
 
@@ -120,7 +120,7 @@ describe("extractSprites", () => {
   });
 
   it("skips sprites that already exist as webp", async () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = makeTempDir();
     const outputDir = join(makeTempDir(), "sprites");
 
@@ -141,7 +141,7 @@ describe("extractSprites", () => {
   });
 
   it("skips outline PNGs and non-item-icon PNGs", async () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = makeTempDir();
     const outputDir = join(makeTempDir(), "sprites");
 
@@ -167,7 +167,7 @@ describe("extractSprites", () => {
   });
 
   it("excludes overridden sprites from extraction", async () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = makeTempDir();
     const outputDir = join(makeTempDir(), "sprites");
 
@@ -190,7 +190,7 @@ describe("extractSprites", () => {
 
 describe("extractVillagerSprites", () => {
   it("extracts sprites as webp keyed by villager ID under villagers/", async () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = makeTempDir();
     const outputDir = join(makeTempDir(), "sprites");
 
@@ -219,7 +219,7 @@ describe("extractVillagerSprites", () => {
   });
 
   it("reports missing villager sprites", async () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = makeTempDir();
     const outputDir = join(makeTempDir(), "sprites");
 
@@ -239,7 +239,7 @@ describe("extractVillagerSprites", () => {
   });
 
   it("skips outline PNGs in the NPC icon directory", async () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = makeTempDir();
     const outputDir = join(makeTempDir(), "sprites");
 
@@ -259,7 +259,7 @@ describe("extractVillagerSprites", () => {
   });
 
   it("does not extract villager sprites from the item icon search directories", async () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = makeTempDir();
     const outputDir = join(makeTempDir(), "sprites");
 

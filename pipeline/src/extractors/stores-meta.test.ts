@@ -28,7 +28,7 @@ function makeFiddle(overrides: Record<string, unknown> = {}) {
 
 describe("extractStoresMeta", () => {
   beforeEach(() => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
   });
 
   afterEach(() => {

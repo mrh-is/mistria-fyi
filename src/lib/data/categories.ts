@@ -114,9 +114,9 @@ export function sortCategoryKeysByName(
   keys: readonly CategoryKey[],
   locale: LocaleCode,
 ): CategoryKey[] {
-  return [...keys].sort((left, right) => {
+  return [...keys].toSorted((left, right) => {
     const nameOrder = CATEGORY_NAMES[left](locale).localeCompare(CATEGORY_NAMES[right](locale));
-    return nameOrder !== 0 ? nameOrder : left.localeCompare(right);
+    return nameOrder === 0 ? left.localeCompare(right) : nameOrder;
   });
 }
 

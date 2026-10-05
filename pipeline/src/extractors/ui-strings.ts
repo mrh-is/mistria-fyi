@@ -100,7 +100,7 @@ export function extractUiStrings(
     byId.set(id, { miscLocalKey, stripArticle });
   }
 
-  for (const [id, { miscLocalKey, stripArticle }] of [...byId].sort(([a], [b]) =>
+  for (const [id, { miscLocalKey, stripArticle }] of [...byId].toSorted(([a], [b]) =>
     a.localeCompare(b),
   )) {
     const english = miscLocal[miscLocalKey];

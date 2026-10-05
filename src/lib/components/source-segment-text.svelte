@@ -5,6 +5,7 @@
   import { isVisible } from "#lib/engine/visibility.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
 
+  // oxlint-disable-next-line import/no-self-import, import/no-cycle -- Svelte requires a recursive component to import itself
   import SourceSegmentText from "./source-segment-text.svelte";
 
   import type { SourceSegment } from "#lib/utils/source-segments.js";

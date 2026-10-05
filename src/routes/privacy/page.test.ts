@@ -19,7 +19,7 @@ describe("privacy policy", () => {
 
 describe("privacy disclosure drift", () => {
   it("app.html makes no automatic requests to undisclosed third parties", () => {
-    const appHtml = readFileSync(resolve(import.meta.dirname, "../../app.html"), "utf-8");
+    const appHtml = readFileSync(resolve(import.meta.dirname, "../../app.html"), "utf8");
 
     // Google Fonts or any external font service would constitute an
     // automatic third-party request that the privacy policy must disclose.

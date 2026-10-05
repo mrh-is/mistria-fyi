@@ -27,7 +27,9 @@
 
   function scrollToTransfer(): void {
     void openThenScroll(
-      () => transferOpen = true,
+      () => {
+        transferOpen = true;
+      },
       () => transferSection?.scrollIntoView({
         behavior: prefersReducedMotion.current ? "auto" : "smooth",
           block: "start",
@@ -41,7 +43,13 @@
     const target = section === "transfer" ? transferSection : importSection;
     if (section !== "transfer" && section !== "import") return;
     void openThenScroll(
-      () => section === "transfer" ? transferOpen = true : importOpen = true,
+      () => {
+        if (section === "transfer") {
+          transferOpen = true;
+        } else {
+          importOpen = true;
+        }
+      },
       () => target?.scrollIntoView({
         behavior: prefersReducedMotion.current ? "auto" : "smooth",
           block: "start",

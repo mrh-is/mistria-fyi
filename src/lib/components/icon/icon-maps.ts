@@ -52,6 +52,12 @@ import IconX from "@tabler/icons-svelte-runes/icons/x";
 
 import type { Icon } from "@tabler/icons-svelte-runes";
 
+import type { CategoryKey } from "#lib/data/categories.js";
+import type { SourceFilter } from "#lib/stores/toolbar-state.svelte.js";
+import type { QuestState } from "#lib/stores/user-state.svelte.js";
+import type { Source } from "#lib/types/acquisition.js";
+import type { Season, Weather } from "#lib/types/tracker-data.js";
+
 export type AppIcon = Icon;
 
 export interface IconProps {
@@ -61,12 +67,6 @@ export interface IconProps {
   size?: number | string;
   stroke?: number | string;
 }
-
-import type { CategoryKey } from "#lib/data/categories.js";
-import type { SourceFilter } from "#lib/stores/toolbar-state.svelte.js";
-import type { QuestState } from "#lib/stores/user-state.svelte.js";
-import type { Source } from "#lib/types/acquisition.js";
-import type { Season, Weather } from "#lib/types/tracker-data.js";
 
 // ── Source ──────────────────────────────────────────────────────────────────
 
