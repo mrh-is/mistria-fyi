@@ -1,8 +1,8 @@
-import { render } from "svelte/server";
 import { afterEach, describe, expect, it } from "vitest";
 
 import SourceSegmentText from "#lib/components/source-segment-text.svelte";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 import type { SourceSegment } from "#lib/utils/source-segments.js";
 
@@ -19,10 +19,10 @@ describe("SourceSegmentText", () => {
         revealed: ["the Dragon Forge (Mines level 90)"],
       },
     ];
-    const { body } = render(SourceSegmentText, { props: { segments } });
-    expect(body).toContain("Craft at");
-    expect(body).toContain('aria-label="Reveal spoiler"');
-    expect(body).toContain('aria-hidden="true"');
+    const { container, queries } = renderToFragment(SourceSegmentText, { props: { segments } });
+    expect(container.textContent).toContain("Craft at");
+    const cover = queries.getByRole("button", { name: "Reveal spoiler" });
+    expect(cover.querySelector("[aria-hidden='true']")?.textContent).toContain("Dragon Forge");
   });
 
   it("reveals a fragment when progression satisfies its condition", () => {
@@ -33,8 +33,8 @@ describe("SourceSegmentText", () => {
         revealed: ["the Dragon Forge (Mines level 90)"],
       },
     ];
-    const { body } = render(SourceSegmentText, { props: { segments } });
-    expect(body).toContain("Dragon Forge");
-    expect(body).not.toContain("Reveal spoiler");
+    const { container, queries } = renderToFragment(SourceSegmentText, { props: { segments } });
+    expect(container.textContent).toContain("Dragon Forge");
+    expect(queries.queryByRole("button", { name: "Reveal spoiler" })).toBeNull();
   });
 });
