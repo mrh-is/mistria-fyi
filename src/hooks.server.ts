@@ -1,4 +1,4 @@
-import { sequence } from "@sveltejs/kit/hooks";
+import { type Handle, sequence } from "@sveltejs/kit/hooks";
 
 import {
   baseLocale,
@@ -6,10 +6,8 @@ import {
   extractLocaleFromHeader,
   getTextDirection,
   isLocale,
-} from "$lib/paraglide/runtime.js";
-import { paraglideMiddleware } from "$lib/paraglide/server.js";
-
-import type { Handle } from "@sveltejs/kit";
+} from "#lib/paraglide/runtime.js";
+import { paraglideMiddleware } from "#lib/paraglide/server.js";
 
 /**
  * Never locale-prefixed: `/api` is a JSON endpoint, and `/sitemap.xml` is a prerendered,
@@ -58,12 +56,13 @@ export const bareLocaleRedirect: Handle = ({ event, resolve }) => {
 };
 
 const paraglideHandle: Handle = ({ event, resolve }) =>
-  paraglideMiddleware(event.request, ({ locale, request: localizedRequest }) => {
-    event.request = localizedRequest;
-    return resolve(event, {
+  // `event.request` is read-only in SvelteKit 3, so the middleware's de-localized request is unused;
+  // routing already de-localizes through the `reroute` hook in `hooks.ts`.
+  paraglideMiddleware(event.request, ({ locale }) =>
+    resolve(event, {
       transformPageChunk: ({ html }) =>
         html.replace("%lang%", locale).replace("%dir%", getTextDirection(locale)),
-    });
-  });
+    }),
+  );
 
 export const handle: Handle = sequence(bareLocaleRedirect, paraglideHandle);

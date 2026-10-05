@@ -6,8 +6,8 @@ import type {
   SkillId,
   VillagerId,
   Weather,
-} from "$lib/types/tracker-data.js";
-import type { NonEmptyArray } from "$lib/utils";
+} from "#lib/types/tracker-data.js";
+import type { NonEmptyArray } from "#lib/utils.js";
 
 export interface AvailabilityContext {
   heartLevels?: ReadonlyMap<VillagerId, number>;

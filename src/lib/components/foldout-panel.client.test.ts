@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import FoldoutPanelHarness from "$lib/components/foldout-panel.test-harness.svelte";
+import FoldoutPanelHarness from "#lib/components/foldout-panel.test-harness.svelte";
 
 function renderPanel(props: { dialog?: boolean; withHeaderAction?: boolean } = {}) {
   const onclose = vi.fn();

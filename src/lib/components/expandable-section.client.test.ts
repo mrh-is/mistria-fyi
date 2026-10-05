@@ -2,8 +2,8 @@ import { fireEvent, render, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { describe, expect, it } from "vitest";
 
-import ExpandableSectionHarness from "$lib/components/expandable-section.test-harness.svelte";
-import { FeedbackContext } from "$lib/feedback/context.svelte.js";
+import ExpandableSectionHarness from "#lib/components/expandable-section.test-harness.svelte";
+import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 
 describe("ExpandableSection", () => {
   it("connects the disclosure trigger to its controlled content", async () => {

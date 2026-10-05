@@ -1,4 +1,4 @@
-import type { CategoryKey } from "$lib/data/categories.js";
+import type { CategoryKey } from "#lib/data/categories.js";
 
 export const SITE_ORIGIN = "https://mistria.fyi";
 export const SITE_NAME = "Mistria Field Guide";

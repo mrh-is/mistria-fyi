@@ -1,6 +1,6 @@
 import { SvelteSet } from "svelte/reactivity";
 
-import { canonicalAlmanacId, trackerData } from "$lib/data/index.js";
+import { canonicalAlmanacId, trackerData } from "#lib/data/index.js";
 import {
   clampLevel,
   clampMineFloor,
@@ -8,27 +8,27 @@ import {
   getMaxMineFloor,
   MAX_SKILL_LEVEL,
   MAX_VILLAGER_LEVEL,
-} from "$lib/engine/progress.js";
-import { findRecipesForQuest } from "$lib/engine/quest-rewards.js";
+} from "#lib/engine/progress.js";
+import { findRecipesForQuest } from "#lib/engine/quest-rewards.js";
 import {
   getMarriedVillager,
   normalizeRelationships,
   relationshipBranch,
   relationshipRank,
-} from "$lib/engine/relationships.js";
-import { deriveProgressionState, type UserProgressionState } from "$lib/engine/visibility.js";
-import { isWeatherInSeason } from "$lib/engine/world-state";
+} from "#lib/engine/relationships.js";
+import { deriveProgressionState, type UserProgressionState } from "#lib/engine/visibility.js";
+import { isWeatherInSeason } from "#lib/engine/world-state.js";
 import {
   AVAILABILITY_WINDOWS,
   DEFAULT_AVAILABILITY_WINDOWS,
   LEGACY_AVAILABILITY_MODES,
   legacyAvailabilityWindows,
-} from "$lib/types/availability.js";
-import { SEASONS, VILLAGER_RELATIONSHIPS, WEATHERS } from "$lib/types/tracker-data.js";
-import { recordEntries, recordKeys } from "$lib/utils";
-import { tryGetItem, trySetItem } from "$lib/utils/local-storage.js";
+} from "#lib/types/availability.js";
+import { SEASONS, VILLAGER_RELATIONSHIPS, WEATHERS } from "#lib/types/tracker-data.js";
+import { recordEntries, recordKeys } from "#lib/utils.js";
+import { tryGetItem, trySetItem } from "#lib/utils/local-storage.js";
 
-import type { AvailabilityWindow, LegacyAvailabilityMode } from "$lib/types/availability.js";
+import type { AvailabilityWindow, LegacyAvailabilityMode } from "#lib/types/availability.js";
 import type {
   AnimalId,
   AnimalVariantId,
@@ -46,7 +46,7 @@ import type {
   VillagerId,
   VillagerRelationship,
   Weather,
-} from "$lib/types/tracker-data.js";
+} from "#lib/types/tracker-data.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 

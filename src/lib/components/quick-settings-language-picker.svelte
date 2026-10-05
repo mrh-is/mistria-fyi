@@ -5,13 +5,13 @@
   import { slide } from "svelte/transition";
 
   import { page } from "$app/state";
-  import localeManifest from "$lib/data/locales.json";
-  import { getName } from "$lib/data/names.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { getLocale } from "$lib/paraglide/runtime.js";
-  import { localePreference } from "$lib/stores/locale-preference.svelte.js";
+  import localeManifest from "#lib/data/locales.json";
+  import { getName } from "#lib/data/names.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { getLocale } from "#lib/paraglide/runtime.js";
+  import { localePreference } from "#lib/stores/locale-preference.svelte.js";
 
-  import type { LocaleCode, LocaleManifest } from "$lib/types/locale.js";
+  import type { LocaleCode, LocaleManifest } from "#lib/types/locale.js";
 
   let open = $state(false);
   /** A locale the player tried to switch to while offline, before it was downloaded. */

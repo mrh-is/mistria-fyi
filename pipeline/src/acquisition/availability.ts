@@ -1,5 +1,5 @@
-import { simplifyAvailabilityCondition } from "$lib/engine/availability-condition.js";
-import { isNonEmptyArray, type NonEmptyArray } from "$lib/utils.js";
+import { simplifyAvailabilityCondition } from "#lib/engine/availability-condition.js";
+import { isNonEmptyArray, type NonEmptyArray } from "#lib/utils.js";
 
 import type {
   AvailabilityCondition,
@@ -10,10 +10,10 @@ import type {
   SkillId,
   VillagerId,
   Weather,
-} from "$lib/types/tracker-data.js";
+} from "#lib/types/tracker-data.js";
 
-import type { SourceFieldLocation } from "../data-shapes";
-import type { RequirementContext, RequirementExpression } from "../requirements";
+import type { SourceFieldLocation } from "../data-shapes.js";
+import type { RequirementContext, RequirementExpression } from "../requirements.js";
 
 const ALL_SEASONS = new Set<Season>(["fall", "spring", "summer", "winter"]);
 const ALL_WEATHERS = new Set<Weather>(["calm", "heavy_inclement", "inclement", "special"]);

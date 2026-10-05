@@ -1,9 +1,9 @@
 <script lang="ts">
-  import TagDialog from "$lib/components/tag-dialog.svelte";
-  import * as Dialog from "$lib/components/ui/dialog/index.js";
-  import * as m from "$lib/paraglide/messages.js";
+  import TagDialog from "#lib/components/tag-dialog.svelte";
+  import * as Dialog from "#lib/components/ui/dialog/index.js";
+  import * as m from "#lib/paraglide/messages.js";
 
-  import type { SourceFilter } from "$lib/stores/toolbar-state.svelte.js";
+  import type { SourceFilter } from "#lib/stores/toolbar-state.svelte.js";
 
   let { filters, open = $bindable(false) }: { filters: SourceFilter[]; open?: boolean } = $props();
 </script>

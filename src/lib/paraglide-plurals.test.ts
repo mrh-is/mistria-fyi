@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import * as m from "$lib/paraglide/messages.js";
-import { locales } from "$lib/paraglide/runtime.js";
+import * as m from "#lib/paraglide/messages.js";
+import { locales } from "#lib/paraglide/runtime.js";
 
-import type { Locale } from "$lib/paraglide/runtime.js";
+import type { Locale } from "#lib/paraglide/runtime.js";
 
 describe("plural messages", () => {
   it("covers every plural category Intl.PluralRules reports for each locale", () => {

@@ -1,4 +1,4 @@
-import type { LocaleCode } from "$lib/types/locale.js";
+import type { LocaleCode } from "#lib/types/locale.js";
 import type {
   AnimalId,
   AnimalVariantId,
@@ -17,7 +17,7 @@ import type {
   StoreId,
   TreasureChestTierId,
   VillagerId,
-} from "$lib/types/tracker-data.js";
+} from "#lib/types/tracker-data.js";
 
 export type AnimalNameId = string & { readonly __brand: "AnimalNameId" };
 

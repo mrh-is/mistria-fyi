@@ -2,10 +2,10 @@ import {
   CACHE_LOCALES_MESSAGE,
   type CacheLocalesMessage,
   type CacheLocalesReply,
-} from "$lib/engine/service-worker-cache";
-import { baseLocale } from "$lib/paraglide/runtime.js";
+} from "#lib/engine/service-worker-cache.js";
+import { baseLocale } from "#lib/paraglide/runtime.js";
 
-import type { LocaleCode } from "$lib/types/locale";
+import type { LocaleCode } from "#lib/types/locale.js";
 
 /**
  * Asks the service worker to keep `locale` available offline: every name chunk for it, plus

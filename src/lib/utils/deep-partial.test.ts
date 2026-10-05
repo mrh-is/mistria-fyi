@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { deepMerge, type DeepPartial } from "./deep-partial";
+import { deepMerge, type DeepPartial } from "./deep-partial.js";
 
 describe("deepMerge", () => {
   it("returns target unchanged if source is undefined", () => {

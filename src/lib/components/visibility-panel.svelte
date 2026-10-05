@@ -6,21 +6,21 @@
   import { prefersReducedMotion } from "svelte/motion";
 
   import { page } from "$app/state";
-  import BlockySwitch from "$lib/components/blocky-switch.svelte";
-  import { weatherIcon } from "$lib/components/icon/icon-maps.js";
-  import { Icon } from "$lib/components/icon/index.js";
-  import SourceExplainerDialog from "$lib/components/source-explainer-dialog.svelte";
-  import { weathersForSeason } from "$lib/engine/world-state";
-  import * as m from "$lib/paraglide/messages.js";
-  import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
-  import { AVAILABILITY_WINDOWS } from "$lib/types/availability.js";
-  import { seasonLabel, seasonLabelAbbr, weatherLabel } from "$lib/utils/format.js";
+  import BlockySwitch from "#lib/components/blocky-switch.svelte";
+  import { weatherIcon } from "#lib/components/icon/icon-maps.js";
+  import { Icon } from "#lib/components/icon/index.js";
+  import SourceExplainerDialog from "#lib/components/source-explainer-dialog.svelte";
+  import { weathersForSeason } from "#lib/engine/world-state.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
+  import { AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
+  import { seasonLabel, seasonLabelAbbr, weatherLabel } from "#lib/utils/format.js";
 
   import type { Icon as AppIcon } from "@tabler/icons-svelte-runes";
 
-  import type { AvailabilityWindow } from "$lib/types/availability.js";
-  import type { Season, Weather } from "$lib/types/tracker-data.js";
+  import type { AvailabilityWindow } from "#lib/types/availability.js";
+  import type { Season, Weather } from "#lib/types/tracker-data.js";
 
   let { showSeasonality }: { showSeasonality: boolean } = $props();
 

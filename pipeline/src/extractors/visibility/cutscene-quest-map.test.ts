@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { buildCutsceneQuestMap } from "./cutscene-quest-map";
+import { buildCutsceneQuestMap } from "./cutscene-quest-map.js";
 
 // Minimal fiddle factory for cutscene tests
 function makeCutsceneFiddle(overrides: {

@@ -1,40 +1,40 @@
 <script lang="ts">
   import { toast } from "svelte-sonner";
 
-  import ConfirmSpoilerDialog from "$lib/components/confirm-spoiler-dialog.svelte";
-  import ExpandableSection from "$lib/components/expandable-section.svelte";
-  import SpoilerSection from "$lib/components/spoiler-section.svelte";
-  import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
-  import TrackerRow from "$lib/components/tracker-row.svelte";
-  import { trackerData, trackerIndex } from "$lib/data/index.js";
-  import { getName, nameCollator } from "$lib/data/names.js";
-  import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
-  import { getMarriedVillager } from "$lib/engine/relationships.js";
-  import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
-  import { recordEntries } from "$lib/utils";
-  import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
-  import { displayQuestName } from "$lib/utils/format.js";
-  import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
-  import { registerSourceFilters } from "$lib/utils/source-filter-registration.svelte.js";
-  import { createSpoilerGuard } from "$lib/utils/spoiler-guard.svelte.js";
+  import ConfirmSpoilerDialog from "#lib/components/confirm-spoiler-dialog.svelte";
+  import ExpandableSection from "#lib/components/expandable-section.svelte";
+  import SpoilerSection from "#lib/components/spoiler-section.svelte";
+  import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
+  import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { trackerData, trackerIndex } from "#lib/data/index.js";
+  import { getName, nameCollator } from "#lib/data/names.js";
+  import { recipeDisplayNames } from "#lib/engine/quest-rewards.js";
+  import { getMarriedVillager } from "#lib/engine/relationships.js";
+  import { isEntityNameVisible, isVisible } from "#lib/engine/visibility.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
+  import { recordEntries } from "#lib/utils.js";
+  import { celebrate, celebrateCategory } from "#lib/utils/celebrate.js";
+  import { displayQuestName } from "#lib/utils/format.js";
+  import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
+  import { registerSourceFilters } from "#lib/utils/source-filter-registration.svelte.js";
+  import { createSpoilerGuard } from "#lib/utils/spoiler-guard.svelte.js";
 
   import AllCompleted from "./all-completed.svelte";
 
-  import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
-  import type { QuestState } from "$lib/stores/user-state.svelte.js";
-  import type { Source } from "$lib/types/acquisition";
-  import type { LocaleCode } from "$lib/types/locale.js";
+  import type { TrackerRowDisplay } from "#lib/components/tracker-row.svelte";
+  import type { QuestState } from "#lib/stores/user-state.svelte.js";
+  import type { Source } from "#lib/types/acquisition.js";
+  import type { LocaleCode } from "#lib/types/locale.js";
   import type {
     FetchQuest,
     HeartQuest,
     QuestId,
     QuestType,
     VillagerId,
-  } from "$lib/types/tracker-data.js";
-  import type { VisibilityCondition } from "$lib/types/visibility.js";
+  } from "#lib/types/tracker-data.js";
+  import type { VisibilityCondition } from "#lib/types/visibility.js";
 
   let { locale }: { locale: LocaleCode } = $props();
 

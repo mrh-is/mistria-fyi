@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { makeFiddle as makeFiddleBase } from "../../test-helpers";
-import { ItemSourceAccumulator } from "../source-accumulator";
-import { buildBaitRanges, buildFishBiomeMap, collectNaturalSources } from "./natural";
+import { makeFiddle as makeFiddleBase } from "../../test-helpers.js";
+import { ItemSourceAccumulator } from "../source-accumulator.js";
+import { buildBaitRanges, buildFishBiomeMap, collectNaturalSources } from "./natural.js";
 
-import type { ItemId } from "$lib/types/tracker-data.js";
+import type { ItemId } from "#lib/types/tracker-data.js";
 
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({

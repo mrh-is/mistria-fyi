@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { projectRequirementExpressionToAvailability } from "./availability";
+import { projectRequirementExpressionToAvailability } from "./availability.js";
 
-import type { RequirementContext, RequirementExpression } from "../requirements";
+import type { RequirementContext, RequirementExpression } from "../requirements.js";
 
 const context: RequirementContext = {
   cutsceneMap: {

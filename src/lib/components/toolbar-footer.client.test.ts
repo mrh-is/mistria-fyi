@@ -1,16 +1,16 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import ToolbarFooterHarness from "$lib/components/toolbar-footer.test-harness.svelte";
-import { FeedbackContext } from "$lib/feedback/context.svelte.js";
-import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
-import { userState } from "$lib/stores/user-state.svelte.js";
-import { pageStub } from "$lib/test-utils/page-stub.svelte";
+import ToolbarFooterHarness from "#lib/components/toolbar-footer.test-harness.svelte";
+import { FeedbackContext } from "#lib/feedback/context.svelte.js";
+import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
+import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 
-import type { PageMetadataInput } from "$lib/data/page-metadata.js";
+import type { PageMetadataInput } from "#lib/data/page-metadata.js";
 
 vi.mock("$app/state", async () => ({
-  page: (await import("$lib/test-utils/page-stub.svelte")).pageStub,
+  page: (await import("#lib/test-utils/page-stub.svelte.js")).pageStub,
 }));
 
 function overlayState() {

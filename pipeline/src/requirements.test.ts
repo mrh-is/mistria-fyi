@@ -6,9 +6,9 @@ import {
   type NamedRequirementDefinitions,
   parseRequirements,
   type RequirementExpression,
-} from "./requirements";
+} from "./requirements.js";
 
-import type { SourceFieldLocation } from "./data-shapes";
+import type { SourceFieldLocation } from "./data-shapes.js";
 
 const testSourceLocation: SourceFieldLocation = {
   entityId: "test_item",

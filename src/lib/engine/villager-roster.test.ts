@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { trackerData } from "$lib/data/index.js";
-import { getName, nameCollator } from "$lib/data/names.js";
-import { MAX_VILLAGER_LEVEL } from "$lib/engine/progress";
-import { userState } from "$lib/stores/user-state.svelte.js";
-import { recordKeys } from "$lib/utils.js";
+import { trackerData } from "#lib/data/index.js";
+import { getName, nameCollator } from "#lib/data/names.js";
+import { MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
+import { recordKeys } from "#lib/utils.js";
 
-import { buildVillagerRoster, filterVillagerRoster } from "./villager-roster";
+import { buildVillagerRoster, filterVillagerRoster } from "./villager-roster.js";
 
 afterEach(() => {
   userState.resetAll();

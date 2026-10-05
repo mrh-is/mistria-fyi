@@ -1,7 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 import { readFileSync, writeFileSync } from "node:fs";
 
-import { waitForControl } from "./service-worker";
+import { waitForControl } from "./service-worker.js";
 
 const WORKER_PATH = ".svelte-kit/output/client/service-worker.js";
 const UPDATE_MESSAGE =

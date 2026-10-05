@@ -2,11 +2,12 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { CSP_DIRECTIVES } from "./security/csp-directives.js";
+
 const repositoryRoot = resolve(import.meta.dirname, "../..");
 const appCss = readFileSync(resolve(repositoryRoot, "src/app.css"), "utf8");
 const gitignore = readFileSync(resolve(repositoryRoot, ".gitignore"), "utf8");
 const notices = readFileSync(resolve(repositoryRoot, "THIRD-PARTY-NOTICES.md"), "utf8");
-const svelteConfig = readFileSync(resolve(repositoryRoot, "svelte.config.js"), "utf8");
 
 describe("proprietary font boundary", () => {
   it("prefers a local Satoshi installation and falls back to the R2-hosted copy", () => {
@@ -14,7 +15,7 @@ describe("proprietary font boundary", () => {
     expect(appCss).toContain(
       'url("https://assets.mistria.fyi/fonts/satoshi-regular.woff2") format("woff2")',
     );
-    expect(svelteConfig).toContain('"https://assets.mistria.fyi"');
+    expect(CSP_DIRECTIVES["font-src"]).toContain("https://assets.mistria.fyi");
   });
 
   it("excludes the local font file from the source license boundary", () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { generateLocaleManifest, localizeField } from "./localize";
-import { requireGameAssetsDir } from "./test-helpers";
+import { generateLocaleManifest, localizeField } from "./localize.js";
+import { requireGameAssetsDir } from "./test-helpers.js";
 
 describe("localizeField — real assets", () => {
   it("derives the key and looks up npcs/balor/name across locales", () => {

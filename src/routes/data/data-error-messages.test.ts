@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { getLocale, overwriteGetLocale } from "$lib/paraglide/runtime.js";
+import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
 
 import {
   formatSaveFileError,
   formatSaveFilesError,
   formatSaveImportWarning,
   formatTransferDecodeError,
-} from "./data-error-messages";
+} from "./data-error-messages.js";
 
 const defaultGetLocale = getLocale;
 

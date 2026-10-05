@@ -1,10 +1,13 @@
 import { assert, describe, expect, it } from "vitest";
 
-import { AcquisitionReferenceIndex } from "./reference-index";
-import { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator";
-import { AcquisitionSourceValidationError, validateAcquisitionSources } from "./validate-sources";
+import { AcquisitionReferenceIndex } from "./reference-index.js";
+import { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator.js";
+import {
+  AcquisitionSourceValidationError,
+  validateAcquisitionSources,
+} from "./validate-sources.js";
 
-import type { Source } from "$lib/types/acquisition.js";
+import type { Source } from "#lib/types/acquisition.js";
 
 describe("validateAcquisitionSources", () => {
   it.each(["mine", "mines_chest", "mines_dig_site"])(

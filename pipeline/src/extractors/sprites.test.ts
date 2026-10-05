@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { extractSprites, extractVillagerSprites, publishSprites } from "./sprites";
+import { extractSprites, extractVillagerSprites, publishSprites } from "./sprites.js";
 
 const temporaryDirectories: string[] = [];
 

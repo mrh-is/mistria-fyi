@@ -1,6 +1,6 @@
-import type { QuestId, QuestType } from "$lib/types/tracker-data.js";
+import type { QuestId, QuestType } from "#lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "./parse-fiddle";
+import type { ParsedGameData } from "./parse-fiddle.js";
 
 /**
  * The six TOML quest-group keys tracked in the UI.

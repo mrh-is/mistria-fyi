@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { createRequirementContext } from "../../requirements";
-import { makeFiddle as makeFiddleBase } from "../../test-helpers";
-import { ItemSourceAccumulator } from "../source-accumulator";
-import { collectStoreSources } from "./stores";
+import { createRequirementContext } from "../../requirements.js";
+import { makeFiddle as makeFiddleBase } from "../../test-helpers.js";
+import { ItemSourceAccumulator } from "../source-accumulator.js";
+import { collectStoreSources } from "./stores.js";
 
-import type { ItemId } from "$lib/types/tracker-data.js";
+import type { ItemId } from "#lib/types/tracker-data.js";
 
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({ requirements: {}, stores: {}, ...overrides });

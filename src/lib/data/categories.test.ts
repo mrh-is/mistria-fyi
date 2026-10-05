@@ -6,12 +6,12 @@ import {
   categoryKeyForPathname,
   SEARCH_RESULT_CATEGORY_KEYS,
   sortCategoryKeysByName,
-} from "./categories";
+} from "./categories.js";
 
 describe("categoryForKey", () => {
   it("labels the villagers category with the game's Villagers term", () => {
     expect(categoryForKey("villagers", "en")).toMatchObject({
-      href: "/villagers",
+      href: "villagers",
       name: "Villagers",
     });
   });

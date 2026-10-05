@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeFiddle as makeFiddleBase } from "../test-helpers";
-import { deriveRecipeLocaleNames, extractRecipes } from "./recipes";
+import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
+import { deriveRecipeLocaleNames, extractRecipes } from "./recipes.js";
 
-import type { RecipeId } from "$lib/types/tracker-data.js";
+import type { RecipeId } from "#lib/types/tracker-data.js";
 
-import type { CutsceneQuestMap } from "./visibility/cutscene-quest-map";
+import type { CutsceneQuestMap } from "./visibility/cutscene-quest-map.js";
 
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({

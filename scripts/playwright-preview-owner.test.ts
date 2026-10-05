@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { assessPreviewProbe, classifyOwnerResponse } from "./playwright-preview-owner";
+import { assessPreviewProbe, classifyOwnerResponse } from "./playwright-preview-owner.js";
 
 const url = "http://127.0.0.1:41234";
 const checkout = "/repo/.worktrees/330";

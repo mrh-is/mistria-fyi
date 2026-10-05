@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { itemSpriteUrl } from "$lib/sprites/sprite-url.js";
+  import { itemSpriteUrl } from "#lib/sprites/sprite-url.js";
 
   export type SpriteSlotState = "complete" | "ready" | "spoilered";
 

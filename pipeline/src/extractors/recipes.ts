@@ -1,11 +1,11 @@
-import { LOCALE_CODES } from "$lib/types/locale.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { buildQuestTypeIndex, forEachItem, forEachQuest } from "../extractor-helpers";
-import { buildRequirementDefinitions, parseRequirements } from "../requirements";
-import { resolveToVisibility } from "./visibility/requirement-resolver";
+import { buildQuestTypeIndex, forEachItem, forEachQuest } from "../extractor-helpers.js";
+import { buildRequirementDefinitions, parseRequirements } from "../requirements.js";
+import { resolveToVisibility } from "./visibility/requirement-resolver.js";
 
-import type { Source as AcquisitionSource, SourceTuple } from "$lib/types/acquisition.js";
-import type { LocaleCode } from "$lib/types/locale.js";
+import type { Source as AcquisitionSource, SourceTuple } from "#lib/types/acquisition.js";
+import type { LocaleCode } from "#lib/types/locale.js";
 import type {
   FestivalId,
   ItemId,
@@ -19,12 +19,12 @@ import type {
   Season,
   StoreId,
   TreasureChestTierId,
-} from "$lib/types/tracker-data.js";
-import type { VisibilityCondition } from "$lib/types/visibility.js";
+} from "#lib/types/tracker-data.js";
+import type { VisibilityCondition } from "#lib/types/visibility.js";
 
-import type { TrackedQuestGroup } from "../extractor-helpers";
-import type { ParsedGameData } from "../parse-fiddle";
-import type { CutsceneQuestMap } from "./visibility/cutscene-quest-map";
+import type { TrackedQuestGroup } from "../extractor-helpers.js";
+import type { ParsedGameData } from "../parse-fiddle.js";
+import type { CutsceneQuestMap } from "./visibility/cutscene-quest-map.js";
 
 const QUEST_TYPES_WITH_SCROLLS = [
   "fetch_quests",

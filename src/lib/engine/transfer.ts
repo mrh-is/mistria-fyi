@@ -1,14 +1,14 @@
-import { canonicalAlmanacId, trackerData, trackerIndex } from "$lib/data/index.js";
+import { canonicalAlmanacId, trackerData, trackerIndex } from "#lib/data/index.js";
 import {
   clampMineFloor,
   clampRenownLevel,
   MAX_SKILL_LEVEL,
   MAX_VILLAGER_LEVEL,
-} from "$lib/engine/progress.js";
-import { normalizeRelationships } from "$lib/engine/relationships.js";
-import { recordEntries, recordKeys, recordValues } from "$lib/utils";
+} from "#lib/engine/progress.js";
+import { normalizeRelationships } from "#lib/engine/relationships.js";
+import { recordEntries, recordKeys, recordValues } from "#lib/utils.js";
 
-import type { ChildChoice, CompletedState, QuestState } from "$lib/stores/user-state.svelte.js";
+import type { ChildChoice, CompletedState, QuestState } from "#lib/stores/user-state.svelte.js";
 import type {
   AnimalId,
   AnimalVariantId,
@@ -25,7 +25,7 @@ import type {
   SpellId,
   VillagerId,
   VillagerRelationship,
-} from "$lib/types/tracker-data.js";
+} from "#lib/types/tracker-data.js";
 
 // ─── Constants ──────────────────────────────────────────────────────
 

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { showUndoToast } from "$lib/utils/undo-toast.js";
+import { showUndoToast } from "#lib/utils/undo-toast.js";
 
 const toast = vi.hoisted(() => vi.fn(() => "toast-id"));
 const dismiss = vi.hoisted(() => vi.fn());

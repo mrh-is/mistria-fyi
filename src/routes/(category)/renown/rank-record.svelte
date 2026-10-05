@@ -1,11 +1,11 @@
 <script lang="ts">
-  import IconCompletion from "$lib/components/icon/icon-completion.svelte";
-  import { Icon } from "$lib/components/icon/index.js";
-  import Spoiler from "$lib/components/spoiler.svelte";
-  import { getRankState } from "$lib/engine/renown-presentation.js";
-  import * as m from "$lib/paraglide/messages.js";
+  import IconCompletion from "#lib/components/icon/icon-completion.svelte";
+  import { Icon } from "#lib/components/icon/index.js";
+  import Spoiler from "#lib/components/spoiler.svelte";
+  import { getRankState } from "#lib/engine/renown-presentation.js";
+  import * as m from "#lib/paraglide/messages.js";
 
-  import type { TownRank } from "$lib/types/tracker-data.js";
+  import type { TownRank } from "#lib/types/tracker-data.js";
 
   let {
     color,

@@ -1,7 +1,7 @@
 import { render } from "svelte/server";
 import { describe, expect, it } from "vitest";
 
-import SourceCard from "$lib/components/source-card.svelte";
+import SourceCard from "#lib/components/source-card.svelte";
 
 describe("SourceCard", () => {
   it("renders readable timing context beside a source description", () => {

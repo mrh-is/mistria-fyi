@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { trackerData, trackerIndex } from "$lib/data/index.js";
-import { MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "$lib/engine/progress.js";
-import { recordEntries, recordKeys, recordValues } from "$lib/utils.js";
+import { trackerData, trackerIndex } from "#lib/data/index.js";
+import { MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
+import { recordEntries, recordKeys, recordValues } from "#lib/utils.js";
 
 import {
   decodeTransferPayload,
@@ -12,9 +12,9 @@ import {
   TRANSFER_ORDERING_HASH,
   TRANSFER_VERSION,
   TransferDecodeError,
-} from "./transfer";
+} from "./transfer.js";
 
-import type { CompletedState } from "$lib/stores/user-state.svelte.js";
+import type { CompletedState } from "#lib/stores/user-state.svelte.js";
 import type {
   AnimalId,
   AnimalVariantId,
@@ -30,9 +30,9 @@ import type {
   SpellId,
   VillagerId,
   VillagerRelationship,
-} from "$lib/types/tracker-data.js";
+} from "#lib/types/tracker-data.js";
 
-import type { TransferDecodeErrorCode } from "./transfer";
+import type { TransferDecodeErrorCode } from "./transfer.js";
 
 const CHECKSUM_BYTE_LENGTH = 4;
 

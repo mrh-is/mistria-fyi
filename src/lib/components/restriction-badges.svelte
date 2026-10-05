@@ -1,13 +1,13 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { restrictionWeatherIcon } from "$lib/components/icon/icon-maps.js";
-  import { Icon } from "$lib/components/icon/index.js";
-  import { weathersForSeason } from "$lib/engine/world-state";
-  import { seasonLabel, timeRangeLabel, weatherLabel } from "$lib/utils/format.js";
+  import { restrictionWeatherIcon } from "#lib/components/icon/icon-maps.js";
+  import { Icon } from "#lib/components/icon/index.js";
+  import { weathersForSeason } from "#lib/engine/world-state.js";
+  import { seasonLabel, timeRangeLabel, weatherLabel } from "#lib/utils/format.js";
 
-  import type { AppIcon } from "$lib/components/icon/icon-maps.js";
-  import type { DisplayBadges } from "$lib/engine/availability-condition.js";
-  import type { Season, Weather } from "$lib/types/tracker-data.js";
+  import type { AppIcon } from "#lib/components/icon/icon-maps.js";
+  import type { DisplayBadges } from "#lib/engine/availability-condition.js";
+  import type { Season, Weather } from "#lib/types/tracker-data.js";
 
   let {
     badges,

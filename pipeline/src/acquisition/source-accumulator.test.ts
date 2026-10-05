@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator";
+import { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator.js";
 
-import type { Source } from "$lib/types/acquisition.js";
-import type { CosmeticId, ItemId, MinesBiomeId } from "$lib/types/tracker-data.js";
+import type { Source } from "#lib/types/acquisition.js";
+import type { CosmeticId, ItemId, MinesBiomeId } from "#lib/types/tracker-data.js";
 
 describe("source accumulators", () => {
   it("keeps item and cosmetic target namespaces independent", () => {

@@ -1,22 +1,22 @@
 <script lang="ts">
-  import { trackerData } from "$lib/data";
-  import { animalNameId, getName } from "$lib/data/names.js";
-  import { isVisible } from "$lib/engine/visibility.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { toolbarState } from "$lib/stores/toolbar-state.svelte";
-  import { userState } from "$lib/stores/user-state.svelte";
-  import { recordEntries } from "$lib/utils";
-  import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
+  import { trackerData } from "#lib/data/index.js";
+  import { animalNameId, getName } from "#lib/data/names.js";
+  import { isVisible } from "#lib/engine/visibility.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
+  import { recordEntries } from "#lib/utils.js";
+  import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
 
   import AnimalSubcategory from "./animal-subcategory.svelte";
 
-  import type { LocaleCode } from "$lib/types/locale.js";
-  import type { AnimalId, CosmeticId } from "$lib/types/tracker-data";
+  import type { LocaleCode } from "#lib/types/locale.js";
+  import type { AnimalId, CosmeticId } from "#lib/types/tracker-data.js";
 
   import type {
     AnimalSubcategoryRowProps,
     AnimalSubcategorySectionConfig,
-  } from "./animal-subcategory.types";
+  } from "./animal-subcategory.types.js";
 
   function hasCompletedCosmetic(animalId: AnimalId, cosmeticId: CosmeticId): boolean {
     return userState.state.completed.animalCosmetics[animalId].has(cosmeticId);

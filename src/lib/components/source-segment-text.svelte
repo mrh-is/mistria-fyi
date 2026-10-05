@@ -1,13 +1,13 @@
 <script lang="ts">
   import { SvelteSet } from "svelte/reactivity";
 
-  import Spoiler from "$lib/components/spoiler.svelte";
-  import { isVisible } from "$lib/engine/visibility.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
+  import Spoiler from "#lib/components/spoiler.svelte";
+  import { isVisible } from "#lib/engine/visibility.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
 
   import SourceSegmentText from "./source-segment-text.svelte";
 
-  import type { SourceSegment } from "$lib/utils/source-segments.js";
+  import type { SourceSegment } from "#lib/utils/source-segments.js";
 
   let { segments }: { segments: SourceSegment[] } = $props();
 

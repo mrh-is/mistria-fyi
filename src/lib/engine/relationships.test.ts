@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { trackerData } from "$lib/data/index.js";
+import { trackerData } from "#lib/data/index.js";
 
 import {
   getMarriedVillager,
   isRomantic,
   normalizeRelationships,
   relationshipPresentation,
-} from "./relationships";
+} from "./relationships.js";
 
-import type { VillagerId, VillagerRelationship } from "$lib/types/tracker-data.js";
+import type { VillagerId, VillagerRelationship } from "#lib/types/tracker-data.js";
 
 function rels(
   obj: Record<string, VillagerRelationship>,

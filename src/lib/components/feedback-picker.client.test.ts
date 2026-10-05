@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import FeedbackPicker from "$lib/components/feedback-picker.svelte";
-import { FeedbackContext } from "$lib/feedback/context.svelte.js";
+import FeedbackPicker from "#lib/components/feedback-picker.svelte";
+import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 
 const metadata = {
   category: "recipe",

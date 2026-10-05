@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { bareLocaleRedirect } from "./hooks.server";
+import { bareLocaleRedirect } from "./hooks.server.js";
 
 import type { RequestEvent } from "@sveltejs/kit";
 

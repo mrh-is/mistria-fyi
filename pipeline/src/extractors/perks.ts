@@ -1,6 +1,6 @@
-import type { PerkId, SkillId } from "$lib/types/tracker-data.js";
+import type { PerkId, SkillId } from "#lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../parse-fiddle";
+import type { ParsedGameData } from "../parse-fiddle.js";
 
 export function extractPerks(fiddle: ParsedGameData): {
   perks: Record<PerkId, { name: string; skillId: SkillId; tier: number }>;

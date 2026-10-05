@@ -1,4 +1,4 @@
-import type { TownRank } from "$lib/types/tracker-data.js";
+import type { TownRank } from "#lib/types/tracker-data.js";
 
 export const RANK_COLORS = [
   "#92400e",

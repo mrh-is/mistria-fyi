@@ -1,11 +1,11 @@
 import { fireEvent, render, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import VillagerRecordHarness from "$lib/components/villager-record.test-harness.svelte";
-import { villagerSpriteUrl } from "$lib/sprites/sprite-url.js";
-import { userState } from "$lib/stores/user-state.svelte.js";
+import VillagerRecordHarness from "#lib/components/villager-record.test-harness.svelte";
+import { villagerSpriteUrl } from "#lib/sprites/sprite-url.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
 
-import type { Villager, VillagerId } from "$lib/types/tracker-data.js";
+import type { Villager, VillagerId } from "#lib/types/tracker-data.js";
 
 const adelineId = "adeline" as VillagerId;
 const balorId = "balor" as VillagerId;

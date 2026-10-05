@@ -5,9 +5,9 @@
   import IconSparkles from "@tabler/icons-svelte-runes/icons/sparkles";
   import { onMount } from "svelte";
 
-  import * as m from "$lib/paraglide/messages.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
-  import { localizedHref } from "$lib/utils/localized-href.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
+  import { localizedHref } from "#lib/utils/localized-href.js";
 
   type OnboardingFlow = "desktop" | "mobile";
 
@@ -45,12 +45,12 @@
 
     <div class="welcome-card__actions">
       {#if showMobileFlow}
-        <a class="welcome-card__primary" href="{localizedHref('/data')}?section=transfer">
+        <a class="welcome-card__primary" href="{localizedHref('data')}?section=transfer">
           <IconQrcode aria-hidden="true" />
           <span>{m.onboarding_transfer_action()}</span>
         </a>
       {:else}
-        <a class="welcome-card__primary" href="{localizedHref('/data')}?section=import">
+        <a class="welcome-card__primary" href="{localizedHref('data')}?section=import">
           <IconFileDownload aria-hidden="true" />
           <span>{m.onboarding_import_action()}</span>
         </a>

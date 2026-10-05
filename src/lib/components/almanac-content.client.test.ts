@@ -2,14 +2,14 @@ import { fireEvent, render, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import AlmanacContent from "$lib/components/almanac-content.svelte";
-import { trackerData } from "$lib/data/index.js";
-import { getName } from "$lib/data/names.js";
-import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
-import { userState } from "$lib/stores/user-state.svelte.js";
-import { recordEntries } from "$lib/utils.js";
+import AlmanacContent from "#lib/components/almanac-content.svelte";
+import { trackerData } from "#lib/data/index.js";
+import { getName } from "#lib/data/names.js";
+import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
+import { recordEntries } from "#lib/utils.js";
 
-import type { ItemId } from "$lib/types/tracker-data.js";
+import type { ItemId } from "#lib/types/tracker-data.js";
 
 describe("AlmanacContent", () => {
   beforeEach(() => {

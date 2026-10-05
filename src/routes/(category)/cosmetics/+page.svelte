@@ -1,5 +1,5 @@
 <script lang="ts">
-  import CosmeticsContent from "$lib/components/cosmetics-content.svelte";
+  import CosmeticsContent from "#lib/components/cosmetics-content.svelte";
 
   import type { PageProps } from "./$types";
 

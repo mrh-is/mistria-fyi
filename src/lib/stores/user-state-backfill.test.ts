@@ -1,14 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { trackerData } from "$lib/data/index.js";
-import { getAllProgress } from "$lib/engine/progress.js";
-import { searchItems } from "$lib/engine/search.js";
-import { encodeTransferPayload } from "$lib/engine/transfer.js";
-import { deriveProgressionState } from "$lib/engine/visibility.js";
-import { recordKeys } from "$lib/utils";
+import { trackerData } from "#lib/data/index.js";
+import { getAllProgress } from "#lib/engine/progress.js";
+import { searchItems } from "#lib/engine/search.js";
+import { encodeTransferPayload } from "#lib/engine/transfer.js";
+import { deriveProgressionState } from "#lib/engine/visibility.js";
+import { recordKeys } from "#lib/utils.js";
 
-import type { CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { AnimalId, AnimalVariantId, CosmeticId } from "$lib/types/tracker-data.js";
+import type { CompletedState } from "#lib/stores/user-state.svelte.js";
+import type { AnimalId, AnimalVariantId, CosmeticId } from "#lib/types/tracker-data.js";
 
 const ALL_ANIMAL_IDS = recordKeys(trackerData.animals);
 
@@ -91,7 +91,7 @@ describe("animal map backfill on deserialization", () => {
     vi.stubGlobal("localStorage", makeStorage(buildStoredState()));
     vi.resetModules();
 
-    const { userState } = await import("$lib/stores/user-state.svelte.js");
+    const { userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
 
     for (const animalId of OMITTED_ANIMALS) {
@@ -125,7 +125,7 @@ describe("animal map backfill on deserialization", () => {
     vi.stubGlobal("localStorage", makeStorage(buildStoredState({ animalCosmetics, animals })));
     vi.resetModules();
 
-    const { userState } = await import("$lib/stores/user-state.svelte.js");
+    const { userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
 
     expect(userState.state.completed.animals[progressAnimal].has(progressVariant)).toBe(true);
@@ -143,7 +143,7 @@ describe("animal map backfill on deserialization", () => {
     );
     vi.resetModules();
 
-    const { userState } = await import("$lib/stores/user-state.svelte.js");
+    const { userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
 
     for (const animalId of ALL_ANIMAL_IDS) {
@@ -163,7 +163,7 @@ describe("animal map backfill on merge", () => {
     );
     vi.resetModules();
 
-    const { userState } = await import("$lib/stores/user-state.svelte.js");
+    const { userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
 
     // Merge data that also lacks some animals
@@ -198,7 +198,7 @@ describe("downstream consumers after backfill", () => {
     vi.stubGlobal("localStorage", makeStorage(buildStoredState()));
     vi.resetModules();
 
-    const { userState } = await import("$lib/stores/user-state.svelte.js");
+    const { userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
     return userState.state.completed;
   }

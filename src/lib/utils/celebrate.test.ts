@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
+import { celebrate, celebrateCategory } from "#lib/utils/celebrate.js";
 
 const confetti = vi.hoisted(() => vi.fn());
 

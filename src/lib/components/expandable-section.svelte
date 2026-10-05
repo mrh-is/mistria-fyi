@@ -4,15 +4,15 @@
   import { slide } from "svelte/transition";
 
   import { page } from "$app/state";
-  import { Icon } from "$lib/components/icon/index.js";
-  import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { getLocale } from "$lib/paraglide/runtime.js";
-  import { formatNumber } from "$lib/utils/format.js";
+  import { Icon } from "#lib/components/icon/index.js";
+  import { getFeedbackContextOrFallback } from "#lib/feedback/context.svelte.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { getLocale } from "#lib/paraglide/runtime.js";
+  import { formatNumber } from "#lib/utils/format.js";
 
   import type { Snippet } from "svelte";
 
-  import type { FeedbackContext } from "$lib/feedback/context.svelte.js";
+  import type { FeedbackContext } from "#lib/feedback/context.svelte.js";
 
   let {
     children,

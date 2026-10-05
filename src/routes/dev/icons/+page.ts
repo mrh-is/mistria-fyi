@@ -1,6 +1,6 @@
-import { pageMetadata } from "$lib/data/page-metadata";
+import { pageMetadata } from "#lib/data/page-metadata.js";
 
-import type { RobotsDirective } from "$lib/data/page-metadata";
+import type { RobotsDirective } from "#lib/data/page-metadata.js";
 
 import type { PageLoad } from "./$types";
 

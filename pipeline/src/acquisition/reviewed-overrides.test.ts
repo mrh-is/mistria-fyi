@@ -1,8 +1,8 @@
 import { assert, describe, expect, it } from "vitest";
 
-import { recordEntries } from "$lib/utils.js";
+import { recordEntries } from "#lib/utils.js";
 
-import { makeFiddle } from "../test-helpers";
+import { makeFiddle } from "../test-helpers.js";
 import {
   applyReviewedOverrides,
   collectDefaultCosmeticSources,
@@ -10,11 +10,11 @@ import {
   COSMETIC_OVERRIDES,
   ITEM_OVERRIDES,
   ITEM_SOURCE_REPLACEMENTS,
-} from "./reviewed-overrides";
-import { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator";
+} from "./reviewed-overrides.js";
+import { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator.js";
 
-import type { Source } from "$lib/types/acquisition.js";
-import type { CosmeticId, ItemId, QuestId, QuestType, StoreId } from "$lib/types/tracker-data.js";
+import type { Source } from "#lib/types/acquisition.js";
+import type { CosmeticId, ItemId, QuestId, QuestType, StoreId } from "#lib/types/tracker-data.js";
 
 describe("reviewed overrides", () => {
   describe("override tables", () => {

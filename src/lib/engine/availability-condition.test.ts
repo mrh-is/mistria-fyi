@@ -4,7 +4,7 @@ import {
   evaluateAvailabilityCondition,
   hasSelectiveSeasonCondition,
   simplifyAvailabilityCondition,
-} from "./availability-condition";
+} from "./availability-condition.js";
 
 import type {
   AvailabilityCondition,
@@ -12,7 +12,7 @@ import type {
   QuestId,
   SkillId,
   VillagerId,
-} from "$lib/types/tracker-data.js";
+} from "#lib/types/tracker-data.js";
 
 const summer = { season: "summer" as const, weather: "calm" as const };
 

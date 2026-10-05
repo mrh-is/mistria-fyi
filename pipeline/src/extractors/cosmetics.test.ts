@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { makeFiddle } from "../test-helpers";
-import { extractCosmetics } from "./cosmetics";
+import { makeFiddle } from "../test-helpers.js";
+import { extractCosmetics } from "./cosmetics.js";
 
-vi.mock("../parse-fiddle", () => ({
+vi.mock("../parse-fiddle.js", () => ({
   sourceFileFor: () => "mock-source.toml",
 }));
 
@@ -23,7 +23,7 @@ const localizeField = vi.hoisted(() =>
   })),
 );
 
-vi.mock("../localize", () => ({ localizeField }));
+vi.mock("../localize.js", () => ({ localizeField }));
 
 // Built from entries so the game's (non-alphabetical) section order is what the extractor sees.
 const customization = Object.fromEntries([

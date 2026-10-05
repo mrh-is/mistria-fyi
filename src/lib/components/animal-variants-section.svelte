@@ -1,28 +1,28 @@
 <script lang="ts">
-  import { trackerData } from "$lib/data/index.js";
-  import { animalNameId, getName, nameCollator } from "$lib/data/names.js";
+  import { trackerData } from "#lib/data/index.js";
+  import { animalNameId, getName, nameCollator } from "#lib/data/names.js";
   import {
     getVariantSeason,
     isVariantInScope as isVariantInScopeEngine,
-  } from "$lib/engine/animal-availability.js";
-  import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
+  } from "#lib/engine/animal-availability.js";
+  import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
 
   import AnimalSubcategory from "./animal-subcategory.svelte";
 
-  import type { LocaleCode } from "$lib/types/locale.js";
+  import type { LocaleCode } from "#lib/types/locale.js";
   import type {
     AnimalId,
     AnimalVariant,
     AnimalVariantId,
     AnimalVariantTier,
     Season,
-  } from "$lib/types/tracker-data.js";
+  } from "#lib/types/tracker-data.js";
 
   import type {
     AnimalSubcategoryRowProps,
     AnimalSubcategorySectionConfig,
-  } from "./animal-subcategory.types";
+  } from "./animal-subcategory.types.js";
 
   function forEachVariant(
     animalId: AnimalId,

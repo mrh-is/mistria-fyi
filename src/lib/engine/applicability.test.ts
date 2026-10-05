@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { trackerData } from "$lib/data/index.js";
-import { recordValues } from "$lib/utils.js";
+import { trackerData } from "#lib/data/index.js";
+import { recordValues } from "#lib/utils.js";
 
-import { isItemApplicable, isItemApplicableForAlmanac } from "./applicability";
+import { isItemApplicable, isItemApplicableForAlmanac } from "./applicability.js";
 
-import type { CompletedState } from "$lib/stores/user-state.svelte.js";
+import type { CompletedState } from "#lib/stores/user-state.svelte.js";
 import type {
   AnimalVariantId,
   CosmeticId,
   ItemId,
   VillagerId,
   VillagerRelationship,
-} from "$lib/types/tracker-data.js";
+} from "#lib/types/tracker-data.js";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 

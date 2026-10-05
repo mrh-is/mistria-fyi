@@ -1,6 +1,6 @@
-import type { QuestId } from "$lib/types/tracker-data.js";
+import type { QuestId } from "#lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../../parse-fiddle";
+import type { ParsedGameData } from "../../parse-fiddle.js";
 
 export interface CutsceneQuestEntry {
   phase: "available" | "completed";

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { CACHE_LOCALES_MESSAGE } from "$lib/engine/service-worker-cache";
+import { CACHE_LOCALES_MESSAGE } from "#lib/engine/service-worker-cache.js";
 
-import { downloadLocale, keepLocaleOffline } from "./offline-locales";
+import { downloadLocale, keepLocaleOffline } from "./offline-locales.js";
 
 function container() {
   const postMessage = vi.fn();

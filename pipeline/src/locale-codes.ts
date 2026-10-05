@@ -2,9 +2,9 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "smol-toml";
 
-import { LOCALE_CODES } from "$lib/types/locale.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import type { InfusionFormat, LocaleCode } from "$lib/types/locale.js";
+import type { InfusionFormat, LocaleCode } from "#lib/types/locale.js";
 
 /**
  * The game's own internal language codes, as they appear in `l10n.meta.toml` and as the filename
