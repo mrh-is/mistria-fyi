@@ -39,7 +39,8 @@ that the existing versions cannot distinguish states the application must handle
 Before changing pipeline code or generated data:
 
 1. Open an issue for the new game version and link the upstream release notes or other authoritative
-   source material.
+   source material. The game build watch workflow files this issue automatically when the public
+   Steam build changes; update the game in Steam and confirm the installed build matches the issue.
 2. Record the currently supported game version, application commit, serialized-state version, and
    transfer version.
 3. Obtain a clean copy of the new game assets. Keep the preceding supported assets available for
