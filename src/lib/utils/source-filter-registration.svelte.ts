@@ -1,7 +1,7 @@
 import { untrack } from "svelte";
 import { SvelteSet } from "svelte/reactivity";
 
-import { SOURCE_FILTERS } from "#lib/components/icon/index.js";
+import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 
 import type { Source } from "#lib/types/acquisition.js";

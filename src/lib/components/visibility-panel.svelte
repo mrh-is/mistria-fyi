@@ -7,8 +7,9 @@
 
   import BlockySwitch from "#lib/components/blocky-switch.svelte";
   import { weatherIcon } from "#lib/components/icon/icon-maps.js";
-  import { Icon } from "#lib/components/icon/index.js";
+  import { Icon, SOURCE_FILTER_ICON } from "#lib/components/icon/index.js";
   import SourceExplainerDialog from "#lib/components/source-explainer-dialog.svelte";
+  import { sortSourceFiltersByLabel, sourceFilterLabel } from "#lib/data/source-filters.js";
   import { weathersForSeason } from "#lib/engine/world-state.js";
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -219,9 +220,9 @@
         >
       </div>
       <div class="chip-row">
-        {#each toolbarState.sourceFilters as filter (filter.label)}
-          {@const SourceIcon = filter.icon}
-          {@const selected = toolbarState.activeSourceLabels.has(filter.label)}
+        {#each sortSourceFiltersByLabel(toolbarState.sourceFilters, page.data.locale) as filter (filter.id)}
+          {@const SourceIcon = SOURCE_FILTER_ICON[filter.id]}
+          {@const selected = toolbarState.activeSourceIds.has(filter.id)}
           <button
             class="filter-chip"
             class:filter-chip--active={selected}
@@ -231,7 +232,7 @@
               toolbarState.toggleSourceFilter(filter);
             }}
           >
-            <SourceIcon class="size-3" />{filter.label}
+            <SourceIcon class="size-3" />{sourceFilterLabel(filter.id, page.data.locale)}
           </button>
         {/each}
       </div>
