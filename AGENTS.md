@@ -331,6 +331,13 @@ aggregate findings across pull requests.
 - When approaching limits, write a handoff note to the worktree or issue, then stop. A fresh session
   reading the issue and branch is 50–100x cheaper than re-tokenizing a cold conversation.
 
+### Recurring friction
+
+When you work around a tooling, environment, or repository bug (a failing command, a flaky setup
+step, stale docs), search open issues for it first. Add your evidence to an existing issue, or file
+one with the symptom, the workaround, and a root-cause guess. Name the workaround in your final
+report either way. Workarounds that each agent rediscovers cost more than one fix.
+
 ### Handoffs
 
 Do **not** paste handoff narratives. Give the new session:
