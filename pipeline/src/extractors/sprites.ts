@@ -1,9 +1,11 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import sharp from "sharp";
-import { open, type ZipFile } from "yauzl-promise";
+import { open } from "yauzl-promise";
 
 import { resolveAssetsZipPath } from "../assets-zip.js";
+
+import type { ZipFile } from "yauzl-promise";
 
 const ITEM_SPRITE_SEARCH_DIRS = [
   join("animations", "Item Icons"),
@@ -28,7 +30,7 @@ const MISSING_SPRITE_OVERRIDES: Record<string, string> = {
 /** Recognizes the game's on-disk sprite filenames for one entity kind and how to file its output. */
 interface SpriteKind {
   /** Returns the sprite name (filename minus `.png`) if `basename` is a sprite this kind owns. */
-  matchesFilename(basename: string): boolean;
+  matchesFilename: (basename: string) => boolean;
   /** Subdirectory of the sprites output root this kind's converted files are staged under. */
   outputSubdir: string;
   searchDirs: string[];
@@ -178,11 +180,10 @@ async function extractSpritesForKind(
 
   const kindOutputDir = join(outputDir, kind.outputSubdir);
   const zipPath = zipPathOverride ?? resolveAssetsZipPath(assetsDir);
-  const result = zipFileOverride
-    ? await extractSpritesFromZip(kind, zipFileOverride, entityIdsBySprite, kindOutputDir)
-    : zipPath
-      ? await extractSpritesFromZip(kind, zipPath, entityIdsBySprite, kindOutputDir)
-      : await extractSpritesFromFilesystem(kind, assetsDir, entityIdsBySprite, kindOutputDir);
+  const zipSource = zipFileOverride ?? zipPath;
+  const result = zipSource
+    ? await extractSpritesFromZip(kind, zipSource, entityIdsBySprite, kindOutputDir)
+    : await extractSpritesFromFilesystem(kind, assetsDir, entityIdsBySprite, kindOutputDir);
   result.overridden = overriddenEntityIds.length;
   return result;
 }
@@ -219,7 +220,7 @@ async function extractSpritesFromFilesystem(
   const missing: string[] = [];
   const staged: StagedSprite[] = [];
 
-  for (const spriteName of [...entityIdsBySprite.keys()].sort()) {
+  for (const spriteName of [...entityIdsBySprite.keys()].toSorted()) {
     const entityIds = entityIdsBySprite.get(spriteName) ?? [];
     const sourcePath = spriteIndex.get(spriteName);
     if (!sourcePath) {
@@ -227,6 +228,7 @@ async function extractSpritesFromFilesystem(
       continue;
     }
 
+    // oxlint-disable-next-line eslint/no-await-in-loop -- sprites stage sequentially so the staged output order and peak memory stay deterministic
     const counts = await stageEntitiesForSprite(
       entityIds,
       entityOutputDir,
@@ -306,7 +308,7 @@ async function extractSpritesFromZip(
   const missing: string[] = [];
   const staged: StagedSprite[] = [];
 
-  for (const spriteName of [...entityIdsBySprite.keys()].sort()) {
+  for (const spriteName of [...entityIdsBySprite.keys()].toSorted()) {
     const entityIds = entityIdsBySprite.get(spriteName) ?? [];
     const pngData = spriteData.get(spriteName);
     if (!pngData) {
@@ -314,6 +316,7 @@ async function extractSpritesFromZip(
       continue;
     }
 
+    // oxlint-disable-next-line eslint/no-await-in-loop -- sprites stage sequentially so the staged output order and peak memory stay deterministic
     const counts = await stageEntitiesForSprite(
       entityIds,
       entityOutputDir,
@@ -346,12 +349,13 @@ async function stageEntitiesForSprite(
   let skipped = 0;
   let webpData: Buffer | undefined;
 
-  for (const entityId of [...entityIds].sort()) {
+  for (const entityId of [...entityIds].toSorted()) {
     const outPath = join(entityOutputDir, `${entityId}.webp`);
     if (existsSync(outPath)) {
       skipped++;
       continue;
     }
+    // oxlint-disable-next-line eslint/no-await-in-loop -- converts at most once, lazily, on the first entity that needs staging
     webpData ??= await loadWebp();
     staged.push({ data: webpData, outPath });
     extracted++;

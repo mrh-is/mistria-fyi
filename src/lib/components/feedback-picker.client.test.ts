@@ -31,8 +31,8 @@ function registerVisibleElement(context: FeedbackContext): HTMLElement {
 
 describe("FeedbackPicker", () => {
   beforeEach(() => {
-    vi.spyOn(window, "requestAnimationFrame").mockImplementation(() => 1);
-    vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => undefined);
+    vi.spyOn(globalThis, "requestAnimationFrame").mockReturnValue(1);
+    vi.spyOn(globalThis, "cancelAnimationFrame").mockReturnValue(undefined);
   });
 
   afterEach(() => {
@@ -82,7 +82,7 @@ describe("FeedbackPicker", () => {
     context.startPicking(onSelect);
     render(FeedbackPicker, { active: true, feedbackContext: context });
 
-    await fireEvent.keyDown(window, { key: "Escape" });
+    await fireEvent.keyDown(document, { key: "Escape" });
 
     expect(context.isPicking).toBe(false);
     expect(onSelect).not.toHaveBeenCalled();
@@ -98,9 +98,9 @@ describe("FeedbackPicker", () => {
     await waitFor(() => {
       expect(cancel).toHaveFocus();
     });
-    await fireEvent.keyDown(window, { key: "Tab" });
+    await fireEvent.keyDown(document, { key: "Tab" });
     expect(screen.getByRole("button", { name: "Report feedback about Tomato Soup" })).toHaveFocus();
-    await fireEvent.keyDown(window, { key: "Tab" });
+    await fireEvent.keyDown(document, { key: "Tab" });
     expect(cancel).toHaveFocus();
     element.remove();
   });

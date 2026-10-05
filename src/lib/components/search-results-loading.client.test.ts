@@ -21,6 +21,18 @@ vi.mock("#lib/data/names.js", async (importOriginal) => ({
   loadNames: names.loadNames,
 }));
 
+interface PendingLoad {
+  reject: (error: Error) => void;
+  resolve: () => void;
+}
+
+/** A `loadNames` call that stays open until the test settles it through `pending`. */
+function holdLoad(pending: PendingLoad[]): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    pending.push({ reject, resolve });
+  });
+}
+
 describe("SearchResults chunk loading", () => {
   afterEach(() => {
     names.hasNames.mockReset().mockReturnValue(false);
@@ -28,7 +40,7 @@ describe("SearchResults chunk loading", () => {
   });
 
   it("fetches every category for the locale and English on open, and searches once they land", async () => {
-    let release = (): void => undefined;
+    let release: (() => void) | undefined;
     names.loadNames.mockReturnValue(
       new Promise<void>((resolve) => {
         release = resolve;
@@ -44,7 +56,7 @@ describe("SearchResults chunk loading", () => {
     });
     expect(screen.queryAllByRole("button", { name: /カブ/ })).toHaveLength(0);
 
-    release();
+    release?.();
     await waitFor(() => {
       expect(screen.getAllByRole("button", { name: /カブ/ }).length).toBeGreaterThan(0);
     });
@@ -69,13 +81,8 @@ describe("SearchResults chunk loading", () => {
   });
 
   it("ignores a stale rejection once a locale change has superseded it", async () => {
-    const pending: { reject: (error: Error) => void; resolve: () => void }[] = [];
-    names.loadNames.mockImplementation(
-      () =>
-        new Promise<void>((resolve, reject) => {
-          pending.push({ reject, resolve });
-        }),
-    );
+    const pending: PendingLoad[] = [];
+    names.loadNames.mockImplementation(() => holdLoad(pending));
 
     const view = render(SearchResults, { locale: "ja", query: "カブ" });
     await waitFor(() => {
@@ -93,9 +100,9 @@ describe("SearchResults chunk loading", () => {
     await Promise.resolve();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 
-    pending.slice(2).forEach(({ resolve }) => {
+    for (const { resolve } of pending.slice(2)) {
       resolve();
-    });
+    }
     await waitFor(() => {
       expect(screen.queryByText("Loading search…")).not.toBeInTheDocument();
     });
@@ -103,21 +110,16 @@ describe("SearchResults chunk loading", () => {
   });
 
   it("reloads names when the locale changes", async () => {
-    const pending: { resolve: () => void }[] = [];
-    names.loadNames.mockImplementation(
-      () =>
-        new Promise<void>((resolve) => {
-          pending.push({ resolve });
-        }),
-    );
+    const pending: PendingLoad[] = [];
+    names.loadNames.mockImplementation(() => holdLoad(pending));
 
     const view = render(SearchResults, { locale: "ja", query: "カブ" });
     await waitFor(() => {
       expect(pending).toHaveLength(2);
     });
-    pending.forEach(({ resolve }) => {
+    for (const { resolve } of pending) {
       resolve();
-    });
+    }
     await waitFor(() => {
       expect(screen.getAllByRole("button", { name: /カブ/ }).length).toBeGreaterThan(0);
     });
@@ -129,9 +131,9 @@ describe("SearchResults chunk loading", () => {
     expect(names.loadNames).toHaveBeenCalledWith("fr", LOCALIZED_CATEGORIES);
     expect(names.loadNames).toHaveBeenCalledWith("en", LOCALIZED_CATEGORIES);
 
-    pending.slice(2).forEach(({ resolve }) => {
+    for (const { resolve } of pending.slice(2)) {
       resolve();
-    });
+    }
     await waitFor(() => {
       expect(screen.queryByText("Loading search…")).not.toBeInTheDocument();
     });

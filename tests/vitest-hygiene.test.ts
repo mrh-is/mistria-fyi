@@ -7,7 +7,7 @@ const originalGlobal = Object.getOwnPropertyDescriptor(globalThis, "__vitestHygi
 // Seed in beforeAll so this checks Vitest's automatic cleanup before each test,
 // independent of file order or worker scheduling.
 beforeAll(() => {
-  vi.spyOn(reporter, "error").mockImplementation(() => undefined);
+  vi.spyOn(reporter, "error").mockReturnValue(undefined);
   vi.stubGlobal("__vitestHygieneProbe", "leaked stub");
 });
 

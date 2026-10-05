@@ -77,7 +77,7 @@ export function assertGameLanguageMapExhaustive(assetsDir: string): void {
  */
 export function readGameLanguages(assetsDir: string): Record<GameLanguageCode, GameLanguageMeta> {
   const path = join(assetsDir, "localization", "l10n.meta.toml");
-  const toml = parse(readFileSync(path, "utf-8")) as {
+  const toml = parse(readFileSync(path, "utf8")) as {
     asset_properties: {
       languages: Record<
         string,

@@ -1,10 +1,10 @@
 <script lang="ts">
   import { toast } from "svelte-sonner";
 
-  import { goto } from "$app/navigation";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
+  import { goto } from "$app/navigation";
 
   const SUPPRESS_MS = 60_000;
   let suppressedUntil = 0;

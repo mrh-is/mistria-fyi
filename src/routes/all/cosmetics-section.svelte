@@ -1,8 +1,8 @@
 <script lang="ts">
-  import MinesContent from "#lib/components/mines-content.svelte";
+  import CosmeticsContent from "#lib/components/cosmetics-content.svelte";
   import { userState } from "#lib/stores/user-state.svelte.js";
 
-  import SectionHeader from "./SectionHeader.svelte";
+  import SectionHeader from "./section-header.svelte";
 
   import type { CategoryProgress } from "#lib/engine/progress.js";
   import type { LocaleCode } from "#lib/types/locale.js";
@@ -12,11 +12,11 @@
 
 {#if progress.completed < progress.total || userState.state.showCompleted}
   <section
-    aria-labelledby="category-mines"
+    aria-labelledby="category-cosmetics"
     class="flex flex-col gap-1"
-    style="--primary: var(--cat-mines)"
+    style="--primary: var(--cat-cosmetics)"
   >
-    <SectionHeader key="mines" {progress} />
-    <MinesContent compact {locale} />
+    <SectionHeader key="cosmetics" {progress} />
+    <CosmeticsContent {locale} />
   </section>
 {/if}

@@ -57,6 +57,7 @@ test.describe("@critical browser accessibility preferences", () => {
       return { outlineStyle: style.outlineStyle, outlineWidth: style.outlineWidth };
     });
     expect(focusStyle.outlineStyle).not.toBe("none");
+    // oxlint-disable-next-line unicorn/prefer-number-coercion -- computed style values carry a "px" suffix that Number() rejects
     expect(Number.parseFloat(focusStyle.outlineWidth)).toBeGreaterThan(0);
 
     await completion.press("Space");

@@ -1,5 +1,5 @@
 import { simplifyAvailabilityCondition } from "#lib/engine/availability-condition.js";
-import { isNonEmptyArray, type NonEmptyArray } from "#lib/utils.js";
+import { isNonEmptyArray } from "#lib/utils.js";
 
 import { forEachItem } from "../../extractor-helpers.js";
 
@@ -17,10 +17,11 @@ import type {
   ItemId,
   MinesBiomeId,
   PerkId,
+  PetCosmeticSetId,
   Season,
   Weather,
 } from "#lib/types/tracker-data.js";
-import type { PetCosmeticSetId } from "#lib/types/tracker-data.js";
+import type { NonEmptyArray } from "#lib/utils.js";
 
 import type { ParsedGameData } from "../../parse-fiddle.js";
 import type {
@@ -248,7 +249,7 @@ export function buildFishBiomeMap(fiddle: ParsedGameData): Map<string, MinesBiom
     const biomeId = name
       .replace(/^The\s+/i, "")
       .toLowerCase()
-      .replace(/\s+/g, "_") as MinesBiomeId;
+      .replaceAll(/\s+/g, "_") as MinesBiomeId;
 
     const votes = b.votes as Record<string, unknown> | undefined;
     const fishEntries = votes?.fish;
@@ -279,11 +280,7 @@ function collectFishSources(fiddle: ParsedGameData, accumulator: ItemSourceAccum
     const targetId = ((data.item as string | undefined) ?? fishId) as ItemId;
 
     const retrieval = data.retrieval;
-    const retrievalArr = Array.isArray(retrieval)
-      ? retrieval.filter((v): v is string => typeof v === "string")
-      : typeof retrieval === "string"
-        ? [retrieval]
-        : [];
+    const retrievalArr = stringOrStringArray(retrieval);
 
     const methods = new Set(retrievalArr.length > 0 ? retrievalArr : ["fishing"]);
     const isBaitOnly = data.bait_only === true;
@@ -390,12 +387,7 @@ function collectForageSources(fiddle: ParsedGameData, accumulator: ItemSourceAcc
     for (const rarityGroup of Object.values(seasonData)) {
       if (!Array.isArray(rarityGroup)) continue;
       for (const entry of rarityGroup) {
-        const itemId =
-          typeof entry === "string"
-            ? entry
-            : typeof entry === "object" && entry !== null
-              ? ((entry as Record<string, unknown>).item as string | undefined)
-              : undefined;
+        const itemId = forageEntryItemId(entry);
         if (itemId) {
           accumulator.add(itemId as ItemId, {
             type: "forage",
@@ -608,6 +600,21 @@ function parseSeasonsArray(seasons: unknown): NonEmptyArray<Season> | undefined 
   return undefined;
 }
 
+/** Normalizes a TOML field that is either a single string or an array of strings. */
+function stringOrStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === "string");
+  if (typeof value === "string") return [value];
+  return [];
+}
+
+function forageEntryItemId(entry: unknown): string | undefined {
+  if (typeof entry === "string") return entry;
+  if (typeof entry === "object" && entry !== null) {
+    return (entry as Record<string, unknown>).item as string | undefined;
+  }
+  return undefined;
+}
+
 function parseStringArray(data: unknown): string[] | undefined {
   if (data === false || data === undefined || data === null) return undefined;
   if (Array.isArray(data)) {
@@ -618,11 +625,7 @@ function parseStringArray(data: unknown): string[] | undefined {
 }
 
 function parseWaterTypes(waterType: unknown): NonEmptyArray<WaterType> | undefined {
-  const arr = Array.isArray(waterType)
-    ? waterType.filter((v): v is string => typeof v === "string")
-    : typeof waterType === "string"
-      ? [waterType]
-      : [];
+  const arr = stringOrStringArray(waterType);
   if (arr.length === 0) return undefined;
   if (arr.length === 3) return undefined;
   return arr as NonEmptyArray<WaterType>;

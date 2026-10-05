@@ -1,15 +1,24 @@
 // oxlint lints every script: `.ts`, `.js`, `.svelte.ts`, and `.svelte` `<script>` blocks.
 // Type-aware rules run through tsgolint, which covers everything except `.svelte` files.
-// Svelte template rules live in eslint.config.js. See
-// docs/development-workflow.md#linting--formatting.
+// Svelte template rules live in eslint.config.js. tests/lint-ownership.test.ts pins that boundary.
+// See docs/development-workflow.md#linting--formatting.
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["eslint", "typescript", "unicorn", "oxc"],
+  "plugins": ["eslint", "typescript", "unicorn", "oxc", "import", "promise", "node", "jsdoc"],
   "jsPlugins": ["eslint-plugin-perfectionist"],
-  "categories": { "correctness": "error" },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "error",
+    "pedantic": "error",
+    "style": "error",
+    "restriction": "error"
+  },
   "options": { "typeAware": true },
   "env": { "builtin": true, "browser": true, "node": true },
   "ignorePatterns": [
+    // Lint-ownership probes violate rules on purpose; tests/lint-ownership.test.ts lints them.
+    "tests/lint-probes/",
     "**/node_modules",
     ".worktrees/",
     ".claude/worktrees/",
@@ -47,6 +56,89 @@
     ".locale-fonts-dist/"
   ],
   "rules": {
+    // Every category except `nursery` is on, so an oxlint upgrade surfaces its new rules for triage.
+    // Each rule below that's `off` says why, in one of three groups. See
+    // docs/development-workflow.md#oxlint-rule-decisions for revisit conditions.
+
+    // Rejected: conflicts with a convention this repo deliberately keeps.
+    "eslint/capitalized-comments": "off", // Commented-out identifiers and code references.
+    "eslint/func-style": "off", // Declarations & arrow callbacks each have their place.
+    "eslint/id-length": "off", // Short callback names (`c`, `x`) read fine in tight scopes.
+    "eslint/init-declarations": "off", // `let x: T;` assigned in branches is the clearest form.
+    "eslint/max-classes-per-file": "off", // Error classes & test fakes live beside their users.
+    "eslint/no-bitwise": "off", // Transfer encoding & the save parser pack bits deliberately.
+    "eslint/no-continue": "off", // Guard-clause `continue` beats nested loop bodies.
+    "eslint/no-duplicate-imports": "off", // `import type` lines repeat a path; import/no-duplicates owns this.
+    "eslint/no-magic-numbers": "off", // Game data and layout constants are self-describing in place.
+    "eslint/no-plusplus": "off", // oxfmt's semicolons remove the ASI hazard this rule guards.
+    "eslint/no-ternary": "off", // Ternaries are idiomatic in Svelte markup & `$derived`.
+    "eslint/no-undefined": "off", // TypeScript optional values are `undefined`, by design.
+    "eslint/no-use-before-define": "off", // Hoisted helpers below their caller; TypeScript catches TDZ.
+    "eslint/no-void": "off", // `void promise` marks intentional fire-and-forget for no-floating-promises.
+    "eslint/no-underscore-dangle": "off", // SvelteKit `_`-prefixed exports; `_` marks unused bindings.
+    "eslint/one-var": "off", // One declaration per statement is the repo style.
+    "eslint/prefer-destructuring": "off", // `const x = arr[0]` is clearer than `[x] = arr`.
+    "eslint/sort-imports": "off", // oxfmt sorts import statements; perfectionist sorts specifiers.
+    "eslint/sort-keys": "off", // perfectionist/sort-objects owns key order, with domain groups.
+    "import/exports-last": "off", // Exports sit beside their implementation.
+    "import/group-exports": "off", // Same.
+    "import/no-default-export": "off", // Config files and SvelteKit hooks require default exports.
+    "import/no-named-export": "off",
+    "import/no-namespace": "off", // Paraglide messages import as `* as m`, by its convention. // Named exports are the repo convention.
+    "import/no-nodejs-modules": "off", // The pipeline and scripts are Node programs.
+    "import/no-unassigned-import": "off", // CSS & polyfill side-effect imports.
+    "import/prefer-default-export": "off",
+    "jsdoc/require-param": "off", // TypeScript signatures document parameters; JSDoc is prose.
+    "jsdoc/require-param-description": "off", // Same.
+    "jsdoc/require-param-type": "off", // Same.
+    "jsdoc/require-returns": "off", // Same. // Named exports are the repo convention.
+    "import/unambiguous": "off", // Ambient `.d.ts` files are scripts by design.
+    "node/no-process-env": "off", // Vite config and CLIs read the environment directly.
+    "node/no-sync": "off", // The pipeline and scripts are sequential CLIs.
+    "node/no-top-level-await": "off", // ESM entry points use top-level await (unicorn/prefer-top-level-await).
+    "oxc/no-async-await": "off", // ES-target restriction; the build targets modern runtimes.
+    "oxc/no-optional-chaining": "off", // Same.
+    "oxc/no-rest-spread-properties": "off", // Same.
+    "oxc/no-map-spread": "off", // Immutable updates are deliberate; its fix mutates shared objects.
+    "promise/avoid-new": "off", // Wrapping callback & event APIs needs `new Promise`.
+    "typescript/explicit-function-return-type": "off", // Inference for callbacks; module boundaries are checked.
+    "typescript/explicit-member-accessibility": "off", // TypeScript members are public by default.
+    "typescript/prefer-readonly-parameter-types": "off", // Deep-readonly props & DOM types are impractical.
+    "unicorn/import-style": "off", // Named imports from Node built-ins are the repo convention.
+    "unicorn/no-null": "off",
+    "unicorn/prefer-query-selector": "off", // `getElementById` needs no CSS escaping and returns `HTMLElement`. // DOM, JSON, and Svelte APIs speak `null`.
+    "unicorn/number-literal-case": "off", // Conflicts with oxfmt's lowercase hex digits.
+
+    // Contradicts a stricter rule that's on.
+    "default-case": "off", // typescript/switch-exhaustiveness-check proves switches complete.
+    "eslint/require-await": "off", // typescript/require-await knows when an async function returns a thenable.
+    "typescript/promise-function-async": "off", // Its `async` fix makes require-await flag pass-through returns.
+    "unicorn/no-nested-ternary": "off", // eslint/no-nested-ternary is stricter.
+
+    // Deferred: worthwhile, but the backlog needs its own scoping. Revisit conditions live in the doc.
+    "eslint/complexity": "off",
+    "eslint/max-depth": "off",
+    "eslint/max-lines": "off",
+    "eslint/max-lines-per-function": "off",
+    "eslint/max-params": "off",
+    "eslint/max-statements": "off",
+    "eslint/no-inline-comments": "off",
+    "eslint/prefer-named-capture-group": "off",
+    "eslint/require-unicode-regexp": "off",
+    "import/max-dependencies": "off",
+    "import/no-relative-parent-imports": "off",
+    "typescript/consistent-return": "off",
+    "typescript/no-unsafe-type-assertion": "off",
+    "typescript/strict-boolean-expressions": "off",
+    "typescript/strict-void-return": "off",
+    "unicorn/max-nested-calls": "off",
+    "unicorn/no-useless-undefined": "off",
+
+    // Configured category rules
+    "import/extensions": ["error", "always", { "ignorePackages": true }],
+    "unicorn/filename-case": ["error", { "case": "kebabCase" }],
+    "unicorn/switch-case-braces": ["error", "avoid"],
+
     // Core rules beyond the `correctness` category
     "curly": ["error", "multi-line", "consistent"],
     "eqeqeq": "error",
@@ -192,6 +284,42 @@
   },
   "overrides": [
     {
+      // Vitest rules apply to unit tests only; Playwright specs under tests/ use a different API.
+      "files": ["**/*.test.ts"],
+      "plugins": ["vitest"],
+      "rules": {
+        // Assertion helpers are named `expect*`, like `expectDecodeError`.
+        // ESLint's RuleTester registers its own `describe`/`it` blocks.
+        "vitest/require-hook": ["error", { "allowedFunctionCalls": ["tester.run"] }],
+        "vitest/expect-expect": ["error", { "assertFunctionNames": ["expect", "expect*"] }],
+        "vitest/consistent-test-it": ["error", { "fn": "it", "withinDescribe": "it" }],
+        "vitest/max-expects": "off", // Table-style tests assert many facts about one fixture.
+        "vitest/no-hooks": "off", // `beforeEach` resets shared fakes.
+        "vitest/no-importing-vitest-globals": "off", // Vitest globals are off; tests import `vi`, `expect`, & co.
+        "vitest/prefer-describe-function-title": "off", // Describe titles name behaviors, not only functions.
+        "vitest/prefer-expect-assertions": "off",
+        "vitest/prefer-expect-resolves": "off", // jest-dom matchers under `.resolves` aren't typed as thenables, so await-thenable rejects the rewrite.
+        "vitest/prefer-lowercase-title": "off",
+        "vitest/prefer-mock-return-shorthand": "off", // Its fix shares one value across calls that must each build their own (fresh promises, side effects). // Describe titles name PascalCase components & types. // Typed, synchronous assertions can't silently skip.
+        "vitest/require-test-timeout": "off", // The global Vitest timeout applies.
+        "vitest/require-top-level-describe": "off", // Small test files don't need a wrapper.
+        "vitest/prefer-called-once": "off", // vitest/prefer-called-times states every count the same way.
+        "vitest/prefer-strict-boolean-matchers": "off", // Its fix turns truthiness checks on elements into `toBe(true)`.
+        "vitest/prefer-to-be-falsy": "off", // `toBe(false)` is stricter on real booleans.
+        "vitest/prefer-to-be-truthy": "off", // `toBe(true)` is stricter on real booleans.
+        "vitest/no-conditional-in-test": "off",
+        "vitest/prefer-import-in-mock": "off",
+        "vitest/prefer-strict-equal": "off",
+        "vitest/require-mock-type-parameters": "off",
+        "vitest/valid-expect": ["error", { "maxArgs": 2 }]
+      }
+    },
+    {
+      // Playwright specs drive one page through ordered steps, so their awaits are sequential.
+      "files": ["tests/**/*.ts"],
+      "rules": { "no-await-in-loop": "off" }
+    },
+    {
       // TypeScript reports these itself (typescript-eslint's eslint-recommended overrides). Every
       // `.svelte` script is `lang="ts"`, so the same applies there.
       "files": ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts", "**/*.svelte"],
@@ -249,6 +377,12 @@
       // shadcn-svelte generated components: vendored code, so relax strict rules
       "files": ["src/lib/components/ui/**/*.svelte", "src/lib/components/ui/**/*.ts"],
       "rules": {
+        "import/consistent-type-specifier-style": "off",
+        "import/no-cycle": "off",
+        "import/newline-after-import": "off",
+        "import/no-duplicates": "off",
+        "typescript/explicit-module-boundary-types": "off",
+        "unicorn/prefer-export-from": "off",
         "perfectionist/sort-named-exports": "off",
         "perfectionist/sort-object-types": "off",
         "perfectionist/sort-objects": "off",

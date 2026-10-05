@@ -84,6 +84,9 @@ function buildStoredState(
 ): string {
   const invalidDomains = options.invalidDomains ?? false;
   const malformedNumericScalars = options.malformedNumericScalars ?? false;
+  let mineFloor: null | number = 0;
+  if (malformedNumericScalars) mineFloor = null;
+  else if (invalidDomains) mineFloor = getMaxMineFloor() + 50;
   return JSON.stringify({
     availabilityWindows: invalidDomains ? ["now", "removed_window"] : ["now"],
     completed: {
@@ -101,7 +104,7 @@ function buildStoredState(
       cosmetics: [known.cosmetic, UNKNOWN_ID],
       dates: [known.date, UNKNOWN_ID],
       mines: {
-        floor: malformedNumericScalars ? null : invalidDomains ? getMaxMineFloor() + 50 : 0,
+        floor: mineFloor,
         spells: [known.spell, UNKNOWN_ID],
       },
       museum: [known.museum, UNKNOWN_ID],

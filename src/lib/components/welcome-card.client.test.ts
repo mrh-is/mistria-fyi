@@ -6,7 +6,7 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 
 function setDevice({ touchPoints, width }: { touchPoints: number; width: number }): void {
   Object.defineProperty(navigator, "maxTouchPoints", { configurable: true, value: touchPoints });
-  Object.defineProperty(window, "innerWidth", { configurable: true, value: width });
+  Object.defineProperty(globalThis, "innerWidth", { configurable: true, value: width });
 }
 
 beforeEach(() => {
@@ -17,7 +17,9 @@ beforeEach(() => {
 afterEach(async () => {
   cleanup();
   vi.restoreAllMocks();
-  await new Promise((resolve) => setTimeout(resolve, 350));
+  await new Promise((resolve) => {
+    setTimeout(resolve, 350);
+  });
 });
 
 describe("WelcomeCard", () => {
@@ -38,11 +40,10 @@ describe("WelcomeCard", () => {
     setDevice({ touchPoints: 5, width: 390 });
     render(WelcomeCard);
 
-    expect(
-      (await screen.findByRole("link", { name: "Scan QR code from another device" })).getAttribute(
-        "href",
-      ),
-    ).toMatch(/\/data\?section=transfer$/);
+    const transferLink = await screen.findByRole("link", {
+      name: "Scan QR code from another device",
+    });
+    expect(transferLink.getAttribute("href")).toMatch(/\/data\?section=transfer$/);
 
     await fireEvent.click(screen.getByRole("button", { name: "I’m on a computer" }));
 

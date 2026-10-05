@@ -82,7 +82,7 @@ export function probePreviewOwner(baseUrl: string): PreviewProbe {
   const output = execFileSync(
     process.execPath,
     ["--input-type=module", "--eval", probeSource, `${baseUrl}/${OWNER_FILE}`],
-    { encoding: "utf-8", timeout: 5_000 },
+    { encoding: "utf8", timeout: 5000 },
   );
   const result = JSON.parse(output) as null | { body: unknown; status: number };
   if (result === null) return { kind: "unreachable" };

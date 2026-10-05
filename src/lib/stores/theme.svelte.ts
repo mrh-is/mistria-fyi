@@ -15,6 +15,11 @@ function applyTheme(resolved: "dark" | "light") {
   }
 }
 
+function resolveTheme(preference: Theme, prefersDark: boolean): "dark" | "light" {
+  if (preference !== "system") return preference;
+  return prefersDark ? "dark" : "light";
+}
+
 function createThemeStore() {
   let preference = $state<Theme>("system");
   // Reactive, so "system" follows the OS theme as it changes.
@@ -26,12 +31,10 @@ function createThemeStore() {
     preference = stored;
   }
 
-  const resolved = $derived<"dark" | "light">(
-    preference === "system" ? (prefersDark.current ? "dark" : "light") : preference,
-  );
+  const resolved = $derived<"dark" | "light">(resolveTheme(preference, prefersDark.current));
 
   // Apply on change, including OS theme changes in "system" mode
-  if (typeof window !== "undefined") {
+  if ("window" in globalThis) {
     $effect.root(() => {
       $effect(() => {
         applyTheme(resolved);

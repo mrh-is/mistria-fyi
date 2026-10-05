@@ -1,5 +1,5 @@
-import encodeQR from "qr";
-import decodeQR from "qr/decode.js";
+import { encodeQR } from "qr";
+import { decodeQR } from "qr/decode.js";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";

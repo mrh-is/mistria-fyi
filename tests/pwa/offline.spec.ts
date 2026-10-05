@@ -45,8 +45,12 @@ test("registers, activates, and precaches the offline shell", async ({ page }) =
   });
 
   const cachedPaths = await page.evaluate(async () => {
+    const cacheKeys = await caches.keys();
     const requests = await Promise.all(
-      (await caches.keys()).map(async (cacheName) => (await caches.open(cacheName)).keys()),
+      cacheKeys.map(async (cacheName) => {
+        const cache = await caches.open(cacheName);
+        return cache.keys();
+      }),
     );
     return requests.flat().map((request) => new URL(request.url).pathname);
   });
@@ -83,7 +87,11 @@ test("serves cached routes and assets offline, then falls back for an uncached n
   await page.reload();
   await expect(page).toHaveURL(/\/animals$/);
   await expect(page.locator("main")).toBeVisible();
-  expect(await page.evaluate(async () => (await fetch("/favicon.png")).ok)).toBe(true);
+  const faviconOk = await page.evaluate(async () => {
+    const response = await fetch("/favicon.png");
+    return response.ok;
+  });
+  expect(faviconOk).toBe(true);
 
   await page.goto("/pwa-uncached-offline-probe");
   await expect(page.getByRole("heading", { name: /offline/i })).toBeVisible();
@@ -112,8 +120,10 @@ test.describe("without service workers", () => {
 
     await expect(page.locator("main")).toBeVisible();
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    expect(
-      await page.evaluate(async () => (await navigator.serviceWorker.getRegistrations()).length),
-    ).toBe(0);
+    const registrationCount = await page.evaluate(async () => {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      return registrations.length;
+    });
+    expect(registrationCount).toBe(0);
   });
 });

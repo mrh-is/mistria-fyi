@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { page } from "$app/state";
   import * as AlertDialog from "#lib/components/ui/alert-dialog/index.js";
   import { buttonVariants } from "#lib/components/ui/button/button.svelte";
   import { getName } from "#lib/data/names.js";
   import { isConditionInvertible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { page } from "$app/state";
 
   import type { VisibilityCondition } from "#lib/types/visibility.js";
 

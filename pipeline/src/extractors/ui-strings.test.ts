@@ -40,7 +40,7 @@ function stubLocalized(perLocale: Partial<Record<string, string>>): void {
 
 describe("extractUiStrings", () => {
   it("localizes each requested misc_local key without a field segment", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const fiddle = makeFiddle({ misc_local: { crops: "Crops", tier_1: "Tier 1" } });
 
     const { localeNames } = extractUiStrings(fiddle, "assets", ["tier_1", "crops", "crops"]);
@@ -57,7 +57,7 @@ describe("extractUiStrings", () => {
   });
 
   it("stores an aliased request under its id, localized from its misc_local key", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const fiddle = makeFiddle({
       misc_local: { fish: "Fish", fishing_and_diving: "Fishing and Diving" },
     });
@@ -91,7 +91,7 @@ describe("extractUiStrings", () => {
   });
 
   it("collapses player-gender variants to the they form", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     stubLocalized({ es: "<he>Casado</he><she>Casada</she><they>Casade</they>" });
     const fiddle = makeFiddle({ misc_local: { married: "Married" } });
 
@@ -102,7 +102,7 @@ describe("extractUiStrings", () => {
   });
 
   it("throws on inline markup it cannot collapse", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     stubLocalized({ fr: "Appuyez sur <input_confirm>" });
     const fiddle = makeFiddle({ misc_local: { confirm: "Confirm" } });
 
@@ -112,7 +112,7 @@ describe("extractUiStrings", () => {
   });
 
   it("strips a leading article per language and re-capitalizes", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     stubLocalized({ es: "El museo", fr: "Le musée", ja: "博物館", ru: "Музей" });
     const fiddle = makeFiddle({ misc_local: { the_museum: "The Museum" } });
 
@@ -128,7 +128,7 @@ describe("extractUiStrings", () => {
   });
 
   it("leaves a title alone when the language wrote it without an article", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     stubLocalized({ es: "Almanaque", fr: "L'almanach" });
     const fiddle = makeFiddle({ misc_local: { the_almanac: "The Almanac" } });
 

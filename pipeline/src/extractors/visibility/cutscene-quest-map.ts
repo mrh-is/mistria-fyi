@@ -87,7 +87,7 @@ export function buildCutsceneQuestMap(fiddle: ParsedGameData): CutsceneQuestMap 
       const ptMatch = /^(.+)_pt_(\d+)$/.exec(cutsceneId);
       if (!ptMatch) continue;
       const baseId = ptMatch[1];
-      const partNumber = parseInt(ptMatch[2], 10);
+      const partNumber = Math.trunc(Number(ptMatch[2]));
       if (allQuestIds.has(baseId)) {
         map[cutsceneId] = {
           phase: partNumber >= 2 ? "completed" : "available",

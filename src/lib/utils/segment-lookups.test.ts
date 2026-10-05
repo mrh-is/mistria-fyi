@@ -74,7 +74,9 @@ describe("buildBaseSegmentLookups", () => {
     const sources = collectSources(trackerData);
     const questIds = new Set(sources.flatMap((s) => (s.type === "quest" ? [s.questId] : [])));
     const tiers = new Set(sources.flatMap((s) => (s.type === "treasure_chest" ? [s.tier] : [])));
-    const trackedQuestIds = new Set(Object.values(trackerData.quests).flatMap(Object.keys));
+    const trackedQuestIds = new Set(
+      Object.values(trackerData.quests).flatMap((quests) => Object.keys(quests)),
+    );
 
     for (const id of UNNAMED_SOURCE_IDS.quests) {
       expect(questIds.has(id), id).toBe(true);

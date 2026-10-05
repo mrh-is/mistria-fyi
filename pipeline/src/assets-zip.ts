@@ -7,8 +7,7 @@ import { dirname, join, resolve } from "node:path";
  * on. Used as a last-resort fallback so `pnpm run pipeline` works with no arguments and no
  * `MISTRIA_ASSETS` on a stock Windows dev machine.
  */
-export const DEFAULT_WINDOWS_STEAM_ASSETS_DIR =
-  "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Fields of Mistria";
+export const DEFAULT_WINDOWS_STEAM_ASSETS_DIR = String.raw`C:\Program Files (x86)\Steam\steamapps\common\Fields of Mistria`;
 
 /** Reads the installed Windows game's Product Version without opening or extracting assets.zip. */
 export function readInstalledGameVersion(assetsZipPath: string | undefined): string | undefined {

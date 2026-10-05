@@ -2,11 +2,11 @@
   import { tick } from "svelte";
   import { prefersReducedMotion } from "svelte/motion";
 
-  import { version } from '$app/env';
-  import { page } from "$app/state";
   import PageHeader from "#lib/components/page-header.svelte";
   import { trackerData } from "#lib/data/index.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { version } from "$app/env";
+  import { page } from "$app/state";
 
   import BackupCard from "./backup-card.svelte";
   import DangerZoneCard from "./danger-zone-card.svelte";
@@ -27,11 +27,14 @@
 
   function scrollToTransfer(): void {
     void openThenScroll(
-      () => transferOpen = true,
-      () => transferSection?.scrollIntoView({
-        behavior: prefersReducedMotion.current ? "auto" : "smooth",
+      () => {
+        transferOpen = true;
+      },
+      () =>
+        transferSection?.scrollIntoView({
+          behavior: prefersReducedMotion.current ? "auto" : "smooth",
           block: "start",
-      }),
+        }),
       tick,
     );
   }
@@ -41,11 +44,18 @@
     const target = section === "transfer" ? transferSection : importSection;
     if (section !== "transfer" && section !== "import") return;
     void openThenScroll(
-      () => section === "transfer" ? transferOpen = true : importOpen = true,
-      () => target?.scrollIntoView({
-        behavior: prefersReducedMotion.current ? "auto" : "smooth",
+      () => {
+        if (section === "transfer") {
+          transferOpen = true;
+        } else {
+          importOpen = true;
+        }
+      },
+      () =>
+        target?.scrollIntoView({
+          behavior: prefersReducedMotion.current ? "auto" : "smooth",
           block: "start",
-      }),
+        }),
       tick,
     );
   });

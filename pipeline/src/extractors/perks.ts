@@ -24,7 +24,7 @@ export function extractPerks(fiddle: ParsedGameData): {
   const perksData = fiddle.perks as Record<string, Record<string, unknown>> | undefined;
   const perks = {} as Record<PerkId, { name: string; skillId: SkillId; tier: number }>;
 
-  for (const skillId of Object.keys(skillMenus).sort()) {
+  for (const skillId of Object.keys(skillMenus).toSorted()) {
     if (skillId === "defaults") continue;
     const skillMenu = skillMenus[skillId];
     if (typeof skillMenu !== "object" || skillMenu === null) continue;

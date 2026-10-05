@@ -15,7 +15,7 @@ describe("TrackerCheckbox", () => {
     const button = screen.getByRole("button", { name: "Mark Tomato as complete" });
     await fireEvent.click(button);
 
-    expect(onclick).toHaveBeenCalledOnce();
+    expect(onclick).toHaveBeenCalledTimes(1);
     expect(button.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
   });
 

@@ -19,7 +19,7 @@ export function buildVillagerRoster(locale: LocaleCode): VillagerRosterEntry[] {
       const villagerId = id as VillagerId;
       return { ...villager, id: villagerId, name: getName("villagers", villagerId, locale) };
     })
-    .sort((a, b) => collator.compare(a.name, b.name));
+    .toSorted((a, b) => collator.compare(a.name, b.name));
 }
 
 export function filterVillagerRoster(

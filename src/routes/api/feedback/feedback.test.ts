@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { OPTIONS, POST } from "./+server.js";
+import { OPTIONS as handleOptions, POST as handlePost } from "./+server.js";
 
 import type { env } from "cloudflare:workers";
 
@@ -57,37 +57,26 @@ async function callPost(
 
   try {
     const url = makeUrl();
-    return await POST({
+    return await handlePost({
       request,
       url,
-    } as Parameters<typeof POST>[0]);
+    } as Parameters<typeof handlePost>[0]);
   } finally {
     globalThis.fetch = originalFetch;
   }
 }
 
-const turnstileSuccessResponse = () =>
-  new Response(JSON.stringify({ success: true }), {
-    headers: { "Content-Type": "application/json" },
-    status: 200,
-  });
+const turnstileSuccessResponse = () => Response.json({ success: true }, { status: 200 });
 
-const turnstileFailureResponse = () =>
-  new Response(JSON.stringify({ success: false }), {
-    headers: { "Content-Type": "application/json" },
-    status: 200,
-  });
+const turnstileFailureResponse = () => Response.json({ success: false }, { status: 200 });
 
 const githubSuccessResponse = () =>
-  new Response(
-    JSON.stringify({
+  Response.json(
+    {
       html_url: "PR 99 (private beta)",
       number: 99,
-    }),
-    {
-      headers: { "Content-Type": "application/json" },
-      status: 201,
     },
+    { status: 201 },
   );
 
 function getGitHubCall(fetchMock: ReturnType<typeof vi.fn>): [url: string, options: RequestInit] {
@@ -102,10 +91,7 @@ function getGitHubCall(fetchMock: ReturnType<typeof vi.fn>): [url: string, optio
 
 function mockGitHubFailure(status: number) {
   return routingFetchMock({
-    github: new Response(JSON.stringify({ message: "error" }), {
-      headers: { "Content-Type": "application/json" },
-      status,
-    }),
+    github: Response.json({ message: "error" }, { status }),
   });
 }
 
@@ -174,7 +160,7 @@ describe("POST /api/feedback", () => {
 
     const [, options] = getGitHubCall(fetchMock);
     const body = JSON.parse(options.body as string) as { body: string };
-    expect(body.body).toContain("\u{1f4e7} Contact email provided");
+    expect(body.body).toContain("\u{1F4E7} Contact email provided");
     expect(body.body).not.toContain("user@example.com");
     expect(kvPut).toHaveBeenCalledWith("99", expect.stringContaining("user@example.com"));
   });
@@ -194,8 +180,8 @@ describe("POST /api/feedback", () => {
 
     const [, options] = getGitHubCall(fetchMock);
     const issue = JSON.parse(options.body as string) as { body: string };
-    expect(issue.body).toContain("cc \\@octocat and \\@mrh-is/maintainers");
-    expect(issue.body).toContain("- **Name:** \\@octocat");
+    expect(issue.body).toContain(String.raw`cc \@octocat and \@mrh-is/maintainers`);
+    expect(issue.body).toContain(String.raw`- **Name:** \@octocat`);
     expect(issue.body).not.toMatch(/(?<!\\)@/);
   });
 
@@ -217,7 +203,7 @@ describe("POST /api/feedback", () => {
     const issue = JSON.parse(options.body as string) as { body: string; title: string };
     expect(issue.title).toBe("[Feedback] recipe: Tomato Soup");
     expect(issue.body).toContain("**Selected element**");
-    expect(issue.body).toContain("- **ID:** tomato\\_soup");
+    expect(issue.body).toContain(String.raw`- **ID:** tomato\_soup`);
     expect(issue.body).toContain("- **Page:** /recipes");
     expect(issue.body).toContain("- **level:** 2");
     expect(issue.body).toContain("- **cookbook:** Mistrian Kitchen");
@@ -361,15 +347,14 @@ describe("POST /api/feedback", () => {
   });
 
   it("logs sanitized GitHub failure diagnostics", async () => {
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const consoleError = vi.spyOn(console, "error").mockReturnValue(undefined);
     const fetchMock = routingFetchMock({
-      github: new Response(
-        JSON.stringify({
+      github: Response.json(
+        {
           message: "Resource not accessible by personal access token\nwith extra detail",
-        }),
+        },
         {
           headers: {
-            "Content-Type": "application/json",
             "X-Accepted-GitHub-Permissions": "issues=write",
             "X-GitHub-Request-Id": "request-123",
           },
@@ -419,7 +404,7 @@ describe("POST /api/feedback", () => {
     const fetchMock = mockGitHubSuccess();
     const request = makeRequest({ ...validPayload, email: "user@example.com" });
     const platform = mockPlatform({ kvPutFail: true });
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.spyOn(console, "error").mockReturnValue(undefined);
     const response = await callPost(request, { fetchMock, platform });
 
     expect(response.status).toBe(200);
@@ -430,7 +415,7 @@ describe("POST /api/feedback", () => {
   it("reports emailSaved: false when KV binding is missing", async () => {
     const fetchMock = mockGitHubSuccess();
     const request = makeRequest({ ...validPayload, email: "user@example.com" });
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.spyOn(console, "error").mockReturnValue(undefined);
     const platform = {
       env: {
         GITHUB_FEEDBACK_TOKEN: "ghp_test_token",
@@ -520,7 +505,7 @@ describe("POST /api/feedback", () => {
   });
 
   it("returns 400 when turnstileToken is not a string", async () => {
-    const request = makeRequest({ ...validPayload, turnstileToken: 12345 });
+    const request = makeRequest({ ...validPayload, turnstileToken: 12_345 });
     await expect(callPost(request)).rejects.toMatchObject({ status: 400 });
   });
 
@@ -567,7 +552,9 @@ describe("OPTIONS /api/feedback", () => {
       headers: { Origin: "https://mistria.fyi" },
       method: "OPTIONS",
     });
-    const response = await OPTIONS({ request, url: makeUrl() } as Parameters<typeof OPTIONS>[0]);
+    const response = await handleOptions({ request, url: makeUrl() } as Parameters<
+      typeof handleOptions
+    >[0]);
     expect(response.status).toBe(204);
     expect(response.headers.get("Access-Control-Allow-Methods")).toContain("POST");
     expect(response.headers.get("Access-Control-Allow-Origin")).toBe("https://mistria.fyi");
@@ -579,8 +566,8 @@ describe("OPTIONS /api/feedback", () => {
       method: "OPTIONS",
     });
 
-    expect(() => OPTIONS({ request, url: makeUrl() } as Parameters<typeof OPTIONS>[0])).toThrow(
-      expect.objectContaining({ status: 403 }),
-    );
+    expect(() =>
+      handleOptions({ request, url: makeUrl() } as Parameters<typeof handleOptions>[0]),
+    ).toThrow(expect.objectContaining({ status: 403 }));
   });
 });

@@ -24,15 +24,12 @@
   let rankState = $derived(getRankState(currentLevel, rank));
   let span = $derived(Math.max(rank.levels.end - rank.levels.start + 1, 1));
   let within = $derived(Math.max(currentLevel - rank.levels.start, 0));
-  let fill = $derived(
-    rankState === "completed"
-      ? 100
-      : rankState === "upcoming"
-        ? 0
-        : span === 1 && currentLevel >= rank.levels.end
-          ? 100
-          : Math.min((within / span) * 100, 100),
-  );
+  let fill = $derived.by(() => {
+    if (rankState === "completed") return 100;
+    if (rankState === "upcoming") return 0;
+    if (span === 1 && currentLevel >= rank.levels.end) return 100;
+    return Math.min((within / span) * 100, 100);
+  });
   let revealed = $state(false);
   let hidden = $derived(spoilered && !revealed);
 </script>

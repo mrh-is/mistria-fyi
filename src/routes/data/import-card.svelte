@@ -34,7 +34,8 @@
 
   // ── Desktop detection (simple heuristic) ──
   let isDesktop = $derived(
-    typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches,
+    typeof globalThis.matchMedia === "function" &&
+      globalThis.matchMedia("(min-width: 768px)").matches,
   );
 
   // ── Import state ──
@@ -57,13 +58,16 @@
   const SAV_PATH = String.raw`%LOCALAPPDATA%\FieldsOfMistria\saves`;
   let copied = $state(false);
 
+  async function copyPathAsync(): Promise<void> {
+    await navigator.clipboard.writeText(SAV_PATH);
+    copied = true;
+    setTimeout(() => {
+      copied = false;
+    }, 2000);
+  }
+
   function copyPath() {
-    void navigator.clipboard.writeText(SAV_PATH).then(() => {
-      copied = true;
-      setTimeout(() => {
-        copied = false;
-      }, 2000);
-    });
+    void copyPathAsync();
   }
 
   function handleDragEnter(e: DragEvent) {
@@ -85,7 +89,7 @@
     dragCounter = 0;
     const files = e.dataTransfer?.files;
     if (files?.length) {
-      void handleFileChange(Array.from(files));
+      void handleFileChange([...files]);
     }
   }
 
@@ -102,7 +106,7 @@
 
     try {
       // Check if user selected a .sav file
-      const savFile = Array.from(files).find(isSavFile);
+      const savFile = [...files].find((file) => isSavFile(file));
 
       let bundle;
       let parseWarnings: SaveImportWarning[] = [];
@@ -110,10 +114,10 @@
         importStatus = m.import_status_unpacking();
         try {
           bundle = await unpackSavFile(savFile);
-        } catch (err) {
+        } catch (error) {
           importError =
-            err instanceof SaveFileError
-              ? formatSaveFileError(err.detail)
+            error instanceof SaveFileError
+              ? formatSaveFileError(error.detail)
               : m.import_error_unexpected();
           savFallback = true;
           return;
@@ -162,7 +166,7 @@
   function handleInputChange(e: Event) {
     const files = (e.target as HTMLInputElement).files;
     if (files?.length) {
-      void handleFileChange(Array.from(files));
+      void handleFileChange([...files]);
     }
   }
 

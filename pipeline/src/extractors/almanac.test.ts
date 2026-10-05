@@ -38,7 +38,7 @@ afterEach(() => {
 
 describe("extractAlmanac", () => {
   it("traverses valid items while preserving item-level exclusions", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = createAssetsFixture({
       "fish.toml": `
 [treasure]
@@ -122,7 +122,7 @@ tags = ["crop"]
   });
 
   it("collapses colorways by recipe_key + name with alphabetical-first canonical ID", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = createAssetsFixture({
       "items/other/furniture.toml": `
 [default]
@@ -163,7 +163,7 @@ tags = ["furniture"]
   });
 
   it("keeps different names under the same recipe_key as separate entries", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = createAssetsFixture({
       "items/other/furniture.toml": `
 [default]
@@ -191,12 +191,12 @@ tags = ["furniture"]
     const result = extractAlmanac(fiddle, assetsDir);
     const cat = result.almanac["furniture" as AlmanacCategoryId];
     expect(cat.items).toHaveLength(2);
-    const canonicalIds = cat.items.map((e: AlmanacEntry) => e.itemIds[0]).sort();
+    const canonicalIds = cat.items.map((e: AlmanacEntry) => e.itemIds[0]).toSorted();
     expect(canonicalIds).toEqual(["bed_double_v1", "bed_single_v1"]);
   });
 
   it("includes items in every almanac category matched by their tags", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = createAssetsFixture({
       "items/other/materials.toml": `
 [wood]
@@ -249,7 +249,7 @@ tags = ["material"]
   });
 
   it("singleton entries have a single-element itemIds array", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = createAssetsFixture({
       "items/other/crops.toml": `
 [default]
@@ -274,7 +274,7 @@ tags = ["crop"]
   });
 
   it("throws when an item is missing icon_sprite", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = createAssetsFixture({
       "items/other/crops.toml": `
 [default]

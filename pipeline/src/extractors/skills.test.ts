@@ -27,7 +27,7 @@ describe("extractSkills", () => {
   const assetsDir = "test-assets";
 
   beforeEach(() => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
   });
 
   it("returns empty defaults when skills data is absent", () => {

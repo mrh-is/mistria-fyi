@@ -76,7 +76,7 @@ describe("getName", () => {
 
   it("accepts only Villager IDs for the Villager category", () => {
     // @ts-expect-error Localized name lookups preserve the category's branded ID type.
-    getName("villagers", "balor", "en");
+    expect(() => getName("villagers", "balor", "en")).not.toThrow();
   });
 
   it("gives independent results for two locales interleaved in one process", () => {
@@ -89,7 +89,11 @@ describe("getName", () => {
     ]);
 
     // Interleaved, then reversed, then shuffled — order must never change any single answer.
-    for (const order of [pairs, [...pairs].reverse(), [...pairs].sort(() => 0.5 - Math.random())]) {
+    for (const order of [
+      pairs,
+      [...pairs].toReversed(),
+      [...pairs].toSorted(() => 0.5 - Math.random()),
+    ]) {
       for (const { expected, id, locale } of order) {
         expect(getName("villagers", id, locale)).toBe(expected);
       }
@@ -118,7 +122,9 @@ describe("getName", () => {
 describe("getNameTable", () => {
   it("merges the English chunk under the requested locale", () => {
     const table = getNameTable("villagers", "ja");
-    expect(Object.keys(table).sort()).toStrictEqual([...recordKeys(trackerData.villagers)].sort());
+    expect(Object.keys(table).toSorted()).toStrictEqual(
+      [...recordKeys(trackerData.villagers)].toSorted(),
+    );
     expect(table[balor]).toBe("バロル");
   });
 

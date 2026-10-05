@@ -24,7 +24,7 @@
     }
     return [...firstByInitial.entries()]
       .map(([initial, id]) => ({ id, initial }))
-      .sort((a, b) => a.initial.localeCompare(b.initial));
+      .toSorted((a, b) => a.initial.localeCompare(b.initial));
   });
 
   function activate({ id, initial }: { id: string; initial: string }): void {

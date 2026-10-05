@@ -1,16 +1,11 @@
-import AxeBuilder from "@axe-core/playwright";
+import { AxeBuilder } from "@axe-core/playwright";
 
-import {
-  type AxeAssessment,
-  type AxeException,
-  type AxeFinding,
-  type AxeRunContext,
-  flattenAxeViolations,
-  formatAxeFailures,
-} from "./violations.js";
+import { flattenAxeViolations, formatAxeFailures } from "./violations.js";
 
 import type { Page, TestInfo } from "@playwright/test";
 import type { AxeResults } from "axe-core";
+
+import type { AxeAssessment, AxeException, AxeFinding, AxeRunContext } from "./violations.js";
 
 export { formatAxeFailures } from "./violations.js";
 export type { AxeAssessment, AxeException, AxeRunContext } from "./violations.js";
@@ -88,7 +83,7 @@ export function assessAxeResults(
 }
 
 export function validateAxeExceptions(exceptions: AxeException[]): void {
-  if (!exceptions.every(isExactException)) {
+  if (!exceptions.every((exception) => isExactException(exception))) {
     throw new Error("Axe exceptions must be exact and fully documented");
   }
 }

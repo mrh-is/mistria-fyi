@@ -2,10 +2,12 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { expectArray } from "../data-shapes.js";
 import { localizeField } from "../localize.js";
-import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
+import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { TrackerData } from "#lib/types/tracker-data.js";
+
+import type { ParsedGameData } from "../parse-fiddle.js";
 
 export interface TownRankExtraction {
   localeNames: Record<LocaleCode, Record<string, string>>;

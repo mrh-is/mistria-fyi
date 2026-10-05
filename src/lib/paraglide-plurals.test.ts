@@ -34,8 +34,8 @@ describe("plural messages", () => {
           m.merge_label_renown,
           m.merge_label_skill_levels,
         ]) {
-          const result = message({ count }, { locale });
-          expect(result).toContain(count.toString());
+          const messageResult = message({ count }, { locale });
+          expect(messageResult).toContain(count.toString());
         }
       }
     }

@@ -62,7 +62,10 @@ export class FeedbackContext {
     this.#onFinish = undefined;
     this.#onSelect = undefined;
     this.#setPicking(false);
-    void tick().then(() => onFinish?.());
+    void (async () => {
+      await tick();
+      onFinish?.();
+    })();
   }
 }
 

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { page } from "$app/state";
   import { Icon } from "#lib/components/icon/index.js";
   import Stepper from "#lib/components/stepper.svelte";
   import { trackerData } from "#lib/data/index.js";
@@ -9,6 +8,7 @@
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { celebrateCategory } from "#lib/utils/celebrate.js";
+  import { page } from "$app/state";
 
   import type { LocaleCode } from "#lib/types/locale.js";
 

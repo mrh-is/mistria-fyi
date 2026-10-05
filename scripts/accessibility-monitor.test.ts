@@ -9,6 +9,12 @@ function report(message = "Accessibility violations:\nroute: /\nrule: color-cont
   return { suites: [{ specs: [{ tests: [{ results: [{ errors: [{ message }] }] }] }] }] };
 }
 
+function rejectMutations(_command: string, args: string[]): Promise<string> {
+  return args[1] === "list"
+    ? Promise.resolve("[]")
+    : Promise.reject(new Error("unexpected mutation"));
+}
+
 describe("accessibility issue monitor", () => {
   it("extracts bounded, actionable accessibility failures", () => {
     expect(summarizePlaywrightReport(report())).toEqual([
@@ -64,10 +70,12 @@ describe("accessibility issue monitor", () => {
   });
 
   it("rejects setup failures without mutating GitHub", async () => {
-    const run = (_command: string, args: string[]): Promise<string> =>
-      args[1] === "list" ? Promise.resolve("[]") : Promise.reject(new Error("unexpected mutation"));
     await expect(
-      synchronizeAccessibilityIssue({ result: "failure", run, workflowUrl: "run" }),
+      synchronizeAccessibilityIssue({
+        result: "failure",
+        run: rejectMutations,
+        workflowUrl: "run",
+      }),
     ).rejects.toThrow("setup failed");
   });
 });

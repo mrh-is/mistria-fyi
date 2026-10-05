@@ -1,7 +1,9 @@
-import { type APIRequestContext, expect, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import { SITE_NAME, SITE_ORIGIN } from "../../src/lib/data/page-metadata.js";
 import { LOCALE_CODES } from "../../src/lib/types/locale.js";
+
+import type { APIRequestContext } from "@playwright/test";
 
 const HOME_PATH_PATTERN = new RegExp(`^/(?:${LOCALE_CODES.join("|")})$`);
 
@@ -10,7 +12,8 @@ function sitemapLocale(path: string): string | undefined {
 }
 
 async function sitemapPaths(request: APIRequestContext): Promise<string[]> {
-  const sitemap = await (await request.get("/sitemap.xml")).text();
+  const response = await request.get("/sitemap.xml");
+  const sitemap = await response.text();
   return [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map(
     ([, location]) => new URL(location).pathname,
   );
@@ -46,7 +49,8 @@ test.describe("server-rendered search metadata", () => {
           ? route.abort()
           : route.continue(),
       );
-      const paths = (await sitemapPaths(request)).filter((path) => sitemapLocale(path) === locale);
+      const allPaths = await sitemapPaths(request);
+      const paths = allPaths.filter((path) => sitemapLocale(path) === locale);
       expect(paths.length).toBeGreaterThan(0);
 
       for (const path of paths) {

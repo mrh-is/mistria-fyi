@@ -37,7 +37,7 @@ describe("FeedbackContext", () => {
     expect(context.isPicking).toBe(false);
     expect(onSelect).toHaveBeenCalledWith(metadata);
     await vi.waitFor(() => {
-      expect(onFinish).toHaveBeenCalledOnce();
+      expect(onFinish).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -51,7 +51,7 @@ describe("FeedbackContext", () => {
 
     expect(onSelect).not.toHaveBeenCalled();
     await vi.waitFor(() => {
-      expect(onFinish).toHaveBeenCalledOnce();
+      expect(onFinish).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -5,12 +5,14 @@
 import { includeIgnoreFile } from "@eslint/compat";
 import { loadConfig } from "@sveltejs/load-config";
 import svelte from "eslint-plugin-svelte";
-import { defineConfig } from "eslint/config";
+import { defineConfig, globalIgnores } from "eslint/config";
 import globals from "globals";
 import { fileURLToPath } from "node:url";
 import ts from "typescript-eslint";
 
 import noHardcodedUiText from "./eslint-rules/no-hardcoded-ui-text.js";
+// Node strips the types when it imports this TypeScript module.
+import noRawInternalHref from "./eslint-rules/no-raw-internal-href.ts";
 
 // SvelteKit 3 reads its config from the `sveltekit()` plugin in vite.config.ts, flattened (no `kit`).
 const loadedConfig = await loadConfig("./", { traverse: false });
@@ -19,7 +21,12 @@ if (!loadedConfig || !("config" in loadedConfig)) {
 }
 const svelteConfig = loadedConfig.config;
 
-const gitignorePath = fileURLToPath(new URL("./.gitignore", import.meta.url));
+// One plugin object: flat config rejects two different definitions of the same plugin name.
+const localPlugin = {
+  rules: { "no-hardcoded-ui-text": noHardcodedUiText, "no-raw-internal-href": noRawInternalHref },
+};
+
+const gitignorePath = fileURLToPath(new URL(".gitignore", import.meta.url));
 
 // eslint-plugin-svelte reads only these fields. Passing the whole config breaks `eslint --cache`,
 // which serializes parser options and can't handle `kit.typescript.config`'s function value.
@@ -85,6 +92,8 @@ const localizedFiles = [
 
 export default defineConfig(
   includeIgnoreFile(gitignorePath),
+  // Lint-ownership probes violate rules on purpose; tests/lint-ownership.test.ts lints them.
+  globalIgnores(["tests/lint-probes/"]),
   ...svelte.configs.recommended,
   // Formatting belongs to oxfmt.
   ...svelte.configs.prettier,
@@ -98,9 +107,11 @@ export default defineConfig(
         svelteConfig: lintSvelteConfig,
       },
     },
+    plugins: { local: localPlugin },
     rules: {
       // Without type information, this rule can't see that `localizedHref()` returns a resolved
-      // path, so it flags every localized link. Links go through `localizedHref()` by convention.
+      // path, so it flags every localized link. `local/no-raw-internal-href` guards `href` instead.
+      "local/no-raw-internal-href": "error",
       "svelte/no-navigation-without-resolve": "off",
     },
   },
@@ -121,7 +132,7 @@ export default defineConfig(
     // See docs/localization.md — catches hardcoded UI text only in files already migrated
     // to Paraglide messages (localizedFiles above).
     files: localizedFiles,
-    plugins: { local: { rules: { "no-hardcoded-ui-text": noHardcodedUiText } } },
+    plugins: { local: localPlugin },
     rules: { "local/no-hardcoded-ui-text": "error" },
   },
 );

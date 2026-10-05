@@ -24,14 +24,14 @@ export class ToolbarState {
     );
   }
 
-  private sourceFilterRegistrations = new SvelteMap<string, SourceFilter[]>();
+  private readonly sourceFilterRegistrations = new SvelteMap<string, SourceFilter[]>();
 
-  closeSearch() {
+  closeSearch(): void {
     this.searchOpen = false;
     this.searchQuery = "";
   }
 
-  hideAllSourceFilters() {
+  hideAllSourceFilters(): void {
     this.activeSourceLabels = new SvelteSet();
   }
 
@@ -46,33 +46,33 @@ export class ToolbarState {
     );
   }
 
-  openSearch() {
+  openSearch(): void {
     this.searchOpen = true;
   }
 
-  removeSourceFilters(owner: string) {
+  removeSourceFilters(owner: string): void {
     this.sourceFilterRegistrations.delete(owner);
     this.rebuildSourceFilters();
   }
 
-  resetSourceFilters() {
+  resetSourceFilters(): void {
     this.activeSourceLabels = new SvelteSet(this.sourceFilters.map((filter) => filter.label));
   }
 
-  setSearch(query: string) {
+  setSearch(query: string): void {
     this.searchQuery = query;
   }
 
-  setSourceFilters(owner: string, filters: SourceFilter[]) {
+  setSourceFilters(owner: string, filters: SourceFilter[]): void {
     this.sourceFilterRegistrations.set(owner, filters);
     this.rebuildSourceFilters();
   }
 
-  showAllSourceFilters() {
+  showAllSourceFilters(): void {
     this.resetSourceFilters();
   }
 
-  toggleSourceFilter(filter: SourceFilter) {
+  toggleSourceFilter(filter: SourceFilter): void {
     if (this.activeSourceLabels.has(filter.label)) {
       this.activeSourceLabels.delete(filter.label);
     } else {
@@ -80,12 +80,14 @@ export class ToolbarState {
     }
   }
 
-  private rebuildSourceFilters() {
+  private rebuildSourceFilters(): void {
     const filtersByLabel = new SvelteMap<string, SourceFilter>();
     for (const filters of this.sourceFilterRegistrations.values()) {
       for (const filter of filters) filtersByLabel.set(filter.label, filter);
     }
-    const nextFilters = [...filtersByLabel.values()].sort((a, b) => a.label.localeCompare(b.label));
+    const nextFilters = [...filtersByLabel.values()].toSorted((a, b) =>
+      a.label.localeCompare(b.label),
+    );
     const currentLabels = this.sourceFilters.map(({ label }) => label).join("\0");
     const nextLabels = nextFilters.map(({ label }) => label).join("\0");
     if (currentLabels !== nextLabels) {

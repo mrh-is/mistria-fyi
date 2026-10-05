@@ -5,7 +5,7 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 
 import MergeSummary from "./merge-summary.svelte";
 
-import type { CompletedState, MergeCounts } from "#lib/stores/user-state.svelte.js";
+import type { CompletedState } from "#lib/stores/user-state.svelte.js";
 import type { VillagerId } from "#lib/types/tracker-data.js";
 
 const CASES: { expected: string; imported: Partial<CompletedState>; setup?: () => void }[] = [
@@ -35,15 +35,20 @@ afterEach(() => {
 });
 
 describe("merge summary integration", () => {
-  for (const { expected, imported, setup } of CASES) {
-    it(`reports ${expected} after an actual merge`, () => {
-      setup?.();
-      const { counts } = userState.mergeFromSave(imported);
+  it.each(CASES)("reports $expected after an actual merge", ({ expected, imported, setup }) => {
+    setup?.();
+    const { counts } = userState.mergeFromSave(imported);
 
-      assertSummary("import", counts, expected);
-      assertSummary("transfer", counts, expected);
-    });
-  }
+    for (const kind of ["import", "transfer"] as const) {
+      const { body } = render(MergeSummary, {
+        props: { counts, filesUsed: ["player.json"], kind },
+      });
+
+      expect(body).toContain(expected);
+      expect(body).not.toContain("No new data to import");
+      expect(body).not.toContain("no new items to add");
+    }
+  });
 });
 
 describe("merge summary household conflicts", () => {
@@ -76,11 +81,3 @@ describe("merge summary household conflicts", () => {
     expect(body).toContain("Child-free");
   });
 });
-
-function assertSummary(kind: "import" | "transfer", counts: MergeCounts, expected: string): void {
-  const { body } = render(MergeSummary, { props: { counts, filesUsed: ["player.json"], kind } });
-
-  expect(body).toContain(expected);
-  expect(body).not.toContain("No new data to import");
-  expect(body).not.toContain("no new items to add");
-}

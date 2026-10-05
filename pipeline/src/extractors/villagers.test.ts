@@ -23,7 +23,7 @@ vi.mock("../localize.js", () => ({
 
 describe("extractVillagers", () => {
   it("captures each villager's icon_sprite without emitting it into the structural record", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
 
     const { iconSpritesByVillagerId, villagers } = extractVillagers(
       makeFiddle({
@@ -45,7 +45,7 @@ describe("extractVillagers", () => {
   });
 
   it("includes a villager missing icon_sprite in tracker data but not in icon sprite index", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
 
     const { iconSpritesByVillagerId, villagers } = extractVillagers(
       makeFiddle({
@@ -63,7 +63,7 @@ describe("extractVillagers", () => {
   });
 
   it("skips the default template entry without requiring icon_sprite", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
 
     const { iconSpritesByVillagerId, villagers } = extractVillagers(
       makeFiddle({
@@ -124,7 +124,7 @@ describe("extractVillagerIconSprites", () => {
         nameless: { birthday: { day: 1, season: "spring" }, icon_sprite: "spr_x" },
       },
     });
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
 
     const iconSpritesByVillagerId = extractVillagerIconSprites(fiddle);
     const { iconSpritesByVillagerId: fromFullExtraction } = extractVillagers(

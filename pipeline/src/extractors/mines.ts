@@ -2,7 +2,7 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { expectArray } from "../data-shapes.js";
 import { localizeField } from "../localize.js";
-import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
+import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { SourceTuple } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -13,6 +13,8 @@ import type {
   SpellId,
   TrackerData,
 } from "#lib/types/tracker-data.js";
+
+import type { ParsedGameData } from "../parse-fiddle.js";
 
 export interface MinesExtraction {
   biomeLocaleNames: Record<LocaleCode, Record<MinesBiomeId, string>>;
@@ -40,7 +42,7 @@ export function extractMines(fiddle: ParsedGameData, assetsDir: string): MinesEx
   const misc = dungeons?.misc as Record<string, unknown> | undefined;
   const maxFloors = misc?.max_floors as number | undefined;
   if (typeof maxFloors !== "number") {
-    throw new Error("Missing numeric dungeons.misc.max_floors");
+    throw new TypeError("Missing numeric dungeons.misc.max_floors");
   }
 
   const sourceFile = sourceFileFor(fiddle, "dungeons.dungeons.biomes");
@@ -95,7 +97,7 @@ export function extractMines(fiddle: ParsedGameData, assetsDir: string): MinesEx
     }
   }
 
-  const lastBiome = biomes[biomes.length - 1];
+  const lastBiome = biomes.at(-1);
   console.log(
     `  Mines: ${biomes.length} biomes, ${lastBiome?.floors.end ?? 0} max floors, ${Object.keys(spells).length} spells`,
   );
@@ -106,5 +108,5 @@ function nameToId(name: string): MinesBiomeId {
   return name
     .replace(/^The\s+/i, "")
     .toLowerCase()
-    .replace(/\s+/g, "_") as MinesBiomeId;
+    .replaceAll(/\s+/g, "_") as MinesBiomeId;
 }

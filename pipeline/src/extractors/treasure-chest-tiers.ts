@@ -31,7 +31,7 @@ export function extractTreasureChestTiers(
 
   const result = {} as Record<TreasureChestTierId, object>;
 
-  for (const tier of Object.keys(chestTables).sort()) {
+  for (const tier of Object.keys(chestTables).toSorted()) {
     const itemKey = `treasure_box_${tier}`;
     const itemData = fishMisc?.[itemKey];
     const name = itemData?.name as string | undefined;

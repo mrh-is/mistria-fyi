@@ -86,7 +86,7 @@ function classifyLetterTrigger(reqs: Record<string, unknown> | undefined): Lette
       triggerDate: {
         day: (reachedDate.day as number) ?? 1,
         season: (reachedDate.season as Season) ?? "spring",
-        ...(reachedDate.year !== undefined ? { year: reachedDate.year as number } : {}),
+        ...(reachedDate.year === undefined ? {} : { year: reachedDate.year as number }),
       },
     };
   }

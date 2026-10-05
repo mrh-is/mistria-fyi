@@ -3,10 +3,11 @@ import { describe, expect, it } from "vitest";
 import { trackerData } from "#lib/data/index.js";
 import { LOCALE_CODES } from "#lib/types/locale.js";
 import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
-import { buildSourceSegments, type SourceSegment } from "#lib/utils/source-segments.js";
+import { buildSourceSegments } from "#lib/utils/source-segments.js";
 
 import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
+import type { SourceSegment } from "#lib/utils/source-segments.js";
 
 interface SourcedEntity {
   entity: { sources: Source[]; visibility?: VisibilityCondition };
@@ -139,17 +140,45 @@ function pathIdentity(path: string): { entityId: string; entityKind: string } {
   };
 }
 
-function walkSegments(segments: SourceSegment[], context: string): void {
-  expect(segments.length, context).toBeGreaterThan(0);
+function segmentProblems(segments: SourceSegment[]): string[] {
+  const problems: string[] = [];
+  if (segments.length === 0) problems.push("empty segment list");
   for (const segment of segments) {
     if (typeof segment === "string") {
-      expect(segment.length, context).toBeGreaterThan(0);
+      if (segment.length === 0) problems.push("empty string segment");
       continue;
     }
     if ("redacted" in segment && segment.redacted === true) continue;
-    walkSegments(segment.revealed, context);
-    if (segment.redacted) walkSegments(segment.redacted, context);
+    problems.push(...segmentProblems(segment.revealed));
+    if (segment.redacted) problems.push(...segmentProblems(segment.redacted));
   }
+  return problems;
+}
+
+function lookupProblems(
+  source: Source,
+  baseLookups: ReturnType<typeof buildBaseSegmentLookups>,
+): string[] {
+  const problems: string[] = [];
+  if (
+    (source.type === "mine" || source.type === "mines_chest" || source.type === "mines_dig_site") &&
+    !baseLookups.biomes.some(({ id }) => id === source.biomeId)
+  ) {
+    problems.push(`unknown biome ${source.biomeId}`);
+  }
+  if ("perkId" in source && source.perkId !== undefined && !baseLookups.perks[source.perkId]) {
+    problems.push(`unknown perk ${source.perkId}`);
+  }
+  if (
+    source.type === "quest" &&
+    (source.questType ?? baseLookups.questTypes[source.questId]) === undefined
+  ) {
+    problems.push(`unknown quest ${source.questId}`);
+  }
+  if ("storeId" in source && source.storeId !== undefined && !baseLookups.stores[source.storeId]) {
+    problems.push(`unknown store ${source.storeId}`);
+  }
+  return problems;
 }
 
 describe("generated source rendering contract", () => {
@@ -180,37 +209,20 @@ describe("generated source rendering contract", () => {
 
   it("renders every generated source and resolves every formatter reference", () => {
     for (const { entity, path } of sourcedEntities) {
-      entity.sources.forEach((source, index) => {
+      for (const [index, source] of entity.sources.entries()) {
         const context = `${path} source[${String(index)}] ${JSON.stringify(source)}`;
 
-        if (
-          source.type === "mine" ||
-          source.type === "mines_chest" ||
-          source.type === "mines_dig_site"
-        ) {
-          expect(
-            baseLookups.biomes.some(({ id }) => id === source.biomeId),
-            context,
-          ).toBe(true);
-        }
-        if ("perkId" in source && source.perkId !== undefined) {
-          expect(baseLookups.perks[source.perkId], context).toBeDefined();
-        }
-        if (source.type === "quest") {
-          expect(source.questType ?? baseLookups.questTypes[source.questId], context).toBeDefined();
-        }
-        if ("storeId" in source && source.storeId !== undefined) {
-          expect(baseLookups.stores[source.storeId], context).toBeDefined();
-        }
+        expect(lookupProblems(source, baseLookups), context).toStrictEqual([]);
 
+        let segments: SourceSegment[] = [];
         expect(() => {
-          const segments = buildSourceSegments(source, {
+          segments = buildSourceSegments(source, {
             ...baseLookups,
             entityVisibility: entity.visibility,
           });
-          walkSegments(segments, context);
         }, context).not.toThrow();
-      });
+        expect(segmentProblems(segments), context).toStrictEqual([]);
+      }
     }
   });
 
@@ -219,15 +231,17 @@ describe("generated source rendering contract", () => {
     (locale) => {
       const lookups = buildBaseSegmentLookups(new Set(), locale);
       for (const { entity, path } of sourcedEntities) {
-        entity.sources.forEach((source, index) => {
+        for (const [index, source] of entity.sources.entries()) {
           const context = `${locale} ${path} source[${String(index)}] ${JSON.stringify(source)}`;
+          let segments: SourceSegment[] = [];
           expect(() => {
-            walkSegments(
-              buildSourceSegments(source, { ...lookups, entityVisibility: entity.visibility }),
-              context,
-            );
+            segments = buildSourceSegments(source, {
+              ...lookups,
+              entityVisibility: entity.visibility,
+            });
           }, context).not.toThrow();
-        });
+          expect(segmentProblems(segments), context).toStrictEqual([]);
+        }
       }
     },
   );
@@ -272,7 +286,7 @@ describe("generated source rendering contract", () => {
       }
     }
 
-    expect([...missing].sort()).toEqual([]);
+    expect([...missing].toSorted()).toEqual([]);
   });
 
   it("has no unsupported predicate diagnostics", () => {
@@ -285,7 +299,7 @@ describe("generated source rendering contract", () => {
           ),
         );
       })
-      .sort(
+      .toSorted(
         (left, right) =>
           left.predicate.localeCompare(right.predicate) ||
           left.entityKind.localeCompare(right.entityKind) ||

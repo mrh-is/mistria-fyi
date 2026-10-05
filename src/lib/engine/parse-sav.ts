@@ -1,4 +1,6 @@
-import { isSaveSection, type SaveBundle } from "./save-bundle.js";
+import { isSaveSection } from "./save-bundle.js";
+
+import type { SaveBundle } from "./save-bundle.js";
 
 /** Maximum compressed input size: over 27x the measured 298,271-byte late-game fixture. */
 export const MAX_COMPRESSED_SIZE = 8 * 1024 * 1024;
@@ -100,11 +102,13 @@ async function decompress(
     const chunks: Uint8Array[] = [];
     let totalLen = 0;
     for (;;) {
+      // oxlint-disable-next-line no-await-in-loop -- stream reads must be sequential; each read depends on the previous one
       const { done, value } = await reader.read();
       if (done) break;
       chunks.push(value);
       totalLen += value.length;
       if (totalLen > maxDecompressedSize) {
+        // oxlint-disable-next-line no-await-in-loop -- cancels the stream, then exits the read loop by throwing
         await reader.cancel();
         throw new SaveFileError(
           { code: "decompressed-too-large", maxBytes: maxDecompressedSize },
@@ -170,11 +174,11 @@ function extractBundle(data: Uint8Array): SaveBundle {
       let parsed: unknown;
       try {
         parsed = JSON.parse(jsonStr);
-      } catch (cause) {
+      } catch (error) {
         throw new SaveFileError(
           { code: "invalid-entry", entry: name },
-          `Failed to parse "${name}" entry: ${cause instanceof Error ? cause.message : String(cause)}`,
-          { cause },
+          `Failed to parse "${name}" entry: ${error instanceof Error ? error.message : String(error)}`,
+          { cause: error },
         );
       }
       if (!isSaveSection(parsed)) {
@@ -210,5 +214,5 @@ function formatSize(bytes: number): string {
 function u64(view: DataView, offset: number): number {
   const lo = view.getUint32(offset, true);
   const hi = view.getUint32(offset + 4, true);
-  return lo + hi * 0x100000000;
+  return lo + hi * 0x1_00_00_00_00;
 }

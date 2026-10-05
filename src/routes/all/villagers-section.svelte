@@ -1,8 +1,8 @@
 <script lang="ts">
-  import RenownCurrentRecord from "#lib/components/renown-current-record.svelte";
+  import VillagerRoster from "#lib/components/villager-roster.svelte";
   import { userState } from "#lib/stores/user-state.svelte.js";
 
-  import SectionHeader from "./SectionHeader.svelte";
+  import SectionHeader from "./section-header.svelte";
 
   import type { CategoryProgress } from "#lib/engine/progress.js";
   import type { LocaleCode } from "#lib/types/locale.js";
@@ -11,8 +11,8 @@
 </script>
 
 {#if progress.completed < progress.total || userState.state.showCompleted}
-  <section aria-labelledby="category-renown" style="--primary: var(--cat-renown)">
-    <SectionHeader key="renown" {progress} />
-    <RenownCurrentRecord compact {locale} />
+  <section aria-labelledby="category-villagers" style="--primary: var(--cat-villagers)">
+    <SectionHeader key="villagers" {progress} />
+    <VillagerRoster compact {locale} />
   </section>
 {/if}

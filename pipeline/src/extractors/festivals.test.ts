@@ -24,7 +24,7 @@ const assetsDir = "test-assets";
 
 describe("extractFestivals", () => {
   beforeEach(() => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
   });
 
   afterEach(() => {

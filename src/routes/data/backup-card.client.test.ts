@@ -23,19 +23,17 @@ describe("BackupCard export", () => {
     const createObjectURL = vi.fn((_blob: Blob) => "blob:mistria/backup");
     const revokeObjectURL = vi.fn();
     vi.stubGlobal("URL", Object.assign(URL, { createObjectURL, revokeObjectURL }));
-    const click = vi
-      .spyOn(HTMLAnchorElement.prototype, "click")
-      .mockImplementation(() => undefined);
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockReturnValue(undefined);
     render(BackupCard, { open: true });
 
     await fireEvent.click(screen.getByRole("button", { name: "Export backup" }));
 
-    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
     const [blob] = createObjectURL.mock.calls[0];
     expect(blob.type).toBe("application/json");
     expect(await blob.text()).toBe(userState.exportState());
 
-    expect(click).toHaveBeenCalledOnce();
+    expect(click).toHaveBeenCalledTimes(1);
     const anchor = click.mock.instances[0] as HTMLAnchorElement;
     expect(anchor.download).toMatch(/^mistria-field-guide-backup-\d{4}-\d{2}-\d{2}\.json$/);
     expect(anchor.href).toBe("blob:mistria/backup");
