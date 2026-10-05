@@ -1,7 +1,6 @@
 import { getMarriedVillager, normalizeRelationships } from "#lib/engine/relationships.js";
 import { recordEntries, recordKeys } from "#lib/utils.js";
 
-import type { CompletedState, QuestState } from "#lib/stores/user-state.svelte.js";
 import type {
   PerkId,
   QuestId,
@@ -11,6 +10,7 @@ import type {
   TrackerData,
   VillagerId,
 } from "#lib/types/tracker-data.js";
+import type { CompletedState, QuestState } from "#lib/types/user-progress.js";
 import type { QuestVisibility, VisibilityCondition } from "#lib/types/visibility.js";
 
 const SEASON_ORD: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };

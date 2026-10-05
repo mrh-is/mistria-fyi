@@ -297,8 +297,9 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
   ["dragon_horn_mushroom" as ItemId]: [
     { type: "mine" as const, biomeId: "ancient_ruins" as MinesBiomeId },
   ],
-  // void_powder: Dropped by void monsters in the Ancient Ruins biome
-  ["void_powder" as ItemId]: [{ type: "monster" as const, monsterId: "void_cat" as MonsterId }],
+  // void_powder: Dropped by void monsters in the Ancient Ruins biome. The native monster is
+  // `monsters.cat.cat_void`; `void_cat` is its pet skin, not a monster ID.
+  ["void_powder" as ItemId]: [{ type: "monster" as const, monsterId: "cat_void" as MonsterId }],
   // --- Mine & exploration items ---
   // void_stone: Mine drop from the Ancient Ruins biome, also quest item
   ["void_stone" as ItemId]: [{ type: "mine" as const, biomeId: "ancient_ruins" as MinesBiomeId }],

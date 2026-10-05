@@ -97,39 +97,41 @@
   data-section-depth={depth}
   style="--section-depth: {depth}"
 >
-  <button
-    class="section-trigger"
-    disabled={!hydrated}
-    onclick={toggleExpanded}
-    type="button"
-    aria-busy={!hydrated}
-    aria-expanded={isOpen}
-    aria-controls={contentId}
-    aria-label={total !== undefined && boundedCount !== undefined
-      ? m.section_progress_label({
-          completed: formatNumber(boundedCount, getLocale()),
-          name,
-          total: formatNumber(total, getLocale()),
-        })
-      : undefined}
-    {@attach reportable}
-  >
-    <Icon.UI
-      type="disclosure"
-      class="section-disclosure size-4 shrink-0 transition-transform motion-reduce:transition-none {isOpen
-        ? 'rotate-90'
-        : ''}"
-    />
-    <svelte:element this={headingTag} class="section-name">{name}</svelte:element>
-    {#if total !== undefined && boundedCount !== undefined}
-      <span class="section-count" aria-hidden="true"
-        >{formatNumber(boundedCount, getLocale())} / {formatNumber(total, getLocale())}</span
-      >
-      <span class="section-progress" data-testid="section-progress" aria-hidden="true">
-        <i data-testid="section-progress-fill" style="width: {progress}%"></i>
-      </span>
-    {/if}
-  </button>
+  <svelte:element this={headingTag} class="section-heading">
+    <button
+      class="section-trigger"
+      disabled={!hydrated}
+      onclick={toggleExpanded}
+      type="button"
+      aria-busy={!hydrated}
+      aria-expanded={isOpen}
+      aria-controls={contentId}
+      aria-label={total !== undefined && boundedCount !== undefined
+        ? m.section_progress_label({
+            completed: formatNumber(boundedCount, getLocale()),
+            name,
+            total: formatNumber(total, getLocale()),
+          })
+        : undefined}
+      {@attach reportable}
+    >
+      <Icon.UI
+        type="disclosure"
+        class="section-disclosure size-4 shrink-0 transition-transform motion-reduce:transition-none {isOpen
+          ? 'rotate-90'
+          : ''}"
+      />
+      <span class="section-name">{name}</span>
+      {#if total !== undefined && boundedCount !== undefined}
+        <span class="section-count" aria-hidden="true"
+          >{formatNumber(boundedCount, getLocale())} / {formatNumber(total, getLocale())}</span
+        >
+        <span class="section-progress" data-testid="section-progress" aria-hidden="true">
+          <i data-testid="section-progress-fill" style="width: {progress}%"></i>
+        </span>
+      {/if}
+    </button>
+  </svelte:element>
 
   {#if isOpen}
     <div
@@ -146,6 +148,11 @@
   .section {
     --section-indent: calc(18px + var(--section-depth) * 4px);
     min-width: 0;
+  }
+
+  .section-heading {
+    margin: 0;
+    font: inherit;
   }
 
   .section-trigger {

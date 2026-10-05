@@ -47,10 +47,14 @@ small required subtrees.
 
 ## 2. Git configuration
 
-The repo remote uses HTTPS (not SSH) and authenticates via `gh auth`. Commit signing uses a local
-SSH key with `gpg.ssh.program = ssh-keygen`. Both are configured to work non-interactively so agents
-can push and sign commits without triggering 1Password or other interactive prompts. Do not switch
-the remote back to SSH.
+The repo remote uses HTTPS (not SSH) and authenticates via `gh auth`. Do not switch the remote back
+to SSH. Pushing & signing must work without interactive prompts.
+
+- **Maintainer machine (local):** commit signing uses a local SSH key with
+  `gpg.ssh.program = ssh-keygen`, configured so signing never opens a 1Password prompt.
+- **Cloud & other sandboxes:** the maintainer's signing key is absent. Unsigned agent commits are
+  acceptable there; the platform's own commit identity may sign instead. Never copy a private key
+  into a sandbox to make signing work.
 
 ### Agent attribution
 
@@ -115,9 +119,10 @@ Follow this sequence for every task:
     from deterministic Git commit metadata. Treat `package.json`'s version and Git version tags as
     intentional product-release metadata: do not change or create them unless the task explicitly
     cuts a release, and ask the user to approve the release version first.
-11. **Monitor CI** — after opening the PR, bind it and enable monitoring so CI failures are caught
-    and fixed without requiring the user to relay status. Use `ccd_pr bind_pr` and `set_monitor` in
-    Claude Code, or check `gh pr checks` periodically in other agents.
+11. **Monitor CI** — after opening the PR, watch its checks so CI failures are caught and fixed
+    without requiring the user to relay status. Use whatever the harness offers for PR monitoring
+    (for example, the Claude Code desktop app's `ccd_pr` `bind_pr` & `set_monitor` tools), or check
+    `gh pr checks` periodically.
 
 ### GitHub evidence & prototypes
 
@@ -138,8 +143,8 @@ fails non-interactively with `ERR_PNPM_IGNORED_BUILDS`; add
 `--allow-build=esbuild --allow-build=workerd` to the `pnpx` invocation rather than running the
 interactive `pnpm approve-builds` (unsupported in an agent shell).
 `scripts/sprites/upload-sprites.sh` and `scripts/locale-fonts/upload-locale-fonts.sh` already pass
-it. Wrangler may need access to Cloudflare's API and to its credentials under
-`~/Library/Preferences/.wrangler/`; never read or expose the stored OAuth token.
+it. Wrangler may need access to Cloudflare's API and to its stored credentials (on macOS, under
+`~/Library/Preferences/.wrangler/`); never read or expose the stored OAuth token.
 
 | Command                       | Purpose                                     |
 | ----------------------------- | ------------------------------------------- |
@@ -210,7 +215,8 @@ These rules prevent accidental damage to generated or vendored code:
   Branded IDs for type safety.
 - **Tests**: Colocate as `foo.test.ts` beside `foo.ts`; no `__tests__/` directories. See
   [docs/development-workflow.md §4](docs/development-workflow.md#test-file-placement).
-- **Rules**: `eqeqeq`, `prefer-const` (except `.svelte`), `no-var`, `object-shorthand`,
+- **Rules**: `eqeqeq`, `prefer-const` (oxlint for scripts, `svelte/prefer-const` for Svelte files;
+  `$props()` destructuring must use `let`, which is linted), `no-var`, `object-shorthand`,
   `prefer-template`, `curly` (multi-line).
 
 ## 7. Verification
@@ -237,7 +243,10 @@ failures on the branch rather than merging around them (see §3 step 11).
 
 ### Full local matrix (exceptions)
 
-Run `pnpm run verify` once, when commit-ready, only when:
+`pnpm run verify` is read-only & runs CI's non-browser matrix (`lint`, `check`, `check:i18n`,
+`test`, `build`, `check:routes`); run `pnpm run lint:fix` first. Add `-- --assets` for
+`test:pipeline:assets`, `--browser` for the Playwright suites, or `--all` for both. Run it once,
+when commit-ready, only when:
 
 - The change regenerates `tracker-data.json` or touches the pipeline parser, evaluator, extractors,
   or shared tracker contract. CI has no game assets, so `pnpm run test:pipeline:assets` and the
@@ -333,8 +342,9 @@ aggregate findings across pull requests.
 ### Budget
 
 - **One concern per session.** One issue, one PR-sized deliverable.
-- **Stop at 100 model requests**, the **first context compaction**, or the end of the agent's usage
-  window, whichever comes first.
+- **Stop at the first context compaction**, a harness usage or context warning, or the end of the
+  agent's usage window, whichever comes first. Agents can't count their own requests, so none of
+  these triggers is a request count.
 - When approaching limits, write a handoff note to the worktree or issue, then stop. A fresh session
   reading the issue and branch is 50–100x cheaper than re-tokenizing a cold conversation.
 
@@ -367,8 +377,6 @@ The new session reads `gh issue view`, `git log`, and `git diff` to reconstruct 
 
 ### Model routing
 
-Evaluate task complexity once, at the start, and use the cheapest model that can handle it: cheapest
-tier for single-file fixes and doc updates, default tier for bug fixes and single-component
-features, most capable tier for multi-file features, architecture decisions, and difficult
-debugging. Don't reevaluate mid-session unless you discover unexpected complexity. The routing table
-with model names per agent is in [DELEGATION.md](.agents/DELEGATION.md).
+Route to the cheapest capable model once, at the start, and don't reevaluate mid-session unless you
+discover unexpected complexity. The tiers, per-agent model names, & switching commands live only in
+[DELEGATION.md](.agents/DELEGATION.md); this repo does not pin a model in harness settings.

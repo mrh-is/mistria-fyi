@@ -6,7 +6,7 @@ import {
   totalMergeCounts,
 } from "#lib/engine/merge-labels.js";
 
-import type { MergeCounts } from "#lib/stores/user-state.svelte.js";
+import type { MergeCounts } from "#lib/types/user-progress.js";
 
 function zeroCounts(): MergeCounts {
   return {

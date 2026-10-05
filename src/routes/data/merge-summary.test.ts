@@ -1,12 +1,12 @@
-import { render } from "svelte/server";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 import MergeSummary from "./merge-summary.svelte";
 
-import type { CompletedState } from "#lib/stores/user-state.svelte.js";
 import type { VillagerId } from "#lib/types/tracker-data.js";
+import type { CompletedState } from "#lib/types/user-progress.js";
 
 const CASES: { expected: string; imported: Partial<CompletedState>; setup?: () => void }[] = [
   {
@@ -40,13 +40,13 @@ describe("merge summary integration", () => {
     const { counts } = userState.mergeFromSave(imported);
 
     for (const kind of ["import", "transfer"] as const) {
-      const { body } = render(MergeSummary, {
+      const { text } = renderToFragment(MergeSummary, {
         props: { counts, filesUsed: ["player.json"], kind },
       });
 
-      expect(body).toContain(expected);
-      expect(body).not.toContain("No new data to import");
-      expect(body).not.toContain("no new items to add");
+      expect(text).toContain(expected);
+      expect(text).not.toContain("No new data to import");
+      expect(text).not.toContain("no new items to add");
     }
   });
 });
@@ -58,12 +58,14 @@ describe("merge summary household conflicts", () => {
       villagerRelationships: { ["balor" as VillagerId]: "married" },
     });
 
-    const { body } = render(MergeSummary, { props: { conflicts, counts, kind: "transfer" } });
+    const { container, text } = renderToFragment(MergeSummary, {
+      props: { conflicts, counts, kind: "transfer" },
+    });
 
-    expect(body).toContain("Adeline");
-    expect(body).toContain("Balor");
-    expect(body).toContain("Correct this manually");
-    expect(body).toContain("/villagers");
+    expect(text).toContain("Adeline");
+    expect(text).toContain("Balor");
+    const link = container.querySelector("a[href$='/villagers']");
+    expect(link?.textContent).toContain("Correct this manually");
   });
 
   it("renders a child-choice conflict", () => {
@@ -74,10 +76,12 @@ describe("merge summary household conflicts", () => {
       villagerRelationships: { ["adeline" as VillagerId]: "married" },
     });
 
-    const { body } = render(MergeSummary, { props: { conflicts, counts, kind: "transfer" } });
+    const { text } = renderToFragment(MergeSummary, {
+      props: { conflicts, counts, kind: "transfer" },
+    });
 
-    expect(body).toContain("Adeline");
-    expect(body).toContain("Kids");
-    expect(body).toContain("Child-free");
+    expect(text).toContain("Adeline");
+    expect(text).toContain("Kids");
+    expect(text).toContain("Child-free");
   });
 });

@@ -93,8 +93,8 @@ assets root
   → apply reviewed overrides, then attach sources to items, cosmetics, animals, & pets
   → extract quest chains & heart-level changes (extractors/visibility/)
   → assemble TrackerData
-  → validate acquisition sources against reference registries
   → stamp & assign entity visibility
+  → validate the assembled tracker data against reference registries
   → stage tracker data, the locale manifest, locale chunks, & diagnostic JSON in memory
   → extract & stage sprites, if --sprites is passed
   → publish every staged file & sprite
@@ -109,8 +109,25 @@ either lands as a consistent whole or leaves the previous outputs untouched. Spr
 `assets.mistria.fyi` with `pnpm run sprites:upload` (see
 [docs/sprite-assets.md](../docs/sprite-assets.md)); they are not committed to Git.
 
-Note: visibility assignment runs after `validateAcquisitionSources` and rewrites some `sources`
-arrays, so the validator does not see the final output (tracked in #405).
+Validation runs last because visibility assignment rewrites `sources` arrays and injects hard-coded
+quest gates (store, villager, spell, & barn unlocks). The validator walks every emitted collection
+that carries sources or visibility, so those gates resolve against the same registries as
+acquisition sources.
+
+### Reference registries
+
+Every ID a source, visibility condition, almanac entry, museum set, or quest names must resolve in a
+registry built from one of three inputs. Acquisition sources never contribute IDs, so an override
+that misspells a quest or monster fails instead of validating itself.
+
+- **Extracted registries:** items, cosmetics, recipes, animals, biomes, festivals, perks, skills,
+  stores, villagers, museum wings, and the emitted quest types.
+- **Parsed game tables** (`acquisition/native-references.ts`): locations, monsters, quests &
+  cutscenes, dates (including unlisted ones), placeable stations, treasure chest tiers, fish water
+  types, and festival activities whose backing `misc` table exists. No table enumerates dialogue
+  choices or dungeon loot groups, so any reference to either is unresolved.
+- **Reviewed non-native IDs** (`acquisition/reviewed-references.ts`): the few IDs overrides use
+  deliberately although no table defines them. An entry the game later defines throws as obsolete.
 
 ### Parser & evaluator
 
@@ -199,18 +216,20 @@ The `acquisition/` modules build the `sources` arrays attached to items, cosmeti
 cosmetics, pet cosmetic sets, and pet skins. Recipe sources are collected separately inside
 `extractors/recipes.ts`.
 
-| Module                                      | Responsibility                                                                                                                                                        |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `source-accumulator.ts`                     | Per-target accumulators that deduplicate by canonical JSON, sort output deterministically, and record provenance.                                                     |
-| `recipe-products.ts`                        | Adds a `recipe` source to every item a recipe produces.                                                                                                               |
-| `collectors/natural.ts`                     | Fish, bait, bugs, dives, crops, trees, forageables, monster drops, animal products, perks, and fish traps.                                                            |
-| `collectors/rewards.ts`                     | Quest, letter, museum, chicken statue, festival, renown, date, and relationship rewards.                                                                              |
-| `collectors/stores.ts`                      | Store stock, with requirements projected through `availability.ts`.                                                                                                   |
-| `collectors/exploration.ts`                 | Mines, artifact digs, treasure chests, the wishing well, the artifact replicator, and equipment.                                                                      |
-| `availability.ts`                           | Projects requirement expressions into the app’s availability conditions.                                                                                              |
-| `reviewed-overrides.ts`                     | Hand-reviewed item and cosmetic sources plus default (starting) sources. An override that duplicates a native source throws as obsolete.                              |
-| `exclusions.ts`                             | Cosmetics deliberately dropped from the registry (internal assets and unreleased content), each with evidence.                                                        |
-| `reference-index.ts`, `validate-sources.ts` | Build reference registries from the assembled data and native IDs, then throw `AcquisitionSourceValidationError` on unknown references, bad fields, or recipe cycles. |
+| Module                                      | Responsibility                                                                                                                                     |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `source-accumulator.ts`                     | Per-target accumulators that deduplicate by canonical JSON, sort output deterministically, and record provenance.                                  |
+| `recipe-products.ts`                        | Adds a `recipe` source to every item a recipe produces.                                                                                            |
+| `collectors/natural.ts`                     | Fish, bait, bugs, dives, crops, trees, forageables, monster drops, animal products, perks, and fish traps.                                         |
+| `collectors/rewards.ts`                     | Quest, letter, museum, chicken statue, festival, renown, date, and relationship rewards.                                                           |
+| `collectors/stores.ts`                      | Store stock, with requirements projected through `availability.ts`.                                                                                |
+| `collectors/exploration.ts`                 | Mines, artifact digs, treasure chests, the wishing well, the artifact replicator, and equipment.                                                   |
+| `availability.ts`                           | Projects requirement expressions into the app’s availability conditions.                                                                           |
+| `reviewed-overrides.ts`                     | Hand-reviewed item and cosmetic sources plus default (starting) sources. An override that duplicates a native source throws as obsolete.           |
+| `exclusions.ts`                             | Cosmetics deliberately dropped from the registry (internal assets and unreleased content), each with evidence.                                     |
+| `native-references.ts`                      | Reads reference registries from parsed game tables only (see “Reference registries”).                                                              |
+| `reviewed-references.ts`                    | The explicit, reviewed IDs no parsed table defines.                                                                                                |
+| `reference-index.ts`, `validate-sources.ts` | Index the registries, then throw `AcquisitionSourceValidationError` on unknown references, bad fields, or recipe cycles in the final tracker data. |
 
 ### Visibility
 

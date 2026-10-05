@@ -1,5 +1,6 @@
 import { AxeBuilder } from "@axe-core/playwright";
 
+import { waitForRendering } from "./application-state.js";
 import { flattenAxeViolations, formatAxeFailures } from "./violations.js";
 
 import type { Page, TestInfo } from "@playwright/test";
@@ -19,12 +20,7 @@ export async function analyzeAccessibility(
   context: AxeRunContext,
   testInfo?: TestInfo,
 ): Promise<AxeAssessment> {
-  await page.waitForFunction(() =>
-    document.getAnimations().every((animation) => {
-      const iterations = animation.effect?.getComputedTiming().iterations;
-      return iterations === Infinity || animation.playState === "finished";
-    }),
-  );
+  await waitForRendering(page);
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
     .analyze();

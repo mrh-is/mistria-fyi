@@ -25,6 +25,7 @@ import {
   legacyAvailabilityWindows,
 } from "#lib/types/availability.js";
 import { SEASONS, VILLAGER_RELATIONSHIPS, WEATHERS } from "#lib/types/tracker-data.js";
+import { CHILD_CHOICES, QUEST_STATES } from "#lib/types/user-progress.js";
 import { getOrCreate, recordEntries, recordKeys } from "#lib/utils.js";
 import { tryGetItem, trySetItem } from "#lib/utils/local-storage.js";
 
@@ -48,98 +49,27 @@ import type {
   VillagerRelationship,
   Weather,
 } from "#lib/types/tracker-data.js";
+import type {
+  ChildChoice,
+  CompletedState,
+  MergeConflict,
+  MergeCounts,
+  MergeResult,
+  QuestState,
+} from "#lib/types/user-progress.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
 export type AvailabilityMode = LegacyAvailabilityMode;
-export const CHILD_CHOICES = ["no", "undeclared", "yes"] as const;
-export const QUEST_STATES = ["completed", "none", "obtained"] as const;
-export type ChildChoice = (typeof CHILD_CHOICES)[number];
-export interface CompletedState {
-  almanac: Set<ItemId>;
-  almanacRecipes: Set<RecipeId>;
-  animalCosmetics: Record<AnimalId, Set<CosmeticId>>;
-  animals: Record<AnimalId, Set<AnimalVariantId>>;
-  childChoice: ChildChoice;
-  cosmetics: Set<CosmeticId>;
-  dates: Set<DateId>;
-  hasUpperFloor: boolean;
-  mines: { floor: number; spells: Set<SpellId> };
-  museum: Set<ItemId>;
-  petCosmetics: Set<PetCosmeticSetId>;
-  petSkins: Set<PetSkinId>;
-  questStates: Record<QuestId, QuestState>;
-  reachedSeason: Season;
-  renown: number;
-  skillLevels: Record<SkillId, number>;
-  unlockedPerks: Set<PerkId>;
-  villagerLevels: Record<VillagerId, number>;
-  villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>>;
-}
 export type ImportErrorKind = "invalid-fields" | "malformed-json" | "unsupported-version";
 
 export type ImportResult = { error: ImportErrorKind; ok: false } | { ok: true };
-
-/**
- * A household fact (spouse identity or child choice) that a merge could not apply because it
- * conflicts with locally recorded progress. The merge keeps the local value and reports the
- * conflict rather than guessing; see docs on `mergeFromSave` for the policy.
- */
-export type MergeConflict =
-  | {
-      incomingChildChoice: Exclude<ChildChoice, "undeclared">;
-      kind: "childChoice";
-      localChildChoice: Exclude<ChildChoice, "undeclared">;
-      villagerId: VillagerId;
-    }
-  | {
-      incomingRelationship: VillagerRelationship;
-      kind: "relationship";
-      localRelationship: VillagerRelationship;
-      villagerId: VillagerId;
-    }
-  | {
-      incomingVillagerId: VillagerId;
-      kind: "spouse";
-      localVillagerId: VillagerId;
-    };
-
-export interface MergeCounts {
-  almanac: number;
-  almanacRecipes: number;
-  animalCosmetics: number;
-  animals: number;
-  childChoice: number;
-  cosmetics: number;
-  dates: number;
-  hasUpperFloor: number;
-  mineFloor: number;
-  museum: number;
-  perks: number;
-  petCosmetics: number;
-  petSkins: number;
-  quests: number;
-  reachedSeason: number;
-  renown: number;
-  skillLevels: number;
-  spells: number;
-  villagerLevels: number;
-  villagerRelationships: number;
-}
-
-/** What {@link mergeFromSave} applied and what it skipped rather than guessing. */
-export interface MergeResult {
-  conflicts: MergeConflict[];
-  counts: MergeCounts;
-}
 
 /** The outcome of one `completeQuestWithRecipes` call, enough to undo exactly that call. */
 export interface QuestCompletion {
   newlyAdded: RecipeId[];
   previousState: QuestState;
 }
-
-export type QuestState = (typeof QUEST_STATES)[number];
 
 export interface UserState {
   availabilityWindows: AvailabilityWindow[];
@@ -1088,7 +1018,7 @@ function deserialize(json: string, mode: ValidationMode): DeserializeResult {
     );
 
     // Migrate villagerRelationships from legacy romanticVillagers/marriedVillager
-    let villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>> = {};
+    const villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>> = {};
     if (s.completed.villagerRelationships) {
       for (const [id, rel] of Object.entries(s.completed.villagerRelationships)) {
         if (

@@ -1,5 +1,6 @@
-import { render } from "svelte/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 import DataPage from "./+page.svelte";
 
@@ -20,15 +21,11 @@ vi.mock("$app/state", () => ({
   },
 }));
 
-function disclosureState(body: string, title: string): string | undefined {
-  const disclosures = body.matchAll(
-    /<button[^>]*data-slot="collapsible-trigger"[^>]*aria-expanded="(true|false)"[^>]*>(.*?)<\/button>/gs,
-  );
-
-  for (const disclosure of disclosures) {
-    if (disclosure[2].includes(title)) return disclosure[1];
-  }
-  return undefined;
+function disclosureState(container: HTMLElement, title: string): null | string | undefined {
+  const triggers = container.querySelectorAll("[data-slot='collapsible-trigger']");
+  return [...triggers]
+    .find((trigger) => trigger.textContent.includes(title))
+    ?.getAttribute("aria-expanded");
 }
 
 beforeEach(() => {
@@ -37,27 +34,31 @@ beforeEach(() => {
 
 describe("data management page", () => {
   it("collects transfer, backup, and reset tools in the Field kit", () => {
-    const { body } = render(DataPage, { props: {} });
+    const { container, text } = renderToFragment(DataPage, { props: {} });
 
-    expect(body).toContain("Data management");
-    expect(body).toContain("Field kit");
-    expect(body).toContain("Import from Save File");
-    expect(body).toContain("Transfer to Another Device");
-    expect(body).toContain("Backup &amp; Restore");
-    expect(body).toContain("Danger Zone");
-    expect(body).toContain("Fields of Mistria v1.0.5");
-    expect(body).not.toContain('href="/about"');
-    expect(body).not.toContain('href="/privacy"');
-    expect(body).not.toContain("Send feedback");
-    expect(body).not.toContain("AI disclosure");
+    expect(text).toContain("Data management");
+    expect(text).toContain("Field kit");
+    for (const title of [
+      "Import from Save File",
+      "Transfer to Another Device",
+      "Backup & Restore",
+      "Danger Zone",
+    ]) {
+      expect(disclosureState(container, title)).toBeDefined();
+    }
+    expect(text).toContain("Fields of Mistria v1.0.5");
+    expect(container.querySelector("a[href='/about']")).toBeNull();
+    expect(container.querySelector("a[href='/privacy']")).toBeNull();
+    expect(text).not.toContain("Send feedback");
+    expect(text).not.toContain("AI disclosure");
   });
 
   it("opens the requested deep-linked tool", () => {
     appState.url = new URL("https://mistria-fyi.test/data?section=transfer");
 
-    const { body } = render(DataPage, { props: {} });
+    const { container } = renderToFragment(DataPage, { props: {} });
 
-    expect(disclosureState(body, "Import from Save File")).toBe("false");
-    expect(disclosureState(body, "Transfer to Another Device")).toBe("true");
+    expect(disclosureState(container, "Import from Save File")).toBe("false");
+    expect(disclosureState(container, "Transfer to Another Device")).toBe("true");
   });
 });
