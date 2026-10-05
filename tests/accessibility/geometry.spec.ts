@@ -6,6 +6,7 @@ import {
   gotoRenderedApplication as gotoApplication,
   initializeApplication,
 } from "./support/application-state.js";
+import { requireBox, settledBox } from "./support/boxes.js";
 import {
   collectVisibleElementBoxes,
   collectVisibleTargets,
@@ -13,8 +14,9 @@ import {
   findTargetSizeViolations,
 } from "./support/geometry.js";
 import { openSearch, openSettingsCard, openVisibilityPanel } from "./support/scenarios.js";
+import { critical, criticalWhen } from "./support/tags.js";
 
-test.describe("@critical 320-pixel reflow", () => {
+test.describe("320-pixel reflow", () => {
   test.use({ viewport: { height: 720, width: 320 } });
 
   test.beforeEach(async ({ page }) => {
@@ -22,14 +24,18 @@ test.describe("@critical 320-pixel reflow", () => {
   });
 
   for (const route of accessibilityRoutes) {
-    test(`${route.path} has no horizontal overflow`, async ({ page }) => {
-      await gotoApplication(page, route.path);
-      const violations = findOverflow(await collectVisibleElementBoxes(page), 320);
-      expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
-    });
+    test(
+      `${route.path} has no horizontal overflow`,
+      criticalWhen(route.path === "/"),
+      async ({ page }) => {
+        await gotoApplication(page, route.path);
+        const violations = findOverflow(await collectVisibleElementBoxes(page), 320);
+        expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+      },
+    );
   }
 
-  test("expanded controls and results reflow", async ({ page }) => {
+  test("expanded controls and results reflow", critical, async ({ page }) => {
     await gotoApplication(page, "/");
     await openSearch(page, "turnip");
     expect(findOverflow(await collectVisibleElementBoxes(page), 320)).toEqual([]);
@@ -67,7 +73,7 @@ test.describe("@critical 320-pixel reflow", () => {
 
   test("category headings leave room for display-font descenders", async ({ page }) => {
     await gotoApplication(page, "/recipes");
-    const metrics = await page.locator(".page-header__title").evaluate((heading) => {
+    const metrics = await page.getByTestId("page-header-title").evaluate((heading) => {
       const style = getComputedStyle(heading);
       return {
         // oxlint-disable-next-line unicorn/prefer-number-coercion -- computed style values carry a "px" suffix that Number() rejects
@@ -81,16 +87,20 @@ test.describe("@critical 320-pixel reflow", () => {
   });
 });
 
-test.describe("@critical interactive target geometry", () => {
+test.describe("interactive target geometry", () => {
   test.beforeEach(async ({ page }) => {
     await initializeApplication(page, "light");
   });
 
-  test("visible home controls meet the 24-pixel size-or-spacing rule", async ({ page }) => {
-    await gotoApplication(page, "/");
-    const violations = findTargetSizeViolations(await collectVisibleTargets(page));
-    expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
-  });
+  test(
+    "visible home controls meet the 24-pixel size-or-spacing rule",
+    critical,
+    async ({ page }) => {
+      await gotoApplication(page, "/");
+      const violations = findTargetSizeViolations(await collectVisibleTargets(page));
+      expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+    },
+  );
 
   test("home category ribbons stay inside the viewport at 320 pixels", async ({ page }) => {
     await page.setViewportSize({ height: 720, width: 320 });
@@ -124,7 +134,7 @@ test.describe("@critical interactive target geometry", () => {
   });
 });
 
-test.describe("@critical tracker paper geometry", () => {
+test.describe("tracker paper geometry", () => {
   test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await initializeApplication(page, "light");
@@ -132,91 +142,91 @@ test.describe("@critical tracker paper geometry", () => {
     await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
   });
 
-  test("source control and paper borders preserve the two-sheet geometry", async ({ page }) => {
-    const row = page
-      .locator("[data-tracker-row]")
-      .filter({ has: page.locator('button[aria-controls^="sources-"]') })
-      .first();
-    const nextRow = row.locator("xpath=following-sibling::*[@data-tracker-row][1]");
-    const sourceButton = row.locator("button[aria-controls]");
-    const sourcePaper = row.locator("[data-source-paper]");
-    const whitePaper = row.locator(".tracker-paper__surface");
-    const nextWhitePaper = nextRow.locator(".tracker-paper__surface");
-    const diagonal = row.locator("[data-tracker-paper-diagonal] path");
+  test(
+    "source control and paper borders preserve the two-sheet geometry",
+    critical,
+    async ({ page }) => {
+      const row = page
+        .locator("[data-tracker-row]")
+        .filter({ has: page.locator('button[aria-controls^="sources-"]') })
+        .first();
+      const nextRow = row.locator("xpath=following-sibling::*[@data-tracker-row][1]");
+      const sourceButton = row.locator("button[aria-controls]");
+      const sourcePaper = row.locator("[data-source-paper]");
+      const whitePaper = row.getByTestId("tracker-paper-surface");
+      const nextWhitePaper = nextRow.getByTestId("tracker-paper-surface");
+      const diagonal = row.locator("[data-tracker-paper-diagonal] path");
 
-    await expect(row).toBeVisible();
-    await expect(nextRow).toBeVisible();
-    const before = await sourceButton.boundingBox();
-    expect(before).not.toBeNull();
-    expect(before?.width).toBeGreaterThanOrEqual(32);
-    expect(before?.height).toBeGreaterThanOrEqual(32);
+      await expect(row).toBeVisible();
+      await expect(nextRow).toBeVisible();
+      const before = await requireBox(sourceButton);
+      expect(before.width).toBeGreaterThanOrEqual(32);
+      expect(before.height).toBeGreaterThanOrEqual(32);
 
-    const hitTargetIsControl = await sourceButton.evaluate((button) => {
-      const box = button.getBoundingClientRect();
-      const points = [
-        [box.left + 2, box.top + 2],
-        [box.right - 2, box.top + 2],
-        [box.left + 2, box.bottom - 2],
-        [box.right - 2, box.bottom - 2],
-      ];
-      return points.every(
-        ([x, y]) => document.elementFromPoint(x, y)?.closest("button") === button,
+      const hitTargetIsControl = await sourceButton.evaluate((button) => {
+        const box = button.getBoundingClientRect();
+        const points = [
+          [box.left + 2, box.top + 2],
+          [box.right - 2, box.top + 2],
+          [box.left + 2, box.bottom - 2],
+          [box.right - 2, box.bottom - 2],
+        ];
+        return points.every(
+          ([x, y]) => document.elementFromPoint(x, y)?.closest("button") === button,
+        );
+      });
+      expect(hitTargetIsControl).toBe(true);
+
+      expect(
+        await whitePaper.evaluate((element) => getComputedStyle(element).borderBottomWidth),
+      ).toBe("1px");
+      expect(
+        await nextWhitePaper.evaluate((element) => getComputedStyle(element).borderTopWidth),
+      ).toBe("0px");
+      expect(
+        await sourcePaper.evaluate((element) => getComputedStyle(element).borderBottomWidth),
+      ).toBe("1px");
+      expect(await diagonal.evaluate((element) => getComputedStyle(element).strokeWidth)).toBe(
+        "1px",
       );
-    });
-    expect(hitTargetIsControl).toBe(true);
 
-    expect(
-      await whitePaper.evaluate((element) => getComputedStyle(element).borderBottomWidth),
-    ).toBe("1px");
-    expect(
-      await nextWhitePaper.evaluate((element) => getComputedStyle(element).borderTopWidth),
-    ).toBe("0px");
-    expect(
-      await sourcePaper.evaluate((element) => getComputedStyle(element).borderBottomWidth),
-    ).toBe("1px");
-    expect(await diagonal.evaluate((element) => getComputedStyle(element).strokeWidth)).toBe("1px");
+      await sourceButton.click();
+      await expect(row).toHaveAttribute("data-source-state", "open");
+      await expect(row.getByTestId("source-card")).toBeVisible();
+      const after = await settledBox(sourceButton);
+      expect(Math.abs(after.x + after.width - (before.x + before.width))).toBeLessThanOrEqual(0.5);
+      expect(after.y).toBeGreaterThan(before.y);
+      const stationaryControl = row.locator("[data-source-paper-stationary-control]");
+      const stationary = await settledBox(stationaryControl);
+      expect(Math.abs(stationary.x - before.x)).toBeLessThanOrEqual(0.5);
+      expect(Math.abs(stationary.y - before.y)).toBeLessThanOrEqual(0.5);
+      expect(
+        await whitePaper.evaluate((element) => getComputedStyle(element).borderBottomWidth),
+      ).toBe("1px");
+      expect(
+        await nextWhitePaper.evaluate((element) => getComputedStyle(element).borderTopWidth),
+      ).toBe("1px");
 
-    await sourceButton.click();
-    await expect(row).toHaveAttribute("data-source-state", "open");
-    await expect(row.locator(".source-card")).toBeVisible();
-    await page.waitForTimeout(300);
-    const after = await sourceButton.boundingBox();
-    expect(after).not.toBeNull();
-    expect(
-      Math.abs((after?.x ?? 0) + (after?.width ?? 0) - ((before?.x ?? 0) + (before?.width ?? 0))),
-    ).toBeLessThanOrEqual(0.5);
-    expect(after?.y ?? 0).toBeGreaterThan(before?.y ?? 0);
-    const stationaryControl = row.locator("[data-source-paper-stationary-control]");
-    const stationary = await stationaryControl.boundingBox();
-    expect(stationary).not.toBeNull();
-    expect(Math.abs((stationary?.x ?? 0) - (before?.x ?? 0))).toBeLessThanOrEqual(0.5);
-    expect(Math.abs((stationary?.y ?? 0) - (before?.y ?? 0))).toBeLessThanOrEqual(0.5);
-    expect(
-      await whitePaper.evaluate((element) => getComputedStyle(element).borderBottomWidth),
-    ).toBe("1px");
-    expect(
-      await nextWhitePaper.evaluate((element) => getComputedStyle(element).borderTopWidth),
-    ).toBe("1px");
+      const gap = await row.evaluate((element) => {
+        const source = element.querySelector<HTMLElement>("[data-source-paper]");
+        const next = element.nextElementSibling?.querySelector<HTMLElement>(
+          '[data-testid="tracker-paper-surface"]',
+        );
+        if (!source || !next) return null;
+        return next.getBoundingClientRect().top - source.getBoundingClientRect().bottom;
+      });
+      if (gap === null) throw new Error("Expected the open source paper and a following row");
+      expect(Math.abs(gap - 6)).toBeLessThanOrEqual(0.5);
 
-    const gap = await row.evaluate((element) => {
-      const source = element.querySelector<HTMLElement>("[data-source-paper]");
-      const next =
-        element.nextElementSibling?.querySelector<HTMLElement>(".tracker-paper__surface");
-      if (!source || !next) return null;
-      return next.getBoundingClientRect().top - source.getBoundingClientRect().bottom;
-    });
-    expect(gap).not.toBeNull();
-    expect(Math.abs((gap ?? 0) - 6)).toBeLessThanOrEqual(0.5);
-
-    await stationaryControl.click({ position: { x: 2, y: 2 } });
-    await expect(row).toHaveAttribute("data-source-state", "closed");
-    await page.waitForTimeout(300);
-    const closedAgain = await sourceButton.boundingBox();
-    expect(Math.abs((closedAgain?.y ?? 0) - (before?.y ?? 0))).toBeLessThanOrEqual(0.5);
-  });
+      await stationaryControl.click({ position: { x: 2, y: 2 } });
+      await expect(row).toHaveAttribute("data-source-state", "closed");
+      const closedAgain = await settledBox(sourceButton);
+      expect(Math.abs(closedAgain.y - before.y)).toBeLessThanOrEqual(0.5);
+    },
+  );
 });
 
-test.describe("@critical tracker paper touch geometry", () => {
+test.describe("tracker paper touch geometry", () => {
   test.use({
     deviceScaleFactor: devices["iPhone 13"].deviceScaleFactor,
     hasTouch: devices["iPhone 13"].hasTouch,
@@ -265,7 +275,7 @@ test.describe("@critical tracker paper touch geometry", () => {
     await expect(page.getByRole("button", { name: "Reveal spoiler" }).first()).toBeVisible();
     // Long names wrap at 320 pixels; measure a cover that fits on one line.
     const singleLineIndex = await page
-      .locator(".spoiler-cover__mask")
+      .getByTestId("spoiler-cover-mask")
       .evaluateAll((masks) => masks.findIndex((mask) => mask.getBoundingClientRect().height <= 24));
     expect(singleLineIndex).toBeGreaterThanOrEqual(0);
     const spoiler = page.getByRole("button", { name: "Reveal spoiler" }).nth(singleLineIndex);
@@ -275,17 +285,17 @@ test.describe("@critical tracker paper touch geometry", () => {
     });
     const row = page.locator("[data-tracker-row]").nth(rowIndex);
     await spoiler.scrollIntoViewIfNeeded();
-    const rowBefore = await row.boundingBox();
-    const button = await spoiler.boundingBox();
-    const cover = await spoiler.locator(".spoiler-cover__mask").boundingBox();
-    expect(button?.height).toBeGreaterThanOrEqual(44);
-    expect(cover?.height).toBeLessThanOrEqual(24);
-    expect(rowBefore?.height).toBeLessThan(60);
+    const rowBefore = await requireBox(row);
+    const button = await requireBox(spoiler);
+    const cover = await requireBox(spoiler.getByTestId("spoiler-cover-mask"));
+    expect(button.height).toBeGreaterThanOrEqual(44);
+    expect(cover.height).toBeLessThanOrEqual(24);
+    expect(rowBefore.height).toBeLessThan(60);
 
-    await page.mouse.click((cover?.x ?? 0) + 8, (cover?.y ?? 0) - 6);
+    await page.mouse.click(cover.x + 8, cover.y - 6);
     await expect(row.getByRole("button", { name: "Reveal spoiler" })).toHaveCount(0);
-    const rowAfter = await row.boundingBox();
-    expect(Math.abs((rowAfter?.height ?? 0) - (rowBefore?.height ?? 0))).toBeLessThanOrEqual(0.5);
+    const rowAfter = await settledBox(row);
+    expect(Math.abs(rowAfter.height - rowBefore.height)).toBeLessThanOrEqual(0.5);
   });
 
   test("specialized record controls retain 44-pixel coarse targets", async ({ page }) => {
@@ -312,12 +322,10 @@ test.describe("@critical tracker paper touch geometry", () => {
     }
 
     const index = page.getByRole("navigation", { name: "Villager alphabet" });
-    const beforeScroll = await index.boundingBox();
-    const roster = await page.locator(".villager-roster").boundingBox();
-    const whitespaceCenter = ((roster?.x ?? 0) + (roster?.width ?? 0) + 320) / 2;
-    expect(
-      Math.abs((beforeScroll?.x ?? 0) + (beforeScroll?.width ?? 0) / 2 - whitespaceCenter),
-    ).toBe(0);
+    const beforeScroll = await requireBox(index);
+    const roster = await requireBox(page.getByTestId("villager-roster"));
+    const whitespaceCenter = (roster.x + roster.width + 320) / 2;
+    expect(Math.abs(beforeScroll.x + beforeScroll.width / 2 - whitespaceCenter)).toBe(0);
     const indexGeometry = await index.evaluate((element) => {
       const style = getComputedStyle(element);
       const buttons = [...element.querySelectorAll("button")];
@@ -337,10 +345,10 @@ test.describe("@critical tracker paper touch geometry", () => {
     await page.evaluate(() => {
       window.scrollTo(0, document.body.scrollHeight);
     });
-    const afterScroll = await index.boundingBox();
-    expect(Math.abs((afterScroll?.y ?? 0) - (beforeScroll?.y ?? 0))).toBeLessThanOrEqual(0.5);
-    expect(afterScroll?.y).toBeGreaterThanOrEqual(62);
-    expect((afterScroll?.y ?? 0) + (afterScroll?.height ?? 0)).toBeLessThanOrEqual(652);
+    const afterScroll = await settledBox(index);
+    expect(Math.abs(afterScroll.y - beforeScroll.y)).toBeLessThanOrEqual(0.5);
+    expect(afterScroll.y).toBeGreaterThanOrEqual(62);
+    expect(afterScroll.y + afterScroll.height).toBeLessThanOrEqual(652);
 
     await gotoApplication(page, "/skills");
     for (const control of await page.locator("[data-skill-record] button").first().all()) {

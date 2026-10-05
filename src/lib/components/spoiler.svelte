@@ -21,7 +21,7 @@
   >
 {:else}
   <button class="spoiler-cover" type="button" onclick={onReveal} aria-label="Reveal spoiler">
-    <span class="spoiler-cover__mask" aria-hidden="true"
+    <span class="spoiler-cover__mask" data-testid="spoiler-cover-mask" aria-hidden="true"
       ><span class="spoiler-cover__content">{@render children()}</span></span
     >
   </button>

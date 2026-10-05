@@ -23,6 +23,11 @@ pnpm run test:accessibility:critical
 pnpm run test:accessibility
 ```
 
+Tag individual tests for the critical subset with `critical` or `criticalWhen(...)` from
+`tests/accessibility/support/tags.ts`; never tag a whole `describe`. Keep it to one or two cases per
+feature. Build stored-state fixtures with `createStoredState`, which follows the store's current
+serialized type, and read geometry through `requireBox` & `settledBox` rather than sleeping.
+
 The Playwright configuration builds the app once, starts one preview server, and reuses it across
 the selected cases. Chromium is the only installed automated browser. Cross-browser and
 assistive-technology behavior belongs in the manual matrix.

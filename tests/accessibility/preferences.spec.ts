@@ -7,49 +7,53 @@ import {
   waitForRendering,
 } from "./support/application-state.js";
 import { openFeedbackValidation, openVisibilityPanel } from "./support/scenarios.js";
+import { critical } from "./support/tags.js";
 
-test.describe("@critical browser accessibility preferences", () => {
-  test("reduced motion removes non-essential animation but preserves feedback", async ({
-    page,
-  }) => {
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    await initializeApplication(page, "light");
-    await gotoApplication(page, "/almanac");
-    await openVisibilityPanel(page);
-    // Inspect durations before settling: waiting first would conceal a full-duration regression.
-    const finiteDurations = await page.evaluate(() =>
-      document.getAnimations().flatMap((animation) => {
-        const timing = animation.effect?.getComputedTiming();
-        return timing?.iterations === Infinity ? [] : [timing?.activeDuration];
-      }),
-    );
-    // The reduced-motion stylesheet uses a 0.01 ms duration, rather than zero, to retain events.
-    expect(
-      finiteDurations.every((duration) => typeof duration === "number" && duration <= 0.01),
-    ).toBe(true);
-    await waitForRendering(page);
+test.describe("browser accessibility preferences", () => {
+  test(
+    "reduced motion removes non-essential animation but preserves feedback",
+    critical,
+    async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await initializeApplication(page, "light");
+      await gotoApplication(page, "/almanac");
+      await openVisibilityPanel(page);
+      // Inspect durations before settling: waiting first would conceal a full-duration regression.
+      const finiteDurations = await page.evaluate(() =>
+        document.getAnimations().flatMap((animation) => {
+          const timing = animation.effect?.getComputedTiming();
+          return timing?.iterations === Infinity ? [] : [timing?.activeDuration];
+        }),
+      );
+      // The reduced-motion stylesheet uses a 0.01 ms duration, rather than zero, to retain events.
+      expect(
+        finiteDurations.every((duration) => typeof duration === "number" && duration <= 0.01),
+      ).toBe(true);
+      await waitForRendering(page);
 
-    const activeFiniteAnimations = await page.evaluate(() =>
-      document.getAnimations().flatMap((animation) => {
-        const timing = animation.effect?.getComputedTiming();
-        if (timing?.iterations === Infinity || timing?.activeDuration === 0) return [];
-        const target = animation.effect instanceof KeyframeEffect ? animation.effect.target : null;
-        return [
-          {
-            activeDuration: timing?.activeDuration,
-            target: target instanceof Element ? target.outerHTML.slice(0, 200) : null,
-          },
-        ];
-      }),
-    );
-    expect(activeFiniteAnimations).toEqual([]);
+      const activeFiniteAnimations = await page.evaluate(() =>
+        document.getAnimations().flatMap((animation) => {
+          const timing = animation.effect?.getComputedTiming();
+          if (timing?.iterations === Infinity || timing?.activeDuration === 0) return [];
+          const target =
+            animation.effect instanceof KeyframeEffect ? animation.effect.target : null;
+          return [
+            {
+              activeDuration: timing?.activeDuration,
+              target: target instanceof Element ? target.outerHTML.slice(0, 200) : null,
+            },
+          ];
+        }),
+      );
+      expect(activeFiniteAnimations).toEqual([]);
 
-    await gotoApplication(page, "/");
-    await openFeedbackValidation(page);
-    await expect(page.getByRole("alert")).toHaveText("Please enter a message.");
-  });
+      await gotoApplication(page, "/");
+      await openFeedbackValidation(page);
+      await expect(page.getByRole("alert")).toHaveText("Please enter a message.");
+    },
+  );
 
-  test("forced colors retain focus and state boundaries", async ({ page }) => {
+  test("forced colors retain focus and state boundaries", critical, async ({ page }) => {
     await page.emulateMedia({ forcedColors: "active" });
     await initializeApplication(
       page,
