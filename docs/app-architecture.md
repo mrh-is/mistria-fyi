@@ -129,3 +129,20 @@ Progress calculation and UI row visibility are separate concerns.
   `showCompleted`, and `showSpoilers` at the component level.
 - Hidden completed rows still contribute to progress totals. This ensures the overall percentage
   remains accurate even when the user filters out completed content.
+
+## 6. Response Headers
+
+`src/lib/security/` is the one source for the Content-Security-Policy and the other security headers
+(`Permissions-Policy`, `Referrer-Policy`, `Strict-Transport-Security`, and
+`X-Content-Type-Options`). Cloudflare Pages delivers them by two paths, and both derive from it:
+
+- **Server responses** — SvelteKit emits the CSP, with a per-response script nonce, from the `csp`
+  option in `vite.config.ts`; the `securityHeaders` hook in `hooks.server.ts` adds the rest. Pages
+  never applies `_headers` to Function responses.
+- **Static files** — the build writes `_headers` (gitignored) from the same directives, and
+  `@sveltejs/adapter-cloudflare` copies it into `build/` with its own cache rules. Never commit or
+  hand-edit it.
+
+`security-headers.test.ts` pins the full production policy, so any change to it shows up in review.
+The asset origin lives in `src/lib/asset-origin.ts`; `asset-origin.test.ts` holds the copies that
+can't import it (CSS & upload scripts) to the same value.

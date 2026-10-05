@@ -8,6 +8,7 @@ import {
   isLocale,
 } from "#lib/paraglide/runtime.js";
 import { paraglideMiddleware } from "#lib/paraglide/server.js";
+import { withSecurityHeaders } from "#lib/security/security-headers.js";
 
 import type { Handle } from "@sveltejs/kit/hooks";
 
@@ -67,4 +68,12 @@ const paraglideHandle: Handle = ({ event, resolve }) =>
     }),
   );
 
-export const handle: Handle = sequence(bareLocaleRedirect, paraglideHandle);
+/**
+ * Cloudflare Pages applies `_headers` to static files only, never to Function responses, so every
+ * server response (pages, redirects, `/api`) gets the security headers here. SvelteKit adds the
+ * CSP to rendered pages itself.
+ */
+export const securityHeaders: Handle = async ({ event, resolve }) =>
+  withSecurityHeaders(await resolve(event));
+
+export const handle: Handle = sequence(securityHeaders, bareLocaleRedirect, paraglideHandle);

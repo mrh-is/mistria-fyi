@@ -30,10 +30,6 @@ declare global {
     // interface PageState {}
   }
 
-  interface ImportMetaEnv {
-    readonly PUBLIC_ASSET_ORIGIN?: string;
-  }
-
   interface Window {
     turnstile?: Turnstile;
   }
