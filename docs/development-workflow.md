@@ -60,6 +60,17 @@ pnpm run prepare
 
 </details>
 
+### Codex sandbox
+
+Codex's default `workspace-write` sandbox disables command-network access & keeps `.git` read-only,
+including the resolved Git directory for linked worktrees. That protects normal source edits, but
+`pnpm install`, `gh`, & remote Git commands need network access, while `git worktree add`, staging,
+commits, & ref updates require an approved sandbox escalation. Enabling command-network access
+requires `[sandbox_workspace_write]` with `network_access = true` in `.codex/config.toml`; that
+change is pending, to be applied by the maintainer. Keep `approval_policy = "on-request"` so
+Git-metadata operations can request a narrow escalation. If the active managed environment disallows
+escalation, report the limitation rather than weakening the sandbox or bypassing isolation.
+
 ### Shared vs. Isolated Worktree Resources (`.worktreeinclude`)
 
 The `.worktreeinclude` file lists ignored local entries required for development:
@@ -425,8 +436,9 @@ git branch -vv
 
 - Ensure `git branch --show-current` matches the PR branch name.
 - Ensure `git branch -vv` shows that branch tracking the expected `origin/<branch>`.
-- Push through the agent delivery mechanism (for Copilot runs, `report_progress`) after committing,
-  then verify the branch is clean with `git status --short`.
+- Push through the agent delivery mechanism (for example, Copilot cloud runs push with their
+  `report_progress` tool; elsewhere use `git push`) after committing, then verify the branch is
+  clean with `git status --short`.
 
 ### Attach visual evidence & prototype code
 
