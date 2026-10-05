@@ -3,9 +3,13 @@ import { createWriteStream, existsSync, mkdirSync, mkdtempSync, rmSync, statSync
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { pipeline } from "node:stream/promises";
+import { fileURLToPath } from "node:url";
 import { open } from "yauzl-promise";
 
 export const DEFAULT_WINDOWS_GAME_ARCHIVE = String.raw`C:\Program Files (x86)\Steam\steamapps\common\Fields of Mistria\assets.zip`;
+
+/** The ignored local assets directory, `pipeline/input/assets`, independent of the working directory. */
+export const DEFAULT_ASSETS_DIR = fileURLToPath(new URL("../input/assets", import.meta.url));
 
 const REQUIRED_PREFIXES = ["assets/fiddle/", "assets/localization/"];
 
@@ -58,7 +62,7 @@ export function readInstalledGameVersion(archivePath: string | undefined): strin
 
 function defaultInput(): string {
   if (existsSync(DEFAULT_WINDOWS_GAME_ARCHIVE)) return DEFAULT_WINDOWS_GAME_ARCHIVE;
-  return "input/assets";
+  return DEFAULT_ASSETS_DIR;
 }
 
 async function materializeStructuredAssets(archivePath: string): Promise<string> {

@@ -4,6 +4,8 @@ import { dirname, join } from "node:path";
 import { crc32 } from "node:zlib";
 import { onTestFinished } from "vitest";
 
+import { DEFAULT_ASSETS_DIR } from "./asset-input.js";
+
 import type { ParsedGameData } from "./parse-fiddle.js";
 
 const temporaryAssetsDirectories: string[] = [];
@@ -107,7 +109,7 @@ export function removeAssetsFixtures(): void {
 }
 
 export function requireGameAssetsDir(): string {
-  const assetsDir = process.env.MISTRIA_ASSETS ?? "pipeline/input/assets";
+  const assetsDir = process.env.MISTRIA_ASSETS ?? DEFAULT_ASSETS_DIR;
   const fiddleDir = join(assetsDir, "fiddle");
   if (!existsSync(fiddleDir) || !statSync(fiddleDir).isDirectory()) {
     throw new Error(
