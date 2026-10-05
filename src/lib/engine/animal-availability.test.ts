@@ -5,11 +5,11 @@ import { recordEntries } from "#lib/utils.js";
 
 import { getVariantSeason, isVariantInScope } from "./animal-availability.js";
 
-import type { AvailabilityMode } from "#lib/stores/user-state.svelte.js";
+import type { LegacyAvailabilityMode } from "#lib/types/availability.js";
 import type { AnimalVariant, Season } from "#lib/types/tracker-data.js";
 
 const SEASONS: Season[] = ["spring", "summer", "fall", "winter"];
-const MODES: AvailabilityMode[] = ["available", "everything", "timely"];
+const MODES: LegacyAvailabilityMode[] = ["available", "everything", "timely"];
 
 const SUMMER_BREED: AnimalVariant = {
   source: { type: "breed", availability: { type: "season", seasons: ["summer"] } },
