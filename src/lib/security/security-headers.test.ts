@@ -72,7 +72,7 @@ describe("_headers", () => {
       `  Content-Security-Policy: ${PRODUCTION_CSP}`,
       "  Permissions-Policy: camera=(self), geolocation=(), microphone=(), payment=(), usb=()",
       "  Referrer-Policy: strict-origin-when-cross-origin",
-      "  Strict-Transport-Security: max-age=31536000",
+      "  Strict-Transport-Security: max-age=31536000; includeSubDomains",
       "  X-Content-Type-Options: nosniff",
       "",
     ]);
