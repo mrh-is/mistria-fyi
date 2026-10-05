@@ -367,8 +367,8 @@ why.
 
 | Measurement                          | Before (#486) | After |
 | ------------------------------------ | ------------- | ----- |
-| `pnpm run lint`, cold ESLint cache   | 6.0 s         | TBD   |
-| `pnpm run lint`, warm ESLint cache   | 3.3 s         | TBD   |
+| `pnpm run lint`, cold ESLint cache   | 6.0 s         | 5.0 s |
+| `pnpm run lint`, warm ESLint cache   | 3.3 s         | 3.3 s |
 | CI "Run pnpm run lint" step (ubuntu) | 22 s          | TBD   |
 
 Suppressions follow the tool that owns the rule. Use `// oxlint-disable-next-line <rule> -- reason`
