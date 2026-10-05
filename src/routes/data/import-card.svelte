@@ -34,7 +34,8 @@
 
   // ── Desktop detection (simple heuristic) ──
   let isDesktop = $derived(
-    typeof globalThis.matchMedia === "function" && globalThis.matchMedia("(min-width: 768px)").matches,
+    typeof globalThis.matchMedia === "function" &&
+      globalThis.matchMedia("(min-width: 768px)").matches,
   );
 
   // ── Import state ──

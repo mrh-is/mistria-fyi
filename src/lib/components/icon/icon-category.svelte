@@ -1,9 +1,9 @@
 <script lang="ts">
   import { CATEGORY_ICON } from "#lib/components/icon/icon-maps.js";
-  import { categoryColor } from '#lib/data/categories.js';
-import type { CategoryKey } from '#lib/data/categories.js';
+  import { categoryColor } from "#lib/data/categories.js";
 
   import type { IconProps } from "#lib/components/icon/icon-maps.js";
+  import type { CategoryKey } from "#lib/data/categories.js";
 
   interface Props extends IconProps {
     category: "all" | "complete" | CategoryKey;

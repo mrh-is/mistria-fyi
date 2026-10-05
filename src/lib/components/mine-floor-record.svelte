@@ -2,10 +2,10 @@
   import IconMinus from "@tabler/icons-svelte-runes/icons/minus";
   import IconPlus from "@tabler/icons-svelte-runes/icons/plus";
 
-  import { page } from "$app/state";
   import { getName } from "#lib/data/names.js";
   import { getFeedbackContextOrFallback } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { page } from "$app/state";
 
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { MinesBiome } from "#lib/types/tracker-data.js";

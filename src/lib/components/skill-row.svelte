@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { page } from "$app/state";
   import IconCompletion from "#lib/components/icon/icon-completion.svelte";
   import Stepper from "#lib/components/stepper.svelte";
   import { Input } from "#lib/components/ui/input/index.js";
@@ -10,6 +9,7 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { recordKeys } from "#lib/utils.js";
   import { celebrateCategory } from "#lib/utils/celebrate.js";
+  import { page } from "$app/state";
 
   import type { SkillId } from "#lib/types/tracker-data.js";
 

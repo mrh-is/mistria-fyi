@@ -325,6 +325,9 @@ minute per run. `svelte-check` still type-checks them. Keep nontrivial async or 
 in `.ts` or `.svelte.ts` modules, where the typed rules apply. When tsgolint gains Svelte support,
 the probe test fails; that's the trigger to revisit this boundary.
 
+The same test checks that oxfmt formats `.svelte` files. That needs `.oxfmtrc.json`'s `svelte`
+option; without it, `oxfmt --check` skips every `.svelte` file without saying so.
+
 ESLint's template rules include two local ones in `eslint-rules/`: `no-hardcoded-ui-text` (see
 [localization](localization.md)) and `no-raw-internal-href`, which rejects literal internal routes
 like `href="/about"` and accepts `localizedHref(...)` or any other expression. It replaces

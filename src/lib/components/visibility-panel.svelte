@@ -5,7 +5,6 @@
   import IconTags from "@tabler/icons-svelte-runes/icons/tags";
   import { prefersReducedMotion } from "svelte/motion";
 
-  import { page } from "$app/state";
   import BlockySwitch from "#lib/components/blocky-switch.svelte";
   import { weatherIcon } from "#lib/components/icon/icon-maps.js";
   import { Icon } from "#lib/components/icon/index.js";
@@ -16,6 +15,7 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
   import { seasonLabel, seasonLabelAbbr, weatherLabel } from "#lib/utils/format.js";
+  import { page } from "$app/state";
 
   import type { Icon as AppIcon } from "@tabler/icons-svelte-runes";
 

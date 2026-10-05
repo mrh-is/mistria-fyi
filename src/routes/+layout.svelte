@@ -6,8 +6,6 @@
 
   import { onMount } from "svelte";
 
-  import { afterNavigate } from "$app/navigation";
-  import { page } from "$app/state";
   import PencilFilter from "#lib/components/pencil-filter.svelte";
   import PersistenceWarning from "#lib/components/persistence-warning.svelte";
   import SeoHead from "#lib/components/seo-head.svelte";
@@ -22,6 +20,8 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { keepLocaleOffline } from "#lib/utils/offline-locales.js";
+  import { afterNavigate } from "$app/navigation";
+  import { page } from "$app/state";
 
   let { children } = $props();
   let feedbackContext = setFeedbackContext(new FeedbackContext());
@@ -66,7 +66,7 @@
   {/if}
 </svelte:head>
 
-<SeoHead metadata={metadata} pathname={page.url.pathname} />
+<SeoHead {metadata} pathname={page.url.pathname} />
 
 <!-- Paraglide message calls aren't reactive to the locale, so all chrome re-mounts when a client-side locale switch lands. -->
 {#key page.data.locale}
@@ -92,12 +92,9 @@
     {/key}
   </div>
 
-  <ToolbarFooter metadata={metadata} bind:overlayActive />
+  <ToolbarFooter {metadata} bind:overlayActive />
 
-  <Toaster
-    position="bottom-center"
-    offset="calc(56px + env(safe-area-inset-bottom))"
-  />
+  <Toaster position="bottom-center" offset="calc(56px + env(safe-area-inset-bottom))" />
 
   <PersistenceWarning />
   <UpdatePrompt />

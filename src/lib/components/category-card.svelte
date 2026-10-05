@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { page } from "$app/state";
   import { Icon } from "#lib/components/icon/index.js";
-  import { categoryForKey } from '#lib/data/categories.js';
-import type { CategoryKey } from '#lib/data/categories.js';
+  import { categoryForKey } from "#lib/data/categories.js";
   import * as m from "#lib/paraglide/messages.js";
   import { getLocale } from "#lib/paraglide/runtime.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
+  import { page } from "$app/state";
 
+  import type { CategoryKey } from "#lib/data/categories.js";
   import type { CategoryProgress } from "#lib/engine/progress.js";
 
   interface DisplayCategory {

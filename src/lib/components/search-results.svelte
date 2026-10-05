@@ -167,7 +167,7 @@
       case "almanac":
         userState.toggleAlmanacItem(result.id as never);
         break;
-      case "animals": 
+      case "animals":
         if (result.id.startsWith("pet-cosmetic:")) {
           const petCosmeticId = result.id.slice("pet-cosmetic:".length);
           userState.togglePetCosmetic(petCosmeticId as PetCosmeticSetId);
@@ -183,7 +183,7 @@
           }
         }
         break;
-      
+
       case "cosmetics":
         userState.toggleCosmetic(result.id as never);
         break;

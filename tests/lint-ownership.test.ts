@@ -5,6 +5,9 @@
 // The `.svelte` expectation records a known gap: tsgolint doesn't read `.svelte` files, so typed
 // rules skip their `<script>` blocks. When this test fails because that rule starts firing there,
 // tsgolint has gained Svelte support; revisit the oxlint/ESLint boundary.
+//
+// oxfmt formats `.svelte` files only when `.oxfmtrc.json` enables its `svelte` option; without it,
+// `oxfmt --check` skips them silently. The last test catches that.
 import { ESLint } from "eslint";
 import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
@@ -75,6 +78,15 @@ describe("lint tool ownership", () => {
       "local/no-hardcoded-ui-text",
       "local/no-raw-internal-href",
     ]);
+  });
+
+  it("oxfmt formats .svelte files", () => {
+    const { stdout } = spawnSync(
+      "node_modules/.bin/oxfmt",
+      ["--stdin-filepath", "src/lib/components/probe.svelte"],
+      { encoding: "utf8", input: "<script lang=\"ts\">\n  import x from './x.js';\n</script>\n" },
+    );
+    expect(stdout).toContain('import x from "./x.js";');
   });
 
   it("ESLint leaves script rules to oxlint", async () => {

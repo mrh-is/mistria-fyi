@@ -46,8 +46,7 @@
       if (isAnimalVisible) {
         return isVariantVisible(variant, completed);
       }
-        return isVariantInScope(variant, completed);
-      
+      return isVariantInScope(variant, completed);
     });
   }
 
@@ -55,8 +54,8 @@
     animalId: AnimalId,
     predicate: (value: [AnimalVariantId, AnimalVariant]) => boolean,
   ): boolean {
-    return trackerData.animals[animalId].variantTiers.some((tier) => 
-      tierEntries(tier).some((entry) => predicate(entry))
+    return trackerData.animals[animalId].variantTiers.some((tier) =>
+      tierEntries(tier).some((entry) => predicate(entry)),
     );
   }
 

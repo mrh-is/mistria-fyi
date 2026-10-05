@@ -1,8 +1,8 @@
 <script lang="ts">
   import IconHome from "@tabler/icons-svelte-runes/icons/home";
 
-  import { page } from "$app/state";
   import { localizedHref } from "#lib/utils/localized-href.js";
+  import { page } from "$app/state";
 </script>
 
 <div class="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">

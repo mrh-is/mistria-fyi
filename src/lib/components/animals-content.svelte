@@ -43,8 +43,9 @@
   }
 
   function isAnimalComplete(animalId: AnimalId): boolean {
-    const someVariantIncomplete = someVariant(animalId, ([variantId]) => 
-      !hasCompletedVariant(animalId, variantId)
+    const someVariantIncomplete = someVariant(
+      animalId,
+      ([variantId]) => !hasCompletedVariant(animalId, variantId),
     );
     if (someVariantIncomplete) return false;
 
@@ -61,8 +62,10 @@
     animalId: AnimalId,
     predicate: (value: [AnimalVariantId, AnimalVariant]) => boolean,
   ): boolean {
-    return trackerData.animals[animalId].variantTiers.some((tier) => 
-      (Object.entries(tier) as [AnimalVariantId, AnimalVariant][]).some((entry) => predicate(entry))
+    return trackerData.animals[animalId].variantTiers.some((tier) =>
+      (Object.entries(tier) as [AnimalVariantId, AnimalVariant][]).some((entry) =>
+        predicate(entry),
+      ),
     );
   }
 
