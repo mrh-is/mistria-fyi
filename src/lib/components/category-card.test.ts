@@ -1,8 +1,8 @@
-import { render } from "svelte/server";
 import { afterEach, describe, expect, it } from "vitest";
 
 import CategoryCard from "#lib/components/category-card.svelte";
 import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
+import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 describe("CategoryCard", () => {
   const defaultGetLocale = getLocale;
@@ -12,70 +12,72 @@ describe("CategoryCard", () => {
   });
 
   it("renders a named category stripe with progress and a decorative ribbon", () => {
-    const { body } = render(CategoryCard, {
+    const { queries } = renderToFragment(CategoryCard, {
       props: {
         key: "almanac",
         progress: { completed: 7, filtered: 13, total: 20 },
       },
     });
 
-    expect(body).toContain("data-category-stripe");
-    expect(body).toContain('aria-label="Almanac, 7 of 20 completed"');
-    expect(body).toContain("data-category-ribbon");
-    expect(body).toContain('aria-hidden="true"');
-    expect(body).toContain("7");
-    expect(body).toContain("/");
-    expect(body).toContain("20");
-    expect(body).toContain("--category-progress: 35%");
+    const stripe = queries.getByRole("link", { name: "Almanac, 7 of 20 completed" });
+    expect(stripe.matches("[data-category-stripe]")).toBe(true);
+    expect(stripe.getAttribute("style")).toContain("--category-progress: 35%");
+    expect(stripe.querySelector("[data-category-ribbon]")?.getAttribute("aria-hidden")).toBe(
+      "true",
+    );
+    expect(stripe.querySelector(".category-count")?.textContent.replaceAll(/\s+/g, " ")).toBe(
+      "7 / 20",
+    );
   });
 
   it("uses the filtered total in the visible and accessible progress count", () => {
-    const { body } = render(CategoryCard, {
+    const { queries } = renderToFragment(CategoryCard, {
       props: {
         key: "museum",
         progress: { completed: 4, filtered: 6, total: 20 },
       },
     });
 
-    expect(body).toContain('aria-label="Museum, 4 of 10 completed"');
-    expect(body).toContain("--category-progress: 40%");
+    const stripe = queries.getByRole("link", { name: "Museum, 4 of 10 completed" });
+    expect(stripe.getAttribute("style")).toContain("--category-progress: 40%");
   });
 
   it("keeps the category identity when adding the completed gold-leaf edge", () => {
-    const { body } = render(CategoryCard, {
+    const { container } = renderToFragment(CategoryCard, {
       props: {
         key: "animals",
         progress: { completed: 20, filtered: 0, total: 20 },
       },
     });
 
-    expect(body).toContain("category-stripe--complete");
-    expect(body).toContain("--category-color: var(--cat-animals)");
+    const stripe = container.querySelector("[data-category-stripe]");
+    expect(stripe?.classList.contains("category-stripe--complete")).toBe(true);
+    expect(stripe?.getAttribute("style")).toContain("--category-color: var(--cat-animals)");
   });
 
   it("localizes the accessible progress phrase for Japanese", () => {
     overwriteGetLocale(() => "ja");
 
-    const { body } = render(CategoryCard, {
+    const { queries } = renderToFragment(CategoryCard, {
       props: {
         key: "almanac",
         progress: { completed: 7, filtered: 13, total: 20 },
       },
     });
 
-    expect(body).toContain('aria-label="Almanac、20件中7件完了"');
+    expect(queries.getByRole("link", { name: "Almanac、20件中7件完了" })).toBeTruthy();
   });
 
   it("localizes the accessible progress phrase for Russian", () => {
     overwriteGetLocale(() => "ru");
 
-    const { body } = render(CategoryCard, {
+    const { queries } = renderToFragment(CategoryCard, {
       props: {
         key: "almanac",
         progress: { completed: 7, filtered: 13, total: 20 },
       },
     });
 
-    expect(body).toContain('aria-label="Almanac, выполнено 7 из 20"');
+    expect(queries.getByRole("link", { name: "Almanac, выполнено 7 из 20" })).toBeTruthy();
   });
 });

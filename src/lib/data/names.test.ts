@@ -96,7 +96,7 @@ describe("getName", () => {
     for (const order of [
       pairs,
       [...pairs].toReversed(),
-      [...pairs].toSorted(() => 0.5 - Math.random()),
+      [...pairs].toSorted((a, b) => (a.id + a.locale).localeCompare(b.locale + b.id)),
     ]) {
       for (const { expected, id, locale } of order) {
         expect(getName("villagers", id, locale)).toBe(expected);

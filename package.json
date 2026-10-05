@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "prepare": "husky && pnpm run paraglide:compile && svelte-kit sync",
-    "paraglide:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide",
+    "paraglide:compile": "tsx scripts/paraglide-compile.ts",
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
@@ -16,7 +16,7 @@
     "check:pipeline": "tsc --noEmit -p pipeline/tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "cloudflare:logs": "tsx scripts/cloudflare-pages-logs.ts",
-    "lint": "oxfmt --check && oxlint --type-aware --disable-nested-config --deny-warnings && eslint \"**/*.svelte\" \"**/*.svelte.{js,ts}\" --cache --cache-location node_modules/.cache/eslint/ --max-warnings=0 && stylelint \"src/**/*.{css,svelte}\"",
+    "lint": "oxfmt --check && oxlint --type-aware --disable-nested-config --deny-warnings && eslint \"**/*.svelte\" \"**/*.svelte.{js,ts}\" --cache --cache-location node_modules/.cache/eslint/ --max-warnings=0 && stylelint \"src/**/*.{css,svelte}\" --max-warnings=0",
     "lint:fix": "oxfmt && oxlint --type-aware --disable-nested-config --fix && eslint \"**/*.svelte\" \"**/*.svelte.{js,ts}\" --cache --cache-location node_modules/.cache/eslint/ --fix && stylelint \"src/**/*.{css,svelte}\" --fix",
     "optimize-icons": "svgo --config svgo.config.js -f src/lib/components/icon/custom/raw -o src/lib/components/icon/custom/optimized",
     "pipeline": "cd pipeline && tsx src/main.ts",
@@ -25,6 +25,7 @@
     "test:changed": "node scripts/test-changed.ts",
     "verify": "bash scripts/verify.sh",
     "worktree:new": "bash scripts/new-worktree.sh",
+    "worktree:cleanup": "bash scripts/cleanup-merged-worktrees.sh",
     "accessibility:monitor": "tsx scripts/accessibility-monitor.ts",
     "generate:brand-assets": "tsx scripts/generate-brand-assets.ts",
     "test:accessibility": "playwright test",
@@ -99,6 +100,7 @@
     "canvas-confetti": "^1.9.4",
     "qr": "^0.7.2"
   },
+  "packageManager": "pnpm@11.21.0",
   "engines": {
     "node": ">=24.15.0 <27.0.0"
   },

@@ -11,9 +11,10 @@ in GitHub Issues.
    it (what, where, why, acceptance criteria).
 2. **Label it** — apply a `status:` label and a `type:` label. Add an `area:` label if the change is
    scoped to one subsystem.
-3. **Work it** — create a branch (`<issue-number>-<short-description>`), make changes, open a PR
+3. **Work it** — create a branch (see [branch naming](#branch-naming)), make changes, and open a PR
    that references the issue (`Closes #N`).
-4. **Merge** — squash merge to `main`.
+4. **Merge** — merge to `main` with a merge commit. The repository allows only merge commits, so a
+   branch’s individual commits stay in history.
 
 ### Labels
 
@@ -43,7 +44,9 @@ Area labels scope the change to a subsystem:
 
 ### Branch naming
 
-`<issue-number>-<short-description>` — e.g., `23-npc-hearts-center`.
+`<issue-number>-<short-description>`, e.g. `23-npc-hearts-center`; `pnpm run worktree:new` creates
+this form. Agent harness branches such as `claude/issue-23-a1b2c3` or `codex/…` are also accepted.
+See [AGENTS.md §1](AGENTS.md#1-worktree-isolation).
 
 ## Project Overview
 
@@ -55,7 +58,7 @@ SvelteKit 3 + Svelte 5 (runes), Tailwind 4, shadcn-svelte, deployed to Cloudflar
 
 | Path                    | What                                                                    |
 | ----------------------- | ----------------------------------------------------------------------- |
-| `src/routes/(category)` | 9 category pages (almanac, animals, cosmetics, mines, museum...)        |
+| `src/routes/(category)` | 10 category pages (almanac, animals, cosmetics, mines, museum, …)       |
 | `src/lib/engine/`       | Pure functions: availability, progress, search, save import             |
 | `src/lib/stores/`       | Reactive state via `$state`/`$derived` runes; persisted to localStorage |
 | `src/lib/components/`   | Shared components; `ui/` is vendored shadcn-svelte (don't edit)         |
@@ -71,20 +74,7 @@ contracts, and state management rules, see [docs/app-architecture.md](docs/app-a
 
 ## Commands
 
-| Command                                | What                                                  |
-| -------------------------------------- | ----------------------------------------------------- |
-| `pnpm run dev`                         | Dev server                                            |
-| `pnpm run build`                       | Production build (Cloudflare Pages)                   |
-| `pnpm run check`                       | SvelteKit type checking                               |
-| `pnpm run check:i18n`                  | Verify locale files match `en.json`'s keys            |
-| `pnpm run check:routes`                | Verify built static assets bypass Functions           |
-| `pnpm run lint`                        | oxfmt + oxlint + ESLint + Stylelint                   |
-| `pnpm run lint:fix`                    | Auto-fix lint issues                                  |
-| `pnpm run test`                        | Complete Vitest suite                                 |
-| `pnpm run test:app`                    | App tests (`src/`)                                    |
-| `pnpm run test:pipeline`               | Pipeline tests (`pipeline/`)                          |
-| `pnpm run verify`                      | Full CI matrix locally                                |
-| `pnpm run pipeline -- /path/to/assets` | Regenerate `tracker-data.json` from local TOML assets |
+See the command table in [AGENTS.md §4](AGENTS.md#4-commands).
 
 ## Security
 
@@ -92,22 +82,9 @@ Report vulnerabilities privately — see [SECURITY.md](SECURITY.md).
 
 ## Code Conventions
 
-- **TypeScript**: type-aware oxlint (typescript-eslint's strict & stylistic rules) + `strict: true`
-  tsconfig. Use `type` imports (`consistent-type-imports`).
-- **Formatting**: oxfmt — double quotes, no tabs, trailing commas, 100 char width, semicolons.
-- **Imports**: Auto-sorted by oxfmt — externals first, then `#lib`/`$app`, then relative. Always
-  write the extension, `.js` for TypeScript modules (`#lib/utils.js`).
-- **Svelte**: Use `let` (not `const`) for `$props()` destructuring. Use runes (`$state`, `$derived`,
-  `$effect`), not legacy stores.
-- **Naming**: `camelCase` variables/functions, `PascalCase` types/components, `kebab-case` files.
-  Branded IDs for type safety.
-- **Components**: Extract when a component has its own state/concern OR is reused. Pages should be
-  layout compositors. Colocate page-specific components in the route directory; move to
-  `#lib/components/` when shared.
-- **shadcn-svelte**: Vendored in `src/lib/components/ui/` — do not manually edit these.
-- **Styling**: Tailwind utilities & scoped `<style>` blocks, both on the design tokens in
-  `src/app.css`. Stylelint rejects color, type-size, shadow, & radius literals in scoped CSS. See
-  [docs/styling.md](docs/styling.md).
+[AGENTS.md §5–6](AGENTS.md#5-architecture-boundaries) is the single source for architecture
+boundaries & code style, including when to extract a component. Styling rules live in
+[docs/styling.md](docs/styling.md).
 
 ## Pipeline
 

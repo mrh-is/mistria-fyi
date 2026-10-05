@@ -16,11 +16,20 @@ The shared data contract between the pipeline and the app. It defines branded ID
 `RecipeId`, `VillagerId`, etc.) and the `TrackerData` interface. The pipeline emits JSON that must
 conform to these types.
 
+### `src/lib/types/user-progress.ts`
+
+The player's recorded progress (`CompletedState`, `QuestState`, `ChildChoice`) and the shape of a
+save merge (`MergeCounts`, `MergeConflict`, `MergeResult`). The engine, store, and UI all share
+these types; the store owns the mutable instance.
+
 ## 2. Engine vs Stores
 
 ### `src/lib/engine/`
 
 Pure functions with no side effects. They accept explicit inputs and return computed values.
+oxlint's `no-restricted-imports` enforces the layering: engine modules and their tests can't import
+from `src/lib/stores/` or `src/lib/components/`, even for types. Engine tests build their inputs
+directly rather than driving the store.
 
 - **Availability filtering** — determines which items/recipes/Villagers are visible based on season,
   weather, quest gates, and world state.
@@ -33,7 +42,7 @@ Pure functions with no side effects. They accept explicit inputs and return comp
 
 Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$effect`). It:
 
-- Holds the canonical `UserState` shape (`availabilityMode`, `completed`, `showCompleted`,
+- Holds the canonical `UserState` shape (`availabilityWindows`, `completed`, `showCompleted`,
   `showSpoilers`, `worldState`).
 - Persists to `localStorage` under the key `mistria-fyi-v1` with a 300 ms debounce.
 - Exposes methods for toggling individual entries, importing/exporting JSON, merging save data, and
@@ -47,13 +56,15 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 
 The `SerializedState` interface defines the persisted shape:
 
-- `version: "1"` — used for migration detection.
-- `availabilityMode`
+- `version: "2"` — used for migration detection; version `"1"` is still accepted on load.
+- `availabilityWindows` — a subset of `now`, `anytime`, & `later`. A legacy `availabilityMode`
+  (`available`, `everything`, `timely`) is migrated on load.
 - `completed` — all sets and records are serialized as sorted arrays or filtered records. Legacy
   formats (`villagers`, `skills`, `quests` as flat arrays) are migrated on load.
+- `showSpoilers`
 - `worldState`
 
-Ephemeral UI-only fields (`showCompleted`, `showSpoilers`) are not persisted.
+The ephemeral UI-only `showCompleted` field is not persisted.
 
 ### Save File Import
 
@@ -107,10 +118,11 @@ Pages are layout compositors. They handle data fetching and composition, not bus
 
 - **Shared layout** — `src/routes/(category)/+layout.svelte` applies the category color and renders
   `children()`.
-- **Category pages** — e.g., `skills/+page.svelte` derives progress from `userState` and
-  `getSkillsProgress`, then delegates rendering to a focused component.
+- **Category pages** — the shared category layout derives each page’s progress through
+  `getCategoryProgress`; each `+page.svelte` delegates rendering to a focused component, such as
+  `#lib/components/skills-content.svelte`.
 - **Colocated components** — components used by a single page live in the same directory (e.g.,
-  `src/routes/settings/import-card.svelte`).
+  `src/routes/data/import-card.svelte`).
 - **Shared components** — reusable components live in `src/lib/components/` or vendored
   `src/lib/components/ui/`.
 - **"Everything" view** — `src/routes/all/+page.svelte` composes section components
@@ -122,7 +134,7 @@ Progress calculation and UI row visibility are separate concerns.
 
 - **Progress** is computed in `src/lib/engine/progress.ts` from the full `CompletedState`,
   regardless of filters.
-- **Visibility** is controlled by `availabilityMode` (available, everything, timely) and
-  `showCompleted` at the component level.
+- **Visibility** is controlled by `availabilityWindows` (`now`, `anytime`, `later`),
+  `showCompleted`, and `showSpoilers` at the component level.
 - Hidden completed rows still contribute to progress totals. This ensures the overall percentage
   remains accurate even when the user filters out completed content.

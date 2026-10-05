@@ -1,0 +1,3 @@
+# Ripgrep-based search (rg, Claude Code Grep, Codex) skips these paths.
+# docs/superpowers/ holds dated plans, specs, & notes whose identifiers are stale by design.
+docs/superpowers/

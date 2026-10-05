@@ -24,7 +24,7 @@ directory. Pass pipeline flags after `--`; it avoids a shell environment assignm
 preferred command for routine regeneration in a configured worktree.
 
 With no path argument and no `MISTRIA_ASSETS`, the pipeline falls back to Fields of Mistria's
-default Steam install location — the only platform the game ships on:
+default Steam install location (Steam is the only platform the game ships on):
 
 ```text
 C:\Program Files (x86)\Steam\steamapps\common\Fields of Mistria
@@ -45,7 +45,7 @@ can read PNGs directly from `assets.zip`.
 
 `--sprites-only` (alias: `pnpm run sprites:villagers`) is the narrowest of these: it parses only
 `fiddle.npcs` and regenerates villager sprites alone, skipping `tracker-data.json`, locale chunks,
-and every other output — the right command for "just get me fresh villager icons," including
+and every other output. It is the right command for “just get me fresh villager icons”, including
 straight off a bare Steam install with nothing extracted. Item sprite regeneration uses the full
 pipeline because producing `iconSpritesByItemId` also requires almanac and localization extraction;
 pass an extracted structured-assets root together with `--sprites`.
@@ -81,30 +81,55 @@ contracts. It does not regenerate data; `pnpm run pipeline -- <path>` remains a 
 
 ## Data flow
 
+`main.ts` is the orchestrator; read it for the exact call order. A full run proceeds in these
+stages:
+
 ```text
 assets root
-  → parse TOML into a dotted namespace tree + non-enumerable provenance
+  → parse TOML into a dotted namespace tree with non-enumerable provenance
   → evaluate item value expressions in place
-  → project claimed namespaces through domain extractors
-  → attach direct-reward quest gates
+  → extract registries & per-locale names (extractors/)
+  → collect acquisition sources into accumulators (acquisition/)
+  → apply reviewed overrides, then attach sources to items, cosmetics, animals, & pets
+  → extract quest chains & heart-level changes (extractors/visibility/)
   → assemble TrackerData
-  → stage committed and diagnostic JSON artifacts (and, with --sprites, converted sprites) in memory
-  → extract & validate sprites, if requested
-  → publish every staged artifact
+  → stamp & assign entity visibility
+  → validate the assembled tracker data against reference registries
+  → stage tracker data, the locale manifest, locale chunks, & diagnostic JSON in memory
+  → extract & stage sprites, if --sprites is passed
+  → publish every staged file & sprite
 ```
 
-`main.ts` stages every output it will write, including `tracker-data.json`, the locale chunks, and
-the human-readable diagnostic files, as in-memory content rather than writing it immediately. With
-`--sprites`, sprite extraction (`extractors/sprites.ts`) similarly converts needed item and villager
-sprites to webp in memory without touching `pipeline/output/sprites/items/` or
-`pipeline/output/sprites/villagers/`. Villager sprites resolve their source PNG from each npc's own
-`icon_sprite` field the same way items do, under `animations/UI NEW/Generic/Icons/NPC/`. Only after
-sprite extraction reports no missing sprites does `main.ts` publish everything: it writes every
-staged file and sprite in one final step. Sprites are uploaded to `assets.mistria.fyi` with
-`pnpm run sprites:upload` (see [docs/sprite-assets.md](../docs/sprite-assets.md)) — they are no
-longer committed to Git. If sprite validation fails, the process exits before that step runs and no
-tracked output file is modified, so a regeneration either lands as a consistent whole or leaves the
-previous outputs untouched.
+Nothing is written until the final step. `main.ts` stages every output it will write as in-memory
+content; with `--sprites`, sprite extraction (`extractors/sprites.ts`) converts the needed item and
+villager sprites to webp in memory as well. Villager sprites resolve their source PNG from each
+NPC’s own `icon_sprite` field, the same way items do, under `animations/UI NEW/Generic/Icons/NPC/`.
+A thrown error, a failed validation, or a missing sprite exits before publishing, so a regeneration
+either lands as a consistent whole or leaves the previous outputs untouched. Sprites are uploaded to
+`assets.mistria.fyi` with `pnpm run sprites:upload` (see
+[docs/sprite-assets.md](../docs/sprite-assets.md)); they are not committed to Git.
+
+Validation runs last because visibility assignment rewrites `sources` arrays and injects hard-coded
+quest gates (store, villager, spell, & barn unlocks). The validator walks every emitted collection
+that carries sources or visibility, so those gates resolve against the same registries as
+acquisition sources.
+
+### Reference registries
+
+Every ID a source, visibility condition, almanac entry, museum set, or quest names must resolve in a
+registry built from one of three inputs. Acquisition sources never contribute IDs, so an override
+that misspells a quest or monster fails instead of validating itself.
+
+- **Extracted registries:** items, cosmetics, recipes, animals, biomes, festivals, perks, skills,
+  stores, villagers, museum wings, and the emitted quest types.
+- **Parsed game tables** (`acquisition/native-references.ts`): locations, monsters, quests &
+  cutscenes, dates (including unlisted ones), placeable stations, treasure chest tiers, fish water
+  types, and festival activities whose backing `misc` table exists. No table enumerates dialogue
+  choices or dungeon loot groups, so any reference to either is unresolved.
+- **Reviewed non-native IDs** (`acquisition/reviewed-references.ts`): the few IDs overrides use
+  deliberately although no table defines them. An entry the game later defines throws as obsolete.
+
+### Parser & evaluator
 
 The parser walks `fiddle/` recursively, maps each non-metadata TOML file to its relative dotted
 namespace, and excludes files ending in `.meta.toml`. It rejects duplicate destinations, including
@@ -124,219 +149,127 @@ first, then its `store` value, and preserves a numeric zero.
 
 ## Vocabulary
 
-| Term                   | Meaning                                                                                                                                                           |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Assets root            | The caller-supplied directory that contains `fiddle/`.                                                                                                            |
-| Fiddle root            | The `fiddle/` directory beneath the assets root. It is the parser’s recursive input root.                                                                         |
-| Dotted root path       | A file’s relative path without `.toml`, with directory separators replaced by dots, such as `items.other.cooked_dishes`.                                          |
-| Provenance             | The non-enumerable mapping from a dotted root path to its TOML source file. Ancestor lookup provides source context for nested data.                              |
-| Claimed data           | A game namespace that an extractor deliberately projects into `TrackerData`. Other namespaces remain parsed, but are not app data.                                |
-| Primitive predicate    | A named requirement definition with an empty object body. It becomes a predicate carrying its use-site value.                                                     |
-| Named requirement      | A non-empty requirement definition referenced only with Boolean `true`; the resolver expands and caches it.                                                       |
-| Requirement expression | The normalized Boolean tree of `all`, `any`, `not`, and predicate nodes produced from a requirements object.                                                      |
-| Acquisition source     | A `Source` record explaining one way an item, cosmetic, or other game object ID is obtained. Its `location` meaning depends on `type`.                            |
-| Restriction            | A flat `Restriction` record attached to a source. It models a subset of conditions, such as season, weather, time, skill, or stock.                               |
-| Quest gate             | An index from every allowlisted quest’s `rewards[].item` reward ID to quest IDs. Applicators attach only IDs that match extracted item, animal, or spell records. |
+| Term                   | Meaning                                                                                                                                   |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Assets root            | The caller-supplied directory that contains `fiddle/` and `localization/`.                                                                |
+| Fiddle root            | The `fiddle/` directory beneath the assets root. It is the parser’s recursive input root.                                                 |
+| Dotted root path       | A file’s relative path without `.toml`, with directory separators replaced by dots, such as `items.other.cooked_dishes`.                  |
+| Provenance             | The non-enumerable mapping from a dotted root path to its TOML source file. Ancestor lookup provides source context for nested data.      |
+| Claimed data           | A game namespace that an extractor deliberately projects into `TrackerData`. Other namespaces remain parsed, but are not app data.        |
+| Primitive predicate    | A requirement definition with an empty object body. It becomes a predicate carrying its use-site value.                                   |
+| Named requirement      | A non-empty requirement definition referenced only with Boolean `true`; the resolver expands and caches it.                               |
+| Requirement expression | The normalized Boolean tree of `all`, `any`, `not`, and predicate nodes produced from a requirements object.                              |
+| Acquisition source     | A discriminated `Source` record (`src/lib/types/acquisition.ts`) describing one way to obtain an item, cosmetic, recipe, or pet cosmetic. |
+| Source accumulator     | A per-target collection that deduplicates sources by canonical JSON and records where each one came from.                                 |
+| Reviewed override      | A hand-written source, with wiki evidence, for an acquisition path no native data table encodes.                                          |
+| Visibility             | A condition stamped on an entity that tells the app when the player can know it exists (spoiler gating).                                  |
 
 ## Processor map
 
-The table covers every current extractor, including source and quest-gate extraction. Missing roots
-often produce an empty result or fallback rather than an error; the exact behavior below is the
-current contract, not a general validation policy.
+Paths are relative to `pipeline/src/`. Colocated `*.test.ts` files cover most modules.
 
-| Module                      | Input ownership                                                                                                                  | Output                                                    | Important normalization or omission                                                                                                                                                                                                                                                                                                                                                                           |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `main.ts`                   | CLI arguments, `MISTRIA_ASSETS`, parsed tree                                                                                     | `TrackerData` and files                                   | Requires an assets root containing `fiddle/` for a full run; `--sprites-only` can parse directly from `assets.zip`. Parse-only stops before evaluation, extraction, and writes. Stages every output in memory and publishes it in one step only after sprite extraction (if requested) reports no missing sprites; a sprite failure exits before any tracked file is written.                                 |
-| `parse-fiddle.ts`           | Assets root and TOML below fiddle root                                                                                           | Namespace tree, count, provenance                         | Excludes `.meta.toml`; rejects duplicate, colliding, and invalid nested destinations; provenance is non-enumerable.                                                                                                                                                                                                                                                                                           |
-| `evaluate.ts`               | Parsed `items` and provenance                                                                                                    | In-place numeric item values                              | Resolves two expression forms, rounds recipe multipliers, skips time and essence recipe entries, and fails with source context on invalid dependencies.                                                                                                                                                                                                                                                       |
-| `requirements.ts`           | Requirement definitions and an object                                                                                            | Boolean expression                                        | Empty input becomes `all: []`; siblings become `all`; `or` becomes `any`; `invert` becomes `not`; unknown keys remain predicates.                                                                                                                                                                                                                                                                             |
-| `data-shapes.ts`            | Extractor values with source context                                                                                             | Array guards                                              | Throws errors for malformed arrays used by extractors.                                                                                                                                                                                                                                                                                                                                                        |
-| `localize.ts`               | Game translation tables and classified fields                                                                                    | Values for every locale                                   | Derives or overrides translation keys, records explicit English fallbacks for missing locale keys, and rejects unusable override classifications.                                                                                                                                                                                                                                                             |
-| `extractors/almanac.ts`     | Items, almanac UI, fish, and translation tables                                                                                  | Almanac, item registry, locale names, and fallback report | Skips defaults, chests, unreviewed, nameless, and localization-path items; assigns first menu-order tag category; collapses colorways by English recipe key and name into structural `AlmanacEntry` objects. The canonical ID is the alphabetically-first member. Item names are emitted only in per-locale chunks, with sorted per-locale fallback IDs and non-localizable items reported deterministically. |
-| `extractors/animals.ts`     | `ranching.animals`                                                                                                               | Animal registry                                           | Skips defaults and unacquirable variants; falls back to IDs; strips species names from cosmetics; default-unlocked variants become tier one.                                                                                                                                                                                                                                                                  |
-| `extractors/cosmetics.ts`   | `player_assets` and customization UI                                                                                             | Cosmetic registry                                         | Skips defaults; takes `ui_slot` and `ui_sub_category` verbatim and throws unless both name a section and entry of `ui/character_customization.toml`; emits `cosmeticSlots` in the game's menu order and localizes sub-category labels by ordinal into `cosmetics/subcategories` chunks.                                                                                                                       |
-| `extractors/mines.ts`       | Dungeons and spells                                                                                                              | Floors, biomes, spells                                    | Requires numeric maximum floors and a biome array; derives ends from next starts; falls back to positional floors and names.                                                                                                                                                                                                                                                                                  |
-| `extractors/museum.ts`      | Museum wings and UI ordering                                                                                                     | Ordered wings and sets                                    | Prefers UI order, falls back to object order, skips unknown ordered IDs and wings without sets, and validates item arrays.                                                                                                                                                                                                                                                                                    |
-| `extractors/npcs.ts`        | NPCs                                                                                                                             | NPC registry                                              | Skips defaults and NPCs without name, Boolean `dateable`, or complete birthday.                                                                                                                                                                                                                                                                                                                               |
-| `extractors/quests.ts`      | Six named quest groups                                                                                                           | Quest groups                                              | Includes only supported groups, skips defaults, and falls back to quest IDs for names.                                                                                                                                                                                                                                                                                                                        |
-| `extractors/renown.ts`      | Renown                                                                                                                           | Ranks and levels per rank                                 | Falls back to 10 levels per rank and `Unknown` rank names.                                                                                                                                                                                                                                                                                                                                                    |
-| `extractors/ui-strings.ts`  | `misc_local` and requested keys                                                                                                  | `ui` locale chunk                                         | Localizes game UI vocabulary via `misc_local/<key>`: `APP_UI_STRINGS` (category names, seasons, quest types, …), almanac category labels (honoring `local_key`), and `tier_<n>`. Strips leading articles on request, collapses player-gender markup to `<they>`, and throws when English is missing.                                                                                                          |
-| `extractors/skills.ts`      | Skills                                                                                                                           | Skill names                                               | Skips defaults and title-cases IDs without a name.                                                                                                                                                                                                                                                                                                                                                            |
-| `extractors/sources.ts`     | Stores, wildlife, items, forageables, monsters, quests, festivals, renown                                                        | Acquisition-target source index                           | Source order follows extractor order. Structural deduplication preserves the first identical JSON representation. Targets include items, cosmetics, and other game object IDs. Scroll entries are counted and discarded. `all` requirements flatten, while `any`, `not`, unsupported predicates, and reached-date day precision are discarded.                                                                |
-| `extractors/recipes.ts`     | Items (all categories), quests, letters, stores, museum wings, chicken statue, fishing chests, wishing well, festivals, dungeons | Recipe registry, member IDs, and name sources             | Groups items by `recipe_key ?? itemId`; selects a representative backing item for localized display while preserving the established English bed-name normalization; collects and deduplicates acquisition sources; validates recipe ID collisions; and requires `recipe_is_default` agreement across groups.                                                                                                 |
-| `extractors/quest-gates.ts` | Supported quest groups and extracted registries                                                                                  | Direct-reward index and mutations                         | Every allowlisted `rewards[].item` ID is indexed. Applicators attach only IDs that match extracted item, animal, or spell records; recipe scrolls and animal, spell, store, & progression inference are deferred.                                                                                                                                                                                             |
+### Input & orchestration
 
-### Source rules
+| Module                 | Responsibility                                                                                                                                                      |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `main.ts`              | CLI flags, asset-root resolution, stage order, assembly, staging, and publishing. `--parse-only` stops after parsing; `--sprites-only` runs villager sprites alone. |
+| `parse-fiddle.ts`      | Parses `fiddle/` from disk or straight out of `assets.zip` into one namespace tree. Excludes `.meta.toml`; rejects duplicate and colliding destinations.            |
+| `evaluate.ts`          | Resolves `value.bin` and `value.store` expressions in place (grammar below).                                                                                        |
+| `requirements.ts`      | Normalizes native requirement objects into requirement expressions and expands named requirements.                                                                  |
+| `assets-zip.ts`        | Locates `assets.zip`, the default Steam install, and the installed executable’s version for `main.ts`.                                                              |
+| `asset-input.ts`       | Materializes only `fiddle/` and `localization/` from `assets.zip` for the real-asset test suite (`assets-test-setup.ts`).                                           |
+| `data-shapes.ts`       | Array guards that throw with field and source-file context.                                                                                                         |
+| `extractor-helpers.ts` | `forEachItem`, `forEachQuest`, and the six tracked quest groups with their app quest types.                                                                         |
+| `localize.ts`          | Resolves a classified text field to every locale through the game’s translation tables and `localize-overrides.json`; falls back to English for missing beta keys.  |
+| `locale-codes.ts`      | Maps game language codes to BCP 47 tags and throws when the game adds or drops a language.                                                                          |
 
-`sources.ts` appends source records in fixed extractor order: stores, fish, bugs, crafting, crop
-items, forageables, crop seasons, monster drops, quest rewards, festival cosmetics, then renown
-rewards. It deduplicates each target after collection by serializing every source to JSON, retaining
-the first structurally identical record. The serialized `TrackerData.sources` type says item IDs,
-but the extractor also indexes cosmetics and other game object IDs.
+### Extractors
 
-Store processing accepts constant, seasonal, and random stock. It counts and discards
-`recipe_scroll` and `crafting_scroll` entries; these are handled by the recipe extractor
-(`extractors/recipes.ts`) instead. Store requirements first become Boolean expressions, then a lossy
-flat restriction list: `all` branches concatenate; `any` and `not` branches disappear; unsupported
-predicates disappear; and `reached_date` retains season but drops day precision. Supported
-predicates project to perk, skill, mines-level, season, animal, cutscene, season-seen, upper-floor,
-or relationship restrictions.
+Each extractor projects one claimed domain into a registry plus per-locale names. Names are emitted
+only in locale chunks (`src/lib/data/locales/<locale>/<category>.json`), never in
+`tracker-data.json`.
 
-The remaining source processors expose fish, chests, dives, bugs, crafted furniture, cooked food,
-seeds, saplings, forageables, monster drops, quest rewards, festival stock, and renown rewards. They
-may omit malformed or unsupported entries. Crop records inherit the seed source’s season
-restriction; source location can be a store, quest, monster, festival vendor, or joined water type.
+| Module                    | Input                                   | Output & notable rules                                                                                                                                      |
+| ------------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `almanac.ts`              | Items, almanac UI, fish, translations   | Almanac rows and the item registry. Collapses colorways by recipe key and English name; the canonical ID is the alphabetically first member.                |
+| `animals.ts`              | `ranching.animals`                      | Animal species with variant tiers. Skips templates and unacquirable variants; default-unlocked variants land in tier one.                                   |
+| `cosmetics.ts`            | `player_assets`, customization UI       | Cosmetic registry and slot order. Throws unless `ui_slot` and `ui_sub_category` name an entry of `ui/character_customization.toml`.                         |
+| `dates.ts`                | `dates`                                 | Date registry.                                                                                                                                              |
+| `festivals.ts`            | `festivals`                             | Festival registry.                                                                                                                                          |
+| `mines.ts`                | `dungeons`, `spells`                    | Floors, biomes, and spells. Throws without a numeric `dungeons.misc.max_floors`.                                                                            |
+| `museum.ts`               | Museum wings and UI ordering            | Wings and sets in UI order, falling back to object order.                                                                                                   |
+| `pets.ts`                 | `pets`, items                           | Pet cosmetic sets and pet skins.                                                                                                                            |
+| `quests.ts`               | The six tracked quest groups            | Quests by app quest type. Throws when a cooking or fetch quest has no `has_item` requirement.                                                               |
+| `recipes.ts`              | Items plus every recipe-scroll location | Recipe registry with sources, `recipeIdByItemId`, and member maps. Groups items by `recipe_key ?? itemId` (details below).                                  |
+| `renown.ts`               | `renown`                                | Town ranks. Defaults to 10 levels per rank; throws when a rank has no English name.                                                                         |
+| `skills.ts`               | `skills`, `perks`, skill menu UI        | Skills, perk tiers, and perk names. Throws when the skill menu names a perk without a name.                                                                 |
+| `stores-meta.ts`          | `stores`                                | Store registry.                                                                                                                                             |
+| `treasure-chest-tiers.ts` | `fishing.chest_tables`                  | Treasure chest tiers.                                                                                                                                       |
+| `ui-strings.ts`           | `misc_local`                            | The `ui` locale chunk: category names, seasons, quest types, almanac labels, and `tier_<n>`. Collapses gendered markup to `<they>`; throws on other markup. |
+| `villagers.ts`            | `npcs`                                  | Villager registry and icon-sprite index. Throws when a villager lacks `icon_sprite`.                                                                        |
+| `sprites.ts`              | `assets.zip` or extracted PNGs          | Stages webp conversions for items and villagers; `publishSprites` writes them.                                                                              |
+| `perks.ts`                | `perks`                                 | Not called by `main.ts`; only its test uses it.                                                                                                             |
 
-### Quest gates
+### Acquisition
 
-Quest gates are evidence of direct finished-item rewards, not a full availability model.
-`extractQuestGates` scans the same six supported quest groups as the quest extractor, records every
-reward with an `item` field, and deduplicates quest IDs per item. The main program applies those
-gates to the item registry. Animal and spell applicators exist, but their current indexes are empty.
-Recipe-scroll tracking and inference from animals, spells, stores, progression flags, requirements,
-or cutscenes are deferred.
+The `acquisition/` modules build the `sources` arrays attached to items, cosmetics, animal
+cosmetics, pet cosmetic sets, and pet skins. Recipe sources are collected separately inside
+`extractors/recipes.ts`.
+
+| Module                                      | Responsibility                                                                                                                                     |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `source-accumulator.ts`                     | Per-target accumulators that deduplicate by canonical JSON, sort output deterministically, and record provenance.                                  |
+| `recipe-products.ts`                        | Adds a `recipe` source to every item a recipe produces.                                                                                            |
+| `collectors/natural.ts`                     | Fish, bait, bugs, dives, crops, trees, forageables, monster drops, animal products, perks, and fish traps.                                         |
+| `collectors/rewards.ts`                     | Quest, letter, museum, chicken statue, festival, renown, date, and relationship rewards.                                                           |
+| `collectors/stores.ts`                      | Store stock, with requirements projected through `availability.ts`.                                                                                |
+| `collectors/exploration.ts`                 | Mines, artifact digs, treasure chests, the wishing well, the artifact replicator, and equipment.                                                   |
+| `availability.ts`                           | Projects requirement expressions into the app’s availability conditions.                                                                           |
+| `reviewed-overrides.ts`                     | Hand-reviewed item and cosmetic sources plus default (starting) sources. An override that duplicates a native source throws as obsolete.           |
+| `exclusions.ts`                             | Cosmetics deliberately dropped from the registry (internal assets and unreleased content), each with evidence.                                     |
+| `native-references.ts`                      | Reads reference registries from parsed game tables only (see “Reference registries”).                                                              |
+| `reviewed-references.ts`                    | The explicit, reviewed IDs no parsed table defines.                                                                                                |
+| `reference-index.ts`, `validate-sources.ts` | Index the registries, then throw `AcquisitionSourceValidationError` on unknown references, bad fields, or recipe cycles in the final tracker data. |
+
+### Visibility
+
+The `extractors/visibility/` modules compute spoiler gating.
+
+| Module                       | Responsibility                                                                                                                                |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cutscene-quest-map.ts`      | Maps cutscenes to the quests that trigger them.                                                                                               |
+| `quest-chains.ts`            | Story prerequisites, heart-level chains, crown, Stillwell, & Tali order, and raw fetch-quest requirements; includes reviewed story overrides. |
+| `requirement-resolver.ts`    | Resolves requirement expressions into visibility conditions.                                                                                  |
+| `availability-projection.ts` | Converts availability conditions into visibility conditions.                                                                                  |
+| `entity-visibility.ts`       | Hardcoded store, villager, and category gates; heart-level changes; and visibility for items, recipes, cosmetics, animals, spells, & quests.  |
 
 ### Recipes
 
-`extractRecipes` builds a recipe registry in three phases. The first phase scans all items for
-`recipe_key` and `recipe_is_default`, grouping items into recipe identities using
-`recipe_key ?? itemId`. Only items with a `recipe` array or a `recipe_key` field are included; items
-with `recipe_is_default` but no recipe or key (e.g., `ore_gold`) are excluded with a diagnostic log.
-Item IDs that collide with recipe keys from other groups produce a warning.
+`extractRecipes` builds the recipe registry in three phases. The first groups items into recipe
+identities by `recipe_key ?? itemId`. Only items with a `recipe` array or a `recipe_key` field are
+included; items with `recipe_is_default` but neither (such as `ore_gold`) are excluded with a
+diagnostic log, and `recipe_is_default` must agree across a group.
 
-The second phase collects recipe acquisition sources from nine data locations:
+The second phase merges sources from quest and letter scrolls, store and festival stock, museum
+rewards, the chicken statue, fishing chests, the wishing well, mines delicacies & chests, scroll
+bundles, perks, the dragon forge, renown, and a short hardcoded list. Sources are deduplicated and
+then sorted by type and detail fields.
 
-| Source type       | Data location                                                             | Pattern                                                                                                                  |
-| ----------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `quest`           | `quests/{fetch_quests,stillwell_challenges,story_quests,tali_challenges}` | `rewards[].recipe_scroll` or `crafting_scroll`                                                                           |
-| `donate_item`     | `letters`                                                                 | `items[].recipe_scroll` with `requirements.donated_item`                                                                 |
-| `reach_day`       | `letters`                                                                 | `items[].recipe_scroll` with `requirements.reached_date`                                                                 |
-| `ship_item`       | `letters`                                                                 | `items[].recipe_scroll` with `requirements.shipped_item`                                                                 |
-| `store`           | `stores[storeId].categories[]`                                            | `constant_stock`, `seasonal`, `random_stock` entries with `recipe_scroll`, `crafting_scroll`, or `include_recipe = true` |
-| `museum_donation` | `museum_wings/{archaeology,fish,flora,insect}`                            | `rewards[].entries[].crafting_scroll`                                                                                    |
-| `chicken_statue`  | `chicken_statue`                                                          | `common.{small,medium,large}_roll[].recipe_scroll`                                                                       |
-| `treasure_chest`  | `fishing`                                                                 | `chest_tables.{tier}.items[]` with `kind = "recipe"` and `value` as target                                               |
-| `wishing_well`    | `wishing_well`                                                            | `common.{small,medium,large}_roll[].recipe_scroll`                                                                       |
-| `festival`        | `festivals[festivalId].stocks[storeId]`                                   | Stock entries with `recipe_scroll` or `crafting_scroll`                                                                  |
-| `mine_zone`       | `dungeons`                                                                | `biomes[].dungeon_delicacies` and `taste_maker` item ID lists                                                            |
+The third phase selects one backing item for each recipe’s localized name. English keeps the
+established single- and double-bed normalization; every other locale uses the representative item’s
+translation directly, so English suffix rules never alter translated strings.
 
-After all collectors merge, sources are structurally deduplicated centrally, then sorted by type and
-detail fields.
+## Artifacts
 
-The third phase selects one backing item for each recipe's localized name. English retains the
-established single/double-bed normalization; every other locale uses the representative item's game
-translation directly, so English suffix rules never mutate translated strings. The extractor also
-returns `recipeIdByItemId` and `recipeMemberItems` maps for quest links and acquisition-source
-derivation.
+| Output                                       | Contents                                                     |
+| -------------------------------------------- | ------------------------------------------------------------ |
+| `src/lib/data/tracker-data.json`             | Minified committed app data                                  |
+| `src/lib/data/locales.json`                  | Locale manifest generated from `l10n.meta.toml`              |
+| `src/lib/data/locales/<locale>/*.json`       | Per-locale name chunks, one file per category                |
+| `pipeline/output/tracker-data.json`          | Pretty diagnostic copy of the tracker data                   |
+| `pipeline/output/tracker-data-readable.json` | A second, identical pretty copy                              |
+| `pipeline/output/fiddle-readable.json`       | Parsed and evaluated namespace tree for inspection           |
+| `pipeline/output/sprites/{items,villagers}/` | Converted webp sprites, with `--sprites` or `--sprites-only` |
 
-## Artifacts & mutation
-
-| Output                                       | Ownership                                      |
-| -------------------------------------------- | ---------------------------------------------- |
-| `pipeline/output/tracker-data.json`          | Pretty diagnostic output                       |
-| `pipeline/output/tracker-data-readable.json` | Duplicate pretty diagnostic output             |
-| `pipeline/output/fiddle-readable.json`       | Parsed/evaluated namespace tree for inspection |
-| `src/lib/data/tracker-data.json`             | Minified committed app data                    |
-
-Evaluation mutates the parsed tree. Gate applicators mutate extracted registries. No files are
-written until every transform succeeds, and `generatedAt` changes on every successful run.
-
-## Recommendations
-
-These are implementation briefs, not current pipeline behavior. They preserve the present contract
-until a separately reviewed change adopts them.
-
-### Preserve requirement logic
-
-- **Current behavior:** `requirements.ts` produces a Boolean expression tree, but `sources.ts`
-  flattens `all`, discards complete `any` and `not` subtrees, drops unsupported predicates, and
-  reduces `reached_date` objects to season only. Restrictions can understate store availability
-  conditions.
-- **Affected files:** `pipeline/src/requirements.ts`, `pipeline/src/extractors/sources.ts`,
-  `src/lib/types/tracker-data.ts`, availability consumers, restriction badges, and new extractor
-  tests.
-- **Desired result:** Preserve the normalized Boolean expression, or introduce an equally expressive
-  app-facing acquisition-condition model. Supported predicates retain complete values, and
-  unsupported predicates remain representable.
-- **Constraints:** Treat this as a schema migration. Update every app consumer and generated-data
-  fixture together; do not reinterpret flat arrays as Boolean trees.
-- **Verification:** Tests cover nested `all`, `any`, and `not`; named requirements; unknown
-  predicates; full reached-date values; UI rendering; and availability evaluation.
-
-### Model acquisition identities
-
-- **Current behavior:** `TrackerData.sources` is typed as `Record<ItemId, Source[]>`, although the
-  index also contains cosmetics and acquisition targets absent from both registries.
-  `Source.location` can mean a store, quest, monster, festival vendor, or joined water type
-  depending on `Source.type`.
-- **Affected files:** `pipeline/src/extractors/sources.ts`, `src/lib/types/tracker-data.ts`, source
-  lookup and display consumers, and generated-data contract tests.
-- **Desired result:** Introduce a truthful acquisition-target identifier and a discriminated source
-  union with source-specific fields such as `storeId`, `questId`, or `monsterId`.
-- **Constraints:** Inventory every current source key and location interpretation first. Preserve
-  useful targets that are not almanac items.
-- **Verification:** A generated-data contract test classifies every source target and proves every
-  source variant carries its discriminator’s required identifier.
-
-### Strengthen restriction types
-
-- **Current behavior:** `Restriction` is one permissive interface with optional fields, so
-  impossible combinations type-check. Several generated variants are informational because
-  availability and badge UI do not consume them.
-- **Affected files:** `src/lib/types/tracker-data.ts`, `pipeline/src/extractors/sources.ts`,
-  `src/lib/engine/availability.ts`, restriction UI components, and tests.
-- **Desired result:** Replace `Restriction` with a discriminated union whose required payload is
-  determined by `type`, then make every variant’s evaluation and presentation policy explicit.
-- **Constraints:** Preserve serialized discriminator values unless a coordinated migration is
-  approved. Decide whether unhandled variants are display-only or availability-affecting first.
-- **Verification:** Exhaustive TypeScript switches cover every variant, and tests prove availability
-  and badge behavior for each supported type.
-
-### Define validation policy
-
-- **Current behavior:** The design says processed data fails fast, while extractors silently skip
-  missing roots, malformed entries, incomplete NPCs, unknown ordered IDs, unsupported stock entries,
-  and other partial shapes.
-- **Affected files:** Every `pipeline/src/extractors/` file, `pipeline/src/data-shapes.ts`, parser
-  provenance helpers, and extractor tests.
-- **Desired result:** Create a field-by-field policy for optional data, ignored domains, recoverable
-  omissions, and fatal malformed claimed data. Apply shared validators after the policy is explicit.
-- **Constraints:** Do not convert fallback into a fatal error without checking the current fixture
-  and at least one newer data version. Fatal diagnostics include entity, field, and source-file
-  provenance where available.
-- **Verification:** Synthetic tests exercise every declared omission and failure class; a complete
-  fixture run produces no new unexplained skips.
-
-### Version parse-only checks
-
-- **Current behavior:** `main.ts` makes `--parse-only` require exactly 297 parsed files and three
-  v1.0.5 paths, even when another assets version is supplied.
-- **Affected files:** `pipeline/src/main.ts`, CLI documentation, and parser integration tests.
-- **Desired result:** Separate version-agnostic parse validation from named fixture profiles. The
-  default smoke test validates structural invariants; an explicit v1.0.5 profile retains the
-  297-file and representative-path assertions.
-- **Constraints:** Preserve a strict regression check for the canonical v1.0.5 integration fixture.
-- **Verification:** Synthetic assets pass generic parse-only, the v1.0.5 profile enforces 297 files
-  and representative paths, and a mismatched profile fails with an actionable message.
-
-### Add contract coverage
-
-- **Current behavior:** Parser tests omit metadata exclusion and provenance serialization; evaluator
-  tests mainly cover real-fixture happy paths, with a conditional representative referenced-value
-  assertion and fixture-wide multi-count no-throw coverage; requirement tests omit malformed forms;
-  sources and quest gates have no focused tests.
-- **Affected files:** Existing `pipeline/src/*.test.ts`, new extractor test files, and shared
-  synthetic-fixture helpers.
-- **Desired result:** Add contract tests for parser collisions and provenance, evaluator mutation
-  and failures, requirement normalization and malformed input, lossy source projection, source
-  deduplication, and direct item-reward quest gates.
-- **Constraints:** Tests must not require private assets unless marked integration tests. Assert
-  exact representative outputs rather than merely that code does not throw.
-- **Verification:** Every documented invariant has a test whose name and assertion agree, and the
-  unit suite passes without `pipeline/input/assets/`.
-
-### ~~Tighten expression grammar~~ _(done — #190)_
-
-Implemented in PR #194. The evaluator now uses strict regexes (`\d+(?:\.\d+)?` for recipe
-multipliers, `\d+` for store counts) and rejects zero, negative, non-finite, & malformed literals
-with source-context errors. The exact accepted grammar is documented in the evaluator section above.
+Evaluation mutates the parsed tree, and source attachment & visibility mutate the extracted
+registries. `generatedAt` changes on every successful run.

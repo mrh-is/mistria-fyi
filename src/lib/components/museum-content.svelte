@@ -69,7 +69,7 @@
     };
   }
 
-  let recentlyCompleted = new SvelteSet<ItemId>();
+  const recentlyCompleted = new SvelteSet<ItemId>();
 
   function isItemComplete(itemId: ItemId): boolean {
     return userState.state.completed.museum.has(itemId);

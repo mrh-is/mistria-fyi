@@ -1,5 +1,6 @@
 import { sequence } from "@sveltejs/kit/hooks";
 
+import { UNLOCALIZED_PATH_PREFIXES } from "#lib/i18n/paraglide-options.js";
 import {
   baseLocale,
   cookieName,
@@ -10,12 +11,6 @@ import {
 import { paraglideMiddleware } from "#lib/paraglide/server.js";
 
 import type { Handle } from "@sveltejs/kit/hooks";
-
-/**
- * Never locale-prefixed: `/api` is a JSON endpoint, and `/sitemap.xml` is a prerendered,
- * conventionally-located SEO file (its own content lists per-locale page URLs instead).
- */
-const UNLOCALIZED_PATH_PREFIXES = ["/api", "/sitemap.xml"];
 
 function hasLocalePrefix(pathname: string): boolean {
   const firstSegment = pathname.split("/")[1];
