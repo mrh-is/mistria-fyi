@@ -7,8 +7,9 @@
 
 ## 1. Local Setup Requirements
 
-- **Node.js**: Use the version in `.node-version` (26). `package.json` also accepts Node 24.15+ so
-  Codex cloud can use its preinstalled runtime.
+- **Node.js**: Use the version in `.node-version` (Node 24 LTS). Every environment, including CI and
+  both cloud agents, runs Node 24 so tests match what agents run. `package.json` accepts 24.15 or
+  later so Codex cloud can use its preinstalled patch release.
 - **Package Manager**: Use **pnpm** exclusively. Do not use `npm`, `npx`, `yarn`, or `bun`.
 - **Dependency Installation**:
   ```sh

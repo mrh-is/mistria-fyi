@@ -4,14 +4,17 @@ Claude Code cloud and Codex cloud use fresh Linux checkouts that do not inherit 
 credentials. Configure both environments to install dependencies on a supported Node version, and
 grant only read access to Cloudflare Pages build logs.
 
-The environments get Node differently because their images and sandboxes differ:
+Both environments run Node 24, the repository’s version, but get it differently:
 
-- **Claude Code cloud** ships Node 22.22.0, below the dependency floor. Its setup script installs
-  Node from `.node-version` (26).
-- **Codex cloud** ships Node 24.19, which `package.json`’s `engines` range accepts. Its agent phase
-  can write only under `/workspace` and temporary directories, and its home directory doesn’t
-  persist from setup, so a downloaded runtime can’t reliably reach the agent’s `PATH`. Codex uses
-  its preinstalled Node instead.
+- **Claude Code cloud** ships Node 22.22.0, below the dependency floor of 24.15. Its setup script
+  installs Node from `.node-version`.
+- **Codex cloud** ships Node 24 (24.19 as of October 2026), which `package.json`’s `engines` range
+  accepts. Its agent phase can write only under `/workspace` and temporary directories, and its home
+  directory doesn’t persist from setup, so a downloaded runtime couldn’t reach the agent’s `PATH`
+  anyway. Codex uses its preinstalled Node, which may trail `.node-version` by a few patch releases.
+
+Revisit `.node-version` when both images ship a newer LTS line; Node 24 reaches end of life in
+April 2028.
 
 The checked-in Claude setup script downloads Node from `nodejs.org`, verifies its published SHA-256
 checksum, adds it to `PATH` in the Bash startup files, and runs `pnpm install --frozen-lockfile`.
@@ -87,7 +90,9 @@ line the script adds to the Bash startup files; without help, the agent’s shel
 `/opt/node22/bin/node`. A SessionStart hook in `.claude/settings.json` runs
 `scripts/claude-session-env.sh`, which prepends the repository-managed Node directory to `PATH`
 through `$CLAUDE_ENV_FILE` so every Bash call in the session uses it. The hook exits unless
-`CLAUDE_CODE_REMOTE` is `true`, so local sessions keep their own Node.
+`CLAUDE_CODE_REMOTE` is `true`, so local sessions keep their own Node. A cached environment skips
+the setup script, so when the cached Node doesn’t match `.node-version`, the hook reruns the setup
+script before exporting `PATH`.
 
 A setup script that exits with `scripts/setup-cloud-agent.sh: No such file or directory` is using
 the checkout-relative path; add the `mistria-fyi/` prefix. Claude does not cache a setup that exits
@@ -153,11 +158,11 @@ pnpm run paraglide:compile
 pnpm run cloudflare:logs -- <deployment-id>
 ```
 
-The Node command must match `.node-version` for Claude and print 24.15 or later for Codex; Paraglide
-must compile without requesting jsDelivr; the log command must print timestamped build-log lines.
-Use a real deployment ID from the Pages project; the command intentionally rejects the
-`<deployment-id>` placeholder. For Claude with a protected API credential, `CLOUDFLARE_API_TOKEN`
-should be unset even though the log request succeeds.
+The Node command must match `.node-version` for Claude and print a 24.x release of at least 24.15
+for Codex; Paraglide must compile without requesting jsDelivr; the log command must print
+timestamped build-log lines. Use a real deployment ID from the Pages project; the command
+intentionally rejects the `<deployment-id>` placeholder. For Claude with a protected API credential,
+`CLOUDFLARE_API_TOKEN` should be unset even though the log request succeeds.
 
 For Claude, also run:
 

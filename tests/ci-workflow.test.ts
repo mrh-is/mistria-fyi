@@ -124,12 +124,12 @@ describe("CI workflow jobs", () => {
     expect(allCommands).not.toMatch(/lint:fix|pipeline --|test:pipeline:assets/);
   });
 
-  it("installs dependencies from a frozen lockfile on Node 26 before running anything", () => {
+  it("installs dependencies from a frozen lockfile on Node 24 before running anything", () => {
     for (const jobName of installJobs) {
       expect(jobs[jobName]["runs-on"]).toBe("ubuntu-latest");
       expect(runCommands(jobs[jobName])[0]).toBe("pnpm install --frozen-lockfile");
       const setup = jobs[jobName].steps?.find((step) => step.uses?.startsWith("pnpm/setup@"));
-      expect(setup?.with?.runtime).toBe("node@26");
+      expect(setup?.with?.runtime).toBe("node@24");
     }
   });
 });
