@@ -7,7 +7,8 @@
 
 ## 1. Local Setup Requirements
 
-- **Node.js**: Requires Node `>=26.0.0 <27.0.0` (as defined in `package.json`).
+- **Node.js**: Use the version in `.node-version` (26). `package.json` also accepts Node 24.15+ so
+  Codex cloud can use its preinstalled runtime.
 - **Package Manager**: Use **pnpm** exclusively. Do not use `npm`, `npx`, `yarn`, or `bun`.
 - **Dependency Installation**:
   ```sh
