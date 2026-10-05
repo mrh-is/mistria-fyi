@@ -234,7 +234,7 @@ describe("CI workflow browser suites", () => {
     expect(jobs.pwa.strategy).toBeUndefined();
   });
 
-  it("publishes failure evidence for both suites before preserving the failed outcome", () => {
+  it("publishes failure and recovered-retry evidence before preserving the failed outcome", () => {
     const accessibilitySteps = jobs.accessibility.steps ?? [];
     expect(
       accessibilitySteps.find((step) => step.id === "accessibility-tests")?.["continue-on-error"],
@@ -242,20 +242,26 @@ describe("CI workflow browser suites", () => {
     const accessibilityUpload = accessibilitySteps.find((step) =>
       step.uses?.startsWith("actions/upload-artifact@"),
     );
-    expect(accessibilityUpload?.if).toContain("failure");
+    expect(accessibilityUpload?.if).toContain("steps.accessibility-tests.outcome == 'failure'");
+    expect(accessibilityUpload?.if).toContain(
+      "hashFiles('.playwright-results/**/trace.zip') != ''",
+    );
     expect(accessibilityUpload?.with?.name).toBe("accessibility-report-${{ strategy.job-index }}");
     expect(accessibilityUpload?.with?.path).toContain(".playwright-artifacts/");
     expect(accessibilityUpload?.with?.path).toContain(".playwright-results/");
     expect(accessibilityUpload?.with?.["if-no-files-found"]).toBe("ignore");
+    expect(accessibilityUpload?.with?.["include-hidden-files"]).toBe(true);
     expect(accessibilitySteps.at(-1)?.run).toBe("exit 1");
 
     const pwaSteps = jobs.pwa.steps ?? [];
     expect(pwaSteps.find((step) => step.id === "pwa-tests")?.["continue-on-error"]).toBe(true);
     const pwaUpload = pwaSteps.find((step) => step.uses?.startsWith("actions/upload-artifact@"));
-    expect(pwaUpload?.if).toContain("failure");
+    expect(pwaUpload?.if).toContain("steps.pwa-tests.outcome == 'failure'");
+    expect(pwaUpload?.if).toContain("hashFiles('.playwright-pwa-results/**/trace.zip') != ''");
     expect(pwaUpload?.with?.path).toContain(".playwright-pwa-report/");
     expect(pwaUpload?.with?.path).toContain(".playwright-pwa-results/");
     expect(pwaUpload?.with?.["if-no-files-found"]).toBe("ignore");
+    expect(pwaUpload?.with?.["include-hidden-files"]).toBe(true);
     expect(pwaSteps.at(-1)?.run).toBe("exit 1");
   });
 
