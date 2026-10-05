@@ -237,7 +237,10 @@ failures on the branch rather than merging around them (see §3 step 11).
 
 ### Full local matrix (exceptions)
 
-Run `pnpm run verify` once, when commit-ready, only when:
+`pnpm run verify` is read-only & runs CI's non-browser matrix (`lint`, `check`, `check:i18n`,
+`test`, `build`, `check:routes`); run `pnpm run lint:fix` first. Add `-- --assets` for
+`test:pipeline:assets`, `--browser` for the Playwright suites, or `--all` for both. Run it once,
+when commit-ready, only when:
 
 - The change regenerates `tracker-data.json` or touches the pipeline parser, evaluator, extractors,
   or shared tracker contract. CI has no game assets, so `pnpm run test:pipeline:assets` and the
