@@ -144,15 +144,24 @@ These steps follow OpenAI’s
    Also add these non-secret **Environment variables**:
 
    ```dotenv
+   XDG_CONFIG_HOME=/workspace/.config
+   XDG_CACHE_HOME=/workspace/.cache
    WRANGLER_LOG_PATH=/workspace/.wrangler/logs/
    WRANGLER_REGISTRY_PATH=/workspace/.wrangler/registry
    ```
 
+   The XDG settings give tools that honor them writable configuration and cache directories instead
+   of the defaults under the read-only home directory. Keep them alongside the pnpm workspace
+   settings and the explicit Wrangler paths; each controls a different set of writes. Changing
+   `XDG_CONFIG_HOME` also changes where Wrangler looks for its local configuration, so use the
+   environment's `CLOUDFLARE_API_TOKEN` for cloud diagnostics rather than relying on a
+   home-directory login.
+
    SvelteKit loads the Cloudflare adapter during `prepare`, checks, and tests. Wrangler otherwise
    writes logs under `~/.config/.wrangler/logs`, and Miniflare writes its worker registry under
    `~/.config/.wrangler/registry`. The log failure is nonfatal, but the registry failure prevents
-   Vitest from starting. These overrides keep both writable without relocating Wrangler’s credential
-   configuration or changing `HOME`.
+   Vitest from starting. The explicit Wrangler overrides keep both paths writable, and the XDG
+   settings cover other configuration and cache writes without changing `HOME`.
 
 6. Keep the start skill free of Node or `PATH` activation steps. The preinstalled runtime needs
    none.
@@ -169,7 +178,9 @@ are the security boundary; never replace it with a broader Cloudflare token.
 
 ## Validation
 
-In one new session for each environment, ask the agent to run:
+In one new session for each environment, run the following commands from the repository checkout.
+For Codex, first use `cd /workspace/mistria-fyi` if the shell starts in `/workspace`; the parent
+directory has no package manifest and does not load the repository's pnpm workspace settings.
 
 ```sh
 node --version

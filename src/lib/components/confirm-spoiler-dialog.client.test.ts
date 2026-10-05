@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/svelte";
+import { tick } from "svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import ConfirmSpoilerDialog from "#lib/components/confirm-spoiler-dialog.svelte";
@@ -24,9 +25,7 @@ function renderDialog(condition: VisibilityCondition) {
 
 afterEach(async () => {
   cleanup();
-  await new Promise((resolve) => {
-    setTimeout(resolve, 100);
-  });
+  await tick();
 });
 
 describe("ConfirmSpoilerDialog", () => {
