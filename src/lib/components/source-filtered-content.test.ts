@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import CosmeticsContent from "#lib/components/cosmetics-content.svelte";
-import { SOURCE_FILTERS } from "#lib/components/icon/index.js";
 import { trackerData } from "#lib/data/index.js";
+import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
