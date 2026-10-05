@@ -260,10 +260,16 @@ describe("CI workflow browser suites", () => {
       (step) => step.id === "accessibility-tests",
     );
     const pwaStep = jobs.pwa.steps?.find((step) => step.id === "pwa-tests");
-    expect(accessibilityStep?.run).toContain("pnpm run test:accessibility");
-    expect(accessibilityStep?.env?.PLAYWRIGHT_SKIP_BUILD).toBe("true");
-    expect(pwaStep?.run).toContain("pnpm run test:pwa");
-    expect(pwaStep?.env?.PLAYWRIGHT_SKIP_BUILD).toBe("true");
+    expect(accessibilityStep?.run).toContain(
+      "pnpm exec tsx scripts/playwright-allocation.ts ${{ matrix.shard }}",
+    );
+    expect(accessibilityStep?.run).toContain(
+      "pnpm run test:accessibility --test-list=.playwright-artifacts/test-list.txt",
+    );
+    expect(accessibilityStep?.run).not.toContain("--shard=");
+    expect(accessibilityStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
+    expect(pwaStep?.run).toBe("pnpm run test:pwa");
+    expect(pwaStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
   });
 
   it("runs browser suites on host runners with cached Chromium", () => {
@@ -291,6 +297,18 @@ describe("CI workflow browser suites", () => {
     expect(jobs.accessibility.strategy?.["fail-fast"]).toBe(false);
     expect(shards).toEqual(["1/4", "2/4", "3/4", "4/4"]);
     expect(jobs.pwa.strategy).toBeUndefined();
+  });
+
+  it("retains per-test timings from successful and failed accessibility runs", () => {
+    const timingUpload = jobs.accessibility.steps?.find(
+      (step) => step.name === "Publish accessibility timings",
+    );
+    expect(timingUpload?.if).toBe("always()");
+    expect(timingUpload?.with?.name).toBe("accessibility-timings-${{ strategy.job-index }}");
+    expect(timingUpload?.with?.path).toContain(".playwright-artifacts/results.json");
+    expect(timingUpload?.with?.path).toContain(".playwright-artifacts/allocation.json");
+    expect(timingUpload?.with?.path).toContain(".playwright-artifacts/test-list.txt");
+    expect(timingUpload?.with?.["include-hidden-files"]).toBe(true);
   });
 
   it("publishes failure and recovered-retry evidence before preserving the failed outcome", () => {
