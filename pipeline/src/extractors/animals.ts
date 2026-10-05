@@ -70,7 +70,7 @@ export function extractAnimals(fiddle: ParsedGameData, assetsDir: string): Anima
       }
     }
 
-    const sortedTiers = [...tierBuckets.entries()].sort(([a], [b]) => a - b);
+    const sortedTiers = [...tierBuckets.entries()].toSorted(([a], [b]) => a - b);
     const variantTiers: AnimalVariantTier[] = sortedTiers.map(([, bucket]) => bucket);
 
     const speciesName = (core?.name as string | undefined) ?? id;

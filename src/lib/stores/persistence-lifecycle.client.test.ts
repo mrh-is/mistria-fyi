@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 interface TestWindow {
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject): void;
-  dispatch(
+  addEventListener: (type: string, listener: EventListenerOrEventListenerObject) => void;
+  dispatch: (
     type: "pagehide" | "pageshow" | "storage",
     event?: Partial<PageTransitionEvent> | Partial<StorageEvent>,
-  ): void;
+  ) => void;
 }
 
 function buildMinimalState(renown = 0, version = "1"): string {

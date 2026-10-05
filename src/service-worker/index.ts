@@ -1,6 +1,5 @@
 import {
   cacheLocaleChunks,
-  type CacheLocalesReply,
   cacheLocalesRequest,
   fetchRuntimeRequest,
   fetchSpriteRequest,
@@ -8,7 +7,6 @@ import {
   isExternalSpriteAsset,
   isLazyAsset,
   isSkipWaitingRequest,
-  type LocaleNameChunks,
   OFFLINE_LOCALES_CACHE,
   readOfflineLocales,
   rememberOfflineLocales,
@@ -16,10 +14,12 @@ import {
 import { version } from "$app/env";
 import { assets, immutable } from "$app/manifest";
 
+import type { CacheLocalesReply, LocaleNameChunks } from "#lib/engine/service-worker-cache.js";
+
 /** Inlined by `localeNameChunksPlugin` (src/lib/build/locale-name-chunks.ts); absent in dev. */
 declare const __LOCALE_NAME_CHUNKS__: LocaleNameChunks | undefined;
 
-const sw = self as unknown as ServiceWorkerGlobalScope;
+const sw = globalThis as unknown as ServiceWorkerGlobalScope;
 
 const CACHE = `cache-${version}`;
 const SPRITES_CACHE = "sprites-v1";
@@ -28,6 +28,7 @@ const ASSETS = [...immutable, ...assets].map(
   ({ path }) => new URL(path, sw.registration.scope).pathname,
 );
 const LOCALE_NAME_CHUNKS: LocaleNameChunks =
+  // oxlint-disable-next-line unicorn/no-typeof-undefined -- Only builds define this identifier; reading it bare throws a ReferenceError in dev.
   typeof __LOCALE_NAME_CHUNKS__ === "undefined" ? {} : __LOCALE_NAME_CHUNKS__;
 const LOCALE_NAME_CHUNK_PATHS: ReadonlySet<string> = new Set(
   Object.values(LOCALE_NAME_CHUNKS).flat(),
@@ -66,6 +67,7 @@ sw.addEventListener("message", (event) => {
       try {
         failed = await cacheLocaleChunks(await caches.open(CACHE), locales, LOCALE_NAME_CHUNKS);
       } finally {
+        // oxlint-disable-next-line unicorn/require-post-message-target-origin -- `MessagePort.postMessage` takes no target origin
         reply?.postMessage({ failed } satisfies CacheLocalesReply);
       }
       await rememberOfflineLocales(await caches.open(OFFLINE_LOCALES_CACHE), locales);
@@ -75,14 +77,15 @@ sw.addEventListener("message", (event) => {
 
 sw.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then(async (keys) => {
-      for (const key of keys) {
-        if (key !== CACHE && key !== SPRITES_CACHE && key !== OFFLINE_LOCALES_CACHE) {
-          await caches.delete(key);
-        }
-      }
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(
+        keys
+          .filter((key) => key !== CACHE && key !== SPRITES_CACHE && key !== OFFLINE_LOCALES_CACHE)
+          .map((key) => caches.delete(key)),
+      );
       await sw.clients.claim();
-    }),
+    })(),
   );
 });
 
@@ -98,7 +101,8 @@ sw.addEventListener("fetch", (event) => {
       // Build assets are content-addressed, so a `Vary` header can't make a cached copy wrong. Vite's
       // CORS middleware adds `Vary: Origin`, which would otherwise miss for module imports: they
       // send an `Origin` header the precache requests didn't.
-      caches.match(event.request, { ignoreVary: true }).then(async (cached) => {
+      (async () => {
+        const cached = await caches.match(event.request, { ignoreVary: true });
         if (cached) return cached;
         const response = await fetch(event.request);
         if (response.ok && isLazyAsset(url.pathname, LOCALE_NAME_CHUNK_PATHS)) {
@@ -106,33 +110,36 @@ sw.addEventListener("fetch", (event) => {
           await cache.put(event.request, response.clone());
         }
         return response;
-      }),
+      })(),
     );
   } else if (isExternalSpriteAsset(url)) {
     event.respondWith(
-      caches.open(SPRITES_CACHE).then((cache) =>
-        fetchSpriteRequest(event.request, {
+      (async () => {
+        const cache = await caches.open(SPRITES_CACHE);
+        return fetchSpriteRequest(event.request, {
           cache,
           fetcher: (request) => fetch(request),
           waitUntil: (promise) => {
             event.waitUntil(promise);
           },
-        }),
-      ),
+        });
+      })(),
     );
   } else if (isEligibleForRuntimeCaching(url, sw.location.origin)) {
-    const response = caches.open(CACHE).then((cache) =>
-      fetchRuntimeRequest(event.request, {
-        assetPaths: ASSETS,
-        cache,
-        fetcher: (request) => fetch(request),
-        matchCache: (request) => caches.match(request),
-        waitUntil: (promise) => {
-          event.waitUntil(promise);
-        },
-      }),
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(CACHE);
+        return fetchRuntimeRequest(event.request, {
+          assetPaths: ASSETS,
+          cache,
+          fetcher: (request) => fetch(request),
+          matchCache: (request) => caches.match(request),
+          waitUntil: (promise) => {
+            event.waitUntil(promise);
+          },
+        });
+      })(),
     );
-    event.respondWith(response);
   } else {
     event.respondWith(fetch(event.request));
   }

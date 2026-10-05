@@ -4,11 +4,7 @@ const COMMIT_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const COMMIT_PATTERN = /^[0-9a-f]{40}$/i;
 const SHORT_COMMIT_LENGTH = 8;
 
-/**
- * @param {string} commitDate
- * @param {string} commit
- */
-export function formatAppVersion(commitDate, commit) {
+export function formatAppVersion(commitDate: string, commit: string): string {
   const normalizedDate = commitDate.trim();
   const normalizedCommit = commit.trim();
 
@@ -19,16 +15,14 @@ export function formatAppVersion(commitDate, commit) {
   return `${normalizedDate.replaceAll("-", ".")} (${normalizedCommit.slice(0, SHORT_COMMIT_LENGTH)})`;
 }
 
-/** @param {string[]} args */
-function readGit(args) {
+function readGit(args: string[]): string {
   return execFileSync("git", args, { encoding: "utf8" });
 }
 
-/**
- * @param {string} [environment]
- * @param {(args: string[]) => string} [readGitValue]
- */
-export function getAppVersion(environment = process.env.NODE_ENV, readGitValue = readGit) {
+export function getAppVersion(
+  environment: string | undefined = process.env.NODE_ENV,
+  readGitValue: (args: string[]) => string = readGit,
+): string {
   if (environment !== "production") {
     return "dev";
   }

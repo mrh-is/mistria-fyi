@@ -133,7 +133,9 @@ export function extractRecipes(
   const recipeMemberItems = new Map<RecipeId, ItemId[]>();
 
   for (const [recipeId, group] of grouped) {
-    const memberItemIds = group.map((e) => e.itemId as ItemId).sort((a, b) => a.localeCompare(b));
+    const memberItemIds = group
+      .map((e) => e.itemId as ItemId)
+      .toSorted((a, b) => a.localeCompare(b));
     recipeMemberItems.set(recipeId as RecipeId, memberItemIds);
 
     const defaultFlags = group.map((e) => e.isDefault);
@@ -174,7 +176,7 @@ export function extractRecipes(
     }
   }
   const countParts = [...sourceTypeCounts.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
+    .toSorted(([a], [b]) => a.localeCompare(b))
     .map(([type, count]) => `${count} ${type}`);
   console.log(
     `  Recipes: ${totalRecipes} total, ${withDefault} default, ${withSources} with acquired sources (${countParts.join(", ")})`,
@@ -514,7 +516,7 @@ function collectMinesRecipeSources(
     const biomeId = biomeName
       .replace(/^The\s+/i, "")
       .toLowerCase()
-      .replace(/\s+/g, "_") as MinesBiomeId;
+      .replaceAll(/\s+/g, "_") as MinesBiomeId;
 
     const chestArrays: [string, PerkId][] = [["taste_maker", "taste_maker" as PerkId]];
     for (const [arrayKey, perkId] of chestArrays) {
@@ -866,16 +868,17 @@ function collectStoreScrollSources(
             (obj.recipe_scroll as string | undefined) ??
             (obj.crafting_scroll as string | undefined);
 
-          const recipeId = scrollTarget
-            ? resolveScrollTarget(
-                scrollTarget,
-                itemIdToRecipeId,
-                knownRecipeIds,
-                `stores/${storeId}`,
-              )
-            : obj.include_recipe === true
-              ? itemIdToRecipeId.get(obj.item as string)
-              : undefined;
+          let recipeId: string | undefined;
+          if (scrollTarget) {
+            recipeId = resolveScrollTarget(
+              scrollTarget,
+              itemIdToRecipeId,
+              knownRecipeIds,
+              `stores/${storeId}`,
+            );
+          } else if (obj.include_recipe === true) {
+            recipeId = itemIdToRecipeId.get(obj.item as string);
+          }
 
           if (!recipeId) continue;
 
@@ -962,7 +965,7 @@ function compareRecipeSources(a: AcquisitionSource, b: AcquisitionSource): numbe
 function deduplicateSources(sources: AcquisitionSource[]): AcquisitionSource[] {
   const seen = new Set<string>();
   const result: AcquisitionSource[] = [];
-  const sorted = [...sources].sort(compareRecipeSources);
+  const sorted = [...sources].toSorted(compareRecipeSources);
   for (const s of sorted) {
     const key = sourceKey(s);
     if (seen.has(key)) continue;
@@ -973,11 +976,11 @@ function deduplicateSources(sources: AcquisitionSource[]): AcquisitionSource[] {
 }
 
 function deriveRecipeNameSource(recipeId: string, group: RawRecipeEntry[]): RecipeNameSource {
-  const uniqueNames = [...new Set(group.map((e) => e.name))].sort();
+  const uniqueNames = [...new Set(group.map((e) => e.name))].toSorted();
   if (uniqueNames.length === 1) {
     return {
       englishName: uniqueNames[0],
-      itemId: group.map(({ itemId }) => itemId).sort()[0] as ItemId,
+      itemId: group.map(({ itemId }) => itemId).toSorted()[0] as ItemId,
     };
   }
 
@@ -992,7 +995,7 @@ function deriveRecipeNameSource(recipeId: string, group: RawRecipeEntry[]): Reci
       const representative = group
         .filter(({ name }) => name === plainBed)
         .map(({ itemId }) => itemId)
-        .sort()[0];
+        .toSorted()[0];
       return { englishName: `${prefix} Bed`, itemId: representative as ItemId };
     }
   }
@@ -1031,7 +1034,7 @@ function firstRequiredItem(value: unknown): string | undefined {
 
 function requireNumber(value: unknown, path: string): number {
   if (typeof value !== "number" || !Number.isFinite(value)) {
-    throw new Error(`Invalid or missing numeric value "${path}"`);
+    throw new TypeError(`Invalid or missing numeric value "${path}"`);
   }
   return value;
 }
@@ -1065,7 +1068,7 @@ function resolveStockVisibility(
 
 function sourceKey(s: AcquisitionSource): string {
   return JSON.stringify(
-    Object.fromEntries(Object.entries(s).sort(([a], [b]) => a.localeCompare(b))),
+    Object.fromEntries(Object.entries(s).toSorted(([a], [b]) => a.localeCompare(b))),
   );
 }
 

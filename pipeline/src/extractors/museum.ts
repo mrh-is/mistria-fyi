@@ -2,7 +2,7 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { expectArray, expectStringArray } from "../data-shapes.js";
 import { localizeField } from "../localize.js";
-import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
+import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type {
@@ -13,6 +13,8 @@ import type {
   MuseumWingSetId,
   TrackerData,
 } from "#lib/types/tracker-data.js";
+
+import type { ParsedGameData } from "../parse-fiddle.js";
 
 /**
  * Projects museum wings and sets in the canonical UI display order. Object insertion order is only
@@ -113,7 +115,7 @@ function readMuseumOrdering(fiddle: ParsedGameData): {
   for (const entry of rawWings) {
     const wingId = entry.wing;
     if (typeof wingId !== "string") {
-      throw new Error(`museum.wings entry lacks string wing in ${sourceFile}`);
+      throw new TypeError(`museum.wings entry lacks string wing in ${sourceFile}`);
     }
     wingOrder.push(wingId);
   }

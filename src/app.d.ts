@@ -5,9 +5,9 @@ import type { LocaleCode } from "#lib/types/locale.js";
 // for information about these interfaces
 
 interface Turnstile {
-  remove(widgetId: string): void;
-  render(container: HTMLElement, options: TurnstileRenderOptions): string;
-  reset(widgetId: string): void;
+  remove: (widgetId: string) => void;
+  render: (container: HTMLElement, options: TurnstileRenderOptions) => string;
+  reset: (widgetId: string) => void;
 }
 
 interface TurnstileRenderOptions {
@@ -37,6 +37,6 @@ declare global {
   interface Window {
     turnstile?: Turnstile;
   }
-}
 
-export {};
+  var turnstile: Turnstile | undefined;
+}

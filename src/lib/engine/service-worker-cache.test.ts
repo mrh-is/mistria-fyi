@@ -111,7 +111,8 @@ describe("service-worker runtime request path", () => {
     await deps.settled();
 
     expect(await response.text()).toBe("fresh");
-    expect(await (await cache.match(request))?.text()).toBe("fresh");
+    const stored = await cache.match(request);
+    expect(await stored?.text()).toBe("fresh");
   });
 
   it("returns the network response when the cache write fails", async () => {
@@ -154,7 +155,8 @@ describe("service-worker runtime request path", () => {
       dependencies(cache, vi.fn().mockResolvedValue(new Response("failure", { status: 500 }))),
     );
 
-    expect(await (await cache.match(request))?.text()).toBe("healthy");
+    const stored = await cache.match(request);
+    expect(await stored?.text()).toBe("healthy");
   });
 
   it("returns the cached request when the network is offline", async () => {
@@ -189,9 +191,12 @@ describe("service-worker eviction path", () => {
   it("evicts the oldest runtime entries through the cache update helper", async () => {
     const cache = new MemoryCache();
     await cache.put(`${ORIGIN}/favicon.png`, new Response("asset"));
-    for (let index = 0; index < 50; index++) {
-      await cache.put(`${ORIGIN}/page-${String(index)}`, new Response(String(index)));
-    }
+    // `MemoryCache.put` records insertion order synchronously, so the order below is the LRU order.
+    await Promise.all(
+      Array.from({ length: 50 }, (_, index) =>
+        cache.put(`${ORIGIN}/page-${String(index)}`, new Response(String(index))),
+      ),
+    );
 
     await cacheRuntimeResponse(
       cache,
@@ -202,7 +207,8 @@ describe("service-worker eviction path", () => {
     );
 
     expect(await cache.match(`${ORIGIN}/page-0`)).toBeUndefined();
-    expect(await (await cache.match(`${ORIGIN}/newest`))?.text()).toBe("new");
+    const stored = await cache.match(`${ORIGIN}/newest`);
+    expect(await stored?.text()).toBe("new");
     expect(cache.entries.size).toBe(51);
   });
 });
@@ -266,16 +272,17 @@ describe("service-worker sprite asset handling", () => {
   it("fetches and caches an uncached sprite", async () => {
     const cache = new MemoryCache();
     const sprite = new Request(spriteUrl("spr_ui_item_apple"));
-    const dependencies = spriteDependencies(
+    const deps = spriteDependencies(
       cache,
       vi.fn().mockResolvedValue(new Response("sprite", { status: 200 })),
     );
 
-    const response = await fetchSpriteRequest(sprite, dependencies);
-    await dependencies.settled();
+    const response = await fetchSpriteRequest(sprite, deps);
+    await deps.settled();
 
     expect(await response.text()).toBe("sprite");
-    expect(await (await cache.match(sprite))?.text()).toBe("sprite");
+    const stored = await cache.match(sprite);
+    expect(await stored?.text()).toBe("sprite");
   });
 
   it("does not cache an opaque no-cors response (crossorigin is required on every sprite img/image)", async () => {
@@ -284,10 +291,10 @@ describe("service-worker sprite asset handling", () => {
     // An <img>/<image> fetched without crossorigin="anonymous" yields an opaque response here:
     // status 0, ok false. Response.error() models the same "not ok" shape fetchSpriteRequest
     // gates on; a real opaque Response can't be constructed directly in this test environment.
-    const dependencies = spriteDependencies(cache, vi.fn().mockResolvedValue(Response.error()));
+    const deps = spriteDependencies(cache, vi.fn().mockResolvedValue(Response.error()));
 
-    const response = await fetchSpriteRequest(sprite, dependencies);
-    await dependencies.settled();
+    const response = await fetchSpriteRequest(sprite, deps);
+    await deps.settled();
 
     expect(response.ok).toBe(false);
     expect(await cache.match(sprite)).toBeUndefined();
@@ -296,13 +303,13 @@ describe("service-worker sprite asset handling", () => {
   it("does not cache a failed response", async () => {
     const cache = new MemoryCache();
     const sprite = new Request(spriteUrl("spr_ui_item_missing"));
-    const dependencies = spriteDependencies(
+    const deps = spriteDependencies(
       cache,
       vi.fn().mockResolvedValue(new Response("not found", { status: 404 })),
     );
 
-    const response = await fetchSpriteRequest(sprite, dependencies);
-    await dependencies.settled();
+    const response = await fetchSpriteRequest(sprite, deps);
+    await deps.settled();
 
     expect(response.status).toBe(404);
     expect(cache.entries.size).toBe(0);
@@ -336,9 +343,11 @@ describe("service-worker sprite asset handling", () => {
 
   it("evicts the oldest sprite once the 400-entry cap is exceeded", async () => {
     const cache = new MemoryCache();
-    for (let index = 0; index < MAX_SPRITE_ENTRIES; index++) {
-      await cache.put(spriteUrl(`spr_${String(index)}`), new Response(String(index)));
-    }
+    await Promise.all(
+      Array.from({ length: MAX_SPRITE_ENTRIES }, (_, index) =>
+        cache.put(spriteUrl(`spr_${String(index)}`), new Response(String(index))),
+      ),
+    );
 
     await cacheSpriteResponse(cache, new Request(spriteUrl("spr_newest")), new Response("newest"));
 
@@ -351,10 +360,10 @@ describe("service-worker sprite asset handling", () => {
     const cache = new MemoryCache();
     await cache.put(spriteUrl("spr_a"), new Response("a"));
     await cache.put(spriteUrl("spr_b"), new Response("b"));
-    const dependencies = spriteDependencies(cache, vi.fn());
+    const deps = spriteDependencies(cache, vi.fn());
 
-    await fetchSpriteRequest(new Request(spriteUrl("spr_a")), dependencies);
-    await dependencies.settled();
+    await fetchSpriteRequest(new Request(spriteUrl("spr_a")), deps);
+    await deps.settled();
     await cacheSpriteResponse(cache, new Request(spriteUrl("spr_c")), new Response("c"), 2);
 
     expect(await cache.match(spriteUrl("spr_a"))).toBeDefined();
@@ -375,9 +384,11 @@ describe("service-worker sprite asset handling", () => {
 
   it("never evicts a newer generation to make room for an older one", async () => {
     const cache = new MemoryCache();
-    for (let index = 0; index < MAX_SPRITE_ENTRIES; index++) {
-      await cache.put(spriteUrl(`spr_${String(index)}`, 2), new Response(String(index)));
-    }
+    await Promise.all(
+      Array.from({ length: MAX_SPRITE_ENTRIES }, (_, index) =>
+        cache.put(spriteUrl(`spr_${String(index)}`, 2), new Response(String(index))),
+      ),
+    );
 
     await cacheSpriteResponse(cache, new Request(spriteUrl("spr_old", 1)), new Response("old"));
 
@@ -415,9 +426,11 @@ describe("service-worker locale name chunks", () => {
 
   class LocaleCache extends MemoryCache {
     readonly added: string[] = [];
+    private readonly failing: ReadonlySet<string>;
 
-    constructor(private readonly failing: ReadonlySet<string> = new Set()) {
+    constructor(failing: ReadonlySet<string> = new Set()) {
       super();
+      this.failing = failing;
     }
 
     add(request: RequestInfo | URL): Promise<void> {

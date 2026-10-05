@@ -5,8 +5,7 @@ import { basename, dirname, join, resolve } from "node:path";
 import { pipeline } from "node:stream/promises";
 import { open } from "yauzl-promise";
 
-export const DEFAULT_WINDOWS_GAME_ARCHIVE =
-  "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Fields of Mistria\\assets.zip";
+export const DEFAULT_WINDOWS_GAME_ARCHIVE = String.raw`C:\Program Files (x86)\Steam\steamapps\common\Fields of Mistria\assets.zip`;
 
 const REQUIRED_PREFIXES = ["assets/fiddle/", "assets/localization/"];
 

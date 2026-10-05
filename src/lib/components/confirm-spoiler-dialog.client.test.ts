@@ -24,7 +24,9 @@ function renderDialog(condition: VisibilityCondition) {
 
 afterEach(async () => {
   cleanup();
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  await new Promise((resolve) => {
+    setTimeout(resolve, 100);
+  });
 });
 
 describe("ConfirmSpoilerDialog", () => {
@@ -54,7 +56,7 @@ describe("ConfirmSpoilerDialog", () => {
     const dialog = await screen.findByRole("alertdialog");
 
     await fireEvent.click(within(dialog).getByRole("button", { name: "Yes, just this item" }));
-    expect(handlers.onComplete).toHaveBeenCalledOnce();
+    expect(handlers.onComplete).toHaveBeenCalledTimes(1);
     expect(handlers.onCompleteAndUpdate).not.toHaveBeenCalled();
     expect(handlers.onCancel).not.toHaveBeenCalled();
   });
@@ -66,7 +68,7 @@ describe("ConfirmSpoilerDialog", () => {
     await fireEvent.click(
       within(dialog).getByRole("button", { name: "Yes, and update my progress" }),
     );
-    expect(handlers.onCompleteAndUpdate).toHaveBeenCalledOnce();
+    expect(handlers.onCompleteAndUpdate).toHaveBeenCalledTimes(1);
     expect(handlers.onComplete).not.toHaveBeenCalled();
   });
 
@@ -75,7 +77,7 @@ describe("ConfirmSpoilerDialog", () => {
     const dialog = await screen.findByRole("alertdialog");
 
     await fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
-    expect(handlers.onCancel).toHaveBeenCalledOnce();
+    expect(handlers.onCancel).toHaveBeenCalledTimes(1);
     expect(handlers.onComplete).not.toHaveBeenCalled();
     expect(handlers.onCompleteAndUpdate).not.toHaveBeenCalled();
   });

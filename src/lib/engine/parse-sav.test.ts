@@ -11,13 +11,13 @@ async function expectSaveFileError(
   detail: SaveFileErrorDetail,
   message?: string,
 ): Promise<void> {
-  const error: unknown = await parsing.then(
+  const rejected: unknown = await parsing.then(
     () => undefined,
-    (rejection: unknown) => rejection,
+    (error: unknown) => error,
   );
-  expect(error).toBeInstanceOf(SaveFileError);
-  expect(error).toHaveProperty("detail", detail);
-  if (message) expect(error).toHaveProperty("message", expect.stringContaining(message));
+  expect(rejected).toBeInstanceOf(SaveFileError);
+  expect(rejected).toHaveProperty("detail", detail);
+  expect(rejected).toHaveProperty("message", expect.stringContaining(message ?? ""));
 }
 
 const encoder = new TextEncoder();
@@ -32,10 +32,7 @@ function buildRawSav(entries: Record<string, object | string>): Uint8Array {
   for (const [name, data] of entryList) {
     const nameBytes = encoder.encode(name);
     const dataBytes = encoder.encode(typeof data === "string" ? data : JSON.stringify(data));
-    parts.push(u64LE(nameBytes.length));
-    parts.push(nameBytes);
-    parts.push(u64LE(dataBytes.length));
-    parts.push(dataBytes);
+    parts.push(u64LE(nameBytes.length), nameBytes, u64LE(dataBytes.length), dataBytes);
   }
 
   const totalLen = parts.reduce((sum, p) => sum + p.length, 0);
@@ -64,6 +61,7 @@ async function compressToFile(raw: Uint8Array, name = "test.sav"): Promise<File>
   const drain = async () => {
     const chunks: Uint8Array[] = [];
     for (;;) {
+      // oxlint-disable-next-line no-await-in-loop -- stream reads are inherently sequential
       const { done, value } = await reader.read();
       if (done) break;
       chunks.push(value);
@@ -88,7 +86,7 @@ function u64LE(n: number): Uint8Array {
   const buf = new ArrayBuffer(8);
   const view = new DataView(buf);
   view.setUint32(0, n >>> 0, true);
-  view.setUint32(4, Math.floor(n / 0x100000000), true);
+  view.setUint32(4, Math.floor(n / 0x1_00_00_00_00), true);
   return new Uint8Array(buf);
 }
 

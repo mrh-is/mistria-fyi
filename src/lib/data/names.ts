@@ -176,6 +176,15 @@ function chunkPath(locale: LocaleCode, category: LocalizedCategory): string {
   return `./locales/${locale}/${category}.json`;
 }
 
+/** A failed import must not poison the cache: drop it so the next caller retries the fetch. */
+async function dropFailedLoad(key: string, load: Promise<void>): Promise<void> {
+  try {
+    await load;
+  } catch {
+    chunkLoads.delete(key);
+  }
+}
+
 function loadChunk(locale: LocaleCode, category: LocalizedCategory): Promise<void> {
   const key = chunkKey(locale, category);
   const loader = chunkLoaders[chunkPath(locale, category)];
@@ -185,12 +194,11 @@ function loadChunk(locale: LocaleCode, category: LocalizedCategory): Promise<voi
 
   let load = chunkLoads.get(key);
   if (!load) {
-    load = loader().then((chunk) => {
-      chunks.set(key, chunk);
-    });
-    // A failed import must not poison the cache: drop it so the next caller retries the fetch.
-    load.catch(() => chunkLoads.delete(key));
+    load = (async () => {
+      chunks.set(key, await loader());
+    })();
     chunkLoads.set(key, load);
+    void dropFailedLoad(key, load);
   }
   return load;
 }

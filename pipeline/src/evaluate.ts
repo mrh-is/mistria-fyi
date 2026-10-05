@@ -1,4 +1,6 @@
-import { type ParsedGameData, sourceFileFor } from "./parse-fiddle.js";
+import { sourceFileFor } from "./parse-fiddle.js";
+
+import type { ParsedGameData } from "./parse-fiddle.js";
 
 type ResolutionState = "resolved" | "visiting";
 type ResolvableValueField = "bin" | "store";
@@ -178,7 +180,7 @@ function resolveExpression(
   const refStoreMatch = /^(\w+)\.store\s*\*\s*(\d+)$/.exec(expression);
   if (refStoreMatch) {
     const referencedItemId = refStoreMatch[1];
-    const count = parseInt(refStoreMatch[2], 10);
+    const count = Math.trunc(Number(refStoreMatch[2]));
     const referencedStoreValue = resolveValueField(referencedItemId, "store", context, itemId);
     if (typeof referencedStoreValue !== "number") {
       throw itemError(

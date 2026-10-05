@@ -161,7 +161,7 @@ function rowToggle(category: string, name: string): HTMLElement {
 }
 
 function undoLastToggle(): void {
-  expect(showUndoToast).toHaveBeenCalledOnce();
+  expect(showUndoToast).toHaveBeenCalledTimes(1);
   const undo = showUndoToast.mock.calls[0]?.[2] as (() => void) | undefined;
   expect(undo).toBeTypeOf("function");
   undo?.();

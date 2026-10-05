@@ -1,11 +1,11 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import QuickSettingsLanguagePicker from "#lib/components/quick-settings-language-picker.svelte";
+
 const { select } = vi.hoisted(() => ({ select: vi.fn<(locale: string) => Promise<boolean>>() }));
 
 vi.mock("#lib/stores/locale-preference.svelte.js", () => ({ localePreference: { select } }));
-
-import QuickSettingsLanguagePicker from "#lib/components/quick-settings-language-picker.svelte";
 
 afterEach(() => {
   cleanup();

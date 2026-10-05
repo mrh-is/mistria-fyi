@@ -38,7 +38,7 @@
     input.name = "backup-file";
     input.setAttribute("aria-label", m.backup_choose_file_aria());
     input.accept = ".json";
-    input.onchange = async () => {
+    input.addEventListener("change", async () => {
       const file = input.files?.[0];
       input.remove();
       if (!file) return;
@@ -48,11 +48,11 @@
       try {
         const text = await file.text();
         const result = userState.importState(text);
-        if (!result.ok) {
+        if (result.ok) {
+          restoreStatus = m.backup_restored_success();
+        } else {
           restoreStatus = "";
           restoreError = ERROR_MESSAGES[result.error];
-        } else {
-          restoreStatus = m.backup_restored_success();
         }
       } catch {
         restoreStatus = "";
@@ -60,11 +60,11 @@
       } finally {
         restoring = false;
       }
-    };
+    });
     input.className = "sr-only";
-    input.oncancel = () => {
+    input.addEventListener("cancel", () => {
       input.remove();
-    };
+    });
     document.body.append(input);
     input.click();
   }

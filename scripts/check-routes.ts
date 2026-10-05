@@ -35,7 +35,7 @@ interface RoutesJson {
 }
 
 export async function checkRoutes(buildDir = BUILD_DIR): Promise<RoutesReport> {
-  const raw = await readFile(path.join(buildDir, "_routes.json"), "utf-8");
+  const raw = await readFile(path.join(buildDir, "_routes.json"), "utf8");
   const routes = JSON.parse(raw) as RoutesJson;
   const assets = await listStaticAssets(buildDir);
   return {
@@ -44,7 +44,10 @@ export async function checkRoutes(buildDir = BUILD_DIR): Promise<RoutesReport> {
   };
 }
 
-export function isFunctionRoute(routes: Pick<RoutesJson, "exclude" | "include">, urlPath: string) {
+export function isFunctionRoute(
+  routes: Pick<RoutesJson, "exclude" | "include">,
+  urlPath: string,
+): boolean {
   const included = routes.include.some((pattern) => matchesRoute(pattern, urlPath));
   const excluded = routes.exclude.some((pattern) => matchesRoute(pattern, urlPath));
   return included && !excluded;
@@ -55,12 +58,15 @@ export function isFunctionRoute(routes: Pick<RoutesJson, "exclude" | "include">,
  * including `/`, so `/sprites/*` covers the whole directory tree.
  */
 export function matchesRoute(pattern: string, urlPath: string): boolean {
-  const source = pattern.split("*").map(escapeRegExp).join(".*");
+  const source = pattern
+    .split("*")
+    .map((part) => escapeRegExp(part))
+    .join(".*");
   return new RegExp(`^${source}$`).test(urlPath);
 }
 
 function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 }
 
 async function listStaticAssets(buildDir: string): Promise<string[]> {
@@ -70,7 +76,7 @@ async function listStaticAssets(buildDir: string): Promise<string[]> {
     .map((entry) => path.relative(buildDir, path.join(entry.parentPath, entry.name)))
     .filter((relative) => !PAGES_INTERNAL_FILES.has(relative))
     .map((relative) => `/${relative.split(path.sep).join("/")}`)
-    .sort();
+    .toSorted();
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
@@ -95,7 +101,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     failed = true;
   }
   if (failed) {
-    process.exit(1);
+    process.exitCode = 1;
+  } else {
+    console.log(`_routes.json uses ${ruleCount} rules; every static asset bypasses Functions.`);
   }
-  console.log(`_routes.json uses ${ruleCount} rules; every static asset bypasses Functions.`);
 }

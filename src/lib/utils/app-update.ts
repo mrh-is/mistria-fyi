@@ -56,7 +56,8 @@ export function watchForAppUpdate({
   );
 
   let lastCheck = now();
-  void container.ready.then((registration) => {
+  const watchRegistration = async (): Promise<void> => {
+    const registration = await container.ready;
     if (signal.aborted) return;
     function announce(): void {
       if (!registration.waiting || !container?.controller) return;
@@ -90,12 +91,18 @@ export function watchForAppUpdate({
         if (visibility.visibilityState !== "visible") return;
         if (now() - lastCheck < UPDATE_CHECK_INTERVAL_MS) return;
         lastCheck = now();
-        // Best-effort: offline, or a server error, just means no update this time.
-        registration.update().catch(() => undefined);
+        void (async () => {
+          try {
+            await registration.update();
+          } catch {
+            // Best-effort: offline, or a server error, just means no update this time.
+          }
+        })();
       },
       { signal },
     );
-  });
+  };
+  void watchRegistration();
 
   return () => {
     controller.abort();

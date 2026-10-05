@@ -31,7 +31,7 @@ function biomeNameToId(name: string): MinesBiomeId {
   return name
     .replace(/^The\s+/i, "")
     .toLowerCase()
-    .replace(/\s+/g, "_") as MinesBiomeId;
+    .replaceAll(/\s+/g, "_") as MinesBiomeId;
 }
 
 function collectArtifactDigSources(
@@ -295,7 +295,7 @@ function getArtifactSetItems(fiddle: ParsedGameData, setName: string): string[] 
 
 function requireNumber(value: unknown, path: string): number {
   if (typeof value !== "number" || !Number.isFinite(value)) {
-    throw new Error(`Invalid or missing numeric value "${path}"`);
+    throw new TypeError(`Invalid or missing numeric value "${path}"`);
   }
   return value;
 }

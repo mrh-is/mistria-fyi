@@ -1,0 +1,5 @@
+{
+  // The root config ignores this directory so `pnpm run lint` passes; extending it here lints the
+  // probes with every root rule.
+  "extends": ["../../.oxlintrc.json"]
+}

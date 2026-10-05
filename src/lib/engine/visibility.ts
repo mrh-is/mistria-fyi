@@ -243,7 +243,6 @@ export function satisfyCondition(
         completed.skillLevels[condition.skillId] ?? 0,
         condition.level,
       );
-      return;
   }
 }
 

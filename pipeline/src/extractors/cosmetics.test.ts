@@ -39,7 +39,7 @@ const customization = Object.fromEntries([
 
 describe("extractCosmetics sub-categories", () => {
   it("localizes sub-category labels by ordinal and stores the key on the cosmetic", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const fiddle = makeFiddle({
       player_assets: {
         bob_cut: { name: "Bob Cut", ui_slot: "hair", ui_sub_category: "medium_hair" },

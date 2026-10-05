@@ -17,8 +17,8 @@ describe("dev tooling layout", () => {
     let thrown: unknown;
     try {
       run();
-    } catch (caught) {
-      thrown = caught;
+    } catch (error) {
+      thrown = error;
     }
     expect(isHttpError(thrown, 404)).toBe(true);
   });

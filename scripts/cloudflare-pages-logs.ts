@@ -19,7 +19,7 @@ export async function fetchPagesDeploymentLogs(
   url: string,
   apiToken: string | undefined,
   fetchImpl: FetchLike = fetch,
-) {
+): Promise<BuildLogResponse> {
   const options: RequestInit = apiToken ? { headers: { Authorization: `Bearer ${apiToken}` } } : {};
   const response = await fetchImpl(url, options);
 
@@ -31,7 +31,7 @@ export async function fetchPagesDeploymentLogs(
   return (await response.json()) as BuildLogResponse;
 }
 
-export function formatPagesDeploymentLogs(response: BuildLogResponse) {
+export function formatPagesDeploymentLogs(response: BuildLogResponse): string {
   return response.result.data.map(({ line, ts }) => `${ts} ${line}`).join("\n");
 }
 
@@ -39,12 +39,14 @@ export function pagesDeploymentLogsUrl(
   accountId: string,
   deploymentId: string,
   projectName: string,
-) {
-  const segments = [accountId, projectName, deploymentId].map(encodeURIComponent);
+): string {
+  const segments = [accountId, projectName, deploymentId].map((segment) =>
+    encodeURIComponent(segment),
+  );
   return `https://api.cloudflare.com/client/v4/accounts/${segments[0]}/pages/projects/${segments[1]}/deployments/${segments[2]}/history/logs`;
 }
 
-async function main() {
+async function main(): Promise<void> {
   const deploymentId = process.argv[2];
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const projectName = process.env.CLOUDFLARE_PAGES_PROJECT ?? "mistria-fyi";
@@ -64,8 +66,10 @@ async function main() {
 
 const entrypoint = process.argv[1];
 if (entrypoint && import.meta.url === pathToFileURL(entrypoint).href) {
-  main().catch((error: unknown) => {
+  try {
+    await main();
+  } catch (error: unknown) {
     console.error(error instanceof Error ? error.message : error);
     process.exitCode = 1;
-  });
+  }
 }

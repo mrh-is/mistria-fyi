@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { page } from "$app/state";
   import { restrictionWeatherIcon } from "#lib/components/icon/icon-maps.js";
   import { Icon } from "#lib/components/icon/index.js";
   import { weathersForSeason } from "#lib/engine/world-state.js";
   import { seasonLabel, timeRangeLabel, weatherLabel } from "#lib/utils/format.js";
+  import { page } from "$app/state";
 
   import type { AppIcon } from "#lib/components/icon/icon-maps.js";
   import type { DisplayBadges } from "#lib/engine/availability-condition.js";
@@ -29,7 +29,7 @@
 
   function isAllWeathers(weathers: Weather[], seasons?: Season[]): boolean {
     const availableWeathers = seasons?.length
-      ? [...new Set(seasons.flatMap(weathersForSeason))]
+      ? [...new Set(seasons.flatMap((season) => weathersForSeason(season)))]
       : ALL_WEATHERS;
     return availableWeathers.every((weather) => weathers.includes(weather));
   }

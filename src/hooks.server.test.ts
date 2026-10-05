@@ -28,7 +28,7 @@ describe("bareLocaleRedirect", () => {
       resolve,
     });
 
-    expect(resolve).toHaveBeenCalledOnce();
+    expect(resolve).toHaveBeenCalledTimes(1);
     expect(response).toBe(PASS_THROUGH);
   });
 

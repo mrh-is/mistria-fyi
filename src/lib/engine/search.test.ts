@@ -149,7 +149,7 @@ describe("basic matching", () => {
     const firstItemName = getName("items", firstItemId, "en");
     const lower = search(firstItemName.toLowerCase());
     const upper = search(firstItemName.toUpperCase());
-    expect(lower.length).toBe(upper.length);
+    expect(lower).toHaveLength(upper.length);
   });
 
   it("finds Villagers by name", () => {
@@ -392,10 +392,10 @@ describe("result shape", () => {
       expect(r).toHaveProperty("category");
       expect(r).toHaveProperty("completed");
       expect(r).toHaveProperty("available");
-      expect(typeof r.id).toBe("string");
-      expect(typeof r.name).toBe("string");
-      expect(typeof r.completed).toBe("boolean");
-      expect(typeof r.available).toBe("boolean");
+      expect(r.id).toBeTypeOf("string");
+      expect(r.name).toBeTypeOf("string");
+      expect(r.completed).toBeTypeOf("boolean");
+      expect(r.available).toBeTypeOf("boolean");
     }
   });
 });
@@ -445,9 +445,9 @@ describe("recipe visibility", () => {
     const progression = deriveProgressionState(completed, trackerData, false);
 
     const results = searchItems("Strawberry Shortcake", completed, defaultWorld, progression, "en");
-    const recipeResults = results.filter((r) => r.category === "recipes");
+    const recipeResult = results.find((r) => r.category === "recipes");
 
-    expect(recipeResults[0].completed).toBe(true);
+    expect(recipeResult?.completed).toBe(true);
   });
 });
 
@@ -535,7 +535,7 @@ describe("items in both the almanac and the museum", () => {
     const matches = search(name).filter(
       (r) => r.id === itemId && (r.category === "almanac" || r.category === "museum"),
     );
-    expect(matches.map((r) => r.category).sort()).toEqual(["almanac", "museum"]);
+    expect(matches.map((r) => r.category).toSorted()).toEqual(["almanac", "museum"]);
   });
 
   it("reads completion for each result from its own namespace", () => {

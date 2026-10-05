@@ -97,12 +97,15 @@ export function getCategoryProgress(category: CategoryKey, ctx: ProgressContext)
 }
 
 export function getMaxMineFloor(): number {
-  const biomes = trackerData.mines.biomes;
-  return biomes[biomes.length - 1].floors.end;
+  const lastBiome = trackerData.mines.biomes.at(-1);
+  if (!lastBiome) throw new Error("Tracker data has no mine biomes");
+  return lastBiome.floors.end;
 }
 
 export function getMaxRenownLevel(): number {
-  return trackerData.townRanks[trackerData.townRanks.length - 1].levels.end;
+  const lastRank = trackerData.townRanks.at(-1);
+  if (!lastRank) throw new Error("Tracker data has no town ranks");
+  return lastRank.levels.end;
 }
 
 // ─── Per-category progress ──────────────────────────────────────────
@@ -271,8 +274,7 @@ function getCravingQuestCount(
 }
 
 function getMinesProgress(ctx: ProgressContext): CategoryProgress {
-  const biomes = trackerData.mines.biomes;
-  const maxFloor = biomes[biomes.length - 1].floors.end;
+  const maxFloor = getMaxMineFloor();
   const totalFloors = maxFloor;
   const totalSpells = recordKeys(trackerData.mines.spells).length;
   const total = totalFloors + totalSpells;
@@ -325,8 +327,7 @@ function getRecipesProgress(ctx: ProgressContext): CategoryProgress {
 // ─── All categories ─────────────────────────────────────────────────
 
 function getRenownProgress(ctx: ProgressContext): CategoryProgress {
-  const ranks = trackerData.townRanks;
-  const total = ranks[ranks.length - 1].levels.end;
+  const total = getMaxRenownLevel();
   const completed = Math.max(0, Math.min(ctx.completed.renown, total));
   return { completed, filtered: total - completed, total };
 }

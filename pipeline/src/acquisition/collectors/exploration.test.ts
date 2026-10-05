@@ -296,7 +296,7 @@ describe("collectExplorationSources", () => {
       const acc = new ItemSourceAccumulator();
       const cosAcc = new CosmeticSourceAccumulator();
       collectExplorationSources(fiddle, acc, cosAcc);
-      expect(acc.entries().length).toBe(0);
+      expect(acc.entries()).toHaveLength(0);
     });
   });
 });

@@ -26,13 +26,12 @@
     const cosmeticIds = Object.keys(trackerData.animals[animalId].cosmetics) as CosmeticId[];
     if (isSpeciesVisible(animalId)) {
       return cosmeticIds.some((cid) => isCosmeticVisible(animalId, cid));
-    } else {
-      return cosmeticIds.some((cosmeticId) =>
-        toolbarState.matchesSourceFilters(
-          trackerData.animals[animalId].cosmetics[cosmeticId].sources,
-        ),
-      );
     }
+    return cosmeticIds.some((cosmeticId) =>
+      toolbarState.matchesSourceFilters(
+        trackerData.animals[animalId].cosmetics[cosmeticId].sources,
+      ),
+    );
   }
 
   function isCosmeticVisible(animalId: AnimalId, cosmeticId: CosmeticId): boolean {
@@ -51,8 +50,8 @@
     let completedCount = 0;
     let displayableCount = 0;
     let visibleCosmetics: AnimalSubcategoryRowProps<CosmeticId>[] = [];
-    recordEntries(animal.cosmetics).forEach(([cid]) => {
-      if (!toolbarState.matchesSourceFilters(animal.cosmetics[cid].sources)) return;
+    for (const [cid] of recordEntries(animal.cosmetics)) {
+      if (!toolbarState.matchesSourceFilters(animal.cosmetics[cid].sources)) continue;
       displayableCount++;
       const cosmeticId = cid;
       const completed = hasCompletedCosmetic(animalId, cosmeticId);
@@ -66,7 +65,7 @@
           sources: animal.cosmetics[cosmeticId].sources,
         });
       }
-    });
+    }
     return {
       displayableCompletedItemCount: completedCount,
       displayableItemCount: displayableCount,

@@ -35,8 +35,8 @@ function zeroCounts(): MergeCounts {
 
 describe("MERGE_COUNT_LABELS", () => {
   it("covers every key in MergeCounts", () => {
-    const labelKeys = Object.keys(MERGE_COUNT_LABELS).sort();
-    const countKeys = Object.keys(zeroCounts()).sort();
+    const labelKeys = Object.keys(MERGE_COUNT_LABELS).toSorted();
+    const countKeys = Object.keys(zeroCounts()).toSorted();
     expect(labelKeys).toEqual(countKeys);
   });
 });

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { _pageEntries, GET } from "../../routes/sitemap.xml/+server.js";
+import { _pageEntries, GET as getSitemap } from "../../routes/sitemap.xml/+server.js";
 import { locales, localizeUrl } from "../paraglide/runtime.js";
 import { categoryKeyForPathname } from "./categories.js";
 import { errorPageMetadata, pageMetadata, SITE_NAME, SITE_ORIGIN } from "./page-metadata.js";
@@ -48,10 +48,10 @@ describe("page metadata", () => {
       expect(entry.metadata.title === SITE_NAME || !entry.metadata.title.includes(SITE_NAME)).toBe(
         true,
       );
+    }
 
-      if (entry.metadata.robots === undefined) {
-        expect(entry.metadata.description).toContain("Fields of Mistria");
-      }
+    for (const entry of entries.filter(({ metadata: { robots } }) => robots === undefined)) {
+      expect(entry.metadata.description).toContain("Fields of Mistria");
     }
   });
 
@@ -115,7 +115,8 @@ describe("page metadata", () => {
 describe("crawler files", () => {
   it("generates the sitemap from indexable page metadata, one locale-prefixed URL per locale", async () => {
     const entries = await pageMetadataEntries();
-    const sitemap = await (await GET()).text();
+    const sitemapResponse = await getSitemap();
+    const sitemap = await sitemapResponse.text();
     const locations = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
     const expected = entries
       .filter(({ metadata }) => metadata.robots === undefined)
@@ -129,7 +130,8 @@ describe("crawler files", () => {
   });
 
   it("cross-links every locale's sitemap entry to every other locale via hreflang", async () => {
-    const sitemap = await (await GET()).text();
+    const sitemapResponse = await getSitemap();
+    const sitemap = await sitemapResponse.text();
 
     expect(sitemap).toContain(
       `<xhtml:link rel="alternate" hreflang="ja" href="${localizeUrl(new URL("/almanac", SITE_ORIGIN), { locale: "ja" }).href}" />`,

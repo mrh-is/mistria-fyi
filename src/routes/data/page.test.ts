@@ -1,6 +1,8 @@
 import { render } from "svelte/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import DataPage from "./+page.svelte";
+
 const appState = vi.hoisted(() => ({
   url: new URL("https://mistria-fyi.test/data"),
 }));
@@ -18,8 +20,6 @@ vi.mock("$app/state", () => ({
   },
 }));
 
-import DataPage from "./+page.svelte";
-
 function disclosureState(body: string, title: string): string | undefined {
   const disclosures = body.matchAll(
     /<button[^>]*data-slot="collapsible-trigger"[^>]*aria-expanded="(true|false)"[^>]*>(.*?)<\/button>/gs,
@@ -28,6 +28,7 @@ function disclosureState(body: string, title: string): string | undefined {
   for (const disclosure of disclosures) {
     if (disclosure[2].includes(title)) return disclosure[1];
   }
+  return undefined;
 }
 
 beforeEach(() => {

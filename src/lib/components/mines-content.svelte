@@ -6,6 +6,7 @@
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
+  import { getMaxMineFloor } from "#lib/engine/progress.js";
   import { isEntityNameVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -57,7 +58,7 @@
   } = $props();
 
   const biomes = trackerData.mines.biomes;
-  const maxFloors = biomes[biomes.length - 1].floors.end;
+  const maxFloors = getMaxMineFloor();
 
   function allSpellsComplete(): boolean {
     return Object.keys(trackerData.mines.spells).every((id) =>
@@ -99,7 +100,7 @@
         name: getName("spells", id as SpellId, locale),
         sources: spell.sources,
       }))
-      .sort((a, b) => nameCollator(locale).compare(a.name, b.name)),
+      .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
   );
 
   registerSourceFilters("mines", () => trackerIndex.categorySourceTypes.mines);

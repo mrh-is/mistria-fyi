@@ -23,6 +23,12 @@ function renderedText(body: string): string {
     .trim();
 }
 
+/** A filtered counter either shrinks below `bound` or the section shows the empty-filter message. */
+function isFilteredTotalBelow(text: string, counter: RegExp, bound: number): boolean {
+  const match = counter.exec(text);
+  return match ? Number(match[2]) < bound : text.includes("No items match the current filters");
+}
+
 afterEach(() => {
   userState.resetAll();
   toolbarState.closeSearch();
@@ -128,12 +134,9 @@ describe("subsection counters", () => {
     toolbarState.hideAllSourceFilters();
 
     const { body } = render(MinesContent, { props: {} });
-    const match = /Spells (\d+) \/ (\d+)/.exec(renderedText(body));
-    if (match) {
-      expect(Number(match[2])).toBeLessThan(spellCount);
-    } else {
-      expect(renderedText(body)).toContain("No items match the current filters");
-    }
+    expect(isFilteredTotalBelow(renderedText(body), /Spells (\d+) \/ (\d+)/, spellCount)).toBe(
+      true,
+    );
   });
 
   it("reduces fetch quest count when source groups are hidden", () => {
@@ -148,13 +151,9 @@ describe("subsection counters", () => {
     toolbarState.hideAllSourceFilters();
 
     const filteredBody = renderedText(render(QuestsContent, { props: { locale: "en" } }).body);
-    const filteredMatch = /Fetch Quests (\d+) \/ (\d+)/.exec(filteredBody);
-
-    if (filteredMatch) {
-      expect(Number(filteredMatch[2])).toBeLessThan(unfilteredTotal);
-    } else {
-      expect(filteredBody).toContain("No items match the current filters");
-    }
+    expect(isFilteredTotalBelow(filteredBody, /Fetch Quests (\d+) \/ (\d+)/, unfilteredTotal)).toBe(
+      true,
+    );
   });
 
   it("hides almanac rows whose covered sources all belong to hidden groups", () => {

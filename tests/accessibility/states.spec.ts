@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import encodeQR from "qr";
+import { encodeQR } from "qr";
 
 import {
   createStoredState,
@@ -17,10 +17,10 @@ import {
 } from "./support/scenarios.js";
 
 const emptyPlayerPath = fileURLToPath(
-  new URL("./fixtures/import/empty-player.json", import.meta.url),
+  new URL("fixtures/import/empty-player.json", import.meta.url),
 );
 const progressPlayerPath = fileURLToPath(
-  new URL("./fixtures/import/progress-player.json", import.meta.url),
+  new URL("fixtures/import/progress-player.json", import.meta.url),
 );
 
 test.describe("@critical stateful accessibility", () => {
@@ -78,7 +78,8 @@ test.describe("@critical stateful accessibility", () => {
     await page.getByRole("button", { name: /Show \d+ more/ }).click();
     const spoiler = page.getByRole("button", { name: "Reveal spoiler" }).first();
     await expect(spoiler).toBeVisible();
-    const spoilerName = (await spoiler.textContent())?.trim();
+    const spoilerText = await spoiler.textContent();
+    const spoilerName = spoilerText?.trim();
     if (!spoilerName) throw new Error("Spoiler control had no searchable item name");
     await openSearch(page, spoilerName);
     await expect(page.getByRole("button", { name: "Reveal spoiler" })).toHaveCount(0);
@@ -197,9 +198,8 @@ test.describe("@critical stateful accessibility", () => {
     const generatedBuffer = Buffer.from(dataUrl.split(",")[1] ?? "", "base64");
     const successChooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: /scan from a screenshot/i }).click();
-    await (
-      await successChooser
-    ).setFiles({
+    const successChooserDialog = await successChooser;
+    await successChooserDialog.setFiles({
       buffer: generatedBuffer,
       mimeType: "image/png",
       name: "transfer.png",
@@ -215,9 +215,8 @@ test.describe("@critical stateful accessibility", () => {
     const invalidBuffer = Buffer.from(encodeQR("MFGTCw", "gif", { scale: 4 }));
     const errorChooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: /scan from a screenshot/i }).click();
-    await (
-      await errorChooser
-    ).setFiles({
+    const errorChooserDialog = await errorChooser;
+    await errorChooserDialog.setFiles({
       buffer: invalidBuffer,
       mimeType: "image/gif",
       name: "invalid-transfer.gif",
@@ -235,9 +234,8 @@ test.describe("@critical stateful accessibility", () => {
     const outdatedBuffer = Buffer.from(encodeQR("MFGTCg", "gif", { scale: 4 }));
     const outdatedChooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: /scan from a screenshot/i }).click();
-    await (
-      await outdatedChooser
-    ).setFiles({
+    const outdatedChooserDialog = await outdatedChooser;
+    await outdatedChooserDialog.setFiles({
       buffer: outdatedBuffer,
       mimeType: "image/gif",
       name: "outdated-transfer.gif",
@@ -258,9 +256,8 @@ test.describe("@critical stateful accessibility", () => {
     await openSettingsCard(page, "Backup & Restore");
     const chooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: "Restore from backup" }).click();
-    await (
-      await chooser
-    ).setFiles({
+    const chooserDialog = await chooser;
+    await chooserDialog.setFiles({
       buffer: await readFile(progressPlayerPath),
       mimeType: "application/json",
       name: "invalid-backup.json",

@@ -48,7 +48,8 @@ export function _pageEntries(): Promise<
 }
 
 export async function GET(): Promise<Response> {
-  const urls = (await _pageEntries())
+  const pageEntries = await _pageEntries();
+  const urls = pageEntries
     .filter(({ pageModule }) => pageModule._robots === undefined)
     .flatMap(({ path }) => localizedUrlEntries(path))
     .join("\n");

@@ -1,5 +1,7 @@
-import { type ClassValue, clsx } from "clsx";
+import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+
+import type { ClassValue } from "clsx";
 
 export type NonEmptyArray<T> = [T, ...T[]];
 
@@ -7,8 +9,21 @@ export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?:
 
 export type WithoutChild<T> = Omit<T, "child">;
 export type WithoutChildrenOrChild<T> = Omit<T, "child" | "children">;
-export function cn(...inputs: ClassValue[]) {
+export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
+}
+
+/** Returns `record[key]`, first storing `create()` there when the key is unset. */
+export function getOrCreate<K extends PropertyKey, V>(
+  record: Partial<Record<K, V>>,
+  key: K,
+  create: () => V,
+): V {
+  const existing = record[key];
+  if (existing !== undefined) return existing;
+  const created = create();
+  record[key] = created;
+  return created;
 }
 
 export function isNonEmptyArray<T>(arr: T[]): arr is NonEmptyArray<T> {
@@ -18,7 +33,7 @@ export function isNonEmptyArray<T>(arr: T[]): arr is NonEmptyArray<T> {
 export function recordEntries<R extends Record<string, unknown>>(
   record: R,
 ): { [K in keyof R]-?: [K, NonNullable<R[K]>] }[keyof R][];
-export function recordEntries(record: Record<string, unknown>) {
+export function recordEntries(record: Record<string, unknown>): [string, unknown][] {
   return Object.entries(record);
 }
 
@@ -26,10 +41,10 @@ export function recordForEach<K extends string, T>(
   record: Record<K, T>,
   callbackfn: (value: [K, T], index: number, record: Record<K, T>) => void,
   thisArg?: unknown,
-) {
-  recordKeys(record).forEach((key, index) => {
+): void {
+  for (const [index, key] of recordKeys(record).entries()) {
     callbackfn.call(thisArg, [key, record[key]], index, record);
-  });
+  }
 }
 export function recordKeys<K extends string, T>(record: Record<K, T>): K[] {
   return Object.keys(record) as K[];
@@ -40,9 +55,9 @@ export function recordMap<K extends string, T, U>(
   thisArg?: unknown,
 ): Record<K, U> {
   const result = {} as Record<K, U>;
-  recordKeys(record).forEach((key, index) => {
+  for (const [index, key] of recordKeys(record).entries()) {
     result[key] = callbackfn.call(thisArg, record[key], key, index, record);
-  });
+  }
   return result;
 }
 export function recordValues<K extends PropertyKey, T>(record: Record<K, T>): T[] {

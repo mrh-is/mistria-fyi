@@ -22,15 +22,15 @@ describe("FoldoutPanel", () => {
     expect(dialog).toHaveAttribute("id", "harness-panel");
 
     await fireEvent.click(within(dialog).getByRole("button", { name: "Close Harness" }));
-    expect(onclose).toHaveBeenCalledOnce();
+    expect(onclose).toHaveBeenCalledTimes(1);
   });
 
   it("closes on Escape", async () => {
     const onclose = renderPanel();
 
-    await fireEvent.keyDown(window, { key: "Escape" });
+    await fireEvent.keyDown(document, { key: "Escape" });
 
-    expect(onclose).toHaveBeenCalledOnce();
+    expect(onclose).toHaveBeenCalledTimes(1);
   });
 
   it("wraps Tab and Shift+Tab within the panel", async () => {
@@ -40,10 +40,10 @@ describe("FoldoutPanel", () => {
     const last = within(dialog).getByRole("button", { name: "Last" });
 
     last.focus();
-    await fireEvent.keyDown(window, { key: "Tab" });
+    await fireEvent.keyDown(document, { key: "Tab" });
     expect(headerAction).toHaveFocus();
 
-    await fireEvent.keyDown(window, { key: "Tab", shiftKey: true });
+    await fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
     expect(last).toHaveFocus();
   });
 
@@ -52,11 +52,11 @@ describe("FoldoutPanel", () => {
     const dialog = screen.getByRole("dialog");
 
     screen.getByRole("button", { name: "Outside after" }).focus();
-    await fireEvent.keyDown(window, { key: "Tab" });
+    await fireEvent.keyDown(document, { key: "Tab" });
     expect(within(dialog).getByRole("button", { name: "Close Harness" })).toHaveFocus();
 
     screen.getByRole("button", { name: "Outside before" }).focus();
-    await fireEvent.keyDown(window, { key: "Tab", shiftKey: true });
+    await fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
     expect(within(dialog).getByRole("button", { name: "Last" })).toHaveFocus();
   });
 
@@ -68,10 +68,10 @@ describe("FoldoutPanel", () => {
 
     const last = screen.getByRole("button", { name: "Last" });
     last.focus();
-    await fireEvent.keyDown(window, { key: "Tab" });
+    await fireEvent.keyDown(document, { key: "Tab" });
     expect(last).toHaveFocus();
 
-    await fireEvent.keyDown(window, { key: "Escape" });
+    await fireEvent.keyDown(document, { key: "Escape" });
     expect(onclose).not.toHaveBeenCalled();
   });
 });

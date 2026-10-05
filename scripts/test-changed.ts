@@ -60,12 +60,12 @@ export function planChangedTestRun(
     }
   }
 
-  const sortedFiles = [...changedFiles].sort();
+  const sortedFiles = [...changedFiles].toSorted();
   if (sortedFiles.length === 0) {
     return { baseRef, changedFiles: [], mode: "none" };
   }
 
-  const fullSuiteFile = sortedFiles.find(needsFullSuite);
+  const fullSuiteFile = sortedFiles.find((file) => needsFullSuite(file));
   if (fullSuiteFile) {
     return {
       mode: "full",

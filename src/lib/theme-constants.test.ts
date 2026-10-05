@@ -5,10 +5,10 @@ import { describe, expect, it } from "vitest";
 import { THEME_COLORS, THEME_STORAGE_KEY } from "./theme.js";
 
 // app.html and manifest.json are served as written, so they can't import the shared constants.
-const appHtml = readFileSync(resolve(__dirname, "../app.html"), "utf-8");
-const appCss = readFileSync(resolve(__dirname, "../app.css"), "utf-8");
+const appHtml = readFileSync(resolve(import.meta.dirname, "../app.html"), "utf8");
+const appCss = readFileSync(resolve(import.meta.dirname, "../app.css"), "utf8");
 const manifest = JSON.parse(
-  readFileSync(resolve(__dirname, "../../static/manifest.json"), "utf-8"),
+  readFileSync(resolve(import.meta.dirname, "../../static/manifest.json"), "utf8"),
 ) as { background_color: string; theme_color: string };
 
 describe("theme constants", () => {

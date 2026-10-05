@@ -83,7 +83,7 @@
         id: id as DateId,
         name: getName("dates", id as DateId, locale),
       }))
-      .sort((a, b) => nameCollator(locale).compare(a.name, b.name)),
+      .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
   );
 
   registerSourceFilters("dates", () => trackerIndex.categorySourceTypes.dates);

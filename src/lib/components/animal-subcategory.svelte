@@ -9,7 +9,7 @@
   import { showUndoToast } from "#lib/utils/undo-toast.js";
 
   import TrackerRowStack from "./tracker-row-stack.svelte";
-  import TrackerRow, { type TrackerRowDisplay } from "./tracker-row.svelte";
+  import TrackerRow from "./tracker-row.svelte";
 
   import type { AnimalId, AnyId } from "#lib/types/tracker-data.js";
 
@@ -17,6 +17,7 @@
     AnimalSubcategoryProps,
     AnimalSubcategoryRowProps,
   } from "./animal-subcategory.types.js";
+  import type { TrackerRowDisplay } from "./tracker-row.svelte";
 
   function rowDisplay(row: AnimalSubcategoryRowProps<ItemId>): TrackerRowDisplay {
     if (row.completed) return { mode: "completed" };
@@ -32,21 +33,19 @@
         id: id as AnimalId,
         name: getName("animals", animalNameId(id as AnimalId, "core"), props.locale),
       }))
-      .sort((a, b) => nameCollator(props.locale).compare(a.name, b.name)),
+      .toSorted((a, b) => nameCollator(props.locale).compare(a.name, b.name)),
   );
 
-  let { completedCount, totalCount } = $derived(
-    animals.reduce(
-      (acc, a) => {
-        const { displayableCompletedItemCount, displayableItemCount } = props.sectionConfig(a.id);
-        return {
-          completedCount: acc.completedCount + displayableCompletedItemCount,
-          totalCount: acc.totalCount + displayableItemCount,
-        };
-      },
-      { completedCount: 0, totalCount: 0 },
-    ),
-  );
+  let { completedCount, totalCount } = $derived.by(() => {
+    let completed = 0;
+    let total = 0;
+    for (const a of animals) {
+      const { displayableCompletedItemCount, displayableItemCount } = props.sectionConfig(a.id);
+      completed += displayableCompletedItemCount;
+      total += displayableItemCount;
+    }
+    return { completedCount: completed, totalCount: total };
+  });
 </script>
 
 {#if animals.some((a) => props.hasDisplayableItem(a.id))}

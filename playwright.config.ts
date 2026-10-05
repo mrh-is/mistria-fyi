@@ -1,10 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
-import { assessPreviewProbe, probePreviewOwner } from "./scripts/playwright-preview-owner";
+import { assessPreviewProbe, probePreviewOwner } from "./scripts/playwright-preview-owner.js";
 
 const isCi = process.env.CI === "true";
 const worktreePortOffset = [...process.cwd()].reduce(
-  (hash, character) => (hash * 31 + character.charCodeAt(0)) % 10_000,
+  (hash, character) => (hash * 31 + (character.codePointAt(0) ?? 0)) % 10_000,
   0,
 );
 const testPort = process.env.PLAYWRIGHT_PORT ?? String(40_000 + worktreePortOffset);

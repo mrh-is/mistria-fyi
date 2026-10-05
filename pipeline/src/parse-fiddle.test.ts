@@ -102,14 +102,14 @@ describe("parseFiddleFromZip", () => {
 
     // Object key order (and so zip entry order) isn't guaranteed to survive formatting, so assert
     // on content rather than which of the two colliding paths the error happened to be raised from.
-    let error: unknown;
+    let thrownError: unknown;
     try {
       await parseFiddleFromZip(zipPath);
-    } catch (caught) {
-      error = caught;
+    } catch (error) {
+      thrownError = error;
     }
-    expect(error).toBeInstanceOf(Error);
-    const message = (error as Error).message;
+    expect(thrownError).toBeInstanceOf(Error);
+    const message = (thrownError as Error).message;
     expect(message).toContain("Duplicate or colliding TOML destinations");
     expect(message).toContain('"items"');
     expect(message).toContain('"items.crops"');

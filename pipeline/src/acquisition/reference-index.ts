@@ -85,9 +85,9 @@ export class AcquisitionReferenceIndex {
   readonly #references = emptyReferenceSets();
 
   constructor(input: AcquisitionReferenceIndexInput = {}) {
-    this.#addRegistries(input.emitted, this.#references);
-    this.#addRegistries(input.native, this.#references);
-    this.#addRegistries(input.excluded, this.#excluded);
+    addRegistries(input.emitted, this.#references);
+    addRegistries(input.native, this.#references);
+    addRegistries(input.excluded, this.#excluded);
   }
 
   static from(input: AcquisitionReferenceIndexInput): AcquisitionReferenceIndex {
@@ -101,29 +101,29 @@ export class AcquisitionReferenceIndex {
   isExcluded(kind: AcquisitionReferenceKind, id: string): boolean {
     return this.#excluded[kind].has(id);
   }
+}
 
-  #addRegistries(
-    registries: AcquisitionReferenceRegistries | undefined,
-    target: Record<AcquisitionReferenceKind, Set<string>>,
-  ): void {
-    if (!registries) return;
-    for (const [registryName, registry] of Object.entries(registries) as [
-      keyof AcquisitionReferenceRegistries,
-      ReferenceRegistry | undefined,
-    ][]) {
-      if (!registry) continue;
-      const kind = REGISTRY_KIND[registryName];
-      for (const id of registryIds(registryName, registry)) target[kind].add(id);
-      if (registryName === "quests" && !isIterable(registry)) {
-        for (const [groupId, group] of Object.entries(registry)) {
-          if (
-            typeof group === "object" &&
-            group !== null &&
-            !Array.isArray(group) &&
-            !("name" in group)
-          ) {
-            target.questType.add(groupId);
-          }
+function addRegistries(
+  registries: AcquisitionReferenceRegistries | undefined,
+  target: Record<AcquisitionReferenceKind, Set<string>>,
+): void {
+  if (!registries) return;
+  for (const [registryName, registry] of Object.entries(registries) as [
+    keyof AcquisitionReferenceRegistries,
+    ReferenceRegistry | undefined,
+  ][]) {
+    if (!registry) continue;
+    const kind = REGISTRY_KIND[registryName];
+    for (const id of registryIds(registryName, registry)) target[kind].add(id);
+    if (registryName === "quests" && !isIterable(registry)) {
+      for (const [groupId, group] of Object.entries(registry)) {
+        if (
+          typeof group === "object" &&
+          group !== null &&
+          !Array.isArray(group) &&
+          !("name" in group)
+        ) {
+          target.questType.add(groupId);
         }
       }
     }

@@ -24,9 +24,11 @@ export function classifyItemAvailability(
 ): AvailabilityWindow {
   if (sources.length === 0) return "anytime";
 
-  const sourceWindows = sources.map((source) => classifySourceAvailability(source, worldState));
-  if (sourceWindows.includes("anytime")) return "anytime";
-  if (sourceWindows.includes("now")) return "now";
+  const sourceWindows = new Set(
+    sources.map((source) => classifySourceAvailability(source, worldState)),
+  );
+  if (sourceWindows.has("anytime")) return "anytime";
+  if (sourceWindows.has("now")) return "now";
   return "later";
 }
 

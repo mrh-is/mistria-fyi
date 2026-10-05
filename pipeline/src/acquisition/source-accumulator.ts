@@ -13,7 +13,11 @@ export type AnimalCosmeticKey = `${AnimalId}:${CosmeticId}`;
 abstract class SourceAccumulator<TargetId extends string> {
   readonly #sourcesByTarget = new Map<TargetId, Map<string, Source>>();
 
-  protected constructor(private readonly targetNamespace: string) {}
+  readonly #targetNamespace: string;
+
+  protected constructor(targetNamespace: string) {
+    this.#targetNamespace = targetNamespace;
+  }
 
   add(targetId: TargetId, source: Source, provenance?: SourceProvenance): void {
     let sources = this.#sourcesByTarget.get(targetId);
@@ -31,7 +35,7 @@ abstract class SourceAccumulator<TargetId extends string> {
           provenanceByTarget = new Map();
           provenanceBySource.set(source, provenanceByTarget);
         }
-        provenanceByTarget.set(`${this.targetNamespace}.${targetId}`, provenance);
+        provenanceByTarget.set(`${this.#targetNamespace}.${targetId}`, provenance);
       }
     }
   }
@@ -42,12 +46,12 @@ abstract class SourceAccumulator<TargetId extends string> {
 
   entries(): [TargetId, Source[]][] {
     return [...this.#sourcesByTarget.entries()]
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([targetId, sources]) => [targetId, this.#sortedSources(sources)]);
+      .toSorted(([left], [right]) => left.localeCompare(right))
+      .map(([targetId, sources]) => [targetId, sortedSources(sources)]);
   }
 
   get(targetId: TargetId): Source[] {
-    return this.#sortedSources(this.#sourcesByTarget.get(targetId));
+    return sortedSources(this.#sourcesByTarget.get(targetId));
   }
 
   replace(targetId: TargetId, sources: Source[], provenance?: SourceProvenance): void {
@@ -60,13 +64,13 @@ abstract class SourceAccumulator<TargetId extends string> {
   toRecord(): Record<TargetId, Source[]> {
     return Object.fromEntries(this.entries()) as Record<TargetId, Source[]>;
   }
+}
 
-  #sortedSources(sources: Map<string, Source> | undefined): Source[] {
-    if (!sources) return [];
-    return [...sources.entries()]
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([, source]) => source);
-  }
+function sortedSources(sources: Map<string, Source> | undefined): Source[] {
+  if (!sources) return [];
+  return [...sources.entries()]
+    .toSorted(([left], [right]) => left.localeCompare(right))
+    .map(([, source]) => source);
 }
 
 export class AnimalCosmeticSourceAccumulator {
@@ -141,15 +145,15 @@ export function getSourceProvenance(
       ([targetPath]) =>
         validationFieldPath === targetPath || validationFieldPath.startsWith(`${targetPath}.`),
     )
-    .sort(([left], [right]) => right.length - left.length)[0]?.[1];
+    .toSorted(([left], [right]) => right.length - left.length)[0]?.[1];
 }
 
 function stableJson(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (Array.isArray(value)) return `[${value.map((entry) => stableJson(entry)).join(",")}]`;
   if (value !== null && typeof value === "object") {
     const record = value as Record<string, unknown>;
     const entries = Object.keys(record)
-      .sort((left, right) => left.localeCompare(right))
+      .toSorted((left, right) => left.localeCompare(right))
       .filter((key) => record[key] !== undefined)
       .map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`);
     return `{${entries.join(",")}}`;

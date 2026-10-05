@@ -1,4 +1,4 @@
-export default {
+const config = {
   plugins: [
     "removeDoctype",
     "removeXMLProcInst",
@@ -53,3 +53,5 @@ export default {
     },
   ],
 };
+
+export default config;

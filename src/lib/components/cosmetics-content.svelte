@@ -98,7 +98,7 @@
         visibility: cosmetic.visibility,
       });
     }
-    const groups: SlotGroup[] = [];
+    const slotGroups: SlotGroup[] = [];
     for (const [slot, { subCategories }] of recordEntries(trackerData.cosmeticSlots)) {
       const cosmeticsBySubCategory = bySlot[slot];
       if (!cosmeticsBySubCategory) continue;
@@ -112,7 +112,7 @@
       } else {
         throw new Error(`Cosmetic slot "${slot}" has sub-categories but no heading message`);
       }
-      groups.push({
+      slotGroups.push({
         name,
         nested,
         slot,
@@ -124,7 +124,7 @@
         }),
       });
     }
-    return groups;
+    return slotGroups;
   });
 
   registerSourceFilters("cosmetics", () => trackerIndex.categorySourceTypes.cosmetics);

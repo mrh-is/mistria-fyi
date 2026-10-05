@@ -145,7 +145,12 @@ export default defineConfig({
         extends: true,
         test: {
           exclude: [...sharedTestExcludes, "**/*.assets.test.ts"],
-          include: ["pipeline/**/*.test.ts", "scripts/**/*.test.ts", "tests/**/*.test.ts"],
+          include: [
+            "eslint-rules/**/*.test.ts",
+            "pipeline/**/*.test.ts",
+            "scripts/**/*.test.ts",
+            "tests/**/*.test.ts",
+          ],
           name: "node",
         },
       },

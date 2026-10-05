@@ -43,9 +43,10 @@
   }
 
   function isAnimalComplete(animalId: AnimalId): boolean {
-    const someVariantIncomplete = someVariant(animalId, ([variantId]) => {
-      return !hasCompletedVariant(animalId, variantId);
-    });
+    const someVariantIncomplete = someVariant(
+      animalId,
+      ([variantId]) => !hasCompletedVariant(animalId, variantId),
+    );
     if (someVariantIncomplete) return false;
 
     const cosmeticIds = Object.keys(trackerData.animals[animalId].cosmetics) as CosmeticId[];
@@ -61,9 +62,11 @@
     animalId: AnimalId,
     predicate: (value: [AnimalVariantId, AnimalVariant]) => boolean,
   ): boolean {
-    return trackerData.animals[animalId].variantTiers.some((tier) => {
-      return (Object.entries(tier) as [AnimalVariantId, AnimalVariant][]).some(predicate);
-    });
+    return trackerData.animals[animalId].variantTiers.some((tier) =>
+      (Object.entries(tier) as [AnimalVariantId, AnimalVariant][]).some((entry) =>
+        predicate(entry),
+      ),
+    );
   }
 
   registerSourceFilters("animals", () => trackerIndex.categorySourceTypes.animals);

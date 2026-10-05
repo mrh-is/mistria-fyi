@@ -76,15 +76,15 @@
   }
 
   function isMuseumComplete(): boolean {
-    return recordValues(trackerData.museum).every(isWingComplete);
+    return recordValues(trackerData.museum).every((wing) => isWingComplete(wing));
   }
 
   function isSetComplete(set: MuseumWingSet): boolean {
-    return set.items.every(isItemComplete);
+    return set.items.every((itemId) => isItemComplete(itemId));
   }
 
   function isWingComplete(wing: MuseumWing): boolean {
-    return recordValues(wing.sets).every(isSetComplete);
+    return recordValues(wing.sets).every((set) => isSetComplete(set));
   }
 
   function markLeaving(itemId: ItemId): void {
@@ -152,9 +152,9 @@
         (itemId) => isItemScoped(itemId) && isItemComplete(itemId),
       ).length,
       scopedItemCount: set.items.filter(isItemScoped).length,
-      visibleItems: set.items.filter(isItemVisible).map((itemId) => {
-        return { itemId, ...trackerData.items[itemId] };
-      }),
+      visibleItems: set.items
+        .filter(isItemVisible)
+        .map((itemId) => ({ itemId, ...trackerData.items[itemId] })),
     };
   }
   function toggleItem(itemId: ItemId, setId: MuseumWingSetId, wingId: MuseumWingId): void {
@@ -177,9 +177,7 @@
 
   function wingConfig(wingId: MuseumWingId, wing: MuseumWing): WingConfig {
     const setConfigs = recordEntries(wing.sets)
-      .map(([id, set]) => {
-        return { setId: id, ...setConfig(wingId, id, set) };
-      })
+      .map(([id, set]) => ({ setId: id, ...setConfig(wingId, id, set) }))
       .filter(({ baseItemCount }) => baseItemCount > 0);
     return {
       baseItemCount: setConfigs.reduce((sum, { baseItemCount }) => sum + baseItemCount, 0),

@@ -63,7 +63,7 @@ describe("collectNaturalSources", () => {
 
       const acc = new ItemSourceAccumulator();
       collectNaturalSources(fiddle, acc);
-      expect(acc.get("bass" as ItemId).length).toBe(1);
+      expect(acc.get("bass" as ItemId)).toHaveLength(1);
     });
 
     it("adds a dive source for divespot retrieval", () => {
@@ -93,7 +93,7 @@ describe("collectNaturalSources", () => {
           other: {
             apiaries_and_terrariums: {
               fish_bait_common: {
-                attract: { max_rarity: "common", min_rarity: 10000 },
+                attract: { max_rarity: "common", min_rarity: 10_000 },
                 tags: ["fish_bait"],
               },
               fish_bait_uncommon: {
@@ -150,7 +150,7 @@ describe("collectNaturalSources", () => {
           other: {
             apiaries_and_terrariums: {
               fish_bait_common: {
-                attract: { max_rarity: "common", min_rarity: 10000 },
+                attract: { max_rarity: "common", min_rarity: 10_000 },
                 tags: ["fish_bait"],
               },
             },
@@ -204,7 +204,7 @@ describe("collectNaturalSources", () => {
           other: {
             apiaries_and_terrariums: {
               fish_bait_common: {
-                attract: { max_rarity: "common", min_rarity: 10000 },
+                attract: { max_rarity: "common", min_rarity: 10_000 },
                 tags: ["fish_bait"],
               },
             },
@@ -245,7 +245,7 @@ describe("collectNaturalSources", () => {
           other: {
             apiaries_and_terrariums: {
               fish_bait_common: {
-                attract: { max_rarity: "common", min_rarity: 10000 },
+                attract: { max_rarity: "common", min_rarity: 10_000 },
                 tags: ["fish_bait"],
               },
             },
@@ -497,7 +497,7 @@ describe("buildBaitRanges", () => {
         other: {
           apiaries_and_terrariums: {
             fish_bait_common: {
-              attract: { max_rarity: "common", min_rarity: 10000 },
+              attract: { max_rarity: "common", min_rarity: 10_000 },
               tags: ["fish_bait"],
             },
             fish_bait_rare: {

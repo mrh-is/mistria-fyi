@@ -4,7 +4,16 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
-export function createSpoilerGuard() {
+export interface SpoilerGuard {
+  cancel: () => void;
+  complete: () => void;
+  completeAndUpdate: () => void;
+  readonly condition: null | VisibilityCondition;
+  guard: (forCondition: undefined | VisibilityCondition, action: () => void) => void;
+  open: boolean;
+}
+
+export function createSpoilerGuard(): SpoilerGuard {
   let open = $state(false);
   let condition = $state<null | VisibilityCondition>(null);
   let pendingAction: (() => void) | null = null;

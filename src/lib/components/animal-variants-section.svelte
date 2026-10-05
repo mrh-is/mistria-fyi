@@ -28,11 +28,11 @@
     animalId: AnimalId,
     callbackfn: (value: [AnimalVariantId, AnimalVariant], tier: number) => void,
   ) {
-    trackerData.animals[animalId].variantTiers.forEach((tier, index) => {
-      tierEntries(tier).forEach(([variantId, variant]) => {
+    for (const [index, tier] of trackerData.animals[animalId].variantTiers.entries()) {
+      for (const [variantId, variant] of tierEntries(tier)) {
         callbackfn([variantId, variant], index);
-      });
-    });
+      }
+    }
   }
 
   function hasCompletedVariant(animalId: AnimalId, variantId: AnimalVariantId): boolean {
@@ -45,9 +45,8 @@
       const completed = hasCompletedVariant(animalId, variantId);
       if (isAnimalVisible) {
         return isVariantVisible(variant, completed);
-      } else {
-        return isVariantInScope(variant, completed);
       }
+      return isVariantInScope(variant, completed);
     });
   }
 
@@ -55,9 +54,9 @@
     animalId: AnimalId,
     predicate: (value: [AnimalVariantId, AnimalVariant]) => boolean,
   ): boolean {
-    return trackerData.animals[animalId].variantTiers.some((tier) => {
-      return tierEntries(tier).some(predicate);
-    });
+    return trackerData.animals[animalId].variantTiers.some((tier) =>
+      tierEntries(tier).some((entry) => predicate(entry)),
+    );
   }
 
   function tierEntries(tier: AnimalVariantTier): [AnimalVariantId, AnimalVariant][] {

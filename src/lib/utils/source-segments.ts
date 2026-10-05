@@ -669,13 +669,16 @@ function crownRequestSubject(questName: string): string {
   return questName.replace(/^Crown Request\s*/, "");
 }
 
+function same(text: string): StoreClause {
+  return { branch: text, clause: text };
+}
+
 function describeStoreAvailability(
   condition: AvailabilityCondition,
   lookups: SegmentLookups,
   storeQuestIds: ReadonlySet<QuestId>,
 ): StoreClause[] | undefined {
   const opts = { locale: lookups.locale };
-  const same = (text: string): StoreClause => ({ branch: text, clause: text });
 
   switch (condition.type) {
     case "all":

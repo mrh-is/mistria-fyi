@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { type GitResult, parseBaseRef, planChangedTestRun } from "./test-changed.js";
+import { parseBaseRef, planChangedTestRun } from "./test-changed.js";
+
+import type { GitResult } from "./test-changed.js";
 
 function result(status: number, stdout = "", stderr = ""): GitResult {
   return { status, stderr, stdout };
@@ -14,7 +16,7 @@ describe("planChangedTestRun", () => {
       mode: "full",
       reason: "Git could not resolve origin/main to a commit.",
     });
-    expect(runGit).toHaveBeenCalledOnce();
+    expect(runGit).toHaveBeenCalledTimes(1);
   });
 
   it("falls back to the full suite when Git cannot enumerate changes", () => {

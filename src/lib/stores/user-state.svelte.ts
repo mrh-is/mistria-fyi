@@ -16,7 +16,7 @@ import {
   relationshipBranch,
   relationshipRank,
 } from "#lib/engine/relationships.js";
-import { deriveProgressionState, type UserProgressionState } from "#lib/engine/visibility.js";
+import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { isWeatherInSeason } from "#lib/engine/world-state.js";
 import {
   AVAILABILITY_WINDOWS,
@@ -25,9 +25,10 @@ import {
   legacyAvailabilityWindows,
 } from "#lib/types/availability.js";
 import { SEASONS, VILLAGER_RELATIONSHIPS, WEATHERS } from "#lib/types/tracker-data.js";
-import { recordEntries, recordKeys } from "#lib/utils.js";
+import { getOrCreate, recordEntries, recordKeys } from "#lib/utils.js";
 import { tryGetItem, trySetItem } from "#lib/utils/local-storage.js";
 
+import type { UserProgressionState } from "#lib/engine/visibility.js";
 import type { AvailabilityWindow, LegacyAvailabilityMode } from "#lib/types/availability.js";
 import type {
   AnimalId,
@@ -224,7 +225,11 @@ function addStartingItems(completed: CompletedState): void {
   }
 
   for (const [animalId, animal] of recordEntries(trackerData.animals)) {
-    const variantSet = (completed.animals[animalId] ??= new SvelteSet<AnimalVariantId>());
+    const variantSet = getOrCreate(
+      completed.animals,
+      animalId,
+      () => new SvelteSet<AnimalVariantId>(),
+    );
     for (const tier of animal.variantTiers) {
       for (const [variantId, variant] of recordEntries(tier)) {
         if (variant.source.type === "default") {
@@ -394,7 +399,7 @@ function createUserState() {
   );
 
   // Auto-save to localStorage (debounced)
-  if (typeof window !== "undefined") {
+  if ("window" in globalThis) {
     $effect.root(() => {
       $effect(() => {
         if (!_persistenceReady) return;
@@ -408,7 +413,7 @@ function createUserState() {
       });
     });
 
-    const windowWithEvents = window as { addEventListener?: Window["addEventListener"] };
+    const windowWithEvents = globalThis.window as { addEventListener?: Window["addEventListener"] };
     windowWithEvents.addEventListener?.("pagehide", flushCurrentState);
     // A page restored from the back/forward cache missed any storage events fired while frozen.
     windowWithEvents.addEventListener?.("pageshow", (event) => {
@@ -563,7 +568,11 @@ function createUserState() {
       // Animal variants
       if (imported.animals) {
         for (const [animalId, variants] of recordEntries(imported.animals)) {
-          const existing = (state.completed.animals[animalId] ??= new SvelteSet<AnimalVariantId>());
+          const existing = getOrCreate(
+            state.completed.animals,
+            animalId,
+            () => new SvelteSet<AnimalVariantId>(),
+          );
           for (const v of variants) {
             if (!existing.has(v)) {
               existing.add(v);
@@ -576,8 +585,11 @@ function createUserState() {
       // Animal cosmetics
       if (imported.animalCosmetics) {
         for (const [animalId, cosmetics] of recordEntries(imported.animalCosmetics)) {
-          const existing = (state.completed.animalCosmetics[animalId] ??=
-            new SvelteSet<CosmeticId>());
+          const existing = getOrCreate(
+            state.completed.animalCosmetics,
+            animalId,
+            () => new SvelteSet<CosmeticId>(),
+          );
           for (const c of cosmetics) {
             if (!existing.has(c)) {
               existing.add(c);
@@ -950,11 +962,19 @@ function createUserState() {
       toggleInSet(state.completed.almanacRecipes, id);
     },
     toggleAnimalCosmetic(animalId: AnimalId, cosmeticId: CosmeticId) {
-      const set = (state.completed.animalCosmetics[animalId] ??= new SvelteSet<CosmeticId>());
+      const set = getOrCreate(
+        state.completed.animalCosmetics,
+        animalId,
+        () => new SvelteSet<CosmeticId>(),
+      );
       toggleInSet(set, cosmeticId);
     },
     toggleAnimalVariant(animalId: AnimalId, variantId: AnimalVariantId) {
-      const set = (state.completed.animals[animalId] ??= new SvelteSet<AnimalVariantId>());
+      const set = getOrCreate(
+        state.completed.animals,
+        animalId,
+        () => new SvelteSet<AnimalVariantId>(),
+      );
       toggleInSet(set, variantId);
     },
     toggleAvailabilityWindow(window: AvailabilityWindow) {
@@ -1304,7 +1324,7 @@ function isStringArray(value: unknown): value is string[] {
 }
 
 function isStringArrayRecord(value: unknown): value is Record<string, string[]> {
-  return isRecord(value) && Object.values(value).every(isStringArray);
+  return isRecord(value) && Object.values(value).every((entry) => isStringArray(entry));
 }
 
 // ─── Serialization helpers ───────────────────────────────────────────
@@ -1317,7 +1337,8 @@ function knownBrandedSet<T>(
 }
 
 function nextQuestState(current: QuestState): QuestState {
-  return current === "none" ? "obtained" : current === "obtained" ? "completed" : "none";
+  if (current === "none") return "obtained";
+  return current === "obtained" ? "completed" : "none";
 }
 
 function normalizeAlmanacIds(ids: string[]): Set<ItemId> {
@@ -1391,30 +1412,30 @@ function serialize(state: UserState, source?: Record<string, unknown>): string {
   const s: SerializedState = {
     availabilityWindows: [...state.availabilityWindows],
     completed: {
-      almanac: [...state.completed.almanac].sort(),
-      almanacRecipes: [...state.completed.almanacRecipes].sort(),
+      almanac: [...state.completed.almanac].toSorted(),
+      almanacRecipes: [...state.completed.almanacRecipes].toSorted(),
       animalCosmetics: Object.fromEntries(
-        Object.entries(state.completed.animalCosmetics).map(([k, v]) => [k, [...v].sort()]),
+        Object.entries(state.completed.animalCosmetics).map(([k, v]) => [k, [...v].toSorted()]),
       ),
       animals: Object.fromEntries(
-        Object.entries(state.completed.animals).map(([k, v]) => [k, [...v].sort()]),
+        Object.entries(state.completed.animals).map(([k, v]) => [k, [...v].toSorted()]),
       ),
       childChoice: state.completed.childChoice,
-      cosmetics: [...state.completed.cosmetics].sort(),
-      dates: [...state.completed.dates].sort(),
+      cosmetics: [...state.completed.cosmetics].toSorted(),
+      dates: [...state.completed.dates].toSorted(),
       hasUpperFloor: state.completed.hasUpperFloor,
       mines: {
         floor: state.completed.mines.floor,
-        spells: [...state.completed.mines.spells].sort(),
+        spells: [...state.completed.mines.spells].toSorted(),
       },
-      museum: [...state.completed.museum].sort(),
-      petCosmetics: [...state.completed.petCosmetics].sort(),
-      petSkins: [...state.completed.petSkins].sort(),
+      museum: [...state.completed.museum].toSorted(),
+      petCosmetics: [...state.completed.petCosmetics].toSorted(),
+      petSkins: [...state.completed.petSkins].toSorted(),
       questStates: filterRecord(state.completed.questStates, (v) => v !== "none"),
       reachedSeason: state.completed.reachedSeason,
       renown: state.completed.renown,
       skillLevels: filterRecord(state.completed.skillLevels, (v) => v > 0),
-      unlockedPerks: [...state.completed.unlockedPerks].sort(),
+      unlockedPerks: [...state.completed.unlockedPerks].toSorted(),
       villagerLevels: filterRecord(state.completed.villagerLevels, (v) => v > 0),
       villagerRelationships: filterRecord(
         state.completed.villagerRelationships as Record<string, VillagerRelationship>,

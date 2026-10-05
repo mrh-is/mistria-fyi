@@ -24,8 +24,8 @@ describe("AlmanacContent", () => {
 
   it("renders section rows in animation-frame batches after opening a large section", async () => {
     const queuedFrames: FrameRequestCallback[] = [];
-    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
-      queuedFrames.push(callback);
+    vi.stubGlobal("requestAnimationFrame", (onFrame: FrameRequestCallback) => {
+      queuedFrames.push(onFrame);
       return queuedFrames.length;
     });
     vi.stubGlobal("cancelAnimationFrame", vi.fn());
@@ -42,7 +42,7 @@ describe("AlmanacContent", () => {
     });
     await fireEvent.click(trigger);
 
-    expect(view.container.querySelectorAll("[data-tracker-row]").length).toBe(0);
+    expect(view.container.querySelectorAll("[data-tracker-row]")).toHaveLength(0);
     expect(view.getByText("Loading items…")).toBeInTheDocument();
     expect(queuedFrames.length).toBeGreaterThan(0);
 
@@ -55,6 +55,7 @@ describe("AlmanacContent", () => {
 
     while (queuedFrames.length > 0) {
       queuedFrames.shift()?.(0);
+      // oxlint-disable-next-line no-await-in-loop -- each frame must flush before the next is dequeued
       await tick();
     }
 
@@ -78,5 +79,5 @@ describe("AlmanacContent", () => {
 });
 
 function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 }

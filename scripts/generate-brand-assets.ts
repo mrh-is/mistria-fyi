@@ -1,6 +1,7 @@
 import { chromium } from "@playwright/test";
 import { spawn } from "node:child_process";
 import { join } from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
@@ -51,7 +52,7 @@ async function createIcon(size: number, maskable = false): Promise<Buffer> {
 }
 
 async function createOgImage(): Promise<void> {
-  const port = 48171;
+  const port = 48_171;
   const server = spawn(
     "pnpm",
     ["exec", "vite", "dev", "--host", "127.0.0.1", "--port", String(port)],
@@ -63,10 +64,12 @@ async function createOgImage(): Promise<void> {
   try {
     for (let attempt = 0; attempt < 50; attempt += 1) {
       try {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- readiness polling must retry sequentially until the dev server answers
         await fetch(`http://127.0.0.1:${port}/dev/og-image`);
         break;
       } catch {
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        // oxlint-disable-next-line eslint/no-await-in-loop -- delay between sequential readiness retries
+        await sleep(100);
       }
     }
     const browser = await chromium.launch();
@@ -144,4 +147,4 @@ function svg(content: string, width: number, height: number): Buffer {
   );
 }
 
-void main();
+await main();

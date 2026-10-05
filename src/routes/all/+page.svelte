@@ -8,16 +8,16 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { registerSourceFilters } from "#lib/utils/source-filter-registration.svelte.js";
 
-  import AlmanacSection from "./AlmanacSection.svelte";
-  import AnimalsSection from "./AnimalsSection.svelte";
-  import CosmeticsSection from "./CosmeticsSection.svelte";
-  import MinesSection from "./MinesSection.svelte";
-  import MuseumSection from "./MuseumSection.svelte";
-  import QuestsSection from "./QuestsSection.svelte";
-  import RecipesSection from "./RecipesSection.svelte";
-  import RenownSection from "./RenownSection.svelte";
-  import SkillsSection from "./SkillsSection.svelte";
-  import VillagersSection from "./VillagersSection.svelte";
+  import AlmanacSection from "./almanac-section.svelte";
+  import AnimalsSection from "./animals-section.svelte";
+  import CosmeticsSection from "./cosmetics-section.svelte";
+  import MinesSection from "./mines-section.svelte";
+  import MuseumSection from "./museum-section.svelte";
+  import QuestsSection from "./quests-section.svelte";
+  import RecipesSection from "./recipes-section.svelte";
+  import RenownSection from "./renown-section.svelte";
+  import SkillsSection from "./skills-section.svelte";
+  import VillagersSection from "./villagers-section.svelte";
 
   import type { CategoryKey } from "#lib/data/categories.js";
 

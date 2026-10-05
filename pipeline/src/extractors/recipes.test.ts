@@ -30,8 +30,8 @@ function makeFiddle(overrides: Record<string, unknown> = {}) {
 
 describe("extractRecipes", () => {
   beforeEach(() => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
-    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
+    vi.spyOn(console, "warn").mockReturnValue(undefined);
   });
 
   afterEach(() => {
@@ -1189,8 +1189,8 @@ describe("extractRecipes", () => {
 
 describe("extractRecipes — stock requirement visibility", () => {
   beforeEach(() => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
-    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
+    vi.spyOn(console, "warn").mockReturnValue(undefined);
   });
 
   afterEach(() => {

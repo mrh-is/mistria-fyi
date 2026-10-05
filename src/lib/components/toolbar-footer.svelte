@@ -8,7 +8,6 @@
   import { prefersReducedMotion } from "svelte/motion";
   import { fade, fly } from "svelte/transition";
 
-  import { page } from "$app/state";
   import FeedbackPanel from "#lib/components/feedback-panel.svelte";
   import FoldoutPanel from "#lib/components/foldout-panel.svelte";
   import QuickSettingsPanel from "#lib/components/quick-settings-panel.svelte";
@@ -21,6 +20,7 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
+  import { page } from "$app/state";
 
   import type { PageMetadata } from "#lib/data/page-metadata.js";
 
@@ -54,13 +54,18 @@
     previousPathname = currentPathname;
   });
 
+  async function afterTick(run: () => void): Promise<void> {
+    await tick();
+    run();
+  }
+
   $effect(() => {
     if (activePanel !== null && activePanel !== "feedback" && activePanel !== previousPanel) {
-      void tick().then(() => panelElement?.querySelector<HTMLElement>("button, a")?.focus());
+      void afterTick(() => panelElement?.querySelector<HTMLElement>("button, a")?.focus());
     } else if (activePanel === null && previousPanel !== null) {
       const focusTarget = panelOpener;
       panelOpener = null;
-      void tick().then(() => {
+      void afterTick(() => {
         if (focusTarget?.isConnected) focusTarget.focus();
       });
     }
@@ -93,7 +98,7 @@
     toolbarState.closeSearch();
     const focusTarget = searchOpener;
     searchOpener = null;
-    void tick().then(() => {
+    void afterTick(() => {
       const restoredTarget = focusTarget?.isConnected
         ? focusTarget
         : document.querySelector<HTMLElement>("[data-toolbar-search-trigger]");

@@ -69,17 +69,18 @@
       return;
     }
     let cancelled = false;
-    void Promise.all([
-      loadNames(targetLocale, LOCALIZED_CATEGORIES),
-      loadNames("en", LOCALIZED_CATEGORIES),
-    ]).then(
-      () => {
-        if (!cancelled) namesLocale = targetLocale;
-      },
-      () => {
+    void (async () => {
+      try {
+        await Promise.all([
+          loadNames(targetLocale, LOCALIZED_CATEGORIES),
+          loadNames("en", LOCALIZED_CATEGORIES),
+        ]);
+      } catch {
         if (!cancelled) namesError = true;
-      },
-    );
+        return;
+      }
+      if (!cancelled) namesLocale = targetLocale;
+    })();
     return () => {
       cancelled = true;
     };
@@ -166,7 +167,7 @@
       case "almanac":
         userState.toggleAlmanacItem(result.id as never);
         break;
-      case "animals": {
+      case "animals":
         if (result.id.startsWith("pet-cosmetic:")) {
           const petCosmeticId = result.id.slice("pet-cosmetic:".length);
           userState.togglePetCosmetic(petCosmeticId as PetCosmeticSetId);
@@ -182,7 +183,7 @@
           }
         }
         break;
-      }
+
       case "cosmetics":
         userState.toggleCosmetic(result.id as never);
         break;

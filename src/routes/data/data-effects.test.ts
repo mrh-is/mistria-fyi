@@ -29,8 +29,8 @@ describe("data effects", () => {
 
     const cleared = closeScanner(scanner);
 
-    expect(scanner.stop).toHaveBeenCalledOnce();
-    expect(scanner.destroy).toHaveBeenCalledOnce();
+    expect(scanner.stop).toHaveBeenCalledTimes(1);
+    expect(scanner.destroy).toHaveBeenCalledTimes(1);
     expect(cleared).toBeNull();
   });
 

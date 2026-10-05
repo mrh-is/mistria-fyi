@@ -4,12 +4,12 @@
   import IconLanguage from "@tabler/icons-svelte-runes/icons/language";
   import { slide } from "svelte/transition";
 
-  import { page } from "$app/state";
   import localeManifest from "#lib/data/locales.json";
   import { getName } from "#lib/data/names.js";
   import * as m from "#lib/paraglide/messages.js";
   import { getLocale } from "#lib/paraglide/runtime.js";
   import { localePreference } from "#lib/stores/locale-preference.svelte.js";
+  import { page } from "$app/state";
 
   import type { LocaleCode, LocaleManifest } from "#lib/types/locale.js";
 

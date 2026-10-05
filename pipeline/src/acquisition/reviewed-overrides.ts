@@ -17,9 +17,9 @@ import type {
   PerkId,
   QuestId,
   StoreId,
+  TrackerData,
   VillagerId,
 } from "#lib/types/tracker-data.js";
-import type { TrackerData } from "#lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
 import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator.js";

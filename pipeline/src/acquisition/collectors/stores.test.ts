@@ -104,7 +104,7 @@ describe("collectStoreSources", () => {
     collectStoreSources(fiddle, defaultContext, acc);
 
     const sources = acc.get("perk_item" as ItemId);
-    expect(sources.length).toBe(1);
+    expect(sources).toHaveLength(1);
     expect(sources[0]).toMatchObject({
       type: "store",
       storeId: "general",
@@ -132,7 +132,7 @@ describe("collectStoreSources", () => {
     const acc = new ItemSourceAccumulator();
     collectStoreSources(fiddle, defaultContext, acc);
 
-    expect(acc.get("real_item" as ItemId).length).toBe(1);
+    expect(acc.get("real_item" as ItemId)).toHaveLength(1);
   });
 
   it("handles cosmetic stock entries", () => {
@@ -166,6 +166,6 @@ describe("collectStoreSources", () => {
     collectStoreSources(fiddle, defaultContext, acc);
 
     expect(acc.get("skip_me" as ItemId)).toEqual([]);
-    expect(acc.get("keep_me" as ItemId).length).toBe(1);
+    expect(acc.get("keep_me" as ItemId)).toHaveLength(1);
   });
 });
