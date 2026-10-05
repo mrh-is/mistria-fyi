@@ -51,6 +51,8 @@ jobs:
           url=$(jq -r '.appnews.newsitems[0].url // empty' <<<"$news")
           version=$(grep -oE 'v[0-9]+(\.[0-9]+)+' <<<"$title" | head -n1 || true)
 
+          previous=$(gh pr list --state merged --search "\"Update tracker data\" in:title" \
+            --limit 1 --json number --jq '.[0].number // empty')
           notes="[${title}](${url:-https://store.steampowered.com/news/app/${STEAM_APP_ID}})"
           issue_title="Update tracker data for game ${version:-build ${BUILD_ID}}"
 
@@ -60,12 +62,15 @@ jobs:
           - Steam build: \`${BUILD_ID}\` (public branch)
           - Latest announcement: ${notes} (confirm it matches this build)
 
+          Follow [the game version update protocol](https://github.com/${GH_REPO}/blob/main/docs/game-version-update-protocol.md).${previous:+ Previous update: #${previous}.}
+
           ## Checklist (gaming PC)
 
           - [ ] Update Fields of Mistria in Steam and confirm the installed build matches
-          - [ ] Refresh \`pipeline/input/assets\` from the install
-          - [ ] Run \`pnpm run pipeline -- <path>\` to regenerate \`src/lib/data/tracker-data.json\`
-          - [ ] Review the diff for new, removed, or renamed items; add tests or pipeline fixes where needed
+          - [ ] Record the current game, app commit, serialized-state, and transfer versions
+          - [ ] Run \`MISTRIA_ASSETS=<path> pnpm run test:pipeline:assets\` and \`pnpm run pipeline -- <path>\`
+          - [ ] Classify changes and review local-state, backup, save-import, and transfer compatibility
+          - [ ] Post the compatibility report on the PR
           - [ ] Run \`pnpm run verify\`, then open a PR that closes this issue
 
           Agent: github-actions
