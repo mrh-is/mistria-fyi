@@ -2,33 +2,33 @@
   import { onDestroy } from "svelte";
   import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
-  import ConfirmSpoilerDialog from "$lib/components/confirm-spoiler-dialog.svelte";
-  import DatesSection from "$lib/components/dates-section.svelte";
-  import ExpandableSection from "$lib/components/expandable-section.svelte";
-  import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
-  import TrackerRow from "$lib/components/tracker-row.svelte";
-  import { Button } from "$lib/components/ui/button/index.js";
-  import { trackerData, trackerIndex } from "$lib/data/index.js";
-  import { getName, nameCollator } from "$lib/data/names.js";
-  import { isItemDimmed, isRowVisible, shouldCountItem } from "$lib/engine/availability.js";
-  import { isEntityNameVisible, isVisible } from "$lib/engine/visibility.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
-  import { recordEntries, recordValues } from "$lib/utils";
-  import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
-  import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
-  import { registerSourceFilters } from "$lib/utils/source-filter-registration.svelte.js";
-  import { createSpoilerGuard } from "$lib/utils/spoiler-guard.svelte.js";
-  import { showUndoToast } from "$lib/utils/undo-toast.js";
+  import ConfirmSpoilerDialog from "#lib/components/confirm-spoiler-dialog.svelte";
+  import DatesSection from "#lib/components/dates-section.svelte";
+  import ExpandableSection from "#lib/components/expandable-section.svelte";
+  import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
+  import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { Button } from "#lib/components/ui/button/index.js";
+  import { trackerData, trackerIndex } from "#lib/data/index.js";
+  import { getName, nameCollator } from "#lib/data/names.js";
+  import { isItemDimmed, isRowVisible, shouldCountItem } from "#lib/engine/availability.js";
+  import { isEntityNameVisible, isVisible } from "#lib/engine/visibility.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
+  import { recordEntries, recordValues } from "#lib/utils.js";
+  import { celebrate, celebrateCategory } from "#lib/utils/celebrate.js";
+  import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
+  import { registerSourceFilters } from "#lib/utils/source-filter-registration.svelte.js";
+  import { createSpoilerGuard } from "#lib/utils/spoiler-guard.svelte.js";
+  import { showUndoToast } from "#lib/utils/undo-toast.js";
 
   import AllCompleted from "./all-completed.svelte";
 
-  import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
-  import type { Source } from "$lib/types/acquisition";
-  import type { LocaleCode } from "$lib/types/locale.js";
-  import type { AlmanacEntry, ItemId } from "$lib/types/tracker-data.js";
-  import type { VisibilityCondition } from "$lib/types/visibility.js";
+  import type { TrackerRowDisplay } from "#lib/components/tracker-row.svelte";
+  import type { Source } from "#lib/types/acquisition.js";
+  import type { LocaleCode } from "#lib/types/locale.js";
+  import type { AlmanacEntry, ItemId } from "#lib/types/tracker-data.js";
+  import type { VisibilityCondition } from "#lib/types/visibility.js";
 
   let { locale }: { locale: LocaleCode } = $props();
 

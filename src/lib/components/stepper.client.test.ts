@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
-import Stepper from "$lib/components/stepper.svelte";
+import Stepper from "#lib/components/stepper.svelte";
 
 describe("Stepper accessibility", () => {
   it("groups its controls with the current value", () => {

@@ -8,9 +8,9 @@ const runtime = vi.hoisted(() => ({
 
 const names = vi.hoisted(() => ({ loadNames: vi.fn(() => Promise.resolve()) }));
 
-vi.mock("$app/environment", () => environment);
-vi.mock("$lib/paraglide/runtime.js", () => runtime);
-vi.mock("$lib/data/names.js", () => names);
+vi.mock("$app/env", () => environment);
+vi.mock("#lib/paraglide/runtime.js", () => runtime);
+vi.mock("#lib/data/names.js", () => names);
 
 const { load } = await import("./+layout.js");
 

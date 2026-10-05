@@ -8,9 +8,9 @@ import {
   extractHeartLevelChanges,
   stampStoreVisibility,
   stampVillagerVisibility,
-} from "./entity-visibility";
+} from "./entity-visibility.js";
 
-import type { Source } from "$lib/types/acquisition.js";
+import type { Source } from "#lib/types/acquisition.js";
 import type {
   AnimalId,
   CosmeticId,
@@ -23,10 +23,10 @@ import type {
   StoreId,
   TrackerData,
   VillagerId,
-} from "$lib/types/tracker-data.js";
+} from "#lib/types/tracker-data.js";
 
-import type { CutsceneQuestMap } from "./cutscene-quest-map";
-import type { QuestChainData } from "./quest-chains";
+import type { CutsceneQuestMap } from "./cutscene-quest-map.js";
+import type { QuestChainData } from "./quest-chains.js";
 
 function assertSourceWithDetails(
   source: Source,

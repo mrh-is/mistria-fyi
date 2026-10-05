@@ -1,10 +1,10 @@
-import { LOCALE_CODES } from "$lib/types/locale.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { expectArray, expectStringArray } from "../data-shapes";
-import { localizeField } from "../localize";
-import { type ParsedGameData, sourceFileFor } from "../parse-fiddle";
+import { expectArray, expectStringArray } from "../data-shapes.js";
+import { localizeField } from "../localize.js";
+import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
 
-import type { LocaleCode } from "$lib/types/locale.js";
+import type { LocaleCode } from "#lib/types/locale.js";
 import type {
   ItemId,
   MuseumWing,
@@ -12,7 +12,7 @@ import type {
   MuseumWingSet,
   MuseumWingSetId,
   TrackerData,
-} from "$lib/types/tracker-data.js";
+} from "#lib/types/tracker-data.js";
 
 /**
  * Projects museum wings and sets in the canonical UI display order. Object insertion order is only

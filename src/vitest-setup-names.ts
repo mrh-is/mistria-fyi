@@ -1,5 +1,5 @@
-import { loadNames, LOCALIZED_CATEGORIES } from "$lib/data/names.js";
-import { LOCALE_CODES } from "$lib/types/locale.js";
+import { loadNames, LOCALIZED_CATEGORIES } from "#lib/data/names.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
 
 // The app awaits name chunks in each route's `load()` before anything calls `getName`. Tests call
 // engine functions and mount components directly, with no route in front of them, so every chunk

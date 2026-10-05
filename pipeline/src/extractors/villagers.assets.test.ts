@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { makeFiddle, requireGameAssetsDir } from "../test-helpers";
-import { extractVillagers } from "./villagers";
+import { makeFiddle, requireGameAssetsDir } from "../test-helpers.js";
+import { extractVillagers } from "./villagers.js";
 
-import type { VillagerId } from "$lib/types/tracker-data.js";
+import type { VillagerId } from "#lib/types/tracker-data.js";
 
 const balor = "balor" as VillagerId;
 const adeline = "adeline" as VillagerId;

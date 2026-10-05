@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { afterAll, describe, expect, it } from "vitest";
 
-import { createAssetsFixture, removeAssetsFixtures } from "./test-helpers";
+import { createAssetsFixture, removeAssetsFixtures } from "./test-helpers.js";
 
 let assetsDir: string;
 

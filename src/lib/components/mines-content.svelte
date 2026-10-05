@@ -1,23 +1,23 @@
 <script lang="ts">
-  import ConfirmSpoilerDialog from "$lib/components/confirm-spoiler-dialog.svelte";
-  import ExpandableSection from "$lib/components/expandable-section.svelte";
-  import MineFloorRecord from "$lib/components/mine-floor-record.svelte";
-  import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
-  import TrackerRow from "$lib/components/tracker-row.svelte";
-  import { trackerData, trackerIndex } from "$lib/data/index.js";
-  import { getName, nameCollator } from "$lib/data/names.js";
-  import { isEntityNameVisible } from "$lib/engine/visibility.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
-  import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
-  import { registerSourceFilters } from "$lib/utils/source-filter-registration.svelte.js";
-  import { createSpoilerGuard } from "$lib/utils/spoiler-guard.svelte.js";
-  import { showUndoToast } from "$lib/utils/undo-toast.js";
+  import ConfirmSpoilerDialog from "#lib/components/confirm-spoiler-dialog.svelte";
+  import ExpandableSection from "#lib/components/expandable-section.svelte";
+  import MineFloorRecord from "#lib/components/mine-floor-record.svelte";
+  import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
+  import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { trackerData, trackerIndex } from "#lib/data/index.js";
+  import { getName, nameCollator } from "#lib/data/names.js";
+  import { isEntityNameVisible } from "#lib/engine/visibility.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
+  import { celebrate, celebrateCategory } from "#lib/utils/celebrate.js";
+  import { registerSourceFilters } from "#lib/utils/source-filter-registration.svelte.js";
+  import { createSpoilerGuard } from "#lib/utils/spoiler-guard.svelte.js";
+  import { showUndoToast } from "#lib/utils/undo-toast.js";
 
-  import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
-  import type { LocaleCode } from "$lib/types/locale.js";
-  import type { SpellId } from "$lib/types/tracker-data.js";
+  import type { TrackerRowDisplay } from "#lib/components/tracker-row.svelte";
+  import type { LocaleCode } from "#lib/types/locale.js";
+  import type { SpellId } from "#lib/types/tracker-data.js";
 
   const spoilerGuard = createSpoilerGuard();
 

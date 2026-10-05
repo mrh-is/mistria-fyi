@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { parseFiddle, parseFiddleFromZip, sourceFileFor } from "./parse-fiddle";
-import { createAssetsFixture, writeStoredZipFixture } from "./test-helpers";
+import { parseFiddle, parseFiddleFromZip, sourceFileFor } from "./parse-fiddle.js";
+import { createAssetsFixture, writeStoredZipFixture } from "./test-helpers.js";
 
 describe("parseFiddle", () => {
   it("assembles nested TOML files and records source provenance", () => {

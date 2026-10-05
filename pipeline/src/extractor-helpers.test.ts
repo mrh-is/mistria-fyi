@@ -5,8 +5,8 @@ import {
   forEachItem,
   forEachQuest,
   TRACKED_QUEST_GROUPS,
-} from "./extractor-helpers";
-import { makeFiddle as makeFiddleBase } from "./test-helpers";
+} from "./extractor-helpers.js";
+import { makeFiddle as makeFiddleBase } from "./test-helpers.js";
 
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({ items: {}, quests: {}, ...overrides });

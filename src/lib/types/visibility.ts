@@ -1,4 +1,4 @@
-import type { PerkId, QuestId, Season, SkillId, VillagerId } from "./tracker-data";
+import type { PerkId, QuestId, Season, SkillId, VillagerId } from "./tracker-data.js";
 
 export type QuestVisibility = "available" | "completed" | "unavailable";
 

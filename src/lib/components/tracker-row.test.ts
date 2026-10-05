@@ -1,9 +1,9 @@
 import { render } from "svelte/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import TrackerRow from "$lib/components/tracker-row.svelte";
-import { FeedbackContext } from "$lib/feedback/context.svelte.js";
-import { userState } from "$lib/stores/user-state.svelte.js";
+import TrackerRow from "#lib/components/tracker-row.svelte";
+import { FeedbackContext } from "#lib/feedback/context.svelte.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
 
 describe("TrackerRow", () => {
   beforeEach(() => {

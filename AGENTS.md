@@ -185,13 +185,14 @@ These rules prevent accidental damage to generated or vendored code:
 - **Linting**: oxlint for every script, ESLint only for Svelte templates. See
   [docs/development-workflow.md](docs/development-workflow.md#linting--formatting) for which tool
   owns which rule and how to suppress each.
-- **Imports**: Auto-sorted by oxfmt — externals first, then `$lib`/`$app` internals, then relative.
-  With `moduleResolution: "bundler"`, extensionless specifiers resolve TS modules directly, so write
-  relative and aliased imports of TypeScript modules without a `.js` suffix (e.g. `./availability`,
-  not `./availability.js`). Keep the extension only when it names a real, non-TypeScript asset (a
-  generated `.js` file with no `.ts` source, such as `src/lib/paraglide/runtime.js`) or is required
-  by an external tool. `vi.mock(...)` specifiers must match the import path exactly, so update them
-  alongside the imports they mock.
+- **Imports**: Auto-sorted by oxfmt — externals first, then `#lib`/`$app` internals, then relative.
+  Import `src/lib` through the `#lib` subpath import (declared in `package.json`'s `imports`);
+  SvelteKit 3 removed the `$lib` alias. Always write the file extension: `#lib` subpath imports
+  don't resolve without one, and relative imports follow the same rule for consistency. Name a
+  TypeScript module by its `.js` output (`./availability.js`, `#lib/utils.js`, `./store.svelte.js`)
+  and every other file by its real extension (`.svelte`, `.json`, `.css`). SvelteKit's virtual
+  `./$types` modules are the one exception. `vi.mock(...)` specifiers must match the import path
+  exactly, so update them alongside the imports they mock.
 - **Styling**: Tailwind utilities & scoped `<style>` blocks, both on the design tokens in
   `src/app.css`; Stylelint rejects color, type-size, shadow, & radius literals in scoped CSS. See
   [docs/styling.md](docs/styling.md).

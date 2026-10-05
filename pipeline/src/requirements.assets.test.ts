@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { parseFiddle } from "./parse-fiddle";
-import { buildRequirementDefinitions, parseRequirements } from "./requirements";
-import { requireGameAssetsDir } from "./test-helpers";
+import { parseFiddle } from "./parse-fiddle.js";
+import { buildRequirementDefinitions, parseRequirements } from "./requirements.js";
+import { requireGameAssetsDir } from "./test-helpers.js";
 
 describe("requirements — v1.0.5 assets", () => {
   it("classifies and resolves the complete requirements registry", () => {

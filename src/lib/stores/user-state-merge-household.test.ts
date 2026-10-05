@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { userState } from "$lib/stores/user-state.svelte.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
 
-import type { VillagerId } from "$lib/types/tracker-data.js";
+import type { VillagerId } from "#lib/types/tracker-data.js";
 
 const ADELINE = "adeline" as VillagerId;
 const BALOR = "balor" as VillagerId;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { parseFiddle, sourceFileFor } from "./parse-fiddle";
-import { requireGameAssetsDir } from "./test-helpers";
+import { parseFiddle, sourceFileFor } from "./parse-fiddle.js";
+import { requireGameAssetsDir } from "./test-helpers.js";
 
 describe("parseFiddle — v1.0.5 assets", () => {
   it("parses all files with representative paths", () => {

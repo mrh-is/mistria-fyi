@@ -1,9 +1,9 @@
 import { fireEvent, render } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 
-import MineFloorRecordHarness from "$lib/components/mine-floor-record.test-harness.svelte";
+import MineFloorRecordHarness from "#lib/components/mine-floor-record.test-harness.svelte";
 
-import type { MinesBiome, MinesBiomeId } from "$lib/types/tracker-data.js";
+import type { MinesBiome, MinesBiomeId } from "#lib/types/tracker-data.js";
 
 const biomes: MinesBiome[] = [
   { floors: { start: 1, end: 20 }, id: "upper_mines" as MinesBiomeId },

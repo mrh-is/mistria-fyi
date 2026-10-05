@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { SITE_NAME, SITE_ORIGIN } from "$lib/data/page-metadata.js";
-  import { deLocalizeHref, locales, localizeHref } from "$lib/paraglide/runtime.js";
+  import { SITE_NAME, SITE_ORIGIN } from "#lib/data/page-metadata.js";
+  import { deLocalizeHref, locales, localizeHref } from "#lib/paraglide/runtime.js";
 
-  import type { PageMetadata } from "$lib/data/page-metadata.js";
+  import type { PageMetadata } from "#lib/data/page-metadata.js";
 
   let { metadata, pathname }: { metadata: PageMetadata; pathname: string } = $props();
   let canonicalUrl = $derived(new URL(pathname, SITE_ORIGIN).href);

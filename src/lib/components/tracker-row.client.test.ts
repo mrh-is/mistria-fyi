@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
-import TrackerRow from "$lib/components/tracker-row.svelte";
-import { FeedbackContext } from "$lib/feedback/context.svelte.js";
+import TrackerRow from "#lib/components/tracker-row.svelte";
+import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 
 describe("TrackerRow reportable metadata", () => {
   it("reveals a ready sprite with the spoiler name", async () => {

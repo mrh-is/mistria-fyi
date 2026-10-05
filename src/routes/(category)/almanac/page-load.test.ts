@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { getName } from "$lib/data/names";
-import * as m from "$lib/paraglide/messages.js";
+import { getName } from "#lib/data/names.js";
+import * as m from "#lib/paraglide/messages.js";
 
-import { load } from "./+page";
+import { load } from "./+page.js";
 
 describe("almanac page load", () => {
   it("renders metadata in the layout's locale during SSR, not the base locale", async () => {

@@ -1,7 +1,7 @@
 <script lang="ts">
   import IconX from "@tabler/icons-svelte-runes/icons/x";
 
-  import * as m from "$lib/paraglide/messages.js";
+  import * as m from "#lib/paraglide/messages.js";
 
   import type { Snippet } from "svelte";
 

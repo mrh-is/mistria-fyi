@@ -2,7 +2,7 @@ import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
 import type { Component } from "svelte";
 
-import type { Source } from "$lib/types/acquisition";
+import type { Source } from "#lib/types/acquisition.js";
 
 export interface SourceFilter {
   icon: Component;

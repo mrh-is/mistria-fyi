@@ -3,9 +3,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const { select } = vi.hoisted(() => ({ select: vi.fn<(locale: string) => Promise<boolean>>() }));
 
-vi.mock("$lib/stores/locale-preference.svelte.js", () => ({ localePreference: { select } }));
+vi.mock("#lib/stores/locale-preference.svelte.js", () => ({ localePreference: { select } }));
 
-import QuickSettingsLanguagePicker from "$lib/components/quick-settings-language-picker.svelte";
+import QuickSettingsLanguagePicker from "#lib/components/quick-settings-language-picker.svelte";
 
 afterEach(() => {
   cleanup();

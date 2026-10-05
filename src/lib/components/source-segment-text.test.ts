@@ -1,10 +1,10 @@
 import { render } from "svelte/server";
 import { afterEach, describe, expect, it } from "vitest";
 
-import SourceSegmentText from "$lib/components/source-segment-text.svelte";
-import { userState } from "$lib/stores/user-state.svelte.js";
+import SourceSegmentText from "#lib/components/source-segment-text.svelte";
+import { userState } from "#lib/stores/user-state.svelte.js";
 
-import type { SourceSegment } from "$lib/utils/source-segments.js";
+import type { SourceSegment } from "#lib/utils/source-segments.js";
 
 afterEach(() => {
   userState.resetAll();

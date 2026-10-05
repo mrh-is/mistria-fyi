@@ -6,7 +6,7 @@
   import TriangleAlertIcon from "@tabler/icons-svelte-runes/icons/alert-triangle";
   import { Toaster as Sonner, type ToasterProps as SonnerProps } from "svelte-sonner";
 
-  import { theme } from "$lib/stores/theme.svelte.js";
+  import { theme } from "#lib/stores/theme.svelte.js";
 
   let { ...restProps }: SonnerProps = $props();
 </script>

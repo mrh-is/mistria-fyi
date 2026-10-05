@@ -1,10 +1,10 @@
-import { forEachItem } from "../extractor-helpers";
+import { forEachItem } from "../extractor-helpers.js";
 
-import type { Source } from "$lib/types/acquisition.js";
-import type { ItemId, ProductionMethod, RecipeId } from "$lib/types/tracker-data.js";
+import type { Source } from "#lib/types/acquisition.js";
+import type { ItemId, ProductionMethod, RecipeId } from "#lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../parse-fiddle";
-import type { ItemSourceAccumulator } from "./source-accumulator";
+import type { ParsedGameData } from "../parse-fiddle.js";
+import type { ItemSourceAccumulator } from "./source-accumulator.js";
 
 interface ItemMethodEntry {
   itemId: string;

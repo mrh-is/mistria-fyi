@@ -9,20 +9,20 @@
   import { fade, fly } from "svelte/transition";
 
   import { page } from "$app/state";
-  import FeedbackPanel from "$lib/components/feedback-panel.svelte";
-  import FoldoutPanel from "$lib/components/foldout-panel.svelte";
-  import QuickSettingsPanel from "$lib/components/quick-settings-panel.svelte";
-  import { Input } from "$lib/components/ui/input/index.js";
-  import VisibilityPanel from "$lib/components/visibility-panel.svelte";
-  import { getName } from "$lib/data/names.js";
-  import { getFeedbackContext } from "$lib/feedback/context.svelte.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { deLocalizeHref } from "$lib/paraglide/runtime.js";
-  import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
-  import { DEFAULT_AVAILABILITY_WINDOWS } from "$lib/types/availability.js";
+  import FeedbackPanel from "#lib/components/feedback-panel.svelte";
+  import FoldoutPanel from "#lib/components/foldout-panel.svelte";
+  import QuickSettingsPanel from "#lib/components/quick-settings-panel.svelte";
+  import { Input } from "#lib/components/ui/input/index.js";
+  import VisibilityPanel from "#lib/components/visibility-panel.svelte";
+  import { getName } from "#lib/data/names.js";
+  import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { deLocalizeHref } from "#lib/paraglide/runtime.js";
+  import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
+  import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 
-  import type { PageMetadata } from "$lib/data/page-metadata.js";
+  import type { PageMetadata } from "#lib/data/page-metadata.js";
 
   type ActivePanel = "feedback" | "settings" | "visibility" | null;
 

@@ -1,8 +1,8 @@
 import { render } from "svelte/server";
 import { afterEach, describe, expect, it } from "vitest";
 
-import CategoryGrid from "$lib/components/category-grid.svelte";
-import { getLocale, overwriteGetLocale } from "$lib/paraglide/runtime.js";
+import CategoryGrid from "#lib/components/category-grid.svelte";
+import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
 
 const complete = { completed: 2, filtered: 0, total: 2 };
 

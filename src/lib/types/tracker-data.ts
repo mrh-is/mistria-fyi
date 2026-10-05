@@ -1,5 +1,5 @@
-import type { DateId, Source, SourceTuple } from "./acquisition";
-import type { VisibilityCondition } from "./visibility";
+import type { DateId, Source, SourceTuple } from "./acquisition.js";
+import type { VisibilityCondition } from "./visibility.js";
 
 export type {
   ActivityId,
@@ -16,7 +16,7 @@ export type {
   SourceTuple,
   StationId,
   WaterType,
-} from "./acquisition";
+} from "./acquisition.js";
 
 /**
  * The category's label is the game's own UI string, resolved through `getName("ui", id, locale)`,

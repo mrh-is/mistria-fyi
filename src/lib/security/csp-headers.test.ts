@@ -2,22 +2,12 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { CSP_DIRECTIVES } from "./csp-directives.js";
+
 const headersPath = resolve(import.meta.dirname, "../../../_headers");
 const headersContent = readFileSync(headersPath, "utf-8");
 const appHtmlPath = resolve(import.meta.dirname, "../../app.html");
 const appHtmlContent = readFileSync(appHtmlPath, "utf-8");
-const svelteConfigPath = resolve(import.meta.dirname, "../../../svelte.config.js");
-
-async function loadCspDirectives(): Promise<Record<string, string[]>> {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const config = await import(svelteConfigPath);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  const directives = config.default?.kit?.csp?.directives as Record<string, string[]> | undefined;
-  if (!directives) {
-    throw new Error("CSP directives not found in svelte.config.js");
-  }
-  return directives;
-}
 
 function parseHeadersCsp(content: string): Map<string, string> {
   const cspMatch = /Content-Security-Policy:\s*(.+)/.exec(content);
@@ -54,8 +44,8 @@ const requiredDirectiveNames = [
 ];
 
 describe("Content-Security-Policy", () => {
-  it("svelte.config.js defines CSP directives", async () => {
-    const directives = await loadCspDirectives();
+  it("CSP_DIRECTIVES defines CSP directives", () => {
+    const directives: Record<string, readonly string[]> = CSP_DIRECTIVES;
     expect(directives["default-src"]).toContain("none");
     expect(directives["script-src"]).toContain("self");
     expect(directives["object-src"]).toContain("none");
@@ -66,8 +56,8 @@ describe("Content-Security-Policy", () => {
     expect(headersContent).toContain("Content-Security-Policy:");
   });
 
-  it("svelte.config.js covers all required directives", async () => {
-    const directives = await loadCspDirectives();
+  it("CSP_DIRECTIVES covers all required directives", () => {
+    const directives: Record<string, readonly string[]> = CSP_DIRECTIVES;
     for (const name of requiredDirectiveNames) {
       expect(directives, `missing directive: ${name}`).toHaveProperty(name);
     }
@@ -80,8 +70,8 @@ describe("Content-Security-Policy", () => {
     }
   });
 
-  it("svelte.config.js and _headers share the same directive values", async () => {
-    const directives = await loadCspDirectives();
+  it("CSP_DIRECTIVES and _headers share the same directive values", () => {
+    const directives: Record<string, readonly string[]> = CSP_DIRECTIVES;
     const headersParsed = parseHeadersCsp(headersContent);
 
     for (const name of requiredDirectiveNames) {
@@ -91,7 +81,7 @@ describe("Content-Security-Policy", () => {
       for (const value of configValues) {
         expect(
           headersValue.includes(value),
-          `_headers directive "${name}" missing value "${value}" from svelte.config.js`,
+          `_headers directive "${name}" missing value "${value}" from CSP_DIRECTIVES`,
         ).toBe(true);
       }
     }
@@ -107,8 +97,8 @@ describe("Content-Security-Policy", () => {
     }
   });
 
-  it("does not allow unsafe-inline scripts or obsolete Google Fonts origins", async () => {
-    const directives = await loadCspDirectives();
+  it("does not allow unsafe-inline scripts or obsolete Google Fonts origins", () => {
+    const directives: Record<string, readonly string[]> = CSP_DIRECTIVES;
     const scriptSrc = directives["script-src"] ?? [];
     expect(scriptSrc).not.toContain("unsafe-inline");
 

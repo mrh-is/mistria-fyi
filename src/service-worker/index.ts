@@ -1,8 +1,3 @@
-/// <reference types="@sveltejs/kit" />
-/// <reference no-default-lib="true"/>
-/// <reference lib="esnext" />
-/// <reference lib="webworker" />
-
 import {
   cacheLocaleChunks,
   type CacheLocalesReply,
@@ -17,8 +12,9 @@ import {
   OFFLINE_LOCALES_CACHE,
   readOfflineLocales,
   rememberOfflineLocales,
-} from "$lib/engine/service-worker-cache.js";
-import { build, files, version } from "$service-worker";
+} from "#lib/engine/service-worker-cache.js";
+import { version } from "$app/env";
+import { assets, immutable } from "$app/manifest";
 
 /** Inlined by `localeNameChunksPlugin` (src/lib/build/locale-name-chunks.ts); absent in dev. */
 declare const __LOCALE_NAME_CHUNKS__: LocaleNameChunks | undefined;
@@ -27,7 +23,10 @@ const sw = self as unknown as ServiceWorkerGlobalScope;
 
 const CACHE = `cache-${version}`;
 const SPRITES_CACHE = "sprites-v1";
-const ASSETS = [...build, ...files];
+// Manifest paths are relative to the base path, which is the registration scope's pathname.
+const ASSETS = [...immutable, ...assets].map(
+  ({ path }) => new URL(path, sw.registration.scope).pathname,
+);
 const LOCALE_NAME_CHUNKS: LocaleNameChunks =
   typeof __LOCALE_NAME_CHUNKS__ === "undefined" ? {} : __LOCALE_NAME_CHUNKS__;
 const LOCALE_NAME_CHUNK_PATHS: ReadonlySet<string> = new Set(
@@ -96,7 +95,10 @@ sw.addEventListener("fetch", (event) => {
 
   if (isAsset) {
     event.respondWith(
-      caches.match(event.request).then(async (cached) => {
+      // Build assets are content-addressed, so a `Vary` header can't make a cached copy wrong. Vite's
+      // CORS middleware adds `Vary: Origin`, which would otherwise miss for module imports: they
+      // send an `Origin` header the precache requests didn't.
+      caches.match(event.request, { ignoreVary: true }).then(async (cached) => {
         if (cached) return cached;
         const response = await fetch(event.request);
         if (response.ok && isLazyAsset(url.pathname, LOCALE_NAME_CHUNK_PATHS)) {

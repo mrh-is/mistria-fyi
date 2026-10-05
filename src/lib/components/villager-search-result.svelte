@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { Icon } from "$lib/components/icon/index.js";
-  import TrackerPaper from "$lib/components/tracker-paper.svelte";
-  import { trackerData } from "$lib/data/index.js";
-  import { MAX_VILLAGER_LEVEL } from "$lib/engine/progress";
-  import * as m from "$lib/paraglide/messages.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
-  import { localizedHref } from "$lib/utils/localized-href";
+  import { Icon } from "#lib/components/icon/index.js";
+  import TrackerPaper from "#lib/components/tracker-paper.svelte";
+  import { trackerData } from "#lib/data/index.js";
+  import { MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
+  import { localizedHref } from "#lib/utils/localized-href.js";
 
-  import type { VillagerId } from "$lib/types/tracker-data.js";
+  import type { VillagerId } from "#lib/types/tracker-data.js";
 
   // Hearts aren't binary, so a villager result links to its record instead of offering a toggle.
   let { completed, id, name }: { completed: boolean; id: VillagerId; name: string } = $props();
@@ -23,7 +23,7 @@
   <TrackerPaper hasCutout={false}>
     <a
       class="villager-search-result__link"
-      href="{localizedHref('/villagers')}#villager-{id}"
+      href="{localizedHref('villagers')}#villager-{id}"
       aria-label={m.villager_relationship_level_aria({ level, max: MAX_VILLAGER_LEVEL, name })}
     >
       <span class="villager-search-result__mark" aria-hidden="true">

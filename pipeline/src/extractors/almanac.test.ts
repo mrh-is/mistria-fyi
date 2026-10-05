@@ -3,14 +3,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { parseFiddle } from "../parse-fiddle";
-import { extractAlmanac, readAlmanacCategories } from "./almanac";
+import { parseFiddle } from "../parse-fiddle.js";
+import { extractAlmanac, readAlmanacCategories } from "./almanac.js";
 
-import type { AlmanacCategoryId, AlmanacEntry } from "$lib/types/tracker-data.js";
+import type { AlmanacCategoryId, AlmanacEntry } from "#lib/types/tracker-data.js";
 
 const temporaryDirectories: string[] = [];
 
-vi.mock("../localize", () => ({
+vi.mock("../localize.js", () => ({
   localizeField: vi.fn((_assetsDir: string, input: { englishValue: string; id: string }) => {
     const fallsBack = input.id === "turnip";
     return {

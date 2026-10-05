@@ -3,7 +3,7 @@ import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
 import type { Attachment } from "svelte/attachments";
 
-import type { ReportableElement } from "$lib/feedback/types.js";
+import type { ReportableElement } from "#lib/feedback/types.js";
 
 type SelectionHandler = (element: ReportableElement) => void;
 

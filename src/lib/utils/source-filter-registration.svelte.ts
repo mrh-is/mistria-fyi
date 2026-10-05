@@ -1,10 +1,10 @@
 import { untrack } from "svelte";
 import { SvelteSet } from "svelte/reactivity";
 
-import { SOURCE_FILTERS } from "$lib/components/icon/index.js";
-import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
+import { SOURCE_FILTERS } from "#lib/components/icon/index.js";
+import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 
-import type { Source } from "$lib/types/acquisition.js";
+import type { Source } from "#lib/types/acquisition.js";
 
 export function registerSourceFilters(
   owner: string,

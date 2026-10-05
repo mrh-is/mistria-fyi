@@ -6,7 +6,7 @@ import ru from "./locale-fonts-ru.css?url";
 import zhHans from "./locale-fonts-zh-Hans.css?url";
 import zhHant from "./locale-fonts-zh-Hant.css?url";
 
-import type { LocaleCode } from "$lib/types/locale.js";
+import type { LocaleCode } from "#lib/types/locale.js";
 
 const LOCALE_FONT_STYLESHEETS: Partial<Record<LocaleCode, string>> = {
   ja,

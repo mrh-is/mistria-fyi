@@ -2,25 +2,25 @@
   import { untrack } from "svelte";
   import { toast } from "svelte-sonner";
 
-  import TrackerRowStack from "$lib/components/tracker-row-stack.svelte";
-  import TrackerRow from "$lib/components/tracker-row.svelte";
-  import VillagerSearchResult from "$lib/components/villager-search-result.svelte";
-  import { categoryNameForKey } from "$lib/data/categories.js";
-  import { trackerData } from "$lib/data/index.js";
-  import { hasNames, loadNames, LOCALIZED_CATEGORIES } from "$lib/data/names.js";
-  import { recipeDisplayNames } from "$lib/engine/quest-rewards.js";
-  import { searchItems } from "$lib/engine/search.js";
-  import { isVisible } from "$lib/engine/visibility.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
-  import { recordEntries } from "$lib/utils";
-  import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
-  import { showUndoToast } from "$lib/utils/undo-toast.js";
+  import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
+  import TrackerRow from "#lib/components/tracker-row.svelte";
+  import VillagerSearchResult from "#lib/components/villager-search-result.svelte";
+  import { categoryNameForKey } from "#lib/data/categories.js";
+  import { trackerData } from "#lib/data/index.js";
+  import { hasNames, loadNames, LOCALIZED_CATEGORIES } from "#lib/data/names.js";
+  import { recipeDisplayNames } from "#lib/engine/quest-rewards.js";
+  import { searchItems } from "#lib/engine/search.js";
+  import { isVisible } from "#lib/engine/visibility.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
+  import { recordEntries } from "#lib/utils.js";
+  import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
+  import { showUndoToast } from "#lib/utils/undo-toast.js";
 
-  import type { TrackerRowDisplay } from "$lib/components/tracker-row.svelte";
-  import type { SearchResult } from "$lib/engine/search.js";
-  import type { Source } from "$lib/types/acquisition";
-  import type { LocaleCode } from "$lib/types/locale.js";
+  import type { TrackerRowDisplay } from "#lib/components/tracker-row.svelte";
+  import type { SearchResult } from "#lib/engine/search.js";
+  import type { Source } from "#lib/types/acquisition.js";
+  import type { LocaleCode } from "#lib/types/locale.js";
   import type {
     AnimalId,
     AnimalVariantId,
@@ -31,7 +31,7 @@
     QuestId,
     RecipeId,
     VillagerId,
-  } from "$lib/types/tracker-data.js";
+  } from "#lib/types/tracker-data.js";
 
   let { locale, query }: { locale: LocaleCode; query: string } = $props();
 

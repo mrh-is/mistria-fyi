@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { trySetItem } from "$lib/utils/local-storage.js";
+import { trySetItem } from "#lib/utils/local-storage.js";
 
 describe("trySetItem", () => {
   afterEach(() => {

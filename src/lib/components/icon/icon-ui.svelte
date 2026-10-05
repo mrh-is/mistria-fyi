@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { UI_ICON } from "$lib/components/icon/icon-maps.js";
+  import { UI_ICON } from "#lib/components/icon/icon-maps.js";
 
-  import type { IconProps } from "$lib/components/icon/icon-maps.js";
-  import type { UIIconType } from "$lib/components/icon/icon-maps.js";
+  import type { IconProps } from "#lib/components/icon/icon-maps.js";
+  import type { UIIconType } from "#lib/components/icon/icon-maps.js";
 
   interface Props extends IconProps {
     type: UIIconType;

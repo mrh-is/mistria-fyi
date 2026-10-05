@@ -1,18 +1,18 @@
 import { fireEvent, render, screen, within } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import SearchResults from "$lib/components/search-results.svelte";
-import { trackerData, trackerIndex } from "$lib/data/index.js";
-import { getName } from "$lib/data/names.js";
-import { searchItems } from "$lib/engine/search.js";
-import { userState } from "$lib/stores/user-state.svelte.js";
-import { recordEntries } from "$lib/utils.js";
+import SearchResults from "#lib/components/search-results.svelte";
+import { trackerData, trackerIndex } from "#lib/data/index.js";
+import { getName } from "#lib/data/names.js";
+import { searchItems } from "#lib/engine/search.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
+import { recordEntries } from "#lib/utils.js";
 
-import type { ItemId, VillagerId } from "$lib/types/tracker-data.js";
+import type { ItemId, VillagerId } from "#lib/types/tracker-data.js";
 
 const showUndoToast = vi.hoisted(() => vi.fn());
 
-vi.mock("$lib/utils/undo-toast.js", () => ({ showUndoToast }));
+vi.mock("#lib/utils/undo-toast.js", () => ({ showUndoToast }));
 
 afterEach(() => {
   userState.resetAll();

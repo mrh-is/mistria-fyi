@@ -1,11 +1,11 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import SkillRowHarness from "$lib/components/skill-row.test-harness.svelte";
-import { FeedbackContext } from "$lib/feedback/context.svelte.js";
-import { userState } from "$lib/stores/user-state.svelte.js";
+import SkillRowHarness from "#lib/components/skill-row.test-harness.svelte";
+import { FeedbackContext } from "#lib/feedback/context.svelte.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
 
-import type { SkillId } from "$lib/types/tracker-data.js";
+import type { SkillId } from "#lib/types/tracker-data.js";
 
 const skillId = "mining" as SkillId;
 

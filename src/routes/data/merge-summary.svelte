@@ -1,17 +1,17 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { getName } from "$lib/data/names.js";
+  import { getName } from "#lib/data/names.js";
   import {
     formatMergeCount,
     MERGE_COUNT_LABELS,
     totalMergeCounts,
-  } from "$lib/engine/merge-labels.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { localizedHref } from "$lib/utils/localized-href.js";
+  } from "#lib/engine/merge-labels.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { localizedHref } from "#lib/utils/localized-href.js";
 
-  import type { MergeCountKey } from "$lib/engine/merge-labels.js";
-  import type { ChildChoice, MergeConflict, MergeCounts } from "$lib/stores/user-state.svelte.js";
-  import type { VillagerRelationship } from "$lib/types/tracker-data.js";
+  import type { MergeCountKey } from "#lib/engine/merge-labels.js";
+  import type { ChildChoice, MergeConflict, MergeCounts } from "#lib/stores/user-state.svelte.js";
+  import type { VillagerRelationship } from "#lib/types/tracker-data.js";
 
   let {
     conflicts = [],
@@ -96,7 +96,7 @@
     {#each conflicts as conflict, index (index)}
       <li class="text-amber-900 dark:text-amber-200">
         {conflictMessage(conflict)}
-        <a class="underline" href={localizedHref("/villagers")}>
+        <a class="underline" href={localizedHref("villagers")}>
           {m.merge_conflict_correction_link()}
         </a>
       </li>

@@ -1,7 +1,7 @@
-import { legacyAvailabilityWindows } from "$lib/types/availability.js";
+import { legacyAvailabilityWindows } from "#lib/types/availability.js";
 
-import type { AvailabilitySelection } from "$lib/types/availability.js";
-import type { AnimalVariant, Season } from "$lib/types/tracker-data.js";
+import type { AvailabilitySelection } from "#lib/types/availability.js";
+import type { AnimalVariant, Season } from "#lib/types/tracker-data.js";
 
 export function getVariantSeason(variant: AnimalVariant): Season | undefined {
   if (variant.source.type === "breed" && variant.source.availability?.type === "season") {

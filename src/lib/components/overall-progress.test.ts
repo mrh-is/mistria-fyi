@@ -1,11 +1,11 @@
 import { render } from "svelte/server";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import OverallProgress from "$lib/components/overall-progress.svelte";
-import { getAllProgress } from "$lib/engine/progress.js";
-import { getLocale, overwriteGetLocale } from "$lib/paraglide/runtime.js";
-import { userState } from "$lib/stores/user-state.svelte.js";
-import { formatNumber } from "$lib/utils/format.js";
+import OverallProgress from "#lib/components/overall-progress.svelte";
+import { getAllProgress } from "#lib/engine/progress.js";
+import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
+import { formatNumber } from "#lib/utils/format.js";
 
 describe("OverallProgress", () => {
   const defaultGetLocale = getLocale;

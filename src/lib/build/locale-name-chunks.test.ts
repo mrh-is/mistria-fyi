@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { localeNameChunks } from "./locale-name-chunks";
+import { localeNameChunks } from "./locale-name-chunks.js";
 
 import type { Manifest } from "vite";
 

@@ -1,6 +1,6 @@
-import { trackerData } from "$lib/data/index.js";
-import { getName, getNameTable } from "$lib/data/names.js";
-import { recordMap } from "$lib/utils";
+import { trackerData } from "#lib/data/index.js";
+import { getName, getNameTable } from "#lib/data/names.js";
+import { recordMap } from "#lib/utils.js";
 import {
   buildAnimalNames,
   buildBundleNames,
@@ -9,12 +9,12 @@ import {
   buildUnnamedSourceNames,
   buildWaterNames,
   UNNAMED_SOURCE_IDS,
-} from "$lib/utils/source-names.js";
+} from "#lib/utils/source-names.js";
 
-import type { LocalizedCategory } from "$lib/data/names.js";
-import type { LocaleCode } from "$lib/types/locale.js";
-import type { QuestType, SkillId, StoreId } from "$lib/types/tracker-data";
-import type { SegmentLookups } from "$lib/utils/source-segments.js";
+import type { LocalizedCategory } from "#lib/data/names.js";
+import type { LocaleCode } from "#lib/types/locale.js";
+import type { QuestType, SkillId, StoreId } from "#lib/types/tracker-data.js";
+import type { SegmentLookups } from "#lib/utils/source-segments.js";
 
 /**
  * Builds the shared portion of a `SegmentLookups` object from `trackerData`.

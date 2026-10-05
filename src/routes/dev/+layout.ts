@@ -1,6 +1,6 @@
 import { error } from "@sveltejs/kit";
 
-import { dev } from "$app/environment";
+import { dev } from "$app/env";
 
 import type { LayoutLoad } from "./$types";
 

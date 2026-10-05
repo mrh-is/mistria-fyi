@@ -2,25 +2,27 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { _pageEntries, GET } from "../../routes/sitemap.xml/+server";
+import { _pageEntries, GET } from "../../routes/sitemap.xml/+server.js";
 import { locales, localizeUrl } from "../paraglide/runtime.js";
-import { categoryKeyForPathname } from "./categories";
-import { errorPageMetadata, pageMetadata, SITE_NAME, SITE_ORIGIN } from "./page-metadata";
+import { categoryKeyForPathname } from "./categories.js";
+import { errorPageMetadata, pageMetadata, SITE_NAME, SITE_ORIGIN } from "./page-metadata.js";
 
-import type { PageMetadata } from "./page-metadata";
+import type { PageMetadata } from "./page-metadata.js";
 
 /**
  * Runs every rendered page's `load()` as the base locale would render it, with the minimal event
  * the loads read: the root layout's resolved locale.
  */
 function pageMetadataEntries() {
-  return Promise.all(
-    _pageEntries().map(async (entry) => {
-      const data = (await entry.pageModule.load({
-        parent: () => Promise.resolve({ locale: "en" }),
-      } as never)) as { metadata: PageMetadata };
-      return { ...entry, metadata: data.metadata };
-    }),
+  return _pageEntries().then((pageEntries) =>
+    Promise.all(
+      pageEntries.map(async (entry) => {
+        const data = (await entry.pageModule.load({
+          parent: () => Promise.resolve({ locale: "en" }),
+        } as never)) as { metadata: PageMetadata };
+        return { ...entry, metadata: data.metadata };
+      }),
+    ),
   );
 }
 
@@ -30,7 +32,7 @@ describe("page metadata", () => {
 
     expect(entries).not.toHaveLength(0);
     expect(entries.every(({ metadata }) => metadata.description && metadata.title)).toBe(true);
-    expect(entries.some(({ path }) => path === "/villagers")).toBe(true);
+    expect(entries.some(({ path }) => path === "villagers")).toBe(true);
   });
 
   it("gives every page distinct, meaningful search text and a canonical URL", async () => {
@@ -73,7 +75,7 @@ describe("page metadata", () => {
     const entries = await pageMetadataEntries();
 
     for (const { metadata, path } of entries) {
-      const categoryKey = categoryKeyForPathname(path);
+      const categoryKey = categoryKeyForPathname(`/${path}`);
       expect(metadata.accent).toBe(categoryKey ? `cat-${categoryKey}` : "home-accent");
     }
   });
@@ -83,10 +85,10 @@ describe("page metadata", () => {
     const toolbarFor = (path: string) =>
       entries.find((entry) => entry.path === path)?.metadata.toolbar;
 
-    expect(toolbarFor("/about")).toBe("hidden");
-    expect(toolbarFor("/data")).toBe("hidden");
-    expect(toolbarFor("/")).toEqual({ search: true, worldState: true });
-    expect(toolbarFor("/mines")).toEqual({ search: false, worldState: false });
+    expect(toolbarFor("about")).toBe("hidden");
+    expect(toolbarFor("data")).toBe("hidden");
+    expect(toolbarFor("")).toEqual({ search: true, worldState: true });
+    expect(toolbarFor("mines")).toEqual({ search: false, worldState: false });
     expect(errorPageMetadata(404).toolbar).toEqual({ search: false, worldState: false });
   });
 
@@ -99,8 +101,8 @@ describe("page metadata", () => {
   it("keeps utility, development, and error pages out of search results", async () => {
     const entries = await pageMetadataEntries();
 
-    expect(entries.find(({ path }) => path === "/data")?.metadata.robots).toBe("noindex, follow");
-    expect(entries.find(({ path }) => path === "/dev/icons")?.metadata.robots).toBe(
+    expect(entries.find(({ path }) => path === "data")?.metadata.robots).toBe("noindex, follow");
+    expect(entries.find(({ path }) => path === "dev/icons")?.metadata.robots).toBe(
       "noindex, nofollow",
     );
     expect(errorPageMetadata(404)).toMatchObject({
@@ -113,7 +115,7 @@ describe("page metadata", () => {
 describe("crawler files", () => {
   it("generates the sitemap from indexable page metadata, one locale-prefixed URL per locale", async () => {
     const entries = await pageMetadataEntries();
-    const sitemap = await GET().text();
+    const sitemap = await (await GET()).text();
     const locations = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
     const expected = entries
       .filter(({ metadata }) => metadata.robots === undefined)
@@ -127,7 +129,7 @@ describe("crawler files", () => {
   });
 
   it("cross-links every locale's sitemap entry to every other locale via hreflang", async () => {
-    const sitemap = await GET().text();
+    const sitemap = await (await GET()).text();
 
     expect(sitemap).toContain(
       `<xhtml:link rel="alternate" hreflang="ja" href="${localizeUrl(new URL("/almanac", SITE_ORIGIN), { locale: "ja" }).href}" />`,

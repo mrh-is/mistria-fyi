@@ -1,6 +1,6 @@
-import { browser } from "$app/environment";
-import { loadNames } from "$lib/data/names.js";
-import { getLocale, getLocaleForUrl } from "$lib/paraglide/runtime.js";
+import { loadNames } from "#lib/data/names.js";
+import { getLocale, getLocaleForUrl } from "#lib/paraglide/runtime.js";
+import { browser } from "$app/env";
 
 import type { LayoutLoad } from "./$types";
 

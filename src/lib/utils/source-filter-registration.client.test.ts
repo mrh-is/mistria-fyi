@@ -2,9 +2,9 @@ import { render } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { SOURCE_FILTERS } from "$lib/components/icon/index.js";
-import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
-import SourceFilterRegistrationHarness from "$lib/utils/source-filter-registration.test-harness.svelte";
+import { SOURCE_FILTERS } from "#lib/components/icon/index.js";
+import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+import SourceFilterRegistrationHarness from "#lib/utils/source-filter-registration.test-harness.svelte";
 
 afterEach(() => {
   toolbarState.removeSourceFilters("external-test");

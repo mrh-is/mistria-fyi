@@ -13,12 +13,12 @@ vi.mock("$app/navigation", () => ({ goto }));
 vi.mock("$app/state", () => ({
   page: { data: { locale: "en" }, status: 200, url: new URL("https://mistria.fyi/ru/almanac") },
 }));
-vi.mock("$lib/paraglide/runtime.js", () => ({
+vi.mock("#lib/paraglide/runtime.js", () => ({
   deLocalizeHref: (pathname: string) => pathname.replace(/^\/[^/]+/, ""),
   localizeHref: (pathname: string, { locale }: { locale: string }) => `/${locale}${pathname}`,
   setLocale,
 }));
-vi.mock("$lib/utils/offline-locales", () => ({ downloadLocale }));
+vi.mock("#lib/utils/offline-locales.js", () => ({ downloadLocale }));
 
 import { localePreference } from "./locale-preference.svelte";
 

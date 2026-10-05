@@ -1,6 +1,6 @@
 import { toast } from "svelte-sonner";
 
-import * as m from "$lib/paraglide/messages.js";
+import * as m from "#lib/paraglide/messages.js";
 
 /**
  * Show a toast with an "Undo" action for check-off state changes.

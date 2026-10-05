@@ -1,8 +1,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import WelcomeCard from "$lib/components/welcome-card.svelte";
-import { userState } from "$lib/stores/user-state.svelte.js";
+import WelcomeCard from "#lib/components/welcome-card.svelte";
+import { userState } from "#lib/stores/user-state.svelte.js";
 
 function setDevice({ touchPoints, width }: { touchPoints: number; width: number }): void {
   Object.defineProperty(navigator, "maxTouchPoints", { configurable: true, value: touchPoints });

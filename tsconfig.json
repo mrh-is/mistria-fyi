@@ -1,24 +1,10 @@
 {
-  "extends": "./.svelte-kit/tsconfig.json",
+  "extends": "$app/tsconfig",
   "compilerOptions": {
-    "allowJs": true,
-    "checkJs": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
-    "types": ["@testing-library/jest-dom"]
+    "types": ["@testing-library/jest-dom", "$app/types"]
   },
-  "exclude": [
-    "node_modules/**",
-    "scripts/locale-fonts/**",
-    "src/service-worker.js",
-    "src/service-worker/**/*.js",
-    "src/service-worker.ts",
-    "src/service-worker/**/*.ts",
-    "src/service-worker.d.ts",
-    "src/service-worker/**/*.d.ts"
-  ]
+  "exclude": ["node_modules/**", "scripts/locale-fonts/**", "src/service-worker/**"],
+  "include": ["src", "tests", "scripts/**/*.ts", "vite.config.ts"]
 }

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { evaluateExpressions } from "./evaluate";
-import { parseFiddle } from "./parse-fiddle";
-import { requireGameAssetsDir } from "./test-helpers";
+import { evaluateExpressions } from "./evaluate.js";
+import { parseFiddle } from "./parse-fiddle.js";
+import { requireGameAssetsDir } from "./test-helpers.js";
 
 describe("evaluateExpressions — v1.0.5 assets", () => {
   it("resolves every supported item value expression", () => {

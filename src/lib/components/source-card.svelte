@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { Icon } from "$lib/components/icon/index.js";
-  import RestrictionBadges from "$lib/components/restriction-badges.svelte";
-  import SourceSegmentText from "$lib/components/source-segment-text.svelte";
+  import { Icon } from "#lib/components/icon/index.js";
+  import RestrictionBadges from "#lib/components/restriction-badges.svelte";
+  import SourceSegmentText from "#lib/components/source-segment-text.svelte";
 
-  import type { DisplayBadges } from "$lib/engine/availability-condition.js";
-  import type { Source } from "$lib/types/acquisition";
-  import type { SourceSegment } from "$lib/utils/source-segments.js";
+  import type { DisplayBadges } from "#lib/engine/availability-condition.js";
+  import type { Source } from "#lib/types/acquisition.js";
+  import type { SourceSegment } from "#lib/utils/source-segments.js";
 
   let {
     sourceBadges,

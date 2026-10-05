@@ -1,12 +1,12 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import VillagerAlphabetIndex from "$lib/components/villager-alphabet-index.svelte";
-  import VillagerRecord from "$lib/components/villager-record.svelte";
-  import { buildVillagerRoster, filterVillagerRoster } from "$lib/engine/villager-roster";
-  import * as m from "$lib/paraglide/messages.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
+  import VillagerAlphabetIndex from "#lib/components/villager-alphabet-index.svelte";
+  import VillagerRecord from "#lib/components/villager-record.svelte";
+  import { buildVillagerRoster, filterVillagerRoster } from "#lib/engine/villager-roster.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
 
-  import type { LocaleCode } from "$lib/types/locale.js";
+  import type { LocaleCode } from "#lib/types/locale.js";
 
   let {
     compact = false,

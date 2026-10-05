@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import TrackerCheckbox from "$lib/components/tracker-checkbox.svelte";
+import TrackerCheckbox from "#lib/components/tracker-checkbox.svelte";
 
 afterEach(() => {
   cleanup();

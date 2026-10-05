@@ -1,7 +1,7 @@
-import { localizedPageLoad } from "$lib/data/page-load";
-import * as m from "$lib/paraglide/messages.js";
+import { localizedPageLoad } from "#lib/data/page-load.js";
+import * as m from "#lib/paraglide/messages.js";
 
-import type { RobotsDirective } from "$lib/data/page-metadata";
+import type { RobotsDirective } from "#lib/data/page-metadata.js";
 
 import type { PageLoad } from "./$types";
 

@@ -1,11 +1,11 @@
-import { SITE_ORIGIN } from "$lib/data/page-metadata.js";
-import { locales, localizeUrl } from "$lib/paraglide/runtime.js";
+import { SITE_ORIGIN } from "#lib/data/page-metadata.js";
+import { locales, localizeUrl } from "#lib/paraglide/runtime.js";
 
 import type { Load } from "@sveltejs/kit";
 
-import type { Pathname } from "$app/types";
-import type { RobotsDirective } from "$lib/data/page-metadata";
-import type { Locale } from "$lib/paraglide/runtime.js";
+import type { RobotsDirective } from "#lib/data/page-metadata.js";
+import type { Locale } from "#lib/paraglide/runtime.js";
+import type { Path } from "$app/types";
 
 export const prerender = true;
 
@@ -20,31 +20,35 @@ interface PageModule {
 }
 
 const pageComponents = import.meta.glob("/src/routes/**/+page.svelte");
-const pageModules: Partial<Record<string, PageModule>> = import.meta.glob<PageModule>(
-  "/src/routes/**/+page.ts",
-  { eager: true },
-);
+// Lazy on purpose: an eager glob makes the bundler re-export each `+page.ts` as a namespace object
+// under a minified name, which SvelteKit rejects as an invalid page export.
+const pageModules: Partial<Record<string, () => Promise<PageModule>>> =
+  import.meta.glob<PageModule>("/src/routes/**/+page.ts");
 
 /** Every rendered page's route path and `+page.ts` module, in glob order. */
-export function _pageEntries(): {
-  modulePath: string;
-  pageModule: PageModule;
-  path: Pathname;
-}[] {
-  return Object.keys(pageComponents).map((componentPath) => {
-    const modulePath = componentPath.replace(/\.svelte$/, ".ts");
-    const pageModule = pageModules[modulePath];
+export function _pageEntries(): Promise<
+  { modulePath: string; pageModule: PageModule; path: Path }[]
+> {
+  return Promise.all(
+    Object.keys(pageComponents).map(async (componentPath) => {
+      const modulePath = componentPath.replace(/\.svelte$/, ".ts");
+      const importPageModule = pageModules[modulePath];
 
-    if (!pageModule) {
-      throw new Error(`Page metadata load is missing for ${componentPath}`);
-    }
+      if (!importPageModule) {
+        throw new Error(`Page metadata load is missing for ${componentPath}`);
+      }
 
-    return { modulePath, pageModule, path: routePathForModule(modulePath) };
-  });
+      return {
+        modulePath,
+        pageModule: await importPageModule(),
+        path: routePathForModule(modulePath),
+      };
+    }),
+  );
 }
 
-export function GET(): Response {
-  const urls = _pageEntries()
+export async function GET(): Promise<Response> {
+  const urls = (await _pageEntries())
     .filter(({ pageModule }) => pageModule._robots === undefined)
     .flatMap(({ path }) => localizedUrlEntries(path))
     .join("\n");
@@ -62,12 +66,11 @@ ${urls}
 }
 
 /** One `<url>` entry per locale for `path`, each cross-linked to the other locales' URLs. */
-function localizedUrlEntries(path: Pathname): string[] {
+function localizedUrlEntries(path: Path): string[] {
   const canonicalUrl = new URL(path, SITE_ORIGIN);
   const hrefByLocale = new Map(
     locales.map((locale) => [locale, localizeUrl(canonicalUrl, { locale }).href]),
   );
-
   const alternateLinks = locales
     .map(
       (locale) =>
@@ -81,12 +84,12 @@ function localizedUrlEntries(path: Pathname): string[] {
   );
 }
 
-function routePathForModule(modulePath: string): Pathname {
+function routePathForModule(modulePath: string): Path {
   const routeSegments = modulePath
     .replace(/^\/src\/routes\/?/, "")
     .replace(/(^|\/)\+page\.ts$/, "")
     .split("/")
     .filter((segment) => segment && !(segment.startsWith("(") && segment.endsWith(")")));
 
-  return `/${routeSegments.join("/")}` as Pathname;
+  return routeSegments.join("/") as Path;
 }

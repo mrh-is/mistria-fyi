@@ -1,5 +1,5 @@
 <script lang="ts">
-  import VillagerAlphabetIndex from "$lib/components/villager-alphabet-index.svelte";
+  import VillagerAlphabetIndex from "#lib/components/villager-alphabet-index.svelte";
 
   let {
     entries,

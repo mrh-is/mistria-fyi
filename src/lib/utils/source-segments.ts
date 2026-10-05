@@ -1,4 +1,4 @@
-import * as m from "$lib/paraglide/messages.js";
+import * as m from "#lib/paraglide/messages.js";
 
 import {
   findBiome,
@@ -6,10 +6,10 @@ import {
   formatStoreName,
   requireEntry,
   withIndefiniteArticle,
-} from "./format";
+} from "./format.js";
 
-import type { AvailabilityCondition, ProductionMethod, Source } from "$lib/types/acquisition.js";
-import type { LocaleCode } from "$lib/types/locale.js";
+import type { AvailabilityCondition, ProductionMethod, Source } from "#lib/types/acquisition.js";
+import type { LocaleCode } from "#lib/types/locale.js";
 import type {
   LocationId,
   MinesBiomeId,
@@ -21,10 +21,10 @@ import type {
   TrackerData,
   VillagerId,
   WaterType,
-} from "$lib/types/tracker-data.js";
-import type { VisibilityCondition } from "$lib/types/visibility.js";
+} from "#lib/types/tracker-data.js";
+import type { VisibilityCondition } from "#lib/types/visibility.js";
 
-import type { NameLookup, RecipeSourceLookups } from "./format";
+import type { NameLookup, RecipeSourceLookups } from "./format.js";
 
 export type SegmentLookups = Pick<TrackerData, "categoryVisibility"> &
   RecipeSourceLookups & {

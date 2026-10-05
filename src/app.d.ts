@@ -1,19 +1,8 @@
-import type { PageMetadata } from "$lib/data/page-metadata.js";
-import type { LocaleCode } from "$lib/types/locale.js";
+import type { PageMetadata } from "#lib/data/page-metadata.js";
+import type { LocaleCode } from "#lib/types/locale.js";
 
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
-
-interface KVNamespace {
-  delete(key: string): Promise<void>;
-  get(key: string): Promise<null | string>;
-  put(key: string, value: string, options?: KVNamespacePutOptions): Promise<void>;
-}
-
-interface KVNamespacePutOptions {
-  expiration?: number;
-  expirationTtl?: number;
-}
 
 interface Turnstile {
   remove(widgetId: string): void;
@@ -39,13 +28,6 @@ declare global {
       metadata: PageMetadata;
     }
     // interface PageState {}
-    interface Platform {
-      env: {
-        FEEDBACK_EMAIL_STORE: KVNamespace;
-        GITHUB_FEEDBACK_TOKEN: string;
-        TURNSTILE_SECRET_KEY: string;
-      };
-    }
   }
 
   interface ImportMetaEnv {

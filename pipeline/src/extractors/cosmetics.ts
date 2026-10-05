@@ -1,19 +1,19 @@
-import { LOCALE_CODES } from "$lib/types/locale.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { isExcludedCosmetic } from "../acquisition/exclusions";
-import { expectArray } from "../data-shapes";
-import { localizeField } from "../localize";
-import { type ParsedGameData, sourceFileFor } from "../parse-fiddle";
+import { isExcludedCosmetic } from "../acquisition/exclusions.js";
+import { expectArray } from "../data-shapes.js";
+import { localizeField } from "../localize.js";
+import { type ParsedGameData, sourceFileFor } from "../parse-fiddle.js";
 
-import type { SourceTuple } from "$lib/types/acquisition.js";
-import type { LocaleCode } from "$lib/types/locale.js";
+import type { SourceTuple } from "#lib/types/acquisition.js";
+import type { LocaleCode } from "#lib/types/locale.js";
 import type {
   Cosmetic,
   CosmeticId,
   CosmeticSlot,
   CosmeticSlotMeta,
   TrackerData,
-} from "$lib/types/tracker-data.js";
+} from "#lib/types/tracker-data.js";
 
 export interface CosmeticExtraction {
   cosmetics: TrackerData["cosmetics"];

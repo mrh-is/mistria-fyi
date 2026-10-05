@@ -1,6 +1,6 @@
-import { trackerData } from "$lib/data/index.js";
+import { trackerData } from "#lib/data/index.js";
 
-import type { VillagerId, VillagerRelationship } from "$lib/types/tracker-data.js";
+import type { VillagerId, VillagerRelationship } from "#lib/types/tracker-data.js";
 
 export type RelationshipActionValue =
   | "married"

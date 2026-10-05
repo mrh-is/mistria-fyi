@@ -1,5 +1,5 @@
-import { LOCALIZED_CATEGORIES } from "$lib/data/names";
-import { localizedPageLoad } from "$lib/data/page-load";
+import { LOCALIZED_CATEGORIES } from "#lib/data/names.js";
+import { localizedPageLoad } from "#lib/data/page-load.js";
 
 import type { PageLoad } from "./$types";
 

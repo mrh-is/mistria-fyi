@@ -2,7 +2,7 @@ import encodeQR, { type QrOpts } from "qr";
 import decodeQR from "qr/decode.js";
 import { frameLoop, QRCanvas, rearCamera, svgToPng } from "qr/dom.js";
 
-import type { ClosableScanner } from "./data-effects";
+import type { ClosableScanner } from "./data-effects.js";
 
 /** Transfer payloads are long, so low error correction keeps the code at the smallest version. */
 export const TRANSFER_QR_OPTIONS = { border: 2, ecc: "low" } as const satisfies QrOpts;

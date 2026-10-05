@@ -1,6 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { OPTIONS, POST } from "./+server";
+import { OPTIONS, POST } from "./+server.js";
+
+import type { env } from "cloudflare:workers";
+
+type WorkerEnv = typeof env;
+
+/**
+ * The adapter's `cloudflare:workers` stand-in reads bindings from this global platform proxy, which
+ * the adapter installs in dev. Each call swaps in its own bindings.
+ */
+const cloudflarePlatform = vi.hoisted(() => {
+  const platform: { env: unknown } = { env: {} };
+  Object.assign(globalThis, { __sveltekit_cloudflare_platform: platform });
+  return platform;
+});
 
 function makeRequest(
   body: unknown,
@@ -29,17 +43,21 @@ const validPayload = {
 
 async function callPost(
   request: Request,
-  { fetchMock, platform }: { fetchMock?: ReturnType<typeof vi.fn>; platform?: App.Platform } = {},
+  {
+    fetchMock,
+    platform,
+  }: { fetchMock?: ReturnType<typeof vi.fn>; platform?: { env: WorkerEnv } } = {},
 ): Promise<Response> {
   const originalFetch = globalThis.fetch;
   if (fetchMock) {
     globalThis.fetch = fetchMock as typeof globalThis.fetch;
   }
 
+  cloudflarePlatform.env = (platform ?? mockPlatform()).env;
+
   try {
     const url = makeUrl();
     return await POST({
-      platform: platform ?? mockPlatform(),
       request,
       url,
     } as Parameters<typeof POST>[0]);
@@ -99,14 +117,14 @@ function mockPlatform(overrides?: {
   kvPutFail?: boolean;
   tokenMissing?: boolean;
   turnstileSecretMissing?: boolean;
-}): App.Platform {
+}): { env: WorkerEnv } {
   return {
     env: {
       FEEDBACK_EMAIL_STORE: {
         put: overrides?.kvPutFail
           ? vi.fn().mockRejectedValue(new Error("KV write failed"))
           : vi.fn().mockResolvedValue(undefined),
-      } as unknown as App.Platform["env"]["FEEDBACK_EMAIL_STORE"],
+      } as unknown as { env: WorkerEnv }["env"]["FEEDBACK_EMAIL_STORE"],
       GITHUB_FEEDBACK_TOKEN: overrides?.tokenMissing ? "" : "ghp_test_token",
       TURNSTILE_SECRET_KEY: overrides?.turnstileSecretMissing ? "" : "test-turnstile-secret",
     },
@@ -418,7 +436,7 @@ describe("POST /api/feedback", () => {
         GITHUB_FEEDBACK_TOKEN: "ghp_test_token",
         TURNSTILE_SECRET_KEY: "test-turnstile-secret",
       },
-    } as unknown as App.Platform;
+    } as unknown as { env: WorkerEnv };
 
     const response = await callPost(request, { fetchMock, platform });
 

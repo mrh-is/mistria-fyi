@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { checkRoutes, isFunctionRoute, matchesRoute } from "./check-routes";
+import { checkRoutes, isFunctionRoute, matchesRoute } from "./check-routes.js";
 
 describe("matchesRoute", () => {
   it("matches exact paths", () => {

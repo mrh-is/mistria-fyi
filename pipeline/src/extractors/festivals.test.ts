@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeFiddle } from "../test-helpers";
-import { extractFestivals } from "./festivals";
+import { makeFiddle } from "../test-helpers.js";
+import { extractFestivals } from "./festivals.js";
 
-import type { FestivalId } from "$lib/types/tracker-data.js";
+import type { FestivalId } from "#lib/types/tracker-data.js";
 
-vi.mock("../localize", () => ({
+vi.mock("../localize.js", () => ({
   localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
     fallbackLocales: [],
     values: {

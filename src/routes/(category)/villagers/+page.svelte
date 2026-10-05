@@ -1,5 +1,5 @@
 <script lang="ts">
-  import VillagerRoster from "$lib/components/villager-roster.svelte";
+  import VillagerRoster from "#lib/components/villager-roster.svelte";
 
   import type { PageProps } from "./$types";
 

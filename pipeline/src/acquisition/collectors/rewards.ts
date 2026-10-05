@@ -1,4 +1,4 @@
-import type { ActivityId, Source } from "$lib/types/acquisition.js";
+import type { ActivityId, Source } from "#lib/types/acquisition.js";
 import type {
   AnimalId,
   CosmeticId,
@@ -11,15 +11,15 @@ import type {
   Season,
   StoreId,
   VillagerId,
-} from "$lib/types/tracker-data.js";
+} from "#lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../../parse-fiddle";
+import type { ParsedGameData } from "../../parse-fiddle.js";
 import type {
   AnimalCosmeticSourceAccumulator,
   CosmeticSourceAccumulator,
   ItemSourceAccumulator,
   PetCosmeticSourceAccumulator,
-} from "../source-accumulator";
+} from "../source-accumulator.js";
 
 type LetterRewardSource = Extract<
   Source,

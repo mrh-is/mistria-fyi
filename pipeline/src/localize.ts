@@ -2,14 +2,14 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "smol-toml";
 
-import { LOCALE_CODES } from "$lib/types/locale.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { GAME_LANGUAGE_TO_LOCALE, readGameLanguages } from "./locale-codes";
+import { GAME_LANGUAGE_TO_LOCALE, readGameLanguages } from "./locale-codes.js";
 import overrides from "./localize-overrides.json" with { type: "json" };
 
-import type { LocaleCode, LocaleManifest, LocaleStatus } from "$lib/types/locale.js";
+import type { LocaleCode, LocaleManifest, LocaleStatus } from "#lib/types/locale.js";
 
-import type { GameLanguageCode } from "./locale-codes";
+import type { GameLanguageCode } from "./locale-codes.js";
 
 /**
  * How a text field is treated for localization purposes:

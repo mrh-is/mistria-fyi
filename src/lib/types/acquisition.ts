@@ -1,4 +1,4 @@
-import type { NonEmptyArray } from "$lib/utils.js";
+import type { NonEmptyArray } from "#lib/utils.js";
 
 import type {
   AnimalId,
@@ -17,8 +17,8 @@ import type {
   TreasureChestTierId,
   VillagerId,
   Weather,
-} from "./tracker-data";
-import type { QuestVisibility, VisibilityCondition } from "./visibility";
+} from "./tracker-data.js";
+import type { QuestVisibility, VisibilityCondition } from "./visibility.js";
 
 export type ActivityId = string & { readonly __brand: "ActivityId" };
 export type AvailabilityCondition =

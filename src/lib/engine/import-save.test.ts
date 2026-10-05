@@ -1,20 +1,20 @@
 import { describe, expect, it } from "vitest";
 
-import { trackerData } from "$lib/data/index.js";
+import { trackerData } from "#lib/data/index.js";
 import {
   getMaxMineFloor,
   getMaxRenownLevel,
   type LevelIssue,
   MAX_SKILL_LEVEL,
   MAX_VILLAGER_LEVEL,
-} from "$lib/engine/progress.js";
-import { recordKeys, recordValues } from "$lib/utils.js";
+} from "#lib/engine/progress.js";
+import { recordKeys, recordValues } from "#lib/utils.js";
 
-import { buildImportState, parseSaveFiles, validatePlayerSave } from "./import-save";
+import { buildImportState, parseSaveFiles, validatePlayerSave } from "./import-save.js";
 
-import type { RecipeId, SkillId, VillagerId } from "$lib/types/tracker-data.js";
+import type { RecipeId, SkillId, VillagerId } from "#lib/types/tracker-data.js";
 
-import type { SaveBundle } from "./import-save";
+import type { SaveBundle } from "./import-save.js";
 
 function getDefaultRecipeIds(): Set<RecipeId> {
   const ids = new Set<RecipeId>();

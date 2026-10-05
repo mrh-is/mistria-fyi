@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { trackerData } from "$lib/data/index.js";
-import { LOCALE_CODES } from "$lib/types/locale.js";
-import { buildBaseSegmentLookups } from "$lib/utils/segment-lookups.js";
-import { buildSourceSegments, type SourceSegment } from "$lib/utils/source-segments.js";
+import { trackerData } from "#lib/data/index.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
+import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
+import { buildSourceSegments, type SourceSegment } from "#lib/utils/source-segments.js";
 
-import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
-import type { VisibilityCondition } from "$lib/types/visibility.js";
+import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
+import type { VisibilityCondition } from "#lib/types/visibility.js";
 
 interface SourcedEntity {
   entity: { sources: Source[]; visibility?: VisibilityCondition };

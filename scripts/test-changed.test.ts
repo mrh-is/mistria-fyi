@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { type GitResult, parseBaseRef, planChangedTestRun } from "./test-changed";
+import { type GitResult, parseBaseRef, planChangedTestRun } from "./test-changed.js";
 
 function result(status: number, stdout = "", stderr = ""): GitResult {
   return { status, stderr, stdout };

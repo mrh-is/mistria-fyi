@@ -2,10 +2,10 @@
   import IconX from "@tabler/icons-svelte-runes/icons/x";
   import { tick } from "svelte";
 
-  import * as m from "$lib/paraglide/messages.js";
+  import * as m from "#lib/paraglide/messages.js";
 
-  import type { FeedbackContext } from "$lib/feedback/context.svelte.js";
-  import type { ReportableElement } from "$lib/feedback/types.js";
+  import type { FeedbackContext } from "#lib/feedback/context.svelte.js";
+  import type { ReportableElement } from "#lib/feedback/types.js";
 
   interface Highlight {
     height: number;

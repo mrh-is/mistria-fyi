@@ -1,8 +1,8 @@
-import localeManifest from "$lib/data/locales.json";
-import { getName } from "$lib/data/names.js";
-import * as m from "$lib/paraglide/messages.js";
+import localeManifest from "#lib/data/locales.json";
+import { getName } from "#lib/data/names.js";
+import * as m from "#lib/paraglide/messages.js";
 
-import type { LocaleCode, LocaleManifest } from "$lib/types/locale.js";
+import type { LocaleCode, LocaleManifest } from "#lib/types/locale.js";
 import type {
   MinesBiome,
   MinesBiomeId,
@@ -14,7 +14,7 @@ import type {
   TrackerData,
   TreasureChestTierId,
   Weather,
-} from "$lib/types/tracker-data.js";
+} from "#lib/types/tracker-data.js";
 
 const SEASON_LABEL_ABBR: Record<Season, () => string> = {
   fall: m.season_fall_abbr,

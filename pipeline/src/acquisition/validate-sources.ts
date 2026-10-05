@@ -1,9 +1,9 @@
-import { getSourceProvenance } from "./source-accumulator";
+import { getSourceProvenance } from "./source-accumulator.js";
 
-import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
+import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
 
-import type { AcquisitionReferenceKind } from "./reference-index";
-import type { AcquisitionReferenceIndex } from "./reference-index";
+import type { AcquisitionReferenceKind } from "./reference-index.js";
+import type { AcquisitionReferenceIndex } from "./reference-index.js";
 
 export interface AcquisitionSourceAssembly {
   almanac?: Readonly<Record<string, { items?: readonly string[] }>>;

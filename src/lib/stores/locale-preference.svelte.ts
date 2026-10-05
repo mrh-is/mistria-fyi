@@ -1,9 +1,9 @@
+import { deLocalizeHref, localizeHref, setLocale } from "#lib/paraglide/runtime.js";
+import { downloadLocale } from "#lib/utils/offline-locales.js";
 import { goto } from "$app/navigation";
 import { page } from "$app/state";
-import { deLocalizeHref, localizeHref, setLocale } from "$lib/paraglide/runtime.js";
-import { downloadLocale } from "$lib/utils/offline-locales";
 
-import type { LocaleCode } from "$lib/types/locale";
+import type { LocaleCode } from "#lib/types/locale.js";
 
 /**
  * Persists a player's selected locale, then navigates to the current page in that locale. Paraglide

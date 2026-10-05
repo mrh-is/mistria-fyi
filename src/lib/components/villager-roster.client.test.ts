@@ -1,15 +1,15 @@
 import { render } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import VillagerRoster from "$lib/components/villager-roster.svelte";
-import { trackerData } from "$lib/data/index.js";
-import { MAX_VILLAGER_LEVEL } from "$lib/engine/progress";
-import { userState } from "$lib/stores/user-state.svelte.js";
-import { pageStub } from "$lib/test-utils/page-stub.svelte";
-import { recordKeys } from "$lib/utils.js";
+import VillagerRoster from "#lib/components/villager-roster.svelte";
+import { trackerData } from "#lib/data/index.js";
+import { MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
+import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
+import { recordKeys } from "#lib/utils.js";
 
 vi.mock("$app/state", async () => ({
-  page: (await import("$lib/test-utils/page-stub.svelte")).pageStub,
+  page: (await import("#lib/test-utils/page-stub.svelte.js")).pageStub,
 }));
 
 describe("VillagerRoster localization", () => {

@@ -1,7 +1,7 @@
 import { fireEvent, render } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import VillagerAlphabetIndexHarness from "$lib/components/villager-alphabet-index.test-harness.svelte";
+import VillagerAlphabetIndexHarness from "#lib/components/villager-alphabet-index.test-harness.svelte";
 
 const entries = [
   { id: "villager-balor", initial: "B" },

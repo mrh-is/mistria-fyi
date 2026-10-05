@@ -2,10 +2,10 @@
   import { onMount } from "svelte";
 
   import { page } from "$app/state";
-  import { getName } from "$lib/data/names.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { LOCALE_CODES } from "$lib/types/locale.js";
-  import { localizedHref } from "$lib/utils/localized-href.js";
+  import { getName } from "#lib/data/names.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { LOCALE_CODES } from "#lib/types/locale.js";
+  import { localizedHref } from "#lib/utils/localized-href.js";
 
   // Real UI strings so each role is judged on what the app actually sets in it.
   const roles = [
@@ -60,7 +60,7 @@
       {#each LOCALE_CODES as locale (locale)}
         <a
           class="rounded border px-2 py-1 {locale === page.data.locale ? 'bg-accent' : ''}"
-          href={localizedHref("/dev/fonts", { locale })}
+          href={localizedHref("dev/fonts", { locale })}
         >
           {locale}
         </a>
