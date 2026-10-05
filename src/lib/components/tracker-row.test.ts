@@ -1,9 +1,9 @@
-import { render } from "svelte/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import TrackerRow from "#lib/components/tracker-row.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 describe("TrackerRow", () => {
   beforeEach(() => {
@@ -17,7 +17,7 @@ describe("TrackerRow", () => {
   };
 
   it("renders a spoiler overlay for a spoilered row", () => {
-    const { body } = render(TrackerRow, {
+    const { container, queries } = renderToFragment(TrackerRow, {
       props: {
         display: { mode: "spoilered" },
         ...reportProps,
@@ -26,15 +26,17 @@ describe("TrackerRow", () => {
         sprite: "spr_ui_item_cherry_cobbler",
       },
     });
-    expect(body).toContain('aria-label="Reveal spoiler"');
-    expect(body).toContain('aria-hidden="true"');
-    expect(body).toContain('aria-label="Check spoilered item"');
-    expect(body).toContain('data-sprite-slot="spoilered"');
-    expect(body).toContain('crossorigin="anonymous"');
+    const cover = queries.getByRole("button", { name: "Reveal spoiler" });
+    expect(cover.querySelector("[aria-hidden='true']")?.textContent).toContain("Cherry Cobbler");
+    expect(queries.getByRole("button", { name: "Check spoilered item" })).toBeTruthy();
+    expect(container.querySelector<HTMLElement>("[data-sprite-slot]")?.dataset.spriteSlot).toBe(
+      "spoilered",
+    );
+    expect(container.querySelector("image")?.getAttribute("crossorigin")).toBe("anonymous");
   });
 
   it("reveals the name for a completed row, unlike a spoilered one", () => {
-    const { body } = render(TrackerRow, {
+    const { container, queries } = renderToFragment(TrackerRow, {
       props: {
         display: { mode: "completed" },
         ...reportProps,
@@ -44,13 +46,15 @@ describe("TrackerRow", () => {
       },
     });
 
-    expect(body).toContain("Cherry Cobbler");
-    expect(body).not.toContain("Reveal spoiler");
-    expect(body).toContain('data-sprite-slot="complete"');
+    expect(queries.getByText("Cherry Cobbler")).toBeTruthy();
+    expect(queries.queryByRole("button", { name: "Reveal spoiler" })).toBeNull();
+    expect(container.querySelector<HTMLElement>("[data-sprite-slot]")?.dataset.spriteSlot).toBe(
+      "complete",
+    );
   });
 
   it("shows the entity name for a visible row", () => {
-    const { body } = render(TrackerRow, {
+    const { container, queries } = renderToFragment(TrackerRow, {
       props: {
         display: { mode: "visible" },
         ...reportProps,
@@ -60,13 +64,15 @@ describe("TrackerRow", () => {
       },
     });
 
-    expect(body).toContain("Cherry Cobbler");
-    expect(body).toContain('aria-label="Check Cherry Cobbler"');
-    expect(body).toContain('data-sprite-slot="ready"');
+    expect(queries.getByText("Cherry Cobbler")).toBeTruthy();
+    expect(queries.getByRole("button", { name: "Check Cherry Cobbler" })).toBeTruthy();
+    expect(container.querySelector<HTMLElement>("[data-sprite-slot]")?.dataset.spriteSlot).toBe(
+      "ready",
+    );
   });
 
   it("marks a completed row for uncheck", () => {
-    const { body } = render(TrackerRow, {
+    const { queries } = renderToFragment(TrackerRow, {
       props: {
         display: { mode: "completed" },
         ...reportProps,
@@ -75,12 +81,12 @@ describe("TrackerRow", () => {
       },
     });
 
-    expect(body).toContain("Cherry Cobbler");
-    expect(body).toContain('aria-label="Uncheck Cherry Cobbler"');
+    expect(queries.getByText("Cherry Cobbler")).toBeTruthy();
+    expect(queries.getByRole("button", { name: "Uncheck Cherry Cobbler" })).toBeTruthy();
   });
 
   it("renders a clipped tracker paper and persistent source paper when sourced", () => {
-    const { body } = render(TrackerRow, {
+    const { container, queries } = renderToFragment(TrackerRow, {
       props: {
         display: { mode: "visible" },
         ...reportProps,
@@ -90,21 +96,23 @@ describe("TrackerRow", () => {
       },
     });
 
-    expect(body).toContain('aria-label="Cherry Cobbler sources"');
-    expect(body).toContain('aria-controls="sources-cherry-cobbler-');
-    expect(body).toContain('data-source-state="closed"');
-    expect(body).toContain("data-tracker-paper");
-    expect(body).toContain("tracker-paper__surface--cutout");
-    expect(body).toContain("data-tracker-paper-diagonal");
-    expect(body).toContain('d="M 26.5 0.5 L 0.5 26.5"');
-    expect(body).toContain('stroke-width="1"');
-    expect(body).toContain('vector-effect="non-scaling-stroke"');
-    expect(body).toContain('shape-rendering="geometricPrecision"');
-    expect(body).toContain("data-source-paper");
+    const control = queries.getByRole("button", { name: "Cherry Cobbler sources" });
+    expect(control.getAttribute("aria-controls")).toMatch(/^sources-cherry-cobbler-/);
+    expect(container.querySelector<HTMLElement>("[data-tracker-row]")?.dataset.sourceState).toBe(
+      "closed",
+    );
+    const paper = container.querySelector("[data-tracker-paper]");
+    expect(paper?.querySelector(".tracker-paper__surface--cutout")).not.toBeNull();
+    const diagonal = paper?.querySelector("[data-tracker-paper-diagonal] path");
+    expect(diagonal?.getAttribute("d")).toBe("M 26.5 0.5 L 0.5 26.5");
+    expect(diagonal?.getAttribute("stroke-width")).toBe("1");
+    expect(diagonal?.getAttribute("vector-effect")).toBe("non-scaling-stroke");
+    expect(diagonal?.getAttribute("shape-rendering")).toBe("geometricPrecision");
+    expect(container.querySelector("[data-source-paper]")).not.toBeNull();
   });
 
   it("renders no source paper or diagonal when there are no sources", () => {
-    const { body } = render(TrackerRow, {
+    const { container } = renderToFragment(TrackerRow, {
       props: {
         display: { mode: "visible" },
         ...reportProps,
@@ -113,9 +121,11 @@ describe("TrackerRow", () => {
       },
     });
 
-    expect(body).toContain('data-source-state="none"');
-    expect(body).toContain("data-tracker-paper");
-    expect(body).not.toContain("data-tracker-paper-diagonal");
-    expect(body).not.toContain("data-source-paper");
+    expect(container.querySelector<HTMLElement>("[data-tracker-row]")?.dataset.sourceState).toBe(
+      "none",
+    );
+    expect(container.querySelector("[data-tracker-paper]")).not.toBeNull();
+    expect(container.querySelector("[data-tracker-paper-diagonal]")).toBeNull();
+    expect(container.querySelector("[data-source-paper]")).toBeNull();
   });
 });
