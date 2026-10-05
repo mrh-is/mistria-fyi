@@ -13,7 +13,6 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && tsc --noEmit -p src/service-worker/tsconfig.json && tsc --noEmit -p pipeline/tsconfig.json",
     "check:i18n": "tsx scripts/check-translation-keys.ts",
     "check:routes": "tsx scripts/check-routes.ts",
-    "check:pipeline": "tsc --noEmit -p pipeline/tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "cloudflare:logs": "tsx scripts/cloudflare-pages-logs.ts",
     "lint": "oxfmt --check && oxlint --type-aware --disable-nested-config --deny-warnings && eslint \"**/*.svelte\" \"**/*.svelte.{js,ts}\" --cache --cache-location node_modules/.cache/eslint/ --max-warnings=0 && stylelint \"src/**/*.{css,svelte}\" --max-warnings=0",
@@ -32,12 +31,10 @@
     "generate:brand-assets": "tsx scripts/generate-brand-assets.ts",
     "test:accessibility": "playwright test",
     "test:accessibility:critical": "playwright test --grep @critical",
-    "test:app": "vitest run --project=app --project=mocked --project=client",
+    "test:app": "vitest run --project=app --project=cold --project=client",
     "test:client": "vitest run --project=client",
-    "test:mocked": "vitest run --project=mocked",
-    "test:pipeline": "vitest run --project=node pipeline/",
+    "test:pipeline": "vitest run --project=pipeline",
     "test:pwa": "playwright test --config playwright.pwa.config.ts",
-    "test:server": "vitest run --project=app --project=mocked --project=node",
     "test:pipeline:assets": "vitest run --project=assets",
     "fonts:install": "pnpm --dir scripts/locale-fonts install --frozen-lockfile",
     "fonts:build": "pnpm --dir scripts/locale-fonts run build",
@@ -45,7 +42,7 @@
     "fonts:lint": "pnpm --dir scripts/locale-fonts run lint",
     "fonts:upload": "bash scripts/locale-fonts/upload-locale-fonts.sh",
     "sprites:upload": "bash scripts/sprites/upload-sprites.sh",
-    "sprites:villagers": "pnpm run pipeline -- --sprites-only"
+    "sprites:villagers": "pnpm run pipeline -- --villager-sprites-only"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

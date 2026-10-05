@@ -203,47 +203,58 @@ colocated tests don’t double the length of directory listings.
   ```
   This command passes in a fresh clone without `pipeline/input/` and is the test command CI runs.
 - **Run tests affected by branch changes**:
+
   ```sh
   pnpm run test:changed
   ```
+
   This compares committed, staged, modified, and untracked files with the local `origin/main` ref,
   then lets Vitest select related tests. If the comparison ref is unavailable, Git cannot enumerate
   the changes, or test configuration changes, the command explains why and runs the complete
   asset-independent suite instead. A branch with no changes prints that state explicitly instead of
   relying on Vitest's successful zero-test exit.
-- **Run Application Logic Tests Only** (`src/`):
+
+  `origin/main` is a local remote-tracking ref, so refresh it with `git fetch origin main` when it
+  may be stale. A stale behind ref is conservative because it includes extra changed files, but
+  `pnpm run test` remains the authoritative local fallback and the command CI runs. Pass another
+  comparison ref when needed, for example `pnpm run test:changed -- main`.
+
+- **Run application tests only** (`src/`: the `app`, `cold`, & `client` projects):
   ```sh
   pnpm run test:app
   ```
-- **Run Data Pipeline Tests Only** (`pipeline/`):
+  `pnpm run test:client` runs only the `client` project.
+- **Run data pipeline tests only** (`pipeline/`):
   ```sh
   pnpm run test:pipeline
   ```
   This command is also asset-independent.
+- **Run one file** from any project:
+  ```sh
+  pnpm exec vitest run path/to/file.test.ts
+  ```
 
 ### Test projects
 
-`vite.config.ts` splits Vitest into projects by what each test needs to run. Select one with
+`vite.config.ts` splits Vitest into projects by what each test needs to run. Vitest assigns a file
+to its project, so a file path alone selects the right environment. Select a whole project with
 `pnpm exec vitest run --project=<name>`.
 
-`origin/main` is a local remote-tracking ref, so refresh it with `git fetch origin main` when it may
-be stale. A stale behind ref is conservative because it includes extra changed files, but
-`pnpm run test` remains the authoritative local fallback and the command CI runs. Pass another
-comparison ref when needed, for example `pnpm run test:changed -- main`.
-
-| Project  | Files                                                 | Environment & setup                                            |
-| -------- | ----------------------------------------------------- | -------------------------------------------------------------- |
-| `app`    | `src/**/*.test.ts`                                    | Node, SvelteKit stand-ins & preloaded names, isolated per file |
-| `mocked` | `src/**/*.cold.test.ts`                               | Node, isolated per file, no names preload                      |
-| `client` | `src/**/*.client.test.ts`                             | happy-dom & Testing Library                                    |
-| `node`   | `*.test.ts` under `pipeline/`, `scripts/`, & `tests/` | Plain Node, isolated per file                                  |
-| `assets` | `**/*.assets.test.ts`                                 | Installed game assets; local only, excluded from `test`        |
+| Project    | Files                                                     | Environment & setup                                            |
+| ---------- | --------------------------------------------------------- | -------------------------------------------------------------- |
+| `app`      | `src/**/*.test.ts`                                        | Node, SvelteKit stand-ins & preloaded names, isolated per file |
+| `cold`     | `src/**/*.cold.test.ts`                                   | Node, isolated per file, no names preload                      |
+| `client`   | `src/**/*.client.test.ts`                                 | happy-dom & Testing Library                                    |
+| `pipeline` | `pipeline/**/*.test.ts`                                   | Plain Node without the app's Vite plugins                      |
+| `node`     | `*.test.ts` under `eslint-rules/`, `scripts/`, & `tests/` | Plain Node without the app's Vite plugins                      |
+| `assets`   | `**/*.assets.test.ts`                                     | Installed game assets; local only, excluded from `test`        |
 
 Every project isolates files and restores spies & stubbed globals before each test. Set up spies and
 `vi.stubGlobal()` in the test or `beforeEach`, rather than relying on suite-level stubs. A new tier
 gets its own project rather than another entry in an exclude list. Tests that need an unloaded names
-cache use the `*.cold.test.ts` convention and run in `mocked` without preloads; ordinary `vi.mock()`
-tests remain in `app`.
+cache use the `*.cold.test.ts` convention and run in `cold` without preloads; ordinary `vi.mock()`
+tests remain in `app`. `tests/vitest-projects.test.ts` fails when a tracked test file belongs to no
+project or to more than one.
 
 ### Local real-data verification
 
