@@ -39,7 +39,8 @@ that the existing versions cannot distinguish states the application must handle
 Before changing pipeline code or generated data:
 
 1. Open an issue for the new game version and link the upstream release notes or other authoritative
-   source material.
+   source material. The game build watch workflow files this issue automatically when the public
+   Steam build changes; update the game in Steam and confirm the installed build matches the issue.
 2. Record the currently supported game version, application commit, serialized-state version, and
    transfer version.
 3. Obtain a clean copy of the new game assets. Keep the preceding supported assets available for
@@ -64,6 +65,15 @@ pnpm run pipeline -- /path/to/new/assets
 Treat the regenerated data as a candidate until the semantic review is complete. Inspect the
 readable pipeline artifact or a purpose-built comparison rather than relying only on the minified
 JSON diff.
+
+## Share the extracted assets
+
+The game is installed only on the gaming PC. After generating the candidate there, copy the
+extracted structured-assets root (the directory passed to `pnpm run pipeline`, with `fiddle/`,
+`data_files/`, `localization/`, and so on) to Google Drive at
+`Development/Mistria/Fields of Mistria vX.Y.Z/assets/`. Other machines point `pipeline/input/assets`
+at that folder for development work. Copy only the extracted subtrees the pipeline reads; never
+upload the full `assets.zip` archive.
 
 ## Classify changes
 
@@ -161,6 +171,10 @@ The version-update issue or pull request must include a compatibility report wit
 - The migration policy and historical fixtures added, or an explanation of why none are needed.
 - Any user-facing notice.
 - The rollback constraint for the release.
+
+Post the mechanical ID inventory (additions, removals, renames, and transfer-position changes by
+domain, compared from the baseline commit) as its own PR comment, as #354 did. It is the durable
+diff later updates compare against.
 
 Use this conclusion when the review finds no incompatibility: “No persisted-state or transfer
 compatibility change is required”. Support that conclusion with the reviewed comparisons and tests.
