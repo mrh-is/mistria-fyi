@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
+import { tick } from "svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import AboutPage from "./+page.svelte";
@@ -7,9 +8,7 @@ afterEach(async () => {
   cleanup();
   vi.restoreAllMocks();
   Reflect.deleteProperty(globalThis.history, "length");
-  await new Promise((resolve) => {
-    setTimeout(resolve, 250);
-  });
+  await tick();
 });
 
 describe("About page navigation and disclosures", () => {
