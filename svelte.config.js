@@ -1,13 +1,8 @@
 import adapter from "@sveltejs/adapter-cloudflare";
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
-import { execSync } from "node:child_process";
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync } from "node:fs";
 
-const pkg = JSON.parse(readFileSync("package.json", "utf-8"));
-const commit =
-  process.env.NODE_ENV === "production"
-    ? execSync("git rev-parse --short HEAD").toString().trim()
-    : "dev";
+import { getAppVersion } from "./scripts/app-version.js";
 
 /**
  * Cloudflare Pages caps `_routes.json` at 100 rules. The adapter's default `<files>` exclusion
@@ -58,7 +53,7 @@ const config = {
         config.include.push("../scripts/**/*.ts");
       },
     },
-    version: { name: `${pkg.version} (${commit})` },
+    version: { name: getAppVersion() },
   },
 
   preprocess: vitePreprocess(),
