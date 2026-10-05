@@ -19,7 +19,7 @@ const gatheringFilter = sourceFilter("Gathering");
 const storesFilter = sourceFilter("Stores");
 
 function weatherStrip() {
-  return screen.getByLabelText("Weather");
+  return screen.getByRole("radiogroup", { name: "Weather" });
 }
 
 afterEach(async () => {
@@ -50,42 +50,42 @@ describe("VisibilityPanel interactions", () => {
   it("selects a season and relabels the weather strip for it", async () => {
     render(VisibilityPanel, { showSeasonality: true });
 
-    const seasons = screen.getByLabelText("Season");
-    expect(within(seasons).getByRole("button", { name: "Spring" })).toHaveAttribute(
-      "aria-pressed",
+    const seasons = screen.getByRole("radiogroup", { name: "Season" });
+    expect(within(seasons).getByRole("radio", { name: "Spring" })).toHaveAttribute(
+      "aria-checked",
       "true",
     );
-    expect(within(weatherStrip()).getByRole("button", { name: "Rain" })).toBeInTheDocument();
+    expect(within(weatherStrip()).getByRole("radio", { name: "Rain" })).toBeInTheDocument();
 
-    await fireEvent.click(within(seasons).getByRole("button", { name: "Winter" }));
+    await fireEvent.click(within(seasons).getByRole("radio", { name: "Winter" }));
 
-    expect(within(seasons).getByRole("button", { name: "Winter" })).toHaveAttribute(
-      "aria-pressed",
+    expect(within(seasons).getByRole("radio", { name: "Winter" })).toHaveAttribute(
+      "aria-checked",
       "true",
     );
     expect(userState.state.worldState.season).toBe("winter");
     await waitFor(() => {
-      expect(within(weatherStrip()).getByRole("button", { name: "Snow" })).toBeInTheDocument();
+      expect(within(weatherStrip()).getByRole("radio", { name: "Snow" })).toBeInTheDocument();
     });
-    expect(within(weatherStrip()).getByRole("button", { name: "Blizzard" })).toBeInTheDocument();
+    expect(within(weatherStrip()).getByRole("radio", { name: "Blizzard" })).toBeInTheDocument();
   });
 
   it("selects weather and falls back to calm when the season loses that weather", async () => {
     render(VisibilityPanel, { showSeasonality: true });
 
-    const breeze = within(weatherStrip()).getByRole("button", { name: "Breeze" });
+    const breeze = within(weatherStrip()).getByRole("radio", { name: "Breeze" });
     expect(breeze).toBeEnabled();
     await fireEvent.click(breeze);
-    expect(breeze).toHaveAttribute("aria-pressed", "true");
+    expect(breeze).toHaveAttribute("aria-checked", "true");
     expect(userState.state.worldState.weather).toBe("special");
 
-    await fireEvent.click(screen.getByRole("button", { name: "Summer" }));
+    await fireEvent.click(screen.getByRole("radio", { name: "Summer" }));
 
     await waitFor(() => {
       expect(userState.state.worldState.weather).toBe("calm");
     });
-    expect(within(weatherStrip()).getByRole("button", { name: "Sun" })).toHaveAttribute(
-      "aria-pressed",
+    expect(within(weatherStrip()).getByRole("radio", { name: "Sun" })).toHaveAttribute(
+      "aria-checked",
       "true",
     );
     // The special-weather slot stays in the DOM (for the collapse animation) but leaves the
@@ -94,6 +94,26 @@ describe("VisibilityPanel interactions", () => {
     expect(special).toBeDisabled();
     expect(special).toHaveAttribute("aria-hidden", "true");
     expect(special).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("models season as a radiogroup with arrow-key selection", async () => {
+    render(VisibilityPanel, { showSeasonality: true });
+
+    const seasons = screen.getByRole("radiogroup", { name: "Season" });
+    const spring = within(seasons).getByRole("radio", { name: "Spring" });
+    expect(spring).toHaveAttribute("tabindex", "0");
+    expect(within(seasons).getByRole("radio", { name: "Summer" })).toHaveAttribute(
+      "tabindex",
+      "-1",
+    );
+
+    spring.focus();
+    await fireEvent.keyDown(spring, { key: "ArrowRight" });
+    const summer = within(seasons).getByRole("radio", { name: "Summer" });
+    expect(summer).toHaveFocus();
+    expect(summer).toHaveAttribute("aria-checked", "true");
+    expect(userState.state.worldState.season).toBe("summer");
+    expect(within(seasons).queryAllByRole("radio", { checked: true })).toHaveLength(1);
   });
 
   it("toggles source groups and reflects the pressed state", async () => {

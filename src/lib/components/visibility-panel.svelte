@@ -85,6 +85,32 @@
   function toggleAvailability(window: AvailabilityWindow): void {
     userState.toggleAvailabilityWindow(window);
   }
+
+  // Native radio-group keyboard model: arrows move selection (wrapping), Home & End jump.
+  function moveRadioFocus(event: KeyboardEvent & { currentTarget: HTMLElement }): void {
+    const step: Record<string, number> = {
+      ArrowDown: 1,
+      ArrowLeft: -1,
+      ArrowRight: 1,
+      ArrowUp: -1,
+    };
+    const group = event.currentTarget.closest('[role="radiogroup"]');
+    if (!group) return;
+    const radios = [...group.querySelectorAll<HTMLButtonElement>('[role="radio"]:not(:disabled)')];
+    const current = radios.indexOf(event.currentTarget as HTMLButtonElement);
+    let next: number | undefined;
+    if (event.key === "Home") {
+      next = 0;
+    } else if (event.key === "End") {
+      next = radios.length - 1;
+    } else if (event.key in step) {
+      next = (current + (step[event.key] ?? 0) + radios.length) % radios.length;
+    }
+    if (current === -1 || next === undefined) return;
+    event.preventDefault();
+    radios[next]?.focus();
+    radios[next]?.click();
+  }
 </script>
 
 <SourceExplainerDialog bind:open={sourcesExplainerOpen} filters={toolbarState.sourceFilters} />
@@ -113,13 +139,16 @@
       <div class="world-state-grid">
         <div>
           <p>{m.visibility_season_label()}</p>
-          <div class="radio-strip" aria-label={m.visibility_season_label()}>
+          <div class="radio-strip" role="radiogroup" aria-label={m.visibility_season_label()}>
             {#each seasons as season (season)}
               {@const selected = season === currentSeason}
               <button
                 type="button"
+                role="radio"
+                onkeydown={moveRadioFocus}
                 aria-label={seasonLabel(season, page.data.locale)}
-                aria-pressed={selected}
+                aria-checked={selected}
+                tabindex={selected ? 0 : -1}
                 class:radio-strip__active={selected}
                 onclick={() => {
                   userState.setSeason(season);
@@ -133,6 +162,7 @@
           <p>{m.visibility_weather_label()}</p>
           <div
             class="radio-strip radio-strip--weather"
+            role="radiogroup"
             aria-label={m.visibility_weather_label()}
             style:grid-template-columns={weatherColumns}
             style:transition-duration="{transitionDuration()}ms"
@@ -148,12 +178,14 @@
               >
                 <button
                   type="button"
+                  role="radio"
+                  onkeydown={moveRadioFocus}
                   aria-label={weatherLabel(weather, currentSeason)}
-                  aria-pressed={selected}
+                  aria-checked={selected}
                   aria-hidden={isSpecial && !hasSpecialWeather}
                   class:radio-strip__active={selected}
                   disabled={isSpecial && !hasSpecialWeather}
-                  tabindex={isSpecial && !hasSpecialWeather ? -1 : undefined}
+                  tabindex={selected && !(isSpecial && !hasSpecialWeather) ? 0 : -1}
                   onclick={() => {
                     userState.setWeather(weather);
                   }}
