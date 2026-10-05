@@ -28,7 +28,8 @@ const ASSETS = [...immutable, ...assets].map(
   ({ path }) => new URL(path, sw.registration.scope).pathname,
 );
 const LOCALE_NAME_CHUNKS: LocaleNameChunks =
-  __LOCALE_NAME_CHUNKS__ === undefined ? {} : __LOCALE_NAME_CHUNKS__;
+  // oxlint-disable-next-line unicorn/no-typeof-undefined -- Only builds define this identifier; reading it bare throws a ReferenceError in dev.
+  typeof __LOCALE_NAME_CHUNKS__ === "undefined" ? {} : __LOCALE_NAME_CHUNKS__;
 const LOCALE_NAME_CHUNK_PATHS: ReadonlySet<string> = new Set(
   Object.values(LOCALE_NAME_CHUNKS).flat(),
 );
