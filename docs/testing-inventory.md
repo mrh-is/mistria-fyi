@@ -114,9 +114,6 @@ Ordered by risk:
    `confirm-spoiler-dialog` and that "Yes, and update my progress" changes progression.
 4. **Camera scanning** in `transfer-card`: belongs in the Playwright layer with a fake media stream,
    if it is covered at all.
-5. **Playwright hydration signal**: interaction helpers in `tests/accessibility` should await a
-   hydration-ready marker, and local runs should refuse a preview owned by another checkout. Tracked
-   separately from the happy-dom work.
 
 ## Conventions
 

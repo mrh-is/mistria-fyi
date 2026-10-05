@@ -24,8 +24,10 @@
 
 ## 2. Git Worktree Mechanics & Workspace Isolation
 
-All agents must operate within an isolated Git worktree to prevent edit collisions, dirty-state
-confusion, and branch switching interference across concurrent sessions.
+Agents that modify tracked files work in an isolated Git worktree to prevent edit collisions,
+dirty-state confusion, and branch switching interference across concurrent sessions. Read-only work
+and platform-isolated cloud sessions are exempt; see
+[AGENTS.md §1](../AGENTS.md#1-worktree-isolation).
 
 ### Worktree creation
 
@@ -485,7 +487,7 @@ offline fallback, registration, or activation behavior.
 - **Symptom**: App UI displays stale item fields after pipeline extractor logic updates.
 - **Recovery**: Run the pipeline with local game assets to regenerate the target dataset:
   ```sh
-  pnpm run pipeline -- input/assets --version=1.0.2
+  pnpm run pipeline -- input/assets --version=1.0.5
   ```
   Review `git diff src/lib/data/tracker-data.json` to verify schema and data accuracy.
 

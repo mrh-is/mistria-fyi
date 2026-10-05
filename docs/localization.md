@@ -258,10 +258,10 @@ Be honest with yourself (and reviewers) about what this catches:
 
 - The ESLint rule only sees Svelte template syntax. It cannot verify that a displayed field like
   `entity.name` is actually locale-aware — that depends on whether the pipeline extractor for that
-  category was migrated to read the game's translation tables (see
-  [`docs/superpowers/specs/2026-09-16-localization-support-design.md`](superpowers/specs/2026-09-16-localization-support-design.md)
-  for the state of that migration, category by category). A field that's still English-only in
-  `tracker-data.json` will render fine and pass lint.
+  category reads the game's translation tables. As of this writing, every pipeline category emits
+  its names through per-locale chunks (`src/lib/data/locales/<locale>/<category>.json`) and
+  `tracker-data.json` carries no display names, so the remaining risk is app-authored text. A future
+  field added to the contract as English-only would render fine and pass lint.
 - The key-shape check cannot verify translation quality or that a value has actually been translated
   (as opposed to copy-pasted from English).
 - Both checks are opt-in / allowlisted, not repo-wide. A PR that never touches an allowlisted file
