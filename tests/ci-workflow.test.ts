@@ -159,12 +159,16 @@ describe("CI workflow jobs", () => {
     expect(packageJson.packageManager).toMatch(/^pnpm@\d+\.\d+\.\d+$/);
     expect(readFileSync(".node-version", "utf8").trim()).toMatch(/^\d+\.\d+\.\d+$/);
     for (const job of Object.values(jobs)) {
-      for (const step of job.steps?.filter((entry) => entry.uses?.startsWith("pnpm/setup@")) ??
-        []) {
-        expect(step.with?.version).toBeUndefined();
-        expect(step.with?.runtime).toBeUndefined();
-        expect(step.with?.["node-version-file"]).toBe(".node-version");
+      const steps = job.steps ?? [];
+      const pnpmIndex = steps.findIndex((entry) => entry.uses?.startsWith("pnpm/setup@"));
+      if (pnpmIndex === -1) {
+        continue;
       }
+      expect(steps[pnpmIndex].with?.version).toBeUndefined();
+      expect(steps[pnpmIndex].with?.runtime).toBeUndefined();
+      const nodeIndex = steps.findIndex((entry) => entry.uses?.startsWith("actions/setup-node@"));
+      expect(nodeIndex).toBeGreaterThan(-1);
+      expect(steps[nodeIndex].with?.["node-version-file"]).toBe(".node-version");
     }
   });
 
