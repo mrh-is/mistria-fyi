@@ -1,8 +1,8 @@
-import { getName, getNameTable } from "$lib/data/names.js";
-import * as m from "$lib/paraglide/messages.js";
+import { getName, getNameTable } from "#lib/data/names.js";
+import * as m from "#lib/paraglide/messages.js";
 
-import type { LocaleCode } from "$lib/types/locale.js";
-import type { ItemId, PetSkinId, QuestId, TreasureChestTierId } from "$lib/types/tracker-data.js";
+import type { LocaleCode } from "#lib/types/locale.js";
+import type { ItemId, PetSkinId, QuestId, TreasureChestTierId } from "#lib/types/tracker-data.js";
 
 type NameMessage = (inputs: Record<string, never>, options: { locale: LocaleCode }) => string;
 type VariantMessage = (inputs: { monster: string }, options: { locale: LocaleCode }) => string;

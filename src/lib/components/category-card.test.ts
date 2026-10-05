@@ -1,8 +1,8 @@
 import { render } from "svelte/server";
 import { afterEach, describe, expect, it } from "vitest";
 
-import CategoryCard from "$lib/components/category-card.svelte";
-import { getLocale, overwriteGetLocale } from "$lib/paraglide/runtime.js";
+import CategoryCard from "#lib/components/category-card.svelte";
+import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
 
 describe("CategoryCard", () => {
   const defaultGetLocale = getLocale;

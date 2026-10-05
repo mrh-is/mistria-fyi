@@ -1,8 +1,8 @@
-import { getName } from "$lib/data/names.js";
-import * as m from "$lib/paraglide/messages.js";
+import { getName } from "#lib/data/names.js";
+import * as m from "#lib/paraglide/messages.js";
 
-import type { Pathname } from "$app/types";
-import type { LocaleCode } from "$lib/types/locale.js";
+import type { LocaleCode } from "#lib/types/locale.js";
+import type { Path } from "$app/types";
 
 export const CATEGORY_KEYS = [
   "almanac",
@@ -20,10 +20,9 @@ export const CATEGORY_KEYS = [
 export interface CategoryInfo {
   color: string;
   description: string;
-  href: Pathname;
+  href: Path;
   name: string;
 }
-
 export type CategoryKey = (typeof CATEGORY_KEYS)[number];
 
 /**
@@ -73,17 +72,17 @@ const CATEGORY_DESCRIPTIONS: Record<CategoryKey, (locale: LocaleCode) => string>
   villagers: () => m.category_villagers_description(),
 };
 
-const CATEGORY_HREFS: Record<CategoryKey, Pathname> = {
-  almanac: "/almanac",
-  animals: "/animals",
-  cosmetics: "/cosmetics",
-  mines: "/mines",
-  museum: "/museum",
-  quests: "/quests",
-  recipes: "/recipes",
-  renown: "/renown",
-  skills: "/skills",
-  villagers: "/villagers",
+const CATEGORY_HREFS: Record<CategoryKey, Path> = {
+  almanac: "almanac",
+  animals: "animals",
+  cosmetics: "cosmetics",
+  mines: "mines",
+  museum: "museum",
+  quests: "quests",
+  recipes: "recipes",
+  renown: "renown",
+  skills: "skills",
+  villagers: "villagers",
 };
 
 /** The CSS color token for a category; the one lookup that needs no locale. */
@@ -103,7 +102,7 @@ export function categoryForKey(key: CategoryKey, locale: LocaleCode): CategoryIn
 
 /** Look up a category key from its public route. */
 export function categoryKeyForPathname(pathname: string): CategoryKey | undefined {
-  return CATEGORY_KEYS.find((key) => CATEGORY_HREFS[key] === pathname);
+  return CATEGORY_KEYS.find((key) => `/${CATEGORY_HREFS[key]}` === pathname);
 }
 
 /** Display name for a category, or the raw key when it isn't a known category. */

@@ -1,12 +1,16 @@
 import { paraglideVitePlugin } from "@inlang/paraglide-js";
+import adapter from "@sveltejs/adapter-cloudflare";
 import { sveltekit } from "@sveltejs/kit/vite";
+import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 import tailwindcss from "@tailwindcss/vite";
 import { svelteTesting } from "@testing-library/svelte/vite";
-import { fileURLToPath } from "node:url";
+import { readdirSync } from "node:fs";
 import { defineConfig } from "vite";
 import { configDefaults } from "vitest/config";
 
+import { getAppVersion } from "./scripts/app-version.js";
 import { localeNameChunksPlugin } from "./src/lib/build/locale-name-chunks.js";
+import { CSP_DIRECTIVES } from "./src/lib/security/csp-directives.js";
 import { LOCALE_CODES } from "./src/lib/types/locale.js";
 
 // All 8 locales are prefixed symmetrically, including the base locale "en" — there is no
@@ -17,6 +21,7 @@ const localizedRootPattern: [string, string][] = LOCALE_CODES.map((locale) => [
   locale,
   `/${locale}`,
 ]);
+
 const localizedCatchAllPattern: [string, string][] = LOCALE_CODES.map((locale) => [
   locale,
   `/${locale}/:path(.*)?`,
@@ -28,6 +33,18 @@ const sharedTestExcludes = [
   "**/.claude/worktrees/**",
   "**/.pnpm-store/**",
 ];
+
+/**
+ * Cloudflare Pages caps `_routes.json` at 100 rules. The adapter's default `<files>` exclusion
+ * lists every static asset individually, which can overflow that cap once `static/` holds enough
+ * files (it did for the ~2,500 sprites now hosted on assets.mistria.fyi instead, see #312, #247).
+ * Exclude each top-level `static/` directory with one wildcard instead, and keep top-level files
+ * as individual rules. Dynamic routes (locale pages, `/api/feedback`) stay covered by the `/*`
+ * include.
+ */
+const staticExcludes = readdirSync("static", { withFileTypes: true })
+  .filter((entry) => !entry.name.startsWith("."))
+  .map((entry) => (entry.isDirectory() ? `/${entry.name}/*` : `/${entry.name}`));
 
 export default defineConfig({
   build: {
@@ -58,7 +75,24 @@ export default defineConfig({
   envPrefix: ["VITE_", "PUBLIC_"],
   plugins: [
     tailwindcss(),
-    sveltekit(),
+    sveltekit({
+      adapter: adapter({
+        routes: {
+          exclude: [
+            "<build>",
+            "<prerendered>",
+            "<redirects>",
+            "/service-worker.js",
+            ...staticExcludes,
+          ],
+          include: ["/*"],
+        },
+      }),
+      preprocess: vitePreprocess(),
+
+      csp: { directives: CSP_DIRECTIVES },
+      version: { name: getAppVersion() },
+    }),
     localeNameChunksPlugin(),
     paraglideVitePlugin({
       outdir: "./src/lib/paraglide",
@@ -143,11 +177,6 @@ export default defineConfig({
       },
       {
         // Needs the installed game assets, so CI never runs it; `pnpm run test` excludes it.
-        resolve: {
-          alias: {
-            $lib: fileURLToPath(new URL("./src/lib", import.meta.url)),
-          },
-        },
         test: {
           exclude: sharedTestExcludes,
           globalSetup: ["pipeline/src/assets-test-setup.ts"],

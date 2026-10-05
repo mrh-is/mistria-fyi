@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { trackerData } from "$lib/data/index.js";
-import { getName, getNameTable, nameCollator } from "$lib/data/names.js";
-import { LOCALE_CODES } from "$lib/types/locale.js";
-import { recordKeys } from "$lib/utils.js";
+import { trackerData } from "#lib/data/index.js";
+import { getName, getNameTable, nameCollator } from "#lib/data/names.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
+import { recordKeys } from "#lib/utils.js";
 
 import type {
   FestivalId,
@@ -12,7 +12,7 @@ import type {
   RecipeId,
   SkillId,
   VillagerId,
-} from "$lib/types/tracker-data.js";
+} from "#lib/types/tracker-data.js";
 
 const balor = "balor" as VillagerId;
 const farming = "farming" as SkillId;

@@ -4,14 +4,14 @@
   import IconInfoCircle from "@tabler/icons-svelte-runes/icons/info-circle";
   import IconTool from "@tabler/icons-svelte-runes/icons/tool";
 
-  import BlockySwitch from "$lib/components/blocky-switch.svelte";
-  import QuickSettingsLanguagePicker from "$lib/components/quick-settings-language-picker.svelte";
-  import QuickSettingsThemePicker from "$lib/components/quick-settings-theme-picker.svelte";
-  import TagDialog from "$lib/components/tag-dialog.svelte";
-  import * as Dialog from "$lib/components/ui/dialog/index.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
-  import { localizedHref } from "$lib/utils/localized-href.js";
+  import BlockySwitch from "#lib/components/blocky-switch.svelte";
+  import QuickSettingsLanguagePicker from "#lib/components/quick-settings-language-picker.svelte";
+  import QuickSettingsThemePicker from "#lib/components/quick-settings-theme-picker.svelte";
+  import TagDialog from "#lib/components/tag-dialog.svelte";
+  import * as Dialog from "#lib/components/ui/dialog/index.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
+  import { localizedHref } from "#lib/utils/localized-href.js";
 
   let confirmSpoilers = $state(false);
   let spoilerToggleChecked = $state(userState.state.showSpoilers);
@@ -76,12 +76,12 @@
   <QuickSettingsLanguagePicker />
 
   <div class="quick-settings__links">
-    <a class="quick-settings__link" href={localizedHref("/data")}>
+    <a class="quick-settings__link" href={localizedHref("data")}>
       <IconTool class="size-4" />
       <span>{m.settings_data_link()}</span>
       <IconChevronRight class="size-4" />
     </a>
-    <a class="quick-settings__link" href={localizedHref("/about")}>
+    <a class="quick-settings__link" href={localizedHref("about")}>
       <IconInfoCircle class="size-4" />
       <span>{m.settings_about_link()}</span>
       <IconChevronRight class="size-4" />

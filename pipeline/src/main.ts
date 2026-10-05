@@ -7,71 +7,71 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { open, type ZipFile } from "yauzl-promise";
 
-import { LOCALE_CODES } from "$lib/types/locale.js";
-import { recordEntries } from "$lib/utils.js";
-import { isNonEmptyArray } from "$lib/utils.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
+import { recordEntries } from "#lib/utils.js";
+import { isNonEmptyArray } from "#lib/utils.js";
 
-import { collectExplorationSources } from "./acquisition/collectors/exploration";
-import { collectNaturalSources } from "./acquisition/collectors/natural";
-import { collectRewardSources } from "./acquisition/collectors/rewards";
-import { collectStoreSources } from "./acquisition/collectors/stores";
-import { applyExclusions } from "./acquisition/exclusions";
-import { deriveRecipeProductSources } from "./acquisition/recipe-products";
-import { AcquisitionReferenceIndex } from "./acquisition/reference-index";
+import { collectExplorationSources } from "./acquisition/collectors/exploration.js";
+import { collectNaturalSources } from "./acquisition/collectors/natural.js";
+import { collectRewardSources } from "./acquisition/collectors/rewards.js";
+import { collectStoreSources } from "./acquisition/collectors/stores.js";
+import { applyExclusions } from "./acquisition/exclusions.js";
+import { deriveRecipeProductSources } from "./acquisition/recipe-products.js";
+import { AcquisitionReferenceIndex } from "./acquisition/reference-index.js";
 import {
   applyReviewedOverrides,
   collectDefaultCosmeticSources,
   collectDefaultItemSources,
-} from "./acquisition/reviewed-overrides";
+} from "./acquisition/reviewed-overrides.js";
 import {
   AnimalCosmeticSourceAccumulator,
   CosmeticSourceAccumulator,
   ItemSourceAccumulator,
   PetCosmeticSourceAccumulator,
-} from "./acquisition/source-accumulator";
+} from "./acquisition/source-accumulator.js";
 import {
   type AcquisitionSourceAssembly,
   validateAcquisitionSources,
-} from "./acquisition/validate-sources";
+} from "./acquisition/validate-sources.js";
 import {
   DEFAULT_WINDOWS_STEAM_ASSETS_DIR,
   readInstalledGameVersion,
   resolveAssetsZipPath,
-} from "./assets-zip";
-import { evaluateExpressions } from "./evaluate";
-import { forEachItem } from "./extractor-helpers";
-import { extractAlmanac, readAlmanacCategories } from "./extractors/almanac";
-import { extractAnimals } from "./extractors/animals";
-import { extractCosmetics } from "./extractors/cosmetics";
-import { extractDates } from "./extractors/dates";
-import { extractFestivals } from "./extractors/festivals";
-import { extractMines } from "./extractors/mines";
-import { extractMuseum } from "./extractors/museum";
-import { extractPetCosmetics, extractPetSkins } from "./extractors/pets";
-import { extractQuests } from "./extractors/quests";
-import { deriveRecipeLocaleNames, extractRecipes } from "./extractors/recipes";
-import { extractTownRanks } from "./extractors/renown";
-import { extractSkills } from "./extractors/skills";
-import { extractSprites, extractVillagerSprites, publishSprites } from "./extractors/sprites";
-import { extractStoresMeta } from "./extractors/stores-meta";
-import { extractTreasureChestTiers } from "./extractors/treasure-chest-tiers";
-import { APP_UI_STRINGS, extractUiStrings, tierKeys } from "./extractors/ui-strings";
-import { extractVillagerIconSprites, extractVillagers } from "./extractors/villagers";
-import { buildCutsceneQuestMap } from "./extractors/visibility/cutscene-quest-map";
+} from "./assets-zip.js";
+import { evaluateExpressions } from "./evaluate.js";
+import { forEachItem } from "./extractor-helpers.js";
+import { extractAlmanac, readAlmanacCategories } from "./extractors/almanac.js";
+import { extractAnimals } from "./extractors/animals.js";
+import { extractCosmetics } from "./extractors/cosmetics.js";
+import { extractDates } from "./extractors/dates.js";
+import { extractFestivals } from "./extractors/festivals.js";
+import { extractMines } from "./extractors/mines.js";
+import { extractMuseum } from "./extractors/museum.js";
+import { extractPetCosmetics, extractPetSkins } from "./extractors/pets.js";
+import { extractQuests } from "./extractors/quests.js";
+import { deriveRecipeLocaleNames, extractRecipes } from "./extractors/recipes.js";
+import { extractTownRanks } from "./extractors/renown.js";
+import { extractSkills } from "./extractors/skills.js";
+import { extractSprites, extractVillagerSprites, publishSprites } from "./extractors/sprites.js";
+import { extractStoresMeta } from "./extractors/stores-meta.js";
+import { extractTreasureChestTiers } from "./extractors/treasure-chest-tiers.js";
+import { APP_UI_STRINGS, extractUiStrings, tierKeys } from "./extractors/ui-strings.js";
+import { extractVillagerIconSprites, extractVillagers } from "./extractors/villagers.js";
+import { buildCutsceneQuestMap } from "./extractors/visibility/cutscene-quest-map.js";
 import {
   assignEntityVisibility,
   extractCategoryVisibility,
   extractHeartLevelChanges,
   stampStoreVisibility,
   stampVillagerVisibility,
-} from "./extractors/visibility/entity-visibility";
-import { extractQuestChains } from "./extractors/visibility/quest-chains";
-import { generateLocaleManifest } from "./localize";
-import { parseFiddle, parseFiddleFromZip } from "./parse-fiddle";
-import { createRequirementContext } from "./requirements";
+} from "./extractors/visibility/entity-visibility.js";
+import { extractQuestChains } from "./extractors/visibility/quest-chains.js";
+import { generateLocaleManifest } from "./localize.js";
+import { parseFiddle, parseFiddleFromZip } from "./parse-fiddle.js";
+import { createRequirementContext } from "./requirements.js";
 
-import type { Source as AcquisitionSource } from "$lib/types/acquisition.js";
-import type { LocaleCode } from "$lib/types/locale.js";
+import type { Source as AcquisitionSource } from "#lib/types/acquisition.js";
+import type { LocaleCode } from "#lib/types/locale.js";
 import type {
   CosmeticId,
   Item,
@@ -79,10 +79,10 @@ import type {
   QuestId,
   TrackerData,
   VillagerId,
-} from "$lib/types/tracker-data.js";
+} from "#lib/types/tracker-data.js";
 
-import type { SpriteExtractionResult, StagedSprite } from "./extractors/sprites";
-import type { ParsedGameData } from "./parse-fiddle";
+import type { SpriteExtractionResult, StagedSprite } from "./extractors/sprites.js";
+import type { ParsedGameData } from "./parse-fiddle.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PIPELINE_ROOT = resolve(__dirname, "..");
 const OUTPUT_DIR = resolve(PIPELINE_ROOT, "output");

@@ -1,16 +1,16 @@
-import { AVAILABILITY_WINDOWS, legacyAvailabilityWindows } from "$lib/types/availability.js";
+import { AVAILABILITY_WINDOWS, legacyAvailabilityWindows } from "#lib/types/availability.js";
 
 import {
   evaluateAvailabilityCondition,
   extractDisplayBadges,
   hasSelectiveSeasonCondition,
-} from "./availability-condition";
+} from "./availability-condition.js";
 
-import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
-import type { AvailabilitySelection, AvailabilityWindow } from "$lib/types/availability.js";
-import type { ItemId, Season, Weather } from "$lib/types/tracker-data.js";
+import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
+import type { AvailabilitySelection, AvailabilityWindow } from "#lib/types/availability.js";
+import type { ItemId, Season, Weather } from "#lib/types/tracker-data.js";
 
-import type { DisplayBadges } from "./availability-condition";
+import type { DisplayBadges } from "./availability-condition.js";
 
 interface WorldState {
   season: Season;

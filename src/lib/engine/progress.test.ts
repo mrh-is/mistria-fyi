@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { trackerData } from "$lib/data/index.js";
-import { isVariantInScope } from "$lib/engine/animal-availability.js";
-import { recordEntries, recordKeys, recordValues } from "$lib/utils.js";
+import { trackerData } from "#lib/data/index.js";
+import { isVariantInScope } from "#lib/engine/animal-availability.js";
+import { recordEntries, recordKeys, recordValues } from "#lib/utils.js";
 
 import {
   clampRenownLevel,
@@ -12,14 +12,14 @@ import {
   isVillagerComplete,
   MAX_SKILL_LEVEL,
   MAX_VILLAGER_LEVEL,
-} from "./progress";
+} from "./progress.js";
 
-import type { CategoryKey } from "$lib/data/categories.js";
+import type { CategoryKey } from "#lib/data/categories.js";
 import type {
   AvailabilityMode,
   CompletedState,
   QuestState,
-} from "$lib/stores/user-state.svelte.js";
+} from "#lib/stores/user-state.svelte.js";
 import type {
   AnimalVariantId,
   CosmeticId,
@@ -28,7 +28,7 @@ import type {
   VillagerId,
   VillagerRelationship,
   Weather,
-} from "$lib/types/tracker-data.js";
+} from "#lib/types/tracker-data.js";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 

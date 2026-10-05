@@ -1,6 +1,6 @@
 <script lang="ts">
   // Initialize theme store (side-effect: applies .dark class + syncs with localStorage)
-  import "$lib/stores/theme.svelte.js";
+  import "#lib/stores/theme.svelte.js";
 
   import "../app.css";
 
@@ -8,26 +8,28 @@
 
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
-  import PencilFilter from "$lib/components/pencil-filter.svelte";
-  import PersistenceWarning from "$lib/components/persistence-warning.svelte";
-  import SeoHead from "$lib/components/seo-head.svelte";
-  import ToolbarFooter from "$lib/components/toolbar-footer.svelte";
-  import { Toaster } from "$lib/components/ui/sonner/index.js";
-  import UpdatePrompt from "$lib/components/update-prompt.svelte";
-  import { errorPageMetadata } from "$lib/data/page-metadata.js";
-  import { FeedbackContext, setFeedbackContext } from "$lib/feedback/context.svelte.js";
-  import { localeFontStylesheet } from "$lib/fonts/locale-fonts.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { getTextDirection } from "$lib/paraglide/runtime.js";
-  import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
-  import { keepLocaleOffline } from "$lib/utils/offline-locales";
+  import PencilFilter from "#lib/components/pencil-filter.svelte";
+  import PersistenceWarning from "#lib/components/persistence-warning.svelte";
+  import SeoHead from "#lib/components/seo-head.svelte";
+  import ToolbarFooter from "#lib/components/toolbar-footer.svelte";
+  import { Toaster } from "#lib/components/ui/sonner/index.js";
+  import UpdatePrompt from "#lib/components/update-prompt.svelte";
+  import { errorPageMetadata } from "#lib/data/page-metadata.js";
+  import { FeedbackContext, setFeedbackContext } from "#lib/feedback/context.svelte.js";
+  import { localeFontStylesheet } from "#lib/fonts/locale-fonts.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { getTextDirection } from "#lib/paraglide/runtime.js";
+  import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
+  import { keepLocaleOffline } from "#lib/utils/offline-locales.js";
 
   let { children } = $props();
   let feedbackContext = setFeedbackContext(new FeedbackContext());
 
   // Clear search when navigating so home search doesn't bleed into category pages
-  afterNavigate(() => {
+  afterNavigate(({ shallow }) => {
+    if (shallow) return;
+
     feedbackContext.reset();
     toolbarState.closeSearch();
     toolbarState.resetSourceFilters();
@@ -64,7 +66,7 @@
   {/if}
 </svelte:head>
 
-<SeoHead {metadata} pathname={page.url.pathname} />
+<SeoHead metadata={metadata} pathname={page.url.pathname} />
 
 <!-- Paraglide message calls aren't reactive to the locale, so all chrome re-mounts when a client-side locale switch lands. -->
 {#key page.data.locale}
@@ -90,8 +92,13 @@
     {/key}
   </div>
 
-  <ToolbarFooter {metadata} bind:overlayActive />
-  <Toaster position="bottom-center" offset="calc(56px + env(safe-area-inset-bottom))" />
+  <ToolbarFooter metadata={metadata} bind:overlayActive />
+
+  <Toaster
+    position="bottom-center"
+    offset="calc(56px + env(safe-area-inset-bottom))"
+  />
+
   <PersistenceWarning />
   <UpdatePrompt />
   <PencilFilter />

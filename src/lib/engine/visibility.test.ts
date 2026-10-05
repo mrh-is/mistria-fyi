@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { recordKeys } from "$lib/utils";
-import { deepMerge, type DeepPartial } from "$lib/utils/deep-partial.js";
+import { recordKeys } from "#lib/utils.js";
+import { deepMerge, type DeepPartial } from "#lib/utils/deep-partial.js";
 
 import {
   deriveProgressionState,
@@ -9,9 +9,9 @@ import {
   isEntityNameVisible,
   isVisible,
   satisfyCondition,
-} from "./visibility";
+} from "./visibility.js";
 
-import type { CompletedState } from "$lib/stores/user-state.svelte.js";
+import type { CompletedState } from "#lib/stores/user-state.svelte.js";
 import type {
   PerkId,
   QuestId,
@@ -20,10 +20,10 @@ import type {
   StoryQuest,
   TrackerData,
   VillagerId,
-} from "$lib/types/tracker-data.js";
-import type { VisibilityCondition } from "$lib/types/visibility.js";
+} from "#lib/types/tracker-data.js";
+import type { VisibilityCondition } from "#lib/types/visibility.js";
 
-import type { UserProgressionState } from "./visibility";
+import type { UserProgressionState } from "./visibility.js";
 
 function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState {
   return {

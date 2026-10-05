@@ -1,4 +1,4 @@
-import { pageMetadata, SITE_NAME } from "$lib/data/page-metadata.js";
+import { pageMetadata, SITE_NAME } from "#lib/data/page-metadata.js";
 
 import type { PageLoad } from "./$types";
 

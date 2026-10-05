@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Icon } from "$lib/components/icon/index.js";
-  import * as Collapsible from "$lib/components/ui/collapsible/index.js";
+  import { Icon } from "#lib/components/icon/index.js";
+  import * as Collapsible from "#lib/components/ui/collapsible/index.js";
 
   import type { Snippet } from "svelte";
 

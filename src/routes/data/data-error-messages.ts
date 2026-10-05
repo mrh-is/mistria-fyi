@@ -1,10 +1,10 @@
-import * as m from "$lib/paraglide/messages.js";
-import { getLocale } from "$lib/paraglide/runtime.js";
-import { formatNumber } from "$lib/utils/format.js";
+import * as m from "#lib/paraglide/messages.js";
+import { getLocale } from "#lib/paraglide/runtime.js";
+import { formatNumber } from "#lib/utils/format.js";
 
-import type { SaveFilesError, SaveImportWarning } from "$lib/engine/import-save";
-import type { SaveFileErrorDetail } from "$lib/engine/parse-sav";
-import type { TransferDecodeErrorCode } from "$lib/engine/transfer";
+import type { SaveFilesError, SaveImportWarning } from "#lib/engine/import-save.js";
+import type { SaveFileErrorDetail } from "#lib/engine/parse-sav.js";
+import type { TransferDecodeErrorCode } from "#lib/engine/transfer.js";
 
 // Localized text for the structured errors & warnings the save import and transfer engines return.
 // Save paths, file names, and IDs are save-format identifiers and stay untranslated.

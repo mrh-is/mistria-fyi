@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { trackerData, trackerIndex } from "$lib/data/index.js";
-import { animalNameId, getName } from "$lib/data/names.js";
-import { deriveProgressionState } from "$lib/engine/visibility.js";
-import { recordEntries, recordKeys } from "$lib/utils.js";
+import { trackerData, trackerIndex } from "#lib/data/index.js";
+import { animalNameId, getName } from "#lib/data/names.js";
+import { deriveProgressionState } from "#lib/engine/visibility.js";
+import { recordEntries, recordKeys } from "#lib/utils.js";
 
-import { searchItems } from "./search";
+import { searchItems } from "./search.js";
 
-import type { CompletedState } from "$lib/stores/user-state.svelte.js";
+import type { CompletedState } from "#lib/stores/user-state.svelte.js";
 import type {
   AnimalVariantId,
   CosmeticId,
@@ -15,9 +15,9 @@ import type {
   RecipeId,
   Season,
   Weather,
-} from "$lib/types/tracker-data.js";
+} from "#lib/types/tracker-data.js";
 
-import type { UserProgressionState } from "./visibility";
+import type { UserProgressionState } from "./visibility.js";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 

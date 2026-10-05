@@ -1,7 +1,7 @@
 <script lang="ts">
-  import VillagerRecord from "$lib/components/villager-record.svelte";
+  import VillagerRecord from "#lib/components/villager-record.svelte";
 
-  import type { Villager, VillagerId } from "$lib/types/tracker-data.js";
+  import type { Villager, VillagerId } from "#lib/types/tracker-data.js";
 
   let {
     compact = false,

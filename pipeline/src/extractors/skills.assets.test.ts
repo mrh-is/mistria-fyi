@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { parseFiddle } from "../parse-fiddle";
-import { requireGameAssetsDir } from "../test-helpers";
-import { extractSkills } from "./skills";
+import { parseFiddle } from "../parse-fiddle.js";
+import { requireGameAssetsDir } from "../test-helpers.js";
+import { extractSkills } from "./skills.js";
 
-import type { SkillId } from "$lib/types/tracker-data.js";
+import type { SkillId } from "#lib/types/tracker-data.js";
 
 const farming = "farming" as SkillId;
 

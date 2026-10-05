@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { deepMerge } from "./deep-partial";
+import { deepMerge } from "./deep-partial.js";
 import {
   buildBiomeLabel,
   buildPerkLabel,
   buildSourceSegments,
   buildStoreQualifier,
   formatDateLabel,
-} from "./source-segments";
+} from "./source-segments.js";
 
-import type { AvailabilityCondition, Source } from "$lib/types/acquisition.js";
+import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
 import type {
   ActivityId,
   AnimalId,
@@ -30,10 +30,10 @@ import type {
   TreasureChestTierId,
   VillagerId,
   WaterType,
-} from "$lib/types/tracker-data.js";
-import type { VisibilityCondition } from "$lib/types/visibility.js";
+} from "#lib/types/tracker-data.js";
+import type { VisibilityCondition } from "#lib/types/visibility.js";
 
-import type { SegmentLookups } from "./source-segments";
+import type { SegmentLookups } from "./source-segments.js";
 
 const BASE_LOOKUPS: SegmentLookups = {
   animalNames: {},

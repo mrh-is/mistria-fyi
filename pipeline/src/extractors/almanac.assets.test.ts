@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { evaluateExpressions } from "../evaluate";
-import { parseFiddle } from "../parse-fiddle";
-import { requireGameAssetsDir } from "../test-helpers";
-import { extractAlmanac } from "./almanac";
+import { evaluateExpressions } from "../evaluate.js";
+import { parseFiddle } from "../parse-fiddle.js";
+import { requireGameAssetsDir } from "../test-helpers.js";
+import { extractAlmanac } from "./almanac.js";
 
-import type { AlmanacCategoryId, ItemId } from "$lib/types/tracker-data.js";
+import type { AlmanacCategoryId, ItemId } from "#lib/types/tracker-data.js";
 
 describe("extractAlmanac — v1.0.5 assets", () => {
   it("matches the verified category totals while preserving distinct bed presentations", () => {

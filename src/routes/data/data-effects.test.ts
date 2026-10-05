@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { closeScanner, openThenScroll } from "./data-effects";
+import { closeScanner, openThenScroll } from "./data-effects.js";
 
 describe("data effects", () => {
   it("waits for the opened content to settle before scrolling", async () => {

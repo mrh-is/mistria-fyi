@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { userState } from "$lib/stores/user-state.svelte.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
 
 import DangerZoneCard from "./danger-zone-card.svelte";
 

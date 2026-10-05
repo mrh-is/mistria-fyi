@@ -1,7 +1,7 @@
 <script lang="ts">
   import { prefersReducedMotion } from "svelte/motion";
 
-  import * as m from "$lib/paraglide/messages.js";
+  import * as m from "#lib/paraglide/messages.js";
 
   let {
     entries,

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import QuestsContent from "$lib/components/quests-content.svelte";
+  import QuestsContent from "#lib/components/quests-content.svelte";
 
   import type { PageProps } from "./$types";
 

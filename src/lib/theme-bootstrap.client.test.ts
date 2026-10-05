@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { THEME_COLORS, THEME_STORAGE_KEY } from "$lib/theme";
+import { THEME_COLORS, THEME_STORAGE_KEY } from "#lib/theme.js";
 
 // Extract the two inline <script> blocks from app.html and evaluate them
 // directly, so tests exercise the production code rather than a reimplemented

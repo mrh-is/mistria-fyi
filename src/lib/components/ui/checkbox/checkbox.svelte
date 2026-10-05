@@ -3,7 +3,7 @@
   import MinusIcon from "@tabler/icons-svelte-runes/icons/minus";
   import { Checkbox as CheckboxPrimitive } from "bits-ui";
 
-  import { cn, type WithoutChildrenOrChild } from "$lib/utils.js";
+  import { cn, type WithoutChildrenOrChild } from "#lib/utils.js";
 
   let {
     checked = $bindable(false),

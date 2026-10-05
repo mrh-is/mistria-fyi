@@ -1,10 +1,10 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import SearchResults from "$lib/components/search-results.svelte";
-import { LOCALIZED_CATEGORIES } from "$lib/data/names.js";
+import SearchResults from "#lib/components/search-results.svelte";
+import { LOCALIZED_CATEGORIES } from "#lib/data/names.js";
 
-import type * as NamesModule from "$lib/data/names.js";
+import type * as NamesModule from "#lib/data/names.js";
 
 /**
  * The client setup preloads every chunk, so the real `hasNames` would report ready at once.
@@ -15,7 +15,7 @@ const names = vi.hoisted(() => ({
   loadNames: vi.fn<() => Promise<void>>(),
 }));
 
-vi.mock("$lib/data/names.js", async (importOriginal) => ({
+vi.mock("#lib/data/names.js", async (importOriginal) => ({
   ...(await importOriginal<typeof NamesModule>()),
   hasNames: names.hasNames,
   loadNames: names.loadNames,

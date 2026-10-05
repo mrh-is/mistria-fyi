@@ -1,11 +1,11 @@
-import { trackerData } from "$lib/data/index.js";
-import { getName, nameCollator } from "$lib/data/names.js";
+import { trackerData } from "#lib/data/index.js";
+import { getName, nameCollator } from "#lib/data/names.js";
 
-import { isVillagerComplete } from "./progress";
+import { isVillagerComplete } from "./progress.js";
 
-import type { CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { LocaleCode } from "$lib/types/locale.js";
-import type { Villager, VillagerId } from "$lib/types/tracker-data.js";
+import type { CompletedState } from "#lib/stores/user-state.svelte.js";
+import type { LocaleCode } from "#lib/types/locale.js";
+import type { Villager, VillagerId } from "#lib/types/tracker-data.js";
 
 export interface VillagerRosterEntry extends Villager {
   id: VillagerId;

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { userState } from "$lib/stores/user-state.svelte.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
 
 afterEach(() => {
   userState.resetAll();

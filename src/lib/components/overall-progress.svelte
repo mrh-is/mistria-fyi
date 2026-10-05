@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { getOverallProgress } from "$lib/engine/progress.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { getLocale } from "$lib/paraglide/runtime.js";
-  import { formatNumber, formatPercent } from "$lib/utils/format.js";
+  import { getOverallProgress } from "#lib/engine/progress.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { getLocale } from "#lib/paraglide/runtime.js";
+  import { formatNumber, formatPercent } from "#lib/utils/format.js";
 
-  import type { AllProgress } from "$lib/engine/progress.js";
+  import type { AllProgress } from "#lib/engine/progress.js";
 
   let { progress }: { progress: AllProgress } = $props();
 

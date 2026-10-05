@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { makeFiddle } from "../test-helpers";
-import { extractVillagerIconSprites, extractVillagers } from "./villagers";
+import { makeFiddle } from "../test-helpers.js";
+import { extractVillagerIconSprites, extractVillagers } from "./villagers.js";
 
-import type { VillagerId } from "$lib/types/tracker-data.js";
+import type { VillagerId } from "#lib/types/tracker-data.js";
 
-vi.mock("../localize", () => ({
+vi.mock("../localize.js", () => ({
   localizeField: vi.fn((_assetsDir: string, input: { englishValue: string; id: string }) => ({
     fallbackLocales: [],
     values: {
@@ -81,7 +81,7 @@ describe("extractVillagers", () => {
 
 describe("extractVillagerIconSprites", () => {
   it("builds the icon-sprite index without calling localizeField", async () => {
-    const { localizeField } = await import("../localize");
+    const { localizeField } = await import("../localize.js");
 
     const iconSpritesByVillagerId = extractVillagerIconSprites(
       makeFiddle({

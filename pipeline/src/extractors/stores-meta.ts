@@ -1,12 +1,12 @@
-import { LOCALE_CODES } from "$lib/types/locale.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { localizeField } from "../localize";
+import { localizeField } from "../localize.js";
 
-import type { LocaleCode } from "$lib/types/locale.js";
-import type { StoreId } from "$lib/types/tracker-data.js";
-import type { TrackerData } from "$lib/types/tracker-data.js";
+import type { LocaleCode } from "#lib/types/locale.js";
+import type { StoreId } from "#lib/types/tracker-data.js";
+import type { TrackerData } from "#lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../parse-fiddle";
+import type { ParsedGameData } from "../parse-fiddle.js";
 
 const KNOWN_STORES: Record<string, { article?: "the" }> = {
   balor: {},

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import MuseumContent from "$lib/components/museum-content.svelte";
+  import MuseumContent from "#lib/components/museum-content.svelte";
 
   import type { PageProps } from "./$types";
 

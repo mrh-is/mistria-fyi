@@ -1,6 +1,6 @@
-import { recordEntries } from "$lib/utils";
+import { recordEntries } from "#lib/utils.js";
 
-import type { CosmeticId } from "$lib/types/tracker-data.js";
+import type { CosmeticId } from "#lib/types/tracker-data.js";
 
 export interface CosmeticExclusion {
   evidence: string;

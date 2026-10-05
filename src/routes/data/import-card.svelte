@@ -4,28 +4,28 @@
   import IconDeviceDesktop from "@tabler/icons-svelte-runes/icons/device-desktop";
   import IconUpload from "@tabler/icons-svelte-runes/icons/upload";
 
-  import { Button } from "$lib/components/ui/button/index.js";
-  import * as Dialog from "$lib/components/ui/dialog/index.js";
-  import { Separator } from "$lib/components/ui/separator/index.js";
+  import { Button } from "#lib/components/ui/button/index.js";
+  import * as Dialog from "#lib/components/ui/dialog/index.js";
+  import { Separator } from "#lib/components/ui/separator/index.js";
   import {
     buildImportState,
     parseSaveFiles,
     SaveFileError,
     unpackSavFile,
-  } from "$lib/engine/import-save.js";
-  import { totalMergeCounts } from "$lib/engine/merge-labels.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
+  } from "#lib/engine/import-save.js";
+  import { totalMergeCounts } from "#lib/engine/merge-labels.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
 
   import DataCard from "./data-card.svelte";
   import {
     formatSaveFileError,
     formatSaveFilesError,
     formatSaveImportWarning,
-  } from "./data-error-messages";
+  } from "./data-error-messages.js";
   import MergeSummary from "./merge-summary.svelte";
 
-  import type { ImportResult, SaveImportWarning } from "$lib/engine/import-save.js";
+  import type { ImportResult, SaveImportWarning } from "#lib/engine/import-save.js";
 
   let {
     onScrollToTransfer,

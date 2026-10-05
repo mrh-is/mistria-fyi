@@ -1,17 +1,17 @@
-import { trackerData, trackerIndex } from "$lib/data/index.js";
-import { animalNameId, getName, nameCollator } from "$lib/data/names.js";
-import { isItemApplicable, isItemApplicableForAlmanac } from "$lib/engine/applicability.js";
-import { isItemAvailable } from "$lib/engine/availability.js";
-import { isVillagerComplete } from "$lib/engine/progress.js";
-import { isVisible } from "$lib/engine/visibility.js";
-import { recordEntries } from "$lib/utils";
-import { composeInfusion } from "$lib/utils/format.js";
+import { trackerData, trackerIndex } from "#lib/data/index.js";
+import { animalNameId, getName, nameCollator } from "#lib/data/names.js";
+import { isItemApplicable, isItemApplicableForAlmanac } from "#lib/engine/applicability.js";
+import { isItemAvailable } from "#lib/engine/availability.js";
+import { isVillagerComplete } from "#lib/engine/progress.js";
+import { isVisible } from "#lib/engine/visibility.js";
+import { recordEntries } from "#lib/utils.js";
+import { composeInfusion } from "#lib/utils/format.js";
 
-import type { SearchCategoryKey } from "$lib/data/categories.js";
-import type { UserProgressionState } from "$lib/engine/visibility.js";
-import type { CompletedState } from "$lib/stores/user-state.svelte.js";
-import type { LocaleCode } from "$lib/types/locale.js";
-import type { ItemId, QuestId, Season, Weather } from "$lib/types/tracker-data.js";
+import type { SearchCategoryKey } from "#lib/data/categories.js";
+import type { UserProgressionState } from "#lib/engine/visibility.js";
+import type { CompletedState } from "#lib/stores/user-state.svelte.js";
+import type { LocaleCode } from "#lib/types/locale.js";
+import type { ItemId, QuestId, Season, Weather } from "#lib/types/tracker-data.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 

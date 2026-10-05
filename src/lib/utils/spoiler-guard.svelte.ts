@@ -1,8 +1,8 @@
-import { trackerData } from "$lib/data/index.js";
-import { satisfyCondition } from "$lib/engine/visibility.js";
-import { userState } from "$lib/stores/user-state.svelte.js";
+import { trackerData } from "#lib/data/index.js";
+import { satisfyCondition } from "#lib/engine/visibility.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
 
-import type { VisibilityCondition } from "$lib/types/visibility.js";
+import type { VisibilityCondition } from "#lib/types/visibility.js";
 
 export function createSpoilerGuard() {
   let open = $state(false);

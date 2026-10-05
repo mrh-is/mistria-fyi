@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import FeedbackPanel from "$lib/components/feedback-panel.svelte";
-import { FeedbackContext } from "$lib/feedback/context.svelte.js";
+import FeedbackPanel from "#lib/components/feedback-panel.svelte";
+import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 
 const toast = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), warning: vi.fn() }));
 

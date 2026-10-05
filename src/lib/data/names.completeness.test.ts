@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { getNameTable, LOCALIZED_CATEGORIES } from "$lib/data/names.js";
-import { LOCALE_CODES } from "$lib/types/locale.js";
+import { getNameTable, LOCALIZED_CATEGORIES } from "#lib/data/names.js";
+import { LOCALE_CODES } from "#lib/types/locale.js";
 
 /**
  * The app fetches only the active locale's chunk per category — no English chunk rides along as a

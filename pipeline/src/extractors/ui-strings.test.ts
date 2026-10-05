@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { makeFiddle } from "../test-helpers";
-import { extractUiStrings, tierKeys } from "./ui-strings";
+import { makeFiddle } from "../test-helpers.js";
+import { extractUiStrings, tierKeys } from "./ui-strings.js";
 
 const localizeField = vi.hoisted(() =>
   vi.fn((_assetsDir: string, input: { englishValue: string; id: string }) => ({
@@ -19,7 +19,7 @@ const localizeField = vi.hoisted(() =>
   })),
 );
 
-vi.mock("../localize", () => ({ localizeField }));
+vi.mock("../localize.js", () => ({ localizeField }));
 
 function stubLocalized(perLocale: Partial<Record<string, string>>): void {
   localizeField.mockImplementationOnce((_assetsDir, input) => ({

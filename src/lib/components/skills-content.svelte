@@ -1,13 +1,13 @@
 <script lang="ts">
-  import SkillRow from "$lib/components/skill-row.svelte";
-  import { trackerData } from "$lib/data/index.js";
-  import { getName, nameCollator } from "$lib/data/names.js";
-  import { MAX_SKILL_LEVEL } from "$lib/engine/progress.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
-  import { recordKeys } from "$lib/utils";
+  import SkillRow from "#lib/components/skill-row.svelte";
+  import { trackerData } from "#lib/data/index.js";
+  import { getName, nameCollator } from "#lib/data/names.js";
+  import { MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
+  import { recordKeys } from "#lib/utils.js";
 
-  import type { LocaleCode } from "$lib/types/locale.js";
+  import type { LocaleCode } from "#lib/types/locale.js";
 
   let { compact = false, locale }: { compact?: boolean; locale: LocaleCode } = $props();
 

@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { crc32 } from "node:zlib";
 import { onTestFinished } from "vitest";
 
-import type { ParsedGameData } from "./parse-fiddle";
+import type { ParsedGameData } from "./parse-fiddle.js";
 
 const temporaryAssetsDirectories: string[] = [];
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import * as Dialog from "$lib/components/ui/dialog/index.js";
-  import * as m from "$lib/paraglide/messages.js";
+  import * as Dialog from "#lib/components/ui/dialog/index.js";
+  import * as m from "#lib/paraglide/messages.js";
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
 </script>

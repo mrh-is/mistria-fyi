@@ -1,5 +1,5 @@
 <script lang="ts">
-  import SkillsContent from "$lib/components/skills-content.svelte";
+  import SkillsContent from "#lib/components/skills-content.svelte";
 
   import type { PageProps } from "./$types";
 

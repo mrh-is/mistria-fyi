@@ -2,11 +2,11 @@ import {
   buildRequirementDefinitions,
   parseRequirements,
   type RequirementExpression,
-} from "../../requirements";
+} from "../../requirements.js";
 
-import type { QuestId, VillagerId } from "$lib/types/tracker-data.js";
+import type { QuestId, VillagerId } from "#lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../../parse-fiddle";
+import type { ParsedGameData } from "../../parse-fiddle.js";
 
 export interface QuestChainData {
   crown: QuestId[];

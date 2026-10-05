@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { availabilityToVisibility, toAvailableVisibility } from "./availability-projection";
+import { availabilityToVisibility, toAvailableVisibility } from "./availability-projection.js";
 
-import type { AvailabilityCondition } from "$lib/types/acquisition.js";
-import type { QuestId } from "$lib/types/tracker-data.js";
-import type { VisibilityCondition } from "$lib/types/visibility.js";
+import type { AvailabilityCondition } from "#lib/types/acquisition.js";
+import type { QuestId } from "#lib/types/tracker-data.js";
+import type { VisibilityCondition } from "#lib/types/visibility.js";
 
 describe("availabilityToVisibility", () => {
   it.each([

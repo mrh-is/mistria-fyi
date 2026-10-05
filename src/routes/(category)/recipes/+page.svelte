@@ -1,5 +1,5 @@
 <script lang="ts">
-  import RecipesContent from "$lib/components/recipes-content.svelte";
+  import RecipesContent from "#lib/components/recipes-content.svelte";
 
   import type { PageProps } from "./$types";
 

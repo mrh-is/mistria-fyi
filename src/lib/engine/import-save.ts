@@ -1,4 +1,4 @@
-import { canonicalAlmanacId, trackerData } from "$lib/data/index.js";
+import { canonicalAlmanacId, trackerData } from "#lib/data/index.js";
 import {
   getMaxMineFloor,
   getMaxRenownLevel,
@@ -6,17 +6,17 @@ import {
   MAX_SKILL_LEVEL,
   MAX_VILLAGER_LEVEL,
   normalizeLevel,
-} from "$lib/engine/progress.js";
-import { recordKeys, recordValues } from "$lib/utils.js";
+} from "#lib/engine/progress.js";
+import { recordKeys, recordValues } from "#lib/utils.js";
 
-import { isSaveSection, type SaveBundle, type SaveSection } from "./save-bundle";
+import { isSaveSection, type SaveBundle, type SaveSection } from "./save-bundle.js";
 
 import type {
   CompletedState,
   MergeCounts,
   MergeResult,
   QuestState,
-} from "$lib/stores/user-state.svelte.js";
+} from "#lib/stores/user-state.svelte.js";
 import type {
   AnimalVariantId,
   CosmeticId,
@@ -29,7 +29,7 @@ import type {
   SpellId,
   VillagerId,
   VillagerRelationship,
-} from "$lib/types/tracker-data.js";
+} from "#lib/types/tracker-data.js";
 
 // ─── Import result ──────────────────────────────────────────────────
 
@@ -494,8 +494,8 @@ export {
   SaveFileError,
   type SaveFileErrorDetail,
   parseSavFile as unpackSavFile,
-} from "./parse-sav";
-export type { SaveBundle, SaveSection } from "./save-bundle";
+} from "./parse-sav.js";
+export type { SaveBundle, SaveSection } from "./save-bundle.js";
 
 // ─── Season derivation ─────────────────────────────────────────────
 

@@ -1,8 +1,8 @@
 import { render } from "svelte/server";
 import { describe, expect, it } from "vitest";
 
-import { SOURCE_FILTERS, SOURCE_ICON } from "$lib/components/icon/index.js";
-import VisibilityPanel from "$lib/components/visibility-panel.svelte";
+import { SOURCE_FILTERS, SOURCE_ICON } from "#lib/components/icon/index.js";
+import VisibilityPanel from "#lib/components/visibility-panel.svelte";
 
 // Interaction coverage (toggling chips, seasons, weather, source groups, the explainer dialog, and
 // the completed switch) lives in visibility-panel.client.test.ts.

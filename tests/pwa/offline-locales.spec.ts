@@ -2,8 +2,8 @@ import { expect, type Page, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 
-import { LOCALE_CODES } from "../../src/lib/types/locale";
-import { waitForControl } from "./service-worker";
+import { LOCALE_CODES } from "../../src/lib/types/locale.js";
+import { waitForControl } from "./service-worker.js";
 
 const CLIENT_OUTPUT = ".svelte-kit/output/client";
 /** Per-locale gzipped name data; see docs/pwa-verification.md#byte-budget. */

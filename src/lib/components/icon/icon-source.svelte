@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { SOURCE_ICON } from "$lib/components/icon/icon-maps.js";
+  import { SOURCE_ICON } from "#lib/components/icon/icon-maps.js";
 
-  import type { IconProps } from "$lib/components/icon/icon-maps.js";
-  import type { Source } from "$lib/types/acquisition";
+  import type { IconProps } from "#lib/components/icon/icon-maps.js";
+  import type { Source } from "#lib/types/acquisition.js";
 
   interface Props extends IconProps {
     type: Source["type"];

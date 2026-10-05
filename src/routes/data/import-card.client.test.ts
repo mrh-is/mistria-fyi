@@ -1,10 +1,10 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { trackerData } from "$lib/data/index.js";
-import { MAX_COMPRESSED_SIZE } from "$lib/engine/parse-sav.js";
-import { userState } from "$lib/stores/user-state.svelte.js";
-import { recordKeys } from "$lib/utils.js";
+import { trackerData } from "#lib/data/index.js";
+import { MAX_COMPRESSED_SIZE } from "#lib/engine/parse-sav.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
+import { recordKeys } from "#lib/utils.js";
 
 import ImportCard from "./import-card.svelte";
 

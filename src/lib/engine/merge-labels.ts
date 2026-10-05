@@ -1,6 +1,6 @@
-import * as m from "$lib/paraglide/messages.js";
+import * as m from "#lib/paraglide/messages.js";
 
-import type { MergeCounts } from "$lib/stores/user-state.svelte.js";
+import type { MergeCounts } from "#lib/stores/user-state.svelte.js";
 
 interface MergeCountLabel {
   /**

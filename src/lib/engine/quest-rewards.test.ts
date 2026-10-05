@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { findRecipesForQuest, recipeDisplayNames } from "./quest-rewards";
+import { findRecipesForQuest, recipeDisplayNames } from "./quest-rewards.js";
 
-import type { QuestId, RecipeId } from "$lib/types/tracker-data.js";
+import type { QuestId, RecipeId } from "#lib/types/tracker-data.js";
 
 const ONE_REWARD_QUEST = "bell_berry_bakewell_tart_challenge" as QuestId;
 const ONE_REWARD_RECIPE = "kitchen_herb_planter" as RecipeId;

@@ -1,9 +1,9 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { Icon } from "$lib/components/icon/index.js";
-  import { categoryForKey, type CategoryKey } from "$lib/data/categories.js";
+  import { Icon } from "#lib/components/icon/index.js";
+  import { categoryForKey, type CategoryKey } from "#lib/data/categories.js";
 
-  import type { CategoryProgress } from "$lib/engine/progress.js";
+  import type { CategoryProgress } from "#lib/engine/progress.js";
 
   let {
     key,

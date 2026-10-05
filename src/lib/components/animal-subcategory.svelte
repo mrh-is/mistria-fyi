@@ -1,22 +1,22 @@
 <script lang="ts" generics="ItemId extends AnyId">
-  import ExpandableSection from "$lib/components/expandable-section.svelte";
-  import SpoilerSection from "$lib/components/spoiler-section.svelte";
-  import { trackerData } from "$lib/data/index.js";
-  import { animalNameId, getName, nameCollator } from "$lib/data/names.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { toolbarState } from "$lib/stores/toolbar-state.svelte.js";
-  import { celebrate, celebrateCategory } from "$lib/utils/celebrate.js";
-  import { showUndoToast } from "$lib/utils/undo-toast.js";
+  import ExpandableSection from "#lib/components/expandable-section.svelte";
+  import SpoilerSection from "#lib/components/spoiler-section.svelte";
+  import { trackerData } from "#lib/data/index.js";
+  import { animalNameId, getName, nameCollator } from "#lib/data/names.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+  import { celebrate, celebrateCategory } from "#lib/utils/celebrate.js";
+  import { showUndoToast } from "#lib/utils/undo-toast.js";
 
   import TrackerRowStack from "./tracker-row-stack.svelte";
   import TrackerRow, { type TrackerRowDisplay } from "./tracker-row.svelte";
 
-  import type { AnimalId, AnyId } from "$lib/types/tracker-data.js";
+  import type { AnimalId, AnyId } from "#lib/types/tracker-data.js";
 
   import type {
     AnimalSubcategoryProps,
     AnimalSubcategoryRowProps,
-  } from "./animal-subcategory.types";
+  } from "./animal-subcategory.types.js";
 
   function rowDisplay(row: AnimalSubcategoryRowProps<ItemId>): TrackerRowDisplay {
     if (row.completed) return { mode: "completed" };

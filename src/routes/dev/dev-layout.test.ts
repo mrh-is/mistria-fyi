@@ -3,9 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 
 const environment = vi.hoisted(() => ({ dev: false }));
 
-vi.mock("$app/environment", () => environment);
+vi.mock("$app/env", () => environment);
 
-const { load } = await import("./+layout");
+const { load } = await import("./+layout.js");
 
 function run(): unknown {
   return load({} as never);

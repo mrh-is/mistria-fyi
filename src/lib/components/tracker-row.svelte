@@ -2,22 +2,22 @@
   import { prefersReducedMotion } from "svelte/motion";
 
   import { page } from "$app/state";
-  import SourcePaper from "$lib/components/source-paper.svelte";
-  import Spoiler from "$lib/components/spoiler.svelte";
-  import SpriteSlot from "$lib/components/sprite-slot.svelte";
-  import TrackerCheckbox from "$lib/components/tracker-checkbox.svelte";
-  import TrackerPaper from "$lib/components/tracker-paper.svelte";
-  import { extractDisplayBadges } from "$lib/engine/availability-condition.js";
-  import { getFeedbackContextOrFallback } from "$lib/feedback/context.svelte.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { buildSourceSegments } from "$lib/utils/source-segments.js";
+  import SourcePaper from "#lib/components/source-paper.svelte";
+  import Spoiler from "#lib/components/spoiler.svelte";
+  import SpriteSlot from "#lib/components/sprite-slot.svelte";
+  import TrackerCheckbox from "#lib/components/tracker-checkbox.svelte";
+  import TrackerPaper from "#lib/components/tracker-paper.svelte";
+  import { extractDisplayBadges } from "#lib/engine/availability-condition.js";
+  import { getFeedbackContextOrFallback } from "#lib/feedback/context.svelte.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { buildSourceSegments } from "#lib/utils/source-segments.js";
 
-  import type { SpriteSlotState } from "$lib/components/sprite-slot.svelte";
-  import type { CheckboxState } from "$lib/components/tracker-checkbox.svelte";
-  import type { DisplayBadges } from "$lib/engine/availability-condition.js";
-  import type { FeedbackContext } from "$lib/feedback/context.svelte.js";
-  import type { Source } from "$lib/types/acquisition";
-  import type { SegmentLookups, SourceSegment } from "$lib/utils/source-segments.js";
+  import type { SpriteSlotState } from "#lib/components/sprite-slot.svelte";
+  import type { CheckboxState } from "#lib/components/tracker-checkbox.svelte";
+  import type { DisplayBadges } from "#lib/engine/availability-condition.js";
+  import type { FeedbackContext } from "#lib/feedback/context.svelte.js";
+  import type { Source } from "#lib/types/acquisition.js";
+  import type { SegmentLookups, SourceSegment } from "#lib/utils/source-segments.js";
 
   export type TrackerRowDisplay =
     | { dimmed?: boolean; mode: "visible" }

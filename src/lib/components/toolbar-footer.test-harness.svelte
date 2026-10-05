@@ -1,12 +1,12 @@
 <script lang="ts">
   import { untrack } from "svelte";
 
-  import ToolbarFooter from "$lib/components/toolbar-footer.svelte";
-  import { pageMetadata } from "$lib/data/page-metadata.js";
-  import { setFeedbackContext } from "$lib/feedback/context.svelte.js";
+  import ToolbarFooter from "#lib/components/toolbar-footer.svelte";
+  import { pageMetadata } from "#lib/data/page-metadata.js";
+  import { setFeedbackContext } from "#lib/feedback/context.svelte.js";
 
-  import type { PageMetadataInput } from "$lib/data/page-metadata.js";
-  import type { FeedbackContext } from "$lib/feedback/context.svelte.js";
+  import type { PageMetadataInput } from "#lib/data/page-metadata.js";
+  import type { FeedbackContext } from "#lib/feedback/context.svelte.js";
 
   let {
     feedbackContext,

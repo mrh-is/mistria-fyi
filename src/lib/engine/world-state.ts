@@ -1,4 +1,4 @@
-import type { Season, Weather } from "$lib/types/tracker-data";
+import type { Season, Weather } from "#lib/types/tracker-data.js";
 
 export function isWeatherInSeason(weather: Weather, season: Season): boolean {
   return weathersForSeason(season).includes(weather);

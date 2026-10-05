@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { MAX_VILLAGER_LEVEL } from "$lib/engine/progress.js";
-import { userState } from "$lib/stores/user-state.svelte.js";
+import { MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
+import { userState } from "#lib/stores/user-state.svelte.js";
 
-import type { QuestId, RecipeId, VillagerId } from "$lib/types/tracker-data.js";
+import type { QuestId, RecipeId, VillagerId } from "#lib/types/tracker-data.js";
 
 const NO_REWARD_QUEST = "a_birdhouse" as QuestId;
 const ONE_REWARD_QUEST = "bell_berry_bakewell_tart_challenge" as QuestId;

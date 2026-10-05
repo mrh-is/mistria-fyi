@@ -3,7 +3,7 @@ import { dirname, join, resolve } from "node:path";
 import sharp from "sharp";
 import { open, type ZipFile } from "yauzl-promise";
 
-import { resolveAssetsZipPath } from "../assets-zip";
+import { resolveAssetsZipPath } from "../assets-zip.js";
 
 const ITEM_SPRITE_SEARCH_DIRS = [
   join("animations", "Item Icons"),

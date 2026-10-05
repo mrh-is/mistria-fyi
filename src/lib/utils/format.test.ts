@@ -8,9 +8,9 @@ import {
   formatStoreName,
   timeRangeLabel,
   withIndefiniteArticle,
-} from "./format";
+} from "./format.js";
 
-import type { MinesBiomeId, StoreId } from "$lib/types/tracker-data.js";
+import type { MinesBiomeId, StoreId } from "#lib/types/tracker-data.js";
 
 describe("withIndefiniteArticle", () => {
   it("uses 'an' for vowel-starting names", () => {

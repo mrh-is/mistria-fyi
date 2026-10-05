@@ -4,9 +4,9 @@ import {
   formatMergeCount,
   MERGE_COUNT_LABELS,
   totalMergeCounts,
-} from "$lib/engine/merge-labels.js";
+} from "#lib/engine/merge-labels.js";
 
-import type { MergeCounts } from "$lib/stores/user-state.svelte.js";
+import type { MergeCounts } from "#lib/stores/user-state.svelte.js";
 
 function zeroCounts(): MergeCounts {
   return {

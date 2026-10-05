@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { getName, hasNames, loadNames } from "$lib/data/names.js";
+import { getName, hasNames, loadNames } from "#lib/data/names.js";
 
-import { load as loadVillagers } from "../../routes/(category)/villagers/+page";
+import { load as loadVillagers } from "../../routes/(category)/villagers/+page.js";
 
-import type { ItemId, VillagerId } from "$lib/types/tracker-data.js";
+import type { ItemId, VillagerId } from "#lib/types/tracker-data.js";
 
 const balor = "balor" as VillagerId;
 const turnip = "turnip" as ItemId;

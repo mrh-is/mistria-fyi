@@ -4,25 +4,25 @@
   import IconPhotoPlus from "@tabler/icons-svelte-runes/icons/photo-plus";
   import IconQrcode from "@tabler/icons-svelte-runes/icons/qrcode";
 
-  import { Icon } from "$lib/components/icon/index.js";
-  import { Button } from "$lib/components/ui/button/index.js";
+  import { Icon } from "#lib/components/icon/index.js";
+  import { Button } from "#lib/components/ui/button/index.js";
   import {
     decodeTransferPayload,
     encodeTransferPayload,
     TransferDecodeError,
-  } from "$lib/engine/transfer.js";
-  import * as m from "$lib/paraglide/messages.js";
-  import { userState } from "$lib/stores/user-state.svelte.js";
+  } from "#lib/engine/transfer.js";
+  import * as m from "#lib/paraglide/messages.js";
+  import { userState } from "#lib/stores/user-state.svelte.js";
 
   import DataCard from "./data-card.svelte";
-  import { closeScanner } from "./data-effects";
-  import { formatTransferDecodeError } from "./data-error-messages";
+  import { closeScanner } from "./data-effects.js";
+  import { formatTransferDecodeError } from "./data-error-messages.js";
   import MergeSummary from "./merge-summary.svelte";
-  import { decodeQrImage, generateTransferQr, startQrCamera } from "./transfer-qr";
+  import { decodeQrImage, generateTransferQr, startQrCamera } from "./transfer-qr.js";
 
-  import type { MergeResult } from "$lib/stores/user-state.svelte.js";
+  import type { MergeResult } from "#lib/stores/user-state.svelte.js";
 
-  import type { ClosableScanner } from "./data-effects";
+  import type { ClosableScanner } from "./data-effects.js";
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
 
