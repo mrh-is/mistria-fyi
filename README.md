@@ -67,7 +67,7 @@ pnpm run pipeline -- /path/to/assets
 
 ## Tech stack
 
-- SvelteKit 2 + Svelte 5 (runes)
+- SvelteKit 3 + Svelte 5 (runes)
 - Tailwind 4 + shadcn-svelte
 - Cloudflare Pages
 - PWA (offline-capable)
