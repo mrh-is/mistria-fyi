@@ -5,8 +5,8 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 
 import MergeSummary from "./merge-summary.svelte";
 
-import type { CompletedState } from "#lib/stores/user-state.svelte.js";
 import type { VillagerId } from "#lib/types/tracker-data.js";
+import type { CompletedState } from "#lib/types/user-progress.js";
 
 const CASES: { expected: string; imported: Partial<CompletedState>; setup?: () => void }[] = [
   {

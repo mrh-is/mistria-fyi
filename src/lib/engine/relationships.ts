@@ -1,6 +1,7 @@
 import { trackerData } from "#lib/data/index.js";
 
 import type { VillagerId, VillagerRelationship } from "#lib/types/tracker-data.js";
+import type { ChildChoice } from "#lib/types/user-progress.js";
 
 export type RelationshipActionValue =
   | "married"
@@ -29,7 +30,7 @@ export type RelationshipStatus =
   | "path_not_chosen";
 
 interface RelationshipPresentationInput {
-  childChoice: "no" | "undeclared" | "yes";
+  childChoice: ChildChoice;
   level: number;
   marriedVillager: null | VillagerId;
   relationship: VillagerRelationship;
