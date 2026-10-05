@@ -250,6 +250,7 @@ describe("CI workflow browser suites", () => {
     expect(accessibilityUpload?.with?.path).toContain(".playwright-artifacts/");
     expect(accessibilityUpload?.with?.path).toContain(".playwright-results/");
     expect(accessibilityUpload?.with?.["if-no-files-found"]).toBe("ignore");
+    expect(accessibilityUpload?.with?.["include-hidden-files"]).toBe(true);
     expect(accessibilitySteps.at(-1)?.run).toBe("exit 1");
 
     const pwaSteps = jobs.pwa.steps ?? [];
@@ -260,6 +261,7 @@ describe("CI workflow browser suites", () => {
     expect(pwaUpload?.with?.path).toContain(".playwright-pwa-report/");
     expect(pwaUpload?.with?.path).toContain(".playwright-pwa-results/");
     expect(pwaUpload?.with?.["if-no-files-found"]).toBe("ignore");
+    expect(pwaUpload?.with?.["include-hidden-files"]).toBe(true);
     expect(pwaSteps.at(-1)?.run).toBe("exit 1");
   });
 
