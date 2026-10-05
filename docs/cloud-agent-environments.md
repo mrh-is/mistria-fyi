@@ -77,8 +77,8 @@ The setup script runs before Claude Code starts, but Claude’s Bash tool doesn�
 line the script adds to the Bash startup files; without help, the agent’s shell resolves the image’s
 `/opt/node22/bin/node`. A SessionStart hook in `.claude/settings.json` runs
 `scripts/claude-session-env.sh`, which prepends the repository-managed Node directory to `PATH`
-through `$CLAUDE_ENV_FILE` so every Bash call in the session uses it. The hook does nothing in a
-checkout where the setup script never installed Node, so local sessions keep their own Node.
+through `$CLAUDE_ENV_FILE` so every Bash call in the session uses it. The hook exits unless
+`CLAUDE_CODE_REMOTE` is `true`, so local sessions keep their own Node.
 
 A setup script that exits with `scripts/setup-cloud-agent.sh: No such file or directory` is using
 the checkout-relative path; add the `mistria-fyi/` prefix. Claude does not cache a setup that exits

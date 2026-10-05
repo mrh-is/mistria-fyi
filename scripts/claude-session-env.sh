@@ -3,12 +3,12 @@
 #
 # Claude Code captures its shell environment at startup, and the agent's Bash tool doesn't read the
 # PATH line that scripts/setup-cloud-agent.sh appends to the Bash startup files. Lines written to
-# $CLAUDE_ENV_FILE apply to every Bash call in the session. Without that installation (any local
-# checkout), this exits without changing anything.
+# $CLAUDE_ENV_FILE apply to every Bash call in the session. Local sessions exit without changes.
 set -euo pipefail
 
 node_bin="$HOME/.local/share/mistria-node/current/bin"
 
+[ "${CLAUDE_CODE_REMOTE:-}" = "true" ] || exit 0
 [ -n "${CLAUDE_ENV_FILE:-}" ] || exit 0
 [ -x "$node_bin/node" ] || exit 0
 
