@@ -374,6 +374,32 @@
       }
     },
     {
+      // The engine is pure domain logic: it must not reach up into stores or components, even
+      // for types. Shared domain types live in `src/lib/types/`. Options replace the base rule's,
+      // so the icon restriction is restated.
+      "files": ["src/lib/engine/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "allowTypeImports": true,
+                "message": "Import icons individually, e.g. from \"@tabler/icons-svelte-runes/icons/x\".",
+                "name": "@tabler/icons-svelte-runes"
+              }
+            ],
+            "patterns": [
+              {
+                "message": "The engine is pure domain logic; move shared types to src/lib/types/ and keep side effects at store or component boundaries.",
+                "regex": "^(#lib/|(?:\\.\\./)+)(stores|components)/"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       // shadcn-svelte generated components: vendored code, so relax strict rules
       "files": ["src/lib/components/ui/**/*.svelte", "src/lib/components/ui/**/*.ts"],
       "rules": {

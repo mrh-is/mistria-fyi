@@ -8,7 +8,6 @@ import {
 import { normalizeRelationships } from "#lib/engine/relationships.js";
 import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils.js";
 
-import type { ChildChoice, CompletedState, QuestState } from "#lib/stores/user-state.svelte.js";
 import type {
   AnimalId,
   AnimalVariantId,
@@ -26,6 +25,7 @@ import type {
   VillagerId,
   VillagerRelationship,
 } from "#lib/types/tracker-data.js";
+import type { ChildChoice, CompletedState, QuestState } from "#lib/types/user-progress.js";
 
 // ─── Constants ──────────────────────────────────────────────────────
 

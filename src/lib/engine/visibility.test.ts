@@ -11,7 +11,6 @@ import {
   satisfyCondition,
 } from "./visibility.js";
 
-import type { CompletedState } from "#lib/stores/user-state.svelte.js";
 import type {
   PerkId,
   QuestId,
@@ -21,6 +20,7 @@ import type {
   TrackerData,
   VillagerId,
 } from "#lib/types/tracker-data.js";
+import type { CompletedState } from "#lib/types/user-progress.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 import type { DeepPartial } from "#lib/utils/deep-partial.js";
 

@@ -14,7 +14,6 @@ import {
   TransferDecodeError,
 } from "./transfer.js";
 
-import type { CompletedState } from "#lib/stores/user-state.svelte.js";
 import type {
   AnimalId,
   AnimalVariantId,
@@ -31,6 +30,7 @@ import type {
   VillagerId,
   VillagerRelationship,
 } from "#lib/types/tracker-data.js";
+import type { CompletedState } from "#lib/types/user-progress.js";
 
 import type { TransferDecodeErrorCode } from "./transfer.js";
 

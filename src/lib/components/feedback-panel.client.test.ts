@@ -46,8 +46,10 @@ describe("FeedbackPanel", () => {
       "style",
       "--primary: var(--cat-museum); --ring: var(--cat-museum);",
     );
-    expect(screen.getByRole("checkbox", { name: /I’d like a reply/ })).toBeTruthy();
-    expect(screen.getByPlaceholderText("Comments, questions, suggestions, praise?")).toBeTruthy();
+    expect(screen.getByRole("checkbox", { name: /I’d like a reply/ })).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("Comments, questions, suggestions, praise?"),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
   });
 
@@ -96,7 +98,7 @@ describe("FeedbackPanel", () => {
       entityId: "tomato_soup",
       page: "/recipes",
     });
-    expect(await screen.findByText("Tomato Soup")).toBeTruthy();
+    expect(await screen.findByText("Tomato Soup")).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Change" })).toHaveFocus();
     });
@@ -346,6 +348,23 @@ describe("FeedbackPanel", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Could not connect. Please try again or copy your message.",
     );
-    expect(screen.getByRole("button", { name: "Copy" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
+  });
+
+  it("offers the GitHub fallback as a link when Turnstile fails", async () => {
+    (globalThis as unknown as Record<string, unknown>).turnstile = {
+      remove: vi.fn(),
+      render: (_container: HTMLElement, options: { "error-callback": () => void }) => {
+        options["error-callback"]();
+        return "1";
+      },
+      reset: vi.fn(),
+    };
+    render(FeedbackPanel, { onclose: vi.fn(), open: true, resetKey: "/museum" });
+
+    const link = await screen.findByRole("link", { name: /GitHub/ });
+    expect(link).toHaveAttribute("href", "https://github.com/mrh-is/mistria-fyi/issues/new");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link.getAttribute("rel")).toContain("noopener");
   });
 });

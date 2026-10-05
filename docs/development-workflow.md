@@ -24,8 +24,10 @@
 
 ## 2. Git Worktree Mechanics & Workspace Isolation
 
-All agents must operate within an isolated Git worktree to prevent edit collisions, dirty-state
-confusion, and branch switching interference across concurrent sessions.
+Agents that modify tracked files work in an isolated Git worktree to prevent edit collisions,
+dirty-state confusion, and branch switching interference across concurrent sessions. Read-only work
+and platform-isolated cloud sessions are exempt; see
+[AGENTS.md §1](../AGENTS.md#1-worktree-isolation).
 
 ### Worktree creation
 
@@ -35,9 +37,11 @@ Create and set up a worktree from any checkout with one command:
 pnpm run worktree:new <issue-number>-<short-description>
 ```
 
-The script creates `.worktrees/<slug>` on a matching branch under the main checkout, refuses to run
-if `.worktrees/` is not gitignored, symlinks every `.worktreeinclude` entry from the main checkout,
-and runs `pnpm install --frozen-lockfile` and `pnpm run prepare` (Husky hooks, Paraglide output, &
+The script validates the slug (`<issue-number>-<short-description>`, lowercase), fetches
+`origin/main`, creates `.worktrees/<slug>` on a matching branch from `origin/main` under the main
+checkout, removes the worktree & branch again if a later step fails, refuses to run if `.worktrees/`
+is not gitignored, symlinks every `.worktreeinclude` entry from the main checkout, and runs
+`pnpm install --frozen-lockfile` and `pnpm run prepare` (Husky hooks, Paraglide output, &
 `svelte-kit sync`). Agents with their own managed worktree directory (for example
 `.claude/worktrees/`) may use it instead; the same symlink and install steps still apply.
 
@@ -46,7 +50,8 @@ and runs `pnpm install --frozen-lockfile` and `pnpm run prepare` (Husky hooks, P
 
 ```sh
 git check-ignore -q .worktrees/placeholder
-git worktree add .worktrees/<slug> -b <slug>
+git fetch origin main
+git worktree add .worktrees/<slug> -b <slug> --no-track origin/main
 cd .worktrees/<slug>
 ln -s /path/to/main/repo/pipeline/input pipeline/input
 pnpm install --frozen-lockfile
@@ -54,6 +59,17 @@ pnpm run prepare
 ```
 
 </details>
+
+### Codex sandbox
+
+Codex's default `workspace-write` sandbox disables command-network access & keeps `.git` read-only,
+including the resolved Git directory for linked worktrees. That protects normal source edits, but
+`pnpm install`, `gh`, & remote Git commands need network access, while `git worktree add`, staging,
+commits, & ref updates require an approved sandbox escalation. Enabling command-network access
+requires `[sandbox_workspace_write]` with `network_access = true` in `.codex/config.toml`; that
+change is pending, to be applied by the maintainer. Keep `approval_policy = "on-request"` so
+Git-metadata operations can request a narrow escalation. If the active managed environment disallows
+escalation, report the limitation rather than weakening the sandbox or bypassing isolation.
 
 ### Shared vs. Isolated Worktree Resources (`.worktreeinclude`)
 
@@ -382,14 +398,17 @@ there for oxlint's rules.
 
 ### Full local matrix
 
-`pnpm run verify` runs the `ci.yml` matrix locally (plus `lint:fix` first) with compact output,
-stopping on the first failure. Run it once, when commit-ready, only for the exceptions in
-[AGENTS.md §7](../AGENTS.md#7-verification). If a step fails, fix the issue and rerun only that
-step, then rerun `pnpm run verify` once.
+`pnpm run verify` runs CI's non-browser matrix locally (`lint`, `check`, `check:i18n`, `test`,
+`build`, `check:routes`) with compact output, stopping on the first failure. It is read-only: it
+runs `lint`, not `lint:fix`, so run `pnpm run lint:fix` beforehand. Opt-in flags add the local-only
+steps: `pnpm run verify -- --assets` adds `test:pipeline:assets`, `--browser` adds
+`test:accessibility` & `test:pwa`, and `--all` adds both. Run it once, when commit-ready, only for
+the exceptions in [AGENTS.md §7](../AGENTS.md#7-verification). If a step fails, fix the issue and
+rerun only that step, then rerun `pnpm run verify` once.
 
 Pipeline parser, evaluator, extractor, & shared data-contract changes must additionally pass
-`pnpm run test:pipeline:assets` and the pipeline run described in §4. Those are local-only because
-CI has no game assets.
+`pnpm run test:pipeline:assets` (or `pnpm run verify -- --assets`) and the pipeline run described in
+§4. Those are local-only because CI has no game assets.
 
 ### Documentation-only changes
 
@@ -417,8 +436,9 @@ git branch -vv
 
 - Ensure `git branch --show-current` matches the PR branch name.
 - Ensure `git branch -vv` shows that branch tracking the expected `origin/<branch>`.
-- Push through the agent delivery mechanism (for Copilot runs, `report_progress`) after committing,
-  then verify the branch is clean with `git status --short`.
+- Push through the agent delivery mechanism (for example, Copilot cloud runs push with their
+  `report_progress` tool; elsewhere use `git push`) after committing, then verify the branch is
+  clean with `git status --short`.
 
 ### Attach visual evidence & prototype code
 
@@ -449,13 +469,14 @@ prototype code available to reviewers in a collapsed `<details>` element:
 Run the cleanup helper from the repository root to preview eligible removals:
 
 ```sh
-scripts/cleanup-merged-worktrees.sh
+pnpm run worktree:cleanup
 ```
 
-Pass `--apply` only after reviewing the preview. The helper removes a local branch only when its
-current commit exactly matches the head commit of a merged GitHub pull request, and it has no open
-pull request. It removes an associated worktree only when that worktree is clean; Git itself still
-must accept the removal. It leaves every other branch and worktree alone.
+Pass `--apply` (`pnpm run worktree:cleanup -- --apply`) only after reviewing the preview. The helper
+removes a local branch only when its current commit exactly matches the head commit of a merged
+GitHub pull request, and it has no open pull request. It removes an associated worktree only when
+that worktree is clean; Git itself still must accept the removal. It leaves every other branch and
+worktree alone.
 
 ---
 
@@ -485,7 +506,7 @@ offline fallback, registration, or activation behavior.
 - **Symptom**: App UI displays stale item fields after pipeline extractor logic updates.
 - **Recovery**: Run the pipeline with local game assets to regenerate the target dataset:
   ```sh
-  pnpm run pipeline -- input/assets --version=1.0.2
+  pnpm run pipeline -- input/assets --version=1.0.5
   ```
   Review `git diff src/lib/data/tracker-data.json` to verify schema and data accuracy.
 

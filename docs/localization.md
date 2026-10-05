@@ -151,6 +151,21 @@ redirects (307) to the stored preference cookie's locale, then the best `Accept-
 then `/en` (`bareLocaleRedirect` in `src/hooks.server.ts`). The redirect sends
 `Vary: Cookie, Accept-Language` so caches don't hand one visitor's locale to another.
 
+## Locale list & Paraglide config
+
+`project.inlang/settings.json` is the authoritative locale list. `LOCALE_CODES` in
+`src/lib/types/locale.ts` repeats it as a literal tuple so `LocaleCode` stays a union type, and the
+pipeline generates `src/lib/data/locales.json` from the game's language list. `locale.test.ts` fails
+if either copy, or the compiled Paraglide runtime, drifts from `settings.json` (order included).
+Adding a locale means changing all three in one PR.
+
+`PARAGLIDE_OPTIONS` in `src/lib/i18n/paraglide-options.ts` is the only Paraglide compiler config:
+the URL strategy, the per-locale URL patterns, and the unlocalized paths (`/api`, `/sitemap.xml`),
+which `src/hooks.server.ts` also reads. The Vite plugin and `pnpm run paraglide:compile` (run by
+`prepare`, through `scripts/paraglide-compile.ts`) both compile with it, so `src/lib/paraglide`
+behaves the same whichever wrote it last. Don't call the `paraglide-js compile` CLI directly; it
+takes only a few options as flags and would emit a runtime with the default strategy.
+
 ## Adding a new UI string (agents & humans)
 
 1. Add the English string to `messages/en.json` under a descriptive key (snake_case, prefixed by
@@ -258,10 +273,10 @@ Be honest with yourself (and reviewers) about what this catches:
 
 - The ESLint rule only sees Svelte template syntax. It cannot verify that a displayed field like
   `entity.name` is actually locale-aware — that depends on whether the pipeline extractor for that
-  category was migrated to read the game's translation tables (see
-  [`docs/superpowers/specs/2026-09-16-localization-support-design.md`](superpowers/specs/2026-09-16-localization-support-design.md)
-  for the state of that migration, category by category). A field that's still English-only in
-  `tracker-data.json` will render fine and pass lint.
+  category reads the game's translation tables. As of this writing, every pipeline category emits
+  its names through per-locale chunks (`src/lib/data/locales/<locale>/<category>.json`) and
+  `tracker-data.json` carries no display names, so the remaining risk is app-authored text. A future
+  field added to the contract as English-only would render fine and pass lint.
 - The key-shape check cannot verify translation quality or that a value has actually been translated
   (as opposed to copy-pasted from English).
 - Both checks are opt-in / allowlisted, not repo-wide. A PR that never touches an allowlisted file
