@@ -35,7 +35,7 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/claude-session-env.sh\"",
-            "timeout": 300
+            "timeout": 600
           }
         ]
       }
