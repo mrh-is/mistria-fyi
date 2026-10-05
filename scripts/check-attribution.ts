@@ -74,7 +74,7 @@ export function checkPullRequest({ body, commits, labels }: PullRequest): string
     );
   }
 
-  if (/generated with \[?claude code\]?/i.test(body)) {
+  if (/^[^\w\n]*generated with \[?claude code\]?/im.test(body)) {
     problems.push(
       'The PR body has the "Generated with Claude Code" footer; end it with "Agent: claude-code" instead.',
     );

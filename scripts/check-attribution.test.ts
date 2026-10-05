@@ -87,6 +87,16 @@ describe("checkPullRequest", () => {
     ).toHaveLength(1);
   });
 
+  it("allows prose that merely mentions the footer", () => {
+    expect(
+      checkPullRequest({
+        body: 'Rejects the "Generated with Claude Code" footer.\n\nAgent: claude-code',
+        commits: [],
+        labels: ["agent: claude"],
+      }),
+    ).toEqual([]);
+  });
+
   it("skips merge commits", () => {
     expect(
       checkPullRequest({
