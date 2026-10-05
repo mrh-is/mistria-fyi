@@ -134,6 +134,26 @@ These steps follow OpenAI’s
    Don’t use `scripts/setup-cloud-agent.sh`; it writes to the home directory, which is read-only
    during Codex’s agent phase.
 
+   The checked-in `pnpm-workspace.yaml` puts pnpm’s store and metadata cache under the ignored
+   `.pnpm-store/` directory. Both setup and agent commands read this configuration, so ordinary
+   `pnpm install` and `pnpm run` commands work without writing to the home directory. Each worktree
+   has its own store; pnpm’s setup action discovers this path for CI caching too. When moving an
+   existing install from the default store, run `CI=true pnpm install --frozen-lockfile` once to
+   allow pnpm to recreate `node_modules` without an interactive confirmation.
+
+   Also add these non-secret **Environment variables**:
+
+   ```dotenv
+   WRANGLER_LOG_PATH=/workspace/.wrangler/logs/
+   WRANGLER_REGISTRY_PATH=/workspace/.wrangler/registry
+   ```
+
+   SvelteKit loads the Cloudflare adapter during `prepare`, checks, and tests. Wrangler otherwise
+   writes logs under `~/.config/.wrangler/logs`, and Miniflare writes its worker registry under
+   `~/.config/.wrangler/registry`. The log failure is nonfatal, but the registry failure prevents
+   Vitest from starting. These overrides keep both writable without relocating Wrangler’s credential
+   configuration or changing `HOME`.
+
 6. Keep the start skill free of Node or `PATH` activation steps. The preinstalled runtime needs
    none.
 7. Set agent internet access to the restricted or allowlist mode, and allow `api.cloudflare.com`.
@@ -154,6 +174,9 @@ In one new session for each environment, ask the agent to run:
 ```sh
 node --version
 pnpm --version
+pnpm install --frozen-lockfile
+pnpm run check
+pnpm run test
 pnpm run paraglide:compile
 pnpm run cloudflare:logs -- <deployment-id>
 ```
@@ -163,6 +186,11 @@ for Codex; Paraglide must compile without requesting jsDelivr; the log command m
 timestamped build-log lines. Use a real deployment ID from the Pages project; the command
 intentionally rejects the `<deployment-id>` placeholder. For Claude with a protected API credential,
 `CLOUDFLARE_API_TOKEN` should be unset even though the log request succeeds.
+
+Install, check, and tests must exit successfully. When filtering their output with `tail`, enable
+`set -o pipefail` first so the pipeline preserves failures from pnpm instead of reporting `tail`’s
+successful exit status. Keep the full output when diagnosing failures: the last few stack frames can
+hide the actual error message.
 
 For Claude, also run:
 
