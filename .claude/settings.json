@@ -27,5 +27,18 @@
       "Bash(pnpm run worktree:new *)"
     ],
     "deny": ["Bash(npm *)", "Bash(npx *)", "Bash(yarn *)", "Bash(bun *)"]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/claude-session-env.sh\"",
+            "timeout": 600
+          }
+        ]
+      }
+    ]
   }
 }
