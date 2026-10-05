@@ -132,7 +132,7 @@ export function buildTrackerIndex(trackerData: TrackerData): TrackerIndex {
 
   const categorySourceTypes = {
     ...categorySourceTypesWithoutAll,
-    all: uniqueSourceTypes(Object.values(categorySourceTypesWithoutAll).flatMap((types) => types)),
+    all: uniqueSourceTypes(Object.values(categorySourceTypesWithoutAll).flat()),
   } satisfies Readonly<Record<string, readonly SourceType[]>>;
 
   return {

@@ -2,7 +2,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { vi } from "vitest";
 
-Object.defineProperty(window, "matchMedia", {
+Object.defineProperty(globalThis, "matchMedia", {
   value: vi.fn().mockImplementation((query: string) => ({
     addEventListener: vi.fn(),
     addListener: vi.fn(),

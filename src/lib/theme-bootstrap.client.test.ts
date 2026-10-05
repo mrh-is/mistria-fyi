@@ -7,7 +7,7 @@ import { THEME_COLORS, THEME_STORAGE_KEY } from "#lib/theme.js";
 // Extract the two inline <script> blocks from app.html and evaluate them
 // directly, so tests exercise the production code rather than a reimplemented
 // copy that could drift.
-const appHtml = readFileSync(resolve(__dirname, "../app.html"), "utf-8");
+const appHtml = readFileSync(resolve(import.meta.dirname, "../app.html"), "utf8");
 
 const scriptBlocks = [...appHtml.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
 const themeBootstrapScript = scriptBlocks[0];
@@ -30,12 +30,12 @@ function makeStorage(data: Record<string, string> = {}): Storage {
 }
 
 function runBootstrap(): void {
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval, @typescript-eslint/no-unsafe-call
+  // oxlint-disable-next-line no-new-func, typescript/no-implied-eval, typescript/no-unsafe-call -- the test must run app.html's inline script as written, in global scope
   new Function(themeBootstrapScript)();
 }
 
 function runThemeColorSync(): void {
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval, @typescript-eslint/no-unsafe-call
+  // oxlint-disable-next-line no-new-func, typescript/no-implied-eval, typescript/no-unsafe-call -- the test must run app.html's inline script as written, in global scope
   new Function(themeColorScript)();
 }
 
@@ -70,7 +70,7 @@ describe("theme bootstrap", () => {
     if (!meta) {
       meta = document.createElement("meta");
       meta.name = "theme-color";
-      document.head.appendChild(meta);
+      document.head.append(meta);
     }
     meta.content = THEME_COLORS.light;
   });
@@ -99,35 +99,35 @@ describe("theme bootstrap", () => {
 
   it("follows OS preference when stored preference is system and OS prefers dark", () => {
     vi.stubGlobal("localStorage", makeStorage({ [THEME_STORAGE_KEY]: "system" }));
-    vi.spyOn(window, "matchMedia").mockReturnValue({ matches: true } as MediaQueryList);
+    vi.spyOn(globalThis, "matchMedia").mockReturnValue({ matches: true } as MediaQueryList);
     runBootstrap();
     expect(document.documentElement.classList.contains("dark")).toBe(true);
   });
 
   it("follows OS preference when stored preference is system and OS prefers light", () => {
     vi.stubGlobal("localStorage", makeStorage({ [THEME_STORAGE_KEY]: "system" }));
-    vi.spyOn(window, "matchMedia").mockReturnValue({ matches: false } as MediaQueryList);
+    vi.spyOn(globalThis, "matchMedia").mockReturnValue({ matches: false } as MediaQueryList);
     runBootstrap();
     expect(document.documentElement.classList.contains("dark")).toBe(false);
   });
 
   it("falls back to system when no preference is stored", () => {
     vi.stubGlobal("localStorage", makeStorage());
-    vi.spyOn(window, "matchMedia").mockReturnValue({ matches: true } as MediaQueryList);
+    vi.spyOn(globalThis, "matchMedia").mockReturnValue({ matches: true } as MediaQueryList);
     runBootstrap();
     expect(document.documentElement.classList.contains("dark")).toBe(true);
   });
 
   it("falls back to system when localStorage.getItem throws", () => {
     vi.stubGlobal("localStorage", throwingStorage());
-    vi.spyOn(window, "matchMedia").mockReturnValue({ matches: true } as MediaQueryList);
+    vi.spyOn(globalThis, "matchMedia").mockReturnValue({ matches: true } as MediaQueryList);
     runBootstrap();
     expect(document.documentElement.classList.contains("dark")).toBe(true);
   });
 
   it("does not apply dark class when localStorage throws and OS prefers light", () => {
     vi.stubGlobal("localStorage", throwingStorage());
-    vi.spyOn(window, "matchMedia").mockReturnValue({ matches: false } as MediaQueryList);
+    vi.spyOn(globalThis, "matchMedia").mockReturnValue({ matches: false } as MediaQueryList);
     runBootstrap();
     expect(document.documentElement.classList.contains("dark")).toBe(false);
   });
@@ -140,7 +140,7 @@ describe("theme-color sync", () => {
     if (!meta) {
       meta = document.createElement("meta");
       meta.name = "theme-color";
-      document.head.appendChild(meta);
+      document.head.append(meta);
     }
     meta.content = THEME_COLORS.light;
   });
@@ -172,7 +172,7 @@ describe("theme-color sync", () => {
 
   it("sets dark theme-color when localStorage throws and OS prefers dark", () => {
     vi.stubGlobal("localStorage", throwingStorage());
-    vi.spyOn(window, "matchMedia").mockReturnValue({ matches: true } as MediaQueryList);
+    vi.spyOn(globalThis, "matchMedia").mockReturnValue({ matches: true } as MediaQueryList);
     runBootstrap();
     runThemeColorSync();
 
@@ -183,7 +183,7 @@ describe("theme-color sync", () => {
 
   it("preserves light theme-color when localStorage throws and OS prefers light", () => {
     vi.stubGlobal("localStorage", throwingStorage());
-    vi.spyOn(window, "matchMedia").mockReturnValue({ matches: false } as MediaQueryList);
+    vi.spyOn(globalThis, "matchMedia").mockReturnValue({ matches: false } as MediaQueryList);
     runBootstrap();
     runThemeColorSync();
 

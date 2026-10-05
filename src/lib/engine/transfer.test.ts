@@ -78,13 +78,13 @@ async function expectDecodeError(
   code: TransferDecodeErrorCode,
   message: RegExp,
 ): Promise<void> {
-  const error: unknown = await decodeTransferPayload(payload).then(
+  const rejected: unknown = await decodeTransferPayload(payload).then(
     () => undefined,
-    (rejection: unknown) => rejection,
+    (error: unknown) => error,
   );
-  expect(error).toBeInstanceOf(TransferDecodeError);
-  expect(error).toHaveProperty("code", code);
-  expect(error).toHaveProperty("message", expect.stringMatching(message));
+  expect(rejected).toBeInstanceOf(TransferDecodeError);
+  expect(rejected).toHaveProperty("code", code);
+  expect(rejected).toHaveProperty("message", expect.stringMatching(message));
 }
 
 /** A marked payload: the transfer marker followed by the base64url bytes. */
@@ -114,14 +114,14 @@ function crc32(bytes: Uint8Array): number {
     const table = new Uint32Array(256);
     for (let n = 0; n < 256; n++) {
       let c = n;
-      for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+      for (let k = 0; k < 8; k++) c = c & 1 ? 0xed_b8_83_20 ^ (c >>> 1) : c >>> 1;
       table[n] = c >>> 0;
     }
     testCrc32Table = table;
   }
-  let crc = 0xffffffff;
+  let crc = 0xff_ff_ff_ff;
   for (const byte of bytes) crc = testCrc32Table[(crc ^ byte) & 0xff] ^ (crc >>> 8);
-  return (crc ^ 0xffffffff) >>> 0;
+  return (crc ^ 0xff_ff_ff_ff) >>> 0;
 }
 
 function crc32ToBytes(checksum: number): number[] {
@@ -145,16 +145,19 @@ async function decompressTransferRaw(payload: string): Promise<Uint8Array> {
 }
 
 function fromBase64url(payload: string): Uint8Array {
-  const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+  const base64 = payload.replaceAll("-", "+").replaceAll("_", "/");
   const binary = atob(base64 + "=".repeat((4 - (base64.length % 4)) % 4));
-  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  return Uint8Array.from(binary, (character) => character.codePointAt(0) ?? 0);
+}
+
+function bytesForBits(count: number): number {
+  return Math.ceil(count / 8);
 }
 
 function getTransferFieldOffsets(): Record<
   "child" | "married" | "progression" | "quest" | "relationship" | "spell",
   number
 > {
-  const bytesForBits = (count: number): number => Math.ceil(count / 8);
   const animalVariantCount = recordValues(trackerData.animals).reduce(
     (count, animal) =>
       count +
@@ -315,9 +318,9 @@ async function mutateEncodedRaw(
 }
 
 function toBase64url(bytes: Uint8Array): string {
-  return btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
+  return btoa(String.fromCodePoint(...bytes))
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
     .replace(/=+$/, "");
 }
 
@@ -362,7 +365,7 @@ describe("transfer codec v11", () => {
       const collator = new Intl.Collator(locale);
       const localeCompare = vi
         .spyOn(String.prototype, "localeCompare")
-        .mockImplementation(function (this: string, other) {
+        .mockImplementation(function localeCompare(this: string, other) {
           return collator.compare(this, other);
         });
 
@@ -422,7 +425,7 @@ describe("transfer codec v11", () => {
     const maxRenown = trackerData.townRanks.at(-1)?.levels.end ?? 0;
     const completed = makeCompleted({
       mines: { floor: 0xff, spells: new Set() },
-      renown: 0xffff,
+      renown: 0xff_ff,
       skillLevels: Object.fromEntries(skillIds.map((id) => [id, 0xff])),
       villagerLevels: Object.fromEntries(villagerIds.map((id) => [id, 0xf])),
     });
@@ -582,23 +585,25 @@ describe("transfer codec v11", () => {
     expect(decoded.hasUpperFloor).toBe(true);
   });
 
-  it("round-trips reachedSeason", async () => {
-    for (const season of ["spring", "summer", "fall", "winter"] as const) {
+  it.each(["spring", "summer", "fall", "winter"] as const)(
+    "round-trips reachedSeason %s",
+    async (season) => {
       const completed = makeCompleted({ reachedSeason: season });
       const payload = await encodeTransferPayload(completed);
       const decoded = await decodeTransferPayload(payload);
       expect(decoded.reachedSeason).toBe(season);
-    }
-  });
+    },
+  );
 
   it("round-trips villagerRelationships", async () => {
     const dateableVillagers = (Object.keys(trackerData.villagers) as VillagerId[]).filter(
       (id) => trackerData.villagers[id].dateable,
     );
-    const relationships: Partial<Record<VillagerId, VillagerRelationship>> = {};
-    relationships[dateableVillagers[0]] = "romantic";
-    relationships[dateableVillagers[1]] = "proposed";
-    relationships[dateableVillagers[2]] = "platonic";
+    const relationships: Partial<Record<VillagerId, VillagerRelationship>> = {
+      [dateableVillagers[0]]: "romantic",
+      [dateableVillagers[1]]: "proposed",
+      [dateableVillagers[2]]: "platonic",
+    };
     const completed = makeCompleted({ villagerRelationships: relationships });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
@@ -607,13 +612,11 @@ describe("transfer codec v11", () => {
     expect(decoded.villagerRelationships?.[dateableVillagers[2]]).toBe("platonic");
   });
 
-  it("round-trips childChoice", async () => {
-    for (const choice of ["undeclared", "yes", "no"] as const) {
-      const completed = makeCompleted({ childChoice: choice });
-      const payload = await encodeTransferPayload(completed);
-      const decoded = await decodeTransferPayload(payload);
-      expect(decoded.childChoice).toBe(choice);
-    }
+  it.each(["undeclared", "yes", "no"] as const)("round-trips childChoice %s", async (choice) => {
+    const completed = makeCompleted({ childChoice: choice });
+    const payload = await encodeTransferPayload(completed);
+    const decoded = await decodeTransferPayload(payload);
+    expect(decoded.childChoice).toBe(choice);
   });
 
   it("round-trips almanacRecipes", async () => {
@@ -757,7 +760,7 @@ describe("transfer codec v11", () => {
     const raw = await decompressTransferRaw(payload);
     const corruptedRaw = new Uint8Array(raw);
     corruptedRaw[0] ^= 0x01;
-    expect(corruptedRaw.length).toBe(raw.length);
+    expect(corruptedRaw).toHaveLength(raw.length);
 
     // Keep the checksum bytes from the ORIGINAL (uncorrupted) payload, simulating a bit-flip that
     // landed in the compressed body after the checksum was computed and stored.

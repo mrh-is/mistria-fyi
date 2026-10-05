@@ -138,7 +138,7 @@
   const TURNSTILE_SCRIPT_TIMEOUT_MS = 10_000;
 
   function ensureTurnstileScript(): Promise<void> {
-    if (window.turnstile) return Promise.resolve();
+    if (globalThis.turnstile) return Promise.resolve();
 
     return new Promise((resolve, reject) => {
       let timedOut = false;
@@ -148,7 +148,7 @@
       }, TURNSTILE_SCRIPT_TIMEOUT_MS);
 
       function waitForGlobal() {
-        if (window.turnstile) {
+        if (globalThis.turnstile) {
           clearTimeout(timer);
           resolve();
         } else if (!timedOut) {
@@ -165,18 +165,18 @@
       const script = document.createElement("script");
       script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
       script.async = true;
-      script.onload = waitForGlobal;
-      script.onerror = () => {
+      script.addEventListener("load", waitForGlobal);
+      script.addEventListener("error", () => {
         clearTimeout(timer);
         reject(new Error("Turnstile script failed to load"));
-      };
-      document.head.appendChild(script);
+      });
+      document.head.append(script);
     });
   }
 
   function removeTurnstileWidget(): void {
-    if (turnstileWidgetId !== undefined && window.turnstile) {
-      window.turnstile.remove(turnstileWidgetId);
+    if (turnstileWidgetId !== undefined && globalThis.turnstile) {
+      globalThis.turnstile.remove(turnstileWidgetId);
     }
     turnstileWidgetId = undefined;
     turnstileToken = "";
@@ -186,15 +186,15 @@
   }
 
   function renderTurnstile(container: HTMLDivElement): void {
-    if (!window.turnstile || !container.isConnected) return;
+    if (!globalThis.turnstile || !container.isConnected) return;
     if (turnstileWidgetId !== undefined) {
-      window.turnstile.remove(turnstileWidgetId);
+      globalThis.turnstile.remove(turnstileWidgetId);
     }
     turnstileToken = "";
     turnstileReady = false;
     turnstileError = false;
     turnstileInteractive = false;
-    turnstileWidgetId = window.turnstile.render(container, {
+    turnstileWidgetId = globalThis.turnstile.render(container, {
       "before-interactive-callback": () => {
         turnstileInteractive = true;
       },
@@ -219,30 +219,38 @@
   }
 
   function resetTurnstileWidget(): void {
-    if (turnstileWidgetId !== undefined && window.turnstile) {
-      window.turnstile.reset(turnstileWidgetId);
+    if (turnstileWidgetId !== undefined && globalThis.turnstile) {
+      globalThis.turnstile.reset(turnstileWidgetId);
       turnstileToken = "";
       turnstileReady = false;
       turnstileInteractive = false;
     }
   }
 
+  async function loadTurnstileWidget(container: HTMLDivElement, gen: number): Promise<void> {
+    try {
+      await ensureTurnstileScript();
+    } catch {
+      if (gen === turnstileGeneration) {
+        turnstileError = true;
+      }
+      return;
+    }
+    if (gen === turnstileGeneration && container.isConnected) {
+      renderTurnstile(container);
+    }
+  }
+
+  async function afterTick(run: () => void): Promise<void> {
+    await tick();
+    run();
+  }
+
   $effect(() => {
     if (visible && turnstileContainer) {
       const container = turnstileContainer;
       const gen = ++turnstileGeneration;
-      void ensureTurnstileScript().then(
-        () => {
-          if (gen === turnstileGeneration && container.isConnected) {
-            renderTurnstile(container);
-          }
-        },
-        () => {
-          if (gen === turnstileGeneration) {
-            turnstileError = true;
-          }
-        },
-      );
+      void loadTurnstileWidget(container, gen);
     }
     if (!open) {
       removeTurnstileWidget();
@@ -257,7 +265,7 @@
     if (visible && !wasOpen) {
       opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       wasOpen = true;
-      void tick().then(() => dialogElement?.focus());
+      void afterTick(() => dialogElement?.focus());
     } else if (!open && wasOpen) {
       messageTouched = false;
       emailTouched = false;
@@ -265,7 +273,7 @@
       const focusTarget = opener;
       opener = null;
       wasOpen = false;
-      void tick().then(() => {
+      void afterTick(() => {
         if (focusTarget?.isConnected) {
           focusTarget.focus();
         }
@@ -383,7 +391,7 @@
             label: m.feedback_action_view_issue(),
             onClick: () => window.open(data.issueUrl, "_blank", "noopener"),
           },
-          duration: 12000,
+          duration: 12_000,
         });
       } else {
         toast(m.feedback_toast_thanks(), {
@@ -394,13 +402,12 @@
           duration: 8000,
         });
       }
-    } catch (err) {
+    } catch (error) {
       if (generation !== submitGeneration) return;
-      if (err instanceof Error && err.name === "AbortError") {
-        submitError = m.feedback_error_timeout();
-      } else {
-        submitError = m.feedback_error_offline();
-      }
+      submitError =
+        error instanceof Error && error.name === "AbortError"
+          ? m.feedback_error_timeout()
+          : m.feedback_error_offline();
       resetTurnstileWidget();
     } finally {
       clearTimeout(timeout);
@@ -420,7 +427,7 @@
     if (wantsReply && !emailTouched) {
       emailTouched = true;
     }
-    void tick().then(() => {
+    void afterTick(() => {
       if (messageInvalid) {
         messageInput?.focus();
       } else if (emailInvalid) {
@@ -441,7 +448,7 @@
       },
       () => {
         pickerActive = false;
-        void tick().then(() => pickerButton?.focus());
+        void afterTick(() => pickerButton?.focus());
       },
     );
   }

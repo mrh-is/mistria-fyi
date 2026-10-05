@@ -39,7 +39,7 @@ export function buildQuestTypeIndex(fiddle: ParsedGameData): Map<QuestId, QuestT
     entries.set(typedQuestId, questType);
   });
 
-  return new Map([...entries].sort(([left], [right]) => left.localeCompare(right)));
+  return new Map([...entries].toSorted(([left], [right]) => left.localeCompare(right)));
 }
 
 /**
@@ -52,11 +52,11 @@ export function buildQuestTypeIndex(fiddle: ParsedGameData): Map<QuestId, QuestT
  * - null or non-object records are skipped.
  *
  * @param fiddle      Parsed game data.
- * @param callback    Receives `itemId`, the item record, `topCategory`, and `subCategory`.
+ * @param onItem      Receives `itemId`, the item record, `topCategory`, and `subCategory`.
  */
 export function forEachItem(
   fiddle: ParsedGameData,
-  callback: (
+  onItem: (
     itemId: string,
     item: Record<string, unknown>,
     topCategory: string,
@@ -74,7 +74,7 @@ export function forEachItem(
       if (typeof categoryItems !== "object" || categoryItems === null) continue;
       for (const [itemId, item] of Object.entries(categoryItems)) {
         if (itemId === "default" || typeof item !== "object" || item === null) continue;
-        callback(itemId, item, topCat, subCat);
+        onItem(itemId, item, topCat, subCat);
       }
     }
   }
@@ -92,12 +92,12 @@ export function forEachItem(
  *
  * @param fiddle      Parsed game data.
  * @param questGroups Quest-group keys to iterate (e.g. a subset of TRACKED_QUEST_GROUPS).
- * @param callback    Receives `questType`, `questId`, and the quest record.
+ * @param onQuest     Receives `questType`, `questId`, and the quest record.
  */
 export function forEachQuest(
   fiddle: ParsedGameData,
   questGroups: readonly string[],
-  callback: (questType: string, questId: string, quest: Record<string, unknown>) => void,
+  onQuest: (questType: string, questId: string, quest: Record<string, unknown>) => void,
 ): void {
   const quests = fiddle.quests as
     | Record<string, Record<string, Record<string, unknown>>>
@@ -110,7 +110,7 @@ export function forEachQuest(
 
     for (const [questId, quest] of Object.entries(questGroup)) {
       if (questId === "default" || typeof quest !== "object" || quest === null) continue;
-      callback(questType, questId, quest);
+      onQuest(questType, questId, quest);
     }
   }
 }

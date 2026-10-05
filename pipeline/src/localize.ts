@@ -82,12 +82,13 @@ export function localizeField(assetsDir: string, input: LocalizeFieldInput): Loc
 
   const key = resolveKey(input);
 
-  if (input.expectedEnglishValue !== undefined) {
-    if (input.englishValue !== input.expectedEnglishValue) {
-      throw new Error(
-        `English localization mismatch for ordinal key "${key}": expected "${input.expectedEnglishValue}", got "${input.englishValue}"`,
-      );
-    }
+  if (
+    input.expectedEnglishValue !== undefined &&
+    input.englishValue !== input.expectedEnglishValue
+  ) {
+    throw new Error(
+      `English localization mismatch for ordinal key "${key}": expected "${input.expectedEnglishValue}", got "${input.englishValue}"`,
+    );
   }
 
   for (const [gameLanguage, locale] of Object.entries(GAME_LANGUAGE_TO_LOCALE)) {
@@ -125,7 +126,7 @@ function loadTranslationTable(
   if (cached) return cached;
 
   const path = join(assetsDir, "localization", "translations", `${gameLanguage}.meta.toml`);
-  const toml = parse(readFileSync(path, "utf-8")) as {
+  const toml = parse(readFileSync(path, "utf8")) as {
     asset_properties: Record<string, unknown>;
   };
 

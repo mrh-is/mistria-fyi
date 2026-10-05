@@ -1,3 +1,4 @@
+/* oxlint-disable no-template-curly-in-string -- these tests assert literal GitHub Actions `${{ }}` expression text */
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
@@ -120,7 +121,9 @@ describe("CI workflow jobs", () => {
       }
     }
 
-    const allCommands = Object.values(jobs).flatMap(runCommands).join("\n");
+    const allCommands = Object.values(jobs)
+      .flatMap((job) => runCommands(job))
+      .join("\n");
     expect(allCommands).not.toMatch(/lint:fix|pipeline --|test:pipeline:assets/);
   });
 
@@ -140,10 +143,11 @@ describe("CI workflow permissions", () => {
     expect(jobs.changes.permissions).toEqual({ "pull-requests": "read" });
     expect(jobs["issue-sync"].permissions).toEqual({ contents: "read", issues: "write" });
     expect(jobs["issue-sync"].if).toContain("github.event_name == 'schedule'");
-    for (const [jobName, job] of Object.entries(jobs)) {
-      if (jobName !== "changes" && jobName !== "issue-sync") {
-        expect(job.permissions).toBeUndefined();
-      }
+    const unprivilegedJobs = Object.entries(jobs).filter(
+      ([jobName]) => jobName !== "changes" && jobName !== "issue-sync",
+    );
+    for (const [, job] of unprivilegedJobs) {
+      expect(job.permissions).toBeUndefined();
     }
     for (const job of Object.values(jobs)) {
       for (const step of job.steps?.filter((entry) =>

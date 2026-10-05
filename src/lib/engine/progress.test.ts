@@ -8,6 +8,8 @@ import {
   clampRenownLevel,
   getAllProgress,
   getCategoryProgress,
+  getMaxMineFloor,
+  getMaxRenownLevel,
   getOverallProgress,
   isVillagerComplete,
   MAX_SKILL_LEVEL,
@@ -83,7 +85,7 @@ function ctx(
 // ─── clampRenownLevel ──────────────────────────────────────────────
 
 describe("clampRenownLevel", () => {
-  const maxLevel = trackerData.townRanks[trackerData.townRanks.length - 1].levels.end;
+  const maxLevel = getMaxRenownLevel();
 
   it("clamps negative values to zero", () => {
     expect(clampRenownLevel(-5)).toBe(0);
@@ -123,7 +125,7 @@ describe("getAllProgress", () => {
       "renown",
       "skills",
     ];
-    expect(Object.keys(progress).sort()).toEqual(expectedCategories.sort());
+    expect(Object.keys(progress).toSorted()).toEqual(expectedCategories.toSorted());
   });
 
   it("reports zero completed when nothing is marked", () => {
@@ -155,14 +157,12 @@ describe("getAllProgress", () => {
 describe("getOverallProgress", () => {
   it("sums to the same totals as reducing every category directly", () => {
     const all = getAllProgress(ctx());
-    const expected = Object.values(all).reduce(
-      (sum, p) => ({
-        completed: sum.completed + p.completed,
-        filtered: sum.filtered + p.filtered,
-        total: sum.total + p.total,
-      }),
-      { completed: 0, filtered: 0, total: 0 },
-    );
+    const expected = { completed: 0, filtered: 0, total: 0 };
+    for (const p of Object.values(all)) {
+      expected.completed += p.completed;
+      expected.filtered += p.filtered;
+      expected.total += p.total;
+    }
     expect(getOverallProgress(all)).toEqual(expected);
   });
 });
@@ -227,7 +227,7 @@ describe("almanac progress", () => {
 
     expect(progressAll.total).toBe(progressAvailable.total);
     expect(progressAll.total).toBeGreaterThan(0);
-    expect(typeof canonicalId).toBe("string");
+    expect(canonicalId).toBeTypeOf("string");
   });
 });
 
@@ -311,13 +311,13 @@ describe("recipes progress", () => {
 
 describe("renown progress", () => {
   it("total equals max rank level", () => {
-    const maxLevel = trackerData.townRanks[trackerData.townRanks.length - 1].levels.end;
+    const maxLevel = trackerData.townRanks.at(-1)?.levels.end;
     const progress = getCategoryProgress("renown", ctx());
     expect(progress.total).toBe(maxLevel);
   });
 
   it("clamps renown at max", () => {
-    const maxLevel = trackerData.townRanks[trackerData.townRanks.length - 1].levels.end;
+    const maxLevel = getMaxRenownLevel();
     const progress = getCategoryProgress("renown", ctx({ completed: { renown: maxLevel + 100 } }));
     expect(progress.completed).toBe(maxLevel);
   });
@@ -347,8 +347,7 @@ describe("skills progress", () => {
 describe("mines progress", () => {
   it("total includes both floors and spells", () => {
     const progress = getCategoryProgress("mines", ctx());
-    const biomes = trackerData.mines.biomes;
-    const maxFloor = biomes[biomes.length - 1].floors.end;
+    const maxFloor = getMaxMineFloor();
     const spellCount = recordKeys(trackerData.mines.spells).length;
     expect(progress.total).toBe(maxFloor + spellCount);
   });
@@ -385,38 +384,37 @@ describe("animal progress variant filtering matches UI predicate", () => {
   const seasons: Season[] = ["spring", "summer", "fall", "winter"];
   const modes: AvailabilityMode[] = ["available", "everything", "timely"];
 
-  for (const mode of modes) {
-    for (const season of seasons) {
-      it(`${mode}/${season}: variant filtered count matches isVariantInScope`, () => {
-        const c = ctx({
-          availabilityMode: mode,
-          worldState: { season, weather: "calm" as Weather },
-        });
-        const progress = getCategoryProgress("animals", c);
+  it.each(modes.flatMap((mode) => seasons.map((season) => [mode, season] as const)))(
+    "%s/%s: variant filtered count matches isVariantInScope",
+    (mode, season) => {
+      const c = ctx({
+        availabilityMode: mode,
+        worldState: { season, weather: "calm" as Weather },
+      });
+      const progress = getCategoryProgress("animals", c);
 
-        let expectedVariantFiltered = 0;
-        for (const [, animal] of recordEntries(trackerData.animals)) {
-          for (const tier of animal.variantTiers) {
-            for (const [, variant] of recordEntries(tier)) {
-              if (isVariantInScope(variant, season, mode)) {
-                expectedVariantFiltered++;
-              }
+      let expectedVariantFiltered = 0;
+      for (const [, animal] of recordEntries(trackerData.animals)) {
+        for (const tier of animal.variantTiers) {
+          for (const [, variant] of recordEntries(tier)) {
+            if (isVariantInScope(variant, season, mode)) {
+              expectedVariantFiltered++;
             }
           }
         }
+      }
 
-        const cosmeticCount = recordValues(trackerData.animals).reduce(
-          (sum, a) => sum + recordKeys(a.cosmetics).length,
-          0,
-        );
-        const petCosmeticCount = recordKeys(trackerData.pets.cosmetics).length;
-        const petSkinCount = recordKeys(trackerData.pets.skins).length;
-        const nonVariantFiltered = cosmeticCount + petCosmeticCount + petSkinCount;
+      const cosmeticCount = recordValues(trackerData.animals).reduce(
+        (sum, a) => sum + recordKeys(a.cosmetics).length,
+        0,
+      );
+      const petCosmeticCount = recordKeys(trackerData.pets.cosmetics).length;
+      const petSkinCount = recordKeys(trackerData.pets.skins).length;
+      const nonVariantFiltered = cosmeticCount + petCosmeticCount + petSkinCount;
 
-        expect(progress.filtered).toBe(expectedVariantFiltered + nonVariantFiltered);
-      });
-    }
-  }
+      expect(progress.filtered).toBe(expectedVariantFiltered + nonVariantFiltered);
+    },
+  );
 
   it("everything mode: filtered + completed = total for animals", () => {
     const c = ctx({ availabilityMode: "everything" });

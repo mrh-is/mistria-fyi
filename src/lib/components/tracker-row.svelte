@@ -54,7 +54,7 @@
   } = $props();
 
   const rawInstanceId = $props.id();
-  const instanceId = rawInstanceId.replace(/[^a-zA-Z0-9_-]/g, "-");
+  const instanceId = rawInstanceId.replaceAll(/[^a-zA-Z0-9_-]/g, "-");
 
   let expanded = $state(false);
   let spoilerRevealed = $state(false);
@@ -77,10 +77,13 @@
   let sourceContentId = $derived(
     `sources-${reportEntityId
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")}-${instanceId}`,
+      .replaceAll(/[^a-z0-9]+/g, "-")
+      .replaceAll(/^-|-$/g, "")}-${instanceId}`,
   );
-  let sourceState = $derived(hasSources ? (expanded ? "open" : "closed") : "none");
+  let sourceState = $derived.by(() => {
+    if (!hasSources) return "none";
+    return expanded ? "open" : "closed";
+  });
 
   let reportable = $derived(
     isSpoilered
@@ -97,15 +100,21 @@
           page: page.url.pathname,
         },
   );
-  let checkboxState: CheckboxState = $derived(
-    isCompleted ? "checked" : isObtained ? "obtained" : "unchecked",
-  );
-  let spriteState: SpriteSlotState = $derived(
-    isSpoilered ? "spoilered" : isCompleted ? "complete" : "ready",
-  );
+  let checkboxState: CheckboxState = $derived.by(() => {
+    if (isCompleted) return "checked";
+    return isObtained ? "obtained" : "unchecked";
+  });
+  let spriteState: SpriteSlotState = $derived.by(() => {
+    if (isSpoilered) return "spoilered";
+    return isCompleted ? "complete" : "ready";
+  });
 
   function completeOut(node: Element) {
-    if (node.getAttribute("data-leaving") !== "true" || prefersReducedMotion.current) {
+    if (
+      !(node instanceof HTMLElement) ||
+      node.dataset.leaving !== "true" ||
+      prefersReducedMotion.current
+    ) {
       return { duration: 0 };
     }
     return {
@@ -114,8 +123,8 @@
       duration: 200,
       tick: (t: number) => {
         if (t === 0) {
-          (node as HTMLElement).style.height = "0";
-          (node as HTMLElement).style.overflow = "hidden";
+          node.style.height = "0";
+          node.style.overflow = "hidden";
         }
       },
     };

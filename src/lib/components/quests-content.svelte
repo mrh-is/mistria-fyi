@@ -132,6 +132,7 @@
       }
       return villagerName;
     }
+    return undefined;
   }
 
   function questVisibility(

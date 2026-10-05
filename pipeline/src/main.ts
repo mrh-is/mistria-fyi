@@ -4,12 +4,10 @@
  */
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-import { open, type ZipFile } from "yauzl-promise";
+import { open } from "yauzl-promise";
 
 import { LOCALE_CODES } from "#lib/types/locale.js";
-import { recordEntries } from "#lib/utils.js";
-import { isNonEmptyArray } from "#lib/utils.js";
+import { isNonEmptyArray, recordEntries } from "#lib/utils.js";
 
 import { collectExplorationSources } from "./acquisition/collectors/exploration.js";
 import { collectNaturalSources } from "./acquisition/collectors/natural.js";
@@ -29,10 +27,7 @@ import {
   ItemSourceAccumulator,
   PetCosmeticSourceAccumulator,
 } from "./acquisition/source-accumulator.js";
-import {
-  type AcquisitionSourceAssembly,
-  validateAcquisitionSources,
-} from "./acquisition/validate-sources.js";
+import { validateAcquisitionSources } from "./acquisition/validate-sources.js";
 import {
   DEFAULT_WINDOWS_STEAM_ASSETS_DIR,
   readInstalledGameVersion,
@@ -70,6 +65,8 @@ import { generateLocaleManifest } from "./localize.js";
 import { parseFiddle, parseFiddleFromZip } from "./parse-fiddle.js";
 import { createRequirementContext } from "./requirements.js";
 
+import type { ZipFile } from "yauzl-promise";
+
 import type { Source as AcquisitionSource } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type {
@@ -81,9 +78,11 @@ import type {
   VillagerId,
 } from "#lib/types/tracker-data.js";
 
+import type { AcquisitionSourceAssembly } from "./acquisition/validate-sources.js";
 import type { SpriteExtractionResult, StagedSprite } from "./extractors/sprites.js";
 import type { ParsedGameData } from "./parse-fiddle.js";
-const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const __dirname = import.meta.dirname;
 const PIPELINE_ROOT = resolve(__dirname, "..");
 const OUTPUT_DIR = resolve(PIPELINE_ROOT, "output");
 const APP_DATA_DIR = resolve(PIPELINE_ROOT, "..", "src", "lib", "data");
@@ -120,9 +119,11 @@ function buildAcquisitionReferences(
       recipes: trackerData.recipes,
     },
     excluded: {
-      cosmetics: Object.keys(cosmeticsRaw)
-        .filter((id) => !(id in cosmetics))
-        .reduce<Record<string, unknown>>((acc, id) => ({ ...acc, [id]: true }), {}),
+      cosmetics: Object.fromEntries(
+        Object.keys(cosmeticsRaw)
+          .filter((id) => !(id in cosmetics))
+          .map((id) => [id, true]),
+      ),
     },
     native: {
       activities: nativeIds.activities,
@@ -135,12 +136,7 @@ function buildAcquisitionReferences(
       items: trackerData.items,
       locations: nativeIds.locations,
       monsters: nativeIds.monsters,
-      perks: Object.values(trackerData.skills).reduce<Record<string, unknown>>((acc, skill) => {
-        for (const tier of skill.perkTiers) {
-          for (const perkId of Object.keys(tier)) acc[perkId] = true;
-        }
-        return acc;
-      }, {}),
+      perks: collectPerkIds(trackerData),
       quests: { ...nativeIds.quests, ...toRecord(nativeQuestIds), ...trackerData.quests },
       questTypes: nativeIds.questTypes,
       skills: trackerData.skills,
@@ -152,6 +148,16 @@ function buildAcquisitionReferences(
       wings: trackerData.museum,
     },
   });
+}
+
+function collectPerkIds(trackerData: TrackerData): Record<string, unknown> {
+  const perks: Record<string, unknown> = {};
+  for (const skill of Object.values(trackerData.skills)) {
+    for (const tier of skill.perkTiers) {
+      for (const perkId of Object.keys(tier)) perks[perkId] = true;
+    }
+  }
+  return perks;
 }
 
 function collectNativeIdsFromSources(
@@ -193,7 +199,7 @@ function collectNativeIdsFromSources(
         break;
       case "artifact_dig":
       case "bug_catch":
-        source.locationIds?.forEach((id) => sets.locations.add(id));
+        for (const id of source.locationIds ?? []) sets.locations.add(id);
         break;
       case "chicken_statue":
       case "crop":
@@ -205,7 +211,7 @@ function collectNativeIdsFromSources(
       case "default":
         break;
       case "dive":
-        source.waterTypes?.forEach((id) => sets.waterTypes.add(id));
+        for (const id of source.waterTypes ?? []) sets.waterTypes.add(id);
         break;
       case "donate_item":
       case "lost_and_found":
@@ -222,12 +228,12 @@ function collectNativeIdsFromSources(
         sets.activities.add(source.activityId);
         break;
       case "fish":
-        source.waterTypes?.forEach((id) => sets.waterTypes.add(id));
+        for (const id of source.waterTypes ?? []) sets.waterTypes.add(id);
         break;
       case "fish_trap":
         break;
       case "forage":
-        source.locationIds?.forEach((id) => sets.locations.add(id));
+        for (const id of source.locationIds ?? []) sets.locations.add(id);
         break;
       case "mines_chest":
         if (source.lootGroup) sets.dungeonLootGroups.add(source.lootGroup);
@@ -315,29 +321,32 @@ async function main(): Promise<void> {
     console.error("  Or set MISTRIA_ASSETS environment variable");
     console.error(`  Or install the game at its default Steam location on Windows:`);
     console.error(`    ${DEFAULT_WINDOWS_STEAM_ASSETS_DIR}`);
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
 
   // Prefer an already-extracted fiddle/ on disk; otherwise read straight out of assets.zip
   // (Steam's own distribution format) without ever extracting it. Either shape produces the same
   // ParsedGameData, so every downstream extractor is source-agnostic.
   const fiddleDir = resolve(assetsDir, "fiddle");
-  const fiddleSource: { kind: "disk" } | { kind: "zip"; zipPath: string } = existsSync(fiddleDir)
-    ? { kind: "disk" }
-    : (() => {
-        const zipPath = resolveAssetsZipPath(assetsDir);
-        if (!zipPath) {
-          console.error(
-            `❌ Missing input: no fiddle/ directory and no assets.zip found under ${assetsDir}`,
-          );
-          console.error(
-            "   Pass the path to the assets directory containing fiddle/, or to a directory",
-          );
-          console.error("   containing assets.zip (e.g. the Steam install directory).");
-          process.exit(1);
-        }
-        return { kind: "zip" as const, zipPath };
-      })();
+  let fiddleSource: { kind: "disk" } | { kind: "zip"; zipPath: string };
+  if (existsSync(fiddleDir)) {
+    fiddleSource = { kind: "disk" };
+  } else {
+    const zipPath = resolveAssetsZipPath(assetsDir);
+    if (!zipPath) {
+      console.error(
+        `❌ Missing input: no fiddle/ directory and no assets.zip found under ${assetsDir}`,
+      );
+      console.error(
+        "   Pass the path to the assets directory containing fiddle/, or to a directory",
+      );
+      console.error("   containing assets.zip (e.g. the Steam install directory).");
+      process.exitCode = 1;
+      return;
+    }
+    fiddleSource = { kind: "zip", zipPath };
+  }
 
   const parseOnly = args.includes("--parse-only");
   const spritesOnly = args.includes("--sprites-only");
@@ -356,7 +365,8 @@ async function main(): Promise<void> {
     console.error(
       "   Extract your game assets first, or use --sprites-only for sprite regeneration from assets.zip.",
     );
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
 
   if (spritesOnly) {
@@ -371,14 +381,16 @@ async function main(): Promise<void> {
     readInstalledGameVersion(resolveAssetsZipPath(assetsDir));
   if (!version) {
     console.error("❌ No game version found. Pass --version=X.Y.Z or ensure misc.version exists.");
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
   console.log(`  Game version: ${version}\n`);
 
   if (parseOnly) {
     if (parsed.fileCount !== 297) {
       console.error(`  ❌ Expected 297 files, got ${parsed.fileCount}`);
-      process.exit(1);
+      process.exitCode = 1;
+      return;
     }
     const checks = ["items.other.cooked_dishes", "npcs.holt", "dungeons.dungeons.biomes"];
     for (const path of checks) {
@@ -389,7 +401,8 @@ async function main(): Promise<void> {
       }
       if (current === undefined) {
         console.error(`  ❌ Missing representative path: ${path}`);
-        process.exit(1);
+        process.exitCode = 1;
+        return;
       }
     }
     console.log("  ✅ Parse-only smoke test passed");
@@ -669,9 +682,7 @@ async function main(): Promise<void> {
   const prettyJson = JSON.stringify(trackerData, null, 2);
 
   console.log("Step 5: Staging outputs...");
-  const staged: StagedFile[] = [];
-
-  staged.push({ content: prettyJson, path: resolve(OUTPUT_DIR, OUTPUT_FILE) });
+  const staged: StagedFile[] = [{ content: prettyJson, path: resolve(OUTPUT_DIR, OUTPUT_FILE) }];
   console.log(
     `  Staged: pipeline/output/${OUTPUT_FILE} (${(prettyJson.length / 1024).toFixed(1)} KB pretty)`,
   );
@@ -743,7 +754,7 @@ async function main(): Promise<void> {
       logSpriteExtraction("Items", itemSpriteResult);
       logSpriteExtraction("Villagers", villagerSpriteResult);
       const missing = [...itemSpriteResult.missing, ...villagerSpriteResult.missing];
-      reportMissingSpritesAndAbort(missing);
+      if (reportMissingSprites(missing)) return;
       stagedSprites = [...itemSpriteResult.staged, ...villagerSpriteResult.staged];
     } finally {
       if (zipFile) await zipFile.close();
@@ -770,15 +781,19 @@ function publishFiles(staged: readonly StagedFile[]): void {
   }
 }
 
-/** Reports missing sprites and aborts the pipeline. */
-function reportMissingSpritesAndAbort(missing: readonly string[]): void {
-  if (missing.length === 0) return;
+/**
+ * Reports missing sprites and flags the process as failed. Returns true when the caller must abort
+ * the pipeline.
+ */
+function reportMissingSprites(missing: readonly string[]): boolean {
+  if (missing.length === 0) return false;
   console.error(`  ❌ ${missing.length} sprites not found:`);
   for (const name of missing) {
     console.error(`    - ${name}`);
   }
   console.error("  Aborting before publish: no tracked output file was written.");
-  process.exit(1);
+  process.exitCode = 1;
+  return true;
 }
 
 /**
@@ -798,7 +813,7 @@ async function runVillagerSpritesOnly(fiddle: ParsedGameData, assetsDir: string)
     SPRITES_OUTPUT_ROOT,
   );
   logSpriteExtraction("Villagers", result);
-  reportMissingSpritesAndAbort(result.missing);
+  if (reportMissingSprites(result.missing)) return;
 
   publishSprites(result.staged);
   console.log(`  Published ${result.staged.length} villager sprites`);
@@ -833,4 +848,4 @@ function toRecord(keys: string[]): Record<string, true> {
   return Object.fromEntries(keys.map((k) => [k, true as const]));
 }
 
-void main();
+await main();

@@ -1,7 +1,9 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { readFileSync, writeFileSync } from "node:fs";
 
 import { waitForControl } from "./service-worker.js";
+
+import type { Page } from "@playwright/test";
 
 const WORKER_PATH = ".svelte-kit/output/client/service-worker.js";
 const UPDATE_MESSAGE =
@@ -17,7 +19,7 @@ function cacheNames(page: Page): Promise<string[]> {
  * must keep the byte length: this swaps the version's last letter or digit.
  */
 function deployNewVersion(version: string): { newVersion: string; restore: () => void } {
-  const original = readFileSync(WORKER_PATH, "utf-8");
+  const original = readFileSync(WORKER_PATH, "utf8");
   const newVersion = version.replace(/\w(?=\W*$)/, (last) => (last === "x" ? "y" : "x"));
   const updated = original.replaceAll(version, newVersion);
   if (updated === original) throw new Error(`The built worker doesn't contain "${version}"`);
@@ -40,14 +42,16 @@ test("keeps open tabs on their version until one accepts the update, then reload
   await otherTab.goto("/en/animals");
   await waitForControl(otherTab);
 
-  const oldCache = (await cacheNames(page)).find((name) => name.startsWith("cache-"));
+  const initialCacheNames = await cacheNames(page);
+  const oldCache = initialCacheNames.find((name) => name.startsWith("cache-"));
   if (!oldCache) throw new Error("The service worker has no versioned cache");
   const { newVersion, restore } = deployNewVersion(oldCache.slice("cache-".length));
   const newCache = `cache-${newVersion}`;
 
   try {
     await page.evaluate(async () => {
-      await (await navigator.serviceWorker.ready).update();
+      const registration = await navigator.serviceWorker.ready;
+      await registration.update();
     });
 
     // The new version installs and waits; both tabs offer it.
@@ -73,9 +77,11 @@ test("keeps open tabs on their version until one accepts the update, then reload
       await waitForControl(tab);
       await expect(tab.getByText(UPDATE_MESSAGE)).toBeHidden();
     }
-    expect(
-      await page.evaluate(async () => (await navigator.serviceWorker.ready).waiting === null),
-    ).toBe(true);
+    const noWaitingWorker = await page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.ready;
+      return registration.waiting === null;
+    });
+    expect(noWaitingWorker).toBe(true);
     const caches = await cacheNames(page);
     expect(caches).toContain(newCache);
     expect(caches).not.toContain(oldCache);

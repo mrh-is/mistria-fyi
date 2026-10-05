@@ -1,4 +1,4 @@
-const isBrowser = typeof window !== "undefined";
+const isBrowser = "window" in globalThis;
 
 type StorageReadResult = { ok: false } | { ok: true; value: null | string };
 

@@ -32,7 +32,7 @@ function themeColor(): null | string {
 describe("theme store", () => {
   beforeEach(() => {
     query = new FakeColorSchemeQuery();
-    vi.spyOn(window, "matchMedia").mockReturnValue(query as unknown as MediaQueryList);
+    vi.spyOn(globalThis, "matchMedia").mockReturnValue(query as unknown as MediaQueryList);
     localStorage.clear();
     document.documentElement.classList.remove("dark");
     const meta = document.createElement("meta");

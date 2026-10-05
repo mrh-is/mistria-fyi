@@ -67,7 +67,7 @@ describe("watchForAppUpdate", () => {
     const waiting = new FakeWorker();
     const { onUpdateReady } = await watch({ waiting });
 
-    expect(onUpdateReady).toHaveBeenCalledOnce();
+    expect(onUpdateReady).toHaveBeenCalledTimes(1);
   });
 
   it("announces a version once it finishes installing", async () => {
@@ -76,7 +76,7 @@ describe("watchForAppUpdate", () => {
 
     registration.install(new FakeWorker());
 
-    expect(onUpdateReady).toHaveBeenCalledOnce();
+    expect(onUpdateReady).toHaveBeenCalledTimes(1);
   });
 
   it("asks the newest waiting worker to take over when accepted", async () => {
@@ -99,7 +99,7 @@ describe("watchForAppUpdate", () => {
     container.dispatchEvent(new Event("controllerchange"));
     container.dispatchEvent(new Event("controllerchange"));
 
-    expect(reload).toHaveBeenCalledOnce();
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 
   it("neither announces nor reloads for the first-ever install", async () => {
@@ -119,7 +119,7 @@ describe("watchForAppUpdate", () => {
     expect(reload).not.toHaveBeenCalled();
 
     container.dispatchEvent(new Event("controllerchange"));
-    expect(reload).toHaveBeenCalledOnce();
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 
   it("checks for a new version when the tab is refocused, at most once per interval", async () => {
@@ -131,7 +131,7 @@ describe("watchForAppUpdate", () => {
     clock.now = UPDATE_CHECK_INTERVAL_MS;
     refocus(visibility);
     refocus(visibility);
-    expect(registration.update).toHaveBeenCalledOnce();
+    expect(registration.update).toHaveBeenCalledTimes(1);
   });
 
   it("stops watching once stopped", async () => {

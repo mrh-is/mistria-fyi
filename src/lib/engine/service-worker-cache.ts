@@ -111,9 +111,7 @@ export async function cacheRuntimeResponse(
     return !assetPaths.includes(url.pathname) && !isExternalFontAsset(url);
   });
   const excess = runtimeKeys.length - maxEntries;
-  for (const key of runtimeKeys.slice(0, Math.max(0, excess))) {
-    await cache.delete(key);
-  }
+  await Promise.all(runtimeKeys.slice(0, Math.max(0, excess)).map((key) => cache.delete(key)));
 }
 
 /**
@@ -138,9 +136,9 @@ export async function cacheSpriteResponse(
   const stale = keys.filter((key) => spriteGeneration(key.url) < generation);
   const evictable = keys.filter((key) => spriteGeneration(key.url) === generation);
   const excess = keys.length - stale.length - maxEntries;
-  for (const key of [...stale, ...evictable.slice(0, Math.max(0, excess))]) {
-    await cache.delete(key);
-  }
+  await Promise.all(
+    [...stale, ...evictable.slice(0, Math.max(0, excess))].map((key) => cache.delete(key)),
+  );
 }
 
 /**
@@ -166,13 +164,19 @@ export async function fetchRuntimeRequest(
   }
   if (response.ok) {
     dependencies.waitUntil(
-      cacheRuntimeResponse(
-        dependencies.cache,
-        request,
-        response,
-        dependencies.assetPaths,
-        dependencies.maxEntries,
-      ).catch(() => undefined),
+      (async () => {
+        try {
+          await cacheRuntimeResponse(
+            dependencies.cache,
+            request,
+            response,
+            dependencies.assetPaths,
+            dependencies.maxEntries,
+          );
+        } catch {
+          // Best-effort cache write: a failed write never affects the response.
+        }
+      })(),
     );
   }
   return response;
@@ -195,9 +199,13 @@ export async function fetchSpriteRequest(
     const copy = cached.clone();
     dependencies.waitUntil(
       (async () => {
-        await cache.delete(request);
-        await cache.put(request, copy);
-      })().catch(() => undefined),
+        try {
+          await cache.delete(request);
+          await cache.put(request, copy);
+        } catch {
+          // Best-effort cache write: a failed re-insert only leaves the entry's age unchanged.
+        }
+      })(),
     );
     return cached;
   }
@@ -208,8 +216,15 @@ export async function fetchSpriteRequest(
     return Response.error();
   }
   if (response.ok) {
+    const copy = response.clone();
     dependencies.waitUntil(
-      cacheSpriteResponse(cache, request, response.clone(), maxEntries).catch(() => undefined),
+      (async () => {
+        try {
+          await cacheSpriteResponse(cache, request, copy, maxEntries);
+        } catch {
+          // Best-effort cache write: a failed write never affects the response.
+        }
+      })(),
     );
   }
   return response;
@@ -267,12 +282,9 @@ export async function rememberOfflineLocales(
   locales: readonly string[],
 ): Promise<void> {
   const remembered = await readOfflineLocales(cache);
-  const next = [...new Set([...remembered, ...locales])].sort();
+  const next = [...new Set([...remembered, ...locales])].toSorted();
   if (next.length === remembered.length) return;
-  await cache.put(
-    OFFLINE_LOCALES_KEY,
-    new Response(JSON.stringify(next), { headers: { "Content-Type": "application/json" } }),
-  );
+  await cache.put(OFFLINE_LOCALES_KEY, Response.json(next));
 }
 
 /** A sprite URL's `?g=` generation; URLs without one count as generation 0. */

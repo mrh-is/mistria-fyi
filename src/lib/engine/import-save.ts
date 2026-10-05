@@ -2,15 +2,15 @@ import { canonicalAlmanacId, trackerData } from "#lib/data/index.js";
 import {
   getMaxMineFloor,
   getMaxRenownLevel,
-  type LevelIssue,
   MAX_SKILL_LEVEL,
   MAX_VILLAGER_LEVEL,
   normalizeLevel,
 } from "#lib/engine/progress.js";
 import { recordKeys, recordValues } from "#lib/utils.js";
 
-import { isSaveSection, type SaveBundle, type SaveSection } from "./save-bundle.js";
+import { isSaveSection } from "./save-bundle.js";
 
+import type { LevelIssue } from "#lib/engine/progress.js";
 import type {
   CompletedState,
   MergeCounts,
@@ -30,6 +30,8 @@ import type {
   VillagerId,
   VillagerRelationship,
 } from "#lib/types/tracker-data.js";
+
+import type { SaveBundle, SaveSection } from "./save-bundle.js";
 
 // ─── Import result ──────────────────────────────────────────────────
 
@@ -67,13 +69,13 @@ export type SaveImportWarning =
 /** Typed access to one save section; see createSectionReader. */
 interface SectionReader {
   /** An object field, or `undefined` when missing or malformed. */
-  record(key: string): SaveSection | undefined;
+  record: (key: string) => SaveSection | undefined;
   /** A list of strings; non-string entries are dropped. */
-  stringList(key: string): string[];
+  stringList: (key: string) => string[];
   /** An object whose values are lists of strings, e.g. unlocks keyed by animal. */
-  stringListRecord(key: string): Record<string, string[]>;
+  stringListRecord: (key: string) => Record<string, string[]>;
   /** A raw field for callers that normalize it themselves. */
-  value(key: string): unknown;
+  value: (key: string) => unknown;
 }
 
 export function buildImportState(bundle: SaveBundle): {
@@ -499,7 +501,7 @@ export type { SaveBundle, SaveSection } from "./save-bundle.js";
 
 // ─── Season derivation ─────────────────────────────────────────────
 
-const GAME_DAY = 259200;
+const GAME_DAY = 259_200;
 const GAME_SEASON = 28 * GAME_DAY;
 const SEASON_ORDER: Season[] = ["spring", "summer", "fall", "winter"];
 
@@ -527,11 +529,25 @@ export async function parseSaveFiles(files: File[]): Promise<{
   const bundle: SaveBundle = {};
   const errors: SaveImportWarning[] = [];
 
-  for (const file of files) {
-    if (!SAVE_FILES.has(file.name)) continue;
+  const saveFiles = files.filter((file) => SAVE_FILES.has(file.name));
+  const texts = await Promise.all(
+    saveFiles.map(async (file) => {
+      try {
+        return await file.text();
+      } catch {
+        return undefined;
+      }
+    }),
+  );
+
+  for (const [index, file] of saveFiles.entries()) {
+    const text = texts[index];
+    if (text === undefined) {
+      errors.push({ code: "invalid-json", file: file.name });
+      continue;
+    }
 
     try {
-      const text = await file.text();
       const data: unknown = JSON.parse(text);
       if (!isSaveSection(data)) {
         errors.push({ code: "not-json-object", file: file.name });

@@ -29,7 +29,7 @@ function makeFiddle(overrides: Record<string, unknown> = {}) {
 
 describe("extractMuseum", () => {
   beforeEach(() => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
   });
 
   it("returns empty record when museum_wings is absent", () => {

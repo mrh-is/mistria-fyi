@@ -9,19 +9,21 @@ import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 
 import type { PageMetadataInput } from "#lib/data/page-metadata.js";
 
-vi.mock("$app/state", async () => ({
-  page: (await import("#lib/test-utils/page-stub.svelte.js")).pageStub,
-}));
+vi.mock("$app/state", async () => {
+  const stubModule = await import("#lib/test-utils/page-stub.svelte.js");
+  return { page: stubModule.pageStub };
+});
 
 function overlayState() {
   return screen.getByTestId("overlay-state").textContent;
 }
 
-function renderToolbar(toolbar: PageMetadataInput["toolbar"] = { search: true, worldState: true }) {
+function renderToolbar(toolbar?: PageMetadataInput["toolbar"]) {
+  const resolvedToolbar = toolbar ?? { search: true, worldState: true };
   const feedbackContext = new FeedbackContext();
   const view = render(ToolbarFooterHarness, {
     feedbackContext,
-    metadata: { description: "Test page.", title: "Test", toolbar },
+    metadata: { description: "Test page.", title: "Test", toolbar: resolvedToolbar },
   });
   return { ...view, feedbackContext };
 }
@@ -44,7 +46,9 @@ afterEach(async () => {
   toolbarState.removeSourceFilters("test");
   userState.resetAll();
   // Let deferred focus restoration and panel transitions settle before the next test mounts.
-  await new Promise((resolve) => setTimeout(resolve, 250));
+  await new Promise((resolve) => {
+    setTimeout(resolve, 250);
+  });
 });
 
 describe("ToolbarFooter panels", () => {
@@ -82,7 +86,7 @@ describe("ToolbarFooter panels", () => {
       expect(dialog.contains(document.activeElement)).toBe(true);
     });
 
-    await fireEvent.keyDown(window, { key: "Escape" });
+    await fireEvent.keyDown(document, { key: "Escape" });
 
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();

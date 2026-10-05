@@ -62,7 +62,9 @@ export function formatSaveImportWarning(warning: SaveImportWarning): string {
 }
 
 /** The message for a rejected transfer payload. `outdated` has its own recovery panel. */
-export function formatTransferDecodeError(code: Exclude<TransferDecodeErrorCode, "outdated">) {
+export function formatTransferDecodeError(
+  code: Exclude<TransferDecodeErrorCode, "outdated">,
+): string {
   switch (code) {
     case "corrupt":
       return m.transfer_error_corrupt();
@@ -74,13 +76,14 @@ export function formatTransferDecodeError(code: Exclude<TransferDecodeErrorCode,
 }
 
 /** Binary sizes, matching the engine's limits, with locale-formatted numbers & unit labels. */
+function scaleBytes(bytes: number): [value: number, unit: string] {
+  if (bytes < 1024) return [bytes, "byte"];
+  if (bytes < 1024 * 1024) return [bytes / 1024, "kilobyte"];
+  return [bytes / (1024 * 1024), "megabyte"];
+}
+
 function formatBytes(bytes: number): string {
-  const [value, unit] =
-    bytes < 1024
-      ? [bytes, "byte"]
-      : bytes < 1024 * 1024
-        ? [bytes / 1024, "kilobyte"]
-        : [bytes / (1024 * 1024), "megabyte"];
+  const [value, unit] = scaleBytes(bytes);
   return new Intl.NumberFormat(getLocale(), {
     maximumFractionDigits: 1,
     style: "unit",

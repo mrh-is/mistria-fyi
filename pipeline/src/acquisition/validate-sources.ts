@@ -2,8 +2,7 @@ import { getSourceProvenance } from "./source-accumulator.js";
 
 import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
 
-import type { AcquisitionReferenceKind } from "./reference-index.js";
-import type { AcquisitionReferenceIndex } from "./reference-index.js";
+import type { AcquisitionReferenceIndex, AcquisitionReferenceKind } from "./reference-index.js";
 
 export interface AcquisitionSourceAssembly {
   almanac?: Readonly<Record<string, { items?: readonly string[] }>>;
@@ -127,7 +126,9 @@ const SOURCE_TYPES = new Set<string>(Object.keys(SOURCE_FIELDS));
 const SOURCE_DETAIL_FIELDS = ["availability", "cost", "visibility", "weight"];
 
 export class AcquisitionSourceValidationError extends Error {
-  constructor(readonly diagnostics: AcquisitionSourceDiagnostic[]) {
+  readonly diagnostics: AcquisitionSourceDiagnostic[];
+
+  constructor(diagnostics: AcquisitionSourceDiagnostic[]) {
     super(
       `Acquisition source validation failed with ${diagnostics.length} diagnostic${diagnostics.length === 1 ? "" : "s"}:\n${diagnostics
         .map(
@@ -140,6 +141,7 @@ export class AcquisitionSourceValidationError extends Error {
         )
         .join("\n")}`,
     );
+    this.diagnostics = diagnostics;
     this.name = "AcquisitionSourceValidationError";
   }
 }
@@ -339,7 +341,7 @@ function optionalReferenceArray(
 ): void {
   if (!(field in source)) return;
   if (requireStringArray(source, field, targetId, fieldPath, source, diagnostics)) {
-    (source[field] as string[]).forEach((id, index) => {
+    for (const [index, id] of (source[field] as string[]).entries()) {
       reference(
         diagnostics,
         references,
@@ -349,7 +351,7 @@ function optionalReferenceArray(
         `${fieldPath}.${field}[${index}]`,
         source,
       );
-    });
+    }
   }
 }
 
@@ -388,7 +390,7 @@ function reference(
 }
 
 function referenceLabel(kind: AcquisitionReferenceKind): string {
-  return kind.replace(/[A-Z]/g, (character) => ` ${character.toLowerCase()}`);
+  return kind.replaceAll(/[A-Z]/g, (character) => ` ${character.toLowerCase()}`);
 }
 
 function requiredReferenceArray(
@@ -401,7 +403,7 @@ function requiredReferenceArray(
   diagnostics: AcquisitionSourceDiagnostic[],
 ): void {
   if (requireStringArray(source, field, targetId, fieldPath, source, diagnostics)) {
-    (source[field] as string[]).forEach((id, index) => {
+    for (const [index, id] of (source[field] as string[]).entries()) {
       reference(
         diagnostics,
         references,
@@ -411,7 +413,7 @@ function requiredReferenceArray(
         `${fieldPath}.${field}[${index}]`,
         source,
       );
-    });
+    }
   }
 }
 
@@ -475,7 +477,7 @@ function validateAssemblyReferences(
   diagnostics: AcquisitionSourceDiagnostic[],
 ): void {
   for (const [categoryId, category] of Object.entries(trackerData.almanac ?? {})) {
-    for (const itemId of [...(category.items ?? [])].sort()) {
+    for (const itemId of [...(category.items ?? [])].toSorted()) {
       reference(
         diagnostics,
         references,
@@ -500,10 +502,10 @@ function validateAssemblyReferences(
       }
     }
   }
-  for (const [recipeId, recipe] of Object.entries(trackerData.recipes).sort(([left], [right]) =>
+  for (const [recipeId, recipe] of Object.entries(trackerData.recipes).toSorted(([left], [right]) =>
     left.localeCompare(right),
   )) {
-    recipe.memberItemIds?.forEach((itemId, index) => {
+    for (const [index, itemId] of (recipe.memberItemIds ?? []).entries()) {
       reference(
         diagnostics,
         references,
@@ -512,9 +514,9 @@ function validateAssemblyReferences(
         recipeId,
         `recipes.${recipeId}.memberItemIds[${index}]`,
       );
-    });
-    recipe.presentations?.forEach((presentation, presentationIndex) =>
-      presentation.itemIds?.forEach((itemId, itemIndex) => {
+    }
+    for (const [presentationIndex, presentation] of (recipe.presentations ?? []).entries()) {
+      for (const [itemIndex, itemId] of (presentation.itemIds ?? []).entries()) {
         reference(
           diagnostics,
           references,
@@ -523,13 +525,13 @@ function validateAssemblyReferences(
           recipeId,
           `recipes.${recipeId}.presentations[${presentationIndex}].itemIds[${itemIndex}]`,
         );
-      }),
-    );
+      }
+    }
   }
-  for (const [questType, questGroup] of Object.entries(trackerData.quests ?? {}).sort(
+  for (const [questType, questGroup] of Object.entries(trackerData.quests ?? {}).toSorted(
     ([left], [right]) => left.localeCompare(right),
   )) {
-    for (const [questId, quest] of Object.entries(questGroup ?? {}).sort(([left], [right]) =>
+    for (const [questId, quest] of Object.entries(questGroup ?? {}).toSorted(([left], [right]) =>
       left.localeCompare(right),
     )) {
       if (quest.itemId) {
@@ -598,15 +600,7 @@ function validateAvailability(
       case "all":
       case "any": {
         const conditions = getDenseJsonArrayValues(value.conditions);
-        if (!conditions) {
-          malformed(
-            diagnostics,
-            targetId,
-            `${fieldPath}.conditions`,
-            "Expected a dense JSON array of availability conditions",
-            source,
-          );
-        } else {
+        if (conditions) {
           for (let index = 0; index < conditions.length; index++) {
             validateAvailability(
               conditions[index],
@@ -618,8 +612,16 @@ function validateAvailability(
               active,
             );
           }
+        } else {
+          malformed(
+            diagnostics,
+            targetId,
+            `${fieldPath}.conditions`,
+            "Expected a dense JSON array of availability conditions",
+            source,
+          );
         }
-        return;
+        break;
       }
       case "always":
         return;
@@ -628,7 +630,7 @@ function validateAvailability(
         if (!isJsonValue(value.value, new Set())) {
           malformed(diagnostics, targetId, `${fieldPath}.value`, "Expected a JSON value", source);
         }
-        return;
+        break;
       case "hasUpperFloor":
       case "isDating":
         return;
@@ -696,41 +698,41 @@ function validateAvailability(
         }
         return;
       case "reachedSeason":
-        if (requireString(value, "season", targetId, fieldPath, source, diagnostics)) {
-          if (!SEASONS.has(value.season as string)) {
+        if (
+          requireString(value, "season", targetId, fieldPath, source, diagnostics) &&
+          !SEASONS.has(value.season as string)
+        ) {
+          malformed(
+            diagnostics,
+            targetId,
+            `${fieldPath}.season`,
+            `Unknown season "${value.season as string}"`,
+            source,
+          );
+        }
+        return;
+      case "season": {
+        const seasons = requireStringArray(
+          value,
+          "seasons",
+          targetId,
+          fieldPath,
+          source,
+          diagnostics,
+        );
+        for (const [index, season] of (seasons ?? []).entries()) {
+          if (!SEASONS.has(season)) {
             malformed(
               diagnostics,
               targetId,
-              `${fieldPath}.season`,
-              `Unknown season "${value.season as string}"`,
+              `${fieldPath}.seasons[${index}]`,
+              `Unknown season "${season}"`,
               source,
             );
           }
         }
         return;
-      case "season":
-        {
-          const seasons = requireStringArray(
-            value,
-            "seasons",
-            targetId,
-            fieldPath,
-            source,
-            diagnostics,
-          );
-          seasons?.forEach((season, index) => {
-            if (!SEASONS.has(season)) {
-              malformed(
-                diagnostics,
-                targetId,
-                `${fieldPath}.seasons[${index}]`,
-                `Unknown season "${season}"`,
-                source,
-              );
-            }
-          });
-        }
-        return;
+      }
       case "skillLevel":
         requireNumber(value, "level", targetId, fieldPath, source, diagnostics);
         if (requireString(value, "skillId", targetId, fieldPath, source, diagnostics)) {
@@ -749,29 +751,28 @@ function validateAvailability(
         requireNumber(value, "end", targetId, fieldPath, source, diagnostics);
         requireNumber(value, "start", targetId, fieldPath, source, diagnostics);
         return;
-      case "weather":
-        {
-          const weathers = requireStringArray(
-            value,
-            "weathers",
-            targetId,
-            fieldPath,
-            source,
-            diagnostics,
-          );
-          weathers?.forEach((weather, index) => {
-            if (!WEATHERS.has(weather)) {
-              malformed(
-                diagnostics,
-                targetId,
-                `${fieldPath}.weathers[${index}]`,
-                `Unknown weather "${weather}"`,
-                source,
-              );
-            }
-          });
+      case "weather": {
+        const weathers = requireStringArray(
+          value,
+          "weathers",
+          targetId,
+          fieldPath,
+          source,
+          diagnostics,
+        );
+        for (const [index, weather] of (weathers ?? []).entries()) {
+          if (!WEATHERS.has(weather)) {
+            malformed(
+              diagnostics,
+              targetId,
+              `${fieldPath}.weathers[${index}]`,
+              `Unknown weather "${weather}"`,
+              source,
+            );
+          }
         }
         return;
+      }
       default:
         malformed(
           diagnostics,
@@ -870,7 +871,7 @@ function validateEntities(
   diagnostics: AcquisitionSourceDiagnostic[],
 ): void {
   const label = `${kind[0].toUpperCase()}${kind.slice(1)}`;
-  for (const [targetId, entity] of Object.entries(entities).sort(([left], [right]) =>
+  for (const [targetId, entity] of Object.entries(entities).toSorted(([left], [right]) =>
     left.localeCompare(right),
   )) {
     reference(diagnostics, references, kind, targetId, targetId, `${kind}s.${targetId}`);
@@ -893,7 +894,7 @@ function validateEntities(
         targetId,
       });
     }
-    entitySources.forEach((source, index) => {
+    for (const [index, source] of entitySources.entries()) {
       validateSource(
         source,
         targetId,
@@ -901,7 +902,7 @@ function validateEntities(
         references,
         diagnostics,
       );
-    });
+    }
   }
 }
 
@@ -911,9 +912,7 @@ function validateReachedDay(
   fieldPath: string,
   diagnostics: AcquisitionSourceDiagnostic[],
 ): void {
-  if (!isRecord(source.triggerDate)) {
-    malformed(diagnostics, targetId, `${fieldPath}.triggerDate`, "Expected a reached date", source);
-  } else {
+  if (isRecord(source.triggerDate)) {
     requireNumber(
       source.triggerDate,
       "day",
@@ -938,6 +937,8 @@ function validateReachedDay(
       source,
       diagnostics,
     );
+  } else {
+    malformed(diagnostics, targetId, `${fieldPath}.triggerDate`, "Expected a reached date", source);
   }
 }
 
@@ -949,18 +950,18 @@ function validateRecipeCycles(
   for (const [recipeId, recipe] of Object.entries(recipes)) {
     const recipeSources = recipe.sources ?? [];
     const dependencies = (Array.isArray(recipeSources) ? recipeSources : [])
-      .filter(isRecord)
+      .filter((source) => isRecord(source))
       .filter((source) => source.type === "recipe" && typeof source.recipeId === "string")
       .map((source) => source.recipeId as string)
       .filter((dependency) => dependency in recipes)
-      .sort((left, right) => left.localeCompare(right));
+      .toSorted((left, right) => left.localeCompare(right));
     graph.set(recipeId, dependencies);
   }
 
   const resolved = new Set<string>();
   const visiting = new Set<string>();
   const stack: string[] = [];
-  for (const recipeId of [...graph.keys()].sort((left, right) => left.localeCompare(right))) {
+  for (const recipeId of [...graph.keys()].toSorted((left, right) => left.localeCompare(right))) {
     findRecipeCycle(recipeId, graph, visiting, resolved, stack, diagnostics);
   }
 }

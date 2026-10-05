@@ -179,8 +179,9 @@ These rules prevent accidental damage to generated or vendored code:
 
 ## 6. Code style
 
-- **TypeScript**: type-aware oxlint (typescript-eslint's strict & stylistic rules) + `strict: true`
-  tsconfig. Use `type` imports (`consistent-type-imports`).
+- **TypeScript**: type-aware oxlint with every non-nursery category on (each disabled rule states
+  why) + `strict: true` & `noImplicitReturns` tsconfigs. Use `type` imports
+  (`consistent-type-imports`).
 - **Formatting**: oxfmt — double quotes, no tabs, trailing commas, 100 char width, semicolons.
 - **Linting**: oxlint for every script, ESLint only for Svelte templates. See
   [docs/development-workflow.md](docs/development-workflow.md#linting--formatting) for which tool

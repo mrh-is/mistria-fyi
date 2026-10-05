@@ -1,7 +1,7 @@
 // Drift prevention for scoped CSS, not a style guide: these rules only keep colors, type sizes,
 // shadows, and radii on the design tokens in src/app.css. See docs/styling.md.
 /** @type {import("stylelint").Config} */
-export default {
+const config = {
   ignoreFiles: [
     // Where the tokens are defined, so it's the one place literals belong.
     "src/app.css",
@@ -38,3 +38,5 @@ export default {
     ],
   },
 };
+
+export default config;

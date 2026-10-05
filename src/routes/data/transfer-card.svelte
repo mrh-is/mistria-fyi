@@ -53,8 +53,8 @@
     try {
       const payload = await encodeTransferPayload(userState.state.completed);
       qrDataUrl = await generateTransferQr(payload);
-    } catch (err) {
-      transferError = `${m.transfer_error_generate_prefix()} ${err instanceof Error ? err.message : m.transfer_unknown_error()}`;
+    } catch (error) {
+      transferError = `${m.transfer_error_generate_prefix()} ${error instanceof Error ? error.message : m.transfer_unknown_error()}`;
     } finally {
       generating = false;
     }
@@ -71,7 +71,9 @@
     scanning = true;
 
     // Wait for video element to bind
-    await new Promise((r) => setTimeout(r, 50));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
 
     if (!isCurrentScan(attempt)) return;
 
@@ -91,21 +93,19 @@
         return;
       }
       scanner = started;
-    } catch (err) {
+    } catch (error) {
       if (attempt !== scanAttempt) return;
       scanning = false;
-      if (isCameraPermissionError(err)) {
-        transferError = m.transfer_error_camera_denied();
-      } else {
-        transferError = `${m.transfer_error_camera_prefix()} ${err instanceof Error ? err.message : m.transfer_error_unknown_camera()}`;
-      }
+      transferError = isCameraPermissionError(error)
+        ? m.transfer_error_camera_denied()
+        : `${m.transfer_error_camera_prefix()} ${error instanceof Error ? error.message : m.transfer_error_unknown_camera()}`;
     }
   }
 
-  function isCameraPermissionError(err: unknown) {
+  function isCameraPermissionError(error: unknown) {
     // getUserMedia rejects with a DOMException; not every environment makes that an Error.
-    if (!(err instanceof Error || err instanceof DOMException)) return false;
-    return err.name === "NotAllowedError" || err.message.toLowerCase().includes("permission");
+    if (!(error instanceof Error || error instanceof DOMException)) return false;
+    return error.name === "NotAllowedError" || error.message.toLowerCase().includes("permission");
   }
 
   // A scan goes stale when the card closes or another scan starts during an await.
@@ -125,13 +125,13 @@
     }
   });
 
-  function copyRecoverySteps() {
-    void navigator.clipboard
-      .writeText(m.transfer_error_outdated_recovery())
-      .then(() => {
-        copiedRecoverySteps = true;
-      })
-      .catch(() => undefined);
+  async function copyRecoverySteps(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(m.transfer_error_outdated_recovery());
+      copiedRecoverySteps = true;
+    } catch {
+      // Clipboard access can be denied or unavailable; the steps stay visible either way.
+    }
   }
 
   // ── Scan from image file ──
@@ -147,7 +147,7 @@
     input.name = "transfer-image";
     input.setAttribute("aria-label", m.transfer_image_upload_aria());
     input.accept = "image/*";
-    input.onchange = async () => {
+    input.addEventListener("change", async () => {
       const file = input.files?.[0];
       input.remove();
       if (!file) return;
@@ -157,11 +157,11 @@
       } catch {
         transferError = m.transfer_error_no_qr_in_image();
       }
-    };
+    });
     input.className = "sr-only";
-    input.oncancel = () => {
+    input.addEventListener("cancel", () => {
       input.remove();
-    };
+    });
     document.body.append(input);
     input.click();
   }
@@ -172,13 +172,13 @@
     try {
       const decoded = await decodeTransferPayload(data);
       transferResult = userState.mergeFromSave(decoded);
-    } catch (err) {
-      if (!(err instanceof TransferDecodeError)) {
+    } catch (error) {
+      if (!(error instanceof TransferDecodeError)) {
         transferError = `${m.transfer_error_invalid_qr_prefix()} ${m.transfer_error_could_not_decode()}`;
-      } else if (err.code === "outdated") {
+      } else if (error.code === "outdated") {
         outdatedTransfer = true;
       } else {
-        transferError = formatTransferDecodeError(err.code);
+        transferError = formatTransferDecodeError(error.code);
       }
     }
   }

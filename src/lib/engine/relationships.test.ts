@@ -92,11 +92,9 @@ describe("normalizeRelationships", () => {
       .map(([id]) => id as VillagerId);
 
     for (const villagerId of dateableVillagers) {
-      if (villagerId === ("adeline" as VillagerId)) {
-        expect(input[villagerId]).toBe("married");
-      } else {
-        expect(input[villagerId]).toBe("platonic");
-      }
+      expect(input[villagerId]).toBe(
+        villagerId === ("adeline" as VillagerId) ? "married" : "platonic",
+      );
     }
   });
 });

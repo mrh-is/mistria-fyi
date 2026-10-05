@@ -41,7 +41,7 @@
         ...entry,
         name: getName("pets/cosmetic_sets", id as PetCosmeticSetId, locale),
       }))
-      .sort((a, b) => nameCollator(locale).compare(a.name, b.name)),
+      .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
   );
 
   let petSkinEntries = $derived(
@@ -51,7 +51,7 @@
         ...entry,
         name: getName("pets/skins", id as PetSkinId, locale),
       }))
-      .sort((a, b) => nameCollator(locale).compare(a.name, b.name)),
+      .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
   );
 
   let scopedPetCosmeticEntries = $derived(

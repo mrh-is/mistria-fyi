@@ -2,7 +2,7 @@
   import QuestsContent from "#lib/components/quests-content.svelte";
   import { userState } from "#lib/stores/user-state.svelte.js";
 
-  import SectionHeader from "./SectionHeader.svelte";
+  import SectionHeader from "./section-header.svelte";
 
   import type { CategoryProgress } from "#lib/engine/progress.js";
   import type { LocaleCode } from "#lib/types/locale.js";

@@ -38,19 +38,17 @@ describe("tracker data structural presence", () => {
     "version",
   ];
 
-  for (const key of requiredKeys) {
-    it(`has "${key}" key`, () => {
-      expect(trackerData).toHaveProperty(key);
-    });
-  }
+  it.each(requiredKeys)('has "%s" key', (key) => {
+    expect(trackerData).toHaveProperty(key);
+  });
 
   it("has a version string", () => {
-    expect(typeof trackerData.version).toBe("string");
+    expect(trackerData.version).toBeTypeOf("string");
     expect(trackerData.version.length).toBeGreaterThan(0);
   });
 
   it("has a generatedAt timestamp", () => {
-    expect(typeof trackerData.generatedAt).toBe("string");
+    expect(trackerData.generatedAt).toBeTypeOf("string");
     expect(trackerData.generatedAt.length).toBeGreaterThan(0);
   });
 });
@@ -309,22 +307,22 @@ describe("reference integrity", () => {
 describe("no duplicate IDs", () => {
   it("no duplicate item IDs", () => {
     const ids = recordKeys(trackerData.items);
-    expect(ids.length).toBe(new Set(ids).size);
+    expect(ids).toHaveLength(new Set(ids).size);
   });
 
   it("no duplicate Villager IDs", () => {
     const ids = recordKeys(trackerData.villagers);
-    expect(ids.length).toBe(new Set(ids).size);
+    expect(ids).toHaveLength(new Set(ids).size);
   });
 
   it("no duplicate recipe IDs", () => {
     const ids = recordKeys(trackerData.recipes);
-    expect(ids.length).toBe(new Set(ids).size);
+    expect(ids).toHaveLength(new Set(ids).size);
   });
 
   it("no duplicate cosmetic IDs", () => {
     const ids = recordKeys(trackerData.cosmetics);
-    expect(ids.length).toBe(new Set(ids).size);
+    expect(ids).toHaveLength(new Set(ids).size);
   });
 
   it("no duplicate quest IDs across quest types", () => {
@@ -401,13 +399,13 @@ describe("animals structural integrity", () => {
 
 describe("skills structural integrity", () => {
   it("every skill has exactly 5 perk tiers", () => {
-    for (const [id, skill] of recordEntries(trackerData.skills)) {
-      expect(skill.perkTiers.length, `${id} has ${skill.perkTiers.length} perk tiers`).toBe(5);
+    for (const [, skill] of recordEntries(trackerData.skills)) {
+      expect(skill.perkTiers).toHaveLength(5);
     }
   });
 
   it("perkTierLevels has exactly 5 entries", () => {
-    expect(trackerData.perkTierLevels.length).toBe(5);
+    expect(trackerData.perkTierLevels).toHaveLength(5);
   });
 
   it("perkTierLevels are in ascending order", () => {

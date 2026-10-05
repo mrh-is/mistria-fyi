@@ -22,7 +22,19 @@ export function getRankState(level: number, rank: TownRank): RankState {
   return "current";
 }
 
-export function getRenownPresentation(level: number, ranks: TownRank[]) {
+export interface RenownPresentation {
+  color: string;
+  currentRank: TownRank;
+  currentRankIndex: number;
+  isMaxed: boolean;
+  maxLevel: number;
+  overallPercent: number;
+  rankPercent: number;
+  rankSpan: number;
+  withinRank: number;
+}
+
+export function getRenownPresentation(level: number, ranks: TownRank[]): RenownPresentation {
   const maxLevel = ranks.at(-1)?.levels.end ?? 0;
   const currentRankIndex = Math.max(
     ranks.findLastIndex((rank) => getRankState(level, rank) === "current"),

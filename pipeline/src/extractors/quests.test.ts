@@ -31,7 +31,7 @@ describe("extractQuests", () => {
   const emptyQuests = { cooking: {}, crown: {}, fetch: {}, heart: {}, mission: {}, story: {} };
 
   it("preserves a present tracked quest group with no accepted quests", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const fiddle = {
       quests: {
         story_quests: {
@@ -44,7 +44,7 @@ describe("extractQuests", () => {
   });
 
   it("maps a populated tracked quest with its name, Villager, and itemId", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const fiddle = {
       quests: {
         fetch_quests: {
@@ -72,14 +72,14 @@ describe("extractQuests", () => {
   });
 
   it("does not log a summary when the quest root is absent", () => {
-    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const logSpy = vi.spyOn(console, "log").mockReturnValue(undefined);
 
     expect(extractQuests({} as ParsedGameData, assetsDir).quests).toEqual(emptyQuests);
     expect(logSpy).not.toHaveBeenCalled();
   });
 
   it("maps a heart quest with villager and heartLevel 0 (stamped later by visibility)", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const fiddle = {
       quests: {
         heart_quests: {
@@ -105,7 +105,7 @@ describe("extractQuests", () => {
   });
 
   it("extracts villager from stage query for pregnancy quests and sets heartLevel to 10", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const fiddle = {
       quests: {
         heart_quests: {
@@ -130,7 +130,7 @@ describe("extractQuests", () => {
   });
 
   it("maps a cooking quest with its recipeId from recipeIdByItemId", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const fiddle = {
       quests: {
         tali_challenges: {
@@ -158,7 +158,7 @@ describe("extractQuests", () => {
   });
 
   it("throws when a cooking quest has no has_item requirement", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const fiddle = {
       quests: {
         tali_challenges: {
@@ -176,7 +176,7 @@ describe("extractQuests", () => {
   });
 
   it("throws when a cooking quest's required item has no matching recipe", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const fiddle = {
       quests: {
         tali_challenges: {
@@ -194,7 +194,7 @@ describe("extractQuests", () => {
   });
 
   it("resolves a quantity-object has_item for a cooking quest", () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
     const fiddle = {
       quests: {
         tali_challenges: {

@@ -1,10 +1,7 @@
-import {
-  CACHE_LOCALES_MESSAGE,
-  type CacheLocalesMessage,
-  type CacheLocalesReply,
-} from "#lib/engine/service-worker-cache.js";
+import { CACHE_LOCALES_MESSAGE } from "#lib/engine/service-worker-cache.js";
 import { baseLocale } from "#lib/paraglide/runtime.js";
 
+import type { CacheLocalesMessage, CacheLocalesReply } from "#lib/engine/service-worker-cache.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 
 /**
@@ -30,10 +27,11 @@ export function keepLocaleOffline(
     type: CACHE_LOCALES_MESSAGE,
     locales: [...new Set([baseLocale, locale])],
   };
-  void target.ready.then((registration) => {
+  void (async () => {
+    const registration = await target.ready;
     registration.active?.postMessage(message);
     registration.waiting?.postMessage(message);
-  });
+  })();
 }
 
 /** How long a locale download may take before the switch gives up and reports it unavailable. */
@@ -69,9 +67,11 @@ export function downloadLocale(
       channel.port1.close();
       resolve(complete);
     }
-    channel.port1.onmessage = ({ data }: MessageEvent<CacheLocalesReply>) => {
+    channel.port1.addEventListener("message", ({ data }: MessageEvent<CacheLocalesReply>) => {
       finish(data.failed.length === 0);
-    };
+    });
+    // Unlike the `onmessage` setter, `addEventListener` doesn't start the port implicitly.
+    channel.port1.start();
     worker.postMessage(message, [channel.port2]);
   });
 }

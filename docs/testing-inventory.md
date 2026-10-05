@@ -102,7 +102,7 @@ Camera scanning in `transfer-card` is not covered: it needs `getUserMedia`, whic
 | `persistence-warning`                                                                               |         |           | Gap: store-level lifecycle is tested                  |
 | `ai-disclosure-dialog`                                                                              |         |           | Gap: open/dismiss                                     |
 | `og-share-card`, `pencil-filter`, `icon/*`, `all-completed`                                         |         |           | Static; no test needed                                |
-| Route `+page.svelte` files, `routes/all/*Section.svelte`                                            | partial |           | `about`, `data`, `privacy`, `error` have server tests |
+| Route `+page.svelte` files, `routes/all/*-section.svelte`                                           | partial |           | `about`, `data`, `privacy`, `error` have server tests |
 
 ## Remaining gaps
 

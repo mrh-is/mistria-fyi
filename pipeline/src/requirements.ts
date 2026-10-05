@@ -75,7 +75,7 @@ export function parseRequirements(
 ): RequirementExpression {
   if (value === undefined || value === null) return { all: [] };
   if (typeof value !== "object" || Array.isArray(value)) {
-    throw new Error(
+    throw new TypeError(
       `Expected requirements object for ${context.entityId ?? context.fieldPath} in ${context.sourcePath}, got ${typeof value}`,
     );
   }

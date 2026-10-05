@@ -94,31 +94,30 @@ describe("isVariantInScope", () => {
 });
 
 describe("animal progress vs UI predicate agreement", () => {
-  for (const mode of MODES) {
-    for (const season of SEASONS) {
-      it(`${mode} mode in ${season}: progress filtered count matches UI in-scope count`, () => {
-        let uiInScopeCount = 0;
-        for (const { variant } of allVariants()) {
-          if (isVariantInScope(variant, season, mode)) {
-            uiInScopeCount++;
-          }
+  it.each(MODES.flatMap((mode) => SEASONS.map((season) => [mode, season] as const)))(
+    "%s mode in %s: progress filtered count matches UI in-scope count",
+    (mode, season) => {
+      let uiInScopeCount = 0;
+      for (const { variant } of allVariants()) {
+        if (isVariantInScope(variant, season, mode)) {
+          uiInScopeCount++;
         }
+      }
 
-        let progressFilteredCount = 0;
-        for (const [, animal] of recordEntries(trackerData.animals)) {
-          for (const tier of animal.variantTiers) {
-            for (const [, variant] of recordEntries(tier)) {
-              if (isVariantInScope(variant, season, mode)) {
-                progressFilteredCount++;
-              }
+      let progressFilteredCount = 0;
+      for (const [, animal] of recordEntries(trackerData.animals)) {
+        for (const tier of animal.variantTiers) {
+          for (const [, variant] of recordEntries(tier)) {
+            if (isVariantInScope(variant, season, mode)) {
+              progressFilteredCount++;
             }
           }
         }
+      }
 
-        expect(progressFilteredCount).toBe(uiInScopeCount);
-      });
-    }
-  }
+      expect(progressFilteredCount).toBe(uiInScopeCount);
+    },
+  );
 
   it("at least one non-seasonal variant exists in test data", () => {
     const nonseasonal = allVariants().filter((v) => getVariantSeason(v.variant) === undefined);

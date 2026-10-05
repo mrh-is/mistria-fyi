@@ -296,15 +296,80 @@ is the one check to require for merging.
 | ESLint    | `eslint.config.js`    | `.svelte` & `.svelte.{js,ts}` only: eslint-plugin-svelte, template-aware unused variables, & `no-hardcoded-ui-text` |
 | Stylelint | `stylelint.config.js` | Scoped CSS; see [styling](styling.md#lint-rules)                                                                    |
 
-oxlint's config starts from its `correctness` category and adds typescript-eslint's strict &
-stylistic type-checked rules, plus eslint-plugin-perfectionist (as an oxlint JS plugin) for sorting
-object keys, types, unions, & named imports and exports.
+oxlint enables every category except `nursery`, with the `eslint`, `typescript`, `unicorn`, `oxc`,
+`import`, `promise`, `node`, & `jsdoc` plugins (plus `vitest` for `*.test.ts`), and adds
+typescript-eslint's strict & stylistic type-checked rules and eslint-plugin-perfectionist (as an
+oxlint JS plugin) for sorting object keys, types, unions, & named imports and exports. Because whole
+categories are on, an oxlint upgrade that adds rules fails lint until each new rule is fixed or
+turned off with a reason. Every `off` in `.oxlintrc.json` carries a one-line reason; see
+[oxlint rule decisions](#oxlint-rule-decisions).
 
-Type-aware rules (`no-floating-promises`, `no-unsafe-*`, and so on) run on `.ts` and `.svelte.ts`
-files but **not** inside `.svelte` `<script>` blocks: tsgolint doesn't read `.svelte` files, and
-typed ESLint on them took over a minute per run. `svelte-check` still type-checks them. Keep
-nontrivial async or loosely typed logic in `.ts` or `.svelte.ts` modules, where the typed rules
-apply.
+TypeScript's `noImplicitReturns` stands in for oxlint's `typescript/consistent-return`, which can't
+see that an exhaustive `switch` returns on every path.
+
+#### Tool ownership
+
+`tests/lint-ownership.test.ts` lints the probes in `tests/lint-probes/` and pins this matrix, so a
+boundary change fails a test instead of silently dropping coverage:
+
+| Surface                    | Untyped oxlint rules | Type-aware oxlint rules | ESLint template rules |
+| -------------------------- | -------------------- | ----------------------- | --------------------- |
+| `.ts`                      | Yes                  | Yes                     | No                    |
+| `.svelte.ts`               | Yes                  | Yes                     | No                    |
+| `.svelte` `<script>` block | Yes                  | **No** (gap)            | No                    |
+| `.svelte` template         | No                   | No                      | Yes                   |
+
+Type-aware rules (`no-floating-promises`, `no-unsafe-*`, and so on) don't run inside `.svelte`
+`<script>` blocks: tsgolint doesn't read `.svelte` files, and typed ESLint on them took over a
+minute per run. `svelte-check` still type-checks them. Keep nontrivial async or loosely typed logic
+in `.ts` or `.svelte.ts` modules, where the typed rules apply. When tsgolint gains Svelte support,
+the probe test fails; that's the trigger to revisit this boundary.
+
+ESLint's template rules include two local ones in `eslint-rules/`: `no-hardcoded-ui-text` (see
+[localization](localization.md)) and `no-raw-internal-href`, which rejects literal internal routes
+like `href="/about"` and accepts `localizedHref(...)` or any other expression. It replaces
+`svelte/no-navigation-without-resolve`, which needs type information to recognize `localizedHref()`.
+
+#### Oxlint rule decisions
+
+Rules turned off in `.oxlintrc.json` fall into three groups:
+
+- **Rejected:** conflicts with a convention this repo keeps on purpose (named exports, `null` from
+  DOM APIs, oxfmt's output, and so on). The inline reason is the whole record; revisit only if the
+  convention changes.
+- **Contradicted:** a stricter or overlapping rule is on (`default-case` versus
+  `switch-exhaustiveness-check`, for example).
+- **Deferred:** worthwhile, but the backlog needs its own scoping. Each has a revisit condition:
+
+| Rule                                             | Findings | Revisit when                                                               |
+| ------------------------------------------------ | -------- | -------------------------------------------------------------------------- |
+| `typescript/no-unsafe-type-assertion`            | 1,943    | A dedicated issue scopes the assertion backlog                             |
+| `typescript/strict-boolean-expressions`          | 212      | After the assertion cleanup; many hits are `string \| undefined` checks    |
+| `typescript/strict-void-return`                  | 81       | Callback-typing cleanup is scoped                                          |
+| `typescript/consistent-return`                   | 27       | tsgolint treats exhaustive `switch` statements as returning                |
+| `eslint/require-unicode-regexp`                  | 239      | A regex audit confirms the `u`/`v` flag changes no pattern's meaning       |
+| `eslint/prefer-named-capture-group`              | 38       | Same audit                                                                 |
+| `unicorn/no-useless-undefined`                   | 102      | `noImplicitReturns` settles explicit `return undefined` style              |
+| `eslint/max-*`, `complexity`, `max-nested-calls` | 25–313   | Thresholds are chosen from the current distribution                        |
+| `eslint/no-inline-comments`                      | 31       | Trailing-comment style (including this config's reasons) is decided        |
+| `import/no-relative-parent-imports`              | 124      | `#lib`-style imports exist for `pipeline/` and `scripts/` too              |
+| `import/max-dependencies`                        | 32       | Thresholds are chosen                                                      |
+| `vitest/prefer-strict-equal`                     | 719      | Fixtures are audited for `undefined` properties that `toStrictEqual` sees  |
+| `vitest/no-conditional-in-test`                  | 179      | Table-driven tests move to `it.each`                                       |
+| `vitest/require-mock-type-parameters`            | 126      | Mocks are typed in a dedicated pass                                        |
+| `vitest/prefer-import-in-mock`                   | 39       | Partial module mocks are typed (its `import()` form type-checks factories) |
+
+`eslint/no-await-in-loop` is on everywhere except Playwright specs, whose awaits drive one page
+through ordered steps. Elsewhere, an intentionally sequential loop carries a disable comment naming
+why.
+
+#### Lint timings
+
+| Measurement                          | Before (#486) | After |
+| ------------------------------------ | ------------- | ----- |
+| `pnpm run lint`, cold ESLint cache   | 6.0 s         | TBD   |
+| `pnpm run lint`, warm ESLint cache   | 3.3 s         | TBD   |
+| CI "Run pnpm run lint" step (ubuntu) | 22 s          | TBD   |
 
 Suppressions follow the tool that owns the rule. Use `// oxlint-disable-next-line <rule> -- reason`
 for oxlint rules and `// eslint-disable-next-line svelte/<rule> -- reason` (or the

@@ -23,7 +23,7 @@ function makeFiddle(overrides: Record<string, unknown> = {}) {
 
 describe("extractTreasureChestTiers", () => {
   beforeEach(() => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
   });
 
   afterEach(() => {

@@ -397,7 +397,8 @@ describe("validateAcquisitionSources", () => {
   });
 
   it("rejects invalid season and weather members and non-JSON condition arrays", () => {
-    const sparseConditions = Array(1) as unknown[];
+    const sparseConditions: unknown[] = [];
+    sparseConditions.length = 1;
     const items = {
       invalid_array: {
         sources: [
@@ -536,20 +537,14 @@ describe("validateAcquisitionSources", () => {
       },
     });
 
-    try {
-      validateAcquisitionSources(trackerData, references);
-      expect.unreachable("validation should fail");
-    } catch (error) {
-      assert.instanceOf(error, AcquisitionSourceValidationError);
-      expect(error.diagnostics).toEqual([
-        {
-          fieldPath: "recipes.orphan_recipe.sources",
-          kind: "missing-source",
-          message: 'Recipe "orphan_recipe" has no acquisition sources',
-          targetId: "orphan_recipe",
-        },
-      ]);
-    }
+    expect(captureDiagnostics(trackerData, references)).toEqual([
+      {
+        fieldPath: "recipes.orphan_recipe.sources",
+        kind: "missing-source",
+        message: 'Recipe "orphan_recipe" has no acquisition sources',
+        targetId: "orphan_recipe",
+      },
+    ]);
   });
 
   it("aggregates deterministic diagnostics with field paths and source provenance", () => {
@@ -600,52 +595,46 @@ describe("validateAcquisitionSources", () => {
       excluded: { items: ["debug_item"] },
     });
 
-    try {
-      validateAcquisitionSources(trackerData, references);
-      expect.unreachable("validation should fail");
-    } catch (error) {
-      assert.instanceOf(error, AcquisitionSourceValidationError);
-      expect(error.diagnostics).toEqual([
-        {
-          fieldPath: "cosmetics.empty_cosmetic.sources",
-          kind: "missing-source",
-          message: 'Cosmetic "empty_cosmetic" has no acquisition sources',
-          targetId: "empty_cosmetic",
-        },
-        {
-          fieldPath: "items.missing_item.sources",
-          kind: "missing-source",
-          message: 'Item "missing_item" has no acquisition sources',
-          targetId: "missing_item",
-        },
-        {
-          fieldPath: "items.malformed.sources[0].availability.value",
-          kind: "malformed-payload",
-          message: "Expected a JSON value",
-          sourceFieldPath: "shops.general.stock[2]",
-          sourcePath: "fiddle/shops.toml",
-          targetId: "malformed",
-        },
-        {
-          fieldPath: "recipes.unresolved.sources[0].recipeId",
-          kind: "unresolved-reference",
-          message: 'Unknown recipe ID "missing_recipe"',
-          targetId: "unresolved",
-        },
-        {
-          fieldPath: "items.excluded_reference.sources[0].triggerItemId",
-          kind: "excluded-id-reference",
-          message: 'Excluded item ID "debug_item" is still referenced',
-          targetId: "excluded_reference",
-        },
-        {
-          fieldPath: "recipes.cycle_a.sources",
-          kind: "recipe-cycle",
-          message: "Recipe source cycle: cycle_a -> cycle_b -> cycle_a",
-          targetId: "cycle_a",
-        },
-      ]);
-    }
+    expect(captureDiagnostics(trackerData, references)).toEqual([
+      {
+        fieldPath: "cosmetics.empty_cosmetic.sources",
+        kind: "missing-source",
+        message: 'Cosmetic "empty_cosmetic" has no acquisition sources',
+        targetId: "empty_cosmetic",
+      },
+      {
+        fieldPath: "items.missing_item.sources",
+        kind: "missing-source",
+        message: 'Item "missing_item" has no acquisition sources',
+        targetId: "missing_item",
+      },
+      {
+        fieldPath: "items.malformed.sources[0].availability.value",
+        kind: "malformed-payload",
+        message: "Expected a JSON value",
+        sourceFieldPath: "shops.general.stock[2]",
+        sourcePath: "fiddle/shops.toml",
+        targetId: "malformed",
+      },
+      {
+        fieldPath: "recipes.unresolved.sources[0].recipeId",
+        kind: "unresolved-reference",
+        message: 'Unknown recipe ID "missing_recipe"',
+        targetId: "unresolved",
+      },
+      {
+        fieldPath: "items.excluded_reference.sources[0].triggerItemId",
+        kind: "excluded-id-reference",
+        message: 'Excluded item ID "debug_item" is still referenced',
+        targetId: "excluded_reference",
+      },
+      {
+        fieldPath: "recipes.cycle_a.sources",
+        kind: "recipe-cycle",
+        message: "Recipe source cycle: cycle_a -> cycle_b -> cycle_a",
+        targetId: "cycle_a",
+      },
+    ]);
   });
 
   it("validates fetch quest itemId references against emitted items", () => {

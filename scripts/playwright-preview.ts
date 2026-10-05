@@ -14,24 +14,32 @@ const checkout = process.cwd();
 const port = process.env.PLAYWRIGHT_PREVIEW_PORT;
 if (port === undefined) throw new Error("PLAYWRIGHT_PREVIEW_PORT is required.");
 
+let buildStatus = 0;
 if (process.env.PLAYWRIGHT_SKIP_BUILD !== "true") {
-  const build = spawnSync("pnpm", ["run", "build"], { stdio: "inherit" });
-  if (build.status !== 0) process.exit(build.status ?? 1);
+  buildStatus = spawnSync("pnpm", ["run", "build"], { stdio: "inherit" }).status ?? 1;
 }
 
-// `vite preview` serves `.svelte-kit/output/client` as the static root.
-const clientDir = path.join(checkout, ".svelte-kit", "output", "client");
-mkdirSync(clientDir, { recursive: true });
-const owner: PreviewOwner = { checkout, startedAt: new Date().toISOString() };
-writeFileSync(path.join(clientDir, OWNER_FILE), JSON.stringify(owner));
+function servePreview(previewPort: string): void {
+  // `vite preview` serves `.svelte-kit/output/client` as the static root.
+  const clientDir = path.join(checkout, ".svelte-kit", "output", "client");
+  mkdirSync(clientDir, { recursive: true });
+  const owner: PreviewOwner = { checkout, startedAt: new Date().toISOString() };
+  writeFileSync(path.join(clientDir, OWNER_FILE), JSON.stringify(owner));
 
-const preview = spawn("pnpm", ["run", "preview", "--host", "127.0.0.1", "--port", port], {
-  stdio: "inherit",
-});
-preview.on("exit", (code, signal) => {
-  if (signal !== null) process.kill(process.pid, signal);
-  process.exit(code ?? 1);
-});
-for (const signal of ["SIGINT", "SIGTERM"] as const) {
-  process.on(signal, () => preview.kill(signal));
+  const preview = spawn("pnpm", ["run", "preview", "--host", "127.0.0.1", "--port", previewPort], {
+    stdio: "inherit",
+  });
+  preview.on("exit", (code, signal) => {
+    if (signal !== null) process.kill(process.pid, signal);
+    process.exitCode = code ?? 1;
+  });
+  for (const signal of ["SIGINT", "SIGTERM"] as const) {
+    process.on(signal, () => preview.kill(signal));
+  }
+}
+
+if (buildStatus === 0) {
+  servePreview(port);
+} else {
+  process.exitCode = buildStatus;
 }

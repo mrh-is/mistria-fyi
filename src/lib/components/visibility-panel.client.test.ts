@@ -25,7 +25,9 @@ afterEach(async () => {
   cleanup();
   toolbarState.removeSourceFilters("test");
   userState.resetAll();
-  await new Promise((resolve) => setTimeout(resolve, 250));
+  await new Promise((resolve) => {
+    setTimeout(resolve, 250);
+  });
 });
 
 describe("VisibilityPanel interactions", () => {

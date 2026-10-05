@@ -10,7 +10,7 @@ vi.mock("svelte-sonner", () => ({ toast }));
 
 function mockTurnstile() {
   let widgetId = 0;
-  (window as unknown as Record<string, unknown>).turnstile = {
+  (globalThis as unknown as Record<string, unknown>).turnstile = {
     remove: vi.fn(),
     render: (
       _container: HTMLElement,
@@ -143,7 +143,7 @@ describe("FeedbackPanel", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledOnce();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
     const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
     expect(JSON.parse(options.body as string)).toMatchObject({
@@ -214,9 +214,9 @@ describe("FeedbackPanel", () => {
     render(FeedbackPanel, { onclose, open: true, resetKey: "/museum" });
 
     document.body.focus();
-    await fireEvent.keyDown(window, { key: "Escape" });
+    await fireEvent.keyDown(document, { key: "Escape" });
 
-    expect(onclose).toHaveBeenCalledOnce();
+    expect(onclose).toHaveBeenCalledTimes(1);
   });
 
   it("contains keyboard focus within the open dialog", async () => {
@@ -227,7 +227,7 @@ describe("FeedbackPanel", () => {
     const closeButton = screen.getByRole("button", { name: "Close Send feedback" });
     closeButton.focus();
 
-    await fireEvent.keyDown(window, { key: "Tab", shiftKey: true });
+    await fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
 
     const sendButton = screen.getByRole("button", { name: "Send" });
     expect(document.activeElement).toBe(sendButton);
@@ -259,7 +259,7 @@ describe("FeedbackPanel", () => {
   });
 
   it("disables submission while the request is in flight", async () => {
-    let resolveRequest: (response: Response) => void = () => undefined;
+    let resolveRequest: ((response: Response) => void) | undefined;
     vi.stubGlobal(
       "fetch",
       vi.fn(
@@ -277,9 +277,9 @@ describe("FeedbackPanel", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     expect(screen.getByRole("button", { name: "Sending…" })).toBeDisabled();
-    resolveRequest(Response.json({ issueUrl: "https://example.com/issues/1" }));
+    resolveRequest?.(Response.json({ issueUrl: "https://example.com/issues/1" }));
     await waitFor(() => {
-      expect(toast).toHaveBeenCalledOnce();
+      expect(toast).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -297,10 +297,10 @@ describe("FeedbackPanel", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     await waitFor(() => {
-      expect(onclose).toHaveBeenCalledOnce();
+      expect(onclose).toHaveBeenCalledTimes(1);
     });
     expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("");
-    expect(toast).toHaveBeenCalledOnce();
+    expect(toast).toHaveBeenCalledTimes(1);
   });
 
   it("treats partial submission as final without exposing or duplicating contact details", async () => {
@@ -323,15 +323,15 @@ describe("FeedbackPanel", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     await waitFor(() => {
-      expect(toast.warning).toHaveBeenCalledOnce();
+      expect(toast.warning).toHaveBeenCalledTimes(1);
     });
     const [warning] = toast.warning.mock.calls[0] as [string];
     expect(warning).toContain("Sending it again would create a duplicate public issue");
     expect(warning).toContain("submit a new report later");
     expect(warning).not.toContain("comment");
     expect(warning).not.toContain("private@example.com");
-    expect(fetchMock).toHaveBeenCalledOnce();
-    expect(onclose).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(onclose).toHaveBeenCalledTimes(1);
   });
 
   it("shows the fallback copy action after a failed submission", async () => {

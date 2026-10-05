@@ -19,12 +19,12 @@ export function buildStoredZip(files: Record<string, string>): Buffer {
   let offset = 0;
 
   for (const [name, content] of Object.entries(files)) {
-    const nameBuf = Buffer.from(name, "utf-8");
-    const dataBuf = Buffer.from(content, "utf-8");
+    const nameBuf = Buffer.from(name, "utf8");
+    const dataBuf = Buffer.from(content, "utf8");
     const crc = crc32(dataBuf);
 
     const localHeader = Buffer.alloc(30);
-    localHeader.writeUInt32LE(0x04034b50, 0);
+    localHeader.writeUInt32LE(0x04_03_4b_50, 0);
     localHeader.writeUInt16LE(20, 4); // version needed
     localHeader.writeUInt16LE(0, 6); // general purpose flag
     localHeader.writeUInt16LE(0, 8); // compression method: stored
@@ -38,7 +38,7 @@ export function buildStoredZip(files: Record<string, string>): Buffer {
     localParts.push(localHeader, nameBuf, dataBuf);
 
     const centralHeader = Buffer.alloc(46);
-    centralHeader.writeUInt32LE(0x02014b50, 0);
+    centralHeader.writeUInt32LE(0x02_01_4b_50, 0);
     centralHeader.writeUInt16LE(20, 4); // version made by
     centralHeader.writeUInt16LE(20, 6); // version needed
     centralHeader.writeUInt16LE(0, 8); // general purpose flag
@@ -64,7 +64,7 @@ export function buildStoredZip(files: Record<string, string>): Buffer {
   const centralSection = Buffer.concat(centralParts);
 
   const eocd = Buffer.alloc(22);
-  eocd.writeUInt32LE(0x06054b50, 0);
+  eocd.writeUInt32LE(0x06_05_4b_50, 0);
   eocd.writeUInt16LE(0, 4); // disk number
   eocd.writeUInt16LE(0, 6); // disk where central directory starts
   eocd.writeUInt16LE(Object.keys(files).length, 8); // records on this disk

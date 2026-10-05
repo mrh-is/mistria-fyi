@@ -1,5 +1,5 @@
 /* eslint-disable no-console -- server-side error logging */
-import { error, isHttpError } from "@sveltejs/kit";
+import { error as httpError, isHttpError } from "@sveltejs/kit";
 import { env } from "cloudflare:workers";
 
 import type { ReportableElement } from "#lib/feedback/types.js";
@@ -20,7 +20,7 @@ const MAX_PAYLOAD_BYTES = 100 * 1024;
 const MAX_GITHUB_ERROR_LOG_LENGTH = 200;
 const GITHUB_TIMEOUT_MS = 10_000;
 const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
-const TURNSTILE_TIMEOUT_MS = 5_000;
+const TURNSTILE_TIMEOUT_MS = 5000;
 
 interface FeedbackPayload {
   appVersion: string;
@@ -39,35 +39,43 @@ interface GitHubFailureDiagnostics {
 }
 
 function buildIssueBody(payload: FeedbackPayload): string {
-  const lines: string[] = [escapeMentions(payload.message), "", "---", ""];
-
-  lines.push(`**App version:** ${payload.appVersion}`);
-  lines.push(`**Game data version:** ${payload.gameDataVersion}`);
+  const lines: string[] = [
+    escapeMentions(payload.message),
+    "",
+    "---",
+    "",
+    `**App version:** ${payload.appVersion}`,
+    `**Game data version:** ${payload.gameDataVersion}`,
+  ];
 
   if (payload.email) {
-    lines.push("");
-    lines.push("\u{1f4e7} Contact email provided");
+    lines.push("", "\u{1F4E7} Contact email provided");
   }
 
   if (payload.saveData) {
-    lines.push("");
-    lines.push("<details>");
-    lines.push("<summary>Save data (user-provided progress snapshot)</summary>");
-    lines.push("");
-    lines.push("\u{26a0}\u{fe0f} This data was voluntarily attached by the reporter.");
-    lines.push("");
-    lines.push("```json");
-    lines.push(JSON.stringify(payload.saveData, null, 2));
-    lines.push("```");
-    lines.push("");
-    lines.push("</details>");
+    lines.push(
+      "",
+      "<details>",
+      "<summary>Save data (user-provided progress snapshot)</summary>",
+      "",
+      "\u{26A0}\u{FE0F} This data was voluntarily attached by the reporter.",
+      "",
+      "```json",
+      JSON.stringify(payload.saveData, null, 2),
+      "```",
+      "",
+      "</details>",
+    );
   }
 
   if (payload.selectedElement) {
     const { category, displayName, entityId, extra, page } = payload.selectedElement;
-    lines.push("", "**Selected element**");
-    lines.push(`- **Category:** ${formatBodyValue(category)}`);
-    lines.push(`- **Name:** ${formatBodyValue(displayName)}`);
+    lines.push(
+      "",
+      "**Selected element**",
+      `- **Category:** ${formatBodyValue(category)}`,
+      `- **Name:** ${formatBodyValue(displayName)}`,
+    );
     if (entityId) {
       lines.push(`- **ID:** ${formatBodyValue(entityId)}`);
     }
@@ -79,8 +87,7 @@ function buildIssueBody(payload: FeedbackPayload): string {
     }
   }
 
-  lines.push("");
-  lines.push("*Submitted via in-app feedback*");
+  lines.push("", "*Submitted via in-app feedback*");
 
   return lines.join("\n");
 }
@@ -92,7 +99,7 @@ function deriveTitle(payload: FeedbackPayload): string {
   }
 
   // eslint-disable-next-line no-control-regex -- stripping control characters from user input for issue title
-  const sanitized = payload.message.replaceAll(/[\n\r\x00-\x1f]/g, " ").trim();
+  const sanitized = payload.message.replaceAll(/[\n\r\u0000-\u001F]/g, " ").trim();
   if (sanitized.length <= 80) {
     return `[Feedback] ${sanitized}`;
   }
@@ -101,7 +108,7 @@ function deriveTitle(payload: FeedbackPayload): string {
 }
 
 function escapeMarkdown(value: string): string {
-  return value.replaceAll(/([*_`<>[\]\\|~#@])/g, "\\$1");
+  return value.replaceAll(/([*_`<>[\]\\|~#@])/g, String.raw`\$1`);
 }
 
 /**
@@ -109,7 +116,7 @@ function escapeMarkdown(value: string): string {
  * The rest of the message stays Markdown, since reporters format it on purpose.
  */
 function escapeMentions(value: string): string {
-  return value.replaceAll("@", "\\@");
+  return value.replaceAll("@", String.raw`\@`);
 }
 
 function formatBodyValue(value: string): string {
@@ -141,7 +148,7 @@ async function getGitHubFailureDiagnostics(response: Response): Promise<GitHubFa
 
 function sanitizeTitlePart(value: string): string {
   // eslint-disable-next-line no-control-regex -- stripping control characters from user input for issue title
-  return value.replaceAll(/[\n\r\x00-\x1f]/g, " ").trim();
+  return value.replaceAll(/[\n\r\u0000-\u001F]/g, " ").trim();
 }
 
 function truncateTitle(value: string, maxLength: number): string {
@@ -159,14 +166,14 @@ function validateElementString(value: unknown): string {
     value.trim().length === 0 ||
     value.length > MAX_ELEMENT_STRING_LENGTH
   ) {
-    error(400, "Invalid selected element");
+    httpError(400, "Invalid selected element");
   }
   return value;
 }
 
 function validatePayload(body: unknown): FeedbackPayload {
   if (typeof body !== "object" || body === null) {
-    error(400, "Invalid request body");
+    httpError(400, "Invalid request body");
   }
 
   const { appVersion, email, gameDataVersion, message, saveData, selectedElement } = body as Record<
@@ -175,45 +182,45 @@ function validatePayload(body: unknown): FeedbackPayload {
   >;
 
   if (typeof message !== "string" || message.trim().length === 0) {
-    error(400, "Message is required");
+    httpError(400, "Message is required");
   }
   if (message.length > MAX_MESSAGE_LENGTH) {
-    error(400, "Message too long");
+    httpError(400, "Message too long");
   }
 
   if (typeof appVersion !== "string" || appVersion.length === 0) {
-    error(400, "App version is required");
+    httpError(400, "App version is required");
   }
   if (appVersion.length > MAX_SHORT_STRING) {
-    error(400, "App version too long");
+    httpError(400, "App version too long");
   }
 
   if (typeof gameDataVersion !== "string" || gameDataVersion.length === 0) {
-    error(400, "Game data version is required");
+    httpError(400, "Game data version is required");
   }
   if (gameDataVersion.length > MAX_SHORT_STRING) {
-    error(400, "Game data version too long");
+    httpError(400, "Game data version too long");
   }
 
   if (email !== undefined && email !== null) {
     if (typeof email !== "string") {
-      error(400, "Invalid email");
+      httpError(400, "Invalid email");
     }
     if (email.length > MAX_EMAIL_LENGTH) {
-      error(400, "Email too long");
+      httpError(400, "Email too long");
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      error(400, "Invalid email format");
+      httpError(400, "Invalid email format");
     }
   }
 
   let validatedSaveData: Record<string, unknown> | undefined;
   if (saveData !== undefined && saveData !== null) {
     if (typeof saveData !== "object" || Array.isArray(saveData)) {
-      error(400, "Invalid save data");
+      httpError(400, "Invalid save data");
     }
     if (new TextEncoder().encode(JSON.stringify(saveData)).byteLength > MAX_SAVE_DATA_BYTES) {
-      error(400, "Save data too large");
+      httpError(400, "Save data too large");
     }
     validatedSaveData = saveData as Record<string, unknown>;
   }
@@ -231,13 +238,13 @@ function validatePayload(body: unknown): FeedbackPayload {
 function validateSelectedElement(value: unknown): ReportableElement | undefined {
   if (value === undefined || value === null) return undefined;
   if (typeof value !== "object" || Array.isArray(value)) {
-    error(400, "Invalid selected element");
+    httpError(400, "Invalid selected element");
   }
 
   const record = value as Record<string, unknown>;
   const allowedKeys = new Set(["category", "displayName", "entityId", "extra", "page"]);
   if (Object.keys(record).some((key) => !allowedKeys.has(key))) {
-    error(400, "Invalid selected element");
+    httpError(400, "Invalid selected element");
   }
 
   const category = validateElementString(record.category);
@@ -248,17 +255,17 @@ function validateSelectedElement(value: unknown): ReportableElement | undefined 
     entityId !== undefined &&
     (typeof entityId !== "string" || entityId.length > MAX_ENTITY_ID_LENGTH)
   ) {
-    error(400, "Invalid selected element");
+    httpError(400, "Invalid selected element");
   }
 
   let extra: Record<string, number | string> | undefined;
   if (record.extra !== undefined) {
     if (typeof record.extra !== "object" || record.extra === null || Array.isArray(record.extra)) {
-      error(400, "Invalid selected element");
+      httpError(400, "Invalid selected element");
     }
     const entries = Object.entries(record.extra);
     if (entries.length > MAX_EXTRA_KEYS) {
-      error(400, "Invalid selected element");
+      httpError(400, "Invalid selected element");
     }
     if (
       entries.some(
@@ -267,7 +274,7 @@ function validateSelectedElement(value: unknown): ReportableElement | undefined 
           (typeof extraValue === "number" && !Number.isFinite(extraValue)),
       )
     ) {
-      error(400, "Invalid selected element");
+      httpError(400, "Invalid selected element");
     }
     extra = Object.fromEntries(entries);
   }
@@ -291,19 +298,19 @@ async function verifyTurnstile(token: string, secretKey: string): Promise<void> 
 
     if (!response.ok) {
       console.error(`Turnstile API error: ${String(response.status)}`);
-      error(503, "Verification service unavailable. Please try again.");
+      httpError(503, "Verification service unavailable. Please try again.");
     }
 
     const result = (await response.json()) as { success: boolean };
     if (!result.success) {
-      error(403, "Verification failed. Please try again.");
+      httpError(403, "Verification failed. Please try again.");
     }
-  } catch (err) {
-    if (isHttpError(err)) {
-      throw err;
+  } catch (error) {
+    if (isHttpError(error)) {
+      throw error;
     }
-    console.error("Turnstile verification failed", err);
-    error(503, "Verification service unavailable. Please try again.");
+    console.error("Turnstile verification failed", error);
+    httpError(503, "Verification service unavailable. Please try again.");
   } finally {
     clearTimeout(timeout);
   }
@@ -313,7 +320,7 @@ export const OPTIONS: RequestHandler = ({ request, url }) => {
   const origin = request.headers.get("origin") ?? "";
 
   if (origin && origin !== url.origin) {
-    error(403, "Forbidden");
+    httpError(403, "Forbidden");
   }
 
   return new Response(null, {
@@ -327,17 +334,17 @@ export const POST: RequestHandler = async ({ request, url }) => {
   const allowedOrigin = url.origin;
 
   if (!origin || origin !== allowedOrigin) {
-    error(403, "Forbidden");
+    httpError(403, "Forbidden");
   }
 
   const contentType = request.headers.get("content-type");
   if (!contentType?.includes("application/json")) {
-    error(400, "Content-Type must be application/json");
+    httpError(400, "Content-Type must be application/json");
   }
 
   const contentLength = Number(request.headers.get("content-length"));
   if (Number.isFinite(contentLength) && contentLength > MAX_PAYLOAD_BYTES) {
-    error(400, "Request body too large");
+    httpError(400, "Request body too large");
   }
 
   const rawText = await readBodyWithLimit(request, MAX_PAYLOAD_BYTES);
@@ -346,7 +353,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
   try {
     rawBody = JSON.parse(rawText) as unknown;
   } catch {
-    error(400, "Invalid JSON");
+    httpError(400, "Invalid JSON");
   }
 
   const payload = validatePayload(rawBody);
@@ -356,20 +363,20 @@ export const POST: RequestHandler = async ({ request, url }) => {
       ? (rawBody as Record<string, unknown>).turnstileToken
       : undefined;
   if (typeof turnstileToken !== "string" || turnstileToken.length === 0) {
-    error(400, "Verification token is required");
+    httpError(400, "Verification token is required");
   }
 
   const turnstileSecret = env.TURNSTILE_SECRET_KEY;
   if (!turnstileSecret) {
     console.error("TURNSTILE_SECRET_KEY is not configured");
-    error(503, "Feedback service temporarily unavailable");
+    httpError(503, "Feedback service temporarily unavailable");
   }
   await verifyTurnstile(turnstileToken, turnstileSecret);
 
   const token = env.GITHUB_FEEDBACK_TOKEN;
   if (!token) {
     console.error("GITHUB_FEEDBACK_TOKEN is not configured");
-    error(503, "Feedback service temporarily unavailable");
+    httpError(503, "Feedback service temporarily unavailable");
   }
 
   const title = deriveTitle(payload);
@@ -402,7 +409,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
     if (!response.ok) {
       console.error("GitHub API error", await getGitHubFailureDiagnostics(response));
-      error(
+      httpError(
         503,
         "Feedback service temporarily unavailable. Please try again later or copy your message.",
       );
@@ -412,16 +419,16 @@ export const POST: RequestHandler = async ({ request, url }) => {
     issueUrl = result.html_url;
     issueNumber = result.number;
     console.info("Feedback issue created", { issueNumber });
-  } catch (err) {
-    if (isHttpError(err)) {
-      throw err;
+  } catch (error) {
+    if (isHttpError(error)) {
+      throw error;
     }
-    if (err instanceof Error && err.name === "AbortError") {
+    if (error instanceof Error && error.name === "AbortError") {
       console.error("GitHub API timeout");
     } else {
-      console.error("GitHub API request failed", err);
+      console.error("GitHub API request failed", error);
     }
-    error(
+    httpError(
       503,
       "Feedback service temporarily unavailable. Please try again later or copy your message.",
     );
@@ -443,8 +450,8 @@ export const POST: RequestHandler = async ({ request, url }) => {
         JSON.stringify({ email: payload.email, timestamp: new Date().toISOString() }),
       );
       emailSaved = true;
-    } catch (err) {
-      console.error("KV write failure for issue", issueNumber, err);
+    } catch (error) {
+      console.error("KV write failure for issue", issueNumber, error);
       emailSaved = false;
     }
   }
@@ -461,10 +468,32 @@ function corsHeaders(allowedOrigin: string): Record<string, string> {
   };
 }
 
+async function cancelQuietly(reader: ReadableStreamDefaultReader<Uint8Array>): Promise<void> {
+  try {
+    await reader.cancel();
+  } catch {
+    // The body is already being rejected; a failed cancel changes nothing.
+  }
+}
+
+function concatChunks(chunks: Uint8Array[]): Uint8Array {
+  let totalLength = 0;
+  for (const chunk of chunks) {
+    totalLength += chunk.byteLength;
+  }
+  const merged = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return merged;
+}
+
 async function readBodyWithLimit(request: Request, maxBytes: number): Promise<string> {
   const reader = request.body?.getReader();
   if (!reader) {
-    error(400, "Request body is required");
+    httpError(400, "Request body is required");
   }
 
   const chunks: Uint8Array[] = [];
@@ -472,24 +501,16 @@ async function readBodyWithLimit(request: Request, maxBytes: number): Promise<st
 
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- streaming loop
   while (true) {
+    // oxlint-disable-next-line no-await-in-loop -- stream chunks must be read in order to enforce the size limit
     const { done, value } = await reader.read();
     if (done) break;
     totalBytes += value.byteLength;
     if (totalBytes > maxBytes) {
-      reader.cancel().catch(() => undefined);
-      error(400, "Request body too large");
+      void cancelQuietly(reader);
+      httpError(400, "Request body too large");
     }
     chunks.push(value);
   }
 
-  return new TextDecoder().decode(
-    chunks.length === 1
-      ? chunks[0]
-      : chunks.reduce((acc, chunk) => {
-          const merged = new Uint8Array(acc.byteLength + chunk.byteLength);
-          merged.set(acc);
-          merged.set(chunk, acc.byteLength);
-          return merged;
-        }, new Uint8Array(0)),
-  );
+  return new TextDecoder().decode(chunks.length === 1 ? chunks[0] : concatChunks(chunks));
 }

@@ -9,8 +9,8 @@ function makeFiddle(overrides: Record<string, unknown> = {}) {
 
 describe("extractPerks", () => {
   beforeEach(() => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
-    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockReturnValue(undefined);
+    vi.spyOn(console, "warn").mockReturnValue(undefined);
   });
 
   afterEach(() => {
