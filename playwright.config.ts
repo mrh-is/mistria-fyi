@@ -45,7 +45,8 @@ export default defineConfig({
     screenshot: "only-on-failure",
     serviceWorkers: "block",
     timezoneId: "UTC",
-    trace: "retain-on-failure",
+    // CI captures retries, including recovered failures; local runs have no retries.
+    trace: isCi ? "on-first-retry" : "retain-on-failure",
     viewport: { height: 720, width: 1280 },
   },
   webServer: {

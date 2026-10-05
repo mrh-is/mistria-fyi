@@ -24,7 +24,8 @@ export default defineConfig({
     locale: "en-US",
     screenshot: "only-on-failure",
     serviceWorkers: "allow",
-    trace: "retain-on-failure",
+    // CI captures retries, including recovered failures; local runs have no retries.
+    trace: isCi ? "on-first-retry" : "retain-on-failure",
   },
   webServer: {
     command: skipBuild
