@@ -1,25 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 import DataPage from "./+page.svelte";
 
-const appState = vi.hoisted(() => ({
-  url: new URL("https://mistria-fyi.test/data"),
-}));
-
-// Under the `app` project's `isolate: false`, a component module cached by this file keeps this
-// mock for later files in the same worker, so it carries every field the shared stand-in in
-// src/vitest-setup-app-state.ts does.
-vi.mock("$app/state", () => ({
-  page: {
-    data: { locale: "en" },
-    status: 200,
-    get url() {
-      return appState.url;
-    },
-  },
-}));
+vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 
 function disclosureState(container: HTMLElement, title: string): null | string | undefined {
   const triggers = container.querySelectorAll("[data-slot='collapsible-trigger']");
@@ -29,7 +15,8 @@ function disclosureState(container: HTMLElement, title: string): null | string |
 }
 
 beforeEach(() => {
-  appState.url = new URL("https://mistria-fyi.test/data");
+  pageStub.reset();
+  pageStub.navigate("/en/data");
 });
 
 describe("data management page", () => {
@@ -54,7 +41,7 @@ describe("data management page", () => {
   });
 
   it("opens the requested deep-linked tool", () => {
-    appState.url = new URL("https://mistria-fyi.test/data?section=transfer");
+    pageStub.navigate("/en/data?section=transfer");
 
     const { container } = renderToFragment(DataPage, { props: {} });
 

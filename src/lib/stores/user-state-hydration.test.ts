@@ -1,5 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 
+import { memoryStorage } from "#lib/test-utils/memory-storage.js";
+
 const STORED_STATE = JSON.stringify({
   availabilityMode: "available",
   completed: {
@@ -25,22 +27,7 @@ const STORED_STATE = JSON.stringify({
 });
 
 function storedUserState(): Storage {
-  const values = new Map([["mistria-fyi-v1", STORED_STATE]]);
-
-  return {
-    clear: () => {
-      values.clear();
-    },
-    getItem: (key) => values.get(key) ?? null,
-    key: (index) => [...values.keys()][index] ?? null,
-    get length() {
-      return values.size;
-    },
-    removeItem: (key) => {
-      values.delete(key);
-    },
-    setItem: (key, value) => values.set(key, value),
-  };
+  return memoryStorage({ "mistria-fyi-v1": STORED_STATE });
 }
 
 afterEach(() => {
@@ -72,24 +59,9 @@ it("normalizes historical nonrepresentative almanac IDs to canonical on hydratio
     version: "1",
     worldState: { season: "spring", weather: "calm" },
   });
-  const values = new Map([["mistria-fyi-v1", stateWithRawIds]]);
-  const storage: Storage = {
-    clear: () => {
-      values.clear();
-    },
-    getItem: (key) => values.get(key) ?? null,
-    key: (index) => [...values.keys()][index] ?? null,
-    get length() {
-      return values.size;
-    },
-    removeItem: (key) => {
-      values.delete(key);
-    },
-    setItem: (key, value) => values.set(key, value),
-  };
   vi.useFakeTimers();
   vi.stubGlobal("window", {});
-  vi.stubGlobal("localStorage", storage);
+  vi.stubGlobal("localStorage", memoryStorage({ "mistria-fyi-v1": stateWithRawIds }));
   vi.resetModules();
 
   const { userState } = await import("#lib/stores/user-state.svelte.js");

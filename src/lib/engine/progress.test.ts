@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { isVariantInScope } from "#lib/engine/animal-availability.js";
+import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { recordEntries, recordKeys, recordValues } from "#lib/utils.js";
 
 import {
@@ -20,7 +21,6 @@ import type { CategoryKey } from "#lib/data/categories.js";
 import type { LegacyAvailabilityMode } from "#lib/types/availability.js";
 import type {
   AnimalVariantId,
-  CosmeticId,
   QuestId,
   Season,
   VillagerId,
@@ -30,38 +30,6 @@ import type {
 import type { CompletedState, QuestState } from "#lib/types/user-progress.js";
 
 // ─── Helpers ───────────────────────────────────────────────────────
-
-function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState {
-  const animals: Record<string, Set<AnimalVariantId>> = {};
-  const animalCosmetics: Record<string, Set<CosmeticId>> = {};
-  for (const animalId of recordKeys(trackerData.animals)) {
-    animals[animalId] = new Set();
-    animalCosmetics[animalId] = new Set();
-  }
-
-  return {
-    almanac: new Set(),
-    almanacRecipes: new Set(),
-    animalCosmetics,
-    animals,
-    childChoice: "undeclared",
-    cosmetics: new Set(),
-    dates: new Set(),
-    hasUpperFloor: false,
-    mines: { floor: 0, spells: new Set() },
-    museum: new Set(),
-    petCosmetics: new Set(),
-    petSkins: new Set(),
-    questStates: {},
-    reachedSeason: "spring",
-    renown: 0,
-    skillLevels: {},
-    unlockedPerks: new Set(),
-    villagerLevels: {},
-    villagerRelationships: {},
-    ...overrides,
-  };
-}
 
 const defaultWorld = { season: "spring" as Season, weather: "calm" as Weather };
 
@@ -74,7 +42,7 @@ function ctx(
 ) {
   return {
     availabilityWindows: overrides.availabilityMode ?? "everything",
-    completed: makeCompleted(overrides.completed ?? {}),
+    completed: makeCompletedState(overrides.completed ?? {}),
     worldState: overrides.worldState ?? defaultWorld,
   };
 }
@@ -477,26 +445,28 @@ describe("availability filtering on item-based categories", () => {
 
 describe("isVillagerComplete", () => {
   it("non-dateable Villager is complete at max hearts", () => {
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       villagerLevels: { darcy: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
     });
     expect(isVillagerComplete("darcy" as VillagerId, completed)).toBe(true);
   });
 
   it("non-dateable Villager is incomplete below max hearts", () => {
-    const completed = makeCompleted({ villagerLevels: { darcy: 5 } as Record<VillagerId, number> });
+    const completed = makeCompletedState({
+      villagerLevels: { darcy: 5 } as Record<VillagerId, number>,
+    });
     expect(isVillagerComplete("darcy" as VillagerId, completed)).toBe(false);
   });
 
   it("dateable Villager with undecided relationship is never complete", () => {
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
     });
     expect(isVillagerComplete("adeline" as VillagerId, completed)).toBe(false);
   });
 
   it("dateable Villager is complete when platonic at max hearts", () => {
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
       villagerRelationships: { adeline: "platonic" } as Partial<
         Record<VillagerId, VillagerRelationship>
@@ -506,7 +476,7 @@ describe("isVillagerComplete", () => {
   });
 
   it("dateable Villager is incomplete when platonic below max hearts", () => {
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       villagerLevels: { adeline: 8 } as Record<VillagerId, number>,
       villagerRelationships: { adeline: "platonic" } as Partial<
         Record<VillagerId, VillagerRelationship>
@@ -516,7 +486,7 @@ describe("isVillagerComplete", () => {
   });
 
   it("dateable Villager is incomplete when romantic (not married)", () => {
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
       villagerRelationships: { adeline: "romantic" } as Partial<
         Record<VillagerId, VillagerRelationship>
@@ -526,7 +496,7 @@ describe("isVillagerComplete", () => {
   });
 
   it("dateable Villager is incomplete when proposed (not married)", () => {
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
       villagerRelationships: { adeline: "proposed" } as Partial<
         Record<VillagerId, VillagerRelationship>
@@ -536,7 +506,7 @@ describe("isVillagerComplete", () => {
   });
 
   it("married Villager is incomplete below max hearts even with child choice", () => {
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       childChoice: "yes",
       villagerLevels: { adeline: 8 } as Record<VillagerId, number>,
       villagerRelationships: { adeline: "married" } as Partial<
@@ -547,7 +517,7 @@ describe("isVillagerComplete", () => {
   });
 
   it("married Villager at max hearts is incomplete with undeclared child choice", () => {
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       childChoice: "undeclared",
       villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
       villagerRelationships: { adeline: "married" } as Partial<
@@ -558,7 +528,7 @@ describe("isVillagerComplete", () => {
   });
 
   it("married Villager at max hearts is complete when child choice is yes", () => {
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       childChoice: "yes",
       villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
       villagerRelationships: { adeline: "married" } as Partial<
@@ -569,7 +539,7 @@ describe("isVillagerComplete", () => {
   });
 
   it("married Villager at max hearts is complete when child choice is no", () => {
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       childChoice: "no",
       villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
       villagerRelationships: { adeline: "married" } as Partial<
