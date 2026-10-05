@@ -3,7 +3,7 @@ import { devices, expect, test } from "@playwright/test";
 import { accessibilityRoutes } from "./routes.js";
 import {
   createStoredState,
-  gotoApplication,
+  gotoRenderedApplication as gotoApplication,
   initializeApplication,
 } from "./support/application-state.js";
 import {

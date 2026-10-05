@@ -4,6 +4,7 @@ import {
   createStoredState,
   gotoApplication,
   initializeApplication,
+  waitForRendering,
 } from "./support/application-state.js";
 
 test.describe("@critical keyboard and focus accessibility", () => {
@@ -134,6 +135,7 @@ test.describe("@critical keyboard and focus accessibility", () => {
     const initialT = page.getByRole("button", { name: "Jump to T, first villager record" });
     await initialO.click();
     await expect(page.locator('[id^="villager-o"]:focus')).toHaveCount(1);
+    await waitForRendering(page);
     const dBox = await initialD.boundingBox();
     const tBox = await initialT.boundingBox();
 
