@@ -36,7 +36,7 @@
     overlayActive?: boolean;
   } = $props();
 
-  let feedbackContext = getFeedbackContext();
+  const feedbackContext = getFeedbackContext();
   // Route matching below is keyed by the unprefixed route, not the locale-prefixed browser URL.
   let pathname = $derived(deLocalizeHref(page.url.pathname));
   let toolbar = $derived(metadata.toolbar === "hidden" ? null : metadata.toolbar);

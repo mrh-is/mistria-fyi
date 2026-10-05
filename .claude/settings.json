@@ -1,5 +1,4 @@
 {
-  "model": "claude-sonnet-5",
   "permissions": {
     "allow": [
       "Bash(pnpm run lint *)",

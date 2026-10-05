@@ -10,8 +10,8 @@
   import { page } from "$app/state";
 
   import type { MergeCountKey } from "#lib/engine/merge-labels.js";
-  import type { ChildChoice, MergeConflict, MergeCounts } from "#lib/stores/user-state.svelte.js";
   import type { VillagerRelationship } from "#lib/types/tracker-data.js";
+  import type { ChildChoice, MergeConflict, MergeCounts } from "#lib/types/user-progress.js";
 
   let {
     conflicts = [],

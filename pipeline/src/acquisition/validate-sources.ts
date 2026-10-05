@@ -1,21 +1,30 @@
 import { getSourceProvenance } from "./source-accumulator.js";
 
 import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
+import type { QuestType, TrackerData } from "#lib/types/tracker-data.js";
+import type { VisibilityCondition } from "#lib/types/visibility.js";
 
 import type { AcquisitionReferenceIndex, AcquisitionReferenceKind } from "./reference-index.js";
 
-export interface AcquisitionSourceAssembly {
-  almanac?: Readonly<Record<string, { items?: readonly string[] }>>;
-  cosmetics: Readonly<Record<string, AcquisitionSourceEntity>>;
-  items: Readonly<Record<string, AcquisitionSourceEntity>>;
-  museum?: Readonly<
-    Record<string, { sets?: Readonly<Record<string, { items?: readonly string[] }>> }>
-  >;
-  quests?: Readonly<
-    Partial<Record<string, Readonly<Record<string, { itemId?: string; villager?: string }>>>>
-  >;
-  recipes: Readonly<Record<string, AcquisitionRecipeEntity>>;
-}
+/**
+ * The assembled tracker data the validator walks. It is the real `TrackerData` contract with no
+ * cast; every field is still checked at runtime because extraction and overrides are untyped.
+ */
+export type AcquisitionSourceAssembly = Pick<
+  TrackerData,
+  | "almanac"
+  | "animals"
+  | "categoryVisibility"
+  | "cosmetics"
+  | "items"
+  | "mines"
+  | "museum"
+  | "pets"
+  | "quests"
+  | "recipes"
+  | "stores"
+  | "villagers"
+>;
 
 export interface AcquisitionSourceDiagnostic {
   fieldPath: string;
@@ -33,14 +42,18 @@ export type AcquisitionSourceDiagnosticKind =
   | "recipe-cycle"
   | "unresolved-reference";
 
-interface AcquisitionRecipeEntity extends AcquisitionSourceEntity {
-  memberItemIds?: readonly string[];
-  presentations?: readonly { itemIds?: readonly string[] }[];
+/** Options for one collection of entities that carry `sources` and an optional `visibility`. */
+interface EntityCollectionOptions {
+  /** Emits `missing-source` when an entity has an empty `sources` array. */
+  missingSourceLabel?: string;
+  /** The registry each entity's own ID must resolve in. */
+  selfKind?: AcquisitionReferenceKind;
 }
 
-interface AcquisitionSourceEntity {
-  sources: readonly unknown[];
-}
+type QuestFieldRule =
+  | { type: "heartLevelChanges"; field: string; required: boolean }
+  | { type: "number"; field: string; required: boolean }
+  | { type: "reference"; field: string; kind: AcquisitionReferenceKind; required: boolean };
 
 const DIAGNOSTIC_ORDER: Record<AcquisitionSourceDiagnosticKind, number> = {
   "excluded-id-reference": 3,
@@ -68,6 +81,41 @@ const AVAILABILITY_FIELDS = {
   time: ["end", "start"],
   weather: ["weathers"],
 } as const satisfies Record<AvailabilityCondition["type"], readonly string[]>;
+
+const VISIBILITY_FIELDS = {
+  always: [],
+  and: ["conditions"],
+  hasUpperFloor: [],
+  heartLevel: ["level", "villagerId"],
+  isDating: [],
+  married: ["villagerId"],
+  minesLevel: ["floor"],
+  or: ["conditions"],
+  perkUnlocked: ["perkId"],
+  questAvailable: ["questId"],
+  questCompleted: ["questId"],
+  reachedSeason: ["season"],
+  renownLevel: ["level"],
+  skillLevel: ["level", "skillId"],
+  villagerKnown: ["villagerId"],
+} as const satisfies Record<VisibilityCondition["type"], readonly string[]>;
+
+/** Per-quest-type fields beyond `sources` & `visibility`, mirroring `QuestTypeMap`. */
+const QUEST_FIELDS = {
+  cooking: [{ type: "reference", field: "recipeId", kind: "recipe", required: true }],
+  crown: [],
+  fetch: [
+    { type: "reference", field: "itemId", kind: "item", required: true },
+    { type: "reference", field: "rewardRecipeId", kind: "recipe", required: false },
+    { type: "reference", field: "villager", kind: "villager", required: true },
+  ],
+  heart: [
+    { type: "number", field: "heartLevel", required: true },
+    { type: "reference", field: "villager", kind: "villager", required: true },
+  ],
+  mission: [],
+  story: [{ type: "heartLevelChanges", field: "heartLevelChanges", required: false }],
+} as const satisfies Record<QuestType, readonly QuestFieldRule[]>;
 
 const SEASONS = new Set(["fall", "spring", "summer", "winter"]);
 const WEATHERS = new Set(["calm", "heavy_inclement", "inclement", "special"]);
@@ -151,12 +199,30 @@ export function validateAcquisitionSources(
   references: AcquisitionReferenceIndex,
 ): void {
   const diagnostics: AcquisitionSourceDiagnostic[] = [];
+  const data = trackerData as Readonly<Record<keyof AcquisitionSourceAssembly, unknown>>;
 
-  validateEntities("cosmetic", trackerData.cosmetics, references, diagnostics);
-  validateEntities("item", trackerData.items, references, diagnostics);
-  validateEntities("recipe", trackerData.recipes, references, diagnostics);
-  validateAssemblyReferences(trackerData, references, diagnostics);
-  validateRecipeCycles(trackerData.recipes, diagnostics);
+  validateEntities("cosmetics", data.cosmetics, references, diagnostics, {
+    missingSourceLabel: "Cosmetic",
+    selfKind: "cosmetic",
+  });
+  validateEntities("items", data.items, references, diagnostics, {
+    missingSourceLabel: "Item",
+    selfKind: "item",
+  });
+  validateEntities("recipes", data.recipes, references, diagnostics, {
+    missingSourceLabel: "Recipe",
+    selfKind: "recipe",
+  });
+  validateAnimals(data.animals, references, diagnostics);
+  validatePets(data.pets, references, diagnostics);
+  validateSpells(data.mines, references, diagnostics);
+  validateQuests(data.quests, references, diagnostics);
+  validateVisibilityOnly("stores", data.stores, references, diagnostics);
+  validateVisibilityOnly("villagers", data.villagers, references, diagnostics);
+  validateCategoryVisibility(data.categoryVisibility, references, diagnostics);
+  validateAlmanac(data.almanac, references, diagnostics);
+  validateMuseum(data.museum, references, diagnostics);
+  validateRecipeCycles(data.recipes, diagnostics);
 
   diagnostics.sort(compareDiagnostics);
   if (diagnostics.length > 0) throw new AcquisitionSourceValidationError(diagnostics);
@@ -364,7 +430,16 @@ function reference(
   fieldPath: string,
   source?: object,
 ): void {
-  if (typeof id !== "string") return;
+  if (typeof id !== "string") {
+    malformed(
+      diagnostics,
+      targetId,
+      fieldPath,
+      `Expected a string ${referenceLabel(kind)} ID`,
+      source,
+    );
+    return;
+  }
   const provenance = source ? getSourceProvenance(source, fieldPath) : undefined;
   if (references.isExcluded(kind, id)) {
     diagnostics.push({
@@ -422,7 +497,7 @@ function requireNumber(
   field: string,
   targetId: string,
   fieldPath: string,
-  source: object,
+  source: object | undefined,
   diagnostics: AcquisitionSourceDiagnostic[],
 ): boolean {
   if (isFiniteNumber(value[field])) return true;
@@ -435,7 +510,7 @@ function requireString(
   field: string,
   targetId: string,
   fieldPath: string,
-  source: object,
+  source: object | undefined,
   diagnostics: AcquisitionSourceDiagnostic[],
 ): boolean {
   if (typeof value[field] === "string") return true;
@@ -448,7 +523,7 @@ function requireStringArray(
   field: string,
   targetId: string,
   fieldPath: string,
-  source: object,
+  source: object | undefined,
   diagnostics: AcquisitionSourceDiagnostic[],
 ): string[] | undefined {
   const entries = getDenseJsonArrayValues(value[field]);
@@ -469,93 +544,6 @@ function requireStringArray(
   }
   malformed(diagnostics, targetId, `${fieldPath}.${field}`, "Expected an array of strings", source);
   return undefined;
-}
-
-function validateAssemblyReferences(
-  trackerData: AcquisitionSourceAssembly,
-  references: AcquisitionReferenceIndex,
-  diagnostics: AcquisitionSourceDiagnostic[],
-): void {
-  for (const [categoryId, category] of Object.entries(trackerData.almanac ?? {})) {
-    for (const itemId of [...(category.items ?? [])].toSorted()) {
-      reference(
-        diagnostics,
-        references,
-        "item",
-        itemId,
-        itemId,
-        `almanac.${categoryId}.items[${itemId}]`,
-      );
-    }
-  }
-  for (const [wingId, wing] of Object.entries(trackerData.museum ?? {})) {
-    for (const [setId, set] of Object.entries(wing.sets ?? {})) {
-      for (const [itemIndex, itemId] of (set.items ?? []).entries()) {
-        reference(
-          diagnostics,
-          references,
-          "item",
-          itemId,
-          itemId,
-          `museum.${wingId}.sets.${setId}.items[${itemIndex}]`,
-        );
-      }
-    }
-  }
-  for (const [recipeId, recipe] of Object.entries(trackerData.recipes).toSorted(([left], [right]) =>
-    left.localeCompare(right),
-  )) {
-    for (const [index, itemId] of (recipe.memberItemIds ?? []).entries()) {
-      reference(
-        diagnostics,
-        references,
-        "item",
-        itemId,
-        recipeId,
-        `recipes.${recipeId}.memberItemIds[${index}]`,
-      );
-    }
-    for (const [presentationIndex, presentation] of (recipe.presentations ?? []).entries()) {
-      for (const [itemIndex, itemId] of (presentation.itemIds ?? []).entries()) {
-        reference(
-          diagnostics,
-          references,
-          "item",
-          itemId,
-          recipeId,
-          `recipes.${recipeId}.presentations[${presentationIndex}].itemIds[${itemIndex}]`,
-        );
-      }
-    }
-  }
-  for (const [questType, questGroup] of Object.entries(trackerData.quests ?? {}).toSorted(
-    ([left], [right]) => left.localeCompare(right),
-  )) {
-    for (const [questId, quest] of Object.entries(questGroup ?? {}).toSorted(([left], [right]) =>
-      left.localeCompare(right),
-    )) {
-      if (quest.itemId) {
-        reference(
-          diagnostics,
-          references,
-          "item",
-          quest.itemId,
-          questId,
-          `quests.${questType}.${questId}.itemId`,
-        );
-      }
-      if (quest.villager) {
-        reference(
-          diagnostics,
-          references,
-          "villager",
-          quest.villager,
-          questId,
-          `quests.${questType}.${questId}.villager`,
-        );
-      }
-    }
-  }
 }
 
 function validateAvailability(
@@ -791,7 +779,7 @@ function validateAvailabilityPropertyShape(
   value: Record<string, unknown>,
   targetId: string,
   fieldPath: string,
-  source: object,
+  source: object | undefined,
   diagnostics: AcquisitionSourceDiagnostic[],
 ): boolean {
   let valid = true;
@@ -800,7 +788,7 @@ function validateAvailabilityPropertyShape(
       diagnostics,
       targetId,
       fieldPath,
-      "Expected an availability object without symbol properties",
+      "Expected a condition object without symbol properties",
       source,
     );
     valid = false;
@@ -847,8 +835,16 @@ function validateCommonSourceFields(
   if ("cost" in source) {
     validateCost(source.cost, targetId, `${fieldPath}.cost`, source, diagnostics);
   }
-  if ("visibility" in source && !isJsonValue(source.visibility, new Set())) {
-    malformed(diagnostics, targetId, `${fieldPath}.visibility`, "Expected a JSON value", source);
+  if ("visibility" in source) {
+    validateVisibility(
+      source.visibility,
+      targetId,
+      `${fieldPath}.visibility`,
+      source,
+      references,
+      diagnostics,
+      new Set(),
+    );
   }
 }
 
@@ -865,43 +861,45 @@ function validateCost(
 }
 
 function validateEntities(
-  kind: "cosmetic" | "item" | "recipe",
-  entities: Readonly<Record<string, AcquisitionSourceEntity>>,
+  collectionPath: string,
+  entities: unknown,
   references: AcquisitionReferenceIndex,
   diagnostics: AcquisitionSourceDiagnostic[],
+  options: EntityCollectionOptions = {},
 ): void {
-  const label = `${kind[0].toUpperCase()}${kind.slice(1)}`;
-  for (const [targetId, entity] of Object.entries(entities).toSorted(([left], [right]) =>
-    left.localeCompare(right),
-  )) {
-    reference(diagnostics, references, kind, targetId, targetId, `${kind}s.${targetId}`);
+  const record = requireRecord(entities, collectionPath, collectionPath, diagnostics);
+  if (!record) return;
+  for (const [targetId, entity] of sortedEntries(record)) {
+    const entityPath = `${collectionPath}.${targetId}`;
+    if (options.selfKind) {
+      reference(diagnostics, references, options.selfKind, targetId, targetId, entityPath);
+    }
+    if (!isRecord(entity)) {
+      malformed(diagnostics, targetId, entityPath, "Expected an entity object", undefined);
+      continue;
+    }
+    validateEntityVisibility(entity, targetId, entityPath, references, diagnostics);
     const entitySources = entity.sources;
     if (!Array.isArray(entitySources)) {
       malformed(
         diagnostics,
         targetId,
-        `${kind}s.${targetId}.sources`,
+        `${entityPath}.sources`,
         "Expected an array of acquisition sources",
         undefined,
       );
       continue;
     }
-    if (entitySources.length === 0) {
+    if (options.missingSourceLabel && entitySources.length === 0) {
       diagnostics.push({
-        fieldPath: `${kind}s.${targetId}.sources`,
+        fieldPath: `${entityPath}.sources`,
         kind: "missing-source",
-        message: `${label} "${targetId}" has no acquisition sources`,
+        message: `${options.missingSourceLabel} "${targetId}" has no acquisition sources`,
         targetId,
       });
     }
     for (const [index, source] of entitySources.entries()) {
-      validateSource(
-        source,
-        targetId,
-        `${kind}s.${targetId}.sources[${index}]`,
-        references,
-        diagnostics,
-      );
+      validateSource(source, targetId, `${entityPath}.sources[${index}]`, references, diagnostics);
     }
   }
 }
@@ -942,13 +940,12 @@ function validateReachedDay(
   }
 }
 
-function validateRecipeCycles(
-  recipes: Readonly<Record<string, AcquisitionRecipeEntity>>,
-  diagnostics: AcquisitionSourceDiagnostic[],
-): void {
+function validateRecipeCycles(recipes: unknown, diagnostics: AcquisitionSourceDiagnostic[]): void {
+  // Shape problems are reported by validateEntities; cycle detection only follows valid edges.
+  if (!isRecord(recipes)) return;
   const graph = new Map<string, string[]>();
   for (const [recipeId, recipe] of Object.entries(recipes)) {
-    const recipeSources = recipe.sources ?? [];
+    const recipeSources = isRecord(recipe) ? recipe.sources : undefined;
     const dependencies = (Array.isArray(recipeSources) ? recipeSources : [])
       .filter((source) => isRecord(source))
       .filter((source) => source.type === "recipe" && typeof source.recipeId === "string")
@@ -1291,5 +1288,426 @@ function validateVariantFields(
   }
   for (const field of requiredStrings) {
     requireString(source, field, targetId, fieldPath, source, diagnostics);
+  }
+}
+
+function requireRecord(
+  value: unknown,
+  targetId: string,
+  fieldPath: string,
+  diagnostics: AcquisitionSourceDiagnostic[],
+): Record<string, unknown> | undefined {
+  if (isRecord(value)) return value;
+  malformed(diagnostics, targetId, fieldPath, "Expected an object", undefined);
+  return undefined;
+}
+
+function sortedEntries(record: Record<string, unknown>): [string, unknown][] {
+  return Object.entries(record).toSorted(([left], [right]) => left.localeCompare(right));
+}
+
+/** Checks a required array of ID strings and resolves each one; non-strings are malformed. */
+function validateIdArray(
+  value: unknown,
+  kind: AcquisitionReferenceKind,
+  targetId: string,
+  fieldPath: string,
+  references: AcquisitionReferenceIndex,
+  diagnostics: AcquisitionSourceDiagnostic[],
+  { nonEmpty }: { nonEmpty: boolean },
+): void {
+  const entries = getDenseJsonArrayValues(value);
+  if (!entries) {
+    malformed(diagnostics, targetId, fieldPath, "Expected an array of IDs", undefined);
+    return;
+  }
+  if (nonEmpty && entries.length === 0) {
+    malformed(diagnostics, targetId, fieldPath, "Expected at least one ID", undefined);
+  }
+  for (const [index, id] of entries.entries()) {
+    reference(diagnostics, references, kind, id, targetId, `${fieldPath}[${index}]`);
+  }
+}
+
+function validateAlmanac(
+  almanac: unknown,
+  references: AcquisitionReferenceIndex,
+  diagnostics: AcquisitionSourceDiagnostic[],
+): void {
+  const categories = requireRecord(almanac, "almanac", "almanac", diagnostics);
+  if (!categories) return;
+  for (const [categoryId, category] of sortedEntries(categories)) {
+    const categoryPath = `almanac.${categoryId}`;
+    const categoryRecord = requireRecord(category, categoryId, categoryPath, diagnostics);
+    if (!categoryRecord) continue;
+    const entries = getDenseJsonArrayValues(categoryRecord.items);
+    if (!entries) {
+      malformed(
+        diagnostics,
+        categoryId,
+        `${categoryPath}.items`,
+        "Expected an array of almanac entries",
+        undefined,
+      );
+      continue;
+    }
+    for (const [index, entry] of entries.entries()) {
+      const entryPath = `${categoryPath}.items[${index}]`;
+      const entryRecord = requireRecord(entry, categoryId, entryPath, diagnostics);
+      if (!entryRecord) continue;
+      validateIdArray(
+        entryRecord.itemIds,
+        "item",
+        categoryId,
+        `${entryPath}.itemIds`,
+        references,
+        diagnostics,
+        { nonEmpty: true },
+      );
+      if ("recipeId" in entryRecord) {
+        reference(
+          diagnostics,
+          references,
+          "recipe",
+          entryRecord.recipeId,
+          categoryId,
+          `${entryPath}.recipeId`,
+        );
+      }
+    }
+  }
+}
+
+function validateAnimals(
+  animals: unknown,
+  references: AcquisitionReferenceIndex,
+  diagnostics: AcquisitionSourceDiagnostic[],
+): void {
+  const record = requireRecord(animals, "animals", "animals", diagnostics);
+  if (!record) return;
+  for (const [animalId, animal] of sortedEntries(record)) {
+    const animalPath = `animals.${animalId}`;
+    reference(diagnostics, references, "animal", animalId, animalId, animalPath);
+    const animalRecord = requireRecord(animal, animalId, animalPath, diagnostics);
+    if (!animalRecord) continue;
+    validateEntityVisibility(animalRecord, animalId, animalPath, references, diagnostics);
+    validateEntities(`${animalPath}.cosmetics`, animalRecord.cosmetics, references, diagnostics);
+  }
+}
+
+function validateCategoryVisibility(
+  categoryVisibility: unknown,
+  references: AcquisitionReferenceIndex,
+  diagnostics: AcquisitionSourceDiagnostic[],
+): void {
+  const record = requireRecord(
+    categoryVisibility,
+    "categoryVisibility",
+    "categoryVisibility",
+    diagnostics,
+  );
+  if (!record) return;
+  for (const [category, visibility] of sortedEntries(record)) {
+    validateVisibility(
+      visibility,
+      category,
+      `categoryVisibility.${category}`,
+      undefined,
+      references,
+      diagnostics,
+      new Set(),
+    );
+  }
+}
+
+function validateEntityVisibility(
+  entity: Record<string, unknown>,
+  targetId: string,
+  entityPath: string,
+  references: AcquisitionReferenceIndex,
+  diagnostics: AcquisitionSourceDiagnostic[],
+): void {
+  if (!("visibility" in entity)) return;
+  validateVisibility(
+    entity.visibility,
+    targetId,
+    `${entityPath}.visibility`,
+    undefined,
+    references,
+    diagnostics,
+    new Set(),
+  );
+}
+
+function validateMuseum(
+  museum: unknown,
+  references: AcquisitionReferenceIndex,
+  diagnostics: AcquisitionSourceDiagnostic[],
+): void {
+  const wings = requireRecord(museum, "museum", "museum", diagnostics);
+  if (!wings) return;
+  for (const [wingId, wing] of sortedEntries(wings)) {
+    const wingRecord = requireRecord(wing, wingId, `museum.${wingId}`, diagnostics);
+    if (!wingRecord) continue;
+    const sets = requireRecord(wingRecord.sets, wingId, `museum.${wingId}.sets`, diagnostics);
+    if (!sets) continue;
+    for (const [setId, set] of sortedEntries(sets)) {
+      const setPath = `museum.${wingId}.sets.${setId}`;
+      const setRecord = requireRecord(set, setId, setPath, diagnostics);
+      if (!setRecord) continue;
+      validateIdArray(setRecord.items, "item", setId, `${setPath}.items`, references, diagnostics, {
+        nonEmpty: true,
+      });
+    }
+  }
+}
+
+function validatePets(
+  pets: unknown,
+  references: AcquisitionReferenceIndex,
+  diagnostics: AcquisitionSourceDiagnostic[],
+): void {
+  const record = requireRecord(pets, "pets", "pets", diagnostics);
+  if (!record) return;
+  validateEntities("pets.cosmetics", record.cosmetics, references, diagnostics);
+  validateEntities("pets.skins", record.skins, references, diagnostics);
+}
+
+function validateQuestFields(
+  quest: Record<string, unknown>,
+  rules: readonly QuestFieldRule[],
+  questId: string,
+  questPath: string,
+  references: AcquisitionReferenceIndex,
+  diagnostics: AcquisitionSourceDiagnostic[],
+): void {
+  for (const rule of rules) {
+    const fieldPath = `${questPath}.${rule.field}`;
+    if (!(rule.field in quest)) {
+      if (rule.required) malformed(diagnostics, questId, fieldPath, "Expected a value", undefined);
+      continue;
+    }
+    const value = quest[rule.field];
+    switch (rule.type) {
+      case "heartLevelChanges": {
+        const changes = getDenseJsonArrayValues(value);
+        if (!changes) {
+          malformed(diagnostics, questId, fieldPath, "Expected an array of changes", undefined);
+          break;
+        }
+        for (const [index, change] of changes.entries()) {
+          const changePath = `${fieldPath}[${index}]`;
+          const changeRecord = requireRecord(change, questId, changePath, diagnostics);
+          if (!changeRecord) continue;
+          requireNumber(changeRecord, "level", questId, changePath, undefined, diagnostics);
+          reference(
+            diagnostics,
+            references,
+            "villager",
+            changeRecord.villagerId,
+            questId,
+            `${changePath}.villagerId`,
+          );
+        }
+        break;
+      }
+      case "number":
+        requireNumber(quest, rule.field, questId, questPath, undefined, diagnostics);
+        break;
+      case "reference":
+        reference(diagnostics, references, rule.kind, value, questId, fieldPath);
+        break;
+    }
+  }
+}
+
+function validateQuests(
+  quests: unknown,
+  references: AcquisitionReferenceIndex,
+  diagnostics: AcquisitionSourceDiagnostic[],
+): void {
+  const groups = requireRecord(quests, "quests", "quests", diagnostics);
+  if (!groups) return;
+  for (const [questType, group] of sortedEntries(groups)) {
+    const groupPath = `quests.${questType}`;
+    if (!Object.hasOwn(QUEST_FIELDS, questType)) {
+      malformed(diagnostics, questType, groupPath, "Expected a known quest type", undefined);
+      continue;
+    }
+    validateEntities(groupPath, group, references, diagnostics, { selfKind: "quest" });
+    const questRecords = isRecord(group) ? group : {};
+    for (const [questId, quest] of sortedEntries(questRecords)) {
+      if (!isRecord(quest)) continue;
+      validateQuestFields(
+        quest,
+        QUEST_FIELDS[questType as QuestType],
+        questId,
+        `${groupPath}.${questId}`,
+        references,
+        diagnostics,
+      );
+    }
+  }
+}
+
+function validateSpells(
+  mines: unknown,
+  references: AcquisitionReferenceIndex,
+  diagnostics: AcquisitionSourceDiagnostic[],
+): void {
+  const record = requireRecord(mines, "mines", "mines", diagnostics);
+  if (!record) return;
+  validateEntities("mines.spells", record.spells, references, diagnostics);
+}
+
+function validateVisibility(
+  value: unknown,
+  targetId: string,
+  fieldPath: string,
+  source: object | undefined,
+  references: AcquisitionReferenceIndex,
+  diagnostics: AcquisitionSourceDiagnostic[],
+  active: Set<object>,
+): void {
+  if (!isRecord(value)) {
+    malformed(diagnostics, targetId, fieldPath, "Expected a visibility condition object", source);
+    return;
+  }
+  if (active.has(value)) {
+    malformed(diagnostics, targetId, fieldPath, "Expected an acyclic visibility tree", source);
+    return;
+  }
+  if (!validateAvailabilityPropertyShape(value, targetId, fieldPath, source, diagnostics)) return;
+  const type = value.type;
+  if (typeof type !== "string" || !Object.hasOwn(VISIBILITY_FIELDS, type)) {
+    malformed(
+      diagnostics,
+      targetId,
+      `${fieldPath}.type`,
+      "Expected a known visibility type",
+      source,
+    );
+    return;
+  }
+  const visibilityType = type as VisibilityCondition["type"];
+  const allowedFields = new Set<string>(["type", ...VISIBILITY_FIELDS[visibilityType]]);
+  for (const key of Object.getOwnPropertyNames(value)) {
+    if (!allowedFields.has(key)) {
+      malformed(
+        diagnostics,
+        targetId,
+        `${fieldPath}.${key}`,
+        `Unexpected field for ${type} visibility`,
+        source,
+      );
+    }
+  }
+
+  const visibilityReference = (field: string, kind: AcquisitionReferenceKind): void => {
+    if (requireString(value, field, targetId, fieldPath, source, diagnostics)) {
+      reference(
+        diagnostics,
+        references,
+        kind,
+        value[field],
+        targetId,
+        `${fieldPath}.${field}`,
+        source,
+      );
+    }
+  };
+
+  active.add(value);
+  try {
+    switch (visibilityType) {
+      case "always":
+      case "hasUpperFloor":
+      case "isDating":
+        return;
+      case "and":
+      case "or": {
+        const conditions = getDenseJsonArrayValues(value.conditions);
+        if (!conditions || conditions.length === 0) {
+          malformed(
+            diagnostics,
+            targetId,
+            `${fieldPath}.conditions`,
+            "Expected a non-empty array of visibility conditions",
+            source,
+          );
+          return;
+        }
+        for (const [index, condition] of conditions.entries()) {
+          validateVisibility(
+            condition,
+            targetId,
+            `${fieldPath}.conditions[${index}]`,
+            source,
+            references,
+            diagnostics,
+            active,
+          );
+        }
+        return;
+      }
+      case "heartLevel":
+        requireNumber(value, "level", targetId, fieldPath, source, diagnostics);
+        visibilityReference("villagerId", "villager");
+        return;
+      case "married":
+      case "villagerKnown":
+        visibilityReference("villagerId", "villager");
+        return;
+      case "minesLevel":
+        requireNumber(value, "floor", targetId, fieldPath, source, diagnostics);
+        return;
+      case "perkUnlocked":
+        visibilityReference("perkId", "perk");
+        return;
+      case "questAvailable":
+      case "questCompleted":
+        visibilityReference("questId", "quest");
+        return;
+      case "reachedSeason":
+        if (
+          requireString(value, "season", targetId, fieldPath, source, diagnostics) &&
+          !SEASONS.has(value.season as string)
+        ) {
+          malformed(
+            diagnostics,
+            targetId,
+            `${fieldPath}.season`,
+            `Unknown season "${value.season as string}"`,
+            source,
+          );
+        }
+        return;
+      case "renownLevel":
+        requireNumber(value, "level", targetId, fieldPath, source, diagnostics);
+        return;
+      case "skillLevel":
+        requireNumber(value, "level", targetId, fieldPath, source, diagnostics);
+        visibilityReference("skillId", "skill");
+    }
+  } finally {
+    active.delete(value);
+  }
+}
+
+/** Validates the `visibility` of entities that carry no acquisition sources. */
+function validateVisibilityOnly(
+  collectionPath: string,
+  entities: unknown,
+  references: AcquisitionReferenceIndex,
+  diagnostics: AcquisitionSourceDiagnostic[],
+): void {
+  const record = requireRecord(entities, collectionPath, collectionPath, diagnostics);
+  if (!record) return;
+  for (const [entityId, entity] of sortedEntries(record)) {
+    const entityPath = `${collectionPath}.${entityId}`;
+    const entityRecord = requireRecord(entity, entityId, entityPath, diagnostics);
+    if (entityRecord) {
+      validateEntityVisibility(entityRecord, entityId, entityPath, references, diagnostics);
+    }
   }
 }

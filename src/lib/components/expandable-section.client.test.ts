@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from "@testing-library/svelte";
+import { fireEvent, render, waitFor, within } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { describe, expect, it } from "vitest";
 
@@ -153,5 +153,15 @@ describe("ExpandableSection", () => {
       setTimeout(resolve, 50);
     });
     expect(feedbackContext.registrations.size).toBe(0);
+  });
+
+  it("wraps the disclosure button in the heading instead of nesting a heading inside it", () => {
+    const feedbackContext = new FeedbackContext();
+    const view = render(ExpandableSectionHarness, { feedbackContext, name: "Spells" });
+
+    const heading = view.getByRole("heading", { level: 2 });
+    expect(heading).toHaveTextContent("Spells");
+    expect(within(heading).getByRole("button", { name: "Spells" })).toBeInTheDocument();
+    expect(view.getByRole("button", { name: "Spells" }).querySelector("h2, h3")).toBeNull();
   });
 });

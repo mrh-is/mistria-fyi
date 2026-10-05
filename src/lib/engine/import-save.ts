@@ -12,12 +12,6 @@ import { isSaveSection } from "./save-bundle.js";
 
 import type { LevelIssue } from "#lib/engine/progress.js";
 import type {
-  CompletedState,
-  MergeCounts,
-  MergeResult,
-  QuestState,
-} from "#lib/stores/user-state.svelte.js";
-import type {
   AnimalVariantId,
   CosmeticId,
   ItemId,
@@ -30,6 +24,12 @@ import type {
   VillagerId,
   VillagerRelationship,
 } from "#lib/types/tracker-data.js";
+import type {
+  CompletedState,
+  MergeCounts,
+  MergeResult,
+  QuestState,
+} from "#lib/types/user-progress.js";
 
 import type { SaveBundle, SaveSection } from "./save-bundle.js";
 

@@ -2,6 +2,11 @@ export interface AcquisitionReferenceIndexInput {
   emitted?: AcquisitionReferenceRegistries;
   excluded?: AcquisitionReferenceRegistries;
   native?: AcquisitionReferenceRegistries;
+  /**
+   * Reviewed IDs that no parsed table defines. Each must be absent from `emitted` & `native`; an
+   * entry the game now defines is obsolete and throws, like an obsolete reviewed override.
+   */
+  reviewed?: AcquisitionReferenceRegistries;
 }
 
 export type AcquisitionReferenceKind =
@@ -87,6 +92,21 @@ export class AcquisitionReferenceIndex {
   constructor(input: AcquisitionReferenceIndexInput = {}) {
     addRegistries(input.emitted, this.#references);
     addRegistries(input.native, this.#references);
+    const reviewed = emptyReferenceSets();
+    addRegistries(input.reviewed, reviewed);
+    for (const [kind, ids] of Object.entries(reviewed) as [
+      AcquisitionReferenceKind,
+      Set<string>,
+    ][]) {
+      for (const id of ids) {
+        if (this.#references[kind].has(id)) {
+          throw new Error(
+            `Obsolete reviewed reference: ${kind} ID "${id}" is now defined by game data`,
+          );
+        }
+        this.#references[kind].add(id);
+      }
+    }
     addRegistries(input.excluded, this.#excluded);
   }
 

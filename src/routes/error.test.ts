@@ -1,5 +1,6 @@
-import { render } from "svelte/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 import ErrorPage from "./+error.svelte";
 
@@ -24,22 +25,21 @@ beforeEach(() => {
 
 describe("error page", () => {
   it("renders a friendly 404 page with a link home", () => {
-    const { body } = render(ErrorPage, { props: {} });
+    const { queries, text } = renderToFragment(ErrorPage, { props: {} });
 
-    expect(body).toContain(">404</span>");
-    expect(body).toContain("This page doesn't exist");
-    expect(body).toContain("tend the fields");
-    expect(body).toContain('href="/en"');
-    expect(body).toContain("Back to home");
+    expect(queries.getByText("404")).toBeTruthy();
+    expect(text).toContain("This page doesn't exist");
+    expect(text).toContain("tend the fields");
+    expect(queries.getByRole("link", { name: "Back to home" }).getAttribute("href")).toBe("/en");
   });
 
   it("renders the generic message for non-404 errors", () => {
     appState.status = 500;
 
-    const { body } = render(ErrorPage, { props: {} });
+    const { queries, text } = renderToFragment(ErrorPage, { props: {} });
 
-    expect(body).toContain(">500</span>");
-    expect(body).toContain("Something went wrong.");
-    expect(body).not.toContain("tend the fields");
+    expect(queries.getByText("500")).toBeTruthy();
+    expect(text).toContain("Something went wrong.");
+    expect(text).not.toContain("tend the fields");
   });
 });
