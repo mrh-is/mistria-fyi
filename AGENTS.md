@@ -25,15 +25,19 @@ session-assigned branch works directly in that checkout. It must not create a ne
 replace the assigned branch. This exception applies only when the platform guarantees isolation for
 that session; local and shared checkouts still require worktrees.
 
+Harness-created worktrees and branches (such as Claude Code’s `.claude/worktrees/` with
+`claude/issue-<number>-<suffix>` branches, or Codex’s `codex/…` branches) are equally acceptable.
+
 Create and set up a worktree with one command:
 
 ```sh
 pnpm run worktree:new <issue-number>-<short-description>
 ```
 
-This creates `.worktrees/<slug>` on a matching branch, symlinks the `.worktreeinclude` entries in
-from the main checkout, and runs `pnpm install --frozen-lockfile` and `pnpm run prepare`. It never
-copies dependencies, caches, build artifacts, or other writable generated directories. See
+This creates `.worktrees/<slug>` on a matching branch (`<issue-number>-<short-description>`),
+symlinks the `.worktreeinclude` entries in from the main checkout, and runs
+`pnpm install --frozen-lockfile` and `pnpm run prepare`. It never copies dependencies, caches, build
+artifacts, or other writable generated directories. See
 [docs/development-workflow.md §2](docs/development-workflow.md#2-git-worktree-mechanics--workspace-isolation)
 for the manual steps and troubleshooting.
 
@@ -140,6 +144,7 @@ it. Wrangler may need access to Cloudflare's API and to its credentials under
 | Command                       | Purpose                                     |
 | ----------------------------- | ------------------------------------------- |
 | `pnpm run dev`                | Dev server                                  |
+| `pnpm run preview`            | Preview the production build locally        |
 | `pnpm run build`              | Production build (Cloudflare Pages)         |
 | `pnpm run check`              | SvelteKit type checking                     |
 | `pnpm run check:i18n`         | Verify locale files match `en.json`'s keys  |
@@ -150,6 +155,7 @@ it. Wrangler may need access to Cloudflare's API and to its credentials under
 | `pnpm run test:changed`       | Vitest tests affected by branch changes     |
 | `pnpm run test:app`           | App tests (`src/`)                          |
 | `pnpm run test:pipeline`      | Pipeline tests (`pipeline/`)                |
+| `pnpm run test:accessibility` | Browser accessibility matrix (Playwright)   |
 | `pnpm run verify`             | Full CI matrix locally (see §7 exceptions)  |
 | `pnpm run pipeline -- <path>` | Regenerate `tracker-data.json` from assets  |
 
@@ -171,11 +177,12 @@ These rules prevent accidental damage to generated or vendored code:
 - **Componentize along logical lines.** Break complex components into sub-components that each own
   one concern (a checkbox, a sprite slot, a source card), even when they have only one call site.
   The goal is reasoning clarity, not reuse.
-- **`docs/superpowers/plans/` and `docs/superpowers/specs/`** are historical artifacts, dated
-  records of what was planned and designed at the time. Do not edit them to reflect later renames,
-  refactors, or reversals — a later change (e.g. a rename of `npcs` to `villagers`) should not touch
-  their prose even though it makes older identifiers there stale. Update current reference docs
-  (`docs/*.md` outside `superpowers/`) instead.
+- **`docs/superpowers/`** (`plans/`, `specs/`, & `notes/`) holds historical artifacts, dated records
+  of what was planned, designed, or observed at the time. The root `.ignore` hides it from
+  ripgrep-based search; read a file there only when a task names it. Do not edit them to reflect
+  later renames, refactors, or reversals — a later change (e.g. a rename of `npcs` to `villagers`)
+  should not touch their prose even though it makes older identifiers there stale. Update current
+  reference docs (`docs/*.md` outside `superpowers/`) instead.
 
 ## 6. Code style
 
