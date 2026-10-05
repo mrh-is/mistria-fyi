@@ -201,16 +201,19 @@ be stale. A stale behind ref is conservative because it includes extra changed f
 `pnpm run test` remains the authoritative local fallback and the command CI runs. Pass another
 comparison ref when needed, for example `pnpm run test:changed -- main`.
 
-| Project  | Files                                                 | Environment & setup                                         |
-| -------- | ----------------------------------------------------- | ----------------------------------------------------------- |
-| `app`    | `src/**/*.test.ts`                                    | Node, SvelteKit stand-ins & preloaded names, shared modules |
-| `mocked` | The few `src/` files listed in `isolatedTests`        | Node, isolated per file, no names preload                   |
-| `client` | `src/**/*.client.test.ts`                             | happy-dom & Testing Library                                 |
-| `node`   | `*.test.ts` under `pipeline/`, `scripts/`, & `tests/` | Plain Node, shared modules                                  |
-| `assets` | `**/*.assets.test.ts`                                 | Installed game assets; local only, excluded from `test`     |
+| Project  | Files                                                 | Environment & setup                                            |
+| -------- | ----------------------------------------------------- | -------------------------------------------------------------- |
+| `app`    | `src/**/*.test.ts`                                    | Node, SvelteKit stand-ins & preloaded names, isolated per file |
+| `mocked` | `src/**/*.cold.test.ts`                               | Node, isolated per file, no names preload                      |
+| `client` | `src/**/*.client.test.ts`                             | happy-dom & Testing Library                                    |
+| `node`   | `*.test.ts` under `pipeline/`, `scripts/`, & `tests/` | Plain Node, isolated per file                                  |
+| `assets` | `**/*.assets.test.ts`                                 | Installed game assets; local only, excluded from `test`        |
 
-A new tier gets its own project rather than another entry in an exclude list. A test that needs
-per-file module isolation (for example, `vi.mock()` of a shared package) goes in `isolatedTests`.
+Every project isolates files and restores spies & stubbed globals before each test. Set up spies and
+`vi.stubGlobal()` in the test or `beforeEach`, rather than relying on suite-level stubs. A new tier
+gets its own project rather than another entry in an exclude list. Tests that need an unloaded names
+cache use the `*.cold.test.ts` convention and run in `mocked` without preloads; ordinary `vi.mock()`
+tests remain in `app`.
 
 ### Local real-data verification
 
