@@ -1,0 +1,48 @@
+name: Guarded paths
+
+# Vendored & generated files change only in PRs that say so: `shadcn-update` for
+# src/lib/components/ui/, `generated-data` for src/lib/data/tracker-data.json (AGENTS.md §5).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  guarded-paths:
+    name: Guarded paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          files=$(gh api --paginate "repos/$REPOSITORY/pulls/$PR_NUMBER/files" --jq '.[].filename')
+          failed=0
+          require() {
+            case ",$LABELS," in
+              *",$1,"*) ;;
+              *)
+                echo "::error::$2 changed without the \"$1\" label."
+                failed=1
+                ;;
+            esac
+          }
+          if grep -q '^src/lib/components/ui/' <<< "$files"; then
+            require shadcn-update "Vendored shadcn-svelte code under src/lib/components/ui/"
+          fi
+          if grep -qx 'src/lib/data/tracker-data.json' <<< "$files"; then
+            require generated-data "Generated src/lib/data/tracker-data.json"
+          fi
+          exit "$failed"
