@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { page } from "$app/state";
   import { getName } from "#lib/data/names.js";
   import {
     formatMergeCount,
@@ -8,6 +7,7 @@
   } from "#lib/engine/merge-labels.js";
   import * as m from "#lib/paraglide/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
+  import { page } from "$app/state";
 
   import type { MergeCountKey } from "#lib/engine/merge-labels.js";
   import type { ChildChoice, MergeConflict, MergeCounts } from "#lib/stores/user-state.svelte.js";

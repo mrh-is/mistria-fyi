@@ -9,9 +9,9 @@
 
   import type { Snippet } from "svelte";
 
-  import type { Path } from "$app/types";
   import type { CategoryKey } from "#lib/data/categories.js";
   import type { CategoryProgress } from "#lib/engine/progress.js";
+  import type { Path } from "$app/types";
 
   let {
     backHref = "",
@@ -22,7 +22,7 @@
     progress,
     ref = $bindable<HTMLElement | undefined>(undefined),
     title,
-  }: { 
+  }: {
     backHref?: Path;
     backLabel?: string;
     category?: CategoryKey;
@@ -33,9 +33,11 @@
     title: string;
   } = $props();
 
-  const pct = $derived(progress !== undefined && progress.total > 0
-    ? Math.round(progress.completed / progress.total * 100)
-    : undefined);
+  const pct = $derived(
+    progress !== undefined && progress.total > 0
+      ? Math.round((progress.completed / progress.total) * 100)
+      : undefined,
+  );
 </script>
 
 <header
@@ -75,11 +77,9 @@
     </span>
   {/if}
   {#if category !== undefined}
-    <span
-      class="page-header__ribbon"
-      data-page-header-ribbon
-      aria-hidden="true"
-    ><Icon.Category category={category} class="page-header__icon" /></span>
+    <span class="page-header__ribbon" data-page-header-ribbon aria-hidden="true"
+      ><Icon.Category {category} class="page-header__icon" /></span
+    >
 
     <span class="page-header__edge-mask" aria-hidden="true"></span>
     <span class="page-header__progress" aria-hidden="true"><i></i></span>

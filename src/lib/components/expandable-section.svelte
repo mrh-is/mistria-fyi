@@ -3,12 +3,12 @@
   import { prefersReducedMotion } from "svelte/motion";
   import { slide } from "svelte/transition";
 
-  import { page } from "$app/state";
   import { Icon } from "#lib/components/icon/index.js";
   import { getFeedbackContextOrFallback } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { getLocale } from "#lib/paraglide/runtime.js";
   import { formatNumber } from "#lib/utils/format.js";
+  import { page } from "$app/state";
 
   import type { Snippet } from "svelte";
 

@@ -9,8 +9,7 @@
   import { showUndoToast } from "#lib/utils/undo-toast.js";
 
   import TrackerRowStack from "./tracker-row-stack.svelte";
-  import TrackerRow from './tracker-row.svelte';
-import type { TrackerRowDisplay } from './tracker-row.svelte';
+  import TrackerRow from "./tracker-row.svelte";
 
   import type { AnimalId, AnyId } from "#lib/types/tracker-data.js";
 
@@ -18,6 +17,7 @@ import type { TrackerRowDisplay } from './tracker-row.svelte';
     AnimalSubcategoryProps,
     AnimalSubcategoryRowProps,
   } from "./animal-subcategory.types.js";
+  import type { TrackerRowDisplay } from "./tracker-row.svelte";
 
   function rowDisplay(row: AnimalSubcategoryRowProps<ItemId>): TrackerRowDisplay {
     if (row.completed) return { mode: "completed" };

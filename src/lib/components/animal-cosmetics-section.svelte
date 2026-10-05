@@ -27,12 +27,11 @@
     if (isSpeciesVisible(animalId)) {
       return cosmeticIds.some((cid) => isCosmeticVisible(animalId, cid));
     }
-      return cosmeticIds.some((cosmeticId) =>
-        toolbarState.matchesSourceFilters(
-          trackerData.animals[animalId].cosmetics[cosmeticId].sources,
-        ),
-      );
-    
+    return cosmeticIds.some((cosmeticId) =>
+      toolbarState.matchesSourceFilters(
+        trackerData.animals[animalId].cosmetics[cosmeticId].sources,
+      ),
+    );
   }
 
   function isCosmeticVisible(animalId: AnimalId, cosmeticId: CosmeticId): boolean {

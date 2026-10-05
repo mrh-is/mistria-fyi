@@ -9,7 +9,6 @@
   import { prefersReducedMotion } from "svelte/motion";
   import { fly, slide } from "svelte/transition";
 
-  import { version } from '$app/env';
   import FeedbackPicker from "#lib/components/feedback-picker.svelte";
   import FoldoutPanel from "#lib/components/foldout-panel.svelte";
   import { Checkbox } from "#lib/components/ui/checkbox/index.js";
@@ -17,6 +16,7 @@
   import { FeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { version } from "$app/env";
 
   import type { ReportableElement } from "#lib/feedback/types.js";
 
@@ -81,7 +81,12 @@
     wantsReply && emailTouched && (email.trim() === "" || !EMAIL_PATTERN.test(email.trim())),
   );
   let emailMissing = $derived(wantsReply && emailTouched && email.trim() === "");
-  let canSubmit = $derived(message.trim() && !submitting && turnstileReady && (!wantsReply || email.trim() !== "" && EMAIL_PATTERN.test(email.trim())));
+  let canSubmit = $derived(
+    message.trim() &&
+      !submitting &&
+      turnstileReady &&
+      (!wantsReply || (email.trim() !== "" && EMAIL_PATTERN.test(email.trim()))),
+  );
   let submitShake = $state(false);
 
   $effect(() => {
@@ -143,8 +148,8 @@
     return new Promise((resolve, reject) => {
       let timedOut = false;
       const timer = setTimeout(() => {
-          timedOut = true;
-          reject(new Error("Turnstile script load timeout"));
+        timedOut = true;
+        reject(new Error("Turnstile script load timeout"));
       }, TURNSTILE_SCRIPT_TIMEOUT_MS);
 
       function waitForGlobal() {
@@ -297,9 +302,7 @@
     }
     if (!visible || event.key !== "Tab") return;
 
-    const focusable = [
-      ...dialogElement?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? []
-    ];
+    const focusable = [...(dialogElement?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? [])];
 
     const first = focusable.at(0);
     const last = focusable.at(-1);
@@ -332,7 +335,7 @@
     const controller = new AbortController();
     activeController = controller;
     const timeout = setTimeout(() => {
-        controller.abort();
+      controller.abort();
     }, CLIENT_TIMEOUT_MS);
 
     try {
@@ -366,13 +369,13 @@
       if (generation !== submitGeneration) return;
 
       if (!response.ok) {
-        const data = await response.json().catch(() => null) as null | { message?: string };
+        const data = (await response.json().catch(() => null)) as null | { message?: string };
         submitError = data?.message ?? m.feedback_error_generic();
         resetTurnstileWidget();
         return;
       }
 
-      const data = await response.json() as { emailSaved?: boolean; issueUrl: string };
+      const data = (await response.json()) as { emailSaved?: boolean; issueUrl: string };
 
       message = "";
       email = "";
@@ -454,12 +457,9 @@
   }
 </script>
 
-<svelte:window onkeydown={handleKeydown}></svelte:window>
+<svelte:window onkeydown={handleKeydown} />
 
-<FeedbackPicker
-  active={pickerActive}
-  feedbackContext={feedbackContext}
-/>
+<FeedbackPicker active={pickerActive} {feedbackContext} />
 
 {#if visible}
   <button
@@ -481,12 +481,7 @@
     style={accent === undefined ? undefined : `--primary: ${accent}; --ring: ${accent};`}
     in:fly={{ duration: prefersReducedMotion.current ? 0 : 150, y: 8 }}
   >
-    <FoldoutPanel
-      id="feedback-panel"
-      title={m.toolbar_send_feedback()}
-      dialog={false}
-      onclose={onclose}
-    >
+    <FoldoutPanel id="feedback-panel" title={m.toolbar_send_feedback()} dialog={false} {onclose}>
       <div class="feedback-form">
         <div>
           <textarea
@@ -673,18 +668,16 @@
               <IconPointer class="size-3.5 shrink-0" />
               <span class="min-w-0 flex-1 truncate">{selectedElement.displayName}</span>
 
-              <button
-                bind:this={pickerButton}
-                type="button"
-                onclick={startPicking}
-              >{m.feedback_change_selection()}</button>
+              <button bind:this={pickerButton} type="button" onclick={startPicking}
+                >{m.feedback_change_selection()}</button
+              >
 
               <button
                 class="feedback-form__clear"
                 type="button"
                 aria-label={m.feedback_clear_selection_aria()}
-                onclick={() => selectedElement = undefined}
-              ><IconX class="size-3" /></button>
+                onclick={() => (selectedElement = undefined)}><IconX class="size-3" /></button
+              >
             </div>
           {:else if pickerAvailable}
             <button

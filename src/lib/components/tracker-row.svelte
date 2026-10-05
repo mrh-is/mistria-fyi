@@ -1,7 +1,6 @@
 <script lang="ts">
   import { prefersReducedMotion } from "svelte/motion";
 
-  import { page } from "$app/state";
   import SourcePaper from "#lib/components/source-paper.svelte";
   import Spoiler from "#lib/components/spoiler.svelte";
   import SpriteSlot from "#lib/components/sprite-slot.svelte";
@@ -11,6 +10,7 @@
   import { getFeedbackContextOrFallback } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { buildSourceSegments } from "#lib/utils/source-segments.js";
+  import { page } from "$app/state";
 
   import type { SpriteSlotState } from "#lib/components/sprite-slot.svelte";
   import type { CheckboxState } from "#lib/components/tracker-checkbox.svelte";

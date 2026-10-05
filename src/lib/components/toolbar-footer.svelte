@@ -8,7 +8,6 @@
   import { prefersReducedMotion } from "svelte/motion";
   import { fade, fly } from "svelte/transition";
 
-  import { page } from "$app/state";
   import FeedbackPanel from "#lib/components/feedback-panel.svelte";
   import FoldoutPanel from "#lib/components/foldout-panel.svelte";
   import QuickSettingsPanel from "#lib/components/quick-settings-panel.svelte";
@@ -21,6 +20,7 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
+  import { page } from "$app/state";
 
   import type { PageMetadata } from "#lib/data/page-metadata.js";
 
