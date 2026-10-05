@@ -1,31 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import { makeCompletedState } from "#lib/test-utils/completed-state.js";
+
 import { getCategoryProgress } from "./progress.js";
 
 import type { CompletedState } from "#lib/types/user-progress.js";
 
 function completedAtRenown(renown: number): CompletedState {
-  return {
-    almanac: new Set(),
-    almanacRecipes: new Set(),
-    animalCosmetics: {},
-    animals: {},
-    childChoice: "undeclared",
-    cosmetics: new Set(),
-    dates: new Set(),
-    hasUpperFloor: false,
-    mines: { floor: 0, spells: new Set() },
-    museum: new Set(),
-    petCosmetics: new Set(),
-    petSkins: new Set(),
-    questStates: {},
-    reachedSeason: "spring",
-    renown,
-    skillLevels: {},
-    unlockedPerks: new Set(),
-    villagerLevels: {},
-    villagerRelationships: {},
-  };
+  return makeCompletedState({ renown });
 }
 
 describe("renown maximum", () => {

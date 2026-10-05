@@ -185,12 +185,18 @@ Tests sit next to the module they cover, so moving or deleting a module takes it
 - **Unit & module tests** are siblings: `foo.ts` → `foo.test.ts`. Do not create `__tests__/`
   directories or mirror the source tree elsewhere.
 - **Runtime or requirement variants** use a suffix, not a directory: `foo.client.test.ts` for
-  browser-only tests and `foo.assets.test.ts` for tests that need game assets. `vite.config.ts`
-  selects them by glob.
+  browser-only tests, `foo.cold.test.ts` for tests that need an unloaded names cache, and
+  `foo.assets.test.ts` for tests that need game assets. `vite.config.ts` selects them by glob.
 - **Large test files** split by suffix so they sort beside their source: `progress.test.ts` &
-  `progress.renown.test.ts`.
-- **Whole-app or repo-level suites** (accessibility, PWA, CI workflow checks) live in top-level
-  `tests/`, because they exercise the built app or the repository rather than one module.
+  `progress.renown.test.ts`. Two suffixes name a kind of check rather than a slice:
+  `.invariants.test.ts` asserts properties every record of a data set must hold (for example
+  `tracker-data.invariants.test.ts`), and `.completeness.test.ts` asserts that a data set has an
+  entry for every key it should (for example `names.completeness.test.ts`).
+- **Whole-app or repo-level suites** (accessibility, PWA, CI workflow checks, checks of
+  `src/app.css` or other non-module files) live in top-level `tests/`, because they exercise the
+  built app or the repository rather than one module.
+- **Shared test helpers** live in `src/lib/test-utils/`; reuse them rather than copying a local
+  builder or stub. [The testing inventory](testing-inventory.md#shared-helpers) lists them.
 
 The committed `.vscode/settings.json` nests each test under its source in the VS Code explorer, so
 colocated tests don’t double the length of directory listings.

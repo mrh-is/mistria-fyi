@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { memoryStorage as makeStorage } from "#lib/test-utils/memory-storage.js";
+
 interface TestWindow {
   addEventListener: (type: string, listener: EventListenerOrEventListenerObject) => void;
   dispatch: (
@@ -42,22 +44,6 @@ function failingStorage(data: Record<string, string>): Storage {
   return base;
 }
 
-function makeStorage(data: Record<string, string> = {}): Storage {
-  const store = new Map(Object.entries(data));
-  return {
-    clear: () => {
-      store.clear();
-    },
-    getItem: (key) => store.get(key) ?? null,
-    key: (index) => [...store.keys()][index] ?? null,
-    get length() {
-      return store.size;
-    },
-    removeItem: (key) => store.delete(key),
-    setItem: (key, value) => store.set(key, value),
-  };
-}
-
 function makeWindow(): TestWindow {
   const listeners = new Map<string, EventListener[]>();
   return {
@@ -93,26 +79,17 @@ function quarantineFailureStorage(data: Record<string, string>): Storage {
 }
 
 function transientReadFailureStorage(data: Record<string, string>): Storage {
-  const store = new Map(Object.entries(data));
+  const base = makeStorage(data);
+  const getItem = base.getItem.bind(base);
   let shouldFail = true;
-  return {
-    clear: () => {
-      store.clear();
-    },
-    getItem: (key) => {
-      if (shouldFail) {
-        shouldFail = false;
-        throw new DOMException("Access denied", "SecurityError");
-      }
-      return store.get(key) ?? null;
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    get length() {
-      return store.size;
-    },
-    removeItem: (key) => store.delete(key),
-    setItem: (key, value) => store.set(key, value),
+  base.getItem = (key) => {
+    if (shouldFail) {
+      shouldFail = false;
+      throw new DOMException("Access denied", "SecurityError");
+    }
+    return getItem(key);
   };
+  return base;
 }
 
 afterEach(() => {

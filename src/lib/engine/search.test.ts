@@ -3,55 +3,17 @@ import { describe, expect, it } from "vitest";
 import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { animalNameId, getName } from "#lib/data/names.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
-import { recordEntries, recordKeys } from "#lib/utils.js";
+import { makeCompletedState } from "#lib/test-utils/completed-state.js";
+import { recordEntries } from "#lib/utils.js";
 
 import { searchItems } from "./search.js";
 
-import type {
-  AnimalVariantId,
-  CosmeticId,
-  QuestId,
-  RecipeId,
-  Season,
-  Weather,
-} from "#lib/types/tracker-data.js";
+import type { QuestId, RecipeId, Season, Weather } from "#lib/types/tracker-data.js";
 import type { CompletedState } from "#lib/types/user-progress.js";
 
 import type { UserProgressionState } from "./visibility.js";
 
 // ─── Helpers ───────────────────────────────────────────────────────
-
-function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState {
-  const animals: Record<string, Set<AnimalVariantId>> = {};
-  const animalCosmetics: Record<string, Set<CosmeticId>> = {};
-  for (const animalId of recordKeys(trackerData.animals)) {
-    animals[animalId] = new Set();
-    animalCosmetics[animalId] = new Set();
-  }
-
-  return {
-    almanac: new Set(),
-    almanacRecipes: new Set(),
-    animalCosmetics,
-    animals,
-    childChoice: "undeclared",
-    cosmetics: new Set(),
-    dates: new Set(),
-    hasUpperFloor: false,
-    mines: { floor: 0, spells: new Set() },
-    museum: new Set(),
-    petCosmetics: new Set(),
-    petSkins: new Set(),
-    questStates: {},
-    reachedSeason: "spring",
-    renown: 0,
-    skillLevels: {},
-    unlockedPerks: new Set(),
-    villagerLevels: {},
-    villagerRelationships: {},
-    ...overrides,
-  };
-}
 
 const defaultWorld: { season: Season; weather: Weather } = {
   season: "spring",
@@ -114,7 +76,7 @@ function overlappingFixture() {
 function search(query: string, completed?: Partial<CompletedState>) {
   return searchItems(
     query,
-    makeCompleted(completed),
+    makeCompletedState(completed),
     defaultWorld,
     makeProgressionState({ showSpoilers: true }),
     "en",
@@ -179,7 +141,7 @@ describe("basic matching", () => {
     const englishFullName = `${getName("animals", animalNameId(animalId, "core"), "en")} ${getName("animals", animalNameId(animalId, "cosmetics", cosmeticId), "en")}`;
     const results = searchItems(
       englishFullName,
-      makeCompleted(),
+      makeCompletedState(),
       defaultWorld,
       makeProgressionState({ showSpoilers: true }),
       "ja",
@@ -197,7 +159,7 @@ describe("basic matching", () => {
     // single non-English query must surface localized names from two categories at once.
     const results = searchItems(
       "ベジタブルスープ",
-      makeCompleted(),
+      makeCompletedState(),
       defaultWorld,
       makeProgressionState({ showSpoilers: true }),
       "ja",
@@ -212,7 +174,7 @@ describe("basic matching", () => {
   it("matches the English fallback term while reporting the localized name", () => {
     const results = searchItems(
       "Vegetable Soup",
-      makeCompleted(),
+      makeCompletedState(),
       defaultWorld,
       makeProgressionState({ showSpoilers: true }),
       "ja",
@@ -291,7 +253,7 @@ describe("ranking before truncation", () => {
   it("includes later-category prefix matches even when earlier categories fill the cap", () => {
     const results = searchItems(
       "a",
-      makeCompleted(),
+      makeCompletedState(),
       defaultWorld,
       makeProgressionState({ showSpoilers: true }),
       "en",
@@ -346,7 +308,7 @@ describe("ranking before truncation", () => {
   it("collects candidates from all categories before truncating to cap", () => {
     const results = searchItems(
       "e",
-      makeCompleted(),
+      makeCompletedState(),
       defaultWorld,
       makeProgressionState({ showSpoilers: true }),
       "en",
@@ -368,7 +330,7 @@ describe("cross-category coverage", () => {
   it("searches across multiple categories", () => {
     const results = searchItems(
       "e",
-      makeCompleted(),
+      makeCompletedState(),
       defaultWorld,
       makeProgressionState({ showSpoilers: true }),
       "en",
@@ -404,7 +366,7 @@ describe("result shape", () => {
 
 describe("recipe visibility", () => {
   it("hides recipes gated by unmet visibility conditions", () => {
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
     const progression = deriveProgressionState(completed, trackerData, false);
 
     const results = searchItems("Strawberry Shortcake", completed, defaultWorld, progression, "en");
@@ -414,7 +376,7 @@ describe("recipe visibility", () => {
   });
 
   it("shows recipes when visibility conditions are met", () => {
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       questStates: { request_for_strawberries: "completed" },
     } as Partial<CompletedState>);
     const progression = deriveProgressionState(completed, trackerData, false);
@@ -427,7 +389,7 @@ describe("recipe visibility", () => {
   });
 
   it("shows recipes when showSpoilers is enabled", () => {
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
     const progression = deriveProgressionState(completed, trackerData, true);
 
     const results = searchItems("Strawberry Shortcake", completed, defaultWorld, progression, "en");
@@ -438,7 +400,7 @@ describe("recipe visibility", () => {
   });
 
   it("marks recipe results as completed when in almanacRecipes", () => {
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       almanacRecipes: new Set(["strawberry_shortcake" as RecipeId]),
       questStates: { request_for_strawberries: "completed" },
     } as Partial<CompletedState>);

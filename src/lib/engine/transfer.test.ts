@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
+import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { recordEntries, recordKeys, recordValues } from "#lib/utils.js";
 
 import {
@@ -222,40 +223,9 @@ function getTransferFieldOffsets(): Record<
 }
 
 // Helper to create a minimal CompletedState for testing
-function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState {
-  const animals: Record<string, Set<AnimalVariantId>> = {};
-  const animalCosmetics: Record<string, Set<CosmeticId>> = {};
-  for (const animalId of Object.keys(trackerData.animals)) {
-    animals[animalId] = new Set();
-    animalCosmetics[animalId] = new Set();
-  }
-  return {
-    almanac: new Set(),
-    almanacRecipes: new Set(),
-    animalCosmetics,
-    animals,
-    childChoice: "undeclared",
-    cosmetics: new Set(),
-    dates: new Set(),
-    hasUpperFloor: false,
-    mines: { floor: 0, spells: new Set() },
-    museum: new Set(),
-    petCosmetics: new Set(),
-    petSkins: new Set(),
-    questStates: {},
-    reachedSeason: "spring",
-    renown: 0,
-    skillLevels: {},
-    unlockedPerks: new Set(),
-    villagerLevels: {},
-    villagerRelationships: {},
-    ...overrides,
-  };
-}
-
 function makeGoldenCompleted(): CompletedState {
   const chicken = "chicken" as AnimalId;
-  const completed = makeCompleted({
+  const completed = makeCompletedState({
     almanac: new Set(["turnip" as ItemId]),
     almanacRecipes: new Set(["basic_wood_chest" as RecipeId]),
     childChoice: "yes",
@@ -312,7 +282,7 @@ function makeGoldenDecodedExpectation(): Partial<CompletedState> {
 async function mutateEncodedRaw(
   mutate: (raw: Uint8Array, offsets: ReturnType<typeof getTransferFieldOffsets>) => void,
 ): Promise<string> {
-  const raw = await decompressTransferRaw(await encodeTransferPayload(makeCompleted()));
+  const raw = await decompressTransferRaw(await encodeTransferPayload(makeCompletedState()));
   mutate(raw, getTransferFieldOffsets());
   return compressTransferRaw(TRANSFER_VERSION, raw);
 }
@@ -401,7 +371,7 @@ describe("transfer codec v11", () => {
     villagerRelationships[dateableVillagers[0]] = "married";
     const maxFloor = trackerData.mines.biomes.at(-1)?.floors.end ?? 0;
     const maxRenown = trackerData.townRanks.at(-1)?.levels.end ?? 0;
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       mines: { floor: maxFloor, spells: new Set() },
       renown: maxRenown,
       skillLevels: Object.fromEntries(skillIds.map((id) => [id, MAX_SKILL_LEVEL])),
@@ -423,7 +393,7 @@ describe("transfer codec v11", () => {
     const skillIds = recordKeys(trackerData.skills);
     const maxFloor = trackerData.mines.biomes.at(-1)?.floors.end ?? 0;
     const maxRenown = trackerData.townRanks.at(-1)?.levels.end ?? 0;
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       mines: { floor: 0xff, spells: new Set() },
       renown: 0xff_ff,
       skillLevels: Object.fromEntries(skillIds.map((id) => [id, 0xff])),
@@ -439,7 +409,7 @@ describe("transfer codec v11", () => {
   });
 
   it("round-trips every transferable completion without loss", async () => {
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       almanac: new Set(
         recordValues(trackerData.almanac).flatMap(({ items }) =>
           items.map((entry) => entry.itemIds[0]),
@@ -518,7 +488,7 @@ describe("transfer codec v11", () => {
 
   it("round-trips unlockedPerks", async () => {
     const perkIds = recordKeys(trackerData.skills["cooking" as SkillId].perkTiers[0]);
-    const completed = makeCompleted({ unlockedPerks: new Set(perkIds) });
+    const completed = makeCompletedState({ unlockedPerks: new Set(perkIds) });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     expect(decoded.unlockedPerks).toEqual(new Set(perkIds));
@@ -535,14 +505,14 @@ describe("transfer codec v11", () => {
     for (const other of dateableVillagers.slice(1)) {
       relationships[other] = "platonic";
     }
-    const completed = makeCompleted({ villagerRelationships: relationships });
+    const completed = makeCompletedState({ villagerRelationships: relationships });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     expect(decoded.villagerRelationships?.[villagerId]).toBe("married");
   });
 
   it("round-trips no married Villager", async () => {
-    const completed = makeCompleted({ villagerRelationships: {} });
+    const completed = makeCompletedState({ villagerRelationships: {} });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     const married = Object.entries(decoded.villagerRelationships ?? {}).find(
@@ -556,7 +526,7 @@ describe("transfer codec v11", () => {
       0,
       3,
     ) as PetCosmeticSetId[];
-    const completed = makeCompleted({ petCosmetics: new Set(petCosmeticIds) });
+    const completed = makeCompletedState({ petCosmetics: new Set(petCosmeticIds) });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     expect(decoded.petCosmetics).toEqual(new Set(petCosmeticIds));
@@ -564,7 +534,7 @@ describe("transfer codec v11", () => {
 
   it("round-trips petSkins", async () => {
     const petSkinIds = Object.keys(trackerData.pets.skins).slice(0, 3) as PetSkinId[];
-    const completed = makeCompleted({ petSkins: new Set(petSkinIds) });
+    const completed = makeCompletedState({ petSkins: new Set(petSkinIds) });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     expect(decoded.petSkins).toEqual(new Set(petSkinIds));
@@ -572,14 +542,14 @@ describe("transfer codec v11", () => {
 
   it("round-trips dates", async () => {
     const dateIds = Object.keys(trackerData.dates).slice(0, 3) as DateId[];
-    const completed = makeCompleted({ dates: new Set(dateIds) });
+    const completed = makeCompletedState({ dates: new Set(dateIds) });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     expect(decoded.dates).toEqual(new Set(dateIds));
   });
 
   it("round-trips hasUpperFloor", async () => {
-    const completed = makeCompleted({ hasUpperFloor: true });
+    const completed = makeCompletedState({ hasUpperFloor: true });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     expect(decoded.hasUpperFloor).toBe(true);
@@ -588,7 +558,7 @@ describe("transfer codec v11", () => {
   it.each(["spring", "summer", "fall", "winter"] as const)(
     "round-trips reachedSeason %s",
     async (season) => {
-      const completed = makeCompleted({ reachedSeason: season });
+      const completed = makeCompletedState({ reachedSeason: season });
       const payload = await encodeTransferPayload(completed);
       const decoded = await decodeTransferPayload(payload);
       expect(decoded.reachedSeason).toBe(season);
@@ -604,7 +574,7 @@ describe("transfer codec v11", () => {
       [dateableVillagers[1]]: "proposed",
       [dateableVillagers[2]]: "platonic",
     };
-    const completed = makeCompleted({ villagerRelationships: relationships });
+    const completed = makeCompletedState({ villagerRelationships: relationships });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     expect(decoded.villagerRelationships?.[dateableVillagers[0]]).toBe("romantic");
@@ -613,7 +583,7 @@ describe("transfer codec v11", () => {
   });
 
   it.each(["undeclared", "yes", "no"] as const)("round-trips childChoice %s", async (choice) => {
-    const completed = makeCompleted({ childChoice: choice });
+    const completed = makeCompletedState({ childChoice: choice });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     expect(decoded.childChoice).toBe(choice);
@@ -621,7 +591,7 @@ describe("transfer codec v11", () => {
 
   it("round-trips almanacRecipes", async () => {
     const recipeIds = (Object.keys(trackerData.recipes) as RecipeId[]).slice(0, 3);
-    const completed = makeCompleted({ almanacRecipes: new Set(recipeIds) });
+    const completed = makeCompletedState({ almanacRecipes: new Set(recipeIds) });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     expect(decoded.almanacRecipes).toEqual(new Set(recipeIds));
@@ -652,7 +622,7 @@ describe("transfer codec v11", () => {
       .find((entry) => entry.itemIds.length > 1);
     if (!colorwayEntry) throw new Error("expected a colorway entry in test data");
     const canonicalId = colorwayEntry.itemIds[0];
-    const completed = makeCompleted({ almanac: new Set([canonicalId]) });
+    const completed = makeCompletedState({ almanac: new Set([canonicalId]) });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     const decodedAlmanac = decoded.almanac ?? new Set();
@@ -665,14 +635,14 @@ describe("transfer codec v11", () => {
     );
     const allCanonicalIds = [...new Set(categoryCanonicalIds)].toSorted();
     expect(categoryCanonicalIds.length).toBeGreaterThan(allCanonicalIds.length);
-    const completed = makeCompleted({ almanac: new Set(allCanonicalIds) });
+    const completed = makeCompletedState({ almanac: new Set(allCanonicalIds) });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     expect(decoded.almanac).toEqual(new Set(allCanonicalIds));
   });
 
   it("round-trips empty almanacRecipes", async () => {
-    const completed = makeCompleted({ almanacRecipes: new Set() });
+    const completed = makeCompletedState({ almanacRecipes: new Set() });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     expect(decoded.almanacRecipes).toEqual(new Set());
@@ -680,7 +650,7 @@ describe("transfer codec v11", () => {
 
   it("round-trips fully completed almanacRecipes", async () => {
     const allRecipeIds = Object.keys(trackerData.recipes) as RecipeId[];
-    const completed = makeCompleted({ almanacRecipes: new Set(allRecipeIds) });
+    const completed = makeCompletedState({ almanacRecipes: new Set(allRecipeIds) });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     expect(decoded.almanacRecipes).toEqual(new Set(allRecipeIds));
@@ -689,7 +659,7 @@ describe("transfer codec v11", () => {
   it("round-trips partial almanacRecipes", async () => {
     const recipeIds = Object.keys(trackerData.recipes) as RecipeId[];
     const partial = new Set(recipeIds.filter((_, i) => i % 2 === 0));
-    const completed = makeCompleted({ almanacRecipes: partial });
+    const completed = makeCompletedState({ almanacRecipes: partial });
     const payload = await encodeTransferPayload(completed);
     const decoded = await decodeTransferPayload(payload);
     expect(decoded.almanacRecipes).toEqual(partial);
@@ -732,7 +702,7 @@ describe("transfer codec v11", () => {
   });
 
   it("rejects truncated compressed data", async () => {
-    const payload = await encodeTransferPayload(makeCompleted());
+    const payload = await encodeTransferPayload(makeCompletedState());
     const truncated = marked(unmarked(payload).slice(0, -1));
     await expectDecodeError(truncated, "corrupt", /compressed transfer payload/i);
   });
@@ -743,7 +713,7 @@ describe("transfer codec v11", () => {
   });
 
   it.each(["truncated", "trailing"])("rejects %s decompressed data", async (kind) => {
-    const payload = await encodeTransferPayload(makeCompleted());
+    const payload = await encodeTransferPayload(makeCompletedState());
     const raw = await decompressTransferRaw(payload);
     const malformed = kind === "truncated" ? raw.slice(0, -1) : new Uint8Array([...raw, 0]);
     const malformedPayload = await compressTransferRaw(TRANSFER_VERSION, malformed);
@@ -755,7 +725,7 @@ describe("transfer codec v11", () => {
     // Regression test for a corruption that decompresses to a byte-identical length but different
     // content: without an integrity checksum this previously decoded silently into wrong progress.
     const payload = await encodeTransferPayload(
-      makeCompleted({ mines: { floor: 40, spells: new Set() } }),
+      makeCompletedState({ mines: { floor: 40, spells: new Set() } }),
     );
     const raw = await decompressTransferRaw(payload);
     const corruptedRaw = new Uint8Array(raw);
@@ -774,7 +744,7 @@ describe("transfer codec v11", () => {
   });
 
   it("rejects a payload whose stored checksum does not match its content", async () => {
-    const payload = await encodeTransferPayload(makeCompleted());
+    const payload = await encodeTransferPayload(makeCompletedState());
     const tampered = new Uint8Array(unmarked(payload));
     tampered[1] ^= 0xff;
 

@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
+
 import { localePreference } from "./locale-preference.svelte.js";
 
 const { downloadLocale, goto, setLocale } = vi.hoisted(() => ({
@@ -9,12 +11,7 @@ const { downloadLocale, goto, setLocale } = vi.hoisted(() => ({
 }));
 
 vi.mock("$app/navigation", () => ({ goto }));
-// Under the `app` project's `isolate: false`, a component module cached by this file keeps this
-// mock for later files in the same worker, so it carries every field the shared stand-in in
-// src/vitest-setup-app-state.ts does.
-vi.mock("$app/state", () => ({
-  page: { data: { locale: "en" }, status: 200, url: new URL("https://mistria.fyi/ru/almanac") },
-}));
+vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 vi.mock("#lib/paraglide/runtime.js", () => ({
   deLocalizeHref: (pathname: string) => pathname.replace(/^\/[^/]+/, ""),
   localizeHref: (pathname: string, { locale }: { locale: string }) => `/${locale}${pathname}`,
@@ -24,6 +21,8 @@ vi.mock("#lib/utils/offline-locales.js", () => ({ downloadLocale }));
 
 describe("localePreference", () => {
   beforeEach(() => {
+    pageStub.reset();
+    pageStub.navigate("/ru/almanac");
     goto.mockReset();
     downloadLocale.mockReset().mockResolvedValue(true);
     setLocale.mockReset();

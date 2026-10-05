@@ -10,10 +10,7 @@ import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 
 import type { PageMetadataInput } from "#lib/data/page-metadata.js";
 
-vi.mock("$app/state", async () => {
-  const stubModule = await import("#lib/test-utils/page-stub.svelte.js");
-  return { page: stubModule.pageStub };
-});
+vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 
 function overlayState() {
   return screen.getByTestId("overlay-state").textContent;
