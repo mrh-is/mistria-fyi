@@ -5,9 +5,9 @@ credentials. Configure both environments to run the repository bootstrap script,
 `.node-version`, and grant only read access to Cloudflare Pages build logs.
 
 The checked-in setup script downloads Node from `nodejs.org`, verifies its published SHA-256
-checksum, persists it through `~/.bashrc`, and runs `pnpm install --frozen-lockfile`. The frozen
-install runs the repository’s `prepare` lifecycle, including Paraglide compilation and SvelteKit
-sync.
+checksum, adds it to `PATH` in the Bash startup files, and runs `pnpm install --frozen-lockfile`.
+The frozen install runs the repository’s `prepare` lifecycle, including Paraglide compilation and
+SvelteKit sync.
 
 ## Cloudflare credential
 
@@ -72,6 +72,13 @@ is absent.
    value, and select **Connect**.
 9. Start a new cloud session in this environment. Existing sessions do not receive environment
    edits.
+
+The setup script runs before Claude Code starts, but Claude’s Bash tool doesn’t pick up the `PATH`
+line the script adds to the Bash startup files; without help, the agent’s shell resolves the image’s
+`/opt/node22/bin/node`. A SessionStart hook in `.claude/settings.json` runs
+`scripts/claude-session-env.sh`, which prepends the repository-managed Node directory to `PATH`
+through `$CLAUDE_ENV_FILE` so every Bash call in the session uses it. The hook does nothing in a
+checkout where the setup script never installed Node, so local sessions keep their own Node.
 
 A setup script that exits with `scripts/setup-cloud-agent.sh: No such file or directory` is using
 the checkout-relative path; add the `mistria-fyi/` prefix. Claude does not cache a setup that exits
