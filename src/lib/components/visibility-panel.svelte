@@ -60,7 +60,7 @@
   }
 
   let weatherSlotDisplay = $state(buildWeatherSlots(userState.state.worldState.season));
-  let weatherSlotFading = $state(
+  const weatherSlotFading = $state(
     Object.fromEntries(allWeathers.map((weather) => [weather, false])) as Record<Weather, boolean>,
   );
 

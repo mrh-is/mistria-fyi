@@ -22,7 +22,7 @@
 
   let { compact = false, id, name }: { compact?: boolean; id: SkillId; name: string } = $props();
 
-  let feedbackContext = getFeedbackContextOrFallback();
+  const feedbackContext = getFeedbackContextOrFallback();
   let level = $derived(userState.state.completed.skillLevels[id] ?? 0);
   let maxed = $derived(level >= MAX_SKILL_LEVEL);
   let reportable = $derived(

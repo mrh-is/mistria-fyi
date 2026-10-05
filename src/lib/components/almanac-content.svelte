@@ -77,7 +77,7 @@
 
   let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
 
-  let recentlyCompleted = new SvelteSet<ItemId>();
+  const recentlyCompleted = new SvelteSet<ItemId>();
 
   function checkCelebration(canonicalIds: ItemId[]): void {
     if (isAlmanacComplete()) {
@@ -103,9 +103,9 @@
   const SECTION_LIMIT = 50;
   const SECTION_BATCH_SIZE = 12;
 
-  let expandedSections = $state<Record<string, boolean>>({});
-  let openSections = $state<Record<string, boolean>>({});
-  let renderedSectionCounts = $state<Record<string, number>>({});
+  const expandedSections = $state<Record<string, boolean>>({});
+  const openSections = $state<Record<string, boolean>>({});
+  const renderedSectionCounts = $state<Record<string, number>>({});
   const sectionFrames = new SvelteMap<string, number>();
 
   let nameFilter = $derived(toolbarState.searchQuery);
