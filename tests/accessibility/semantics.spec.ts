@@ -70,8 +70,8 @@ test.describe("@critical semantic accessibility", () => {
 
     await gotoApplication(page, "/almanac");
     await openVisibilityPanel(page);
-    const spring = page.getByRole("button", { exact: true, name: "Spring" });
-    await expect(spring).toHaveAttribute("aria-pressed", "true");
+    const spring = page.getByRole("radio", { exact: true, name: "Spring" });
+    await expect(spring).toHaveAttribute("aria-checked", "true");
   });
 
   test("feedback validation connects its input and alert", async ({ page }) => {

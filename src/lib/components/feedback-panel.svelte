@@ -646,17 +646,13 @@
         {#if turnstileError}
           <p class="text-[11px] text-muted-foreground">
             {m.feedback_turnstile_unavailable_intro()}
-            <button
+            <a
               class="underline hover:text-foreground"
-              type="button"
-              onclick={() =>
-                window.open(
-                  "https://github.com/mrh-is/mistria-fyi/issues/new",
-                  "_blank",
-                  "noopener",
-                )}
+              href="https://github.com/mrh-is/mistria-fyi/issues/new"
+              rel="noopener noreferrer"
+              target="_blank"
             >
-              {m.feedback_turnstile_github_action()}</button
+              {m.feedback_turnstile_github_action()}</a
             >
             {m.feedback_turnstile_unavailable_suffix()}
           </p>
