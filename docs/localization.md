@@ -160,9 +160,9 @@ then `/en` (`bareLocaleRedirect` in `src/hooks.server.ts`). The redirect sends
    [Improving a translation](#improving-a-translation-humans) below for how these get refined. Match
    the game's regional variant and terminology; see [Regional variants](#regional-variants).
 3. Run `pnpm run paraglide:compile` to regenerate `src/lib/paraglide`.
-4. Use the generated message in your component: `import * as m from "$lib/paraglide/messages"`, then
-   `{m.feedback_submit_button()}` in the template. Never hardcode the English string directly in a
-   `.svelte` file.
+4. Use the generated message in your component: `import * as m from "#lib/paraglide/messages.js"`,
+   then `{m.feedback_submit_button()}` in the template. Never hardcode the English string directly
+   in a `.svelte` file.
 5. If the component's file is in the `no-hardcoded-ui-text` allowlist in `eslint.config.js` already,
    `pnpm run lint` will catch any string you forgot to wrap. If the file isn't in that list yet (see
    below), add it in the same PR.
