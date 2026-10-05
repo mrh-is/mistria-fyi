@@ -5,12 +5,15 @@ import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 import tailwindcss from "@tailwindcss/vite";
 import { svelteTesting } from "@testing-library/svelte/vite";
 import { readdirSync } from "node:fs";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import { configDefaults } from "vitest/config";
 
 import { getAppVersion } from "./scripts/app-version.js";
+import { resolveSpriteAssetBase } from "./src/lib/asset-origin.js";
+import { headersFilePlugin } from "./src/lib/build/headers-file.js";
 import { localeNameChunksPlugin } from "./src/lib/build/locale-name-chunks.js";
-import { CSP_DIRECTIVES } from "./src/lib/security/csp-directives.js";
+import { cspDirectives } from "./src/lib/security/csp-directives.js";
+import { renderHeadersFile } from "./src/lib/security/security-headers.js";
 import { LOCALE_CODES } from "./src/lib/types/locale.js";
 
 // All 8 locales are prefixed symmetrically, including the base locale "en" — there is no
@@ -26,6 +29,17 @@ const localizedCatchAllPattern: [string, string][] = LOCALE_CODES.map((locale) =
   locale,
   `/${locale}/:path(.*)?`,
 ]);
+
+/**
+ * Where sprites load from: production, or a `PUBLIC_ASSET_ORIGIN` override (shell, `.env`, or
+ * `.env.local`) for testing unuploaded sprites locally. It's read here, once, so the sprite URLs
+ * and both copies of the CSP agree. Vite no longer exposes `PUBLIC_*` variables to the client.
+ */
+const spriteAssetBase = resolveSpriteAssetBase(
+  // An empty mode skips the mode-specific `.env.<mode>` files: the override doesn't vary by mode.
+  loadEnv("", import.meta.dirname, "PUBLIC_ASSET_ORIGIN").PUBLIC_ASSET_ORIGIN,
+);
+const contentSecurityPolicy = cspDirectives(spriteAssetBase);
 
 const sharedTestExcludes = [
   ...configDefaults.exclude,
@@ -68,11 +82,9 @@ export default defineConfig({
       },
     },
   },
-  // Vite only exposes VITE_-prefixed vars via import.meta.env by default. PUBLIC_ASSET_ORIGIN
-  // (src/lib/sprites/sprite-url.ts) uses SvelteKit's own "PUBLIC_" convention, so it must be added
-  // here too — SvelteKit's $env/static/public requires the var to be declared at build time, which
-  // breaks an optional override with no committed .env file.
-  envPrefix: ["VITE_", "PUBLIC_"],
+  define: {
+    __SPRITE_ASSET_BASE__: JSON.stringify(spriteAssetBase),
+  },
   plugins: [
     tailwindcss(),
     sveltekit({
@@ -90,10 +102,11 @@ export default defineConfig({
       }),
       preprocess: vitePreprocess(),
 
-      csp: { directives: CSP_DIRECTIVES },
+      csp: { directives: contentSecurityPolicy },
       version: { name: getAppVersion() },
     }),
     localeNameChunksPlugin(),
+    headersFilePlugin(renderHeadersFile(contentSecurityPolicy)),
     paraglideVitePlugin({
       outdir: "./src/lib/paraglide",
       project: "./project.inlang",

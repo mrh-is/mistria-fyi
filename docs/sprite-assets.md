@@ -18,10 +18,11 @@ the game does, and this layout means a patch that doesn't touch an icon doesn't 
 or re-upload its object. `<generation>` is the `spriteGeneration` constant in `sprite-url.ts` — bump
 it only when an existing sprite's pixels change (never for a newly-added sprite); the bump is a
 global cache bust with no re-upload, since R2 ignores the query string while the edge cache and
-service worker key on the full URL. `<origin>` defaults to `https://assets.mistria.fyi`, overridable
-via the `PUBLIC_ASSET_ORIGIN` build-time env var (see [Local development](#local-development)). No
-other module constructs a sprite path; `sprite-slot.svelte` and `villager-record.svelte` both call
-the resolver.
+service worker key on the full URL. `<origin>` defaults to `PRODUCTION_ASSET_ORIGIN`
+(`https://assets.mistria.fyi`, in `src/lib/asset-origin.ts`), overridable via the
+`PUBLIC_ASSET_ORIGIN` build-time env var (see [Local development](#local-development)). No other
+module constructs a sprite path; `sprite-slot.svelte` and `villager-record.svelte` both call the
+resolver.
 
 Villager icons come from a different source than items: each `fiddle/npcs/<id>.toml` has an
 `icon_sprite` field (e.g. `spr_ui_generic_icon_npc_adeline`), and the matching PNG lives under
@@ -114,10 +115,13 @@ are never broken in between:
 
 Sprites are not required for local development. With `PUBLIC_ASSET_ORIGIN` unset, `pnpm run dev`
 resolves sprite URLs against the production bucket, so contributors get real artwork without running
-the pipeline. Set `PUBLIC_ASSET_ORIGIN` in a local `.env.local` to point at a different origin (for
-example a local static file server rooted at `pipeline/output/`) when testing freshly-generated
-sprites before they are uploaded; if that origin is unreachable, sprite slots simply show their
-placeholder.
+the pipeline. Set `PUBLIC_ASSET_ORIGIN` in the shell, `.env`, or `.env.local` to point at a
+different origin (for example a local static file server rooted at `pipeline/output/`) when testing
+freshly-generated sprites before they are uploaded; if that origin is unreachable, sprite slots
+simply show their placeholder. `vite.config.ts` reads it once, at startup, and uses the same value
+for the sprite URLs and the CSP's `img-src`, so the override never trips the CSP. Mode-specific
+files such as `.env.development` are not read, and the value never reaches the client as an
+environment variable.
 
 ## Repository history
 

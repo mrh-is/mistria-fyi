@@ -1,11 +1,13 @@
+import { PRODUCTION_ASSET_ORIGIN } from "#lib/asset-origin.js";
+
 export const MAX_RUNTIME_ENTRIES = 50;
 export const MAX_SPRITE_ENTRIES = 400;
 
 /** Self-hosted fonts on R2: Satoshi plus the per-locale families under versioned prefixes. */
-const EXTERNAL_FONT_PREFIX = "https://assets.mistria.fyi/fonts/";
+const EXTERNAL_FONT_PREFIX = `${PRODUCTION_ASSET_ORIGIN}/fonts/`;
 
 /** Item and villager sprites on R2 — both live under this one entity-ID-keyed root. */
-const EXTERNAL_SPRITE_PREFIX = "https://assets.mistria.fyi/sprites/";
+const EXTERNAL_SPRITE_PREFIX = `${PRODUCTION_ASSET_ORIGIN}/sprites/`;
 
 /** Per-locale @font-face stylesheets; large and locale-specific, so cached on demand, not on install. */
 const LAZY_ASSET_PATTERN = /\/locale-fonts-[^/]+\.css$/;
