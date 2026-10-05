@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
-import { getName } from "#lib/data/names.js";
+import { getName, loadNames, LOCALIZED_CATEGORIES } from "#lib/data/names.js";
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { buildBaseSegmentLookups } from "./segment-lookups.js";
@@ -10,6 +10,10 @@ import { buildSourceSegments } from "./source-segments.js";
 
 import type { Source } from "#lib/types/acquisition.js";
 import type { StoreId } from "#lib/types/tracker-data.js";
+
+beforeAll(async () => {
+  await Promise.all(LOCALE_CODES.map((locale) => loadNames(locale, LOCALIZED_CATEGORIES)));
+});
 
 /** Every `sources` entry anywhere in the generated tracker data. */
 function collectSources(value: unknown, found: Source[] = []): Source[] {
