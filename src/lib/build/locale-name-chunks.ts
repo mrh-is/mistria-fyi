@@ -32,32 +32,34 @@ export function localeNameChunks(manifest: Manifest): Record<string, string[]> {
  * Hands the service worker the locale name-chunk map, so it can leave those chunks out of its
  * install-time precache and cache each locale on demand instead.
  *
- * SvelteKit builds the service worker last, after the client build writes its manifest, and
- * passes the outer build's `define` object to that build. The service worker build accepts no
- * plugins of its own, so the entry is a getter on that object: it reads the manifest when the
- * service worker build resolves its config, not when this plugin runs. The server build also
- * reads the getter, before the client manifest exists; nothing on the server uses the value.
+ * SvelteKit 3 builds the service worker as its own Vite environment, after the client build writes
+ * its manifest, and runs this plugin there. The map replaces the bare identifier in the rendered
+ * service worker chunk; no other environment references it.
  */
 export function localeNameChunksPlugin(): Plugin {
+  let root = process.cwd();
   return {
     apply: "build",
     configResolved(config) {
-      if (!config.build.ssr) return;
-      if (!config.define) {
-        throw new Error("localeNameChunksPlugin expects SvelteKit to define build constants.");
-      }
-      const manifestPath = path.resolve(config.root, ".svelte-kit/output/client/.vite/manifest.json");
-      Object.defineProperty(config.define, LOCALE_NAME_CHUNKS_DEFINE, {
-        configurable: true,
-        enumerable: true,
-        get: () =>
-          JSON.stringify(
-            existsSync(manifestPath)
-              ? localeNameChunks(JSON.parse(readFileSync(manifestPath, "utf-8")) as Manifest)
-              : {},
-          ),
-      });
+      root = config.root;
     },
     name: "mfg:locale-name-chunks",
+    renderChunk(code) {
+      if (this.environment.name !== "serviceWorker" || !code.includes(LOCALE_NAME_CHUNKS_DEFINE)) {
+        return null;
+      }
+      const manifestPath = path.resolve(root, ".svelte-kit/output/client/.vite/manifest.json");
+      if (!existsSync(manifestPath)) {
+        throw new Error(`localeNameChunksPlugin needs the client manifest at ${manifestPath}.`);
+      }
+      const chunks = localeNameChunks(JSON.parse(readFileSync(manifestPath, "utf-8")) as Manifest);
+      return {
+        code: code.replaceAll(
+          new RegExp(`\\b${LOCALE_NAME_CHUNKS_DEFINE}\\b`, "g"),
+          `(${JSON.stringify(chunks)})`,
+        ),
+        map: null,
+      };
+    },
   };
 }
