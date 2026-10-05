@@ -224,6 +224,8 @@ describe("downstream consumers after backfill", () => {
 
   it("encodeTransferPayload does not throw on backfilled state", async () => {
     const completed = await getBackfilledState();
-    await expect(encodeTransferPayload(completed)).resolves.toBeDefined();
+    const payload = await encodeTransferPayload(completed);
+    expect(payload).toMatch(/^[\w-]+$/);
+    expect(payload.length).toBeGreaterThan(0);
   });
 });
