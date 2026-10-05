@@ -29,7 +29,9 @@ Keep the existing versions conceptually separate:
   which is a different decision from bumping the serialized `version` field.
 - `TRANSFER_VERSION` identifies the progress-transfer codec. Change it only when the encoded fields,
   their interpretation, or their positional layout changes incompatibly.
-- The Mistria Field Guide application version identifies the deployed application release.
+- The Mistria Field Guide application version identifies the exact deployed commit. Production
+  builds derive it deterministically from the commit date and abbreviated SHA. `package.json`'s
+  version and Git version tags identify intentional product releases rather than routine deploys.
 
 Do not add another version axis speculatively. Introduce one when a concrete release demonstrates
 that the existing versions cannot distinguish states the application must handle.
