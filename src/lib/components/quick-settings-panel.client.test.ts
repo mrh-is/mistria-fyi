@@ -45,7 +45,7 @@ describe("QuickSettingsPanel", () => {
 
     const spoilers = screen.getByRole("switch", { name: "Show spoilers?" });
     await fireEvent.click(spoilers);
-    expect(await screen.findByRole("dialog")).toBeTruthy();
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
     await fireEvent.click(screen.getByRole("button", { name: "Never mind" }));
 
     await waitFor(() => {

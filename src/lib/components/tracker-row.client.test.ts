@@ -20,7 +20,7 @@ describe("TrackerRow reportable metadata", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Reveal spoiler" }));
 
     expect(view.container.querySelector("[data-sprite-slot='ready']")).toBeTruthy();
-    expect(screen.getByText("Turnip")).toBeTruthy();
+    expect(screen.getByText("Turnip")).toBeInTheDocument();
   });
 
   it("registers the whole row and preserves completion behavior", async () => {
