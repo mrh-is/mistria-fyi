@@ -100,7 +100,9 @@ export default defineConfig(
   {
     files: ["**/*.svelte", "**/*.svelte.js", "**/*.svelte.ts"],
     languageOptions: {
-      globals: { ...globals.browser, ...globals.node },
+      // Browser only: ESLint lints just Svelte files, which run in the client (or SSR), so
+      // `process` & `Buffer` should be flagged. Node code is linted by oxlint.
+      globals: { ...globals.browser },
       parserOptions: {
         extraFileExtensions: [".svelte"],
         parser: ts.parser,
@@ -112,7 +114,12 @@ export default defineConfig(
       // Without type information, this rule can't see that `localizedHref()` returns a resolved
       // path, so it flags every localized link. `local/no-raw-internal-href` guards `href` instead.
       "local/no-raw-internal-href": "error",
+      // Makes the browser-only `globals` meaningful: `process` & `Buffer` in client code are flagged.
+      "no-undef": "error",
       "svelte/no-navigation-without-resolve": "off",
+      // oxlint's `prefer-const` is off for these files because it can't tell runes from
+      // reassignable bindings; the Svelte-aware version exempts `$props()` & friends.
+      "svelte/prefer-const": "error",
     },
   },
   {
@@ -125,6 +132,15 @@ export default defineConfig(
       "@typescript-eslint/no-unused-vars": [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
+      // AGENTS.md §6: destructure `$props()` with `let` so the bindings stay reassignable.
+      "no-restricted-syntax": [
+        "error",
+        {
+          message: "Destructure `$props()` with `let`, not `const` (AGENTS.md §6).",
+          selector:
+            'VariableDeclaration[kind="const"] > VariableDeclarator[init.callee.name="$props"]',
+        },
       ],
     },
   },

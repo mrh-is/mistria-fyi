@@ -210,7 +210,8 @@ These rules prevent accidental damage to generated or vendored code:
   Branded IDs for type safety.
 - **Tests**: Colocate as `foo.test.ts` beside `foo.ts`; no `__tests__/` directories. See
   [docs/development-workflow.md §4](docs/development-workflow.md#test-file-placement).
-- **Rules**: `eqeqeq`, `prefer-const` (except `.svelte`), `no-var`, `object-shorthand`,
+- **Rules**: `eqeqeq`, `prefer-const` (oxlint for scripts, `svelte/prefer-const` for Svelte files;
+  `$props()` destructuring must use `let`, which is linted), `no-var`, `object-shorthand`,
   `prefer-template`, `curly` (multi-line).
 
 ## 7. Verification

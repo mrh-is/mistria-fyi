@@ -49,7 +49,7 @@
     const animal = trackerData.animals[animalId];
     let completedCount = 0;
     let displayableCount = 0;
-    let visibleCosmetics: AnimalSubcategoryRowProps<CosmeticId>[] = [];
+    const visibleCosmetics: AnimalSubcategoryRowProps<CosmeticId>[] = [];
     for (const [cid] of recordEntries(animal.cosmetics)) {
       if (!toolbarState.matchesSourceFilters(animal.cosmetics[cid].sources)) continue;
       displayableCount++;

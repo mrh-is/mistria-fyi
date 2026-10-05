@@ -16,7 +16,7 @@
     value?: string;
   }
 
-  const {
+  let {
     children,
     decrementDisabled = false,
     decrementLabel = "Decrease",
