@@ -1,0 +1,76 @@
+name: Game build watch
+
+# Opens an issue when Fields of Mistria ships a new public Steam build. The issue body records the
+# build ID, which doubles as the dedup key, so no other state is stored between runs.
+
+on:
+  schedule:
+    - cron: "17 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+concurrency:
+  group: game-build-watch
+  cancel-in-progress: false
+
+env:
+  STEAM_APP_ID: "2142790"
+
+jobs:
+  watch:
+    name: Check for a new game build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read the public build ID
+        id: build
+        run: |
+          set -euo pipefail
+          build_id=$(curl -fsS --retry 3 "https://api.steamcmd.net/v1/info/${STEAM_APP_ID}" \
+            | jq -er --arg app "$STEAM_APP_ID" '.data[$app].depots.branches.public.buildid')
+          echo "Public build: ${build_id}"
+          echo "id=${build_id}" >> "$GITHUB_OUTPUT"
+
+      - name: Open an issue for an unseen build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BUILD_ID: ${{ steps.build.outputs.id }}
+        run: |
+          set -euo pipefail
+          existing=$(gh issue list --state all --search "\"${BUILD_ID}\" in:body" --json number --jq 'length')
+          if [ "$existing" -gt 0 ]; then
+            echo "Build ${BUILD_ID} already has an issue."
+            exit 0
+          fi
+
+          news=$(curl -fsS --retry 3 \
+            "https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid=${STEAM_APP_ID}&count=1&maxlength=1&feeds=steam_community_announcements")
+          title=$(jq -r '.appnews.newsitems[0].title // "Latest announcement"' <<<"$news")
+          url=$(jq -r '.appnews.newsitems[0].url // empty' <<<"$news")
+          version=$(grep -oE 'v[0-9]+(\.[0-9]+)+' <<<"$title" | head -n1 || true)
+
+          notes="[${title}](${url:-https://store.steampowered.com/news/app/${STEAM_APP_ID}})"
+          issue_title="Update tracker data for game ${version:-build ${BUILD_ID}}"
+
+          cat > body.md <<EOF
+          Fields of Mistria shipped a new Steam build. Regenerate the tracker data from the updated game files.
+
+          - Steam build: \`${BUILD_ID}\` (public branch)
+          - Latest announcement: ${notes} (confirm it matches this build)
+
+          ## Checklist (gaming PC)
+
+          - [ ] Update Fields of Mistria in Steam and confirm the installed build matches
+          - [ ] Refresh \`pipeline/input/assets\` from the install
+          - [ ] Run \`pnpm run pipeline -- <path>\` to regenerate \`src/lib/data/tracker-data.json\`
+          - [ ] Review the diff for new, removed, or renamed items; add tests or pipeline fixes where needed
+          - [ ] Run \`pnpm run verify\`, then open a PR that closes this issue
+
+          Agent: github-actions
+          EOF
+
+          gh issue create --title "$issue_title" --body-file body.md \
+            --label "status: ready" --label "area: pipeline" \
+            --label "type: maintenance" --label "requires game install"
