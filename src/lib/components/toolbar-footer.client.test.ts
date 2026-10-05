@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
+import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import ToolbarFooterHarness from "#lib/components/toolbar-footer.test-harness.svelte";
@@ -45,10 +46,8 @@ afterEach(async () => {
   toolbarState.closeSearch();
   toolbarState.removeSourceFilters("test");
   userState.resetAll();
-  // Let deferred focus restoration and panel transitions settle before the next test mounts.
-  await new Promise((resolve) => {
-    setTimeout(resolve, 250);
-  });
+  // Flush pending Svelte microtasks after unmount and state reset.
+  await tick();
 });
 
 describe("ToolbarFooter panels", () => {

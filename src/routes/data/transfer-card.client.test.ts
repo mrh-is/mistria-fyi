@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { tick } from "svelte";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { encodeTransferPayload } from "#lib/engine/transfer.js";
@@ -35,14 +36,11 @@ beforeEach(() => {
 
 afterEach(async () => {
   cleanup();
+  // The file picker is appended to body and can outlive a canceled scan.
+  for (const input of document.querySelectorAll('input[name="transfer-image"]')) input.remove();
   userState.resetAll();
-  await new Promise((resolve) => {
-    setTimeout(resolve, 100);
-  });
-});
-
-afterAll(() => {
   vi.unstubAllGlobals();
+  await tick();
 });
 
 // A marked v10 version byte: recognized as a transfer code, but from an older version.
