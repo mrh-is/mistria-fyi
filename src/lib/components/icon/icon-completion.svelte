@@ -1,7 +1,7 @@
 <script lang="ts">
   import { prefersReducedMotion } from "svelte/motion";
 
-  import type { QuestState } from "#lib/stores/user-state.svelte.js";
+  import type { QuestState } from "#lib/types/user-progress.js";
 
   interface Props {
     class?: string;
