@@ -129,9 +129,9 @@ describe("persistence lifecycle", () => {
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
-    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
 
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
     expect(storage.getItem("mistria-fyi-v1")).toBe(stored);
@@ -153,10 +153,10 @@ describe("persistence lifecycle", () => {
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
-    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
     userState.setRenown(26);
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
     const saved = JSON.parse(storage.getItem("mistria-fyi-v1") ?? "null") as Record<
@@ -181,7 +181,7 @@ describe("persistence lifecycle", () => {
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
-    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
     const incomingState = JSON.parse(userState.exportState()) as {
       completed: { renown: number };
@@ -195,7 +195,7 @@ describe("persistence lifecycle", () => {
       newValue: incoming,
       storageArea: storage,
     });
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
     expect(userState.state.completed.renown).toBe(42);
@@ -209,7 +209,7 @@ describe("persistence lifecycle", () => {
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
-    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
     const incomingState = JSON.parse(userState.exportState()) as {
       completed: { renown: number };
@@ -218,14 +218,14 @@ describe("persistence lifecycle", () => {
     const incoming = JSON.stringify(incomingState);
     storage.setItem("mistria-fyi-v1", incoming);
     userState.setRenown(10);
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
     expect(userState.state.completed.renown).toBe(42);
     expect(storage.getItem("mistria-fyi-v1")).toBe(incoming);
 
     userState.setRenown(11);
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
     const saved = JSON.parse(storage.getItem("mistria-fyi-v1") ?? "null") as {
@@ -242,12 +242,12 @@ describe("persistence lifecycle", () => {
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
-    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
     storage.clear();
     testWindow.dispatch("storage", { key: null, newValue: null, storageArea: storage });
     userState.setRenown(11);
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
     const saved = JSON.parse(storage.getItem("mistria-fyi-v1") ?? "null") as {
@@ -284,7 +284,7 @@ describe("persistence lifecycle", () => {
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
-    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
     const futureState = JSON.parse(userState.exportState()) as Record<string, unknown>;
     futureState.version = "3";
@@ -296,7 +296,7 @@ describe("persistence lifecycle", () => {
       newValue: future,
       storageArea: storage,
     });
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
     expect(storage.getItem("mistria-fyi-v1")).toBe(future);
@@ -334,10 +334,10 @@ describe("persistence lifecycle", () => {
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
-    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
 
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
     expect(storage.getItem("mistria-fyi-v1")).toBe(invalid);
@@ -353,12 +353,12 @@ describe("persistence lifecycle", () => {
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
-    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
 
     expect(userState.importState(buildMinimalState(25))).toEqual({ ok: true });
     const expected = userState.exportState();
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
     expect(storage.getItem("mistria-fyi-v1")).toBe(expected);
@@ -374,11 +374,11 @@ describe("persistence lifecycle", () => {
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
-    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
     userState.resetAll();
 
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
     expect(storage.getItem("mistria-fyi-v1")).not.toBe(invalid);
@@ -394,11 +394,11 @@ describe("persistence lifecycle", () => {
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
-    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
     expect(userState.importState(buildMinimalState(25))).toEqual({ ok: true });
 
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
     expect(storage.getItem("mistria-fyi-v1")).toBe(invalid);
@@ -429,10 +429,10 @@ describe("persistence lifecycle", () => {
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
-    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
 
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
     expect(storage.getItem("mistria-fyi-v1")).toBe(stored);
@@ -447,7 +447,7 @@ describe("persistence lifecycle", () => {
     vi.stubGlobal("localStorage", makeStorage({ "mistria-fyi-v1": stored }));
     vi.resetModules();
 
-    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
 
     expect(userState.persistenceFailureGeneration).toBe(0);
@@ -458,7 +458,7 @@ describe("persistence lifecycle", () => {
     // Trigger a state change that fires the auto-save effect
     userState.state.completed.renown = 1;
     // Flush the 300ms debounce
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
     expect(userState.persistenceFailed).toBe(true);
@@ -467,7 +467,7 @@ describe("persistence lifecycle", () => {
 
     // Second failure should produce a new generation
     userState.state.completed.renown = 2;
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
     expect(userState.persistenceFailureGeneration).toBeGreaterThan(gen1);
@@ -480,12 +480,12 @@ describe("persistence lifecycle", () => {
     vi.stubGlobal("localStorage", makeStorage({ "mistria-fyi-v1": stored }));
     vi.resetModules();
 
-    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
 
     vi.stubGlobal("localStorage", failingStorage({ "mistria-fyi-v1": stored }));
     userState.state.completed.renown = 1;
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
     expect(userState.persistenceFailed).toBe(true);
@@ -502,14 +502,14 @@ describe("persistence lifecycle", () => {
     vi.stubGlobal("localStorage", makeStorage({ "mistria-fyi-v1": stored }));
     vi.resetModules();
 
-    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
 
     vi.stubGlobal("localStorage", failingStorage({ "mistria-fyi-v1": stored }));
 
     // First failure
     userState.state.completed.renown = 1;
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
     expect(userState.persistenceFailed).toBe(true);
 
@@ -519,7 +519,7 @@ describe("persistence lifecycle", () => {
 
     // Another failure after dismiss
     userState.state.completed.renown = 2;
-    vi.advanceTimersByTime(400);
+    vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
     expect(userState.persistenceFailed).toBe(true);

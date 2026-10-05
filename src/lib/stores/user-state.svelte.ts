@@ -115,6 +115,8 @@ interface SerializedState {
   worldState: { season: Season; weather: Weather };
 }
 
+/** Quiet period after the last change before progress is written to localStorage. */
+export const PERSIST_DEBOUNCE_MS = 300;
 const STORAGE_KEY = "mistria-fyi-v1";
 const QUARANTINE_KEY = `${STORAGE_KEY}-quarantine`;
 const CURRENT_SERIALIZATION_VERSION = "2";
@@ -339,7 +341,7 @@ function createUserState() {
         if (json === lastKnownStoredValue) return;
 
         pendingSave = { expectedStoredValue: lastKnownStoredValue, json };
-        saveTimeout = setTimeout(flushPendingSave, 300);
+        saveTimeout = setTimeout(flushPendingSave, PERSIST_DEBOUNCE_MS);
       });
     });
 
