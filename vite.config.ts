@@ -5,6 +5,7 @@ import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 import tailwindcss from "@tailwindcss/vite";
 import { svelteTesting } from "@testing-library/svelte/vite";
 import { readdirSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv } from "vite";
 import { configDefaults } from "vitest/config";
 
@@ -26,6 +27,16 @@ const spriteAssetBase = resolveSpriteAssetBase(
   loadEnv("", import.meta.dirname, "PUBLIC_ASSET_ORIGIN").PUBLIC_ASSET_ORIGIN,
 );
 const contentSecurityPolicy = cspDirectives(spriteAssetBase);
+
+/**
+ * Vite resolves `#lib/*` through the nearest package.json's `imports` field. For files under
+ * `pipeline/`, that's `pipeline/package.json`, which has none, so map it explicitly (the pipeline's
+ * tsconfig does the same for tsx). The `assets` test project doesn't extend this config, so it
+ * repeats the alias.
+ */
+const libAlias = [
+  { find: /^#lib\//u, replacement: `${fileURLToPath(new URL("src/lib", import.meta.url))}/` },
+];
 
 const sharedTestExcludes = [
   ...configDefaults.exclude,
@@ -95,6 +106,7 @@ export default defineConfig({
     headersFilePlugin(renderHeadersFile(contentSecurityPolicy)),
     paraglideVitePlugin(PARAGLIDE_OPTIONS),
   ],
+  resolve: { alias: libAlias },
   server: {
     // Claude Code's preview tool sets PORT when 5173 is already bound by another worktree's dev
     // server (`autoPort` in .claude/launch.json). Vite ignores PORT on its own, so read it here
@@ -167,6 +179,7 @@ export default defineConfig({
       },
       {
         // Needs the installed game assets, so CI never runs it; `pnpm run test` excludes it.
+        resolve: { alias: libAlias },
         test: {
           exclude: sharedTestExcludes,
           globalSetup: ["pipeline/src/assets-test-setup.ts"],
