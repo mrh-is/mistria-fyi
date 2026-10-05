@@ -7,6 +7,7 @@ import {
   initializeApplication,
 } from "./support/application-state.js";
 import { openFeedbackValidation, openVisibilityPanel } from "./support/scenarios.js";
+import { critical, criticalWhen } from "./support/tags.js";
 
 const HEADING_NAME_OVERRIDES: Record<string, string | undefined> = {
   "/": "Mistria Field Guide",
@@ -14,18 +15,22 @@ const HEADING_NAME_OVERRIDES: Record<string, string | undefined> = {
   "/settings": "Data management",
 };
 
-test.describe("@critical semantic accessibility", () => {
+test.describe("semantic accessibility", () => {
   test.beforeEach(async ({ page }) => {
     await initializeApplication(page, "light");
   });
 
   for (const route of accessibilityRoutes) {
-    test(`${route.path} has a named main landmark and page heading`, async ({ page }) => {
-      await gotoApplication(page, route.path);
-      await expect(page.getByRole("main")).toBeVisible();
-      const headingName = HEADING_NAME_OVERRIDES[route.path] ?? route.name;
-      await expect(page.getByRole("heading", { level: 1, name: headingName })).toBeVisible();
-    });
+    test(
+      `${route.path} has a named main landmark and page heading`,
+      criticalWhen(route.path === "/"),
+      async ({ page }) => {
+        await gotoApplication(page, route.path);
+        await expect(page.getByRole("main")).toBeVisible();
+        const headingName = HEADING_NAME_OVERRIDES[route.path] ?? route.name;
+        await expect(page.getByRole("heading", { level: 1, name: headingName })).toBeVisible();
+      },
+    );
   }
 
   test("progress indicators expose their current values", async ({ page }) => {
@@ -74,7 +79,7 @@ test.describe("@critical semantic accessibility", () => {
     await expect(spring).toHaveAttribute("aria-checked", "true");
   });
 
-  test("feedback validation connects its input and alert", async ({ page }) => {
+  test("feedback validation connects its input and alert", critical, async ({ page }) => {
     await gotoApplication(page, "/");
     await openFeedbackValidation(page);
     const message = page.getByRole("textbox", { name: "Message" });

@@ -59,7 +59,7 @@
   {#if category === undefined}
     {@render icon?.("size-5")}
   {/if}
-  <h1 class="page-header__title">{title}</h1>
+  <h1 class="page-header__title" data-testid="page-header-title">{title}</h1>
   {#if pct !== undefined && progress !== undefined}
     <span class="page-header__count">
       <span class="sr-only" aria-live="polite"

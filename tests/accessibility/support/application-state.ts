@@ -1,46 +1,42 @@
 import { expect } from "@playwright/test";
 
 import { THEME_STORAGE_KEY } from "../../../src/lib/theme.js";
+import { legacyAvailabilityWindows } from "../../../src/lib/types/availability.js";
+import { CURRENT_SERIALIZATION_VERSION } from "../../../src/lib/types/user-progress.js";
 
 import type { Page, Response } from "@playwright/test";
 
+import type { SerializedState } from "../../../src/lib/stores/user-state.svelte.js";
+import type {
+  AvailabilityWindow,
+  LegacyAvailabilityMode,
+} from "../../../src/lib/types/availability.js";
 import type { AccessibilityTheme } from "./violations.js";
 
-interface SerializedCompletedState {
-  almanac: string[];
-  almanacRecipes: string[];
-  animalCosmetics: Record<string, string[]>;
-  animals: Record<string, string[]>;
-  childChoice: "no" | "undeclared" | "yes";
-  cosmetics: string[];
-  dates: string[];
-  hasUpperFloor: boolean;
-  mines: { floor: number; spells: string[] };
-  museum: string[];
-  petCosmetics: string[];
-  petSkins: string[];
-  questStates: Record<string, "completed" | "none" | "obtained">;
-  reachedSeason: "fall" | "spring" | "summer" | "winter";
-  renown: number;
-  skillLevels: Record<string, number>;
-  unlockedPerks: string[];
-  villagerLevels: Record<string, number>;
-  villagerRelationships: Record<string, string>;
-}
+/** Legacy fields the store reads for migration but never writes. */
+type LegacyCompletedKey =
+  | "marriedVillager"
+  | "quests"
+  | "romanticVillagers"
+  | "skills"
+  | "villagers";
 
-interface StoredState {
-  availabilityMode: "available" | "everything" | "timely";
+/** Every field the store writes today, so a fixture never exercises the legacy migration path. */
+type SerializedCompletedState = Omit<Required<SerializedState["completed"]>, LegacyCompletedKey>;
+
+interface StoredState extends Omit<SerializedState, "availabilityMode" | "completed"> {
+  availabilityWindows: AvailabilityWindow[];
   completed: SerializedCompletedState;
   showSpoilers: boolean;
-  version: "1";
-  worldState: {
-    season: "fall" | "spring" | "summer" | "winter";
-    weather: "calm" | "heavy_inclement" | "inclement" | "special";
-  };
 }
 
+/**
+ * Builds a blob in the store's current serialized shape (`SerializedState`) and version.
+ * `availabilityMode` is shorthand for the equivalent `availabilityWindows`.
+ */
 export function createStoredState(
   overrides: Partial<Omit<StoredState, "completed" | "version">> & {
+    availabilityMode?: LegacyAvailabilityMode;
     completed?: Partial<SerializedCompletedState>;
   } = {},
 ): StoredState {
@@ -68,10 +64,12 @@ export function createStoredState(
   };
 
   return {
-    availabilityMode: overrides.availabilityMode ?? "available",
+    availabilityWindows:
+      overrides.availabilityWindows ??
+      legacyAvailabilityWindows(overrides.availabilityMode ?? "available"),
     completed,
     showSpoilers: overrides.showSpoilers ?? false,
-    version: "1",
+    version: CURRENT_SERIALIZATION_VERSION,
     worldState: overrides.worldState ?? { season: "spring", weather: "calm" },
   };
 }
