@@ -270,7 +270,6 @@ describe("CI workflow browser suites", () => {
     expect(accessibilityStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
     expect(pwaStep?.run).toBe("pnpm run test:pwa");
     expect(pwaStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
-
   });
 
   it("runs browser suites on host runners with cached Chromium", () => {
