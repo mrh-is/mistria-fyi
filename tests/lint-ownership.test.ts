@@ -10,6 +10,8 @@
 // `oxfmt --check` skips them silently. The last test catches that.
 import { ESLint } from "eslint";
 import { spawnSync } from "node:child_process";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { basename, join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const probeDirectory = "tests/lint-probes";
@@ -91,5 +93,52 @@ describe("lint tool ownership", () => {
 
   it("ESLint leaves script rules to oxlint", async () => {
     await expect(eslintRules("probe.svelte.ts")).resolves.toStrictEqual([]);
+  });
+});
+
+describe("engine import boundary", () => {
+  it("rejects store & component type imports through aliases and repeated parent segments", async () => {
+    // Use real engine paths so the production override, not a copied rule, selects the probes.
+    const nestedDirectory = await mkdtemp("src/lib/engine/lint-probe-");
+    const rootProbe = `src/lib/engine/${basename(nestedDirectory)}.ts`;
+    const nestedProbe = join(nestedDirectory, "probe.ts");
+    try {
+      await writeFile(
+        rootProbe,
+        [
+          'import type { AliasStore } from "#lib/stores/probe.js";',
+          'import type { AliasComponent } from "#lib/components/probe.js";',
+          'import type { RelativeStore } from "../stores/probe.js";',
+          'import type { RelativeComponent } from "../components/probe.js";',
+          'import type { Domain } from "../types/probe.js";',
+          "export type Probe = AliasStore | AliasComponent | RelativeStore | RelativeComponent | Domain;",
+        ].join("\n"),
+      );
+      await writeFile(
+        nestedProbe,
+        [
+          'import type { Store } from "../../stores/probe.js";',
+          'import type { Component } from "../../components/probe.js";',
+          'import type { Domain } from "../../types/probe.js";',
+          "export type Probe = Store | Component | Domain;",
+        ].join("\n"),
+      );
+      const result = spawnSync(
+        "node_modules/.bin/oxlint",
+        ["--config", ".oxlintrc.json", "--format", "json", rootProbe, nestedProbe],
+        { encoding: "utf8" },
+      );
+      expect(result.error).toBeUndefined();
+      const report = JSON.parse(result.stdout) as OxlintReport;
+      const restricted = report.diagnostics.filter(
+        ({ code }) => code === "eslint(no-restricted-imports)",
+      );
+      expect(restricted.filter(({ filename }) => filename === rootProbe)).toHaveLength(4);
+      expect(restricted.filter(({ filename }) => filename === nestedProbe)).toHaveLength(2);
+      expect(result.status).toBe(1);
+    } finally {
+      await rm(rootProbe, { force: true });
+      await rm(nestedDirectory, { force: true, recursive: true });
+    }
   });
 });
