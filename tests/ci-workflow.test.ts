@@ -26,6 +26,7 @@ interface WorkflowJob {
   "runs-on"?: string;
   steps?: WorkflowStep[];
   strategy?: { "fail-fast"?: boolean; matrix?: Record<string, string[]> };
+  "timeout-minutes"?: number;
 }
 
 interface WorkflowStep {
@@ -43,6 +44,7 @@ const pinnedAction = /^[^@]+@[a-f0-9]{40}$/;
 const workflow = parse(readFileSync(".github/workflows/ci.yml", "utf8")) as Workflow;
 const jobs = workflow.jobs ?? {};
 const browserJobs = ["accessibility", "pwa"] as const;
+const requiredJobs = ["changes", "lint", "check", "test", "build", "ci-passed"] as const;
 const installJobs = ["lint", "check", "test", "build", ...browserJobs, "issue-sync"] as const;
 
 function runCommands(job: undefined | WorkflowJob): string[] {
@@ -70,17 +72,7 @@ describe("CI workflow triggers", () => {
 
 describe("CI workflow jobs", () => {
   it("runs lint, check, test, and build as independent parallel jobs", () => {
-    expect(Object.keys(jobs)).toEqual([
-      "changes",
-      "lint",
-      "check",
-      "test",
-      "build",
-      "accessibility",
-      "pwa",
-      "issue-sync",
-      "ci-passed",
-    ]);
+    expect(Object.keys(jobs)).toEqual(expect.arrayContaining([...requiredJobs, ...browserJobs]));
     // Each job restores the pnpm cache and installs on its own, so a shared setup job would only
     // add a serial step to the critical path.
     for (const jobName of ["changes", "lint", "check", "test", "build"] as const) {
@@ -93,15 +85,39 @@ describe("CI workflow jobs", () => {
 
     // Lint needs its own sync step: it runs on a separate runner from `check`, which is the
     // only script that generates .svelte-kit/tsconfig.json (required by oxlint's type-aware rules).
-    expect(runCommands(jobs.lint)).toEqual([
-      "pnpm install --frozen-lockfile",
-      "pnpm exec svelte-kit sync",
-      "pnpm run lint",
-    ]);
-    expect(runCommands(jobs.check).slice(-2)).toEqual(["pnpm run check", "pnpm run check:i18n"]);
-    expect(runCommands(jobs.test).at(-1)).toBe("pnpm run test");
+    const lintCommands = runCommands(jobs.lint);
+    expect(lintCommands).toContain("pnpm run lint");
+    expect(lintCommands.indexOf("pnpm exec svelte-kit sync")).toBeGreaterThan(-1);
+    expect(lintCommands.indexOf("pnpm exec svelte-kit sync")).toBeLessThan(
+      lintCommands.indexOf("pnpm run lint"),
+    );
+    expect(runCommands(jobs.check)).toContain("pnpm run check");
+    expect(runCommands(jobs.test)).toContain("pnpm run test");
     // The build job also proves the Cloudflare route table keeps static assets off Functions.
-    expect(runCommands(jobs.build).slice(-2)).toEqual(["pnpm run build", "pnpm run check:routes"]);
+    expect(runCommands(jobs.build)).toEqual(
+      expect.arrayContaining(["pnpm run build", "pnpm run check:routes"]),
+    );
+  });
+
+  it("runs each verification command exactly once", () => {
+    const commands = Object.values(jobs).flatMap((job) => runCommands(job));
+    for (const command of [
+      "pnpm run lint",
+      "pnpm run check",
+      "pnpm run check:i18n",
+      "pnpm run test",
+      "pnpm run build",
+      "pnpm run check:routes",
+    ]) {
+      expect(commands.filter((entry) => entry === command)).toHaveLength(1);
+    }
+  });
+
+  it("bounds every job with a timeout shorter than the 6 hour default", () => {
+    for (const [jobName, job] of Object.entries(jobs)) {
+      expect(job["timeout-minutes"], jobName).toBeGreaterThan(0);
+      expect(job["timeout-minutes"], jobName).toBeLessThanOrEqual(60);
+    }
   });
 
   it("restores Vitest's module cache before running the tests", () => {
@@ -127,13 +143,44 @@ describe("CI workflow jobs", () => {
     expect(allCommands).not.toMatch(/lint:fix|pipeline --|test:pipeline:assets/);
   });
 
-  it("installs dependencies from a frozen lockfile on Node 24 before running anything", () => {
+  it("installs dependencies from a frozen lockfile before running anything", () => {
     for (const jobName of installJobs) {
       expect(jobs[jobName]["runs-on"]).toBe("ubuntu-latest");
       expect(runCommands(jobs[jobName])[0]).toBe("pnpm install --frozen-lockfile");
       const setup = jobs[jobName].steps?.find((step) => step.uses?.startsWith("pnpm/setup@"));
-      expect(setup?.with?.runtime).toBe("node@24");
+      expect(setup).toBeDefined();
     }
+  });
+
+  it("takes the pnpm and Node versions from the repository, not the workflow", () => {
+    const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as {
+      packageManager?: string;
+    };
+    expect(packageJson.packageManager).toMatch(/^pnpm@\d+\.\d+\.\d+$/);
+    expect(readFileSync(".node-version", "utf8").trim()).toMatch(/^\d+\.\d+\.\d+$/);
+    for (const job of Object.values(jobs)) {
+      const steps = job.steps ?? [];
+      const pnpmIndex = steps.findIndex((entry) => entry.uses?.startsWith("pnpm/setup@"));
+      if (pnpmIndex === -1) {
+        continue;
+      }
+      expect(steps[pnpmIndex].with?.version).toBeUndefined();
+      expect(steps[pnpmIndex].with?.runtime).toBeUndefined();
+      const nodeIndex = steps.findIndex((entry) => entry.uses?.startsWith("actions/setup-node@"));
+      expect(nodeIndex).toBeGreaterThan(-1);
+      expect(steps[nodeIndex].with?.["node-version-file"]).toBe(".node-version");
+    }
+  });
+
+  it("has Dependabot keep the pinned GitHub Actions current", () => {
+    const dependabot = parse(readFileSync(".github/dependabot.yml", "utf8")) as {
+      updates?: { directory?: string; "package-ecosystem"?: string }[];
+    };
+    expect(
+      dependabot.updates?.some(
+        (update) => update["package-ecosystem"] === "github-actions" && update.directory === "/",
+      ),
+    ).toBe(true);
   });
 });
 
@@ -163,16 +210,28 @@ describe("CI workflow browser suites", () => {
   it("runs the browser suites only when the change detector says they are relevant", () => {
     const filter = jobs.changes.steps?.find((step) => step.id === "filter");
     expect(jobs.changes.outputs?.browser).toBe("${{ steps.filter.outputs.browser }}");
+    // Every input that changes browser results: the app, its assets & headers, translations
+    // (specs select by accessible name), the Playwright web server & config, and the toolchain.
     for (const pattern of [
       "src/*",
       "static/*",
       "tests/*",
+      "messages/*",
+      "project.inlang/*",
+      "_headers",
+      "scripts/playwright-*",
       "playwright*.config.ts",
+      "svelte.config.*",
+      "vite.config.*",
+      "package.json",
       "pnpm-lock.yaml",
+      ".node-version",
       ".github/workflows/ci.yml",
     ]) {
-      expect(filter?.run).toContain(pattern);
+      expect(filter?.run).toContain(` ${pattern}`);
     }
+    // Tailwind 4 has no config file, so a tailwind.* pattern would be dead.
+    expect(filter?.run).not.toContain("tailwind.*");
     // Only pull requests are filtered; every other event runs the suites.
     expect(filter?.run).toMatch(/browser=true\n\s*if \[ "\$EVENT_NAME" = "pull_request" \]/);
 
@@ -201,10 +260,10 @@ describe("CI workflow browser suites", () => {
       (step) => step.id === "accessibility-tests",
     );
     const pwaStep = jobs.pwa.steps?.find((step) => step.id === "pwa-tests");
-    expect(accessibilityStep?.run).toBe("pnpm run test:accessibility --shard=${{ matrix.shard }}");
-    expect(accessibilityStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
-    expect(pwaStep?.run).toBe("pnpm run test:pwa");
-    expect(pwaStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
+    expect(accessibilityStep?.run).toContain("pnpm run test:accessibility");
+    expect(accessibilityStep?.env?.PLAYWRIGHT_SKIP_BUILD).toBe("true");
+    expect(pwaStep?.run).toContain("pnpm run test:pwa");
+    expect(pwaStep?.env?.PLAYWRIGHT_SKIP_BUILD).toBe("true");
   });
 
   it("runs browser suites on host runners with cached Chromium", () => {

@@ -84,14 +84,54 @@ export async function expectResolvedTheme(page: Page, theme: AccessibilityTheme)
 export const HYDRATED_SELECTOR = 'html[data-hydrated="true"]';
 
 /**
- * Navigates and waits for hydration. Network idle alone is not enough: a control clicked between
+ * Navigates and waits for interaction readiness. A control clicked between
  * the server-rendered paint and `onMount` drops the event, which showed up as flaky interaction
  * failures under parallel workers (#330).
  */
 export async function gotoApplication(page: Page, path: string): Promise<null | Response> {
-  const response = await page.goto(path, { waitUntil: "networkidle" });
+  const response = await page.goto(path, { waitUntil: "domcontentloaded" });
   await page.locator(HYDRATED_SELECTOR).waitFor({ state: "attached" });
   return response;
+}
+
+export async function gotoRenderedApplication(page: Page, path: string): Promise<null | Response> {
+  const response = await gotoApplication(page, path);
+  await waitForRendering(page);
+  return response;
+}
+
+/** Asset/layout readiness for geometry and contrast checks, including newly expanded content. */
+export async function waitForRendering(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    // Let hydration and state changes reach the next painted frame before inspecting animations.
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        resolve();
+      });
+    });
+  });
+  await page.waitForFunction(() =>
+    [...document.images].every((image) => {
+      const box = image.getBoundingClientRect();
+      // Below-the-fold lazy images have not been requested yet. Broken images are settled too;
+      // their application fallback and the existing assertions determine whether they are valid.
+      const inViewport =
+        box.bottom > 0 && box.top < innerHeight && box.right > 0 && box.left < innerWidth;
+      return (
+        image.complete ||
+        box.width === 0 ||
+        box.height === 0 ||
+        (image.loading === "lazy" && !inViewport)
+      );
+    }),
+  );
+  await page.waitForFunction(() =>
+    document.getAnimations().every((animation) => {
+      const iterations = animation.effect?.getComputedTiming().iterations;
+      return iterations === Infinity || animation.playState === "finished";
+    }),
+  );
 }
 
 export async function initializeApplication(

@@ -4,7 +4,7 @@ import { trackerData } from "#lib/data/index.js";
 import { getMaxMineFloor, MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
 import { recordEntries, recordKeys } from "#lib/utils.js";
 
-import type { CompletedState } from "#lib/stores/user-state.svelte.js";
+import type { CompletedState } from "#lib/types/user-progress.js";
 
 const STORAGE_KEY = "mistria-fyi-v1";
 const UNKNOWN_ID = "removed_from_tracker_data";

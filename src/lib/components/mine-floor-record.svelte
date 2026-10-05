@@ -26,7 +26,7 @@
     registerFeedback?: boolean;
   } = $props();
 
-  let feedbackContext = getFeedbackContextOrFallback();
+  const feedbackContext = getFeedbackContextOrFallback();
   let maxFloor = $derived(biomes.at(-1)?.floors.end ?? 0);
   let currentBiome = $derived(
     biomes.find((biome) => floor >= biome.floors.start && floor <= biome.floors.end) ?? biomes[0],

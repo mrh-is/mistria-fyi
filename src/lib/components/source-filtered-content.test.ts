@@ -1,4 +1,3 @@
-import { render } from "svelte/server";
 import { afterEach, describe, expect, it } from "vitest";
 
 import CosmeticsContent from "#lib/components/cosmetics-content.svelte";
@@ -6,14 +5,7 @@ import { trackerData } from "#lib/data/index.js";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
-
-function renderedText(body: string): string {
-  return body
-    .replaceAll(/<!--.*?-->/gs, "")
-    .replaceAll(/<[^>]+>/g, " ")
-    .replaceAll(/\s+/g, " ")
-    .trim();
-}
+import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 afterEach(() => {
   toolbarState.removeSourceFilters("test");
@@ -34,14 +26,14 @@ describe("source-filtered content", () => {
     const slotLabel = { back: "Back", eyes: "Eyes", facial_hair: "Facial Hair" }[coveredSlot[0]];
     if (!slotLabel) throw new Error(`Add a heading for slot "${coveredSlot[0]}" to this test`);
 
-    expect(renderedText(render(CosmeticsContent, { props: { locale: "en" } }).body)).toContain(
+    expect(renderToFragment(CosmeticsContent, { props: { locale: "en" } }).text).toContain(
       slotLabel,
     );
 
     toolbarState.setSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
-    expect(renderedText(render(CosmeticsContent, { props: { locale: "en" } }).body)).toContain(
+    expect(renderToFragment(CosmeticsContent, { props: { locale: "en" } }).text).toContain(
       `${slotLabel} 0 / 0`,
     );
   });
