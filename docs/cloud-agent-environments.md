@@ -1,13 +1,25 @@
 # Cloud agent environments
 
 Claude Code cloud and Codex cloud use fresh Linux checkouts that do not inherit local tools or
-credentials. Configure both environments to run the repository bootstrap script, use Node from
-`.node-version`, and grant only read access to Cloudflare Pages build logs.
+credentials. Configure both environments to install dependencies on a supported Node version, and
+grant only read access to Cloudflare Pages build logs.
 
-The checked-in setup script downloads Node from `nodejs.org`, verifies its published SHA-256
-checksum, persists it through `~/.bashrc`, and runs `pnpm install --frozen-lockfile`. The frozen
-install runs the repository’s `prepare` lifecycle, including Paraglide compilation and SvelteKit
-sync.
+Both environments run Node 24, the repository’s version, but get it differently:
+
+- **Claude Code cloud** ships Node 22.22.0, below the dependency floor of 24.15. Its setup script
+  installs Node from `.node-version`.
+- **Codex cloud** ships Node 24 (24.19 as of October 2026), which `package.json`’s `engines` range
+  accepts. Its agent phase can write only under `/workspace` and temporary directories, and its home
+  directory doesn’t persist from setup, so a downloaded runtime couldn’t reach the agent’s `PATH`
+  anyway. Codex uses its preinstalled Node, which may trail `.node-version` by a few patch releases.
+
+Revisit `.node-version` when both images ship a newer LTS line; Node 24 reaches end of life in
+April 2028.
+
+The checked-in Claude setup script downloads Node from `nodejs.org`, verifies its published SHA-256
+checksum, adds it to `PATH` in the Bash startup files, and runs `pnpm install --frozen-lockfile`.
+The frozen install runs the repository’s `prepare` lifecycle, including Paraglide compilation and
+SvelteKit sync.
 
 ## Cloudflare credential
 
@@ -73,6 +85,15 @@ is absent.
 9. Start a new cloud session in this environment. Existing sessions do not receive environment
    edits.
 
+The setup script runs before Claude Code starts, but Claude’s Bash tool doesn’t pick up the `PATH`
+line the script adds to the Bash startup files; without help, the agent’s shell resolves the image’s
+`/opt/node22/bin/node`. A SessionStart hook in `.claude/settings.json` runs
+`scripts/claude-session-env.sh`, which prepends the repository-managed Node directory to `PATH`
+through `$CLAUDE_ENV_FILE` so every Bash call in the session uses it. The hook exits unless
+`CLAUDE_CODE_REMOTE` is `true`, so local sessions keep their own Node. A cached environment skips
+the setup script, so when the cached Node doesn’t match `.node-version`, the hook reruns the setup
+script before exporting `PATH`.
+
 A setup script that exits with `scripts/setup-cloud-agent.sh: No such file or directory` is using
 the checkout-relative path; add the `mistria-fyi/` prefix. Claude does not cache a setup that exits
 unsuccessfully, so no cache reset is required after fixing it. If an older successful setup is
@@ -92,16 +113,11 @@ the session. No separate GitHub token belongs in the setup script or environment
 These steps follow OpenAI’s
 [cloud environment configuration](https://learn.chatgpt.com/docs/environments/cloud-environment).
 
-Note: The Codex setup below has not been validated end to end since the script reached `main`.
-Claude’s setup script needed a working-directory prefix that the original guide missed; if Codex
-reports `No such file or directory`, check which directory Codex runs setup from and adjust the path
-the same way.
-
 1. Open [Codex environment settings](https://chatgpt.com/codex/settings/environments), then create
    or edit the environment attached to this repository.
 2. Name the environment `Mistria Field Guide`.
-3. If **Set package versions** offers Node 26.5.0, select it. The setup script still enforces
-   `.node-version`, so this selection is an optimization rather than a requirement.
+3. Leave Node at the preinstalled version (24.19 as of October 2026). Don’t download another
+   runtime; see the explanation at the top of this page.
 4. Add these environment variables, replacing both placeholders:
 
    ```dotenv
@@ -109,19 +125,17 @@ the same way.
    CLOUDFLARE_API_TOKEN=your-pages-read-token
    ```
 
-5. Set the setup script to:
+5. Set the install script to:
 
    ```sh
-   bash scripts/setup-cloud-agent.sh
+   pnpm install --frozen-lockfile
    ```
 
-6. Set the optional maintenance script to the same command. It is idempotent and refreshes the
-   frozen install when Codex resumes a cached container on a newer commit. The script adds the
-   repository-managed Node runtime to all common Bash startup files because Codex runs setup and
-   agent commands in separate shells; changing `PATH` only during setup does not persist. Codex also
-   reconstructs `PATH` from its selected runtime for the agent phase, so the script redirects that
-   runtime’s `node` executable to the checksum-verified repository version while retaining the
-   original executable with a `.codex-platform` suffix.
+   Don’t use `scripts/setup-cloud-agent.sh`; it writes to the home directory, which is read-only
+   during Codex’s agent phase.
+
+6. Keep the start skill free of Node or `PATH` activation steps. The preinstalled runtime needs
+   none.
 7. Set agent internet access to the restricted or allowlist mode, and allow `api.cloudflare.com`.
    Setup scripts have internet access separately; the agent needs this host during its working phase
    to fetch Pages logs.
@@ -144,10 +158,11 @@ pnpm run paraglide:compile
 pnpm run cloudflare:logs -- <deployment-id>
 ```
 
-The Node command must match `.node-version`; Paraglide must compile without requesting jsDelivr; the
-log command must print timestamped build-log lines. Use a real deployment ID from the Pages project;
-the command intentionally rejects the `<deployment-id>` placeholder. For Claude with a protected API
-credential, `CLOUDFLARE_API_TOKEN` should be unset even though the log request succeeds.
+The Node command must match `.node-version` for Claude and print a 24.x release of at least 24.15
+for Codex; Paraglide must compile without requesting jsDelivr; the log command must print
+timestamped build-log lines. Use a real deployment ID from the Pages project; the command
+intentionally rejects the `<deployment-id>` placeholder. For Claude with a protected API credential,
+`CLOUDFLARE_API_TOKEN` should be unset even though the log request succeeds.
 
 For Claude, also run:
 
