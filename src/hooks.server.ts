@@ -69,9 +69,10 @@ const paraglideHandle: Handle = ({ event, resolve }) =>
   );
 
 /**
- * Cloudflare Pages applies `_headers` to static files only, never to Function responses, so every
- * server response (pages, redirects, `/api`) gets the security headers here. SvelteKit adds the
- * CSP to rendered pages itself.
+ * Cloudflare Pages applies `_headers` to static files only, never to Function responses. Responses
+ * passing through this hook (pages, bare-path redirects, `/api`) get the security headers here.
+ * SvelteKit adds the CSP to rendered pages itself; pre-hook responses, such as trailing-slash
+ * normalization redirects, do not receive these headers.
  */
 export const securityHeaders: Handle = async ({ event, resolve }) =>
   withSecurityHeaders(await resolve(event));

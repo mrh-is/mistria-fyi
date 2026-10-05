@@ -136,9 +136,12 @@ Progress calculation and UI row visibility are separate concerns.
 (`Permissions-Policy`, `Referrer-Policy`, `Strict-Transport-Security`, and
 `X-Content-Type-Options`). Cloudflare Pages delivers them by two paths, and both derive from it:
 
-- **Server responses** — SvelteKit emits the CSP, with a per-response script nonce, from the `csp`
-  option in `vite.config.ts`; the `securityHeaders` hook in `hooks.server.ts` adds the rest. Pages
-  never applies `_headers` to Function responses.
+- **Server responses passing through `handle`** — SvelteKit emits the CSP, with a per-response
+  script nonce, from the `csp` option in `vite.config.ts`; the `securityHeaders` hook in
+  `hooks.server.ts` adds the rest to pages, bare-path redirects, & API responses. Framework
+  responses emitted before `handle`, such as trailing-slash normalization redirects (`HEAD /en/all/`
+  returns `308`), do not receive these headers. Pages never applies `_headers` to Function
+  responses.
 - **Static files** — the build writes `_headers` (gitignored) from the same directives, and
   `@sveltejs/adapter-cloudflare` copies it into `build/` with its own cache rules. Never commit or
   hand-edit it.
