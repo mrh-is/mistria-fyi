@@ -19,6 +19,7 @@ prefix_rule(
             "test:server",
             "verify",
             "worktree:new",
+            "worktree:setup",
         ],
     ],
     decision = "allow",

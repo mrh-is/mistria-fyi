@@ -39,7 +39,17 @@ symlinks the `.worktreeinclude` entries in from the main checkout, and runs
 `pnpm install --frozen-lockfile` and `pnpm run prepare`. It never copies dependencies, caches, build
 artifacts, or other writable generated directories. See
 [docs/development-workflow.md §2](docs/development-workflow.md#2-git-worktree-mechanics--workspace-isolation)
-for the manual steps and troubleshooting.
+for the manual steps and troubleshooting. Inside a harness-created worktree, run
+`pnpm run worktree:setup` for the same symlink & install steps.
+
+**Subagent worktrees:** an orchestrator gives each editing subagent a worktree its harness lets that
+subagent edit. In Claude Code, the session's edit guard refuses Write/Edit outside the session's own
+worktree, including `.worktrees/`, so spawn editing subagents with the Agent tool's
+`isolation: "worktree"` and have each run `pnpm run worktree:setup` first.
+
+**Refused edits:** if the harness refuses a file write or edit, stop and report it. Never route
+around the refusal with shell writes (heredocs, `sed -i`, `perl -i`, scripts); the guard exists to
+keep agents out of the shared checkout, and a shell write bypasses it silently.
 
 The installed game assets are a massive `assets.zip` archive. Do not unpack the full archive without
 the user's explicit approval. The pipeline should read the archive directly or materialize only the
