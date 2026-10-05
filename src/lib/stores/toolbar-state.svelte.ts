@@ -1,30 +1,20 @@
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
-import type { Component } from "svelte";
-
+import type { SourceFilter, SourceFilterId } from "#lib/data/source-filters.js";
 import type { Source } from "#lib/types/acquisition.js";
 
-export interface SourceFilter {
-  icon: Component;
-  label: string;
-  members: string[];
-  types: Source["type"][];
-}
-
 export class ToolbarState {
-  activeSourceLabels = $state<SvelteSet<string>>(new SvelteSet());
+  activeSourceIds = $state<SvelteSet<SourceFilterId>>(new SvelteSet());
   searchOpen = $state(false);
 
   searchQuery = $state("");
 
-  sourceFilters = $state<SourceFilter[]>([]);
+  sourceFilters = $state<readonly SourceFilter[]>([]);
   get sourceFilterActive(): boolean {
-    return (
-      this.sourceFilters.length > 0 && this.activeSourceLabels.size !== this.sourceFilters.length
-    );
+    return this.sourceFilters.length > 0 && this.activeSourceIds.size !== this.sourceFilters.length;
   }
 
-  private readonly sourceFilterRegistrations = new SvelteMap<string, SourceFilter[]>();
+  private readonly sourceFilterRegistrations = new SvelteMap<string, readonly SourceFilter[]>();
 
   closeSearch(): void {
     this.searchOpen = false;
@@ -32,7 +22,7 @@ export class ToolbarState {
   }
 
   hideAllSourceFilters(): void {
-    this.activeSourceLabels = new SvelteSet();
+    this.activeSourceIds = new SvelteSet();
   }
 
   matchesSourceFilters(sources: Source[]): boolean {
@@ -41,7 +31,7 @@ export class ToolbarState {
       sources.length === 0 ||
       sources.some((source) => {
         const group = this.sourceFilters.find((filter) => filter.types.includes(source.type));
-        return group === undefined || this.activeSourceLabels.has(group.label);
+        return group === undefined || this.activeSourceIds.has(group.id);
       })
     );
   }
@@ -56,14 +46,14 @@ export class ToolbarState {
   }
 
   resetSourceFilters(): void {
-    this.activeSourceLabels = new SvelteSet(this.sourceFilters.map((filter) => filter.label));
+    this.activeSourceIds = new SvelteSet(this.sourceFilters.map((filter) => filter.id));
   }
 
   setSearch(query: string): void {
     this.searchQuery = query;
   }
 
-  setSourceFilters(owner: string, filters: SourceFilter[]): void {
+  setSourceFilters(owner: string, filters: readonly SourceFilter[]): void {
     this.sourceFilterRegistrations.set(owner, filters);
     this.rebuildSourceFilters();
   }
@@ -73,24 +63,23 @@ export class ToolbarState {
   }
 
   toggleSourceFilter(filter: SourceFilter): void {
-    if (this.activeSourceLabels.has(filter.label)) {
-      this.activeSourceLabels.delete(filter.label);
+    if (this.activeSourceIds.has(filter.id)) {
+      this.activeSourceIds.delete(filter.id);
     } else {
-      this.activeSourceLabels.add(filter.label);
+      this.activeSourceIds.add(filter.id);
     }
   }
 
   private rebuildSourceFilters(): void {
-    const filtersByLabel = new SvelteMap<string, SourceFilter>();
+    const filtersById = new SvelteMap<SourceFilterId, SourceFilter>();
     for (const filters of this.sourceFilterRegistrations.values()) {
-      for (const filter of filters) filtersByLabel.set(filter.label, filter);
+      for (const filter of filters) filtersById.set(filter.id, filter);
     }
-    const nextFilters = [...filtersByLabel.values()].toSorted((a, b) =>
-      a.label.localeCompare(b.label),
-    );
-    const currentLabels = this.sourceFilters.map(({ label }) => label).join("\0");
-    const nextLabels = nextFilters.map(({ label }) => label).join("\0");
-    if (currentLabels !== nextLabels) {
+    // ID order keeps identity and change detection locale-independent; the panel sorts by label.
+    const nextFilters = [...filtersById.values()].toSorted((a, b) => a.id.localeCompare(b.id));
+    const currentIds = this.sourceFilters.map(({ id }) => id).join("\0");
+    const nextIds = nextFilters.map(({ id }) => id).join("\0");
+    if (currentIds !== nextIds) {
       this.sourceFilters = nextFilters;
       this.resetSourceFilters();
     }
