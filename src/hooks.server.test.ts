@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { bareLocaleRedirect } from "./hooks.server.js";
+import { bareLocaleRedirect, securityHeaders } from "./hooks.server.js";
 
 import type { RequestEvent } from "@sveltejs/kit";
 
@@ -121,5 +121,19 @@ describe("bareLocaleRedirect", () => {
     });
 
     expect(response.headers.get("vary")).toBe("Cookie, Accept-Language");
+  });
+});
+
+describe("securityHeaders", () => {
+  it("adds the security headers to server-rendered responses", async () => {
+    const response = await securityHeaders({
+      event: makeEvent("/en/almanac"),
+      resolve: vi.fn().mockResolvedValue(new Response("page")),
+    });
+
+    expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(response.headers.get("Referrer-Policy")).toBe("strict-origin-when-cross-origin");
+    expect(response.headers.get("Permissions-Policy")).toContain("camera=(self)");
+    expect(response.headers.get("Strict-Transport-Security")).toBe("max-age=31536000");
   });
 });
