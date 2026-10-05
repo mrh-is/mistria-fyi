@@ -65,6 +65,15 @@ Treat the regenerated data as a candidate until the semantic review is complete.
 readable pipeline artifact or a purpose-built comparison rather than relying only on the minified
 JSON diff.
 
+## Share the extracted assets
+
+The game is installed only on the gaming PC. After generating the candidate there, copy the
+extracted structured-assets root (the directory passed to `pnpm run pipeline`, with `fiddle/`,
+`data_files/`, `localization/`, and so on) to Google Drive at
+`Development/Mistria/Fields of Mistria vX.Y.Z/assets/`. Other machines point `pipeline/input/assets`
+at that folder for development work. Copy only the extracted subtrees the pipeline reads; never
+upload the full `assets.zip` archive.
+
 ## Classify changes
 
 Compare the previous and candidate datasets by domain. At minimum, inspect almanac entries and their
@@ -161,6 +170,10 @@ The version-update issue or pull request must include a compatibility report wit
 - The migration policy and historical fixtures added, or an explanation of why none are needed.
 - Any user-facing notice.
 - The rollback constraint for the release.
+
+Post the mechanical ID inventory (additions, removals, renames, and transfer-position changes by
+domain, compared from the baseline commit) as its own PR comment, as #354 did. It is the durable
+diff later updates compare against.
 
 Use this conclusion when the review finds no incompatibility: “No persisted-state or transfer
 compatibility change is required”. Support that conclusion with the reviewed comparisons and tests.
