@@ -56,7 +56,7 @@
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/svelte": "^5.4.2",
     "@types/canvas-confetti": "^1.9.0",
-    "@types/node": "^26.6.2",
+    "@types/node": "^24.19.1",
     "@types/yauzl-promise": "^4.0.1",
     "axe-core": "^4.13.0",
     "bits-ui": "^2.19.2",
@@ -98,6 +98,6 @@
     "qr": "^0.7.0"
   },
   "engines": {
-    "node": "^24.15.0 || ^26.0.0"
+    "node": ">=24.15.0 <27.0.0"
   }
 }

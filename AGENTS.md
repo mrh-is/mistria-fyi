@@ -96,7 +96,7 @@ Follow this sequence for every task:
 5. **Worktree** — create an isolated worktree and branch **immediately** when starting work on an
    issue (see §1 for when worktrees are required). The worktree is the workspace for the entire
    task. Only skip if the user explicitly directs work in the current checkout.
-6. **Baseline** — install dependencies (Node 26, or 24.15+ in Codex cloud;
+6. **Baseline** — install dependencies (Node 24 per `.node-version`;
    `pnpm install --frozen-lockfile`) and verify a clean baseline.
 7. **Understand contracts** — read the affected subsystem, its boundaries, and existing tests before
    editing.

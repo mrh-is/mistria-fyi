@@ -22,9 +22,9 @@ describe.skipIf(process.platform !== "linux")("setup-cloud-agent", () => {
     const home = mkdtempSync(join(tmpdir(), "mistria-cloud-setup-"));
     temporaryDirectories.push(home);
 
-    const binDirectory = join(home, ".local/share/mistria-node/26.5.0/bin");
+    const binDirectory = join(home, ".local/share/mistria-node/24.21.0/bin");
     mkdirSync(binDirectory, { recursive: true });
-    writeExecutable(join(binDirectory, "node"), '#!/usr/bin/env bash\nprintf "v26.5.0\\n"\n');
+    writeExecutable(join(binDirectory, "node"), '#!/usr/bin/env bash\nprintf "v24.21.0\\n"\n');
     writeExecutable(join(binDirectory, "pnpm"), "#!/usr/bin/env bash\nexit 0\n");
 
     execFileSync("bash", ["scripts/setup-cloud-agent.sh"], {
