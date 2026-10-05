@@ -8,13 +8,14 @@ import type { CspDirectives } from "./csp-directives.js";
  *   off the other powerful features the app never uses.
  * - `Referrer-Policy` sends only the origin cross-origin; Turnstile checks the embedding hostname,
  *   so `no-referrer` would break the feedback form.
- * - `Strict-Transport-Security` omits `includeSubDomains` and `preload`: both bind every
- *   `mistria.fyi` subdomain to HTTPS, which is a domain-wide decision rather than this app's.
+ * - `Strict-Transport-Security` covers subdomains (both in use, `www` and the asset origin, are
+ *   HTTPS-only) but omits `preload`: preload-list entries ship in browser builds and are slow to
+ *   undo, which outweighs the first-visit protection for this site.
  */
 export const SECURITY_HEADERS = {
   "Permissions-Policy": "camera=(self), geolocation=(), microphone=(), payment=(), usb=()",
   "Referrer-Policy": "strict-origin-when-cross-origin",
-  "Strict-Transport-Security": "max-age=31536000",
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
   "X-Content-Type-Options": "nosniff",
 } as const;
 
