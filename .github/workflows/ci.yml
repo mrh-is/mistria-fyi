@@ -183,6 +183,15 @@ jobs:
             .playwright-results/
           retention-days: 14
           if-no-files-found: ignore
+      - name: Publish accessibility timings
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: accessibility-timings-${{ strategy.job-index }}
+          include-hidden-files: true
+          path: .playwright-artifacts/results.json
+          retention-days: 14
+          if-no-files-found: ignore
       - name: Preserve test outcome
         if: steps.accessibility-tests.outcome == 'failure'
         run: exit 1

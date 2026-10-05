@@ -234,6 +234,16 @@ describe("CI workflow browser suites", () => {
     expect(jobs.pwa.strategy).toBeUndefined();
   });
 
+  it("retains per-test timings from successful and failed accessibility runs", () => {
+    const timingUpload = jobs.accessibility.steps?.find(
+      (step) => step.name === "Publish accessibility timings",
+    );
+    expect(timingUpload?.if).toBe("always()");
+    expect(timingUpload?.with?.name).toBe("accessibility-timings-${{ strategy.job-index }}");
+    expect(timingUpload?.with?.path).toBe(".playwright-artifacts/results.json");
+    expect(timingUpload?.with?.["include-hidden-files"]).toBe(true);
+  });
+
   it("publishes failure and recovered-retry evidence before preserving the failed outcome", () => {
     const accessibilitySteps = jobs.accessibility.steps ?? [];
     expect(
