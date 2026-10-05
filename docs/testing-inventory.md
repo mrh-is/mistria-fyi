@@ -123,6 +123,8 @@ Ordered by risk:
   reflected. Do not assert on internal component variables.
 - Cover in-flight, success, and failure states for asynchronous actions, and always assert that a
   failure leaves progress untouched.
-- Clean up with `cleanup()` and `userState.resetAll()`; wait briefly afterward when the component
-  restores focus or runs an outro so the next test mounts on a settled DOM.
+- Clean up with `cleanup()` and `userState.resetAll()`, then `await tick()` so the next test mounts
+  on a settled DOM. Never sleep for real time: `waitFor` an observable condition, or use fake timers
+  (`vi.useFakeTimers()`) for debounces, advancing by the exported constant (for example
+  `PERSIST_DEBOUNCE_MS`) rather than a guessed number.
 - Keep a component's test as a server-render test when it has no interaction to exercise.

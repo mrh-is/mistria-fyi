@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import WelcomeCard from "#lib/components/welcome-card.svelte";
@@ -17,9 +18,7 @@ beforeEach(() => {
 afterEach(async () => {
   cleanup();
   vi.restoreAllMocks();
-  await new Promise((resolve) => {
-    setTimeout(resolve, 350);
-  });
+  await tick();
 });
 
 describe("WelcomeCard", () => {
