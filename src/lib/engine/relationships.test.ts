@@ -5,6 +5,7 @@ import { trackerData } from "#lib/data/index.js";
 import {
   getMarriedVillager,
   isRomantic,
+  mergeHousehold,
   normalizeRelationships,
   relationshipPresentation,
 } from "./relationships.js";
@@ -219,5 +220,85 @@ describe("relationshipPresentation", () => {
         villagerId,
       }),
     ).toEqual({ actions: [], status: "best_friends" });
+  });
+});
+
+// ─── mergeHousehold ───────────────────────────────────────────────
+
+describe("mergeHousehold", () => {
+  const ADELINE = "adeline" as VillagerId;
+  const BALOR = "balor" as VillagerId;
+  const CELINE = "celine" as VillagerId;
+
+  it("leaves the household unchanged when nothing comes in", () => {
+    const local = {
+      childChoice: "yes" as const,
+      villagerRelationships: rels({ adeline: "married" }),
+    };
+
+    expect(mergeHousehold(local, {})).toEqual({
+      childChoice: "yes",
+      conflicts: [],
+      counts: { childChoice: 0, villagerRelationships: 0 },
+      villagerRelationships: { adeline: "married" },
+    });
+  });
+
+  it("applies an incoming marriage and its child choice when no local spouse exists", () => {
+    const result = mergeHousehold(
+      { childChoice: "undeclared", villagerRelationships: rels({ celine: "proposed" }) },
+      { childChoice: "no", villagerRelationships: rels({ adeline: "married" }) },
+    );
+
+    expect(result.villagerRelationships[ADELINE]).toBe("married");
+    expect(result.villagerRelationships[CELINE]).toBe("platonic");
+    expect(result.childChoice).toBe("no");
+    expect(result.counts).toEqual({ childChoice: 1, villagerRelationships: 1 });
+    expect(result.conflicts).toEqual([]);
+  });
+
+  it("reports one spouse conflict and skips the incoming child choice", () => {
+    const result = mergeHousehold(
+      { childChoice: "undeclared", villagerRelationships: rels({ adeline: "married" }) },
+      { childChoice: "yes", villagerRelationships: rels({ balor: "married" }) },
+    );
+
+    expect(result.conflicts).toEqual([
+      { incomingVillagerId: BALOR, kind: "spouse", localVillagerId: ADELINE },
+    ]);
+    expect(result.villagerRelationships[ADELINE]).toBe("married");
+    expect(result.childChoice).toBe("undeclared");
+  });
+
+  it("moves forward within a branch and flags a move between branches", () => {
+    const result = mergeHousehold(
+      {
+        childChoice: "undeclared",
+        villagerRelationships: rels({ adeline: "romantic", balor: "platonic" }),
+      },
+      { villagerRelationships: rels({ adeline: "proposed", balor: "romantic" }) },
+    );
+
+    expect(result.villagerRelationships).toEqual({ adeline: "proposed", balor: "platonic" });
+    expect(result.counts.villagerRelationships).toBe(1);
+    expect(result.conflicts).toEqual([
+      {
+        incomingRelationship: "romantic",
+        kind: "relationship",
+        localRelationship: "platonic",
+        villagerId: BALOR,
+      },
+    ]);
+  });
+
+  it("does not mutate the local household", () => {
+    const localRelationships = rels({ celine: "proposed" });
+
+    mergeHousehold(
+      { childChoice: "undeclared", villagerRelationships: localRelationships },
+      { villagerRelationships: rels({ adeline: "married" }) },
+    );
+
+    expect(localRelationships).toEqual({ celine: "proposed" });
   });
 });
