@@ -1,8 +1,8 @@
 <script lang="ts">
   import { SvelteSet } from "svelte/reactivity";
 
-  import ConfirmSpoilerDialog from "#lib/components/confirm-spoiler-dialog.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
+  import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { Button } from "#lib/components/ui/button/index.js";
@@ -13,7 +13,9 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "#lib/utils/celebrate.js";
-  import { recordEntries, recordForEach } from "#lib/utils/record.js";
+  import { createLeavingSet } from "#lib/utils/leaving-set.svelte.js";
+  import { recordForEach } from "#lib/utils/record.js";
+  import { computeRedactedStoreIds } from "#lib/utils/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
   import { registerSourceFilters } from "#lib/utils/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/utils/spoiler-guard.svelte.js";
@@ -31,22 +33,9 @@
 
   const spoilerGuard = createSpoilerGuard();
 
-  const recentlyCompleted = new SvelteSet<RecipeId>();
+  const recentlyCompleted = createLeavingSet<RecipeId>();
 
-  function markLeaving(recipeId: RecipeId): void {
-    recentlyCompleted.add(recipeId);
-    setTimeout(() => recentlyCompleted.delete(recipeId), 1050);
-  }
-
-  let redactedStoreIds = $derived(
-    new Set(
-      recordEntries(trackerData.stores)
-        .filter(
-          ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
-        )
-        .map(([id]) => id),
-    ),
-  );
+  let redactedStoreIds = $derived(computeRedactedStoreIds(userState.progressionState));
 
   function recipeForItem(item: Item): RecipeId | undefined {
     return item.sources.find((source) => source.type === "recipe")?.recipeId;
@@ -134,27 +123,13 @@
       userState.toggleAlmanacRecipe(entry.id);
     });
     if (nowCompleted) {
-      if (!userState.state.showCompleted) markLeaving(entry.id);
+      if (!userState.state.showCompleted) recentlyCompleted.mark(entry.id);
       checkCelebration(sectionRecipeIds);
     }
   }
 </script>
 
-{#if spoilerGuard.condition}
-  <ConfirmSpoilerDialog
-    condition={spoilerGuard.condition}
-    bind:open={spoilerGuard.open}
-    onCancel={() => {
-      spoilerGuard.cancel();
-    }}
-    onComplete={() => {
-      spoilerGuard.complete();
-    }}
-    onCompleteAndUpdate={() => {
-      spoilerGuard.completeAndUpdate();
-    }}
-  />
-{/if}
+<SpoilerGuardDialog guard={spoilerGuard} />
 
 {#each recipesByCategory as group (group.id)}
   {@const namedEntries = group.entries.filter(matchesName)}

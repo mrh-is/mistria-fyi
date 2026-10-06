@@ -1,7 +1,7 @@
 <script lang="ts">
-  import ConfirmSpoilerDialog from "#lib/components/confirm-spoiler-dialog.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import MineFloorRecord from "#lib/components/mine-floor-record.svelte";
+  import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
@@ -117,21 +117,7 @@
   );
 </script>
 
-{#if spoilerGuard.condition}
-  <ConfirmSpoilerDialog
-    condition={spoilerGuard.condition}
-    bind:open={spoilerGuard.open}
-    onCancel={() => {
-      spoilerGuard.cancel();
-    }}
-    onComplete={() => {
-      spoilerGuard.complete();
-    }}
-    onCompleteAndUpdate={() => {
-      spoilerGuard.completeAndUpdate();
-    }}
-  />
-{/if}
+<SpoilerGuardDialog guard={spoilerGuard} />
 
 {#if compact}
   <MineFloorRecord

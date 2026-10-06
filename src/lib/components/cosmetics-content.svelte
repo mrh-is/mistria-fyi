@@ -1,16 +1,17 @@
 <script lang="ts">
-  import ConfirmSpoilerDialog from "#lib/components/confirm-spoiler-dialog.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
+  import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
-  import { isEntityNameVisible, isVisible } from "#lib/engine/visibility.js";
+  import { isEntityNameVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "#lib/utils/celebrate.js";
   import { recordEntries } from "#lib/utils/record.js";
+  import { computeRedactedStoreIds } from "#lib/utils/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
   import { registerSourceFilters } from "#lib/utils/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/utils/spoiler-guard.svelte.js";
@@ -35,15 +36,7 @@
 
   const spoilerGuard = createSpoilerGuard();
 
-  let redactedStoreIds = $derived(
-    new Set(
-      recordEntries(trackerData.stores)
-        .filter(
-          ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
-        )
-        .map(([id]) => id),
-    ),
-  );
+  let redactedStoreIds = $derived(computeRedactedStoreIds(userState.progressionState));
 
   let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
 
@@ -145,21 +138,7 @@
   }
 </script>
 
-{#if spoilerGuard.condition}
-  <ConfirmSpoilerDialog
-    condition={spoilerGuard.condition}
-    bind:open={spoilerGuard.open}
-    onCancel={() => {
-      spoilerGuard.cancel();
-    }}
-    onComplete={() => {
-      spoilerGuard.complete();
-    }}
-    onCompleteAndUpdate={() => {
-      spoilerGuard.completeAndUpdate();
-    }}
-  />
-{/if}
+<SpoilerGuardDialog guard={spoilerGuard} />
 
 {#each groups() as { name, nested, slot, subCategories } (slot)}
   {@const allInSlot = subCategories.flatMap(({ cosmetics }) => cosmetics)}
