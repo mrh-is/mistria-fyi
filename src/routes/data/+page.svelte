@@ -92,14 +92,14 @@
   }
 
   .data-page__intro {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-sm);
   }
 
   .data-page h2 {
     margin-bottom: 8px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-controls);
     font-size: var(--text-3xs);
     font-weight: 400;
@@ -120,7 +120,7 @@
 
   .data-page__footer {
     padding-top: 8px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-2xs);
     text-align: center;

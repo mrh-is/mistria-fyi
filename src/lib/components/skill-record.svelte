@@ -96,7 +96,7 @@
   </span>
 
   <Stepper
-    accent="var(--cat-skills)"
+    accent="var(--color-category-skills)"
     decrementDisabled={level <= 0}
     incrementDisabled={level >= MAX_SKILL_LEVEL}
     decrementLabel={m.skill_decrease_level({ name })}
@@ -154,11 +154,11 @@
     min-width: 0;
     gap: 3px;
     padding: 6px 8px;
-    border: 1px solid var(--hairline);
+    border: 1px solid var(--color-ink-hairline);
     border-bottom: 0;
-    background: var(--paper-raised);
+    background: var(--color-paper-raised);
     box-shadow: var(--shadow-small);
-    color: var(--ink);
+    color: var(--color-ink);
   }
 
   .skill-record:first-child {
@@ -166,12 +166,12 @@
   }
 
   .skill-record:last-child {
-    border-bottom: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--color-ink-hairline);
     border-radius: 0 0 var(--radius) var(--radius);
   }
 
   .skill-record[data-complete="true"] {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .skill-name {
@@ -199,7 +199,7 @@
     width: 18px;
     height: 18px;
     flex: 0 0 18px;
-    color: var(--cat-skills);
+    color: var(--color-category-skills);
   }
 
   .skill-meter {
@@ -221,13 +221,13 @@
     height: 5px;
     flex: 1;
     overflow: hidden;
-    background: color-mix(in srgb, var(--cat-skills) 14%, transparent);
+    background: color-mix(in srgb, var(--color-category-skills) 14%, transparent);
   }
 
   .skill-segments i {
     display: block;
     height: 100%;
-    background: var(--cat-skills);
+    background: var(--color-category-skills);
     transition: width 300ms ease-out;
   }
 
@@ -237,7 +237,7 @@
     padding: 0 4px;
     border: 0;
     background: transparent;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-data);
     font-size: var(--text-xs);
     text-align: right;
@@ -245,8 +245,8 @@
   }
 
   .skill-count:is(:hover, :focus-visible) {
-    color: var(--cat-skills);
-    outline: 2px solid var(--cat-skills);
+    color: var(--color-category-skills);
+    outline: 2px solid var(--color-category-skills);
     outline-offset: -2px;
   }
 

@@ -7,7 +7,7 @@
   import type { Snippet } from "svelte";
 
   let {
-    accent = "var(--ink)",
+    accent = "var(--color-ink)",
     children,
     decrementDisabled = false,
     decrementLabel,
@@ -18,7 +18,7 @@
     onIncrement,
     value,
   }: {
-    /** CSS color for the hover & focus border, usually the page's `--cat-*` token. */
+    /** CSS color for the hover & focus border, usually the page's `--color-category-*` token. */
     accent?: string;
     children?: Snippet;
     decrementDisabled?: boolean;
@@ -78,10 +78,10 @@
     width: 44px;
     height: 44px;
     place-items: center;
-    border: 1px solid var(--hairline);
+    border: 1px solid var(--color-ink-hairline);
     border-radius: var(--radius);
     background: transparent;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     touch-action: manipulation;
   }
 

@@ -77,7 +77,9 @@ describe("/all page", () => {
     for (const key of CATEGORY_KEYS) {
       const section = container.querySelector(`section[aria-labelledby="category-${key}"]`);
       expect(section, key).not.toBeNull();
-      expect(section?.getAttribute("style"), key).toContain(`--primary: var(--cat-${key})`);
+      expect(section?.getAttribute("style"), key).toContain(
+        `--primary: var(--color-category-${key})`,
+      );
     }
   });
 });

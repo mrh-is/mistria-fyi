@@ -92,7 +92,7 @@
 {/if}
 
 {#if conflicts.length > 0}
-  <ul class="mt-2 space-y-1.5 border-t border-(--fg-amber)/40 pt-2 text-sm">
+  <ul class="mt-2 space-y-1.5 border-t border-(--color-status-warning)/40 pt-2 text-sm">
     {#each conflicts as conflict, index (index)}
       <li class="text-foreground">
         {conflictMessage(conflict)}

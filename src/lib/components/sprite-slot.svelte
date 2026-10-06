@@ -37,7 +37,7 @@
   <svg class="sprite-slot__svg {spriteClass}" viewBox="0 0 18 18" role="presentation">
     <defs>
       <filter id={grayFilterId} color-interpolation-filters="sRGB">
-        <feFlood flood-color="var(--ink-muted)" result="gray" />
+        <feFlood flood-color="var(--color-ink-muted)" result="gray" />
         <feComposite in="gray" in2="SourceAlpha" operator="in" />
       </filter>
 
@@ -120,7 +120,7 @@
       <path
         d="M9 3.5 14.5 9 9 14.5 3.5 9Z"
         fill="none"
-        stroke="var(--ink-muted)"
+        stroke="var(--color-ink-muted)"
         stroke-width="0.75"
         stroke-dasharray="1.5 1.5"
         opacity="0.3"
@@ -138,7 +138,7 @@
     width: var(--tracker-sprite-size, 40px);
     height: var(--tracker-sprite-size, 40px);
     flex-shrink: 0;
-    border: 1px dashed var(--sprite-slot-outline);
+    border: 1px dashed var(--color-sprite-slot-outline);
     border-radius: var(--radius);
     opacity: 0.32;
   }
@@ -149,7 +149,7 @@
 
   .sprite-slot--complete {
     border-style: solid;
-    border-color: var(--sprite-slot-outline);
+    border-color: var(--color-sprite-slot-outline);
     opacity: 1;
   }
 
