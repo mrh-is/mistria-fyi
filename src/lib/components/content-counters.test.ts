@@ -11,7 +11,7 @@ import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
 import { isEntityNameVisible } from "#lib/engine/visibility.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
-import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
+import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
 
 import type { ItemId, SpellId } from "#lib/types/tracker-data.js";
 
@@ -32,7 +32,7 @@ describe("subsection counters", () => {
     const spellIds = Object.keys(trackerData.mines.spells) as SpellId[];
     userState.toggleSpell(spellIds[0]);
 
-    const { text } = renderToFragment(MinesContent, { props: { locale: "en" } });
+    const { text } = renderToFragmentWithFeedback(MinesContent, { props: { locale: "en" } });
 
     expect(text).toContain(`Spells 1 / ${spellIds.length}`);
   });
@@ -42,7 +42,7 @@ describe("subsection counters", () => {
       userState.toggleSpell(spellId);
     }
 
-    const { text } = renderToFragment(MinesContent, { props: { locale: "en" } });
+    const { text } = renderToFragmentWithFeedback(MinesContent, { props: { locale: "en" } });
 
     const spellCount = Object.keys(trackerData.mines.spells).length;
     expect(text).toContain(`Spells ${spellCount.toString()} / ${spellCount.toString()}`);
@@ -54,7 +54,7 @@ describe("subsection counters", () => {
     userState.toggleShowCompleted();
     toolbarState.setSearch("Copper Axe");
 
-    const { text } = renderToFragment(AlmanacContent, { props: { locale: "en" } });
+    const { text } = renderToFragmentWithFeedback(AlmanacContent, { props: { locale: "en" } });
 
     expect(text).toContain("Blacksmithing 1 / 1");
   });
@@ -69,7 +69,7 @@ describe("subsection counters", () => {
     if (!hiddenEntry) throw new Error("Expected a spoilered almanac entry");
 
     toolbarState.setSearch(getName("items", hiddenEntry.itemIds[0], "en"));
-    const { queries } = renderToFragment(AlmanacContent, { props: { locale: "en" } });
+    const { queries } = renderToFragmentWithFeedback(AlmanacContent, { props: { locale: "en" } });
 
     expect(queries.queryByRole("button", { name: "Reveal spoiler" })).toBeNull();
   });
@@ -85,7 +85,7 @@ describe("subsection counters", () => {
     toolbarState.setSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
-    const { text } = renderToFragment(RecipesContent, { props: { locale: "en" } });
+    const { text } = renderToFragmentWithFeedback(RecipesContent, { props: { locale: "en" } });
 
     expect(text).not.toContain(hiddenRecipeName);
   });
@@ -104,33 +104,35 @@ describe("subsection counters", () => {
 
     userState.setAvailabilityMode("everything");
     toolbarState.setSearch(itemName);
-    const unfiltered = renderToFragment(MuseumContent, { props: { locale: "en" } });
+    const unfiltered = renderToFragmentWithFeedback(MuseumContent, { props: { locale: "en" } });
     expect(unfiltered.text).toContain(itemName);
 
     toolbarState.setSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
-    const { text } = renderToFragment(MuseumContent, { props: { locale: "en" } });
+    const { text } = renderToFragmentWithFeedback(MuseumContent, { props: { locale: "en" } });
     expect(text).not.toContain(itemName);
   });
 
   it("reduces mine spell count when source groups are hidden", () => {
     const spellCount = Object.keys(trackerData.mines.spells).length;
 
-    const unfiltered = renderToFragment(MinesContent, { props: { locale: "en" } });
+    const unfiltered = renderToFragmentWithFeedback(MinesContent, { props: { locale: "en" } });
     expect(unfiltered.text).toContain(`Spells 0 / ${spellCount.toString()}`);
 
     toolbarState.setSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
-    const { text } = renderToFragment(MinesContent, { props: { locale: "en" } });
+    const { text } = renderToFragmentWithFeedback(MinesContent, { props: { locale: "en" } });
     expect(isFilteredTotalBelow(text, /Spells (\d+) \/ (\d+)/, spellCount)).toBe(true);
   });
 
   it("reduces fetch quest count when source groups are hidden", () => {
     userState.toggleShowSpoilers();
 
-    const unfilteredBody = renderToFragment(QuestsContent, { props: { locale: "en" } }).text;
+    const unfilteredBody = renderToFragmentWithFeedback(QuestsContent, {
+      props: { locale: "en" },
+    }).text;
     const unfilteredMatch = /Fetch Quests (\d+) \/ (\d+)/.exec(unfilteredBody);
     if (!unfilteredMatch) throw new Error("Expected Fetch Quests counter in unfiltered render");
     const unfilteredTotal = Number(unfilteredMatch[2]);
@@ -138,7 +140,9 @@ describe("subsection counters", () => {
     toolbarState.setSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
-    const filteredBody = renderToFragment(QuestsContent, { props: { locale: "en" } }).text;
+    const filteredBody = renderToFragmentWithFeedback(QuestsContent, {
+      props: { locale: "en" },
+    }).text;
     expect(isFilteredTotalBelow(filteredBody, /Fetch Quests (\d+) \/ (\d+)/, unfilteredTotal)).toBe(
       true,
     );
@@ -160,13 +164,13 @@ describe("subsection counters", () => {
     userState.setAvailabilityMode("everything");
     const hiddenEntryName = getName("items", hiddenEntry.itemIds[0], "en");
     toolbarState.setSearch(hiddenEntryName);
-    const unfiltered = renderToFragment(AlmanacContent, { props: { locale: "en" } });
+    const unfiltered = renderToFragmentWithFeedback(AlmanacContent, { props: { locale: "en" } });
     expect(unfiltered.text).toContain(hiddenEntryName);
 
     toolbarState.setSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
-    const { text } = renderToFragment(AlmanacContent, { props: { locale: "en" } });
+    const { text } = renderToFragmentWithFeedback(AlmanacContent, { props: { locale: "en" } });
 
     expect(text).not.toContain(hiddenEntryName);
   });

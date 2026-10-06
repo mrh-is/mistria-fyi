@@ -211,6 +211,7 @@ describe("POST /api/feedback", () => {
 
   it.each([
     ["missing category", { displayName: "Tomato Soup", page: "/recipes" }],
+    ["unknown category", { category: "Recipes", displayName: "Tomato Soup", page: "/recipes" }],
     ["empty display name", { category: "recipe", displayName: " ", page: "/recipes" }],
     ["long page", { category: "recipe", displayName: "Tomato Soup", page: `/${"x".repeat(200)}` }],
     [

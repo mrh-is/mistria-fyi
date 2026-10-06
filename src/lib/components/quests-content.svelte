@@ -314,7 +314,7 @@
             q.isCraving ? q.isCompleted : getQuestState(q.id) === "completed",
           ).length}
           name={typeLabel(questType)}
-          reportCategory="quest section"
+          reportCategory="quest-section"
           reportEntityId={questType}
           total={shownQuests.length}
         >
@@ -327,7 +327,7 @@
                   display={questRowDisplay(cravingState, cravingNameVisible)}
                   lookups={baseLookups}
                   name={quest.displayName}
-                  reportCategory="craving quest"
+                  reportCategory="craving-quest"
                   reportEntityId={quest.id}
                   sources={[]}
                   subtitle={quest.subtitle}

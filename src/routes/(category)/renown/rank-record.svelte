@@ -2,8 +2,10 @@
   import IconCompletion from "#lib/components/icon/icon-completion.svelte";
   import { Icon } from "#lib/components/icon/index.js";
   import Spoiler from "#lib/components/spoiler.svelte";
+  import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { getRankState } from "#lib/presentation/renown-presentation.js";
+  import { page } from "$app/state";
 
   import type { TownRank } from "#lib/types/tracker-data.js";
 
@@ -32,10 +34,19 @@
   });
   let revealed = $state(false);
   let hidden = $derived(spoilered && !revealed);
+  const feedbackContext = getFeedbackContext();
+  let reportable = $derived(
+    feedbackContext.reportable({
+      category: "rank",
+      displayName: hidden ? m.tracker_row_spoilered_item() : name,
+      page: page.url.pathname,
+    }),
+  );
 </script>
 
 <li
   class="rank-record"
+  {@attach reportable}
   data-rank-record
   data-rank-state={rankState}
   style="--rank-color: {color}; --rank-fill: {fill}%"

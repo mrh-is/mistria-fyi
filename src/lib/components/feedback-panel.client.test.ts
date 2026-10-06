@@ -1,8 +1,9 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { fireEvent, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import FeedbackPanel from "#lib/components/feedback-panel.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
+import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 
 const toast = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), warning: vi.fn() }));
 
@@ -34,7 +35,7 @@ describe("FeedbackPanel", () => {
   });
 
   it("renders form fields when open", () => {
-    render(FeedbackPanel, {
+    renderWithFeedback(FeedbackPanel, {
       accent: "var(--cat-museum)",
       onclose: vi.fn(),
       open: true,
@@ -53,13 +54,13 @@ describe("FeedbackPanel", () => {
   });
 
   it("renders nothing when closed", () => {
-    render(FeedbackPanel, { onclose: vi.fn(), open: false });
+    renderWithFeedback(FeedbackPanel, { onclose: vi.fn(), open: false });
 
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("keeps the elastic-overscroll backdrop below the persistent page chrome", () => {
-    render(FeedbackPanel, { onclose: vi.fn(), open: true });
+    renderWithFeedback(FeedbackPanel, { onclose: vi.fn(), open: true });
 
     const backdrop = document.querySelector('[aria-label="Close feedback"]');
     expect(backdrop).toHaveClass("top-[-100dvh]", "bottom-[-100dvh]", "z-0");
@@ -67,7 +68,7 @@ describe("FeedbackPanel", () => {
   });
 
   it("clears progress preview and email validation when their options are unchecked", async () => {
-    render(FeedbackPanel, { onclose: vi.fn(), open: true });
+    renderWithFeedback(FeedbackPanel, { onclose: vi.fn(), open: true });
     const attach = screen.getByRole("checkbox", { name: "Attach my tracker progress" });
     await fireEvent.click(attach);
     await fireEvent.click(screen.getByRole("button", { name: "Read more" }));
@@ -102,12 +103,15 @@ describe("FeedbackPanel", () => {
       page: "/recipes",
     })(reportableElement);
 
-    const view = render(FeedbackPanel, {
+    const view = renderWithFeedback(
+      FeedbackPanel,
+      {
+        onclose: vi.fn(),
+        open: true,
+        pickerEnabled: true,
+      },
       feedbackContext,
-      onclose: vi.fn(),
-      open: true,
-      pickerEnabled: true,
-    });
+    );
 
     await fireEvent.click(screen.getByRole("button", { name: "Point at something" }));
     expect(feedbackContext.isPicking).toBe(true);
@@ -147,12 +151,15 @@ describe("FeedbackPanel", () => {
       entityId: "tomato_soup",
       page: "/recipes",
     })(reportableElement);
-    render(FeedbackPanel, {
+    renderWithFeedback(
+      FeedbackPanel,
+      {
+        onclose: vi.fn(),
+        open: true,
+        pickerEnabled: true,
+      },
       feedbackContext,
-      onclose: vi.fn(),
-      open: true,
-      pickerEnabled: true,
-    });
+    );
 
     await fireEvent.click(screen.getByRole("button", { name: "Point at something" }));
     feedbackContext.select({
@@ -184,7 +191,7 @@ describe("FeedbackPanel", () => {
   it("prevents submission when the message is empty", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
-    render(FeedbackPanel, { onclose: vi.fn(), open: true });
+    renderWithFeedback(FeedbackPanel, { onclose: vi.fn(), open: true });
 
     const sendButton = screen.getByRole("button", { name: "Send" });
     expect(sendButton).not.toHaveAttribute("aria-disabled");
@@ -198,7 +205,7 @@ describe("FeedbackPanel", () => {
   });
 
   it("exposes email purpose and validation relationship", async () => {
-    render(FeedbackPanel, { onclose: vi.fn(), open: true });
+    renderWithFeedback(FeedbackPanel, { onclose: vi.fn(), open: true });
 
     await fireEvent.click(screen.getByRole("checkbox", { name: /I’d like a reply/ }));
     const email = screen.getByRole("textbox", { name: "Your email" });
@@ -215,7 +222,7 @@ describe("FeedbackPanel", () => {
   });
 
   it("preserves a dismissed draft", async () => {
-    const view = render(FeedbackPanel, {
+    const view = renderWithFeedback(FeedbackPanel, {
       onclose: vi.fn(),
       open: true,
     });
@@ -229,7 +236,7 @@ describe("FeedbackPanel", () => {
 
   it("closes on Escape even when focus is outside the dialog", async () => {
     const onclose = vi.fn();
-    render(FeedbackPanel, { onclose, open: true });
+    renderWithFeedback(FeedbackPanel, { onclose, open: true });
 
     document.body.focus();
     await fireEvent.keyDown(document, { key: "Escape" });
@@ -238,7 +245,7 @@ describe("FeedbackPanel", () => {
   });
 
   it("contains keyboard focus within the open dialog", async () => {
-    render(FeedbackPanel, { onclose: vi.fn(), open: true });
+    renderWithFeedback(FeedbackPanel, { onclose: vi.fn(), open: true });
     await waitFor(() => {
       expect(screen.getByRole("dialog", { name: "Send feedback" })).toHaveFocus();
     });
@@ -257,7 +264,7 @@ describe("FeedbackPanel", () => {
     opener.focus();
 
     try {
-      const view = render(FeedbackPanel, {
+      const view = renderWithFeedback(FeedbackPanel, {
         onclose: vi.fn(),
         open: true,
       });
@@ -278,7 +285,7 @@ describe("FeedbackPanel", () => {
   it("cancels the validation shake timer on unmount", async () => {
     vi.useFakeTimers();
     try {
-      const view = render(FeedbackPanel, { onclose: vi.fn(), open: true });
+      const view = renderWithFeedback(FeedbackPanel, { onclose: vi.fn(), open: true });
       await vi.advanceTimersByTimeAsync(0);
       await fireEvent.click(screen.getByRole("button", { name: "Send" }));
       await vi.advanceTimersByTimeAsync(0);
@@ -302,7 +309,7 @@ describe("FeedbackPanel", () => {
           }),
       ),
     );
-    render(FeedbackPanel, { onclose: vi.fn(), open: true });
+    renderWithFeedback(FeedbackPanel, { onclose: vi.fn(), open: true });
 
     await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
       target: { value: "Something is wrong" },
@@ -322,7 +329,7 @@ describe("FeedbackPanel", () => {
       vi.fn().mockResolvedValue(Response.json({ issueUrl: "https://example.com/issues/1" })),
     );
     const onclose = vi.fn();
-    render(FeedbackPanel, { onclose, open: true });
+    renderWithFeedback(FeedbackPanel, { onclose, open: true });
 
     await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
       target: { value: "Something is wrong" },
@@ -344,7 +351,7 @@ describe("FeedbackPanel", () => {
       );
     vi.stubGlobal("fetch", fetchMock);
     const onclose = vi.fn();
-    render(FeedbackPanel, { onclose, open: true });
+    renderWithFeedback(FeedbackPanel, { onclose, open: true });
 
     await fireEvent.click(screen.getByRole("checkbox", { name: /I’d like a reply/ }));
     await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
@@ -369,7 +376,7 @@ describe("FeedbackPanel", () => {
 
   it("shows the fallback copy action after a failed submission", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
-    render(FeedbackPanel, { onclose: vi.fn(), open: true });
+    renderWithFeedback(FeedbackPanel, { onclose: vi.fn(), open: true });
 
     await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
       target: { value: "Something is wrong" },
@@ -391,7 +398,7 @@ describe("FeedbackPanel", () => {
       },
       reset: vi.fn(),
     };
-    render(FeedbackPanel, { onclose: vi.fn(), open: true });
+    renderWithFeedback(FeedbackPanel, { onclose: vi.fn(), open: true });
 
     const link = await screen.findByRole("link", { name: /GitHub/ });
     expect(link).toHaveAttribute("href", "https://github.com/mrh-is/mistria-fyi/issues/new");

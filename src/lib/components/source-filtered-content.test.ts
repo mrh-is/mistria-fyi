@@ -5,7 +5,7 @@ import { trackerData } from "#lib/data/index.js";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
-import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
+import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
 
 afterEach(() => {
   toolbarState.removeSourceFilters("test");
@@ -26,15 +26,15 @@ describe("source-filtered content", () => {
     const slotLabel = { back: "Back", eyes: "Eyes", facial_hair: "Facial Hair" }[coveredSlot[0]];
     if (!slotLabel) throw new Error(`Add a heading for slot "${coveredSlot[0]}" to this test`);
 
-    expect(renderToFragment(CosmeticsContent, { props: { locale: "en" } }).text).toContain(
-      slotLabel,
-    );
+    expect(
+      renderToFragmentWithFeedback(CosmeticsContent, { props: { locale: "en" } }).text,
+    ).toContain(slotLabel);
 
     toolbarState.setSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
-    expect(renderToFragment(CosmeticsContent, { props: { locale: "en" } }).text).toContain(
-      `${slotLabel} 0 / 0`,
-    );
+    expect(
+      renderToFragmentWithFeedback(CosmeticsContent, { props: { locale: "en" } }).text,
+    ).toContain(`${slotLabel} 0 / 0`);
   });
 });

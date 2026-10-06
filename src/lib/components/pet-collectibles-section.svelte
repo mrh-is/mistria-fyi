@@ -90,7 +90,7 @@
     {locale}
     count={cosmeticCompletedCount}
     name={m.animals_pet_cosmetics_section_name()}
-    reportCategory="pet cosmetics"
+    reportCategory="pet-cosmetics"
     total={scopedPetCosmeticEntries.length}
   >
     <TrackerRowList getKey={(entry) => entry.id} items={visibleCosmeticEntries}>
@@ -101,7 +101,7 @@
           })}
           lookups={baseLookups}
           name={entry.name}
-          reportCategory="pet cosmetic"
+          reportCategory="pet-cosmetic"
           reportEntityId={entry.id}
           sources={entry.sources}
           onToggle={() => {
@@ -127,7 +127,7 @@
     {locale}
     count={skinCompletedCount}
     name={m.animals_pet_skins_section_name()}
-    reportCategory="pet skins"
+    reportCategory="pet-skins"
     total={scopedPetSkinEntries.length}
   >
     <TrackerRowList getKey={(entry) => entry.id} items={visibleSkinEntries}>
@@ -138,7 +138,7 @@
           })}
           lookups={baseLookups}
           name={entry.name}
-          reportCategory="pet skin"
+          reportCategory="pet-skin"
           reportEntityId={entry.id}
           sources={entry.sources}
           onToggle={() => {

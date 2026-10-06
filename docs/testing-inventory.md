@@ -26,7 +26,10 @@ second mocks `$app/state` with a static `page`; a test that needs a different UR
 route changes, mocks `$app/state` with the reactive `pageStub` instead (see “Shared helpers”).
 
 Components that read context (the feedback context, for example) get a sibling
-`*.test-harness.svelte` that sets the context and renders the component under test.
+`*.test-harness.svelte` that sets the context and renders the component under test. For the feedback
+context specifically, `renderWithFeedback` & `renderToFragmentWithFeedback` (in
+`src/lib/test-utils/`) wrap any component in one, since `getFeedbackContext()` throws outside a
+provider.
 
 ## Coverage by component
 

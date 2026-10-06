@@ -4,7 +4,7 @@ import { CATEGORY_KEYS, sortCategoryKeysByName } from "#lib/data/categories.js";
 import { pageMetadata } from "#lib/data/page-metadata.js";
 import { getAllProgress, getOverallProgress } from "#lib/engine/progress.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
-import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
+import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
 import { formatNumber } from "#lib/utils/format.js";
 
 import AllPage from "./+page.svelte";
@@ -23,7 +23,7 @@ beforeEach(() => {
 
 describe("/all page", () => {
   it("renders a section for every category, including recipes", () => {
-    const { container } = renderToFragment(AllPage, { props });
+    const { container } = renderToFragmentWithFeedback(AllPage, { props });
 
     for (const key of CATEGORY_KEYS) {
       expect(container.querySelector(`#category-${key}`)).not.toBeNull();
@@ -31,7 +31,7 @@ describe("/all page", () => {
   });
 
   it("orders sections alphabetically by category name, matching the home page", () => {
-    const { container } = renderToFragment(AllPage, { props });
+    const { container } = renderToFragmentWithFeedback(AllPage, { props });
 
     const expectedOrder = sortCategoryKeysByName(CATEGORY_KEYS, "en");
     const renderedOrder = [...container.querySelectorAll("[id^='category-']")].map((element) =>
@@ -50,7 +50,7 @@ describe("/all page", () => {
     const overall = getOverallProgress(progress);
     expect(progress.recipes.total).toBeGreaterThan(0);
 
-    const { queries } = renderToFragment(AllPage, { props });
+    const { queries } = renderToFragmentWithFeedback(AllPage, { props });
 
     expect(
       queries.getByText(

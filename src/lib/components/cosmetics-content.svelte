@@ -166,7 +166,7 @@
       {locale}
       count={scopedInSlot.filter((c) => userState.state.completed.cosmetics.has(c.id)).length}
       {name}
-      reportCategory="cosmetic slot"
+      reportCategory="cosmetic-slot"
       reportEntityId={slot}
       total={scopedInSlot.length}
     >
