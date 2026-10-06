@@ -27,6 +27,40 @@ function isTranslatable(text) {
   return trimmed.length > 0 && HAS_LETTER.test(trimmed);
 }
 
+// Translatable string literals that a mustache expression can render directly: `{"Hello"}`,
+// `{cond ? "Yes" : "No"}`, `{value ?? "None"}`, and a template literal's static parts.
+function* stringLiterals(expression) {
+  switch (expression?.type) {
+    case "Literal":
+      if (typeof expression.value === "string" && isTranslatable(expression.value)) {
+        yield { node: expression, text: expression.value };
+      }
+      break;
+    case "TemplateLiteral":
+      for (const quasi of expression.quasis) {
+        const cooked = quasi.value.cooked ?? "";
+        if (isTranslatable(cooked)) {
+          yield { node: quasi, text: cooked };
+        }
+      }
+      break;
+    case "ConditionalExpression":
+      yield* stringLiterals(expression.consequent);
+      yield* stringLiterals(expression.alternate);
+      break;
+    case "LogicalExpression":
+      yield* stringLiterals(expression.left);
+      yield* stringLiterals(expression.right);
+      break;
+    default:
+      break;
+  }
+}
+
+function isAttributeLike(node) {
+  return node?.type === "SvelteAttribute" || node?.type.endsWith("Directive");
+}
+
 const rule = {
   create(context) {
     function isExempt(node) {
@@ -48,15 +82,38 @@ const rule = {
         if (typeof attrName !== "string" || !TEXT_ATTRIBUTES.has(attrName)) {
           return;
         }
-        if (node.value.length !== 1 || node.value[0].type !== "SvelteLiteral") {
+        // `node.value` is empty for shorthand/boolean attributes; otherwise a mix of static
+        // text (`SvelteLiteral`) & `{...}` mustaches, e.g. `aria-label="Remove {name}"`.
+        for (const part of node.value) {
+          if (part.type === "SvelteLiteral") {
+            if (isTranslatable(part.value)) {
+              context.report({
+                data: { attribute: attrName, text: JSON.stringify(part.value.trim()) },
+                messageId: "hardcodedAttribute",
+                node: part,
+              });
+            }
+          } else if (part.type === "SvelteMustacheTag") {
+            for (const literal of stringLiterals(part.expression)) {
+              context.report({
+                data: { attribute: attrName, text: JSON.stringify(literal.text.trim()) },
+                messageId: "hardcodedAttribute",
+                node: literal.node,
+              });
+            }
+          }
+        }
+      },
+      SvelteMustacheTag(node) {
+        // Attribute mustaches are handled by `SvelteAttribute`; directive values are code, not text.
+        if (node.kind !== "text" || isAttributeLike(node.parent) || isExempt(node)) {
           return;
         }
-        const literal = node.value[0];
-        if (isTranslatable(literal.value)) {
+        for (const literal of stringLiterals(node.expression)) {
           context.report({
-            data: { attribute: attrName, text: JSON.stringify(literal.value.trim()) },
-            messageId: "hardcodedAttribute",
-            node: literal,
+            data: { text: JSON.stringify(literal.text.trim()) },
+            messageId: "hardcodedText",
+            node: literal.node,
           });
         }
       },
