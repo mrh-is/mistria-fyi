@@ -18,6 +18,7 @@ const NOT_ALLOWED: Record<string, string> = {
   "optimize-icons": "rewrites committed icon files",
   "sprites:upload": "publishes to production storage",
   "sprites:villagers": "rewrites generated sprites from game assets",
+  "worktree:cleanup": "a trailing `-- --apply` reaches the same deletion as worktree:cleanup:apply",
   "worktree:cleanup:apply": "deletes worktrees & branches",
 };
 

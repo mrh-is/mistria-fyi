@@ -31,7 +31,6 @@ prefix_rule(
             "test:pwa",
             "test:server",
             "verify",
-            "worktree:cleanup",
             "worktree:new",
             "worktree:setup",
         ],
