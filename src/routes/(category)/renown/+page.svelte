@@ -2,10 +2,10 @@
   import RenownCurrentRecord from "#lib/components/renown-current-record.svelte";
   import { trackerData } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
-  import { RANK_COLORS } from "#lib/engine/renown-presentation.js";
   import { isEntityNameVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { townRankColor } from "#lib/utils/palette.js";
 
   import RankRecord from "./rank-record.svelte";
 
@@ -26,7 +26,7 @@
 <ul class="rank-register" aria-label={m.renown_rank_register_aria()}>
   {#each trackerData.townRanks as rank, index (index)}
     <RankRecord
-      color={RANK_COLORS[index] ?? "#a78bfa"}
+      color={townRankColor(index)}
       currentLevel={userState.state.completed.renown}
       {rank}
       name={getName("town-ranks", index.toString(), data.locale)}

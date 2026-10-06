@@ -77,7 +77,7 @@
   .home-header {
     position: sticky;
     top: 0;
-    z-index: 12;
+    z-index: var(--z-home-header);
     display: flex;
     align-items: center;
     justify-content: space-between;

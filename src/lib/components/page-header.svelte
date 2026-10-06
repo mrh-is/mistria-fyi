@@ -90,7 +90,7 @@
   .page-header {
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: var(--z-page-header);
     display: flex;
     min-width: 0;
     align-items: center;
