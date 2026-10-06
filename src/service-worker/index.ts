@@ -27,6 +27,7 @@ const SPRITES_CACHE = "sprites-v1";
 const ASSETS = [...immutable, ...assets].map(
   ({ path }) => new URL(path, sw.registration.scope).pathname,
 );
+const ASSET_PATHS = new Set(ASSETS);
 const LOCALE_NAME_CHUNKS: LocaleNameChunks =
   // oxlint-disable-next-line unicorn/no-typeof-undefined -- Only builds define this identifier; reading it bare throws a ReferenceError in dev.
   typeof __LOCALE_NAME_CHUNKS__ === "undefined" ? {} : __LOCALE_NAME_CHUNKS__;
@@ -94,7 +95,7 @@ sw.addEventListener("fetch", (event) => {
 
   const url = new URL(event.request.url);
 
-  const isAsset = ASSETS.includes(url.pathname);
+  const isAsset = ASSET_PATHS.has(url.pathname);
 
   if (isAsset) {
     event.respondWith(
@@ -130,7 +131,7 @@ sw.addEventListener("fetch", (event) => {
       (async () => {
         const cache = await caches.open(CACHE);
         return fetchRuntimeRequest(event.request, {
-          assetPaths: ASSETS,
+          assetPaths: ASSET_PATHS,
           cache,
           fetcher: (request) => fetch(request),
           matchCache: (request) => caches.match(request),
