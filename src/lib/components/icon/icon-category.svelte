@@ -14,7 +14,7 @@
 
   const color = $derived.by(() => {
     if (category === "all") return "var(--muted-foreground)";
-    if (category === "complete") return "var(--yellow-700)";
+    if (category === "complete") return "var(--color-progress-complete)";
     return categoryColor(category);
   });
 
