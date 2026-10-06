@@ -37,7 +37,7 @@ import {
   QUEST_STATES,
 } from "#lib/types/user-progress.js";
 import { tryGetItem, trySetItem } from "#lib/utils/local-storage.js";
-import { getOrCreate, recordEntries, recordKeys } from "#lib/utils/record.js";
+import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
 import type { UserProgressionState } from "#lib/engine/visibility.js";
 import type { AvailabilityWindow, LegacyAvailabilityMode } from "#lib/types/availability.js";
@@ -388,11 +388,11 @@ function createUserState() {
       state.completed.petCosmetics.size > 0 ||
       state.completed.petSkins.size > 0 ||
       state.completed.unlockedPerks.size > 0 ||
-      Object.values(state.completed.villagerLevels).some((v) => v > 0) ||
-      Object.values(state.completed.skillLevels).some((v) => v > 0) ||
-      Object.values(state.completed.questStates).some((v) => v !== "none") ||
-      Object.values(state.completed.animals).some((s) => s.size > 0) ||
-      Object.values(state.completed.animalCosmetics).some((s) => s.size > 0),
+      recordValues(state.completed.villagerLevels).some((v) => v > 0) ||
+      recordValues(state.completed.skillLevels).some((v) => v > 0) ||
+      recordValues(state.completed.questStates).some((v) => v !== "none") ||
+      recordValues(state.completed.animals).some((s) => s.size > 0) ||
+      recordValues(state.completed.animalCosmetics).some((s) => s.size > 0),
   );
 
   return {
@@ -1101,10 +1101,10 @@ function deserialize(json: string, mode: ValidationMode): DeserializeResult {
 }
 
 function filterRecord<V>(
-  record: Record<string, V>,
+  record: Partial<Record<string, V>>,
   predicate: (v: V) => boolean,
 ): Record<string, V> {
-  return Object.fromEntries(Object.entries(record).filter(([, v]) => predicate(v)));
+  return Object.fromEntries(recordEntries(record).filter(([, v]) => predicate(v)));
 }
 
 function hasKnownId(knownIds: object | ReadonlySet<string>, id: string): boolean {
@@ -1332,10 +1332,10 @@ function serialize(state: UserState, source?: Record<string, unknown>): string {
       almanac: [...state.completed.almanac].toSorted(),
       almanacRecipes: [...state.completed.almanacRecipes].toSorted(),
       animalCosmetics: Object.fromEntries(
-        Object.entries(state.completed.animalCosmetics).map(([k, v]) => [k, [...v].toSorted()]),
+        recordEntries(state.completed.animalCosmetics).map(([k, v]) => [k, [...v].toSorted()]),
       ),
       animals: Object.fromEntries(
-        Object.entries(state.completed.animals).map(([k, v]) => [k, [...v].toSorted()]),
+        recordEntries(state.completed.animals).map(([k, v]) => [k, [...v].toSorted()]),
       ),
       childChoice: state.completed.childChoice,
       cosmetics: [...state.completed.cosmetics].toSorted(),

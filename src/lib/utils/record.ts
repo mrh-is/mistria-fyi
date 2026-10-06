@@ -47,6 +47,8 @@ export function recordMap<K extends string, T, U>(
   }
   return result;
 }
-export function recordValues<K extends PropertyKey, T>(record: Record<K, T>): T[] {
-  return Object.values(record);
+/** The defined values of a record; entries a `Partial` record leaves `undefined` are skipped. */
+export function recordValues<R extends object>(record: R): Exclude<R[keyof R], undefined>[];
+export function recordValues(record: object): unknown[] {
+  return Object.values(record as Record<string, unknown>).filter((value) => value !== undefined);
 }
