@@ -7,7 +7,7 @@
 /** localStorage key for the theme preference, also read by the pre-paint script in `app.html`. */
 export const THEME_STORAGE_KEY = "mistria-fyi-theme";
 
-/** Mobile browser chrome colors: each theme's `--paper` in `app.css`. */
+/** Mobile browser chrome colors: each theme's `--color-paper` in `app.css`. */
 export const THEME_COLORS = {
   dark: "#222226",
   light: "#f7f5f0",

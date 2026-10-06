@@ -12,13 +12,13 @@
 
   let { category, useCategoryColor, ...rest }: Props = $props();
 
-  const { color } = $derived.by(() => {
-    if (category === "all") return { color: "muted-foreground" };
-    if (category === "complete") return { color: "yellow-700" };
-    return { color: categoryColor(category) };
+  const color = $derived.by(() => {
+    if (category === "all") return "var(--muted-foreground)";
+    if (category === "complete") return "var(--yellow-700)";
+    return categoryColor(category);
   });
 
   const IconComp = $derived(CATEGORY_ICON[category]);
 </script>
 
-<IconComp {...rest} color={useCategoryColor ? `var(--${color})` : undefined} />
+<IconComp {...rest} color={useCategoryColor ? color : undefined} />

@@ -76,14 +76,15 @@
   --font-data: "IBM Plex Mono", "Courier New", monospace;
 
   /* ── Field Guide palette: light ──────────────────────── */
-  --paper: #f7f5f0;
-  --paper-raised: #fdfcf9;
-  --ink: #2e2a22;
-  --ink-muted: #6a6460;
-  --hairline: #948a7c;
-  --paper-deep: #eeedea;
-  --ribbon-ink: #fdfcf9;
-  --sprite-slot-outline: #e0dcd4;
+  /* Colors are --color-<domain>-<role>; see docs/styling.md. */
+  --color-paper: #f7f5f0;
+  --color-paper-raised: #fdfcf9;
+  --color-paper-sunken: #eeedea;
+  --color-ink: #2e2a22;
+  --color-ink-muted: #6a6460;
+  --color-ink-hairline: #948a7c;
+  --color-ribbon-foreground: #fdfcf9;
+  --color-sprite-slot-outline: #e0dcd4;
   --shadow-small: 0 1px 1px rgb(46 42 34 / 12%);
   --shadow-medium: 0 3px 10px rgb(46 42 34 / 15%);
   --shadow-large: 0 6px 16px rgb(46 42 34 / 18%);
@@ -92,46 +93,64 @@
   --shadow-ribbon: 0 3px 2px rgb(46 42 34 / 30%);
   --shadow-sticker: 0.8px 1.2px 0.7px rgb(46 42 34 / 35%);
 
-  --fg-green: #1a7a3a;
-  --fg-amber: #a85a0e;
-  --fg-rose: #b83060;
-  --fg-blue: #1860a8;
-  --fg-brown: #7a5a3a;
-  --home-accent: #8a642e;
-  --home-accent-ink: var(--ribbon-ink);
+  /* Hues: the raw ink colors. Components read a role below, never a hue directly. */
+  --color-hue-green: #1a7a3a;
+  --color-hue-amber: #a85a0e;
+  --color-hue-rose: #b83060;
+  --color-hue-blue: #1860a8;
+  --color-hue-brown: #7a5a3a;
+
+  /* Roles: what each hue means where it's used. They resolve against the theme's hues. */
+  --color-brand-accent: var(--color-hue-green);
+  --color-brand-mark: var(--color-hue-amber);
+  --color-status-success: var(--color-hue-green);
+  --color-status-warning: var(--color-hue-amber);
+  --color-status-info: var(--color-hue-blue);
+  --color-tracker-checked: var(--color-hue-green);
+  --color-tracker-obtained: var(--color-hue-amber);
+  --color-tracker-active: var(--color-hue-amber);
+  --color-progress-complete: var(--color-hue-amber);
+  --color-toolbar-filtered: var(--color-hue-amber);
+  --color-season-spring: var(--color-hue-green);
+  --color-season-summer: var(--color-hue-amber);
+  --color-season-fall: var(--color-hue-brown);
+  --color-season-winter: var(--color-hue-blue);
+
+  --color-home-accent: #8a642e;
+  --color-home-accent-foreground: var(--color-ribbon-foreground);
   /* Gilt edge on the ribbon of a completed category */
-  --ribbon-gold: #d4a72c;
+  --color-ribbon-fill: #d4a72c;
 
   /* shadcn semantic tokens mapped to Field Guide */
-  --background: var(--paper);
-  --foreground: var(--ink);
+  --background: var(--color-paper);
+  --foreground: var(--color-ink);
   --card: #f2efe8;
-  --card-foreground: var(--ink);
+  --card-foreground: var(--color-ink);
   --popover: var(--card);
-  --popover-foreground: var(--ink);
-  --primary: var(--fg-green);
-  --primary-foreground: var(--paper);
-  --secondary: var(--fg-rose);
-  --secondary-foreground: var(--paper);
+  --popover-foreground: var(--color-ink);
+  --primary: var(--color-brand-accent);
+  --primary-foreground: var(--color-paper);
+  --secondary: var(--color-hue-rose);
+  --secondary-foreground: var(--color-paper);
   --muted: #ece8e0;
-  --muted-foreground: var(--ink-muted);
+  --muted-foreground: var(--color-ink-muted);
   --accent: #eae6dc;
-  --accent-foreground: var(--ink);
+  --accent-foreground: var(--color-ink);
   --destructive: #c03030;
-  --border: var(--hairline);
-  --input: var(--hairline);
-  --ring: var(--fg-green);
+  --border: var(--color-ink-hairline);
+  --input: var(--color-ink-hairline);
+  --ring: var(--color-brand-accent);
   /* Category colors — jewel tones */
-  --cat-museum: #2e8a30;
-  --cat-almanac: #5848c0;
-  --cat-recipes: #b87028;
-  --cat-animals: #c03838;
-  --cat-villagers: #c03060;
-  --cat-cosmetics: #9838a8;
-  --cat-skills: #1a8878;
-  --cat-renown: #a48018;
-  --cat-quests: #1878b8;
-  --cat-mines: #7a5a3a;
+  --color-category-museum: #2e8a30;
+  --color-category-almanac: #5848c0;
+  --color-category-recipes: #b87028;
+  --color-category-animals: #c03838;
+  --color-category-villagers: #c03060;
+  --color-category-cosmetics: #9838a8;
+  --color-category-skills: #1a8878;
+  --color-category-renown: #a48018;
+  --color-category-quests: #1878b8;
+  --color-category-mines: #7a5a3a;
 
   /* Villager level marks (villager-record.svelte), the town rank ladder (renown), & confetti
    * (celebrate.ts). One palette for both themes: each sits on paper or a canvas overlay. */
@@ -167,70 +186,74 @@
   --color-confetti-7: #f9a8d4;
 
   /* Tag dialogs (tag-dialog.svelte): a paper shipping tag on a string */
-  --tag-accent: #a65343;
-  --tag-ink: #312e2b;
-  --tag-muted: #68635e;
-  --tag-paper: #e2dace;
-  --tag-highlight: #fff8e9;
-  --tag-string: color-mix(in srgb, var(--tag-ink) 35%, #fff);
-  --tag-string-shadow: 0 1px 1px rgb(0 0 0 / 30%);
-  --tag-ring-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--tag-accent) 60%, #000),
-    0 0 0 1px color-mix(in srgb, var(--tag-accent) 68%, #000), 0 1px 1px rgb(57 36 23 / 22%);
-  --tag-shadow: drop-shadow(1px -2px 6px rgb(31 23 15 / 18%))
+  --color-tag-accent: #a65343;
+  --color-tag-ink: #312e2b;
+  --color-tag-ink-muted: #68635e;
+  --color-tag-paper: #e2dace;
+  --color-tag-highlight: #fff8e9;
+  --color-tag-string: color-mix(in srgb, var(--color-tag-ink) 35%, #fff);
+  --shadow-tag-string: 0 1px 1px rgb(0 0 0 / 30%);
+  --shadow-tag-ring:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-tag-accent) 60%, #000),
+    0 0 0 1px color-mix(in srgb, var(--color-tag-accent) 68%, #000), 0 1px 1px rgb(57 36 23 / 22%);
+  /* A complete `filter` value, not a shadow to wrap in drop-shadow() */
+  --filter-tag-shadow: drop-shadow(1px -2px 6px rgb(31 23 15 / 18%))
     drop-shadow(3px 8px 16px rgb(31 23 15 / 28%));
+
+  /* Ribbon width shared by the page header & category stripe ribbons */
+  --size-ribbon-width: 49px;
 }
 
 .dark {
   /* ── Field Guide palette: dark ("oil lamp") ────────── */
-  --paper: #222226;
-  --paper-raised: #28282c;
-  --ink: #e4dfd8;
-  --ink-muted: #a8a098;
-  --hairline: #746c64;
-  --paper-deep: #2e2e32;
-  --ribbon-ink: #f7f5f0;
-  --sprite-slot-outline: #48464b;
+  --color-paper: #222226;
+  --color-paper-raised: #28282c;
+  --color-paper-sunken: #2e2e32;
+  --color-ink: #e4dfd8;
+  --color-ink-muted: #a8a098;
+  --color-ink-hairline: #746c64;
+  --color-ribbon-foreground: #f7f5f0;
+  --color-sprite-slot-outline: #48464b;
   --shadow-small: 0 1px 1px rgb(0 0 0 / 30%);
   --shadow-medium: 0 3px 10px rgb(0 0 0 / 15%);
   --shadow-large: 0 6px 16px rgb(0 0 0 / 18%);
   --shadow-overlay: 0 9px 24px rgb(0 0 0 / 18%);
 
-  --fg-green: #38984e;
-  --fg-amber: #c88030;
-  --fg-rose: #c04070;
-  --fg-blue: #3878b8;
-  --fg-brown: #9a7848;
-  --home-accent: #a87838;
-  --home-accent-ink: #101014;
+  --color-hue-green: #38984e;
+  --color-hue-amber: #c88030;
+  --color-hue-rose: #c04070;
+  --color-hue-blue: #3878b8;
+  --color-hue-brown: #9a7848;
+  --color-home-accent: #a87838;
+  --color-home-accent-foreground: #101014;
 
   --card: #2a2a2e;
-  --card-foreground: var(--ink);
+  --card-foreground: var(--color-ink);
   --popover: var(--card);
-  --popover-foreground: var(--ink);
+  --popover-foreground: var(--color-ink);
   --primary-foreground: #1a1a1e;
   --secondary-foreground: #1a1a1e;
   --muted: #2c2c2a;
   --accent: #32322c;
-  --accent-foreground: var(--ink);
+  --accent-foreground: var(--color-ink);
   --destructive: #e85858;
 
   /* Category colors — adjusted for dark ground */
-  --cat-animals: #b84040;
-  --cat-recipes: #b87830;
-  --cat-renown: #a88820;
-  --cat-museum: #38902e;
-  --cat-skills: #2e8878;
-  --cat-quests: #2e82b8;
-  --cat-almanac: #7868c8;
-  --cat-cosmetics: #8838a0;
-  --cat-villagers: #b83060;
-  --cat-mines: #886838;
+  --color-category-animals: #b84040;
+  --color-category-recipes: #b87830;
+  --color-category-renown: #a88820;
+  --color-category-museum: #38902e;
+  --color-category-skills: #2e8878;
+  --color-category-quests: #2e82b8;
+  --color-category-almanac: #7868c8;
+  --color-category-cosmetics: #8838a0;
+  --color-category-villagers: #b83060;
+  --color-category-mines: #886838;
 
-  --tag-accent: #c36d5a;
-  --tag-ink: #e8e3dc;
-  --tag-muted: #aaa39b;
-  --tag-paper: #352f2a;
+  --color-tag-accent: #c36d5a;
+  --color-tag-ink: #e8e3dc;
+  --color-tag-ink-muted: #aaa39b;
+  --color-tag-paper: #352f2a;
 }
 
 /* ── Locale font stacks (issue #269) ─────────────────── */
@@ -348,16 +371,6 @@ html:lang(ru) {
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-cat-museum: var(--cat-museum);
-  --color-cat-almanac: var(--cat-almanac);
-  --color-cat-recipes: var(--cat-recipes);
-  --color-cat-animals: var(--cat-animals);
-  --color-cat-villagers: var(--cat-villagers);
-  --color-cat-cosmetics: var(--cat-cosmetics);
-  --color-cat-skills: var(--cat-skills);
-  --color-cat-renown: var(--cat-renown);
-  --color-cat-quests: var(--cat-quests);
-  --color-cat-mines: var(--cat-mines);
 }
 
 /* ── Motion: Minimum Viable Delight ──────────────────── */
@@ -494,8 +507,8 @@ html:lang(ru) {
    */
   :where([data-tracker-row], [data-tracker-row-stack]) {
     --tracker-paper-border-width: 1px;
-    --tracker-paper-line: color-mix(in srgb, var(--hairline) 42%, transparent);
-    --tracker-paper-radius: 2px;
+    --tracker-paper-line: color-mix(in srgb, var(--color-ink-hairline) 42%, transparent);
+    --tracker-paper-radius: var(--radius);
     --tracker-peek-size: 27px;
     --tracker-row-gap: 7px;
     --tracker-sheet-gap: 6px;
@@ -523,7 +536,7 @@ html:lang(ru) {
 }
 
 [data-sonner-toast] [data-cancel] {
-  color: var(--ink);
+  color: var(--color-ink);
 }
 
 @media (forced-colors: active) {
