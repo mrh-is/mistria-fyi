@@ -1,21 +1,21 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { MAX_COMPRESSED_SIZE, parseSavFile, SaveFileError } from "./parse-sav.js";
+import { MAX_COMPRESSED_SIZE, parseSavArchive, SavArchiveError } from "./parse-sav.js";
 
-import type { SaveFileErrorDetail } from "./parse-sav.js";
+import type { SavArchiveErrorDetail } from "./parse-sav.js";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 
-async function expectSaveFileError(
+async function expectSavArchiveError(
   parsing: Promise<unknown>,
-  detail: SaveFileErrorDetail,
+  detail: SavArchiveErrorDetail,
   message?: string,
 ): Promise<void> {
   const rejected: unknown = await parsing.then(
     () => undefined,
     (error: unknown) => error,
   );
-  expect(rejected).toBeInstanceOf(SaveFileError);
+  expect(rejected).toBeInstanceOf(SavArchiveError);
   expect(rejected).toHaveProperty("detail", detail);
   expect(rejected).toHaveProperty("message", expect.stringContaining(message ?? ""));
 }
@@ -45,7 +45,7 @@ function buildRawSav(entries: Record<string, object | string>): Uint8Array {
   return result;
 }
 
-/** Deflate-compress raw bytes and wrap as a File for parseSavFile. */
+/** Deflate-compress raw bytes and wrap as a File for parseSavArchive. */
 async function compressToFile(raw: Uint8Array, name = "test.sav"): Promise<File> {
   const cs = new CompressionStream("deflate");
   const writer = cs.writable.getWriter();
@@ -90,9 +90,9 @@ function u64LE(n: number): Uint8Array {
   return new Uint8Array(buf);
 }
 
-// ─── parseSavFile ──────────────────────────────────────────────────
+// ─── parseSavArchive ──────────────────────────────────────────────────
 
-describe("parseSavFile", () => {
+describe("parseSavArchive", () => {
   it("extracts player, gamedata, and quests entries", async () => {
     const player = { gold: 500, name: "TestPlayer" };
     const gamedata = { day: 5, season: "spring" };
@@ -100,7 +100,7 @@ describe("parseSavFile", () => {
 
     const raw = buildRawSav({ gamedata, player, quests });
     const file = await compressToFile(raw);
-    const bundle = await parseSavFile(file);
+    const bundle = await parseSavArchive(file);
 
     expect(bundle.player).toEqual(player);
     expect(bundle.gamedata).toEqual(gamedata);
@@ -111,7 +111,7 @@ describe("parseSavFile", () => {
     const player = { name: "TestPlayer" };
     const raw = buildRawSav({ player, settings: { volume: 0.5 }, world: { rain: true } });
     const file = await compressToFile(raw);
-    const bundle = await parseSavFile(file);
+    const bundle = await parseSavArchive(file);
 
     expect(bundle.player).toEqual(player);
     expect(bundle).not.toHaveProperty("settings");
@@ -121,7 +121,7 @@ describe("parseSavFile", () => {
   it("works with only player entry", async () => {
     const raw = buildRawSav({ player: { name: "Solo" } });
     const file = await compressToFile(raw);
-    const bundle = await parseSavFile(file);
+    const bundle = await parseSavArchive(file);
 
     expect(bundle.player).toEqual({ name: "Solo" });
     expect(bundle.gamedata).toBeUndefined();
@@ -131,7 +131,7 @@ describe("parseSavFile", () => {
   it("works with only gamedata entry", async () => {
     const raw = buildRawSav({ gamedata: { day: 1 } });
     const file = await compressToFile(raw);
-    const bundle = await parseSavFile(file);
+    const bundle = await parseSavArchive(file);
 
     expect(bundle.gamedata).toEqual({ day: 1 });
   });
@@ -140,8 +140,8 @@ describe("parseSavFile", () => {
     const raw = buildRawSav({ settings: { volume: 0.5 } });
     const file = await compressToFile(raw);
 
-    await expectSaveFileError(
-      parseSavFile(file),
+    await expectSavArchiveError(
+      parseSavArchive(file),
       { code: "no-save-data" },
       "No recognized save data",
     );
@@ -151,15 +151,15 @@ describe("parseSavFile", () => {
     const raw = new Uint8Array([1, 2, 3]);
     const file = await compressToFile(raw);
 
-    await expectSaveFileError(parseSavFile(file), { code: "corrupt" });
+    await expectSavArchiveError(parseSavArchive(file), { code: "corrupt" });
   });
 
   it("handles empty entries object (zero entry count)", async () => {
     const raw = u64LE(0);
     const file = await compressToFile(raw);
 
-    await expectSaveFileError(
-      parseSavFile(file),
+    await expectSavArchiveError(
+      parseSavArchive(file),
       { code: "no-save-data" },
       "No recognized save data",
     );
@@ -176,7 +176,7 @@ describe("parseSavFile", () => {
     };
     const raw = buildRawSav({ player });
     const file = await compressToFile(raw);
-    const bundle = await parseSavFile(file);
+    const bundle = await parseSavArchive(file);
 
     expect(bundle.player).toEqual(player);
   });
@@ -184,14 +184,14 @@ describe("parseSavFile", () => {
 
 // ─── Size bounds ────────────────────────────────────────────────────
 
-describe("parseSavFile size bounds", () => {
+describe("parseSavArchive size bounds", () => {
   it("rejects a compressed file exceeding MAX_COMPRESSED_SIZE", async () => {
     const file = new File([], "huge.sav");
     Object.defineProperty(file, "size", { value: MAX_COMPRESSED_SIZE + 1 });
     const arrayBuffer = vi.spyOn(file, "arrayBuffer");
 
-    await expectSaveFileError(
-      parseSavFile(file),
+    await expectSavArchiveError(
+      parseSavArchive(file),
       { code: "too-large", maxBytes: MAX_COMPRESSED_SIZE, sizeBytes: MAX_COMPRESSED_SIZE + 1 },
       "Save file is too large",
     );
@@ -208,8 +208,8 @@ describe("parseSavFile size bounds", () => {
     const compressedBlob = await file.arrayBuffer();
     expect(compressedBlob.byteLength).toBeLessThan(MAX_COMPRESSED_SIZE);
 
-    await expectSaveFileError(
-      parseSavFile(file, {
+    await expectSavArchiveError(
+      parseSavArchive(file, {
         maxCompressedSize: MAX_COMPRESSED_SIZE,
         maxDecompressedSize: testDecompressedLimit,
       }),
@@ -221,7 +221,7 @@ describe("parseSavFile size bounds", () => {
   it("accepts a valid save well within both limits", async () => {
     const raw = buildRawSav({ player: { name: "Normal" } });
     const file = await compressToFile(raw);
-    const bundle = await parseSavFile(file);
+    const bundle = await parseSavArchive(file);
 
     expect(bundle.player).toEqual({ name: "Normal" });
   });
@@ -231,7 +231,7 @@ describe("parseSavFile size bounds", () => {
     const garbage = new Uint8Array([0xde, 0xad, 0xbe, 0xef, 0x01, 0x02, 0x03, 0x04]);
     const file = new File([garbage], "corrupt.sav");
 
-    await expectSaveFileError(parseSavFile(file), { code: "corrupt" });
+    await expectSavArchiveError(parseSavArchive(file), { code: "corrupt" });
   });
 
   it.each([
@@ -240,6 +240,6 @@ describe("parseSavFile size bounds", () => {
   ])("reports a recognized entry that %s as an invalid entry", async (_, text) => {
     const file = await compressToFile(buildRawSav({ quests: text }));
 
-    await expectSaveFileError(parseSavFile(file), { code: "invalid-entry", entry: "quests" });
+    await expectSavArchiveError(parseSavArchive(file), { code: "invalid-entry", entry: "quests" });
   });
 });
