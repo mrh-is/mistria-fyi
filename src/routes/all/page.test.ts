@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { CATEGORY_KEYS, sortCategoryKeysByName } from "#lib/data/categories.js";
 import { pageMetadata } from "#lib/data/page-metadata.js";
-import { getAllProgress, getOverallProgress } from "#lib/engine/progress.js";
+import { getAllProgress, getMaxRenownLevel, getOverallProgress } from "#lib/engine/progress.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 import { formatNumber } from "#lib/utils/format.js";
@@ -57,5 +57,27 @@ describe("/all page", () => {
         `${formatNumber(overall.completed, "en")} of ${formatNumber(overall.total, "en")} completed`,
       ),
     ).toBeTruthy();
+  });
+
+  it("hides a completed category unless completed content is shown", () => {
+    userState.setRenown(getMaxRenownLevel());
+
+    const hidden = renderToFragment(AllPage, { props });
+    expect(hidden.container.querySelector("#category-renown")).toBeNull();
+    expect(hidden.container.querySelector("#category-skills")).not.toBeNull();
+
+    userState.toggleShowCompleted();
+    const shown = renderToFragment(AllPage, { props });
+    expect(shown.container.querySelector("#category-renown")).not.toBeNull();
+  });
+
+  it("labels each section by its header and tints it with the category color", () => {
+    const { container } = renderToFragment(AllPage, { props });
+
+    for (const key of CATEGORY_KEYS) {
+      const section = container.querySelector(`section[aria-labelledby="category-${key}"]`);
+      expect(section, key).not.toBeNull();
+      expect(section?.getAttribute("style"), key).toContain(`--primary: var(--cat-${key})`);
+    }
   });
 });
