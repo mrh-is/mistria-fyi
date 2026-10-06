@@ -539,15 +539,24 @@ Subagents start their own dev server instead:
 ### Attach visual evidence & prototype code
 
 Use `--attach` when adding screenshots to GitHub CLI-created issues, pull requests, or pull-request
-comments. The flag can be repeated, and image alt text follows the file path after `#`:
+comments. The flag can be repeated. On its own, `--attach` appends each image to the end of the
+body, after the final `Agent:` line, which fails the "Attribution" check. Reference every attached
+file in the body above that line instead; GitHub CLI rewrites each local reference to the uploaded
+asset and appends nothing:
 
-```sh
-gh pr create --attach './desktop.png#Desktop tracker view' --attach './mobile.png#Mobile tracker view'
+```markdown
+## Screenshots
+
+![Desktop tracker view](./desktop.png) ![Mobile tracker view](./mobile.png)
+
+Agent: claude-code
 ```
 
-When the Markdown body already includes a local attachment reference, such as
-`![Desktop tracker](./desktop.png)`, GitHub CLI replaces it with the uploaded asset. Keep useful
-prototype code available to reviewers in a collapsed `<details>` element:
+```sh
+gh pr create --body-file body.md --attach ./desktop.png --attach ./mobile.png
+```
+
+Keep useful prototype code available to reviewers in a collapsed `<details>` element:
 
 ````markdown
 <details>

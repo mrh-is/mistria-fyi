@@ -150,8 +150,9 @@ Follow this sequence for every task:
 
 ### GitHub evidence & prototypes
 
-- Attach screenshots with GitHub CLI's `--attach` flag. Include useful prototype code in a collapsed
-  `<details>` element. See the
+- Attach screenshots with GitHub CLI's `--attach` flag, referencing each file in the body above the
+  final `Agent:` line (otherwise the image lands after it and fails Attribution). Include useful
+  prototype code in a collapsed `<details>` element. See the
   [development workflow](docs/development-workflow.md#attach-visual-evidence--prototype-code) for
   the exact syntax and examples.
 
