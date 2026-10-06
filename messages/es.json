@@ -1,6 +1,9 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Mistria Field Guide",
+  "og_share_tagline": "Sigue todas tus colecciones, misiones, habilidades y más",
+  "og_share_description": "Todo Mistria en un solo lugar",
+  "source_hidden": "Oculto",
   "app_update_available": "¡Mistria Field Guide se ha actualizado! Actualiza la página para obtener la versión más reciente.",
   "app_update_later": "Ahora no",
   "app_update_refresh": "Actualizar",
