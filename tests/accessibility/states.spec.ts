@@ -15,6 +15,7 @@ import {
   openSettingsCard,
   openVisibilityPanel,
 } from "./support/scenarios.js";
+import { critical } from "./support/tags.js";
 
 const emptyPlayerPath = fileURLToPath(
   new URL("fixtures/import/empty-player.json", import.meta.url),
@@ -23,7 +24,7 @@ const progressPlayerPath = fileURLToPath(
   new URL("fixtures/import/progress-player.json", import.meta.url),
 );
 
-test.describe("@critical stateful accessibility", () => {
+test.describe("stateful accessibility", () => {
   test.beforeEach(async ({ page }, testInfo) => {
     const state = testInfo.title.includes("spoiler-hidden")
       ? createStoredState({ availabilityMode: "everything" })
@@ -31,7 +32,7 @@ test.describe("@critical stateful accessibility", () => {
     await initializeApplication(page, "light", state);
   });
 
-  test("expanded visibility controls pass axe", async ({ page }, testInfo) => {
+  test("expanded visibility controls pass axe", critical, async ({ page }, testInfo) => {
     await gotoApplication(page, "/almanac");
     await openVisibilityPanel(page);
 
@@ -61,7 +62,7 @@ test.describe("@critical stateful accessibility", () => {
     );
   });
 
-  test("feedback validation dialog passes axe", async ({ page }, testInfo) => {
+  test("feedback validation dialog passes axe", critical, async ({ page }, testInfo) => {
     await gotoApplication(page, "/");
     await openFeedbackValidation(page);
 
@@ -72,7 +73,7 @@ test.describe("@critical stateful accessibility", () => {
     );
   });
 
-  test("spoiler-hidden and revealed rows pass axe", async ({ page }, testInfo) => {
+  test("spoiler-hidden and revealed rows pass axe", critical, async ({ page }, testInfo) => {
     await gotoApplication(page, "/almanac");
     await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
     await page.getByRole("button", { name: /Show \d+ more/ }).click();

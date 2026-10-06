@@ -5,7 +5,11 @@
 </script>
 
 <div class="tracker-paper" data-tracker-paper>
-  <div class="tracker-paper__surface" class:tracker-paper__surface--cutout={hasCutout}>
+  <div
+    class="tracker-paper__surface"
+    data-testid="tracker-paper-surface"
+    class:tracker-paper__surface--cutout={hasCutout}
+  >
     {@render children()}
   </div>
 
