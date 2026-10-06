@@ -1,15 +1,15 @@
 <script lang="ts">
   import { getName } from "#lib/data/names.js";
+  import * as m from "#lib/paraglide/messages.js";
   import {
     formatMergeCount,
     MERGE_COUNT_LABELS,
     totalMergeCounts,
-  } from "#lib/engine/merge-labels.js";
-  import * as m from "#lib/paraglide/messages.js";
+  } from "#lib/presentation/merge-labels.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
 
-  import type { MergeCountKey } from "#lib/engine/merge-labels.js";
+  import type { MergeCountKey } from "#lib/presentation/merge-labels.js";
   import type { VillagerRelationship } from "#lib/types/tracker-data.js";
   import type { ChildChoice, MergeConflict, MergeCounts } from "#lib/types/user-progress.js";
 

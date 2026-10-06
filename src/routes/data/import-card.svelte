@@ -13,8 +13,8 @@
     SaveFileError,
     unpackSavFile,
   } from "#lib/engine/import-save.js";
-  import { totalMergeCounts } from "#lib/engine/merge-labels.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { totalMergeCounts } from "#lib/presentation/merge-labels.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
 
   import DataCard from "./data-card.svelte";
