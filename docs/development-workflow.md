@@ -34,16 +34,21 @@ and platform-isolated cloud sessions are exempt; see
 Create and set up a worktree from any checkout with one command:
 
 ```sh
-pnpm run worktree:new <issue-number>-<short-description>
+pnpm run worktree:new <issue-number>-<short-description> [starting-branch]
 ```
 
-The script validates the slug (`<issue-number>-<short-description>`, lowercase), fetches
-`origin/main`, creates `.worktrees/<slug>` on a matching branch from `origin/main` under the main
-checkout, removes the worktree & branch again if a later step fails, refuses to run if `.worktrees/`
-is not gitignored, symlinks every `.worktreeinclude` entry from the main checkout, and runs
-`pnpm install --frozen-lockfile` and `pnpm run prepare` (Husky hooks, Paraglide output, &
-`svelte-kit sync`). The symlink & install steps live in `scripts/setup-worktree.sh`, which skips
-entries already present.
+The script validates the slug (`<issue-number>-<short-description>`, lowercase), fetches the
+starting branch (default `main`), creates `.worktrees/<slug>` on a matching branch from the
+refreshed `origin/<starting-branch>` under the main checkout, removes the worktree & branch again if
+a later step fails, refuses to run if `.worktrees/` is not gitignored, symlinks every
+`.worktreeinclude` entry from the main checkout, and runs `pnpm install --frozen-lockfile` and
+`pnpm run prepare` (Husky hooks, Paraglide output, & `svelte-kit sync`). The symlink & install steps
+live in `scripts/setup-worktree.sh`, which skips entries already present.
+
+Before creating the harness worktree, fetch the intended starting branch and use its refreshed
+remote tip as the base. Setup installs dependencies; it does not move an existing worktree or
+refresh its base. When working directly on a starting branch, pull with `git pull --ff-only` before
+edits; stop on divergence rather than resetting existing work.
 
 Agents with their own managed worktree directory (for example `.claude/worktrees/`) may use it
 instead; run the setup steps from inside it:
