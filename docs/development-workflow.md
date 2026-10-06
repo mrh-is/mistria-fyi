@@ -628,7 +628,9 @@ offline fallback, registration, or activation behavior.
 - **Cause**: Lifecycle scripts (including `prepare`) may be disabled or skipped in some
   environments. `core.hooksPath` is stored in the shared `.git/config` and may already be set by
   another worktree, but the `.husky/_` directory that Husky generates is worktree-local and will be
-  absent until `prepare` is run.
+  absent until `prepare` is run. A parallel setup can also hold the shared `.git/config` lock;
+  `scripts/install-git-hooks.ts` retries Husky's install, and `prepare` fails with the lock error if
+  it never frees.
 - **Recovery**: Run `pnpm run prepare` from within the worktree directory after installation:
   ```sh
   pnpm run prepare

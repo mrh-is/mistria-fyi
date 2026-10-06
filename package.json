@@ -5,7 +5,7 @@
   "version": "0.15.33",
   "type": "module",
   "scripts": {
-    "prepare": "husky && pnpm run paraglide:compile && svelte-kit sync",
+    "prepare": "node scripts/install-git-hooks.ts && pnpm run paraglide:compile && svelte-kit sync",
     "paraglide:compile": "tsx scripts/paraglide-compile.ts",
     "dev": "vite dev",
     "build": "vite build",
