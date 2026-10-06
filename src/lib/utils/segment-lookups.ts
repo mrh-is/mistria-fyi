@@ -1,6 +1,6 @@
 import { trackerData } from "#lib/data/index.js";
 import { getName, getNameTable } from "#lib/data/names.js";
-import { recordMap } from "#lib/utils.js";
+import { recordEntries, recordKeys, recordMap } from "#lib/utils.js";
 import {
   buildAnimalNames,
   buildBundleNames,
@@ -13,7 +13,7 @@ import {
 
 import type { LocalizedCategory } from "#lib/data/names.js";
 import type { LocaleCode } from "#lib/types/locale.js";
-import type { QuestType, SkillId, StoreId } from "#lib/types/tracker-data.js";
+import type { QuestType, StoreId } from "#lib/types/tracker-data.js";
 import type { SegmentLookups } from "#lib/utils/source-segments.js";
 
 /**
@@ -129,9 +129,9 @@ function getLocalizedBaseSegmentLookups(
     })),
     bundleNames: buildBundleNames(locale),
     festivals: Object.fromEntries(
-      Object.entries(trackerData.festivals).map(([id, festival]) => [
+      recordEntries(trackerData.festivals).map(([id, festival]) => [
         id,
-        { ...festival, name: getName("festivals", id as never, locale) },
+        { ...festival, name: getName("festivals", id, locale) },
       ]),
     ),
     itemNames,
@@ -139,13 +139,13 @@ function getLocalizedBaseSegmentLookups(
     monsterNames: buildMonsterNames(locale),
     museumWingNames: getNameTable("museum_wings", locale),
     perks: Object.fromEntries(
-      Object.entries(trackerData.skills).flatMap(([skillId, skill]) =>
+      recordEntries(trackerData.skills).flatMap(([skillId, skill]) =>
         skill.perkTiers.flatMap((tier, tierIndex) =>
-          Object.keys(tier).map((perkId) => [
+          recordKeys(tier).map((perkId) => [
             perkId,
             {
-              name: getName("perks", perkId as never, locale),
-              skillId: skillId as SkillId,
+              name: getName("perks", perkId, locale),
+              skillId,
               tier: tierIndex + 1,
             },
           ]),
@@ -156,7 +156,7 @@ function getLocalizedBaseSegmentLookups(
       ...buildUnnamedSourceNames(UNNAMED_SOURCE_IDS.quests),
       ...Object.fromEntries(
         Object.values(trackerData.quests).flatMap((group) =>
-          Object.keys(group).map((id) => [id, getName("quests", id as never, locale)]),
+          recordKeys(group).map((id) => [id, getName("quests", id, locale)]),
         ),
       ),
     },
@@ -164,9 +164,9 @@ function getLocalizedBaseSegmentLookups(
     // Processing stations are items.
     stationNames: itemNames,
     stores: Object.fromEntries(
-      Object.entries(trackerData.stores).map(([id, store]) => [
+      recordEntries(trackerData.stores).map(([id, store]) => [
         id,
-        { ...store, name: getName("stores", id as never, locale) },
+        { ...store, name: getName("stores", id, locale) },
       ]),
     ),
     treasureChestTiers: {
@@ -174,9 +174,9 @@ function getLocalizedBaseSegmentLookups(
         name,
       })),
       ...Object.fromEntries(
-        Object.keys(trackerData.treasureChestTiers).map((id) => [
+        recordKeys(trackerData.treasureChestTiers).map((id) => [
           id,
-          { name: getName("treasure-chest-tiers", id as never, locale) },
+          { name: getName("treasure-chest-tiers", id, locale) },
         ]),
       ),
     },
