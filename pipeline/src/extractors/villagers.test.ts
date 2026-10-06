@@ -1,25 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { makeFiddle } from "../test-helpers.js";
+import { makeFiddle, stubLocalizer } from "../test-helpers.js";
 import { extractVillagerIconSprites, extractVillagers } from "./villagers.js";
 
 import type { VillagerId } from "#lib/types/tracker-data.js";
-
-vi.mock("../localize.js", () => ({
-  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string; id: string }) => ({
-    fallbackLocales: [],
-    values: {
-      en: input.englishValue,
-      es: input.englishValue,
-      fr: input.englishValue,
-      ja: input.englishValue,
-      ko: input.englishValue,
-      ru: input.englishValue,
-      "zh-Hans": input.englishValue,
-      "zh-Hant": input.englishValue,
-    },
-  })),
-}));
 
 describe("extractVillagers", () => {
   it("captures each villager's icon_sprite without emitting it into the structural record", () => {
@@ -35,7 +19,7 @@ describe("extractVillagers", () => {
           },
         },
       }),
-      "unused-assets-dir",
+      stubLocalizer(),
     );
 
     expect(iconSpritesByVillagerId).toStrictEqual({ adeline: "spr_ui_generic_icon_npc_adeline" });
@@ -53,7 +37,7 @@ describe("extractVillagers", () => {
           adeline: { birthday: { day: 3, season: "spring" }, name: "Adeline" },
         },
       }),
-      "unused-assets-dir",
+      stubLocalizer(),
     );
 
     expect(iconSpritesByVillagerId).toStrictEqual({});
@@ -71,7 +55,7 @@ describe("extractVillagers", () => {
           default: { birthday: { day: 1, season: "spring" }, name: "Default" },
         },
       }),
-      "unused-assets-dir",
+      stubLocalizer(),
     );
 
     expect(iconSpritesByVillagerId).toStrictEqual({});
@@ -80,9 +64,7 @@ describe("extractVillagers", () => {
 });
 
 describe("extractVillagerIconSprites", () => {
-  it("builds the icon-sprite index without calling localizeField", async () => {
-    const { localizeField } = await import("../localize.js");
-
+  it("builds the icon-sprite index without localizing", () => {
     const iconSpritesByVillagerId = extractVillagerIconSprites(
       makeFiddle({
         npcs: {
@@ -97,7 +79,6 @@ describe("extractVillagerIconSprites", () => {
     );
 
     expect(iconSpritesByVillagerId).toStrictEqual({ adeline: "spr_ui_generic_icon_npc_adeline" });
-    expect(localizeField).not.toHaveBeenCalled();
   });
 
   it("throws when a villager is missing icon_sprite", () => {
@@ -129,7 +110,7 @@ describe("extractVillagerIconSprites", () => {
     const iconSpritesByVillagerId = extractVillagerIconSprites(fiddle);
     const { iconSpritesByVillagerId: fromFullExtraction } = extractVillagers(
       fiddle,
-      "unused-assets-dir",
+      stubLocalizer(),
     );
 
     expect(iconSpritesByVillagerId).toStrictEqual(fromFullExtraction);

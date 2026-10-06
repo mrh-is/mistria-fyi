@@ -1,16 +1,16 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { forEachItem } from "../extractor-helpers.js";
-import { localizeField } from "../localize.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { DateId, DateType, ItemId } from "#lib/types/tracker-data.js";
 
+import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 
 export function extractDates(
   fiddle: ParsedGameData,
-  assetsDir: string,
+  localizer: Localizer,
 ): { dates: Record<DateId, DateType>; localeNames: Record<LocaleCode, Record<DateId, string>> } {
   const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
     LocaleCode,
@@ -38,7 +38,7 @@ export function extractDates(
     }
 
     result[id as DateId] = { sources: [{ type: "date_inspiration", itemId: unlockItemId }] };
-    const { values } = localizeField(assetsDir, {
+    const { values } = localizer.localizeField({
       category: "dates",
       classification: "localizable",
       englishValue: name,

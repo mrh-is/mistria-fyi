@@ -1,27 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
+import { makeFiddle as makeFiddleBase, stubLocalizer } from "../test-helpers.js";
 import { extractMuseum } from "./museum.js";
 
-vi.mock("../parse-fiddle.js", () => ({
-  sourceFileFor: () => "mock-source.toml",
-}));
-vi.mock("../localize.js", () => ({
-  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
-    fallbackLocales: [],
-    values: {
-      en: input.englishValue,
-      es: input.englishValue,
-      fr: input.englishValue,
-      ja: input.englishValue,
-      ko: input.englishValue,
-      ru: input.englishValue,
-      "zh-Hans": input.englishValue,
-      "zh-Hant": input.englishValue,
-    },
-  })),
-}));
-const assetsDir = "test-assets";
+const localizer = stubLocalizer();
 
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({ museum_wings: {}, ui: {}, ...overrides });
@@ -34,7 +16,7 @@ describe("extractMuseum", () => {
 
   it("returns empty record when museum_wings is absent", () => {
     const fiddle = makeFiddleBase({ ui: {} });
-    expect(extractMuseum(fiddle, assetsDir).museum).toEqual({});
+    expect(extractMuseum(fiddle, localizer).museum).toEqual({});
   });
 
   it("extracts wings and sets as records", () => {
@@ -52,7 +34,7 @@ describe("extractMuseum", () => {
       },
     });
 
-    const { localeNames, museum } = extractMuseum(fiddle, assetsDir);
+    const { localeNames, museum } = extractMuseum(fiddle, localizer);
     expect(museum).toEqual({
       archaeology: {
         sets: {
@@ -77,7 +59,7 @@ describe("extractMuseum", () => {
       },
     });
 
-    expect(extractMuseum(fiddle, assetsDir).museum).toEqual({
+    expect(extractMuseum(fiddle, localizer).museum).toEqual({
       gems: {
         sets: {
           rubies: { items: ["ruby"] },
@@ -98,7 +80,7 @@ describe("extractMuseum", () => {
       },
     });
 
-    expect(extractMuseum(fiddle, assetsDir).museum).toEqual({
+    expect(extractMuseum(fiddle, localizer).museum).toEqual({
       archaeology: {
         sets: {
           fossils: { items: ["bone"] },
@@ -136,7 +118,7 @@ describe("extractMuseum", () => {
       },
     });
 
-    expect(Object.keys(extractMuseum(fiddle, assetsDir).museum)).toEqual(["gamma", "beta"]);
+    expect(Object.keys(extractMuseum(fiddle, localizer).museum)).toEqual(["gamma", "beta"]);
   });
 
   it("skips wings referenced in UI order but missing from data", () => {
@@ -160,7 +142,7 @@ describe("extractMuseum", () => {
       },
     });
 
-    expect(Object.keys(extractMuseum(fiddle, assetsDir).museum)).toEqual(["alpha"]);
+    expect(Object.keys(extractMuseum(fiddle, localizer).museum)).toEqual(["alpha"]);
   });
 
   it("respects set ordering from UI menus", () => {
@@ -187,7 +169,7 @@ describe("extractMuseum", () => {
       },
     });
 
-    const { museum: result } = extractMuseum(fiddle, assetsDir);
+    const { museum: result } = extractMuseum(fiddle, localizer);
     const sets = result[Object.keys(result)[0] as keyof typeof result];
     expect(Object.keys((sets as { sets: Record<string, unknown> }).sets)).toEqual([
       "relics",
@@ -205,7 +187,7 @@ describe("extractMuseum", () => {
       },
     });
 
-    expect(extractMuseum(fiddle, assetsDir).museum).toEqual({});
+    expect(extractMuseum(fiddle, localizer).museum).toEqual({});
   });
 
   it("handles multiple wings with multiple sets", () => {
@@ -227,7 +209,7 @@ describe("extractMuseum", () => {
       },
     });
 
-    expect(extractMuseum(fiddle, assetsDir).museum).toEqual({
+    expect(extractMuseum(fiddle, localizer).museum).toEqual({
       archaeology: {
         sets: {
           aldarian: { items: ["sword"] },

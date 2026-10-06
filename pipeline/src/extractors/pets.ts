@@ -1,7 +1,6 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { forEachItem, titleCase } from "../extractor-helpers.js";
-import { localizeField } from "../localize.js";
 
 import type { SourceTuple } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -12,11 +11,12 @@ import type {
   PetSkinId,
 } from "#lib/types/tracker-data.js";
 
+import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 
 export function extractPetCosmetics(
   fiddle: ParsedGameData,
-  assetsDir: string,
+  localizer: Localizer,
 ): {
   cosmetics: Record<PetCosmeticSetId, PetCosmeticSet>;
   localeNames: Record<LocaleCode, Record<PetCosmeticSetId, string>>;
@@ -33,7 +33,7 @@ export function extractPetCosmetics(
   for (const [id, set] of Object.entries(sets)) {
     const name = (set.name as string | undefined) ?? titleCase(id);
     result[id as PetCosmeticSetId] = { sources: [] as unknown as SourceTuple };
-    const { values } = localizeField(assetsDir, {
+    const { values } = localizer.localizeField({
       category: "pets/cosmetic_sets",
       classification: "localizable",
       englishValue: name,

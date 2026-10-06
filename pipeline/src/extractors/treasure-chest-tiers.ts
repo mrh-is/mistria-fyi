@@ -1,15 +1,14 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { localizeField } from "../localize.js";
-
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { TreasureChestTier, TreasureChestTierId } from "#lib/types/tracker-data.js";
 
+import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 
 export function extractTreasureChestTiers(
   fiddle: ParsedGameData,
-  assetsDir: string,
+  localizer: Localizer,
 ): {
   localeNames: Record<LocaleCode, Record<TreasureChestTierId, string>>;
   tiers: Record<TreasureChestTierId, TreasureChestTier>;
@@ -42,7 +41,7 @@ export function extractTreasureChestTiers(
 
     const tierId = tier as TreasureChestTierId;
     result[tierId] = {};
-    const { values } = localizeField(assetsDir, {
+    const { values } = localizer.localizeField({
       category: "items/fish/misc",
       classification: "localizable",
       englishValue: name,

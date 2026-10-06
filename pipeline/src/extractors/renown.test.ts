@@ -1,21 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
+import { makeFiddle as makeFiddleBase, stubLocalizer } from "../test-helpers.js";
 import { extractTownRanks as extractLocalizedTownRanks } from "./renown.js";
 
-vi.mock("../parse-fiddle.js", () => ({
-  sourceFileFor: () => "mock-source.toml",
-}));
-
-vi.mock("../localize.js", () => ({
-  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
-    fallbackLocales: [],
-    values: { en: input.englishValue },
-  })),
-}));
-
 function extractTownRanks(fiddle: ReturnType<typeof makeFiddleBase>) {
-  const { localeNames, townRanks } = extractLocalizedTownRanks(fiddle, "test-assets");
+  const { localeNames, townRanks } = extractLocalizedTownRanks(fiddle, stubLocalizer());
   return townRanks.map((rank, index) => ({ ...rank, name: localeNames.en[index.toString()] }));
 }
 

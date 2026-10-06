@@ -551,15 +551,30 @@ export const COSMETIC_OVERRIDES: Partial<Record<CosmeticId, Source[]>> = {
   ],
 };
 
+/** Hand-reviewed sources for acquisition paths the native data doesn't encode. */
+export interface ReviewedOverrides {
+  cosmetics: Partial<Record<CosmeticId, Source[]>>;
+  itemReplacements: Partial<Record<ItemId, Source[]>>;
+  items: Partial<Record<ItemId, Source[]>>;
+}
+
+/** The reviewed overrides for the installed game version. */
+export const REVIEWED_OVERRIDES: ReviewedOverrides = {
+  cosmetics: COSMETIC_OVERRIDES,
+  itemReplacements: ITEM_SOURCE_REPLACEMENTS,
+  items: ITEM_OVERRIDES,
+};
+
 export function applyReviewedOverrides(
   items: Readonly<Record<string, unknown>>,
   cosmetics: Readonly<Record<string, unknown>>,
   itemAccumulator: ItemSourceAccumulator,
   cosmeticAccumulator: CosmeticSourceAccumulator,
+  overrides: ReviewedOverrides = REVIEWED_OVERRIDES,
 ): OverrideDiagnostic[] {
   const diagnostics: OverrideDiagnostic[] = [];
 
-  for (const [targetId, sources] of recordEntries(ITEM_OVERRIDES)) {
+  for (const [targetId, sources] of recordEntries(overrides.items)) {
     if (!(targetId in items)) {
       diagnostics.push({
         kind: "missing-target",
@@ -589,7 +604,7 @@ export function applyReviewedOverrides(
     }
   }
 
-  for (const [targetId, sources] of recordEntries(ITEM_SOURCE_REPLACEMENTS)) {
+  for (const [targetId, sources] of recordEntries(overrides.itemReplacements)) {
     if (!(targetId in items)) {
       diagnostics.push({
         kind: "missing-target",
@@ -606,7 +621,7 @@ export function applyReviewedOverrides(
     });
   }
 
-  for (const [targetId, sources] of recordEntries(COSMETIC_OVERRIDES)) {
+  for (const [targetId, sources] of recordEntries(overrides.cosmetics)) {
     if (!(targetId in cosmetics)) {
       diagnostics.push({
         kind: "missing-target",
