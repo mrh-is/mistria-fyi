@@ -437,7 +437,13 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["summer_chair" as RecipeId];
-    expect(recipe.sources).toEqual([{ type: "store", storeId: "seasonal_store" }]);
+    expect(recipe.sources).toEqual([
+      {
+        type: "store",
+        availability: { type: "season", seasons: ["summer"] },
+        storeId: "seasonal_store",
+      },
+    ]);
   });
 
   it("maps museum wing crafting_scroll to museum_donation source", () => {
@@ -627,7 +633,12 @@ describe("extractRecipes", () => {
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["festival_treat" as RecipeId];
     expect(recipe.sources).toEqual([
-      { type: "festival", festivalId: "harvest", storeId: "nora_souvenir_stall" },
+      {
+        type: "festival",
+        availability: { type: "season", seasons: ["fall"] },
+        festivalId: "harvest",
+        storeId: "nora_souvenir_stall",
+      },
     ]);
   });
 
@@ -748,7 +759,7 @@ describe("extractRecipes", () => {
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining("ore_gold"));
   });
 
-  it("emits a plain store source when requirements include repaired_* (upgrade gate dropped)", () => {
+  it("retains repaired-store availability on recipe stock", () => {
     const fiddle = makeFiddle({
       items: {
         other: {
@@ -779,10 +790,16 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["inn_special" as RecipeId];
-    expect(recipe.sources).toEqual([{ type: "store", storeId: "sleeping_dragon_inn" }]);
+    expect(recipe.sources).toEqual([
+      {
+        type: "store",
+        availability: { type: "gamePredicate", predicate: "repaired_inn", value: true },
+        storeId: "sleeping_dragon_inn",
+      },
+    ]);
   });
 
-  it("emits a plain store source when requirements include has_perk (perk gate dropped)", () => {
+  it("retains perk availability on recipe stock", () => {
     const fiddle = makeFiddle({
       items: {
         other: {
@@ -814,7 +831,43 @@ describe("extractRecipes", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["espresso" as RecipeId];
-    expect(recipe.sources).toEqual([{ type: "store", storeId: "darcy_stall" }]);
+    expect(recipe.sources).toEqual([
+      {
+        type: "store",
+        availability: { type: "perkUnlocked", perkId: "espresso_yourself" },
+        storeId: "darcy_stall",
+      },
+    ]);
+  });
+
+  it("shares spouse and explicit year-one letter semantics with items", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          dishes: {
+            first_year_soup: { name: "First Year Soup", recipe: [] },
+            spouse_soup: { name: "Spouse Soup", recipe: [] },
+          },
+        },
+      },
+      letters: {
+        spouse_recipe: {
+          items: [{ recipe_scroll: "spouse_soup" }],
+          requirements: { is_spouse: "juniper" },
+        },
+        year_recipe: {
+          items: [{ recipe_scroll: "first_year_soup" }],
+          requirements: { reached_date: { day: 5, season: "summer", year: 1 } },
+        },
+      },
+    });
+    const { recipes } = extractRecipes(fiddle);
+    expect(recipes["spouse_soup" as RecipeId].sources).toEqual([
+      { type: "spouseGift", villagerId: "juniper" },
+    ]);
+    expect(recipes["first_year_soup" as RecipeId].sources).toEqual([
+      { type: "reach_day", triggerDate: { day: 5, season: "summer", year: 1 } },
+    ]);
   });
 
   it("maps letter recipe_scroll with reached_date requirement to letter source with triggerDate", () => {
@@ -1290,6 +1343,7 @@ describe("extractRecipes — stock requirement visibility", () => {
     expect(recipe.sources).toEqual([
       {
         type: "store",
+        availability: { type: "quest", questId: "repair_the_general_store", state: "completed" },
         storeId: "general",
         visibility: { type: "questCompleted", questId: "repair_the_general_store" },
       },
@@ -1339,13 +1393,14 @@ describe("extractRecipes — stock requirement visibility", () => {
     expect(recipe.sources).toEqual([
       {
         type: "store",
+        availability: { type: "quest", questId: "destroy_the_vines", state: "available" },
         storeId: "general",
         visibility: { type: "questAvailable", questId: "destroy_the_vines" },
       },
     ]);
   });
 
-  it("resolves reached_date to always because it is explicitly non-spoiler-sensitive", () => {
+  it("preserves day-level reached_date as an unknown availability gate", () => {
     const fiddle = makeFiddle({
       items: {
         other: {
@@ -1376,7 +1431,17 @@ describe("extractRecipes — stock requirement visibility", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["dated_dish" as RecipeId];
-    expect(recipe.sources).toEqual([{ type: "store", storeId: "general" }]);
+    expect(recipe.sources).toEqual([
+      {
+        type: "store",
+        availability: {
+          type: "gamePredicate",
+          predicate: "reached_date",
+          value: { day: 1, season: "spring" },
+        },
+        storeId: "general",
+      },
+    ]);
   });
 
   it("carries the resolved completion condition on an upgrade-gated scroll bundle", () => {
@@ -1427,6 +1492,7 @@ describe("extractRecipes — stock requirement visibility", () => {
     expect(recipe.sources).toEqual([
       {
         type: "scroll_bundle",
+        availability: { type: "quest", questId: "repair_the_general_store", state: "completed" },
         bundleName: "Void Bundle Scroll",
         storeId: "general",
         visibility: { type: "questCompleted", questId: "repair_the_general_store" },
@@ -1461,7 +1527,7 @@ describe("extractRecipes — stock requirement visibility", () => {
     });
   });
 
-  it("emits a plain store source for the Espresso Machine fixture (perk gate dropped)", () => {
+  it("retains the Espresso Machine perk gate", () => {
     const fiddle = makeFiddle({
       items: {
         other: {
@@ -1493,6 +1559,12 @@ describe("extractRecipes — stock requirement visibility", () => {
 
     const { recipes } = extractRecipes(fiddle);
     const recipe = recipes["espresso" as RecipeId];
-    expect(recipe.sources).toEqual([{ type: "store", storeId: "darcy_stall" }]);
+    expect(recipe.sources).toEqual([
+      {
+        type: "store",
+        availability: { type: "perkUnlocked", perkId: "espresso_yourself" },
+        storeId: "darcy_stall",
+      },
+    ]);
   });
 });

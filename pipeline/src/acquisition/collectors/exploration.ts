@@ -1,22 +1,25 @@
 import { isNonEmptyArray } from "#lib/utils/record.js";
 
-import { forEachItem, minesBiomeId } from "../../extractor-helpers.js";
+import { forEachItem, minesBiomeId, scrollTargetOf } from "../../extractor-helpers.js";
+import { addRecipeScrollSource } from "../recipe-target.js";
 
 import type { LocationId } from "#lib/types/acquisition.js";
-import type { CosmeticId, ItemId, TreasureChestTierId } from "#lib/types/tracker-data.js";
+import type { CosmeticId, ItemId, PerkId, TreasureChestTierId } from "#lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../../parse-fiddle.js";
+import type { RecipeAcquisitionContext } from "../recipe-target.js";
 import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "../source-accumulator.js";
 
 export function collectExplorationSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
   cosmeticAccumulator: CosmeticSourceAccumulator,
+  recipes: RecipeAcquisitionContext,
 ): void {
-  collectMineBiomeSources(fiddle, accumulator, cosmeticAccumulator);
+  collectMineBiomeSources(fiddle, accumulator, cosmeticAccumulator, recipes);
   collectPerfectOreSources(fiddle, accumulator);
-  collectWishingWellSources(fiddle, accumulator);
-  collectFishingChestSources(fiddle, accumulator, cosmeticAccumulator);
+  collectWishingWellSources(fiddle, accumulator, cosmeticAccumulator, recipes);
+  collectFishingChestSources(fiddle, accumulator, cosmeticAccumulator, recipes);
   collectArtifactDigSources(fiddle, accumulator);
   collectArtifactReplicaSources(fiddle, accumulator);
   collectEquipmentCosmeticSources(fiddle, cosmeticAccumulator);
@@ -90,6 +93,7 @@ function collectFishingChestSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
   cosmeticAccumulator: CosmeticSourceAccumulator,
+  recipes: RecipeAcquisitionContext,
 ): void {
   const fishing = fiddle.fishing as Record<string, unknown> | undefined;
   if (!fishing) return;
@@ -116,7 +120,17 @@ function collectFishingChestSources(
         continue;
       }
 
-      if (kind === "recipe") continue;
+      if (kind === "recipe") {
+        if (typeof obj.value === "string") {
+          addRecipeScrollSource(
+            obj.value,
+            { type: "treasure_chest", tier: tier as TreasureChestTierId },
+            recipes,
+            `fishing/chest_tables/${tier}`,
+          );
+        }
+        continue;
+      }
 
       const value = obj.value as string | undefined;
       if (value && kind === "item") {
@@ -133,6 +147,7 @@ function collectMineBiomeSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
   cosmeticAccumulator: CosmeticSourceAccumulator,
+  recipes: RecipeAcquisitionContext,
 ): void {
   const dungeons = fiddle.dungeons as Record<string, Record<string, unknown>> | undefined;
   if (!dungeons) return;
@@ -147,6 +162,17 @@ function collectMineBiomeSources(
 
     const name = (biome.name as string | undefined) ?? `Biome ${i + 1}`;
     const biomeId = minesBiomeId(name);
+    for (const [arrayKey, source] of [
+      ["taste_maker", { type: "mines_chest", biomeId, perkId: "taste_maker" as PerkId }],
+      ["furniture", { type: "mines_dig_site", biomeId, perkId: "natural_beauty" as PerkId }],
+    ] as const) {
+      const products = Array.isArray(biome[arrayKey]) ? biome[arrayKey] : [];
+      for (const product of products) {
+        if (typeof product !== "string") continue;
+        const recipeId = recipes.recipeIdByItemId.get(product);
+        if (recipeId) recipes.sources.add(recipeId, source);
+      }
+    }
 
     const cosmetics = Array.isArray(biome.cosmetics)
       ? biome.cosmetics.filter((v): v is string => typeof v === "string")
@@ -231,6 +257,8 @@ function collectPerfectOreSources(
 function collectWishingWellSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
+  cosmeticAccumulator: CosmeticSourceAccumulator,
+  recipes: RecipeAcquisitionContext,
 ): void {
   const wishingWell = fiddle.wishing_well as Record<string, Record<string, unknown>> | undefined;
   if (!wishingWell) return;
@@ -252,6 +280,18 @@ function collectWishingWellSources(
       for (const entry of roll) {
         if (typeof entry !== "object" || entry === null) continue;
         const obj = entry as Record<string, unknown>;
+        const scrollTarget = scrollTargetOf(obj);
+        if (scrollTarget) {
+          addRecipeScrollSource(
+            scrollTarget,
+            { type: "wishing_well", cost },
+            recipes,
+            "wishing_well",
+          );
+        }
+        if (typeof obj.cosmetic === "string") {
+          cosmeticAccumulator.add(obj.cosmetic as CosmeticId, { type: "wishing_well", cost });
+        }
         const itemId = obj.item as ItemId | undefined;
         if (itemId) {
           accumulator.add(itemId, {

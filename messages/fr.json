@@ -557,6 +557,8 @@
   "source_default": "Disponible dès le début",
   "source_dive": "Plonger : {waters}",
   "source_dive_any": "Plonger",
+  "source_letter_birthday": "Recevoir dans une lettre d’anniversaire",
+  "source_letter_condition": "Recevoir dans une lettre",
   "source_donate_item": "Recevoir par lettre après avoir fait don de : {item}",
   "source_ship_item": "Recevoir par lettre après avoir expédié : {item}",
   "source_engagement": "Recevoir d’Elsie après avoir atteint 10 cœurs avec un habitant avec qui sortir",

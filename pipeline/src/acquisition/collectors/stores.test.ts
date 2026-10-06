@@ -1,11 +1,38 @@
 import { describe, expect, it } from "vitest";
 
+import { PipelineDiagnostics } from "../../diagnostics.js";
 import { createRequirementContext } from "../../requirements.js";
 import { makeFiddle as makeFiddleBase } from "../../test-helpers.js";
-import { ItemSourceAccumulator } from "../source-accumulator.js";
-import { collectStoreSources } from "./stores.js";
+import {
+  AnimalCosmeticSourceAccumulator,
+  CosmeticSourceAccumulator,
+  ItemSourceAccumulator,
+  RecipeSourceAccumulator,
+} from "../source-accumulator.js";
+import { collectStoreSources as collectStoreSourcesImpl } from "./stores.js";
 
-import type { ItemId } from "#lib/types/tracker-data.js";
+import type { CosmeticId, ItemId } from "#lib/types/tracker-data.js";
+
+function collectStoreSources(
+  fiddle: Parameters<typeof collectStoreSourcesImpl>[0],
+  context: Parameters<typeof collectStoreSourcesImpl>[1],
+  items: ItemSourceAccumulator,
+  cosmetics = new CosmeticSourceAccumulator(),
+): void {
+  collectStoreSourcesImpl(
+    fiddle,
+    context,
+    items,
+    cosmetics,
+    new AnimalCosmeticSourceAccumulator(),
+    {
+      diagnostics: new PipelineDiagnostics(),
+      knownRecipeIds: new Set(),
+      recipeIdByItemId: new Map(),
+      sources: new RecipeSourceAccumulator(),
+    },
+  );
+}
 
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({ requirements: {}, stores: {}, ...overrides });
@@ -145,9 +172,12 @@ describe("collectStoreSources", () => {
     });
 
     const acc = new ItemSourceAccumulator();
-    collectStoreSources(fiddle, defaultContext, acc);
+    const cosmetics = new CosmeticSourceAccumulator();
+    collectStoreSources(fiddle, defaultContext, acc, cosmetics);
 
-    expect(acc.get("fancy_hat" as ItemId)).toEqual([{ type: "store", storeId: "clothing" }]);
+    expect(cosmetics.get("fancy_hat" as CosmeticId)).toEqual([
+      { type: "store", storeId: "clothing" },
+    ]);
   });
 
   it("skips default store entries", () => {

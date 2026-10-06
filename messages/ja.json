@@ -543,6 +543,8 @@
   "source_default": "最初から入手可能",
   "source_dive": "{waters}で潜る",
   "source_dive_any": "潜る",
+  "source_letter_birthday": "誕生日の手紙で受け取る",
+  "source_letter_condition": "手紙で受け取る",
   "source_donate_item": "{item}を寄贈した後に手紙で受け取る",
   "source_ship_item": "{item}を出荷した後に手紙で受け取る",
   "source_engagement": "デート可能な町の住民とハートが10になった後、エルシーから受け取る",
