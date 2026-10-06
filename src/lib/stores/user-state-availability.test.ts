@@ -28,7 +28,7 @@ describe("availability windows", () => {
   });
 
   it("serializes the new windows without the legacy mode", () => {
-    const exported = JSON.parse(userState.exportState()) as Record<string, unknown>;
+    const exported = JSON.parse(userState.exportBackup()) as Record<string, unknown>;
     expect(exported.availabilityWindows).toEqual(["now", "anytime"]);
     expect(exported).not.toHaveProperty("availabilityMode");
   });
@@ -38,35 +38,35 @@ describe("availability windows", () => {
     ["everything", ["now", "anytime", "later"]],
     ["timely", ["now"]],
   ] as const)("migrates the legacy %s mode", (availabilityMode, expected) => {
-    const exported = JSON.parse(userState.exportState()) as Record<string, unknown>;
+    const exported = JSON.parse(userState.exportBackup()) as Record<string, unknown>;
     delete exported.availabilityWindows;
     exported.availabilityMode = availabilityMode;
 
-    expect(userState.importState(JSON.stringify(exported))).toEqual({ ok: true });
+    expect(userState.restoreBackup(JSON.stringify(exported))).toEqual({ ok: true });
     expect(userState.state.availabilityWindows).toEqual(expected);
   });
 
   it("rejects invalid windows atomically", () => {
-    const original = userState.exportState();
+    const original = userState.exportBackup();
     const exported = JSON.parse(original) as Record<string, unknown>;
     exported.availabilityWindows = ["now", "eventually"];
 
-    expect(userState.importState(JSON.stringify(exported))).toEqual({
+    expect(userState.restoreBackup(JSON.stringify(exported))).toEqual({
       error: "invalid-fields",
       ok: false,
     });
-    expect(userState.exportState()).toBe(original);
+    expect(userState.exportBackup()).toBe(original);
   });
 
   it("rejects an empty windows array", () => {
-    const original = userState.exportState();
+    const original = userState.exportBackup();
     const exported = JSON.parse(original) as Record<string, unknown>;
     exported.availabilityWindows = [];
 
-    expect(userState.importState(JSON.stringify(exported))).toEqual({
+    expect(userState.restoreBackup(JSON.stringify(exported))).toEqual({
       error: "invalid-fields",
       ok: false,
     });
-    expect(userState.exportState()).toBe(original);
+    expect(userState.exportBackup()).toBe(original);
   });
 });
