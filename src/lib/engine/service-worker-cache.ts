@@ -48,7 +48,7 @@ type OfflineLocalesCache = Pick<Cache, "match" | "put">;
 type RuntimeCache = Pick<Cache, "delete" | "keys" | "put">;
 
 interface RuntimeRequestDependencies {
-  assetPaths: readonly string[];
+  assetPaths: ReadonlySet<string>;
   cache: RuntimeCache;
   fetcher: (request: Request) => Promise<Response>;
   matchCache: (request: RequestInfo | URL) => Promise<Response | undefined>;
@@ -103,14 +103,14 @@ export async function cacheRuntimeResponse(
   cache: RuntimeCache,
   request: Request,
   response: Response,
-  assetPaths: readonly string[],
+  assetPaths: ReadonlySet<string>,
   maxEntries = MAX_RUNTIME_ENTRIES,
 ): Promise<void> {
   await cache.put(request, response.clone());
   const keys = await cache.keys();
   const runtimeKeys = keys.filter((key) => {
     const url = new URL(key.url);
-    return !assetPaths.includes(url.pathname) && !isExternalFontAsset(url);
+    return !assetPaths.has(url.pathname) && !isExternalFontAsset(url);
   });
   const excess = runtimeKeys.length - maxEntries;
   await Promise.all(runtimeKeys.slice(0, Math.max(0, excess)).map((key) => cache.delete(key)));
