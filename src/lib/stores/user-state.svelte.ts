@@ -18,9 +18,8 @@ import {
 import { findRecipesForQuest } from "#lib/engine/quest-rewards.js";
 import {
   getMarriedVillager,
+  mergeHousehold,
   normalizeRelationships,
-  relationshipBranch,
-  relationshipRank,
 } from "#lib/engine/relationships.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { isWeatherInSeason } from "#lib/engine/world-state.js";
@@ -38,6 +37,7 @@ import {
 } from "#lib/types/user-progress.js";
 import { tryGetItem, trySetItem } from "#lib/utils/local-storage.js";
 import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
+import { unionInto } from "#lib/utils/set.js";
 
 import type { UserProgressionState } from "#lib/engine/visibility.js";
 import type { AvailabilityWindow, LegacyAvailabilityMode } from "#lib/types/availability.js";
@@ -62,7 +62,6 @@ import type {
 import type {
   ChildChoice,
   CompletedState,
-  MergeConflict,
   MergeCounts,
   MergeResult,
   QuestState,
@@ -71,10 +70,9 @@ import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
-export type AvailabilityMode = LegacyAvailabilityMode;
+/** The outcome of restoring a backup with `importState`, which replaces all progress. */
+export type BackupRestoreResult = { error: ImportErrorKind; ok: false } | { ok: true };
 export type ImportErrorKind = "invalid-fields" | "malformed-json" | "unsupported-version";
-
-export type ImportResult = { error: ImportErrorKind; ok: false } | { ok: true };
 
 /** The outcome of one `completeQuestWithRecipes` call, enough to undo exactly that call. */
 export interface QuestCompletion {
@@ -130,6 +128,13 @@ export interface SerializedState {
 export const PERSIST_DEBOUNCE_MS = 300;
 const STORAGE_KEY = "mistria-fyi-v1";
 const QUARANTINE_KEY = `${STORAGE_KEY}-quarantine`;
+/**
+ * Legacy states stored completed villagers and skills as bare ID lists. A completed villager
+ * migrates to the maximum standard heart level (romance unlocks the hearts above it); a completed
+ * skill migrates to the maximum skill level.
+ */
+const LEGACY_COMPLETED_VILLAGER_LEVEL = 10;
+const LEGACY_COMPLETED_SKILL_LEVEL = MAX_SKILL_LEVEL;
 const SUPPORTED_SERIALIZATION_VERSIONS = new Set(["1", CURRENT_SERIALIZATION_VERSION]);
 
 const VALID_CHILD_CHOICES = new Set<string>(CHILD_CHOICES);
@@ -416,9 +421,6 @@ function createUserState() {
       }
       return { newlyAdded, previousState };
     },
-    cycleQuestState(id: QuestId) {
-      state.completed.questStates[id] = nextQuestState(state.completed.questStates[id] ?? "none");
-    },
     dismissPersistenceWarning() {
       if (persistenceBlocked) {
         _persistenceFailureGeneration++;
@@ -433,7 +435,7 @@ function createUserState() {
       return hasAnyProgress;
     },
     /** Import/export user state JSON (full replace) */
-    importState(json: string): ImportResult {
+    importState(json: string): BackupRestoreResult {
       const result = deserialize(json, "strict");
       if (!result.ok) return result;
       state = result.state;
@@ -441,334 +443,97 @@ function createUserState() {
       enablePersistenceAfterExplicitReplace();
       return { ok: true };
     },
-    /** Merge imported data into current progress (union, never removes) */
+    /**
+     * Merges a native save into current progress: sets union, levels take the max, and the
+     * household follows {@link mergeHousehold}'s conflict policy. Never removes progress.
+     */
     mergeFromSave(imported: Partial<CompletedState>): MergeResult {
-      const conflicts: MergeConflict[] = [];
+      const completed = state.completed;
       const counts: MergeCounts = emptyMergeCounts();
 
-      // Almanac
-      if (imported.almanac) {
-        for (const id of imported.almanac) {
-          if (!state.completed.almanac.has(id)) {
-            state.completed.almanac.add(id);
-            counts.almanac++;
-          }
-        }
+      counts.almanac = unionInto(completed.almanac, imported.almanac ?? []);
+      counts.almanacRecipes = unionInto(completed.almanacRecipes, imported.almanacRecipes ?? []);
+      counts.cosmetics = unionInto(completed.cosmetics, imported.cosmetics ?? []);
+      counts.dates = unionInto(completed.dates, imported.dates ?? []);
+      counts.museum = unionInto(completed.museum, imported.museum ?? []);
+      counts.perks = unionInto(completed.unlockedPerks, imported.unlockedPerks ?? []);
+      counts.petCosmetics = unionInto(completed.petCosmetics, imported.petCosmetics ?? []);
+      counts.petSkins = unionInto(completed.petSkins, imported.petSkins ?? []);
+      counts.spells = unionInto(completed.mines.spells, imported.mines?.spells ?? []);
+      for (const [animalId, variants] of recordEntries(imported.animals ?? {})) {
+        const existing = getOrCreate(
+          completed.animals,
+          animalId,
+          () => new SvelteSet<AnimalVariantId>(),
+        );
+        counts.animals += unionInto(existing, variants);
       }
-
-      // Almanac recipes
-      if (imported.almanacRecipes) {
-        for (const id of imported.almanacRecipes) {
-          if (!state.completed.almanacRecipes.has(id)) {
-            state.completed.almanacRecipes.add(id);
-            counts.almanacRecipes++;
-          }
-        }
-      }
-
-      // Cosmetics
-      if (imported.cosmetics) {
-        for (const id of imported.cosmetics) {
-          if (!state.completed.cosmetics.has(id)) {
-            state.completed.cosmetics.add(id);
-            counts.cosmetics++;
-          }
-        }
-      }
-
-      // Dates
-      if (imported.dates) {
-        for (const id of imported.dates) {
-          if (!state.completed.dates.has(id)) {
-            state.completed.dates.add(id);
-            counts.dates++;
-          }
-        }
-      }
-
-      // Animal variants
-      if (imported.animals) {
-        for (const [animalId, variants] of recordEntries(imported.animals)) {
-          const existing = getOrCreate(
-            state.completed.animals,
-            animalId,
-            () => new SvelteSet<AnimalVariantId>(),
-          );
-          for (const v of variants) {
-            if (!existing.has(v)) {
-              existing.add(v);
-              counts.animals++;
-            }
-          }
-        }
-      }
-
-      // Animal cosmetics
-      if (imported.animalCosmetics) {
-        for (const [animalId, cosmetics] of recordEntries(imported.animalCosmetics)) {
-          const existing = getOrCreate(
-            state.completed.animalCosmetics,
-            animalId,
-            () => new SvelteSet<CosmeticId>(),
-          );
-          for (const c of cosmetics) {
-            if (!existing.has(c)) {
-              existing.add(c);
-              counts.animalCosmetics++;
-            }
-          }
-        }
-      }
-
-      // Pet cosmetics
-      if (imported.petCosmetics) {
-        for (const id of imported.petCosmetics) {
-          if (!state.completed.petCosmetics.has(id)) {
-            state.completed.petCosmetics.add(id);
-            counts.petCosmetics++;
-          }
-        }
-      }
-
-      // Pet skins
-      if (imported.petSkins) {
-        for (const id of imported.petSkins) {
-          if (!state.completed.petSkins.has(id)) {
-            state.completed.petSkins.add(id);
-            counts.petSkins++;
-          }
-        }
-      }
-
-      // Museum
-      if (imported.museum) {
-        for (const id of imported.museum) {
-          if (!state.completed.museum.has(id)) {
-            state.completed.museum.add(id);
-            counts.museum++;
-          }
-        }
-      }
-
-      // Spells
-      if (imported.mines?.spells) {
-        for (const id of imported.mines.spells) {
-          if (!state.completed.mines.spells.has(id)) {
-            state.completed.mines.spells.add(id);
-            counts.spells++;
-          }
-        }
+      for (const [animalId, cosmetics] of recordEntries(imported.animalCosmetics ?? {})) {
+        const existing = getOrCreate(
+          completed.animalCosmetics,
+          animalId,
+          () => new SvelteSet<CosmeticId>(),
+        );
+        counts.animalCosmetics += unionInto(existing, cosmetics);
       }
 
       // Levels are clamped again here so the canonical state stays inside its domains even if a
-      // caller bypasses buildImportState's normalization.
-
-      // Mine floor (take max)
+      // caller bypasses buildImportState's normalization. Scalars report how far they rose.
       if (imported.mines) {
         const floor = clampMineFloor(imported.mines.floor);
-        if (floor > state.completed.mines.floor) {
-          counts.mineFloor = floor - state.completed.mines.floor;
-          state.completed.mines.floor = floor;
+        if (floor > completed.mines.floor) {
+          counts.mineFloor = floor - completed.mines.floor;
+          completed.mines.floor = floor;
         }
       }
-
-      // Renown (take max)
       if (imported.renown !== undefined) {
         const renown = clampRenownLevel(imported.renown);
-        if (renown > state.completed.renown) {
-          counts.renown = renown - state.completed.renown;
-          state.completed.renown = renown;
+        if (renown > completed.renown) {
+          counts.renown = renown - completed.renown;
+          completed.renown = renown;
+        }
+      }
+      counts.villagerLevels = raiseLevels(
+        completed.villagerLevels,
+        imported.villagerLevels,
+        MAX_VILLAGER_LEVEL,
+      );
+      counts.skillLevels = raiseLevels(
+        completed.skillLevels,
+        imported.skillLevels,
+        MAX_SKILL_LEVEL,
+      );
+
+      // Quest states take the more advanced state: none < obtained < completed.
+      for (const [id, importedState] of recordEntries(imported.questStates ?? {})) {
+        if (questStateRank(importedState) > questStateRank(completed.questStates[id] ?? "none")) {
+          completed.questStates[id] = importedState;
+          counts.quests++;
         }
       }
 
-      // Villager levels (take max per villager)
-      if (imported.villagerLevels) {
-        for (const [id, rawLevel] of recordEntries(imported.villagerLevels)) {
-          const level = clampLevel(rawLevel, MAX_VILLAGER_LEVEL);
-          const current = state.completed.villagerLevels[id] ?? 0;
-          if (level > current) {
-            state.completed.villagerLevels[id] = level;
-            counts.villagerLevels++;
-          }
-        }
-      }
-
-      // Skill levels (take max per skill)
-      if (imported.skillLevels) {
-        for (const [id, rawLevel] of recordEntries(imported.skillLevels)) {
-          const level = clampLevel(rawLevel, MAX_SKILL_LEVEL);
-          const current = state.completed.skillLevels[id] ?? 0;
-          if (level > current) {
-            state.completed.skillLevels[id] = level;
-            counts.skillLevels++;
-          }
-        }
-      }
-
-      // Perks (union)
-      if (imported.unlockedPerks) {
-        for (const id of imported.unlockedPerks) {
-          if (!state.completed.unlockedPerks.has(id)) {
-            state.completed.unlockedPerks.add(id);
-            counts.perks++;
-          }
-        }
-      }
-
-      // Quest states (take more advanced state: none < obtained < completed)
-      if (imported.questStates) {
-        for (const [id, importedState] of recordEntries(imported.questStates)) {
-          const current = state.completed.questStates[id] ?? "none";
-          if (questStateRank(importedState) > questStateRank(current)) {
-            state.completed.questStates[id] = importedState;
-            counts.quests++;
-          }
-        }
-      }
-
-      // Reached season (take later season)
       if (
         imported.reachedSeason !== undefined &&
-        seasonOrdinal(imported.reachedSeason) > seasonOrdinal(state.completed.reachedSeason)
+        seasonOrdinal(imported.reachedSeason) > seasonOrdinal(completed.reachedSeason)
       ) {
-        state.completed.reachedSeason = imported.reachedSeason;
+        completed.reachedSeason = imported.reachedSeason;
         counts.reachedSeason = 1;
       }
-
-      // Has upper floor (logical OR)
-      if (imported.hasUpperFloor && !state.completed.hasUpperFloor) {
-        state.completed.hasUpperFloor = true;
+      if (imported.hasUpperFloor && !completed.hasUpperFloor) {
+        completed.hasUpperFloor = true;
         counts.hasUpperFloor = 1;
       }
 
-      // Villager relationships & child choice (one coherent household merge; see docs on
-      // mergeFromSave for the conflict policy this implements).
-      {
-        const localMarried = getMarriedVillager(state.completed.villagerRelationships);
-        const importedRelationships = imported.villagerRelationships ?? {};
-        const importedMarried = imported.villagerRelationships
-          ? getMarriedVillager(importedRelationships)
-          : null;
-
-        // Villagers whose relationship the general per-villager loop below must not touch,
-        // because they are (or were) a spouse and are handled explicitly above.
-        const skipVillagerIds = new SvelteSet<VillagerId>();
-        // Whether a household exists (locally or newly created by this merge) that the
-        // incoming child choice may be applied against.
-        let householdVillagerId: null | VillagerId = localMarried;
-        // A new marriage forces every other dateable villager to platonic via
-        // normalizeRelationships regardless of what the incoming data says about them, so the
-        // general per-villager loop below must not evaluate them for conflicts at all.
-        let skipGeneralLoop = false;
-
-        if (imported.villagerRelationships) {
-          if (localMarried === null && importedMarried !== null) {
-            // No local spouse: the incoming marriage applies silently, cascading every other
-            // villager to platonic via normalizeRelationships. This is the one allowed downgrade.
-            state.completed.villagerRelationships[importedMarried] = "married";
-            counts.villagerRelationships++;
-            skipVillagerIds.add(importedMarried);
-            householdVillagerId = importedMarried;
-            skipGeneralLoop = true;
-          } else if (
-            localMarried !== null &&
-            importedMarried !== null &&
-            importedMarried !== localMarried
-          ) {
-            // Different spouses: one household conflict, never two independent ones. The incoming
-            // marriage and its child choice are both skipped entirely; other villagers still merge
-            // normally.
-            conflicts.push({
-              incomingVillagerId: importedMarried,
-              kind: "spouse",
-              localVillagerId: localMarried,
-            });
-            skipVillagerIds.add(localMarried);
-            skipVillagerIds.add(importedMarried);
-            householdVillagerId = null;
-          } else if (localMarried !== null) {
-            // Same spouse (or incoming doesn't mention a spouse at all): check whether the
-            // incoming data downgrades the local marriage.
-            const importedLocalSpouseRel = importedRelationships[localMarried];
-            if (importedLocalSpouseRel && importedLocalSpouseRel !== "married") {
-              conflicts.push({
-                incomingRelationship: importedLocalSpouseRel,
-                kind: "relationship",
-                localRelationship: "married",
-                villagerId: localMarried,
-              });
-              // The marriage itself is disputed, so the household it would apply a child choice
-              // to is not a settled fact this merge can act on.
-              householdVillagerId = null;
-            }
-            skipVillagerIds.add(localMarried);
-          }
-
-          // General per-villager merge for everyone else: silent for a forward move within a
-          // branch (undecided → anything, romantic → proposed), a conflict for a move between
-          // branches or backward. An incoming "undecided" or an omitted villager is always a no-op.
-          if (!skipGeneralLoop) {
-            for (const [villagerIdStr, importedRel] of Object.entries(importedRelationships)) {
-              const villagerId = villagerIdStr as VillagerId;
-              if (!importedRel || importedRel === "undecided" || skipVillagerIds.has(villagerId)) {
-                continue;
-              }
-
-              const localRel = state.completed.villagerRelationships[villagerId] ?? "undecided";
-              if (localRel === importedRel) continue;
-
-              if (localRel === "undecided") {
-                state.completed.villagerRelationships[villagerId] = importedRel;
-                counts.villagerRelationships++;
-              } else if (relationshipBranch(localRel) !== relationshipBranch(importedRel)) {
-                conflicts.push({
-                  incomingRelationship: importedRel,
-                  kind: "relationship",
-                  localRelationship: localRel,
-                  villagerId,
-                });
-              } else if (relationshipRank(importedRel) > relationshipRank(localRel)) {
-                state.completed.villagerRelationships[villagerId] = importedRel;
-                counts.villagerRelationships++;
-              } else {
-                conflicts.push({
-                  incomingRelationship: importedRel,
-                  kind: "relationship",
-                  localRelationship: localRel,
-                  villagerId,
-                });
-              }
-            }
-          }
-
-          normalizeRelationships(state.completed.villagerRelationships);
-        }
-
-        // Child choice merge: meaningless without a household, and never carried across a
-        // household conflict (a different spouse, or a disputed downgrade of the local spouse).
-        if (
-          householdVillagerId !== null &&
-          imported.childChoice !== undefined &&
-          imported.childChoice !== "undeclared"
-        ) {
-          if (state.completed.childChoice === "undeclared") {
-            state.completed.childChoice = imported.childChoice;
-            counts.childChoice = 1;
-          } else if (state.completed.childChoice !== imported.childChoice) {
-            conflicts.push({
-              incomingChildChoice: imported.childChoice,
-              kind: "childChoice",
-              localChildChoice: state.completed.childChoice,
-              villagerId: householdVillagerId,
-            });
-          }
-        }
-      }
+      const household = mergeHousehold(completed, imported);
+      completed.villagerRelationships = household.villagerRelationships;
+      completed.childChoice = household.childChoice;
+      counts.villagerRelationships = household.counts.villagerRelationships;
+      counts.childChoice = household.counts.childChoice;
 
       // Backfill animal maps for any animals added since the imported state was created
-      backfillAnimalMaps(state.completed);
+      backfillAnimalMaps(completed);
 
-      return { conflicts, counts };
+      return { conflicts: household.conflicts, counts };
     },
     get persistenceFailed(): boolean {
       return _persistenceFailureGeneration > 0;
@@ -817,9 +582,6 @@ function createUserState() {
         quarantineAvailable = trySetItem(QUARANTINE_KEY, stored);
         _persistenceFailureGeneration++;
       }
-    },
-    setAvailabilityMode(mode: AvailabilityMode) {
-      state.availabilityWindows = legacyAvailabilityWindows(mode);
     },
     setAvailabilityWindows(windows: readonly AvailabilityWindow[]) {
       state.availabilityWindows = AVAILABILITY_WINDOWS.filter((window) => windows.includes(window));
@@ -900,7 +662,8 @@ function createUserState() {
       toggleInSet(set, variantId);
     },
     toggleAvailabilityWindow(window: AvailabilityWindow) {
-      const selected = new SvelteSet(state.availabilityWindows);
+      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- A scratch copy; only the filtered array is stored.
+      const selected = new Set(state.availabilityWindows);
       if (selected.has(window)) {
         if (selected.size === 1) return;
         selected.delete(window);
@@ -981,7 +744,9 @@ function deserialize(json: string, mode: ValidationMode): DeserializeResult {
     // Old format: villagers/skills/quests as string[]; New format: villagerLevels/skillLevels/questStates as Records
     const rawVillagerLevels: Record<string, unknown> = { ...s.completed.villagerLevels };
     if (!s.completed.villagerLevels && s.completed.villagers) {
-      for (const id of s.completed.villagers) rawVillagerLevels[id] = 10;
+      for (const id of s.completed.villagers) {
+        rawVillagerLevels[id] = LEGACY_COMPLETED_VILLAGER_LEVEL;
+      }
     }
     const villagerLevels = normalizeLevelRecord<VillagerId>(
       rawVillagerLevels,
@@ -991,7 +756,7 @@ function deserialize(json: string, mode: ValidationMode): DeserializeResult {
 
     const rawSkillLevels: Record<string, unknown> = { ...s.completed.skillLevels };
     if (!s.completed.skillLevels && s.completed.skills) {
-      for (const id of s.completed.skills) rawSkillLevels[id] = MAX_SKILL_LEVEL;
+      for (const id of s.completed.skills) rawSkillLevels[id] = LEGACY_COMPLETED_SKILL_LEVEL;
     }
     const skillLevels = normalizeLevelRecord<SkillId>(
       rawSkillLevels,
@@ -1323,6 +1088,26 @@ function normalizeLevelRecord<K extends string>(
     }
   }
   return result;
+}
+
+/**
+ * Raises each level in `target` to its clamped imported value when that is higher, and returns how
+ * many levels rose.
+ */
+function raiseLevels(
+  target: Partial<Record<string, number>>,
+  imported: Partial<Record<string, number>> | undefined,
+  max: number,
+): number {
+  let raised = 0;
+  for (const [id, rawLevel] of recordEntries(imported ?? {})) {
+    const level = clampLevel(rawLevel, max);
+    if (level > (target[id] ?? 0)) {
+      target[id] = level;
+      raised++;
+    }
+  }
+  return raised;
 }
 
 function serialize(state: UserState, source?: Record<string, unknown>): string {
