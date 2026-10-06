@@ -3,7 +3,6 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
 import { expectArray, expectStringArray } from "../data-shapes.js";
 import { PipelineDiagnostics } from "../diagnostics.js";
 import { forEachItem } from "../extractor-helpers.js";
-import { localizeField } from "../localize.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -16,6 +15,7 @@ import type {
   TrackerData,
 } from "#lib/types/tracker-data.js";
 
+import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 
 /**
@@ -45,7 +45,7 @@ export interface RawAlmanacCategory {
 
 export function extractAlmanac(
   fiddle: ParsedGameData,
-  assetsDir: string,
+  localizer: Localizer,
   sharedDiagnostics?: PipelineDiagnostics,
 ): {
   almanac: TrackerData["almanac"];
@@ -174,7 +174,7 @@ export function extractAlmanac(
     const itemId = item.id as ItemId;
     items[item.id] = { category: categoryKey };
     iconSpritesByItemId[item.id] = item.iconSprite;
-    const { fallbackLocales, values } = localizeField(assetsDir, {
+    const { fallbackLocales, values } = localizer.localizeField({
       category: `items/${item.topCategory}/${item.subCategory}`,
       classification: "localizable",
       englishValue: item.name,

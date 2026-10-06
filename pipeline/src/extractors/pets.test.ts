@@ -1,24 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import { makeFiddle } from "../test-helpers.js";
+import { makeFiddle, stubLocalizer } from "../test-helpers.js";
 import { extractPetCosmetics, extractPetSkins } from "./pets.js";
 
-vi.mock("../localize.js", () => ({
-  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
-    fallbackLocales: [],
-    values: {
-      en: input.englishValue,
-      es: input.englishValue,
-      fr: input.englishValue,
-      ja: input.englishValue,
-      ko: input.englishValue,
-      ru: input.englishValue,
-      "zh-Hans": input.englishValue,
-      "zh-Hant": input.englishValue,
-    },
-  })),
-}));
-const assetsDir = "test-assets";
+const localizer = stubLocalizer();
 
 describe("extractPetCosmetics", () => {
   it("extracts cosmetic sets with names and empty sources", () => {
@@ -31,7 +16,7 @@ describe("extractPetCosmetics", () => {
       },
     });
 
-    const { cosmetics, localeNames } = extractPetCosmetics(fiddle, assetsDir);
+    const { cosmetics, localeNames } = extractPetCosmetics(fiddle, localizer);
     expect(cosmetics).toEqual({
       flower_crown: { sources: [] },
       halo: { sources: [] },
@@ -41,12 +26,12 @@ describe("extractPetCosmetics", () => {
 
   it("returns empty record when no cosmetic_sets exist", () => {
     const fiddle = makeFiddle({ pets: {} });
-    expect(extractPetCosmetics(fiddle, assetsDir).cosmetics).toEqual({});
+    expect(extractPetCosmetics(fiddle, localizer).cosmetics).toEqual({});
   });
 
   it("returns empty record when no pets key exists", () => {
     const fiddle = makeFiddle({});
-    expect(extractPetCosmetics(fiddle, assetsDir).cosmetics).toEqual({});
+    expect(extractPetCosmetics(fiddle, localizer).cosmetics).toEqual({});
   });
 });
 

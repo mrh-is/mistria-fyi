@@ -1,27 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { stubLocalizer } from "../test-helpers.js";
 import { extractQuests } from "./quests.js";
 
 import type { QuestId, RecipeId } from "#lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
 
-vi.mock("../localize.js", () => ({
-  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
-    fallbackLocales: [],
-    values: {
-      en: input.englishValue,
-      es: input.englishValue,
-      fr: input.englishValue,
-      ja: input.englishValue,
-      ko: input.englishValue,
-      ru: input.englishValue,
-      "zh-Hans": input.englishValue,
-      "zh-Hant": input.englishValue,
-    },
-  })),
-}));
-const assetsDir = "test-assets";
+const localizer = stubLocalizer();
 
 describe("extractQuests", () => {
   afterEach(() => {
@@ -40,7 +26,7 @@ describe("extractQuests", () => {
       },
     } as unknown as ParsedGameData;
 
-    expect(extractQuests(fiddle, assetsDir).quests).toEqual(emptyQuests);
+    expect(extractQuests(fiddle, localizer).quests).toEqual(emptyQuests);
   });
 
   it("maps a populated tracked quest with its name, Villager, and itemId", () => {
@@ -57,7 +43,7 @@ describe("extractQuests", () => {
       },
     } as unknown as ParsedGameData;
 
-    const { localeNames, quests } = extractQuests(fiddle, assetsDir);
+    const { localeNames, quests } = extractQuests(fiddle, localizer);
     expect(quests).toEqual({
       ...emptyQuests,
       fetch: {
@@ -74,7 +60,7 @@ describe("extractQuests", () => {
   it("does not log a summary when the quest root is absent", () => {
     const logSpy = vi.spyOn(console, "log").mockReturnValue(undefined);
 
-    expect(extractQuests({} as ParsedGameData, assetsDir).quests).toEqual(emptyQuests);
+    expect(extractQuests({} as ParsedGameData, localizer).quests).toEqual(emptyQuests);
     expect(logSpy).not.toHaveBeenCalled();
   });
 
@@ -92,7 +78,7 @@ describe("extractQuests", () => {
       },
     } as unknown as ParsedGameData;
 
-    expect(extractQuests(fiddle, assetsDir).quests).toEqual({
+    expect(extractQuests(fiddle, localizer).quests).toEqual({
       ...emptyQuests,
       heart: {
         tall_dark_and_mysterious: {
@@ -117,7 +103,7 @@ describe("extractQuests", () => {
       },
     } as unknown as ParsedGameData;
 
-    expect(extractQuests(fiddle, assetsDir).quests).toEqual({
+    expect(extractQuests(fiddle, localizer).quests).toEqual({
       ...emptyQuests,
       heart: {
         adeline_pregnancy_request: {
@@ -146,7 +132,7 @@ describe("extractQuests", () => {
       ["crispy_fried_earthshroom", "crispy_fried_earthshroom" as RecipeId],
     ]);
 
-    expect(extractQuests(fiddle, assetsDir, recipeIdByItemId).quests).toEqual({
+    expect(extractQuests(fiddle, localizer, recipeIdByItemId).quests).toEqual({
       ...emptyQuests,
       cooking: {
         crispy_fried_earthshroom_challenge: {
@@ -170,7 +156,7 @@ describe("extractQuests", () => {
       },
     } as unknown as ParsedGameData;
 
-    expect(() => extractQuests(fiddle, assetsDir, new Map())).toThrow(
+    expect(() => extractQuests(fiddle, localizer, new Map())).toThrow(
       'Cooking quest "bad_challenge" has no has_item requirement in any stage',
     );
   });
@@ -188,7 +174,7 @@ describe("extractQuests", () => {
       },
     } as unknown as ParsedGameData;
 
-    expect(() => extractQuests(fiddle, assetsDir, new Map())).toThrow(
+    expect(() => extractQuests(fiddle, localizer, new Map())).toThrow(
       'Cooking quest "orphan_challenge" requires item "unknown_item" which has no matching recipe',
     );
   });
@@ -208,7 +194,7 @@ describe("extractQuests", () => {
 
     const recipeIdByItemId = new Map([["some_dish", "some_dish" as RecipeId]]);
 
-    const result = extractQuests(fiddle, assetsDir, recipeIdByItemId);
+    const result = extractQuests(fiddle, localizer, recipeIdByItemId);
     expect(result.quests.cooking["qty_challenge" as QuestId]).toMatchObject({
       recipeId: "some_dish",
     });

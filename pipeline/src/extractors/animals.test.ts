@@ -1,17 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
+import { makeFiddle as makeFiddleBase, stubLocalizer } from "../test-helpers.js";
 import { extractAnimals as extractLocalizedAnimals } from "./animals.js";
 
-vi.mock("../localize.js", () => ({
-  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
-    fallbackLocales: [],
-    values: { en: input.englishValue },
-  })),
-}));
-
 function extractAnimals(fiddle: ReturnType<typeof makeFiddleBase>) {
-  const { animals, localeNames } = extractLocalizedAnimals(fiddle, "test-assets");
+  const { animals, localeNames } = extractLocalizedAnimals(fiddle, stubLocalizer());
   return Object.fromEntries(
     Object.entries(animals).map(([animalId, animal]) => [
       animalId,

@@ -1,7 +1,6 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { forEachQuest, QUEST_TYPE_MAP, TRACKED_QUEST_GROUPS } from "../extractor-helpers.js";
-import { localizeField } from "../localize.js";
 
 import type { SourceTuple } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -14,11 +13,12 @@ import type {
   VillagerId,
 } from "#lib/types/tracker-data.js";
 
+import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 
 export function extractQuests(
   fiddle: ParsedGameData,
-  assetsDir: string,
+  localizer: Localizer,
   recipeIdByItemId?: Map<string, RecipeId>,
 ): { localeNames: Record<LocaleCode, Record<QuestId, string>>; quests: TrackerData["quests"] } {
   const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
@@ -47,7 +47,7 @@ export function extractQuests(
   forEachQuest(fiddle, TRACKED_QUEST_GROUPS, (tomlType, questId, quest) => {
     const outputType = QUEST_TYPE_MAP[tomlType as keyof typeof QUEST_TYPE_MAP];
     const name = (quest.name as string | undefined) ?? questId;
-    const { values } = localizeField(assetsDir, {
+    const { values } = localizer.localizeField({
       category: `quests/${tomlType}`,
       classification: "localizable",
       englishValue: name,

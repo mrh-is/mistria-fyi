@@ -1,7 +1,6 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { expectArray, expectStringArray } from "../data-shapes.js";
-import { localizeField } from "../localize.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -14,6 +13,7 @@ import type {
   TrackerData,
 } from "#lib/types/tracker-data.js";
 
+import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 
 /**
@@ -22,7 +22,7 @@ import type { ParsedGameData } from "../parse-fiddle.js";
  */
 export function extractMuseum(
   fiddle: ParsedGameData,
-  assetsDir: string,
+  localizer: Localizer,
 ): { localeNames: Record<LocaleCode, Record<string, string>>; museum: TrackerData["museum"] } {
   const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
     LocaleCode,
@@ -62,7 +62,7 @@ export function extractMuseum(
       sets[setId as MuseumWingSetId] = { items: items as ItemId[] };
       const name = (set.name as string | undefined) ?? setId;
       const key = `${wingId}/sets/${setId}`;
-      const { values } = localizeField(assetsDir, {
+      const { values } = localizer.localizeField({
         category: `museum_wings/${wingId}/sets`,
         classification: "localizable",
         englishValue: name,
@@ -74,7 +74,7 @@ export function extractMuseum(
 
     result[wingId as MuseumWingId] = { sets };
     const name = (wing.name as string | undefined) ?? wingId;
-    const { values } = localizeField(assetsDir, {
+    const { values } = localizer.localizeField({
       category: "museum_wings",
       classification: "localizable",
       englishValue: name,

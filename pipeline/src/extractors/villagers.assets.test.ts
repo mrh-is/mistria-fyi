@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { createAssetsLocalizer } from "../localize.js";
 import { makeFiddle, requireGameAssetsDir } from "../test-helpers.js";
 import { extractVillagers } from "./villagers.js";
 
@@ -33,7 +34,7 @@ function extract() {
         },
       },
     }),
-    requireGameAssetsDir(),
+    createAssetsLocalizer(requireGameAssetsDir()),
   );
 }
 

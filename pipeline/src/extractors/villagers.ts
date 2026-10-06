@@ -1,10 +1,9 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { localizeField } from "../localize.js";
-
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { Season, TrackerData, VillagerId } from "#lib/types/tracker-data.js";
 
+import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 
 export interface VillagerExtraction {
@@ -55,7 +54,7 @@ export function extractVillagerIconSprites(fiddle: ParsedGameData): VillagerIcon
  * exist on the type is the guardrail against rendering untranslated data. Callers resolve names
  * through `getName("villagers", id, locale)` instead.
  */
-export function extractVillagers(fiddle: ParsedGameData, assetsDir: string): VillagerExtraction {
+export function extractVillagers(fiddle: ParsedGameData, localizer: Localizer): VillagerExtraction {
   const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
     LocaleCode,
     Record<VillagerId, string>
@@ -74,7 +73,7 @@ export function extractVillagers(fiddle: ParsedGameData, assetsDir: string): Vil
       iconSpritesByVillagerId[record.id] = record.iconSprite;
     }
 
-    const { values } = localizeField(assetsDir, {
+    const { values } = localizer.localizeField({
       category: "npcs",
       classification: "localizable",
       englishValue: record.name,

@@ -43,7 +43,51 @@ export interface LocalizeFieldResult {
   values: Record<LocaleCode, string>;
 }
 
-const translationTableCache = new Map<string, ReadonlyMap<string, string>>();
+/** Which `localization/` directory a translation table comes from. */
+export type TranslationDirectory = "source_caches" | "translations";
+
+/**
+ * Supplies one game language's key-to-string table. {@link createLocalizer} memoizes each table, so
+ * a source may read from disk on every call.
+ */
+export type TranslationTableSource = (
+  gameLanguage: GameLanguageCode,
+  directory: TranslationDirectory,
+) => ReadonlyMap<string, string>;
+
+/**
+ * Resolves text fields to every {@link LocaleCode}. Extractors receive one instead of an assets
+ * path, so tests inject in-memory tables rather than mocking this module.
+ */
+export interface Localizer {
+  localizeField: (input: LocalizeFieldInput) => LocalizeFieldResult;
+}
+
+type TableLoader = (
+  gameLanguage: GameLanguageCode,
+  directory?: TranslationDirectory,
+) => ReadonlyMap<string, string>;
+
+/** A {@link Localizer} reading `<assetsDir>/localization/<directory>/<language>.meta.toml`. */
+export function createAssetsLocalizer(assetsDir: string): Localizer {
+  return createLocalizer((gameLanguage, directory) =>
+    readTranslationTable(assetsDir, gameLanguage, directory),
+  );
+}
+
+/** A {@link Localizer} over any table source, memoizing each table it loads. */
+export function createLocalizer(source: TranslationTableSource): Localizer {
+  const cache = new Map<string, ReadonlyMap<string, string>>();
+  const loadTable: TableLoader = (gameLanguage, directory = "translations") => {
+    const cacheKey = `${directory} ${gameLanguage}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return cached;
+    const table = source(gameLanguage, directory);
+    cache.set(cacheKey, table);
+    return table;
+  };
+  return { localizeField: (input) => localizeField(loadTable, input) };
+}
 
 /** Generates the `locales.json` manifest from `l10n.meta.toml`'s per-language fields. */
 export function generateLocaleManifest(assetsDir: string): LocaleManifest {
@@ -71,7 +115,7 @@ export function generateLocaleManifest(assetsDir: string): LocaleManifest {
  * translation table is the normal, expected case — this logs and falls back to English rather
  * than throwing.
  */
-export function localizeField(assetsDir: string, input: LocalizeFieldInput): LocalizeFieldResult {
+function localizeField(loadTable: TableLoader, input: LocalizeFieldInput): LocalizeFieldResult {
   const values = { en: input.englishValue } as Record<LocaleCode, string>;
   const fallbackLocales: LocaleCode[] = [];
 
@@ -94,13 +138,9 @@ export function localizeField(assetsDir: string, input: LocalizeFieldInput): Loc
   for (const [gameLanguage, locale] of Object.entries(GAME_LANGUAGE_TO_LOCALE)) {
     if (locale === "en") continue;
 
-    const table = loadTranslationTable(assetsDir, gameLanguage as GameLanguageCode);
+    const table = loadTable(gameLanguage as GameLanguageCode);
     if (input.expectedEnglishValue !== undefined) {
-      const sourceEnglish = loadTranslationTable(
-        assetsDir,
-        gameLanguage as GameLanguageCode,
-        "source_caches",
-      ).get(key);
+      const sourceEnglish = loadTable(gameLanguage as GameLanguageCode, "source_caches").get(key);
       // A wholly absent beta entry can still fall back to English. A translation requires its
       // matching English baseline, and an existing baseline must never describe another ordinal.
       if (
@@ -135,15 +175,11 @@ function deriveKey(category: string, id: string, field: string | undefined): str
   return field === undefined ? `${category}/${id}` : `${category}/${id}/${field}`;
 }
 
-function loadTranslationTable(
+function readTranslationTable(
   assetsDir: string,
   gameLanguage: GameLanguageCode,
-  directory: "source_caches" | "translations" = "translations",
+  directory: TranslationDirectory,
 ): ReadonlyMap<string, string> {
-  const cacheKey = `${assetsDir} ${directory} ${gameLanguage}`;
-  const cached = translationTableCache.get(cacheKey);
-  if (cached) return cached;
-
   const path = join(assetsDir, "localization", directory, `${gameLanguage}.meta.toml`);
   const toml = parse(readFileSync(path, "utf8")) as {
     asset_properties: Record<string, unknown>;
@@ -153,8 +189,6 @@ function loadTranslationTable(
   for (const [key, value] of Object.entries(toml.asset_properties)) {
     if (typeof value === "string") table.set(key, value);
   }
-
-  translationTableCache.set(cacheKey, table);
   return table;
 }
 

@@ -1,12 +1,12 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { expectArray } from "../data-shapes.js";
-import { localizeField } from "../localize.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { TrackerData } from "#lib/types/tracker-data.js";
 
+import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 
 export interface TownRankExtraction {
@@ -28,7 +28,7 @@ const RANK_ENGLISH_NAMES = [
   "Mistril",
 ] as const;
 
-export function extractTownRanks(fiddle: ParsedGameData, assetsDir: string): TownRankExtraction {
+export function extractTownRanks(fiddle: ParsedGameData, localizer: Localizer): TownRankExtraction {
   const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
     LocaleCode,
     Record<string, string>
@@ -49,7 +49,7 @@ export function extractTownRanks(fiddle: ParsedGameData, assetsDir: string): Tow
   const townRanks: TrackerData["townRanks"] = rawRanks.map((r, i) => {
     const name = r.name as string | undefined;
     if (!name) throw new Error(`Town rank at ordinal ${i} has no English name`);
-    const { values } = localizeField(assetsDir, {
+    const { values } = localizer.localizeField({
       category: "renown/ranks",
       classification: "localizable",
       englishValue: name,

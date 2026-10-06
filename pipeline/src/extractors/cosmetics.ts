@@ -2,7 +2,6 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { isExcludedCosmetic } from "../acquisition/exclusions.js";
 import { expectArray } from "../data-shapes.js";
-import { localizeField } from "../localize.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { SourceTuple } from "#lib/types/acquisition.js";
@@ -15,6 +14,7 @@ import type {
   TrackerData,
 } from "#lib/types/tracker-data.js";
 
+import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 
 export interface CosmeticExtraction {
@@ -33,13 +33,13 @@ export interface CosmeticExtraction {
  * Each asset's `ui_slot` and `ui_sub_category` are taken verbatim; both must name a section and
  * entry of `ui/character_customization.toml`, which is what the game's wardrobe menu groups by.
  */
-export function extractCosmetics(fiddle: ParsedGameData, assetsDir: string): CosmeticExtraction {
+export function extractCosmetics(fiddle: ParsedGameData, localizer: Localizer): CosmeticExtraction {
   const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
     LocaleCode,
     Record<CosmeticId, string>
   >;
   const assets = fiddle.player_assets as Record<string, Record<string, unknown>> | undefined;
-  const { cosmeticSlots, subCategoryLocaleNames } = readCustomizationMenu(fiddle, assetsDir);
+  const { cosmeticSlots, subCategoryLocaleNames } = readCustomizationMenu(fiddle, localizer);
   if (!assets) return { cosmetics: {}, cosmeticSlots, localeNames, subCategoryLocaleNames };
 
   const result = {} as Record<CosmeticId, Cosmetic>;
@@ -74,7 +74,7 @@ export function extractCosmetics(fiddle: ParsedGameData, assetsDir: string): Cos
         : []) as SourceTuple,
       subCategory,
     };
-    const { values } = localizeField(assetsDir, {
+    const { values } = localizer.localizeField({
       category: "player_assets",
       classification: "localizable",
       englishValue: name,
@@ -97,7 +97,7 @@ export function extractCosmetics(fiddle: ParsedGameData, assetsDir: string): Cos
  */
 function readCustomizationMenu(
   fiddle: ParsedGameData,
-  assetsDir: string,
+  localizer: Localizer,
 ): Pick<CosmeticExtraction, "cosmeticSlots" | "subCategoryLocaleNames"> {
   const subCategoryLocaleNames = Object.fromEntries(
     LOCALE_CODES.map((locale) => [locale, {}]),
@@ -125,7 +125,7 @@ function readCustomizationMenu(
       if (key in subCategoryLocaleNames.en) {
         throw new Error(`character_customization sub-category key "${key}" appears twice`);
       }
-      const { values } = localizeField(assetsDir, {
+      const { values } = localizer.localizeField({
         category: `ui/character_customization/${section}`,
         classification: "localizable",
         englishValue: name,

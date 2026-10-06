@@ -1,26 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
+import { makeFiddle as makeFiddleBase, stubLocalizer } from "../test-helpers.js";
 import { extractDates } from "./dates.js";
 
 import type { DateId } from "#lib/types/tracker-data.js";
 
-vi.mock("../localize.js", () => ({
-  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
-    fallbackLocales: [],
-    values: {
-      en: input.englishValue,
-      es: input.englishValue,
-      fr: input.englishValue,
-      ja: input.englishValue,
-      ko: input.englishValue,
-      ru: input.englishValue,
-      "zh-Hans": input.englishValue,
-      "zh-Hant": input.englishValue,
-    },
-  })),
-}));
-const assetsDir = "test-assets";
+const localizer = stubLocalizer();
 
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({
@@ -53,7 +38,7 @@ describe("extractDates", () => {
       },
     });
 
-    const { dates, localeNames } = extractDates(fiddle, assetsDir);
+    const { dates, localeNames } = extractDates(fiddle, localizer);
 
     expect(dates).toEqual({
       inn_meal: {
@@ -71,7 +56,7 @@ describe("extractDates", () => {
       },
     });
 
-    const { dates } = extractDates(fiddle, assetsDir);
+    const { dates } = extractDates(fiddle, localizer);
     expect(Object.keys(dates)).toEqual(["inn_meal"]);
   });
 
@@ -83,19 +68,19 @@ describe("extractDates", () => {
       },
     });
 
-    const { dates } = extractDates(fiddle, assetsDir);
+    const { dates } = extractDates(fiddle, localizer);
     expect(Object.keys(dates)).toEqual(["inn_meal"]);
   });
 
   it("returns an empty object when there is no dates data", () => {
-    expect(extractDates(makeFiddle({ dates: undefined }), assetsDir).dates).toEqual({});
+    expect(extractDates(makeFiddle({ dates: undefined }), localizer).dates).toEqual({});
   });
 
   it("throws when a date has no name", () => {
     const fiddle = makeFiddle({
       dates: { bad_date: {} },
     });
-    expect(() => extractDates(fiddle, assetsDir)).toThrow('Date "bad_date" is missing a name');
+    expect(() => extractDates(fiddle, localizer)).toThrow('Date "bad_date" is missing a name');
   });
 
   it("throws when a date has no matching unlock item", () => {
@@ -103,7 +88,7 @@ describe("extractDates", () => {
       dates: { orphan_date: { name: "Orphan" } },
       items: { other: { dating: {} } },
     });
-    expect(() => extractDates(fiddle, assetsDir)).toThrow(
+    expect(() => extractDates(fiddle, localizer)).toThrow(
       'Date "orphan_date" has no matching date_unlock item',
     );
   });
@@ -116,7 +101,7 @@ describe("extractDates", () => {
       },
     });
 
-    const { dates } = extractDates(fiddle, assetsDir);
+    const { dates } = extractDates(fiddle, localizer);
     expect(Object.keys(dates)).toEqual(["deep_woods_picnic", "inn_meal"]);
     expect(dates["deep_woods_picnic" as DateId]).toEqual({
       sources: [{ type: "date_inspiration", itemId: "picnic_set" }],
