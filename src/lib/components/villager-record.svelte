@@ -15,6 +15,7 @@
   import { recordKeys } from "#lib/utils.js";
   import { celebrateCategory } from "#lib/utils/celebrate.js";
   import { seasonLabel, seasonLabelAbbr } from "#lib/utils/format.js";
+  import { levelColor } from "#lib/utils/palette.js";
   import { page } from "$app/state";
 
   import type {
@@ -63,21 +64,6 @@
     romantic: m.relationship_action_romantic(),
     yes: m.relationship_action_yes(),
   });
-  const levelColors = [
-    "#7c3aed",
-    "#4338ca",
-    "#2563eb",
-    "#38bdf8",
-    "#22c55e",
-    "#a3e635",
-    "#fbbf24",
-    "#fde047",
-    "#f97316",
-    "#ea580c",
-    "#ef4444",
-    "#be123c",
-  ];
-
   let recordElement: HTMLLIElement;
   let locallyRevealed = $state(false);
   let imageFailed = $state(false);
@@ -223,7 +209,7 @@
           data-villager-mark
           data-villager-mark-filled={filled}
           data-villager-mark-kind={villager.dateable ? "dateable" : "platonic"}
-          style="--mark-color: {levelColors[index]}"
+          style="--mark-color: {levelColor(index)}"
         >
           <Icon.ProgressMark
             type={villager.dateable ? "relationship_dateable" : "relationship_platonic"}

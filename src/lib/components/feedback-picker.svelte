@@ -102,7 +102,7 @@
 
 {#if active}
   <div
-    class="pointer-events-none fixed inset-0 z-40"
+    class="pointer-events-none fixed inset-0 z-[var(--z-picker)]"
     role="dialog"
     aria-label={m.feedback_picker_dialog_title()}
     aria-modal="true"
@@ -157,7 +157,7 @@
     top: 0;
     right: 0;
     left: 0;
-    z-index: 50;
+    z-index: var(--z-dialog);
     display: flex;
     min-height: 62px;
     align-items: center;

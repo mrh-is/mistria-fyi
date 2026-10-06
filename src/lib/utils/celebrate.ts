@@ -1,9 +1,11 @@
 import confetti from "canvas-confetti";
 
+import { confettiColors } from "#lib/utils/palette.js";
+
 /** Fire a confetti burst for milestone completions (sections, categories). */
 export function celebrate(): void {
   void confetti({
-    colors: ["#fbbf24", "#f59e0b", "#d97706", "#fde68a", "#fef3c7"],
+    colors: confettiColors([1, 2, 3, 4, 5]),
     decay: 0.9,
     disableForReducedMotion: true,
     gravity: 1.2,
@@ -18,7 +20,7 @@ export function celebrate(): void {
 /** Fire a bigger confetti burst for category-level completions. */
 export function celebrateCategory(): void {
   const defaults = {
-    colors: ["#fbbf24", "#f59e0b", "#d97706", "#fde68a", "#a78bfa", "#f9a8d4"],
+    colors: confettiColors([1, 2, 3, 4, 6, 7]),
     decay: 0.92,
     disableForReducedMotion: true,
     gravity: 1,
