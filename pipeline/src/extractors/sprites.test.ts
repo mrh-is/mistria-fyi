@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { writeStoredZipFixture } from "../test-helpers.js";
 import { extractSprites, extractVillagerSprites, publishSprites } from "./sprites.js";
 
 const temporaryDirectories: string[] = [];
@@ -27,6 +28,38 @@ const TINY_PNG = Buffer.from(
 );
 
 describe("extractSprites", () => {
+  it("matches disk priority when duplicate zip filenames arrive in either order", async () => {
+    const assetsDir = makeTempDir();
+    const preferredDir = join(assetsDir, "animations", "Item Icons", "Crops");
+    const fallbackDir = join(assetsDir, "animations", "Placeables");
+    mkdirSync(preferredDir, { recursive: true });
+    mkdirSync(fallbackDir, { recursive: true });
+    writeFileSync(join(preferredDir, "spr_ui_item_turnip.png"), TINY_PNG);
+    const nestedDir = join(preferredDir, "spr_ui_item_turnip");
+    mkdirSync(nestedDir);
+    writeFileSync(join(nestedDir, "spr_ui_item_turnip.png"), "not a PNG");
+    // The fallback is deliberately invalid: selecting it must fail conversion.
+    writeFileSync(join(fallbackDir, "spr_ui_item_turnip.png"), "not a PNG");
+    const disk = await extractSprites(assetsDir, { turnip: "spr_ui_item_turnip" }, makeTempDir());
+    const entries: [string, Buffer | string][] = [
+      ["assets/animations/Placeables/spr_ui_item_turnip.png", "not a PNG"],
+      ["assets/animations/Item Icons/Crops/spr_ui_item_turnip/spr_ui_item_turnip.png", "not a PNG"],
+      ["assets/animations/Item Icons/Crops/spr_ui_item_turnip.png", TINY_PNG],
+    ];
+    await Promise.all(
+      [entries, entries.toReversed()].map(async (files) => {
+        const zip = writeStoredZipFixture(Object.fromEntries(files));
+        const result = await extractSprites(
+          assetsDir,
+          { turnip: "spr_ui_item_turnip" },
+          makeTempDir(),
+          zip,
+        );
+        expect(result.staged[0]?.data).toEqual(disk.staged[0]?.data);
+      }),
+    );
+  });
+
   it("extracts sprites as webp keyed by item ID under items/", async () => {
     vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = makeTempDir();
@@ -117,6 +150,26 @@ describe("extractSprites", () => {
     // Conversions are staged in memory, not written — the caller must not publish on failure.
     expect(existsSync(join(outputDir, "items", "turnip.webp"))).toBe(false);
     expect(result.staged).toHaveLength(1);
+  });
+
+  it("refreshes stale output and leaves it untouched until publishing", async () => {
+    const assetsDir = makeTempDir();
+    const outputDir = makeTempDir();
+    const iconsDir = join(assetsDir, "animations", "Item Icons", "Crops");
+    mkdirSync(iconsDir, { recursive: true });
+    writeFileSync(join(iconsDir, "spr_ui_item_turnip.png"), TINY_PNG);
+    mkdirSync(join(outputDir, "items"), { recursive: true });
+    const path = join(outputDir, "items", "turnip.webp");
+    writeFileSync(path, "stale sprite");
+    const result = await extractSprites(assetsDir, { turnip: "spr_ui_item_turnip" }, outputDir);
+    expect(result.extracted).toBe(1);
+    expect(result.skipped).toBe(0);
+    expect(readFileSync(path, "utf8")).toBe("stale sprite");
+    publishSprites(result.staged);
+    expect(readFileSync(path)).toEqual(result.staged[0]?.data);
+    const repeated = await extractSprites(assetsDir, { turnip: "spr_ui_item_turnip" }, outputDir);
+    expect(repeated.staged).toEqual([]);
+    expect(repeated.skipped).toBe(1);
   });
 
   it("skips sprites that already exist as webp", async () => {

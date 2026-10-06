@@ -1,6 +1,7 @@
 import { UPGRADE_IDS } from "#lib/types/acquisition.js";
 import { SEASONS, WEATHERS } from "#lib/types/tracker-data.js";
 
+import { compareStrings } from "../ordering.js";
 import { getSourceProvenance } from "./source-accumulator.js";
 
 import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
@@ -237,10 +238,10 @@ function compareDiagnostics(
 ): number {
   return (
     DIAGNOSTIC_ORDER[left.kind] - DIAGNOSTIC_ORDER[right.kind] ||
-    left.targetId.localeCompare(right.targetId) ||
-    left.fieldPath.localeCompare(right.fieldPath) ||
-    left.message.localeCompare(right.message) ||
-    (left.sourcePath ?? "").localeCompare(right.sourcePath ?? "")
+    compareStrings(left.targetId, right.targetId) ||
+    compareStrings(left.fieldPath, right.fieldPath) ||
+    compareStrings(left.message, right.message) ||
+    compareStrings(left.sourcePath ?? "", right.sourcePath ?? "")
   );
 }
 
@@ -954,14 +955,14 @@ function validateRecipeCycles(recipes: unknown, diagnostics: AcquisitionSourceDi
       .filter((source) => source.type === "recipe" && typeof source.recipeId === "string")
       .map((source) => source.recipeId as string)
       .filter((dependency) => dependency in recipes)
-      .toSorted((left, right) => left.localeCompare(right));
+      .toSorted((left, right) => compareStrings(left, right));
     graph.set(recipeId, dependencies);
   }
 
   const resolved = new Set<string>();
   const visiting = new Set<string>();
   const stack: string[] = [];
-  for (const recipeId of [...graph.keys()].toSorted((left, right) => left.localeCompare(right))) {
+  for (const recipeId of [...graph.keys()].toSorted((left, right) => compareStrings(left, right))) {
     findRecipeCycle(recipeId, graph, visiting, resolved, stack, diagnostics);
   }
 }
@@ -1313,7 +1314,7 @@ function requireRecord(
 }
 
 function sortedEntries(record: Record<string, unknown>): [string, unknown][] {
-  return Object.entries(record).toSorted(([left], [right]) => left.localeCompare(right));
+  return Object.entries(record).toSorted(([left], [right]) => compareStrings(left, right));
 }
 
 /** Checks a required array of ID strings and resolves each one; non-strings are malformed. */

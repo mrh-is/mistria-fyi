@@ -1,5 +1,7 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
+import { compareStrings } from "../ordering.js";
+
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { StoreId, StoreUpgradeAction, TrackerData } from "#lib/types/tracker-data.js";
 
@@ -43,7 +45,7 @@ export function extractStoresMeta(
 
   const result = {} as TrackerData["stores"];
 
-  for (const storeId of Object.keys(stores).toSorted()) {
+  for (const storeId of Object.keys(stores).toSorted(compareStrings)) {
     if (storeId === "default") continue;
     const store = stores[storeId];
     if (typeof store !== "object" || store === null) continue;
