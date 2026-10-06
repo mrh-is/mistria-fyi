@@ -5,6 +5,7 @@
   import IconQrcode from "@tabler/icons-svelte-runes/icons/qrcode";
 
   import { Icon } from "#lib/components/icon/index.js";
+  import StatusNote from "#lib/components/status-note.svelte";
   import { Button } from "#lib/components/ui/button/index.js";
   import {
     decodeTransferPayload,
@@ -269,21 +270,18 @@
 
     <!-- Success -->
     {#if transferResult}
-      <div class="rounded-md bg-green-50 p-3 dark:bg-green-950">
+      <StatusNote tone="success">
         <MergeSummary
           conflicts={transferResult.conflicts}
           counts={transferResult.counts}
           kind="transfer"
         />
-      </div>
+      </StatusNote>
     {/if}
 
     <!-- Error -->
     {#if outdatedTransfer}
-      <div
-        class="flex flex-col gap-3 rounded-md bg-amber-50 p-3 text-base text-amber-900 dark:bg-amber-950 dark:text-amber-100"
-        role="alert"
-      >
+      <StatusNote class="flex flex-col gap-3 text-base" tone="warning">
         <p class="font-medium">{m.transfer_error_outdated_title()}</p>
         <p>{m.transfer_error_outdated_recovery()}</p>
         <Button class="self-start" size="sm" variant="outline" onclick={copyRecoverySteps}>
@@ -291,14 +289,11 @@
             ? m.transfer_error_outdated_copied()
             : m.transfer_error_outdated_copy_steps()}
         </Button>
-      </div>
+      </StatusNote>
     {:else if transferError}
-      <div
-        class="rounded-md bg-red-50 p-3 text-base text-red-700 dark:bg-red-950 dark:text-red-300"
-        role="alert"
-      >
+      <StatusNote class="text-base" tone="error">
         {transferError}
-      </div>
+      </StatusNote>
     {/if}
   </div>
 </DataCard>

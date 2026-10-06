@@ -1,7 +1,8 @@
 # Styling
 
 The app mixes Tailwind utilities & scoped `<style>` blocks on purpose. Both draw from one set of
-design tokens in `src/app.css`, and Stylelint keeps scoped CSS on those tokens.
+design tokens in `src/app.css`. Stylelint keeps scoped CSS on those tokens, and an ESLint rule does
+the same for class strings in markup.
 
 ## Utilities vs. scoped CSS
 
@@ -98,6 +99,25 @@ prevention, not a style guide:
 `src/app.css` is exempt, since it defines the tokens. So are the vendored `src/lib/components/ui/`
 and generated files. The config is `stylelint.config.js`, and `scripts/stylelint-config.test.ts`
 covers it.
+
+ESLint's `local/no-untokened-classes` covers what Stylelint can't see: class strings in `.svelte`
+markup, including `class={...}` expressions (string, template, ternary, `cn(...)` arguments, &
+object keys) and `class:` directives. It rejects:
+
+- Arbitrary font sizes such as `text-[11px]`. Use the type scale (`text-3xs` is 10px, `text-2xs` is
+  11px).
+- Tailwind's raw palette hues such as `text-red-700` or `dark:bg-amber-950`. Use a semantic utility
+  (`text-destructive`, `text-muted-foreground`) or a palette token by reference
+  (`text-(--fg-green)`, `border-(--fg-amber)/40`); tokens already switch with the theme, so they
+  need no `dark:` twin.
+
+Arbitrary values that read a token, like `z-[var(--z-panel)]`, pass. The vendored
+`src/lib/components/ui/` and `*.test-harness.svelte` files are exempt. The rule lives in
+`eslint-rules/no-untokened-classes.ts`.
+
+For an error, warning, or success message box, use `StatusNote`
+(`tone="error" | "warning" | "success"`) rather than restyling a `<div>`. It tints the background
+from the tone's token and announces errors & warnings as alerts.
 
 Tailwind class order isn't a lint rule: oxfmt sorts the classes in `class` attributes against
 `src/app.css`, as `prettier-plugin-tailwindcss` did.

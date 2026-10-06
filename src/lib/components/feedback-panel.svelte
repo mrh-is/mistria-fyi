@@ -436,7 +436,7 @@
             bind:value={message}
             maxlength={5000}></textarea>
           {#if messageInvalid}
-            <p id="feedback-message-error" class="mt-1 text-[11px] text-destructive" role="alert">
+            <p id="feedback-message-error" class="mt-1 text-2xs text-destructive" role="alert">
               {m.feedback_message_required()}
             </p>
           {/if}
@@ -462,7 +462,7 @@
               {m.feedback_attach_progress_label()}
             </label>
             <button
-              class="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+              class="flex items-center gap-1 text-2xs text-muted-foreground hover:text-foreground"
               type="button"
               onclick={() => {
                 showProgressInfo = !showProgressInfo;
@@ -482,12 +482,12 @@
               class="space-y-1 pl-7"
               transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
             >
-              <p class="text-[11px] leading-relaxed text-muted-foreground">
+              <p class="text-2xs leading-relaxed text-muted-foreground">
                 {m.feedback_save_data_description()}
                 <strong>{m.feedback_save_data_public_warning()}</strong>
               </p>
               <button
-                class="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+                class="flex items-center gap-1 text-2xs text-muted-foreground hover:text-foreground"
                 type="button"
                 onclick={() => {
                   showSaveDataPreview = !showSaveDataPreview;
@@ -505,7 +505,7 @@
               {#if showSaveDataPreview}
                 <!-- prettier-ignore -->
                 <pre
-                  class="max-h-40 overflow-auto rounded border border-border bg-muted/40 p-2 text-[11px] leading-tight"
+                  class="max-h-40 overflow-auto rounded border border-border bg-muted/40 p-2 text-2xs leading-tight"
                   transition:slide={{ duration: prefersReducedMotion.current ? 0 : 120 }}
                 >{saveDataPreview}</pre>
               {/if}
@@ -558,11 +558,11 @@
                 }}
               />
               {#if emailInvalid}
-                <p id="feedback-email-error" class="mt-1 text-[11px] text-destructive" role="alert">
+                <p id="feedback-email-error" class="mt-1 text-2xs text-destructive" role="alert">
                   {emailMissing ? m.feedback_email_missing() : m.feedback_email_invalid()}
                 </p>
               {:else}
-                <p id="feedback-email-note" class="mt-2 text-[11px] text-muted-foreground">
+                <p id="feedback-email-note" class="mt-2 text-2xs text-muted-foreground">
                   {m.feedback_email_note()}
                 </p>
               {/if}
@@ -581,7 +581,7 @@
           >
             <p class="flex-1">{submitError}</p>
             <button
-              class="flex min-h-11 shrink-0 items-center gap-1 rounded px-2 text-[11px] hover:bg-destructive/20"
+              class="flex min-h-11 shrink-0 items-center gap-1 rounded px-2 text-2xs hover:bg-destructive/20"
               type="button"
               onclick={copyMessage}
             >
@@ -599,7 +599,7 @@
         ></div>
 
         {#if turnstileError}
-          <p class="text-[11px] text-muted-foreground">
+          <p class="text-2xs text-muted-foreground">
             {m.feedback_turnstile_unavailable_intro()}
             <a
               class="underline hover:text-foreground"
