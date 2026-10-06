@@ -100,15 +100,26 @@
   let visibleName = $derived(revealed ? name : m.villager_hidden_name());
 
   async function applyAction(value: RelationshipActionValue): Promise<void> {
+    // The roster can unmount this record once the action settles it (completed rows hidden),
+    // which nulls `recordElement`, so resolve the fallback focus targets first.
+    const record = recordElement;
+    const neighbor = record.nextElementSibling ?? record.previousElementSibling;
+    const list = record.parentElement;
     mutateWithCelebration(() => {
       if (value === "yes" || value === "no") userState.setChildChoice(value);
       else userState.setVillagerRelationship(id, value);
     });
 
     await tick();
-    const nextAction = recordElement.querySelector<HTMLButtonElement>("[data-relationship-action]");
-    if (nextAction) nextAction.focus();
-    else recordElement.focus();
+    if (record.isConnected) {
+      const nextAction = record.querySelector<HTMLButtonElement>("[data-relationship-action]");
+      if (nextAction) nextAction.focus();
+      else record.focus();
+    } else if (neighbor instanceof HTMLElement && neighbor.isConnected) {
+      neighbor.focus();
+    } else {
+      list?.focus();
+    }
   }
 
   function areAllVillagersComplete(): boolean {

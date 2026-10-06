@@ -34,7 +34,12 @@
 </script>
 
 <div class:villager-roster-shell={indexed}>
-  <ul class="villager-roster" data-testid="villager-roster" aria-label={m.villagers_roster_aria()}>
+  <ul
+    class="villager-roster"
+    data-testid="villager-roster"
+    aria-label={m.villagers_roster_aria()}
+    tabindex="-1"
+  >
     {#each visibleVillagers as villager (villager.id)}
       <VillagerRecord
         {compact}
