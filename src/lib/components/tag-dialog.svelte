@@ -103,7 +103,7 @@
   :global(.tag-dialog__overlay) {
     position: fixed;
     inset: 0;
-    z-index: 50;
+    z-index: var(--z-dialog);
     background: color-mix(in srgb, var(--paper) 72%, transparent);
   }
 
@@ -111,7 +111,7 @@
     position: fixed;
     top: 50%;
     left: 50%;
-    z-index: 50;
+    z-index: var(--z-dialog);
     width: calc(100% - 2rem);
     outline: none;
   }

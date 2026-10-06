@@ -1,18 +1,6 @@
-import type { TownRank } from "#lib/types/tracker-data.js";
+import { townRankColor } from "#lib/utils/palette.js";
 
-export const RANK_COLORS = [
-  "#92400e",
-  "#a8a29e",
-  "#f97316",
-  "#ef4444",
-  "#94a3b8",
-  "#3b82f6",
-  "#cbd5e1",
-  "#10b981",
-  "#fbbf24",
-  "#67e8f9",
-  "#a78bfa",
-] as const;
+import type { TownRank } from "#lib/types/tracker-data.js";
 
 export type RankState = "completed" | "current" | "upcoming";
 
@@ -45,7 +33,7 @@ export function getRenownPresentation(level: number, ranks: TownRank[]): RenownP
   const withinRank = Math.max(level - currentRank.levels.start, 0);
 
   return {
-    color: RANK_COLORS[currentRankIndex] ?? "#a78bfa",
+    color: townRankColor(currentRankIndex),
     currentRank,
     currentRankIndex,
     isMaxed: level >= maxLevel,

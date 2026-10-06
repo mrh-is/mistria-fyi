@@ -16,15 +16,25 @@ design tokens in `src/app.css`, and Stylelint keeps scoped CSS on those tokens.
 
 Every token is defined in `src/app.css`, and nowhere else.
 
-| Kind          | Tokens                                                                                 | Defined in                     |
-| ------------- | -------------------------------------------------------------------------------------- | ------------------------------ |
-| Palette       | `--paper`, `--ink`, `--hairline`, `--fg-*`, `--cat-*`, `--tag-*`, …                    | `:root` (light) & `.dark`      |
-| Shadcn colors | `--background`, `--primary`, `--muted`, …                                              | `:root` & `.dark`              |
-| Elevation     | `--shadow-small`, `--shadow-medium`, `--shadow-large`, `--shadow-overlay`              | `:root` & `.dark`              |
-| Drop shadows  | `--shadow-ribbon`, `--shadow-sticker`, `--tag-shadow`                                  | `:root`                        |
-| Type size     | `--text-3xs` (10px) & `--text-2xs` (11px), plus Tailwind's `--text-xs` (12px) and up   | `@theme`                       |
-| Radius        | `--radius` (2px), `--radius-lg` (4px), `--radius-xl` (6px)                             | `:root` & `@theme inline`      |
-| Font roles    | `--font-display`, `--font-body`, `--font-controls`, `--font-annotation`, `--font-data` | `:root`, overridden per locale |
+| Kind          | Tokens                                                                                                                                                  | Defined in                         |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| Palette       | `--paper`, `--ink`, `--hairline`, `--fg-*`, `--cat-*`, `--tag-*`, …                                                                                     | `:root` (light) & `.dark`          |
+| Shadcn colors | `--background`, `--primary`, `--muted`, …                                                                                                               | `:root` & `.dark`                  |
+| Elevation     | `--shadow-small`, `--shadow-medium`, `--shadow-large`, `--shadow-overlay`                                                                               | `:root` & `.dark`                  |
+| Drop shadows  | `--shadow-ribbon`, `--shadow-sticker`, `--tag-shadow`                                                                                                   | `:root`                            |
+| Type size     | `--text-3xs` (10px) & `--text-2xs` (11px), plus Tailwind's `--text-xs` (12px) and up                                                                    | `@theme`                           |
+| Radius        | `--radius` (2px), `--radius-lg` (4px), `--radius-xl` (6px)                                                                                              | `:root` & `@theme inline`          |
+| Level & rank  | `--color-relationship-level-1`…`--color-relationship-level-12` (villager marks), `--color-town-rank-1`…`--color-town-rank-11`, `--color-confetti-1`…`7` | `:root` (one palette, both themes) |
+| Z-index       | `--z-section-header`, `--z-page-header`, `--z-home-header`, `--z-toolbar`, `--z-panel`, `--z-picker`, `--z-dialog`                                      | `@theme`                           |
+| Font roles    | `--font-display`, `--font-body`, `--font-controls`, `--font-annotation`, `--font-data`                                                                  | `:root`, overridden per locale     |
+
+The `--color-relationship-level-*`, `--color-town-rank-*`, & `--color-confetti-*` tokens sit in
+`:root`, not `@theme`, like `--cat-*`: Tailwind would otherwise generate `bg-…` utilities nothing
+uses. Palette colors that JS picks by index go through `src/lib/utils/palette.ts`
+(`relationshipLevelColor`, `townRankColor`, `confettiColors`), never a hex array in a component.
+Z-index tokens cover layers that cross component boundaries; stacking inside one component stays a
+small literal. Read one in a class as `z-[var(--z-panel)]` (the shorthand `z-(--z-panel)` trips
+oxfmt's class sorter, which drops the space after it).
 
 Scoped CSS reads tokens with `var()`, and derives tints with `color-mix()`:
 
