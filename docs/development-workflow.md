@@ -482,6 +482,20 @@ git branch -vv
   `report_progress` tool; elsewhere use `git push`) after committing, then verify the branch is
   clean with `git status --short`.
 
+### Force-push only over the commit you expect
+
+After rebasing a pushed branch, name the remote commit you expect to replace:
+
+```sh
+git push --force-with-lease=<branch>:<full-sha-you-last-saw> origin <branch>
+```
+
+A bare `--force-with-lease` compares against your local `origin/<branch>`, so any fetch after
+someone else's push makes the lease pass and silently discards their commit. That happened on a PR
+the maintainer had pushed to while an agent was rebasing it. Take the SHA from the PR (for example
+`gh pr view <n> --json headRefOid`) before rebasing. If the push is rejected, the branch moved: stop
+and report rather than fetching and retrying. Never use plain `--force`.
+
 ### Attach visual evidence & prototype code
 
 Use `--attach` when adding screenshots to GitHub CLI-created issues, pull requests, or pull-request
