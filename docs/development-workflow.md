@@ -201,7 +201,16 @@ colocated tests don’t double the length of directory listings.
   ```sh
   pnpm run test
   ```
-  This command passes in a fresh clone without `pipeline/input/` and is the test command CI runs.
+  This command passes in a fresh clone without `pipeline/input/`. CI runs the same suite through
+  `pnpm run test:coverage`.
+- **Measure coverage** (opt-in; the same suite plus v8 coverage):
+  ```sh
+  pnpm run test:coverage
+  ```
+  Coverage covers `src/lib/engine/`, `src/lib/stores/`, & `pipeline/src/`. It's reported, not gated:
+  the terminal prints a summary, `coverage/index.html` has per-line detail, and CI writes a per-area
+  table with the least-covered files to the test job's summary. Plain `pnpm run test` and
+  single-file runs don't measure coverage, so they cost nothing extra.
 - **Run tests affected by branch changes**:
 
   ```sh
@@ -216,7 +225,7 @@ colocated tests don’t double the length of directory listings.
 
   `origin/main` is a local remote-tracking ref, so refresh it with `git fetch origin main` when it
   may be stale. A stale behind ref is conservative because it includes extra changed files, but
-  `pnpm run test` remains the authoritative local fallback and the command CI runs. Pass another
+  `pnpm run test` remains the authoritative local fallback and the suite CI runs. Pass another
   comparison ref when needed, for example `pnpm run test:changed -- main`.
 
 - **Run application tests only** (`src/`: the `app`, `cold`, & `client` projects):
@@ -309,14 +318,14 @@ other full-suite command during development.
 
 `.github/workflows/ci.yml` runs on every pull request and main push:
 
-| Command                 | Description & Purpose                                                            | Scope                |
-| ----------------------- | -------------------------------------------------------------------------------- | -------------------- |
-| `pnpm run lint`         | Checks oxfmt formatting, oxlint, ESLint (Svelte templates), and Stylelint        | All files            |
-| `pnpm run check:i18n`   | Verifies every locale file matches `en.json`'s key shape                         | `messages/`          |
-| `pnpm run check`        | Synchronizes SvelteKit types and runs `svelte-check` plus the pipeline `tsc`     | `src/` & `pipeline/` |
-| `pnpm run test`         | Executes the complete Vitest test suite                                          | Unit & logic tests   |
-| `pnpm run build`        | Compiles SvelteKit app and verifies Cloudflare adapter                           | Build validation     |
-| `pnpm run check:routes` | Proves every built static asset bypasses Cloudflare Functions via `_routes.json` | Build validation     |
+| Command                  | Description & Purpose                                                            | Scope                |
+| ------------------------ | -------------------------------------------------------------------------------- | -------------------- |
+| `pnpm run lint`          | Checks oxfmt formatting, oxlint, ESLint (Svelte templates), and Stylelint        | All files            |
+| `pnpm run check:i18n`    | Verifies every locale file matches `en.json`'s key shape                         | `messages/`          |
+| `pnpm run check`         | Synchronizes SvelteKit types and runs `svelte-check` plus the pipeline `tsc`     | `src/` & `pipeline/` |
+| `pnpm run test:coverage` | Executes the complete Vitest suite and summarizes coverage (not gated)           | Unit & logic tests   |
+| `pnpm run build`         | Compiles SvelteKit app and verifies Cloudflare adapter                           | Build validation     |
+| `pnpm run check:routes`  | Proves every built static asset bypasses Cloudflare Functions via `_routes.json` | Build validation     |
 
 `.github/workflows/ci.yml` also runs the accessibility and PWA Playwright suites against the build
 job's output when `src/`, `static/`, `tests/`, or their configs change; see

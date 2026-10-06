@@ -21,6 +21,7 @@
     "bun.lock",
     ".svelte-kit/",
     "build/",
+    "coverage/",
     ".wrangler/",
     "pipeline/input/",
     "pipeline/output/",

@@ -92,7 +92,13 @@ describe("CI workflow jobs", () => {
       lintCommands.indexOf("pnpm run lint"),
     );
     expect(runCommands(jobs.check)).toContain("pnpm run check");
-    expect(runCommands(jobs.test)).toContain("pnpm run test");
+    // One pass runs the suite and measures coverage; the summary step only reads its report.
+    const testCommands = runCommands(jobs.test);
+    expect(testCommands).toContain("pnpm run test:coverage");
+    expect(testCommands).not.toContain("pnpm run test");
+    expect(testCommands.indexOf("pnpm run test:coverage")).toBeLessThan(
+      testCommands.indexOf('node scripts/coverage-summary.ts >> "$GITHUB_STEP_SUMMARY"'),
+    );
     // The build job also proves the Cloudflare route table keeps static assets off Functions.
     expect(runCommands(jobs.build)).toEqual(
       expect.arrayContaining(["pnpm run build", "pnpm run check:routes"]),
@@ -105,7 +111,7 @@ describe("CI workflow jobs", () => {
       "pnpm run lint",
       "pnpm run check",
       "pnpm run check:i18n",
-      "pnpm run test",
+      "pnpm run test:coverage",
       "pnpm run build",
       "pnpm run check:routes",
     ]) {
@@ -123,7 +129,7 @@ describe("CI workflow jobs", () => {
   it("restores Vitest's module cache before running the tests", () => {
     const steps = jobs.test.steps ?? [];
     const cacheIndex = steps.findIndex((step) => step.uses?.startsWith("actions/cache@"));
-    const testIndex = steps.findIndex((step) => step.run === "pnpm run test");
+    const testIndex = steps.findIndex((step) => step.run === "pnpm run test:coverage");
     expect(cacheIndex).toBeGreaterThan(-1);
     expect(cacheIndex).toBeLessThan(testIndex);
     expect(steps[cacheIndex].with?.path).toBe("node_modules/.vitest-cache");
