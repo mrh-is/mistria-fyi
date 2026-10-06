@@ -4,7 +4,7 @@ import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { animalNameId, getName } from "#lib/data/names.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
-import { recordEntries } from "#lib/utils.js";
+import { recordEntries } from "#lib/utils/record.js";
 
 import { searchItems } from "./search.js";
 

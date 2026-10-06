@@ -1,5 +1,5 @@
 import { simplifyAvailabilityCondition } from "#lib/engine/availability-condition.js";
-import { isNonEmptyArray } from "#lib/utils.js";
+import { isNonEmptyArray } from "#lib/utils/record.js";
 
 import { forEachItem } from "../../extractor-helpers.js";
 
@@ -21,7 +21,7 @@ import type {
   Season,
   Weather,
 } from "#lib/types/tracker-data.js";
-import type { NonEmptyArray } from "#lib/utils.js";
+import type { NonEmptyArray } from "#lib/utils/record.js";
 
 import type { ParsedGameData } from "../../parse-fiddle.js";
 import type {

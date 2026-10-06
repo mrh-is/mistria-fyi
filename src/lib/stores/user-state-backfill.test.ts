@@ -6,7 +6,7 @@ import { searchItems } from "#lib/engine/search.js";
 import { encodeTransferPayload } from "#lib/engine/transfer.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
-import { recordKeys } from "#lib/utils.js";
+import { recordKeys } from "#lib/utils/record.js";
 
 import type { AnimalId, AnimalVariantId, CosmeticId } from "#lib/types/tracker-data.js";
 import type { CompletedState } from "#lib/types/user-progress.js";

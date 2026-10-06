@@ -1,5 +1,5 @@
 import { trackerData } from "#lib/data/index.js";
-import { recordKeys } from "#lib/utils.js";
+import { recordKeys } from "#lib/utils/record.js";
 
 import type { AnimalId, AnimalVariantId, CosmeticId } from "#lib/types/tracker-data.js";
 import type { CompletedState } from "#lib/types/user-progress.js";

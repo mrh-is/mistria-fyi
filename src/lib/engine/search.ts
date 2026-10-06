@@ -4,8 +4,8 @@ import { isItemApplicable, isItemApplicableForAlmanac } from "#lib/engine/applic
 import { isItemAvailable } from "#lib/engine/availability.js";
 import { isVillagerComplete } from "#lib/engine/progress.js";
 import { isVisible } from "#lib/engine/visibility.js";
-import { recordEntries } from "#lib/utils.js";
 import { composeInfusion } from "#lib/utils/format.js";
+import { recordEntries } from "#lib/utils/record.js";
 
 import type { SearchCategoryKey } from "#lib/data/categories.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";

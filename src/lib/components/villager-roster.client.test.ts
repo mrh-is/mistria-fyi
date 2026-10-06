@@ -6,7 +6,7 @@ import { trackerData } from "#lib/data/index.js";
 import { MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
-import { recordKeys } from "#lib/utils.js";
+import { recordKeys } from "#lib/utils/record.js";
 
 vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 

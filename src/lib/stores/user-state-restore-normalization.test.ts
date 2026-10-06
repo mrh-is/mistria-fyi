@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { trackerData } from "#lib/data/index.js";
 import { getMaxMineFloor, MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
-import { recordEntries, recordKeys } from "#lib/utils.js";
+import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
 import type { CompletedState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";

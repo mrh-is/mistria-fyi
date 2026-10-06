@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
-import { recordKeys } from "#lib/utils.js";
 import { deepMerge } from "#lib/utils/deep-partial.js";
+import { recordKeys } from "#lib/utils/record.js";
 
 import {
   deriveProgressionState,

@@ -6,7 +6,7 @@ import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
 import { searchItems } from "#lib/engine/search.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
-import { recordEntries } from "#lib/utils.js";
+import { recordEntries } from "#lib/utils/record.js";
 
 import type { ItemId, VillagerId } from "#lib/types/tracker-data.js";
 

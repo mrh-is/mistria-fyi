@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
-import { recordEntries } from "#lib/utils.js";
+import { recordEntries } from "#lib/utils/record.js";
 
 import { getVariantSeason, isVariantInScope } from "./animal-availability.js";
 
