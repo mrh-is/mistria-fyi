@@ -2,6 +2,7 @@
   import { onDestroy } from "svelte";
   import { SvelteMap } from "svelte/reactivity";
 
+  import AllCompleted from "#lib/components/all-completed.svelte";
   import DatesSection from "#lib/components/dates-section.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
@@ -25,8 +26,6 @@
   import { matchesName } from "#lib/utils/name-match.js";
   import { recordEntries } from "#lib/utils/record.js";
   import { sectionRenderTarget, trackerRowDisplay } from "#lib/utils/row-display.js";
-
-  import AllCompleted from "./all-completed.svelte";
 
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";

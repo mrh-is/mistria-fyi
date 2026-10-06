@@ -6,11 +6,9 @@
   let {
     entries,
     locale = "en",
-    reducedMotion,
   }: {
     entries: { id: string; name: string }[];
     locale?: LocaleCode;
-    reducedMotion?: boolean;
   } = $props();
 </script>
 
@@ -19,4 +17,4 @@
     <div id={entry.id} tabindex="-1" data-index-target>{entry.id}</div>
   {/each}
 </div>
-<VillagerAlphabetIndex {entries} {locale} {reducedMotion} />
+<VillagerAlphabetIndex {entries} {locale} />

@@ -13,7 +13,7 @@
     element = $bindable(null),
     focus,
     label,
-    onclose,
+    onClose,
     outro = false,
     style,
   }: {
@@ -22,7 +22,7 @@
     element?: HTMLElement | null;
     focus?: Attachment<HTMLElement>;
     label?: string;
-    onclose: () => void;
+    onClose: () => void;
     outro?: boolean;
     style?: string;
   } = $props();
@@ -33,12 +33,12 @@
   type="button"
   aria-label={closeLabel}
   tabindex="-1"
-  onclick={onclose}
+  onclick={onClose}
 ></button>
 <div
   bind:this={element}
   {@attach focus}
-  {@attach label ? trapFocus(onclose) : undefined}
+  {@attach label ? trapFocus(onClose) : undefined}
   class="fixed right-0 bottom-safe-offset-16 left-0 z-[var(--z-panel)] mx-auto max-w-lg px-3 outline-none"
   role={label ? "dialog" : undefined}
   aria-label={label}
