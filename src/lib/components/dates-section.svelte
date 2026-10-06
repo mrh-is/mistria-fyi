@@ -93,6 +93,7 @@
 
 {#if categoryVisible || userState.state.showSpoilers}
   <ExpandableSection
+    {locale}
     name={m.dates_section_name()}
     reportCategory="dates"
     count={completedCount}

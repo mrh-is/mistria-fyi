@@ -41,6 +41,7 @@
 
 {#if animals.some((a) => props.hasDisplayableItem(a.id))}
   <ExpandableSection
+    locale={props.locale}
     count={completedCount}
     name={props.name}
     reportCategory={props.name.toLowerCase()}
@@ -53,6 +54,7 @@
         <SpoilerSection name={animal.name} revealed={isVisible}>
           {#if visibleItems.length > 0}
             <ExpandableSection
+              locale={props.locale}
               depth={1}
               count={displayableCompletedItemCount}
               name={animal.name}

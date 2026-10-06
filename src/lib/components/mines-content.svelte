@@ -125,6 +125,7 @@
   />
 {:else}
   <ExpandableSection
+    {locale}
     count={userState.state.completed.mines.floor}
     name={m.mines_floor_progress_section()}
     reportCategory="mines"
@@ -148,6 +149,7 @@
 
 {#if scopedSpells.length > 0}
   <ExpandableSection
+    {locale}
     count={scopedSpells.filter((spell) => userState.state.completed.mines.spells.has(spell.id))
       .length}
     name={getName("ui", "magic_spells", locale)}

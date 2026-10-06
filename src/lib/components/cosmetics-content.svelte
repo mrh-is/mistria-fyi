@@ -163,6 +163,7 @@
   {/snippet}
   {#if visibleInSlot.length > 0 || toolbarState.sourceFilterActive}
     <ExpandableSection
+      {locale}
       count={scopedInSlot.filter((c) => userState.state.completed.cosmetics.has(c.id)).length}
       {name}
       reportCategory="cosmetic slot"
@@ -178,6 +179,7 @@
         {#if visibleCosmetics.length > 0}
           {#if nested}
             <ExpandableSection
+              {locale}
               count={cosmetics.filter(
                 (c) =>
                   toolbarState.matchesSourceFilters(c.sources) &&

@@ -10,6 +10,11 @@ import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 
 import type { PageMetadataInput } from "#lib/data/page-metadata.js";
 
+const navigation = vi.hoisted(() => ({
+  afterNavigate: vi.fn<(callback: (navigation: { shallow: boolean }) => void) => void>(),
+}));
+vi.mock("$app/navigation", () => navigation);
+
 vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 
 function overlayState() {
@@ -36,10 +41,17 @@ function visibilityButton() {
 
 beforeEach(() => {
   pageStub.reset();
+  navigation.afterNavigate.mockClear();
+  vi.stubGlobal("turnstile", {
+    remove: vi.fn(),
+    render: vi.fn(() => "test-widget"),
+    reset: vi.fn(),
+  });
 });
 
 afterEach(async () => {
   cleanup();
+  vi.unstubAllGlobals();
   toolbarState.closeSearch();
   toolbarState.removeSourceFilters("test");
   userState.resetAll();
@@ -48,6 +60,30 @@ afterEach(async () => {
 });
 
 describe("ToolbarFooter panels", () => {
+  it.each(["Search", "Quick settings"])(
+    "keeps replacement %s focus when feedback closes",
+    async (replacement) => {
+      renderToolbar();
+      const feedback = screen.getByRole("button", { name: "Send feedback" });
+      feedback.focus();
+      await fireEvent.click(feedback);
+      await waitFor(() =>
+        expect(screen.getByRole("dialog", { name: "Send feedback" })).toHaveFocus(),
+      );
+      const trigger = screen.getByRole("button", { name: replacement });
+      trigger.focus();
+      await fireEvent.click(trigger);
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog", { name: "Send feedback" })).toBeNull();
+      });
+      expect(
+        screen.getByRole(replacement === "Search" ? "textbox" : "button", {
+          name: replacement === "Search" ? "Search items" : "Close Quick settings",
+        }),
+      ).toHaveFocus();
+    },
+  );
+
   it("opens one panel at a time and reflects the open panel in aria-expanded", async () => {
     renderToolbar();
 
@@ -140,11 +176,43 @@ describe("ToolbarFooter panels", () => {
     await screen.findByRole("dialog", { name: "Quick settings" });
 
     pageStub.navigate("/en/museum");
+    navigation.afterNavigate.mock.calls[0]?.[0]({ shallow: false });
 
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });
     expect(settingsButton()).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("preserves a feedback draft on dismiss but remounts it on navigation", async () => {
+    renderToolbar();
+    const feedbackButton = screen.getByRole("button", { name: "Send feedback" });
+    await fireEvent.click(feedbackButton);
+    await fireEvent.input(screen.getByRole("textbox", { name: "Message" }), {
+      target: { value: "Draft feedback" },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: "Close Send feedback" }));
+    await fireEvent.click(feedbackButton);
+    expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("Draft feedback");
+    pageStub.navigate("/en/museum");
+    navigation.afterNavigate.mock.calls[0]?.[0]({ shallow: false });
+    await tick();
+    await fireEvent.click(feedbackButton);
+    expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("");
+  });
+
+  it("cancels pending search updates when the toolbar unmounts", async () => {
+    vi.useFakeTimers();
+    try {
+      const view = renderToolbar();
+      await fireEvent.click(screen.getByRole("button", { name: "Search" }));
+      await fireEvent.input(screen.getByRole("textbox"), { target: { value: "stale query" } });
+      view.unmount();
+      await vi.advanceTimersByTimeAsync(250);
+      expect(toolbarState.searchQuery).toBe("");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("marks the overlay active and hides the toolbar while the feedback picker runs", async () => {
