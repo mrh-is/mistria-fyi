@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { SKIP_WAITING_MESSAGE } from "#lib/engine/service-worker-cache.js";
+import { SKIP_WAITING_MESSAGE } from "#lib/pwa/service-worker-cache.js";
 
 import { UPDATE_CHECK_INTERVAL_MS, watchForAppUpdate } from "./app-update.js";
 

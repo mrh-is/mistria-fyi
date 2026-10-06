@@ -4,7 +4,7 @@ import {
   formatMergeCount,
   MERGE_COUNT_LABELS,
   totalMergeCounts,
-} from "#lib/engine/merge-labels.js";
+} from "#lib/presentation/merge-labels.js";
 
 import type { MergeCounts } from "#lib/types/user-progress.js";
 

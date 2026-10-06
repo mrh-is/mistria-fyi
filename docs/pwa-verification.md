@@ -49,7 +49,7 @@ JavaScript can’t load any chunk it hasn’t imported yet.
   version active, the new one installs into its own `cache-<version>` and waits; old tabs keep the
   old worker and its cache. The first-ever install has nothing to wait for, so it activates and
   claims the page at once.
-- **Open tabs offer it.** `watchForAppUpdate` (`src/lib/utils/app-update.ts`) finds a worker that is
+- **Open tabs offer it.** `watchForAppUpdate` (`src/lib/pwa/app-update.ts`) finds a worker that is
   already waiting when the page loads, or one that finishes installing later, and the root layout’s
   `UpdatePrompt` shows a toast: “The Mistria Field Guide has been updated! Refresh to get the newest
   version.” The toast stays until the player acts on it, is announced through the toaster’s live

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getRankState, getRenownPresentation } from "#lib/engine/renown-presentation.js";
+import { getRankState, getRenownPresentation } from "#lib/presentation/renown-presentation.js";
 
 import type { TownRank } from "#lib/types/tracker-data.js";
 

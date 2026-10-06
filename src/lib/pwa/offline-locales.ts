@@ -1,7 +1,7 @@
-import { CACHE_LOCALES_MESSAGE } from "#lib/engine/service-worker-cache.js";
 import { baseLocale } from "#lib/paraglide/runtime.js";
+import { CACHE_LOCALES_MESSAGE } from "#lib/pwa/service-worker-cache.js";
 
-import type { CacheLocalesMessage, CacheLocalesReply } from "#lib/engine/service-worker-cache.js";
+import type { CacheLocalesMessage, CacheLocalesReply } from "#lib/pwa/service-worker-cache.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 
 /**

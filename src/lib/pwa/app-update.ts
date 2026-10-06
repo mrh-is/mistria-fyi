@@ -1,4 +1,4 @@
-import { SKIP_WAITING_MESSAGE } from "#lib/engine/service-worker-cache.js";
+import { SKIP_WAITING_MESSAGE } from "#lib/pwa/service-worker-cache.js";
 
 /** Refocusing a tab checks for a new version at most this often. */
 export const UPDATE_CHECK_INTERVAL_MS = 5 * 60_000;

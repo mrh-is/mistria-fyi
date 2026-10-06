@@ -393,7 +393,7 @@
       }
     },
     {
-      // The engine is pure domain logic: it must not reach up into stores or components, even
+      // The engine is pure domain logic: it must not reach up into stores, components, or Paraglide messages, even
       // for types. Shared domain types live in `src/lib/types/`. Options replace the base rule's,
       // so the icon restriction is restated.
       "files": ["src/lib/engine/**/*.ts"],
@@ -410,8 +410,8 @@
             ],
             "patterns": [
               {
-                "message": "The engine is pure domain logic; move shared types to src/lib/types/ and keep side effects at store or component boundaries.",
-                "regex": "^(#lib/|(?:\\.\\./)+)(stores|components)/"
+                "message": "The engine is pure domain logic; move shared types to src/lib/types/ and keep side effects and message lookups at store or component boundaries.",
+                "regex": "^(#lib/|(?:\\.\\./)+)(stores|components|paraglide)/"
               }
             ]
           }
