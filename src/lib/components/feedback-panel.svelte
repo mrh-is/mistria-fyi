@@ -87,7 +87,7 @@
   let saveDataPreview = $derived.by(() => {
     if (!includeSaveData) return "";
     try {
-      const exported = JSON.parse(userState.exportState()) as {
+      const exported = JSON.parse(userState.exportBackup()) as {
         completed: Record<string, unknown>;
       };
       return JSON.stringify(exported.completed, null, 2);
@@ -291,7 +291,7 @@
       let saveData: Record<string, unknown> | undefined;
       if (includeSaveData) {
         try {
-          const exported = JSON.parse(userState.exportState()) as {
+          const exported = JSON.parse(userState.exportBackup()) as {
             completed: Record<string, unknown>;
           };
           saveData = exported.completed;

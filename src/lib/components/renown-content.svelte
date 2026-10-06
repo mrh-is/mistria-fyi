@@ -3,7 +3,7 @@
   import RenownCurrentRecord from "#lib/components/renown-current-record.svelte";
   import { trackerData } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
-  import { isEntityNameVisible } from "#lib/engine/visibility.js";
+  import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { townRankColor } from "#lib/utils/palette.js";
@@ -14,10 +14,7 @@
   let { compact = false, locale }: { compact?: boolean; locale: LocaleCode } = $props();
 
   function isRankVisible(minLevel: number): boolean {
-    return isEntityNameVisible(
-      { type: "renownLevel", level: minLevel },
-      userState.progressionState,
-    );
+    return isConditionVisible({ type: "renownLevel", level: minLevel }, userState.progressionState);
   }
 </script>
 
