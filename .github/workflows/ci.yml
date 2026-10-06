@@ -114,7 +114,10 @@ jobs:
           restore-keys: |
             vitest-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
             vitest-${{ runner.os }}-
-      - run: pnpm run test
+      # The same suite as `pnpm run test`, plus a coverage report: reported, not gated.
+      - run: pnpm run test:coverage
+      - name: Summarize coverage
+        run: node scripts/coverage-summary.ts >> "$GITHUB_STEP_SUMMARY"
 
   build:
     name: Build
