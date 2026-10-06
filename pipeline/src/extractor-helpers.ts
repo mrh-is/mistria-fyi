@@ -114,3 +114,11 @@ export function forEachQuest(
     }
   }
 }
+
+/** A snake_case id as English words ("fruit_tree" becomes "Fruit Tree"), for ids with no game name. */
+export function titleCase(key: string): string {
+  return key
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}

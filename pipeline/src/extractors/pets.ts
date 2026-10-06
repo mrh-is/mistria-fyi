@@ -1,6 +1,6 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { forEachItem } from "../extractor-helpers.js";
+import { forEachItem, titleCase } from "../extractor-helpers.js";
 import { localizeField } from "../localize.js";
 
 import type { SourceTuple } from "#lib/types/acquisition.js";
@@ -78,11 +78,4 @@ export function extractPetSkins(
 
   console.log(`  Pet skins: ${Object.keys(result).length}`);
   return { localeNames, skins: result };
-}
-
-function titleCase(key: string): string {
-  return key
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
 }
