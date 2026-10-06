@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { trackerData } from "#lib/data/index.js";
 import { encodeTransferPayload } from "#lib/engine/transfer.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
-import { recordValues } from "#lib/utils.js";
+import { recordValues } from "#lib/utils/record.js";
 
 import { TRANSFER_QR_OPTIONS } from "./transfer-qr.js";
 

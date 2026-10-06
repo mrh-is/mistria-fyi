@@ -7,7 +7,7 @@ import {
   MAX_SKILL_LEVEL,
   MAX_VILLAGER_LEVEL,
 } from "#lib/engine/progress.js";
-import { recordKeys, recordValues } from "#lib/utils.js";
+import { recordKeys, recordValues } from "#lib/utils/record.js";
 
 import { buildImportState, parseSaveFiles, validatePlayerSave } from "./import-save.js";
 

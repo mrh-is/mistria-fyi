@@ -1,4 +1,4 @@
-import { isNonEmptyArray } from "#lib/utils.js";
+import { isNonEmptyArray } from "#lib/utils/record.js";
 
 import { forEachItem } from "../../extractor-helpers.js";
 

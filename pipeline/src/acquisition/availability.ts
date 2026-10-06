@@ -1,5 +1,5 @@
 import { simplifyAvailabilityCondition } from "#lib/engine/availability-condition.js";
-import { isNonEmptyArray } from "#lib/utils.js";
+import { isNonEmptyArray } from "#lib/utils/record.js";
 
 import type {
   AvailabilityCondition,
@@ -11,7 +11,7 @@ import type {
   VillagerId,
   Weather,
 } from "#lib/types/tracker-data.js";
-import type { NonEmptyArray } from "#lib/utils.js";
+import type { NonEmptyArray } from "#lib/utils/record.js";
 
 import type { SourceFieldLocation } from "../data-shapes.js";
 import type { RequirementContext, RequirementExpression } from "../requirements.js";

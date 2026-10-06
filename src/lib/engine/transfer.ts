@@ -6,7 +6,7 @@ import {
   MAX_VILLAGER_LEVEL,
 } from "#lib/engine/progress.js";
 import { normalizeRelationships } from "#lib/engine/relationships.js";
-import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils.js";
+import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
 import type {
   AnimalId,

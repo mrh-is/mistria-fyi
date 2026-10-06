@@ -1,4 +1,4 @@
-import type { NonEmptyArray } from "#lib/utils.js";
+import type { NonEmptyArray } from "#lib/utils/record.js";
 
 import type {
   AnimalId,

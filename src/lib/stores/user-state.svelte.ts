@@ -30,8 +30,8 @@ import {
   CURRENT_SERIALIZATION_VERSION,
   QUEST_STATES,
 } from "#lib/types/user-progress.js";
-import { getOrCreate, recordEntries, recordKeys } from "#lib/utils.js";
 import { tryGetItem, trySetItem } from "#lib/utils/local-storage.js";
+import { getOrCreate, recordEntries, recordKeys } from "#lib/utils/record.js";
 
 import type { UserProgressionState } from "#lib/engine/visibility.js";
 import type { AvailabilityWindow, LegacyAvailabilityMode } from "#lib/types/availability.js";

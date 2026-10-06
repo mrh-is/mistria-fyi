@@ -1,6 +1,6 @@
 import { trackerData } from "#lib/data/index.js";
 import { getName, getNameTable } from "#lib/data/names.js";
-import { recordEntries, recordKeys, recordMap } from "#lib/utils.js";
+import { recordEntries, recordKeys, recordMap } from "#lib/utils/record.js";
 import {
   buildAnimalNames,
   buildBundleNames,

@@ -1,6 +1,6 @@
 import { getName, getNameTable } from "#lib/data/names.js";
 import * as m from "#lib/paraglide/messages.js";
-import { recordMap } from "#lib/utils.js";
+import { recordMap } from "#lib/utils/record.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { ItemId, PetSkinId, QuestId, TreasureChestTierId } from "#lib/types/tracker-data.js";
