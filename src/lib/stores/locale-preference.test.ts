@@ -17,7 +17,7 @@ vi.mock("#lib/paraglide/runtime.js", () => ({
   localizeHref: (pathname: string, { locale }: { locale: string }) => `/${locale}${pathname}`,
   setLocale,
 }));
-vi.mock("#lib/utils/offline-locales.js", () => ({ downloadLocale }));
+vi.mock("#lib/pwa/offline-locales.js", () => ({ downloadLocale }));
 
 describe("localePreference", () => {
   beforeEach(() => {

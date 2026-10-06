@@ -1,5 +1,5 @@
 import { deLocalizeHref, localizeHref, setLocale } from "#lib/paraglide/runtime.js";
-import { downloadLocale } from "#lib/utils/offline-locales.js";
+import { downloadLocale } from "#lib/pwa/offline-locales.js";
 import { goto } from "$app/navigation";
 import { page } from "$app/state";
 
