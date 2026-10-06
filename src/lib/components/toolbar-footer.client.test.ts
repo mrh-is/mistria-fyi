@@ -92,13 +92,27 @@ describe("ToolbarFooter panels", () => {
     });
   });
 
+  it("dismisses a nested spoiler dialog without closing the settings panel", async () => {
+    renderToolbar();
+    await fireEvent.click(settingsButton());
+    await fireEvent.click(screen.getByRole("switch", { name: "Show spoilers?" }));
+    const confirmation = await screen.findByRole("dialog", { name: "Show spoilers?" });
+    const cancel = within(confirmation).getByRole("button", { name: "Never mind" });
+    cancel.focus();
+    await fireEvent.keyDown(cancel, { key: "Escape" });
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "Show spoilers?" })).toBeNull();
+    });
+    expect(screen.getByRole("dialog", { name: "Quick settings" })).toBeInTheDocument();
+    expect(settingsButton()).toHaveAttribute("aria-expanded", "true");
+  });
+
   it("closes the panel from the backdrop", async () => {
     renderToolbar();
 
     await fireEvent.click(visibilityButton());
     await screen.findByRole("dialog", { name: "Filters" });
 
-    // The backdrop is aria-hidden, so it has no accessible name to query by role.
     await fireEvent.click(screen.getByLabelText("Close panel"));
 
     await waitFor(() => {
