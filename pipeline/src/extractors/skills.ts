@@ -1,12 +1,27 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { titleCase } from "../extractor-helpers.js";
+import { expectNonEmptyString } from "../data-shapes.js";
+import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { PerkId, PerkTier, Skill, SkillId, TrackerData } from "#lib/types/tracker-data.js";
 
 import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
+
+// v1.0.5 skills.toml has no name fields. These are the exact English source-cache values, checked
+// against each locale's English baseline by expectedEnglishValue below.
+const SKILL_ENGLISH_NAMES: Readonly<Record<string, string>> = {
+  archaeology: "Archaeology",
+  blacksmithing: "Blacksmithing",
+  combat: "Combat",
+  cooking: "Cooking",
+  farming: "Farming",
+  fishing: "Fishing",
+  mining: "Mining",
+  ranching: "Ranching",
+  woodcrafting: "Woodcrafting",
+};
 
 /**
  * Skill display names are localized from `ui/skill_menu/<skill-id>/name`, e.g.
@@ -55,7 +70,11 @@ export function extractSkills(
   const skills = {} as Record<SkillId, Skill>;
   for (const id of Object.keys(skillsData)) {
     if (id === "default") continue;
-    const name = (skillsData[id].name as string | undefined) ?? titleCase(id);
+    const name = expectNonEmptyString(skillsData[id].name ?? SKILL_ENGLISH_NAMES[id], {
+      entityId: `skills.${id}`,
+      fieldPath: "name",
+      sourcePath: sourceFileFor(fiddle, `skills.${id}`),
+    });
     const perkTiers = buildPerkTiers(id, skillMenus, perksData, localizer, perkLocaleNames);
     skills[id as SkillId] = { perkTiers };
 
@@ -63,6 +82,7 @@ export function extractSkills(
       category: "ui/skill_menu",
       classification: "localizable",
       englishValue: name,
+      expectedEnglishValue: name,
       field: "name",
       id,
     });

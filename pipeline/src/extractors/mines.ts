@@ -1,6 +1,6 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { expectArray } from "../data-shapes.js";
+import { expectArray, expectNonEmptyString } from "../data-shapes.js";
 import { minesBiomeId } from "../extractor-helpers.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 
@@ -53,12 +53,23 @@ export function extractMines(fiddle: ParsedGameData, localizer: Localizer): Mine
   });
 
   const biomes: MinesBiome[] = rawBiomes.map((b, i) => {
-    const name = (b.name as string | undefined) ?? `Biome ${i + 1}`;
-    const start = (b.floor as number | undefined) ?? i * 20 + 1;
-    const end =
-      i + 1 < rawBiomes.length
-        ? ((rawBiomes[i + 1].floor as number | undefined) ?? (i + 1) * 20 + 1) - 1
-        : maxFloors;
+    const name = expectNonEmptyString(b.name, {
+      entityId: `dungeons.biomes[${i}]`,
+      fieldPath: "name",
+      sourcePath: sourceFile,
+    });
+    const start = b.floor;
+    if (typeof start !== "number" || !Number.isInteger(start) || start < 1) {
+      throw new TypeError(`Expected numeric floor for dungeons.biomes[${i}] in ${sourceFile}`);
+    }
+    const nextFloor = rawBiomes[i + 1]?.floor;
+    if (
+      i + 1 < rawBiomes.length &&
+      (typeof nextFloor !== "number" || !Number.isInteger(nextFloor) || nextFloor < 1)
+    ) {
+      throw new TypeError(`Expected numeric floor for dungeons.biomes[${i + 1}] in ${sourceFile}`);
+    }
+    const end = i + 1 < rawBiomes.length ? (nextFloor as number) - 1 : maxFloors;
     const id = minesBiomeId(name);
     const { values } = localizer.localizeField({
       category: "dungeons/dungeons/biomes",
@@ -86,7 +97,11 @@ export function extractMines(fiddle: ParsedGameData, localizer: Localizer): Mine
       spells[id as SpellId] = {
         sources: [] as unknown as SourceTuple,
       };
-      const name = (spell.name as string | undefined) ?? id;
+      const name = expectNonEmptyString(spell.name, {
+        entityId: `spells.${id}`,
+        fieldPath: "name",
+        sourcePath: sourceFileFor(fiddle, `spells.${id}`),
+      });
       const { values } = localizer.localizeField({
         category: "spells",
         classification: "localizable",

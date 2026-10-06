@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createLocalizer } from "../localize.js";
 import { makeFiddle as makeFiddleBase, stubLocalizer } from "../test-helpers.js";
 import { extractSkills } from "./skills.js";
 
@@ -53,15 +54,40 @@ describe("extractSkills", () => {
     expect(Object.keys(result.skills)).toContain("combat");
   });
 
-  it("converts snake_case IDs to title case as name fallback", () => {
+  it("rejects a skill without a source name", () => {
     const fiddle = makeFiddle({
       skills: {
         bug_catching: {},
       },
     });
 
-    const result = extractSkills(fiddle, localizer);
-    expect(result.localeNames.en).toMatchObject({ bug_catching: "Bug Catching" });
+    expect(() => extractSkills(fiddle, localizer)).toThrow(
+      "Expected nonempty string for skills.bug_catching.name in skills.toml",
+    );
+  });
+
+  it("uses the reviewed English name for a shipped skill whose data has no name", () => {
+    const fiddle = makeFiddle({ skills: { archaeology: {} } });
+
+    expect(extractSkills(fiddle, localizer).localeNames.en).toMatchObject({
+      archaeology: "Archaeology",
+    });
+    expect(localizer.localizeField).toHaveBeenCalledWith(
+      expect.objectContaining({ expectedEnglishValue: "Archaeology", id: "archaeology" }),
+    );
+  });
+
+  it("rejects a reviewed skill name that drifts from the game's English source cache", () => {
+    const fiddle = makeFiddle({ skills: { archaeology: {} } });
+    const key = "ui/skill_menu/archaeology/name";
+    const localizerWithDrift = createLocalizer(
+      (_language, directory) =>
+        new Map([[key, directory === "source_caches" ? "Archeology" : "考古学"]]),
+    );
+
+    expect(() => extractSkills(fiddle, localizerWithDrift)).toThrow(
+      `English localization mismatch for ordinal key "${key}"`,
+    );
   });
 
   it("extracts perkTierLevels from UI config", () => {

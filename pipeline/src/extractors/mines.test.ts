@@ -62,7 +62,7 @@ describe("extractMines", () => {
     expect(result.biomes[1].id).toBe("ancient_ruins");
   });
 
-  it("uses fallback floor values when biomes omit floor field", () => {
+  it("rejects a biome without a source floor", () => {
     const fiddle = makeFiddle({
       dungeons: {
         dungeons: {
@@ -72,9 +72,36 @@ describe("extractMines", () => {
       },
     });
 
-    const { mines: result } = extractMines(fiddle, localizer);
-    expect(result.biomes[0].floors).toEqual({ start: 1, end: 20 });
-    expect(result.biomes[1].floors).toEqual({ start: 21, end: 50 });
+    expect(() => extractMines(fiddle, localizer)).toThrow(
+      "Expected numeric floor for dungeons.biomes[0] in dungeons.toml",
+    );
+  });
+
+  it("rejects a biome without a source name", () => {
+    const fiddle = makeFiddle({
+      dungeons: {
+        dungeons: { biomes: [{ floor: 1 }] },
+        misc: { max_floors: 20 },
+      },
+    });
+
+    expect(() => extractMines(fiddle, localizer)).toThrow(
+      "Expected nonempty string for dungeons.biomes[0].name in dungeons.toml",
+    );
+  });
+
+  it("rejects a spell without a source name", () => {
+    const fiddle = makeFiddle({
+      dungeons: {
+        dungeons: { biomes: [{ floor: 1, name: "Upper Mines" }] },
+        misc: { max_floors: 20 },
+      },
+      spells: { unnamed_spell: {} },
+    });
+
+    expect(() => extractMines(fiddle, localizer)).toThrow(
+      "Expected nonempty string for spells.unnamed_spell.name in spells.toml",
+    );
   });
 
   it("extracts spells from spells data", () => {

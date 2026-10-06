@@ -76,6 +76,26 @@ describe("extractAnimals", () => {
     });
   });
 
+  it.each([
+    ["core", { core: {}, variants: {} }, "ranching.animals.chicken.core.name"],
+    [
+      "variant",
+      { core: { name: "Chicken" }, variants: { white: { tier: 1 } } },
+      "ranching.animals.chicken.variants.white.name",
+    ],
+    [
+      "cosmetic",
+      { core: { name: "Chicken" }, cosmetics: { hat: {} }, variants: {} },
+      "ranching.animals.chicken.cosmetics.hat.name",
+    ],
+  ])("rejects an animal %s without a source name", (_kind, chicken, field) => {
+    const fiddle = makeFiddle({ ranching: { animals: { chicken } } });
+
+    expect(() => extractAnimals(fiddle)).toThrow(
+      `Expected nonempty string for ${field} in ranching.toml`,
+    );
+  });
+
   it("places default_unlocked variants into tier 1 regardless of their tier field", () => {
     const fiddle = makeFiddle({
       ranching: {
@@ -260,7 +280,7 @@ describe("extractAnimals", () => {
     });
   });
 
-  it("uses animal ID as name fallback when core.name is missing", () => {
+  it("rejects a missing animal core instead of using its ID as a name", () => {
     const fiddle = makeFiddle({
       ranching: {
         animals: {
@@ -273,13 +293,9 @@ describe("extractAnimals", () => {
       },
     });
 
-    expect(extractAnimals(fiddle)).toEqual({
-      mystery_beast: {
-        cosmetics: {},
-        name: "mystery_beast",
-        variantTiers: [{ normal: { name: "Normal", source: { type: "breed" } } }],
-      },
-    });
+    expect(() => extractAnimals(fiddle)).toThrow(
+      "Expected nonempty string for ranching.animals.mystery_beast.core.name in ranching.toml",
+    );
   });
 
   it("handles animals with no variants or cosmetics", () => {

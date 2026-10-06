@@ -28,3 +28,11 @@ export function expectStringArray(value: unknown, context: SourceFieldLocation):
   }
   return arr as string[];
 }
+
+export function expectNonEmptyString(value: unknown, context: SourceFieldLocation): string {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    const loc = context.entityId ? `${context.entityId}.${context.fieldPath}` : context.fieldPath;
+    throw new Error(`Expected nonempty string for ${loc} in ${context.sourcePath}`);
+  }
+  return value;
+}

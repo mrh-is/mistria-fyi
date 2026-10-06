@@ -1,5 +1,8 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
+import { expectNonEmptyString } from "../data-shapes.js";
+import { sourceFileFor } from "../parse-fiddle.js";
+
 import type { Source, SourceTuple } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type {
@@ -40,6 +43,8 @@ export function extractAnimals(fiddle: ParsedGameData, localizer: Localizer): An
   for (const [id, animal] of Object.entries(animals)) {
     if (id === "default") continue;
 
+    const sourcePath = sourceFileFor(fiddle, `ranching.animals.${id}`);
+
     const core = animal.core as Record<string, unknown> | undefined;
     const rawVariants = animal.variants as Record<string, Record<string, unknown>> | undefined;
     const rawCosmetics = animal.cosmetics as Record<string, Record<string, unknown>> | undefined;
@@ -63,7 +68,11 @@ export function extractAnimals(fiddle: ParsedGameData, localizer: Localizer): An
 
         const bucket = tierBuckets.get(tier) ?? {};
         if (!tierBuckets.has(tier)) tierBuckets.set(tier, bucket);
-        const name = (v.name as string | undefined) ?? vid;
+        const name = expectNonEmptyString(v.name, {
+          entityId: `ranching.animals.${id}.variants.${vid}`,
+          fieldPath: "name",
+          sourcePath,
+        });
         bucket[vid as AnimalVariantId] = { source };
         localizeAnimalName(localeNames, localizer, id, "variants", vid, name);
       }
@@ -72,7 +81,11 @@ export function extractAnimals(fiddle: ParsedGameData, localizer: Localizer): An
     const sortedTiers = [...tierBuckets.entries()].toSorted(([a], [b]) => a - b);
     const variantTiers: AnimalVariantTier[] = sortedTiers.map(([, bucket]) => bucket);
 
-    const speciesName = (core?.name as string | undefined) ?? id;
+    const speciesName = expectNonEmptyString(core?.name, {
+      entityId: `ranching.animals.${id}.core`,
+      fieldPath: "name",
+      sourcePath,
+    });
     localizeAnimalName(localeNames, localizer, id, "core", undefined, speciesName);
     const breedCosmetics = new Set<string>();
     if (rawVariants) {
@@ -89,7 +102,11 @@ export function extractAnimals(fiddle: ParsedGameData, localizer: Localizer): An
     if (rawCosmetics) {
       for (const [cid, c] of Object.entries(rawCosmetics)) {
         if (cid === "default") continue;
-        const rawName = (c.name as string | undefined) ?? cid;
+        const rawName = expectNonEmptyString(c.name, {
+          entityId: `ranching.animals.${id}.cosmetics.${cid}`,
+          fieldPath: "name",
+          sourcePath,
+        });
         const stripped = rawName.replace(new RegExp(`\\b${speciesName}\\b\\s*`, "i"), "").trim();
         const sources: Source[] = breedCosmetics.has(cid) ? [{ type: "breed" }] : [];
         cosmetics[cid as CosmeticId] = { sources: sources as SourceTuple };
