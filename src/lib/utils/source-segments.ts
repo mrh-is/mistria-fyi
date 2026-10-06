@@ -1,12 +1,12 @@
 import * as m from "#lib/paraglide/messages.js";
 
 import {
-  findBiome,
   formatBiomeName,
   formatStoreName,
-  requireEntry,
   withIndefiniteArticle,
-} from "./format.js";
+  withoutDefiniteArticle,
+} from "./en-grammar.js";
+import { findBiome, requireEntry } from "./format.js";
 
 import type { AvailabilityCondition, ProductionMethod, Source } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -450,8 +450,7 @@ export function formatDateLabel(
 
 /** The biome name with English's definite article ("the Tide Caverns"); other locales as-is. */
 function biomeDisplayName(biomeId: MinesBiomeId, lookups: SegmentLookups): string {
-  if (lookups.locale === "en") return formatBiomeName(biomeId, lookups.biomes);
-  return findBiome(biomeId, lookups.biomes).name;
+  return formatBiomeName(biomeId, lookups.biomes, lookups.locale);
 }
 
 /** One "after one of" option: its first clause in branch form, any further ones appended. */
@@ -630,8 +629,7 @@ function buildStoryQuestSegments(
   const questVis = source.visibility;
 
   // The English message supplies "the", so drop the name's own to avoid "the The".
-  const displayName =
-    lookups.locale === "en" && questName.startsWith("The ") ? questName.slice(4) : questName;
+  const displayName = withoutDefiniteArticle(questName, lookups.locale);
   const nameSegment: SourceSegment =
     questVis && questVis.type !== "always"
       ? { condition: questVis, revealed: [displayName] }
@@ -814,7 +812,7 @@ function formatConjunction(items: string[], locale: LocaleCode): string {
 
 /** English prefixes "a"/"an"; other locales' messages handle articles themselves. */
 function indefiniteName(name: string, locale: LocaleCode): string {
-  return locale === "en" ? withIndefiniteArticle(name) : name;
+  return withIndefiniteArticle(name, locale);
 }
 
 function joinSegments(...parts: (SourceSegment | SourceSegment[])[]): Segments {
@@ -860,8 +858,7 @@ function storeActionClause(action: string | undefined, locale: LocaleCode): stri
 
 /** The store name with English's definite article where the store takes one; others as-is. */
 function storeDisplayName(storeId: StoreId, lookups: SegmentLookups): string {
-  if (lookups.locale === "en") return formatStoreName(storeId, lookups.stores);
-  return requireEntry(lookups.stores, storeId, "stores").name;
+  return formatStoreName(storeId, lookups.stores, lookups.locale);
 }
 
 function visibilityContains(
