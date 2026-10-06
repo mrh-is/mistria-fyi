@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { getMaxMineFloor, MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
+import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { recordEntries, recordKeys } from "#lib/utils.js";
 
 import type { CompletedState } from "#lib/types/user-progress.js";
@@ -168,19 +169,7 @@ function expectUnknownIdsRemoved(completed: CompletedState): void {
 }
 
 function makeStorage(json: string): Storage {
-  const values = new Map([[STORAGE_KEY, json]]);
-  return {
-    clear: () => {
-      values.clear();
-    },
-    getItem: (key) => values.get(key) ?? null,
-    key: (index) => [...values.keys()][index] ?? null,
-    get length() {
-      return values.size;
-    },
-    removeItem: (key) => values.delete(key),
-    setItem: (key, value) => values.set(key, value),
-  };
+  return memoryStorage({ [STORAGE_KEY]: json });
 }
 
 afterEach(() => {

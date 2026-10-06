@@ -5,6 +5,7 @@ import { getAllProgress } from "#lib/engine/progress.js";
 import { searchItems } from "#lib/engine/search.js";
 import { encodeTransferPayload } from "#lib/engine/transfer.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
+import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { recordKeys } from "#lib/utils.js";
 
 import type { AnimalId, AnimalVariantId, CosmeticId } from "#lib/types/tracker-data.js";
@@ -62,21 +63,7 @@ function buildStoredState(overrides?: {
 }
 
 function makeStorage(json: string): Storage {
-  const values = new Map([["mistria-fyi-v1", json]]);
-  return {
-    clear: () => {
-      values.clear();
-    },
-    getItem: (key) => values.get(key) ?? null,
-    key: (index) => [...values.keys()][index] ?? null,
-    get length() {
-      return values.size;
-    },
-    removeItem: (key) => {
-      values.delete(key);
-    },
-    setItem: (key, value) => values.set(key, value),
-  };
+  return memoryStorage({ "mistria-fyi-v1": json });
 }
 
 afterEach(() => {

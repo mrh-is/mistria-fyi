@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { THEME_COLORS, THEME_STORAGE_KEY } from "#lib/theme.js";
 
 // Extract the two inline <script> blocks from app.html and evaluate them
@@ -12,22 +13,6 @@ const appHtml = readFileSync(resolve(import.meta.dirname, "../app.html"), "utf8"
 const scriptBlocks = [...appHtml.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
 const themeBootstrapScript = scriptBlocks[0];
 const themeColorScript = scriptBlocks[1];
-
-function makeStorage(data: Record<string, string> = {}): Storage {
-  const store = new Map(Object.entries(data));
-  return {
-    clear: () => {
-      store.clear();
-    },
-    getItem: (key: string) => store.get(key) ?? null,
-    key: (index: number) => [...store.keys()][index] ?? null,
-    get length() {
-      return store.size;
-    },
-    removeItem: (key: string) => store.delete(key),
-    setItem: (key: string, value: string) => store.set(key, value),
-  };
-}
 
 function runBootstrap(): void {
   // oxlint-disable-next-line no-new-func, typescript/no-implied-eval, typescript/no-unsafe-call -- the test must run app.html's inline script as written, in global scope
@@ -86,33 +71,33 @@ describe("theme bootstrap", () => {
   });
 
   it("applies dark class when stored preference is dark", () => {
-    vi.stubGlobal("localStorage", makeStorage({ [THEME_STORAGE_KEY]: "dark" }));
+    vi.stubGlobal("localStorage", memoryStorage({ [THEME_STORAGE_KEY]: "dark" }));
     runBootstrap();
     expect(document.documentElement.classList.contains("dark")).toBe(true);
   });
 
   it("does not apply dark class when stored preference is light", () => {
-    vi.stubGlobal("localStorage", makeStorage({ [THEME_STORAGE_KEY]: "light" }));
+    vi.stubGlobal("localStorage", memoryStorage({ [THEME_STORAGE_KEY]: "light" }));
     runBootstrap();
     expect(document.documentElement.classList.contains("dark")).toBe(false);
   });
 
   it("follows OS preference when stored preference is system and OS prefers dark", () => {
-    vi.stubGlobal("localStorage", makeStorage({ [THEME_STORAGE_KEY]: "system" }));
+    vi.stubGlobal("localStorage", memoryStorage({ [THEME_STORAGE_KEY]: "system" }));
     vi.spyOn(globalThis, "matchMedia").mockReturnValue({ matches: true } as MediaQueryList);
     runBootstrap();
     expect(document.documentElement.classList.contains("dark")).toBe(true);
   });
 
   it("follows OS preference when stored preference is system and OS prefers light", () => {
-    vi.stubGlobal("localStorage", makeStorage({ [THEME_STORAGE_KEY]: "system" }));
+    vi.stubGlobal("localStorage", memoryStorage({ [THEME_STORAGE_KEY]: "system" }));
     vi.spyOn(globalThis, "matchMedia").mockReturnValue({ matches: false } as MediaQueryList);
     runBootstrap();
     expect(document.documentElement.classList.contains("dark")).toBe(false);
   });
 
   it("falls back to system when no preference is stored", () => {
-    vi.stubGlobal("localStorage", makeStorage());
+    vi.stubGlobal("localStorage", memoryStorage());
     vi.spyOn(globalThis, "matchMedia").mockReturnValue({ matches: true } as MediaQueryList);
     runBootstrap();
     expect(document.documentElement.classList.contains("dark")).toBe(true);
@@ -151,7 +136,7 @@ describe("theme-color sync", () => {
   });
 
   it("sets dark theme-color when bootstrap applied dark class", () => {
-    vi.stubGlobal("localStorage", makeStorage({ [THEME_STORAGE_KEY]: "dark" }));
+    vi.stubGlobal("localStorage", memoryStorage({ [THEME_STORAGE_KEY]: "dark" }));
     runBootstrap();
     runThemeColorSync();
 
@@ -161,7 +146,7 @@ describe("theme-color sync", () => {
   });
 
   it("preserves light theme-color when bootstrap did not apply dark class", () => {
-    vi.stubGlobal("localStorage", makeStorage({ [THEME_STORAGE_KEY]: "light" }));
+    vi.stubGlobal("localStorage", memoryStorage({ [THEME_STORAGE_KEY]: "light" }));
     runBootstrap();
     runThemeColorSync();
 

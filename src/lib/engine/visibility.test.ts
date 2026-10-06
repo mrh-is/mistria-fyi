@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { recordKeys } from "#lib/utils.js";
 import { deepMerge } from "#lib/utils/deep-partial.js";
 
@@ -20,36 +21,10 @@ import type {
   TrackerData,
   VillagerId,
 } from "#lib/types/tracker-data.js";
-import type { CompletedState } from "#lib/types/user-progress.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 import type { DeepPartial } from "#lib/utils/deep-partial.js";
 
 import type { UserProgressionState } from "./visibility.js";
-
-function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState {
-  return {
-    almanac: new Set(),
-    almanacRecipes: new Set(),
-    animalCosmetics: {},
-    animals: {},
-    childChoice: "undeclared",
-    cosmetics: new Set(),
-    dates: new Set(),
-    hasUpperFloor: false,
-    mines: { floor: 0, spells: new Set() },
-    museum: new Set(),
-    petCosmetics: new Set(),
-    petSkins: new Set(),
-    questStates: {},
-    reachedSeason: "spring",
-    renown: 0,
-    skillLevels: {},
-    unlockedPerks: new Set(),
-    villagerLevels: {},
-    villagerRelationships: {},
-    ...overrides,
-  };
-}
 
 function makeState(overrides: Partial<UserProgressionState> = {}): UserProgressionState {
   return {
@@ -313,7 +288,7 @@ describe("deriveProgressionState", () => {
     const trackerData = makeTrackerData({
       quests: { [story]: { [repairTheInn]: { name: "Repair the Inn" } } },
     });
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       questStates: { [repairTheInn]: "completed" },
     });
 
@@ -332,7 +307,7 @@ describe("deriveProgressionState", () => {
         },
       },
     });
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       questStates: { [theSecondQuest]: "obtained" },
     });
 
@@ -345,7 +320,7 @@ describe("deriveProgressionState", () => {
     const trackerData = makeTrackerData({
       quests: { [story]: { [firstQuest]: { name: "First" } } },
     });
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
 
     const state = deriveProgressionState(completed, trackerData, false);
     expect(state.questVisibility[firstQuest]).toBe("available");
@@ -364,11 +339,11 @@ describe("deriveProgressionState", () => {
       },
     });
 
-    const notYetCompleted = makeCompleted();
+    const notYetCompleted = makeCompletedState();
     const notYetState = deriveProgressionState(notYetCompleted, trackerData, false);
     expect(notYetState.knownVillagers.has(seridia)).toBe(false);
 
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       questStates: { [breakingTheFinalSeal]: "completed" },
     });
     const state = deriveProgressionState(completed, trackerData, false);
@@ -384,7 +359,7 @@ describe("deriveProgressionState", () => {
         },
       },
     });
-    const completed = makeCompleted({ villagerLevels: { [caldarus]: 4 } });
+    const completed = makeCompletedState({ villagerLevels: { [caldarus]: 4 } });
 
     const state = deriveProgressionState(completed, trackerData, false);
     expect(state.knownVillagers.has(caldarus)).toBe(false);
@@ -401,7 +376,7 @@ describe("deriveProgressionState", () => {
         },
       },
     });
-    const completed = makeCompleted({ villagerLevels: { [holt]: 5 } });
+    const completed = makeCompletedState({ villagerLevels: { [holt]: 5 } });
 
     const state = deriveProgressionState(completed, trackerData, false);
     expect(state.knownVillagers.has(holt)).toBe(true);
@@ -425,7 +400,7 @@ describe("deriveProgressionState", () => {
         },
       },
     });
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       questStates: { [breakingTheFireSeal]: "completed" },
     });
 
@@ -469,7 +444,7 @@ describe("deriveProgressionState", () => {
         [story, ...allTypes.filter((t) => t !== story)],
         storyQuests,
       );
-      const completed = makeCompleted({ questStates: { [summitStairs]: "completed" } });
+      const completed = makeCompletedState({ questStates: { [summitStairs]: "completed" } });
 
       const state = deriveProgressionState(completed, trackerData, false);
       expect(state.questVisibility[generalStore]).toBe("available");
@@ -477,7 +452,7 @@ describe("deriveProgressionState", () => {
     });
 
     it("produces identical visibility for every quest key order", () => {
-      const completed = makeCompleted({ questStates: { [summitStairs]: "completed" } });
+      const completed = makeCompletedState({ questStates: { [summitStairs]: "completed" } });
       const typeOrders = [allTypes, [...allTypes].toReversed()];
       const storyOrders = [storyQuests, [...storyQuests].toReversed()];
 
@@ -504,7 +479,7 @@ describe("deriveProgressionState", () => {
         },
       });
 
-      const state = deriveProgressionState(makeCompleted(), trackerData, false);
+      const state = deriveProgressionState(makeCompletedState(), trackerData, false);
       expect(state.questVisibility[cycleA]).toBe("unavailable");
       expect(state.questVisibility[cycleB]).toBe("unavailable");
     });
@@ -513,44 +488,44 @@ describe("deriveProgressionState", () => {
 
 describe("satisfyCondition", () => {
   it("does nothing for always", () => {
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
     satisfyCondition({ type: "always" }, completed, makeTrackerData());
-    expect(completed).toEqual(makeCompleted());
+    expect(completed).toEqual(makeCompletedState());
   });
 
   it("does nothing for villagerKnown (not invertible)", () => {
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
     satisfyCondition({ type: "villagerKnown", villagerId: holt }, completed, makeTrackerData());
     expect(completed.questStates).toEqual({});
   });
 
   it("sets minesLevel to max of current and required", () => {
-    const completed = makeCompleted({ mines: { floor: 10, spells: new Set() } });
+    const completed = makeCompletedState({ mines: { floor: 10, spells: new Set() } });
     satisfyCondition({ type: "minesLevel", floor: 20 }, completed, makeTrackerData());
     expect(completed.mines.floor).toBe(20);
   });
 
   it("does not lower minesLevel", () => {
-    const completed = makeCompleted({ mines: { floor: 40, spells: new Set() } });
+    const completed = makeCompletedState({ mines: { floor: 40, spells: new Set() } });
     satisfyCondition({ type: "minesLevel", floor: 20 }, completed, makeTrackerData());
     expect(completed.mines.floor).toBe(40);
   });
 
   it("sets renownLevel", () => {
-    const completed = makeCompleted({ renown: 5 });
+    const completed = makeCompletedState({ renown: 5 });
     satisfyCondition({ type: "renownLevel", level: 20 }, completed, makeTrackerData());
     expect(completed.renown).toBe(20);
   });
 
   it("sets skillLevel", () => {
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
     const skillId = "cooking" as SkillId;
     satisfyCondition({ type: "skillLevel", level: 15, skillId }, completed, makeTrackerData());
     expect(completed.skillLevels[skillId]).toBe(15);
   });
 
   it("sets heartLevel", () => {
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
     satisfyCondition(
       { type: "heartLevel", level: 6, villagerId: holt },
       completed,
@@ -560,7 +535,7 @@ describe("satisfyCondition", () => {
   });
 
   it("takes max of heartLevel", () => {
-    const completed = makeCompleted({ villagerLevels: { [holt]: 8 } });
+    const completed = makeCompletedState({ villagerLevels: { [holt]: 8 } });
     satisfyCondition(
       { type: "heartLevel", level: 6, villagerId: holt },
       completed,
@@ -570,20 +545,20 @@ describe("satisfyCondition", () => {
   });
 
   it("adds perkUnlocked", () => {
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
     const perkId = "magic_design" as PerkId;
     satisfyCondition({ type: "perkUnlocked", perkId }, completed, makeTrackerData());
     expect(completed.unlockedPerks.has(perkId)).toBe(true);
   });
 
   it("does not modify state for isDating (requires Villager choice)", () => {
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
     satisfyCondition({ type: "isDating" }, completed, makeTrackerData());
     expect(Object.keys(completed.villagerRelationships)).toHaveLength(0);
   });
 
   it("sets villagerRelationships to married", () => {
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
     satisfyCondition({ type: "married", villagerId: holt }, completed, makeTrackerData());
     expect(completed.villagerRelationships[holt]).toBe("married");
   });
@@ -592,13 +567,13 @@ describe("satisfyCondition", () => {
     const trackerData = makeTrackerData({
       quests: { [story]: { [repairTheInn]: { name: "Repair the Inn" } } },
     });
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
     satisfyCondition({ type: "questCompleted", questId: repairTheInn }, completed, trackerData);
     expect(completed.questStates[repairTheInn]).toBe("completed");
   });
 
   it("satisfies and by satisfying all sub-conditions", () => {
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
     const condition: VisibilityCondition = {
       type: "and",
       conditions: [
@@ -612,7 +587,7 @@ describe("satisfyCondition", () => {
   });
 
   it("satisfies or by picking the first invertible branch", () => {
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
     const condition: VisibilityCondition = {
       type: "or",
       conditions: [
@@ -636,7 +611,7 @@ describe("satisfyCondition", () => {
         },
       },
     });
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
     satisfyCondition({ type: "questCompleted", questId: theSecondQuest }, completed, trackerData);
     expect(completed.questStates[firstQuest]).toBe("completed");
     expect(completed.questStates[theSecondQuest]).toBe("completed");
@@ -655,7 +630,7 @@ describe("satisfyCondition", () => {
         },
       },
     });
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
     satisfyCondition({ type: "questAvailable", questId: thirdCrown }, completed, trackerData);
     expect(completed.questStates[firstQuest]).toBe("completed");
     expect(completed.questStates[theSecondQuest]).toBe("completed");
@@ -673,7 +648,7 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
       questId: repairTheInn,
     };
 
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
     const stateBefore = deriveProgressionState(completed, trackerData, false);
     expect(isEntityNameVisible(entityCondition, stateBefore)).toBe(false);
 
@@ -692,7 +667,7 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
     };
     const sourceCondition: VisibilityCondition = { type: "minesLevel", floor: 20 };
 
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
     const state1 = deriveProgressionState(completed, trackerData, false);
     expect(isEntityNameVisible(entityCondition, state1)).toBe(false);
     expect(isVisible(sourceCondition, state1)).toBe(false);
@@ -725,7 +700,7 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
       villagerId: caldarus,
     };
 
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
     const stateBefore = deriveProgressionState(completed, trackerData, false);
     expect(isVisible(villagerKnownCondition, stateBefore)).toBe(false);
 
@@ -755,7 +730,7 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
       questId: theSecondQuest,
     };
 
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
     satisfyCondition(gatedBehindSecond, completed, trackerData);
     const state = deriveProgressionState(completed, trackerData, false);
 
@@ -773,7 +748,7 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
       questId: repairTheInn,
     };
 
-    const completed = makeCompleted();
+    const completed = makeCompletedState();
     // "Just this item" means toggling the checkbox without calling satisfyCondition.
     // The quest state should not change.
     const stateBefore = deriveProgressionState(completed, trackerData, false);

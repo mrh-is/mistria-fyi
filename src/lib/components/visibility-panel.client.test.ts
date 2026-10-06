@@ -10,10 +10,7 @@ import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 
 import type { SourceFilter, SourceFilterId } from "#lib/data/source-filters.js";
 
-vi.mock("$app/state", async () => {
-  const stubModule = await import("#lib/test-utils/page-stub.svelte.js");
-  return { page: stubModule.pageStub };
-});
+vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 
 function sourceFilter(id: SourceFilterId): SourceFilter {
   const filter = SOURCE_FILTERS.find((candidate) => candidate.id === id);

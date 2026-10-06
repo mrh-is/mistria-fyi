@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { trackerData } from "#lib/data/index.js";
 import { getName, nameCollator } from "#lib/data/names.js";
 import { MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
+import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { recordKeys } from "#lib/utils.js";
 
 import { buildVillagerRoster, filterVillagerRoster } from "./villager-roster.js";
@@ -13,27 +14,7 @@ import type { CompletedState } from "#lib/types/user-progress.js";
 function completedWithVillagerLevels(
   villagerLevels: Partial<Record<VillagerId, number>>,
 ): CompletedState {
-  return {
-    almanac: new Set(),
-    almanacRecipes: new Set(),
-    animalCosmetics: {},
-    animals: {},
-    childChoice: "undeclared",
-    cosmetics: new Set(),
-    dates: new Set(),
-    hasUpperFloor: false,
-    mines: { floor: 0, spells: new Set() },
-    museum: new Set(),
-    petCosmetics: new Set(),
-    petSkins: new Set(),
-    questStates: {},
-    reachedSeason: "spring",
-    renown: 0,
-    skillLevels: {},
-    unlockedPerks: new Set(),
-    villagerLevels: villagerLevels as Record<VillagerId, number>,
-    villagerRelationships: {},
-  };
+  return makeCompletedState({ villagerLevels: villagerLevels as Record<VillagerId, number> });
 }
 
 describe("buildVillagerRoster", () => {

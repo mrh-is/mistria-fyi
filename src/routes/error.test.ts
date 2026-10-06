@@ -1,26 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 import ErrorPage from "./+error.svelte";
 
-const appState = vi.hoisted(() => ({ status: 404 }));
-
-// Under the `app` project's `isolate: false`, a component module cached by this file keeps this
-// mock for later files in the same worker, so it carries every field the shared stand-in in
-// src/vitest-setup-app-state.ts does.
-vi.mock("$app/state", () => ({
-  page: {
-    data: { locale: "en" },
-    get status() {
-      return appState.status;
-    },
-    url: new URL("https://mistria.fyi/en"),
-  },
-}));
+vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 
 beforeEach(() => {
-  appState.status = 404;
+  pageStub.reset();
+  pageStub.status = 404;
 });
 
 describe("error page", () => {
@@ -34,7 +23,7 @@ describe("error page", () => {
   });
 
   it("renders the generic message for non-404 errors", () => {
-    appState.status = 500;
+    pageStub.status = 500;
 
     const { queries, text } = renderToFragment(ErrorPage, { props: {} });
 
