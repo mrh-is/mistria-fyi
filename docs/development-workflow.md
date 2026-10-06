@@ -516,6 +516,26 @@ the maintainer had pushed to while an agent was rebasing it. Take the SHA from t
 `gh pr view <n> --json headRefOid`) before rebasing. If the push is rejected, the branch moved: stop
 and report rather than fetching and retrying. Never use plain `--force`.
 
+### Preview from a subagent worktree
+
+The Claude Code desktop app resolves `.claude/launch.json` against the session's primary working
+directory, which subagents share. A subagent spawned with `isolation: "worktree"` that calls
+`preview_start` with `name: "dev"` therefore serves the orchestrator's checkout, not its own (#581).
+Subagents start their own dev server instead:
+
+1. From the subagent's worktree, start Vite in the background on a port no other session uses
+   (`pnpm exec vite dev --port 5180 --strictPort`; pick another port if it's taken).
+2. Open it with `preview_start` and a `url` (`http://localhost:5180`), never a `name`.
+3. Before checking anything, unregister stale service workers. A worker another dev or preview
+   server registered on the same origin can serve its own cached pages, including the offline
+   fallback. Run this in the page with `javascript_tool`, then reload:
+
+   ```js
+   for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+   ```
+
+4. Stop the server when the check is done.
+
 ### Attach visual evidence & prototype code
 
 Use `--attach` when adding screenshots to GitHub CLI-created issues, pull requests, or pull-request
