@@ -61,6 +61,8 @@ single-component row's marks disagree with its test files.
 | ---------------------------- | :----: | :--------: | --------------------------------------------------------- |
 | `tracker-row`                |   ✓    |     ✓      | Spoiler reveal, completion, source papers, focus movement |
 | `tracker-row-stack`          |   ✓    |            | Layout only                                               |
+| `tracker-row-list`           |        |     ✓      | Row cap, show more, progressive count, empty note         |
+| `tracker-empty-state`        |        | via parent | Through `tracker-row-list`                                |
 | `tracker-checkbox`           |        |     ✓      | Label, click forwarding, visual states                    |
 | `tracker-paper`              |        |            | Layout only; no interaction                               |
 | `confirm-spoiler-dialog`     |        |     ✓      | Invertible vs. non-invertible choices, handler routing    |

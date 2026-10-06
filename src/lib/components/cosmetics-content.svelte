@@ -1,7 +1,8 @@
 <script lang="ts">
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
-  import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
+  import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
+  import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -16,10 +17,10 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { recordEntries } from "#lib/utils/record.js";
+  import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import AllCompleted from "./all-completed.svelte";
 
-  import type { TrackerRowDisplay } from "#lib/components/tracker-row.svelte";
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { CosmeticId, CosmeticSlot } from "#lib/types/tracker-data.js";
@@ -57,14 +58,6 @@
 
   function isSlotComplete(items: CosmeticEntry[]): boolean {
     return items.every((c) => userState.state.completed.cosmetics.has(c.id));
-  }
-
-  function rowDisplay(cosmetic: CosmeticEntry, completed: boolean): TrackerRowDisplay {
-    if (!isEntityNameVisible(cosmetic.visibility, userState.progressionState)) {
-      return { mode: "spoilered" };
-    }
-    if (completed) return { mode: "completed" };
-    return { mode: "visible" };
   }
 
   /**
@@ -147,6 +140,27 @@
     const done = userState.state.completed.cosmetics.has(c.id);
     return done ? userState.state.showCompleted : true;
   })}
+  {#snippet cosmeticRow(cosmetic: CosmeticEntry)}
+    {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
+    {@const nameVisible = isEntityNameVisible(cosmetic.visibility, userState.progressionState)}
+    <TrackerRow
+      display={trackerRowDisplay({ completed, nameVisible })}
+      lookups={{ ...baseLookups, entityVisibility: cosmetic.visibility }}
+      name={cosmetic.name}
+      reportCategory="cosmetic"
+      reportEntityId={cosmetic.id}
+      sources={cosmetic.sources}
+      onToggle={() => {
+        if (nameVisible || completed) {
+          toggleCosmetic(cosmetic, allInSlot);
+        } else {
+          spoilerGuard.guard(cosmetic.visibility, () => {
+            toggleCosmetic(cosmetic, allInSlot);
+          });
+        }
+      }}
+    />
+  {/snippet}
   {#if visibleInSlot.length > 0 || toolbarState.sourceFilterActive}
     <ExpandableSection
       count={scopedInSlot.filter((c) => userState.state.completed.cosmetics.has(c.id)).length}
@@ -175,65 +189,25 @@
               reportEntityId={`${slot}:${subCategory}`}
               total={cosmetics.filter((c) => toolbarState.matchesSourceFilters(c.sources)).length}
             >
-              <TrackerRowStack>
-                {#each visibleCosmetics as cosmetic (cosmetic.id)}
-                  {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
-                  <TrackerRow
-                    display={rowDisplay(cosmetic, completed)}
-                    lookups={{ ...baseLookups, entityVisibility: cosmetic.visibility }}
-                    name={cosmetic.name}
-                    reportCategory="cosmetic"
-                    reportEntityId={cosmetic.id}
-                    sources={cosmetic.sources}
-                    onToggle={() => {
-                      if (
-                        isEntityNameVisible(cosmetic.visibility, userState.progressionState) ||
-                        completed
-                      ) {
-                        toggleCosmetic(cosmetic, allInSlot);
-                      } else {
-                        spoilerGuard.guard(cosmetic.visibility, () => {
-                          toggleCosmetic(cosmetic, allInSlot);
-                        });
-                      }
-                    }}
-                  />
-                {/each}
-              </TrackerRowStack>
+              <TrackerRowList
+                getKey={(cosmetic) => cosmetic.id}
+                items={visibleCosmetics}
+                row={cosmeticRow}
+                showEmpty={false}
+              />
             </ExpandableSection>
           {:else}
-            <TrackerRowStack>
-              {#each visibleCosmetics as cosmetic (cosmetic.id)}
-                {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
-                <TrackerRow
-                  display={rowDisplay(cosmetic, completed)}
-                  lookups={{ ...baseLookups, entityVisibility: cosmetic.visibility }}
-                  name={cosmetic.name}
-                  reportCategory="cosmetic"
-                  reportEntityId={cosmetic.id}
-                  sources={cosmetic.sources}
-                  onToggle={() => {
-                    if (
-                      isEntityNameVisible(cosmetic.visibility, userState.progressionState) ||
-                      completed
-                    ) {
-                      toggleCosmetic(cosmetic, allInSlot);
-                    } else {
-                      spoilerGuard.guard(cosmetic.visibility, () => {
-                        toggleCosmetic(cosmetic, allInSlot);
-                      });
-                    }
-                  }}
-                />
-              {/each}
-            </TrackerRowStack>
+            <TrackerRowList
+              getKey={(cosmetic) => cosmetic.id}
+              items={visibleCosmetics}
+              row={cosmeticRow}
+              showEmpty={false}
+            />
           {/if}
         {/if}
       {/each}
       {#if visibleInSlot.length === 0}
-        <p class="py-4 text-center text-sm text-muted-foreground">
-          {m.no_items_match_filters()}
-        </p>
+        <TrackerEmptyState />
       {/if}
     </ExpandableSection>
   {/if}

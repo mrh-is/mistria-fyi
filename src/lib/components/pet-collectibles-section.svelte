@@ -1,6 +1,7 @@
 <script lang="ts">
   import ExpandableSection from "#lib/components/expandable-section.svelte";
-  import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
+  import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
+  import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { trackerData } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
@@ -11,8 +12,8 @@
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
-  import type { TrackerRowDisplay } from "#lib/components/tracker-row.svelte";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { PetCosmeticSetId, PetSkinId } from "#lib/types/tracker-data.js";
 
@@ -82,16 +83,6 @@
       petSkinEntries.every((e) => userState.state.completed.petSkins.has(e.id))
     );
   }
-
-  function cosmeticDisplay(id: PetCosmeticSetId): TrackerRowDisplay {
-    return userState.state.completed.petCosmetics.has(id)
-      ? { mode: "completed" }
-      : { mode: "visible" };
-  }
-
-  function skinDisplay(id: PetSkinId): TrackerRowDisplay {
-    return userState.state.completed.petSkins.has(id) ? { mode: "completed" } : { mode: "visible" };
-  }
 </script>
 
 {#if visibleCosmeticEntries.length > 0}
@@ -101,10 +92,12 @@
     reportCategory="pet cosmetics"
     total={scopedPetCosmeticEntries.length}
   >
-    <TrackerRowStack>
-      {#each visibleCosmeticEntries as entry (entry.id)}
+    <TrackerRowList getKey={(entry) => entry.id} items={visibleCosmeticEntries}>
+      {#snippet row(entry)}
         <TrackerRow
-          display={cosmeticDisplay(entry.id)}
+          display={trackerRowDisplay({
+            completed: userState.state.completed.petCosmetics.has(entry.id),
+          })}
           lookups={baseLookups}
           name={entry.name}
           reportCategory="pet cosmetic"
@@ -123,8 +116,8 @@
             }
           }}
         />
-      {/each}
-    </TrackerRowStack>
+      {/snippet}
+    </TrackerRowList>
   </ExpandableSection>
 {/if}
 
@@ -135,10 +128,12 @@
     reportCategory="pet skins"
     total={scopedPetSkinEntries.length}
   >
-    <TrackerRowStack>
-      {#each visibleSkinEntries as entry (entry.id)}
+    <TrackerRowList getKey={(entry) => entry.id} items={visibleSkinEntries}>
+      {#snippet row(entry)}
         <TrackerRow
-          display={skinDisplay(entry.id)}
+          display={trackerRowDisplay({
+            completed: userState.state.completed.petSkins.has(entry.id),
+          })}
           lookups={baseLookups}
           name={entry.name}
           reportCategory="pet skin"
@@ -157,11 +152,11 @@
             }
           }}
         />
-      {/each}
-    </TrackerRowStack>
+      {/snippet}
+    </TrackerRowList>
   </ExpandableSection>
 {/if}
 
 {#if toolbarState.sourceFilterActive && visibleCosmeticEntries.length === 0 && visibleSkinEntries.length === 0}
-  <p class="py-4 text-center text-sm text-muted-foreground">{m.no_items_match_filters()}</p>
+  <TrackerEmptyState />
 {/if}

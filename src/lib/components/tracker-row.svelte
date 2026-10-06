@@ -19,12 +19,7 @@
   import type { FeedbackContext } from "#lib/feedback/context.svelte.js";
   import type { SegmentLookups, SourceSegment } from "#lib/sources/source-segments.js";
   import type { Source } from "#lib/types/acquisition.js";
-
-  export type TrackerRowDisplay =
-    | { dimmed?: boolean; mode: "visible" }
-    | { leaving?: boolean; mode: "completed" }
-    | { mode: "obtained" }
-    | { mode: "spoilered" };
+  import type { TrackerRowDisplay } from "#lib/utils/row-display.js";
 
   let {
     display,
@@ -237,13 +232,6 @@
 
 <style>
   .tracker-row {
-    --tracker-paper-border-width: 1px;
-    --tracker-paper-line: color-mix(in srgb, var(--hairline) 42%, transparent);
-    --tracker-paper-radius: 2px;
-    --tracker-peek-size: 27px;
-    --tracker-row-gap: 7px;
-    --tracker-sheet-gap: 6px;
-    --tracker-source-inset: calc(var(--tracker-target-size) + var(--tracker-row-gap));
     --tracker-paper-border-start-width: var(--tracker-paper-border-width);
     --tracker-paper-start-start-radius: var(--tracker-paper-radius);
     --tracker-paper-start-end-radius: var(--tracker-paper-radius);

@@ -5,25 +5,16 @@
   import { animalNameId, getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
+  import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
-  import TrackerRowStack from "./tracker-row-stack.svelte";
+  import TrackerEmptyState from "./tracker-empty-state.svelte";
+  import TrackerRowList from "./tracker-row-list.svelte";
   import TrackerRow from "./tracker-row.svelte";
 
   import type { AnimalId, AnyId } from "#lib/types/tracker-data.js";
 
-  import type {
-    AnimalSubcategoryProps,
-    AnimalSubcategoryRowProps,
-  } from "./animal-subcategory.types.js";
-  import type { TrackerRowDisplay } from "./tracker-row.svelte";
-
-  function rowDisplay(row: AnimalSubcategoryRowProps<ItemId>): TrackerRowDisplay {
-    if (row.completed) return { mode: "completed" };
-    if (row.redacted) return { mode: "spoilered" };
-    return { mode: "visible" };
-  }
+  import type { AnimalSubcategoryProps } from "./animal-subcategory.types.js";
 
   let props: AnimalSubcategoryProps<ItemId> = $props();
 
@@ -69,10 +60,14 @@
               reportEntityId={animal.id}
               total={displayableItemCount}
             >
-              <TrackerRowStack>
-                {#each visibleItems as itemRow (itemRow.id)}
+              <TrackerRowList getKey={(itemRow) => itemRow.id} items={visibleItems}>
+                {#snippet row(itemRow)}
                   <TrackerRow
-                    display={rowDisplay(itemRow)}
+                    display={trackerRowDisplay({
+                      completed: itemRow.completed,
+                      // Unlike other categories, a completed animal row is never redacted.
+                      nameVisible: itemRow.completed || !itemRow.redacted,
+                    })}
                     lookups={props.lookups
                       ? { ...props.lookups, entityVisibility: undefined }
                       : undefined}
@@ -96,8 +91,8 @@
                     }}
                     sources={itemRow.sources}
                   />
-                {/each}
-              </TrackerRowStack>
+                {/snippet}
+              </TrackerRowList>
             </ExpandableSection>
           {/if}
         </SpoilerSection>
@@ -105,5 +100,5 @@
     {/each}
   </ExpandableSection>
 {:else if toolbarState.sourceFilterActive}
-  <p class="py-4 text-center text-sm text-muted-foreground">{m.no_items_match_filters()}</p>
+  <TrackerEmptyState />
 {/if}

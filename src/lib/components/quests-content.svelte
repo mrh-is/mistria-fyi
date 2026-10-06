@@ -4,7 +4,8 @@
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import SpoilerSection from "#lib/components/spoiler-section.svelte";
-  import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
+  import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
+  import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -20,10 +21,10 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { displayQuestName } from "#lib/utils/en-grammar.js";
+  import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import AllCompleted from "./all-completed.svelte";
 
-  import type { TrackerRowDisplay } from "#lib/components/tracker-row.svelte";
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type {
@@ -35,6 +36,7 @@
   } from "#lib/types/tracker-data.js";
   import type { QuestState } from "#lib/types/user-progress.js";
   import type { VisibilityCondition } from "#lib/types/visibility.js";
+  import type { TrackerRowDisplay } from "#lib/utils/row-display.js";
 
   let { locale }: { locale: LocaleCode } = $props();
 
@@ -91,10 +93,8 @@
   }
 
   function questRowDisplay(questState: QuestState, nameVisible: boolean): TrackerRowDisplay {
-    if (!nameVisible) return { mode: "spoilered" };
-    if (questState === "completed") return { mode: "completed" };
-    if (questState === "obtained") return { mode: "obtained" };
-    return { mode: "visible" };
+    if (nameVisible && questState === "obtained") return { mode: "obtained" };
+    return trackerRowDisplay({ completed: questState === "completed", nameVisible });
   }
 
   function questSources(questType: QuestType, questId: QuestId): Source[] {
@@ -317,8 +317,8 @@
           reportEntityId={questType}
           total={shownQuests.length}
         >
-          <TrackerRowStack>
-            {#each visibleQuests as quest (quest.id)}
+          <TrackerRowList getKey={(quest) => quest.id} items={visibleQuests}>
+            {#snippet row(quest)}
               {#if quest.isCraving}
                 {@const cravingState = quest.isCompleted ? "completed" : "none"}
                 {@const cravingNameVisible = !!quest.villager}
@@ -361,13 +361,11 @@
                   }}
                 />
               {/if}
-            {/each}
-          </TrackerRowStack>
+            {/snippet}
+          </TrackerRowList>
         </ExpandableSection>
       {:else}
-        <p class="py-4 text-center text-sm text-muted-foreground">
-          {m.no_items_match_filters()}
-        </p>
+        <TrackerEmptyState />
       {/if}
     </SpoilerSection>
   {/if}
