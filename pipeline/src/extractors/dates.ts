@@ -3,7 +3,7 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
 import { forEachItem } from "../extractor-helpers.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
-import type { DateId, DateType, ItemId } from "#lib/types/tracker-data.js";
+import type { DateId, ItemId, VillagerDate } from "#lib/types/tracker-data.js";
 
 import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
@@ -11,7 +11,10 @@ import type { ParsedGameData } from "../parse-fiddle.js";
 export function extractDates(
   fiddle: ParsedGameData,
   localizer: Localizer,
-): { dates: Record<DateId, DateType>; localeNames: Record<LocaleCode, Record<DateId, string>> } {
+): {
+  dates: Record<DateId, VillagerDate>;
+  localeNames: Record<LocaleCode, Record<DateId, string>>;
+} {
   const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
     LocaleCode,
     Record<DateId, string>
@@ -21,7 +24,7 @@ export function extractDates(
 
   const unlockItems = buildDateUnlockMap(fiddle);
 
-  const result = {} as Record<DateId, DateType>;
+  const result = {} as Record<DateId, VillagerDate>;
 
   for (const [id, date] of Object.entries(dates)) {
     if (id === "default") continue;

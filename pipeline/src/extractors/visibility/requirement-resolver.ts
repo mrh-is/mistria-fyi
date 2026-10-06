@@ -13,7 +13,7 @@ const NON_SPOILER_PREDICATES = new Set([
 ]);
 
 /** The unconditional visibility, shared so every module emits the same shape. */
-export const ALWAYS: VisibilityCondition = Object.freeze({ type: "always" });
+export const ALWAYS_VISIBLE: VisibilityCondition = Object.freeze({ type: "always" });
 
 export function resolveToVisibility(
   expr: RequirementExpression,
@@ -34,17 +34,17 @@ export function resolveToVisibility(
     });
   }
   if ("not" in expr) {
-    return ALWAYS;
+    return ALWAYS_VISIBLE;
   }
 
   // Predicate leaf
   const { predicate, value } = expr;
 
-  if (NON_SPOILER_PREDICATES.has(predicate)) return ALWAYS;
+  if (NON_SPOILER_PREDICATES.has(predicate)) return ALWAYS_VISIBLE;
 
   if (predicate === "seen_cutscene" && typeof value === "string") {
     const entry = cutsceneMap[value];
-    if (!entry) return ALWAYS;
+    if (!entry) return ALWAYS_VISIBLE;
     return entry.phase === "completed"
       ? { type: "questCompleted", questId: entry.questId }
       : { type: "questAvailable", questId: entry.questId };
@@ -68,7 +68,7 @@ export function resolveToVisibility(
         conditions: conditions as [VisibilityCondition, ...VisibilityCondition[]],
       });
     }
-    return ALWAYS;
+    return ALWAYS_VISIBLE;
   }
 
   if (predicate === "reached_skill_level" && typeof value === "object" && value !== null) {
@@ -110,7 +110,7 @@ export function resolveToVisibility(
   }
 
   // Unknown predicates — project to always (forward compatibility)
-  return ALWAYS;
+  return ALWAYS_VISIBLE;
 }
 
 export function simplifyCondition(condition: VisibilityCondition): VisibilityCondition {
@@ -118,7 +118,7 @@ export function simplifyCondition(condition: VisibilityCondition): VisibilityCon
     const simplified = condition.conditions
       .map(simplifyCondition)
       .filter((c) => c.type !== "always");
-    if (simplified.length === 0) return ALWAYS;
+    if (simplified.length === 0) return ALWAYS_VISIBLE;
     if (simplified.length === 1) return simplified[0];
     return {
       type: "and",
@@ -127,8 +127,8 @@ export function simplifyCondition(condition: VisibilityCondition): VisibilityCon
   }
   if (condition.type === "or") {
     const simplified = condition.conditions.map(simplifyCondition);
-    if (simplified.some((c) => c.type === "always")) return ALWAYS;
-    if (simplified.length === 0) return ALWAYS;
+    if (simplified.some((c) => c.type === "always")) return ALWAYS_VISIBLE;
+    if (simplified.length === 0) return ALWAYS_VISIBLE;
     if (simplified.length === 1) return simplified[0];
     return {
       type: "or",

@@ -6,15 +6,17 @@ import type { ParsedGameData } from "../../parse-fiddle.js";
 import type { RequirementExpression } from "../../requirements.js";
 
 export interface QuestChainData {
+  /** Cooking quest order, from `tali_registry`. */
+  cooking: QuestId[];
   crown: QuestId[];
   fetch: Record<QuestId, RequirementExpression>;
   heart: Record<
     VillagerId,
     { heartLevel: number; prerequisiteQuest?: QuestId; questId: QuestId }[]
   >;
-  stillwell: QuestId[];
+  /** Mission quest order, from `stillwell_registry`. */
+  mission: QuestId[];
   story: Record<QuestId, { prerequisites: QuestId[] }>;
-  tali: QuestId[];
 }
 
 interface HeartChainEntry {
@@ -26,7 +28,7 @@ interface HeartChainEntry {
 /**
  * Walks four data sources to build the raw quest-chain skeleton the app's `deriveProgressionState`
  * uses to gate unavailable content: story prerequisites and heart-level chains come from
- * `letters.toml`, crown/stillwell/tali ordering comes from their registry files' `order` arrays,
+ * `letters.toml`, crown/mission/cooking ordering comes from their registry files' `order` arrays,
  * and fetch-quest requirements come from `request_board.toml`. Fetch requirements are left as raw
  * `RequirementExpression` trees — Task 5's `assignEntityVisibility` resolves them into
  * `VisibilityCondition`.
@@ -39,17 +41,17 @@ export function extractQuestChains(fiddle: ParsedGameData): QuestChainData {
   const story = extractStoryChain(questGroups, letters, cutscenes);
   const heart = extractHeartChain(letters, questGroups);
   const crown = extractRegistryOrder(questGroups, "crown_registry");
-  const stillwell = extractRegistryOrder(questGroups, "stillwell_registry");
-  const tali = extractRegistryOrder(questGroups, "tali_registry");
+  const mission = extractRegistryOrder(questGroups, "stillwell_registry");
+  const cooking = extractRegistryOrder(questGroups, "tali_registry");
   const fetch = extractFetchChain(fiddle, questGroups);
 
   console.log(
     `  Quest chains: ${Object.keys(story).length} story, ${Object.keys(heart).length} heart villagers, ` +
-      `${crown.length} crown, ${stillwell.length} stillwell, ${tali.length} tali, ` +
+      `${crown.length} crown, ${mission.length} mission, ${cooking.length} cooking,` +
       `${Object.keys(fetch).length} fetch`,
   );
 
-  return { crown, fetch, heart, stillwell, story, tali };
+  return { cooking, crown, fetch, heart, mission, story };
 }
 
 /**
