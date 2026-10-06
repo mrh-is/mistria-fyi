@@ -134,6 +134,8 @@ Reuse these from `src/lib/test-utils/` rather than copying a local version into 
 
 - **`makeCompletedState(overrides)`** (`completed-state.ts`): an empty `CompletedState` with every
   animal's sets present, plus overrides.
+- **`deepMerge(base, overrides)`** (`deep-partial.ts`): merges a `DeepPartial` override into a
+  fixture.
 - **`memoryStorage(entries)`** (`memory-storage.ts`): an in-memory `Storage` for
   `vi.stubGlobal("localStorage", …)`. Wrap it to inject a failure on one method.
 - **`pageStub`** (`page-stub.svelte.ts`): a reactive `$app/state` `page`. Mock the module with

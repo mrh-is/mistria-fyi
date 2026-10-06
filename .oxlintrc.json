@@ -419,6 +419,32 @@
       }
     },
     {
+      // `utils/` holds low-level helpers that every layer may import, so it must not reach up into
+      // the layers built on it, even for types. Options replace the base rule's, so the icon
+      // restriction is restated.
+      "files": ["src/lib/utils/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "allowTypeImports": true,
+                "message": "Import icons individually, e.g. from \"@tabler/icons-svelte-runes/icons/x\".",
+                "name": "@tabler/icons-svelte-runes"
+              }
+            ],
+            "patterns": [
+              {
+                "message": "utils/ is for low-level helpers; code that needs components, stores, controllers, effects, sources, PWA, or presentation modules belongs in that layer instead.",
+                "regex": "^(#lib/|(?:\\.\\./)+)(components|stores|controllers|effects|sources|pwa|presentation)/"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       // shadcn-svelte generated components: vendored code, so relax strict rules
       "files": ["src/lib/components/ui/**/*.svelte", "src/lib/components/ui/**/*.ts"],
       "rules": {

@@ -2,13 +2,13 @@ import { beforeAll, describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { loadNames, LOCALIZED_CATEGORIES } from "#lib/data/names.js";
+import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
+import { buildSourceSegments } from "#lib/sources/source-segments.js";
 import { LOCALE_CODES } from "#lib/types/locale.js";
-import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
-import { buildSourceSegments } from "#lib/utils/source-segments.js";
 
+import type { SourceSegment } from "#lib/sources/source-segments.js";
 import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
-import type { SourceSegment } from "#lib/utils/source-segments.js";
 
 beforeAll(async () => {
   await Promise.all(LOCALE_CODES.map((locale) => loadNames(locale, LOCALIZED_CATEGORIES)));

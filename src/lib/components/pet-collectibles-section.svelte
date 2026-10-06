@@ -4,13 +4,13 @@
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { trackerData } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
+  import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
+  import { showUndoToast } from "#lib/effects/undo-toast.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
+  import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { celebrate, celebrateCategory } from "#lib/utils/celebrate.js";
-  import { computeRedactedStoreIds } from "#lib/utils/redacted-stores.js";
-  import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
-  import { showUndoToast } from "#lib/utils/undo-toast.js";
 
   import type { TrackerRowDisplay } from "#lib/components/tracker-row.svelte";
   import type { LocaleCode } from "#lib/types/locale.js";

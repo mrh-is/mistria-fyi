@@ -1,7 +1,7 @@
 <script lang="ts">
   import ConfirmSpoilerDialog from "#lib/components/confirm-spoiler-dialog.svelte";
 
-  import type { SpoilerGuard } from "#lib/utils/spoiler-guard.svelte.js";
+  import type { SpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
 
   let { guard }: { guard: SpoilerGuard } = $props();
 </script>
