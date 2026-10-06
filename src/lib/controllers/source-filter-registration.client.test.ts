@@ -7,8 +7,8 @@ import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import SourceFilterRegistrationHarness from "#lib/test-utils/source-filter-registration.test-harness.svelte";
 
 afterEach(() => {
-  toolbarState.removeSourceFilters("external-test");
-  toolbarState.removeSourceFilters("reactivity-test");
+  toolbarState.unregisterSourceFilters("external-test");
+  toolbarState.unregisterSourceFilters("reactivity-test");
 });
 
 describe("registerSourceFilters", () => {
@@ -20,7 +20,7 @@ describe("registerSourceFilters", () => {
         const externalFilter = SOURCE_FILTERS.find(({ id }) => id !== "gathering");
         expect(externalFilter).toBeDefined();
         if (!externalFilter) return;
-        toolbarState.setSourceFilters("external-test", [externalFilter]);
+        toolbarState.registerSourceFilters("external-test", [externalFilter]);
         await tick();
       })(),
     ).resolves.toBeUndefined();

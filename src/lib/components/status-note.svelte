@@ -21,19 +21,19 @@
 <style>
   /* The hue alone falls under 4.5:1 on its own tint, so text deepens it toward the theme's ink. */
   .status-note {
-    --status-note-hue: var(--color-status-success);
+    --status-note-color: var(--color-status-success);
 
     padding: 0.75rem;
     border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--status-note-hue) 10%, var(--color-paper));
-    color: color-mix(in srgb, var(--status-note-hue) 80%, var(--color-ink));
+    background: color-mix(in srgb, var(--status-note-color) 10%, var(--color-paper));
+    color: color-mix(in srgb, var(--status-note-color) 80%, var(--color-ink));
   }
 
   .status-note--error {
-    --status-note-hue: var(--destructive);
+    --status-note-color: var(--destructive);
   }
 
   .status-note--warning {
-    --status-note-hue: var(--color-status-warning);
+    --status-note-color: var(--color-status-warning);
   }
 </style>

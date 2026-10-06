@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 
-import type { ReportableElement } from "#lib/feedback/types.js";
+import type { ReportTarget } from "#lib/feedback/types.js";
 
-const metadata: ReportableElement = {
+const metadata: ReportTarget = {
   category: "recipe",
   displayName: "Tomato Soup",
   entityId: "tomato_soup",
@@ -15,12 +15,12 @@ describe("FeedbackContext", () => {
   it("registers, updates, and removes reportable elements", () => {
     const context = new FeedbackContext();
     const element = document.createElement("div");
-    const cleanup = context.reportable(metadata)(element);
+    const cleanup = context.reportableAttachment(metadata)(element);
 
     expect(context.registrations.get(element)).toEqual(metadata);
 
     const updated = { ...metadata, displayName: "Tomato Soup recipe" };
-    const secondCleanup = context.reportable(updated)(element);
+    const secondCleanup = context.reportableAttachment(updated)(element);
     expect(context.registrations.get(element)).toEqual(updated);
 
     secondCleanup?.();

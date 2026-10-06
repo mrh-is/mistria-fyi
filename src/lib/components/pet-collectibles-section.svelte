@@ -99,7 +99,7 @@
           display={trackerRowDisplay({
             completed: userState.state.completed.petCosmetics.has(entry.id),
           })}
-          lookups={baseLookups}
+          segmentLookups={baseLookups}
           name={entry.name}
           reportCategory="pet-cosmetic"
           reportEntityId={entry.id}
@@ -136,7 +136,7 @@
           display={trackerRowDisplay({
             completed: userState.state.completed.petSkins.has(entry.id),
           })}
-          lookups={baseLookups}
+          segmentLookups={baseLookups}
           name={entry.name}
           reportCategory="pet-skin"
           reportEntityId={entry.id}
@@ -159,6 +159,6 @@
   </ExpandableSection>
 {/if}
 
-{#if toolbarState.sourceFilterActive && visibleCosmeticEntries.length === 0 && visibleSkinEntries.length === 0}
+{#if toolbarState.isSourceFilterNarrowing && visibleCosmeticEntries.length === 0 && visibleSkinEntries.length === 0}
   <TrackerEmptyState />
 {/if}

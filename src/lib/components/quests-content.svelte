@@ -132,7 +132,7 @@
             {#if row.kind === "craving"}
               <TrackerRow
                 display={questRowDisplay(row.completed ? "completed" : "none", !!row.villagerId)}
-                lookups={baseLookups}
+                segmentLookups={baseLookups}
                 name={row.displayName}
                 reportCategory="craving-quest"
                 reportEntityId={row.id}
@@ -147,7 +147,7 @@
               {@const nameVisible = isConditionVisible(row.visibility, userState.progressionState)}
               <TrackerRow
                 display={questRowDisplay(questState, nameVisible)}
-                lookups={{ ...baseLookups, entityVisibility: row.visibility }}
+                segmentLookups={{ ...baseLookups, entityVisibility: row.visibility }}
                 name={row.displayName}
                 reportCategory="quest"
                 reportEntityId={row.id}
@@ -157,7 +157,7 @@
                   if (nameVisible || questState !== "none") {
                     completeQuest(row.id, row.displayName, section);
                   } else {
-                    spoilerGuard.guard(row.visibility, () => {
+                    spoilerGuard.requestGuardedAction(row.visibility, () => {
                       completeQuest(row.id, row.displayName, section);
                     });
                   }

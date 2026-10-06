@@ -4,7 +4,7 @@ import { env } from "cloudflare:workers";
 
 import { isReportCategory } from "#lib/feedback/types.js";
 
-import type { ReportableElement } from "#lib/feedback/types.js";
+import type { ReportTarget } from "#lib/feedback/types.js";
 
 import type { RequestHandler } from "./$types";
 
@@ -30,7 +30,7 @@ interface FeedbackPayload {
   gameDataVersion: string;
   message: string;
   saveData?: Record<string, unknown>;
-  selectedElement?: ReportableElement;
+  selectedElement?: ReportTarget;
 }
 
 interface GitHubFailureDiagnostics {
@@ -237,7 +237,7 @@ function validatePayload(body: unknown): FeedbackPayload {
   };
 }
 
-function validateSelectedElement(value: unknown): ReportableElement | undefined {
+function validateSelectedElement(value: unknown): ReportTarget | undefined {
   if (value === undefined || value === null) return undefined;
   if (typeof value !== "object" || Array.isArray(value)) {
     httpError(400, "Invalid selected element");

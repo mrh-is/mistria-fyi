@@ -73,7 +73,7 @@
   const feedbackContext = getFeedbackContext();
   // A spoilered villager reports without its name or id, like a spoilered tracker row.
   let reportable = $derived(
-    feedbackContext.reportable(
+    feedbackContext.reportableAttachment(
       revealed
         ? { category: "villager", displayName: name, entityId: id, page: page.url.pathname }
         : {
@@ -197,7 +197,7 @@
   </header>
 
   <Stepper
-    accent="var(--color-category-villagers)"
+    accentColor="var(--color-category-villagers)"
     decrementDisabled={!revealed || storedLevel <= 0}
     decrementLabel={m.villager_decrease_hearts({
       name: revealed ? name : m.villager_hidden_name_lower(),
@@ -233,7 +233,7 @@
           data-villager-mark
           data-villager-mark-filled={filled}
           data-villager-mark-kind={villager.dateable ? "dateable" : "platonic"}
-          style="--mark-color: {relationshipLevelColor(index)}"
+          style="--relationship-level-color: {relationshipLevelColor(index)}"
         >
           <Icon.ProgressMark
             type={villager.dateable ? "relationship_dateable" : "relationship_platonic"}
@@ -404,8 +404,8 @@
   }
 
   .villager-mark[data-villager-mark-filled="true"] :global(svg) {
-    fill: var(--mark-color);
-    color: var(--mark-color);
+    fill: var(--relationship-level-color);
+    color: var(--relationship-level-color);
   }
 
   .relationship-decision {
