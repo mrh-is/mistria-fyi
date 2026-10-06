@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { trackerData } from "#lib/data/index.js";
+import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { isVariantInScope } from "#lib/engine/animal-availability.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { legacyAvailabilityWindows } from "#lib/types/availability.js";
@@ -13,6 +13,7 @@ import {
   getMaxMineFloor,
   getMaxRenownLevel,
   getOverallProgress,
+  isCategoryComplete,
   isVillagerComplete,
   MAX_SKILL_LEVEL,
   MAX_VILLAGER_LEVEL,
@@ -46,6 +47,63 @@ function ctx(
     completed: makeCompletedState(overrides.completed ?? {}),
     worldState: overrides.worldState ?? defaultWorld,
   };
+}
+
+function firstKey<K extends string>(record: Record<K, unknown>): K {
+  return recordKeys(record)[0];
+}
+
+function rel(
+  villager: string,
+  relationship: VillagerRelationship,
+): Partial<Record<VillagerId, VillagerRelationship>> {
+  return { [villager as VillagerId]: relationship };
+}
+
+/** Every category at 100%: married to Adeline with a child, every other dateable Villager platonic. */
+function fullyCompletedState(): CompletedState {
+  const animals: CompletedState["animals"] = {};
+  const animalCosmetics: CompletedState["animalCosmetics"] = {};
+  for (const [animalId, animal] of recordEntries(trackerData.animals)) {
+    animals[animalId] = new Set(animal.variantTiers.flatMap((tier) => recordKeys(tier)));
+    animalCosmetics[animalId] = new Set(recordKeys(animal.cosmetics));
+  }
+  const questStates: CompletedState["questStates"] = {};
+  for (const byType of recordValues(trackerData.quests)) {
+    for (const id of recordKeys(byType)) questStates[id] = "completed";
+  }
+  const villagerLevels: CompletedState["villagerLevels"] = {};
+  const villagerRelationships: CompletedState["villagerRelationships"] = {};
+  for (const [id, villager] of recordEntries(trackerData.villagers)) {
+    villagerLevels[id] = MAX_VILLAGER_LEVEL;
+    if (villager.dateable) villagerRelationships[id] = "platonic";
+  }
+  villagerRelationships["adeline" as VillagerId] = "married";
+  const skillLevels: CompletedState["skillLevels"] = {};
+  for (const id of recordKeys(trackerData.skills)) skillLevels[id] = MAX_SKILL_LEVEL;
+
+  return makeCompletedState({
+    almanac: new Set(trackerIndex.almanacCanonicalIds),
+    almanacRecipes: new Set(recordKeys(trackerData.recipes)),
+    animalCosmetics,
+    animals,
+    childChoice: "yes",
+    cosmetics: new Set(recordKeys(trackerData.cosmetics)),
+    dates: new Set(recordKeys(trackerData.dates)),
+    mines: { floor: getMaxMineFloor(), spells: new Set(recordKeys(trackerData.mines.spells)) },
+    museum: new Set(
+      recordValues(trackerData.museum).flatMap(({ sets }) =>
+        recordValues(sets).flatMap(({ items }) => items),
+      ),
+    ),
+    petCosmetics: new Set(recordKeys(trackerData.pets.cosmetics)),
+    petSkins: new Set(recordKeys(trackerData.pets.skins)),
+    questStates,
+    renown: getMaxRenownLevel(),
+    skillLevels,
+    villagerLevels,
+    villagerRelationships,
+  });
 }
 
 // ─── clampRenownLevel ──────────────────────────────────────────────
@@ -145,6 +203,72 @@ describe("getCategoryProgress", () => {
   });
 });
 
+describe("isCategoryComplete", () => {
+  it("is false for every category on a fresh save", () => {
+    const c = ctx();
+    for (const key of recordKeys(getAllProgress(c))) {
+      expect(isCategoryComplete(key, c), key).toBe(false);
+    }
+  });
+
+  it("is true for every category on a fully completed save", () => {
+    const c = { ...ctx(), completed: fullyCompletedState() };
+    for (const [key, progress] of recordEntries(getAllProgress(c))) {
+      expect(progress.completed, key).toBe(progress.total);
+      expect(isCategoryComplete(key, c), key).toBe(true);
+    }
+  });
+
+  it("agrees with progress when one item is missing from each category", () => {
+    const full = fullyCompletedState();
+    const missingOne: Record<CategoryKey, CompletedState> = {
+      almanac: { ...full, dates: new Set([...full.dates].slice(1)) },
+      animals: { ...full, petSkins: new Set([...full.petSkins].slice(1)) },
+      cosmetics: { ...full, cosmetics: new Set([...full.cosmetics].slice(1)) },
+      mines: { ...full, mines: { ...full.mines, floor: full.mines.floor - 1 } },
+      museum: { ...full, museum: new Set([...full.museum].slice(1)) },
+      quests: {
+        ...full,
+        questStates: { ...full.questStates, [firstKey(trackerData.quests.story)]: "obtained" },
+      },
+      recipes: { ...full, almanacRecipes: new Set([...full.almanacRecipes].slice(1)) },
+      renown: { ...full, renown: full.renown - 1 },
+      skills: {
+        ...full,
+        skillLevels: { ...full.skillLevels, [firstKey(trackerData.skills)]: MAX_SKILL_LEVEL - 1 },
+      },
+      villagers: {
+        ...full,
+        villagerRelationships: { ...full.villagerRelationships, adeline: "romantic" } as Partial<
+          Record<VillagerId, VillagerRelationship>
+        >,
+      },
+    };
+    for (const [key, completed] of recordEntries(missingOne)) {
+      const c = { ...ctx(), completed };
+      const progress = getCategoryProgress(key, c);
+      expect(progress.completed, key).toBeLessThan(progress.total);
+      expect(isCategoryComplete(key, c), key).toBe(false);
+    }
+  });
+
+  it("agrees with isVillagerComplete across the whole roster", () => {
+    const full = fullyCompletedState();
+    const roster = recordKeys(trackerData.villagers);
+    expect(roster.every((id) => isVillagerComplete(id, full))).toBe(true);
+    expect(isCategoryComplete("villagers", { ...ctx(), completed: full })).toBe(true);
+
+    const undecided = {
+      ...full,
+      villagerRelationships: { ...full.villagerRelationships, adeline: "undecided" } as Partial<
+        Record<VillagerId, VillagerRelationship>
+      >,
+    };
+    expect(isVillagerComplete("adeline" as VillagerId, undecided)).toBe(false);
+    expect(isCategoryComplete("villagers", { ...ctx(), completed: undecided })).toBe(false);
+  });
+});
+
 // ─── Category-specific progress ────────────────────────────────────
 
 describe("almanac progress", () => {
@@ -214,10 +338,57 @@ describe("cosmetics progress", () => {
 });
 
 describe("villagers progress", () => {
-  it("total is Villager count times MAX_VILLAGER_LEVEL", () => {
+  it("total is a level track per Villager plus a relationship step per dateable Villager", () => {
     const progress = getCategoryProgress("villagers", ctx());
-    const expectedVillagerTotal = recordKeys(trackerData.villagers).length * MAX_VILLAGER_LEVEL;
-    expect(progress.total).toBe(expectedVillagerTotal);
+    const villagers = recordValues(trackerData.villagers);
+    const dateableCount = villagers.filter(({ dateable }) => dateable).length;
+    expect(dateableCount).toBeGreaterThan(0);
+    expect(progress.total).toBe(villagers.length * MAX_VILLAGER_LEVEL + dateableCount);
+  });
+
+  it("counts a dateable Villager's relationship step only once it is settled", () => {
+    const levels = { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>;
+    const undecided = getCategoryProgress(
+      "villagers",
+      ctx({ completed: { villagerLevels: levels } }),
+    );
+    expect(undecided.completed).toBe(MAX_VILLAGER_LEVEL);
+
+    const romantic = getCategoryProgress(
+      "villagers",
+      ctx({
+        completed: { villagerLevels: levels, villagerRelationships: rel("adeline", "romantic") },
+      }),
+    );
+    expect(romantic.completed).toBe(MAX_VILLAGER_LEVEL);
+
+    const platonic = getCategoryProgress(
+      "villagers",
+      ctx({
+        completed: { villagerLevels: levels, villagerRelationships: rel("adeline", "platonic") },
+      }),
+    );
+    expect(platonic.completed).toBe(MAX_VILLAGER_LEVEL + 1);
+
+    const marriedUndeclared = getCategoryProgress(
+      "villagers",
+      ctx({
+        completed: { villagerLevels: levels, villagerRelationships: rel("adeline", "married") },
+      }),
+    );
+    expect(marriedUndeclared.completed).toBe(MAX_VILLAGER_LEVEL);
+
+    const marriedDeclared = getCategoryProgress(
+      "villagers",
+      ctx({
+        completed: {
+          childChoice: "no",
+          villagerLevels: levels,
+          villagerRelationships: rel("adeline", "married"),
+        },
+      }),
+    );
+    expect(marriedDeclared.completed).toBe(MAX_VILLAGER_LEVEL + 1);
   });
 
   it("caps individual Villager levels at MAX_VILLAGER_LEVEL", () => {
