@@ -2,14 +2,16 @@
   import IconMinus from "@tabler/icons-svelte-runes/icons/minus";
   import IconPlus from "@tabler/icons-svelte-runes/icons/plus";
 
+  import * as m from "#lib/paraglide/messages.js";
+
   import type { Snippet } from "svelte";
 
   interface Props {
     children?: Snippet;
     decrementDisabled?: boolean;
-    decrementLabel?: string;
+    decrementLabel: string;
     incrementDisabled?: boolean;
-    incrementLabel?: string;
+    incrementLabel: string;
     label?: string;
     onDecrement: () => void;
     onIncrement: () => void;
@@ -19,9 +21,9 @@
   let {
     children,
     decrementDisabled = false,
-    decrementLabel = "Decrease",
+    decrementLabel,
     incrementDisabled = false,
-    incrementLabel = "Increase",
+    incrementLabel,
     label,
     onDecrement,
     onIncrement,
@@ -32,7 +34,7 @@
 <div
   class="flex w-full items-center gap-2"
   role={label ? "group" : undefined}
-  aria-label={label && value ? `${label}, ${value}` : label}
+  aria-label={label && value ? m.stepper_group_label({ label, value }) : label}
 >
   <button
     class="group flex size-11 shrink-0 touch-manipulation items-center justify-center disabled:opacity-50"

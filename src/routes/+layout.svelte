@@ -42,7 +42,9 @@
     document.documentElement.dataset.hydrated = "true";
   });
 
-  let metadata = $derived(page.status >= 400 ? errorPageMetadata(page.status) : page.data.metadata);
+  let metadata = $derived(
+    page.status >= 400 ? errorPageMetadata(page.status, page.data.locale) : page.data.metadata,
+  );
   let hasToolbar = $derived(metadata.toolbar !== "hidden");
   let toolbarFooter = $state<{ isOverlayActive: () => boolean }>();
   let overlayActive = $derived(toolbarFooter?.isOverlayActive() ?? false);

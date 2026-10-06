@@ -196,6 +196,23 @@ takes only a few options as flags and would emit a runtime with the default stra
    `pnpm run lint` will catch any string you forgot to wrap. If the file isn't in that list yet (see
    below), add it in the same PR.
 
+### Sentences around links & icons
+
+A sentence that wraps a link or icon is one message with a placeholder per element, never fragments
+glued around it, since fragments force English word order. Render it with `messageParts` from
+`src/lib/utils/message-parts.ts` (`about/+page.svelte` is the model) and place each slot in a
+snippet or `{#each}`; a message that drops a placeholder throws.
+
+The vendored `Dialog.Content` hardcodes an English "Close" label, so dialogs pass
+`showCloseButton={false}` & render `dialog-close-button.svelte`, which uses `common_close`.
+
+### Page metadata & manifest
+
+`SITE_NAME` is the product name, a proper noun that is the same in every locale (`app_name`). Every
+page's title and description come from messages through `localizedPageLoad`. `static/manifest.json`
+is a single static file, so it stays English and declares `"lang": "en"` & `"id": "/"`; a per-locale
+manifest would need a route and a locale-aware `<link rel="manifest">`.
+
 ### Regional variants
 
 A locale tag doesn't pin down a region, but the game's translation does. MFG's chrome text sits
