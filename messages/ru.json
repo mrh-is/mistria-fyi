@@ -132,6 +132,7 @@
   "all_completed_message": "Всё готово! Включите «Показать выполненные», чтобы просмотреть.",
   "quest_type_fetch": "Задания на доставку",
   "quest_craving_name": "Тяга к еде",
+  "quest_subtitle_with_recipe": "{villager} · {recipe}",
   "skills_ledger_aria": "Реестр навыков",
   "skill_level_label": "Уровень «{name}»",
   "skill_decrease_level": "Понизить уровень «{name}»",

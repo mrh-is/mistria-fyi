@@ -123,6 +123,7 @@
   "all_completed_message": "全部完成！切换“显示已完成”即可查看。",
   "quest_type_fetch": "跑腿任务",
   "quest_craving_name": "孕期渴望",
+  "quest_subtitle_with_recipe": "{villager} · {recipe}",
   "skills_ledger_aria": "技能记录",
   "skill_level_label": "{name}等级",
   "skill_decrease_level": "降低{name}等级",

@@ -22,6 +22,7 @@
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { matchesName } from "#lib/utils/name-match.js";
   import { recordEntries } from "#lib/utils/record.js";
   import { sectionRenderTarget, trackerRowDisplay } from "#lib/utils/row-display.js";
 
@@ -168,8 +169,7 @@
   });
 
   function matchesFilter(name: string): boolean {
-    if (!nameFilter) return true;
-    return name.toLowerCase().includes(nameFilter.toLowerCase());
+    return matchesName(name, nameFilter, locale);
   }
 
   function scheduleSectionRendering(sectionId: string, targetCount: number): void {
