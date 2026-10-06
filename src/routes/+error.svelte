@@ -1,6 +1,7 @@
 <script lang="ts">
   import IconHome from "@tabler/icons-svelte-runes/icons/home";
 
+  import * as m from "#lib/paraglide/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
 </script>
@@ -9,9 +10,9 @@
   <span class="text-6xl font-bold text-muted-foreground/50">{page.status}</span>
   <p class="text-lg text-muted-foreground">
     {#if page.status === 404}
-      This page doesn't exist. Maybe it wandered off to tend the fields.
+      {m.error_not_found()}
     {:else}
-      Something went wrong.
+      {m.error_generic()}
     {/if}
   </p>
   <a
@@ -19,6 +20,6 @@
     href={localizedHref("")}
   >
     <IconHome class="size-4" />
-    Back to home
+    {m.error_back_home()}
   </a>
 </div>

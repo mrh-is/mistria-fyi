@@ -10,7 +10,9 @@ describe("about and legal page", () => {
 
     expect(text).toContain("independent, unofficial, & noncommercial fan project");
     expect(text).toContain("affiliated with, endorsed by, supported by, or sponsored by");
-    expect(text).toContain("Michael Helmbrecht");
+    expect(text).toMatch(/progress in\s+Fields of Mistria\./u);
+    expect(text).toMatch(/maintained by\s+Michael Helmbrecht\./u);
+    expect(text).toMatch(/sponsored by\s+Villager Studio\s+\(though, call me!\)\./u);
     expect(text).toContain("all the content therein");
     expect(text).toContain("game version 1.0.5");
     expect(text).toContain("briefly be out of date");

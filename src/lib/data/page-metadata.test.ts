@@ -89,7 +89,7 @@ describe("page metadata", () => {
     expect(toolbarFor("data")).toBe("hidden");
     expect(toolbarFor("")).toEqual({ search: true, worldState: true });
     expect(toolbarFor("mines")).toEqual({ search: false, worldState: false });
-    expect(errorPageMetadata(404).toolbar).toEqual({ search: false, worldState: false });
+    expect(errorPageMetadata(404, "en").toolbar).toEqual({ search: false, worldState: false });
   });
 
   it("declares each page's robots directive statically, where the sitemap reads it", async () => {
@@ -105,10 +105,29 @@ describe("page metadata", () => {
     expect(entries.find(({ path }) => path === "dev/icons")?.metadata.robots).toBe(
       "noindex, nofollow",
     );
-    expect(errorPageMetadata(404)).toMatchObject({
+    expect(errorPageMetadata(404, "en")).toMatchObject({
       robots: "noindex, nofollow",
       title: "404",
     });
+  });
+});
+
+describe("localized metadata", () => {
+  it("renders the home, everything, and error metadata in the page's locale", async () => {
+    const [{ load: loadHome }, { load: loadAll }] = await Promise.all([
+      import("../../routes/+page.js"),
+      import("../../routes/all/+page.js"),
+    ]);
+    const event = { parent: () => Promise.resolve({ locale: "ja" }) } as never;
+    const home = (await loadHome(event)) as { metadata: PageMetadata };
+    const all = (await loadAll(event)) as { metadata: PageMetadata };
+
+    expect(home.metadata.title).toBe(SITE_NAME);
+    expect(home.metadata.description).toContain("Fields of Mistria");
+    expect(home.metadata.description).not.toMatch(/Track museum/u);
+    expect(all.metadata.title).not.toBe("Checklist of everything");
+    expect(all.metadata.description).not.toMatch(/View & track/u);
+    expect(errorPageMetadata(404, "ja").description).not.toMatch(/could not be found/u);
   });
 });
 

@@ -6,6 +6,7 @@
   import { CATEGORY_KEYS, sortCategoryKeysByName } from "#lib/data/categories.js";
   import { trackerIndex } from "#lib/data/index.js";
   import { getAllProgress, getOverallProgress } from "#lib/engine/progress.js";
+  import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
 
   import AlmanacSection from "./almanac-section.svelte";
@@ -68,7 +69,7 @@
   let overallProgress = $derived(getOverallProgress(progress));
 </script>
 
-<PageHeader bind:ref={headerEl} title="Everything" progress={overallProgress}>
+<PageHeader bind:ref={headerEl} title={m.home_everything_label()} progress={overallProgress}>
   {#snippet icon(cls)}
     <Icon.Category category="all" useCategoryColor class={cls} />
   {/snippet}
