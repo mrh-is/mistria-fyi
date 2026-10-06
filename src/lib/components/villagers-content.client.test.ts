@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import VillagersContent from "#lib/components/villagers-content.svelte";
 import { trackerData } from "#lib/data/index.js";
 import { MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
+import { buildVillagerRoster } from "#lib/engine/villager-roster.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
@@ -32,6 +33,40 @@ describe("VillagersContent localization", () => {
     expect(view.getByText("バロル")).toBeInTheDocument();
     expect(view.getByText("アデライン")).toBeInTheDocument();
     expect(view.queryByText("Balor")).not.toBeInTheDocument();
+  });
+});
+
+describe("VillagersContent alphabet index", () => {
+  beforeEach(() => {
+    userState.resetAll();
+  });
+
+  afterEach(() => {
+    userState.resetAll();
+  });
+
+  it("omits initials that only spoilered villagers start with", () => {
+    const { knownVillagers } = userState.progressionState;
+    const roster = buildVillagerRoster("en");
+    const initialOf = (villager: (typeof roster)[number]) =>
+      villager.name.charAt(0).toLocaleUpperCase("en");
+    const knownInitials = new Set(
+      roster
+        .filter((villager) => knownVillagers.has(villager.id))
+        .map((villager) => initialOf(villager)),
+    );
+    const hiddenOnly = roster
+      .filter((villager) => !knownVillagers.has(villager.id))
+      .map((villager) => initialOf(villager))
+      .find((initial) => !knownInitials.has(initial));
+    expect(hiddenOnly).toBeDefined();
+    expect(knownInitials.size).toBeGreaterThan(0);
+
+    const view = renderWithFeedback(VillagersContent, { indexed: true, locale: "en" });
+    const letters = view.getAllByRole("button").map((button) => button.textContent.trim());
+
+    for (const initial of knownInitials) expect(letters).toContain(initial);
+    expect(letters).not.toContain(hiddenOnly);
   });
 });
 
