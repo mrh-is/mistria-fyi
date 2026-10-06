@@ -8,17 +8,22 @@ another.
 
 ## Test layers
 
-| Layer          | Files                 | Runner                        | Use for                                                             |
-| -------------- | --------------------- | ----------------------------- | ------------------------------------------------------------------- |
-| Server render  | `*.test.ts`           | `pnpm run test:app`           | Static markup, invariants, SEO output, anything with no interaction |
-| happy-dom      | `*.client.test.ts`    | `pnpm run test:client`        | Clicks, keyboard, focus, async state, store effects, dialogs        |
-| Browser (a11y) | `tests/accessibility` | `pnpm run test:accessibility` | Full-route axe scans, reflow, forced colors, reduced motion         |
+| Layer          | Files                      | Vitest project | Runner                        | Use for                                                             |
+| -------------- | -------------------------- | -------------- | ----------------------------- | ------------------------------------------------------------------- |
+| Server render  | `src/**/*.test.ts`         | `app`          | `pnpm run test:app`           | Static markup, invariants, SEO output, anything with no interaction |
+| Cold start     | `src/**/*.cold.test.ts`    | `cold`         | `pnpm run test:app`           | The names-cache loading boundary, with no names preloaded           |
+| happy-dom      | `src/**/*.client.test.ts`  | `client`       | `pnpm run test:client`        | Clicks, keyboard, focus, async state, store effects, dialogs        |
+| Browser (a11y) | `tests/accessibility/*.ts` | Playwright     | `pnpm run test:accessibility` | Full-route axe scans, reflow, forced colors, reduced motion         |
+
+The a11y suite's own helpers have unit tests (`tests/accessibility/support/*.test.ts`), which run in
+Vitest's `node` project with `pnpm run test`. `docs/development-workflow.md` describes every Vitest
+project.
 
 happy-dom tests share three setup files (`src/vitest-setup.ts`, `src/vitest-setup-app-state.ts`,
 `src/vitest-setup-names.ts`). The first stubs `matchMedia` and `Element.animate()`; the `animate`
 stub fires `onfinish` on the next macrotask so `transition:` outros actually remove their nodes. The
-second mocks `$app/state` with a static `page`; a test that needs route changes mocks `$app/state`
-itself with the reactive `pageStub` from `src/lib/test-utils/page-stub.svelte.ts`.
+second mocks `$app/state` with a static `page`; a test that needs a different URL or status, or
+route changes, mocks `$app/state` with the reactive `pageStub` instead (see “Shared helpers”).
 
 Components that read context (the feedback context, for example) get a sibling
 `*.test-harness.svelte` that sets the context and renders the component under test.
@@ -27,7 +32,8 @@ Components that read context (the feedback context, for example) get a sibling
 
 "Server" means a `*.test.ts` file exists; "happy-dom" means a `*.client.test.ts` file exists.
 Components marked "via parent" are exercised through a parent's happy-dom test rather than their
-own.
+own. `tests/testing-inventory.test.ts` fails when a component is missing from these tables or a
+single-component row's marks disagree with its test files.
 
 ### Toolbar & panels
 
@@ -37,13 +43,15 @@ own.
 | `foldout-panel`                  |        |     ✓      | Dialog semantics, Escape, Tab wrap, non-dialog mode                               |
 | `visibility-panel`               |   ✓    |     ✓      | Chips, season/weather strips, source groups, explainer, completed switch          |
 | `quick-settings-panel`           |        |     ✓      | Language list, spoiler confirmation                                               |
-| `quick-settings-language-picker` |        | via parent | Through `quick-settings-panel`                                                    |
+| `quick-settings-language-picker` |        |     ✓      | Offline-unavailable message; locale list through `quick-settings-panel`           |
 | `quick-settings-theme-picker`    |        |            | Gap: theme selection and persistence                                              |
 | `feedback-panel`                 |        |     ✓      | Form, Turnstile, submit states                                                    |
 | `feedback-picker`                |        |     ✓      | Element picking                                                                   |
 | `search-results`                 |        |     ✓      | Toggle and undo across categories                                                 |
 | `search-results-loading`         |        |     ✓      |                                                                                   |
 | `source-explainer-dialog`        |        | via parent | Open and dismiss through `visibility-panel`                                       |
+| `tag-dialog`                     |        | via parent | Through `source-explainer-dialog` and `quick-settings-panel`                      |
+| `villager-search-result`         |        | via parent | Record link through `search-results`                                              |
 | `blocky-switch`                  |        | via parent | Through `visibility-panel` and `quick-settings-panel`                             |
 
 ### Tracker rows & controls
@@ -85,13 +93,14 @@ own.
 | Component          | Server | happy-dom  | Notes                                                                    |
 | ------------------ | :----: | :--------: | ------------------------------------------------------------------------ |
 | `import-card`      |   ✓    |     ✓      | Oversized-file rejection; atomicity                                      |
-| `transfer-card`    |   ✓    |     ✓      | QR generation (in-flight, success, failure), image scan merge and errors |
+| `transfer-card`    |   ✓    |     ✓      | QR generation (in-flight, success, failure), image & camera scan, errors |
 | `backup-card`      |   ✓    |     ✓      | Export download, restore success and every error kind                    |
 | `danger-zone-card` |   ✓    |     ✓      | Confirm, cancel, reset                                                   |
 | `merge-summary`    |   ✓    |            | Static rendering                                                         |
 | `data-card`        |   ✓    | via parent | Collapsed summaries; expand through the cards                            |
 
-Camera scanning in `transfer-card` is not covered: it needs `getUserMedia`, which happy-dom lacks.
+Camera scanning in `transfer-card` is covered with a mocked `startQrCamera`; the real `getUserMedia`
+stream & decoder are not.
 
 ### Static & layout
 
@@ -101,6 +110,7 @@ Camera scanning in `transfer-card` is not covered: it needs `getUserMedia`, whic
 | `welcome-card`                                                                                      |         |     ✓     |                                                       |
 | `persistence-warning`                                                                               |         |           | Gap: store-level lifecycle is tested                  |
 | `ai-disclosure-dialog`                                                                              |         |           | Gap: open/dismiss                                     |
+| `update-prompt`                                                                                     |         |           | Gap: toast & dismissal; `utils/app-update` is tested  |
 | `og-share-card`, `pencil-filter`, `icon/*`, `all-completed`                                         |         |           | Static; no test needed                                |
 | Route `+page.svelte` files, `routes/all/*-section.svelte`                                           | partial |           | `about`, `data`, `privacy`, `error` have server tests |
 
@@ -109,11 +119,26 @@ Camera scanning in `transfer-card` is not covered: it needs `getUserMedia`, whic
 Ordered by risk:
 
 1. **`quick-settings-theme-picker`**: theme choice and its `localStorage` persistence.
-2. **`ai-disclosure-dialog`** and **`persistence-warning`**: open, dismiss, and dismissal memory.
+2. **`ai-disclosure-dialog`**, **`persistence-warning`**, & **`update-prompt`**: open, dismiss, and
+   dismissal memory.
 3. **Category compositors** (`*-content.svelte`): a smoke test per page that a spoilered row opens
    `confirm-spoiler-dialog` and that "Yes, and update my progress" changes progression.
-4. **Camera scanning** in `transfer-card`: belongs in the Playwright layer with a fake media stream,
-   if it is covered at all.
+4. **Camera stream** in `transfer-card`: the real `getUserMedia` path belongs in the Playwright
+   layer with a fake media stream, if it is covered at all.
+
+## Shared helpers
+
+Reuse these from `src/lib/test-utils/` rather than copying a local version into a test file:
+
+- **`makeCompletedState(overrides)`** (`completed-state.ts`): an empty `CompletedState` with every
+  animal's sets present, plus overrides.
+- **`memoryStorage(entries)`** (`memory-storage.ts`): an in-memory `Storage` for
+  `vi.stubGlobal("localStorage", …)`. Wrap it to inject a failure on one method.
+- **`pageStub`** (`page-stub.svelte.ts`): a reactive `$app/state` `page`. Mock the module with
+  `vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"))`, then set
+  `pageStub.status` or call `pageStub.navigate()`.
+- **`renderToFragment`** (`render-to-fragment.ts`): server-renders a component into a queryable
+  fragment for `*.test.ts` files.
 
 ## Conventions
 

@@ -1,6 +1,6 @@
 /**
  * Theme constants shared by the theme store and its tests. `src/app.html` and
- * `static/manifest.json` can't import them, so `theme-constants.test.ts` checks that their copies
+ * `static/manifest.json` can't import them, so `theme.static-files.test.ts` checks that their copies
  * match.
  */
 

@@ -1,18 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
+import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { recordValues } from "#lib/utils.js";
 
 import { isItemApplicable, isItemApplicableForAlmanac } from "./applicability.js";
 
-import type {
-  AnimalVariantId,
-  CosmeticId,
-  ItemId,
-  VillagerId,
-  VillagerRelationship,
-} from "#lib/types/tracker-data.js";
-import type { CompletedState } from "#lib/types/user-progress.js";
+import type { ItemId, VillagerId, VillagerRelationship } from "#lib/types/tracker-data.js";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 
@@ -29,38 +23,6 @@ function findItemWithSource(
   return undefined;
 }
 
-function makeCompleted(overrides: Partial<CompletedState> = {}): CompletedState {
-  const animals: Record<string, Set<AnimalVariantId>> = {};
-  const animalCosmetics: Record<string, Set<CosmeticId>> = {};
-  for (const id of Object.keys(trackerData.animals)) {
-    animals[id] = new Set();
-    animalCosmetics[id] = new Set();
-  }
-
-  return {
-    almanac: new Set(),
-    almanacRecipes: new Set(),
-    animalCosmetics,
-    animals,
-    childChoice: "undeclared",
-    cosmetics: new Set(),
-    dates: new Set(),
-    hasUpperFloor: false,
-    mines: { floor: 0, spells: new Set() },
-    museum: new Set(),
-    petCosmetics: new Set(),
-    petSkins: new Set(),
-    questStates: {},
-    reachedSeason: "spring",
-    renown: 0,
-    skillLevels: {},
-    unlockedPerks: new Set(),
-    villagerLevels: {},
-    villagerRelationships: {},
-    ...overrides,
-  };
-}
-
 // ─── isItemApplicable ─────────────────────────────────────────────
 
 describe("isItemApplicable", () => {
@@ -70,13 +32,13 @@ describe("isItemApplicable", () => {
     );
     if (!nonMarriageItem) return;
     const [itemId] = nonMarriageItem;
-    expect(isItemApplicable(itemId as ItemId, makeCompleted())).toBe(true);
+    expect(isItemApplicable(itemId as ItemId, makeCompletedState())).toBe(true);
   });
 
   it("returns true for already-completed items regardless of relationship", () => {
     const proposalItem = findItemWithSource("proposal");
     if (!proposalItem) return;
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       almanac: new Set([proposalItem.itemId]),
       villagerRelationships: { [proposalItem.villagerId]: "platonic" },
     });
@@ -86,7 +48,7 @@ describe("isItemApplicable", () => {
   it("suppresses proposal items when the Villager is platonic", () => {
     const proposalItem = findItemWithSource("proposal");
     if (!proposalItem) return;
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       villagerRelationships: { [proposalItem.villagerId]: "platonic" },
     });
     expect(isItemApplicable(proposalItem.itemId, completed)).toBe(false);
@@ -95,7 +57,7 @@ describe("isItemApplicable", () => {
   it("shows proposal items when the Villager relationship is undecided", () => {
     const proposalItem = findItemWithSource("proposal");
     if (!proposalItem) return;
-    expect(isItemApplicable(proposalItem.itemId, makeCompleted())).toBe(true);
+    expect(isItemApplicable(proposalItem.itemId, makeCompletedState())).toBe(true);
   });
 
   it("suppresses spouse gifts when married to a different Villager", () => {
@@ -106,7 +68,7 @@ describe("isItemApplicable", () => {
     );
     if (!otherVillager) return;
 
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       villagerRelationships: {
         [otherVillager[0]]: "married",
         [spouseItem.villagerId]: "platonic",
@@ -118,7 +80,7 @@ describe("isItemApplicable", () => {
   it("shows spouse gifts when married to the matching Villager", () => {
     const spouseItem = findItemWithSource("spouseGift");
     if (!spouseItem) return;
-    const completed = makeCompleted({
+    const completed = makeCompletedState({
       villagerRelationships: { [spouseItem.villagerId]: "married" },
     });
     expect(isItemApplicable(spouseItem.itemId, completed)).toBe(true);
@@ -134,7 +96,7 @@ describe("isItemApplicableForAlmanac", () => {
       .find((entry) => entry.itemIds.length > 1);
     if (!colorwayEntry) return;
 
-    const completed = makeCompleted({ almanac: new Set([colorwayEntry.itemIds[0]]) });
+    const completed = makeCompletedState({ almanac: new Set([colorwayEntry.itemIds[0]]) });
     expect(isItemApplicableForAlmanac(colorwayEntry.itemIds, completed)).toBe(true);
   });
 
@@ -144,6 +106,6 @@ describe("isItemApplicableForAlmanac", () => {
     );
     if (!nonMarriageItem) return;
     const [itemId] = nonMarriageItem;
-    expect(isItemApplicableForAlmanac([itemId as ItemId], makeCompleted())).toBe(true);
+    expect(isItemApplicableForAlmanac([itemId as ItemId], makeCompletedState())).toBe(true);
   });
 });
