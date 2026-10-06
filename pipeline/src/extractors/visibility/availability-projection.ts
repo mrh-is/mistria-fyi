@@ -1,9 +1,7 @@
-import { simplifyCondition } from "./requirement-resolver.js";
+import { ALWAYS, simplifyCondition } from "./requirement-resolver.js";
 
 import type { AvailabilityCondition } from "#lib/types/acquisition.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
-
-const ALWAYS: VisibilityCondition = { type: "always" };
 
 export function availabilityToVisibility(condition?: AvailabilityCondition): VisibilityCondition {
   if (!condition) return ALWAYS;

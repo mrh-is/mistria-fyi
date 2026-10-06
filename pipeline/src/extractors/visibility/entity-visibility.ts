@@ -1,5 +1,5 @@
 import { availabilityToVisibility, toAvailableVisibility } from "./availability-projection.js";
-import { resolveToVisibility, simplifyCondition } from "./requirement-resolver.js";
+import { ALWAYS, resolveToVisibility, simplifyCondition } from "./requirement-resolver.js";
 
 import type { Source as AcquisitionSource, SourceTuple } from "#lib/types/acquisition.js";
 import type {
@@ -16,8 +16,6 @@ import type { ParsedGameData } from "../../parse-fiddle.js";
 import type { RequirementExpression } from "../../requirements.js";
 import type { CutsceneQuestMap } from "./cutscene-quest-map.js";
 import type { QuestChainData } from "./quest-chains.js";
-
-const ALWAYS: VisibilityCondition = { type: "always" };
 
 /**
  * The exact renown level required for crown quests to appear in-game has not been confirmed

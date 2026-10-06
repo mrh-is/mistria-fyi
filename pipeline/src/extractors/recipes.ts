@@ -1,7 +1,16 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { PipelineDiagnostics } from "../diagnostics.js";
-import { buildQuestTypeIndex, forEachItem, forEachQuest } from "../extractor-helpers.js";
+import {
+  appendToMultimap,
+  buildQuestTypeIndex,
+  firstRequiredItemId,
+  forEachItem,
+  forEachQuest,
+  forEachStockEntry,
+  minesBiomeId,
+  scrollTargetOf,
+} from "../extractor-helpers.js";
 import { buildRequirementDefinitions, parseRequirements } from "../requirements.js";
 import { resolveToVisibility } from "./visibility/requirement-resolver.js";
 
@@ -10,7 +19,6 @@ import type { LocaleCode } from "#lib/types/locale.js";
 import type {
   FestivalId,
   ItemId,
-  MinesBiomeId,
   MuseumWingId,
   PerkId,
   QuestId,
@@ -96,9 +104,7 @@ export function extractRecipes(
 
   for (const entry of entries) {
     itemIdToRecipeId.set(entry.itemId, entry.recipeId);
-    const group = grouped.get(entry.recipeId) ?? [];
-    group.push(entry);
-    grouped.set(entry.recipeId, group);
+    appendToMultimap(grouped, entry.recipeId, entry);
   }
 
   validateRecipeIdCollisions(itemIdToRecipeId, grouped, diagnostics);
@@ -108,9 +114,7 @@ export function extractRecipes(
 
   function mergeSources(incoming: Map<string, AcquisitionSource[]>): void {
     for (const [recipeId, sources] of incoming) {
-      const existing = allSources.get(recipeId) ?? [];
-      existing.push(...sources);
-      allSources.set(recipeId, existing);
+      for (const source of sources) appendToMultimap(allSources, recipeId, source);
     }
   }
 
@@ -213,11 +217,11 @@ function buildQuestRecipeSource(
   };
 
   if (nativeQuestGroup === "fetch_quests") {
-    const itemId = extractQuestRequiredItem(quest);
+    const itemId = firstRequiredItemId(quest);
     return itemId ? { ...sourceBase, requestedItemId: itemId as ItemId } : sourceBase;
   }
   if (nativeQuestGroup === "tali_challenges") {
-    const itemId = extractQuestRequiredItem(quest);
+    const itemId = firstRequiredItemId(quest);
     const challengeRecipeId = itemId ? itemIdToRecipeId.get(itemId) : undefined;
     return challengeRecipeId
       ? { ...sourceBase, challengeRecipeId: challengeRecipeId as RecipeId }
@@ -255,8 +259,7 @@ function collectChickenStatueSources(
       if (typeof entry !== "object" || entry === null) continue;
       const obj = entry as Record<string, unknown>;
 
-      const scrollTarget =
-        (obj.recipe_scroll as string | undefined) ?? (obj.crafting_scroll as string | undefined);
+      const scrollTarget = scrollTargetOf(obj);
       if (!scrollTarget) continue;
 
       const recipeId = resolveScrollTarget(
@@ -268,9 +271,7 @@ function collectChickenStatueSources(
       );
       if (!recipeId) continue;
 
-      const sources = result.get(recipeId) ?? [];
-      sources.push({ type: "chicken_statue", cost });
-      result.set(recipeId, sources);
+      appendToMultimap(result, recipeId, { type: "chicken_statue", cost });
     }
   }
 
@@ -325,8 +326,7 @@ function collectFestivalScrollSources(
         if (typeof entry !== "object" || entry === null) continue;
         const obj = entry as Record<string, unknown>;
 
-        const scrollTarget =
-          (obj.recipe_scroll as string | undefined) ?? (obj.crafting_scroll as string | undefined);
+        const scrollTarget = scrollTargetOf(obj);
         if (!scrollTarget) continue;
 
         const recipeId = resolveScrollTarget(
@@ -338,13 +338,11 @@ function collectFestivalScrollSources(
         );
         if (!recipeId) continue;
 
-        const sources = result.get(recipeId) ?? [];
-        sources.push({
+        appendToMultimap(result, recipeId, {
           type: "festival",
           festivalId: festivalId as FestivalId,
           storeId: vendorStoreId as StoreId,
         });
-        result.set(recipeId, sources);
       }
     }
   }
@@ -388,9 +386,10 @@ function collectFishingChestSources(
       );
       if (!recipeId) continue;
 
-      const sources = result.get(recipeId) ?? [];
-      sources.push({ type: "treasure_chest", tier: chestTier as TreasureChestTierId });
-      result.set(recipeId, sources);
+      appendToMultimap(result, recipeId, {
+        type: "treasure_chest",
+        tier: chestTier as TreasureChestTierId,
+      });
     }
   }
 
@@ -449,8 +448,7 @@ function collectLetterScrollSources(
       if (typeof item !== "object" || item === null) continue;
       const obj = item as Record<string, unknown>;
 
-      const scrollTarget =
-        (obj.recipe_scroll as string | undefined) ?? (obj.crafting_scroll as string | undefined);
+      const scrollTarget = scrollTargetOf(obj);
       if (!scrollTarget) continue;
 
       const recipeId = resolveScrollTarget(
@@ -540,10 +538,7 @@ function collectMinesRecipeSources(
     if (typeof biome !== "object" || biome === null) continue;
     const biomeObj = biome as Record<string, unknown>;
     const biomeName = (biomeObj.name as string | undefined) ?? `Biome ${i + 1}`;
-    const biomeId = biomeName
-      .replace(/^The\s+/i, "")
-      .toLowerCase()
-      .replaceAll(/\s+/g, "_") as MinesBiomeId;
+    const biomeId = minesBiomeId(biomeName);
 
     const chestArrays: [string, PerkId][] = [["taste_maker", "taste_maker" as PerkId]];
     for (const [arrayKey, perkId] of chestArrays) {
@@ -555,9 +550,7 @@ function collectMinesRecipeSources(
         const recipeId = itemIdToRecipeId.get(itemId);
         if (!recipeId) continue;
 
-        const sources = result.get(recipeId) ?? [];
-        sources.push({ type: "mines_chest", biomeId, perkId });
-        result.set(recipeId, sources);
+        appendToMultimap(result, recipeId, { type: "mines_chest", biomeId, perkId });
       }
     }
 
@@ -568,9 +561,11 @@ function collectMinesRecipeSources(
       const recipeId = itemIdToRecipeId.get(itemId);
       if (!recipeId) continue;
 
-      const sources = result.get(recipeId) ?? [];
-      sources.push({ type: "mines_dig_site", biomeId, perkId: "natural_beauty" as PerkId });
-      result.set(recipeId, sources);
+      appendToMultimap(result, recipeId, {
+        type: "mines_dig_site",
+        biomeId,
+        perkId: "natural_beauty" as PerkId,
+      });
     }
   }
 
@@ -604,8 +599,7 @@ function collectMuseumScrollSources(
         if (typeof entry !== "object" || entry === null) continue;
         const obj = entry as Record<string, unknown>;
 
-        const scrollTarget =
-          (obj.recipe_scroll as string | undefined) ?? (obj.crafting_scroll as string | undefined);
+        const scrollTarget = scrollTargetOf(obj);
         if (!scrollTarget) continue;
 
         const recipeId = resolveScrollTarget(
@@ -617,9 +611,11 @@ function collectMuseumScrollSources(
         );
         if (!recipeId) continue;
 
-        const sources = result.get(recipeId) ?? [];
-        sources.push({ type: "museum_donation", setCount, wingId: wingId as MuseumWingId });
-        result.set(recipeId, sources);
+        appendToMultimap(result, recipeId, {
+          type: "museum_donation",
+          setCount,
+          wingId: wingId as MuseumWingId,
+        });
       }
     }
   }
@@ -677,8 +673,7 @@ function collectQuestScrollSources(
       if (typeof reward !== "object" || reward === null) continue;
       const obj = reward as Record<string, unknown>;
 
-      const scrollTarget =
-        (obj.recipe_scroll as string | undefined) ?? (obj.crafting_scroll as string | undefined);
+      const scrollTarget = scrollTargetOf(obj);
       if (!scrollTarget) continue;
 
       const recipeId = resolveScrollTarget(
@@ -690,8 +685,9 @@ function collectQuestScrollSources(
       );
       if (!recipeId) continue;
 
-      const sources = result.get(recipeId) ?? [];
-      sources.push(
+      appendToMultimap(
+        result,
+        recipeId,
         buildQuestRecipeSource(
           nativeQuestGroup as TrackedQuestGroup,
           questType,
@@ -700,7 +696,6 @@ function collectQuestScrollSources(
           itemIdToRecipeId,
         ),
       );
-      result.set(recipeId, sources);
     }
   });
 
@@ -783,56 +778,21 @@ function collectScrollBundleSources(
     string,
     { bundleName: string; storeId: string; visibility: VisibilityCondition }
   >();
-  const stores = fiddle.stores as Record<string, Record<string, unknown>> | undefined;
-  if (stores) {
-    for (const [storeId, store] of Object.entries(stores)) {
-      if (storeId === "default" || typeof store !== "object" || store === null) continue;
-      const categories = Array.isArray(store.categories) ? store.categories : [];
-
-      for (const category of categories) {
-        if (typeof category !== "object" || category === null) continue;
-        const cat = category as Record<string, unknown>;
-
-        const allStock: unknown[] = [];
-        if (Array.isArray(cat.constant_stock)) {
-          allStock.push(...(cat.constant_stock as unknown[]));
-        }
-        if (Array.isArray(cat.random_stock)) {
-          allStock.push(...(cat.random_stock as unknown[]));
-        }
-        const seasonal = cat.seasonal as Record<string, unknown> | undefined;
-        if (seasonal) {
-          for (const val of Object.values(seasonal)) {
-            if (Array.isArray(val)) allStock.push(...(val as unknown[]));
-          }
-        }
-
-        for (const entry of allStock) {
-          let itemId: string | undefined;
-          if (typeof entry === "string") {
-            itemId = entry;
-          } else if (typeof entry === "object" && entry !== null) {
-            itemId = (entry as Record<string, unknown>).item as string | undefined;
-          }
-          if (!itemId) continue;
-          const setTag = bundleIdToSetTag.get(itemId);
-          if (setTag) {
-            const bundleName = bundleIdToName.get(itemId) ?? itemId;
-            const entryObject =
-              typeof entry === "object" && entry !== null
-                ? (entry as Record<string, unknown>)
-                : undefined;
-            const visibility = resolveStockVisibility(
-              entryObject?.requirements,
-              `${storeId}/${itemId}`,
-              ctx,
-            );
-            setTagToStore.set(setTag, { bundleName, storeId, visibility });
-          }
-        }
-      }
-    }
-  }
+  forEachStockEntry(fiddle, (storeId, entry) => {
+    const entryObject =
+      typeof entry === "object" && entry !== null ? (entry as Record<string, unknown>) : undefined;
+    const itemId = typeof entry === "string" ? entry : (entryObject?.item as string | undefined);
+    if (!itemId) return;
+    const setTag = bundleIdToSetTag.get(itemId);
+    if (!setTag) return;
+    const bundleName = bundleIdToName.get(itemId) ?? itemId;
+    const visibility = resolveStockVisibility(
+      entryObject?.requirements,
+      `${storeId}/${itemId}`,
+      ctx,
+    );
+    setTagToStore.set(setTag, { bundleName, storeId, visibility });
+  });
 
   forEachItem(fiddle, (itemId, item) => {
     const tags = Array.isArray(item.tags) ? (item.tags as string[]) : [];
@@ -864,78 +824,41 @@ function collectStoreScrollSources(
   ctx: StockVisibilityContext,
   diagnostics: PipelineDiagnostics,
 ): Map<string, AcquisitionSource[]> {
-  const stores = fiddle.stores as Record<string, Record<string, unknown>> | undefined;
-  if (!stores) return new Map();
-
   const result = new Map<string, AcquisitionSource[]>();
 
-  for (const [storeId, store] of Object.entries(stores)) {
-    if (storeId === "default" || typeof store !== "object" || store === null) continue;
-    const storeObj = store;
-    const categories = Array.isArray(storeObj.categories) ? storeObj.categories : [];
+  forEachStockEntry(fiddle, (storeId, entry) => {
+    if (typeof entry !== "object" || entry === null) return;
+    const obj = entry as Record<string, unknown>;
 
-    for (const category of categories) {
-      if (typeof category !== "object" || category === null) continue;
-      const cat = category as Record<string, unknown>;
+    const scrollTarget = scrollTargetOf(obj);
 
-      const stockArrays: unknown[][] = [];
-
-      if (Array.isArray(cat.constant_stock)) stockArrays.push(cat.constant_stock);
-
-      const seasonal = cat.seasonal as Record<string, unknown> | undefined;
-      if (seasonal) {
-        for (const val of Object.values(seasonal)) {
-          if (Array.isArray(val)) stockArrays.push(val);
-        }
-      }
-
-      if (Array.isArray(cat.random_stock)) stockArrays.push(cat.random_stock);
-
-      for (const arr of stockArrays) {
-        for (const entry of arr) {
-          if (typeof entry !== "object" || entry === null) continue;
-          const obj = entry as Record<string, unknown>;
-
-          const scrollTarget =
-            (obj.recipe_scroll as string | undefined) ??
-            (obj.crafting_scroll as string | undefined);
-
-          let recipeId: string | undefined;
-          if (scrollTarget) {
-            recipeId = resolveScrollTarget(
-              scrollTarget,
-              itemIdToRecipeId,
-              knownRecipeIds,
-              `stores/${storeId}`,
-              diagnostics,
-            );
-          } else if (obj.include_recipe === true) {
-            recipeId = itemIdToRecipeId.get(obj.item as string);
-          }
-
-          if (!recipeId) continue;
-
-          const sources = result.get(recipeId) ?? [];
-          const visibility = resolveStockVisibility(
-            obj.requirements,
-            `${storeId}/${recipeId}`,
-            ctx,
-          );
-
-          // NOTE: perk-gated stock (has_perk requirement) and repaired-store upgrade gates
-          // (UPGRADE_PREDICATES) both collapse to a plain "store" source. AcquisitionSource has
-          // no equivalent of the legacy `store_with_perk` type or `upgraded` flag; Task 2 will
-          // reintroduce richer availability/restriction modeling.
-          sources.push({
-            type: "store",
-            storeId: storeId as StoreId,
-            ...(visibility.type === "always" ? {} : { visibility }),
-          });
-          result.set(recipeId, sources);
-        }
-      }
+    let recipeId: string | undefined;
+    if (scrollTarget) {
+      recipeId = resolveScrollTarget(
+        scrollTarget,
+        itemIdToRecipeId,
+        knownRecipeIds,
+        `stores/${storeId}`,
+        diagnostics,
+      );
+    } else if (obj.include_recipe === true) {
+      recipeId = itemIdToRecipeId.get(obj.item as string);
     }
-  }
+
+    if (!recipeId) return;
+
+    const visibility = resolveStockVisibility(obj.requirements, `${storeId}/${recipeId}`, ctx);
+
+    // NOTE: perk-gated stock (has_perk requirement) and repaired-store upgrade gates
+    // (UPGRADE_PREDICATES) both collapse to a plain "store" source. AcquisitionSource has
+    // no equivalent of the legacy `store_with_perk` type or `upgraded` flag; Task 2 will
+    // reintroduce richer availability/restriction modeling.
+    appendToMultimap(result, recipeId, {
+      type: "store",
+      storeId: storeId as StoreId,
+      ...(visibility.type === "always" ? {} : { visibility }),
+    });
+  });
 
   return result;
 }
@@ -969,8 +892,7 @@ function collectWishingWellSources(
       if (typeof entry !== "object" || entry === null) continue;
       const obj = entry as Record<string, unknown>;
 
-      const scrollTarget =
-        (obj.recipe_scroll as string | undefined) ?? (obj.crafting_scroll as string | undefined);
+      const scrollTarget = scrollTargetOf(obj);
       if (!scrollTarget) continue;
 
       const recipeId = resolveScrollTarget(
@@ -982,9 +904,7 @@ function collectWishingWellSources(
       );
       if (!recipeId) continue;
 
-      const sources = result.get(recipeId) ?? [];
-      sources.push({ type: "wishing_well", cost });
-      result.set(recipeId, sources);
+      appendToMultimap(result, recipeId, { type: "wishing_well", cost });
     }
   }
 
@@ -1038,33 +958,6 @@ function deriveRecipeNameSource(recipeId: string, group: RawRecipeEntry[]): Reci
   throw new Error(
     `Recipe "${recipeId}" has ${uniqueNames.length} distinct presentation names: ${uniqueNames.join(", ")}`,
   );
-}
-
-function extractQuestRequiredItem(quest: Record<string, unknown>): string | undefined {
-  const stages = Array.isArray(quest.stages) ? quest.stages : [];
-  for (const stage of stages) {
-    if (typeof stage !== "object" || stage === null) continue;
-    const requirements = (stage as Record<string, unknown>).requirements;
-    if (typeof requirements !== "object" || requirements === null) continue;
-    const itemId = firstRequiredItem((requirements as Record<string, unknown>).has_item);
-    if (itemId) return itemId;
-  }
-  return undefined;
-}
-
-function firstRequiredItem(value: unknown): string | undefined {
-  if (typeof value === "string") return value;
-  if (Array.isArray(value)) {
-    for (const entry of value) {
-      const itemId = firstRequiredItem(entry);
-      if (itemId) return itemId;
-    }
-    return undefined;
-  }
-  if (typeof value === "object" && value !== null) {
-    return Object.keys(value)[0];
-  }
-  return undefined;
 }
 
 function requireNumber(value: unknown, path: string): number {

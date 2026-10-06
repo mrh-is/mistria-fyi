@@ -1,3 +1,5 @@
+import { SEASONS, WEATHERS } from "#lib/types/tracker-data.js";
+
 import { getSourceProvenance } from "./source-accumulator.js";
 
 import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
@@ -117,8 +119,8 @@ const QUEST_FIELDS = {
   story: [{ type: "heartLevelChanges", field: "heartLevelChanges", required: false }],
 } as const satisfies Record<QuestType, readonly QuestFieldRule[]>;
 
-const SEASONS = new Set(["fall", "spring", "summer", "winter"]);
-const WEATHERS = new Set(["calm", "heavy_inclement", "inclement", "special"]);
+const SEASON_VALUES = new Set<string>(SEASONS);
+const WEATHER_VALUES = new Set<string>(WEATHERS);
 
 const SOURCE_FIELDS = {
   animal_product: ["animalId"],
@@ -688,7 +690,7 @@ function validateAvailability(
       case "reachedSeason":
         if (
           requireString(value, "season", targetId, fieldPath, source, diagnostics) &&
-          !SEASONS.has(value.season as string)
+          !SEASON_VALUES.has(value.season as string)
         ) {
           malformed(
             diagnostics,
@@ -709,7 +711,7 @@ function validateAvailability(
           diagnostics,
         );
         for (const [index, season] of (seasons ?? []).entries()) {
-          if (!SEASONS.has(season)) {
+          if (!SEASON_VALUES.has(season)) {
             malformed(
               diagnostics,
               targetId,
@@ -749,7 +751,7 @@ function validateAvailability(
           diagnostics,
         );
         for (const [index, weather] of (weathers ?? []).entries()) {
-          if (!WEATHERS.has(weather)) {
+          if (!WEATHER_VALUES.has(weather)) {
             malformed(
               diagnostics,
               targetId,
@@ -1671,7 +1673,7 @@ function validateVisibility(
       case "reachedSeason":
         if (
           requireString(value, "season", targetId, fieldPath, source, diagnostics) &&
-          !SEASONS.has(value.season as string)
+          !SEASON_VALUES.has(value.season as string)
         ) {
           malformed(
             diagnostics,
