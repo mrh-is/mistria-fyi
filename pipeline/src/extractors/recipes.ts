@@ -14,7 +14,7 @@ import {
 import { buildRequirementDefinitions, parseRequirements } from "../requirements.js";
 import { resolveToVisibility } from "./visibility/requirement-resolver.js";
 
-import type { Source as AcquisitionSource, SourceTuple } from "#lib/types/acquisition.js";
+import type { Source as AcquisitionSource } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type {
   FestivalId,
@@ -31,6 +31,7 @@ import type {
 } from "#lib/types/tracker-data.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
+import type { SourceDraft } from "../acquisition/required-sources.js";
 import type { TrackedQuestGroup } from "../extractor-helpers.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 import type { CutsceneQuestMap } from "./visibility/cutscene-quest-map.js";
@@ -90,7 +91,7 @@ export function extractRecipes(
   recipeIdByItemId: Map<string, RecipeId>;
   recipeMemberItems: Map<RecipeId, ItemId[]>;
   recipeNameSources: Record<RecipeId, RecipeNameSource>;
-  recipes: Record<RecipeId, Recipe>;
+  recipes: Record<RecipeId, SourceDraft<Recipe>>;
 } {
   const diagnostics = sharedDiagnostics ?? new PipelineDiagnostics();
   const definitions = buildRequirementDefinitions(
@@ -141,7 +142,7 @@ export function extractRecipes(
   mergeSources(collectRenownRecipeSources(fiddle, itemIdToRecipeId));
   mergeSources(collectHardcodedSources(itemIdToRecipeId));
 
-  const recipes: Record<RecipeId, Recipe> = {};
+  const recipes: Record<RecipeId, SourceDraft<Recipe>> = {};
   const recipeNameSources = {} as Record<RecipeId, RecipeNameSource>;
   const recipeMemberItems = new Map<RecipeId, ItemId[]>();
 
@@ -169,7 +170,7 @@ export function extractRecipes(
 
     const typedRecipeId = recipeId as RecipeId;
     recipeNameSources[typedRecipeId] = nameSource;
-    recipes[typedRecipeId] = { sources: allSrc as SourceTuple };
+    recipes[typedRecipeId] = { sources: allSrc };
   }
 
   const recipeIdByItemId = new Map<string, RecipeId>();
