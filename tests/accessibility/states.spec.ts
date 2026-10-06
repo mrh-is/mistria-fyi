@@ -62,6 +62,36 @@ test.describe("stateful accessibility", () => {
     );
   });
 
+  test("a lone villager search result keeps its rounded paper", async ({ page }) => {
+    await gotoApplication(page, "/");
+    await openSearch(page, "Adeline");
+    const link = page.getByRole("link", { name: /Adeline/ }).first();
+    await expect(link).toBeVisible();
+
+    const paper = await link.evaluate((element) => {
+      const surface = element
+        .closest("[data-tracker-row]")
+        ?.querySelector(".tracker-paper__surface");
+      if (!surface) throw new Error("Villager result has no paper surface");
+      const style = getComputedStyle(surface);
+      return {
+        borderStart: style.borderBlockStartWidth,
+        endEnd: style.borderEndEndRadius,
+        endStart: style.borderEndStartRadius,
+        startEnd: style.borderStartEndRadius,
+        startStart: style.borderStartStartRadius,
+      };
+    });
+
+    expect(paper).toEqual({
+      borderStart: "1px",
+      endEnd: "2px",
+      endStart: "2px",
+      startEnd: "2px",
+      startStart: "2px",
+    });
+  });
+
   test("feedback validation dialog passes axe", critical, async ({ page }, testInfo) => {
     await gotoApplication(page, "/");
     await openFeedbackValidation(page);
