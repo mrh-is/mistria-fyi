@@ -2,13 +2,11 @@
   import IconCompletion from "#lib/components/icon/icon-completion.svelte";
   import Stepper from "#lib/components/stepper.svelte";
   import { Input } from "#lib/components/ui/input/index.js";
-  import { trackerData } from "#lib/data/index.js";
   import { celebrateCategory } from "#lib/effects/celebrate.js";
-  import { MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
+  import { isCategoryComplete, MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
   import { getFeedbackContextOrFallback } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { recordKeys } from "#lib/utils/record.js";
   import { page } from "$app/state";
 
   import type { SkillId } from "#lib/types/tracker-data.js";
@@ -46,9 +44,7 @@
   });
 
   function areAllSkillsMaxed(): boolean {
-    return recordKeys(trackerData.skills).every(
-      (skillId) => (userState.state.completed.skillLevels[skillId] ?? 0) >= MAX_SKILL_LEVEL,
-    );
+    return isCategoryComplete("skills", userState.state);
   }
 
   function commitEdit(): void {

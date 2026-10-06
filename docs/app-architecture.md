@@ -151,6 +151,9 @@ Progress calculation and UI row visibility are separate concerns.
   `showCompleted`, and `showSpoilers` at the component level.
 - Hidden completed rows still contribute to progress totals. This ensures the overall percentage
   remains accurate even when the user filters out completed content.
+- **Category completion** is `isCategoryComplete(key, ctx)`, which is the category's progress at
+  100%. The header, the all-completed banner, & `celebrateCategory()` all read it; components don't
+  re-derive completion. See the [decision record](decisions/2026-10-06-category-completion.md).
 
 ## 6. Response Headers
 

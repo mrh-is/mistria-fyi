@@ -2,12 +2,12 @@ import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { isVariantInScope } from "#lib/engine/animal-availability.js";
 import { isItemApplicable, isItemApplicableForAlmanac } from "#lib/engine/applicability.js";
 import { filterAvailableItems, isItemAvailable } from "#lib/engine/availability.js";
-import { getMarriedVillager } from "#lib/engine/relationships.js";
+import { getCravingQuest, PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
 import { recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
 import type { CategoryKey } from "#lib/data/categories.js";
 import type { AvailabilityWindow } from "#lib/types/availability.js";
-import type { ItemId, QuestId, Season, VillagerId, Weather } from "#lib/types/tracker-data.js";
+import type { ItemId, Season, VillagerId, Weather } from "#lib/types/tracker-data.js";
 import type { CompletedState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
@@ -34,7 +34,7 @@ export interface NormalizedLevel {
   value: number;
 }
 
-interface ProgressContext {
+export interface ProgressContext {
   availabilityWindows: readonly AvailabilityWindow[];
   completed: DeepReadonly<CompletedState>;
   worldState: { season: Season; weather: Weather };
@@ -124,21 +124,21 @@ export function getOverallProgress(allProgress: AllProgress): CategoryProgress {
   return { completed, filtered, total };
 }
 
+/**
+ * Whether a category is at 100%. This is the single completion rule behind the header's progress,
+ * the all-completed banner, & the category celebration, so the three can never disagree.
+ */
+export function isCategoryComplete(category: CategoryKey, ctx: ProgressContext): boolean {
+  const { completed, total } = getCategoryProgress(category, ctx);
+  return completed >= total;
+}
+
 export function isVillagerComplete(
   villagerId: VillagerId,
   completed: DeepReadonly<CompletedState>,
 ): boolean {
-  const villager = trackerData.villagers[villagerId];
   const level = completed.villagerLevels[villagerId] ?? 0;
-  if (level < MAX_VILLAGER_LEVEL) return false;
-
-  if (!villager.dateable) return true;
-
-  const relationship = completed.villagerRelationships[villagerId] ?? "undecided";
-  if (relationship === "platonic") return true;
-  if (relationship === "married") return completed.childChoice !== "undeclared";
-
-  return false;
+  return level >= MAX_VILLAGER_LEVEL && isRelationshipSettled(villagerId, completed);
 }
 
 /**
@@ -256,28 +256,6 @@ function getCosmeticsProgress(ctx: ProgressContext): CategoryProgress {
   return { completed, filtered: total - completed, total };
 }
 
-function getCravingQuestCount(
-  marriedVillager: null | VillagerId,
-  isWife: boolean,
-  activePregnancyQuestId: QuestId | undefined,
-  ctx: ProgressContext,
-): { completed: number; total: number } {
-  if (!marriedVillager) {
-    return { completed: 0, total: 1 };
-  }
-  if (!isWife) {
-    return { completed: 0, total: 0 };
-  }
-  if (ctx.completed.childChoice === "no") {
-    return { completed: 0, total: 0 };
-  }
-  if (activePregnancyQuestId) {
-    const isCompleted = ctx.completed.questStates[activePregnancyQuestId] === "completed";
-    return { completed: isCompleted ? 1 : 0, total: 1 };
-  }
-  return { completed: 0, total: 1 };
-}
-
 function getMinesProgress(ctx: ProgressContext): CategoryProgress {
   const maxFloor = getMaxMineFloor();
   const totalFloors = maxFloor;
@@ -295,30 +273,21 @@ function getMuseumProgress(ctx: ProgressContext): CategoryProgress {
 }
 
 function getQuestsProgress(ctx: ProgressContext): CategoryProgress {
-  const pregnancyQuestIds = new Set(
-    Object.values(trackerData.pregnancyQuestByVillager).filter(
-      (id): id is QuestId => id !== undefined,
-    ),
-  );
-  const marriedVillager = getMarriedVillager(ctx.completed.villagerRelationships);
-  const isWife = marriedVillager ? marriedVillager in trackerData.pregnancyQuestByVillager : false;
-  const activePregnancyQuestId = marriedVillager
-    ? trackerData.pregnancyQuestByVillager[marriedVillager]
-    : undefined;
-
   let total = 0;
   let completed = 0;
   for (const questType of recordValues(trackerData.quests)) {
     for (const id of recordKeys(questType)) {
-      if (pregnancyQuestIds.has(id)) continue;
+      if (PREGNANCY_QUEST_IDS.has(id)) continue;
       total++;
       if (ctx.completed.questStates[id] === "completed") completed++;
     }
   }
 
-  const cravingCount = getCravingQuestCount(marriedVillager, isWife, activePregnancyQuestId, ctx);
-  total += cravingCount.total;
-  completed += cravingCount.completed;
+  const craving = getCravingQuest(ctx.completed);
+  if (craving.applicable) {
+    total++;
+    if (craving.completed) completed++;
+  }
 
   return { completed, filtered: total - completed, total };
 }
@@ -347,14 +316,36 @@ function getSkillsProgress(ctx: ProgressContext): CategoryProgress {
   return { completed, filtered: total - completed, total };
 }
 
+/**
+ * Each Villager contributes their heart levels; a dateable Villager also contributes one step for
+ * a settled relationship, so the category reaches 100% exactly when every Villager is complete.
+ */
 function getVillagersProgress(ctx: ProgressContext): CategoryProgress {
   let total = 0;
   let completed = 0;
-  for (const id of recordKeys(trackerData.villagers)) {
+  for (const [id, villager] of recordEntries(trackerData.villagers)) {
     total += MAX_VILLAGER_LEVEL;
     completed += Math.min(ctx.completed.villagerLevels[id] ?? 0, MAX_VILLAGER_LEVEL);
+    if (!villager.dateable) continue;
+    total++;
+    if (isRelationshipSettled(id, ctx.completed)) completed++;
   }
   return { completed, filtered: total - completed, total };
+}
+
+/**
+ * A non-dateable Villager has nothing to settle; a dateable one settles as platonic, or as married
+ * once the household declares its child choice.
+ */
+function isRelationshipSettled(
+  villagerId: VillagerId,
+  completed: DeepReadonly<CompletedState>,
+): boolean {
+  if (!trackerData.villagers[villagerId].dateable) return true;
+  const relationship = completed.villagerRelationships[villagerId] ?? "undecided";
+  if (relationship === "platonic") return true;
+  if (relationship === "married") return completed.childChoice !== "undeclared";
+  return false;
 }
 
 function itemProgress(
