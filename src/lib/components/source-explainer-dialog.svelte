@@ -5,7 +5,7 @@
   import {
     sortSourceFiltersByLabel,
     sourceFilterLabel,
-    sourceFilterMembers,
+    sourceFilterMembersLabel,
   } from "#lib/data/source-filters.js";
   import * as m from "#lib/paraglide/messages.js";
   import { page } from "$app/state";
@@ -30,7 +30,7 @@
           <SourceIcon class="size-4" />
           <div>
             <strong>{sourceFilterLabel(filter.id, page.data.locale)}</strong><span
-              >{sourceFilterMembers(filter, page.data.locale)}</span
+              >{sourceFilterMembersLabel(filter, page.data.locale)}</span
             >
           </div>
         </li>

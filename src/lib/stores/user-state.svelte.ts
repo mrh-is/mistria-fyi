@@ -1,6 +1,6 @@
 import { SvelteSet } from "svelte/reactivity";
 
-import { canonicalAlmanacId, trackerData } from "#lib/data/index.js";
+import { trackerData, trackerIndex } from "#lib/data/index.js";
 import {
   emptyMergeCounts,
   nextQuestState,
@@ -1026,7 +1026,7 @@ function knownBrandedSet<T>(
 function normalizeAlmanacIds(ids: string[]): Set<ItemId> {
   const result = new SvelteSet<ItemId>();
   for (const id of ids) {
-    const canonical = canonicalAlmanacId.get(id as ItemId);
+    const canonical = trackerIndex.memberToCanonicalAlmanacId.get(id as ItemId);
     if (canonical) {
       result.add(canonical);
     }

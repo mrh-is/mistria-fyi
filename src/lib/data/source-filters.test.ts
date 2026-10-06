@@ -5,7 +5,7 @@ import {
   sortSourceFiltersByLabel,
   SOURCE_FILTERS,
   sourceFilterLabel,
-  sourceFilterMembers,
+  sourceFilterMembersLabel,
 } from "#lib/data/source-filters.js";
 
 function filter(id: string) {
@@ -50,9 +50,11 @@ describe("source filter labels", () => {
   });
 
   it("joins members with the locale's list format", () => {
-    expect(sourceFilterMembers(filter("offerings"), "en")).toBe("Chicken statue and Wishing well");
-    expect(sourceFilterMembers(filter("offerings"), "ja")).toBe("ニワトリ像、願いの井戸");
-    expect(sourceFilterMembers(filter("chests"), "en")).toBe(
+    expect(sourceFilterMembersLabel(filter("offerings"), "en")).toBe(
+      "Chicken statue and Wishing well",
+    );
+    expect(sourceFilterMembersLabel(filter("offerings"), "ja")).toBe("ニワトリ像、願いの井戸");
+    expect(sourceFilterMembersLabel(filter("chests"), "en")).toBe(
       "Beach cave, Treasure boxes, and Lost & found",
     );
   });

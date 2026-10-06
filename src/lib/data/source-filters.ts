@@ -209,7 +209,7 @@ export function sourceFilterLabel(id: SourceFilterId, locale: LocaleCode): strin
 }
 
 /** The filter's member source kinds as one list, joined in the locale's own style. */
-export function sourceFilterMembers(filter: SourceFilter, locale: LocaleCode): string {
+export function sourceFilterMembersLabel(filter: SourceFilter, locale: LocaleCode): string {
   return new Intl.ListFormat(locale, { type: "conjunction" }).format(
     filter.members.map((member) => MEMBER_LABELS[member](locale)),
   );

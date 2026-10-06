@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 import {
   CACHE_LOCALES_MESSAGE,
   cacheLocaleChunks,
-  cacheLocalesRequest,
   cacheRuntimeResponse,
   cacheSpriteResponse,
   fetchRuntimeRequest,
@@ -14,6 +13,7 @@ import {
   isLazyAsset,
   isSkipWaitingRequest,
   MAX_SPRITE_ENTRIES,
+  parseCacheLocalesMessage,
   readOfflineLocales,
   rememberOfflineLocales,
   SKIP_WAITING_MESSAGE,
@@ -464,18 +464,18 @@ describe("service-worker locale name chunks", () => {
 
   it("accepts a cache request for known locales only", () => {
     expect(
-      cacheLocalesRequest(
+      parseCacheLocalesMessage(
         { type: CACHE_LOCALES_MESSAGE, locales: ["ja", "en", "ja", "xx"] },
         CHUNKS,
       ),
     ).toEqual(["ja", "en"]);
     expect(
-      cacheLocalesRequest({ type: CACHE_LOCALES_MESSAGE, locales: ["constructor"] }, CHUNKS),
+      parseCacheLocalesMessage({ type: CACHE_LOCALES_MESSAGE, locales: ["constructor"] }, CHUNKS),
     ).toEqual([]);
-    expect(cacheLocalesRequest({ type: "other", locales: ["ja"] }, CHUNKS)).toBeUndefined();
-    expect(cacheLocalesRequest({ type: CACHE_LOCALES_MESSAGE }, CHUNKS)).toBeUndefined();
-    expect(cacheLocalesRequest("mfg:cache-locales", CHUNKS)).toBeUndefined();
-    expect(cacheLocalesRequest(null, CHUNKS)).toBeUndefined();
+    expect(parseCacheLocalesMessage({ type: "other", locales: ["ja"] }, CHUNKS)).toBeUndefined();
+    expect(parseCacheLocalesMessage({ type: CACHE_LOCALES_MESSAGE }, CHUNKS)).toBeUndefined();
+    expect(parseCacheLocalesMessage("mfg:cache-locales", CHUNKS)).toBeUndefined();
+    expect(parseCacheLocalesMessage(null, CHUNKS)).toBeUndefined();
   });
 
   it("caches every chunk of the requested locales and nothing else", async () => {

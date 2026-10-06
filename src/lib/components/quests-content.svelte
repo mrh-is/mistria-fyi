@@ -131,7 +131,7 @@
           {#snippet row(row)}
             {#if row.kind === "craving"}
               <TrackerRow
-                display={questRowDisplay(row.completed ? "completed" : "none", !!row.villager)}
+                display={questRowDisplay(row.completed ? "completed" : "none", !!row.villagerId)}
                 lookups={baseLookups}
                 name={row.displayName}
                 reportCategory="craving-quest"
