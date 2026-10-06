@@ -142,3 +142,47 @@ describe("engine import boundary", () => {
     }
   });
 });
+
+describe("utils import boundary", () => {
+  it("rejects imports from the layers built on utils", async () => {
+    // Use a real utils path so the production override, not a copied rule, selects the probe.
+    const probe = `src/lib/utils/lint-probe-${process.pid}.ts`;
+    const layers = [
+      "components",
+      "stores",
+      "controllers",
+      "effects",
+      "sources",
+      "pwa",
+      "presentation",
+    ];
+    try {
+      await writeFile(
+        probe,
+        [
+          ...layers.map(
+            (layer, index) => `import type { T${index} } from "#lib/${layer}/probe.js";`,
+          ),
+          'import type { Relative } from "../stores/probe.js";',
+          'import type { Sibling } from "#lib/utils/probe.js";',
+          'import type { Data } from "#lib/data/probe.js";',
+          `export type Probe = ${layers.map((_, index) => `T${index}`).join(" | ")} | Relative | Sibling | Data;`,
+        ].join("\n"),
+      );
+      const result = spawnSync(
+        "node_modules/.bin/oxlint",
+        ["--config", ".oxlintrc.json", "--format", "json", probe],
+        { encoding: "utf8" },
+      );
+      expect(result.error).toBeUndefined();
+      const report = JSON.parse(result.stdout) as OxlintReport;
+      const restricted = report.diagnostics.filter(
+        ({ code }) => code === "eslint(no-restricted-imports)",
+      );
+      expect(restricted).toHaveLength(layers.length + 1);
+      expect(result.status).toBe(1);
+    } finally {
+      await rm(probe, { force: true });
+    }
+  });
+});

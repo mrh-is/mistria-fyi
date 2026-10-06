@@ -3,11 +3,11 @@
   import Stepper from "#lib/components/stepper.svelte";
   import { trackerData } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
+  import { celebrateCategory } from "#lib/effects/celebrate.js";
   import { getFeedbackContextOrFallback } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { getRenownPresentation } from "#lib/presentation/renown-presentation.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { celebrateCategory } from "#lib/utils/celebrate.js";
   import { page } from "$app/state";
 
   import type { LocaleCode } from "#lib/types/locale.js";

@@ -2,11 +2,11 @@
   import { trackerData } from "#lib/data/index.js";
   import { animalNameId, getName } from "#lib/data/names.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
+  import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { recordEntries } from "#lib/utils/record.js";
-  import { computeRedactedStoreIds } from "#lib/utils/redacted-stores.js";
-  import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
 
   import AnimalSubcategory from "./animal-subcategory.svelte";
 

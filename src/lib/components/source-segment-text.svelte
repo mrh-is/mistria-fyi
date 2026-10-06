@@ -8,7 +8,7 @@
   // oxlint-disable-next-line import/no-self-import, import/no-cycle -- Svelte requires a recursive component to import itself
   import SourceSegmentText from "./source-segment-text.svelte";
 
-  import type { SourceSegment } from "#lib/utils/source-segments.js";
+  import type { SourceSegment } from "#lib/sources/source-segments.js";
 
   let { segments }: { segments: SourceSegment[] } = $props();
 
