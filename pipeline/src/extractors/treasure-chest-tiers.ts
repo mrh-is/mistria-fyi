@@ -1,5 +1,7 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
+import { compareStrings } from "../ordering.js";
+
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { TreasureChestTier, TreasureChestTierId } from "#lib/types/tracker-data.js";
 
@@ -30,7 +32,7 @@ export function extractTreasureChestTiers(
 
   const result = {} as Record<TreasureChestTierId, TreasureChestTier>;
 
-  for (const tier of Object.keys(chestTables).toSorted()) {
+  for (const tier of Object.keys(chestTables).toSorted(compareStrings)) {
     const itemKey = `treasure_box_${tier}`;
     const itemData = fishMisc?.[itemKey];
     const name = itemData?.name as string | undefined;

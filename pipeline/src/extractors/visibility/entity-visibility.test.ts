@@ -78,7 +78,6 @@ function makeTrackerData(overrides: Record<string, unknown>): TrackerData {
     cosmeticSlots: {} as TrackerData["cosmeticSlots"],
     dates: {},
     festivals: {},
-    generatedAt: "",
     items: {},
     mines: { biomes: [], spells: {} },
     museum: {},

@@ -22,7 +22,6 @@ describe("tracker data structural presence", () => {
     "categoryVisibility",
     "cosmetics",
     "festivals",
-    "generatedAt",
     "items",
     "mines",
     "museum",
@@ -45,11 +44,6 @@ describe("tracker data structural presence", () => {
   it("has a version string", () => {
     expect(trackerData.version).toBeTypeOf("string");
     expect(trackerData.version.length).toBeGreaterThan(0);
-  });
-
-  it("has a generatedAt timestamp", () => {
-    expect(trackerData.generatedAt).toBeTypeOf("string");
-    expect(trackerData.generatedAt.length).toBeGreaterThan(0);
   });
 });
 

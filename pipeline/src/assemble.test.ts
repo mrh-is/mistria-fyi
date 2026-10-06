@@ -88,7 +88,6 @@ const localizer = createMemoryLocalizer({
 });
 
 const options: AssembleOptions = {
-  generatedAt: "2026-01-01T00:00:00.000Z",
   reviewedDiagnostics: [],
   reviewedOverrides: { cosmetics: {}, itemReplacements: {}, items: {} },
   version: "1.0.0",
@@ -109,7 +108,6 @@ describe("assembleTrackerData", () => {
       options,
     );
 
-    expect(trackerData.generatedAt).toBe(options.generatedAt);
     expect(trackerData.version).toBe("1.0.0");
     expect(trackerData.items[turnip]).toEqual({
       category: "crops",

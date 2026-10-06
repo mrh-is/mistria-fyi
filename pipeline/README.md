@@ -111,8 +111,9 @@ content; with `--sprites`, sprite extraction (`extractors/sprites.ts`) converts 
 villager sprites to webp in memory as well. Villager sprites resolve their source PNG from each
 NPC’s own `icon_sprite` field, the same way items do, under `animations/UI NEW/Generic/Icons/NPC/`.
 A thrown error, a failed validation, or a missing sprite exits before publishing, so a regeneration
-either lands as a consistent whole or leaves the previous outputs untouched. Sprites are uploaded to
-`assets.mistria.fyi` with `pnpm run sprites:upload` (see
+leaves the previous outputs untouched on transformation or validation failure. Publishing writes
+files sequentially; an I/O failure during that step can leave partially updated outputs. Sprites are
+uploaded to `assets.mistria.fyi` with `pnpm run sprites:upload` (see
 [docs/sprite-assets.md](../docs/sprite-assets.md)); they are not committed to Git.
 
 Validation runs last because visibility assignment rewrites `sources` arrays and injects hard-coded
@@ -289,9 +290,11 @@ translation directly, so English suffix rules never alter translated strings.
 | `src/lib/data/locales.json`                  | Locale manifest generated from `l10n.meta.toml`                       |
 | `src/lib/data/locales/<locale>/*.json`       | Per-locale name chunks, one file per category                         |
 | `pipeline/output/tracker-data.json`          | Pretty diagnostic copy of the tracker data                            |
-| `pipeline/output/tracker-data-readable.json` | A second, identical pretty copy                                       |
 | `pipeline/output/fiddle-readable.json`       | Parsed and evaluated namespace tree for inspection                    |
 | `pipeline/output/sprites/{items,villagers}/` | Converted webp sprites, with `--sprites` or `--villager-sprites-only` |
 
 Evaluation mutates the parsed tree, and source attachment & visibility mutate the extracted
-registries. `generatedAt` changes on every successful run.
+registries. Outputs contain no generation timestamp. String ordering uses one UTF-16 code-unit
+comparator, independent of host locale or ICU; disk and zip TOML inputs register in sorted relative
+path order. Sprite extraction compares converted bytes and refreshes changed outputs while skipping
+identical ones.
