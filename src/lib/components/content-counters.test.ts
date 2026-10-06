@@ -12,6 +12,7 @@ import { isEntityNameVisible } from "#lib/engine/visibility.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
+import { AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 
 import type { ItemId, SpellId } from "#lib/types/tracker-data.js";
 
@@ -102,7 +103,7 @@ describe("subsection counters", () => {
     if (!hiddenItem) throw new Error("Expected a museum item with covered source types");
     const itemName = getName("items", hiddenItem, "en");
 
-    userState.setAvailabilityMode("everything");
+    userState.setAvailabilityWindows(AVAILABILITY_WINDOWS);
     toolbarState.setSearch(itemName);
     const unfiltered = renderToFragmentWithFeedback(MuseumContent, { props: { locale: "en" } });
     expect(unfiltered.text).toContain(itemName);
@@ -161,7 +162,7 @@ describe("subsection counters", () => {
     });
     if (!hiddenEntry) throw new Error("Expected an almanac row with covered source types");
 
-    userState.setAvailabilityMode("everything");
+    userState.setAvailabilityWindows(AVAILABILITY_WINDOWS);
     const hiddenEntryName = getName("items", hiddenEntry.itemIds[0], "en");
     toolbarState.setSearch(hiddenEntryName);
     const unfiltered = renderToFragmentWithFeedback(AlmanacContent, { props: { locale: "en" } });

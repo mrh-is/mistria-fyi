@@ -1,9 +1,5 @@
 import { canonicalAlmanacId, trackerData } from "#lib/data/index.js";
-import {
-  emptyMergeCounts,
-  SEASON_ORDER,
-  seasonFromOrdinal,
-} from "#lib/engine/domain-primitives.js";
+import { SEASON_ORDER, seasonFromOrdinal } from "#lib/engine/domain-primitives.js";
 import {
   getMaxMineFloor,
   getMaxRenownLevel,
@@ -29,18 +25,14 @@ import type {
   VillagerId,
   VillagerRelationship,
 } from "#lib/types/tracker-data.js";
-import type {
-  CompletedState,
-  MergeCounts,
-  MergeResult,
-  QuestState,
-} from "#lib/types/user-progress.js";
+import type { CompletedState, MergeResult, QuestState } from "#lib/types/user-progress.js";
 
 import type { SaveBundle, SaveSection } from "./save-bundle.js";
 
 // ─── Import result ──────────────────────────────────────────────────
 
-export interface ImportResult extends MergeResult {
+/** What a native save import changed, skipped as a conflict, or warned about. */
+export interface SaveImportReport extends MergeResult {
   warnings: SaveImportWarning[];
 }
 
@@ -83,12 +75,15 @@ interface SectionReader {
   value: (key: string) => unknown;
 }
 
+/**
+ * Maps a save bundle to the progress it records, plus warnings for the parts it skipped. What the
+ * import changes is counted later, by the store's merge.
+ */
 export function buildImportState(bundle: SaveBundle): {
   completed: Partial<CompletedState>;
-  result: ImportResult;
+  warnings: SaveImportWarning[];
 } {
   const warnings: SaveImportWarning[] = [];
-  const counts: MergeCounts = emptyMergeCounts();
 
   // parseSaveFiles rejects an unrecognizable player.json outright; a .sav entry reaches here.
   let playerSection = bundle.player;
@@ -115,7 +110,6 @@ export function buildImportState(bundle: SaveBundle): {
       almanacIds.add(canonical);
     }
   }
-  counts.almanac = almanacIds.size;
 
   // ── Recipe unlocks ──
   const almanacRecipes = new Set<RecipeId>();
@@ -139,7 +133,6 @@ export function buildImportState(bundle: SaveBundle): {
       }
     }
   }
-  counts.almanacRecipes = almanacRecipes.size;
 
   // ── Cosmetics ──
   const cosmeticIds = new Set<CosmeticId>();
@@ -152,7 +145,6 @@ export function buildImportState(bundle: SaveBundle): {
       warnings.push({ code: "unknown-id", id, path: "player.cosmetic_unlocks" });
     }
   }
-  counts.cosmetics = cosmeticIds.size;
 
   // ── Animal variants ──
   const animalVariants: Record<string, Set<AnimalVariantId>> = {};
@@ -176,7 +168,6 @@ export function buildImportState(bundle: SaveBundle): {
       }
     }
     animalVariants[animalId] = matched;
-    counts.animals += matched.size;
   }
 
   // ── Animal cosmetics ──
@@ -201,7 +192,6 @@ export function buildImportState(bundle: SaveBundle): {
       }
     }
     animalCosmetics[animalId] = matched;
-    counts.animalCosmetics += matched.size;
   }
 
   // ── Pet cosmetic sets ──
@@ -215,7 +205,6 @@ export function buildImportState(bundle: SaveBundle): {
       warnings.push({ code: "unknown-id", id, path: "player.pet_cosmetic_sets_unlocked" });
     }
   }
-  counts.petCosmetics = petCosmetics.size;
 
   // ── Pet skins ──
   const petSkins = new Set<PetSkinId>();
@@ -228,7 +217,6 @@ export function buildImportState(bundle: SaveBundle): {
       warnings.push({ code: "unknown-id", id, path: "player.pet_skin_unlocks" });
     }
   }
-  counts.petSkins = petSkins.size;
 
   // ── Spells ──
   const spells = new Set<SpellId>();
@@ -241,7 +229,6 @@ export function buildImportState(bundle: SaveBundle): {
       warnings.push({ code: "unknown-id", id, path: "player.spells_learned" });
     }
   }
-  counts.spells = spells.size;
 
   // ── Perks ──
   const perkIds = new Set<PerkId>();
@@ -258,7 +245,6 @@ export function buildImportState(bundle: SaveBundle): {
       warnings.push({ code: "unknown-id", id, path: "player.perks" });
     }
   }
-  counts.perks = perkIds.size;
 
   // ── Museum donations (from gamedata.json → museum_progress) ──
   const museumIds = new Set<ItemId>();
@@ -272,7 +258,6 @@ export function buildImportState(bundle: SaveBundle): {
       museumIds.add(id as ItemId);
     }
   }
-  counts.museum = museumIds.size;
 
   // ── Numeric levels: mine floor, villager hearts, skill levels, renown ──
   // Each fact is normalized into its finite domain (see normalizeLevel). Above-maximum values
@@ -296,7 +281,6 @@ export function buildImportState(bundle: SaveBundle): {
     gamedata.value("maximum_mines_level"),
     getMaxMineFloor(),
   );
-  counts.mineFloor = mineFloor;
 
   // Villager levels, skill levels, renown (from gamedata.json → t2_world_facts)
   const villagerLevels: Record<string, number> = {};
@@ -311,7 +295,6 @@ export function buildImportState(bundle: SaveBundle): {
       const level = extractLevel(key, facts[key], MAX_VILLAGER_LEVEL);
       if (level > 0) {
         villagerLevels[villagerId] = level;
-        counts.villagerLevels++;
       }
     }
 
@@ -321,19 +304,16 @@ export function buildImportState(bundle: SaveBundle): {
       const level = extractLevel(key, facts[key], MAX_SKILL_LEVEL);
       if (level > 0) {
         skillLevels[skillId] = level;
-        counts.skillLevels++;
       }
     }
 
     // Renown level: clamped silently, matching backup restore. Nothing in ordinary play produces
     // an out-of-domain value, so a warning would only be noise.
     renown = normalizeLevel(facts.renown, getMaxRenownLevel()).value;
-    counts.renown = renown;
   }
 
   // ── Has upper floor (from player.json → upper_floor) ──
   const hasUpperFloor = player.value("upper_floor") === true;
-  if (hasUpperFloor) counts.hasUpperFloor = 1;
 
   // ── Villager relationships (from gamedata.json → t2_world_facts → {villager}_is_dating) ──
   const villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>> = {};
@@ -345,14 +325,12 @@ export function buildImportState(bundle: SaveBundle): {
       const val = facts[`${villagerId}_is_dating`];
       if (val === true || val === 1) {
         villagerRelationships[villagerId as VillagerId] = "romantic";
-        counts.villagerRelationships++;
       }
     }
   }
 
   // ── Reached season (from gamedata.json → date timestamp) ──
   const reachedSeason = deriveReachedSeason(gamedata.value("date"));
-  if (reachedSeason !== "spring") counts.reachedSeason = 1;
 
   // ── Quest completion (from quests.json) ──
   // Completed quests import as "completed" and active quests as "obtained". A quest listed in
@@ -378,7 +356,6 @@ export function buildImportState(bundle: SaveBundle): {
   for (const id of readActiveQuestNames(quests.value("active_quests"), warnings)) {
     importQuest(id, "quests.active_quests", "obtained");
   }
-  counts.quests = Object.keys(questStates).length;
 
   return {
     completed: {
@@ -400,11 +377,7 @@ export function buildImportState(bundle: SaveBundle): {
       villagerLevels,
       villagerRelationships,
     },
-    result: {
-      conflicts: [],
-      counts,
-      warnings,
-    },
+    warnings,
   };
 }
 

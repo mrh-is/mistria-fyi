@@ -92,10 +92,12 @@ The app processes save files entirely client-side. No save data is uploaded.
    validation and warning generation. Every field is read through a type guard: a field of the wrong
    shape (a string where a list belongs, `null` where an object belongs) is dropped with a warning,
    and non-text list entries are dropped individually. A quest listed as both completed and active
-   imports as `completed`.
+   imports as `completed`. It returns that state & its warnings; it doesn’t count anything.
 4. `mergeFromSave` unions the imported state into the current `userState.completed`, taking max
    values for numeric fields (Villager levels, skill levels, renown, mine floor) and the more
-   advanced quest state (`none` → `obtained` → `completed`).
+   advanced quest state (`none` → `obtained` → `completed`). Relationships & child choice merge as
+   one household through the pure `mergeHousehold` in `src/lib/engine/relationships.ts`, which
+   reports conflicts rather than guessing. The merge’s counts are the ones the import summary shows.
 
 Numeric levels are normalized by `normalizeLevel` in `src/lib/engine/progress.ts` at extraction
 time, and `mergeFromSave` clamps them again before installing. Import stays additive, so an invalid
