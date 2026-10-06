@@ -70,7 +70,7 @@ test.describe("@readiness application readiness", () => {
       await navigation;
       expect(ready).toBe(true);
       expect(
-        await page.locator("img").evaluate((image: HTMLImageElement) => image.naturalWidth),
+        await page.getByRole("img").evaluate((image: HTMLImageElement) => image.naturalWidth),
       ).toBe(192);
       expect(await page.evaluate(() => document.fonts.status)).toBe("loaded");
     } finally {

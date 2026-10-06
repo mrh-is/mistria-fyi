@@ -91,7 +91,10 @@ test("keeps the visited locale offline and leaves other locales to download on d
   await context.setOffline(true);
 
   // A category this session never opened still renders its names offline.
-  await page.locator('a[href="/en/recipes"]').first().click();
+  await page
+    .getByRole("link", { name: /^Recipes/ })
+    .first()
+    .click();
   await expect(page).toHaveURL(/\/en\/recipes$/);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 

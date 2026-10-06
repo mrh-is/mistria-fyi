@@ -60,7 +60,10 @@ test("keeps open tabs on their version until one accepts the update, then reload
     expect(await cacheNames(page)).toEqual(expect.arrayContaining([oldCache, newCache]));
 
     // Until a tab accepts, the old version keeps working, cache and all.
-    await page.locator('a[href="/en/recipes"]').first().click();
+    await page
+      .getByRole("link", { name: /^Recipes/ })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/en\/recipes$/);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     expect(await cacheNames(page)).toContain(oldCache);

@@ -66,7 +66,7 @@ test("serves cached routes and assets offline, then falls back for an uncached n
   await page.goto("/");
   await page.evaluate(async () => navigator.serviceWorker.ready);
   await page.goto("/animals");
-  await expect(page.locator("main")).toBeVisible();
+  await expect(page.getByRole("main")).toBeVisible();
 
   // There's no unprefixed default locale, so /animals redirects to /en/animals — that's the
   // URL the service worker actually caches the navigation under.
@@ -86,7 +86,7 @@ test("serves cached routes and assets offline, then falls back for an uncached n
   await context.setOffline(true);
   await page.reload();
   await expect(page).toHaveURL(/\/animals$/);
-  await expect(page.locator("main")).toBeVisible();
+  await expect(page.getByRole("main")).toBeVisible();
   const faviconOk = await page.evaluate(async () => {
     const response = await fetch("/favicon.png");
     return response.ok;
@@ -118,7 +118,7 @@ test.describe("without service workers", () => {
   test("keeps the online application usable", async ({ page }) => {
     await page.goto("/animals");
 
-    await expect(page.locator("main")).toBeVisible();
+    await expect(page.getByRole("main")).toBeVisible();
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     const registrationCount = await page.evaluate(async () => {
       const registrations = await navigator.serviceWorker.getRegistrations();

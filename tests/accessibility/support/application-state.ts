@@ -75,6 +75,7 @@ export function createStoredState(
 }
 
 export async function expectResolvedTheme(page: Page, theme: AccessibilityTheme): Promise<void> {
+  // oxlint-disable-next-line playwright/no-raw-locators -- the theme class lives on the document element, which has no role
   await expect(page.locator("html")).toHaveClass(theme === "dark" ? /\bdark\b/ : /^(?!.*\bdark\b)/);
 }
 
