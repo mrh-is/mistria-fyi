@@ -56,6 +56,11 @@ worktree, including `.worktrees/`, so spawn editing subagents with the Agent too
 serves the orchestrator's checkout, so a subagent previews its own dev server by URL; see
 [docs/development-workflow.md](docs/development-workflow.md#preview-from-a-subagent-worktree).
 
+**Stashes are shared:** `refs/stash` is one stack for every linked worktree, so a bare
+`git stash pop` or `apply` can restore another session's edits. Prefer a temporary WIP commit; if
+you must stash, address your entry by its commit ID (see
+[docs/development-workflow.md](docs/development-workflow.md#set-work-aside-without-the-shared-stash)).
+
 **Refused edits:** if the harness refuses a file write or edit, stop and report it. Never route
 around the refusal with shell writes (heredocs, `sed -i`, `perl -i`, scripts); the guard exists to
 keep agents out of the shared checkout, and a shell write bypasses it silently.
@@ -146,7 +151,9 @@ Follow this sequence for every task:
 11. **Monitor CI** — after opening the PR, watch its checks so CI failures are caught and fixed
     without requiring the user to relay status. Use whatever the harness offers for PR monitoring
     (for example, the Claude Code desktop app's `ccd_pr` `bind_pr` & `set_monitor` tools), or check
-    `gh pr checks` periodically.
+    `gh pr checks` periodically. GitHub sometimes never starts CI for a PR's `opened` event; if no
+    "CI" run exists for the head commit a few minutes after opening, push an empty commit (see
+    [docs/development-workflow.md](docs/development-workflow.md#ci-doesnt-start-on-a-new-pr)).
 
 ### GitHub evidence & prototypes
 
