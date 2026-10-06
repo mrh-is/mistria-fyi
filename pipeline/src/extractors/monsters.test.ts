@@ -28,6 +28,11 @@ describe("extractMonsterNames", () => {
     expect(() => extractMonsterNames(fiddle)).toThrow(/"slime" has no reviewed pet variant/);
   });
 
+  it("throws when a source table is missing", () => {
+    expect(() => extractMonsterNames(makeFiddle({ monsters: {} }))).toThrow(/pets\.variants/);
+    expect(() => extractMonsterNames(makeFiddle({ pets: { variants: {} } }))).toThrow(/monsters/);
+  });
+
   it("throws when the reviewed pet variant is missing", () => {
     const fiddle = makeFiddle({ monsters: { cat: { cat: {} } }, pets: { variants: {} } });
     expect(() => extractMonsterNames(fiddle)).toThrow(/"lava_cat", which is unnamed/);

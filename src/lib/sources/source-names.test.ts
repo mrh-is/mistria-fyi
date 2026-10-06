@@ -50,10 +50,14 @@ describe("buildLocationNames", () => {
   it("names every location in English", () => {
     const names = buildLocationNames("en");
 
-    expect(names.beach).toBe("The Beach");
+    expect(names.beach).toBe("the Beach");
     expect(names.haydens_farm).toBe("Sweetwater Farm");
-    expect(names.farm).toBe("Farm");
+    expect(names.farm).toBe("your farm");
     expect(Object.values(names).every((name) => name !== "")).toBe(true);
+  });
+
+  it("lowercases English articles, since names only appear mid-sentence", () => {
+    for (const name of Object.values(buildLocationNames("en"))) expect(name).not.toMatch(/^The /);
   });
 
   it("localizes names per locale", () => {
