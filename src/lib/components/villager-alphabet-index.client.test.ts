@@ -3,6 +3,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import VillagerAlphabetIndexHarness from "#lib/components/villager-alphabet-index.test-harness.svelte";
 
+const reducedMotion = vi.hoisted(() => ({ current: false }));
+vi.mock("svelte/motion", () => ({ prefersReducedMotion: reducedMotion }));
+
 const entries = [
   { id: "villager-balor", name: "Balor" },
   { id: "villager-adeline", name: "Adeline" },
@@ -12,6 +15,7 @@ const entries = [
 
 describe("VillagerAlphabetIndex", () => {
   afterEach(() => {
+    reducedMotion.current = false;
     vi.restoreAllMocks();
   });
 
@@ -53,7 +57,8 @@ describe("VillagerAlphabetIndex", () => {
   it("uses immediate scrolling under reduced motion", async () => {
     const scrollIntoView = vi.fn();
     Element.prototype.scrollIntoView = scrollIntoView;
-    const view = render(VillagerAlphabetIndexHarness, { entries, reducedMotion: true });
+    reducedMotion.current = true;
+    const view = render(VillagerAlphabetIndexHarness, { entries });
 
     await fireEvent.click(view.getByRole("button", { name: "Jump to B, first villager record" }));
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "auto", block: "center" });

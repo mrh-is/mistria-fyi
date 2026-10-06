@@ -6,18 +6,6 @@
 
   import type { Snippet } from "svelte";
 
-  interface Props {
-    children?: Snippet;
-    decrementDisabled?: boolean;
-    decrementLabel: string;
-    incrementDisabled?: boolean;
-    incrementLabel: string;
-    label?: string;
-    onDecrement: () => void;
-    onIncrement: () => void;
-    value?: string;
-  }
-
   let {
     children,
     decrementDisabled = false,
@@ -28,7 +16,17 @@
     onDecrement,
     onIncrement,
     value,
-  }: Props = $props();
+  }: {
+    children?: Snippet;
+    decrementDisabled?: boolean;
+    decrementLabel: string;
+    incrementDisabled?: boolean;
+    incrementLabel: string;
+    label?: string;
+    onDecrement: () => void;
+    onIncrement: () => void;
+    value?: string;
+  } = $props();
 </script>
 
 <div

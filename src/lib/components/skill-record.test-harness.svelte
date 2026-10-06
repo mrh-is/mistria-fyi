@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
 
-  import SkillRow from "#lib/components/skill-row.svelte";
+  import SkillRecord from "#lib/components/skill-record.svelte";
   import { setFeedbackContext } from "#lib/feedback/context.svelte.js";
 
   import type { FeedbackContext } from "#lib/feedback/context.svelte.js";
@@ -18,5 +18,5 @@
 </script>
 
 <ul>
-  <SkillRow {compact} {id} {name} />
+  <SkillRecord {compact} {id} {name} />
 </ul>

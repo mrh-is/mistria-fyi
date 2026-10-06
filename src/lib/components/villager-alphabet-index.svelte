@@ -9,11 +9,9 @@
   let {
     entries,
     locale,
-    reducedMotion,
   }: {
     entries: { id: string; name: string }[];
     locale: LocaleCode;
-    reducedMotion?: boolean;
   } = $props();
 
   let scrubbing = $state(false);
@@ -46,7 +44,7 @@
     lastScrubbedInitial = initial;
     target.focus({ preventScroll: true });
     target.scrollIntoView({
-      behavior: (reducedMotion ?? prefersReducedMotion.current) ? "auto" : "smooth",
+      behavior: prefersReducedMotion.current ? "auto" : "smooth",
       block: "center",
     });
   }

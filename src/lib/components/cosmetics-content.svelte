@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AllCompleted from "#lib/components/all-completed.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
@@ -19,8 +20,6 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { recordEntries } from "#lib/utils/record.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
-
-  import AllCompleted from "./all-completed.svelte";
 
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import SkillRow from "#lib/components/skill-row.svelte";
+  import SkillRecord from "#lib/components/skill-record.svelte";
   import { trackerData } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
   import { MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
@@ -23,7 +23,7 @@
   {#each skills as skill (skill.id)}
     {@const level = userState.state.completed.skillLevels[skill.id] ?? 0}
     {#if level >= MAX_SKILL_LEVEL ? userState.state.showCompleted : true}
-      <SkillRow {compact} id={skill.id} name={skill.name} />
+      <SkillRecord {compact} id={skill.id} name={skill.name} />
     {/if}
   {/each}
 </ul>

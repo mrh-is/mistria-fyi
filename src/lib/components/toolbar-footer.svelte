@@ -121,9 +121,10 @@
   }
 
   let availabilityIsDefault = $derived(
-    userState.state.availabilityWindows.length === 2 &&
-      userState.state.availabilityWindows[0] === "now" &&
-      userState.state.availabilityWindows[1] === "anytime",
+    userState.state.availabilityWindows.length === DEFAULT_AVAILABILITY_WINDOWS.length &&
+      DEFAULT_AVAILABILITY_WINDOWS.every(
+        (window, index) => userState.state.availabilityWindows[index] === window,
+      ),
   );
   let filtersActive = $derived(
     !availabilityIsDefault || userState.state.showCompleted || toolbarState.sourceFilterActive,
@@ -146,7 +147,7 @@
     <FeedbackPanel
       accent={toolbarAccent}
       open={activePanel === "feedback"}
-      onclose={closePanel}
+      onClose={closePanel}
       pickerEnabled
       restoreFocus={activePanel === null && !toolbarState.searchOpen}
     />
@@ -256,7 +257,7 @@
     <PanelOverlay
       bind:element={panelElement}
       closeLabel={m.toolbar_close_panel()}
-      onclose={closePanel}
+      onClose={closePanel}
       style="--primary: {toolbarAccent}; --ring: {toolbarAccent}"
       outro
     >
@@ -264,12 +265,12 @@
         <FoldoutPanel
           id="quick-settings-panel"
           title={m.toolbar_quick_settings()}
-          onclose={closePanel}
+          onClose={closePanel}
         >
           <QuickSettingsPanel />
         </FoldoutPanel>
       {:else}
-        <FoldoutPanel id="visibility-panel" title={m.toolbar_filters()} onclose={closePanel}>
+        <FoldoutPanel id="visibility-panel" title={m.toolbar_filters()} onClose={closePanel}>
           {#snippet headerActions()}
             {#if filtersActive}
               <button

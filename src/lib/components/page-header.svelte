@@ -17,8 +17,8 @@
     backHref = "",
     backLabel = m.page_header_back_to_home(),
     category,
+    historyBack = false,
     icon,
-    onback,
     progress,
     ref = $bindable<HTMLElement | undefined>(undefined),
     title,
@@ -26,8 +26,9 @@
     backHref?: Path;
     backLabel?: string;
     category?: CategoryKey;
+    /** Steps back through browser history when there is any, instead of following `backHref`. */
+    historyBack?: boolean;
     icon?: Snippet<[string]>;
-    onback?: (event: MouseEvent) => void;
     progress?: CategoryProgress;
     ref?: HTMLElement | undefined;
     title: string;
@@ -38,6 +39,12 @@
       ? Math.round((progress.completed / progress.total) * 100)
       : undefined,
   );
+
+  function goBack(event: MouseEvent): void {
+    if (history.length <= 1) return;
+    event.preventDefault();
+    history.back();
+  }
 </script>
 
 <header
@@ -52,7 +59,7 @@
     class="page-header__back"
     href={localizedHref(backHref)}
     aria-label={backLabel}
-    onclick={onback}
+    onclick={historyBack ? goBack : undefined}
   >
     <IconArrowLeft class="size-5" />
   </a>
