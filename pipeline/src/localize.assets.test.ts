@@ -72,18 +72,6 @@ describe("localizeField — real assets", () => {
     expect(result.values.ja).toBe("they_them");
     expect(result.fallbackLocales).toHaveLength(0);
   });
-
-  it("throws when a field is classified 'override' but has no override entry", () => {
-    expect(() =>
-      createAssetsLocalizer(requireGameAssetsDir()).localizeField({
-        category: "cosmetics",
-        classification: "override",
-        englishValue: "Some Cosmetic",
-        field: "name",
-        id: "unmapped_cosmetic",
-      }),
-    ).toThrow(/no entry in localize-overrides\.json/);
-  });
 });
 
 describe("generateLocaleManifest — real assets", () => {

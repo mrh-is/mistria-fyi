@@ -5,7 +5,6 @@ import { parse } from "smol-toml";
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { GAME_LANGUAGE_TO_LOCALE, readGameLanguages } from "./locale-codes.js";
-import overrides from "./localize-overrides.json" with { type: "json" };
 
 import type { LocaleCode, LocaleManifest, LocaleStatus } from "#lib/types/locale.js";
 
@@ -16,10 +15,8 @@ import type { GameLanguageCode } from "./locale-codes.js";
  * - `localizable`: has (or derives) an l10n key and should be translated per locale.
  * - `structural`: not player-facing prose (an enum tag, an internal ID) and never translated —
  *   the English value is used for every locale.
- * - `override`: the field's l10n key can't be derived from category + ID; it's looked up in
- *   {@link localize-overrides.json} instead.
  */
-export type FieldClassification = "localizable" | "override" | "structural";
+export type FieldClassification = "localizable" | "structural";
 
 export interface LocalizeFieldInput {
   /** Category path, e.g. `"npcs"` or `"items/fish/bait_fish"`. */
@@ -106,11 +103,10 @@ export function generateLocaleManifest(assetsDir: string): LocaleManifest {
 }
 
 /**
- * Resolves a single text field to its localized value in every {@link LocaleCode}, deriving (or
- * looking up an override for) the l10n key, translating game language codes to BCP 47 tags along
- * the way.
+ * Resolves a single text field to its localized value in every {@link LocaleCode}, deriving the
+ * l10n key and translating game language codes to BCP 47 tags along the way.
  *
- * Throws for unusable overrides or ordinal English baselines that differ from the source cache.
+ * Throws for ordinal English baselines that differ from the source cache.
  * A classified field whose key is simply absent from a beta locale’s
  * translation table is the normal, expected case — this logs and falls back to English rather
  * than throwing.
@@ -124,7 +120,7 @@ function localizeField(loadTable: TableLoader, input: LocalizeFieldInput): Local
     return { fallbackLocales, values };
   }
 
-  const key = resolveKey(input);
+  const key = deriveKey(input.category, input.id, input.field);
 
   if (
     input.expectedEnglishValue !== undefined &&
@@ -190,20 +186,4 @@ function readTranslationTable(
     if (typeof value === "string") table.set(key, value);
   }
   return table;
-}
-
-function resolveKey(input: LocalizeFieldInput): string {
-  const derived = deriveKey(input.category, input.id, input.field);
-  const override = (overrides as Record<string, string>)[derived];
-
-  if (input.classification === "override") {
-    if (!override) {
-      throw new Error(
-        `Field classified "override" has no entry in localize-overrides.json for derived key "${derived}"`,
-      );
-    }
-    return override;
-  }
-
-  return override ?? derived;
 }
