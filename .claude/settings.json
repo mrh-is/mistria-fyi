@@ -4,22 +4,37 @@
       "Bash(pnpm run lint *)",
       "Bash(pnpm run lint:fix *)",
       "Bash(pnpm run check *)",
+      "Bash(pnpm run check:i18n *)",
+      "Bash(pnpm run check:pipeline *)",
+      "Bash(pnpm run check:routes *)",
       "Bash(pnpm run test *)",
+      "Bash(pnpm run test:accessibility *)",
+      "Bash(pnpm run test:accessibility:critical *)",
       "Bash(pnpm run test:app *)",
+      "Bash(pnpm run test:changed *)",
       "Bash(pnpm run test:pipeline *)",
+      "Bash(pnpm run test:pipeline:assets *)",
+      "Bash(pnpm run test:pwa *)",
       "Bash(pnpm run test:client *)",
       "Bash(pnpm run test:server *)",
       "Bash(pnpm run test:mocked *)",
       "Bash(pnpm run build *)",
+      "Bash(pnpm run fonts:check *)",
+      "Bash(pnpm run fonts:lint *)",
+      "Bash(pnpm run paraglide:compile *)",
+      "Bash(pnpm run preview *)",
       "Bash(pnpm run verify *)",
       "Bash(pnpm run dev *)",
       "Bash(pnpm run pipeline *)",
+      "Bash(pnpm run pipeline:assets *)",
       "Bash(pnpm exec vitest *)",
       "Bash(pnpm exec svelte-check *)",
       "Bash(pnpm exec svelte-kit *)",
       "Bash(pnpm exec oxfmt *)",
       "Bash(pnpm exec oxlint *)",
       "Bash(pnpm exec eslint *)",
+      "Bash(pnpm exec stylelint *)",
+      "Bash(pnpm exec tsx *)",
       "Bash(pnpm exec playwright *)",
       "Bash(pnpm install --frozen-lockfile *)",
       "Bash(pnpm run prepare *)",
@@ -29,6 +44,18 @@
     "deny": ["Bash(npm *)", "Bash(npx *)", "Bash(yarn *)", "Bash(bun *)"]
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|NotebookEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/guard-generated-paths.ts\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "hooks": [
