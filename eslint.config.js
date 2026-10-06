@@ -7,7 +7,6 @@ import { loadConfig } from "@sveltejs/load-config";
 import svelte from "eslint-plugin-svelte";
 import { defineConfig, globalIgnores } from "eslint/config";
 import globals from "globals";
-import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import ts from "typescript-eslint";
 
@@ -37,72 +36,6 @@ const lintSvelteConfig = {
   onwarn: svelteConfig.onwarn,
   warningFilter: svelteConfig.warningFilter,
 };
-
-// Files already migrated to Paraglide messages. The no-hardcoded-ui-text rule (see
-// docs/localization.md) only applies here — turning it on repo-wide today would flag every
-// not-yet-localized component. Add a file to this list in the same PR that localizes it; the
-// rule then guards against future regressions in that file.
-const localizedFiles = [
-  "src/lib/components/ai-disclosure-dialog.svelte",
-  "src/lib/components/all-completed.svelte",
-  "src/lib/components/almanac-content.svelte",
-  "src/lib/components/animal-cosmetics-section.svelte",
-  "src/lib/components/animal-subcategory.svelte",
-  "src/lib/components/animal-variants-section.svelte",
-  "src/lib/components/confirm-spoiler-dialog.svelte",
-  "src/lib/components/cosmetics-content.svelte",
-  "src/lib/components/dates-section.svelte",
-  "src/lib/components/dialog-close-button.svelte",
-  "src/lib/components/expandable-section.svelte",
-  "src/lib/components/feedback-panel.svelte",
-  "src/lib/components/feedback-picker.svelte",
-  "src/lib/components/foldout-panel.svelte",
-  "src/lib/components/mine-floor-record.svelte",
-  "src/lib/components/mines-content.svelte",
-  "src/lib/components/museum-content.svelte",
-  "src/lib/components/page-header.svelte",
-  "src/lib/components/pet-collectibles-section.svelte",
-  "src/lib/components/quests-content.svelte",
-  "src/lib/components/quick-settings-language-picker.svelte",
-  "src/lib/components/quick-settings-panel.svelte",
-  "src/lib/components/quick-settings-theme-picker.svelte",
-  "src/lib/components/recipes-content.svelte",
-  "src/lib/components/renown-current-record.svelte",
-  "src/lib/components/search-results.svelte",
-  "src/lib/components/skill-row.svelte",
-  "src/lib/components/skills-content.svelte",
-  "src/lib/components/spoiler.svelte",
-  "src/lib/components/source-explainer-dialog.svelte",
-  "src/lib/components/stepper.svelte",
-  "src/lib/components/toolbar-footer.svelte",
-  "src/lib/components/tracker-row.svelte",
-  "src/lib/components/update-prompt.svelte",
-  "src/lib/components/villager-alphabet-index.svelte",
-  "src/lib/components/villager-record.svelte",
-  "src/lib/components/villager-roster.svelte",
-  "src/lib/components/visibility-panel.svelte",
-  "src/lib/components/welcome-card.svelte",
-  "src/routes/(category)/renown/+page.svelte",
-  "src/routes/(category)/renown/rank-record.svelte",
-  "src/routes/+error.svelte",
-  "src/routes/about/+page.svelte",
-  "src/routes/all/+page.svelte",
-  "src/routes/data/+page.svelte",
-  "src/routes/data/backup-card.svelte",
-  "src/routes/data/danger-zone-card.svelte",
-  "src/routes/data/import-card.svelte",
-  "src/routes/data/merge-summary.svelte",
-  "src/routes/data/transfer-card.svelte",
-  "src/routes/privacy/+page.svelte",
-];
-
-// A typo here would silently disable the rule for that file, so fail loudly instead.
-const missingLocalizedFiles = localizedFiles.filter(
-  (file) => !existsSync(fileURLToPath(new URL(file, import.meta.url))),
-);
-if (missingLocalizedFiles.length > 0) {
-  throw new Error(`localizedFiles lists missing paths: ${missingLocalizedFiles.join(", ")}`);
-}
 
 export default defineConfig(
   includeIgnoreFile(gitignorePath),
@@ -159,9 +92,10 @@ export default defineConfig(
     },
   },
   {
-    // See docs/localization.md — catches hardcoded UI text only in files already migrated
-    // to Paraglide messages (localizedFiles above).
-    files: localizedFiles,
+    // Cover app templates by default. Vendored primitives, dev-only pages, and fixture
+    // templates are intentionally outside the user-facing localization contract.
+    files: ["src/**/*.svelte"],
+    ignores: ["src/lib/components/ui/**", "src/routes/dev/**", "**/*.test-harness.svelte"],
     plugins: { local: localPlugin },
     rules: { "local/no-hardcoded-ui-text": "error" },
   },
