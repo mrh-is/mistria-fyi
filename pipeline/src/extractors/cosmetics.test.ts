@@ -21,6 +21,15 @@ const customization = Object.fromEntries([
 ]);
 
 describe("extractCosmetics sub-categories", () => {
+  it("rejects an unknown wardrobe section", () => {
+    expect(() =>
+      extractCosmetics(
+        makeFiddle({ ui: { character_customization: { constructor: [] } } }),
+        localizer,
+      ),
+    ).toThrow("character_customization.constructor");
+  });
+
   it("localizes sub-category labels by ordinal and stores the key on the cosmetic", () => {
     vi.spyOn(console, "log").mockReturnValue(undefined);
     const fiddle = makeFiddle({

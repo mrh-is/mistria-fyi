@@ -1,3 +1,5 @@
+import { getCutsceneRecords } from "../../parse-fiddle.js";
+
 import type { QuestId } from "#lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../../parse-fiddle.js";
@@ -28,11 +30,7 @@ export function buildCutsceneQuestMap(fiddle: ParsedGameData): CutsceneQuestMap 
   }
 
   // Source 1: Explicit quest_to_start / quest_to_progress on cutscene entries
-  // Access cutscenes from either the nested structure or flat structure
-  const cutscenes =
-    ((fiddle.cutscenes as Record<string, unknown> | undefined)?.cutscenes as
-      | Record<string, Record<string, unknown>>
-      | undefined) ?? (fiddle.cutscenes as Record<string, Record<string, unknown>> | undefined);
+  const cutscenes = getCutsceneRecords(fiddle);
 
   if (cutscenes) {
     for (const [cutsceneId, cutscene] of Object.entries(cutscenes)) {

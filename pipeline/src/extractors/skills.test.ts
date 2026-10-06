@@ -17,6 +17,15 @@ describe("extractSkills", () => {
     vi.spyOn(console, "log").mockReturnValue(undefined);
   });
 
+  it.each([[0, "5"], "levels"])("rejects malformed skill thresholds: %j", (levelRequirements) => {
+    const fiddle = makeFiddle({
+      ui: { skill_menu: { defaults: { category: { level_requirements: levelRequirements } } } },
+    });
+    expect(() => extractSkills(fiddle, localizer)).toThrow(
+      "skill_menu.defaults.category.level_requirements",
+    );
+  });
+
   it("returns empty defaults when skills data is absent", () => {
     const fiddle = makeFiddleBase({});
     const result = extractSkills(fiddle, localizer);

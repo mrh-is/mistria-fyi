@@ -115,6 +115,18 @@ describe("parseRequirements", () => {
     ).toThrow(/cycle_a -> cycle_b -> cycle_a/);
   });
 
+  it("does not resolve inherited names as requirement definitions", () => {
+    const { namedRequirements, primitivePredicates } = makeRequirementDefinitions({});
+    expect(
+      parseRequirements(
+        { constructor: true },
+        namedRequirements,
+        primitivePredicates,
+        testSourceLocation,
+      ),
+    ).toEqual({ predicate: "constructor", value: true });
+  });
+
   it("preserves unknown keys as predicate leaves", () => {
     const { namedRequirements, primitivePredicates } = makeRequirementDefinitions({});
     // unknown_requirement is neither primitive nor named

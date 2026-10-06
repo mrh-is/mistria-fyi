@@ -1,7 +1,7 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { isExcludedCosmetic } from "../acquisition/exclusions.js";
-import { expectArray } from "../data-shapes.js";
+import { expectArray, expectNonEmptyString, expectRecord } from "../data-shapes.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -33,6 +33,23 @@ export interface CosmeticExtraction {
  * Each asset's `ui_slot` and `ui_sub_category` are taken verbatim; both must name a section and
  * entry of `ui/character_customization.toml`, which is what the game's wardrobe menu groups by.
  */
+const COSMETIC_SLOTS: readonly CosmeticSlot[] = [
+  "back",
+  "bottom",
+  "eyes",
+  "face_gear",
+  "facial_hair",
+  "feet",
+  "hair",
+  "head_gear",
+  "skin",
+  "top",
+];
+
+function isCosmeticSlot(value: unknown): value is CosmeticSlot {
+  return COSMETIC_SLOTS.some((slot) => slot === value);
+}
+
 export function extractCosmetics(fiddle: ParsedGameData, localizer: Localizer): CosmeticExtraction {
   const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
     LocaleCode,
@@ -48,13 +65,13 @@ export function extractCosmetics(fiddle: ParsedGameData, localizer: Localizer): 
     if (id === "default") continue;
     if (isExcludedCosmetic(id as CosmeticId)) continue;
 
-    const rawSlot = asset.ui_slot as string | undefined;
-    if (rawSlot === undefined || !(rawSlot in cosmeticSlots)) {
+    const rawSlot = asset.ui_slot;
+    if (!isCosmeticSlot(rawSlot) || !Object.hasOwn(cosmeticSlots, rawSlot)) {
       throw new Error(
         `Player cosmetic "${id}" has ui_slot ${JSON.stringify(rawSlot)} with no section in ui/character_customization.toml`,
       );
     }
-    const slot = rawSlot as CosmeticSlot;
+    const slot = rawSlot;
     const subCategory = asset.ui_sub_category as string | undefined;
     if (subCategory === undefined || !cosmeticSlots[slot].subCategories.includes(subCategory)) {
       throw new Error(
@@ -107,20 +124,29 @@ function readCustomizationMenu(
   const sourceFile = sourceFileFor(fiddle, "ui.character_customization");
 
   for (const [section, rawEntries] of Object.entries(customization)) {
-    const entries = expectArray<Record<string, unknown>>(rawEntries, {
+    if (!isCosmeticSlot(section)) {
+      throw new Error(`Unknown wardrobe slot character_customization.${section} in ${sourceFile}`);
+    }
+    const entries = expectArray<unknown>(rawEntries, {
       fieldPath: `character_customization.${section}`,
       sourcePath: sourceFile,
     });
     const subCategories: string[] = [];
-    for (const [index, entry] of entries.entries()) {
-      const key = entry.key as string | undefined;
-      const name = entry.name as string | undefined;
-      if (!key || !name) {
-        throw new Error(
-          `character_customization.${section}[${index.toString()}] needs both key and name`,
-        );
-      }
-      if (key in subCategoryLocaleNames.en) {
+    for (const [index, rawEntry] of entries.entries()) {
+      const context = {
+        fieldPath: `character_customization.${section}[${index}]`,
+        sourcePath: sourceFile,
+      };
+      const entry = expectRecord(rawEntry, context);
+      const key = expectNonEmptyString(entry.key, {
+        ...context,
+        fieldPath: `${context.fieldPath}.key`,
+      });
+      const name = expectNonEmptyString(entry.name, {
+        ...context,
+        fieldPath: `${context.fieldPath}.name`,
+      });
+      if (Object.hasOwn(subCategoryLocaleNames.en, key)) {
         throw new Error(`character_customization sub-category key "${key}" appears twice`);
       }
       const { values } = localizer.localizeField({
@@ -134,7 +160,7 @@ function readCustomizationMenu(
       for (const locale of LOCALE_CODES) subCategoryLocaleNames[locale][key] = values[locale];
       subCategories.push(key);
     }
-    cosmeticSlots[section as CosmeticSlot] = { subCategories };
+    cosmeticSlots[section] = { subCategories };
   }
   return { cosmeticSlots, subCategoryLocaleNames };
 }

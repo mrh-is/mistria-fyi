@@ -1,17 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { makeFiddle } from "../../test-helpers.js";
 import { buildCutsceneQuestMap } from "./cutscene-quest-map.js";
 
 // Minimal fiddle factory for cutscene tests
 function makeCutsceneFiddle(overrides: {
   cutscenes?: Record<string, Record<string, unknown>>;
   quests?: Record<string, Record<string, unknown>>;
-}): Record<string, unknown> {
-  return {
-    cutscenes: { cutscenes: overrides.cutscenes ?? {} },
+}) {
+  return makeFiddle({
+    cutscenes: overrides.cutscenes ?? {},
     quests: overrides.quests ?? {},
     ...overrides,
-  };
+  });
 }
 
 describe("buildCutsceneQuestMap", () => {
@@ -21,13 +22,19 @@ describe("buildCutsceneQuestMap", () => {
   });
   afterEach(() => vi.restoreAllMocks());
 
+  it("rejects the former nested cutscene shape", () => {
+    expect(() => buildCutsceneQuestMap(makeFiddle({ cutscenes: { cutscenes: {} } }))).toThrow(
+      "Expected flat cutscene table",
+    );
+  });
+
   it("maps explicit quest_to_start on cutscene", () => {
     const fiddle = makeCutsceneFiddle({
       cutscenes: {
         my_cutscene: { quest_to_start: "some_quest" },
       },
     });
-    const map = buildCutsceneQuestMap(fiddle as never);
+    const map = buildCutsceneQuestMap(fiddle);
     expect(map.my_cutscene).toEqual({
       phase: "available",
       questId: "some_quest",
@@ -40,7 +47,7 @@ describe("buildCutsceneQuestMap", () => {
         repair_the_inn_pt_2: { quest_to_progress: "repair_the_inn" },
       },
     });
-    const map = buildCutsceneQuestMap(fiddle as never);
+    const map = buildCutsceneQuestMap(fiddle);
     expect(map.repair_the_inn_pt_2).toEqual({
       phase: "completed",
       questId: "repair_the_inn",
@@ -57,7 +64,7 @@ describe("buildCutsceneQuestMap", () => {
         },
       },
     });
-    const map = buildCutsceneQuestMap(fiddle as never);
+    const map = buildCutsceneQuestMap(fiddle);
     expect(map.quest_start_scene).toEqual({
       phase: "available",
       questId: "some_quest",
@@ -75,7 +82,7 @@ describe("buildCutsceneQuestMap", () => {
         },
       },
     });
-    const map = buildCutsceneQuestMap(fiddle as never);
+    const map = buildCutsceneQuestMap(fiddle);
     expect(map.repair_the_general_store_pt_2).toEqual({
       phase: "completed",
       questId: "repair_the_general_store",
@@ -88,7 +95,7 @@ describe("buildCutsceneQuestMap", () => {
         priestess_quarters_pt_2: { quest_to_progress: "find_the_magic_key" },
       },
     });
-    const map = buildCutsceneQuestMap(fiddle as never);
+    const map = buildCutsceneQuestMap(fiddle);
     expect(map.priestess_quarters_pt_2).toEqual({
       phase: "completed",
       questId: "find_the_magic_key",
@@ -103,7 +110,7 @@ describe("buildCutsceneQuestMap", () => {
       },
       quests: {},
     });
-    const map = buildCutsceneQuestMap(fiddle as never);
+    const map = buildCutsceneQuestMap(fiddle);
     expect(map.the_unusual_tree_pt_1).toBeUndefined();
     expect(map.the_unusual_tree_pt_2).toBeUndefined();
   });
@@ -119,7 +126,7 @@ describe("buildCutsceneQuestMap", () => {
         },
       },
     });
-    const map = buildCutsceneQuestMap(fiddle as never);
+    const map = buildCutsceneQuestMap(fiddle);
     expect(map.dragon_tablet_pt_2).toEqual({
       phase: "completed",
       questId: "the_dragonsworn_tablet",
