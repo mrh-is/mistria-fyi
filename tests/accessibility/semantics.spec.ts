@@ -6,7 +6,11 @@ import {
   gotoApplication,
   initializeApplication,
 } from "./support/application-state.js";
-import { openFeedbackValidation, openVisibilityPanel } from "./support/scenarios.js";
+import {
+  openFeedbackValidation,
+  openVisibilityPanel,
+  villagerRecord,
+} from "./support/scenarios.js";
 import { critical, criticalWhen } from "./support/tags.js";
 
 const HEADING_NAME_OVERRIDES: Record<string, string | undefined> = {
@@ -55,11 +59,13 @@ test.describe("semantic accessibility", () => {
       }),
     );
     await gotoApplication(page, "/villagers");
-    const record = page.locator("#villager-adeline");
+    const record = villagerRecord(page, "adeline");
     await expect(
       record.getByRole("group", { name: "Adeline relationship level, 8 of 12" }),
     ).toBeVisible();
+    // oxlint-disable-next-line playwright/no-raw-locators -- marks are decorative, so they carry a data hook instead of a role
     await expect(record.locator("[data-villager-mark]")).toHaveCount(12);
+    // oxlint-disable-next-line playwright/no-raw-locators -- asserts no button role exists inside the decorative marks
     await expect(record.locator("[data-villager-mark] button")).toHaveCount(0);
     await expect(record.getByRole("button", { name: "Decrease Adeline hearts" })).toBeVisible();
     await expect(record.getByRole("button", { name: "Increase Adeline hearts" })).toBeVisible();

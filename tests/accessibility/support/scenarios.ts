@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
 
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 
 export async function openFeedbackValidation(page: Page): Promise<void> {
   const trigger = page
@@ -31,4 +31,16 @@ export async function openSettingsCard(page: Page, name: string): Promise<void> 
 export async function openVisibilityPanel(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Visibility filters" }).click();
   await expect(page.getByRole("dialog", { name: "Filters" })).toBeVisible();
+}
+
+/** A villager's record card; the page anchors it by id, which has no role or accessible name. */
+export function villagerRecord(page: Page, villagerId: string): Locator {
+  // oxlint-disable-next-line playwright/no-raw-locators -- the record is only addressable by its anchor id
+  return page.locator(`#villager-${villagerId}`);
+}
+
+/** The villager record card whose id starts with `prefix` and currently holds focus. */
+export function focusedVillagerRecord(page: Page, prefix: string): Locator {
+  // oxlint-disable-next-line playwright/no-raw-locators -- focus is asserted on the anchored record itself
+  return page.locator(`[id^="villager-${prefix}"]:focus`);
 }
