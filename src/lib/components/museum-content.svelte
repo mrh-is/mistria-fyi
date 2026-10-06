@@ -178,12 +178,18 @@
       setConfigs,
     };
   }
+
+  let wingViews = $derived(
+    recordEntries(trackerData.museum).map(([wingId, wing]) => ({
+      config: wingConfig(wingId, wing),
+      wingId,
+    })),
+  );
 </script>
 
 <SpoilerGuardDialog guard={spoilerGuard} />
 
-{#each recordEntries(trackerData.museum) as [wingId, wing] (wingId)}
-  {@const config = wingConfig(wingId, wing)}
+{#each wingViews as { config, wingId } (wingId)}
   {#if config.isVisible}
     <ExpandableSection
       {locale}
