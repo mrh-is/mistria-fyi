@@ -5,7 +5,9 @@ import { describe, expect, it } from "vitest";
 /**
  * Enforces the component locale convention in `docs/localization.md`: content components take a
  * required `locale` prop, chrome reads `page.data.locale`, and neither reads the ambient
- * `getLocale()` nor defaults the prop to "en".
+ * `getLocale()` nor defaults the prop to anything. The default check inspects `$props()`
+ * destructuring only; a `locale="en"` attribute in markup is a deliberate literal (a test harness
+ * or fixed-locale caller) and is not flagged.
  */
 
 const root = join(import.meta.dirname, "..");
@@ -43,10 +45,23 @@ describe("component locale convention", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("never defaults a locale prop", () => {
-    const offenders = files.filter((file) =>
-      /\blocale\s*=\s*["'`]/u.test(readFileSync(join(root, file), "utf8")),
+  it("keeps the allowlist free of converted files", () => {
+    const stale = [...AMBIENT_READ_ALLOWLIST].filter(
+      (file) => !/\bgetLocale\b/u.test(readFileSync(join(root, file), "utf8")),
     );
+    expect(
+      stale,
+      "These files no longer read getLocale(); remove them from AMBIENT_READ_ALLOWLIST",
+    ).toEqual([]);
+  });
+
+  it("never defaults a locale prop", () => {
+    const offenders = files.filter((file) => {
+      const destructuring = /let\s*\{([^}]*)\}[^;]*?=\s*\$props\(\)/u.exec(
+        readFileSync(join(root, file), "utf8"),
+      );
+      return destructuring !== null && /\blocale\s*=/u.test(destructuring[1]);
+    });
     expect(offenders).toEqual([]);
   });
 });
