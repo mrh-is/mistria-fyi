@@ -3,6 +3,7 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
 import { expectArray, expectStringArray } from "../data-shapes.js";
 import { PipelineDiagnostics } from "../diagnostics.js";
 import { forEachItem } from "../extractor-helpers.js";
+import { compareStrings } from "../ordering.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -197,7 +198,7 @@ export function extractAlmanac(
 
     const entries = collapseColorways(bucket);
 
-    entries.sort((a, b) => a.sortName.localeCompare(b.sortName));
+    entries.sort((a, b) => compareStrings(a.sortName, b.sortName));
 
     almanac[cat.key as AlmanacCategoryId] = {
       items: entries.map(({ itemIds, recipeId }) => ({
@@ -215,7 +216,7 @@ export function extractAlmanac(
   console.log(
     `  Almanac: ${Object.keys(almanac).length} categories, ${totalEntries} entries (${totalColorways} item IDs)`,
   );
-  namelessItems.sort((a, b) => a.localeCompare(b));
+  namelessItems.sort((a, b) => compareStrings(a, b));
   if (namelessItems.length > 0) {
     console.log(`  Nameless items skipped (${namelessItems.length}):`);
     for (const path of namelessItems) {
@@ -317,7 +318,7 @@ function collapseColorways(
 
   // Sort member IDs alphabetically; canonical ID = first element
   for (const entry of result) {
-    entry.itemIds.sort((a, b) => a.localeCompare(b));
+    entry.itemIds.sort((a, b) => compareStrings(a, b));
   }
 
   return result;

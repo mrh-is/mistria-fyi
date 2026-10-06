@@ -1,5 +1,7 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
+import { compareStrings } from "../ordering.js";
+
 import type { LocaleCode } from "#lib/types/locale.js";
 
 import type { Localizer } from "../localize.js";
@@ -100,7 +102,7 @@ export function extractUiStrings(
   }
 
   for (const [id, { miscLocalKey, stripArticle }] of [...byId].toSorted(([a], [b]) =>
-    a.localeCompare(b),
+    compareStrings(a, b),
   )) {
     const english = miscLocal[miscLocalKey];
     if (typeof english !== "string" || english.length === 0) {

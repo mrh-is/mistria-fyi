@@ -1,6 +1,8 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 import { SEASONS } from "#lib/types/tracker-data.js";
 
+import { compareStrings } from "../ordering.js";
+
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { FestivalId, Season, TrackerData } from "#lib/types/tracker-data.js";
 
@@ -24,7 +26,7 @@ export function extractFestivals(
   if (!festivals) return { festivals: {}, localeNames };
 
   const result = {} as TrackerData["festivals"];
-  for (const festivalId of Object.keys(festivals).toSorted()) {
+  for (const festivalId of Object.keys(festivals).toSorted(compareStrings)) {
     if (festivalId === "default") continue;
 
     const festival = festivals[festivalId];

@@ -4,6 +4,7 @@ import sharp from "sharp";
 import { open } from "yauzl-promise";
 
 import { resolveAssetsZipPath } from "../assets-zip.js";
+import { compareStrings } from "../ordering.js";
 
 import type { ZipFile } from "yauzl-promise";
 
@@ -126,20 +127,25 @@ export function publishSprites(staged: readonly StagedSprite[]): void {
 }
 
 function buildSpriteIndex(kind: SpriteKind, rootDir: string, index: Map<string, string>): void {
+  const candidates: { path: string; spriteName: string }[] = [];
   function walk(dir: string): void {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    for (const entry of readdirSync(dir, { withFileTypes: true }).toSorted((a, b) =>
+      compareStrings(a.name, b.name),
+    )) {
       if (entry.isDirectory()) {
         walk(join(dir, entry.name));
       } else if (entry.name.endsWith(".png") && kind.matchesFilename(entry.name)) {
-        const spriteName = entry.name.slice(0, -4);
-        if (!index.has(spriteName)) {
-          index.set(spriteName, join(dir, entry.name));
-        }
+        candidates.push({ path: join(dir, entry.name), spriteName: entry.name.slice(0, -4) });
       }
     }
   }
 
   walk(rootDir);
+  for (const { path, spriteName } of candidates.toSorted((a, b) =>
+    compareStrings(a.path, b.path),
+  )) {
+    if (!index.has(spriteName)) index.set(spriteName, path);
+  }
 }
 
 async function convertToWebp(pngData: Buffer): Promise<Buffer> {
@@ -220,7 +226,7 @@ async function extractSpritesFromFilesystem(
   const missing: string[] = [];
   const staged: StagedSprite[] = [];
 
-  for (const spriteName of [...entityIdsBySprite.keys()].toSorted()) {
+  for (const spriteName of [...entityIdsBySprite.keys()].toSorted(compareStrings)) {
     const entityIds = entityIdsBySprite.get(spriteName) ?? [];
     const sourcePath = spriteIndex.get(spriteName);
     if (!sourcePath) {
@@ -264,19 +270,27 @@ async function extractSpritesFromZip(
   }
 
   const spriteData = new Map<string, Buffer>();
+  const selectedPaths = new Map<string, { path: string; priority: number }>();
   try {
     for await (const entry of zipFile) {
       if (entry.filename.endsWith("/")) continue;
       if (!entry.filename.endsWith(".png")) continue;
 
-      const inSearchDir = zipPrefixes.some((prefix) => entry.filename.startsWith(prefix));
-      if (!inSearchDir) continue;
+      const priority = zipPrefixes.findIndex((prefix) => entry.filename.startsWith(prefix));
+      if (priority === -1) continue;
 
       const basename = entry.filename.split("/").at(-1) ?? "";
       if (!kind.matchesFilename(basename)) continue;
 
       const spriteName = basename.slice(0, -4);
-      if (entityIdsBySprite.has(spriteName) && !spriteData.has(spriteName)) {
+      const selected = selectedPaths.get(spriteName);
+      // Match disk lookup: search-directory priority, then sorted relative filename.
+      const preferred =
+        !selected ||
+        priority < selected.priority ||
+        (priority === selected.priority && compareStrings(entry.filename, selected.path) < 0);
+      if (entityIdsBySprite.has(spriteName) && preferred) {
+        selectedPaths.set(spriteName, { path: entry.filename, priority });
         const stream = await entry.openReadStream();
         const chunks: Buffer[] = [];
         for await (const chunk of stream) {
@@ -308,7 +322,7 @@ async function extractSpritesFromZip(
   const missing: string[] = [];
   const staged: StagedSprite[] = [];
 
-  for (const spriteName of [...entityIdsBySprite.keys()].toSorted()) {
+  for (const spriteName of [...entityIdsBySprite.keys()].toSorted(compareStrings)) {
     const entityIds = entityIdsBySprite.get(spriteName) ?? [];
     const pngData = spriteData.get(spriteName);
     if (!pngData) {
@@ -349,14 +363,15 @@ async function stageEntitiesForSprite(
   let skipped = 0;
   let webpData: Buffer | undefined;
 
-  for (const entityId of [...entityIds].toSorted()) {
+  for (const entityId of [...entityIds].toSorted(compareStrings)) {
     const outPath = join(entityOutputDir, `${entityId}.webp`);
-    if (existsSync(outPath)) {
+    // Compare the converted bytes so a game update refreshes existing sprites too.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- convert each shared sprite once before comparing existing outputs
+    webpData ??= await loadWebp();
+    if (existsSync(outPath) && readFileSync(outPath).equals(webpData)) {
       skipped++;
       continue;
     }
-    // oxlint-disable-next-line eslint/no-await-in-loop -- converts at most once, lazily, on the first entity that needs staging
-    webpData ??= await loadWebp();
     staged.push({ data: webpData, outPath });
     extracted++;
   }

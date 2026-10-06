@@ -32,14 +32,14 @@ const temporaryAssetsDirectories: string[] = [];
  * zip-reading code (e.g. {@link parseFiddleFromZip}) without depending on a zip-writer package.
  * `files` maps each entry's path inside the archive to its text content.
  */
-export function buildStoredZip(files: Record<string, string>): Buffer {
+export function buildStoredZip(files: Record<string, Buffer | string>): Buffer {
   const localParts: Buffer[] = [];
   const centralParts: Buffer[] = [];
   let offset = 0;
 
   for (const [name, content] of Object.entries(files)) {
     const nameBuf = Buffer.from(name, "utf8");
-    const dataBuf = Buffer.from(content, "utf8");
+    const dataBuf = typeof content === "string" ? Buffer.from(content, "utf8") : content;
     const crc = crc32(dataBuf);
 
     const localHeader = Buffer.alloc(30);
@@ -95,7 +95,7 @@ export function buildStoredZip(files: Record<string, string>): Buffer {
   return Buffer.concat([localSection, centralSection, eocd]);
 }
 
-export function createAssetsFixture(files: Record<string, string>): string {
+export function createAssetsFixture(files: Record<string, Buffer | string>): string {
   const assetsDir = mkdtempSync(join(tmpdir(), "mistria-fyi-assets-"));
   temporaryAssetsDirectories.push(assetsDir);
   onTestFinished(() => {
@@ -188,7 +188,7 @@ export function stubLocalizer(
 }
 
 /** Writes {@link buildStoredZip}'s output to a temp file and returns its path. */
-export function writeStoredZipFixture(files: Record<string, string>): string {
+export function writeStoredZipFixture(files: Record<string, Buffer | string>): string {
   const dir = mkdtempSync(join(tmpdir(), "mistria-fyi-zip-"));
   onTestFinished(() => {
     rmSync(dir, { force: true, recursive: true });
