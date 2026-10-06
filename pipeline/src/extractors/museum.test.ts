@@ -48,7 +48,7 @@ describe("extractMuseum", () => {
     expect(localeNames.ja["archaeology/sets/aldarian"]).toBe("Aldarian");
   });
 
-  it("uses wing ID as name fallback", () => {
+  it("rejects a wing without a source name", () => {
     const fiddle = makeFiddle({
       museum_wings: {
         gems: {
@@ -59,16 +59,12 @@ describe("extractMuseum", () => {
       },
     });
 
-    expect(extractMuseum(fiddle, localizer).museum).toEqual({
-      gems: {
-        sets: {
-          rubies: { items: ["ruby"] },
-        },
-      },
-    });
+    expect(() => extractMuseum(fiddle, localizer)).toThrow(
+      "Expected nonempty string for museum_wings.gems.name in museum_wings.toml",
+    );
   });
 
-  it("uses set ID as set name fallback", () => {
+  it("rejects a set without a source name", () => {
     const fiddle = makeFiddle({
       museum_wings: {
         archaeology: {
@@ -80,13 +76,9 @@ describe("extractMuseum", () => {
       },
     });
 
-    expect(extractMuseum(fiddle, localizer).museum).toEqual({
-      archaeology: {
-        sets: {
-          fossils: { items: ["bone"] },
-        },
-      },
-    });
+    expect(() => extractMuseum(fiddle, localizer)).toThrow(
+      "Expected nonempty string for museum_wings.archaeology.sets.fossils.name in museum_wings.toml",
+    );
   });
 
   it("respects wing ordering from UI menus", () => {
