@@ -69,6 +69,7 @@ single-component row's marks disagree with its test files.
 | `spoiler-guard-dialog`       |        |     ✓      | Renders only while the guard holds a condition            |
 | `skill-row`                  |        |     ✓      | Level editing                                             |
 | `stepper`                    |        |     ✓      | Grouped controls                                          |
+| `dialog-close-button`        |        |     ✓      | Localized close control, dismisses the dialog             |
 | `expandable-section`         |        |     ✓      | Disclosure, IDs, nesting, reporting                       |
 | `spoiler`, `spoiler-section` |        | via parent | Through `tracker-row`                                     |
 | `sprite-slot`                |        | via parent | Through `tracker-row`                                     |
