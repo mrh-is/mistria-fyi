@@ -123,6 +123,7 @@
   "all_completed_message": "All done! Toggle \"Show completed\" to review.",
   "quest_type_fetch": "Fetch Quests",
   "quest_craving_name": "A Craving",
+  "quest_subtitle_with_recipe": "{villager} · {recipe}",
   "skills_ledger_aria": "Skills ledger",
   "skill_level_label": "{name} level",
   "skill_decrease_level": "Decrease {name} level",

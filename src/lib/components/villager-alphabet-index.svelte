@@ -1,13 +1,18 @@
 <script lang="ts">
   import { prefersReducedMotion } from "svelte/motion";
 
+  import { nameCollator } from "#lib/data/names.js";
   import * as m from "#lib/paraglide/messages.js";
+
+  import type { LocaleCode } from "#lib/types/locale.js";
 
   let {
     entries,
+    locale,
     reducedMotion,
   }: {
-    entries: { id: string; initial: string }[];
+    entries: { id: string; name: string }[];
+    locale: LocaleCode;
     reducedMotion?: boolean;
   } = $props();
 
@@ -15,16 +20,22 @@
   let lastScrubbedInitial = $state<string>();
   let scrubStartInitial = $state<string>();
   let suppressPointerClick = $state(false);
+  /**
+   * One button per initial, in the locale's collation order. Initials the collator treats as the
+   * same letter ("E" and "É" under base sensitivity) share the first one's button.
+   */
   let initials = $derived.by(() => {
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- short-lived projection local
-    const firstByInitial = new Map<string, string>();
+    const collator = nameCollator(locale);
+    const firsts: { id: string; initial: string }[] = [];
     for (const entry of entries) {
-      const initial = entry.initial.toUpperCase();
-      if (!firstByInitial.has(initial)) firstByInitial.set(initial, entry.id);
+      const [first] = entry.name;
+      if (first === undefined) continue;
+      const initial = first.toLocaleUpperCase(locale);
+      if (!firsts.some((existing) => collator.compare(existing.initial, initial) === 0)) {
+        firsts.push({ id: entry.id, initial });
+      }
     }
-    return [...firstByInitial.entries()]
-      .map(([initial, id]) => ({ id, initial }))
-      .toSorted((a, b) => a.initial.localeCompare(b.initial));
+    return firsts.toSorted((a, b) => collator.compare(a.initial, b.initial));
   });
 
   function activate({ id, initial }: { id: string; initial: string }): void {
