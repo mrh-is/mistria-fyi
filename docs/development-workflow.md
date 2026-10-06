@@ -516,6 +516,30 @@ the maintainer had pushed to while an agent was rebasing it. Take the SHA from t
 `gh pr view <n> --json headRefOid`) before rebasing. If the push is rejected, the branch moved: stop
 and report rather than fetching and retrying. Never use plain `--force`.
 
+### Set work aside without the shared stash
+
+Linked worktrees share one `refs/stash`, so stash indexes and the default `stash@{0}` point at
+whichever session stashed last. A bare `git stash apply` once restored a concurrent session's patch
+into the wrong worktree (#597). Set work aside with a temporary commit instead:
+
+```sh
+git add -A && git commit -m "WIP: set aside" --no-verify
+git reset --soft HEAD~1   # when resuming
+```
+
+If you must stash, give the entry a unique message, record its commit ID immediately, and address it
+only by that ID:
+
+```sh
+git stash push -u -m "<unique-tag>"
+git stash list --format='%H %gs' | grep '<unique-tag>'
+git stash show --stat <sha>   # confirm the file set before applying
+git stash apply <sha>
+```
+
+Never use bare `pop`, `apply`, or `drop`. To drop the entry afterward, re-find its current
+`stash@{n}` by tag first, since other sessions shift the indexes.
+
 ### Preview from a subagent worktree
 
 The Claude Code desktop app resolves `.claude/launch.json` against the session's primary working
