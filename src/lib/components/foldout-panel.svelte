@@ -54,8 +54,8 @@
   .foldout {
     max-height: min(72dvh, 620px);
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--hairline) 58%, transparent);
-    background: var(--paper-raised);
+    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 58%, transparent);
+    background: var(--color-paper-raised);
     box-shadow: var(--shadow-overlay);
   }
 
@@ -65,7 +65,7 @@
     align-items: center;
     justify-content: space-between;
     padding-left: 18px;
-    border-bottom: 1px solid color-mix(in srgb, var(--hairline) 30%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-ink-hairline) 30%, transparent);
   }
 
   .foldout__title {
@@ -87,11 +87,11 @@
     width: 44px;
     height: 44px;
     place-items: center;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .foldout__close:is(:hover, :focus-visible) {
-    color: var(--ink);
+    color: var(--color-ink);
     background: var(--accent);
     outline: 2px solid var(--primary);
     outline-offset: -4px;
