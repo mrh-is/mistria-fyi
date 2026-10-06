@@ -302,6 +302,21 @@ describe("transfer codec v11", () => {
     expect(await encodeTransferPayload(makeGoldenCompleted())).toBe(V11_GOLDEN_FIXTURE);
   });
 
+  it("encodes a state whose animal maps lack backfilled entries as no progress for them", async () => {
+    const sparse = makeGoldenCompleted();
+    const empty = makeGoldenCompleted();
+    for (const id of recordKeys(empty.animals)) {
+      empty.animals[id].clear();
+      Reflect.deleteProperty(sparse.animals, id);
+    }
+    for (const id of recordKeys(empty.animalCosmetics)) {
+      empty.animalCosmetics[id].clear();
+      Reflect.deleteProperty(sparse.animalCosmetics, id);
+    }
+
+    await expect(encodeTransferPayload(sparse)).resolves.toBe(await encodeTransferPayload(empty));
+  });
+
   it("decodes the immutable v11 golden payload without changing its meaning", async () => {
     const decoded = await decodeTransferPayload(V11_GOLDEN_FIXTURE);
 

@@ -3,10 +3,10 @@
 The device-transfer QR code contains the text `MFGT` (`TRANSFER_MAGIC`) followed by an unpadded
 base64url envelope. The marker, added in v11, identifies the code as a Mistria Field Guide transfer
 code, so an unrelated QR code is never mistaken for one from another version; earlier versions have
-no marker. The envelope’s first decoded byte is the transfer version. From v9, the next four bytes
-are a big-endian CRC-32 integrity checksum of the raw (pre-compression) payload; earlier versions
-have no checksum. The remaining bytes are a raw-DEFLATE stream containing version-specific packed
-progress fields. `TRANSFER_VERSION` in `src/lib/engine/transfer.ts` identifies the current encoder.
+no marker. The envelope’s first decoded byte is the transfer version, and the next four bytes are a
+big-endian CRC-32 integrity checksum of the raw (pre-compression) payload. The remaining bytes are a
+raw-DEFLATE stream containing the packed progress fields. `TRANSFER_VERSION` in
+`src/lib/engine/transfer.ts` identifies the current encoder.
 
 Transfers merge decoded progress additively. They are not backups and never replace the recipient’s
 state. The broader compatibility review for tracker-data changes is defined in
