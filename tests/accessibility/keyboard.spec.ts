@@ -144,17 +144,17 @@ test.describe("keyboard and focus accessibility", () => {
 
     await page.mouse.move(dBox.x + 12, dBox.y + dBox.height / 2);
     await page.mouse.down();
-    await expect(initialD).toHaveAttribute("data-active", "true");
+    await expect(initialD).toHaveAttribute("data-scrub-target", "true");
     await page.mouse.move(tBox.x + 12, tBox.y + tBox.height / 2, {
       steps: 8,
     });
     await expect(focusedVillagerRecord(page, "t")).toHaveCount(1);
-    await expect(initialD).toHaveAttribute("data-active", "false");
-    await expect(initialT).toHaveAttribute("data-active", "true");
+    await expect(initialD).toHaveAttribute("data-scrub-target", "false");
+    await expect(initialT).toHaveAttribute("data-scrub-target", "true");
 
     await page.mouse.up();
     await expect(focusedVillagerRecord(page, "t")).toHaveCount(1);
-    await expect(initialT).toHaveAttribute("data-active", "false");
+    await expect(initialT).toHaveAttribute("data-scrub-target", "false");
   });
 
   test("specialized numeric records support direct keyboard editing", async ({ page }) => {

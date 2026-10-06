@@ -19,8 +19,8 @@ describe("renown presentation", () => {
   ])("derives rank at $level from inclusive ranges", ({ index, level, span, within }) => {
     const result = getRenownPresentation(level, ranks);
     expect(result.currentRankIndex).toBe(index);
-    expect(result.rankSpan).toBe(span);
-    expect(result.withinRank).toBe(within);
+    expect(result.rankLevelSpan).toBe(span);
+    expect(result.levelsIntoRank).toBe(within);
   });
 
   it("distinguishes completed, current, and upcoming ranks", () => {

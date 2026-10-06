@@ -145,7 +145,7 @@
 {#if toolbar}
   {#key pathname}
     <FeedbackPanel
-      accent={toolbarAccent}
+      accentColor={toolbarAccent}
       open={activePanel === "feedback"}
       onClose={closePanel}
       pickerEnabled
@@ -256,10 +256,10 @@
   {#if activePanel === "settings" || activePanel === "visibility"}
     <PanelOverlay
       bind:element={panelElement}
+      animateOut
       closeLabel={m.toolbar_close_panel()}
       onClose={closePanel}
       style="--primary: {toolbarAccent}; --ring: {toolbarAccent}"
-      outro
     >
       {#if activePanel === "settings"}
         <FoldoutPanel

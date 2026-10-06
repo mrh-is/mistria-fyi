@@ -12,16 +12,16 @@
   </header>
   <div class="stripe-scale">
     <CategoryStripe
+      categoryTotal={total}
       color="fg-green"
       completed={1416}
       completedLabel="??"
       description={m.og_share_description()}
+      filteredTotal={total}
       href=""
       icon="all"
       mobileRibbon
       name={m.home_everything_label()}
-      {total}
-      trackedTotal={total}
     />
   </div>
 </div>

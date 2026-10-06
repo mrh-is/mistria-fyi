@@ -32,7 +32,7 @@
 </script>
 
 <div class="home-page">
-  <header class="home-header" style="--overall-progress: {overallPct}%">
+  <header class="home-header" style="--overall-progress-percent: {overallPct}%">
     <h1 class="flex min-w-0 items-center gap-2 font-brand text-2xl leading-none">
       <IconNotebook class="size-5 shrink-0 text-(--color-brand-mark)" />
       {m.app_name()}
@@ -99,7 +99,7 @@
 
   .overall-progress-rule i {
     display: block;
-    width: var(--overall-progress);
+    width: var(--overall-progress-percent);
     height: 100%;
     background: var(--color-home-accent);
     transition: width 300ms ease-out;

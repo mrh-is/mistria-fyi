@@ -206,7 +206,7 @@
                 completed: result.completed,
                 dimmed: !result.available,
               })}
-              lookups={baseLookups}
+              segmentLookups={baseLookups}
               name={result.detail ? `${label} ${result.detail}` : label}
               reportCategory={SEARCH_REPORT_CATEGORY[result.category]}
               reportEntityId={result.id}
@@ -226,7 +226,7 @@
         </div>
         <span
           class="search-result__category"
-          style="--result-category: var(--color-category-{result.category}, var(--color-ink-muted))"
+          style="--result-category-color: var(--color-category-{result.category}, var(--color-ink-muted))"
         >
           {categoryNameForKey(result.category, locale)}
         </span>
@@ -269,8 +269,8 @@
     flex-shrink: 0;
     padding: 4px 11px 4px 9px;
     color: var(--color-ink);
-    border-left: 2px solid var(--result-category);
-    background: color-mix(in srgb, var(--result-category) 9%, var(--color-paper));
+    border-left: 2px solid var(--result-category-color);
+    background: color-mix(in srgb, var(--result-category-color) 9%, var(--color-paper));
     clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 50%, 100% 100%, 0 100%);
     font-family: var(--font-annotation);
     font-size: var(--text-3xs);

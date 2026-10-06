@@ -8,28 +8,29 @@
 
   let {
     children,
-    dialog = true,
     headerActions,
     id,
+    isModal = true,
     onClose,
     title,
   }: {
     children: Snippet;
-    dialog?: boolean;
     headerActions?: Snippet;
     id: string;
+    /** Render as a focus-trapped modal dialog rather than a plain section. */
+    isModal?: boolean;
     onClose: () => void;
     title: string;
   } = $props();
 </script>
 
 <section
-  {@attach dialog ? trapFocus(onClose) : undefined}
+  {@attach isModal ? trapFocus(onClose) : undefined}
   class="foldout"
   {id}
   aria-labelledby="{id}-title"
-  role={dialog ? "dialog" : undefined}
-  aria-modal={dialog ? "true" : undefined}
+  role={isModal ? "dialog" : undefined}
+  aria-modal={isModal ? "true" : undefined}
 >
   <header class="foldout__header">
     <h2 class="foldout__title" id="{id}-title">{title}</h2>

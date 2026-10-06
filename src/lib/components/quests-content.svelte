@@ -132,7 +132,7 @@
             {#if row.kind === "craving"}
               <TrackerRow
                 display={questRowDisplay(row.completed ? "completed" : "none", !!row.villager)}
-                lookups={baseLookups}
+                segmentLookups={baseLookups}
                 name={row.displayName}
                 reportCategory="craving-quest"
                 reportEntityId={row.id}
@@ -147,7 +147,7 @@
               {@const nameVisible = isEntityNameVisible(row.visibility, userState.progressionState)}
               <TrackerRow
                 display={questRowDisplay(questState, nameVisible)}
-                lookups={{ ...baseLookups, entityVisibility: row.visibility }}
+                segmentLookups={{ ...baseLookups, entityVisibility: row.visibility }}
                 name={row.displayName}
                 reportCategory="quest"
                 reportEntityId={row.id}

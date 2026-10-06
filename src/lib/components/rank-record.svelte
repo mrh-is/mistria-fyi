@@ -24,21 +24,21 @@
   } = $props();
 
   let rankState = $derived(getRankState(currentLevel, rank));
-  let span = $derived(Math.max(rank.levels.end - rank.levels.start + 1, 1));
-  let within = $derived(Math.max(currentLevel - rank.levels.start, 0));
-  let fill = $derived.by(() => {
+  let rankLevelSpan = $derived(Math.max(rank.levels.end - rank.levels.start + 1, 1));
+  let levelsIntoRank = $derived(Math.max(currentLevel - rank.levels.start, 0));
+  let fillPercent = $derived.by(() => {
     if (rankState === "completed") return 100;
     if (rankState === "upcoming") return 0;
-    if (span === 1 && currentLevel >= rank.levels.end) return 100;
-    return Math.min((within / span) * 100, 100);
+    if (rankLevelSpan === 1 && currentLevel >= rank.levels.end) return 100;
+    return Math.min((levelsIntoRank / rankLevelSpan) * 100, 100);
   });
   let revealed = $state(false);
-  let hidden = $derived(spoilered && !revealed);
+  let isRedacted = $derived(spoilered && !revealed);
   const feedbackContext = getFeedbackContext();
   let reportable = $derived(
-    feedbackContext.reportable({
+    feedbackContext.reportableAttachment({
       category: "rank",
-      displayName: hidden ? m.tracker_row_spoilered_item() : name,
+      displayName: isRedacted ? m.tracker_row_spoilered_item() : name,
       page: page.url.pathname,
     }),
   );
@@ -49,12 +49,12 @@
   {@attach reportable}
   data-rank-record
   data-rank-state={rankState}
-  style="--rank-color: {color}; --rank-fill: {fill}%"
+  style="--town-rank-color: {color}"
 >
   <span class="rank-mark" aria-hidden="true">
     <Icon.ProgressMark type="town_rank" stroke={1.5} />
-    {#if fill > 0}
-      <span data-testid="rank-fill" style="clip-path: inset(0 {100 - fill}% 0 0)">
+    {#if fillPercent > 0}
+      <span data-testid="rank-fill" style="clip-path: inset(0 {100 - fillPercent}% 0 0)">
         <Icon.ProgressMark type="town_rank" fill={color} stroke={1.5} />
       </span>
     {/if}
@@ -62,7 +62,7 @@
 
   <span class="rank-copy">
     <strong>
-      {#if hidden}
+      {#if isRedacted}
         <Spoiler onReveal={() => (revealed = true)}>{name}</Spoiler>
       {:else}
         {name}
@@ -83,7 +83,9 @@
       {m.rank_state_completed()}
     </span>
   {:else if rankState === "current"}
-    <span class="rank-state"><strong>{m.rank_state_current()}</strong> {within} / {span}</span>
+    <span class="rank-state"
+      ><strong>{m.rank_state_current()}</strong> {levelsIntoRank} / {rankLevelSpan}</span
+    >
   {:else}
     <span class="rank-state">{m.rank_state_upcoming()}</span>
   {/if}
@@ -131,7 +133,7 @@
 
   .rank-mark > span {
     overflow: hidden;
-    color: var(--rank-color);
+    color: var(--town-rank-color);
   }
 
   .rank-copy {
