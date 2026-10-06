@@ -62,17 +62,17 @@ describe("/all page", () => {
   it("hides a completed category unless completed content is shown", () => {
     userState.setRenown(getMaxRenownLevel());
 
-    const hidden = renderToFragment(AllPage, { props });
+    const hidden = renderToFragmentWithFeedback(AllPage, { props });
     expect(hidden.container.querySelector("#category-renown")).toBeNull();
     expect(hidden.container.querySelector("#category-skills")).not.toBeNull();
 
     userState.toggleShowCompleted();
-    const shown = renderToFragment(AllPage, { props });
+    const shown = renderToFragmentWithFeedback(AllPage, { props });
     expect(shown.container.querySelector("#category-renown")).not.toBeNull();
   });
 
   it("labels each section by its header and tints it with the category color", () => {
-    const { container } = renderToFragment(AllPage, { props });
+    const { container } = renderToFragmentWithFeedback(AllPage, { props });
 
     for (const key of CATEGORY_KEYS) {
       const section = container.querySelector(`section[aria-labelledby="category-${key}"]`);
