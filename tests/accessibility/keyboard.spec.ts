@@ -6,13 +6,15 @@ import {
   initializeApplication,
   waitForRendering,
 } from "./support/application-state.js";
+import { requireBox } from "./support/boxes.js";
+import { critical } from "./support/tags.js";
 
-test.describe("@critical keyboard and focus accessibility", () => {
+test.describe("keyboard and focus accessibility", () => {
   test.beforeEach(async ({ page }) => {
     await initializeApplication(page, "light");
   });
 
-  test("toolbar controls follow a predictable focus order", async ({ page }) => {
+  test("toolbar controls follow a predictable focus order", critical, async ({ page }) => {
     await gotoApplication(page, "/");
     const tools = page.getByRole("navigation", { name: "Tracker tools" });
     await tools.getByRole("button", { name: "Quick settings" }).focus();
@@ -24,7 +26,7 @@ test.describe("@critical keyboard and focus accessibility", () => {
     await expect(tools.getByRole("button", { name: "Visibility filters" })).toBeFocused();
   });
 
-  test("feedback dialog contains focus and restores it on Escape", async ({ page }) => {
+  test("feedback dialog contains focus and restores it on Escape", critical, async ({ page }) => {
     await gotoApplication(page, "/");
     const trigger = page
       .getByRole("navigation", { name: "Tracker tools" })
@@ -79,7 +81,7 @@ test.describe("@critical keyboard and focus accessibility", () => {
     await expect(page).toHaveURL(/\/museum$/);
   });
 
-  test("row removal moves focus and Undo is keyboard operable", async ({ page }) => {
+  test("row removal moves focus and Undo is keyboard operable", critical, async ({ page }) => {
     await gotoApplication(page, "/almanac");
     await page.getByRole("button", { name: /^Artifacts, 0 of \d+ completed$/ }).click();
     const rows = page.getByRole("button", { name: /^Check (?!spoilered item)/ });
@@ -136,13 +138,13 @@ test.describe("@critical keyboard and focus accessibility", () => {
     await initialO.click();
     await expect(page.locator('[id^="villager-o"]:focus')).toHaveCount(1);
     await waitForRendering(page);
-    const dBox = await initialD.boundingBox();
-    const tBox = await initialT.boundingBox();
+    const dBox = await requireBox(initialD);
+    const tBox = await requireBox(initialT);
 
-    await page.mouse.move((dBox?.x ?? 0) + 12, (dBox?.y ?? 0) + (dBox?.height ?? 0) / 2);
+    await page.mouse.move(dBox.x + 12, dBox.y + dBox.height / 2);
     await page.mouse.down();
     await expect(initialD).toHaveAttribute("data-active", "true");
-    await page.mouse.move((tBox?.x ?? 0) + 12, (tBox?.y ?? 0) + (tBox?.height ?? 0) / 2, {
+    await page.mouse.move(tBox.x + 12, tBox.y + tBox.height / 2, {
       steps: 8,
     });
     await expect(page.locator('[id^="villager-t"]:focus')).toHaveCount(1);

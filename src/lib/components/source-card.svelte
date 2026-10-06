@@ -22,7 +22,7 @@
   }
 </script>
 
-<div class="source-card">
+<div class="source-card" data-testid="source-card">
   {#each sources as source, i (i)}
     <div class="source-card__line" data-source-type={source.type}>
       <Icon.Source type={source.type} class="source-card__icon" />

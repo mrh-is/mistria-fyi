@@ -25,7 +25,11 @@ import {
   legacyAvailabilityWindows,
 } from "#lib/types/availability.js";
 import { SEASONS, VILLAGER_RELATIONSHIPS, WEATHERS } from "#lib/types/tracker-data.js";
-import { CHILD_CHOICES, QUEST_STATES } from "#lib/types/user-progress.js";
+import {
+  CHILD_CHOICES,
+  CURRENT_SERIALIZATION_VERSION,
+  QUEST_STATES,
+} from "#lib/types/user-progress.js";
 import { getOrCreate, recordEntries, recordKeys } from "#lib/utils.js";
 import { tryGetItem, trySetItem } from "#lib/utils/local-storage.js";
 
@@ -81,7 +85,7 @@ export interface UserState {
 
 // ─── Serialization ──────────────────────────────────────────────────
 
-interface SerializedState {
+export interface SerializedState {
   availabilityMode?: LegacyAvailabilityMode;
   availabilityWindows?: AvailabilityWindow[];
   completed: {
@@ -119,7 +123,6 @@ interface SerializedState {
 export const PERSIST_DEBOUNCE_MS = 300;
 const STORAGE_KEY = "mistria-fyi-v1";
 const QUARANTINE_KEY = `${STORAGE_KEY}-quarantine`;
-const CURRENT_SERIALIZATION_VERSION = "2";
 const SUPPORTED_SERIALIZATION_VERSIONS = new Set(["1", CURRENT_SERIALIZATION_VERSION]);
 
 const VALID_CHILD_CHOICES = new Set<string>(CHILD_CHOICES);
