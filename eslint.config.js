@@ -7,10 +7,11 @@ import { loadConfig } from "@sveltejs/load-config";
 import svelte from "eslint-plugin-svelte";
 import { defineConfig, globalIgnores } from "eslint/config";
 import globals from "globals";
+import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import ts from "typescript-eslint";
 
-import noHardcodedUiText from "./eslint-rules/no-hardcoded-ui-text.js";
+import noHardcodedUiText from "./eslint-rules/no-hardcoded-ui-text.ts";
 // Node strips the types when it imports this TypeScript module.
 import noRawInternalHref from "./eslint-rules/no-raw-internal-href.ts";
 
@@ -89,6 +90,14 @@ const localizedFiles = [
   "src/routes/data/transfer-card.svelte",
   "src/routes/privacy/+page.svelte",
 ];
+
+// A typo here would silently disable the rule for that file, so fail loudly instead.
+const missingLocalizedFiles = localizedFiles.filter(
+  (file) => !existsSync(fileURLToPath(new URL(file, import.meta.url))),
+);
+if (missingLocalizedFiles.length > 0) {
+  throw new Error(`localizedFiles lists missing paths: ${missingLocalizedFiles.join(", ")}`);
+}
 
 export default defineConfig(
   includeIgnoreFile(gitignorePath),
