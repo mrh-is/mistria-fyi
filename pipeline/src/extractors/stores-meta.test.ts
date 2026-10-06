@@ -31,7 +31,7 @@ describe("extractStoresMeta", () => {
 
     const { localeNames, stores } = extractStoresMeta(fiddle, localizer);
     expect(stores).toEqual({
-      general: { article: "the", upgradeAction: "repairing" },
+      general: { article: "the", upgradeAction: "repair" },
       merri: {},
     });
     expect(localeNames.ja["general" as StoreId]).toBe("General Store");
@@ -45,7 +45,7 @@ describe("extractStoresMeta", () => {
     });
 
     expect(extractStoresMeta(fiddle, localizer).stores).toEqual({
-      general: { article: "the", upgradeAction: "repairing" },
+      general: { article: "the", upgradeAction: "repair" },
     });
   });
 
@@ -94,7 +94,7 @@ describe("extractStoresMeta", () => {
     const { stores } = extractStoresMeta(fiddle, localizer);
     expect(stores["general" as StoreId]).toEqual({
       article: "the",
-      upgradeAction: "repairing",
+      upgradeAction: "repair",
     });
     expect(stores["inn" as StoreId]).toEqual({ article: "the" });
   });

@@ -55,7 +55,6 @@ const BASE_LOOKUPS: SegmentLookups = {
       name: "Deep Earth",
     },
   ],
-  bundleNames: {},
   categoryVisibility: {},
   entityVisibility: undefined,
   festivals: {},
@@ -84,7 +83,7 @@ const BASE_LOOKUPS: SegmentLookups = {
     ["general" as StoreId]: {
       article: "the" as const,
       name: "General Store",
-      upgradeAction: "repairing",
+      upgradeAction: "repair",
     },
     ["inn" as StoreId]: { article: "the" as const, name: "Sleeping Dragon Inn" },
   },
@@ -476,7 +475,7 @@ describe("buildSourceSegments — simple types", () => {
     const source: Source = {
       type: "upgrade",
       storeId: "carpenter" as StoreId,
-      upgradeName: "stairs",
+      upgradeId: "stairs",
     };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Upgrade your home a fourth time"]);
   });
@@ -485,7 +484,7 @@ describe("buildSourceSegments — simple types", () => {
     const source: Source = {
       type: "upgrade",
       storeId: "carpenter" as StoreId,
-      upgradeName: "farm_bridge",
+      upgradeId: "farm_bridge",
     };
     expect(buildSourceSegments(source, BASE_LOOKUPS)).toEqual(["Expand your farm"]);
   });
@@ -564,6 +563,7 @@ describe("buildSourceSegments — scroll_bundle", () => {
         type: "questCompleted",
         questId: "repair_the_general_store" as QuestId,
       },
+      itemNames: { ["fall_crop_sign_scroll_bundle" as ItemId]: "Fall Crop Sign Scroll Bundle" },
       storeVisibility: {
         ["general" as StoreId]: {
           type: "questCompleted",
@@ -573,7 +573,7 @@ describe("buildSourceSegments — scroll_bundle", () => {
     };
     const source: Source = {
       type: "scroll_bundle",
-      bundleName: "Fall Crop Sign Scroll Bundle",
+      bundleItemId: "fall_crop_sign_scroll_bundle" as ItemId,
       storeId: "general" as StoreId,
       visibility: sourceVisibility,
     };
@@ -1256,7 +1256,7 @@ describe("buildSourceSegments — localized rendering", () => {
           ["general" as StoreId]: {
             article: "the" as const,
             name: storeName,
-            upgradeAction: "repairing",
+            upgradeAction: "repair",
           },
         },
         storeVisibility: { ["general" as StoreId]: { type: "questCompleted", questId } },

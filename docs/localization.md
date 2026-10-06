@@ -147,12 +147,20 @@ A store's availability qualifier is a slot, not a suffix. `buildStoreQualifier` 
 `source_scroll_bundle_qualified` messages place it: in parentheses after the store in English, ahead
 of the verb in Japanese, Korean, & Chinese.
 
-Most names come from game-translated chunks: monsters use their `pets/skins` family name plus a
-variant message, farm animals use `animals` `<id>/core`, stations are items, and museum wings use
-`museum_wings`. Location & water names have no extracted translations yet, so `source-names.ts` maps
-them to interim machine-translated `source_location_*` & `source_water_*` messages. Scroll bundles
-are keyed by English `bundleName` through a static id map. Replace these with pipeline extraction
-once the game's translation keys are read from `assets/localization/`.
+Most names come from game-translated chunks: farm animals use `animals` `<id>/core`, stations are
+items, museum wings use `museum_wings`, and locations use `locations` (`locations/<id>/name`). The
+game leaves some source names untranslated or unnamed, so `source-names.ts` fills the gaps:
+
+- **Monsters:** English reads the `monsters` chunk, named after each monster's `pets.toml` variant
+  (`pipeline/src/extractors/monsters.ts` holds the reviewed mapping). The game never translates
+  those names, so other locales, and the three monsters with no pet variant, compose the
+  `pets/skins` family name with a machine-translated `source_monster_variant_*` qualifier.
+- **Locations without a game name** (`farm`, `mines`, & `dungeon`) and **water types** use interim
+  machine-translated `source_location_*` & `source_water_*` messages.
+
+Scroll bundle sources carry the bundle's `bundleItemId` and render through the `items` chunk.
+Upgrade sources carry a closed `UpgradeId`, and a store's `upgradeAction` is a `StoreUpgradeAction`
+key; each maps to a Paraglide message.
 
 ## Falling back to English
 

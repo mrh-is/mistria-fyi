@@ -1,3 +1,4 @@
+import { UPGRADE_IDS } from "#lib/types/acquisition.js";
 import { SEASONS, WEATHERS } from "#lib/types/tracker-data.js";
 
 import { compareStrings } from "../ordering.js";
@@ -161,14 +162,14 @@ const SOURCE_FIELDS = {
   recipe: ["method", "recipeId"],
   renown: ["level"],
   ritual_chamber: ["perkId"],
-  scroll_bundle: ["bundleName", "storeId"],
+  scroll_bundle: ["bundleItemId", "storeId"],
   ship_item: ["triggerItemId"],
   spouseGift: ["villagerId"],
   station: ["stationId"],
   store: ["storeId"],
   treasure_chest: ["tier"],
   tree: ["saplingItemId"],
-  upgrade: ["storeId", "upgradeName"],
+  upgrade: ["storeId", "upgradeId"],
   wedding: [],
   wishing_well: ["cost"],
 } as const satisfies Record<Source["type"], readonly string[]>;
@@ -1247,8 +1248,7 @@ function validateVariantFields(
       requiredNumbers.push("level");
       break;
     case "scroll_bundle":
-      requiredStrings.push("bundleName");
-      stringReferences.push(["storeId", "store"]);
+      stringReferences.push(["bundleItemId", "item"], ["storeId", "store"]);
       break;
     case "spouseGift":
       stringReferences.push(["villagerId", "villager"]);
@@ -1267,7 +1267,15 @@ function validateVariantFields(
       break;
     case "upgrade":
       stringReferences.push(["storeId", "store"]);
-      requiredStrings.push("upgradeName");
+      if (!(UPGRADE_IDS as readonly unknown[]).includes(source.upgradeId)) {
+        malformed(
+          diagnostics,
+          targetId,
+          `${fieldPath}.upgradeId`,
+          "Expected an upgrade id",
+          source,
+        );
+      }
       break;
     case "wishing_well":
       break;

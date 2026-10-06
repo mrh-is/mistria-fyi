@@ -6,7 +6,9 @@ import type {
   DateId,
   FestivalId,
   ItemId,
+  LocationId,
   MinesBiomeId,
+  MonsterId,
   PerkId,
   PetCosmeticSetId,
   PetSkinId,
@@ -32,7 +34,9 @@ export const NAME_CHUNKS = [
   "dates",
   "festivals",
   "items",
+  "locations",
   "mines",
+  "monsters",
   "museum_wings",
   "perks",
   "pets/cosmetic_sets",
@@ -56,7 +60,10 @@ interface LocalizedCategoryId {
   dates: DateId;
   festivals: FestivalId;
   items: ItemId;
+  locations: LocationId;
   mines: MinesBiomeId;
+  /** English-only: the game names monsters only in untranslated `pets.toml` fields. */
+  monsters: MonsterId;
   museum_wings: string;
   perks: PerkId;
   "pets/cosmetic_sets": PetCosmeticSetId;

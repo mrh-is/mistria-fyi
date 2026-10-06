@@ -414,13 +414,13 @@ function collectHardcodedSources(
 
   const hardcoded: [string, AcquisitionSource][] = [
     ["water_sprite_statue_v1", { type: "beach_cave_chest" }],
-    ["stairs", { type: "upgrade", storeId: "carpenter" as StoreId, upgradeName: "House Stairs" }],
+    ["stairs", { type: "upgrade", storeId: "carpenter" as StoreId, upgradeId: "stairs" }],
     [
       "farm_bridge",
       {
         type: "upgrade",
         storeId: "carpenter" as StoreId,
-        upgradeName: "Starter Farm Bridge",
+        upgradeId: "farm_bridge",
       },
     ],
     ["engagement_ring", { type: "engagement" }],
@@ -774,20 +774,16 @@ function collectScrollBundleSources(
   const result = new Map<string, AcquisitionSource[]>();
 
   const bundleIdToSetTag = new Map<string, string>();
-  const bundleIdToName = new Map<string, string>();
   forEachItem(fiddle, (itemId, item) => {
     const setUnlock = item.set_unlock as string | undefined;
-    if (setUnlock) {
-      bundleIdToSetTag.set(itemId, setUnlock);
-      bundleIdToName.set(itemId, (item.name as string | undefined) ?? itemId);
-    }
+    if (setUnlock) bundleIdToSetTag.set(itemId, setUnlock);
   });
 
   if (bundleIdToSetTag.size === 0) return result;
 
   const setTagToStore = new Map<
     string,
-    { bundleName: string; storeId: string; visibility: VisibilityCondition }
+    { bundleItemId: ItemId; storeId: string; visibility: VisibilityCondition }
   >();
   forEachStockEntry(fiddle, (storeId, entry) => {
     const entryObject =
@@ -796,13 +792,12 @@ function collectScrollBundleSources(
     if (!itemId) return;
     const setTag = bundleIdToSetTag.get(itemId);
     if (!setTag) return;
-    const bundleName = bundleIdToName.get(itemId) ?? itemId;
     const visibility = resolveStockVisibility(
       entryObject?.requirements,
       `${storeId}/${itemId}`,
       ctx,
     );
-    const listing = { bundleName, storeId, visibility };
+    const listing = { bundleItemId: itemId as ItemId, storeId, visibility };
     const existing = setTagToStore.get(setTag);
     // A set tag stocked twice must agree; otherwise stock order would silently pick the store.
     if (existing && JSON.stringify(existing) !== JSON.stringify(listing)) {
@@ -831,7 +826,7 @@ function collectScrollBundleSources(
           result.set(recipeId, [
             {
               type: "scroll_bundle",
-              bundleName: info.bundleName,
+              bundleItemId: info.bundleItemId,
               storeId: info.storeId as StoreId,
               ...(info.visibility.type === "always" ? {} : { visibility: info.visibility }),
             },

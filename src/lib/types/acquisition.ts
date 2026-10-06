@@ -104,14 +104,14 @@ export type Source =
         | { type: "recipe"; method: ProductionMethod; recipeId: RecipeId }
         | { type: "renown"; level: number }
         | { type: "ritual_chamber"; perkId: PerkId }
-        | { type: "scroll_bundle"; bundleName: string; storeId: StoreId }
+        | { type: "scroll_bundle"; bundleItemId: ItemId; storeId: StoreId }
         | { type: "ship_item"; triggerItemId: ItemId }
         | { type: "spouseGift"; villagerId: VillagerId }
         | { type: "station"; stationId: StationId }
         | { type: "store"; storeId: StoreId }
         | { type: "treasure_chest"; tier: TreasureChestTierId }
         | { type: "tree"; saplingItemId: ItemId }
-        | { type: "upgrade"; storeId: StoreId; upgradeName: string }
+        | { type: "upgrade"; storeId: StoreId; upgradeId: UpgradeId }
         | { type: "wedding" }
         | { type: "wishing_well"; cost: number }
       ))
@@ -122,4 +122,7 @@ export interface SourceDetails {
 }
 export type SourceTuple = NonEmptyArray<Source>;
 export type StationId = string & { readonly __brand: "StationId" };
+/** Purchasable home & farm upgrades; each id is also the upgraded item's id. */
+export const UPGRADE_IDS = ["adept_kitchen", "cozy_kitchen", "farm_bridge", "stairs"] as const;
+export type UpgradeId = (typeof UPGRADE_IDS)[number];
 export type WaterType = string & { readonly __brand: "WaterType" };

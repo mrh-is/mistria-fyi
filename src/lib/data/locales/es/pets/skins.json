@@ -1,16 +1,16 @@
 {
-  "sapling": "Aspecto de mascota: retoño",
+  "sapling": "Retoño",
   "mushroom": "Mushroom",
   "rockclod": "Rockclod",
   "oreclod": "Oreclod",
-  "stalagmite": "Aspecto de mascota: estalagmita",
-  "lava_cat": "Aspecto de mascota: gato de lava",
+  "stalagmite": "Estalagmita",
+  "lava_cat": "Gato de lava",
   "void_cat": "Void Cat",
-  "flame_spirit": "Aspecto de mascota: espíritu del fuego",
-  "rock_stack": "Aspecto de mascota: montón de piedras",
-  "griffin_statue": "Aspecto de mascota: estatua de grifo",
-  "flying_tome": "Aspecto de mascota: tomo volador",
-  "essence_bat": "Aspecto de mascota: esenciélago",
-  "enchantern": "Aspecto de mascota: lectrolámpara",
-  "mimic": "Aspecto de mascota: mímico"
+  "flame_spirit": "Espíritu del fuego",
+  "rock_stack": "Montón de piedras",
+  "griffin_statue": "Estatua de grifo",
+  "flying_tome": "Tomo volador",
+  "essence_bat": "Esenciélago",
+  "enchantern": "Lectrolámpara",
+  "mimic": "Mímico"
 }

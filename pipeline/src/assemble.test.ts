@@ -63,6 +63,7 @@ function syntheticFiddle() {
       },
     },
     object_prototypes: {},
+    pets: { variants: {} },
     quests: {
       heart_quests: {
         adeline_pregnancy_request: {
@@ -156,6 +157,8 @@ describe("assembleTrackerData", () => {
       "recipes",
       "pets/skins",
       "treasure-chest-tiers",
+      "locations",
+      "monsters",
     ]);
     const villagers = localeChunks.find((chunk) => chunk.category === "villagers");
     expect(villagers?.byLocale.ja.adeline).toBe("アデリン");
