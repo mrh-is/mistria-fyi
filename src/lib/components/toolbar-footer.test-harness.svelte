@@ -13,10 +13,11 @@
     metadata = { description: "Test page.", title: "Test" },
   }: { feedbackContext: FeedbackContext; metadata?: PageMetadataInput } = $props();
 
-  let overlayActive = $state(false);
+  let toolbarFooter = $state<{ isOverlayActive: () => boolean }>();
+  let overlayActive = $derived(toolbarFooter?.isOverlayActive() ?? false);
 
   setFeedbackContext(untrack(() => feedbackContext));
 </script>
 
-<ToolbarFooter metadata={pageMetadata(metadata)} bind:overlayActive />
+<ToolbarFooter metadata={pageMetadata(metadata)} bind:this={toolbarFooter} />
 <p data-testid="overlay-state">{overlayActive ? "active" : "inactive"}</p>

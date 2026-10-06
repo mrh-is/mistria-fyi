@@ -4,7 +4,7 @@
   import IconRotate from "@tabler/icons-svelte-runes/icons/rotate";
   import IconSearch from "@tabler/icons-svelte-runes/icons/search";
   import IconSettings from "@tabler/icons-svelte-runes/icons/settings";
-  import { flushSync, tick } from "svelte";
+  import { flushSync, onDestroy, tick } from "svelte";
   import { prefersReducedMotion } from "svelte/motion";
   import { fade } from "svelte/transition";
 
@@ -21,6 +21,7 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
+  import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
 
   import type { PageMetadata } from "#lib/data/page-metadata.js";
@@ -29,13 +30,7 @@
 
   // The root layout resolves `metadata` (including the error-page fallback) and passes it down, so
   // this never reads `page.data.metadata`, which is absent when no `+page.ts` load ran.
-  let {
-    metadata,
-    overlayActive = $bindable(false),
-  }: {
-    metadata: PageMetadata;
-    overlayActive?: boolean;
-  } = $props();
+  let { metadata }: { metadata: PageMetadata } = $props();
 
   const feedbackContext = getFeedbackContext();
   // Route matching below is keyed by the unprefixed route, not the locale-prefixed browser URL.
@@ -44,49 +39,57 @@
   let toolbarAccent = $derived(`var(--${metadata.accent})`);
 
   let activePanel = $state<ActivePanel>(null);
-  let previousPathname = $state("");
-  let previousPanel = $state<ActivePanel>(null);
   let panelElement = $state<HTMLElement | null>(null);
   let panelOpener: HTMLElement | null = null;
 
-  $effect(() => {
-    const currentPathname = pathname;
-    if (previousPathname && currentPathname !== previousPathname) activePanel = null;
-    previousPathname = currentPathname;
+  afterNavigate(({ shallow }) => {
+    if (shallow) return;
+    closePanel(false);
+    clearTimeout(debounceTimer);
+    feedbackContext.reset();
   });
+
+  export function isOverlayActive(): boolean {
+    return activePanel !== null || feedbackContext.isPicking;
+  }
 
   async function afterTick(run: () => void): Promise<void> {
     await tick();
     run();
   }
 
-  $effect(() => {
-    if (activePanel !== null && activePanel !== "feedback" && activePanel !== previousPanel) {
-      void afterTick(() => panelElement?.querySelector<HTMLElement>("button, a")?.focus());
-    } else if (activePanel === null && previousPanel !== null) {
-      const focusTarget = panelOpener;
-      panelOpener = null;
+  function closePanel(restoreFocus = true): void {
+    if (activePanel === null) return;
+    activePanel = null;
+    const focusTarget = panelOpener;
+    panelOpener = null;
+    if (restoreFocus) {
       void afterTick(() => {
-        if (focusTarget?.isConnected) focusTarget.focus();
+        if (activePanel === null && !toolbarState.searchOpen && focusTarget?.isConnected) {
+          focusTarget.focus();
+        }
       });
     }
-    previousPanel = activePanel;
-  });
-
-  function closePanel(): void {
-    activePanel = null;
   }
 
   function togglePanel(panel: Exclude<ActivePanel, null>): void {
-    if (activePanel !== panel) {
-      panelOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (activePanel === panel) {
+      closePanel();
+      return;
     }
-    activePanel = activePanel === panel ? null : panel;
+    panelOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    activePanel = panel;
+    if (panel !== "feedback") {
+      void afterTick(() => {
+        if (activePanel === panel) panelElement?.querySelector<HTMLElement>("button, a")?.focus();
+      });
+    }
   }
 
   let searchInput = $state<HTMLInputElement | null>(null);
   let searchOpener: HTMLElement | null = null;
-  let debounceTimer: ReturnType<typeof setTimeout>;
+  let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+  onDestroy(() => clearTimeout(debounceTimer));
 
   function closeSearch(): void {
     clearTimeout(debounceTimer);
@@ -117,10 +120,6 @@
     searchInput?.focus();
   }
 
-  $effect(() => {
-    overlayActive = activePanel !== null || feedbackContext.isPicking;
-  });
-
   let availabilityIsDefault = $derived(
     userState.state.availabilityWindows.length === 2 &&
       userState.state.availabilityWindows[0] === "now" &&
@@ -134,32 +133,29 @@
     userState.setAvailabilityWindows(DEFAULT_AVAILABILITY_WINDOWS);
     if (userState.state.showCompleted) userState.toggleShowCompleted();
     toolbarState.resetSourceFilters();
+    announceFilters();
   }
   let filterStatus = $state("");
-  let previousFilterState = $state("");
-
-  $effect(() => {
-    const currentFilterState = `${userState.state.availabilityWindows.join(",")}:${userState.state.showCompleted}:${toolbarState.sourceFilterActive}`;
-    if (previousFilterState && currentFilterState !== previousFilterState) {
-      filterStatus = filtersActive ? m.toolbar_filters_applied() : m.toolbar_filters_cleared();
-    }
-    previousFilterState = currentFilterState;
-  });
+  function announceFilters(): void {
+    filterStatus = filtersActive ? m.toolbar_filters_applied() : m.toolbar_filters_cleared();
+  }
 </script>
 
 {#if toolbar}
-  <FeedbackPanel
-    accent={toolbarAccent}
-    {feedbackContext}
-    open={activePanel === "feedback"}
-    onclose={closePanel}
-    pickerEnabled
-    resetKey={pathname}
-  />
+  {#key pathname}
+    <FeedbackPanel
+      accent={toolbarAccent}
+      {feedbackContext}
+      open={activePanel === "feedback"}
+      onclose={closePanel}
+      pickerEnabled
+      restoreFocus={activePanel === null && !toolbarState.searchOpen}
+    />
+  {/key}
 
   <nav
     aria-label={m.toolbar_nav_label()}
-    class="pointer-events-none fixed right-0 bottom-safe-offset-3 left-0 z-20 mx-auto max-w-lg px-3"
+    class="pointer-events-none fixed right-0 bottom-safe-offset-3 left-0 z-[var(--z-toolbar)] mx-auto max-w-lg px-3"
     style="--primary: {toolbarAccent}; --ring: {toolbarAccent}"
     hidden={feedbackContext.isPicking}
   >
@@ -287,7 +283,7 @@
               </button>
             {/if}
           {/snippet}
-          <VisibilityPanel showSeasonality={toolbar.worldState} />
+          <VisibilityPanel showSeasonality={toolbar.worldState} onFilterChange={announceFilters} />
         </FoldoutPanel>
       {/if}
     </PanelOverlay>

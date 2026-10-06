@@ -44,7 +44,8 @@
 
   let metadata = $derived(page.status >= 400 ? errorPageMetadata(page.status) : page.data.metadata);
   let hasToolbar = $derived(metadata.toolbar !== "hidden");
-  let overlayActive = $state(false);
+  let toolbarFooter = $state<{ isOverlayActive: () => boolean }>();
+  let overlayActive = $derived(toolbarFooter?.isOverlayActive() ?? false);
   let fontStylesheet = $derived(localeFontStylesheet(page.data.locale));
 
   // The server stamps `<html lang>`/`dir` for the first paint; a client-side locale switch (the
@@ -92,7 +93,7 @@
     {/key}
   </div>
 
-  <ToolbarFooter {metadata} bind:overlayActive />
+  <ToolbarFooter {metadata} bind:this={toolbarFooter} />
 
   <Toaster position="bottom-center" offset="calc(56px + env(safe-area-inset-bottom))" />
 

@@ -8,7 +8,9 @@ foldout handler (#445).
 ## Decision
 
 Use one Svelte attachment for keyboard containment & Escape, and a shared overlay component for the
-scrim & positioned wrapper. Existing callers continue to own initial focus & restoration. A stack
+scrim & positioned wrapper. Callers choose initial focus & restoration policy through the overlay’s
+optional focus attachment. #446 revisits the initial implementation because DOM attachment cleanup
+replaces previous-value effects while retaining picker suspension & nested-dialog behavior. A stack
 limits nested attachments to the innermost panel; prevented events remain owned by bits-ui dialogs.
 
 ## Alternatives
@@ -19,5 +21,5 @@ they are.
 
 ## Revisit if
 
-The panels adopt the existing bits-ui dialog presentation, or new modal behavior requires shared
-initial focus & restoration.
+The panels adopt the existing bits-ui dialog presentation, or another consumer needs a shared
+initial-focus & restoration policy instead of caller-specific lifecycle attachments.

@@ -213,6 +213,7 @@
         : Math.min(renderedSectionCounts[id] ?? renderTarget, renderTarget)}
     {@const displayItems = filteredItems.slice(0, renderedCount)}
     <ExpandableSection
+      {locale}
       count={scopedItems.filter(({ canonicalId }) => isItemCompleted(canonicalId)).length}
       forceOpen={!!nameFilter}
       name={getName("ui", id, locale)}

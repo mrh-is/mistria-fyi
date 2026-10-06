@@ -5,11 +5,13 @@
   import { trapFocus } from "#lib/attachments/trap-focus.js";
 
   import type { Snippet } from "svelte";
+  import type { Attachment } from "svelte/attachments";
 
   let {
     children,
     closeLabel,
     element = $bindable(null),
+    focus,
     label,
     onclose,
     outro = false,
@@ -18,6 +20,7 @@
     children: Snippet;
     closeLabel: string;
     element?: HTMLElement | null;
+    focus?: Attachment<HTMLElement>;
     label?: string;
     onclose: () => void;
     outro?: boolean;
@@ -34,8 +37,9 @@
 ></button>
 <div
   bind:this={element}
+  {@attach focus}
   {@attach label ? trapFocus(onclose) : undefined}
-  class="fixed right-0 bottom-safe-offset-16 left-0 z-30 mx-auto max-w-lg px-3 outline-none"
+  class="fixed right-0 bottom-safe-offset-16 left-0 z-[var(--z-panel)] mx-auto max-w-lg px-3 outline-none"
   role={label ? "dialog" : undefined}
   aria-label={label}
   aria-modal={label ? "true" : undefined}
