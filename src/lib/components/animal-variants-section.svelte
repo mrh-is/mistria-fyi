@@ -36,7 +36,7 @@
   }
 
   function hasCompletedVariant(animalId: AnimalId, variantId: AnimalVariantId): boolean {
-    return userState.state.completed.animals[animalId].has(variantId);
+    return userState.state.completed.animals[animalId]?.has(variantId) ?? false;
   }
 
   function hasDisplayableVariant(animalId: AnimalId): boolean {
@@ -84,7 +84,7 @@
     if (userState.state.showSpoilers) return false;
 
     const completedVariants = userState.state.completed.animals[animalId];
-    if (completedVariants.has(variantId)) return false;
+    if (completedVariants?.has(variantId)) return false;
 
     const animal = trackerData.animals[animalId];
 
@@ -95,7 +95,7 @@
       wasThisVariantLastTier = foundThisVariant;
       for (const vid of Object.keys(tier)) {
         // If we find a completed one, this tier is unredacted
-        if (completedVariants.has(vid as AnimalVariantId)) return false;
+        if (completedVariants?.has(vid as AnimalVariantId)) return false;
         // If we find this variant, set a flag, and only check one more tier down
         if (vid === variantId) foundThisVariant = true;
       }

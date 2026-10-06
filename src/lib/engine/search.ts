@@ -140,7 +140,7 @@ const SEARCH_SOURCES: readonly SearchSource[] = [
             result: () => ({
               available: true,
               category: "animals",
-              completed: completed.animals[animalId].has(variantId),
+              completed: completed.animals[animalId]?.has(variantId) ?? false,
               detail: getName("animals", animalNameId(animalId, "core"), locale),
               id: `${animalId}:${variantId}`,
               name,
@@ -170,7 +170,7 @@ const SEARCH_SOURCES: readonly SearchSource[] = [
           result: () => ({
             available: true,
             category: "animals",
-            completed: completed.animalCosmetics[animalId].has(cosmeticId),
+            completed: completed.animalCosmetics[animalId]?.has(cosmeticId) ?? false,
             fullName,
             id: `${animalId}:${cosmeticId}`,
             name,

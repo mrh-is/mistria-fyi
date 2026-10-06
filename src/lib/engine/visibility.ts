@@ -29,9 +29,9 @@ export interface UserProgressionState {
   reachedSeason: Season;
   renown: number;
   showSpoilers: boolean;
-  skillLevels: Readonly<Record<SkillId, number>>;
+  skillLevels: Readonly<Partial<Record<SkillId, number>>>;
   unlockedPerks: ReadonlySet<PerkId>;
-  villagerLevels: Record<VillagerId, number>;
+  villagerLevels: Partial<Record<VillagerId, number>>;
 }
 
 export function deriveProgressionState(
@@ -56,7 +56,7 @@ export function deriveProgressionState(
   }
 
   const storedLevels = computeStoredVillagerLevels(completed, trackerData);
-  const villagerLevels: Record<VillagerId, number> = {};
+  const villagerLevels: Partial<Record<VillagerId, number>> = {};
   for (const villagerId of villagerIds) {
     villagerLevels[villagerId] = knownVillagers.has(villagerId)
       ? (storedLevels[villagerId] ?? 0)
@@ -316,7 +316,7 @@ function satisfyConditionInDraft(
 function computeStoredVillagerLevels(
   completed: DeepReadonly<CompletedState>,
   trackerData: TrackerData,
-): Record<VillagerId, number> {
+): Partial<Record<VillagerId, number>> {
   const levels = { ...completed.villagerLevels };
   for (const [questId, state] of recordEntries(completed.questStates)) {
     if (state !== "completed") continue;
