@@ -1,12 +1,11 @@
 import * as m from "#lib/paraglide/messages.js";
-
 import {
   formatBiomeName,
   formatStoreName,
   withIndefiniteArticle,
   withoutDefiniteArticle,
-} from "./en-grammar.js";
-import { findBiome, requireEntry } from "./format.js";
+} from "#lib/utils/en-grammar.js";
+import { findBiome, requireEntry } from "#lib/utils/format.js";
 
 import type { AvailabilityCondition, ProductionMethod, Source } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -23,8 +22,7 @@ import type {
   WaterType,
 } from "#lib/types/tracker-data.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
-
-import type { NameLookup, RecipeSourceLookups } from "./format.js";
+import type { NameLookup, RecipeSourceLookups } from "#lib/utils/format.js";
 
 export type SegmentLookups = Pick<TrackerData, "categoryVisibility"> &
   RecipeSourceLookups & {

@@ -12,7 +12,7 @@ import type { ItemId, VillagerId } from "#lib/types/tracker-data.js";
 
 const showUndoToast = vi.hoisted(() => vi.fn());
 
-vi.mock("#lib/utils/undo-toast.js", () => ({ showUndoToast }));
+vi.mock("#lib/effects/undo-toast.js", () => ({ showUndoToast }));
 
 afterEach(() => {
   userState.resetAll();

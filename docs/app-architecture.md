@@ -32,6 +32,18 @@ from `src/lib/stores/`, `src/lib/components/`, or `src/lib/paraglide/`, even for
 build their inputs directly rather than driving the store. Service-worker cache code & update
 plumbing live in `src/lib/pwa/`; message labels & colors for the UI live in `src/lib/presentation/`.
 
+### Other `src/lib/` layers
+
+- **`sources/`** builds the localized source text for item rows (segments, name lookups, & the
+  hand-kept game tables behind them).
+- **`controllers/`** holds rune-backed controllers that components instantiate, such as the spoiler
+  guard & the leaving-row set.
+- **`effects/`** fires UI side effects: confetti & the undo toast.
+- **`utils/`** is for low-level helpers (formatting, records, localized links, storage access) that
+  any layer may import. oxlint's `no-restricted-imports` keeps it from importing components, stores,
+  or any of the layers above.
+- **`test-utils/`** holds helpers & harnesses that only tests import.
+
 - **Availability filtering** — determines which items/recipes/Villagers are visible based on season,
   weather, quest gates, and world state.
 - **Progress calculation** — computes completion counts and percentages from `CompletedState`.

@@ -4,8 +4,8 @@
   import SourceSegmentText from "#lib/components/source-segment-text.svelte";
 
   import type { DisplayBadges } from "#lib/engine/availability-condition.js";
+  import type { SourceSegment } from "#lib/sources/source-segments.js";
   import type { Source } from "#lib/types/acquisition.js";
-  import type { SourceSegment } from "#lib/utils/source-segments.js";
 
   let {
     sourceBadges,

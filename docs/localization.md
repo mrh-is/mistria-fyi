@@ -106,7 +106,7 @@ exists but was never awaited throws rather than silently degrading.
   `src/lib/data/page-load.ts`, which awaits the listed chunks in the locale the root layout resolved
   (never the URL: paraglide's `getLocaleForUrl` reports the base locale during SSR). The layout
   already awaits `ui` on every route, so pages don't list it. A page that renders source segments
-  also spreads `SEGMENT_LOOKUP_CATEGORIES` from `src/lib/utils/segment-lookups.ts`. If you add a
+  also spreads `SEGMENT_LOOKUP_CATEGORIES` from `src/lib/sources/segment-lookups.ts`. If you add a
   `getName()` call for a new category to a page's component tree, add the category to that route's
   list; the thrown error names the missing chunk.
 - **`/all`** awaits every category (`LOCALIZED_CATEGORIES`).

@@ -3,21 +3,21 @@
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
+  import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
+  import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
+  import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
+  import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isItemDimmed, isRowVisible, shouldCountItem } from "#lib/engine/availability.js";
   import { isEntityNameVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
+  import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { celebrate, celebrateCategory } from "#lib/utils/celebrate.js";
-  import { createLeavingSet } from "#lib/utils/leaving-set.svelte.js";
   import { recordEntries, recordValues } from "#lib/utils/record.js";
-  import { computeRedactedStoreIds } from "#lib/utils/redacted-stores.js";
-  import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
-  import { registerSourceFilters } from "#lib/utils/source-filter-registration.svelte.js";
-  import { createSpoilerGuard } from "#lib/utils/spoiler-guard.svelte.js";
-  import { showUndoToast } from "#lib/utils/undo-toast.js";
 
   import AllCompleted from "./all-completed.svelte";
 

@@ -3,7 +3,7 @@ import { tick } from "svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
-import { createSpoilerGuard } from "#lib/utils/spoiler-guard.svelte.js";
+import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
 
 afterEach(() => {
   cleanup();
