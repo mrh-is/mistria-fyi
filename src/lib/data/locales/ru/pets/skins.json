@@ -1,16 +1,16 @@
 {
-  "sapling": "Облик питомца: слизянка",
+  "sapling": "Слизянка",
   "mushroom": "Mushroom",
   "rockclod": "Rockclod",
   "oreclod": "Oreclod",
-  "stalagmite": "Облик питомца: сталагмит",
-  "lava_cat": "Облик питомца: лавакошка",
+  "stalagmite": "Сталагмит",
+  "lava_cat": "Лавакошка",
   "void_cat": "Void Cat",
-  "flame_spirit": "Облик питомца: дух огня",
-  "rock_stack": "Облик питомца: камнекубик",
-  "griffin_statue": "Облик питомца: статуя грифона",
-  "flying_tome": "Облик питомца: летающий фолиант",
-  "essence_bat": "Облик питомца: крылан эссенции",
-  "enchantern": "Облик питомца: фонарник",
-  "mimic": "Облик питомца: мимик"
+  "flame_spirit": "Дух огня",
+  "rock_stack": "Камнекубик",
+  "griffin_statue": "Статуя грифона",
+  "flying_tome": "Летающий фолиант",
+  "essence_bat": "Крылан эссенции",
+  "enchantern": "Фонарник",
+  "mimic": "Мимик"
 }
