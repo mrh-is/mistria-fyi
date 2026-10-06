@@ -41,10 +41,10 @@ export function filterAvailableItems(
   itemIds: ItemId[],
   sourceLookup: (id: ItemId) => Source[],
   worldState: WorldState,
-  selection: readonly AvailabilityWindow[],
+  windows: readonly AvailabilityWindow[],
 ): ItemId[] {
-  if (AVAILABILITY_WINDOWS.every((window) => selection.includes(window))) return itemIds;
-  return itemIds.filter((id) => isItemAvailable(sourceLookup(id), worldState, selection));
+  if (AVAILABILITY_WINDOWS.every((window) => windows.includes(window))) return itemIds;
+  return itemIds.filter((id) => isItemAvailable(sourceLookup(id), worldState, windows));
 }
 
 /**
@@ -125,7 +125,7 @@ export function isSourceAvailable(
  * Completed items are always in scope; incomplete items must pass availability.
  * Ignores showCompleted and recentlyCompleted — those affect rendering only.
  */
-export function shouldCountItem(
+export function isInProgressScope(
   sources: Source[],
   isCompleted: boolean,
   worldState: WorldState,

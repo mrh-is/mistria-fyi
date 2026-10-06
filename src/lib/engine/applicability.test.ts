@@ -4,7 +4,7 @@ import { trackerData } from "#lib/data/index.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { recordValues } from "#lib/utils/record.js";
 
-import { isItemApplicable, isItemApplicableForAlmanac } from "./applicability.js";
+import { isAlmanacEntryObtainable, isItemObtainable } from "./applicability.js";
 
 import type { ItemId, VillagerId, VillagerRelationship } from "#lib/types/tracker-data.js";
 
@@ -23,16 +23,16 @@ function findItemWithSource(
   return undefined;
 }
 
-// ─── isItemApplicable ─────────────────────────────────────────────
+// ─── isItemObtainable ─────────────────────────────────────────────
 
-describe("isItemApplicable", () => {
+describe("isItemObtainable", () => {
   it("returns true for items with no marriage-exclusive sources", () => {
     const nonMarriageItem = Object.entries(trackerData.items).find(
       ([, item]) => !item.sources.some((s) => s.type === "proposal" || s.type === "spouseGift"),
     );
     if (!nonMarriageItem) return;
     const [itemId] = nonMarriageItem;
-    expect(isItemApplicable(itemId as ItemId, makeCompletedState())).toBe(true);
+    expect(isItemObtainable(itemId as ItemId, makeCompletedState())).toBe(true);
   });
 
   it("returns true for already-completed items regardless of relationship", () => {
@@ -42,7 +42,7 @@ describe("isItemApplicable", () => {
       almanac: new Set([proposalItem.itemId]),
       villagerRelationships: { [proposalItem.villagerId]: "platonic" },
     });
-    expect(isItemApplicable(proposalItem.itemId, completed)).toBe(true);
+    expect(isItemObtainable(proposalItem.itemId, completed)).toBe(true);
   });
 
   it("suppresses proposal items when the Villager is platonic", () => {
@@ -51,13 +51,13 @@ describe("isItemApplicable", () => {
     const completed = makeCompletedState({
       villagerRelationships: { [proposalItem.villagerId]: "platonic" },
     });
-    expect(isItemApplicable(proposalItem.itemId, completed)).toBe(false);
+    expect(isItemObtainable(proposalItem.itemId, completed)).toBe(false);
   });
 
   it("shows proposal items when the Villager relationship is undecided", () => {
     const proposalItem = findItemWithSource("proposal");
     if (!proposalItem) return;
-    expect(isItemApplicable(proposalItem.itemId, makeCompletedState())).toBe(true);
+    expect(isItemObtainable(proposalItem.itemId, makeCompletedState())).toBe(true);
   });
 
   it("suppresses spouse gifts when married to a different Villager", () => {
@@ -74,7 +74,7 @@ describe("isItemApplicable", () => {
         [spouseItem.villagerId]: "platonic",
       } as Partial<Record<VillagerId, VillagerRelationship>>,
     });
-    expect(isItemApplicable(spouseItem.itemId, completed)).toBe(false);
+    expect(isItemObtainable(spouseItem.itemId, completed)).toBe(false);
   });
 
   it("shows spouse gifts when married to the matching Villager", () => {
@@ -83,13 +83,13 @@ describe("isItemApplicable", () => {
     const completed = makeCompletedState({
       villagerRelationships: { [spouseItem.villagerId]: "married" },
     });
-    expect(isItemApplicable(spouseItem.itemId, completed)).toBe(true);
+    expect(isItemObtainable(spouseItem.itemId, completed)).toBe(true);
   });
 });
 
-// ─── isItemApplicableForAlmanac ───────────────────────────────────
+// ─── isAlmanacEntryObtainable ───────────────────────────────────
 
-describe("isItemApplicableForAlmanac", () => {
+describe("isAlmanacEntryObtainable", () => {
   it("returns true when any member of the colorway group is completed", () => {
     const colorwayEntry = recordValues(trackerData.almanac)
       .flatMap(({ items }) => items)
@@ -97,15 +97,15 @@ describe("isItemApplicableForAlmanac", () => {
     if (!colorwayEntry) return;
 
     const completed = makeCompletedState({ almanac: new Set([colorwayEntry.itemIds[0]]) });
-    expect(isItemApplicableForAlmanac(colorwayEntry.itemIds, completed)).toBe(true);
+    expect(isAlmanacEntryObtainable(colorwayEntry.itemIds, completed)).toBe(true);
   });
 
-  it("delegates to isItemApplicable when no member is completed", () => {
+  it("delegates to isItemObtainable when no member is completed", () => {
     const nonMarriageItem = Object.entries(trackerData.items).find(
       ([, item]) => !item.sources.some((s) => s.type === "proposal" || s.type === "spouseGift"),
     );
     if (!nonMarriageItem) return;
     const [itemId] = nonMarriageItem;
-    expect(isItemApplicableForAlmanac([itemId as ItemId], makeCompletedState())).toBe(true);
+    expect(isAlmanacEntryObtainable([itemId as ItemId], makeCompletedState())).toBe(true);
   });
 });

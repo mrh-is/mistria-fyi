@@ -5,11 +5,10 @@ import { deepMerge } from "#lib/test-utils/deep-partial.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 import {
+  canPlanConditionMutations,
   deriveProgressionState,
-  isConditionInvertible,
-  isEntityNameVisible,
-  isVisible,
-  satisfyCondition as planCondition,
+  isConditionVisible,
+  planConditionMutations as planCondition,
 } from "./visibility.js";
 
 import type { DeepPartial } from "#lib/test-utils/deep-partial.js";
@@ -22,7 +21,7 @@ import type {
   TrackerData,
   VillagerId,
 } from "#lib/types/tracker-data.js";
-import type { CompletedState } from "#lib/types/user-progress.js";
+import type { ProgressState } from "#lib/types/user-progress.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
 import type { UserProgressionState } from "./visibility.js";
@@ -33,7 +32,7 @@ function makeState(overrides: Partial<UserProgressionState> = {}): UserProgressi
     isDating: false,
     knownVillagers: new Set(),
     marriedVillager: null,
-    minesFloor: 0,
+    mineFloor: 0,
     questVisibility: {},
     reachedSeason: "spring" as const,
     renown: 0,
@@ -88,21 +87,21 @@ function makeTrackerData(overrides: DeepPartial<TrackerData> = {}): TrackerData 
   return deepMerge(defaults, overrides);
 }
 
-describe("isVisible", () => {
+describe("isConditionVisible", () => {
   it("always returns true", () => {
-    expect(isVisible({ type: "always" }, makeState())).toBe(true);
+    expect(isConditionVisible({ type: "always" }, makeState())).toBe(true);
   });
 
   it("questCompleted checks questVisibility", () => {
     const state = makeState({
       questVisibility: { ["repair_the_inn" as QuestId]: "completed" },
     });
-    expect(isVisible({ type: "questCompleted", questId: "repair_the_inn" as QuestId }, state)).toBe(
-      true,
-    );
-    expect(isVisible({ type: "questCompleted", questId: "other_quest" as QuestId }, state)).toBe(
-      false,
-    );
+    expect(
+      isConditionVisible({ type: "questCompleted", questId: "repair_the_inn" as QuestId }, state),
+    ).toBe(true);
+    expect(
+      isConditionVisible({ type: "questCompleted", questId: "other_quest" as QuestId }, state),
+    ).toBe(false);
   });
 
   it("questAvailable matches available or completed", () => {
@@ -114,75 +113,86 @@ describe("isVisible", () => {
       },
     });
     expect(
-      isVisible({ type: "questAvailable", questId: "available_quest" as QuestId }, state),
+      isConditionVisible({ type: "questAvailable", questId: "available_quest" as QuestId }, state),
     ).toBe(true);
     expect(
-      isVisible({ type: "questAvailable", questId: "completed_quest" as QuestId }, state),
+      isConditionVisible({ type: "questAvailable", questId: "completed_quest" as QuestId }, state),
     ).toBe(true);
     expect(
-      isVisible({ type: "questAvailable", questId: "unavailable_quest" as QuestId }, state),
+      isConditionVisible(
+        { type: "questAvailable", questId: "unavailable_quest" as QuestId },
+        state,
+      ),
     ).toBe(false);
   });
 
   it("villagerKnown checks knownVillagers set", () => {
     const state = makeState({ knownVillagers: new Set(["holt" as VillagerId]) });
-    expect(isVisible({ type: "villagerKnown", villagerId: "holt" as VillagerId }, state)).toBe(
-      true,
-    );
-    expect(isVisible({ type: "villagerKnown", villagerId: "caldarus" as VillagerId }, state)).toBe(
-      false,
-    );
+    expect(
+      isConditionVisible({ type: "villagerKnown", villagerId: "holt" as VillagerId }, state),
+    ).toBe(true);
+    expect(
+      isConditionVisible({ type: "villagerKnown", villagerId: "caldarus" as VillagerId }, state),
+    ).toBe(false);
   });
 
   it("skillLevel checks >= threshold", () => {
     const state = makeState({ skillLevels: { ["farming" as SkillId]: 30 } });
-    expect(isVisible({ type: "skillLevel", level: 30, skillId: "farming" as SkillId }, state)).toBe(
-      true,
-    );
-    expect(isVisible({ type: "skillLevel", level: 31, skillId: "farming" as SkillId }, state)).toBe(
-      false,
-    );
-    expect(isVisible({ type: "skillLevel", level: 1, skillId: "mining" as SkillId }, state)).toBe(
-      false,
-    );
+    expect(
+      isConditionVisible({ type: "skillLevel", level: 30, skillId: "farming" as SkillId }, state),
+    ).toBe(true);
+    expect(
+      isConditionVisible({ type: "skillLevel", level: 31, skillId: "farming" as SkillId }, state),
+    ).toBe(false);
+    expect(
+      isConditionVisible({ type: "skillLevel", level: 1, skillId: "mining" as SkillId }, state),
+    ).toBe(false);
   });
 
   it("perkUnlocked checks set membership", () => {
     const state = makeState({ unlockedPerks: new Set(["magic_design" as PerkId]) });
-    expect(isVisible({ type: "perkUnlocked", perkId: "magic_design" as PerkId }, state)).toBe(true);
-    expect(isVisible({ type: "perkUnlocked", perkId: "other_perk" as PerkId }, state)).toBe(false);
+    expect(
+      isConditionVisible({ type: "perkUnlocked", perkId: "magic_design" as PerkId }, state),
+    ).toBe(true);
+    expect(
+      isConditionVisible({ type: "perkUnlocked", perkId: "other_perk" as PerkId }, state),
+    ).toBe(false);
   });
 
   it("minesLevel checks >= floor", () => {
-    const state = makeState({ minesFloor: 40 });
-    expect(isVisible({ type: "minesLevel", floor: 40 }, state)).toBe(true);
-    expect(isVisible({ type: "minesLevel", floor: 41 }, state)).toBe(false);
+    const state = makeState({ mineFloor: 40 });
+    expect(isConditionVisible({ type: "minesLevel", floor: 40 }, state)).toBe(true);
+    expect(isConditionVisible({ type: "minesLevel", floor: 41 }, state)).toBe(false);
   });
 
   it("heartLevel checks villagerLevels >= level", () => {
     const state = makeState({ villagerLevels: { ["ryis" as VillagerId]: 4 } });
     expect(
-      isVisible({ type: "heartLevel", level: 4, villagerId: "ryis" as VillagerId }, state),
+      isConditionVisible({ type: "heartLevel", level: 4, villagerId: "ryis" as VillagerId }, state),
     ).toBe(true);
     expect(
-      isVisible({ type: "heartLevel", level: 5, villagerId: "ryis" as VillagerId }, state),
+      isConditionVisible({ type: "heartLevel", level: 5, villagerId: "ryis" as VillagerId }, state),
     ).toBe(false);
   });
 
   it("renownLevel checks >= level", () => {
     const state = makeState({ renown: 50 });
-    expect(isVisible({ type: "renownLevel", level: 50 }, state)).toBe(true);
-    expect(isVisible({ type: "renownLevel", level: 51 }, state)).toBe(false);
+    expect(isConditionVisible({ type: "renownLevel", level: 50 }, state)).toBe(true);
+    expect(isConditionVisible({ type: "renownLevel", level: 51 }, state)).toBe(false);
   });
 
   it("married checks marriedVillager", () => {
     const state = makeState({ marriedVillager: "adeline" as VillagerId });
-    expect(isVisible({ type: "married", villagerId: "adeline" as VillagerId }, state)).toBe(true);
-    expect(isVisible({ type: "married", villagerId: "reina" as VillagerId }, state)).toBe(false);
+    expect(
+      isConditionVisible({ type: "married", villagerId: "adeline" as VillagerId }, state),
+    ).toBe(true);
+    expect(isConditionVisible({ type: "married", villagerId: "reina" as VillagerId }, state)).toBe(
+      false,
+    );
   });
 
   it("and requires all sub-conditions", () => {
-    const state = makeState({ minesFloor: 20, renown: 30 });
+    const state = makeState({ mineFloor: 20, renown: 30 });
     const condition: VisibilityCondition = {
       type: "and",
       conditions: [
@@ -190,10 +200,10 @@ describe("isVisible", () => {
         { type: "renownLevel", level: 30 },
       ],
     };
-    expect(isVisible(condition, state)).toBe(true);
+    expect(isConditionVisible(condition, state)).toBe(true);
 
-    const stateLow = makeState({ minesFloor: 20, renown: 10 });
-    expect(isVisible(condition, stateLow)).toBe(false);
+    const stateLow = makeState({ mineFloor: 20, renown: 10 });
+    expect(isConditionVisible(condition, stateLow)).toBe(false);
   });
 
   it("or requires any sub-condition", () => {
@@ -204,16 +214,18 @@ describe("isVisible", () => {
         { type: "renownLevel", level: 30 },
       ],
     };
-    expect(isVisible(condition, makeState({ minesFloor: 20 }))).toBe(true);
-    expect(isVisible(condition, makeState({ renown: 30 }))).toBe(true);
-    expect(isVisible(condition, makeState())).toBe(false);
+    expect(isConditionVisible(condition, makeState({ mineFloor: 20 }))).toBe(true);
+    expect(isConditionVisible(condition, makeState({ renown: 30 }))).toBe(true);
+    expect(isConditionVisible(condition, makeState())).toBe(false);
   });
 
   it("showSpoilers bypasses all conditions", () => {
     const state = makeState({ showSpoilers: true });
-    expect(isVisible({ type: "questCompleted", questId: "any" as QuestId }, state)).toBe(true);
+    expect(isConditionVisible({ type: "questCompleted", questId: "any" as QuestId }, state)).toBe(
+      true,
+    );
     expect(
-      isVisible(
+      isConditionVisible(
         {
           type: "and",
           conditions: [
@@ -227,30 +239,34 @@ describe("isVisible", () => {
   });
 });
 
-describe("isConditionInvertible", () => {
+describe("canPlanConditionMutations", () => {
   it("returns true for invertible primitives", () => {
-    expect(isConditionInvertible({ type: "questCompleted", questId: "q" as QuestId })).toBe(true);
-    expect(isConditionInvertible({ type: "skillLevel", level: 10, skillId: "s" as SkillId })).toBe(
+    expect(canPlanConditionMutations({ type: "questCompleted", questId: "q" as QuestId })).toBe(
       true,
     );
-    expect(isConditionInvertible({ type: "minesLevel", floor: 10 })).toBe(true);
-    expect(isConditionInvertible({ type: "perkUnlocked", perkId: "p" as PerkId })).toBe(true);
-    expect(isConditionInvertible({ type: "married", villagerId: "n" as VillagerId })).toBe(true);
+    expect(
+      canPlanConditionMutations({ type: "skillLevel", level: 10, skillId: "s" as SkillId }),
+    ).toBe(true);
+    expect(canPlanConditionMutations({ type: "minesLevel", floor: 10 })).toBe(true);
+    expect(canPlanConditionMutations({ type: "perkUnlocked", perkId: "p" as PerkId })).toBe(true);
+    expect(canPlanConditionMutations({ type: "married", villagerId: "n" as VillagerId })).toBe(
+      true,
+    );
   });
 
   it("returns false for isDating (requires Villager choice)", () => {
-    expect(isConditionInvertible({ type: "isDating" })).toBe(false);
+    expect(canPlanConditionMutations({ type: "isDating" })).toBe(false);
   });
 
   it("returns false for villagerKnown", () => {
-    expect(isConditionInvertible({ type: "villagerKnown", villagerId: "n" as VillagerId })).toBe(
-      false,
-    );
+    expect(
+      canPlanConditionMutations({ type: "villagerKnown", villagerId: "n" as VillagerId }),
+    ).toBe(false);
   });
 
   it("returns false for and containing villagerKnown", () => {
     expect(
-      isConditionInvertible({
+      canPlanConditionMutations({
         type: "and",
         conditions: [
           { type: "villagerKnown", villagerId: "n" as VillagerId },
@@ -262,7 +278,7 @@ describe("isConditionInvertible", () => {
 
   it("returns true for and of invertible conditions", () => {
     expect(
-      isConditionInvertible({
+      canPlanConditionMutations({
         type: "and",
         conditions: [
           { type: "minesLevel", floor: 10 },
@@ -431,7 +447,7 @@ describe("deriveProgressionState", () => {
     expect(state.questVisibility[prerequisite]).toBe("available");
     expect(state.questVisibility[dependent]).toBe("available");
     expect(state.questVisibility[ordered]).toBe("unavailable");
-    expect(isVisible(condition, state)).toBe(true);
+    expect(isConditionVisible(condition, state)).toBe(true);
     completed.questStates[prerequisite] = "obtained";
     expect(deriveProgressionState(completed, data, false).questVisibility[ordered]).toBe(
       "available",
@@ -468,7 +484,7 @@ describe("deriveProgressionState", () => {
     expect(state.villagerLevels[holt]).toBe(4);
     expect(state.questVisibility[ordered]).toBe("unavailable");
     expect(state.questVisibility[dependent]).toBe("unavailable");
-    expect(isVisible(condition, state)).toBe(true);
+    expect(isConditionVisible(condition, state)).toBe(true);
   });
 
   it("evaluates ordered villager-known gates from recorded progress", () => {
@@ -575,9 +591,9 @@ describe("deriveProgressionState", () => {
   });
 });
 
-function satisfyCondition(
+function planConditionMutations(
   condition: VisibilityCondition,
-  completed: CompletedState,
+  completed: ProgressState,
   data: TrackerData,
 ): void {
   for (const mutation of planCondition(condition, completed, data)) {
@@ -613,7 +629,7 @@ function satisfyCondition(
   }
 }
 
-describe("satisfyCondition", () => {
+describe("planConditionMutations", () => {
   it("returns mutations without changing nested records or sets", () => {
     const completed = makeCompletedState();
     const before = makeCompletedState();
@@ -640,44 +656,52 @@ describe("satisfyCondition", () => {
 
   it("does nothing for always", () => {
     const completed = makeCompletedState();
-    satisfyCondition({ type: "always" }, completed, makeTrackerData());
+    planConditionMutations({ type: "always" }, completed, makeTrackerData());
     expect(completed).toEqual(makeCompletedState());
   });
 
   it("does nothing for villagerKnown (not invertible)", () => {
     const completed = makeCompletedState();
-    satisfyCondition({ type: "villagerKnown", villagerId: holt }, completed, makeTrackerData());
+    planConditionMutations(
+      { type: "villagerKnown", villagerId: holt },
+      completed,
+      makeTrackerData(),
+    );
     expect(completed.questStates).toEqual({});
   });
 
   it("sets minesLevel to max of current and required", () => {
     const completed = makeCompletedState({ mines: { floor: 10, spells: new Set() } });
-    satisfyCondition({ type: "minesLevel", floor: 20 }, completed, makeTrackerData());
+    planConditionMutations({ type: "minesLevel", floor: 20 }, completed, makeTrackerData());
     expect(completed.mines.floor).toBe(20);
   });
 
   it("does not lower minesLevel", () => {
     const completed = makeCompletedState({ mines: { floor: 40, spells: new Set() } });
-    satisfyCondition({ type: "minesLevel", floor: 20 }, completed, makeTrackerData());
+    planConditionMutations({ type: "minesLevel", floor: 20 }, completed, makeTrackerData());
     expect(completed.mines.floor).toBe(40);
   });
 
   it("sets renownLevel", () => {
     const completed = makeCompletedState({ renown: 5 });
-    satisfyCondition({ type: "renownLevel", level: 20 }, completed, makeTrackerData());
+    planConditionMutations({ type: "renownLevel", level: 20 }, completed, makeTrackerData());
     expect(completed.renown).toBe(20);
   });
 
   it("sets skillLevel", () => {
     const completed = makeCompletedState();
     const skillId = "cooking" as SkillId;
-    satisfyCondition({ type: "skillLevel", level: 15, skillId }, completed, makeTrackerData());
+    planConditionMutations(
+      { type: "skillLevel", level: 15, skillId },
+      completed,
+      makeTrackerData(),
+    );
     expect(completed.skillLevels[skillId]).toBe(15);
   });
 
   it("sets heartLevel", () => {
     const completed = makeCompletedState();
-    satisfyCondition(
+    planConditionMutations(
       { type: "heartLevel", level: 6, villagerId: holt },
       completed,
       makeTrackerData(),
@@ -687,7 +711,7 @@ describe("satisfyCondition", () => {
 
   it("takes max of heartLevel", () => {
     const completed = makeCompletedState({ villagerLevels: { [holt]: 8 } });
-    satisfyCondition(
+    planConditionMutations(
       { type: "heartLevel", level: 6, villagerId: holt },
       completed,
       makeTrackerData(),
@@ -698,19 +722,19 @@ describe("satisfyCondition", () => {
   it("adds perkUnlocked", () => {
     const completed = makeCompletedState();
     const perkId = "magic_design" as PerkId;
-    satisfyCondition({ type: "perkUnlocked", perkId }, completed, makeTrackerData());
+    planConditionMutations({ type: "perkUnlocked", perkId }, completed, makeTrackerData());
     expect(completed.unlockedPerks.has(perkId)).toBe(true);
   });
 
   it("does not modify state for isDating (requires Villager choice)", () => {
     const completed = makeCompletedState();
-    satisfyCondition({ type: "isDating" }, completed, makeTrackerData());
+    planConditionMutations({ type: "isDating" }, completed, makeTrackerData());
     expect(Object.keys(completed.villagerRelationships)).toHaveLength(0);
   });
 
   it("sets villagerRelationships to married", () => {
     const completed = makeCompletedState();
-    satisfyCondition({ type: "married", villagerId: holt }, completed, makeTrackerData());
+    planConditionMutations({ type: "married", villagerId: holt }, completed, makeTrackerData());
     expect(completed.villagerRelationships[holt]).toBe("married");
   });
 
@@ -719,7 +743,11 @@ describe("satisfyCondition", () => {
       quests: { [story]: { [repairTheInn]: { name: "Repair the Inn" } } },
     });
     const completed = makeCompletedState();
-    satisfyCondition({ type: "questCompleted", questId: repairTheInn }, completed, trackerData);
+    planConditionMutations(
+      { type: "questCompleted", questId: repairTheInn },
+      completed,
+      trackerData,
+    );
     expect(completed.questStates[repairTheInn]).toBe("completed");
   });
 
@@ -732,7 +760,7 @@ describe("satisfyCondition", () => {
         { type: "renownLevel", level: 30 },
       ],
     };
-    satisfyCondition(condition, completed, makeTrackerData());
+    planConditionMutations(condition, completed, makeTrackerData());
     expect(completed.mines.floor).toBe(20);
     expect(completed.renown).toBe(30);
   });
@@ -746,7 +774,7 @@ describe("satisfyCondition", () => {
         { type: "minesLevel", floor: 20 },
       ],
     };
-    satisfyCondition(condition, completed, makeTrackerData());
+    planConditionMutations(condition, completed, makeTrackerData());
     expect(completed.mines.floor).toBe(20);
   });
 
@@ -763,7 +791,11 @@ describe("satisfyCondition", () => {
       },
     });
     const completed = makeCompletedState();
-    satisfyCondition({ type: "questCompleted", questId: theSecondQuest }, completed, trackerData);
+    planConditionMutations(
+      { type: "questCompleted", questId: theSecondQuest },
+      completed,
+      trackerData,
+    );
     expect(completed.questStates[firstQuest]).toBe("completed");
     expect(completed.questStates[theSecondQuest]).toBe("completed");
   });
@@ -782,14 +814,14 @@ describe("satisfyCondition", () => {
       },
     });
     const completed = makeCompletedState();
-    satisfyCondition({ type: "questAvailable", questId: thirdCrown }, completed, trackerData);
+    planConditionMutations({ type: "questAvailable", questId: thirdCrown }, completed, trackerData);
     expect(completed.questStates[firstQuest]).toBe("completed");
     expect(completed.questStates[theSecondQuest]).toBe("completed");
     expect(completed.questStates[thirdCrown]).toBeUndefined();
   });
 });
 
-describe("satisfyCondition → deriveProgressionState round-trips", () => {
+describe("planConditionMutations → deriveProgressionState round-trips", () => {
   it("hides then reveals an entity after satisfying its condition", () => {
     const trackerData = makeTrackerData({
       quests: { [story]: { [repairTheInn]: { name: "Repair the Inn" } } },
@@ -801,11 +833,11 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
 
     const completed = makeCompletedState();
     const stateBefore = deriveProgressionState(completed, trackerData, false);
-    expect(isEntityNameVisible(entityCondition, stateBefore)).toBe(false);
+    expect(isConditionVisible(entityCondition, stateBefore)).toBe(false);
 
-    satisfyCondition(entityCondition, completed, trackerData);
+    planConditionMutations(entityCondition, completed, trackerData);
     const stateAfter = deriveProgressionState(completed, trackerData, false);
-    expect(isEntityNameVisible(entityCondition, stateAfter)).toBe(true);
+    expect(isConditionVisible(entityCondition, stateAfter)).toBe(true);
   });
 
   it("reveals source detail and entity name at their separate thresholds", () => {
@@ -820,18 +852,18 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
 
     const completed = makeCompletedState();
     const state1 = deriveProgressionState(completed, trackerData, false);
-    expect(isEntityNameVisible(entityCondition, state1)).toBe(false);
-    expect(isVisible(sourceCondition, state1)).toBe(false);
+    expect(isConditionVisible(entityCondition, state1)).toBe(false);
+    expect(isConditionVisible(sourceCondition, state1)).toBe(false);
 
     completed.mines.floor = 20;
     const state2 = deriveProgressionState(completed, trackerData, false);
-    expect(isEntityNameVisible(entityCondition, state2)).toBe(false);
-    expect(isVisible(sourceCondition, state2)).toBe(true);
+    expect(isConditionVisible(entityCondition, state2)).toBe(false);
+    expect(isConditionVisible(sourceCondition, state2)).toBe(true);
 
-    satisfyCondition(entityCondition, completed, trackerData);
+    planConditionMutations(entityCondition, completed, trackerData);
     const state3 = deriveProgressionState(completed, trackerData, false);
-    expect(isEntityNameVisible(entityCondition, state3)).toBe(true);
-    expect(isVisible(sourceCondition, state3)).toBe(true);
+    expect(isConditionVisible(entityCondition, state3)).toBe(true);
+    expect(isConditionVisible(sourceCondition, state3)).toBe(true);
   });
 
   it("satisfying a quest reveals Villager-gated content", () => {
@@ -853,15 +885,15 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
 
     const completed = makeCompletedState();
     const stateBefore = deriveProgressionState(completed, trackerData, false);
-    expect(isVisible(villagerKnownCondition, stateBefore)).toBe(false);
+    expect(isConditionVisible(villagerKnownCondition, stateBefore)).toBe(false);
 
-    satisfyCondition(
+    planConditionMutations(
       { type: "questCompleted", questId: breakingTheFireSeal },
       completed,
       trackerData,
     );
     const stateAfter = deriveProgressionState(completed, trackerData, false);
-    expect(isVisible(villagerKnownCondition, stateAfter)).toBe(true);
+    expect(isConditionVisible(villagerKnownCondition, stateAfter)).toBe(true);
   });
 
   it("completing a chain quest cascades visibility to gated items", () => {
@@ -882,12 +914,12 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
     };
 
     const completed = makeCompletedState();
-    satisfyCondition(gatedBehindSecond, completed, trackerData);
+    planConditionMutations(gatedBehindSecond, completed, trackerData);
     const state = deriveProgressionState(completed, trackerData, false);
 
     expect(state.questVisibility[firstQuest]).toBe("completed");
     expect(state.questVisibility[theSecondQuest]).toBe("completed");
-    expect(isVisible(gatedBehindSecond, state)).toBe(true);
+    expect(isConditionVisible(gatedBehindSecond, state)).toBe(true);
   });
 
   it("just-this-item does not cascade quest state", () => {
@@ -900,10 +932,10 @@ describe("satisfyCondition → deriveProgressionState round-trips", () => {
     };
 
     const completed = makeCompletedState();
-    // "Just this item" means toggling the checkbox without calling satisfyCondition.
+    // "Just this item" means toggling the checkbox without calling planConditionMutations.
     // The quest state should not change.
     const stateBefore = deriveProgressionState(completed, trackerData, false);
-    expect(isVisible(entityCondition, stateBefore)).toBe(false);
+    expect(isConditionVisible(entityCondition, stateBefore)).toBe(false);
 
     // Simulate: user checks item off but doesn't satisfy the condition.
     // The item is now "completed" in the almanac/recipes, but the underlying quest is untouched.

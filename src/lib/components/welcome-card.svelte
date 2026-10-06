@@ -20,7 +20,7 @@
   });
 
   function startManually(): void {
-    userState.applyStartingItems();
+    userState.markDefaultUnlocksComplete();
   }
 
   function switchFlow(): void {

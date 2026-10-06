@@ -139,7 +139,7 @@ Ordered by risk:
 
 Reuse these from `src/lib/test-utils/` rather than copying a local version into a test file:
 
-- **`makeCompletedState(overrides)`** (`completed-state.ts`): an empty `CompletedState` with every
+- **`makeCompletedState(overrides)`** (`completed-state.ts`): an empty `ProgressState` with every
   animal's sets present, plus overrides.
 - **`deepMerge(base, overrides)`** (`deep-partial.ts`): merges a `DeepPartial` override into a
   fixture.

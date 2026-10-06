@@ -11,7 +11,7 @@
     isVillagerComplete,
     MAX_VILLAGER_LEVEL,
   } from "#lib/engine/progress.js";
-  import { getMarriedVillager, relationshipPresentation } from "#lib/engine/relationships.js";
+  import { getSpouseId, relationshipPresentation } from "#lib/engine/relationships.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { villagerSpriteUrl } from "#lib/sprites/sprite-url.js";
@@ -90,7 +90,7 @@
     relationshipPresentation({
       childChoice: userState.state.completed.childChoice,
       level: storedLevel,
-      marriedVillager: getMarriedVillager(userState.state.completed.villagerRelationships),
+      marriedVillager: getSpouseId(userState.state.completed.villagerRelationships),
       relationship,
       villagerId: id,
     }),
@@ -260,7 +260,7 @@
           </button>
         {/each}
       </span>
-      {#if presentation.warning}
+      {#if presentation.showsMarriageWarning}
         <small id={warningId} class="relationship-warning">
           {m.relationship_warning_marriage()}
         </small>

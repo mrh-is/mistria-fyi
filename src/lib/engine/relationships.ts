@@ -26,8 +26,8 @@ export type RelationshipActionValue =
 export interface RelationshipPresentation {
   actions: RelationshipActionValue[];
   prompt?: RelationshipPrompt;
+  showsMarriageWarning?: boolean;
   status?: RelationshipStatus;
-  warning?: boolean;
 }
 
 export type RelationshipPrompt = "choose_path" | "household" | "next_note";
@@ -49,7 +49,7 @@ interface RelationshipPresentationInput {
   villagerId: VillagerId;
 }
 
-export function getMarriedVillager(
+export function getSpouseId(
   villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>>,
 ): null | VillagerId {
   for (const [villagerId, rel] of Object.entries(villagerRelationships)) {
@@ -90,13 +90,13 @@ export function mergeHousehold(
   const villagerRelationships = { ...local.villagerRelationships };
   let childChoice = local.childChoice;
 
-  const localMarried = getMarriedVillager(villagerRelationships);
+  const localMarried = getSpouseId(villagerRelationships);
   // The spouse whose household the incoming child choice may apply to, if that household is settled.
   let householdVillagerId: null | VillagerId = localMarried;
 
   if (incoming.villagerRelationships) {
     const importedRelationships = incoming.villagerRelationships;
-    const importedMarried = getMarriedVillager(importedRelationships);
+    const importedMarried = getSpouseId(importedRelationships);
     // Spouses, past or present, that the general per-villager pass must not touch.
     const skipVillagerIds = new Set<VillagerId>();
     // A new marriage forces every other dateable villager to platonic, so the general pass must
@@ -163,7 +163,7 @@ export function mergeHousehold(
       }
     }
 
-    normalizeRelationships(villagerRelationships);
+    applyMarriageCascade(villagerRelationships);
   }
 
   const importedChoice = incoming.childChoice;
@@ -188,10 +188,14 @@ export function mergeHousehold(
   return { childChoice, conflicts, counts, villagerRelationships };
 }
 
-export function normalizeRelationships(
+/**
+ * When someone is married, makes every other villager platonic. Mutates
+ * `villagerRelationships` in place, filling in platonic entries for unmentioned dateable villagers.
+ */
+export function applyMarriageCascade(
   villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>>,
 ): void {
-  const marriedVillager = getMarriedVillager(villagerRelationships);
+  const marriedVillager = getSpouseId(villagerRelationships);
   if (!marriedVillager) return;
 
   for (const [villagerId, rel] of Object.entries(villagerRelationships)) {
@@ -257,8 +261,8 @@ export function relationshipPresentation({
     return {
       actions: ["married"],
       prompt: "next_note",
+      showsMarriageWarning: true,
       status: "engaged",
-      warning: true,
     };
   }
 

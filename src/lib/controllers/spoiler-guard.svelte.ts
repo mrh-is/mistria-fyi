@@ -1,5 +1,5 @@
 import { trackerData } from "#lib/data/index.js";
-import { satisfyCondition } from "#lib/engine/visibility.js";
+import { planConditionMutations } from "#lib/engine/visibility.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 
 import type { VisibilityCondition } from "#lib/types/visibility.js";
@@ -32,7 +32,7 @@ export function createSpoilerGuard(): SpoilerGuard {
     },
     completeAndUpdate(): void {
       if (condition) {
-        for (const mutation of satisfyCondition(
+        for (const mutation of planConditionMutations(
           condition,
           userState.state.completed,
           trackerData,

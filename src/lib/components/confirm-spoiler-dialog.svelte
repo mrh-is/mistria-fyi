@@ -2,7 +2,7 @@
   import * as AlertDialog from "#lib/components/ui/alert-dialog/index.js";
   import { buttonVariants } from "#lib/components/ui/button/button.svelte";
   import { getName } from "#lib/data/names.js";
-  import { isConditionInvertible } from "#lib/engine/visibility.js";
+  import { canPlanConditionMutations } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { page } from "$app/state";
 
@@ -22,7 +22,7 @@
     open?: boolean;
   } = $props();
 
-  const invertible = $derived(isConditionInvertible(condition));
+  const invertible = $derived(canPlanConditionMutations(condition));
 </script>
 
 <AlertDialog.Root bind:open>

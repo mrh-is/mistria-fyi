@@ -7,7 +7,7 @@
   import { trackerData } from "#lib/data/index.js";
   import { hasNames, loadNames, NAME_CHUNKS } from "#lib/data/names.js";
   import { showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
-  import { searchItems } from "#lib/engine/search.js";
+  import { searchAllCategories } from "#lib/engine/search.js";
   import * as m from "#lib/paraglide/messages.js";
   import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
@@ -34,7 +34,7 @@
   let { locale, query }: { locale: LocaleCode; query: string } = $props();
 
   // Search spans every category, so it needs every category's chunk for the active locale, plus
-  // English because `searchItems` also matches English terms, rather than the per-route subset a
+  // English because `searchAllCategories` also matches English terms, rather than the per-route subset a
   // category page awaits in `load()`. The fetch happens here, on first search-open, not at page
   // load; `loadNames` caches per chunk for the session, so re-opening search or retyping never
   // re-fetches. Until the chunks land, the `$derived` name lookups below must not run, since
@@ -82,7 +82,7 @@
   });
 
   let results = $derived(
-    searchItems(
+    searchAllCategories(
       query,
       userState.state.completed,
       userState.state.worldState,

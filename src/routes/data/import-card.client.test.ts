@@ -42,7 +42,7 @@ describe("save import", () => {
 
   it("reports unparseable JSON files and preserves tracker state", async () => {
     userState.toggleShowSpoilers();
-    const before = userState.exportState();
+    const before = userState.exportBackup();
 
     await importFiles([new File(["{"], "player.json")]);
 
@@ -54,12 +54,12 @@ describe("save import", () => {
     expect(
       within(screen.getByRole("alert")).getByText("player.json isn’t valid JSON; skipped"),
     ).toBeInTheDocument();
-    expect(userState.exportState()).toBe(before);
+    expect(userState.exportBackup()).toBe(before);
   });
 
   it("offers the manual extraction fallback for an unreadable .sav and preserves tracker state", async () => {
     userState.toggleShowSpoilers();
-    const before = userState.exportState();
+    const before = userState.exportBackup();
 
     await importFiles([new File([new Uint8Array([1, 2, 3, 4])], "broken.sav")]);
 
@@ -69,14 +69,14 @@ describe("save import", () => {
       );
     });
     expect(screen.getByRole("link", { name: "vaultc" })).toBeInTheDocument();
-    expect(userState.exportState()).toBe(before);
+    expect(userState.exportBackup()).toBe(before);
   });
 });
 
 describe("save import atomicity", () => {
   it("rejects an oversized save before reading it and preserves tracker state", async () => {
     userState.toggleShowSpoilers();
-    const before = userState.exportState();
+    const before = userState.exportBackup();
     const file = new File([], "oversized.sav");
     Object.defineProperty(file, "size", { value: MAX_COMPRESSED_SIZE + 1 });
     const arrayBuffer = vi.spyOn(file, "arrayBuffer");
@@ -89,6 +89,6 @@ describe("save import atomicity", () => {
       );
     });
     expect(arrayBuffer).not.toHaveBeenCalled();
-    expect(userState.exportState()).toBe(before);
+    expect(userState.exportBackup()).toBe(before);
   });
 });

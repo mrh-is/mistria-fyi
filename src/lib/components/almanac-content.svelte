@@ -15,9 +15,9 @@
   import { getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
-  import { isItemDimmed, isRowVisible, shouldCountItem } from "#lib/engine/availability.js";
+  import { isInProgressScope, isItemDimmed, isRowVisible } from "#lib/engine/availability.js";
   import { isCategoryComplete } from "#lib/engine/progress.js";
-  import { isEntityNameVisible } from "#lib/engine/visibility.js";
+  import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
@@ -46,7 +46,7 @@
   }
 
   function itemNameVisible(item: { visibility?: VisibilityCondition }): boolean {
-    return isEntityNameVisible(item.visibility, userState.progressionState);
+    return isConditionVisible(item.visibility, userState.progressionState);
   }
 
   function rowDisplay(
@@ -133,7 +133,7 @@
       const baseRows = section.rows.filter(({ canonicalId, entry, item, name }) => {
         if (!matchesFilter(name)) return false;
         if (nameFilter && !itemNameVisible(item)) return false;
-        return shouldCountItem(
+        return isInProgressScope(
           aggregateSources(entry),
           isItemCompleted(canonicalId),
           userState.state.worldState,
