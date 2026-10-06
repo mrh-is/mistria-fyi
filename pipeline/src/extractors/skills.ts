@@ -70,7 +70,8 @@ export function extractSkills(
   const skills = {} as Record<SkillId, Skill>;
   for (const id of Object.keys(skillsData)) {
     if (id === "default") continue;
-    const name = expectNonEmptyString(skillsData[id].name ?? SKILL_ENGLISH_NAMES[id], {
+    const reviewedName = skillsData[id].name === undefined ? SKILL_ENGLISH_NAMES[id] : undefined;
+    const name = expectNonEmptyString(skillsData[id].name ?? reviewedName, {
       entityId: `skills.${id}`,
       fieldPath: "name",
       sourcePath: sourceFileFor(fiddle, `skills.${id}`),
@@ -85,6 +86,7 @@ export function extractSkills(
       expectedEnglishValue: name,
       field: "name",
       id,
+      requireEnglishSource: reviewedName !== undefined,
     });
     for (const locale of LOCALE_CODES) localeNames[locale][id as SkillId] = values[locale];
   }

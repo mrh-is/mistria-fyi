@@ -73,8 +73,35 @@ describe("extractSkills", () => {
       archaeology: "Archaeology",
     });
     expect(localizer.localizeField).toHaveBeenCalledWith(
-      expect.objectContaining({ expectedEnglishValue: "Archaeology", id: "archaeology" }),
+      expect.objectContaining({
+        expectedEnglishValue: "Archaeology",
+        id: "archaeology",
+        requireEnglishSource: true,
+      }),
     );
+  });
+
+  it("rejects a reviewed skill absent from every English source cache", () => {
+    const fiddle = makeFiddle({ skills: { archaeology: {} } });
+    const localizerWithoutSource = createLocalizer(() => new Map());
+
+    expect(() => extractSkills(fiddle, localizerWithoutSource)).toThrow(
+      'Missing English source cache for "ui/skill_menu/archaeology/name"',
+    );
+  });
+
+  it("allows a reviewed skill when one source cache matches and beta locales are absent", () => {
+    const fiddle = makeFiddle({ skills: { archaeology: {} } });
+    const key = "ui/skill_menu/archaeology/name";
+    const sparseLocalizer = createLocalizer((language, directory) =>
+      directory === "source_caches" && language === "fra"
+        ? new Map([[key, "Archaeology"]])
+        : new Map(),
+    );
+
+    expect(extractSkills(fiddle, sparseLocalizer).localeNames.ja).toMatchObject({
+      archaeology: "Archaeology",
+    });
   });
 
   it("rejects a reviewed skill name that drifts from the game's English source cache", () => {
