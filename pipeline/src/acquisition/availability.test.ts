@@ -107,7 +107,7 @@ describe("projectRequirementExpressionToAvailability", () => {
     ).toEqual({
       type: "all",
       conditions: [
-        { type: "minesLevel", floor: 60 },
+        { type: "mineFloor", floor: 60 },
         { type: "perkUnlocked", perkId: "deep_delver" },
       ],
     });

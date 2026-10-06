@@ -12,34 +12,34 @@
 
   let { segments }: { segments: SourceSegment[] } = $props();
 
-  const revealedSegments = new SvelteSet<number>();
+  const unspoileredSegments = new SvelteSet<number>();
 
   function revealSegment(index: number) {
-    revealedSegments.add(index);
+    unspoileredSegments.add(index);
   }
 </script>
 
 {#each segments as segment, i (i)}
   {#if typeof segment === "string"}
     {segment}
-  {:else if "redacted" in segment && segment.redacted === true}
+  {:else if "spoilered" in segment && segment.spoilered === true}
     <span
       class="inline-block rounded-sm bg-muted-foreground/25 align-baseline text-transparent select-none"
     >
-      <span class="sr-only">{m.source_hidden()}</span>
+      <span class="sr-only">{m.source_spoilered()}</span>
       <span aria-hidden="true">███</span>
     </span>
   {:else if "condition" in segment}
     {@const visible = isConditionVisible(segment.condition, userState.progressionState)}
-    {#if visible || revealedSegments.has(i)}
-      <SourceSegmentText segments={segment.revealed} />
+    {#if visible || unspoileredSegments.has(i)}
+      <SourceSegmentText segments={segment.unspoilered} />
     {:else}
       <Spoiler
         onReveal={() => {
           revealSegment(i);
         }}
       >
-        <SourceSegmentText segments={segment.revealed} />
+        <SourceSegmentText segments={segment.unspoilered} />
       </Spoiler>
     {/if}
   {/if}

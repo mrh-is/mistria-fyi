@@ -15,10 +15,10 @@ afterEach(() => {
 });
 
 describe("SourceSegmentText", () => {
-  it("localizes the screen-reader label for redacted source text", () => {
+  it("localizes the screen-reader label for spoilered source text", () => {
     overwriteGetLocale(() => "fr");
     const { container } = renderToFragment(SourceSegmentText, {
-      props: { segments: [{ redacted: true }] },
+      props: { segments: [{ spoilered: true }] },
     });
     expect(container.querySelector(".sr-only")?.textContent).toBe("Masqué");
     expect(container.querySelector("[aria-hidden='true']")?.textContent).toBe("███");
@@ -28,8 +28,8 @@ describe("SourceSegmentText", () => {
     const segments: SourceSegment[] = [
       "Craft at ",
       {
-        condition: { type: "minesLevel", floor: 90 },
-        revealed: ["the Dragon Forge (Mines level 90)"],
+        condition: { type: "mineFloor", floor: 90 },
+        unspoilered: ["the Dragon Forge (Mines level 90)"],
       },
     ];
     const { container, queries } = renderToFragment(SourceSegmentText, { props: { segments } });
@@ -42,8 +42,8 @@ describe("SourceSegmentText", () => {
     userState.setMineFloor(90);
     const segments: SourceSegment[] = [
       {
-        condition: { type: "minesLevel", floor: 90 },
-        revealed: ["the Dragon Forge (Mines level 90)"],
+        condition: { type: "mineFloor", floor: 90 },
+        unspoilered: ["the Dragon Forge (Mines level 90)"],
       },
     ];
     const { container, queries } = renderToFragment(SourceSegmentText, { props: { segments } });

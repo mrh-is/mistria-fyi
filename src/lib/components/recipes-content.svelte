@@ -13,8 +13,8 @@
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/progress.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
-  import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
+  import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
@@ -32,21 +32,21 @@
 
   const recentlyCompleted = createLeavingSet<RecipeId>();
 
-  let redactedStoreIds = $derived(computeRedactedStoreIds(userState.progressionState));
+  let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));
 
   function recipeForItem(item: Item): RecipeId | undefined {
     return item.sources.find((source) => source.type === "recipe")?.recipeId;
   }
 
   // The current recipe condition is added when each tree is built.
-  let baseSegmentLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
+  let baseSegmentLookups = $derived(buildBaseSegmentLookups(spoileredStoreIds, locale));
 
   interface RecipeEntry {
     id: RecipeId;
     itemId: ItemId;
     name: string;
-    nameVisible: boolean;
     sources: Source[];
+    spoilered: boolean;
     visibility?: VisibilityCondition;
   }
 
@@ -69,8 +69,8 @@
           id: recipeId,
           itemId: canonicalId,
           name: getName("items", canonicalId, locale),
-          nameVisible: isConditionVisible(visibility, userState.progressionState),
           sources,
+          spoilered: !isConditionVisible(visibility, userState.progressionState),
           visibility,
         });
       }
@@ -175,7 +175,7 @@
             display={trackerRowDisplay({
               completed,
               leaving: recentlyCompleted.has(entry.id),
-              nameVisible: entry.nameVisible,
+              spoilered: entry.spoilered,
             })}
             segmentLookups={{ ...baseSegmentLookups, entityVisibility: entry.visibility }}
             name={entry.name}
@@ -185,7 +185,7 @@
             sprite={entry.itemId}
             spriteClass="text-(--color-category-recipes)"
             onToggle={() => {
-              if (entry.nameVisible || completed) {
+              if (!entry.spoilered || completed) {
                 toggleRecipe(
                   entry,
                   group.entries.map((candidate) => candidate.id),

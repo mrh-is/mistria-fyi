@@ -164,7 +164,7 @@ function hasWindowRestriction(condition: AvailabilityCondition): boolean {
     case "hasUpperFloor":
     case "heartLevel":
     case "isDating":
-    case "minesLevel":
+    case "mineFloor":
     case "perkUnlocked":
     case "quest":
     case "reachedSeason":

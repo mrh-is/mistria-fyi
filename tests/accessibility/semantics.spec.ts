@@ -54,7 +54,7 @@ test.describe("semantic accessibility", () => {
       page,
       "light",
       createStoredState({
-        completed: { villagerLevels: { adeline: 8 } },
+        completed: { heartLevels: { adeline: 8 } },
         showSpoilers: true,
       }),
     );

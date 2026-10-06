@@ -35,7 +35,8 @@ export interface ProgressState {
   cosmetics: Set<CosmeticId>;
   dates: Set<DateId>;
   hasUpperFloor: boolean;
-  mines: { floor: number; spells: Set<SpellId> };
+  heartLevels: Partial<Record<VillagerId, number>>;
+  mineFloor: number;
   museum: Set<ItemId>;
   petCosmetics: Set<PetCosmeticSetId>;
   petSkins: Set<PetSkinId>;
@@ -43,8 +44,9 @@ export interface ProgressState {
   reachedSeason: Season;
   renown: number;
   skillLevels: Partial<Record<SkillId, number>>;
+  /** Player spells, unlocked through mine progression but usable anywhere. */
+  spells: Set<SpellId>;
   unlockedPerks: Set<PerkId>;
-  villagerLevels: Partial<Record<VillagerId, number>>;
   villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>>;
 }
 
@@ -81,6 +83,7 @@ export interface MergeCounts {
   cosmetics: number;
   dates: number;
   hasUpperFloor: number;
+  heartLevels: number;
   mineFloor: number;
   museum: number;
   perks: number;
@@ -91,7 +94,6 @@ export interface MergeCounts {
   renown: number;
   skillLevels: number;
   spells: number;
-  villagerLevels: number;
   villagerRelationships: number;
 }
 

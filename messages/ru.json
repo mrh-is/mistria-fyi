@@ -3,7 +3,7 @@
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "Отслеживайте коллекции, задания, навыки и многое другое",
   "og_share_description": "Вся Мистрия в одном месте",
-  "source_hidden": "Скрыто",
+  "source_spoilered": "Скрыто",
   "app_update_available": "Mistria Field Guide обновился! Обновите страницу, чтобы получить новую версию.",
   "app_update_later": "Не сейчас",
   "app_update_refresh": "Обновить",
@@ -156,8 +156,8 @@
   "season_fall_abbr": "ОСЕ",
   "season_winter_abbr": "ЗИМ",
   "villager_birthday_aria": "День рождения: {day} {season}",
-  "villager_birthday_hidden": "День рождения скрыт",
-  "villager_hidden_name": "Скрытый житель",
+  "villager_birthday_spoilered": "День рождения скрыт",
+  "villager_spoilered_name": "Скрытый житель",
   "villager_relationship_level_aria": "Уровень отношений с «{name}», {level} из {max}",
   "villager_decrease_hearts": "Уменьшить количество сердец «{name}»",
   "villager_increase_hearts": "Увеличить количество сердец «{name}»",
@@ -185,7 +185,7 @@
   "rank_state_completed": "Завершено",
   "rank_state_current": "Текущий",
   "rank_state_upcoming": "Предстоящий",
-  "villager_hidden_name_lower": "скрытый житель",
+  "villager_spoilered_name_lower": "скрытый житель",
   "villagers_jump_to_initial_aria": "Перейти к {initial}, первая запись жителя",
   "cosmetic_slot_head_gear": "Головные уборы",
   "cosmetic_slot_face_gear": "Аксессуары для лица",
@@ -504,7 +504,7 @@
       }
     }
   ],
-  "merge_label_villager_levels": [
+  "merge_label_heart_levels": [
     {
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],

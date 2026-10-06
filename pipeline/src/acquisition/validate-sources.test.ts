@@ -192,7 +192,7 @@ describe("validateAcquisitionSources", () => {
       { type: "always" },
       { type: "gamePredicate", predicate: "native_flag", value: true },
       { type: "heartLevel", level: 4, villagerId: "villager" },
-      { type: "minesLevel", floor: 20 },
+      { type: "mineFloor", floor: 20 },
       { type: "perkUnlocked", perkId: "perk" },
       { type: "quest", questId: "quest", state: "completed" },
       { type: "season", seasons: ["spring"] },

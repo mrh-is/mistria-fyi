@@ -47,8 +47,8 @@
       <VillagerRecord
         {compact}
         id={villager.id}
-        known={userState.progressionState.knownVillagers.has(villager.id)}
         name={villager.name}
+        spoilered={!userState.progressionState.knownVillagers.has(villager.id)}
         {villager}
       />
     {/each}

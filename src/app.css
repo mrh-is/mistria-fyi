@@ -152,7 +152,7 @@
   --color-category-quests: #1878b8;
   --color-category-mines: #7a5a3a;
 
-  /* Villager level marks (villager-record.svelte), the town rank ladder (renown), & confetti
+  /* Heart level marks (villager-record.svelte), the town rank ladder (renown), & confetti
    * (celebrate.ts). One palette for both themes: each sits on paper or a canvas overlay. */
   --color-relationship-level-1: #7c3aed;
   --color-relationship-level-2: #4338ca;

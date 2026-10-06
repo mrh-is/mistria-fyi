@@ -11,7 +11,7 @@ import type { ItemId, Season, VillagerId, Weather } from "#lib/types/tracker-dat
 import type { ProgressState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
-export const MAX_VILLAGER_LEVEL = 12;
+export const MAX_HEART_LEVEL = 12;
 export const MAX_SKILL_LEVEL = 60;
 
 export type AllProgress = Record<CategoryKey, CategoryProgress>;
@@ -137,8 +137,8 @@ export function isVillagerComplete(
   villagerId: VillagerId,
   completed: DeepReadonly<ProgressState>,
 ): boolean {
-  const level = completed.villagerLevels[villagerId] ?? 0;
-  return level >= MAX_VILLAGER_LEVEL && isRelationshipSettled(villagerId, completed);
+  const level = completed.heartLevels[villagerId] ?? 0;
+  return level >= MAX_HEART_LEVEL && isRelationshipSettled(villagerId, completed);
 }
 
 /**
@@ -262,7 +262,7 @@ function getMinesProgress(ctx: ProgressContext): CategoryProgress {
   const totalFloors = maxFloor;
   const totalSpells = recordKeys(trackerData.mines.spells).length;
   const total = totalFloors + totalSpells;
-  const completed = ctx.completed.mines.floor + ctx.completed.mines.spells.size;
+  const completed = ctx.completed.mineFloor + ctx.completed.spells.size;
   return { completed, remainingInScope: total - completed, total };
 }
 
@@ -325,8 +325,8 @@ function getVillagersProgress(ctx: ProgressContext): CategoryProgress {
   let total = 0;
   let completed = 0;
   for (const [id, villager] of recordEntries(trackerData.villagers)) {
-    total += MAX_VILLAGER_LEVEL;
-    completed += Math.min(ctx.completed.villagerLevels[id] ?? 0, MAX_VILLAGER_LEVEL);
+    total += MAX_HEART_LEVEL;
+    completed += Math.min(ctx.completed.heartLevels[id] ?? 0, MAX_HEART_LEVEL);
     if (!villager.dateable) continue;
     total++;
     if (isRelationshipSettled(id, ctx.completed)) completed++;
