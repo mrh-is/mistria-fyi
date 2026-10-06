@@ -14,7 +14,7 @@ describe("createLeavingSet", () => {
 
   it("keeps a marked id until the row leave time has elapsed", () => {
     const set = createLeavingSet<string>();
-    set.mark("a");
+    set.markLeaving("a");
 
     expect(set.has("a")).toBe(true);
     expect(set.ids.has("a")).toBe(true);
@@ -26,9 +26,9 @@ describe("createLeavingSet", () => {
 
   it("restarts the leaving window when the same item is completed again", () => {
     const set = createLeavingSet<string>(100);
-    set.mark("a");
+    set.markLeaving("a");
     vi.advanceTimersByTime(50);
-    set.mark("a");
+    set.markLeaving("a");
     vi.advanceTimersByTime(50);
     expect(set.has("a")).toBe(true);
     vi.advanceTimersByTime(50);
@@ -41,7 +41,7 @@ describe("createLeavingSet", () => {
 
   it("accepts a custom duration", () => {
     const set = createLeavingSet<number>(10);
-    set.mark(1);
+    set.markLeaving(1);
     vi.advanceTimersByTime(10);
     expect(set.has(1)).toBe(false);
   });

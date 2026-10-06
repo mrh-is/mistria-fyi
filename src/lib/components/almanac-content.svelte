@@ -218,7 +218,7 @@
       userState.toggleAlmanacItem(canonicalId);
     });
     if (completed) {
-      if (!userState.state.showCompleted) recentlyCompleted.mark(canonicalId);
+      if (!userState.state.showCompleted) recentlyCompleted.markLeaving(canonicalId);
       checkCelebration(catCanonicalIds);
     }
   }
@@ -280,7 +280,7 @@
               if (itemNameVisible({ visibility: itemVisibility }) || itemCompleted) {
                 toggleItem(canonicalId, name, canonicalIds);
               } else {
-                spoilerGuard.guard(itemVisibility, () => {
+                spoilerGuard.requestGuardedAction(itemVisibility, () => {
                   toggleItem(canonicalId, name, canonicalIds);
                 });
               }

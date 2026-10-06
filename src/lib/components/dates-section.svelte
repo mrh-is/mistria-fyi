@@ -47,7 +47,7 @@
   function toggleDate(dateId: DateId): void {
     const vis = trackerData.dates[dateId].visibility;
     if (!dateNameVisible(dateId)) {
-      spoilerGuard.guard(vis, () => {
+      spoilerGuard.requestGuardedAction(vis, () => {
         toggleDate(dateId);
       });
       return;

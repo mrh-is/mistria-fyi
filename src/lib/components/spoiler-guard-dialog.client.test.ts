@@ -22,7 +22,7 @@ describe("SpoilerGuardDialog", () => {
     const action = vi.fn();
     render(SpoilerGuardDialog, { guard });
 
-    guard.guard({ type: "minesLevel", floor: 20 }, action);
+    guard.requestGuardedAction({ type: "minesLevel", floor: 20 }, action);
     await tick();
 
     expect(screen.getByRole("alertdialog")).toBeTruthy();

@@ -99,6 +99,6 @@
       {/if}
     {/each}
   </ExpandableSection>
-{:else if toolbarState.sourceFilterActive}
+{:else if toolbarState.isSourceFilterNarrowing}
   <TrackerEmptyState />
 {/if}

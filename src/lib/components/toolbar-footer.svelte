@@ -9,11 +9,11 @@
   import { fade } from "svelte/transition";
 
   import FeedbackPanel from "#lib/components/feedback-panel.svelte";
+  import FilterPanel from "#lib/components/filter-panel.svelte";
   import FoldoutPanel from "#lib/components/foldout-panel.svelte";
   import PanelOverlay from "#lib/components/panel-overlay.svelte";
   import QuickSettingsPanel from "#lib/components/quick-settings-panel.svelte";
   import { Input } from "#lib/components/ui/input/index.js";
-  import VisibilityPanel from "#lib/components/visibility-panel.svelte";
   import { getName } from "#lib/data/names.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
@@ -108,7 +108,7 @@
     const target = event.target as HTMLInputElement;
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
-      toolbarState.setSearch(target.value);
+      toolbarState.setSearchQuery(target.value);
     }, 200);
   }
 
@@ -127,7 +127,7 @@
       ),
   );
   let filtersActive = $derived(
-    !availabilityIsDefault || userState.state.showCompleted || toolbarState.sourceFilterActive,
+    !availabilityIsDefault || userState.state.showCompleted || toolbarState.isSourceFilterNarrowing,
   );
 
   function resetFilters(): void {
@@ -181,7 +181,7 @@
               type="button"
               aria-label={m.toolbar_clear_search()}
               onclick={() => {
-                toolbarState.setSearch("");
+                toolbarState.setSearchQuery("");
               }}>×</button
             >
           {/if}
@@ -241,7 +241,7 @@
             type="button"
             aria-label={m.toolbar_visibility_filters()}
             aria-expanded={activePanel === "visibility"}
-            aria-controls="visibility-panel"
+            aria-controls="filter-panel"
             onclick={() => {
               togglePanel("visibility");
             }}
@@ -270,7 +270,7 @@
           <QuickSettingsPanel />
         </FoldoutPanel>
       {:else}
-        <FoldoutPanel id="visibility-panel" title={m.toolbar_filters()} onClose={closePanel}>
+        <FoldoutPanel id="filter-panel" title={m.toolbar_filters()} onClose={closePanel}>
           {#snippet headerActions()}
             {#if filtersActive}
               <button
@@ -283,7 +283,10 @@
               </button>
             {/if}
           {/snippet}
-          <VisibilityPanel showSeasonality={toolbar.worldState} onFilterChange={announceFilters} />
+          <FilterPanel
+            showWorldStateFilters={toolbar.worldState}
+            onFilterChange={announceFilters}
+          />
         </FoldoutPanel>
       {/if}
     </PanelOverlay>

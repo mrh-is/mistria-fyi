@@ -152,14 +152,14 @@
         if (nameVisible || completed) {
           toggleCosmetic(cosmetic, allInSlot);
         } else {
-          spoilerGuard.guard(cosmetic.visibility, () => {
+          spoilerGuard.requestGuardedAction(cosmetic.visibility, () => {
             toggleCosmetic(cosmetic, allInSlot);
           });
         }
       }}
     />
   {/snippet}
-  {#if visibleInSlot.length > 0 || toolbarState.sourceFilterActive}
+  {#if visibleInSlot.length > 0 || toolbarState.isSourceFilterNarrowing}
     <ExpandableSection
       {locale}
       count={scopedInSlot.filter((c) => userState.state.completed.cosmetics.has(c.id)).length}

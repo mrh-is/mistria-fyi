@@ -25,8 +25,8 @@
 
   let {
     onFilterChange,
-    showSeasonality,
-  }: { onFilterChange?: () => void; showSeasonality: boolean } = $props();
+    showWorldStateFilters,
+  }: { onFilterChange?: () => void; showWorldStateFilters: boolean } = $props();
 
   const seasons: Season[] = ["spring", "summer", "fall", "winter"];
   const allWeathers: Weather[] = ["calm", "inclement", "heavy_inclement", "special"];
@@ -121,7 +121,7 @@
 <SourceExplainerDialog bind:open={sourcesExplainerOpen} filters={toolbarState.sourceFilters} />
 
 <div class="filters">
-  {#if showSeasonality}
+  {#if showWorldStateFilters}
     <section class="filter-section" aria-labelledby="availability-filter-label">
       <h3 id="availability-filter-label">
         <IconClock class="size-3.5" />{m.visibility_when_to_find()}
@@ -226,7 +226,7 @@
       <div class="chip-row">
         {#each sortSourceFiltersByLabel(toolbarState.sourceFilters, page.data.locale) as filter (filter.id)}
           {@const SourceIcon = SOURCE_FILTER_ICON[filter.id]}
-          {@const selected = toolbarState.activeSourceIds.has(filter.id)}
+          {@const selected = toolbarState.enabledSourceFilterIds.has(filter.id)}
           <button
             class="filter-chip"
             class:filter-chip--active={selected}
