@@ -21,11 +21,30 @@ export function localeNameChunks(manifest: Manifest): Record<string, string[]> {
     if (locale === undefined) continue;
     (chunks[locale] ??= new Set()).add(`/${chunk.file}`);
   }
+  if (Object.keys(chunks).length === 0) {
+    // An empty map would make the service worker precache every locale's chunks (~2.4 MB) with no
+    // error, so a changed manifest layout or source path must stop the build instead.
+    throw new Error(
+      "The client manifest lists no locale name chunks; the service worker would precache every locale.",
+    );
+  }
   return Object.fromEntries(
     Object.entries(chunks)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([locale, files]) => [locale, [...files].sort()]),
   );
+}
+
+/**
+ * Throws unless the rendered service worker had the map inlined. A service worker that never
+ * references the placeholder precaches every locale, so a missing replacement fails the build.
+ */
+export function assertLocaleNameChunksInlined(inlined: boolean): void {
+  if (!inlined) {
+    throw new Error(
+      `No service worker chunk referenced ${LOCALE_NAME_CHUNKS_DEFINE}, so no locale name chunks were inlined.`,
+    );
+  }
 }
 
 /**
@@ -38,10 +57,16 @@ export function localeNameChunks(manifest: Manifest): Record<string, string[]> {
  */
 export function localeNameChunksPlugin(): Plugin {
   let root = process.cwd();
+  let inlined = false;
   return {
     apply: "build",
     configResolved(config) {
       root = config.root;
+    },
+    generateBundle() {
+      if (this.environment.name === "serviceWorker") {
+        assertLocaleNameChunksInlined(inlined);
+      }
     },
     name: "mfg:locale-name-chunks",
     renderChunk(code) {
@@ -53,6 +78,7 @@ export function localeNameChunksPlugin(): Plugin {
         throw new Error(`localeNameChunksPlugin needs the client manifest at ${manifestPath}.`);
       }
       const chunks = localeNameChunks(JSON.parse(readFileSync(manifestPath, "utf-8")) as Manifest);
+      inlined = true;
       return {
         code: code.replaceAll(
           new RegExp(`\\b${LOCALE_NAME_CHUNKS_DEFINE}\\b`, "g"),

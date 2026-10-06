@@ -5,6 +5,7 @@ import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 import tailwindcss from "@tailwindcss/vite";
 import { svelteTesting } from "@testing-library/svelte/vite";
 import { readdirSync } from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv } from "vite";
 import { configDefaults } from "vitest/config";
@@ -59,7 +60,9 @@ const plainNodeTestOptions = { isolate: true, restoreMocks: true, unstubGlobals:
  * as individual rules. Dynamic routes (locale pages, `/api/feedback`) stay covered by the `/*`
  * include.
  */
-const staticExcludes = readdirSync("static", { withFileTypes: true })
+const staticExcludes = readdirSync(path.join(import.meta.dirname, "static"), {
+  withFileTypes: true,
+})
   .filter((entry) => !entry.name.startsWith("."))
   .map((entry) => (entry.isDirectory() ? `/${entry.name}/*` : `/${entry.name}`));
 

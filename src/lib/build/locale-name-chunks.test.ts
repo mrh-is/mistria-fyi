@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { localeNameChunks } from "./locale-name-chunks.js";
+import { assertLocaleNameChunksInlined, localeNameChunks } from "./locale-name-chunks.js";
 
 import type { Manifest } from "vite";
 
@@ -19,12 +19,23 @@ describe("localeNameChunks", () => {
     });
   });
 
+  it("throws when no locale name chunks are present, rather than precaching every locale", () => {
+    expect(() => localeNameChunks({})).toThrow(/no locale name chunks/);
+  });
+
   it("ignores modules outside the locale name tree", () => {
     const manifest: Manifest = {
       "src/lib/data/locales.json": { file: "_app/immutable/chunks/L.js" },
       "src/lib/data/tracker-data.json": { file: "_app/immutable/chunks/T.js" },
     };
 
-    expect(localeNameChunks(manifest)).toEqual({});
+    expect(() => localeNameChunks(manifest)).toThrow(/no locale name chunks/);
+  });
+});
+
+describe("assertLocaleNameChunksInlined", () => {
+  it("throws when the service worker never received the map", () => {
+    expect(() => assertLocaleNameChunksInlined(false)).toThrow(/__LOCALE_NAME_CHUNKS__/);
+    expect(() => assertLocaleNameChunksInlined(true)).not.toThrow();
   });
 });
