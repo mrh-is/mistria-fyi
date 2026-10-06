@@ -1,4 +1,4 @@
-import { canonicalAlmanacId, trackerData, trackerIndex } from "#lib/data/index.js";
+import { trackerData, trackerIndex } from "#lib/data/index.js";
 import {
   clampMineFloor,
   clampRenownLevel,
@@ -41,8 +41,7 @@ const MIN_SUPPORTED_TRANSFER_VERSION = 11;
  */
 export const TRANSFER_MAGIC = "MFGT";
 
-/** First version to prepend a CRC-32 integrity checksum of the raw payload before compression. */
-const CHECKSUM_VERSION = 9;
+/** Every supported version prepends a CRC-32 integrity checksum of the raw payload. */
 const CHECKSUM_BYTE_LENGTH = 4;
 
 const SEASON_BY_ORD: Season[] = ["spring", "summer", "fall", "winter"];
@@ -71,8 +70,6 @@ export class TransferDecodeError extends Error {
     this.code = code;
   }
 }
-
-// ─── Deterministic orderings (derived from trackerData) ─────────────
 
 /**
  * Decode base64url string → Partial<CompletedState> for merging. Every rejection is a
@@ -107,8 +104,8 @@ export async function encodeTransferPayload(
   const animalVariantKeys = animalVariantOrder.map((v) => `${v.animalId}:${v.variantId}`);
   const completedAnimalVariants = new Set<string>();
   for (const { animalId, variantId } of animalVariantOrder) {
-    const animalSet = completed.animals[animalId];
-    if (animalSet.has(variantId)) {
+    const animalSet = completed.animals[animalId] as ReadonlySet<string> | undefined;
+    if (animalSet?.has(variantId)) {
       completedAnimalVariants.add(`${animalId}:${variantId}`);
     }
   }
@@ -119,8 +116,8 @@ export async function encodeTransferPayload(
   const animalCosmeticKeys = animalCosmeticOrder.map((v) => `${v.animalId}:${v.cosmeticId}`);
   const completedAnimalCosmetics = new Set<string>();
   for (const { animalId, cosmeticId } of animalCosmeticOrder) {
-    const cosmeticSet = completed.animalCosmetics[animalId];
-    if (cosmeticSet.has(cosmeticId)) {
+    const cosmeticSet = completed.animalCosmetics[animalId] as ReadonlySet<string> | undefined;
+    if (cosmeticSet?.has(cosmeticId)) {
       completedAnimalCosmetics.add(`${animalId}:${cosmeticId}`);
     }
   }
@@ -132,6 +129,7 @@ export async function encodeTransferPayload(
 
   // 6. Spell bitmask (1 byte)
   const spellOrder = getSpellOrder();
+  assertSpellBitmaskFits(spellOrder.length);
   let spellByte = 0;
   for (let i = 0; i < spellOrder.length; i++) {
     if (completed.mines.spells.has(spellOrder[i])) {
@@ -178,35 +176,35 @@ export async function encodeTransferPayload(
   }
   parts.push(questBytes);
 
-  // 12. Perk bitfield (new in v2)
+  // 12. Perk bitfield
   const perkOrder = getPerkOrder();
   parts.push(toBitfield(perkOrder, completed.unlockedPerks));
 
-  // 13. Married villager index (v2+, still written for v6 backward compat)
+  // 13. Married villager index (1 byte; also encoded in the relationship states)
   const marriedVillager = Object.entries(completed.villagerRelationships).find(
     ([, r]) => r === "married",
   )?.[0] as undefined | VillagerId;
   const marriedIndex = marriedVillager ? villagerOrder.indexOf(marriedVillager) : -1;
   parts.push(new Uint8Array([marriedIndex === -1 ? 0xff : marriedIndex]));
 
-  // 14. Pet cosmetic sets bitfield (new in v3)
+  // 14. Pet cosmetic sets bitfield
   const petCosmeticOrder = getPetCosmeticOrder();
   parts.push(toBitfield(petCosmeticOrder, completed.petCosmetics));
 
-  // 15. Pet skins bitfield (new in v3)
+  // 15. Pet skins bitfield
   const petSkinOrder = getPetSkinOrder();
   parts.push(toBitfield(petSkinOrder, completed.petSkins));
 
-  // 16. Date bitfield (new in v4)
+  // 16. Date bitfield
   const dateOrder = getDateOrder();
   parts.push(toBitfield(dateOrder, completed.dates));
 
-  // 17. Progression byte (new in v5) — bits 7-6: reachedSeason, bit 5: hasUpperFloor
+  // 17. Progression byte — bits 7-6: reachedSeason, bit 5: hasUpperFloor
   const progressionByte =
     ((SEASON_ORD[completed.reachedSeason] & 0x3) << 6) | (completed.hasUpperFloor ? 0x20 : 0);
   parts.push(new Uint8Array([progressionByte]));
 
-  // 18. Romantic villager bitfield (v5+, still written for v6 backward compat)
+  // 18. Romantic villager bitfield (also encoded in the relationship states)
   const romanticOrder = getDateableVillagerOrder();
   const romanticSet = new Set<string>();
   for (const [id, rel] of Object.entries(completed.villagerRelationships)) {
@@ -216,7 +214,7 @@ export async function encodeTransferPayload(
   }
   parts.push(toBitfield(romanticOrder, romanticSet));
 
-  // 19. Villager relationship states (new in v7) — 3 bits per dateable villager
+  // 19. Villager relationship states — 3 bits per dateable villager
   const RELATIONSHIP_ENCODE: Record<VillagerRelationship, number> = {
     married: 4,
     platonic: 1,
@@ -243,11 +241,11 @@ export async function encodeTransferPayload(
   }
   parts.push(relBytes);
 
-  // 20. Child choice (new in v7) — 1 byte
+  // 20. Child choice — 1 byte
   const childByte = encodeChildChoice(completed.childChoice);
   parts.push(new Uint8Array([childByte]));
 
-  // 21. Almanac recipes bitfield (new in v8)
+  // 21. Almanac recipes bitfield
   const recipeOrder = getRecipeOrder();
   parts.push(toBitfield(recipeOrder, completed.almanacRecipes));
 
@@ -307,20 +305,16 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
     );
   }
 
-  let expectedChecksum: null | number = null;
-  let bodyStart = 1;
-  if (version >= CHECKSUM_VERSION) {
-    if (payloadBytes.length < 1 + CHECKSUM_BYTE_LENGTH) {
-      throw new Error("Malformed transfer payload: missing integrity checksum");
-    }
-    expectedChecksum =
-      ((payloadBytes[1] << 24) |
-        (payloadBytes[2] << 16) |
-        (payloadBytes[3] << 8) |
-        payloadBytes[4]) >>>
-      0;
-    bodyStart = 1 + CHECKSUM_BYTE_LENGTH;
+  if (payloadBytes.length < 1 + CHECKSUM_BYTE_LENGTH) {
+    throw new Error("Malformed transfer payload: missing integrity checksum");
   }
+  const expectedChecksum =
+    ((payloadBytes[1] << 24) |
+      (payloadBytes[2] << 16) |
+      (payloadBytes[3] << 8) |
+      payloadBytes[4]) >>>
+    0;
+  const bodyStart = 1 + CHECKSUM_BYTE_LENGTH;
 
   const compressed = payloadBytes.slice(bodyStart);
   if (compressed.length === 0) {
@@ -334,11 +328,11 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
     throw new Error("Invalid compressed transfer payload", { cause: error });
   }
 
-  if (expectedChecksum !== null && crc32(raw) !== expectedChecksum) {
+  if (crc32(raw) !== expectedChecksum) {
     throw new Error("Transfer payload failed integrity check: data may be corrupted");
   }
 
-  const expectedLength = getTransferRawLength(version);
+  const expectedLength = getTransferRawLength();
   if (raw.length !== expectedLength) {
     throw new Error(
       `Invalid transfer payload length: expected ${String(expectedLength)} bytes, received ${String(raw.length)}`,
@@ -359,13 +353,9 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
   }
 
   // 1. Almanac items
-  const almanacOrder = version >= 6 ? getAlmanacOrder() : getLegacyAlmanacOrder();
+  const almanacOrder = getAlmanacOrder();
   const almanacBytes = readBytes(Math.ceil(almanacOrder.length / 8));
-  const rawAlmanac = fromBitfield(almanacOrder, almanacBytes, "almanac bitfield") as Set<ItemId>;
-  const almanac =
-    version >= 6
-      ? rawAlmanac
-      : new Set([...rawAlmanac].map((id) => canonicalAlmanacId.get(id) ?? id));
+  const almanac = fromBitfield(almanacOrder, almanacBytes, "almanac bitfield") as Set<ItemId>;
 
   // 2. Cosmetics (non-default-unlocked)
   const cosmeticOrder = getCosmeticOrder();
@@ -467,131 +457,105 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
     questStates[questOrder[i].questId] = questStateMap[bits];
   }
 
-  // 12. Perk bitfield (v2 only)
-  // 13. Married villager index (v2 only) — 1 byte: 0xFF = no spouse, else index into villagerOrder
-  let unlockedPerks = new Set<PerkId>();
+  // 12. Perk bitfield
+  const perkOrder = getPerkOrder();
+  const perkBytes = readBytes(Math.ceil(perkOrder.length / 8));
+  const unlockedPerks = fromBitfield(perkOrder, perkBytes, "perk bitfield") as Set<PerkId>;
+
+  // 13. Married villager index — 1 byte: 0xFF = no spouse, else index into villagerOrder
   let marriedVillager: null | VillagerId = null;
-
-  if (version >= 2) {
-    const perkOrder = getPerkOrder();
-    const perkBytes = readBytes(Math.ceil(perkOrder.length / 8));
-    unlockedPerks = fromBitfield(perkOrder, perkBytes, "perk bitfield") as Set<PerkId>;
-
-    const marriedByte = readBytes(1)[0];
-    if (marriedByte !== 0xff) {
-      marriedVillager = villagerOrder[marriedByte] ?? null;
-      if (!marriedVillager) {
-        throw new Error(`Invalid spouse index: ${String(marriedByte)}`);
-      }
+  const marriedByte = readBytes(1)[0];
+  if (marriedByte !== 0xff) {
+    marriedVillager = villagerOrder[marriedByte] ?? null;
+    if (!marriedVillager) {
+      throw new Error(`Invalid spouse index: ${String(marriedByte)}`);
     }
   }
 
-  // 14. Pet cosmetic sets bitfield (v3 only)
-  // 15. Pet skins bitfield (v3 only)
-  let petCosmetics = new Set<PetCosmeticSetId>();
-  let petSkins = new Set<PetSkinId>();
+  // 14. Pet cosmetic sets bitfield
+  const petCosmeticOrder = getPetCosmeticOrder();
+  const petCosmeticBytes = readBytes(Math.ceil(petCosmeticOrder.length / 8));
+  const petCosmetics = fromBitfield(
+    petCosmeticOrder,
+    petCosmeticBytes,
+    "pet cosmetic bitfield",
+  ) as Set<PetCosmeticSetId>;
 
-  if (version >= 3) {
-    const petCosmeticOrder = getPetCosmeticOrder();
-    const petCosmeticBytes = readBytes(Math.ceil(petCosmeticOrder.length / 8));
-    petCosmetics = fromBitfield(
-      petCosmeticOrder,
-      petCosmeticBytes,
-      "pet cosmetic bitfield",
-    ) as Set<PetCosmeticSetId>;
+  // 15. Pet skins bitfield
+  const petSkinOrder = getPetSkinOrder();
+  const petSkinBytes = readBytes(Math.ceil(petSkinOrder.length / 8));
+  const petSkins = fromBitfield(petSkinOrder, petSkinBytes, "pet skin bitfield") as Set<PetSkinId>;
 
-    const petSkinOrder = getPetSkinOrder();
-    const petSkinBytes = readBytes(Math.ceil(petSkinOrder.length / 8));
-    petSkins = fromBitfield(petSkinOrder, petSkinBytes, "pet skin bitfield") as Set<PetSkinId>;
+  // 16. Date bitfield
+  const dateOrder = getDateOrder();
+  const dateBytes = readBytes(Math.ceil(dateOrder.length / 8));
+  const dates = fromBitfield(dateOrder, dateBytes, "date bitfield") as Set<DateId>;
+
+  // 17. Progression byte — bits 7-6: reachedSeason, bit 5: hasUpperFloor, bits 4-0: reserved
+  const progressionByte = readBytes(1)[0];
+  if (progressionByte & 0x1f) {
+    throw new Error("Invalid progression reserved bits: expected zero");
   }
+  const reachedSeason: Season = SEASON_BY_ORD[(progressionByte >> 6) & 0x3];
+  const hasUpperFloor = Boolean(progressionByte & 0x20);
 
-  // 16. Date bitfield (v4 only)
-  let dates = new Set<DateId>();
-  if (version >= 4) {
-    const dateOrder = getDateOrder();
-    const dateBytes = readBytes(Math.ceil(dateOrder.length / 8));
-    dates = fromBitfield(dateOrder, dateBytes, "date bitfield") as Set<DateId>;
-  }
-
-  // 17. Progression byte (v5 only) — bits 7-6: reachedSeason, bit 5: hasUpperFloor, bits 4-0: reserved
-  // 18. Romantic villager bitfield (v5 only)
-  let hasUpperFloor = false;
-  let reachedSeason: Season = "spring";
+  // 18. Romantic villager bitfield; the relationship states below override it
   const villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>> = {};
-
-  if (version >= 5) {
-    const progressionByte = readBytes(1)[0];
-    if (progressionByte & 0x1f) {
-      throw new Error("Invalid progression reserved bits: expected zero");
-    }
-    reachedSeason = SEASON_BY_ORD[(progressionByte >> 6) & 0x3];
-    hasUpperFloor = Boolean(progressionByte & 0x20);
-
-    const romanticOrder = getDateableVillagerOrder();
-    const romanticBytes = readBytes(Math.ceil(romanticOrder.length / 8));
-    const romanticVillagers = fromBitfield(
-      romanticOrder,
-      romanticBytes,
-      "romantic villager bitfield",
-    ) as Set<VillagerId>;
-
-    for (const villagerId of romanticVillagers) {
-      villagerRelationships[villagerId] = "romantic";
-    }
+  const romanticOrder = getDateableVillagerOrder();
+  const romanticBytes = readBytes(Math.ceil(romanticOrder.length / 8));
+  const romanticVillagers = fromBitfield(
+    romanticOrder,
+    romanticBytes,
+    "romantic villager bitfield",
+  ) as Set<VillagerId>;
+  for (const villagerId of romanticVillagers) {
+    villagerRelationships[villagerId] = "romantic";
   }
 
   if (marriedVillager) {
     villagerRelationships[marriedVillager] = "married";
   }
 
-  // 19. Villager relationship states (v7) — 3 bits per dateable villager
-  // 20. Child choice (v7) — 1 byte
-  let childChoice: ChildChoice = "undeclared";
-
-  if (version >= 7) {
-    const dateableOrder = getDateableVillagerOrder();
-    const relByteCount = Math.ceil((dateableOrder.length * 3) / 8);
-    const relBytes = readBytes(relByteCount);
-    assertZeroPadding(dateableOrder.length * 3, relBytes, "relationship reserved bits");
-    const RELATIONSHIP_MAP = [
-      "undecided",
-      "platonic",
-      "romantic",
-      "proposed",
-      "married",
-    ] as const satisfies readonly VillagerRelationship[];
-    for (let i = 0; i < dateableOrder.length; i++) {
-      const bitOffset = i * 3;
-      const byteIndex = Math.floor(bitOffset / 8);
-      const bitShift = 5 - (bitOffset % 8);
-      const bits =
-        bitShift >= 0
-          ? (relBytes[byteIndex] >> bitShift) & 0x7
-          : ((relBytes[byteIndex] << -bitShift) | (relBytes[byteIndex + 1] >> (8 + bitShift))) &
-            0x7;
-      if (bits >= RELATIONSHIP_MAP.length) {
-        throw new Error(`Invalid relationship state code: ${String(bits)}`);
-      }
-      const rel = RELATIONSHIP_MAP[bits];
-      if (rel !== "undecided") {
-        villagerRelationships[dateableOrder[i]] = rel;
-      }
+  // 19. Villager relationship states — 3 bits per dateable villager
+  const dateableOrder = getDateableVillagerOrder();
+  const relByteCount = Math.ceil((dateableOrder.length * 3) / 8);
+  const relBytes = readBytes(relByteCount);
+  assertZeroPadding(dateableOrder.length * 3, relBytes, "relationship reserved bits");
+  const RELATIONSHIP_MAP = [
+    "undecided",
+    "platonic",
+    "romantic",
+    "proposed",
+    "married",
+  ] as const satisfies readonly VillagerRelationship[];
+  for (let i = 0; i < dateableOrder.length; i++) {
+    const bitOffset = i * 3;
+    const byteIndex = Math.floor(bitOffset / 8);
+    const bitShift = 5 - (bitOffset % 8);
+    const bits =
+      bitShift >= 0
+        ? (relBytes[byteIndex] >> bitShift) & 0x7
+        : ((relBytes[byteIndex] << -bitShift) | (relBytes[byteIndex + 1] >> (8 + bitShift))) & 0x7;
+    if (bits >= RELATIONSHIP_MAP.length) {
+      throw new Error(`Invalid relationship state code: ${String(bits)}`);
     }
-
-    const childByte = readBytes(1)[0];
-    if (childByte > 0x02) {
-      throw new Error(`Invalid child choice code: ${String(childByte)}`);
+    const rel = RELATIONSHIP_MAP[bits];
+    if (rel !== "undecided") {
+      villagerRelationships[dateableOrder[i]] = rel;
     }
-    childChoice = decodeChildChoice(childByte);
   }
 
-  // 21. Almanac recipes bitfield (v8+)
-  let almanacRecipes = new Set<RecipeId>();
-  if (version >= 8) {
-    const recipeOrder = getRecipeOrder();
-    const recipeBytes = readBytes(Math.ceil(recipeOrder.length / 8));
-    almanacRecipes = fromBitfield(recipeOrder, recipeBytes, "recipe bitfield") as Set<RecipeId>;
+  // 20. Child choice — 1 byte
+  const childByte = readBytes(1)[0];
+  if (childByte > 0x02) {
+    throw new Error(`Invalid child choice code: ${String(childByte)}`);
   }
+  const childChoice: ChildChoice = decodeChildChoice(childByte);
+
+  // 21. Almanac recipes bitfield
+  const recipeOrder = getRecipeOrder();
+  const recipeBytes = readBytes(Math.ceil(recipeOrder.length / 8));
+  const almanacRecipes = fromBitfield(recipeOrder, recipeBytes, "recipe bitfield") as Set<RecipeId>;
 
   normalizeRelationships(villagerRelationships);
 
@@ -656,8 +620,6 @@ function fromBase64url(str: string): Uint8Array {
   return bytes;
 }
 
-// ─── Integrity checksum (CRC-32, IEEE 802.3 polynomial) ────────────
-
 let crc32Table: null | Uint32Array = null;
 
 export function getTransferOrderingHash(): string {
@@ -681,6 +643,13 @@ export function getTransferOrderingHash(): string {
   return crc32(new TextEncoder().encode(JSON.stringify(orderings)))
     .toString(16)
     .padStart(8, "0");
+}
+
+/** The spell bitmask is one byte; a ninth spell would shift by a negative amount and corrupt it. */
+function assertSpellBitmaskFits(spellCount: number): void {
+  if (spellCount > 8) {
+    throw new Error(`Transfer spell bitmask holds 8 spells, found ${String(spellCount)}`);
+  }
 }
 
 function assertZeroPadding(usedBitCount: number, bytes: Uint8Array, label: string): void {
@@ -730,9 +699,9 @@ function getCrc32Table(): Uint32Array {
   return table;
 }
 
-function getTransferRawLength(version: number): number {
-  let length =
-    Math.ceil((version >= 6 ? getAlmanacOrder() : getLegacyAlmanacOrder()).length / 8) +
+function getTransferRawLength(): number {
+  return (
+    Math.ceil(getAlmanacOrder().length / 8) +
     Math.ceil(getCosmeticOrder().length / 8) +
     Math.ceil(getAnimalVariantOrder().length / 8) +
     Math.ceil(getAnimalCosmeticOrder().length / 8) +
@@ -742,123 +711,19 @@ function getTransferRawLength(version: number): number {
     2 +
     Math.ceil(getVillagerOrder().length / 2) +
     getSkillOrder().length +
-    Math.ceil(getQuestOrder().length / 4);
-
-  if (version >= 2) {
-    length += Math.ceil(getPerkOrder().length / 8) + 1;
-  }
-  if (version >= 3) {
-    length += Math.ceil(getPetCosmeticOrder().length / 8) + Math.ceil(getPetSkinOrder().length / 8);
-  }
-  if (version >= 4) {
-    length += Math.ceil(getDateOrder().length / 8);
-  }
-  if (version >= 5) {
-    length += 1 + Math.ceil(getDateableVillagerOrder().length / 8);
-  }
-  if (version >= 7) {
-    length += Math.ceil((getDateableVillagerOrder().length * 3) / 8) + 1;
-  }
-  if (version >= 8) {
-    length += Math.ceil(getRecipeOrder().length / 8);
-  }
-
-  return length;
+    Math.ceil(getQuestOrder().length / 4) +
+    Math.ceil(getPerkOrder().length / 8) +
+    1 +
+    Math.ceil(getPetCosmeticOrder().length / 8) +
+    Math.ceil(getPetSkinOrder().length / 8) +
+    Math.ceil(getDateOrder().length / 8) +
+    1 +
+    Math.ceil(getDateableVillagerOrder().length / 8) +
+    Math.ceil((getDateableVillagerOrder().length * 3) / 8) +
+    1 +
+    Math.ceil(getRecipeOrder().length / 8)
+  );
 }
-
-// v1–v5 used TOML-order-first representatives; v6 switched to alphabetical-first.
-// This table maps the 88 new canonical IDs back to their old representatives so the
-// legacy bit ordering can be reconstructed from the current tracker data.
-const V5_CANONICAL_REMAP = new Map<string, string>([
-  ["bakery_bread_basket_coffee", "bakery_bread_basket_pastel"],
-  ["bakery_cake_case_coffee", "bakery_cake_case_pastel"],
-  ["bakery_cake_coffee", "bakery_cake_pastel"],
-  ["bakery_cake_slice_coffee", "bakery_cake_slice_pastel"],
-  ["bakery_cookie_jar_coffee", "bakery_cookie_jar_pastel"],
-  ["bakery_cutting_board_coffee", "bakery_cutting_board_pastel"],
-  ["basic_area_rug_green", "basic_area_rug_yellow"],
-  ["basic_doormat_green", "basic_doormat_yellow"],
-  ["basic_wood_chest_black", "basic_wood_chest_dark"],
-  ["bathroom_curtain_stand_black", "bathroom_curtain_stand_blue"],
-  ["bathroom_wall_towel_black", "bathroom_wall_towel_blue"],
-  ["broken_pillar_v1_gray", "broken_pillar_v1_white"],
-  ["butterfly_wall_lamp_bronze", "butterfly_wall_lamp_gold"],
-  ["cavern_floor_brazier_blue", "cavern_floor_brazier_purple"],
-  ["cavern_wall_brazier_blue", "cavern_wall_brazier_purple"],
-  ["chess_bishop_black", "chess_bishop_white"],
-  ["chess_king_black", "chess_king_white"],
-  ["chess_knight_black", "chess_knight_white"],
-  ["chess_pawn_black", "chess_pawn_white"],
-  ["chess_queen_black", "chess_queen_white"],
-  ["chess_rook_black", "chess_rook_white"],
-  ["chess_table_black", "chess_table_white"],
-  ["cottage_bed_ash", "cottage_bed_oak"],
-  ["cottage_bed_double_ash", "cottage_bed_double_oak"],
-  ["cottage_chair_ash", "cottage_chair_oak"],
-  ["cottage_dresser_ash", "cottage_dresser_oak"],
-  ["cottage_flooring_ash", "cottage_flooring_oak"],
-  ["cottage_fridge_ash", "cottage_fridge_oak"],
-  ["cottage_nightstand_ash", "cottage_nightstand_oak"],
-  ["cottage_plant_shelf_ash", "cottage_plant_shelf_oak"],
-  ["cottage_potted_fig_ash", "cottage_potted_fig_oak"],
-  ["cottage_potted_flowers_ash", "cottage_potted_flowers_oak"],
-  ["cottage_rug_ash", "cottage_rug_oak"],
-  ["cottage_table_ash", "cottage_table_oak"],
-  ["cottage_wall_flowers_ash", "cottage_wall_flowers_oak"],
-  ["cottage_wall_window_ash", "cottage_wall_window_oak"],
-  ["cottage_wallpaper_ash", "cottage_wallpaper_oak"],
-  ["counter_kitchen_blue", "counter_kitchen_pink"],
-  ["dragon_altar_earth", "dragon_altar_water"],
-  ["enchantern_lamp_blue", "enchantern_lamp_yellow"],
-  ["essence_bat_garland_blue", "essence_bat_garland_purple"],
-  ["fall_bed_cream", "fall_bed_red"],
-  ["fall_double_bed_cream", "fall_double_bed_red"],
-  ["fall_table_cream", "fall_table_orange"],
-  ["fishing_tank_gold", "fishing_tank_silver"],
-  ["fishing_window_gold", "fishing_window_silver"],
-  ["haunted_attic_armoire_dark", "haunted_attic_armoire_dusty"],
-  ["haunted_attic_bed_dark", "haunted_attic_bed_dusty"],
-  ["haunted_attic_chair_dark", "haunted_attic_chair_dusty"],
-  ["haunted_attic_double_bed_dark", "haunted_attic_double_bed_dusty"],
-  ["haunted_attic_dress_form_dark", "haunted_attic_dress_form_dusty"],
-  ["haunted_attic_flooring_dark", "haunted_attic_flooring_dusty"],
-  ["haunted_attic_nightstand_dark", "haunted_attic_nightstand_dusty"],
-  ["haunted_attic_rocking_chair_dark", "haunted_attic_rocking_chair_dusty"],
-  ["haunted_attic_table_dark", "haunted_attic_table_dusty"],
-  ["haunted_attic_wall_shelf_dark", "haunted_attic_wall_shelf_dusty"],
-  ["haunted_attic_wall_window_dark", "haunted_attic_wall_window_dusty"],
-  ["haunted_attic_wallpaper_dark", "haunted_attic_wallpaper_dusty"],
-  ["kitchen_scale_blue", "kitchen_scale_yellow"],
-  ["kitchen_utensil_holder_blue", "kitchen_utensil_holder_pink"],
-  ["large_fluffy_rug_beige", "large_fluffy_rug_blue"],
-  ["lava_caves_obsidian_fence_blue", "lava_caves_obsidian_fence_purple"],
-  ["mushroom_sofa_blue", "mushroom_sofa_red"],
-  ["ornate_rug_large_rectangle_blue", "ornate_rug_large_rectangle_red"],
-  ["ornate_rug_large_round_blue", "ornate_rug_large_round_red"],
-  ["ornate_rug_large_square_blue", "ornate_rug_large_square_red"],
-  ["ornate_rug_medium_round_blue", "ornate_rug_medium_round_red"],
-  ["ornate_rug_medium_square_blue", "ornate_rug_medium_square_red"],
-  ["ornate_rug_small_blue", "ornate_rug_small_red"],
-  ["picnic_place_setting_pink", "picnic_place_setting_red"],
-  ["picnic_rug_pink", "picnic_rug_red"],
-  ["round_cushioned_stool_beige", "round_cushioned_stool_blue"],
-  ["royal_chest_blue", "royal_chest_wood"],
-  ["sapling_beanbag_chair_blue", "sapling_beanbag_chair_green"],
-  ["small_bathmat_beige", "small_bathmat_blue"],
-  ["star_cushion_blue", "star_cushion_yellow"],
-  ["star_lantern_blue", "star_lantern_yellow"],
-  ["star_viewing_blanket_blue", "star_viewing_blanket_yellow"],
-  ["summer_bed_red", "summer_bed_yellow"],
-  ["summer_chair_red", "summer_chair_yellow"],
-  ["summer_double_bed_red", "summer_double_bed_yellow"],
-  ["summer_flooring_red", "summer_flooring_yellow"],
-  ["summer_jar_lamp_red", "summer_jar_lamp_yellow"],
-  ["summer_rug_red", "summer_rug_yellow"],
-  ["summer_table_red", "summer_table_yellow"],
-  ["summer_wallpaper_red", "summer_wallpaper_yellow"],
-  ["training_dummy_clod", "training_dummy_sapling"],
-  ["void_gryphon_statue_blue", "void_gryphon_statue_purple"],
-]);
 
 function encodeQuestState(state: QuestState): number {
   if (state === "none") return 0;
@@ -916,8 +781,6 @@ function getCosmeticOrder(): CosmeticId[] {
     .toSorted();
 }
 
-// ─── Bitfield helpers ───────────────────────────────────────────────
-
 function getDateableVillagerOrder(): VillagerId[] {
   return (Object.keys(trackerData.villagers) as VillagerId[])
     .filter((id) => trackerData.villagers[id].dateable)
@@ -927,17 +790,6 @@ function getDateableVillagerOrder(): VillagerId[] {
 function getDateOrder(): DateId[] {
   return (Object.keys(trackerData.dates) as DateId[]).toSorted();
 }
-
-function getLegacyAlmanacOrder(): ItemId[] {
-  return recordEntries(trackerData.almanac).flatMap(([categoryId, { items }]) =>
-    items
-      .filter((entry) => trackerData.items[entry.itemIds[0]].category === categoryId)
-      .map((entry) => (V5_CANONICAL_REMAP.get(entry.itemIds[0]) ?? entry.itemIds[0]) as ItemId)
-      .toSorted(),
-  );
-}
-
-// ─── Compression (Web Compression Streams API) ─────────────────────
 
 function getMuseumOrder(): ItemId[] {
   return recordValues(trackerData.museum)
@@ -977,8 +829,6 @@ function getSkillOrder(): SkillId[] {
   return (Object.keys(trackerData.skills) as SkillId[]).toSorted();
 }
 
-// ─── Base64url ──────────────────────────────────────────────────────
-
 function getSpellOrder(): SpellId[] {
   return (Object.keys(trackerData.mines.spells) as SpellId[]).toSorted();
 }
@@ -987,8 +837,6 @@ function getVillagerOrder(): VillagerId[] {
   return (Object.keys(trackerData.villagers) as VillagerId[]).toSorted();
 }
 
-// ─── Encode ─────────────────────────────────────────────────────────
-
 function toBase64url(bytes: Uint8Array): string {
   let binary = "";
   for (const byte of bytes) {
@@ -996,8 +844,6 @@ function toBase64url(bytes: Uint8Array): string {
   }
   return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
 }
-
-// ─── Decode ─────────────────────────────────────────────────────────
 
 function toBitfield(ordered: string[], completedSet: ReadonlySet<string>): Uint8Array {
   const byteCount = Math.ceil(ordered.length / 8);
