@@ -7,6 +7,7 @@
   import { trackerData } from "#lib/data/index.js";
   import * as m from "#lib/paraglide/messages.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
+  import { messageParts } from "#lib/utils/message-parts.js";
 
   let aiDisclosureOpen = $state(false);
 
@@ -24,14 +25,18 @@
   <section>
     <h2>{m.about_status_heading()}</h2>
     <p>
-      {m.about_status_intro()}
-      <a href="https://www.fieldsofmistria.com/">Fields of Mistria</a>.
+      {#each messageParts( (slot) => m.about_status_intro( { game: slot("game") } ) ) as part, index (index)}
+        {#if typeof part === "string"}{part}{:else}<a href="https://www.fieldsofmistria.com/"
+            >Fields of Mistria</a
+          >{/if}
+      {/each}
     </p>
     <p>
-      {m.about_maintainer_intro()} <a href="https://mrh.is/">Michael Helmbrecht</a>.
-      {m.about_maintainer_suffix()}
-      <a href="https://www.villagerstudio.com/">Villager Studio</a>
-      {m.about_maintainer_suffix2()}
+      {#each messageParts( (slot) => m.about_maintainer( { maintainer: slot("maintainer"), studio: slot("studio") } ) ) as part, index (index)}
+        {#if typeof part === "string"}{part}{:else if part.slot === "maintainer"}<a
+            href="https://mrh.is/">Michael Helmbrecht</a
+          >{:else}<a href="https://www.villagerstudio.com/">Villager Studio</a>{/if}
+      {/each}
     </p>
   </section>
   <!-- eslint-enable local/no-hardcoded-ui-text -->
@@ -53,10 +58,12 @@
   <section>
     <h2>{m.about_questions_heading()}</h2>
     <p>
-      {m.about_questions_intro_before_icon()}
-      <IconMessageReport class="feedback-icon" aria-hidden="true" />
-      {m.about_questions_intro_after_icon()}
-      <a href="mailto:michael@mistria.fyi">{m.about_contact_privately_link()}</a>.
+      {#each messageParts( (slot) => m.about_questions_intro( { contact: slot("contact"), icon: slot("icon") } ) ) as part, index (index)}
+        {#if typeof part === "string"}{part}{:else if part.slot === "icon"}<IconMessageReport
+            class="feedback-icon"
+            aria-hidden="true"
+          />{:else}<a href="mailto:michael@mistria.fyi">{m.about_contact_privately_link()}</a>{/if}
+      {/each}
     </p>
   </section>
 

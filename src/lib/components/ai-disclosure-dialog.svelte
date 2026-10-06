@@ -1,4 +1,5 @@
 <script lang="ts">
+  import DialogCloseButton from "#lib/components/dialog-close-button.svelte";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
   import * as m from "#lib/paraglide/messages.js";
 
@@ -6,7 +7,7 @@
 </script>
 
 <Dialog.Root bind:open>
-  <Dialog.Content class="max-w-md">
+  <Dialog.Content class="max-w-md" showCloseButton={false}>
     <Dialog.Header>
       <Dialog.Title>{m.ai_disclosure_title()}</Dialog.Title>
     </Dialog.Header>
@@ -32,5 +33,6 @@
         >.
       </p>
     </div>
+    <DialogCloseButton />
   </Dialog.Content>
 </Dialog.Root>

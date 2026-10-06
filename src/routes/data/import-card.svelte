@@ -4,6 +4,7 @@
   import IconDeviceDesktop from "@tabler/icons-svelte-runes/icons/device-desktop";
   import IconUpload from "@tabler/icons-svelte-runes/icons/upload";
 
+  import DialogCloseButton from "#lib/components/dialog-close-button.svelte";
   import { Button } from "#lib/components/ui/button/index.js";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
   import { Separator } from "#lib/components/ui/separator/index.js";
@@ -233,7 +234,7 @@
         <Dialog.Trigger class="underline decoration-dotted"
           >{m.import_where_is_save()}</Dialog.Trigger
         >
-        <Dialog.Content class="max-w-sm">
+        <Dialog.Content class="max-w-sm" showCloseButton={false}>
           <Dialog.Header>
             <Dialog.Title>{m.import_finding_save_title()}</Dialog.Title>
             <Dialog.Description>
@@ -276,6 +277,7 @@
               {/snippet}
             </Dialog.Close>
           </Dialog.Footer>
+          <DialogCloseButton />
         </Dialog.Content>
       </Dialog.Root>
     </p>

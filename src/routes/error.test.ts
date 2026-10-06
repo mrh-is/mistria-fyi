@@ -17,7 +17,7 @@ describe("error page", () => {
     const { queries, text } = renderToFragment(ErrorPage, { props: {} });
 
     expect(queries.getByText("404")).toBeTruthy();
-    expect(text).toContain("This page doesn't exist");
+    expect(text).toContain("This page doesn’t exist");
     expect(text).toContain("tend the fields");
     expect(queries.getByRole("link", { name: "Back to home" }).getAttribute("href")).toBe("/en");
   });

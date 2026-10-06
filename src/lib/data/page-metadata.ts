@@ -1,6 +1,10 @@
+import * as m from "#lib/paraglide/messages.js";
+
 import type { CategoryKey } from "#lib/data/categories.js";
+import type { LocaleCode } from "#lib/types/locale.js";
 
 export const SITE_ORIGIN = "https://mistria.fyi";
+/** The product name; a proper noun that reads the same in every locale (`app_name` in each). */
 export const SITE_NAME = "Mistria Field Guide";
 
 /** A CSS color token (sans `--`) that the page chrome reads as `--primary`. */
@@ -39,9 +43,9 @@ export interface ToolbarConfig {
 
 const DEFAULT_TOOLBAR: ToolbarConfig = { search: false, worldState: false };
 
-export function errorPageMetadata(status: number): PageMetadata {
+export function errorPageMetadata(status: number, locale: LocaleCode): PageMetadata {
   return pageMetadata({
-    description: "The requested Fields of Mistria tracker page could not be found.",
+    description: m.error_page_description({}, { locale }),
     robots: "noindex, nofollow",
     title: String(status),
   });
