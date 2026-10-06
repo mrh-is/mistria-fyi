@@ -7,12 +7,8 @@ allowBuilds:
   esbuild: true
   workerd: true
 
-minimumReleaseAgeExclude:
-  - miniflare@5.20260911.1-alpha
-  - wrangler@4.131.2
-
+# Wrangler's miniflare resolves undici 7.29.0 without this, which `pnpm audit`
+# flags (GHSA-2gqq-gqf2-x968 and others, patched in 7.29.1). Drop it once
+# miniflare's own range excludes the vulnerable releases.
 overrides:
-  "cookie@<0.7.0": ">=0.7.0"
-  nanoid: ">=3.3.18"
-  undici: ">=7.29.0"
-  wrangler: ">=4.131.2"
+  "undici@7": "^7.29.1"
