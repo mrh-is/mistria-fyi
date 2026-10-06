@@ -26,7 +26,7 @@
   } from "./data-error-messages.js";
   import MergeSummary from "./merge-summary.svelte";
 
-  import type { ImportResult, SaveImportWarning } from "#lib/engine/import-save.js";
+  import type { SaveImportReport, SaveImportWarning } from "#lib/engine/import-save.js";
 
   let {
     onScrollToTransfer,
@@ -40,7 +40,7 @@
   );
 
   // ── Import state ──
-  let importResult = $state<ImportResult | null>(null);
+  let importResult = $state<null | SaveImportReport>(null);
   let importError = $state<null | string>(null);
   let importErrorDetails = $state<string[]>([]);
   let savFallback = $state(false);
@@ -144,13 +144,13 @@
       if (bundle.quests) filesUsed.push("quests.json");
 
       importStatus = m.import_status_importing();
-      const { completed, result } = buildImportState(bundle);
+      const { completed, warnings } = buildImportState(bundle);
       const merged = userState.mergeFromSave(completed);
 
       importResult = {
         conflicts: merged.conflicts,
         counts: merged.counts,
-        warnings: [...parseWarnings, ...result.warnings],
+        warnings: [...parseWarnings, ...warnings],
       };
     } catch {
       importError = m.import_error_unexpected();

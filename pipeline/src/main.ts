@@ -1,7 +1,7 @@
 /**
  * The pipeline parses, evaluates in place, assembles (see {@link assembleTrackerData}), and
  * serializes output. Writes begin only after every transformation succeeds.
- * --parse-only is a v1.0.5-specific smoke test that exits before evaluation.
+ * --parse-only checks parser structure without requiring a particular game version.
  */
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -15,12 +15,14 @@ import {
   readInstalledGameVersion,
   resolveAssetsZipPath,
 } from "./assets-zip.js";
+import { parseCliOptions } from "./cli-options.js";
 import { evaluateExpressions } from "./evaluate.js";
 import { extractSprites, extractVillagerSprites, publishSprites } from "./extractors/sprites.js";
 import { extractVillagerIconSprites } from "./extractors/villagers.js";
 import { assertGameLanguageMapExhaustive } from "./locale-codes.js";
 import { createAssetsLocalizer, generateLocaleManifest } from "./localize.js";
 import { parseFiddle, parseFiddleFromZip } from "./parse-fiddle.js";
+import { checkParseSmoke } from "./parse-smoke.js";
 
 import type { ZipFile } from "yauzl-promise";
 
@@ -50,9 +52,16 @@ function logSpriteExtraction(label: string, result: SpriteExtractionResult): voi
 async function main(): Promise<void> {
   console.log("📚 Mistria Field Guide — Data Pipeline\n");
 
-  const args = process.argv.slice(2).filter((a) => a !== "--");
+  let options;
+  try {
+    options = parseCliOptions(process.argv.slice(2));
+  } catch (error) {
+    console.error(`❌ ${(error as Error).message}`);
+    process.exitCode = 1;
+    return;
+  }
   const assetsDir =
-    args.find((a) => !a.startsWith("-")) ??
+    options.assetsDir ??
     process.env.MISTRIA_ASSETS ??
     (existsSync(DEFAULT_WINDOWS_STEAM_ASSETS_DIR) ? DEFAULT_WINDOWS_STEAM_ASSETS_DIR : undefined);
   if (!assetsDir) {
@@ -63,8 +72,6 @@ async function main(): Promise<void> {
     process.exitCode = 1;
     return;
   }
-
-  assertGameLanguageMapExhaustive(assetsDir);
 
   // Prefer an already-extracted fiddle/ on disk; otherwise read straight out of assets.zip
   // (Steam's own distribution format) without ever extracting it. Either shape produces the same
@@ -89,35 +96,51 @@ async function main(): Promise<void> {
     fiddleSource = { kind: "zip", zipPath };
   }
 
-  const parseOnly = args.includes("--parse-only");
-  const villagerSpritesOnly = args.includes("--villager-sprites-only");
-  const versionFlag = args.find((a) => a.startsWith("--version="));
-  const versionArg = versionFlag?.split("=")[1];
-
-  console.log("Step 1: Parsing TOML data...");
-  const parsed =
-    fiddleSource.kind === "disk"
-      ? parseFiddle(assetsDir)
-      : await parseFiddleFromZip(fiddleSource.zipPath, villagerSpritesOnly ? ["npcs"] : undefined);
-  const fiddle = parsed.data;
-
-  if (fiddleSource.kind === "zip" && !villagerSpritesOnly) {
+  if (fiddleSource.kind === "zip" && !options.parseOnly && !options.villagerSpritesOnly) {
     console.error("❌ Full pipeline extraction requires an on-disk fiddle/ directory.");
     console.error(
-      "   Extract your game assets first, or use --villager-sprites-only to regenerate villager sprites from assets.zip.",
+      "   Extract your game assets first, or use --parse-only or --villager-sprites-only with assets.zip.",
     );
     process.exitCode = 1;
     return;
   }
 
-  if (villagerSpritesOnly) {
+  if (!options.parseOnly && !options.villagerSpritesOnly) {
+    assertGameLanguageMapExhaustive(assetsDir);
+  }
+
+  console.log("Step 1: Parsing TOML data...");
+  const parsed =
+    fiddleSource.kind === "disk"
+      ? parseFiddle(assetsDir)
+      : await parseFiddleFromZip(
+          fiddleSource.zipPath,
+          options.villagerSpritesOnly ? ["npcs"] : undefined,
+        );
+  const fiddle = parsed.data;
+
+  if (options.parseOnly) {
+    try {
+      checkParseSmoke(parsed, options.parseProfile);
+    } catch (error) {
+      console.error(`  ❌ ${(error as Error).message}`);
+      process.exitCode = 1;
+      return;
+    }
+    console.log(
+      `  ✅ Parse-only ${options.parseProfile ? `${options.parseProfile} fixture profile` : "structural smoke test"} passed`,
+    );
+    return;
+  }
+
+  if (options.villagerSpritesOnly) {
     await runVillagerSpritesOnly(fiddle, assetsDir);
     return;
   }
 
   const misc = fiddle.misc as Record<string, unknown> | undefined;
   const version =
-    versionArg ??
+    options.version ??
     (misc?.version as string | undefined) ??
     readInstalledGameVersion(resolveAssetsZipPath(assetsDir));
   if (!version) {
@@ -126,29 +149,6 @@ async function main(): Promise<void> {
     return;
   }
   console.log(`  Game version: ${version}\n`);
-
-  if (parseOnly) {
-    if (parsed.fileCount !== 297) {
-      console.error(`  ❌ Expected 297 files, got ${parsed.fileCount}`);
-      process.exitCode = 1;
-      return;
-    }
-    const checks = ["items.other.cooked_dishes", "npcs.holt", "dungeons.dungeons.biomes"];
-    for (const path of checks) {
-      const parts = path.split(".");
-      let current: unknown = fiddle;
-      for (const part of parts) {
-        current = (current as Record<string, unknown>)?.[part];
-      }
-      if (current === undefined) {
-        console.error(`  ❌ Missing representative path: ${path}`);
-        process.exitCode = 1;
-        return;
-      }
-    }
-    console.log("  ✅ Parse-only smoke test passed");
-    return;
-  }
 
   console.log("Step 2: Evaluating expressions...");
   evaluateExpressions(fiddle);
@@ -195,7 +195,7 @@ async function main(): Promise<void> {
   );
 
   let stagedSprites: StagedSprite[] = [];
-  const extractSpritesFlag = args.includes("--sprites");
+  const extractSpritesFlag = options.sprites;
   const zipPath = resolveAssetsZipPath(resolve(assetsDir));
   if (extractSpritesFlag) {
     console.log("\nStep 6: Extracting item and villager sprites...");

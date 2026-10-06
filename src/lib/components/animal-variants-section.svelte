@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AnimalSubcategory from "#lib/components/animal-subcategory.svelte";
   import { trackerData } from "#lib/data/index.js";
   import { animalNameId, getName, nameCollator } from "#lib/data/names.js";
   import {
@@ -8,8 +9,10 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
 
-  import AnimalSubcategory from "./animal-subcategory.svelte";
-
+  import type {
+    AnimalSubcategoryRowProps,
+    AnimalSubcategorySectionConfig,
+  } from "#lib/components/animal-subcategory.types.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type {
     AnimalId,
@@ -18,11 +21,6 @@
     AnimalVariantTier,
     Season,
   } from "#lib/types/tracker-data.js";
-
-  import type {
-    AnimalSubcategoryRowProps,
-    AnimalSubcategorySectionConfig,
-  } from "./animal-subcategory.types.js";
 
   function forEachVariant(
     animalId: AnimalId,

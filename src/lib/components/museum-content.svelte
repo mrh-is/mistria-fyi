@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AllCompleted from "#lib/components/all-completed.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
@@ -17,10 +18,9 @@
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { matchesName } from "#lib/utils/name-match.js";
   import { recordEntries, recordValues } from "#lib/utils/record.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
-
-  import AllCompleted from "./all-completed.svelte";
 
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
@@ -129,7 +129,7 @@
   function matchesFilter(itemId: ItemId): boolean {
     if (!nameFilter) return true;
     if (!itemNameVisible(itemId)) return false;
-    return getName("items", itemId, locale).toLowerCase().includes(nameFilter.toLowerCase());
+    return matchesName(getName("items", itemId, locale), nameFilter, locale);
   }
 
   function setConfig(wingId: MuseumWingId, setId: MuseumWingSetId, set: MuseumWingSet): SetConfig {

@@ -210,7 +210,9 @@ function questSubtitle(
   const villagerName = getName("villagers", villager, locale);
   const rewardRecipeName =
     questType === "fetch" ? fetchRewardRecipeName(row.id, locale) : undefined;
-  return duplicated && rewardRecipeName ? `${villagerName} · ${rewardRecipeName}` : villagerName;
+  return duplicated && rewardRecipeName
+    ? m.quest_subtitle_with_recipe({ recipe: rewardRecipeName, villager: villagerName }, { locale })
+    : villagerName;
 }
 
 function fetchRewardRecipeName(id: QuestId, locale: LocaleCode): string | undefined {

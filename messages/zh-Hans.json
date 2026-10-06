@@ -1,6 +1,9 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Mistria Field Guide",
+  "og_share_tagline": "追踪所有收藏、任务、技能及更多内容",
+  "og_share_description": "米斯特里亚的一切，尽在一处",
+  "source_hidden": "已隐藏",
   "app_update_available": "Mistria Field Guide 已更新！刷新页面即可获取最新版本。",
   "app_update_later": "稍后",
   "app_update_refresh": "刷新",
@@ -120,6 +123,7 @@
   "all_completed_message": "全部完成！切换“显示已完成”即可查看。",
   "quest_type_fetch": "跑腿任务",
   "quest_craving_name": "孕期渴望",
+  "quest_subtitle_with_recipe": "{villager} · {recipe}",
   "skills_ledger_aria": "技能记录",
   "skill_level_label": "{name}等级",
   "skill_decrease_level": "降低{name}等级",

@@ -4,7 +4,6 @@ import { expectArray, expectNonEmptyString } from "../data-shapes.js";
 import { minesBiomeId } from "../extractor-helpers.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 
-import type { SourceTuple } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type {
   MinesBiome,
@@ -95,7 +94,7 @@ export function extractMines(fiddle: ParsedGameData, localizer: Localizer): Mine
     for (const [id, spell] of Object.entries(spellsData)) {
       if (id === "default") continue;
       spells[id as SpellId] = {
-        sources: [] as unknown as SourceTuple,
+        sources: [],
       };
       const name = expectNonEmptyString(spell.name, {
         entityId: `spells.${id}`,

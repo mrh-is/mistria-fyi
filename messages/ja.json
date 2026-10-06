@@ -1,6 +1,9 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Mistria Field Guide",
+  "og_share_tagline": "コレクション、クエスト、スキルなどの進捗を記録",
+  "og_share_description": "ミストリアのすべてをひとつに",
+  "source_hidden": "非表示",
   "app_update_available": "Mistria Field Guideが更新されました！再読み込みして最新バージョンを入手してください。",
   "app_update_later": "後で",
   "app_update_refresh": "再読み込み",
@@ -120,6 +123,7 @@
   "all_completed_message": "すべて完了しました！確認するには「完了済みを表示」を切り替えてください。",
   "quest_type_fetch": "お使いクエスト",
   "quest_craving_name": "つわり",
+  "quest_subtitle_with_recipe": "{villager}・{recipe}",
   "skills_ledger_aria": "スキル台帳",
   "skill_level_label": "{name}レベル",
   "skill_decrease_level": "{name}レベルを下げる",

@@ -71,7 +71,8 @@ export class ToolbarState {
   }
 
   private rebuildSourceFilters(): void {
-    const filtersById = new SvelteMap<SourceFilterId, SourceFilter>();
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- A scratch index; only the sorted array is stored.
+    const filtersById = new Map<SourceFilterId, SourceFilter>();
     for (const filters of this.sourceFilterRegistrations.values()) {
       for (const filter of filters) filtersById.set(filter.id, filter);
     }

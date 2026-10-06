@@ -17,6 +17,15 @@ export function isNonEmptyArray<T>(arr: T[]): arr is NonEmptyArray<T> {
   return arr.length > 0;
 }
 
+/** `Array.prototype.map` for a non-empty array, keeping the non-empty guarantee in the type. */
+export function mapNonEmpty<T, U>(
+  arr: NonEmptyArray<T>,
+  callbackfn: (value: T, index: number) => U,
+): NonEmptyArray<U> {
+  const [first, ...rest] = arr;
+  return [callbackfn(first, 0), ...rest.map((value, index) => callbackfn(value, index + 1))];
+}
+
 export function recordEntries<R extends Record<string, unknown>>(
   record: R,
 ): { [K in keyof R]-?: [K, Exclude<R[K], undefined>] }[keyof R][];

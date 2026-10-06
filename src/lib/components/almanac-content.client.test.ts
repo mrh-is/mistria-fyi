@@ -8,6 +8,7 @@ import { getName } from "#lib/data/names.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
+import { AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { recordEntries } from "#lib/utils/record.js";
 
 import type { ItemId } from "#lib/types/tracker-data.js";
@@ -15,7 +16,7 @@ import type { ItemId } from "#lib/types/tracker-data.js";
 describe("AlmanacContent", () => {
   beforeEach(() => {
     userState.resetAll();
-    userState.setAvailabilityMode("everything");
+    userState.setAvailabilityWindows(AVAILABILITY_WINDOWS);
     toolbarState.closeSearch();
   });
 

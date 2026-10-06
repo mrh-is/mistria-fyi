@@ -8,7 +8,6 @@ import {
 } from "../extractor-helpers.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 
-import type { SourceTuple } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type {
   ItemId,
@@ -79,7 +78,7 @@ export function extractQuests(
         itemId: itemId as ItemId,
         villager,
         ...(rewardRecipeId ? { rewardRecipeId } : {}),
-        sources: [] as unknown as SourceTuple,
+        sources: [],
       };
     } else if (outputType === "heart") {
       const villager = extractQuestVillager(
@@ -90,19 +89,17 @@ export function extractQuests(
       const isPregnancy = questId.endsWith("_pregnancy_request");
       result.heart[questId as QuestId] = {
         heartLevel: isPregnancy ? 10 : 0,
-        sources: [] as unknown as SourceTuple,
+        sources: [],
         villager,
       };
     } else if (outputType === "cooking") {
       const recipeId = extractCookingQuestRecipeId(questId, quest, recipeIdByItemId);
       result.cooking[questId as QuestId] = {
         recipeId,
-        sources: [] as unknown as SourceTuple,
+        sources: [],
       };
     } else {
-      (result[outputType] as Record<QuestId, { sources: SourceTuple }>)[questId as QuestId] = {
-        sources: [] as unknown as SourceTuple,
-      };
+      result[outputType][questId as QuestId] = { sources: [] };
     }
   });
 

@@ -3,7 +3,7 @@
  * writes none: localization arrives through an injected {@link Localizer}, and `main.ts` owns
  * argument parsing, staging, & publishing.
  */
-import { isNonEmptyArray, recordEntries } from "#lib/utils/record.js";
+import { isNonEmptyArray, recordEntries, recordMap } from "#lib/utils/record.js";
 
 import { collectExplorationSources } from "./acquisition/collectors/exploration.js";
 import { collectNaturalSources } from "./acquisition/collectors/natural.js";
@@ -13,6 +13,7 @@ import { getExcludedCosmeticIds } from "./acquisition/exclusions.js";
 import { collectNativeReferenceRegistries } from "./acquisition/native-references.js";
 import { deriveRecipeProductSources } from "./acquisition/recipe-products.js";
 import { AcquisitionReferenceIndex } from "./acquisition/reference-index.js";
+import { finalizeSources, requireSources } from "./acquisition/required-sources.js";
 import {
   applyReviewedOverrides,
   collectDefaultCosmeticSources,
@@ -110,24 +111,28 @@ export function assembleTrackerData(
   console.log("Step 3: Extracting tracker data...");
   const { localeNames: museumLocaleNames, museum } = extractMuseum(fiddle, localizer);
   const cutsceneQuestMap = buildCutsceneQuestMap(fiddle);
-  const { recipeIdByItemId, recipeMemberItems, recipeNameSources, recipes } = extractRecipes(
-    fiddle,
-    cutsceneQuestMap,
-    diagnostics,
-  );
+  const {
+    recipeIdByItemId,
+    recipeMemberItems,
+    recipeNameSources,
+    recipes: recipeDrafts,
+  } = extractRecipes(fiddle, cutsceneQuestMap, diagnostics);
   const {
     almanac,
     iconSpritesByItemId,
-    items,
+    items: itemMetadata,
     localeNames: itemLocaleNames,
   } = extractAlmanac(fiddle, localizer, diagnostics);
   const recipeLocaleNames = deriveRecipeLocaleNames(recipeNameSources, itemLocaleNames);
-  const { animals, localeNames: animalLocaleNames } = extractAnimals(fiddle, localizer);
-  const { cosmetics: petCosmetics, localeNames: petCosmeticLocaleNames } = extractPetCosmetics(
+  const { animals: animalDrafts, localeNames: animalLocaleNames } = extractAnimals(
     fiddle,
     localizer,
   );
-  const { localeNames: petSkinLocaleNames, skins: petSkins } = extractPetSkins(
+  const { cosmetics: petCosmeticDrafts, localeNames: petCosmeticLocaleNames } = extractPetCosmetics(
+    fiddle,
+    localizer,
+  );
+  const { localeNames: petSkinLocaleNames, skins: petSkinDrafts } = extractPetSkins(
     fiddle,
     itemLocaleNames,
   );
@@ -137,7 +142,7 @@ export function assembleTrackerData(
     villagers,
   } = extractVillagers(fiddle, localizer);
   const {
-    cosmetics,
+    cosmetics: cosmeticDrafts,
     cosmeticSlots,
     localeNames: cosmeticLocaleNames,
     subCategoryLocaleNames: cosmeticSubCategoryLocaleNames,
@@ -169,7 +174,7 @@ export function assembleTrackerData(
     extractTreasureChestTiers(fiddle, localizer);
   const maxVariantTiers = Math.max(
     0,
-    ...Object.values(animals).map((animal) => animal.variantTiers.length),
+    ...Object.values(animalDrafts).map((animal) => animal.variantTiers.length),
   );
   const { localeNames: uiLocaleNames } = extractUiStrings(fiddle, localizer, [
     ...APP_UI_STRINGS,
@@ -206,12 +211,12 @@ export function assembleTrackerData(
     animalCosmeticSources,
   );
   collectExplorationSources(fiddle, itemSources, cosmeticSources);
-  collectDefaultItemSources(fiddle, itemSources, items);
-  collectDefaultCosmeticSources(cosmetics, cosmeticSources);
+  collectDefaultItemSources(fiddle, itemSources, itemMetadata);
+  collectDefaultCosmeticSources(cosmeticDrafts, cosmeticSources);
 
   const overrideDiagnostics = applyReviewedOverrides(
-    items,
-    cosmetics,
+    itemMetadata,
+    cosmeticDrafts,
     itemSources,
     cosmeticSources,
     options.reviewedOverrides ?? REVIEWED_OVERRIDES,
@@ -220,17 +225,9 @@ export function assembleTrackerData(
     diagnostics.add({ ...diagnostic, fieldPath: `${diagnostic.namespace}.${diagnostic.targetId}` });
   }
 
-  // Attach inline acquisition sources to items
-  for (const [itemId, sources] of itemSources.entries()) {
-    const item = items[itemId];
-    if (item && isNonEmptyArray(sources)) {
-      (item as Item).sources = sources;
-    }
-  }
-
   // Attach inline acquisition sources to cosmetics
   for (const [cosmeticId, sources] of cosmeticSources.entries()) {
-    const cosmetic = cosmetics[cosmeticId];
+    const cosmetic = cosmeticDrafts[cosmeticId];
     if (cosmetic && isNonEmptyArray(sources)) {
       cosmetic.sources = sources;
     }
@@ -238,19 +235,14 @@ export function assembleTrackerData(
 
   // Attach sources to animal cosmetics
   for (const { animalId, cosmeticId, sources } of animalCosmeticSources.animalCosmeticEntries()) {
-    const animal = animals[animalId];
-    if (!animal) continue;
-    const cosmetic = animal.cosmetics[cosmeticId];
+    const cosmetic = animalDrafts[animalId]?.cosmetics[cosmeticId];
     if (!cosmetic) continue;
-    const merged = [...cosmetic.sources, ...sources];
-    if (isNonEmptyArray(merged)) {
-      cosmetic.sources = merged;
-    }
+    cosmetic.sources = [...cosmetic.sources, ...sources];
   }
 
   // Attach sources to pet cosmetic sets
   for (const [setId, sources] of petCosmeticSources.entries()) {
-    const set = petCosmetics[setId];
+    const set = petCosmeticDrafts[setId];
     if (set && isNonEmptyArray(sources)) {
       set.sources = sources;
     }
@@ -264,7 +256,7 @@ export function assembleTrackerData(
       petSkinItemMap.set(skinUnlock, itemId);
     }
   });
-  for (const [skinId, skin] of Object.entries(petSkins)) {
+  for (const [skinId, skin] of Object.entries(petSkinDrafts)) {
     const itemId = petSkinItemMap.get(skinId);
     if (itemId) {
       const itemSrc = itemSources.get(itemId as ItemId);
@@ -274,29 +266,32 @@ export function assembleTrackerData(
     }
   }
 
-  // Log inline source attachment stats
-  const itemsWithSources = Object.values(items).filter((i) => (i as Item).sources?.length).length;
-  const cosmeticsWithSources = Object.values(cosmetics).filter((c) => c.sources?.length).length;
-  const recipesWithSources = Object.values(recipes).filter((r) => r.sources?.length).length;
-  const animalCosmeticsWithSources = Object.values(animals).reduce(
-    (n, a) => n + Object.values(a.cosmetics).filter((c) => c.sources.length > 0).length,
-    0,
-  );
+  // Every kind below promises a non-empty `SourceTuple`, so finalizing throws on the first entity
+  // that has no sources rather than emitting an empty list under that type.
+  const items: Record<ItemId, Item> = recordMap(itemMetadata, ({ category }, itemId) => ({
+    category,
+    sources: requireSources(`items.${itemId}`, itemSources.get(itemId as ItemId)),
+  }));
+  const cosmetics = finalizeSources("cosmetics", cosmeticDrafts);
+  const recipes = finalizeSources("recipes", recipeDrafts);
+  const animals = recordMap(animalDrafts, (animal, animalId) => ({
+    ...animal,
+    cosmetics: finalizeSources(`animals.${animalId}.cosmetics`, animal.cosmetics),
+  }));
+  const petCosmetics = finalizeSources("pets.cosmetics", petCosmeticDrafts);
+  const petSkins = finalizeSources("pets.skins", petSkinDrafts);
+
   const totalAnimalCosmetics = Object.values(animals).reduce(
     (n, a) => n + Object.keys(a.cosmetics).length,
     0,
   );
-  const petCosmeticsWithSources = Object.values(petCosmetics).filter(
-    (c) => c.sources.length > 0,
-  ).length;
-  const petSkinsWithSources = Object.values(petSkins).filter((s) => s.sources.length > 0).length;
   console.log(
-    `  Inline sources: ${itemsWithSources}/${Object.keys(items).length} items, ` +
-      `${cosmeticsWithSources}/${Object.keys(cosmetics).length} cosmetics, ` +
-      `${recipesWithSources}/${Object.keys(recipes).length} recipes, ` +
-      `${animalCosmeticsWithSources}/${totalAnimalCosmetics} animal cosmetics, ` +
-      `${petCosmeticsWithSources}/${Object.keys(petCosmetics).length} pet cosmetics, ` +
-      `${petSkinsWithSources}/${Object.keys(petSkins).length} pet skins`,
+    `  Inline sources: ${Object.keys(items).length} items, ` +
+      `${Object.keys(cosmetics).length} cosmetics, ` +
+      `${Object.keys(recipes).length} recipes, ` +
+      `${totalAnimalCosmetics} animal cosmetics, ` +
+      `${Object.keys(petCosmetics).length} pet cosmetics, ` +
+      `${Object.keys(petSkins).length} pet skins`,
   );
 
   console.log();
@@ -331,7 +326,7 @@ export function assembleTrackerData(
     dates,
     festivals,
     generatedAt: options.generatedAt,
-    items: items as unknown as Record<ItemId, Item>,
+    items,
     mines,
     museum,
     perkTierLevels,

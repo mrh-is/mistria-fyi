@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AllCompleted from "#lib/components/all-completed.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import SpoilerSection from "#lib/components/spoiler-section.svelte";
@@ -20,8 +21,6 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
-
-  import AllCompleted from "./all-completed.svelte";
 
   import type { QuestRow, QuestSection } from "#lib/presentation/quest-sections.js";
   import type { LocaleCode } from "#lib/types/locale.js";

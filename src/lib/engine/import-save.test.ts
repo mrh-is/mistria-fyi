@@ -28,16 +28,16 @@ function getDefaultRecipeIds(): Set<RecipeId> {
 
 describe("buildImportState", () => {
   it("imports tracked progress from a preceding 1.0.2 save shape", () => {
-    const { completed, result } = buildImportState({
+    const { completed, warnings } = buildImportState({
       player: { items_acquired: ["animated_waterfall_v2"] },
     });
 
     expect(completed.almanac).toContain("animated_waterfall_v1");
-    expect(result.warnings).toEqual([]);
+    expect(warnings).toEqual([]);
   });
 
   it("imports new 1.0.5 item, cosmetic, and recipe progress", () => {
-    const { completed, result } = buildImportState({
+    const { completed, warnings } = buildImportState({
       player: {
         cosmetic_unlocks: ["facial_hair_friendly_mutton_chops"],
         items_acquired: ["cottage_sofa_oak"],
@@ -48,13 +48,13 @@ describe("buildImportState", () => {
     expect(completed.almanac).toContain("cottage_sofa_ash");
     expect(completed.cosmetics).toContain("facial_hair_friendly_mutton_chops");
     expect(completed.almanacRecipes).toContain("cottage_sofa");
-    expect(result.warnings).toEqual([]);
+    expect(warnings).toEqual([]);
   });
 
   it("imports direct and item-derived recipe unlocks alongside default recipes", () => {
     const defaultRecipeIds = getDefaultRecipeIds();
 
-    const { completed, result } = buildImportState({
+    const { completed, warnings } = buildImportState({
       player: {
         recipe_unlocks: ["ocarina_sprite_statue", "animated_waterfall_v1", "unknown_recipe_unlock"],
       },
@@ -63,8 +63,7 @@ describe("buildImportState", () => {
     expect(completed.almanacRecipes).toEqual(
       new Set([...defaultRecipeIds, "animated_waterfall", "ocarina_sprite_statue"]),
     );
-    expect(result.counts.almanacRecipes).toBe(defaultRecipeIds.size + 2);
-    expect(result.warnings).toEqual([]);
+    expect(warnings).toEqual([]);
   });
 
   it("imports perks from player.perks", () => {
@@ -73,7 +72,7 @@ describe("buildImportState", () => {
         perks: ["magic_design", "green_thumb", "unknown_perk"],
       },
     };
-    const { completed, result } = buildImportState(bundle);
+    const { completed, warnings } = buildImportState(bundle);
     const unlockedPerks = completed.unlockedPerks;
     if (unlockedPerks === undefined) {
       throw new Error("unlockedPerks should be defined");
@@ -81,7 +80,7 @@ describe("buildImportState", () => {
     expect(unlockedPerks.has("magic_design" as never)).toBe(true);
     expect(unlockedPerks.has("green_thumb" as never)).toBe(true);
     expect(unlockedPerks.has("unknown_perk" as never)).toBe(false);
-    expect(result.warnings).toContainEqual({
+    expect(warnings).toContainEqual({
       code: "unknown-id",
       id: "unknown_perk",
       path: "player.perks",
@@ -172,7 +171,7 @@ describe("numeric level domains", () => {
   const FARMING = "farming" as SkillId;
 
   it("accepts in-domain levels without warnings", () => {
-    const { completed, result } = buildImportState({
+    const { completed, warnings } = buildImportState({
       gamedata: {
         maximum_mines_level: getMaxMineFloor(),
         t2_world_facts: {
@@ -186,11 +185,11 @@ describe("numeric level domains", () => {
     expect(completed.villagerLevels?.[ADELINE]).toBe(MAX_VILLAGER_LEVEL);
     expect(completed.skillLevels?.[FARMING]).toBe(MAX_SKILL_LEVEL);
     expect(completed.renown).toBe(getMaxRenownLevel());
-    expect(result.warnings).toEqual([]);
+    expect(warnings).toEqual([]);
   });
 
   it("clamps above-maximum levels and warns, except renown which clamps silently", () => {
-    const { completed, result } = buildImportState({
+    const { completed, warnings } = buildImportState({
       gamedata: {
         maximum_mines_level: 9999,
         t2_world_facts: { adeline_heart_level: 99, farming_level: 999, renown: 9999 },
@@ -200,8 +199,7 @@ describe("numeric level domains", () => {
     expect(completed.villagerLevels?.[ADELINE]).toBe(MAX_VILLAGER_LEVEL);
     expect(completed.skillLevels?.[FARMING]).toBe(MAX_SKILL_LEVEL);
     expect(completed.renown).toBe(getMaxRenownLevel());
-    expect(result.counts.renown).toBe(getMaxRenownLevel());
-    expect(result.warnings).toEqual([
+    expect(warnings).toEqual([
       levelWarning("above-max", "maximum_mines_level", "9999", getMaxMineFloor()),
       levelWarning("above-max", "adeline_heart_level", "99", MAX_VILLAGER_LEVEL),
       levelWarning("above-max", "farming_level", "999", MAX_SKILL_LEVEL),
@@ -209,30 +207,30 @@ describe("numeric level domains", () => {
   });
 
   it("floors fractional levels silently", () => {
-    const { completed, result } = buildImportState(
+    const { completed, warnings } = buildImportState(
       worldFacts({ adeline_heart_level: 3.9, farming_level: 7.2, renown: 2.5 }),
     );
     expect(completed.villagerLevels?.[ADELINE]).toBe(3);
     expect(completed.skillLevels?.[FARMING]).toBe(7);
     expect(completed.renown).toBe(2);
-    expect(result.warnings).toEqual([]);
+    expect(warnings).toEqual([]);
   });
 
   it("ignores negative levels with a warning", () => {
-    const { completed, result } = buildImportState(
+    const { completed, warnings } = buildImportState(
       worldFacts({ adeline_heart_level: -1, farming_level: -0.5, renown: -3 }),
     );
     expect(completed.villagerLevels?.[ADELINE]).toBeUndefined();
     expect(completed.skillLevels?.[FARMING]).toBeUndefined();
     expect(completed.renown).toBe(0);
-    expect(result.warnings).toEqual([
+    expect(warnings).toEqual([
       levelWarning("negative", "adeline_heart_level", "-1", MAX_VILLAGER_LEVEL),
       levelWarning("negative", "farming_level", "-0.5", MAX_SKILL_LEVEL),
     ]);
   });
 
   it("ignores nonfinite and wrong-type levels with a warning", () => {
-    const { completed, result } = buildImportState({
+    const { completed, warnings } = buildImportState({
       gamedata: {
         maximum_mines_level: Number.NaN,
         t2_world_facts: {
@@ -246,7 +244,7 @@ describe("numeric level domains", () => {
     expect(completed.villagerLevels?.[ADELINE]).toBeUndefined();
     expect(completed.skillLevels?.[FARMING]).toBeUndefined();
     expect(completed.renown).toBe(0);
-    expect(result.warnings).toEqual([
+    expect(warnings).toEqual([
       levelWarning("not-a-number", "maximum_mines_level", "NaN", getMaxMineFloor()),
       levelWarning("not-a-number", "adeline_heart_level", '"12"', MAX_VILLAGER_LEVEL),
       levelWarning("not-a-number", "farming_level", "Infinity", MAX_SKILL_LEVEL),
@@ -254,11 +252,11 @@ describe("numeric level domains", () => {
   });
 
   it("treats missing and zero levels as unset without warnings", () => {
-    const { completed, result } = buildImportState(worldFacts({ adeline_heart_level: 0 }));
+    const { completed, warnings } = buildImportState(worldFacts({ adeline_heart_level: 0 }));
     expect(completed.mines?.floor).toBe(0);
     expect(completed.villagerLevels).toEqual({});
     expect(completed.renown).toBe(0);
-    expect(result.warnings).toEqual([]);
+    expect(warnings).toEqual([]);
   });
 });
 
@@ -277,17 +275,16 @@ describe("colorway normalization", () => {
     const bundle: SaveBundle = {
       player: { items_acquired: ["animated_waterfall_v1", "animated_waterfall_v2"] },
     };
-    const { completed, result } = buildImportState(bundle);
+    const { completed } = buildImportState(bundle);
     const almanac = completed.almanac ?? new Set();
     expect(almanac.has("animated_waterfall_v1" as never)).toBe(true);
-    expect(result.counts.almanac).toBeGreaterThanOrEqual(1);
-    const countWithBoth = result.counts.almanac;
+    expect(almanac.size).toBe(1);
 
     const bundleSingle: SaveBundle = {
       player: { items_acquired: ["animated_waterfall_v1"] },
     };
-    const { result: resultSingle } = buildImportState(bundleSingle);
-    expect(resultSingle.counts.almanac).toBe(countWithBoth);
+    const { completed: completedSingle } = buildImportState(bundleSingle);
+    expect(completedSingle.almanac).toEqual(almanac);
   });
 });
 
@@ -313,33 +310,31 @@ describe("malformed save fields", () => {
   const perkId = recordKeys(recordValues(trackerData.skills)[0].perkTiers[0])[0];
 
   it("drops a string list field with a warning instead of iterating its characters", () => {
-    const { completed, result } = buildImportState({
+    const { completed, warnings } = buildImportState({
       player: { cosmetic_unlocks: [], perks: perkId },
     });
 
     expect(completed.unlockedPerks?.size).toBe(0);
-    expect(result.warnings).toEqual([{ code: "not-a-list", path: "player.perks" }]);
+    expect(warnings).toEqual([{ code: "not-a-list", path: "player.perks" }]);
   });
 
   it("drops non-text entries from a list and keeps the rest", () => {
-    const { completed, result } = buildImportState({
+    const { completed, warnings } = buildImportState({
       player: { perks: [perkId, 7, null, { id: perkId }] },
     });
 
     expect([...(completed.unlockedPerks ?? [])]).toEqual([perkId]);
-    expect(result.warnings).toEqual([
-      { code: "unreadable-entries", count: 3, path: "player.perks" },
-    ]);
+    expect(warnings).toEqual([{ code: "unreadable-entries", count: 3, path: "player.perks" }]);
   });
 
   it("drops wrongly shaped gamedata fields without throwing", () => {
-    const { completed, result } = buildImportState({
+    const { completed, warnings } = buildImportState({
       gamedata: { museum_progress: { 0: "anything" }, t2_world_facts: [1, 2] },
     });
 
     expect(completed.museum?.size).toBe(0);
     expect(completed.renown).toBe(0);
-    expect(result.warnings).toEqual([
+    expect(warnings).toEqual([
       { code: "not-a-list", path: "gamedata.museum_progress" },
       { code: "not-an-object", path: "gamedata.t2_world_facts" },
     ]);
@@ -347,7 +342,7 @@ describe("malformed save fields", () => {
 
   it("drops null and array records with a warning", () => {
     const animalId = recordKeys(trackerData.animals)[0];
-    const { completed, result } = buildImportState({
+    const { completed, warnings } = buildImportState({
       player: {
         animal_cosmetic_unlocks: { [animalId]: "not-a-list" },
         animal_variant_unlocks: ["not", "a", "record"],
@@ -357,7 +352,7 @@ describe("malformed save fields", () => {
     });
 
     expect(completed.animals?.[animalId]?.size).toBe(0);
-    expect(result.warnings).toEqual([
+    expect(warnings).toEqual([
       { code: "not-an-object", path: "player.items_sold" },
       { code: "not-an-object", path: "player.animal_variant_unlocks" },
       { code: "not-a-list", path: `player.animal_cosmetic_unlocks.${animalId}` },
@@ -365,21 +360,21 @@ describe("malformed save fields", () => {
   });
 
   it("never matches inherited object properties as tracker IDs", () => {
-    const { completed, result } = buildImportState({
+    const { completed, warnings } = buildImportState({
       player: { recipe_unlocks: ["constructor", "__proto__", "toString"] },
     });
 
     expect(completed.almanacRecipes).toEqual(getDefaultRecipeIds());
-    expect(result.warnings).toEqual([]);
+    expect(warnings).toEqual([]);
   });
 
   it("ignores an unrecognizable player section with a warning", () => {
-    const { completed, result } = buildImportState({
+    const { completed, warnings } = buildImportState({
       player: { perks: "cook_perk" },
     });
 
     expect(completed.unlockedPerks?.size).toBe(0);
-    expect(result.warnings).toEqual([{ code: "unrecognized-player", file: "player" }]);
+    expect(warnings).toEqual([{ code: "unrecognized-player", file: "player" }]);
   });
 });
 
@@ -389,26 +384,24 @@ describe("quest import", () => {
   );
 
   it("imports completed quests as completed", () => {
-    const { completed, result } = buildImportState({
+    const { completed, warnings } = buildImportState({
       quests: { completed_quests: [firstQuest] },
     });
 
     expect(completed.questStates).toEqual({ [firstQuest]: "completed" });
-    expect(result.counts.quests).toBe(1);
-    expect(result.warnings).toEqual([]);
+    expect(warnings).toEqual([]);
   });
 
   it("imports active quests as obtained", () => {
-    const { completed, result } = buildImportState({
+    const { completed } = buildImportState({
       quests: { active_quests: [{ quest_name: secondQuest }] },
     });
 
     expect(completed.questStates).toEqual({ [secondQuest]: "obtained" });
-    expect(result.counts.quests).toBe(1);
   });
 
-  it("keeps a quest in both lists completed and counts it once", () => {
-    const { completed, result } = buildImportState({
+  it("keeps a quest listed in both places completed", () => {
+    const { completed } = buildImportState({
       quests: {
         active_quests: [{ quest_name: firstQuest }, { quest_name: secondQuest }],
         completed_quests: [firstQuest, firstQuest],
@@ -419,11 +412,10 @@ describe("quest import", () => {
       [firstQuest]: "completed",
       [secondQuest]: "obtained",
     });
-    expect(result.counts.quests).toBe(2);
   });
 
   it("warns about unknown quest IDs and nameless active entries", () => {
-    const { completed, result } = buildImportState({
+    const { completed, warnings } = buildImportState({
       quests: {
         active_quests: [{ quest_name: "not_a_quest" }, { progress: 3 }, "loose"],
         completed_quests: ["constructor"],
@@ -431,8 +423,7 @@ describe("quest import", () => {
     });
 
     expect(completed.questStates).toEqual({});
-    expect(result.counts.quests).toBe(0);
-    expect(result.warnings).toEqual([
+    expect(warnings).toEqual([
       { code: "unknown-id", id: "constructor", path: "quests.completed_quests" },
       { code: "unreadable-entries", count: 2, path: "quests.active_quests" },
       { code: "unknown-id", id: "not_a_quest", path: "quests.active_quests" },

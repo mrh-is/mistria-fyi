@@ -6,9 +6,9 @@
   import MuseumContent from "#lib/components/museum-content.svelte";
   import QuestsContent from "#lib/components/quests-content.svelte";
   import RecipesContent from "#lib/components/recipes-content.svelte";
-  import RenownCurrentRecord from "#lib/components/renown-current-record.svelte";
+  import RenownContent from "#lib/components/renown-content.svelte";
   import SkillsContent from "#lib/components/skills-content.svelte";
-  import VillagerRoster from "#lib/components/villager-roster.svelte";
+  import VillagersContent from "#lib/components/villagers-content.svelte";
   import { userState } from "#lib/stores/user-state.svelte.js";
 
   import SectionHeader from "./section-header.svelte";
@@ -37,9 +37,9 @@
     museum: { compact: false, component: MuseumContent, stacked: true },
     quests: { compact: false, component: QuestsContent, stacked: true },
     recipes: { compact: false, component: RecipesContent, stacked: true },
-    renown: { compact: true, component: RenownCurrentRecord, stacked: false },
+    renown: { compact: true, component: RenownContent, stacked: false },
     skills: { compact: true, component: SkillsContent, stacked: false },
-    villagers: { compact: true, component: VillagerRoster, stacked: false },
+    villagers: { compact: true, component: VillagersContent, stacked: false },
   };
 
   let {

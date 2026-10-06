@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import SkillRowHarness from "#lib/components/skill-row.test-harness.svelte";
+import SkillRecordHarness from "#lib/components/skill-record.test-harness.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 
@@ -9,7 +9,7 @@ import type { SkillId } from "#lib/types/tracker-data.js";
 
 const skillId = "mining" as SkillId;
 
-describe("SkillRow", () => {
+describe("SkillRecord", () => {
   beforeEach(() => {
     userState.resetAll();
   });
@@ -19,7 +19,7 @@ describe("SkillRow", () => {
 
   it("registers with skill metadata", async () => {
     const feedbackContext = new FeedbackContext();
-    const view = render(SkillRowHarness, {
+    const view = render(SkillRecordHarness, {
       feedbackContext,
       id: skillId,
       name: "Mining",
@@ -50,7 +50,7 @@ describe("SkillRow", () => {
 
   it("renders four decorative fifteen-level segments and a spaced count", () => {
     userState.setSkillLevel(skillId, 22);
-    const view = render(SkillRowHarness, {
+    const view = render(SkillRecordHarness, {
       feedbackContext: new FeedbackContext(),
       id: skillId,
       name: "Mining",
@@ -67,7 +67,7 @@ describe("SkillRow", () => {
   });
 
   it("commits finite direct edits and cancels invalid or escaped edits", async () => {
-    const view = render(SkillRowHarness, {
+    const view = render(SkillRecordHarness, {
       feedbackContext: new FeedbackContext(),
       id: skillId,
       name: "Mining",
@@ -94,7 +94,7 @@ describe("SkillRow", () => {
   });
 
   it("keeps controls bounded and marks completion without color alone", async () => {
-    const view = render(SkillRowHarness, {
+    const view = render(SkillRecordHarness, {
       compact: true,
       feedbackContext: new FeedbackContext(),
       id: skillId,

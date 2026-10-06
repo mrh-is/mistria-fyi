@@ -62,13 +62,8 @@ export async function parseFiddleFromZip(
   const zipFile = await open(zipPath);
   try {
     for await (const entry of zipFile) {
-      const tomlEntry = await zipEntryToTomlEntry(entry);
+      const tomlEntry = await zipEntryToTomlEntry(entry, paths);
       if (!tomlEntry) continue;
-
-      if (paths !== undefined && !paths.some((p) => tomlEntry.sourceKey.startsWith(p))) {
-        continue;
-      }
-
       processTomlEntry(data, sourceFileByRootPath, tomlEntry);
     }
   } finally {
@@ -217,10 +212,13 @@ function walkDirectory(dir: string, rootDir: string, onEntry: (entry: TomlEntry)
 }
 
 /** Converts a zip entry to a TomlEntry by reading its content, or returns null if not a valid fiddle TOML file. */
-async function zipEntryToTomlEntry(entry: {
-  filename: string;
-  openReadStream: () => Promise<AsyncIterable<Buffer>>;
-}): Promise<null | TomlEntry> {
+async function zipEntryToTomlEntry(
+  entry: {
+    filename: string;
+    openReadStream: () => Promise<AsyncIterable<Buffer>>;
+  },
+  paths?: readonly string[],
+): Promise<null | TomlEntry> {
   if (entry.filename.endsWith("/")) return null;
   if (!entry.filename.startsWith(FIDDLE_ZIP_PREFIX)) return null;
   if (!entry.filename.endsWith(".toml") || entry.filename.endsWith(".meta.toml")) return null;
@@ -228,6 +226,9 @@ async function zipEntryToTomlEntry(entry: {
   const relPath = entry.filename.slice(FIDDLE_ZIP_PREFIX.length);
   const keyPath = relPath.replace(/\.toml$/, "").split("/");
   const sourceKey = keyPath.join(".");
+  if (paths !== undefined && !paths.some((p) => sourceKey === p || sourceKey.startsWith(`${p}.`))) {
+    return null;
+  }
 
   const stream = await entry.openReadStream();
   const chunks: Buffer[] = [];
