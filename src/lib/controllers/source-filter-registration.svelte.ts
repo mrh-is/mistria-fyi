@@ -16,14 +16,14 @@ export function registerSourceFilters(
       sourceTypes.add(typeof sourceOrType === "string" ? sourceOrType : sourceOrType.type);
     }
     untrack(() => {
-      toolbarState.setSourceFilters(
+      toolbarState.registerSourceFilters(
         owner,
         SOURCE_FILTERS.filter(({ types }) => types.some((type) => sourceTypes.has(type))),
       );
     });
     return () => {
       untrack(() => {
-        toolbarState.removeSourceFilters(owner);
+        toolbarState.unregisterSourceFilters(owner);
       });
     };
   });

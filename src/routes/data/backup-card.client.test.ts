@@ -31,7 +31,7 @@ describe("BackupCard export", () => {
     expect(createObjectURL).toHaveBeenCalledTimes(1);
     const [blob] = createObjectURL.mock.calls[0];
     expect(blob.type).toBe("application/json");
-    expect(await blob.text()).toBe(userState.exportState());
+    expect(await blob.text()).toBe(userState.exportBackup());
 
     expect(click).toHaveBeenCalledTimes(1);
     const anchor = click.mock.instances[0] as HTMLAnchorElement;
@@ -45,7 +45,7 @@ describe("BackupCard export", () => {
 describe("BackupCard restore", () => {
   it("replaces the current state from a valid backup and announces success", async () => {
     userState.toggleShowSpoilers();
-    const backup = userState.exportState();
+    const backup = userState.exportBackup();
     userState.resetAll();
     expect(userState.state.showSpoilers).toBe(false);
     render(BackupCard, { open: true });
@@ -62,14 +62,14 @@ describe("BackupCard restore", () => {
 
   it("rejects malformed JSON and leaves the current state untouched", async () => {
     userState.toggleShowSpoilers();
-    const before = userState.exportState();
+    const before = userState.exportBackup();
     render(BackupCard, { open: true });
 
     await restoreFromFile(new File(["{not json"], "broken.json", { type: "application/json" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/This file is not valid JSON/);
     expect(screen.getByRole("status")).toHaveTextContent("");
-    expect(userState.exportState()).toBe(before);
+    expect(userState.exportBackup()).toBe(before);
   });
 
   it("rejects a backup missing required fields", async () => {
@@ -104,7 +104,7 @@ describe("BackupCard restore", () => {
     await restoreFromFile(new File(["{not json"], "broken.json"));
     await screen.findByRole("alert");
 
-    await restoreFromFile(new File([userState.exportState()], "backup.json"));
+    await restoreFromFile(new File([userState.exportBackup()], "backup.json"));
 
     await waitFor(() => {
       expect(screen.getByRole("status")).toHaveTextContent("Backup restored successfully.");

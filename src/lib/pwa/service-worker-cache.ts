@@ -92,7 +92,10 @@ export async function cacheLocaleChunks(
  * The known locales a page asked the service worker to cache, or `undefined` for any other
  * message. Unknown locales are dropped rather than trusted.
  */
-export function cacheLocalesRequest(data: unknown, chunks: LocaleNameChunks): string[] | undefined {
+export function parseCacheLocalesMessage(
+  data: unknown,
+  chunks: LocaleNameChunks,
+): string[] | undefined {
   if (typeof data !== "object" || data === null) return undefined;
   const { type, locales } = data as Partial<CacheLocalesMessage>;
   if (type !== CACHE_LOCALES_MESSAGE || !Array.isArray(locales)) return undefined;

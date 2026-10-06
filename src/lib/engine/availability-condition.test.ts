@@ -39,12 +39,12 @@ describe("evaluateAvailabilityCondition", () => {
     expect(
       evaluateAvailabilityCondition(condition, {
         ...summer,
-        heartLevels: new Map([["adeline" as VillagerId, 4]]),
-        minesLevel: 20,
-        perkIds: new Set(["green_thumb" as PerkId]),
+        mineFloor: 20,
         questStates: new Map([["main_quest" as QuestId, "completed"]]),
         skillLevels: new Map([["farming" as SkillId, 10]]),
         time: 1200,
+        unlockedPerks: new Set(["green_thumb" as PerkId]),
+        villagerLevels: new Map([["adeline" as VillagerId, 4]]),
       }),
     ).toBe(true);
   });

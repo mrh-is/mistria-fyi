@@ -6,7 +6,7 @@
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { isCategoryComplete } from "#lib/engine/progress.js";
-  import { isEntityNameVisible } from "#lib/engine/visibility.js";
+  import { isConditionVisible } from "#lib/engine/visibility.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
 
   import type { LocaleCode } from "#lib/types/locale.js";
@@ -44,7 +44,7 @@
 
   function isSpeciesVisible(animalId: AnimalId): boolean {
     const visibility = trackerData.animals[animalId].visibility;
-    return isEntityNameVisible(visibility, userState.progressionState);
+    return isConditionVisible(visibility, userState.progressionState);
   }
 
   function someVariant(

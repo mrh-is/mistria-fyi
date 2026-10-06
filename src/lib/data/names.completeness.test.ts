@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { getNameTable, loadNames, LOCALIZED_CATEGORIES } from "#lib/data/names.js";
+import { getNameTable, loadNames, NAME_CHUNKS } from "#lib/data/names.js";
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 /**
@@ -12,12 +12,12 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
  */
 describe("generated locale chunks", () => {
   beforeAll(async () => {
-    await Promise.all(LOCALE_CODES.map((locale) => loadNames(locale, LOCALIZED_CATEGORIES)));
+    await Promise.all(LOCALE_CODES.map((locale) => loadNames(locale, NAME_CHUNKS)));
   });
 
   const nonEnglishLocales = LOCALE_CODES.filter((locale) => locale !== "en");
 
-  it.each(LOCALIZED_CATEGORIES)("%s has identical keys in every locale", (category) => {
+  it.each(NAME_CHUNKS)("%s has identical keys in every locale", (category) => {
     const englishKeys = Object.keys(getNameTable(category, "en")).toSorted();
     expect(englishKeys.length).toBeGreaterThan(0);
 
@@ -26,14 +26,11 @@ describe("generated locale chunks", () => {
     }
   });
 
-  it.each(LOCALIZED_CATEGORIES)(
-    "%s has a non-empty name for every key in every locale",
-    (category) => {
-      for (const locale of LOCALE_CODES) {
-        for (const [id, name] of Object.entries(getNameTable(category, locale))) {
-          expect(name.trim().length, `${locale}/${category}/${id}`).toBeGreaterThan(0);
-        }
+  it.each(NAME_CHUNKS)("%s has a non-empty name for every key in every locale", (category) => {
+    for (const locale of LOCALE_CODES) {
+      for (const [id, name] of Object.entries(getNameTable(category, locale))) {
+        expect(name.trim().length, `${locale}/${category}/${id}`).toBeGreaterThan(0);
       }
-    },
-  );
+    }
+  });
 });

@@ -14,11 +14,11 @@
 <!-- The total counts what the filters still show, so filtering shrinks it. -->
 <CategoryStripe
   {color}
+  categoryTotal={progress.total}
   completed={progress.completed}
   {description}
+  filteredTotal={progress.completed + progress.remainingInScope}
   {href}
   icon={key}
   {name}
-  total={progress.completed + progress.filtered}
-  trackedTotal={progress.total}
 />

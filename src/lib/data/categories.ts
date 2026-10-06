@@ -85,9 +85,9 @@ const CATEGORY_HREFS: Record<CategoryKey, Path> = {
   villagers: "villagers",
 };
 
-/** The CSS color token for a category; the one lookup that needs no locale. */
-export function categoryColor<Key extends CategoryKey>(key: Key): `cat-${Key}` {
-  return `cat-${key}`;
+/** A category's color as a CSS `var()` reference; the one lookup that needs no locale. */
+export function categoryColor<Key extends CategoryKey>(key: Key): `var(--color-category-${Key})` {
+  return `var(--color-category-${key})`;
 }
 
 /** Lookup a single category by key. */

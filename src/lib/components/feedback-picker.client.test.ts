@@ -4,9 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import FeedbackPicker from "#lib/components/feedback-picker.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 
-import type { ReportableElement } from "#lib/feedback/types.js";
+import type { ReportTarget } from "#lib/feedback/types.js";
 
-const metadata: ReportableElement = {
+const metadata: ReportTarget = {
   category: "recipe",
   displayName: "Tomato Soup",
   entityId: "tomato_soup",
@@ -27,7 +27,7 @@ function registerVisibleElement(context: FeedbackContext): HTMLElement {
       y: 100,
     }) as DOMRect;
   document.body.append(element);
-  context.reportable(metadata)(element);
+  context.reportableAttachment(metadata)(element);
   return element;
 }
 
@@ -113,7 +113,7 @@ describe("FeedbackPicker", () => {
     element.getBoundingClientRect = () =>
       ({ bottom: -1, height: 0, left: 0, right: 0, top: -1, width: 0, x: 0, y: -1 }) as DOMRect;
     document.body.append(element);
-    context.reportable(metadata)(element);
+    context.reportableAttachment(metadata)(element);
     context.startPicking(vi.fn());
     render(FeedbackPicker, { active: true, feedbackContext: context });
 

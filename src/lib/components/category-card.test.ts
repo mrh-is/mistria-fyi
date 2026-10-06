@@ -15,13 +15,13 @@ describe("CategoryCard", () => {
     const { queries } = renderToFragment(CategoryCard, {
       props: {
         key: "almanac",
-        progress: { completed: 7, filtered: 13, total: 20 },
+        progress: { completed: 7, remainingInScope: 13, total: 20 },
       },
     });
 
     const stripe = queries.getByRole("link", { name: "Almanac, 7 of 20 completed" });
     expect(stripe.matches("[data-category-stripe]")).toBe(true);
-    expect(stripe.getAttribute("style")).toContain("--category-progress: 35%");
+    expect(stripe.getAttribute("style")).toContain("--category-progress-percent: 35%");
     expect(stripe.querySelector("[data-category-ribbon]")?.getAttribute("aria-hidden")).toBe(
       "true",
     );
@@ -34,25 +34,27 @@ describe("CategoryCard", () => {
     const { queries } = renderToFragment(CategoryCard, {
       props: {
         key: "museum",
-        progress: { completed: 4, filtered: 6, total: 20 },
+        progress: { completed: 4, remainingInScope: 6, total: 20 },
       },
     });
 
     const stripe = queries.getByRole("link", { name: "Museum, 4 of 10 completed" });
-    expect(stripe.getAttribute("style")).toContain("--category-progress: 40%");
+    expect(stripe.getAttribute("style")).toContain("--category-progress-percent: 40%");
   });
 
   it("keeps the category identity when adding the completed gold-leaf edge", () => {
     const { container } = renderToFragment(CategoryCard, {
       props: {
         key: "animals",
-        progress: { completed: 20, filtered: 0, total: 20 },
+        progress: { completed: 20, remainingInScope: 0, total: 20 },
       },
     });
 
     const stripe = container.querySelector("[data-category-stripe]");
     expect(stripe?.classList.contains("category-stripe--complete")).toBe(true);
-    expect(stripe?.getAttribute("style")).toContain("--category-color: var(--cat-animals)");
+    expect(stripe?.getAttribute("style")).toContain(
+      "--category-color: var(--color-category-animals)",
+    );
   });
 
   it("localizes the accessible progress phrase for Japanese", () => {
@@ -61,7 +63,7 @@ describe("CategoryCard", () => {
     const { queries } = renderToFragment(CategoryCard, {
       props: {
         key: "almanac",
-        progress: { completed: 7, filtered: 13, total: 20 },
+        progress: { completed: 7, remainingInScope: 13, total: 20 },
       },
     });
 
@@ -74,7 +76,7 @@ describe("CategoryCard", () => {
     const { queries } = renderToFragment(CategoryCard, {
       props: {
         key: "almanac",
-        progress: { completed: 7, filtered: 13, total: 20 },
+        progress: { completed: 7, remainingInScope: 13, total: 20 },
       },
     });
 

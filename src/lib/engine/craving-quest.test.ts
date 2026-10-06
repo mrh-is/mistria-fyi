@@ -28,7 +28,7 @@ describe("getCravingQuest", () => {
       applicable: true,
       completed: false,
       questId: undefined,
-      villager: undefined,
+      villagerId: undefined,
     });
   });
 
@@ -38,7 +38,7 @@ describe("getCravingQuest", () => {
     );
     expect(craving.applicable).toBe(false);
     expect(craving.questId).toBeUndefined();
-    expect(craving.villager).toBe("balor" as VillagerId);
+    expect(craving.villagerId).toBe("balor" as VillagerId);
   });
 
   it("is not applicable when the household chose no children", () => {
@@ -56,7 +56,7 @@ describe("getCravingQuest", () => {
       applicable: true,
       completed: false,
       questId: adelinePregnancy,
-      villager: "adeline" as VillagerId,
+      villagerId: "adeline" as VillagerId,
     });
 
     const done = getCravingQuest(

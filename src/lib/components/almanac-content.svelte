@@ -15,9 +15,9 @@
   import { getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
-  import { isItemDimmed, isRowVisible, shouldCountItem } from "#lib/engine/availability.js";
+  import { isInProgressScope, isItemDimmed, isRowVisible } from "#lib/engine/availability.js";
   import { isCategoryComplete } from "#lib/engine/progress.js";
-  import { isEntityNameVisible } from "#lib/engine/visibility.js";
+  import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
@@ -25,7 +25,7 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { matchesName } from "#lib/utils/name-match.js";
   import { recordEntries } from "#lib/utils/record.js";
-  import { sectionRenderTarget, trackerRowDisplay } from "#lib/utils/row-display.js";
+  import { sectionRowLimit, trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
@@ -46,7 +46,7 @@
   }
 
   function itemNameVisible(item: { visibility?: VisibilityCondition }): boolean {
-    return isEntityNameVisible(item.visibility, userState.progressionState);
+    return isConditionVisible(item.visibility, userState.progressionState);
   }
 
   function rowDisplay(
@@ -133,7 +133,7 @@
       const baseRows = section.rows.filter(({ canonicalId, entry, item, name }) => {
         if (!matchesFilter(name)) return false;
         if (nameFilter && !itemNameVisible(item)) return false;
-        return shouldCountItem(
+        return isInProgressScope(
           aggregateSources(entry),
           isItemCompleted(canonicalId),
           userState.state.worldState,
@@ -218,7 +218,7 @@
       userState.toggleAlmanacItem(canonicalId);
     });
     if (completed) {
-      if (!userState.state.showCompleted) recentlyCompleted.mark(canonicalId);
+      if (!userState.state.showCompleted) recentlyCompleted.markLeaving(canonicalId);
       checkCelebration(catCanonicalIds);
     }
   }
@@ -230,7 +230,7 @@
   {#if baseRows.length > 0}
     {@const showAll = expandedSections[id] ?? false}
     {@const isOpen = openSections[id] ?? false}
-    {@const renderTarget = sectionRenderTarget(visibleRows.length, showAll)}
+    {@const renderTarget = sectionRowLimit(visibleRows.length, showAll)}
     {@const shouldBypassBatching =
       isOpen && !sectionFrames.has(id) && (renderedSectionCounts[id] ?? 0) < renderTarget}
     {@const renderedCount =
@@ -243,7 +243,7 @@
       forceOpen={!!nameFilter}
       name={getName("ui", id, locale)}
       onExpandedChange={(open: boolean) => {
-        setSectionOpen(id, open, sectionRenderTarget(visibleRows.length, showAll));
+        setSectionOpen(id, open, sectionRowLimit(visibleRows.length, showAll));
       }}
       reportCategory="almanac"
       reportEntityId={id}
@@ -269,18 +269,18 @@
           {@const itemVisibility = item.visibility}
           <TrackerRow
             display={rowDisplay(canonicalId, { visibility: itemVisibility }, itemSources)}
-            lookups={{ ...baseLookups, entityVisibility: itemVisibility }}
+            segmentLookups={{ ...baseLookups, entityVisibility: itemVisibility }}
             {name}
             reportCategory="almanac-item"
             reportEntityId={canonicalId}
             sources={itemSources}
             sprite={canonicalId}
-            spriteClass="text-cat-almanac"
+            spriteClass="text-(--color-category-almanac)"
             onToggle={() => {
               if (itemNameVisible({ visibility: itemVisibility }) || itemCompleted) {
                 toggleItem(canonicalId, name, canonicalIds);
               } else {
-                spoilerGuard.guard(itemVisibility, () => {
+                spoilerGuard.requestGuardedAction(itemVisibility, () => {
                   toggleItem(canonicalId, name, canonicalIds);
                 });
               }

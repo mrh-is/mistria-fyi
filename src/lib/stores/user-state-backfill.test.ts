@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { getAllProgress } from "#lib/engine/progress.js";
-import { searchItems } from "#lib/engine/search.js";
+import { searchAllCategories } from "#lib/engine/search.js";
 import { encodeTransferPayload } from "#lib/engine/transfer.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
@@ -10,7 +10,7 @@ import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 import type { AnimalId, AnimalVariantId, CosmeticId } from "#lib/types/tracker-data.js";
-import type { CompletedState } from "#lib/types/user-progress.js";
+import type { ProgressState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 const ALL_ANIMAL_IDS = recordKeys(trackerData.animals);
@@ -81,7 +81,7 @@ describe("animal map backfill on deserialization", () => {
     vi.resetModules();
 
     const { userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
+    userState.loadFromStorage();
 
     for (const animalId of OMITTED_ANIMALS) {
       expect(
@@ -115,7 +115,7 @@ describe("animal map backfill on deserialization", () => {
     vi.resetModules();
 
     const { userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
+    userState.loadFromStorage();
 
     expect(userState.state.completed.animals[progressAnimal]?.has(progressVariant)).toBe(true);
     expect(userState.state.completed.animalCosmetics[progressAnimal]?.has(progressCosmetic)).toBe(
@@ -133,7 +133,7 @@ describe("animal map backfill on deserialization", () => {
     vi.resetModules();
 
     const { userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
+    userState.loadFromStorage();
 
     for (const animalId of ALL_ANIMAL_IDS) {
       expect(userState.state.completed.animals[animalId]).toBeDefined();
@@ -153,7 +153,7 @@ describe("animal map backfill on merge", () => {
     vi.resetModules();
 
     const { userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
+    userState.loadFromStorage();
 
     // Merge data that also lacks some animals
     const partialImport = {
@@ -180,14 +180,14 @@ describe("animal map backfill on merge", () => {
   });
 });
 
-async function getBackfilledState(): Promise<DeepReadonly<CompletedState>> {
+async function getBackfilledState(): Promise<DeepReadonly<ProgressState>> {
   vi.useFakeTimers();
   vi.stubGlobal("window", {});
   vi.stubGlobal("localStorage", makeStorage(buildStoredState()));
   vi.resetModules();
 
   const { userState } = await import("#lib/stores/user-state.svelte.js");
-  userState.restorePersistedState();
+  userState.loadFromStorage();
   return userState.state.completed;
 }
 
@@ -203,11 +203,11 @@ describe("downstream consumers after backfill", () => {
     ).not.toThrow();
   });
 
-  it("searchItems does not throw when searching animals on backfilled state", async () => {
+  it("searchAllCategories does not throw when searching animals on backfilled state", async () => {
     const completed = await getBackfilledState();
     const progression = deriveProgressionState(completed, trackerData, false);
     expect(() =>
-      searchItems("a", completed, { season: "spring", weather: "calm" }, progression, "en"),
+      searchAllCategories("a", completed, { season: "spring", weather: "calm" }, progression, "en"),
     ).not.toThrow();
   });
 

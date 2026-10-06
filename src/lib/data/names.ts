@@ -25,7 +25,7 @@ export type AnimalNameId = string & { readonly __brand: "AnimalNameId" };
  * Categories whose player-facing names live in per-locale chunks, not in `tracker-data.json`.
  * Every named category is migrated; none carries an inline `name` field on its `tracker-data` type.
  */
-export const LOCALIZED_CATEGORIES = [
+export const NAME_CHUNKS = [
   "animals",
   "cosmetics",
   "cosmetics/subcategories",
@@ -47,7 +47,7 @@ export const LOCALIZED_CATEGORIES = [
   "ui",
   "villagers",
 ] as const;
-export type LocalizedCategory = (typeof LOCALIZED_CATEGORIES)[number];
+export type NameChunk = (typeof NAME_CHUNKS)[number];
 
 interface LocalizedCategoryId {
   animals: AnimalNameId;
@@ -72,7 +72,7 @@ interface LocalizedCategoryId {
   ui: string;
   villagers: VillagerId;
 }
-type NameChunk = Partial<Record<string, string>>;
+type NameChunkContents = Partial<Record<string, string>>;
 
 /**
  * Every generated chunk, keyed `./locales/<locale>/<category>.json`, as a lazy loader. Each chunk
@@ -85,13 +85,11 @@ type NameChunk = Partial<Record<string, string>>;
  * {@link loadNames} populates. A route's `load()` awaits the chunks its page needs before the
  * page renders; sitewide search awaits every category on first open.
  */
-const chunkLoaders: Partial<Record<string, () => Promise<NameChunk>>> = import.meta.glob<NameChunk>(
-  "./locales/**/*.json",
-  { import: "default" },
-);
+const chunkLoaders: Partial<Record<string, () => Promise<NameChunkContents>>> =
+  import.meta.glob<NameChunkContents>("./locales/**/*.json", { import: "default" });
 
 /** Resolved chunks, keyed `<locale>/<category>`. Shared across SSR requests: it's an immutable cache. */
-const chunks = new Map<string, NameChunk>();
+const chunks = new Map<string, NameChunkContents>();
 /** One in-flight or settled load per chunk key, so concurrent callers share a single import. */
 const chunkLoads = new Map<string, Promise<void>>();
 const collators = new Map<LocaleCode, Intl.Collator>();
@@ -114,7 +112,7 @@ export function animalNameId(
  * read from module-level state: SSR on Cloudflare Workers serves concurrent requests in different
  * locales from one module instance.
  */
-export function getName<Category extends LocalizedCategory>(
+export function getName<Category extends NameChunk>(
   category: Category,
   id: LocalizedCategoryId[Category],
   locale: LocaleCode,
@@ -126,7 +124,7 @@ export function getName<Category extends LocalizedCategory>(
 }
 
 /** The whole `category` chunk for `locale`. Use for bulk lookups (sorting, search). */
-export function getNameTable<Category extends LocalizedCategory>(
+export function getNameTable<Category extends NameChunk>(
   category: Category,
   locale: LocaleCode,
 ): Readonly<Record<LocalizedCategoryId[Category], string>> {
@@ -134,7 +132,7 @@ export function getNameTable<Category extends LocalizedCategory>(
 }
 
 /** Whether every chunk {@link loadNames} would fetch for these arguments is already resident. */
-export function hasNames(locale: LocaleCode, categories: readonly LocalizedCategory[]): boolean {
+export function hasNames(locale: LocaleCode, categories: readonly NameChunk[]): boolean {
   return categories.every((category) => chunks.has(chunkKey(locale, category)));
 }
 
@@ -144,10 +142,7 @@ export function hasNames(locale: LocaleCode, categories: readonly LocalizedCateg
  * for already-loaded chunks resolve immediately without a second fetch. Only `locale` is fetched:
  * search, which matches English terms too, loads `"en"` explicitly.
  */
-export function loadNames(
-  locale: LocaleCode,
-  categories: readonly LocalizedCategory[],
-): Promise<void> {
+export function loadNames(locale: LocaleCode, categories: readonly NameChunk[]): Promise<void> {
   return Promise.all(categories.map((category) => loadChunk(locale, category))).then(
     () => undefined,
   );
@@ -171,7 +166,7 @@ function chunkKey(locale: LocaleCode, category: string): string {
   return `${locale}/${category}`;
 }
 
-function chunkPath(locale: LocaleCode, category: LocalizedCategory): string {
+function chunkPath(locale: LocaleCode, category: NameChunk): string {
   return `./locales/${locale}/${category}.json`;
 }
 
@@ -184,7 +179,7 @@ async function dropFailedLoad(key: string, load: Promise<void>): Promise<void> {
   }
 }
 
-function loadChunk(locale: LocaleCode, category: LocalizedCategory): Promise<void> {
+function loadChunk(locale: LocaleCode, category: NameChunk): Promise<void> {
   const key = chunkKey(locale, category);
   const loader = chunkLoaders[chunkPath(locale, category)];
   if (!loader) {
@@ -208,7 +203,7 @@ function loadChunk(locale: LocaleCode, category: LocalizedCategory): Promise<voi
  * programming error — the route's `load()` forgot to await it — and throws rather than silently
  * degrading.
  */
-function readChunk(locale: LocaleCode, category: LocalizedCategory): NameChunk {
+function readChunk(locale: LocaleCode, category: NameChunk): NameChunkContents {
   const key = chunkKey(locale, category);
   const chunk = chunks.get(key);
   if (chunk) return chunk;

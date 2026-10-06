@@ -5,7 +5,7 @@
   import {
     sortSourceFiltersByLabel,
     sourceFilterLabel,
-    sourceFilterMembers,
+    sourceFilterMembersLabel,
   } from "#lib/data/source-filters.js";
   import * as m from "#lib/paraglide/messages.js";
   import { page } from "$app/state";
@@ -30,7 +30,7 @@
           <SourceIcon class="size-4" />
           <div>
             <strong>{sourceFilterLabel(filter.id, page.data.locale)}</strong><span
-              >{sourceFilterMembers(filter, page.data.locale)}</span
+              >{sourceFilterMembersLabel(filter, page.data.locale)}</span
             >
           </div>
         </li>
@@ -54,7 +54,7 @@
 
   .inventory-tag__heading {
     padding-bottom: 8px;
-    border-bottom: 1px solid color-mix(in srgb, var(--tag-ink) 42%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-tag-ink) 42%, transparent);
   }
 
   .inventory-tag__overline {
@@ -83,8 +83,8 @@
     min-width: 0;
     gap: 7px;
     padding: 7px 6px;
-    border-right: 1px solid color-mix(in srgb, var(--tag-ink) 22%, transparent);
-    border-bottom: 1px solid color-mix(in srgb, var(--tag-ink) 22%, transparent);
+    border-right: 1px solid color-mix(in srgb, var(--color-tag-ink) 22%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-tag-ink) 22%, transparent);
   }
 
   .inventory-tag__list li:nth-child(even) {
@@ -114,7 +114,7 @@
 
   .inventory-tag__list span {
     margin-top: 1px;
-    color: var(--tag-muted);
+    color: var(--color-tag-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-2xs);
     line-height: 1.25;
@@ -132,15 +132,15 @@
   :global(.inventory-tag__close) {
     min-width: 76px;
     min-height: 40px;
-    border: 1px solid color-mix(in srgb, var(--tag-ink) 72%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-tag-ink) 72%, transparent);
     font-family: var(--font-controls);
     font-size: var(--text-3xs);
   }
 
   :global(.inventory-tag__close:is(:hover, :focus-visible)) {
-    color: var(--tag-highlight);
-    background: var(--tag-accent);
-    outline: 2px solid var(--tag-highlight);
+    color: var(--color-tag-highlight);
+    background: var(--color-tag-accent);
+    outline: 2px solid var(--color-tag-highlight);
     outline-offset: -4px;
   }
 
@@ -159,7 +159,7 @@
     }
 
     .inventory-tag__list li:not(:last-child) {
-      border-bottom: 1px solid color-mix(in srgb, var(--tag-ink) 22%, transparent);
+      border-bottom: 1px solid color-mix(in srgb, var(--color-tag-ink) 22%, transparent);
     }
 
     .inventory-tag__footer {

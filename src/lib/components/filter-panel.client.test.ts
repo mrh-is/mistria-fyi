@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { tick } from "svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import VisibilityPanel from "#lib/components/visibility-panel.svelte";
+import FilterPanel from "#lib/components/filter-panel.svelte";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
@@ -27,15 +27,15 @@ function weatherStrip() {
 
 afterEach(async () => {
   cleanup();
-  toolbarState.removeSourceFilters("test");
+  toolbarState.unregisterSourceFilters("test");
   userState.resetAll();
   pageStub.reset();
   await tick();
 });
 
-describe("VisibilityPanel interactions", () => {
+describe("FilterPanel interactions", () => {
   it("toggles availability windows as pressed chips", async () => {
-    render(VisibilityPanel, { showSeasonality: true });
+    render(FilterPanel, { showWorldStateFilters: true });
 
     const now = screen.getByRole("button", { name: "Now" });
     const later = screen.getByRole("button", { name: "Later" });
@@ -52,7 +52,7 @@ describe("VisibilityPanel interactions", () => {
   });
 
   it("selects a season and relabels the weather strip for it", async () => {
-    render(VisibilityPanel, { showSeasonality: true });
+    render(FilterPanel, { showWorldStateFilters: true });
 
     const seasons = screen.getByRole("radiogroup", { name: "Season" });
     expect(within(seasons).getByRole("radio", { name: "Spring" })).toHaveAttribute(
@@ -75,7 +75,7 @@ describe("VisibilityPanel interactions", () => {
   });
 
   it("selects weather and falls back to calm when the season loses that weather", async () => {
-    render(VisibilityPanel, { showSeasonality: true });
+    render(FilterPanel, { showWorldStateFilters: true });
 
     const breeze = within(weatherStrip()).getByRole("radio", { name: "Breeze" });
     expect(breeze).toBeEnabled();
@@ -101,7 +101,7 @@ describe("VisibilityPanel interactions", () => {
   });
 
   it("models season as a radiogroup with arrow-key selection", async () => {
-    render(VisibilityPanel, { showSeasonality: true });
+    render(FilterPanel, { showWorldStateFilters: true });
 
     const seasons = screen.getByRole("radiogroup", { name: "Season" });
     const spring = within(seasons).getByRole("radio", { name: "Spring" });
@@ -121,30 +121,30 @@ describe("VisibilityPanel interactions", () => {
   });
 
   it("toggles source groups and reflects the pressed state", async () => {
-    toolbarState.setSourceFilters("test", [gatheringFilter, storesFilter]);
-    render(VisibilityPanel, { showSeasonality: false });
+    toolbarState.registerSourceFilters("test", [gatheringFilter, storesFilter]);
+    render(FilterPanel, { showWorldStateFilters: false });
 
     const gathering = screen.getByRole("button", { name: "Gathering" });
     const stores = screen.getByRole("button", { name: "Stores" });
     expect(gathering).toHaveAttribute("aria-pressed", "true");
     expect(stores).toHaveAttribute("aria-pressed", "true");
-    expect(toolbarState.sourceFilterActive).toBe(false);
+    expect(toolbarState.isSourceFilterNarrowing).toBe(false);
 
     await fireEvent.click(gathering);
 
     expect(gathering).toHaveAttribute("aria-pressed", "false");
     expect(stores).toHaveAttribute("aria-pressed", "true");
-    expect(toolbarState.sourceFilterActive).toBe(true);
+    expect(toolbarState.isSourceFilterNarrowing).toBe(true);
 
     await fireEvent.click(gathering);
     expect(gathering).toHaveAttribute("aria-pressed", "true");
-    expect(toolbarState.sourceFilterActive).toBe(false);
+    expect(toolbarState.isSourceFilterNarrowing).toBe(false);
   });
 
   it("labels source groups in the page locale and keys their state on IDs", async () => {
     pageStub.data = { locale: "ja" };
-    toolbarState.setSourceFilters("test", [gatheringFilter, storesFilter]);
-    render(VisibilityPanel, { showSeasonality: false });
+    toolbarState.registerSourceFilters("test", [gatheringFilter, storesFilter]);
+    render(FilterPanel, { showWorldStateFilters: false });
 
     const gathering = screen.getByRole("button", { name: "採集" });
     const stores = screen.getByRole("button", { name: "ショップ" });
@@ -153,15 +153,15 @@ describe("VisibilityPanel interactions", () => {
 
     await fireEvent.click(gathering);
     expect(gathering).toHaveAttribute("aria-pressed", "false");
-    expect([...toolbarState.activeSourceIds]).toEqual(["stores"]);
+    expect([...toolbarState.enabledSourceFilterIds]).toEqual(["stores"]);
 
     await fireEvent.click(gathering);
-    expect(toolbarState.activeSourceIds.has("gathering")).toBe(true);
+    expect(toolbarState.enabledSourceFilterIds.has("gathering")).toBe(true);
   });
 
   it("opens and dismisses the source-types explainer", async () => {
-    toolbarState.setSourceFilters("test", [gatheringFilter]);
-    render(VisibilityPanel, { showSeasonality: false });
+    toolbarState.registerSourceFilters("test", [gatheringFilter]);
+    render(FilterPanel, { showWorldStateFilters: false });
 
     await fireEvent.click(screen.getByRole("button", { name: "About source types" }));
 
@@ -179,7 +179,7 @@ describe("VisibilityPanel interactions", () => {
   });
 
   it("toggles completed visibility from the switch", async () => {
-    render(VisibilityPanel, { showSeasonality: false });
+    render(FilterPanel, { showWorldStateFilters: false });
 
     const showCompleted = screen.getByRole("switch", { name: "Show completed?" });
     expect(showCompleted).not.toBeChecked();

@@ -21,28 +21,28 @@ const storeFilter: SourceFilter = {
 describe("ToolbarState source filters", () => {
   it("unions contextual filters from every mounted owner", () => {
     const state = new ToolbarState();
-    state.setSourceFilters("museum", [storeFilter]);
-    state.setSourceFilters("recipes", [gatheringFilter]);
+    state.registerSourceFilters("museum", [storeFilter]);
+    state.registerSourceFilters("recipes", [gatheringFilter]);
 
     expect(state.sourceFilters.map(({ id }) => id)).toEqual(["gathering", "stores"]);
   });
 
   it("preserves the filter array when the registered IDs do not change", () => {
     const state = new ToolbarState();
-    state.setSourceFilters("page", [gatheringFilter, storeFilter]);
+    state.registerSourceFilters("page", [gatheringFilter, storeFilter]);
     const filters = state.sourceFilters;
 
-    state.setSourceFilters("page", [gatheringFilter, storeFilter]);
+    state.registerSourceFilters("page", [gatheringFilter, storeFilter]);
 
     expect(state.sourceFilters).toBe(filters);
   });
 
   it("removes only the departing owner's contextual filters", () => {
     const state = new ToolbarState();
-    state.setSourceFilters("museum", [gatheringFilter]);
-    state.setSourceFilters("recipes", [storeFilter]);
+    state.registerSourceFilters("museum", [gatheringFilter]);
+    state.registerSourceFilters("recipes", [storeFilter]);
 
-    state.removeSourceFilters("museum");
+    state.unregisterSourceFilters("museum");
 
     expect(state.sourceFilters.map(({ id }) => id)).toEqual(["stores"]);
   });
@@ -52,7 +52,7 @@ describe("ToolbarState source filters", () => {
     const storeId = "general_store" as StoreId;
     const mixedSources: Source[] = [{ type: "forage" }, { type: "store", storeId }];
 
-    state.setSourceFilters("page", [gatheringFilter, storeFilter]);
+    state.registerSourceFilters("page", [gatheringFilter, storeFilter]);
     state.hideAllSourceFilters();
     state.toggleSourceFilter(storeFilter);
 
@@ -64,41 +64,41 @@ describe("ToolbarState source filters", () => {
 
   it("resets active IDs without removing the page context", () => {
     const state = new ToolbarState();
-    state.setSourceFilters("page", [gatheringFilter, storeFilter]);
+    state.registerSourceFilters("page", [gatheringFilter, storeFilter]);
     state.hideAllSourceFilters();
 
     state.resetSourceFilters();
 
-    expect([...state.activeSourceIds]).toEqual(["gathering", "stores"]);
+    expect([...state.enabledSourceFilterIds]).toEqual(["gathering", "stores"]);
     expect(state.sourceFilters.map(({ id }) => id)).toEqual(["gathering", "stores"]);
   });
 
-  it("reports sourceFilterActive when some groups are hidden", () => {
+  it("reports isSourceFilterNarrowing when some groups are hidden", () => {
     const state = new ToolbarState();
-    expect(state.sourceFilterActive).toBe(false);
+    expect(state.isSourceFilterNarrowing).toBe(false);
 
-    state.setSourceFilters("page", [gatheringFilter, storeFilter]);
-    expect(state.sourceFilterActive).toBe(false);
+    state.registerSourceFilters("page", [gatheringFilter, storeFilter]);
+    expect(state.isSourceFilterNarrowing).toBe(false);
 
     state.toggleSourceFilter(gatheringFilter);
-    expect(state.sourceFilterActive).toBe(true);
+    expect(state.isSourceFilterNarrowing).toBe(true);
 
     state.hideAllSourceFilters();
-    expect(state.sourceFilterActive).toBe(true);
+    expect(state.isSourceFilterNarrowing).toBe(true);
 
     state.resetSourceFilters();
-    expect(state.sourceFilterActive).toBe(false);
+    expect(state.isSourceFilterNarrowing).toBe(false);
   });
 
   it("resets active IDs to the new union when owners change", () => {
     const state = new ToolbarState();
-    state.setSourceFilters("museum", [gatheringFilter, storeFilter]);
+    state.registerSourceFilters("museum", [gatheringFilter, storeFilter]);
     state.hideAllSourceFilters();
-    expect(state.sourceFilterActive).toBe(true);
+    expect(state.isSourceFilterNarrowing).toBe(true);
 
-    state.removeSourceFilters("museum");
-    state.setSourceFilters("mines", [gatheringFilter]);
-    expect(state.sourceFilterActive).toBe(false);
-    expect([...state.activeSourceIds]).toEqual(["gathering"]);
+    state.unregisterSourceFilters("museum");
+    state.registerSourceFilters("mines", [gatheringFilter]);
+    expect(state.isSourceFilterNarrowing).toBe(false);
+    expect([...state.enabledSourceFilterIds]).toEqual(["gathering"]);
   });
 });

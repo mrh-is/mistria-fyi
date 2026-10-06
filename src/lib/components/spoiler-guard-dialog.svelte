@@ -14,10 +14,10 @@
       guard.cancel();
     }}
     onComplete={() => {
-      guard.complete();
+      guard.proceed();
     }}
     onCompleteAndUpdate={() => {
-      guard.completeAndUpdate();
+      guard.proceedAndRecordPrerequisites();
     }}
   />
 {/if}

@@ -8,7 +8,7 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
 
 afterEach(() => {
-  toolbarState.removeSourceFilters("test");
+  toolbarState.unregisterSourceFilters("test");
   userState.resetAll();
 });
 
@@ -30,7 +30,7 @@ describe("source-filtered content", () => {
       renderToFragmentWithFeedback(CosmeticsContent, { props: { locale: "en" } }).text,
     ).toContain(slotLabel);
 
-    toolbarState.setSourceFilters("test", SOURCE_FILTERS);
+    toolbarState.registerSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
     expect(

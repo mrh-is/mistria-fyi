@@ -12,7 +12,7 @@
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/progress.js";
-  import { isEntityNameVisible } from "#lib/engine/visibility.js";
+  import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
@@ -140,10 +140,10 @@
   })}
   {#snippet cosmeticRow(cosmetic: CosmeticEntry)}
     {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
-    {@const nameVisible = isEntityNameVisible(cosmetic.visibility, userState.progressionState)}
+    {@const nameVisible = isConditionVisible(cosmetic.visibility, userState.progressionState)}
     <TrackerRow
       display={trackerRowDisplay({ completed, nameVisible })}
-      lookups={{ ...baseLookups, entityVisibility: cosmetic.visibility }}
+      segmentLookups={{ ...baseLookups, entityVisibility: cosmetic.visibility }}
       name={cosmetic.name}
       reportCategory="cosmetic"
       reportEntityId={cosmetic.id}
@@ -152,14 +152,14 @@
         if (nameVisible || completed) {
           toggleCosmetic(cosmetic, allInSlot);
         } else {
-          spoilerGuard.guard(cosmetic.visibility, () => {
+          spoilerGuard.requestGuardedAction(cosmetic.visibility, () => {
             toggleCosmetic(cosmetic, allInSlot);
           });
         }
       }}
     />
   {/snippet}
-  {#if visibleInSlot.length > 0 || toolbarState.sourceFilterActive}
+  {#if visibleInSlot.length > 0 || toolbarState.isSourceFilterNarrowing}
     <ExpandableSection
       {locale}
       count={scopedInSlot.filter((c) => userState.state.completed.cosmetics.has(c.id)).length}

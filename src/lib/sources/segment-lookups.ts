@@ -11,7 +11,7 @@ import {
 } from "#lib/sources/source-names.js";
 import { recordEntries, recordKeys, recordMap } from "#lib/utils/record.js";
 
-import type { LocalizedCategory } from "#lib/data/names.js";
+import type { NameChunk } from "#lib/data/names.js";
 import type { SegmentLookups } from "#lib/sources/source-segments.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { QuestType, StoreId } from "#lib/types/tracker-data.js";
@@ -98,7 +98,7 @@ function buildStaticBaseSegmentLookups(): Omit<
  * Every name category {@link buildBaseSegmentLookups} resolves. A route whose page renders source
  * segments must await these (see `localizedPageLoad`) alongside its own category's chunk.
  */
-export const SEGMENT_LOOKUP_CATEGORIES = [
+export const SEGMENT_LOOKUP_NAME_CHUNKS = [
   "animals",
   "festivals",
   "items",
@@ -112,7 +112,7 @@ export const SEGMENT_LOOKUP_CATEGORIES = [
   "skills",
   "stores",
   "treasure-chest-tiers",
-] as const satisfies readonly LocalizedCategory[];
+] as const satisfies readonly NameChunk[];
 
 function getLocalizedBaseSegmentLookups(
   locale: LocaleCode,

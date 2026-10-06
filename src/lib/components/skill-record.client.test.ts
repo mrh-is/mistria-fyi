@@ -111,7 +111,7 @@ describe("SkillRecord", () => {
       expect(view.getByRole("button", { name: "Increase Mining level" })).toBeDisabled();
     });
     expect(view.container.querySelector("[data-skill-record]")).toHaveAttribute(
-      "data-complete",
+      "data-maxed",
       "true",
     );
     expect(view.getByTestId("skill-completion-mark")).toBeInTheDocument();

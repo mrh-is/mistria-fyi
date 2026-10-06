@@ -104,23 +104,23 @@ function collectVillagerRecords(
   if (!npcs) return [];
 
   const records: RawVillagerRecord[] = [];
-  for (const [id, npc] of Object.entries(npcs)) {
+  for (const [id, rawVillager] of Object.entries(npcs)) {
     if (id === "default") continue;
 
-    const name = npc.name as string | undefined;
+    const name = rawVillager.name as string | undefined;
     if (!name) continue;
 
-    const birthday = npc.birthday as undefined | { day?: number; season?: string };
+    const birthday = rawVillager.birthday as undefined | { day?: number; season?: string };
     if (!birthday?.season || typeof birthday.day !== "number") continue;
 
-    const iconSprite = npc.icon_sprite as string | undefined;
+    const iconSprite = rawVillager.icon_sprite as string | undefined;
     if (requireIconSprite && !iconSprite) {
       throw new Error(`Missing icon_sprite for villager "${id}"`);
     }
 
     records.push({
       birthday: { day: birthday.day, season: birthday.season as Season },
-      dateable: npc.dateable === true,
+      dateable: rawVillager.dateable === true,
       iconSprite,
       id,
       name,

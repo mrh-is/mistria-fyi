@@ -4,7 +4,7 @@ import CategoryGrid from "#lib/components/category-grid.svelte";
 import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
-const complete = { completed: 2, filtered: 0, total: 2 };
+const complete = { completed: 2, remainingInScope: 0, total: 2 };
 
 const allComplete = {
   almanac: complete,
@@ -21,7 +21,7 @@ const allComplete = {
 
 const oneActiveOneComplete = {
   ...allComplete,
-  almanac: { completed: 1, filtered: 1, total: 2 },
+  almanac: { completed: 1, remainingInScope: 1, total: 2 },
 };
 
 describe("CategoryGrid", () => {
@@ -35,16 +35,16 @@ describe("CategoryGrid", () => {
     const { queries } = renderToFragment(CategoryGrid, {
       props: {
         progress: {
-          almanac: { completed: 1, filtered: 1, total: 2 },
-          animals: { completed: 0, filtered: 1, total: 2 },
-          cosmetics: { completed: 1, filtered: 1, total: 2 },
-          mines: { completed: 2, filtered: 0, total: 2 },
-          museum: { completed: 1, filtered: 1, total: 2 },
-          quests: { completed: 1, filtered: 1, total: 2 },
-          recipes: { completed: 1, filtered: 1, total: 2 },
-          renown: { completed: 1, filtered: 1, total: 2 },
-          skills: { completed: 1, filtered: 1, total: 2 },
-          villagers: { completed: 1, filtered: 1, total: 2 },
+          almanac: { completed: 1, remainingInScope: 1, total: 2 },
+          animals: { completed: 0, remainingInScope: 1, total: 2 },
+          cosmetics: { completed: 1, remainingInScope: 1, total: 2 },
+          mines: { completed: 2, remainingInScope: 0, total: 2 },
+          museum: { completed: 1, remainingInScope: 1, total: 2 },
+          quests: { completed: 1, remainingInScope: 1, total: 2 },
+          recipes: { completed: 1, remainingInScope: 1, total: 2 },
+          renown: { completed: 1, remainingInScope: 1, total: 2 },
+          skills: { completed: 1, remainingInScope: 1, total: 2 },
+          villagers: { completed: 1, remainingInScope: 1, total: 2 },
         },
       },
     });

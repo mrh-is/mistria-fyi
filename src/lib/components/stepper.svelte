@@ -7,7 +7,7 @@
   import type { Snippet } from "svelte";
 
   let {
-    accent = "var(--ink)",
+    accentColor = "var(--color-ink)",
     children,
     decrementDisabled = false,
     decrementLabel,
@@ -18,8 +18,8 @@
     onIncrement,
     value,
   }: {
-    /** CSS color for the hover & focus border, usually the page's `--cat-*` token. */
-    accent?: string;
+    /** CSS color for the hover & focus border, usually the page's `--color-category-*` token. */
+    accentColor?: string;
     children?: Snippet;
     decrementDisabled?: boolean;
     decrementLabel: string;
@@ -34,7 +34,7 @@
 
 <div
   class="stepper"
-  style:--stepper-accent={accent}
+  style:--stepper-accent-color={accentColor}
   role={label ? "group" : undefined}
   aria-label={label && value ? m.stepper_group_label({ label, value }) : label}
 >
@@ -78,10 +78,10 @@
     width: 44px;
     height: 44px;
     place-items: center;
-    border: 1px solid var(--hairline);
+    border: 1px solid var(--color-ink-hairline);
     border-radius: var(--radius);
     background: transparent;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     touch-action: manipulation;
   }
 
@@ -91,9 +91,9 @@
   }
 
   .stepper > button:is(:hover, :focus-visible):not(:disabled) {
-    border-color: var(--stepper-accent);
-    color: var(--stepper-accent);
-    outline: 2px solid var(--stepper-accent);
+    border-color: var(--stepper-accent-color);
+    color: var(--stepper-accent-color);
+    outline: 2px solid var(--stepper-accent-color);
     outline-offset: -2px;
   }
 

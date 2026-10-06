@@ -1,16 +1,19 @@
 import { trackerData } from "#lib/data/index.js";
-import { satisfyCondition } from "#lib/engine/visibility.js";
+import { planConditionMutations } from "#lib/engine/visibility.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
 export interface SpoilerGuard {
   cancel: () => void;
-  complete: () => void;
-  completeAndUpdate: () => void;
   readonly condition: null | VisibilityCondition;
-  guard: (forCondition: undefined | VisibilityCondition, action: () => void) => void;
   open: boolean;
+  /** Run the pending action without changing progress. */
+  proceed: () => void;
+  /** Satisfy the pending condition in the user's progress, then run the pending action. */
+  proceedAndRecordPrerequisites: () => void;
+  /** Hold `action` and open the confirmation dialog for `forCondition`. */
+  requestGuardedAction: (forCondition: undefined | VisibilityCondition, action: () => void) => void;
 }
 
 export function createSpoilerGuard(): SpoilerGuard {
@@ -24,15 +27,24 @@ export function createSpoilerGuard(): SpoilerGuard {
       condition = null;
       pendingAction = null;
     },
-    complete(): void {
+    get condition(): null | VisibilityCondition {
+      return condition;
+    },
+    get open(): boolean {
+      return open;
+    },
+    set open(value: boolean) {
+      open = value;
+    },
+    proceed(): void {
       pendingAction?.();
       open = false;
       condition = null;
       pendingAction = null;
     },
-    completeAndUpdate(): void {
+    proceedAndRecordPrerequisites(): void {
       if (condition) {
-        for (const mutation of satisfyCondition(
+        for (const mutation of planConditionMutations(
           condition,
           userState.state.completed,
           trackerData,
@@ -75,19 +87,10 @@ export function createSpoilerGuard(): SpoilerGuard {
       condition = null;
       pendingAction = null;
     },
-    get condition(): null | VisibilityCondition {
-      return condition;
-    },
-    guard(forCondition: undefined | VisibilityCondition, action: () => void): void {
+    requestGuardedAction(forCondition: undefined | VisibilityCondition, action: () => void): void {
       condition = forCondition ?? null;
       pendingAction = action;
       open = true;
-    },
-    get open(): boolean {
-      return open;
-    },
-    set open(value: boolean) {
-      open = value;
     },
   };
 }

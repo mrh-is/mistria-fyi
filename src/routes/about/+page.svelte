@@ -88,7 +88,7 @@
   }
 
   h2 {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-controls);
     font-size: var(--text-3xs);
     font-weight: 600;
@@ -101,7 +101,7 @@
   }
 
   a {
-    color: var(--ink);
+    color: var(--color-ink);
     text-decoration: underline;
     text-decoration-color: var(--primary);
     text-decoration-style: dotted;
@@ -129,7 +129,7 @@
     justify-content: center;
     gap: 0 8px;
     padding-top: 8px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-2xs);
   }
@@ -143,10 +143,10 @@
   }
 
   .about-page__footer :is(button, a):is(:hover, :focus-visible) {
-    color: var(--ink);
+    color: var(--color-ink);
   }
 
   .divider {
-    border-top: 1px solid color-mix(in srgb, var(--hairline) 50%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--color-ink-hairline) 50%, transparent);
   }
 </style>

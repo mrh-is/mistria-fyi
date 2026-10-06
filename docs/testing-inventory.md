@@ -45,7 +45,7 @@ single-component row's marks disagree with its test files.
 | `toolbar-footer`                 |        |     ✓      | Panel mutual exclusion, Escape/backdrop/close, route change, search, filter reset |
 | `panel-overlay`                  |        | via parent | Shared overlay & focus through toolbar & feedback panel tests                     |
 | `foldout-panel`                  |        |     ✓      | Dialog semantics, Escape, Tab wrap, non-dialog mode                               |
-| `visibility-panel`               |   ✓    |     ✓      | Chips, season/weather strips, source groups, explainer, completed switch          |
+| `filter-panel`                   |   ✓    |     ✓      | Chips, season/weather strips, source groups, explainer, completed switch          |
 | `quick-settings-panel`           |        |     ✓      | Language list, spoiler confirmation                                               |
 | `quick-settings-language-picker` |        |     ✓      | Offline-unavailable message; locale list through `quick-settings-panel`           |
 | `quick-settings-theme-picker`    |        |            | Gap: theme selection and persistence                                              |
@@ -53,10 +53,10 @@ single-component row's marks disagree with its test files.
 | `feedback-picker`                |        |     ✓      | Element picking                                                                   |
 | `search-results`                 |        |     ✓      | Toggle and undo across categories                                                 |
 | `search-results-loading`         |        |     ✓      |                                                                                   |
-| `source-explainer-dialog`        |        | via parent | Open and dismiss through `visibility-panel`                                       |
+| `source-explainer-dialog`        |        | via parent | Open and dismiss through `filter-panel`                                           |
 | `tag-dialog`                     |        | via parent | Through `source-explainer-dialog` and `quick-settings-panel`                      |
 | `villager-search-result`         |        | via parent | Record link through `search-results`                                              |
-| `blocky-switch`                  |        | via parent | Through `visibility-panel` and `quick-settings-panel`                             |
+| `blocky-switch`                  |        | via parent | Through `filter-panel` and `quick-settings-panel`                                 |
 
 ### Tracker rows & controls
 
@@ -139,7 +139,7 @@ Ordered by risk:
 
 Reuse these from `src/lib/test-utils/` rather than copying a local version into a test file:
 
-- **`makeCompletedState(overrides)`** (`completed-state.ts`): an empty `CompletedState` with every
+- **`makeCompletedState(overrides)`** (`completed-state.ts`): an empty `ProgressState` with every
   animal's sets present, plus overrides.
 - **`deepMerge(base, overrides)`** (`deep-partial.ts`): merges a `DeepPartial` override into a
   fixture.
