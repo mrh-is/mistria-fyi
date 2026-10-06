@@ -133,6 +133,39 @@
   --cat-quests: #1878b8;
   --cat-mines: #7a5a3a;
 
+  /* Villager level marks (villager-record.svelte), the town rank ladder (renown), & confetti
+   * (celebrate.ts). One palette for both themes: each sits on paper or a canvas overlay. */
+  --level-1: #7c3aed;
+  --level-2: #4338ca;
+  --level-3: #2563eb;
+  --level-4: #38bdf8;
+  --level-5: #22c55e;
+  --level-6: #a3e635;
+  --level-7: #fbbf24;
+  --level-8: #fde047;
+  --level-9: #f97316;
+  --level-10: #ea580c;
+  --level-11: #ef4444;
+  --level-12: #be123c;
+  --rank-1: #92400e;
+  --rank-2: #a8a29e;
+  --rank-3: #f97316;
+  --rank-4: #ef4444;
+  --rank-5: #94a3b8;
+  --rank-6: #3b82f6;
+  --rank-7: #cbd5e1;
+  --rank-8: #10b981;
+  --rank-9: #fbbf24;
+  --rank-10: #67e8f9;
+  --rank-11: #a78bfa;
+  --confetti-1: #fbbf24;
+  --confetti-2: #f59e0b;
+  --confetti-3: #d97706;
+  --confetti-4: #fde68a;
+  --confetti-5: #fef3c7;
+  --confetti-6: #a78bfa;
+  --confetti-7: #f9a8d4;
+
   /* Tag dialogs (tag-dialog.svelte): a paper shipping tag on a string */
   --tag-accent: #a65343;
   --tag-ink: #312e2b;
@@ -270,6 +303,18 @@ html:lang(ru) {
 @theme {
   --text-3xs: 0.625rem;
   --text-2xs: 0.6875rem;
+}
+
+/* Stacking order for layers that cross component boundaries. Local stacking inside one component
+ * (a ribbon over a card, a decoration at -1) stays a small literal. */
+@theme {
+  --z-section-header: 5;
+  --z-page-header: 10;
+  --z-home-header: 12;
+  --z-toolbar: 20;
+  --z-panel: 30;
+  --z-picker: 40;
+  --z-dialog: 50;
 }
 
 @theme inline {
