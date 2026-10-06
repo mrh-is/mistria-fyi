@@ -117,7 +117,7 @@ stream & decoder are not.
 | `ai-disclosure-dialog`                                                                              |         |           | Gap: open/dismiss                                     |
 | `update-prompt`                                                                                     |         |           | Gap: toast & dismissal; `pwa/app-update` is tested    |
 | `og-share-card`, `pencil-filter`, `icon/*`, `all-completed`                                         |         |           | Static; no test needed                                |
-| Route `+page.svelte` files, `routes/all/*-section.svelte`                                           | partial |           | `about`, `data`, `privacy`, `error` have server tests |
+| Route `+page.svelte` files, `routes/all/category-section.svelte`                                    | partial |           | `about`, `data`, `privacy`, `error`, `all` have tests |
 
 ## Remaining gaps
 
