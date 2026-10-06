@@ -47,7 +47,6 @@ function oxlintRules(): Map<string, Set<string>> {
 async function eslintRules(file: string): Promise<string[]> {
   const eslint = new ESLint({
     ignore: false,
-    // `no-hardcoded-ui-text` normally applies only to already-localized files.
     overrideConfig: {
       files: [`${probeDirectory}/**`],
       rules: { "local/no-hardcoded-ui-text": "error" },
@@ -93,6 +92,32 @@ describe("lint tool ownership", () => {
 
   it("ESLint leaves script rules to oxlint", async () => {
     await expect(eslintRules("probe.svelte.ts")).resolves.toStrictEqual([]);
+  });
+
+  it("checks app templates for hardcoded text, excluding vendored, dev, and fixture files", async () => {
+    const eslint = new ESLint();
+    for (const file of [
+      "src/lib/components/source-segment-text.svelte",
+      "src/lib/components/future-feature.svelte",
+      "src/lib/components/spoiler.svelte",
+      "src/routes/all/+page.svelte",
+      "src/routes/+error.svelte",
+    ]) {
+      const config = (await eslint.calculateConfigForFile(file)) as
+        | undefined
+        | { rules?: Record<string, [number]> };
+      expect(config?.rules?.["local/no-hardcoded-ui-text"]?.[0], file).toBe(2);
+    }
+    for (const file of [
+      "src/lib/components/ui/dialog/dialog-content.svelte",
+      "src/routes/dev/fonts/+page.svelte",
+      "src/lib/components/foldout-panel.test-harness.svelte",
+    ]) {
+      const config = (await eslint.calculateConfigForFile(file)) as
+        | undefined
+        | { rules?: Record<string, [number]> };
+      expect(config?.rules?.["local/no-hardcoded-ui-text"], file).toBeUndefined();
+    }
   });
 });
 

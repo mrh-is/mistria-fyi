@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AnimalSubcategory from "#lib/components/animal-subcategory.svelte";
   import { trackerData } from "#lib/data/index.js";
   import { animalNameId, getName } from "#lib/data/names.js";
   import * as m from "#lib/paraglide/messages.js";
@@ -8,15 +9,12 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { recordEntries } from "#lib/utils/record.js";
 
-  import AnimalSubcategory from "./animal-subcategory.svelte";
-
-  import type { LocaleCode } from "#lib/types/locale.js";
-  import type { AnimalId, CosmeticId } from "#lib/types/tracker-data.js";
-
   import type {
     AnimalSubcategoryRowProps,
     AnimalSubcategorySectionConfig,
-  } from "./animal-subcategory.types.js";
+  } from "#lib/components/animal-subcategory.types.js";
+  import type { LocaleCode } from "#lib/types/locale.js";
+  import type { AnimalId, CosmeticId } from "#lib/types/tracker-data.js";
 
   function hasCompletedCosmetic(animalId: AnimalId, cosmeticId: CosmeticId): boolean {
     return userState.state.completed.animalCosmetics[animalId]?.has(cosmeticId) ?? false;

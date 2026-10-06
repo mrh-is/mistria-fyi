@@ -1,14 +1,13 @@
 <script lang="ts">
+  import AllCompleted from "#lib/components/all-completed.svelte";
+  import AnimalCosmeticsSection from "#lib/components/animal-cosmetics-section.svelte";
+  import AnimalVariantsSection from "#lib/components/animal-variants-section.svelte";
+  import PetCollectiblesSection from "#lib/components/pet-collectibles-section.svelte";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { isCategoryComplete } from "#lib/engine/progress.js";
   import { isEntityNameVisible } from "#lib/engine/visibility.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-
-  import AllCompleted from "./all-completed.svelte";
-  import AnimalCosmeticsSection from "./animal-cosmetics-section.svelte";
-  import AnimalVariantsSection from "./animal-variants-section.svelte";
-  import PetCollectiblesSection from "./pet-collectibles-section.svelte";
 
   import type { LocaleCode } from "#lib/types/locale.js";
   import type {

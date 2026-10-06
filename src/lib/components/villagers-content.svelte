@@ -28,7 +28,7 @@
   let indexEntries = $derived(
     visibleVillagers.map((villager) => ({
       id: `villager-${villager.id}`,
-      initial: villager.name.charAt(0),
+      name: villager.name,
     })),
   );
 </script>
@@ -47,7 +47,7 @@
   </ul>
 
   {#if indexed}
-    <VillagerAlphabetIndex entries={indexEntries} />
+    <VillagerAlphabetIndex entries={indexEntries} {locale} />
   {/if}
 </div>
 

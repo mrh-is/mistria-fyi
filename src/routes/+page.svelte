@@ -10,6 +10,7 @@
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { formatNumber } from "#lib/utils/format.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
 
   import type { PageProps } from "./$types";
@@ -25,9 +26,9 @@
   );
 
   let overall = $derived(getOverallProgress(allProgress));
-  let totalCompleted = $derived(overall.completed);
-  let grandTotal = $derived(overall.total);
-  let overallPct = $derived(grandTotal > 0 ? (totalCompleted / grandTotal) * 100 : 0);
+  let overallPct = $derived(overall.total > 0 ? (overall.completed / overall.total) * 100 : 0);
+  let totalCompleted = $derived(formatNumber(overall.completed, data.locale));
+  let grandTotal = $derived(formatNumber(overall.total, data.locale));
 </script>
 
 <div class="home-page">

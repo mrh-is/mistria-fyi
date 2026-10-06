@@ -70,7 +70,7 @@ single-component row's marks disagree with its test files.
 | `tracker-paper`              |        |            | Layout only; no interaction                               |
 | `confirm-spoiler-dialog`     |        |     ✓      | Invertible vs. non-invertible choices, handler routing    |
 | `spoiler-guard-dialog`       |        |     ✓      | Renders only while the guard holds a condition            |
-| `skill-row`                  |        |     ✓      | Level editing                                             |
+| `skill-record`               |        |     ✓      | Level editing                                             |
 | `stepper`                    |        |     ✓      | Grouped controls                                          |
 | `dialog-close-button`        |        |     ✓      | Localized close control, dismisses the dialog             |
 | `expandable-section`         |        |     ✓      | Disclosure, IDs, nesting, reporting                       |
@@ -84,17 +84,17 @@ single-component row's marks disagree with its test files.
 | `mine-floor-record`          |        |     ✓      |                                                           |
 | `renown-current-record`      |        |     ✓      |                                                           |
 | `villager-record`            |        |     ✓      |                                                           |
-| `villager-roster`            |        |     ✓      |                                                           |
+| `villagers-content`          |        |     ✓      |                                                           |
 | `villager-alphabet-index`    |        |     ✓      |                                                           |
-| `rank-record` (renown)       |        |     ✓      |                                                           |
+| `rank-record`                |        |     ✓      |                                                           |
 
 ### Category content
 
-| Component                                                                                                                      | Server | happy-dom | Notes                                                           |
-| ------------------------------------------------------------------------------------------------------------------------------ | :----: | :-------: | --------------------------------------------------------------- |
-| `almanac-content`                                                                                                              |        |     ✓     |                                                                 |
-| `animals-content`, `animal-subcategory`, `animal-*-section`, `pet-collectibles-section`                                        |        |           | Gap: variant/cosmetic toggles; store is tested                  |
-| `cosmetics-content`, `mines-content`, `museum-content`, `quests-content`, `recipes-content`, `dates-section`, `skills-content` |        |           | Gap: page compositors; rows and dialogs are tested individually |
+| Component                                                                                                                                        | Server | happy-dom | Notes                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | :----: | :-------: | --------------------------------------------------------------- |
+| `almanac-content`                                                                                                                                |        |     ✓     |                                                                 |
+| `animals-content`, `animal-subcategory`, `animal-*-section`, `pet-collectibles-section`                                                          |        |           | Gap: variant/cosmetic toggles; store is tested                  |
+| `cosmetics-content`, `mines-content`, `museum-content`, `quests-content`, `recipes-content`, `renown-content`, `dates-section`, `skills-content` |        |           | Gap: page compositors; rows and dialogs are tested individually |
 
 ### Data page
 
@@ -112,15 +112,15 @@ stream & decoder are not.
 
 ### Static & layout
 
-| Component                                                                                           | Server  | happy-dom | Notes                                                 |
-| --------------------------------------------------------------------------------------------------- | :-----: | :-------: | ----------------------------------------------------- |
-| `category-card`, `category-grid`, `content-counters`, `overall-progress`, `page-header`, `seo-head` |    ✓    |           | Static                                                |
-| `welcome-card`                                                                                      |         |     ✓     |                                                       |
-| `persistence-warning`                                                                               |         |           | Gap: store-level lifecycle is tested                  |
-| `ai-disclosure-dialog`                                                                              |         |           | Gap: open/dismiss                                     |
-| `update-prompt`                                                                                     |         |           | Gap: toast & dismissal; `pwa/app-update` is tested    |
-| `og-share-card`, `pencil-filter`, `icon/*`, `all-completed`                                         |         |           | Static; no test needed                                |
-| Route `+page.svelte` files, `routes/all/category-section.svelte`                                    | partial |           | `about`, `data`, `privacy`, `error`, `all` have tests |
+| Component                                                                                                                    | Server  | happy-dom | Notes                                                 |
+| ---------------------------------------------------------------------------------------------------------------------------- | :-----: | :-------: | ----------------------------------------------------- |
+| `category-card` (with `category-stripe`), `category-grid`, `content-counters`, `overall-progress`, `page-header`, `seo-head` |    ✓    |           | Static                                                |
+| `welcome-card`                                                                                                               |         |     ✓     |                                                       |
+| `persistence-warning`                                                                                                        |         |           | Gap: store-level lifecycle is tested                  |
+| `ai-disclosure-dialog`                                                                                                       |         |           | Gap: open/dismiss                                     |
+| `update-prompt`                                                                                                              |         |           | Gap: toast & dismissal; `pwa/app-update` is tested    |
+| `og-share-card`, `pencil-filter`, `icon/*`, `all-completed`                                                                  |         |           | Static; no test needed                                |
+| Route `+page.svelte` files, `routes/all/category-section.svelte`                                                             | partial |           | `about`, `data`, `privacy`, `error`, `all` have tests |
 
 ## Remaining gaps
 

@@ -11,20 +11,20 @@
     dialog = true,
     headerActions,
     id,
-    onclose,
+    onClose,
     title,
   }: {
     children: Snippet;
     dialog?: boolean;
     headerActions?: Snippet;
     id: string;
-    onclose: () => void;
+    onClose: () => void;
     title: string;
   } = $props();
 </script>
 
 <section
-  {@attach dialog ? trapFocus(onclose) : undefined}
+  {@attach dialog ? trapFocus(onClose) : undefined}
   class="foldout"
   {id}
   aria-labelledby="{id}-title"
@@ -40,7 +40,7 @@
       class="foldout__close"
       type="button"
       aria-label={m.foldout_close({ title })}
-      onclick={onclose}
+      onclick={onClose}
     >
       <IconX class="size-4" />
     </button>

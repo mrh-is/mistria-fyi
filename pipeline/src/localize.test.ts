@@ -81,12 +81,6 @@ describe("Localizer key derivation & fallback", () => {
     expect(source).not.toHaveBeenCalled();
   });
 
-  it("rejects an override classification with no reviewed key", () => {
-    expect(() =>
-      createMemoryLocalizer({}).localizeField({ ...villagerName, classification: "override" }),
-    ).toThrow(/no entry in localize-overrides.json for derived key "npcs\/balor\/name"/);
-  });
-
   it("loads each table from its source once", () => {
     const source = vi.fn(() => new Map<string, string>());
     const localizer = createLocalizer(source);

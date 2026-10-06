@@ -3,12 +3,7 @@
 
   import type { QuestState } from "#lib/types/user-progress.js";
 
-  interface Props {
-    class?: string;
-    state: QuestState;
-  }
-
-  let { class: className = "", state }: Props = $props();
+  let { class: className = "", state }: { class?: string; state: QuestState } = $props();
 
   let shouldAnimate = $derived(!prefersReducedMotion.current);
 </script>

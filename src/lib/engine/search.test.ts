@@ -189,6 +189,23 @@ describe("basic matching", () => {
     const recipe = results.find((result) => result.category === "recipes");
     expect(recipe?.name).toBe("ベジタブルスープ");
   });
+
+  it("matches a hiragana query against a katakana name", () => {
+    const results = searchItems(
+      "べじたぶるすーぷ",
+      makeCompletedState(),
+      defaultWorld,
+      makeProgressionState({ showSpoilers: true }),
+      "ja",
+    );
+
+    expect(results.some((result) => result.name === "ベジタブルスープ")).toBe(true);
+  });
+
+  it("matches full-width and accented input against an English name", () => {
+    expect(search("ＴＨＥ ＭＡＮＯＲ").some((r) => r.name === "The Manor")).toBe(true);
+    expect(search("Thé Mänor").some((r) => r.name === "The Manor")).toBe(true);
+  });
 });
 
 // ─── Completion status ─────────────────────────────────────────────

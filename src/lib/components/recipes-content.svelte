@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AllCompleted from "#lib/components/all-completed.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
@@ -16,10 +17,9 @@
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { matchesName } from "#lib/utils/name-match.js";
   import { recordForEach } from "#lib/utils/record.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
-
-  import AllCompleted from "./all-completed.svelte";
 
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
@@ -98,8 +98,8 @@
     return isCategoryComplete("recipes", userState.state);
   }
 
-  function matchesName(entry: RecipeEntry): boolean {
-    return !nameFilter || entry.name.toLowerCase().includes(nameFilter.toLowerCase());
+  function matchesFilter(entry: RecipeEntry): boolean {
+    return matchesName(entry.name, nameFilter, locale);
   }
 
   function isRecipeCompleted(id: RecipeId): boolean {
@@ -113,7 +113,7 @@
    */
   let groupViews = $derived(
     recipesByCategory.map((group) => {
-      const namedEntries = group.entries.filter(matchesName);
+      const namedEntries = group.entries.filter(matchesFilter);
       const scopedEntries = namedEntries.filter(({ sources }) =>
         toolbarState.matchesSourceFilters(sources),
       );

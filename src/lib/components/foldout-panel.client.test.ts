@@ -4,9 +4,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import FoldoutPanelHarness from "#lib/components/foldout-panel.test-harness.svelte";
 
 function renderPanel(props: { dialog?: boolean; withHeaderAction?: boolean } = {}) {
-  const onclose = vi.fn();
-  render(FoldoutPanelHarness, { onclose, ...props });
-  return onclose;
+  const onClose = vi.fn();
+  render(FoldoutPanelHarness, { onClose, ...props });
+  return onClose;
 }
 
 afterEach(() => {
@@ -15,22 +15,22 @@ afterEach(() => {
 
 describe("FoldoutPanel", () => {
   it("exposes itself as a labelled modal dialog with a close control", async () => {
-    const onclose = renderPanel();
+    const onClose = renderPanel();
 
     const dialog = screen.getByRole("dialog", { name: "Harness" });
     expect(dialog).toHaveAttribute("aria-modal", "true");
     expect(dialog).toHaveAttribute("id", "harness-panel");
 
     await fireEvent.click(within(dialog).getByRole("button", { name: "Close Harness" }));
-    expect(onclose).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("closes on Escape", async () => {
-    const onclose = renderPanel();
+    const onClose = renderPanel();
 
     await fireEvent.keyDown(document, { key: "Escape" });
 
-    expect(onclose).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("wraps Tab and Shift+Tab within the panel", async () => {
@@ -61,7 +61,7 @@ describe("FoldoutPanel", () => {
   });
 
   it("renders as a plain section without trapping focus when not a dialog", async () => {
-    const onclose = renderPanel({ dialog: false });
+    const onClose = renderPanel({ dialog: false });
 
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByRole("region", { name: "Harness" })).not.toHaveAttribute("aria-modal");
@@ -72,6 +72,6 @@ describe("FoldoutPanel", () => {
     expect(last).toHaveFocus();
 
     await fireEvent.keyDown(document, { key: "Escape" });
-    expect(onclose).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

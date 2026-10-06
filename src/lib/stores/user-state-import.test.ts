@@ -250,7 +250,7 @@ describe("mergeFromSave numeric domains", () => {
   });
 
   it("never installs out-of-domain levels from a native save", () => {
-    const { completed, result } = buildImportState({
+    const { completed, warnings } = buildImportState({
       gamedata: {
         maximum_mines_level: 9999,
         t2_world_facts: { adeline_heart_level: 99, farming_level: 999, renown: 9999 },
@@ -264,7 +264,7 @@ describe("mergeFromSave numeric domains", () => {
     );
     expect(userState.state.completed.skillLevels["farming" as SkillId]).toBe(MAX_SKILL_LEVEL);
     expect(userState.state.completed.renown).toBe(getMaxRenownLevel());
-    expect(result.warnings).toHaveLength(3);
+    expect(warnings).toHaveLength(3);
   });
 
   it("clamps levels handed directly to the merge", () => {

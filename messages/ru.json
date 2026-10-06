@@ -1,6 +1,9 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Mistria Field Guide",
+  "og_share_tagline": "Отслеживайте коллекции, задания, навыки и многое другое",
+  "og_share_description": "Вся Мистрия в одном месте",
+  "source_hidden": "Скрыто",
   "app_update_available": "Mistria Field Guide обновился! Обновите страницу, чтобы получить новую версию.",
   "app_update_later": "Не сейчас",
   "app_update_refresh": "Обновить",
@@ -129,6 +132,7 @@
   "all_completed_message": "Всё готово! Включите «Показать выполненные», чтобы просмотреть.",
   "quest_type_fetch": "Задания на доставку",
   "quest_craving_name": "Тяга к еде",
+  "quest_subtitle_with_recipe": "{villager} · {recipe}",
   "skills_ledger_aria": "Реестр навыков",
   "skill_level_label": "Уровень «{name}»",
   "skill_decrease_level": "Понизить уровень «{name}»",

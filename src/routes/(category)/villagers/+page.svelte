@@ -1,9 +1,9 @@
 <script lang="ts">
-  import VillagerRoster from "#lib/components/villager-roster.svelte";
+  import VillagersContent from "#lib/components/villagers-content.svelte";
 
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
 </script>
 
-<VillagerRoster indexed locale={data.locale} />
+<VillagersContent indexed locale={data.locale} />

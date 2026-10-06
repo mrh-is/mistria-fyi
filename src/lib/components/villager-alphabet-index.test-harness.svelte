@@ -1,12 +1,14 @@
 <script lang="ts">
   import VillagerAlphabetIndex from "#lib/components/villager-alphabet-index.svelte";
 
+  import type { LocaleCode } from "#lib/types/locale.js";
+
   let {
     entries,
-    reducedMotion,
+    locale = "en",
   }: {
-    entries: { id: string; initial: string }[];
-    reducedMotion?: boolean;
+    entries: { id: string; name: string }[];
+    locale?: LocaleCode;
   } = $props();
 </script>
 
@@ -15,4 +17,4 @@
     <div id={entry.id} tabindex="-1" data-index-target>{entry.id}</div>
   {/each}
 </div>
-<VillagerAlphabetIndex {entries} {reducedMotion} />
+<VillagerAlphabetIndex {entries} {locale} />

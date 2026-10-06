@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import VillagerRoster from "#lib/components/villager-roster.svelte";
+import VillagersContent from "#lib/components/villagers-content.svelte";
 import { trackerData } from "#lib/data/index.js";
 import { MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
@@ -10,7 +10,7 @@ import { recordKeys } from "#lib/utils/record.js";
 
 vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
 
-describe("VillagerRoster localization", () => {
+describe("VillagersContent localization", () => {
   beforeEach(() => {
     userState.resetAll();
   });
@@ -20,14 +20,14 @@ describe("VillagerRoster localization", () => {
   });
 
   it("renders English names under the en locale", () => {
-    const view = renderWithFeedback(VillagerRoster, { locale: "en" });
+    const view = renderWithFeedback(VillagersContent, { locale: "en" });
 
     expect(view.getByText("Balor")).toBeInTheDocument();
     expect(view.getByText("Adeline")).toBeInTheDocument();
   });
 
   it("renders localized names under a non-Latin locale", () => {
-    const view = renderWithFeedback(VillagerRoster, { locale: "ja" });
+    const view = renderWithFeedback(VillagersContent, { locale: "ja" });
 
     expect(view.getByText("バロル")).toBeInTheDocument();
     expect(view.getByText("アデライン")).toBeInTheDocument();
@@ -35,7 +35,7 @@ describe("VillagerRoster localization", () => {
   });
 });
 
-describe("VillagerRoster with completed villagers hidden", () => {
+describe("VillagersContent with completed villagers hidden", () => {
   const [completed, other] = recordKeys(trackerData.villagers).filter(
     (id) => !trackerData.villagers[id].dateable,
   );
@@ -55,7 +55,7 @@ describe("VillagerRoster with completed villagers hidden", () => {
   it("keeps the villager targeted by the URL hash", () => {
     pageStub.navigate(`/en/villagers#villager-${completed}`);
 
-    const view = renderWithFeedback(VillagerRoster, { locale: "en" });
+    const view = renderWithFeedback(VillagersContent, { locale: "en" });
 
     expect(view.container.querySelector(`#villager-${completed}`)).not.toBeNull();
     expect(view.container.querySelector(`#villager-${other}`)).toBeNull();

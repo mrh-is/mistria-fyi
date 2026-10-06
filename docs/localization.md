@@ -192,9 +192,8 @@ takes only a few options as flags and would emit a runtime with the default stra
 4. Use the generated message in your component: `import * as m from "#lib/paraglide/messages.js"`,
    then `{m.feedback_submit_button()}` in the template. Never hardcode the English string directly
    in a `.svelte` file.
-5. If the component's file is in the `no-hardcoded-ui-text` allowlist in `eslint.config.js` already,
-   `pnpm run lint` will catch any string you forgot to wrap. If the file isn't in that list yet (see
-   below), add it in the same PR.
+5. Run `pnpm run lint` to catch any hardcoded template text you forgot to wrap. The
+   `no-hardcoded-ui-text` rule applies to app templates by default.
 
 ### Sentences around links & icons
 
@@ -292,11 +291,9 @@ of Mistria", a person's name) from ordinary prose — those need a
 `<!-- eslint-disable local/no-hardcoded-ui-text -- reason -->` /
 `<!-- eslint-enable local/no-hardcoded-ui-text -->` pair around the element, with a reason.
 
-**This rule only applies to files listed in `localizedFiles` in `eslint.config.js`.** Turning it on
-for the whole codebase today would flag every not-yet-localized component (localization is still
-rolling out feature area by feature area). When you localize a component, add its path to that list
-in the same PR — the rule then guards against future regressions in that file, and coverage grows as
-more of the app gets localized.
+The rule applies to every `src/**/*.svelte` file except vendored `src/lib/components/ui/**`,
+development routes under `src/routes/dev/**`, and `*.test-harness.svelte` fixtures. Keep these
+exceptions narrow so new app templates receive the rule automatically.
 
 ## Limits of the tooling
 
@@ -310,8 +307,8 @@ Be honest with yourself (and reviewers) about what this catches:
   field added to the contract as English-only would render fine and pass lint.
 - The key-shape check cannot verify translation quality or that a value has actually been translated
   (as opposed to copy-pasted from English).
-- Both checks are opt-in / allowlisted, not repo-wide. A PR that never touches an allowlisted file
-  can still ship hardcoded English text elsewhere without either check firing.
+- The ESLint rule covers app templates by default, but it does not inspect user-facing strings
+  assembled in scripts or data. Review those strings when adding new features.
 
 Do your best with these; don't treat a green CI run as proof that a feature is fully localized.
 

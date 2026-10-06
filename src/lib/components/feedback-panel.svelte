@@ -29,13 +29,13 @@
 
   let {
     accent,
-    onclose,
+    onClose,
     open,
     pickerEnabled = false,
     restoreFocus = true,
   }: {
     accent?: string;
-    onclose: () => void;
+    onClose: () => void;
     open: boolean;
     pickerEnabled?: boolean;
     restoreFocus?: boolean;
@@ -337,7 +337,7 @@
       showProgressInfo = false;
       showSaveDataPreview = false;
       selectedElement = undefined;
-      onclose();
+      onClose();
 
       if (data.emailSaved === false) {
         toast.warning(m.feedback_toast_email_not_saved(), {
@@ -417,10 +417,10 @@
     focus={manageFocus}
     closeLabel={m.feedback_close_aria()}
     label={m.toolbar_send_feedback()}
-    {onclose}
+    {onClose}
     style={accent === undefined ? undefined : `--primary: ${accent}; --ring: ${accent};`}
   >
-    <FoldoutPanel id="feedback-panel" title={m.toolbar_send_feedback()} dialog={false} {onclose}>
+    <FoldoutPanel id="feedback-panel" title={m.toolbar_send_feedback()} dialog={false} {onClose}>
       <div class="feedback-form">
         <div>
           <textarea

@@ -13,9 +13,9 @@ function mount() {
   panel.innerHTML =
     '<button>First</button><button disabled>Disabled</button><input tabindex="-1"><a href="/">Link</a><select><option>Choice</option></select><div tabindex="0">Last</div>';
   document.body.append(panel);
-  const onclose = vi.fn();
-  dispose = trapFocus(onclose)(panel) ?? undefined;
-  return { onclose, panel };
+  const onClose = vi.fn();
+  dispose = trapFocus(onClose)(panel) ?? undefined;
+  return { onClose, panel };
 }
 
 function required(panel: HTMLElement, selector: string): HTMLElement {
@@ -68,7 +68,7 @@ describe("trapFocus", () => {
   });
 
   it("lets only the innermost trap close and resumes the outer trap after cleanup", () => {
-    const { onclose, panel } = mount();
+    const { onClose, panel } = mount();
     const nested = document.createElement("section");
     panel.append(nested);
     const closeNested = vi.fn();
@@ -77,12 +77,12 @@ describe("trapFocus", () => {
       new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
     );
     expect(closeNested).toHaveBeenCalledTimes(1);
-    expect(onclose).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
     disposeNested?.();
     document.dispatchEvent(
       new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }),
     );
-    expect(onclose).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("recovers focus from outside and contains an empty panel", () => {
@@ -94,11 +94,11 @@ describe("trapFocus", () => {
   });
 
   it("closes once on Escape and removes its listener on cleanup", () => {
-    const { onclose } = mount();
+    const { onClose } = mount();
     escape();
-    expect(onclose).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
     dispose?.();
     escape();
-    expect(onclose).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
