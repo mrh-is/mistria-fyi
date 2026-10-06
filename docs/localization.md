@@ -250,7 +250,7 @@ part of `pnpm run verify`.
 
 ### ESLint rule (`local/no-hardcoded-ui-text`)
 
-A custom rule in `eslint-rules/no-hardcoded-ui-text.js` walks the Svelte template AST and flags:
+A custom rule in `eslint-rules/no-hardcoded-ui-text.ts` walks the Svelte template AST and flags:
 
 - Literal text nodes containing letters (not just punctuation/whitespace/digits).
 - Literal values on text-bearing attributes (`title`, `alt`, `placeholder`, `aria-label`, etc).
