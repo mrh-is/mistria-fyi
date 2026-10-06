@@ -14,14 +14,14 @@
     biomes,
     compact = false,
     floor,
-    locale = "en",
+    locale,
     onChange,
     registerFeedback = true,
   }: {
     biomes: MinesBiome[];
     compact?: boolean;
     floor: number;
-    locale?: LocaleCode;
+    locale: LocaleCode;
     onChange: (floor: number) => void;
     registerFeedback?: boolean;
   } = $props();
