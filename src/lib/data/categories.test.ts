@@ -22,6 +22,17 @@ describe("categoryForKey", () => {
   });
 });
 
+describe("locale-explicit messages", () => {
+  it("renders message-backed names & descriptions in the requested locale, not the ambient one", () => {
+    const en = categoryForKey("cosmetics", "en");
+    const fr = categoryForKey("cosmetics", "fr");
+
+    expect(fr.name).not.toBe(en.name);
+    expect(fr.description).not.toBe(en.description);
+    expect(categoryForKey("quests", "fr").name).not.toBe(categoryForKey("quests", "en").name);
+  });
+});
+
 describe("SEARCH_RESULT_CATEGORY_KEYS", () => {
   it("only contains valid category keys", () => {
     for (const key of SEARCH_RESULT_CATEGORY_KEYS) {
