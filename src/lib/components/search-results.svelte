@@ -10,10 +10,9 @@
   import { hasNames, loadNames, LOCALIZED_CATEGORIES } from "#lib/data/names.js";
   import { recipeDisplayNames } from "#lib/engine/quest-rewards.js";
   import { searchItems } from "#lib/engine/search.js";
-  import { isVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { recordEntries } from "#lib/utils/record.js";
+  import { computeRedactedStoreIds } from "#lib/utils/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
   import { showUndoToast } from "#lib/utils/undo-toast.js";
 
@@ -96,15 +95,7 @@
     ),
   );
 
-  let redactedStoreIds = $derived(
-    new Set(
-      recordEntries(trackerData.stores)
-        .filter(
-          ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
-        )
-        .map(([id]) => id),
-    ),
-  );
+  let redactedStoreIds = $derived(computeRedactedStoreIds(userState.progressionState));
 
   let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
 

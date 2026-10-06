@@ -64,6 +64,7 @@ single-component row's marks disagree with its test files.
 | `tracker-checkbox`           |        |     ✓      | Label, click forwarding, visual states                    |
 | `tracker-paper`              |        |            | Layout only; no interaction                               |
 | `confirm-spoiler-dialog`     |        |     ✓      | Invertible vs. non-invertible choices, handler routing    |
+| `spoiler-guard-dialog`       |        |     ✓      | Renders only while the guard holds a condition            |
 | `skill-row`                  |        |     ✓      | Level editing                                             |
 | `stepper`                    |        |     ✓      | Grouped controls                                          |
 | `expandable-section`         |        |     ✓      | Disclosure, IDs, nesting, reporting                       |

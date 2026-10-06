@@ -4,12 +4,11 @@
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { trackerData } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
-  import { isVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "#lib/utils/celebrate.js";
-  import { recordEntries } from "#lib/utils/record.js";
+  import { computeRedactedStoreIds } from "#lib/utils/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
   import { showUndoToast } from "#lib/utils/undo-toast.js";
 
@@ -22,15 +21,7 @@
     locale,
   }: { areAllAnimalsComplete: () => boolean; locale: LocaleCode } = $props();
 
-  let redactedStoreIds = $derived(
-    new Set(
-      recordEntries(trackerData.stores)
-        .filter(
-          ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
-        )
-        .map(([id]) => id),
-    ),
-  );
+  let redactedStoreIds = $derived(computeRedactedStoreIds(userState.progressionState));
 
   let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
 

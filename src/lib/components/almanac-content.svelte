@@ -1,22 +1,24 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { SvelteMap, SvelteSet } from "svelte/reactivity";
+  import { SvelteMap } from "svelte/reactivity";
 
-  import ConfirmSpoilerDialog from "#lib/components/confirm-spoiler-dialog.svelte";
   import DatesSection from "#lib/components/dates-section.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
+  import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { Button } from "#lib/components/ui/button/index.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
   import { isItemDimmed, isRowVisible, shouldCountItem } from "#lib/engine/availability.js";
-  import { isEntityNameVisible, isVisible } from "#lib/engine/visibility.js";
+  import { isEntityNameVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "#lib/utils/celebrate.js";
+  import { createLeavingSet } from "#lib/utils/leaving-set.svelte.js";
   import { recordEntries, recordValues } from "#lib/utils/record.js";
+  import { computeRedactedStoreIds } from "#lib/utils/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
   import { registerSourceFilters } from "#lib/utils/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/utils/spoiler-guard.svelte.js";
@@ -65,19 +67,11 @@
     };
   }
 
-  let redactedStoreIds = $derived(
-    new Set(
-      recordEntries(trackerData.stores)
-        .filter(
-          ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
-        )
-        .map(([id]) => id),
-    ),
-  );
+  let redactedStoreIds = $derived(computeRedactedStoreIds(userState.progressionState));
 
   let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
 
-  const recentlyCompleted = new SvelteSet<ItemId>();
+  const recentlyCompleted = createLeavingSet<ItemId>();
 
   function checkCelebration(canonicalIds: ItemId[]): void {
     if (isAlmanacComplete()) {
@@ -93,11 +87,6 @@
         cat.items.every((entry) => isItemCompleted(entry.itemIds[0])),
       ) && userState.state.completed.dates.size === recordValues(trackerData.dates).length
     );
-  }
-
-  function markLeaving(itemId: ItemId): void {
-    recentlyCompleted.add(itemId);
-    setTimeout(() => recentlyCompleted.delete(itemId), 1050);
   }
 
   const SECTION_LIMIT = 50;
@@ -171,27 +160,13 @@
       userState.toggleAlmanacItem(canonicalId);
     });
     if (completed) {
-      if (!userState.state.showCompleted) markLeaving(canonicalId);
+      if (!userState.state.showCompleted) recentlyCompleted.mark(canonicalId);
       checkCelebration(catCanonicalIds);
     }
   }
 </script>
 
-{#if spoilerGuard.condition}
-  <ConfirmSpoilerDialog
-    condition={spoilerGuard.condition}
-    bind:open={spoilerGuard.open}
-    onCancel={() => {
-      spoilerGuard.cancel();
-    }}
-    onComplete={() => {
-      spoilerGuard.complete();
-    }}
-    onCompleteAndUpdate={() => {
-      spoilerGuard.completeAndUpdate();
-    }}
-  />
-{/if}
+<SpoilerGuardDialog guard={spoilerGuard} />
 
 {#each recordEntries(trackerData.almanac) as [id, cat] (id)}
   {@const catCanonicalIds = cat.items.map((entry) => entry.itemIds[0])}
@@ -221,7 +196,7 @@
       canonicalId,
       isItemCompleted(canonicalId),
       userState.state.showCompleted,
-      recentlyCompleted,
+      recentlyCompleted.ids,
     ),
   )}
   {#if baseItems.length > 0}
