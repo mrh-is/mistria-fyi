@@ -19,11 +19,11 @@ Decoding is all-or-nothing. The decoder validates these boundaries before return
 - The payload starts with `MFGT`. Anything else is not a transfer code, whatever its contents.
 - The envelope uses canonical, unpadded base64url characters and contains a version byte.
 - The version is `MIN_SUPPORTED_TRANSFER_VERSION` through the current `TRANSFER_VERSION`.
-- From v9, the envelope contains a complete four-byte checksum, and the decompressed payload’s
-  CRC-32 matches it. This catches corruption (such as a single bit-flip) that happens to decompress
-  cleanly to the expected length but produces different content.
+- The envelope contains a complete four-byte checksum, and the decompressed payload’s CRC-32 matches
+  it. This catches corruption (such as a single bit-flip) that happens to decompress cleanly to the
+  expected length but produces different content.
 - The body is a complete raw-DEFLATE stream.
-- The decompressed byte count is exactly the layout length expected for that version.
+- The decompressed byte count is exactly the layout length.
 - Every enumerated field contains a defined code, including quest state, spouse index, relationship
   state, and child choice.
 - Every reserved or unused bit is zero, including bitfield padding, spell padding, progression
@@ -41,11 +41,11 @@ Every rejection is a `TransferDecodeError` whose code the UI localizes:
 - `corrupt`: any other failure above, including a version byte of zero.
 
 After the layout is decoded, mine floor, renown, skill levels, and villager levels are clamped to
-their real domain maxima (from tracker data and `MAX_SKILL_LEVEL`/`MAX_VILLAGER_LEVEL`) regardless
-of transfer version. Every scalar field's on-wire representation reserves more bit width than its
-domain uses (for example mine floor is one byte but the real maximum is under 256), so an encoded
-value at the bit-width maximum is not necessarily in-domain; clamping applies to every version,
-including historical fixtures, so a payload can never merge an out-of-domain value.
+their real domain maxima (from tracker data and `MAX_SKILL_LEVEL`/`MAX_VILLAGER_LEVEL`) always.
+Every scalar field's on-wire representation reserves more bit width than its domain uses (for
+example mine floor is one byte but the real maximum is under 256), so an encoded value at the
+bit-width maximum is not necessarily in-domain; clamping always applies, so a payload can never
+merge an out-of-domain value.
 
 ## Compatibility fixtures
 
