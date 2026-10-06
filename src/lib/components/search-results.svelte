@@ -7,14 +7,14 @@
   import { categoryNameForKey } from "#lib/data/categories.js";
   import { trackerData } from "#lib/data/index.js";
   import { hasNames, loadNames, LOCALIZED_CATEGORIES } from "#lib/data/names.js";
+  import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { recipeDisplayNames } from "#lib/engine/quest-rewards.js";
   import { searchItems } from "#lib/engine/search.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
+  import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { computeRedactedStoreIds } from "#lib/utils/redacted-stores.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
-  import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
-  import { showUndoToast } from "#lib/utils/undo-toast.js";
 
   import type { SearchResult } from "#lib/engine/search.js";
   import type { Source } from "#lib/types/acquisition.js";

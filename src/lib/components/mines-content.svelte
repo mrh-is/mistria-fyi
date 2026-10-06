@@ -5,18 +5,18 @@
   import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
   import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
+  import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
+  import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
+  import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
+  import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { getMaxMineFloor } from "#lib/engine/progress.js";
   import { isEntityNameVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { celebrate, celebrateCategory } from "#lib/utils/celebrate.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
-  import { registerSourceFilters } from "#lib/utils/source-filter-registration.svelte.js";
-  import { createSpoilerGuard } from "#lib/utils/spoiler-guard.svelte.js";
-  import { showUndoToast } from "#lib/utils/undo-toast.js";
 
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { SpellId } from "#lib/types/tracker-data.js";

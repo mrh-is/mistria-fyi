@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
-import { deepMerge } from "#lib/utils/deep-partial.js";
+import { deepMerge } from "#lib/test-utils/deep-partial.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 import {
@@ -12,6 +12,7 @@ import {
   satisfyCondition as planCondition,
 } from "./visibility.js";
 
+import type { DeepPartial } from "#lib/test-utils/deep-partial.js";
 import type {
   PerkId,
   QuestId,
@@ -23,7 +24,6 @@ import type {
 } from "#lib/types/tracker-data.js";
 import type { CompletedState } from "#lib/types/user-progress.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
-import type { DeepPartial } from "#lib/utils/deep-partial.js";
 
 import type { UserProgressionState } from "./visibility.js";
 

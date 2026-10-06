@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
-import SourceFilterRegistrationHarness from "#lib/utils/source-filter-registration.test-harness.svelte";
+import SourceFilterRegistrationHarness from "#lib/test-utils/source-filter-registration.test-harness.svelte";
 
 afterEach(() => {
   toolbarState.removeSourceFilters("external-test");

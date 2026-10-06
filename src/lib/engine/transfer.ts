@@ -103,8 +103,10 @@ export async function encodeTransferPayload(
   const animalVariantOrder = getAnimalVariantOrder();
   const animalVariantKeys = animalVariantOrder.map((v) => `${v.animalId}:${v.variantId}`);
   const completedAnimalVariants = new Set<string>();
+  // A sparse map is valid input; the encoder doesn't rely on hydration backfill.
+  const animalSets: Readonly<Partial<Record<string, ReadonlySet<string>>>> = completed.animals;
   for (const { animalId, variantId } of animalVariantOrder) {
-    const animalSet = completed.animals[animalId] as ReadonlySet<string> | undefined;
+    const animalSet = animalSets[animalId];
     if (animalSet?.has(variantId)) {
       completedAnimalVariants.add(`${animalId}:${variantId}`);
     }
@@ -115,8 +117,10 @@ export async function encodeTransferPayload(
   const animalCosmeticOrder = getAnimalCosmeticOrder();
   const animalCosmeticKeys = animalCosmeticOrder.map((v) => `${v.animalId}:${v.cosmeticId}`);
   const completedAnimalCosmetics = new Set<string>();
+  const cosmeticSets: Readonly<Partial<Record<string, ReadonlySet<string>>>> =
+    completed.animalCosmetics;
   for (const { animalId, cosmeticId } of animalCosmeticOrder) {
-    const cosmeticSet = completed.animalCosmetics[animalId] as ReadonlySet<string> | undefined;
+    const cosmeticSet = cosmeticSets[animalId];
     if (cosmeticSet?.has(cosmeticId)) {
       completedAnimalCosmetics.add(`${animalId}:${cosmeticId}`);
     }
@@ -405,6 +409,7 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
 
   // 6. Spell bitmask (1 byte)
   const spellOrder = getSpellOrder();
+  assertSpellBitmaskFits(spellOrder.length);
   const spellByte = readBytes(1)[0];
   assertZeroPadding(spellOrder.length, new Uint8Array([spellByte]), "spell reserved bits");
   const spells = new Set<SpellId>();

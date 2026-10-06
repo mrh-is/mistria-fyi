@@ -93,6 +93,12 @@ describe("empty and whitespace queries", () => {
   it("returns empty for whitespace-only", () => {
     expect(search("   ")).toEqual([]);
   });
+
+  it("trims surrounding whitespace before matching", () => {
+    const [firstItemId] = recordEntries(trackerData.items)[0];
+    const name = getName("items", firstItemId, "en");
+    expect(search(`  ${name}  `)).toEqual(search(name));
+  });
 });
 
 // ─── Basic matching ────────────────────────────────────────────────
@@ -532,6 +538,24 @@ describe("pet cosmetic and skin result IDs", () => {
     );
     expect(match).toBeDefined();
     expect(match?.id).toBe(`pet-cosmetic:${firstId}`);
+  });
+
+  it("finds a pet cosmetic and a quest by English name in another locale", () => {
+    const [cosmeticId] = recordEntries(trackerData.pets.cosmetics)[0];
+    const [questId] = recordEntries(Object.values(trackerData.quests)[0])[0];
+    for (const [category, id, name] of [
+      ["animals", `pet-cosmetic:${cosmeticId}`, getName("pets/cosmetic_sets", cosmeticId, "en")],
+      ["quests", questId, getName("quests", questId, "en")],
+    ] as const) {
+      const results = searchItems(
+        name,
+        makeCompletedState(),
+        defaultWorld,
+        makeProgressionState({ showSpoilers: true }),
+        "ja",
+      );
+      expect(results.some((r) => r.category === category && r.id === id)).toBe(true);
+    }
   });
 
   it("marks pet cosmetics as completed when in completed.petCosmetics", () => {
