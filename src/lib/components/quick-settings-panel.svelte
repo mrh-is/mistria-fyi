@@ -97,14 +97,14 @@
     justify-content: space-between;
     gap: 10px;
     padding: 6px 18px;
-    border-bottom: 1px solid color-mix(in srgb, var(--hairline) 24%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-ink-hairline) 24%, transparent);
   }
 
   .quick-settings__label {
     display: flex;
     align-items: center;
     gap: 6px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-2xs);
     font-weight: 500;
@@ -112,7 +112,7 @@
   }
 
   .quick-settings__link :global(svg) {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .quick-settings__link {
@@ -123,7 +123,7 @@
     justify-content: center;
     gap: 8px;
     padding: 6px 12px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-controls);
     font-size: var(--text-2xs);
   }
@@ -131,11 +131,11 @@
   .quick-settings__links {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    border-bottom: 1px solid color-mix(in srgb, var(--hairline) 24%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-ink-hairline) 24%, transparent);
   }
 
   .quick-settings__link + .quick-settings__link {
-    border-left: 1px solid color-mix(in srgb, var(--hairline) 24%, transparent);
+    border-left: 1px solid color-mix(in srgb, var(--color-ink-hairline) 24%, transparent);
   }
 
   .quick-settings__link:is(:hover, :focus-visible) {
@@ -159,7 +159,7 @@
 
   :global(.spoiler-tag__desc) {
     margin-top: 6px;
-    color: var(--tag-muted);
+    color: var(--color-tag-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-sm);
     line-height: 1.4;
@@ -174,23 +174,23 @@
   .spoiler-tag__btn {
     min-height: 40px;
     flex: 1;
-    border: 1px solid color-mix(in srgb, var(--tag-ink) 42%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-tag-ink) 42%, transparent);
     font-family: var(--font-controls);
     font-size: var(--text-3xs);
   }
 
   .spoiler-tag__btn:is(:hover, :focus-visible) {
-    outline: 2px solid var(--tag-accent);
+    outline: 2px solid var(--color-tag-accent);
     outline-offset: -4px;
   }
 
   .spoiler-tag__btn--confirm {
-    color: var(--tag-highlight);
-    border-color: var(--tag-accent);
-    background: var(--tag-accent);
+    color: var(--color-tag-highlight);
+    border-color: var(--color-tag-accent);
+    background: var(--color-tag-accent);
   }
 
   .spoiler-tag__btn--confirm:is(:hover, :focus-visible) {
-    outline-color: var(--tag-highlight);
+    outline-color: var(--color-tag-highlight);
   }
 </style>

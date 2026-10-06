@@ -52,7 +52,9 @@ describe("CategoryCard", () => {
 
     const stripe = container.querySelector("[data-category-stripe]");
     expect(stripe?.classList.contains("category-stripe--complete")).toBe(true);
-    expect(stripe?.getAttribute("style")).toContain("--category-color: var(--cat-animals)");
+    expect(stripe?.getAttribute("style")).toContain(
+      "--category-color: var(--color-category-animals)",
+    );
   });
 
   it("localizes the accessible progress phrase for Japanese", () => {

@@ -97,7 +97,7 @@
   {/if}
 
   <Stepper
-    accent="var(--cat-mines)"
+    accent="var(--color-category-mines)"
     decrementDisabled={floor <= 0}
     decrementLabel={m.mines_floor_up()}
     incrementDisabled={floor >= maxFloor}
@@ -144,11 +144,11 @@
     min-width: 0;
     gap: 8px;
     padding: 10px;
-    border: 1px solid var(--hairline);
+    border: 1px solid var(--color-ink-hairline);
     border-radius: var(--radius);
-    background: var(--paper-raised);
+    background: var(--color-paper-raised);
     box-shadow: var(--shadow-small);
-    color: var(--ink);
+    color: var(--color-ink);
   }
 
   .floor-label {
@@ -177,13 +177,13 @@
     display: block;
     height: 100%;
     overflow: hidden;
-    background: color-mix(in srgb, var(--cat-mines) 13%, transparent);
+    background: color-mix(in srgb, var(--color-category-mines) 13%, transparent);
   }
 
   .mine-biomes b {
     display: block;
     height: 100%;
-    background: var(--cat-mines);
+    background: var(--color-category-mines);
     transition: width 300ms ease-out;
   }
 
@@ -203,9 +203,9 @@
     min-height: 44px;
     appearance: textfield;
     border: 0;
-    border-bottom: 1px solid var(--cat-mines);
+    border-bottom: 1px solid var(--color-category-mines);
     background: transparent;
-    color: var(--ink);
+    color: var(--color-ink);
     font-family: var(--font-data);
     font-size: var(--text-base);
     text-align: center;
@@ -217,7 +217,7 @@
   }
 
   .floor-readout input:focus-visible {
-    outline: 2px solid var(--cat-mines);
+    outline: 2px solid var(--color-category-mines);
     outline-offset: 2px;
   }
 
@@ -226,13 +226,13 @@
     align-items: baseline;
     justify-content: center;
     gap: 6px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-data);
     font-size: var(--text-2xs);
   }
 
   .biome-readout strong {
-    color: var(--ink);
+    color: var(--color-ink);
     font-family: var(--font-body);
     font-size: var(--text-sm);
   }
