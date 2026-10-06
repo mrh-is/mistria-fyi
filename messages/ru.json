@@ -612,7 +612,6 @@
   "source_upgrade_cozy_kitchen": "Улучшить до уютной кухни",
   "source_upgrade_farm_bridge": "Расширить ферму",
   "source_upgrade_stairs": "Улучшить дом в четвёртый раз",
-  "source_upgrade_other": "Купить: {upgrade}",
   "source_wedding": "Получить после свадьбы",
   "source_wishing_well": "Получить из колодца желаний ({cost} т)",
   "source_quest_cooking": "Выполнить кулинарное испытание: {recipe}",

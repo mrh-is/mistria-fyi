@@ -283,7 +283,7 @@ describe("generated source rendering contract", () => {
           check(lookups.museumWingNames, "wing", source.wingId);
         }
         if (source.type === "scroll_bundle") {
-          check(lookups.bundleNames, "bundle", source.bundleName);
+          check(lookups.itemNames, "item", source.bundleItemId);
         }
         if (source.type === "station") {
           check(lookups.stationNames, "station", source.stationId);

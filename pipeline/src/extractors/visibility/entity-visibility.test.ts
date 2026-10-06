@@ -792,7 +792,13 @@ describe("assignEntityVisibility — recipes", () => {
       recipes: {
         bundle_recipe: {
           name: "Test Recipe",
-          sources: [{ type: "scroll_bundle", bundleName: "Void Set", storeId: "zorel" as StoreId }],
+          sources: [
+            {
+              type: "scroll_bundle",
+              bundleItemId: "void_set_scroll_bundle" as ItemId,
+              storeId: "zorel" as StoreId,
+            },
+          ],
         },
       },
     });

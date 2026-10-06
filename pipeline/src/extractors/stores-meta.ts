@@ -1,7 +1,7 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
-import type { StoreId, TrackerData } from "#lib/types/tracker-data.js";
+import type { StoreId, StoreUpgradeAction, TrackerData } from "#lib/types/tracker-data.js";
 
 import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
@@ -26,8 +26,8 @@ const KNOWN_STORES: Record<string, { article?: "the" }> = {
   zorel: {},
 };
 
-const UPGRADE_ACTIONS: Partial<Record<string, string>> = {
-  general: "repairing",
+const UPGRADE_ACTIONS: Partial<Record<string, StoreUpgradeAction>> = {
+  general: "repair",
 };
 
 export function extractStoresMeta(

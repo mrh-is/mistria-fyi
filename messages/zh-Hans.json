@@ -591,7 +591,6 @@
   "source_upgrade_cozy_kitchen": "升级为舒适厨房",
   "source_upgrade_farm_bridge": "扩建农场",
   "source_upgrade_stairs": "第四次升级房屋",
-  "source_upgrade_other": "购买{upgrade}",
   "source_wedding": "结婚后获得",
   "source_wishing_well": "从许愿井获得（{cost}t）",
   "source_quest_cooking": "完成烹饪挑战“{recipe}”",

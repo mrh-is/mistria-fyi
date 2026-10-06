@@ -5,12 +5,10 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import {
   buildAnimalNames,
-  buildBundleNames,
   buildLocationNames,
   buildMonsterNames,
   buildUnnamedSourceNames,
   buildWaterNames,
-  SCROLL_BUNDLE_ITEM_IDS,
   UNNAMED_SOURCE_IDS,
 } from "./source-names.js";
 
@@ -23,14 +21,12 @@ beforeAll(async () => {
 });
 
 describe("game-data tables", () => {
-  it("name every monster (through its pet skin) & bundle item in every locale", () => {
+  it("name every monster through its pet skin in every locale", () => {
     for (const locale of LOCALE_CODES) {
-      const items = getNameTable("items", locale);
       const monsters = buildMonsterNames(locale);
 
       expect(Object.keys(monsters).length).toBeGreaterThan(0);
       for (const name of Object.values(monsters)) expect(name).not.toBe("");
-      for (const id of Object.values(SCROLL_BUNDLE_ITEM_IDS)) expect(items).toHaveProperty(id);
     }
   });
 
@@ -82,18 +78,6 @@ describe("buildMonsterNames", () => {
 
     expect(names.cat).toBe(names.void_cat);
     expect(names.cat).toBe(names.cat_void);
-  });
-});
-
-describe("buildBundleNames", () => {
-  it("keys every scroll bundle by its English name", () => {
-    expect(Object.keys(buildBundleNames("en")).toSorted()).toEqual(
-      Object.keys(SCROLL_BUNDLE_ITEM_IDS).toSorted(),
-    );
-  });
-
-  it("names bundles through the item table", () => {
-    expect(buildBundleNames("en")["Chess Piece Scroll Bundle"]).toBe("Chess Piece Scroll Bundle");
   });
 });
 
