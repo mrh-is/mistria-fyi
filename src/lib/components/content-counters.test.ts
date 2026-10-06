@@ -32,7 +32,7 @@ describe("subsection counters", () => {
     const spellIds = Object.keys(trackerData.mines.spells) as SpellId[];
     userState.toggleSpell(spellIds[0]);
 
-    const { text } = renderToFragment(MinesContent, { props: {} });
+    const { text } = renderToFragment(MinesContent, { props: { locale: "en" } });
 
     expect(text).toContain(`Spells 1 / ${spellIds.length}`);
   });
@@ -42,7 +42,7 @@ describe("subsection counters", () => {
       userState.toggleSpell(spellId);
     }
 
-    const { text } = renderToFragment(MinesContent, { props: {} });
+    const { text } = renderToFragment(MinesContent, { props: { locale: "en" } });
 
     const spellCount = Object.keys(trackerData.mines.spells).length;
     expect(text).toContain(`Spells ${spellCount.toString()} / ${spellCount.toString()}`);
@@ -117,13 +117,13 @@ describe("subsection counters", () => {
   it("reduces mine spell count when source groups are hidden", () => {
     const spellCount = Object.keys(trackerData.mines.spells).length;
 
-    const unfiltered = renderToFragment(MinesContent, { props: {} });
+    const unfiltered = renderToFragment(MinesContent, { props: { locale: "en" } });
     expect(unfiltered.text).toContain(`Spells 0 / ${spellCount.toString()}`);
 
     toolbarState.setSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
-    const { text } = renderToFragment(MinesContent, { props: {} });
+    const { text } = renderToFragment(MinesContent, { props: { locale: "en" } });
     expect(isFilteredTotalBelow(text, /Spells (\d+) \/ (\d+)/, spellCount)).toBe(true);
   });
 

@@ -2,7 +2,6 @@
   import { Icon } from "#lib/components/icon/index.js";
   import { categoryForKey } from "#lib/data/categories.js";
   import * as m from "#lib/paraglide/messages.js";
-  import { getLocale } from "#lib/paraglide/runtime.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
   import { page } from "$app/state";
@@ -61,9 +60,9 @@
   </span>
 
   <span class="category-count" aria-hidden="true">
-    <span>{displayCompleted ?? formatNumber(progress.completed, getLocale())}</span>
+    <span>{displayCompleted ?? formatNumber(progress.completed, page.data.locale)}</span>
     <span class="category-slash">/</span>
-    <span>{formatNumber(displayTotal, getLocale())}</span>
+    <span>{formatNumber(displayTotal, page.data.locale)}</span>
   </span>
 
   <span class="category-ribbon" data-category-ribbon aria-hidden="true">

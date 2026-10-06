@@ -6,6 +6,7 @@ import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 import { formatNumber } from "#lib/utils/format.js";
+import { page } from "$app/state";
 
 describe("OverallProgress", () => {
   const defaultGetLocale = getLocale;
@@ -16,6 +17,7 @@ describe("OverallProgress", () => {
 
   afterEach(() => {
     overwriteGetLocale(defaultGetLocale);
+    page.data.locale = "en";
   });
 
   it("includes every category in the overall total", () => {
@@ -40,6 +42,7 @@ describe("OverallProgress", () => {
 
   it("localizes the overall progress label for Japanese", () => {
     overwriteGetLocale(() => "ja");
+    page.data.locale = "ja";
     const progress = getAllProgress({
       availabilityWindows: userState.state.availabilityWindows,
       completed: userState.state.completed,
@@ -61,6 +64,7 @@ describe("OverallProgress", () => {
 
   it("localizes the overall progress label for Russian", () => {
     overwriteGetLocale(() => "ru");
+    page.data.locale = "ru";
     const progress = getAllProgress({
       availabilityWindows: userState.state.availabilityWindows,
       completed: userState.state.completed,
