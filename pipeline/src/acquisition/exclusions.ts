@@ -1,5 +1,3 @@
-import { recordEntries } from "#lib/utils.js";
-
 import type { CosmeticId } from "#lib/types/tracker-data.js";
 
 export interface CosmeticExclusion {
@@ -83,106 +81,10 @@ export const COSMETIC_EXCLUSIONS: CosmeticExclusion[] = [
 
 const EXCLUDED_COSMETIC_SET = new Set<CosmeticId>(COSMETIC_EXCLUSIONS.map((e) => e.id));
 
-export interface ExclusionReferenceDiagnostic {
-  excludedId: CosmeticId;
-  message: string;
-  referencePath: string;
-}
-
-export function applyExclusions<T>(cosmetics: Record<CosmeticId, T>): Record<CosmeticId, T> {
-  const result = {} as Record<CosmeticId, T>;
-  for (const [id, value] of recordEntries(cosmetics)) {
-    if (!EXCLUDED_COSMETIC_SET.has(id)) {
-      result[id] = value;
-    }
-  }
-  return result;
-}
-
 export function getExcludedCosmeticIds(): ReadonlySet<CosmeticId> {
   return EXCLUDED_COSMETIC_SET;
 }
 
 export function isExcludedCosmetic(id: CosmeticId): boolean {
   return EXCLUDED_COSMETIC_SET.has(id);
-}
-
-export function validateExclusionReferences(
-  almanac: readonly { items?: Readonly<Record<string, unknown>> }[] | undefined,
-  museum: readonly { sets?: readonly { items?: readonly string[] }[] }[] | undefined,
-  recipes: Readonly<Record<string, { memberItemIds?: readonly string[] }>> | undefined,
-  cosmeticSources: Readonly<Record<string, unknown>> | undefined,
-): ExclusionReferenceDiagnostic[] {
-  const diagnostics: ExclusionReferenceDiagnostic[] = [];
-
-  if (almanac) {
-    for (let catIdx = 0; catIdx < almanac.length; catIdx++) {
-      const category = almanac[catIdx];
-      if (category.items) {
-        for (const itemId of Object.keys(category.items)) {
-          if (EXCLUDED_COSMETIC_SET.has(itemId as CosmeticId)) {
-            diagnostics.push({
-              excludedId: itemId as CosmeticId,
-              message: `excluded cosmetic "${itemId}" referenced in almanac category ${catIdx}`,
-              referencePath: `almanac[${catIdx}].items.${itemId}`,
-            });
-          }
-        }
-      }
-    }
-  }
-
-  if (museum) {
-    for (let wingIdx = 0; wingIdx < museum.length; wingIdx++) {
-      const wing = museum[wingIdx];
-      if (wing.sets) {
-        for (let setIdx = 0; setIdx < wing.sets.length; setIdx++) {
-          const set = wing.sets[setIdx];
-          if (set.items) {
-            for (let itemIdx = 0; itemIdx < set.items.length; itemIdx++) {
-              const itemId = set.items[itemIdx];
-              if (EXCLUDED_COSMETIC_SET.has(itemId as CosmeticId)) {
-                diagnostics.push({
-                  excludedId: itemId as CosmeticId,
-                  message: `excluded cosmetic "${itemId}" referenced in museum set`,
-                  referencePath: `museum[${wingIdx}].sets[${setIdx}].items[${itemIdx}]`,
-                });
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  if (recipes) {
-    for (const [recipeId, recipe] of Object.entries(recipes)) {
-      if (recipe.memberItemIds) {
-        for (let idx = 0; idx < recipe.memberItemIds.length; idx++) {
-          const itemId = recipe.memberItemIds[idx];
-          if (EXCLUDED_COSMETIC_SET.has(itemId as CosmeticId)) {
-            diagnostics.push({
-              excludedId: itemId as CosmeticId,
-              message: `excluded cosmetic "${itemId}" referenced as recipe member`,
-              referencePath: `recipes.${recipeId}.memberItemIds[${idx}]`,
-            });
-          }
-        }
-      }
-    }
-  }
-
-  if (cosmeticSources) {
-    for (const cosmeticId of Object.keys(cosmeticSources)) {
-      if (EXCLUDED_COSMETIC_SET.has(cosmeticId as CosmeticId)) {
-        diagnostics.push({
-          excludedId: cosmeticId as CosmeticId,
-          message: `excluded cosmetic "${cosmeticId}" has accumulated sources`,
-          referencePath: `cosmeticSources.${cosmeticId}`,
-        });
-      }
-    }
-  }
-
-  return diagnostics;
 }
