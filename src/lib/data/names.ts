@@ -22,9 +22,8 @@ import type {
 export type AnimalNameId = string & { readonly __brand: "AnimalNameId" };
 
 /**
- * Categories whose player-facing names have been migrated out of `tracker-data.json` and into
- * per-locale chunks. Phase 4 extends this union as each remaining category is migrated; until
- * then, unmigrated categories still carry an inline `name` field on their `tracker-data` type.
+ * Categories whose player-facing names live in per-locale chunks, not in `tracker-data.json`.
+ * Every named category is migrated; none carries an inline `name` field on its `tracker-data` type.
  */
 export const LOCALIZED_CATEGORIES = [
   "animals",

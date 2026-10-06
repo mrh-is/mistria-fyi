@@ -16,7 +16,7 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { recordEntries } from "#lib/utils.js";
   import { celebrate, celebrateCategory } from "#lib/utils/celebrate.js";
-  import { displayQuestName } from "#lib/utils/format.js";
+  import { displayQuestName } from "#lib/utils/en-grammar.js";
   import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
   import { registerSourceFilters } from "#lib/utils/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/utils/spoiler-guard.svelte.js";
@@ -274,7 +274,7 @@
       return {
         displayName: fetchQuest
           ? getName("items", fetchQuest.itemId, locale)
-          : displayQuestName(getName("quests", id as QuestId, locale), questType),
+          : displayQuestName(getName("quests", id as QuestId, locale), questType, locale),
         heartLevel: heartQuest?.heartLevel,
         id: id as QuestId,
         isCompleted: false,
