@@ -1,7 +1,7 @@
 <script lang="ts">
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
-  import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
+  import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -15,8 +15,8 @@
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
-  import type { TrackerRowDisplay } from "#lib/components/tracker-row.svelte";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { DateId } from "#lib/types/tracker-data.js";
 
@@ -42,11 +42,6 @@
   function dateNameVisible(dateId: DateId): boolean {
     const visibility = trackerData.dates[dateId].visibility;
     return isEntityNameVisible(visibility, userState.progressionState);
-  }
-
-  function rowDisplay(dateId: DateId, completed: boolean): TrackerRowDisplay {
-    if (!dateNameVisible(dateId)) return { mode: "spoilered" };
-    return completed ? { mode: "completed" } : { mode: "visible" };
   }
 
   function toggleDate(dateId: DateId): void {
@@ -105,25 +100,22 @@
     defaultOpen={false}
   >
     <div class="flex flex-col gap-0.5">
-      <TrackerRowStack>
-        {#each visibleDates as date (date.id)}
+      <TrackerRowList getKey={(date) => date.id} items={visibleDates}>
+        {#snippet row(date)}
           {@const completed = userState.state.completed.dates.has(date.id)}
           <TrackerRow
             name={date.name}
             reportCategory="date"
             reportEntityId={date.id}
-            display={rowDisplay(date.id, completed)}
+            display={trackerRowDisplay({ completed, nameVisible: dateNameVisible(date.id) })}
             sources={date.sources}
             lookups={{ ...baseLookups, entityVisibility: date.visibility }}
             onToggle={() => {
               toggleDate(date.id);
             }}
           />
-        {/each}
-      </TrackerRowStack>
-      {#if visibleDates.length === 0}
-        <p class="py-4 text-center text-sm text-muted-foreground">{m.no_items_match_filters()}</p>
-      {/if}
+        {/snippet}
+      </TrackerRowList>
     </div>
   </ExpandableSection>
 {/if}

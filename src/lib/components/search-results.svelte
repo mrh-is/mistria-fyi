@@ -2,7 +2,6 @@
   import { untrack } from "svelte";
   import { toast } from "svelte-sonner";
 
-  import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import VillagerSearchResult from "#lib/components/villager-search-result.svelte";
   import { categoryNameForKey } from "#lib/data/categories.js";
@@ -15,8 +14,8 @@
   import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
-  import type { TrackerRowDisplay } from "#lib/components/tracker-row.svelte";
   import type { SearchResult } from "#lib/engine/search.js";
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
@@ -148,11 +147,6 @@
     });
   }
 
-  function rowDisplay(result: SearchResult): TrackerRowDisplay {
-    if (result.completed) return { mode: "completed" };
-    return { dimmed: !result.available, mode: "visible" };
-  }
-
   function toggleResult(result: SearchResult): void {
     switch (result.category) {
       case "almanac":
@@ -216,34 +210,35 @@
       {@const label = result.fullName ?? result.name}
       <div class="search-result">
         <div class="min-w-0 flex-1">
-          <TrackerRowStack>
-            {#if result.category === "villagers"}
-              <VillagerSearchResult
-                completed={result.completed}
-                id={result.id as VillagerId}
-                name={label}
-              />
-            {:else}
-              <TrackerRow
-                display={rowDisplay(result)}
-                lookups={baseLookups}
-                name={result.detail ? `${label} ${result.detail}` : label}
-                reportCategory={categoryNameForKey(result.category, locale)}
-                reportEntityId={result.id}
-                sources={getSources(result)}
-                onToggle={() => {
-                  if (result.category === "quests") {
-                    handleQuestToggle(result);
-                  } else {
+          {#if result.category === "villagers"}
+            <VillagerSearchResult
+              completed={result.completed}
+              id={result.id as VillagerId}
+              name={label}
+            />
+          {:else}
+            <TrackerRow
+              display={trackerRowDisplay({
+                completed: result.completed,
+                dimmed: !result.available,
+              })}
+              lookups={baseLookups}
+              name={result.detail ? `${label} ${result.detail}` : label}
+              reportCategory={categoryNameForKey(result.category, locale)}
+              reportEntityId={result.id}
+              sources={getSources(result)}
+              onToggle={() => {
+                if (result.category === "quests") {
+                  handleQuestToggle(result);
+                } else {
+                  toggleResult(result);
+                  showUndoToast(result.name, !result.completed, () => {
                     toggleResult(result);
-                    showUndoToast(result.name, !result.completed, () => {
-                      toggleResult(result);
-                    });
-                  }
-                }}
-              />
-            {/if}
-          </TrackerRowStack>
+                  });
+                }
+              }}
+            />
+          {/if}
         </div>
         <span
           class="search-result__category"

@@ -5,9 +5,8 @@
   import DatesSection from "#lib/components/dates-section.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
-  import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
+  import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
-  import { Button } from "#lib/components/ui/button/index.js";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -23,14 +22,15 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { recordEntries, recordValues } from "#lib/utils/record.js";
+  import { sectionRenderTarget, trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import AllCompleted from "./all-completed.svelte";
 
-  import type { TrackerRowDisplay } from "#lib/components/tracker-row.svelte";
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { AlmanacEntry, ItemId } from "#lib/types/tracker-data.js";
   import type { VisibilityCondition } from "#lib/types/visibility.js";
+  import type { TrackerRowDisplay } from "#lib/utils/row-display.js";
 
   let { locale }: { locale: LocaleCode } = $props();
 
@@ -54,17 +54,17 @@
     sources: Source[],
   ): TrackerRowDisplay {
     const completed = isItemCompleted(itemId);
-    if (!itemNameVisible(item)) return { mode: "spoilered" };
-    if (completed) return { leaving: recentlyCompleted.has(itemId), mode: "completed" };
-    return {
+    return trackerRowDisplay({
+      completed,
       dimmed: isItemDimmed(
         sources,
         completed,
         userState.state.worldState,
         userState.state.availabilityWindows,
       ),
-      mode: "visible",
-    };
+      leaving: recentlyCompleted.has(itemId),
+      nameVisible: itemNameVisible(item),
+    });
   }
 
   let redactedStoreIds = $derived(computeRedactedStoreIds(userState.progressionState));
@@ -89,7 +89,6 @@
     );
   }
 
-  const SECTION_LIMIT = 50;
   const SECTION_BATCH_SIZE = 12;
 
   const expandedSections = $state<Record<string, boolean>>({});
@@ -202,35 +201,39 @@
   {#if baseItems.length > 0}
     {@const showAll = expandedSections[id] ?? false}
     {@const isOpen = openSections[id] ?? false}
-    {@const renderTarget = showAll
-      ? filteredItems.length
-      : Math.min(filteredItems.length, SECTION_LIMIT)}
+    {@const renderTarget = sectionRenderTarget(filteredItems.length, showAll)}
     {@const shouldBypassBatching =
       isOpen && !sectionFrames.has(id) && (renderedSectionCounts[id] ?? 0) < renderTarget}
     {@const renderedCount =
       nameFilter || shouldBypassBatching
         ? renderTarget
         : Math.min(renderedSectionCounts[id] ?? renderTarget, renderTarget)}
-    {@const displayItems = filteredItems.slice(0, renderedCount)}
     <ExpandableSection
       count={scopedItems.filter(({ canonicalId }) => isItemCompleted(canonicalId)).length}
       forceOpen={!!nameFilter}
       name={getName("ui", id, locale)}
       onExpandedChange={(open: boolean) => {
-        setSectionOpen(
-          id,
-          open,
-          expandedSections[id]
-            ? filteredItems.length
-            : Math.min(filteredItems.length, SECTION_LIMIT),
-        );
+        setSectionOpen(id, open, sectionRenderTarget(filteredItems.length, showAll));
       }}
       reportCategory="almanac"
       reportEntityId={id}
       total={scopedItems.length}
     >
-      <TrackerRowStack>
-        {#each displayItems as { canonicalId, entry, item, name } (canonicalId)}
+      <TrackerRowList
+        expanded={showAll}
+        getKey={(item) => item.canonicalId}
+        items={filteredItems}
+        limited
+        loadingMessage={nameFilter ? undefined : m.almanac_loading_items()}
+        onShowMore={() => {
+          expandedSections[id] = true;
+          if (openSections[id]) {
+            scheduleSectionRendering(id, filteredItems.length);
+          }
+        }}
+        {renderedCount}
+      >
+        {#snippet row({ canonicalId, entry, item, name })}
           {@const itemCompleted = isItemCompleted(canonicalId)}
           {@const itemSources = aggregateSources(entry)}
           {@const itemVisibility = item.visibility}
@@ -253,29 +256,8 @@
               }
             }}
           />
-        {/each}
-      </TrackerRowStack>
-      {#if filteredItems.length === 0}
-        <p class="py-4 text-center text-sm text-muted-foreground">{m.no_items_match_filters()}</p>
-      {:else if !nameFilter && renderedCount === 0}
-        <p class="py-4 text-center text-sm text-muted-foreground">{m.almanac_loading_items()}</p>
-      {/if}
-      {#if !showAll && filteredItems.length > SECTION_LIMIT}
-        <div class="flex justify-center py-1">
-          <Button
-            class="h-7 text-sm text-muted-foreground"
-            variant="ghost"
-            onclick={() => {
-              expandedSections[id] = true;
-              if (openSections[id]) {
-                scheduleSectionRendering(id, filteredItems.length);
-              }
-            }}
-          >
-            {m.show_more_count({ count: filteredItems.length - SECTION_LIMIT })}
-          </Button>
-        </div>
-      {/if}
+        {/snippet}
+      </TrackerRowList>
     </ExpandableSection>
   {/if}
 {/each}

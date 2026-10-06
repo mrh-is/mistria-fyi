@@ -43,6 +43,13 @@
 
 <style>
   .villager-search-result {
+    /* A lone card, so every corner is rounded; TrackerRow declares the same singleton state. */
+    --tracker-paper-border-start-width: var(--tracker-paper-border-width);
+    --tracker-paper-start-start-radius: var(--tracker-paper-radius);
+    --tracker-paper-start-end-radius: var(--tracker-paper-radius);
+    --tracker-paper-end-start-radius: var(--tracker-paper-radius);
+    --tracker-paper-end-end-radius: var(--tracker-paper-radius);
+
     position: relative;
   }
 

@@ -3,9 +3,8 @@
 
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
-  import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
+  import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
-  import { Button } from "#lib/components/ui/button/index.js";
   import { createLeavingSet } from "#lib/controllers/leaving-set.svelte.js";
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/controllers/spoiler-guard.svelte.js";
@@ -14,16 +13,15 @@
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isVisible } from "#lib/engine/visibility.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { recordForEach } from "#lib/utils/record.js";
+  import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import AllCompleted from "./all-completed.svelte";
 
-  import type { TrackerRowDisplay } from "#lib/components/tracker-row.svelte";
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { Item, ItemId, RecipeId } from "#lib/types/tracker-data.js";
@@ -84,12 +82,6 @@
     return groups;
   });
 
-  function rowDisplay(entry: RecipeEntry, completed: boolean, leaving: boolean): TrackerRowDisplay {
-    if (!entry.nameVisible) return { mode: "spoilered" };
-    if (completed) return { leaving, mode: "completed" };
-    return { mode: "visible" };
-  }
-
   let nameFilter = $derived(toolbarState.searchQuery);
 
   registerSourceFilters("recipes", () => trackerIndex.categorySourceTypes.recipes);
@@ -111,8 +103,6 @@
   function matchesName(entry: RecipeEntry): boolean {
     return !nameFilter || entry.name.toLowerCase().includes(nameFilter.toLowerCase());
   }
-
-  const SECTION_LIMIT = 50;
 
   const expandedSections = $state<Record<string, boolean>>({});
 
@@ -151,14 +141,23 @@
       reportEntityId={group.id}
       total={scopedEntries.length}
     >
-      {@const showAll = expandedSections[group.id] ?? false}
-      {@const displayEntries = showAll ? filteredEntries : filteredEntries.slice(0, SECTION_LIMIT)}
-      <TrackerRowStack>
-        {#each displayEntries as entry (entry.id)}
+      <TrackerRowList
+        expanded={expandedSections[group.id] ?? false}
+        getKey={(entry) => entry.id}
+        items={filteredEntries}
+        limited
+        onShowMore={() => {
+          expandedSections[group.id] = true;
+        }}
+      >
+        {#snippet row(entry)}
           {@const completed = userState.state.completed.almanacRecipes.has(entry.id)}
-          {@const leaving = recentlyCompleted.has(entry.id)}
           <TrackerRow
-            display={rowDisplay(entry, completed, leaving)}
+            display={trackerRowDisplay({
+              completed,
+              leaving: recentlyCompleted.has(entry.id),
+              nameVisible: entry.nameVisible,
+            })}
             lookups={{ ...baseSegmentLookups, entityVisibility: entry.visibility }}
             name={entry.name}
             reportCategory="recipe"
@@ -182,26 +181,8 @@
               }
             }}
           />
-        {/each}
-      </TrackerRowStack>
-      {#if filteredEntries.length === 0}
-        <p class="py-4 text-center text-sm text-muted-foreground">
-          {m.no_items_match_filters()}
-        </p>
-      {/if}
-      {#if !showAll && filteredEntries.length > SECTION_LIMIT}
-        <div class="flex justify-center py-1">
-          <Button
-            class="h-7 text-sm text-muted-foreground"
-            variant="ghost"
-            onclick={() => {
-              expandedSections[group.id] = true;
-            }}
-          >
-            {m.show_more_count({ count: filteredEntries.length - SECTION_LIMIT })}
-          </Button>
-        </div>
-      {/if}
+        {/snippet}
+      </TrackerRowList>
     </ExpandableSection>
   {/if}
 {/each}
