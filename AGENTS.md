@@ -89,9 +89,11 @@ Agent attribution is mandatory for agent-authored Git and GitHub content:
 - For multiline GitHub CLI issue or PR bodies, pass a file or stdin with literal line breaks (for
   example, `gh issue edit --body-file -`). Do not embed escaped `\\n` sequences in `--body`; GitHub
   renders them literally. Re-read the published body after creating or editing it.
-- Enforcement: a `commit-msg` hook rejects drifted trailers locally, and the "Attribution" workflow
-  checks a PR's own commits, its final `Agent:` line, & its single `agent:*` label (human-only PRs
-  pass). A harness reminder may inject model-versioned text; correct it before committing.
+- Checks: a `commit-msg` hook rejects drifted trailers locally, and the "Attribution" workflow
+  checks a PR's own commits (final trailer block only), its final `Agent:` line, & its single
+  `agent:*` label (human-only PRs pass). The workflow blocks a merge only once the main ruleset
+  lists "Attribution" as a required check. A harness reminder may inject model-versioned text;
+  correct it before committing.
 - Preserve existing attribution during edits and handoffs. The active `agent:*` label identifies the
   current top-level owner; trailers and `Agent:` lines identify who authored each artifact.
 

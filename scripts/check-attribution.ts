@@ -8,7 +8,10 @@ import { pathToFileURL } from "node:url";
  *
  * - A `Co-Authored-By` trailer for an agent address must use the canonical product-level name, so
  *   `Claude Opus 5.5 <noreply@anthropic.com>` fails but `Claude Code <noreply@anthropic.com>` passes.
- *   Trailers for humans & unlisted agents are ignored.
+ *   Trailers for humans & unlisted agents are ignored. Only the final trailer block counts (see
+ *   `trailerBlock`), so a quoted example in the message body is neither validated nor authorship.
+ * - The PR commits endpoint lists at most 250 commits; a PR with more fails rather than passing
+ *   unchecked.
  * - A PR is agent-authored when it carries an `agent:*` label, has an `Agent:` line, or has a
  *   canonical agent trailer on a commit. An agent-authored PR must end its body with an
  *   `Agent: <slug>` line & carry exactly one `agent:*` label, matching the slug for known agents.
@@ -32,8 +35,13 @@ export interface Commit {
   sha?: string;
 }
 
+/** The most commits GitHub's "list commits on a pull request" endpoint returns. */
+export const COMMIT_LIST_LIMIT = 250;
+
 export interface PullRequest {
   body: string;
+  /** The PR's real commit count (`pull_request.commits`), to detect a truncated listing. */
+  commitCount?: number;
   commits: Commit[];
   labels: string[];
 }
@@ -41,11 +49,32 @@ export interface PullRequest {
 const TRAILER = /^co-authored-by:\s*(.*?)\s*<([^>]*)>\s*$/gim;
 const AGENT_LINE = /^Agent:\s*(\S+)\s*$/;
 
+const TRAILER_LINE = /^[\w-]+\s*:\s*\S/;
+const CONTINUATION_LINE = /^[ \t]+\S/;
+
+/**
+ * Git's trailer block: the message's last paragraph, when it follows another paragraph (the
+ * subject) and every line is `token: value` or an indented continuation. This tracks
+ * `git interpret-trailers --parse` closely enough; quoted examples elsewhere don't count.
+ */
+export function trailerBlock(message: string): string {
+  const lines = message.replaceAll("\r\n", "\n").trimEnd().split("\n");
+  const blank = lines.findLastIndex((line) => line.trim() === "");
+  if (blank < 1 || lines.slice(0, blank).every((line) => line.trim() === "")) {
+    return "";
+  }
+  const block = lines.slice(blank + 1);
+  const trailerShaped = block.every(
+    (line, index) => TRAILER_LINE.test(line) || (index > 0 && CONTINUATION_LINE.test(line)),
+  );
+  return trailerShaped ? block.join("\n") : "";
+}
+
 /** Problems with one commit message's agent trailers; also reports whether it has a canonical one. */
 export function checkCommitMessage(message: string): { agent: boolean; problems: string[] } {
   const problems: string[] = [];
   let agent = false;
-  for (const [, name, email] of message.matchAll(TRAILER)) {
+  for (const [, name, email] of trailerBlock(message).matchAll(TRAILER)) {
     const known = CANONICAL_AGENTS.find((candidate) => candidate.email === email.toLowerCase());
     if (known === undefined) {
       continue;
@@ -59,8 +88,16 @@ export function checkCommitMessage(message: string): { agent: boolean; problems:
   return { agent, problems };
 }
 
-export function checkPullRequest({ body, commits, labels }: PullRequest): string[] {
+export function checkPullRequest({ body, commitCount, commits, labels }: PullRequest): string[] {
   const problems: string[] = [];
+  if (
+    commitCount !== undefined &&
+    (commitCount > COMMIT_LIST_LIMIT || commitCount > commits.length)
+  ) {
+    problems.push(
+      `The PR has ${commitCount} commits but only ${commits.length} could be listed (GitHub's endpoint caps at ${COMMIT_LIST_LIMIT}); split the PR or check its commits by hand.`,
+    );
+  }
   let trailerAgent = false;
   for (const commit of commits) {
     if ((commit.parents ?? 1) > 1) {
@@ -122,6 +159,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     report(
       checkPullRequest({
         body: process.env.PR_BODY ?? "",
+        commitCount:
+          process.env.PR_COMMIT_COUNT === undefined
+            ? undefined
+            : Number(process.env.PR_COMMIT_COUNT),
         commits: (process.env.PR_COMMITS ?? "")
           .split("\n")
           .filter((line) => line.trim() !== "")
