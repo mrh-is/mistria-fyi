@@ -4,7 +4,6 @@ import { isExcludedCosmetic } from "../acquisition/exclusions.js";
 import { expectArray } from "../data-shapes.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 
-import type { SourceTuple } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type {
   Cosmetic,
@@ -14,11 +13,12 @@ import type {
   TrackerData,
 } from "#lib/types/tracker-data.js";
 
+import type { SourceDraft } from "../acquisition/required-sources.js";
 import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 
 export interface CosmeticExtraction {
-  cosmetics: TrackerData["cosmetics"];
+  cosmetics: Record<CosmeticId, SourceDraft<Cosmetic>>;
   /** Every customization-menu slot in game order, with its sub-categories in game order. */
   cosmeticSlots: TrackerData["cosmeticSlots"];
   localeNames: Record<LocaleCode, Record<CosmeticId, string>>;
@@ -42,7 +42,7 @@ export function extractCosmetics(fiddle: ParsedGameData, localizer: Localizer): 
   const { cosmeticSlots, subCategoryLocaleNames } = readCustomizationMenu(fiddle, localizer);
   if (!assets) return { cosmetics: {}, cosmeticSlots, localeNames, subCategoryLocaleNames };
 
-  const result = {} as Record<CosmeticId, Cosmetic>;
+  const result = {} as Record<CosmeticId, SourceDraft<Cosmetic>>;
 
   for (const [id, asset] of Object.entries(assets)) {
     if (id === "default") continue;
@@ -69,9 +69,7 @@ export function extractCosmetics(fiddle: ParsedGameData, localizer: Localizer): 
     const cosmeticId = id as CosmeticId;
     result[cosmeticId] = {
       slot,
-      sources: ((asset.default_unlocked as boolean | undefined)
-        ? [{ type: "default" }]
-        : []) as SourceTuple,
+      sources: (asset.default_unlocked as boolean | undefined) ? [{ type: "default" }] : [],
       subCategory,
     };
     const { values } = localizer.localizeField({
