@@ -126,7 +126,7 @@
   --cat-almanac: #5848c0;
   --cat-recipes: #b87028;
   --cat-animals: #c03838;
-  --cat-npcs: #c03060;
+  --cat-villagers: #c03060;
   --cat-cosmetics: #9838a8;
   --cat-skills: #1a8878;
   --cat-renown: #a48018;
@@ -224,7 +224,7 @@
   --cat-quests: #2e82b8;
   --cat-almanac: #7868c8;
   --cat-cosmetics: #8838a0;
-  --cat-npcs: #b83060;
+  --cat-villagers: #b83060;
   --cat-mines: #886838;
 
   --tag-accent: #c36d5a;
@@ -352,7 +352,7 @@ html:lang(ru) {
   --color-cat-almanac: var(--cat-almanac);
   --color-cat-recipes: var(--cat-recipes);
   --color-cat-animals: var(--cat-animals);
-  --color-cat-npcs: var(--cat-npcs);
+  --color-cat-villagers: var(--cat-villagers);
   --color-cat-cosmetics: var(--cat-cosmetics);
   --color-cat-skills: var(--cat-skills);
   --color-cat-renown: var(--cat-renown);
