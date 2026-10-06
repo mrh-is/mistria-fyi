@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 
-const metadata = {
+import type { ReportableElement } from "#lib/feedback/types.js";
+
+const metadata: ReportableElement = {
   category: "recipe",
   displayName: "Tomato Soup",
   entityId: "tomato_soup",

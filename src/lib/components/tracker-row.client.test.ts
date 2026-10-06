@@ -1,16 +1,17 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { fireEvent, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
 import TrackerRow from "#lib/components/tracker-row.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
+import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 
 describe("TrackerRow reportable metadata", () => {
   it("reveals a ready sprite with the spoiler name", async () => {
-    const view = render(TrackerRow, {
+    const view = renderWithFeedback(TrackerRow, {
       display: { mode: "spoilered" },
       name: "Turnip",
       onToggle: vi.fn(),
-      reportCategory: "almanac item",
+      reportCategory: "almanac-item",
       reportEntityId: "turnip",
       sprite: "spr_ui_item_turnip",
     });
@@ -26,14 +27,17 @@ describe("TrackerRow reportable metadata", () => {
   it("registers the whole row and preserves completion behavior", async () => {
     const feedbackContext = new FeedbackContext();
     const onToggle = vi.fn();
-    const view = render(TrackerRow, {
-      display: { mode: "visible" },
+    const view = renderWithFeedback(
+      TrackerRow,
+      {
+        display: { mode: "visible" },
+        name: "Tomato Soup",
+        onToggle,
+        reportCategory: "recipe",
+        reportEntityId: "tomato_soup",
+      },
       feedbackContext,
-      name: "Tomato Soup",
-      onToggle,
-      reportCategory: "recipe",
-      reportEntityId: "tomato_soup",
-    });
+    );
 
     await waitFor(() => {
       expect(feedbackContext.registrations.size).toBe(1);
@@ -52,11 +56,11 @@ describe("TrackerRow reportable metadata", () => {
   });
 
   it("keeps one source paper and control while toggling its content", async () => {
-    const view = render(TrackerRow, {
+    const view = renderWithFeedback(TrackerRow, {
       display: { mode: "visible" },
       name: "Amberjack",
       onToggle: vi.fn(),
-      reportCategory: "almanac item",
+      reportCategory: "almanac-item",
       reportEntityId: "amberjack",
       sources: [{ type: "default" }],
     });
@@ -101,19 +105,19 @@ describe("TrackerRow reportable metadata", () => {
   });
 
   it("keeps multiple source papers expanded independently", async () => {
-    const first = render(TrackerRow, {
+    const first = renderWithFeedback(TrackerRow, {
       display: { mode: "visible" },
       name: "Amberjack",
       onToggle: vi.fn(),
-      reportCategory: "almanac item",
+      reportCategory: "almanac-item",
       reportEntityId: "amberjack",
       sources: [{ type: "default" }],
     });
-    const second = render(TrackerRow, {
+    const second = renderWithFeedback(TrackerRow, {
       display: { mode: "visible" },
       name: "Cod",
       onToggle: vi.fn(),
-      reportCategory: "almanac item",
+      reportCategory: "almanac-item",
       reportEntityId: "cod",
       sources: [{ type: "default" }],
     });
@@ -140,7 +144,7 @@ describe("TrackerRow reportable metadata", () => {
 
     const list = document.createElement("div");
     document.body.append(list);
-    const first = render(TrackerRow, {
+    const first = renderWithFeedback(TrackerRow, {
       display: { mode: "visible" },
       name: "First item",
       onToggle: () => {
@@ -148,18 +152,18 @@ describe("TrackerRow reportable metadata", () => {
           display: { leaving: true, mode: "completed" },
           name: "First item",
           onToggle: vi.fn(),
-          reportCategory: "item",
+          reportCategory: "almanac-item",
           reportEntityId: "first",
         });
       },
-      reportCategory: "item",
+      reportCategory: "almanac-item",
       reportEntityId: "first",
     });
-    const second = render(TrackerRow, {
+    const second = renderWithFeedback(TrackerRow, {
       display: { mode: "visible" },
       name: "Second item",
       onToggle: vi.fn(),
-      reportCategory: "item",
+      reportCategory: "almanac-item",
       reportEntityId: "second",
     });
     const firstRow = first.container.firstElementChild;

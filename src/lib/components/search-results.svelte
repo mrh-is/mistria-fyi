@@ -14,7 +14,9 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
+  import type { SearchCategoryKey } from "#lib/data/categories.js";
   import type { SearchResult } from "#lib/engine/search.js";
+  import type { ReportCategory } from "#lib/feedback/types.js";
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type {
@@ -157,6 +159,17 @@
         break;
     }
   }
+
+  /** Search results report under the stable key of their row's own category, not a localized name. */
+  const SEARCH_REPORT_CATEGORY = {
+    almanac: "almanac-item",
+    animals: "animal",
+    cosmetics: "cosmetic",
+    museum: "museum-item",
+    quests: "quest",
+    recipes: "recipe",
+    villagers: "villager",
+  } as const satisfies Record<SearchCategoryKey, ReportCategory>;
 </script>
 
 {#if namesError}
@@ -195,7 +208,7 @@
               })}
               lookups={baseLookups}
               name={result.detail ? `${label} ${result.detail}` : label}
-              reportCategory={categoryNameForKey(result.category, locale)}
+              reportCategory={SEARCH_REPORT_CATEGORY[result.category]}
               reportEntityId={result.id}
               sources={getSources(result)}
               onToggle={() => {

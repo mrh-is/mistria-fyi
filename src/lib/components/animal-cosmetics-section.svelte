@@ -99,6 +99,7 @@
   {locale}
   lookups={baseLookups}
   name={m.animals_cosmetics_section_name()}
+  reportCategory="animal-cosmetics"
   {sectionConfig}
   toggleCompletion={(animalId: AnimalId, variantId: CosmeticId) => {
     userState.toggleAnimalCosmetic(animalId, variantId);

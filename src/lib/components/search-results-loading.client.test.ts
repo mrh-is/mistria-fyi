@@ -1,8 +1,9 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { fireEvent, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import SearchResults from "#lib/components/search-results.svelte";
 import { LOCALIZED_CATEGORIES } from "#lib/data/names.js";
+import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 
 import type * as NamesModule from "#lib/data/names.js";
 
@@ -47,7 +48,7 @@ describe("SearchResults chunk loading", () => {
       }),
     );
 
-    render(SearchResults, { locale: "ja", query: "カブ" });
+    renderWithFeedback(SearchResults, { locale: "ja", query: "カブ" });
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading search");
     await waitFor(() => {
@@ -67,7 +68,7 @@ describe("SearchResults chunk loading", () => {
     names.loadNames.mockRejectedValueOnce(new Error("chunk fetch failed"));
     names.loadNames.mockResolvedValue(undefined);
 
-    render(SearchResults, { locale: "ja", query: "カブ" });
+    renderWithFeedback(SearchResults, { locale: "ja", query: "カブ" });
 
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("Couldn’t load search results.");
@@ -84,7 +85,7 @@ describe("SearchResults chunk loading", () => {
     const pending: PendingLoad[] = [];
     names.loadNames.mockImplementation(() => holdLoad(pending));
 
-    const view = render(SearchResults, { locale: "ja", query: "カブ" });
+    const view = renderWithFeedback(SearchResults, { locale: "ja", query: "カブ" });
     await waitFor(() => {
       expect(pending).toHaveLength(2);
     });
@@ -113,7 +114,7 @@ describe("SearchResults chunk loading", () => {
     const pending: PendingLoad[] = [];
     names.loadNames.mockImplementation(() => holdLoad(pending));
 
-    const view = render(SearchResults, { locale: "ja", query: "カブ" });
+    const view = renderWithFeedback(SearchResults, { locale: "ja", query: "カブ" });
     await waitFor(() => {
       expect(pending).toHaveLength(2);
     });

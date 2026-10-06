@@ -4,22 +4,23 @@
   import { slide } from "svelte/transition";
 
   import { Icon } from "#lib/components/icon/index.js";
-  import { getFeedbackContextOrFallback } from "#lib/feedback/context.svelte.js";
+  import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
 
   import type { Snippet } from "svelte";
 
-  import type { FeedbackContext } from "#lib/feedback/context.svelte.js";
+  import type { ReportCategory } from "#lib/feedback/types.js";
   import type { LocaleCode } from "#lib/types/locale.js";
+
+  const feedbackContext = getFeedbackContext();
 
   let {
     children,
     count,
     defaultOpen = false,
     depth = 0,
-    feedbackContext = getFeedbackContextOrFallback(),
     forceOpen = false,
     locale,
     name,
@@ -33,12 +34,11 @@
     count?: number;
     defaultOpen?: boolean;
     depth?: number;
-    feedbackContext?: FeedbackContext;
     forceOpen?: boolean;
     locale: LocaleCode;
     name: string;
     onExpandedChange?: (expanded: boolean) => void;
-    reportCategory?: string;
+    reportCategory?: ReportCategory;
     reportEntityId?: string;
     reportExtra?: Record<string, number | string>;
     total?: number;

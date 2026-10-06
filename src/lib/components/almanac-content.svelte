@@ -272,7 +272,7 @@
             display={rowDisplay(canonicalId, { visibility: itemVisibility }, itemSources)}
             lookups={{ ...baseLookups, entityVisibility: itemVisibility }}
             {name}
-            reportCategory="almanac item"
+            reportCategory="almanac-item"
             reportEntityId={canonicalId}
             sources={itemSources}
             sprite={canonicalId}

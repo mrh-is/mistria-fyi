@@ -156,7 +156,7 @@
       count={completedCount}
       forceOpen={!!nameFilter || toolbarState.sourceFilterActive}
       name={group.name}
-      reportCategory="recipe category"
+      reportCategory="recipe-category"
       reportEntityId={group.id}
       total={scopedEntries.length}
     >

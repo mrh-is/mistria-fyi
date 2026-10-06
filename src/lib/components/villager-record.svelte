@@ -13,6 +13,7 @@
     MAX_VILLAGER_LEVEL,
   } from "#lib/engine/progress.js";
   import { getMarriedVillager, relationshipPresentation } from "#lib/engine/relationships.js";
+  import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { villagerSpriteUrl } from "#lib/sprites/sprite-url.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
@@ -70,6 +71,19 @@
   let locallyRevealed = $state(false);
   let imageFailed = $state(false);
   let revealed = $derived(known || locallyRevealed);
+  const feedbackContext = getFeedbackContext();
+  // A spoilered villager reports without its name or id, like a spoilered tracker row.
+  let reportable = $derived(
+    feedbackContext.reportable(
+      revealed
+        ? { category: "villager", displayName: name, entityId: id, page: page.url.pathname }
+        : {
+            category: "villager",
+            displayName: m.villager_hidden_name(),
+            page: page.url.pathname,
+          },
+    ),
+  );
   let storedLevel = $derived(userState.state.completed.villagerLevels[id] ?? 0);
   let displayedLevel = $derived(revealed ? storedLevel : 0);
   let relationship = $derived(userState.state.completed.villagerRelationships[id] ?? "undecided");
@@ -116,6 +130,7 @@
 
 <li
   bind:this={recordElement}
+  {@attach reportable}
   class="villager-record"
   class:villager-record--complete={completed}
   class:villager-record--spoilered={!revealed}

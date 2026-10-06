@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/svelte";
+import { fireEvent, screen, within } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import SearchResults from "#lib/components/search-results.svelte";
@@ -6,6 +6,7 @@ import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
 import { searchItems } from "#lib/engine/search.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
+import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { recordEntries } from "#lib/utils/record.js";
 
 import type { ItemId, QuestId, VillagerId } from "#lib/types/tracker-data.js";
@@ -26,7 +27,7 @@ describe("SearchResults completion dispatch", () => {
     const id = "adeline" as VillagerId;
     userState.setVillagerLevel(id, 11);
 
-    render(SearchResults, { locale: "en", query: "Adeline" });
+    renderWithFeedback(SearchResults, { locale: "en", query: "Adeline" });
     const link = screen.getByRole("link", { name: "Adeline relationship level, 11 of 12" });
 
     expect(link).toHaveAttribute("href", expect.stringMatching(/\/villagers#villager-adeline$/));
@@ -35,11 +36,21 @@ describe("SearchResults completion dispatch", () => {
     expect(userState.state.completed.villagerLevels[id]).toBe(11);
   });
 
+  it("reports a result under a stable category key, not its localized name", () => {
+    const { name } = museumOnlyFixture();
+
+    const { feedbackContext } = renderWithFeedback(SearchResults, { locale: "ja", query: name });
+
+    const categories = [...feedbackContext.registrations.values()].map(({ category }) => category);
+    expect(categories).toContain("museum-item");
+    expect(categories.every((category) => /^[a-z]+(-[a-z]+)*$/u.test(category))).toBe(true);
+  });
+
   it("toggles and undoes a museum result only in completed.museum", async () => {
     const { id, name } = museumOnlyFixture();
     const animalKeys = Object.keys(userState.state.completed.animalCosmetics);
 
-    render(SearchResults, { locale: "en", query: name });
+    renderWithFeedback(SearchResults, { locale: "en", query: name });
     await fireEvent.click(screen.getByRole("button", { name: `Check ${name}` }));
 
     expect(userState.state.completed.museum.has(id)).toBe(true);
@@ -52,7 +63,7 @@ describe("SearchResults completion dispatch", () => {
   it("toggles and undoes the almanac row of an overlapping item only in completed.almanac", async () => {
     const { id, name } = overlappingFixture();
 
-    render(SearchResults, { locale: "en", query: name });
+    renderWithFeedback(SearchResults, { locale: "en", query: name });
     await fireEvent.click(rowToggle("Almanac", name));
 
     expect(userState.state.completed.almanac.has(id)).toBe(true);
@@ -65,7 +76,7 @@ describe("SearchResults completion dispatch", () => {
   it("toggles and undoes the museum row of an overlapping item only in completed.museum", async () => {
     const { id, name } = overlappingFixture();
 
-    render(SearchResults, { locale: "en", query: name });
+    renderWithFeedback(SearchResults, { locale: "en", query: name });
     await fireEvent.click(rowToggle("Museum", name));
 
     expect(userState.state.completed.museum.has(id)).toBe(true);
@@ -80,7 +91,7 @@ describe("SearchResults completion dispatch", () => {
     const animalKeys = Object.keys(userState.state.completed.animalCosmetics);
 
     const name = getName("pets/cosmetic_sets", id, "en");
-    render(SearchResults, { locale: "en", query: name });
+    renderWithFeedback(SearchResults, { locale: "en", query: name });
     await fireEvent.click(screen.getByRole("button", { name: `Check ${name}` }));
 
     expect(userState.state.completed.petCosmetics.has(id)).toBe(true);
@@ -94,7 +105,7 @@ describe("SearchResults completion dispatch", () => {
     const animalKeys = Object.keys(userState.state.completed.animalCosmetics);
     const name = getName("pets/skins", id, "en");
 
-    render(SearchResults, { locale: "en", query: name });
+    renderWithFeedback(SearchResults, { locale: "en", query: name });
     await fireEvent.click(screen.getByRole("button", { name: `Check ${name}` }));
 
     expect(userState.state.completed.petSkins.has(id)).toBe(true);
@@ -106,7 +117,7 @@ describe("SearchResults completion dispatch", () => {
   it("advances a quest result through the shared quest toast and undoes it", async () => {
     const { id, name } = questFixture();
 
-    render(SearchResults, { locale: "en", query: name });
+    renderWithFeedback(SearchResults, { locale: "en", query: name });
     await fireEvent.click(rowToggle("Quests", name));
 
     const nextState = userState.state.completed.questStates[id];
