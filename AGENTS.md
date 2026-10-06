@@ -173,6 +173,7 @@ it. Wrangler may need access to Cloudflare's API and to its stored credentials (
 | `pnpm run lint:fix`           | Auto-fix formatting & lint                  |
 | `pnpm run test`               | Complete Vitest suite (asset-independent)   |
 | `pnpm run test:changed`       | Vitest tests affected by branch changes     |
+| `pnpm run test:coverage`      | Complete suite plus coverage (opt-in)       |
 | `pnpm run test:app`           | App tests (`src/`)                          |
 | `pnpm run test:client`        | App component tests (`*.client.test.ts`)    |
 | `pnpm run test:pipeline`      | Pipeline tests (`pipeline/`)                |
@@ -260,10 +261,11 @@ compaction.
 
 ### CI (every pull request)
 
-`ci.yml` runs `lint`, `check`, `check:i18n`, `test`, `build`, & `check:routes`, then the
-accessibility and PWA suites against that build when `src/`, `static/`, `tests/`, or their tooling
-change. Its "CI passed" job aggregates every result. A PR merges only when it passes; fix CI
-failures on the branch rather than merging around them (see §3 step 11).
+`ci.yml` runs `lint`, `check`, `check:i18n`, `test:coverage` (the `test` suite plus a coverage
+summary that doesn't gate), `build`, & `check:routes`, then the accessibility and PWA suites against
+that build when `src/`, `static/`, `tests/`, or their tooling change. Its "CI passed" job aggregates
+every result. A PR merges only when it passes; fix CI failures on the branch rather than merging
+around them (see §3 step 11).
 
 ### Full local matrix (exceptions)
 

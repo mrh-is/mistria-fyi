@@ -26,6 +26,7 @@
     "**/.wrangler",
     "**/.svelte-kit",
     "build",
+    "coverage",
     ".playwright-artifacts",
     ".playwright-report",
     ".playwright-results",
