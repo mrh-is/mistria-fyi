@@ -3,7 +3,7 @@
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "수집품, 퀘스트, 스킬 등 모든 진행 상황을 기록하세요",
   "og_share_description": "미스트리아의 모든 것을 한곳에",
-  "source_hidden": "숨김",
+  "source_spoilered": "숨김",
   "app_update_available": "Mistria Field Guide가 업데이트되었습니다! 새로 고침하여 최신 버전을 받으세요.",
   "app_update_later": "나중에",
   "app_update_refresh": "새로 고침",
@@ -147,8 +147,8 @@
   "season_fall_abbr": "가을",
   "season_winter_abbr": "겨울",
   "villager_birthday_aria": "생일: {season} {day}일",
-  "villager_birthday_hidden": "생일 숨김",
-  "villager_hidden_name": "숨겨진 마을 주민",
+  "villager_birthday_spoilered": "생일 숨김",
+  "villager_spoilered_name": "숨겨진 마을 주민",
   "villager_relationship_level_aria": "{name}와의 관계 레벨, {max}중 {level}",
   "villager_decrease_hearts": "{name}의 하트 줄이기",
   "villager_increase_hearts": "{name}의 하트 늘리기",
@@ -176,7 +176,7 @@
   "rank_state_completed": "완료",
   "rank_state_current": "현재",
   "rank_state_upcoming": "예정",
-  "villager_hidden_name_lower": "숨겨진 마을 주민",
+  "villager_spoilered_name_lower": "숨겨진 마을 주민",
   "villagers_jump_to_initial_aria": "{initial}(으)로 이동, 첫 번째 마을 주민 기록",
   "cosmetic_slot_head_gear": "머리 장비",
   "cosmetic_slot_face_gear": "얼굴 장비",
@@ -492,7 +492,7 @@
       }
     }
   ],
-  "merge_label_villager_levels": [
+  "merge_label_heart_levels": [
     {
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],

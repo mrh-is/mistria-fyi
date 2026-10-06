@@ -14,8 +14,8 @@ describe("availabilityToVisibility", () => {
       { type: "heartLevel", level: 4, villagerId: "juniper" },
     ],
     [
-      { type: "minesLevel", floor: 40 },
-      { type: "minesLevel", floor: 40 },
+      { type: "mineFloor", floor: 40 },
+      { type: "mineFloor", floor: 40 },
     ],
     [
       { type: "perkUnlocked", perkId: "espresso_yourself" },
@@ -45,7 +45,7 @@ describe("availabilityToVisibility", () => {
         {
           type: "any",
           conditions: [
-            { type: "minesLevel", floor: 20 },
+            { type: "mineFloor", floor: 20 },
             {
               type: "quest",
               questId: "find_the_magic_key" as QuestId,
@@ -59,7 +59,7 @@ describe("availabilityToVisibility", () => {
     expect(availabilityToVisibility(condition)).toEqual({
       type: "or",
       conditions: [
-        { type: "minesLevel", floor: 20 },
+        { type: "mineFloor", floor: 20 },
         { type: "questCompleted", questId: "find_the_magic_key" },
       ],
     });
@@ -82,7 +82,7 @@ describe("availabilityToVisibility", () => {
       availabilityToVisibility({
         type: "any",
         conditions: [
-          { type: "minesLevel", floor: 20 },
+          { type: "mineFloor", floor: 20 },
           { type: "season", seasons: ["spring"] },
         ],
       }),
@@ -103,7 +103,7 @@ describe("toAvailableVisibility", () => {
         {
           type: "or",
           conditions: [
-            { type: "minesLevel", floor: 20 },
+            { type: "mineFloor", floor: 20 },
             { type: "questCompleted", questId: "find_the_magic_key" as QuestId },
           ],
         },
@@ -117,7 +117,7 @@ describe("toAvailableVisibility", () => {
         {
           type: "or",
           conditions: [
-            { type: "minesLevel", floor: 20 },
+            { type: "mineFloor", floor: 20 },
             { type: "questAvailable", questId: "find_the_magic_key" },
           ],
         },

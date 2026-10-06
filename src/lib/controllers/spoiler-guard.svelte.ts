@@ -54,12 +54,12 @@ export function createSpoilerGuard(): SpoilerGuard {
               userState.setHasUpperFloor(true);
               break;
             case "heartLevel":
-              userState.setVillagerLevel(mutation.villagerId, mutation.level);
+              userState.setHeartLevel(mutation.villagerId, mutation.level);
               break;
             case "married":
               userState.setVillagerRelationship(mutation.villagerId, "married");
               break;
-            case "minesLevel":
+            case "mineFloor":
               userState.setMineFloor(mutation.floor);
               break;
             case "perkUnlocked":

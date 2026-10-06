@@ -25,14 +25,13 @@ import type { QuestType, StoreId } from "#lib/types/tracker-data.js";
  * `source-names.ts` covers them with interim translations.
  */
 export function buildBaseSegmentLookups(
-  redactedStoreIds: ReadonlySet<StoreId>,
+  spoileredStoreIds: ReadonlySet<StoreId>,
   locale: LocaleCode,
 ): Omit<SegmentLookups, "entityVisibility"> {
   return {
     ...staticBaseSegmentLookups,
     ...getLocalizedBaseSegmentLookups(locale),
     locale,
-    redactedStoreIds,
     seasonNames: {
       fall: getName("ui", "fall", locale),
       spring: getName("ui", "spring", locale),
@@ -40,6 +39,7 @@ export function buildBaseSegmentLookups(
       winter: getName("ui", "winter", locale),
     },
     skillNames: getNameTable("skills", locale),
+    spoileredStoreIds,
     villagerNames: getNameTable("villagers", locale),
   };
 }
@@ -67,9 +67,9 @@ function buildStaticBaseSegmentLookups(): Omit<
   SegmentLookups,
   | "entityVisibility"
   | "locale"
-  | "redactedStoreIds"
   | "seasonNames"
   | "skillNames"
+  | "spoileredStoreIds"
   | "villagerNames"
   | LocalizedLookupKey
 > {

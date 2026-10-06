@@ -30,7 +30,7 @@ describe("plural messages", () => {
 
         for (const message of [
           m.merge_label_mine_floor,
-          m.merge_label_villager_levels,
+          m.merge_label_heart_levels,
           m.merge_label_renown,
           m.merge_label_skill_levels,
         ]) {

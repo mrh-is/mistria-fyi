@@ -21,8 +21,8 @@ export interface AnimalSubcategoryRowProps<Id extends AnyId> {
   completed: boolean;
   id: Id;
   name: string;
-  redacted: boolean;
   sources: Source[];
+  spoilered: boolean;
   subtitle?: string;
 }
 

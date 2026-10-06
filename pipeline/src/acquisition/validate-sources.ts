@@ -75,7 +75,7 @@ const AVAILABILITY_FIELDS = {
   hasUpperFloor: [],
   heartLevel: ["level", "villagerId"],
   isDating: [],
-  minesLevel: ["floor"],
+  mineFloor: ["floor"],
   not: ["condition"],
   perkUnlocked: ["perkId"],
   quest: ["questId", "state"],
@@ -93,7 +93,7 @@ const VISIBILITY_FIELDS = {
   heartLevel: ["level", "villagerId"],
   isDating: [],
   married: ["villagerId"],
-  minesLevel: ["floor"],
+  mineFloor: ["floor"],
   or: ["conditions"],
   perkUnlocked: ["perkId"],
   questAvailable: ["questId"],
@@ -640,7 +640,7 @@ function validateAvailability(
           );
         }
         return;
-      case "minesLevel":
+      case "mineFloor":
         requireNumber(value, "floor", targetId, fieldPath, source, diagnostics);
         return;
       case "not":
@@ -1669,7 +1669,7 @@ function validateVisibility(
       case "villagerKnown":
         visibilityReference("villagerId", "villager");
         return;
-      case "minesLevel":
+      case "mineFloor":
         requireNumber(value, "floor", targetId, fieldPath, source, diagnostics);
         return;
       case "perkUnlocked":

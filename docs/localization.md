@@ -130,7 +130,7 @@ lint concern. See [Limits of the tooling](#limits-of-the-tooling) below.
 ### Source text
 
 Acquisition sources ("Purchase from the General Store (after repairing)") are sentences assembled
-from game names, and parts of them can be redacted or gated behind progress. `source-segments.ts`
+from game names, and parts of them can be spoilered or gated behind progress. `source-segments.ts`
 renders each sentence from a `source_*` Paraglide message and `fillMessage` fills its placeholders
 with segments rather than plain text: it passes private-use markers into the message, then splits
 the result at the markers, so each locale's word order decides where a gated name lands. A message

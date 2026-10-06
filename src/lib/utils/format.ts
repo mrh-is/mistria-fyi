@@ -51,8 +51,8 @@ export type BaseSegmentLookups = Pick<TrackerData, "perkTierLevels"> & {
   perks: Partial<Record<PerkId, { name: string; skillId: SkillId; tier: number }>>;
   questNames: NameLookup<TrackerData["quests"][QuestType]>;
   recipeNames: NameLookup<TrackerData["recipes"]>;
-  redactedStoreIds?: ReadonlySet<StoreId>;
   skillNames: NameLookup<TrackerData["skills"]>;
+  spoileredStoreIds?: ReadonlySet<StoreId>;
   stores: Partial<
     Record<StoreId, { article?: "the"; name: string; upgradeAction?: StoreUpgradeAction }>
   >;

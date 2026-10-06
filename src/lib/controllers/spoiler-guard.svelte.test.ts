@@ -7,7 +7,7 @@ import { createSpoilerGuard } from "./spoiler-guard.svelte.js";
 import type { VillagerId } from "#lib/types/tracker-data.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
-const FLOOR_CONDITION: VisibilityCondition = { type: "minesLevel", floor: 12 };
+const FLOOR_CONDITION: VisibilityCondition = { type: "mineFloor", floor: 12 };
 
 describe("createSpoilerGuard", () => {
   afterEach(() => {
@@ -51,7 +51,7 @@ describe("createSpoilerGuard", () => {
     expect(action).not.toHaveBeenCalled();
     expect(guard.open).toBe(false);
     expect(guard.condition).toBeNull();
-    expect(userState.state.completed.mines.floor).toBe(0);
+    expect(userState.state.completed.mineFloor).toBe(0);
     guard.proceed();
     expect(action).not.toHaveBeenCalled();
   });
@@ -67,20 +67,20 @@ describe("createSpoilerGuard", () => {
     expect(action).toHaveBeenCalledTimes(1);
     expect(guard.open).toBe(false);
     expect(guard.condition).toBeNull();
-    expect(userState.state.completed.mines.floor).toBe(0);
+    expect(userState.state.completed.mineFloor).toBe(0);
   });
 
   it("proceedAndRecordPrerequisites satisfies the condition, then runs the action", () => {
     const guard = createSpoilerGuard();
     const action = vi.fn(() => {
-      expect(userState.state.completed.mines.floor).toBe(12);
+      expect(userState.state.completed.mineFloor).toBe(12);
     });
     guard.requestGuardedAction(FLOOR_CONDITION, action);
 
     guard.proceedAndRecordPrerequisites();
 
     expect(action).toHaveBeenCalledTimes(1);
-    expect(userState.state.completed.mines.floor).toBe(12);
+    expect(userState.state.completed.mineFloor).toBe(12);
     expect(guard.open).toBe(false);
     expect(guard.condition).toBeNull();
   });

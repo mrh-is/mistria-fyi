@@ -30,7 +30,7 @@ export type AvailabilityCondition =
   | { type: "hasUpperFloor" }
   | { type: "heartLevel"; level: number; villagerId: VillagerId }
   | { type: "isDating" }
-  | { type: "minesLevel"; floor: number }
+  | { type: "mineFloor"; floor: number }
   | { type: "not"; condition: AvailabilityCondition }
   | { type: "perkUnlocked"; perkId: PerkId }
   | { type: "quest"; questId: QuestId; state: Exclude<QuestVisibility, "unavailable"> }
