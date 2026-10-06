@@ -138,8 +138,11 @@ Pages are layout compositors. They handle data fetching and composition, not bus
   `src/routes/data/import-card.svelte`).
 - **Shared components** — reusable components live in `src/lib/components/` or vendored
   `src/lib/components/ui/`.
-- **"Everything" view** — `src/routes/all/+page.svelte` composes section components
-  (`MuseumSection`, `AlmanacSection`, etc.) and computes overall completion.
+- **"Everything" view** — `src/routes/all/+page.svelte` computes overall completion and renders one
+  `category-section.svelte` per category. That component owns the category-to-content map (which
+  content component, whether it's compact, whether its rows stack), the sticky
+  `section-header.svelte`, and hiding a completed category unless completed content is shown. A new
+  category adds one map entry, not a new section file.
 
 ## 5. Progress & Visibility
 

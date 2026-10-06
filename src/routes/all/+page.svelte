@@ -9,33 +9,9 @@
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
 
-  import AlmanacSection from "./almanac-section.svelte";
-  import AnimalsSection from "./animals-section.svelte";
-  import CosmeticsSection from "./cosmetics-section.svelte";
-  import MinesSection from "./mines-section.svelte";
-  import MuseumSection from "./museum-section.svelte";
-  import QuestsSection from "./quests-section.svelte";
-  import RecipesSection from "./recipes-section.svelte";
-  import RenownSection from "./renown-section.svelte";
-  import SkillsSection from "./skills-section.svelte";
-  import VillagersSection from "./villagers-section.svelte";
-
-  import type { CategoryKey } from "#lib/data/categories.js";
+  import CategorySection from "./category-section.svelte";
 
   import type { PageProps } from "./$types";
-
-  const sectionComponents: Record<CategoryKey, typeof AlmanacSection> = {
-    almanac: AlmanacSection,
-    animals: AnimalsSection,
-    cosmetics: CosmeticsSection,
-    mines: MinesSection,
-    museum: MuseumSection,
-    quests: QuestsSection,
-    recipes: RecipesSection,
-    renown: RenownSection,
-    skills: SkillsSection,
-    villagers: VillagersSection,
-  };
 
   let { data }: PageProps = $props();
 
@@ -77,8 +53,7 @@
 
 <div class="flex flex-col gap-6 px-4 pb-4" style="--section-top: {headerH}px">
   {#each orderedCategories as category (category)}
-    {@const SectionComponent = sectionComponents[category]}
-    <SectionComponent locale={data.locale} progress={progress[category]} />
+    <CategorySection key={category} locale={data.locale} progress={progress[category]} />
   {/each}
 
   <AllCompleted isAllCompleted={overallProgress.completed >= overallProgress.total} />
