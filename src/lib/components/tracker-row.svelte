@@ -9,6 +9,7 @@
   import { extractDisplayBadges } from "#lib/engine/availability-condition.js";
   import { getFeedbackContextOrFallback } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { ROW_LEAVE_DELAY_MS, ROW_LEAVE_FADE_MS } from "#lib/utils/row-timing.js";
   import { buildSourceSegments } from "#lib/utils/source-segments.js";
   import { page } from "$app/state";
 
@@ -119,8 +120,8 @@
     }
     return {
       css: (t: number) => `opacity: ${t}; pointer-events: none;`,
-      delay: 800,
-      duration: 200,
+      delay: ROW_LEAVE_DELAY_MS,
+      duration: ROW_LEAVE_FADE_MS,
       tick: (t: number) => {
         if (t === 0) {
           node.style.height = "0";

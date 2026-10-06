@@ -1,0 +1,37 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { ROW_LEAVE_DELAY_MS, ROW_LEAVE_FADE_MS, ROW_LEAVE_MS } from "#lib/utils/row-timing.js";
+
+import { createLeavingSet } from "./leaving-set.svelte.js";
+
+describe("createLeavingSet", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("keeps a marked id until the row leave time has elapsed", () => {
+    const set = createLeavingSet<string>();
+    set.mark("a");
+
+    expect(set.has("a")).toBe(true);
+    expect(set.ids.has("a")).toBe(true);
+    vi.advanceTimersByTime(ROW_LEAVE_MS - 1);
+    expect(set.has("a")).toBe(true);
+    vi.advanceTimersByTime(1);
+    expect(set.has("a")).toBe(false);
+  });
+
+  it("outlasts the row's delay plus fade", () => {
+    expect(ROW_LEAVE_MS).toBeGreaterThanOrEqual(ROW_LEAVE_DELAY_MS + ROW_LEAVE_FADE_MS);
+  });
+
+  it("accepts a custom duration", () => {
+    const set = createLeavingSet<number>(10);
+    set.mark(1);
+    vi.advanceTimersByTime(10);
+    expect(set.has(1)).toBe(false);
+  });
+});

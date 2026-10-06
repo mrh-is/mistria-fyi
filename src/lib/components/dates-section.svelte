@@ -1,6 +1,6 @@
 <script lang="ts">
-  import ConfirmSpoilerDialog from "#lib/components/confirm-spoiler-dialog.svelte";
   import ExpandableSection from "#lib/components/expandable-section.svelte";
+  import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
@@ -10,7 +10,7 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { celebrate } from "#lib/utils/celebrate.js";
-  import { recordEntries } from "#lib/utils/record.js";
+  import { computeRedactedStoreIds } from "#lib/utils/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
   import { registerSourceFilters } from "#lib/utils/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/utils/spoiler-guard.svelte.js";
@@ -29,15 +29,7 @@
     isVisible(trackerData.categoryVisibility.dates, userState.progressionState),
   );
 
-  let redactedStoreIds = $derived(
-    new Set(
-      recordEntries(trackerData.stores)
-        .filter(
-          ([, { visibility }]) => visibility && !isVisible(visibility, userState.progressionState),
-        )
-        .map(([id]) => id),
-    ),
-  );
+  let redactedStoreIds = $derived(computeRedactedStoreIds(userState.progressionState));
 
   let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
 
@@ -136,18 +128,4 @@
   </ExpandableSection>
 {/if}
 
-{#if spoilerGuard.condition}
-  <ConfirmSpoilerDialog
-    bind:open={spoilerGuard.open}
-    condition={spoilerGuard.condition}
-    onCancel={() => {
-      spoilerGuard.cancel();
-    }}
-    onComplete={() => {
-      spoilerGuard.complete();
-    }}
-    onCompleteAndUpdate={() => {
-      spoilerGuard.completeAndUpdate();
-    }}
-  />
-{/if}
+<SpoilerGuardDialog guard={spoilerGuard} />
