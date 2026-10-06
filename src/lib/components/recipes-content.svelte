@@ -137,7 +137,7 @@
       count={scopedEntries.filter((e) => userState.state.completed.almanacRecipes.has(e.id)).length}
       forceOpen={!!nameFilter || toolbarState.sourceFilterActive}
       name={group.name}
-      reportCategory="recipe category"
+      reportCategory="recipe-category"
       reportEntityId={group.id}
       total={scopedEntries.length}
     >

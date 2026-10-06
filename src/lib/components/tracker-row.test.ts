@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import TrackerRow from "#lib/components/tracker-row.svelte";
-import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
-import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
+import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
 
 describe("TrackerRow", () => {
   beforeEach(() => {
@@ -11,13 +10,12 @@ describe("TrackerRow", () => {
   });
 
   const reportProps = {
-    feedbackContext: new FeedbackContext(),
-    reportCategory: "recipe",
+    reportCategory: "recipe" as const,
     reportEntityId: "cherry_cobbler",
   };
 
   it("renders a spoiler overlay for a spoilered row", () => {
-    const { container, queries } = renderToFragment(TrackerRow, {
+    const { container, queries } = renderToFragmentWithFeedback(TrackerRow, {
       props: {
         display: { mode: "spoilered" },
         ...reportProps,
@@ -36,7 +34,7 @@ describe("TrackerRow", () => {
   });
 
   it("reveals the name for a completed row, unlike a spoilered one", () => {
-    const { container, queries } = renderToFragment(TrackerRow, {
+    const { container, queries } = renderToFragmentWithFeedback(TrackerRow, {
       props: {
         display: { mode: "completed" },
         ...reportProps,
@@ -54,7 +52,7 @@ describe("TrackerRow", () => {
   });
 
   it("shows the entity name for a visible row", () => {
-    const { container, queries } = renderToFragment(TrackerRow, {
+    const { container, queries } = renderToFragmentWithFeedback(TrackerRow, {
       props: {
         display: { mode: "visible" },
         ...reportProps,
@@ -72,7 +70,7 @@ describe("TrackerRow", () => {
   });
 
   it("marks a completed row for uncheck", () => {
-    const { queries } = renderToFragment(TrackerRow, {
+    const { queries } = renderToFragmentWithFeedback(TrackerRow, {
       props: {
         display: { mode: "completed" },
         ...reportProps,
@@ -86,7 +84,7 @@ describe("TrackerRow", () => {
   });
 
   it("renders a clipped tracker paper and persistent source paper when sourced", () => {
-    const { container, queries } = renderToFragment(TrackerRow, {
+    const { container, queries } = renderToFragmentWithFeedback(TrackerRow, {
       props: {
         display: { mode: "visible" },
         ...reportProps,
@@ -112,7 +110,7 @@ describe("TrackerRow", () => {
   });
 
   it("renders no source paper or diagonal when there are no sources", () => {
-    const { container } = renderToFragment(TrackerRow, {
+    const { container } = renderToFragmentWithFeedback(TrackerRow, {
       props: {
         display: { mode: "visible" },
         ...reportProps,

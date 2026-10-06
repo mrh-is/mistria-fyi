@@ -189,7 +189,7 @@
       count={config.scopedCompletedItemCount}
       forceOpen={!!nameFilter}
       name={getName("museum_wings", wingId, locale)}
-      reportCategory="museum wing"
+      reportCategory="museum-wing"
       reportEntityId={wingId}
       total={config.scopedItemCount}
     >
@@ -200,7 +200,7 @@
           count={set.scopedCompletedItemCount}
           forceOpen={!!nameFilter}
           name={set.name}
-          reportCategory="museum set"
+          reportCategory="museum-set"
           reportEntityId={set.setId}
           total={set.scopedItemCount}
         >
@@ -214,7 +214,7 @@
                 display={rowDisplay(itemId, museumItemSources)}
                 lookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
                 name={getName("items", itemId, locale)}
-                reportCategory="museum item"
+                reportCategory="museum-item"
                 reportEntityId={itemId}
                 sources={museumItemSources}
                 sprite={itemId}

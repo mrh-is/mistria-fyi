@@ -2,6 +2,8 @@
 import { error as httpError, isHttpError } from "@sveltejs/kit";
 import { env } from "cloudflare:workers";
 
+import { isReportCategory } from "#lib/feedback/types.js";
+
 import type { ReportableElement } from "#lib/feedback/types.js";
 
 import type { RequestHandler } from "./$types";
@@ -248,6 +250,9 @@ function validateSelectedElement(value: unknown): ReportableElement | undefined 
   }
 
   const category = validateElementString(record.category);
+  if (!isReportCategory(category)) {
+    httpError(400, "Invalid selected element");
+  }
   const displayName = validateElementString(record.displayName);
   const page = validateElementString(record.page);
   const entityId = record.entityId;

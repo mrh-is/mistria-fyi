@@ -145,7 +145,6 @@
   {#key pathname}
     <FeedbackPanel
       accent={toolbarAccent}
-      {feedbackContext}
       open={activePanel === "feedback"}
       onclose={closePanel}
       pickerEnabled

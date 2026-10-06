@@ -1,4 +1,3 @@
-import { render } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import VillagerRoster from "#lib/components/villager-roster.svelte";
@@ -6,6 +5,7 @@ import { trackerData } from "#lib/data/index.js";
 import { MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
+import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 vi.mock("$app/state", () => import("#lib/test-utils/page-stub.svelte.js"));
@@ -20,14 +20,14 @@ describe("VillagerRoster localization", () => {
   });
 
   it("renders English names under the en locale", () => {
-    const view = render(VillagerRoster, { locale: "en" });
+    const view = renderWithFeedback(VillagerRoster, { locale: "en" });
 
     expect(view.getByText("Balor")).toBeInTheDocument();
     expect(view.getByText("Adeline")).toBeInTheDocument();
   });
 
   it("renders localized names under a non-Latin locale", () => {
-    const view = render(VillagerRoster, { locale: "ja" });
+    const view = renderWithFeedback(VillagerRoster, { locale: "ja" });
 
     expect(view.getByText("バロル")).toBeInTheDocument();
     expect(view.getByText("アデライン")).toBeInTheDocument();
@@ -55,7 +55,7 @@ describe("VillagerRoster with completed villagers hidden", () => {
   it("keeps the villager targeted by the URL hash", () => {
     pageStub.navigate(`/en/villagers#villager-${completed}`);
 
-    const view = render(VillagerRoster, { locale: "en" });
+    const view = renderWithFeedback(VillagerRoster, { locale: "en" });
 
     expect(view.container.querySelector(`#villager-${completed}`)).not.toBeNull();
     expect(view.container.querySelector(`#villager-${other}`)).toBeNull();
