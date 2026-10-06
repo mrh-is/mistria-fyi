@@ -19,6 +19,6 @@
   {href}
   icon={key}
   {name}
-  total={progress.completed + progress.filtered}
+  total={progress.completed + progress.remainingInScope}
   trackedTotal={progress.total}
 />

@@ -9,11 +9,11 @@ import { recordKeys } from "#lib/utils/record.js";
 import { buildVillagerRoster, filterVillagerRoster } from "./villager-roster.js";
 
 import type { VillagerId } from "#lib/types/tracker-data.js";
-import type { CompletedState } from "#lib/types/user-progress.js";
+import type { ProgressState } from "#lib/types/user-progress.js";
 
 function completedWithVillagerLevels(
   villagerLevels: Partial<Record<VillagerId, number>>,
-): CompletedState {
+): ProgressState {
   return makeCompletedState({ villagerLevels });
 }
 

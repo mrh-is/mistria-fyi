@@ -1,9 +1,9 @@
 import { trackerData } from "#lib/data/index.js";
-import { getMarriedVillager } from "#lib/engine/relationships.js";
+import { getSpouseId } from "#lib/engine/relationships.js";
 import { recordValues } from "#lib/utils/record.js";
 
 import type { QuestId, VillagerId } from "#lib/types/tracker-data.js";
-import type { CompletedState } from "#lib/types/user-progress.js";
+import type { ProgressState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 /**
@@ -25,8 +25,8 @@ export const PREGNANCY_QUEST_IDS: ReadonlySet<QuestId> = new Set(
   recordValues(trackerData.pregnancyQuestByVillager),
 );
 
-export function getCravingQuest(completed: DeepReadonly<CompletedState>): CravingQuest {
-  const villagerId = getMarriedVillager(completed.villagerRelationships) ?? undefined;
+export function getCravingQuest(completed: DeepReadonly<ProgressState>): CravingQuest {
+  const villagerId = getSpouseId(completed.villagerRelationships) ?? undefined;
   if (!villagerId) return { applicable: true, completed: false, questId: undefined, villagerId };
 
   const questId = trackerData.pregnancyQuestByVillager[villagerId];

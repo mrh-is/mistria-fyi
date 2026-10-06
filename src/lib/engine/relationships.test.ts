@@ -3,10 +3,10 @@ import { describe, expect, it } from "vitest";
 import { trackerData } from "#lib/data/index.js";
 
 import {
-  getMarriedVillager,
+  applyMarriageCascade,
+  getSpouseId,
   isRomantic,
   mergeHousehold,
-  normalizeRelationships,
   relationshipPresentation,
 } from "./relationships.js";
 
@@ -18,21 +18,21 @@ function rels(
   return obj;
 }
 
-// ─── getMarriedVillager ────────────────────────────────────────────────
+// ─── getSpouseId ────────────────────────────────────────────────
 
-describe("getMarriedVillager", () => {
+describe("getSpouseId", () => {
   it("returns null when no Villager is married", () => {
-    expect(getMarriedVillager({})).toBeNull();
+    expect(getSpouseId({})).toBeNull();
   });
 
   it("returns null when all relationships are non-married", () => {
     expect(
-      getMarriedVillager(rels({ adeline: "romantic", balor: "platonic", celine: "proposed" })),
+      getSpouseId(rels({ adeline: "romantic", balor: "platonic", celine: "proposed" })),
     ).toBeNull();
   });
 
   it("returns the married Villager ID", () => {
-    expect(getMarriedVillager(rels({ adeline: "married", balor: "platonic" }))).toBe("adeline");
+    expect(getSpouseId(rels({ adeline: "married", balor: "platonic" }))).toBe("adeline");
   });
 });
 
@@ -67,26 +67,26 @@ describe("isRomantic", () => {
   });
 });
 
-// ─── normalizeRelationships ───────────────────────────────────────
+// ─── applyMarriageCascade ───────────────────────────────────────
 
-describe("normalizeRelationships", () => {
+describe("applyMarriageCascade", () => {
   it("does nothing when no one is married", () => {
     const input = rels({ adeline: "romantic", balor: "proposed" });
     const copy = { ...input };
-    normalizeRelationships(copy);
+    applyMarriageCascade(copy);
     expect(copy).toEqual(input);
   });
 
   it("forces all other dateable Villagers to platonic when one is married", () => {
     const input = rels({ adeline: "married", balor: "romantic" });
-    normalizeRelationships(input);
+    applyMarriageCascade(input);
     expect(input["adeline" as VillagerId]).toBe("married");
     expect(input["balor" as VillagerId]).toBe("platonic");
   });
 
   it("adds platonic for dateable Villagers not yet in the map", () => {
     const input = rels({ adeline: "married" });
-    normalizeRelationships(input);
+    applyMarriageCascade(input);
 
     const dateableVillagers = Object.entries(trackerData.villagers)
       .filter(([, villager]) => villager.dateable)
@@ -206,7 +206,7 @@ describe("relationshipPresentation", () => {
       villagerId,
     });
 
-    expect(presentation.warning).toBe(true);
+    expect(presentation.showsMarriageWarning).toBe(true);
     expect(presentation.actions).toEqual(["married"]);
   });
 

@@ -1,10 +1,10 @@
 import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { animalNameId, getName, nameCollator } from "#lib/data/names.js";
-import { isItemApplicable, isItemApplicableForAlmanac } from "#lib/engine/applicability.js";
+import { isAlmanacEntryObtainable, isItemObtainable } from "#lib/engine/applicability.js";
 import { isItemAvailable } from "#lib/engine/availability.js";
 import { PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
 import { isVillagerComplete } from "#lib/engine/progress.js";
-import { isVisible } from "#lib/engine/visibility.js";
+import { isConditionVisible } from "#lib/engine/visibility.js";
 import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { composeDescriptorName } from "#lib/utils/format.js";
 import { foldName } from "#lib/utils/name-match.js";
@@ -14,7 +14,7 @@ import type { SearchCategoryKey } from "#lib/data/categories.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { ItemId, Season, Weather } from "#lib/types/tracker-data.js";
-import type { CompletedState } from "#lib/types/user-progress.js";
+import type { ProgressState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 export interface SearchResult {
@@ -30,7 +30,7 @@ export interface SearchResult {
 const MAX_RESULTS = 50;
 
 interface SearchContext {
-  completed: DeepReadonly<CompletedState>;
+  completed: DeepReadonly<ProgressState>;
   locale: LocaleCode;
   progressionState: UserProgressionState;
   worldState: { season: Season; weather: Weather };
@@ -47,15 +47,15 @@ interface SearchCandidate {
   result: () => SearchResult;
 }
 
-type SearchSource = (context: SearchContext) => Iterable<SearchCandidate>;
+type SearchProvider = (context: SearchContext) => Iterable<SearchCandidate>;
 
 /**
  * Every searchable category as a generator of candidates. Each source applies its own visibility
  * & applicability rules; matching, ranking, & truncation are shared. Source order is the stable
  * order for equally ranked results.
  */
-/* oxlint-disable jsdoc/require-yields -- table entries share the contract documented on SearchSource */
-const SEARCH_SOURCES: readonly SearchSource[] = [
+/* oxlint-disable jsdoc/require-yields -- table entries share the contract documented on SearchProvider */
+const SEARCH_PROVIDERS: readonly SearchProvider[] = [
   // Almanac entries: one result per collapsed row, canonical ID
   function* almanac({ completed, locale, progressionState, worldState }) {
     const seen = new Set<ItemId>();
@@ -64,8 +64,8 @@ const SEARCH_SOURCES: readonly SearchSource[] = [
       if (seen.has(canonicalId)) continue;
       seen.add(canonicalId);
       const item = trackerData.items[canonicalId];
-      if (item.visibility && !isVisible(item.visibility, progressionState)) continue;
-      if (!isItemApplicableForAlmanac(entry.itemIds, completed)) continue;
+      if (item.visibility && !isConditionVisible(item.visibility, progressionState)) continue;
+      if (!isAlmanacEntryObtainable(entry.itemIds, completed)) continue;
       const name = getName("items", canonicalId, locale);
       yield {
         englishName: getName("items", canonicalId, "en"),
@@ -92,8 +92,8 @@ const SEARCH_SOURCES: readonly SearchSource[] = [
       for (const set of Object.values(wing.sets)) {
         for (const id of set.items) {
           const item = trackerData.items[id];
-          if (item.visibility && !isVisible(item.visibility, progressionState)) continue;
-          if (!isItemApplicable(id, completed)) continue;
+          if (item.visibility && !isConditionVisible(item.visibility, progressionState)) continue;
+          if (!isItemObtainable(id, completed)) continue;
           const name = getName("items", id, locale);
           yield {
             englishName: getName("items", id, "en"),
@@ -113,7 +113,9 @@ const SEARCH_SOURCES: readonly SearchSource[] = [
 
   function* villagers({ completed, locale, progressionState }) {
     for (const [id, villager] of recordEntries(trackerData.villagers)) {
-      if (villager.visibility && !isVisible(villager.visibility, progressionState)) continue;
+      if (villager.visibility && !isConditionVisible(villager.visibility, progressionState)) {
+        continue;
+      }
       const name = getName("villagers", id, locale);
       yield {
         englishName: getName("villagers", id, "en"),
@@ -131,7 +133,7 @@ const SEARCH_SOURCES: readonly SearchSource[] = [
 
   function* animalVariants({ completed, locale, progressionState }) {
     for (const [animalId, animal] of recordEntries(trackerData.animals)) {
-      if (animal.visibility && !isVisible(animal.visibility, progressionState)) continue;
+      if (animal.visibility && !isConditionVisible(animal.visibility, progressionState)) continue;
       for (const tier of animal.variantTiers) {
         for (const [variantId] of recordEntries(tier)) {
           const nameId = animalNameId(animalId, "variants", variantId);
@@ -156,7 +158,7 @@ const SEARCH_SOURCES: readonly SearchSource[] = [
   // Cosmetics match on the composed "animal + cosmetic" name
   function* animalCosmetics({ completed, locale, progressionState }) {
     for (const [animalId, animal] of recordEntries(trackerData.animals)) {
-      if (animal.visibility && !isVisible(animal.visibility, progressionState)) continue;
+      if (animal.visibility && !isConditionVisible(animal.visibility, progressionState)) continue;
       for (const [cosmeticId] of recordEntries(animal.cosmetics)) {
         const nameId = animalNameId(animalId, "cosmetics", cosmeticId);
         const coreId = animalNameId(animalId, "core");
@@ -221,7 +223,7 @@ const SEARCH_SOURCES: readonly SearchSource[] = [
   // Recipes are gated by recipe visibility, not item visibility
   function* recipes({ completed, locale, progressionState }) {
     for (const [id, recipe] of recordEntries(trackerData.recipes)) {
-      if (recipe.visibility && !isVisible(recipe.visibility, progressionState)) continue;
+      if (recipe.visibility && !isConditionVisible(recipe.visibility, progressionState)) continue;
       const name = getName("recipes", id, locale);
       yield {
         englishName: getName("recipes", id, "en"),
@@ -239,7 +241,9 @@ const SEARCH_SOURCES: readonly SearchSource[] = [
 
   function* cosmetics({ completed, locale, progressionState }) {
     for (const [id, cosmetic] of recordEntries(trackerData.cosmetics)) {
-      if (cosmetic.visibility && !isVisible(cosmetic.visibility, progressionState)) continue;
+      if (cosmetic.visibility && !isConditionVisible(cosmetic.visibility, progressionState)) {
+        continue;
+      }
       const name = getName("cosmetics", id, locale);
       yield {
         englishName: getName("cosmetics", id, "en"),
@@ -260,7 +264,7 @@ const SEARCH_SOURCES: readonly SearchSource[] = [
     for (const [, byType] of recordEntries(trackerData.quests)) {
       for (const [id, quest] of recordEntries(byType)) {
         if (PREGNANCY_QUEST_IDS.has(id)) continue;
-        if (quest.visibility && !isVisible(quest.visibility, progressionState)) continue;
+        if (quest.visibility && !isConditionVisible(quest.visibility, progressionState)) continue;
         const name = getName("quests", id, locale);
         yield {
           englishName: getName("quests", id, "en"),
@@ -279,9 +283,9 @@ const SEARCH_SOURCES: readonly SearchSource[] = [
 ];
 /* oxlint-enable jsdoc/require-yields */
 
-export function searchItems(
+export function searchAllCategories(
   query: string,
-  completed: DeepReadonly<CompletedState>,
+  completed: DeepReadonly<ProgressState>,
   worldState: { season: Season; weather: Weather },
   progressionState: UserProgressionState,
   locale: LocaleCode,
@@ -292,7 +296,7 @@ export function searchItems(
 
   const context: SearchContext = { completed, locale, progressionState, worldState };
   const results: SearchResult[] = [];
-  for (const source of SEARCH_SOURCES) {
+  for (const source of SEARCH_PROVIDERS) {
     for (const candidate of source(context)) {
       if (
         foldName(candidate.localizedName, locale).includes(q) ||

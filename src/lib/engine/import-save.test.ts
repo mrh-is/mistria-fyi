@@ -9,7 +9,11 @@ import {
 } from "#lib/engine/progress.js";
 import { recordKeys, recordValues } from "#lib/utils/record.js";
 
-import { buildImportState, parseSaveFiles, validatePlayerSave } from "./import-save.js";
+import {
+  extractSaveProgress,
+  isPlayerSaveSection,
+  parseExtractedSaveFiles,
+} from "./import-save.js";
 
 import type { LevelIssue } from "#lib/engine/progress.js";
 import type { RecipeId, SkillId, VillagerId } from "#lib/types/tracker-data.js";
@@ -26,9 +30,9 @@ function getDefaultRecipeIds(): Set<RecipeId> {
   return ids;
 }
 
-describe("buildImportState", () => {
+describe("extractSaveProgress", () => {
   it("imports tracked progress from a preceding 1.0.2 save shape", () => {
-    const { completed, warnings } = buildImportState({
+    const { completed, warnings } = extractSaveProgress({
       player: { items_acquired: ["animated_waterfall_v2"] },
     });
 
@@ -37,7 +41,7 @@ describe("buildImportState", () => {
   });
 
   it("imports new 1.0.5 item, cosmetic, and recipe progress", () => {
-    const { completed, warnings } = buildImportState({
+    const { completed, warnings } = extractSaveProgress({
       player: {
         cosmetic_unlocks: ["facial_hair_friendly_mutton_chops"],
         items_acquired: ["cottage_sofa_oak"],
@@ -54,7 +58,7 @@ describe("buildImportState", () => {
   it("imports direct and item-derived recipe unlocks alongside default recipes", () => {
     const defaultRecipeIds = getDefaultRecipeIds();
 
-    const { completed, warnings } = buildImportState({
+    const { completed, warnings } = extractSaveProgress({
       player: {
         recipe_unlocks: ["ocarina_sprite_statue", "animated_waterfall_v1", "unknown_recipe_unlock"],
       },
@@ -72,7 +76,7 @@ describe("buildImportState", () => {
         perks: ["magic_design", "green_thumb", "unknown_perk"],
       },
     };
-    const { completed, warnings } = buildImportState(bundle);
+    const { completed, warnings } = extractSaveProgress(bundle);
     const unlockedPerks = completed.unlockedPerks;
     if (unlockedPerks === undefined) {
       throw new Error("unlockedPerks should be defined");
@@ -92,7 +96,7 @@ describe("buildImportState", () => {
       const bundle: SaveBundle = {
         player: { items_acquired: [], upper_floor: true },
       };
-      const { completed } = buildImportState(bundle);
+      const { completed } = extractSaveProgress(bundle);
       expect(completed.hasUpperFloor).toBe(true);
     });
 
@@ -100,7 +104,7 @@ describe("buildImportState", () => {
       const bundle: SaveBundle = {
         player: { items_acquired: [] },
       };
-      const { completed } = buildImportState(bundle);
+      const { completed } = extractSaveProgress(bundle);
       expect(completed.hasUpperFloor).toBe(false);
     });
 
@@ -114,7 +118,7 @@ describe("buildImportState", () => {
           },
         },
       };
-      const { completed } = buildImportState(bundle);
+      const { completed } = extractSaveProgress(bundle);
       expect(completed.villagerRelationships).toEqual({
         juniper: "romantic",
         march: "romantic",
@@ -126,7 +130,7 @@ describe("buildImportState", () => {
       const bundle: SaveBundle = {
         gamedata: { date: 2 * GAME_SEASON + 100 },
       };
-      const { completed } = buildImportState(bundle);
+      const { completed } = extractSaveProgress(bundle);
       expect(completed.reachedSeason).toBe("fall");
     });
 
@@ -135,13 +139,13 @@ describe("buildImportState", () => {
       const bundle: SaveBundle = {
         gamedata: { date: 5 * GAME_SEASON },
       };
-      const { completed } = buildImportState(bundle);
+      const { completed } = extractSaveProgress(bundle);
       expect(completed.reachedSeason).toBe("winter");
     });
 
     it("defaults reachedSeason to spring when date is missing", () => {
       const bundle: SaveBundle = { gamedata: {} };
-      const { completed } = buildImportState(bundle);
+      const { completed } = extractSaveProgress(bundle);
       expect(completed.reachedSeason).toBe("spring");
     });
   });
@@ -171,7 +175,7 @@ describe("numeric level domains", () => {
   const FARMING = "farming" as SkillId;
 
   it("accepts in-domain levels without warnings", () => {
-    const { completed, warnings } = buildImportState({
+    const { completed, warnings } = extractSaveProgress({
       gamedata: {
         maximum_mines_level: getMaxMineFloor(),
         t2_world_facts: {
@@ -189,7 +193,7 @@ describe("numeric level domains", () => {
   });
 
   it("clamps above-maximum levels and warns, except renown which clamps silently", () => {
-    const { completed, warnings } = buildImportState({
+    const { completed, warnings } = extractSaveProgress({
       gamedata: {
         maximum_mines_level: 9999,
         t2_world_facts: { adeline_heart_level: 99, farming_level: 999, renown: 9999 },
@@ -207,7 +211,7 @@ describe("numeric level domains", () => {
   });
 
   it("floors fractional levels silently", () => {
-    const { completed, warnings } = buildImportState(
+    const { completed, warnings } = extractSaveProgress(
       worldFacts({ adeline_heart_level: 3.9, farming_level: 7.2, renown: 2.5 }),
     );
     expect(completed.villagerLevels?.[ADELINE]).toBe(3);
@@ -217,7 +221,7 @@ describe("numeric level domains", () => {
   });
 
   it("ignores negative levels with a warning", () => {
-    const { completed, warnings } = buildImportState(
+    const { completed, warnings } = extractSaveProgress(
       worldFacts({ adeline_heart_level: -1, farming_level: -0.5, renown: -3 }),
     );
     expect(completed.villagerLevels?.[ADELINE]).toBeUndefined();
@@ -230,7 +234,7 @@ describe("numeric level domains", () => {
   });
 
   it("ignores nonfinite and wrong-type levels with a warning", () => {
-    const { completed, warnings } = buildImportState({
+    const { completed, warnings } = extractSaveProgress({
       gamedata: {
         maximum_mines_level: Number.NaN,
         t2_world_facts: {
@@ -252,7 +256,7 @@ describe("numeric level domains", () => {
   });
 
   it("treats missing and zero levels as unset without warnings", () => {
-    const { completed, warnings } = buildImportState(worldFacts({ adeline_heart_level: 0 }));
+    const { completed, warnings } = extractSaveProgress(worldFacts({ adeline_heart_level: 0 }));
     expect(completed.mines?.floor).toBe(0);
     expect(completed.villagerLevels).toEqual({});
     expect(completed.renown).toBe(0);
@@ -265,7 +269,7 @@ describe("colorway normalization", () => {
     const bundle: SaveBundle = {
       player: { items_acquired: ["animated_waterfall_v2"] },
     };
-    const { completed } = buildImportState(bundle);
+    const { completed } = extractSaveProgress(bundle);
     const almanac = completed.almanac ?? new Set();
     expect(almanac.has("animated_waterfall_v1" as never)).toBe(true);
     expect(almanac.has("animated_waterfall_v2" as never)).toBe(false);
@@ -275,7 +279,7 @@ describe("colorway normalization", () => {
     const bundle: SaveBundle = {
       player: { items_acquired: ["animated_waterfall_v1", "animated_waterfall_v2"] },
     };
-    const { completed } = buildImportState(bundle);
+    const { completed } = extractSaveProgress(bundle);
     const almanac = completed.almanac ?? new Set();
     expect(almanac.has("animated_waterfall_v1" as never)).toBe(true);
     expect(almanac.size).toBe(1);
@@ -283,18 +287,18 @@ describe("colorway normalization", () => {
     const bundleSingle: SaveBundle = {
       player: { items_acquired: ["animated_waterfall_v1"] },
     };
-    const { completed: completedSingle } = buildImportState(bundleSingle);
+    const { completed: completedSingle } = extractSaveProgress(bundleSingle);
     expect(completedSingle.almanac).toEqual(almanac);
   });
 });
 
-describe("validatePlayerSave", () => {
+describe("isPlayerSaveSection", () => {
   it("accepts a save containing recipe unlocks", () => {
-    expect(validatePlayerSave({ recipe_unlocks: ["ocarina_sprite_statue"] })).toBe(true);
+    expect(isPlayerSaveSection({ recipe_unlocks: ["ocarina_sprite_statue"] })).toBe(true);
   });
 });
 
-describe("validatePlayerSave rejections", () => {
+describe("isPlayerSaveSection rejections", () => {
   it.each([
     ["null", null],
     ["an array", [{ perks: [] }]],
@@ -302,7 +306,7 @@ describe("validatePlayerSave rejections", () => {
     ["null-valued record fields", { animal_variant_unlocks: null, items_sold: null }],
     ["wrongly typed list fields", { perks: "cook_perk", recipe_unlocks: { id: true } }],
   ])("rejects %s", (_label, data) => {
-    expect(validatePlayerSave(data)).toBe(false);
+    expect(isPlayerSaveSection(data)).toBe(false);
   });
 });
 
@@ -310,7 +314,7 @@ describe("malformed save fields", () => {
   const perkId = recordKeys(recordValues(trackerData.skills)[0].perkTiers[0])[0];
 
   it("drops a string list field with a warning instead of iterating its characters", () => {
-    const { completed, warnings } = buildImportState({
+    const { completed, warnings } = extractSaveProgress({
       player: { cosmetic_unlocks: [], perks: perkId },
     });
 
@@ -319,7 +323,7 @@ describe("malformed save fields", () => {
   });
 
   it("drops non-text entries from a list and keeps the rest", () => {
-    const { completed, warnings } = buildImportState({
+    const { completed, warnings } = extractSaveProgress({
       player: { perks: [perkId, 7, null, { id: perkId }] },
     });
 
@@ -328,7 +332,7 @@ describe("malformed save fields", () => {
   });
 
   it("drops wrongly shaped gamedata fields without throwing", () => {
-    const { completed, warnings } = buildImportState({
+    const { completed, warnings } = extractSaveProgress({
       gamedata: { museum_progress: { 0: "anything" }, t2_world_facts: [1, 2] },
     });
 
@@ -342,7 +346,7 @@ describe("malformed save fields", () => {
 
   it("drops null and array records with a warning", () => {
     const animalId = recordKeys(trackerData.animals)[0];
-    const { completed, warnings } = buildImportState({
+    const { completed, warnings } = extractSaveProgress({
       player: {
         animal_cosmetic_unlocks: { [animalId]: "not-a-list" },
         animal_variant_unlocks: ["not", "a", "record"],
@@ -360,7 +364,7 @@ describe("malformed save fields", () => {
   });
 
   it("never matches inherited object properties as tracker IDs", () => {
-    const { completed, warnings } = buildImportState({
+    const { completed, warnings } = extractSaveProgress({
       player: { recipe_unlocks: ["constructor", "__proto__", "toString"] },
     });
 
@@ -369,7 +373,7 @@ describe("malformed save fields", () => {
   });
 
   it("ignores an unrecognizable player section with a warning", () => {
-    const { completed, warnings } = buildImportState({
+    const { completed, warnings } = extractSaveProgress({
       player: { perks: "cook_perk" },
     });
 
@@ -384,7 +388,7 @@ describe("quest import", () => {
   );
 
   it("imports completed quests as completed", () => {
-    const { completed, warnings } = buildImportState({
+    const { completed, warnings } = extractSaveProgress({
       quests: { completed_quests: [firstQuest] },
     });
 
@@ -393,7 +397,7 @@ describe("quest import", () => {
   });
 
   it("imports active quests as obtained", () => {
-    const { completed } = buildImportState({
+    const { completed } = extractSaveProgress({
       quests: { active_quests: [{ quest_name: secondQuest }] },
     });
 
@@ -401,7 +405,7 @@ describe("quest import", () => {
   });
 
   it("keeps a quest listed in both places completed", () => {
-    const { completed } = buildImportState({
+    const { completed } = extractSaveProgress({
       quests: {
         active_quests: [{ quest_name: firstQuest }, { quest_name: secondQuest }],
         completed_quests: [firstQuest, firstQuest],
@@ -415,7 +419,7 @@ describe("quest import", () => {
   });
 
   it("warns about unknown quest IDs and nameless active entries", () => {
-    const { completed, warnings } = buildImportState({
+    const { completed, warnings } = extractSaveProgress({
       quests: {
         active_quests: [{ quest_name: "not_a_quest" }, { progress: 3 }, "loose"],
         completed_quests: ["constructor"],
@@ -431,17 +435,17 @@ describe("quest import", () => {
   });
 });
 
-describe("parseSaveFiles", () => {
+describe("parseExtractedSaveFiles", () => {
   const player = jsonFile("player.json", { perks: [] });
 
   it("ignores files with other names", async () => {
-    const result = await parseSaveFiles([player, jsonFile("info.json", { perks: [] })]);
+    const result = await parseExtractedSaveFiles([player, jsonFile("info.json", { perks: [] })]);
 
     expect(result).toEqual({ bundle: { player: { perks: [] } }, warnings: [] });
   });
 
   it("reports that no save files were recognized", async () => {
-    const result = await parseSaveFiles([jsonFile("notes.json", {})]);
+    const result = await parseExtractedSaveFiles([jsonFile("notes.json", {})]);
 
     expect(result.bundle).toBeUndefined();
     expect(result.error).toEqual({ code: "no-save-files" });
@@ -452,7 +456,7 @@ describe("parseSaveFiles", () => {
     ["a number", "3", "not-json-object"],
     ["invalid JSON", "{", "invalid-json"],
   ] as const)("rejects a file containing %s", async (_label, text, code) => {
-    const result = await parseSaveFiles([new File([text], "gamedata.json")]);
+    const result = await parseExtractedSaveFiles([new File([text], "gamedata.json")]);
 
     expect(result).toEqual({
       error: { code: "no-valid-files", problems: [{ code, file: "gamedata.json" }] },
@@ -460,7 +464,7 @@ describe("parseSaveFiles", () => {
   });
 
   it("rejects an unrecognizable player.json", async () => {
-    const result = await parseSaveFiles([jsonFile("player.json", { perks: "cook_perk" })]);
+    const result = await parseExtractedSaveFiles([jsonFile("player.json", { perks: "cook_perk" })]);
 
     expect(result).toEqual({
       error: {
@@ -472,7 +476,7 @@ describe("parseSaveFiles", () => {
 
   it("imports a partial bundle and reports the files it skipped", async () => {
     const quests = jsonFile("quests.json", { completed_quests: [] });
-    const result = await parseSaveFiles([
+    const result = await parseExtractedSaveFiles([
       quests,
       new File(["{"], "gamedata.json"),
       jsonFile("player.json", {}),

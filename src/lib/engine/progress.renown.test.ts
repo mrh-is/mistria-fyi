@@ -5,9 +5,9 @@ import { AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 
 import { getCategoryProgress } from "./progress.js";
 
-import type { CompletedState } from "#lib/types/user-progress.js";
+import type { ProgressState } from "#lib/types/user-progress.js";
 
-function completedAtRenown(renown: number): CompletedState {
+function completedAtRenown(renown: number): ProgressState {
   return makeCompletedState({ renown });
 }
 
@@ -19,7 +19,7 @@ describe("renown maximum", () => {
       worldState: { season: "spring", weather: "calm" },
     });
 
-    expect(progress).toEqual({ completed: 100, filtered: 0, total: 100 });
+    expect(progress).toEqual({ completed: 100, remainingInScope: 0, total: 100 });
   });
 
   it("normalizes progress saved above max level", () => {
@@ -29,6 +29,6 @@ describe("renown maximum", () => {
       worldState: { season: "spring", weather: "calm" },
     });
 
-    expect(progress).toEqual({ completed: 100, filtered: 0, total: 100 });
+    expect(progress).toEqual({ completed: 100, remainingInScope: 0, total: 100 });
   });
 });

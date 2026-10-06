@@ -113,7 +113,7 @@ describe("persistence lifecycle", () => {
 
     expect(storage.getItem("mistria-fyi-v1")).toBe(stored);
 
-    userState.restorePersistedState();
+    userState.loadFromStorage();
     expect(userState.state.completed.renown).toBe(25);
   });
 
@@ -131,7 +131,7 @@ describe("persistence lifecycle", () => {
     vi.resetModules();
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
+    userState.loadFromStorage();
     userState.setRenown(26);
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
@@ -159,8 +159,8 @@ describe("persistence lifecycle", () => {
     vi.resetModules();
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
-    const incomingState = JSON.parse(userState.exportState()) as {
+    userState.loadFromStorage();
+    const incomingState = JSON.parse(userState.exportBackup()) as {
       completed: { renown: number };
     };
     incomingState.completed.renown = 42;
@@ -187,8 +187,8 @@ describe("persistence lifecycle", () => {
     vi.resetModules();
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
-    const incomingState = JSON.parse(userState.exportState()) as {
+    userState.loadFromStorage();
+    const incomingState = JSON.parse(userState.exportBackup()) as {
       completed: { renown: number };
     };
     incomingState.completed.renown = 42;
@@ -220,7 +220,7 @@ describe("persistence lifecycle", () => {
     vi.resetModules();
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
+    userState.loadFromStorage();
     storage.clear();
     testWindow.dispatch("storage", { key: null, newValue: null, storageArea: storage });
     userState.setRenown(11);
@@ -242,8 +242,8 @@ describe("persistence lifecycle", () => {
     vi.resetModules();
 
     const { userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
-    const incomingState = JSON.parse(userState.exportState()) as {
+    userState.loadFromStorage();
+    const incomingState = JSON.parse(userState.exportBackup()) as {
       completed: { renown: number };
     };
     incomingState.completed.renown = 42;
@@ -262,8 +262,8 @@ describe("persistence lifecycle", () => {
     vi.resetModules();
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
-    const futureState = JSON.parse(userState.exportState()) as Record<string, unknown>;
+    userState.loadFromStorage();
+    const futureState = JSON.parse(userState.exportBackup()) as Record<string, unknown>;
     futureState.version = "3";
     const future = JSON.stringify(futureState);
     userState.setRenown(10);
@@ -289,7 +289,7 @@ describe("persistence lifecycle", () => {
     vi.resetModules();
 
     const { userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
+    userState.loadFromStorage();
     userState.setRenown(12);
     await vi.waitFor(() => {
       expect(userState.state.completed.renown).toBe(12);
@@ -312,7 +312,7 @@ describe("persistence lifecycle", () => {
     vi.resetModules();
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
+    userState.loadFromStorage();
 
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
@@ -331,10 +331,10 @@ describe("persistence lifecycle", () => {
     vi.resetModules();
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
+    userState.loadFromStorage();
 
-    expect(userState.importState(buildMinimalState(25))).toEqual({ ok: true });
-    const expected = userState.exportState();
+    expect(userState.restoreBackup(buildMinimalState(25))).toEqual({ ok: true });
+    const expected = userState.exportBackup();
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
@@ -352,7 +352,7 @@ describe("persistence lifecycle", () => {
     vi.resetModules();
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
+    userState.loadFromStorage();
     userState.resetAll();
 
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
@@ -372,8 +372,8 @@ describe("persistence lifecycle", () => {
     vi.resetModules();
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
-    expect(userState.importState(buildMinimalState(25))).toEqual({ ok: true });
+    userState.loadFromStorage();
+    expect(userState.restoreBackup(buildMinimalState(25))).toEqual({ ok: true });
 
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
@@ -389,7 +389,7 @@ describe("persistence lifecycle", () => {
     vi.resetModules();
 
     const { userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
+    userState.loadFromStorage();
     const generation = userState.persistenceFailureGeneration;
 
     userState.dismissPersistenceWarning();
@@ -407,7 +407,7 @@ describe("persistence lifecycle", () => {
     vi.resetModules();
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
+    userState.loadFromStorage();
 
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
@@ -425,7 +425,7 @@ describe("persistence lifecycle", () => {
     vi.resetModules();
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
+    userState.loadFromStorage();
 
     expect(userState.persistenceFailureGeneration).toBe(0);
 
@@ -458,7 +458,7 @@ describe("persistence lifecycle", () => {
     vi.resetModules();
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
+    userState.loadFromStorage();
 
     vi.stubGlobal("localStorage", failingStorage({ "mistria-fyi-v1": stored }));
     userState.setRenown(1);
@@ -480,7 +480,7 @@ describe("persistence lifecycle", () => {
     vi.resetModules();
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
+    userState.loadFromStorage();
 
     vi.stubGlobal("localStorage", failingStorage({ "mistria-fyi-v1": stored }));
 
