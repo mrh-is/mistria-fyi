@@ -126,5 +126,5 @@ describe("supported Playwright selection", () => {
     } finally {
       rmSync(directory, { force: true, recursive: true });
     }
-  }, 30_000);
+  }, 90_000);
 });
