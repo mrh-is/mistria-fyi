@@ -11,7 +11,7 @@ import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import ts from "typescript-eslint";
 
-import noHardcodedUiText from "./eslint-rules/no-hardcoded-ui-text.js";
+import noHardcodedUiText from "./eslint-rules/no-hardcoded-ui-text.ts";
 // Node strips the types when it imports this TypeScript module.
 import noRawInternalHref from "./eslint-rules/no-raw-internal-href.ts";
 

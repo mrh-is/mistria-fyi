@@ -2,7 +2,7 @@ import { RuleTester } from "eslint";
 import svelteParser from "svelte-eslint-parser";
 import { describe, it } from "vitest";
 
-import rule from "./no-hardcoded-ui-text.js";
+import rule from "./no-hardcoded-ui-text.ts";
 
 RuleTester.describe = describe;
 RuleTester.it = it;
