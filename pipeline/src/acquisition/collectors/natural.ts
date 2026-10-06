@@ -1,8 +1,9 @@
 import { simplifyAvailabilityCondition } from "#lib/engine/availability-condition.js";
+import { SEASONS } from "#lib/types/tracker-data.js";
 import { isNonEmptyArray } from "#lib/utils/record.js";
 
 import { PipelineDiagnostics } from "../../diagnostics.js";
-import { forEachItem } from "../../extractor-helpers.js";
+import { forEachItem, minesBiomeId } from "../../extractor-helpers.js";
 
 import type {
   ActivityId,
@@ -250,10 +251,7 @@ export function buildFishBiomeMap(fiddle: ParsedGameData): Map<string, MinesBiom
     const name = b.name as string | undefined;
     if (!name) continue;
 
-    const biomeId = name
-      .replace(/^The\s+/i, "")
-      .toLowerCase()
-      .replaceAll(/\s+/g, "_") as MinesBiomeId;
+    const biomeId = minesBiomeId(name);
 
     const votes = b.votes as Record<string, unknown> | undefined;
     const fishEntries = votes?.fish;
@@ -371,10 +369,10 @@ function collectForageSources(fiddle: ParsedGameData, accumulator: ItemSourceAcc
   const forageables = fiddle.forageables as Record<string, unknown> | undefined;
   if (!forageables) return;
 
-  const SEASONS = new Set(["fall", "spring", "summer", "winter"]);
+  const seasons = new Set<string>(SEASONS);
 
   for (const [key, data] of Object.entries(forageables)) {
-    if (SEASONS.has(key)) continue;
+    if (seasons.has(key)) continue;
     if (!Array.isArray(data)) continue;
     for (const entry of data) {
       const itemId = typeof entry === "string" ? entry : undefined;
@@ -395,7 +393,7 @@ function collectForageSources(fiddle: ParsedGameData, accumulator: ItemSourceAcc
         if (itemId) {
           accumulator.add(itemId as ItemId, {
             type: "forage",
-            availability: { type: "season", seasons: [season as Season] },
+            availability: { type: "season", seasons: [season] },
           });
         }
       }

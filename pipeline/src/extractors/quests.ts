@@ -1,6 +1,11 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { forEachQuest, QUEST_TYPE_MAP, TRACKED_QUEST_GROUPS } from "../extractor-helpers.js";
+import {
+  firstRequiredItemId,
+  forEachQuest,
+  QUEST_TYPE_MAP,
+  TRACKED_QUEST_GROUPS,
+} from "../extractor-helpers.js";
 
 import type { SourceTuple } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -100,52 +105,20 @@ function extractCookingQuestRecipeId(
   quest: Record<string, unknown>,
   recipeIdByItemId: Map<string, RecipeId> | undefined,
 ): RecipeId {
-  const stages = quest.stages as Record<string, unknown>[] | undefined;
-  if (Array.isArray(stages)) {
-    for (const stage of stages) {
-      const requirements = stage.requirements as Record<string, unknown> | undefined;
-      const hasItem = requirements?.has_item;
-      let itemId: string | undefined;
-      if (typeof hasItem === "string") {
-        itemId = hasItem;
-      } else if (Array.isArray(hasItem) && hasItem.length > 0) {
-        const first: unknown = hasItem[0];
-        if (typeof first === "object" && first !== null) {
-          itemId = Object.keys(first)[0];
-        }
-      } else if (typeof hasItem === "object" && hasItem !== null) {
-        itemId = Object.keys(hasItem)[0];
-      }
-      if (itemId) {
-        const recipeId = recipeIdByItemId?.get(itemId);
-        if (recipeId) return recipeId;
-        throw new Error(
-          `Cooking quest "${questId}" requires item "${itemId}" which has no matching recipe`,
-        );
-      }
-    }
+  const itemId = firstRequiredItemId(questId, quest);
+  if (!itemId) {
+    throw new Error(`Cooking quest "${questId}" has no has_item requirement in any stage`);
   }
-  throw new Error(`Cooking quest "${questId}" has no has_item requirement in any stage`);
+  const recipeId = recipeIdByItemId?.get(itemId);
+  if (recipeId) return recipeId;
+  throw new Error(
+    `Cooking quest "${questId}" requires item "${itemId}" which has no matching recipe`,
+  );
 }
 
 function extractFetchQuestItemId(questId: string, quest: Record<string, unknown>): string {
-  const stages = quest.stages as Record<string, unknown>[] | undefined;
-  if (Array.isArray(stages)) {
-    for (const stage of stages) {
-      const requirements = stage.requirements as Record<string, unknown> | undefined;
-      const hasItem = requirements?.has_item;
-      if (typeof hasItem === "string") return hasItem;
-      if (Array.isArray(hasItem) && hasItem.length > 0) {
-        const first: unknown = hasItem[0];
-        if (typeof first === "object" && first !== null) {
-          return Object.keys(first)[0];
-        }
-      }
-      if (typeof hasItem === "object" && hasItem !== null && !Array.isArray(hasItem)) {
-        return Object.keys(hasItem)[0];
-      }
-    }
-  }
+  const itemId = firstRequiredItemId(questId, quest);
+  if (itemId) return itemId;
   throw new Error(`Fetch quest "${questId}" has no has_item requirement in any stage`);
 }
 

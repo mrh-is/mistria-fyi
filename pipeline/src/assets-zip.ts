@@ -14,12 +14,16 @@ export function readInstalledGameVersion(assetsZipPath: string | undefined): str
   if (process.platform !== "win32" || !assetsZipPath) return undefined;
   const executablePath = join(dirname(assetsZipPath), "FieldsOfMistria.exe");
   if (!existsSync(executablePath)) return undefined;
+  // PowerShell single-quoted strings escape a quote by doubling it.
+  const quotedPath = executablePath.replaceAll("'", "''");
   const version = execFileSync(
     "powershell.exe",
     [
+      "-NoLogo",
       "-NoProfile",
+      "-NonInteractive",
       "-Command",
-      `(Get-Item -LiteralPath '${executablePath}').VersionInfo.ProductVersion`,
+      `(Get-Item -LiteralPath '${quotedPath}').VersionInfo.ProductVersion`,
     ],
     { encoding: "utf8" },
   ).trim();

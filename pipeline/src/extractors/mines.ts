@@ -1,6 +1,7 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { expectArray } from "../data-shapes.js";
+import { minesBiomeId } from "../extractor-helpers.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { SourceTuple } from "#lib/types/acquisition.js";
@@ -58,7 +59,7 @@ export function extractMines(fiddle: ParsedGameData, localizer: Localizer): Mine
       i + 1 < rawBiomes.length
         ? ((rawBiomes[i + 1].floor as number | undefined) ?? (i + 1) * 20 + 1) - 1
         : maxFloors;
-    const id = nameToId(name);
+    const id = minesBiomeId(name);
     const { values } = localizer.localizeField({
       category: "dungeons/dungeons/biomes",
       classification: "localizable",
@@ -102,11 +103,4 @@ export function extractMines(fiddle: ParsedGameData, localizer: Localizer): Mine
     `  Mines: ${biomes.length} biomes, ${lastBiome?.floors.end ?? 0} max floors, ${Object.keys(spells).length} spells`,
   );
   return { biomeLocaleNames, mines: { biomes, spells }, spellLocaleNames };
-}
-
-function nameToId(name: string): MinesBiomeId {
-  return name
-    .replace(/^The\s+/i, "")
-    .toLowerCase()
-    .replaceAll(/\s+/g, "_") as MinesBiomeId;
 }
