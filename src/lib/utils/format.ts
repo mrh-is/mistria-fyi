@@ -60,23 +60,6 @@ export type RecipeSourceLookups = Pick<TrackerData, "perkTierLevels"> & {
   treasureChestTiers: Partial<Record<TreasureChestTierId, { name: string }>>;
 };
 
-/** Shorten repetitive quest name prefixes */
-export function displayQuestName(name: string, questType: QuestType): string {
-  if (questType === "fetch") {
-    // "Request for a {item}" / "Request for {item}" → "{item}"
-    // "Important Request for a Moon Fruit" → "Moon Fruit (Important)"
-    if (name.startsWith("Important ")) {
-      return `${name.replace(/^Important Request [Ff]or (an? )?/, "")} (Important)`;
-    }
-    return name.replace(/^Request [Ff]or (an? )?/, "");
-  }
-  if (questType === "crown") {
-    // "Crown Request: {item}" or "Crown Request {item}" → "{item}"
-    return name.replace(/^Crown Request:?\s*/, "");
-  }
-  return name;
-}
-
 /** The named biome; like {@link requireEntry}, a missing biome is a data bug and throws. */
 export function findBiome<Biome extends { id: MinesBiomeId }>(
   biomeId: MinesBiomeId,
@@ -85,23 +68,6 @@ export function findBiome<Biome extends { id: MinesBiomeId }>(
   const biome = biomes.find((b) => b.id === biomeId);
   if (!biome) throw new Error(`No biome for id "${biomeId}"`);
   return biome;
-}
-
-export function formatBiomeName(
-  biomeId: MinesBiomeId,
-  biomes: RecipeSourceLookups["biomes"],
-): string {
-  const biome = findBiome(biomeId, biomes);
-  if (biome.name.startsWith("The ")) return `the ${biome.name.slice(4)}`;
-  return `the ${biome.name}`;
-}
-
-export function formatStoreName(
-  storeId: StoreId,
-  stores: Partial<Record<StoreId, { article?: "the"; name: string }>>,
-): string {
-  const store = requireEntry(stores, storeId, "stores");
-  return store.article ? `${store.article} ${store.name}` : store.name;
 }
 
 /**
@@ -176,10 +142,4 @@ export function weatherLabel(weather: Weather, season?: Season): string {
     return (WEATHER_LABEL_BY_SEASON[season][weather] ?? WEATHER_LABEL[weather])();
   }
   return WEATHER_LABEL[weather]();
-}
-
-export function withIndefiniteArticle(name: string): string {
-  const firstChar = name.charAt(0).toLowerCase();
-  const article = "aeiou".includes(firstChar) ? "an" : "a";
-  return `${article} ${name}`;
 }

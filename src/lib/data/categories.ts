@@ -1,4 +1,4 @@
-import { getName } from "#lib/data/names.js";
+import { getName, nameCollator } from "#lib/data/names.js";
 import * as m from "#lib/paraglide/messages.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -49,27 +49,27 @@ export type SearchCategoryKey = (typeof SEARCH_RESULT_CATEGORY_KEYS)[number];
 const CATEGORY_NAMES: Record<CategoryKey, (locale: LocaleCode) => string> = {
   almanac: (locale) => getName("ui", "almanac", locale),
   animals: (locale) => getName("ui", "animals", locale),
-  cosmetics: () => m.category_cosmetics_name(),
-  mines: () => m.category_mines_name(),
+  cosmetics: (locale) => m.category_cosmetics_name({}, { locale }),
+  mines: (locale) => m.category_mines_name({}, { locale }),
   museum: (locale) => getName("ui", "museum", locale),
-  quests: () => m.category_quests_name(),
-  recipes: () => m.category_recipes_name(),
+  quests: (locale) => m.category_quests_name({}, { locale }),
+  recipes: (locale) => m.category_recipes_name({}, { locale }),
   renown: (locale) => getName("ui", "renown", locale),
   skills: (locale) => getName("ui", "skills", locale),
   villagers: (locale) => getName("ui", "villagers", locale),
 };
 
 const CATEGORY_DESCRIPTIONS: Record<CategoryKey, (locale: LocaleCode) => string> = {
-  almanac: () => m.category_almanac_description(),
-  animals: () => m.category_animals_description(),
-  cosmetics: () => m.category_cosmetics_description(),
-  mines: () => m.category_mines_description(),
-  museum: () => m.category_museum_description(),
-  quests: () => m.category_quests_description(),
-  recipes: () => m.category_recipes_description(),
+  almanac: (locale) => m.category_almanac_description({}, { locale }),
+  animals: (locale) => m.category_animals_description({}, { locale }),
+  cosmetics: (locale) => m.category_cosmetics_description({}, { locale }),
+  mines: (locale) => m.category_mines_description({}, { locale }),
+  museum: (locale) => m.category_museum_description({}, { locale }),
+  quests: (locale) => m.category_quests_description({}, { locale }),
+  recipes: (locale) => m.category_recipes_description({}, { locale }),
   renown: (locale) => getName("ui", "town_rank", locale),
   skills: (locale) => getName("ui", "skill_levels", locale),
-  villagers: () => m.category_villagers_description(),
+  villagers: (locale) => m.category_villagers_description({}, { locale }),
 };
 
 const CATEGORY_HREFS: Record<CategoryKey, Path> = {
@@ -115,7 +115,10 @@ export function sortCategoryKeysByName(
   locale: LocaleCode,
 ): CategoryKey[] {
   return [...keys].toSorted((left, right) => {
-    const nameOrder = CATEGORY_NAMES[left](locale).localeCompare(CATEGORY_NAMES[right](locale));
+    const nameOrder = nameCollator(locale).compare(
+      CATEGORY_NAMES[left](locale),
+      CATEGORY_NAMES[right](locale),
+    );
     return nameOrder === 0 ? left.localeCompare(right) : nameOrder;
   });
 }
