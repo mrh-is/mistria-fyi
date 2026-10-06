@@ -52,7 +52,9 @@ for the manual steps and troubleshooting. Inside a harness-created worktree, run
 **Subagent worktrees:** an orchestrator gives each editing subagent a worktree its harness lets that
 subagent edit. In Claude Code, the session's edit guard refuses Write/Edit outside the session's own
 worktree, including `.worktrees/`, so spawn editing subagents with the Agent tool's
-`isolation: "worktree"` and have each run `pnpm run worktree:setup` first.
+`isolation: "worktree"` and have each run `pnpm run worktree:setup` first. `preview_start` by `name`
+serves the orchestrator's checkout, so a subagent previews its own dev server by URL; see
+[docs/development-workflow.md](docs/development-workflow.md#preview-from-a-subagent-worktree).
 
 **Refused edits:** if the harness refuses a file write or edit, stop and report it. Never route
 around the refusal with shell writes (heredocs, `sed -i`, `perl -i`, scripts); the guard exists to
