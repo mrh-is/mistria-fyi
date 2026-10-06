@@ -17,7 +17,6 @@ import type {
   PerkId,
   QuestId,
   StoreId,
-  TrackerData,
   VillagerId,
 } from "#lib/types/tracker-data.js";
 
@@ -657,11 +656,11 @@ export function applyReviewedOverrides(
 const DEFAULT_SOURCE: Source = { type: "default" };
 
 export function collectDefaultCosmeticSources(
-  cosmetics: TrackerData["cosmetics"],
+  cosmetics: Readonly<Record<CosmeticId, { readonly sources: readonly Source[] }>>,
   accumulator: CosmeticSourceAccumulator,
 ): void {
   for (const [id, cosmetic] of recordEntries(cosmetics)) {
-    if (cosmetic.sources?.some((src) => src.type === "default")) {
+    if (cosmetic.sources.some((src) => src.type === "default")) {
       accumulator.add(id, DEFAULT_SOURCE, {
         fieldPath: `cosmetics.${id}.default_unlocked`,
         sourcePath: "player_assets.toml",

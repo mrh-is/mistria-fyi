@@ -7,7 +7,6 @@ import {
   TRACKED_QUEST_GROUPS,
 } from "../extractor-helpers.js";
 
-import type { SourceTuple } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type {
   ItemId,
@@ -69,26 +68,24 @@ export function extractQuests(
         itemId: itemId as ItemId,
         villager: (villager ?? questId) as VillagerId,
         ...(rewardRecipeId ? { rewardRecipeId: rewardRecipeId as RecipeId } : {}),
-        sources: [] as unknown as SourceTuple,
+        sources: [],
       };
     } else if (outputType === "heart") {
       const villager = quest.npc_for_icon as string | undefined;
       const isPregnancy = questId.endsWith("_pregnancy_request");
       result.heart[questId as QuestId] = {
         heartLevel: isPregnancy ? 10 : 0,
-        sources: [] as unknown as SourceTuple,
+        sources: [],
         villager: (villager ?? extractStageQueryVillager(quest) ?? questId) as VillagerId,
       };
     } else if (outputType === "cooking") {
       const recipeId = extractCookingQuestRecipeId(questId, quest, recipeIdByItemId);
       result.cooking[questId as QuestId] = {
         recipeId,
-        sources: [] as unknown as SourceTuple,
+        sources: [],
       };
     } else {
-      (result[outputType] as Record<QuestId, { sources: SourceTuple }>)[questId as QuestId] = {
-        sources: [] as unknown as SourceTuple,
-      };
+      result[outputType][questId as QuestId] = { sources: [] };
     }
   });
 

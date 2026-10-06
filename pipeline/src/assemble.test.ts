@@ -195,6 +195,16 @@ describe("assembleTrackerData", () => {
     ).toThrow(/missing-target at items\.missing_item/);
   });
 
+  it("fails instead of emitting an item with no acquisition sources", () => {
+    const fiddle = syntheticFiddle();
+    (fiddle.misc as { ari_stats: { starting_inventory: string[] } }).ari_stats.starting_inventory =
+      [];
+
+    expect(() => assembleTrackerData(fiddle, localizer, options)).toThrow(
+      "items.turnip has no acquisition sources",
+    );
+  });
+
   it("defaults to the installed game's reviewed overrides & diagnostics", () => {
     const {
       reviewedDiagnostics: _diagnostics,

@@ -1,6 +1,6 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import type { Source, SourceTuple } from "#lib/types/acquisition.js";
+import type { Source } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type {
   Animal,
@@ -10,14 +10,19 @@ import type {
   AnimalVariantId,
   AnimalVariantTier,
   CosmeticId,
-  TrackerData,
 } from "#lib/types/tracker-data.js";
 
+import type { SourceDraft } from "../acquisition/required-sources.js";
 import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 
+/** An `Animal` whose cosmetics' sources assembly has yet to attach & check. */
+export type AnimalDraft = Omit<Animal, "cosmetics"> & {
+  cosmetics: Record<CosmeticId, SourceDraft<AnimalCosmetic>>;
+};
+
 export interface AnimalExtraction {
-  animals: TrackerData["animals"];
+  animals: Record<AnimalId, AnimalDraft>;
   localeNames: Record<LocaleCode, Record<string, string>>;
 }
 
@@ -34,7 +39,7 @@ export function extractAnimals(fiddle: ParsedGameData, localizer: Localizer): An
   const animals = ranching?.animals as Record<string, Record<string, unknown>> | undefined;
   if (!animals) return { animals: {}, localeNames };
 
-  const result = {} as Record<AnimalId, Animal>;
+  const result = {} as Record<AnimalId, AnimalDraft>;
   let skippedVariants = 0;
 
   for (const [id, animal] of Object.entries(animals)) {
@@ -85,14 +90,14 @@ export function extractAnimals(fiddle: ParsedGameData, localizer: Localizer): An
       }
     }
 
-    const cosmetics = {} as Record<CosmeticId, AnimalCosmetic>;
+    const cosmetics = {} as Record<CosmeticId, SourceDraft<AnimalCosmetic>>;
     if (rawCosmetics) {
       for (const [cid, c] of Object.entries(rawCosmetics)) {
         if (cid === "default") continue;
         const rawName = (c.name as string | undefined) ?? cid;
         const stripped = rawName.replace(new RegExp(`\\b${speciesName}\\b\\s*`, "i"), "").trim();
         const sources: Source[] = breedCosmetics.has(cid) ? [{ type: "breed" }] : [];
-        cosmetics[cid as CosmeticId] = { sources: sources as SourceTuple };
+        cosmetics[cid as CosmeticId] = { sources };
         localizeAnimalName(localeNames, localizer, id, "cosmetics", cid, stripped || rawName);
       }
     }
