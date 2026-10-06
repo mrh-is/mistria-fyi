@@ -13,7 +13,7 @@ import { collectExplorationSources } from "./acquisition/collectors/exploration.
 import { collectNaturalSources } from "./acquisition/collectors/natural.js";
 import { collectRewardSources } from "./acquisition/collectors/rewards.js";
 import { collectStoreSources } from "./acquisition/collectors/stores.js";
-import { applyExclusions } from "./acquisition/exclusions.js";
+import { getExcludedCosmeticIds } from "./acquisition/exclusions.js";
 import { collectNativeReferenceRegistries } from "./acquisition/native-references.js";
 import { deriveRecipeProductSources } from "./acquisition/recipe-products.js";
 import { AcquisitionReferenceIndex } from "./acquisition/reference-index.js";
@@ -63,6 +63,7 @@ import {
   stampVillagerVisibility,
 } from "./extractors/visibility/entity-visibility.js";
 import { extractQuestChains } from "./extractors/visibility/quest-chains.js";
+import { assertGameLanguageMapExhaustive } from "./locale-codes.js";
 import { generateLocaleManifest } from "./localize.js";
 import { parseFiddle, parseFiddleFromZip } from "./parse-fiddle.js";
 import { createRequirementContext } from "./requirements.js";
@@ -96,7 +97,6 @@ interface StagedFile {
 function buildAcquisitionReferences(
   trackerData: TrackerData,
   fiddle: ParsedGameData,
-  cosmeticsRaw: Record<string, unknown>,
 ): AcquisitionReferenceIndex {
   return AcquisitionReferenceIndex.from({
     emitted: {
@@ -105,7 +105,7 @@ function buildAcquisitionReferences(
       recipes: trackerData.recipes,
     },
     excluded: {
-      cosmetics: Object.keys(cosmeticsRaw).filter((id) => !(id in trackerData.cosmetics)),
+      cosmetics: getExcludedCosmeticIds(),
     },
     native: {
       ...collectNativeReferenceRegistries(fiddle),
@@ -152,6 +152,8 @@ async function main(): Promise<void> {
     process.exitCode = 1;
     return;
   }
+
+  assertGameLanguageMapExhaustive(assetsDir);
 
   // Prefer an already-extracted fiddle/ on disk; otherwise read straight out of assets.zip
   // (Steam's own distribution format) without ever extracting it. Either shape produces the same
@@ -270,12 +272,11 @@ async function main(): Promise<void> {
     villagers,
   } = extractVillagers(fiddle, assetsDir);
   const {
-    cosmetics: cosmeticsRaw,
+    cosmetics,
     cosmeticSlots,
     localeNames: cosmeticLocaleNames,
     subCategoryLocaleNames: cosmeticSubCategoryLocaleNames,
   } = extractCosmetics(fiddle, assetsDir);
-  const cosmetics = applyExclusions(cosmeticsRaw);
   const {
     localeNames: skillLocaleNames,
     perkLocaleNames,
@@ -494,10 +495,7 @@ async function main(): Promise<void> {
 
   // Validation is the last step before serialization: visibility assignment rewrites sources and
   // injects hard-coded quest gates, so validating any earlier would miss the emitted shape.
-  validateAcquisitionSources(
-    trackerData,
-    buildAcquisitionReferences(trackerData, fiddle, cosmeticsRaw),
-  );
+  validateAcquisitionSources(trackerData, buildAcquisitionReferences(trackerData, fiddle));
   console.log("  Tracker data validation passed");
 
   const json = JSON.stringify(trackerData);
