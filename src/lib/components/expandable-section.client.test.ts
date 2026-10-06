@@ -149,9 +149,7 @@ describe("ExpandableSection", () => {
       name: "Spells",
     });
 
-    await new Promise((resolve) => {
-      setTimeout(resolve, 50);
-    });
+    await tick();
     expect(feedbackContext.registrations.size).toBe(0);
   });
 
