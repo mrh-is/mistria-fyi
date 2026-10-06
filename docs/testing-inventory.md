@@ -73,6 +73,7 @@ single-component row's marks disagree with its test files.
 | `skill-record`               |        |     ✓      | Level editing                                             |
 | `stepper`                    |        |     ✓      | Grouped controls                                          |
 | `dialog-close-button`        |        |     ✓      | Localized close control, dismisses the dialog             |
+| `status-note`                |   ✓    |            | Tone classes; alert role for errors & warnings            |
 | `expandable-section`         |        |     ✓      | Disclosure, IDs, nesting, reporting                       |
 | `spoiler`, `spoiler-section` |        | via parent | Through `tracker-row`                                     |
 | `sprite-slot`                |        | via parent | Through `tracker-row`                                     |

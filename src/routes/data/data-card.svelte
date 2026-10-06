@@ -24,7 +24,7 @@
     <div>
       <Collapsible.Trigger class="data-card__trigger">
         <span class="flex min-w-0 flex-1 flex-col gap-0">
-          <span class="leading-none font-semibold {variant === 'danger' ? 'text-destructive' : ''}">
+          <span class="data-card__title leading-none font-semibold">
             {title}
           </span>
           <span
@@ -72,6 +72,11 @@
   .data-card--danger {
     border-color: color-mix(in srgb, var(--destructive) 35%, transparent);
     border-left-color: var(--destructive);
+  }
+
+  /* Plain --destructive falls under 4.5:1 on dark raised paper; deepen it toward the ink. */
+  .data-card--danger .data-card__title {
+    color: color-mix(in srgb, var(--destructive) 80%, var(--ink));
   }
 
   :global(.data-card__trigger) {
