@@ -4,6 +4,7 @@ import { parse } from "smol-toml";
 import { open } from "yauzl-promise";
 
 import { expectRecord } from "./data-shapes.js";
+import { compareStrings } from "./ordering.js";
 
 const SOURCE_FILE_BY_ROOT_PATH: unique symbol = Symbol("sourceFileByRootPath");
 
@@ -35,9 +36,11 @@ export function parseFiddle(assetsDir: string): ParsedGameDataResult {
   const sourceFileByRootPath = new Map<string, string>();
   const data = attachProvenance({}, sourceFileByRootPath);
 
-  walkDirectory(fiddleDir, fiddleDir, (entry) => {
+  const entries: TomlEntry[] = [];
+  walkDirectory(fiddleDir, fiddleDir, (entry) => entries.push(entry));
+  for (const entry of entries.toSorted((a, b) => compareStrings(a.relPath, b.relPath))) {
     processTomlEntry(data, sourceFileByRootPath, entry);
-  });
+  }
 
   console.log(`  Parsed ${sourceFileByRootPath.size} TOML files from ${fiddleDir}`);
   return { data, fileCount: sourceFileByRootPath.size, sourceFileByRootPath };
@@ -61,17 +64,21 @@ export async function parseFiddleFromZip(
   const sourceFileByRootPath = new Map<string, string>();
   const data = attachProvenance({}, sourceFileByRootPath);
 
+  const entries: TomlEntry[] = [];
   const zipFile = await open(zipPath);
   try {
     for await (const entry of zipFile) {
       const tomlEntry = await zipEntryToTomlEntry(entry, paths);
       if (!tomlEntry) continue;
-      processTomlEntry(data, sourceFileByRootPath, tomlEntry);
+      entries.push(tomlEntry);
     }
   } finally {
     await zipFile.close();
   }
 
+  for (const entry of entries.toSorted((a, b) => compareStrings(a.relPath, b.relPath))) {
+    processTomlEntry(data, sourceFileByRootPath, entry);
+  }
   console.log(`  Parsed ${sourceFileByRootPath.size} TOML files from ${zipPath}`);
   return { data, fileCount: sourceFileByRootPath.size, sourceFileByRootPath };
 }
@@ -122,7 +129,7 @@ function assertNoCollision(
   );
   if (conflictingKey) {
     throw new Error(
-      `Duplicate or colliding TOML destinations "${conflictingKey}" and "${sourceKey}" from ${relPath}`,
+      `Duplicate or colliding TOML destinations "${conflictingKey}" and "${sourceKey}" from ${sourceFileByRootPath.get(conflictingKey)} and ${relPath}`,
     );
   }
 }
@@ -189,7 +196,7 @@ function setNestedValue(
 }
 
 function walkDirectory(dir: string, rootDir: string, onEntry: (entry: TomlEntry) => void): void {
-  const entries = readdirSync(dir);
+  const entries = readdirSync(dir).toSorted(compareStrings);
 
   for (const entry of entries) {
     const fullPath = join(dir, entry);

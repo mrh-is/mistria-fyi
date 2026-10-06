@@ -40,7 +40,7 @@ describe("parseFiddle", () => {
     });
 
     expect(() => parseFiddle(assetsDir)).toThrow(
-      /items\.toml[\s\S]*items[\s\S]*items\.crops|items\.crops[\s\S]*items[\s\S]*items\.toml/,
+      /"items"[\s\S]*"items\.crops"[\s\S]*items\.toml[\s\S]*items\/crops\.toml/,
     );
   });
 
@@ -57,6 +57,24 @@ describe("parseFiddle", () => {
 });
 
 describe("parseFiddleFromZip", () => {
+  it("registers disk and shuffled zip inputs in the same stable order", async () => {
+    const files = Object.fromEntries([
+      ["zebra.toml", "value = 1"],
+      ["alpha/zebra.toml", "value = 2"],
+      ["alpha/ant.toml", "value = 3"],
+    ]);
+    const disk = parseFiddle(createAssetsFixture(files));
+    const zip = await parseFiddleFromZip(
+      writeStoredZipFixture(
+        Object.fromEntries(
+          Object.entries(files).map(([path, text]) => [`assets/fiddle/${path}`, text]),
+        ),
+      ),
+    );
+    expect([...zip.sourceFileByRootPath.keys()]).toEqual(["alpha.ant", "alpha.zebra", "zebra"]);
+    expect(JSON.stringify(zip.data)).toBe(JSON.stringify(disk.data));
+  });
+
   it("reads fiddle/ TOML entries straight out of the zip, producing the same shape as parseFiddle", async () => {
     const zipPath = writeStoredZipFixture({
       "assets/animations/UI NEW/Generic/Icons/NPC/spr_ui_generic_icon_npc_adeline.png": "binary",
