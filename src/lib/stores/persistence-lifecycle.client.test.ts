@@ -433,7 +433,7 @@ describe("persistence lifecycle", () => {
     vi.stubGlobal("localStorage", failingStorage({ "mistria-fyi-v1": stored }));
 
     // Trigger a state change that fires the auto-save effect
-    userState.state.completed.renown = 1;
+    userState.setRenown(1);
     // Flush the 300ms debounce
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
@@ -443,7 +443,7 @@ describe("persistence lifecycle", () => {
     expect(gen1).toBeGreaterThan(0);
 
     // Second failure should produce a new generation
-    userState.state.completed.renown = 2;
+    userState.setRenown(2);
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
@@ -461,7 +461,7 @@ describe("persistence lifecycle", () => {
     userState.restorePersistedState();
 
     vi.stubGlobal("localStorage", failingStorage({ "mistria-fyi-v1": stored }));
-    userState.state.completed.renown = 1;
+    userState.setRenown(1);
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
@@ -485,7 +485,7 @@ describe("persistence lifecycle", () => {
     vi.stubGlobal("localStorage", failingStorage({ "mistria-fyi-v1": stored }));
 
     // First failure
-    userState.state.completed.renown = 1;
+    userState.setRenown(1);
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
     expect(userState.persistenceFailed).toBe(true);
@@ -495,7 +495,7 @@ describe("persistence lifecycle", () => {
     expect(userState.persistenceFailed).toBe(false);
 
     // Another failure after dismiss
-    userState.state.completed.renown = 2;
+    userState.setRenown(2);
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 

@@ -4,6 +4,7 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 
 import { createSpoilerGuard } from "./spoiler-guard.svelte.js";
 
+import type { VillagerId } from "#lib/types/tracker-data.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
 const FLOOR_CONDITION: VisibilityCondition = { type: "minesLevel", floor: 12 };
@@ -82,6 +83,24 @@ describe("createSpoilerGuard", () => {
     expect(userState.state.completed.mines.floor).toBe(12);
     expect(guard.open).toBe(false);
     expect(guard.condition).toBeNull();
+  });
+
+  it("applies level caps through store setters before running the action", () => {
+    const guard = createSpoilerGuard();
+    guard.guard({ type: "renownLevel", level: 1_000_000 }, () => {
+      expect(userState.state.completed.renown).toBeLessThan(1_000_000);
+    });
+    guard.completeAndUpdate();
+  });
+
+  it("resets child choice when satisfying a new marriage", () => {
+    const villagerId = "holt" as VillagerId;
+    userState.setChildChoice("yes");
+    const guard = createSpoilerGuard();
+    guard.guard({ type: "married", villagerId }, vi.fn());
+    guard.completeAndUpdate();
+    expect(userState.state.completed.villagerRelationships[villagerId]).toBe("married");
+    expect(userState.state.completed.childChoice).toBe("undeclared");
   });
 
   it("completeAndUpdate with no condition still runs the action", () => {

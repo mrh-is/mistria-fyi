@@ -6,6 +6,7 @@ import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { recordEntries, recordKeys } from "#lib/utils.js";
 
 import type { CompletedState } from "#lib/types/user-progress.js";
+import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 const STORAGE_KEY = "mistria-fyi-v1";
 const UNKNOWN_ID = "removed_from_tracker_data";
@@ -144,7 +145,7 @@ function buildStoredState(
   });
 }
 
-function expectUnknownIdsRemoved(completed: CompletedState): void {
+function expectUnknownIdsRemoved(completed: DeepReadonly<CompletedState>): void {
   expect(completed.almanac).not.toContain(UNKNOWN_ID);
   expect(completed.almanacRecipes).not.toContain(UNKNOWN_ID);
   expect(completed.cosmetics).not.toContain(UNKNOWN_ID);

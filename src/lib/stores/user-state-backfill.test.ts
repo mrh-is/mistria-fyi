@@ -10,6 +10,7 @@ import { recordKeys } from "#lib/utils.js";
 
 import type { AnimalId, AnimalVariantId, CosmeticId } from "#lib/types/tracker-data.js";
 import type { CompletedState } from "#lib/types/user-progress.js";
+import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 const ALL_ANIMAL_IDS = recordKeys(trackerData.animals);
 
@@ -178,7 +179,7 @@ describe("animal map backfill on merge", () => {
   });
 });
 
-async function getBackfilledState(): Promise<CompletedState> {
+async function getBackfilledState(): Promise<DeepReadonly<CompletedState>> {
   vi.useFakeTimers();
   vi.stubGlobal("window", {});
   vi.stubGlobal("localStorage", makeStorage(buildStoredState()));
