@@ -1,5 +1,6 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
+import { titleCase } from "../extractor-helpers.js";
 import { localizeField } from "../localize.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -54,7 +55,7 @@ export function extractSkills(
   const skills = {} as Record<SkillId, Skill>;
   for (const id of Object.keys(skillsData)) {
     if (id === "default") continue;
-    const name = (skillsData[id].name as string | undefined) ?? snakeToTitle(id);
+    const name = (skillsData[id].name as string | undefined) ?? titleCase(id);
     const perkTiers = buildPerkTiers(id, skillMenus, perksData, assetsDir, perkLocaleNames);
     skills[id as SkillId] = { perkTiers };
 
@@ -115,11 +116,4 @@ function buildPerkTiers(
   }
 
   return tiers;
-}
-
-function snakeToTitle(s: string): string {
-  return s
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
 }
