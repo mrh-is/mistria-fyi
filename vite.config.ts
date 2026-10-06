@@ -31,8 +31,8 @@ const contentSecurityPolicy = cspDirectives(spriteAssetBase);
 /**
  * Vite resolves `#lib/*` through the nearest package.json's `imports` field. For files under
  * `pipeline/`, that's `pipeline/package.json`, which has none, so map it explicitly (the pipeline's
- * tsconfig does the same for tsx). The `assets` test project doesn't extend this config, so it
- * repeats the alias.
+ * tsconfig does the same for tsx). The plain-Node test projects don't extend this config, so they
+ * repeat the alias.
  */
 const libAlias = [
   { find: /^#lib\//u, replacement: `${fileURLToPath(new URL("src/lib", import.meta.url))}/` },
@@ -44,6 +44,12 @@ const sharedTestExcludes = [
   "**/.claude/worktrees/**",
   "**/.pnpm-store/**",
 ];
+
+/**
+ * The root test options a plain-Node project would otherwise inherit with `extends: true`. Those
+ * projects skip the app's Vite plugins (SvelteKit, Tailwind, Paraglide), so they restate these.
+ */
+const plainNodeTestOptions = { isolate: true, restoreMocks: true, unstubGlobals: true };
 
 /**
  * Cloudflare Pages caps `_routes.json` at 100 rules. The adapter's default `<files>` exclusion
@@ -138,16 +144,23 @@ export default defineConfig({
         },
       },
       {
-        // Pipeline, build scripts, & repo-level checks: plain Node, no SvelteKit stand-ins.
-        extends: true,
+        // The data pipeline: plain Node without the app's plugins, the same environment as the
+        // `assets` project.
+        resolve: { alias: libAlias },
         test: {
+          ...plainNodeTestOptions,
           exclude: [...sharedTestExcludes, "**/*.assets.test.ts"],
-          include: [
-            "eslint-rules/**/*.test.ts",
-            "pipeline/**/*.test.ts",
-            "scripts/**/*.test.ts",
-            "tests/**/*.test.ts",
-          ],
+          include: ["pipeline/**/*.test.ts"],
+          name: "pipeline",
+        },
+      },
+      {
+        // Build scripts, lint rules, & repo-level checks: plain Node without the app's plugins.
+        resolve: { alias: libAlias },
+        test: {
+          ...plainNodeTestOptions,
+          exclude: [...sharedTestExcludes, "**/*.assets.test.ts"],
+          include: ["eslint-rules/**/*.test.ts", "scripts/**/*.test.ts", "tests/**/*.test.ts"],
           name: "node",
         },
       },
@@ -158,7 +171,7 @@ export default defineConfig({
           // Other files, including tests that mock shared packages, use the isolated app project.
           exclude: sharedTestExcludes,
           include: ["src/**/*.cold.test.ts"],
-          name: "mocked",
+          name: "cold",
         },
       },
       {
@@ -181,13 +194,11 @@ export default defineConfig({
         // Needs the installed game assets, so CI never runs it; `pnpm run test` excludes it.
         resolve: { alias: libAlias },
         test: {
+          ...plainNodeTestOptions,
           exclude: sharedTestExcludes,
           globalSetup: ["pipeline/src/assets-test-setup.ts"],
           include: ["**/*.assets.test.ts"],
-          isolate: true,
           name: "assets",
-          restoreMocks: true,
-          unstubGlobals: true,
         },
       },
     ],

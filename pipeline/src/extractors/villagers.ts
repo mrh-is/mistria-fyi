@@ -34,7 +34,7 @@ interface RawVillagerRecord {
 /**
  * Builds only the villager icon-sprite index, with no localization lookup and no disk reads beyond
  * `fiddle` itself. Lets sprite-only pipeline runs work directly off `assets.zip` (see
- * `pnpm run pipeline -- <path> --sprites-only` in `pipeline/README.md`), where per-locale name
+ * `pnpm run pipeline -- <path> --villager-sprites-only` in `pipeline/README.md`), where per-locale name
  * files aren't available without a full on-disk asset extraction.
  */
 export function extractVillagerIconSprites(fiddle: ParsedGameData): VillagerIconSpriteIndex {

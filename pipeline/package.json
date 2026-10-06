@@ -2,9 +2,6 @@
   "name": "mistria-fyi-pipeline",
   "private": true,
   "type": "module",
-  "scripts": {
-    "generate": "tsx src/main.ts"
-  },
   "dependencies": {
     "smol-toml": "^1.8.0"
   }
