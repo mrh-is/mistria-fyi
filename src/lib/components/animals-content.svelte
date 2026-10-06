@@ -1,6 +1,7 @@
 <script lang="ts">
   import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
+  import { isCategoryComplete } from "#lib/engine/progress.js";
   import { isEntityNameVisible } from "#lib/engine/visibility.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
 
@@ -15,23 +16,12 @@
     AnimalVariant,
     AnimalVariantId,
     CosmeticId,
-    PetCosmeticSetId,
-    PetSkinId,
   } from "#lib/types/tracker-data.js";
 
   let { locale }: { locale: LocaleCode } = $props();
 
   function areAllAnimalsComplete(): boolean {
-    const allAnimals = Object.keys(trackerData.animals).every((id) =>
-      isAnimalComplete(id as AnimalId),
-    );
-    const allPetCosmetics = Object.keys(trackerData.pets.cosmetics).every((id) =>
-      userState.state.completed.petCosmetics.has(id as PetCosmeticSetId),
-    );
-    const allPetSkins = Object.keys(trackerData.pets.skins).every((id) =>
-      userState.state.completed.petSkins.has(id as PetSkinId),
-    );
-    return allAnimals && allPetCosmetics && allPetSkins;
+    return isCategoryComplete("animals", userState.state);
   }
 
   function hasCompletedCosmetic(animalId: AnimalId, cosmeticId: CosmeticId): boolean {

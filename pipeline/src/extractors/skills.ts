@@ -1,11 +1,11 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { titleCase } from "../extractor-helpers.js";
-import { localizeField } from "../localize.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { PerkId, PerkTier, Skill, SkillId, TrackerData } from "#lib/types/tracker-data.js";
 
+import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 
 /**
@@ -14,7 +14,7 @@ import type { ParsedGameData } from "../parse-fiddle.js";
  */
 export function extractSkills(
   fiddle: ParsedGameData,
-  assetsDir: string,
+  localizer: Localizer,
 ): {
   localeNames: Record<LocaleCode, Record<SkillId, string>>;
   perkLocaleNames: Record<LocaleCode, Record<PerkId, string>>;
@@ -56,10 +56,10 @@ export function extractSkills(
   for (const id of Object.keys(skillsData)) {
     if (id === "default") continue;
     const name = (skillsData[id].name as string | undefined) ?? titleCase(id);
-    const perkTiers = buildPerkTiers(id, skillMenus, perksData, assetsDir, perkLocaleNames);
+    const perkTiers = buildPerkTiers(id, skillMenus, perksData, localizer, perkLocaleNames);
     skills[id as SkillId] = { perkTiers };
 
-    const { values } = localizeField(assetsDir, {
+    const { values } = localizer.localizeField({
       category: "ui/skill_menu",
       classification: "localizable",
       englishValue: name,
@@ -81,7 +81,7 @@ function buildPerkTiers(
   skillId: string,
   skillMenus: Record<string, Record<string, unknown>> | undefined,
   perksData: Record<string, Record<string, unknown>> | undefined,
-  assetsDir: string,
+  localizer: Localizer,
   perkLocaleNames: Record<LocaleCode, Record<PerkId, string>>,
 ): [PerkTier, PerkTier, PerkTier, PerkTier, PerkTier] {
   const tiers: [PerkTier, PerkTier, PerkTier, PerkTier, PerkTier] = [{}, {}, {}, {}, {}];
@@ -104,7 +104,7 @@ function buildPerkTiers(
       }
 
       tiers[tierIdx][perkId as PerkId] = {};
-      const { values } = localizeField(assetsDir, {
+      const { values } = localizer.localizeField({
         category: "perks",
         classification: "localizable",
         englishValue: name,

@@ -2,6 +2,7 @@ import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { animalNameId, getName, nameCollator } from "#lib/data/names.js";
 import { isItemApplicable, isItemApplicableForAlmanac } from "#lib/engine/applicability.js";
 import { isItemAvailable } from "#lib/engine/availability.js";
+import { PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
 import { isVillagerComplete } from "#lib/engine/progress.js";
 import { isVisible } from "#lib/engine/visibility.js";
 import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
@@ -11,7 +12,7 @@ import { recordEntries } from "#lib/utils/record.js";
 import type { SearchCategoryKey } from "#lib/data/categories.js";
 import type { UserProgressionState } from "#lib/engine/visibility.js";
 import type { LocaleCode } from "#lib/types/locale.js";
-import type { ItemId, QuestId, Season, Weather } from "#lib/types/tracker-data.js";
+import type { ItemId, Season, Weather } from "#lib/types/tracker-data.js";
 import type { CompletedState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
@@ -255,14 +256,9 @@ const SEARCH_SOURCES: readonly SearchSource[] = [
 
   // Pregnancy quests are surfaced through their villager, not individually
   function* quests({ completed, locale, progressionState }) {
-    const pregnancyQuestIds = new Set(
-      Object.values(trackerData.pregnancyQuestByVillager).filter(
-        (id): id is QuestId => id !== undefined,
-      ),
-    );
     for (const [, byType] of recordEntries(trackerData.quests)) {
       for (const [id, quest] of recordEntries(byType)) {
-        if (pregnancyQuestIds.has(id)) continue;
+        if (PREGNANCY_QUEST_IDS.has(id)) continue;
         if (quest.visibility && !isVisible(quest.visibility, progressionState)) continue;
         const name = getName("quests", id, locale);
         yield {

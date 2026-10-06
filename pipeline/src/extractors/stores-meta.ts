@@ -1,10 +1,9 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { localizeField } from "../localize.js";
-
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { StoreId, TrackerData } from "#lib/types/tracker-data.js";
 
+import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 
 const KNOWN_STORES: Record<string, { article?: "the" }> = {
@@ -33,7 +32,7 @@ const UPGRADE_ACTIONS: Partial<Record<string, string>> = {
 
 export function extractStoresMeta(
   fiddle: ParsedGameData,
-  assetsDir: string,
+  localizer: Localizer,
 ): { localeNames: Record<LocaleCode, Record<StoreId, string>>; stores: TrackerData["stores"] } {
   const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
     LocaleCode,
@@ -64,7 +63,7 @@ export function extractStoresMeta(
       ...(known.article ? { article: known.article } : {}),
       ...(upgradeAction ? { upgradeAction } : {}),
     };
-    const { values } = localizeField(assetsDir, {
+    const { values } = localizer.localizeField({
       category: "stores",
       classification: "localizable",
       englishValue: name,

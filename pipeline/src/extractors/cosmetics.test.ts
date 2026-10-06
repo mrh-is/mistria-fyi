@@ -1,29 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { makeFiddle } from "../test-helpers.js";
+import { makeFiddle, stubLocalizer } from "../test-helpers.js";
 import { extractCosmetics } from "./cosmetics.js";
 
-vi.mock("../parse-fiddle.js", () => ({
-  sourceFileFor: () => "mock-source.toml",
-}));
-
-const localizeField = vi.hoisted(() =>
-  vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
-    fallbackLocales: [],
-    values: {
-      en: input.englishValue,
-      es: input.englishValue,
-      fr: input.englishValue,
-      ja: `JA ${input.englishValue}`,
-      ko: input.englishValue,
-      ru: input.englishValue,
-      "zh-Hans": input.englishValue,
-      "zh-Hant": input.englishValue,
-    },
-  })),
+const localizer = stubLocalizer((input, locale) =>
+  locale === "ja" ? `JA ${input.englishValue}` : undefined,
 );
-
-vi.mock("../localize.js", () => ({ localizeField }));
+const { localizeField } = localizer;
 
 // Built from entries so the game's (non-alphabetical) section order is what the extractor sees.
 const customization = Object.fromEntries([
@@ -47,7 +30,10 @@ describe("extractCosmetics sub-categories", () => {
       ui: { character_customization: customization },
     });
 
-    const { cosmetics, cosmeticSlots, subCategoryLocaleNames } = extractCosmetics(fiddle, "assets");
+    const { cosmetics, cosmeticSlots, subCategoryLocaleNames } = extractCosmetics(
+      fiddle,
+      localizer,
+    );
 
     expect(cosmetics).toEqual({
       bob_cut: { slot: "hair", sources: [], subCategory: "medium_hair" },
@@ -60,7 +46,7 @@ describe("extractCosmetics sub-categories", () => {
       short_hair: "Short Hair",
     });
     expect(subCategoryLocaleNames.ja.medium_hair).toBe("JA Medium Hair");
-    expect(localizeField).toHaveBeenCalledWith("assets", {
+    expect(localizeField).toHaveBeenCalledWith({
       category: "ui/character_customization/hair",
       classification: "localizable",
       englishValue: "Medium Hair",
@@ -78,7 +64,7 @@ describe("extractCosmetics sub-categories", () => {
       ui: { character_customization: customization },
     });
 
-    expect(() => extractCosmetics(fiddle, "assets")).toThrow(/"mystery_hair" with no entry/);
+    expect(() => extractCosmetics(fiddle, localizer)).toThrow(/"mystery_hair" with no entry/);
   });
 
   it("throws on a ui_sub_category that belongs to a different slot", () => {
@@ -89,7 +75,7 @@ describe("extractCosmetics sub-categories", () => {
       ui: { character_customization: customization },
     });
 
-    expect(() => extractCosmetics(fiddle, "assets")).toThrow(
+    expect(() => extractCosmetics(fiddle, localizer)).toThrow(
       /"medium_hair" with no entry under "eyes"/,
     );
   });
@@ -102,7 +88,7 @@ describe("extractCosmetics sub-categories", () => {
       ui: { character_customization: customization },
     });
 
-    expect(() => extractCosmetics(fiddle, "assets")).toThrow(/ui_slot "bottom" with no section/);
+    expect(() => extractCosmetics(fiddle, localizer)).toThrow(/ui_slot "bottom" with no section/);
   });
 
   it("throws on a cosmetic with no ui_sub_category", () => {
@@ -111,6 +97,6 @@ describe("extractCosmetics sub-categories", () => {
       ui: { character_customization: customization },
     });
 
-    expect(() => extractCosmetics(fiddle, "assets")).toThrow(/ui_sub_category undefined/);
+    expect(() => extractCosmetics(fiddle, localizer)).toThrow(/ui_sub_category undefined/);
   });
 });

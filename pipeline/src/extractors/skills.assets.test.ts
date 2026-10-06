@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { createAssetsLocalizer } from "../localize.js";
 import { parseFiddle } from "../parse-fiddle.js";
 import { requireGameAssetsDir } from "../test-helpers.js";
 import { extractSkills } from "./skills.js";
@@ -11,7 +12,10 @@ const farming = "farming" as SkillId;
 describe("extractSkills — real assets", () => {
   it("uses ui/skill_menu/<id>/name translations for skill display names", () => {
     const assetsDir = requireGameAssetsDir();
-    const { localeNames, skills } = extractSkills(parseFiddle(assetsDir).data, assetsDir);
+    const { localeNames, skills } = extractSkills(
+      parseFiddle(assetsDir).data,
+      createAssetsLocalizer(assetsDir),
+    );
 
     expect(skills[farming]).toStrictEqual(
       expect.objectContaining({ perkTiers: expect.any(Array) }),
