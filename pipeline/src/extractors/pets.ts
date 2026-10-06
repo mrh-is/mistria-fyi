@@ -47,6 +47,12 @@ export function extractPetCosmetics(
   return { cosmetics: result, localeNames };
 }
 
+/**
+ * Every locale names a pet skin item “<Pet Skin>: <name>”, with its own translation of the label
+ * and an ASCII or full-width colon (“Apparence d'animal : magmatou”, “ペットスキン：ナエネミー”).
+ */
+const PET_SKIN_ITEM_PREFIX = /^[^:：]+[:：]\s*/u;
+
 export function extractPetSkins(
   fiddle: ParsedGameData,
   itemLocaleNames: Record<LocaleCode, Record<string, string>>,
@@ -66,13 +72,16 @@ export function extractPetSkins(
 
     const skinId = skinUnlock as PetSkinId;
     result[skinId] = { sources: [] };
-    const englishName = itemLocaleNames.en[itemId];
-    if (!englishName) throw new Error(`Pet skin "${skinUnlock}" has no localized item "${itemId}"`);
     for (const locale of LOCALE_CODES) {
       const name = itemLocaleNames[locale][itemId];
       if (!name) throw new Error(`Pet skin "${skinUnlock}" has no "${locale}" item name`);
+      const skinName = name.replace(PET_SKIN_ITEM_PREFIX, "");
+      if (skinName === name || !skinName) {
+        throw new Error(`Pet skin item "${itemId}" has no "Pet Skin:" prefix in "${locale}"`);
+      }
+      // The game lowercases the name after the label (“jeune pousse”); it stands alone here.
       localeNames[locale][skinId] =
-        locale === "en" || name === englishName ? name.replace(/^Pet Skin:\s*/i, "") : name;
+        skinName.charAt(0).toLocaleUpperCase(locale) + skinName.slice(1);
     }
   });
 

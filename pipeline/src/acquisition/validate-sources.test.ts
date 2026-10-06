@@ -91,6 +91,45 @@ describe("validateAcquisitionSources", () => {
     }).toThrow(AcquisitionSourceValidationError);
   });
 
+  it.each([
+    { type: "scroll_bundle", bundleItemId: "bundle", storeId: "general" },
+    { type: "upgrade", storeId: "general", upgradeId: "stairs" },
+  ])("accepts a valid $type source", (source) => {
+    const trackerData = {
+      cosmetics: {},
+      items: { bundle: { sources: [{ type: "default" }] }, reward: { sources: [source] } },
+      recipes: {},
+    };
+    const references = AcquisitionReferenceIndex.from({
+      emitted: { items: trackerData.items },
+      native: { stores: { general: {} } },
+    });
+
+    expect(() => {
+      validateAcquisitionSources(assembly(trackerData), references);
+    }).not.toThrow();
+  });
+
+  it.each([
+    [
+      { type: "scroll_bundle", bundleItemId: "Chess Piece Scroll Bundle", storeId: "general" },
+      'Unknown item ID "Chess Piece Scroll Bundle"',
+    ],
+    [{ type: "upgrade", storeId: "general", upgradeId: "House Stairs" }, "Expected an upgrade id"],
+  ])("rejects a $type source naming its target by English label", (source, message) => {
+    const trackerData = {
+      cosmetics: {},
+      items: { reward: { sources: [source] } },
+      recipes: {},
+    };
+    const references = AcquisitionReferenceIndex.from({
+      emitted: { items: trackerData.items },
+      native: { stores: { general: {} } },
+    });
+
+    expect(captureDiagnostics(trackerData, references).map((d) => d.message)).toContain(message);
+  });
+
   it("accepts an assembled fixture with emitted and non-emitted native references", () => {
     const trackerData = {
       almanac: {},

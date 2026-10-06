@@ -2,7 +2,6 @@ import { trackerData } from "#lib/data/index.js";
 import { getName, getNameTable } from "#lib/data/names.js";
 import {
   buildAnimalNames,
-  buildBundleNames,
   buildLocationNames,
   buildMonsterNames,
   buildUnnamedSourceNames,
@@ -51,7 +50,6 @@ const localizedBaseSegmentLookups = new Map<LocaleCode, Pick<SegmentLookups, Loc
 type LocalizedLookupKey =
   | "animalNames"
   | "biomes"
-  | "bundleNames"
   | "festivals"
   | "itemNames"
   | "locationNames"
@@ -102,7 +100,9 @@ export const SEGMENT_LOOKUP_NAME_CHUNKS = [
   "animals",
   "festivals",
   "items",
+  "locations",
   "mines",
+  "monsters",
   "museum_wings",
   "villagers",
   "perks",
@@ -127,7 +127,6 @@ function getLocalizedBaseSegmentLookups(
       ...biome,
       name: getName("mines", biome.id, locale),
     })),
-    bundleNames: buildBundleNames(locale),
     festivals: Object.fromEntries(
       recordEntries(trackerData.festivals).map(([id, festival]) => [
         id,

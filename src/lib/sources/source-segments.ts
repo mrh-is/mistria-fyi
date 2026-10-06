@@ -7,7 +7,12 @@ import {
 } from "#lib/utils/en-grammar.js";
 import { requireBiome, requireEntry } from "#lib/utils/format.js";
 
-import type { AvailabilityCondition, ProductionMethod, Source } from "#lib/types/acquisition.js";
+import type {
+  AvailabilityCondition,
+  ProductionMethod,
+  Source,
+  UpgradeId,
+} from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type {
   LocationId,
@@ -17,6 +22,7 @@ import type {
   QuestType,
   Season,
   StoreId,
+  StoreUpgradeAction,
   TrackerData,
   VillagerId,
   WaterType,
@@ -27,8 +33,6 @@ import type { BaseSegmentLookups, NameLookup } from "#lib/utils/format.js";
 export type SegmentLookups = BaseSegmentLookups &
   Pick<TrackerData, "categoryVisibility"> & {
     animalNames: NameLookup<TrackerData["animals"]>;
-    /** Localized scroll bundle names, keyed by the English `bundleName` a source carries. */
-    bundleNames: Partial<Record<string, string>>;
     entityVisibility?: VisibilityCondition;
     itemVisibility: VisibilityLookup<TrackerData["items"]>;
     /** The locale every message & name in these lookups renders in. */
@@ -82,23 +86,18 @@ const RECIPE_METHOD_MESSAGES: Record<
   smith: m.source_recipe_smith,
 };
 
-/** Keyed by `upgradeName`, which the pipeline emits as either an id or an English label. */
-const UPGRADE_MESSAGES: Partial<
-  Record<string, (inputs: Record<string, never>, options: { locale: LocaleCode }) => string>
-> = {
+type FixedMessage = (inputs: Record<string, never>, options: { locale: LocaleCode }) => string;
+
+const UPGRADE_MESSAGES: Record<UpgradeId, FixedMessage> = {
   adept_kitchen: m.source_upgrade_adept_kitchen,
   cozy_kitchen: m.source_upgrade_cozy_kitchen,
   farm_bridge: m.source_upgrade_farm_bridge,
-  "House Stairs": m.source_upgrade_stairs,
   stairs: m.source_upgrade_stairs,
-  "Starter Farm Bridge": m.source_upgrade_farm_bridge,
 };
 
-/** Keyed by the English `upgradeAction` the pipeline emits for a store; absent means upgrading. */
-const STORE_ACTION_CLAUSES: Partial<
-  Record<string, (inputs: Record<string, never>, options: { locale: LocaleCode }) => string>
-> = {
-  repairing: m.source_clause_repairing,
+/** A store's `upgradeAction`; a store without one reads as upgrading. */
+const STORE_ACTION_CLAUSES: Record<StoreUpgradeAction, FixedMessage> = {
+  repair: m.source_clause_repairing,
 };
 
 const SLOT_MARKER = /(\d+)/;
@@ -341,7 +340,7 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
     case "scroll_bundle": {
       const storeName = buildStoreName(source.storeId, lookups);
       const qualifier = buildStoreQualifier(source, lookups);
-      const bundleName = lookups.bundleNames[source.bundleName] ?? source.bundleName;
+      const bundleName = requireEntry(lookups.itemNames, source.bundleItemId, "itemNames");
       const bundleSegment: SourceSegment =
         lookups.entityVisibility && lookups.entityVisibility.type !== "always"
           ? { condition: lookups.entityVisibility, unspoilered: [bundleName] }
@@ -380,12 +379,9 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
       const sapling = requireEntry(lookups.itemNames, source.saplingItemId, "itemNames");
       return [m.source_tree({ sapling }, opts)];
     }
-    case "upgrade": {
-      const message = UPGRADE_MESSAGES[source.upgradeName];
-      return [
-        message ? message({}, opts) : m.source_upgrade_other({ upgrade: source.upgradeName }, opts),
-      ];
-    }
+    case "upgrade":
+      return [UPGRADE_MESSAGES[source.upgradeId]({}, opts)];
+
     case "wedding":
       return [m.source_wedding({}, opts)];
     case "wishing_well":
@@ -841,9 +837,8 @@ function plainPerkLabel(perkId: PerkId, lookups: SegmentLookups): string {
   return m.source_perk_label({ perk: perk.name, skill, tier: String(perk.tier) }, { locale });
 }
 
-function storeActionClause(action: string | undefined, locale: LocaleCode): string {
-  if (action === undefined) return m.source_clause_upgrading({}, { locale });
-  return STORE_ACTION_CLAUSES[action]?.({}, { locale }) ?? action;
+function storeActionClause(action: StoreUpgradeAction | undefined, locale: LocaleCode): string {
+  return (action ? STORE_ACTION_CLAUSES[action] : m.source_clause_upgrading)({}, { locale });
 }
 
 function visibilityContains(
