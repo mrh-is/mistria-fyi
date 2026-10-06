@@ -132,18 +132,22 @@ export function appendToMultimap<K, V>(map: Map<K, V[]>, key: K, value: V): void
 }
 
 /**
- * The first item ID a quest’s stages require through `has_item`, scanning stages in order.
- * `has_item` may be an item ID, an `{ itemId = count }` table, or an array of either; the first
- * ID found wins.
+ * The item ID the first `has_item` requirement in a quest’s stages names. `has_item` must be an
+ * item ID, an `{ itemId = count }` table, or a non-empty array of such tables (whose first wins);
+ * any other shape, including an empty table or array, throws rather than guessing.
  */
-export function firstRequiredItemId(quest: Record<string, unknown>): string | undefined {
+export function firstRequiredItemId(
+  questId: string,
+  quest: Record<string, unknown>,
+): string | undefined {
   const stages = Array.isArray(quest.stages) ? (quest.stages as unknown[]) : [];
-  for (const stage of stages) {
+  for (const [index, stage] of stages.entries()) {
     if (typeof stage !== "object" || stage === null) continue;
     const requirements = (stage as Record<string, unknown>).requirements;
     if (typeof requirements !== "object" || requirements === null) continue;
-    const itemId = firstItemIdIn((requirements as Record<string, unknown>).has_item);
-    if (itemId) return itemId;
+    const hasItem = (requirements as Record<string, unknown>).has_item;
+    if (hasItem === undefined) continue;
+    return firstItemIdIn(hasItem, `quest "${questId}" stage ${index} has_item`);
   }
   return undefined;
 }
@@ -211,15 +215,28 @@ export function titleCase(key: string): string {
     .join(" ");
 }
 
-function firstItemIdIn(hasItem: unknown): string | undefined {
-  if (typeof hasItem === "string") return hasItem;
+/** Reads `string | table | table[]`, one level deep; any other shape is unexpected data. */
+function firstItemIdIn(hasItem: unknown, context: string): string {
+  if (typeof hasItem === "string" && hasItem.length > 0) return hasItem;
+  if (isTable(hasItem)) return firstTableKey(hasItem, context);
   if (Array.isArray(hasItem)) {
-    for (const entry of hasItem as unknown[]) {
-      const itemId = firstItemIdIn(entry);
-      if (itemId) return itemId;
+    const entries = hasItem as unknown[];
+    const first: unknown = entries[0];
+    if (!isTable(first) || !entries.every((entry) => isTable(entry))) {
+      throw new TypeError(`Expected ${context} to be a non-empty array of tables`);
     }
-    return undefined;
+    for (const entry of entries) firstTableKey(entry, context);
+    return firstTableKey(first, context);
   }
-  if (typeof hasItem === "object" && hasItem !== null) return Object.keys(hasItem)[0];
-  return undefined;
+  throw new TypeError(`Expected ${context} to be an item ID, a table, or an array of tables`);
+}
+
+function firstTableKey(table: Record<string, unknown>, context: string): string {
+  const [first] = Object.keys(table);
+  if (first === undefined) throw new TypeError(`Expected ${context} to name an item`);
+  return first;
+}
+
+function isTable(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
