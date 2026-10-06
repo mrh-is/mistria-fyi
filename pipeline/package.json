@@ -3,6 +3,11 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "smol-toml": "^1.9.0"
+    "sharp": "^0.35.5",
+    "smol-toml": "^1.9.0",
+    "yauzl-promise": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/yauzl-promise": "^4.0.1"
   }
 }
