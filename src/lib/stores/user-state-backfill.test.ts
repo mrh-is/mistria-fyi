@@ -88,13 +88,13 @@ describe("animal map backfill on deserialization", () => {
         userState.state.completed.animals[animalId],
         `animals["${animalId}"] should exist`,
       ).toBeDefined();
-      expect(userState.state.completed.animals[animalId].size).toBe(0);
+      expect(userState.state.completed.animals[animalId]?.size).toBe(0);
 
       expect(
         userState.state.completed.animalCosmetics[animalId],
         `animalCosmetics["${animalId}"] should exist`,
       ).toBeDefined();
-      expect(userState.state.completed.animalCosmetics[animalId].size).toBe(0);
+      expect(userState.state.completed.animalCosmetics[animalId]?.size).toBe(0);
     }
   });
 
@@ -117,8 +117,8 @@ describe("animal map backfill on deserialization", () => {
     const { userState } = await import("#lib/stores/user-state.svelte.js");
     userState.restorePersistedState();
 
-    expect(userState.state.completed.animals[progressAnimal].has(progressVariant)).toBe(true);
-    expect(userState.state.completed.animalCosmetics[progressAnimal].has(progressCosmetic)).toBe(
+    expect(userState.state.completed.animals[progressAnimal]?.has(progressVariant)).toBe(true);
+    expect(userState.state.completed.animalCosmetics[progressAnimal]?.has(progressCosmetic)).toBe(
       true,
     );
   });

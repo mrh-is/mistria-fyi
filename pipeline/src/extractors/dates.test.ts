@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
 import { extractDates } from "./dates.js";
 
-import type { DateId } from "#lib/types/acquisition.js";
+import type { DateId } from "#lib/types/tracker-data.js";
 
 vi.mock("../localize.js", () => ({
   localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({

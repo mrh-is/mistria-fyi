@@ -3,7 +3,7 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
 import { localizeField } from "../localize.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
-import type { TreasureChestTierId } from "#lib/types/tracker-data.js";
+import type { TreasureChestTier, TreasureChestTierId } from "#lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../parse-fiddle.js";
 
@@ -12,7 +12,7 @@ export function extractTreasureChestTiers(
   assetsDir: string,
 ): {
   localeNames: Record<LocaleCode, Record<TreasureChestTierId, string>>;
-  tiers: Record<TreasureChestTierId, object>;
+  tiers: Record<TreasureChestTierId, TreasureChestTier>;
 } {
   const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
     LocaleCode,
@@ -29,7 +29,7 @@ export function extractTreasureChestTiers(
     | undefined;
   const fishMisc = items?.fish?.misc;
 
-  const result = {} as Record<TreasureChestTierId, object>;
+  const result = {} as Record<TreasureChestTierId, TreasureChestTier>;
 
   for (const tier of Object.keys(chestTables).toSorted()) {
     const itemKey = `treasure_box_${tier}`;

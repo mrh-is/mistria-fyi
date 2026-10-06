@@ -14,7 +14,7 @@ import type { CompletedState } from "#lib/types/user-progress.js";
 function completedWithVillagerLevels(
   villagerLevels: Partial<Record<VillagerId, number>>,
 ): CompletedState {
-  return makeCompletedState({ villagerLevels: villagerLevels as Record<VillagerId, number> });
+  return makeCompletedState({ villagerLevels });
 }
 
 describe("buildVillagerRoster", () => {
