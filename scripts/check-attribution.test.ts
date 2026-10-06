@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { checkCommitMessage, checkPullRequest } from "./check-attribution.js";
+import { checkCommitMessage, checkPullRequest, trailerBlock } from "./check-attribution.js";
 
 const claudeCommit = {
   message: "feat: x\n\nCo-Authored-By: Claude Code <noreply@anthropic.com>",
@@ -33,6 +33,55 @@ describe("checkCommitMessage", () => {
         "x\n\nCo-authored-by: Ada <ada@example.com>\nCo-Authored-By: Copilot <c@github.com>",
       ),
     ).toEqual({ agent: false, problems: [] });
+  });
+});
+
+describe("trailer block parsing", () => {
+  it("ignores a quoted non-canonical trailer followed by prose", () => {
+    const message =
+      "docs: explain attribution migration\n\nThe old form was:\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\nWe now use the stable name.";
+    expect(checkCommitMessage(message)).toEqual({ agent: false, problems: [] });
+  });
+
+  it("does not treat a quoted canonical trailer in prose as agent authorship", () => {
+    const message =
+      "docs: attribution\n\nCo-Authored-By: Codex <codex@openai.com>\n\nThat is the Codex form.";
+    expect(checkCommitMessage(message).agent).toBe(false);
+    expect(checkPullRequest({ body: "Docs only.", commits: [{ message }], labels: [] })).toEqual(
+      [],
+    );
+  });
+
+  it("still validates a real trailer block after quoted prose", () => {
+    const message =
+      "x\n\nSee Co-Authored-By: Foo <a@b.c>.\n\nSigned-off-by: A <a@b.c>\nCo-Authored-By: Claude Opus <noreply@anthropic.com>";
+    expect(checkCommitMessage(message).problems).toHaveLength(1);
+  });
+
+  it("needs a subject paragraph before the trailer block", () => {
+    expect(trailerBlock("Co-Authored-By: Codex <codex@openai.com>")).toBe("");
+  });
+
+  it("accepts continuation lines & trailing blank lines", () => {
+    expect(trailerBlock("x\n\nA: b\n  c\nCo-Authored-By: Codex <codex@openai.com>\n\n")).not.toBe(
+      "",
+    );
+  });
+});
+
+describe("commit count cap", () => {
+  it("fails when the listing is shorter than the PR's commits, or the cap is exceeded", () => {
+    const commits = [{ message: "x" }];
+    expect(checkPullRequest({ body: "", commitCount: 1, commits, labels: [] })).toEqual([]);
+    expect(checkPullRequest({ body: "", commitCount: 2, commits, labels: [] })).toHaveLength(1);
+    expect(
+      checkPullRequest({
+        body: "",
+        commitCount: 251,
+        commits: Array.from({ length: 251 }, () => ({ message: "x" })),
+        labels: [],
+      }),
+    ).toHaveLength(1);
   });
 });
 
