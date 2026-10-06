@@ -1,9 +1,8 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { localizeField } from "../localize.js";
-
 import type { LocaleCode } from "#lib/types/locale.js";
 
+import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 
 export interface UiStringExtraction {
@@ -75,7 +74,7 @@ const ANY_TAG = /<[a-z_]+>/;
  */
 export function extractUiStrings(
   fiddle: ParsedGameData,
-  assetsDir: string,
+  localizer: Localizer,
   requests: readonly UiStringRequest[],
 ): UiStringExtraction {
   const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
@@ -107,7 +106,7 @@ export function extractUiStrings(
     if (typeof english !== "string" || english.length === 0) {
       throw new Error(`misc_local has no English string for UI key "${miscLocalKey}"`);
     }
-    const { values } = localizeField(assetsDir, {
+    const { values } = localizer.localizeField({
       category: "misc_local",
       classification: "localizable",
       englishValue: english,

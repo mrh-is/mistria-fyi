@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { generateLocaleManifest, localizeField } from "./localize.js";
+import { createAssetsLocalizer, generateLocaleManifest } from "./localize.js";
 import { requireGameAssetsDir } from "./test-helpers.js";
 
 describe("localizeField — real assets", () => {
   it("derives the key and looks up npcs/balor/name across locales", () => {
-    const result = localizeField(requireGameAssetsDir(), {
+    const result = createAssetsLocalizer(requireGameAssetsDir()).localizeField({
       category: "npcs",
       classification: "localizable",
       englishValue: "Balor",
@@ -19,7 +19,7 @@ describe("localizeField — real assets", () => {
   });
 
   it("derives the key and looks up a nested category path", () => {
-    const result = localizeField(requireGameAssetsDir(), {
+    const result = createAssetsLocalizer(requireGameAssetsDir()).localizeField({
       category: "items/fish/bait_fish",
       classification: "localizable",
       englishValue: "Copper Rockfish",
@@ -32,7 +32,7 @@ describe("localizeField — real assets", () => {
   });
 
   it("falls back to English and records the locale when a key is missing", () => {
-    const result = localizeField(requireGameAssetsDir(), {
+    const result = createAssetsLocalizer(requireGameAssetsDir()).localizeField({
       category: "npcs",
       classification: "localizable",
       englishValue: "Nonexistent villager",
@@ -47,7 +47,7 @@ describe("localizeField — real assets", () => {
 
   it("rejects an ordinal translation when the English source order changes", () => {
     expect(() =>
-      localizeField(requireGameAssetsDir(), {
+      createAssetsLocalizer(requireGameAssetsDir()).localizeField({
         category: "renown/ranks",
         classification: "localizable",
         englishValue: "Stone",
@@ -61,7 +61,7 @@ describe("localizeField — real assets", () => {
   });
 
   it("passes structural fields through unchanged for every locale", () => {
-    const result = localizeField(requireGameAssetsDir(), {
+    const result = createAssetsLocalizer(requireGameAssetsDir()).localizeField({
       category: "npcs",
       classification: "structural",
       englishValue: "they_them",
@@ -75,7 +75,7 @@ describe("localizeField — real assets", () => {
 
   it("throws when a field is classified 'override' but has no override entry", () => {
     expect(() =>
-      localizeField(requireGameAssetsDir(), {
+      createAssetsLocalizer(requireGameAssetsDir()).localizeField({
         category: "cosmetics",
         classification: "override",
         englishValue: "Some Cosmetic",

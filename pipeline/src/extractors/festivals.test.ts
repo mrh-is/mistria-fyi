@@ -1,26 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeFiddle } from "../test-helpers.js";
+import { makeFiddle, stubLocalizer } from "../test-helpers.js";
 import { extractFestivals } from "./festivals.js";
 
 import type { FestivalId } from "#lib/types/tracker-data.js";
 
-vi.mock("../localize.js", () => ({
-  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
-    fallbackLocales: [],
-    values: {
-      en: input.englishValue,
-      es: input.englishValue,
-      fr: input.englishValue,
-      ja: input.englishValue,
-      ko: input.englishValue,
-      ru: input.englishValue,
-      "zh-Hans": input.englishValue,
-      "zh-Hant": input.englishValue,
-    },
-  })),
-}));
-const assetsDir = "test-assets";
+const localizer = stubLocalizer();
 
 describe("extractFestivals", () => {
   beforeEach(() => {
@@ -43,7 +28,7 @@ describe("extractFestivals", () => {
       },
     });
 
-    const { festivals, localeNames } = extractFestivals(fiddle, assetsDir);
+    const { festivals, localeNames } = extractFestivals(fiddle, localizer);
 
     expect(festivals).toEqual({
       spring_festival: { date: { day: 1, season: "spring" } },
@@ -61,13 +46,13 @@ describe("extractFestivals", () => {
       },
     });
 
-    expect(extractFestivals(fiddle, assetsDir).festivals).toEqual({
+    expect(extractFestivals(fiddle, localizer).festivals).toEqual({
       spring_festival: { date: { day: 1, season: "spring" } },
     });
   });
 
   it("returns an empty object when there is no festivals data", () => {
-    expect(extractFestivals(makeFiddle(), assetsDir).festivals).toEqual({});
+    expect(extractFestivals(makeFiddle(), localizer).festivals).toEqual({});
   });
 
   it("extracts festival date when present", () => {
@@ -79,7 +64,7 @@ describe("extractFestivals", () => {
         },
       },
     });
-    const { festivals: result } = extractFestivals(fiddle, assetsDir);
+    const { festivals: result } = extractFestivals(fiddle, localizer);
     expect(result["harvest_festival" as FestivalId]).toEqual({
       date: { day: 10, season: "fall" },
     });
@@ -87,7 +72,7 @@ describe("extractFestivals", () => {
 
   it("rejects a festival without a valid date", () => {
     const fiddle = makeFiddle({ festivals: { harvest: { name: "Harvest Festival" } } });
-    expect(() => extractFestivals(fiddle, assetsDir)).toThrow(
+    expect(() => extractFestivals(fiddle, localizer)).toThrow(
       'Festival "harvest" has no valid date',
     );
   });
@@ -99,7 +84,7 @@ describe("extractFestivals", () => {
     { date: { day: 10.5, season: "fall" }, label: "fractional day" },
   ])("rejects $label", ({ date }) => {
     const fiddle = makeFiddle({ festivals: { harvest: { date, name: "Harvest Festival" } } });
-    expect(() => extractFestivals(fiddle, assetsDir)).toThrow(
+    expect(() => extractFestivals(fiddle, localizer)).toThrow(
       'Festival "harvest" has no valid date',
     );
   });

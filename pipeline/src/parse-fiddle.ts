@@ -30,16 +30,11 @@ interface TomlEntry {
  */
 export function parseFiddle(assetsDir: string): ParsedGameDataResult {
   const fiddleDir = join(assetsDir, "fiddle");
-  const data = {} as ParsedGameData;
   const sourceFileByRootPath = new Map<string, string>();
+  const data = attachProvenance({}, sourceFileByRootPath);
 
   walkDirectory(fiddleDir, fiddleDir, (entry) => {
     processTomlEntry(data, sourceFileByRootPath, entry);
-  });
-
-  Object.defineProperty(data, SOURCE_FILE_BY_ROOT_PATH, {
-    enumerable: false,
-    value: sourceFileByRootPath,
   });
 
   console.log(`  Parsed ${sourceFileByRootPath.size} TOML files from ${fiddleDir}`);
@@ -61,8 +56,8 @@ export async function parseFiddleFromZip(
   zipPath: string,
   paths?: readonly string[],
 ): Promise<ParsedGameDataResult> {
-  const data = {} as ParsedGameData;
   const sourceFileByRootPath = new Map<string, string>();
+  const data = attachProvenance({}, sourceFileByRootPath);
 
   const zipFile = await open(zipPath);
   try {
@@ -80,13 +75,23 @@ export async function parseFiddleFromZip(
     await zipFile.close();
   }
 
+  console.log(`  Parsed ${sourceFileByRootPath.size} TOML files from ${zipPath}`);
+  return { data, fileCount: sourceFileByRootPath.size, sourceFileByRootPath };
+}
+
+/**
+ * Embeds `sourceFileByRootPath` as non-enumerable provenance, so it survives mutation but not JSON
+ * serialization. Test fixtures use it to build fiddles that {@link sourceFileFor} can resolve.
+ */
+export function attachProvenance(
+  data: Record<string, unknown>,
+  sourceFileByRootPath: ReadonlyMap<string, string>,
+): ParsedGameData {
   Object.defineProperty(data, SOURCE_FILE_BY_ROOT_PATH, {
     enumerable: false,
     value: sourceFileByRootPath,
   });
-
-  console.log(`  Parsed ${sourceFileByRootPath.size} TOML files from ${zipPath}`);
-  return { data, fileCount: sourceFileByRootPath.size, sourceFileByRootPath };
+  return data as ParsedGameData;
 }
 
 /**

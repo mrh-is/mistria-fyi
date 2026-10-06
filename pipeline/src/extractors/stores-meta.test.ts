@@ -1,26 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
+import { makeFiddle as makeFiddleBase, stubLocalizer } from "../test-helpers.js";
 import { extractStoresMeta } from "./stores-meta.js";
 
 import type { StoreId } from "#lib/types/tracker-data.js";
 
-vi.mock("../localize.js", () => ({
-  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string }) => ({
-    fallbackLocales: [],
-    values: {
-      en: input.englishValue,
-      es: input.englishValue,
-      fr: input.englishValue,
-      ja: input.englishValue,
-      ko: input.englishValue,
-      ru: input.englishValue,
-      "zh-Hans": input.englishValue,
-      "zh-Hant": input.englishValue,
-    },
-  })),
-}));
-const assetsDir = "test-assets";
+const localizer = stubLocalizer();
 
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({ stores: {}, ...overrides });
@@ -44,7 +29,7 @@ describe("extractStoresMeta", () => {
       },
     });
 
-    const { localeNames, stores } = extractStoresMeta(fiddle, assetsDir);
+    const { localeNames, stores } = extractStoresMeta(fiddle, localizer);
     expect(stores).toEqual({
       general: { article: "the", upgradeAction: "repairing" },
       merri: {},
@@ -59,7 +44,7 @@ describe("extractStoresMeta", () => {
       },
     });
 
-    expect(extractStoresMeta(fiddle, assetsDir).stores).toEqual({
+    expect(extractStoresMeta(fiddle, localizer).stores).toEqual({
       general: { article: "the", upgradeAction: "repairing" },
     });
   });
@@ -74,7 +59,7 @@ describe("extractStoresMeta", () => {
       },
     });
 
-    const { stores } = extractStoresMeta(fiddle, assetsDir);
+    const { stores } = extractStoresMeta(fiddle, localizer);
     expect(stores["carpenter" as StoreId]).toEqual({ article: "the" });
     expect(stores["inn" as StoreId]).toEqual({ article: "the" });
     expect(stores["blacksmith" as StoreId]).toEqual({
@@ -92,7 +77,7 @@ describe("extractStoresMeta", () => {
       },
     });
 
-    const { stores } = extractStoresMeta(fiddle, assetsDir);
+    const { stores } = extractStoresMeta(fiddle, localizer);
     expect(stores["darcy" as StoreId]).toEqual({});
     expect(stores["hayden" as StoreId]).toEqual({});
     expect(stores["maple_spring_festival" as StoreId]).toEqual({});
@@ -106,7 +91,7 @@ describe("extractStoresMeta", () => {
       },
     });
 
-    const { stores } = extractStoresMeta(fiddle, assetsDir);
+    const { stores } = extractStoresMeta(fiddle, localizer);
     expect(stores["general" as StoreId]).toEqual({
       article: "the",
       upgradeAction: "repairing",
@@ -121,7 +106,7 @@ describe("extractStoresMeta", () => {
       },
     });
 
-    expect(() => extractStoresMeta(fiddle, assetsDir)).toThrow(
+    expect(() => extractStoresMeta(fiddle, localizer)).toThrow(
       'Unknown store "mystery_vendor" — add it to KNOWN_STORES in stores-meta.ts',
     );
   });
@@ -133,14 +118,14 @@ describe("extractStoresMeta", () => {
       },
     });
 
-    expect(() => extractStoresMeta(fiddle, assetsDir)).toThrow(
+    expect(() => extractStoresMeta(fiddle, localizer)).toThrow(
       'Store "general" has no name in stores.toml — check data assembly',
     );
   });
 
   it("returns empty when no stores data", () => {
     const fiddle = makeFiddle({ stores: undefined });
-    const { stores } = extractStoresMeta(fiddle, assetsDir);
+    const { stores } = extractStoresMeta(fiddle, localizer);
     expect(Object.keys(stores)).toEqual([]);
   });
 });
