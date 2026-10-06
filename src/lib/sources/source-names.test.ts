@@ -15,7 +15,14 @@ import {
 beforeAll(async () => {
   await Promise.all(
     LOCALE_CODES.map((locale) =>
-      loadNames(locale, ["items", "pets/skins", "quests", "treasure-chest-tiers"]),
+      loadNames(locale, [
+        "items",
+        "locations",
+        "monsters",
+        "pets/skins",
+        "quests",
+        "treasure-chest-tiers",
+      ]),
     ),
   );
 });
@@ -43,7 +50,9 @@ describe("buildLocationNames", () => {
   it("names every location in English", () => {
     const names = buildLocationNames("en");
 
-    expect(names.beach).toBe("Beach");
+    expect(names.beach).toBe("The Beach");
+    expect(names.haydens_farm).toBe("Sweetwater Farm");
+    expect(names.farm).toBe("Farm");
     expect(Object.values(names).every((name) => name !== "")).toBe(true);
   });
 
@@ -60,24 +69,28 @@ describe("buildWaterNames", () => {
 });
 
 describe("buildMonsterNames", () => {
-  it("names a base monster by its family", () => {
+  it("names monsters after their pet variants in English", () => {
     const names = buildMonsterNames("en");
 
-    expect(names.mushroom).toBe(names.mushroom_blue.replace(" (blue)", ""));
+    expect(names.mushroom).toBe("Mushroom");
+    expect(names.mushroom_blue).toBe("Blue Mushroom");
+    expect(names.cat).toBe("Lava Cat");
+    expect(names.cat_void).toBe("Void Cat");
   });
 
-  it("composes variant names around the family name", () => {
+  it("composes family & variant for monsters with no pet variant", () => {
     const names = buildMonsterNames("en");
 
-    expect(names.mushroom_blue).toBe(`${names.mushroom} (blue)`);
-    expect(names.copperclod).toMatch(/\(copper\)$/);
+    expect(names.mistrilclod).toBe("Oreclod (mistril)");
+    expect(names.rockclod_purple).toBe("Rockclod (purple)");
   });
 
-  it("shares one family name across variants of different ids", () => {
-    const names = buildMonsterNames("en");
+  it("composes family & variant outside English", () => {
+    const names = buildMonsterNames("fr");
 
-    expect(names.cat).toBe(names.void_cat);
-    expect(names.cat).toBe(names.cat_void);
+    expect(names.cat).toBe("Magmatou");
+    expect(names.cat_void).toBe("Void Cat");
+    expect(names.sapling_blue).toBe(`${names.sapling} (bleu)`);
   });
 });
 

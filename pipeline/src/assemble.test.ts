@@ -158,6 +158,8 @@ describe("assembleTrackerData", () => {
       "recipes",
       "pets/skins",
       "treasure-chest-tiers",
+      "locations",
+      "monsters",
     ]);
     const villagers = localeChunks.find((chunk) => chunk.category === "villagers");
     expect(villagers?.byLocale.ja.adeline).toBe("アデリン");
