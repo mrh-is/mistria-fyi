@@ -302,22 +302,36 @@ describe("firstRequiredItemId", () => {
     ["an item ID", "turnip"],
     ["an item table", { turnip: 5 }],
     ["an array of tables", [{ turnip: 5 }, { potato: 1 }]],
-    ["an array of item IDs", ["turnip", "potato"]],
   ])("reads the first item from %s", (_label, hasItem) => {
-    expect(firstRequiredItemId(questRequiring(hasItem))).toBe("turnip");
+    expect(firstRequiredItemId("q", questRequiring(hasItem))).toBe("turnip");
   });
 
   it("scans stages in order, skipping stages without a requirement", () => {
     expect(
-      firstRequiredItemId({
+      firstRequiredItemId("q", {
         stages: [{}, { requirements: {} }, ...questRequiring("turnip").stages],
       }),
     ).toBe("turnip");
   });
 
   it("returns undefined when no stage requires an item", () => {
-    expect(firstRequiredItemId({ stages: [{ requirements: { has_item: [] } }] })).toBeUndefined();
-    expect(firstRequiredItemId({})).toBeUndefined();
+    expect(firstRequiredItemId("q", { stages: [{ requirements: {} }] })).toBeUndefined();
+    expect(firstRequiredItemId("q", {})).toBeUndefined();
+  });
+
+  it.each([
+    ["an empty array", []],
+    ["an array of item IDs", ["turnip", "potato"]],
+    ["a mixed array", [{ turnip: 1 }, "potato"]],
+    ["a nested array", [[{ turnip: 1 }]]],
+    ["an array holding an empty table", [{ turnip: 1 }, {}]],
+    ["an empty table", {}],
+    ["an empty item ID", ""],
+    ["a number", 5],
+  ])("rejects %s instead of guessing", (_label, hasItem) => {
+    expect(() => firstRequiredItemId("fetch_turnips", questRequiring(hasItem))).toThrow(
+      /quest "fetch_turnips" stage 0 has_item/,
+    );
   });
 });
 

@@ -105,7 +105,7 @@ function extractCookingQuestRecipeId(
   quest: Record<string, unknown>,
   recipeIdByItemId: Map<string, RecipeId> | undefined,
 ): RecipeId {
-  const itemId = firstRequiredItemId(quest);
+  const itemId = firstRequiredItemId(questId, quest);
   if (!itemId) {
     throw new Error(`Cooking quest "${questId}" has no has_item requirement in any stage`);
   }
@@ -117,7 +117,7 @@ function extractCookingQuestRecipeId(
 }
 
 function extractFetchQuestItemId(questId: string, quest: Record<string, unknown>): string {
-  const itemId = firstRequiredItemId(quest);
+  const itemId = firstRequiredItemId(questId, quest);
   if (itemId) return itemId;
   throw new Error(`Fetch quest "${questId}" has no has_item requirement in any stage`);
 }

@@ -217,11 +217,11 @@ function buildQuestRecipeSource(
   };
 
   if (nativeQuestGroup === "fetch_quests") {
-    const itemId = firstRequiredItemId(quest);
+    const itemId = firstRequiredItemId(questId, quest);
     return itemId ? { ...sourceBase, requestedItemId: itemId as ItemId } : sourceBase;
   }
   if (nativeQuestGroup === "tali_challenges") {
-    const itemId = firstRequiredItemId(quest);
+    const itemId = firstRequiredItemId(questId, quest);
     const challengeRecipeId = itemId ? itemIdToRecipeId.get(itemId) : undefined;
     return challengeRecipeId
       ? { ...sourceBase, challengeRecipeId: challengeRecipeId as RecipeId }
@@ -791,7 +791,16 @@ function collectScrollBundleSources(
       `${storeId}/${itemId}`,
       ctx,
     );
-    setTagToStore.set(setTag, { bundleName, storeId, visibility });
+    const listing = { bundleName, storeId, visibility };
+    const existing = setTagToStore.get(setTag);
+    // A set tag stocked twice must agree; otherwise stock order would silently pick the store.
+    if (existing && JSON.stringify(existing) !== JSON.stringify(listing)) {
+      throw new Error(
+        `Scroll bundle set "${setTag}" has conflicting store listings: ` +
+          `${JSON.stringify(existing)} and ${JSON.stringify(listing)}`,
+      );
+    }
+    setTagToStore.set(setTag, listing);
   });
 
   forEachItem(fiddle, (itemId, item) => {
