@@ -182,7 +182,7 @@ Paths are relative to `pipeline/src/`. Colocated `*.test.ts` files cover most mo
 | `assets-zip.ts`        | Locates `assets.zip`, the default Steam install, and the installed executable’s version for `main.ts`.                                                                  |
 | `asset-input.ts`       | Materializes only `fiddle/` and `localization/` from `assets.zip` for the real-asset test suite (`assets-test-setup.ts`).                                               |
 | `data-shapes.ts`       | Array guards that throw with field and source-file context.                                                                                                             |
-| `extractor-helpers.ts` | `forEachItem`, `forEachQuest`, and the six tracked quest groups with their app quest types.                                                                             |
+| `extractor-helpers.ts` | Shared traversals & parsers: `forEachItem`, `forEachQuest`, `forEachStockEntry`, `firstRequiredItemId`, `minesBiomeId`, `scrollTargetOf`, and the tracked quest groups. |
 | `localize.ts`          | The `Localizer` extractors receive: resolves a classified text field to every locale through translation tables and `localize-overrides.json`; falls back to English.   |
 | `locale-codes.ts`      | Maps game language codes to BCP 47 tags and throws when the game adds or drops a language.                                                                              |
 

@@ -1,12 +1,16 @@
-import { execFileSync } from "node:child_process";
 import { createWriteStream, existsSync, mkdirSync, mkdtempSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve, win32 } from "node:path";
 import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
 import { open } from "yauzl-promise";
 
-export const DEFAULT_WINDOWS_GAME_ARCHIVE = String.raw`C:\Program Files (x86)\Steam\steamapps\common\Fields of Mistria\assets.zip`;
+import { DEFAULT_WINDOWS_STEAM_ASSETS_DIR } from "./assets-zip.js";
+
+export const DEFAULT_WINDOWS_GAME_ARCHIVE = win32.join(
+  DEFAULT_WINDOWS_STEAM_ASSETS_DIR,
+  "assets.zip",
+);
 
 /** The ignored local assets directory, `pipeline/input/assets`, independent of the working directory. */
 export const DEFAULT_ASSETS_DIR = fileURLToPath(new URL("../input/assets", import.meta.url));
@@ -35,29 +39,6 @@ export async function prepareGameAssets(input?: string): Promise<GameAssetsInput
     rmSync(root, { force: true, recursive: true });
   });
   return { archivePath, assetsDir: join(root, "assets") };
-}
-
-/** Reads the Product Version of the installed Windows executable beside an assets archive. */
-export function readInstalledGameVersion(archivePath: string | undefined): string | undefined {
-  if (process.platform !== "win32" || !archivePath) return undefined;
-
-  const executablePath = join(dirname(archivePath), "FieldsOfMistria.exe");
-  if (!existsSync(executablePath)) return undefined;
-
-  const escapedPath = executablePath.replaceAll("'", "''");
-  const productVersion = execFileSync(
-    "powershell.exe",
-    [
-      "-NoLogo",
-      "-NoProfile",
-      "-NonInteractive",
-      "-Command",
-      `(Get-Item -LiteralPath '${escapedPath}').VersionInfo.ProductVersion`,
-    ],
-    { encoding: "utf8" },
-  ).trim();
-
-  return /^\d+\.\d+\.\d+$/.test(productVersion) ? productVersion : undefined;
 }
 
 function defaultInput(): string {

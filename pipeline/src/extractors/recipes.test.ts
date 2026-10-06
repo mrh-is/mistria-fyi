@@ -28,6 +28,26 @@ function makeFiddle(overrides: Record<string, unknown> = {}) {
   });
 }
 
+/** A one-bundle set, the Void Chair, whose bundle scroll is stocked by `stores`. */
+function bundleFiddle(stores: Record<string, unknown>) {
+  return makeFiddle({
+    items: {
+      furniture: {
+        test_set: {
+          default: {},
+          void_bundle_scroll: { name: "Void Bundle Scroll", set_unlock: "void_set_tag" },
+          void_chair: {
+            name: "Void Chair",
+            recipe: [{ count: 1, item: "void_essence" }],
+            tags: ["void_set_tag"],
+          },
+        },
+      },
+    },
+    stores,
+  });
+}
+
 describe("extractRecipes", () => {
   beforeEach(() => {
     vi.spyOn(console, "log").mockReturnValue(undefined);
@@ -1405,6 +1425,33 @@ describe("extractRecipes — stock requirement visibility", () => {
         visibility: { type: "questCompleted", questId: "repair_the_general_store" },
       },
     ]);
+  });
+
+  describe("a scroll bundle stocked more than once", () => {
+    it("accepts identical listings", () => {
+      const fiddle = bundleFiddle({
+        general: {
+          categories: [
+            { constant_stock: ["void_bundle_scroll"], random_stock: ["void_bundle_scroll"] },
+          ],
+        },
+      });
+
+      expect(extractRecipes(fiddle).recipes["void_chair" as RecipeId].sources).toEqual([
+        { type: "scroll_bundle", bundleName: "Void Bundle Scroll", storeId: "general" },
+      ]);
+    });
+
+    it("throws when the listings name different stores instead of letting stock order decide", () => {
+      const fiddle = bundleFiddle({
+        carpenter: { categories: [{ random_stock: ["void_bundle_scroll"] }] },
+        general: { categories: [{ seasonal: { spring: ["void_bundle_scroll"] } }] },
+      });
+
+      expect(() => extractRecipes(fiddle)).toThrow(
+        /Scroll bundle set "void_set_tag" has conflicting store listings/,
+      );
+    });
   });
 
   it("emits a plain store source for the Espresso Machine fixture (perk gate dropped)", () => {

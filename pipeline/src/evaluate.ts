@@ -1,8 +1,8 @@
 import { sourceFileFor } from "./parse-fiddle.js";
 
+import type { ResolutionState } from "./extractor-helpers.js";
 import type { ParsedGameData } from "./parse-fiddle.js";
 
-type ResolutionState = "resolved" | "visiting";
 type ResolvableValueField = "bin" | "store";
 
 interface ValueEvaluationContext {

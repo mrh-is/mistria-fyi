@@ -1,14 +1,9 @@
 import { isNonEmptyArray } from "#lib/utils/record.js";
 
-import { forEachItem } from "../../extractor-helpers.js";
+import { forEachItem, minesBiomeId } from "../../extractor-helpers.js";
 
 import type { LocationId } from "#lib/types/acquisition.js";
-import type {
-  CosmeticId,
-  ItemId,
-  MinesBiomeId,
-  TreasureChestTierId,
-} from "#lib/types/tracker-data.js";
+import type { CosmeticId, ItemId, TreasureChestTierId } from "#lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../../parse-fiddle.js";
 import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "../source-accumulator.js";
@@ -25,13 +20,6 @@ export function collectExplorationSources(
   collectArtifactDigSources(fiddle, accumulator);
   collectArtifactReplicaSources(fiddle, accumulator);
   collectEquipmentCosmeticSources(fiddle, cosmeticAccumulator);
-}
-
-function biomeNameToId(name: string): MinesBiomeId {
-  return name
-    .replace(/^The\s+/i, "")
-    .toLowerCase()
-    .replaceAll(/\s+/g, "_") as MinesBiomeId;
 }
 
 function collectArtifactDigSources(
@@ -158,7 +146,7 @@ function collectMineBiomeSources(
     if (typeof biome !== "object" || biome === null) continue;
 
     const name = (biome.name as string | undefined) ?? `Biome ${i + 1}`;
-    const biomeId = biomeNameToId(name);
+    const biomeId = minesBiomeId(name);
 
     const cosmetics = Array.isArray(biome.cosmetics)
       ? biome.cosmetics.filter((v): v is string => typeof v === "string")
@@ -223,7 +211,7 @@ function collectPerfectOreSources(
     if (typeof biome !== "object" || biome === null) continue;
 
     const name = (biome.name as string | undefined) ?? `Biome ${i + 1}`;
-    const biomeId = biomeNameToId(name);
+    const biomeId = minesBiomeId(name);
 
     for (const mineralKey of [biome.ore, biome.gem] as (string | undefined)[]) {
       if (!mineralKey) continue;
