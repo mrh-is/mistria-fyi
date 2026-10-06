@@ -1,4 +1,5 @@
 import { simplifyAvailabilityCondition } from "#lib/engine/availability-condition.js";
+import { SEASONS, WEATHERS } from "#lib/types/tracker-data.js";
 import { isNonEmptyArray } from "#lib/utils/record.js";
 
 import type {
@@ -16,8 +17,8 @@ import type { NonEmptyArray } from "#lib/utils/record.js";
 import type { SourceFieldLocation } from "../data-shapes.js";
 import type { RequirementContext, RequirementExpression } from "../requirements.js";
 
-const ALL_SEASONS = new Set<Season>(["fall", "spring", "summer", "winter"]);
-const ALL_WEATHERS = new Set<Weather>(["calm", "heavy_inclement", "inclement", "special"]);
+const ALL_SEASONS = new Set<Season>(SEASONS);
+const ALL_WEATHERS = new Set<Weather>(WEATHERS);
 const STORY_CUTSCENE_QUESTS: Partial<Record<string, QuestId>> = {
   break_fire_seal: "breaking_the_fire_seal" as QuestId,
   dragon_tablet_pt_4: "breaking_the_final_seal" as QuestId,

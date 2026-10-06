@@ -1,10 +1,13 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
+import { SEASONS } from "#lib/types/tracker-data.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { FestivalId, Season, TrackerData } from "#lib/types/tracker-data.js";
 
 import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
+
+const VALID_SEASONS = new Set<string>(SEASONS);
 
 export function extractFestivals(
   fiddle: ParsedGameData,
@@ -35,14 +38,13 @@ export function extractFestivals(
       throw new Error(`Festival "${festivalId}" has no valid date`);
     }
     const { day, season } = dateObj as Record<string, unknown>;
-    const validSeasons = new Set<Season>(["fall", "spring", "summer", "winter"]);
     if (
       typeof day !== "number" ||
       !Number.isInteger(day) ||
       day < 1 ||
       day > 28 ||
       typeof season !== "string" ||
-      !validSeasons.has(season as Season)
+      !VALID_SEASONS.has(season)
     ) {
       throw new Error(`Festival "${festivalId}" has no valid date`);
     }

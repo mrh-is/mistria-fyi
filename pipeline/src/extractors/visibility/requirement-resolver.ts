@@ -12,7 +12,8 @@ const NON_SPOILER_PREDICATES = new Set([
   "reached_date",
 ]);
 
-const ALWAYS: VisibilityCondition = { type: "always" };
+/** The unconditional visibility, shared so every module emits the same shape. */
+export const ALWAYS: VisibilityCondition = Object.freeze({ type: "always" });
 
 export function resolveToVisibility(
   expr: RequirementExpression,

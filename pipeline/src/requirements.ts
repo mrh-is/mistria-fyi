@@ -1,4 +1,5 @@
 import type { SourceFieldLocation } from "./data-shapes.js";
+import type { ResolutionState } from "./extractor-helpers.js";
 import type { CutsceneQuestMap } from "./extractors/visibility/cutscene-quest-map.js";
 
 /**
@@ -38,8 +39,6 @@ interface RequirementResolutionContext {
   primitivePredicates: Set<string>;
   resolutionStateByName: Map<string, ResolutionState>;
 }
-
-type ResolutionState = "resolved" | "unvisited" | "visiting";
 
 export function buildRequirementDefinitions(
   requirementsData: Record<string, unknown>,
@@ -195,7 +194,7 @@ function resolveNamed(
   const cached = requirementResolutionContext.cache.get(name);
   if (cached) return cached;
 
-  const currentState = requirementResolutionContext.resolutionStateByName.get(name) ?? "unvisited";
+  const currentState = requirementResolutionContext.resolutionStateByName.get(name);
   if (currentState === "visiting") {
     const cycle = [...namedRequirementStack, name].join(" -> ");
     throw new Error(`Requirement cycle: ${cycle} in ${context.sourcePath}`);

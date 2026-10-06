@@ -1,9 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  appendToMultimap,
   buildQuestTypeIndex,
+  firstRequiredItemId,
   forEachItem,
   forEachQuest,
+  forEachStockEntry,
+  minesBiomeId,
+  scrollTargetOf,
   titleCase,
   TRACKED_QUEST_GROUPS,
 } from "./extractor-helpers.js";
@@ -271,5 +276,100 @@ describe("titleCase", () => {
   it("leaves a single word capitalized & an empty key empty", () => {
     expect(titleCase("farming")).toBe("Farming");
     expect(titleCase("")).toBe("");
+  });
+});
+
+describe("appendToMultimap", () => {
+  it("creates a list on first use and appends after that", () => {
+    const map = new Map<string, number[]>();
+    appendToMultimap(map, "a", 1);
+    appendToMultimap(map, "a", 2);
+    appendToMultimap(map, "b", 3);
+
+    expect([...map]).toEqual([
+      ["a", [1, 2]],
+      ["b", [3]],
+    ]);
+  });
+});
+
+function questRequiring(...hasItems: unknown[]) {
+  return { stages: hasItems.map((has_item) => ({ requirements: { has_item } })) };
+}
+
+describe("firstRequiredItemId", () => {
+  it.each([
+    ["an item ID", "turnip"],
+    ["an item table", { turnip: 5 }],
+    ["an array of tables", [{ turnip: 5 }, { potato: 1 }]],
+    ["an array of item IDs", ["turnip", "potato"]],
+  ])("reads the first item from %s", (_label, hasItem) => {
+    expect(firstRequiredItemId(questRequiring(hasItem))).toBe("turnip");
+  });
+
+  it("scans stages in order, skipping stages without a requirement", () => {
+    expect(
+      firstRequiredItemId({
+        stages: [{}, { requirements: {} }, ...questRequiring("turnip").stages],
+      }),
+    ).toBe("turnip");
+  });
+
+  it("returns undefined when no stage requires an item", () => {
+    expect(firstRequiredItemId({ stages: [{ requirements: { has_item: [] } }] })).toBeUndefined();
+    expect(firstRequiredItemId({})).toBeUndefined();
+  });
+});
+
+describe("forEachStockEntry", () => {
+  it("visits constant, then seasonal, then random stock for every non-default store", () => {
+    const fiddle = makeFiddle({
+      stores: {
+        default: { categories: [{ constant_stock: ["template"] }] },
+        general: {
+          categories: [
+            {
+              constant_stock: ["seeds"],
+              random_stock: [{ item: "lamp" }],
+              seasonal: { spring: ["tulip"], summer: "not a list" },
+            },
+            "not a category",
+          ],
+        },
+      },
+    });
+    const visits: unknown[] = [];
+
+    forEachStockEntry(fiddle, (storeId, entry, season) => visits.push([storeId, entry, season]));
+
+    expect(visits).toEqual([
+      ["general", "seeds", undefined],
+      ["general", "tulip", "spring"],
+      ["general", { item: "lamp" }, undefined],
+    ]);
+  });
+
+  it("does nothing without stores", () => {
+    const onEntry = vi.fn();
+    forEachStockEntry(makeFiddle(), onEntry);
+    expect(onEntry).not.toHaveBeenCalled();
+  });
+});
+
+describe("minesBiomeId", () => {
+  it.each([
+    ["Upper Mines", "upper_mines"],
+    ["The Tide Caverns", "tide_caverns"],
+    ["Ancient Ruins", "ancient_ruins"],
+  ])("derives %s as %s", (name, id) => {
+    expect(minesBiomeId(name)).toBe(id);
+  });
+});
+
+describe("scrollTargetOf", () => {
+  it("prefers recipe_scroll over crafting_scroll", () => {
+    expect(scrollTargetOf({ crafting_scroll: "b", recipe_scroll: "a" })).toBe("a");
+    expect(scrollTargetOf({ crafting_scroll: "b" })).toBe("b");
+    expect(scrollTargetOf({ item: "c" })).toBeUndefined();
   });
 });

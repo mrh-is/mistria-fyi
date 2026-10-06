@@ -1,5 +1,6 @@
 import { simplifyAvailabilityCondition } from "#lib/engine/availability-condition.js";
 
+import { forEachStockEntry } from "../../extractor-helpers.js";
 import { parseRequirements } from "../../requirements.js";
 import { projectRequirementExpressionToAvailability } from "../availability.js";
 
@@ -22,68 +23,19 @@ export function collectStoreSources(
   cosmeticAccumulator?: CosmeticSourceAccumulator,
   animalCosmeticAccumulator?: AnimalCosmeticSourceAccumulator,
 ): void {
-  const stores = fiddle.stores as Record<string, Record<string, unknown>> | undefined;
-  if (!stores) return;
-
-  for (const [storeId, store] of Object.entries(stores)) {
-    if (storeId === "default" || typeof store !== "object" || store === null) continue;
-    const categories = Array.isArray(store.categories) ? store.categories : [];
-
-    for (const category of categories) {
-      if (typeof category !== "object" || category === null) continue;
-      const cat = category as Record<string, unknown>;
-
-      if (Array.isArray(cat.constant_stock)) {
-        for (const entry of cat.constant_stock) {
-          processStoreEntry(
-            entry,
-            storeId,
-            undefined,
-            requirementContext,
-            accumulator,
-            cosmeticAccumulator,
-            animalCosmeticAccumulator,
-          );
-        }
-      }
-
-      const seasonal = cat.seasonal as Record<string, unknown> | undefined;
-      if (seasonal) {
-        for (const [season, itemsData] of Object.entries(seasonal)) {
-          if (!Array.isArray(itemsData)) continue;
-          const seasonAvailability: AvailabilityCondition = {
-            type: "season",
-            seasons: [season as Season],
-          };
-          for (const entry of itemsData) {
-            processStoreEntry(
-              entry,
-              storeId,
-              seasonAvailability,
-              requirementContext,
-              accumulator,
-              cosmeticAccumulator,
-              animalCosmeticAccumulator,
-            );
-          }
-        }
-      }
-
-      if (Array.isArray(cat.random_stock)) {
-        for (const entry of cat.random_stock) {
-          processStoreEntry(
-            entry,
-            storeId,
-            undefined,
-            requirementContext,
-            accumulator,
-            cosmeticAccumulator,
-            animalCosmeticAccumulator,
-          );
-        }
-      }
-    }
-  }
+  forEachStockEntry(fiddle, (storeId, entry, season) => {
+    const seasonAvailability: AvailabilityCondition | undefined =
+      season === undefined ? undefined : { type: "season", seasons: [season as Season] };
+    processStoreEntry(
+      entry,
+      storeId,
+      seasonAvailability,
+      requirementContext,
+      accumulator,
+      cosmeticAccumulator,
+      animalCosmeticAccumulator,
+    );
+  });
 }
 
 function buildStoreSource(
