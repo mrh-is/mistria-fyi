@@ -10,6 +10,7 @@
   import { getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
+  import { isCategoryComplete } from "#lib/engine/progress.js";
   import { isEntityNameVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
@@ -51,9 +52,7 @@
   }
 
   function isCosmeticsComplete(): boolean {
-    return Object.keys(trackerData.cosmetics).every((id) =>
-      userState.state.completed.cosmetics.has(id as CosmeticId),
-    );
+    return isCategoryComplete("cosmetics", userState.state);
   }
 
   function isSlotComplete(items: CosmeticEntry[]): boolean {

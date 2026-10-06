@@ -15,13 +15,14 @@
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isItemDimmed, isRowVisible, shouldCountItem } from "#lib/engine/availability.js";
+  import { isCategoryComplete } from "#lib/engine/progress.js";
   import { isEntityNameVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { recordEntries, recordValues } from "#lib/utils/record.js";
+  import { recordEntries } from "#lib/utils/record.js";
   import { sectionRenderTarget, trackerRowDisplay } from "#lib/utils/row-display.js";
 
   import AllCompleted from "./all-completed.svelte";
@@ -82,11 +83,7 @@
   }
 
   function isAlmanacComplete(): boolean {
-    return (
-      recordValues(trackerData.almanac).every((cat) =>
-        cat.items.every((entry) => isItemCompleted(entry.itemIds[0])),
-      ) && userState.state.completed.dates.size === recordValues(trackerData.dates).length
-    );
+    return isCategoryComplete("almanac", userState.state);
   }
 
   const SECTION_BATCH_SIZE = 12;
