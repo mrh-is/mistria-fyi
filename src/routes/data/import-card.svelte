@@ -259,7 +259,7 @@
                   aria-label={m.import_copy_path_aria()}
                 >
                   {#if copied}
-                    <IconCheck class="size-4 text-(--fg-green)" />
+                    <IconCheck class="size-4 text-(--color-status-success)" />
                   {:else}
                     <IconCopy class="size-4" />
                   {/if}
@@ -352,10 +352,10 @@
 
       {#if isDesktop && onScrollToTransfer}
         <button
-          class="mt-3 flex w-full items-start gap-3 rounded-md border border-(--fg-blue)/30 bg-(--fg-blue)/8 p-3 text-left transition-colors hover:bg-(--fg-blue)/15"
+          class="mt-3 flex w-full items-start gap-3 rounded-md border border-(--color-status-info)/30 bg-(--color-status-info)/8 p-3 text-left transition-colors hover:bg-(--color-status-info)/15"
           onclick={onScrollToTransfer}
         >
-          <IconDeviceDesktop class="mt-0.5 size-5 shrink-0 text-(--fg-blue)" />
+          <IconDeviceDesktop class="mt-0.5 size-5 shrink-0 text-(--color-status-info)" />
           <div>
             <p class="text-base font-medium text-foreground">
               {m.import_playing_on_phone()}

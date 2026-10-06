@@ -226,7 +226,7 @@
         </div>
         <span
           class="search-result__category"
-          style="--result-category: var(--cat-{result.category}, var(--ink-muted))"
+          style="--result-category: var(--color-category-{result.category}, var(--color-ink-muted))"
         >
           {categoryNameForKey(result.category, locale)}
         </span>
@@ -248,7 +248,7 @@
 
   .search-results__count {
     margin-bottom: 3px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-data);
     font-size: var(--text-2xs);
   }
@@ -268,9 +268,9 @@
     min-width: 76px;
     flex-shrink: 0;
     padding: 4px 11px 4px 9px;
-    color: var(--ink);
+    color: var(--color-ink);
     border-left: 2px solid var(--result-category);
-    background: color-mix(in srgb, var(--result-category) 9%, var(--paper));
+    background: color-mix(in srgb, var(--result-category) 9%, var(--color-paper));
     clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 50%, 100% 100%, 0 100%);
     font-family: var(--font-annotation);
     font-size: var(--text-3xs);
@@ -281,7 +281,7 @@
   .search-results__empty,
   .search-results__error {
     padding: 32px 0;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-body);
     font-size: var(--text-base);
     text-align: center;
@@ -296,8 +296,8 @@
 
   .search-results__error button {
     padding: 6px 16px;
-    color: var(--ink);
-    border: 1px solid var(--ink-muted);
+    color: var(--color-ink);
+    border: 1px solid var(--color-ink-muted);
     border-radius: var(--radius-lg);
     background: transparent;
     font-family: var(--font-body);
@@ -306,7 +306,7 @@
   }
 
   .search-results__error button:hover {
-    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    background: color-mix(in srgb, var(--color-ink) 6%, transparent);
   }
 
   @media (max-width: 380px) {

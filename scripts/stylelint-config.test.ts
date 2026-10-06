@@ -17,8 +17,8 @@ describe("stylelint config", () => {
   it("accepts token-based declarations", async () => {
     await expect(
       lintSvelte(`
-    color: var(--ink);
-    background: color-mix(in srgb, var(--paper) 72%, transparent);
+    color: var(--color-ink);
+    background: color-mix(in srgb, var(--color-paper) 72%, transparent);
     border-radius: var(--radius);
     box-shadow: var(--shadow-small);
     font-size: var(--text-2xs);`),
@@ -40,7 +40,7 @@ describe("stylelint config", () => {
     ],
     [
       "a pixel shadow",
-      "box-shadow: 0 3px 8px var(--ink);",
+      "box-shadow: 0 3px 8px var(--color-ink);",
       "declaration-property-unit-disallowed-list",
     ],
   ])("rejects %s", async (_label, declaration, rule) => {

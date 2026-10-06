@@ -244,11 +244,11 @@
   }
 
   .tracker-row--dimmed {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .tracker-row--completed {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     text-decoration: line-through;
   }
 
@@ -262,13 +262,13 @@
   .tracker-row__subtitle {
     display: block;
     font-size: var(--text-sm);
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .tracker-row__active-badge {
     font-family: var(--font-data);
     font-size: var(--text-2xs);
     font-weight: 600;
-    color: var(--fg-amber);
+    color: var(--color-tracker-active);
   }
 </style>

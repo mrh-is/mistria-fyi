@@ -63,9 +63,9 @@
 
 <style>
   .data-card {
-    border: 1px solid color-mix(in srgb, var(--hairline) 34%, transparent);
-    border-left: 3px solid var(--home-accent);
-    background: var(--paper-raised);
+    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 34%, transparent);
+    border-left: 3px solid var(--color-home-accent);
+    background: var(--color-paper-raised);
     box-shadow: var(--shadow-small);
   }
 
@@ -76,7 +76,7 @@
 
   /* Plain --destructive falls under 4.5:1 on dark raised paper; deepen it toward the ink. */
   .data-card--danger .data-card__title {
-    color: color-mix(in srgb, var(--destructive) 80%, var(--ink));
+    color: color-mix(in srgb, var(--destructive) 80%, var(--color-ink));
   }
 
   :global(.data-card__trigger) {
@@ -95,6 +95,6 @@
 
   .data-card__content {
     padding: 8px 14px 16px;
-    border-top: 1px dashed color-mix(in srgb, var(--hairline) 34%, transparent);
+    border-top: 1px dashed color-mix(in srgb, var(--color-ink-hairline) 34%, transparent);
   }
 </style>
