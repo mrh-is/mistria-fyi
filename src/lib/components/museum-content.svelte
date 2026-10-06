@@ -152,7 +152,7 @@
       userState.toggleMuseumItem(itemId);
     });
     if (completed) {
-      if (!userState.state.showCompleted) recentlyCompleted.mark(itemId);
+      if (!userState.state.showCompleted) recentlyCompleted.markLeaving(itemId);
       if (isMuseumComplete()) {
         celebrateCategory();
       } else if (isWingComplete(trackerData.museum[wingId])) {
@@ -219,7 +219,7 @@
               {@const museumItemVisibility = trackerData.items[itemId].visibility}
               <TrackerRow
                 display={rowDisplay(itemId, museumItemSources)}
-                lookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
+                segmentLookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
                 name={getName("items", itemId, locale)}
                 reportCategory="museum-item"
                 reportEntityId={itemId}
@@ -230,7 +230,7 @@
                   if (itemNameVisible(itemId) || museumCompleted) {
                     toggleItem(itemId, set.setId, wingId);
                   } else {
-                    spoilerGuard.guard(museumItemVisibility, () => {
+                    spoilerGuard.requestGuardedAction(museumItemVisibility, () => {
                       toggleItem(itemId, set.setId, wingId);
                     });
                   }

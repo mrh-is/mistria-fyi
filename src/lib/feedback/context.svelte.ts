@@ -3,9 +3,9 @@ import { SvelteMap } from "svelte/reactivity";
 
 import type { Attachment } from "svelte/attachments";
 
-import type { ReportableElement } from "#lib/feedback/types.js";
+import type { ReportTarget } from "#lib/feedback/types.js";
 
-type SelectionHandler = (element: ReportableElement) => void;
+type SelectionHandler = (element: ReportTarget) => void;
 
 /**
  * Tracks which elements can be reported & whether the picker is choosing one. The root layout
@@ -15,7 +15,7 @@ type SelectionHandler = (element: ReportableElement) => void;
  */
 export class FeedbackContext {
   isPicking = $state(false);
-  readonly registrations = new SvelteMap<HTMLElement, ReportableElement>();
+  readonly registrations = new SvelteMap<HTMLElement, ReportTarget>();
 
   #onFinish: (() => void) | undefined;
   #onSelect: SelectionHandler | undefined;
@@ -24,7 +24,7 @@ export class FeedbackContext {
     this.#finish();
   }
 
-  reportable(metadata: ReportableElement): Attachment<HTMLElement> {
+  reportableAttachment(metadata: ReportTarget): Attachment<HTMLElement> {
     return (element) => {
       this.registrations.set(element, metadata);
 
@@ -40,7 +40,7 @@ export class FeedbackContext {
     this.isPicking = false;
   }
 
-  select(metadata: ReportableElement): void {
+  select(metadata: ReportTarget): void {
     const onSelect = this.#onSelect;
     this.#finish();
     onSelect?.(metadata);

@@ -36,7 +36,7 @@ describe("FeedbackPanel", () => {
 
   it("renders form fields when open", () => {
     renderWithFeedback(FeedbackPanel, {
-      accent: "var(--color-category-museum)",
+      accentColor: "var(--color-category-museum)",
       onClose: vi.fn(),
       open: true,
     });
@@ -96,7 +96,7 @@ describe("FeedbackPanel", () => {
     const feedbackContext = new FeedbackContext();
     const reportableElement = document.createElement("div");
     document.body.append(reportableElement);
-    feedbackContext.reportable({
+    feedbackContext.reportableAttachment({
       category: "recipe",
       displayName: "Tomato Soup",
       entityId: "tomato_soup",
@@ -145,7 +145,7 @@ describe("FeedbackPanel", () => {
     const feedbackContext = new FeedbackContext();
     const reportableElement = document.createElement("div");
     document.body.append(reportableElement);
-    feedbackContext.reportable({
+    feedbackContext.reportableAttachment({
       category: "recipe",
       displayName: "Tomato Soup",
       entityId: "tomato_soup",

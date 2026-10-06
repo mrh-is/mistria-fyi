@@ -21,7 +21,7 @@ describe("CategoryCard", () => {
 
     const stripe = queries.getByRole("link", { name: "Almanac, 7 of 20 completed" });
     expect(stripe.matches("[data-category-stripe]")).toBe(true);
-    expect(stripe.getAttribute("style")).toContain("--category-progress: 35%");
+    expect(stripe.getAttribute("style")).toContain("--category-progress-percent: 35%");
     expect(stripe.querySelector("[data-category-ribbon]")?.getAttribute("aria-hidden")).toBe(
       "true",
     );
@@ -39,7 +39,7 @@ describe("CategoryCard", () => {
     });
 
     const stripe = queries.getByRole("link", { name: "Museum, 4 of 10 completed" });
-    expect(stripe.getAttribute("style")).toContain("--category-progress: 40%");
+    expect(stripe.getAttribute("style")).toContain("--category-progress-percent: 40%");
   });
 
   it("keeps the category identity when adding the completed gold-leaf edge", () => {

@@ -47,7 +47,7 @@
   function toggleDate(dateId: DateId): void {
     const vis = trackerData.dates[dateId].visibility;
     if (!dateNameVisible(dateId)) {
-      spoilerGuard.guard(vis, () => {
+      spoilerGuard.requestGuardedAction(vis, () => {
         toggleDate(dateId);
       });
       return;
@@ -110,7 +110,7 @@
             reportEntityId={date.id}
             display={trackerRowDisplay({ completed, nameVisible: dateNameVisible(date.id) })}
             sources={date.sources}
-            lookups={{ ...baseLookups, entityVisibility: date.visibility }}
+            segmentLookups={{ ...baseLookups, entityVisibility: date.visibility }}
             onToggle={() => {
               toggleDate(date.id);
             }}

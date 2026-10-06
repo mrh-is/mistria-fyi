@@ -7,7 +7,7 @@ export interface LeavingSet<T> {
   /** Reactive view of the ids still lingering, for availability checks. */
   readonly ids: ReadonlySet<T>;
   /** Keep `id` alive while its row plays the leave animation, then drop it. */
-  mark: (id: T) => void;
+  markLeaving: (id: T) => void;
 }
 
 /** Tracks rows that just completed so they stay rendered for the leave animation. */
@@ -22,7 +22,7 @@ export function createLeavingSet<T>(durationMs: number = ROW_LEAVE_MS): LeavingS
   return {
     has: (id) => ids.has(id),
     ids,
-    mark(id): void {
+    markLeaving(id): void {
       clearTimeout(timers.get(id));
       ids.add(id);
       timers.set(

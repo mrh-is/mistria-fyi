@@ -5,12 +5,12 @@
   import * as m from "#lib/paraglide/messages.js";
 
   import type { FeedbackContext } from "#lib/feedback/context.svelte.js";
-  import type { ReportableElement } from "#lib/feedback/types.js";
+  import type { ReportTarget } from "#lib/feedback/types.js";
 
   interface Highlight {
     height: number;
     left: number;
-    metadata: ReportableElement;
+    metadata: ReportTarget;
     top: number;
     width: number;
   }

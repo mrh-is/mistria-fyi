@@ -4,5 +4,5 @@
   const leaving = createLeavingSet<string>();
 </script>
 
-<button type="button" onclick={() => leaving.mark("item")}>Complete item</button>
+<button type="button" onclick={() => leaving.markLeaving("item")}>Complete item</button>
 <p>{leaving.has("item") ? "Leaving" : "Absent"}</p>

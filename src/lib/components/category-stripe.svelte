@@ -14,34 +14,34 @@
    * own.
    */
   let {
+    categoryTotal,
     color,
     completed,
     completedLabel,
     description,
+    filteredTotal,
     href,
     icon,
     mobileRibbon = false,
     name,
-    total,
-    trackedTotal,
   }: {
+    /** Everything in the category, filters aside; reaching it earns the gold-leaf edge. */
+    categoryTotal: number;
     color: string;
     completed: number;
     /** Replaces the visible completed count (the share image shows "??"). */
     completedLabel?: string;
     description: string;
+    /** The count shown after the slash: what's completed plus what the filters still show. */
+    filteredTotal: number;
     href: Path;
     icon: "all" | CategoryKey;
     mobileRibbon?: boolean;
     name: string;
-    /** The count shown after the slash: what's completed plus what the filters still show. */
-    total: number;
-    /** Everything in the category, filters aside; reaching it earns the gold-leaf edge. */
-    trackedTotal: number;
   } = $props();
 
-  let pct = $derived(total > 0 ? (completed / total) * 100 : 0);
-  let isComplete = $derived(trackedTotal > 0 && completed >= trackedTotal);
+  let pct = $derived(filteredTotal > 0 ? (completed / filteredTotal) * 100 : 0);
+  let isComplete = $derived(categoryTotal > 0 && completed >= categoryTotal);
 </script>
 
 <a
@@ -53,9 +53,9 @@
   aria-label={m.section_progress_label({
     completed: formatNumber(completed, page.data.locale),
     name,
-    total: formatNumber(total, page.data.locale),
+    total: formatNumber(filteredTotal, page.data.locale),
   })}
-  style="--category-color: {color}; --category-progress: {pct}%"
+  style="--category-color: {color}; --category-progress-percent: {pct}%"
 >
   <span class="category-copy">
     <strong class="category-name">{name}</strong>
@@ -65,7 +65,7 @@
   <span class="category-count" aria-hidden="true">
     <span>{completedLabel ?? formatNumber(completed, page.data.locale)}</span>
     <span class="category-slash">/</span>
-    <span>{formatNumber(total, page.data.locale)}</span>
+    <span>{formatNumber(filteredTotal, page.data.locale)}</span>
   </span>
 
   <span class="category-ribbon" data-category-ribbon aria-hidden="true">
@@ -209,7 +209,7 @@
 
   .category-progress i {
     display: block;
-    width: var(--category-progress);
+    width: var(--category-progress-percent);
     height: 100%;
     background: var(--category-color);
     transition: width 300ms ease-out;
