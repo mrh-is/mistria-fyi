@@ -10,10 +10,10 @@ export const REVIEWED_NON_NATIVE_REFERENCES = {
   // names it through the `source_location_mines` message.
   locations: ["mines"],
   // A wildcard for drops from every monster, rendered as “any monster” by `monsterName` in
-  // `src/lib/utils/source-segments.ts`.
+  // `src/lib/sources/source-segments.ts`.
   monsters: ["any"],
   // Runtime-only story beats (items, songs, & flags) that are not quests or cutscenes. Each must
-  // also appear in `UNNAMED_SOURCE_IDS.quests` (`src/lib/utils/source-names.ts`) so it renders;
+  // also appear in `UNNAMED_SOURCE_IDS.quests` (`src/lib/sources/source-names.ts`) so it renders;
   // #471 tracks giving them reviewed names.
   quests: [
     "another_tower",

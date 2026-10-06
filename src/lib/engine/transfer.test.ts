@@ -317,6 +317,25 @@ describe("transfer codec v11", () => {
     await expect(encodeTransferPayload(sparse)).resolves.toBe(await encodeTransferPayload(empty));
   });
 
+  it("fails loudly on both sides when a ninth spell would overflow the one-byte bitmask", async () => {
+    const spells = trackerData.mines.spells as Record<string, unknown>;
+    const [firstId] = Object.keys(spells);
+    spells.zz_ninth_spell = spells[firstId];
+    try {
+      // Fill to nine entries regardless of the current count.
+      let filler = 0;
+      while (Object.keys(spells).length < 9) {
+        spells[`zz_filler_${String(filler++)}`] = spells[firstId];
+      }
+      await expect(encodeTransferPayload(makeGoldenCompleted())).rejects.toThrow(/8 spells/);
+      await expectDecodeError(V11_GOLDEN_FIXTURE, "corrupt", /8 spells/);
+    } finally {
+      for (const id of Object.keys(spells)) {
+        if (id.startsWith("zz_")) Reflect.deleteProperty(spells, id);
+      }
+    }
+  });
+
   it("decodes the immutable v11 golden payload without changing its meaning", async () => {
     const decoded = await decodeTransferPayload(V11_GOLDEN_FIXTURE);
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { deepMerge } from "./deep-partial.js";
+import { deepMerge } from "#lib/test-utils/deep-partial.js";
+
 import {
   buildBiomeLabel,
   buildPerkLabel,

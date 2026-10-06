@@ -3,10 +3,10 @@
   import SpoilerSection from "#lib/components/spoiler-section.svelte";
   import { trackerData } from "#lib/data/index.js";
   import { animalNameId, getName, nameCollator } from "#lib/data/names.js";
+  import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
+  import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
-  import { celebrate, celebrateCategory } from "#lib/utils/celebrate.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
-  import { showUndoToast } from "#lib/utils/undo-toast.js";
 
   import TrackerEmptyState from "./tracker-empty-state.svelte";
   import TrackerRowList from "./tracker-row-list.svelte";

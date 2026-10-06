@@ -1,7 +1,7 @@
+import type { SegmentLookups } from "#lib/sources/source-segments.js";
 import type { Source } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { AnimalId, AnyId } from "#lib/types/tracker-data.js";
-import type { SegmentLookups } from "#lib/utils/source-segments.js";
 
 export interface AnimalSubcategoryProps<ItemId extends AnyId> {
   areAllAnimalsComplete: () => boolean;
