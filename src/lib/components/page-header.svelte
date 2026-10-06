@@ -3,9 +3,9 @@
 
   import { Icon } from "#lib/components/icon/index.js";
   import * as m from "#lib/paraglide/messages.js";
-  import { getLocale } from "#lib/paraglide/runtime.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { localizedHref } from "#lib/utils/localized-href.js";
+  import { page } from "$app/state";
 
   import type { Snippet } from "svelte";
 
@@ -64,14 +64,14 @@
     <span class="page-header__count">
       <span class="sr-only" aria-live="polite"
         >{m.page_header_progress({
-          completed: formatNumber(progress.completed, getLocale()),
-          total: formatNumber(progress.total, getLocale()),
+          completed: formatNumber(progress.completed, page.data.locale),
+          total: formatNumber(progress.total, page.data.locale),
         })}</span
       >
       <span aria-hidden="true"
-        >{formatNumber(progress.completed, getLocale())} / {formatNumber(
+        >{formatNumber(progress.completed, page.data.locale)} / {formatNumber(
           progress.total,
-          getLocale(),
+          page.data.locale,
         )}</span
       >
     </span>

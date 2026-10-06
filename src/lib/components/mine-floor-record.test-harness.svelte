@@ -17,4 +17,4 @@
   }
 </script>
 
-<MineFloorRecord {biomes} {compact} {floor} onChange={setFloor} />
+<MineFloorRecord {biomes} locale="en" {compact} {floor} onChange={setFloor} />

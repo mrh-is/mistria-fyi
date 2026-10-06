@@ -7,7 +7,6 @@
   import localeManifest from "#lib/data/locales.json";
   import { getName } from "#lib/data/names.js";
   import * as m from "#lib/paraglide/messages.js";
-  import { getLocale } from "#lib/paraglide/runtime.js";
   import { localePreference } from "#lib/stores/locale-preference.svelte.js";
   import { page } from "$app/state";
 
@@ -17,11 +16,12 @@
   /** A locale the player tried to switch to while offline, before it was downloaded. */
   let unavailableLocale = $state<LocaleCode | null>(null);
   const locales = localeManifest as LocaleManifest;
-  const currentLocale = getLocale();
-  const currentLocaleName =
-    locales.find(({ tag }) => tag === currentLocale)?.displayName ?? "English";
+  let currentLocale = $derived(page.data.locale);
+  let currentLocaleName = $derived(
+    locales.find(({ tag }) => tag === currentLocale)?.displayName ?? "English",
+  );
   // Named in the reader's own language ("Japanese", not "日本語"), since it sits inside a sentence.
-  const languageNames = new Intl.DisplayNames([currentLocale], { type: "language" });
+  let languageNames = $derived(new Intl.DisplayNames([currentLocale], { type: "language" }));
 
   async function select(locale: LocaleCode): Promise<void> {
     unavailableLocale = null;
