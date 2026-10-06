@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   guarded-paths:
@@ -32,9 +32,11 @@ jobs:
           node-version-file: .node-version
       - env:
           GH_TOKEN: ${{ github.token }}
-          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPOSITORY: ${{ github.repository }}
         run: |
+          # Read the live PR labels, not the event snapshot, so a rerun sees current labels.
+          PR_LABELS=$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER" --jq '[.labels[].name]')
+          export PR_LABELS
           gh api --paginate "repos/$REPOSITORY/pulls/$PR_NUMBER/files" --jq '.[]' | jq -s . > "$RUNNER_TEMP/files.json"
           node scripts/check-guarded-paths.ts "$RUNNER_TEMP/files.json"

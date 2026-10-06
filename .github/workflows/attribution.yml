@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   attribution:
@@ -31,12 +31,16 @@ jobs:
           node-version-file: .node-version
       - env:
           GH_TOKEN: ${{ github.token }}
-          PR_BODY: ${{ github.event.pull_request.body }}
-          PR_COMMIT_COUNT: ${{ github.event.pull_request.commits }}
-          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPOSITORY: ${{ github.repository }}
         run: |
+          # Read the live PR, not the event snapshot, so a rerun of any event's run sees current
+          # labels & body.
+          PR=$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER")
+          PR_BODY=$(jq -r '.body // ""' <<< "$PR")
+          PR_COMMIT_COUNT=$(jq -r '.commits' <<< "$PR")
+          PR_LABELS=$(jq -c '[.labels[].name]' <<< "$PR")
+          export PR_BODY PR_COMMIT_COUNT PR_LABELS
           PR_COMMITS=$(gh api --paginate "repos/$REPOSITORY/pulls/$PR_NUMBER/commits" \
             --jq '.[] | {message: .commit.message, parents: (.parents | length), sha: .sha}')
           export PR_COMMITS
