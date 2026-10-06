@@ -9,6 +9,7 @@ import type { CategoryKey } from "#lib/data/categories.js";
 import type { AvailabilitySelection } from "#lib/types/availability.js";
 import type { ItemId, QuestId, Season, VillagerId, Weather } from "#lib/types/tracker-data.js";
 import type { CompletedState } from "#lib/types/user-progress.js";
+import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 export const MAX_VILLAGER_LEVEL = 12;
 export const MAX_SKILL_LEVEL = 60;
@@ -35,7 +36,7 @@ export interface NormalizedLevel {
 
 interface ProgressContext {
   availabilityWindows: AvailabilitySelection;
-  completed: CompletedState;
+  completed: DeepReadonly<CompletedState>;
   worldState: { season: Season; weather: Weather };
 }
 
@@ -123,7 +124,10 @@ export function getOverallProgress(allProgress: AllProgress): CategoryProgress {
   return { completed, filtered, total };
 }
 
-export function isVillagerComplete(villagerId: VillagerId, completed: CompletedState): boolean {
+export function isVillagerComplete(
+  villagerId: VillagerId,
+  completed: DeepReadonly<CompletedState>,
+): boolean {
   const villager = trackerData.villagers[villagerId];
   const level = completed.villagerLevels[villagerId] ?? 0;
   if (level < MAX_VILLAGER_LEVEL) return false;
@@ -160,7 +164,7 @@ export function normalizeLevel(level: unknown, max: number): NormalizedLevel {
 
 function almanacEntryProgress(
   canonicalIds: ItemId[],
-  completedSet: Set<ItemId>,
+  completedSet: ReadonlySet<ItemId>,
   ctx: ProgressContext,
 ): CategoryProgress {
   const applicableIds = canonicalIds.filter((id) => {
@@ -354,7 +358,7 @@ function getVillagersProgress(ctx: ProgressContext): CategoryProgress {
 
 function itemProgress(
   allIds: ItemId[],
-  completedSet: Set<ItemId>,
+  completedSet: ReadonlySet<ItemId>,
   ctx: ProgressContext,
 ): CategoryProgress {
   const applicableIds = allIds.filter(

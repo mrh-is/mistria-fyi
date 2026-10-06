@@ -26,6 +26,7 @@ import type {
   VillagerRelationship,
 } from "#lib/types/tracker-data.js";
 import type { ChildChoice, CompletedState, QuestState } from "#lib/types/user-progress.js";
+import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 // ─── Constants ──────────────────────────────────────────────────────
 
@@ -88,7 +89,9 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
 }
 
 /** Encode CompletedState → base64url string for QR code */
-export async function encodeTransferPayload(completed: CompletedState): Promise<string> {
+export async function encodeTransferPayload(
+  completed: DeepReadonly<CompletedState>,
+): Promise<string> {
   const parts: Uint8Array[] = [];
 
   // 1. Almanac items
@@ -996,7 +999,7 @@ function toBase64url(bytes: Uint8Array): string {
 
 // ─── Decode ─────────────────────────────────────────────────────────
 
-function toBitfield(ordered: string[], completedSet: Set<string>): Uint8Array {
+function toBitfield(ordered: string[], completedSet: ReadonlySet<string>): Uint8Array {
   const byteCount = Math.ceil(ordered.length / 8);
   const bytes = new Uint8Array(byteCount);
   for (let i = 0; i < ordered.length; i++) {

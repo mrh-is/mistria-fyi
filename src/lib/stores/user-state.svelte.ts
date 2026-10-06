@@ -61,6 +61,7 @@ import type {
   MergeResult,
   QuestState,
 } from "#lib/types/user-progress.js";
+import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -848,6 +849,9 @@ function createUserState() {
     setMineFloor(floor: number) {
       state.completed.mines.floor = clampMineFloor(floor);
     },
+    setQuestState(id: QuestId, questState: QuestState) {
+      state.completed.questStates[id] = questState;
+    },
     setReachedSeason(season: Season) {
       const seasonOrd: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
       if (seasonOrd[season] > seasonOrd[state.completed.reachedSeason]) {
@@ -887,7 +891,7 @@ function createUserState() {
       if (!isWeatherInSeason(weather, state.worldState.season)) return;
       state.worldState.weather = weather;
     },
-    get state(): UserState {
+    get state(): DeepReadonly<UserState> {
       return state;
     },
     toggleAlmanacItem(id: ItemId) {
