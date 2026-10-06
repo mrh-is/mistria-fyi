@@ -31,7 +31,45 @@ export function createSpoilerGuard(): SpoilerGuard {
       pendingAction = null;
     },
     completeAndUpdate(): void {
-      if (condition) satisfyCondition(condition, userState.state.completed, trackerData);
+      if (condition) {
+        for (const mutation of satisfyCondition(
+          condition,
+          userState.state.completed,
+          trackerData,
+        )) {
+          switch (mutation.type) {
+            case "hasUpperFloor":
+              userState.setHasUpperFloor(true);
+              break;
+            case "heartLevel":
+              userState.setVillagerLevel(mutation.villagerId, mutation.level);
+              break;
+            case "married":
+              userState.setVillagerRelationship(mutation.villagerId, "married");
+              break;
+            case "minesLevel":
+              userState.setMineFloor(mutation.floor);
+              break;
+            case "perkUnlocked":
+              if (!userState.state.completed.unlockedPerks.has(mutation.perkId)) {
+                userState.togglePerk(mutation.perkId);
+              }
+              break;
+            case "questCompleted":
+              userState.setQuestState(mutation.questId, "completed");
+              break;
+            case "reachedSeason":
+              userState.setReachedSeason(mutation.season);
+              break;
+            case "renownLevel":
+              userState.setRenown(mutation.level);
+              break;
+            case "skillLevel":
+              userState.setSkillLevel(mutation.skillId, mutation.level);
+              break;
+          }
+        }
+      }
       pendingAction?.();
       open = false;
       condition = null;

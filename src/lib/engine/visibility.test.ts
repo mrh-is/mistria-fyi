@@ -9,7 +9,7 @@ import {
   isConditionInvertible,
   isEntityNameVisible,
   isVisible,
-  satisfyCondition,
+  satisfyCondition as planCondition,
 } from "./visibility.js";
 
 import type {
@@ -21,6 +21,7 @@ import type {
   TrackerData,
   VillagerId,
 } from "#lib/types/tracker-data.js";
+import type { CompletedState } from "#lib/types/user-progress.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 import type { DeepPartial } from "#lib/utils/deep-partial.js";
 
@@ -486,7 +487,69 @@ describe("deriveProgressionState", () => {
   });
 });
 
+function satisfyCondition(
+  condition: VisibilityCondition,
+  completed: CompletedState,
+  data: TrackerData,
+): void {
+  for (const mutation of planCondition(condition, completed, data)) {
+    switch (mutation.type) {
+      case "hasUpperFloor":
+        completed.hasUpperFloor = true;
+        break;
+      case "heartLevel":
+        completed.villagerLevels[mutation.villagerId] = mutation.level;
+        break;
+      case "married":
+        completed.villagerRelationships[mutation.villagerId] = "married";
+        break;
+      case "minesLevel":
+        completed.mines.floor = mutation.floor;
+        break;
+      case "perkUnlocked":
+        completed.unlockedPerks.add(mutation.perkId);
+        break;
+      case "questCompleted":
+        completed.questStates[mutation.questId] = "completed";
+        break;
+      case "reachedSeason":
+        completed.reachedSeason = mutation.season;
+        break;
+      case "renownLevel":
+        completed.renown = mutation.level;
+        break;
+      case "skillLevel":
+        completed.skillLevels[mutation.skillId] = mutation.level;
+        break;
+    }
+  }
+}
+
 describe("satisfyCondition", () => {
+  it("returns mutations without changing nested records or sets", () => {
+    const completed = makeCompletedState();
+    const before = makeCompletedState();
+    const perkId = "test_perk" as PerkId;
+    const mutations = planCondition(
+      {
+        type: "and",
+        conditions: [
+          { type: "renownLevel", level: 20 },
+          { type: "perkUnlocked", perkId },
+          { type: "married", villagerId: holt },
+        ],
+      },
+      completed,
+      makeTrackerData(),
+    );
+    expect(completed).toEqual(before);
+    expect(mutations).toEqual([
+      { type: "renownLevel", level: 20 },
+      { type: "perkUnlocked", perkId },
+      { type: "married", villagerId: holt },
+    ]);
+  });
+
   it("does nothing for always", () => {
     const completed = makeCompletedState();
     satisfyCondition({ type: "always" }, completed, makeTrackerData());

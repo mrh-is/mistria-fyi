@@ -12,6 +12,7 @@ import type {
 } from "#lib/types/tracker-data.js";
 import type { CompletedState, QuestState } from "#lib/types/user-progress.js";
 import type { QuestVisibility, VisibilityCondition } from "#lib/types/visibility.js";
+import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 const SEASON_ORD: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
 
@@ -25,13 +26,13 @@ export interface UserProgressionState {
   reachedSeason: Season;
   renown: number;
   showSpoilers: boolean;
-  skillLevels: Record<SkillId, number>;
-  unlockedPerks: Set<PerkId>;
+  skillLevels: Readonly<Record<SkillId, number>>;
+  unlockedPerks: ReadonlySet<PerkId>;
   villagerLevels: Record<VillagerId, number>;
 }
 
 export function deriveProgressionState(
-  completed: CompletedState,
+  completed: DeepReadonly<CompletedState>,
   trackerData: TrackerData,
   showSpoilers: boolean,
 ): UserProgressionState {
@@ -178,14 +179,86 @@ export function isVisible(
 
 // ─── Invertibility & satisfaction ───────────────────────────────────
 
-/**
- * Mutates `completed` to satisfy `condition`, per the invertible-primitive mapping in the spec
- * (spoiler-system-design.md Section 2). Callers should check `isConditionInvertible` first;
- * conditions containing a non-invertible `villagerKnown` leaf are no-ops here.
- */
+type ConditionDraft = Pick<
+  CompletedState,
+  | "hasUpperFloor"
+  | "questStates"
+  | "reachedSeason"
+  | "renown"
+  | "skillLevels"
+  | "unlockedPerks"
+  | "villagerLevels"
+  | "villagerRelationships"
+> & { mines: Pick<CompletedState["mines"], "floor"> };
+
+export type ConditionMutation =
+  | { type: "hasUpperFloor" }
+  | { type: "heartLevel"; level: number; villagerId: VillagerId }
+  | { type: "married"; villagerId: VillagerId }
+  | { type: "minesLevel"; floor: number }
+  | { type: "perkUnlocked"; perkId: PerkId }
+  | { type: "questCompleted"; questId: QuestId }
+  | { type: "reachedSeason"; season: Season }
+  | { type: "renownLevel"; level: number }
+  | { type: "skillLevel"; level: number; skillId: SkillId };
+
+/** Plans intended progress changes without mutating the caller's state. Apply via store setters. */
 export function satisfyCondition(
   condition: VisibilityCondition,
-  completed: CompletedState,
+  completed: DeepReadonly<CompletedState>,
+  trackerData: TrackerData,
+): ConditionMutation[] {
+  // Only these fields can be touched by prerequisite traversal; all other progress is read-only.
+  const draft = {
+    ...completed,
+    mines: { ...completed.mines },
+    questStates: { ...completed.questStates },
+    skillLevels: { ...completed.skillLevels },
+    unlockedPerks: new Set(completed.unlockedPerks),
+    villagerLevels: { ...completed.villagerLevels },
+    villagerRelationships: { ...completed.villagerRelationships },
+  };
+  satisfyConditionInDraft(condition, draft, trackerData);
+  const mutations: ConditionMutation[] = [];
+  if (draft.hasUpperFloor !== completed.hasUpperFloor) mutations.push({ type: "hasUpperFloor" });
+  if (draft.mines.floor !== completed.mines.floor) {
+    mutations.push({ type: "minesLevel", floor: draft.mines.floor });
+  }
+  if (draft.renown !== completed.renown) {
+    mutations.push({ type: "renownLevel", level: draft.renown });
+  }
+  if (draft.reachedSeason !== completed.reachedSeason) {
+    mutations.push({ type: "reachedSeason", season: draft.reachedSeason });
+  }
+  for (const [villagerId, level] of recordEntries(draft.villagerLevels)) {
+    if (level !== completed.villagerLevels[villagerId]) {
+      mutations.push({ type: "heartLevel", level, villagerId });
+    }
+  }
+  for (const [skillId, level] of recordEntries(draft.skillLevels)) {
+    if (level !== completed.skillLevels[skillId]) {
+      mutations.push({ type: "skillLevel", level, skillId });
+    }
+  }
+  for (const perkId of draft.unlockedPerks) {
+    if (!completed.unlockedPerks.has(perkId)) mutations.push({ type: "perkUnlocked", perkId });
+  }
+  for (const [questId, value] of recordEntries(draft.questStates)) {
+    if (value === "completed" && completed.questStates[questId] !== value) {
+      mutations.push({ type: "questCompleted", questId });
+    }
+  }
+  const spouse = getMarriedVillager(draft.villagerRelationships);
+  if (spouse !== null && spouse !== getMarriedVillager(completed.villagerRelationships)) {
+    mutations.push({ type: "married", villagerId: spouse });
+  }
+  return mutations;
+}
+
+/** Mutates a private draft to preserve ordered prerequisite & OR-branch planning. */
+function satisfyConditionInDraft(
+  condition: VisibilityCondition,
+  completed: ConditionDraft,
   trackerData: TrackerData,
 ): void {
   switch (condition.type) {
@@ -194,7 +267,7 @@ export function satisfyCondition(
     case "villagerKnown":
       return;
     case "and":
-      for (const sub of condition.conditions) satisfyCondition(sub, completed, trackerData);
+      for (const sub of condition.conditions) satisfyConditionInDraft(sub, completed, trackerData);
       return;
     case "hasUpperFloor":
       completed.hasUpperFloor = true;
@@ -218,7 +291,7 @@ export function satisfyCondition(
       // The UI is expected to let the user pick a branch and call `satisfyCondition` with just
       // that branch. If handed the whole `or`, fall back to the first invertible branch.
       const branch = condition.conditions.find(isConditionInvertible) ?? condition.conditions.at(0);
-      if (branch) satisfyCondition(branch, completed, trackerData);
+      if (branch) satisfyConditionInDraft(branch, completed, trackerData);
       return;
     }
     case "perkUnlocked":
@@ -249,7 +322,7 @@ export function satisfyCondition(
 /** Combines a stored `villagerLevels` entry with any `heartLevelChanges` cascade from completed quests. */
 function computeStoredVillagerLevel(
   villagerId: VillagerId,
-  completed: CompletedState,
+  completed: DeepReadonly<CompletedState>,
   trackerData: TrackerData,
 ): number {
   let level = completed.villagerLevels[villagerId] ?? 0;
@@ -272,7 +345,7 @@ function computeStoredVillagerLevel(
  * prerequisite cycle stay "unavailable".
  */
 function deriveQuestVisibility(
-  completed: CompletedState,
+  completed: DeepReadonly<CompletedState>,
   trackerData: TrackerData,
 ): Record<QuestId, QuestVisibility> {
   const questVisibility: Record<QuestId, QuestVisibility> = {};
@@ -315,7 +388,7 @@ function deriveQuestVisibility(
 function evaluateOrderedChain(
   order: QuestId[],
   questId: QuestId,
-  completed: CompletedState,
+  completed: DeepReadonly<CompletedState>,
   trackerData: TrackerData,
   baseCondition: VisibilityCondition,
 ): QuestVisibility {
@@ -330,7 +403,7 @@ function evaluateOrderedChain(
 function evaluateQuestPrerequisites(
   questId: QuestId,
   questType: QuestType,
-  completed: CompletedState,
+  completed: DeepReadonly<CompletedState>,
   trackerData: TrackerData,
   questVisibility: Record<QuestId, QuestVisibility>,
 ): QuestVisibility {
@@ -373,7 +446,7 @@ function findQuestType(questId: QuestId, trackerData: TrackerData): QuestType | 
 
 function isBaseConditionMet(
   condition: VisibilityCondition,
-  completed: CompletedState,
+  completed: DeepReadonly<CompletedState>,
   trackerData: TrackerData,
 ): boolean {
   switch (condition.type) {
@@ -418,7 +491,7 @@ function isBaseConditionMet(
 function markOrderedPredecessorsCompleted(
   order: QuestId[],
   questId: QuestId,
-  completed: CompletedState,
+  completed: ConditionDraft,
   trackerData: TrackerData,
 ): void {
   const index = order.indexOf(questId);
@@ -429,7 +502,7 @@ function markOrderedPredecessorsCompleted(
 /** Marks `questId` completed, first recursively completing everything it's chained behind. */
 function markQuestCompleted(
   questId: QuestId,
-  completed: CompletedState,
+  completed: ConditionDraft,
   trackerData: TrackerData,
 ): void {
   if (completed.questStates[questId] === "completed") return;
@@ -439,7 +512,7 @@ function markQuestCompleted(
 
 function markQuestPrerequisitesCompleted(
   questId: QuestId,
-  completed: CompletedState,
+  completed: ConditionDraft,
   trackerData: TrackerData,
 ): void {
   const questType = findQuestType(questId, trackerData);
@@ -453,6 +526,6 @@ function markQuestPrerequisitesCompleted(
 
   const quest = trackerData.quests[questType][questId];
   if (quest.visibility) {
-    satisfyCondition(quest.visibility, completed, trackerData);
+    satisfyConditionInDraft(quest.visibility, completed, trackerData);
   }
 }
