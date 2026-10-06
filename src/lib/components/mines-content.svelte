@@ -50,11 +50,11 @@
   let {
     compact = false,
     defaultOpen = false,
-    locale = "en",
+    locale,
   }: {
     compact?: boolean;
     defaultOpen?: boolean;
-    locale?: LocaleCode;
+    locale: LocaleCode;
   } = $props();
 
   const biomes = trackerData.mines.biomes;

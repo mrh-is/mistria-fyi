@@ -12,7 +12,7 @@
 
   import type { LocaleCode } from "#lib/types/locale.js";
 
-  let { compact = false, locale = "en" }: { compact?: boolean; locale?: LocaleCode } = $props();
+  let { compact = false, locale }: { compact?: boolean; locale: LocaleCode } = $props();
 
   const feedbackContext = getFeedbackContextOrFallback();
   let level = $derived(userState.state.completed.renown);

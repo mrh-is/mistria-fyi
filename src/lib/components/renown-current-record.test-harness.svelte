@@ -4,4 +4,4 @@
   let { compact = false }: { compact?: boolean } = $props();
 </script>
 
-<RenownCurrentRecord {compact} />
+<RenownCurrentRecord {compact} locale="en" />

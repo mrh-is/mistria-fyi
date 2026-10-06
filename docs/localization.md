@@ -31,7 +31,21 @@ MFG's own chrome names plenty of concepts the game names too: category names ("A
 Paraglide messages. `APP_UI_STRINGS` in `pipeline/src/extractors/ui-strings.ts` lists the
 `misc_local` keys the app displays, the pipeline writes them into the `ui` chunk, and the root
 layout (`src/routes/+layout.ts`) awaits that chunk on every route, so `getName("ui", id, locale)`
-works anywhere. Sitewide chrome without a `locale` prop reads `page.data.locale`.
+works anywhere.
+
+### Getting the locale in components
+
+There are two ways, & the choice follows what the component renders:
+
+- **Content components** (records, sections, anything a route composes from game data) take a
+  required `locale: LocaleCode` prop, which the route passes from `data.locale`. They never default
+  it; a missing prop is a type error rather than a silent English render.
+- **Sitewide chrome** (page header, progress counters, the language picker) reads `page.data.locale`
+  from `$app/state`.
+
+Components never call Paraglide's ambient `getLocale()`: it reports the previous page's locale while
+a navigation is committing, & it is a third source of truth. `tests/component-locale.test.ts`
+enforces both rules.
 
 Two adjustments happen in the extractor rather than the app. A request with `stripArticle` drops the
 leading definite article the game puts on a menu title ("The Almanac" → "Almanac", "Le musée" →
