@@ -600,6 +600,15 @@ describe("buildSourceSegments — scroll_bundle", () => {
 });
 
 describe("buildSourceSegments — letter and perk", () => {
+  it("names a birthday letter explicitly", () => {
+    expect(
+      buildSourceSegments(
+        { type: "letter", letterId: "birthday_gift", trigger: "birthday" },
+        BASE_LOOKUPS,
+      ),
+    ).toEqual(["Receive in a birthday letter"]);
+  });
+
   it("gates a shipped item name with item visibility", () => {
     const crystal_berries = "crystal_berries" as ItemId;
     const lookups: SegmentLookups = {

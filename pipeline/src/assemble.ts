@@ -7,6 +7,7 @@ import { isNonEmptyArray, recordEntries, recordMap } from "#lib/utils/record.js"
 
 import { collectExplorationSources } from "./acquisition/collectors/exploration.js";
 import { collectNaturalSources } from "./acquisition/collectors/natural.js";
+import { collectRecipeOnlySources } from "./acquisition/collectors/recipe-only.js";
 import { collectRewardSources } from "./acquisition/collectors/rewards.js";
 import { collectStoreSources } from "./acquisition/collectors/stores.js";
 import { getExcludedCosmeticIds } from "./acquisition/exclusions.js";
@@ -26,6 +27,7 @@ import {
   CosmeticSourceAccumulator,
   ItemSourceAccumulator,
   PetCosmeticSourceAccumulator,
+  RecipeSourceAccumulator,
 } from "./acquisition/source-accumulator.js";
 import { validateAcquisitionSources } from "./acquisition/validate-sources.js";
 import { PipelineDiagnostics } from "./diagnostics.js";
@@ -109,12 +111,13 @@ export function assembleTrackerData(
   console.log("Step 3: Extracting tracker data...");
   const { localeNames: museumLocaleNames, museum } = extractMuseum(fiddle, localizer);
   const cutsceneQuestMap = buildCutsceneQuestMap(fiddle);
+  const recipeSources = new RecipeSourceAccumulator();
   const {
     recipeIdByItemId,
     recipeMemberItems,
     recipeNameSources,
     recipes: recipeDrafts,
-  } = extractRecipes(fiddle, cutsceneQuestMap, diagnostics);
+  } = extractRecipes(fiddle, cutsceneQuestMap, diagnostics, recipeSources);
   const {
     almanac,
     iconSpritesByItemId,
@@ -192,6 +195,12 @@ export function assembleTrackerData(
   const cosmeticSources = new CosmeticSourceAccumulator();
   const animalCosmeticSources = new AnimalCosmeticSourceAccumulator();
   const petCosmeticSources = new PetCosmeticSourceAccumulator();
+  const recipeContext = {
+    diagnostics,
+    knownRecipeIds: new Set(Object.keys(recipeDrafts)),
+    recipeIdByItemId,
+    sources: recipeSources,
+  };
   deriveRecipeProductSources(fiddle, recipeMemberItems, itemSources);
   collectNaturalSources(fiddle, itemSources, cosmeticSources, petCosmeticSources, diagnostics);
   collectRewardSources(
@@ -200,6 +209,8 @@ export function assembleTrackerData(
     cosmeticSources,
     animalCosmeticSources,
     petCosmeticSources,
+    recipeContext,
+    requirementContext,
   );
   collectStoreSources(
     fiddle,
@@ -207,8 +218,13 @@ export function assembleTrackerData(
     itemSources,
     cosmeticSources,
     animalCosmeticSources,
+    recipeContext,
   );
-  collectExplorationSources(fiddle, itemSources, cosmeticSources);
+  collectExplorationSources(fiddle, itemSources, cosmeticSources, recipeContext);
+  collectRecipeOnlySources(fiddle, recipeContext);
+  for (const recipeId of Object.keys(recipeDrafts) as (keyof typeof recipeDrafts)[]) {
+    recipeDrafts[recipeId].sources = recipeSources.get(recipeId);
+  }
   collectDefaultItemSources(fiddle, itemSources, itemMetadata);
   collectDefaultCosmeticSources(cosmeticDrafts, cosmeticSources);
 

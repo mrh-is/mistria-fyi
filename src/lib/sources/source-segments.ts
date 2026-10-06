@@ -203,6 +203,12 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
     }
     case "default":
       return [m.source_default({}, opts)];
+    case "letter":
+      return [
+        source.trigger === "birthday"
+          ? m.source_letter_birthday({}, opts)
+          : m.source_letter_condition({}, opts),
+      ];
     case "dive": {
       const waters = buildWaterList(source.waterTypes, lookups);
       return [waters ? m.source_dive({ waters }, opts) : m.source_dive_any({}, opts)];

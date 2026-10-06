@@ -543,6 +543,8 @@
   "source_default": "처음부터 사용 가능",
   "source_dive": "{waters}에서 잠수",
   "source_dive_any": "잠수",
+  "source_letter_birthday": "생일 편지로 받기",
+  "source_letter_condition": "편지로 받기",
   "source_donate_item": "{item}을(를) 기증한 후 편지로 받기",
   "source_ship_item": "{item}을(를) 출하한 후 편지로 받기",
   "source_engagement": "데이트 가능한 마을 주민과 하트 10개 달성 후 엘시에게서 받기",

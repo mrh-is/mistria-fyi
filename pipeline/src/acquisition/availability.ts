@@ -181,9 +181,9 @@ function projectPredicate(
       if (typeof jsonValue === "string" && ALL_SEASONS.has(jsonValue as Season)) {
         return { type: "reachedSeason", season: jsonValue as Season };
       }
-      throw new Error(
-        `Day-level reached_date is not supported at ${sourceFieldPath(sourceLocation, predicate)} in ${sourceLocation.sourcePath}`,
-      );
+      // The UI cannot evaluate calendar days yet; preserve the native predicate as an unknown
+      // gate so a day-level restriction is never represented as unconditional stock.
+      return { type: "gamePredicate", predicate, value: jsonValue };
 
     case "reached_heart_level": {
       const condition = projectLevelRecord(jsonValue, "heart");

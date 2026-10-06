@@ -564,6 +564,8 @@
   "source_default": "Доступно с самого начала",
   "source_dive": "Нырять: {waters}",
   "source_dive_any": "Нырять",
+  "source_letter_birthday": "Получить в письме на день рождения",
+  "source_letter_condition": "Получить в письме",
   "source_donate_item": "Получить письмом после пожертвования: {item}",
   "source_ship_item": "Получить письмом после отправки: {item}",
   "source_engagement": "Получить от Элси после 10 сердец с жителем, с которым можно встречаться",

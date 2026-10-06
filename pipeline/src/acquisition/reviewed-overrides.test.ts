@@ -232,7 +232,7 @@ describe("reviewed overrides", () => {
 
       const voidCakeAdd = itemAdds.find(([id]) => id === ("void_cake" as ItemId));
       expect(voidCakeAdd).toBeDefined();
-      expect(cosmeticAdds).toHaveLength(8);
+      expect(cosmeticAdds).toHaveLength(6);
     });
 
     it("reports diagnostics for override targets missing from registries", () => {

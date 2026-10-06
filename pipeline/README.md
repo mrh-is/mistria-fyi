@@ -129,8 +129,8 @@ that misspells a quest or monster fails instead of validating itself.
 
 - **Extracted registries:** items, cosmetics, recipes, animals, biomes, festivals, perks, skills,
   stores, villagers, museum wings, and the emitted quest types.
-- **Parsed game tables** (`acquisition/native-references.ts`): locations, monsters, quests &
-  cutscenes, dates (including unlisted ones), placeable stations, treasure chest tiers, fish water
+- **Parsed game tables** (`acquisition/native-references.ts`): locations, monsters, letters, quests
+  & cutscenes, dates (including unlisted ones), placeable stations, treasure chest tiers, fish water
   types, and festival activities whose backing `misc` table exists. No table enumerates dialogue
   choices or dungeon loot groups, so any reference to either is unresolved.
 - **Reviewed non-native IDs** (`acquisition/reviewed-references.ts`): the few IDs overrides use
@@ -199,40 +199,42 @@ Each extractor projects one claimed domain into a registry plus per-locale names
 only in locale chunks (`src/lib/data/locales/<locale>/<category>.json`), never in
 `tracker-data.json`.
 
-| Module                    | Input                                   | Output & notable rules                                                                                                                                      |
-| ------------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `almanac.ts`              | Items, almanac UI, fish, translations   | Almanac rows and the item registry. Collapses colorways by recipe key and English name; the canonical ID is the alphabetically first member.                |
-| `animals.ts`              | `ranching.animals`                      | Animal species with variant tiers. Skips templates and unacquirable variants; default-unlocked variants land in tier one.                                   |
-| `cosmetics.ts`            | `player_assets`, customization UI       | Cosmetic registry and slot order. Throws unless `ui_slot` and `ui_sub_category` name an entry of `ui/character_customization.toml`.                         |
-| `dates.ts`                | `dates`                                 | Date registry.                                                                                                                                              |
-| `festivals.ts`            | `festivals`                             | Festival registry.                                                                                                                                          |
-| `mines.ts`                | `dungeons`, `spells`                    | Floors, biomes, and spells. Throws without a numeric `dungeons.misc.max_floors`.                                                                            |
-| `museum.ts`               | Museum wings and UI ordering            | Wings and sets in UI order, falling back to object order.                                                                                                   |
-| `pets.ts`                 | `pets`, items                           | Pet cosmetic sets and pet skins.                                                                                                                            |
-| `quests.ts`               | The six tracked quest groups            | Quests by app quest type. Throws when a cooking or fetch quest has no `has_item` requirement.                                                               |
-| `recipes.ts`              | Items plus every recipe-scroll location | Recipe registry with sources, `recipeIdByItemId`, and member maps. Groups items by `recipe_key ?? itemId` (details below).                                  |
-| `renown.ts`               | `renown`                                | Town ranks. Defaults to 10 levels per rank; throws when a rank has no English name.                                                                         |
-| `skills.ts`               | `skills`, `perks`, skill menu UI        | Skills, perk tiers, and perk names. Throws when the skill menu names a perk without a name.                                                                 |
-| `stores-meta.ts`          | `stores`                                | Store registry.                                                                                                                                             |
-| `treasure-chest-tiers.ts` | `fishing.chest_tables`                  | Treasure chest tiers.                                                                                                                                       |
-| `ui-strings.ts`           | `misc_local`                            | The `ui` locale chunk: category names, seasons, quest types, almanac labels, and `tier_<n>`. Collapses gendered markup to `<they>`; throws on other markup. |
-| `villagers.ts`            | `npcs`                                  | Villager registry and icon-sprite index. Throws when a villager lacks `icon_sprite`.                                                                        |
-| `sprites.ts`              | `assets.zip` or extracted PNGs          | Stages webp conversions for items and villagers; `publishSprites` writes them.                                                                              |
+| Module                    | Input                                 | Output & notable rules                                                                                                                                      |
+| ------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `almanac.ts`              | Items, almanac UI, fish, translations | Almanac rows and the item registry. Collapses colorways by recipe key and English name; the canonical ID is the alphabetically first member.                |
+| `animals.ts`              | `ranching.animals`                    | Animal species with variant tiers. Skips templates and unacquirable variants; default-unlocked variants land in tier one.                                   |
+| `cosmetics.ts`            | `player_assets`, customization UI     | Cosmetic registry and slot order. Throws unless `ui_slot` and `ui_sub_category` name an entry of `ui/character_customization.toml`.                         |
+| `dates.ts`                | `dates`                               | Date registry.                                                                                                                                              |
+| `festivals.ts`            | `festivals`                           | Festival registry.                                                                                                                                          |
+| `mines.ts`                | `dungeons`, `spells`                  | Floors, biomes, and spells. Throws without a numeric `dungeons.misc.max_floors`.                                                                            |
+| `museum.ts`               | Museum wings and UI ordering          | Wings and sets in UI order, falling back to object order.                                                                                                   |
+| `pets.ts`                 | `pets`, items                         | Pet cosmetic sets and pet skins.                                                                                                                            |
+| `quests.ts`               | The six tracked quest groups          | Quests by app quest type. Throws when a cooking or fetch quest has no `has_item` requirement.                                                               |
+| `recipes.ts`              | Items                                 | Recipe identities, native defaults, `recipeIdByItemId`, names, and member maps. Groups items by `recipe_key ?? itemId` (details below).                     |
+| `renown.ts`               | `renown`                              | Town ranks. Defaults to 10 levels per rank; throws when a rank has no English name.                                                                         |
+| `skills.ts`               | `skills`, `perks`, skill menu UI      | Skills, perk tiers, and perk names. Throws when the skill menu names a perk without a name.                                                                 |
+| `stores-meta.ts`          | `stores`                              | Store registry.                                                                                                                                             |
+| `treasure-chest-tiers.ts` | `fishing.chest_tables`                | Treasure chest tiers.                                                                                                                                       |
+| `ui-strings.ts`           | `misc_local`                          | The `ui` locale chunk: category names, seasons, quest types, almanac labels, and `tier_<n>`. Collapses gendered markup to `<they>`; throws on other markup. |
+| `villagers.ts`            | `npcs`                                | Villager registry and icon-sprite index. Throws when a villager lacks `icon_sprite`.                                                                        |
+| `sprites.ts`              | `assets.zip` or extracted PNGs        | Stages webp conversions for items and villagers; `publishSprites` writes them.                                                                              |
 
 ### Acquisition
 
-The `acquisition/` modules build the `sources` arrays attached to items, cosmetics, animal
-cosmetics, pet cosmetic sets, and pet skins. Recipe sources are collected separately inside
-`extractors/recipes.ts`.
+The `acquisition/` modules build the `sources` arrays attached to items, recipes, cosmetics, animal
+cosmetics, pet cosmetic sets, and pet skins. One reward, store, or exploration walker emits all
+relevant target kinds from each native table.
 
 | Module                                      | Responsibility                                                                                                                                     |
 | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `source-accumulator.ts`                     | Per-target accumulators that deduplicate by canonical JSON, sort output deterministically, and record provenance.                                  |
+| `recipe-target.ts`                          | Resolves a scroll product item to its recipe key, accepts known recipe IDs, and diagnoses unknown targets.                                         |
 | `recipe-products.ts`                        | Adds a `recipe` source to every item a recipe produces.                                                                                            |
 | `collectors/natural.ts`                     | Fish, bait, bugs, dives, crops, trees, forageables, monster drops, animal products, perks, and fish traps.                                         |
 | `collectors/rewards.ts`                     | Quest, letter, museum, chicken statue, festival, renown, date, and relationship rewards.                                                           |
 | `collectors/stores.ts`                      | Store stock, with requirements projected through `availability.ts`.                                                                                |
 | `collectors/exploration.ts`                 | Mines, artifact digs, treasure chests, the wishing well, the artifact replicator, and equipment.                                                   |
+| `collectors/recipe-only.ts`                 | Perks, dragon-forged defaults, and reviewed recipe-only exceptions that have no parallel item-acquisition table.                                   |
 | `availability.ts`                           | Projects requirement expressions into the app’s availability conditions.                                                                           |
 | `reviewed-overrides.ts`                     | Hand-reviewed item and cosmetic sources plus default (starting) sources. An override that duplicates a native source throws as obsolete.           |
 | `exclusions.ts`                             | Cosmetics deliberately dropped from the registry (internal assets and unreleased content), each with evidence.                                     |
@@ -268,17 +270,29 @@ The `extractors/visibility/` modules compute spoiler gating.
 
 ### Recipes
 
-`extractRecipes` builds the recipe registry in three phases. The first groups items into recipe
+`extractRecipes` builds the recipe registry from item identities. It first groups items into recipe
 identities by `recipe_key ?? itemId`. Only items with a `recipe` array or a `recipe_key` field are
 included; items with `recipe_is_default` but neither (such as `ore_gold`) are excluded with a
 diagnostic log, and `recipe_is_default` must agree across a group.
 
-The second phase merges sources from quest and letter scrolls, store and festival stock, museum
-rewards, the chicken statue, fishing chests, the wishing well, mines delicacies & chests, scroll
-bundles, perks, the dragon forge, renown, and a short hardcoded list. Sources are deduplicated and
-then sorted by type and detail fields.
+Assembly then collects recipe acquisition alongside item acquisition from quest and letter rewards,
+store and festival stock, museum rewards, the chicken statue, fishing chests, the wishing well,
+mines chests, scroll bundles, renown, perks, dragon-forged defaults, and a short exception list.
+Standalone `extractRecipes` calls invoke those same collectors. Recipe scroll targets resolve from
+the product item to its recipe key, or from an existing recipe ID; an unknown target is fatal.
+Source identity includes both availability and visibility. When the same path has different gates,
+each gated source remains a separate acquisition alternative, keeping its availability and spoiler
+condition paired. An unconditional path remains a separate alternative, and sorted output is
+independent of collector order.
 
-The third phase selects one backing item for each recipe’s localized name. English keeps the
+Letter sources use explicit shipping, donation, spouse, or calendar triggers where the native data
+provides them. Birthday and other recognized conditional letters retain their requirement tree as
+availability, including unknown game predicates, and carry a `letter` source with a birthday or
+condition trigger. One recognized trigger is enough to classify a letter; the full requirement
+expression, including additional JSON-safe unknown predicates, is preserved. Wholly unrecognized
+requirements produce a diagnostic; no default Spring 1 date is inferred.
+
+Name extraction selects one backing item for each recipe’s localized name. English keeps the
 established single- and double-bed normalization; every other locale uses the representative item’s
 translation directly, so English suffix rules never alter translated strings.
 
