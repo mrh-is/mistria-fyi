@@ -1,12 +1,10 @@
 <script lang="ts">
   import IconX from "@tabler/icons-svelte-runes/icons/x";
 
+  import { trapFocus } from "#lib/attachments/trap-focus.js";
   import * as m from "#lib/paraglide/messages.js";
 
   import type { Snippet } from "svelte";
-
-  const FOCUSABLE_SELECTOR =
-    'a[href], button:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
   let {
     children,
@@ -23,43 +21,10 @@
     onclose: () => void;
     title: string;
   } = $props();
-
-  let panelElement = $state<HTMLElement | null>(null);
-
-  function handleKeydown(event: KeyboardEvent) {
-    if (!dialog) return;
-    if (event.key === "Escape") {
-      onclose();
-      return;
-    }
-    if (event.key !== "Tab") return;
-
-    const focusable = [...(panelElement?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? [])];
-    const first = focusable.at(0);
-    const last = focusable.at(-1);
-    if (!first || !last) {
-      event.preventDefault();
-      return;
-    }
-
-    const activeElement = document.activeElement;
-    if (event.shiftKey && (activeElement === first || !panelElement?.contains(activeElement))) {
-      event.preventDefault();
-      last.focus();
-    } else if (
-      !event.shiftKey &&
-      (activeElement === last || !panelElement?.contains(activeElement))
-    ) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
-
 <section
-  bind:this={panelElement}
+  {@attach dialog ? trapFocus(onclose) : undefined}
   class="foldout"
   {id}
   aria-labelledby="{id}-title"

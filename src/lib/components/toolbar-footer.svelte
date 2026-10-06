@@ -6,10 +6,11 @@
   import IconSettings from "@tabler/icons-svelte-runes/icons/settings";
   import { flushSync, tick } from "svelte";
   import { prefersReducedMotion } from "svelte/motion";
-  import { fade, fly } from "svelte/transition";
+  import { fade } from "svelte/transition";
 
   import FeedbackPanel from "#lib/components/feedback-panel.svelte";
   import FoldoutPanel from "#lib/components/foldout-panel.svelte";
+  import PanelOverlay from "#lib/components/panel-overlay.svelte";
   import QuickSettingsPanel from "#lib/components/quick-settings-panel.svelte";
   import { Input } from "#lib/components/ui/input/index.js";
   import VisibilityPanel from "#lib/components/visibility-panel.svelte";
@@ -74,12 +75,6 @@
 
   function closePanel(): void {
     activePanel = null;
-  }
-
-  function handleKeydown(event: KeyboardEvent): void {
-    if (activePanel === null || activePanel === "feedback" || event.key !== "Escape") return;
-    event.preventDefault();
-    closePanel();
   }
 
   function togglePanel(panel: Exclude<ActivePanel, null>): void {
@@ -151,8 +146,6 @@
     previousFilterState = currentFilterState;
   });
 </script>
-
-<svelte:window onkeydown={handleKeydown} />
 
 {#if toolbar}
   <FeedbackPanel
@@ -265,19 +258,12 @@
   </nav>
 
   {#if activePanel === "settings" || activePanel === "visibility"}
-    <button
-      class="fixed inset-x-0 top-[-100dvh] bottom-[-100dvh] z-0"
-      type="button"
-      aria-hidden="true"
-      aria-label={m.toolbar_close_panel()}
-      tabindex="-1"
-      onclick={closePanel}
-    ></button>
-    <div
-      bind:this={panelElement}
-      class="fixed right-0 bottom-safe-offset-16 left-0 z-30 mx-auto max-w-lg px-3"
+    <PanelOverlay
+      bind:element={panelElement}
+      closeLabel={m.toolbar_close_panel()}
+      onclose={closePanel}
       style="--primary: {toolbarAccent}; --ring: {toolbarAccent}"
-      transition:fly={{ duration: prefersReducedMotion.current ? 0 : 150, y: 8 }}
+      outro
     >
       {#if activePanel === "settings"}
         <FoldoutPanel
@@ -304,7 +290,7 @@
           <VisibilityPanel showSeasonality={toolbar.worldState} />
         </FoldoutPanel>
       {/if}
-    </div>
+    </PanelOverlay>
   {/if}
 
   <p class="sr-only" role="status" aria-live="polite">{filterStatus}</p>

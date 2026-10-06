@@ -7,10 +7,11 @@
   import { tick } from "svelte";
   import { toast } from "svelte-sonner";
   import { prefersReducedMotion } from "svelte/motion";
-  import { fly, slide } from "svelte/transition";
+  import { slide } from "svelte/transition";
 
   import FeedbackPicker from "#lib/components/feedback-picker.svelte";
   import FoldoutPanel from "#lib/components/foldout-panel.svelte";
+  import PanelOverlay from "#lib/components/panel-overlay.svelte";
   import { Checkbox } from "#lib/components/ui/checkbox/index.js";
   import { trackerData } from "#lib/data/index.js";
   import { FeedbackContext } from "#lib/feedback/context.svelte.js";
@@ -21,9 +22,6 @@
   import type { ReportableElement } from "#lib/feedback/types.js";
 
   const TURNSTILE_SITE_KEY = "0x4AAAAAAEjKeNTnEDdgRcXX";
-
-  const FOCUSABLE_SELECTOR =
-    'button:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]), input:not([disabled])';
 
   const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -295,35 +293,6 @@
     }
   }
 
-  function handleKeydown(event: KeyboardEvent) {
-    if (visible && event.key === "Escape") {
-      onclose();
-      return;
-    }
-    if (!visible || event.key !== "Tab") return;
-
-    const focusable = [...(dialogElement?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? [])];
-
-    const first = focusable.at(0);
-    const last = focusable.at(-1);
-    if (!first || !last) {
-      event.preventDefault();
-      return;
-    }
-
-    const activeElement = document.activeElement;
-    if (event.shiftKey && (activeElement === first || !dialogElement?.contains(activeElement))) {
-      event.preventDefault();
-      last.focus();
-    } else if (
-      !event.shiftKey &&
-      (activeElement === last || !dialogElement?.contains(activeElement))
-    ) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
-
   async function handleSubmit() {
     if (!message.trim() || submitting) return;
 
@@ -457,29 +426,15 @@
   }
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
-
 <FeedbackPicker active={pickerActive} {feedbackContext} />
 
 {#if visible}
-  <button
-    class="fixed inset-x-0 top-[-100dvh] bottom-[-100dvh] z-0"
-    type="button"
-    aria-hidden="true"
-    aria-label={m.feedback_close_aria()}
-    tabindex="-1"
-    onclick={onclose}
-  ></button>
-
-  <div
-    bind:this={dialogElement}
-    class="fixed right-0 bottom-safe-offset-16 left-0 z-30 mx-auto max-w-lg px-3 outline-none"
-    role="dialog"
-    aria-label={m.toolbar_send_feedback()}
-    aria-modal="true"
-    tabindex="-1"
+  <PanelOverlay
+    bind:element={dialogElement}
+    closeLabel={m.feedback_close_aria()}
+    label={m.toolbar_send_feedback()}
+    {onclose}
     style={accent === undefined ? undefined : `--primary: ${accent}; --ring: ${accent};`}
-    in:fly={{ duration: prefersReducedMotion.current ? 0 : 150, y: 8 }}
   >
     <FoldoutPanel id="feedback-panel" title={m.toolbar_send_feedback()} dialog={false} {onclose}>
       <div class="feedback-form">
@@ -696,7 +651,7 @@
         </div>
       </div>
     </FoldoutPanel>
-  </div>
+  </PanelOverlay>
 {/if}
 
 <style>
