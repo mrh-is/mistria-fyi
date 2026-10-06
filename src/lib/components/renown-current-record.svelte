@@ -19,7 +19,7 @@
   let level = $derived(userState.state.completed.renown);
   let presentation = $derived(getRenownPresentation(level, trackerData.townRanks));
   let reportable = $derived(
-    feedbackContext.reportable({
+    feedbackContext.reportableAttachment({
       category: "renown",
       displayName: getName("town-ranks", presentation.currentRankIndex.toString(), locale),
       extra: { level },
@@ -51,11 +51,11 @@
   {@attach reportable}
 >
   {#if presentation.currentRank}
-    <span class="rank-seal" style="--rank-color: {presentation.color}" aria-hidden="true">
+    <span class="rank-seal" style="--town-rank-color: {presentation.rankColor}" aria-hidden="true">
       <Icon.ProgressMark
         type="town_rank"
-        fill={presentation.color}
-        color={presentation.color}
+        fill={presentation.rankColor}
+        color={presentation.rankColor}
         stroke={1.5}
       />
     </span>
@@ -66,7 +66,10 @@
         <small>{m.renown_max_rank_reached()}</small>
       {:else}
         <small>
-          {m.renown_within_rank({ span: presentation.rankSpan, within: presentation.withinRank })}
+          {m.renown_within_rank({
+            span: presentation.rankLevelSpan,
+            within: presentation.levelsIntoRank,
+          })}
         </small>
       {/if}
     </span>
@@ -84,7 +87,7 @@
   </span>
 
   <Stepper
-    accent="var(--cat-renown)"
+    accentColor="var(--color-category-renown)"
     decrementDisabled={level <= 0}
     incrementDisabled={level >= presentation.maxLevel}
     decrementLabel={m.renown_decrease()}
@@ -121,11 +124,11 @@
     align-items: center;
     gap: 5px 10px;
     padding: 12px;
-    border: 1px solid var(--hairline);
+    border: 1px solid var(--color-ink-hairline);
     border-radius: var(--radius);
-    background: var(--paper-raised);
+    background: var(--color-paper-raised);
     box-shadow: var(--shadow-small);
-    color: var(--ink);
+    color: var(--color-ink);
   }
 
   .rank-seal {
@@ -134,11 +137,11 @@
     height: 48px;
     grid-row: span 2;
     place-items: center;
-    border: 2px solid color-mix(in srgb, var(--rank-color) 70%, var(--ink));
+    border: 2px solid color-mix(in srgb, var(--town-rank-color) 70%, var(--color-ink));
     border-radius: 50%;
-    background: color-mix(in srgb, var(--rank-color) 15%, var(--paper-raised));
+    background: color-mix(in srgb, var(--town-rank-color) 15%, var(--color-paper-raised));
     /* stylelint-disable-next-line declaration-property-unit-disallowed-list -- a hard offset "stamp" edge, not an elevation */
-    box-shadow: 1px 2px 0 color-mix(in srgb, var(--rank-color) 25%, transparent);
+    box-shadow: 1px 2px 0 color-mix(in srgb, var(--town-rank-color) 25%, transparent);
     transform: rotate(-2deg);
   }
 
@@ -165,7 +168,7 @@
   }
 
   .rank-copy small {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-data);
     font-size: var(--text-2xs);
   }
@@ -175,13 +178,13 @@
     display: block;
     height: 4px;
     overflow: hidden;
-    background: color-mix(in srgb, var(--cat-renown) 14%, transparent);
+    background: color-mix(in srgb, var(--color-category-renown) 14%, transparent);
   }
 
   .renown-rule i {
     display: block;
     height: 100%;
-    background: var(--cat-renown);
+    background: var(--color-category-renown);
     transition: width 300ms ease-out;
   }
 
@@ -194,7 +197,7 @@
     align-items: baseline;
     justify-content: center;
     gap: 4px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-data);
     font-size: var(--text-xs);
     white-space: nowrap;
@@ -205,9 +208,9 @@
     min-height: 44px;
     appearance: textfield;
     border: 0;
-    border-bottom: 1px solid var(--cat-renown);
+    border-bottom: 1px solid var(--color-category-renown);
     background: transparent;
-    color: var(--ink);
+    color: var(--color-ink);
     font-family: var(--font-data);
     font-size: var(--text-base);
     text-align: center;
@@ -219,12 +222,12 @@
   }
 
   .renown-readout input:focus-visible {
-    outline: 2px solid var(--cat-renown);
+    outline: 2px solid var(--color-category-renown);
     outline-offset: 2px;
   }
 
   .renown-current[data-maxed="true"] .rank-copy {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .renown-current[data-compact="true"] {

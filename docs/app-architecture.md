@@ -18,7 +18,7 @@ conform to these types.
 
 ### `src/lib/types/user-progress.ts`
 
-The player's recorded progress (`CompletedState`, `QuestState`, `ChildChoice`) and the shape of a
+The player's recorded progress (`ProgressState`, `QuestState`, `ChildChoice`) and the shape of a
 save merge (`MergeCounts`, `MergeConflict`, `MergeResult`). The engine, store, and UI all share
 these types; the store owns the mutable instance.
 
@@ -46,9 +46,9 @@ plumbing live in `src/lib/pwa/`; message labels & colors for the UI live in `src
 
 - **Availability filtering** — determines which items/recipes/Villagers are visible based on season,
   weather, quest gates, and world state.
-- **Progress calculation** — computes completion counts and percentages from `CompletedState`.
+- **Progress calculation** — computes completion counts and percentages from `ProgressState`.
 - **Search** — filters and ranks tracker entries.
-- **Save import** — parses extracted save JSON files and builds a `Partial<CompletedState>` for
+- **Save import** — parses extracted save JSON files and builds a `Partial<ProgressState>` for
   merging.
 
 ### `src/lib/stores/user-state.svelte.ts`
@@ -85,10 +85,11 @@ The app processes save files entirely client-side. No save data is uploaded.
 
 1. The user selects a `.sav` file or the extracted JSON files (`player.json`, `gamedata.json`,
    `quests.json`).
-2. `parseSavFile` or `parseSaveFiles` bundles the sections into a `SaveBundle`. A section must be a
-   JSON object, and `player` must contain at least one recognizable progress field. When some JSON
-   files are unusable but at least one parses, the others are reported as warnings.
-3. `buildImportState` maps the bundle to a `Partial<CompletedState>` using `trackerData` for
+2. `parseSavArchive` or `parseExtractedSaveFiles` bundles the sections into a `SaveBundle`. A
+   section must be a JSON object, and `player` must contain at least one recognizable progress
+   field. When some JSON files are unusable but at least one parses, the others are reported as
+   warnings.
+3. `extractSaveProgress` maps the bundle to a `Partial<ProgressState>` using `trackerData` for
    validation and warning generation. Every field is read through a type guard: a field of the wrong
    shape (a string where a list belongs, `null` where an object belongs) is dropped with a warning,
    and non-text list entries are dropped individually. A quest listed as both completed and active
@@ -112,7 +113,7 @@ fact produces a warning rather than aborting the import:
 | Wrong type, `NaN`, or infinite | Ignored, warns                |
 
 Renown is the exception: it clamps silently at every boundary, since nothing in ordinary play
-produces an out-of-domain value. Backup restore (`importState`) uses the same domain maximums but
+produces an out-of-domain value. Backup restore (`restoreBackup`) uses the same domain maximums but
 rejects the whole document when a mine floor, villager level, or skill level is out of domain;
 renown is clamped there too rather than rejected. See
 [Backup Restore vs Transfer](#backup-restore-vs-transfer).
@@ -121,8 +122,8 @@ renown is clamped there too rather than rejected. See
 
 These flows are not interchangeable:
 
-- **Backup restore** (`importState`) replaces the entire serialized state with the imported JSON. It
-  is a full-state overwrite.
+- **Backup restore** (`restoreBackup`) replaces the entire serialized state with the imported JSON.
+  It is a full-state overwrite.
 - **Save import / device transfer** (`mergeFromSave`) unions imported progress into the current
   state. It is additive and never removes existing entries. The versioned binary contract and
   failure behavior are documented in [the progress transfer format](transfer-format.md).
@@ -171,8 +172,8 @@ Pages are layout compositors. They handle data fetching and composition, not bus
 
 Progress calculation and UI row visibility are separate concerns.
 
-- **Progress** is computed in `src/lib/engine/progress.ts` from the full `CompletedState`,
-  regardless of filters.
+- **Progress** is computed in `src/lib/engine/progress.ts` from the full `ProgressState`, regardless
+  of filters.
 - **Visibility** is controlled by `availabilityWindows` (`now`, `anytime`, `later`),
   `showCompleted`, and `showSpoilers` at the component level.
 - Hidden completed rows still contribute to progress totals. This ensures the overall percentage

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CACHE_LOCALES_MESSAGE } from "#lib/pwa/service-worker-cache.js";
 
-import { downloadLocale, keepLocaleOffline } from "./offline-locales.js";
+import { ensureLocaleCachedOffline, keepLocaleOffline } from "./offline-locales.js";
 
 function container() {
   const postMessage = vi.fn();
@@ -64,11 +64,11 @@ function controller(reply?: (data: unknown) => { failed: string[] }) {
   return { controller: { postMessage } as unknown as ServiceWorker, postMessage };
 }
 
-describe("downloadLocale", () => {
+describe("ensureLocaleCachedOffline", () => {
   it("asks the controlling worker to cache just that locale", async () => {
     const { controller: worker, postMessage } = controller(() => ({ failed: [] }));
 
-    expect(await downloadLocale("ja", { controller: worker })).toBe(true);
+    expect(await ensureLocaleCachedOffline("ja", { controller: worker })).toBe(true);
 
     expect(postMessage).toHaveBeenCalledWith({ type: CACHE_LOCALES_MESSAGE, locales: ["ja"] }, [
       expect.any(MessagePort),
@@ -80,16 +80,16 @@ describe("downloadLocale", () => {
       failed: ["/_app/immutable/chunks/ja-a.js"],
     }));
 
-    expect(await downloadLocale("ja", { controller: worker })).toBe(false);
+    expect(await ensureLocaleCachedOffline("ja", { controller: worker })).toBe(false);
   });
 
   it("reports the locale unavailable when the worker never answers", async () => {
     const { controller: worker } = controller();
 
-    expect(await downloadLocale("ja", { controller: worker }, 10)).toBe(false);
+    expect(await ensureLocaleCachedOffline("ja", { controller: worker }, 10)).toBe(false);
   });
 
   it("has no answer without a controlling worker", async () => {
-    expect(await downloadLocale("ja", { controller: null })).toBeUndefined();
+    expect(await ensureLocaleCachedOffline("ja", { controller: null })).toBeUndefined();
   });
 });

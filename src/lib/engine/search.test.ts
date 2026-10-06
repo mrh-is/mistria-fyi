@@ -6,10 +6,10 @@ import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { recordEntries } from "#lib/utils/record.js";
 
-import { searchItems } from "./search.js";
+import { searchAllCategories } from "./search.js";
 
 import type { QuestId, RecipeId, Season, Weather } from "#lib/types/tracker-data.js";
-import type { CompletedState } from "#lib/types/user-progress.js";
+import type { ProgressState } from "#lib/types/user-progress.js";
 
 import type { UserProgressionState } from "./visibility.js";
 
@@ -26,7 +26,7 @@ function makeProgressionState(overrides: Partial<UserProgressionState> = {}): Us
     isDating: false,
     knownVillagers: new Set(),
     marriedVillager: null,
-    minesFloor: 0,
+    mineFloor: 0,
     questVisibility: {},
     reachedSeason: "spring" as const,
     renown: 0,
@@ -73,8 +73,8 @@ function overlappingFixture() {
   throw new Error("Expected tracker data to contain an item in both the almanac and the museum");
 }
 
-function search(query: string, completed?: Partial<CompletedState>) {
-  return searchItems(
+function search(query: string, completed?: Partial<ProgressState>) {
+  return searchAllCategories(
     query,
     makeCompletedState(completed),
     defaultWorld,
@@ -145,7 +145,7 @@ describe("basic matching", () => {
     const [animalId, animal] = recordEntries(trackerData.animals)[0];
     const [cosmeticId] = recordEntries(animal.cosmetics)[0];
     const englishFullName = `${getName("animals", animalNameId(animalId, "core"), "en")} ${getName("animals", animalNameId(animalId, "cosmetics", cosmeticId), "en")}`;
-    const results = searchItems(
+    const results = searchAllCategories(
       englishFullName,
       makeCompletedState(),
       defaultWorld,
@@ -163,7 +163,7 @@ describe("basic matching", () => {
   it("matches a translated query across categories with localized result names", () => {
     // "ベジタブルスープ" (vegetable soup) is both an almanac item and a recipe in Japanese, so a
     // single non-English query must surface localized names from two categories at once.
-    const results = searchItems(
+    const results = searchAllCategories(
       "ベジタブルスープ",
       makeCompletedState(),
       defaultWorld,
@@ -178,7 +178,7 @@ describe("basic matching", () => {
   });
 
   it("matches the English fallback term while reporting the localized name", () => {
-    const results = searchItems(
+    const results = searchAllCategories(
       "Vegetable Soup",
       makeCompletedState(),
       defaultWorld,
@@ -191,7 +191,7 @@ describe("basic matching", () => {
   });
 
   it("matches a hiragana query against a katakana name", () => {
-    const results = searchItems(
+    const results = searchAllCategories(
       "べじたぶるすーぷ",
       makeCompletedState(),
       defaultWorld,
@@ -274,7 +274,7 @@ describe("result cap", () => {
 
 describe("ranking before truncation", () => {
   it("includes later-category prefix matches even when earlier categories fill the cap", () => {
-    const results = searchItems(
+    const results = searchAllCategories(
       "a",
       makeCompletedState(),
       defaultWorld,
@@ -329,7 +329,7 @@ describe("ranking before truncation", () => {
   });
 
   it("collects candidates from all categories before truncating to cap", () => {
-    const results = searchItems(
+    const results = searchAllCategories(
       "e",
       makeCompletedState(),
       defaultWorld,
@@ -351,7 +351,7 @@ describe("ranking before truncation", () => {
 
 describe("cross-category coverage", () => {
   it("searches across multiple categories", () => {
-    const results = searchItems(
+    const results = searchAllCategories(
       "e",
       makeCompletedState(),
       defaultWorld,
@@ -392,7 +392,13 @@ describe("recipe visibility", () => {
     const completed = makeCompletedState();
     const progression = deriveProgressionState(completed, trackerData, false);
 
-    const results = searchItems("Strawberry Shortcake", completed, defaultWorld, progression, "en");
+    const results = searchAllCategories(
+      "Strawberry Shortcake",
+      completed,
+      defaultWorld,
+      progression,
+      "en",
+    );
     const recipeResults = results.filter((r) => r.category === "recipes");
 
     expect(recipeResults).toHaveLength(0);
@@ -401,10 +407,16 @@ describe("recipe visibility", () => {
   it("shows recipes when visibility conditions are met", () => {
     const completed = makeCompletedState({
       questStates: { request_for_strawberries: "completed" },
-    } as Partial<CompletedState>);
+    } as Partial<ProgressState>);
     const progression = deriveProgressionState(completed, trackerData, false);
 
-    const results = searchItems("Strawberry Shortcake", completed, defaultWorld, progression, "en");
+    const results = searchAllCategories(
+      "Strawberry Shortcake",
+      completed,
+      defaultWorld,
+      progression,
+      "en",
+    );
     const recipeResults = results.filter((r) => r.category === "recipes");
 
     expect(recipeResults).toHaveLength(1);
@@ -415,7 +427,13 @@ describe("recipe visibility", () => {
     const completed = makeCompletedState();
     const progression = deriveProgressionState(completed, trackerData, true);
 
-    const results = searchItems("Strawberry Shortcake", completed, defaultWorld, progression, "en");
+    const results = searchAllCategories(
+      "Strawberry Shortcake",
+      completed,
+      defaultWorld,
+      progression,
+      "en",
+    );
     const recipeResults = results.filter((r) => r.category === "recipes");
 
     expect(recipeResults).toHaveLength(1);
@@ -426,10 +444,16 @@ describe("recipe visibility", () => {
     const completed = makeCompletedState({
       almanacRecipes: new Set(["strawberry_shortcake" as RecipeId]),
       questStates: { request_for_strawberries: "completed" },
-    } as Partial<CompletedState>);
+    } as Partial<ProgressState>);
     const progression = deriveProgressionState(completed, trackerData, false);
 
-    const results = searchItems("Strawberry Shortcake", completed, defaultWorld, progression, "en");
+    const results = searchAllCategories(
+      "Strawberry Shortcake",
+      completed,
+      defaultWorld,
+      progression,
+      "en",
+    );
     const recipeResult = results.find((r) => r.category === "recipes");
 
     expect(recipeResult?.completed).toBe(true);
@@ -564,7 +588,7 @@ describe("pet cosmetic and skin result IDs", () => {
       ["animals", `pet-cosmetic:${cosmeticId}`, getName("pets/cosmetic_sets", cosmeticId, "en")],
       ["quests", questId, getName("quests", questId, "en")],
     ] as const) {
-      const results = searchItems(
+      const results = searchAllCategories(
         name,
         makeCompletedState(),
         defaultWorld,

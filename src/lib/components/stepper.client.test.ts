@@ -35,7 +35,7 @@ describe("Stepper accessibility", () => {
 describe("Stepper appearance", () => {
   it("takes its hover & focus accent from the caller", () => {
     render(Stepper, {
-      accent: "var(--cat-mines)",
+      accentColor: "var(--color-category-mines)",
       decrementLabel: "Go up a floor",
       incrementLabel: "Go down a floor",
       onDecrement: vi.fn(),
@@ -43,7 +43,9 @@ describe("Stepper appearance", () => {
     });
 
     const root = screen.getByRole("button", { name: "Go up a floor" }).parentElement;
-    expect(root?.style.getPropertyValue("--stepper-accent")).toBe("var(--cat-mines)");
+    expect(root?.style.getPropertyValue("--stepper-accent-color")).toBe(
+      "var(--color-category-mines)",
+    );
   });
 
   it("marks both buttons as stepper targets and disables them independently", () => {

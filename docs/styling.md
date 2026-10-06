@@ -13,35 +13,66 @@ the same for class strings in markup.
 - Follow whichever mode the surrounding component already uses. Don't convert one to the other in
   passing; a conversion is its own change.
 
+## Token names
+
+A token's name says what kind of value it holds, then what it's for: `--<kind>-<domain>-<role>`.
+
+- **Colors** are `--color-<domain>-<role>`, in Tailwind v4's color namespace:
+  `--color-paper-raised`, `--color-category-museum`, `--color-status-warning`.
+- **Other kinds** keep their prefix: `--shadow-*`, `--filter-*`, `--radius-*`, `--size-*`,
+  `--font-*`, `--text-*`, `--z-*`.
+- **shadcn-svelte's names** (`--background`, `--primary`, `--muted-foreground`, `--card`, `--ring`,
+  …) stay as they are, since the vendored `src/lib/components/ui/` reads them. They alias the Field
+  Guide tokens.
+- **Component-local custom properties** (set in one component, read by it or its children) are
+  prefixed with the component's name, like `--tracker-row-gap`, and say what they hold.
+
+Each color has one name. A color doesn't get both a `:root` name and an `@theme` alias; markup reads
+it by reference, as `text-(--color-category-almanac)`.
+
+### Hues & roles
+
+The `--color-hue-*` tokens (green, amber, rose, blue, & brown) are raw ink colors. Components never
+read them. Each use gets a role alias in `:root` that names what the color means there:
+`--color-status-success`, `--color-season-fall`, `--color-tracker-obtained`, `--color-brand-mark`,
+and so on. Two roles can share a hue; they still get two names, so changing one later doesn't change
+the other. Add a role when a new use doesn't fit an existing one.
+
 ## Where tokens live
 
 Every token is defined in `src/app.css`, and nowhere else.
 
 | Kind          | Tokens                                                                                                                                                  | Defined in                         |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| Palette       | `--paper`, `--ink`, `--hairline`, `--fg-*`, `--cat-*`, `--tag-*`, …                                                                                     | `:root` (light) & `.dark`          |
+| Paper & ink   | `--color-paper`, `--color-paper-raised`, `--color-paper-sunken`, `--color-ink`, `--color-ink-muted`, `--color-ink-hairline`                             | `:root` (light) & `.dark`          |
+| Hues          | `--color-hue-green`, `-amber`, `-rose`, `-blue`, `-brown` (only role aliases read these)                                                                | `:root` & `.dark`                  |
+| Color roles   | `--color-brand-*`, `--color-status-*`, `--color-tracker-*`, `--color-progress-*`, `--color-toolbar-*`, `--color-season-*`                               | `:root` (aliases of hues)          |
+| Domain colors | `--color-category-*`, `--color-home-accent`, `--color-ribbon-*`, `--color-tag-*`, `--color-sprite-slot-outline`                                         | `:root` & `.dark`                  |
 | Shadcn colors | `--background`, `--primary`, `--muted`, …                                                                                                               | `:root` & `.dark`                  |
 | Elevation     | `--shadow-small`, `--shadow-medium`, `--shadow-large`, `--shadow-overlay`                                                                               | `:root` & `.dark`                  |
-| Drop shadows  | `--shadow-ribbon`, `--shadow-sticker`, `--tag-shadow`                                                                                                   | `:root`                            |
+| Drop shadows  | `--shadow-ribbon`, `--shadow-sticker`, `--shadow-tag-string`, `--shadow-tag-ring`, `--filter-tag-shadow`                                                | `:root`                            |
 | Type size     | `--text-3xs` (10px) & `--text-2xs` (11px), plus Tailwind's `--text-xs` (12px) and up                                                                    | `@theme`                           |
 | Radius        | `--radius` (2px), `--radius-lg` (4px), `--radius-xl` (6px)                                                                                              | `:root` & `@theme inline`          |
+| Sizes         | `--size-ribbon-width`                                                                                                                                   | `:root`                            |
 | Level & rank  | `--color-relationship-level-1`…`--color-relationship-level-12` (villager marks), `--color-town-rank-1`…`--color-town-rank-11`, `--color-confetti-1`…`7` | `:root` (one palette, both themes) |
 | Z-index       | `--z-section-header`, `--z-page-header`, `--z-home-header`, `--z-toolbar`, `--z-panel`, `--z-picker`, `--z-dialog`                                      | `@theme`                           |
 | Font roles    | `--font-display`, `--font-body`, `--font-controls`, `--font-annotation`, `--font-data`                                                                  | `:root`, overridden per locale     |
 
-The `--color-relationship-level-*`, `--color-town-rank-*`, & `--color-confetti-*` tokens sit in
-`:root`, not `@theme`, like `--cat-*`: Tailwind would otherwise generate `bg-…` utilities nothing
-uses. Palette colors that JS picks by index go through `src/lib/utils/palette.ts`
-(`relationshipLevelColor`, `townRankColor`, `confettiColors`), never a hex array in a component.
-Z-index tokens cover layers that cross component boundaries; stacking inside one component stays a
-small literal. Read one in a class as `z-[var(--z-panel)]` (the shorthand `z-(--z-panel)` trips
-oxfmt's class sorter, which drops the space after it).
+App colors sit in `:root`, not `@theme`: Tailwind would otherwise generate `bg-…` utilities nothing
+uses, and it drops theme variables it can't see used, which breaks names built at runtime (like
+`categoryColor(key)`). Code that passes a token around passes the whole `var()` reference:
+`categoryColor("museum")` returns `"var(--color-category-museum)"`. Palette colors that JS picks by
+index go through `src/lib/utils/palette.ts` (`relationshipLevelColor`, `townRankColor`,
+`confettiColors`), never a hex array in a component. Z-index tokens cover layers that cross
+component boundaries; stacking inside one component stays a small literal. Read one in a class as
+`z-[var(--z-panel)]` (the shorthand `z-(--z-panel)` trips oxfmt's class sorter, which drops the
+space after it).
 
 Scoped CSS reads tokens with `var()`, and derives tints with `color-mix()`:
 
 ```css
 .record {
-  border: 1px solid color-mix(in srgb, var(--hairline) 58%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 58%, transparent);
   border-radius: var(--radius);
   box-shadow: var(--shadow-small);
   font-size: var(--text-2xs);
@@ -108,8 +139,8 @@ object keys) and `class:` directives. It rejects:
   11px).
 - Tailwind's raw palette hues such as `text-red-700` or `dark:bg-amber-950`. Use a semantic utility
   (`text-destructive`, `text-muted-foreground`) or a palette token by reference
-  (`text-(--fg-green)`, `border-(--fg-amber)/40`); tokens already switch with the theme, so they
-  need no `dark:` twin.
+  (`text-(--color-status-success)`, `border-(--color-status-warning)/40`); tokens already switch
+  with the theme, so they need no `dark:` twin.
 
 Arbitrary values that read a token, like `z-[var(--z-panel)]`, pass. The vendored
 `src/lib/components/ui/` and `*.test-harness.svelte` files are exempt. The rule lives in

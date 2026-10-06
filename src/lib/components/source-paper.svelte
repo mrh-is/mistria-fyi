@@ -83,7 +83,7 @@
     min-block-size: var(--tracker-peek-size);
     margin-block-start: calc(-1 * var(--tracker-peek-size));
     margin-inline-start: var(--tracker-source-inset);
-    background: var(--paper-deep);
+    background: var(--color-paper-sunken);
     border: var(--tracker-paper-border-width) solid var(--tracker-paper-line);
     border-end-start-radius: var(--tracker-source-end-start-radius);
     border-end-end-radius: var(--tracker-source-end-end-radius);
@@ -131,7 +131,7 @@
     block-size: var(--tracker-target-size);
     align-items: center;
     justify-content: center;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     border-radius: var(--tracker-paper-radius);
   }
 
@@ -154,7 +154,7 @@
       .source-paper__stationary-control:hover
     )
     .source-paper__surface {
-    background: color-mix(in srgb, var(--ink) 4%, transparent);
+    background: color-mix(in srgb, var(--color-ink) 4%, transparent);
   }
 
   .source-paper__stationary-control {

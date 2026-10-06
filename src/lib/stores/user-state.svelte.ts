@@ -1,6 +1,6 @@
 import { SvelteSet } from "svelte/reactivity";
 
-import { canonicalAlmanacId, trackerData } from "#lib/data/index.js";
+import { trackerData, trackerIndex } from "#lib/data/index.js";
 import {
   emptyMergeCounts,
   nextQuestState,
@@ -16,11 +16,7 @@ import {
   MAX_VILLAGER_LEVEL,
 } from "#lib/engine/progress.js";
 import { findRecipesForQuest } from "#lib/engine/quest-rewards.js";
-import {
-  getMarriedVillager,
-  mergeHousehold,
-  normalizeRelationships,
-} from "#lib/engine/relationships.js";
+import { applyMarriageCascade, getSpouseId, mergeHousehold } from "#lib/engine/relationships.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { isWeatherInSeason } from "#lib/engine/world-state.js";
 import {
@@ -61,18 +57,18 @@ import type {
 } from "#lib/types/tracker-data.js";
 import type {
   ChildChoice,
-  CompletedState,
   MergeCounts,
   MergeResult,
+  ProgressState,
   QuestState,
 } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
-/** The outcome of restoring a backup with `importState`, which replaces all progress. */
-export type BackupRestoreResult = { error: ImportErrorKind; ok: false } | { ok: true };
-export type ImportErrorKind = "invalid-fields" | "malformed-json" | "unsupported-version";
+/** The outcome of restoring a backup with `restoreBackup`, which replaces all progress. */
+export type BackupRestoreResult = { error: BackupRestoreErrorKind; ok: false } | { ok: true };
+export type BackupRestoreErrorKind = "invalid-fields" | "malformed-json" | "unsupported-version";
 
 /** The outcome of one `completeQuestWithRecipes` call, enough to undo exactly that call. */
 export interface QuestCompletion {
@@ -82,7 +78,7 @@ export interface QuestCompletion {
 
 export interface UserState {
   availabilityWindows: AvailabilityWindow[];
-  completed: CompletedState;
+  completed: ProgressState;
   showCompleted: boolean;
   showSpoilers: boolean;
   worldState: { season: Season; weather: Weather };
@@ -146,7 +142,7 @@ const VALID_SEASONS = new Set<string>(SEASONS);
 const VALID_WEATHER = new Set<string>(WEATHERS);
 
 type DeserializeResult =
-  | { error: ImportErrorKind; ok: false }
+  | { error: BackupRestoreErrorKind; ok: false }
   | { ok: true; source: Record<string, unknown>; state: UserState };
 type ValidationMode = "local" | "strict";
 
@@ -164,7 +160,7 @@ const PERK_IDS = new Set(
   ),
 );
 
-function addStartingItems(completed: CompletedState): void {
+function addDefaultUnlocks(completed: ProgressState): void {
   for (const [id, cosmetic] of recordEntries(trackerData.cosmetics)) {
     if (cosmetic.sources.some((s) => s.type === "default")) {
       completed.cosmetics.add(id);
@@ -199,14 +195,14 @@ function addStartingItems(completed: CompletedState): void {
  * animals; this backfills empty sets so downstream code can access maps without
  * guarding missing keys.
  */
-function backfillAnimalMaps(completed: CompletedState): void {
+function backfillAnimalMaps(completed: ProgressState): void {
   for (const animalId of recordKeys(trackerData.animals)) {
     completed.animals[animalId] ??= new SvelteSet<AnimalVariantId>();
     completed.animalCosmetics[animalId] ??= new SvelteSet<CosmeticId>();
   }
 }
 
-function createDefaultCompleted(): CompletedState {
+function createDefaultProgress(): ProgressState {
   const animals: Record<string, Set<AnimalVariantId>> = {};
   const animalCosmetics: Record<string, Set<CosmeticId>> = {};
   for (const animalId of recordKeys(trackerData.animals)) {
@@ -242,7 +238,7 @@ function createDefaultCompleted(): CompletedState {
 function createDefaultState(): UserState {
   return {
     availabilityWindows: [...DEFAULT_AVAILABILITY_WINDOWS],
-    completed: createDefaultCompleted(),
+    completed: createDefaultProgress(),
     showCompleted: false,
     showSpoilers: false,
     worldState: { season: "spring", weather: "calm" },
@@ -401,9 +397,6 @@ function createUserState() {
   );
 
   return {
-    applyStartingItems() {
-      addStartingItems(state.completed);
-    },
     /** Cycles the quest's state, completing its recipe rewards on the obtained-to-completed step. */
     completeQuestWithRecipes(id: QuestId): QuestCompletion {
       const previousState = state.completed.questStates[id] ?? "none";
@@ -428,26 +421,54 @@ function createUserState() {
         _persistenceFailureGeneration = 0;
       }
     },
-    exportState(): string {
+    exportBackup(): string {
       return serialize(state, serializedSource);
     },
     get hasAnyProgress(): boolean {
       return hasAnyProgress;
     },
-    /** Import/export user state JSON (full replace) */
-    importState(json: string): BackupRestoreResult {
-      const result = deserialize(json, "strict");
-      if (!result.ok) return result;
-      state = result.state;
-      serializedSource = result.source;
-      enablePersistenceAfterExplicitReplace();
-      return { ok: true };
+    loadFromStorage() {
+      const storedResult = tryGetItem(STORAGE_KEY);
+      if (!storedResult.ok) {
+        _persistenceReady = false;
+        persistenceBlocked = true;
+        quarantineAvailable = false;
+        _persistenceFailureGeneration++;
+        return;
+      }
+
+      const stored = storedResult.value;
+      lastKnownStoredValue = stored;
+      if (stored === null) {
+        serializedSource = undefined;
+        persistenceBlocked = false;
+        quarantineAvailable = false;
+        _persistenceReady = true;
+        return;
+      }
+
+      const result = deserialize(stored, "local");
+      if (result.ok) {
+        state = result.state;
+        serializedSource = result.source;
+        persistenceBlocked = false;
+        quarantineAvailable = false;
+        _persistenceReady = true;
+      } else {
+        _persistenceReady = false;
+        persistenceBlocked = true;
+        quarantineAvailable = trySetItem(QUARANTINE_KEY, stored);
+        _persistenceFailureGeneration++;
+      }
+    },
+    markDefaultUnlocksComplete() {
+      addDefaultUnlocks(state.completed);
     },
     /**
      * Merges a native save into current progress: sets union, levels take the max, and the
      * household follows {@link mergeHousehold}'s conflict policy. Never removes progress.
      */
-    mergeFromSave(imported: Partial<CompletedState>): MergeResult {
+    mergeFromSave(imported: Partial<ProgressState>): MergeResult {
       const completed = state.completed;
       const counts: MergeCounts = emptyMergeCounts();
 
@@ -478,7 +499,7 @@ function createUserState() {
       }
 
       // Levels are clamped again here so the canonical state stays inside its domains even if a
-      // caller bypasses buildImportState's normalization. Scalars report how far they rose.
+      // caller bypasses extractSaveProgress's normalization. Scalars report how far they rose.
       if (imported.mines) {
         const floor = clampMineFloor(imported.mines.floor);
         if (floor > completed.mines.floor) {
@@ -549,39 +570,14 @@ function createUserState() {
       serializedSource = undefined;
       enablePersistenceAfterExplicitReplace();
     },
-    restorePersistedState() {
-      const storedResult = tryGetItem(STORAGE_KEY);
-      if (!storedResult.ok) {
-        _persistenceReady = false;
-        persistenceBlocked = true;
-        quarantineAvailable = false;
-        _persistenceFailureGeneration++;
-        return;
-      }
-
-      const stored = storedResult.value;
-      lastKnownStoredValue = stored;
-      if (stored === null) {
-        serializedSource = undefined;
-        persistenceBlocked = false;
-        quarantineAvailable = false;
-        _persistenceReady = true;
-        return;
-      }
-
-      const result = deserialize(stored, "local");
-      if (result.ok) {
-        state = result.state;
-        serializedSource = result.source;
-        persistenceBlocked = false;
-        quarantineAvailable = false;
-        _persistenceReady = true;
-      } else {
-        _persistenceReady = false;
-        persistenceBlocked = true;
-        quarantineAvailable = trySetItem(QUARANTINE_KEY, stored);
-        _persistenceFailureGeneration++;
-      }
+    /** Import/export user state JSON (full replace) */
+    restoreBackup(json: string): BackupRestoreResult {
+      const result = deserialize(json, "strict");
+      if (!result.ok) return result;
+      state = result.state;
+      serializedSource = result.source;
+      enablePersistenceAfterExplicitReplace();
+      return { ok: true };
     },
     setAvailabilityWindows(windows: readonly AvailabilityWindow[]) {
       state.availabilityWindows = AVAILABILITY_WINDOWS.filter((window) => windows.includes(window));
@@ -619,15 +615,15 @@ function createUserState() {
       state.completed.villagerLevels[id] = clampLevel(level, MAX_VILLAGER_LEVEL);
     },
     setVillagerRelationship(villagerId: VillagerId, relationship: VillagerRelationship) {
-      const oldMarried = getMarriedVillager(state.completed.villagerRelationships);
+      const oldMarried = getSpouseId(state.completed.villagerRelationships);
       if (relationship === "undecided") {
         const { [villagerId]: _, ...rest } = state.completed.villagerRelationships;
         state.completed.villagerRelationships = rest;
       } else {
         state.completed.villagerRelationships[villagerId] = relationship;
       }
-      normalizeRelationships(state.completed.villagerRelationships);
-      const newMarried = getMarriedVillager(state.completed.villagerRelationships);
+      applyMarriageCascade(state.completed.villagerRelationships);
+      const newMarried = getSpouseId(state.completed.villagerRelationships);
       if (oldMarried !== newMarried) {
         state.completed.childChoice = "undeclared";
       }
@@ -801,14 +797,14 @@ function deserialize(json: string, mode: ValidationMode): DeserializeResult {
         villagerRelationships[s.completed.marriedVillager as VillagerId] = "married";
       }
     }
-    normalizeRelationships(villagerRelationships);
+    applyMarriageCascade(villagerRelationships);
 
     const childChoice: ChildChoice =
       s.completed.childChoice && VALID_CHILD_CHOICES.has(s.completed.childChoice)
         ? s.completed.childChoice
         : "undeclared";
 
-    const completed: CompletedState = {
+    const completed: ProgressState = {
       almanac: normalizeAlmanacIds(s.completed.almanac),
       almanacRecipes: knownBrandedSet<RecipeId>(
         s.completed.almanacRecipes ?? [],
@@ -1026,7 +1022,7 @@ function knownBrandedSet<T>(
 function normalizeAlmanacIds(ids: string[]): Set<ItemId> {
   const result = new SvelteSet<ItemId>();
   for (const id of ids) {
-    const canonical = canonicalAlmanacId.get(id as ItemId);
+    const canonical = trackerIndex.memberToCanonicalAlmanacId.get(id as ItemId);
     if (canonical) {
       result.add(canonical);
     }

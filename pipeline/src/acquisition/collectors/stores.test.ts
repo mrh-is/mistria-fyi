@@ -80,7 +80,7 @@ describe("collectStoreSources", () => {
         type: "store",
         availability: {
           type: "all",
-          conditions: expect.arrayContaining([{ type: "season", seasons: ["spring"] }]),
+          conditions: expect.arrayContaining([{ type: "season", seasons: ["spring"] }]) as unknown,
         },
         storeId: "general",
       },

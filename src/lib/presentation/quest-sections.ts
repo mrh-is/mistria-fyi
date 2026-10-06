@@ -8,7 +8,7 @@ import { recordEntries } from "#lib/utils/record.js";
 import type { Source } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { QuestId, QuestType, VillagerId } from "#lib/types/tracker-data.js";
-import type { CompletedState } from "#lib/types/user-progress.js";
+import type { ProgressState } from "#lib/types/user-progress.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
@@ -45,7 +45,7 @@ export interface CravingQuestRow {
   /** The pregnancy quest the row toggles; absent before marriage, when the row is inert. */
   questId?: QuestId;
   subtitle?: string;
-  villager?: VillagerId;
+  villagerId?: VillagerId;
 }
 
 export type QuestRow = CravingQuestRow | QuestEntryRow;
@@ -68,7 +68,7 @@ interface SortableRow {
  * when it doesn't apply. Sections with no rows are omitted.
  */
 export function buildQuestSections(
-  completed: DeepReadonly<CompletedState>,
+  completed: DeepReadonly<ProgressState>,
   locale: LocaleCode,
 ): QuestSection[] {
   const sections: QuestSection[] = [];
@@ -125,7 +125,7 @@ function comparator(
 }
 
 function cravingRow(
-  completed: DeepReadonly<CompletedState>,
+  completed: DeepReadonly<ProgressState>,
   locale: LocaleCode,
 ): SortableRow | undefined {
   const craving = getCravingQuest(completed);
@@ -139,12 +139,12 @@ function cravingRow(
       kind: "craving",
       questId: craving.questId,
       subtitle:
-        craving.questId && craving.villager
-          ? getName("villagers", craving.villager, locale)
+        craving.questId && craving.villagerId
+          ? getName("villagers", craving.villagerId, locale)
           : undefined,
-      villager: craving.villager,
+      villagerId: craving.villagerId,
     },
-    villager: craving.villager,
+    villager: craving.villagerId,
   };
 }
 

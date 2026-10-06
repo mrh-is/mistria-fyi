@@ -3,7 +3,7 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
 import {
   firstRequiredItemId,
   forEachQuest,
-  QUEST_TYPE_MAP,
+  QUEST_TYPE_BY_GROUP,
   TRACKED_QUEST_GROUPS,
 } from "../extractor-helpers.js";
 import { sourceFileFor } from "../parse-fiddle.js";
@@ -50,7 +50,7 @@ export function extractQuests(
   };
 
   forEachQuest(fiddle, TRACKED_QUEST_GROUPS, (tomlType, questId, quest) => {
-    const outputType = QUEST_TYPE_MAP[tomlType as keyof typeof QUEST_TYPE_MAP];
+    const outputType = QUEST_TYPE_BY_GROUP[tomlType as keyof typeof QUEST_TYPE_BY_GROUP];
     const name = (quest.name as string | undefined) ?? questId;
     const { values } = localizer.localizeField({
       category: `quests/${tomlType}`,

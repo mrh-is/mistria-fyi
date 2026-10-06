@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import { SECTION_LIMIT, sectionRenderTarget, trackerRowDisplay } from "#lib/utils/row-display.js";
+import { SECTION_ROW_LIMIT, sectionRowLimit, trackerRowDisplay } from "#lib/utils/row-display.js";
 
 describe("trackerRowDisplay", () => {
   it("defaults to a visible, undimmed row", () => {
-    expect(trackerRowDisplay({ completed: false })).toEqual({ dimmed: false, mode: "visible" });
+    expect(trackerRowDisplay({ completed: false })).toEqual({ dimmed: false, mode: "incomplete" });
   });
 
   it("carries the dimmed flag on visible rows", () => {
     expect(trackerRowDisplay({ completed: false, dimmed: true })).toEqual({
       dimmed: true,
-      mode: "visible",
+      mode: "incomplete",
     });
   });
 
@@ -32,13 +32,13 @@ describe("trackerRowDisplay", () => {
   });
 });
 
-describe("sectionRenderTarget", () => {
+describe("sectionRowLimit", () => {
   it("caps a collapsed section at the limit", () => {
-    expect(sectionRenderTarget(SECTION_LIMIT + 10, false)).toBe(SECTION_LIMIT);
-    expect(sectionRenderTarget(3, false)).toBe(3);
+    expect(sectionRowLimit(SECTION_ROW_LIMIT + 10, false)).toBe(SECTION_ROW_LIMIT);
+    expect(sectionRowLimit(3, false)).toBe(3);
   });
 
   it("renders every row once expanded", () => {
-    expect(sectionRenderTarget(SECTION_LIMIT + 10, true)).toBe(SECTION_LIMIT + 10);
+    expect(sectionRowLimit(SECTION_ROW_LIMIT + 10, true)).toBe(SECTION_ROW_LIMIT + 10);
   });
 });

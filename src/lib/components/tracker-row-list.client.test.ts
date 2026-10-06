@@ -3,7 +3,7 @@ import { createRawSnippet } from "svelte";
 import { describe, expect, it, vi } from "vitest";
 
 import TrackerRowList from "#lib/components/tracker-row-list.svelte";
-import { SECTION_LIMIT } from "#lib/utils/row-display.js";
+import { SECTION_ROW_LIMIT } from "#lib/utils/row-display.js";
 
 const row = createRawSnippet<[string]>((item) => ({
   render: () => `<div data-tracker-row data-source-state="none">${item()}</div>`,
@@ -48,14 +48,16 @@ describe("TrackerRowList", () => {
 
   it("caps a limited section & expands through the callback", async () => {
     const onShowMore = vi.fn();
-    const view = renderList({ items: names(SECTION_LIMIT + 7), limited: true, onShowMore });
+    const view = renderList({ items: names(SECTION_ROW_LIMIT + 7), limited: true, onShowMore });
 
-    expect(view.container.querySelectorAll("[data-tracker-row]")).toHaveLength(SECTION_LIMIT);
+    expect(view.container.querySelectorAll("[data-tracker-row]")).toHaveLength(SECTION_ROW_LIMIT);
     await fireEvent.click(screen.getByRole("button", { name: /7/ }));
     expect(onShowMore).toHaveBeenCalledTimes(1);
 
     await view.rerender({ expanded: true });
-    expect(view.container.querySelectorAll("[data-tracker-row]")).toHaveLength(SECTION_LIMIT + 7);
+    expect(view.container.querySelectorAll("[data-tracker-row]")).toHaveLength(
+      SECTION_ROW_LIMIT + 7,
+    );
     expect(screen.queryByRole("button")).toBeNull();
   });
 

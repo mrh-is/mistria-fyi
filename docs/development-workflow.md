@@ -15,6 +15,13 @@
   ```sh
   pnpm install --frozen-lockfile
   ```
+- **pnpm launcher**: The `packageManager` field pins pnpm, and your installed pnpm downloads and
+  runs that version. pnpm 12 ships as a native executable, which pnpm 11's launcher runs through
+  Node and fails with `SyntaxError: Invalid or unexpected token` (#563). Before or when the pin
+  moves to pnpm 12, upgrade the machine's pnpm itself to 12 (for example `pnpm self-update 12`, or
+  your installer's equivalent). As a stopgap, put the downloaded native pnpm 12 executable first on
+  `PATH` so nested scripts use it too. CI uses `pnpm/setup`, which installs the native binary
+  directly and isn't affected.
 - **Environment Configuration**: Copy `.env.example` to `.env` if local environment variables are
   required.
 - **Cloud agents**: Configure Claude Code cloud and Codex cloud with the shared setup script and
@@ -516,6 +523,30 @@ the maintainer had pushed to while an agent was rebasing it. Take the SHA from t
 `gh pr view <n> --json headRefOid`) before rebasing. If the push is rejected, the branch moved: stop
 and report rather than fetching and retrying. Never use plain `--force`.
 
+### Set work aside without the shared stash
+
+Linked worktrees share one `refs/stash`, so stash indexes and the default `stash@{0}` point at
+whichever session stashed last. A bare `git stash apply` once restored a concurrent session's patch
+into the wrong worktree (#597). Set work aside with a temporary commit instead:
+
+```sh
+git add -A && git commit -m "WIP: set aside" --no-verify
+git reset --soft HEAD~1   # when resuming
+```
+
+If you must stash, give the entry a unique message, record its commit ID immediately, and address it
+only by that ID:
+
+```sh
+git stash push -u -m "<unique-tag>"
+git stash list --format='%H %gs' | grep '<unique-tag>'
+git stash show --stat <sha>   # confirm the file set before applying
+git stash apply <sha>
+```
+
+Never use bare `pop`, `apply`, or `drop`. To drop the entry afterward, re-find its current
+`stash@{n}` by tag first, since other sessions shift the indexes.
+
 ### Preview from a subagent worktree
 
 The Claude Code desktop app resolves `.claude/launch.json` against the session's primary working
@@ -621,6 +652,18 @@ offline fallback, registration, or activation behavior.
 - **Recovery**: Bypass hooks if necessary (`git commit --no-verify`), provided you have directly run
   `pnpm run lint:fix` and the focused checks from §5; CI still runs the full matrix on the PR.
 
+### CI Doesn't Start on a New PR
+
+- **Symptom**: A newly opened PR shows only "Attribution" and "Guarded paths"; no "CI" run exists
+  and the PR stays blocked.
+- **Cause**: Unconfirmed. On #622–#625, opened within minutes of each other, GitHub started the
+  other workflows for the `opened` event but not `ci.yml` (#626).
+- **Recovery**: Push an empty commit; its `synchronize` event starts CI.
+  ```sh
+  gh run list --workflow ci.yml --branch "$(git branch --show-current)" --limit 1
+  git commit --allow-empty -m "Retrigger CI" -m "Co-Authored-By: <your agent trailer>" && git push
+  ```
+
 ### Missing Husky Hooks After Worktree Setup
 
 - **Symptom**: Pre-commit hooks are absent in a fresh worktree — commits pass without lint or
@@ -628,7 +671,9 @@ offline fallback, registration, or activation behavior.
 - **Cause**: Lifecycle scripts (including `prepare`) may be disabled or skipped in some
   environments. `core.hooksPath` is stored in the shared `.git/config` and may already be set by
   another worktree, but the `.husky/_` directory that Husky generates is worktree-local and will be
-  absent until `prepare` is run.
+  absent until `prepare` is run. A parallel setup can also hold the shared `.git/config` lock;
+  `scripts/install-git-hooks.ts` retries Husky's install, and `prepare` fails with the lock error if
+  it never frees.
 - **Recovery**: Run `pnpm run prepare` from within the worktree directory after installation:
   ```sh
   pnpm run prepare

@@ -1,20 +1,20 @@
 import { describe, expect, it } from "vitest";
 
-import { composeInfusion, formatNumber, formatPercent, timeRangeLabel } from "./format.js";
+import { composeDescriptorName, formatNumber, formatPercent, timeRangeLabel } from "./format.js";
 
-describe("composeInfusion", () => {
+describe("composeDescriptorName", () => {
   it("puts the descriptor first with a space, in English (Adjective order)", () => {
-    expect(composeInfusion("Golden Retriever", "Crown", "en")).toBe("Golden Retriever Crown");
+    expect(composeDescriptorName("Golden Retriever", "Crown", "en")).toBe("Golden Retriever Crown");
   });
 
   it("puts the descriptor first with no space, in Japanese (Adjective order, no space)", () => {
-    expect(composeInfusion("ゴールデンレトリバー", "クラウン", "ja")).toBe(
+    expect(composeDescriptorName("ゴールデンレトリバー", "クラウン", "ja")).toBe(
       "ゴールデンレトリバークラウン",
     );
   });
 
   it("puts the descriptor last, in Russian (Noun order)", () => {
-    expect(composeInfusion("Golden Retriever", "Crown", "ru")).toBe("Crown Golden Retriever");
+    expect(composeDescriptorName("Golden Retriever", "Crown", "ru")).toBe("Crown Golden Retriever");
   });
 });
 

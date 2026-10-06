@@ -7,7 +7,7 @@ export interface TrackerIndex {
   almanacEntries: AlmanacEntry[];
   almanacEntryByCanonicalId: ReadonlyMap<ItemId, AlmanacEntry>;
   categorySourceTypes: Readonly<Record<string, readonly SourceType[]>>;
-  getAggregatedAlmanacSources: (canonicalId: ItemId) => Source[];
+  getAggregatedAlmanacSources: (almanacItemId: ItemId) => Source[];
   memberToCanonicalAlmanacId: ReadonlyMap<ItemId, ItemId>;
   uniqueAlmanacCanonicalIds: ItemId[];
 }
@@ -31,8 +31,8 @@ export function buildTrackerIndex(trackerData: TrackerData): TrackerIndex {
   const uniqueAlmanacCanonicalIds = [...new Set(almanacCanonicalIds)].toSorted();
   const aggregatedAlmanacSources = new Map<ItemId, Source[]>();
 
-  function getAggregatedAlmanacSources(canonicalId: ItemId): Source[] {
-    const resolvedCanonicalId = memberToCanonicalAlmanacId.get(canonicalId) ?? canonicalId;
+  function getAggregatedAlmanacSources(almanacItemId: ItemId): Source[] {
+    const resolvedCanonicalId = memberToCanonicalAlmanacId.get(almanacItemId) ?? almanacItemId;
     const cached = aggregatedAlmanacSources.get(resolvedCanonicalId);
     if (cached) return cached;
 

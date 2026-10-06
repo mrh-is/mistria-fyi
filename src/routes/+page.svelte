@@ -32,9 +32,9 @@
 </script>
 
 <div class="home-page">
-  <header class="home-header" style="--overall-progress: {overallPct}%">
+  <header class="home-header" style="--overall-progress-percent: {overallPct}%">
     <h1 class="flex min-w-0 items-center gap-2 font-brand text-2xl leading-none">
-      <IconNotebook class="size-5 shrink-0 text-(--fg-amber)" />
+      <IconNotebook class="size-5 shrink-0 text-(--color-brand-mark)" />
       {m.app_name()}
     </h1>
     <OverallProgress progress={allProgress} />
@@ -84,7 +84,7 @@
     justify-content: space-between;
     gap: 12px;
     padding: max(16px, env(safe-area-inset-top)) 22px 13px;
-    background: color-mix(in srgb, var(--paper) 96%, transparent);
+    background: color-mix(in srgb, var(--color-paper) 96%, transparent);
     backdrop-filter: blur(10px);
   }
 
@@ -94,14 +94,14 @@
     bottom: 0;
     left: 0;
     height: 3px;
-    background: var(--paper-deep);
+    background: var(--color-paper-sunken);
   }
 
   .overall-progress-rule i {
     display: block;
-    width: var(--overall-progress);
+    width: var(--overall-progress-percent);
     height: 100%;
-    background: var(--home-accent);
+    background: var(--color-home-accent);
     transition: width 300ms ease-out;
   }
 
@@ -111,13 +111,13 @@
     align-items: center;
     gap: 12px;
     padding: 4px 8px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-size: var(--text-sm);
   }
 
   .everything-link:is(:hover, :focus-visible) {
-    color: var(--ink);
-    outline: 2px solid var(--home-accent);
+    color: var(--color-ink);
+    outline: 2px solid var(--color-home-accent);
     outline-offset: 0;
   }
 

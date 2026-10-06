@@ -72,7 +72,7 @@ describe("AlmanacContent", () => {
     const turnip = "turnip" as ItemId;
     const japaneseName = getName("items", turnip, "ja");
     expect(japaneseName).not.toBe(getName("items", turnip, "en"));
-    toolbarState.setSearch(japaneseName);
+    toolbarState.setSearchQuery(japaneseName);
 
     const view = renderWithFeedback(AlmanacContent, { locale: "ja" });
 

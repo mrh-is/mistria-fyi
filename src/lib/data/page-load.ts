@@ -1,7 +1,7 @@
 import { loadNames } from "#lib/data/names.js";
 import { pageMetadata } from "#lib/data/page-metadata.js";
 
-import type { LocalizedCategory } from "#lib/data/names.js";
+import type { NameChunk } from "#lib/data/names.js";
 import type { PageMetadata, PageMetadataInput } from "#lib/data/page-metadata.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 
@@ -19,7 +19,7 @@ interface LocalizedPageLoadEvent {
  * awaits on every route. They're loaded before `metadata` runs, so it can call `getName`.
  */
 export function localizedPageLoad(
-  categories: readonly LocalizedCategory[],
+  categories: readonly NameChunk[],
   metadata: (locale: LocaleCode) => PageMetadataInput,
 ): (event: LocalizedPageLoadEvent) => Promise<{ metadata: PageMetadata }> {
   return async ({ parent }) => {

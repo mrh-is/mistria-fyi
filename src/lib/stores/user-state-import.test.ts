@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
-import { buildImportState } from "#lib/engine/import-save.js";
+import { extractSaveProgress } from "#lib/engine/import-save.js";
 import { getMaxRenownLevel, MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { recordKeys } from "#lib/utils/record.js";
@@ -10,85 +10,85 @@ import type { SkillId, VillagerId } from "#lib/types/tracker-data.js";
 
 const MAX_MINE_FLOOR = trackerData.mines.biomes.at(-1)?.floors.end ?? 0;
 
-describe("importState validation", () => {
+describe("restoreBackup validation", () => {
   afterEach(() => {
     userState.resetAll();
   });
 
   it("succeeds with a valid backup", () => {
-    const json = userState.exportState();
+    const json = userState.exportBackup();
     expect(JSON.parse(json)).toMatchObject({ version: "2" });
-    const result = userState.importState(json);
+    const result = userState.restoreBackup(json);
     expect(result.ok).toBe(true);
   });
 
   it("restores a preceding-release backup without losing tracked IDs", () => {
     const almanacId = Object.values(trackerData.almanac)[0].items[0].itemIds[0];
     const cosmeticId = recordKeys(trackerData.cosmetics)[0];
-    const data = JSON.parse(userState.exportState()) as Record<string, unknown>;
+    const data = JSON.parse(userState.exportBackup()) as Record<string, unknown>;
     data.version = "1";
     const completed = data.completed as Record<string, unknown>;
     completed.almanac = [almanacId];
     completed.cosmetics = [cosmeticId];
 
-    expect(userState.importState(JSON.stringify(data))).toEqual({ ok: true });
+    expect(userState.restoreBackup(JSON.stringify(data))).toEqual({ ok: true });
     expect(userState.state.completed.almanac).toContain(almanacId);
     expect(userState.state.completed.cosmetics).toContain(cosmeticId);
   });
 
   it("rejects malformed JSON", () => {
-    const result = userState.importState("not json {{{");
+    const result = userState.restoreBackup("not json {{{");
     expect(result).toEqual({ error: "malformed-json", ok: false });
   });
 
   it("rejects non-object JSON", () => {
-    const result = userState.importState('"just a string"');
+    const result = userState.restoreBackup('"just a string"');
     expect(result).toEqual({ error: "malformed-json", ok: false });
   });
 
   it("rejects null JSON", () => {
-    const result = userState.importState("null");
+    const result = userState.restoreBackup("null");
     expect(result).toEqual({ error: "malformed-json", ok: false });
   });
 
   it("rejects JSON without a version field", () => {
-    const result = userState.importState(JSON.stringify({ completed: {} }));
+    const result = userState.restoreBackup(JSON.stringify({ completed: {} }));
     expect(result).toEqual({ error: "invalid-fields", ok: false });
   });
 
   it("rejects an unsupported version", () => {
-    const json = userState.exportState();
+    const json = userState.exportBackup();
     const data = JSON.parse(json) as Record<string, unknown>;
     data.version = "99";
-    const result = userState.importState(JSON.stringify(data));
+    const result = userState.restoreBackup(JSON.stringify(data));
     expect(result).toEqual({ error: "unsupported-version", ok: false });
   });
 
   it("rejects a backup missing the completed object", () => {
-    const result = userState.importState(JSON.stringify({ version: "1" }));
+    const result = userState.restoreBackup(JSON.stringify({ version: "1" }));
     expect(result).toEqual({ error: "invalid-fields", ok: false });
   });
 
   it("rejects a backup with invalid completed structure", () => {
-    const result = userState.importState(
+    const result = userState.restoreBackup(
       JSON.stringify({ completed: "not an object", version: "1" }),
     );
     expect(result).toEqual({ error: "invalid-fields", ok: false });
   });
 
   it("preserves existing state after a failed import", () => {
-    const json = userState.exportState();
+    const json = userState.exportBackup();
     const original = JSON.parse(json) as Record<string, unknown>;
 
-    const badResult = userState.importState("not json");
+    const badResult = userState.restoreBackup("not json");
     expect(badResult.ok).toBe(false);
 
-    const afterFail = JSON.parse(userState.exportState()) as Record<string, unknown>;
+    const afterFail = JSON.parse(userState.exportBackup()) as Record<string, unknown>;
     expect(afterFail).toEqual(original);
   });
 
   it("rejects malformed required and nested fields atomically", () => {
-    const original = userState.exportState();
+    const original = userState.exportBackup();
     const cases: { mutate: (data: Record<string, unknown>) => void; name: string }[] = [
       { mutate: (data) => (data.availabilityMode = "sometimes"), name: "availabilityMode" },
       {
@@ -206,35 +206,35 @@ describe("importState validation", () => {
       const data = JSON.parse(original) as Record<string, unknown>;
       testCase.mutate(data);
 
-      expect(userState.importState(JSON.stringify(data)), testCase.name).toEqual({
+      expect(userState.restoreBackup(JSON.stringify(data)), testCase.name).toEqual({
         error: "invalid-fields",
         ok: false,
       });
-      expect(userState.exportState(), `${testCase.name} should preserve state`).toBe(original);
+      expect(userState.exportBackup(), `${testCase.name} should preserve state`).toBe(original);
     }
   });
 
   it("replaces state on successful import", () => {
-    const json = userState.exportState();
+    const json = userState.exportBackup();
     const data = JSON.parse(json) as Record<string, unknown>;
     const completed = data.completed as Record<string, unknown>;
     completed.renown = 15;
     data.completed = completed;
 
-    const result = userState.importState(JSON.stringify(data));
+    const result = userState.restoreBackup(JSON.stringify(data));
     expect(result.ok).toBe(true);
     expect(userState.state.completed.renown).toBe(15);
   });
 
   it("restores boundary values for every numeric domain", () => {
-    const json = userState.exportState();
+    const json = userState.exportBackup();
     const data = JSON.parse(json) as Record<string, unknown>;
     const completed = data.completed as Record<string, unknown>;
     (completed.mines as Record<string, unknown>).floor = MAX_MINE_FLOOR;
     completed.villagerLevels = { adeline: MAX_VILLAGER_LEVEL };
     completed.skillLevels = { farming: MAX_SKILL_LEVEL };
 
-    const result = userState.importState(JSON.stringify(data));
+    const result = userState.restoreBackup(JSON.stringify(data));
     expect(result.ok).toBe(true);
     expect(userState.state.completed.mines.floor).toBe(MAX_MINE_FLOOR);
     expect(userState.state.completed.villagerLevels["adeline" as VillagerId]).toBe(
@@ -250,7 +250,7 @@ describe("mergeFromSave numeric domains", () => {
   });
 
   it("never installs out-of-domain levels from a native save", () => {
-    const { completed, warnings } = buildImportState({
+    const { completed, warnings } = extractSaveProgress({
       gamedata: {
         maximum_mines_level: 9999,
         t2_world_facts: { adeline_heart_level: 99, farming_level: 999, renown: 9999 },
@@ -287,7 +287,7 @@ describe("mergeFromSave numeric domains", () => {
     userState.setRenown(5);
     userState.setMineFloor(20);
 
-    const { completed } = buildImportState({
+    const { completed } = extractSaveProgress({
       gamedata: {
         maximum_mines_level: 10,
         t2_world_facts: { adeline_heart_level: 3, farming_level: 10, renown: 2 },

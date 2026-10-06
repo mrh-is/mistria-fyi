@@ -4,11 +4,11 @@
  * call sites never need their own `locale === "en"` guard; other locales' messages carry their
  * own articles.
  */
-import { findBiome, requireEntry } from "#lib/utils/format.js";
+import { requireBiome, requireEntry } from "#lib/utils/format.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { MinesBiomeId, QuestType, StoreId } from "#lib/types/tracker-data.js";
-import type { RecipeSourceLookups } from "#lib/utils/format.js";
+import type { BaseSegmentLookups } from "#lib/utils/format.js";
 
 /** Shortens repetitive English quest name prefixes; other locales' names are shown as-is. */
 export function displayQuestName(name: string, questType: QuestType, locale: LocaleCode): string {
@@ -31,10 +31,10 @@ export function displayQuestName(name: string, questType: QuestType, locale: Loc
 /** The biome name with English's definite article ("the Tide Caverns"); other locales as-is. */
 export function formatBiomeName(
   biomeId: MinesBiomeId,
-  biomes: RecipeSourceLookups["biomes"],
+  biomes: BaseSegmentLookups["biomes"],
   locale: LocaleCode,
 ): string {
-  const biome = findBiome(biomeId, biomes);
+  const biome = requireBiome(biomeId, biomes);
   if (locale !== "en") return biome.name;
   if (biome.name.startsWith("The ")) return `the ${biome.name.slice(4)}`;
   return `the ${biome.name}`;

@@ -42,7 +42,7 @@
   {#if completedCategories.length > 0}
     <section class="flex flex-col gap-2">
       <div
-        class="flex items-center gap-1.5 px-1 font-controls text-2xs tracking-[0.14em] text-(--fg-amber) uppercase"
+        class="flex items-center gap-1.5 px-1 font-controls text-2xs tracking-[0.14em] text-(--color-progress-complete) uppercase"
       >
         <Icon.Category category="complete" class="size-3.5" />
         <h2>{m.home_completed_heading()}</h2>

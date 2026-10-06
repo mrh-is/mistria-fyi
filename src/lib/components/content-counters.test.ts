@@ -8,7 +8,7 @@ import RecipesContent from "#lib/components/recipes-content.svelte";
 import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
-import { isEntityNameVisible } from "#lib/engine/visibility.js";
+import { isConditionVisible } from "#lib/engine/visibility.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
@@ -25,7 +25,7 @@ function isFilteredTotalBelow(text: string, counter: RegExp, bound: number): boo
 afterEach(() => {
   userState.resetAll();
   toolbarState.closeSearch();
-  toolbarState.removeSourceFilters("test");
+  toolbarState.unregisterSourceFilters("test");
 });
 
 describe("subsection counters", () => {
@@ -53,7 +53,7 @@ describe("subsection counters", () => {
     userState.toggleAlmanacItem("axe_copper" as ItemId);
     userState.toggleAlmanacItem("copper_armor" as ItemId);
     userState.toggleShowCompleted();
-    toolbarState.setSearch("Copper Axe");
+    toolbarState.setSearchQuery("Copper Axe");
 
     const { text } = renderToFragmentWithFeedback(AlmanacContent, { props: { locale: "en" } });
 
@@ -65,11 +65,11 @@ describe("subsection counters", () => {
       .flatMap(({ items }) => items)
       .find(({ itemIds }) => {
         const item = trackerData.items[itemIds[0]];
-        return !isEntityNameVisible(item.visibility, userState.progressionState);
+        return !isConditionVisible(item.visibility, userState.progressionState);
       });
     if (!hiddenEntry) throw new Error("Expected a spoilered almanac entry");
 
-    toolbarState.setSearch(getName("items", hiddenEntry.itemIds[0], "en"));
+    toolbarState.setSearchQuery(getName("items", hiddenEntry.itemIds[0], "en"));
     const { queries } = renderToFragmentWithFeedback(AlmanacContent, { props: { locale: "en" } });
 
     expect(queries.queryByRole("button", { name: "Reveal spoiler" })).toBeNull();
@@ -83,7 +83,7 @@ describe("subsection counters", () => {
     if (!hiddenRecipe) throw new Error("Expected a recipe with covered source types");
     const hiddenRecipeName = getName("recipes", hiddenRecipe[0] as never, "en");
 
-    toolbarState.setSourceFilters("test", SOURCE_FILTERS);
+    toolbarState.registerSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
     const { text } = renderToFragmentWithFeedback(RecipesContent, { props: { locale: "en" } });
@@ -104,11 +104,11 @@ describe("subsection counters", () => {
     const itemName = getName("items", hiddenItem, "en");
 
     userState.setAvailabilityWindows(AVAILABILITY_WINDOWS);
-    toolbarState.setSearch(itemName);
+    toolbarState.setSearchQuery(itemName);
     const unfiltered = renderToFragmentWithFeedback(MuseumContent, { props: { locale: "en" } });
     expect(unfiltered.text).toContain(itemName);
 
-    toolbarState.setSourceFilters("test", SOURCE_FILTERS);
+    toolbarState.registerSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
     const { text } = renderToFragmentWithFeedback(MuseumContent, { props: { locale: "en" } });
@@ -121,7 +121,7 @@ describe("subsection counters", () => {
     const unfiltered = renderToFragmentWithFeedback(MinesContent, { props: { locale: "en" } });
     expect(unfiltered.text).toContain(`Spells 0 / ${spellCount.toString()}`);
 
-    toolbarState.setSourceFilters("test", SOURCE_FILTERS);
+    toolbarState.registerSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
     const { text } = renderToFragmentWithFeedback(MinesContent, { props: { locale: "en" } });
@@ -138,7 +138,7 @@ describe("subsection counters", () => {
     if (!unfilteredMatch) throw new Error("Expected Fetch Quests counter in unfiltered render");
     const unfilteredTotal = Number(unfilteredMatch[2]);
 
-    toolbarState.setSourceFilters("test", SOURCE_FILTERS);
+    toolbarState.registerSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
     const filteredBody = renderToFragmentWithFeedback(QuestsContent, {
@@ -164,11 +164,11 @@ describe("subsection counters", () => {
 
     userState.setAvailabilityWindows(AVAILABILITY_WINDOWS);
     const hiddenEntryName = getName("items", hiddenEntry.itemIds[0], "en");
-    toolbarState.setSearch(hiddenEntryName);
+    toolbarState.setSearchQuery(hiddenEntryName);
     const unfiltered = renderToFragmentWithFeedback(AlmanacContent, { props: { locale: "en" } });
     expect(unfiltered.text).toContain(hiddenEntryName);
 
-    toolbarState.setSourceFilters("test", SOURCE_FILTERS);
+    toolbarState.registerSourceFilters("test", SOURCE_FILTERS);
     toolbarState.hideAllSourceFilters();
 
     const { text } = renderToFragmentWithFeedback(AlmanacContent, { props: { locale: "en" } });

@@ -19,7 +19,7 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { version } from "$app/env";
 
-  import type { ReportableElement } from "#lib/feedback/types.js";
+  import type { ReportTarget } from "#lib/feedback/types.js";
 
   const TURNSTILE_SITE_KEY = "0x4AAAAAAEjKeNTnEDdgRcXX";
 
@@ -28,13 +28,13 @@
   const feedbackContext = getFeedbackContext();
 
   let {
-    accent,
+    accentColor,
     onClose,
     open,
     pickerEnabled = false,
     restoreFocus = true,
   }: {
-    accent?: string;
+    accentColor?: string;
     onClose: () => void;
     open: boolean;
     pickerEnabled?: boolean;
@@ -53,7 +53,7 @@
   let submitError = $state("");
   let messageInput = $state<HTMLTextAreaElement | null>(null);
   let pickerButton = $state<HTMLButtonElement | null>(null);
-  let selectedElement = $state<ReportableElement | undefined>();
+  let selectedElement = $state<ReportTarget | undefined>();
   let opener: HTMLElement | null = null;
   let pickerActive = $state(false);
   let submitGeneration = 0;
@@ -87,7 +87,7 @@
   let saveDataPreview = $derived.by(() => {
     if (!includeSaveData) return "";
     try {
-      const exported = JSON.parse(userState.exportState()) as {
+      const exported = JSON.parse(userState.exportBackup()) as {
         completed: Record<string, unknown>;
       };
       return JSON.stringify(exported.completed, null, 2);
@@ -291,7 +291,7 @@
       let saveData: Record<string, unknown> | undefined;
       if (includeSaveData) {
         try {
-          const exported = JSON.parse(userState.exportState()) as {
+          const exported = JSON.parse(userState.exportBackup()) as {
             completed: Record<string, unknown>;
           };
           saveData = exported.completed;
@@ -418,9 +418,11 @@
     closeLabel={m.feedback_close_aria()}
     label={m.toolbar_send_feedback()}
     {onClose}
-    style={accent === undefined ? undefined : `--primary: ${accent}; --ring: ${accent};`}
+    style={accentColor === undefined
+      ? undefined
+      : `--primary: ${accentColor}; --ring: ${accentColor};`}
   >
-    <FoldoutPanel id="feedback-panel" title={m.toolbar_send_feedback()} dialog={false} {onClose}>
+    <FoldoutPanel id="feedback-panel" title={m.toolbar_send_feedback()} isModal={false} {onClose}>
       <div class="feedback-form">
         <div>
           <textarea
@@ -667,7 +669,7 @@
     width: 100%;
     resize: vertical;
     border-width: 1px;
-    background: var(--paper-deep);
+    background: var(--color-paper-sunken);
     padding: 12px 14px;
     font-family: var(--font-body);
     font-size: var(--text-base);
@@ -682,14 +684,14 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-xs);
   }
 
   .feedback-form__optional,
   .feedback-form__version {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-controls);
     font-size: var(--text-3xs);
     letter-spacing: 0.12em;
@@ -701,8 +703,8 @@
     flex-direction: column;
     gap: 12px;
     padding: 13px;
-    border: 1px solid color-mix(in srgb, var(--hairline) 42%, transparent);
-    background: var(--paper-deep);
+    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 42%, transparent);
+    background: var(--color-paper-sunken);
   }
 
   .feedback-form__email {
@@ -722,7 +724,7 @@
     align-items: center;
     justify-content: center;
     gap: 7px;
-    border: 1px solid color-mix(in srgb, var(--hairline) 48%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 48%, transparent);
     padding: 6px 13px;
     font-family: var(--font-controls);
     font-size: var(--text-3xs);
@@ -737,7 +739,7 @@
   .feedback-form__selection {
     min-width: 0;
     justify-content: flex-start;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .feedback-form__selection button {
@@ -762,12 +764,12 @@
   }
 
   .feedback-form__send {
-    color: var(--ink);
-    background: color-mix(in srgb, var(--primary) 48%, var(--paper-deep));
+    color: var(--color-ink);
+    background: color-mix(in srgb, var(--primary) 48%, var(--color-paper-sunken));
   }
 
   .feedback-form__send:is(:hover, :focus-visible) {
-    background: color-mix(in srgb, var(--primary) 64%, var(--paper-deep));
+    background: color-mix(in srgb, var(--primary) 64%, var(--color-paper-sunken));
     outline: 2px solid var(--primary);
     outline-offset: -4px;
   }
@@ -778,7 +780,7 @@
   }
 
   .feedback-form__send--ready:is(:hover, :focus-visible) {
-    background: color-mix(in srgb, var(--primary) 88%, var(--ink));
+    background: color-mix(in srgb, var(--primary) 88%, var(--color-ink));
   }
 
   @media (max-width: 380px) {

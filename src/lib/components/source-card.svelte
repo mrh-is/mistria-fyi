@@ -59,11 +59,11 @@
   :global(.source-card__icon) {
     width: 1rem;
     height: 1rem;
-    color: color-mix(in srgb, var(--ink-muted) 78%, transparent);
+    color: color-mix(in srgb, var(--color-ink-muted) 78%, transparent);
   }
 
   .source-card__description {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .source-card__restrictions {

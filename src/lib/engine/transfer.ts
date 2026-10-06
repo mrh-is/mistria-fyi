@@ -6,7 +6,7 @@ import {
   MAX_SKILL_LEVEL,
   MAX_VILLAGER_LEVEL,
 } from "#lib/engine/progress.js";
-import { normalizeRelationships } from "#lib/engine/relationships.js";
+import { applyMarriageCascade } from "#lib/engine/relationships.js";
 import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
 import type {
@@ -26,7 +26,7 @@ import type {
   VillagerId,
   VillagerRelationship,
 } from "#lib/types/tracker-data.js";
-import type { ChildChoice, CompletedState, QuestState } from "#lib/types/user-progress.js";
+import type { ChildChoice, ProgressState, QuestState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 // ─── Constants ──────────────────────────────────────────────────────
@@ -71,10 +71,10 @@ export class TransferDecodeError extends Error {
 }
 
 /**
- * Decode base64url string → Partial<CompletedState> for merging. Every rejection is a
+ * Decode base64url string → Partial<ProgressState> for merging. Every rejection is a
  * {@link TransferDecodeError}; a failure deeper in the layout is reported as `corrupt`.
  */
-export async function decodeTransferPayload(payload: string): Promise<Partial<CompletedState>> {
+export async function decodeTransferPayload(payload: string): Promise<Partial<ProgressState>> {
   try {
     return await decodeTransferPayloadUnchecked(payload);
   } catch (error) {
@@ -84,9 +84,9 @@ export async function decodeTransferPayload(payload: string): Promise<Partial<Co
   }
 }
 
-/** Encode CompletedState → base64url string for QR code */
+/** Encode ProgressState → base64url string for QR code */
 export async function encodeTransferPayload(
-  completed: DeepReadonly<CompletedState>,
+  completed: DeepReadonly<ProgressState>,
 ): Promise<string> {
   const parts: Uint8Array[] = [];
 
@@ -283,7 +283,7 @@ async function compressBytes(data: Uint8Array): Promise<Uint8Array> {
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
-async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<CompletedState>> {
+async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<ProgressState>> {
   if (!payload.startsWith(TRANSFER_MAGIC)) {
     throw new TransferDecodeError("not-transfer-code", "Not a transfer payload: missing marker");
   }
@@ -561,7 +561,7 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
   const recipeBytes = readBytes(Math.ceil(recipeOrder.length / 8));
   const almanacRecipes = fromBitfield(recipeOrder, recipeBytes, "recipe bitfield") as Set<RecipeId>;
 
-  normalizeRelationships(villagerRelationships);
+  applyMarriageCascade(villagerRelationships);
 
   for (const id of recordKeys(skillLevels)) {
     skillLevels[id] = Math.min(skillLevels[id], MAX_SKILL_LEVEL);

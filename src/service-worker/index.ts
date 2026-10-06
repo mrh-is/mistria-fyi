@@ -1,6 +1,5 @@
 import {
   cacheLocaleChunks,
-  cacheLocalesRequest,
   fetchRuntimeRequest,
   fetchSpriteRequest,
   isEligibleForRuntimeCaching,
@@ -8,6 +7,7 @@ import {
   isLazyAsset,
   isSkipWaitingRequest,
   OFFLINE_LOCALES_CACHE,
+  parseCacheLocalesMessage,
   readOfflineLocales,
   rememberOfflineLocales,
 } from "#lib/pwa/service-worker-cache.js";
@@ -56,7 +56,7 @@ sw.addEventListener("message", (event) => {
     event.waitUntil(sw.skipWaiting());
     return;
   }
-  const locales = cacheLocalesRequest(event.data, LOCALE_NAME_CHUNKS);
+  const locales = parseCacheLocalesMessage(event.data, LOCALE_NAME_CHUNKS);
   if (!locales) return;
   // A reply is this version's cache speaking for itself, which a page can't infer: the modules it
   // already imported may come from a cache an update has since deleted.

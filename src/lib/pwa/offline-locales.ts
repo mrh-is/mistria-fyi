@@ -47,7 +47,7 @@ const DOWNLOAD_TIMEOUT_MS = 15_000;
  * independently, so a locale can be partly cached, and modules the page already imported may come
  * from a cache that an update has since replaced.
  */
-export function downloadLocale(
+export function ensureLocaleCachedOffline(
   locale: LocaleCode,
   container?: Pick<ServiceWorkerContainer, "controller">,
   timeoutMs = DOWNLOAD_TIMEOUT_MS,

@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import SearchResults from "#lib/components/search-results.svelte";
 import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
-import { searchItems } from "#lib/engine/search.js";
+import { searchAllCategories } from "#lib/engine/search.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { recordEntries } from "#lib/utils/record.js";
@@ -141,7 +141,7 @@ function questFixture(): { id: QuestId; name: string } {
   for (const byType of Object.values(trackerData.quests)) {
     for (const id of Object.keys(byType) as QuestId[]) {
       const name = getName("quests", id, "en");
-      const results = searchItems(
+      const results = searchAllCategories(
         name,
         userState.state.completed,
         userState.state.worldState,
@@ -163,7 +163,7 @@ function museumOnlyFixture(): { id: ItemId; name: string } {
       for (const id of set.items) {
         if (canonicalIds.has(id)) continue;
         const name = getName("items", id, "en");
-        const results = searchItems(
+        const results = searchAllCategories(
           name,
           userState.state.completed,
           userState.state.worldState,
@@ -187,7 +187,7 @@ function overlappingFixture(): { id: ItemId; name: string } {
       for (const id of set.items) {
         if (!canonicalIds.has(id)) continue;
         const name = getName("items", id, "en");
-        const results = searchItems(
+        const results = searchAllCategories(
           name,
           userState.state.completed,
           userState.state.worldState,
