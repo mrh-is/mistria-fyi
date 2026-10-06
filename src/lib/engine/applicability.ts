@@ -1,12 +1,12 @@
 import { trackerData } from "#lib/data/index.js";
-import { getMarriedVillager } from "#lib/engine/relationships.js";
+import { getSpouseId } from "#lib/engine/relationships.js";
 
 import type { Source } from "#lib/types/acquisition.js";
 import type { ItemId, VillagerId, VillagerRelationship } from "#lib/types/tracker-data.js";
-import type { CompletedState } from "#lib/types/user-progress.js";
+import type { ProgressState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
-export function isItemApplicable(itemId: ItemId, completed: DeepReadonly<CompletedState>): boolean {
+export function isItemObtainable(itemId: ItemId, completed: DeepReadonly<ProgressState>): boolean {
   if (completed.almanac.has(itemId) || completed.museum.has(itemId)) return true;
 
   const item = trackerData.items[itemId];
@@ -16,19 +16,19 @@ export function isItemApplicable(itemId: ItemId, completed: DeepReadonly<Complet
   );
   if (!hasMarriageExclusiveSource) return true;
 
-  const marriedVillager = getMarriedVillager(completed.villagerRelationships);
+  const marriedVillager = getSpouseId(completed.villagerRelationships);
   return item.sources.some(
     (s) => !isSourceSuppressed(s, completed.villagerRelationships, marriedVillager),
   );
 }
 
-export function isItemApplicableForAlmanac(
+export function isAlmanacEntryObtainable(
   itemIds: ItemId[],
-  completed: DeepReadonly<CompletedState>,
+  completed: DeepReadonly<ProgressState>,
 ): boolean {
   if (itemIds.some((id) => completed.almanac.has(id))) return true;
 
-  return itemIds.some((id) => isItemApplicable(id, completed));
+  return itemIds.some((id) => isItemObtainable(id, completed));
 }
 
 function isSourceSuppressed(
