@@ -2,7 +2,8 @@
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import MineFloorRecord from "#lib/components/mine-floor-record.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
-  import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
+  import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
+  import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
@@ -12,20 +13,15 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "#lib/utils/celebrate.js";
+  import { trackerRowDisplay } from "#lib/utils/row-display.js";
   import { registerSourceFilters } from "#lib/utils/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/utils/spoiler-guard.svelte.js";
   import { showUndoToast } from "#lib/utils/undo-toast.js";
 
-  import type { TrackerRowDisplay } from "#lib/components/tracker-row.svelte";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type { SpellId } from "#lib/types/tracker-data.js";
 
   const spoilerGuard = createSpoilerGuard();
-
-  function rowDisplay(spellId: SpellId, completed: boolean): TrackerRowDisplay {
-    if (!spellNameVisible(spellId)) return { mode: "spoilered" };
-    return completed ? { mode: "completed" } : { mode: "visible" };
-  }
 
   function spellNameVisible(spellId: SpellId): boolean {
     const visibility = trackerData.mines.spells[spellId].visibility;
@@ -160,11 +156,11 @@
     {defaultOpen}
     total={scopedSpells.length}
   >
-    <TrackerRowStack>
-      {#each visibleSpells as spell (spell.id)}
+    <TrackerRowList getKey={(spell) => spell.id} items={visibleSpells}>
+      {#snippet row(spell)}
         {@const completed = userState.state.completed.mines.spells.has(spell.id)}
         <TrackerRow
-          display={rowDisplay(spell.id, completed)}
+          display={trackerRowDisplay({ completed, nameVisible: spellNameVisible(spell.id) })}
           name={spell.name}
           reportCategory="spell"
           reportEntityId={spell.id}
@@ -179,14 +175,9 @@
             }
           }}
         />
-      {/each}
-    </TrackerRowStack>
-    {#if visibleSpells.length === 0}
-      <p class="py-4 text-center text-sm text-muted-foreground">
-        {m.no_items_match_filters()}
-      </p>
-    {/if}
+      {/snippet}
+    </TrackerRowList>
   </ExpandableSection>
 {:else if toolbarState.sourceFilterActive}
-  <p class="py-4 text-center text-sm text-muted-foreground">{m.no_items_match_filters()}</p>
+  <TrackerEmptyState />
 {/if}
