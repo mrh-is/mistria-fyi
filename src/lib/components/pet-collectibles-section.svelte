@@ -159,6 +159,6 @@
   </ExpandableSection>
 {/if}
 
-{#if toolbarState.sourceFilterActive && visibleCosmeticEntries.length === 0 && visibleSkinEntries.length === 0}
+{#if toolbarState.isSourceFilterNarrowing && visibleCosmeticEntries.length === 0 && visibleSkinEntries.length === 0}
   <TrackerEmptyState />
 {/if}

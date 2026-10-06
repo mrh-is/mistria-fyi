@@ -141,7 +141,7 @@
       userState.toggleAlmanacRecipe(entry.id);
     });
     if (nowCompleted) {
-      if (!userState.state.showCompleted) recentlyCompleted.mark(entry.id);
+      if (!userState.state.showCompleted) recentlyCompleted.markLeaving(entry.id);
       checkCelebration(sectionRecipeIds);
     }
   }
@@ -154,7 +154,7 @@
     <ExpandableSection
       {locale}
       count={completedCount}
-      forceOpen={!!nameFilter || toolbarState.sourceFilterActive}
+      forceOpen={!!nameFilter || toolbarState.isSourceFilterNarrowing}
       name={group.name}
       reportCategory="recipe-category"
       reportEntityId={group.id}
@@ -191,7 +191,7 @@
                   group.entries.map((candidate) => candidate.id),
                 );
               } else {
-                spoilerGuard.guard(entry.visibility, () => {
+                spoilerGuard.requestGuardedAction(entry.visibility, () => {
                   toggleRecipe(
                     entry,
                     group.entries.map((candidate) => candidate.id),

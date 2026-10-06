@@ -157,7 +157,7 @@
                   if (nameVisible || questState !== "none") {
                     completeQuest(row.id, row.displayName, section);
                   } else {
-                    spoilerGuard.guard(row.visibility, () => {
+                    spoilerGuard.requestGuardedAction(row.visibility, () => {
                       completeQuest(row.id, row.displayName, section);
                     });
                   }

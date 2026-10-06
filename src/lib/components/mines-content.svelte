@@ -168,15 +168,18 @@
             if (spellNameVisible(spell.id) || completed) {
               toggleSpell(spell.id);
             } else {
-              spoilerGuard.guard(trackerData.mines.spells[spell.id].visibility, () => {
-                toggleSpell(spell.id);
-              });
+              spoilerGuard.requestGuardedAction(
+                trackerData.mines.spells[spell.id].visibility,
+                () => {
+                  toggleSpell(spell.id);
+                },
+              );
             }
           }}
         />
       {/snippet}
     </TrackerRowList>
   </ExpandableSection>
-{:else if toolbarState.sourceFilterActive}
+{:else if toolbarState.isSourceFilterNarrowing}
   <TrackerEmptyState />
 {/if}
