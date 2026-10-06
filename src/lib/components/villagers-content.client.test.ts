@@ -1,3 +1,4 @@
+import { fireEvent, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import VillagersContent from "#lib/components/villagers-content.svelte";
@@ -94,5 +95,29 @@ describe("VillagersContent with completed villagers hidden", () => {
 
     expect(view.container.querySelector(`#villager-${completed}`)).not.toBeNull();
     expect(view.container.querySelector(`#villager-${other}`)).toBeNull();
+  });
+
+  it("moves focus to a remaining record when settling a relationship hides the focused one", async () => {
+    const dateable = recordKeys(trackerData.villagers).find(
+      (id) => trackerData.villagers[id].dateable,
+    );
+    if (!dateable) throw new Error("fixture has no dateable villager");
+    userState.setVillagerLevel(dateable, MAX_VILLAGER_LEVEL);
+    const view = renderWithFeedback(VillagersContent, { locale: "en" });
+    const record = view.container.querySelector<HTMLElement>(`#villager-${dateable}`);
+    const bestFriend = record?.querySelector<HTMLButtonElement>("[data-relationship-action]");
+    if (!bestFriend) throw new Error("Best Friend action missing");
+    expect(bestFriend).toHaveTextContent("Best Friend");
+    bestFriend.focus();
+
+    await fireEvent.click(bestFriend);
+
+    await waitFor(() => {
+      expect(view.container.querySelector(`#villager-${dateable}`)).toBeNull();
+    });
+    const focused = document.activeElement;
+    expect(focused).toHaveAttribute("data-villager-record");
+    expect(view.container.contains(focused)).toBe(true);
+    expect(focused?.id).not.toBe(`villager-${dateable}`);
   });
 });
