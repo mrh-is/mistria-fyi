@@ -85,6 +85,7 @@ describe("parseFiddleFromZip", () => {
       "assets/fiddle/items/other/cooked_dishes.toml":
         'turnip_soup = { name = "Turnip Soup", value = { bin = 100 } }',
       "assets/fiddle/npcs/holt.toml": 'name = "Holt"',
+      "assets/fiddle/npcskins/holt.toml": "invalid = [",
     });
 
     const parsed = await parseFiddleFromZip(zipPath, ["npcs"]);
@@ -92,6 +93,7 @@ describe("parseFiddleFromZip", () => {
     expect(parsed.fileCount).toBe(1);
     expect(parsed.data).toHaveProperty("npcs.holt.name", "Holt");
     expect(parsed.data).not.toHaveProperty("items.other.cooked_dishes.turnip_soup");
+    expect(parsed.data).not.toHaveProperty("npcskins.holt");
   });
 
   it("reports both destinations for duplicate destinations", async () => {

@@ -16,6 +16,7 @@ pnpm run pipeline -- input/assets --version=1.0.5
 pnpm run pipeline -- /path/to/assets
 MISTRIA_ASSETS=/path/to/assets pnpm run pipeline
 pnpm run pipeline -- /path/to/assets --parse-only
+pnpm run pipeline -- /path/to/assets --parse-only --parse-profile=v1.0.5
 pnpm run pipeline:assets -- --version=1.0.5
 ```
 
@@ -50,8 +51,11 @@ including straight off a bare Steam install with nothing extracted. Item sprite 
 the full pipeline because producing `iconSpritesByItemId` also requires almanac and localization
 extraction; pass an extracted structured-assets root together with `--sprites`.
 
-`--parse-only` currently enforces the v1.0.5 fixture’s 297 non-metadata files and three
-representative paths, so it is not a version-agnostic validator.
+`--parse-only` checks that at least one non-metadata TOML file parses and that every parsed root has
+matching provenance. It accepts an extracted `fiddle/` directory or an `assets.zip` archive, and
+does not require version or localization metadata. Add `--parse-profile=v1.0.5` to check the
+canonical fixture’s 297 files and three representative paths. Unknown or duplicate CLI flags fail
+before assets are read.
 
 Supporting a new Fields of Mistria version is a reviewed application release, not a routine
 regeneration. Follow the [game version update protocol](../docs/game-version-update-protocol.md)
@@ -174,7 +178,9 @@ Paths are relative to `pipeline/src/`. Colocated `*.test.ts` files cover most mo
 
 | Module                 | Responsibility                                                                                                                                                          |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `main.ts`              | CLI flags, asset-root resolution, stage order, staging, and publishing. `--parse-only` stops after parsing; `--villager-sprites-only` runs villager sprites alone.      |
+| `main.ts`              | CLI, asset-root resolution, stage order, staging, and publishing. `--parse-only` stops after parsing; `--villager-sprites-only` runs villager sprites alone.            |
+| `cli-options.ts`       | Validates CLI arguments and rejects unknown or conflicting flags before asset reads.                                                                                    |
+| `parse-smoke.ts`       | Checks generic parsed structure, with an explicit strict v1.0.5 fixture profile.                                                                                        |
 | `assemble.ts`          | `assembleTrackerData`: extraction, source attachment, visibility, & validation with an injected `Localizer`. Reviewed overrides & diagnostics are injectable for tests. |
 | `parse-fiddle.ts`      | Parses `fiddle/` from disk or straight out of `assets.zip` into one namespace tree. Excludes `.meta.toml`; rejects duplicate and colliding destinations.                |
 | `evaluate.ts`          | Resolves `value.bin` and `value.store` expressions in place (grammar below).                                                                                            |
@@ -183,7 +189,7 @@ Paths are relative to `pipeline/src/`. Colocated `*.test.ts` files cover most mo
 | `asset-input.ts`       | Materializes only `fiddle/` and `localization/` from `assets.zip` for the real-asset test suite (`assets-test-setup.ts`).                                               |
 | `data-shapes.ts`       | Array guards that throw with field and source-file context.                                                                                                             |
 | `extractor-helpers.ts` | Shared traversals & parsers: `forEachItem`, `forEachQuest`, `forEachStockEntry`, `firstRequiredItemId`, `minesBiomeId`, `scrollTargetOf`, and the tracked quest groups. |
-| `localize.ts`          | The `Localizer` extractors receive: resolves a classified text field to every locale through translation tables and `localize-overrides.json`; falls back to English.   |
+| `localize.ts`          | The `Localizer` extractors receive: resolves a classified text field to every locale through translation tables; falls back to English.                                 |
 | `locale-codes.ts`      | Maps game language codes to BCP 47 tags and throws when the game adds or drops a language.                                                                              |
 
 ### Extractors
@@ -211,7 +217,6 @@ only in locale chunks (`src/lib/data/locales/<locale>/<category>.json`), never i
 | `ui-strings.ts`           | `misc_local`                            | The `ui` locale chunk: category names, seasons, quest types, almanac labels, and `tier_<n>`. Collapses gendered markup to `<they>`; throws on other markup. |
 | `villagers.ts`            | `npcs`                                  | Villager registry and icon-sprite index. Throws when a villager lacks `icon_sprite`.                                                                        |
 | `sprites.ts`              | `assets.zip` or extracted PNGs          | Stages webp conversions for items and villagers; `publishSprites` writes them.                                                                              |
-| `perks.ts`                | `perks`                                 | Not called by `main.ts`; only its test uses it.                                                                                                             |
 
 ### Acquisition
 
