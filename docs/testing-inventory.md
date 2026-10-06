@@ -40,6 +40,7 @@ single-component row's marks disagree with its test files.
 | Component                        | Server | happy-dom  | Notes                                                                             |
 | -------------------------------- | :----: | :--------: | --------------------------------------------------------------------------------- |
 | `toolbar-footer`                 |        |     ✓      | Panel mutual exclusion, Escape/backdrop/close, route change, search, filter reset |
+| `panel-overlay`                  |        | via parent | Shared overlay & focus through toolbar & feedback panel tests                     |
 | `foldout-panel`                  |        |     ✓      | Dialog semantics, Escape, Tab wrap, non-dialog mode                               |
 | `visibility-panel`               |   ✓    |     ✓      | Chips, season/weather strips, source groups, explainer, completed switch          |
 | `quick-settings-panel`           |        |     ✓      | Language list, spoiler confirmation                                               |
