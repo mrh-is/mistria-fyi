@@ -124,7 +124,7 @@ export function buildBiomeLabel(biomeId: MinesBiomeId, lookups: SegmentLookups):
       ),
       revealed: [
         m.source_biome_floors(
-          { start, end, biome: biomeDisplayName(biomeId, lookups) },
+          { start, end, biome: formatBiomeName(biomeId, lookups.biomes, lookups.locale) },
           { locale },
         ),
       ],
@@ -214,7 +214,7 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
       const message = source.type === "ship_item" ? m.source_ship_item : m.source_donate_item;
       const itemName = requireEntry(lookups.itemNames, source.triggerItemId, "itemNames");
       const itemVis = lookups.itemVisibility[source.triggerItemId];
-      const nameWithArticle = indefiniteName(itemName, locale);
+      const nameWithArticle = withIndefiniteArticle(itemName, locale);
       const itemSegment: SourceSegment =
         itemVis && itemVis.type !== "always"
           ? { condition: itemVis, revealed: [nameWithArticle] }
@@ -240,7 +240,7 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
             : m.source_festival({ festival }, opts),
         ];
       }
-      const store = storeDisplayName(source.storeId, lookups);
+      const store = formatStoreName(source.storeId, lookups.stores, lookups.locale);
       return [
         date
           ? m.source_festival_store_dated({ date, festival, store }, opts)
@@ -376,7 +376,7 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
     }
     case "treasure_chest": {
       const { name } = requireEntry(lookups.treasureChestTiers, source.tier, "treasureChestTiers");
-      return [m.source_treasure_chest({ chest: indefiniteName(name, locale) }, opts)];
+      return [m.source_treasure_chest({ chest: withIndefiniteArticle(name, locale) }, opts)];
     }
     case "tree": {
       const sapling = requireEntry(lookups.itemNames, source.saplingItemId, "itemNames");
@@ -446,11 +446,6 @@ export function formatDateLabel(
   locale: LocaleCode,
 ): string {
   return m.source_date_label({ day: String(day), season: seasonNames[season] }, { locale });
-}
-
-/** The biome name with English's definite article ("the Tide Caverns"); other locales as-is. */
-function biomeDisplayName(biomeId: MinesBiomeId, lookups: SegmentLookups): string {
-  return formatBiomeName(biomeId, lookups.biomes, lookups.locale);
 }
 
 /** One "after one of" option: its first clause in branch form, any further ones appended. */
@@ -616,7 +611,7 @@ function buildQuestSegments(source: Source & { type: "quest" }, lookups: Segment
 
 function buildStoreName(storeId: StoreId, lookups: SegmentLookups): Segments {
   const vis = lookups.storeVisibility[storeId];
-  const name = storeDisplayName(storeId, lookups);
+  const name = formatStoreName(storeId, lookups.stores, lookups.locale);
   if (!vis || vis.type === "always") return [name];
   return [{ condition: vis, revealed: [name] }];
 }
@@ -810,11 +805,6 @@ function formatConjunction(items: string[], locale: LocaleCode): string {
   return new Intl.ListFormat(locale, { type: "conjunction" }).format(items);
 }
 
-/** English prefixes "a"/"an"; other locales' messages handle articles themselves. */
-function indefiniteName(name: string, locale: LocaleCode): string {
-  return withIndefiniteArticle(name, locale);
-}
-
 function joinSegments(...parts: (SourceSegment | SourceSegment[])[]): Segments {
   const flat: SourceSegment[] = [];
   for (const part of parts) {
@@ -854,11 +844,6 @@ function plainPerkLabel(perkId: PerkId, lookups: SegmentLookups): string {
 function storeActionClause(action: string | undefined, locale: LocaleCode): string {
   if (action === undefined) return m.source_clause_upgrading({}, { locale });
   return STORE_ACTION_CLAUSES[action]?.({}, { locale }) ?? action;
-}
-
-/** The store name with English's definite article where the store takes one; others as-is. */
-function storeDisplayName(storeId: StoreId, lookups: SegmentLookups): string {
-  return formatStoreName(storeId, lookups.stores, lookups.locale);
 }
 
 function visibilityContains(
