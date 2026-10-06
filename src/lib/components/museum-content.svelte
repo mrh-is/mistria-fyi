@@ -1,19 +1,19 @@
 <script lang="ts">
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
-  import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
+  import TrackerRowList from "#lib/components/tracker-row-list.svelte";
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
   import { isItemDimmed, isRowVisible, shouldCountItem } from "#lib/engine/availability.js";
   import { isEntityNameVisible } from "#lib/engine/visibility.js";
-  import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { celebrate, celebrateCategory } from "#lib/utils/celebrate.js";
   import { createLeavingSet } from "#lib/utils/leaving-set.svelte.js";
   import { recordEntries, recordValues } from "#lib/utils/record.js";
   import { computeRedactedStoreIds } from "#lib/utils/redacted-stores.js";
+  import { trackerRowDisplay } from "#lib/utils/row-display.js";
   import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
   import { registerSourceFilters } from "#lib/utils/source-filter-registration.svelte.js";
   import { createSpoilerGuard } from "#lib/utils/spoiler-guard.svelte.js";
@@ -21,7 +21,6 @@
 
   import AllCompleted from "./all-completed.svelte";
 
-  import type { TrackerRowDisplay } from "#lib/components/tracker-row.svelte";
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
   import type {
@@ -32,6 +31,7 @@
     MuseumWingSet,
     MuseumWingSetId,
   } from "#lib/types/tracker-data.js";
+  import type { TrackerRowDisplay } from "#lib/utils/row-display.js";
 
   let { locale }: { locale: LocaleCode } = $props();
 
@@ -48,17 +48,17 @@
 
   function rowDisplay(itemId: ItemId, sources: Source[]): TrackerRowDisplay {
     const completed = userState.state.completed.museum.has(itemId);
-    if (!itemNameVisible(itemId)) return { mode: "spoilered" };
-    if (completed) return { leaving: recentlyCompleted.has(itemId), mode: "completed" };
-    return {
+    return trackerRowDisplay({
+      completed,
       dimmed: isItemDimmed(
         sources,
         completed,
         userState.state.worldState,
         userState.state.availabilityWindows,
       ),
-      mode: "visible",
-    };
+      leaving: recentlyCompleted.has(itemId),
+      nameVisible: itemNameVisible(itemId),
+    });
   }
 
   const recentlyCompleted = createLeavingSet<ItemId>();
@@ -202,8 +202,8 @@
           reportEntityId={set.setId}
           total={set.scopedItemCount}
         >
-          <TrackerRowStack>
-            {#each set.visibleItems as item (item.itemId)}
+          <TrackerRowList getKey={(item) => item.itemId} items={set.visibleItems}>
+            {#snippet row(item)}
               {@const itemId = item.itemId}
               {@const museumCompleted = isItemComplete(itemId)}
               {@const museumItemSources = trackerData.items[itemId].sources}
@@ -227,13 +227,8 @@
                   }
                 }}
               />
-            {/each}
-          </TrackerRowStack>
-          {#if set.visibleItems.length === 0}
-            <p class="py-4 text-center text-sm text-muted-foreground">
-              {m.no_items_match_filters()}
-            </p>
-          {/if}
+            {/snippet}
+          </TrackerRowList>
         </ExpandableSection>
       {/each}
     </ExpandableSection>
