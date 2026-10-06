@@ -4,7 +4,7 @@ import { trackerData } from "#lib/data/index.js";
 import { buildImportState } from "#lib/engine/import-save.js";
 import { getMaxRenownLevel, MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
-import { recordKeys } from "#lib/utils.js";
+import { recordKeys } from "#lib/utils/record.js";
 
 import type { SkillId, VillagerId } from "#lib/types/tracker-data.js";
 

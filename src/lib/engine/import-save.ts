@@ -6,7 +6,7 @@ import {
   MAX_VILLAGER_LEVEL,
   normalizeLevel,
 } from "#lib/engine/progress.js";
-import { recordKeys, recordValues } from "#lib/utils.js";
+import { recordKeys, recordValues } from "#lib/utils/record.js";
 
 import { isSaveSection } from "./save-bundle.js";
 

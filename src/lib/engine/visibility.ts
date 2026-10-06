@@ -3,7 +3,7 @@ import {
   isRomantic,
   normalizeRelationships,
 } from "#lib/engine/relationships.js";
-import { recordEntries, recordKeys } from "#lib/utils.js";
+import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
 import type {
   PerkId,

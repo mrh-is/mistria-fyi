@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
-import { recordKeys } from "#lib/utils.js";
+import { recordKeys } from "#lib/utils/record.js";
 
 import type { AnimalId, AnimalVariantId } from "#lib/types/tracker-data.js";
 

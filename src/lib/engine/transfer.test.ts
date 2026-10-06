@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
-import { recordEntries, recordKeys, recordValues } from "#lib/utils.js";
+import { recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
 import {
   decodeTransferPayload,
