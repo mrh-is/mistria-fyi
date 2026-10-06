@@ -27,7 +27,7 @@ export interface LocalizeFieldInput {
   classification: FieldClassification;
   /** The value already present in the (English) source fiddle data. */
   englishValue: string;
-  /** Expected source name for ordinal paths, guarding against upstream reordering. */
+  /** Expected source name for ordinal paths; also checked against each locale’s English source cache. */
   expectedEnglishValue?: string;
   /** Field name, e.g. `"name"`. Omit for keys with no field segment, such as `misc_local/<id>`. */
   field?: string;
@@ -66,8 +66,8 @@ export function generateLocaleManifest(assetsDir: string): LocaleManifest {
  * looking up an override for) the l10n key, translating game language codes to BCP 47 tags along
  * the way.
  *
- * Throws only when the field's {@link FieldClassification} is unusable (an `override` field with
- * no override entry). A classified field whose key is simply absent from a beta locale's
+ * Throws for unusable overrides or ordinal English baselines that differ from the source cache.
+ * A classified field whose key is simply absent from a beta locale’s
  * translation table is the normal, expected case — this logs and falls back to English rather
  * than throwing.
  */
@@ -95,6 +95,24 @@ export function localizeField(assetsDir: string, input: LocalizeFieldInput): Loc
     if (locale === "en") continue;
 
     const table = loadTranslationTable(assetsDir, gameLanguage as GameLanguageCode);
+    if (input.expectedEnglishValue !== undefined) {
+      const sourceEnglish = loadTranslationTable(
+        assetsDir,
+        gameLanguage as GameLanguageCode,
+        "source_caches",
+      ).get(key);
+      // A wholly absent beta entry can still fall back to English. A translation requires its
+      // matching English baseline, and an existing baseline must never describe another ordinal.
+      if (
+        (sourceEnglish !== undefined || table.has(key)) &&
+        sourceEnglish !== input.expectedEnglishValue
+      ) {
+        throw new Error(
+          `English localization mismatch for ordinal key "${key}" in ${gameLanguage}: expected "${input.expectedEnglishValue}", got ${JSON.stringify(sourceEnglish)}`,
+        );
+      }
+    }
+
     const translated = table.get(key);
 
     if (translated === undefined) {
@@ -120,12 +138,13 @@ function deriveKey(category: string, id: string, field: string | undefined): str
 function loadTranslationTable(
   assetsDir: string,
   gameLanguage: GameLanguageCode,
+  directory: "source_caches" | "translations" = "translations",
 ): ReadonlyMap<string, string> {
-  const cacheKey = `${assetsDir} ${gameLanguage}`;
+  const cacheKey = `${assetsDir} ${directory} ${gameLanguage}`;
   const cached = translationTableCache.get(cacheKey);
   if (cached) return cached;
 
-  const path = join(assetsDir, "localization", "translations", `${gameLanguage}.meta.toml`);
+  const path = join(assetsDir, "localization", directory, `${gameLanguage}.meta.toml`);
   const toml = parse(readFileSync(path, "utf8")) as {
     asset_properties: Record<string, unknown>;
   };

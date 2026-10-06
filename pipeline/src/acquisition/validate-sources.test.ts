@@ -1,5 +1,6 @@
 import { assert, describe, expect, it } from "vitest";
 
+import { getExcludedCosmeticIds } from "./exclusions.js";
 import { AcquisitionReferenceIndex } from "./reference-index.js";
 import { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator.js";
 import {
@@ -12,6 +13,20 @@ import type { Source } from "#lib/types/acquisition.js";
 import type { AcquisitionSourceAssembly } from "./validate-sources.js";
 
 describe("validateAcquisitionSources", () => {
+  it("rejects a table-excluded cosmetic reintroduced after extraction", () => {
+    const trackerData = { cosmetics: { head_flower_hat: { sources: [{ type: "default" }] } } };
+    const references = AcquisitionReferenceIndex.from({
+      emitted: { cosmetics: trackerData.cosmetics },
+      excluded: { cosmetics: getExcludedCosmeticIds() },
+    });
+    expect(captureDiagnostics(trackerData, references)).toEqual([
+      expect.objectContaining({
+        fieldPath: "cosmetics.head_flower_hat",
+        kind: "excluded-id-reference",
+      }),
+    ]);
+  });
+
   it.each(["mine", "mines_chest", "mines_dig_site"])(
     "rejects a %s source without biomeId",
     (type) => {
