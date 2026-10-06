@@ -25,11 +25,14 @@
       targetedId,
     ),
   );
+  // Spoilered villagers render without their name, so their initials stay out of the index too.
   let indexEntries = $derived(
-    visibleVillagers.map((villager) => ({
-      id: `villager-${villager.id}`,
-      name: villager.name,
-    })),
+    visibleVillagers
+      .filter((villager) => userState.progressionState.knownVillagers.has(villager.id))
+      .map((villager) => ({
+        id: `villager-${villager.id}`,
+        name: villager.name,
+      })),
   );
 </script>
 
