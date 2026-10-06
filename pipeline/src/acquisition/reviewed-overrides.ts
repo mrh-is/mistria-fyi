@@ -281,7 +281,7 @@ export const ITEM_OVERRIDES: Partial<Record<ItemId, Source[]>> = {
       "humble_pie",
       "confiscated_coffee",
       "pbm_sandwich",
-      "pbjt_sandwich", // cspell:disable-line
+      "pbjt_sandwich",
       "nachos",
       "honey_toast",
       "dark_chocolate",
