@@ -135,36 +135,36 @@
 
   /* Villager level marks (villager-record.svelte), the town rank ladder (renown), & confetti
    * (celebrate.ts). One palette for both themes: each sits on paper or a canvas overlay. */
-  --level-1: #7c3aed;
-  --level-2: #4338ca;
-  --level-3: #2563eb;
-  --level-4: #38bdf8;
-  --level-5: #22c55e;
-  --level-6: #a3e635;
-  --level-7: #fbbf24;
-  --level-8: #fde047;
-  --level-9: #f97316;
-  --level-10: #ea580c;
-  --level-11: #ef4444;
-  --level-12: #be123c;
-  --rank-1: #92400e;
-  --rank-2: #a8a29e;
-  --rank-3: #f97316;
-  --rank-4: #ef4444;
-  --rank-5: #94a3b8;
-  --rank-6: #3b82f6;
-  --rank-7: #cbd5e1;
-  --rank-8: #10b981;
-  --rank-9: #fbbf24;
-  --rank-10: #67e8f9;
-  --rank-11: #a78bfa;
-  --confetti-1: #fbbf24;
-  --confetti-2: #f59e0b;
-  --confetti-3: #d97706;
-  --confetti-4: #fde68a;
-  --confetti-5: #fef3c7;
-  --confetti-6: #a78bfa;
-  --confetti-7: #f9a8d4;
+  --color-relationship-level-1: #7c3aed;
+  --color-relationship-level-2: #4338ca;
+  --color-relationship-level-3: #2563eb;
+  --color-relationship-level-4: #38bdf8;
+  --color-relationship-level-5: #22c55e;
+  --color-relationship-level-6: #a3e635;
+  --color-relationship-level-7: #fbbf24;
+  --color-relationship-level-8: #fde047;
+  --color-relationship-level-9: #f97316;
+  --color-relationship-level-10: #ea580c;
+  --color-relationship-level-11: #ef4444;
+  --color-relationship-level-12: #be123c;
+  --color-town-rank-1: #92400e;
+  --color-town-rank-2: #a8a29e;
+  --color-town-rank-3: #f97316;
+  --color-town-rank-4: #ef4444;
+  --color-town-rank-5: #94a3b8;
+  --color-town-rank-6: #3b82f6;
+  --color-town-rank-7: #cbd5e1;
+  --color-town-rank-8: #10b981;
+  --color-town-rank-9: #fbbf24;
+  --color-town-rank-10: #67e8f9;
+  --color-town-rank-11: #a78bfa;
+  --color-confetti-1: #fbbf24;
+  --color-confetti-2: #f59e0b;
+  --color-confetti-3: #d97706;
+  --color-confetti-4: #fde68a;
+  --color-confetti-5: #fef3c7;
+  --color-confetti-6: #a78bfa;
+  --color-confetti-7: #f9a8d4;
 
   /* Tag dialogs (tag-dialog.svelte): a paper shipping tag on a string */
   --tag-accent: #a65343;

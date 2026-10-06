@@ -1,4 +1,4 @@
-import { rankColor } from "#lib/utils/palette.js";
+import { townRankColor } from "#lib/utils/palette.js";
 
 import type { TownRank } from "#lib/types/tracker-data.js";
 
@@ -33,7 +33,7 @@ export function getRenownPresentation(level: number, ranks: TownRank[]): RenownP
   const withinRank = Math.max(level - currentRank.levels.start, 0);
 
   return {
-    color: rankColor(currentRankIndex),
+    color: townRankColor(currentRankIndex),
     currentRank,
     currentRankIndex,
     isMaxed: level >= maxLevel,

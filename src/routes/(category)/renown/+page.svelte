@@ -5,7 +5,7 @@
   import { isEntityNameVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { rankColor } from "#lib/utils/palette.js";
+  import { townRankColor } from "#lib/utils/palette.js";
 
   import RankRecord from "./rank-record.svelte";
 
@@ -26,7 +26,7 @@
 <ul class="rank-register" aria-label={m.renown_rank_register_aria()}>
   {#each trackerData.townRanks as rank, index (index)}
     <RankRecord
-      color={rankColor(index)}
+      color={townRankColor(index)}
       currentLevel={userState.state.completed.renown}
       {rank}
       name={getName("town-ranks", index.toString(), data.locale)}
