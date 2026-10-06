@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import FoldoutPanelHarness from "#lib/components/foldout-panel.test-harness.svelte";
 
-function renderPanel(props: { dialog?: boolean; withHeaderAction?: boolean } = {}) {
+function renderPanel(props: { isModal?: boolean; withHeaderAction?: boolean } = {}) {
   const onClose = vi.fn();
   render(FoldoutPanelHarness, { onClose, ...props });
   return onClose;
@@ -61,7 +61,7 @@ describe("FoldoutPanel", () => {
   });
 
   it("renders as a plain section without trapping focus when not a dialog", async () => {
-    const onClose = renderPanel({ dialog: false });
+    const onClose = renderPanel({ isModal: false });
 
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByRole("region", { name: "Harness" })).not.toHaveAttribute("aria-modal");

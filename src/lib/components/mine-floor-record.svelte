@@ -12,16 +12,17 @@
     biomes,
     compact = false,
     floor,
+    isReportable = true,
     locale,
     onChange,
-    registerFeedback = true,
   }: {
     biomes: MinesBiome[];
     compact?: boolean;
     floor: number;
+    /** Whether the record attaches a feedback report target (off when a parent already does). */
+    isReportable?: boolean;
     locale: LocaleCode;
     onChange: (floor: number) => void;
-    registerFeedback?: boolean;
   } = $props();
 
   const feedbackContext = getFeedbackContext();
@@ -30,8 +31,8 @@
     biomes.find((biome) => floor >= biome.floors.start && floor <= biome.floors.end) ?? biomes[0],
   );
   let reportable = $derived(
-    registerFeedback
-      ? feedbackContext.reportable({
+    isReportable
+      ? feedbackContext.reportableAttachment({
           category: "mines",
           displayName: "Floor progress",
           extra: { biome: getName("mines", currentBiome.id, locale), floor },
@@ -97,7 +98,7 @@
   {/if}
 
   <Stepper
-    accent="var(--color-category-mines)"
+    accentColor="var(--color-category-mines)"
     decrementDisabled={floor <= 0}
     decrementLabel={m.mines_floor_up()}
     incrementDisabled={floor >= maxFloor}

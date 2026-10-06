@@ -19,7 +19,7 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { version } from "$app/env";
 
-  import type { ReportableElement } from "#lib/feedback/types.js";
+  import type { ReportTarget } from "#lib/feedback/types.js";
 
   const TURNSTILE_SITE_KEY = "0x4AAAAAAEjKeNTnEDdgRcXX";
 
@@ -28,13 +28,13 @@
   const feedbackContext = getFeedbackContext();
 
   let {
-    accent,
+    accentColor,
     onClose,
     open,
     pickerEnabled = false,
     restoreFocus = true,
   }: {
-    accent?: string;
+    accentColor?: string;
     onClose: () => void;
     open: boolean;
     pickerEnabled?: boolean;
@@ -53,7 +53,7 @@
   let submitError = $state("");
   let messageInput = $state<HTMLTextAreaElement | null>(null);
   let pickerButton = $state<HTMLButtonElement | null>(null);
-  let selectedElement = $state<ReportableElement | undefined>();
+  let selectedElement = $state<ReportTarget | undefined>();
   let opener: HTMLElement | null = null;
   let pickerActive = $state(false);
   let submitGeneration = 0;
@@ -418,9 +418,11 @@
     closeLabel={m.feedback_close_aria()}
     label={m.toolbar_send_feedback()}
     {onClose}
-    style={accent === undefined ? undefined : `--primary: ${accent}; --ring: ${accent};`}
+    style={accentColor === undefined
+      ? undefined
+      : `--primary: ${accentColor}; --ring: ${accentColor};`}
   >
-    <FoldoutPanel id="feedback-panel" title={m.toolbar_send_feedback()} dialog={false} {onClose}>
+    <FoldoutPanel id="feedback-panel" title={m.toolbar_send_feedback()} isModal={false} {onClose}>
       <div class="feedback-form">
         <div>
           <textarea

@@ -137,9 +137,9 @@
     <MineFloorRecord
       {biomes}
       floor={userState.state.completed.mines.floor}
+      isReportable={false}
       {locale}
       onChange={setFloorWithCelebration}
-      registerFeedback={false}
     />
   </ExpandableSection>
 {/if}

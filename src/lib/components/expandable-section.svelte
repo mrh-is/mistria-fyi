@@ -45,7 +45,7 @@
   } = $props();
   let reportable = $derived(
     reportCategory
-      ? feedbackContext.reportable({
+      ? feedbackContext.reportableAttachment({
           category: reportCategory,
           displayName: name,
           entityId: reportEntityId,

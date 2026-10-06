@@ -25,7 +25,7 @@
   let level = $derived(userState.state.completed.skillLevels[id] ?? 0);
   let maxed = $derived(level >= MAX_SKILL_LEVEL);
   let reportable = $derived(
-    feedbackContext.reportable({
+    feedbackContext.reportableAttachment({
       category: "skill",
       displayName: name,
       entityId: id,
@@ -83,7 +83,7 @@
   class="skill-record"
   data-skill-record
   data-compact={compact}
-  data-complete={maxed}
+  data-maxed={maxed}
   {@attach reportable}
 >
   <span class="skill-name">
@@ -96,7 +96,7 @@
   </span>
 
   <Stepper
-    accent="var(--color-category-skills)"
+    accentColor="var(--color-category-skills)"
     decrementDisabled={level <= 0}
     incrementDisabled={level >= MAX_SKILL_LEVEL}
     decrementLabel={m.skill_decrease_level({ name })}
@@ -170,7 +170,7 @@
     border-radius: 0 0 var(--radius) var(--radius);
   }
 
-  .skill-record[data-complete="true"] {
+  .skill-record[data-maxed="true"] {
     color: var(--color-ink-muted);
   }
 

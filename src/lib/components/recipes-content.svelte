@@ -177,7 +177,7 @@
               leaving: recentlyCompleted.has(entry.id),
               nameVisible: entry.nameVisible,
             })}
-            lookups={{ ...baseSegmentLookups, entityVisibility: entry.visibility }}
+            segmentLookups={{ ...baseSegmentLookups, entityVisibility: entry.visibility }}
             name={entry.name}
             reportCategory="recipe"
             reportEntityId={entry.id}

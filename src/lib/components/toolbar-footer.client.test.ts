@@ -356,7 +356,7 @@ describe("ToolbarFooter picker state", () => {
     const { feedbackContext } = renderToolbar();
     const target = document.createElement("div");
     document.body.append(target);
-    feedbackContext.reportable({
+    feedbackContext.reportableAttachment({
       category: "recipe",
       displayName: "Tomato Soup",
       page: "/recipes",

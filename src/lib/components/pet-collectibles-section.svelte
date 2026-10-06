@@ -99,7 +99,7 @@
           display={trackerRowDisplay({
             completed: userState.state.completed.petCosmetics.has(entry.id),
           })}
-          lookups={baseLookups}
+          segmentLookups={baseLookups}
           name={entry.name}
           reportCategory="pet-cosmetic"
           reportEntityId={entry.id}
@@ -136,7 +136,7 @@
           display={trackerRowDisplay({
             completed: userState.state.completed.petSkins.has(entry.id),
           })}
-          lookups={baseLookups}
+          segmentLookups={baseLookups}
           name={entry.name}
           reportCategory="pet-skin"
           reportEntityId={entry.id}

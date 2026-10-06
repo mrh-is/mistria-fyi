@@ -15,7 +15,7 @@ describe("PageHeader", () => {
 
     const header = container.querySelector("header");
     expect(header?.dataset.pageHeader).toBe("category");
-    expect(header?.getAttribute("style")).toContain("--category-progress: 35%");
+    expect(header?.getAttribute("style")).toContain("--category-progress-percent: 35%");
     expect(queries.getByRole("heading", { level: 1, name: "Almanac" })).toBeTruthy();
     expect(queries.getByText("7 / 20")).toBeTruthy();
     expect(queries.getByText("7 of 20 completed")).toBeTruthy();
@@ -43,6 +43,6 @@ describe("PageHeader", () => {
 
     const header = container.querySelector("header");
     expect(header?.classList.contains("page-header--complete")).toBe(true);
-    expect(header?.getAttribute("style")).toContain("--category-progress: 100%");
+    expect(header?.getAttribute("style")).toContain("--category-progress-percent: 100%");
   });
 });

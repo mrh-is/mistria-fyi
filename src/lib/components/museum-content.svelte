@@ -219,7 +219,7 @@
               {@const museumItemVisibility = trackerData.items[itemId].visibility}
               <TrackerRow
                 display={rowDisplay(itemId, museumItemSources)}
-                lookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
+                segmentLookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
                 name={getName("items", itemId, locale)}
                 reportCategory="museum-item"
                 reportEntityId={itemId}

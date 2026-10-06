@@ -19,7 +19,7 @@
   let level = $derived(userState.state.completed.renown);
   let presentation = $derived(getRenownPresentation(level, trackerData.townRanks));
   let reportable = $derived(
-    feedbackContext.reportable({
+    feedbackContext.reportableAttachment({
       category: "renown",
       displayName: getName("town-ranks", presentation.currentRankIndex.toString(), locale),
       extra: { level },
@@ -51,11 +51,11 @@
   {@attach reportable}
 >
   {#if presentation.currentRank}
-    <span class="rank-seal" style="--rank-color: {presentation.color}" aria-hidden="true">
+    <span class="rank-seal" style="--town-rank-color: {presentation.rankColor}" aria-hidden="true">
       <Icon.ProgressMark
         type="town_rank"
-        fill={presentation.color}
-        color={presentation.color}
+        fill={presentation.rankColor}
+        color={presentation.rankColor}
         stroke={1.5}
       />
     </span>
@@ -66,7 +66,10 @@
         <small>{m.renown_max_rank_reached()}</small>
       {:else}
         <small>
-          {m.renown_within_rank({ span: presentation.rankSpan, within: presentation.withinRank })}
+          {m.renown_within_rank({
+            span: presentation.rankLevelSpan,
+            within: presentation.levelsIntoRank,
+          })}
         </small>
       {/if}
     </span>
@@ -84,7 +87,7 @@
   </span>
 
   <Stepper
-    accent="var(--color-category-renown)"
+    accentColor="var(--color-category-renown)"
     decrementDisabled={level <= 0}
     incrementDisabled={level >= presentation.maxLevel}
     decrementLabel={m.renown_decrease()}
@@ -134,11 +137,11 @@
     height: 48px;
     grid-row: span 2;
     place-items: center;
-    border: 2px solid color-mix(in srgb, var(--rank-color) 70%, var(--color-ink));
+    border: 2px solid color-mix(in srgb, var(--town-rank-color) 70%, var(--color-ink));
     border-radius: 50%;
-    background: color-mix(in srgb, var(--rank-color) 15%, var(--color-paper-raised));
+    background: color-mix(in srgb, var(--town-rank-color) 15%, var(--color-paper-raised));
     /* stylelint-disable-next-line declaration-property-unit-disallowed-list -- a hard offset "stamp" edge, not an elevation */
-    box-shadow: 1px 2px 0 color-mix(in srgb, var(--rank-color) 25%, transparent);
+    box-shadow: 1px 2px 0 color-mix(in srgb, var(--town-rank-color) 25%, transparent);
     transform: rotate(-2deg);
   }
 

@@ -143,7 +143,7 @@
     {@const nameVisible = isEntityNameVisible(cosmetic.visibility, userState.progressionState)}
     <TrackerRow
       display={trackerRowDisplay({ completed, nameVisible })}
-      lookups={{ ...baseLookups, entityVisibility: cosmetic.visibility }}
+      segmentLookups={{ ...baseLookups, entityVisibility: cosmetic.visibility }}
       name={cosmetic.name}
       reportCategory="cosmetic"
       reportEntityId={cosmetic.id}

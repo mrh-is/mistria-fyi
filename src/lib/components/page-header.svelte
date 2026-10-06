@@ -53,7 +53,9 @@
   class:page-header--category={category !== undefined}
   class:page-header--complete={pct === 100}
   data-page-header={category === undefined ? "generic" : "category"}
-  style={category !== undefined && pct !== undefined ? `--category-progress: ${pct}%;` : undefined}
+  style={category !== undefined && pct !== undefined
+    ? `--category-progress-percent: ${pct}%;`
+    : undefined}
 >
   <a
     class="page-header__back"
@@ -219,7 +221,7 @@
 
   .page-header__progress i {
     display: block;
-    width: var(--category-progress);
+    width: var(--category-progress-percent);
     height: 100%;
     background: var(--primary);
     transition: width 300ms ease-out;

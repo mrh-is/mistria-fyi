@@ -3,14 +3,14 @@
   import { localizedHref } from "#lib/utils/localized-href.js";
 
   let {
-    dialog = true,
+    isModal = true,
     onClose,
     withHeaderAction = false,
-  }: { dialog?: boolean; onClose: () => void; withHeaderAction?: boolean } = $props();
+  }: { isModal?: boolean; onClose: () => void; withHeaderAction?: boolean } = $props();
 </script>
 
 <button type="button">Outside before</button>
-<FoldoutPanel {dialog} id="harness-panel" title="Harness" {onClose}>
+<FoldoutPanel id="harness-panel" {isModal} title="Harness" {onClose}>
   {#snippet headerActions()}
     {#if withHeaderAction}
       <button type="button">Header action</button>

@@ -110,7 +110,7 @@
             reportEntityId={date.id}
             display={trackerRowDisplay({ completed, nameVisible: dateNameVisible(date.id) })}
             sources={date.sources}
-            lookups={{ ...baseLookups, entityVisibility: date.visibility }}
+            segmentLookups={{ ...baseLookups, entityVisibility: date.visibility }}
             onToggle={() => {
               toggleDate(date.id);
             }}
