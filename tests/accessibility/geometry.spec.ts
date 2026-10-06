@@ -314,7 +314,9 @@ test.describe("tracker paper touch geometry", () => {
 
     await gotoApplication(page, "/villagers");
     for (const control of await page
-      .locator("#villager-adeline .villager-stepper, #villager-adeline [data-relationship-action]")
+      .locator(
+        "#villager-adeline [data-stepper-button], #villager-adeline [data-relationship-action]",
+      )
       .all()) {
       const box = await control.boundingBox();
       expect(box?.width).toBeGreaterThanOrEqual(44);
