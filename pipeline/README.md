@@ -30,9 +30,9 @@ default Steam install location (Steam is the only platform the game ships on):
 C:\Program Files (x86)\Steam\steamapps\common\Fields of Mistria
 ```
 
-so the integration suite and `pnpm run pipeline -- --sprites-only` work with no configuration on a
-stock Windows dev machine that owns the game. Full tracker-data regeneration still requires an
-extracted structured-assets root.
+so the integration suite and `pnpm run pipeline -- --villager-sprites-only` work with no
+configuration on a stock Windows dev machine that owns the game. Full tracker-data regeneration
+still requires an extracted structured-assets root.
 
 The pipeline reads `FieldsOfMistria.exe`'s Product Version beside the archive automatically. On
 macOS and Linux, pass `--version=X.Y.Z` when the assets omit a native version value.
@@ -43,12 +43,12 @@ multi-gigabyte animation and audio trees. The full pipeline does not yet use tha
 its localization extractors retain an on-disk contract. Sprite extraction (`extractors/sprites.ts`)
 can read PNGs directly from `assets.zip`.
 
-`--sprites-only` (alias: `pnpm run sprites:villagers`) is the narrowest of these: it parses only
-`fiddle.npcs` and regenerates villager sprites alone, skipping `tracker-data.json`, locale chunks,
-and every other output. It is the right command for “just get me fresh villager icons”, including
-straight off a bare Steam install with nothing extracted. Item sprite regeneration uses the full
-pipeline because producing `iconSpritesByItemId` also requires almanac and localization extraction;
-pass an extracted structured-assets root together with `--sprites`.
+`--villager-sprites-only` (alias: `pnpm run sprites:villagers`) is the narrowest of these: it parses
+only `fiddle.npcs` and regenerates villager sprites alone, skipping `tracker-data.json`, locale
+chunks, and every other output. It is the right command for “just get me fresh villager icons”,
+including straight off a bare Steam install with nothing extracted. Item sprite regeneration uses
+the full pipeline because producing `iconSpritesByItemId` also requires almanac and localization
+extraction; pass an extracted structured-assets root together with `--sprites`.
 
 `--parse-only` currently enforces the v1.0.5 fixture’s 297 non-metadata files and three
 representative paths, so it is not a version-agnostic validator.
@@ -170,18 +170,18 @@ Paths are relative to `pipeline/src/`. Colocated `*.test.ts` files cover most mo
 
 ### Input & orchestration
 
-| Module                 | Responsibility                                                                                                                                                      |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `main.ts`              | CLI flags, asset-root resolution, stage order, assembly, staging, and publishing. `--parse-only` stops after parsing; `--sprites-only` runs villager sprites alone. |
-| `parse-fiddle.ts`      | Parses `fiddle/` from disk or straight out of `assets.zip` into one namespace tree. Excludes `.meta.toml`; rejects duplicate and colliding destinations.            |
-| `evaluate.ts`          | Resolves `value.bin` and `value.store` expressions in place (grammar below).                                                                                        |
-| `requirements.ts`      | Normalizes native requirement objects into requirement expressions and expands named requirements.                                                                  |
-| `assets-zip.ts`        | Locates `assets.zip`, the default Steam install, and the installed executable’s version for `main.ts`.                                                              |
-| `asset-input.ts`       | Materializes only `fiddle/` and `localization/` from `assets.zip` for the real-asset test suite (`assets-test-setup.ts`).                                           |
-| `data-shapes.ts`       | Array guards that throw with field and source-file context.                                                                                                         |
-| `extractor-helpers.ts` | `forEachItem`, `forEachQuest`, and the six tracked quest groups with their app quest types.                                                                         |
-| `localize.ts`          | Resolves a classified text field to every locale through the game’s translation tables and `localize-overrides.json`; falls back to English for missing beta keys.  |
-| `locale-codes.ts`      | Maps game language codes to BCP 47 tags and throws when the game adds or drops a language.                                                                          |
+| Module                 | Responsibility                                                                                                                                                               |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `main.ts`              | CLI flags, asset-root resolution, stage order, assembly, staging, and publishing. `--parse-only` stops after parsing; `--villager-sprites-only` runs villager sprites alone. |
+| `parse-fiddle.ts`      | Parses `fiddle/` from disk or straight out of `assets.zip` into one namespace tree. Excludes `.meta.toml`; rejects duplicate and colliding destinations.                     |
+| `evaluate.ts`          | Resolves `value.bin` and `value.store` expressions in place (grammar below).                                                                                                 |
+| `requirements.ts`      | Normalizes native requirement objects into requirement expressions and expands named requirements.                                                                           |
+| `assets-zip.ts`        | Locates `assets.zip`, the default Steam install, and the installed executable’s version for `main.ts`.                                                                       |
+| `asset-input.ts`       | Materializes only `fiddle/` and `localization/` from `assets.zip` for the real-asset test suite (`assets-test-setup.ts`).                                                    |
+| `data-shapes.ts`       | Array guards that throw with field and source-file context.                                                                                                                  |
+| `extractor-helpers.ts` | `forEachItem`, `forEachQuest`, and the six tracked quest groups with their app quest types.                                                                                  |
+| `localize.ts`          | Resolves a classified text field to every locale through the game’s translation tables and `localize-overrides.json`; falls back to English for missing beta keys.           |
+| `locale-codes.ts`      | Maps game language codes to BCP 47 tags and throws when the game adds or drops a language.                                                                                   |
 
 ### Extractors
 
@@ -261,15 +261,15 @@ translation directly, so English suffix rules never alter translated strings.
 
 ## Artifacts
 
-| Output                                       | Contents                                                     |
-| -------------------------------------------- | ------------------------------------------------------------ |
-| `src/lib/data/tracker-data.json`             | Minified committed app data                                  |
-| `src/lib/data/locales.json`                  | Locale manifest generated from `l10n.meta.toml`              |
-| `src/lib/data/locales/<locale>/*.json`       | Per-locale name chunks, one file per category                |
-| `pipeline/output/tracker-data.json`          | Pretty diagnostic copy of the tracker data                   |
-| `pipeline/output/tracker-data-readable.json` | A second, identical pretty copy                              |
-| `pipeline/output/fiddle-readable.json`       | Parsed and evaluated namespace tree for inspection           |
-| `pipeline/output/sprites/{items,villagers}/` | Converted webp sprites, with `--sprites` or `--sprites-only` |
+| Output                                       | Contents                                                              |
+| -------------------------------------------- | --------------------------------------------------------------------- |
+| `src/lib/data/tracker-data.json`             | Minified committed app data                                           |
+| `src/lib/data/locales.json`                  | Locale manifest generated from `l10n.meta.toml`                       |
+| `src/lib/data/locales/<locale>/*.json`       | Per-locale name chunks, one file per category                         |
+| `pipeline/output/tracker-data.json`          | Pretty diagnostic copy of the tracker data                            |
+| `pipeline/output/tracker-data-readable.json` | A second, identical pretty copy                                       |
+| `pipeline/output/fiddle-readable.json`       | Parsed and evaluated namespace tree for inspection                    |
+| `pipeline/output/sprites/{items,villagers}/` | Converted webp sprites, with `--sprites` or `--villager-sprites-only` |
 
 Evaluation mutates the parsed tree, and source attachment & visibility mutate the extracted
 registries. `generatedAt` changes on every successful run.

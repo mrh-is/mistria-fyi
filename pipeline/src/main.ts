@@ -177,7 +177,7 @@ async function main(): Promise<void> {
   }
 
   const parseOnly = args.includes("--parse-only");
-  const spritesOnly = args.includes("--sprites-only");
+  const villagerSpritesOnly = args.includes("--villager-sprites-only");
   const versionFlag = args.find((a) => a.startsWith("--version="));
   const versionArg = versionFlag?.split("=")[1];
 
@@ -185,19 +185,19 @@ async function main(): Promise<void> {
   const parsed =
     fiddleSource.kind === "disk"
       ? parseFiddle(assetsDir)
-      : await parseFiddleFromZip(fiddleSource.zipPath, spritesOnly ? ["npcs"] : undefined);
+      : await parseFiddleFromZip(fiddleSource.zipPath, villagerSpritesOnly ? ["npcs"] : undefined);
   const fiddle = parsed.data;
 
-  if (fiddleSource.kind === "zip" && !spritesOnly) {
+  if (fiddleSource.kind === "zip" && !villagerSpritesOnly) {
     console.error("❌ Full pipeline extraction requires an on-disk fiddle/ directory.");
     console.error(
-      "   Extract your game assets first, or use --sprites-only for sprite regeneration from assets.zip.",
+      "   Extract your game assets first, or use --villager-sprites-only to regenerate villager sprites from assets.zip.",
     );
     process.exitCode = 1;
     return;
   }
 
-  if (spritesOnly) {
+  if (villagerSpritesOnly) {
     await runVillagerSpritesOnly(fiddle, assetsDir);
     return;
   }
@@ -623,7 +623,7 @@ function reportMissingSprites(missing: readonly string[]): boolean {
  * `assets.zip`'s NPC icon PNGs are enough, so this never touches `tracker-data.json`, locale
  * chunks, or any other output, and never requires an on-disk `fiddle/` extraction — it works
  * directly off `assets.zip` (see {@link parseFiddleFromZip}), including at the default Steam
- * install location with zero configuration. Invoke with `pnpm run pipeline -- --sprites-only` or
+ * install location with zero configuration. Invoke with `pnpm run pipeline -- --villager-sprites-only` or
  * `pnpm run sprites:villagers`.
  */
 async function runVillagerSpritesOnly(fiddle: ParsedGameData, assetsDir: string): Promise<void> {

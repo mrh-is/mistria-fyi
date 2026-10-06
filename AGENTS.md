@@ -174,6 +174,7 @@ it. Wrangler may need access to Cloudflare's API and to its stored credentials (
 | `pnpm run test`               | Complete Vitest suite (asset-independent)   |
 | `pnpm run test:changed`       | Vitest tests affected by branch changes     |
 | `pnpm run test:app`           | App tests (`src/`)                          |
+| `pnpm run test:client`        | App component tests (`*.client.test.ts`)    |
 | `pnpm run test:pipeline`      | Pipeline tests (`pipeline/`)                |
 | `pnpm run test:accessibility` | Browser accessibility matrix (Playwright)   |
 | `pnpm run verify`             | Full CI matrix locally (see §7 exceptions)  |
@@ -249,7 +250,8 @@ compaction.
 
 ### Local (every change)
 
-- Run only the test covering your change: `pnpm exec vitest run path/to/file.test.ts`.
+- Run only the test covering your change: `pnpm exec vitest run path/to/file.test.ts`. This works
+  for every test file, including `*.client.test.ts` & `*.cold.test.ts`; Vitest picks the project.
 - Run `pnpm run check` after a TypeScript or Svelte contract edit.
 - Run `pnpm run lint:fix` before committing. Lint must produce zero errors and zero warnings; a
   warning that needs an `oxlint-disable`, `eslint-disable`, or `stylelint-disable` comment gets the
