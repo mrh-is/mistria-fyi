@@ -20,10 +20,10 @@ import { ASSET_ORIGIN, ASSET_PREFIX, FONTSOURCE_FONTS, SLICED_FONTS } from "./ma
 import type { FontLocale, FontsourceFont, SlicedFont } from "./manifest.js";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
-const TOOL_DIR = fileURLToPath(new URL(".", import.meta.url));
+const TOOL_DIR = import.meta.dirname;
 const CSS_DIR = path.join(ROOT, "src", "lib", "fonts");
 const RANGES_FILE = fileURLToPath(
-  new URL("./simplified-chinese-unicode-ranges.json", import.meta.url),
+  new URL("simplified-chinese-unicode-ranges.json", import.meta.url),
 );
 
 interface FontFace {
@@ -53,8 +53,8 @@ function coveredText(font: fontkit.Font, range: string): string {
   for (const part of range.split(",")) {
     const match = /^U\+([0-9a-f]+)(?:-([0-9a-f]+))?$/i.exec(part);
     if (!match) throw new Error(`Unparseable unicode-range segment: ${part}`);
-    const start = parseInt(match[1], 16);
-    const end = match[2] ? parseInt(match[2], 16) : start;
+    const start = Number.parseInt(match[1], 16);
+    const end = match[2] ? Number.parseInt(match[2], 16) : start;
     for (let codePoint = start; codePoint <= end; codePoint += 1) {
       if (font.hasGlyphForCodePoint(codePoint)) text += String.fromCodePoint(codePoint);
     }
@@ -69,11 +69,13 @@ async function main(): Promise<void> {
   };
 
   for (const font of FONTSOURCE_FONTS) {
+    // oxlint-disable-next-line no-await-in-loop -- Stage families in manifest order with bounded I/O.
     add(font.locale, await stageFontsource(font));
   }
   if (!args["skip-sliced"]) {
     const table = JSON.parse(await readFile(RANGES_FILE, "utf8")) as UnicodeRangeTable;
     for (const font of SLICED_FONTS) {
+      // oxlint-disable-next-line no-await-in-loop -- Bound memory used by font parsing & subsetting.
       add(font.locale, await stageSliced(font, table));
     }
   }
@@ -81,6 +83,7 @@ async function main(): Promise<void> {
   await mkdir(CSS_DIR, { recursive: true });
   for (const [locale, faces] of facesByLocale) {
     const file = path.join(CSS_DIR, `locale-fonts-${locale}.css`);
+    // oxlint-disable-next-line no-await-in-loop -- Write locale outputs in deterministic order.
     await writeFile(file, renderStylesheet(locale, faces));
     console.log(`${path.relative(ROOT, file)}: ${faces.length} faces`);
   }
@@ -111,6 +114,7 @@ async function stageFontsource(font: FontsourceFont): Promise<FontFace[]> {
   const faces: FontFace[] = [];
 
   for (const entry of font.faces) {
+    // oxlint-disable-next-line no-await-in-loop -- Read one face stylesheet at a time.
     const css = await readFile(path.join(packageDir, `${entry}.css`), "utf8");
     for (const block of css.split("@font-face").slice(1)) {
       const family = /font-family:\s*'([^']+)'/.exec(block)?.[1];
@@ -124,8 +128,9 @@ async function stageFontsource(font: FontsourceFont): Promise<FontFace[]> {
         );
       }
       const key = `${keyPrefix}/${file}`;
+      // oxlint-disable-next-line no-await-in-loop -- Repeated chunk keys may target the same file.
       await stageFile(key, (target) => copyFile(path.join(packageDir, "files", file), target));
-      faces.push({ family, key, style, unicodeRange: unicodeRange.replace(/\s+/g, ""), weight });
+      faces.push({ family, key, style, unicodeRange: unicodeRange.replaceAll(/\s+/g, ""), weight });
     }
   }
   return faces;
@@ -137,6 +142,7 @@ async function stageSliced(font: SlicedFont, table: UnicodeRangeTable): Promise<
 
   for (const face of font.faces) {
     const source = path.join(args.input, face.file);
+    // oxlint-disable-next-line no-await-in-loop -- Keep only one source font buffer live at a time.
     const buffer = await readFile(source);
     const parsed = fontkit.create(buffer);
     if (!("hasGlyphForCodePoint" in parsed)) {
@@ -147,8 +153,10 @@ async function stageSliced(font: SlicedFont, table: UnicodeRangeTable): Promise<
     for (const { id, range } of table.ranges) {
       const text = coveredText(parsed, range);
       if (text.length === 0) continue;
+      // oxlint-disable-next-line no-await-in-loop -- Subsetting is memory intensive; run sequentially.
       const woff2 = await subsetFont(buffer, text, { targetFormat: "woff2" });
       const key = `${keyPrefix}/${font.slug}-${id}-${face.weight}-${face.style}.woff2`;
+      // oxlint-disable-next-line no-await-in-loop -- Flush each chunk before allocating the next one.
       await stageFile(key, (target) => writeFile(target, woff2));
       faces.push({
         family: font.family,
@@ -164,7 +172,9 @@ async function stageSliced(font: SlicedFont, table: UnicodeRangeTable): Promise<
   return faces;
 }
 
-main().catch((error: unknown) => {
+try {
+  await main();
+} catch (error: unknown) {
   console.error(error);
-  process.exit(1);
-});
+  process.exitCode = 1;
+}

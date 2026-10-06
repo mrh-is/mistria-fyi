@@ -34,6 +34,13 @@ Create and set up a worktree with one command:
 pnpm run worktree:new <issue-number>-<short-description>
 ```
 
+Refresh the starting branch (usually `main`) before beginning work. This script fetches the latest
+`origin/main` before creating the worktree; pass a second argument to start from another branch. For
+a harness-created worktree, fetch its intended starting branch and ensure the new worktree starts at
+that refreshed remote tip before setup or edits. If working directly on an existing starting branch,
+use `git pull --ff-only`. Never reset existing work, switch a shared checkout, or discard local
+changes to refresh a base.
+
 This creates `.worktrees/<slug>` on a matching branch (`<issue-number>-<short-description>`),
 symlinks the `.worktreeinclude` entries in from the main checkout, and runs
 `pnpm install --frozen-lockfile` and `pnpm run prepare`. It never copies dependencies, caches, build
