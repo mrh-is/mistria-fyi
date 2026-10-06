@@ -1,5 +1,6 @@
 <script lang="ts">
   import CategoryCard from "#lib/components/category-card.svelte";
+  import * as m from "#lib/paraglide/messages.js";
 
   import type { CategoryProgress } from "#lib/engine/progress.js";
 
@@ -14,8 +15,8 @@
 
 <div class="og-card">
   <header>
-    <h1>Mistria Field Guide</h1>
-    <p>Track every collection, quest, skill &amp; more</p>
+    <h1>{m.app_name()}</h1>
+    <p>{m.og_share_tagline()}</p>
   </header>
   <div class="stripe-scale">
     <CategoryCard
@@ -25,10 +26,10 @@
       displayCompleted="??"
       displayCategory={{
         color: "fg-green",
-        description: "All of Mistria in one place",
+        description: m.og_share_description(),
         href: "",
         icon: "all",
-        name: "Everything",
+        name: m.home_everything_label(),
       }}
     />
   </div>
