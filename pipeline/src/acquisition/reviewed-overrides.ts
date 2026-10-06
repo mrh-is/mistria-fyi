@@ -1,4 +1,4 @@
-import { recordEntries } from "#lib/utils.js";
+import { recordEntries } from "#lib/utils/record.js";
 
 import { canonicalSourceJson } from "./source-accumulator.js";
 

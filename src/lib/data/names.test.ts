@@ -3,7 +3,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { trackerData } from "#lib/data/index.js";
 import { getName, getNameTable, loadNames, nameCollator } from "#lib/data/names.js";
 import { LOCALE_CODES } from "#lib/types/locale.js";
-import { recordKeys } from "#lib/utils.js";
+import { recordKeys } from "#lib/utils/record.js";
 
 import type {
   FestivalId,

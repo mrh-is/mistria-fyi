@@ -13,7 +13,7 @@
   import { isVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { recordEntries } from "#lib/utils.js";
+  import { recordEntries } from "#lib/utils/record.js";
   import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
   import { showUndoToast } from "#lib/utils/undo-toast.js";
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
-import { recordValues } from "#lib/utils.js";
+import { recordValues } from "#lib/utils/record.js";
 
 import { isItemApplicable, isItemApplicableForAlmanac } from "./applicability.js";
 

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { trackerData } from "#lib/data/index.js";
 import { isVariantInScope } from "#lib/engine/animal-availability.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
-import { recordEntries, recordKeys, recordValues } from "#lib/utils.js";
+import { recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
 import {
   clampRenownLevel,

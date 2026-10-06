@@ -8,8 +8,8 @@
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { recordEntries } from "#lib/utils.js";
   import { celebrate, celebrateCategory } from "#lib/utils/celebrate.js";
+  import { recordEntries } from "#lib/utils/record.js";
   import { buildBaseSegmentLookups } from "#lib/utils/segment-lookups.js";
   import { showUndoToast } from "#lib/utils/undo-toast.js";
 

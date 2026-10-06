@@ -1,6 +1,6 @@
 import { assert, describe, expect, it } from "vitest";
 
-import { recordEntries } from "#lib/utils.js";
+import { recordEntries } from "#lib/utils/record.js";
 
 import { makeFiddle } from "../test-helpers.js";
 import {

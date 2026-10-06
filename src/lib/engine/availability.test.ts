@@ -14,7 +14,7 @@ import {
 import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
 import type { AvailabilityWindow } from "#lib/types/availability.js";
 import type { ItemId, Season, StoreId, Weather } from "#lib/types/tracker-data.js";
-import type { NonEmptyArray } from "#lib/utils.js";
+import type { NonEmptyArray } from "#lib/utils/record.js";
 
 const spring = { season: "spring" as const, weather: "calm" as const };
 const defaultWindows: AvailabilityWindow[] = ["now", "anytime"];

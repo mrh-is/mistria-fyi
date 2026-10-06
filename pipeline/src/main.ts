@@ -7,7 +7,7 @@ import { dirname, resolve } from "node:path";
 import { open } from "yauzl-promise";
 
 import { LOCALE_CODES } from "#lib/types/locale.js";
-import { isNonEmptyArray, recordEntries } from "#lib/utils.js";
+import { isNonEmptyArray, recordEntries } from "#lib/utils/record.js";
 
 import { collectExplorationSources } from "./acquisition/collectors/exploration.js";
 import { collectNaturalSources } from "./acquisition/collectors/natural.js";

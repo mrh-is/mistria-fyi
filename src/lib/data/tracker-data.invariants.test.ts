@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { animalNameId, getName } from "#lib/data/names.js";
-import { recordEntries, recordKeys, recordValues } from "#lib/utils.js";
+import { recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
 import type { Source } from "#lib/types/acquisition.js";
 import type { TrackerData } from "#lib/types/tracker-data.js";

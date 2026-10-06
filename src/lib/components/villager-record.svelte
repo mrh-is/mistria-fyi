@@ -12,10 +12,10 @@
   import * as m from "#lib/paraglide/messages.js";
   import { villagerSpriteUrl } from "#lib/sprites/sprite-url.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { recordKeys } from "#lib/utils.js";
   import { celebrateCategory } from "#lib/utils/celebrate.js";
   import { seasonLabel, seasonLabelAbbr } from "#lib/utils/format.js";
   import { relationshipLevelColor } from "#lib/utils/palette.js";
+  import { recordKeys } from "#lib/utils/record.js";
   import { page } from "$app/state";
 
   import type {

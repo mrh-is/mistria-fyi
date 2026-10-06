@@ -4,7 +4,7 @@ import { trackerData } from "#lib/data/index.js";
 import { getName, nameCollator } from "#lib/data/names.js";
 import { MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
-import { recordKeys } from "#lib/utils.js";
+import { recordKeys } from "#lib/utils/record.js";
 
 import { buildVillagerRoster, filterVillagerRoster } from "./villager-roster.js";
 
