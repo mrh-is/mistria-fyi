@@ -48,7 +48,7 @@ describe("no-untokened-classes", () => {
     ],
     valid: [
       `<p class="text-2xs bg-destructive/10 text-destructive">Text</p>`,
-      `<p class="text-[var(--fg-amber)] bg-[color-mix(in_srgb,var(--paper),var(--fg-green))]">Text</p>`,
+      `<p class="text-[var(--color-status-warning)] bg-[color-mix(in_srgb,var(--color-paper),var(--color-status-success))]">Text</p>`,
       `<p class={active ? "text-fg-green" : "text-muted-foreground"}>Text</p>`,
       `<p class="text-sm sm:text-base hover:border-border">Text</p>`,
       `<p class:text-destructive={danger}>Text</p>`,

@@ -30,7 +30,7 @@
       width="21"
       height="21"
       rx="1"
-      stroke="var(--hairline)"
+      stroke="var(--color-ink-hairline)"
       stroke-width="1.5"
     />
     {#if isChecked || isObtained}
@@ -58,7 +58,7 @@
     min-height: var(--tracker-target-size, 44px);
     min-width: var(--tracker-target-size, 44px);
     flex-shrink: 0;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     border-radius: var(--radius);
   }
 
@@ -75,11 +75,11 @@
   }
 
   .tracker-checkbox--checked {
-    color: var(--fg-green);
+    color: var(--color-tracker-checked);
   }
 
   .tracker-checkbox--obtained {
-    color: var(--fg-amber);
+    color: var(--color-tracker-obtained);
   }
 
   .tracker-checkbox__icon {

@@ -77,15 +77,15 @@
     gap: 14px;
     padding: 19px 18px 16px 21px;
     overflow: clip;
-    border: 1px solid color-mix(in srgb, var(--hairline) 38%, transparent);
-    border-left: 3px solid var(--home-accent);
+    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 38%, transparent);
+    border-left: 3px solid var(--color-home-accent);
     background:
       linear-gradient(
         135deg,
-        color-mix(in srgb, var(--home-accent) 7%, transparent),
+        color-mix(in srgb, var(--color-home-accent) 7%, transparent),
         transparent 55%
       ),
-      var(--paper-raised);
+      var(--color-paper-raised);
     box-shadow: var(--shadow-small);
   }
 
@@ -95,7 +95,7 @@
     bottom: -26px;
     width: 84px;
     height: 84px;
-    border: 1px solid color-mix(in srgb, var(--home-accent) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-home-accent) 12%, transparent);
     border-radius: 50%;
     content: "";
   }
@@ -108,8 +108,8 @@
     width: 30px;
     height: 30px;
     place-items: center;
-    color: var(--home-accent);
-    background: color-mix(in srgb, var(--home-accent) 10%, var(--paper-raised));
+    color: var(--color-home-accent);
+    background: color-mix(in srgb, var(--color-home-accent) 10%, var(--color-paper-raised));
     border-radius: 50%;
     transform: rotate(5deg);
   }
@@ -127,7 +127,7 @@
 
   .welcome-card__overline {
     margin-bottom: 4px;
-    color: var(--home-accent);
+    color: var(--color-home-accent);
     font-family: var(--font-controls);
     font-size: var(--text-3xs);
     letter-spacing: 0.14em;
@@ -143,7 +143,7 @@
   }
 
   .welcome-card__copy > p:not(.welcome-card__overline) {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-xs);
     line-height: 1.45;
@@ -169,7 +169,7 @@
     justify-content: center;
     gap: 8px;
     padding: 8px 12px;
-    border: 1px solid var(--home-accent);
+    border: 1px solid var(--color-home-accent);
     font-family: var(--font-controls);
     font-size: var(--text-xs);
     font-weight: 600;
@@ -182,13 +182,13 @@
   }
 
   .welcome-card__primary {
-    color: var(--home-accent-ink);
-    background: var(--home-accent);
+    color: var(--color-home-accent-foreground);
+    background: var(--color-home-accent);
   }
 
   .welcome-card__secondary {
-    color: var(--ink);
-    background: color-mix(in srgb, var(--paper-raised) 92%, var(--home-accent));
+    color: var(--color-ink);
+    background: color-mix(in srgb, var(--color-paper-raised) 92%, var(--color-home-accent));
   }
 
   .welcome-card__primary :global(svg),
@@ -200,13 +200,13 @@
 
   .welcome-card__primary:is(:hover, :focus-visible),
   .welcome-card__secondary:is(:hover, :focus-visible) {
-    outline: 2px solid var(--home-accent);
+    outline: 2px solid var(--color-home-accent);
     outline-offset: 2px;
     transform: translateY(-1px);
   }
 
   .welcome-card__secondary:hover {
-    background: color-mix(in srgb, var(--paper-raised) 80%, var(--home-accent));
+    background: color-mix(in srgb, var(--color-paper-raised) 80%, var(--color-home-accent));
   }
 
   .welcome-card__switch {
@@ -218,7 +218,7 @@
     align-items: center;
     gap: 5px;
     margin: -5px 0 -7px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-2xs);
     text-align: left;
@@ -229,7 +229,7 @@
   }
 
   .welcome-card__switch:is(:hover, :focus-visible) {
-    color: var(--ink);
+    color: var(--color-ink);
     outline: none;
     text-decoration-style: solid;
   }
