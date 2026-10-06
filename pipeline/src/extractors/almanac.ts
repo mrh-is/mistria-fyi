@@ -135,7 +135,7 @@ export function extractAlmanac(
   }
 
   const categoryBuckets: Map<string, { id: string; name: string; recipeKey?: string }>[] =
-    rawCategories.map(() => new Map());
+    rawCategories.map(() => new Map<string, { id: string; name: string; recipeKey?: string }>());
 
   const items: ItemMetadataIndex = {};
   const iconSpritesByItemId: ItemIconSpriteIndex = {};

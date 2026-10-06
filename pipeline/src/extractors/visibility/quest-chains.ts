@@ -118,7 +118,8 @@ function extractHeartChain(
       const reachedHeartLevel = (requirements as Record<string, unknown>).reached_heart_level;
       if (typeof reachedHeartLevel !== "object" || reachedHeartLevel === null) continue;
 
-      const [villagerId, level] = Object.entries(reachedHeartLevel)[0] ?? [];
+      const [villagerId, level] =
+        Object.entries(reachedHeartLevel as Record<string, unknown>)[0] ?? [];
       if (villagerId === undefined || typeof level !== "number") continue;
 
       const entries = entriesByVillager.get(villagerId as VillagerId) ?? [];
@@ -143,7 +144,8 @@ function extractHeartChain(
       const reachedHeartLevel = requirements.reached_heart_level;
       if (typeof reachedHeartLevel !== "object" || reachedHeartLevel === null) continue;
 
-      const [villagerId, level] = Object.entries(reachedHeartLevel)[0] ?? [];
+      const [villagerId, level] =
+        Object.entries(reachedHeartLevel as Record<string, unknown>)[0] ?? [];
       if (villagerId === undefined || typeof level !== "number") continue;
 
       const entries = entriesByVillager.get(villagerId as VillagerId) ?? [];
@@ -248,7 +250,7 @@ function extractStoryChain(
       const questToStart = entry.quest_to_start;
       const questToProgress = entry.quest_to_progress;
       const candidates = Array.isArray(questToStart)
-        ? [...questToStart, questToProgress]
+        ? [...(questToStart as unknown[]), questToProgress]
         : [questToStart, questToProgress];
 
       const triggeredQuestIds = candidates.filter(

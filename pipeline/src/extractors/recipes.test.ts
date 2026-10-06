@@ -58,6 +58,13 @@ describe("extractRecipes", () => {
     vi.restoreAllMocks();
   });
 
+  it.each([["blacksmithing", 3], "blacksmithing"])("rejects malformed recipe tags: %j", (tags) => {
+    const fiddle = makeFiddle({
+      items: { weapons: { swords: { dragon_forged_sword: { recipe: [], tags } } } },
+    });
+    expect(() => extractRecipes(fiddle, {})).toThrow("dragon_forged_sword.tags in items.toml");
+  });
+
   it("groups colorway items by recipe_key into a single recipe", () => {
     const fiddle = makeFiddle({
       items: {
