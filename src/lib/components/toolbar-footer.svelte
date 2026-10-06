@@ -36,7 +36,7 @@
   // Route matching below is keyed by the unprefixed route, not the locale-prefixed browser URL.
   let pathname = $derived(deLocalizeHref(page.url.pathname));
   let toolbar = $derived(metadata.toolbar === "hidden" ? null : metadata.toolbar);
-  let toolbarAccent = $derived(`var(--${metadata.accent})`);
+  let toolbarAccent = $derived(metadata.accent);
 
   let activePanel = $state<ActivePanel>(null);
   let panelElement = $state<HTMLElement | null>(null);

@@ -55,7 +55,7 @@
     name,
     total: formatNumber(total, page.data.locale),
   })}
-  style="--category-color: var(--{color}); --category-progress: {pct}%"
+  style="--category-color: {color}; --category-progress: {pct}%"
 >
   <span class="category-copy">
     <strong class="category-name">{name}</strong>
