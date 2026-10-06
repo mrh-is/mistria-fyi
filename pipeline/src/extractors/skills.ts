@@ -1,6 +1,6 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { expectNonEmptyString } from "../data-shapes.js";
+import { expectNonEmptyString, expectNumberArray } from "../data-shapes.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -54,9 +54,13 @@ export function extractSkills(
 
   const defaults = skillMenus?.defaults;
   const category = defaults?.category as Record<string, unknown> | undefined;
-  const rawLevels = Array.isArray(category?.level_requirements)
-    ? (category.level_requirements as number[])
-    : [];
+  const rawLevels =
+    category?.level_requirements === undefined
+      ? []
+      : expectNumberArray(category.level_requirements, {
+          fieldPath: "skill_menu.defaults.category.level_requirements",
+          sourcePath: sourceFileFor(fiddle, "ui.skill_menu.defaults"),
+        });
   const perkTierLevels = [
     rawLevels[0] ?? 0,
     rawLevels[1] ?? 0,

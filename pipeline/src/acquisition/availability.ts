@@ -32,13 +32,15 @@ export function projectRequirementExpressionToAvailability(
   if ("all" in expression) {
     const conditions = expression.all.map((child) =>
       projectRequirementExpressionToAvailability(child, context, sourceLocation),
-    ) as NonEmptyArray<AvailabilityCondition>;
+    );
+    if (!isNonEmptyArray(conditions)) return { type: "always" };
     return simplifyAvailabilityCondition({ type: "all", conditions }) ?? { type: "always" };
   }
   if ("any" in expression) {
     const conditions = expression.any.map((child) =>
       projectRequirementExpressionToAvailability(child, context, sourceLocation),
-    ) as NonEmptyArray<AvailabilityCondition>;
+    );
+    if (!isNonEmptyArray(conditions)) return { type: "not", condition: { type: "always" } };
     return simplifyAvailabilityCondition({ type: "any", conditions }) ?? { type: "always" };
   }
   if ("not" in expression) {
@@ -84,7 +86,7 @@ function isFiniteNumber(value: unknown): value is number {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
-  const prototype = Object.getPrototypeOf(value);
+  const prototype: unknown = Object.getPrototypeOf(value);
   return prototype === null || prototype === Object.prototype;
 }
 

@@ -24,6 +24,11 @@ function project(expression: RequirementExpression) {
 }
 
 describe("projectRequirementExpressionToAvailability", () => {
+  it("handles empty conjunctions and disjunctions without fabricating nonempty arrays", () => {
+    expect(project({ all: [] })).toEqual({ type: "always" });
+    expect(project({ any: [] })).toEqual({ type: "not", condition: { type: "always" } });
+  });
+
   it("preserves mixed sibling requirements as an all condition", () => {
     expect(
       project({

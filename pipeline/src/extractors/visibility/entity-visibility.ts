@@ -1,5 +1,6 @@
 import { mapNonEmpty } from "#lib/utils/record.js";
 
+import { getCutsceneRecords } from "../../parse-fiddle.js";
 import { availabilityToVisibility, toAvailableVisibility } from "./availability-projection.js";
 import { ALWAYS, resolveToVisibility, simplifyCondition } from "./requirement-resolver.js";
 
@@ -549,16 +550,6 @@ function computeSourceConditions(
     entity: andSimplify([variant.entity, availabilityEntity]),
     source: andSimplify([variant.source, availabilitySource]),
   };
-}
-
-/**
- * Returns cutscene records from either the nested (`fiddle.cutscenes.cutscenes`) or flat
- * (`fiddle.cutscenes`) structure, matching the access pattern in `cutscene-quest-map.ts`.
- */
-function getCutsceneRecords(fiddle: ParsedGameData): Record<string, Record<string, unknown>> {
-  const raw = fiddle.cutscenes as Record<string, unknown> | undefined;
-  const nested = raw?.cutscenes as Record<string, Record<string, unknown>> | undefined;
-  return nested ?? (raw as Record<string, Record<string, unknown>> | undefined) ?? {};
 }
 
 function isAlwaysVisible(v: undefined | VisibilityCondition): boolean {
