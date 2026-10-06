@@ -372,3 +372,21 @@ describe("CI workflow gate", () => {
     expect(check?.run).toContain("*) exit 1 ;;");
   });
 });
+
+describe("PR metadata workflows", () => {
+  const metadataWorkflows = ["attribution", "guarded-paths"] as const;
+
+  // `gh pr create --label` fires `opened` & `labeled` together; cancelling one leaves a cancelled
+  // required check, which GitHub counts as failing.
+  it.each(metadataWorkflows)("%s never cancels an in-progress required check", (name) => {
+    const file = parse(readFileSync(`.github/workflows/${name}.yml`, "utf8")) as Workflow;
+    expect(file.concurrency?.["cancel-in-progress"]).toBe(false);
+  });
+
+  it.each(metadataWorkflows)("%s reads labels from the live PR, not the event payload", (name) => {
+    const text = readFileSync(`.github/workflows/${name}.yml`, "utf8");
+    expect(text).not.toContain("github.event.pull_request.labels");
+    expect(text).not.toContain("github.event.pull_request.body");
+    expect(text).toContain('gh api "repos/$REPOSITORY/pulls/$PR_NUMBER"');
+  });
+});
