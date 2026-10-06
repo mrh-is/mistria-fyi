@@ -110,7 +110,7 @@ describe("extractRecipes", () => {
     expect(recipe).not.toHaveProperty("defaultUnlocked");
   });
 
-  it("warns and omits default source when members disagree on recipe_is_default", () => {
+  it("rejects members that disagree on recipe_is_default", () => {
     const fiddle = makeFiddle({
       items: {
         furniture: {
@@ -132,9 +132,7 @@ describe("extractRecipes", () => {
       },
     });
 
-    const { recipes } = extractRecipes(fiddle);
-    expect(recipes["mixed_group" as RecipeId].sources).toEqual([]);
-    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining("mixed_group"));
+    expect(() => extractRecipes(fiddle)).toThrow(/mixed.*recipe_is_default/);
   });
 
   it("maps quest crafting_scroll rewards to recipe sources", () => {
@@ -272,7 +270,7 @@ describe("extractRecipes", () => {
     expect(recipeMemberItems.get("widget" as RecipeId)).toEqual(["aaa_first", "zzz_last"]);
   });
 
-  it("warns on unresolved scroll targets and skips them", () => {
+  it("rejects unresolved scroll targets", () => {
     const fiddle = makeFiddle({
       quests: {
         fetch_quests: {
@@ -284,9 +282,34 @@ describe("extractRecipes", () => {
       },
     });
 
-    const { recipes } = extractRecipes(fiddle);
-    expect(recipes["unknown_dish" as RecipeId]).toBeUndefined();
-    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining("unknown_dish"));
+    expect(() => extractRecipes(fiddle)).toThrow(/unknown_dish.*no matching item/);
+  });
+
+  it.each([
+    { kind: "unparseable-reached-date", requirements: { reached_date: "unparseable" } },
+    { kind: "letter-without-trigger", requirements: {} },
+  ])("rejects invalid recipe letter triggers ($kind)", ({ kind, requirements }) => {
+    const fiddle = makeFiddle({
+      items: {
+        food: { dishes: { soup: { name: "Soup", recipe: [{ count: 1, item: "turnip" }] } } },
+      },
+      letters: { bad_letter: { items: [{ recipe_scroll: "soup" }], requirements } },
+    });
+    expect(() => extractRecipes(fiddle)).toThrow(kind);
+  });
+
+  it("rejects an item ID that collides with a different recipe group", () => {
+    const fiddle = makeFiddle({
+      items: {
+        other: {
+          craftables: {
+            first: { name: "First", recipe: [], recipe_key: "second" },
+            third: { name: "Third", recipe: [], recipe_key: "first" },
+          },
+        },
+      },
+    });
+    expect(() => extractRecipes(fiddle)).toThrow(/recipe-id-collision/);
   });
 
   it("maps letter recipe_scroll with shipped_item requirement", () => {

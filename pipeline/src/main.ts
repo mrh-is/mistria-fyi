@@ -35,6 +35,7 @@ import {
   readInstalledGameVersion,
   resolveAssetsZipPath,
 } from "./assets-zip.js";
+import { PipelineDiagnostics } from "./diagnostics.js";
 import { evaluateExpressions } from "./evaluate.js";
 import { forEachItem } from "./extractor-helpers.js";
 import { extractAlmanac, readAlmanacCategories } from "./extractors/almanac.js";
@@ -67,6 +68,7 @@ import { assertGameLanguageMapExhaustive } from "./locale-codes.js";
 import { generateLocaleManifest } from "./localize.js";
 import { parseFiddle, parseFiddleFromZip } from "./parse-fiddle.js";
 import { createRequirementContext } from "./requirements.js";
+import { REVIEWED_PIPELINE_DIAGNOSTICS } from "./reviewed-diagnostics.js";
 
 import type { ZipFile } from "yauzl-promise";
 
@@ -154,6 +156,7 @@ async function main(): Promise<void> {
   }
 
   assertGameLanguageMapExhaustive(assetsDir);
+  const diagnostics = new PipelineDiagnostics(REVIEWED_PIPELINE_DIAGNOSTICS);
 
   // Prefer an already-extracted fiddle/ on disk; otherwise read straight out of assets.zip
   // (Steam's own distribution format) without ever extracting it. Either shape produces the same
@@ -249,13 +252,14 @@ async function main(): Promise<void> {
   const { recipeIdByItemId, recipeMemberItems, recipeNameSources, recipes } = extractRecipes(
     fiddle,
     cutsceneQuestMap,
+    diagnostics,
   );
   const {
     almanac,
     iconSpritesByItemId,
     items,
     localeNames: itemLocaleNames,
-  } = extractAlmanac(fiddle, assetsDir);
+  } = extractAlmanac(fiddle, assetsDir, diagnostics);
   const recipeLocaleNames = deriveRecipeLocaleNames(recipeNameSources, itemLocaleNames);
   const { animals, localeNames: animalLocaleNames } = extractAnimals(fiddle, assetsDir);
   const { cosmetics: petCosmetics, localeNames: petCosmeticLocaleNames } = extractPetCosmetics(
@@ -325,7 +329,7 @@ async function main(): Promise<void> {
   const animalCosmeticSources = new AnimalCosmeticSourceAccumulator();
   const petCosmeticSources = new PetCosmeticSourceAccumulator();
   deriveRecipeProductSources(fiddle, recipeMemberItems, itemSources);
-  collectNaturalSources(fiddle, itemSources, cosmeticSources, petCosmeticSources);
+  collectNaturalSources(fiddle, itemSources, cosmeticSources, petCosmeticSources, diagnostics);
   collectRewardSources(
     fiddle,
     itemSources,
@@ -350,11 +354,8 @@ async function main(): Promise<void> {
     itemSources,
     cosmeticSources,
   );
-  for (const d of overrideDiagnostics) {
-    if (d.kind === "obsolete-override") {
-      throw new Error(`Obsolete override: ${d.message}`);
-    }
-    console.log(`  Warning: ${d.message}`);
+  for (const diagnostic of overrideDiagnostics) {
+    diagnostics.add({ ...diagnostic, fieldPath: `${diagnostic.namespace}.${diagnostic.targetId}` });
   }
 
   // Attach inline acquisition sources to items
@@ -495,6 +496,7 @@ async function main(): Promise<void> {
 
   // Validation is the last step before serialization: visibility assignment rewrites sources and
   // injects hard-coded quest gates, so validating any earlier would miss the emitted shape.
+  diagnostics.validate();
   validateAcquisitionSources(trackerData, buildAcquisitionReferences(trackerData, fiddle));
   console.log("  Tracker data validation passed");
 
