@@ -127,13 +127,13 @@ describe("TransferCard scan from image", () => {
     ["a damaged transfer code", "MFGTCw", "This QR code’s data is damaged or incomplete."],
   ])("rejects %s without touching progress", async (_, payload, message) => {
     transferQr.decodeQrImage.mockResolvedValue(payload);
-    const before = userState.exportState();
+    const before = userState.exportBackup();
     render(TransferCard, { open: true });
 
     await scanImage(new File(["png"], "bogus.png", { type: "image/png" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(message);
-    expect(userState.exportState()).toBe(before);
+    expect(userState.exportBackup()).toBe(before);
   });
 
   it("explains how to replace a QR code from an older tracker-data version", async () => {

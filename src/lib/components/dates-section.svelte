@@ -9,7 +9,7 @@
   import { getName, nameCollator } from "#lib/data/names.js";
   import { celebrate } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
-  import { isEntityNameVisible, isVisible } from "#lib/engine/visibility.js";
+  import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
@@ -26,7 +26,7 @@
   const spoilerGuard = createSpoilerGuard();
 
   const categoryVisible = $derived(
-    isVisible(trackerData.categoryVisibility.dates, userState.progressionState),
+    isConditionVisible(trackerData.categoryVisibility.dates, userState.progressionState),
   );
 
   let redactedStoreIds = $derived(computeRedactedStoreIds(userState.progressionState));
@@ -41,7 +41,7 @@
 
   function dateNameVisible(dateId: DateId): boolean {
     const visibility = trackerData.dates[dateId].visibility;
-    return isEntityNameVisible(visibility, userState.progressionState);
+    return isConditionVisible(visibility, userState.progressionState);
   }
 
   function toggleDate(dateId: DateId): void {

@@ -6,9 +6,9 @@ import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 import MergeSummary from "./merge-summary.svelte";
 
 import type { VillagerId } from "#lib/types/tracker-data.js";
-import type { CompletedState } from "#lib/types/user-progress.js";
+import type { ProgressState } from "#lib/types/user-progress.js";
 
-const CASES: { expected: string; imported: Partial<CompletedState>; setup?: () => void }[] = [
+const CASES: { expected: string; imported: Partial<ProgressState>; setup?: () => void }[] = [
   {
     expected: "Child choice updated",
     imported: { childChoice: "yes" },

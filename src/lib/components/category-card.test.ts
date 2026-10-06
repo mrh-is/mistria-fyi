@@ -15,7 +15,7 @@ describe("CategoryCard", () => {
     const { queries } = renderToFragment(CategoryCard, {
       props: {
         key: "almanac",
-        progress: { completed: 7, filtered: 13, total: 20 },
+        progress: { completed: 7, remainingInScope: 13, total: 20 },
       },
     });
 
@@ -34,7 +34,7 @@ describe("CategoryCard", () => {
     const { queries } = renderToFragment(CategoryCard, {
       props: {
         key: "museum",
-        progress: { completed: 4, filtered: 6, total: 20 },
+        progress: { completed: 4, remainingInScope: 6, total: 20 },
       },
     });
 
@@ -46,7 +46,7 @@ describe("CategoryCard", () => {
     const { container } = renderToFragment(CategoryCard, {
       props: {
         key: "animals",
-        progress: { completed: 20, filtered: 0, total: 20 },
+        progress: { completed: 20, remainingInScope: 0, total: 20 },
       },
     });
 
@@ -63,7 +63,7 @@ describe("CategoryCard", () => {
     const { queries } = renderToFragment(CategoryCard, {
       props: {
         key: "almanac",
-        progress: { completed: 7, filtered: 13, total: 20 },
+        progress: { completed: 7, remainingInScope: 13, total: 20 },
       },
     });
 
@@ -76,7 +76,7 @@ describe("CategoryCard", () => {
     const { queries } = renderToFragment(CategoryCard, {
       props: {
         key: "almanac",
-        progress: { completed: 7, filtered: 13, total: 20 },
+        progress: { completed: 7, remainingInScope: 13, total: 20 },
       },
     });
 

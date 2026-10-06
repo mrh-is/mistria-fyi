@@ -12,7 +12,7 @@
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/progress.js";
-  import { isVisible } from "#lib/engine/visibility.js";
+  import { isConditionVisible } from "#lib/engine/visibility.js";
   import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -69,7 +69,7 @@
           id: recipeId,
           itemId: canonicalId,
           name: getName("items", canonicalId, locale),
-          nameVisible: isVisible(visibility, userState.progressionState),
+          nameVisible: isConditionVisible(visibility, userState.progressionState),
           sources,
           visibility,
         });

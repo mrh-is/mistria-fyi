@@ -8,7 +8,7 @@ import RecipesContent from "#lib/components/recipes-content.svelte";
 import { trackerData } from "#lib/data/index.js";
 import { getName } from "#lib/data/names.js";
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
-import { isEntityNameVisible } from "#lib/engine/visibility.js";
+import { isConditionVisible } from "#lib/engine/visibility.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderToFragmentWithFeedback } from "#lib/test-utils/render-to-fragment-with-feedback.js";
@@ -65,7 +65,7 @@ describe("subsection counters", () => {
       .flatMap(({ items }) => items)
       .find(({ itemIds }) => {
         const item = trackerData.items[itemIds[0]];
-        return !isEntityNameVisible(item.visibility, userState.progressionState);
+        return !isConditionVisible(item.visibility, userState.progressionState);
       });
     if (!hiddenEntry) throw new Error("Expected a spoilered almanac entry");
 

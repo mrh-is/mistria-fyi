@@ -8,7 +8,7 @@ describe("PageHeader", () => {
     const { container, queries } = renderToFragment(PageHeader, {
       props: {
         category: "almanac",
-        progress: { completed: 7, filtered: 3, total: 20 },
+        progress: { completed: 7, remainingInScope: 3, total: 20 },
         title: "Almanac",
       },
     });
@@ -36,7 +36,7 @@ describe("PageHeader", () => {
     const { container } = renderToFragment(PageHeader, {
       props: {
         category: "museum",
-        progress: { completed: 20, filtered: 0, total: 20 },
+        progress: { completed: 20, remainingInScope: 0, total: 20 },
         title: "Museum",
       },
     });

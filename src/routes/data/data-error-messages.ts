@@ -2,14 +2,14 @@ import * as m from "#lib/paraglide/messages.js";
 import { getLocale } from "#lib/paraglide/runtime.js";
 import { formatNumber } from "#lib/utils/format.js";
 
-import type { SaveFilesError, SaveImportWarning } from "#lib/engine/import-save.js";
-import type { SaveFileErrorDetail } from "#lib/engine/parse-sav.js";
+import type { ExtractedSaveFilesError, SaveImportWarning } from "#lib/engine/import-save.js";
+import type { SavArchiveErrorDetail } from "#lib/engine/parse-sav.js";
 import type { TransferDecodeErrorCode } from "#lib/engine/transfer.js";
 
 // Localized text for the structured errors & warnings the save import and transfer engines return.
 // Save paths, file names, and IDs are save-format identifiers and stay untranslated.
 
-export function formatSaveFileError(detail: SaveFileErrorDetail): string {
+export function formatSavArchiveError(detail: SavArchiveErrorDetail): string {
   switch (detail.code) {
     case "corrupt":
       return m.import_error_sav_corrupt();
@@ -28,7 +28,7 @@ export function formatSaveFileError(detail: SaveFileErrorDetail): string {
 }
 
 /** The headline for a failed file import; list `problems` beneath it with formatSaveImportWarning. */
-export function formatSaveFilesError(error: SaveFilesError): string {
+export function formatExtractedSaveFilesError(error: ExtractedSaveFilesError): string {
   switch (error.code) {
     case "no-save-files":
       return m.import_error_no_save_files();

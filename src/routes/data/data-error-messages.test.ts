@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
 
 import {
-  formatSaveFileError,
-  formatSaveFilesError,
+  formatExtractedSaveFilesError,
+  formatSavArchiveError,
   formatSaveImportWarning,
   formatTransferDecodeError,
 } from "./data-error-messages.js";
@@ -40,9 +40,11 @@ describe("data error messages", () => {
   });
 
   it("formats file-level errors", () => {
-    expect(formatSaveFilesError({ code: "no-save-files" })).toMatch(/^No recognized save files/);
+    expect(formatExtractedSaveFilesError({ code: "no-save-files" })).toMatch(
+      /^No recognized save files/,
+    );
     expect(
-      formatSaveFilesError({
+      formatExtractedSaveFilesError({
         code: "no-valid-files",
         problems: [{ code: "invalid-json", file: "player.json" }],
       }),
@@ -52,11 +54,11 @@ describe("data error messages", () => {
   it("formats .sav sizes in binary units for the locale", () => {
     const detail = { code: "too-large", maxBytes: 8 * 1024 * 1024, sizeBytes: 9_700_000 } as const;
 
-    expect(formatSaveFileError(detail)).toBe(
+    expect(formatSavArchiveError(detail)).toBe(
       "This save file is too large (9.3 MB). The maximum supported size is 8 MB.",
     );
     overwriteGetLocale(() => "fr");
-    expect(formatSaveFileError(detail)).toMatch(/\(9,3\s?Mo\)/);
+    expect(formatSavArchiveError(detail)).toMatch(/\(9,3\s?Mo\)/);
   });
 
   it("formats transfer decode errors", () => {
