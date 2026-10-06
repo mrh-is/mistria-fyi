@@ -124,7 +124,7 @@
         {locale}
         count={completedCount}
         name={typeLabel(section.questType)}
-        reportCategory="quest section"
+        reportCategory="quest-section"
         reportEntityId={section.questType}
         total={scopedRows.length}
       >
@@ -135,7 +135,7 @@
                 display={questRowDisplay(row.completed ? "completed" : "none", !!row.villager)}
                 lookups={baseLookups}
                 name={row.displayName}
-                reportCategory="craving quest"
+                reportCategory="craving-quest"
                 reportEntityId={row.id}
                 sources={[]}
                 subtitle={row.subtitle}

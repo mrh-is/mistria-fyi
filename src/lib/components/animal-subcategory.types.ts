@@ -1,3 +1,4 @@
+import type { ReportCategory } from "#lib/feedback/types.js";
 import type { SegmentLookups } from "#lib/sources/source-segments.js";
 import type { Source } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -11,6 +12,7 @@ export interface AnimalSubcategoryProps<ItemId extends AnyId> {
   locale: LocaleCode;
   lookups?: Omit<SegmentLookups, "entityVisibility">;
   name: string;
+  reportCategory: ReportCategory;
   sectionConfig: (animalId: AnimalId) => AnimalSubcategorySectionConfig<ItemId>;
   toggleCompletion: (animalId: AnimalId, itemId: ItemId) => void;
 }

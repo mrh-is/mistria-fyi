@@ -3,7 +3,7 @@
   import IconPlus from "@tabler/icons-svelte-runes/icons/plus";
 
   import { getName } from "#lib/data/names.js";
-  import { getFeedbackContextOrFallback } from "#lib/feedback/context.svelte.js";
+  import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { page } from "$app/state";
 
@@ -26,7 +26,7 @@
     registerFeedback?: boolean;
   } = $props();
 
-  const feedbackContext = getFeedbackContextOrFallback();
+  const feedbackContext = getFeedbackContext();
   let maxFloor = $derived(biomes.at(-1)?.floors.end ?? 0);
   let currentBiome = $derived(
     biomes.find((biome) => floor >= biome.floors.start && floor <= biome.floors.end) ?? biomes[0],

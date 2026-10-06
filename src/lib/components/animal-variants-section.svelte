@@ -173,6 +173,7 @@
   {isAnimalComplete}
   {locale}
   name={getName("ui", "color_variant", locale)}
+  reportCategory="animal-variants"
   {sectionConfig}
   toggleCompletion={(animalId: AnimalId, variantId: AnimalVariantId) => {
     userState.toggleAnimalVariant(animalId, variantId);

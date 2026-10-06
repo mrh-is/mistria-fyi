@@ -4,7 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import FeedbackPicker from "#lib/components/feedback-picker.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
 
-const metadata = {
+import type { ReportableElement } from "#lib/feedback/types.js";
+
+const metadata: ReportableElement = {
   category: "recipe",
   displayName: "Tomato Soup",
   entityId: "tomato_soup",

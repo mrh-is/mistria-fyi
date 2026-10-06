@@ -1,5 +1,5 @@
 import { createContext, tick } from "svelte";
-import { SvelteMap, SvelteSet } from "svelte/reactivity";
+import { SvelteMap } from "svelte/reactivity";
 
 import type { Attachment } from "svelte/attachments";
 
@@ -7,21 +7,21 @@ import type { ReportableElement } from "#lib/feedback/types.js";
 
 type SelectionHandler = (element: ReportableElement) => void;
 
+/**
+ * Tracks which elements can be reported & whether the picker is choosing one. The root layout
+ * creates one and provides it with `setFeedbackContext`; consumers read it with
+ * `getFeedbackContext()`, which throws outside a provider rather than handing back a context
+ * nothing else can see.
+ */
 export class FeedbackContext {
-  // SvelteSet workaround: $state fields on classes aren't reactive across contexts, but
-  // SvelteSet membership checks are. Toggle via clear()/add() instead of direct assignment.
-  readonly pickerState = new SvelteSet([false]);
+  isPicking = $state(false);
   readonly registrations = new SvelteMap<HTMLElement, ReportableElement>();
 
-  get isPicking(): boolean {
-    return this.pickerState.has(true);
-  }
   #onFinish: (() => void) | undefined;
-
   #onSelect: SelectionHandler | undefined;
 
   cancel(): void {
-    this.finish();
+    this.#finish();
   }
 
   reportable(metadata: ReportableElement): Attachment<HTMLElement> {
@@ -37,31 +37,24 @@ export class FeedbackContext {
   reset(): void {
     this.#onFinish = undefined;
     this.#onSelect = undefined;
-    this.#setPicking(false);
+    this.isPicking = false;
   }
 
   select(metadata: ReportableElement): void {
     const onSelect = this.#onSelect;
-    this.finish();
+    this.#finish();
     onSelect?.(metadata);
   }
 
   startPicking(onSelect: SelectionHandler, onFinish?: () => void): void {
     this.#onSelect = onSelect;
     this.#onFinish = onFinish;
-    this.#setPicking(true);
+    this.isPicking = true;
   }
 
-  #setPicking(value: boolean): void {
-    this.pickerState.clear();
-    this.pickerState.add(value);
-  }
-
-  private finish(): void {
+  #finish(): void {
     const onFinish = this.#onFinish;
-    this.#onFinish = undefined;
-    this.#onSelect = undefined;
-    this.#setPicking(false);
+    this.reset();
     void (async () => {
       await tick();
       onFinish?.();
@@ -70,11 +63,3 @@ export class FeedbackContext {
 }
 
 export const [getFeedbackContext, setFeedbackContext] = createContext<FeedbackContext>();
-
-export function getFeedbackContextOrFallback(): FeedbackContext {
-  try {
-    return getFeedbackContext();
-  } catch {
-    return new FeedbackContext();
-  }
-}

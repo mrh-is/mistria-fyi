@@ -7,7 +7,7 @@
   import TrackerCheckbox from "#lib/components/tracker-checkbox.svelte";
   import TrackerPaper from "#lib/components/tracker-paper.svelte";
   import { extractDisplayBadges } from "#lib/engine/availability-condition.js";
-  import { getFeedbackContextOrFallback } from "#lib/feedback/context.svelte.js";
+  import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { buildSourceSegments } from "#lib/sources/source-segments.js";
   import { ROW_LEAVE_DELAY_MS, ROW_LEAVE_FADE_MS } from "#lib/utils/row-timing.js";
@@ -16,14 +16,15 @@
   import type { SpriteSlotState } from "#lib/components/sprite-slot.svelte";
   import type { CheckboxState } from "#lib/components/tracker-checkbox.svelte";
   import type { DisplayBadges } from "#lib/engine/availability-condition.js";
-  import type { FeedbackContext } from "#lib/feedback/context.svelte.js";
+  import type { ReportCategory } from "#lib/feedback/types.js";
   import type { SegmentLookups, SourceSegment } from "#lib/sources/source-segments.js";
   import type { Source } from "#lib/types/acquisition.js";
   import type { TrackerRowDisplay } from "#lib/utils/row-display.js";
 
+  const feedbackContext = getFeedbackContext();
+
   let {
     display,
-    feedbackContext = getFeedbackContextOrFallback(),
     lookups,
     name,
     onToggle,
@@ -36,11 +37,10 @@
     subtitle,
   }: {
     display: TrackerRowDisplay;
-    feedbackContext?: FeedbackContext;
     lookups?: SegmentLookups;
     name: string;
     onToggle: () => void;
-    reportCategory: string;
+    reportCategory: ReportCategory;
     reportEntityId: string;
     reportExtra?: Record<string, number | string>;
     sources?: Source[];

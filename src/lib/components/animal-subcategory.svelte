@@ -44,7 +44,7 @@
     locale={props.locale}
     count={completedCount}
     name={props.name}
-    reportCategory={props.name.toLowerCase()}
+    reportCategory={props.reportCategory}
     total={totalCount}
   >
     {#each animals as animal (animal.id)}
@@ -58,7 +58,7 @@
               depth={1}
               count={displayableCompletedItemCount}
               name={animal.name}
-              reportCategory={props.name.toLowerCase()}
+              reportCategory={props.reportCategory}
               reportEntityId={animal.id}
               total={displayableItemCount}
             >
@@ -74,7 +74,7 @@
                       ? { ...props.lookups, entityVisibility: undefined }
                       : undefined}
                     name={itemRow.name}
-                    reportCategory={props.name.toLowerCase()}
+                    reportCategory={props.reportCategory}
                     reportEntityId={`${animal.id}:${itemRow.id}`}
                     subtitle={itemRow.subtitle}
                     onToggle={() => {

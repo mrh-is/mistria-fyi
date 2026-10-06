@@ -1,5 +1,6 @@
 <script lang="ts">
   import VillagerRecord from "#lib/components/villager-record.svelte";
+  import { FeedbackContext, setFeedbackContext } from "#lib/feedback/context.svelte.js";
 
   import type { Villager, VillagerId } from "#lib/types/tracker-data.js";
 
@@ -16,6 +17,8 @@
     name: string;
     villager: Villager;
   } = $props();
+
+  setFeedbackContext(new FeedbackContext());
 </script>
 
 <ul>

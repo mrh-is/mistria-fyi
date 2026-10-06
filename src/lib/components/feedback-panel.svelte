@@ -14,7 +14,7 @@
   import PanelOverlay from "#lib/components/panel-overlay.svelte";
   import { Checkbox } from "#lib/components/ui/checkbox/index.js";
   import { trackerData } from "#lib/data/index.js";
-  import { FeedbackContext } from "#lib/feedback/context.svelte.js";
+  import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { version } from "$app/env";
@@ -25,16 +25,16 @@
 
   const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+  const feedbackContext = getFeedbackContext();
+
   let {
     accent,
-    feedbackContext = new FeedbackContext(),
     onclose,
     open,
     pickerEnabled = false,
     restoreFocus = true,
   }: {
     accent?: string;
-    feedbackContext?: FeedbackContext;
     onclose: () => void;
     open: boolean;
     pickerEnabled?: boolean;
