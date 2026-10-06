@@ -7,6 +7,7 @@ import {
   waitForRendering,
 } from "./support/application-state.js";
 import { requireBox } from "./support/boxes.js";
+import { focusedVillagerRecord, villagerRecord } from "./support/scenarios.js";
 import { critical } from "./support/tags.js";
 
 test.describe("keyboard and focus accessibility", () => {
@@ -113,15 +114,15 @@ test.describe("keyboard and focus accessibility", () => {
     const letter = page.getByRole("button", { name: "Jump to A, first villager record" });
     await letter.focus();
     await page.keyboard.press("Enter");
-    await expect(page.locator("#villager-adeline")).toBeFocused();
+    await expect(villagerRecord(page, "adeline")).toBeFocused();
 
-    const proposal = page
-      .locator("#villager-adeline")
-      .getByRole("button", { name: "Record proposal" });
+    const proposal = villagerRecord(page, "adeline").getByRole("button", {
+      name: "Record proposal",
+    });
     await proposal.focus();
     await page.keyboard.press("Enter");
     await expect(
-      page.locator("#villager-adeline").getByRole("button", { name: "Record marriage" }),
+      villagerRecord(page, "adeline").getByRole("button", { name: "Record marriage" }),
     ).toBeFocused();
   });
 
@@ -136,7 +137,7 @@ test.describe("keyboard and focus accessibility", () => {
     const initialO = page.getByRole("button", { name: "Jump to O, first villager record" });
     const initialT = page.getByRole("button", { name: "Jump to T, first villager record" });
     await initialO.click();
-    await expect(page.locator('[id^="villager-o"]:focus')).toHaveCount(1);
+    await expect(focusedVillagerRecord(page, "o")).toHaveCount(1);
     await waitForRendering(page);
     const dBox = await requireBox(initialD);
     const tBox = await requireBox(initialT);
@@ -147,12 +148,12 @@ test.describe("keyboard and focus accessibility", () => {
     await page.mouse.move(tBox.x + 12, tBox.y + tBox.height / 2, {
       steps: 8,
     });
-    await expect(page.locator('[id^="villager-t"]:focus')).toHaveCount(1);
+    await expect(focusedVillagerRecord(page, "t")).toHaveCount(1);
     await expect(initialD).toHaveAttribute("data-active", "false");
     await expect(initialT).toHaveAttribute("data-active", "true");
 
     await page.mouse.up();
-    await expect(page.locator('[id^="villager-t"]:focus')).toHaveCount(1);
+    await expect(focusedVillagerRecord(page, "t")).toHaveCount(1);
     await expect(initialT).toHaveAttribute("data-active", "false");
   });
 
