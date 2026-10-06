@@ -12,7 +12,7 @@
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { getMaxMineFloor, isCategoryComplete } from "#lib/engine/progress.js";
-  import { isEntityNameVisible } from "#lib/engine/visibility.js";
+  import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
@@ -25,7 +25,7 @@
 
   function spellNameVisible(spellId: SpellId): boolean {
     const visibility = trackerData.mines.spells[spellId].visibility;
-    return isEntityNameVisible(visibility, userState.progressionState);
+    return isConditionVisible(visibility, userState.progressionState);
   }
 
   function toggleSpell(spellId: SpellId): void {
@@ -137,9 +137,9 @@
     <MineFloorRecord
       {biomes}
       floor={userState.state.completed.mines.floor}
+      isReportable={false}
       {locale}
       onChange={setFloorWithCelebration}
-      registerFeedback={false}
     />
   </ExpandableSection>
 {/if}
@@ -168,15 +168,18 @@
             if (spellNameVisible(spell.id) || completed) {
               toggleSpell(spell.id);
             } else {
-              spoilerGuard.guard(trackerData.mines.spells[spell.id].visibility, () => {
-                toggleSpell(spell.id);
-              });
+              spoilerGuard.requestGuardedAction(
+                trackerData.mines.spells[spell.id].visibility,
+                () => {
+                  toggleSpell(spell.id);
+                },
+              );
             }
           }}
         />
       {/snippet}
     </TrackerRowList>
   </ExpandableSection>
-{:else if toolbarState.sourceFilterActive}
+{:else if toolbarState.isSourceFilterNarrowing}
   <TrackerEmptyState />
 {/if}

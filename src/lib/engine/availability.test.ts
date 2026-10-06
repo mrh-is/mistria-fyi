@@ -6,11 +6,11 @@ import {
   classifyItemAvailability,
   filterAvailableItems,
   getDisplayBadges,
+  isInProgressScope,
   isItemAvailable,
   isItemDimmed,
   isRowVisible,
   isSourceAvailable,
-  shouldCountItem,
 } from "./availability.js";
 
 import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
@@ -199,25 +199,25 @@ describe("filterAvailableItems", () => {
   });
 });
 
-// ─── shouldCountItem ────────────────────────────────────────────────
+// ─── isInProgressScope ────────────────────────────────────────────────
 
-describe("shouldCountItem", () => {
+describe("isInProgressScope", () => {
   it("completed items are always in scope regardless of availability", () => {
-    expect(shouldCountItem([src()], true, spring, AVAILABLE)).toBe(true);
-    expect(shouldCountItem([src()], true, spring, TIMELY)).toBe(true);
-    expect(shouldCountItem([src()], true, spring, EVERYTHING)).toBe(true);
+    expect(isInProgressScope([src()], true, spring, AVAILABLE)).toBe(true);
+    expect(isInProgressScope([src()], true, spring, TIMELY)).toBe(true);
+    expect(isInProgressScope([src()], true, spring, EVERYTHING)).toBe(true);
   });
 
   it("incomplete items in scope when available", () => {
-    expect(shouldCountItem([src()], false, spring, AVAILABLE)).toBe(true);
+    expect(isInProgressScope([src()], false, spring, AVAILABLE)).toBe(true);
   });
 
   it("incomplete items always in scope in everything mode", () => {
-    expect(shouldCountItem([src()], false, spring, EVERYTHING)).toBe(true);
+    expect(isInProgressScope([src()], false, spring, EVERYTHING)).toBe(true);
   });
 
   it("incomplete items out of scope in timely mode when no sources are timely", () => {
-    expect(shouldCountItem([], false, spring, TIMELY)).toBe(false);
+    expect(isInProgressScope([], false, spring, TIMELY)).toBe(false);
   });
 });
 

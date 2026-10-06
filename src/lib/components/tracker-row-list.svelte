@@ -3,7 +3,7 @@
   import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
   import { Button } from "#lib/components/ui/button/index.js";
   import * as m from "#lib/paraglide/messages.js";
-  import { SECTION_LIMIT, sectionRenderTarget } from "#lib/utils/row-display.js";
+  import { SECTION_ROW_LIMIT, sectionRowLimit } from "#lib/utils/row-display.js";
 
   import type { Snippet } from "svelte";
 
@@ -23,11 +23,11 @@
     row,
     showEmpty = true,
   }: {
-    /** Whether the section has been expanded past `SECTION_LIMIT`; read only when `limited`. */
+    /** Whether the section has been expanded past `SECTION_ROW_LIMIT`; read only when `limited`. */
     expanded?: boolean;
     getKey: (item: T) => string;
     items: readonly T[];
-    /** Cap the section at `SECTION_LIMIT` rows until it is expanded. */
+    /** Cap the section at `SECTION_ROW_LIMIT` rows until it is expanded. */
     limited?: boolean;
     /** Shown while `renderedCount` is zero but rows exist (progressive rendering). */
     loadingMessage?: string;
@@ -40,9 +40,9 @@
     showEmpty?: boolean;
   } = $props();
 
-  let renderTarget = $derived(limited ? sectionRenderTarget(items.length, expanded) : items.length);
+  let renderTarget = $derived(limited ? sectionRowLimit(items.length, expanded) : items.length);
   let shown = $derived(items.slice(0, Math.min(renderTarget, renderedCount ?? renderTarget)));
-  let hiddenCount = $derived(limited && !expanded ? items.length - SECTION_LIMIT : 0);
+  let hiddenCount = $derived(limited && !expanded ? items.length - SECTION_ROW_LIMIT : 0);
 </script>
 
 <TrackerRowStack>

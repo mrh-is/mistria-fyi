@@ -8,7 +8,7 @@ import sharp from "sharp";
 import { trackerData } from "../src/lib/data/index.js";
 import { getAllProgress } from "../src/lib/engine/progress.js";
 
-import type { CompletedState } from "../src/lib/types/user-progress.js";
+import type { ProgressState } from "../src/lib/types/user-progress.js";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const STATIC = join(ROOT, "static");
@@ -82,7 +82,7 @@ async function createOgImage(): Promise<void> {
   }
 }
 
-function emptyCompletedState(): CompletedState {
+function emptyCompletedState(): ProgressState {
   return {
     almanac: new Set(),
     almanacRecipes: new Set(),

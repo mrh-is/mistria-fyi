@@ -217,7 +217,7 @@ describe("extractQuestChains — registry ordering", () => {
     expect(result.crown).toEqual(["crown_request_crops", "crown_request_fish"]);
   });
 
-  it("extracts stillwell quest order from stillwell_registry", () => {
+  it("extracts mission quest order from stillwell_registry", () => {
     const fiddle = makeFiddle({
       quests: {
         stillwell_registry: {
@@ -226,10 +226,10 @@ describe("extractQuestChains — registry ordering", () => {
       },
     });
     const result = extractQuestChains(fiddle as never);
-    expect(result.stillwell).toEqual(["green_sapling_surprise", "rock_clod_catastrophe"]);
+    expect(result.mission).toEqual(["green_sapling_surprise", "rock_clod_catastrophe"]);
   });
 
-  it("extracts tali quest order from tali_registry", () => {
+  it("extracts cooking quest order from tali_registry", () => {
     const fiddle = makeFiddle({
       quests: {
         tali_registry: {
@@ -238,15 +238,15 @@ describe("extractQuestChains — registry ordering", () => {
       },
     });
     const result = extractQuestChains(fiddle as never);
-    expect(result.tali).toEqual(["rice_ball_challenge", "crystal_berry_pie_challenge"]);
+    expect(result.cooking).toEqual(["rice_ball_challenge", "crystal_berry_pie_challenge"]);
   });
 
   it("defaults registry order to an empty array when the registry is absent", () => {
     const fiddle = makeFiddle({});
     const result = extractQuestChains(fiddle as never);
     expect(result.crown).toEqual([]);
-    expect(result.stillwell).toEqual([]);
-    expect(result.tali).toEqual([]);
+    expect(result.mission).toEqual([]);
+    expect(result.cooking).toEqual([]);
   });
 });
 

@@ -17,7 +17,7 @@ export const TRACKED_QUEST_GROUPS = [
 
 export type TrackedQuestGroup = (typeof TRACKED_QUEST_GROUPS)[number];
 
-export const QUEST_TYPE_MAP: Record<TrackedQuestGroup, QuestType> = {
+export const QUEST_TYPE_BY_GROUP: Record<TrackedQuestGroup, QuestType> = {
   crown_quests: "crown",
   fetch_quests: "fetch",
   heart_quests: "heart",
@@ -30,7 +30,7 @@ export function buildQuestTypeIndex(fiddle: ParsedGameData): Map<QuestId, QuestT
   const entries = new Map<QuestId, QuestType>();
 
   forEachQuest(fiddle, TRACKED_QUEST_GROUPS, (nativeGroup, questId) => {
-    const questType = QUEST_TYPE_MAP[nativeGroup as TrackedQuestGroup];
+    const questType = QUEST_TYPE_BY_GROUP[nativeGroup as TrackedQuestGroup];
     const typedQuestId = questId as QuestId;
     const existing = entries.get(typedQuestId);
     if (existing && existing !== questType) {

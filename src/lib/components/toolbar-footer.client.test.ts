@@ -57,7 +57,7 @@ afterEach(async () => {
   cleanup();
   vi.unstubAllGlobals();
   toolbarState.closeSearch();
-  toolbarState.removeSourceFilters("test");
+  toolbarState.unregisterSourceFilters("test");
   userState.resetAll();
   // Flush pending Svelte microtasks after unmount and state reset.
   await tick();
@@ -276,7 +276,7 @@ describe("ToolbarFooter search", () => {
   it("clears the query without closing the search bar", async () => {
     renderToolbar();
     await fireEvent.click(screen.getByRole("button", { name: "Search" }));
-    toolbarState.setSearch("bread");
+    toolbarState.setSearchQuery("bread");
 
     await fireEvent.click(await screen.findByRole("button", { name: "Clear search" }));
 
@@ -292,7 +292,7 @@ describe("ToolbarFooter search", () => {
     const trigger = screen.getByRole("button", { name: "Search" });
     trigger.focus();
     await fireEvent.click(trigger);
-    toolbarState.setSearch("bread");
+    toolbarState.setSearchQuery("bread");
 
     await fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
@@ -356,7 +356,7 @@ describe("ToolbarFooter picker state", () => {
     const { feedbackContext } = renderToolbar();
     const target = document.createElement("div");
     document.body.append(target);
-    feedbackContext.reportable({
+    feedbackContext.reportableAttachment({
       category: "recipe",
       displayName: "Tomato Soup",
       page: "/recipes",

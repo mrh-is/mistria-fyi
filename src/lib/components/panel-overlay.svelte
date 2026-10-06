@@ -8,22 +8,23 @@
   import type { Attachment } from "svelte/attachments";
 
   let {
+    animateOut = false,
     children,
     closeLabel,
     element = $bindable(null),
     focus,
     label,
     onClose,
-    outro = false,
     style,
   }: {
+    /** Play the fly-out transition when the overlay unmounts. */
+    animateOut?: boolean;
     children: Snippet;
     closeLabel: string;
     element?: HTMLElement | null;
     focus?: Attachment<HTMLElement>;
     label?: string;
     onClose: () => void;
-    outro?: boolean;
     style?: string;
   } = $props();
 </script>
@@ -46,7 +47,7 @@
   tabindex="-1"
   {style}
   in:fly={{ duration: prefersReducedMotion.current ? 0 : 150, y: 8 }}
-  out:fly={{ duration: outro && !prefersReducedMotion.current ? 150 : 0, y: 8 }}
+  out:fly={{ duration: animateOut && !prefersReducedMotion.current ? 150 : 0, y: 8 }}
 >
   {@render children()}
 </div>

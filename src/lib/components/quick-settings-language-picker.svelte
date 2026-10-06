@@ -90,7 +90,7 @@
 
 <style>
   .language-setting {
-    border-bottom: 1px solid color-mix(in srgb, var(--hairline) 24%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-ink-hairline) 24%, transparent);
   }
 
   .language-setting__row {
@@ -106,7 +106,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-2xs);
     font-weight: 500;
@@ -121,15 +121,15 @@
     justify-content: space-between;
     gap: 8px;
     padding: 4px 9px;
-    border: 1px solid color-mix(in srgb, var(--hairline) 42%, transparent);
-    color: var(--ink);
+    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 42%, transparent);
+    color: var(--color-ink);
     font-family: var(--font-controls);
     font-size: var(--text-3xs);
   }
 
   .language-setting__trigger[aria-expanded="true"] {
     color: var(--primary);
-    background: color-mix(in srgb, var(--primary) 12%, var(--paper-raised));
+    background: color-mix(in srgb, var(--primary) 12%, var(--color-paper-raised));
   }
 
   :global(.language-setting__chevron) {
@@ -146,7 +146,7 @@
     gap: 2px;
     margin: 0 18px 12px;
     padding: 4px;
-    background: color-mix(in srgb, var(--primary) 5%, var(--paper-raised));
+    background: color-mix(in srgb, var(--primary) 5%, var(--color-paper-raised));
   }
 
   .language-setting__option {
@@ -156,7 +156,7 @@
     justify-content: space-between;
     gap: 12px;
     padding: 6px 8px;
-    color: var(--ink);
+    color: var(--color-ink);
     font-family: var(--font-controls);
     font-size: var(--text-2xs);
     text-align: left;
@@ -166,14 +166,14 @@
   .language-setting__option:focus-visible,
   .language-setting__option--current {
     color: var(--primary);
-    background: color-mix(in srgb, var(--primary) 12%, var(--paper-raised));
+    background: color-mix(in srgb, var(--primary) 12%, var(--color-paper-raised));
     outline: 2px solid var(--primary);
     outline-offset: -2px;
   }
 
   .language-setting__offline {
     grid-column: 1 / -1;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-2xs);
     line-height: 1.4;
@@ -190,8 +190,8 @@
     flex: none;
     align-items: center;
     justify-content: center;
-    border: 1px solid color-mix(in srgb, var(--hairline) 58%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 58%, transparent);
     border-radius: var(--radius-lg);
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 </style>

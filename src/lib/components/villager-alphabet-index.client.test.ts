@@ -82,16 +82,16 @@ describe("VillagerAlphabetIndex", () => {
 
     await fireEvent.pointerDown(letterA, { pointerId: 1 });
     expect(document.activeElement).toBe(view.container.querySelector("#villager-adeline"));
-    expect(letterA).toHaveAttribute("data-active", "true");
+    expect(letterA).toHaveAttribute("data-scrub-target", "true");
     await fireEvent.pointerMove(index, { clientX: 10, clientY: 10, pointerId: 1 });
     expect(document.activeElement).toBe(view.container.querySelector("#villager-zara"));
-    expect(letterA).toHaveAttribute("data-active", "false");
-    expect(letterZ).toHaveAttribute("data-active", "true");
+    expect(letterA).toHaveAttribute("data-scrub-target", "false");
+    expect(letterZ).toHaveAttribute("data-scrub-target", "true");
 
     await fireEvent.pointerUp(index, { pointerId: 1 });
     await fireEvent.click(letterA, { detail: 1 });
     expect(document.activeElement).toBe(view.container.querySelector("#villager-zara"));
-    expect(letterZ).toHaveAttribute("data-active", "false");
+    expect(letterZ).toHaveAttribute("data-scrub-target", "false");
 
     elementFromPoint.mockReturnValue(letterA);
     await fireEvent.pointerMove(index, { clientX: 10, clientY: 10, pointerId: 1 });

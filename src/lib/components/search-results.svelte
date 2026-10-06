@@ -5,9 +5,9 @@
   import VillagerSearchResult from "#lib/components/villager-search-result.svelte";
   import { categoryNameForKey } from "#lib/data/categories.js";
   import { trackerData } from "#lib/data/index.js";
-  import { hasNames, loadNames, LOCALIZED_CATEGORIES } from "#lib/data/names.js";
+  import { hasNames, loadNames, NAME_CHUNKS } from "#lib/data/names.js";
   import { showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
-  import { searchItems } from "#lib/engine/search.js";
+  import { searchAllCategories } from "#lib/engine/search.js";
   import * as m from "#lib/paraglide/messages.js";
   import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
@@ -34,7 +34,7 @@
   let { locale, query }: { locale: LocaleCode; query: string } = $props();
 
   // Search spans every category, so it needs every category's chunk for the active locale, plus
-  // English because `searchItems` also matches English terms, rather than the per-route subset a
+  // English because `searchAllCategories` also matches English terms, rather than the per-route subset a
   // category page awaits in `load()`. The fetch happens here, on first search-open, not at page
   // load; `loadNames` caches per chunk for the session, so re-opening search or retyping never
   // re-fetches. Until the chunks land, the `$derived` name lookups below must not run, since
@@ -49,7 +49,7 @@
   let namesReady = $derived(namesLocale === locale);
 
   function hasSearchNames(searchLocale: LocaleCode): boolean {
-    return hasNames(searchLocale, LOCALIZED_CATEGORIES) && hasNames("en", LOCALIZED_CATEGORIES);
+    return hasNames(searchLocale, NAME_CHUNKS) && hasNames("en", NAME_CHUNKS);
   }
 
   function retryNames(): void {
@@ -69,10 +69,7 @@
     let cancelled = false;
     void (async () => {
       try {
-        await Promise.all([
-          loadNames(targetLocale, LOCALIZED_CATEGORIES),
-          loadNames("en", LOCALIZED_CATEGORIES),
-        ]);
+        await Promise.all([loadNames(targetLocale, NAME_CHUNKS), loadNames("en", NAME_CHUNKS)]);
       } catch {
         if (!cancelled) namesError = true;
         return;
@@ -85,7 +82,7 @@
   });
 
   let results = $derived(
-    searchItems(
+    searchAllCategories(
       query,
       userState.state.completed,
       userState.state.worldState,
@@ -206,7 +203,7 @@
                 completed: result.completed,
                 dimmed: !result.available,
               })}
-              lookups={baseLookups}
+              segmentLookups={baseLookups}
               name={result.detail ? `${label} ${result.detail}` : label}
               reportCategory={SEARCH_REPORT_CATEGORY[result.category]}
               reportEntityId={result.id}
@@ -226,7 +223,7 @@
         </div>
         <span
           class="search-result__category"
-          style="--result-category: var(--cat-{result.category}, var(--ink-muted))"
+          style="--result-category-color: var(--color-category-{result.category}, var(--color-ink-muted))"
         >
           {categoryNameForKey(result.category, locale)}
         </span>
@@ -248,7 +245,7 @@
 
   .search-results__count {
     margin-bottom: 3px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-data);
     font-size: var(--text-2xs);
   }
@@ -268,9 +265,9 @@
     min-width: 76px;
     flex-shrink: 0;
     padding: 4px 11px 4px 9px;
-    color: var(--ink);
-    border-left: 2px solid var(--result-category);
-    background: color-mix(in srgb, var(--result-category) 9%, var(--paper));
+    color: var(--color-ink);
+    border-left: 2px solid var(--result-category-color);
+    background: color-mix(in srgb, var(--result-category-color) 9%, var(--color-paper));
     clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 50%, 100% 100%, 0 100%);
     font-family: var(--font-annotation);
     font-size: var(--text-3xs);
@@ -281,7 +278,7 @@
   .search-results__empty,
   .search-results__error {
     padding: 32px 0;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-body);
     font-size: var(--text-base);
     text-align: center;
@@ -296,8 +293,8 @@
 
   .search-results__error button {
     padding: 6px 16px;
-    color: var(--ink);
-    border: 1px solid var(--ink-muted);
+    color: var(--color-ink);
+    border: 1px solid var(--color-ink-muted);
     border-radius: var(--radius-lg);
     background: transparent;
     font-family: var(--font-body);
@@ -306,7 +303,7 @@
   }
 
   .search-results__error button:hover {
-    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    background: color-mix(in srgb, var(--color-ink) 6%, transparent);
   }
 
   @media (max-width: 380px) {

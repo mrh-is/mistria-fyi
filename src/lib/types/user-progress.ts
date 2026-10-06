@@ -26,7 +26,7 @@ export const CURRENT_SERIALIZATION_VERSION = "2";
 export const CHILD_CHOICES = ["no", "undeclared", "yes"] as const;
 export const QUEST_STATES = ["completed", "none", "obtained"] as const;
 export type ChildChoice = (typeof CHILD_CHOICES)[number];
-export interface CompletedState {
+export interface ProgressState {
   almanac: Set<ItemId>;
   almanacRecipes: Set<RecipeId>;
   animalCosmetics: Partial<Record<AnimalId, Set<CosmeticId>>>;

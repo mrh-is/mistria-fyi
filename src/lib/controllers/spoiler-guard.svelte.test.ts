@@ -25,7 +25,7 @@ describe("createSpoilerGuard", () => {
     const guard = createSpoilerGuard();
     const action = vi.fn();
 
-    guard.guard(FLOOR_CONDITION, action);
+    guard.requestGuardedAction(FLOOR_CONDITION, action);
 
     expect(guard.open).toBe(true);
     expect(guard.condition).toEqual(FLOOR_CONDITION);
@@ -35,7 +35,7 @@ describe("createSpoilerGuard", () => {
   it("treats an undefined condition as none", () => {
     const guard = createSpoilerGuard();
 
-    guard.guard(undefined, vi.fn());
+    guard.requestGuardedAction(undefined, vi.fn());
 
     expect(guard.open).toBe(true);
     expect(guard.condition).toBeNull();
@@ -44,7 +44,7 @@ describe("createSpoilerGuard", () => {
   it("cancel drops the action & leaves progress untouched", () => {
     const guard = createSpoilerGuard();
     const action = vi.fn();
-    guard.guard(FLOOR_CONDITION, action);
+    guard.requestGuardedAction(FLOOR_CONDITION, action);
 
     guard.cancel();
 
@@ -52,17 +52,17 @@ describe("createSpoilerGuard", () => {
     expect(guard.open).toBe(false);
     expect(guard.condition).toBeNull();
     expect(userState.state.completed.mines.floor).toBe(0);
-    guard.complete();
+    guard.proceed();
     expect(action).not.toHaveBeenCalled();
   });
 
-  it("complete runs the action once without changing progress", () => {
+  it("proceed runs the action once without changing progress", () => {
     const guard = createSpoilerGuard();
     const action = vi.fn();
-    guard.guard(FLOOR_CONDITION, action);
+    guard.requestGuardedAction(FLOOR_CONDITION, action);
 
-    guard.complete();
-    guard.complete();
+    guard.proceed();
+    guard.proceed();
 
     expect(action).toHaveBeenCalledTimes(1);
     expect(guard.open).toBe(false);
@@ -70,14 +70,14 @@ describe("createSpoilerGuard", () => {
     expect(userState.state.completed.mines.floor).toBe(0);
   });
 
-  it("completeAndUpdate satisfies the condition, then runs the action", () => {
+  it("proceedAndRecordPrerequisites satisfies the condition, then runs the action", () => {
     const guard = createSpoilerGuard();
     const action = vi.fn(() => {
       expect(userState.state.completed.mines.floor).toBe(12);
     });
-    guard.guard(FLOOR_CONDITION, action);
+    guard.requestGuardedAction(FLOOR_CONDITION, action);
 
-    guard.completeAndUpdate();
+    guard.proceedAndRecordPrerequisites();
 
     expect(action).toHaveBeenCalledTimes(1);
     expect(userState.state.completed.mines.floor).toBe(12);
@@ -87,28 +87,28 @@ describe("createSpoilerGuard", () => {
 
   it("applies level caps through store setters before running the action", () => {
     const guard = createSpoilerGuard();
-    guard.guard({ type: "renownLevel", level: 1_000_000 }, () => {
+    guard.requestGuardedAction({ type: "renownLevel", level: 1_000_000 }, () => {
       expect(userState.state.completed.renown).toBeLessThan(1_000_000);
     });
-    guard.completeAndUpdate();
+    guard.proceedAndRecordPrerequisites();
   });
 
   it("resets child choice when satisfying a new marriage", () => {
     const villagerId = "holt" as VillagerId;
     userState.setChildChoice("yes");
     const guard = createSpoilerGuard();
-    guard.guard({ type: "married", villagerId }, vi.fn());
-    guard.completeAndUpdate();
+    guard.requestGuardedAction({ type: "married", villagerId }, vi.fn());
+    guard.proceedAndRecordPrerequisites();
     expect(userState.state.completed.villagerRelationships[villagerId]).toBe("married");
     expect(userState.state.completed.childChoice).toBe("undeclared");
   });
 
-  it("completeAndUpdate with no condition still runs the action", () => {
+  it("proceedAndRecordPrerequisites with no condition still runs the action", () => {
     const guard = createSpoilerGuard();
     const action = vi.fn();
-    guard.guard(undefined, action);
+    guard.requestGuardedAction(undefined, action);
 
-    guard.completeAndUpdate();
+    guard.proceedAndRecordPrerequisites();
 
     expect(action).toHaveBeenCalledTimes(1);
     expect(userState.hasAnyProgress).toBe(false);
@@ -116,7 +116,7 @@ describe("createSpoilerGuard", () => {
 
   it("lets the dialog close itself by assigning open", () => {
     const guard = createSpoilerGuard();
-    guard.guard(FLOOR_CONDITION, vi.fn());
+    guard.requestGuardedAction(FLOOR_CONDITION, vi.fn());
 
     guard.open = false;
 

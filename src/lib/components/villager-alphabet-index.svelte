@@ -99,7 +99,7 @@
 
 <nav
   class="villager-index"
-  style="--villager-index-count: {initials.length}"
+  style="--villager-index-initial-count: {initials.length}"
   aria-label={m.villagers_alphabet_aria()}
   data-scrubbing={scrubbing}
   onpointermove={scrub}
@@ -110,7 +110,7 @@
     <button
       type="button"
       data-villager-index-initial={entry.initial}
-      data-active={scrubbing && lastScrubbedInitial === entry.initial}
+      data-scrub-target={scrubbing && lastScrubbedInitial === entry.initial}
       aria-label={m.villagers_jump_to_initial_aria({ initial: entry.initial })}
       onpointerdown={(event) => {
         startScrub(event, entry);
@@ -132,8 +132,8 @@
     z-index: 9;
     display: grid;
     width: 24px;
-    height: min(calc(100dvh - 152px), calc(var(--villager-index-count) * 24px));
-    grid-template-rows: repeat(var(--villager-index-count), minmax(0, 1fr));
+    height: min(calc(100dvh - 152px), calc(var(--villager-index-initial-count) * 24px));
+    grid-template-rows: repeat(var(--villager-index-initial-count), minmax(0, 1fr));
     background: transparent;
     touch-action: none;
     transform: translateY(-50%);
@@ -146,24 +146,24 @@
     place-items: center;
     border: 0;
     background: transparent;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-data);
     font-size: var(--text-3xs);
     line-height: 1;
   }
 
-  .villager-index button:is(:focus-visible, [data-active="true"]) {
-    background: color-mix(in srgb, var(--cat-villagers) 12%, transparent);
-    color: var(--cat-villagers);
-    outline: 2px solid var(--cat-villagers);
+  .villager-index button:is(:focus-visible, [data-scrub-target="true"]) {
+    background: color-mix(in srgb, var(--color-category-villagers) 12%, transparent);
+    color: var(--color-category-villagers);
+    outline: 2px solid var(--color-category-villagers);
     outline-offset: 0;
   }
 
   @media (hover: hover) {
     .villager-index:not([data-scrubbing="true"]) button:hover {
-      background: color-mix(in srgb, var(--cat-villagers) 12%, transparent);
-      color: var(--cat-villagers);
-      outline: 2px solid var(--cat-villagers);
+      background: color-mix(in srgb, var(--color-category-villagers) 12%, transparent);
+      color: var(--color-category-villagers);
+      outline: 2px solid var(--color-category-villagers);
       outline-offset: 0;
     }
   }

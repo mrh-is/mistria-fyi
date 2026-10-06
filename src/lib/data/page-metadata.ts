@@ -7,8 +7,8 @@ export const SITE_ORIGIN = "https://mistria.fyi";
 /** The product name; a proper noun that reads the same in every locale (`app_name` in each). */
 export const SITE_NAME = "Mistria Field Guide";
 
-/** A CSS color token (sans `--`) that the page chrome reads as `--primary`. */
-export type PageAccent = "home-accent" | `cat-${CategoryKey}`;
+/** A CSS color, as a `var()` reference to a token, that the page chrome reads as `--primary`. */
+export type PageAccent = "var(--color-home-accent)" | `var(--color-category-${CategoryKey})`;
 
 export interface PageMetadata {
   /** Colors the page chrome. Category pages use their own token; everything else is the home accent. */
@@ -53,7 +53,7 @@ export function errorPageMetadata(status: number, locale: LocaleCode): PageMetad
 
 /** Resolves every default so consumers never have to interpret an absent field. */
 export function pageMetadata(input: PageMetadataInput): PageMetadata {
-  const { accent = "home-accent", toolbar = {}, ...rest } = input;
+  const { accent = "var(--color-home-accent)", toolbar = {}, ...rest } = input;
   return {
     ...rest,
     accent,

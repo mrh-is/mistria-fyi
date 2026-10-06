@@ -10,9 +10,9 @@
   import * as Dialog from "#lib/components/ui/dialog/index.js";
   import { Separator } from "#lib/components/ui/separator/index.js";
   import {
-    buildImportState,
-    parseSaveFiles,
-    SaveFileError,
+    extractSaveProgress,
+    parseExtractedSaveFiles,
+    SavArchiveError,
     unpackSavFile,
   } from "#lib/engine/import-save.js";
   import * as m from "#lib/paraglide/messages.js";
@@ -21,8 +21,8 @@
 
   import DataCard from "./data-card.svelte";
   import {
-    formatSaveFileError,
-    formatSaveFilesError,
+    formatExtractedSaveFilesError,
+    formatSavArchiveError,
     formatSaveImportWarning,
   } from "./data-error-messages.js";
   import MergeSummary from "./merge-summary.svelte";
@@ -44,7 +44,7 @@
   let importResult = $state<null | SaveImportReport>(null);
   let importError = $state<null | string>(null);
   let importErrorDetails = $state<string[]>([]);
-  let savFallback = $state(false);
+  let showSavFallbackHelp = $state(false);
   let importing = $state(false);
   let importStatus = $state("");
   let filesUsed = $state<string[]>([]);
@@ -91,18 +91,18 @@
     dragCounter = 0;
     const files = e.dataTransfer?.files;
     if (files?.length) {
-      void handleFileChange([...files]);
+      void importFiles([...files]);
     }
   }
 
-  async function handleFileChange(files: File[] | null) {
+  async function importFiles(files: File[] | null) {
     if (!files || files.length === 0) return;
 
     importing = true;
     importResult = null;
     importError = null;
     importErrorDetails = [];
-    savFallback = false;
+    showSavFallbackHelp = false;
     importStatus = "";
     filesUsed = [];
 
@@ -118,17 +118,17 @@
           bundle = await unpackSavFile(savFile);
         } catch (error) {
           importError =
-            error instanceof SaveFileError
-              ? formatSaveFileError(error.detail)
+            error instanceof SavArchiveError
+              ? formatSavArchiveError(error.detail)
               : m.import_error_unexpected();
-          savFallback = true;
+          showSavFallbackHelp = true;
           return;
         }
       } else {
-        const result = await parseSaveFiles(files);
+        const result = await parseExtractedSaveFiles(files);
         if (result.error || !result.bundle) {
           importError = result.error
-            ? formatSaveFilesError(result.error)
+            ? formatExtractedSaveFilesError(result.error)
             : m.import_error_parse_failed();
           if (result.error?.code === "no-valid-files") {
             importErrorDetails = result.error.problems.map(formatSaveImportWarning);
@@ -145,7 +145,7 @@
       if (bundle.quests) filesUsed.push("quests.json");
 
       importStatus = m.import_status_importing();
-      const { completed, warnings } = buildImportState(bundle);
+      const { completed, warnings } = extractSaveProgress(bundle);
       const merged = userState.mergeFromSave(completed);
 
       importResult = {
@@ -168,7 +168,7 @@
   function handleInputChange(e: Event) {
     const files = (e.target as HTMLInputElement).files;
     if (files?.length) {
-      void handleFileChange([...files]);
+      void importFiles([...files]);
     }
   }
 
@@ -259,7 +259,7 @@
                   aria-label={m.import_copy_path_aria()}
                 >
                   {#if copied}
-                    <IconCheck class="size-4 text-(--fg-green)" />
+                    <IconCheck class="size-4 text-(--color-status-success)" />
                   {:else}
                     <IconCopy class="size-4" />
                   {/if}
@@ -293,7 +293,7 @@
             {/each}
           </ul>
         {/if}
-        {#if savFallback}
+        {#if showSavFallbackHelp}
           <p class="mt-2 text-sm">
             {m.import_fallback_before_vaultc()}
             <!-- eslint-disable local/no-hardcoded-ui-text -- proper noun, same in every locale -->
@@ -352,10 +352,10 @@
 
       {#if isDesktop && onScrollToTransfer}
         <button
-          class="mt-3 flex w-full items-start gap-3 rounded-md border border-(--fg-blue)/30 bg-(--fg-blue)/8 p-3 text-left transition-colors hover:bg-(--fg-blue)/15"
+          class="mt-3 flex w-full items-start gap-3 rounded-md border border-(--color-status-info)/30 bg-(--color-status-info)/8 p-3 text-left transition-colors hover:bg-(--color-status-info)/15"
           onclick={onScrollToTransfer}
         >
-          <IconDeviceDesktop class="mt-0.5 size-5 shrink-0 text-(--fg-blue)" />
+          <IconDeviceDesktop class="mt-0.5 size-5 shrink-0 text-(--color-status-info)" />
           <div>
             <p class="text-base font-medium text-foreground">
               {m.import_playing_on_phone()}

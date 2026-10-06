@@ -333,9 +333,9 @@ export function assembleTrackerData(
     pets: { cosmetics: petCosmetics, skins: petSkins },
     pregnancyQuestByVillager,
     questOrder: {
-      cooking: questChainsRaw.tali,
+      cooking: questChainsRaw.cooking,
       crown: questChainsRaw.crown,
-      mission: questChainsRaw.stillwell,
+      mission: questChainsRaw.mission,
     },
     quests,
     recipes,

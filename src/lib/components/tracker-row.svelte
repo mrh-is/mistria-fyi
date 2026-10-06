@@ -25,24 +25,24 @@
 
   let {
     display,
-    lookups,
     name,
     onToggle,
     reportCategory,
     reportEntityId,
     reportExtra,
+    segmentLookups,
     sources = [],
     sprite,
     spriteClass = "text-primary",
     subtitle,
   }: {
     display: TrackerRowDisplay;
-    lookups?: SegmentLookups;
     name: string;
     onToggle: () => void;
     reportCategory: ReportCategory;
     reportEntityId: string;
     reportExtra?: Record<string, number | string>;
+    segmentLookups?: SegmentLookups;
     sources?: Source[];
     sprite?: string;
     spriteClass?: string;
@@ -62,14 +62,14 @@
     }),
   );
   let sourceSegments: SourceSegment[][] = $derived(
-    lookups ? sources.map((source) => buildSourceSegments(source, lookups)) : [],
+    segmentLookups ? sources.map((source) => buildSourceSegments(source, segmentLookups)) : [],
   );
 
   let isCompleted = $derived(display.mode === "completed");
   let isObtained = $derived(display.mode === "obtained");
   let isSpoilered = $derived(display.mode === "spoilered" && !spoilerRevealed);
   let isLeaving = $derived(display.mode === "completed" && (display.leaving ?? false));
-  let isDimmed = $derived(display.mode === "visible" && (display.dimmed ?? false));
+  let isDimmed = $derived(display.mode === "incomplete" && (display.dimmed ?? false));
   let sourceContentId = $derived(
     `sources-${reportEntityId
       .toLowerCase()
@@ -105,7 +105,7 @@
     return isCompleted ? "complete" : "ready";
   });
 
-  function completeOut(node: Element) {
+  function leaveTransition(node: Element) {
     if (
       !(node instanceof HTMLElement) ||
       node.dataset.leaving !== "true" ||
@@ -149,7 +149,7 @@
   }
 
   function handleToggle(event: MouseEvent): void {
-    const shouldFocusAdjacentRow = display.mode === "visible";
+    const shouldFocusAdjacentRow = display.mode === "incomplete";
     onToggle();
     if (!shouldFocusAdjacentRow) return;
 
@@ -170,9 +170,9 @@
 <div
   data-tracker-row
   data-source-state={sourceState}
-  out:completeOut
+  out:leaveTransition
   data-leaving={isLeaving}
-  {@attach feedbackContext.reportable(reportable)}
+  {@attach feedbackContext.reportableAttachment(reportable)}
   class="tracker-row"
   class:tracker-row--dimmed={isDimmed}
   class:tracker-row--completed={isCompleted || isLeaving}
@@ -244,11 +244,11 @@
   }
 
   .tracker-row--dimmed {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .tracker-row--completed {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     text-decoration: line-through;
   }
 
@@ -262,13 +262,13 @@
   .tracker-row__subtitle {
     display: block;
     font-size: var(--text-sm);
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .tracker-row__active-badge {
     font-family: var(--font-data);
     font-size: var(--text-2xs);
     font-weight: 600;
-    color: var(--fg-amber);
+    color: var(--color-tracker-active);
   }
 </style>

@@ -10,13 +10,13 @@ import type {
 import type { NonEmptyArray } from "#lib/utils/record.js";
 
 export interface AvailabilityContext {
-  heartLevels?: ReadonlyMap<VillagerId, number>;
-  minesLevel?: number;
-  perkIds?: ReadonlySet<PerkId>;
+  mineFloor?: number;
   questStates?: ReadonlyMap<QuestId, "available" | "completed">;
   season?: Season;
   skillLevels?: ReadonlyMap<SkillId, number>;
   time?: number;
+  unlockedPerks?: ReadonlySet<PerkId>;
+  villagerLevels?: ReadonlyMap<VillagerId, number>;
   weather?: Weather;
 }
 
@@ -46,17 +46,19 @@ export function evaluateAvailabilityCondition(
     case "reachedSeason":
       return "unknown";
     case "heartLevel": {
-      const level = context.heartLevels?.get(condition.villagerId);
+      const level = context.villagerLevels?.get(condition.villagerId);
       return level === undefined ? "unknown" : level >= condition.level;
     }
     case "minesLevel":
-      return context.minesLevel === undefined ? "unknown" : context.minesLevel >= condition.floor;
+      return context.mineFloor === undefined ? "unknown" : context.mineFloor >= condition.floor;
     case "not": {
       const value = evaluateAvailabilityCondition(condition.condition, context);
       return value === "unknown" ? "unknown" : !value;
     }
     case "perkUnlocked":
-      return context.perkIds === undefined ? "unknown" : context.perkIds.has(condition.perkId);
+      return context.unlockedPerks === undefined
+        ? "unknown"
+        : context.unlockedPerks.has(condition.perkId);
     case "quest": {
       const state = context.questStates?.get(condition.questId);
       return state === undefined ? "unknown" : state === condition.state;

@@ -7,7 +7,7 @@ export interface SaveBundle {
 
 /**
  * One parsed save section (`player`, `gamedata`, or `quests`). Its fields are untrusted JSON until
- * `buildImportState` reads them field by field.
+ * `extractSaveProgress` reads them field by field.
  */
 export type SaveSection = Record<string, unknown>;
 

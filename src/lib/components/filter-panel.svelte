@@ -25,8 +25,8 @@
 
   let {
     onFilterChange,
-    showSeasonality,
-  }: { onFilterChange?: () => void; showSeasonality: boolean } = $props();
+    showWorldStateFilters,
+  }: { onFilterChange?: () => void; showWorldStateFilters: boolean } = $props();
 
   const seasons: Season[] = ["spring", "summer", "fall", "winter"];
   const allWeathers: Weather[] = ["calm", "inclement", "heavy_inclement", "special"];
@@ -121,7 +121,7 @@
 <SourceExplainerDialog bind:open={sourcesExplainerOpen} filters={toolbarState.sourceFilters} />
 
 <div class="filters">
-  {#if showSeasonality}
+  {#if showWorldStateFilters}
     <section class="filter-section" aria-labelledby="availability-filter-label">
       <h3 id="availability-filter-label">
         <IconClock class="size-3.5" />{m.visibility_when_to_find()}
@@ -226,7 +226,7 @@
       <div class="chip-row">
         {#each sortSourceFiltersByLabel(toolbarState.sourceFilters, page.data.locale) as filter (filter.id)}
           {@const SourceIcon = SOURCE_FILTER_ICON[filter.id]}
-          {@const selected = toolbarState.activeSourceIds.has(filter.id)}
+          {@const selected = toolbarState.enabledSourceFilterIds.has(filter.id)}
           <button
             class="filter-chip"
             class:filter-chip--active={selected}
@@ -263,7 +263,7 @@
 <style>
   .filter-section {
     padding: 11px 18px;
-    border-bottom: 1px solid color-mix(in srgb, var(--hairline) 28%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-ink-hairline) 28%, transparent);
   }
 
   .filter-section h3,
@@ -276,7 +276,7 @@
 
   .filter-section h3 {
     gap: 6px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-2xs);
     font-weight: 500;
@@ -306,9 +306,9 @@
     justify-content: center;
     gap: 5px;
     padding: 5px 10px;
-    border: 1px solid color-mix(in srgb, var(--hairline) 34%, transparent);
-    color: var(--ink-muted);
-    background: var(--paper-deep);
+    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 34%, transparent);
+    color: var(--color-ink-muted);
+    background: var(--color-paper-sunken);
     font-family: var(--font-controls);
     font-size: var(--text-3xs);
   }
@@ -326,7 +326,7 @@
   .filter-chip--active {
     border-color: var(--primary);
     color: var(--primary);
-    background: color-mix(in srgb, var(--primary) 14%, var(--paper-raised));
+    background: color-mix(in srgb, var(--primary) 14%, var(--color-paper-raised));
   }
 
   .filter-chip:is(:hover, :focus-visible),
@@ -347,7 +347,7 @@
     align-items: center;
     gap: 4px;
     margin-bottom: 4px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-3xs);
   }
@@ -356,7 +356,7 @@
     display: flex;
     min-width: 0;
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--hairline) 34%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 34%, transparent);
   }
 
   .radio-strip button {
@@ -369,9 +369,9 @@
     gap: 3px;
     overflow: hidden;
     padding: 4px 5px;
-    border-right: 1px solid color-mix(in srgb, var(--hairline) 28%, transparent);
-    color: var(--ink-muted);
-    background: var(--paper-deep);
+    border-right: 1px solid color-mix(in srgb, var(--color-ink-hairline) 28%, transparent);
+    color: var(--color-ink-muted);
+    background: var(--color-paper-sunken);
     font-family: var(--font-controls);
     font-size: var(--text-3xs);
     text-overflow: ellipsis;
@@ -430,8 +430,8 @@
   }
 
   .radio-strip .radio-strip__active {
-    color: var(--ink);
-    background: color-mix(in srgb, var(--primary) 12%, var(--paper-raised));
+    color: var(--color-ink);
+    background: color-mix(in srgb, var(--primary) 12%, var(--color-paper-raised));
   }
 
   .info-button {
@@ -439,7 +439,7 @@
     width: 36px;
     height: 36px;
     place-items: center;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .filter-section--completed {
@@ -449,7 +449,7 @@
 
   .filter-section--completed span {
     gap: 6px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-2xs);
     font-weight: 500;

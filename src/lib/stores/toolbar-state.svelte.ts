@@ -4,14 +4,17 @@ import type { SourceFilter, SourceFilterId } from "#lib/data/source-filters.js";
 import type { Source } from "#lib/types/acquisition.js";
 
 export class ToolbarState {
-  activeSourceIds = $state<SvelteSet<SourceFilterId>>(new SvelteSet());
+  enabledSourceFilterIds = $state<SvelteSet<SourceFilterId>>(new SvelteSet());
   searchOpen = $state(false);
 
   searchQuery = $state("");
 
   sourceFilters = $state<readonly SourceFilter[]>([]);
-  get sourceFilterActive(): boolean {
-    return this.sourceFilters.length > 0 && this.activeSourceIds.size !== this.sourceFilters.length;
+  get isSourceFilterNarrowing(): boolean {
+    return (
+      this.sourceFilters.length > 0 &&
+      this.enabledSourceFilterIds.size !== this.sourceFilters.length
+    );
   }
 
   private readonly sourceFilterRegistrations = new SvelteMap<string, readonly SourceFilter[]>();
@@ -22,16 +25,16 @@ export class ToolbarState {
   }
 
   hideAllSourceFilters(): void {
-    this.activeSourceIds = new SvelteSet();
+    this.enabledSourceFilterIds = new SvelteSet();
   }
 
   matchesSourceFilters(sources: Source[]): boolean {
-    if (!this.sourceFilterActive) return true;
+    if (!this.isSourceFilterNarrowing) return true;
     return (
       sources.length === 0 ||
       sources.some((source) => {
         const group = this.sourceFilters.find((filter) => filter.types.includes(source.type));
-        return group === undefined || this.activeSourceIds.has(group.id);
+        return group === undefined || this.enabledSourceFilterIds.has(group.id);
       })
     );
   }
@@ -40,34 +43,30 @@ export class ToolbarState {
     this.searchOpen = true;
   }
 
-  removeSourceFilters(owner: string): void {
-    this.sourceFilterRegistrations.delete(owner);
-    this.rebuildSourceFilters();
-  }
-
-  resetSourceFilters(): void {
-    this.activeSourceIds = new SvelteSet(this.sourceFilters.map((filter) => filter.id));
-  }
-
-  setSearch(query: string): void {
-    this.searchQuery = query;
-  }
-
-  setSourceFilters(owner: string, filters: readonly SourceFilter[]): void {
+  registerSourceFilters(owner: string, filters: readonly SourceFilter[]): void {
     this.sourceFilterRegistrations.set(owner, filters);
     this.rebuildSourceFilters();
   }
 
-  showAllSourceFilters(): void {
-    this.resetSourceFilters();
+  resetSourceFilters(): void {
+    this.enabledSourceFilterIds = new SvelteSet(this.sourceFilters.map((filter) => filter.id));
+  }
+
+  setSearchQuery(query: string): void {
+    this.searchQuery = query;
   }
 
   toggleSourceFilter(filter: SourceFilter): void {
-    if (this.activeSourceIds.has(filter.id)) {
-      this.activeSourceIds.delete(filter.id);
+    if (this.enabledSourceFilterIds.has(filter.id)) {
+      this.enabledSourceFilterIds.delete(filter.id);
     } else {
-      this.activeSourceIds.add(filter.id);
+      this.enabledSourceFilterIds.add(filter.id);
     }
+  }
+
+  unregisterSourceFilters(owner: string): void {
+    this.sourceFilterRegistrations.delete(owner);
+    this.rebuildSourceFilters();
   }
 
   private rebuildSourceFilters(): void {

@@ -29,7 +29,7 @@ import type {
   VillagerRelationship,
   Weather,
 } from "#lib/types/tracker-data.js";
-import type { CompletedState, QuestState } from "#lib/types/user-progress.js";
+import type { ProgressState, QuestState } from "#lib/types/user-progress.js";
 
 // ─── Helpers ───────────────────────────────────────────────────────
 
@@ -38,7 +38,7 @@ const defaultWorld = { season: "spring" as Season, weather: "calm" as Weather };
 function ctx(
   overrides: Partial<{
     availabilityMode: LegacyAvailabilityMode;
-    completed: Partial<CompletedState>;
+    completed: Partial<ProgressState>;
     worldState: { season: Season; weather: Weather };
   }> = {},
 ) {
@@ -61,25 +61,25 @@ function rel(
 }
 
 /** Every category at 100%: married to Adeline with a child, every other dateable Villager platonic. */
-function fullyCompletedState(): CompletedState {
-  const animals: CompletedState["animals"] = {};
-  const animalCosmetics: CompletedState["animalCosmetics"] = {};
+function fullyCompletedState(): ProgressState {
+  const animals: ProgressState["animals"] = {};
+  const animalCosmetics: ProgressState["animalCosmetics"] = {};
   for (const [animalId, animal] of recordEntries(trackerData.animals)) {
     animals[animalId] = new Set(animal.variantTiers.flatMap((tier) => recordKeys(tier)));
     animalCosmetics[animalId] = new Set(recordKeys(animal.cosmetics));
   }
-  const questStates: CompletedState["questStates"] = {};
+  const questStates: ProgressState["questStates"] = {};
   for (const byType of recordValues(trackerData.quests)) {
     for (const id of recordKeys(byType)) questStates[id] = "completed";
   }
-  const villagerLevels: CompletedState["villagerLevels"] = {};
-  const villagerRelationships: CompletedState["villagerRelationships"] = {};
+  const villagerLevels: ProgressState["villagerLevels"] = {};
+  const villagerRelationships: ProgressState["villagerRelationships"] = {};
   for (const [id, villager] of recordEntries(trackerData.villagers)) {
     villagerLevels[id] = MAX_VILLAGER_LEVEL;
     if (villager.dateable) villagerRelationships[id] = "platonic";
   }
   villagerRelationships["adeline" as VillagerId] = "married";
-  const skillLevels: CompletedState["skillLevels"] = {};
+  const skillLevels: ProgressState["skillLevels"] = {};
   for (const id of recordKeys(trackerData.skills)) skillLevels[id] = MAX_SKILL_LEVEL;
 
   return makeCompletedState({
@@ -169,7 +169,7 @@ describe("getAllProgress", () => {
   it("has filtered + completed equal total for every category (in everything mode)", () => {
     const progress = getAllProgress(ctx({ availabilityMode: "everything" }));
     for (const [key, cat] of recordEntries(progress)) {
-      expect(cat.filtered + cat.completed, `${key}: filtered + completed !== total`).toBe(
+      expect(cat.remainingInScope + cat.completed, `${key}: filtered + completed !== total`).toBe(
         cat.total,
       );
     }
@@ -181,10 +181,10 @@ describe("getAllProgress", () => {
 describe("getOverallProgress", () => {
   it("sums to the same totals as reducing every category directly", () => {
     const all = getAllProgress(ctx());
-    const expected = { completed: 0, filtered: 0, total: 0 };
+    const expected = { completed: 0, remainingInScope: 0, total: 0 };
     for (const p of Object.values(all)) {
       expected.completed += p.completed;
-      expected.filtered += p.filtered;
+      expected.remainingInScope += p.remainingInScope;
       expected.total += p.total;
     }
     expect(getOverallProgress(all)).toEqual(expected);
@@ -221,7 +221,7 @@ describe("isCategoryComplete", () => {
 
   it("agrees with progress when one item is missing from each category", () => {
     const full = fullyCompletedState();
-    const missingOne: Record<CategoryKey, CompletedState> = {
+    const missingOne: Record<CategoryKey, ProgressState> = {
       almanac: { ...full, dates: new Set([...full.dates].slice(1)) },
       animals: { ...full, petSkins: new Set([...full.petSkins].slice(1)) },
       cosmetics: { ...full, cosmetics: new Set([...full.cosmetics].slice(1)) },
@@ -549,14 +549,14 @@ describe("animal progress variant filtering matches UI predicate", () => {
       const petSkinCount = recordKeys(trackerData.pets.skins).length;
       const nonVariantFiltered = cosmeticCount + petCosmeticCount + petSkinCount;
 
-      expect(progress.filtered).toBe(expectedVariantFiltered + nonVariantFiltered);
+      expect(progress.remainingInScope).toBe(expectedVariantFiltered + nonVariantFiltered);
     },
   );
 
   it("everything mode: filtered + completed = total for animals", () => {
     const c = ctx({ availabilityMode: "everything" });
     const progress = getCategoryProgress("animals", c);
-    expect(progress.filtered + progress.completed).toBe(progress.total);
+    expect(progress.remainingInScope + progress.completed).toBe(progress.total);
   });
 
   it("available mode: completed count is independent of season", () => {
@@ -597,7 +597,7 @@ describe("availability filtering on item-based categories", () => {
     const c2 = ctx({ availabilityMode: "available" });
     const everything = getCategoryProgress("almanac", c1);
     const available = getCategoryProgress("almanac", c2);
-    expect(available.filtered).toBeLessThanOrEqual(everything.filtered);
+    expect(available.remainingInScope).toBeLessThanOrEqual(everything.remainingInScope);
   });
 
   it("completed count is the same regardless of availability mode", () => {
