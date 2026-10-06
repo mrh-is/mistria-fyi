@@ -11,7 +11,7 @@
   import { getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
-  import { getMaxMineFloor } from "#lib/engine/progress.js";
+  import { getMaxMineFloor, isCategoryComplete } from "#lib/engine/progress.js";
   import { isEntityNameVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -63,10 +63,7 @@
   }
 
   function isMinesComplete(): boolean {
-    const allSpells = Object.keys(trackerData.mines.spells).every((id) =>
-      userState.state.completed.mines.spells.has(id as SpellId),
-    );
-    return allSpells && userState.state.completed.mines.floor >= maxFloors;
+    return isCategoryComplete("mines", userState.state);
   }
 
   let currentBiome = $derived.by(() => {

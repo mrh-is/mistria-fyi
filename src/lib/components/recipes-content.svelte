@@ -10,6 +10,7 @@
   import { getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
+  import { isCategoryComplete } from "#lib/engine/progress.js";
   import { isVisible } from "#lib/engine/visibility.js";
   import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
@@ -94,9 +95,7 @@
   }
 
   function isAllComplete(): boolean {
-    return Object.keys(trackerData.recipes).every((id) =>
-      userState.state.completed.almanacRecipes.has(id as RecipeId),
-    );
+    return isCategoryComplete("recipes", userState.state);
   }
 
   function matchesName(entry: RecipeEntry): boolean {

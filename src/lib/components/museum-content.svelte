@@ -11,6 +11,7 @@
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isItemDimmed, isRowVisible, shouldCountItem } from "#lib/engine/availability.js";
+  import { isCategoryComplete } from "#lib/engine/progress.js";
   import { isEntityNameVisible } from "#lib/engine/visibility.js";
   import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
@@ -68,7 +69,7 @@
   }
 
   function isMuseumComplete(): boolean {
-    return recordValues(trackerData.museum).every((wing) => isWingComplete(wing));
+    return isCategoryComplete("museum", userState.state);
   }
 
   function isSetComplete(set: MuseumWingSet): boolean {
