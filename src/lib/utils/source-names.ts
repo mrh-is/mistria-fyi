@@ -1,5 +1,6 @@
 import { getName, getNameTable } from "#lib/data/names.js";
 import * as m from "#lib/paraglide/messages.js";
+import { recordMap } from "#lib/utils.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { ItemId, PetSkinId, QuestId, TreasureChestTierId } from "#lib/types/tracker-data.js";
@@ -12,7 +13,7 @@ type VariantMessage = (inputs: { monster: string }, options: { locale: LocaleCod
  * translations in Paraglide. Replace them with the game's own translation keys once the
  * pipeline reads them from `assets/localization/`.
  */
-const LOCATION_MESSAGES: Record<string, NameMessage> = {
+const LOCATION_MESSAGES = {
   beach: m.source_location_beach,
   deep_woods: m.source_location_deep_woods,
   dungeon: m.source_location_dungeon,
@@ -22,13 +23,13 @@ const LOCATION_MESSAGES: Record<string, NameMessage> = {
   mines: m.source_location_mines,
   narrows: m.source_location_narrows,
   western_ruins: m.source_location_western_ruins,
-};
+} satisfies Record<string, NameMessage>;
 
-const WATER_MESSAGES: Record<string, NameMessage> = {
+const WATER_MESSAGES = {
   ocean: m.source_water_ocean,
   pond: m.source_water_pond,
   river: m.source_water_river,
-};
+} satisfies Record<string, NameMessage>;
 
 const VARIANT_MESSAGES = {
   blue: m.source_monster_variant_blue,
@@ -47,63 +48,83 @@ const VARIANT_MESSAGES = {
 } satisfies Record<string, VariantMessage>;
 
 /**
+ * Brands a literal as a pet skin id. The only unchecked step; `source-names.test.ts` asserts every
+ * id used here exists in the `pets/skins` name table.
+ */
+function skin(id: string): PetSkinId {
+  return id as PetSkinId;
+}
+
+/** Brands a literal as an item id; checked against the `items` name table in the test. */
+function item(id: string): ItemId {
+  return id as ItemId;
+}
+
+/**
  * Each monster's family, named by the pet skin the game translates for it, plus the color or
  * material variant that tells family members apart. Monster names themselves only live in the
  * game's translation tables, which the pipeline doesn't extract yet.
  */
-const MONSTER_FAMILIES: Record<
-  string,
-  { family: PetSkinId; variant?: keyof typeof VARIANT_MESSAGES }
-> = {
-  bat: { family: "essence_bat" as PetSkinId },
-  bat_blue: { family: "essence_bat" as PetSkinId, variant: "blue" },
-  cat: { family: "void_cat" as PetSkinId },
-  cat_void: { family: "void_cat" as PetSkinId },
-  copperclod: { family: "oreclod" as PetSkinId, variant: "copper" },
-  enchantern: { family: "enchantern" as PetSkinId },
-  enchantern_blue: { family: "enchantern" as PetSkinId, variant: "blue" },
-  goldclod: { family: "oreclod" as PetSkinId, variant: "gold" },
-  griffin_statue: { family: "griffin_statue" as PetSkinId },
-  ironclod: { family: "oreclod" as PetSkinId, variant: "iron" },
-  mimic: { family: "mimic" as PetSkinId },
-  mistrilclod: { family: "oreclod" as PetSkinId, variant: "mistril" },
-  mushroom: { family: "mushroom" as PetSkinId },
-  mushroom_blue: { family: "mushroom" as PetSkinId, variant: "blue" },
-  mushroom_green: { family: "mushroom" as PetSkinId, variant: "green" },
-  mushroom_purple: { family: "mushroom" as PetSkinId, variant: "purple" },
-  rock_stack: { family: "rock_stack" as PetSkinId },
-  rockclod: { family: "rockclod" as PetSkinId },
-  rockclod_blue: { family: "rockclod" as PetSkinId, variant: "blue" },
-  rockclod_green: { family: "rockclod" as PetSkinId, variant: "green" },
-  rockclod_purple: { family: "rockclod" as PetSkinId, variant: "purple" },
-  rockclod_red: { family: "rockclod" as PetSkinId, variant: "red" },
-  sapling: { family: "sapling" as PetSkinId },
-  sapling_blue: { family: "sapling" as PetSkinId, variant: "blue" },
-  sapling_cool: { family: "sapling" as PetSkinId, variant: "cool" },
-  sapling_orange: { family: "sapling" as PetSkinId, variant: "orange" },
-  sapling_orange_mini: { family: "sapling" as PetSkinId, variant: "orange_mini" },
-  sapling_pink: { family: "sapling" as PetSkinId, variant: "pink" },
-  sapling_purple: { family: "sapling" as PetSkinId, variant: "purple" },
-  silverclod: { family: "oreclod" as PetSkinId, variant: "silver" },
-  spirit: { family: "flame_spirit" as PetSkinId },
-  spirit_purple: { family: "flame_spirit" as PetSkinId, variant: "purple" },
-  stalagmite: { family: "stalagmite" as PetSkinId },
-  stalagmite_green: { family: "stalagmite" as PetSkinId, variant: "green" },
-  stalagmite_purple: { family: "stalagmite" as PetSkinId, variant: "purple" },
-  tome: { family: "flying_tome" as PetSkinId },
-  void_cat: { family: "void_cat" as PetSkinId },
-};
+interface MonsterFamily {
+  family: PetSkinId;
+  variant?: keyof typeof VARIANT_MESSAGES;
+}
+
+const MONSTER_FAMILIES = {
+  bat: { family: skin("essence_bat") },
+  bat_blue: { family: skin("essence_bat"), variant: "blue" },
+  cat: { family: skin("void_cat") },
+  cat_void: { family: skin("void_cat") },
+  copperclod: { family: skin("oreclod"), variant: "copper" },
+  enchantern: { family: skin("enchantern") },
+  enchantern_blue: { family: skin("enchantern"), variant: "blue" },
+  goldclod: { family: skin("oreclod"), variant: "gold" },
+  griffin_statue: { family: skin("griffin_statue") },
+  ironclod: { family: skin("oreclod"), variant: "iron" },
+  mimic: { family: skin("mimic") },
+  mistrilclod: { family: skin("oreclod"), variant: "mistril" },
+  mushroom: { family: skin("mushroom") },
+  mushroom_blue: { family: skin("mushroom"), variant: "blue" },
+  mushroom_green: { family: skin("mushroom"), variant: "green" },
+  mushroom_purple: { family: skin("mushroom"), variant: "purple" },
+  rock_stack: { family: skin("rock_stack") },
+  rockclod: { family: skin("rockclod") },
+  rockclod_blue: { family: skin("rockclod"), variant: "blue" },
+  rockclod_green: { family: skin("rockclod"), variant: "green" },
+  rockclod_purple: { family: skin("rockclod"), variant: "purple" },
+  rockclod_red: { family: skin("rockclod"), variant: "red" },
+  sapling: { family: skin("sapling") },
+  sapling_blue: { family: skin("sapling"), variant: "blue" },
+  sapling_cool: { family: skin("sapling"), variant: "cool" },
+  sapling_orange: { family: skin("sapling"), variant: "orange" },
+  sapling_orange_mini: { family: skin("sapling"), variant: "orange_mini" },
+  sapling_pink: { family: skin("sapling"), variant: "pink" },
+  sapling_purple: { family: skin("sapling"), variant: "purple" },
+  silverclod: { family: skin("oreclod"), variant: "silver" },
+  spirit: { family: skin("flame_spirit") },
+  spirit_purple: { family: skin("flame_spirit"), variant: "purple" },
+  stalagmite: { family: skin("stalagmite") },
+  stalagmite_green: { family: skin("stalagmite"), variant: "green" },
+  stalagmite_purple: { family: skin("stalagmite"), variant: "purple" },
+  tome: { family: skin("flying_tome") },
+  void_cat: { family: skin("void_cat") },
+} satisfies Record<string, MonsterFamily>;
+
+/** The monster ids named by {@link MONSTER_FAMILIES}. */
+export type NamedMonsterId = keyof typeof MONSTER_FAMILIES;
+export type NamedLocationId = keyof typeof LOCATION_MESSAGES;
+export type NamedWaterType = keyof typeof WATER_MESSAGES;
 
 /** Scroll bundle item ids, keyed by the English `bundleName` on `scroll_bundle` sources. */
-export const SCROLL_BUNDLE_ITEM_IDS: Record<string, ItemId> = {
-  "Chess Piece Scroll Bundle": "chess_scroll_bundle" as ItemId,
-  "Fall Crop Sign Scroll Bundle": "fall_crop_sign_scroll_bundle" as ItemId,
-  "Lovely Cottage Scroll Bundle": "lovely_cottage_scroll_bundle" as ItemId,
-  "Rustic Cabin Scroll Bundle": "rustic_cabin_scroll_bundle" as ItemId,
-  "Spring Crop Sign Scroll Bundle": "spring_crop_sign_scroll_bundle" as ItemId,
-  "Summer Crop Sign Scroll Bundle": "summer_crop_sign_scroll_bundle" as ItemId,
-  "Winter Crop Sign Scroll Bundle": "winter_crop_sign_scroll_bundle" as ItemId,
-};
+export const SCROLL_BUNDLE_ITEM_IDS = {
+  "Chess Piece Scroll Bundle": item("chess_scroll_bundle"),
+  "Fall Crop Sign Scroll Bundle": item("fall_crop_sign_scroll_bundle"),
+  "Lovely Cottage Scroll Bundle": item("lovely_cottage_scroll_bundle"),
+  "Rustic Cabin Scroll Bundle": item("rustic_cabin_scroll_bundle"),
+  "Spring Crop Sign Scroll Bundle": item("spring_crop_sign_scroll_bundle"),
+  "Summer Crop Sign Scroll Bundle": item("summer_crop_sign_scroll_bundle"),
+  "Winter Crop Sign Scroll Bundle": item("winter_crop_sign_scroll_bundle"),
+} satisfies Record<string, ItemId>;
 
 /**
  * The only IDs a generated source may reference without a name. Neither the game nor the pipeline
@@ -144,28 +165,22 @@ export function buildAnimalNames(locale: LocaleCode): Partial<Record<string, str
  * English `bundleName`, not the bundle's item id, so this maps one to the other until the pipeline
  * emits the id itself.
  */
-export function buildBundleNames(locale: LocaleCode): Partial<Record<string, string>> {
-  return Object.fromEntries(
-    Object.entries(SCROLL_BUNDLE_ITEM_IDS).map(([name, id]) => [
-      name,
-      getName("items", id, locale),
-    ]),
-  );
+export function buildBundleNames(
+  locale: LocaleCode,
+): Record<keyof typeof SCROLL_BUNDLE_ITEM_IDS, string> {
+  return recordMap(SCROLL_BUNDLE_ITEM_IDS, (id) => getName("items", id, locale));
 }
 
-export function buildLocationNames(locale: LocaleCode): Partial<Record<string, string>> {
-  return Object.fromEntries(
-    Object.entries(LOCATION_MESSAGES).map(([id, message]) => [id, message({}, { locale })]),
-  );
+export function buildLocationNames(locale: LocaleCode): Record<NamedLocationId, string> {
+  return recordMap(LOCATION_MESSAGES, (message) => message({}, { locale }));
 }
 
-export function buildMonsterNames(locale: LocaleCode): Partial<Record<string, string>> {
-  return Object.fromEntries(
-    Object.entries(MONSTER_FAMILIES).map(([id, { family, variant }]) => {
-      const monster = getName("pets/skins", family, locale);
-      return [id, variant ? VARIANT_MESSAGES[variant]({ monster }, { locale }) : monster];
-    }),
-  );
+export function buildMonsterNames(locale: LocaleCode): Record<NamedMonsterId, string> {
+  const families: Record<NamedMonsterId, MonsterFamily> = MONSTER_FAMILIES;
+  return recordMap(families, ({ family, variant }) => {
+    const monster = getName("pets/skins", family, locale);
+    return variant ? VARIANT_MESSAGES[variant]({ monster }, { locale }) : monster;
+  });
 }
 
 /** Placeholder names for {@link UNNAMED_SOURCE_IDS}, identical in every locale. */
@@ -173,10 +188,8 @@ export function buildUnnamedSourceNames(ids: readonly string[]): Record<string, 
   return Object.fromEntries(ids.map((id) => [id, titleCase(id)]));
 }
 
-export function buildWaterNames(locale: LocaleCode): Partial<Record<string, string>> {
-  return Object.fromEntries(
-    Object.entries(WATER_MESSAGES).map(([id, message]) => [id, message({}, { locale })]),
-  );
+export function buildWaterNames(locale: LocaleCode): Record<NamedWaterType, string> {
+  return recordMap(WATER_MESSAGES, (message) => message({}, { locale }));
 }
 
 function titleCase(s: string): string {
