@@ -69,8 +69,6 @@ import type { Localizer } from "./localize.js";
 import type { ParsedGameData } from "./parse-fiddle.js";
 
 export interface AssembleOptions {
-  /** ISO timestamp stamped into `generatedAt`. */
-  generatedAt: string;
   /** Exact diagnostics this run may raise. Defaults to the installed game's reviewed list. */
   reviewedDiagnostics?: readonly ReviewedPipelineDiagnostic[];
   /** Hand-reviewed acquisition sources. Defaults to the installed game's reviewed overrides. */
@@ -325,7 +323,6 @@ export function assembleTrackerData(
     cosmeticSlots,
     dates,
     festivals,
-    generatedAt: options.generatedAt,
     items,
     mines,
     museum,

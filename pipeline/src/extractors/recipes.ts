@@ -12,6 +12,7 @@ import {
   minesBiomeId,
   scrollTargetOf,
 } from "../extractor-helpers.js";
+import { compareStrings } from "../ordering.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 import { buildRequirementDefinitions, parseRequirements } from "../requirements.js";
 import { resolveToVisibility } from "./visibility/requirement-resolver.js";
@@ -151,7 +152,7 @@ export function extractRecipes(
   for (const [recipeId, group] of grouped) {
     const memberItemIds = group
       .map((e) => e.itemId as ItemId)
-      .toSorted((a, b) => a.localeCompare(b));
+      .toSorted((a, b) => compareStrings(a, b));
     recipeMemberItems.set(recipeId as RecipeId, memberItemIds);
 
     const defaultFlags = group.map((e) => e.isDefault);
@@ -195,7 +196,7 @@ export function extractRecipes(
     }
   }
   const countParts = [...sourceTypeCounts.entries()]
-    .toSorted(([a], [b]) => a.localeCompare(b))
+    .toSorted(([a], [b]) => compareStrings(a, b))
     .map(([type, count]) => `${count} ${type}`);
   console.log(
     `  Recipes: ${totalRecipes} total, ${withDefault} default, ${withSources} with acquired sources (${countParts.join(", ")})`,
@@ -938,9 +939,9 @@ function collectWishingWellSources(
 }
 
 function compareRecipeSources(a: AcquisitionSource, b: AcquisitionSource): number {
-  const cmp = a.type.localeCompare(b.type);
+  const cmp = compareStrings(a.type, b.type);
   if (cmp !== 0) return cmp;
-  return sourceKey(a).localeCompare(sourceKey(b));
+  return compareStrings(sourceKey(a), sourceKey(b));
 }
 
 function deduplicateSources(sources: AcquisitionSource[]): AcquisitionSource[] {
@@ -957,11 +958,11 @@ function deduplicateSources(sources: AcquisitionSource[]): AcquisitionSource[] {
 }
 
 function deriveRecipeNameSource(recipeId: string, group: RawRecipeEntry[]): RecipeNameSource {
-  const uniqueNames = [...new Set(group.map((e) => e.name))].toSorted();
+  const uniqueNames = [...new Set(group.map((e) => e.name))].toSorted(compareStrings);
   if (uniqueNames.length === 1) {
     return {
       englishName: uniqueNames[0],
-      itemId: group.map(({ itemId }) => itemId).toSorted()[0] as ItemId,
+      itemId: group.map(({ itemId }) => itemId).toSorted(compareStrings)[0] as ItemId,
     };
   }
 
@@ -976,7 +977,7 @@ function deriveRecipeNameSource(recipeId: string, group: RawRecipeEntry[]): Reci
       const representative = group
         .filter(({ name }) => name === plainBed)
         .map(({ itemId }) => itemId)
-        .toSorted()[0];
+        .toSorted(compareStrings)[0];
       return { englishName: `${prefix} Bed`, itemId: representative as ItemId };
     }
   }
@@ -1028,7 +1029,7 @@ function resolveStockVisibility(
 
 function sourceKey(s: AcquisitionSource): string {
   return JSON.stringify(
-    Object.fromEntries(Object.entries(s).toSorted(([a], [b]) => a.localeCompare(b))),
+    Object.fromEntries(Object.entries(s).toSorted(([a], [b]) => compareStrings(a, b))),
   );
 }
 
