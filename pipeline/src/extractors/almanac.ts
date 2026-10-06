@@ -1,6 +1,7 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { expectArray, expectStringArray } from "../data-shapes.js";
+import { PipelineDiagnostics } from "../diagnostics.js";
 import { forEachItem } from "../extractor-helpers.js";
 import { localizeField } from "../localize.js";
 import { sourceFileFor } from "../parse-fiddle.js";
@@ -45,6 +46,7 @@ export interface RawAlmanacCategory {
 export function extractAlmanac(
   fiddle: ParsedGameData,
   assetsDir: string,
+  sharedDiagnostics?: PipelineDiagnostics,
 ): {
   almanac: TrackerData["almanac"];
   iconSpritesByItemId: ItemIconSpriteIndex;
@@ -52,6 +54,7 @@ export function extractAlmanac(
   localeNames: Record<LocaleCode, Record<ItemId, string>>;
   localizationReport: ItemLocalizationReport;
 } {
+  const diagnostics = sharedDiagnostics ?? new PipelineDiagnostics();
   const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
     LocaleCode,
     Record<ItemId, string>
@@ -66,11 +69,16 @@ export function extractAlmanac(
     localeNames,
     localizationReport: { fallbackItemIds, nonLocalizableItems: [] },
   };
-  if (!fiddle.items) return emptyResult;
 
   const rawCategories = readAlmanacCategories(fiddle);
-  if (rawCategories.length === 0) {
-    console.warn("  Warning: No almanac categories found in UI data, falling back to empty");
+  if (!fiddle.items || rawCategories.length === 0) {
+    diagnostics.add({
+      fieldPath: "ui.menus.sub_menus.almanac.categories",
+      kind: "empty-almanac",
+      message: "No almanac items or categories found in game data",
+      targetId: "almanac",
+    });
+    if (!sharedDiagnostics) diagnostics.validate();
     return emptyResult;
   }
 

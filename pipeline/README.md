@@ -231,6 +231,19 @@ cosmetics, pet cosmetic sets, and pet skins. Recipe sources are collected separa
 | `reviewed-references.ts`                    | The explicit, reviewed IDs no parsed table defines.                                                                                                |
 | `reference-index.ts`, `validate-sources.ts` | Index the registries, then throw `AcquisitionSourceValidationError` on unknown references, bad fields, or recipe cycles in the final tracker data. |
 
+### Data-quality diagnostics
+
+Recipe scroll targets, letter triggers, recipe defaults & ID collisions, almanac categories, Mines
+forageable mappings, and reviewed override targets feed one run-scoped `PipelineDiagnostics` list.
+`main.ts` validates it before serializing or publishing outputs; standalone extractors validate
+before returning. Missing targets & obsolete acquisition overrides are always fatal.
+
+`reviewed-diagnostics.ts` contains exact exceptions keyed by kind, field path, target ID, & message,
+each with a reason & native-data evidence. Unknown diagnostics fail; exceptions no longer observed
+also fail, so game updates cannot silently retain stale suppressions. The current exception is Void
+Herb’s biome-less tag in `items/other/materials.toml`, whose existing reviewed override provides its
+Mines acquisition source. Beta localization fallbacks remain separate from data-quality diagnostics.
+
 ### Visibility
 
 The `extractors/visibility/` modules compute spoiler gating.

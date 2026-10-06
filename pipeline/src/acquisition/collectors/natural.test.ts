@@ -18,6 +18,15 @@ function makeFiddle(overrides: Record<string, unknown> = {}) {
 }
 
 describe("collectNaturalSources", () => {
+  it("rejects mines forageables without a biome", () => {
+    const fiddle = makeFiddle({
+      items: { other: { materials: { mystery_herb: { tags: ["mines_forageable"] } } } },
+    });
+    expect(() => {
+      collectNaturalSources(fiddle, new ItemSourceAccumulator());
+    }).toThrow(/biome-less-forageable.*mystery_herb/);
+  });
+
   describe("fish", () => {
     it("adds a fish source with season, weather, time, and water type", () => {
       const fiddle = makeFiddle({
