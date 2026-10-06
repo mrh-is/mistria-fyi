@@ -4,13 +4,13 @@
 
   let {
     dialog = true,
-    onclose,
+    onClose,
     withHeaderAction = false,
-  }: { dialog?: boolean; onclose: () => void; withHeaderAction?: boolean } = $props();
+  }: { dialog?: boolean; onClose: () => void; withHeaderAction?: boolean } = $props();
 </script>
 
 <button type="button">Outside before</button>
-<FoldoutPanel {dialog} id="harness-panel" title="Harness" {onclose}>
+<FoldoutPanel {dialog} id="harness-panel" title="Harness" {onClose}>
   {#snippet headerActions()}
     {#if withHeaderAction}
       <button type="button">Header action</button>
