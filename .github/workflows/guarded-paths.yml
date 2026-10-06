@@ -1,0 +1,40 @@
+name: Guarded paths
+
+# Vendored & generated files change only in PRs that say so: `shadcn-update` for
+# src/lib/components/ui/, `generated-data` for src/lib/data/tracker-data.json (AGENTS.md §5).
+# scripts/check-guarded-paths.ts holds the rules, including renames out of a guarded path.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  guarded-paths:
+    name: Guarded paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          gh api --paginate "repos/$REPOSITORY/pulls/$PR_NUMBER/files" --jq '.[]' | jq -s . > "$RUNNER_TEMP/files.json"
+          node scripts/check-guarded-paths.ts "$RUNNER_TEMP/files.json"

@@ -188,6 +188,13 @@ These rules prevent accidental damage to generated or vendored code:
 - Transfer encoding uses deterministic orderings derived from generated tracker data. Ordering &
   schema changes require compatibility tests & deliberate versioning.
 - **`src/lib/components/ui/`** is vendored shadcn-svelte code. Do not manually edit.
+- Both guarded paths above are enforced: a Claude Code `PreToolUse` hook
+  (`scripts/guard-generated-paths.ts`) refuses agent edits, CODEOWNERS routes them to the owner, and
+  the "Guarded paths" workflow fails a PR that changes them without the `shadcn-update` or
+  `generated-data` label. Codex has no equivalent hook; its rules only gate shell commands.
+- `.claude/settings.json` and `.codex/rules/default.rules` allow the same `pnpm` scripts;
+  `tests/agent-permissions.test.ts` fails when a `package.json` script is in neither the allowlists
+  nor its explicit exclusion list.
 - Category pages are layout compositors. Shared or stateful concerns belong in focused components.
 - **Componentize along logical lines.** Break complex components into sub-components that each own
   one concern (a checkbox, a sprite slot, a source card), even when they have only one call site.
