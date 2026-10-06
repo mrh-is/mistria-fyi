@@ -40,10 +40,6 @@ abstract class SourceAccumulator<TargetId extends string> {
     }
   }
 
-  append(targetId: TargetId, source: Source, provenance?: SourceProvenance): void {
-    this.add(targetId, source, provenance);
-  }
-
   entries(): [TargetId, Source[]][] {
     return [...this.#sourcesByTarget.entries()]
       .toSorted(([left], [right]) => left.localeCompare(right))
