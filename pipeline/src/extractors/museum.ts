@@ -1,6 +1,6 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { expectArray, expectStringArray } from "../data-shapes.js";
+import { expectArray, expectNonEmptyString, expectStringArray } from "../data-shapes.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -60,7 +60,11 @@ export function extractMuseum(
       });
 
       sets[setId as MuseumWingSetId] = { items: items as ItemId[] };
-      const name = (set.name as string | undefined) ?? setId;
+      const name = expectNonEmptyString(set.name, {
+        entityId: `museum_wings.${wingId}.sets.${setId}`,
+        fieldPath: "name",
+        sourcePath: sourceFile,
+      });
       const key = `${wingId}/sets/${setId}`;
       const { values } = localizer.localizeField({
         category: `museum_wings/${wingId}/sets`,
@@ -73,7 +77,11 @@ export function extractMuseum(
     }
 
     result[wingId as MuseumWingId] = { sets };
-    const name = (wing.name as string | undefined) ?? wingId;
+    const name = expectNonEmptyString(wing.name, {
+      entityId: `museum_wings.${wingId}`,
+      fieldPath: "name",
+      sourcePath: sourceFile,
+    });
     const { values } = localizer.localizeField({
       category: "museum_wings",
       classification: "localizable",

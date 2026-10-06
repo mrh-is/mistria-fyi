@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { stubLocalizer } from "../test-helpers.js";
+import { makeFiddle, stubLocalizer } from "../test-helpers.js";
 import { extractQuests } from "./quests.js";
 
 import type { QuestId, RecipeId } from "#lib/types/tracker-data.js";
@@ -31,7 +31,7 @@ describe("extractQuests", () => {
 
   it("maps a populated tracked quest with its name, Villager, and itemId", () => {
     vi.spyOn(console, "log").mockReturnValue(undefined);
-    const fiddle = {
+    const fiddle = makeFiddle({
       quests: {
         fetch_quests: {
           meet_juniper: {
@@ -41,7 +41,7 @@ describe("extractQuests", () => {
           },
         },
       },
-    } as unknown as ParsedGameData;
+    });
 
     const { localeNames, quests } = extractQuests(fiddle, localizer);
     expect(quests).toEqual({
@@ -66,7 +66,7 @@ describe("extractQuests", () => {
 
   it("maps a heart quest with villager and heartLevel 0 (stamped later by visibility)", () => {
     vi.spyOn(console, "log").mockReturnValue(undefined);
-    const fiddle = {
+    const fiddle = makeFiddle({
       quests: {
         heart_quests: {
           tall_dark_and_mysterious: {
@@ -76,7 +76,7 @@ describe("extractQuests", () => {
           },
         },
       },
-    } as unknown as ParsedGameData;
+    });
 
     expect(extractQuests(fiddle, localizer).quests).toEqual({
       ...emptyQuests,
@@ -92,7 +92,7 @@ describe("extractQuests", () => {
 
   it("extracts villager from stage query for pregnancy quests and sets heartLevel to 10", () => {
     vi.spyOn(console, "log").mockReturnValue(undefined);
-    const fiddle = {
+    const fiddle = makeFiddle({
       quests: {
         heart_quests: {
           adeline_pregnancy_request: {
@@ -101,7 +101,7 @@ describe("extractQuests", () => {
           },
         },
       },
-    } as unknown as ParsedGameData;
+    });
 
     expect(extractQuests(fiddle, localizer).quests).toEqual({
       ...emptyQuests,
@@ -199,4 +199,64 @@ describe("extractQuests", () => {
       recipeId: "some_dish",
     });
   });
+
+  it.each(["recipe_scroll", "crafting_scroll"])(
+    "resolves a fetch quest %s reward item to its recipe ID",
+    (scrollField) => {
+      const fiddle = makeFiddle({
+        quests: {
+          fetch_quests: {
+            furniture_delivery: {
+              name: "Furniture Delivery",
+              npc_for_icon: "eiland",
+              rewards: [{ [scrollField]: "blue_chair" }],
+              stages: [{ requirements: { has_item: "wood" } }],
+            },
+          },
+        },
+      });
+      const recipeIdByItemId = new Map([["blue_chair", "sapling_chair" as RecipeId]]);
+
+      expect(extractQuests(fiddle, localizer, recipeIdByItemId).quests.fetch).toMatchObject({
+        furniture_delivery: { rewardRecipeId: "sapling_chair" },
+      });
+    },
+  );
+
+  it.each(["recipe_scroll", "crafting_scroll"])(
+    "rejects an unresolved fetch quest %s reward",
+    (scrollField) => {
+      const fiddle = makeFiddle({
+        quests: {
+          fetch_quests: {
+            furniture_delivery: {
+              name: "Furniture Delivery",
+              npc_for_icon: "eiland",
+              rewards: [{ [scrollField]: "unknown_chair" }],
+              stages: [{ requirements: { has_item: "wood" } }],
+            },
+          },
+        },
+      });
+
+      expect(() => extractQuests(fiddle, localizer, new Map())).toThrow(
+        `Fetch quest "furniture_delivery" rewards ${scrollField} "unknown_chair" with no matching recipe in quests.toml`,
+      );
+    },
+  );
+
+  it.each(["fetch_quests", "heart_quests"])(
+    "rejects a %s quest without a villager instead of using its quest ID",
+    (group) => {
+      const quest = {
+        name: "Unknown Villager",
+        stages: [{ requirements: { has_item: "wood" } }],
+      };
+      const fiddle = makeFiddle({ quests: { [group]: { no_villager: quest } } });
+
+      expect(() => extractQuests(fiddle, localizer)).toThrow(
+        `Quest "no_villager" has no villager in quests.toml`,
+      );
+    },
+  );
 });

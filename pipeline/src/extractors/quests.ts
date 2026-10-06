@@ -6,6 +6,7 @@ import {
   QUEST_TYPE_MAP,
   TRACKED_QUEST_GROUPS,
 } from "../extractor-helpers.js";
+import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 import type {
@@ -61,22 +62,35 @@ export function extractQuests(
     for (const locale of LOCALE_CODES) localeNames[locale][questId as QuestId] = values[locale];
 
     if (outputType === "fetch") {
-      const villager = quest.npc_for_icon as string | undefined;
+      const villager = extractQuestVillager(
+        questId,
+        quest,
+        sourceFileFor(fiddle, `quests.${tomlType}`),
+      );
       const itemId = extractFetchQuestItemId(questId, quest);
-      const rewardRecipeId = extractRewardRecipeId(quest);
+      const rewardRecipeId = extractRewardRecipeId(
+        questId,
+        quest,
+        recipeIdByItemId,
+        sourceFileFor(fiddle, `quests.${tomlType}`),
+      );
       result.fetch[questId as QuestId] = {
         itemId: itemId as ItemId,
-        villager: (villager ?? questId) as VillagerId,
-        ...(rewardRecipeId ? { rewardRecipeId: rewardRecipeId as RecipeId } : {}),
+        villager,
+        ...(rewardRecipeId ? { rewardRecipeId } : {}),
         sources: [],
       };
     } else if (outputType === "heart") {
-      const villager = quest.npc_for_icon as string | undefined;
+      const villager = extractQuestVillager(
+        questId,
+        quest,
+        sourceFileFor(fiddle, `quests.${tomlType}`),
+      );
       const isPregnancy = questId.endsWith("_pregnancy_request");
       result.heart[questId as QuestId] = {
         heartLevel: isPregnancy ? 10 : 0,
         sources: [],
-        villager: (villager ?? extractStageQueryVillager(quest) ?? questId) as VillagerId,
+        villager,
       };
     } else if (outputType === "cooking") {
       const recipeId = extractCookingQuestRecipeId(questId, quest, recipeIdByItemId);
@@ -119,13 +133,48 @@ function extractFetchQuestItemId(questId: string, quest: Record<string, unknown>
   throw new Error(`Fetch quest "${questId}" has no has_item requirement in any stage`);
 }
 
-function extractRewardRecipeId(quest: Record<string, unknown>): string | undefined {
+function extractRewardRecipeId(
+  questId: string,
+  quest: Record<string, unknown>,
+  recipeIdByItemId: Map<string, RecipeId> | undefined,
+  sourceFile: string,
+): RecipeId | undefined {
   const rewards = quest.rewards as Record<string, unknown>[] | undefined;
   if (!Array.isArray(rewards)) return undefined;
   for (const reward of rewards) {
-    if (typeof reward.recipe_scroll === "string") return reward.recipe_scroll;
+    let field: "crafting_scroll" | "recipe_scroll";
+    if ("recipe_scroll" in reward) {
+      field = "recipe_scroll";
+    } else if ("crafting_scroll" in reward) {
+      field = "crafting_scroll";
+    } else {
+      continue;
+    }
+    const itemId = reward[field];
+    if (typeof itemId !== "string" || itemId.length === 0) {
+      throw new TypeError(`Fetch quest "${questId}" has invalid ${field} in ${sourceFile}`);
+    }
+    const recipeId = recipeIdByItemId?.get(itemId);
+    if (!recipeId) {
+      throw new Error(
+        `Fetch quest "${questId}" rewards ${field} "${itemId}" with no matching recipe in ${sourceFile}`,
+      );
+    }
+    return recipeId;
   }
   return undefined;
+}
+
+function extractQuestVillager(
+  questId: string,
+  quest: Record<string, unknown>,
+  sourceFile: string,
+): VillagerId {
+  const villager = quest.npc_for_icon ?? extractStageQueryVillager(quest);
+  if (typeof villager !== "string" || villager.length === 0) {
+    throw new Error(`Quest "${questId}" has no villager in ${sourceFile}`);
+  }
+  return villager as VillagerId;
 }
 
 function extractStageQueryVillager(quest: Record<string, unknown>): string | undefined {

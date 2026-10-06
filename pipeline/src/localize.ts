@@ -31,6 +31,8 @@ export interface LocalizeFieldInput {
   id: string;
   /** Set false when a bulk extractor emits its own deterministic aggregate fallback report. */
   logMissing?: boolean;
+  /** Require at least one game source cache to contain the expected English value. */
+  requireEnglishSource?: boolean;
 }
 
 export interface LocalizeFieldResult {
@@ -131,12 +133,18 @@ function localizeField(loadTable: TableLoader, input: LocalizeFieldInput): Local
     );
   }
 
+  if (input.requireEnglishSource && input.expectedEnglishValue === undefined) {
+    throw new Error(`Missing expected English value for source-backed key "${key}"`);
+  }
+
+  let hasEnglishSource = false;
   for (const [gameLanguage, locale] of Object.entries(GAME_LANGUAGE_TO_LOCALE)) {
     if (locale === "en") continue;
 
     const table = loadTable(gameLanguage as GameLanguageCode);
     if (input.expectedEnglishValue !== undefined) {
       const sourceEnglish = loadTable(gameLanguage as GameLanguageCode, "source_caches").get(key);
+      if (sourceEnglish !== undefined) hasEnglishSource = true;
       // A wholly absent beta entry can still fall back to English. A translation requires its
       // matching English baseline, and an existing baseline must never describe another ordinal.
       if (
@@ -162,6 +170,10 @@ function localizeField(loadTable: TableLoader, input: LocalizeFieldInput): Local
     } else {
       values[locale] = translated;
     }
+  }
+
+  if (input.requireEnglishSource && !hasEnglishSource) {
+    throw new Error(`Missing English source cache for "${key}"`);
   }
 
   return { fallbackLocales, values };
