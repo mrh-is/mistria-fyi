@@ -2,3 +2,8 @@ name = "mistria-fyi"
 pages_build_output_dir = "./build"
 compatibility_flags = ["nodejs_compat"]
 compatibility_date = "2025-01-01"
+
+# Matches the production Pages project's binding; wrangler.toml is the source of truth for bindings.
+[[kv_namespaces]]
+binding = "FEEDBACK_EMAIL_STORE"
+id = "f5baf1121c7342eda70e9dc600c21565"
