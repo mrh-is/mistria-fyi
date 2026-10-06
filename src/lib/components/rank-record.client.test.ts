@@ -1,7 +1,7 @@
 import { fireEvent, render } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 
-import RankRecordHarness from "./rank-record.test-harness.svelte";
+import RankRecordHarness from "#lib/components/rank-record.test-harness.svelte";
 
 describe("RankRecord", () => {
   it.each([

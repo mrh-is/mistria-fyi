@@ -19,14 +19,14 @@ function canFocus(element: HTMLElement): boolean {
 }
 
 /** Contain panel keyboard navigation; the caller owns initial focus and restoration. */
-export function trapFocus(onclose: () => void): Attachment<HTMLElement> {
+export function trapFocus(onClose: () => void): Attachment<HTMLElement> {
   return (element) => {
     traps.push(element);
     function handleKeydown(event: KeyboardEvent): void {
       if (event.defaultPrevented || traps.at(-1) !== element) return;
       if (event.key === "Escape") {
         event.preventDefault();
-        onclose();
+        onClose();
         return;
       }
       if (event.key !== "Tab") return;

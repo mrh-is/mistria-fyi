@@ -1,6 +1,9 @@
-<script lang="ts" generics="ItemId extends AnyId">
+<script lang="ts" generics="Id extends AnyId">
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SpoilerSection from "#lib/components/spoiler-section.svelte";
+  import TrackerEmptyState from "#lib/components/tracker-empty-state.svelte";
+  import TrackerRowList from "#lib/components/tracker-row-list.svelte";
+  import TrackerRow from "#lib/components/tracker-row.svelte";
   import { trackerData } from "#lib/data/index.js";
   import { animalNameId, getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
@@ -8,15 +11,10 @@
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
-  import TrackerEmptyState from "./tracker-empty-state.svelte";
-  import TrackerRowList from "./tracker-row-list.svelte";
-  import TrackerRow from "./tracker-row.svelte";
-
+  import type { AnimalSubcategoryProps } from "#lib/components/animal-subcategory.types.js";
   import type { AnimalId, AnyId } from "#lib/types/tracker-data.js";
 
-  import type { AnimalSubcategoryProps } from "./animal-subcategory.types.js";
-
-  let props: AnimalSubcategoryProps<ItemId> = $props();
+  let props: AnimalSubcategoryProps<Id> = $props();
 
   let animals = $derived(
     Object.entries(trackerData.animals)

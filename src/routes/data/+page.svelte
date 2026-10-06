@@ -19,12 +19,6 @@
   let importOpen = $state(page.url.searchParams.get("section") === "import");
   let transferOpen = $state(page.url.searchParams.get("section") === "transfer");
 
-  function goBack(event: MouseEvent): void {
-    if (history.length <= 1) return;
-    event.preventDefault();
-    history.back();
-  }
-
   function scrollToTransfer(): void {
     void openThenScroll(
       () => {
@@ -61,7 +55,7 @@
   });
 </script>
 
-<PageHeader title={m.data_title()} backLabel={m.common_go_back()} onback={goBack} />
+<PageHeader title={m.data_title()} backLabel={m.common_go_back()} historyBack />
 
 <div class="data-page">
   <p class="data-page__intro">{m.data_intro()}</p>

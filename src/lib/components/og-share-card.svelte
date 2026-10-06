@@ -1,16 +1,8 @@
 <script lang="ts">
-  import CategoryCard from "#lib/components/category-card.svelte";
+  import CategoryStripe from "#lib/components/category-stripe.svelte";
   import * as m from "#lib/paraglide/messages.js";
 
-  import type { CategoryProgress } from "#lib/engine/progress.js";
-
   let { total }: { total: number } = $props();
-
-  let progress: CategoryProgress = $derived({
-    completed: 1416,
-    filtered: total - 1416,
-    total,
-  });
 </script>
 
 <div class="og-card">
@@ -19,18 +11,17 @@
     <p>{m.og_share_tagline()}</p>
   </header>
   <div class="stripe-scale">
-    <CategoryCard
-      key="almanac"
+    <CategoryStripe
+      color="fg-green"
+      completed={1416}
+      completedLabel="??"
+      description={m.og_share_description()}
+      href=""
+      icon="all"
       mobileRibbon
-      {progress}
-      displayCompleted="??"
-      displayCategory={{
-        color: "fg-green",
-        description: m.og_share_description(),
-        href: "",
-        icon: "all",
-        name: m.home_everything_label(),
-      }}
+      name={m.home_everything_label()}
+      {total}
+      trackedTotal={total}
     />
   </div>
 </div>

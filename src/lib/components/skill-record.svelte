@@ -11,12 +11,13 @@
 
   import type { SkillId } from "#lib/types/tracker-data.js";
 
-  const SEGMENTS = [
-    { start: 0, end: 15 },
-    { start: 15, end: 30 },
-    { start: 30, end: 45 },
-    { start: 45, end: 60 },
-  ];
+  /** The level bar's quarters, each spanning an equal share of `MAX_SKILL_LEVEL`. */
+  const SEGMENT_COUNT = 4;
+  const SEGMENT_SPAN = MAX_SKILL_LEVEL / SEGMENT_COUNT;
+  const SEGMENTS = Array.from({ length: SEGMENT_COUNT }, (_, index) => ({
+    start: index * SEGMENT_SPAN,
+    end: (index + 1) * SEGMENT_SPAN,
+  }));
 
   let { compact = false, id, name }: { compact?: boolean; id: SkillId; name: string } = $props();
 

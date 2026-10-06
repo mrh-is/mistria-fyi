@@ -10,15 +10,9 @@
   import { messageParts } from "#lib/utils/message-parts.js";
 
   let aiDisclosureOpen = $state(false);
-
-  function goBack(event: MouseEvent): void {
-    if (history.length <= 1) return;
-    event.preventDefault();
-    history.back();
-  }
 </script>
 
-<PageHeader title={m.about_title()} backLabel={m.common_go_back()} onback={goBack} />
+<PageHeader title={m.about_title()} backLabel={m.common_go_back()} historyBack />
 
 <div class="about-page">
   <!-- eslint-disable local/no-hardcoded-ui-text -- proper nouns (product/person/studio names), same in every locale -->
