@@ -12,8 +12,9 @@
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { getName, nameCollator } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
+  import { getCravingQuest, PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
+  import { isCategoryComplete } from "#lib/engine/progress.js";
   import { recipeDisplayNames } from "#lib/engine/quest-rewards.js";
-  import { getMarriedVillager } from "#lib/engine/relationships.js";
   import { isEntityNameVisible, isVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
@@ -40,12 +41,6 @@
 
   let { locale }: { locale: LocaleCode } = $props();
 
-  const pregnancyQuestIds = new Set(
-    Object.values(trackerData.pregnancyQuestByVillager).filter(
-      (id): id is QuestId => id !== undefined,
-    ),
-  );
-
   const spoilerGuard = createSpoilerGuard();
 
   let redactedStoreIds = $derived(computeRedactedStoreIds(userState.progressionState));
@@ -64,24 +59,8 @@
     );
   }
 
-  function isCravingQuestComplete(): boolean {
-    const marriedVillager = getMarriedVillager(userState.state.completed.villagerRelationships);
-    if (!marriedVillager) return false;
-    if (!(marriedVillager in trackerData.pregnancyQuestByVillager)) return true;
-    if (userState.state.completed.childChoice === "no") return true;
-    const questId = trackerData.pregnancyQuestByVillager[marriedVillager];
-    return questId ? getQuestState(questId) === "completed" : true;
-  }
-
   function isQuestsComplete(): boolean {
-    for (const type of typeOrder) {
-      for (const id of Object.keys(trackerData.quests[type]) as QuestId[]) {
-        if (pregnancyQuestIds.has(id)) continue;
-        if (getQuestState(id) !== "completed") return false;
-      }
-    }
-    if (!isCravingQuestComplete()) return false;
-    return true;
+    return isCategoryComplete("quests", userState.state);
   }
 
   function isQuestTypeComplete(questIds: QuestId[]): boolean {
@@ -160,33 +139,21 @@
   }
 
   let cravingQuestEntry = $derived.by(() => {
-    const marriedVillager = getMarriedVillager(userState.state.completed.villagerRelationships);
-    const isWife = marriedVillager
-      ? marriedVillager in trackerData.pregnancyQuestByVillager
-      : false;
-    const activeQuestId = marriedVillager
-      ? trackerData.pregnancyQuestByVillager[marriedVillager]
-      : undefined;
-
-    const shouldShow =
-      !marriedVillager || (isWife && userState.state.completed.childChoice !== "no");
-
-    const subtitle =
-      activeQuestId && marriedVillager ? getName("villagers", marriedVillager, locale) : undefined;
-
-    const isCompleted = activeQuestId ? getQuestState(activeQuestId) === "completed" : false;
-
+    const craving = getCravingQuest(userState.state.completed);
     return {
       displayName: m.quest_craving_name(),
       heartLevel: 99,
-      id: (activeQuestId ?? "craving_synthetic") as QuestId,
-      isCompleted,
+      id: craving.questId ?? ("craving_synthetic" as QuestId),
+      isCompleted: craving.completed,
       isCraving: true,
       name: m.quest_craving_name(),
       rewardRecipeName: undefined,
-      shouldShow,
-      subtitle,
-      villager: marriedVillager ?? undefined,
+      shouldShow: craving.applicable,
+      subtitle:
+        craving.questId && craving.villager
+          ? getName("villagers", craving.villager, locale)
+          : undefined,
+      villager: craving.villager,
     };
   });
 
@@ -242,7 +209,7 @@
   )}
   {@const chainOrder = trackerData.questOrder[questType] ?? null}
   {@const quests = Object.entries(trackerData.quests[questType])
-    .filter(([id]) => !pregnancyQuestIds.has(id as QuestId))
+    .filter(([id]) => !PREGNANCY_QUEST_IDS.has(id as QuestId))
     .map(([id, q]) => {
       const fetchQuest = questType === "fetch" ? (q as FetchQuest) : undefined;
       const heartQuest = questType === "heart" ? (q as HeartQuest) : undefined;

@@ -9,10 +9,12 @@ import { extractAlmanac, readAlmanacCategories } from "./almanac.js";
 
 import type { AlmanacCategoryId, AlmanacEntry } from "#lib/types/tracker-data.js";
 
+import type { Localizer } from "../localize.js";
+
 const temporaryDirectories: string[] = [];
 
-vi.mock("../localize.js", () => ({
-  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string; id: string }) => {
+const localizer: Localizer = {
+  localizeField: (input) => {
     const fallsBack = input.id === "turnip";
     return {
       fallbackLocales: fallsBack ? ["ja"] : [],
@@ -27,8 +29,8 @@ vi.mock("../localize.js", () => ({
         "zh-Hant": input.englishValue,
       },
     };
-  }),
-}));
+  },
+};
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -81,7 +83,7 @@ tags = ["crop"]
     });
     const fiddle = parseFiddle(assetsDir).data;
 
-    expect(extractAlmanac(fiddle, assetsDir)).toEqual({
+    expect(extractAlmanac(fiddle, localizer)).toEqual({
       almanac: {
         crops: {
           items: [{ itemIds: ["turnip"] }],
@@ -154,7 +156,7 @@ tags = ["furniture"]
     });
     const fiddle = parseFiddle(assetsDir).data;
 
-    const result = extractAlmanac(fiddle, assetsDir);
+    const result = extractAlmanac(fiddle, localizer);
     const cat = result.almanac["furniture" as AlmanacCategoryId];
     const entry = cat.items[0];
 
@@ -189,7 +191,7 @@ tags = ["furniture"]
     });
     const fiddle = parseFiddle(assetsDir).data;
 
-    const result = extractAlmanac(fiddle, assetsDir);
+    const result = extractAlmanac(fiddle, localizer);
     const cat = result.almanac["furniture" as AlmanacCategoryId];
     expect(cat.items).toHaveLength(2);
     const canonicalIds = cat.items.map((e: AlmanacEntry) => e.itemIds[0]).toSorted();
@@ -226,7 +228,7 @@ tags = ["material"]
     });
     const fiddle = parseFiddle(assetsDir).data;
 
-    const result = extractAlmanac(fiddle, assetsDir);
+    const result = extractAlmanac(fiddle, localizer);
 
     expect(result.almanac["fish" as AlmanacCategoryId].items).toEqual([
       { itemIds: ["shell"] },
@@ -268,7 +270,7 @@ tags = ["crop"]
     });
     const fiddle = parseFiddle(assetsDir).data;
 
-    const result = extractAlmanac(fiddle, assetsDir);
+    const result = extractAlmanac(fiddle, localizer);
     const entry = result.almanac["crops" as AlmanacCategoryId].items[0];
     expect(entry.itemIds).toEqual(["turnip"]);
     expect(entry.recipeId).toBeUndefined();
@@ -292,7 +294,7 @@ tags = ["crop"]
     });
     const fiddle = parseFiddle(assetsDir).data;
 
-    expect(() => extractAlmanac(fiddle, assetsDir)).toThrow(
+    expect(() => extractAlmanac(fiddle, localizer)).toThrow(
       'Missing icon_sprite for item "turnip"',
     );
   });
@@ -350,5 +352,5 @@ function createAssetsFixture(files: Record<string, string>): string {
 }
 
 it("rejects an empty almanac instead of emitting empty registries", () => {
-  expect(() => extractAlmanac(makeFiddle({ items: {} }), "assets")).toThrow(/empty-almanac/);
+  expect(() => extractAlmanac(makeFiddle({ items: {} }), localizer)).toThrow(/empty-almanac/);
 });

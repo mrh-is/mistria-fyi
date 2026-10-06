@@ -4,6 +4,7 @@
   import { trackerData } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
   import { celebrateCategory } from "#lib/effects/celebrate.js";
+  import { isCategoryComplete } from "#lib/engine/progress.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { getRenownPresentation } from "#lib/presentation/renown-presentation.js";
@@ -36,9 +37,9 @@
   }
 
   function setRenownWithCelebration(newLevel: number): void {
-    const wasDone = level >= presentation.maxLevel;
+    const wasDone = isCategoryComplete("renown", userState.state);
     userState.setRenown(newLevel);
-    if (!wasDone && userState.state.completed.renown >= presentation.maxLevel) celebrateCategory();
+    if (!wasDone && isCategoryComplete("renown", userState.state)) celebrateCategory();
   }
 </script>
 

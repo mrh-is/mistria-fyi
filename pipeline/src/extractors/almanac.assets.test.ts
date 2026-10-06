@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { evaluateExpressions } from "../evaluate.js";
+import { createAssetsLocalizer } from "../localize.js";
 import { parseFiddle } from "../parse-fiddle.js";
 import { requireGameAssetsDir } from "../test-helpers.js";
 import { extractAlmanac } from "./almanac.js";
@@ -12,7 +13,10 @@ describe("extractAlmanac — v1.0.5 assets", () => {
     const assetsDir = requireGameAssetsDir();
     const fiddle = parseFiddle(assetsDir).data;
     evaluateExpressions(fiddle);
-    const { almanac, localeNames, localizationReport } = extractAlmanac(fiddle, assetsDir);
+    const { almanac, localeNames, localizationReport } = extractAlmanac(
+      fiddle,
+      createAssetsLocalizer(assetsDir),
+    );
     const fish = almanac["fish" as AlmanacCategoryId];
     const furniture = almanac["furniture" as AlmanacCategoryId];
     const materials = almanac["materials" as AlmanacCategoryId];

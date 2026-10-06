@@ -1,28 +1,21 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeFiddle } from "../test-helpers.js";
+import { makeFiddle, stubLocalizer } from "../test-helpers.js";
 import { extractUiStrings, tierKeys } from "./ui-strings.js";
 
-const localizeField = vi.hoisted(() =>
-  vi.fn((_assetsDir: string, input: { englishValue: string; id: string }) => ({
-    fallbackLocales: [],
-    values: {
-      en: input.englishValue,
-      es: input.englishValue,
-      fr: input.englishValue,
-      ja: `JA ${input.englishValue}`,
-      ko: input.englishValue,
-      ru: input.englishValue,
-      "zh-Hans": input.englishValue,
-      "zh-Hant": input.englishValue,
-    },
-  })),
+import type { LocaleCode } from "#lib/types/locale.js";
+
+const localizer = stubLocalizer((input, locale) =>
+  locale === "ja" ? `JA ${input.englishValue}` : undefined,
 );
+const { localizeField } = localizer;
 
-vi.mock("../localize.js", () => ({ localizeField }));
+beforeEach(() => {
+  localizeField.mockClear();
+});
 
-function stubLocalized(perLocale: Partial<Record<string, string>>): void {
-  localizeField.mockImplementationOnce((_assetsDir, input) => ({
+function stubLocalized(perLocale: Partial<Record<LocaleCode, string>>): void {
+  localizeField.mockImplementationOnce((input) => ({
     fallbackLocales: [],
     values: {
       en: input.englishValue,
@@ -43,12 +36,12 @@ describe("extractUiStrings", () => {
     vi.spyOn(console, "log").mockReturnValue(undefined);
     const fiddle = makeFiddle({ misc_local: { crops: "Crops", tier_1: "Tier 1" } });
 
-    const { localeNames } = extractUiStrings(fiddle, "assets", ["tier_1", "crops", "crops"]);
+    const { localeNames } = extractUiStrings(fiddle, localizer, ["tier_1", "crops", "crops"]);
 
     expect(localeNames.en).toEqual({ crops: "Crops", tier_1: "Tier 1" });
     expect(localeNames.ja).toEqual({ crops: "JA Crops", tier_1: "JA Tier 1" });
     expect(localizeField).toHaveBeenCalledTimes(2);
-    expect(localizeField).toHaveBeenCalledWith("assets", {
+    expect(localizeField).toHaveBeenCalledWith({
       category: "misc_local",
       classification: "localizable",
       englishValue: "Crops",
@@ -62,13 +55,13 @@ describe("extractUiStrings", () => {
       misc_local: { fish: "Fish", fishing_and_diving: "Fishing and Diving" },
     });
 
-    const { localeNames } = extractUiStrings(fiddle, "assets", [
+    const { localeNames } = extractUiStrings(fiddle, localizer, [
       { id: "fish", miscLocalKey: "fishing_and_diving" },
     ]);
 
     expect(localeNames.en).toEqual({ fish: "Fishing and Diving" });
     expect(localeNames.ja).toEqual({ fish: "JA Fishing and Diving" });
-    expect(localizeField).toHaveBeenCalledWith("assets", {
+    expect(localizeField).toHaveBeenCalledWith({
       category: "misc_local",
       classification: "localizable",
       englishValue: "Fishing and Diving",
@@ -79,13 +72,13 @@ describe("extractUiStrings", () => {
   it("throws when one id is requested with two misc_local keys", () => {
     const fiddle = makeFiddle({ misc_local: { fish: "Fish", other: "Other" } });
     expect(() =>
-      extractUiStrings(fiddle, "assets", ["fish", { id: "fish", miscLocalKey: "other" }]),
+      extractUiStrings(fiddle, localizer, ["fish", { id: "fish", miscLocalKey: "other" }]),
     ).toThrow(/conflicting misc_local keys/);
   });
 
   it("throws when misc_local lacks the English string", () => {
     const fiddle = makeFiddle({ misc_local: { crops: "Crops" } });
-    expect(() => extractUiStrings(fiddle, "assets", ["song_crystal"])).toThrow(
+    expect(() => extractUiStrings(fiddle, localizer, ["song_crystal"])).toThrow(
       /no English string for UI key "song_crystal"/,
     );
   });
@@ -95,7 +88,7 @@ describe("extractUiStrings", () => {
     stubLocalized({ es: "<he>Casado</he><she>Casada</she><they>Casade</they>" });
     const fiddle = makeFiddle({ misc_local: { married: "Married" } });
 
-    const { localeNames } = extractUiStrings(fiddle, "assets", ["married"]);
+    const { localeNames } = extractUiStrings(fiddle, localizer, ["married"]);
 
     expect(localeNames.es.married).toBe("Casade");
     expect(localeNames.en.married).toBe("Married");
@@ -106,7 +99,7 @@ describe("extractUiStrings", () => {
     stubLocalized({ fr: "Appuyez sur <input_confirm>" });
     const fiddle = makeFiddle({ misc_local: { confirm: "Confirm" } });
 
-    expect(() => extractUiStrings(fiddle, "assets", ["confirm"])).toThrow(
+    expect(() => extractUiStrings(fiddle, localizer, ["confirm"])).toThrow(
       /misc_local\/confirm in fr has inline markup/,
     );
   });
@@ -116,7 +109,7 @@ describe("extractUiStrings", () => {
     stubLocalized({ es: "El museo", fr: "Le musée", ja: "博物館", ru: "Музей" });
     const fiddle = makeFiddle({ misc_local: { the_museum: "The Museum" } });
 
-    const { localeNames } = extractUiStrings(fiddle, "assets", [
+    const { localeNames } = extractUiStrings(fiddle, localizer, [
       { id: "museum", miscLocalKey: "the_museum", stripArticle: true },
     ]);
 
@@ -132,7 +125,7 @@ describe("extractUiStrings", () => {
     stubLocalized({ es: "Almanaque", fr: "L'almanach" });
     const fiddle = makeFiddle({ misc_local: { the_almanac: "The Almanac" } });
 
-    const { localeNames } = extractUiStrings(fiddle, "assets", [
+    const { localeNames } = extractUiStrings(fiddle, localizer, [
       { id: "almanac", miscLocalKey: "the_almanac", stripArticle: true },
     ]);
 

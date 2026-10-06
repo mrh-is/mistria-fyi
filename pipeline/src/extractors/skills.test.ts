@@ -1,30 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeFiddle as makeFiddleBase } from "../test-helpers.js";
+import { makeFiddle as makeFiddleBase, stubLocalizer } from "../test-helpers.js";
 import { extractSkills } from "./skills.js";
-
-vi.mock("../localize.js", () => ({
-  localizeField: vi.fn((_assetsDir: string, input: { englishValue: string; id: string }) => ({
-    fallbackLocales: [],
-    values: {
-      en: input.englishValue,
-      es: input.englishValue,
-      fr: input.englishValue,
-      ja: input.id === "farming" ? "農業" : input.englishValue,
-      ko: input.englishValue,
-      ru: input.englishValue,
-      "zh-Hans": input.englishValue,
-      "zh-Hant": input.englishValue,
-    },
-  })),
-}));
 
 function makeFiddle(overrides: Record<string, unknown> = {}) {
   return makeFiddleBase({ perks: {}, skills: {}, ui: {}, ...overrides });
 }
 
 describe("extractSkills", () => {
-  const assetsDir = "test-assets";
+  const localizer = stubLocalizer((input, locale) =>
+    locale === "ja" && input.id === "farming" ? "農業" : undefined,
+  );
 
   beforeEach(() => {
     vi.spyOn(console, "log").mockReturnValue(undefined);
@@ -32,7 +18,7 @@ describe("extractSkills", () => {
 
   it("returns empty defaults when skills data is absent", () => {
     const fiddle = makeFiddleBase({});
-    const result = extractSkills(fiddle, assetsDir);
+    const result = extractSkills(fiddle, localizer);
     expect(result.skills).toEqual({});
     expect(result.perkTierLevels).toEqual([0, 0, 0, 0, 0]);
   });
@@ -45,7 +31,7 @@ describe("extractSkills", () => {
       },
     });
 
-    const result = extractSkills(fiddle, assetsDir);
+    const result = extractSkills(fiddle, localizer);
     expect(result.skills).toEqual({
       farming: { perkTiers: [{}, {}, {}, {}, {}] },
       mining: { perkTiers: [{}, {}, {}, {}, {}] },
@@ -62,7 +48,7 @@ describe("extractSkills", () => {
       },
     });
 
-    const result = extractSkills(fiddle, assetsDir);
+    const result = extractSkills(fiddle, localizer);
     expect(Object.keys(result.skills)).not.toContain("default");
     expect(Object.keys(result.skills)).toContain("combat");
   });
@@ -74,7 +60,7 @@ describe("extractSkills", () => {
       },
     });
 
-    const result = extractSkills(fiddle, assetsDir);
+    const result = extractSkills(fiddle, localizer);
     expect(result.localeNames.en).toMatchObject({ bug_catching: "Bug Catching" });
   });
 
@@ -94,7 +80,7 @@ describe("extractSkills", () => {
       },
     });
 
-    const result = extractSkills(fiddle, assetsDir);
+    const result = extractSkills(fiddle, localizer);
     expect(result.perkTierLevels).toEqual([0, 5, 15, 30, 50]);
   });
 
@@ -103,7 +89,7 @@ describe("extractSkills", () => {
       skills: { farming: { name: "Farming" } },
     });
 
-    const result = extractSkills(fiddle, assetsDir);
+    const result = extractSkills(fiddle, localizer);
     expect(result.perkTierLevels).toEqual([0, 0, 0, 0, 0]);
   });
 
@@ -129,7 +115,7 @@ describe("extractSkills", () => {
       },
     });
 
-    const result = extractSkills(fiddle, assetsDir);
+    const result = extractSkills(fiddle, localizer);
     expect(result.skills).toEqual({
       farming: {
         perkTiers: [{ green_thumb: {} }, { harvest_moon: {} }, {}, {}, {}],
@@ -154,7 +140,7 @@ describe("extractSkills", () => {
       },
     });
 
-    expect(() => extractSkills(fiddle, assetsDir)).toThrow(
+    expect(() => extractSkills(fiddle, localizer)).toThrow(
       'Perk "nameless_perk" found in skill menu but has no name in perks data',
     );
   });
@@ -177,7 +163,7 @@ describe("extractSkills", () => {
       },
     });
 
-    const result = extractSkills(fiddle, assetsDir);
+    const result = extractSkills(fiddle, localizer);
     expect(result.skills).toEqual({
       mining: {
         perkTiers: [{}, {}, { perk_a: {}, perk_b: {} }, {}, {}],
@@ -192,7 +178,7 @@ describe("extractSkills", () => {
       },
     });
 
-    const result = extractSkills(fiddle, assetsDir);
+    const result = extractSkills(fiddle, localizer);
     expect(result.skills).toEqual({
       fishing: {
         perkTiers: [{}, {}, {}, {}, {}],
@@ -217,7 +203,7 @@ describe("extractSkills", () => {
       },
     });
 
-    const result = extractSkills(fiddle, assetsDir);
+    const result = extractSkills(fiddle, localizer);
     expect(result.skills).toEqual({
       farming: {
         perkTiers: [{ real_perk: {} }, {}, {}, {}, {}],

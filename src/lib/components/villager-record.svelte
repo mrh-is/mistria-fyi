@@ -5,10 +5,13 @@
 
   import { Icon } from "#lib/components/icon/index.js";
   import Spoiler from "#lib/components/spoiler.svelte";
-  import { trackerData } from "#lib/data/index.js";
   import { getName } from "#lib/data/names.js";
   import { celebrateCategory } from "#lib/effects/celebrate.js";
-  import { isVillagerComplete, MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
+  import {
+    isCategoryComplete,
+    isVillagerComplete,
+    MAX_VILLAGER_LEVEL,
+  } from "#lib/engine/progress.js";
   import { getMarriedVillager, relationshipPresentation } from "#lib/engine/relationships.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
@@ -16,7 +19,6 @@
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { seasonLabel, seasonLabelAbbr } from "#lib/utils/format.js";
   import { relationshipLevelColor } from "#lib/utils/palette.js";
-  import { recordKeys } from "#lib/utils/record.js";
   import { page } from "$app/state";
 
   import type {
@@ -110,9 +112,7 @@
   }
 
   function areAllVillagersComplete(): boolean {
-    return recordKeys(trackerData.villagers).every((villagerId) =>
-      isVillagerComplete(villagerId, userState.state.completed),
-    );
+    return isCategoryComplete("villagers", userState.state);
   }
 
   function mutateWithCelebration(mutate: () => void): void {
