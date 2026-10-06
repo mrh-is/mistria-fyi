@@ -72,7 +72,7 @@
 </script>
 
 {#if total > 0}
-  <p class="text-base font-medium text-green-800 dark:text-green-200">
+  <p class="text-base font-medium text-(--fg-green)">
     {kind === "import"
       ? m.merge_imported_from({ files: filesUsed.join(", ") })
       : m.merge_transferred_items({ count: total })}
@@ -86,15 +86,15 @@
     {/each}
   </ul>
 {:else}
-  <p class="text-base font-medium text-green-800 dark:text-green-200">
+  <p class="text-base font-medium text-(--fg-green)">
     {kind === "import" ? m.data_no_new_data_import() : m.merge_qr_no_new_items()}
   </p>
 {/if}
 
 {#if conflicts.length > 0}
-  <ul class="mt-2 space-y-1.5 border-t border-amber-200 pt-2 text-sm dark:border-amber-800">
+  <ul class="mt-2 space-y-1.5 border-t border-(--fg-amber)/40 pt-2 text-sm">
     {#each conflicts as conflict, index (index)}
-      <li class="text-amber-900 dark:text-amber-200">
+      <li>
         {conflictMessage(conflict)}
         <a class="underline" href={localizedHref("villagers")}>
           {m.merge_conflict_correction_link()}

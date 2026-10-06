@@ -34,7 +34,7 @@
 <div class="home-page">
   <header class="home-header" style="--overall-progress: {overallPct}%">
     <h1 class="flex min-w-0 items-center gap-2 font-brand text-2xl leading-none">
-      <IconNotebook class="size-5 shrink-0 text-amber-700 dark:text-amber-400" />
+      <IconNotebook class="size-5 shrink-0 text-(--fg-amber)" />
       {m.app_name()}
     </h1>
     <OverallProgress progress={allProgress} />
@@ -46,7 +46,7 @@
       <SearchResults locale={data.locale} query={toolbarState.searchQuery} />
     {:else}
       <WelcomeCard />
-      <h2 class="px-1 font-controls text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
+      <h2 class="px-1 font-controls text-2xs tracking-[0.14em] text-muted-foreground uppercase">
         {m.home_index_heading()}
       </h2>
       <CategoryGrid progress={allProgress} />
