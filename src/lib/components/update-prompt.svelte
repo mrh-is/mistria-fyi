@@ -9,7 +9,7 @@
   import { toast } from "svelte-sonner";
 
   import * as m from "#lib/paraglide/messages.js";
-  import { watchForAppUpdate } from "#lib/utils/app-update.js";
+  import { watchForAppUpdate } from "#lib/pwa/app-update.js";
 
   // A fixed ID makes a repeat announcement (a newer deploy, a remount) replace the toast in place.
   const TOAST_ID = "app-update";

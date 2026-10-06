@@ -17,9 +17,9 @@
   import { localeFontStylesheet } from "#lib/fonts/locale-fonts.js";
   import * as m from "#lib/paraglide/messages.js";
   import { getTextDirection } from "#lib/paraglide/runtime.js";
+  import { keepLocaleOffline } from "#lib/pwa/offline-locales.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { keepLocaleOffline } from "#lib/utils/offline-locales.js";
   import { afterNavigate } from "$app/navigation";
   import { page } from "$app/state";
 

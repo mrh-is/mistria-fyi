@@ -10,11 +10,11 @@ import {
   OFFLINE_LOCALES_CACHE,
   readOfflineLocales,
   rememberOfflineLocales,
-} from "#lib/engine/service-worker-cache.js";
+} from "#lib/pwa/service-worker-cache.js";
 import { version } from "$app/env";
 import { assets, immutable } from "$app/manifest";
 
-import type { CacheLocalesReply, LocaleNameChunks } from "#lib/engine/service-worker-cache.js";
+import type { CacheLocalesReply, LocaleNameChunks } from "#lib/pwa/service-worker-cache.js";
 
 /** Inlined by `localeNameChunksPlugin` (src/lib/build/locale-name-chunks.ts); absent in dev. */
 declare const __LOCALE_NAME_CHUNKS__: LocaleNameChunks | undefined;
