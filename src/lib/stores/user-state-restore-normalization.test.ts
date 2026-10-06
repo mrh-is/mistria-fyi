@@ -5,7 +5,7 @@ import { getMaxMineFloor, MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "#lib/engin
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 import { recordEntries, recordKeys } from "#lib/utils/record.js";
 
-import type { CompletedState } from "#lib/types/user-progress.js";
+import type { ProgressState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 const STORAGE_KEY = "mistria-fyi-v1";
@@ -145,7 +145,7 @@ function buildStoredState(
   });
 }
 
-function expectUnknownIdsRemoved(completed: DeepReadonly<CompletedState>): void {
+function expectUnknownIdsRemoved(completed: DeepReadonly<ProgressState>): void {
   expect(completed.almanac).not.toContain(UNKNOWN_ID);
   expect(completed.almanacRecipes).not.toContain(UNKNOWN_ID);
   expect(completed.cosmetics).not.toContain(UNKNOWN_ID);
@@ -184,7 +184,7 @@ describe("persisted-state normalization", () => {
     vi.stubGlobal("localStorage", makeStorage(buildStoredState({ invalidDomains: true })));
 
     const { userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
+    userState.loadFromStorage();
 
     expect(userState.persistenceFailed).toBe(false);
     expect(userState.state.availabilityWindows).toEqual(["now"]);
@@ -208,7 +208,7 @@ describe("persisted-state normalization", () => {
   it("filters IDs removed from tracker data when importing a manual backup", async () => {
     const { userState } = await import("#lib/stores/user-state.svelte.js");
 
-    expect(userState.importState(buildStoredState())).toEqual({ ok: true });
+    expect(userState.restoreBackup(buildStoredState())).toEqual({ ok: true });
     expectUnknownIdsRemoved(userState.state.completed);
     expect(userState.state.completed.almanac).toContain(known.almanac);
     expect((userState.state.completed.questStates as Record<string, string>)[known.quest]).toBe(
@@ -221,7 +221,7 @@ describe("persisted-state normalization", () => {
     vi.stubGlobal("localStorage", makeStorage(buildStoredState({ malformedNumericScalars: true })));
 
     const { userState } = await import("#lib/stores/user-state.svelte.js");
-    userState.restorePersistedState();
+    userState.loadFromStorage();
 
     expect(userState.persistenceFailed).toBe(false);
     expect(userState.state.completed.mines.floor).toBe(0);

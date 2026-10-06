@@ -53,14 +53,14 @@ merge an out-of-domain value.
 than v11 are deliberately unsupported: v1 through v9 because their positional layouts no longer
 match the current tracker data, and v10 because it predates the marker. v11 has v10’s layout.
 
-| Version | Purpose                                                                            | Compatibility expectation                                                                    |
-| ------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| v1      | Earliest layout, before perks and later progression fields                         | Reject as `not-transfer-code` (no marker) before decompression.                              |
-| v5      | Historical pre-v6 almanac ordering                                                 | Reject as `not-transfer-code` (no marker) before interpreting obsolete almanac positions.    |
-| v8      | Final pre-checksum layout                                                          | Reject as `not-transfer-code` (no marker) before interpreting obsolete positions.            |
-| v9      | Preceding checksummed layout                                                       | Reject as `not-transfer-code` (no marker) before interpreting obsolete positions.            |
-| v10     | Last unmarked layout, identical to v11’s fields                                    | Reject as `not-transfer-code` before interpreting any field.                                 |
-| v11     | Fixed representative `CompletedState` spanning scalar, enum, and positional fields | Encode to the immutable golden payload and decode that payload to the pinned progress state. |
+| Version | Purpose                                                                           | Compatibility expectation                                                                    |
+| ------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| v1      | Earliest layout, before perks and later progression fields                        | Reject as `not-transfer-code` (no marker) before decompression.                              |
+| v5      | Historical pre-v6 almanac ordering                                                | Reject as `not-transfer-code` (no marker) before interpreting obsolete almanac positions.    |
+| v8      | Final pre-checksum layout                                                         | Reject as `not-transfer-code` (no marker) before interpreting obsolete positions.            |
+| v9      | Preceding checksummed layout                                                      | Reject as `not-transfer-code` (no marker) before interpreting obsolete positions.            |
+| v10     | Last unmarked layout, identical to v11’s fields                                   | Reject as `not-transfer-code` before interpreting any field.                                 |
+| v11     | Fixed representative `ProgressState` spanning scalar, enum, and positional fields | Encode to the immutable golden payload and decode that payload to the pinned progress state. |
 
 The codec also pins `TRANSFER_ORDERING_HASH` beside `TRANSFER_VERSION`. The hash covers every ID
 array whose position determines an on-wire bit, using code-unit ordering only. A tracker-data change

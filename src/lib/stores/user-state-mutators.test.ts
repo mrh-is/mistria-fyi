@@ -90,13 +90,13 @@ describe("collection toggles", () => {
     expect(read()).toEqual([value]);
   });
 
-  it.each(COLLECTIONS)("round-trips $name through exportState & importState", (collection) => {
+  it.each(COLLECTIONS)("round-trips $name through exportBackup & restoreBackup", (collection) => {
     collection.toggle();
-    const json = userState.exportState();
+    const json = userState.exportBackup();
 
     userState.resetAll();
     expect(collection.read()).toEqual([]);
-    expect(userState.importState(json)).toEqual({ ok: true });
+    expect(userState.restoreBackup(json)).toEqual({ ok: true });
 
     expect(collection.read()).toEqual([collection.value]);
   });
@@ -115,13 +115,13 @@ describe("world state & availability", () => {
     userState.resetAll();
   });
 
-  it("round-trips season & weather through exportState & importState", () => {
+  it("round-trips season & weather through exportBackup & restoreBackup", () => {
     userState.setSeason("winter");
     userState.setWeather("heavy_inclement");
-    const json = userState.exportState();
+    const json = userState.exportBackup();
 
     userState.resetAll();
-    expect(userState.importState(json)).toEqual({ ok: true });
+    expect(userState.restoreBackup(json)).toEqual({ ok: true });
 
     expect(userState.state.worldState).toEqual({ season: "winter", weather: "heavy_inclement" });
   });
@@ -141,12 +141,12 @@ describe("world state & availability", () => {
     expect(userState.state.availabilityWindows).toEqual(["now", "later"]);
   });
 
-  it("round-trips availability windows through exportState & importState", () => {
+  it("round-trips availability windows through exportBackup & restoreBackup", () => {
     userState.setAvailabilityWindows(["later"]);
-    const json = userState.exportState();
+    const json = userState.exportBackup();
 
     userState.resetAll();
-    expect(userState.importState(json)).toEqual({ ok: true });
+    expect(userState.restoreBackup(json)).toEqual({ ok: true });
 
     expect(userState.state.availabilityWindows).toEqual(["later"]);
   });
