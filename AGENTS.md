@@ -64,6 +64,14 @@ The installed game assets are a massive `assets.zip` archive. Do not unpack the 
 the user's explicit approval. The pipeline should read the archive directly or materialize only the
 small required subtrees.
 
+**Check `pipeline/input/` before assuming a machine has no game files.** Worktree setup symlinks it
+from the main checkout (`.worktreeinclude`), so `ls pipeline/input` settles the question; a
+`needs game installation` label is not, by itself, a blocker. When present, it holds `assets/`
+(`fiddle/` TOML, `localization/` translation tables, `gml/`, `tiled/`), `__fiddle__.json`,
+`localization.json` (every English string by key), and `save/`. Regenerate data from it with
+`pnpm run pipeline:assets -- --version=1.0.5`; the plain `pipeline` script resolves paths from
+`pipeline/`, not the repo root.
+
 ## 2. Git configuration
 
 The repo remote uses HTTPS (not SSH) and authenticates via `gh auth`. Do not switch the remote back

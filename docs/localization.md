@@ -150,9 +150,10 @@ of the verb in Japanese, Korean, & Chinese.
 Most names come from game-translated chunks: monsters use their `pets/skins` family name plus a
 variant message, farm animals use `animals` `<id>/core`, stations are items, and museum wings use
 `museum_wings`. Location & water names have no extracted translations yet, so `source-names.ts` maps
-them to interim machine-translated `source_location_*` & `source_water_*` messages. Scroll bundles
-are keyed by English `bundleName` through a static id map. Replace these with pipeline extraction
-once the game's translation keys are read from `assets/localization/`.
+them to interim machine-translated `source_location_*` & `source_water_*` messages (#356). Scroll
+bundle sources carry the bundle's `bundleItemId` and render through the `items` chunk. Upgrade
+sources carry a closed `UpgradeId`, and a store's `upgradeAction` is a `StoreUpgradeAction` key;
+each maps to a Paraglide message.
 
 ## Falling back to English
 

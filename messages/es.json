@@ -605,7 +605,6 @@
   "source_upgrade_cozy_kitchen": "Mejorar a la cocina acogedora",
   "source_upgrade_farm_bridge": "Ampliar tu granja",
   "source_upgrade_stairs": "Mejorar tu casa por cuarta vez",
-  "source_upgrade_other": "Comprar: {upgrade}",
   "source_wedding": "Recibir tras casarse",
   "source_wishing_well": "Obtener del pozo de los deseos ({cost} t)",
   "source_quest_cooking": "Completar el desafío culinario: {recipe}",

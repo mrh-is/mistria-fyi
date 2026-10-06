@@ -3,7 +3,7 @@ import * as m from "#lib/paraglide/messages.js";
 import { recordMap } from "#lib/utils/record.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
-import type { ItemId, PetSkinId, QuestId, TreasureChestTierId } from "#lib/types/tracker-data.js";
+import type { PetSkinId, QuestId, TreasureChestTierId } from "#lib/types/tracker-data.js";
 
 type NameMessage = (inputs: Record<string, never>, options: { locale: LocaleCode }) => string;
 type VariantMessage = (inputs: { monster: string }, options: { locale: LocaleCode }) => string;
@@ -53,11 +53,6 @@ const VARIANT_MESSAGES = {
  */
 function skin(id: string): PetSkinId {
   return id as PetSkinId;
-}
-
-/** Brands a literal as an item id; checked against the `items` name table in the test. */
-function item(id: string): ItemId {
-  return id as ItemId;
 }
 
 /**
@@ -115,17 +110,6 @@ export type NamedMonsterId = keyof typeof MONSTER_FAMILIES;
 export type NamedLocationId = keyof typeof LOCATION_MESSAGES;
 export type NamedWaterType = keyof typeof WATER_MESSAGES;
 
-/** Scroll bundle item ids, keyed by the English `bundleName` on `scroll_bundle` sources. */
-export const SCROLL_BUNDLE_ITEM_IDS = {
-  "Chess Piece Scroll Bundle": item("chess_scroll_bundle"),
-  "Fall Crop Sign Scroll Bundle": item("fall_crop_sign_scroll_bundle"),
-  "Lovely Cottage Scroll Bundle": item("lovely_cottage_scroll_bundle"),
-  "Rustic Cabin Scroll Bundle": item("rustic_cabin_scroll_bundle"),
-  "Spring Crop Sign Scroll Bundle": item("spring_crop_sign_scroll_bundle"),
-  "Summer Crop Sign Scroll Bundle": item("summer_crop_sign_scroll_bundle"),
-  "Winter Crop Sign Scroll Bundle": item("winter_crop_sign_scroll_bundle"),
-} satisfies Record<string, ItemId>;
-
 /**
  * The only IDs a generated source may reference without a name. Neither the game nor the pipeline
  * names them: the quests are reviewed runtime-only story beats (cutscenes, items, & flags), and the
@@ -158,17 +142,6 @@ export function buildAnimalNames(locale: LocaleCode): Partial<Record<string, str
       .filter(([key]) => key.endsWith("/core"))
       .map(([key, name]) => [key.slice(0, -"/core".length), name]),
   );
-}
-
-/**
- * Localized scroll bundle names keyed by English name. A `scroll_bundle` source carries only the
- * English `bundleName`, not the bundle's item id, so this maps one to the other until the pipeline
- * emits the id itself.
- */
-export function buildBundleNames(
-  locale: LocaleCode,
-): Record<keyof typeof SCROLL_BUNDLE_ITEM_IDS, string> {
-  return recordMap(SCROLL_BUNDLE_ITEM_IDS, (id) => getName("items", id, locale));
 }
 
 export function buildLocationNames(locale: LocaleCode): Record<NamedLocationId, string> {
