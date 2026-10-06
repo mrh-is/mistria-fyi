@@ -3,6 +3,8 @@ import { join, relative, sep } from "node:path";
 import { parse } from "smol-toml";
 import { open } from "yauzl-promise";
 
+import { expectRecord } from "./data-shapes.js";
+
 const SOURCE_FILE_BY_ROOT_PATH: unique symbol = Symbol("sourceFileByRootPath");
 
 export type ParsedGameData = Record<string, unknown> & {
@@ -238,4 +240,20 @@ async function zipEntryToTomlEntry(
   const text = Buffer.concat(chunks).toString("utf8");
 
   return { keyPath, relPath, sourceKey, text };
+}
+
+/** The parser registers cutscenes.toml as one flat cutscene table. */
+export function getCutsceneRecords(data: ParsedGameData): Record<string, Record<string, unknown>> {
+  if (data.cutscenes === undefined) return {};
+  const context = { fieldPath: "cutscenes", sourcePath: sourceFileFor(data, "cutscenes") };
+  const raw = expectRecord(data.cutscenes, context);
+  if (Object.hasOwn(raw, "cutscenes")) {
+    throw new Error(`Expected flat cutscene table in ${context.sourcePath}`);
+  }
+  return Object.fromEntries(
+    Object.entries(raw).map(([id, entry]) => [
+      id,
+      expectRecord(entry, { ...context, fieldPath: `cutscenes.${id}` }),
+    ]),
+  );
 }

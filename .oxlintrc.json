@@ -393,6 +393,10 @@
       }
     },
     {
+      "files": ["pipeline/**/*.ts"],
+      "rules": { "typescript/no-unsafe-assignment": "error" }
+    },
+    {
       // The engine is pure domain logic: it must not reach up into stores, components, or Paraglide messages, even
       // for types. Shared domain types live in `src/lib/types/`. Options replace the base rule's,
       // so the icon restriction is restated.

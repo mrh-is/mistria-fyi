@@ -18,7 +18,7 @@ describe("extractSkills — real assets", () => {
     );
 
     expect(skills[farming]).toStrictEqual(
-      expect.objectContaining({ perkTiers: expect.any(Array) }),
+      expect.objectContaining({ perkTiers: expect.any(Array) as unknown }),
     );
     expect("name" in skills[farming]).toBe(false);
     expect(localeNames.en[farming]).toBe("Farming");

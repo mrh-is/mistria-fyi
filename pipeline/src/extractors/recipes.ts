@@ -1,5 +1,6 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
+import { expectStringArray } from "../data-shapes.js";
 import { PipelineDiagnostics } from "../diagnostics.js";
 import {
   appendToMultimap,
@@ -11,6 +12,7 @@ import {
   minesBiomeId,
   scrollTargetOf,
 } from "../extractor-helpers.js";
+import { sourceFileFor } from "../parse-fiddle.js";
 import { buildRequirementDefinitions, parseRequirements } from "../requirements.js";
 import { resolveToVisibility } from "./visibility/requirement-resolver.js";
 
@@ -285,10 +287,17 @@ function collectDragonForgeSources(
 ): Map<string, AcquisitionSource[]> {
   const result = new Map<string, AcquisitionSource[]>();
 
-  forEachItem(fiddle, (itemId, item) => {
+  forEachItem(fiddle, (itemId, item, topCategory, subCategory) => {
     if (item.recipe_is_default) return;
 
-    const tags = Array.isArray(item.tags) ? (item.tags as string[]) : [];
+    const tags =
+      item.tags === undefined
+        ? []
+        : expectStringArray(item.tags, {
+            entityId: itemId,
+            fieldPath: "tags",
+            sourcePath: sourceFileFor(fiddle, `items.${topCategory}.${subCategory}.${itemId}`),
+          });
     if (!tags.includes("blacksmithing")) return;
     if (!itemId.startsWith("dragon_forged_")) return;
 
@@ -588,7 +597,7 @@ function collectMuseumScrollSources(
     if (wingId === "default" || typeof wing !== "object" || wing === null) continue;
 
     const wingObj = wing;
-    const rewards = Array.isArray(wingObj.rewards) ? wingObj.rewards : [];
+    const rewards: unknown[] = Array.isArray(wingObj.rewards) ? wingObj.rewards : [];
     for (let rewardIdx = 0; rewardIdx < rewards.length; rewardIdx++) {
       const reward = rewards[rewardIdx];
       if (typeof reward !== "object" || reward === null) continue;
@@ -669,7 +678,7 @@ function collectQuestScrollSources(
     if (!questType) {
       throw new Error(`Unable to normalize quest type for "${questId}"`);
     }
-    const rewards = Array.isArray(quest.rewards) ? quest.rewards : [];
+    const rewards: unknown[] = Array.isArray(quest.rewards) ? quest.rewards : [];
     for (const reward of rewards) {
       if (typeof reward !== "object" || reward === null) continue;
       const obj = reward as Record<string, unknown>;
@@ -739,7 +748,7 @@ function collectRenownRecipeSources(
   if (!renown) return new Map();
 
   const result = new Map<string, AcquisitionSource[]>();
-  const rewards = Array.isArray(renown.rewards) ? renown.rewards : [];
+  const rewards: unknown[] = Array.isArray(renown.rewards) ? renown.rewards : [];
 
   for (let i = 0; i < rewards.length; i++) {
     const reward = rewards[i];
@@ -804,8 +813,15 @@ function collectScrollBundleSources(
     setTagToStore.set(setTag, listing);
   });
 
-  forEachItem(fiddle, (itemId, item) => {
-    const tags = Array.isArray(item.tags) ? (item.tags as string[]) : [];
+  forEachItem(fiddle, (itemId, item, topCategory, subCategory) => {
+    const tags =
+      item.tags === undefined
+        ? []
+        : expectStringArray(item.tags, {
+            entityId: itemId,
+            fieldPath: "tags",
+            sourcePath: sourceFileFor(fiddle, `items.${topCategory}.${subCategory}.${itemId}`),
+          });
 
     for (const [setTag, info] of setTagToStore) {
       if (tags.includes(setTag)) {
