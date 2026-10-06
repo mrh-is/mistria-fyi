@@ -47,10 +47,24 @@ const sharedTestExcludes = [
 ];
 
 /**
+ * Per-test & per-hook timeout for every project. Vitest's 5 s default is tuned for an idle host;
+ * under the full parallel suite, tests that finish in 1-4 s alone (the lint-ownership ESLint &
+ * oxlint probes, content counters, animation-frame batching) overrun it, so a timeout reports host
+ * load rather than a wrong result (#589). A genuine hang still fails, just 30 s later.
+ */
+const loadTolerantTimeoutMs = 30_000;
+
+/**
  * The root test options a plain-Node project would otherwise inherit with `extends: true`. Those
  * projects skip the app's Vite plugins (SvelteKit, Tailwind, Paraglide), so they restate these.
  */
-const plainNodeTestOptions = { isolate: true, restoreMocks: true, unstubGlobals: true };
+const plainNodeTestOptions = {
+  hookTimeout: loadTolerantTimeoutMs,
+  isolate: true,
+  restoreMocks: true,
+  testTimeout: loadTolerantTimeoutMs,
+  unstubGlobals: true,
+};
 
 /**
  * Cloudflare Pages caps `_routes.json` at 100 rules. The adapter's default `<files>` exclusion
@@ -136,6 +150,7 @@ export default defineConfig({
     // Persists module transforms under node_modules/.vitest-cache, so warm runs skip most of the
     // transform work. CI restores the directory with actions/cache.
     fsModuleCache: true,
+    hookTimeout: loadTolerantTimeoutMs,
     // Every file gets its own module registry; spies and stubbed globals are restored per test.
     isolate: true,
     // Each project is a tier, split by what its tests need to run. `pnpm run test` runs every
@@ -215,6 +230,7 @@ export default defineConfig({
       },
     ],
     restoreMocks: true,
+    testTimeout: loadTolerantTimeoutMs,
     unstubGlobals: true,
   },
 });
