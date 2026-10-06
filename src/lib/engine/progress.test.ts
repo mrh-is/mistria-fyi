@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { trackerData } from "#lib/data/index.js";
 import { isVariantInScope } from "#lib/engine/animal-availability.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
+import { legacyAvailabilityWindows } from "#lib/types/availability.js";
 import { recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
 import {
@@ -41,7 +42,7 @@ function ctx(
   }> = {},
 ) {
   return {
-    availabilityWindows: overrides.availabilityMode ?? "everything",
+    availabilityWindows: legacyAvailabilityWindows(overrides.availabilityMode ?? "everything"),
     completed: makeCompletedState(overrides.completed ?? {}),
     worldState: overrides.worldState ?? defaultWorld,
   };
@@ -362,7 +363,7 @@ describe("animal progress variant filtering matches UI predicate", () => {
       for (const [, animal] of recordEntries(trackerData.animals)) {
         for (const tier of animal.variantTiers) {
           for (const [, variant] of recordEntries(tier)) {
-            if (isVariantInScope(variant, season, mode)) {
+            if (isVariantInScope(variant, season, legacyAvailabilityWindows(mode))) {
               expectedVariantFiltered++;
             }
           }

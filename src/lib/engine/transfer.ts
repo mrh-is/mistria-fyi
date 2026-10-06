@@ -1,4 +1,5 @@
 import { trackerData, trackerIndex } from "#lib/data/index.js";
+import { seasonFromOrdinal, seasonOrdinal } from "#lib/engine/domain-primitives.js";
 import {
   clampMineFloor,
   clampRenownLevel,
@@ -44,8 +45,6 @@ export const TRANSFER_MAGIC = "MFGT";
 /** Every supported version prepends a CRC-32 integrity checksum of the raw payload. */
 const CHECKSUM_BYTE_LENGTH = 4;
 
-const SEASON_BY_ORD: Season[] = ["spring", "summer", "fall", "winter"];
-const SEASON_ORD: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
 /**
  * Why a transfer payload could not be decoded. The UI localizes the code; the English message is
  * for debugging only.
@@ -205,7 +204,7 @@ export async function encodeTransferPayload(
 
   // 17. Progression byte — bits 7-6: reachedSeason, bit 5: hasUpperFloor
   const progressionByte =
-    ((SEASON_ORD[completed.reachedSeason] & 0x3) << 6) | (completed.hasUpperFloor ? 0x20 : 0);
+    ((seasonOrdinal(completed.reachedSeason) & 0x3) << 6) | (completed.hasUpperFloor ? 0x20 : 0);
   parts.push(new Uint8Array([progressionByte]));
 
   // 18. Romantic villager bitfield (also encoded in the relationship states)
@@ -501,7 +500,7 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
   if (progressionByte & 0x1f) {
     throw new Error("Invalid progression reserved bits: expected zero");
   }
-  const reachedSeason: Season = SEASON_BY_ORD[(progressionByte >> 6) & 0x3];
+  const reachedSeason: Season = seasonFromOrdinal((progressionByte >> 6) & 0x3);
   const hasUpperFloor = Boolean(progressionByte & 0x20);
 
   // 18. Romantic villager bitfield; the relationship states below override it
