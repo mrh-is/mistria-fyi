@@ -102,6 +102,36 @@
     return !nameFilter || entry.name.toLowerCase().includes(nameFilter.toLowerCase());
   }
 
+  function isRecipeCompleted(id: RecipeId): boolean {
+    return userState.state.completed.almanacRecipes.has(id);
+  }
+
+  /**
+   * Each group's entries narrowed in three steps: `namedEntries` (search; the group renders only
+   * when non-empty), `scopedEntries` (plus source filters; the counter), and `filteredEntries`
+   * (plus completed-row hiding; what renders).
+   */
+  let groupViews = $derived(
+    recipesByCategory.map((group) => {
+      const namedEntries = group.entries.filter(matchesName);
+      const scopedEntries = namedEntries.filter(({ sources }) =>
+        toolbarState.matchesSourceFilters(sources),
+      );
+      return {
+        completedCount: scopedEntries.filter((e) => isRecipeCompleted(e.id)).length,
+        filteredEntries: scopedEntries.filter(
+          (e) =>
+            userState.state.showCompleted ||
+            !isRecipeCompleted(e.id) ||
+            recentlyCompleted.has(e.id),
+        ),
+        group,
+        namedEntries,
+        scopedEntries,
+      };
+    }),
+  );
+
   const expandedSections = $state<Record<string, boolean>>({});
 
   function toggleRecipe(entry: RecipeEntry, sectionRecipeIds: RecipeId[]): void {
@@ -119,21 +149,11 @@
 
 <SpoilerGuardDialog guard={spoilerGuard} />
 
-{#each recipesByCategory as group (group.id)}
-  {@const namedEntries = group.entries.filter(matchesName)}
-  {@const scopedEntries = namedEntries.filter(({ sources }) =>
-    toolbarState.matchesSourceFilters(sources),
-  )}
-  {@const filteredEntries = scopedEntries.filter((e) => {
-    if (!userState.state.showCompleted && userState.state.completed.almanacRecipes.has(e.id)) {
-      return recentlyCompleted.has(e.id);
-    }
-    return true;
-  })}
+{#each groupViews as { completedCount, filteredEntries, group, namedEntries, scopedEntries } (group.id)}
   {#if namedEntries.length > 0}
     <ExpandableSection
       {locale}
-      count={scopedEntries.filter((e) => userState.state.completed.almanacRecipes.has(e.id)).length}
+      count={completedCount}
       forceOpen={!!nameFilter || toolbarState.sourceFilterActive}
       name={group.name}
       reportCategory="recipe-category"
