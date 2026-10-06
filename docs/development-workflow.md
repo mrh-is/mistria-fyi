@@ -645,6 +645,18 @@ offline fallback, registration, or activation behavior.
 - **Recovery**: Bypass hooks if necessary (`git commit --no-verify`), provided you have directly run
   `pnpm run lint:fix` and the focused checks from §5; CI still runs the full matrix on the PR.
 
+### CI Doesn't Start on a New PR
+
+- **Symptom**: A newly opened PR shows only "Attribution" and "Guarded paths"; no "CI" run exists
+  and the PR stays blocked.
+- **Cause**: Unconfirmed. On #622–#625, opened within minutes of each other, GitHub started the
+  other workflows for the `opened` event but not `ci.yml` (#626).
+- **Recovery**: Push an empty commit; its `synchronize` event starts CI.
+  ```sh
+  gh run list --workflow ci.yml --branch "$(git branch --show-current)" --limit 1
+  git commit --allow-empty -m "Retrigger CI" -m "Co-Authored-By: <your agent trailer>" && git push
+  ```
+
 ### Missing Husky Hooks After Worktree Setup
 
 - **Symptom**: Pre-commit hooks are absent in a fresh worktree — commits pass without lint or
