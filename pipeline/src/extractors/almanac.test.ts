@@ -41,7 +41,7 @@ afterEach(() => {
 
 describe("extractAlmanac", () => {
   it("traverses valid items while preserving item-level exclusions", () => {
-    vi.spyOn(console, "log").mockReturnValue(undefined);
+    const log = vi.spyOn(console, "log").mockReturnValue(undefined);
     const assetsDir = createAssetsFixture({
       "fish.toml": `
 [treasure]
@@ -105,23 +105,9 @@ tags = ["crop"]
         "zh-Hans": { turnip: "Turnip" },
         "zh-Hant": { turnip: "Turnip" },
       },
-      localizationReport: {
-        fallbackItemIds: {
-          en: [],
-          es: [],
-          fr: [],
-          ja: ["turnip"],
-          ko: [],
-          ru: [],
-          "zh-Hans": [],
-          "zh-Hant": [],
-        },
-        nonLocalizableItems: [
-          "other/crops/localized (localization path: items/names/localized)",
-          "other/crops/nameless (missing name)",
-        ],
-      },
     });
+    expect(log).toHaveBeenCalledWith(expect.stringContaining("ja: 1"));
+    expect(log).toHaveBeenCalledWith("  Nameless items skipped (2):");
   });
 
   it("collapses colorways by recipe_key + name with alphabetical-first canonical ID", () => {

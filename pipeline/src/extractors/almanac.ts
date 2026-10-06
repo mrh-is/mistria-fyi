@@ -25,11 +25,6 @@ import type { ParsedGameData } from "../parse-fiddle.js";
  */
 export type ItemIconSpriteIndex = Record<string, string>;
 
-export interface ItemLocalizationReport {
-  fallbackItemIds: Record<LocaleCode, ItemId[]>;
-  nonLocalizableItems: string[];
-}
-
 /**
  * Extracts both named item metadata and visible almanac rows. The metadata index includes every
  * accepted named item, while the almanac contains only items assigned to a UI-defined category.
@@ -52,22 +47,21 @@ export function extractAlmanac(
   iconSpritesByItemId: ItemIconSpriteIndex;
   items: ItemMetadataIndex;
   localeNames: Record<LocaleCode, Record<ItemId, string>>;
-  localizationReport: ItemLocalizationReport;
 } {
   const diagnostics = sharedDiagnostics ?? new PipelineDiagnostics();
   const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
     LocaleCode,
     Record<ItemId, string>
   >;
-  const fallbackItemIds = Object.fromEntries(
-    LOCALE_CODES.map((locale) => [locale, [] as ItemId[]]),
-  ) as unknown as Record<LocaleCode, ItemId[]>;
+  const fallbackCounts = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, 0])) as Record<
+    LocaleCode,
+    number
+  >;
   const emptyResult = {
     almanac: {},
     iconSpritesByItemId: {},
     items: {},
     localeNames,
-    localizationReport: { fallbackItemIds, nonLocalizableItems: [] },
   };
 
   const rawCategories = readAlmanacCategories(fiddle);
@@ -183,7 +177,7 @@ export function extractAlmanac(
       logMissing: false,
     });
     for (const locale of LOCALE_CODES) localeNames[locale][itemId] = values[locale];
-    for (const locale of fallbackLocales) fallbackItemIds[locale].push(itemId);
+    for (const locale of fallbackLocales) fallbackCounts[locale]++;
 
     for (const categoryIdx of matchedCategoryIndices) {
       categoryBuckets[categoryIdx].set(item.id, {
@@ -222,9 +216,6 @@ export function extractAlmanac(
     `  Almanac: ${Object.keys(almanac).length} categories, ${totalEntries} entries (${totalColorways} item IDs)`,
   );
   namelessItems.sort((a, b) => a.localeCompare(b));
-  for (const locale of LOCALE_CODES) {
-    fallbackItemIds[locale].sort((a, b) => a.localeCompare(b));
-  }
   if (namelessItems.length > 0) {
     console.log(`  Nameless items skipped (${namelessItems.length}):`);
     for (const path of namelessItems) {
@@ -232,7 +223,7 @@ export function extractAlmanac(
     }
   }
   const fallbackSummary = LOCALE_CODES.map(
-    (locale) => `${locale}: ${fallbackItemIds[locale].length.toString()}`,
+    (locale) => `${locale}: ${fallbackCounts[locale].toString()}`,
   ).join(", ");
   console.log(`  Item localization fallbacks: ${fallbackSummary}`);
   return {
@@ -240,7 +231,6 @@ export function extractAlmanac(
     iconSpritesByItemId,
     items,
     localeNames,
-    localizationReport: { fallbackItemIds, nonLocalizableItems: namelessItems },
   };
 }
 

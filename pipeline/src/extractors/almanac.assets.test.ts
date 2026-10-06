@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { evaluateExpressions } from "../evaluate.js";
 import { createAssetsLocalizer } from "../localize.js";
@@ -13,10 +13,8 @@ describe("extractAlmanac — v1.0.5 assets", () => {
     const assetsDir = requireGameAssetsDir();
     const fiddle = parseFiddle(assetsDir).data;
     evaluateExpressions(fiddle);
-    const { almanac, localeNames, localizationReport } = extractAlmanac(
-      fiddle,
-      createAssetsLocalizer(assetsDir),
-    );
+    const log = vi.spyOn(console, "log").mockReturnValue(undefined);
+    const { almanac, localeNames } = extractAlmanac(fiddle, createAssetsLocalizer(assetsDir));
     const fish = almanac["fish" as AlmanacCategoryId];
     const furniture = almanac["furniture" as AlmanacCategoryId];
     const materials = almanac["materials" as AlmanacCategoryId];
@@ -32,14 +30,10 @@ describe("extractAlmanac — v1.0.5 assets", () => {
     expect(furniture.items.filter((entry) => entry.recipeId === "emerald_bed")).toHaveLength(2);
     expect(Object.keys(localeNames.en)).toHaveLength(2709);
     expect(localeNames.ja["turnip" as ItemId]).not.toBe(localeNames.en["turnip" as ItemId]);
-    expect(localizationReport.fallbackItemIds.ja).toHaveLength(305);
-    expect(localizationReport.nonLocalizableItems).toEqual([
-      "other/misc/animal_cosmetic (missing name)",
-      "other/misc/cosmetic (missing name)",
-      "other/misc/horse_potion (missing name)",
-      "other/misc/lurid_colored_drink (missing name)",
-      "other/misc/pet_cosmetic (missing name)",
-      "other/misc/stinky_stamina_potion (missing name)",
-    ]);
+    expect(log).toHaveBeenCalledWith(expect.stringContaining("ja: 305"));
+    expect(log).toHaveBeenCalledWith("  Nameless items skipped (6):");
+    expect(log).toHaveBeenCalledWith("    - other/misc/animal_cosmetic (missing name)");
+    expect(log).toHaveBeenCalledWith("    - other/misc/stinky_stamina_potion (missing name)");
+    log.mockRestore();
   });
 });
