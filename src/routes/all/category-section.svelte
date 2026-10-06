@@ -55,7 +55,7 @@
   <section
     aria-labelledby="category-{key}"
     class={content.stacked ? "flex flex-col gap-1" : undefined}
-    style="--primary: var(--cat-{key})"
+    style="--primary: var(--color-category-{key})"
   >
     <SectionHeader {key} {progress} />
     {#if content.compact}

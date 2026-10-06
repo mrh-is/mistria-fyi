@@ -15,7 +15,7 @@
 <!--
   A modal dialog drawn as a paper shipping tag hanging from a string. The frame (palette, punched
   hole, string, reinforcement ring, & entrance animation) lives here; callers supply the body and
-  footer. The --tag-* palette is defined in src/app.css, so caller content can use it too.
+  footer. The --color-tag-* palette is defined in src/app.css, so caller content can use it too.
 -->
 <Dialog.Root bind:open>
   <DialogPrimitive.Portal>
@@ -40,7 +40,7 @@
   .tag-wrap {
     position: relative;
     width: 100%;
-    filter: var(--tag-shadow);
+    filter: var(--filter-tag-shadow);
   }
 
   .tag {
@@ -50,8 +50,8 @@
     max-height: calc(100dvh - 48px);
     flex-direction: column;
     overflow: hidden;
-    color: var(--tag-ink);
-    background: var(--tag-paper);
+    color: var(--color-tag-ink);
+    background: var(--color-tag-paper);
     clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%, 0 14px);
     /* stylelint-disable color-no-hex -- a mask reads only alpha; #000 means "keep" */
     -webkit-mask: radial-gradient(circle at 50% 31px, transparent 0 7px, #000 7.5px);
@@ -68,9 +68,9 @@
     height: 70px;
     overflow: visible;
     fill: none;
-    filter: drop-shadow(var(--tag-string-shadow));
+    filter: drop-shadow(var(--shadow-tag-string));
     pointer-events: none;
-    stroke: var(--tag-string);
+    stroke: var(--color-tag-string);
     stroke-linecap: round;
     stroke-width: 2.2;
   }
@@ -81,16 +81,16 @@
     align-items: center;
     flex: 0 0 auto;
     justify-content: center;
-    border-bottom: 1px dashed color-mix(in srgb, var(--tag-ink) 35%, transparent);
+    border-bottom: 1px dashed color-mix(in srgb, var(--color-tag-ink) 35%, transparent);
   }
 
   .tag__ring {
     width: 34px;
     height: 34px;
-    border: 8px solid var(--tag-accent);
+    border: 8px solid var(--color-tag-accent);
     border-radius: 50%;
     background: transparent;
-    box-shadow: var(--tag-ring-shadow);
+    box-shadow: var(--shadow-tag-ring);
   }
 
   .tag :global(h2) {
@@ -104,7 +104,7 @@
     position: fixed;
     inset: 0;
     z-index: var(--z-dialog);
-    background: color-mix(in srgb, var(--paper) 72%, transparent);
+    background: color-mix(in srgb, var(--color-paper) 72%, transparent);
   }
 
   :global(.tag-dialog) {

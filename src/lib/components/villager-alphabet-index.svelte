@@ -146,24 +146,24 @@
     place-items: center;
     border: 0;
     background: transparent;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-data);
     font-size: var(--text-3xs);
     line-height: 1;
   }
 
   .villager-index button:is(:focus-visible, [data-active="true"]) {
-    background: color-mix(in srgb, var(--cat-villagers) 12%, transparent);
-    color: var(--cat-villagers);
-    outline: 2px solid var(--cat-villagers);
+    background: color-mix(in srgb, var(--color-category-villagers) 12%, transparent);
+    color: var(--color-category-villagers);
+    outline: 2px solid var(--color-category-villagers);
     outline-offset: 0;
   }
 
   @media (hover: hover) {
     .villager-index:not([data-scrubbing="true"]) button:hover {
-      background: color-mix(in srgb, var(--cat-villagers) 12%, transparent);
-      color: var(--cat-villagers);
-      outline: 2px solid var(--cat-villagers);
+      background: color-mix(in srgb, var(--color-category-villagers) 12%, transparent);
+      color: var(--color-category-villagers);
+      outline: 2px solid var(--color-category-villagers);
       outline-offset: 0;
     }
   }

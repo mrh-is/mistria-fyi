@@ -295,9 +295,9 @@
 <style>
   .search-bar,
   .floating-tool {
-    border: 1px solid color-mix(in srgb, var(--hairline) 48%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 48%, transparent);
     border-radius: var(--radius-md);
-    background: var(--paper-raised);
+    background: var(--color-paper-raised);
   }
 
   .floating-tool :global(svg) {
@@ -310,7 +310,7 @@
     min-height: 44px;
     align-items: center;
     justify-content: center;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     box-shadow: var(--shadow-medium);
     pointer-events: auto;
     transition:
@@ -329,8 +329,8 @@
   }
 
   .floating-tool--filtered {
-    color: var(--fg-amber);
-    background: color-mix(in srgb, var(--paper-raised) 86%, var(--fg-amber));
+    color: var(--color-toolbar-filtered);
+    background: color-mix(in srgb, var(--color-paper-raised) 86%, var(--color-toolbar-filtered));
   }
 
   .floating-tool:is(:hover, :focus-visible) :global(svg) {

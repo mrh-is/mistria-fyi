@@ -48,7 +48,7 @@
     align-items: center;
     gap: var(--tracker-row-gap);
     padding: 4px 12px 4px 0;
-    background: var(--paper-raised);
+    background: var(--color-paper-raised);
     border-color: var(--tracker-paper-line);
     border-style: solid;
     border-width: var(--tracker-paper-border-width);

@@ -60,7 +60,7 @@ describe("page metadata", () => {
 
     expect(pageMetadata(base)).toEqual({
       ...base,
-      accent: "home-accent",
+      accent: "var(--color-home-accent)",
       toolbar: { search: false, worldState: false },
     });
     expect(pageMetadata({ ...base, toolbar: { search: true } }).toolbar).toEqual({
@@ -68,7 +68,9 @@ describe("page metadata", () => {
       worldState: false,
     });
     expect(pageMetadata({ ...base, toolbar: "hidden" }).toolbar).toBe("hidden");
-    expect(pageMetadata({ ...base, accent: "cat-mines" }).accent).toBe("cat-mines");
+    expect(pageMetadata({ ...base, accent: "var(--color-category-mines)" }).accent).toBe(
+      "var(--color-category-mines)",
+    );
   });
 
   it("colors category pages with their own accent and everything else with the home accent", async () => {
@@ -76,7 +78,9 @@ describe("page metadata", () => {
 
     for (const { metadata, path } of entries) {
       const categoryKey = categoryKeyForPathname(`/${path}`);
-      expect(metadata.accent).toBe(categoryKey ? `cat-${categoryKey}` : "home-accent");
+      expect(metadata.accent).toBe(
+        categoryKey ? `var(--color-category-${categoryKey})` : "var(--color-home-accent)",
+      );
     }
   });
 
