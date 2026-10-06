@@ -96,6 +96,7 @@
   </span>
 
   <Stepper
+    accent="var(--cat-skills)"
     decrementDisabled={level <= 0}
     incrementDisabled={level >= MAX_SKILL_LEVEL}
     decrementLabel={m.skill_decrease_level({ name })}
