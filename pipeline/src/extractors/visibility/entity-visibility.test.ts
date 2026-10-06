@@ -55,12 +55,12 @@ function makeFiddle(overrides: {
 
 function makeQuestChains(overrides: Partial<QuestChainData>): QuestChainData {
   return {
+    cooking: [],
     crown: [],
     fetch: {},
     heart: {},
-    stillwell: [],
+    mission: [],
     story: {},
-    tali: [],
     ...overrides,
   };
 }
