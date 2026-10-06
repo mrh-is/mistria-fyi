@@ -2,6 +2,12 @@ import { SvelteSet } from "svelte/reactivity";
 
 import { canonicalAlmanacId, trackerData } from "#lib/data/index.js";
 import {
+  emptyMergeCounts,
+  nextQuestState,
+  questStateRank,
+  seasonOrdinal,
+} from "#lib/engine/domain-primitives.js";
+import {
   clampLevel,
   clampMineFloor,
   clampRenownLevel,
@@ -438,28 +444,7 @@ function createUserState() {
     /** Merge imported data into current progress (union, never removes) */
     mergeFromSave(imported: Partial<CompletedState>): MergeResult {
       const conflicts: MergeConflict[] = [];
-      const counts: MergeCounts = {
-        almanac: 0,
-        almanacRecipes: 0,
-        animalCosmetics: 0,
-        animals: 0,
-        childChoice: 0,
-        cosmetics: 0,
-        dates: 0,
-        hasUpperFloor: 0,
-        mineFloor: 0,
-        museum: 0,
-        perks: 0,
-        petCosmetics: 0,
-        petSkins: 0,
-        quests: 0,
-        reachedSeason: 0,
-        renown: 0,
-        skillLevels: 0,
-        spells: 0,
-        villagerLevels: 0,
-        villagerRelationships: 0,
-      };
+      const counts: MergeCounts = emptyMergeCounts();
 
       // Almanac
       if (imported.almanac) {
@@ -632,10 +617,9 @@ function createUserState() {
 
       // Quest states (take more advanced state: none < obtained < completed)
       if (imported.questStates) {
-        const rank: Record<QuestState, number> = { completed: 2, none: 0, obtained: 1 };
         for (const [id, importedState] of recordEntries(imported.questStates)) {
           const current = state.completed.questStates[id] ?? "none";
-          if (rank[importedState] > rank[current]) {
+          if (questStateRank(importedState) > questStateRank(current)) {
             state.completed.questStates[id] = importedState;
             counts.quests++;
           }
@@ -643,12 +627,12 @@ function createUserState() {
       }
 
       // Reached season (take later season)
-      if (imported.reachedSeason !== undefined) {
-        const seasonOrd: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
-        if (seasonOrd[imported.reachedSeason] > seasonOrd[state.completed.reachedSeason]) {
-          state.completed.reachedSeason = imported.reachedSeason;
-          counts.reachedSeason = 1;
-        }
+      if (
+        imported.reachedSeason !== undefined &&
+        seasonOrdinal(imported.reachedSeason) > seasonOrdinal(state.completed.reachedSeason)
+      ) {
+        state.completed.reachedSeason = imported.reachedSeason;
+        counts.reachedSeason = 1;
       }
 
       // Has upper floor (logical OR)
@@ -853,8 +837,7 @@ function createUserState() {
       state.completed.questStates[id] = questState;
     },
     setReachedSeason(season: Season) {
-      const seasonOrd: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
-      if (seasonOrd[season] > seasonOrd[state.completed.reachedSeason]) {
+      if (seasonOrdinal(season) > seasonOrdinal(state.completed.reachedSeason)) {
         state.completed.reachedSeason = season;
       }
     },
@@ -1273,11 +1256,6 @@ function knownBrandedSet<T>(
   knownIds: object | ReadonlySet<string>,
 ): Set<T> {
   return new SvelteSet(ids.filter((id) => hasKnownId(knownIds, id))) as unknown as Set<T>;
-}
-
-function nextQuestState(current: QuestState): QuestState {
-  if (current === "none") return "obtained";
-  return current === "obtained" ? "completed" : "none";
 }
 
 function normalizeAlmanacIds(ids: string[]): Set<ItemId> {
