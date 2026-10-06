@@ -97,10 +97,10 @@
     align-items: center;
     gap: 8px;
     padding: 7px 9px;
-    border: 1px solid var(--hairline);
+    border: 1px solid var(--color-ink-hairline);
     border-bottom: 0;
-    background: var(--paper-raised);
-    color: var(--ink-muted);
+    background: var(--color-paper-raised);
+    color: var(--color-ink-muted);
   }
 
   .rank-record:first-child {
@@ -108,7 +108,7 @@
   }
 
   .rank-record:last-child {
-    border-bottom: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--color-ink-hairline);
     border-radius: 0 0 var(--radius) var(--radius);
   }
 
@@ -117,7 +117,7 @@
     display: block;
     width: 28px;
     height: 28px;
-    color: color-mix(in srgb, var(--ink-muted) 55%, transparent);
+    color: color-mix(in srgb, var(--color-ink-muted) 55%, transparent);
   }
 
   .rank-mark > :global(svg),
@@ -165,7 +165,7 @@
   .rank-state :global(.rank-completion) {
     width: 17px;
     height: 17px;
-    color: var(--cat-renown);
+    color: var(--color-category-renown);
   }
 
   .rank-record[data-rank-state="completed"] .rank-copy strong {
@@ -175,9 +175,9 @@
   .rank-record[data-rank-state="current"] {
     position: relative;
     z-index: 1;
-    color: var(--ink);
+    color: var(--color-ink);
     /* stylelint-disable-next-line declaration-property-unit-disallowed-list -- an inset edge marker, not an elevation */
-    box-shadow: inset 3px 0 0 var(--cat-renown);
+    box-shadow: inset 3px 0 0 var(--color-category-renown);
   }
 
   .rank-record[data-rank-state="current"] .rank-copy strong::after {
@@ -187,7 +187,7 @@
     left: -3px;
     z-index: -1;
     height: 45%;
-    background: color-mix(in srgb, var(--cat-renown) 18%, transparent);
+    background: color-mix(in srgb, var(--color-category-renown) 18%, transparent);
     content: "";
     transform: rotate(-0.6deg);
   }

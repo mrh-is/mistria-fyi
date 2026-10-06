@@ -667,7 +667,7 @@
     width: 100%;
     resize: vertical;
     border-width: 1px;
-    background: var(--paper-deep);
+    background: var(--color-paper-sunken);
     padding: 12px 14px;
     font-family: var(--font-body);
     font-size: var(--text-base);
@@ -682,14 +682,14 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-xs);
   }
 
   .feedback-form__optional,
   .feedback-form__version {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-controls);
     font-size: var(--text-3xs);
     letter-spacing: 0.12em;
@@ -701,8 +701,8 @@
     flex-direction: column;
     gap: 12px;
     padding: 13px;
-    border: 1px solid color-mix(in srgb, var(--hairline) 42%, transparent);
-    background: var(--paper-deep);
+    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 42%, transparent);
+    background: var(--color-paper-sunken);
   }
 
   .feedback-form__email {
@@ -722,7 +722,7 @@
     align-items: center;
     justify-content: center;
     gap: 7px;
-    border: 1px solid color-mix(in srgb, var(--hairline) 48%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 48%, transparent);
     padding: 6px 13px;
     font-family: var(--font-controls);
     font-size: var(--text-3xs);
@@ -737,7 +737,7 @@
   .feedback-form__selection {
     min-width: 0;
     justify-content: flex-start;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .feedback-form__selection button {
@@ -762,12 +762,12 @@
   }
 
   .feedback-form__send {
-    color: var(--ink);
-    background: color-mix(in srgb, var(--primary) 48%, var(--paper-deep));
+    color: var(--color-ink);
+    background: color-mix(in srgb, var(--primary) 48%, var(--color-paper-sunken));
   }
 
   .feedback-form__send:is(:hover, :focus-visible) {
-    background: color-mix(in srgb, var(--primary) 64%, var(--paper-deep));
+    background: color-mix(in srgb, var(--primary) 64%, var(--color-paper-sunken));
     outline: 2px solid var(--primary);
     outline-offset: -4px;
   }
@@ -778,7 +778,7 @@
   }
 
   .feedback-form__send--ready:is(:hover, :focus-visible) {
-    background: color-mix(in srgb, var(--primary) 88%, var(--ink));
+    background: color-mix(in srgb, var(--primary) 88%, var(--color-ink));
   }
 
   @media (max-width: 380px) {

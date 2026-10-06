@@ -77,7 +77,6 @@
 
 <style>
   .category-stripe {
-    --ribbon-width: 49px;
     position: relative;
     isolation: isolate;
     display: grid;
@@ -88,8 +87,8 @@
     min-height: 58px;
     padding: 6px 69px 6px 23px;
     overflow: visible;
-    color: var(--ink);
-    background: var(--paper-raised);
+    color: var(--color-ink);
+    background: var(--color-paper-raised);
     box-shadow: var(--shadow-small);
     text-align: left;
     transition:
@@ -116,7 +115,7 @@
     font-size: var(--text-base);
     font-weight: 600;
     line-height: 1.2;
-    -webkit-text-stroke: 1.35px var(--paper-raised);
+    -webkit-text-stroke: 1.35px var(--color-paper-raised);
     paint-order: stroke fill;
   }
 
@@ -140,7 +139,7 @@
     display: block;
     overflow: hidden;
     margin-top: 2px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-2xs);
     line-height: 1.2;
@@ -179,9 +178,9 @@
     z-index: 0;
     display: grid;
     place-items: center;
-    width: calc(var(--ribbon-width) + 8px);
+    width: calc(var(--size-ribbon-width) + 8px);
     padding-left: 8px;
-    color: var(--ribbon-ink);
+    color: var(--color-ribbon-foreground);
     background: var(--category-color);
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 8px 50%);
     transition:
@@ -217,7 +216,7 @@
   }
 
   .category-stripe--complete {
-    background: color-mix(in srgb, var(--paper-raised) 96%, var(--fg-amber));
+    background: color-mix(in srgb, var(--color-paper-raised) 96%, var(--color-progress-complete));
   }
 
   .category-stripe--complete .category-ribbon::after {
@@ -227,9 +226,19 @@
     left: 0;
     width: 9px;
     background:
-      linear-gradient(to bottom right, transparent 46%, var(--ribbon-gold) 48% 57%, transparent 59%)
+      linear-gradient(
+          to bottom right,
+          transparent 46%,
+          var(--color-ribbon-fill) 48% 57%,
+          transparent 59%
+        )
         top / 9px 50% no-repeat,
-      linear-gradient(to top right, transparent 46%, var(--ribbon-gold) 48% 57%, transparent 59%)
+      linear-gradient(
+          to top right,
+          transparent 46%,
+          var(--color-ribbon-fill) 48% 57%,
+          transparent 59%
+        )
         bottom / 9px 50% no-repeat;
     content: "";
   }
@@ -258,8 +267,8 @@
     }
 
     .category-ribbon {
-      right: calc(-1 * var(--ribbon-width));
-      width: var(--ribbon-width);
+      right: calc(-1 * var(--size-ribbon-width));
+      width: var(--size-ribbon-width);
       padding-left: 0;
       clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 50%, 100% 100%, 0 100%);
     }
@@ -284,11 +293,16 @@
         linear-gradient(
             to bottom left,
             transparent 46%,
-            var(--ribbon-gold) 48% 57%,
+            var(--color-ribbon-fill) 48% 57%,
             transparent 59%
           )
           top / 9px 50% no-repeat,
-        linear-gradient(to top left, transparent 46%, var(--ribbon-gold) 48% 57%, transparent 59%)
+        linear-gradient(
+            to top left,
+            transparent 46%,
+            var(--color-ribbon-fill) 48% 57%,
+            transparent 59%
+          )
           bottom / 9px 50% no-repeat;
     }
   }
@@ -299,7 +313,7 @@
 
   .category-stripe--mobile-ribbon .category-ribbon {
     right: -8px;
-    width: calc(var(--ribbon-width) + 8px);
+    width: calc(var(--size-ribbon-width) + 8px);
     padding-left: 8px;
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 8px 50%);
   }

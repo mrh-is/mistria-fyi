@@ -167,7 +167,7 @@
     padding: 5px 8px 7px;
     border: 0;
     background: transparent;
-    color: var(--ink);
+    color: var(--color-ink);
     text-align: left;
   }
 
@@ -178,7 +178,7 @@
   }
 
   .section-trigger :global(.section-disclosure) {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .section-name {
@@ -194,7 +194,7 @@
 
   .section-count {
     min-width: 9ch;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-data);
     font-size: var(--text-xs);
     text-align: right;
@@ -226,7 +226,7 @@
 
   .section--complete .section-name,
   .section--complete .section-count {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .section[data-section-depth]:not([data-section-depth="0"]) .section-progress {
