@@ -120,6 +120,7 @@
   "all_completed_message": "모두 완료했습니다! 확인하려면 \"완료 항목 표시\"를 켜세요.",
   "quest_type_fetch": "심부름 퀘스트",
   "quest_craving_name": "입덧",
+  "quest_subtitle_with_recipe": "{villager} · {recipe}",
   "skills_ledger_aria": "기술 목록",
   "skill_level_label": "{name} 레벨",
   "skill_decrease_level": "{name} 레벨 낮추기",

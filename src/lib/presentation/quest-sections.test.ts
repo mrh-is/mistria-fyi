@@ -8,6 +8,7 @@ import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 import type { QuestRow, QuestSection } from "#lib/presentation/quest-sections.js";
+import type { LocaleCode } from "#lib/types/locale.js";
 import type {
   QuestId,
   QuestType,
@@ -24,6 +25,12 @@ function section(sections: QuestSection[], questType: QuestType): QuestSection {
   const found = sections.find((s) => s.questType === questType);
   if (!found) throw new Error(`No ${questType} section`);
   return found;
+}
+
+function fetchSubtitles(locale: LocaleCode): string[] {
+  return section(buildQuestSections(makeCompletedState(), locale), "fetch")
+    .rows.map((row) => row.subtitle)
+    .filter((subtitle) => subtitle !== undefined);
 }
 
 function cravingRow(completed: CompletedState): QuestRow | undefined {
@@ -81,6 +88,13 @@ describe("buildQuestSections", () => {
       expect(row.displayName).toBe(getName("items", quest.itemId, "en"));
       expect(row.subtitle).toContain(getName("villagers", quest.villager, "en"));
     }
+  });
+
+  it("joins a duplicate fetch quest's Villager & reward recipe with the locale's separator", () => {
+    expect(fetchSubtitles("en").some((subtitle) => subtitle.includes(" · "))).toBe(true);
+    const ja = fetchSubtitles("ja");
+    expect(ja.some((subtitle) => subtitle.includes("・"))).toBe(true);
+    expect(ja.some((subtitle) => subtitle.includes(" · "))).toBe(false);
   });
 
   it("groups heart quests by Villager in ascending heart level, with the craving row last", () => {
