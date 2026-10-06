@@ -1,6 +1,9 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Mistria Field Guide",
+  "og_share_tagline": "Отслеживайте коллекции, задания, навыки и многое другое",
+  "og_share_description": "Вся Мистрия в одном месте",
+  "source_hidden": "Скрыто",
   "app_update_available": "Mistria Field Guide обновился! Обновите страницу, чтобы получить новую версию.",
   "app_update_later": "Не сейчас",
   "app_update_refresh": "Обновить",

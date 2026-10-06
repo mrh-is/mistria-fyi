@@ -1,16 +1,29 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import SourceSegmentText from "#lib/components/source-segment-text.svelte";
+import { getLocale, overwriteGetLocale } from "#lib/paraglide/runtime.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderToFragment } from "#lib/test-utils/render-to-fragment.js";
 
 import type { SourceSegment } from "#lib/sources/source-segments.js";
 
+const defaultGetLocale = getLocale;
+
 afterEach(() => {
   userState.resetAll();
+  overwriteGetLocale(defaultGetLocale);
 });
 
 describe("SourceSegmentText", () => {
+  it("localizes the screen-reader label for redacted source text", () => {
+    overwriteGetLocale(() => "fr");
+    const { container } = renderToFragment(SourceSegmentText, {
+      props: { segments: [{ redacted: true }] },
+    });
+    expect(container.querySelector(".sr-only")?.textContent).toBe("Masqué");
+    expect(container.querySelector("[aria-hidden='true']")?.textContent).toBe("███");
+  });
+
   it("preserves structural text while spoilering a gated fragment", () => {
     const segments: SourceSegment[] = [
       "Craft at ",
