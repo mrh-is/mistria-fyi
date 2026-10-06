@@ -24,6 +24,17 @@ describe("createLeavingSet", () => {
     expect(set.has("a")).toBe(false);
   });
 
+  it("restarts the leaving window when the same item is completed again", () => {
+    const set = createLeavingSet<string>(100);
+    set.mark("a");
+    vi.advanceTimersByTime(50);
+    set.mark("a");
+    vi.advanceTimersByTime(50);
+    expect(set.has("a")).toBe(true);
+    vi.advanceTimersByTime(50);
+    expect(set.has("a")).toBe(false);
+  });
+
   it("outlasts the row's delay plus fade", () => {
     expect(ROW_LEAVE_MS).toBeGreaterThanOrEqual(ROW_LEAVE_DELAY_MS + ROW_LEAVE_FADE_MS);
   });

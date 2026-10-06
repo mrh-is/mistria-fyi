@@ -1,6 +1,6 @@
 import { fireEvent, render, waitFor, within } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import ExpandableSectionHarness from "#lib/components/expandable-section.test-harness.svelte";
 import { FeedbackContext } from "#lib/feedback/context.svelte.js";
@@ -23,6 +23,34 @@ describe("ExpandableSection", () => {
     await fireEvent.click(trigger);
     expect(trigger).toHaveAttribute("aria-expanded", "true");
     expect(document.getElementById(contentId)).toBeInTheDocument();
+  });
+
+  it("reports effective expansion on mount, toggles, and forced expansion", async () => {
+    const onExpandedChange = vi.fn();
+    const props = { feedbackContext: new FeedbackContext(), name: "Spells", onExpandedChange };
+    const view = render(ExpandableSectionHarness, props);
+    expect(onExpandedChange).toHaveBeenLastCalledWith(false);
+    await fireEvent.click(view.getByRole("button", { name: "Spells" }));
+    expect(onExpandedChange).toHaveBeenLastCalledWith(true);
+    await fireEvent.click(view.getByRole("button", { name: "Spells" }));
+    expect(onExpandedChange).toHaveBeenLastCalledWith(false);
+    await view.rerender({ ...props, forceOpen: true });
+    expect(onExpandedChange).toHaveBeenLastCalledWith(true);
+    expect(onExpandedChange).toHaveBeenCalledTimes(4);
+  });
+
+  it("formats progress using the caller’s locale", () => {
+    const view = render(ExpandableSectionHarness, {
+      count: 1234,
+      feedbackContext: new FeedbackContext(),
+      locale: "fr",
+      name: "Crops",
+      total: 5678,
+    });
+    expect(view.getByRole("button")).toHaveAttribute(
+      "aria-label",
+      "Crops, 1 234 of 5 678 completed",
+    );
   });
 
   it("assigns unique controlled-content IDs to repeated section names", () => {

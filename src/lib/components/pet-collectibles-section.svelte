@@ -87,6 +87,7 @@
 
 {#if visibleCosmeticEntries.length > 0}
   <ExpandableSection
+    {locale}
     count={cosmeticCompletedCount}
     name={m.animals_pet_cosmetics_section_name()}
     reportCategory="pet cosmetics"
@@ -123,6 +124,7 @@
 
 {#if visibleSkinEntries.length > 0}
   <ExpandableSection
+    {locale}
     count={skinCompletedCount}
     name={m.animals_pet_skins_section_name()}
     reportCategory="pet skins"

@@ -13,12 +13,25 @@ export interface LeavingSet<T> {
 /** Tracks rows that just completed so they stay rendered for the leave animation. */
 export function createLeavingSet<T>(durationMs: number = ROW_LEAVE_MS): LeavingSet<T> {
   const ids = new SvelteSet<T>();
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- Timer handles are resource bookkeeping, not rendered state.
+  const timers = new Map<T, ReturnType<typeof setTimeout>>();
+  $effect(() => () => {
+    for (const timer of timers.values()) clearTimeout(timer);
+    timers.clear();
+  });
   return {
     has: (id) => ids.has(id),
     ids,
     mark(id): void {
+      clearTimeout(timers.get(id));
       ids.add(id);
-      setTimeout(() => ids.delete(id), durationMs);
+      timers.set(
+        id,
+        setTimeout(() => {
+          timers.delete(id);
+          ids.delete(id);
+        }, durationMs),
+      );
     },
   };
 }
