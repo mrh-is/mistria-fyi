@@ -349,6 +349,7 @@ describe("assignEntityVisibility — items", () => {
         seed_turnip: {
           category: "seeds",
           name: "Turnip Seed",
+          sources: [{ type: "default" }],
         },
       },
       stores: { general: { name: "General Store" } },
@@ -422,24 +423,6 @@ describe("assignEntityVisibility — items", () => {
         { type: "questCompleted", questId: "find_the_thing" },
       ],
     });
-  });
-
-  it("defaults an item with no sources to always", () => {
-    const trackerData = makeTrackerData({
-      items: {
-        mystery_item: {
-          category: "other",
-          name: "Mystery Item",
-        },
-      },
-    });
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
-    expect(trackerData.items["mystery_item" as ItemId].visibility).toBeUndefined();
   });
 
   it("ANDs a store gate with supported stock availability", () => {
@@ -1124,19 +1107,6 @@ describe("assignEntityVisibility — cosmetics", () => {
       type: "questCompleted",
       questId: "upgrade_the_saturday_market",
     });
-  });
-
-  it("leaves visibility unstamped for cosmetics without a known source (issue #78)", () => {
-    const trackerData = makeTrackerData({
-      cosmetics: { unsourced_hat: { name: "Unsourced Hat", slot: "head" } },
-    });
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
-    expect(trackerData.cosmetics["unsourced_hat" as CosmeticId].visibility).toBeUndefined();
   });
 
   it("projects supported cosmetic-source availability", () => {

@@ -1,11 +1,14 @@
+import { mapNonEmpty } from "#lib/utils/record.js";
+
 import { availabilityToVisibility, toAvailableVisibility } from "./availability-projection.js";
 import { ALWAYS, resolveToVisibility, simplifyCondition } from "./requirement-resolver.js";
 
-import type { Source as AcquisitionSource, SourceTuple } from "#lib/types/acquisition.js";
+import type { Source as AcquisitionSource } from "#lib/types/acquisition.js";
 import type {
   MinesBiomeId,
   QuestId,
   SkillId,
+  SourcedEntity,
   StoreId,
   TrackerData,
   VillagerId,
@@ -485,25 +488,16 @@ function acquisitionSourceConditions(
   }
 }
 
-function assignSourcedEntityVisibility(
-  entity: { sources?: SourceTuple; visibility?: VisibilityCondition },
-  ctx: SourceVisibilityContext,
-): void {
-  const sources = entity.sources ?? [];
-  if (sources.length === 0) {
-    entity.visibility = ALWAYS;
-    return;
-  }
-
-  const computed = sources.map((source) => ({
+function assignSourcedEntityVisibility(entity: SourcedEntity, ctx: SourceVisibilityContext): void {
+  const computed = mapNonEmpty(entity.sources, (source) => ({
     conditions: computeSourceConditions(source, ctx),
     source,
   }));
 
-  entity.sources = computed.map(({ conditions, source }) => ({
+  entity.sources = mapNonEmpty(computed, ({ conditions, source }) => ({
     ...source,
     visibility: conditions.source,
-  })) as SourceTuple;
+  }));
   entity.visibility = orSimplify(computed.map(({ conditions }) => conditions.entity));
 }
 

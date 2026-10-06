@@ -34,7 +34,7 @@ export interface Animal {
   variantTiers: AnimalVariantTier[];
   visibility?: VisibilityCondition;
 }
-export type AnimalCosmetic = TrackerEntity;
+export type AnimalCosmetic = SourcedEntity;
 export type AnimalId = string & { readonly __brand: "AnimalId" };
 export interface AnimalVariant {
   source: Extract<Source, { type: "breed" | "default" }>;
@@ -45,7 +45,7 @@ export type AnyId = string & { readonly __brand: string };
 export interface CookingQuest extends Quest {
   recipeId: RecipeId;
 }
-export interface Cosmetic extends TrackerEntity {
+export interface Cosmetic extends SourcedEntity {
   /** A `ui/character_customization.toml` section; the wardrobe menu's slot. */
   slot: CosmeticSlot;
   /** A `ui_sub_category` key; its label resolves via `getName("cosmetics/subcategories", key, locale)`. */
@@ -69,7 +69,7 @@ export interface CosmeticSlotMeta {
   /** `ui_sub_category` keys in the game's menu order. */
   subCategories: string[];
 }
-export type DateType = TrackerEntity;
+export type DateType = SourcedEntity;
 export interface Day {
   day: number;
   season: Season;
@@ -91,7 +91,7 @@ export interface HeartQuest extends Quest {
   heartLevel: number;
   villager: VillagerId;
 }
-export interface Item extends TrackerEntity {
+export interface Item extends SourcedEntity {
   category: string;
 }
 export type ItemId = string & { readonly __brand: "ItemId" };
@@ -112,10 +112,11 @@ export type MuseumWingSetId = string & { readonly __brand: "MuseumWingSetId" };
 export type Perk = Record<string, never>;
 export type PerkId = string & { readonly __brand: "PerkId" };
 export type PerkTier = Record<PerkId, Perk>;
-export type PetCosmeticSet = TrackerEntity;
+export type PetCosmeticSet = SourcedEntity;
 export type PetCosmeticSetId = string & { readonly __brand: "PetCosmeticSetId" };
-export type PetSkin = TrackerEntity;
+export type PetSkin = SourcedEntity;
 export type PetSkinId = string & { readonly __brand: "PetSkinId" };
+/** Quests carry no acquisition sources of their own today, so the list is empty. */
 export type Quest = TrackerEntity;
 export type QuestId = string & { readonly __brand: "QuestId" };
 export interface QuestOverrides {
@@ -132,14 +133,19 @@ export interface Range {
   end: number;
   start: number;
 }
-export type Recipe = TrackerEntity;
+export type Recipe = SourcedEntity;
 export type RecipeId = string & { readonly __brand: "RecipeId" };
 export const SEASONS = ["fall", "spring", "summer", "winter"] as const;
 export type Season = (typeof SEASONS)[number];
 export interface Skill {
   perkTiers: [PerkTier, PerkTier, PerkTier, PerkTier, PerkTier];
 }
+/** An entity the pipeline guarantees at least one acquisition source for; assembly throws otherwise. */
+export interface SourcedEntity extends TrackerEntity {
+  sources: SourceTuple;
+}
 export type SkillId = string & { readonly __brand: "SkillId" };
+/** A spell without a known unlock quest has an empty source list. */
 export type Spell = TrackerEntity;
 export type SpellId = string & { readonly __brand: "SpellId" };
 export interface Store {
@@ -188,8 +194,12 @@ export interface TrackerData {
   version: string;
   villagers: Record<VillagerId, Villager>;
 }
+/**
+ * An entity whose source list may be empty. Kinds the pipeline guarantees at least one source for
+ * use `SourcedEntity` instead, so `sources[0]` is only typed as present when it is.
+ */
 export interface TrackerEntity {
-  sources: SourceTuple;
+  sources: Source[];
   visibility?: VisibilityCondition;
 }
 /** A chest tier's entry carries no data; names live in the locale files, keyed by tier ID. */

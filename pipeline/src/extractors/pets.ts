@@ -2,7 +2,6 @@ import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { forEachItem, titleCase } from "../extractor-helpers.js";
 
-import type { SourceTuple } from "#lib/types/acquisition.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type {
   PetCosmeticSet,
@@ -11,6 +10,7 @@ import type {
   PetSkinId,
 } from "#lib/types/tracker-data.js";
 
+import type { SourceDraft } from "../acquisition/required-sources.js";
 import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 
@@ -18,7 +18,7 @@ export function extractPetCosmetics(
   fiddle: ParsedGameData,
   localizer: Localizer,
 ): {
-  cosmetics: Record<PetCosmeticSetId, PetCosmeticSet>;
+  cosmetics: Record<PetCosmeticSetId, SourceDraft<PetCosmeticSet>>;
   localeNames: Record<LocaleCode, Record<PetCosmeticSetId, string>>;
 } {
   const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
@@ -29,10 +29,10 @@ export function extractPetCosmetics(
   const sets = pets?.cosmetic_sets as Record<string, Record<string, unknown>> | undefined;
   if (!sets) return { cosmetics: {}, localeNames };
 
-  const result = {} as Record<PetCosmeticSetId, PetCosmeticSet>;
+  const result = {} as Record<PetCosmeticSetId, SourceDraft<PetCosmeticSet>>;
   for (const [id, set] of Object.entries(sets)) {
     const name = (set.name as string | undefined) ?? titleCase(id);
-    result[id as PetCosmeticSetId] = { sources: [] as unknown as SourceTuple };
+    result[id as PetCosmeticSetId] = { sources: [] };
     const { values } = localizer.localizeField({
       category: "pets/cosmetic_sets",
       classification: "localizable",
@@ -52,9 +52,9 @@ export function extractPetSkins(
   itemLocaleNames: Record<LocaleCode, Record<string, string>>,
 ): {
   localeNames: Record<LocaleCode, Record<PetSkinId, string>>;
-  skins: Record<PetSkinId, PetSkin>;
+  skins: Record<PetSkinId, SourceDraft<PetSkin>>;
 } {
-  const result = {} as Record<PetSkinId, PetSkin>;
+  const result = {} as Record<PetSkinId, SourceDraft<PetSkin>>;
   const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
     LocaleCode,
     Record<PetSkinId, string>
@@ -65,7 +65,7 @@ export function extractPetSkins(
     if (!skinUnlock) return;
 
     const skinId = skinUnlock as PetSkinId;
-    result[skinId] = { sources: [] as unknown as SourceTuple };
+    result[skinId] = { sources: [] };
     const englishName = itemLocaleNames.en[itemId];
     if (!englishName) throw new Error(`Pet skin "${skinUnlock}" has no localized item "${itemId}"`);
     for (const locale of LOCALE_CODES) {
