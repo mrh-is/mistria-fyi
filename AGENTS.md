@@ -56,6 +56,11 @@ worktree, including `.worktrees/`, so spawn editing subagents with the Agent too
 serves the orchestrator's checkout, so a subagent previews its own dev server by URL; see
 [docs/development-workflow.md](docs/development-workflow.md#preview-from-a-subagent-worktree).
 
+**Stashes are shared:** `refs/stash` is one stack for every linked worktree, so a bare
+`git stash pop` or `apply` can restore another session's edits. Prefer a temporary WIP commit; if
+you must stash, address your entry by its commit ID (see
+[docs/development-workflow.md](docs/development-workflow.md#set-work-aside-without-the-shared-stash)).
+
 **Refused edits:** if the harness refuses a file write or edit, stop and report it. Never route
 around the refusal with shell writes (heredocs, `sed -i`, `perl -i`, scripts); the guard exists to
 keep agents out of the shared checkout, and a shell write bypasses it silently.
