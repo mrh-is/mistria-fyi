@@ -6,6 +6,7 @@ import { searchItems } from "#lib/engine/search.js";
 import { encodeTransferPayload } from "#lib/engine/transfer.js";
 import { deriveProgressionState } from "#lib/engine/visibility.js";
 import { memoryStorage } from "#lib/test-utils/memory-storage.js";
+import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { recordKeys } from "#lib/utils/record.js";
 
 import type { AnimalId, AnimalVariantId, CosmeticId } from "#lib/types/tracker-data.js";
@@ -195,7 +196,7 @@ describe("downstream consumers after backfill", () => {
     const completed = await getBackfilledState();
     expect(() =>
       getAllProgress({
-        availabilityWindows: "available",
+        availabilityWindows: DEFAULT_AVAILABILITY_WINDOWS,
         completed,
         worldState: { season: "spring", weather: "calm" },
       }),

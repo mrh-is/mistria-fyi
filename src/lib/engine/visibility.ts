@@ -1,3 +1,4 @@
+import { seasonOrdinal } from "#lib/engine/domain-primitives.js";
 import {
   getMarriedVillager,
   isRomantic,
@@ -17,8 +18,6 @@ import type {
 import type { CompletedState, QuestState } from "#lib/types/user-progress.js";
 import type { QuestVisibility, VisibilityCondition } from "#lib/types/visibility.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
-
-const SEASON_ORD: Record<Season, number> = { fall: 2, spring: 0, summer: 1, winter: 3 };
 
 export interface UserProgressionState {
   hasUpperFloor: boolean;
@@ -161,7 +160,7 @@ function evaluateCondition(
     case "questCompleted":
       return state.questStatus(condition.questId) === "completed";
     case "reachedSeason":
-      return SEASON_ORD[state.reachedSeason] >= SEASON_ORD[condition.season];
+      return seasonOrdinal(state.reachedSeason) >= seasonOrdinal(condition.season);
     case "renownLevel":
       return state.renown >= condition.level;
     case "skillLevel":
@@ -298,7 +297,7 @@ function satisfyConditionInDraft(
       markQuestCompleted(condition.questId, completed, trackerData);
       return;
     case "reachedSeason":
-      if (SEASON_ORD[condition.season] > SEASON_ORD[completed.reachedSeason]) {
+      if (seasonOrdinal(condition.season) > seasonOrdinal(completed.reachedSeason)) {
         completed.reachedSeason = condition.season;
       }
       return;

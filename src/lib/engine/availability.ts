@@ -1,4 +1,4 @@
-import { AVAILABILITY_WINDOWS, legacyAvailabilityWindows } from "#lib/types/availability.js";
+import { AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 
 import {
   evaluateAvailabilityCondition,
@@ -7,7 +7,7 @@ import {
 } from "./availability-condition.js";
 
 import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
-import type { AvailabilitySelection, AvailabilityWindow } from "#lib/types/availability.js";
+import type { AvailabilityWindow } from "#lib/types/availability.js";
 import type { ItemId, Season, Weather } from "#lib/types/tracker-data.js";
 
 import type { DisplayBadges } from "./availability-condition.js";
@@ -41,15 +41,9 @@ export function filterAvailableItems(
   itemIds: ItemId[],
   sourceLookup: (id: ItemId) => Source[],
   worldState: WorldState,
-  selection: AvailabilitySelection,
+  selection: readonly AvailabilityWindow[],
 ): ItemId[] {
-  if (selection === "everything") return itemIds;
-  if (
-    typeof selection !== "string" &&
-    AVAILABILITY_WINDOWS.every((window) => selection.includes(window))
-  ) {
-    return itemIds;
-  }
+  if (AVAILABILITY_WINDOWS.every((window) => selection.includes(window))) return itemIds;
   return itemIds.filter((id) => isItemAvailable(sourceLookup(id), worldState, selection));
 }
 
@@ -73,31 +67,29 @@ export function getDisplayBadges(sources: Source[]): DisplayBadges {
 
 /**
  * Check if an item is available: ANY source must pass (OR logic).
- * Items with no sources are always available in "available"/"everything",
- * but hidden in "timely" (nothing is timely about them).
+ * Items with no sources classify as "anytime", so they pass whenever "anytime" is selected.
  */
 export function isItemAvailable(
   sources: Source[],
   worldState: WorldState,
-  selection: AvailabilitySelection,
+  windows: readonly AvailabilityWindow[],
 ): boolean {
-  return selectedWindows(selection).includes(classifyItemAvailability(sources, worldState));
+  return windows.includes(classifyItemAvailability(sources, worldState));
 }
 
 // ─── Composite display helpers ───────────────────────────────────────
 
 /**
  * Whether an item row should be visually dimmed — incomplete but unavailable
- * in the current season/weather when viewing "everything".
+ * in the current season/weather while "later" is selected alongside another window.
  */
 export function isItemDimmed(
   sources: Source[],
   isCompleted: boolean,
   worldState: WorldState,
-  selection: AvailabilitySelection,
+  windows: readonly AvailabilityWindow[],
 ): boolean {
   if (isCompleted) return false;
-  const windows = selectedWindows(selection);
   if (!windows.includes("later") || !windows.some((window) => window !== "later")) return false;
   return classifyItemAvailability(sources, worldState) === "later";
 }
@@ -123,9 +115,9 @@ export function isRowVisible(
 export function isSourceAvailable(
   source: Source,
   worldState: WorldState,
-  selection: AvailabilitySelection,
+  windows: readonly AvailabilityWindow[],
 ): boolean {
-  return selectedWindows(selection).includes(classifySourceAvailability(source, worldState));
+  return windows.includes(classifySourceAvailability(source, worldState));
 }
 
 /**
@@ -137,10 +129,10 @@ export function shouldCountItem(
   sources: Source[],
   isCompleted: boolean,
   worldState: WorldState,
-  selection: AvailabilitySelection,
+  windows: readonly AvailabilityWindow[],
 ): boolean {
   if (isCompleted) return true;
-  return isItemAvailable(sources, worldState, selection);
+  return isItemAvailable(sources, worldState, windows);
 }
 
 function classifySourceAvailability(source: Source, worldState: WorldState): AvailabilityWindow {
@@ -186,8 +178,4 @@ function hasWindowRestriction(condition: AvailabilityCondition): boolean {
     case "weather":
       return true;
   }
-}
-
-function selectedWindows(selection: AvailabilitySelection): readonly AvailabilityWindow[] {
-  return typeof selection === "string" ? legacyAvailabilityWindows(selection) : selection;
 }
