@@ -67,8 +67,10 @@ export function extractMonsterNames(
   fiddle: ParsedGameData,
 ): Record<LocaleCode, Record<MonsterId, string>> {
   const pets = fiddle.pets as Record<string, unknown> | undefined;
-  const variants = (pets?.variants ?? {}) as Record<string, Record<string, unknown>>;
-  const monsters = (fiddle.monsters ?? {}) as Record<string, Record<string, unknown>>;
+  const variants = pets?.variants as Record<string, Record<string, unknown>> | undefined;
+  const monsters = fiddle.monsters as Record<string, Record<string, unknown>> | undefined;
+  if (!variants) throw new Error("The fiddle has no pets.variants table");
+  if (!monsters) throw new Error("The fiddle has no monsters table");
 
   const names = {} as Record<MonsterId, string>;
   for (const monstersOfType of Object.values(monsters)) {

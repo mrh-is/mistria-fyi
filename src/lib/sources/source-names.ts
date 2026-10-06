@@ -71,6 +71,16 @@ function skin(id: string): PetSkinId {
  * chunk) are English-only, so other locales compose a name from these instead, as does English
  * for the three monsters that have no pet variant to name them.
  */
+/**
+ * Monsters with no `pets.toml` variant, so no game name: English composes theirs too. Mirrors
+ * `MONSTERS_WITHOUT_PET_VARIANT` in `pipeline/src/extractors/monsters.ts`.
+ */
+const MONSTERS_WITHOUT_GAME_NAME = new Set<string>([
+  "mistrilclod",
+  "rockclod_purple",
+  "sapling_orange_mini",
+]);
+
 interface MonsterFamily {
   family: PetSkinId;
   variant?: keyof typeof VARIANT_MESSAGES;
@@ -156,9 +166,16 @@ export function buildAnimalNames(locale: LocaleCode): Partial<Record<string, str
   );
 }
 
+/**
+ * Location names only appear mid-sentence (“Dig up at {locations}”). English game names lead with
+ * a capitalized article (“The Beach”), so it's lowercased to read “Dig up at the Beach”.
+ */
 export function buildLocationNames(locale: LocaleCode): Record<NamedLocationId, string> {
   const gameNames = Object.fromEntries(
-    GAME_NAMED_LOCATIONS.map((id) => [id, getName("locations", id as LocationId, locale)]),
+    GAME_NAMED_LOCATIONS.map((id) => {
+      const name = getName("locations", id as LocationId, locale);
+      return [id, locale === "en" ? name.replace(/^The /, "the ") : name];
+    }),
   ) as Record<(typeof GAME_NAMED_LOCATIONS)[number], string>;
   return {
     ...gameNames,
@@ -177,6 +194,9 @@ export function buildMonsterNames(locale: LocaleCode): Record<NamedMonsterId, st
   return recordMap(families, ({ family, variant }, id) => {
     const gameName = gameNames[id];
     if (gameName) return gameName;
+    if (locale === "en" && !MONSTERS_WITHOUT_GAME_NAME.has(id)) {
+      throw new Error(`No "monsters" name for id "${id}" in locale "en"`);
+    }
     const monster = getName("pets/skins", family, locale);
     return variant ? VARIANT_MESSAGES[variant]({ monster }, { locale }) : monster;
   });

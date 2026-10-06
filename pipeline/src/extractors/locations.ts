@@ -20,7 +20,7 @@ export function extractLocationNames(
     Record<LocationId, string>
   >;
   const locations = fiddle.locations as Record<string, Record<string, unknown>> | undefined;
-  if (!locations) return localeNames;
+  if (!locations) throw new Error("The fiddle has no locations table");
 
   for (const [id, location] of Object.entries(locations)) {
     if (id === "default" || typeof location.name !== "string") continue;

@@ -63,6 +63,7 @@ function syntheticFiddle() {
       },
     },
     object_prototypes: {},
+    pets: { variants: {} },
     quests: {
       heart_quests: {
         adeline_pregnancy_request: {

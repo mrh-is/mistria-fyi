@@ -29,4 +29,8 @@ describe("extractLocationNames", () => {
     expect(names.en).toEqual({ beach: "The Beach" });
     expect(names.fr).toEqual({ beach: "FR The Beach" });
   });
+
+  it("throws when the fiddle has no locations table", () => {
+    expect(() => extractLocationNames(makeFiddle({}), localizer)).toThrow(/locations table/);
+  });
 });
