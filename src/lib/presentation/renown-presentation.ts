@@ -11,15 +11,17 @@ export function getRankState(level: number, rank: TownRank): RankState {
 }
 
 export interface RenownPresentation {
-  color: string;
   currentRank: TownRank;
   currentRankIndex: number;
   isMaxed: boolean;
+  /** Levels the player has completed inside the current rank. */
+  levelsIntoRank: number;
   maxLevel: number;
   overallPercent: number;
+  rankColor: string;
+  /** How many levels the current rank spans. */
+  rankLevelSpan: number;
   rankPercent: number;
-  rankSpan: number;
-  withinRank: number;
 }
 
 export function getRenownPresentation(level: number, ranks: TownRank[]): RenownPresentation {
@@ -29,18 +31,18 @@ export function getRenownPresentation(level: number, ranks: TownRank[]): RenownP
     0,
   );
   const currentRank = ranks[currentRankIndex];
-  const rankSpan = Math.max(currentRank.levels.end - currentRank.levels.start + 1, 1);
-  const withinRank = Math.max(level - currentRank.levels.start, 0);
+  const rankLevelSpan = Math.max(currentRank.levels.end - currentRank.levels.start + 1, 1);
+  const levelsIntoRank = Math.max(level - currentRank.levels.start, 0);
 
   return {
-    color: townRankColor(currentRankIndex),
     currentRank,
     currentRankIndex,
     isMaxed: level >= maxLevel,
+    levelsIntoRank,
     maxLevel,
     overallPercent: maxLevel > 0 ? Math.min(Math.max((level / maxLevel) * 100, 0), 100) : 0,
-    rankPercent: Math.min((withinRank / rankSpan) * 100, 100),
-    rankSpan,
-    withinRank,
+    rankColor: townRankColor(currentRankIndex),
+    rankLevelSpan,
+    rankPercent: Math.min((levelsIntoRank / rankLevelSpan) * 100, 100),
   };
 }

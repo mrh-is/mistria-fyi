@@ -1,3 +1,8 @@
+import { SEASONS } from "#lib/types/tracker-data.js";
+
+import { expectNumber, expectRecord, expectString } from "../../data-shapes.js";
+import { sourceFileFor } from "../../parse-fiddle.js";
+
 import type { ActivityId, Source } from "#lib/types/acquisition.js";
 import type {
   AnimalId,
@@ -13,6 +18,7 @@ import type {
   VillagerId,
 } from "#lib/types/tracker-data.js";
 
+import type { SourceFieldLocation } from "../../data-shapes.js";
 import type { ParsedGameData } from "../../parse-fiddle.js";
 import type {
   AnimalCosmeticSourceAccumulator,
@@ -33,6 +39,10 @@ const FESTIVAL_SEASON_MAP: Record<string, Season> = {
   summer: "summer",
   winter: "winter",
 };
+
+function isSeason(value: string): value is Season {
+  return SEASONS.some((season) => season === value);
+}
 
 const TEN_HEART_SUFFIX = "_ten_hearts";
 
@@ -59,7 +69,10 @@ export function collectRewardSources(
 const SMALL_ANIMAL_KINDS = ["capybara", "chicken", "duck", "rabbit"];
 const LARGE_ANIMAL_KINDS = ["alpaca", "cow", "horse", "sheep"];
 
-function classifyLetterTrigger(reqs: Record<string, unknown> | undefined): LetterRewardSource {
+function classifyLetterTrigger(
+  reqs: Record<string, unknown> | undefined,
+  context: SourceFieldLocation,
+): LetterRewardSource {
   if (!reqs) {
     return {
       type: "reach_day",
@@ -79,14 +92,36 @@ function classifyLetterTrigger(reqs: Record<string, unknown> | undefined): Lette
     return { type: "donate_item", triggerItemId: reqs.donated_item as ItemId };
   }
 
-  const reachedDate = reqs.reached_date as Record<string, unknown> | undefined;
-  if (reachedDate && typeof reachedDate === "object") {
+  if (reqs.reached_date !== undefined) {
+    const reachedDate = expectRecord(reqs.reached_date, context);
+    const season =
+      reachedDate.season === undefined
+        ? "spring"
+        : expectString(reachedDate.season, {
+            ...context,
+            fieldPath: `${context.fieldPath}.season`,
+          });
+    if (!isSeason(season)) {
+      throw new Error(
+        `Invalid season for ${context.entityId}.${context.fieldPath}.season in ${context.sourcePath}`,
+      );
+    }
     return {
       type: "reach_day",
       triggerDate: {
-        day: (reachedDate.day as number) ?? 1,
-        season: (reachedDate.season as Season) ?? "spring",
-        ...(reachedDate.year === undefined ? {} : { year: reachedDate.year as number }),
+        day:
+          reachedDate.day === undefined
+            ? 1
+            : expectNumber(reachedDate.day, { ...context, fieldPath: `${context.fieldPath}.day` }),
+        season,
+        ...(reachedDate.year === undefined
+          ? {}
+          : {
+              year: expectNumber(reachedDate.year, {
+                ...context,
+                fieldPath: `${context.fieldPath}.year`,
+              }),
+            }),
       },
     };
   }
@@ -292,14 +327,18 @@ function collectLetterRewardSources(
   const letters = fiddle.letters as Record<string, Record<string, unknown>> | undefined;
   if (!letters) return;
 
-  for (const [, letter] of Object.entries(letters)) {
+  for (const [letterId, letter] of Object.entries(letters)) {
     if (typeof letter !== "object" || letter === null) continue;
 
     const items = Array.isArray(letter.items) ? letter.items : [];
     if (items.length === 0) continue;
 
     const reqs = letter.requirements as Record<string, unknown> | undefined;
-    const source = classifyLetterTrigger(reqs);
+    const source = classifyLetterTrigger(reqs, {
+      entityId: letterId,
+      fieldPath: "requirements.reached_date",
+      sourcePath: sourceFileFor(fiddle, `letters.${letterId}`),
+    });
 
     for (const entry of items) {
       if (typeof entry !== "object" || entry === null) continue;
@@ -330,7 +369,7 @@ function collectMuseumDonationRewardSources(
   for (const [wingId, wing] of Object.entries(wings)) {
     if (typeof wing !== "object" || wing === null) continue;
 
-    const rewards = Array.isArray(wing.rewards) ? wing.rewards : [];
+    const rewards: unknown[] = Array.isArray(wing.rewards) ? wing.rewards : [];
 
     for (let i = 0; i < rewards.length; i++) {
       const reward = rewards[i];
@@ -407,7 +446,7 @@ function collectQuestRewardSources(
       if (questId === "default" || typeof quest !== "object" || quest === null) continue;
 
       const questData = quest as Record<string, unknown>;
-      const rewards = Array.isArray(questData.rewards) ? questData.rewards : [];
+      const rewards: unknown[] = Array.isArray(questData.rewards) ? questData.rewards : [];
       processQuestRewards(
         rewards,
         questId,
@@ -441,7 +480,7 @@ function collectRenownRewardSources(
   const renown = fiddle.renown as Record<string, unknown> | undefined;
   if (!renown) return;
 
-  const rewards = Array.isArray(renown.rewards) ? renown.rewards : [];
+  const rewards: unknown[] = Array.isArray(renown.rewards) ? renown.rewards : [];
 
   for (let i = 0; i < rewards.length; i++) {
     const reward = rewards[i];

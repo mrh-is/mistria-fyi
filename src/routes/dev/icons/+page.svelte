@@ -215,8 +215,8 @@
   }
 
   .gallery.dark {
-    background: var(--paper);
-    color: var(--ink);
+    background: var(--color-paper);
+    color: var(--color-ink);
   }
 
   .gallery-header {

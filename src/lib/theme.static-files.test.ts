@@ -23,8 +23,8 @@ describe("theme constants", () => {
     expect(manifest.background_color).toBe(THEME_COLORS.light);
   });
 
-  it("match each theme's --paper token", () => {
-    const paper = [...appCss.matchAll(/--paper:\s*(#[0-9a-f]{6})/gi)].map((m) => m[1]);
+  it("match each theme's --color-paper token", () => {
+    const paper = [...appCss.matchAll(/--color-paper:\s*(#[0-9a-f]{6})/gi)].map((m) => m[1]);
     expect(paper).toEqual([THEME_COLORS.light, THEME_COLORS.dark]);
   });
 });

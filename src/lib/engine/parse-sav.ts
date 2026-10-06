@@ -28,19 +28,19 @@ const DEFAULT_LIMITS: ParseSavLimits = {
  * - `invalid-entry`: a recognized entry isn't a JSON object.
  * - `no-save-data`: the file has none of the player, gamedata, or quests entries.
  */
-export type SaveFileErrorDetail =
+export type SavArchiveErrorDetail =
   | { code: "corrupt" }
   | { code: "decompressed-too-large"; maxBytes: number }
   | { code: "invalid-entry"; entry: string }
   | { code: "no-save-data" }
   | { code: "too-large"; maxBytes: number; sizeBytes: number };
 
-export class SaveFileError extends Error {
-  readonly detail: SaveFileErrorDetail;
+export class SavArchiveError extends Error {
+  readonly detail: SavArchiveErrorDetail;
 
-  constructor(detail: SaveFileErrorDetail, message: string, options?: ErrorOptions) {
+  constructor(detail: SavArchiveErrorDetail, message: string, options?: ErrorOptions) {
     super(message, options);
-    this.name = "SaveFileError";
+    this.name = "SavArchiveError";
     this.detail = detail;
   }
 }
@@ -54,14 +54,14 @@ export class SaveFileError extends Error {
  *     [u64 LE name_len][name bytes (UTF-8)][u64 LE data_len][data bytes (UTF-8 JSON)]
  *
  * We extract the "player", "gamedata", and "quests" entries and parse them as JSON. Every
- * rejection is a {@link SaveFileError}.
+ * rejection is a {@link SavArchiveError}.
  */
-export async function parseSavFile(
+export async function parseSavArchive(
   file: File,
   limits: ParseSavLimits = DEFAULT_LIMITS,
 ): Promise<SaveBundle> {
   if (file.size > limits.maxCompressedSize) {
-    throw new SaveFileError(
+    throw new SavArchiveError(
       { code: "too-large", maxBytes: limits.maxCompressedSize, sizeBytes: file.size },
       `Save file is too large (${formatSize(file.size)}). ` +
         `Maximum supported size is ${formatSize(limits.maxCompressedSize)}.`,
@@ -73,14 +73,14 @@ export async function parseSavFile(
   try {
     decompressed = await decompress(compressed, limits.maxDecompressedSize);
   } catch (error) {
-    if (error instanceof SaveFileError) throw error;
+    if (error instanceof SavArchiveError) throw error;
     throw corrupt("Save file is not valid compressed data", { cause: error });
   }
   return extractBundle(decompressed);
 }
 
-function corrupt(message: string, options?: ErrorOptions): SaveFileError {
-  return new SaveFileError({ code: "corrupt" }, message, options);
+function corrupt(message: string, options?: ErrorOptions): SavArchiveError {
+  return new SavArchiveError({ code: "corrupt" }, message, options);
 }
 
 async function decompress(
@@ -110,7 +110,7 @@ async function decompress(
       if (totalLen > maxDecompressedSize) {
         // oxlint-disable-next-line no-await-in-loop -- cancels the stream, then exits the read loop by throwing
         await reader.cancel();
-        throw new SaveFileError(
+        throw new SavArchiveError(
           { code: "decompressed-too-large", maxBytes: maxDecompressedSize },
           `Decompressed save data exceeds the maximum supported size ` +
             `(${formatSize(maxDecompressedSize)}). The file may be corrupt.`,
@@ -175,14 +175,14 @@ function extractBundle(data: Uint8Array): SaveBundle {
       try {
         parsed = JSON.parse(jsonStr);
       } catch (error) {
-        throw new SaveFileError(
+        throw new SavArchiveError(
           { code: "invalid-entry", entry: name },
           `Failed to parse "${name}" entry: ${error instanceof Error ? error.message : String(error)}`,
           { cause: error },
         );
       }
       if (!isSaveSection(parsed)) {
-        throw new SaveFileError(
+        throw new SavArchiveError(
           { code: "invalid-entry", entry: name },
           `Entry "${name}" is not a JSON object`,
         );
@@ -194,7 +194,7 @@ function extractBundle(data: Uint8Array): SaveBundle {
   }
 
   if (!bundle.player && !bundle.gamedata && !bundle.quests) {
-    throw new SaveFileError(
+    throw new SavArchiveError(
       { code: "no-save-data" },
       "No recognized save data found in this .sav file. Expected player, gamedata, or quests entries.",
     );

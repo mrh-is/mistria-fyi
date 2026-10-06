@@ -11,9 +11,9 @@
   import { getName } from "#lib/data/names.js";
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
-  import { isItemDimmed, isRowVisible, shouldCountItem } from "#lib/engine/availability.js";
+  import { isInProgressScope, isItemDimmed, isRowVisible } from "#lib/engine/availability.js";
   import { isCategoryComplete } from "#lib/engine/progress.js";
-  import { isEntityNameVisible } from "#lib/engine/visibility.js";
+  import { isConditionVisible } from "#lib/engine/visibility.js";
   import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -40,7 +40,7 @@
 
   function itemNameVisible(itemId: ItemId): boolean {
     const visibility = trackerData.items[itemId].visibility;
-    return isEntityNameVisible(visibility, userState.progressionState);
+    return isConditionVisible(visibility, userState.progressionState);
   }
 
   let redactedStoreIds = $derived(computeRedactedStoreIds(userState.progressionState));
@@ -102,7 +102,7 @@
 
   function isItemBaseScoped(itemId: ItemId): boolean {
     if (!matchesFilter(itemId)) return false;
-    return shouldCountItem(
+    return isInProgressScope(
       trackerData.items[itemId].sources,
       isItemComplete(itemId),
       userState.state.worldState,
@@ -152,7 +152,7 @@
       userState.toggleMuseumItem(itemId);
     });
     if (completed) {
-      if (!userState.state.showCompleted) recentlyCompleted.mark(itemId);
+      if (!userState.state.showCompleted) recentlyCompleted.markLeaving(itemId);
       if (isMuseumComplete()) {
         celebrateCategory();
       } else if (isWingComplete(trackerData.museum[wingId])) {
@@ -219,18 +219,18 @@
               {@const museumItemVisibility = trackerData.items[itemId].visibility}
               <TrackerRow
                 display={rowDisplay(itemId, museumItemSources)}
-                lookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
+                segmentLookups={{ ...baseLookups, entityVisibility: museumItemVisibility }}
                 name={getName("items", itemId, locale)}
                 reportCategory="museum-item"
                 reportEntityId={itemId}
                 sources={museumItemSources}
                 sprite={itemId}
-                spriteClass="text-cat-museum"
+                spriteClass="text-(--color-category-museum)"
                 onToggle={() => {
                   if (itemNameVisible(itemId) || museumCompleted) {
                     toggleItem(itemId, set.setId, wingId);
                   } else {
-                    spoilerGuard.guard(museumItemVisibility, () => {
+                    spoilerGuard.requestGuardedAction(museumItemVisibility, () => {
                       toggleItem(itemId, set.setId, wingId);
                     });
                   }

@@ -1,4 +1,4 @@
-import { canonicalAlmanacId, trackerData } from "#lib/data/index.js";
+import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { SEASON_ORDER, seasonFromOrdinal } from "#lib/engine/domain-primitives.js";
 import {
   getMaxMineFloor,
@@ -25,7 +25,7 @@ import type {
   VillagerId,
   VillagerRelationship,
 } from "#lib/types/tracker-data.js";
-import type { CompletedState, MergeResult, QuestState } from "#lib/types/user-progress.js";
+import type { MergeResult, ProgressState, QuestState } from "#lib/types/user-progress.js";
 
 import type { SaveBundle, SaveSection } from "./save-bundle.js";
 
@@ -37,7 +37,7 @@ export interface SaveImportReport extends MergeResult {
 }
 
 /** Why no extracted save file could be used. */
-export type SaveFilesError =
+export type ExtractedSaveFilesError =
   | { code: "no-save-files" }
   | { code: "no-valid-files"; problems: SaveImportWarning[] };
 
@@ -79,15 +79,15 @@ interface SectionReader {
  * Maps a save bundle to the progress it records, plus warnings for the parts it skipped. What the
  * import changes is counted later, by the store's merge.
  */
-export function buildImportState(bundle: SaveBundle): {
-  completed: Partial<CompletedState>;
+export function extractSaveProgress(bundle: SaveBundle): {
+  completed: Partial<ProgressState>;
   warnings: SaveImportWarning[];
 } {
   const warnings: SaveImportWarning[] = [];
 
-  // parseSaveFiles rejects an unrecognizable player.json outright; a .sav entry reaches here.
+  // parseExtractedSaveFiles rejects an unrecognizable player.json outright; a .sav entry reaches here.
   let playerSection = bundle.player;
-  if (playerSection && !validatePlayerSave(playerSection)) {
+  if (playerSection && !isPlayerSaveSection(playerSection)) {
     warnings.push({ code: "unrecognized-player", file: "player" });
     playerSection = undefined;
   }
@@ -105,7 +105,7 @@ export function buildImportState(bundle: SaveBundle): {
   ]);
 
   for (const id of allPlayerItems) {
-    const canonical = canonicalAlmanacId.get(id as ItemId);
+    const canonical = trackerIndex.memberToCanonicalAlmanacId.get(id as ItemId);
     if (canonical) {
       almanacIds.add(canonical);
     }
@@ -450,9 +450,9 @@ function readActiveQuestNames(raw: unknown, warnings: SaveImportWarning[]): stri
 // ─── .sav file unpacking (client-side) ──────────────────────────────
 
 export {
-  SaveFileError,
-  type SaveFileErrorDetail,
-  parseSavFile as unpackSavFile,
+  SavArchiveError,
+  type SavArchiveErrorDetail,
+  parseSavArchive as unpackSavFile,
 } from "./parse-sav.js";
 export type { SaveBundle, SaveSection } from "./save-bundle.js";
 
@@ -477,9 +477,9 @@ const SAVE_FILES = new Set(["gamedata.json", "player.json", "quests.json"]);
  * file parses, the problems with the others are returned as warnings rather than failing the
  * import; when none does, they are returned with the error.
  */
-export async function parseSaveFiles(files: File[]): Promise<{
+export async function parseExtractedSaveFiles(files: File[]): Promise<{
   bundle?: SaveBundle;
-  error?: SaveFilesError;
+  error?: ExtractedSaveFilesError;
   warnings?: SaveImportWarning[];
 }> {
   const bundle: SaveBundle = {};
@@ -515,7 +515,7 @@ export async function parseSaveFiles(files: File[]): Promise<{
           bundle.gamedata = data;
           break;
         case "player.json":
-          if (validatePlayerSave(data)) {
+          if (isPlayerSaveSection(data)) {
             bundle.player = data;
           } else {
             errors.push({ code: "unrecognized-player", file: file.name });
@@ -546,9 +546,9 @@ export async function parseSaveFiles(files: File[]): Promise<{
 
 /**
  * Whether `data` looks like a player save: an object with at least one progress field of the
- * expected shape. This recognizes the file; {@link buildImportState} validates each field.
+ * expected shape. This recognizes the file; {@link extractSaveProgress} validates each field.
  */
-export function validatePlayerSave(data: unknown): data is SaveSection {
+export function isPlayerSaveSection(data: unknown): data is SaveSection {
   if (!isSaveSection(data)) return false;
   return (
     Array.isArray(data.items_acquired) ||

@@ -2,7 +2,7 @@ import { fireEvent, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import SearchResults from "#lib/components/search-results.svelte";
-import { LOCALIZED_CATEGORIES } from "#lib/data/names.js";
+import { NAME_CHUNKS } from "#lib/data/names.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 
 import type * as NamesModule from "#lib/data/names.js";
@@ -18,7 +18,7 @@ const names = vi.hoisted(() => ({
 
 vi.mock("#lib/data/names.js", async (importOriginal) => {
   const original = await importOriginal<typeof NamesModule>();
-  await original.loadNames("fr", original.LOCALIZED_CATEGORIES);
+  await original.loadNames("fr", original.NAME_CHUNKS);
   return { ...original, hasNames: names.hasNames, loadNames: names.loadNames };
 });
 
@@ -52,8 +52,8 @@ describe("SearchResults chunk loading", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading search");
     await waitFor(() => {
-      expect(names.loadNames).toHaveBeenCalledWith("ja", LOCALIZED_CATEGORIES);
-      expect(names.loadNames).toHaveBeenCalledWith("en", LOCALIZED_CATEGORIES);
+      expect(names.loadNames).toHaveBeenCalledWith("ja", NAME_CHUNKS);
+      expect(names.loadNames).toHaveBeenCalledWith("en", NAME_CHUNKS);
     });
     expect(screen.queryAllByRole("button", { name: /カブ/ })).toHaveLength(0);
 
@@ -129,8 +129,8 @@ describe("SearchResults chunk loading", () => {
     await view.rerender({ locale: "fr", query: "カブ" });
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading search");
-    expect(names.loadNames).toHaveBeenCalledWith("fr", LOCALIZED_CATEGORIES);
-    expect(names.loadNames).toHaveBeenCalledWith("en", LOCALIZED_CATEGORIES);
+    expect(names.loadNames).toHaveBeenCalledWith("fr", NAME_CHUNKS);
+    expect(names.loadNames).toHaveBeenCalledWith("en", NAME_CHUNKS);
 
     for (const { resolve } of pending.slice(2)) {
       resolve();

@@ -9,11 +9,11 @@
   import { fade } from "svelte/transition";
 
   import FeedbackPanel from "#lib/components/feedback-panel.svelte";
+  import FilterPanel from "#lib/components/filter-panel.svelte";
   import FoldoutPanel from "#lib/components/foldout-panel.svelte";
   import PanelOverlay from "#lib/components/panel-overlay.svelte";
   import QuickSettingsPanel from "#lib/components/quick-settings-panel.svelte";
   import { Input } from "#lib/components/ui/input/index.js";
-  import VisibilityPanel from "#lib/components/visibility-panel.svelte";
   import { getName } from "#lib/data/names.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
@@ -36,7 +36,7 @@
   // Route matching below is keyed by the unprefixed route, not the locale-prefixed browser URL.
   let pathname = $derived(deLocalizeHref(page.url.pathname));
   let toolbar = $derived(metadata.toolbar === "hidden" ? null : metadata.toolbar);
-  let toolbarAccent = $derived(`var(--${metadata.accent})`);
+  let toolbarAccent = $derived(metadata.accent);
 
   let activePanel = $state<ActivePanel>(null);
   let panelElement = $state<HTMLElement | null>(null);
@@ -108,7 +108,7 @@
     const target = event.target as HTMLInputElement;
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
-      toolbarState.setSearch(target.value);
+      toolbarState.setSearchQuery(target.value);
     }, 200);
   }
 
@@ -127,7 +127,7 @@
       ),
   );
   let filtersActive = $derived(
-    !availabilityIsDefault || userState.state.showCompleted || toolbarState.sourceFilterActive,
+    !availabilityIsDefault || userState.state.showCompleted || toolbarState.isSourceFilterNarrowing,
   );
 
   function resetFilters(): void {
@@ -145,7 +145,7 @@
 {#if toolbar}
   {#key pathname}
     <FeedbackPanel
-      accent={toolbarAccent}
+      accentColor={toolbarAccent}
       open={activePanel === "feedback"}
       onClose={closePanel}
       pickerEnabled
@@ -181,7 +181,7 @@
               type="button"
               aria-label={m.toolbar_clear_search()}
               onclick={() => {
-                toolbarState.setSearch("");
+                toolbarState.setSearchQuery("");
               }}>×</button
             >
           {/if}
@@ -241,7 +241,7 @@
             type="button"
             aria-label={m.toolbar_visibility_filters()}
             aria-expanded={activePanel === "visibility"}
-            aria-controls="visibility-panel"
+            aria-controls="filter-panel"
             onclick={() => {
               togglePanel("visibility");
             }}
@@ -256,10 +256,10 @@
   {#if activePanel === "settings" || activePanel === "visibility"}
     <PanelOverlay
       bind:element={panelElement}
+      animateOut
       closeLabel={m.toolbar_close_panel()}
       onClose={closePanel}
       style="--primary: {toolbarAccent}; --ring: {toolbarAccent}"
-      outro
     >
       {#if activePanel === "settings"}
         <FoldoutPanel
@@ -270,7 +270,7 @@
           <QuickSettingsPanel />
         </FoldoutPanel>
       {:else}
-        <FoldoutPanel id="visibility-panel" title={m.toolbar_filters()} onClose={closePanel}>
+        <FoldoutPanel id="filter-panel" title={m.toolbar_filters()} onClose={closePanel}>
           {#snippet headerActions()}
             {#if filtersActive}
               <button
@@ -283,7 +283,10 @@
               </button>
             {/if}
           {/snippet}
-          <VisibilityPanel showSeasonality={toolbar.worldState} onFilterChange={announceFilters} />
+          <FilterPanel
+            showWorldStateFilters={toolbar.worldState}
+            onFilterChange={announceFilters}
+          />
         </FoldoutPanel>
       {/if}
     </PanelOverlay>
@@ -295,9 +298,9 @@
 <style>
   .search-bar,
   .floating-tool {
-    border: 1px solid color-mix(in srgb, var(--hairline) 48%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-ink-hairline) 48%, transparent);
     border-radius: var(--radius-md);
-    background: var(--paper-raised);
+    background: var(--color-paper-raised);
   }
 
   .floating-tool :global(svg) {
@@ -310,7 +313,7 @@
     min-height: 44px;
     align-items: center;
     justify-content: center;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     box-shadow: var(--shadow-medium);
     pointer-events: auto;
     transition:
@@ -329,8 +332,8 @@
   }
 
   .floating-tool--filtered {
-    color: var(--fg-amber);
-    background: color-mix(in srgb, var(--paper-raised) 86%, var(--fg-amber));
+    color: var(--color-toolbar-filtered);
+    background: color-mix(in srgb, var(--color-paper-raised) 86%, var(--color-toolbar-filtered));
   }
 
   .floating-tool:is(:hover, :focus-visible) :global(svg) {

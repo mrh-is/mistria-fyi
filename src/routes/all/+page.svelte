@@ -20,13 +20,13 @@
   registerSourceFilters("all", () => trackerIndex.categorySourceTypes.all);
 
   let headerEl = $state<HTMLElement | undefined>(undefined);
-  let headerH = $state(0);
+  let headerHeight = $state(0);
 
   $effect(() => {
     if (!headerEl) return;
     const el = headerEl;
     const ro = new ResizeObserver(() => {
-      headerH = el.offsetHeight;
+      headerHeight = el.offsetHeight;
     });
     ro.observe(headerEl);
     return () => {
@@ -51,7 +51,7 @@
   {/snippet}
 </PageHeader>
 
-<div class="flex flex-col gap-6 px-4 pb-4" style="--section-top: {headerH}px">
+<div class="flex flex-col gap-6 px-4 pb-4" style="--section-header-sticky-top: {headerHeight}px">
   {#each orderedCategories as category (category)}
     <CategorySection key={category} locale={data.locale} progress={progress[category]} />
   {/each}

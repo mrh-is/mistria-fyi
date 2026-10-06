@@ -1,7 +1,8 @@
 import { mapNonEmpty } from "#lib/utils/record.js";
 
+import { getCutsceneRecords } from "../../parse-fiddle.js";
 import { availabilityToVisibility, toAvailableVisibility } from "./availability-projection.js";
-import { ALWAYS, resolveToVisibility, simplifyCondition } from "./requirement-resolver.js";
+import { ALWAYS_VISIBLE, resolveToVisibility, simplifyCondition } from "./requirement-resolver.js";
 
 import type { Source as AcquisitionSource } from "#lib/types/acquisition.js";
 import type {
@@ -119,16 +120,16 @@ export function extractCategoryVisibility(
             villagerId,
           })) as [VisibilityCondition, ...VisibilityCondition[]],
         }
-      : ALWAYS;
+      : ALWAYS_VISIBLE;
 
   return {
     cooking: { type: "villagerKnown", villagerId: "taliferro" as VillagerId },
     crown: { type: "renownLevel", level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER },
     dates: datesVisibility,
-    fetch: ALWAYS,
-    heart: ALWAYS,
+    fetch: ALWAYS_VISIBLE,
+    heart: ALWAYS_VISIBLE,
     mission: { type: "villagerKnown", villagerId: "stillwell" as VillagerId },
-    story: ALWAYS,
+    story: ALWAYS_VISIBLE,
   };
 }
 
@@ -247,24 +248,26 @@ function acquisitionSourceCondition(
     case "tree":
     case "wedding":
     case "wishing_well":
-      return ALWAYS;
+      return ALWAYS_VISIBLE;
     case "bait_fish":
       return { type: "questCompleted", questId: "apiaries_and_terrariums" as QuestId };
     case "festival":
-      return source.storeId ? storeGateCondition(source.storeId, ctx.storeVisibility) : ALWAYS;
+      return source.storeId
+        ? storeGateCondition(source.storeId, ctx.storeVisibility)
+        : ALWAYS_VISIBLE;
     case "mine":
     case "mine_fish": {
       const floor = source.biomeId ? ctx.biomeFloor(source.biomeId) : undefined;
-      return floor === undefined ? ALWAYS : { type: "minesLevel", floor };
+      return floor === undefined ? ALWAYS_VISIBLE : { type: "minesLevel", floor };
     }
     case "mines_chest":
     case "mines_dig_site": {
       const floor = ctx.biomeFloor(source.biomeId);
       const minesCondition: VisibilityCondition =
-        floor === undefined ? ALWAYS : { type: "minesLevel", floor };
+        floor === undefined ? ALWAYS_VISIBLE : { type: "minesLevel", floor };
       const perkCondition: VisibilityCondition = source.perkId
         ? { type: "perkUnlocked", perkId: source.perkId }
-        : ALWAYS;
+        : ALWAYS_VISIBLE;
       return andSimplify([minesCondition, perkCondition]);
     }
     case "perk":
@@ -284,7 +287,7 @@ function acquisitionSourceCondition(
 }
 
 function andSimplify(conditions: VisibilityCondition[]): VisibilityCondition {
-  if (conditions.length === 0) return ALWAYS;
+  if (conditions.length === 0) return ALWAYS_VISIBLE;
   if (conditions.length === 1) return conditions[0];
   return simplifyCondition({
     type: "and",
@@ -302,7 +305,7 @@ function assignAnimalVisibility(trackerData: TrackerData, fiddle: ParsedGameData
     const gated = requirements?.repaired_haydens_farm === true;
     animal.visibility = gated
       ? { type: "questCompleted", questId: HAYDENS_BARN_UNLOCK_QUEST }
-      : ALWAYS;
+      : ALWAYS_VISIBLE;
   }
 }
 
@@ -345,7 +348,7 @@ function assignQuestVisibility(
     const prerequisites = chains.story[questId as QuestId]?.prerequisites ?? [];
     quest.visibility =
       prerequisites.length === 0
-        ? ALWAYS
+        ? ALWAYS_VISIBLE
         : andSimplify(
             prerequisites.map((prereq): VisibilityCondition => ({
               type: "questCompleted",
@@ -372,12 +375,12 @@ function assignQuestVisibility(
 
   const fetchVisibility = extractFetchQuestVisibility(chains.fetch, cutsceneMap);
   for (const [questId, quest] of Object.entries(trackerData.quests.fetch)) {
-    quest.visibility = fetchVisibility[questId as QuestId] ?? ALWAYS;
+    quest.visibility = fetchVisibility[questId as QuestId] ?? ALWAYS_VISIBLE;
   }
 
   assignOrderedChain(trackerData.quests.crown, chains.crown, categoryVisibility.crown);
-  assignOrderedChain(trackerData.quests.mission, chains.stillwell, categoryVisibility.mission);
-  assignOrderedChain(trackerData.quests.cooking, chains.tali, categoryVisibility.cooking);
+  assignOrderedChain(trackerData.quests.mission, chains.mission, categoryVisibility.mission);
+  assignOrderedChain(trackerData.quests.cooking, chains.cooking, categoryVisibility.cooking);
 }
 
 function assignRecipeVisibility(trackerData: TrackerData, ctx: SourceVisibilityContext): void {
@@ -447,12 +450,12 @@ function acquisitionSourceConditions(
     case "upgrade":
     case "wedding":
     case "wishing_well":
-      return { entity, source: ALWAYS };
+      return { entity, source: ALWAYS_VISIBLE };
     case "mines_chest":
     case "mines_dig_site": {
       const floor = ctx.biomeFloor(source.biomeId);
       const minesCondition: VisibilityCondition =
-        floor === undefined ? ALWAYS : { type: "minesLevel", floor };
+        floor === undefined ? ALWAYS_VISIBLE : { type: "minesLevel", floor };
       return {
         entity,
         source: minesCondition,
@@ -466,7 +469,7 @@ function acquisitionSourceConditions(
         source:
           perk && level !== undefined
             ? { type: "skillLevel", level, skillId: perk.skillId }
-            : ALWAYS,
+            : ALWAYS_VISIBLE,
       };
     }
     case "quest":
@@ -479,7 +482,7 @@ function acquisitionSourceConditions(
     case "store": {
       const storeGate = storeGateCondition(source.storeId, ctx.storeVisibility);
       // At this point source.visibility carries the extraction-time stock entity gate.
-      const stockGate = source.visibility ?? ALWAYS;
+      const stockGate = source.visibility ?? ALWAYS_VISIBLE;
       return {
         entity: andSimplify([entity, stockGate]),
         source: andSimplify([toAvailableVisibility(storeGate), toAvailableVisibility(stockGate)]),
@@ -551,22 +554,12 @@ function computeSourceConditions(
   };
 }
 
-/**
- * Returns cutscene records from either the nested (`fiddle.cutscenes.cutscenes`) or flat
- * (`fiddle.cutscenes`) structure, matching the access pattern in `cutscene-quest-map.ts`.
- */
-function getCutsceneRecords(fiddle: ParsedGameData): Record<string, Record<string, unknown>> {
-  const raw = fiddle.cutscenes as Record<string, unknown> | undefined;
-  const nested = raw?.cutscenes as Record<string, Record<string, unknown>> | undefined;
-  return nested ?? (raw as Record<string, Record<string, unknown>> | undefined) ?? {};
-}
-
 function isAlwaysVisible(v: undefined | VisibilityCondition): boolean {
   return v === undefined || v.type === "always";
 }
 
 function orSimplify(conditions: VisibilityCondition[]): VisibilityCondition {
-  if (conditions.length === 0) return ALWAYS;
+  if (conditions.length === 0) return ALWAYS_VISIBLE;
   if (conditions.length === 1) return conditions[0];
   return simplifyCondition({
     type: "or",
@@ -578,7 +571,7 @@ function storeGateCondition(
   storeId: StoreId,
   storeVisibility: Record<StoreId, VisibilityCondition>,
 ): VisibilityCondition {
-  return storeVisibility[storeId] ?? ALWAYS;
+  return storeVisibility[storeId] ?? ALWAYS_VISIBLE;
 }
 
 function stripAllAlwaysVisibility(trackerData: TrackerData): void {

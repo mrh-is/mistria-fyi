@@ -1,5 +1,6 @@
 import { assert, describe, expect, it } from "vitest";
 
+import { makeFiddle as makeFiddleWithProvenance } from "../../test-helpers.js";
 import {
   assignEntityVisibility,
   CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER,
@@ -43,24 +44,24 @@ function makeFiddle(overrides: {
   ranching?: Record<string, unknown>;
   requirements?: Record<string, unknown>;
   stores?: Record<string, unknown>;
-}): Record<string, unknown> {
-  return {
+}) {
+  return makeFiddleWithProvenance({
     cutscenes: overrides.cutscenes ?? {},
     quests: overrides.quests ?? {},
     ranching: overrides.ranching ?? { animals: {} },
     requirements: overrides.requirements ?? {},
     stores: overrides.stores ?? {},
-  };
+  });
 }
 
 function makeQuestChains(overrides: Partial<QuestChainData>): QuestChainData {
   return {
+    cooking: [],
     crown: [],
     fetch: {},
     heart: {},
-    stillwell: [],
+    mission: [],
     story: {},
-    tali: [],
     ...overrides,
   };
 }
@@ -295,7 +296,7 @@ describe("extractHeartLevelChanges", () => {
     const cutsceneMap: CutsceneQuestMap = {
       break_water_seal: { phase: "completed", questId: "breaking_the_water_seal" as QuestId },
     };
-    const result = extractHeartLevelChanges(fiddle as never, cutsceneMap);
+    const result = extractHeartLevelChanges(fiddle, cutsceneMap);
     expect(result["breaking_the_water_seal" as QuestId]).toEqual([
       { level: 2, villagerId: "caldarus" },
       { level: 1, villagerId: "seridia" },
@@ -316,7 +317,7 @@ describe("extractHeartLevelChanges", () => {
     const cutsceneMap: CutsceneQuestMap = {
       break_fire_seal: { phase: "completed", questId: "breaking_the_final_seal" as QuestId },
     };
-    const result = extractHeartLevelChanges(fiddle as never, cutsceneMap);
+    const result = extractHeartLevelChanges(fiddle, cutsceneMap);
     expect(result["breaking_the_final_seal" as QuestId]).toEqual([
       { level: 6, villagerId: "caldarus" },
       { level: 6, villagerId: "seridia" },
@@ -327,7 +328,7 @@ describe("extractHeartLevelChanges", () => {
     const fiddle = makeFiddle({
       cutscenes: { default: { heart_level_changes: [] } },
     });
-    const result = extractHeartLevelChanges(fiddle as never, emptyCutsceneMap);
+    const result = extractHeartLevelChanges(fiddle, emptyCutsceneMap);
     expect(result).toEqual({});
   });
 
@@ -337,7 +338,7 @@ describe("extractHeartLevelChanges", () => {
         unmapped_cutscene: { heart_level_changes: [{ heart_level: 1, npc_id: "holt" }] },
       },
     });
-    const result = extractHeartLevelChanges(fiddle as never, emptyCutsceneMap);
+    const result = extractHeartLevelChanges(fiddle, emptyCutsceneMap);
     expect(result).toEqual({});
   });
 });
@@ -354,12 +355,7 @@ describe("assignEntityVisibility — items", () => {
       },
       stores: { general: { name: "General Store" } },
     });
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     expect(trackerData.items["seed_turnip" as ItemId].visibility).toBeUndefined();
   });
 
@@ -379,12 +375,7 @@ describe("assignEntityVisibility — items", () => {
         },
       },
     });
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     expect(trackerData.items["fancy_seed" as ItemId].visibility).toEqual({
       type: "questCompleted",
       questId: "repair_the_general_store",
@@ -410,12 +401,7 @@ describe("assignEntityVisibility — items", () => {
         },
       },
     });
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     expect(trackerData.items["dual_source_item" as ItemId].visibility).toEqual({
       type: "or",
       conditions: [
@@ -448,12 +434,7 @@ describe("assignEntityVisibility — items", () => {
       },
     });
 
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
 
     const item = trackerData.items["gated_stock" as ItemId];
     expect(item.visibility).toEqual({
@@ -498,12 +479,7 @@ describe("assignEntityVisibility — items", () => {
       },
     });
 
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
 
     expect(trackerData.items["alternative_paths" as ItemId].visibility).toBeUndefined();
   });
@@ -529,8 +505,8 @@ describe("assignEntityVisibility — items", () => {
       },
     });
 
-    assignEntityVisibility(first, emptyCutsceneMap, makeFiddle({}) as never, makeQuestChains({}));
-    assignEntityVisibility(second, emptyCutsceneMap, makeFiddle({}) as never, makeQuestChains({}));
+    assignEntityVisibility(first, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
+    assignEntityVisibility(second, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
 
     expect(shared).not.toHaveProperty("visibility");
     expect(first.items["first" as ItemId].sources?.[0]).not.toBe(shared);
@@ -558,12 +534,7 @@ describe("assignEntityVisibility — items", () => {
       },
     });
 
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
 
     expect(trackerData.items["void_herb" as ItemId].visibility).toEqual({
       type: "questCompleted",
@@ -588,12 +559,7 @@ describe("assignEntityVisibility — recipes", () => {
       },
     });
 
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
 
     const recipe = trackerData.recipes["expert_dish" as RecipeId];
     expect(recipe.visibility).toEqual({ type: "skillLevel", level: 30, skillId: "cooking" });
@@ -617,12 +583,7 @@ describe("assignEntityVisibility — recipes", () => {
         },
       },
     });
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     const recipe = trackerData.recipes["stew" as RecipeId];
     expect(recipe.visibility).toEqual({ type: "perkUnlocked", perkId: "taste_maker" });
     const source = recipe.sources?.[0];
@@ -650,12 +611,7 @@ describe("assignEntityVisibility — recipes", () => {
         },
       },
     });
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     const recipe = trackerData.recipes["stairs" as RecipeId];
     expect(recipe.visibility).toEqual({
       type: "questCompleted",
@@ -679,12 +635,7 @@ describe("assignEntityVisibility — recipes", () => {
         },
       },
     });
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     const recipe = trackerData.recipes["basic_dish" as RecipeId];
     expect(recipe.visibility).toBeUndefined();
     expect(recipe.sources?.[0]).toEqual({ type: "default" });
@@ -705,12 +656,7 @@ describe("assignEntityVisibility — recipes", () => {
         },
       },
     });
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     const recipe = trackerData.recipes["scroll_of_the_sword" as RecipeId];
     expect(recipe.visibility).toEqual({ type: "questCompleted", questId: "the_final_showdown" });
     const source = recipe.sources?.[0];
@@ -744,12 +690,7 @@ describe("assignEntityVisibility — recipes", () => {
         },
       },
     });
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     const recipe = trackerData.recipes["crystal_lamp" as RecipeId];
     expect(recipe.visibility).toEqual({
       type: "and",
@@ -773,12 +714,7 @@ describe("assignEntityVisibility — recipes", () => {
         },
       },
     });
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     const recipe = trackerData.recipes["set_reward" as RecipeId];
     expect(recipe.visibility).toBeUndefined();
     const source = recipe.sources?.[0];
@@ -812,12 +748,7 @@ describe("assignEntityVisibility — recipes", () => {
         },
       },
     };
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     const recipe = trackerData.recipes["bundle_recipe" as RecipeId];
     expect(recipe.visibility).toEqual({
       type: "questCompleted",
@@ -854,12 +785,7 @@ describe("assignEntityVisibility — recipes", () => {
       ...trackerData.stores,
       ["general" as StoreId]: { name: "General" },
     };
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     const recipe = trackerData.recipes["general_dish" as RecipeId];
     expect(recipe.visibility).toEqual({
       type: "questCompleted",
@@ -899,12 +825,7 @@ describe("assignEntityVisibility — recipes", () => {
         visibility: { type: "questCompleted", questId: "repair_the_bridge" as QuestId },
       },
     };
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     const recipe = trackerData.recipes["espresso" as RecipeId];
     expect(recipe.visibility).toEqual({
       type: "and",
@@ -950,12 +871,7 @@ describe("assignEntityVisibility — recipes", () => {
       ...trackerData.stores,
       ["general" as StoreId]: { name: "General" },
     };
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     const recipe = trackerData.recipes["and_gated_dish" as RecipeId];
     expect(recipe.visibility).toEqual({
       type: "and",
@@ -1001,12 +917,7 @@ describe("assignEntityVisibility — recipes", () => {
       ...trackerData.stores,
       ["general" as StoreId]: { name: "General" },
     };
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     const recipe = trackerData.recipes["or_gated_dish" as RecipeId];
     expect(recipe.visibility).toEqual({
       type: "or",
@@ -1039,12 +950,7 @@ describe("assignEntityVisibility — recipes", () => {
         },
       },
     });
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     const recipe = trackerData.recipes["multi_source" as RecipeId];
     expect(recipe.visibility).toBeUndefined();
   });
@@ -1069,7 +975,7 @@ describe("assignEntityVisibility — animals", () => {
         animals: { horse: { core: { requirements: { repaired_haydens_farm: true } } } },
       },
     });
-    assignEntityVisibility(trackerData, emptyCutsceneMap, fiddle as never, makeQuestChains({}));
+    assignEntityVisibility(trackerData, emptyCutsceneMap, fiddle, makeQuestChains({}));
     expect(trackerData.animals["horse" as AnimalId].visibility).toEqual({
       type: "questCompleted",
       questId: "repair_haydens_barn",
@@ -1081,7 +987,7 @@ describe("assignEntityVisibility — animals", () => {
       animals: { chicken: { cosmetics: {}, name: "Chicken", variantTiers: [] } },
     });
     const fiddle = makeFiddle({ ranching: { animals: { chicken: { core: {} } } } });
-    assignEntityVisibility(trackerData, emptyCutsceneMap, fiddle as never, makeQuestChains({}));
+    assignEntityVisibility(trackerData, emptyCutsceneMap, fiddle, makeQuestChains({}));
     expect(trackerData.animals["chicken" as AnimalId].visibility).toBeUndefined();
   });
 });
@@ -1103,12 +1009,7 @@ describe("assignEntityVisibility — cosmetics", () => {
         },
       },
     });
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
     expect(trackerData.cosmetics["fancy_hat" as CosmeticId].visibility).toEqual({
       type: "questCompleted",
       questId: "upgrade_the_saturday_market",
@@ -1131,12 +1032,7 @@ describe("assignEntityVisibility — cosmetics", () => {
       },
     });
 
-    assignEntityVisibility(
-      trackerData,
-      emptyCutsceneMap,
-      makeFiddle({}) as never,
-      makeQuestChains({}),
-    );
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), makeQuestChains({}));
 
     const cosmetic = trackerData.cosmetics["veteran_hat" as CosmeticId];
     expect(cosmetic.visibility).toEqual({ type: "skillLevel", level: 30, skillId: "combat" });
@@ -1157,7 +1053,7 @@ describe("assignEntityVisibility — spells", () => {
     const cutsceneMap: CutsceneQuestMap = {
       post_water_seal: { phase: "completed", questId: "the_water_tablet" as QuestId },
     };
-    assignEntityVisibility(trackerData, cutsceneMap, fiddle as never, makeQuestChains({}));
+    assignEntityVisibility(trackerData, cutsceneMap, fiddle, makeQuestChains({}));
     expect(trackerData.mines.spells["summon_rain" as SpellId].visibility).toEqual({
       type: "questCompleted",
       questId: "the_water_tablet",
@@ -1182,7 +1078,7 @@ describe("assignEntityVisibility — quests", () => {
         ],
       } as never,
     });
-    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}) as never, questChains);
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), questChains);
     expect(trackerData.quests.heart["bird_song" as QuestId].visibility).toEqual({
       type: "and",
       conditions: [
@@ -1205,7 +1101,7 @@ describe("assignEntityVisibility — quests", () => {
     const questChains = makeQuestChains({
       crown: ["first_crown_quest", "second_crown_quest"] as never,
     });
-    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}) as never, questChains);
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), questChains);
     expect(trackerData.quests.crown["first_crown_quest" as QuestId].visibility).toEqual({
       type: "renownLevel",
       level: CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER,
@@ -1228,7 +1124,7 @@ describe("assignEntityVisibility — quests", () => {
         deliver_the_goods: { predicate: "completed_quest", value: "repair_the_bridge" },
       } as never,
     });
-    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}) as never, questChains);
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), questChains);
     expect(trackerData.quests.fetch["deliver_the_goods" as QuestId].visibility).toEqual({
       type: "questCompleted",
       questId: "repair_the_bridge",
@@ -1242,7 +1138,7 @@ describe("assignEntityVisibility — quests", () => {
     const questChains = makeQuestChains({
       story: { crafting_tutorial: { prerequisites: [] } } as never,
     });
-    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}) as never, questChains);
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), questChains);
     expect(trackerData.quests.story["crafting_tutorial" as QuestId].visibility).toBeUndefined();
   });
 
@@ -1253,7 +1149,7 @@ describe("assignEntityVisibility — quests", () => {
     const questChains = makeQuestChains({
       story: { repair_the_mill: { prerequisites: ["prior_quest" as QuestId] } } as never,
     });
-    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}) as never, questChains);
+    assignEntityVisibility(trackerData, emptyCutsceneMap, makeFiddle({}), questChains);
     expect(trackerData.quests.story["repair_the_mill" as QuestId].visibility).toEqual({
       type: "questCompleted",
       questId: "prior_quest",

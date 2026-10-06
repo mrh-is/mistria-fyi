@@ -15,7 +15,7 @@ import type {
   VillagerId,
   VillagerRelationship,
 } from "#lib/types/tracker-data.js";
-import type { CompletedState } from "#lib/types/user-progress.js";
+import type { ProgressState } from "#lib/types/user-progress.js";
 
 function married(villager: string): Partial<Record<VillagerId, VillagerRelationship>> {
   return { [villager as VillagerId]: "married" };
@@ -33,7 +33,7 @@ function fetchSubtitles(locale: LocaleCode): string[] {
     .filter((subtitle) => subtitle !== undefined);
 }
 
-function cravingRow(completed: CompletedState): QuestRow | undefined {
+function cravingRow(completed: ProgressState): QuestRow | undefined {
   return section(buildQuestSections(completed, "en"), "heart").rows.find(
     (row) => row.kind === "craving",
   );

@@ -20,6 +20,20 @@ function makeFiddle(overrides: Record<string, unknown> = {}) {
 }
 
 describe("collectRewardSources", () => {
+  it.each([{ day: "2" }, { year: "1" }, { season: "monsoon" }, []])(
+    "rejects malformed letter dates: %j",
+    (reachedDate) => {
+      const fiddle = makeFiddle({
+        letters: {
+          spring_gift: { items: [{ item: "axe" }], requirements: { reached_date: reachedDate } },
+        },
+      });
+      expect(() => {
+        collectRewardSources(fiddle, new ItemSourceAccumulator());
+      }).toThrow("spring_gift.requirements.reached_date");
+    },
+  );
+
   describe("quest rewards", () => {
     it("adds a quest source for item rewards", () => {
       const fiddle = makeFiddle({

@@ -30,7 +30,7 @@ describe("TrackerRow reportable metadata", () => {
     const view = renderWithFeedback(
       TrackerRow,
       {
-        display: { mode: "visible" },
+        display: { mode: "incomplete" },
         name: "Tomato Soup",
         onToggle,
         reportCategory: "recipe",
@@ -57,7 +57,7 @@ describe("TrackerRow reportable metadata", () => {
 
   it("keeps one source paper and control while toggling its content", async () => {
     const view = renderWithFeedback(TrackerRow, {
-      display: { mode: "visible" },
+      display: { mode: "incomplete" },
       name: "Amberjack",
       onToggle: vi.fn(),
       reportCategory: "almanac-item",
@@ -106,7 +106,7 @@ describe("TrackerRow reportable metadata", () => {
 
   it("keeps multiple source papers expanded independently", async () => {
     const first = renderWithFeedback(TrackerRow, {
-      display: { mode: "visible" },
+      display: { mode: "incomplete" },
       name: "Amberjack",
       onToggle: vi.fn(),
       reportCategory: "almanac-item",
@@ -114,7 +114,7 @@ describe("TrackerRow reportable metadata", () => {
       sources: [{ type: "default" }],
     });
     const second = renderWithFeedback(TrackerRow, {
-      display: { mode: "visible" },
+      display: { mode: "incomplete" },
       name: "Cod",
       onToggle: vi.fn(),
       reportCategory: "almanac-item",
@@ -145,7 +145,7 @@ describe("TrackerRow reportable metadata", () => {
     const list = document.createElement("div");
     document.body.append(list);
     const first = renderWithFeedback(TrackerRow, {
-      display: { mode: "visible" },
+      display: { mode: "incomplete" },
       name: "First item",
       onToggle: () => {
         void first.rerender({
@@ -160,7 +160,7 @@ describe("TrackerRow reportable metadata", () => {
       reportEntityId: "first",
     });
     const second = renderWithFeedback(TrackerRow, {
-      display: { mode: "visible" },
+      display: { mode: "incomplete" },
       name: "Second item",
       onToggle: vi.fn(),
       reportCategory: "almanac-item",

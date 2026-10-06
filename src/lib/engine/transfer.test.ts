@@ -31,7 +31,7 @@ import type {
   VillagerId,
   VillagerRelationship,
 } from "#lib/types/tracker-data.js";
-import type { CompletedState } from "#lib/types/user-progress.js";
+import type { ProgressState } from "#lib/types/user-progress.js";
 
 import type { TransferDecodeErrorCode } from "./transfer.js";
 
@@ -216,8 +216,8 @@ function getTransferFieldOffsets(): Record<
   return { child, married, progression, quest, relationship, spell };
 }
 
-// Helper to create a minimal CompletedState for testing
-function makeGoldenCompleted(): CompletedState {
+// Helper to create a minimal ProgressState for testing
+function makeGoldenCompleted(): ProgressState {
   const chicken = "chicken" as AnimalId;
   const completed = makeCompletedState({
     almanac: new Set(["turnip" as ItemId]),
@@ -243,7 +243,7 @@ function makeGoldenCompleted(): CompletedState {
   return completed;
 }
 
-function makeGoldenDecodedExpectation(): Partial<CompletedState> {
+function makeGoldenDecodedExpectation(): Partial<ProgressState> {
   const completed = makeGoldenCompleted();
   const balor = "balor" as VillagerId;
   const dateableVillagers = recordEntries(trackerData.villagers)

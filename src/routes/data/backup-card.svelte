@@ -8,9 +8,9 @@
 
   import DataCard from "./data-card.svelte";
 
-  import type { ImportErrorKind } from "#lib/stores/user-state.svelte.js";
+  import type { BackupRestoreErrorKind } from "#lib/stores/user-state.svelte.js";
 
-  const ERROR_MESSAGES: Record<ImportErrorKind, string> = {
+  const ERROR_MESSAGES: Record<BackupRestoreErrorKind, string> = {
     "invalid-fields": m.backup_error_invalid_fields(),
     "malformed-json": m.backup_error_malformed_json(),
     "unsupported-version": m.backup_error_unsupported_version(),
@@ -22,7 +22,7 @@
   let restoreStatus = $state("");
 
   function handleExport() {
-    const json = userState.exportState();
+    const json = userState.exportBackup();
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -47,7 +47,7 @@
       restoreStatus = m.backup_restoring_status();
       try {
         const text = await file.text();
-        const result = userState.importState(text);
+        const result = userState.restoreBackup(text);
         if (result.ok) {
           restoreStatus = m.backup_restored_success();
         } else {

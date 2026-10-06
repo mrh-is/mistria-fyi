@@ -13,7 +13,7 @@
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showQuestToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/progress.js";
-  import { isEntityNameVisible, isVisible } from "#lib/engine/visibility.js";
+  import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { buildQuestSections } from "#lib/presentation/quest-sections.js";
   import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
@@ -53,7 +53,7 @@
         (row) => row.kind === "craving" || toolbarState.matchesSourceFilters(row.sources),
       );
       return {
-        categoryRevealed: isVisible(
+        categoryRevealed: isConditionVisible(
           trackerData.categoryVisibility[section.questType],
           userState.progressionState,
         ),
@@ -131,8 +131,8 @@
           {#snippet row(row)}
             {#if row.kind === "craving"}
               <TrackerRow
-                display={questRowDisplay(row.completed ? "completed" : "none", !!row.villager)}
-                lookups={baseLookups}
+                display={questRowDisplay(row.completed ? "completed" : "none", !!row.villagerId)}
+                segmentLookups={baseLookups}
                 name={row.displayName}
                 reportCategory="craving-quest"
                 reportEntityId={row.id}
@@ -144,10 +144,10 @@
               />
             {:else}
               {@const questState = getQuestState(row.id)}
-              {@const nameVisible = isEntityNameVisible(row.visibility, userState.progressionState)}
+              {@const nameVisible = isConditionVisible(row.visibility, userState.progressionState)}
               <TrackerRow
                 display={questRowDisplay(questState, nameVisible)}
-                lookups={{ ...baseLookups, entityVisibility: row.visibility }}
+                segmentLookups={{ ...baseLookups, entityVisibility: row.visibility }}
                 name={row.displayName}
                 reportCategory="quest"
                 reportEntityId={row.id}
@@ -157,7 +157,7 @@
                   if (nameVisible || questState !== "none") {
                     completeQuest(row.id, row.displayName, section);
                   } else {
-                    spoilerGuard.guard(row.visibility, () => {
+                    spoilerGuard.requestGuardedAction(row.visibility, () => {
                       completeQuest(row.id, row.displayName, section);
                     });
                   }

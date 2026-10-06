@@ -68,7 +68,7 @@
                       // Unlike other categories, a completed animal row is never redacted.
                       nameVisible: itemRow.completed || !itemRow.redacted,
                     })}
-                    lookups={props.lookups
+                    segmentLookups={props.lookups
                       ? { ...props.lookups, entityVisibility: undefined }
                       : undefined}
                     name={itemRow.name}
@@ -99,6 +99,6 @@
       {/if}
     {/each}
   </ExpandableSection>
-{:else if toolbarState.sourceFilterActive}
+{:else if toolbarState.isSourceFilterNarrowing}
   <TrackerEmptyState />
 {/if}

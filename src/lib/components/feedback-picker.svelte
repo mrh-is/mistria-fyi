@@ -5,12 +5,12 @@
   import * as m from "#lib/paraglide/messages.js";
 
   import type { FeedbackContext } from "#lib/feedback/context.svelte.js";
-  import type { ReportableElement } from "#lib/feedback/types.js";
+  import type { ReportTarget } from "#lib/feedback/types.js";
 
   interface Highlight {
     height: number;
     left: number;
-    metadata: ReportableElement;
+    metadata: ReportTarget;
     top: number;
     width: number;
   }
@@ -163,8 +163,8 @@
     align-items: center;
     gap: 8px;
     padding: max(16px, env(safe-area-inset-top)) 16px 12px;
-    border-bottom: 1px solid color-mix(in srgb, var(--hairline) 50%, transparent);
-    background: var(--paper-raised);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-ink-hairline) 50%, transparent);
+    background: var(--color-paper-raised);
     box-shadow: var(--shadow-small);
   }
 
@@ -175,11 +175,11 @@
     align-items: center;
     justify-content: center;
     margin-left: -12px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .picker-header__back:is(:hover, :focus-visible) {
-    color: var(--ink);
+    color: var(--color-ink);
     outline: 2px solid var(--primary);
     outline-offset: -6px;
   }

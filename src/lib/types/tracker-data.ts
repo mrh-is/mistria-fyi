@@ -70,7 +70,7 @@ export interface CosmeticSlotMeta {
   /** `ui_sub_category` keys in the game's menu order. */
   subCategories: string[];
 }
-export type DateType = SourcedEntity;
+export type VillagerDate = SourcedEntity;
 export interface Day {
   day: number;
   season: Season;
@@ -97,7 +97,7 @@ export interface Item extends SourcedEntity {
 }
 export type ItemId = string & { readonly __brand: "ItemId" };
 export interface MinesBiome {
-  floors: Range;
+  floors: LevelRange;
   id: MinesBiomeId;
 }
 export type MinesBiomeId = string & { readonly __brand: "MinesBiomeId" };
@@ -120,7 +120,7 @@ export type PetSkinId = string & { readonly __brand: "PetSkinId" };
 /** Quests carry no acquisition sources of their own today, so the list is empty. */
 export type Quest = TrackerEntity;
 export type QuestId = string & { readonly __brand: "QuestId" };
-export interface QuestOverrides {
+export interface QuestTypeSpecializations {
   cooking: CookingQuest;
   fetch: FetchQuest;
   heart: HeartQuest;
@@ -128,9 +128,9 @@ export interface QuestOverrides {
 }
 export type QuestType = "cooking" | "crown" | "fetch" | "heart" | "mission" | "story";
 export type QuestTypeMap = {
-  [K in QuestType]: K extends keyof QuestOverrides ? QuestOverrides[K] : Quest;
+  [K in QuestType]: K extends keyof QuestTypeSpecializations ? QuestTypeSpecializations[K] : Quest;
 };
-export interface Range {
+export interface LevelRange {
   end: number;
   start: number;
 }
@@ -162,7 +162,7 @@ export interface StoryQuest extends Quest {
   heartLevelChanges?: HeartLevelChange[];
 }
 export interface TownRank {
-  levels: Range;
+  levels: LevelRange;
 }
 export interface TrackerData {
   almanac: Record<AlmanacCategoryId, AlmanacCategory>;
@@ -171,7 +171,7 @@ export interface TrackerData {
   cosmetics: Record<CosmeticId, Cosmetic>;
   /** Wardrobe slots in the game's menu order (object key order), including slots with no cosmetics. */
   cosmeticSlots: Record<CosmeticSlot, CosmeticSlotMeta>;
-  dates: Record<DateId, DateType>;
+  dates: Record<DateId, VillagerDate>;
   festivals: Record<FestivalId, Festival>;
   generatedAt: string;
   items: Record<ItemId, Item>;

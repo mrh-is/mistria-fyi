@@ -1067,7 +1067,7 @@ describe("validateAcquisitionSources on assembled tracker data", () => {
     },
   ])("reports $name", ({ expected, path, value }) => {
     expect(captureDiagnostics(withPatch(path, value), references)).toEqual([
-      { ...expected, targetId: expect.any(String) },
+      { ...expected, targetId: expect.any(String) as unknown },
     ]);
   });
 });

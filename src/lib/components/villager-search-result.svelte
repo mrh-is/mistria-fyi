@@ -54,7 +54,7 @@
   }
 
   .villager-search-result--completed {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .villager-search-result__link {
@@ -77,7 +77,7 @@
     inline-size: var(--tracker-target-size);
     flex-shrink: 0;
     justify-content: center;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .villager-search-result__name {
@@ -90,6 +90,6 @@
   .villager-search-result__level {
     font-family: var(--font-data);
     font-size: var(--text-2xs);
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 </style>

@@ -165,7 +165,7 @@ function parseRequirementObject(
       );
     } else if (requirementResolutionContext.primitivePredicates.has(key)) {
       conjuncts.push({ predicate: key, value: val });
-    } else if (key in requirementResolutionContext.namedRequirements) {
+    } else if (Object.hasOwn(requirementResolutionContext.namedRequirements, key)) {
       if (val === true) {
         conjuncts.push(
           resolveNamed(key, requirementResolutionContext, context, namedRequirementStack),

@@ -44,7 +44,7 @@ const WEATHER_LABEL: Record<Weather, () => string> = {
 
 export type NameLookup<T> = Partial<Record<keyof T, string>>;
 
-export type RecipeSourceLookups = Pick<TrackerData, "perkTierLevels"> & {
+export type BaseSegmentLookups = Pick<TrackerData, "perkTierLevels"> & {
   biomes: (MinesBiome & { name: string })[];
   festivals: Partial<Record<string, { date: { day: number; season: Season }; name: string }>>;
   itemNames: NameLookup<TrackerData["items"]>;
@@ -60,7 +60,7 @@ export type RecipeSourceLookups = Pick<TrackerData, "perkTierLevels"> & {
 };
 
 /** The named biome; like {@link requireEntry}, a missing biome is a data bug and throws. */
-export function findBiome<Biome extends { id: MinesBiomeId }>(
+export function requireBiome<Biome extends { id: MinesBiomeId }>(
   biomeId: MinesBiomeId,
   biomes: readonly Biome[],
 ): Biome {
@@ -98,7 +98,11 @@ const LOCALE_ENTRIES_BY_TAG = new Map(
  * spacing (e.g. an animal name + a cosmetic name: "Golden Retriever Crown" in English, where the
  * descriptor leads; some locales put it last instead).
  */
-export function composeInfusion(descriptor: string, base: string, locale: LocaleCode): string {
+export function composeDescriptorName(
+  descriptor: string,
+  base: string,
+  locale: LocaleCode,
+): string {
   const infusion = LOCALE_ENTRIES_BY_TAG.get(locale)?.infusion;
   if (!infusion || infusion.order === "Adjective") {
     return `${descriptor}${infusion?.space ?? " "}${base}`;

@@ -11,7 +11,7 @@
     isVillagerComplete,
     MAX_VILLAGER_LEVEL,
   } from "#lib/engine/progress.js";
-  import { getMarriedVillager, relationshipPresentation } from "#lib/engine/relationships.js";
+  import { getSpouseId, relationshipPresentation } from "#lib/engine/relationships.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
   import { villagerSpriteUrl } from "#lib/sprites/sprite-url.js";
@@ -73,7 +73,7 @@
   const feedbackContext = getFeedbackContext();
   // A spoilered villager reports without its name or id, like a spoilered tracker row.
   let reportable = $derived(
-    feedbackContext.reportable(
+    feedbackContext.reportableAttachment(
       revealed
         ? { category: "villager", displayName: name, entityId: id, page: page.url.pathname }
         : {
@@ -90,7 +90,7 @@
     relationshipPresentation({
       childChoice: userState.state.completed.childChoice,
       level: storedLevel,
-      marriedVillager: getMarriedVillager(userState.state.completed.villagerRelationships),
+      marriedVillager: getSpouseId(userState.state.completed.villagerRelationships),
       relationship,
       villagerId: id,
     }),
@@ -197,7 +197,7 @@
   </header>
 
   <Stepper
-    accent="var(--cat-villagers)"
+    accentColor="var(--color-category-villagers)"
     decrementDisabled={!revealed || storedLevel <= 0}
     decrementLabel={m.villager_decrease_hearts({
       name: revealed ? name : m.villager_hidden_name_lower(),
@@ -233,7 +233,7 @@
           data-villager-mark
           data-villager-mark-filled={filled}
           data-villager-mark-kind={villager.dateable ? "dateable" : "platonic"}
-          style="--mark-color: {relationshipLevelColor(index)}"
+          style="--relationship-level-color: {relationshipLevelColor(index)}"
         >
           <Icon.ProgressMark
             type={villager.dateable ? "relationship_dateable" : "relationship_platonic"}
@@ -260,7 +260,7 @@
           </button>
         {/each}
       </span>
-      {#if presentation.warning}
+      {#if presentation.showsMarriageWarning}
         <small id={warningId} class="relationship-warning">
           {m.relationship_warning_marriage()}
         </small>
@@ -277,11 +277,11 @@
     /* Clears the sticky category header when a search link targets this record by hash. */
     scroll-margin-block-start: calc(88px + env(safe-area-inset-top));
     padding: 8px;
-    border: 1px solid var(--hairline);
+    border: 1px solid var(--color-ink-hairline);
     border-bottom: 0;
-    background: var(--paper-raised);
+    background: var(--color-paper-raised);
     box-shadow: var(--shadow-small);
-    color: var(--ink);
+    color: var(--color-ink);
   }
 
   .villager-record:first-child {
@@ -289,19 +289,19 @@
   }
 
   .villager-record:last-child {
-    border-bottom: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--color-ink-hairline);
     border-radius: 0 0 var(--radius) var(--radius);
   }
 
   .villager-record:focus-visible {
     position: relative;
     z-index: 1;
-    outline: 2px solid var(--cat-villagers);
+    outline: 2px solid var(--color-category-villagers);
     outline-offset: -2px;
   }
 
   .villager-record--complete {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
   }
 
   .villager-identity {
@@ -318,10 +318,11 @@
     height: 44px;
     place-items: center;
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--cat-villagers) 25%, var(--hairline));
+    border: 1px solid
+      color-mix(in srgb, var(--color-category-villagers) 25%, var(--color-ink-hairline));
     border-radius: var(--radius);
-    background: color-mix(in srgb, var(--cat-villagers) 11%, var(--paper));
-    color: var(--cat-villagers);
+    background: color-mix(in srgb, var(--color-category-villagers) 11%, var(--color-paper));
+    color: var(--color-category-villagers);
     font-family: var(--font-display);
     font-size: var(--text-2xl);
     font-style: var(--font-display-style);
@@ -356,7 +357,7 @@
   }
 
   .villager-copy small {
-    color: var(--ink);
+    color: var(--color-ink);
     font-family: var(--font-data);
     font-size: var(--text-3xs);
   }
@@ -365,7 +366,7 @@
     display: inline-flex;
     align-items: center;
     gap: 3px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-data);
     font-size: var(--text-2xs);
     white-space: nowrap;
@@ -390,7 +391,7 @@
     width: 100%;
     max-width: 20px;
     place-items: center;
-    color: color-mix(in srgb, var(--ink-muted) 38%, transparent);
+    color: color-mix(in srgb, var(--color-ink-muted) 38%, transparent);
   }
 
   .villager-mark :global(svg) {
@@ -403,20 +404,21 @@
   }
 
   .villager-mark[data-villager-mark-filled="true"] :global(svg) {
-    fill: var(--mark-color);
-    color: var(--mark-color);
+    fill: var(--relationship-level-color);
+    color: var(--relationship-level-color);
   }
 
   .relationship-decision {
     display: grid;
     gap: 5px;
     padding: 6px 8px;
-    border-top: 1px solid color-mix(in srgb, var(--cat-villagers) 28%, var(--hairline));
-    background: color-mix(in srgb, var(--cat-villagers) 5%, transparent);
+    border-top: 1px solid
+      color-mix(in srgb, var(--color-category-villagers) 28%, var(--color-ink-hairline));
+    background: color-mix(in srgb, var(--color-category-villagers) 5%, transparent);
   }
 
   .relationship-prompt {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-data);
     font-size: var(--text-3xs);
     text-transform: uppercase;
@@ -432,22 +434,22 @@
     min-height: 44px;
     flex: 1 1 9rem;
     padding: 7px 10px;
-    border: 1px solid var(--cat-villagers);
+    border: 1px solid var(--color-category-villagers);
     border-radius: var(--radius);
-    background: var(--paper-raised);
-    color: var(--ink);
+    background: var(--color-paper-raised);
+    color: var(--color-ink);
     font-family: var(--font-body);
     font-weight: 650;
   }
 
   .relationship-actions button:is(:hover, :focus-visible) {
-    background: color-mix(in srgb, var(--cat-villagers) 10%, var(--paper-raised));
-    outline: 2px solid var(--cat-villagers);
+    background: color-mix(in srgb, var(--color-category-villagers) 10%, var(--color-paper-raised));
+    outline: 2px solid var(--color-category-villagers);
     outline-offset: -2px;
   }
 
   .relationship-warning {
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-body);
     font-size: var(--text-xs);
     line-height: 1.25;

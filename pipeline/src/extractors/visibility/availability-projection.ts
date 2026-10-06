@@ -1,10 +1,10 @@
-import { ALWAYS, simplifyCondition } from "./requirement-resolver.js";
+import { ALWAYS_VISIBLE, simplifyCondition } from "./requirement-resolver.js";
 
 import type { AvailabilityCondition } from "#lib/types/acquisition.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
 export function availabilityToVisibility(condition?: AvailabilityCondition): VisibilityCondition {
-  if (!condition) return ALWAYS;
+  if (!condition) return ALWAYS_VISIBLE;
 
   switch (condition.type) {
     case "all":
@@ -30,7 +30,7 @@ export function availabilityToVisibility(condition?: AvailabilityCondition): Vis
     case "season":
     case "time":
     case "weather":
-      return ALWAYS;
+      return ALWAYS_VISIBLE;
     case "quest":
       return condition.state === "completed"
         ? { type: "questCompleted", questId: condition.questId }

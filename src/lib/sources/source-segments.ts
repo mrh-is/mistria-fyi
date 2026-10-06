@@ -5,7 +5,7 @@ import {
   withIndefiniteArticle,
   withoutDefiniteArticle,
 } from "#lib/utils/en-grammar.js";
-import { findBiome, requireEntry } from "#lib/utils/format.js";
+import { requireBiome, requireEntry } from "#lib/utils/format.js";
 
 import type {
   AvailabilityCondition,
@@ -28,10 +28,10 @@ import type {
   WaterType,
 } from "#lib/types/tracker-data.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
-import type { NameLookup, RecipeSourceLookups } from "#lib/utils/format.js";
+import type { BaseSegmentLookups, NameLookup } from "#lib/utils/format.js";
 
-export type SegmentLookups = Pick<TrackerData, "categoryVisibility"> &
-  RecipeSourceLookups & {
+export type SegmentLookups = BaseSegmentLookups &
+  Pick<TrackerData, "categoryVisibility"> & {
     animalNames: NameLookup<TrackerData["animals"]>;
     entityVisibility?: VisibilityCondition;
     itemVisibility: VisibilityLookup<TrackerData["items"]>;
@@ -103,7 +103,7 @@ const STORE_ACTION_CLAUSES: Record<StoreUpgradeAction, FixedMessage> = {
 const SLOT_MARKER = /(\d+)/;
 
 export function buildBiomeLabel(biomeId: MinesBiomeId, lookups: SegmentLookups): Segments {
-  const biome = findBiome(biomeId, lookups.biomes);
+  const biome = requireBiome(biomeId, lookups.biomes);
 
   const { locale } = lookups;
   const condition: VisibilityCondition = { type: "minesLevel", floor: biome.floors.start };

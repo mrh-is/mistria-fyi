@@ -12,7 +12,7 @@
   import { celebrate, celebrateCategory } from "#lib/effects/celebrate.js";
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isCategoryComplete } from "#lib/engine/progress.js";
-  import { isVisible } from "#lib/engine/visibility.js";
+  import { isConditionVisible } from "#lib/engine/visibility.js";
   import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -69,7 +69,7 @@
           id: recipeId,
           itemId: canonicalId,
           name: getName("items", canonicalId, locale),
-          nameVisible: isVisible(visibility, userState.progressionState),
+          nameVisible: isConditionVisible(visibility, userState.progressionState),
           sources,
           visibility,
         });
@@ -141,7 +141,7 @@
       userState.toggleAlmanacRecipe(entry.id);
     });
     if (nowCompleted) {
-      if (!userState.state.showCompleted) recentlyCompleted.mark(entry.id);
+      if (!userState.state.showCompleted) recentlyCompleted.markLeaving(entry.id);
       checkCelebration(sectionRecipeIds);
     }
   }
@@ -154,7 +154,7 @@
     <ExpandableSection
       {locale}
       count={completedCount}
-      forceOpen={!!nameFilter || toolbarState.sourceFilterActive}
+      forceOpen={!!nameFilter || toolbarState.isSourceFilterNarrowing}
       name={group.name}
       reportCategory="recipe-category"
       reportEntityId={group.id}
@@ -177,13 +177,13 @@
               leaving: recentlyCompleted.has(entry.id),
               nameVisible: entry.nameVisible,
             })}
-            lookups={{ ...baseSegmentLookups, entityVisibility: entry.visibility }}
+            segmentLookups={{ ...baseSegmentLookups, entityVisibility: entry.visibility }}
             name={entry.name}
             reportCategory="recipe"
             reportEntityId={entry.id}
             sources={entry.sources}
             sprite={entry.itemId}
-            spriteClass="text-cat-recipes"
+            spriteClass="text-(--color-category-recipes)"
             onToggle={() => {
               if (entry.nameVisible || completed) {
                 toggleRecipe(
@@ -191,7 +191,7 @@
                   group.entries.map((candidate) => candidate.id),
                 );
               } else {
-                spoilerGuard.guard(entry.visibility, () => {
+                spoilerGuard.requestGuardedAction(entry.visibility, () => {
                   toggleRecipe(
                     entry,
                     group.entries.map((candidate) => candidate.id),

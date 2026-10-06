@@ -14,34 +14,34 @@
    * own.
    */
   let {
+    categoryTotal,
     color,
     completed,
     completedLabel,
     description,
+    filteredTotal,
     href,
     icon,
     mobileRibbon = false,
     name,
-    total,
-    trackedTotal,
   }: {
+    /** Everything in the category, filters aside; reaching it earns the gold-leaf edge. */
+    categoryTotal: number;
     color: string;
     completed: number;
     /** Replaces the visible completed count (the share image shows "??"). */
     completedLabel?: string;
     description: string;
+    /** The count shown after the slash: what's completed plus what the filters still show. */
+    filteredTotal: number;
     href: Path;
     icon: "all" | CategoryKey;
     mobileRibbon?: boolean;
     name: string;
-    /** The count shown after the slash: what's completed plus what the filters still show. */
-    total: number;
-    /** Everything in the category, filters aside; reaching it earns the gold-leaf edge. */
-    trackedTotal: number;
   } = $props();
 
-  let pct = $derived(total > 0 ? (completed / total) * 100 : 0);
-  let isComplete = $derived(trackedTotal > 0 && completed >= trackedTotal);
+  let pct = $derived(filteredTotal > 0 ? (completed / filteredTotal) * 100 : 0);
+  let isComplete = $derived(categoryTotal > 0 && completed >= categoryTotal);
 </script>
 
 <a
@@ -53,9 +53,9 @@
   aria-label={m.section_progress_label({
     completed: formatNumber(completed, page.data.locale),
     name,
-    total: formatNumber(total, page.data.locale),
+    total: formatNumber(filteredTotal, page.data.locale),
   })}
-  style="--category-color: var(--{color}); --category-progress: {pct}%"
+  style="--category-color: {color}; --category-progress-percent: {pct}%"
 >
   <span class="category-copy">
     <strong class="category-name">{name}</strong>
@@ -65,7 +65,7 @@
   <span class="category-count" aria-hidden="true">
     <span>{completedLabel ?? formatNumber(completed, page.data.locale)}</span>
     <span class="category-slash">/</span>
-    <span>{formatNumber(total, page.data.locale)}</span>
+    <span>{formatNumber(filteredTotal, page.data.locale)}</span>
   </span>
 
   <span class="category-ribbon" data-category-ribbon aria-hidden="true">
@@ -77,7 +77,6 @@
 
 <style>
   .category-stripe {
-    --ribbon-width: 49px;
     position: relative;
     isolation: isolate;
     display: grid;
@@ -88,8 +87,8 @@
     min-height: 58px;
     padding: 6px 69px 6px 23px;
     overflow: visible;
-    color: var(--ink);
-    background: var(--paper-raised);
+    color: var(--color-ink);
+    background: var(--color-paper-raised);
     box-shadow: var(--shadow-small);
     text-align: left;
     transition:
@@ -116,7 +115,7 @@
     font-size: var(--text-base);
     font-weight: 600;
     line-height: 1.2;
-    -webkit-text-stroke: 1.35px var(--paper-raised);
+    -webkit-text-stroke: 1.35px var(--color-paper-raised);
     paint-order: stroke fill;
   }
 
@@ -140,7 +139,7 @@
     display: block;
     overflow: hidden;
     margin-top: 2px;
-    color: var(--ink-muted);
+    color: var(--color-ink-muted);
     font-family: var(--font-annotation);
     font-size: var(--text-2xs);
     line-height: 1.2;
@@ -179,9 +178,9 @@
     z-index: 0;
     display: grid;
     place-items: center;
-    width: calc(var(--ribbon-width) + 8px);
+    width: calc(var(--size-ribbon-width) + 8px);
     padding-left: 8px;
-    color: var(--ribbon-ink);
+    color: var(--color-ribbon-foreground);
     background: var(--category-color);
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 8px 50%);
     transition:
@@ -210,14 +209,14 @@
 
   .category-progress i {
     display: block;
-    width: var(--category-progress);
+    width: var(--category-progress-percent);
     height: 100%;
     background: var(--category-color);
     transition: width 300ms ease-out;
   }
 
   .category-stripe--complete {
-    background: color-mix(in srgb, var(--paper-raised) 96%, var(--fg-amber));
+    background: color-mix(in srgb, var(--color-paper-raised) 96%, var(--color-progress-complete));
   }
 
   .category-stripe--complete .category-ribbon::after {
@@ -227,9 +226,19 @@
     left: 0;
     width: 9px;
     background:
-      linear-gradient(to bottom right, transparent 46%, var(--ribbon-gold) 48% 57%, transparent 59%)
+      linear-gradient(
+          to bottom right,
+          transparent 46%,
+          var(--color-ribbon-fill) 48% 57%,
+          transparent 59%
+        )
         top / 9px 50% no-repeat,
-      linear-gradient(to top right, transparent 46%, var(--ribbon-gold) 48% 57%, transparent 59%)
+      linear-gradient(
+          to top right,
+          transparent 46%,
+          var(--color-ribbon-fill) 48% 57%,
+          transparent 59%
+        )
         bottom / 9px 50% no-repeat;
     content: "";
   }
@@ -258,8 +267,8 @@
     }
 
     .category-ribbon {
-      right: calc(-1 * var(--ribbon-width));
-      width: var(--ribbon-width);
+      right: calc(-1 * var(--size-ribbon-width));
+      width: var(--size-ribbon-width);
       padding-left: 0;
       clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 50%, 100% 100%, 0 100%);
     }
@@ -284,11 +293,16 @@
         linear-gradient(
             to bottom left,
             transparent 46%,
-            var(--ribbon-gold) 48% 57%,
+            var(--color-ribbon-fill) 48% 57%,
             transparent 59%
           )
           top / 9px 50% no-repeat,
-        linear-gradient(to top left, transparent 46%, var(--ribbon-gold) 48% 57%, transparent 59%)
+        linear-gradient(
+            to top left,
+            transparent 46%,
+            var(--color-ribbon-fill) 48% 57%,
+            transparent 59%
+          )
           bottom / 9px 50% no-repeat;
     }
   }
@@ -299,7 +313,7 @@
 
   .category-stripe--mobile-ribbon .category-ribbon {
     right: -8px;
-    width: calc(var(--ribbon-width) + 8px);
+    width: calc(var(--size-ribbon-width) + 8px);
     padding-left: 8px;
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 8px 50%);
   }

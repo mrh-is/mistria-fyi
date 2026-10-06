@@ -35,7 +35,7 @@ export const REPORT_CATEGORIES = [
 
 export type ReportCategory = (typeof REPORT_CATEGORIES)[number];
 
-export interface ReportableElement {
+export interface ReportTarget {
   category: ReportCategory;
   displayName: string;
   entityId?: string;

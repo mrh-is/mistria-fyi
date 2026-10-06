@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
-import { isVisible } from "#lib/engine/visibility.js";
+import { isConditionVisible } from "#lib/engine/visibility.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { recordEntries } from "#lib/utils/record.js";
 
@@ -17,7 +17,7 @@ describe("computeRedactedStoreIds", () => {
     const state = userState.progressionState;
     const redacted = computeRedactedStoreIds(state);
     const expected = recordEntries(trackerData.stores)
-      .filter(([, { visibility }]) => visibility && !isVisible(visibility, state))
+      .filter(([, { visibility }]) => visibility && !isConditionVisible(visibility, state))
       .map(([id]) => id);
 
     expect(expected.length).toBeGreaterThan(0);

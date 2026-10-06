@@ -54,7 +54,7 @@ describe("TrackerRow", () => {
   it("shows the entity name for a visible row", () => {
     const { container, queries } = renderToFragmentWithFeedback(TrackerRow, {
       props: {
-        display: { mode: "visible" },
+        display: { mode: "incomplete" },
         ...reportProps,
         name: "Cherry Cobbler",
         onToggle: vi.fn(),
@@ -86,7 +86,7 @@ describe("TrackerRow", () => {
   it("renders a clipped tracker paper and persistent source paper when sourced", () => {
     const { container, queries } = renderToFragmentWithFeedback(TrackerRow, {
       props: {
-        display: { mode: "visible" },
+        display: { mode: "incomplete" },
         ...reportProps,
         name: "Cherry Cobbler",
         onToggle: vi.fn(),
@@ -112,7 +112,7 @@ describe("TrackerRow", () => {
   it("renders no source paper or diagonal when there are no sources", () => {
     const { container } = renderToFragmentWithFeedback(TrackerRow, {
       props: {
-        display: { mode: "visible" },
+        display: { mode: "incomplete" },
         ...reportProps,
         name: "Cherry Cobbler",
         onToggle: vi.fn(),
