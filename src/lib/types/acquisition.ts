@@ -2,6 +2,7 @@ import type { NonEmptyArray } from "#lib/utils/record.js";
 
 import type {
   AnimalId,
+  DateId,
   Day,
   FestivalId,
   ItemId,
@@ -38,7 +39,6 @@ export type AvailabilityCondition =
   | { type: "skillLevel"; level: number; skillId: SkillId }
   | { type: "time"; start: number; end: number }
   | { type: "weather"; weathers: Weather[] };
-export type DateId = string & { readonly __brand: "DateId" };
 export type DialogueChoiceId = string & { readonly __brand: "DialogueChoiceId" };
 export type DungeonLootGroup = string & { readonly __brand: "DungeonLootGroup" };
 export type JsonValue =

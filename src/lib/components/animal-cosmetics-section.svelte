@@ -19,7 +19,7 @@
   } from "./animal-subcategory.types.js";
 
   function hasCompletedCosmetic(animalId: AnimalId, cosmeticId: CosmeticId): boolean {
-    return userState.state.completed.animalCosmetics[animalId].has(cosmeticId);
+    return userState.state.completed.animalCosmetics[animalId]?.has(cosmeticId) ?? false;
   }
 
   function hasDisplayableCosmetic(animalId: AnimalId): boolean {

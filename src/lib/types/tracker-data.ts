@@ -1,10 +1,9 @@
-import type { DateId, Source, SourceTuple } from "./acquisition.js";
+import type { Source, SourceTuple } from "./acquisition.js";
 import type { VisibilityCondition } from "./visibility.js";
 
 export type {
   ActivityId,
   AvailabilityCondition,
-  DateId,
   DialogueChoiceId,
   DungeonLootGroup,
   JsonValue,
@@ -40,7 +39,7 @@ export type AnimalId = string & { readonly __brand: "AnimalId" };
 export interface AnimalVariant {
   source: Extract<Source, { type: "breed" | "default" }>;
 }
-export type AnimalVariantId = string & { readonly __brand: "VariantId" };
+export type AnimalVariantId = string & { readonly __brand: "AnimalVariantId" };
 export type AnimalVariantTier = Record<AnimalVariantId, AnimalVariant>;
 export type AnyId = string & { readonly __brand: string };
 export interface CookingQuest extends Quest {
@@ -53,6 +52,7 @@ export interface Cosmetic extends TrackerEntity {
   subCategory: string;
 }
 export type CosmeticId = string & { readonly __brand: "CosmeticId" };
+export type DateId = string & { readonly __brand: "DateId" };
 /** The sections of `ui/character_customization.toml`, verbatim. */
 export type CosmeticSlot =
   | "back"
@@ -99,16 +99,17 @@ export interface MinesBiome {
   floors: Range;
   id: MinesBiomeId;
 }
-export type MinesBiomeId = string & { readonly __brand: "BiomeId" };
+export type MinesBiomeId = string & { readonly __brand: "MinesBiomeId" };
 export interface MuseumWing {
   sets: Record<MuseumWingSetId, MuseumWingSet>;
 }
-export type MuseumWingId = string & { readonly __brand: "WingId" };
+export type MuseumWingId = string & { readonly __brand: "MuseumWingId" };
 export interface MuseumWingSet {
   items: ItemId[];
 }
-export type MuseumWingSetId = string & { readonly __brand: "SetId" };
-export type Perk = object;
+export type MuseumWingSetId = string & { readonly __brand: "MuseumWingSetId" };
+/** A perk's entry carries no data; names live in the locale files, keyed by `PerkId`. */
+export type Perk = Record<string, never>;
 export type PerkId = string & { readonly __brand: "PerkId" };
 export type PerkTier = Record<PerkId, Perk>;
 export type PetCosmeticSet = TrackerEntity;
@@ -183,7 +184,7 @@ export interface TrackerData {
   skills: Record<SkillId, Skill>;
   stores: Record<StoreId, Store>;
   townRanks: TownRank[];
-  treasureChestTiers: Record<TreasureChestTierId, object>;
+  treasureChestTiers: Record<TreasureChestTierId, TreasureChestTier>;
   version: string;
   villagers: Record<VillagerId, Villager>;
 }
@@ -191,7 +192,9 @@ export interface TrackerEntity {
   sources: SourceTuple;
   visibility?: VisibilityCondition;
 }
-export type TreasureChestTierId = string & { readonly __brand: "TreasureChestTier" };
+/** A chest tier's entry carries no data; names live in the locale files, keyed by tier ID. */
+export type TreasureChestTier = Record<string, never>;
+export type TreasureChestTierId = string & { readonly __brand: "TreasureChestTierId" };
 /**
  * Player-facing villager names are deliberately absent: they live in the per-locale `villagers`
  * chunks and are resolved through `getName("villagers", id, locale)`. A `name` field that doesn't

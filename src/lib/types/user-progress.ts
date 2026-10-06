@@ -29,8 +29,8 @@ export type ChildChoice = (typeof CHILD_CHOICES)[number];
 export interface CompletedState {
   almanac: Set<ItemId>;
   almanacRecipes: Set<RecipeId>;
-  animalCosmetics: Record<AnimalId, Set<CosmeticId>>;
-  animals: Record<AnimalId, Set<AnimalVariantId>>;
+  animalCosmetics: Partial<Record<AnimalId, Set<CosmeticId>>>;
+  animals: Partial<Record<AnimalId, Set<AnimalVariantId>>>;
   childChoice: ChildChoice;
   cosmetics: Set<CosmeticId>;
   dates: Set<DateId>;
@@ -39,12 +39,12 @@ export interface CompletedState {
   museum: Set<ItemId>;
   petCosmetics: Set<PetCosmeticSetId>;
   petSkins: Set<PetSkinId>;
-  questStates: Record<QuestId, QuestState>;
+  questStates: Partial<Record<QuestId, QuestState>>;
   reachedSeason: Season;
   renown: number;
-  skillLevels: Record<SkillId, number>;
+  skillLevels: Partial<Record<SkillId, number>>;
   unlockedPerks: Set<PerkId>;
-  villagerLevels: Record<VillagerId, number>;
+  villagerLevels: Partial<Record<VillagerId, number>>;
   villagerRelationships: Partial<Record<VillagerId, VillagerRelationship>>;
 }
 

@@ -209,13 +209,14 @@ function getAnimalsProgress(ctx: ProgressContext): CategoryProgress {
   for (const [animalId, animal] of recordEntries(trackerData.animals)) {
     const cosmeticCount = recordKeys(animal.cosmetics).length;
     total += cosmeticCount;
-    completed += ctx.completed.animalCosmetics[animalId].size;
-    filtered += cosmeticCount - ctx.completed.animalCosmetics[animalId].size;
+    const completedCosmetics = ctx.completed.animalCosmetics[animalId]?.size ?? 0;
+    completed += completedCosmetics;
+    filtered += cosmeticCount - completedCosmetics;
 
     for (const tier of animal.variantTiers) {
       for (const [variantId, variant] of recordEntries(tier)) {
         total++;
-        if (ctx.completed.animals[animalId].has(variantId)) {
+        if (ctx.completed.animals[animalId]?.has(variantId)) {
           completed++;
           continue;
         }

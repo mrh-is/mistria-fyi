@@ -35,11 +35,11 @@
   }
 
   function hasCompletedCosmetic(animalId: AnimalId, cosmeticId: CosmeticId): boolean {
-    return userState.state.completed.animalCosmetics[animalId].has(cosmeticId);
+    return userState.state.completed.animalCosmetics[animalId]?.has(cosmeticId) ?? false;
   }
 
   function hasCompletedVariant(animalId: AnimalId, variantId: AnimalVariantId): boolean {
-    return userState.state.completed.animals[animalId].has(variantId);
+    return userState.state.completed.animals[animalId]?.has(variantId) ?? false;
   }
 
   function isAnimalComplete(animalId: AnimalId): boolean {

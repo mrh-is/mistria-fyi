@@ -306,11 +306,11 @@ describe("transfer codec v11", () => {
     const sparse = makeGoldenCompleted();
     const empty = makeGoldenCompleted();
     for (const id of recordKeys(empty.animals)) {
-      empty.animals[id].clear();
+      empty.animals[id]?.clear();
       Reflect.deleteProperty(sparse.animals, id);
     }
     for (const id of recordKeys(empty.animalCosmetics)) {
-      empty.animalCosmetics[id].clear();
+      empty.animalCosmetics[id]?.clear();
       Reflect.deleteProperty(sparse.animalCosmetics, id);
     }
 
