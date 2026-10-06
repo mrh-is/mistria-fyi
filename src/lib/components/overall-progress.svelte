@@ -28,7 +28,7 @@
   <span class="font-data text-sm text-foreground" aria-hidden="true"
     >{formatPercent(overall.pct, page.data.locale)}</span
   >
-  <span class="font-data text-[10px] text-muted-foreground" aria-hidden="true">
+  <span class="font-data text-3xs text-muted-foreground" aria-hidden="true">
     {formatNumber(overall.completed, page.data.locale)} / {formatNumber(
       overall.total,
       page.data.locale,

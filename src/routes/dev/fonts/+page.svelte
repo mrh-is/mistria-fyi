@@ -70,7 +70,7 @@
 
   {#each roles as role (role.name)}
     <section class="flex flex-col gap-1 border-t pt-3">
-      <h2 class="font-controls text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
+      <h2 class="font-controls text-2xs tracking-[0.14em] text-muted-foreground uppercase">
         {role.name}{role.note ? ` · ${role.note}` : ""}
       </h2>
       <p class="{role.utility} text-2xl">{role.sample()}</p>
@@ -89,7 +89,7 @@
   {/each}
 
   <section class="flex flex-col gap-1 border-t pt-3">
-    <h2 class="font-controls text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
+    <h2 class="font-controls text-2xs tracking-[0.14em] text-muted-foreground uppercase">
       composition
     </h2>
     <p class="font-display text-xl">{getName("ui", "villagers", page.data.locale)}</p>

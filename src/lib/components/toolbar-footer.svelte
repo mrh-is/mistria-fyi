@@ -274,7 +274,7 @@
           {#snippet headerActions()}
             {#if filtersActive}
               <button
-                class="text-fg-amber focus-visible:outline-fg-amber flex min-h-11 items-center gap-1.5 px-2 font-controls text-[10px] hover:bg-accent focus-visible:outline-2 focus-visible:-outline-offset-4"
+                class="text-fg-amber focus-visible:outline-fg-amber flex min-h-11 items-center gap-1.5 px-2 font-controls text-3xs hover:bg-accent focus-visible:outline-2 focus-visible:-outline-offset-4"
                 type="button"
                 onclick={resetFilters}
                 transition:fade={{ duration: prefersReducedMotion.current ? 0 : 120 }}

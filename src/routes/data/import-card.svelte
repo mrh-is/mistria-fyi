@@ -5,6 +5,7 @@
   import IconUpload from "@tabler/icons-svelte-runes/icons/upload";
 
   import DialogCloseButton from "#lib/components/dialog-close-button.svelte";
+  import StatusNote from "#lib/components/status-note.svelte";
   import { Button } from "#lib/components/ui/button/index.js";
   import * as Dialog from "#lib/components/ui/dialog/index.js";
   import { Separator } from "#lib/components/ui/separator/index.js";
@@ -258,7 +259,7 @@
                   aria-label={m.import_copy_path_aria()}
                 >
                   {#if copied}
-                    <IconCheck class="size-4 text-green-600" />
+                    <IconCheck class="size-4 text-(--fg-green)" />
                   {:else}
                     <IconCopy class="size-4" />
                   {/if}
@@ -283,10 +284,7 @@
     </p>
 
     {#if importError}
-      <div
-        class="mt-3 rounded-md bg-red-50 p-3 text-base text-red-700 dark:bg-red-950 dark:text-red-300"
-        role="alert"
-      >
+      <StatusNote class="mt-3 text-base" tone="error">
         <p>{importError}</p>
         {#if importErrorDetails.length > 0}
           <ul class="mt-2 list-disc ps-5 text-sm">
@@ -325,11 +323,11 @@
           </p>
           <!-- eslint-enable local/no-hardcoded-ui-text -->
         {/if}
-      </div>
+      </StatusNote>
     {/if}
 
     {#if importResult}
-      <div class="mt-3 rounded-md bg-green-50 p-3 dark:bg-green-950">
+      <StatusNote class="mt-3" tone="success">
         <MergeSummary
           conflicts={importResult.conflicts}
           counts={importResult.counts}
@@ -350,16 +348,16 @@
             </ul>
           </details>
         {/if}
-      </div>
+      </StatusNote>
 
       {#if isDesktop && onScrollToTransfer}
         <button
-          class="mt-3 flex w-full items-start gap-3 rounded-md border border-violet-200 bg-violet-50 p-3 text-left transition-colors hover:bg-violet-100 dark:border-violet-800 dark:bg-violet-950 dark:hover:bg-violet-900"
+          class="mt-3 flex w-full items-start gap-3 rounded-md border border-(--fg-blue)/30 bg-(--fg-blue)/8 p-3 text-left transition-colors hover:bg-(--fg-blue)/15"
           onclick={onScrollToTransfer}
         >
-          <IconDeviceDesktop class="mt-0.5 size-5 shrink-0 text-violet-600 dark:text-violet-400" />
+          <IconDeviceDesktop class="mt-0.5 size-5 shrink-0 text-(--fg-blue)" />
           <div>
-            <p class="text-base font-medium text-violet-800 dark:text-violet-200">
+            <p class="text-base font-medium text-foreground">
               {m.import_playing_on_phone()}
             </p>
             <p class="mt-0.5 text-sm text-muted-foreground">
