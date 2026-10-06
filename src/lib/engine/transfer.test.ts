@@ -39,33 +39,27 @@ const CHECKSUM_BYTE_LENGTH = 4;
 
 // A payload encoded with the v1 codec. Kept to verify that stale positional data is rejected before
 // decoding rather than being interpreted against the current tracker-data ordering.
-// cspell:disable-next-line
 const V1_FIXTURE = "AWNgGAVUBqwMXAYDZDUA";
 
 // A payload encoded with the v5 codec using a historical almanac ordering. It must be rejected
 // before the ordering can be interpreted as current progress.
-// cspell:disable-next-line
 const V5_ALMANAC_FIXTURE = "BWNgoBXgQOE10MyeUTAKqA0A";
 
 // A payload encoded with the pre-checksum v8 codec. It represents the final pre-checksum layout and
 // must be rejected before its positional fields are decoded.
-// cspell:disable-next-line
 const V8_BOUNDARY_FIXTURE = "CGNgGAVUBv_xgYFzVgNDyyRPlQkMDvS0FAA";
 
 // A payload encoded with the v9 codec. It is the immediately preceding layout and must be rejected
 // after the v1.0.5 tracker data changed positional orderings.
-// cspell:disable-next-line
 const V9_BOUNDARY_FIXTURE = "CSG9unJjYBgFVAYpDCln0IENDAycsxoYWiZ5qkxgcKCnpQA";
 
 // A payload encoded with the v10 codec, the last layout without the transfer marker. It has v11's
 // fields, so it pins that an unmarked payload is rejected as foreign rather than decoded.
-// cspell:disable-next-line
 const V10_UNMARKED_FIXTURE =
   "CjegUCBjYBiuwAGF10COLhZy7WYCkxwiDIJYjWAn11yircYuwKjAwCDAscCBQQDMAxEKNHQKCgAA";
 
 // A v11 payload encoded from makeGoldenCompleted(). Unlike round-trip tests, this fixture pins the
 // current wire meaning independently of the live encoder and decoder implementation.
-// cspell:disable-next-line
 const V11_GOLDEN_FIXTURE =
   "MFGTCzegUCBjYBiuwAGF10COLhZy7WYCkxwiDIJYjWAn11yircYuwKjAwCDAscCBQQDMAxEKNHQKCgAA";
 
