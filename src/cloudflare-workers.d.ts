@@ -13,7 +13,8 @@ declare module "cloudflare:workers" {
   }
 
   export const env: {
-    FEEDBACK_EMAIL_STORE: KVNamespace;
+    /** Absent when the Pages project has no KV binding; callers must handle that. */
+    FEEDBACK_EMAIL_STORE?: KVNamespace;
     GITHUB_FEEDBACK_TOKEN: string;
     TURNSTILE_SECRET_KEY: string;
   };
