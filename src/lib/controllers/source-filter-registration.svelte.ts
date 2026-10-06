@@ -1,5 +1,4 @@
 import { untrack } from "svelte";
-import { SvelteSet } from "svelte/reactivity";
 
 import { SOURCE_FILTERS } from "#lib/data/source-filters.js";
 import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
@@ -11,7 +10,8 @@ export function registerSourceFilters(
   getSourceTypes: () => Iterable<Source | Source["type"]>,
 ): void {
   $effect(() => {
-    const sourceTypes = new SvelteSet<Source["type"]>();
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- Rebuilt on every run and read only within it.
+    const sourceTypes = new Set<Source["type"]>();
     for (const sourceOrType of getSourceTypes()) {
       sourceTypes.add(typeof sourceOrType === "string" ? sourceOrType : sourceOrType.type);
     }
