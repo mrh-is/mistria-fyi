@@ -156,7 +156,6 @@ async function main(): Promise<void> {
 
   const { iconSpritesByItemId, iconSpritesByVillagerId, localeChunks, trackerData } =
     assembleTrackerData(fiddle, createAssetsLocalizer(assetsDir), {
-      generatedAt: new Date().toISOString(),
       version,
     });
 
@@ -187,11 +186,6 @@ async function main(): Promise<void> {
   staged.push({ content: fiddlePretty, path: resolve(OUTPUT_DIR, "fiddle-readable.json") });
   console.log(
     `  Staged: pipeline/output/fiddle-readable.json (${(fiddlePretty.length / 1024 / 1024).toFixed(1)} MB)`,
-  );
-
-  staged.push({ content: prettyJson, path: resolve(OUTPUT_DIR, "tracker-data-readable.json") });
-  console.log(
-    `  Staged: pipeline/output/tracker-data-readable.json (${(prettyJson.length / 1024).toFixed(1)} KB)`,
   );
 
   let stagedSprites: StagedSprite[] = [];

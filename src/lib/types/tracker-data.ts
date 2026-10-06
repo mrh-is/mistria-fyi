@@ -169,7 +169,6 @@ export interface TrackerData {
   cosmeticSlots: Record<CosmeticSlot, CosmeticSlotMeta>;
   dates: Record<DateId, VillagerDate>;
   festivals: Record<FestivalId, Festival>;
-  generatedAt: string;
   items: Record<ItemId, Item>;
   mines: {
     biomes: MinesBiome[];

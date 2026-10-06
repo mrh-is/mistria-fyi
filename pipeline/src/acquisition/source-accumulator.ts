@@ -1,3 +1,5 @@
+import { compareStrings } from "../ordering.js";
+
 import type { Source } from "#lib/types/acquisition.js";
 import type { AnimalId, CosmeticId, ItemId, PetCosmeticSetId } from "#lib/types/tracker-data.js";
 
@@ -42,7 +44,7 @@ abstract class SourceAccumulator<TargetId extends string> {
 
   entries(): [TargetId, Source[]][] {
     return [...this.#sourcesByTarget.entries()]
-      .toSorted(([left], [right]) => left.localeCompare(right))
+      .toSorted(([left], [right]) => compareStrings(left, right))
       .map(([targetId, sources]) => [targetId, sortedSources(sources)]);
   }
 
@@ -65,7 +67,7 @@ abstract class SourceAccumulator<TargetId extends string> {
 function sortedSources(sources: Map<string, Source> | undefined): Source[] {
   if (!sources) return [];
   return [...sources.entries()]
-    .toSorted(([left], [right]) => left.localeCompare(right))
+    .toSorted(([left], [right]) => compareStrings(left, right))
     .map(([, source]) => source);
 }
 
@@ -149,7 +151,7 @@ function stableJson(value: unknown): string {
   if (value !== null && typeof value === "object") {
     const record = value as Record<string, unknown>;
     const entries = Object.keys(record)
-      .toSorted((left, right) => left.localeCompare(right))
+      .toSorted((left, right) => compareStrings(left, right))
       .filter((key) => record[key] !== undefined)
       .map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`);
     return `{${entries.join(",")}}`;

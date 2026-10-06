@@ -1,3 +1,5 @@
+import { compareStrings } from "./ordering.js";
+
 import type { MinesBiomeId, QuestId, QuestType } from "#lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "./parse-fiddle.js";
@@ -39,7 +41,7 @@ export function buildQuestTypeIndex(fiddle: ParsedGameData): Map<QuestId, QuestT
     entries.set(typedQuestId, questType);
   });
 
-  return new Map([...entries].toSorted(([left], [right]) => left.localeCompare(right)));
+  return new Map([...entries].toSorted(([left], [right]) => compareStrings(left, right)));
 }
 
 /**
