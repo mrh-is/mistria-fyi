@@ -1,7 +1,5 @@
 <script lang="ts">
-  import IconMinus from "@tabler/icons-svelte-runes/icons/minus";
-  import IconPlus from "@tabler/icons-svelte-runes/icons/plus";
-
+  import Stepper from "#lib/components/stepper.svelte";
   import { getName } from "#lib/data/names.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
@@ -98,22 +96,20 @@
     </div>
   {/if}
 
-  <div
-    class="floor-controls"
-    role="group"
-    aria-label={m.mines_floor_group_aria({ floor, max: maxFloor })}
+  <Stepper
+    accent="var(--cat-mines)"
+    decrementDisabled={floor <= 0}
+    decrementLabel={m.mines_floor_up()}
+    incrementDisabled={floor >= maxFloor}
+    incrementLabel={m.mines_floor_down()}
+    label={m.mines_floor_group_aria({ floor, max: maxFloor })}
+    onDecrement={() => {
+      updateFloor(floor - 1);
+    }}
+    onIncrement={() => {
+      updateFloor(floor + 1);
+    }}
   >
-    <button
-      type="button"
-      disabled={floor <= 0}
-      aria-label={m.mines_floor_up()}
-      onclick={() => {
-        updateFloor(floor - 1);
-      }}
-    >
-      <IconMinus aria-hidden="true" />
-    </button>
-
     <span class="floor-readout">
       <span>{m.mines_floor_label()}</span>
       <input
@@ -127,18 +123,7 @@
       />
       <span aria-hidden="true">/ {maxFloor}</span>
     </span>
-
-    <button
-      type="button"
-      disabled={floor >= maxFloor}
-      aria-label={m.mines_floor_down()}
-      onclick={() => {
-        updateFloor(floor + 1);
-      }}
-    >
-      <IconPlus aria-hidden="true" />
-    </button>
-  </div>
+  </Stepper>
 
   {#if compact && currentBiome}
     <span class="biome-readout" aria-live="polite">
@@ -200,40 +185,6 @@
     height: 100%;
     background: var(--cat-mines);
     transition: width 300ms ease-out;
-  }
-
-  .floor-controls {
-    display: grid;
-    grid-template-columns: 44px minmax(0, 1fr) 44px;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .floor-controls > button {
-    display: grid;
-    width: 44px;
-    height: 44px;
-    place-items: center;
-    border: 1px solid var(--hairline);
-    border-radius: var(--radius);
-    background: transparent;
-    color: var(--ink-muted);
-  }
-
-  .floor-controls > button :global(svg) {
-    width: 16px;
-    height: 16px;
-  }
-
-  .floor-controls > button:is(:hover, :focus-visible):not(:disabled) {
-    border-color: var(--cat-mines);
-    color: var(--cat-mines);
-    outline: 2px solid var(--cat-mines);
-    outline-offset: -2px;
-  }
-
-  .floor-controls > button:disabled {
-    opacity: 0.38;
   }
 
   .floor-readout {
@@ -307,15 +258,6 @@
   }
 
   @media (min-width: 701px) and (hover: hover) and (pointer: fine) {
-    .floor-controls {
-      grid-template-columns: 32px minmax(0, 1fr) 32px;
-    }
-
-    .floor-controls > button {
-      width: 32px;
-      height: 32px;
-    }
-
     .floor-readout input {
       min-height: 32px;
     }

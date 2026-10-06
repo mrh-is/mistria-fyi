@@ -84,6 +84,7 @@
   </span>
 
   <Stepper
+    accent="var(--cat-renown)"
     decrementDisabled={level <= 0}
     incrementDisabled={level >= presentation.maxLevel}
     decrementLabel={m.renown_decrease()}

@@ -1,10 +1,9 @@
 <script lang="ts">
-  import IconMinus from "@tabler/icons-svelte-runes/icons/minus";
-  import IconPlus from "@tabler/icons-svelte-runes/icons/plus";
   import { tick } from "svelte";
 
   import { Icon } from "#lib/components/icon/index.js";
   import Spoiler from "#lib/components/spoiler.svelte";
+  import Stepper from "#lib/components/stepper.svelte";
   import { getName } from "#lib/data/names.js";
   import { celebrateCategory } from "#lib/effects/celebrate.js";
   import {
@@ -197,14 +196,27 @@
     {/if}
   </header>
 
-  <div
-    class="villager-meter"
-    role="group"
-    aria-label={m.villager_relationship_level_aria({
+  <Stepper
+    accent="var(--cat-villagers)"
+    decrementDisabled={!revealed || storedLevel <= 0}
+    decrementLabel={m.villager_decrease_hearts({
+      name: revealed ? name : m.villager_hidden_name_lower(),
+    })}
+    incrementDisabled={!revealed || storedLevel >= MAX_VILLAGER_LEVEL}
+    incrementLabel={m.villager_increase_hearts({
+      name: revealed ? name : m.villager_hidden_name_lower(),
+    })}
+    label={m.villager_relationship_level_aria({
       level: displayedLevel,
       max: MAX_VILLAGER_LEVEL,
       name: visibleName,
     })}
+    onDecrement={() => {
+      setLevel(storedLevel - 1);
+    }}
+    onIncrement={() => {
+      setLevel(storedLevel + 1);
+    }}
   >
     <span class="sr-only" role="status">
       {m.villager_relationship_level_aria({
@@ -213,20 +225,6 @@
         name: visibleName,
       })}
     </span>
-    <button
-      class="villager-stepper"
-      type="button"
-      disabled={!revealed || storedLevel <= 0}
-      aria-label={m.villager_decrease_hearts({
-        name: revealed ? name : m.villager_hidden_name_lower(),
-      })}
-      onclick={() => {
-        setLevel(storedLevel - 1);
-      }}
-    >
-      <IconMinus aria-hidden="true" />
-    </button>
-
     <span class="villager-marks" aria-hidden="true">
       {#each { length: MAX_VILLAGER_LEVEL } as _, index (index)}
         {@const filled = revealed && index < storedLevel}
@@ -243,21 +241,7 @@
         </span>
       {/each}
     </span>
-
-    <button
-      class="villager-stepper"
-      type="button"
-      disabled={!revealed || storedLevel >= MAX_VILLAGER_LEVEL}
-      aria-label={m.villager_increase_hearts({
-        name: revealed ? name : m.villager_hidden_name_lower(),
-      })}
-      onclick={() => {
-        setLevel(storedLevel + 1);
-      }}
-    >
-      <IconPlus aria-hidden="true" />
-    </button>
-  </div>
+  </Stepper>
 
   {#if revealed && villager.dateable && presentation.actions.length > 0}
     <div class="relationship-decision">
@@ -391,44 +375,10 @@
     font-size: var(--text-3xs);
   }
 
-  .villager-meter {
-    display: grid;
-    min-width: 0;
-    grid-template-columns: 44px minmax(0, 1fr) 44px;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .villager-stepper {
-    display: grid;
-    width: 44px;
-    height: 44px;
-    place-items: center;
-    border: 1px solid var(--hairline);
-    border-radius: var(--radius);
-    background: color-mix(in srgb, var(--paper-raised) 92%, transparent);
-    color: var(--ink-muted);
-  }
-
-  .villager-stepper :global(svg) {
-    width: 16px;
-    height: 16px;
-  }
-
-  .villager-stepper:is(:hover, :focus-visible):not(:disabled) {
-    border-color: var(--cat-villagers);
-    color: var(--cat-villagers);
-    outline: 2px solid var(--cat-villagers);
-    outline-offset: -2px;
-  }
-
-  .villager-stepper:disabled {
-    opacity: 0.38;
-  }
-
   .villager-marks {
     display: grid;
     min-width: 0;
+    flex: 1;
     grid-template-columns: repeat(6, minmax(0, 1fr));
     align-items: center;
     justify-items: center;
@@ -509,15 +459,6 @@
   }
 
   @media (min-width: 701px) and (hover: hover) and (pointer: fine) {
-    .villager-meter {
-      grid-template-columns: 32px minmax(0, 1fr) 32px;
-    }
-
-    .villager-stepper {
-      width: 32px;
-      height: 32px;
-    }
-
     .villager-marks {
       grid-template-columns: repeat(12, minmax(0, 1fr));
     }
