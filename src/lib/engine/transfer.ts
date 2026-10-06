@@ -3,8 +3,8 @@ import { seasonFromOrdinal, seasonOrdinal } from "#lib/engine/domain-primitives.
 import {
   clampMineFloor,
   clampRenownLevel,
+  MAX_HEART_LEVEL,
   MAX_SKILL_LEVEL,
-  MAX_VILLAGER_LEVEL,
 } from "#lib/engine/progress.js";
 import { applyMarriageCascade } from "#lib/engine/relationships.js";
 import { getOrCreate, recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
@@ -135,23 +135,23 @@ export async function encodeTransferPayload(
   assertSpellBitmaskFits(spellOrder.length);
   let spellByte = 0;
   for (let i = 0; i < spellOrder.length; i++) {
-    if (completed.mines.spells.has(spellOrder[i])) {
+    if (completed.spells.has(spellOrder[i])) {
       spellByte |= 1 << (7 - i);
     }
   }
 
   // 7. Mine floor (1 byte)
-  parts.push(new Uint8Array([spellByte]), new Uint8Array([Math.min(255, completed.mines.floor)]));
+  parts.push(new Uint8Array([spellByte]), new Uint8Array([Math.min(255, completed.mineFloor)]));
 
   // 8. Renown (2 bytes big-endian uint16)
   const renown = Math.min(0xff_ff, completed.renown);
   parts.push(new Uint8Array([(renown >> 8) & 0xff, renown & 0xff]));
 
-  // 9. Villager levels (4 bits each, high nibble first)
+  // 9. Heart levels (4 bits each, high nibble first)
   const villagerOrder = getVillagerOrder();
   const villagerBytes = new Uint8Array(Math.ceil(villagerOrder.length / 2));
   for (let i = 0; i < villagerOrder.length; i++) {
-    const level = Math.min(15, completed.villagerLevels[villagerOrder[i]] ?? 0);
+    const level = Math.min(15, completed.heartLevels[villagerOrder[i]] ?? 0);
     const byteIndex = Math.floor(i / 2);
     const nibble = i % 2 === 0 ? (level & 0xf) << 4 : level & 0xf;
     villagerBytes[byteIndex] |= nibble;
@@ -419,21 +419,21 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
   }
 
   // 7. Mine floor (1 byte)
-  const floor = readBytes(1)[0];
+  const mineFloor = readBytes(1)[0];
 
   // 8. Renown (2 bytes big-endian uint16)
   const renownBytes = readBytes(2);
   const renown = (renownBytes[0] << 8) | renownBytes[1];
 
-  // 9. Villager levels (4 bits each, high nibble first)
+  // 9. Heart levels (4 bits each, high nibble first)
   const villagerOrder = getVillagerOrder();
   const villagerBytes = readBytes(Math.ceil(villagerOrder.length / 2));
-  const villagerLevels: Record<string, number> = {};
+  const heartLevels: Record<string, number> = {};
   for (let i = 0; i < villagerOrder.length; i++) {
     const byteIndex = Math.floor(i / 2);
     const level =
       i % 2 === 0 ? (villagerBytes[byteIndex] >> 4) & 0xf : villagerBytes[byteIndex] & 0xf;
-    villagerLevels[villagerOrder[i]] = level;
+    heartLevels[villagerOrder[i]] = level;
   }
 
   // 10. Skill levels (1 byte each)
@@ -566,8 +566,8 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
   for (const id of recordKeys(skillLevels)) {
     skillLevels[id] = Math.min(skillLevels[id], MAX_SKILL_LEVEL);
   }
-  for (const id of recordKeys(villagerLevels)) {
-    villagerLevels[id] = Math.min(villagerLevels[id], MAX_VILLAGER_LEVEL);
+  for (const id of recordKeys(heartLevels)) {
+    heartLevels[id] = Math.min(heartLevels[id], MAX_HEART_LEVEL);
   }
 
   return {
@@ -579,7 +579,8 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
     cosmetics,
     dates,
     hasUpperFloor,
-    mines: { floor: clampMineFloor(floor), spells },
+    heartLevels,
+    mineFloor: clampMineFloor(mineFloor),
     museum,
     petCosmetics,
     petSkins,
@@ -587,8 +588,8 @@ async function decodeTransferPayloadUnchecked(payload: string): Promise<Partial<
     reachedSeason,
     renown: clampRenownLevel(renown),
     skillLevels,
+    spells,
     unlockedPerks,
-    villagerLevels,
     villagerRelationships,
   };
 }

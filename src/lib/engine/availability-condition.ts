@@ -10,13 +10,13 @@ import type {
 import type { NonEmptyArray } from "#lib/utils/record.js";
 
 export interface AvailabilityContext {
+  heartLevels?: ReadonlyMap<VillagerId, number>;
   mineFloor?: number;
   questStates?: ReadonlyMap<QuestId, "available" | "completed">;
   season?: Season;
   skillLevels?: ReadonlyMap<SkillId, number>;
   time?: number;
   unlockedPerks?: ReadonlySet<PerkId>;
-  villagerLevels?: ReadonlyMap<VillagerId, number>;
   weather?: Weather;
 }
 
@@ -46,10 +46,10 @@ export function evaluateAvailabilityCondition(
     case "reachedSeason":
       return "unknown";
     case "heartLevel": {
-      const level = context.villagerLevels?.get(condition.villagerId);
+      const level = context.heartLevels?.get(condition.villagerId);
       return level === undefined ? "unknown" : level >= condition.level;
     }
-    case "minesLevel":
+    case "mineFloor":
       return context.mineFloor === undefined ? "unknown" : context.mineFloor >= condition.floor;
     case "not": {
       const value = evaluateAvailabilityCondition(condition.condition, context);
@@ -110,7 +110,7 @@ export function simplifyAvailabilityCondition(
     case "hasUpperFloor":
     case "heartLevel":
     case "isDating":
-    case "minesLevel":
+    case "mineFloor":
     case "perkUnlocked":
     case "quest":
     case "reachedSeason":
@@ -156,7 +156,7 @@ function collectBadges(condition: AvailabilityCondition, badges: DisplayBadges):
     case "hasUpperFloor":
     case "heartLevel":
     case "isDating":
-    case "minesLevel":
+    case "mineFloor":
     case "perkUnlocked":
     case "quest":
     case "reachedSeason":
@@ -213,7 +213,7 @@ function hasSelectiveSeasonConditionInSimplified(condition?: AvailabilityConditi
     case "hasUpperFloor":
     case "heartLevel":
     case "isDating":
-    case "minesLevel":
+    case "mineFloor":
     case "perkUnlocked":
     case "quest":
     case "reachedSeason":

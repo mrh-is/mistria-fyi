@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import VillagersContent from "#lib/components/villagers-content.svelte";
 import { trackerData } from "#lib/data/index.js";
-import { MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
+import { MAX_HEART_LEVEL } from "#lib/engine/progress.js";
 import { buildVillagerRoster } from "#lib/engine/villager-roster.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { pageStub } from "#lib/test-utils/page-stub.svelte.js";
@@ -79,8 +79,8 @@ describe("VillagersContent with completed villagers hidden", () => {
   beforeEach(() => {
     userState.resetAll();
     if (userState.state.showCompleted) userState.toggleShowCompleted();
-    userState.setVillagerLevel(completed, MAX_VILLAGER_LEVEL);
-    userState.setVillagerLevel(other, MAX_VILLAGER_LEVEL);
+    userState.setHeartLevel(completed, MAX_HEART_LEVEL);
+    userState.setHeartLevel(other, MAX_HEART_LEVEL);
   });
 
   afterEach(() => {
@@ -102,7 +102,7 @@ describe("VillagersContent with completed villagers hidden", () => {
       (id) => trackerData.villagers[id].dateable,
     );
     if (!dateable) throw new Error("fixture has no dateable villager");
-    userState.setVillagerLevel(dateable, MAX_VILLAGER_LEVEL);
+    userState.setHeartLevel(dateable, MAX_HEART_LEVEL);
     const view = renderWithFeedback(VillagersContent, { locale: "en" });
     const record = view.container.querySelector<HTMLElement>(`#villager-${dateable}`);
     const bestFriend = record?.querySelector<HTMLButtonElement>("[data-relationship-action]");

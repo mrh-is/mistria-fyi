@@ -101,8 +101,8 @@ describe("buildPerkLabel", () => {
     expect(result).toEqual([
       {
         condition: { type: "skillLevel", level: 1, skillId: "cooking" },
-        redacted: ["the ", { redacted: true }, " perk (Cooking tier 1)"],
-        revealed: ["the Taste Maker perk (Cooking tier 1)"],
+        spoilered: ["the ", { spoilered: true }, " perk (Cooking tier 1)"],
+        unspoilered: ["the Taste Maker perk (Cooking tier 1)"],
       },
     ]);
   });
@@ -123,28 +123,28 @@ describe("buildPerkLabel", () => {
     expect(buildPerkLabel("master_chef" as PerkId, lookups)).toEqual([
       {
         condition: { type: "skillLevel", level: 20, skillId: "cooking" },
-        redacted: ["the ", { redacted: true }, " perk (Cooking tier 5)"],
-        revealed: ["the Master Chef perk (Cooking tier 5)"],
+        spoilered: ["the ", { spoilered: true }, " perk (Cooking tier 5)"],
+        unspoilered: ["the Master Chef perk (Cooking tier 5)"],
       },
     ]);
   });
 });
 
 describe("buildBiomeLabel", () => {
-  it("creates conditional node with floor range redacted", () => {
+  it("creates conditional node with floor range spoilered", () => {
     const result = buildBiomeLabel("tide_caverns" as MinesBiomeId, BASE_LOOKUPS);
     expect(result).toEqual([
       {
-        condition: { type: "minesLevel", floor: 20 },
-        redacted: [
-          { redacted: true },
+        condition: { type: "mineFloor", floor: 20 },
+        spoilered: [
+          { spoilered: true },
           " (Mines floors ",
-          { redacted: true },
+          { spoilered: true },
           "–",
-          { redacted: true },
+          { spoilered: true },
           ")",
         ],
-        revealed: ["the Tide Caverns (Mines floors 20–39)"],
+        unspoilered: ["the Tide Caverns (Mines floors 20–39)"],
       },
     ]);
   });
@@ -183,8 +183,8 @@ describe("buildStoreQualifier", () => {
     );
     expect(result).toEqual({
       condition: vis,
-      redacted: [{ redacted: true }],
-      revealed: ["after repairing"],
+      spoilered: [{ spoilered: true }],
+      unspoilered: ["after repairing"],
     });
   });
 
@@ -204,7 +204,7 @@ describe("buildStoreQualifier", () => {
       lookups,
     );
     expect(result).toMatchObject({
-      revealed: ["after upgrading"],
+      unspoilered: ["after upgrading"],
     });
   });
 
@@ -225,8 +225,8 @@ describe("buildStoreQualifier", () => {
 
     expect(buildStoreQualifier(source, lookups)).toEqual({
       condition: source.visibility,
-      redacted: [{ redacted: true }],
-      revealed: ["after repairing"],
+      spoilered: [{ spoilered: true }],
+      unspoilered: ["after repairing"],
     });
   });
 
@@ -260,8 +260,8 @@ describe("buildStoreQualifier", () => {
       "at Woodcrafting level 15",
     ],
     [
-      { type: "minesLevel", floor: 40 },
-      { type: "minesLevel", floor: 40 },
+      { type: "mineFloor", floor: 40 },
+      { type: "mineFloor", floor: 40 },
       "after reaching Mines floor 40",
     ],
     [
@@ -279,7 +279,7 @@ describe("buildStoreQualifier", () => {
       { type: "questAvailable", questId: "stock_the_pantry" },
       "once Stock the Pantry is available",
     ],
-  ] as const)("renders stock availability %#", (availability, visibility, revealed) => {
+  ] as const)("renders stock availability %#", (availability, visibility, unspoilered) => {
     const source: Source = {
       type: "store",
       availability: availability as AvailabilityCondition,
@@ -289,8 +289,8 @@ describe("buildStoreQualifier", () => {
 
     expect(buildStoreQualifier(source, STORE_LOOKUPS)).toEqual({
       condition: source.visibility,
-      redacted: [{ redacted: true }],
-      revealed: [revealed],
+      spoilered: [{ spoilered: true }],
+      unspoilered: [unspoilered],
     });
   });
 
@@ -300,17 +300,17 @@ describe("buildStoreQualifier", () => {
       availability: {
         type: "all",
         conditions: [
-          { type: "minesLevel", floor: 40 },
+          { type: "mineFloor", floor: 40 },
           { type: "skillLevel", level: 15, skillId: "woodcrafting" as SkillId },
         ],
       },
       storeId: "general" as StoreId,
-      visibility: { type: "minesLevel", floor: 40 },
+      visibility: { type: "mineFloor", floor: 40 },
     };
 
     expect(buildStoreQualifier(source, STORE_LOOKUPS)).toMatchObject({
-      redacted: [{ redacted: true }, " and ", { redacted: true }],
-      revealed: ["after reaching Mines floor 40 and at Woodcrafting level 15"],
+      spoilered: [{ spoilered: true }, " and ", { spoilered: true }],
+      unspoilered: ["after reaching Mines floor 40 and at Woodcrafting level 15"],
     });
   });
 
@@ -320,16 +320,16 @@ describe("buildStoreQualifier", () => {
       availability: {
         type: "any",
         conditions: [
-          { type: "minesLevel", floor: 40 },
+          { type: "mineFloor", floor: 40 },
           { type: "skillLevel", level: 15, skillId: "woodcrafting" as SkillId },
         ],
       },
       storeId: "general" as StoreId,
-      visibility: { type: "minesLevel", floor: 40 },
+      visibility: { type: "mineFloor", floor: 40 },
     };
 
     expect(buildStoreQualifier(source, STORE_LOOKUPS)).toMatchObject({
-      revealed: ["after one of: reaching Mines floor 40 or Woodcrafting level 15"],
+      unspoilered: ["after one of: reaching Mines floor 40 or Woodcrafting level 15"],
     });
   });
 
@@ -339,7 +339,7 @@ describe("buildStoreQualifier", () => {
       availability: {
         type: "any",
         conditions: [
-          { type: "minesLevel", floor: 40 },
+          { type: "mineFloor", floor: 40 },
           { type: "gamePredicate", predicate: "native_flag", value: true },
         ],
       },
@@ -513,7 +513,7 @@ describe("buildSourceSegments — store", () => {
       "Purchase from ",
       {
         condition: { type: "questCompleted", questId: "repair_the_bridge" },
-        revealed: ["Darcy's Stall"],
+        unspoilered: ["Darcy's Stall"],
       },
     ]);
   });
@@ -539,13 +539,13 @@ describe("buildSourceSegments — store", () => {
       "Purchase from ",
       {
         condition: { type: "questCompleted", questId: "repair_the_inn" },
-        revealed: ["the Sleeping Dragon Inn"],
+        unspoilered: ["the Sleeping Dragon Inn"],
       },
       " (",
       {
         condition: vis,
-        redacted: [{ redacted: true }],
-        revealed: ["after upgrading"],
+        spoilered: [{ spoilered: true }],
+        unspoilered: ["after upgrading"],
       },
       ")",
     ]);
@@ -581,18 +581,18 @@ describe("buildSourceSegments — scroll_bundle", () => {
       "Purchase the ",
       {
         condition: { type: "questCompleted", questId: "repair_the_general_store" },
-        revealed: ["Fall Crop Sign Scroll Bundle"],
+        unspoilered: ["Fall Crop Sign Scroll Bundle"],
       },
       " from ",
       {
         condition: { type: "questCompleted", questId: "repair_the_general_store" },
-        revealed: ["the General Store"],
+        unspoilered: ["the General Store"],
       },
       " (",
       {
         condition: sourceVisibility,
-        redacted: [{ redacted: true }],
-        revealed: ["after repairing"],
+        spoilered: [{ spoilered: true }],
+        unspoilered: ["after repairing"],
       },
       ")",
     ]);
@@ -606,7 +606,7 @@ describe("buildSourceSegments — letter and perk", () => {
       ...BASE_LOOKUPS,
       itemNames: { [crystal_berries]: "Crystal Berries" },
       itemVisibility: {
-        [crystal_berries]: { type: "minesLevel", floor: 40 },
+        [crystal_berries]: { type: "mineFloor", floor: 40 },
       },
     };
     const source: Source = {
@@ -615,7 +615,7 @@ describe("buildSourceSegments — letter and perk", () => {
     };
     expect(buildSourceSegments(source, lookups)).toEqual([
       "Receive in a letter after shipping ",
-      { condition: { type: "minesLevel", floor: 40 }, revealed: ["a Crystal Berries"] },
+      { condition: { type: "mineFloor", floor: 40 }, unspoilered: ["a Crystal Berries"] },
     ]);
   });
 
@@ -624,7 +624,7 @@ describe("buildSourceSegments — letter and perk", () => {
     const lookups: SegmentLookups = {
       ...BASE_LOOKUPS,
       itemNames: { [cave_kelp]: "Cave Kelp" },
-      itemVisibility: { [cave_kelp]: { type: "minesLevel", floor: 20 } },
+      itemVisibility: { [cave_kelp]: { type: "mineFloor", floor: 20 } },
     };
     const source: Source = {
       type: "donate_item",
@@ -632,11 +632,11 @@ describe("buildSourceSegments — letter and perk", () => {
     };
     expect(buildSourceSegments(source, lookups)).toEqual([
       "Receive in a letter after donating ",
-      { condition: { type: "minesLevel", floor: 20 }, revealed: ["a Cave Kelp"] },
+      { condition: { type: "mineFloor", floor: 20 }, unspoilered: ["a Cave Kelp"] },
     ]);
   });
 
-  it("renders a reached-date trigger without redaction", () => {
+  it("renders a reached-date trigger without spoilering", () => {
     const source: Source = {
       type: "reach_day",
       triggerDate: { day: 3, season: "winter" },
@@ -683,22 +683,22 @@ describe("buildSourceSegments — mines_chest (worked example: Chickpea Curry)",
     expect(result).toEqual([
       "Find in a Treasure Chest in ",
       {
-        condition: { type: "minesLevel", floor: 20 },
-        redacted: [
-          { redacted: true },
+        condition: { type: "mineFloor", floor: 20 },
+        spoilered: [
+          { spoilered: true },
           " (Mines floors ",
-          { redacted: true },
+          { spoilered: true },
           "–",
-          { redacted: true },
+          { spoilered: true },
           ")",
         ],
-        revealed: ["the Tide Caverns (Mines floors 20–39)"],
+        unspoilered: ["the Tide Caverns (Mines floors 20–39)"],
       },
       ", with ",
       {
         condition: { type: "skillLevel", level: 1, skillId: "cooking" },
-        redacted: ["the ", { redacted: true }, " perk (Cooking tier 1)"],
-        revealed: ["the Taste Maker perk (Cooking tier 1)"],
+        spoilered: ["the ", { spoilered: true }, " perk (Cooking tier 1)"],
+        unspoilered: ["the Taste Maker perk (Cooking tier 1)"],
       },
     ]);
   });
@@ -751,7 +751,7 @@ describe("buildSourceSegments — quest types", () => {
       "Complete the ",
       {
         condition: { type: "questAvailable", questId: "unusual_seed" },
-        revealed: ["Unusual Seed"],
+        unspoilered: ["Unusual Seed"],
       },
       " quest",
     ]);
@@ -779,12 +779,12 @@ describe("buildSourceSegments — quest types", () => {
       "Complete ",
       {
         condition: { type: "questCompleted", questId: "repair_the_bridge" },
-        revealed: ["Balor"],
+        unspoilered: ["Balor"],
       },
       "’s ",
       {
         condition: { type: "questAvailable", questId: "tall_dark" },
-        revealed: ["Tall, Dark and Mysterious"],
+        unspoilered: ["Tall, Dark and Mysterious"],
       },
       " quest",
     ]);
@@ -829,7 +829,7 @@ describe("buildSourceSegments — quest types", () => {
       "Complete Eiland’s request for ",
       {
         condition: { type: "questAvailable", questId: "request_for_berries" },
-        revealed: ["Wild Berries"],
+        unspoilered: ["Wild Berries"],
       },
     ]);
   });
@@ -852,11 +852,11 @@ describe("buildSourceSegments — quest types", () => {
     expect(buildSourceSegments(source, lookups)).toEqual([
       {
         condition: { type: "villagerKnown", villagerId: "taliferro" },
-        revealed: [
+        unspoilered: [
           "Complete the ",
           {
             condition: { type: "questAvailable", questId: "tali_earthshroom" },
-            revealed: ["Crispy Fried Earthshroom"],
+            unspoilered: ["Crispy Fried Earthshroom"],
           },
           " cooking challenge",
         ],
@@ -1064,8 +1064,8 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
     const result = buildSourceSegments(source, BASE_LOOKUPS);
     expect(result[0]).toBe("Mine in ");
     expect(result[1]).toMatchObject({
-      condition: { type: "minesLevel", floor: 1 },
-      revealed: ["the Upper Mines (Mines floors 1–19)"],
+      condition: { type: "mineFloor", floor: 1 },
+      unspoilered: ["the Upper Mines (Mines floors 1–19)"],
     });
   });
 
@@ -1089,7 +1089,7 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
     };
     const result = buildSourceSegments(source, BASE_LOOKUPS);
     expect(result[0]).toBe("Random drop with ");
-    expect(result[1]).toMatchObject({ revealed: ["the Taste Maker perk (Cooking tier 1)"] });
+    expect(result[1]).toMatchObject({ unspoilered: ["the Taste Maker perk (Cooking tier 1)"] });
   });
 
   it("proposal", () => {
@@ -1118,7 +1118,7 @@ describe("buildSourceSegments — item/cosmetic source types", () => {
     const source: Source = { type: "ritual_chamber", perkId: "taste_maker" as PerkId };
     const result = buildSourceSegments(source, BASE_LOOKUPS);
     expect(result[0]).toBe("Craft at the Ritual Chamber with ");
-    expect(result[1]).toMatchObject({ revealed: ["the Taste Maker perk (Cooking tier 1)"] });
+    expect(result[1]).toMatchObject({ unspoilered: ["the Taste Maker perk (Cooking tier 1)"] });
   });
 
   it("station", () => {
@@ -1165,19 +1165,19 @@ describe("buildSourceSegments — localized rendering", () => {
     ).toEqual(["Pêcher : Coffre au trésor en or"]);
   });
 
-  it("renders the biome label with the locale's floor range & redaction", () => {
+  it("renders the biome label with the locale's floor range & spoilering", () => {
     expect(buildBiomeLabel("tide_caverns" as MinesBiomeId, FR_LOOKUPS)).toEqual([
       {
-        condition: { type: "minesLevel", floor: 20 },
-        redacted: [
-          { redacted: true },
+        condition: { type: "mineFloor", floor: 20 },
+        spoilered: [
+          { spoilered: true },
           " (étages ",
-          { redacted: true },
+          { spoilered: true },
           " à ",
-          { redacted: true },
+          { spoilered: true },
           " des mines)",
         ],
-        revealed: ["Mines marines (étages 20 à 39 des mines)"],
+        unspoilered: ["Mines marines (étages 20 à 39 des mines)"],
       },
     ]);
   });
@@ -1223,12 +1223,12 @@ describe("buildSourceSegments — localized rendering", () => {
     expect(buildSourceSegments(source, lookups)).toEqual([
       {
         condition: { type: "questCompleted", questId: "repair_the_bridge" },
-        revealed: ["エイランド"],
+        unspoilered: ["エイランド"],
       },
       "の依頼「",
       {
         condition: { type: "questAvailable", questId: "request_for_berries" },
-        revealed: ["野いちご"],
+        unspoilered: ["野いちご"],
       },
       "」を完了する",
     ]);
@@ -1238,13 +1238,13 @@ describe("buildSourceSegments — localized rendering", () => {
     const questId = "repair_the_general_store" as QuestId;
     const source: Source = {
       type: "store",
-      availability: { type: "minesLevel", floor: 20 },
+      availability: { type: "mineFloor", floor: 20 },
       storeId: "general" as StoreId,
       visibility: {
         type: "and",
         conditions: [
           { type: "questCompleted", questId },
-          { type: "minesLevel", floor: 20 },
+          { type: "mineFloor", floor: 20 },
         ],
       },
     };
@@ -1261,14 +1261,14 @@ describe("buildSourceSegments — localized rendering", () => {
         },
         storeVisibility: { ["general" as StoreId]: { type: "questCompleted", questId } },
       });
-    const qualifier = (revealed: string, conjunction: string) => ({
+    const qualifier = (unspoilered: string, conjunction: string) => ({
       condition: source.visibility,
-      redacted: [{ redacted: true }, conjunction, { redacted: true }],
-      revealed: [revealed],
+      spoilered: [{ spoilered: true }, conjunction, { spoilered: true }],
+      unspoilered: [unspoilered],
     });
     const storeGate = (name: string) => ({
       condition: { type: "questCompleted", questId },
-      revealed: [name],
+      unspoilered: [name],
     });
 
     expect(render("en", "General Store")).toEqual([

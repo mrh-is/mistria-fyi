@@ -6,11 +6,7 @@
   import Stepper from "#lib/components/stepper.svelte";
   import { getName } from "#lib/data/names.js";
   import { celebrateCategory } from "#lib/effects/celebrate.js";
-  import {
-    isCategoryComplete,
-    isVillagerComplete,
-    MAX_VILLAGER_LEVEL,
-  } from "#lib/engine/progress.js";
+  import { isCategoryComplete, isVillagerComplete, MAX_HEART_LEVEL } from "#lib/engine/progress.js";
   import { getSpouseId, relationshipPresentation } from "#lib/engine/relationships.js";
   import { getFeedbackContext } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
@@ -30,15 +26,15 @@
   let {
     compact = false,
     id,
-    known,
     name,
+    spoilered,
     villager,
   }: {
     compact?: boolean;
     id: VillagerId;
-    known: boolean;
     /** Already resolved for the active locale by the roster via `getName("villagers", id, locale)`. */
     name: string;
+    spoilered: boolean;
     villager: Villager;
   } = $props();
 
@@ -67,24 +63,24 @@
     yes: m.relationship_action_yes(),
   });
   let recordElement: HTMLLIElement;
-  let locallyRevealed = $state(false);
+  let spoilerDismissed = $state(false);
   let imageFailed = $state(false);
-  let revealed = $derived(known || locallyRevealed);
+  let isSpoilered = $derived(spoilered && !spoilerDismissed);
   const feedbackContext = getFeedbackContext();
   // A spoilered villager reports without its name or id, like a spoilered tracker row.
   let reportable = $derived(
     feedbackContext.reportableAttachment(
-      revealed
-        ? { category: "villager", displayName: name, entityId: id, page: page.url.pathname }
-        : {
+      isSpoilered
+        ? {
             category: "villager",
-            displayName: m.villager_hidden_name(),
+            displayName: m.villager_spoilered_name(),
             page: page.url.pathname,
-          },
+          }
+        : { category: "villager", displayName: name, entityId: id, page: page.url.pathname },
     ),
   );
-  let storedLevel = $derived(userState.state.completed.villagerLevels[id] ?? 0);
-  let displayedLevel = $derived(revealed ? storedLevel : 0);
+  let storedLevel = $derived(userState.state.completed.heartLevels[id] ?? 0);
+  let displayedLevel = $derived(isSpoilered ? 0 : storedLevel);
   let relationship = $derived(userState.state.completed.villagerRelationships[id] ?? "undecided");
   let presentation = $derived(
     relationshipPresentation({
@@ -96,7 +92,7 @@
     }),
   );
   let completed = $derived(isVillagerComplete(id, userState.state.completed));
-  let visibleName = $derived(revealed ? name : m.villager_hidden_name());
+  let visibleName = $derived(isSpoilered ? m.villager_spoilered_name() : name);
 
   async function applyAction(value: RelationshipActionValue): Promise<void> {
     // The roster can unmount this record once the action settles it (completed rows hidden),
@@ -133,7 +129,7 @@
 
   function setLevel(level: number): void {
     mutateWithCelebration(() => {
-      userState.setVillagerLevel(id, level);
+      userState.setHeartLevel(id, level);
     });
   }
 </script>
@@ -143,14 +139,14 @@
   {@attach reportable}
   class="villager-record"
   class:villager-record--complete={completed}
-  class:villager-record--spoilered={!revealed}
+  class:villager-record--spoilered={isSpoilered}
   data-villager-record
   data-compact={compact}
   id="villager-{id}"
   tabindex="-1"
 >
   <header class="villager-identity">
-    <span class="villager-icon" data-spoilered={!revealed} aria-hidden="true">
+    <span class="villager-icon" data-spoilered={isSpoilered} aria-hidden="true">
       {#if !imageFailed}
         <img
           src={villagerSpriteUrl(id)}
@@ -161,24 +157,24 @@
           onerror={() => (imageFailed = true)}
         />
       {:else}
-        <span data-testid="villager-icon-fallback">{revealed ? name.charAt(0) : "?"}</span>
+        <span data-testid="villager-icon-fallback">{isSpoilered ? "?" : name.charAt(0)}</span>
       {/if}
     </span>
 
     <span class="villager-copy">
       <strong data-villager-name>
-        {#if revealed}
-          {name}
+        {#if isSpoilered}
+          <Spoiler onReveal={() => (spoilerDismissed = true)}>{name}</Spoiler>
         {:else}
-          <Spoiler onReveal={() => (locallyRevealed = true)}>{name}</Spoiler>
+          {name}
         {/if}
       </strong>
-      {#if revealed && villager.dateable && presentation.status}
+      {#if !isSpoilered && villager.dateable && presentation.status}
         <small>{relationshipStatusLabel[presentation.status]}</small>
       {/if}
     </span>
 
-    {#if revealed}
+    {#if !isSpoilered}
       <span
         class="villager-birthday"
         aria-label={m.villager_birthday_aria({
@@ -191,24 +187,25 @@
         {String(villager.birthday.day).padStart(2, "0")}
       </span>
     {:else}
-      <span class="villager-birthday villager-birthday--hidden">{m.villager_birthday_hidden()}</span
+      <span class="villager-birthday villager-birthday--spoilered"
+        >{m.villager_birthday_spoilered()}</span
       >
     {/if}
   </header>
 
   <Stepper
     accentColor="var(--color-category-villagers)"
-    decrementDisabled={!revealed || storedLevel <= 0}
+    decrementDisabled={isSpoilered || storedLevel <= 0}
     decrementLabel={m.villager_decrease_hearts({
-      name: revealed ? name : m.villager_hidden_name_lower(),
+      name: isSpoilered ? m.villager_spoilered_name_lower() : name,
     })}
-    incrementDisabled={!revealed || storedLevel >= MAX_VILLAGER_LEVEL}
+    incrementDisabled={isSpoilered || storedLevel >= MAX_HEART_LEVEL}
     incrementLabel={m.villager_increase_hearts({
-      name: revealed ? name : m.villager_hidden_name_lower(),
+      name: isSpoilered ? m.villager_spoilered_name_lower() : name,
     })}
     label={m.villager_relationship_level_aria({
       level: displayedLevel,
-      max: MAX_VILLAGER_LEVEL,
+      max: MAX_HEART_LEVEL,
       name: visibleName,
     })}
     onDecrement={() => {
@@ -221,13 +218,13 @@
     <span class="sr-only" role="status">
       {m.villager_relationship_level_aria({
         level: displayedLevel,
-        max: MAX_VILLAGER_LEVEL,
+        max: MAX_HEART_LEVEL,
         name: visibleName,
       })}
     </span>
     <span class="villager-marks" aria-hidden="true">
-      {#each { length: MAX_VILLAGER_LEVEL } as _, index (index)}
-        {@const filled = revealed && index < storedLevel}
+      {#each { length: MAX_HEART_LEVEL } as _, index (index)}
+        {@const filled = !isSpoilered && index < storedLevel}
         <span
           class="villager-mark"
           data-villager-mark
@@ -243,7 +240,7 @@
     </span>
   </Stepper>
 
-  {#if revealed && villager.dateable && presentation.actions.length > 0}
+  {#if !isSpoilered && villager.dateable && presentation.actions.length > 0}
     <div class="relationship-decision">
       <span class="relationship-prompt">
         {presentation.prompt ? relationshipPromptLabel[presentation.prompt] : ""}
@@ -372,7 +369,7 @@
     white-space: nowrap;
   }
 
-  .villager-birthday--hidden {
+  .villager-birthday--spoilered {
     font-size: var(--text-3xs);
   }
 

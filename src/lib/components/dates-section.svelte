@@ -11,8 +11,8 @@
   import { showUndoToast } from "#lib/effects/undo-toast.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
-  import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
+  import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
@@ -29,9 +29,9 @@
     isConditionVisible(trackerData.categoryVisibility.dates, userState.progressionState),
   );
 
-  let redactedStoreIds = $derived(computeRedactedStoreIds(userState.progressionState));
+  let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));
 
-  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
+  let baseLookups = $derived(buildBaseSegmentLookups(spoileredStoreIds, locale));
 
   function allDatesComplete(): boolean {
     return Object.keys(trackerData.dates).every((id) =>
@@ -39,14 +39,14 @@
     );
   }
 
-  function dateNameVisible(dateId: DateId): boolean {
+  function isDateSpoilered(dateId: DateId): boolean {
     const visibility = trackerData.dates[dateId].visibility;
-    return isConditionVisible(visibility, userState.progressionState);
+    return !isConditionVisible(visibility, userState.progressionState);
   }
 
   function toggleDate(dateId: DateId): void {
     const vis = trackerData.dates[dateId].visibility;
-    if (!dateNameVisible(dateId)) {
+    if (isDateSpoilered(dateId)) {
       spoilerGuard.requestGuardedAction(vis, () => {
         toggleDate(dateId);
       });
@@ -108,7 +108,7 @@
             name={date.name}
             reportCategory="date"
             reportEntityId={date.id}
-            display={trackerRowDisplay({ completed, nameVisible: dateNameVisible(date.id) })}
+            display={trackerRowDisplay({ completed, spoilered: isDateSpoilered(date.id) })}
             sources={date.sources}
             segmentLookups={{ ...baseLookups, entityVisibility: date.visibility }}
             onToggle={() => {

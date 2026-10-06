@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
+import { MAX_HEART_LEVEL } from "#lib/engine/progress.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 
 import type { QuestId, RecipeId, VillagerId } from "#lib/types/tracker-data.js";
@@ -20,11 +20,11 @@ describe("Villager progression", () => {
   it("clamps relationship levels to the twelve-mark range", () => {
     const villagerId = "adeline" as VillagerId;
 
-    userState.setVillagerLevel(villagerId, MAX_VILLAGER_LEVEL + 10);
-    expect(userState.state.completed.villagerLevels[villagerId]).toBe(MAX_VILLAGER_LEVEL);
+    userState.setHeartLevel(villagerId, MAX_HEART_LEVEL + 10);
+    expect(userState.state.completed.heartLevels[villagerId]).toBe(MAX_HEART_LEVEL);
 
-    userState.setVillagerLevel(villagerId, -1);
-    expect(userState.state.completed.villagerLevels[villagerId]).toBe(0);
+    userState.setHeartLevel(villagerId, -1);
+    expect(userState.state.completed.heartLevels[villagerId]).toBe(0);
   });
 
   it("closes other romantic paths and resets the household choice when a spouse changes", () => {

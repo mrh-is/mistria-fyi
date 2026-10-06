@@ -14,21 +14,21 @@ export function sectionRowLimit(total: number, expanded: boolean): number {
 }
 
 /**
- * Picks a row's display mode. An unrevealed name wins over completion, so a spoilered row stays
- * redacted even when its progress was imported. Defaults describe a plain, incomplete row.
+ * Picks a row's display mode. A spoilered name wins over completion, so a spoilered row stays
+ * spoilered even when its progress was imported. Defaults describe a plain, incomplete row.
  */
 export function trackerRowDisplay({
   completed,
   dimmed = false,
   leaving = false,
-  nameVisible = true,
+  spoilered = false,
 }: {
   completed: boolean;
   dimmed?: boolean;
   leaving?: boolean;
-  nameVisible?: boolean;
+  spoilered?: boolean;
 }): TrackerRowDisplay {
-  if (!nameVisible) return { mode: "spoilered" };
+  if (spoilered) return { mode: "spoilered" };
   if (completed) return { leaving, mode: "completed" };
   return { dimmed, mode: "incomplete" };
 }

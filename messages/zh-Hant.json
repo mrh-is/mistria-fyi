@@ -3,7 +3,7 @@
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "追蹤所有收藏、任務、技能及更多內容",
   "og_share_description": "米斯特里亞的一切，盡在一處",
-  "source_hidden": "已隱藏",
+  "source_spoilered": "已隱藏",
   "app_update_available": "Mistria Field Guide 已更新！重新整理頁面即可取得最新版本。",
   "app_update_later": "稍後",
   "app_update_refresh": "重新整理",
@@ -147,8 +147,8 @@
   "season_fall_abbr": "秋",
   "season_winter_abbr": "冬",
   "villager_birthday_aria": "生日：{season}{day}日",
-  "villager_birthday_hidden": "生日已隱藏",
-  "villager_hidden_name": "隱藏的村民",
+  "villager_birthday_spoilered": "生日已隱藏",
+  "villager_spoilered_name": "隱藏的村民",
   "villager_relationship_level_aria": "與{name}的關係等級，{max}級中的{level}級",
   "villager_decrease_hearts": "減少{name}的愛心",
   "villager_increase_hearts": "增加{name}的愛心",
@@ -176,7 +176,7 @@
   "rank_state_completed": "已完成",
   "rank_state_current": "目前",
   "rank_state_upcoming": "即將到來",
-  "villager_hidden_name_lower": "隱藏的村民",
+  "villager_spoilered_name_lower": "隱藏的村民",
   "villagers_jump_to_initial_aria": "跳至{initial}，第一個村民記錄",
   "cosmetic_slot_head_gear": "頭部裝備",
   "cosmetic_slot_face_gear": "面部裝備",
@@ -492,7 +492,7 @@
       }
     }
   ],
-  "merge_label_villager_levels": [
+  "merge_label_heart_levels": [
     {
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
