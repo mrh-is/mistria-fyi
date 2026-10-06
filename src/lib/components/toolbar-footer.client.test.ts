@@ -31,6 +31,10 @@ function renderToolbar(toolbar?: PageMetadataInput["toolbar"]) {
   return { ...view, feedbackContext };
 }
 
+function toolbarNav() {
+  return screen.getByRole("navigation", { hidden: true });
+}
+
 function settingsButton() {
   return screen.getByRole("button", { name: "Quick settings" });
 }
@@ -344,5 +348,36 @@ describe("ToolbarFooter filters", () => {
     await waitFor(() => {
       expect(visibilityButton()).toHaveClass("floating-tool--filtered");
     });
+  });
+});
+
+describe("ToolbarFooter picker state", () => {
+  it("hides the toolbar & marks the page overlay-active while the panel's picker runs", async () => {
+    const { feedbackContext } = renderToolbar();
+    const target = document.createElement("div");
+    document.body.append(target);
+    feedbackContext.reportable({
+      category: "recipe",
+      displayName: "Tomato Soup",
+      page: "/recipes",
+    })(target);
+
+    await fireEvent.click(screen.getByRole("button", { name: "Send feedback" }));
+    await fireEvent.click(await screen.findByRole("button", { name: "Point at something" }));
+
+    // `FeedbackPanel` starts picking; the toolbar and the root layout's `inert` (mirrored by the
+    // harness through `isOverlayActive`) are other components reading the same context.
+    await waitFor(() => {
+      expect(toolbarNav()).toHaveAttribute("hidden");
+      expect(overlayState()).toBe("active");
+    });
+
+    await fireEvent.click(screen.getByRole("button", { name: "Cancel item picker" }));
+    await waitFor(() => {
+      expect(toolbarNav()).not.toHaveAttribute("hidden");
+    });
+    expect(feedbackContext.isPicking).toBe(false);
+
+    target.remove();
   });
 });
