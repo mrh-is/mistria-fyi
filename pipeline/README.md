@@ -39,9 +39,9 @@ macOS and Linux, pass `--version=X.Y.Z` when the assets omit a native version va
 
 That directory contains `assets.zip` rather than an extracted `fiddle/`. The real-asset integration
 suite temporarily materializes only `fiddle/` and `localization/`; it never expands the archive's
-multi-gigabyte animation and audio trees. The full pipeline does not yet use that adapter because
-its localization extractors retain an on-disk contract. Sprite extraction (`extractors/sprites.ts`)
-can read PNGs directly from `assets.zip`.
+multi-gigabyte animation and audio trees. The full pipeline does not yet use that adapter: `main.ts`
+still requires an on-disk `fiddle/` and builds its `Localizer` from the on-disk `localization/`
+tables. Sprite extraction (`extractors/sprites.ts`) can read PNGs directly from `assets.zip`.
 
 `--villager-sprites-only` (alias: `pnpm run sprites:villagers`) is the narrowest of these: it parses
 only `fiddle.npcs` and regenerates villager sprites alone, skipping `tracker-data.json`, locale
@@ -81,20 +81,22 @@ contracts. It does not regenerate data; `pnpm run pipeline -- <path>` remains a 
 
 ## Data flow
 
-`main.ts` is the orchestrator; read it for the exact call order. A full run proceeds in these
-stages:
+`main.ts` is the CLI and owns every file read & write; `assemble.ts` (`assembleTrackerData`) owns
+the transformation from an evaluated fiddle to validated tracker data & locale chunks, and reads no
+files. A full run proceeds in these stages:
 
 ```text
 assets root
   → parse TOML into a dotted namespace tree with non-enumerable provenance
   → evaluate item value expressions in place
+  ┌ assembleTrackerData(fiddle, localizer, options)
   → extract registries & per-locale names (extractors/)
   → collect acquisition sources into accumulators (acquisition/)
   → apply reviewed overrides, then attach sources to items, cosmetics, animals, & pets
   → extract quest chains & heart-level changes (extractors/visibility/)
   → assemble TrackerData
   → stamp & assign entity visibility
-  → validate the assembled tracker data against reference registries
+  └ validate the assembled tracker data against reference registries
   → stage tracker data, the locale manifest, locale chunks, & diagnostic JSON in memory
   → extract & stage sprites, if --sprites is passed
   → publish every staged file & sprite
@@ -170,18 +172,19 @@ Paths are relative to `pipeline/src/`. Colocated `*.test.ts` files cover most mo
 
 ### Input & orchestration
 
-| Module                 | Responsibility                                                                                                                                                               |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `main.ts`              | CLI flags, asset-root resolution, stage order, assembly, staging, and publishing. `--parse-only` stops after parsing; `--villager-sprites-only` runs villager sprites alone. |
-| `parse-fiddle.ts`      | Parses `fiddle/` from disk or straight out of `assets.zip` into one namespace tree. Excludes `.meta.toml`; rejects duplicate and colliding destinations.                     |
-| `evaluate.ts`          | Resolves `value.bin` and `value.store` expressions in place (grammar below).                                                                                                 |
-| `requirements.ts`      | Normalizes native requirement objects into requirement expressions and expands named requirements.                                                                           |
-| `assets-zip.ts`        | Locates `assets.zip`, the default Steam install, and the installed executable’s version for `main.ts`.                                                                       |
-| `asset-input.ts`       | Materializes only `fiddle/` and `localization/` from `assets.zip` for the real-asset test suite (`assets-test-setup.ts`).                                                    |
-| `data-shapes.ts`       | Array guards that throw with field and source-file context.                                                                                                                  |
-| `extractor-helpers.ts` | `forEachItem`, `forEachQuest`, and the six tracked quest groups with their app quest types.                                                                                  |
-| `localize.ts`          | Resolves a classified text field to every locale through the game’s translation tables and `localize-overrides.json`; falls back to English for missing beta keys.           |
-| `locale-codes.ts`      | Maps game language codes to BCP 47 tags and throws when the game adds or drops a language.                                                                                   |
+| Module                 | Responsibility                                                                                                                                                          |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `main.ts`              | CLI flags, asset-root resolution, stage order, staging, and publishing. `--parse-only` stops after parsing; `--villager-sprites-only` runs villager sprites alone.      |
+| `assemble.ts`          | `assembleTrackerData`: extraction, source attachment, visibility, & validation with an injected `Localizer`. Reviewed overrides & diagnostics are injectable for tests. |
+| `parse-fiddle.ts`      | Parses `fiddle/` from disk or straight out of `assets.zip` into one namespace tree. Excludes `.meta.toml`; rejects duplicate and colliding destinations.                |
+| `evaluate.ts`          | Resolves `value.bin` and `value.store` expressions in place (grammar below).                                                                                            |
+| `requirements.ts`      | Normalizes native requirement objects into requirement expressions and expands named requirements.                                                                      |
+| `assets-zip.ts`        | Locates `assets.zip`, the default Steam install, and the installed executable’s version for `main.ts`.                                                                  |
+| `asset-input.ts`       | Materializes only `fiddle/` and `localization/` from `assets.zip` for the real-asset test suite (`assets-test-setup.ts`).                                               |
+| `data-shapes.ts`       | Array guards that throw with field and source-file context.                                                                                                             |
+| `extractor-helpers.ts` | `forEachItem`, `forEachQuest`, and the six tracked quest groups with their app quest types.                                                                             |
+| `localize.ts`          | The `Localizer` extractors receive: resolves a classified text field to every locale through translation tables and `localize-overrides.json`; falls back to English.   |
+| `locale-codes.ts`      | Maps game language codes to BCP 47 tags and throws when the game adds or drops a language.                                                                              |
 
 ### Extractors
 
@@ -235,8 +238,9 @@ cosmetics, pet cosmetic sets, and pet skins. Recipe sources are collected separa
 
 Recipe scroll targets, letter triggers, recipe defaults & ID collisions, almanac categories, Mines
 forageable mappings, and reviewed override targets feed one run-scoped `PipelineDiagnostics` list.
-`main.ts` validates it before serializing or publishing outputs; standalone extractors validate
-before returning. Missing targets & obsolete acquisition overrides are always fatal.
+`assembleTrackerData` validates it before returning, so `main.ts` never stages invalid output;
+standalone extractors validate before returning. Missing targets & obsolete acquisition overrides
+are always fatal.
 
 `reviewed-diagnostics.ts` contains exact exceptions keyed by kind, field path, target ID, & message,
 each with a reason & native-data evidence. Unknown diagnostics fail; exceptions no longer observed

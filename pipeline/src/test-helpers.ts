@@ -2,11 +2,28 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } f
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { crc32 } from "node:zlib";
-import { onTestFinished } from "vitest";
+import { onTestFinished, vi } from "vitest";
+
+import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { DEFAULT_ASSETS_DIR } from "./asset-input.js";
+import { createLocalizer } from "./localize.js";
+import { attachProvenance } from "./parse-fiddle.js";
 
+import type { Mock } from "vitest";
+
+import type { LocaleCode } from "#lib/types/locale.js";
+
+import type { GameLanguageCode } from "./locale-codes.js";
+import type { LocalizeFieldInput, Localizer, TranslationDirectory } from "./localize.js";
 import type { ParsedGameData } from "./parse-fiddle.js";
+
+type TranslationTable = Readonly<Record<string, string>>;
+
+/** A {@link Localizer} whose method records its calls. */
+interface StubLocalizer extends Localizer {
+  localizeField: Mock<Localizer["localizeField"]>;
+}
 
 const temporaryAssetsDirectories: string[] = [];
 
@@ -98,8 +115,37 @@ export function createAssetsFixture(files: Record<string, string>): string {
   return assetsDir;
 }
 
-export function makeFiddle(overrides: Record<string, unknown> = {}): ParsedGameData {
-  return overrides as unknown as ParsedGameData;
+/**
+ * A {@link Localizer} running the real key derivation & fallback logic over in-memory tables,
+ * keyed by game language code (e.g. `{ jpn: { "npcs/balor/name": "バロル" } }`). Languages without
+ * a table fall back to English.
+ */
+export function createMemoryLocalizer(
+  tables: Partial<
+    Record<TranslationDirectory, Partial<Record<GameLanguageCode, TranslationTable>>>
+  >,
+): Localizer {
+  return createLocalizer(
+    (gameLanguage, directory) => new Map(Object.entries(tables[directory]?.[gameLanguage] ?? {})),
+  );
+}
+
+/**
+ * A fiddle fixture with provenance attached, so code calling {@link sourceFileFor} resolves each
+ * top-level key to `<key>.toml` (or to the matching entry in `sourceFiles`) instead of crashing.
+ * `ParsedGameData` is untyped TOML (`Record<string, unknown>`), so the overrides are too.
+ */
+export function makeFiddle(
+  overrides: Record<string, unknown> = {},
+  sourceFiles: Readonly<Record<string, string>> = {},
+): ParsedGameData {
+  const sourceFileByRootPath = new Map(
+    Object.keys(overrides).map((rootPath) => [rootPath, `${rootPath}.toml`]),
+  );
+  for (const [rootPath, sourceFile] of Object.entries(sourceFiles)) {
+    sourceFileByRootPath.set(rootPath, sourceFile);
+  }
+  return attachProvenance(overrides, sourceFileByRootPath);
 }
 
 export function removeAssetsFixtures(): void {
@@ -117,6 +163,28 @@ export function requireGameAssetsDir(): string {
     );
   }
   return assetsDir;
+}
+
+/**
+ * A {@link Localizer} test double. Every locale gets `translate(input, locale)` or, when that
+ * returns `undefined`, the English value; nothing is reported as a fallback. The method is a
+ * `vi.fn`, so tests can assert on the inputs an extractor passes.
+ */
+export function stubLocalizer(
+  translate: (input: LocalizeFieldInput, locale: LocaleCode) => string | undefined = () =>
+    undefined,
+): StubLocalizer {
+  return {
+    localizeField: vi.fn<Localizer["localizeField"]>((input) => ({
+      fallbackLocales: [],
+      values: Object.fromEntries(
+        LOCALE_CODES.map((locale) => [
+          locale,
+          locale === "en" ? input.englishValue : (translate(input, locale) ?? input.englishValue),
+        ]),
+      ) as Record<LocaleCode, string>,
+    })),
+  };
 }
 
 /** Writes {@link buildStoredZip}'s output to a temp file and returns its path. */

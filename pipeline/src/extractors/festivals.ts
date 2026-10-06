@@ -1,15 +1,14 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { localizeField } from "../localize.js";
-
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { FestivalId, Season, TrackerData } from "#lib/types/tracker-data.js";
 
+import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 
 export function extractFestivals(
   fiddle: ParsedGameData,
-  assetsDir: string,
+  localizer: Localizer,
 ): {
   festivals: TrackerData["festivals"];
   localeNames: Record<LocaleCode, Record<FestivalId, string>>;
@@ -49,7 +48,7 @@ export function extractFestivals(
     }
 
     result[festivalId as FestivalId] = { date: { day, season: season as Season } };
-    const { values } = localizeField(assetsDir, {
+    const { values } = localizer.localizeField({
       category: "festivals",
       classification: "localizable",
       englishValue: name,

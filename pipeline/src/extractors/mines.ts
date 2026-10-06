@@ -1,7 +1,6 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { expectArray } from "../data-shapes.js";
-import { localizeField } from "../localize.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { SourceTuple } from "#lib/types/acquisition.js";
@@ -14,6 +13,7 @@ import type {
   TrackerData,
 } from "#lib/types/tracker-data.js";
 
+import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
 
 export interface MinesExtraction {
@@ -30,7 +30,7 @@ const BIOME_ENGLISH_NAMES = [
   "Ancient Ruins",
 ] as const;
 
-export function extractMines(fiddle: ParsedGameData, assetsDir: string): MinesExtraction {
+export function extractMines(fiddle: ParsedGameData, localizer: Localizer): MinesExtraction {
   const biomeLocaleNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
     LocaleCode,
     Record<MinesBiomeId, string>
@@ -59,7 +59,7 @@ export function extractMines(fiddle: ParsedGameData, assetsDir: string): MinesEx
         ? ((rawBiomes[i + 1].floor as number | undefined) ?? (i + 1) * 20 + 1) - 1
         : maxFloors;
     const id = nameToId(name);
-    const { values } = localizeField(assetsDir, {
+    const { values } = localizer.localizeField({
       category: "dungeons/dungeons/biomes",
       classification: "localizable",
       englishValue: name,
@@ -86,7 +86,7 @@ export function extractMines(fiddle: ParsedGameData, assetsDir: string): MinesEx
         sources: [] as unknown as SourceTuple,
       };
       const name = (spell.name as string | undefined) ?? id;
-      const { values } = localizeField(assetsDir, {
+      const { values } = localizer.localizeField({
         category: "spells",
         classification: "localizable",
         englishValue: name,
