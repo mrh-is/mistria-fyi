@@ -1,9 +1,13 @@
 import { MediaQuery } from "svelte/reactivity";
 
 import { THEME_COLORS, THEME_STORAGE_KEY } from "#lib/theme.js";
-import { safeLocalStorage } from "#lib/utils/local-storage.js";
+import { tryGetItem, trySetItem } from "#lib/utils/local-storage.js";
 
 export type Theme = "dark" | "light" | "system";
+
+function isTheme(value: null | string): value is Theme {
+  return value === "dark" || value === "light" || value === "system";
+}
 
 function applyTheme(resolved: "dark" | "light") {
   if (typeof document === "undefined") return;
@@ -26,9 +30,9 @@ function createThemeStore() {
   const prefersDark = new MediaQuery("(prefers-color-scheme: dark)");
 
   // Load saved preference
-  const stored = safeLocalStorage.getItem(THEME_STORAGE_KEY) as null | Theme;
-  if (stored && ["dark", "light", "system"].includes(stored)) {
-    preference = stored;
+  const stored = tryGetItem(THEME_STORAGE_KEY);
+  if (stored.ok && isTheme(stored.value)) {
+    preference = stored.value;
   }
 
   const resolved = $derived<"dark" | "light">(resolveTheme(preference, prefersDark.current));
@@ -38,7 +42,7 @@ function createThemeStore() {
     $effect.root(() => {
       $effect(() => {
         applyTheme(resolved);
-        safeLocalStorage.setItem(THEME_STORAGE_KEY, preference);
+        trySetItem(THEME_STORAGE_KEY, preference);
       });
     });
   }

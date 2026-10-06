@@ -43,10 +43,6 @@ const WEATHER_LABEL: Record<Weather, () => string> = {
 
 export type NameLookup<T> = Partial<Record<keyof T, string>>;
 
-export type PartialPick<T, K extends keyof T> = {
-  [P in K]: Partial<T[P]>;
-};
-
 export type RecipeSourceLookups = Pick<TrackerData, "perkTierLevels"> & {
   biomes: (MinesBiome & { name: string })[];
   festivals: Partial<Record<string, { date: { day: number; season: Season }; name: string }>>;
