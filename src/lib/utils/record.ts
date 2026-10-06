@@ -19,9 +19,9 @@ export function isNonEmptyArray<T>(arr: T[]): arr is NonEmptyArray<T> {
 
 export function recordEntries<R extends Record<string, unknown>>(
   record: R,
-): { [K in keyof R]-?: [K, NonNullable<R[K]>] }[keyof R][];
+): { [K in keyof R]-?: [K, Exclude<R[K], undefined>] }[keyof R][];
 export function recordEntries(record: Record<string, unknown>): [string, unknown][] {
-  return Object.entries(record);
+  return Object.entries(record).filter(([, value]) => value !== undefined);
 }
 
 export function recordForEach<K extends string, T>(
