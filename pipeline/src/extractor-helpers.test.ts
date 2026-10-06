@@ -4,6 +4,7 @@ import {
   buildQuestTypeIndex,
   forEachItem,
   forEachQuest,
+  titleCase,
   TRACKED_QUEST_GROUPS,
 } from "./extractor-helpers.js";
 import { makeFiddle as makeFiddleBase } from "./test-helpers.js";
@@ -259,5 +260,16 @@ describe("forEachQuest", () => {
     const calls: unknown[][] = [];
     forEachQuest(fiddle, TRACKED_QUEST_GROUPS, (...args) => calls.push(args));
     expect(calls).toHaveLength(0);
+  });
+});
+
+describe("titleCase", () => {
+  it("capitalizes each snake_case word & joins with spaces", () => {
+    expect(titleCase("fruit_tree_sapling")).toBe("Fruit Tree Sapling");
+  });
+
+  it("leaves a single word capitalized & an empty key empty", () => {
+    expect(titleCase("farming")).toBe("Farming");
+    expect(titleCase("")).toBe("");
   });
 });
