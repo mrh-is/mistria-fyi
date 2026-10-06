@@ -7,10 +7,15 @@ allowBuilds:
   esbuild: true
   workerd: true
 
+# Pinned releases that are newer than the minimumReleaseAge window but are
+# installed on purpose; drop an entry once the release ages past the window.
 minimumReleaseAgeExclude:
   - miniflare@5.20260911.1-alpha
   - wrangler@4.131.2
 
+# Floors for transitive dependencies, forcing patched releases. Each selector
+# is as narrow as it can be, so a consumer already on a newer major keeps it
+# (cookie@<0.7.0 leaves SvelteKit 3's cookie v2 alone).
 overrides:
   "cookie@<0.7.0": ">=0.7.0"
   nanoid: ">=3.3.18"
