@@ -410,6 +410,94 @@ describe("deriveProgressionState", () => {
     expect(state.villagerLevels[caldarus]).toBe(4);
   });
 
+  it("uses recorded quest acquisition for ordered gates & derived availability for display", () => {
+    const prerequisite = "prerequisite" as QuestId;
+    const ordered = "ordered" as QuestId;
+    const dependent = "dependent" as QuestId;
+    const condition: VisibilityCondition = { type: "questAvailable", questId: prerequisite };
+    const data = makeTrackerData({
+      categoryVisibility: { crown: condition },
+      questOrder: { crown: [ordered] },
+      quests: {
+        crown: { [ordered]: {} },
+        story: {
+          [dependent]: { visibility: condition },
+          [prerequisite]: {},
+        },
+      },
+    });
+    const completed = makeCompletedState();
+    const state = deriveProgressionState(completed, data, false);
+    expect(state.questVisibility[prerequisite]).toBe("available");
+    expect(state.questVisibility[dependent]).toBe("available");
+    expect(state.questVisibility[ordered]).toBe("unavailable");
+    expect(isVisible(condition, state)).toBe(true);
+    completed.questStates[prerequisite] = "obtained";
+    expect(deriveProgressionState(completed, data, false).questVisibility[ordered]).toBe(
+      "available",
+    );
+  });
+
+  it("uses raw heart levels for quest gates & maximum cascaded levels for display", () => {
+    const ordered = "ordered" as QuestId;
+    const dependent = "dependent" as QuestId;
+    const secondCascade = "second_cascade" as QuestId;
+    const condition: VisibilityCondition = { type: "heartLevel", level: 3, villagerId: holt };
+    const data = makeTrackerData({
+      categoryVisibility: { crown: condition },
+      questOrder: { crown: [ordered] },
+      quests: {
+        crown: { [ordered]: {} },
+        story: {
+          [breakingTheFireSeal]: {
+            heartLevelChanges: [{ level: 4, villagerId: holt }],
+          },
+          [dependent]: { visibility: condition },
+          [secondCascade]: {
+            heartLevelChanges: [{ level: 2, villagerId: holt }],
+          },
+        },
+      },
+      villagers: { [holt]: { birthday: { day: 1, season: "spring" } } },
+    });
+    const completed = makeCompletedState({
+      questStates: { [breakingTheFireSeal]: "completed", [secondCascade]: "completed" },
+      villagerLevels: { [holt]: 1 },
+    });
+    const state = deriveProgressionState(completed, data, false);
+    expect(state.villagerLevels[holt]).toBe(4);
+    expect(state.questVisibility[ordered]).toBe("unavailable");
+    expect(state.questVisibility[dependent]).toBe("unavailable");
+    expect(isVisible(condition, state)).toBe(true);
+  });
+
+  it("evaluates ordered villager-known gates from recorded progress", () => {
+    const prerequisite = "prerequisite" as QuestId;
+    const ordered = "ordered" as QuestId;
+    const data = makeTrackerData({
+      categoryVisibility: { crown: { type: "villagerKnown", villagerId: holt } },
+      questOrder: { crown: [ordered] },
+      quests: {
+        crown: { [ordered]: {} },
+        story: { [prerequisite]: {} },
+      },
+      villagers: {
+        [holt]: {
+          birthday: { day: 1, season: "spring" },
+          visibility: { type: "questAvailable", questId: prerequisite },
+        },
+      },
+    });
+    const completed = makeCompletedState();
+    const state = deriveProgressionState(completed, data, false);
+    expect(state.knownVillagers.has(holt)).toBe(true);
+    expect(state.questVisibility[ordered]).toBe("unavailable");
+    completed.questStates[prerequisite] = "obtained";
+    expect(deriveProgressionState(completed, data, false).questVisibility[ordered]).toBe(
+      "available",
+    );
+  });
+
   describe("prerequisites on quests later in key order", () => {
     const summitStairs = "repair_the_summit_stairs" as QuestId;
     const generalStore = "repair_the_general_store" as QuestId;

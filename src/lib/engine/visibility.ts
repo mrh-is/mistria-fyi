@@ -1,4 +1,8 @@
-import { getMarriedVillager, normalizeRelationships } from "#lib/engine/relationships.js";
+import {
+  getMarriedVillager,
+  isRomantic,
+  normalizeRelationships,
+} from "#lib/engine/relationships.js";
 import { recordEntries, recordKeys } from "#lib/utils.js";
 
 import type {
@@ -36,66 +40,42 @@ export function deriveProgressionState(
   trackerData: TrackerData,
   showSpoilers: boolean,
 ): UserProgressionState {
-  const unlockedPerks = completed.unlockedPerks;
-  const marriedVillager = getMarriedVillager(completed.villagerRelationships);
-
-  // 1. Quest visibility, per-quest, from actual quest state + chain prerequisites.
-  const questVisibility = deriveQuestVisibility(completed, trackerData);
-
-  // 2. Known villagers: always-visible villagers are always known; gated villagers are known once their
-  // visibility condition (typically a questCompleted gate) evaluates true.
-  const villagerIds = new Set<VillagerId>(Object.keys(trackerData.villagers) as VillagerId[]);
-
+  const recorded = recordedProgressContext(completed, trackerData);
+  const questVisibility = deriveQuestVisibility(completed, trackerData, recorded);
+  // Discovery intentionally uses derived quest statuses but recorded heart levels. Unknown
+  // villagers cannot recursively disclose one another during this pass.
+  const discovery = questProgressContext(recorded, questVisibility);
+  const villagerIds = recordKeys(trackerData.villagers);
   const knownVillagers = new Set<VillagerId>();
-  if (showSpoilers) {
-    for (const villagerId of villagerIds) knownVillagers.add(villagerId);
-  } else {
-    const tempState: UserProgressionState = {
-      hasUpperFloor: completed.hasUpperFloor,
-      isDating: Object.values(completed.villagerRelationships).some(
-        (r) => r === "romantic" || r === "proposed" || r === "married",
-      ),
-      knownVillagers: new Set(),
-      marriedVillager,
-      minesFloor: completed.mines.floor,
-      questVisibility,
-      reachedSeason: completed.reachedSeason,
-      renown: completed.renown,
-      showSpoilers: false,
-      skillLevels: completed.skillLevels,
-      unlockedPerks,
-      villagerLevels: completed.villagerLevels,
-    };
-    for (const villagerId of villagerIds) {
-      const villagerVis = trackerData.villagers[villagerId].visibility;
-      if (!villagerVis || isVisible(villagerVis, tempState)) {
-        knownVillagers.add(villagerId);
-      }
+  for (const villagerId of villagerIds) {
+    if (
+      showSpoilers ||
+      evaluateCondition(trackerData.villagers[villagerId].visibility, discovery)
+    ) {
+      knownVillagers.add(villagerId);
     }
   }
 
-  // 3. Effective villager heart levels: stored level (manual + heartLevelChanges cascade), masked to 0
-  // for gated villagers the player doesn't yet know.
-  const villagerLevels: Record<string, number> = {};
+  const storedLevels = computeStoredVillagerLevels(completed, trackerData);
+  const villagerLevels: Record<VillagerId, number> = {};
   for (const villagerId of villagerIds) {
-    const stored = computeStoredVillagerLevel(villagerId, completed, trackerData);
-    villagerLevels[villagerId] = knownVillagers.has(villagerId) ? stored : 0;
+    villagerLevels[villagerId] = knownVillagers.has(villagerId)
+      ? (storedLevels[villagerId] ?? 0)
+      : 0;
   }
 
   return {
-    hasUpperFloor: completed.hasUpperFloor,
-    isDating: Object.values(completed.villagerRelationships).some(
-      (r) => r === "romantic" || r === "proposed" || r === "married",
-    ),
+    hasUpperFloor: recorded.hasUpperFloor,
+    isDating: recorded.isDating,
     knownVillagers,
-    marriedVillager,
-    minesFloor: completed.mines.floor,
+    marriedVillager: recorded.marriedVillager,
+    minesFloor: recorded.minesFloor,
     questVisibility,
-    reachedSeason: completed.reachedSeason,
-    renown: completed.renown,
+    reachedSeason: recorded.reachedSeason,
+    renown: recorded.renown,
     showSpoilers,
-    skillLevels: completed.skillLevels,
-    unlockedPerks,
+    skillLevels: recorded.skillLevels,
+    unlockedPerks: recorded.unlockedPerks,
     villagerLevels,
   };
 }
@@ -125,27 +105,41 @@ export function isConditionInvertible(condition: VisibilityCondition): boolean {
   }
 }
 
-export function isEntityNameVisible(
-  entityVisibility: undefined | VisibilityCondition,
-  state: UserProgressionState,
-): boolean {
-  return isVisible(entityVisibility, state);
-}
+// Preserve the public name without a redundant evaluator wrapper.
+export { isVisible as isEntityNameVisible };
+
+type ConditionContext = Omit<
+  UserProgressionState,
+  "knownVillagers" | "questVisibility" | "showSpoilers"
+> & {
+  isVillagerKnown: (villagerId: VillagerId) => boolean;
+  questStatus: (questId: QuestId) => QuestVisibility | undefined;
+};
 
 export function isVisible(
   condition: undefined | VisibilityCondition,
   state: UserProgressionState,
 ): boolean {
-  // Default visibility is always
+  return (
+    state.showSpoilers ||
+    evaluateCondition(condition, {
+      ...state,
+      isVillagerKnown: (villagerId) => state.knownVillagers.has(villagerId),
+      questStatus: (questId) => state.questVisibility[questId],
+    })
+  );
+}
+
+function evaluateCondition(
+  condition: undefined | VisibilityCondition,
+  state: ConditionContext,
+): boolean {
   if (!condition) return true;
-
-  if (state.showSpoilers) return true;
-
   switch (condition.type) {
     case "always":
       return true;
     case "and":
-      return condition.conditions.every((c) => isVisible(c, state));
+      return condition.conditions.every((c) => evaluateCondition(c, state));
     case "hasUpperFloor":
       return state.hasUpperFloor;
     case "heartLevel":
@@ -157,15 +151,15 @@ export function isVisible(
     case "minesLevel":
       return state.minesFloor >= condition.floor;
     case "or":
-      return condition.conditions.some((c) => isVisible(c, state));
+      return condition.conditions.some((c) => evaluateCondition(c, state));
     case "perkUnlocked":
       return state.unlockedPerks.has(condition.perkId);
     case "questAvailable": {
-      const vis = state.questVisibility[condition.questId];
+      const vis = state.questStatus(condition.questId);
       return vis === "available" || vis === "completed";
     }
     case "questCompleted":
-      return state.questVisibility[condition.questId] === "completed";
+      return state.questStatus(condition.questId) === "completed";
     case "reachedSeason":
       return SEASON_ORD[state.reachedSeason] >= SEASON_ORD[condition.season];
     case "renownLevel":
@@ -173,7 +167,7 @@ export function isVisible(
     case "skillLevel":
       return (state.skillLevels[condition.skillId] ?? 0) >= condition.level;
     case "villagerKnown":
-      return state.knownVillagers.has(condition.villagerId);
+      return state.isVillagerKnown(condition.villagerId);
   }
 }
 
@@ -319,23 +313,67 @@ function satisfyConditionInDraft(
   }
 }
 
-/** Combines a stored `villagerLevels` entry with any `heartLevelChanges` cascade from completed quests. */
-function computeStoredVillagerLevel(
-  villagerId: VillagerId,
+/** Scan completed story quests once, taking the maximum of all recorded & cascaded levels. */
+function computeStoredVillagerLevels(
   completed: DeepReadonly<CompletedState>,
   trackerData: TrackerData,
-): number {
-  let level = completed.villagerLevels[villagerId] ?? 0;
+): Record<VillagerId, number> {
+  const levels = { ...completed.villagerLevels };
   for (const [questId, state] of recordEntries(completed.questStates)) {
     if (state !== "completed") continue;
     if (!(questId in trackerData.quests.story)) continue;
     const quest = trackerData.quests.story[questId];
-    if (quest.heartLevelChanges === undefined) continue;
-    for (const change of quest.heartLevelChanges) {
-      if (change.villagerId === villagerId) level = Math.max(level, change.level);
+    for (const change of quest.heartLevelChanges ?? []) {
+      levels[change.villagerId] = Math.max(levels[change.villagerId] ?? 0, change.level);
     }
   }
-  return level;
+  return levels;
+}
+
+/** Recorded category gates require acquired quests & raw heart levels, independent of display. */
+function recordedProgressContext(
+  completed: DeepReadonly<CompletedState>,
+  trackerData: TrackerData,
+): ConditionContext {
+  const context: ConditionContext = {
+    hasUpperFloor: completed.hasUpperFloor,
+    isDating: recordKeys(completed.villagerRelationships).some((villagerId) =>
+      isRomantic(completed.villagerRelationships, villagerId),
+    ),
+    isVillagerKnown: (villagerId) =>
+      evaluateCondition(trackerData.villagers[villagerId].visibility, context),
+    marriedVillager: getMarriedVillager(completed.villagerRelationships),
+    minesFloor: completed.mines.floor,
+    questStatus: (questId) => {
+      const stored = completed.questStates[questId] ?? "none";
+      switch (stored) {
+        case "completed":
+          return "completed";
+        case "obtained":
+          return "available";
+        case "none":
+          return "unavailable";
+      }
+    },
+    reachedSeason: completed.reachedSeason,
+    renown: completed.renown,
+    skillLevels: completed.skillLevels,
+    unlockedPerks: completed.unlockedPerks,
+    villagerLevels: completed.villagerLevels,
+  };
+  return context;
+}
+
+/** Quest fixpoint & villager discovery use derived quest statuses without claiming known villagers. */
+function questProgressContext(
+  recorded: ConditionContext,
+  questVisibility: Record<QuestId, QuestVisibility>,
+): ConditionContext {
+  return {
+    ...recorded,
+    isVillagerKnown: () => false,
+    questStatus: (questId) => questVisibility[questId],
+  };
 }
 
 /**
@@ -347,6 +385,7 @@ function computeStoredVillagerLevel(
 function deriveQuestVisibility(
   completed: DeepReadonly<CompletedState>,
   trackerData: TrackerData,
+  recorded: ConditionContext,
 ): Record<QuestId, QuestVisibility> {
   const questVisibility: Record<QuestId, QuestVisibility> = {};
   const pending: [QuestId, QuestType][] = [];
@@ -364,6 +403,7 @@ function deriveQuestVisibility(
     }
   }
 
+  const derived = questProgressContext(recorded, questVisibility);
   let changed = true;
   while (changed) {
     changed = false;
@@ -374,7 +414,8 @@ function deriveQuestVisibility(
         questType,
         completed,
         trackerData,
-        questVisibility,
+        recorded,
+        derived,
       );
       if (visibility !== questVisibility[questId]) {
         questVisibility[questId] = visibility;
@@ -389,12 +430,12 @@ function evaluateOrderedChain(
   order: QuestId[],
   questId: QuestId,
   completed: DeepReadonly<CompletedState>,
-  trackerData: TrackerData,
+  recorded: ConditionContext,
   baseCondition: VisibilityCondition,
 ): QuestVisibility {
   const index = order.indexOf(questId);
   if (index === -1) return "unavailable";
-  if (!isBaseConditionMet(baseCondition, completed, trackerData)) return "unavailable";
+  if (!evaluateCondition(baseCondition, recorded)) return "unavailable";
   if (index === 0) return "available";
   const prevQuestId = order[index - 1];
   return completed.questStates[prevQuestId] === "completed" ? "available" : "unavailable";
@@ -405,34 +446,19 @@ function evaluateQuestPrerequisites(
   questType: QuestType,
   completed: DeepReadonly<CompletedState>,
   trackerData: TrackerData,
-  questVisibility: Record<QuestId, QuestVisibility>,
+  recorded: ConditionContext,
+  derived: ConditionContext,
 ): QuestVisibility {
   const order = trackerData.questOrder[questType];
   if (order) {
     const categoryVis = trackerData.categoryVisibility[questType] ?? { type: "always" as const };
-    return evaluateOrderedChain(order, questId, completed, trackerData, categoryVis);
+    return evaluateOrderedChain(order, questId, completed, recorded, categoryVis);
   }
 
   const quest = trackerData.quests[questType][questId];
   if (!quest.visibility) return "available";
 
-  const tempState: UserProgressionState = {
-    hasUpperFloor: completed.hasUpperFloor,
-    isDating: Object.values(completed.villagerRelationships).some(
-      (r) => r === "romantic" || r === "proposed" || r === "married",
-    ),
-    knownVillagers: new Set(),
-    marriedVillager: getMarriedVillager(completed.villagerRelationships),
-    minesFloor: completed.mines.floor,
-    questVisibility,
-    reachedSeason: completed.reachedSeason,
-    renown: completed.renown,
-    showSpoilers: false,
-    skillLevels: completed.skillLevels,
-    unlockedPerks: completed.unlockedPerks,
-    villagerLevels: completed.villagerLevels,
-  };
-  return isVisible(quest.visibility, tempState) ? "available" : "unavailable";
+  return evaluateCondition(quest.visibility, derived) ? "available" : "unavailable";
 }
 
 // ─── Progression state derivation ───────────────────────────────────
@@ -442,50 +468,6 @@ function findQuestType(questId: QuestId, trackerData: TrackerData): QuestType | 
     if (questId in quests) return questType;
   }
   return undefined;
-}
-
-function isBaseConditionMet(
-  condition: VisibilityCondition,
-  completed: DeepReadonly<CompletedState>,
-  trackerData: TrackerData,
-): boolean {
-  switch (condition.type) {
-    case "always":
-      return true;
-    case "and":
-      return condition.conditions.every((c) => isBaseConditionMet(c, completed, trackerData));
-    case "hasUpperFloor":
-      return completed.hasUpperFloor;
-    case "heartLevel":
-      return (completed.villagerLevels[condition.villagerId] ?? 0) >= condition.level;
-    case "isDating":
-      return Object.values(completed.villagerRelationships).some(
-        (r) => r === "romantic" || r === "proposed" || r === "married",
-      );
-    case "married":
-      return getMarriedVillager(completed.villagerRelationships) === condition.villagerId;
-    case "minesLevel":
-      return completed.mines.floor >= condition.floor;
-    case "or":
-      return condition.conditions.some((c) => isBaseConditionMet(c, completed, trackerData));
-    case "perkUnlocked":
-      return completed.unlockedPerks.has(condition.perkId);
-    case "questAvailable":
-      return (completed.questStates[condition.questId] ?? "none") !== "none";
-    case "questCompleted":
-      return completed.questStates[condition.questId] === "completed";
-    case "reachedSeason":
-      return SEASON_ORD[completed.reachedSeason] >= SEASON_ORD[condition.season];
-    case "renownLevel":
-      return completed.renown >= condition.level;
-    case "skillLevel":
-      return (completed.skillLevels[condition.skillId] ?? 0) >= condition.level;
-    case "villagerKnown": {
-      const villagerVis = trackerData.villagers[condition.villagerId].visibility;
-      if (!villagerVis || villagerVis.type === "always") return true;
-      return isBaseConditionMet(villagerVis, completed, trackerData);
-    }
-  }
 }
 
 function markOrderedPredecessorsCompleted(

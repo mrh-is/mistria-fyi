@@ -46,7 +46,7 @@ class MemoryCache {
 function dependencies(cache: MemoryCache, fetcher: (request: Request) => Promise<Response>) {
   const pending: Promise<unknown>[] = [];
   return {
-    assetPaths: ["/favicon.png"],
+    assetPaths: new Set(["/favicon.png"]),
     cache,
     fetcher,
     matchCache: (request: RequestInfo | URL) => cache.match(request),
@@ -202,7 +202,7 @@ describe("service-worker eviction path", () => {
       cache,
       new Request(`${ORIGIN}/newest`),
       new Response("new"),
-      ["/favicon.png"],
+      new Set(["/favicon.png"]),
       50,
     );
 
@@ -226,9 +226,21 @@ describe("service-worker font asset handling", () => {
   it("exempts font chunks from LRU eviction", async () => {
     const cache = new MemoryCache();
     const font = new Request("https://assets.mistria.fyi/fonts/lora-5.3.0/lora-cyrillic-400.woff2");
-    await cacheRuntimeResponse(cache, font, new Response("font"), [], 1);
-    await cacheRuntimeResponse(cache, new Request(`${ORIGIN}/animals`), new Response("a"), [], 1);
-    await cacheRuntimeResponse(cache, new Request(`${ORIGIN}/fish`), new Response("b"), [], 1);
+    await cacheRuntimeResponse(cache, font, new Response("font"), new Set(), 1);
+    await cacheRuntimeResponse(
+      cache,
+      new Request(`${ORIGIN}/animals`),
+      new Response("a"),
+      new Set(),
+      1,
+    );
+    await cacheRuntimeResponse(
+      cache,
+      new Request(`${ORIGIN}/fish`),
+      new Response("b"),
+      new Set(),
+      1,
+    );
 
     expect(await cache.match(font)).toBeDefined();
     expect(await cache.match(new Request(`${ORIGIN}/animals`))).toBeUndefined();
