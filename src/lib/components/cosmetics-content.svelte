@@ -14,8 +14,8 @@
   import { isCategoryComplete } from "#lib/engine/progress.js";
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
-  import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
+  import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { recordEntries } from "#lib/utils/record.js";
@@ -37,9 +37,9 @@
 
   const spoilerGuard = createSpoilerGuard();
 
-  let redactedStoreIds = $derived(computeRedactedStoreIds(userState.progressionState));
+  let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));
 
-  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
+  let baseLookups = $derived(buildBaseSegmentLookups(spoileredStoreIds, locale));
 
   interface SlotGroup {
     /** The game's own heading when the slot has one sub-category; MFG's otherwise. */
@@ -140,16 +140,16 @@
   })}
   {#snippet cosmeticRow(cosmetic: CosmeticEntry)}
     {@const completed = userState.state.completed.cosmetics.has(cosmetic.id)}
-    {@const nameVisible = isConditionVisible(cosmetic.visibility, userState.progressionState)}
+    {@const spoilered = !isConditionVisible(cosmetic.visibility, userState.progressionState)}
     <TrackerRow
-      display={trackerRowDisplay({ completed, nameVisible })}
+      display={trackerRowDisplay({ completed, spoilered })}
       segmentLookups={{ ...baseLookups, entityVisibility: cosmetic.visibility }}
       name={cosmetic.name}
       reportCategory="cosmetic"
       reportEntityId={cosmetic.id}
       sources={cosmetic.sources}
       onToggle={() => {
-        if (nameVisible || completed) {
+        if (!spoilered || completed) {
           toggleCosmetic(cosmetic, allInSlot);
         } else {
           spoilerGuard.requestGuardedAction(cosmetic.visibility, () => {

@@ -20,7 +20,7 @@ export function availabilityToVisibility(condition?: AvailabilityCondition): Vis
     case "hasUpperFloor":
     case "heartLevel":
     case "isDating":
-    case "minesLevel":
+    case "mineFloor":
     case "perkUnlocked":
     case "reachedSeason":
     case "skillLevel":
@@ -45,7 +45,7 @@ export function toAvailableVisibility(condition: VisibilityCondition): Visibilit
     case "heartLevel":
     case "isDating":
     case "married":
-    case "minesLevel":
+    case "mineFloor":
     case "perkUnlocked":
     case "questAvailable":
     case "reachedSeason":

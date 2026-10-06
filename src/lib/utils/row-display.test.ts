@@ -22,11 +22,11 @@ describe("trackerRowDisplay", () => {
     });
   });
 
-  it("keeps an unrevealed name spoilered even when completed", () => {
-    expect(trackerRowDisplay({ completed: true, nameVisible: false })).toEqual({
+  it("keeps a spoilered name spoilered even when completed", () => {
+    expect(trackerRowDisplay({ completed: true, spoilered: true })).toEqual({
       mode: "spoilered",
     });
-    expect(trackerRowDisplay({ completed: false, nameVisible: false })).toEqual({
+    expect(trackerRowDisplay({ completed: false, spoilered: true })).toEqual({
       mode: "spoilered",
     });
   });

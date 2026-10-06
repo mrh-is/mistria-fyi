@@ -20,15 +20,16 @@ function buildMinimalState(renown = 0, version = "1"): string {
       animals: {},
       cosmetics: [],
       dates: [],
-      mines: { floor: 0, spells: [] },
+      heartLevels: {},
+      mineFloor: 0,
       museum: [],
       petCosmetics: [],
       petSkins: [],
       questStates: {},
       renown,
       skillLevels: {},
+      spells: [],
       unlockedPerks: [],
-      villagerLevels: {},
     },
     showSpoilers: false,
     version,
@@ -124,7 +125,6 @@ describe("persistence lifecycle", () => {
     parsed.futureSetting = { enabled: true };
     const completed = parsed.completed as Record<string, unknown>;
     completed.futureProgress = ["kept"];
-    (completed.mines as Record<string, unknown>).futureMineState = 7;
     (parsed.worldState as Record<string, unknown>).futureWeatherDetail = "kept";
     const storage = makeStorage({ "mistria-fyi-v1": JSON.stringify(parsed) });
     vi.stubGlobal("localStorage", storage);
@@ -143,10 +143,6 @@ describe("persistence lifecycle", () => {
     expect(saved.version).toBe("2");
     expect(saved.futureSetting).toEqual({ enabled: true });
     expect((saved.completed as Record<string, unknown>).futureProgress).toEqual(["kept"]);
-    expect(
-      ((saved.completed as Record<string, unknown>).mines as Record<string, unknown>)
-        .futureMineState,
-    ).toBe(7);
     expect((saved.worldState as Record<string, unknown>).futureWeatherDetail).toBe("kept");
   });
 

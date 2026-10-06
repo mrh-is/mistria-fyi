@@ -49,7 +49,7 @@
       {@const { displayableCompletedItemCount, displayableItemCount, isVisible, visibleItems } =
         props.sectionConfig(animal.id)}
       {#if displayableItemCount > 0}
-        <SpoilerSection name={animal.name} revealed={isVisible}>
+        <SpoilerSection name={animal.name} spoilered={!isVisible}>
           {#if visibleItems.length > 0}
             <ExpandableSection
               locale={props.locale}
@@ -65,8 +65,8 @@
                   <TrackerRow
                     display={trackerRowDisplay({
                       completed: itemRow.completed,
-                      // Unlike other categories, a completed animal row is never redacted.
-                      nameVisible: itemRow.completed || !itemRow.redacted,
+                      // Unlike other categories, a completed animal row is never spoilered.
+                      spoilered: !itemRow.completed && itemRow.spoilered,
                     })}
                     segmentLookups={props.lookups
                       ? { ...props.lookups, entityVisibility: undefined }

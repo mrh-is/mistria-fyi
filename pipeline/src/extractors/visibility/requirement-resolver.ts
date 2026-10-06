@@ -89,7 +89,7 @@ export function resolveToVisibility(
   }
 
   if (predicate === "reached_mines_level" && typeof value === "number") {
-    return { type: "minesLevel", floor: value };
+    return { type: "mineFloor", floor: value };
   }
 
   if (predicate === "reached_heart_level" && typeof value === "object" && value !== null) {

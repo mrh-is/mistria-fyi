@@ -3,7 +3,7 @@
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "コレクション、クエスト、スキルなどの進捗を記録",
   "og_share_description": "ミストリアのすべてをひとつに",
-  "source_hidden": "非表示",
+  "source_spoilered": "非表示",
   "app_update_available": "Mistria Field Guideが更新されました！再読み込みして最新バージョンを入手してください。",
   "app_update_later": "後で",
   "app_update_refresh": "再読み込み",
@@ -147,8 +147,8 @@
   "season_fall_abbr": "秋",
   "season_winter_abbr": "冬",
   "villager_birthday_aria": "誕生日：{season}{day}日",
-  "villager_birthday_hidden": "誕生日は非表示",
-  "villager_hidden_name": "非表示の町の住民",
+  "villager_birthday_spoilered": "誕生日は非表示",
+  "villager_spoilered_name": "非表示の町の住民",
   "villager_relationship_level_aria": "{name}との関係レベル、{max}中{level}",
   "villager_decrease_hearts": "{name}のハートを減らす",
   "villager_increase_hearts": "{name}のハートを増やす",
@@ -176,7 +176,7 @@
   "rank_state_completed": "完了",
   "rank_state_current": "現在",
   "rank_state_upcoming": "今後",
-  "villager_hidden_name_lower": "非表示の町の住民",
+  "villager_spoilered_name_lower": "非表示の町の住民",
   "villagers_jump_to_initial_aria": "{initial}へジャンプ、最初の町の住民の記録",
   "cosmetic_slot_head_gear": "頭装備",
   "cosmetic_slot_face_gear": "顔装備",
@@ -492,7 +492,7 @@
       }
     }
   ],
-  "merge_label_villager_levels": [
+  "merge_label_heart_levels": [
     {
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
