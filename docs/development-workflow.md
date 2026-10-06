@@ -332,6 +332,25 @@ categories are on, an oxlint upgrade that adds rules fails lint until each new r
 turned off with a reason. Every `off` in `.oxlintrc.json` carries a one-line reason; see
 [oxlint rule decisions](#oxlint-rule-decisions).
 
+#### Test rules
+
+oxlint owns every test rule; no ESLint plugin is needed, because oxlint ships the Vitest rules
+natively and loads `eslint-plugin-playwright` as a JS plugin (the same way as perfectionist).
+
+| Rule                             | Owner                                 | Scope                                                    |
+| -------------------------------- | ------------------------------------- | -------------------------------------------------------- |
+| `vitest/expect-expect`           | oxlint, built in                      | `*.test.ts`; `expect*` helpers count                     |
+| `vitest/no-conditional-expect`   | oxlint, built in                      | `*.test.ts`                                              |
+| `playwright/no-wait-for-timeout` | `eslint-plugin-playwright`, in oxlint | `tests/**/*.spec.ts`, `tests/pwa`, accessibility helpers |
+| `playwright/no-raw-locators`     | `eslint-plugin-playwright`, in oxlint | Same, except the three files below                       |
+
+Wait with `expect(...).toBeVisible()`, `expect.poll`, or `settledBox`, never a sleep. Prefer
+`getByRole`, `getByLabel`, and `getByTestId`. Where a role can't express the query (an anchor id, a
+decorative `data-*` hook), put the raw locator in a helper or add a one-line
+`oxlint-disable-next-line playwright/no-raw-locators -- reason`. `geometry.spec.ts`, `seo.spec.ts`,
+and `support/geometry.ts` are exempt in `.oxlintrc.json`: they measure layout on `data-*` hooks and
+read `<meta>` tags, which have no role or accessible name.
+
 TypeScript's `noImplicitReturns` stands in for oxlint's `typescript/consistent-return`, which can't
 see that an exhaustive `switch` returns on every path.
 

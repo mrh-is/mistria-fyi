@@ -5,7 +5,7 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["eslint", "typescript", "unicorn", "oxc", "import", "promise", "node", "jsdoc"],
-  "jsPlugins": ["eslint-plugin-perfectionist"],
+  "jsPlugins": ["eslint-plugin-perfectionist", "eslint-plugin-playwright"],
   "categories": {
     "correctness": "error",
     "suspicious": "error",
@@ -307,12 +307,30 @@
         "vitest/prefer-strict-boolean-matchers": "off", // Its fix turns truthiness checks on elements into `toBe(true)`.
         "vitest/prefer-to-be-falsy": "off", // `toBe(false)` is stricter on real booleans.
         "vitest/prefer-to-be-truthy": "off", // `toBe(true)` is stricter on real booleans.
+        "vitest/no-conditional-expect": "error", // An expect behind a branch or catch can silently never run.
         "vitest/no-conditional-in-test": "off",
         "vitest/prefer-import-in-mock": "off",
         "vitest/prefer-strict-equal": "off",
         "vitest/require-mock-type-parameters": "off",
         "vitest/valid-expect": ["error", { "maxArgs": 2 }]
       }
+    },
+    {
+      // Playwright rules (eslint-plugin-playwright, loaded as an oxlint JS plugin) cover the browser
+      // suites. Sleeps are never allowed; raw CSS & XPath locators are, only where a role or label
+      // can't express the query.
+      "files": ["tests/**/*.spec.ts", "tests/accessibility/support/**/*.ts", "tests/pwa/**/*.ts"],
+      "rules": { "playwright/no-raw-locators": "error", "playwright/no-wait-for-timeout": "error" }
+    },
+    {
+      // These suites inspect DOM structure that has no role or name: document metadata (seo) and
+      // layout geometry on data-* hooks (geometry). Semantic locators can't reach it.
+      "files": [
+        "tests/accessibility/geometry.spec.ts",
+        "tests/accessibility/seo.spec.ts",
+        "tests/accessibility/support/geometry.ts"
+      ],
+      "rules": { "playwright/no-raw-locators": "off" }
     },
     {
       // Playwright specs drive one page through ordered steps, so their awaits are sequential.
