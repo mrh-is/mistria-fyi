@@ -4,7 +4,7 @@
   import IconPointer from "@tabler/icons-svelte-runes/icons/pointer";
   import IconShield from "@tabler/icons-svelte-runes/icons/shield";
   import IconX from "@tabler/icons-svelte-runes/icons/x";
-  import { tick } from "svelte";
+  import { onDestroy, tick } from "svelte";
   import { toast } from "svelte-sonner";
   import { prefersReducedMotion } from "svelte/motion";
   import { slide } from "svelte/transition";
@@ -31,14 +31,14 @@
     onclose,
     open,
     pickerEnabled = false,
-    resetKey,
+    restoreFocus = true,
   }: {
     accent?: string;
     feedbackContext?: FeedbackContext;
     onclose: () => void;
     open: boolean;
     pickerEnabled?: boolean;
-    resetKey: string;
+    restoreFocus?: boolean;
   } = $props();
 
   const CLIENT_TIMEOUT_MS = 15_000;
@@ -51,17 +51,14 @@
   let showSaveDataPreview = $state(false);
   let submitting = $state(false);
   let submitError = $state("");
-  let dialogElement = $state<HTMLElement | null>(null);
   let messageInput = $state<HTMLTextAreaElement | null>(null);
   let pickerButton = $state<HTMLButtonElement | null>(null);
   let selectedElement = $state<ReportableElement | undefined>();
-  let previousResetKey = $state("");
-  let hasResetKey = false;
   let opener: HTMLElement | null = null;
-  let wasOpen = false;
   let pickerActive = $state(false);
   let submitGeneration = 0;
   let activeController: AbortController | null = null;
+  let submitTimeout: ReturnType<typeof setTimeout> | undefined;
   let visible = $derived(open && !pickerActive);
   let pickerAvailable = $derived(pickerEnabled && feedbackContext.registrations.size > 0);
   let turnstileToken = $state("");
@@ -87,18 +84,6 @@
   );
   let submitShake = $state(false);
 
-  $effect(() => {
-    if (!wantsReply) {
-      emailTouched = false;
-    }
-  });
-
-  $effect(() => {
-    if (!includeSaveData) {
-      showSaveDataPreview = false;
-    }
-  });
-
   let saveDataPreview = $derived.by(() => {
     if (!includeSaveData) return "";
     try {
@@ -108,33 +93,6 @@
       return JSON.stringify(exported.completed, null, 2);
     } catch {
       return "(could not load progress data)";
-    }
-  });
-
-  $effect(() => {
-    if (!hasResetKey) {
-      previousResetKey = resetKey;
-      hasResetKey = true;
-      return;
-    }
-    if (resetKey !== previousResetKey) {
-      message = "";
-      email = "";
-      wantsReply = false;
-      messageTouched = false;
-      emailTouched = false;
-      includeSaveData = false;
-      showSaveDataPreview = false;
-      selectedElement = undefined;
-      pickerActive = false;
-      showProgressInfo = false;
-      feedbackContext.reset();
-      submitError = "";
-      submitShake = false;
-      turnstileToken = "";
-      turnstileError = false;
-      turnstileInteractive = false;
-      previousResetKey = resetKey;
     }
   });
 
@@ -264,24 +222,44 @@
     };
   });
 
-  $effect(() => {
-    if (visible && !wasOpen) {
-      opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-      wasOpen = true;
-      void afterTick(() => dialogElement?.focus());
-    } else if (!open && wasOpen) {
-      messageTouched = false;
-      emailTouched = false;
-      submitShake = false;
-      const focusTarget = opener;
-      opener = null;
-      wasOpen = false;
+  let focusGeneration = 0;
+  let shakeTimer: ReturnType<typeof setTimeout> | undefined;
+
+  let returningFromPicker = false;
+
+  function manageFocus(element: HTMLElement): () => void {
+    const generation = ++focusGeneration;
+    opener ??= document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const returning = returningFromPicker;
+    returningFromPicker = false;
+    if (!returning) {
       void afterTick(() => {
-        if (focusTarget?.isConnected) {
-          focusTarget.focus();
-        }
+        if (generation === focusGeneration && visible) element.focus();
       });
     }
+    return () => {
+      const closingGeneration = ++focusGeneration;
+      // Read live props after the outgoing block's snapshot has been released.
+      void afterTick(() => {
+        if (closingGeneration !== focusGeneration || open) return;
+        messageTouched = false;
+        emailTouched = false;
+        submitShake = false;
+        clearTimeout(shakeTimer);
+        const focusTarget = opener;
+        opener = null;
+        if (restoreFocus && focusTarget?.isConnected) focusTarget.focus();
+      });
+    };
+  }
+
+  onDestroy(() => {
+    ++focusGeneration;
+    ++submitGeneration;
+    activeController?.abort();
+    clearTimeout(submitTimeout);
+    clearTimeout(shakeTimer);
+    feedbackContext.reset();
   });
 
   async function copyMessage() {
@@ -301,11 +279,13 @@
     const generation = ++submitGeneration;
 
     activeController?.abort();
+    clearTimeout(submitTimeout);
     const controller = new AbortController();
     activeController = controller;
     const timeout = setTimeout(() => {
       controller.abort();
     }, CLIENT_TIMEOUT_MS);
+    submitTimeout = timeout;
 
     try {
       let saveData: Record<string, unknown> | undefined;
@@ -339,12 +319,14 @@
 
       if (!response.ok) {
         const data = (await response.json().catch(() => null)) as null | { message?: string };
+        if (generation !== submitGeneration) return;
         submitError = data?.message ?? m.feedback_error_generic();
         resetTurnstileWidget();
         return;
       }
 
       const data = (await response.json()) as { emailSaved?: boolean; issueUrl: string };
+      if (generation !== submitGeneration) return;
 
       message = "";
       email = "";
@@ -407,12 +389,14 @@
       }
     });
     submitShake = true;
-    setTimeout(() => {
+    clearTimeout(shakeTimer);
+    shakeTimer = setTimeout(() => {
       submitShake = false;
     }, 500);
   }
 
   function startPicking(): void {
+    returningFromPicker = true;
     pickerActive = true;
     feedbackContext.startPicking(
       (element) => {
@@ -430,7 +414,7 @@
 
 {#if visible}
   <PanelOverlay
-    bind:element={dialogElement}
+    focus={manageFocus}
     closeLabel={m.feedback_close_aria()}
     label={m.toolbar_send_feedback()}
     {onclose}
@@ -465,7 +449,15 @@
         <p class="feedback-form__optional">{m.feedback_optional_label()}</p>
         <div class="feedback-form__options">
           <div class="flex items-center gap-2">
-            <Checkbox class="rounded-sm" id="include-save-data" bind:checked={includeSaveData} />
+            <Checkbox
+              class="rounded-sm"
+              id="include-save-data"
+              checked={includeSaveData}
+              onCheckedChange={(checked) => {
+                includeSaveData = checked;
+                if (!checked) showSaveDataPreview = false;
+              }}
+            />
             <label for="include-save-data" class="flex-1 text-xs select-none">
               {m.feedback_attach_progress_label()}
             </label>
@@ -521,7 +513,15 @@
           {/if}
 
           <div class="flex items-center gap-2">
-            <Checkbox class="rounded-sm" id="wants-reply" bind:checked={wantsReply} />
+            <Checkbox
+              class="rounded-sm"
+              id="wants-reply"
+              checked={wantsReply}
+              onCheckedChange={(checked) => {
+                wantsReply = checked;
+                if (!checked) emailTouched = false;
+              }}
+            />
             <label for="wants-reply" class="text-xs select-none"
               >{m.feedback_wants_reply_label()}</label
             >

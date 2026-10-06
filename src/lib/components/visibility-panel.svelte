@@ -23,7 +23,10 @@
   import type { AvailabilityWindow } from "#lib/types/availability.js";
   import type { Season, Weather } from "#lib/types/tracker-data.js";
 
-  let { showSeasonality }: { showSeasonality: boolean } = $props();
+  let {
+    onFilterChange,
+    showSeasonality,
+  }: { onFilterChange?: () => void; showSeasonality: boolean } = $props();
 
   const seasons: Season[] = ["spring", "summer", "fall", "winter"];
   const allWeathers: Weather[] = ["calm", "inclement", "heavy_inclement", "special"];
@@ -85,6 +88,7 @@
 
   function toggleAvailability(window: AvailabilityWindow): void {
     userState.toggleAvailabilityWindow(window);
+    onFilterChange?.();
   }
 
   // Native radio-group keyboard model: arrows move selection (wrapping), Home & End jump.
@@ -230,6 +234,7 @@
             aria-pressed={selected}
             onclick={() => {
               toolbarState.toggleSourceFilter(filter);
+              onFilterChange?.();
             }}
           >
             <SourceIcon class="size-3" />{sourceFilterLabel(filter.id, page.data.locale)}
@@ -249,6 +254,7 @@
       checked={userState.state.showCompleted}
       onCheckedChange={() => {
         userState.toggleShowCompleted();
+        onFilterChange?.();
       }}
     />
   </section>

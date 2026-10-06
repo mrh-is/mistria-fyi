@@ -185,6 +185,7 @@
   {@const config = wingConfig(wingId, wing)}
   {#if config.isVisible}
     <ExpandableSection
+      {locale}
       count={config.scopedCompletedItemCount}
       forceOpen={!!nameFilter}
       name={getName("museum_wings", wingId, locale)}
@@ -194,6 +195,7 @@
     >
       {#each config.setConfigs as set (set.setId)}
         <ExpandableSection
+          {locale}
           depth={1}
           count={set.scopedCompletedItemCount}
           forceOpen={!!nameFilter}

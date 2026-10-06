@@ -2,6 +2,7 @@
   import ExpandableSection from "#lib/components/expandable-section.svelte";
 
   import type { FeedbackContext } from "#lib/feedback/context.svelte.js";
+  import type { LocaleCode } from "#lib/types/locale.js";
 
   let {
     count,
@@ -9,6 +10,7 @@
     depth = 0,
     feedbackContext,
     forceOpen = false,
+    locale = "en",
     name = "Test Section",
     onExpandedChange,
     reportCategory,
@@ -21,6 +23,7 @@
     depth?: number;
     feedbackContext: FeedbackContext;
     forceOpen?: boolean;
+    locale?: LocaleCode;
     name?: string;
     onExpandedChange?: (expanded: boolean) => void;
     reportCategory?: string;
@@ -31,6 +34,7 @@
 </script>
 
 <ExpandableSection
+  {locale}
   {count}
   {defaultOpen}
   {depth}

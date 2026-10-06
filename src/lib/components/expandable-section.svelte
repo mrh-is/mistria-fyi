@@ -6,13 +6,13 @@
   import { Icon } from "#lib/components/icon/index.js";
   import { getFeedbackContextOrFallback } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
-  import { getLocale } from "#lib/paraglide/runtime.js";
   import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
 
   import type { Snippet } from "svelte";
 
   import type { FeedbackContext } from "#lib/feedback/context.svelte.js";
+  import type { LocaleCode } from "#lib/types/locale.js";
 
   let {
     children,
@@ -21,6 +21,7 @@
     depth = 0,
     feedbackContext = getFeedbackContextOrFallback(),
     forceOpen = false,
+    locale,
     name,
     onExpandedChange,
     reportCategory,
@@ -34,6 +35,7 @@
     depth?: number;
     feedbackContext?: FeedbackContext;
     forceOpen?: boolean;
+    locale: LocaleCode;
     name: string;
     onExpandedChange?: (expanded: boolean) => void;
     reportCategory?: string;
@@ -58,7 +60,6 @@
   let expanded = $state(untrack(() => defaultOpen));
   let hydrated = $state(false);
   let isOpen = $derived(expanded || forceOpen);
-  let lastReportedOpen = $state<boolean | undefined>(undefined);
   let boundedCount = $derived(
     total === undefined || count === undefined ? undefined : Math.min(Math.max(count, 0), total),
   );
@@ -80,9 +81,9 @@
   });
 
   $effect(() => {
-    if (lastReportedOpen === isOpen) return;
-    lastReportedOpen = isOpen;
-    onExpandedChange?.(isOpen);
+    const open = isOpen;
+    // Notify the parent of effective state, including externally forced expansion.
+    untrack(() => onExpandedChange?.(open));
   });
 
   function toggleExpanded(): void {
@@ -108,9 +109,9 @@
       aria-controls={contentId}
       aria-label={total !== undefined && boundedCount !== undefined
         ? m.section_progress_label({
-            completed: formatNumber(boundedCount, getLocale()),
+            completed: formatNumber(boundedCount, locale),
             name,
-            total: formatNumber(total, getLocale()),
+            total: formatNumber(total, locale),
           })
         : undefined}
       {@attach reportable}
@@ -124,7 +125,7 @@
       <span class="section-name">{name}</span>
       {#if total !== undefined && boundedCount !== undefined}
         <span class="section-count" aria-hidden="true"
-          >{formatNumber(boundedCount, getLocale())} / {formatNumber(total, getLocale())}</span
+          >{formatNumber(boundedCount, locale)} / {formatNumber(total, locale)}</span
         >
         <span class="section-progress" data-testid="section-progress" aria-hidden="true">
           <i data-testid="section-progress-fill" style="width: {progress}%"></i>

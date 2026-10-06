@@ -12,9 +12,6 @@ import { describe, expect, it } from "vitest";
 
 const root = join(import.meta.dirname, "..");
 
-// Pending conversion; the file is in another agent's open work. Remove once converted.
-const AMBIENT_READ_ALLOWLIST = new Set(["src/lib/components/expandable-section.svelte"]);
-
 function svelteFiles(directory: string): string[] {
   return readdirSync(directory, { recursive: true, withFileTypes: true })
     .filter(
@@ -37,22 +34,10 @@ describe("component locale convention", () => {
   });
 
   it("never reads the ambient locale", () => {
-    const offenders = files.filter(
-      (file) =>
-        !AMBIENT_READ_ALLOWLIST.has(file) &&
-        /\bgetLocale\b/u.test(readFileSync(join(root, file), "utf8")),
+    const offenders = files.filter((file) =>
+      /\bgetLocale\b/u.test(readFileSync(join(root, file), "utf8")),
     );
     expect(offenders).toEqual([]);
-  });
-
-  it("keeps the allowlist free of converted files", () => {
-    const stale = [...AMBIENT_READ_ALLOWLIST].filter(
-      (file) => !/\bgetLocale\b/u.test(readFileSync(join(root, file), "utf8")),
-    );
-    expect(
-      stale,
-      "These files no longer read getLocale(); remove them from AMBIENT_READ_ALLOWLIST",
-    ).toEqual([]);
   });
 
   it("never defaults a locale prop", () => {

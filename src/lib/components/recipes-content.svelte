@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { SvelteSet } from "svelte/reactivity";
-
   import ExpandableSection from "#lib/components/expandable-section.svelte";
   import SpoilerGuardDialog from "#lib/components/spoiler-guard-dialog.svelte";
   import TrackerRowStack from "#lib/components/tracker-row-stack.svelte";
@@ -56,7 +54,8 @@
   let recipesByCategory = $derived.by(() => {
     const groups: { entries: RecipeEntry[]; id: string; name: string }[] = [];
     recordForEach(trackerData.almanac, ([catId, cat]) => {
-      const seen = new SvelteSet<string>();
+      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- Local deduplication is discarded within this derived calculation.
+      const seen = new Set<string>();
       const entries: RecipeEntry[] = [];
       for (const entry of cat.items) {
         const canonicalId = entry.itemIds[0];
@@ -144,6 +143,7 @@
   })}
   {#if namedEntries.length > 0}
     <ExpandableSection
+      {locale}
       count={scopedEntries.filter((e) => userState.state.completed.almanacRecipes.has(e.id)).length}
       forceOpen={!!nameFilter || toolbarState.sourceFilterActive}
       name={group.name}

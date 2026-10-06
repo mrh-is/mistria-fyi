@@ -309,6 +309,7 @@
             toolbarState.matchesSourceFilters(q.isCraving ? [] : questSources(questType, q.id)),
         )}
         <ExpandableSection
+          {locale}
           count={shownQuests.filter((q) =>
             q.isCraving ? q.isCompleted : getQuestState(q.id) === "completed",
           ).length}
