@@ -1,8 +1,8 @@
 <script lang="ts">
+  import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { trackerData, trackerIndex } from "#lib/data/index.js";
   import { isEntityNameVisible } from "#lib/engine/visibility.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { registerSourceFilters } from "#lib/utils/source-filter-registration.svelte.js";
 
   import AllCompleted from "./all-completed.svelte";
   import AnimalCosmeticsSection from "./animal-cosmetics-section.svelte";

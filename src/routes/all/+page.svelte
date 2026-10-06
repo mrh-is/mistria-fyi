@@ -2,11 +2,11 @@
   import AllCompleted from "#lib/components/all-completed.svelte";
   import { Icon } from "#lib/components/icon/index.js";
   import PageHeader from "#lib/components/page-header.svelte";
+  import { registerSourceFilters } from "#lib/controllers/source-filter-registration.svelte.js";
   import { CATEGORY_KEYS, sortCategoryKeysByName } from "#lib/data/categories.js";
   import { trackerIndex } from "#lib/data/index.js";
   import { getAllProgress, getOverallProgress } from "#lib/engine/progress.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
-  import { registerSourceFilters } from "#lib/utils/source-filter-registration.svelte.js";
 
   import AlmanacSection from "./almanac-section.svelte";
   import AnimalsSection from "./animals-section.svelte";

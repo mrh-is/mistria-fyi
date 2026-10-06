@@ -9,16 +9,16 @@
   import { extractDisplayBadges } from "#lib/engine/availability-condition.js";
   import { getFeedbackContextOrFallback } from "#lib/feedback/context.svelte.js";
   import * as m from "#lib/paraglide/messages.js";
+  import { buildSourceSegments } from "#lib/sources/source-segments.js";
   import { ROW_LEAVE_DELAY_MS, ROW_LEAVE_FADE_MS } from "#lib/utils/row-timing.js";
-  import { buildSourceSegments } from "#lib/utils/source-segments.js";
   import { page } from "$app/state";
 
   import type { SpriteSlotState } from "#lib/components/sprite-slot.svelte";
   import type { CheckboxState } from "#lib/components/tracker-checkbox.svelte";
   import type { DisplayBadges } from "#lib/engine/availability-condition.js";
   import type { FeedbackContext } from "#lib/feedback/context.svelte.js";
+  import type { SegmentLookups, SourceSegment } from "#lib/sources/source-segments.js";
   import type { Source } from "#lib/types/acquisition.js";
-  import type { SegmentLookups, SourceSegment } from "#lib/utils/source-segments.js";
 
   export type TrackerRowDisplay =
     | { dimmed?: boolean; mode: "visible" }
