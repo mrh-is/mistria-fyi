@@ -15,7 +15,7 @@
   import { recordKeys } from "#lib/utils.js";
   import { celebrateCategory } from "#lib/utils/celebrate.js";
   import { seasonLabel, seasonLabelAbbr } from "#lib/utils/format.js";
-  import { levelColor } from "#lib/utils/palette.js";
+  import { relationshipLevelColor } from "#lib/utils/palette.js";
   import { page } from "$app/state";
 
   import type {
@@ -209,7 +209,7 @@
           data-villager-mark
           data-villager-mark-filled={filled}
           data-villager-mark-kind={villager.dateable ? "dateable" : "platonic"}
-          style="--mark-color: {levelColor(index)}"
+          style="--mark-color: {relationshipLevelColor(index)}"
         >
           <Icon.ProgressMark
             type={villager.dateable ? "relationship_dateable" : "relationship_platonic"}

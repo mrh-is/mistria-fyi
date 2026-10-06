@@ -12,10 +12,10 @@ describe("confetti colors", () => {
     document.documentElement.removeAttribute("style");
   });
 
-  it("reads the burst palette from the --confetti-* tokens", () => {
+  it("reads the burst palette from the --color-confetti-* tokens", () => {
     for (let n = 1; n <= 7; n += 1) {
       document.documentElement.style.setProperty(
-        `--confetti-${n.toString()}`,
+        `--color-confetti-${n.toString()}`,
         `#00000${n.toString()}`,
       );
     }

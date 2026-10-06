@@ -4,10 +4,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   CONFETTI_COLOR_COUNT,
-  LEVEL_COLOR_COUNT,
-  levelColor,
-  RANK_COLOR_COUNT,
-  rankColor,
+  RELATIONSHIP_LEVEL_COLOR_COUNT,
+  relationshipLevelColor,
+  TOWN_RANK_COLOR_COUNT,
+  townRankColor,
 } from "#lib/utils/palette.js";
 
 const appCss = readFileSync(join(import.meta.dirname, "../../app.css"), "utf8");
@@ -22,25 +22,37 @@ function defined(name: string): boolean {
 
 describe("palette tokens", () => {
   it("defines every level, rank, & confetti token in app.css", () => {
-    for (let n = 1; n <= LEVEL_COLOR_COUNT; n += 1) expect(defined(`level-${n}`)).toBe(true);
-    for (let n = 1; n <= RANK_COLOR_COUNT; n += 1) expect(defined(`rank-${n}`)).toBe(true);
-    for (let n = 1; n <= CONFETTI_COLOR_COUNT; n += 1) expect(defined(`confetti-${n}`)).toBe(true);
+    for (let n = 1; n <= RELATIONSHIP_LEVEL_COLOR_COUNT; n += 1) {
+      expect(defined(`color-relationship-level-${n}`)).toBe(true);
+    }
+    for (let n = 1; n <= TOWN_RANK_COLOR_COUNT; n += 1) {
+      expect(defined(`color-town-rank-${n}`)).toBe(true);
+    }
+    for (let n = 1; n <= CONFETTI_COLOR_COUNT; n += 1) {
+      expect(defined(`color-confetti-${n}`)).toBe(true);
+    }
   });
 
   it("defines no token beyond the counts", () => {
-    expect(defined(`level-${(LEVEL_COLOR_COUNT + 1).toString()}`)).toBe(false);
-    expect(defined(`rank-${(RANK_COLOR_COUNT + 1).toString()}`)).toBe(false);
-    expect(defined(`confetti-${(CONFETTI_COLOR_COUNT + 1).toString()}`)).toBe(false);
+    expect(
+      defined(`color-relationship-level-${(RELATIONSHIP_LEVEL_COLOR_COUNT + 1).toString()}`),
+    ).toBe(false);
+    expect(defined(`color-town-rank-${(TOWN_RANK_COLOR_COUNT + 1).toString()}`)).toBe(false);
+    expect(defined(`color-confetti-${(CONFETTI_COLOR_COUNT + 1).toString()}`)).toBe(false);
   });
 
   it("maps zero-based indexes to one-based tokens", () => {
-    expect(levelColor(0)).toBe("var(--level-1)");
-    expect(rankColor(0)).toBe("var(--rank-1)");
-    expect(rankColor(RANK_COLOR_COUNT - 1)).toBe(`var(--rank-${RANK_COLOR_COUNT.toString()})`);
+    expect(relationshipLevelColor(0)).toBe("var(--color-relationship-level-1)");
+    expect(townRankColor(0)).toBe("var(--color-town-rank-1)");
+    expect(townRankColor(TOWN_RANK_COLOR_COUNT - 1)).toBe(
+      `var(--color-town-rank-${TOWN_RANK_COLOR_COUNT.toString()})`,
+    );
   });
 
   it("clamps a rank past the ladder to the last token", () => {
-    expect(rankColor(RANK_COLOR_COUNT + 5)).toBe(`var(--rank-${RANK_COLOR_COUNT.toString()})`);
+    expect(townRankColor(TOWN_RANK_COLOR_COUNT + 5)).toBe(
+      `var(--color-town-rank-${TOWN_RANK_COLOR_COUNT.toString()})`,
+    );
   });
 });
 
