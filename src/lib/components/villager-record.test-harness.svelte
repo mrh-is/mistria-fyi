@@ -7,14 +7,14 @@
   let {
     compact = false,
     id,
-    known = true,
     name,
+    spoilered = false,
     villager,
   }: {
     compact?: boolean;
     id: VillagerId;
-    known?: boolean;
     name: string;
+    spoilered?: boolean;
     villager: Villager;
   } = $props();
 
@@ -22,5 +22,5 @@
 </script>
 
 <ul>
-  <VillagerRecord {compact} {id} {known} {name} {villager} />
+  <VillagerRecord {compact} {id} {name} {spoilered} {villager} />
 </ul>

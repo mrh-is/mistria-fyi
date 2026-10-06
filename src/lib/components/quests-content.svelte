@@ -16,8 +16,8 @@
   import { isConditionVisible } from "#lib/engine/visibility.js";
   import * as m from "#lib/paraglide/messages.js";
   import { buildQuestSections } from "#lib/presentation/quest-sections.js";
-  import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
+  import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
@@ -32,15 +32,15 @@
 
   const spoilerGuard = createSpoilerGuard();
 
-  let redactedStoreIds = $derived(computeRedactedStoreIds(userState.progressionState));
+  let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));
 
-  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
+  let baseLookups = $derived(buildBaseSegmentLookups(spoileredStoreIds, locale));
 
   let sections = $derived(buildQuestSections(userState.state.completed, locale));
 
   /** A section's rows within the source filters, with their counter values. */
   interface SectionView {
-    categoryRevealed: boolean;
+    categorySpoilered: boolean;
     completedCount: number;
     scopedRows: QuestRow[];
     section: QuestSection;
@@ -53,7 +53,7 @@
         (row) => row.kind === "craving" || toolbarState.matchesSourceFilters(row.sources),
       );
       return {
-        categoryRevealed: isConditionVisible(
+        categorySpoilered: !isConditionVisible(
           trackerData.categoryVisibility[section.questType],
           userState.progressionState,
         ),
@@ -77,9 +77,9 @@
     return row.kind === "craving" ? row.completed : getQuestState(row.id) === "completed";
   }
 
-  function questRowDisplay(questState: QuestState, nameVisible: boolean): TrackerRowDisplay {
-    if (nameVisible && questState === "obtained") return { mode: "obtained" };
-    return trackerRowDisplay({ completed: questState === "completed", nameVisible });
+  function questRowDisplay(questState: QuestState, spoilered: boolean): TrackerRowDisplay {
+    if (!spoilered && questState === "obtained") return { mode: "obtained" };
+    return trackerRowDisplay({ completed: questState === "completed", spoilered });
   }
 
   function typeLabel(type: QuestType): string {
@@ -116,8 +116,8 @@
 
 <SpoilerGuardDialog guard={spoilerGuard} />
 
-{#each sectionViews as { categoryRevealed, completedCount, scopedRows, section, visibleRows } (section.questType)}
-  <SpoilerSection name={typeLabel(section.questType)} revealed={categoryRevealed}>
+{#each sectionViews as { categorySpoilered, completedCount, scopedRows, section, visibleRows } (section.questType)}
+  <SpoilerSection name={typeLabel(section.questType)} spoilered={categorySpoilered}>
     {#if visibleRows.length > 0}
       <ExpandableSection
         {locale}
@@ -131,7 +131,7 @@
           {#snippet row(row)}
             {#if row.kind === "craving"}
               <TrackerRow
-                display={questRowDisplay(row.completed ? "completed" : "none", !!row.villagerId)}
+                display={questRowDisplay(row.completed ? "completed" : "none", !row.villagerId)}
                 segmentLookups={baseLookups}
                 name={row.displayName}
                 reportCategory="craving-quest"
@@ -144,9 +144,9 @@
               />
             {:else}
               {@const questState = getQuestState(row.id)}
-              {@const nameVisible = isConditionVisible(row.visibility, userState.progressionState)}
+              {@const spoilered = !isConditionVisible(row.visibility, userState.progressionState)}
               <TrackerRow
-                display={questRowDisplay(questState, nameVisible)}
+                display={questRowDisplay(questState, spoilered)}
                 segmentLookups={{ ...baseLookups, entityVisibility: row.visibility }}
                 name={row.displayName}
                 reportCategory="quest"
@@ -154,7 +154,7 @@
                 sources={row.sources}
                 subtitle={row.subtitle}
                 onToggle={() => {
-                  if (nameVisible || questState !== "none") {
+                  if (!spoilered || questState !== "none") {
                     completeQuest(row.id, row.displayName, section);
                   } else {
                     spoilerGuard.requestGuardedAction(row.visibility, () => {

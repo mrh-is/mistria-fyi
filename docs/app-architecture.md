@@ -60,8 +60,8 @@ Owns all mutable application state via Svelte 5 runes (`$state`, `$derived`, `$e
 - Persists to `localStorage` under the key `mistria-fyi-v1` with a 300 ms debounce.
 - Exposes methods for toggling individual entries, importing/exporting JSON, merging save data, and
   resetting.
-- Enforces domain constraints at the mutation boundary (e.g., villager level caps, mine floor
-  bounds, renown clamping).
+- Enforces domain constraints at the mutation boundary (e.g., heart level caps, mine floor bounds,
+  renown clamping).
 
 ## 3. Persistence & Serialization
 
@@ -95,10 +95,10 @@ The app processes save files entirely client-side. No save data is uploaded.
    and non-text list entries are dropped individually. A quest listed as both completed and active
    imports as `completed`. It returns that state & its warnings; it doesn’t count anything.
 4. `mergeFromSave` unions the imported state into the current `userState.completed`, taking max
-   values for numeric fields (Villager levels, skill levels, renown, mine floor) and the more
-   advanced quest state (`none` → `obtained` → `completed`). Relationships & child choice merge as
-   one household through the pure `mergeHousehold` in `src/lib/engine/relationships.ts`, which
-   reports conflicts rather than guessing. The merge’s counts are the ones the import summary shows.
+   values for numeric fields (heart levels, skill levels, renown, mine floor) and the more advanced
+   quest state (`none` → `obtained` → `completed`). Relationships & child choice merge as one
+   household through the pure `mergeHousehold` in `src/lib/engine/relationships.ts`, which reports
+   conflicts rather than guessing. The merge’s counts are the ones the import summary shows.
 
 Numeric levels are normalized by `normalizeLevel` in `src/lib/engine/progress.ts` at extraction
 time, and `mergeFromSave` clamps them again before installing. Import stays additive, so an invalid
@@ -114,8 +114,8 @@ fact produces a warning rather than aborting the import:
 
 Renown is the exception: it clamps silently at every boundary, since nothing in ordinary play
 produces an out-of-domain value. Backup restore (`restoreBackup`) uses the same domain maximums but
-rejects the whole document when a mine floor, villager level, or skill level is out of domain;
-renown is clamped there too rather than rejected. See
+rejects the whole document when a mine floor, heart level, or skill level is out of domain; renown
+is clamped there too rather than rejected. See
 [Backup Restore vs Transfer](#backup-restore-vs-transfer).
 
 ### Backup Restore vs Transfer
@@ -181,6 +181,29 @@ Progress calculation and UI row visibility are separate concerns.
 - **Category completion** is `isCategoryComplete(key, ctx)`, which is the category's progress at
   100%. The header, the all-completed banner, & `celebrateCategory()` all read it; components don't
   re-derive completion. See the [decision record](decisions/2026-10-06-category-completion.md).
+
+## Domain glossary
+
+Three concepts had several names across modules. Each now has one term, used for identifiers,
+persisted keys, generated condition types, CSS hooks, & prose. See the
+[decision record](decisions/2026-10-06-canonical-domain-terms.md).
+
+- **Spoilered:** a name or section the player hasn't unlocked, hidden behind a cover until revealed
+  or unlocked by progress. Use `spoilered` (`isSpoilered`, `spoilered` props, `spoileredStoreIds`);
+  its opposite is `unspoilered`. "Reveal" stays as the user action (`onReveal`), & "hidden" stays
+  for unrelated senses such as the DOM `hidden` attribute & completed rows filtered out. The
+  `villagerKnown` condition names the discovery fact that drives a villager's spoilering, so it
+  keeps its name.
+- **Mine floor:** the deepest mine floor the player has reached. Use `mineFloor` / `MineFloor`: the
+  persisted key `completed.mineFloor`, the `mineFloor` condition type in `tracker-data.json`, & the
+  `setMineFloor` setter. The game's own `maximum_mines_level` & `reached_mines_level` keys keep the
+  game's name.
+- **Heart level:** a villager's relationship level (zero through `MAX_HEART_LEVEL`). Villagers don't
+  level up; the relationship does. Use `heartLevel` / `heartLevels`: the persisted key
+  `completed.heartLevels`, `MAX_HEART_LEVEL`, & `setHeartLevel`.
+
+Player spells are their own persisted field, `completed.spells`: they're attached to the player &
+usable anywhere, though unlocked through mine progression.
 
 ## 6. Response Headers
 

@@ -3,7 +3,7 @@
   "app_name": "Mistria Field Guide",
   "og_share_tagline": "Track every collection, quest, skill & more",
   "og_share_description": "All of Mistria in one place",
-  "source_hidden": "Hidden",
+  "source_spoilered": "Hidden",
   "app_update_available": "The Mistria Field Guide has been updated! Refresh to get the newest version.",
   "app_update_later": "Not now",
   "app_update_refresh": "Refresh",
@@ -150,8 +150,8 @@
   "season_fall_abbr": "FAL",
   "season_winter_abbr": "WIN",
   "villager_birthday_aria": "Birthday: {season} {day}",
-  "villager_birthday_hidden": "Birthday hidden",
-  "villager_hidden_name": "Hidden villager",
+  "villager_birthday_spoilered": "Birthday hidden",
+  "villager_spoilered_name": "Hidden villager",
   "villager_relationship_level_aria": "{name} relationship level, {level} of {max}",
   "villager_decrease_hearts": "Decrease {name} hearts",
   "villager_increase_hearts": "Increase {name} hearts",
@@ -179,7 +179,7 @@
   "rank_state_completed": "Completed",
   "rank_state_current": "Current",
   "rank_state_upcoming": "Upcoming",
-  "villager_hidden_name_lower": "hidden villager",
+  "villager_spoilered_name_lower": "hidden villager",
   "villagers_jump_to_initial_aria": "Jump to {initial}, first villager record",
   "cosmetic_slot_head_gear": "Head Gear",
   "cosmetic_slot_face_gear": "Face Gear",
@@ -496,7 +496,7 @@
       }
     }
   ],
-  "merge_label_villager_levels": [
+  "merge_label_heart_levels": [
     {
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],

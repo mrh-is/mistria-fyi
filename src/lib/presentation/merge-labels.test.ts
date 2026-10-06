@@ -18,6 +18,7 @@ function zeroCounts(): MergeCounts {
     cosmetics: 0,
     dates: 0,
     hasUpperFloor: 0,
+    heartLevels: 0,
     mineFloor: 0,
     museum: 0,
     perks: 0,
@@ -28,7 +29,6 @@ function zeroCounts(): MergeCounts {
     renown: 0,
     skillLevels: 0,
     spells: 0,
-    villagerLevels: 0,
     villagerRelationships: 0,
   };
 }

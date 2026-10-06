@@ -27,7 +27,7 @@ describe("VillagerRecord", () => {
   });
 
   it("renders a known dateable Villager as one compact, accessible record", () => {
-    userState.setVillagerLevel(adelineId, 8);
+    userState.setHeartLevel(adelineId, 8);
     const view = render(VillagerRecordHarness, {
       id: adelineId,
       name: "Adeline",
@@ -74,11 +74,11 @@ describe("VillagerRecord", () => {
   });
 
   it("keeps an unmet Villager in place without exposing identity or stored progress", async () => {
-    userState.setVillagerLevel(adelineId, 6);
+    userState.setHeartLevel(adelineId, 6);
     const view = render(VillagerRecordHarness, {
       id: adelineId,
-      known: false,
       name: "Adeline",
+      spoilered: true,
       villager: adeline,
     });
 
@@ -116,7 +116,7 @@ describe("VillagerRecord", () => {
   });
 
   it("advances through only the next relationship decisions and preserves focus", async () => {
-    userState.setVillagerLevel(adelineId, 10);
+    userState.setHeartLevel(adelineId, 10);
     userState.setVillagerRelationship(adelineId, "romantic");
     const view = render(VillagerRecordHarness, {
       id: adelineId,
@@ -157,7 +157,7 @@ describe("VillagerRecord", () => {
       view.getByRole("group", { name: "Adeline relationship level, 1 of 12" }),
     ).toBeInTheDocument();
 
-    userState.setVillagerLevel(adelineId, 12);
+    userState.setHeartLevel(adelineId, 12);
     await waitFor(() => {
       expect(increment).toBeDisabled();
     });

@@ -92,7 +92,7 @@
     for (const tier of animal.variantTiers.toReversed()) {
       wasThisVariantLastTier = foundThisVariant;
       for (const vid of Object.keys(tier)) {
-        // If we find a completed one, this tier is unredacted
+        // If we find a completed one, this tier is unspoilered
         if (completedVariants?.has(vid as AnimalVariantId)) return false;
         // If we find this variant, set a flag, and only check one more tier down
         if (vid === variantId) foundThisVariant = true;
@@ -125,9 +125,9 @@
           completed,
           id: vid,
           name: getName("animals", animalNameId(animalId, "variants", vid), locale),
-          redacted: isVariantSpoilered(animalId, vid),
           season: getVariantSeason(variant),
           sources: [variant.source],
+          spoilered: isVariantSpoilered(animalId, vid),
           subtitle:
             totalTiers > 1 ? getName("ui", `tier_${(tier + 1).toString()}`, locale) : undefined,
           tier,

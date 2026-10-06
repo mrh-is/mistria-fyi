@@ -9,7 +9,7 @@ export type VisibilityCondition =
   | { type: "heartLevel"; level: number; villagerId: VillagerId }
   | { type: "isDating" }
   | { type: "married"; villagerId: VillagerId }
-  | { type: "minesLevel"; floor: number }
+  | { type: "mineFloor"; floor: number }
   | { type: "or"; conditions: [VisibilityCondition, ...VisibilityCondition[]] }
   | { type: "perkUnlocked"; perkId: PerkId }
   | { type: "questAvailable"; questId: QuestId }
