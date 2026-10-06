@@ -45,7 +45,7 @@ export interface CravingQuestRow {
   /** The pregnancy quest the row toggles; absent before marriage, when the row is inert. */
   questId?: QuestId;
   subtitle?: string;
-  villager?: VillagerId;
+  villagerId?: VillagerId;
 }
 
 export type QuestRow = CravingQuestRow | QuestEntryRow;
@@ -139,12 +139,12 @@ function cravingRow(
       kind: "craving",
       questId: craving.questId,
       subtitle:
-        craving.questId && craving.villager
-          ? getName("villagers", craving.villager, locale)
+        craving.questId && craving.villagerId
+          ? getName("villagers", craving.villagerId, locale)
           : undefined,
-      villager: craving.villager,
+      villagerId: craving.villagerId,
     },
-    villager: craving.villager,
+    villager: craving.villagerId,
   };
 }
 

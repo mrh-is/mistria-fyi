@@ -5,7 +5,7 @@
   import VillagerSearchResult from "#lib/components/villager-search-result.svelte";
   import { categoryNameForKey } from "#lib/data/categories.js";
   import { trackerData } from "#lib/data/index.js";
-  import { hasNames, loadNames, LOCALIZED_CATEGORIES } from "#lib/data/names.js";
+  import { hasNames, loadNames, NAME_CHUNKS } from "#lib/data/names.js";
   import { showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
   import { searchItems } from "#lib/engine/search.js";
   import * as m from "#lib/paraglide/messages.js";
@@ -49,7 +49,7 @@
   let namesReady = $derived(namesLocale === locale);
 
   function hasSearchNames(searchLocale: LocaleCode): boolean {
-    return hasNames(searchLocale, LOCALIZED_CATEGORIES) && hasNames("en", LOCALIZED_CATEGORIES);
+    return hasNames(searchLocale, NAME_CHUNKS) && hasNames("en", NAME_CHUNKS);
   }
 
   function retryNames(): void {
@@ -69,10 +69,7 @@
     let cancelled = false;
     void (async () => {
       try {
-        await Promise.all([
-          loadNames(targetLocale, LOCALIZED_CATEGORIES),
-          loadNames("en", LOCALIZED_CATEGORIES),
-        ]);
+        await Promise.all([loadNames(targetLocale, NAME_CHUNKS), loadNames("en", NAME_CHUNKS)]);
       } catch {
         if (!cancelled) namesError = true;
         return;

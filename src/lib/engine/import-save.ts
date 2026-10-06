@@ -1,4 +1,4 @@
-import { canonicalAlmanacId, trackerData } from "#lib/data/index.js";
+import { trackerData, trackerIndex } from "#lib/data/index.js";
 import { SEASON_ORDER, seasonFromOrdinal } from "#lib/engine/domain-primitives.js";
 import {
   getMaxMineFloor,
@@ -105,7 +105,7 @@ export function buildImportState(bundle: SaveBundle): {
   ]);
 
   for (const id of allPlayerItems) {
-    const canonical = canonicalAlmanacId.get(id as ItemId);
+    const canonical = trackerIndex.memberToCanonicalAlmanacId.get(id as ItemId);
     if (canonical) {
       almanacIds.add(canonical);
     }

@@ -1,5 +1,5 @@
 import { deLocalizeHref, localizeHref, setLocale } from "#lib/paraglide/runtime.js";
-import { downloadLocale } from "#lib/pwa/offline-locales.js";
+import { ensureLocaleCachedOffline } from "#lib/pwa/offline-locales.js";
 import { goto } from "$app/navigation";
 import { page } from "$app/state";
 
@@ -20,7 +20,7 @@ export const localePreference = {
    * offline cache to check, and the switch goes ahead.
    */
   async select(locale: LocaleCode): Promise<boolean> {
-    if ((await downloadLocale(locale)) === false) return false;
+    if ((await ensureLocaleCachedOffline(locale)) === false) return false;
     void setLocale(locale, { reload: false });
     // The target is the page already being displayed, re-localized from the router's own path.
     void goto(localizeHref(deLocalizeHref(page.url.pathname), { locale }));

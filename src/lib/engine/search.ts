@@ -6,7 +6,7 @@ import { PREGNANCY_QUEST_IDS } from "#lib/engine/craving-quest.js";
 import { isVillagerComplete } from "#lib/engine/progress.js";
 import { isVisible } from "#lib/engine/visibility.js";
 import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
-import { composeInfusion } from "#lib/utils/format.js";
+import { composeDescriptorName } from "#lib/utils/format.js";
 import { foldName } from "#lib/utils/name-match.js";
 import { recordEntries } from "#lib/utils/record.js";
 
@@ -161,9 +161,9 @@ const SEARCH_SOURCES: readonly SearchSource[] = [
         const nameId = animalNameId(animalId, "cosmetics", cosmeticId);
         const coreId = animalNameId(animalId, "core");
         const name = getName("animals", nameId, locale);
-        const fullName = composeInfusion(getName("animals", coreId, locale), name, locale);
+        const fullName = composeDescriptorName(getName("animals", coreId, locale), name, locale);
         yield {
-          englishName: composeInfusion(
+          englishName: composeDescriptorName(
             getName("animals", coreId, "en"),
             getName("animals", nameId, "en"),
             "en",

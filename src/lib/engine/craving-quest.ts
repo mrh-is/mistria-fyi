@@ -17,7 +17,7 @@ export interface CravingQuest {
   completed: boolean;
   /** The spouse's pregnancy quest; absent before marriage or when the spouse has none. */
   questId?: QuestId;
-  villager?: VillagerId;
+  villagerId?: VillagerId;
 }
 
 /** Every Villager's pregnancy quest. They surface only through the craving quest, never alone. */
@@ -26,17 +26,17 @@ export const PREGNANCY_QUEST_IDS: ReadonlySet<QuestId> = new Set(
 );
 
 export function getCravingQuest(completed: DeepReadonly<CompletedState>): CravingQuest {
-  const villager = getMarriedVillager(completed.villagerRelationships) ?? undefined;
-  if (!villager) return { applicable: true, completed: false, questId: undefined, villager };
+  const villagerId = getMarriedVillager(completed.villagerRelationships) ?? undefined;
+  if (!villagerId) return { applicable: true, completed: false, questId: undefined, villagerId };
 
-  const questId = trackerData.pregnancyQuestByVillager[villager];
+  const questId = trackerData.pregnancyQuestByVillager[villagerId];
   if (!questId || completed.childChoice === "no") {
-    return { applicable: false, completed: false, questId, villager };
+    return { applicable: false, completed: false, questId, villagerId };
   }
   return {
     applicable: true,
     completed: completed.questStates[questId] === "completed",
     questId,
-    villager,
+    villagerId,
   };
 }
