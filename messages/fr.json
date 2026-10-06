@@ -129,6 +129,7 @@
   "all_completed_message": "Tout est fait ! Activez « Afficher terminés » pour vérifier.",
   "quest_type_fetch": "Quêtes de livraison",
   "quest_craving_name": "Une envie",
+  "quest_subtitle_with_recipe": "{villager} · {recipe}",
   "skills_ledger_aria": "Registre des compétences",
   "skill_level_label": "Niveau de {name}",
   "skill_decrease_level": "Diminuer le niveau de {name}",

@@ -7,6 +7,7 @@ import { isVillagerComplete } from "#lib/engine/progress.js";
 import { isVisible } from "#lib/engine/visibility.js";
 import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { composeInfusion } from "#lib/utils/format.js";
+import { foldName } from "#lib/utils/name-match.js";
 import { recordEntries } from "#lib/utils/record.js";
 
 import type { SearchCategoryKey } from "#lib/data/categories.js";
@@ -285,7 +286,8 @@ export function searchItems(
   progressionState: UserProgressionState,
   locale: LocaleCode,
 ): SearchResult[] {
-  const q = query.trim().toLowerCase();
+  const q = foldName(query.trim(), locale);
+  const englishQ = foldName(query.trim(), "en");
   if (!q) return [];
 
   const context: SearchContext = { completed, locale, progressionState, worldState };
@@ -293,8 +295,8 @@ export function searchItems(
   for (const source of SEARCH_SOURCES) {
     for (const candidate of source(context)) {
       if (
-        candidate.localizedName.toLowerCase().includes(q) ||
-        candidate.englishName.toLowerCase().includes(q)
+        foldName(candidate.localizedName, locale).includes(q) ||
+        foldName(candidate.englishName, "en").includes(englishQ)
       ) {
         results.push(candidate.result());
       }
@@ -304,16 +306,25 @@ export function searchItems(
   return rankResults(results, q, locale).slice(0, MAX_RESULTS);
 }
 
-/** Prefix matches first, then available before unavailable, then alphabetical */
-function rankResults(results: SearchResult[], query: string, locale: LocaleCode): SearchResult[] {
+/**
+ * Prefix matches first, then available before unavailable, then alphabetical. `foldedQuery` is
+ * already folded per `foldName`.
+ */
+function rankResults(
+  results: SearchResult[],
+  foldedQuery: string,
+  locale: LocaleCode,
+): SearchResult[] {
   const collator = nameCollator(locale);
-  return results.toSorted((a, b) => {
-    const aName = (a.fullName ?? a.name).toLowerCase();
-    const bName = (b.fullName ?? b.name).toLowerCase();
-    const aPrefix = aName.startsWith(query) ? 0 : 1;
-    const bPrefix = bName.startsWith(query) ? 0 : 1;
-    if (aPrefix !== bPrefix) return aPrefix - bPrefix;
-    if (a.available !== b.available) return a.available ? -1 : 1;
-    return collator.compare(aName, bName);
+  const ranked = results.map((result) => {
+    const name = result.fullName ?? result.name;
+    return { name, prefix: foldName(name, locale).startsWith(foldedQuery), result };
   });
+  return ranked
+    .toSorted((a, b) => {
+      if (a.prefix !== b.prefix) return a.prefix ? -1 : 1;
+      if (a.result.available !== b.result.available) return a.result.available ? -1 : 1;
+      return collator.compare(a.name, b.name);
+    })
+    .map(({ result }) => result);
 }

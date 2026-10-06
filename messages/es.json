@@ -129,6 +129,7 @@
   "all_completed_message": "¡Todo listo! Activa «Mostrar completados» para revisar.",
   "quest_type_fetch": "Misiones de recadero",
   "quest_craving_name": "Un antojo",
+  "quest_subtitle_with_recipe": "{villager} · {recipe}",
   "skills_ledger_aria": "Registro de habilidades",
   "skill_level_label": "Nivel de {name}",
   "skill_decrease_level": "Reducir nivel de {name}",

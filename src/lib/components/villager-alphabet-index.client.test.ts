@@ -4,10 +4,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import VillagerAlphabetIndexHarness from "#lib/components/villager-alphabet-index.test-harness.svelte";
 
 const entries = [
-  { id: "villager-balor", initial: "B" },
-  { id: "villager-adeline", initial: "A" },
-  { id: "villager-aria", initial: "A" },
-  { id: "villager-zara", initial: "Z" },
+  { id: "villager-balor", name: "Balor" },
+  { id: "villager-adeline", name: "Adeline" },
+  { id: "villager-aria", name: "Aria" },
+  { id: "villager-zara", name: "Zara" },
 ];
 
 describe("VillagerAlphabetIndex", () => {
@@ -30,6 +30,24 @@ describe("VillagerAlphabetIndex", () => {
 
     expect(document.activeElement).toBe(view.container.querySelector("#villager-adeline"));
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "center" });
+  });
+
+  it("merges initials the locale collates as one letter and orders them by collation", () => {
+    const view = render(VillagerAlphabetIndexHarness, {
+      entries: [
+        { id: "villager-elsie", name: "Elsie" },
+        { id: "villager-eloise", name: "éloïse" },
+        { id: "villager-zoe", name: "Zoé" },
+        { id: "villager-dell", name: "Dell" },
+      ],
+      locale: "fr",
+    });
+
+    expect(view.getAllByRole("button").map((button) => button.textContent)).toEqual([
+      "D",
+      "E",
+      "Z",
+    ]);
   });
 
   it("uses immediate scrolling under reduced motion", async () => {

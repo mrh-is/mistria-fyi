@@ -17,6 +17,7 @@
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
+  import { matchesName } from "#lib/utils/name-match.js";
   import { recordEntries, recordValues } from "#lib/utils/record.js";
   import { trackerRowDisplay } from "#lib/utils/row-display.js";
 
@@ -129,7 +130,7 @@
   function matchesFilter(itemId: ItemId): boolean {
     if (!nameFilter) return true;
     if (!itemNameVisible(itemId)) return false;
-    return getName("items", itemId, locale).toLowerCase().includes(nameFilter.toLowerCase());
+    return matchesName(getName("items", itemId, locale), nameFilter, locale);
   }
 
   function setConfig(wingId: MuseumWingId, setId: MuseumWingSetId, set: MuseumWingSet): SetConfig {

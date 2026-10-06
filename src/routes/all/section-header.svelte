@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Icon } from "#lib/components/icon/index.js";
   import { categoryForKey } from "#lib/data/categories.js";
+  import { formatNumber } from "#lib/utils/format.js";
   import { page } from "$app/state";
 
   import type { CategoryKey } from "#lib/data/categories.js";
@@ -23,5 +24,10 @@
 >
   <Icon.Category category={key} class="size-4 text-(--header-color)" />
   <h2 id="category-{key}" class="flex-1 text-sm font-semibold tracking-wide">{name}</h2>
-  <span class="text-sm text-muted-foreground">{progress.completed}/{progress.total}</span>
+  <span class="text-sm text-muted-foreground"
+    >{formatNumber(progress.completed, page.data.locale)}/{formatNumber(
+      progress.total,
+      page.data.locale,
+    )}</span
+  >
 </div>
