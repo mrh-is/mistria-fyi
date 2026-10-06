@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { parseFiddle } from "../parse-fiddle.js";
+import { makeFiddle } from "../test-helpers.js";
 import { extractAlmanac, readAlmanacCategories } from "./almanac.js";
 
 import type { AlmanacCategoryId, AlmanacEntry } from "#lib/types/tracker-data.js";
@@ -347,3 +348,7 @@ function createAssetsFixture(files: Record<string, string>): string {
 
   return assetsDir;
 }
+
+it("rejects an empty almanac instead of emitting empty registries", () => {
+  expect(() => extractAlmanac(makeFiddle({ items: {} }), "assets")).toThrow(/empty-almanac/);
+});

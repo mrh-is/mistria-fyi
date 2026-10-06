@@ -1,5 +1,6 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
+import { PipelineDiagnostics } from "../diagnostics.js";
 import { buildQuestTypeIndex, forEachItem, forEachQuest } from "../extractor-helpers.js";
 import { buildRequirementDefinitions, parseRequirements } from "../requirements.js";
 import { resolveToVisibility } from "./visibility/requirement-resolver.js";
@@ -76,12 +77,14 @@ export function deriveRecipeLocaleNames(
 export function extractRecipes(
   fiddle: ParsedGameData,
   cutsceneMap: CutsceneQuestMap = {},
+  sharedDiagnostics?: PipelineDiagnostics,
 ): {
   recipeIdByItemId: Map<string, RecipeId>;
   recipeMemberItems: Map<RecipeId, ItemId[]>;
   recipeNameSources: Record<RecipeId, RecipeNameSource>;
   recipes: Record<RecipeId, Recipe>;
 } {
+  const diagnostics = sharedDiagnostics ?? new PipelineDiagnostics();
   const definitions = buildRequirementDefinitions(
     (fiddle.requirements as Record<string, unknown> | undefined) ?? {},
   );
@@ -98,7 +101,7 @@ export function extractRecipes(
     grouped.set(entry.recipeId, group);
   }
 
-  validateRecipeIdCollisions(itemIdToRecipeId, grouped);
+  validateRecipeIdCollisions(itemIdToRecipeId, grouped, diagnostics);
 
   const knownRecipeIds = new Set(grouped.keys());
   const allSources = new Map<string, AcquisitionSource[]>();
@@ -111,16 +114,22 @@ export function extractRecipes(
     }
   }
 
-  mergeSources(collectQuestScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds));
-  mergeSources(collectLetterScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds));
+  mergeSources(collectQuestScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds, diagnostics));
+  mergeSources(collectLetterScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds, diagnostics));
   mergeSources(
-    collectStoreScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds, stockVisibilityContext),
+    collectStoreScrollSources(
+      fiddle,
+      itemIdToRecipeId,
+      knownRecipeIds,
+      stockVisibilityContext,
+      diagnostics,
+    ),
   );
-  mergeSources(collectMuseumScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds));
-  mergeSources(collectChickenStatueSources(fiddle, itemIdToRecipeId, knownRecipeIds));
-  mergeSources(collectFishingChestSources(fiddle, itemIdToRecipeId, knownRecipeIds));
-  mergeSources(collectWishingWellSources(fiddle, itemIdToRecipeId, knownRecipeIds));
-  mergeSources(collectFestivalScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds));
+  mergeSources(collectMuseumScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds, diagnostics));
+  mergeSources(collectChickenStatueSources(fiddle, itemIdToRecipeId, knownRecipeIds, diagnostics));
+  mergeSources(collectFishingChestSources(fiddle, itemIdToRecipeId, knownRecipeIds, diagnostics));
+  mergeSources(collectWishingWellSources(fiddle, itemIdToRecipeId, knownRecipeIds, diagnostics));
+  mergeSources(collectFestivalScrollSources(fiddle, itemIdToRecipeId, knownRecipeIds, diagnostics));
   mergeSources(collectMinesRecipeSources(fiddle, itemIdToRecipeId));
   mergeSources(collectScrollBundleSources(fiddle, itemIdToRecipeId, stockVisibilityContext));
   mergeSources(collectPerkSources(fiddle, itemIdToRecipeId));
@@ -142,9 +151,12 @@ export function extractRecipes(
     const allDefault = defaultFlags.every(Boolean);
     const anyDefault = defaultFlags.some(Boolean);
     if (anyDefault && !allDefault) {
-      console.warn(
-        `  Warning: recipe "${recipeId}" has mixed recipe_is_default flags — treating as not default`,
-      );
+      diagnostics.add({
+        fieldPath: `recipes.${recipeId}.recipe_is_default`,
+        kind: "mixed-recipe-default",
+        message: `recipe "${recipeId}" has mixed recipe_is_default flags`,
+        targetId: recipeId,
+      });
     }
 
     const nameSource = deriveRecipeNameSource(recipeId, group);
@@ -182,6 +194,7 @@ export function extractRecipes(
     `  Recipes: ${totalRecipes} total, ${withDefault} default, ${withSources} with acquired sources (${countParts.join(", ")})`,
   );
 
+  if (!sharedDiagnostics) diagnostics.validate();
   return { recipeIdByItemId, recipeMemberItems, recipeNameSources, recipes };
 }
 
@@ -217,6 +230,7 @@ function collectChickenStatueSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
   knownRecipeIds: Set<string>,
+  diagnostics: PipelineDiagnostics,
 ): Map<string, AcquisitionSource[]> {
   const chickenStatue = fiddle.chicken_statue as Record<string, unknown> | undefined;
   if (!chickenStatue) return new Map();
@@ -250,6 +264,7 @@ function collectChickenStatueSources(
         itemIdToRecipeId,
         knownRecipeIds,
         "chicken_statue",
+        diagnostics,
       );
       if (!recipeId) continue;
 
@@ -288,6 +303,7 @@ function collectFestivalScrollSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
   knownRecipeIds: Set<string>,
+  diagnostics: PipelineDiagnostics,
 ): Map<string, AcquisitionSource[]> {
   const festivals = fiddle.festivals as Record<string, Record<string, unknown>> | undefined;
   if (!festivals) return new Map();
@@ -318,6 +334,7 @@ function collectFestivalScrollSources(
           itemIdToRecipeId,
           knownRecipeIds,
           `festivals/${festivalId}/${vendorStoreId}`,
+          diagnostics,
         );
         if (!recipeId) continue;
 
@@ -339,6 +356,7 @@ function collectFishingChestSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
   knownRecipeIds: Set<string>,
+  diagnostics: PipelineDiagnostics,
 ): Map<string, AcquisitionSource[]> {
   const fishing = fiddle.fishing as Record<string, unknown> | undefined;
   if (!fishing) return new Map();
@@ -366,6 +384,7 @@ function collectFishingChestSources(
         itemIdToRecipeId,
         knownRecipeIds,
         `fishing/chest_tables/${chestTier}`,
+        diagnostics,
       );
       if (!recipeId) continue;
 
@@ -412,6 +431,7 @@ function collectLetterScrollSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
   knownRecipeIds: Set<string>,
+  diagnostics: PipelineDiagnostics,
 ): Map<string, AcquisitionSource[]> {
   const letters = fiddle.letters as Record<string, Record<string, unknown>> | undefined;
   if (!letters) return new Map();
@@ -438,6 +458,7 @@ function collectLetterScrollSources(
         itemIdToRecipeId,
         knownRecipeIds,
         `letters/${letterId}`,
+        diagnostics,
       );
       if (!recipeId) continue;
 
@@ -475,18 +496,24 @@ function collectLetterScrollSources(
           if (triggerDate) {
             sources.push({ type: "reach_day", triggerDate });
           } else {
-            console.warn(
-              `  Warning: letter "${letterId}" has reached_date but couldn't parse date — skipping`,
-            );
+            diagnostics.add({
+              fieldPath: `letters.${letterId}.requirements.reached_date`,
+              kind: "unparseable-reached-date",
+              message: `letter "${letterId}" has reached_date but couldn’t parse date`,
+              targetId: letterId,
+            });
           }
           result.set(recipeId, sources);
           continue;
         }
       }
 
-      console.warn(
-        `  Warning: letter "${letterId}" has recipe_scroll but no recognized requirement trigger — skipping`,
-      );
+      diagnostics.add({
+        fieldPath: `letters.${letterId}.requirements`,
+        kind: "letter-without-trigger",
+        message: `letter "${letterId}" has recipe_scroll but no recognized requirement trigger`,
+        targetId: letterId,
+      });
       result.set(recipeId, sources);
     }
   }
@@ -554,6 +581,7 @@ function collectMuseumScrollSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
   knownRecipeIds: Set<string>,
+  diagnostics: PipelineDiagnostics,
 ): Map<string, AcquisitionSource[]> {
   const museumWings = fiddle.museum_wings as Record<string, Record<string, unknown>> | undefined;
   if (!museumWings) return new Map();
@@ -585,6 +613,7 @@ function collectMuseumScrollSources(
           itemIdToRecipeId,
           knownRecipeIds,
           `museum_wings/${wingId}`,
+          diagnostics,
         );
         if (!recipeId) continue;
 
@@ -633,6 +662,7 @@ function collectQuestScrollSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
   knownRecipeIds: Set<string>,
+  diagnostics: PipelineDiagnostics,
 ): Map<string, AcquisitionSource[]> {
   const result = new Map<string, AcquisitionSource[]>();
   const questTypeIndex = buildQuestTypeIndex(fiddle);
@@ -656,6 +686,7 @@ function collectQuestScrollSources(
         itemIdToRecipeId,
         knownRecipeIds,
         `${nativeQuestGroup}/${questId}`,
+        diagnostics,
       );
       if (!recipeId) continue;
 
@@ -831,6 +862,7 @@ function collectStoreScrollSources(
   itemIdToRecipeId: Map<string, string>,
   knownRecipeIds: Set<string>,
   ctx: StockVisibilityContext,
+  diagnostics: PipelineDiagnostics,
 ): Map<string, AcquisitionSource[]> {
   const stores = fiddle.stores as Record<string, Record<string, unknown>> | undefined;
   if (!stores) return new Map();
@@ -875,6 +907,7 @@ function collectStoreScrollSources(
               itemIdToRecipeId,
               knownRecipeIds,
               `stores/${storeId}`,
+              diagnostics,
             );
           } else if (obj.include_recipe === true) {
             recipeId = itemIdToRecipeId.get(obj.item as string);
@@ -911,6 +944,7 @@ function collectWishingWellSources(
   fiddle: ParsedGameData,
   itemIdToRecipeId: Map<string, string>,
   knownRecipeIds: Set<string>,
+  diagnostics: PipelineDiagnostics,
 ): Map<string, AcquisitionSource[]> {
   const wishingWell = fiddle.wishing_well as Record<string, unknown> | undefined;
   if (!wishingWell) return new Map();
@@ -944,6 +978,7 @@ function collectWishingWellSources(
         itemIdToRecipeId,
         knownRecipeIds,
         "wishing_well",
+        diagnostics,
       );
       if (!recipeId) continue;
 
@@ -1044,11 +1079,17 @@ function resolveScrollTarget(
   itemIdToRecipeId: Map<string, string>,
   knownRecipeIds: Set<string>,
   context: string,
+  diagnostics: PipelineDiagnostics,
 ): string | undefined {
   const recipeId = itemIdToRecipeId.get(scrollTarget);
   if (recipeId) return recipeId;
   if (knownRecipeIds.has(scrollTarget)) return scrollTarget;
-  console.warn(`  Warning: scroll target "${scrollTarget}" in ${context} has no matching item`);
+  diagnostics.add({
+    fieldPath: context,
+    kind: "unresolved-scroll-target",
+    message: `scroll target "${scrollTarget}" in ${context} has no matching item`,
+    targetId: scrollTarget,
+  });
   return undefined;
 }
 
@@ -1075,13 +1116,17 @@ function sourceKey(s: AcquisitionSource): string {
 function validateRecipeIdCollisions(
   itemIdToRecipeId: Map<string, string>,
   grouped: Map<string, RawRecipeEntry[]>,
+  diagnostics: PipelineDiagnostics,
 ): void {
   for (const [itemId, recipeId] of itemIdToRecipeId) {
     if (itemId === recipeId) continue;
     if (grouped.has(itemId) && itemId !== recipeId) {
-      console.warn(
-        `  Warning: item ID "${itemId}" is also a recipe key for a different group — potential collision`,
-      );
+      diagnostics.add({
+        fieldPath: `recipes.${itemId}`,
+        kind: "recipe-id-collision",
+        message: `item ID "${itemId}" is also a recipe key for a different group`,
+        targetId: itemId,
+      });
     }
   }
 }
