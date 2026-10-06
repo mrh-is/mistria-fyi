@@ -6,6 +6,7 @@ import { isVillagerComplete } from "./progress.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { Villager, VillagerId } from "#lib/types/tracker-data.js";
 import type { CompletedState } from "#lib/types/user-progress.js";
+import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 export interface VillagerRosterEntry extends Villager {
   id: VillagerId;
@@ -24,7 +25,7 @@ export function buildVillagerRoster(locale: LocaleCode): VillagerRosterEntry[] {
 
 export function filterVillagerRoster(
   roster: VillagerRosterEntry[],
-  completed: CompletedState,
+  completed: DeepReadonly<CompletedState>,
   showCompleted: boolean,
   targetedId: string,
 ): VillagerRosterEntry[] {

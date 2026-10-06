@@ -4,8 +4,9 @@ import { getMarriedVillager } from "#lib/engine/relationships.js";
 import type { Source } from "#lib/types/acquisition.js";
 import type { ItemId, VillagerId, VillagerRelationship } from "#lib/types/tracker-data.js";
 import type { CompletedState } from "#lib/types/user-progress.js";
+import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
-export function isItemApplicable(itemId: ItemId, completed: CompletedState): boolean {
+export function isItemApplicable(itemId: ItemId, completed: DeepReadonly<CompletedState>): boolean {
   if (completed.almanac.has(itemId) || completed.museum.has(itemId)) return true;
 
   const item = trackerData.items[itemId];
@@ -21,7 +22,10 @@ export function isItemApplicable(itemId: ItemId, completed: CompletedState): boo
   );
 }
 
-export function isItemApplicableForAlmanac(itemIds: ItemId[], completed: CompletedState): boolean {
+export function isItemApplicableForAlmanac(
+  itemIds: ItemId[],
+  completed: DeepReadonly<CompletedState>,
+): boolean {
   if (itemIds.some((id) => completed.almanac.has(id))) return true;
 
   return itemIds.some((id) => isItemApplicable(id, completed));

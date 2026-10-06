@@ -12,6 +12,7 @@ import type { UserProgressionState } from "#lib/engine/visibility.js";
 import type { LocaleCode } from "#lib/types/locale.js";
 import type { ItemId, QuestId, Season, Weather } from "#lib/types/tracker-data.js";
 import type { CompletedState } from "#lib/types/user-progress.js";
+import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -31,7 +32,7 @@ const MAX_RESULTS = 50;
 
 export function searchItems(
   query: string,
-  completed: CompletedState,
+  completed: DeepReadonly<CompletedState>,
   worldState: { season: Season; weather: Weather },
   progressionState: UserProgressionState,
   locale: LocaleCode,
