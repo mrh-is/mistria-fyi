@@ -275,7 +275,7 @@
             reportEntityId={canonicalId}
             sources={itemSources}
             sprite={canonicalId}
-            spriteClass="text-cat-almanac"
+            spriteClass="text-(--color-category-almanac)"
             onToggle={() => {
               if (itemNameVisible({ visibility: itemVisibility }) || itemCompleted) {
                 toggleItem(canonicalId, name, canonicalIds);

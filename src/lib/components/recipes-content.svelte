@@ -183,7 +183,7 @@
             reportEntityId={entry.id}
             sources={entry.sources}
             sprite={entry.itemId}
-            spriteClass="text-cat-recipes"
+            spriteClass="text-(--color-category-recipes)"
             onToggle={() => {
               if (entry.nameVisible || completed) {
                 toggleRecipe(

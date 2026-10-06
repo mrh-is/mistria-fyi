@@ -225,7 +225,7 @@
                 reportEntityId={itemId}
                 sources={museumItemSources}
                 sprite={itemId}
-                spriteClass="text-cat-museum"
+                spriteClass="text-(--color-category-museum)"
                 onToggle={() => {
                   if (itemNameVisible(itemId) || museumCompleted) {
                     toggleItem(itemId, set.setId, wingId);

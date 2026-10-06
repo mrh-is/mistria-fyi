@@ -36,7 +36,7 @@ describe("FeedbackPanel", () => {
 
   it("renders form fields when open", () => {
     renderWithFeedback(FeedbackPanel, {
-      accent: "var(--cat-museum)",
+      accent: "var(--color-category-museum)",
       onClose: vi.fn(),
       open: true,
     });
@@ -44,7 +44,7 @@ describe("FeedbackPanel", () => {
     const dialog = screen.getByRole("dialog", { name: "Send feedback" });
     expect(dialog).toHaveAttribute(
       "style",
-      "--primary: var(--cat-museum); --ring: var(--cat-museum);",
+      "--primary: var(--color-category-museum); --ring: var(--color-category-museum);",
     );
     expect(screen.getByRole("checkbox", { name: /I’d like a reply/ })).toBeInTheDocument();
     expect(

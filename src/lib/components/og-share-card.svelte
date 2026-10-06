@@ -33,7 +33,7 @@
     width: 1200px;
     height: 630px;
     overflow: hidden;
-    background: var(--paper);
+    background: var(--color-paper);
   }
 
   header {
@@ -44,7 +44,7 @@
 
   h1 {
     margin: 0;
-    color: var(--ink);
+    color: var(--color-ink);
     font-family: var(--font-display);
     /* stylelint-disable-next-line declaration-property-unit-disallowed-list -- fixed 1200×630 image */
     font-size: 102px;
@@ -69,7 +69,7 @@
     top: 372px;
     left: 60px;
     width: 360px;
-    filter: drop-shadow(0 4px 10px color-mix(in srgb, var(--fg-green) 18%, transparent));
+    filter: drop-shadow(0 4px 10px color-mix(in srgb, var(--color-brand-accent) 18%, transparent));
     transform: scale(3);
     transform-origin: top left;
   }

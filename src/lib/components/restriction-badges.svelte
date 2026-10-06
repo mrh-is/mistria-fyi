@@ -113,12 +113,12 @@
     height: 22px;
     padding: 0 4px;
     border-radius: var(--radius-lg);
-    background: color-mix(in srgb, var(--hairline) 18%, transparent);
-    color: var(--ink-muted);
+    background: color-mix(in srgb, var(--color-ink-hairline) 18%, transparent);
+    color: var(--color-ink-muted);
   }
 
   .restriction-chip--neutral {
-    color: color-mix(in srgb, var(--ink-muted) 78%, transparent);
+    color: color-mix(in srgb, var(--color-ink-muted) 78%, transparent);
   }
 
   .restriction-chip__season {
@@ -144,18 +144,18 @@
   }
 
   .restriction-chip__season[data-season="spring"] {
-    color: var(--fg-green);
+    color: var(--color-season-spring);
   }
 
   .restriction-chip__season[data-season="summer"] {
-    color: var(--fg-amber);
+    color: var(--color-season-summer);
   }
 
   .restriction-chip__season[data-season="fall"] {
-    color: var(--fg-brown);
+    color: var(--color-season-fall);
   }
 
   .restriction-chip__season[data-season="winter"] {
-    color: var(--fg-blue);
+    color: var(--color-season-winter);
   }
 </style>
