@@ -4,6 +4,7 @@ import { isItemApplicable, isItemApplicableForAlmanac } from "#lib/engine/applic
 import { isItemAvailable } from "#lib/engine/availability.js";
 import { isVillagerComplete } from "#lib/engine/progress.js";
 import { isVisible } from "#lib/engine/visibility.js";
+import { DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 import { composeInfusion } from "#lib/utils/format.js";
 import { recordEntries } from "#lib/utils/record.js";
 
@@ -71,7 +72,7 @@ const SEARCH_SOURCES: readonly SearchSource[] = [
           available: isItemAvailable(
             trackerIndex.getAggregatedAlmanacSources(canonicalId),
             worldState,
-            "available",
+            DEFAULT_AVAILABILITY_WINDOWS,
           ),
           category: "almanac",
           completed: completed.almanac.has(canonicalId),
@@ -96,7 +97,7 @@ const SEARCH_SOURCES: readonly SearchSource[] = [
             englishName: getName("items", id, "en"),
             localizedName: name,
             result: () => ({
-              available: isItemAvailable(item.sources, worldState, "available"),
+              available: isItemAvailable(item.sources, worldState, DEFAULT_AVAILABILITY_WINDOWS),
               category: "museum",
               completed: completed.museum.has(id),
               id,

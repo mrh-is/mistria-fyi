@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { legacyAvailabilityWindows } from "#lib/types/availability.js";
+
 import {
   classifyItemAvailability,
   filterAvailableItems,
@@ -18,6 +20,9 @@ import type { NonEmptyArray } from "#lib/utils/record.js";
 
 const spring = { season: "spring" as const, weather: "calm" as const };
 const defaultWindows: AvailabilityWindow[] = ["now", "anytime"];
+const AVAILABLE = legacyAvailabilityWindows("available");
+const EVERYTHING = legacyAvailabilityWindows("everything");
+const TIMELY = legacyAvailabilityWindows("timely");
 
 function src(availability?: AvailabilityCondition): Source {
   return { ...(availability ? { availability } : {}), type: "store", storeId: "test" as StoreId };
@@ -42,35 +47,35 @@ const allSeasonsCondition = seasonCondition(["spring", "summer", "fall", "winter
 
 describe("isSourceAvailable", () => {
   it("everything mode always returns true", () => {
-    expect(isSourceAvailable(src(seasonCondition(["winter"])), spring, "everything")).toBe(true);
+    expect(isSourceAvailable(src(seasonCondition(["winter"])), spring, EVERYTHING)).toBe(true);
   });
 
   it("available mode with no availability condition returns true", () => {
-    expect(isSourceAvailable(src(), spring, "available")).toBe(true);
+    expect(isSourceAvailable(src(), spring, AVAILABLE)).toBe(true);
   });
 
   it("timely mode with no availability condition returns false", () => {
-    expect(isSourceAvailable(src(), spring, "timely")).toBe(false);
+    expect(isSourceAvailable(src(), spring, TIMELY)).toBe(false);
   });
 
   it("available mode returns true when the season condition matches", () => {
-    expect(isSourceAvailable(src(seasonCondition(["spring"])), spring, "available")).toBe(true);
+    expect(isSourceAvailable(src(seasonCondition(["spring"])), spring, AVAILABLE)).toBe(true);
   });
 
   it("available mode returns false when the season condition doesn't match", () => {
-    expect(isSourceAvailable(src(seasonCondition(["winter"])), spring, "available")).toBe(false);
+    expect(isSourceAvailable(src(seasonCondition(["winter"])), spring, AVAILABLE)).toBe(false);
   });
 
   it("timely mode returns true for a selective season condition that matches", () => {
-    expect(isSourceAvailable(src(seasonCondition(["spring"])), spring, "timely")).toBe(true);
+    expect(isSourceAvailable(src(seasonCondition(["spring"])), spring, TIMELY)).toBe(true);
   });
 
   it("timely mode returns false for a non-selective (all seasons) condition", () => {
-    expect(isSourceAvailable(src(allSeasonsCondition), spring, "timely")).toBe(false);
+    expect(isSourceAvailable(src(allSeasonsCondition), spring, TIMELY)).toBe(false);
   });
 
   it("timely mode returns false when the selective season condition doesn't match", () => {
-    expect(isSourceAvailable(src(seasonCondition(["winter"])), spring, "timely")).toBe(false);
+    expect(isSourceAvailable(src(seasonCondition(["winter"])), spring, TIMELY)).toBe(false);
   });
 });
 
@@ -82,29 +87,29 @@ describe("isItemAvailable", () => {
       isItemAvailable(
         [src(seasonCondition(["winter"])), src(seasonCondition(["spring"]))],
         spring,
-        "available",
+        AVAILABLE,
       ),
     ).toBe(true);
   });
 
   it("unavailable if no source passes", () => {
-    expect(isItemAvailable([src(seasonCondition(["winter"]))], spring, "available")).toBe(false);
+    expect(isItemAvailable([src(seasonCondition(["winter"]))], spring, AVAILABLE)).toBe(false);
   });
 
   it("no sources: available in available mode", () => {
-    expect(isItemAvailable([], spring, "available")).toBe(true);
+    expect(isItemAvailable([], spring, AVAILABLE)).toBe(true);
   });
 
   it("no sources: hidden in timely mode", () => {
-    expect(isItemAvailable([], spring, "timely")).toBe(false);
+    expect(isItemAvailable([], spring, TIMELY)).toBe(false);
   });
 
   it("everything mode: always available", () => {
-    expect(isItemAvailable([src(seasonCondition(["winter"]))], spring, "everything")).toBe(true);
+    expect(isItemAvailable([src(seasonCondition(["winter"]))], spring, EVERYTHING)).toBe(true);
   });
 
   it("timely mode: available when a source has a selective season condition that matches", () => {
-    expect(isItemAvailable([src(seasonCondition(["spring"]))], spring, "timely")).toBe(true);
+    expect(isItemAvailable([src(seasonCondition(["spring"]))], spring, TIMELY)).toBe(true);
   });
 });
 
@@ -176,17 +181,17 @@ describe("filterAvailableItems", () => {
   const ids = ["a", "b", "c"] as ItemId[];
 
   it("available mode passes items with sources through", () => {
-    const result = filterAvailableItems(ids, sourcesFor, spring, "available");
+    const result = filterAvailableItems(ids, sourcesFor, spring, AVAILABLE);
     expect(result).toEqual(ids);
   });
 
   it("timely mode excludes items with no timely condition", () => {
-    const result = filterAvailableItems(ids, sourcesFor, spring, "timely");
+    const result = filterAvailableItems(ids, sourcesFor, spring, TIMELY);
     expect(result).toEqual([]);
   });
 
   it("everything returns all", () => {
-    expect(filterAvailableItems(ids, sourcesFor, spring, "everything")).toBe(ids);
+    expect(filterAvailableItems(ids, sourcesFor, spring, EVERYTHING)).toBe(ids);
   });
 
   it("skips source lookup when every availability window is selected", () => {
@@ -198,21 +203,21 @@ describe("filterAvailableItems", () => {
 
 describe("shouldCountItem", () => {
   it("completed items are always in scope regardless of availability", () => {
-    expect(shouldCountItem([src()], true, spring, "available")).toBe(true);
-    expect(shouldCountItem([src()], true, spring, "timely")).toBe(true);
-    expect(shouldCountItem([src()], true, spring, "everything")).toBe(true);
+    expect(shouldCountItem([src()], true, spring, AVAILABLE)).toBe(true);
+    expect(shouldCountItem([src()], true, spring, TIMELY)).toBe(true);
+    expect(shouldCountItem([src()], true, spring, EVERYTHING)).toBe(true);
   });
 
   it("incomplete items in scope when available", () => {
-    expect(shouldCountItem([src()], false, spring, "available")).toBe(true);
+    expect(shouldCountItem([src()], false, spring, AVAILABLE)).toBe(true);
   });
 
   it("incomplete items always in scope in everything mode", () => {
-    expect(shouldCountItem([src()], false, spring, "everything")).toBe(true);
+    expect(shouldCountItem([src()], false, spring, EVERYTHING)).toBe(true);
   });
 
   it("incomplete items out of scope in timely mode when no sources are timely", () => {
-    expect(shouldCountItem([], false, spring, "timely")).toBe(false);
+    expect(shouldCountItem([], false, spring, TIMELY)).toBe(false);
   });
 });
 

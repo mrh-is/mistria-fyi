@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
+import { AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 
 import { getCategoryProgress } from "./progress.js";
 
@@ -13,7 +14,7 @@ function completedAtRenown(renown: number): CompletedState {
 describe("renown maximum", () => {
   it("reports max level as complete", () => {
     const progress = getCategoryProgress("renown", {
-      availabilityWindows: "everything",
+      availabilityWindows: AVAILABILITY_WINDOWS,
       completed: completedAtRenown(100),
       worldState: { season: "spring", weather: "calm" },
     });
@@ -23,7 +24,7 @@ describe("renown maximum", () => {
 
   it("normalizes progress saved above max level", () => {
     const progress = getCategoryProgress("renown", {
-      availabilityWindows: "everything",
+      availabilityWindows: AVAILABILITY_WINDOWS,
       completed: completedAtRenown(120),
       worldState: { season: "spring", weather: "calm" },
     });

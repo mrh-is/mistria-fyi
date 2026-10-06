@@ -1,5 +1,10 @@
 import { canonicalAlmanacId, trackerData } from "#lib/data/index.js";
 import {
+  emptyMergeCounts,
+  SEASON_ORDER,
+  seasonFromOrdinal,
+} from "#lib/engine/domain-primitives.js";
+import {
   getMaxMineFloor,
   getMaxRenownLevel,
   MAX_SKILL_LEVEL,
@@ -83,28 +88,7 @@ export function buildImportState(bundle: SaveBundle): {
   result: ImportResult;
 } {
   const warnings: SaveImportWarning[] = [];
-  const counts: MergeCounts = {
-    almanac: 0,
-    almanacRecipes: 0,
-    animalCosmetics: 0,
-    animals: 0,
-    childChoice: 0,
-    cosmetics: 0,
-    dates: 0,
-    hasUpperFloor: 0,
-    mineFloor: 0,
-    museum: 0,
-    perks: 0,
-    petCosmetics: 0,
-    petSkins: 0,
-    quests: 0,
-    reachedSeason: 0,
-    renown: 0,
-    skillLevels: 0,
-    spells: 0,
-    villagerLevels: 0,
-    villagerRelationships: 0,
-  };
+  const counts: MergeCounts = emptyMergeCounts();
 
   // parseSaveFiles rejects an unrecognizable player.json outright; a .sav entry reaches here.
   let playerSection = bundle.player;
@@ -503,13 +487,12 @@ export type { SaveBundle, SaveSection } from "./save-bundle.js";
 
 const GAME_DAY = 259_200;
 const GAME_SEASON = 28 * GAME_DAY;
-const SEASON_ORDER: Season[] = ["spring", "summer", "fall", "winter"];
 
 function deriveReachedSeason(date: unknown): Season {
   if (typeof date !== "number" || date < 0) return "spring";
-  const seasonIndex = Math.floor(date / GAME_SEASON) % 4;
-  if (date >= 4 * GAME_SEASON) return "winter";
-  return SEASON_ORDER[seasonIndex];
+  const seasonIndex = Math.floor(date / GAME_SEASON) % SEASON_ORDER.length;
+  if (date >= SEASON_ORDER.length * GAME_SEASON) return "winter";
+  return seasonFromOrdinal(seasonIndex);
 }
 
 // ─── Parse save files ----------------───────────────────────────────

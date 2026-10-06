@@ -1,6 +1,4 @@
-import { legacyAvailabilityWindows } from "#lib/types/availability.js";
-
-import type { AvailabilitySelection } from "#lib/types/availability.js";
+import type { AvailabilityWindow } from "#lib/types/availability.js";
 import type { AnimalVariant, Season } from "#lib/types/tracker-data.js";
 
 export function getVariantSeason(variant: AnimalVariant): Season | undefined {
@@ -21,11 +19,8 @@ function getAvailabilityWindow(
 export function isVariantInScope(
   variant: AnimalVariant,
   currentSeason: Season,
-  availability: AvailabilitySelection,
+  windows: readonly AvailabilityWindow[],
 ): boolean {
   const season = getVariantSeason(variant);
-  const window = getAvailabilityWindow(season, currentSeason);
-  const windows =
-    typeof availability === "string" ? legacyAvailabilityWindows(availability) : availability;
-  return windows.includes(window);
+  return windows.includes(getAvailabilityWindow(season, currentSeason));
 }

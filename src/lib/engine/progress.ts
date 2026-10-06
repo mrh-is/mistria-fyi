@@ -6,7 +6,7 @@ import { getMarriedVillager } from "#lib/engine/relationships.js";
 import { recordEntries, recordKeys, recordValues } from "#lib/utils/record.js";
 
 import type { CategoryKey } from "#lib/data/categories.js";
-import type { AvailabilitySelection } from "#lib/types/availability.js";
+import type { AvailabilityWindow } from "#lib/types/availability.js";
 import type { ItemId, QuestId, Season, VillagerId, Weather } from "#lib/types/tracker-data.js";
 import type { CompletedState } from "#lib/types/user-progress.js";
 import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
@@ -35,7 +35,7 @@ export interface NormalizedLevel {
 }
 
 interface ProgressContext {
-  availabilityWindows: AvailabilitySelection;
+  availabilityWindows: readonly AvailabilityWindow[];
   completed: DeepReadonly<CompletedState>;
   worldState: { season: Season; weather: Weather };
 }
