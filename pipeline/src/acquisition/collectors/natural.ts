@@ -1,6 +1,7 @@
 import { simplifyAvailabilityCondition } from "#lib/engine/availability-condition.js";
 import { isNonEmptyArray } from "#lib/utils/record.js";
 
+import { PipelineDiagnostics } from "../../diagnostics.js";
 import { forEachItem } from "../../extractor-helpers.js";
 
 import type {
@@ -35,11 +36,13 @@ export function collectNaturalSources(
   accumulator: ItemSourceAccumulator,
   cosmeticAccumulator?: CosmeticSourceAccumulator,
   petCosmeticAccumulator?: PetCosmeticSourceAccumulator,
+  sharedDiagnostics?: PipelineDiagnostics,
 ): void {
+  const diagnostics = sharedDiagnostics ?? new PipelineDiagnostics();
   collectFishSources(fiddle, accumulator);
   collectBugSources(fiddle, accumulator);
   collectForageSources(fiddle, accumulator);
-  collectMineForageableSources(fiddle, accumulator);
+  collectMineForageableSources(fiddle, accumulator, diagnostics);
   collectCropSources(fiddle, accumulator);
   collectTreeSources(fiddle, accumulator);
   collectMonsterDropSources(fiddle, accumulator, cosmeticAccumulator, petCosmeticAccumulator);
@@ -48,6 +51,7 @@ export function collectNaturalSources(
   collectEarthlyEssenceCosmeticSources(fiddle, cosmeticAccumulator);
   collectMistSightSources(fiddle, accumulator, cosmeticAccumulator);
   collectPumpkinPatchSources(fiddle, accumulator);
+  if (!sharedDiagnostics) diagnostics.validate();
 }
 
 function buildNaturalAvailability(
@@ -437,6 +441,7 @@ function collectGoldenAnimalProductSources(
 function collectMineForageableSources(
   fiddle: ParsedGameData,
   accumulator: ItemSourceAccumulator,
+  diagnostics: PipelineDiagnostics,
 ): void {
   forEachItem(fiddle, (itemId, item, topCat, subCat) => {
     const tags = Array.isArray(item.tags)
@@ -447,9 +452,12 @@ function collectMineForageableSources(
 
     const biomeId = topCat === "mines" ? MINE_SUBCAT_TO_BIOME[subCat] : undefined;
     if (!biomeId) {
-      console.warn(
-        `  Warning: mines_forageable "${itemId}" has no biome mapping (${topCat}/${subCat})`,
-      );
+      diagnostics.add({
+        fieldPath: `items.${topCat}.${subCat}.${itemId}`,
+        kind: "biome-less-forageable",
+        message: `mines_forageable "${itemId}" has no biome mapping (${topCat}/${subCat})`,
+        targetId: itemId,
+      });
       return;
     }
 
