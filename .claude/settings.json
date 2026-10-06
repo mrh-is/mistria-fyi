@@ -15,6 +15,7 @@
       "Bash(pnpm run test:pipeline:assets *)",
       "Bash(pnpm run test:pwa *)",
       "Bash(pnpm run test:client *)",
+      "Bash(pnpm run test:coverage *)",
       "Bash(pnpm run build *)",
       "Bash(pnpm run fonts:check *)",
       "Bash(pnpm run fonts:lint *)",

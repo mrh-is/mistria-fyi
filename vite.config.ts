@@ -121,6 +121,15 @@ export default defineConfig({
     strictPort: Boolean(process.env.PORT),
   },
   test: {
+    // Opt-in with `--coverage` (`pnpm run test:coverage`), so ordinary runs pay nothing. Scoped to
+    // the domain logic, stores, & pipeline; reported, not gated.
+    coverage: {
+      exclude: ["**/*.test.ts", "**/*.test-harness.svelte", "pipeline/src/assets-test-setup.ts"],
+      include: ["src/lib/engine/**/*.ts", "src/lib/stores/**/*.ts", "pipeline/src/**/*.ts"],
+      provider: "v8",
+      reporter: ["text-summary", "json-summary", "html"],
+      reportsDirectory: "coverage",
+    },
     // Persists module transforms under node_modules/.vitest-cache, so warm runs skip most of the
     // transform work. CI restores the directory with actions/cache.
     fsModuleCache: true,
