@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { extractSaveProgress } from "#lib/engine/import-save.js";
-import { getMaxRenownLevel, MAX_SKILL_LEVEL, MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
+import { getMaxRenownLevel, MAX_HEART_LEVEL, MAX_SKILL_LEVEL } from "#lib/engine/progress.js";
 import { userState } from "#lib/stores/user-state.svelte.js";
 import { recordKeys } from "#lib/utils/record.js";
 
@@ -118,17 +118,12 @@ describe("restoreBackup validation", () => {
         name: "completed.cosmetics",
       },
       {
-        mutate: (data) =>
-          (((data.completed as Record<string, unknown>).mines as Record<string, unknown>).floor =
-            "deep"),
-        name: "completed.mines.floor",
+        mutate: (data) => ((data.completed as Record<string, unknown>).mineFloor = "deep"),
+        name: "completed.mineFloor",
       },
       {
-        mutate: (data) =>
-          (((data.completed as Record<string, unknown>).mines as Record<string, unknown>).spells = [
-            1,
-          ]),
-        name: "completed.mines.spells",
+        mutate: (data) => ((data.completed as Record<string, unknown>).spells = [1]),
+        name: "completed.spells",
       },
       {
         mutate: (data) => delete (data.completed as Record<string, unknown>).museum,
@@ -149,39 +144,34 @@ describe("restoreBackup validation", () => {
         name: "completed.questStates",
       },
       {
-        mutate: (data) =>
-          (((data.completed as Record<string, unknown>).mines as Record<string, unknown>).floor =
-            1.5),
-        name: "completed.mines.floor (fractional)",
+        mutate: (data) => ((data.completed as Record<string, unknown>).mineFloor = 1.5),
+        name: "completed.mineFloor (fractional)",
+      },
+      {
+        mutate: (data) => ((data.completed as Record<string, unknown>).mineFloor = -1),
+        name: "completed.mineFloor (negative)",
       },
       {
         mutate: (data) =>
-          (((data.completed as Record<string, unknown>).mines as Record<string, unknown>).floor =
-            -1),
-        name: "completed.mines.floor (negative)",
+          ((data.completed as Record<string, unknown>).mineFloor = MAX_MINE_FLOOR + 1),
+        name: "completed.mineFloor (above maximum)",
       },
       {
         mutate: (data) =>
-          (((data.completed as Record<string, unknown>).mines as Record<string, unknown>).floor =
-            MAX_MINE_FLOOR + 1),
-        name: "completed.mines.floor (above maximum)",
+          ((data.completed as Record<string, unknown>).heartLevels = { adeline: 3.5 }),
+        name: "completed.heartLevels (fractional)",
       },
       {
         mutate: (data) =>
-          ((data.completed as Record<string, unknown>).villagerLevels = { adeline: 3.5 }),
-        name: "completed.villagerLevels (fractional)",
+          ((data.completed as Record<string, unknown>).heartLevels = { adeline: -1 }),
+        name: "completed.heartLevels (negative)",
       },
       {
         mutate: (data) =>
-          ((data.completed as Record<string, unknown>).villagerLevels = { adeline: -1 }),
-        name: "completed.villagerLevels (negative)",
-      },
-      {
-        mutate: (data) =>
-          ((data.completed as Record<string, unknown>).villagerLevels = {
-            adeline: MAX_VILLAGER_LEVEL + 1,
+          ((data.completed as Record<string, unknown>).heartLevels = {
+            adeline: MAX_HEART_LEVEL + 1,
           }),
-        name: "completed.villagerLevels (above maximum)",
+        name: "completed.heartLevels (above maximum)",
       },
       {
         mutate: (data) =>
@@ -230,16 +220,14 @@ describe("restoreBackup validation", () => {
     const json = userState.exportBackup();
     const data = JSON.parse(json) as Record<string, unknown>;
     const completed = data.completed as Record<string, unknown>;
-    (completed.mines as Record<string, unknown>).floor = MAX_MINE_FLOOR;
-    completed.villagerLevels = { adeline: MAX_VILLAGER_LEVEL };
+    completed.mineFloor = MAX_MINE_FLOOR;
+    completed.heartLevels = { adeline: MAX_HEART_LEVEL };
     completed.skillLevels = { farming: MAX_SKILL_LEVEL };
 
     const result = userState.restoreBackup(JSON.stringify(data));
     expect(result.ok).toBe(true);
-    expect(userState.state.completed.mines.floor).toBe(MAX_MINE_FLOOR);
-    expect(userState.state.completed.villagerLevels["adeline" as VillagerId]).toBe(
-      MAX_VILLAGER_LEVEL,
-    );
+    expect(userState.state.completed.mineFloor).toBe(MAX_MINE_FLOOR);
+    expect(userState.state.completed.heartLevels["adeline" as VillagerId]).toBe(MAX_HEART_LEVEL);
     expect(userState.state.completed.skillLevels["farming" as SkillId]).toBe(MAX_SKILL_LEVEL);
   });
 });
@@ -258,10 +246,8 @@ describe("mergeFromSave numeric domains", () => {
     });
     userState.mergeFromSave(completed);
 
-    expect(userState.state.completed.mines.floor).toBe(MAX_MINE_FLOOR);
-    expect(userState.state.completed.villagerLevels["adeline" as VillagerId]).toBe(
-      MAX_VILLAGER_LEVEL,
-    );
+    expect(userState.state.completed.mineFloor).toBe(MAX_MINE_FLOOR);
+    expect(userState.state.completed.heartLevels["adeline" as VillagerId]).toBe(MAX_HEART_LEVEL);
     expect(userState.state.completed.skillLevels["farming" as SkillId]).toBe(MAX_SKILL_LEVEL);
     expect(userState.state.completed.renown).toBe(getMaxRenownLevel());
     expect(warnings).toHaveLength(3);
@@ -269,20 +255,20 @@ describe("mergeFromSave numeric domains", () => {
 
   it("clamps levels handed directly to the merge", () => {
     userState.mergeFromSave({
-      mines: { floor: 9999, spells: new Set() },
+      heartLevels: { adeline: 12.7 } as never,
+      mineFloor: 9999,
       renown: Number.POSITIVE_INFINITY,
       skillLevels: { farming: -5 } as never,
-      villagerLevels: { adeline: 12.7 } as never,
     });
 
-    expect(userState.state.completed.mines.floor).toBe(MAX_MINE_FLOOR);
+    expect(userState.state.completed.mineFloor).toBe(MAX_MINE_FLOOR);
     expect(userState.state.completed.renown).toBe(0);
     expect(userState.state.completed.skillLevels["farming" as SkillId]).toBeUndefined();
-    expect(userState.state.completed.villagerLevels["adeline" as VillagerId]).toBe(12);
+    expect(userState.state.completed.heartLevels["adeline" as VillagerId]).toBe(12);
   });
 
   it("preserves higher existing progress across an additive import", () => {
-    userState.setVillagerLevel("adeline" as VillagerId, 8);
+    userState.setHeartLevel("adeline" as VillagerId, 8);
     userState.setSkillLevel("farming" as SkillId, 30);
     userState.setRenown(5);
     userState.setMineFloor(20);
@@ -295,11 +281,11 @@ describe("mergeFromSave numeric domains", () => {
     });
     const { counts } = userState.mergeFromSave(completed);
 
-    expect(userState.state.completed.villagerLevels["adeline" as VillagerId]).toBe(8);
+    expect(userState.state.completed.heartLevels["adeline" as VillagerId]).toBe(8);
     expect(userState.state.completed.skillLevels["farming" as SkillId]).toBe(30);
     expect(userState.state.completed.renown).toBe(5);
-    expect(userState.state.completed.mines.floor).toBe(20);
-    expect(counts.villagerLevels).toBe(0);
+    expect(userState.state.completed.mineFloor).toBe(20);
+    expect(counts.heartLevels).toBe(0);
     expect(counts.skillLevels).toBe(0);
     expect(counts.renown).toBe(0);
     expect(counts.mineFloor).toBe(0);

@@ -23,6 +23,7 @@ const defaultWorld: { season: Season; weather: Weather } = {
 function makeProgressionState(overrides: Partial<UserProgressionState> = {}): UserProgressionState {
   return {
     hasUpperFloor: false,
+    heartLevels: {},
     isDating: false,
     knownVillagers: new Set(),
     marriedVillager: null,
@@ -33,7 +34,6 @@ function makeProgressionState(overrides: Partial<UserProgressionState> = {}): Us
     showSpoilers: false,
     skillLevels: {},
     unlockedPerks: new Set(),
-    villagerLevels: {},
     ...overrides,
   };
 }

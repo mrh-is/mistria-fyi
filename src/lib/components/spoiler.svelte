@@ -9,19 +9,15 @@
   let {
     children,
     onReveal,
-    revealed = false,
+    spoilered = true,
   }: {
     children: Snippet;
     onReveal?: () => void;
-    revealed?: boolean;
+    spoilered?: boolean;
   } = $props();
 </script>
 
-{#if revealed}
-  <span class="spoiler-reveal" in:fade={{ duration: prefersReducedMotion.current ? 0 : 140 }}
-    >{@render children()}</span
-  >
-{:else}
+{#if spoilered}
   <button
     class="spoiler-cover"
     type="button"
@@ -32,6 +28,10 @@
       ><span class="spoiler-cover__content">{@render children()}</span></span
     >
   </button>
+{:else}
+  <span class="spoiler-reveal" in:fade={{ duration: prefersReducedMotion.current ? 0 : 140 }}
+    >{@render children()}</span
+  >
 {/if}
 
 <style>

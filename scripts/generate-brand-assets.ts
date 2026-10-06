@@ -94,7 +94,8 @@ function emptyCompletedState(): ProgressState {
     cosmetics: new Set(),
     dates: new Set(),
     hasUpperFloor: false,
-    mines: { floor: 0, spells: new Set() },
+    heartLevels: {},
+    mineFloor: 0,
     museum: new Set(),
     petCosmetics: new Set(),
     petSkins: new Set(),
@@ -102,8 +103,8 @@ function emptyCompletedState(): ProgressState {
     reachedSeason: "spring",
     renown: 0,
     skillLevels: {},
+    spells: new Set(),
     unlockedPerks: new Set(),
-    villagerLevels: {},
     villagerRelationships: {},
   };
 }

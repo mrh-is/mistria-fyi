@@ -15,8 +15,8 @@ import {
   getOverallProgress,
   isCategoryComplete,
   isVillagerComplete,
+  MAX_HEART_LEVEL,
   MAX_SKILL_LEVEL,
-  MAX_VILLAGER_LEVEL,
 } from "./progress.js";
 
 import type { CategoryKey } from "#lib/data/categories.js";
@@ -72,10 +72,10 @@ function fullyCompletedState(): ProgressState {
   for (const byType of recordValues(trackerData.quests)) {
     for (const id of recordKeys(byType)) questStates[id] = "completed";
   }
-  const villagerLevels: ProgressState["villagerLevels"] = {};
+  const heartLevels: ProgressState["heartLevels"] = {};
   const villagerRelationships: ProgressState["villagerRelationships"] = {};
   for (const [id, villager] of recordEntries(trackerData.villagers)) {
-    villagerLevels[id] = MAX_VILLAGER_LEVEL;
+    heartLevels[id] = MAX_HEART_LEVEL;
     if (villager.dateable) villagerRelationships[id] = "platonic";
   }
   villagerRelationships["adeline" as VillagerId] = "married";
@@ -90,7 +90,8 @@ function fullyCompletedState(): ProgressState {
     childChoice: "yes",
     cosmetics: new Set(recordKeys(trackerData.cosmetics)),
     dates: new Set(recordKeys(trackerData.dates)),
-    mines: { floor: getMaxMineFloor(), spells: new Set(recordKeys(trackerData.mines.spells)) },
+    heartLevels,
+    mineFloor: getMaxMineFloor(),
     museum: new Set(
       recordValues(trackerData.museum).flatMap(({ sets }) =>
         recordValues(sets).flatMap(({ items }) => items),
@@ -101,7 +102,7 @@ function fullyCompletedState(): ProgressState {
     questStates,
     renown: getMaxRenownLevel(),
     skillLevels,
-    villagerLevels,
+    spells: new Set(recordKeys(trackerData.mines.spells)),
     villagerRelationships,
   });
 }
@@ -225,7 +226,7 @@ describe("isCategoryComplete", () => {
       almanac: { ...full, dates: new Set([...full.dates].slice(1)) },
       animals: { ...full, petSkins: new Set([...full.petSkins].slice(1)) },
       cosmetics: { ...full, cosmetics: new Set([...full.cosmetics].slice(1)) },
-      mines: { ...full, mines: { ...full.mines, floor: full.mines.floor - 1 } },
+      mines: { ...full, mineFloor: full.mineFloor - 1 },
       museum: { ...full, museum: new Set([...full.museum].slice(1)) },
       quests: {
         ...full,
@@ -343,61 +344,58 @@ describe("villagers progress", () => {
     const villagers = recordValues(trackerData.villagers);
     const dateableCount = villagers.filter(({ dateable }) => dateable).length;
     expect(dateableCount).toBeGreaterThan(0);
-    expect(progress.total).toBe(villagers.length * MAX_VILLAGER_LEVEL + dateableCount);
+    expect(progress.total).toBe(villagers.length * MAX_HEART_LEVEL + dateableCount);
   });
 
   it("counts a dateable Villager's relationship step only once it is settled", () => {
-    const levels = { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>;
-    const undecided = getCategoryProgress(
-      "villagers",
-      ctx({ completed: { villagerLevels: levels } }),
-    );
-    expect(undecided.completed).toBe(MAX_VILLAGER_LEVEL);
+    const levels = { adeline: MAX_HEART_LEVEL } as Record<VillagerId, number>;
+    const undecided = getCategoryProgress("villagers", ctx({ completed: { heartLevels: levels } }));
+    expect(undecided.completed).toBe(MAX_HEART_LEVEL);
 
     const romantic = getCategoryProgress(
       "villagers",
       ctx({
-        completed: { villagerLevels: levels, villagerRelationships: rel("adeline", "romantic") },
+        completed: { heartLevels: levels, villagerRelationships: rel("adeline", "romantic") },
       }),
     );
-    expect(romantic.completed).toBe(MAX_VILLAGER_LEVEL);
+    expect(romantic.completed).toBe(MAX_HEART_LEVEL);
 
     const platonic = getCategoryProgress(
       "villagers",
       ctx({
-        completed: { villagerLevels: levels, villagerRelationships: rel("adeline", "platonic") },
+        completed: { heartLevels: levels, villagerRelationships: rel("adeline", "platonic") },
       }),
     );
-    expect(platonic.completed).toBe(MAX_VILLAGER_LEVEL + 1);
+    expect(platonic.completed).toBe(MAX_HEART_LEVEL + 1);
 
     const marriedUndeclared = getCategoryProgress(
       "villagers",
       ctx({
-        completed: { villagerLevels: levels, villagerRelationships: rel("adeline", "married") },
+        completed: { heartLevels: levels, villagerRelationships: rel("adeline", "married") },
       }),
     );
-    expect(marriedUndeclared.completed).toBe(MAX_VILLAGER_LEVEL);
+    expect(marriedUndeclared.completed).toBe(MAX_HEART_LEVEL);
 
     const marriedDeclared = getCategoryProgress(
       "villagers",
       ctx({
         completed: {
           childChoice: "no",
-          villagerLevels: levels,
+          heartLevels: levels,
           villagerRelationships: rel("adeline", "married"),
         },
       }),
     );
-    expect(marriedDeclared.completed).toBe(MAX_VILLAGER_LEVEL + 1);
+    expect(marriedDeclared.completed).toBe(MAX_HEART_LEVEL + 1);
   });
 
-  it("caps individual Villager levels at MAX_VILLAGER_LEVEL", () => {
+  it("caps individual Villager levels at MAX_HEART_LEVEL", () => {
     const villagerId = recordKeys(trackerData.villagers)[0];
     const progress = getCategoryProgress(
       "villagers",
-      ctx({ completed: { villagerLevels: { [villagerId]: 999 } } }),
+      ctx({ completed: { heartLevels: { [villagerId]: 999 } } }),
     );
-    expect(progress.completed).toBe(MAX_VILLAGER_LEVEL);
+    expect(progress.completed).toBe(MAX_HEART_LEVEL);
   });
 });
 
@@ -493,7 +491,7 @@ describe("mines progress", () => {
     const spellId = recordKeys(trackerData.mines.spells)[0];
     const progress = getCategoryProgress(
       "mines",
-      ctx({ completed: { mines: { floor: 10, spells: new Set([spellId]) } } }),
+      ctx({ completed: { mineFloor: 10, spells: new Set([spellId]) } }),
     );
     expect(progress.completed).toBe(11);
   });
@@ -618,28 +616,28 @@ describe("availability filtering on item-based categories", () => {
 describe("isVillagerComplete", () => {
   it("non-dateable Villager is complete at max hearts", () => {
     const completed = makeCompletedState({
-      villagerLevels: { darcy: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
+      heartLevels: { darcy: MAX_HEART_LEVEL } as Record<VillagerId, number>,
     });
     expect(isVillagerComplete("darcy" as VillagerId, completed)).toBe(true);
   });
 
   it("non-dateable Villager is incomplete below max hearts", () => {
     const completed = makeCompletedState({
-      villagerLevels: { darcy: 5 } as Record<VillagerId, number>,
+      heartLevels: { darcy: 5 } as Record<VillagerId, number>,
     });
     expect(isVillagerComplete("darcy" as VillagerId, completed)).toBe(false);
   });
 
   it("dateable Villager with undecided relationship is never complete", () => {
     const completed = makeCompletedState({
-      villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
+      heartLevels: { adeline: MAX_HEART_LEVEL } as Record<VillagerId, number>,
     });
     expect(isVillagerComplete("adeline" as VillagerId, completed)).toBe(false);
   });
 
   it("dateable Villager is complete when platonic at max hearts", () => {
     const completed = makeCompletedState({
-      villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
+      heartLevels: { adeline: MAX_HEART_LEVEL } as Record<VillagerId, number>,
       villagerRelationships: { adeline: "platonic" } as Partial<
         Record<VillagerId, VillagerRelationship>
       >,
@@ -649,7 +647,7 @@ describe("isVillagerComplete", () => {
 
   it("dateable Villager is incomplete when platonic below max hearts", () => {
     const completed = makeCompletedState({
-      villagerLevels: { adeline: 8 } as Record<VillagerId, number>,
+      heartLevels: { adeline: 8 } as Record<VillagerId, number>,
       villagerRelationships: { adeline: "platonic" } as Partial<
         Record<VillagerId, VillagerRelationship>
       >,
@@ -659,7 +657,7 @@ describe("isVillagerComplete", () => {
 
   it("dateable Villager is incomplete when romantic (not married)", () => {
     const completed = makeCompletedState({
-      villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
+      heartLevels: { adeline: MAX_HEART_LEVEL } as Record<VillagerId, number>,
       villagerRelationships: { adeline: "romantic" } as Partial<
         Record<VillagerId, VillagerRelationship>
       >,
@@ -669,7 +667,7 @@ describe("isVillagerComplete", () => {
 
   it("dateable Villager is incomplete when proposed (not married)", () => {
     const completed = makeCompletedState({
-      villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
+      heartLevels: { adeline: MAX_HEART_LEVEL } as Record<VillagerId, number>,
       villagerRelationships: { adeline: "proposed" } as Partial<
         Record<VillagerId, VillagerRelationship>
       >,
@@ -680,7 +678,7 @@ describe("isVillagerComplete", () => {
   it("married Villager is incomplete below max hearts even with child choice", () => {
     const completed = makeCompletedState({
       childChoice: "yes",
-      villagerLevels: { adeline: 8 } as Record<VillagerId, number>,
+      heartLevels: { adeline: 8 } as Record<VillagerId, number>,
       villagerRelationships: { adeline: "married" } as Partial<
         Record<VillagerId, VillagerRelationship>
       >,
@@ -691,7 +689,7 @@ describe("isVillagerComplete", () => {
   it("married Villager at max hearts is incomplete with undeclared child choice", () => {
     const completed = makeCompletedState({
       childChoice: "undeclared",
-      villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
+      heartLevels: { adeline: MAX_HEART_LEVEL } as Record<VillagerId, number>,
       villagerRelationships: { adeline: "married" } as Partial<
         Record<VillagerId, VillagerRelationship>
       >,
@@ -702,7 +700,7 @@ describe("isVillagerComplete", () => {
   it("married Villager at max hearts is complete when child choice is yes", () => {
     const completed = makeCompletedState({
       childChoice: "yes",
-      villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
+      heartLevels: { adeline: MAX_HEART_LEVEL } as Record<VillagerId, number>,
       villagerRelationships: { adeline: "married" } as Partial<
         Record<VillagerId, VillagerRelationship>
       >,
@@ -713,7 +711,7 @@ describe("isVillagerComplete", () => {
   it("married Villager at max hearts is complete when child choice is no", () => {
     const completed = makeCompletedState({
       childChoice: "no",
-      villagerLevels: { adeline: MAX_VILLAGER_LEVEL } as Record<VillagerId, number>,
+      heartLevels: { adeline: MAX_HEART_LEVEL } as Record<VillagerId, number>,
       villagerRelationships: { adeline: "married" } as Partial<
         Record<VillagerId, VillagerRelationship>
       >,

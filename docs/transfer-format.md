@@ -40,12 +40,11 @@ Every rejection is a `TransferDecodeError` whose code the UI localizes:
 - `newer-version`: a marked payload newer than `TRANSFER_VERSION`.
 - `corrupt`: any other failure above, including a version byte of zero.
 
-After the layout is decoded, mine floor, renown, skill levels, and villager levels are clamped to
-their real domain maxima (from tracker data and `MAX_SKILL_LEVEL`/`MAX_VILLAGER_LEVEL`) always.
-Every scalar field's on-wire representation reserves more bit width than its domain uses (for
-example mine floor is one byte but the real maximum is under 256), so an encoded value at the
-bit-width maximum is not necessarily in-domain; clamping always applies, so a payload can never
-merge an out-of-domain value.
+After the layout is decoded, mine floor, renown, skill levels, and heart levels are clamped to their
+real domain maxima (from tracker data and `MAX_SKILL_LEVEL`/`MAX_HEART_LEVEL`) always. Every scalar
+field's on-wire representation reserves more bit width than its domain uses (for example mine floor
+is one byte but the real maximum is under 256), so an encoded value at the bit-width maximum is not
+necessarily in-domain; clamping always applies, so a payload can never merge an out-of-domain value.
 
 ## Compatibility fixtures
 

@@ -12,8 +12,8 @@ import {
   clampMineFloor,
   clampRenownLevel,
   getMaxMineFloor,
+  MAX_HEART_LEVEL,
   MAX_SKILL_LEVEL,
-  MAX_VILLAGER_LEVEL,
 } from "#lib/engine/progress.js";
 import { findRecipesForQuest } from "#lib/engine/quest-rewards.js";
 import { applyMarriageCascade, getSpouseId, mergeHousehold } from "#lib/engine/relationships.js";
@@ -98,8 +98,9 @@ export interface SerializedState {
     cosmetics: string[];
     dates?: string[];
     hasUpperFloor?: boolean;
+    heartLevels?: Record<string, number>;
     marriedVillager?: null | string;
-    mines: { floor: number; spells: string[] };
+    mineFloor: number;
     museum: string[];
     petCosmetics?: string[];
     petSkins?: string[];
@@ -110,8 +111,8 @@ export interface SerializedState {
     romanticVillagers?: string[];
     skillLevels?: Record<string, number>;
     skills?: string[];
+    spells: string[];
     unlockedPerks?: string[];
-    villagerLevels?: Record<string, number>;
     villagerRelationships?: Record<string, VillagerRelationship>;
     villagers?: string[];
   };
@@ -129,7 +130,7 @@ const QUARANTINE_KEY = `${STORAGE_KEY}-quarantine`;
  * migrates to the maximum standard heart level (romance unlocks the hearts above it); a completed
  * skill migrates to the maximum skill level.
  */
-const LEGACY_COMPLETED_VILLAGER_LEVEL = 10;
+const LEGACY_COMPLETED_HEART_LEVEL = 10;
 const LEGACY_COMPLETED_SKILL_LEVEL = MAX_SKILL_LEVEL;
 const SUPPORTED_SERIALIZATION_VERSIONS = new Set(["1", CURRENT_SERIALIZATION_VERSION]);
 
@@ -219,7 +220,8 @@ function createDefaultProgress(): ProgressState {
     cosmetics: new SvelteSet<CosmeticId>(),
     dates: new SvelteSet<DateId>(),
     hasUpperFloor: false,
-    mines: { floor: 0, spells: new SvelteSet<SpellId>() },
+    heartLevels: {},
+    mineFloor: 0,
     museum: new SvelteSet<ItemId>(),
     petCosmetics: new SvelteSet<PetCosmeticSetId>(),
     petSkins: new SvelteSet<PetSkinId>(),
@@ -227,8 +229,8 @@ function createDefaultProgress(): ProgressState {
     reachedSeason: "spring",
     renown: 0,
     skillLevels: {},
+    spells: new SvelteSet<SpellId>(),
     unlockedPerks: new SvelteSet<PerkId>(),
-    villagerLevels: {},
     villagerRelationships: {},
   };
 }
@@ -383,13 +385,13 @@ function createUserState() {
       state.completed.reachedSeason !== "spring" ||
       Object.keys(state.completed.villagerRelationships).length > 0 ||
       state.completed.childChoice !== "undeclared" ||
-      state.completed.mines.floor > 0 ||
-      state.completed.mines.spells.size > 0 ||
+      state.completed.mineFloor > 0 ||
+      state.completed.spells.size > 0 ||
       state.completed.renown > 0 ||
       state.completed.petCosmetics.size > 0 ||
       state.completed.petSkins.size > 0 ||
       state.completed.unlockedPerks.size > 0 ||
-      recordValues(state.completed.villagerLevels).some((v) => v > 0) ||
+      recordValues(state.completed.heartLevels).some((v) => v > 0) ||
       recordValues(state.completed.skillLevels).some((v) => v > 0) ||
       recordValues(state.completed.questStates).some((v) => v !== "none") ||
       recordValues(state.completed.animals).some((s) => s.size > 0) ||
@@ -480,7 +482,7 @@ function createUserState() {
       counts.perks = unionInto(completed.unlockedPerks, imported.unlockedPerks ?? []);
       counts.petCosmetics = unionInto(completed.petCosmetics, imported.petCosmetics ?? []);
       counts.petSkins = unionInto(completed.petSkins, imported.petSkins ?? []);
-      counts.spells = unionInto(completed.mines.spells, imported.mines?.spells ?? []);
+      counts.spells = unionInto(completed.spells, imported.spells ?? []);
       for (const [animalId, variants] of recordEntries(imported.animals ?? {})) {
         const existing = getOrCreate(
           completed.animals,
@@ -500,11 +502,11 @@ function createUserState() {
 
       // Levels are clamped again here so the canonical state stays inside its domains even if a
       // caller bypasses extractSaveProgress's normalization. Scalars report how far they rose.
-      if (imported.mines) {
-        const floor = clampMineFloor(imported.mines.floor);
-        if (floor > completed.mines.floor) {
-          counts.mineFloor = floor - completed.mines.floor;
-          completed.mines.floor = floor;
+      if (imported.mineFloor !== undefined) {
+        const mineFloor = clampMineFloor(imported.mineFloor);
+        if (mineFloor > completed.mineFloor) {
+          counts.mineFloor = mineFloor - completed.mineFloor;
+          completed.mineFloor = mineFloor;
         }
       }
       if (imported.renown !== undefined) {
@@ -514,10 +516,10 @@ function createUserState() {
           completed.renown = renown;
         }
       }
-      counts.villagerLevels = raiseLevels(
-        completed.villagerLevels,
-        imported.villagerLevels,
-        MAX_VILLAGER_LEVEL,
+      counts.heartLevels = raiseLevels(
+        completed.heartLevels,
+        imported.heartLevels,
+        MAX_HEART_LEVEL,
       );
       counts.skillLevels = raiseLevels(
         completed.skillLevels,
@@ -588,8 +590,11 @@ function createUserState() {
     setHasUpperFloor(value: boolean) {
       state.completed.hasUpperFloor = value;
     },
+    setHeartLevel(id: VillagerId, level: number) {
+      state.completed.heartLevels[id] = clampLevel(level, MAX_HEART_LEVEL);
+    },
     setMineFloor(floor: number) {
-      state.completed.mines.floor = clampMineFloor(floor);
+      state.completed.mineFloor = clampMineFloor(floor);
     },
     setQuestState(id: QuestId, questState: QuestState) {
       state.completed.questStates[id] = questState;
@@ -610,9 +615,6 @@ function createUserState() {
     },
     setSkillLevel(id: SkillId, level: number) {
       state.completed.skillLevels[id] = clampLevel(level, MAX_SKILL_LEVEL);
-    },
-    setVillagerLevel(id: VillagerId, level: number) {
-      state.completed.villagerLevels[id] = clampLevel(level, MAX_VILLAGER_LEVEL);
     },
     setVillagerRelationship(villagerId: VillagerId, relationship: VillagerRelationship) {
       const oldMarried = getSpouseId(state.completed.villagerRelationships);
@@ -695,7 +697,7 @@ function createUserState() {
       state.showSpoilers = !state.showSpoilers;
     },
     toggleSpell(id: SpellId) {
-      toggleInSet(state.completed.mines.spells, id);
+      toggleInSet(state.completed.spells, id);
     },
     /** Restores the quest's prior state and removes only recipes added by that transition. */
     undoQuestWithRecipes(id: QuestId, { newlyAdded, previousState }: QuestCompletion) {
@@ -737,17 +739,17 @@ function deserialize(json: string, mode: ValidationMode): DeserializeResult {
     const s = raw;
 
     // Migrate legacy Set-based data → level/state Records
-    // Old format: villagers/skills/quests as string[]; New format: villagerLevels/skillLevels/questStates as Records
-    const rawVillagerLevels: Record<string, unknown> = { ...s.completed.villagerLevels };
-    if (!s.completed.villagerLevels && s.completed.villagers) {
+    // Old format: villagers/skills/quests as string[]; New format: heartLevels/skillLevels/questStates as Records
+    const rawHeartLevels: Record<string, unknown> = { ...s.completed.heartLevels };
+    if (!s.completed.heartLevels && s.completed.villagers) {
       for (const id of s.completed.villagers) {
-        rawVillagerLevels[id] = LEGACY_COMPLETED_VILLAGER_LEVEL;
+        rawHeartLevels[id] = LEGACY_COMPLETED_HEART_LEVEL;
       }
     }
-    const villagerLevels = normalizeLevelRecord<VillagerId>(
-      rawVillagerLevels,
+    const heartLevels = normalizeLevelRecord<VillagerId>(
+      rawHeartLevels,
       trackerData.villagers,
-      MAX_VILLAGER_LEVEL,
+      MAX_HEART_LEVEL,
     );
 
     const rawSkillLevels: Record<string, unknown> = { ...s.completed.skillLevels };
@@ -817,12 +819,8 @@ function deserialize(json: string, mode: ValidationMode): DeserializeResult {
       dates: knownBrandedSet<DateId>(s.completed.dates ?? [], trackerData.dates),
       hasUpperFloor:
         typeof s.completed.hasUpperFloor === "boolean" ? s.completed.hasUpperFloor : false,
-      mines: {
-        floor: isFiniteNumber(s.completed.mines.floor)
-          ? clampMineFloor(s.completed.mines.floor)
-          : 0,
-        spells: knownBrandedSet<SpellId>(s.completed.mines.spells, trackerData.mines.spells),
-      },
+      heartLevels,
+      mineFloor: isFiniteNumber(s.completed.mineFloor) ? clampMineFloor(s.completed.mineFloor) : 0,
       museum: knownBrandedSet<ItemId>(s.completed.museum, MUSEUM_ITEM_IDS),
       petCosmetics: knownBrandedSet<PetCosmeticSetId>(
         s.completed.petCosmetics ?? [],
@@ -835,8 +833,8 @@ function deserialize(json: string, mode: ValidationMode): DeserializeResult {
         : "spring",
       renown: isFiniteNumber(s.completed.renown) ? clampRenownLevel(s.completed.renown) : 0,
       skillLevels,
+      spells: knownBrandedSet<SpellId>(s.completed.spells, trackerData.mines.spells),
       unlockedPerks: knownBrandedSet<PerkId>(s.completed.unlockedPerks ?? [], PERK_IDS),
-      villagerLevels,
       villagerRelationships,
     };
 
@@ -953,13 +951,8 @@ function isSerializedState(value: unknown, mode: ValidationMode): value is Seria
     return false;
   }
   if (!isStringArray(completed.cosmetics)) return false;
-  if (!isRecord(completed.mines)) return false;
-  if (
-    (mode === "strict" && !isDomainInteger(completed.mines.floor, getMaxMineFloor())) ||
-    !isStringArray(completed.mines.spells)
-  ) {
-    return false;
-  }
+  if (mode === "strict" && !isDomainInteger(completed.mineFloor, getMaxMineFloor())) return false;
+  if (!isStringArray(completed.spells)) return false;
   if (!isStringArray(completed.museum)) return false;
   // Strict backup imports require a numeric value; local recovery defaults malformed values and
   // clamps numeric drift so one scalar cannot discard otherwise valid persisted progress.
@@ -978,8 +971,8 @@ function isSerializedState(value: unknown, mode: ValidationMode): value is Seria
       completed.marriedVillager === null ||
       typeof completed.marriedVillager === "string") &&
     (mode === "local"
-      ? isOptionalRecord(completed.villagerLevels)
-      : isOptionalIntegerRecord(completed.villagerLevels, MAX_VILLAGER_LEVEL)) &&
+      ? isOptionalRecord(completed.heartLevels)
+      : isOptionalIntegerRecord(completed.heartLevels, MAX_HEART_LEVEL)) &&
     (mode === "local"
       ? isOptionalRecord(completed.villagerRelationships)
       : isOptionalEnumRecord(completed.villagerRelationships, VALID_RELATIONSHIPS)) &&
@@ -1122,10 +1115,8 @@ function serialize(state: UserState, source?: Record<string, unknown>): string {
       cosmetics: [...state.completed.cosmetics].toSorted(),
       dates: [...state.completed.dates].toSorted(),
       hasUpperFloor: state.completed.hasUpperFloor,
-      mines: {
-        floor: state.completed.mines.floor,
-        spells: [...state.completed.mines.spells].toSorted(),
-      },
+      heartLevels: filterRecord(state.completed.heartLevels, (v) => v > 0),
+      mineFloor: state.completed.mineFloor,
       museum: [...state.completed.museum].toSorted(),
       petCosmetics: [...state.completed.petCosmetics].toSorted(),
       petSkins: [...state.completed.petSkins].toSorted(),
@@ -1133,8 +1124,8 @@ function serialize(state: UserState, source?: Record<string, unknown>): string {
       reachedSeason: state.completed.reachedSeason,
       renown: state.completed.renown,
       skillLevels: filterRecord(state.completed.skillLevels, (v) => v > 0),
+      spells: [...state.completed.spells].toSorted(),
       unlockedPerks: [...state.completed.unlockedPerks].toSorted(),
-      villagerLevels: filterRecord(state.completed.villagerLevels, (v) => v > 0),
       villagerRelationships: filterRecord(
         state.completed.villagerRelationships as Record<string, VillagerRelationship>,
         (v) => v !== "undecided",
@@ -1147,7 +1138,6 @@ function serialize(state: UserState, source?: Record<string, unknown>): string {
   if (!source) return JSON.stringify(s);
 
   const sourceCompleted = isRecord(source.completed) ? source.completed : {};
-  const sourceMines = isRecord(sourceCompleted.mines) ? sourceCompleted.mines : {};
   const sourceWorldState = isRecord(source.worldState) ? source.worldState : {};
   const merged: Record<string, unknown> = {
     ...source,
@@ -1155,7 +1145,6 @@ function serialize(state: UserState, source?: Record<string, unknown>): string {
     completed: {
       ...sourceCompleted,
       ...s.completed,
-      mines: { ...sourceMines, ...s.completed.mines },
     },
     worldState: { ...sourceWorldState, ...s.worldState },
   };

@@ -51,10 +51,10 @@ export type SourceSegment =
   | string
   | {
       condition: VisibilityCondition;
-      redacted?: [SourceSegment, ...SourceSegment[]];
-      revealed: [SourceSegment, ...SourceSegment[]];
+      spoilered?: [SourceSegment, ...SourceSegment[]];
+      unspoilered: [SourceSegment, ...SourceSegment[]];
     }
-  | { redacted: true };
+  | { spoilered: true };
 
 type Segments = [SourceSegment, ...SourceSegment[]];
 type Slot = SourceSegment | SourceSegment[];
@@ -69,7 +69,7 @@ interface StoreClause {
 
 type VisibilityLookup<T> = Partial<Record<keyof T, VisibilityCondition>>;
 
-const REDACTED: SourceSegment = { redacted: true };
+const SPOILERED: SourceSegment = { spoilered: true };
 
 const RECIPE_METHOD_MESSAGES: Record<
   ProductionMethod,
@@ -107,20 +107,20 @@ export function buildBiomeLabel(biomeId: MinesBiomeId, lookups: SegmentLookups):
   const biome = requireBiome(biomeId, lookups.biomes);
 
   const { locale } = lookups;
-  const condition: VisibilityCondition = { type: "minesLevel", floor: biome.floors.start };
+  const condition: VisibilityCondition = { type: "mineFloor", floor: biome.floors.start };
   const start = String(biome.floors.start);
   const end = String(biome.floors.end);
 
   return [
     {
       condition,
-      redacted: fillMessage((slot) =>
+      spoilered: fillMessage((slot) =>
         m.source_biome_floors(
-          { start: slot(REDACTED), end: slot(REDACTED), biome: slot(REDACTED) },
+          { start: slot(SPOILERED), end: slot(SPOILERED), biome: slot(SPOILERED) },
           { locale },
         ),
       ),
-      revealed: [
+      unspoilered: [
         m.source_biome_floors(
           { start, end, biome: formatBiomeName(biomeId, lookups.biomes, lookups.locale) },
           { locale },
@@ -146,10 +146,10 @@ export function buildPerkLabel(perkId: PerkId, lookups: SegmentLookups): Segment
   return [
     {
       condition,
-      redacted: fillMessage((slot) =>
-        m.source_perk_label({ perk: slot(REDACTED), skill, tier }, { locale }),
+      spoilered: fillMessage((slot) =>
+        m.source_perk_label({ perk: slot(SPOILERED), skill, tier }, { locale }),
       ),
-      revealed: [m.source_perk_label({ perk: perk.name, skill, tier }, { locale })],
+      unspoilered: [m.source_perk_label({ perk: perk.name, skill, tier }, { locale })],
     },
   ];
 }
@@ -215,7 +215,7 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
       const nameWithArticle = withIndefiniteArticle(itemName, locale);
       const itemSegment: SourceSegment =
         itemVis && itemVis.type !== "always"
-          ? { condition: itemVis, revealed: [nameWithArticle] }
+          ? { condition: itemVis, unspoilered: [nameWithArticle] }
           : nameWithArticle;
       return fillMessage((slot) => message({ item: slot(itemSegment) }, opts));
     }
@@ -290,7 +290,7 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
       return [
         {
           condition: { type: "perkUnlocked", perkId: source.perkId },
-          revealed: fillMessage((slot) =>
+          unspoilered: fillMessage((slot) =>
             m.source_mines_dig_site_perk({ biome: slot(biomeLabel), perk }, opts),
           ),
         },
@@ -344,7 +344,7 @@ export function buildSourceSegments(source: Source, lookups: SegmentLookups): Se
       const bundleName = lookups.bundleNames[source.bundleName] ?? source.bundleName;
       const bundleSegment: SourceSegment =
         lookups.entityVisibility && lookups.entityVisibility.type !== "always"
-          ? { condition: lookups.entityVisibility, revealed: [bundleName] }
+          ? { condition: lookups.entityVisibility, unspoilered: [bundleName] }
           : bundleName;
       return fillMessage((slot) =>
         qualifier
@@ -427,13 +427,13 @@ export function buildStoreQualifier(
 
   return {
     condition: sourceVisibility,
-    redacted: fillMessage((slot) =>
+    spoilered: fillMessage((slot) =>
       formatConjunction(
-        clauses.map(() => slot(REDACTED)),
+        clauses.map(() => slot(SPOILERED)),
         locale,
       ),
     ),
-    revealed: [formatConjunction(clauses, locale)],
+    unspoilered: [formatConjunction(clauses, locale)],
   };
 }
 
@@ -467,7 +467,7 @@ function buildCookingChallengeSegments(
 
   const nameSegment: SourceSegment =
     questVis && questVis.type !== "always"
-      ? { condition: questVis, revealed: [recipeName] }
+      ? { condition: questVis, unspoilered: [recipeName] }
       : recipeName;
 
   const inner = fillMessage((slot) =>
@@ -475,7 +475,7 @@ function buildCookingChallengeSegments(
   );
 
   if (!categoryVis || categoryVis.type === "always") return inner;
-  return [{ condition: categoryVis, revealed: inner }];
+  return [{ condition: categoryVis, unspoilered: inner }];
 }
 
 function buildCrownQuestSegments(
@@ -488,14 +488,16 @@ function buildCrownQuestSegments(
   const categoryVis = lookups.categoryVisibility.crown;
 
   const subjectSegment: SourceSegment =
-    questVis && questVis.type !== "always" ? { condition: questVis, revealed: [subject] } : subject;
+    questVis && questVis.type !== "always"
+      ? { condition: questVis, unspoilered: [subject] }
+      : subject;
 
   const inner = fillMessage((slot) =>
     m.source_quest_crown({ subject: slot(subjectSegment) }, { locale: lookups.locale }),
   );
 
   if (!categoryVis || categoryVis.type === "always") return inner;
-  return [{ condition: categoryVis, revealed: inner }];
+  return [{ condition: categoryVis, unspoilered: inner }];
 }
 
 function buildFetchQuestSegments(
@@ -511,14 +513,14 @@ function buildFetchQuestSegments(
 
   const villagerSegment: SourceSegment =
     villagerVis && villagerVis.type !== "always"
-      ? { condition: villagerVis, revealed: [villagerName] }
+      ? { condition: villagerVis, unspoilered: [villagerName] }
       : villagerName;
 
   const itemId = source.requestedItemId;
   const itemName = itemId ? requireEntry(lookups.itemNames, itemId, "itemNames") : "???";
   const itemSegment: SourceSegment =
     questVis && questVis.type !== "always"
-      ? { condition: questVis, revealed: [itemName] }
+      ? { condition: questVis, unspoilered: [itemName] }
       : itemName;
 
   return fillMessage((slot) =>
@@ -544,11 +546,11 @@ function buildHeartQuestSegments(
 
   const villagerSegment: SourceSegment =
     villagerVis && villagerVis.type !== "always"
-      ? { condition: villagerVis, revealed: [villagerName] }
+      ? { condition: villagerVis, unspoilered: [villagerName] }
       : villagerName;
   const questSegment: SourceSegment =
     questVis && questVis.type !== "always"
-      ? { condition: questVis, revealed: [questName] }
+      ? { condition: questVis, unspoilered: [questName] }
       : questName;
 
   return fillMessage((slot) =>
@@ -576,7 +578,7 @@ function buildMissionQuestSegments(
 
   const nameSegment: SourceSegment =
     questVis && questVis.type !== "always"
-      ? { condition: questVis, revealed: [questName] }
+      ? { condition: questVis, unspoilered: [questName] }
       : questName;
 
   const inner = fillMessage((slot) =>
@@ -584,7 +586,7 @@ function buildMissionQuestSegments(
   );
 
   if (!categoryVis || categoryVis.type === "always") return inner;
-  return [{ condition: categoryVis, revealed: inner }];
+  return [{ condition: categoryVis, unspoilered: inner }];
 }
 
 function buildQuestSegments(source: Source & { type: "quest" }, lookups: SegmentLookups): Segments {
@@ -611,7 +613,7 @@ function buildStoreName(storeId: StoreId, lookups: SegmentLookups): Segments {
   const vis = lookups.storeVisibility[storeId];
   const name = formatStoreName(storeId, lookups.stores, lookups.locale);
   if (!vis || vis.type === "always") return [name];
-  return [{ condition: vis, revealed: [name] }];
+  return [{ condition: vis, unspoilered: [name] }];
 }
 
 function buildStoryQuestSegments(
@@ -625,7 +627,7 @@ function buildStoryQuestSegments(
   const displayName = withoutDefiniteArticle(questName, lookups.locale);
   const nameSegment: SourceSegment =
     questVis && questVis.type !== "always"
-      ? { condition: questVis, revealed: [displayName] }
+      ? { condition: questVis, unspoilered: [displayName] }
       : displayName;
 
   return fillMessage((slot) =>
@@ -709,7 +711,7 @@ function describeStoreAvailability(
     }
     case "isDating":
       return [same(m.source_clause_dating({}, opts))];
-    case "minesLevel": {
+    case "mineFloor": {
       const floor = String(condition.floor);
       return [
         {

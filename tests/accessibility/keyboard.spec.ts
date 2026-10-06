@@ -104,7 +104,7 @@ test.describe("keyboard and focus accessibility", () => {
       "light",
       createStoredState({
         completed: {
-          villagerLevels: { adeline: 10 },
+          heartLevels: { adeline: 10 },
           villagerRelationships: { adeline: "romantic" },
         },
         showSpoilers: true,

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { trackerData } from "#lib/data/index.js";
 import { getName, nameCollator } from "#lib/data/names.js";
-import { MAX_VILLAGER_LEVEL } from "#lib/engine/progress.js";
+import { MAX_HEART_LEVEL } from "#lib/engine/progress.js";
 import { makeCompletedState } from "#lib/test-utils/completed-state.js";
 import { recordKeys } from "#lib/utils/record.js";
 
@@ -11,10 +11,8 @@ import { buildVillagerRoster, filterVillagerRoster } from "./villager-roster.js"
 import type { VillagerId } from "#lib/types/tracker-data.js";
 import type { ProgressState } from "#lib/types/user-progress.js";
 
-function completedWithVillagerLevels(
-  villagerLevels: Partial<Record<VillagerId, number>>,
-): ProgressState {
-  return makeCompletedState({ villagerLevels });
+function completedWithHeartLevels(heartLevels: Partial<Record<VillagerId, number>>): ProgressState {
+  return makeCompletedState({ heartLevels });
 }
 
 describe("buildVillagerRoster", () => {
@@ -34,7 +32,7 @@ describe("filterVillagerRoster", () => {
       (id) => !trackerData.villagers[id].dateable,
     );
     if (!completedId) throw new Error("Expected a non-dateable villager fixture");
-    const completed = completedWithVillagerLevels({ [completedId]: MAX_VILLAGER_LEVEL });
+    const completed = completedWithHeartLevels({ [completedId]: MAX_HEART_LEVEL });
 
     expect(filterVillagerRoster(roster, completed, false, "").map(({ id }) => id)).not.toContain(
       completedId,

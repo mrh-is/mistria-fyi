@@ -3,8 +3,8 @@
   import { trackerData } from "#lib/data/index.js";
   import { animalNameId, getName } from "#lib/data/names.js";
   import * as m from "#lib/paraglide/messages.js";
-  import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
   import { buildBaseSegmentLookups } from "#lib/sources/segment-lookups.js";
+  import { computeSpoileredStoreIds } from "#lib/sources/spoilered-stores.js";
   import { toolbarState } from "#lib/stores/toolbar-state.svelte.js";
   import { userState } from "#lib/stores/user-state.svelte.js";
   import { recordEntries } from "#lib/utils/record.js";
@@ -59,8 +59,8 @@
           completed,
           id: cosmeticId,
           name: getName("animals", animalNameId(animalId, "cosmetics", cosmeticId), locale),
-          redacted: false,
           sources: animal.cosmetics[cosmeticId].sources,
+          spoilered: false,
         });
       }
     }
@@ -72,7 +72,7 @@
     };
   }
 
-  let redactedStoreIds = $derived(computeRedactedStoreIds(userState.progressionState));
+  let spoileredStoreIds = $derived(computeSpoileredStoreIds(userState.progressionState));
 
   let {
     areAllAnimalsComplete,
@@ -86,7 +86,7 @@
     locale: LocaleCode;
   } = $props();
 
-  let baseLookups = $derived(buildBaseSegmentLookups(redactedStoreIds, locale));
+  let baseLookups = $derived(buildBaseSegmentLookups(spoileredStoreIds, locale));
 </script>
 
 <AnimalSubcategory

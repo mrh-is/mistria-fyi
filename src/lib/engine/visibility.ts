@@ -17,6 +17,7 @@ import type { DeepReadonly } from "#lib/utils/deep-readonly.js";
 
 export interface UserProgressionState {
   hasUpperFloor: boolean;
+  heartLevels: Partial<Record<VillagerId, number>>;
   isDating: boolean;
   knownVillagers: Set<VillagerId>;
   marriedVillager: null | VillagerId;
@@ -27,7 +28,6 @@ export interface UserProgressionState {
   showSpoilers: boolean;
   skillLevels: Readonly<Partial<Record<SkillId, number>>>;
   unlockedPerks: ReadonlySet<PerkId>;
-  villagerLevels: Partial<Record<VillagerId, number>>;
 }
 
 export function deriveProgressionState(
@@ -51,16 +51,15 @@ export function deriveProgressionState(
     }
   }
 
-  const storedLevels = computeStoredVillagerLevels(completed, trackerData);
-  const villagerLevels: Partial<Record<VillagerId, number>> = {};
+  const storedLevels = computeStoredHeartLevels(completed, trackerData);
+  const heartLevels: Partial<Record<VillagerId, number>> = {};
   for (const villagerId of villagerIds) {
-    villagerLevels[villagerId] = knownVillagers.has(villagerId)
-      ? (storedLevels[villagerId] ?? 0)
-      : 0;
+    heartLevels[villagerId] = knownVillagers.has(villagerId) ? (storedLevels[villagerId] ?? 0) : 0;
   }
 
   return {
     hasUpperFloor: recorded.hasUpperFloor,
+    heartLevels,
     isDating: recorded.isDating,
     knownVillagers,
     marriedVillager: recorded.marriedVillager,
@@ -71,7 +70,6 @@ export function deriveProgressionState(
     showSpoilers,
     skillLevels: recorded.skillLevels,
     unlockedPerks: recorded.unlockedPerks,
-    villagerLevels,
   };
 }
 
@@ -83,7 +81,7 @@ export function canPlanConditionMutations(condition: VisibilityCondition): boole
     case "hasUpperFloor":
     case "heartLevel":
     case "married":
-    case "minesLevel":
+    case "mineFloor":
     case "perkUnlocked":
     case "questAvailable":
     case "questCompleted":
@@ -135,12 +133,12 @@ function evaluateCondition(
     case "hasUpperFloor":
       return state.hasUpperFloor;
     case "heartLevel":
-      return (state.villagerLevels[condition.villagerId] ?? 0) >= condition.level;
+      return (state.heartLevels[condition.villagerId] ?? 0) >= condition.level;
     case "isDating":
       return state.isDating;
     case "married":
       return state.marriedVillager === condition.villagerId;
-    case "minesLevel":
+    case "mineFloor":
       return state.mineFloor >= condition.floor;
     case "or":
       return condition.conditions.some((c) => evaluateCondition(c, state));
@@ -168,20 +166,21 @@ function evaluateCondition(
 type ConditionDraft = Pick<
   ProgressState,
   | "hasUpperFloor"
+  | "heartLevels"
+  | "mineFloor"
   | "questStates"
   | "reachedSeason"
   | "renown"
   | "skillLevels"
   | "unlockedPerks"
-  | "villagerLevels"
   | "villagerRelationships"
-> & { mines: Pick<ProgressState["mines"], "floor"> };
+>;
 
 export type ConditionMutation =
   | { type: "hasUpperFloor" }
   | { type: "heartLevel"; level: number; villagerId: VillagerId }
   | { type: "married"; villagerId: VillagerId }
-  | { type: "minesLevel"; floor: number }
+  | { type: "mineFloor"; floor: number }
   | { type: "perkUnlocked"; perkId: PerkId }
   | { type: "questCompleted"; questId: QuestId }
   | { type: "reachedSeason"; season: Season }
@@ -197,18 +196,17 @@ export function planConditionMutations(
   // Only these fields can be touched by prerequisite traversal; all other progress is read-only.
   const draft = {
     ...completed,
-    mines: { ...completed.mines },
+    heartLevels: { ...completed.heartLevels },
     questStates: { ...completed.questStates },
     skillLevels: { ...completed.skillLevels },
     unlockedPerks: new Set(completed.unlockedPerks),
-    villagerLevels: { ...completed.villagerLevels },
     villagerRelationships: { ...completed.villagerRelationships },
   };
   planConditionMutationsInDraft(condition, draft, trackerData);
   const mutations: ConditionMutation[] = [];
   if (draft.hasUpperFloor !== completed.hasUpperFloor) mutations.push({ type: "hasUpperFloor" });
-  if (draft.mines.floor !== completed.mines.floor) {
-    mutations.push({ type: "minesLevel", floor: draft.mines.floor });
+  if (draft.mineFloor !== completed.mineFloor) {
+    mutations.push({ type: "mineFloor", floor: draft.mineFloor });
   }
   if (draft.renown !== completed.renown) {
     mutations.push({ type: "renownLevel", level: draft.renown });
@@ -216,8 +214,8 @@ export function planConditionMutations(
   if (draft.reachedSeason !== completed.reachedSeason) {
     mutations.push({ type: "reachedSeason", season: draft.reachedSeason });
   }
-  for (const [villagerId, level] of recordEntries(draft.villagerLevels)) {
-    if (level !== completed.villagerLevels[villagerId]) {
+  for (const [villagerId, level] of recordEntries(draft.heartLevels)) {
+    if (level !== completed.heartLevels[villagerId]) {
       mutations.push({ type: "heartLevel", level, villagerId });
     }
   }
@@ -261,8 +259,8 @@ function planConditionMutationsInDraft(
       completed.hasUpperFloor = true;
       return;
     case "heartLevel":
-      completed.villagerLevels[condition.villagerId] = Math.max(
-        completed.villagerLevels[condition.villagerId] ?? 0,
+      completed.heartLevels[condition.villagerId] = Math.max(
+        completed.heartLevels[condition.villagerId] ?? 0,
         condition.level,
       );
       return;
@@ -272,8 +270,8 @@ function planConditionMutationsInDraft(
         applyMarriageCascade(completed.villagerRelationships);
       }
       return;
-    case "minesLevel":
-      completed.mines.floor = Math.max(completed.mines.floor, condition.floor);
+    case "mineFloor":
+      completed.mineFloor = Math.max(completed.mineFloor, condition.floor);
       return;
     case "or": {
       // The UI is expected to let the user pick a branch and call `planConditionMutations` with just
@@ -309,11 +307,11 @@ function planConditionMutationsInDraft(
 }
 
 /** Scan completed story quests once, taking the maximum of all recorded & cascaded levels. */
-function computeStoredVillagerLevels(
+function computeStoredHeartLevels(
   completed: DeepReadonly<ProgressState>,
   trackerData: TrackerData,
 ): Partial<Record<VillagerId, number>> {
-  const levels = { ...completed.villagerLevels };
+  const levels = { ...completed.heartLevels };
   for (const [questId, state] of recordEntries(completed.questStates)) {
     if (state !== "completed") continue;
     if (!(questId in trackerData.quests.story)) continue;
@@ -332,13 +330,14 @@ function recordedProgressContext(
 ): ConditionContext {
   const context: ConditionContext = {
     hasUpperFloor: completed.hasUpperFloor,
+    heartLevels: completed.heartLevels,
     isDating: recordKeys(completed.villagerRelationships).some((villagerId) =>
       isRomantic(completed.villagerRelationships, villagerId),
     ),
     isVillagerKnown: (villagerId) =>
       evaluateCondition(trackerData.villagers[villagerId].visibility, context),
     marriedVillager: getSpouseId(completed.villagerRelationships),
-    mineFloor: completed.mines.floor,
+    mineFloor: completed.mineFloor,
     questStatus: (questId) => {
       const stored = completed.questStates[questId] ?? "none";
       switch (stored) {
@@ -354,7 +353,6 @@ function recordedProgressContext(
     renown: completed.renown,
     skillLevels: completed.skillLevels,
     unlockedPerks: completed.unlockedPerks,
-    villagerLevels: completed.villagerLevels,
   };
   return context;
 }
