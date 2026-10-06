@@ -1,14 +1,12 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import { toast } from "svelte-sonner";
 
   import TrackerRow from "#lib/components/tracker-row.svelte";
   import VillagerSearchResult from "#lib/components/villager-search-result.svelte";
   import { categoryNameForKey } from "#lib/data/categories.js";
   import { trackerData } from "#lib/data/index.js";
   import { hasNames, loadNames, LOCALIZED_CATEGORIES } from "#lib/data/names.js";
-  import { showUndoToast } from "#lib/effects/undo-toast.js";
-  import { recipeDisplayNames } from "#lib/engine/quest-rewards.js";
+  import { showQuestToast, showUndoToast } from "#lib/effects/undo-toast.js";
   import { searchItems } from "#lib/engine/search.js";
   import * as m from "#lib/paraglide/messages.js";
   import { computeRedactedStoreIds } from "#lib/sources/redacted-stores.js";
@@ -116,36 +114,9 @@
   function handleQuestToggle(result: SearchResult): void {
     const questId = result.id as QuestId;
     const completion = userState.completeQuestWithRecipes(questId);
-    const { newlyAdded } = completion;
     const newState = userState.state.completed.questStates[questId] ?? "none";
-
-    let message: string;
-    if (newState === "obtained") {
-      message = m.quest_marked_obtained({ name: result.name });
-    } else if (newState === "completed") {
-      if (newlyAdded.length === 1) {
-        const names = recipeDisplayNames(newlyAdded, locale);
-        message = m.quest_marked_completed_with_recipe({ name: result.name, recipe: names[0] });
-      } else if (newlyAdded.length > 1) {
-        message = m.quest_marked_completed_with_recipes({
-          count: newlyAdded.length,
-          name: result.name,
-        });
-      } else {
-        message = m.quest_marked_completed({ name: result.name });
-      }
-    } else {
-      message = m.quest_reset({ name: result.name });
-    }
-
-    toast(message, {
-      cancel: {
-        label: m.action_undo(),
-        onClick: () => {
-          userState.undoQuestWithRecipes(questId, completion);
-        },
-      },
-      duration: 30_000,
+    showQuestToast(result.name, newState, completion.newlyAdded, locale, () => {
+      userState.undoQuestWithRecipes(questId, completion);
     });
   }
 

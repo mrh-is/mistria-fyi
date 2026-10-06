@@ -9,15 +9,17 @@ import { userState } from "#lib/stores/user-state.svelte.js";
 import { renderWithFeedback } from "#lib/test-utils/render-with-feedback.js";
 import { recordEntries } from "#lib/utils/record.js";
 
-import type { ItemId, VillagerId } from "#lib/types/tracker-data.js";
+import type { ItemId, QuestId, VillagerId } from "#lib/types/tracker-data.js";
 
 const showUndoToast = vi.hoisted(() => vi.fn());
+const showQuestToast = vi.hoisted(() => vi.fn());
 
-vi.mock("#lib/effects/undo-toast.js", () => ({ showUndoToast }));
+vi.mock("#lib/effects/undo-toast.js", () => ({ showQuestToast, showUndoToast }));
 
 afterEach(() => {
   userState.resetAll();
   showUndoToast.mockReset();
+  showQuestToast.mockReset();
 });
 
 describe("SearchResults completion dispatch", () => {
@@ -111,7 +113,48 @@ describe("SearchResults completion dispatch", () => {
     undoLastToggle();
     expect(userState.state.completed.petSkins.has(id)).toBe(false);
   });
+
+  it("advances a quest result through the shared quest toast and undoes it", async () => {
+    const { id, name } = questFixture();
+
+    renderWithFeedback(SearchResults, { locale: "en", query: name });
+    await fireEvent.click(rowToggle("Quests", name));
+
+    const nextState = userState.state.completed.questStates[id];
+    expect(nextState).toBeDefined();
+    expect(showUndoToast).not.toHaveBeenCalled();
+    expect(showQuestToast).toHaveBeenCalledExactlyOnceWith(
+      name,
+      nextState,
+      expect.any(Array),
+      "en",
+      expect.any(Function),
+    );
+    const undo = showQuestToast.mock.calls[0]?.[4] as () => void;
+    undo();
+    expect(userState.state.completed.questStates[id] ?? "none").toBe("none");
+  });
 });
+
+/** A quest whose name finds its own search row. */
+function questFixture(): { id: QuestId; name: string } {
+  for (const byType of Object.values(trackerData.quests)) {
+    for (const id of Object.keys(byType) as QuestId[]) {
+      const name = getName("quests", id, "en");
+      const results = searchItems(
+        name,
+        userState.state.completed,
+        userState.state.worldState,
+        userState.progressionState,
+        "en",
+      );
+      if (results.some((result) => result.category === "quests" && result.id === id)) {
+        return { id, name };
+      }
+    }
+  }
+  throw new Error("Expected tracker data to contain a searchable quest");
+}
 
 function museumOnlyFixture(): { id: ItemId; name: string } {
   const canonicalIds = new Set(trackerIndex.almanacEntries.map((entry) => entry.itemIds[0]));

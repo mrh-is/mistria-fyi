@@ -29,7 +29,7 @@
 
   import type { Source } from "#lib/types/acquisition.js";
   import type { LocaleCode } from "#lib/types/locale.js";
-  import type { AlmanacEntry, ItemId } from "#lib/types/tracker-data.js";
+  import type { AlmanacEntry, Item, ItemId } from "#lib/types/tracker-data.js";
   import type { VisibilityCondition } from "#lib/types/visibility.js";
   import type { TrackerRowDisplay } from "#lib/utils/row-display.js";
 
@@ -96,6 +96,69 @@
   let nameFilter = $derived(toolbarState.searchQuery);
 
   registerSourceFilters("almanac", () => trackerIndex.categorySourceTypes.almanac);
+
+  interface AlmanacRow {
+    canonicalId: ItemId;
+    entry: AlmanacEntry;
+    item: Item;
+    name: string;
+  }
+
+  /** Each almanac category's rows, named & sorted for the locale. */
+  let almanacSections = $derived(
+    recordEntries(trackerData.almanac).map(([id, cat]) => ({
+      canonicalIds: cat.items.map((entry) => entry.itemIds[0]),
+      id,
+      rows: cat.items
+        .map((entry): AlmanacRow => {
+          const canonicalId = entry.itemIds[0];
+          return {
+            canonicalId,
+            entry,
+            item: trackerData.items[canonicalId],
+            name: getName("items", canonicalId, locale),
+          };
+        })
+        .toSorted((a, b) => nameCollator(locale).compare(a.name, b.name)),
+    })),
+  );
+
+  /**
+   * Each section's rows narrowed in three steps: `baseRows` (search & availability; the section
+   * renders only when non-empty), `scopedRows` (plus source filters; the counter), and
+   * `visibleRows` (plus completed-row hiding; what renders).
+   */
+  let sectionViews = $derived(
+    almanacSections.map((section) => {
+      const baseRows = section.rows.filter(({ canonicalId, entry, item, name }) => {
+        if (!matchesFilter(name)) return false;
+        if (nameFilter && !itemNameVisible(item)) return false;
+        return shouldCountItem(
+          aggregateSources(entry),
+          isItemCompleted(canonicalId),
+          userState.state.worldState,
+          userState.state.availabilityWindows,
+        );
+      });
+      const scopedRows = baseRows.filter(({ entry }) =>
+        toolbarState.matchesSourceFilters(aggregateSources(entry)),
+      );
+      return {
+        ...section,
+        baseRows,
+        completedCount: scopedRows.filter(({ canonicalId }) => isItemCompleted(canonicalId)).length,
+        scopedRows,
+        visibleRows: scopedRows.filter(({ canonicalId }) =>
+          isRowVisible(
+            canonicalId,
+            isItemCompleted(canonicalId),
+            userState.state.showCompleted,
+            recentlyCompleted.ids,
+          ),
+        ),
+      };
+    }),
+  );
 
   onDestroy(() => {
     for (const frame of sectionFrames.values()) {
@@ -164,41 +227,11 @@
 
 <SpoilerGuardDialog guard={spoilerGuard} />
 
-{#each recordEntries(trackerData.almanac) as [id, cat] (id)}
-  {@const catCanonicalIds = cat.items.map((entry) => entry.itemIds[0])}
-  {@const catEntries = cat.items
-    .map((entry) => {
-      const canonicalId = entry.itemIds[0];
-      const item = trackerData.items[canonicalId];
-      return { canonicalId, entry, item, name: getName("items", canonicalId, locale) };
-    })
-    .sort((a, b) => nameCollator(locale).compare(a.name, b.name))}
-  {@const baseItems = catEntries.filter(({ canonicalId, entry, name }) => {
-    if (!matchesFilter(name)) return false;
-    if (nameFilter && !itemNameVisible(trackerData.items[canonicalId])) return false;
-    const sources = aggregateSources(entry);
-    return shouldCountItem(
-      sources,
-      isItemCompleted(canonicalId),
-      userState.state.worldState,
-      userState.state.availabilityWindows,
-    );
-  })}
-  {@const scopedItems = baseItems.filter(({ entry }) =>
-    toolbarState.matchesSourceFilters(aggregateSources(entry)),
-  )}
-  {@const filteredItems = scopedItems.filter(({ canonicalId }) =>
-    isRowVisible(
-      canonicalId,
-      isItemCompleted(canonicalId),
-      userState.state.showCompleted,
-      recentlyCompleted.ids,
-    ),
-  )}
-  {#if baseItems.length > 0}
+{#each sectionViews as { baseRows, canonicalIds, completedCount, id, scopedRows, visibleRows } (id)}
+  {#if baseRows.length > 0}
     {@const showAll = expandedSections[id] ?? false}
     {@const isOpen = openSections[id] ?? false}
-    {@const renderTarget = sectionRenderTarget(filteredItems.length, showAll)}
+    {@const renderTarget = sectionRenderTarget(visibleRows.length, showAll)}
     {@const shouldBypassBatching =
       isOpen && !sectionFrames.has(id) && (renderedSectionCounts[id] ?? 0) < renderTarget}
     {@const renderedCount =
@@ -207,26 +240,26 @@
         : Math.min(renderedSectionCounts[id] ?? renderTarget, renderTarget)}
     <ExpandableSection
       {locale}
-      count={scopedItems.filter(({ canonicalId }) => isItemCompleted(canonicalId)).length}
+      count={completedCount}
       forceOpen={!!nameFilter}
       name={getName("ui", id, locale)}
       onExpandedChange={(open: boolean) => {
-        setSectionOpen(id, open, sectionRenderTarget(filteredItems.length, showAll));
+        setSectionOpen(id, open, sectionRenderTarget(visibleRows.length, showAll));
       }}
       reportCategory="almanac"
       reportEntityId={id}
-      total={scopedItems.length}
+      total={scopedRows.length}
     >
       <TrackerRowList
         expanded={showAll}
         getKey={(item) => item.canonicalId}
-        items={filteredItems}
+        items={visibleRows}
         limited
         loadingMessage={nameFilter ? undefined : m.almanac_loading_items()}
         onShowMore={() => {
           expandedSections[id] = true;
           if (openSections[id]) {
-            scheduleSectionRendering(id, filteredItems.length);
+            scheduleSectionRendering(id, visibleRows.length);
           }
         }}
         {renderedCount}
@@ -246,10 +279,10 @@
             spriteClass="text-cat-almanac"
             onToggle={() => {
               if (itemNameVisible({ visibility: itemVisibility }) || itemCompleted) {
-                toggleItem(canonicalId, name, catCanonicalIds);
+                toggleItem(canonicalId, name, canonicalIds);
               } else {
                 spoilerGuard.guard(itemVisibility, () => {
-                  toggleItem(canonicalId, name, catCanonicalIds);
+                  toggleItem(canonicalId, name, canonicalIds);
                 });
               }
             }}
