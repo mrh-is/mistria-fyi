@@ -9,6 +9,12 @@ const helper = resolve("scripts/public-repo/rewrite-references.py");
 const script = resolve("scripts/public-repo/build-candidate.sh");
 const temporary: string[] = [];
 
+// Construct synthetic URLs at runtime so filtering a candidate does not rewrite test inputs.
+function privateUrl(kind: "issues" | "pull", number: number, suffix = ""): string {
+  const repository = ["https://github.com", "mrh-is", "mistria-fyi"].join("/");
+  return `${repository}/${kind}/${number}${suffix}`;
+}
+
 function directory(): string {
   const path = mkdtempSync(join(tmpdir(), "public-candidate-test-"));
   temporary.push(path);
@@ -71,17 +77,42 @@ describe("public candidate reference rewriting", () => {
 
   it("rewrites only this repository’s URLs in file contents, preserving bare Markdown references", () => {
     expect(
-      rewrite(
-        "#1 mrh-is/mistria-fyi#2 issue 2 (private beta)
-        false,
-      ),
+      rewrite(`#1 mrh-is/mistria-fyi#2 ${privateUrl("pull", 2, "#discussion_r123")}`, false),
     ).toBe("#1 mrh-is/mistria-fyi#2 PR 2 (private beta)");
   });
 
   it("maps transferred issues once, even when the destination is another old number", () => {
-    expect(rewrite("#1 #2 PR 1 (private beta)", true, "1 2\n")).toBe(
-      "#2 PR 2 (private beta) issue 2 (private beta)",
+    expect(rewrite(`#1 #2 ${privateUrl("issues", 1)}`, true, "1 2\n")).toBe(
+      `#2 PR 2 (private beta) ${privateUrl("issues", 2)}`,
     );
+  });
+
+  it("turns unmapped Markdown links into readable text & preserves mapped links", () => {
+    const link = `[issue #1](${privateUrl("issues", 1)} "Issue title")`;
+    expect(rewrite(link, false)).toBe("issue #1 (private beta)");
+    expect(rewrite(link, false, "1 2\n")).toBe(
+      `[issue #1](${privateUrl("issues", 2)} "Issue title")`,
+    );
+    expect(rewrite(`[**PR #2**](<${privateUrl("pull", 2, "/files")}>)`, false)).toBe(
+      "**PR #2** (private beta)",
+    );
+    const other = `[other](https://github.com/other/repo/issues/1) [unknown](${privateUrl("issues", 999)})`;
+    expect(rewrite(other, false)).toBe(other);
+  });
+
+  it("consumes URL subpaths for unmapped references & preserves them for mapped references", () => {
+    expect(rewrite(privateUrl("pull", 2, "/files?diff=split#change"), false)).toBe(
+      "PR 2 (private beta)",
+    );
+    expect(rewrite(privateUrl("issues", 1, "/comments?view=all#last"), false, "1 2\n")).toBe(
+      privateUrl("issues", 2, "/comments?view=all#last"),
+    );
+  });
+
+  it("leaves NUL-containing binary blobs byte-identical", () => {
+    const binary = `\0${privateUrl("issues", 1)}\0`;
+    expect(rewrite(binary, false)).toBe(binary);
+    expect(rewrite(binary, false, "1 2\n")).toBe(binary);
   });
 
   it("rejects duplicate mappings, nonexistent issues, and PR mappings", () => {
@@ -159,7 +190,12 @@ describe("public candidate history filtering", () => {
         join(source, "scripts/measure-transfer-size.ts"),
         ["", "Users", "fixture", "private"].join("/"),
       );
-      writeFileSync(join(source, "README.md"), "PR 1 (private beta)\n");
+      writeFileSync(
+        join(source, "README.md"),
+        `${privateUrl("issues", 1)}\n[issue #1](${privateUrl("issues", 1)})\n`,
+      );
+      const binary = Buffer.concat([Buffer.from([0, 255]), Buffer.from(privateUrl("issues", 1))]);
+      writeFileSync(join(source, "asset.bin"), binary);
       commit("Fix #1");
       const first = git("rev-parse", "HEAD").trim();
       git("tag", "old-tag");
@@ -187,7 +223,10 @@ describe("public candidate history filtering", () => {
         }).trim(),
       ).toBe("refs/heads/main");
       expect(execFileSync("git", ["-C", output, "remote"], { encoding: "utf8" }).trim()).toBe("");
-      expect(readFileSync(join(output, "README.md"), "utf8")).toBe("issue 1 (private beta)\n");
+      expect(readFileSync(join(output, "README.md"), "utf8")).toBe(
+        "issue 1 (private beta)\nissue #1 (private beta)\n",
+      );
+      expect(readFileSync(join(output, "asset.bin"))).toEqual(binary);
       const report = readFileSync(join(output, ".git/candidate-audit/rewrites.jsonl"), "utf8");
       expect(report).toContain('"path": "README.md"');
       expect(report).toContain(first);

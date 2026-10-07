@@ -51,6 +51,12 @@ subjects become `Merge pull request N (private beta) from …`. In both messages
 repository’s issue/PR URLs receive the same treatment. Bare references in file contents remain
 unchanged. Unknown numbers & references to other repositories remain unchanged.
 
+For an unmapped Markdown link, the whole link becomes its label followed by “(private beta)”, rather
+than leaving non-URL text in a link target. Mapped links retain their labels, link titles, & URL
+subpaths, queries, or fragments, with only the issue number changed. Unmapped URL subpaths, queries,
+& fragments are removed along with the private URL. File blobs containing a NUL byte are treated as
+binary & remain byte-identical.
+
 At cutover, pass an issue-transfer mapping, one `old new` pair per line:
 
 ```text
@@ -110,6 +116,25 @@ files, commits, or detectors; a different token in the same file remains detecta
 automatically.
 
 ## Regression checks
+
+Before publishing a candidate, verify its rewritten tip as well as the source branch. URL rewrites
+apply throughout text files, including source code & test fixtures; source-branch CI alone does not
+verify that the candidate still lints, type-checks, tests, & builds. With the repository’s Node 24 &
+pinned pnpm, run:
+
+```bash
+cd /private/tmp/mistria-frozen-candidate
+pnpm install --frozen-lockfile
+pnpm run verify
+git diff --exit-code
+```
+
+Save the verification output alongside the candidate’s audit reports. Verification must exit zero &
+leave the tracked tip unchanged before publication. Do not run `lint:fix` or edit tracked files in
+the candidate: fix a failure in the source or rewrite procedure, then rebuild & rerun the audits.
+Asset-dependent checks remain separate; the standard matrix needs no game files.
+
+For the rewrite procedure itself, run:
 
 ```bash
 pnpm exec vitest run scripts/public-repo/build-candidate.test.ts

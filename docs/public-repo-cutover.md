@@ -191,8 +191,9 @@ Not present: `package.json` has no `repository`, `homepage`, or `bugs` field; th
 
 ## Rewiring checklist
 
-Steps follow the #671 runbook (private beta); each item here
-slots into the runbook step named in brackets. Run items in order. Every item has a check.
+Steps follow the #671 runbook (private beta).
+
+Each item slots into the runbook step named in brackets. Run items in order. Every item has a check.
 **Maintainer** marks steps only the repository owner can do.
 
 ### Before the freeze
@@ -226,6 +227,10 @@ slots into the runbook step named in brackets. Run items in order. Every item ha
       you don’t want (`pre-launch`). _Check:_ `gh label list --repo mrh-is/mistria-fyi` includes
       `user feedback`, `shadcn-update`, `generated-data`, & both `agent:` labels. Do this before the
       issue transfer.
+- [ ] **[Step 6] Verify the filtered candidate before pushing.** Follow the
+      [candidate verification procedure](public-repo.md#regression-checks), including the full
+      read-only matrix & a clean tracked tip. _Check:_ verification exits zero & its output is saved
+      with the candidate’s audit reports.
 - [ ] **[Step 6] Push the filtered history before enabling the ruleset.** The ruleset’s required
       status checks would reject a direct push to `main`. _Check:_
       `git ls-remote origin refs/heads/main` equals the filter script’s output tip.
