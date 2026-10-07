@@ -18,6 +18,7 @@ interface Workflow {
 }
 
 interface WorkflowJob {
+  concurrency?: Workflow["concurrency"];
   container?: string | { image?: string; options?: string };
   if?: string;
   needs?: string | string[];
@@ -380,11 +381,14 @@ describe("CI workflow gate", () => {
 describe("PR metadata workflows", () => {
   const metadataWorkflows = ["attribution", "guarded-paths"] as const;
 
-  // `gh pr create --label` fires `opened` & `labeled` together; cancelling one leaves a cancelled
-  // required check, which GitHub counts as failing.
-  it.each(metadataWorkflows)("%s never cancels an in-progress required check", (name) => {
+  // `opened` & multiple `labeled` events can arrive together. Even cancel-in-progress: false
+  // replaces an existing pending run, leaving a cancelled required check that blocks merges.
+  it.each(metadataWorkflows)("%s lets every required-check run finish independently", (name) => {
     const file = parse(readFileSync(`.github/workflows/${name}.yml`, "utf8")) as Workflow;
-    expect(file.concurrency?.["cancel-in-progress"]).toBe(false);
+    expect(file.concurrency).toBeUndefined();
+    for (const job of Object.values(file.jobs ?? {})) {
+      expect(job.concurrency).toBeUndefined();
+    }
   });
 
   it.each(metadataWorkflows)("%s reads labels from the live PR, not the event payload", (name) => {
