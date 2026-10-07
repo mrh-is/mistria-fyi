@@ -21,6 +21,8 @@ export default defineConfig({
   use: {
     ...devices["Desktop Chrome"],
     baseURL: `http://127.0.0.1:${String(port)}`,
+    // GitHub's runner image supplies Chrome & its libraries; local runs use pinned Chromium.
+    channel: isCi ? "chrome" : undefined,
     locale: "en-US",
     screenshot: "only-on-failure",
     serviceWorkers: "allow",

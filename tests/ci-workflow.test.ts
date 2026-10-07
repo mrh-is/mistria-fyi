@@ -1,6 +1,6 @@
 /* oxlint-disable no-template-curly-in-string -- these tests assert literal GitHub Actions `${{ }}` expression text */
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { parse } from "yaml";
 
 interface Workflow {
@@ -48,6 +48,25 @@ const jobs = workflow.jobs ?? {};
 const browserJobs = ["accessibility", "pwa"] as const;
 const requiredJobs = ["changes", "lint", "check", "test", "build", "ci-passed"] as const;
 const installJobs = ["lint", "check", "test", "build", ...browserJobs, "issue-sync"] as const;
+
+describe("browser selection", () => {
+  it.each(["true", "false", undefined])("selects runner Chrome only when CI is %s", async (ci) => {
+    vi.stubEnv("CI", ci);
+    // Workers skip the preview-owner probe; loading a config must not contact a server here.
+    vi.stubEnv("TEST_WORKER_INDEX", "0");
+    vi.resetModules();
+    try {
+      const accessibility = await import("../playwright.config.js");
+      const pwa = await import("../playwright.pwa.config.js");
+      for (const config of [accessibility.default, pwa.default]) {
+        expect(config.use).toHaveProperty("channel", ci === "true" ? "chrome" : undefined);
+      }
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
+  });
+});
 
 function runCommands(job: undefined | WorkflowJob): string[] {
   return job?.steps?.flatMap((step) => (step.run === undefined ? [] : [step.run])) ?? [];
@@ -280,22 +299,14 @@ describe("CI workflow browser suites", () => {
     expect(pwaStep?.env).toEqual({ PLAYWRIGHT_SKIP_BUILD: "true" });
   });
 
-  it("runs browser suites on host runners with cached Chromium", () => {
+  it("runs browser suites with the runner's Chrome without installing browsers or apt deps", () => {
     for (const jobName of browserJobs) {
       expect(jobs[jobName].container).toBeUndefined();
       const steps = jobs[jobName].steps ?? [];
-      const cache = steps.find((step) => step.id === "playwright-cache");
-      expect(cache?.uses).toMatch(/^actions\/cache@[a-f0-9]{40}$/);
-      expect(cache?.with?.path).toBe("~/.cache/ms-playwright");
-      expect(cache?.with?.key).toBe("playwright-${{ hashFiles('pnpm-lock.yaml') }}");
-      const install = steps.find((step) => step.env?.PLAYWRIGHT_INSTALL !== undefined);
-      expect(install?.env?.PLAYWRIGHT_INSTALL).toBe(
-        "${{ steps.playwright-cache.outputs.cache-hit == 'true' && 'install-deps chromium' || 'install --with-deps chromium' }}",
-      );
-      expect(install?.["timeout-minutes"]).toBe(12);
-      expect(install?.run).toContain("for attempt in 1 2; do");
-      expect(install?.run).toContain(
-        "timeout --kill-after=30s 5m pnpm exec playwright $PLAYWRIGHT_INSTALL && exit 0",
+      expect(steps.find((step) => step.id === "playwright-cache")).toBeUndefined();
+      expect(steps.find((step) => step.env?.PLAYWRIGHT_INSTALL !== undefined)).toBeUndefined();
+      expect(runCommands(jobs[jobName]).join("\n")).not.toMatch(
+        /playwright install|install-deps|--with-deps|apt-get/,
       );
       expect(runCommands(jobs[jobName])).not.toContain(
         'git config --global --add safe.directory "$GITHUB_WORKSPACE"',
