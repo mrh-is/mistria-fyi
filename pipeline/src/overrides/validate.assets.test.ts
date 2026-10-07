@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { evaluateExpressions } from "../evaluate.js";
-import { parseFiddle } from "../parse-fiddle.js";
+import { evaluateExpressions } from "../parse/evaluate.js";
+import { parseFiddle } from "../parse/parse-fiddle.js";
 import { requireGameAssetsDir } from "../test-helpers.js";
 import { validateReviewedGameFacts } from "./validate.js";
 
-import type { ParsedGameData } from "../parse-fiddle.js";
+import type { ParsedGameData } from "../parse/parse-fiddle.js";
 
 function installedFacts(): ParsedGameData {
   const { data } = parseFiddle(requireGameAssetsDir());

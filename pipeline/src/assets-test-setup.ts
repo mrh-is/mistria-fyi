@@ -1,4 +1,4 @@
-import { prepareGameAssets } from "./asset-input.js";
+import { prepareGameAssets } from "./parse/asset-input.js";
 
 export async function setup(): Promise<void> {
   const { assetsDir } = await prepareGameAssets(process.env.MISTRIA_ASSETS);

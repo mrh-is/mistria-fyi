@@ -3,33 +3,35 @@
  * serializes output. Writes begin only after every transformation succeeds.
  * --parse-only checks parser structure without requiring a particular game version.
  */
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { open } from "yauzl-promise";
 
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { assembleTrackerData } from "./assemble.js";
+import { parseCliOptions } from "./cli-options.js";
+import { publishFiles } from "./emit/publish.js";
+import { extractSprites, extractVillagerSprites, publishSprites } from "./emit/sprites.js";
+import { extractVillagerIconSprites } from "./extract/villagers.js";
+import { assertGameLanguageMapExhaustive } from "./localize/locale-codes.js";
+import { createAssetsLocalizer, generateLocaleManifest } from "./localize/localize.js";
+import { validateReviewedGameFacts } from "./overrides/validate.js";
 import {
   DEFAULT_WINDOWS_STEAM_ASSETS_DIR,
   readInstalledGameVersion,
   resolveAssetsZipPath,
-} from "./assets-zip.js";
-import { parseCliOptions } from "./cli-options.js";
-import { evaluateExpressions } from "./evaluate.js";
-import { extractSprites, extractVillagerSprites, publishSprites } from "./extractors/sprites.js";
-import { extractVillagerIconSprites } from "./extractors/villagers.js";
-import { assertGameLanguageMapExhaustive } from "./locale-codes.js";
-import { createAssetsLocalizer, generateLocaleManifest } from "./localize.js";
-import { validateReviewedGameFacts } from "./overrides/validate.js";
-import { parseFiddle, parseFiddleFromZip } from "./parse-fiddle.js";
-import { checkParseSmoke } from "./parse-smoke.js";
+} from "./parse/assets-zip.js";
+import { evaluateExpressions } from "./parse/evaluate.js";
+import { parseFiddle, parseFiddleFromZip } from "./parse/parse-fiddle.js";
+import { checkParseSmoke } from "./parse/parse-smoke.js";
 
 import type { ZipFile } from "yauzl-promise";
 
 import type { LocaleChunk } from "./assemble.js";
-import type { SpriteExtractionResult, StagedSprite } from "./extractors/sprites.js";
-import type { ParsedGameData } from "./parse-fiddle.js";
+import type { StagedFile } from "./emit/publish.js";
+import type { SpriteExtractionResult, StagedSprite } from "./emit/sprites.js";
+import type { ParsedGameData } from "./parse/parse-fiddle.js";
 
 const __dirname = import.meta.dirname;
 const PIPELINE_ROOT = resolve(__dirname, "..");
@@ -37,11 +39,6 @@ const OUTPUT_DIR = resolve(PIPELINE_ROOT, "output");
 const APP_DATA_DIR = resolve(PIPELINE_ROOT, "..", "src", "lib", "data");
 const OUTPUT_FILE = "tracker-data.json";
 const SPRITES_OUTPUT_ROOT = resolve(OUTPUT_DIR, "sprites");
-
-interface StagedFile {
-  content: string;
-  path: string;
-}
 
 /** Logs sprite extraction results for a given entity kind. */
 function logSpriteExtraction(label: string, result: SpriteExtractionResult): void {
@@ -232,14 +229,6 @@ async function main(): Promise<void> {
   );
 
   console.log("\n✅ Pipeline complete!");
-}
-
-/** Writes staged text outputs to disk. Call only after every pipeline validation passes. */
-function publishFiles(staged: readonly StagedFile[]): void {
-  for (const { content, path } of staged) {
-    mkdirSync(dirname(path), { recursive: true });
-    writeFileSync(path, content);
-  }
 }
 
 /**

@@ -7,7 +7,7 @@ Confusing them, or assuming one guarantees the other, is the most common mistake
 
 **Game data names** (items, villagers, locations, festivals, recipes, ...) come from Fields of
 Mistria's own translation tables in `assets.zip` under `assets/localization/`. The pipeline
-(`pipeline/src/localize.ts`) reads them and writes localized names into
+(`pipeline/src/localize/localize.ts`) reads them and writes localized names into
 `src/lib/data/locales/<locale>/<category>.json` chunks. Structural records in
 `src/lib/data/tracker-data.json` deliberately omit migrated display names. MFG never edits this
 content and never invents a translation for it — a category with missing or unclear game-side
@@ -28,10 +28,10 @@ one players recognize.
 
 MFG's own chrome names plenty of concepts the game names too: category names ("Almanac",
 "Villagers", "Renown"), seasons, quest types, relationship statuses, "Cancel". Those are not
-Paraglide messages. `APP_UI_STRINGS` in `pipeline/src/extractors/ui-strings.ts` lists the
-`misc_local` keys the app displays, the pipeline writes them into the `ui` chunk, and the root
-layout (`src/routes/+layout.ts`) awaits that chunk on every route, so `getName("ui", id, locale)`
-works anywhere.
+Paraglide messages. `APP_UI_STRINGS` in `pipeline/src/localize/ui-strings.ts` lists the `misc_local`
+keys the app displays, the pipeline writes them into the `ui` chunk, and the root layout
+(`src/routes/+layout.ts`) awaits that chunk on every route, so `getName("ui", id, locale)` works
+anywhere.
 
 ### Getting the locale in components
 
@@ -152,9 +152,9 @@ items, museum wings use `museum_wings`, and locations use `locations` (`location
 game leaves some source names untranslated or unnamed, so `source-names.ts` fills the gaps:
 
 - **Monsters:** English reads the `monsters` chunk, named after each monster's `pets.toml` variant
-  (`pipeline/src/extractors/monsters.ts` holds the reviewed mapping). The game never translates
-  those names, so other locales, and the three monsters with no pet variant, compose the
-  `pets/skins` family name with a machine-translated `source_monster_variant_*` qualifier.
+  (`pipeline/src/extract/monsters.ts` holds the reviewed mapping). The game never translates those
+  names, so other locales, and the three monsters with no pet variant, compose the `pets/skins`
+  family name with a machine-translated `source_monster_variant_*` qualifier.
 - **Locations without a game name** (`farm`, `mines`, & `dungeon`) and **water types** use interim
   machine-translated `source_location_*` & `source_water_*` messages.
 

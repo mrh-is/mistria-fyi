@@ -26,7 +26,7 @@ import type {
 } from "#lib/types/tracker-data.js";
 import type { NonEmptyArray } from "#lib/utils/record.js";
 
-import type { ParsedGameData } from "../../parse-fiddle.js";
+import type { ParsedGameData } from "../../parse/parse-fiddle.js";
 import type {
   CosmeticSourceAccumulator,
   ItemSourceAccumulator,

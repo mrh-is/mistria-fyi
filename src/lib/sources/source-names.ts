@@ -73,7 +73,7 @@ function skin(id: string): PetSkinId {
  */
 /**
  * Monsters with no `pets.toml` variant, so no game name: English composes theirs too. Mirrors
- * `MONSTERS_WITHOUT_PET_VARIANT` in `pipeline/src/extractors/monsters.ts`.
+ * `MONSTERS_WITHOUT_PET_VARIANT` in `pipeline/src/extract/monsters.ts`.
  */
 const MONSTERS_WITHOUT_GAME_NAME = new Set<string>([
   "mistrilclod",

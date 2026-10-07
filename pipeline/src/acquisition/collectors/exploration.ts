@@ -6,7 +6,7 @@ import { addRecipeScrollSource } from "../recipe-target.js";
 import type { LocationId } from "#lib/types/acquisition.js";
 import type { CosmeticId, ItemId, PerkId, TreasureChestTierId } from "#lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../../parse-fiddle.js";
+import type { ParsedGameData } from "../../parse/parse-fiddle.js";
 import type { RecipeAcquisitionContext } from "../recipe-target.js";
 import type { CosmeticSourceAccumulator, ItemSourceAccumulator } from "../source-accumulator.js";
 

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { assembleTrackerData } from "./assemble.js";
-import { APP_UI_STRINGS } from "./extractors/ui-strings.js";
+import { APP_UI_STRINGS } from "./localize/ui-strings.js";
 import { createMemoryLocalizer, makeFiddle } from "./test-helpers.js";
 
 import type { Source } from "#lib/types/acquisition.js";

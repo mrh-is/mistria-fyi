@@ -1,6 +1,5 @@
 import { compareStrings } from "../ordering.js";
 
-import type { Source } from "#lib/types/acquisition.js";
 import type {
   AnimalId,
   CosmeticId,
@@ -8,6 +7,8 @@ import type {
   PetCosmeticSetId,
   RecipeId,
 } from "#lib/types/tracker-data.js";
+
+import type { PipelineSource as Source } from "./pipeline-source.js";
 
 export interface SourceProvenance {
   fieldPath: string;
@@ -73,8 +74,12 @@ abstract class SourceAccumulator<TargetId extends string> {
 function sortedSources(sources: Map<string, Source> | undefined): Source[] {
   if (!sources) return [];
   return [...sources.entries()]
-    .toSorted(([left], [right]) => compareStrings(left, right))
-    .map(([, source]) => source);
+    .map(([, source]) => source)
+    .toSorted(
+      (left, right) =>
+        compareStrings(legacySourceSortJson(left), legacySourceSortJson(right)) ||
+        compareStrings(canonicalSourceJson(left), canonicalSourceJson(right)),
+    );
 }
 
 export class AnimalCosmeticSourceAccumulator {
@@ -141,6 +146,12 @@ export function canonicalSourceJson(source: Source): string {
   // A source's gate is part of its identity. Distinct gates represent distinct acquisition
   // alternatives; dropping one would make the result depend on collector order.
   return stableJson(source);
+}
+
+function legacySourceSortJson(source: Source): string {
+  const { stockGate, ...publicSource } = source;
+  // Retain the historical sorting position while making the extraction metadata explicit.
+  return stableJson(stockGate ? { ...publicSource, visibility: stockGate } : publicSource);
 }
 
 export function getSourceProvenance(
