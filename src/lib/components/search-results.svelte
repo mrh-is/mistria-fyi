@@ -84,7 +84,7 @@
   let results = $derived(
     searchAllCategories(
       query,
-      userState.state.completed,
+      userState.state.progress,
       userState.state.worldState,
       userState.progressionState,
       locale,
@@ -111,7 +111,7 @@
   function handleQuestToggle(result: SearchResult): void {
     const questId = result.id as QuestId;
     const completion = userState.completeQuestWithRecipes(questId);
-    const newState = userState.state.completed.questStates[questId] ?? "none";
+    const newState = userState.state.progress.questStates[questId] ?? "none";
     showQuestToast(result.name, newState, completion.newlyAdded, locale, () => {
       userState.undoQuestWithRecipes(questId, completion);
     });

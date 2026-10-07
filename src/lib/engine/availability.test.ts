@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { legacyAvailabilityWindows } from "#lib/types/availability.js";
+import { AVAILABILITY_WINDOWS, DEFAULT_AVAILABILITY_WINDOWS } from "#lib/types/availability.js";
 
 import {
   classifyItemAvailability,
@@ -20,9 +20,9 @@ import type { NonEmptyArray } from "#lib/utils/record.js";
 
 const spring = { season: "spring" as const, weather: "calm" as const };
 const defaultWindows: AvailabilityWindow[] = ["now", "anytime"];
-const AVAILABLE = legacyAvailabilityWindows("available");
-const EVERYTHING = legacyAvailabilityWindows("everything");
-const TIMELY = legacyAvailabilityWindows("timely");
+const AVAILABLE = [...DEFAULT_AVAILABILITY_WINDOWS];
+const EVERYTHING = [...AVAILABILITY_WINDOWS];
+const TIMELY: AvailabilityWindow[] = ["now"];
 
 function src(availability?: AvailabilityCondition): Source {
   return { ...(availability ? { availability } : {}), type: "store", storeId: "test" as StoreId };

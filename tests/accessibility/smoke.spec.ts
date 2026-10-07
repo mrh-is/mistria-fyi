@@ -4,7 +4,7 @@ import { accessibilityRoutes } from "./routes.js";
 import { gotoApplication, HYDRATED_SELECTOR } from "./support/application-state.js";
 import { criticalWhen } from "./support/tags.js";
 
-const coreRoutes = new Set<string>(["/", "/almanac", "/villagers", "/all"]);
+const coreRoutes = new Set<string>(["/", "/almanac", "/villagers", "/everything"]);
 
 test.describe("route smoke", () => {
   for (const route of accessibilityRoutes) {

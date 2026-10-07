@@ -11,8 +11,8 @@ import { criticalWhen } from "./support/tags.js";
 import type { AccessibilityTheme } from "./support/violations.js";
 
 const specializedState = createStoredState({
-  availabilityMode: "everything",
-  completed: {
+  availabilityWindows: ["now", "anytime", "later"],
+  progress: {
     heartLevels: { adeline: 10 },
     mineFloor: 21,
     renown: 14,
@@ -25,7 +25,7 @@ const specializedState = createStoredState({
 
 test.describe("populated records accessibility", () => {
   for (const theme of ["light", "dark"] satisfies AccessibilityTheme[]) {
-    for (const path of ["/villagers", "/skills", "/mines", "/renown", "/all"] as const) {
+    for (const path of ["/villagers", "/skills", "/mines", "/renown", "/everything"] as const) {
       test(
         `${path} populated specialized records pass axe in ${theme} theme`,
         criticalWhen(path === "/villagers" && theme === "light"),

@@ -77,7 +77,7 @@ describe("TransferCard generate", () => {
     expect(screen.getByRole("button", { name: "Generate QR Code" })).toBeEnabled();
     expect(screen.getByRole("status")).toHaveTextContent("");
     expect(transferQr.generateTransferQr).toHaveBeenCalledWith(
-      await encodeTransferPayload(userState.state.completed),
+      await encodeTransferPayload(userState.state.progress),
     );
   });
 
@@ -98,7 +98,7 @@ describe("TransferCard generate", () => {
 describe("TransferCard scan from image", () => {
   it("merges a scanned payload and summarizes what was added", async () => {
     userState.toggleMuseumItem(museumItemId);
-    const payload = await encodeTransferPayload(userState.state.completed);
+    const payload = await encodeTransferPayload(userState.state.progress);
     userState.resetAll();
     transferQr.decodeQrImage.mockResolvedValue(payload);
     render(TransferCard, { open: true });
@@ -108,7 +108,7 @@ describe("TransferCard scan from image", () => {
     expect(await screen.findByText("Transferred 1 items!")).toBeInTheDocument();
     expect(screen.getByText("Museum donations: +1")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("QR code scanned successfully.");
-    expect(userState.state.completed.museum.has(museumItemId)).toBe(true);
+    expect(userState.state.progress.museum.has(museumItemId)).toBe(true);
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
@@ -184,7 +184,7 @@ function fakeScanner() {
 describe("TransferCard scan from camera", () => {
   it("merges the first decoded frame and releases the camera", async () => {
     userState.toggleMuseumItem(museumItemId);
-    const payload = await encodeTransferPayload(userState.state.completed);
+    const payload = await encodeTransferPayload(userState.state.progress);
     userState.resetAll();
     const scanner = fakeScanner();
     let emit: ((data: string) => void) | undefined;
@@ -207,7 +207,7 @@ describe("TransferCard scan from camera", () => {
     expect(scanner.stop).toHaveBeenCalledTimes(1);
     expect(scanner.destroy).toHaveBeenCalledTimes(1);
     expect(screen.queryByLabelText("Camera feed for QR code scanning")).toBeNull();
-    expect(userState.state.completed.museum.has(museumItemId)).toBe(true);
+    expect(userState.state.progress.museum.has(museumItemId)).toBe(true);
   });
 
   it("explains a denied camera permission", async () => {

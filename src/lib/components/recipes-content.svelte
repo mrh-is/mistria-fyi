@@ -89,7 +89,7 @@
   function checkCelebration(sectionRecipeIds: RecipeId[]): void {
     if (isAllComplete()) {
       celebrateCategory();
-    } else if (sectionRecipeIds.every((id) => userState.state.completed.almanacRecipes.has(id))) {
+    } else if (sectionRecipeIds.every((id) => userState.state.progress.almanacRecipes.has(id))) {
       celebrate();
     }
   }
@@ -103,7 +103,7 @@
   }
 
   function isRecipeCompleted(id: RecipeId): boolean {
-    return userState.state.completed.almanacRecipes.has(id);
+    return userState.state.progress.almanacRecipes.has(id);
   }
 
   /**
@@ -136,7 +136,7 @@
 
   function toggleRecipe(entry: RecipeEntry, sectionRecipeIds: RecipeId[]): void {
     userState.toggleAlmanacRecipe(entry.id);
-    const nowCompleted = userState.state.completed.almanacRecipes.has(entry.id);
+    const nowCompleted = userState.state.progress.almanacRecipes.has(entry.id);
     showUndoToast(entry.name, nowCompleted, () => {
       userState.toggleAlmanacRecipe(entry.id);
     });
@@ -170,7 +170,7 @@
         }}
       >
         {#snippet row(entry)}
-          {@const completed = userState.state.completed.almanacRecipes.has(entry.id)}
+          {@const completed = userState.state.progress.almanacRecipes.has(entry.id)}
           <TrackerRow
             display={trackerRowDisplay({
               completed,

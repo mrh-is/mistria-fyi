@@ -29,6 +29,9 @@ const localizedCatchAllPattern: [string, string][] = LOCALE_CODES.map((locale) =
  * `src/lib/paraglide` behaves the same whichever wrote it last. Paths resolve from the repo root.
  */
 export const PARAGLIDE_OPTIONS = {
+  // Set explicitly so a library upgrade or default change can't silently reset every player's
+  // language. Renaming it is a breaking change (see docs/app-architecture.md's public contract).
+  cookieName: "mistria-fyi-locale",
   outdir: "./src/lib/paraglide",
   project: "./project.inlang",
   routeStrategies: UNLOCALIZED_PATH_PREFIXES.map((prefix) => ({

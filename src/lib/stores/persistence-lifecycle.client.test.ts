@@ -10,10 +10,9 @@ interface TestWindow {
   ) => void;
 }
 
-function buildMinimalState(renown = 0, version = "1"): string {
+function buildMinimalState(renown = 0): string {
   return JSON.stringify({
-    availabilityMode: "available",
-    completed: {
+    progress: {
       almanac: [],
       almanacRecipes: [],
       animalCosmetics: {},
@@ -31,8 +30,7 @@ function buildMinimalState(renown = 0, version = "1"): string {
       spells: [],
       unlockedPerks: [],
     },
-    showSpoilers: false,
-    version,
+    version: 1,
     worldState: { season: "spring", weather: "calm" },
   });
 }
@@ -71,7 +69,7 @@ function quarantineFailureStorage(data: Record<string, string>): Storage {
   const base = makeStorage(data);
   const setItem = base.setItem.bind(base);
   base.setItem = (key, value) => {
-    if (key === "mistria-fyi-v1-quarantine") {
+    if (key === "mistria-fyi:progress-quarantine") {
       throw new DOMException("Quota exceeded", "QuotaExceededError");
     }
     setItem(key, value);
@@ -103,7 +101,7 @@ describe("persistence lifecycle", () => {
     vi.useFakeTimers();
     vi.stubGlobal("window", makeWindow());
     const stored = buildMinimalState(25);
-    const storage = makeStorage({ "mistria-fyi-v1": stored });
+    const storage = makeStorage({ "mistria-fyi:progress": stored });
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
@@ -112,21 +110,75 @@ describe("persistence lifecycle", () => {
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
-    expect(storage.getItem("mistria-fyi-v1")).toBe(stored);
+    expect(storage.getItem("mistria-fyi:progress")).toBe(stored);
 
     userState.loadFromStorage();
-    expect(userState.state.completed.renown).toBe(25);
+    expect(userState.state.progress.renown).toBe(25);
   });
 
-  it("preserves fields from newer builds when saving known state", async () => {
+  it("saves preferences under their own key once storage has been read", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("window", makeWindow());
+    const storage = makeStorage({
+      "mistria-fyi:preferences": JSON.stringify({
+        availabilityWindows: ["later"],
+        showSpoilers: true,
+      }),
+    });
+    vi.stubGlobal("localStorage", storage);
+    vi.resetModules();
+
+    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    userState.toggleAvailabilityWindow("later");
+    await Promise.resolve();
+    expect(JSON.parse(storage.getItem("mistria-fyi:preferences") ?? "null")).toEqual({
+      availabilityWindows: ["later"],
+      showSpoilers: true,
+    });
+
+    userState.loadFromStorage();
+    expect(userState.state.availabilityWindows).toEqual(["later"]);
+    userState.toggleAvailabilityWindow("now");
+    await vi.runAllTimersAsync();
+    expect(JSON.parse(storage.getItem("mistria-fyi:preferences") ?? "null")).toEqual({
+      availabilityWindows: ["now", "later"],
+      showSpoilers: true,
+    });
+    expect(JSON.parse(userState.exportBackup())).not.toHaveProperty("availabilityWindows");
+  });
+
+  it("applies preference updates from another tab", async () => {
+    vi.useFakeTimers();
+    const testWindow = makeWindow();
+    vi.stubGlobal("window", testWindow);
+    const storage = makeStorage({});
+    vi.stubGlobal("localStorage", storage);
+    vi.resetModules();
+
+    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    userState.loadFromStorage();
+    const incoming = JSON.stringify({ availabilityWindows: ["now"], showSpoilers: true });
+    storage.setItem("mistria-fyi:preferences", incoming);
+    testWindow.dispatch("storage", {
+      key: "mistria-fyi:preferences",
+      newValue: incoming,
+      storageArea: storage,
+    });
+
+    expect(userState.state.availabilityWindows).toEqual(["now"]);
+    expect(userState.state.showSpoilers).toBe(true);
+    await Promise.resolve();
+    expect(storage.getItem("mistria-fyi:preferences")).toBe(incoming);
+  });
+
+  it("drops unrecognized fields when saving", async () => {
     vi.useFakeTimers();
     vi.stubGlobal("window", makeWindow());
     const parsed = JSON.parse(buildMinimalState(25)) as Record<string, unknown>;
-    parsed.futureSetting = { enabled: true };
-    const completed = parsed.completed as Record<string, unknown>;
-    completed.futureProgress = ["kept"];
-    (parsed.worldState as Record<string, unknown>).futureWeatherDetail = "kept";
-    const storage = makeStorage({ "mistria-fyi-v1": JSON.stringify(parsed) });
+    parsed.retiredSetting = { enabled: true };
+    (parsed.progress as Record<string, unknown>).retiredProgress = ["dropped"];
+    (parsed.worldState as Record<string, unknown>).retiredDetail = "dropped";
+    const storage = makeStorage({ "mistria-fyi:progress": JSON.stringify(parsed) });
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
@@ -136,82 +188,83 @@ describe("persistence lifecycle", () => {
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
-    const saved = JSON.parse(storage.getItem("mistria-fyi-v1") ?? "null") as Record<
+    const saved = JSON.parse(storage.getItem("mistria-fyi:progress") ?? "null") as Record<
       string,
       unknown
     >;
-    expect(saved.version).toBe("2");
-    expect(saved.futureSetting).toEqual({ enabled: true });
-    expect((saved.completed as Record<string, unknown>).futureProgress).toEqual(["kept"]);
-    expect((saved.worldState as Record<string, unknown>).futureWeatherDetail).toBe("kept");
+    expect(saved.version).toBe(1);
+    expect(saved).not.toHaveProperty("retiredSetting");
+    expect(saved.progress).not.toHaveProperty("retiredProgress");
+    expect(saved.worldState).not.toHaveProperty("retiredDetail");
+    expect((saved.progress as Record<string, unknown>).renown).toBe(26);
   });
 
   it("applies storage updates from another tab without echoing them", async () => {
     vi.useFakeTimers();
     const testWindow = makeWindow();
     vi.stubGlobal("window", testWindow);
-    const storage = makeStorage({ "mistria-fyi-v1": buildMinimalState(1, "2") });
+    const storage = makeStorage({ "mistria-fyi:progress": buildMinimalState(1) });
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.loadFromStorage();
     const incomingState = JSON.parse(userState.exportBackup()) as {
-      completed: { renown: number };
+      progress: { renown: number };
     };
-    incomingState.completed.renown = 42;
+    incomingState.progress.renown = 42;
     const incoming = JSON.stringify(incomingState);
     userState.setRenown(10);
-    storage.setItem("mistria-fyi-v1", incoming);
+    storage.setItem("mistria-fyi:progress", incoming);
     testWindow.dispatch("storage", {
-      key: "mistria-fyi-v1",
+      key: "mistria-fyi:progress",
       newValue: incoming,
       storageArea: storage,
     });
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
-    expect(userState.state.completed.renown).toBe(42);
-    expect(storage.getItem("mistria-fyi-v1")).toBe(incoming);
+    expect(userState.state.progress.renown).toBe(42);
+    expect(storage.getItem("mistria-fyi:progress")).toBe(incoming);
   });
 
   it("adopts another tab's write when its storage event was missed", async () => {
     vi.useFakeTimers();
     vi.stubGlobal("window", makeWindow());
-    const storage = makeStorage({ "mistria-fyi-v1": buildMinimalState(1, "2") });
+    const storage = makeStorage({ "mistria-fyi:progress": buildMinimalState(1) });
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.loadFromStorage();
     const incomingState = JSON.parse(userState.exportBackup()) as {
-      completed: { renown: number };
+      progress: { renown: number };
     };
-    incomingState.completed.renown = 42;
+    incomingState.progress.renown = 42;
     const incoming = JSON.stringify(incomingState);
-    storage.setItem("mistria-fyi-v1", incoming);
+    storage.setItem("mistria-fyi:progress", incoming);
     userState.setRenown(10);
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
-    expect(userState.state.completed.renown).toBe(42);
-    expect(storage.getItem("mistria-fyi-v1")).toBe(incoming);
+    expect(userState.state.progress.renown).toBe(42);
+    expect(storage.getItem("mistria-fyi:progress")).toBe(incoming);
 
     userState.setRenown(11);
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
-    const saved = JSON.parse(storage.getItem("mistria-fyi-v1") ?? "null") as {
-      completed: { renown: number };
+    const saved = JSON.parse(storage.getItem("mistria-fyi:progress") ?? "null") as {
+      progress: { renown: number };
     };
-    expect(saved.completed.renown).toBe(11);
+    expect(saved.progress.renown).toBe(11);
   });
 
   it("keeps saving after another tab clears storage", async () => {
     vi.useFakeTimers();
     const testWindow = makeWindow();
     vi.stubGlobal("window", testWindow);
-    const storage = makeStorage({ "mistria-fyi-v1": buildMinimalState(1, "2") });
+    const storage = makeStorage({ "mistria-fyi:progress": buildMinimalState(1) });
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
@@ -223,56 +276,56 @@ describe("persistence lifecycle", () => {
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
-    const saved = JSON.parse(storage.getItem("mistria-fyi-v1") ?? "null") as {
-      completed: { renown: number };
+    const saved = JSON.parse(storage.getItem("mistria-fyi:progress") ?? "null") as {
+      progress: { renown: number };
     };
-    expect(saved.completed.renown).toBe(11);
+    expect(saved.progress.renown).toBe(11);
   });
 
   it("resyncs from storage when restored from the back/forward cache", async () => {
     vi.useFakeTimers();
     const testWindow = makeWindow();
     vi.stubGlobal("window", testWindow);
-    const storage = makeStorage({ "mistria-fyi-v1": buildMinimalState(1, "2") });
+    const storage = makeStorage({ "mistria-fyi:progress": buildMinimalState(1) });
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
     const { userState } = await import("#lib/stores/user-state.svelte.js");
     userState.loadFromStorage();
     const incomingState = JSON.parse(userState.exportBackup()) as {
-      completed: { renown: number };
+      progress: { renown: number };
     };
-    incomingState.completed.renown = 42;
-    storage.setItem("mistria-fyi-v1", JSON.stringify(incomingState));
+    incomingState.progress.renown = 42;
+    storage.setItem("mistria-fyi:progress", JSON.stringify(incomingState));
     testWindow.dispatch("pageshow", { persisted: true });
 
-    expect(userState.state.completed.renown).toBe(42);
+    expect(userState.state.progress.renown).toBe(42);
   });
 
   it("blocks a stale tab from overwriting a newer serialization version", async () => {
     vi.useFakeTimers();
     const testWindow = makeWindow();
     vi.stubGlobal("window", testWindow);
-    const storage = makeStorage({ "mistria-fyi-v1": buildMinimalState(1, "2") });
+    const storage = makeStorage({ "mistria-fyi:progress": buildMinimalState(1) });
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.loadFromStorage();
     const futureState = JSON.parse(userState.exportBackup()) as Record<string, unknown>;
-    futureState.version = "3";
+    futureState.version = 2;
     const future = JSON.stringify(futureState);
     userState.setRenown(10);
-    storage.setItem("mistria-fyi-v1", future);
+    storage.setItem("mistria-fyi:progress", future);
     testWindow.dispatch("storage", {
-      key: "mistria-fyi-v1",
+      key: "mistria-fyi:progress",
       newValue: future,
       storageArea: storage,
     });
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
-    expect(storage.getItem("mistria-fyi-v1")).toBe(future);
+    expect(storage.getItem("mistria-fyi:progress")).toBe(future);
     expect(userState.persistenceFailed).toBe(true);
   });
 
@@ -280,7 +333,7 @@ describe("persistence lifecycle", () => {
     vi.useFakeTimers();
     const testWindow = makeWindow();
     vi.stubGlobal("window", testWindow);
-    const storage = makeStorage({ "mistria-fyi-v1": buildMinimalState(1, "2") });
+    const storage = makeStorage({ "mistria-fyi:progress": buildMinimalState(1) });
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
@@ -288,22 +341,22 @@ describe("persistence lifecycle", () => {
     userState.loadFromStorage();
     userState.setRenown(12);
     await vi.waitFor(() => {
-      expect(userState.state.completed.renown).toBe(12);
+      expect(userState.state.progress.renown).toBe(12);
     });
 
     testWindow.dispatch("pagehide");
 
-    const saved = JSON.parse(storage.getItem("mistria-fyi-v1") ?? "null") as {
-      completed: { renown: number };
+    const saved = JSON.parse(storage.getItem("mistria-fyi:progress") ?? "null") as {
+      progress: { renown: number };
     };
-    expect(saved.completed.renown).toBe(12);
+    expect(saved.progress.renown).toBe(12);
   });
 
   it("quarantines invalid persisted data without overwriting it", async () => {
     vi.useFakeTimers();
     vi.stubGlobal("window", makeWindow());
     const invalid = "{not json";
-    const storage = makeStorage({ "mistria-fyi-v1": invalid });
+    const storage = makeStorage({ "mistria-fyi:progress": invalid });
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
@@ -313,8 +366,8 @@ describe("persistence lifecycle", () => {
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
-    expect(storage.getItem("mistria-fyi-v1")).toBe(invalid);
-    expect(storage.getItem("mistria-fyi-v1-quarantine")).toBe(invalid);
+    expect(storage.getItem("mistria-fyi:progress")).toBe(invalid);
+    expect(storage.getItem("mistria-fyi:progress-quarantine")).toBe(invalid);
     expect(userState.persistenceFailed).toBe(true);
     expect(userState.persistenceFailureKind).toBe("unreadable");
     expect(userState.unreadableData).toBe(invalid);
@@ -324,7 +377,7 @@ describe("persistence lifecycle", () => {
     vi.useFakeTimers();
     vi.stubGlobal("window", makeWindow());
     const invalid = "{not json";
-    const storage = makeStorage({ "mistria-fyi-v1": invalid });
+    const storage = makeStorage({ "mistria-fyi:progress": invalid });
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
@@ -346,7 +399,7 @@ describe("persistence lifecycle", () => {
   it("keeps unreadable data in memory when quarantine fails", async () => {
     vi.stubGlobal("window", makeWindow());
     const invalid = "{not json";
-    vi.stubGlobal("localStorage", quarantineFailureStorage({ "mistria-fyi-v1": invalid }));
+    vi.stubGlobal("localStorage", quarantineFailureStorage({ "mistria-fyi:progress": invalid }));
     vi.resetModules();
 
     const { userState } = await import("#lib/stores/user-state.svelte.js");
@@ -377,7 +430,7 @@ describe("persistence lifecycle", () => {
     vi.useFakeTimers();
     vi.stubGlobal("window", makeWindow());
     const invalid = "{not json";
-    const storage = makeStorage({ "mistria-fyi-v1": invalid });
+    const storage = makeStorage({ "mistria-fyi:progress": invalid });
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
@@ -389,8 +442,8 @@ describe("persistence lifecycle", () => {
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
-    expect(storage.getItem("mistria-fyi-v1")).toBe(expected);
-    expect(storage.getItem("mistria-fyi-v1-quarantine")).toBe(invalid);
+    expect(storage.getItem("mistria-fyi:progress")).toBe(expected);
+    expect(storage.getItem("mistria-fyi:progress-quarantine")).toBe(invalid);
     expect(userState.persistenceFailed).toBe(false);
   });
 
@@ -398,7 +451,7 @@ describe("persistence lifecycle", () => {
     vi.useFakeTimers();
     vi.stubGlobal("window", makeWindow());
     const invalid = "{not json";
-    const storage = makeStorage({ "mistria-fyi-v1": invalid });
+    const storage = makeStorage({ "mistria-fyi:progress": invalid });
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
@@ -408,15 +461,15 @@ describe("persistence lifecycle", () => {
     vi.advanceTimersByTime(first.PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
-    expect(storage.getItem("mistria-fyi-v1-quarantine")).toBe(invalid);
+    expect(storage.getItem("mistria-fyi:progress-quarantine")).toBe(invalid);
     expect(first.userState.persistenceFailed).toBe(false);
 
     vi.resetModules();
     const second = await import("#lib/stores/user-state.svelte.js");
     second.userState.loadFromStorage();
 
-    expect(second.userState.state.completed.renown).toBe(25);
-    expect(second.userState.state.completed.mineFloor).toBe(10);
+    expect(second.userState.state.progress.renown).toBe(25);
+    expect(second.userState.state.progress.mineFloor).toBe(10);
     expect(second.userState.persistenceFailed).toBe(false);
   });
 
@@ -424,7 +477,7 @@ describe("persistence lifecycle", () => {
     vi.useFakeTimers();
     vi.stubGlobal("window", makeWindow());
     const invalid = "{not json";
-    const storage = quarantineFailureStorage({ "mistria-fyi-v1": invalid });
+    const storage = quarantineFailureStorage({ "mistria-fyi:progress": invalid });
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
@@ -434,7 +487,7 @@ describe("persistence lifecycle", () => {
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
-    expect(storage.getItem("mistria-fyi-v1")).toBe(invalid);
+    expect(storage.getItem("mistria-fyi:progress")).toBe(invalid);
     expect(userState.persistenceFailed).toBe(true);
   });
 
@@ -442,7 +495,7 @@ describe("persistence lifecycle", () => {
     vi.useFakeTimers();
     vi.stubGlobal("window", makeWindow());
     const invalid = "{not json";
-    const storage = makeStorage({ "mistria-fyi-v1": invalid });
+    const storage = makeStorage({ "mistria-fyi:progress": invalid });
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
@@ -453,8 +506,8 @@ describe("persistence lifecycle", () => {
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
-    expect(storage.getItem("mistria-fyi-v1")).not.toBe(invalid);
-    expect(storage.getItem("mistria-fyi-v1-quarantine")).toBe(invalid);
+    expect(storage.getItem("mistria-fyi:progress")).not.toBe(invalid);
+    expect(storage.getItem("mistria-fyi:progress-quarantine")).toBe(invalid);
     expect(userState.persistenceFailed).toBe(false);
   });
 
@@ -462,7 +515,7 @@ describe("persistence lifecycle", () => {
     vi.useFakeTimers();
     vi.stubGlobal("window", makeWindow());
     const invalid = "{not json";
-    const storage = quarantineFailureStorage({ "mistria-fyi-v1": invalid });
+    const storage = quarantineFailureStorage({ "mistria-fyi:progress": invalid });
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
@@ -473,14 +526,14 @@ describe("persistence lifecycle", () => {
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
-    expect(storage.getItem("mistria-fyi-v1")).toBe(invalid);
+    expect(storage.getItem("mistria-fyi:progress")).toBe(invalid);
     expect(userState.persistenceFailed).toBe(true);
   });
 
   it("keeps warning state active when blocked persistence is dismissed", async () => {
     vi.useFakeTimers();
     vi.stubGlobal("window", makeWindow());
-    vi.stubGlobal("localStorage", makeStorage({ "mistria-fyi-v1": "{not json" }));
+    vi.stubGlobal("localStorage", makeStorage({ "mistria-fyi:progress": "{not json" }));
     vi.resetModules();
 
     const { userState } = await import("#lib/stores/user-state.svelte.js");
@@ -497,7 +550,7 @@ describe("persistence lifecycle", () => {
     vi.useFakeTimers();
     vi.stubGlobal("window", makeWindow());
     const stored = buildMinimalState(25);
-    const storage = transientReadFailureStorage({ "mistria-fyi-v1": stored });
+    const storage = transientReadFailureStorage({ "mistria-fyi:progress": stored });
     vi.stubGlobal("localStorage", storage);
     vi.resetModules();
 
@@ -507,8 +560,8 @@ describe("persistence lifecycle", () => {
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
 
-    expect(storage.getItem("mistria-fyi-v1")).toBe(stored);
-    expect(userState.state.completed.renown).toBe(0);
+    expect(storage.getItem("mistria-fyi:progress")).toBe(stored);
+    expect(userState.state.progress.renown).toBe(0);
     expect(userState.persistenceFailed).toBe(true);
   });
 
@@ -516,7 +569,7 @@ describe("persistence lifecycle", () => {
     vi.useFakeTimers();
     vi.stubGlobal("window", makeWindow());
     const stored = buildMinimalState();
-    vi.stubGlobal("localStorage", makeStorage({ "mistria-fyi-v1": stored }));
+    vi.stubGlobal("localStorage", makeStorage({ "mistria-fyi:progress": stored }));
     vi.resetModules();
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
@@ -525,7 +578,7 @@ describe("persistence lifecycle", () => {
     expect(userState.persistenceFailureGeneration).toBe(0);
 
     // Switch to failing storage
-    vi.stubGlobal("localStorage", failingStorage({ "mistria-fyi-v1": stored }));
+    vi.stubGlobal("localStorage", failingStorage({ "mistria-fyi:progress": stored }));
 
     // Trigger a state change that fires the auto-save effect
     userState.setRenown(1);
@@ -549,13 +602,13 @@ describe("persistence lifecycle", () => {
     vi.useFakeTimers();
     vi.stubGlobal("window", makeWindow());
     const stored = buildMinimalState();
-    vi.stubGlobal("localStorage", makeStorage({ "mistria-fyi-v1": stored }));
+    vi.stubGlobal("localStorage", makeStorage({ "mistria-fyi:progress": stored }));
     vi.resetModules();
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.loadFromStorage();
 
-    vi.stubGlobal("localStorage", failingStorage({ "mistria-fyi-v1": stored }));
+    vi.stubGlobal("localStorage", failingStorage({ "mistria-fyi:progress": stored }));
     userState.setRenown(1);
     vi.advanceTimersByTime(PERSIST_DEBOUNCE_MS);
     await vi.runAllTimersAsync();
@@ -571,13 +624,13 @@ describe("persistence lifecycle", () => {
     vi.useFakeTimers();
     vi.stubGlobal("window", makeWindow());
     const stored = buildMinimalState();
-    vi.stubGlobal("localStorage", makeStorage({ "mistria-fyi-v1": stored }));
+    vi.stubGlobal("localStorage", makeStorage({ "mistria-fyi:progress": stored }));
     vi.resetModules();
 
     const { PERSIST_DEBOUNCE_MS, userState } = await import("#lib/stores/user-state.svelte.js");
     userState.loadFromStorage();
 
-    vi.stubGlobal("localStorage", failingStorage({ "mistria-fyi-v1": stored }));
+    vi.stubGlobal("localStorage", failingStorage({ "mistria-fyi:progress": stored }));
 
     // First failure
     userState.setRenown(1);

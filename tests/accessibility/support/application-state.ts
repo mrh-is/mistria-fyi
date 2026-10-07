@@ -1,46 +1,38 @@
 import { expect } from "@playwright/test";
 
+import {
+  PREFERENCES_STORAGE_KEY,
+  PROGRESS_STORAGE_KEY,
+} from "../../../src/lib/stores/storage-keys.js";
 import { THEME_STORAGE_KEY } from "../../../src/lib/theme.js";
-import { legacyAvailabilityWindows } from "../../../src/lib/types/availability.js";
+import { DEFAULT_AVAILABILITY_WINDOWS } from "../../../src/lib/types/availability.js";
 import { CURRENT_SERIALIZATION_VERSION } from "../../../src/lib/types/user-progress.js";
 
 import type { Page, Response } from "@playwright/test";
 
-import type { SerializedState } from "../../../src/lib/stores/user-state.svelte.js";
 import type {
-  AvailabilityWindow,
-  LegacyAvailabilityMode,
-} from "../../../src/lib/types/availability.js";
+  SerializedPreferences,
+  SerializedState,
+} from "../../../src/lib/stores/user-state.svelte.js";
 import type { AccessibilityTheme } from "./violations.js";
 
-/** Legacy fields the store reads for migration but never writes. */
-type LegacyCompletedKey =
-  | "marriedVillager"
-  | "quests"
-  | "romanticVillagers"
-  | "skills"
-  | "villagers";
+/** Every progress field the store writes. */
+type SerializedProgress = Required<SerializedState["progress"]>;
 
-/** Every field the store writes today, so a fixture never exercises the legacy migration path. */
-type SerializedCompletedState = Omit<Required<SerializedState["completed"]>, LegacyCompletedKey>;
-
-interface StoredState extends Omit<SerializedState, "availabilityMode" | "completed"> {
-  availabilityWindows: AvailabilityWindow[];
-  completed: SerializedCompletedState;
-  showSpoilers: boolean;
+/** The two localStorage blobs the store reads at startup: progress and this device's preferences. */
+export interface StoredState {
+  preferences: SerializedPreferences;
+  progress: SerializedState;
 }
 
-/**
- * Builds a blob in the store's current serialized shape (`SerializedState`) and version.
- * `availabilityMode` is shorthand for the equivalent `availabilityWindows`.
- */
+/** Builds progress & preferences blobs in the store's current serialized shapes and version. */
 export function createStoredState(
-  overrides: Partial<Omit<StoredState, "completed" | "version">> & {
-    availabilityMode?: LegacyAvailabilityMode;
-    completed?: Partial<SerializedCompletedState>;
+  overrides: Partial<SerializedPreferences> & {
+    progress?: Partial<SerializedProgress>;
+    worldState?: SerializedState["worldState"];
   } = {},
 ): StoredState {
-  const completed: SerializedCompletedState = {
+  const progress: SerializedProgress = {
     almanac: [],
     almanacRecipes: [],
     animalCosmetics: {},
@@ -61,17 +53,19 @@ export function createStoredState(
     spells: [],
     unlockedPerks: [],
     villagerRelationships: {},
-    ...overrides.completed,
+    ...overrides.progress,
   };
 
   return {
-    availabilityWindows:
-      overrides.availabilityWindows ??
-      legacyAvailabilityWindows(overrides.availabilityMode ?? "available"),
-    completed,
-    showSpoilers: overrides.showSpoilers ?? false,
-    version: CURRENT_SERIALIZATION_VERSION,
-    worldState: overrides.worldState ?? { season: "spring", weather: "calm" },
+    preferences: {
+      availabilityWindows: overrides.availabilityWindows ?? [...DEFAULT_AVAILABILITY_WINDOWS],
+      showSpoilers: overrides.showSpoilers ?? false,
+    },
+    progress: {
+      progress,
+      version: CURRENT_SERIALIZATION_VERSION,
+      worldState: overrides.worldState ?? { season: "spring", weather: "calm" },
+    },
   };
 }
 
@@ -140,13 +134,18 @@ export async function initializeApplication(
   state: null | StoredState = null,
 ): Promise<void> {
   await page.addInitScript(
-    ({ serializedState, themeKey, themePreference }) => {
+    ({ entries, themeKey, themePreference }) => {
       localStorage.clear();
       localStorage.setItem(themeKey, themePreference);
-      if (serializedState !== null) localStorage.setItem("mistria-fyi-v1", serializedState);
+      for (const [key, value] of entries) localStorage.setItem(key, value);
     },
     {
-      serializedState: state ? JSON.stringify(state) : null,
+      entries: state
+        ? [
+            [PREFERENCES_STORAGE_KEY, JSON.stringify(state.preferences)],
+            [PROGRESS_STORAGE_KEY, JSON.stringify(state.progress)],
+          ]
+        : [],
       themeKey: THEME_STORAGE_KEY,
       themePreference: theme,
     },

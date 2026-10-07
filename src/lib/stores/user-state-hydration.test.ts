@@ -4,7 +4,7 @@ import { memoryStorage } from "#lib/test-utils/memory-storage.js";
 
 const STORED_STATE = JSON.stringify({
   availabilityMode: "available",
-  completed: {
+  progress: {
     almanac: [],
     almanacRecipes: [],
     animalCosmetics: {},
@@ -22,13 +22,12 @@ const STORED_STATE = JSON.stringify({
     spells: [],
     unlockedPerks: [],
   },
-  showSpoilers: false,
-  version: "1",
+  version: 1,
   worldState: { season: "spring", weather: "calm" },
 });
 
 function storedUserState(): Storage {
-  return memoryStorage({ "mistria-fyi-v1": STORED_STATE });
+  return memoryStorage({ "mistria-fyi:progress": STORED_STATE });
 }
 
 afterEach(() => {
@@ -39,7 +38,7 @@ afterEach(() => {
 it("normalizes historical nonrepresentative almanac IDs to canonical on hydration", async () => {
   const stateWithRawIds = JSON.stringify({
     availabilityMode: "available",
-    completed: {
+    progress: {
       almanac: ["animated_waterfall_v2"],
       almanacRecipes: [],
       animalCosmetics: {},
@@ -57,20 +56,19 @@ it("normalizes historical nonrepresentative almanac IDs to canonical on hydratio
       spells: [],
       unlockedPerks: [],
     },
-    showSpoilers: false,
-    version: "1",
+    version: 1,
     worldState: { season: "spring", weather: "calm" },
   });
   vi.useFakeTimers();
   vi.stubGlobal("window", {});
-  vi.stubGlobal("localStorage", memoryStorage({ "mistria-fyi-v1": stateWithRawIds }));
+  vi.stubGlobal("localStorage", memoryStorage({ "mistria-fyi:progress": stateWithRawIds }));
   vi.resetModules();
 
   const { userState } = await import("#lib/stores/user-state.svelte.js");
   userState.loadFromStorage();
 
-  expect(userState.state.completed.almanac.has("animated_waterfall_v1" as never)).toBe(true);
-  expect(userState.state.completed.almanac.has("animated_waterfall_v2" as never)).toBe(false);
+  expect(userState.state.progress.almanac.has("animated_waterfall_v1" as never)).toBe(true);
+  expect(userState.state.progress.almanac.has("animated_waterfall_v2" as never)).toBe(false);
 });
 
 it("restores persisted progress only after hydration initialization", async () => {
@@ -81,9 +79,9 @@ it("restores persisted progress only after hydration initialization", async () =
 
   const { userState } = await import("#lib/stores/user-state.svelte.js");
 
-  expect(userState.state.completed.renown).toBe(0);
+  expect(userState.state.progress.renown).toBe(0);
 
   userState.loadFromStorage();
 
-  expect(userState.state.completed.renown).toBe(25);
+  expect(userState.state.progress.renown).toBe(25);
 });

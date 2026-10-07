@@ -24,9 +24,9 @@ Keep the existing versions conceptually separate:
   tracker data.
 - The serialized user-state `version` identifies the localStorage and JSON backup shape. Change it
   only when persisted user state becomes incompatible or needs a new migration path.
-- `STORAGE_KEY` (currently `"mistria-fyi-v1"` in `user-state.svelte.ts`) identifies the localStorage
-  slot itself. Changing the key abandons existing browser state entirely rather than migrating it,
-  which is a different decision from bumping the serialized `version` field.
+- `PROGRESS_STORAGE_KEY` (`"mistria-fyi:progress"` in `src/lib/stores/storage-keys.ts`) identifies
+  the localStorage slot itself. Changing the key abandons existing browser state entirely rather
+  than migrating it, which is a different decision from bumping the serialized `version` field.
 - `TRANSFER_VERSION` identifies the progress-transfer codec. Change it only when the encoded fields,
   their interpretation, or their positional layout changes incompatibly.
 - The Mistria Field Guide application version identifies the exact deployed commit. Production

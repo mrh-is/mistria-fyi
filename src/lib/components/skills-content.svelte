@@ -21,7 +21,7 @@
 
 <ul class="skill-ledger" aria-label={m.skills_ledger_aria()}>
   {#each skills as skill (skill.id)}
-    {@const level = userState.state.completed.skillLevels[skill.id] ?? 0}
+    {@const level = userState.state.progress.skillLevels[skill.id] ?? 0}
     {#if level >= MAX_SKILL_LEVEL ? userState.state.showCompleted : true}
       <SkillRecord {compact} id={skill.id} name={skill.name} />
     {/if}

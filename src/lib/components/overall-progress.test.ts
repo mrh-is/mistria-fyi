@@ -23,7 +23,7 @@ describe("OverallProgress", () => {
   it("includes every category in the overall total", () => {
     const progress = getAllProgress({
       availabilityWindows: userState.state.availabilityWindows,
-      completed: userState.state.completed,
+      progress: userState.state.progress,
       worldState: userState.state.worldState,
     });
     const expectedTotal = Object.values(progress).reduce(
@@ -45,7 +45,7 @@ describe("OverallProgress", () => {
     page.data.locale = "ja";
     const progress = getAllProgress({
       availabilityWindows: userState.state.availabilityWindows,
-      completed: userState.state.completed,
+      progress: userState.state.progress,
       worldState: userState.state.worldState,
     });
     const expectedTotal = Object.values(progress).reduce(
@@ -67,7 +67,7 @@ describe("OverallProgress", () => {
     page.data.locale = "ru";
     const progress = getAllProgress({
       availabilityWindows: userState.state.availabilityWindows,
-      completed: userState.state.completed,
+      progress: userState.state.progress,
       worldState: userState.state.worldState,
     });
     const expectedTotal = Object.values(progress).reduce(

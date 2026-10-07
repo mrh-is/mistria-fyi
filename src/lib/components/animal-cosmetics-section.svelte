@@ -17,7 +17,7 @@
   import type { AnimalId, CosmeticId } from "#lib/types/tracker-data.js";
 
   function hasCompletedCosmetic(animalId: AnimalId, cosmeticId: CosmeticId): boolean {
-    return userState.state.completed.animalCosmetics[animalId]?.has(cosmeticId) ?? false;
+    return userState.state.progress.animalCosmetics[animalId]?.has(cosmeticId) ?? false;
   }
 
   function hasDisplayableCosmetic(animalId: AnimalId): boolean {

@@ -48,7 +48,7 @@
   let baseLookups = $derived(buildBaseSegmentLookups(spoileredStoreIds, locale));
 
   function rowDisplay(itemId: ItemId, sources: Source[]): TrackerRowDisplay {
-    const completed = userState.state.completed.museum.has(itemId);
+    const completed = userState.state.progress.museum.has(itemId);
     return trackerRowDisplay({
       completed,
       dimmed: isItemDimmed(
@@ -65,7 +65,7 @@
   const recentlyCompleted = createLeavingSet<ItemId>();
 
   function isItemComplete(itemId: ItemId): boolean {
-    return userState.state.completed.museum.has(itemId);
+    return userState.state.progress.museum.has(itemId);
   }
 
   function isMuseumComplete(): boolean {
