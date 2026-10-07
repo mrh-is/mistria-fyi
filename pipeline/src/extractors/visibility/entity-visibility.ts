@@ -1,5 +1,12 @@
 import { mapNonEmpty } from "#lib/utils/record.js";
 
+import {
+  CROWN_QUEST_GATE,
+  HAYDENS_BARN_GATE,
+  SPELL_SOURCES,
+  STORE_UNLOCK_QUESTS,
+  VILLAGER_GATES,
+} from "../../overrides/game-facts.js";
 import { getCutsceneRecords } from "../../parse-fiddle.js";
 import { availabilityToVisibility, toAvailableVisibility } from "./availability-projection.js";
 import { ALWAYS_VISIBLE, resolveToVisibility, simplifyCondition } from "./requirement-resolver.js";
@@ -23,50 +30,24 @@ import type { QuestChainData } from "./quest-chains.js";
 
 /**
  * The exact renown level required for crown quests to appear in-game has not been confirmed
- * against real playthrough data (spec Section 3j marks this TBD). 20 (Copper Star) is used as a
+ * against real playthrough data (#638 tracks confirmation). 20 (Copper Star) is used as a
  * placeholder pending verification — crown quests are Town Rank milestones, and Copper Star is the
  * first rank past the tutorial ranks.
  */
-export const CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER = 20;
+export const CROWN_QUEST_RENOWN_LEVEL_PLACEHOLDER = CROWN_QUEST_GATE.value;
 
 /**
- * Hardcoded store → unlock-quest gates (spec Section 3d). Stores not listed here (including
+ * Hardcoded store → unlock-quest gates (see pipeline/README.md, reviewed game facts). Stores not listed here (including
  * Taliferro and Stillwell, who have no `stores.toml` entry of their own) are always visible.
  */
-const STORE_UNLOCK_QUESTS: Partial<Record<string, QuestId>> = {
-  darcy: "repair_the_bridge" as QuestId,
-  louis: "repair_the_bridge" as QuestId,
-  merri: "repair_the_bridge" as QuestId,
-  vera: "repair_the_bridge" as QuestId,
-  wheedle: "upgrade_the_saturday_market" as QuestId,
-  zorel: "upgrade_the_saturday_market_plaza" as QuestId,
-};
 
-/** Hardcoded villager gates (spec Section 3e). Villagers not listed here are always visible. */
-const VILLAGER_GATES: Partial<Record<string, VisibilityCondition>> = {
-  caldarus: { type: "questCompleted", questId: "breaking_the_fire_seal" as QuestId },
-  darcy: { type: "questCompleted", questId: "repair_the_bridge" as QuestId },
-  louis: { type: "questCompleted", questId: "repair_the_bridge" as QuestId },
-  merri: { type: "questCompleted", questId: "repair_the_bridge" as QuestId },
-  seridia: { type: "questCompleted", questId: "breaking_the_final_seal" as QuestId },
-  stillwell: {
-    type: "questCompleted",
-    questId: "upgrade_the_saturday_market_plaza" as QuestId,
-  },
-  taliferro: { type: "questCompleted", questId: "upgrade_the_saturday_market" as QuestId },
-  vera: { type: "questCompleted", questId: "repair_the_bridge" as QuestId },
-  wheedle: { type: "questCompleted", questId: "upgrade_the_saturday_market" as QuestId },
-  zorel: {
-    type: "questCompleted",
-    questId: "upgrade_the_saturday_market_plaza" as QuestId,
-  },
-};
+/** Hardcoded villager gates (see pipeline/README.md, reviewed game facts). Villagers not listed here are always visible. */
 
 /**
- * The six barn animals gated behind Hayden's barn repair (spec Section 3i). Chicken and cow are
+ * The six barn animals gated behind Hayden's barn repair (see pipeline/README.md, reviewed game facts). Chicken and cow are
  * the only two starting animals and remain always-visible.
  */
-const HAYDENS_BARN_UNLOCK_QUEST = "repair_haydens_barn" as QuestId;
+const HAYDENS_BARN_UNLOCK_QUEST = HAYDENS_BARN_GATE.value;
 
 interface FlatPerkInfo {
   skillId: SkillId;
@@ -102,7 +83,7 @@ export function assignEntityVisibility(
   stripAllAlwaysVisibility(trackerData);
 }
 
-/** Hardcoded category visibility gates (spec Section 3j). */
+/** Hardcoded category visibility gates (see pipeline/README.md, reviewed game facts). */
 export function extractCategoryVisibility(
   villagers: TrackerData["villagers"],
 ): Record<string, VisibilityCondition> {
@@ -134,8 +115,8 @@ export function extractCategoryVisibility(
 }
 
 /**
- * Resolves the request board's raw `RequirementExpression` fetch-quest requirements (Task 3's
- * `questChains.fetch`, already extracted by the caller) into `VisibilityCondition`s via the Task 4
+ * Resolves the request board's raw `RequirementExpression` fetch-quest requirements (
+ * `questChains.fetch`, already extracted by the caller) into `VisibilityCondition`s via the requirement
  * resolver.
  */
 export function extractFetchQuestVisibility(
@@ -151,7 +132,7 @@ export function extractFetchQuestVisibility(
 
 /**
  * Walks `cutscenes.toml` entries for `heart_level_changes` fields, grouping the resulting villager
- * heart-level bumps by the quest that triggers the cutscene (via the Task 2 cutscene-quest map,
+ * heart-level bumps by the quest that triggers the cutscene (via the cutscene-quest map,
  * passed in by the caller rather than rebuilt here).
  */
 export function extractHeartLevelChanges(
@@ -188,7 +169,7 @@ export function extractHeartLevelChanges(
 }
 
 /**
- * Stamps hardcoded store visibility (spec Section 3d) directly onto trackerData.stores.
+ * Stamps hardcoded store visibility (see pipeline/README.md, reviewed game facts) directly onto trackerData.stores.
  * Taliferro and Stillwell have no store entry; their gates are handled by `stampVillagerVisibility`.
  */
 export function stampStoreVisibility(trackerData: TrackerData): void {
@@ -200,7 +181,7 @@ export function stampStoreVisibility(trackerData: TrackerData): void {
   }
 }
 
-/** Stamps hardcoded villager visibility (spec Section 3e) directly onto trackerData.villagers. */
+/** Stamps hardcoded villager visibility (see pipeline/README.md, reviewed game facts) directly onto trackerData.villagers. */
 export function stampVillagerVisibility(trackerData: TrackerData): void {
   for (const [villagerId, villager] of Object.entries(trackerData.villagers)) {
     const gate = VILLAGER_GATES[villagerId];
@@ -398,12 +379,6 @@ function assignRecipeVisibility(trackerData: TrackerData, ctx: SourceVisibilityC
  * cutscenes lack quest_to_start/quest_to_progress and aren't referenced in quest stage queries.
  * full_restore has no quest at all (mines level 10 reward).
  */
-const SPELL_SOURCES: Partial<Record<string, QuestId>> = {
-  fire_breath: "breaking_the_fire_seal" as QuestId,
-  growth: "the_earth_tablet" as QuestId,
-  sacred_light: "find_the_magic_key" as QuestId,
-  summon_rain: "the_water_tablet" as QuestId,
-};
 
 function acquisitionSourceConditions(
   source: AcquisitionSource,

@@ -8,49 +8,37 @@ import {
   collectDefaultCosmeticSources,
   collectDefaultItemSources,
   COSMETIC_OVERRIDES,
-  ITEM_OVERRIDES,
+  getItemOverrides,
+  getReviewedOverrides,
   ITEM_SOURCE_REPLACEMENTS,
 } from "./reviewed-overrides.js";
 import { CosmeticSourceAccumulator, ItemSourceAccumulator } from "./source-accumulator.js";
 
 import type { Source } from "#lib/types/acquisition.js";
-import type { CosmeticId, ItemId, QuestId, QuestType, StoreId } from "#lib/types/tracker-data.js";
+import type { CosmeticId, ItemId, StoreId } from "#lib/types/tracker-data.js";
+
+const ITEM_OVERRIDES = getItemOverrides(100);
+const REVIEWED_OVERRIDES = getReviewedOverrides(
+  makeFiddle({ misc: { wishing_well: { low_price: 100 } } }),
+);
 
 describe("reviewed overrides", () => {
   describe("override tables", () => {
-    it("adds explicit story metadata only to runtime-only reviewed quest IDs", () => {
-      const runtimeOnlyQuestIds = new Set<QuestId>([
-        "another_tower" as QuestId,
-        "balors_crate" as QuestId,
-        "beach_date_unlock" as QuestId,
-        "break_earth_seal" as QuestId,
-        "break_fire_seal" as QuestId,
-        "break_ruins_seal_pt_3" as QuestId,
-        "break_water_seal" as QuestId,
-        "elsies_dating_tutorial" as QuestId,
-        "gem_cutting_date_unlock" as QuestId,
-        "great_bird_0" as QuestId,
-        "park_date_unlock" as QuestId,
-        "ryis_lumber" as QuestId,
+    it("uses the installed wishing-well price for runtime rewards", () => {
+      const overrides = getReviewedOverrides(
+        makeFiddle({ misc: { wishing_well: { low_price: 350 } } }),
+      );
+      expect(overrides.items["dragon_mosaic_flooring" as ItemId]).toEqual([
+        { type: "wishing_well", cost: 350 },
       ]);
-      const questTypes = new Set<QuestType>([
-        "cooking",
-        "crown",
-        "fetch",
-        "heart",
-        "mission",
-        "story",
-      ]);
+      expect(() => getReviewedOverrides(makeFiddle())).toThrow("Missing native");
+    });
 
-      for (const sources of Object.values(ITEM_OVERRIDES)) {
-        for (const source of sources ?? []) {
-          if (source.type !== "quest") continue;
-          expect(source.questType === undefined || questTypes.has(source.questType)).toBe(true);
-          expect(source.questType, source.questId).toBe(
-            runtimeOnlyQuestIds.has(source.questId) ? "story" : undefined,
-          );
-        }
-      }
+    it("points quest overrides at native quests, which carry their own type", () => {
+      const typed = Object.values(ITEM_OVERRIDES)
+        .flatMap((sources) => sources ?? [])
+        .filter((source) => source.type === "quest" && source.questType !== undefined);
+      expect(typed).toEqual([]);
     });
 
     it("every item override has a target ID and at least one source", () => {
@@ -184,7 +172,13 @@ describe("reviewed overrides", () => {
       });
       items.add("other_item" as ItemId, { type: "default" });
 
-      applyReviewedOverrides({ other_item: {}, void_herb: {} }, {}, items, cosmetics);
+      applyReviewedOverrides(
+        { other_item: {}, void_herb: {} },
+        {},
+        items,
+        cosmetics,
+        REVIEWED_OVERRIDES,
+      );
 
       expect(items.get("void_herb" as ItemId)).toEqual(
         ITEM_SOURCE_REPLACEMENTS["void_herb" as ItemId],
@@ -223,6 +217,7 @@ describe("reviewed overrides", () => {
         cosmetics,
         itemAccumulator,
         cosmeticAccumulator,
+        REVIEWED_OVERRIDES,
       );
 
       const missingTargetDiags = diagnostics.filter((d) => d.kind === "missing-target");
@@ -246,7 +241,13 @@ describe("reviewed overrides", () => {
         get: () => [],
       } as unknown as CosmeticSourceAccumulator;
 
-      const diagnostics = applyReviewedOverrides({}, {}, itemAccumulator, cosmeticAccumulator);
+      const diagnostics = applyReviewedOverrides(
+        {},
+        {},
+        itemAccumulator,
+        cosmeticAccumulator,
+        REVIEWED_OVERRIDES,
+      );
 
       expect(diagnostics.length).toBeGreaterThan(0);
       for (const d of diagnostics) {
@@ -275,7 +276,13 @@ describe("reviewed overrides", () => {
 
       const items = { void_cake: { name: "Void Cake" } } as Record<string, unknown>;
 
-      const diagnostics = applyReviewedOverrides(items, {}, itemAccumulator, cosmeticAccumulator);
+      const diagnostics = applyReviewedOverrides(
+        items,
+        {},
+        itemAccumulator,
+        cosmeticAccumulator,
+        REVIEWED_OVERRIDES,
+      );
 
       const obsoleteDiags = diagnostics.filter((d) => d.kind === "obsolete-override");
       expect(obsoleteDiags.length).toBeGreaterThan(0);
@@ -302,7 +309,13 @@ describe("reviewed overrides", () => {
 
       const items = { void_cake: { name: "Void Cake" } } as Record<string, unknown>;
 
-      const diagnostics = applyReviewedOverrides(items, {}, itemAccumulator, cosmeticAccumulator);
+      const diagnostics = applyReviewedOverrides(
+        items,
+        {},
+        itemAccumulator,
+        cosmeticAccumulator,
+        REVIEWED_OVERRIDES,
+      );
 
       const obsoleteDiags = diagnostics.filter((d) => d.kind === "obsolete-override");
       expect(obsoleteDiags).toHaveLength(0);

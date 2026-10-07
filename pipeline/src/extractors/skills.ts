@@ -1,6 +1,7 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { expectNonEmptyString, expectNumberArray } from "../data-shapes.js";
+import { SKILL_ENGLISH_NAMES } from "../overrides/ordinal-names.js";
 import { sourceFileFor } from "../parse-fiddle.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
@@ -11,17 +12,6 @@ import type { ParsedGameData } from "../parse-fiddle.js";
 
 // v1.0.5 skills.toml has no name fields. These are the exact English source-cache values, checked
 // against each locale's English baseline by expectedEnglishValue below.
-const SKILL_ENGLISH_NAMES: Readonly<Record<string, string>> = {
-  archaeology: "Archaeology",
-  blacksmithing: "Blacksmithing",
-  combat: "Combat",
-  cooking: "Cooking",
-  farming: "Farming",
-  fishing: "Fishing",
-  mining: "Mining",
-  ranching: "Ranching",
-  woodcrafting: "Woodcrafting",
-};
 
 /**
  * Skill display names are localized from `ui/skill_menu/<skill-id>/name`, e.g.

@@ -1,40 +1,13 @@
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
 import { compareStrings } from "../ordering.js";
+import { KNOWN_STORES, UPGRADE_ACTIONS } from "../overrides/game-facts.js";
 
 import type { LocaleCode } from "#lib/types/locale.js";
-import type { StoreId, StoreUpgradeAction, TrackerData } from "#lib/types/tracker-data.js";
+import type { StoreId, TrackerData } from "#lib/types/tracker-data.js";
 
 import type { Localizer } from "../localize.js";
 import type { ParsedGameData } from "../parse-fiddle.js";
-
-/**
- * Every store the pipeline has reviewed. A new store throws so its English grammar
- * (`STORES_WITH_ARTICLE` in `src/lib/utils/en-grammar.ts`) and upgrade action get a look.
- */
-const KNOWN_STORES: ReadonlySet<string> = new Set([
-  "balor",
-  "blacksmith",
-  "carpenter",
-  "darcy",
-  "elsie_spring_festival",
-  "general",
-  "hayden",
-  "inn",
-  "louis",
-  "maple_spring_festival",
-  "merri",
-  "nora_souvenir_stall",
-  "terithia",
-  "valens_clinic",
-  "vera",
-  "wheedle",
-  "zorel",
-]);
-
-const UPGRADE_ACTIONS: Partial<Record<string, StoreUpgradeAction>> = {
-  general: "repair",
-};
 
 export function extractStoresMeta(
   fiddle: ParsedGameData,
@@ -54,7 +27,7 @@ export function extractStoresMeta(
     const store = stores[storeId];
     if (typeof store !== "object" || store === null) continue;
 
-    if (!KNOWN_STORES.has(storeId)) {
+    if (!KNOWN_STORES[storeId]) {
       throw new Error(`Unknown store "${storeId}" — add it to KNOWN_STORES in stores-meta.ts`);
     }
 
