@@ -1,3 +1,5 @@
+import { resolve } from "node:path";
+
 export interface CliOptions {
   assetsDir?: string;
   parseOnly: boolean;
@@ -62,4 +64,17 @@ export function parseCliOptions(args: readonly string[]): CliOptions {
     throw new Error("Choose --sprites or --villager-sprites-only.");
   }
   return options;
+}
+
+/**
+ * Resolves a user-supplied path against the directory the command was invoked from. The `pipeline`
+ * script runs `cd pipeline` first, so the process cwd is not the caller's; pnpm records the
+ * caller's directory in `INIT_CWD`.
+ */
+export function resolveCallerPath(
+  path: string,
+  env: NodeJS.ProcessEnv = process.env,
+  cwd: string = process.cwd(),
+): string {
+  return resolve(env.INIT_CWD ?? cwd, path);
 }
