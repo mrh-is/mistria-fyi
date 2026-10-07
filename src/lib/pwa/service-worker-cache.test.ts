@@ -17,6 +17,7 @@ import {
   readOfflineLocales,
   rememberOfflineLocales,
   SKIP_WAITING_MESSAGE,
+  SPRITE_CACHED_AT_HEADER,
 } from "./service-worker-cache.js";
 
 const ORIGIN = "https://mistria.fyi";
@@ -332,8 +333,11 @@ describe("service-worker sprite asset handling", () => {
   ])("a sprite cached %s ago is revalidated: %s", async (_label, hours, revalidated) => {
     const cache = new MemoryCache();
     const sprite = new Request(spriteUrl("spr_ui_item_apple"));
-    const date = new Date(Date.now() - hours * 60 * 60 * 1000).toUTCString();
-    await cache.put(sprite, new Response("cached sprite", { headers: { date } }));
+    const stamp = String(Date.now() - hours * 60 * 60 * 1000);
+    await cache.put(
+      sprite,
+      new Response("cached sprite", { headers: { [SPRITE_CACHED_AT_HEADER]: stamp } }),
+    );
     const fetcher = vi.fn().mockResolvedValue(new Response("gone", { status: 404 }));
     const deps = spriteDependencies(cache, fetcher);
 
@@ -379,6 +383,28 @@ describe("service-worker sprite asset handling", () => {
     await deps.settled();
 
     expect(await cachedText(cache, sprite)).toBe("cached sprite");
+  });
+
+  it("throttles revalidation by its own stamp when the response exposes no Date header", async () => {
+    const cache = new MemoryCache();
+    const sprite = new Request(spriteUrl("spr_ui_item_apple"));
+    // A CORS response from R2 exposes neither Date nor any other unsafelisted header.
+    const fetcher = vi.fn().mockResolvedValue(new Response("sprite", { status: 200 }));
+    const first = spriteDependencies(cache, fetcher);
+    await fetchSpriteRequest(sprite, first);
+    await first.settled();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    const second = spriteDependencies(cache, fetcher);
+    const response = await fetchSpriteRequest(sprite, second);
+    await second.settled();
+    const third = spriteDependencies(cache, fetcher);
+    await fetchSpriteRequest(sprite, third);
+    await third.settled();
+
+    expect(await response.text()).toBe("sprite");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(cache.entries.get(sprite.url)?.headers.has(SPRITE_CACHED_AT_HEADER)).toBe(true);
   });
 
   it("keeps a cached sprite through a transient server error", async () => {
