@@ -26,6 +26,15 @@ public.
   `git filter-repo` output that strips `static/sprites/` and the personal path in
   `measure-transfer-size.ts`. Rename this repository to a private archive and transfer its open
   issues to the new one.
+- **Historical references: mapped links or private-beta text.** Rewrite known private issue/PR
+  references in commit messages, & this repository’s issue/PR URLs in file contents. Transferred
+  issues retain links through an explicit old-to-new mapping; other references become non-linking
+  text, preventing GitHub from linking old numbers to unrelated public issues. Reject source tips
+  containing either excluded path; the tip tree changes only through URL reference rewrites. The
+  [candidate procedure](../public-repo.md) retains a per-reference report for review & requires the
+  filtered tip to pass the full read-only verification matrix before publication. Rewrites include
+  text in source & test fixtures, so checking only the private source is insufficient; tracked
+  candidate files must remain unchanged after verification.
 - **One removal contact:** `michael@mistria.fyi`, in both `DISCLAIMER.md` & the About page.
 
 ## Alternatives
