@@ -42,7 +42,7 @@ That directory contains `assets.zip` rather than an extracted `fiddle/`. The rea
 suite temporarily materializes only `fiddle/` and `localization/`; it never expands the archive's
 multi-gigabyte animation and audio trees. The full pipeline does not yet use that adapter: `main.ts`
 still requires an on-disk `fiddle/` and builds its `Localizer` from the on-disk `localization/`
-tables. Sprite extraction (`extractors/sprites.ts`) can read PNGs directly from `assets.zip`.
+tables. Sprite extraction (`emit/sprites.ts`) can read PNGs directly from `assets.zip`.
 
 `--villager-sprites-only` (alias: `pnpm run sprites:villagers`) is the narrowest of these: it parses
 only `fiddle.npcs` and regenerates villager sprites alone, skipping `tracker-data.json`, locale
@@ -83,6 +83,27 @@ MISTRIA_ASSETS=/path/to/assets pnpm run test:pipeline:assets
 The asset suite validates the parser profile plus fixture-wide evaluator, requirement, & recipe
 contracts. It does not regenerate data; `pnpm run pipeline -- <path>` remains a separate operation.
 
+## Stage boundaries
+
+`parse/` owns native TOML input, requirement parsing, & expression evaluation. `extract/` projects
+registries & quest facts, `acquisition/` collects sources, `enrich/` assigns visibility, `localize/`
+resolves locale text, & `emit/` stages sprites and publishes outputs. The root contains CLI,
+assembly, diagnostics, shared shapes, & test infrastructure.
+
+`acquisition/requirement-projector.ts` traverses each native expression once and returns both
+`availability` & `spoilerVisibility`. Their leaf policies deliberately differ: acquisition retains
+negative, calendar, perk, animal-unlock, & dating gates; spoiler visibility ignores those gates.
+Villager discovery conceals spoilers without claiming an evaluable acquisition restriction. Reviewed
+cutscene fallbacks apply to acquisition only; native spoiler gates require a cutscene-map entry.
+Empty disjunctions remain impossible acquisition conditions & revealable spoiler conditions.
+`enrich/availability-projection.ts` converts already-projected availability, not native
+requirements.
+
+Store recipe sources carry extraction-time spoiler gates in pipeline-only `stockGate` metadata.
+Enrichment consumes that field and writes final `Source.visibility`; public source types never
+include `stockGate`. An emit-boundary assertion rejects unconsumed metadata. Source identity
+includes the metadata, while sorting preserves the previous gate ordering for canonical output.
+
 ## Data flow
 
 `main.ts` is the CLI and owns every file read & write; `assemble.ts` (`assembleTrackerData`) owns
@@ -94,10 +115,10 @@ assets root
   → parse TOML into a dotted namespace tree with non-enumerable provenance
   → evaluate item value expressions in place
   ┌ assembleTrackerData(fiddle, localizer, options)
-  → extract registries & per-locale names (extractors/)
+  → extract registries & per-locale names (extract/)
   → collect acquisition sources into accumulators (acquisition/)
   → apply reviewed overrides, then attach sources to items, cosmetics, animals, & pets
-  → extract quest chains & heart-level changes (extractors/visibility/)
+  → extract quest chains & heart-level changes (extract/)
   → assemble TrackerData
   → stamp & assign entity visibility
   └ validate the assembled tracker data against reference registries
@@ -107,7 +128,7 @@ assets root
 ```
 
 Nothing is written until the final step. `main.ts` stages every output it will write as in-memory
-content; with `--sprites`, sprite extraction (`extractors/sprites.ts`) converts the needed item and
+content; with `--sprites`, sprite extraction (`emit/sprites.ts`) converts the needed item and
 villager sprites to webp in memory as well. Villager sprites resolve their source PNG from each
 NPC’s own `icon_sprite` field, the same way items do, under `animations/UI NEW/Generic/Icons/NPC/`.
 A thrown error, a failed validation, or a missing sprite exits before publishing, so a regeneration
@@ -178,21 +199,21 @@ Paths are relative to `pipeline/src/`. Colocated `*.test.ts` files cover most mo
 
 ### Input & orchestration
 
-| Module                 | Responsibility                                                                                                                                                          |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `main.ts`              | CLI, asset-root resolution, stage order, staging, and publishing. `--parse-only` stops after parsing; `--villager-sprites-only` runs villager sprites alone.            |
-| `cli-options.ts`       | Validates CLI arguments and rejects unknown or conflicting flags before asset reads.                                                                                    |
-| `parse-smoke.ts`       | Checks generic parsed structure, with an explicit strict v1.0.5 fixture profile.                                                                                        |
-| `assemble.ts`          | `assembleTrackerData`: extraction, source attachment, visibility, & validation with an injected `Localizer`. Reviewed overrides & diagnostics are injectable for tests. |
-| `parse-fiddle.ts`      | Parses `fiddle/` from disk or straight out of `assets.zip` into one namespace tree. Excludes `.meta.toml`; rejects duplicate and colliding destinations.                |
-| `evaluate.ts`          | Resolves `value.bin` and `value.store` expressions in place (grammar below).                                                                                            |
-| `requirements.ts`      | Normalizes native requirement objects into requirement expressions and expands named requirements.                                                                      |
-| `assets-zip.ts`        | Locates `assets.zip`, the default Steam install, and the installed executable’s version for `main.ts`.                                                                  |
-| `asset-input.ts`       | Materializes only `fiddle/` and `localization/` from `assets.zip` for the real-asset test suite (`assets-test-setup.ts`).                                               |
-| `data-shapes.ts`       | Array guards that throw with field and source-file context.                                                                                                             |
-| `extractor-helpers.ts` | Shared traversals & parsers: `forEachItem`, `forEachQuest`, `forEachStockEntry`, `firstRequiredItemId`, `minesBiomeId`, `scrollTargetOf`, and the tracked quest groups. |
-| `localize.ts`          | The `Localizer` extractors receive: resolves a classified text field to every locale through translation tables; falls back to English.                                 |
-| `locale-codes.ts`      | Maps game language codes to BCP 47 tags and throws when the game adds or drops a language.                                                                              |
+| Module                     | Responsibility                                                                                                                                                          |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `main.ts`                  | CLI, asset-root resolution, stage order, staging, and publishing. `--parse-only` stops after parsing; `--villager-sprites-only` runs villager sprites alone.            |
+| `cli-options.ts`           | Validates CLI arguments and rejects unknown or conflicting flags before asset reads.                                                                                    |
+| `parse/parse-smoke.ts`     | Checks generic parsed structure, with an explicit strict v1.0.5 fixture profile.                                                                                        |
+| `assemble.ts`              | `assembleTrackerData`: extraction, source attachment, visibility, & validation with an injected `Localizer`. Reviewed overrides & diagnostics are injectable for tests. |
+| `parse/parse-fiddle.ts`    | Parses `fiddle/` from disk or straight out of `assets.zip` into one namespace tree. Excludes `.meta.toml`; rejects duplicate and colliding destinations.                |
+| `parse/evaluate.ts`        | Resolves `value.bin` and `value.store` expressions in place (grammar below).                                                                                            |
+| `parse/requirements.ts`    | Normalizes native requirement objects into requirement expressions and expands named requirements.                                                                      |
+| `parse/assets-zip.ts`      | Locates `assets.zip`, the default Steam install, and the installed executable’s version for `main.ts`.                                                                  |
+| `parse/asset-input.ts`     | Materializes only `fiddle/` and `localization/` from `assets.zip` for the real-asset test suite (`assets-test-setup.ts`).                                               |
+| `data-shapes.ts`           | Array guards that throw with field and source-file context.                                                                                                             |
+| `extractor-helpers.ts`     | Shared traversals & parsers: `forEachItem`, `forEachQuest`, `forEachStockEntry`, `firstRequiredItemId`, `minesBiomeId`, `scrollTargetOf`, and the tracked quest groups. |
+| `localize/localize.ts`     | The `Localizer` extractors receive: resolves a classified text field to every locale through translation tables; falls back to English.                                 |
+| `localize/locale-codes.ts` | Maps game language codes to BCP 47 tags and throws when the game adds or drops a language.                                                                              |
 
 ### Extractors
 
@@ -216,7 +237,7 @@ only in locale chunks (`src/lib/data/locales/<locale>/<category>.json`), never i
 | `skills.ts`               | `skills`, `perks`, skill menu UI      | Skills, perk tiers, and perk names. Throws when the skill menu names a perk without a name.                                                                 |
 | `stores-meta.ts`          | `stores`                              | Store registry.                                                                                                                                             |
 | `treasure-chest-tiers.ts` | `fishing.chest_tables`                | Treasure chest tiers.                                                                                                                                       |
-| `ui-strings.ts`           | `misc_local`                          | The `ui` locale chunk: category names, seasons, quest types, almanac labels, and `tier_<n>`. Collapses gendered markup to `<they>`; throws on other markup. |
+| `localize/ui-strings.ts`  | `misc_local`                          | The `ui` locale chunk: category names, seasons, quest types, almanac labels, and `tier_<n>`. Collapses gendered markup to `<they>`; throws on other markup. |
 | `villagers.ts`            | `npcs`                                | Villager registry and icon-sprite index. Throws when a villager lacks `icon_sprite`.                                                                        |
 | `sprites.ts`              | `assets.zip` or extracted PNGs        | Stages webp conversions for items and villagers; `publishSprites` writes them.                                                                              |
 
@@ -233,10 +254,10 @@ relevant target kinds from each native table.
 | `recipe-products.ts`                        | Adds a `recipe` source to every item a recipe produces.                                                                                            |
 | `collectors/natural.ts`                     | Fish, bait, bugs, dives, crops, trees, forageables, monster drops, animal products, perks, and fish traps.                                         |
 | `collectors/rewards.ts`                     | Quest, letter, museum, chicken statue, festival, renown, date, and relationship rewards.                                                           |
-| `collectors/stores.ts`                      | Store stock, with requirements projected through `availability.ts`.                                                                                |
+| `collectors/stores.ts`                      | Store stock, with requirements projected through `requirement-projector.ts`.                                                                       |
 | `collectors/exploration.ts`                 | Mines, artifact digs, treasure chests, the wishing well, the artifact replicator, and equipment.                                                   |
 | `collectors/recipe-only.ts`                 | Perks, dragon-forged defaults, and reviewed recipe-only exceptions that have no parallel item-acquisition table.                                   |
-| `availability.ts`                           | Projects requirement expressions into the app’s availability conditions.                                                                           |
+| `requirement-projector.ts`                  | One native expression traversal projects acquisition availability & spoiler visibility with independent leaf policies.                             |
 | `reviewed-overrides.ts`                     | Hand-reviewed item and cosmetic sources plus default (starting) sources. An override that duplicates a native source throws as obsolete.           |
 | `exclusions.ts`                             | Cosmetics deliberately dropped from the registry (internal assets and unreleased content), each with evidence.                                     |
 | `native-references.ts`                      | Reads reference registries from parsed game tables only (see “Reference registries”).                                                              |
@@ -259,15 +280,15 @@ Mines acquisition source. Beta localization fallbacks remain separate from data-
 
 ### Visibility
 
-The `extractors/visibility/` modules compute spoiler gating.
+The `enrich/` modules compute spoiler gating from facts extracted in `extract/`.
 
-| Module                       | Responsibility                                                                                                                                |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cutscene-quest-map.ts`      | Maps cutscenes to the quests that trigger them.                                                                                               |
-| `quest-chains.ts`            | Story prerequisites, heart-level chains, crown, Stillwell, & Tali order, and raw fetch-quest requirements; includes reviewed story overrides. |
-| `requirement-resolver.ts`    | Resolves requirement expressions into visibility conditions.                                                                                  |
-| `availability-projection.ts` | Converts availability conditions into visibility conditions.                                                                                  |
-| `entity-visibility.ts`       | Hardcoded store, villager, and category gates; heart-level changes; and visibility for items, recipes, cosmetics, animals, spells, & quests.  |
+| Module                                 | Responsibility                                                                                                                                |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `extract/cutscene-quest-map.ts`        | Maps cutscenes to the quests that trigger them.                                                                                               |
+| `extract/quest-chains.ts`              | Story prerequisites, heart-level chains, crown, Stillwell, & Tali order, and raw fetch-quest requirements; includes reviewed story overrides. |
+| `acquisition/requirement-projector.ts` | Projects native requirements into both acquisition & spoiler conditions; see the acquisition section.                                         |
+| `enrich/availability-projection.ts`    | Converts availability conditions into visibility conditions.                                                                                  |
+| `enrich/entity-visibility.ts`          | Hardcoded store, villager, and category gates; heart-level changes; and visibility for items, recipes, cosmetics, animals, spells, & quests.  |
 
 ### Recipes
 
@@ -281,10 +302,10 @@ store and festival stock, museum rewards, the chicken statue, fishing chests, th
 mines chests, scroll bundles, renown, perks, dragon-forged defaults, and a short exception list.
 Standalone `extractRecipes` calls invoke those same collectors. Recipe scroll targets resolve from
 the product item to its recipe key, or from an existing recipe ID; an unknown target is fatal.
-Source identity includes both availability and visibility. When the same path has different gates,
-each gated source remains a separate acquisition alternative, keeping its availability and spoiler
-condition paired. An unconditional path remains a separate alternative, and sorted output is
-independent of collector order.
+Source identity includes availability, internal stock gates, & final visibility. When the same path
+has different gates, each gated source remains a separate acquisition alternative, keeping its
+availability and spoiler condition paired. An unconditional path remains a separate alternative, and
+sorted output is independent of collector order.
 
 Letter sources use explicit shipping, donation, spouse, or calendar triggers where the native data
 provides them. Birthday and other recognized conditional letters retain their requirement tree as

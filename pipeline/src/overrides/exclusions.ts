@@ -1,7 +1,7 @@
 import type { CosmeticId, ItemId } from "#lib/types/tracker-data.js";
 
 import type { CosmeticSourceAccumulator } from "../acquisition/source-accumulator.js";
-import type { ParsedGameData } from "../parse-fiddle.js";
+import type { ParsedGameData } from "../parse/parse-fiddle.js";
 import type { ReviewedEntry } from "./entry.js";
 
 export const UNRESOLVED_COSMETIC_EXCLUSIONS: ReviewedEntry<boolean>[] = [

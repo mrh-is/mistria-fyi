@@ -6,13 +6,13 @@ import {
   PERK_BY_ITEM_ID,
   PERK_BY_SUBCATEGORY,
 } from "../../overrides/game-facts.js";
-import { sourceFileFor } from "../../parse-fiddle.js";
+import { sourceFileFor } from "../../parse/parse-fiddle.js";
 import { canonicalSourceJson } from "../source-accumulator.js";
 
 import type { Source } from "#lib/types/acquisition.js";
 import type { PerkId, RecipeId } from "#lib/types/tracker-data.js";
 
-import type { ParsedGameData } from "../../parse-fiddle.js";
+import type { ParsedGameData } from "../../parse/parse-fiddle.js";
 import type { RecipeAcquisitionContext } from "../recipe-target.js";
 
 /** Sources whose facts have no corresponding native item-acquisition table. */

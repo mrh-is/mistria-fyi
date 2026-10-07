@@ -65,7 +65,7 @@ clone with no sprites uploaded (or an unreachable bucket) degrades gracefully ra
 
 ## Generating and uploading sprites
 
-Item and villager sprites are extracted by `pipeline/src/extractors/sprites.ts` and staged during a
+Item and villager sprites are extracted by `pipeline/src/emit/sprites.ts` and staged during a
 pipeline run:
 
 ```bash

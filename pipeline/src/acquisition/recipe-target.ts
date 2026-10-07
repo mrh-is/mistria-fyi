@@ -1,7 +1,7 @@
-import type { Source } from "#lib/types/acquisition.js";
 import type { RecipeId } from "#lib/types/tracker-data.js";
 
 import type { PipelineDiagnostics } from "../diagnostics.js";
+import type { PipelineSource as Source } from "./pipeline-source.js";
 import type { RecipeSourceAccumulator } from "./source-accumulator.js";
 
 export interface RecipeAcquisitionContext {

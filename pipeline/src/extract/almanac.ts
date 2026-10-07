@@ -1,0 +1,340 @@
+import { LOCALE_CODES } from "#lib/types/locale.js";
+
+import { ITEM_EXCLUSIONS } from "../acquisition/exclusions.js";
+import { expectArray, expectStringArray } from "../data-shapes.js";
+import { PipelineDiagnostics } from "../diagnostics.js";
+import { forEachItem } from "../extractor-helpers.js";
+import { compareStrings } from "../ordering.js";
+import { sourceFileFor } from "../parse/parse-fiddle.js";
+
+import type { LocaleCode } from "#lib/types/locale.js";
+import type {
+  AlmanacCategory,
+  AlmanacCategoryId,
+  AlmanacEntry,
+  ItemId,
+  RecipeId,
+  TrackerData,
+} from "#lib/types/tracker-data.js";
+
+import type { Localizer } from "../localize/localize.js";
+import type { ParsedGameData } from "../parse/parse-fiddle.js";
+
+/**
+ * The game's `icon_sprite` name per item, keyed by item ID. Used only to locate the source PNG
+ * during sprite extraction; the final `Item` in `tracker-data.json` has no icon field, since sprite
+ * URLs are resolved from the item ID itself (see `src/lib/sprites/sprite-url.ts`).
+ */
+export type ItemIconSpriteIndex = Record<string, string>;
+
+/**
+ * Extracts both named item metadata and visible almanac rows. The metadata index includes every
+ * accepted named item, while the almanac contains only items assigned to a UI-defined category.
+ */
+export type ItemMetadataIndex = Record<string, { category: string }>;
+
+export interface RawAlmanacCategory {
+  key: string;
+  /** The `misc_local` key of the category's label; defaults to `key` unless `local_key` overrides it. */
+  localKey: string;
+  tags: string[];
+}
+
+export function extractAlmanac(
+  fiddle: ParsedGameData,
+  localizer: Localizer,
+  sharedDiagnostics?: PipelineDiagnostics,
+): {
+  almanac: TrackerData["almanac"];
+  iconSpritesByItemId: ItemIconSpriteIndex;
+  items: ItemMetadataIndex;
+  localeNames: Record<LocaleCode, Record<ItemId, string>>;
+} {
+  const diagnostics = sharedDiagnostics ?? new PipelineDiagnostics();
+  const localeNames = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, {}])) as Record<
+    LocaleCode,
+    Record<ItemId, string>
+  >;
+  const fallbackCounts = Object.fromEntries(LOCALE_CODES.map((locale) => [locale, 0])) as Record<
+    LocaleCode,
+    number
+  >;
+  const emptyResult = {
+    almanac: {},
+    iconSpritesByItemId: {},
+    items: {},
+    localeNames,
+  };
+
+  const rawCategories = readAlmanacCategories(fiddle);
+  if (!fiddle.items || rawCategories.length === 0) {
+    diagnostics.add({
+      fieldPath: "ui.menus.sub_menus.almanac.categories",
+      kind: "empty-almanac",
+      message: "No almanac items or categories found in game data",
+      targetId: "almanac",
+    });
+    if (!sharedDiagnostics) diagnostics.validate();
+    return emptyResult;
+  }
+
+  const chestIds = buildChestIdSet(fiddle);
+  const namelessItems: string[] = [];
+
+  const allItems: {
+    iconSprite: string;
+    id: string;
+    name: string;
+    recipeKey?: string;
+    subCategory: string;
+    tags: string[];
+    topCategory: string;
+  }[] = [];
+
+  forEachItem(fiddle, (itemId, item, topCategory, subCategory) => {
+    if (topCategory === "other" && subCategory === "unreviewed_new_items") return;
+    if (chestIds.has(itemId)) return;
+    if (ITEM_EXCLUSIONS.has(itemId as ItemId)) return;
+
+    const rawName = item.name as string | undefined;
+    if (!rawName) {
+      namelessItems.push(`${topCategory}/${subCategory}/${itemId} (missing name)`);
+      return;
+    }
+
+    if (rawName.includes("/") && !rawName.startsWith("spr_")) {
+      namelessItems.push(`${topCategory}/${subCategory}/${itemId} (localization path: ${rawName})`);
+      return;
+    }
+
+    const iconSprite = item.icon_sprite as string | undefined;
+    if (!iconSprite) {
+      throw new Error(`Missing icon_sprite for item "${itemId}" in ${topCategory}/${subCategory}`);
+    }
+
+    const tags = Array.isArray(item.tags)
+      ? (item.tags as unknown[]).filter((v): v is string => typeof v === "string")
+      : [];
+    const recipeKey = item.recipe_key as string | undefined;
+
+    allItems.push({
+      iconSprite,
+      id: itemId,
+      name: rawName,
+      recipeKey,
+      subCategory,
+      tags,
+      topCategory,
+    });
+  });
+
+  const tagToCategoryIndices = new Map<string, number[]>();
+  for (let i = 0; i < rawCategories.length; i++) {
+    for (const tag of rawCategories[i].tags) {
+      const indices = tagToCategoryIndices.get(tag) ?? [];
+      indices.push(i);
+      tagToCategoryIndices.set(tag, indices);
+    }
+  }
+
+  const categoryBuckets: Map<string, { id: string; name: string; recipeKey?: string }>[] =
+    rawCategories.map(() => new Map<string, { id: string; name: string; recipeKey?: string }>());
+
+  const items: ItemMetadataIndex = {};
+  const iconSpritesByItemId: ItemIconSpriteIndex = {};
+
+  const ACQUISITION_TAGS = new Set(["dive", "fishable"]);
+
+  for (const item of allItems) {
+    let assignedIdx: number | undefined;
+    let bestCategoryOrder = Infinity;
+    let bestIsAcquisition = true;
+    const matchedCategoryIndices = new Set<number>();
+    for (const tag of item.tags) {
+      const indices = tagToCategoryIndices.get(tag) ?? [];
+      for (const idx of indices) {
+        matchedCategoryIndices.add(idx);
+        const isAcq = ACQUISITION_TAGS.has(tag);
+        if (
+          (!isAcq && bestIsAcquisition) ||
+          (isAcq === bestIsAcquisition && idx < bestCategoryOrder)
+        ) {
+          bestCategoryOrder = idx;
+          assignedIdx = idx;
+          bestIsAcquisition = isAcq;
+        }
+      }
+    }
+
+    const categoryKey =
+      assignedIdx === undefined ? item.topCategory : rawCategories[assignedIdx].key;
+    const itemId = item.id as ItemId;
+    items[item.id] = { category: categoryKey };
+    iconSpritesByItemId[item.id] = item.iconSprite;
+    const { fallbackLocales, values } = localizer.localizeField({
+      category: `items/${item.topCategory}/${item.subCategory}`,
+      classification: "localizable",
+      englishValue: item.name,
+      field: "name",
+      id: item.id,
+      logMissing: false,
+    });
+    for (const locale of LOCALE_CODES) localeNames[locale][itemId] = values[locale];
+    for (const locale of fallbackLocales) fallbackCounts[locale]++;
+
+    for (const categoryIdx of matchedCategoryIndices) {
+      categoryBuckets[categoryIdx].set(item.id, {
+        id: item.id,
+        name: item.name,
+        recipeKey: item.recipeKey,
+      });
+    }
+  }
+
+  const almanac: Record<AlmanacCategoryId, AlmanacCategory> = {};
+
+  for (let i = 0; i < rawCategories.length; i++) {
+    const cat = rawCategories[i];
+    const bucket = categoryBuckets[i];
+    if (bucket.size === 0) continue;
+
+    const entries = collapseColorways(bucket);
+
+    entries.sort((a, b) => compareStrings(a.sortName, b.sortName));
+
+    almanac[cat.key as AlmanacCategoryId] = {
+      items: entries.map(({ itemIds, recipeId }) => ({
+        itemIds,
+        ...(recipeId ? { recipeId } : {}),
+      })),
+    };
+  }
+
+  const totalEntries = Object.values(almanac).reduce((n, cat) => n + cat.items.length, 0);
+  const totalColorways = Object.values(almanac).reduce(
+    (n, cat) => n + cat.items.reduce((m, entry) => m + entry.itemIds.length, 0),
+    0,
+  );
+  console.log(
+    `  Almanac: ${Object.keys(almanac).length} categories, ${totalEntries} entries (${totalColorways} item IDs)`,
+  );
+  namelessItems.sort((a, b) => compareStrings(a, b));
+  if (namelessItems.length > 0) {
+    console.log(`  Nameless items skipped (${namelessItems.length}):`);
+    for (const path of namelessItems) {
+      console.log(`    - ${path}`);
+    }
+  }
+  const fallbackSummary = LOCALE_CODES.map(
+    (locale) => `${locale}: ${fallbackCounts[locale].toString()}`,
+  ).join(", ");
+  console.log(`  Item localization fallbacks: ${fallbackSummary}`);
+  return {
+    almanac,
+    iconSpritesByItemId,
+    items,
+    localeNames,
+  };
+}
+
+/**
+ * The almanac's UI-defined categories, in game order. Their player-facing labels are game UI
+ * strings keyed `misc_local/<key>`, or `misc_local/<other>` when the category sets `local_key`,
+ * localized by {@link extractUiStrings}, not stored here.
+ */
+export function readAlmanacCategories(fiddle: ParsedGameData): RawAlmanacCategory[] {
+  const ui = fiddle.ui as Record<string, unknown> | undefined;
+  const menus = ui?.menus as Record<string, unknown> | undefined;
+  const subMenus = menus?.sub_menus as Record<string, unknown> | undefined;
+  const almanac = subMenus?.almanac as Record<string, unknown> | undefined;
+  if (!almanac?.categories) return [];
+
+  const sourceFile = sourceFileFor(fiddle, "ui.menus.sub_menus.almanac.categories");
+  const arr = expectArray<Record<string, unknown>>(almanac.categories, {
+    fieldPath: "almanac.categories",
+    sourcePath: sourceFile,
+  });
+
+  return arr.map((cat: Record<string, unknown>) => ({
+    key: cat.key as string,
+    localKey: readLocalKey(cat, sourceFile),
+    tags: expectStringArray(cat.tags, {
+      entityId: cat.key as string,
+      fieldPath: "tags",
+      sourcePath: sourceFile,
+    }),
+  }));
+}
+
+function buildChestIdSet(fiddle: ParsedGameData): Set<string> {
+  const fish = fiddle.fish as Record<string, Record<string, unknown>> | undefined;
+  if (!fish) return new Set();
+
+  const ids = new Set<string>();
+  for (const [fishId, data] of Object.entries(fish)) {
+    if (fishId === "default") continue;
+    if (data.is_chest === true) {
+      const itemId = (data.item as string | undefined) ?? "";
+      if (itemId) ids.add(itemId);
+    }
+  }
+  return ids;
+}
+
+/**
+ * Collapses colorway variants into single almanac entries. Items sharing the same
+ * `recipe_key + name` are grouped. The canonical ID is the alphabetically-first
+ * item ID, matching the game's own almanac icon selection.
+ *
+ * Grouping stays anchored to the English source name so locale-specific translations never change
+ * structural IDs or completion behavior.
+ */
+function collapseColorways(
+  bucket: Map<string, { id: string; name: string; recipeKey?: string }>,
+): (AlmanacEntry & { sortName: string })[] {
+  const result: (AlmanacEntry & { sortName: string })[] = [];
+  const seenRecipeGroups = new Map<string, number>();
+
+  for (const [id, entry] of bucket) {
+    if (entry.recipeKey) {
+      const groupKey = `${entry.recipeKey}::${entry.name}`;
+      const existingIdx = seenRecipeGroups.get(groupKey);
+      if (existingIdx !== undefined) {
+        const existing = result[existingIdx];
+        existing.itemIds.push(id as ItemId);
+        continue;
+      }
+      seenRecipeGroups.set(groupKey, result.length);
+      result.push({
+        itemIds: [id as ItemId],
+        recipeId: entry.recipeKey as RecipeId,
+        sortName: entry.name,
+      });
+    } else {
+      result.push({
+        itemIds: [id as ItemId],
+        sortName: entry.name,
+      });
+    }
+  }
+
+  // Sort member IDs alphabetically; canonical ID = first element
+  for (const entry of result) {
+    entry.itemIds.sort((a, b) => compareStrings(a, b));
+  }
+
+  return result;
+}
+
+/** `local_key` is a full l10n key (`misc_local/<key>`); only the `misc_local` namespace is expected. */
+function readLocalKey(cat: Record<string, unknown>, sourceFile: string): string {
+  const key = cat.key as string;
+  const localKey = cat.local_key;
+  if (localKey === undefined) return key;
+  if (typeof localKey !== "string" || !localKey.startsWith("misc_local/")) {
+    throw new Error(
+      `Almanac category "${key}" in ${sourceFile} has local_key ${JSON.stringify(localKey)}; expected "misc_local/<key>"`,
+    );
+  }
+  return localKey.slice("misc_local/".length);
+}

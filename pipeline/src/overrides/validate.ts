@@ -1,5 +1,5 @@
 import { forEachItem } from "../extractor-helpers.js";
-import { getCutsceneRecords } from "../parse-fiddle.js";
+import { getCutsceneRecords } from "../parse/parse-fiddle.js";
 import { entriesFromRecord, validateReviewedEntries } from "./entry.js";
 import { cosmeticExclusions, ITEM_EXCLUSION_ENTRIES } from "./exclusions.js";
 import {
@@ -28,7 +28,7 @@ import {
   reviewedSourceEntries,
 } from "./sources.js";
 
-import type { ParsedGameData } from "../parse-fiddle.js";
+import type { ParsedGameData } from "../parse/parse-fiddle.js";
 import type { ReviewedEntry } from "./entry.js";
 
 function record(value: unknown): Record<string, unknown> {
