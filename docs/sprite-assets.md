@@ -32,9 +32,9 @@ file, the same way an item's `icon_sprite` is — the output is still keyed by v
 
 ## Production hosting
 
-Objects are overwritten in place at a stable, entity-ID-keyed path and marked immutable — a content
-change is always accompanied by a generation bump, which changes the URL's query string, not the
-object's key:
+Objects are overwritten in place at a stable, entity-ID-keyed path and served with a revalidating
+`Cache-Control`, so removing one reaches returning visitors. A content change is always accompanied
+by a generation bump, which changes the URL's query string, not the object's key:
 
 ```text
 https://assets.mistria.fyi/sprites/items/<itemId>.webp
@@ -53,15 +53,19 @@ Set it up in Cloudflare as follows:
 2. Upload converted sprites under the `sprites/` prefix — `pnpm run sprites:upload` does this (see
    below).
 3. Set uploaded objects' HTTP metadata to `Content-Type: image/webp` and
-   `Cache-Control: public, max-age=31536000, immutable`.
+   `Cache-Control: public, max-age=86400, stale-while-revalidate=86400`. Objects uploaded earlier
+   with the one-year immutable policy keep it until re-uploaded; run
+   `FORCE=1 pnpm run sprites:upload` once to migrate them.
 4. The bucket's existing CORS policy (permissive `GET`/`HEAD`, see [font-assets.md](font-assets.md))
    already covers sprites; no bucket-level change is needed.
 
 The application CSP permits images only from itself and `assets.mistria.fyi`. The service worker
 caches sprites in their own `sprites-v1` cache with a 400-entry LRU cap, separate from the general
-50-entry runtime cache, and never precaches them. Until an object exists at a given URL,
-`sprite-slot.svelte` and `villager-record.svelte` render their placeholder on image error — a fresh
-clone with no sprites uploaded (or an unreachable bucket) degrades gracefully rather than breaking.
+50-entry runtime cache, and never precaches them. It serves a cached sprite immediately, revalidates
+it in the background, & evicts it when the bucket answers 403, 404, or 410. Until an object exists
+at a given URL, `sprite-slot.svelte` and `villager-record.svelte` render their placeholder on image
+error — a fresh clone with no sprites uploaded (or an unreachable bucket) degrades gracefully rather
+than breaking.
 
 ## Generating and uploading sprites
 
@@ -93,10 +97,10 @@ pnpm run sprites:upload
 ```
 
 modeled on `scripts/locale-fonts/upload-locale-fonts.sh`: it uploads via `pnpx wrangler`, marks
-objects immutable, skips keys whose remote ETag already matches the local file's MD5 (`FORCE=1` to
-re-upload everything regardless), and — since original game assets must never reach the public
-bucket by accident — refuses to run if `pipeline/output/sprites/` contains anything other than
-`.webp` files.
+objects `max-age=86400, stale-while-revalidate=86400`, skips keys whose remote ETag already matches
+the local file's MD5 (`FORCE=1` to re-upload everything regardless), and — since original game
+assets must never reach the public bucket by accident — refuses to run if `pipeline/output/sprites/`
+contains anything other than `.webp` files.
 
 ## Rollout order for an icon change
 

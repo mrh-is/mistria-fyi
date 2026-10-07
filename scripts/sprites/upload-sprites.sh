@@ -5,6 +5,10 @@
 # not re-upload: a key is skipped when its remote ETag already matches the local file's MD5 (set
 # FORCE=1 to re-upload everything regardless).
 #
+# Sprites are uploaded with a revalidating Cache-Control (one day, then stale-while-revalidate) so
+# a takedown reaches returning visitors; see docs/takedown.md. Objects uploaded earlier with the
+# old one-year immutable policy keep it until re-uploaded, so run once with FORCE=1 to migrate them.
+#
 #   pnpm run sprites:upload [sprites-dir]   (DRY_RUN=1 previews without uploading)
 set -euo pipefail
 
@@ -31,4 +35,5 @@ fi
 
 # shellcheck source=../lib/r2-upload.sh
 source "$(dirname "$0")/../lib/r2-upload.sh"
-r2_upload_tree "$SPRITES_DIR" '*.webp' "sprites/" image/webp etag
+r2_upload_tree "$SPRITES_DIR" '*.webp' "sprites/" image/webp etag \
+  "public, max-age=86400, stale-while-revalidate=86400"
