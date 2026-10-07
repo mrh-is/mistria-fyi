@@ -20,7 +20,9 @@ export function validateReviewedEntries<T>(
     }
     seen.add(entry.id);
     if (!nativeIds.has(entry.id)) {
-      throw new Error(`Missing reviewed ${label} target in native game data: ${entry.id}`);
+      throw new Error(
+        `Missing reviewed ${label} target in native game data: ${entry.id} (missing-target ${label}.${entry.id})`,
+      );
     }
     if (isNative(entry)) {
       throw new Error(
