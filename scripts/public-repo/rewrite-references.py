@@ -9,11 +9,22 @@ import subprocess
 import sys
 
 REPO = b"mrh-is/mistria-fyi"
-URL = rb"https://github\.com/mrh-is/mistria-fyi/(issues|pull)/(\d+)(?!\d)(?:[?#][^\s<>\)\]]*)?"
-REFERENCE = re.compile(
-    URL + rb"|(?<![\w/.-])(?:mrh-is/mistria-fyi)?#(\d+)\b"
+URL = (
+    rb"https://github\.com/mrh-is/mistria-fyi/(?:issues|pull)/"
+    rb"(?P<url_number>\d+)(?!\d)(?:[/?#][^\s<>\)\]]*)?"
 )
-URL_ONLY = re.compile(URL)
+REFERENCE = re.compile(
+    URL + rb"|(?<![\w/.-])(?:mrh-is/mistria-fyi)?#(?P<bare_number>\d+)\b"
+)
+# Match a link before its URL so removing an unmapped target also removes its link syntax.
+# Preserve mapped link labels, optional angle delimiters, titles, & URL suffixes unchanged.
+MARKDOWN_LINK = (
+    rb"\[(?P<label>(?:\\.|[^\[\]\\\n]|\[[^\[\]\n]*\])*)\]\([ \t]*"
+    rb"(?P<angle><)?"
+    + URL.replace(b"url_number", b"markdown_number")
+    + rb"""(?(angle)>)(?:[ \t]+(?:"[^"\n]*"|'[^'\n]*'|\([^\)\n]*\)))?[ \t]*\)"""
+)
+URL_ONLY = re.compile(MARKDOWN_LINK + b"|" + URL)
 
 
 def git(repo, *args, data=None):
@@ -53,23 +64,30 @@ class Rewriter:
         self.paths = {}
 
     def rewrite(self, content, message=False, location=None):
+        # Treat NUL-containing file blobs as binary, consistently in filtering & tree auditing.
+        if not message and b"\0" in content:
+            return content
         pattern = REFERENCE if message else URL_ONLY
 
         def replace(match):
-            is_url = match.group(1) is not None
-            number = int(match.group(2) if is_url else match.group(3))
+            groups = match.groupdict()
+            url_number = groups.get("markdown_number") or groups.get("url_number")
+            number = int(url_number or groups["bare_number"])
             if number not in self.kinds:
                 return match.group(0)
             if number in self.mapping:
                 new = str(self.mapping[number]).encode()
-                if is_url:
-                    start = match.start(2) - match.start()
-                    end = match.end(2) - match.start()
+                if url_number is not None:
+                    number_group = "markdown_number" if groups.get("markdown_number") else "url_number"
+                    start = match.start(number_group) - match.start()
+                    end = match.end(number_group) - match.start()
                     replacement = match.group(0)[:start] + new + match.group(0)[end:]
                 elif match.group(0).startswith(REPO):
                     replacement = REPO + b"#" + new
                 else:
                     replacement = b"#" + new
+            elif groups.get("label") is not None:
+                replacement = groups["label"] + b" (private beta)"
             else:
                 # Avoid “Merge pull request PR 123” in GitHub’s standard merge subjects.
                 merge_subject = (
@@ -203,7 +221,7 @@ def audit(source, commit, candidate, directory):
         if not passed_scan:
             raise ValueError("FAIL: macOS home prefix in " + scan.stdout.decode("utf-8", "replace"))
         for match in REFERENCE.finditer(message):
-            number = int(match.group(2) if match.group(1) else match.group(3))
+            number = int(match.group("url_number") or match.group("bare_number"))
             if number in rewriter.kinds and number not in rewriter.mapping.values():
                 raise ValueError(f"FAIL: unmapped private reference in commit {oid}")
     passed(True, "all commits contain no macOS home-prefix text or unmapped private message references")
