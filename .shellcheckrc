@@ -1,0 +1,4 @@
+# Follow `source` into shared helpers such as scripts/lib/r2-upload.sh, resolving each `source=`
+# directive from the sourcing script's directory, so variables a helper reads don't look unused.
+external-sources=true
+source-path=SCRIPTDIR
