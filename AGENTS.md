@@ -150,13 +150,16 @@ Follow this sequence for every task:
    Run focused tests during development (see §7).
 9. **Verify** — run `pnpm run lint:fix` before committing; CI runs the full matrix (see §7).
 10. **Deliver** — commit with the required co-author trailer, push, and open an attributed PR that
-    references the issue (`Closes #N`). Apply the matching `agent:*` label to the PR. Keep the
-    active-work labels through PR review. On handoff, replace the active `agent:*` labels. When work
-    closes, is abandoned, or stops pending a decision or dependency, remove both active-work labels
-    and set the appropriate remaining status. Production builds derive their application version
-    from deterministic Git commit metadata. Treat `package.json`'s version and Git version tags as
-    intentional product-release metadata: do not change or create them unless the task explicitly
-    cuts a release, and ask the user to approve the release version first.
+    references the issue (`Closes #N`) and fills in the template's "Preview" line with the branch
+    preview URL, `https://<branch-slug>.mistria-fyi.pages.dev` (the branch name lowercased, each run
+    of other characters replaced with `-`; Cloudflare posts no PR comment with it). Apply the
+    matching `agent:*` label to the PR. Keep the active-work labels through PR review. On handoff,
+    replace the active `agent:*` labels. When work closes, is abandoned, or stops pending a decision
+    or dependency, remove both active-work labels and set the appropriate remaining status.
+    Production builds derive their application version from deterministic Git commit metadata. Treat
+    `package.json`'s version and Git version tags as intentional product-release metadata: do not
+    change or create them unless the task explicitly cuts a release, and ask the user to approve the
+    release version first.
 11. **Monitor CI** — after opening the PR, watch its checks so CI failures are caught and fixed
     without requiring the user to relay status. Use whatever the harness offers for PR monitoring
     (for example, the Claude Code desktop app's `ccd_pr` `bind_pr` & `set_monitor` tools), or check
