@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
 
 /**
- * The repo is public, so a fork PR can trigger any workflow that listens for pull requests. These
+ * Once the repo is public, a fork PR can trigger any workflow that listens for pull requests. These
  * rules hold for every file in `.github/workflows/`: no trigger that hands fork-controlled events a
  * write token or secrets, an explicit workflow-level token ceiling, write scopes only on jobs that
  * never run for pull requests, and actions pinned to full commit SHAs.
