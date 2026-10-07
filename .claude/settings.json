@@ -3,6 +3,7 @@
     "allow": [
       "Bash(pnpm run lint *)",
       "Bash(pnpm run lint:fix *)",
+      "Bash(pnpm run lint:shell *)",
       "Bash(pnpm run check *)",
       "Bash(pnpm run check:i18n *)",
       "Bash(pnpm run check:routes *)",

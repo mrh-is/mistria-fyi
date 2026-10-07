@@ -57,7 +57,7 @@ fi
 
 worktree_is_safe() {
   local target=$1
-  local status worktree_path= line
+  local status worktree_path='' line
   if [[ $target == "$repository_root" || $target == "$primary_worktree" ]]; then
     printf 'Keeping worktree %s: it is the invoking or primary worktree.\n' "$target"
     return 1
