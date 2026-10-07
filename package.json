@@ -28,6 +28,7 @@
     "worktree:setup": "bash scripts/setup-worktree.sh",
     "worktree:cleanup": "bash scripts/cleanup-merged-worktrees.sh",
     "worktree:cleanup:apply": "bash scripts/cleanup-merged-worktrees.sh --apply",
+    "housekeeping:install": "bash scripts/install-housekeeping-agent.sh",
     "accessibility:monitor": "tsx scripts/accessibility-monitor.ts",
     "generate:brand-assets": "tsx scripts/generate-brand-assets.ts",
     "test:accessibility": "playwright test",

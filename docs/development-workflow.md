@@ -616,6 +616,24 @@ GitHub pull request, and it has no open pull request. It removes an associated w
 that worktree is clean; Git itself still must accept the removal. It leaves every other branch and
 worktree alone.
 
+It also keeps any worktree in use: one that a running process (an agent session or its shell) has as
+its working directory, or, with `--idle-minutes <n>`, one whose `HEAD` changed in the last `n`
+minutes. A fresh agent worktree's tip is already in `origin/main`, so unattended runs rely on this.
+
+### Automatic housekeeping
+
+Two mechanisms keep the primary checkout current without manual cleanup:
+
+- **Session start:** Claude Code (`.claude/settings.json`) and Codex (`.codex/hooks.json`) run
+  `scripts/refresh-default-branch.sh` when a session starts. It fast-forwards local `main` (in
+  whichever worktree has it checked out, or as a bare ref) and never fails the session. Codex skips
+  a new or changed project hook until you trust it in its hook review.
+- **Hourly on macOS:** `pnpm run housekeeping:install`, run from the primary checkout, installs a
+  launchd agent that runs `scripts/housekeeping.sh` hourly: refresh `main`, then
+  `cleanup-merged-worktrees.sh --apply --idle-minutes 120`. It logs to
+  `~/Library/Logs/mistria-housekeeping.log` and holds a lock so overlapping runs skip. Remove it
+  with `pnpm run housekeeping:install -- --uninstall`.
+
 ---
 
 ## 6. Troubleshooting & Recovery Steps

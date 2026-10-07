@@ -1,4 +1,4 @@
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import {
   chmodSync,
   mkdirSync,
@@ -147,6 +147,35 @@ describe("merged-worktree cleanup", () => {
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout + result.stderr).toContain(message);
     expect(git("branch", "--list", "worktree-agent-test")).toContain("worktree-agent-test");
+  });
+});
+
+const hasLsof = spawnSync("sh", ["-c", "command -v lsof"]).status === 0;
+
+describe("in-use worktree protection", () => {
+  it.skipIf(!hasLsof)("keeps a worktree that a running process uses", () => {
+    const { git, run, worktree } = fixture({ ancestor: true, associated: false });
+    const session = spawn("sleep", ["30"], { cwd: worktree, stdio: "ignore" });
+    try {
+      const result = run("--apply");
+      expect(result.status, result.stderr).toBe(0);
+      expect(result.stdout).toContain("a running process is using it");
+      expect(git("worktree", "list")).toContain("agent worktree");
+    } finally {
+      session.kill();
+    }
+  });
+
+  it("keeps a worktree whose HEAD changed within the idle window", () => {
+    const { git, run } = fixture({ ancestor: true, associated: false });
+    const result = run("--apply", "--idle-minutes", "60");
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain("HEAD changed in the last 60 minutes");
+    expect(git("branch", "--list", "worktree-agent-test")).toContain("worktree-agent-test");
+  });
+
+  it("rejects a missing idle window", () => {
+    expect(fixture().run("--idle-minutes").status).toBe(2);
   });
 });
 
