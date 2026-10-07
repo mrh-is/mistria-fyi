@@ -26,6 +26,7 @@ import IconHelmet from "@tabler/icons-svelte-runes/icons/helmet";
 import IconLeaf from "@tabler/icons-svelte-runes/icons/leaf";
 import IconLock from "@tabler/icons-svelte-runes/icons/lock";
 import IconMail from "@tabler/icons-svelte-runes/icons/mail";
+import IconMovie from "@tabler/icons-svelte-runes/icons/movie";
 import IconNotebook from "@tabler/icons-svelte-runes/icons/notebook";
 import IconOctagon from "@tabler/icons-svelte-runes/icons/octagon";
 import IconPaw from "@tabler/icons-svelte-runes/icons/paw";
@@ -77,13 +78,14 @@ export const SOURCE_ICON: Record<Source["type"], Icon> = {
   artifact_replicator: IconDiamond,
   bait_fish: IconFish,
   // Shared types (present in both old recipe sources and item/cosmetic sources)
-  beach_cave_chest: IconArchive,
   breed: IconBabyCarriage,
   bug_catch: IconBug,
   chicken_statue: IconCoins,
   crop: IconWheat,
+  cutscene: IconMovie,
   date: IconHeart,
   date_inspiration: IconHeart,
+  date_inspiration_drop: IconHeart,
   default: IconCircleCheck,
   dive: IconSpiral,
   donate_item: IconMail,
@@ -112,6 +114,7 @@ export const SOURCE_ICON: Record<Source["type"], Icon> = {
   renown: IconCrown,
   ritual_chamber: IconSparkles,
   scroll_bundle: IconShoppingCart,
+  secret_chest: IconArchive,
   ship_item: IconMail,
   spouseGift: IconHeart,
   station: IconHelmet,

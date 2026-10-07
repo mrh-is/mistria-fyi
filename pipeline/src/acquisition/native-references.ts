@@ -26,6 +26,7 @@ export function collectNativeReferenceRegistries(
 ): AcquisitionReferenceRegistries {
   return {
     activities: collectActivities(fiddle),
+    cutscenes: tableKeys(fiddle, "cutscenes"),
     dates: tableKeys(fiddle, "dates"),
     letters: fiddle.letters === undefined ? [] : tableKeys(fiddle, "letters"),
     locations: tableKeys(fiddle, "locations"),
@@ -59,7 +60,7 @@ function collectQuests(fiddle: ParsedGameData): string[] {
   requireTable(fiddle, "quests");
   const ids: string[] = [];
   forEachQuest(fiddle, TRACKED_QUEST_GROUPS, (_group, questId) => ids.push(questId));
-  return [...ids, ...tableKeys(fiddle, "cutscenes")];
+  return ids;
 }
 
 function collectWaterTypes(fiddle: ParsedGameData): string[] {

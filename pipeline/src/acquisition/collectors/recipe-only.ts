@@ -2,7 +2,7 @@ import { expectStringArray } from "../../data-shapes.js";
 import { forEachItem } from "../../extractor-helpers.js";
 import { sourceFileFor } from "../../parse-fiddle.js";
 
-import type { Source } from "#lib/types/acquisition.js";
+import type { LocationId, Source } from "#lib/types/acquisition.js";
 import type { PerkId, StoreId } from "#lib/types/tracker-data.js";
 
 import type { ParsedGameData } from "../../parse-fiddle.js";
@@ -32,7 +32,7 @@ export function collectRecipeOnlySources(
     },
     kitchen_salt_and_pepper_shakers: { type: "default" },
     stairs: { type: "upgrade", storeId: "carpenter" as StoreId, upgradeId: "stairs" },
-    water_sprite_statue_v1: { type: "beach_cave_chest" },
+    water_sprite_statue_v1: { type: "secret_chest", locationId: "beach_secret" as LocationId },
   };
 
   forEachItem(fiddle, (itemId, item, category, subcategory) => {

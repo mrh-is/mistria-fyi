@@ -21,18 +21,14 @@ describe("withIndefiniteArticle", () => {
 });
 
 describe("formatStoreName", () => {
-  it("prepends article when present", () => {
-    const stores = {
-      general_store: { article: "the" as const, name: "General Store" },
-    } as Record<StoreId, { article?: "the"; name: string }>;
-    expect(formatStoreName("general_store" as StoreId, stores, "en")).toBe("the General Store");
+  it("prepends the article for common-noun stores", () => {
+    const stores = { general: { name: "General Store" } } as Record<StoreId, { name: string }>;
+    expect(formatStoreName("general" as StoreId, stores, "en")).toBe("the General Store");
   });
 
-  it("omits article for possessive names", () => {
-    const stores = {
-      merri_stall: { name: "Merri's Stall" },
-    } as Record<StoreId, { article?: "the"; name: string }>;
-    expect(formatStoreName("merri_stall" as StoreId, stores, "en")).toBe("Merri's Stall");
+  it("omits the article for personal stalls", () => {
+    const stores = { merri: { name: "Merri's Stall" } } as Record<StoreId, { name: string }>;
+    expect(formatStoreName("merri" as StoreId, stores, "en")).toBe("Merri's Stall");
   });
 
   it("throws for a store with no name", () => {
@@ -73,17 +69,14 @@ describe("formatBiomeName", () => {
 });
 
 describe("non-English locales", () => {
-  const stores = { general_store: { article: "the" as const, name: "Boutique" } } as Record<
-    StoreId,
-    { article?: "the"; name: string }
-  >;
+  const stores = { general: { name: "Boutique" } } as Record<StoreId, { name: string }>;
   const biomes = [
     { floors: { start: 1, end: 19 }, id: "biome_0" as MinesBiomeId, name: "Les Cavernes" },
   ];
 
   it("pass names through without English articles", () => {
     expect(withIndefiniteArticle("Apple", "fr")).toBe("Apple");
-    expect(formatStoreName("general_store" as StoreId, stores, "fr")).toBe("Boutique");
+    expect(formatStoreName("general" as StoreId, stores, "fr")).toBe("Boutique");
     expect(formatBiomeName("biome_0" as MinesBiomeId, biomes, "fr")).toBe("Les Cavernes");
     expect(withoutDefiniteArticle("The Tower", "fr")).toBe("The Tower");
   });

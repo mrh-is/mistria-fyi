@@ -24,7 +24,6 @@ type SourceFilterMemberId =
   | "animal_products"
   | "artifact_digs"
   | "bait_fish"
-  | "beach_cave"
   | "breeding"
   | "bug_catching"
   | "chests"
@@ -54,6 +53,7 @@ type SourceFilterMemberId =
   | "replicator"
   | "ritual_chamber"
   | "scroll_bundles"
+  | "secret_chests"
   | "shipping"
   | "shops"
   | "spouse_gifts"
@@ -78,14 +78,22 @@ export interface SourceFilter {
 export const SOURCE_FILTERS: readonly SourceFilter[] = [
   {
     id: "chests",
-    members: ["beach_cave", "treasure_boxes", "lost_and_found"],
-    types: ["beach_cave_chest", "treasure_chest", "lost_and_found"],
+    members: ["secret_chests", "treasure_boxes", "lost_and_found"],
+    types: ["secret_chest", "treasure_chest", "lost_and_found"],
   },
   { id: "crafting", members: ["recipes"], types: ["recipe"] },
   {
     id: "dating",
     members: ["dates", "engagement", "proposals", "spouse_gifts", "wedding"],
-    types: ["engagement", "date", "date_inspiration", "proposal", "spouseGift", "wedding"],
+    types: [
+      "engagement",
+      "date",
+      "date_inspiration",
+      "date_inspiration_drop",
+      "proposal",
+      "spouseGift",
+      "wedding",
+    ],
   },
   {
     id: "farming",
@@ -131,7 +139,7 @@ export const SOURCE_FILTERS: readonly SourceFilter[] = [
   {
     id: "progress",
     members: ["default", "quests", "renown", "letters"],
-    types: ["default", "letter", "quest", "renown", "reach_day"],
+    types: ["cutscene", "default", "letter", "quest", "renown", "reach_day"],
   },
 ];
 
@@ -162,7 +170,6 @@ const MEMBER_LABELS: Record<SourceFilterMemberId, LabelResolver> = {
   animal_products: (locale) => m.source_filter_member_animal_products({}, { locale }),
   artifact_digs: (locale) => m.source_filter_member_artifact_digs({}, { locale }),
   bait_fish: (locale) => m.source_filter_member_bait_fish({}, { locale }),
-  beach_cave: (locale) => m.source_filter_member_beach_cave({}, { locale }),
   breeding: (locale) => m.source_filter_member_breeding({}, { locale }),
   bug_catching: (locale) => m.source_filter_member_bug_catching({}, { locale }),
   chests: (locale) => m.source_filter_member_chests({}, { locale }),
@@ -192,6 +199,7 @@ const MEMBER_LABELS: Record<SourceFilterMemberId, LabelResolver> = {
   replicator: (locale) => m.source_filter_member_replicator({}, { locale }),
   ritual_chamber: (locale) => m.source_filter_member_ritual_chamber({}, { locale }),
   scroll_bundles: (locale) => m.source_filter_member_scroll_bundles({}, { locale }),
+  secret_chests: (locale) => m.source_filter_member_secret_chests({}, { locale }),
   shipping: (locale) => m.source_filter_member_shipping({}, { locale }),
   shops: (locale) => m.source_filter_member_shops({}, { locale }),
   spouse_gifts: (locale) => m.source_filter_member_spouse_gifts({}, { locale }),

@@ -129,10 +129,11 @@ that misspells a quest or monster fails instead of validating itself.
 
 - **Extracted registries:** items, cosmetics, recipes, animals, biomes, festivals, perks, skills,
   stores, villagers, museum wings, and the emitted quest types.
-- **Parsed game tables** (`acquisition/native-references.ts`): locations, monsters, letters, quests
-  & cutscenes, dates (including unlisted ones), placeable stations, treasure chest tiers, fish water
-  types, and festival activities whose backing `misc` table exists. No table enumerates dialogue
-  choices or dungeon loot groups, so any reference to either is unresolved.
+- **Parsed game tables** (`acquisition/native-references.ts`): locations, monsters, letters, quests,
+  cutscenes (a separate kind, so a cutscene ID can't pass as a quest), dates (including unlisted
+  ones), placeable stations, treasure chest tiers, fish water types, and festival activities whose
+  backing `misc` table exists. No table enumerates dialogue choices or dungeon loot groups, so any
+  reference to either is unresolved.
 - **Reviewed non-native IDs** (`acquisition/reviewed-references.ts`): the few IDs overrides use
   deliberately although no table defines them. An entry the game later defines throws as obsolete.
 
