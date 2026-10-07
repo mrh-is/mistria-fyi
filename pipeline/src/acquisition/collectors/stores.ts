@@ -2,19 +2,19 @@ import { simplifyAvailabilityCondition } from "#lib/engine/availability-conditio
 
 import { expectStringArray } from "../../data-shapes.js";
 import { forEachItem, forEachStockEntry } from "../../extractor-helpers.js";
-import { resolveToVisibility } from "../../extractors/visibility/requirement-resolver.js";
-import { sourceFileFor } from "../../parse-fiddle.js";
-import { parseRequirements } from "../../requirements.js";
-import { projectRequirementExpressionToAvailability } from "../availability.js";
+import { sourceFileFor } from "../../parse/parse-fiddle.js";
+import { parseRequirements } from "../../parse/requirements.js";
 import { addRecipeScrollSource } from "../recipe-target.js";
+import { projectRequirements } from "../requirement-projector.js";
 
-import type { AvailabilityCondition, Source } from "#lib/types/acquisition.js";
+import type { AvailabilityCondition } from "#lib/types/acquisition.js";
 import type { AnimalId, CosmeticId, ItemId, Season, StoreId } from "#lib/types/tracker-data.js";
 import type { VisibilityCondition } from "#lib/types/visibility.js";
 
 import type { SourceFieldLocation } from "../../data-shapes.js";
-import type { ParsedGameData } from "../../parse-fiddle.js";
-import type { RequirementContext } from "../../requirements.js";
+import type { ParsedGameData } from "../../parse/parse-fiddle.js";
+import type { RequirementContext } from "../../parse/requirements.js";
+import type { PipelineSource as Source } from "../pipeline-source.js";
 import type { RecipeAcquisitionContext } from "../recipe-target.js";
 import type {
   AnimalCosmeticSourceAccumulator,
@@ -56,8 +56,8 @@ export function collectStoreSources(
     {
       availability?: AvailabilityCondition;
       bundleItemId: ItemId;
+      stockGate?: VisibilityCondition;
       storeId: StoreId;
-      visibility?: VisibilityCondition;
     }
   >();
   forEachStockEntry(fiddle, (storeId, entry, season) => {
@@ -79,7 +79,7 @@ export function collectStoreSources(
         availability: combineAvailability(seasonAvailability, projected.availability),
         bundleItemId: itemId as ItemId,
         storeId: storeId as StoreId,
-        ...(projected.visibility.type === "always" ? {} : { visibility: projected.visibility }),
+        ...(projected.visibility.type === "always" ? {} : { stockGate: projected.visibility }),
       };
       const existing = bundleListings.get(bundle.setTag);
       if (existing && JSON.stringify(existing) !== JSON.stringify(listing)) {
@@ -110,7 +110,7 @@ export function collectStoreSources(
         bundleItemId: listing.bundleItemId,
         storeId: listing.storeId,
         ...(listing.availability ? { availability: listing.availability } : {}),
-        ...(listing.visibility ? { visibility: listing.visibility } : {}),
+        ...(listing.stockGate ? { stockGate: listing.stockGate } : {}),
       });
     }
   }
@@ -175,7 +175,7 @@ function processStoreEntry(
     const availability = combineAvailability(baseAvailability, projected.availability);
     const source: Source = {
       ...buildStoreSource(storeId, availability),
-      ...(projected.visibility.type === "always" ? {} : { visibility: projected.visibility }),
+      ...(projected.visibility.type === "always" ? {} : { stockGate: projected.visibility }),
     };
     if (typeof scrollTarget === "string") {
       addRecipeScrollSource(scrollTarget, source, recipes, `stores/${storeId}`);
@@ -236,11 +236,9 @@ export function projectStockRequirements(
     context.primitivePredicates,
     location,
   );
+  const projected = projectRequirements(expression, context, location);
   return {
-    availability:
-      requirements === undefined
-        ? undefined
-        : projectRequirementExpressionToAvailability(expression, context, location),
-    visibility: resolveToVisibility(expression, context.cutsceneMap),
+    availability: requirements === undefined ? undefined : projected.availability,
+    visibility: projected.spoilerVisibility,
   };
 }

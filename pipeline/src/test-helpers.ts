@@ -6,17 +6,17 @@ import { onTestFinished, vi } from "vitest";
 
 import { LOCALE_CODES } from "#lib/types/locale.js";
 
-import { DEFAULT_ASSETS_DIR } from "./asset-input.js";
-import { createLocalizer } from "./localize.js";
-import { attachProvenance } from "./parse-fiddle.js";
+import { createLocalizer } from "./localize/localize.js";
+import { DEFAULT_ASSETS_DIR } from "./parse/asset-input.js";
+import { attachProvenance } from "./parse/parse-fiddle.js";
 
 import type { Mock } from "vitest";
 
 import type { LocaleCode } from "#lib/types/locale.js";
 
-import type { GameLanguageCode } from "./locale-codes.js";
-import type { LocalizeFieldInput, Localizer, TranslationDirectory } from "./localize.js";
-import type { ParsedGameData } from "./parse-fiddle.js";
+import type { GameLanguageCode } from "./localize/locale-codes.js";
+import type { LocalizeFieldInput, Localizer, TranslationDirectory } from "./localize/localize.js";
+import type { ParsedGameData } from "./parse/parse-fiddle.js";
 
 type TranslationTable = Readonly<Record<string, string>>;
 
