@@ -59,6 +59,7 @@ import {
   stampVillagerVisibility,
 } from "./extractors/visibility/entity-visibility.js";
 import { extractQuestChains } from "./extractors/visibility/quest-chains.js";
+import { validateCosmeticExclusionSources } from "./overrides/exclusions.js";
 import { isPregnancyQuest } from "./overrides/game-facts.js";
 import { createRequirementContext } from "./requirements.js";
 import { REVIEWED_PIPELINE_DIAGNOSTICS } from "./reviewed-diagnostics.js";
@@ -230,6 +231,8 @@ export function assembleTrackerData(
   }
   collectDefaultItemSources(fiddle, itemSources, itemMetadata);
   collectDefaultCosmeticSources(cosmeticDrafts, cosmeticSources);
+
+  validateCosmeticExclusionSources(fiddle, cosmeticSources);
 
   const overrideDiagnostics = applyReviewedOverrides(
     itemMetadata,
