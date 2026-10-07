@@ -143,7 +143,7 @@ export function validateReviewedGameFacts(fiddle: ParsedGameData): void {
     (entry) => record(record(fiddle.festivals).harvest).season === entry.value,
   );
   validate(
-    "crown placeholder",
+    "crown gate",
     [CROWN_QUEST_GATE],
     ids(record(fiddle.quests)),
     () => record(record(fiddle.quests).crown_quests).renown_level !== undefined,

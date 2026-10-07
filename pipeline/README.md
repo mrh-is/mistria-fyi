@@ -362,8 +362,9 @@ quest naming conventions, & accumulator mechanics remain implementation rules.
 
 Baby presentation cosmetics are discovered from their native ID pattern, & Seridia’s equipment comes
 from `misc.seridia_armor`. Runtime wishing-well rewards use `misc.wishing_well.low_price`; neither
-prices nor outfit inventories are duplicated in reviewed tables. The crown visibility gate remains
-20 pending #638 (private beta).
+prices nor outfit inventories are duplicated in reviewed tables. The crown visibility gate is Iron
+Star (renown level 40), from `Ari.gml`’s crown cooldown; Early Access used 50
+(#638 (private beta)).
 
 The #414 migration produces byte-identical game 1.0.5 tracker output & identical locale chunks
 compared with its pre-change pipeline run. There are no intentional generated-data changes. The two
