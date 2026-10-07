@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseCliOptions } from "./cli-options.js";
+import { parseCliOptions, resolveCallerPath } from "./cli-options.js";
 
 describe("parseCliOptions", () => {
   it("accepts the documented flags and one assets directory", () => {
@@ -29,5 +29,25 @@ describe("parseCliOptions", () => {
   it("requires parse-only for the explicit v1.0.5 profile", () => {
     expect(() => parseCliOptions(["--parse-profile=v1.0.5"])).toThrow(/--parse-only/);
     expect(parseCliOptions(["--parse-only", "--parse-profile=v1.0.5"]).parseProfile).toBe("v1.0.5");
+  });
+});
+
+describe("resolveCallerPath", () => {
+  it("resolves relative paths against pnpm's invoking directory", () => {
+    expect(
+      resolveCallerPath("pipeline/input/assets", { INIT_CWD: "/repo" }, "/repo/pipeline"),
+    ).toBe("/repo/pipeline/input/assets");
+  });
+
+  it("falls back to the process cwd outside pnpm", () => {
+    expect(resolveCallerPath("input/assets", {}, "/repo/pipeline")).toBe(
+      "/repo/pipeline/input/assets",
+    );
+  });
+
+  it("keeps absolute paths", () => {
+    expect(resolveCallerPath("/game/assets", { INIT_CWD: "/repo" }, "/elsewhere")).toBe(
+      "/game/assets",
+    );
   });
 });
