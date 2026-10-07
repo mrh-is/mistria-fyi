@@ -122,6 +122,11 @@ are `status: blocked|ready|needs decision|in progress`, `area: pipeline|ui`,
   every public repository the owner can write to, so revoke it at cutover rather than reuse it. It
   also can’t write to the new repository while it is still private, which is why a fine-grained
   token is needed for the pre-launch verification.
+- **Maintainer: confirm the live token.** A classic `public_repo` PAT can’t create issues in a
+  private repository, and the current repository is private. So either the live token has broader
+  scope (for example `repo`) than `.env.example` documents, or the endpoint can’t file into this
+  repository today. Check the token’s scopes on GitHub and the endpoint’s behavior, and correct
+  `.env.example` if it’s stale.
 - Required replacement: a **fine-grained** personal access token, resource owner `mrh-is`, “Only
   select repositories” limited to the new `mrh-is/mistria-fyi`, repository permission **Issues: Read
   and write** and nothing else (Metadata: read is implied). Give it a short expiry and a calendar
@@ -199,24 +204,29 @@ slots into the runbook step named in brackets. Run items in order. Every item ha
 - [ ] **Resolve the Pages re-pointing question. Maintainer.** Decide between reconnecting the
       existing project and creating a new one. _Check:_ the choice is recorded on #671, with the new
       project’s name if applicable.
-- [ ] **Create the fine-grained feedback token. Maintainer.** Only after the new repository exists
-      (it can’t be selected earlier); see runbook step 4. Scope as described under
-      [Feedback endpoint](#feedback-endpoint). _Check:_ the token’s settings page shows one
-      repository (`mistria-fyi`), one permission (Issues: Read and write), & an expiry date.
+- [ ] **Confirm the live feedback token’s scope. Maintainer.** See the note under
+      [Feedback endpoint](#feedback-endpoint). _Check:_ the answer (broader token, or endpoint
+      currently failing) is recorded on #671.
 
 ### During the cutover
 
-- [ ] **[Step 3] Rename the archive, then create the new repository without delay. Maintainer.**
-      `gh repo rename mistria-fyi-private --repo mrh-is/mistria-fyi`, then create the empty private
-      `mrh-is/mistria-fyi`. _Check:_ `gh repo view mrh-is/mistria-fyi-private --json isPrivate,name`
-      shows the archive; `gh repo view mrh-is/mistria-fyi --json isPrivate,createdAt` shows the new,
-      empty repository (not a redirect to the archive).
+- [ ] **[Step 3] Rename the archive. Maintainer.**
+      `gh repo rename mistria-fyi-private --repo mrh-is/mistria-fyi`. Keep the gap before step 4
+      short. _Check:_ `gh repo view mrh-is/mistria-fyi-private --json isPrivate,name` shows the
+      archive.
+- [ ] **[Step 4] Create the new repository. Maintainer.** Create the empty private
+      `mrh-is/mistria-fyi`. _Check:_ `gh repo view mrh-is/mistria-fyi --json isPrivate,createdAt`
+      shows the new, empty repository (not a redirect to the archive).
+- [ ] **[Step 4] Create the fine-grained feedback token. Maintainer.** It can’t be scoped to the
+      repository until it exists. Scope as described under [Feedback endpoint](#feedback-endpoint).
+      _Check:_ the token’s settings page shows one repository (`mistria-fyi`), one permission
+      (Issues: Read and write), & an expiry date.
 - [ ] **[Step 4] Recreate labels first.**
       `gh label clone mrh-is/mistria-fyi-private --repo mrh-is/mistria-fyi`, then trim the labels
       you don’t want (`pre-launch`). _Check:_ `gh label list --repo mrh-is/mistria-fyi` includes
       `user feedback`, `shadcn-update`, `generated-data`, & both `agent:` labels. Do this before the
       issue transfer.
-- [ ] **[Step 7] Push the filtered history before enabling the ruleset.** The ruleset’s required
+- [ ] **[Step 6] Push the filtered history before enabling the ruleset.** The ruleset’s required
       status checks would reject a direct push to `main`. _Check:_
       `git ls-remote origin refs/heads/main` equals the filter script’s output tip.
 - [ ] **[Step 7] Recreate the ruleset.** `POST` the exported “Protect main” definition (drop
@@ -306,5 +316,7 @@ slots into the runbook step named in brackets. Run items in order. Every item ha
 
 - Does the existing Pages project support re-pointing (see [Cloudflare](#cloudflare))?
 - Which GitHub Apps are installed, and on which repositories?
+- What scope does the live `GITHUB_FEEDBACK_TOKEN` have, given a classic `public_repo` token can’t
+  file issues in a private repository?
 - Is code-owner review meant to be enforced once outside contributors can open PRs?
 - Should the missing `agent:` labels from AGENTS.md be created in the new repository?
