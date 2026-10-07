@@ -75,6 +75,12 @@ function spriteDependencies(cache: MemoryCache, fetcher: (request: Request) => P
   };
 }
 
+/** The body text of a cached request, or `undefined` when nothing is cached for it. */
+async function cachedText(cache: MemoryCache, request: Request): Promise<string | undefined> {
+  const response = await cache.match(request);
+  return response?.text();
+}
+
 function spriteUrl(name: string, generation: null | number = 1): string {
   const url = `https://assets.mistria.fyi/sprites/items/${name}.webp`;
   return generation === null ? url : `${url}?g=${String(generation)}`;
@@ -269,16 +275,68 @@ describe("service-worker sprite asset handling", () => {
     );
   });
 
-  it("serves a cached sprite without a network request", async () => {
+  it("serves a cached sprite at once, then refreshes it from the network", async () => {
     const cache = new MemoryCache();
     const sprite = new Request(spriteUrl("spr_ui_item_apple"));
     await cache.put(sprite, new Response("cached sprite"));
-    const fetcher = vi.fn();
+    const fetcher = vi.fn().mockResolvedValue(new Response("fresh sprite", { status: 200 }));
+    const deps = spriteDependencies(cache, fetcher);
 
-    const response = await fetchSpriteRequest(sprite, spriteDependencies(cache, fetcher));
+    const response = await fetchSpriteRequest(sprite, deps);
+    await deps.settled();
 
     expect(await response.text()).toBe("cached sprite");
-    expect(fetcher).not.toHaveBeenCalled();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(await cachedText(cache, sprite)).toBe("fresh sprite");
+  });
+
+  it("revalidates with the HTTP cache bypassed, so a stale max-age can't hide a takedown", async () => {
+    const cache = new MemoryCache();
+    const sprite = new Request(spriteUrl("spr_ui_item_apple"));
+    await cache.put(sprite, new Response("cached sprite"));
+    const fetcher = vi.fn().mockResolvedValue(new Response("fresh sprite", { status: 200 }));
+    const deps = spriteDependencies(cache, fetcher);
+
+    await fetchSpriteRequest(sprite, deps);
+    await deps.settled();
+
+    const revalidation = fetcher.mock.calls[0]?.[0] as Request;
+    expect(revalidation.url).toBe(sprite.url);
+    expect(revalidation.cache).toBe("no-cache");
+  });
+
+  it.each([403, 404, 410])(
+    "evicts a cached sprite once the network answers %i, after serving it",
+    async (status) => {
+      const cache = new MemoryCache();
+      const sprite = new Request(spriteUrl("spr_ui_item_apple"));
+      await cache.put(sprite, new Response("cached sprite"));
+      const deps = spriteDependencies(
+        cache,
+        vi.fn().mockResolvedValue(new Response("gone", { status })),
+      );
+
+      const response = await fetchSpriteRequest(sprite, deps);
+      await deps.settled();
+
+      expect(await response.text()).toBe("cached sprite");
+      expect(await cache.match(sprite)).toBeUndefined();
+    },
+  );
+
+  it("keeps a cached sprite through a transient server error", async () => {
+    const cache = new MemoryCache();
+    const sprite = new Request(spriteUrl("spr_ui_item_apple"));
+    await cache.put(sprite, new Response("cached sprite"));
+    const deps = spriteDependencies(
+      cache,
+      vi.fn().mockResolvedValue(new Response("oops", { status: 503 })),
+    );
+
+    await fetchSpriteRequest(sprite, deps);
+    await deps.settled();
+
+    expect(await cachedText(cache, sprite)).toBe("cached sprite");
   });
 
   it("fetches and caches an uncached sprite", async () => {
@@ -332,12 +390,13 @@ describe("service-worker sprite asset handling", () => {
     const sprite = new Request(spriteUrl("spr_ui_item_apple"));
     await cache.put(sprite, new Response("cached sprite"));
 
-    const response = await fetchSpriteRequest(
-      sprite,
-      spriteDependencies(cache, vi.fn().mockRejectedValue(new Error("offline"))),
-    );
+    const deps = spriteDependencies(cache, vi.fn().mockRejectedValue(new Error("offline")));
+
+    const response = await fetchSpriteRequest(sprite, deps);
+    await deps.settled();
 
     expect(await response.text()).toBe("cached sprite");
+    expect(await cachedText(cache, sprite)).toBe("cached sprite");
   });
 
   it("falls through to an error response, not the offline page, for a never-loaded sprite", async () => {
@@ -372,7 +431,7 @@ describe("service-worker sprite asset handling", () => {
     const cache = new MemoryCache();
     await cache.put(spriteUrl("spr_a"), new Response("a"));
     await cache.put(spriteUrl("spr_b"), new Response("b"));
-    const deps = spriteDependencies(cache, vi.fn());
+    const deps = spriteDependencies(cache, vi.fn().mockRejectedValue(new Error("offline")));
 
     await fetchSpriteRequest(new Request(spriteUrl("spr_a")), deps);
     await deps.settled();

@@ -37,10 +37,14 @@ fails to load, so the site keeps working.
 5. **Verify.** `curl -I https://assets.mistria.fyi/sprites/items/<any-id>.webp` returns 403 or 404,
    and a fresh browser profile shows placeholders.
 
-Note: browsers & installed PWAs that already fetched a sprite keep it until their cache expires.
-Sprites are uploaded with a one-year immutable `Cache-Control`, and the service worker’s sprite
-cache doesn’t revalidate. Until that’s fixed (see #676), tell the requester plainly that existing
-visitors’ local caches can’t be cleared remotely.
+Note: returning visitors lose the sprites on their own within about a day. Sprites are uploaded with
+`Cache-Control: public, max-age=86400, stale-while-revalidate=86400`, & the service worker serves a
+cached sprite while revalidating it in the background, evicting the entry when the bucket answers
+403 or 404. An installed PWA drops a withdrawn sprite on its next load after the block is live; a
+browser tab may show a cached sprite once more after a day, then the placeholder. Objects uploaded
+before this policy existed carry the old one-year immutable header until re-uploaded
+(`FORCE=1 pnpm run sprites:upload`, a launch step); against those, only a fresh profile is
+guaranteed clean.
 
 ## Dataset
 
@@ -78,6 +82,6 @@ removing the dataset means taking the site down.
 
 ## Afterward
 
-- Reply to the requester confirming what was removed, plus any limits (cached sprites, forks).
+- Reply to the requester confirming what was removed, plus any limits (forks).
 - Update `DISCLAIMER.md` & the About page if the project no longer distributes that material.
 - Add a “Revisit” note to the launch posture decision record.
