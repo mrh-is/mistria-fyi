@@ -187,11 +187,25 @@ export async function fetchRuntimeRequest(
   return response;
 }
 
+/** Statuses that mean a sprite was withdrawn on purpose (a takedown), not that the network hiccuped. */
+const WITHDRAWN_SPRITE_STATUSES: ReadonlySet<number> = new Set([403, 404, 410]);
+
+/** A cached sprite younger than this (by its `Date` header) isn't revalidated on a hit. */
+export const SPRITE_REVALIDATE_AFTER_MS = 24 * 60 * 60 * 1000;
+
+/** Revalidations in flight, by sprite URL, so concurrent hits share one request & one outcome. */
+const spriteRevalidations = new Map<string, Promise<void>>();
+
 /**
- * Serves a sprite cache-first. Sprite URLs are immutable (changed art gets a new `?g=`), so a cached
- * copy never needs revalidating and a hit makes no network request. A miss fetches, caches a
- * successful response, and returns it. Cache writes are best-effort and happen off the response
- * path.
+ * Serves a sprite stale-while-revalidate. A cached copy returns at once, so sprites keep working
+ * offline. Once its `Date` header is a day old (or missing), a background request revalidates it so
+ * removing a sprite from the bucket reaches installed clients: a fresh response replaces the entry,
+ * a 403/404/410 evicts it so the next render shows the placeholder, & anything else (offline, a 5xx)
+ * leaves it alone. A younger copy makes no request. The revalidation bypasses the HTTP cache,
+ * because the one-day `max-age` would otherwise answer it locally. Withdrawal is only visible when
+ * the answer is CORS-readable (see docs/takedown.md); a blocked response is a rejected fetch and
+ * keeps the entry. A miss fetches, caches a successful response, and returns it. Cache writes are
+ * best-effort and happen off the response path.
  */
 export async function fetchSpriteRequest(
   request: Request,
@@ -200,15 +214,14 @@ export async function fetchSpriteRequest(
   const { cache, maxEntries } = dependencies;
   const cached = await cache.match(request);
   if (cached) {
-    // Re-insert to move the entry to the back of the eviction order.
-    const copy = cached.clone();
     dependencies.waitUntil(
       (async () => {
         try {
-          await cache.delete(request);
-          await cache.put(request, copy);
+          await (isSpriteStale(cached)
+            ? revalidateSprite(request, dependencies)
+            : touchSprite(request, cache));
         } catch {
-          // Best-effort cache write: a failed re-insert only leaves the entry's age unchanged.
+          // Best-effort revalidation: a failed cache write leaves the entry as it was.
         }
       })(),
     );
@@ -235,6 +248,59 @@ export async function fetchSpriteRequest(
   return response;
 }
 
+function isSpriteStale(cached: Response): boolean {
+  const date = Date.parse(cached.headers.get("date") ?? "");
+  return !(Date.now() - date < SPRITE_REVALIDATE_AFTER_MS);
+}
+
+/**
+ * Moves a sprite to the back of the eviction order by putting its stored copy again, which replaces
+ * the entry in one step: a rejected write leaves the old copy. Skips a sprite that was evicted since.
+ */
+async function touchSprite(request: Request, cache: SpriteCache): Promise<void> {
+  const current = await cache.match(request);
+  if (current) await cache.put(request, current);
+}
+
+async function refreshSprite(
+  request: Request,
+  dependencies: SpriteRequestDependencies,
+): Promise<void> {
+  const { cache, maxEntries } = dependencies;
+  let response: Response | undefined;
+  try {
+    response = await dependencies.fetcher(new Request(request, { cache: "no-cache" }));
+  } catch {
+    // Offline or CORS-blocked: keep serving the cached copy.
+  }
+  if (response?.ok) {
+    // Only refresh an entry that is still cached; put replaces it without a delete-first gap.
+    if (await cache.match(request)) await cacheSpriteResponse(cache, request, response, maxEntries);
+  } else if (response && WITHDRAWN_SPRITE_STATUSES.has(response.status)) {
+    await cache.delete(request);
+  } else {
+    await touchSprite(request, cache);
+  }
+}
+
+/** Refreshes, evicts, or touches the cached copy of one sprite; concurrent calls share one run. */
+function revalidateSprite(
+  request: Request,
+  dependencies: SpriteRequestDependencies,
+): Promise<void> {
+  const existing = spriteRevalidations.get(request.url);
+  if (existing) return existing;
+  const run = (async () => {
+    try {
+      await refreshSprite(request, dependencies);
+    } finally {
+      spriteRevalidations.delete(request.url);
+    }
+  })();
+  spriteRevalidations.set(request.url, run);
+  return run;
+}
+
 export function isEligibleForRuntimeCaching(url: URL, origin: string): boolean {
   return (url.origin === origin && !url.pathname.startsWith("/api/")) || isExternalFontAsset(url);
 }
@@ -244,7 +310,7 @@ export function isExternalFontAsset(url: URL): boolean {
   return url.href.startsWith(EXTERNAL_FONT_PREFIX);
 }
 
-/** Entity-ID-keyed, immutable sprites on R2: cached in their own bounded runtime cache, never precached. */
+/** Entity-ID-keyed sprites on R2 (revalidated, so removable): cached in their own bounded runtime cache, never precached. */
 export function isExternalSpriteAsset(url: URL): boolean {
   return url.href.startsWith(EXTERNAL_SPRITE_PREFIX);
 }
