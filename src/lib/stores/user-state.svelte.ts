@@ -422,7 +422,10 @@ function createUserState() {
       } else if (event.key === PROGRESS_STORAGE_KEY) {
         applyStorageValue(event.newValue);
       } else if (event.key === PREFERENCES_STORAGE_KEY) {
-        applyPreferencesValue(event.newValue);
+        // Events can arrive after this tab has written something newer, so adopt what's stored now
+        // rather than the event's value; every tab then converges on the last write.
+        const preferencesResult = tryGetItem(PREFERENCES_STORAGE_KEY);
+        if (preferencesResult.ok) applyPreferencesValue(preferencesResult.value);
       }
     });
   }

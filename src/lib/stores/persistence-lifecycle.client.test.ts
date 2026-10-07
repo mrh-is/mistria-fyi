@@ -171,6 +171,35 @@ describe("persistence lifecycle", () => {
     expect(storage.getItem("mistria-fyi:preferences")).toBe(incoming);
   });
 
+  it("ignores a stale preference event after this tab saved newer preferences", async () => {
+    vi.useFakeTimers();
+    const testWindow = makeWindow();
+    vi.stubGlobal("window", testWindow);
+    const storage = makeStorage({});
+    vi.stubGlobal("localStorage", storage);
+    vi.resetModules();
+
+    const { userState } = await import("#lib/stores/user-state.svelte.js");
+    userState.loadFromStorage();
+    // Another tab wrote first, but its event arrives only after this tab's own write.
+    const stale = JSON.stringify({ availabilityWindows: ["now"], showSpoilers: false });
+    storage.setItem("mistria-fyi:preferences", stale);
+    userState.toggleShowSpoilers();
+    await vi.runAllTimersAsync();
+    const newer = storage.getItem("mistria-fyi:preferences");
+    expect(JSON.parse(newer ?? "null")).toMatchObject({ showSpoilers: true });
+
+    testWindow.dispatch("storage", {
+      key: "mistria-fyi:preferences",
+      newValue: stale,
+      storageArea: storage,
+    });
+    await vi.runAllTimersAsync();
+
+    expect(userState.state.showSpoilers).toBe(true);
+    expect(storage.getItem("mistria-fyi:preferences")).toBe(newer);
+  });
+
   it("drops unrecognized fields when saving", async () => {
     vi.useFakeTimers();
     vi.stubGlobal("window", makeWindow());
