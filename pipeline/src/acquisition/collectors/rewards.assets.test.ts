@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { PipelineDiagnostics } from "../../diagnostics.js";
-import { evaluateExpressions } from "../../evaluate.js";
-import { buildCutsceneQuestMap } from "../../extractors/visibility/cutscene-quest-map.js";
-import { parseFiddle } from "../../parse-fiddle.js";
-import { createRequirementContext } from "../../requirements.js";
+import { buildCutsceneQuestMap } from "../../extract/cutscene-quest-map.js";
+import { evaluateExpressions } from "../../parse/evaluate.js";
+import { parseFiddle } from "../../parse/parse-fiddle.js";
+import { createRequirementContext } from "../../parse/requirements.js";
 import { requireGameAssetsDir } from "../../test-helpers.js";
 import {
   AnimalCosmeticSourceAccumulator,

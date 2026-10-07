@@ -7,10 +7,10 @@ import {
   scrollTargetOf,
 } from "../../extractor-helpers.js";
 import { FESTIVAL_SEASON_MAP } from "../../overrides/game-facts.js";
-import { sourceFileFor } from "../../parse-fiddle.js";
-import { parseRequirements } from "../../requirements.js";
-import { projectRequirementExpressionToAvailability } from "../availability.js";
+import { sourceFileFor } from "../../parse/parse-fiddle.js";
+import { parseRequirements } from "../../parse/requirements.js";
 import { addRecipeScrollSource } from "../recipe-target.js";
+import { projectRequirementExpressionToAvailability } from "../requirement-projector.js";
 
 import type { ActivityId, AvailabilityCondition, Source } from "#lib/types/acquisition.js";
 import type {
@@ -29,8 +29,8 @@ import type {
 } from "#lib/types/tracker-data.js";
 
 import type { SourceFieldLocation } from "../../data-shapes.js";
-import type { ParsedGameData } from "../../parse-fiddle.js";
-import type { RequirementContext } from "../../requirements.js";
+import type { ParsedGameData } from "../../parse/parse-fiddle.js";
+import type { RequirementContext } from "../../parse/requirements.js";
 import type { RecipeAcquisitionContext } from "../recipe-target.js";
 import type {
   AnimalCosmeticSourceAccumulator,
