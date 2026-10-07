@@ -1,4 +1,5 @@
 <script lang="ts">
+  import IconFileAlert from "@tabler/icons-svelte-runes/icons/file-alert";
   import IconFileUpload from "@tabler/icons-svelte-runes/icons/file-upload";
   import IconUpload from "@tabler/icons-svelte-runes/icons/upload";
 
@@ -21,15 +22,23 @@
   let restoreError = $state("");
   let restoreStatus = $state("");
 
-  function handleExport() {
-    const json = userState.exportBackup();
+  function downloadJson(json: string, prefix: string) {
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `mistria-field-guide-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `${prefix}-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  function handleExport() {
+    downloadJson(userState.exportBackup(), "mistria-field-guide-backup");
+  }
+
+  function handleDownloadUnreadable() {
+    const data = userState.unreadableData;
+    if (data !== null) downloadJson(data, "mistria-field-guide-unreadable");
   }
 
   function handleImportBackup() {
@@ -85,6 +94,12 @@
       <IconUpload />
       {m.backup_restore_action()}
     </Button>
+    {#if userState.unreadableData !== null}
+      <Button variant="outline" onclick={handleDownloadUnreadable}>
+        <IconFileAlert />
+        {m.backup_download_unreadable_action()}
+      </Button>
+    {/if}
     <div class="sr-only" role="status" aria-live="polite">{restoreStatus}</div>
     <div class="sr-only">
       {#if restoreError}<span role="alert">{restoreError}</span>{/if}

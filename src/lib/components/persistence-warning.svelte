@@ -16,7 +16,11 @@
       toast.dismiss(activeToastId);
     }
 
-    activeToastId = toast.error(m.persistence_warning(), {
+    const message =
+      userState.persistenceFailureKind === "unreadable"
+        ? m.persistence_warning_unreadable()
+        : m.persistence_warning();
+    activeToastId = toast.error(message, {
       action: {
         label: m.data_title(),
         onClick: () => {
